@@ -28,7 +28,7 @@ import {
   isHardWareAccountAccountSupportMiniApproval,
 } from '@/utils/account';
 import { debounce } from 'lodash';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 
 export const enum ActionType {
   Withdraw = 'withdraw',
@@ -145,13 +145,16 @@ export const DappActions = ({
   );
 
   const canDirectSign = useMemo(() => {
-    const DISABLED_ANDROID_HARDWARE_WALLET_MINI_SIGN =
-      IS_ANDROID &&
-      !isHardWareAccountAccountSupportMiniApproval(currentAccount?.type || '');
+    const HARDWARE_WALLET_CAN_MINI_SIGN = IS_IOS
+      ? true
+      : IS_ANDROID &&
+        !isHardWareAccountAccountSupportMiniApproval(
+          currentAccount?.type || '',
+        );
 
     return (
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
-      DISABLED_ANDROID_HARDWARE_WALLET_MINI_SIGN
+      HARDWARE_WALLET_CAN_MINI_SIGN
     );
   }, [currentAccount?.type]);
 
