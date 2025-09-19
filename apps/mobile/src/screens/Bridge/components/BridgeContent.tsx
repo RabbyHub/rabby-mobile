@@ -54,6 +54,7 @@ import {
   directSigningAtom,
   isAbortedDirectSubmitError,
   useCanProcessDirectSubmit,
+  useMiniDirectSignGasFeeTooHigh,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
 import { BridgePendingTxItem } from './PendingTxItem';
@@ -172,10 +173,10 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     color: colors['neutral-foot'],
   },
   buttonContainer: {
-    // position: 'absolute',
-    // left: 0,
-    // bottom: 0,
-    height: 140,
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    // height: 140,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
     padding: 20,
@@ -249,8 +250,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     inSufficient,
 
     openQuotesList,
-    quoteLoading,
+    quoteLoading: originQuoteLoading,
     quoteList,
+    setQuotesList,
 
     bestQuoteId,
     selectedBridgeQuote,
@@ -417,6 +419,15 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         }, 500);
       } catch (error) {
         toast.info((error as any)?.message || String(error));
+        setQuotesList(pre =>
+          pre?.filter(
+            item =>
+              !(
+                item?.aggregator?.id === selectedBridgeQuote?.aggregator?.id &&
+                item?.bridge_id === selectedBridgeQuote?.bridge_id
+              ),
+          ),
+        );
         stats.report('bridgeQuoteResult', {
           aggregatorIds: selectedBridgeQuote.aggregator.id,
           bridgeId: selectedBridgeQuote.bridge_id,
@@ -521,6 +532,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               directSubmit: canShowDirectSubmit,
               account: currentAccount!,
               transparentMask: true,
+              checkGasFee: true,
             });
           }
 
@@ -529,6 +541,15 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       } catch (error) {
         setDirectSigning(false);
         toast.info((error as any)?.message || String(error));
+        setQuotesList(pre =>
+          pre?.filter(
+            item =>
+              !(
+                item?.aggregator?.id === selectedBridgeQuote?.aggregator?.id &&
+                item?.bridge_id === selectedBridgeQuote?.bridge_id
+              ),
+          ),
+        );
         stats.report('bridgeQuoteResult', {
           aggregatorIds: selectedBridgeQuote.aggregator.id,
           bridgeId: selectedBridgeQuote.bridge_id,
@@ -548,9 +569,15 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     data: txs,
     runAsync: runBuildTxs,
     mutate: mutateTxs,
+    loading: buildingTxsLoading,
   } = useRequest(buildTxs, {
     manual: true,
   });
+
+  const quoteLoading =
+    originQuoteLoading ||
+    buildingTxsLoading ||
+    (!!selectedBridgeQuote && !txs?.length && !inSufficient);
 
   const isFocused = useIsFocused();
 
@@ -561,11 +588,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   }, [isFocused, refresh]);
 
   const runBuildSwapTxsRef = useRef<ReturnType<typeof runBuildTxs>>();
-  const {
-    prepareMiniTransactions,
-    sendPrepareMiniTransactions,
-    sendMiniTransactions,
-  } = useMiniApproval();
+  const { prepareMiniTransactions, sendPrepareMiniTransactions } =
+    useMiniApproval();
 
   const canUseMiniTx = isAccountSupportMiniApproval(currentAccount?.type);
 
@@ -620,6 +644,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                 directSubmit: canShowDirectSubmit,
                 account: currentAccount!,
                 transparentMask: true,
+                checkGasFee: true,
               });
             }
           }
@@ -665,17 +690,17 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
             runFetchBridgePendingCount();
           }, 500);
         } catch (error) {
-          setDirectSigning(false);
           if ((error as any)?.name === 'SimulateError') {
             gotoBridge();
           } else if (isAbortedDirectSubmitError(error)) {
-            console.log('AbortedDirectSubmitError bridge');
+            console.debug('AbortedDirectSubmitError bridge');
           } else {
             mutateTxs([]);
             refresh(e => e + 1);
           }
           console.error('handleBridge', error);
         } finally {
+          setDirectSigning(false);
           setFetchingBridgeQuote(false);
         }
       } else {
@@ -772,7 +797,10 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     return !!impact?.showLoss;
   }, [fromToken, amount, selectedBridgeQuote?.to_token_amount, toToken]);
 
-  const showRiskTips = isSlippageHigh || isSlippageLow || showLoss;
+  const miniSignGasFeeTooHigh = useMiniDirectSignGasFeeTooHigh();
+
+  const showRiskTips =
+    isSlippageHigh || isSlippageLow || showLoss || miniSignGasFeeTooHigh;
 
   return (
     <NormalScreenContainer overwriteStyle={styles.screen}>
@@ -832,7 +860,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               }
               fromTokenId={fromToken?.id}
               valueLoading={quoteLoading}
-              value={selectedBridgeQuote?.to_token_amount}
+              value={
+                quoteLoading ? undefined : selectedBridgeQuote?.to_token_amount
+              }
               excludeChains={fromChain ? [fromChain] : undefined}
               noQuote={noQuote}
             />
@@ -861,7 +891,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         ) : null}
 
         <View>
-          {selectedBridgeQuote && inSufficientCanGetQuote && (
+          {selectedBridgeQuote && !quoteLoading && inSufficientCanGetQuote && (
             <BridgeShowMore
               supportDirectSign={canShowDirectSubmit}
               openFeePopup={openFeePopup}
@@ -939,12 +969,15 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
           }>
           {canShowDirectSubmit ? (
             <DirectSignBtn
-              key={`${fromChain}-${fromToken?.id}-${toToken?.id}-${amount}-${selectedBridgeQuote?.approve_contract_id}-${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge_id}-${selectedBridgeQuote?.quote_key?.routePath}-${selectedBridgeQuote?.quote_key?.to_token_raw_amount}`}
+              // refresh risk check
+              key={isDirectSigning + ''}
               authTitle={t('page.whitelist.confirmPassword')}
               title={t('global.confirm')}
               loadingType="circle"
               onFinished={handleBridge}
-              disabled={btnDisabled || !canDirectSign || isDirectSigning}
+              disabled={
+                btnDisabled || !canDirectSign || isDirectSigning || !txs?.length
+              }
               type={'primary'}
               syncUnlockTime
               onBeforeAuth={() => {
@@ -957,6 +990,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               showHardWalletProcess
               showRiskTips={showRiskTips && !btnDisabled}
               loading={isSubmitting}
+              showTextOnLoading
             />
           ) : (
             <Button

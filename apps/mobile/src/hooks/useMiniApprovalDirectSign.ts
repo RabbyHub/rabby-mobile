@@ -61,15 +61,6 @@ export const canDirectSignAtom = atom(true);
 
 const innerError = atom(false);
 export const useSetDirectSubmitInnerError = () => useSetAtom(innerError);
-export const useGetDirectSubmitInnerError = () => useAtomValue(innerError);
-
-export const useCanProcessDirectSubmit = () => {
-  const disabledProcess = useDirectSigningDisabledProcess();
-  const canDirectSign = useAtomValue(canDirectSignAtom);
-  const directSubmitInnerError = useGetDirectSubmitInnerError();
-
-  return !disabledProcess && canDirectSign && !directSubmitInnerError;
-};
 
 const currentMiniSignChain = atom(CHAINS_ENUM.ETH);
 const gasFeeLimitAtom = atom(get => {
@@ -89,7 +80,8 @@ const gasFeeTooHighAtom = atom(get => {
   const showGasContent =
     !!miniApprovalGas &&
     !miniApprovalGas.loading &&
-    !!miniApprovalGas.gasCostUsdStr;
+    !!miniApprovalGas.gasCostUsdStr &&
+    !miniApprovalGas.disabledProcess;
 
   const calcGasAccountUsd = (n: number | string) => {
     const v = Number(n);
@@ -111,9 +103,8 @@ const gasFeeTooHighAtom = atom(get => {
 
   if (
     showGasContent &&
-    (miniApprovalGas?.showGasLevelPopup ||
-      (gasCostUsd &&
-        new BigNumber(gasCostUsd?.replaceAll('$', '') || '0').gt(gasFeeLimit)))
+    gasCostUsd &&
+    new BigNumber(gasCostUsd?.replaceAll('$', '') || '0').gt(gasFeeLimit)
   ) {
     return true;
   }
@@ -123,6 +114,30 @@ const gasFeeTooHighAtom = atom(get => {
 
 export const useMiniDirectSignGasFeeTooHigh = () =>
   useAtomValue(gasFeeTooHighAtom);
+
+export const useCanProcessDirectSubmit = () => {
+  const disabledProcess = useDirectSigningDisabledProcess();
+  const canDirectSign = useAtomValue(canDirectSignAtom);
+  const directSubmitInnerError = useGetDirectSubmitInnerError();
+  const gasFeeDisableProcess = useAtomValue(gasFeeDisableProcessAtom);
+
+  return (
+    !gasFeeDisableProcess &&
+    !disabledProcess &&
+    canDirectSign &&
+    !directSubmitInnerError
+  );
+};
+
+const throwMiniDirectErrorAtom = atom(get => {
+  return get(innerError) || get(gasFeeDisableProcessAtom);
+});
+
+// abort mini sign process
+export const useGetDirectSubmitInnerError = () => {
+  const inner = useAtomValue(throwMiniDirectErrorAtom);
+  return inner;
+};
 
 const gasFeeDisableProcessAtom = atom(get => {
   const checkGasFee = get(checkGasFeeAtom);

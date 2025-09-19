@@ -85,7 +85,6 @@ import {
   directSigningAtom,
   isAbortedDirectSubmitError,
   useCanProcessDirectSubmit,
-  useMiniDirectSignGasFeeDisableProcess,
   useMiniDirectSignGasFeeTooHigh,
 } from '@/hooks/useMiniApprovalDirectSign';
 import {
@@ -615,6 +614,7 @@ const Swap = ({
         if ((e as any)?.name === 'SimulateError') {
           gotoSwap();
         } else if (isAbortedDirectSubmitError(e)) {
+          console.debug('isAbortedDirectSubmitError swap');
         } else {
           mutateTxs([]);
           refresh(e => e + 1);
@@ -793,17 +793,15 @@ const Swap = ({
     payAmount,
   });
 
-  // const { gasFeeDisableProcess } = useMiniDirectSignGasFeeDisableProcess();
-
   const miniSignGasFeeTooHigh = useMiniDirectSignGasFeeTooHigh();
 
   const showRiskTips =
     isSlippageLow || isSlippageHigh || showLoss || miniSignGasFeeTooHigh;
 
   useEffect(() => {
-    if (!isSubmitting && canShowDirectSubmit) {
+    if (canShowDirectSubmit) {
       prepareMiniTransactions({
-        txs: currentTxs || [],
+        txs: currentTxs?.length ? currentTxs : [],
         ga: {
           category: 'Swap',
           source: 'swap',
@@ -813,13 +811,13 @@ const Swap = ({
         account: currentAccount!,
         transparentMask: true,
         showMaskLoading: true,
+        checkGasFee: true,
       });
     }
   }, [
     currentTxs,
     prepareMiniTransactions,
     swapUseSlider,
-    isSubmitting,
     canShowDirectSubmit,
     currentAccount,
   ]);
@@ -1077,7 +1075,9 @@ const Swap = ({
           ) : null}
 
           {isShowMoreVisible &&
-            (!shouldTwoStepSwap || (shouldTwoStepSwap && !approveHash)) && (
+            (!shouldTwoStepSwap ||
+              (shouldTwoStepSwap && !approveHash) ||
+              showRiskTips) && (
               <View
                 style={{
                   marginHorizontal: -24,
@@ -1137,7 +1137,8 @@ const Swap = ({
               />
             )}
 
-          {shouldTwoStepSwap &&
+          {!showRiskTips &&
+          shouldTwoStepSwap &&
           !!currentAccount?.address &&
           approveHash &&
           currentTxs?.[0]?.chainId ? (
@@ -1181,6 +1182,7 @@ const Swap = ({
           <View>
             {canShowDirectSubmit ? (
               <DirectSignBtn
+                // refresh  risk check
                 key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
                 loading={miniSignLoading}
                 loadingType="circle"
@@ -1191,7 +1193,7 @@ const Swap = ({
                 disabled={
                   swapBtnDisabled ||
                   !canDirectSign ||
-                  isDirectSigning ||
+                  miniSignLoading ||
                   approveTxPending
                 }
                 type={'primary'}

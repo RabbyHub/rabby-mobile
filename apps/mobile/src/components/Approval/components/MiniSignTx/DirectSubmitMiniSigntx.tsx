@@ -118,6 +118,7 @@ export const MiniDirectSubmitApproval = ({
   });
 
   const [isDirectSigning] = useAtom(directSigningAtom);
+
   const directSubmitInnerError = useGetDirectSubmitInnerError();
 
   useEffect(() => {

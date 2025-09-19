@@ -210,6 +210,8 @@ export type SendScreenState = {
 
   addressToAddAsContacts: string | null;
   addressToEditAlias: string | null;
+
+  buildTxsCount?: number;
 };
 const DFLT_SEND_STATE: SendScreenState = {
   inited: false,
@@ -823,6 +825,7 @@ export function useSendTokenForm({
             directSubmit: true,
             account,
             transparentMask: true,
+            checkGasFee: true,
           });
         }
       }
@@ -923,6 +926,7 @@ export function useSendTokenForm({
 
           if (!prepareRef.current) {
             prepareCountRef.current++;
+            putScreenState({ buildTxsCount: prepareCountRef.current });
             prepareRef.current = prepareDirectSubmitMiniTx(
               prepareCountRef.current,
             );
@@ -959,10 +963,17 @@ export function useSendTokenForm({
                 messageDataForContractCall,
                 isForceSignTx: true,
               });
+              return;
             }
             if (isAbortedDirectSubmitError(error)) {
               console.log('AbortedDirectSubmitError useSendToken');
+              return;
             }
+            prepareCountRef.current++;
+            putScreenState({ buildTxsCount: prepareCountRef.current });
+            prepareRef.current = prepareDirectSubmitMiniTx(
+              prepareCountRef.current,
+            );
           }
 
           return;
@@ -1017,6 +1028,7 @@ export function useSendTokenForm({
         Alert.alert(e.message);
         console.error(e);
       } finally {
+        setDirectSigning(false);
         putScreenState({ isSubmitLoading: false });
       }
     },
@@ -1576,8 +1588,6 @@ export function useSendTokenForm({
 
   useEffect(() => {
     if (
-      isFocused &&
-      !screenState.isSubmitLoading &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
     ) {
@@ -1600,8 +1610,6 @@ export function useSendTokenForm({
     formValues.messageDataForSendToEoa,
     formValues.messageDataForContractCall,
     currentAccount?.type,
-    isFocused,
-    screenState.isSubmitLoading,
     chainItem?.isTestnet,
     toAddress,
     account,
@@ -1610,15 +1618,18 @@ export function useSendTokenForm({
   useEffect(() => {
     if (
       isFocused &&
-      !screenState.isSubmitLoading &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet &&
-      computed.canSubmit
+      computed.canSubmit &&
+      formValues.to &&
+      formValues.amount
     ) {
       prepareCountRef.current += 1;
+      putScreenState({ buildTxsCount: prepareCountRef.current });
       prepareRef.current = prepareDirectSubmitMiniTx(prepareCountRef.current);
     }
   }, [
+    putScreenState,
     isFocused,
     chainItem?.isTestnet,
     computed.canSubmit,
@@ -1628,7 +1639,6 @@ export function useSendTokenForm({
     formValues.messageDataForContractCall,
     currentAccount?.type,
     prepareDirectSubmitMiniTx,
-    screenState.isSubmitLoading,
   ]);
 
   useFocusEffect(

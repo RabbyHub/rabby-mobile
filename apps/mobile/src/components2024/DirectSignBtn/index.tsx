@@ -97,7 +97,7 @@ export const DirectSignBtn = ({
           style={styles.riskContainer}
           onPress={() => {
             setRiskChecked(!riskChecked);
-            if (checkGasFee && gasFeeDisableProcess && !riskChecked) {
+            if (checkGasFee && !riskChecked) {
               setCheckGasFee(false);
             }
           }}>

@@ -35,6 +35,7 @@ import { getGasLevelI18nKey } from '@/utils/trans';
 import {
   gasRelativeComponentAtom,
   miniApprovalGasAtom,
+  useMiniDirectSignGasFeeTooHigh,
 } from '@/hooks/useMiniApprovalDirectSign';
 // import { RcIconInfoCC } from '@/assets/icons/common';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
@@ -345,7 +346,7 @@ export const DirectSignGasInfo = ({
 
   useEffect(() => {
     if (loading) {
-      setMiniApprovalGas(undefined);
+      setMiniApprovalGas(() => undefined);
       setGasTipsComponent(null);
     }
   }, [loading, setGasTipsComponent, setMiniApprovalGas]);
@@ -375,6 +376,8 @@ export const DirectSignGasInfo = ({
       setIsGasAccountHovering(false);
     }
   }, [loading, noQuote, showGasContent]);
+
+  const miniSignGasFeeTooHigh = useMiniDirectSignGasFeeTooHigh();
 
   if (!supportDirectSign) {
     return null;
@@ -550,6 +553,11 @@ export const DirectSignGasInfo = ({
           />
         )}
       </ListItem>
+      {miniSignGasFeeTooHigh && !loading && !noQuote ? (
+        <Text style={[styles.lossTip, { marginBottom: 0, marginTop: 0 }]}>
+          {t('page.bridge.gasFeeTooHight')}
+        </Text>
+      ) : null}
       {showGasContent && gasTipsComponent ? (
         <View style={{ marginTop: 6 }}>{gasTipsComponent}</View>
       ) : null}
@@ -728,11 +736,17 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   lossTip: {
     marginTop: 8,
     // paddingHorizontal: 4,
-    // backgroundColor: '#FFE3E3',
+    // backgroundColor: colors2024['red-light-1'],
     color: colors2024['red-default'],
-    borderRadius: 4,
-    fontSize: 13,
+    fontSize: 14,
     marginBottom: 8,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '400',
+
+    // paddingHorizontal: 14,
+    // paddingVertical: 8,
+    // borderRadius: 8,
+    // overflow: 'hidden',
   },
   listItem: { marginBottom: 12 },
   listItemContainer: {

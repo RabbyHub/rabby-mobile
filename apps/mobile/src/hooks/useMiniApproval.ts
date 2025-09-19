@@ -170,6 +170,7 @@ export const useMiniApproval = () => {
       transparentMask?: boolean;
       checkGasFee?: boolean;
     }) => {
+      console.debug('prepareMiniTransactions trigger', ga, txs?.length);
       clear();
       resetMiniSignExtraProps();
       setState(prev => {

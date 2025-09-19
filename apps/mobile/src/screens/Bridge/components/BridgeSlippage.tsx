@@ -322,7 +322,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   selectContainer: {
     marginTop: 8,
-    marginBottom: 20,
   },
   input: {
     fontSize: 14,

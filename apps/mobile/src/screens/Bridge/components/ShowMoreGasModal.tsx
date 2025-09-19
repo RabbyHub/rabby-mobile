@@ -10,7 +10,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SwapModal } from '@/screens/Swap/components/Modal';
 import { SvgProps } from 'react-native-svg';
-import { useAtom } from 'jotai';
+import { useAtomValue } from 'jotai';
 import IconGasTokenCC from '@/assets2024/icons/gas-account/gas-token-cc.svg';
 import IconGasAccountCC from '@/assets2024/icons/gas-account/gas-account-cc.svg';
 import IconGasTokenActive from '@/assets2024/icons/gas-account/gas-token-active.svg';
@@ -75,7 +75,7 @@ export default function ShowMoreGasSelectModal({
 }) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [miniApprovalGas, setMiniApprovalGas] = useAtom(miniApprovalGasAtom);
+  const miniApprovalGas = useAtomValue(miniApprovalGasAtom);
 
   const { height, width } = useWindowDimensions();
 
@@ -88,7 +88,6 @@ export default function ShowMoreGasSelectModal({
   }, []);
 
   const fixedMode = useMiniSignFixedMode(chainId);
-  console.debug('fixedMode', chainId, fixedMode);
 
   if (!miniApprovalGas) {
     return null;

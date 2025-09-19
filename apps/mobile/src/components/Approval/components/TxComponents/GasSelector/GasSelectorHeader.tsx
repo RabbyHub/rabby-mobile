@@ -12,6 +12,7 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import {
   Image,
+  Keyboard,
   NativeSyntheticEvent,
   Pressable,
   StyleSheet,
@@ -36,7 +37,10 @@ import {
 } from '@/components';
 import { formatTokenAmount, formatGasHeaderUsdValue } from '@/utils/number';
 import IconQuestionMark from '@/assets/icons/sign/question-mark.svg';
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+} from '@gorhom/bottom-sheet';
 import { GasSelectContainer } from './GasSelectContainer';
 import { FooterButton } from '@/components2024/FooterButton/FooterButton';
 import { TextInput } from 'react-native-gesture-handler';
@@ -432,10 +436,17 @@ export const GasSelectorHeader = ({
       calcGasAccountUsd,
     ],
   );
+  const [isSelectCustom, setIsSelectCustom] = useState(false);
 
   const [checkedFixedMode, setCheckedFixedMode] = useState(
     defaultFixedModeOnCurrentChain,
   );
+
+  useEffect(() => {
+    if (selectedGas && selectedGas?.level !== 'custom') {
+      setCheckedFixedMode(false);
+    }
+  }, [selectedGas, selectedGas?.level]);
 
   const handleConfirmGas = () => {
     if (!selectedGas) return;
@@ -479,7 +490,6 @@ export const GasSelectorHeader = ({
     }
   };
 
-  const [isSelectCustom, setIsSelectCustom] = useState(false);
   const handleClickEdit = useCallback(() => {
     setModalVisible(true);
     modalRef.current?.expand();
@@ -782,6 +792,13 @@ export const GasSelectorHeader = ({
       return;
     }
     setCustomGas(undefined);
+    setCustomGas(e =>
+      rawSelectedGas?.level === 'custom'
+        ? Number(e) * 1e9 === rawSelectedGas.price
+          ? e
+          : rawSelectedGas.price / 1e9
+        : undefined,
+    );
     setChangedCustomGas(false);
     setSelectedGas(rawSelectedGas);
     setModalVisible(false);
@@ -810,7 +827,7 @@ export const GasSelectorHeader = ({
       !selectedGas ||
       !directSubmit
     ) {
-      setMiniApprovalGasState(undefined);
+      setMiniApprovalGasState(() => undefined);
       return;
     }
 
@@ -1135,18 +1152,12 @@ export const GasSelectorHeader = ({
           backgroundColor: colors['neutral-bg1'],
         }}
         onDismiss={handleClosePopup}>
-        <BottomSheetView style={styles.modalWrap}>
+        <BottomSheetScrollView
+          style={styles.modalWrap}
+          onScrollBeginDrag={Keyboard.dismiss}>
           <AppBottomSheetModalTitle
-            style={{
-              color: colors2024['neutral-title-1'],
-              textAlign: 'center',
-              fontFamily: 'SF Pro Rounded',
-              fontSize: 20,
-              fontStyle: 'normal',
-              fontWeight: '800',
-              lineHeight: 24,
-            }}
-            title={t('page.signTx.gasSelectorTitle')}
+            style={styles.sheetTitle}
+            title={t('page.signTx.gasSetting')}
           />
           <View style={styles.gasSelectorModalTop}>
             {disabled ? (
@@ -1226,6 +1237,7 @@ export const GasSelectorHeader = ({
           <View style={styles.formContainer}>
             <View style={styles.gasPriceDesc}>
               <View style={styles.gasPriceDescItem}>
+                <View style={styles.gasPriceDescDot} />
                 <Text style={styles.gasPriceDescText}>
                   {t('page.signTx.myNativeTokenBalance')}
                 </Text>
@@ -1240,6 +1252,7 @@ export const GasSelectorHeader = ({
               </View>
               {gasPriceMedian !== null && (
                 <View style={styles.gasPriceDescItem}>
+                  <View style={styles.gasPriceDescDot} />
                   <Text style={styles.gasPriceDescText}>
                     {t('page.signTx.gasPriceMedian')}
                   </Text>
@@ -1297,6 +1310,19 @@ export const GasSelectorHeader = ({
                     }
                   />
                 </Tip>
+
+                {fixedMode && selectedGas?.level === 'custom' ? (
+                  <Pressable
+                    style={styles.fixedModeContainer}
+                    onPress={() => {
+                      setCheckedFixedMode(e => !e);
+                    }}>
+                    <CheckBoxRect checked={checkedFixedMode} />
+                    <Text style={styles.fixedModeText}>
+                      {t('page.miniSignFooterBar.fixedModeText')}
+                    </Text>
+                  </Pressable>
+                ) : null}
               </>
             )}
 
@@ -1308,34 +1334,7 @@ export const GasSelectorHeader = ({
               </View>
             )}
           </View>
-          {fixedMode ? (
-            <Pressable
-              style={[
-                {
-                  flexDirection: 'row',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-              ]}
-              onPress={() => {
-                setCheckedFixedMode(e => !e);
-              }}>
-              <CheckBoxRect checked={checkedFixedMode} />
-              <Text
-                // style={styles.warningText}
-                style={{
-                  marginLeft: 4,
-                  color: colors2024['neutral-secondary'],
-                  fontFamily: 'SF Pro Rounded',
-                  fontSize: 12,
-                  fontStyle: 'normal',
-                  fontWeight: '500',
-                  lineHeight: 16,
-                }}>
-                {t('page.miniSignFooterBar.fixedModeText')}
-              </Text>
-            </Pressable>
-          ) : null}
+
           <FooterButton
             footerStyle={styles.footer}
             type="primary"
@@ -1343,7 +1342,7 @@ export const GasSelectorHeader = ({
             disabled={!isReady || validateStatus.customGas.status === 'error'}
             title={t('global.confirm')}
           />
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </AppBottomSheetModal>
     </>
   );

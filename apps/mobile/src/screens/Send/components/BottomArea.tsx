@@ -15,8 +15,9 @@ import { useTranslation } from 'react-i18next';
 import {
   directSigningAtom,
   useCanProcessDirectSubmit,
+  useMiniDirectSignGasFeeTooHigh,
 } from '@/hooks/useMiniApprovalDirectSign';
-import { useAtom } from 'jotai';
+import { useAtomValue } from 'jotai';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
 
@@ -47,9 +48,11 @@ export default function BottomArea({ account }: { account: Account | null }) {
 
   const { safeOffBottom } = useSafeSizes();
 
-  const [isDirectSigning] = useAtom(directSigningAtom);
+  const isDirectSigning = useAtomValue(directSigningAtom);
 
   const canDirectSign = useCanProcessDirectSubmit();
+
+  const showRiskTips = useMiniDirectSignGasFeeTooHigh();
 
   return (
     <View
@@ -59,16 +62,20 @@ export default function BottomArea({ account }: { account: Account | null }) {
       ]}>
       {canShowDirectSign ? (
         <DirectSignBtn
+          // refresh  risk check
+          key={screenState?.buildTxsCount + ''}
+          showTextOnLoading
           loadingType="circle"
-          loading={isDirectSigning}
           authTitle={t('page.whitelist.confirmPassword')}
           title={t('global.confirm')}
           onFinished={handleSubmit}
           disabled={!canSubmit || !canDirectSign || isDirectSigning}
+          loading={isSubmitLoading}
           type={'primary'}
           syncUnlockTime
           account={account}
           showHardWalletProcess
+          showRiskTips={showRiskTips && canSubmit}
         />
       ) : (
         <Button

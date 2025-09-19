@@ -1038,6 +1038,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     openQuotesList,
     quoteLoading: pending || quoteLoading,
     quoteList,
+    setQuotesList,
 
     bestQuoteId,
     selectedBridgeQuote,
