@@ -227,6 +227,15 @@ run_upload_changelog() {
   echo "Now you can upload the markdown files to S3"
 }
 
+update_webview_assets() {
+  if [ -z $project_dir ]; then
+    local script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
+    project_dir=$(dirname $script_dir)
+  fi
+  curl -fSL https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js -o $project_dir/assets/custom/bignumber.js@9.3.1-bignumber.min.js
+  curl -fSL https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js -o $project_dir/assets/custom/lightweight-charts.standalone.production.js
+}
+
 
 func_to_exec=$1
 
@@ -243,6 +252,9 @@ if [ ! -z $func_to_exec ]; then
       ;;
     "print_cmd_upload_changelog")
       print_cmd_upload_changelog
+      ;;
+    "update_webview_assets")
+      update_webview_assets
       ;;
     *)
       echo "Invalid function to execute: $func_to_exec"

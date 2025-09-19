@@ -89,6 +89,7 @@ scripts/tmp
 **/InpageBridgeWeb3.js
 /src/**/vconsole.min.js
 /android/app/src/main/assets/custom/vconsole.min.js
+/android/app/src/main/assets/custom/*
 /android/app/src/main/assets/fonts/*
 /android/app/src/main/res/font/*.ttf
 /android/app/src/main/res/font/*.otf
