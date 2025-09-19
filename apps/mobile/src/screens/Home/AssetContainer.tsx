@@ -202,7 +202,7 @@ export const AssetContainer: React.FC<Props> = ({
         data: unFoldTokenList,
       },
       {
-        show: !!foldTokenList.length,
+        show: !!foldTokenList.length || !!scamTokens.length,
         data: [
           { type: 'toggle_token_fold' },
           ...(foldHideList ? [] : foldTokenList),
