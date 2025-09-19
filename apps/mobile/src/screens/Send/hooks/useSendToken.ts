@@ -1605,6 +1605,7 @@ export function useSendTokenForm({
     }
   }, [
     prepareMiniTransactions,
+    chainItem?.id,
     formValues.to,
     formValues.amount,
     formValues.messageDataForSendToEoa,
@@ -1631,6 +1632,7 @@ export function useSendTokenForm({
   }, [
     putScreenState,
     isFocused,
+    chainItem?.id,
     chainItem?.isTestnet,
     computed.canSubmit,
     formValues.to,

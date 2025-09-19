@@ -31,7 +31,7 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import _ from 'lodash';
+import _, { omit } from 'lodash';
 import React, {
   ReactNode,
   useCallback,
@@ -487,7 +487,9 @@ export const MiniSignTx = ({
     if (gas.level === 'custom') {
       setGasList(
         (gasList || []).map(item => {
-          if (item.level === 'custom') return gas;
+          if (item.level === 'custom') {
+            return omit(gas, ['fixedMode']);
+          }
           return item;
         }),
       );

@@ -64,31 +64,32 @@ export const useMiniSignGasStore = (chainId: number) => {
       customGasPrice?: number;
       fixed?: boolean;
     }) => {
+      const isCustom = params.gasLevel === 'custom';
       setMiniGasLevel(params.gasLevel);
-      if (
-        chainId &&
-        (typeof params.customGasPrice)?.toLowerCase() === 'number'
-      ) {
-        setMiniCustomPrice(() => ({
-          [chainId]: params.customGasPrice || 0,
-        }));
-      }
-      if (params.gasLevel !== 'custom' || !params.fixed) {
-        setFixedCustomGas(pre => {
-          const data = { ...pre };
-          if (data[chainId]) {
-            delete data[chainId];
-          }
-          return data;
-        });
-      }
 
-      if (params.fixed) {
-        setFixedCustomGas(pre => ({
-          ...pre,
-          [chainId]: params.customGasPrice || 0,
-        }));
-      }
+      setMiniCustomPrice(() =>
+        isCustom
+          ? {
+              [chainId]: params.customGasPrice || 0,
+            }
+          : {},
+      );
+
+      const isFixedMode = isCustom && !!params.fixed;
+      console.log('isFixedMode updateMiniGas', isFixedMode);
+
+      setFixedCustomGas(pre => {
+        let data = { ...pre };
+        delete data[chainId];
+
+        if (isFixedMode) {
+          data[chainId] = params.customGasPrice || 0;
+        }
+
+        console.log('setFixedCustomGas data', chainId, data);
+
+        return data;
+      });
     },
     [chainId, setFixedCustomGas, setMiniCustomPrice, setMiniGasLevel],
   );

@@ -443,10 +443,10 @@ export const GasSelectorHeader = ({
   );
 
   useEffect(() => {
-    if (selectedGas && selectedGas?.level !== 'custom') {
+    if (selectedGas?.level !== 'custom') {
       setCheckedFixedMode(false);
     }
-  }, [selectedGas, selectedGas?.level]);
+  }, [selectedGas]);
 
   const handleConfirmGas = () => {
     if (!selectedGas) return;
@@ -791,7 +791,6 @@ export const GasSelectorHeader = ({
     if (pressedConfirmRef.current) {
       return;
     }
-    setCustomGas(undefined);
     setCustomGas(e =>
       rawSelectedGas?.level === 'custom'
         ? Number(e) * 1e9 === rawSelectedGas.price
@@ -1238,26 +1237,30 @@ export const GasSelectorHeader = ({
             <View style={styles.gasPriceDesc}>
               <View style={styles.gasPriceDescItem}>
                 <View style={styles.gasPriceDescDot} />
-                <Text style={styles.gasPriceDescText}>
-                  {t('page.signTx.myNativeTokenBalance')}
-                </Text>
-                <Text style={styles.gasPriceDescBoldText}>
-                  {formatTokenAmount(
-                    new BigNumber(nativeTokenBalance).div(1e18).toFixed(),
-                    4,
-                    true,
-                  )}{' '}
-                  {chain.nativeTokenSymbol}
+                <Text>
+                  <Text style={styles.gasPriceDescText}>
+                    {t('page.signTx.myNativeTokenBalance')}
+                  </Text>
+                  <Text style={styles.gasPriceDescBoldText}>
+                    {formatTokenAmount(
+                      new BigNumber(nativeTokenBalance).div(1e18).toFixed(),
+                      4,
+                      true,
+                    )}{' '}
+                    {chain.nativeTokenSymbol}
+                  </Text>
                 </Text>
               </View>
               {gasPriceMedian !== null && (
                 <View style={styles.gasPriceDescItem}>
                   <View style={styles.gasPriceDescDot} />
-                  <Text style={styles.gasPriceDescText}>
-                    {t('page.signTx.gasPriceMedian')}
-                  </Text>
-                  <Text style={styles.gasPriceDescBoldText}>
-                    {new BigNumber(gasPriceMedian).div(1e9).toFixed()} Gwei
+                  <Text>
+                    <Text style={[styles.gasPriceDescText]}>
+                      {t('page.signTx.gasPriceMedian')}
+                    </Text>
+                    <Text style={styles.gasPriceDescBoldText}>
+                      {new BigNumber(gasPriceMedian).div(1e9).toFixed()} Gwei
+                    </Text>
                   </Text>
                 </View>
               )}
@@ -1311,7 +1314,8 @@ export const GasSelectorHeader = ({
                   />
                 </Tip>
 
-                {fixedMode && selectedGas?.level === 'custom' ? (
+                {fixedMode &&
+                (selectedGas?.level === 'custom' || isSelectCustom) ? (
                   <Pressable
                     style={styles.fixedModeContainer}
                     onPress={() => {

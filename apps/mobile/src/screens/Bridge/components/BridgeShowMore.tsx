@@ -42,6 +42,7 @@ import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import { IS_ANDROID } from '@/core/native/utils';
 import { findChainByServerID } from '@/utils/chain';
 import { noop } from 'lodash';
+import { WarningText } from './WarningText';
 
 const RABBY_FEE = '0.25%';
 
@@ -156,31 +157,39 @@ const BridgeShowMore = ({
                       { rotate: !lossImpactOpen ? '180deg' : '0deg' },
                     ],
                   }}>
-                  <RcIconPolygon />
+                  <RcIconBluePolygon color={colors2024['orange-default']} />
                 </Animated.View>
               </TouchableOpacity>
             </View>
-            {lossImpactOpen && (
-              <View style={styles.impactTooltip}>
-                <Text style={styles.impactTooltipText}>
-                  {t('page.bridge.est-payment')}{' '}
-                  {formatTokenAmount(amount || '0')}
-                  {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
-                </Text>
-                <Text style={styles.impactTooltipText}>
-                  {t('page.bridge.est-receiving')}{' '}
-                  {formatTokenAmount(toAmount || '0')}
-                  {getTokenSymbol(toToken)} ≈ {data?.toUsd}
-                </Text>
-                <Text style={styles.impactTooltipText}>
-                  {t('page.bridge.est-difference')} {data?.lossUsd}
-                </Text>
-              </View>
-            )}
 
-            <Text style={[styles.lossTip, { marginBottom: 0 }]}>
-              {t('page.bridge.loss-tips', { usd: data?.lossUsd })}
-            </Text>
+            <WarningText>
+              <Text style={{ marginBottom: 10 }}>
+                {t('page.bridge.loss-tips', { usd: data?.lossUsd })}
+              </Text>
+              {lossImpactOpen && (
+                <>
+                  {'\n'}
+                  {'\n'}
+                  <Text style={styles.impactTooltipText}>
+                    {t('page.bridge.est-payment')}{' '}
+                    {formatTokenAmount(amount || '0')}
+                    {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
+                  </Text>
+                  {'\n'}
+
+                  <Text style={styles.impactTooltipText}>
+                    {t('page.bridge.est-receiving')}{' '}
+                    {formatTokenAmount(toAmount || '0')}
+                    {getTokenSymbol(toToken)} ≈ {data?.toUsd}
+                  </Text>
+                  {'\n'}
+
+                  <Text style={styles.impactTooltipText}>
+                    {t('page.bridge.est-difference')} {data?.lossUsd}
+                  </Text>
+                </>
+              )}
+            </WarningText>
           </View>
         )}
 
@@ -379,6 +388,8 @@ export const DirectSignGasInfo = ({
 
   const miniSignGasFeeTooHigh = useMiniDirectSignGasFeeTooHigh();
 
+  const showGasFeeTooHightTips = miniSignGasFeeTooHigh && !loading && !noQuote;
+
   if (!supportDirectSign) {
     return null;
   }
@@ -509,6 +520,9 @@ export const DirectSignGasInfo = ({
                       fontWeight: '700',
                       lineHeight: 18,
                     },
+                    showGasFeeTooHightTips && {
+                      color: colors2024['orange-default'],
+                    },
                     miniApprovalGas.disabledProcess && {
                       color: colors2024['red-default'],
                     },
@@ -523,7 +537,13 @@ export const DirectSignGasInfo = ({
                   }}>
                   <RcIconBluePolygon
                     style={styles.arrowIcon}
-                    color={colors2024['brand-default']}
+                    color={
+                      miniApprovalGas.disabledProcess
+                        ? colors2024['red-default']
+                        : showGasFeeTooHightTips
+                        ? colors2024['orange-default']
+                        : colors2024['brand-default']
+                    }
                   />
                 </Animated.View>
               </View>
@@ -553,10 +573,10 @@ export const DirectSignGasInfo = ({
           />
         )}
       </ListItem>
-      {miniSignGasFeeTooHigh && !loading && !noQuote ? (
-        <Text style={[styles.lossTip, { marginBottom: 0, marginTop: 0 }]}>
+      {showGasFeeTooHightTips ? (
+        <WarningText style={{ marginTop: 0 }}>
           {t('page.bridge.gasFeeTooHight')}
-        </Text>
+        </WarningText>
       ) : null}
       {showGasContent && gasTipsComponent ? (
         <View style={{ marginTop: 6 }}>{gasTipsComponent}</View>
@@ -670,21 +690,13 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     opacity: 0.5,
     marginHorizontal: -12,
   },
-  impactTooltip: {
-    // alignItems: 'flex-end',
-    flexDirection: 'column',
-    gap: 4,
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors2024['red-light-1'],
-    borderRadius: 12,
-  },
+
   impactTooltipText: {
     fontSize: 12,
-    lineHeight: 14,
+    lineHeight: 16,
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['red-default'],
+    color: colors2024['neutral-title-1'],
   },
   icon: {
     marginLeft: 4,
@@ -718,7 +730,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontWeight: '700',
     // fontFamily: 'SF Pro ',
     lineHeight: 20,
-    color: colors2024['red-default'],
+    color: colors2024['orange-default'],
     marginRight: 4,
   },
   impactText: {

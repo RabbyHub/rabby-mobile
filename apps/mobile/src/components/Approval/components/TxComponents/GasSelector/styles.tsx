@@ -279,7 +279,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   },
   gasPriceDescText: {
     color: colors2024['neutral-secondary'],
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '400',
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
