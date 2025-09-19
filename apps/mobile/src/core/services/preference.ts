@@ -1005,18 +1005,9 @@ export class PreferenceService {
     }
   };
 
+  /** @deprecated use getUserTokenSettingsSync as possible */
   getUserTokenSettings = async () => {
-    return {
-      foldTokens: this.store.foldTokens || [],
-      unfoldTokens: this.store.unfoldTokens || [],
-      includeDefiAndTokens: this.store.includeDefiAndTokens || [],
-      excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
-      pinedQueue: this.store.pinedQueue || [],
-      foldNfts: this.store.foldNfts || [],
-      unfoldNfts: this.store.unFoldNfts || [],
-      foldDefis: this.store.foldDefis || [],
-      unFoldDefis: this.store.unFoldDefis || [],
-    };
+    return this.getUserTokenSettingsSync();
   };
 
   getUserTokenSettingsSync = () => {
