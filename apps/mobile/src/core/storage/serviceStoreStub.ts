@@ -23,6 +23,7 @@ import {
   currencyService,
   dappService,
 } from '../services/shared';
+import { apisSafe } from '../apis/safe';
 
 /**
  * @description only call this hook on app's top level
@@ -111,5 +112,9 @@ export function useSetupServiceStub() {
 
   useMount(() => {
     initEventBus();
+  });
+
+  useMount(() => {
+    apisSafe.syncAllGnosisNetworks();
   });
 }

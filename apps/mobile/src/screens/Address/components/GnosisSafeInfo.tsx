@@ -60,11 +60,11 @@ export const GnosisSafeInfo = ({
     },
   );
 
-  useEffect(() => {
-    if (address) {
-      apisSafe.syncGnosisNetworks(address);
-    }
-  }, [address]);
+  // useEffect(() => {
+  //   if (address) {
+  //     apisSafe.syncGnosisNetworks(address);
+  //   }
+  // }, [address]);
 
   if (safeInfo) {
     return (
