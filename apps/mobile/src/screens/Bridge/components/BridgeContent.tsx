@@ -72,8 +72,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   container: {
     flex: 1,
     paddingTop: 16,
-    paddingBottom: 20,
-    // marginBottom: 12,
   },
   noRecoomedTokenText: {
     fontSize: 14,
@@ -809,9 +807,12 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       )}
       <KeyboardAwareScrollView
         style={styles.container}
+        contentContainerStyle={{
+          paddingBottom: 150 + bottom + (showRiskTips ? 26 : 0),
+        }}
         enableOnAndroid
         scrollEnabled
-        extraHeight={52}
+        extraHeight={200}
         keyboardOpeningTime={0}>
         <View style={styles.card}>
           <View style={styles.cardContainer}>
