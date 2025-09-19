@@ -72,29 +72,24 @@ window.utils = {
     const bd = t;
     return '' + bd.month + '/' + bd.day;
   },
-  formatTime: (t) => {
-    if (typeof t === 'number') {
-      const d = new Date(t * 1000);
-      return (
-        '' +
-        String(d.getMonth() + 1).padStart(2, '0') +
-        '/' +
-        String(d.getDate()).padStart(2, '0') +
-        ' ' +
-        String(d.getHours()).padStart(2, '0') +
-        ':' +
-        String(d.getMinutes()).padStart(2, '0')
-      );
-    }
-    const bd = t;
-    return (
-      '' +
-      bd.year +
-      '-' +
-      String(bd.month).padStart(2, '0') +
-      '-' +
-      String(bd.day).padStart(2, '0')
-    );
+  formatTime: (unixSeconds) => {
+    const date = new Date(unixSeconds * 1000);
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const dateStr = date.toLocaleDateString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        timeZone: userTimezone
+    });
+
+    const timeStr = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: userTimezone
+    });
+
+    return dateStr + ' ' + timeStr;
   },
   // 计算当前可见范围的最高最低价格
   calculateVisibleExtremes: (data, from, to) => {
