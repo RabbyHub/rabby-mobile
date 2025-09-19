@@ -4,8 +4,6 @@ import { apisPerps } from '@/core/apis';
 import { preferenceService } from '@/core/services';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useRequest } from 'ahooks';
-import axios from 'axios';
-import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 
 export const useHyperliquidReferral = (options?: {
@@ -41,7 +39,7 @@ export const useHyperliquidReferral = (options?: {
           return false;
         }
       } else {
-        if (dayjs().isSame(inviteConfig?.lastTime || 0, 'day')) {
+        if (Date.now() - (inviteConfig?.lastTime || 0) < 24 * 60 * 60 * 1000) {
           return false;
         }
       }
