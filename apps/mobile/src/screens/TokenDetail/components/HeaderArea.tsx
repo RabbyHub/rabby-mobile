@@ -5,12 +5,13 @@ import {
   TextStyle,
   View,
   ViewStyle,
+  Text,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
-import { AssetAvatar, Text } from '@/components';
+import { AssetAvatar } from '@/components';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
@@ -83,7 +84,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: '700',
     flexWrap: 'nowrap',
   },
   contract: {
