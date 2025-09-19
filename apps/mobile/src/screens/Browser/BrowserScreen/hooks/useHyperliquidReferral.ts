@@ -36,31 +36,12 @@ export const useHyperliquidReferral = (options?: {
 
       const inviteConfig = preferenceService.getPreference('hyperliquidInvite');
 
-      console.log(inviteConfig);
-
       if (isNonPublicProductionEnv) {
         if (Date.now() - (inviteConfig?.lastTime || 0) < 5 * 60 * 1000) {
           return false;
         }
-
-        if (
-          Date.now() -
-            (inviteConfig?.dict?.[connectedAddress.toLowerCase()]?.lastTime ||
-              0) <
-          5 * 60 * 1000
-        ) {
-          return false;
-        }
       } else {
         if (dayjs().isSame(inviteConfig?.lastTime || 0, 'day')) {
-          return false;
-        }
-        if (
-          dayjs().isSame(
-            inviteConfig?.dict?.[connectedAddress.toLowerCase()]?.lastTime || 0,
-            'day',
-          )
-        ) {
           return false;
         }
       }

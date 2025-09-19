@@ -180,7 +180,6 @@ export interface PreferenceStore {
 
   hyperliquidInvite?: {
     lastTime?: number;
-    dict?: Record<string, { lastTime?: number }>;
   };
 }
 
@@ -264,7 +263,6 @@ export class PreferenceService {
 
           hyperliquidInvite: {
             lastTime: 0,
-            dict: {},
           },
         },
       },

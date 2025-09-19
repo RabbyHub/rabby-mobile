@@ -875,14 +875,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                 !isShowAccountPopup &&
                 !isShowCurrentDappPopup
               }
-              connectedAddress={
-                dappInfo.isConnected ? dappInfo.currentAccount?.address : null
-              }
               onClose={() => {
                 setIsShowInvite(false);
                 preferenceService.setPreference({
                   hyperliquidInvite: {
-                    ...preferenceService.getPreference('hyperliquidInvite'),
                     lastTime: Date.now(),
                   },
                 });
@@ -892,7 +888,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                 setIsShowInvite(false);
                 preferenceService.setPreference({
                   hyperliquidInvite: {
-                    ...preferenceService.getPreference('hyperliquidInvite'),
                     lastTime: Date.now(),
                   },
                 });

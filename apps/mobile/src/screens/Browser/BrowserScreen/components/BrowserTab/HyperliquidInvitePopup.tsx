@@ -18,7 +18,6 @@ import { Trans, useTranslation } from 'react-i18next';
 
 interface Props {
   visible?: boolean;
-  connectedAddress?: string | null;
   onClose?: () => void;
   onInvite?: () => void;
   onUnmount?: () => void;
@@ -27,7 +26,6 @@ interface Props {
 
 export const HyperliquidInvitePopup: React.FC<Props> = ({
   visible,
-  connectedAddress,
   onClose,
   onInvite,
   onUnmount,
@@ -50,23 +48,6 @@ export const HyperliquidInvitePopup: React.FC<Props> = ({
   }, [visible]);
 
   const { androidOnlyBottomOffset } = useSafeSizes();
-
-  useEffect(() => {
-    if (connectedAddress && visible) {
-      const prev = preferenceService.getPreference('hyperliquidInvite');
-      preferenceService.setPreference({
-        hyperliquidInvite: {
-          ...prev,
-          dict: {
-            ...prev?.dict,
-            [connectedAddress.toLowerCase()]: {
-              lastTime: Date.now(),
-            },
-          },
-        },
-      });
-    }
-  }, [connectedAddress, visible]);
 
   useUnmount(() => {
     onUnmount?.();
