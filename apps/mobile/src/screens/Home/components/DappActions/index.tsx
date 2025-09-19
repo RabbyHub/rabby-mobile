@@ -23,8 +23,12 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { isAccountSupportMiniApproval } from '@/utils/account';
+import {
+  isAccountSupportMiniApproval,
+  isHardWareAccountAccountSupportMiniApproval,
+} from '@/utils/account';
 import { debounce } from 'lodash';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const enum ActionType {
   Withdraw = 'withdraw',
@@ -139,8 +143,16 @@ export const DappActions = ({
     },
     [isQueueWithdraw, setDisableSignBtn],
   );
+
   const canDirectSign = useMemo(() => {
-    return isAccountSupportMiniApproval(currentAccount?.type || '');
+    const DISABLED_ANDROID_HARDWARE_WALLET_MINI_SIGN =
+      IS_ANDROID &&
+      !isHardWareAccountAccountSupportMiniApproval(currentAccount?.type || '');
+
+    return (
+      isAccountSupportMiniApproval(currentAccount?.type || '') &&
+      DISABLED_ANDROID_HARDWARE_WALLET_MINI_SIGN
+    );
   }, [currentAccount?.type]);
 
   const handleSubmit = useCallback(

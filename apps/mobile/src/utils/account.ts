@@ -1,3 +1,4 @@
+import { IS_ANDROID } from '@/core/native/utils';
 import { Account } from '@/core/services/preference';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -59,6 +60,12 @@ export const isAccountSupportMiniApproval = (type?: string) => {
   if (!type) {
     return false;
   }
+
+  if (IS_ANDROID) {
+    return (
+      [KEYRING_CLASS.MNEMONIC, KEYRING_CLASS.PRIVATE_KEY] as string[]
+    ).includes(type);
+  }
   return (
     [
       KEYRING_CLASS.MNEMONIC,
@@ -73,6 +80,10 @@ export const isHardWareAccountAccountSupportMiniApproval = (type?: string) => {
   if (!type) {
     return false;
   }
+  if (IS_ANDROID) {
+    return false;
+  }
+
   return (
     [KEYRING_CLASS.HARDWARE.LEDGER, KEYRING_CLASS.HARDWARE.ONEKEY] as string[]
   ).includes(type);
