@@ -145,7 +145,6 @@ export const getDappAccount = ({
       if (txAccount) {
         res = txAccount;
       }
-      console.log('find by tx', { tx, txAccount });
     }
   }
   return res || accounts[0] || preferenceService.getFallbackAccount();
