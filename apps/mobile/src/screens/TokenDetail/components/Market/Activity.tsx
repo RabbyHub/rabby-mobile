@@ -384,7 +384,7 @@ const Details = ({
       const isBuy = item.action === 'buy';
       return (
         <View
-          key={item.user_addr}
+          key={item.id}
           style={[
             styles.tableRow,
             index === list.length - 1 && styles.hideBottomBorder,
