@@ -3,7 +3,7 @@ import { apisPerps } from '@/core/apis';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   CancelOrderParams,
@@ -45,10 +45,10 @@ export const PerpsMarketDetailScreen = () => {
 
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
+      GetNestedScreenRouteProp<
         'TransactionNavigatorParamList',
         'PerpsMarketDetail'
-      >['route']
+      >
     >();
 
   const marketName = route.params.market;

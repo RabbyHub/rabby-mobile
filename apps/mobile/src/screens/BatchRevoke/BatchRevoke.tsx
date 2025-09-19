@@ -5,9 +5,10 @@ import {
 import { RootNames } from '@/constant/layout';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import {
-  UNSTABLE_usePreventRemove,
-  useNavigationState,
+  UNSTABLE_usePreventRemove as usePreventRemove,
+  useRoute,
 } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -39,12 +40,11 @@ const ItemSeparatorComponent = () => {
 
 export const BatchRevokeScreen = () => {
   const { t } = useTranslation();
-  const params = useNavigationState(state => {
-    const route = state.routes[state.index];
-    if (route.name === RootNames.BatchRevoke) {
-      return route.params as TransactionNavigatorParamList['BatchRevoke'];
-    }
-  });
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'BatchRevoke'>
+    >();
+  const params = route.params;
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
   });
@@ -139,7 +139,7 @@ export const BatchRevokeScreen = () => {
   const [accountDepositVisible, setAccountDepositVisible] =
     React.useState(false);
 
-  UNSTABLE_usePreventRemove(
+  usePreventRemove(
     task.status !== 'idle' &&
       task.status !== 'completed' &&
       !accountDepositVisible,

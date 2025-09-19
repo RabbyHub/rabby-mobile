@@ -4,7 +4,7 @@ import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar, Text } from '@/components';
 import { RcIconMore } from '@/assets/icons/home';
 import { RootNames } from '@/constant/layout';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
@@ -43,6 +43,7 @@ import { isAppChain } from '../Home/utils/appchain';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { GetRootScreenRouteProp } from '@/navigation-type';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -159,23 +160,17 @@ export const RightMore: React.FC<{
 export const DeFiDetailScreen = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
+  const route = useRoute<GetRootScreenRouteProp<'DeFiDetail'>>();
+  if (!route.params) {
+    throw new Error('[DefiDetail] route.params is undefined');
+  }
+
   const {
     data: routeData,
     portfolioList,
     isSingleAddress,
     account: routeAccount,
-  } = useNavigationState(
-    s =>
-      s.routes
-        .slice()
-        .reverse()
-        .find(r => r.name === RootNames.DeFiDetail)?.params,
-  ) as {
-    data: AbstractProject;
-    portfolioList: AbstractPortfolio[];
-    account: KeyringAccountWithAlias;
-    isSingleAddress?: boolean;
-  };
+  } = route.params;
 
   const fallbackAccount = useFallbackAccount();
 
