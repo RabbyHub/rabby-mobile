@@ -1,3 +1,5 @@
+import { refAssetForTradeView } from '@/core/storage/webviewAssets';
+
 interface ChartColors {
   background: string;
   text: string;
@@ -13,7 +15,7 @@ interface ChartColors {
   };
 }
 
-const utils = `
+export const TradeViewJSGlobalUtils = /* javascript */ `
 const Sub_Numbers = '₀₁₂₃₄₅₆₇₈₉';
 window.utils = {
   formatLittleNumber: (num, minLen = 6) => {
@@ -143,7 +145,7 @@ export interface ChartDescription {
 export const createTradingViewChartTemplate = (
   colors: ChartColors,
   description: ChartDescription,
-): string => `<!DOCTYPE html>
+): string => /* html */ `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -153,8 +155,12 @@ export const createTradingViewChartTemplate = (
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <!-- 预加载关键资源 -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js" as="script" crossorigin="anonymous">
-    <link rel="preload" href="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js" as="script" crossorigin="anonymous">
+    <link rel="preload" href=${
+      refAssetForTradeView('bignumber.js@9.3.1-bignumber.min.js').quoted
+    } as="script" crossorigin="anonymous">
+    <link rel="preload" href=${
+      refAssetForTradeView('lightweight-charts.standalone.production.js').quoted
+    } as="script" crossorigin="anonymous">
     <style>
       body, html {
           margin: 0;
@@ -174,9 +180,10 @@ export const createTradingViewChartTemplate = (
   </head>
   <body>
     <div id="container"></div>
-    <script src='https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js'></script>
+    <script src=${
+      refAssetForTradeView('bignumber.js@9.3.1-bignumber.min.js').quoted
+    }></script>
     <script>
-      ${utils}
       window.colors = {
         background: "${colors.background}",
         text: "${colors.text}",
@@ -226,8 +233,10 @@ export const createTradingViewChartTemplate = (
       // Step 1: Load TradingView library dynamically
       function loadTradingView() {
         const script = document.createElement('script');
-        script.src =
-          'https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js';
+        script.src = ${
+          refAssetForTradeView('lightweight-charts.standalone.production.js')
+            .quoted
+        };
         script.onload = function () {
           setTimeout(createChart, 50); // Small delay to ensure library is ready
         };

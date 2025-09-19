@@ -10,8 +10,7 @@ import {
 } from '@/core/services';
 import { sleep } from '@/utils/async';
 import { Account } from '@/core/services/preference';
-import { ReactNode, useCallback, useEffect } from 'react';
-import useMount from 'react-use/lib/useMount';
+import { ReactNode, useCallback } from 'react';
 
 export let DirectSubmitReject;
 
@@ -127,17 +126,19 @@ export const useMiniApproval = () => {
       ga,
       directSubmit,
       account,
+      waitTime = 600,
     }: {
       txs: Tx[];
       ga?: Record<string, any>;
       directSubmit?: boolean;
       account: Account;
+      waitTime?: number;
     }) => {
       clear();
       /**
        * wait popup close
        */
-      await sleep(600);
+      await sleep(waitTime);
       return _sendMiniTransactions({
         txs,
         ga,

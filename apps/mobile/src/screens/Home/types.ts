@@ -3,6 +3,7 @@ import {
   PortfolioItem,
   PortfolioItemToken,
   CollectionList,
+  WithdrawAction,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayedProject } from './utils/project';
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -85,6 +86,7 @@ export type PortfolioProject = {
   logo_url: string;
   name: string;
   site_url: string;
+  withdraw_actions?: WithdrawAction[];
   portfolio_item_list?: PortfolioItem[];
 };
 

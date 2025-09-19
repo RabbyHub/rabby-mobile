@@ -13,7 +13,7 @@ export const BalanceChangeLoading = () => {
       StyleSheet.create({
         container: {
           paddingVertical: 16,
-          paddingHorizontal: 16,
+          paddingHorizontal: 12,
           backgroundColor: colors['neutral-bg-2'],
           borderRadius: 8,
           marginBottom: 16,

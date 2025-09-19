@@ -229,7 +229,7 @@ export const useAssets = ({
         return;
       }
       setLoading(true);
-      const cachedTokens = await TokenItemEntity.batchMultAddressTokens(
+      const cachedTokens = await TokenItemEntity.batchMultiAddressTokens(
         addresses,
         options?.core,
         options?.maxLength,

@@ -1,4 +1,5 @@
 import { useAccounts } from '@/hooks/account';
+import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -27,7 +28,7 @@ export const useAccountInfo = () => {
     return accounts.some(account => account.type === KEYRING_CLASS.GNOSIS);
   }, [accounts]);
   const {
-    addresses: top10Addresses,
+    addresses: top10AddressesOrig,
     totalBalance: top10Balance,
     totalEvmBalance: top10EvmBalance,
     notTop10Addresses,
@@ -64,6 +65,10 @@ export const useAccountInfo = () => {
   const notMatterAccounts = useMemo(() => {
     return [...notTop10Addresses, ...gnosisAccounts, ...watchAccounts];
   }, [notTop10Addresses, gnosisAccounts, watchAccounts]);
+
+  const top10Addresses = useCreationWithDeepCompare(() => {
+    return top10AddressesOrig;
+  }, [top10AddressesOrig]);
 
   return {
     top10Addresses,

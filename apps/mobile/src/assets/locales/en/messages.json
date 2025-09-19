@@ -1873,7 +1873,10 @@
     "defiDetail": {
       "viewSiteInApp": "View in Dapp",
       "viewSiteInWebsite": "View in Website",
-      "appChain": "On {{chain}} Account"
+      "appChain": "On {{chain}} Account",
+      "dappActions": {
+        "queueDescription": "Current withdrawal​ will enter a waiting queue. Once processed, it can be ​withdrawn​ to your wallet."
+      }
     },
     "approvalsAddressList": {
       "title": "Approvals"

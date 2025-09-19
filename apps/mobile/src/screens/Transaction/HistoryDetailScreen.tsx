@@ -278,7 +278,10 @@ function HistoryDetailScreen(): JSX.Element {
         cate === HistoryItemCateType.Approve ||
         cate === HistoryItemCateType.Revoke;
       const commonItem =
-        cate === HistoryItemCateType.Send ? data.sends[0] : data.receives[0];
+        cate === HistoryItemCateType.Send ||
+        cate === HistoryItemCateType.GAS_DEPOSIT
+          ? data.sends[0]
+          : data.receives[0];
 
       const tokenId = isApprove
         ? (data.token_approve?.token_id as string)

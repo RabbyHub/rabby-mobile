@@ -27,6 +27,7 @@ import { ScreenWithAccountSwitcherLayouts } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { IS_ANDROID } from '@/core/native/utils';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 const SectionCollapsableNav = function ({
   isCollapsed = false,
   title,
@@ -462,7 +463,7 @@ AccountSwitcherAopProps<{
     changeCollapsed,
   ]);
 
-  const myAddressesList = useMemo(() => {
+  const myAddressesList = useCreationWithShallowCompare(() => {
     return isSceneSupportAllAccounts ? myAddresses.slice(0, 10) : myAddresses;
   }, [myAddresses, isSceneSupportAllAccounts]);
 
