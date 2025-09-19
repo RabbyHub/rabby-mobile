@@ -34,6 +34,7 @@ import {
   canDirectSignAtom,
   gasRelativeComponentAtom,
   miniApprovalGasAtom,
+  useMiniDirectSignGasFeeDisableProcess,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
 import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataApprovalTask';
@@ -444,6 +445,16 @@ export const MiniFooterBar: React.FC<Props> = ({
     const showGasLessToSign =
       showGasLess && !canGotoUseGasAccount && canUseGasLess;
 
+    const noGasComponent =
+      !showGasLessToSign &&
+      !(showGasLess && !payGasByGasAccount && !canUseGasLess) &&
+      !(payGasByGasAccount && !gasAccountCanPay);
+
+    if (noGasComponent) {
+      setGasRelativeComponent(null);
+      return;
+    }
+
     setGasRelativeComponent(
       !isInited ? null : (
         <>
@@ -532,17 +543,21 @@ export const MiniFooterBar: React.FC<Props> = ({
     useGasLess,
   ]);
 
+  const { gasFeeDisableProcess, checkGasFee } =
+    useMiniDirectSignGasFeeDisableProcess();
+
   if (!account) {
     return null;
   }
 
-  const overWriteDisabledProcess = disableSignBtn
-    ? true
-    : payGasByGasAccount
-    ? !gasAccountCanPay
-    : useGasLess
-    ? false
-    : props.disabledProcess;
+  const overWriteDisabledProcess =
+    disableSignBtn || gasFeeDisableProcess
+      ? true
+      : payGasByGasAccount
+      ? !gasAccountCanPay
+      : useGasLess
+      ? false
+      : props.disabledProcess;
 
   return (
     <View style={styles.container}>

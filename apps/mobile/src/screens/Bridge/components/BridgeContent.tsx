@@ -31,17 +31,15 @@ import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
 import { toast } from '@/components/Toast';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { useIsFocused } from '@react-navigation/native';
-import { RootNames } from '@/constant/layout';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
-import { findChainByEnum, findChainByServerID } from '@/utils/chain';
+import { findChainByEnum } from '@/utils/chain';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
-import { useBridge } from '../hooks/token';
+import { tokenPriceImpact, useBridge } from '../hooks/token';
 import { Button } from '@/components2024/Button';
 
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
-import { naviReplace } from '@/utils/navigation';
 import { CHAINS_ENUM } from '@debank/common';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import {
@@ -49,20 +47,14 @@ import {
   SwapBridgeDappPopup,
 } from '@/components/ExternalSwapBridgeDappPopup';
 import { Tip } from '@/components';
-import {
-  useSceneAccountInfo,
-  useSwitchSceneCurrentAccount,
-} from '@/hooks/accountsSwitcher';
-import {
-  isAccountSupportDirectSign,
-  isAccountSupportMiniApproval,
-} from '@/utils/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { isAccountSupportMiniApproval } from '@/utils/account';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
-import AuthButton from '@/components2024/AuthButton';
 import {
   directSigningAtom,
   isAbortedDirectSubmitError,
   useCanProcessDirectSubmit,
+  useMiniDirectSignGasFeeTooHigh,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
 import { BridgePendingTxItem } from './PendingTxItem';
@@ -71,6 +63,7 @@ import { transactionHistoryService } from '@/core/services/shared';
 import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -79,8 +72,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   container: {
     flex: 1,
     paddingTop: 16,
-    paddingBottom: 20,
-    // marginBottom: 12,
   },
   noRecoomedTokenText: {
     fontSize: 14,
@@ -180,10 +171,10 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     color: colors['neutral-foot'],
   },
   buttonContainer: {
-    // position: 'absolute',
-    // left: 0,
-    // bottom: 0,
-    height: 140,
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    // height: 140,
     backgroundColor: colors2024['neutral-bg-1'],
     width: '100%',
     padding: 20,
@@ -257,8 +248,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     inSufficient,
 
     openQuotesList,
-    quoteLoading,
+    quoteLoading: originQuoteLoading,
     quoteList,
+    setQuotesList,
 
     bestQuoteId,
     selectedBridgeQuote,
@@ -425,6 +417,15 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         }, 500);
       } catch (error) {
         toast.info((error as any)?.message || String(error));
+        setQuotesList(pre =>
+          pre?.filter(
+            item =>
+              !(
+                item?.aggregator?.id === selectedBridgeQuote?.aggregator?.id &&
+                item?.bridge_id === selectedBridgeQuote?.bridge_id
+              ),
+          ),
+        );
         stats.report('bridgeQuoteResult', {
           aggregatorIds: selectedBridgeQuote.aggregator.id,
           bridgeId: selectedBridgeQuote.bridge_id,
@@ -528,6 +529,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               },
               directSubmit: canShowDirectSubmit,
               account: currentAccount!,
+              transparentMask: true,
+              checkGasFee: true,
             });
           }
 
@@ -536,6 +539,15 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       } catch (error) {
         setDirectSigning(false);
         toast.info((error as any)?.message || String(error));
+        setQuotesList(pre =>
+          pre?.filter(
+            item =>
+              !(
+                item?.aggregator?.id === selectedBridgeQuote?.aggregator?.id &&
+                item?.bridge_id === selectedBridgeQuote?.bridge_id
+              ),
+          ),
+        );
         stats.report('bridgeQuoteResult', {
           aggregatorIds: selectedBridgeQuote.aggregator.id,
           bridgeId: selectedBridgeQuote.bridge_id,
@@ -555,9 +567,15 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     data: txs,
     runAsync: runBuildTxs,
     mutate: mutateTxs,
+    loading: buildingTxsLoading,
   } = useRequest(buildTxs, {
     manual: true,
   });
+
+  const quoteLoading =
+    originQuoteLoading ||
+    buildingTxsLoading ||
+    (!!selectedBridgeQuote && !txs?.length && !inSufficient);
 
   const isFocused = useIsFocused();
 
@@ -568,16 +586,13 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   }, [isFocused, refresh]);
 
   const runBuildSwapTxsRef = useRef<ReturnType<typeof runBuildTxs>>();
-  const {
-    prepareMiniTransactions,
-    sendPrepareMiniTransactions,
-    sendMiniTransactions,
-  } = useMiniApproval();
+  const { prepareMiniTransactions, sendPrepareMiniTransactions } =
+    useMiniApproval();
 
   const canUseMiniTx = isAccountSupportMiniApproval(currentAccount?.type);
 
   const canShowDirectSubmit =
-    isAccountSupportDirectSign(currentAccount?.type) &&
+    isAccountSupportMiniApproval(currentAccount?.type) &&
     isSupportedChain &&
     !inSufficient;
 
@@ -626,6 +641,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                 },
                 directSubmit: canShowDirectSubmit,
                 account: currentAccount!,
+                transparentMask: true,
+                checkGasFee: true,
               });
             }
           }
@@ -643,18 +660,6 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
             }
             const resTx = await sendPrepareMiniTransactions({
               directSubmit: true,
-            });
-            txHash = last(resTx)?.txHash || '';
-          } else {
-            const resTx = await sendMiniTransactions({
-              txs: res,
-              ga: {
-                category: 'Bridge',
-                source: 'bridge',
-                // trigger: rbiSource,
-              },
-              directSubmit: false,
-              account: currentAccount!,
             });
             txHash = last(resTx)?.txHash || '';
           }
@@ -683,17 +688,17 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
             runFetchBridgePendingCount();
           }, 500);
         } catch (error) {
-          setDirectSigning(false);
           if ((error as any)?.name === 'SimulateError') {
             gotoBridge();
           } else if (isAbortedDirectSubmitError(error)) {
-            console.log('AbortedDirectSubmitError bridge');
+            console.debug('AbortedDirectSubmitError bridge');
           } else {
             mutateTxs([]);
             refresh(e => e + 1);
           }
           console.error('handleBridge', error);
         } finally {
+          setDirectSigning(false);
           setFetchingBridgeQuote(false);
         }
       } else {
@@ -780,18 +785,20 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
 
-  // useEffect(() => {
-  //   if (!isShowSign) {
-  //     prepareMiniTransactions({
-  //       txs: txs || [],
-  //       ga: {
-  //         category: 'Bridge',
-  //         source: 'bridge',
-  //         // trigger: rbiSource,
-  //       },
-  //     });
-  //   }
-  // }, [txs, prepareMiniTransactions, isShowSign]);
+  const showLoss = useMemo(() => {
+    const impact = tokenPriceImpact(
+      fromToken,
+      toToken,
+      amount,
+      selectedBridgeQuote?.to_token_amount,
+    );
+    return !!impact?.showLoss;
+  }, [fromToken, amount, selectedBridgeQuote?.to_token_amount, toToken]);
+
+  const miniSignGasFeeTooHigh = useMiniDirectSignGasFeeTooHigh();
+
+  const showRiskTips =
+    isSlippageHigh || isSlippageLow || showLoss || miniSignGasFeeTooHigh;
 
   return (
     <NormalScreenContainer overwriteStyle={styles.screen}>
@@ -800,9 +807,12 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       )}
       <KeyboardAwareScrollView
         style={styles.container}
+        contentContainerStyle={{
+          paddingBottom: 150 + bottom + (showRiskTips ? 26 : 0),
+        }}
         enableOnAndroid
         scrollEnabled
-        extraHeight={52}
+        extraHeight={200}
         keyboardOpeningTime={0}>
         <View style={styles.card}>
           <View style={styles.cardContainer}>
@@ -851,7 +861,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               }
               fromTokenId={fromToken?.id}
               valueLoading={quoteLoading}
-              value={selectedBridgeQuote?.to_token_amount}
+              value={
+                quoteLoading ? undefined : selectedBridgeQuote?.to_token_amount
+              }
               excludeChains={fromChain ? [fromChain] : undefined}
               noQuote={noQuote}
             />
@@ -880,7 +892,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         ) : null}
 
         <View>
-          {selectedBridgeQuote && inSufficientCanGetQuote && (
+          {selectedBridgeQuote && !quoteLoading && inSufficientCanGetQuote && (
             <BridgeShowMore
               supportDirectSign={canShowDirectSubmit}
               openFeePopup={openFeePopup}
@@ -957,11 +969,16 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               : undefined
           }>
           {canShowDirectSubmit ? (
-            <AuthButton
+            <DirectSignBtn
+              // refresh risk check
+              key={isDirectSigning + ''}
               authTitle={t('page.whitelist.confirmPassword')}
               title={t('global.confirm')}
+              loadingType="circle"
               onFinished={handleBridge}
-              disabled={btnDisabled || !canDirectSign || isDirectSigning}
+              disabled={
+                btnDisabled || !canDirectSign || isDirectSigning || !txs?.length
+              }
               type={'primary'}
               syncUnlockTime
               onBeforeAuth={() => {
@@ -970,6 +987,11 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               onCancel={() => {
                 refresh(e => e + 1);
               }}
+              account={currentAccount}
+              showHardWalletProcess
+              showRiskTips={showRiskTips && !btnDisabled}
+              loading={isSubmitting}
+              showTextOnLoading
             />
           ) : (
             <Button

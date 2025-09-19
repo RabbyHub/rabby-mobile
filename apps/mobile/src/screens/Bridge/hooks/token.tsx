@@ -28,6 +28,7 @@ import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 
 export const enableInsufficientQuote = true;
 
@@ -67,8 +68,12 @@ export const tokenPriceImpact = (
   };
 };
 
+const tokenRefreshIdAtom = atom(0);
+const useTokenRefreshId = () => useAtomValue(tokenRefreshIdAtom);
+const useSetTokenRefreshId = () => useSetAtom(tokenRefreshIdAtom);
+
 const useToken = (type: 'from' | 'to') => {
-  const refreshId = useRefreshId();
+  const refreshId = useTokenRefreshId();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -138,6 +143,8 @@ const useToken = (type: 'from' | 'to') => {
 };
 
 export const useBridge = (isForMultipleAddress?: boolean) => {
+  const setTokenRefreshId = useSetTokenRefreshId();
+
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -357,7 +364,8 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       if (!quote?.manualClick && expiredTimer.current) {
         clearTimeout(expiredTimer.current);
       }
-      if (!quote?.manualClick) {
+
+      if (!quote?.manualClick && quote) {
         expiredTimer.current = setTimeout(() => {
           setRefreshId(e => e + 1);
         }, 1000 * 30);
@@ -585,6 +593,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       ) {
         let isEmpty = false;
         const result: SelectedBridgeQuote[] = [];
+        setTokenRefreshId(e => e + 1);
 
         setQuotesList(e => {
           if (!e.length) {
@@ -812,7 +821,6 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       userAddress &&
       fromToken?.id &&
       toToken?.id &&
-      toToken &&
       fromChain &&
       toChain &&
       Number(amount) > 0 &&
@@ -827,7 +835,6 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     userAddress,
     fromToken?.id,
     toToken?.id,
-    toToken,
     fromChain,
     toChain,
     amount,
@@ -844,7 +851,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   );
 
   useEffect(() => {
-    if (!quoteLoading && toToken && quoteList.every(e => !e.loading)) {
+    if (!quoteLoading && toToken?.id && quoteList.every(e => !e.loading)) {
       const sortedList = quoteList?.sort((b, a) => {
         return new BigNumber(a.to_token_amount)
           .times(toToken.price || 1)
@@ -876,7 +883,9 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         setSelectedBridgeQuote(useQuote);
       }
     }
-  }, [quoteList, quoteLoading, toToken, setSelectedBridgeQuote]);
+    // ignore toToken price update
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quoteList, quoteLoading, toToken?.id, setSelectedBridgeQuote]);
 
   if (quotesError) {
     console.error('quotesError', quotesError);
@@ -991,13 +1000,13 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   useFocusEffect(
     useCallback(() => {
       const refresh = () => {
-        setRefreshId(e => e + 1);
+        setTokenRefreshId(e => e + 1);
       };
       eventBus.addListener(EVENTS.RELOAD_TX, refresh);
       return () => {
         eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
       };
-    }, [setRefreshId]),
+    }, [setTokenRefreshId]),
   );
 
   useClearMiniGasStateEffect({
@@ -1029,6 +1038,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     openQuotesList,
     quoteLoading: pending || quoteLoading,
     quoteList,
+    setQuotesList,
 
     bestQuoteId,
     selectedBridgeQuote,

@@ -25,6 +25,8 @@ export const miniApprovalAtom = atom<{
   directSubmit?: boolean;
   account?: Account;
   showMaskLoading?: boolean;
+  transparentMask?: boolean;
+  checkGasFee?: boolean;
 }>({
   txs: [],
 });
@@ -86,8 +88,10 @@ export const useMiniApproval = () => {
                   txs: [],
                   visible: false,
                   showMaskLoading: true,
+                  transparentMask: false,
+                  checkGasFee: false,
                 }));
-                setMiniSignExtraProps(DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+                setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
                 const signingTxId =
                   notificationService.currentMiniApproval?.signingTxId;
                 if (signingTxId) {
@@ -102,8 +106,10 @@ export const useMiniApproval = () => {
                   txs: [],
                   visible: false,
                   showMaskLoading: true,
+                  transparentMask: false,
+                  checkGasFee: false,
                 }));
-                setMiniSignExtraProps(DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+                setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
                 notificationService.currentMiniApproval = null;
                 resolve(res);
               },
@@ -144,7 +150,7 @@ export const useMiniApproval = () => {
   );
 
   const resetMiniSignExtraProps = useCallback(() => {
-    setMiniSignExtraProps(DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+    setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
   }, [setMiniSignExtraProps]);
 
   const prepareMiniTransactions = useMemoizedFn(
@@ -154,13 +160,18 @@ export const useMiniApproval = () => {
       directSubmit,
       account,
       showMaskLoading,
+      transparentMask,
+      checkGasFee,
     }: {
       txs: Tx[];
       ga?: Record<string, any>;
       directSubmit?: boolean;
       account: Account;
       showMaskLoading?: boolean;
+      transparentMask?: boolean;
+      checkGasFee?: boolean;
     }) => {
+      console.debug('prepareMiniTransactions trigger', ga, txs?.length);
       clear();
       resetMiniSignExtraProps();
       setState(prev => {
@@ -172,6 +183,8 @@ export const useMiniApproval = () => {
           directSubmit,
           account,
           showMaskLoading: showMaskLoading ?? true,
+          transparentMask: transparentMask ?? false,
+          checkGasFee: checkGasFee ?? false,
         };
       });
     },

@@ -2,7 +2,7 @@ import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { WrapTokenAddressMap } from '@rabby-wallet/rabby-swap';
 import BigNumber from 'bignumber.js';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { refreshIdAtom, useSetQuoteVisible } from './atom';
 import useAsync from 'react-use/lib/useAsync';
@@ -37,6 +37,10 @@ const sliderHapticTriggerNumbers = [0, 50, 100];
 
 const { isSameAddress } = addressUtils;
 
+const tokenRefreshIdAtom = atom(0);
+const useTokenRefreshId = () => useAtomValue(tokenRefreshIdAtom);
+const useSetTokenRefreshId = () => useSetAtom(tokenRefreshIdAtom);
+
 const useTokenInfo = ({
   userAddress,
   chain,
@@ -46,7 +50,7 @@ const useTokenInfo = ({
   chain?: CHAINS_ENUM;
   defaultToken?: TokenItem;
 }) => {
-  const refreshId = useAtomValue(refreshIdAtom);
+  const tokenRefreshId = useTokenRefreshId();
   const [token, setToken] = useState<
     (TokenItem & { tokenId?: string }) | undefined
   >(defaultToken);
@@ -60,7 +64,13 @@ const useTokenInfo = ({
       );
       return { ...data, tokenId: token.id };
     }
-  }, [refreshId, userAddress, token?.id, token?.raw_amount_hex_str, chain]);
+  }, [
+    tokenRefreshId,
+    userAddress,
+    token?.id,
+    token?.raw_amount_hex_str,
+    chain,
+  ]);
 
   useDebounce(
     () => {
@@ -109,6 +119,7 @@ export interface FeeProps {
 export const useTokenPair = ({ account }: { account: Account }) => {
   const userAddress = account.address;
   const refreshId = useAtomValue(refreshIdAtom);
+  const setTokenRefreshId = useSetTokenRefreshId();
   const setRefreshId = useSetAtom(refreshIdAtom);
 
   const [showMoreVisible, setShowMoreVisible] = useState(false);
@@ -174,6 +185,8 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const enableRefreshRef = useRef(false);
+
   const setActiveProvider: React.Dispatch<
     React.SetStateAction<QuoteProvider | undefined>
   > = useCallback(
@@ -181,10 +194,24 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       if (expiredTimer.current) {
         clearTimeout(expiredTimer.current);
       }
+
+      setOriActiveProvider(pre => {
+        enableRefreshRef.current = p ? true : false;
+        if (typeof p === 'function') {
+          const result = p(pre);
+          enableRefreshRef.current = result ? true : false;
+
+          return result;
+        }
+
+        return p;
+      });
+
       expiredTimer.current = setTimeout(() => {
-        setRefreshId(e => e + 1);
+        if (enableRefreshRef.current) {
+          setRefreshId(e => e + 1);
+        }
       }, 1000 * 20);
-      setOriActiveProvider(p);
     },
     [setRefreshId],
   );
@@ -469,6 +496,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         inSufficientCanGetQuote &&
         !isDraggingSlider
       ) {
+        setTokenRefreshId(e => e + 1);
         const limit = rateLimitRef.current?.checkRateLimit();
         setRateLimit(!!limit);
 
@@ -548,7 +576,6 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       userAddress &&
       payToken?.id &&
       receiveToken?.id &&
-      receiveToken &&
       chain &&
       Number(payAmount) > 0 &&
       feeRate &&
@@ -571,7 +598,6 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     receiveToken?.id,
     chain,
     feeRate,
-    receiveToken,
     payAmount,
     runGetAllQuotes,
     setActiveProvider,
@@ -611,7 +637,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   useEffect(() => {
     if (
       !quoteLoading &&
-      receiveToken &&
+      receiveToken?.id &&
       canUpdateActiveProvider &&
       quoteList.every(q => !q.loading)
     ) {
@@ -649,7 +675,6 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         }) || []),
       ];
 
-      setActiveProvider(undefined);
       if (sortedList?.[0]) {
         const bestQuote = sortedList[0];
         const { preExecResult } = bestQuote;
@@ -680,15 +705,22 @@ export const useTokenPair = ({ account }: { account: Account }) => {
                 gasUsd: preExecResult?.gasUsd,
               },
         );
+      } else {
+        setActiveProvider(undefined);
       }
     }
+    // ignore receiveToken price update
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     quoteList,
     quoteLoading,
-    receiveToken,
     inSufficient,
     setActiveProvider,
     canUpdateActiveProvider,
+    receiveToken?.id,
+    receiveToken?.chain,
+    // receiveToken?.price,
+    receiveToken?.decimals,
   ]);
 
   if (quotesError) {
@@ -863,15 +895,14 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   useFocusEffect(
     useCallback(() => {
-      console.log('useFocusEffect refresh');
       const refresh = () => {
-        setRefreshId(e => e + 1);
+        setTokenRefreshId(e => e + 1);
       };
       eventBus.addListener(EVENTS.RELOAD_TX, refresh);
       return () => {
         eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
       };
-    }, [setRefreshId]),
+    }, [setTokenRefreshId]),
   );
 
   const onSetAutoSlippage = useCallback(() => {

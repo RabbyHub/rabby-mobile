@@ -549,7 +549,7 @@ function SendScreen({
                 />
               )}
             </KeyboardAwareScrollView>
-            <BottomArea />
+            <BottomArea account={currentAccount} />
           </View>
         </TouchableWithoutFeedback>
         <TokenInfoPopup />

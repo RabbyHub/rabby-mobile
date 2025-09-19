@@ -31,7 +31,7 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import _ from 'lodash';
+import _, { omit } from 'lodash';
 import React, {
   ReactNode,
   useCallback,
@@ -75,7 +75,10 @@ import {
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
 import { MiniApprovalError } from './error';
-import { useMiniSignGasStore } from '@/hooks/miniSignGasStore';
+import {
+  useMiniSignFixedMode,
+  useMiniSignGasStore,
+} from '@/hooks/miniSignGasStore';
 import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { View } from 'react-native';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
@@ -383,27 +386,33 @@ export const MiniSignTx = ({
   );
 
   const {
-    updateMiniCustomPrice,
-    setMiniGasLevel,
-    miniGasLevel,
-    miniCustomPrice,
-  } = useMiniSignGasStore();
+    // updateMiniCustomPrice,
+    // setMiniGasLevel,
+    // miniGasLevel,
+    // miniCustomPrice,
+    currentMiniCustomGas,
+    currentMiniSignGasLevel,
+    updateMiniGas,
+  } = useMiniSignGasStore(chainId);
+
+  const fixedModeOnCurrentChain = useMiniSignFixedMode(chainId);
 
   const handleInitTask = useMemoizedFn(() => {
-    if (selectedGas && txsResult[0]) {
-      const lastGasLevel = selectedGas?.level || 'normal';
-      setMiniGasLevel(lastGasLevel as any);
+    // if (selectedGas && txsResult[0]) {
+    //   const lastGasLevel = selectedGas?.level || 'normal';
+    //   setMiniGasLevel(lastGasLevel as any);
 
-      if (selectedGas?.level === 'custom') {
-        updateMiniCustomPrice(
-          parseInt(
-            support1559
-              ? txsResult[0].tx.maxFeePerGas || '0'
-              : txsResult[0].tx.gasPrice || '0',
-          ),
-        );
-      }
-    }
+    //   if (selectedGas?.level === 'custom') {
+    //     updateMiniCustomPrice(
+    //       parseInt(
+    //         support1559
+    //           ? txsResult[0].tx.maxFeePerGas || '0'
+    //           : txsResult[0].tx.gasPrice || '0',
+    //       ),
+    //     );
+    //   }
+    // }
+
     task.init(
       txsResult.map(item => {
         return {
@@ -479,11 +488,21 @@ export const MiniSignTx = ({
     if (gas.level === 'custom') {
       setGasList(
         (gasList || []).map(item => {
-          if (item.level === 'custom') return gas;
+          if (item.level === 'custom') {
+            return omit(gas, ['fixedMode']);
+          }
           return item;
         }),
       );
     }
+    updateMiniGas({
+      chainId: txs?.[0]?.chainId!,
+      gasLevel: gas.level as any,
+      fixed: !!gas?.fixedMode,
+      customGasPrice:
+        gas.level === 'custom' ? Math.round(gas.price) : undefined,
+    });
+
     Promise.all(
       txsResult.map(async item => {
         const tx = {
@@ -647,9 +666,10 @@ export const MiniSignTx = ({
 
       checkCanProcess();
       const lastTimeGas: ChainGas = {
-        lastTimeSelect: miniGasLevel === 'custom' ? 'gasPrice' : 'gasLevel',
-        gasLevel: miniGasLevel,
-        gasPrice: miniCustomPrice || 0,
+        lastTimeSelect:
+          currentMiniSignGasLevel === 'custom' ? 'gasPrice' : 'gasLevel',
+        gasLevel: currentMiniSignGasLevel,
+        gasPrice: currentMiniCustomGas || 0,
       };
 
       let customGasPrice = 0;
@@ -1103,6 +1123,8 @@ export const MiniSignTx = ({
               </View>
             ) : null}
             <GasSelectorHeader
+              fixedMode
+              defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
               tx={txs[0]}
               gasAccountCost={gasAccountCost}
               gasMethod={gasMethod}
