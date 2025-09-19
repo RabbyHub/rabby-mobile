@@ -145,12 +145,16 @@ export const DappActions = ({
   );
 
   const canDirectSign = useMemo(() => {
-    const DISABLED_HARDWARE_WALLET_MINI_SIGN =
-      !isHardWareAccountAccountSupportMiniApproval(currentAccount?.type || '');
+    const HARDWARE_WALLET_CAN_MINI_SIGN = IS_IOS
+      ? true
+      : IS_ANDROID &&
+        !isHardWareAccountAccountSupportMiniApproval(
+          currentAccount?.type || '',
+        );
 
     return (
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
-      DISABLED_HARDWARE_WALLET_MINI_SIGN
+      HARDWARE_WALLET_CAN_MINI_SIGN
     );
   }, [currentAccount?.type]);
 
