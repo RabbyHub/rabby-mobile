@@ -85,6 +85,9 @@ import { BalanceChangeLoading } from './BalanceChangeLoanding';
 import { useGetMiniSignTxExtraProps } from '@/hooks/useMiniApproval';
 import BalanceChange from '../TxComponents/BalanceChange';
 
+let count = 1;
+let unCount = 0;
+
 export const MiniSignTx = ({
   txs,
   onReject,
@@ -110,6 +113,20 @@ export const MiniSignTx = ({
   visible?: boolean;
   account: Account;
 }) => {
+  useEffect(() => {
+    if (count - unCount !== 1) {
+      if (__DEV__) {
+        toast2024.info(
+          `MiniSignTx error render, count:${count},unCount:${unCount}`,
+        );
+      }
+      console.error('MiniSignTx error', count - unCount);
+    }
+    count++;
+    return () => {
+      unCount++;
+    };
+  }, []);
   const {
     showSimulateChange,
     title,
@@ -1325,7 +1342,6 @@ export const MiniApproval = ({
       <AppBottomSheetModal
         index={visible ? 0 : -1}
         ref={sheetModalRef}
-        enableDismissOnClose={false}
         style={styles.sheet}
         handleStyle={styles.handleStyle}
         handleIndicatorStyle={styles.handleIndicatorStyle}
