@@ -1,4 +1,4 @@
-import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
+import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { Chain } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
 import { SecurityEngineLevel } from '@/constant/security';
@@ -16,7 +16,7 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import clsx from 'clsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Props as ActionGroupProps } from '../FooterBar/ActionGroup';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
@@ -34,9 +34,11 @@ import {
   canDirectSignAtom,
   gasRelativeComponentAtom,
   miniApprovalGasAtom,
+  useMiniDirectSignGasFeeDisableProcess,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
 import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataApprovalTask';
+import { useGetMiniSignTxExtraProps } from '@/hooks/useMiniApproval';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -237,6 +239,8 @@ export const MiniFooterBar: React.FC<Props> = ({
   miniType: miniSignType = 'tx',
   ...props
 }) => {
+  const { disableSignBtn } = useGetMiniSignTxExtraProps();
+
   const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
     null,
   );
@@ -441,6 +445,16 @@ export const MiniFooterBar: React.FC<Props> = ({
     const showGasLessToSign =
       showGasLess && !canGotoUseGasAccount && canUseGasLess;
 
+    const noGasComponent =
+      !showGasLessToSign &&
+      !(showGasLess && !payGasByGasAccount && !canUseGasLess) &&
+      !(payGasByGasAccount && !gasAccountCanPay);
+
+    if (noGasComponent) {
+      setGasRelativeComponent(null);
+      return;
+    }
+
     setGasRelativeComponent(
       !isInited ? null : (
         <>
@@ -529,53 +543,21 @@ export const MiniFooterBar: React.FC<Props> = ({
     useGasLess,
   ]);
 
+  const { gasFeeDisableProcess, checkGasFee } =
+    useMiniDirectSignGasFeeDisableProcess();
+
   if (!account) {
     return null;
   }
-  const Icon = securityLevel
-    ? SecurityLevelTipColor[securityLevel].icon
-    : undefined;
 
-  const isInternalRequest = origin === INTERNAL_REQUEST_SESSION.origin;
-
-  const footer = (
-    <>
-      {securityLevel && hasUnProcessSecurityResult && (
-        <View
-          className="security-level-tip"
-          style={StyleSheet.flatten([
-            styles.securityLevelTip,
-            {
-              backgroundColor: SecurityLevelTipColor[securityLevel].bg,
-            },
-          ])}>
-          <Icon style={styles.iconLevel} />
-          <Text
-            className="flex-1"
-            style={StyleSheet.flatten([
-              styles.securityLevelTipText,
-              {
-                color: SecurityLevelTipColor[securityLevel].text,
-              },
-            ])}>
-            {t('page.signFooterBar.processRiskAlert')}
-          </Text>
-          <TouchableOpacity onPress={onIgnoreAllRules}>
-            <Text
-              className="underline text-13 font-medium"
-              style={StyleSheet.flatten([
-                styles.securityLevelTipText,
-                {
-                  color: SecurityLevelTipColor[securityLevel].text,
-                },
-              ])}>
-              {t('page.signFooterBar.ignoreAll')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </>
-  );
+  const overWriteDisabledProcess =
+    disableSignBtn || gasFeeDisableProcess
+      ? true
+      : payGasByGasAccount
+      ? !gasAccountCanPay
+      : useGasLess
+      ? false
+      : props.disabledProcess;
 
   return (
     <View style={styles.container}>
@@ -654,13 +636,7 @@ export const MiniFooterBar: React.FC<Props> = ({
               account={account}
               gasLess={useGasLess && !payGasByGasAccount}
               {...props}
-              disabledProcess={
-                payGasByGasAccount
-                  ? !gasAccountCanPay
-                  : useGasLess
-                  ? false
-                  : props.disabledProcess
-              }
+              disabledProcess={overWriteDisabledProcess}
               enableTooltip={
                 payGasByGasAccount
                   ? false

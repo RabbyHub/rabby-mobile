@@ -10,7 +10,7 @@ import {
 import { formatSpeicalAmount } from '@/utils/number';
 import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useNavigationState, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { atom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard } from 'react-native';

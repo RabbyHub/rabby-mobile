@@ -1,26 +1,24 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { sendTransaction } from '@/utils/sendTransaction';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  ActivityIndicator,
-  Animated,
-  Easing,
-  Modal,
-  Pressable,
-  View,
-} from 'react-native';
+import { Animated, Easing, Modal, Pressable, View } from 'react-native';
 import { MiniWaiting } from './MiniWaiting';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import React from 'react';
-import { isAccountSupportDirectSign } from '@/utils/account';
+import {
+  isAccountSupportDirectSign,
+  isHardWareAccountAccountSupportMiniApproval,
+} from '@/utils/account';
 import { useMemoizedFn } from 'ahooks';
 import {
   AbortedDirectSubmitError,
   directSigningAtom,
   useDirectSigningDisabledProcess,
   useGetDirectSubmitInnerError,
+  useMiniDirectSignGasFeeDisableProcess,
   useResetMiniApprovalDirectSignState,
+  useSetMiniSignChain,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
 import { useAtom } from 'jotai';
@@ -28,6 +26,9 @@ import { MiniSignTx } from './MiniSignTx';
 import IconLoadingCC from '@/assets2024/icons/gas-account/loading-cc.svg';
 import { DirectSubmitReject } from '@/hooks/useMiniApproval';
 import { Account } from '@/core/services/preference';
+import { useHardwareWalletMiniSignBleStatus } from './atom';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { findChainByID } from '@/utils/chain';
 
 export const MiniDirectSubmitApproval = ({
   txs,
@@ -41,6 +42,8 @@ export const MiniDirectSubmitApproval = ({
   id,
   account,
   showMaskLoading = true,
+  transparentMask,
+  checkGasFee,
 }: {
   txs?: Tx[];
   visible?: boolean;
@@ -53,6 +56,8 @@ export const MiniDirectSubmitApproval = ({
   id?: string;
   account: Account;
   showMaskLoading?: boolean;
+  transparentMask?: boolean;
+  checkGasFee?: boolean;
 }) => {
   const { styles } = useTheme2024({
     getStyle: getSheetStyles,
@@ -96,16 +101,33 @@ export const MiniDirectSubmitApproval = ({
     }
   });
 
+  const setMiniSignChain = useSetMiniSignChain();
+  const { setCheckGasFee } = useMiniDirectSignGasFeeDisableProcess();
+
+  useEffect(() => {
+    if (txs?.[0]?.chainId) {
+      const chainInfo = findChainByID(txs?.[0]?.chainId);
+      if (chainInfo?.enum) {
+        setMiniSignChain(chainInfo?.enum);
+      }
+    }
+  }, [setMiniSignChain, txs]);
+
   const task = useMiniApprovalTask({
     ga,
   });
 
   const [isDirectSigning] = useAtom(directSigningAtom);
+
   const directSubmitInnerError = useGetDirectSubmitInnerError();
 
   useEffect(() => {
     resetMiniApprovalDirectSignState();
   }, [resetMiniApprovalDirectSignState, txs]);
+
+  useEffect(() => {
+    setCheckGasFee(!!checkGasFee);
+  }, [checkGasFee, setCheckGasFee, txs]);
 
   useEffect(() => {
     if (isDirectSigning) {
@@ -156,18 +178,32 @@ export const MiniDirectSubmitApproval = ({
     outputRange: ['0deg', '360deg'],
   });
 
+  const { oneKeyCheckBlePending, ledgerCheckBlePending } =
+    useHardwareWalletMiniSignBleStatus();
+
+  const isHardwareWallet = isHardWareAccountAccountSupportMiniApproval(
+    account?.type,
+  );
+
+  const checkBlePending = useMemo(() => {
+    if (account?.type === KEYRING_CLASS.HARDWARE.LEDGER) {
+      return ledgerCheckBlePending;
+    }
+    if (account?.type === KEYRING_CLASS.HARDWARE.ONEKEY) {
+      return oneKeyCheckBlePending;
+    }
+    return false;
+  }, [account?.type, ledgerCheckBlePending, oneKeyCheckBlePending]);
+
+  const maskLoading =
+    (showMaskLoading && overlayLoading && !isHardwareWallet) ||
+    checkBlePending ||
+    (isHardwareWallet && task.status !== 'idle');
+
   return (
     <>
       {txs?.length ? (
-        <View
-          style={{
-            width: 0,
-            height: 0,
-            position: 'absolute',
-            left: -9999,
-            top: -9999,
-            zIndex: -9999,
-          }}>
+        <View style={styles.hiddenPortal}>
           <MiniSignTx
             directSubmit
             task={task}
@@ -208,7 +244,18 @@ export const MiniDirectSubmitApproval = ({
         account={account}
       />
 
-      {showMaskLoading && overlayLoading ? (
+      {maskLoading && transparentMask ? (
+        <Modal
+          visible={overlayLoading}
+          transparent
+          animationType="fade"
+          onRequestClose={cancelOverlayLoading}
+          statusBarTranslucent>
+          <View style={styles.transparentOverlay} />
+        </Modal>
+      ) : null}
+
+      {maskLoading && !transparentMask ? (
         <Modal
           visible={overlayLoading}
           transparent
@@ -246,6 +293,14 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  transparentOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0)',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   loadingContainer: {
     width: 58,
     height: 58,
@@ -253,5 +308,13 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: 'rgba(30, 30, 30, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  hiddenPortal: {
+    width: 0,
+    height: 0,
+    position: 'absolute',
+    left: -9999,
+    top: -9999,
+    zIndex: -9999,
   },
 }));

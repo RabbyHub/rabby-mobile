@@ -80,7 +80,7 @@ export async function batchSaveWithPQueueAndTransaction<
   }
 
   const thisTickUpsertQueue = (keyVaryUpsertQueue[taskKey] = new PQueue({
-    concurrency: 1,
+    concurrency: 20,
   }));
 
   const repo = entityCls.getRepository();

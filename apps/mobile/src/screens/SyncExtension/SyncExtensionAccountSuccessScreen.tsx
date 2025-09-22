@@ -10,11 +10,8 @@ import AnimationImportSuccess from '@/assets2024/animations/animation-import-suc
 import Lottie from 'lottie-react-native';
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
-import {
-  AddressNavigatorParamList,
-  GetNestedScreenRouteProp,
-} from '@/navigation-type';
-import { useNavigationState, useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
+import { useRoute } from '@react-navigation/native';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';

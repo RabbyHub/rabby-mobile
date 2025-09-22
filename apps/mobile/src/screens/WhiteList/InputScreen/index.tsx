@@ -24,11 +24,7 @@ import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
-import {
-  useNavigation,
-  useNavigationState,
-  useRoute,
-} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import {
   createGlobalBottomSheetModal2024,
   globalBottomSheetModalAddListener2024,

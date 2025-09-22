@@ -4,6 +4,7 @@ import { RootNames } from '@/constant/layout';
 import {
   SwapTxHistoryItem,
   SendTxHistoryItem,
+  ApproveTokenTxHistoryItem,
 } from '@/core/services/transactionHistory';
 import {
   bridgeService,
@@ -23,22 +24,26 @@ import { formatTokenAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import BigNumber from 'bignumber.js';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { sendToken } from '@/core/apis/token';
 import { useMemoizedFn } from 'ahooks';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
+import { noop } from 'lodash';
+import useAsync from 'react-use/lib/useAsync';
+import useMount from 'react-use/lib/useMount';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
   isForMultipleAddress,
   type,
 }: {
-  data: SwapTxHistoryItem | SendTxHistoryItem;
+  data: SwapTxHistoryItem | SendTxHistoryItem | ApproveTokenTxHistoryItem;
   clearLocalPendingTxData: () => void;
   isForMultipleAddress: boolean;
-  type: 'send' | 'swap';
+  type: 'send' | 'swap' | 'approveSwap';
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -57,6 +62,9 @@ export const PendingTxItem = ({
   });
 
   const handlePress = useMemoizedFn(() => {
+    if (type === 'approveSwap') {
+      return;
+    }
     if (!isPending) {
       clearLocalPendingTxData();
       type === 'send' &&
@@ -103,6 +111,11 @@ export const PendingTxItem = ({
       const sendAmount = formatTokenAmount(sendData?.amount);
       return `-${sendAmount} ${getTokenSymbol(sendData?.token)}`;
     }
+    if (type.startsWith('approve')) {
+      const approveData = data as ApproveTokenTxHistoryItem;
+      const amount = approveData.amount;
+      return `Approval ${amount} ${getTokenSymbol(approveData.token)}`;
+    }
     return '';
   }, [type, data]);
 
@@ -121,7 +134,18 @@ export const PendingTxItem = ({
         <View style={styles.leftContainer}>
           <View style={styles.mainContainer}>
             <View style={styles.titleContainer}>
-              {type === 'send' ? (
+              {type === 'approveSwap' ? (
+                <>
+                  <AssetAvatar
+                    logo={(data as ApproveTokenTxHistoryItem)?.token?.logo_url}
+                    chain={chainItem?.serverId}
+                    chainSize={14}
+                    size={25}
+                    innerChainStyle={styles.innerChainStyle}
+                  />
+                  <Text style={styles.titleText}>{sendTitleTextStr}</Text>
+                </>
+              ) : type === 'send' ? (
                 <>
                   <AssetAvatar
                     logo={(data as SendTxHistoryItem)?.token?.logo_url}
@@ -185,6 +209,60 @@ export const PendingTxItem = ({
         </View>
       </TouchableOpacity>
     </>
+  );
+};
+
+export const ApprovePendingTxItem = ({
+  type,
+  address,
+  isForMultipleAddress,
+  hash,
+  chainId,
+}: // hash,
+{
+  type: 'approveSwap';
+  isForMultipleAddress: boolean;
+  address: string;
+  chainId: number;
+  hash: string;
+}) => {
+  const [{ value: data }, getApproveItem] = useAsyncFn(async () => {
+    const v = await transactionHistoryService.getRecentTxHistory(
+      address,
+      hash,
+      chainId,
+      type,
+    );
+    return v as ApproveTokenTxHistoryItem;
+  }, [type, address]);
+
+  useMount(() => {
+    getApproveItem();
+  });
+
+  useEffect(() => {
+    if (!data || (data.hash === hash && data.status === 'pending')) {
+      let timer = setTimeout(() => getApproveItem(), 1000);
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [getApproveItem, data?.status, data, hash]);
+
+  if (!data || data.hash !== hash) {
+    return null;
+  }
+  if (!data || data.hash !== hash) {
+    return null;
+  }
+
+  return (
+    <PendingTxItem
+      type={type}
+      data={data}
+      clearLocalPendingTxData={noop}
+      isForMultipleAddress={isForMultipleAddress}
+    />
   );
 };
 

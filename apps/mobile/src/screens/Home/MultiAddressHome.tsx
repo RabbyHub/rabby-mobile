@@ -750,6 +750,7 @@ function MultiAddressHome(): JSX.Element {
             loading={loading}
             loadingNewCurve={loadingNewCurve}
             onRefresh={onRefresh}
+            balanceAccounts={balanceAccounts}
           />
           <View
             style={[

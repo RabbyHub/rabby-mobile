@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useState,
   useRef,
+  useImperativeHandle,
 } from 'react';
 import {
   View,
@@ -29,13 +30,13 @@ import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import { useSheetModal } from '@/hooks/useSheetModal';
+import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
-  DisplayedTokenWithOwner,
   getTokenSymbol,
-  TokenItemFromAbstractPortfolioToken,
+  type DisplayedTokenWithOwner,
+  type TokenItemFromAbstractPortfolioToken,
 } from '@/utils/token';
 import { formatAmount, formatPrice } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
@@ -63,6 +64,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import {
   CompositeScreenProps,
+  useFocusEffect,
   useIsFocused,
   useRoute,
 } from '@react-navigation/native';
@@ -101,6 +103,8 @@ import {
   useSharedValue,
 } from 'react-native-reanimated';
 import { PanGestureHandler } from 'react-native-gesture-handler';
+import { useRefState } from '@/hooks/common/useRefState';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -157,6 +161,7 @@ export type TokenItemForRender = {
 export interface TokenSelectorProps<
   T extends TokenSelectType = TokenSelectType,
 > {
+  // visibleRef: SharedValue<boolean>;
   visible: boolean;
   list: TokenItemMaybeWithOwner[];
   foldTokensList?: TokenItemMaybeWithOwner[];
@@ -205,9 +210,67 @@ const screenHeight = Dimensions.get('window').height;
 const modalHeight = screenHeight - 120;
 const snapPoints = [modalHeight];
 
-type TokenSelectorInst = {};
+export function useTokenSelectorModalVisible(options?: {
+  onVisibleChanged?: (visible: boolean) => void;
+}) {
+  const {
+    state: visible,
+    stateRef: visibleRef,
+    setRefState: setVisible,
+  } = useRefState(false);
+
+  const { onVisibleChanged } = options || {};
+  const onVisibleChangedRef = useRef(onVisibleChanged);
+  useEffect(() => {
+    onVisibleChangedRef.current = onVisibleChanged;
+  }, [onVisibleChanged]);
+
+  const tokenSelectorModalRef = useRef<TokenSelectorSheetModalInst>(null);
+  const setTokenSelectorVisible = useCallback(
+    (
+      visible: boolean,
+      options?: {
+        delayShowModal?: number;
+        delaySetState?: number;
+        noTriggerRerender?: boolean;
+      },
+    ) => {
+      onVisibleChangedRef.current?.(visible);
+
+      const {
+        delayShowModal = 0,
+        delaySetState = 100,
+        noTriggerRerender = false,
+      } = options || {};
+      if (delayShowModal) {
+        setTimeout(() => {
+          tokenSelectorModalRef.current?.toggleShow(visible);
+        }, delayShowModal);
+      } else {
+        tokenSelectorModalRef.current?.toggleShow(visible);
+      }
+
+      // setVisible(visible, !noTriggerRerender);
+      const delayMs = Math.max(delaySetState, 100);
+      setTimeout(() => {
+        setVisible(visible, !noTriggerRerender);
+      }, delayMs);
+    },
+    [onVisibleChangedRef, setVisible],
+  );
+
+  return {
+    visible,
+    visibleRef,
+    setTokenSelectorVisible,
+    tokenSelectorModalRef,
+  };
+}
+export type TokenSelectorSheetModalInst = {
+  toggleShow: (nextShown: SheetModalShowType) => void;
+};
 export const TokenSelectorSheetModal = React.forwardRef<
-  TokenSelectorInst,
+  TokenSelectorSheetModalInst,
   RNViewProps & TokenSelectorProps
 >(
   (
@@ -239,16 +302,22 @@ export const TokenSelectorSheetModal = React.forwardRef<
       onFavoriteFilterChange,
       disableSort = false,
     },
-    _ref,
+    ref,
   ) => {
-    const { sheetModalRef: tokenSelectorModal, toggleShowSheetModal } =
+    const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
       useSheetModal();
     const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
 
-    // 记录组件最初渲染的页面，用于判断是否还在原页面
+    useImperativeHandle(ref, () => {
+      return {
+        toggleShow: nextShown => {
+          toggleShowSheetModal(nextShown);
+        },
+      };
+    });
+
     const initialRouteRef = useRef<string | undefined>();
-    React.useEffect(() => {
-      // 组件挂载时记录当前页面
+    useEffect(() => {
       if (!initialRouteRef.current && visible) {
         initialRouteRef.current = getLatestNavigationName();
       }
@@ -263,13 +332,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const isSend = type === 'send';
 
     useEffect(() => {
-      toggleShowSheetModal(visible ? true : false);
       if (!visible) {
         setIsInputActive(false);
         setFold(true);
         setIsScamFold(true);
+        setQuery('');
       }
-    }, [visible, toggleShowSheetModal]);
+    }, [visible]);
 
     const handleShowExcludeTips = useMemoizedFn(() => {
       const modalId = createGlobalBottomSheetModal2024({
@@ -330,7 +399,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     ) {
       toggleShowSheetModal('destroy');
     }
-    // 监听当前路由变化
+
     const currentRoute = getLatestNavigationName();
     const isInInitialRoute = useMemo(() => {
       if (!visible || !initialRouteRef.current) {
@@ -340,7 +409,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
     }, [currentRoute, visible]);
 
     useEffect(() => {
-      // 如果不是从返回按钮进入的，则关闭弹窗
       if (!isFromBack && visible) {
         toggleShowSheetModal('destroy');
         setIsFromBack(false);
@@ -378,12 +446,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const handleInputBlur = () => {
       setIsInputActive(false);
     };
-
-    useEffect(() => {
-      if (!visible) {
-        setQuery('');
-      }
-    }, [visible]);
 
     const displayList = useMemo(() => {
       if (isBridgeTo || isSend) {
@@ -948,7 +1010,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 trade_volume_level: tmpX?.trade_volume_level,
                 $origin: x as
                   | TokenItemForRender
-                  | (TokenItemFromAbstractPortfolioToken & { group?: string }),
+                  | (TokenItemFromAbstractPortfolioToken & {
+                      group?: string;
+                    }),
               };
             }),
           })),
@@ -957,6 +1021,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           },
         ];
       }
+
       return [
         {
           data: tokens,
@@ -992,7 +1057,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
         hideChainFilter,
         showFavoriteFilter,
       ]);
-    // 用于防止重复触发的状态
+
+    // Used to prevent repeated triggering
     const hasTriggered = useSharedValue(false);
 
     const onGestureEvent = useAnimatedGestureHandler({
@@ -1003,7 +1069,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         if (!onFavoriteFilterChange || hasTriggered.value) {
           return;
         }
-        // 设置阈值，超过阈值就触发
+        // Set threshold, trigger if exceeded
         const threshold = 50;
         if (Math.abs(event.translationX) > Math.abs(event.translationY)) {
           if (event.translationX > threshold) {
@@ -1017,16 +1083,24 @@ export const TokenSelectorSheetModal = React.forwardRef<
       },
     });
 
+    const { onHardwareBackHandler } = useHandleBackPressClosable(
+      useCallback(() => {
+        onCancel();
+        return !visible;
+      }, [onCancel, visible]),
+    );
+
+    useFocusEffect(onHardwareBackHandler);
+
     return (
       <AppBottomSheetModal
-        ref={tokenSelectorModal}
+        ref={tokenSelectorModalRef}
         snapPoints={snapPoints}
         enableContentPanningGesture
+        // enableDismissOnClose={false}
         enableDismissOnClose
         onChange={idx => {
-          if (idx < 0) {
-            onCancel();
-          }
+          if (idx < 0) onCancel();
         }}
         {...{
           containerStyle:
@@ -1223,6 +1297,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
               }
               extraData={isLoading}
               initialNumToRender={20}
+              maxToRenderPerBatch={20}
+              onEndReachedThreshold={0.3}
               renderItem={renderItemRenderComponent}
             />
           </PanGestureHandler>

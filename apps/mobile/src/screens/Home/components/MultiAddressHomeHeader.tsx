@@ -18,7 +18,9 @@ import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { ThemeColors2024 } from '@/constant/theme';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
+import useAccountsBalance, {
+  balanceAccountType,
+} from '@/hooks/useAccountsBalance';
 import { useUpgradeInfo } from '@/hooks/version';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useTranslation } from 'react-i18next';
@@ -41,8 +43,6 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { formatSmallCurrencyValue, getChangeData } from '@/hooks/useCurve';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
-import { BlurView } from '@react-native-community/blur';
 import { Skeleton } from '@rneui/base';
 import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
@@ -50,18 +50,21 @@ import LinearGradient from 'react-native-linear-gradient';
 import { LoadingLinear } from '../../TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const HeaderHeight = 24;
 
 export function MultiAddressHomeHeader(
-  prop: {
+  props: {
     data: ReturnType<typeof useMultiCurve>['combineData'];
     loading: boolean;
     loadingNewCurve: boolean;
     onRefresh?: () => void;
+    balanceAccounts?: balanceAccountType[];
   } & RNViewProps,
 ): JSX.Element {
-  const { loading, data, loadingNewCurve, style, onRefresh } = prop;
+  const { loading, data, loadingNewCurve, style, onRefresh, balanceAccounts } =
+    props;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -89,33 +92,30 @@ export function MultiAddressHomeHeader(
 
   const addressListData = useMemo(() => {
     return sortBy(
-      pinnedAccountList
-        .filter(
-          item =>
-            ![
-              KEYRING_TYPE.GnosisKeyring,
-              KEYRING_TYPE.WatchAddressKeyring,
-              KEYRING_TYPE.WalletConnectKeyring,
-            ].includes(item.type),
-        )
-        .map(item => {
-          const hasChangeData = multiTimeStamp[
-            item.address.toLowerCase()
-          ]?.data?.some(i => i.usd_value !== 0);
-          const chartData = getChangeData(
-            multiTimeStamp[item.address.toLowerCase()]?.data || [],
-            item.evmBalance,
-            new Date().getTime(),
-          );
-          return {
-            ...item,
-            changePercent: hasChangeData ? chartData?.changePercent : undefined,
-            isLoss: hasChangeData ? chartData?.isLoss : undefined,
-          };
-        }),
+      pinnedAccountList.map(item => {
+        const hasChangeData = multiTimeStamp[
+          item.address.toLowerCase()
+        ]?.data?.some(i => i.usd_value !== 0);
+        const chartData = getChangeData(
+          multiTimeStamp[item.address.toLowerCase()]?.data || [],
+          item.evmBalance,
+          new Date().getTime(),
+        );
+        const balanceAccount = balanceAccounts?.find(acc =>
+          isSameAddress(acc.address, item.address),
+        );
+
+        return {
+          ...item,
+          balance: balanceAccount?.balance || item.balance || 0,
+          evmBalance: balanceAccount?.evmBalance || item.evmBalance || 0,
+          changePercent: hasChangeData ? chartData?.changePercent : undefined,
+          isLoss: hasChangeData ? chartData?.isLoss : undefined,
+        };
+      }),
       item => -(item.balance || 0),
     ).slice(0, 3);
-  }, [pinnedAccountList, multiTimeStamp]);
+  }, [pinnedAccountList, multiTimeStamp, balanceAccounts]);
 
   const { accountsLength } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes

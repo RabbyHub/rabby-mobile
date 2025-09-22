@@ -8414,16 +8414,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.0.6":
-  version: 1.0.6
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.0.6"
+"@rabby-wallet/hyperliquid-sdk@npm:1.0.7":
+  version: 1.0.7
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.0.7"
   dependencies:
     "@ethereumjs/util": 9.0.0
     "@metamask/eth-sig-util": 5.1.0
     "@msgpack/msgpack": 3.1.2
     "@noble/hashes": 1.8.0
     ethereum-cryptography: 2.2.1
-  checksum: 0f89635f6908a099b840bb05d50dbd3fab48c3cf170cc7573d19b8c669b7095e43bdac452de10167127835e8f327265df09eeec2501a6a4ee44bd43e26bb4fd6
+  checksum: 272e8aa9c3ae5a994dd8e66c8da5ccae6d5be9bc5b99684dedb400d994cfbca1ea606d8323d2740045f0d257f76097901d998b3976e66dd8765d2b2f6bd3714c
   languageName: node
   linkType: hard
 
@@ -8462,7 +8462,7 @@ __metadata:
     "@metamask/eth-json-rpc-provider": ^2.3.0
     "@metamask/json-rpc-engine": ^7.3.0
     "@metamask/utils": ^8.2.0
-    "@rabby-wallet/rabby-api": 0.9.40
+    "@rabby-wallet/rabby-api": 0.9.43
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^5.62.0
     "@typescript-eslint/parser": ^5.62.0
@@ -8608,9 +8608,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.40":
-  version: 0.9.40
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.40"
+"@rabby-wallet/rabby-api@npm:0.9.43":
+  version: 0.9.43
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.43"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -8621,24 +8621,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: e0aa62bbf92d5ce647dc777197684a461132d868313a4b98ade956fe2cc1ea7fa3ab2a18d049d95ae8b7f9e243305fef13870e2b77b0e023d651d851f4444f33
-  languageName: node
-  linkType: hard
-
-"@rabby-wallet/rabby-api@npm:0.9.42":
-  version: 0.9.42
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.42"
-  dependencies:
-    "@rabby-wallet/rabby-sign": 0.4.0
-    axios: ^0.27.2
-    axios-rate-limit: ^1.3.0
-    eth-rpc-errors: ^4.0.3
-    lodash: ^4.17.21
-    qss: ^2.0.3
-  peerDependencies:
-    "@debank/common": ^0.3.9
-    "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: c870c66ff90b9e9057625e46b52f8ed9d50250a92409dade6c68c598feda72eb3699f09e818967ae8d0cd93c20098edc94e8b8149762f4dba94db43f4c3e9b8c
+  checksum: 4c6ff824785be261d6f32e3a712cde3d9da052345ff2d44388159dc0361343c5149c96ce7a26924a4ffc0600895aea840ce5c422ace4a081814ebdc6ae6478f5
   languageName: node
   linkType: hard
 
@@ -8671,9 +8654,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.63":
-  version: 0.0.63
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.63"
+"@rabby-wallet/rabby-swap@npm:0.0.64":
+  version: 0.0.64
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.64"
   dependencies:
     "@ethersproject/abi": ^5.7.0
     axios: ^0.27.2
@@ -8682,7 +8665,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 3338ce4b954baab75c08aae9c5cc88c1c9b3cf71c07b3323f7094aa603b902966871986bf933bf6c30a84de63a9b4f4d9db9888cea6b0a0e7800c74239a53a55
+  checksum: 48280b35035adb2c02ddb139f97760c457b70fdb248aad91e0ed841f76d05656989a895d6098722a6090b594a47509835fc5bb14a6942b891a7f4144bb9f00d5
   languageName: node
   linkType: hard
 
@@ -31267,14 +31250,14 @@ __metadata:
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": 5.0.2
-    "@rabby-wallet/hyperliquid-sdk": 1.0.6
+    "@rabby-wallet/hyperliquid-sdk": 1.0.7
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.13
-    "@rabby-wallet/rabby-api": 0.9.42
+    "@rabby-wallet/rabby-api": 0.9.43
     "@rabby-wallet/rabby-security-engine": 2.0.11
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
-    "@rabby-wallet/rabby-swap": 0.0.63
+    "@rabby-wallet/rabby-swap": 0.0.64
     "@rabby-wallet/react-native-sqlite-storage": 7.0.0-alpha.1
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"

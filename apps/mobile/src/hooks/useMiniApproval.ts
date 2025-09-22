@@ -1,8 +1,8 @@
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useClearMiniApprovalTask } from './useMiniApprovalTask';
-import { uniqueId } from 'lodash';
+import { noop, uniqueId } from 'lodash';
 import { sendTransaction } from '@/utils/sendTransaction';
 import {
   notificationService,
@@ -10,6 +10,7 @@ import {
 } from '@/core/services';
 import { sleep } from '@/utils/async';
 import { Account } from '@/core/services/preference';
+import { ReactNode, useCallback } from 'react';
 
 export let DirectSubmitReject;
 
@@ -24,13 +25,31 @@ export const miniApprovalAtom = atom<{
   directSubmit?: boolean;
   account?: Account;
   showMaskLoading?: boolean;
+  transparentMask?: boolean;
+  checkGasFee?: boolean;
 }>({
   txs: [],
 });
 
+const DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG = {
+  // autoTriggerPreExecError: false,
+  showSimulateChange: false,
+  title: null as ReactNode,
+  disableSignBtn: false,
+  onPreExecChange: noop,
+  autoThrowPreExecError: true,
+  // onRedirectToDeposit: noop,
+};
+
+const miniSignExtraPropsAtom = atom(DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+
+export const useGetMiniSignTxExtraProps = () =>
+  useAtomValue(miniSignExtraPropsAtom);
+
 // let globalCurrentApprovalId = uniqueId('mini-approval');
 export const useMiniApproval = () => {
   const [state, setState] = useAtom(miniApprovalAtom);
+  const setMiniSignExtraProps = useSetAtom(miniSignExtraPropsAtom);
   const { clear } = useClearMiniApprovalTask();
 
   const _sendMiniTransactions = useMemoizedFn(
@@ -69,7 +88,10 @@ export const useMiniApproval = () => {
                   txs: [],
                   visible: false,
                   showMaskLoading: true,
+                  transparentMask: false,
+                  checkGasFee: false,
                 }));
+                setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
                 const signingTxId =
                   notificationService.currentMiniApproval?.signingTxId;
                 if (signingTxId) {
@@ -84,7 +106,10 @@ export const useMiniApproval = () => {
                   txs: [],
                   visible: false,
                   showMaskLoading: true,
+                  transparentMask: false,
+                  checkGasFee: false,
                 }));
+                setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
                 notificationService.currentMiniApproval = null;
                 resolve(res);
               },
@@ -101,17 +126,19 @@ export const useMiniApproval = () => {
       ga,
       directSubmit,
       account,
+      waitTime = 600,
     }: {
       txs: Tx[];
       ga?: Record<string, any>;
       directSubmit?: boolean;
       account: Account;
+      waitTime?: number;
     }) => {
       clear();
       /**
        * wait popup close
        */
-      await sleep(600);
+      await sleep(waitTime);
       return _sendMiniTransactions({
         txs,
         ga,
@@ -122,6 +149,10 @@ export const useMiniApproval = () => {
     },
   );
 
+  const resetMiniSignExtraProps = useCallback(() => {
+    setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+  }, [setMiniSignExtraProps]);
+
   const prepareMiniTransactions = useMemoizedFn(
     ({
       txs,
@@ -129,14 +160,20 @@ export const useMiniApproval = () => {
       directSubmit,
       account,
       showMaskLoading,
+      transparentMask,
+      checkGasFee,
     }: {
       txs: Tx[];
       ga?: Record<string, any>;
       directSubmit?: boolean;
       account: Account;
       showMaskLoading?: boolean;
+      transparentMask?: boolean;
+      checkGasFee?: boolean;
     }) => {
+      console.debug('prepareMiniTransactions trigger', ga, txs?.length);
       clear();
+      resetMiniSignExtraProps();
       setState(prev => {
         return {
           ...prev,
@@ -146,6 +183,8 @@ export const useMiniApproval = () => {
           directSubmit,
           account,
           showMaskLoading: showMaskLoading ?? true,
+          transparentMask: transparentMask ?? false,
+          checkGasFee: checkGasFee ?? false,
         };
       });
     },
@@ -172,5 +211,7 @@ export const useMiniApproval = () => {
     sendMiniTransactions,
     prepareMiniTransactions,
     sendPrepareMiniTransactions,
+    setMiniSignExtraProps,
+    resetMiniSignExtraProps,
   };
 };

@@ -10,7 +10,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SwapModal } from '@/screens/Swap/components/Modal';
 import { SvgProps } from 'react-native-svg';
-import { useAtom } from 'jotai';
+import { useAtomValue } from 'jotai';
 import IconGasTokenCC from '@/assets2024/icons/gas-account/gas-token-cc.svg';
 import IconGasAccountCC from '@/assets2024/icons/gas-account/gas-account-cc.svg';
 import IconGasTokenActive from '@/assets2024/icons/gas-account/gas-token-active.svg';
@@ -22,6 +22,7 @@ import BigNumber from 'bignumber.js';
 import { getGasLevelI18nKey } from '@/utils/trans';
 import { miniApprovalGasAtom } from '@/hooks/useMiniApprovalDirectSign';
 import { formatGasHeaderUsdValue } from '@/utils/number';
+import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
 
 const GasMethod = (props: {
   active: boolean;
@@ -64,15 +65,17 @@ export default function ShowMoreGasSelectModal({
   onCancel,
   onConfirm,
   layout,
+  chainId,
 }: {
   visible: boolean;
   onCancel: () => void;
   onConfirm: () => void;
   layout: { x: number; y: number; width: number; height: number };
+  chainId?: number;
 }) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [miniApprovalGas, setMiniApprovalGas] = useAtom(miniApprovalGasAtom);
+  const miniApprovalGas = useAtomValue(miniApprovalGasAtom);
 
   const { height, width } = useWindowDimensions();
 
@@ -83,6 +86,8 @@ export default function ShowMoreGasSelectModal({
     }
     return formatGasHeaderUsdValue(n || '0');
   }, []);
+
+  const fixedMode = useMiniSignFixedMode(chainId);
 
   if (!miniApprovalGas) {
     return null;
@@ -167,6 +172,9 @@ export default function ShowMoreGasSelectModal({
                 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text style={styles.level}>{levelTitle}</Text>
+                  {isCustom && fixedMode ? (
+                    <Text style={styles.fixedMode}>Fixed mode</Text>
+                  ) : null}
                   {!isCustom && (
                     <Text style={styles.gwei}> ({gwei} Gwei) </Text>
                   )}
@@ -174,9 +182,25 @@ export default function ShowMoreGasSelectModal({
                 </View>
 
                 {isCustom ? (
-                  <IconGasCustomRightArrowCC
-                    color={colors2024['neutral-foot']}
-                  />
+                  <>
+                    {isActive ? (
+                      <Text
+                        style={[
+                          styles.usd,
+                          {
+                            marginLeft: 'auto',
+                          },
+                          (isNotEnough || errorOnGasAccount) && {
+                            color: colors2024['red-default'],
+                          },
+                        ]}>
+                        {costUsd}
+                      </Text>
+                    ) : null}
+                    <IconGasCustomRightArrowCC
+                      color={colors2024['neutral-foot']}
+                    />
+                  </>
                 ) : (
                   <Text
                     style={[
@@ -267,6 +291,24 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderStyle: 'solid',
     borderColor: colors2024['brand-default'],
     backgroundColor: colors2024['brand-light-1'],
+  },
+  fixedMode: {
+    // padding: '1 4',
+    color: colors2024['brand-default'],
+    paddingVertical: 1,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 16,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 4,
+    marginLeft: 2,
+    marginRight: 6,
+    overflow: 'hidden',
   },
   level: {
     color: colors2024['neutral-title-1'],

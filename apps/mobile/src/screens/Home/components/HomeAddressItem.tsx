@@ -1,7 +1,7 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   StyleProp,
   StyleSheet,
@@ -22,6 +22,8 @@ import { AddressItemContextMenu } from '@/screens/Address/components/AddressItem
 import { trigger } from 'react-native-haptic-feedback';
 import { BALANCE_HIDE_TYPE } from '../hooks/useHideBalance';
 import { BlurShadowView } from '@/components2024/BluerShadow';
+import BigNumber from 'bignumber.js';
+import { splitNumberByStep } from '@/utils/number';
 
 export const HomeAddressItem: React.FC<{
   account: KeyringAccountWithAlias;
@@ -36,9 +38,18 @@ export const HomeAddressItem: React.FC<{
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const [isPressing, setIsPressing] = React.useState(false);
-  const { formatCurrentCurrency } = useCurrency();
+  const { currency } = useCurrency();
 
   const isZeroPercentChange = changePercent === '0%';
+
+  const balance = useMemo(() => {
+    const b = new BigNumber(account.balance || 0).times(currency.usd_rate);
+    return `${currency.symbol}${splitNumberByStep(
+      b.isGreaterThan(10)
+        ? b.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString()
+        : b.toFixed(2),
+    )}`;
+  }, [account.balance, currency.symbol, currency.usd_rate]);
 
   return (
     <AddressItemContextMenu
@@ -89,9 +100,7 @@ export const HomeAddressItem: React.FC<{
                   <>
                     <WalletName style={[styles.accountName]} />
                     <View style={[styles.accountBalanceRow]}>
-                      <Text style={styles.accountBalance}>
-                        {formatCurrentCurrency(account.balance || 0)}
-                      </Text>
+                      <Text style={styles.accountBalance}>{balance}</Text>
                       {typeof changePercent === 'string' ? (
                         <Text
                           style={[

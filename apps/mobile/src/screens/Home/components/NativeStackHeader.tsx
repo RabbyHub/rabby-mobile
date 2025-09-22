@@ -41,16 +41,17 @@ export function HomeNativeStackHeader(props: NativeStackHeaderProps) {
       }}
       headerLeft={
         typeof headerLeft === 'function'
-          ? ({ label, ...rest }) =>
+          ? ({ ...rest }) =>
               headerLeft({
                 ...rest,
-                label: headerBackTitle ?? label,
+                label: headerBackTitle,
+                canGoBack,
               })
           : headerLeft === undefined && canGoBack
-          ? ({ tintColor, label, ...rest }) => (
+          ? ({ tintColor, ...rest }) => (
               <HeaderBackButton
                 {...rest}
-                label={headerBackTitle ?? label}
+                label={headerBackTitle}
                 tintColor={tintColor}
                 backImage={
                   headerBackImageSource !== undefined

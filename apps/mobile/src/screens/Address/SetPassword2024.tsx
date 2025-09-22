@@ -355,7 +355,7 @@ function MainListBlocks() {
                     if (!couldSetupBiometrics) {
                       toast.show(
                         t('page.createPassword.phoneNotSupport', {
-                          type: defaultTypeLabel,
+                          bioType: defaultTypeLabel,
                         }),
                       );
                       return;

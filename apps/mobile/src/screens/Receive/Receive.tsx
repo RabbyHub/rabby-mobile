@@ -11,7 +11,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { useNavigationState, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
