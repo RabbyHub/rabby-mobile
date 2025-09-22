@@ -37,7 +37,8 @@ import { useTranslation } from 'react-i18next';
 import { Spin } from '@/components/Spin';
 import { Skeleton } from '@rneui/themed';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { AddressAndCopy } from '@/components/Address/AddressAndCopy';
@@ -132,14 +133,15 @@ const getStyles = (colors: AppColorsVariants) =>
   });
 
 export const ImportMoreAddressScreen = () => {
-  const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.ImportMoreAddress)?.params,
-  ) as {
-    type: KEYRING_TYPE;
-    mnemonics?: string;
-    passphrase?: string;
-    keyringId?: number;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'AddressNavigatorParamList', 'ImportMoreAddress'>
+    >();
+  const state = route.params;
+
+  if (!state) {
+    throw new Error('[ImportMoreAddressScreen] state is undefined');
+  }
 
   const apiHD = React.useMemo(() => {
     switch (state.type) {

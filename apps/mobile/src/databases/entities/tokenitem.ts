@@ -231,7 +231,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
-  static async batchMultAddressTokens(
+  static async batchMultiAddressTokens(
     addresses: string[],
     core?: boolean,
     maxLength?: number,

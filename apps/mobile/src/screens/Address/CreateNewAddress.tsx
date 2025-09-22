@@ -24,7 +24,8 @@ import { ellipsisAddress } from '@/utils/address';
 import { contactService, keyringService } from '@/core/services';
 import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { StackActions, useNavigationState } from '@react-navigation/native';
+import { StackActions, useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import LinearGradient from 'react-native-linear-gradient';
 import { replaceToFirst } from '@/utils/navigation';
@@ -46,17 +47,11 @@ function MainListBlocks() {
   const navigation = useRabbyAppNavigation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.CreateNewAddress)?.params,
-  ) as
-    | {
-        noSetupPassword?: boolean;
-        useCurrentSeed?: boolean;
-        mnemonics?: string;
-        title?: string;
-        accounts?: string[]; // current active addrees
-      }
-    | undefined;
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'AddressNavigatorParamList', 'CreateNewAddress'>
+    >();
+  const state = route.params;
 
   const getHeaderTitle = React.useCallback(() => {
     return (

@@ -12,8 +12,12 @@ import {
   Keyboard,
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
-import { StackActions, useNavigation } from '@react-navigation/native';
-import { useNavigationState } from '@react-navigation/native';
+import {
+  StackActions,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@/constant/chains';
 import {
@@ -115,28 +119,14 @@ function SendScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const navParams = useNavigationState(
-    s =>
-      s.routes.find(
-        r =>
-          r.name ===
-          (isForMultipleAddress ? RootNames.MultiSend : RootNames.Send),
-      )?.params,
-  ) as
-    | {
-        chainEnum?: CHAINS_ENUM | undefined;
-        tokenId?: TokenItem['id'];
-        toAddress?: string;
-        addressBrandName?: string;
-        addrDesc?: AddrDescResponse['desc'];
-      }
-    | {
-        safeInfo: { nonce: number; chainId: number };
-        toAddress?: string;
-        addressBrandName?: string;
-        addrDesc?: AddrDescResponse['desc'];
-      }
-    | undefined;
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        'Send' | 'MultiSend'
+      >
+    >();
+  const navParams = route.params;
 
   const { chainItem, currentToken, setCurrentToken, setChainEnum } =
     useSendTokenScreenChainToken();
@@ -549,7 +539,7 @@ function SendScreen({
                 />
               )}
             </KeyboardAwareScrollView>
-            <BottomArea />
+            <BottomArea account={currentAccount} />
           </View>
         </TouchableWithoutFeedback>
         <TokenInfoPopup />

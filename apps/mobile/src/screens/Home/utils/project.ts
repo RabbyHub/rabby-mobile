@@ -3,6 +3,7 @@ import PQueue from 'p-queue';
 import {
   PortfolioItem,
   PortfolioItemToken,
+  WithdrawAction,
 } from '@rabby-wallet/rabby-api/dist/types';
 import {
   AbstractPortfolio,
@@ -41,6 +42,7 @@ export class DisplayedProject implements AbstractProject {
   _netWorthChangePercent = '';
   _intNetworth = '';
   _rawPortfolios?: PortfolioItem[] = [];
+  withdrawActions?: WithdrawAction[] = [];
 
   constructor(
     p: Partial<PortfolioProject>,
@@ -55,6 +57,7 @@ export class DisplayedProject implements AbstractProject {
     this._netWorth = '-';
     this.site_url = p.site_url;
     this._rawPortfolios = portfolios;
+    this.withdrawActions = p.withdraw_actions;
 
     this.setPortfolios(portfolios, countRepeat);
   }

@@ -6,7 +6,8 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { TransactionNavigatorParamList } from '@/navigation-type';
-import { StackActions, useNavigationState } from '@react-navigation/native';
+import { StackActions, useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { NFTSection, SendNFTSection } from './Section';
 import ToAddressControl2024 from '@/screens/Send/components/ToAddressControl2024';
 import FromAddressControl2024 from '@/screens/Send/components/FromAddressControl';
@@ -29,9 +30,11 @@ export default function SendNFT() {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useRabbyAppNavigation();
-  const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SendNFT)?.params,
-  ) as TransactionNavigatorParamList['SendNFT'] | undefined;
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'SendNFT'>
+    >();
+  const navParams = route.params;
 
   const nftItem = navParams?.nftItem;
   const chainItem = findChain({ serverId: nftItem?.chain });

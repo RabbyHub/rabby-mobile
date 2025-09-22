@@ -10,10 +10,15 @@ import React, {
 } from 'react';
 import { Platform, StyleProp, Text, View, ViewStyle } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { createTradingViewChartTemplate } from './template';
+import {
+  createTradingViewChartTemplate,
+  TradeViewJSGlobalUtils,
+} from './template';
 import { CandleData, CandleStick } from './type';
 import { openExternalUrl } from '@/core/utils/linking';
 import { useTranslation } from 'react-i18next';
+import { IS_IOS } from '@/core/native/utils';
+import { WEBVIEW_BASEURL } from '@/core/storage/webviewAssets';
 
 interface ChartProps {
   height: number;
@@ -283,7 +288,8 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
         <WebView
           ref={webViewRef}
           style={styles.webView}
-          source={{ html: htmlContent }}
+          {...(IS_IOS && { allowFileAccess: true })}
+          source={{ html: htmlContent, baseUrl: WEBVIEW_BASEURL }}
           onMessage={handleWebViewMessage}
           onError={handleWebViewError}
           {...(Platform.OS === 'ios' ? iosWebViewProps : androidWebViewProps)}

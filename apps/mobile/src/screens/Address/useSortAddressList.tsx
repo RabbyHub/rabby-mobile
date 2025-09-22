@@ -1,13 +1,13 @@
 import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
 import { sortAccountList } from '@/utils/sortAccountList';
-import { useMemo } from 'react';
+import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 
 export const useSortAddressList = (accounts: KeyringAccountWithAlias[]) => {
   const { pinAddresses: highlightedAddresses } = usePinAddresses({
     disableAutoFetch: true,
   });
 
-  const list = useMemo(() => {
+  const list = useCreationWithShallowCompare(() => {
     return sortAccountList(accounts, {
       highlightedAddresses,
     });

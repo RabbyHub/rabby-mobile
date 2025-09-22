@@ -43,8 +43,7 @@ export const MultiAssets = ({
 
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10Addresses.join(','), getTotalBalance]);
+  }, [top10Addresses, getTotalBalance]);
 
   const { combineData, isLoadingNew: isLoadingCurve } = useMultiCurve(
     top10Addresses,

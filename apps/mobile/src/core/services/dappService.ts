@@ -134,7 +134,6 @@ export class DappService extends StoreServiceBase<
 
   disconnect(origin: string) {
     this.store.dapps[origin].isConnected = false;
-    this.store.dapps[origin].currentAccount = null;
     this.store.dapps = { ...this.store.dapps };
   }
 

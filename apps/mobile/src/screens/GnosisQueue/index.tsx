@@ -11,15 +11,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GnosisMessageQueue } from './components/GnosisMessageQueue';
 import { GnosisTransactionQueue } from './components/GnosisTransactionQueue';
 import { useRoute } from '@react-navigation/native';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 
 export const GnosisQueueScreen = () => {
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
+      GetNestedScreenRouteProp<
         'TransactionNavigatorParamList',
         'GnosisTransactionQueue'
-      >['route']
+      >
     >();
   const account = route.params.account;
   const themeColors = useThemeColors();
