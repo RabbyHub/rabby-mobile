@@ -134,7 +134,7 @@ unix_replace_variables() {
     echo "Replace finished, result in $output_file"
 }
 
-cleanup_fonts_assets() {
+reset_builtin_assets() {
   local script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
   local project_dir=$(dirname $script_dir)
 
@@ -163,6 +163,9 @@ cleanup_fonts_assets() {
   # local android_font_target=$project_dir/android/app/src/main/res/font
   echo "cleanup and copy fonts to $android_assets_target/fonts..."
   cp $project_dir/assets/fonts/* $project_dir/android/app/src/main/assets/fonts/
+  echo "cleanup and copy custom js to $android_assets_target/custom..."
+  mkdir -p $project_dir/android/app/src/main/assets/custom/;
+  cp $project_dir/assets/custom/*.js $project_dir/android/app/src/main/assets/custom/
 
   # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }
@@ -244,8 +247,8 @@ if [ ! -z $func_to_exec ]; then
     "--source-only")
       # do nothing
       ;;
-    "cleanup_fonts_assets")
-      cleanup_fonts_assets
+    "reset_builtin_assets")
+      reset_builtin_assets
       ;;
     "run_upload_changelog")
       run_upload_changelog
