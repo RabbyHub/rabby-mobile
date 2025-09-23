@@ -39,6 +39,9 @@ import { PerpsScreen } from '../Perps';
 import { PerpsMarketListScreen } from '../PerpsMarketList';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
+import { PolymarketScreen } from '../Polymarket';
+import { PolymarketMarketListScreen } from '../PolymarketMarketList';
+import { PolymarketMarketDetailScreen } from '../PolymarketMarketDetail';
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
@@ -449,6 +452,50 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: t('page.perpsHistory.title'),
           // ...headerPresets.withBgCard1_2024,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.Polymarket}
+        component={PolymarketScreen}
+        options={mergeScreenOptions({
+          title: 'Polymarket',
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.PolymarketMarketList}
+        component={PolymarketMarketListScreen}
+        options={mergeScreenOptions({
+          title: 'Prediction Markets',
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.PolymarketMarketDetail}
+        component={PolymarketMarketDetailScreen}
+        options={mergeScreenOptions({
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,

@@ -326,7 +326,7 @@ class ProviderController extends BaseController {
       session: { origin },
     } = req;
     console.log(req);
-    assertProviderRequest(req as any);
+    assertProviderRequest(req as any, 'ethRequestAccounts');
     if (!dappService.getDapp(origin)?.isConnected) {
       throw ethErrors.provider.unauthorized();
     }
@@ -405,7 +405,7 @@ class ProviderController extends BaseController {
   @Reflect.metadata('APPROVAL', [
     'SignTx',
     (req: ProviderRequest) => {
-      assertProviderRequest(req);
+      assertProviderRequest(req, 'APPROVAL::SignTx');
       const {
         data: {
           params: [tx],
@@ -444,7 +444,7 @@ class ProviderController extends BaseController {
     result: any;
     account: Account;
   }) => {
-    assertProviderRequest(options as any);
+    assertProviderRequest(options as any, 'ethSendTransaction');
     if (options.pushed) {
       return options.result;
     }
@@ -991,7 +991,7 @@ class ProviderController extends BaseController {
   @Reflect.metadata('APPROVAL', [
     'SignText',
     req => {
-      assertProviderRequest(req);
+      assertProviderRequest(req, 'APPROVAL::SignText');
       const {
         data: {
           params: [_, from],
@@ -1013,7 +1013,7 @@ class ProviderController extends BaseController {
     account: Account;
     approvalRes: Pick<ApprovalRes, 'extra'>;
   }) => {
-    assertProviderRequest(req as any);
+    assertProviderRequest(req as any, 'personalSign');
     const { data, approvalRes, account: currentAccount } = req;
     if (!data.params) return;
     if (
@@ -1096,7 +1096,7 @@ class ProviderController extends BaseController {
       session,
       approvalRes,
     } = req;
-    assertProviderRequest(req);
+    assertProviderRequest(req, 'ethSignTypedData');
     const currentAccount = req.account;
     if (
       currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
@@ -1139,7 +1139,7 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('APPROVAL', ['SignTypedData', v1SignTypedDataVlidation])
   ethSignTypedDataV1 = async req => {
-    assertProviderRequest(req);
+    assertProviderRequest(req, 'ethSignTypedDataV1');
     const {
       data: {
         params: [data, from],
@@ -1188,7 +1188,7 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('APPROVAL', ['SignTypedData', signTypedDataVlidation])
   ethSignTypedDataV3 = async req => {
-    assertProviderRequest(req);
+    assertProviderRequest(req, 'ethSignTypedDataV3');
     const {
       data: {
         params: [from, data],
@@ -1245,7 +1245,8 @@ class ProviderController extends BaseController {
       approvalRes,
       account: currentAccount,
     } = req;
-    assertProviderRequest(req);
+    console.debug('[feat] ethSignTypedDataV4:: req', req);
+    assertProviderRequest(req, 'ethSignTypedDataV4');
     if (
       currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
       isString(approvalRes)

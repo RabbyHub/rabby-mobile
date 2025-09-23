@@ -8351,6 +8351,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@polymarket/clob-client@npm:^4.22.0":
+  version: 4.22.0
+  resolution: "@polymarket/clob-client@npm:4.22.0"
+  dependencies:
+    "@polymarket/order-utils": ^2.1.0
+    axios: ^0.27.2
+    browser-or-node: ^2.1.1
+    ethers: ^5.7.1
+  checksum: 3a42488d21eab68124cb966ac6ef493bb54089a7341a215d29cea56ba48442f1dca82922ee3e89bba6629b1f4d31be5c09c0cca6a8bbb17f5cc94fdfca10467d
+  languageName: node
+  linkType: hard
+
 "@polymarket/order-utils@npm:^2.1.0":
   version: 2.1.0
   resolution: "@polymarket/order-utils@npm:2.1.0"
@@ -31842,6 +31854,8 @@ __metadata:
     "@noble/hashes": ^1.4.0
     "@notifee/react-native": ^7.8.0
     "@onekeyfe/hd-ble-sdk": 1.0.10
+    "@polymarket/clob-client": ^4.22.0
+    "@polymarket/order-utils": ^2.1.0
     "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-hd-keyring": 4.3.1
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"

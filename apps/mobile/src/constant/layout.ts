@@ -160,6 +160,9 @@ export const RootNames = {
   PerpsMarketList: 'PerpsMarketList',
   PerpsMarketDetail: 'PerpsMarketDetail',
   PerpsHistory: 'PerpsHistory',
+  Polymarket: 'Polymarket',
+  PolymarketMarketList: 'PolymarketMarketList',
+  PolymarketMarketDetail: 'PolymarketMarketDetail',
   AccountTransaction: 'AccountTransaction',
   /* @deprecated */
   MyBundle: 'MyBundle',

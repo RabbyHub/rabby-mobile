@@ -387,6 +387,12 @@ export type TransactionNavigatorParamList = {
   [RootNames.PerpsMarketDetail]: {
     market: string;
   };
+
+  [RootNames.Polymarket]?: {};
+  [RootNames.PolymarketMarketList]?: {};
+  [RootNames.PolymarketMarketDetail]: {
+    market: string;
+  };
 };
 
 export type SettingNavigatorParamList = {

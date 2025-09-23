@@ -74,12 +74,23 @@ export class EthereumProvider extends EventEmitter {
     return true;
   };
 
+  #_makeCtxAccount() {
+    return this.currentAccount
+      ? ({
+          address: this.currentAccount,
+          type: this.currentAccountType,
+          brandName: this.currentAccountBrand,
+        } as Account)
+      : preferenceService.getFallbackAccount()!;
+  }
+
   // TODO: support multi request!
   request = async data => {
     const { method } = data;
     const request = {
       data,
       session: INTERNAL_REQUEST_SESSION,
+      account: this.#_makeCtxAccount(),
     };
     const mapMethod = underline2Camelcase(method);
     const networkId = this.chainId || CHAINS[CHAINS_ENUM.ETH].id.toString();
@@ -128,13 +139,7 @@ export class EthereumProvider extends EventEmitter {
             params: [txParams],
           },
           session: INTERNAL_REQUEST_SESSION,
-          account: this.currentAccount
-            ? ({
-                address: this.currentAccount,
-                type: this.currentAccountType,
-                brandName: this.currentAccountBrand,
-              } as Account)
-            : preferenceService.getFallbackAccount()!,
+          account: this.#_makeCtxAccount(),
         });
       }
       case 'eth_chainId':

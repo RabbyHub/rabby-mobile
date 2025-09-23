@@ -1,5 +1,8 @@
+import { EthereumProvider } from './buildinProvider';
+
+type ProviderRef = { currentProvider: EthereumProvider };
 const store = {
-  provider: null,
+  provider: null as ProviderRef | null,
   sendRequest: null,
 };
 
@@ -7,7 +10,7 @@ export function setGlobalProvider(provider: any) {
   store.provider = provider;
 }
 
-export function getGlobalProvider(): any {
+export function getGlobalProvider(): ProviderRef | null {
   return store.provider;
 }
 

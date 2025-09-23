@@ -45,7 +45,7 @@ export function setupReactotronConnection() {
   );
 
   const finalScriptHostname =
-    REACTOTRON_HOSTNAME_ || persistedHostname || scriptHostname;
+    persistedHostname || REACTOTRON_HOSTNAME_ || scriptHostname;
 
   if (instanceRef.current) {
     instanceRef.current.close();
