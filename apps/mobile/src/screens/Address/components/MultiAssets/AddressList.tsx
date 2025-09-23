@@ -87,10 +87,7 @@ export const AddressList = () => {
         );
         return {
           ...item,
-          balance:
-            item.balance > 10
-              ? Math.floor(item.balance)
-              : Number(item.balance.toFixed(2)),
+          balance: item.balance,
           changPercent: hasChangeData ? chartData?.changePercent : undefined,
           isLoss: hasChangeData ? chartData?.isLoss : undefined,
         };
