@@ -615,6 +615,7 @@ export const PerpsDepositPopup: React.FC<{
             token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
             isSameAddress(token._tokenId, ARB_USDC_TOKEN_ID)
           ) {
+            setSelectedToken(token);
             setIsShowTokenPopup(false);
             return;
           }
