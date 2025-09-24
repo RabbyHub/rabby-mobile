@@ -1,15 +1,9 @@
-import { apiLedger } from '@/core/apis';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  initAccountsAtom,
-  isLoadedAtom,
-  MainContainer,
-  settingAtom,
-} from './MainContainer';
-import { InitAccounts } from './type';
+import { isLoadedAtom, MainContainer, settingAtom } from './MainContainer';
+import { apiTrezor } from '@/core/apis';
 
 export const SettingTrezor: React.FC<{
   onDone: () => void;
@@ -46,15 +40,18 @@ export const SettingTrezor: React.FC<{
     [t],
   );
 
-  const [initAccounts, setInitAccounts] = useAtom(initAccountsAtom);
   const [setting, setSetting] = useAtom(settingAtom);
   const [isLoaded, setIsLoaded] = useAtom(isLoadedAtom);
   const handleConfirm = React.useCallback(
     value => {
-      apiLedger
-        .setCurrentUsedHDPathType(value.hdPath)
-        .then(() => setSetting(value));
-      onDone?.();
+      apiTrezor
+        .setHDPathType(value.hdPath)
+        .then(async () => {
+          setSetting(value);
+        })
+        .finally(() => {
+          onDone?.();
+        });
     },
     [onDone, setSetting],
   );
@@ -64,18 +61,14 @@ export const SettingTrezor: React.FC<{
       return;
     }
 
-    setLoading(true);
-    apiLedger
-      .getInitialAccounts()
-      .then(res => setInitAccounts(res as InitAccounts))
-      .finally(() => setLoading(false));
+    setLoading(false);
+
     setIsLoaded(true);
-  }, [isLoaded, setInitAccounts, setIsLoaded, setSetting]);
+  }, [isLoaded, setIsLoaded, setSetting]);
 
   return (
     <MainContainer
       loading={loading}
-      initAccounts={initAccounts}
       hdPathOptions={hdPathOptions}
       onConfirm={handleConfirm}
       setting={setting}

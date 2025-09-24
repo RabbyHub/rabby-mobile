@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -119,6 +119,18 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   const stepCountRef = React.useRef(
     params.type === KEYRING_TYPE.HdKeyring ? MAX_STEP_COUNT : 1,
   );
+
+  useEffect(() => {
+    const trezorOnLedgerLiveType =
+      params.type === KEYRING_TYPE.TrezorKeyring &&
+      setting.hdPath === LedgerHDPathType.LedgerLive;
+    stepCountRef.current =
+      params.type === KEYRING_TYPE.HdKeyring
+        ? MAX_STEP_COUNT
+        : trezorOnLedgerLiveType
+        ? MAX_ACCOUNT_COUNT
+        : 1;
+  }, [params.type, setting.hdPath]);
 
   const mnemonicKeyringRef = React.useRef<
     ReturnType<typeof apiMnemonic.getKeyringByMnemonic> | undefined
