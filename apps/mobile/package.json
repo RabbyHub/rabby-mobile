@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.36",
+  "version": "0.6.38",
   "private": true,
   "repository": {
     "type": "git",
@@ -17,7 +17,7 @@
     "ensure-git-hooks": "yarn ../../ install-husky",
     "postinstall": "yarn build:deps && yarn build-inpage",
     "ios": "react-native run-ios",
-    "link-assets": "react-native-asset && sh ./scripts/fns.sh cleanup_fonts_assets",
+    "link-assets": "react-native-asset && sh ./scripts/fns.sh reset_builtin_assets",
     "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "lint:commit:fix": "eslint ./src --quiet --fix --ext .js,.jsx,.ts,.tsx --max-warnings=-1",
