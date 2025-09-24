@@ -39,7 +39,7 @@ import AuthButton from '@/components2024/AuthButton';
 import { isAccountSupportDirectSign } from '@/utils/account';
 import { CHAINS_ENUM, formatTokenAmount } from '@debank/common';
 import { PerpBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { findChain } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
@@ -47,6 +47,7 @@ import { Linear } from '@/screens/Transaction/components/SkeletonCard';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { apisPerps } from '@/core/apis';
+import { tokenAmountBn } from '@/screens/Swap/utils';
 
 export interface PerpBridgeHistory {
   from_chain_id: string;
@@ -92,6 +93,7 @@ export const PerpsDepositPopup: React.FC<{
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const { t } = useTranslation();
+  const [gasPrice, setGasPrice] = useState<number>(0);
 
   const { data: _tokenInfo, runAsync: runFetchUsdcToken } = useRequest(
     async () => {
@@ -117,6 +119,88 @@ export const PerpsDepositPopup: React.FC<{
       ensureAbstractPortfolioToken(ARB_USDC_TOKEN_ITEM)
     );
   }, [_tokenInfo, selectedToken]);
+
+  const { value: gasList } = useAsync(async () => {
+    if (!tokenInfo?.chain) {
+      return [];
+    }
+
+    return openapi.gasMarketV2({
+      chainId: tokenInfo.chain,
+    });
+  }, [tokenInfo?.chain]);
+
+  const chainInfo = useMemo(() => {
+    return (
+      findChainByServerID(tokenInfo?.chain || ARB_USDC_TOKEN_SERVER_CHAIN) ||
+      null
+    );
+  }, [tokenInfo?.chain]);
+
+  const tokenIsNativeToken = useMemo(() => {
+    if (tokenInfo && tokenInfo.chain) {
+      return isSameAddress(
+        tokenInfo._tokenId,
+        chainInfo?.nativeTokenAddress || '',
+      );
+    }
+    return false;
+  }, [tokenInfo, chainInfo?.nativeTokenAddress]);
+
+  const nativeTokenDecimals = useMemo(
+    () => chainInfo?.nativeTokenDecimals || 1e18,
+    [chainInfo?.nativeTokenDecimals],
+  );
+
+  const gasLimit = useMemo(
+    () => (chainInfo?.enum === CHAINS_ENUM.ETH ? 1000000 : 2000000),
+    [chainInfo?.enum],
+  );
+
+  const handleMax = React.useCallback(() => {
+    if (tokenInfo) {
+      if (tokenIsNativeToken && gasList) {
+        const checkGasIsEnough = (price: number) => {
+          return new BigNumber(tokenInfo?.raw_amount_hex_str || 0, 16).gte(
+            new BigNumber(gasLimit).times(price),
+          );
+        };
+        const normalPrice =
+          gasList?.find(e => e.level === 'normal')?.price || 0;
+        const isNormalEnough = checkGasIsEnough(normalPrice);
+        if (isNormalEnough) {
+          const val = tokenAmountBn(tokenInfo).minus(
+            new BigNumber(gasLimit)
+              .times(normalPrice)
+              .div(10 ** nativeTokenDecimals),
+          );
+          setUsdValue(
+            val
+              .times(tokenInfo?.price || 0)
+              .decimalPlaces(2, BigNumber.ROUND_DOWN)
+              .toFixed(),
+          );
+          setGasPrice(normalPrice);
+          return;
+        }
+      }
+      setGasPrice(0);
+      setUsdValue(
+        tokenAmountBn(tokenInfo)
+          ?.times(tokenInfo?.price || 0)
+          .decimalPlaces(2, BigNumber.ROUND_DOWN)
+          .toFixed(),
+      );
+    }
+  }, [
+    nativeTokenDecimals,
+    gasList,
+    tokenIsNativeToken,
+    gasLimit,
+    setUsdValue,
+    setGasPrice,
+    tokenInfo,
+  ]);
 
   const buildSendTx = useMemoizedFn((amount: number | string) => {
     const token = ARB_USDC_TOKEN_ITEM;
@@ -284,6 +368,7 @@ export const PerpsDepositPopup: React.FC<{
               value: res.tx.value,
               data: res.tx.data,
               chainId: res.tx.chainId,
+              gasPrice: gasPrice || undefined,
             } as Tx;
             targetTxs.push(bridgeTx);
             setTxs(targetTxs);
@@ -389,6 +474,7 @@ export const PerpsDepositPopup: React.FC<{
   useEffect(() => {
     if (visible) {
       setUsdValue('');
+      setGasPrice(0);
       setSelectedToken(ensureAbstractPortfolioToken(ARB_USDC_TOKEN_ITEM));
     }
   }, [setUsdValue, visible, setSelectedToken]);
@@ -536,13 +622,7 @@ export const PerpsDepositPopup: React.FC<{
               {!usdValue && (
                 <TouchableOpacity
                   style={styles.maxButtonWrapper}
-                  onPress={() => {
-                    setUsdValue(
-                      Number(
-                        (Math.floor(depositMaxUsdValue * 100) / 100).toFixed(2),
-                      ).toString(),
-                    );
-                  }}>
+                  onPress={handleMax}>
                   <Text style={styles.maxButtonText}>MAX</Text>
                 </TouchableOpacity>
               )}
