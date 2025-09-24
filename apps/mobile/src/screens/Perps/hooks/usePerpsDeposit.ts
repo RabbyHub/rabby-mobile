@@ -105,23 +105,27 @@ export const usePerpsDeposit = ({
       const handleFullback = async () => {
         const results: string[] = [];
         for (const tx of currentTxs) {
-          await sendRequest({
-            data: {
-              method: 'eth_sendTransaction',
-              params: [tx],
-              $ctx: {
-                ga: {
-                  category: 'Perps',
-                  source: 'Perps',
-                  trigger: 'Perps',
+          try {
+            const result = await sendRequest({
+              data: {
+                method: 'eth_sendTransaction',
+                params: [tx],
+                $ctx: {
+                  ga: {
+                    category: 'Perps',
+                    source: 'Perps',
+                    trigger: 'Perps',
+                  },
                 },
               },
-            },
-            session: INTERNAL_REQUEST_SESSION,
-            account: currentPerpsAccount,
-          }).then(hash => {
-            results.push(hash);
-          });
+              session: INTERNAL_REQUEST_SESSION,
+              account: currentPerpsAccount,
+            });
+
+            results.push(result);
+          } catch (error) {
+            throw error;
+          }
         }
         const signature = last(results as Array<string>);
         handleSetHistory(signature as string);
