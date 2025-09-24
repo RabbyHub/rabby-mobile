@@ -241,7 +241,8 @@
         "totalApprovedAmount": "當前已批准金額",
         "PurchaseFrom": "購買自",
         "AddToWhitelist": "加入白名單",
-        "RecipientAddress": "收款錢包"
+        "RecipientAddress": "收款錢包",
+        "Simulation Results": "模擬結果"
       },
       "empty": {
         "title": "沒有交易",
@@ -725,7 +726,8 @@
         "token1": "新增代幣 2",
         "receiver": "接收者",
         "token0": "添加 Token 1"
-      }
+      },
+      "gasSetting": "Gas 設定"
     },
     "signTypedData": {
       "signMultiSig": {
@@ -981,7 +983,8 @@
       "duration": "{{duration}} 分鐘",
       "showMore": {
         "source": "Bridge Source",
-        "title": "顯示更多"
+        "title": "顯示更多",
+        "signWarning": "我了解警告並希望繼續"
       },
       "need-to-approve-token-before-bridge": "在橋接之前需要批准代幣",
       "no-route-found": "未找到路線",
@@ -991,7 +994,8 @@
       "loss-tips": "您正在損失 {{usd}}。請嘗試不同的金額。",
       "no-quote-found": "未找到報價。請嘗試其他代幣對。",
       "To": "至",
-      "bridged": "橋接"
+      "bridged": "橋接",
+      "gasFeeTooHight": "Gas 費用高於正常水平。只有在您希望繼續時才可確認。"
     },
     "signFooterBar": {
       "importedByLedger": "透過 Ledger 匯入",
@@ -1123,7 +1127,8 @@
       "historyTitle": "交換記錄",
       "swapped": "已交換",
       "selectChainModalTitle": "選擇鏈",
-      "results": "結果"
+      "results": "結果",
+      "approve": "批准"
     },
     "signText": {
       "title": "簽署文本",
@@ -1708,7 +1713,9 @@
         "applePayFeeDesc": "包含Apple Pay手續費。不支持提現。",
         "googlePayFeeDesc": "包含Google Pay手續費。不支持提款。",
         "paymentAddress": "付款錢包",
-        "inSufficientTip1": "這個錢包的代幣不足，請選擇另一個錢包。"
+        "inSufficientTip1": "這個錢包的代幣不足，請選擇另一個錢包。",
+        "pay": "支付",
+        "applePayFeeDesc1": "包括應用商店費用。不允許提款。"
       },
       "paymentAddressPopup": {
         "balance": "Balance",
@@ -1746,7 +1753,8 @@
         "depositCanceled": "存款已取消",
         "depositFailed": "存款失敗",
         "balance": "當前 GasAccount 餘額：",
-        "title": "使用 Apple Pay 購買"
+        "title": "使用 Apple Pay 購買",
+        "titleApple": "在 App Store 購買"
       },
       "depositSelectPopup": {
         "desc": "支付所有鏈上的 Gas 費用",
@@ -1754,7 +1762,8 @@
         "depositToken": "使用 Token 存款",
         "depositTokenDesc": "無額外費用，即時提現",
         "title": "存入GasAccount",
-        "buyWithDesc": "30% 費用，不可提款"
+        "buyWithDesc": "30% 費用，不可提款",
+        "buyWithApple": "在 App Store 購買"
       },
       "gasAccountList": {
         "balance": "餘額",
@@ -1851,7 +1860,38 @@
         "marketCap": "市值",
         "txns24h": "24小時交易數量",
         "volume24h": "24小時交易量",
-        "totalSupply": "總供應量"
+        "totalSupply": "總供應量",
+        "holderSections": {
+          "tableHeader": {
+            "ratio": "比例",
+            "address": "地址",
+            "position": "位置"
+          },
+          "top10HoldersRatio": "前十大持有者比例",
+          "top100HoldersRatio": "前 100 名持有者比例"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "min": "min",
+            "all": "全部",
+            "volume": "音量",
+            "address": "地址",
+            "sell": "出售",
+            "type": "類型",
+            "hour": "小時",
+            "addresses": "地址",
+            "time": "時間",
+            "tradingCount": "交易次數",
+            "buy": "購買",
+            "qnt": "Qnt",
+            "price": "價格",
+            "value": "值"
+          }
+        },
+        "details": "詳情",
+        "empty": "無資料",
+        "activity": "活動",
+        "summary": "摘要資料"
       }
     },
     "customTestnet": {
@@ -1894,7 +1934,8 @@
         "txSending": "發送簽名請求",
         "txSigned": "已簽名。創建交易",
         "txSendings": "發送簽名請求（{{current}}/{{total}}）"
-      }
+      },
+      "fixedModeText": "固定模式：始終使用您的自定義 gas 設定"
     },
     "addChain": {
       "title": "添加自定義網絡到 Rabby",
@@ -2168,6 +2209,11 @@
         "refresh": "刷新",
         "disconnect": "斷開連接",
         "favorite": "最愛"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "立即加入",
+        "title": "Hyperliquid 介紹計劃",
+        "desc": "現在使用 Rabby 的代碼加入，獲得 <1>4% 折扣</1> 於你的 Hyperliquid 費用。"
       }
     },
     "browserManage": {
@@ -2200,7 +2246,10 @@
     "defiDetail": {
       "viewSiteInApp": "在 Dapp 中查看",
       "viewSiteInWebsite": "在網站中查看",
-      "appChain": "在 {{chain}} 帳戶"
+      "appChain": "在 {{chain}} 帳戶",
+      "dappActions": {
+        "queueDescription": "當前的提取將進入等待隊列。一旦處理完成，您可以將其提取到您的錢包。"
+      }
     },
     "component": {
       "ChainSelector": {

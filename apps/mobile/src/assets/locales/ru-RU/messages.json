@@ -177,7 +177,8 @@
         "WillReceive": "Получите: ≈ {{token}}",
         "PurchaseFrom": "Приобретено от",
         "AddToWhitelist": "Добавить вWhitelist",
-        "RecipientAddress": "Кошелек получателя"
+        "RecipientAddress": "Кошелек получателя",
+        "Simulation Results": "Результаты симуляции"
       },
       "empty": {
         "title": "Нет транзакций",
@@ -690,7 +691,8 @@
         "poolPrice": "Цена пула",
         "receiver": "Получатель",
         "title": "Добавить ликвидность"
-      }
+      },
+      "gasSetting": "Настройки газа"
     },
     "sendNFT": {
       "sendButton": "Отправить",
@@ -908,12 +910,14 @@
       "no-quote-found": "Котировка не найдена. Пожалуйста, попробуйте другие пары токенов.",
       "showMore": {
         "source": "Источник Bridge",
-        "title": "Показать больше"
+        "title": "Показать больше",
+        "signWarning": "Я понимаю уведомление и хочу продолжить"
       },
       "no-route-found": "Маршрут не найден",
       "value": "Баланс",
       "estimate": "Оценка:",
-      "bridged": "Подключено"
+      "bridged": "Подключено",
+      "gasFeeTooHight": "Плата за газ выше нормы. Подтвердите только если хотите продолжить."
     },
     "manageAddress": {
       "enterThePassphrase": "Введите кодовую фразу",
@@ -1061,7 +1065,8 @@
       "swapped": "Обменяно",
       "historyTitle": "История свапов",
       "selectChainModalTitle": "Выберите цепь",
-      "results": "Результаты"
+      "results": "Результаты",
+      "approve": "Одобрить"
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -1648,7 +1653,8 @@
         "txSending": "Отправка запроса на подпись",
         "txSigned": "Подписано. Создание транзакции",
         "txSendings": "Отправка запроса на подпись ({{current}}/{{total}})"
-      }
+      },
+      "fixedModeText": "Фиксированный режим: Всегда используйте вашу собственную настройку газа"
     },
     "receiveAddressList": {
       "selectChainTitle": "Выберите Chain",
@@ -1788,7 +1794,9 @@
         "applePayFeeDesc": "Включает комиссию Apple Pay. Без снятий.",
         "googlePayFeeDesc": "Включает комиссию Google Pay. Без выводов",
         "paymentAddress": "Платежный кошелек",
-        "inSufficientTip1": "Этот кошелек не имеет достаточно токенов. Пожалуйста, выберите другой кошелек."
+        "inSufficientTip1": "Этот кошелек не имеет достаточно токенов. Пожалуйста, выберите другой кошелек.",
+        "pay": "Оплатить",
+        "applePayFeeDesc1": "Включает плату за приложение. Выводы не производятся."
       },
       "paymentAddressPopup": {
         "confirm": "Подтвердить",
@@ -1829,7 +1837,8 @@
         "depositCanceled": "Депозит отменен",
         "title": "Купить с Apple Pay",
         "titleAndroid": "Купить через Google Pay",
-        "balance": "Текущий баланс GasAccount: "
+        "balance": "Текущий баланс GasAccount: ",
+        "titleApple": "Купить в App Store"
       },
       "depositSelectPopup": {
         "title": "Депозит на GasAccount",
@@ -1837,7 +1846,8 @@
         "desc": "Оплата Gas Fees на всех цепочках",
         "depositToken": "Депозит с Token",
         "buyWithDesc": "30% комиссия, без выводов",
-        "depositTokenDesc": "Без дополнительных комиссий, мгновенные выводы"
+        "depositTokenDesc": "Без дополнительных комиссий, мгновенные выводы",
+        "buyWithApple": "Купить в App Store"
       },
       "gasAccountList": {
         "gasAccountBalance": "Баланс GasAccount",
@@ -1930,7 +1940,38 @@
         "marketCap": "Рыночная капитализация",
         "totalSupply": "Общее предложение",
         "txns24h": "24h Txns",
-        "volume24h": "24h Объем"
+        "volume24h": "24h Объем",
+        "holderSections": {
+          "tableHeader": {
+            "address": "Адрес",
+            "ratio": "Соотношение",
+            "position": "Позиция"
+          },
+          "top10HoldersRatio": "Топ 10 Соотношение Хранителей",
+          "top100HoldersRatio": "Соотношение топ-100 держателей"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "sell": "Продажа",
+            "tradingCount": "Количество сделок",
+            "min": "мин",
+            "time": "Время",
+            "hour": "Час",
+            "volume": "Объем",
+            "address": "Адрес",
+            "addresses": "Адреса",
+            "buy": "Купить",
+            "all": "Все",
+            "type": "Тип",
+            "qnt": "Qnt",
+            "value": "Значение",
+            "price": "Цена"
+          }
+        },
+        "activity": "Активность",
+        "summary": "Сводные данные",
+        "details": "Детали",
+        "empty": "Нет данных"
       }
     },
     "settingModal": {
@@ -2111,6 +2152,11 @@
         "contentModeDesktop": "Запросить десктопную версию сайта",
         "favorite": "Избранное",
         "refresh": "Обновить"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "Присоединяйтесь сейчас",
+        "title": "Программа рефералов Hyperliquid",
+        "desc": "Присоединяйтесь сейчас, используя код Rabby, чтобы получить <1>скидку 4%</1> на ваши сборы Hyperliquid."
       }
     },
     "browserManage": {
@@ -2143,7 +2189,10 @@
     "defiDetail": {
       "viewSiteInApp": "Посмотреть в Dapp",
       "viewSiteInWebsite": "Просмотреть на сайте",
-      "appChain": "На {{chain}} аккаунте"
+      "appChain": "На {{chain}} аккаунте",
+      "dappActions": {
+        "queueDescription": "Текущий вывод будет помещен в очередь ожидания. После обработки его можно будет вывести на ваш кошелек."
+      }
     },
     "component": {
       "ChainSelector": {
