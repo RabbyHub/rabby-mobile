@@ -48,6 +48,8 @@ import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { apisPerps } from '@/core/apis';
 import { tokenAmountBn } from '@/screens/Swap/utils';
+import { AccountSummary } from '@/hooks/perps/usePerpsStore';
+import { useSelectedToken } from '@/screens/Perps/hooks/usePerpsPopupState';
 
 export interface PerpBridgeHistory {
   from_chain_id: string;
@@ -59,14 +61,23 @@ export interface PerpBridgeHistory {
 
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
+  accountSummary?: AccountSummary | null;
   visible?: boolean;
-  onClose?(): void;
+  onClose(): void;
+  showSelectTokenPopup(): void;
   onDeposit?(
     txs: Tx[],
     amount: string,
     cacheBridgeHistory?: PerpBridgeHistory,
   ): void;
-}> = ({ visible, onClose, account, onDeposit }) => {
+}> = ({
+  visible,
+  onClose,
+  account,
+  onDeposit,
+  accountSummary,
+  showSelectTokenPopup,
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -83,9 +94,7 @@ export const PerpsDepositPopup: React.FC<{
   const [isShowTokenPopup, setIsShowTokenPopup] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [isShowModal, setIsShowModal] = useState(false);
-  const [selectedToken, setSelectedToken] = useState<AbstractPortfolioToken>(
-    ensureAbstractPortfolioToken(ARB_USDC_TOKEN_ITEM),
-  );
+  const [selectedToken, setSelectedToken] = useSelectedToken();
   const [quoteLoading, setQuoteLoading] = useState<boolean>(true);
   const [cacheBridgeHistory, setCacheBridgeHistory] =
     useState<PerpBridgeHistory | null>(null);
@@ -119,6 +128,10 @@ export const PerpsDepositPopup: React.FC<{
       ensureAbstractPortfolioToken(ARB_USDC_TOKEN_ITEM)
     );
   }, [_tokenInfo, selectedToken]);
+
+  useEffect(() => {
+    setUsdValue('');
+  }, [selectedToken, setUsdValue]);
 
   const { value: gasList } = useAsync(async () => {
     if (!tokenInfo?.chain) {
@@ -174,12 +187,11 @@ export const PerpsDepositPopup: React.FC<{
               .times(normalPrice)
               .div(10 ** nativeTokenDecimals),
           );
-          setUsdValue(
-            val
-              .times(tokenInfo?.price || 0)
-              .decimalPlaces(2, BigNumber.ROUND_DOWN)
-              .toFixed(),
-          );
+          const valString = val
+            .times(tokenInfo?.price || 0)
+            .decimalPlaces(2, BigNumber.ROUND_DOWN)
+            .toFixed();
+          setUsdValue(valString);
           setGasPrice(normalPrice);
           return;
         }
@@ -431,8 +443,12 @@ export const PerpsDepositPopup: React.FC<{
     );
   }, [selectedToken]);
 
-  const { value: isNeedDepositBeforeApprove } = useAsync(async () => {
+  const { value: isMissingRole } = useAsync(async () => {
     if (!account?.address || !visible) {
+      return false;
+    }
+    if (Number(accountSummary?.accountValue)) {
+      // has account value no need fetch api to check
       return false;
     }
     const sdk = apisPerps.getPerpsSDK();
@@ -443,8 +459,8 @@ export const PerpsDepositPopup: React.FC<{
   const estReceiveUsdValue = useMemo(() => {
     const value =
       (bridgeQuote?.to_token_amount || 0) * ARB_USDC_TOKEN_ITEM.price;
-    return isNeedDepositBeforeApprove ? value - 1 : value;
-  }, [bridgeQuote, isNeedDepositBeforeApprove]);
+    return isMissingRole ? value - 1 : value;
+  }, [bridgeQuote, isMissingRole]);
 
   const { runAsync: handleDeposit, loading } = useRequest(
     async () => {
@@ -475,9 +491,8 @@ export const PerpsDepositPopup: React.FC<{
     if (visible) {
       setUsdValue('');
       setGasPrice(0);
-      setSelectedToken(ensureAbstractPortfolioToken(ARB_USDC_TOKEN_ITEM));
     }
-  }, [setUsdValue, visible, setSelectedToken]);
+  }, [setUsdValue, visible]);
 
   const depositMaxUsdValue = useMemo(() => {
     return Number((tokenInfo?.amount || 0) * (tokenInfo?.price || 0));
@@ -630,7 +645,7 @@ export const PerpsDepositPopup: React.FC<{
               <TouchableOpacity
                 onPress={() => {
                   Keyboard.dismiss();
-                  setIsShowTokenPopup(true);
+                  showSelectTokenPopup();
                 }}>
                 <View style={styles.tokenContainer}>
                   <AssetAvatar
@@ -683,19 +698,23 @@ export const PerpsDepositPopup: React.FC<{
           )}
         </BottomSheetView>
       </AppBottomSheetModal>
-      <PerpsSelectTokenPopup
+      {/* <PerpsSelectTokenPopup
         account={account}
         visible={isShowTokenPopup}
         onClose={() => {
+          if (!selectedToken) {
+            onClose?.();
+          }
+
           setIsShowTokenPopup(false);
         }}
         onSelect={async token => {
           setUsdValue('');
+          setSelectedToken(token);
           if (
             token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
             isSameAddress(token._tokenId, ARB_USDC_TOKEN_ID)
           ) {
-            setSelectedToken(token);
             setIsShowTokenPopup(false);
             return;
           }
@@ -708,10 +727,8 @@ export const PerpsDepositPopup: React.FC<{
           if (res?.success) {
             // bridge token with liFi dex
             setIsShowTokenPopup(false);
-            setSelectedToken(token);
             // setClickLoading(false);
           } else {
-            setSelectedToken(token);
             setIsShowModal(true);
           }
         }}
@@ -727,7 +744,7 @@ export const PerpsDepositPopup: React.FC<{
           setIsShowTokenPopup(false);
           onClose?.();
         }}
-      />
+      /> */}
     </>
   );
 };
