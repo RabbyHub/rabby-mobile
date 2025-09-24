@@ -38,6 +38,9 @@ import { formatUsdValueKMB } from '../../utils/price';
 import { ellipsisAddress } from '@/utils/address';
 import { ExchangeLogos } from './ExchangeLogos';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { formatNetworth } from '@/utils/math';
+import BigNumber from 'bignumber.js';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -81,6 +84,7 @@ export const TokenRow = memo(
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
+    const { currency } = useCurrency();
     const percentColor = useMemo(() => {
       if (
         !data?.price_24h_change ||
@@ -184,7 +188,13 @@ export const TokenRow = memo(
                 (data._usdValue || 0) > 0 &&
                 styles.exclude,
             ]}>
-            {data._usdValueStr}
+            {formatNetworth(
+              new BigNumber(data._usdValue || 0)
+                .times(currency.usd_rate)
+                .toNumber(),
+              false,
+              currency.symbol,
+            )}
           </Text>
           {data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
             <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
