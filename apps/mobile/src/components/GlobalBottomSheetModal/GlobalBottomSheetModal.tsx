@@ -106,11 +106,12 @@ export const GlobalBottomSheetModal = () => {
         };
         modalRefs.current[id] = newModal.ref;
 
+        setTimeout(() => {
+          handlePresent(id);
+        }, 100);
+
         return [...prev, newModal];
       });
-      setTimeout(() => {
-        handlePresent(id);
-      }, 0);
     },
     [getApproval, handlePresent],
   );
@@ -187,6 +188,8 @@ export const GlobalBottomSheetModal = () => {
 
   const { panResponder } = useRefreshAutoLockPanResponder();
   const { androidOnlyBottomOffset } = useSafeSizes();
+
+  console.log('modals', modals);
 
   return (
     <View>
