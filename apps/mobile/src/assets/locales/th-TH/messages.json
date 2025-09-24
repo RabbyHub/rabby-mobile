@@ -295,7 +295,8 @@
         "WillReceive": "จะได้รับ: ≈ {{token}}",
         "totalApprovedAmount": "จำนวนเงินที่อนุมัติในปัจจุบัน",
         "AddToWhitelist": "เพิ่มลงในรายการขาว",
-        "RecipientAddress": "กระเป๋าเงินผู้รับ"
+        "RecipientAddress": "กระเป๋าเงินผู้รับ",
+        "Simulation Results": "ผลการจำลอง"
       },
       "empty": {
         "desc": "ไม่พบธุรกรรมบน<1>supported chains</1>",
@@ -852,7 +853,8 @@
         "poolPrice": "ราคา POOL",
         "priceDiff": "ราคาแตกต่าง",
         "token1": "เพิ่มโทเคน 2"
-      }
+      },
+      "gasSetting": "การตั้งค่า Gas"
     },
     "signFooterBar": {
       "importedByLedger": "นำเข้าโดย Ledger",
@@ -1040,7 +1042,8 @@
       "gas-x-price": "ราคาแก๊ส: {{price}} Gwei.",
       "showMore": {
         "source": "Bridge Source",
-        "title": "แสดงเพิ่มเติม"
+        "title": "แสดงเพิ่มเติม",
+        "signWarning": "ฉันเข้าใจการแจ้งเตือนและต้องการดำเนินการต่อ"
       },
       "gas-fee": "GasFee: {{gasUsed}}",
       "need-to-approve-token-before-bridge": "ต้องอนุมัติโทเค็นก่อนทำการ bridge",
@@ -1051,7 +1054,8 @@
       "history": "Bridge history",
       "est-payment": "ประมาณการจ่าย:",
       "no-quote-found": "ไม่มีการเสนอราคา กรุณาลองคู่โทเค็นอื่น",
-      "bridged": "Bridged"
+      "bridged": "Bridged",
+      "gasFeeTooHight": "ค่าแก๊สสูงกว่าปกติ โปรดยืนยันหากคุณต้องการดำเนินการต่อ"
     },
     "dashboard": {
       "home": {
@@ -1179,7 +1183,8 @@
       "historyTitle": "ประวัติการ Swap",
       "swapped": "สลับแล้ว",
       "selectChainModalTitle": "เลือกโซ่",
-      "results": "ผลลัพธ์"
+      "results": "ผลลัพธ์",
+      "approve": "อนุมัติ"
     },
     "nextComponent": {
       "addAddress": {
@@ -1775,7 +1780,8 @@
         "txSendings": "กำลังส่งคำขอลงนาม ({{current}}/{{total}})",
         "txSending": "กำลังส่งคำขอลงนาม",
         "txSigned": "ลงนามแล้ว กำลังสร้างธุรกรรม"
-      }
+      },
+      "fixedModeText": "โหมดคงที่: ใช้การตั้งค่าก๊าซที่กำหนดเองของคุณเสมอ"
     },
     "singleHome": {
       "sectionHeader": {
@@ -1840,7 +1846,9 @@
         "googlePayFeeDesc": "รวมค่าธรรมเนียม Google Pay ไม่มีการถอน",
         "applePayFeeDesc": "รวมค่าธรรมเนียม Apple Pay ไม่มีการถอนออก",
         "paymentAddress": "กระเป๋าเงินการชำระเงิน",
-        "inSufficientTip1": "กระเป๋าเงินนี้มีโทเค็นไม่เพียงพอ กรุณาเลือกกระเป๋าเงินใบอื่น"
+        "inSufficientTip1": "กระเป๋าเงินนี้มีโทเค็นไม่เพียงพอ กรุณาเลือกกระเป๋าเงินใบอื่น",
+        "applePayFeeDesc1": "รวมค่าธรรมเนียม App Store ไม่มีการถอนเงิน。",
+        "pay": "จ่าย"
       },
       "paymentAddressPopup": {
         "balance": "ยอดเงิน",
@@ -1881,7 +1889,8 @@
         "depositCanceled": "เงินฝากถูกยกเลิก",
         "balance": "ยอดคงเหลือ GasAccount ปัจจุบัน:",
         "title": "ซื้อด้วย Apple Pay",
-        "titleAndroid": "ซื้อด้วย Google Pay"
+        "titleAndroid": "ซื้อด้วย Google Pay",
+        "titleApple": "ซื้อใน App Store"
       },
       "depositSelectPopup": {
         "title": "ฝากไปยัง GasAccount",
@@ -1889,7 +1898,8 @@
         "buyWithDesc": "ค่าธรรมเนียม 30% ไม่มีการถอน",
         "depositToken": "ฝากด้วย Token",
         "buyWith": "ซื้อด้วย",
-        "desc": "จ่ายค่าธรรมเนียม Gas บนทุกเชน"
+        "desc": "จ่ายค่าธรรมเนียม Gas บนทุกเชน",
+        "buyWithApple": "ซื้อใน App Store"
       },
       "gasAccountList": {
         "address": "ที่อยู่",
@@ -2019,7 +2029,38 @@
         "txns24h": "24h Txns",
         "marketCap": "มูลค่าตลาด",
         "totalSupply": "การจัดหาโดยรวม",
-        "volume24h": "24h ปริมาณ"
+        "volume24h": "24h ปริมาณ",
+        "holderSections": {
+          "tableHeader": {
+            "position": "ตำแหน่ง",
+            "address": "ที่อยู่",
+            "ratio": "อัตราส่วน"
+          },
+          "top100HoldersRatio": "สัดส่วนผู้ถือ 100 อันดับแรก",
+          "top10HoldersRatio": "อัตราส่วนผู้ถือ 10 อันดับแรก"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "time": "เวลา",
+            "addresses": "ที่อยู่",
+            "address": "ที่อยู่",
+            "min": "min",
+            "buy": "ซื้อ",
+            "volume": "ปริมาณ",
+            "all": "ทั้งหมด",
+            "hour": "ชั่วโมง",
+            "sell": "ขาย",
+            "type": "ประเภท",
+            "tradingCount": "จำนวนการซื้อขาย",
+            "qnt": "Qnt",
+            "price": "ราคา",
+            "value": "ค่า"
+          }
+        },
+        "details": "รายละเอียด",
+        "summary": "ข้อมูลสรุป",
+        "activity": "กิจกรรม",
+        "empty": "ไม่มีข้อมูล"
       }
     },
     "setting": {
@@ -2229,6 +2270,11 @@
         "favorite": "รายการโปรด",
         "disconnect": "ตัดการเชื่อมต่อ",
         "contentModeDesktop": "ขอเว็บไซต์เดสก์ท็อป"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "เข้าร่วมตอนนี้",
+        "title": "โปรแกรมแนะนำ Hyperliquid",
+        "desc": "เข้าร่วมตอนนี้โดยใช้รหัสของ Rabby เพื่อรับส่วนลด <1>4%</1> สำหรับค่าธรรมเนียม Hyperliquid ของคุณ。"
       }
     },
     "browserManage": {
@@ -2261,7 +2307,10 @@
     "defiDetail": {
       "viewSiteInWebsite": "ดูในเว็บไซต์",
       "viewSiteInApp": "ดูใน Dapp",
-      "appChain": "บนบัญชี {{chain}}"
+      "appChain": "บนบัญชี {{chain}}",
+      "dappActions": {
+        "queueDescription": "การถอนปัจจุบันจะเข้าสู่คิวรอ เมื่อดำเนินการเสร็จสิ้น สามารถถอนเข้าสู่กระเป๋าของคุณได้"
+      }
     },
     "component": {
       "ChainSelector": {

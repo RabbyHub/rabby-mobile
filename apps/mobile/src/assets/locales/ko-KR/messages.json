@@ -81,7 +81,8 @@
         "Collection": "컬렉션",
         "Name": "이름",
         "AddToWhitelist": "화이트리스트에 추가",
-        "RecipientAddress": "수신 지갑"
+        "RecipientAddress": "수신 지갑",
+        "Simulation Results": "시뮬레이션 결과"
       },
       "empty": {
         "desc": "<1> 지원되는 체인 </1>에서 거래를 찾을 수 없습니다.",
@@ -628,7 +629,8 @@
         "token0": "토큰 1 추가",
         "priceDiff": "가격 차이",
         "title": "유동성 추가"
-      }
+      },
+      "gasSetting": "가스 설정"
     },
     "swap": {
       "no-transaction-records": "거래 기록 없음",
@@ -690,7 +692,8 @@
       "swapped": "교환됨",
       "historyTitle": "스왑 기록",
       "selectChainModalTitle": "체인을 선택하십시오",
-      "results": "결과"
+      "results": "결과",
+      "approve": "승인"
     },
     "activities": {
       "signedTx": {
@@ -796,7 +799,8 @@
       "estimate": "예상:",
       "showMore": {
         "source": "브리지 소스",
-        "title": "더 보기"
+        "title": "더 보기",
+        "signWarning": "알림을 이해했으며 계속 진행하겠습니다."
       },
       "From": "부터",
       "bridgeFrom": "브리지에서",
@@ -814,7 +818,8 @@
       "duration": "{{duration}} 분",
       "via-bridge": "{{bridge}} 통해",
       "To": "에게",
-      "bridged": "브리징됨"
+      "bridged": "브리징됨",
+      "gasFeeTooHight": "가스 요금이 정상보다 높습니다. 진행하시려면 확인하십시오."
     },
     "manageAddress": {
       "confirm": "확인",
@@ -1336,7 +1341,8 @@
         "txSending": "서명 요청 전송",
         "txCreated": "트랜잭션 생성됨",
         "txSendings": "서명 요청 전송 중({{current}}/{{total}})"
-      }
+      },
+      "fixedModeText": "고정 모드: 항상 사용자 정의 가스 설정 사용"
     },
     "addChain": {
       "desc": "Rabby는 사용자 정의 네트워크의 보안을 확인할 수 없습니다. 신뢰할 수 있는 네트워크만 추가하십시오.",
@@ -1386,7 +1392,9 @@
         "applePayFeeDesc": "Apple Pay 수수료가 포함됩니다. 인출 불가",
         "googlePayFeeDesc": "Google Pay 수수료가 포함됩니다. 인출 불가",
         "paymentAddress": "결제 지갑",
-        "inSufficientTip1": "이 지갑에는 충분한 토큰이 없습니다. 다른 지갑을 선택하세요."
+        "inSufficientTip1": "이 지갑에는 충분한 토큰이 없습니다. 다른 지갑을 선택하세요.",
+        "pay": "지불하다",
+        "applePayFeeDesc1": "앱 스토어 수수료가 포함되어 있습니다. 출금이 없습니다."
       },
       "paymentAddressPopup": {
         "balance": "잔액",
@@ -1427,7 +1435,8 @@
         "titleAndroid": "Google Pay로 구매하기",
         "title": "Apple Pay로 구매하기",
         "depositCanceled": "입금 취소됨",
-        "balance": "현재 GasAccount 잔액: "
+        "balance": "현재 GasAccount 잔액: ",
+        "titleApple": "앱 스토어에서 구매하세요"
       },
       "depositSelectPopup": {
         "desc": "모든 체인의 가스 요금 지불",
@@ -1435,7 +1444,8 @@
         "depositToken": "토큰으로 입금하기",
         "buyWithDesc": "30% 수수료, 출금 불가",
         "title": "GasAccount에 입금하기",
-        "buyWith": "로 구매하기"
+        "buyWith": "로 구매하기",
+        "buyWithApple": "앱 스토어에서 구매"
       },
       "gasAccountList": {
         "address": "주소",
@@ -1811,7 +1821,38 @@
         "volume24h": "24시간 거래량",
         "txns24h": "24시간 거래",
         "holders": "홀더",
-        "totalSupply": "총 공급량"
+        "totalSupply": "총 공급량",
+        "holderSections": {
+          "tableHeader": {
+            "ratio": "비율",
+            "address": "주소",
+            "position": "포지션"
+          },
+          "top100HoldersRatio": "상위 100 보유자 비율",
+          "top10HoldersRatio": "상위 10 보유자 비율"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "hour": "시간",
+            "min": "최소",
+            "time": "시간",
+            "tradingCount": "거래 수",
+            "buy": "구입하기",
+            "addresses": "주소",
+            "address": "주소",
+            "type": "유형",
+            "all": "모두",
+            "sell": "판매",
+            "volume": "볼륨",
+            "price": "가격",
+            "qnt": "Qnt",
+            "value": "값"
+          }
+        },
+        "details": "세부 정보",
+        "empty": "데이터 없음",
+        "activity": "활동",
+        "summary": "요약 데이터"
       }
     },
     "setting": {
@@ -2021,6 +2062,11 @@
         "disconnect": "연결 해제",
         "favorite": "즐겨찾기",
         "contentModeDesktop": "데스크톱 사이트 요청"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "지금 가입하세요",
+        "title": "하이퍼리퀴드 추천 프로그램",
+        "desc": "지금 Rabby의 코드를 사용하여 Hyperliquid 수수료에서 <1>4% 할인</1>을 받으세요."
       }
     },
     "browserManage": {
@@ -2053,7 +2099,10 @@
     "defiDetail": {
       "viewSiteInWebsite": "웹사이트에서 보기",
       "viewSiteInApp": "Dapp에서 보기",
-      "appChain": "{{chain}} 계좌에서"
+      "appChain": "{{chain}} 계좌에서",
+      "dappActions": {
+        "queueDescription": "현재 출금은 대기 Queue에 들어갑니다. 처리 후 귀하의 Wallet으로 출금할 수 있습니다."
+      }
     },
     "component": {
       "ChainSelector": {

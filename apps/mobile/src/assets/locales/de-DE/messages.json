@@ -379,7 +379,8 @@
         "WillReceive": "Erhalten wird: ≈ {{token}}",
         "BuyAgain": "Erneut kaufen",
         "AddToWhitelist": "Zur Whitelist hinzufügen",
-        "RecipientAddress": "Empfänger-Wallet"
+        "RecipientAddress": "Empfänger-Wallet",
+        "Simulation Results": "Simulations Ergebnisse"
       },
       "empty": {
         "title": "Keine Transaktionen",
@@ -803,7 +804,8 @@
         "priceDiff": "Preis-Diff",
         "receiver": "Empfänger",
         "marketPrice": "Marktpreis"
-      }
+      },
+      "gasSetting": "Gas-Einstellungen"
     },
     "sendNFT": {
       "sendButton": "Senden",
@@ -1179,7 +1181,8 @@
       "swapped": "Getauscht",
       "historyTitle": "Tauschhistorie",
       "selectChainModalTitle": "Kette auswählen",
-      "results": "Ergebnisse"
+      "results": "Ergebnisse",
+      "approve": "Genehmigen"
     },
     "bridge": {
       "liquidity": "Liquidität",
@@ -1195,7 +1198,8 @@
       "To": "Zu",
       "showMore": {
         "source": "Bridge Source",
-        "title": "Mehr anzeigen"
+        "title": "Mehr anzeigen",
+        "signWarning": "Ich verstehe die Warnung und möchte fortfahren"
       },
       "the-following-bridge-route-are-found": "Gefundene folgende Kurse",
       "Pending": "Ausstehend",
@@ -1218,7 +1222,8 @@
       "est-difference": "Geschätzter Unterschied:",
       "duration": "{{duration}} Min.",
       "no-quote": "Kein Angebot",
-      "bridged": "Überbrückt"
+      "bridged": "Überbrückt",
+      "gasFeeTooHight": "Die Gasgebühren sind höher als normal. Bestätigen Sie nur, wenn Sie fortfahren möchten."
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -1896,7 +1901,9 @@
         "googlePayFeeDesc": "Enthält eine Google Pay-Gebühr. Keine Abhebungen",
         "applePayFeeDesc": "Enthält eine Apple Pay Gebühr. Keine Abhebungen",
         "paymentAddress": "Zahlungs-Wallet",
-        "inSufficientTip1": "Diese Wallet hat nicht genügend Tokens. Bitte wählen Sie eine andere Wallet."
+        "inSufficientTip1": "Diese Wallet hat nicht genügend Tokens. Bitte wählen Sie eine andere Wallet.",
+        "pay": "Zahlen",
+        "applePayFeeDesc1": "Beinhaltet eine Gebühr für den App Store. Keine Abhebungen."
       },
       "paymentAddressPopup": {
         "confirm": "Bestätigen",
@@ -1937,7 +1944,8 @@
         "balance": "Aktuelles GasAccount-Guthaben:",
         "depositFailed": "Einzahlung fehlgeschlagen",
         "depositCanceled": "Einzahlung abgebrochen",
-        "title": "Mit Apple Pay kaufen"
+        "title": "Mit Apple Pay kaufen",
+        "titleApple": "In App Store kaufen"
       },
       "depositSelectPopup": {
         "depositToken": "Mit Token einzahlen",
@@ -1945,7 +1953,8 @@
         "buyWith": "Kaufen mit",
         "desc": "Zahlen Sie Gasgebühren auf allen Chains",
         "buyWithDesc": "30 % Gebühr, keine Abhebungen",
-        "depositTokenDesc": "Keine zusätzlichen Gebühren, sofortige Auszahlungen"
+        "depositTokenDesc": "Keine zusätzlichen Gebühren, sofortige Auszahlungen",
+        "buyWithApple": "Im App Store kaufen"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount-Guthaben",
@@ -2067,7 +2076,38 @@
         "totalSupply": "Gesamtvorrat",
         "volume24h": "24h Volumen",
         "marketCap": "Marktkapitalisierung",
-        "holders": "Inhaber"
+        "holders": "Inhaber",
+        "holderSections": {
+          "tableHeader": {
+            "ratio": "Verhältnis",
+            "address": "Adresse",
+            "position": "Position"
+          },
+          "top10HoldersRatio": "Top 10 Halter Anteil",
+          "top100HoldersRatio": "Top 100 Holders Verhältnis"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "min": "min",
+            "address": "Adresse",
+            "time": "Zeit",
+            "sell": "Verkaufen",
+            "hour": "Stunde",
+            "buy": "Kaufen",
+            "all": "Alle",
+            "tradingCount": "Handelsanzahl",
+            "volume": "Volumen",
+            "addresses": "Adressen",
+            "type": "Typ",
+            "qnt": "Qnt",
+            "price": "Preis",
+            "value": "Wert"
+          }
+        },
+        "empty": "Keine Daten",
+        "summary": "Zusammenfassungsdaten",
+        "activity": "Aktivität",
+        "details": "Details"
       }
     },
     "setting": {
@@ -2106,7 +2146,8 @@
         "txSending": "Signaturanfrage senden",
         "txSigned": "Signiert. Transaktion wird erstellt",
         "txCreated": "Transaktion erstellt"
-      }
+      },
+      "fixedModeText": "Festgelegter Modus: Verwenden Sie immer Ihre benutzerdefinierte Gas-Einstellung"
     },
     "customTestnet": {
       "currency": "Währung",
@@ -2319,6 +2360,11 @@
         "favorite": "Favorit",
         "contentModeMobile": "Mobile-Seite anfordern",
         "refresh": "Aktualisieren"
+      },
+      "HyperliquidInvitePopup": {
+        "title": "Hyperliquid Empfehlungsprogramm",
+        "btn": "Jetzt beitreten",
+        "desc": "Tritt jetzt mit dem Code von Rabby bei, um einen <1>4% Rabatt</1> auf deine Hyperliquid-Gebühren zu erhalten."
       }
     },
     "browserManage": {
@@ -2351,7 +2397,10 @@
     "defiDetail": {
       "viewSiteInApp": "In Dapp anzeigen",
       "viewSiteInWebsite": "Auf der Website ansehen",
-      "appChain": "Auf {{chain}} Konto"
+      "appChain": "Auf {{chain}} Konto",
+      "dappActions": {
+        "queueDescription": "Der aktuelle Abhebungsantrag wird in eine Warteschlange eingeordnet. Sobald er bearbeitet wurde, kann er an Ihre Wallet abgehoben werden."
+      }
     },
     "component": {
       "ChainSelector": {
