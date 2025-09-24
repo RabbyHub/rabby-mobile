@@ -1721,7 +1721,9 @@
         "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
         "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals",
         "googlePayFeeDesc": "Includes a Google Pay fee. No withdrawals",
-        "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals"
+        "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals",
+        "applePayFeeDesc1": "Includes an App Store fee. No withdrawls.",
+        "pay": "Pay"
       },
       "paymentAddressPopup": {
         "title": "Select Payment Wallet",
@@ -1766,7 +1768,8 @@
         "titleAndroid": "Buy with Google Pay",
         "balance": "Current GasAccount Balance: ",
         "depositFailed": "Deposit Failed",
-        "depositCanceled": "Deposit Canceled"
+        "depositCanceled": "Deposit Canceled",
+        "titleApple": "Buy in App Store"
       },
       "depositSelectPopup": {
         "title": "Deposit to GasAccount",
@@ -1774,7 +1777,8 @@
         "depositToken": "Deposit with Token",
         "depositTokenDesc": "No extra fee, instant withdrawals",
         "buyWith": "Buy with",
-        "buyWithDesc": "30% fee, no withdrawals"
+        "buyWithDesc": "30% fee, no withdrawals",
+        "buyWithApple": "Buy in App Store"
       },
       "switchAccount": "Switch GasAccount",
       "gasAccountList": {
