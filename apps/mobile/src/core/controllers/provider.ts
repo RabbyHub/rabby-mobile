@@ -263,6 +263,7 @@ class ProviderController extends BaseController {
       params,
       chainId: chainServerId,
     });
+    console.debug('[feat] cache', cache);
     if (cache) {
       return cache;
     }

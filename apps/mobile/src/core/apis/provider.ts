@@ -231,7 +231,7 @@ export const getERC20Allowance = async (
   const allowance = await requestETHRpc(
     {
       method: 'eth_call',
-      params: [{ to: erc20Address, data }, 'latest'],
+      params: [{ to: erc20Address, data }],
     },
     chainServerId,
     account,

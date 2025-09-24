@@ -41,7 +41,8 @@
     "readable-stream": "3.6.2",
     "@safe-global/types-kit": "1.0.4",
     "@ledgerhq/react-native-hw-transport-ble/react-native-ble-plx": "3.1.2",
-    "@onekeyfe/hd-transport-react-native/@onekeyfe/react-native-ble-plx": "npm:react-native-ble-plx@3.1.2"
+    "@onekeyfe/hd-transport-react-native/@onekeyfe/react-native-ble-plx": "npm:react-native-ble-plx@3.1.2",
+    "@ethersproject/providers": "5.7.2"
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
@@ -51,6 +52,7 @@
     "@ethereumjs/common": "4.2.0",
     "@ethereumjs/tx": "5.1.0",
     "@ethereumjs/util": "^9.0.1",
+    "@ethersproject/providers": "5.7.2",
     "@gorhom/bottom-sheet": "5.0.0-alpha.9",
     "@ledgerhq/react-native-hw-transport-ble": "6.33.4",
     "@metamask/abi-utils": "3.0.0",
@@ -61,6 +63,7 @@
     "@onekeyfe/hd-ble-sdk": "1.0.10",
     "@polymarket/clob-client": "^4.22.0",
     "@polymarket/order-utils": "^2.1.0",
+    "@polymarket/relayer-client": "^2.0.2",
     "@rabby-wallet/biz-utils": "workspace:^",
     "@rabby-wallet/eth-hd-keyring": "4.3.1",
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^",
@@ -111,7 +114,7 @@
     "eth-json-rpc-middleware": "^9.0.1",
     "eth-rpc-errors": "^4.0.3",
     "ethereum-blockies-base64": "1.0.2",
-    "ethers": "5.4.2",
+    "ethers": "5.7.2",
     "fflate": "0.8.2",
     "formik": "^2.4.5",
     "highlight-words-core": "1.2.3",

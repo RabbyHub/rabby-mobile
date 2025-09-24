@@ -50,7 +50,7 @@ export const PolymarketScreen = () => {
 
         <View style={styles.authBox}>
           <Text style={styles.sectionTitle}>Authentication</Text>
-          {isAuthenticated ? (
+          {false && isAuthenticated ? (
             <Text style={styles.authStatus}>✓ Connected to Polymarket</Text>
           ) : (
             <TouchableOpacity

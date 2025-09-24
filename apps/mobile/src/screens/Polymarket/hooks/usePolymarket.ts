@@ -22,9 +22,16 @@ interface PolymarketOutcome {
 
 export const usePolymarket = () => {
   const { accounts } = useAccounts({ disableAutoFetch: true });
-  const currentAccount = accounts[0]; // Use the first account as the current account
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  console.log('[feat] accounts', accounts);
+  // const currentAccount = accounts[0]; // Use the first account as the current account
+  const currentAccount =
+    accounts.find(
+      acc => acc.address === '0xd24ebfb120450014113ddcc3034f623ec3ee680e',
+    ) || accounts[0];
+  console.log('[feat] currentAccount', currentAccount);
 
   const [creds, setCreds] = useState<ApiKeyCreds | null>(null);
 
@@ -44,6 +51,8 @@ export const usePolymarket = () => {
       const creds = await polymarketService.makeCreds();
       console.debug('[feat] creds', creds);
       setCreds(creds ?? null);
+
+      const ttt = await polymarketService.createProxyAddress(currentAccount);
 
       return success;
     } catch (err: any) {
