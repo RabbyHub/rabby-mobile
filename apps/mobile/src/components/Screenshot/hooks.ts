@@ -79,7 +79,7 @@ function isEnabledScreenshotToReport({
   showFeedbackOnScreenshot: boolean | null;
   disableScreenshotToReportUntil: number | null;
 }) {
-  if (!showFeedbackOnScreenshot) return false;
+  if (showFeedbackOnScreenshot === false) return false;
 
   disableScreenshotToReportUntil = disableScreenshotToReportUntil || 0;
 
