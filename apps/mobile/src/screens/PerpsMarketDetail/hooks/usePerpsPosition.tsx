@@ -5,6 +5,9 @@ import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
 import { Dimensions, Platform, Text } from 'react-native';
+import { PERPS_BUILDER_INFO } from '@/constant/perps';
+import { sleep } from '@/utils/async';
+import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
 
 export const usePerpsPosition = ({
   setCurrentTpOrSl,
@@ -48,6 +51,7 @@ export const usePerpsPosition = ({
           isBuy: direction === 'Long',
           tpTriggerPx,
           slTriggerPx,
+          builder: PERPS_BUILDER_INFO,
         });
 
         setCurrentTpOrSl({
@@ -92,6 +96,7 @@ export const usePerpsPosition = ({
           isBuy: direction === 'Short',
           size,
           midPx: price,
+          builder: PERPS_BUILDER_INFO,
         });
 
         const filled = res?.response?.data?.statuses[0]?.filled;
@@ -187,20 +192,36 @@ export const usePerpsPosition = ({
           isCross: false,
         });
 
-        const res = await sdk.exchange?.marketOrderOpen({
-          coin,
-          isBuy: direction === 'Long',
-          size,
-          midPx,
-          tpTriggerPx,
-          slTriggerPx,
-        });
+        const promises = [
+          sdk.exchange?.marketOrderOpen({
+            coin,
+            isBuy: direction === 'Long',
+            size,
+            midPx,
+          }),
+        ];
 
+        if (tpTriggerPx || slTriggerPx) {
+          promises.push(
+            (async () => {
+              await sleep(10); // little delay to ensure nonce is correct
+              const result = await sdk.exchange?.bindTpslByOrderId({
+                coin,
+                isBuy: direction === 'Long',
+                tpTriggerPx,
+                slTriggerPx,
+                builder: PERPS_BUILDER_INFO,
+              });
+              return result as OrderResponse;
+            })(),
+          );
+        }
+
+        const results = await Promise.all(promises);
+        const res = results[0];
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
           fetchClearinghouseState();
-          // no need
-          // fetchUserHistoricalOrders();
 
           const { totalSz, avgPx } = filled;
           const msg = `Opened ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;

@@ -143,15 +143,24 @@ export const usePerpsInitial = () => {
   );
 
   const safeSetBuilderFee = useMemoizedFn(async () => {
-    const sdk = apisPerps.getPerpsSDK();
-    const res = await sdk.info.getMaxBuilderFee(
-      PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-    );
-    if (res) {
-      sdk.exchange?.updateBuilder(
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      const res = await sdk.info.getMaxBuilderFee(
         PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-        PERPS_BUILD_FEE,
       );
+      if (!res) {
+        currentPerpsAccount?.address && logout(currentPerpsAccount?.address);
+        console.error('Failed to set builder fee');
+        Sentry.captureException(
+          new Error(
+            'PERPS set builder fee error, no max builder fee' +
+              'account: ' +
+              JSON.stringify(currentPerpsAccount),
+          ),
+        );
+      }
+    } catch (error) {
+      console.error('Failed to set builder fee:', error);
     }
   });
 
@@ -202,8 +211,8 @@ export const usePerpsInitial = () => {
           res.preference.agentAddress,
           PERPS_AGENT_NAME,
         );
-        safeSetBuilderFee();
         await loginPerpsAccount(targetTypeAccount);
+        safeSetBuilderFee();
         await fetchMarketData();
 
         checkIsNeedAutoLoginOut(
@@ -516,11 +525,6 @@ export const usePerpsState = () => {
               nonce: action?.nonce || 0,
               signature: signature || '',
             });
-            res &&
-              sdk.exchange?.updateBuilder(
-                PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-                PERPS_BUILD_FEE,
-              );
             return res;
           }
         }),
@@ -592,9 +596,9 @@ export const usePerpsState = () => {
             res.preference.agentAddress,
             PERPS_AGENT_NAME,
           );
-          safeSetBuilderFee();
           // 未到过期时间无需签名直接登录即可
           await loginPerpsAccount(account);
+          safeSetBuilderFee();
         } else {
           // 过期或者没sendApprove过，需要创建新的agent，同时签名
           await handleLoginWithSignApprove(account);

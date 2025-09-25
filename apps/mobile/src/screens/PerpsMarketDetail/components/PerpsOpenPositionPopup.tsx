@@ -150,7 +150,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   ]);
 
   const bothFee = React.useMemo(() => {
-    return providerFee + 0.0005;
+    return providerFee;
   }, [providerFee]);
 
   // 验证 margin 输入

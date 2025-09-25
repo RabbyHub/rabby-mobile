@@ -38,6 +38,7 @@ import { PerpsIntro } from '../PerpsMarketDetail/components/PerpsIntro';
 import { PerpsClosePositionPopup } from '../PerpsMarketDetail/components/PerpsClosePositionPopup ';
 import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { toast } from '@/components2024/Toast';
+import { PERPS_BUILDER_INFO } from '@/constant/perps';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -122,6 +123,7 @@ export const PerpsScreen = () => {
           isBuy: direction === 'Short',
           size,
           midPx: price,
+          builder: PERPS_BUILDER_INFO,
         });
 
         const filled = res?.response?.data?.statuses[0]?.filled;
