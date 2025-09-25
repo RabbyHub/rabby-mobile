@@ -345,11 +345,12 @@ export const PerpsScreen = () => {
             setClosePositionVisible(false);
           }}
           handleClosePosition={async () => {
+            const marketDataItem = marketDataMap[closePosition.coin];
             await handleClosePosition({
               coin: closePosition.coin,
               size: Math.abs(Number(closePosition.szi || 0)).toString() || '0',
               direction: Number(closePosition.szi || 0) > 0 ? 'Long' : 'Short',
-              price: closePosition.entryPx || '0',
+              price: marketDataItem?.markPx || '0',
             });
           }}
         />
