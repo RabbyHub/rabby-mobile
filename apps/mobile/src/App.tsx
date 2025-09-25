@@ -39,6 +39,9 @@ import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
 import { useUserDidTakeScreenshot } from './components/Screenshot/hooks';
+import Safe from '@rabby-wallet/gnosis-sdk';
+import { SAFE_API_KEY } from './constant/env';
+Safe.apiKey = SAFE_API_KEY;
 
 const rneuiTheme = createTheme({
   lightColors: {

@@ -63,6 +63,7 @@ module.exports = {
           BUILD_GIT_HASH_TIME: buildGitInfo.BUILD_GIT_HASH_TIME,
           BUILD_GIT_COMMITOR: buildGitInfo.BUILD_GIT_COMMITOR,
         }),
+        'process.env.MOBILE_SAFE_API_KEY': process.env.MOBILE_SAFE_API_KEY,
       },
     ],
     [
@@ -94,6 +95,7 @@ module.exports = {
     ['nativewind/babel', {}],
     ['@babel/plugin-proposal-decorators', { legacy: true }],
     ['react-native-reanimated/plugin'],
+    ['@babel/plugin-transform-class-static-block'],
   ],
   env: {
     production: {
