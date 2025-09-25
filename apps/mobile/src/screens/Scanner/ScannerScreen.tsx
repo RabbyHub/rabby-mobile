@@ -7,8 +7,9 @@ import { colord } from 'colord';
 import {
   StackActions,
   useNavigation,
-  useNavigationState,
+  useRoute,
 } from '@react-navigation/native';
+import { GetRootScreenRouteProp } from '@/navigation-type';
 import { atom, useAtom } from 'jotai';
 import { Code } from 'react-native-vision-camera';
 import { RootStackParamsList } from '@/navigation-type';
@@ -33,9 +34,8 @@ export const ScannerScreen = () => {
   const { t } = useTranslation();
   const [_, setText] = useAtom(textAtom);
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const navState = useNavigationState(
-    s => s.routes.find(e => e.name === RootNames.Scanner)?.params,
-  ) as RootStackParamsList['Scanner'] | undefined;
+  const route = useRoute<GetRootScreenRouteProp<'Scanner'>>();
+  const navState = route.params;
   const nav = useNavigation();
   const [decoder] = useState(new URDecoder());
   const [currentCount, setCurrentCount] = useState(0);

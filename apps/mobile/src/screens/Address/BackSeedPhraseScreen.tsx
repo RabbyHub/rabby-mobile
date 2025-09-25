@@ -4,7 +4,8 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
-import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RcIconInfo2CC } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
@@ -90,11 +91,11 @@ export const BackSeedPhraseScreen = () => {
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
   const nav = useNavigation();
-  const { data } = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.BackupMnemonic)?.params,
-  ) as {
-    data: string;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'AddressNavigatorParamList', 'BackupMnemonic'>
+    >();
+  const { data } = route.params || {};
   const [visibleCopyButton, setVisibleCopyButton] = React.useState(false);
 
   const handleDone = React.useCallback(() => {

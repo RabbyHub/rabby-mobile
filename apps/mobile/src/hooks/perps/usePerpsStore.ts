@@ -337,6 +337,7 @@ export const usePerpsStore = () => {
   const resetState = useMemoizedFn(() => {
     setState(prev => ({
       ...prev,
+      accountSummary: null,
       positionAndOpenOrders: [],
       currentPerpsAccount: null,
       isLogin: false,

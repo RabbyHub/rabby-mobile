@@ -96,7 +96,8 @@
         "totalApprovedAmount": "Montant Approuvé Actuel",
         "BuyAgain": "Acheter à nouveau",
         "AddToWhitelist": "Ajouter à la liste blanche",
-        "RecipientAddress": "Portefeuille du destinataire"
+        "RecipientAddress": "Portefeuille du destinataire",
+        "Simulation Results": "Résultats de simulation"
       },
       "empty": {
         "title": "Aucune transaction",
@@ -442,7 +443,8 @@
         "title": "Ajouter de la liquidité",
         "marketPrice": "Prix du marché",
         "token1": "Ajouter le jeton 2"
-      }
+      },
+      "gasSetting": "Paramètres de Gas"
     },
     "activities": {
       "signedTx": {
@@ -855,7 +857,8 @@
       "historyTitle": "Historique des swaps",
       "swapped": "Échangé",
       "selectChainModalTitle": "Sélectionner la chaîne",
-      "results": "Résultats"
+      "results": "Résultats",
+      "approve": "Approuver"
     },
     "manageAddress": {
       "seed-phrase": "Phrase secrète",
@@ -910,7 +913,8 @@
       "gas-fee": "GasFee : {{gasUsed}}",
       "showMore": {
         "source": "Source du bridge",
-        "title": "Afficher plus"
+        "title": "Afficher plus",
+        "signWarning": "Je comprends l'alerte et je souhaite continuer"
       },
       "detail-tx": "Détail",
       "liquidity": "Liquidité",
@@ -929,7 +933,8 @@
       "best": "Meilleur",
       "no-route-found": "Aucun itinéraire trouvé",
       "the-following-bridge-route-are-found": "Taux suivants trouvés",
-      "bridged": "Ponté"
+      "bridged": "Ponté",
+      "gasFeeTooHight": "Les frais de Gas sont plus élevés que la normale. Confirmez uniquement si vous souhaitez continuer."
     },
     "dashboard": {
       "hd": {
@@ -1493,7 +1498,8 @@
         "txSigned": "Signé. Création de la transaction",
         "txCreated": "Transaction créée",
         "txSendings": "Envoi de la demande de signature ({{current}}/{{total}})"
-      }
+      },
+      "fixedModeText": "Mode Fixe : Utilisez toujours votre paramètre de gaz personnalisé"
     },
     "sign": {
       "transactionSpeed": "Vitesse de Transaction"
@@ -1601,7 +1607,9 @@
         "applePayFeeDesc": "Inclut des frais pour Apple Pay. Pas de retraits",
         "googlePayFeeDesc": "Comprend des frais Google Pay. Aucun retrait.",
         "paymentAddress": "Portefeuille de paiement",
-        "inSufficientTip1": "Ce portefeuille n'a pas assez de tokens. Veuillez choisir un autre portefeuille."
+        "inSufficientTip1": "Ce portefeuille n'a pas assez de tokens. Veuillez choisir un autre portefeuille.",
+        "pay": "Payer",
+        "applePayFeeDesc1": "Inclus un frais d'App Store. Aucunes retraits."
       },
       "paymentAddressPopup": {
         "confirm": "Confirmer",
@@ -1642,7 +1650,8 @@
         "depositFailed": "Dépôt échoué",
         "depositCanceled": "Dépôt annulé",
         "titleAndroid": "Acheter avec Google Pay",
-        "title": "Acheter avec Apple Pay"
+        "title": "Acheter avec Apple Pay",
+        "titleApple": "Acheter dans l'App Store"
       },
       "depositSelectPopup": {
         "depositTokenDesc": "Pas de frais supplémentaires, retraits instantanés",
@@ -1650,7 +1659,8 @@
         "buyWithDesc": "30 % de frais, pas de retraits",
         "depositToken": "Dépôt avec Token",
         "title": "Déposer sur GasAccount",
-        "buyWith": "Acheter avec"
+        "buyWith": "Acheter avec",
+        "buyWithApple": "Acheter dans l'App Store"
       },
       "gasAccountList": {
         "balance": "Solde",
@@ -1743,7 +1753,38 @@
         "totalSupply": "Offre Totale",
         "volume24h": "Volume sur 24h",
         "txns24h": "24h Txns",
-        "marketCap": "Capitalisation boursière"
+        "marketCap": "Capitalisation boursière",
+        "holderSections": {
+          "tableHeader": {
+            "address": "Adresse",
+            "ratio": "Ratio",
+            "position": "Position"
+          },
+          "top100HoldersRatio": "Ratio des 100 principaux détenteurs",
+          "top10HoldersRatio": "Ratio des 10 principaux détenteurs"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "all": "Tous",
+            "type": "Type",
+            "time": "Temps",
+            "hour": "Heure",
+            "sell": "Vendre",
+            "volume": "Volume",
+            "buy": "Acheter",
+            "addresses": "Adresses",
+            "address": "Adresse",
+            "tradingCount": "Nombre de transactions",
+            "min": "min",
+            "price": "Prix",
+            "qnt": "Qnt",
+            "value": "Valeur"
+          }
+        },
+        "empty": "Pas de données",
+        "activity": "Activité",
+        "summary": "Résumé des données",
+        "details": "Détails"
       }
     },
     "rabbyPoints": {
@@ -2030,6 +2071,11 @@
         "contentModeMobile": "Demander le site mobile",
         "disconnect": "Déconnexion",
         "refresh": "Rafraîchir"
+      },
+      "HyperliquidInvitePopup": {
+        "title": "Programme de parrainage Hyperliquid",
+        "btn": "Rejoignez maintenant",
+        "desc": "Rejoignez maintenant en utilisant le code de Rabby pour obtenir une <1>remise de 4%</1> sur vos frais Hyperliquid."
       }
     },
     "browserManage": {
@@ -2062,7 +2108,10 @@
     "defiDetail": {
       "viewSiteInApp": "Voir dans Dapp",
       "viewSiteInWebsite": "Voir sur le site Web",
-      "appChain": "Sur le compte {{chain}}"
+      "appChain": "Sur le compte {{chain}}",
+      "dappActions": {
+        "queueDescription": "Le retrait actuel entrera dans une file d'attente. Une fois traité, il pourra être retiré vers votre wallet."
+      }
     },
     "component": {
       "ChainSelector": {

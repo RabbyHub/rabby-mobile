@@ -85,11 +85,11 @@ export const GnosisMessageQueue: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabs[0]?.key]);
 
-  useEffect(() => {
-    if (account?.address) {
-      apisSafe.syncGnosisNetworks(account?.address);
-    }
-  }, [account?.address]);
+  // useEffect(() => {
+  //   if (account?.address) {
+  //     apisSafe.syncGnosisNetworks(account?.address);
+  //   }
+  // }, [account?.address]);
 
   return (
     <View style={[styles.container]}>

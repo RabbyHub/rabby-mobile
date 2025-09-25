@@ -310,7 +310,8 @@
         "WillReceive": "Recibirá: ≈ {{token}}",
         "Collection": "Colección",
         "AddToWhitelist": "Añadir a la lista blanca",
-        "RecipientAddress": "Cartera del destinatario"
+        "RecipientAddress": "Cartera del destinatario",
+        "Simulation Results": "Resultados de la simulación"
       },
       "empty": {
         "desc": "No se encontraron transacciones en <1>supported chains</1>",
@@ -696,7 +697,8 @@
         "token0": "Agregar Token 1",
         "poolPrice": "Precio del Pool",
         "receiver": "Receptor"
-      }
+      },
+      "gasSetting": "Configuración de Gas"
     },
     "activities": {
       "signedTx": {
@@ -1155,7 +1157,8 @@
       "historyTitle": "Historial de Swap",
       "swapped": "Intercambiado",
       "selectChainModalTitle": "Seleccionar cadena",
-      "results": "Resultados"
+      "results": "Resultados",
+      "approve": "Aprobar"
     },
     "nextComponent": {
       "addAddress": {
@@ -1245,7 +1248,8 @@
       "history": "Historial de Bridge",
       "showMore": {
         "title": "Mostrar más",
-        "source": "Bridge Source"
+        "source": "Bridge Source",
+        "signWarning": "Entiendo la alerta y quiero continuar."
       },
       "bridgeTo": "Bridge To",
       "best": "Mejor",
@@ -1275,7 +1279,8 @@
       "price-impact": "Impacto en el precio",
       "From": "Desde",
       "actual": "Actual:",
-      "bridged": "Puenteado"
+      "bridged": "Puenteado",
+      "gasFeeTooHight": "La tarifa de Gas es más alta de lo normal. Confirma solo si deseas continuar."
     },
     "newAddress": {
       "Quick": "Rápido",
@@ -1765,7 +1770,8 @@
         "txCreated": "Transacción creada",
         "txSending": "Enviando solicitud de firma",
         "txSigned": "Firmado. Creando transacción"
-      }
+      },
+      "fixedModeText": "Modo Fijo: Siempre usa tu configuración de gas personalizada"
     },
     "search": {
       "searchWeb": {
@@ -1931,7 +1937,38 @@
         "totalSupply": "Suministro total",
         "marketCap": "Capitalización de mercado",
         "txns24h": "24h Txns",
-        "volume24h": "Volumen 24h"
+        "volume24h": "Volumen 24h",
+        "holderSections": {
+          "tableHeader": {
+            "position": "Posición",
+            "ratio": "Proporción",
+            "address": "Dirección"
+          },
+          "top10HoldersRatio": "Proporción de los 10 principales poseedores",
+          "top100HoldersRatio": "Proporción de los 100 principales poseedores"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "sell": "Vender",
+            "buy": "Comprar",
+            "time": "Tiempo",
+            "hour": "Hora",
+            "address": "Dirección",
+            "volume": "Volumen",
+            "all": "Todo",
+            "tradingCount": "Contador de Trading",
+            "addresses": "Direcciones",
+            "type": "Tipo",
+            "min": "mín",
+            "value": "Valor",
+            "price": "Precio",
+            "qnt": "Qnt"
+          }
+        },
+        "empty": "Sin Datos",
+        "activity": "Actividad",
+        "summary": "Resumen de Datos",
+        "details": "Detalles"
       }
     },
     "setting": {
@@ -2002,7 +2039,9 @@
         "googlePayFeeDesc": "Incluye una tarifa de Google Pay. Sin retiros",
         "applePayFeeDesc": "Incluye una tarifa de Apple Pay. Sin retiradas",
         "inSufficientTip1": "Esta wallet no tiene suficientes tokens. Por favor, elige una wallet diferente.",
-        "paymentAddress": "Billetera de Pago"
+        "paymentAddress": "Billetera de Pago",
+        "pay": "Pagar",
+        "applePayFeeDesc1": "Incluye una tarifa de la App Store. No se permiten retiros."
       },
       "paymentAddressPopup": {
         "confirm": "Confirmar",
@@ -2043,7 +2082,8 @@
         "title": "Comprar con Apple Pay",
         "depositCanceled": "Depósito Cancelado",
         "balance": "Saldo actual de GasAccount:",
-        "depositFailed": "Depósito fallido"
+        "depositFailed": "Depósito fallido",
+        "titleApple": "Comprar en App Store"
       },
       "depositSelectPopup": {
         "desc": "Paga Tarifas de Gas en Todas las Cadenas",
@@ -2051,7 +2091,8 @@
         "title": "Depósito en GasAccount",
         "buyWithDesc": "30% de comisión, sin retiradas",
         "depositToken": "Depósito con Token",
-        "depositTokenDesc": "Sin tarifas adicionales, retiros instantáneos"
+        "depositTokenDesc": "Sin tarifas adicionales, retiros instantáneos",
+        "buyWithApple": "Comprar en la App Store"
       },
       "gasAccountList": {
         "address": "Dirección",
@@ -2244,6 +2285,11 @@
         "favorite": "Favorito",
         "contentModeMobile": "Solicitar sitio móvil",
         "contentModeDesktop": "Solicitar sitio de escritorio"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "Únete ahora",
+        "title": "Programa de Referidos de Hyperliquid",
+        "desc": "Únete ahora usando el código de Rabby para obtener un <1>4% de descuento</1> en tus tarifas de Hyperliquid."
       }
     },
     "browserManage": {
@@ -2276,7 +2322,10 @@
     "defiDetail": {
       "viewSiteInApp": "Ver en Dapp",
       "viewSiteInWebsite": "Ver en el sitio web",
-      "appChain": "En la cuenta {{chain}}"
+      "appChain": "En la cuenta {{chain}}",
+      "dappActions": {
+        "queueDescription": "La retirada actual entrará en una cola de espera. Una vez procesada, se puede retirar a tu wallet."
+      }
     },
     "component": {
       "ChainSelector": {

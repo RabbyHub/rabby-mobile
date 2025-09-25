@@ -25,8 +25,9 @@ import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { getLatestNavigationName } from '@/utils/navigation';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { HomeNavigatorParamsList } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import LinearGradient from 'react-native-linear-gradient';
 
 /**
@@ -44,11 +45,14 @@ export function DappWebViewStubScreen() {
 
   const { safeTop, androidOnlyBottomOffset } = useSafeSizes();
 
-  const { dappsWebViewFromRoute = RootNames.Dapps } = useNavigationState(
-    s =>
-      s.routes.find(r => r.name === RootNames.DappWebViewStubOnHome)?.params ||
-      {},
-  ) as HomeNavigatorParamsList['DappWebViewStubOnHome'] & object;
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'HomeNavigatorParamsList',
+        'DappWebViewStubOnHome'
+      >
+    >();
+  const { dappsWebViewFromRoute = RootNames.Dapps } = route.params || {};
 
   const {
     openedDappItems,

@@ -83,7 +83,8 @@
         "RevokeToken": "Batalkan Token",
         "GasFee": "Biaya Gas",
         "AddToWhitelist": "Tambahkan ke Daftar Putih",
-        "RecipientAddress": "Dompet penerima"
+        "RecipientAddress": "Dompet penerima",
+        "Simulation Results": "Hasil Simulasi"
       },
       "empty": {
         "title": "Tidak ada transaksi",
@@ -423,7 +424,8 @@
         "token1": "Tambahkan Token 2",
         "title": "Tambahkan Likuiditas",
         "poolPrice": "Harga Pool"
-      }
+      },
+      "gasSetting": "Pengaturan Gas"
     },
     "importSuccess": {
       "addressCount": "{{count}} Alamat",
@@ -910,12 +912,14 @@
       "swapped": "Ditukar",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "Transaksi mungkin akan terfront-run karena toleransi slippage yang tinggi",
       "selectChainModalTitle": "Pilih Rantai",
-      "results": "Hasil"
+      "results": "Hasil",
+      "approve": "Setujui"
     },
     "bridge": {
       "showMore": {
         "source": "Jembatan Sumber",
-        "title": "Tampilkan Lebih Banyak"
+        "title": "Tampilkan Lebih Banyak",
+        "signWarning": "Saya mengerti peringatan tersebut dan ingin melanjutkan."
       },
       "value": "Saldo",
       "est-receiving": "Est. Menerima:",
@@ -949,7 +953,8 @@
       "gas-x-price": "Harga gas: {{price}} Gwei.",
       "via-bridge": "via {{bridge}}",
       "no-route-found": "Tidak ada rute yang ditemukan",
-      "best": "Terbaik"
+      "best": "Terbaik",
+      "gasFeeTooHight": "Biaya gas lebih tinggi dari biasanya. Konfirmasi hanya jika Anda ingin melanjutkan."
     },
     "manageAddress": {
       "cancel": "Batal",
@@ -1632,7 +1637,8 @@
         "txSigned": "Ditandatangani. Membuat transaksi",
         "txCreated": "Transaksi dibuat"
       },
-      "signWithLedger": "Tanda Tangan"
+      "signWithLedger": "Tanda Tangan",
+      "fixedModeText": "Mode Tetap: Selalu gunakan pengaturan gas kustom Anda"
     },
     "gasAccount": {
       "history": {
@@ -1662,7 +1668,9 @@
         "googlePayFeeDesc": "Termasuk biaya Google Pay. Tidak ada penarikan.",
         "applePayFeeDesc": "Termasuk biaya Apple Pay. Tidak ada penarikan.",
         "paymentAddress": "Wallet Pembayaran",
-        "inSufficientTip1": "Dompet ini tidak memiliki cukup token Silakan pilih dompet lain"
+        "inSufficientTip1": "Dompet ini tidak memiliki cukup token Silakan pilih dompet lain",
+        "pay": "Bayar",
+        "applePayFeeDesc1": "Termasuk biaya App Store. Tidak ada penarikan."
       },
       "paymentAddressPopup": {
         "balance": "Saldo",
@@ -1707,7 +1715,8 @@
         "title": "Beli dengan Apple Pay",
         "depositFailed": "Setoran Gagal",
         "balance": "Saldo GasAccount Saat Ini:",
-        "titleAndroid": "Beli dengan Google Pay"
+        "titleAndroid": "Beli dengan Google Pay",
+        "titleApple": "Beli di App Store"
       },
       "depositSelectPopup": {
         "buyWith": "Beli dengan",
@@ -1715,7 +1724,8 @@
         "title": "Setor ke GasAccount",
         "desc": "Bayar Biaya Gas di Semua Rantai",
         "buyWithDesc": "30% biaya, tidak ada penarikan",
-        "depositToken": "Setor dengan Token"
+        "depositToken": "Setor dengan Token",
+        "buyWithApple": "Beli di App Store"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount Saldo",
@@ -1814,7 +1824,38 @@
         "volume24h": "24h Volume",
         "totalSupply": "Total Supply",
         "holders": "Pemegang",
-        "txns24h": "24h Txns"
+        "txns24h": "24h Txns",
+        "holderSections": {
+          "tableHeader": {
+            "address": "Alamat",
+            "ratio": "Rasio",
+            "position": "Posisi"
+          },
+          "top100HoldersRatio": "Rasio 100 Pemegang Teratas",
+          "top10HoldersRatio": "Rasio 10 Pemegang Teratas"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "address": "Alamat",
+            "min": "min",
+            "time": "Waktu",
+            "addresses": "Alamat",
+            "all": "Semua",
+            "hour": "Jam",
+            "sell": "Jual",
+            "buy": "Beli",
+            "volume": "Volume",
+            "tradingCount": "Jumlah Perdagangan",
+            "type": "Jenis",
+            "value": "Nilai",
+            "price": "Harga",
+            "qnt": "Qnt"
+          }
+        },
+        "empty": "Tidak Ada Data",
+        "details": "Detail",
+        "summary": "Ringkasan Data",
+        "activity": "Aktivitas"
       }
     },
     "approvalsAddressList": {
@@ -2020,6 +2061,11 @@
         "refresh": "Menyegarkan",
         "disconnect": "Putuskan Sambungan",
         "favorite": "Favorit"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "Bergabung Sekarang",
+        "title": "Program Referal Hyperliquid",
+        "desc": "Bergabung sekarang menggunakan kode Rabby untuk mendapatkan <1>diskon 4%</1> pada biaya Hyperliquid Anda."
       }
     },
     "browserManage": {
@@ -2052,7 +2098,10 @@
     "defiDetail": {
       "viewSiteInApp": "Lihat di Dapp",
       "viewSiteInWebsite": "Lihat di Situs Web",
-      "appChain": "Pada Akun {{chain}}"
+      "appChain": "Pada Akun {{chain}}",
+      "dappActions": {
+        "queueDescription": "Penarikan saat ini akan masuk ke antrean tunggu. Setelah diproses, itu dapat ditarik ke dompet Anda."
+      }
     },
     "component": {
       "ChainSelector": {

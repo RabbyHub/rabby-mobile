@@ -15,6 +15,7 @@ import { Input } from '@rneui/base';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatSpeicalAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import { WarningText } from './WarningText';
 
 export const BRIDGE_SLIPPAGE = ['0.5', '1'];
 
@@ -197,23 +198,27 @@ export const BridgeSlippage = (props: SlippageProps) => {
               }}
             />
           ) : (
-            <Text style={[styles.value, !!tips && styles.warning]}>
-              {type === 'swap' && autoSlippage
-                ? autoSuggestSlippage || displaySlippage
-                : displaySlippage}
-              %
-            </Text>
+            <>
+              <Text style={[styles.value, !!tips && styles.warning]}>
+                {type === 'swap' && autoSlippage
+                  ? autoSuggestSlippage || displaySlippage
+                  : displaySlippage}
+                %
+              </Text>
+              <Animated.View
+                style={{
+                  transform: [{ rotate: slippageOpen ? '180deg' : '0deg' }],
+                }}>
+                <RcIconBluePolygon
+                  color={
+                    tips
+                      ? colors2024['orange-default']
+                      : colors2024['brand-default']
+                  }
+                />
+              </Animated.View>
+            </>
           )}
-          <Animated.View
-            style={{
-              transform: [{ rotate: slippageOpen ? '180deg' : '0deg' }],
-            }}>
-            <RcIconBluePolygon
-              color={
-                tips ? colors2024['red-default'] : colors2024['brand-default']
-              }
-            />
-          </Animated.View>
         </View>
       </TouchableOpacity>
       {slippageOpen && (
@@ -261,7 +266,7 @@ export const BridgeSlippage = (props: SlippageProps) => {
                 styles.inputItem,
                 isCustomSlippage && { borderColor: colors2024['blue-default'] },
               ]}
-              active={isCustomSlippage}>
+              active={isCustomSlippage && !autoSlippage}>
               <Input
                 errorStyle={styles.errorStyle}
                 inputContainerStyle={styles.inputContainerStyle}
@@ -280,11 +285,7 @@ export const BridgeSlippage = (props: SlippageProps) => {
           </View>
         </View>
       )}
-      {!!tips && slippageOpen && (
-        <View style={styles.warningTipContainer}>
-          <Text style={styles.warningTip}>{tips}</Text>
-        </View>
-      )}
+      {!!tips && slippageOpen && <WarningText>{tips}</WarningText>}
     </View>
   );
 };
@@ -314,11 +315,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['brand-default'],
   },
   warning: {
-    color: colors2024['red-default'],
+    color: colors2024['orange-default'],
   },
   selectContainer: {
     marginTop: 8,
-    marginBottom: 20,
   },
   input: {
     fontSize: 14,
@@ -335,17 +335,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     padding: 0,
     maxHeight: 0,
     overflow: 'hidden',
-  },
-  warningTipContainer: {
-    // marginTop: 4,
-    marginTop: -12,
-    marginBottom: 12,
-  },
-  warningTip: {
-    color: colors2024['red-default'],
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
   },
   item: {
     flexDirection: 'row',

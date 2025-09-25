@@ -14,7 +14,6 @@ import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { preloadSettingsScreen } from '@/perfs/preloads';
 
-// const HomeHiddenTabStack = createCustomNativeStackNavigator<HomeNavigatorParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
 
 export function HomeScreenNavigator() {

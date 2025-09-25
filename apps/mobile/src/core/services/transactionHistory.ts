@@ -143,11 +143,24 @@ export interface SendTxHistoryItem {
   completedAt?: number;
 }
 
+export interface ApproveTokenTxHistoryItem {
+  address: string;
+  chainId: number;
+  amount: number;
+  token: TokenItem;
+  status: 'pending' | 'success' | 'failed';
+  hash: string;
+  createdAt: number;
+  completedAt?: number;
+}
+
 interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
   swapTxHistory: SwapTxHistoryItem[];
   sendTxHistory: SendTxHistoryItem[];
   bridgeTxHistory: BridgeTxHistoryItem[];
+  approveSwapTxHistory: ApproveTokenTxHistoryItem[];
+  approveBridgeTxHistory: ApproveTokenTxHistoryItem[];
   successList: string[];
   failList: string[];
   isNeedFetchTxHistory: Record<string, boolean>;
@@ -179,6 +192,8 @@ export class TransactionHistoryService {
           transactions: [],
           swapTxHistory: [],
           bridgeTxHistory: [],
+          approveSwapTxHistory: [],
+          approveBridgeTxHistory: [],
           successList: [],
           failList: [],
           isNeedFetchTxHistory: {},
@@ -212,6 +227,14 @@ export class TransactionHistoryService {
 
     if (!Array.isArray(this.store.bridgeTxHistory)) {
       this.store.bridgeTxHistory = [];
+    }
+
+    if (!Array.isArray(this.store.approveSwapTxHistory)) {
+      this.store.approveSwapTxHistory = [];
+    }
+
+    if (!Array.isArray(this.store.approveBridgeTxHistory)) {
+      this.store.approveBridgeTxHistory = [];
     }
 
     if (typeof this.store.isNeedFetchTxHistory !== 'object') {
@@ -259,6 +282,10 @@ export class TransactionHistoryService {
     });
   }
 
+  getStore() {
+    return this.store['approveSwapTxHistory'];
+  }
+
   getSucceedCount(address?: string) {
     return this.store.successList.filter(item =>
       address ? item.startsWith(address) : true,
@@ -302,6 +329,21 @@ export class TransactionHistoryService {
     }
   }
 
+  addApproveSwapTokenTxHistory(tx: ApproveTokenTxHistoryItem) {
+    this.store.approveSwapTxHistory = [...this.store.approveSwapTxHistory, tx]
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 200);
+  }
+
+  addApproveBridgeTokenTxHistory(tx: ApproveTokenTxHistoryItem) {
+    this.store.approveBridgeTxHistory = [
+      ...this.store.approveBridgeTxHistory,
+      tx,
+    ]
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 200);
+  }
+
   addSwapTxHistory(tx: SwapTxHistoryItem) {
     this.store.swapTxHistory.push(tx);
     this.store.swapTxHistory = this.store.swapTxHistory
@@ -323,7 +365,10 @@ export class TransactionHistoryService {
       .slice(0, 200);
   }
 
-  getRecentPendingTxHistory(address: string, type: 'swap' | 'send' | 'bridge') {
+  getRecentPendingTxHistory(
+    address: string,
+    type: 'swap' | 'send' | 'bridge' | 'approveSwap' | 'approveBridge',
+  ) {
     const recentItem = this.store[`${type}TxHistory`]
       .filter(item => {
         return isSameAddress(address, item.address);
@@ -340,7 +385,7 @@ export class TransactionHistoryService {
     address: string,
     hash: string,
     chainId: number,
-    type: 'swap' | 'send',
+    type: 'swap' | 'send' | 'approveSwap' | 'approveBridge',
   ) {
     return this.store[`${type}TxHistory`].find(
       item =>
@@ -359,11 +404,25 @@ export class TransactionHistoryService {
       this.store.swapTxHistory,
       this.store.sendTxHistory,
       this.store.bridgeTxHistory,
+      this.store.approveSwapTxHistory,
+      this.store.approveBridgeTxHistory,
     ];
     const hashArr = txs.map(item => item.hash);
+
+    eventBus.emit(EVENTS.INNER_HISTORY_ITEM_COMPLETE, {
+      hashArr,
+      chainId,
+    });
+
     arr.forEach(async history => {
       const index = history.findIndex(
-        (item: SwapTxHistoryItem | SendTxHistoryItem | BridgeTxHistoryItem) =>
+        (
+          item:
+            | SwapTxHistoryItem
+            | SendTxHistoryItem
+            | BridgeTxHistoryItem
+            | ApproveTokenTxHistoryItem,
+        ) =>
           ('fromChainId' in item ? item.fromChainId : item.chainId) ===
             chainId && hashArr.includes(item.hash),
       );

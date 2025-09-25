@@ -91,6 +91,7 @@
         "name": "Name",
         "RevokeToken": "Revoke Token",
         "InteractionResults": "Interaction Results",
+        "Simulation Results": "Simulation Results",
         "totalApprovedAmount": "Current Approved Amount",
         "PurchaseFrom": "Purchased from",
         "WillReceive": "Will Receive: ≈ {{token}}"
@@ -135,6 +136,7 @@
       "safeAddressNotSupportChain": "Current safe address is not supported on {{0}} chain",
       "noGasRequired": "No gas required",
       "gasSelectorTitle": "Gas",
+      "gasSetting": "Gas Setting",
       "failToFetchGasCost": "Fail to estimate gas",
       "manuallySetGasLimitAlert": "You have manually set the Gas limit to",
       "gasNotRequireForSafeTransaction": "Gas fee is not required for Safe transactions",
@@ -853,6 +855,7 @@
       "title": "Swap",
       "pendingTip": "Tx submitted. If the tx is pending for long hours, you can try to clear pending in settings.",
       "Pending": "Pending",
+      "approve": "Approve",
       "completedTip": "Transaction on chain, decoding data to generate record",
       "Completed": "Completed",
       "slippage_tolerance": "Slippage tolerance:",
@@ -914,12 +917,14 @@
     "bridge": {
       "showMore": {
         "title": "Show More",
-        "source": "Bridge Source"
+        "source": "Bridge Source",
+        "signWarning": "I understand the alert and want to continue"
       },
       "est-payment": "Est. Payment:",
       "est-receiving": "Est. Receiving:",
       "est-difference": "Est. Difference:",
       "loss-tips": "You're losing {{usd}}. Try a different amount.",
+      "gasFeeTooHight": "Gas fee is higher than normal. Confirm only if you wish to proceed.",
       "price-impact": "Price Impact",
       "From": "From",
       "bridgeFrom": "Bridge From",
@@ -1679,7 +1684,8 @@
         "txSigned": "Signed. Creating transaction",
         "txSending": "Sending signing request",
         "txSendings": "Sending signing request({{current}}/{{total}})"
-      }
+      },
+      "fixedModeText": "Fixed Mode: Always use your custom gas setting"
     },
     "gasAccount": {
       "deposit": "Deposit",
@@ -1715,7 +1721,9 @@
         "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
         "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals",
         "googlePayFeeDesc": "Includes a Google Pay fee. No withdrawals",
-        "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals"
+        "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals",
+        "applePayFeeDesc1": "Includes an App Store fee. No withdrawls.",
+        "pay": "Pay"
       },
       "paymentAddressPopup": {
         "title": "Select Payment Wallet",
@@ -1760,7 +1768,8 @@
         "titleAndroid": "Buy with Google Pay",
         "balance": "Current GasAccount Balance: ",
         "depositFailed": "Deposit Failed",
-        "depositCanceled": "Deposit Canceled"
+        "depositCanceled": "Deposit Canceled",
+        "titleApple": "Buy in App Store"
       },
       "depositSelectPopup": {
         "title": "Deposit to GasAccount",
@@ -1768,7 +1777,8 @@
         "depositToken": "Deposit with Token",
         "depositTokenDesc": "No extra fee, instant withdrawals",
         "buyWith": "Buy with",
-        "buyWithDesc": "30% fee, no withdrawals"
+        "buyWithDesc": "30% fee, no withdrawals",
+        "buyWithApple": "Buy in App Store"
       },
       "switchAccount": "Switch GasAccount",
       "gasAccountList": {
@@ -1861,13 +1871,47 @@
         "totalSupply": "Total Supply",
         "volume24h": "24h Volume",
         "txns24h": "24h Txns",
-        "holders": "Holders"
+        "holders": "Holders",
+        "empty": "No Data",
+        "activity": "Activity",
+        "summary": "Summary Data",
+        "details": "Details",
+        "holderSections": {
+          "top10HoldersRatio": "Top 10 Holders Ratio",
+          "top100HoldersRatio": "Top 100 Holders Ratio",
+          "tableHeader": {
+            "address": "Address",
+            "ratio": "Ratio",
+            "position": "Position"
+          }
+        },
+        "activitySections": {
+          "tableHeader": {
+            "all": "All",
+            "min": "min",
+            "hour": "Hour",
+            "buy": "Buy",
+            "sell": "Sell",
+            "volume": "Volume",
+            "tradingCount": "Trading Count",
+            "address": "Address",
+            "addresses": "Addresses",
+            "type": "Type",
+            "time": "Time",
+            "price": "Price",
+            "qnt": "Qnt",
+            "value": "Value"
+          }
+        }
       }
     },
     "defiDetail": {
       "viewSiteInApp": "View in Dapp",
       "viewSiteInWebsite": "View in Website",
-      "appChain": "On {{chain}} Account"
+      "appChain": "On {{chain}} Account",
+      "dappActions": {
+        "queueDescription": "Current withdrawal​ will enter a waiting queue. Once processed, it can be ​withdrawn​ to your wallet."
+      }
     },
     "approvalsAddressList": {
       "title": "Approvals"
@@ -2072,6 +2116,11 @@
         "contentModeMobile": "Request Mobile Site",
         "contentModeDesktop": "Request DeskTop Site",
         "disconnect": "Disconnect"
+      },
+      "HyperliquidInvitePopup": {
+        "title": "Hyperliquid Referral Program",
+        "desc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Hyperliquid fees.",
+        "btn": "Join Now"
       }
     },
     "browserManage": {
@@ -2139,7 +2188,7 @@
         "withdrawBtn": "Withdraw",
         "depositBtn": "Deposit"
       },
-      "selectAccountTitle": "Select an address to log in",
+      "selectAccountTitle": "Select a Wallet to Log In",
       "PerpsGuidePopup": {
         "step1Title": "Master Perpetual Futures",
         "step1Desc": "With perpetual futures, you're not just trading assets. You're trading what you think will happen next",
@@ -2264,7 +2313,11 @@
       "leverageRangeMinError": "The minimum leverage is {{min}}x",
       "leverageRangeMaxError": "The maximum leverage is {{max}}x",
       "PerpsAccountSelectorPopup": {
-        "lastUsed": "Last Used"
+        "lastUsed": "Last Used",
+        "activatedAddress": "Activated",
+        "hyperliquidBalance": "Perps Balance",
+        "notActivatedAddress": "Not Activated",
+        "noPosition": "No Position"
       }
     },
     "perpsDetail": {
@@ -2312,7 +2365,7 @@
         "closeBtn": "Close {{direction}}",
         "fee": "Fee:",
         "rabbyFeeTips": "Rabby fee: 0.05%",
-        "providerFeeTips": "Provider fee: {{fee}}"
+        "providerFeeTips": "Hyperliquid fee: {{fee}}"
       },
       "PerpsOpenPositionPopup": {
         "margin": "Margin",
@@ -2342,7 +2395,7 @@
         "fee": "Fee",
         "btn": "Open {{direction}} Position",
         "rabbyFeeTips": "Rabby fee: 0.05%",
-        "providerFeeTips": "Provider fee: {{fee}}",
+        "providerFeeTips": "Hyperliquid fee: {{fee}}",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
         "margin": "Margin(Isolated)"

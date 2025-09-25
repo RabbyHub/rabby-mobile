@@ -29,7 +29,8 @@ import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from './components/UserAgreementLikeModalInner';
 import { ConfirmSetPasswordModal } from './components/ConfirmModal';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { sheetModalRefsNeedLock, useLoadLockInfo } from '@/hooks/useLock';
@@ -81,9 +82,11 @@ function useSetupPasswordForm() {
   }, [t]);
 
   const navigation = useRabbyAppNavigation();
-  const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SetPassword)?.params,
-  ) as SettingNavigatorParamList['SetPassword'] | undefined;
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'SettingNavigatorParamList', 'SetPassword'>
+    >();
+  const navParams = route.params;
 
   // const { updateSetPasswordFirst } = useSetPasswordFirstState();
 

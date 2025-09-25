@@ -11,8 +11,9 @@ import { Media } from '@/components/Media';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { GetRootScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -132,13 +133,8 @@ export const NFTDetailScreen = () => {
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { navigateToSendPolyScreen } = useSendRoutes();
-  const {
-    token,
-    isSingleAddress,
-    account: routeAccount,
-  } = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.NftDetail)?.params,
-  ) as GetRootScreensParamsList<'NftDetail'>;
+  const route = useRoute<GetRootScreenRouteProp<'NftDetail'>>();
+  const { token, isSingleAddress, account: routeAccount } = route.params || {};
   type NonListType = Exclude<typeof token, TokenItem[]>;
 
   const chain = getCHAIN_ID_LIST().get((token as NonListType).chain);
