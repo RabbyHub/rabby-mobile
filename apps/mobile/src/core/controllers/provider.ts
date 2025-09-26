@@ -1599,6 +1599,20 @@ class ProviderController extends BaseController {
 
     return keyring;
   };
+
+  ethGetTransactionReceipt = async req => {
+    try {
+      const res = await this.ethRpc(req);
+      return res;
+    } catch (e: any) {
+      const idxKeyPhrases = ['index', 'progress'];
+      if (idxKeyPhrases.some(phrase => e.message?.includes(phrase))) {
+        return null;
+      } else {
+        throw e;
+      }
+    }
+  };
 }
 
 export default new ProviderController();
