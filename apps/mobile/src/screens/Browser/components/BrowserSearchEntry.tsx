@@ -12,6 +12,8 @@ import { useTranslation } from 'react-i18next';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { BrowserTabCard } from '../BrowserScreen/components/BrowserManage/BrowserTabList/BrowserTabCard';
+import { activeTabAtom } from '../BrowserScreen/components/BrowserManage';
+import { useAtom } from 'jotai';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -188,6 +190,7 @@ export const BrowserSearchEntry: React.FC = () => {
   } = useBrowser();
 
   const tabs = useHomeDisplayedTabs();
+  const [, setActiveTab] = useAtom(activeTabAtom);
 
   const { t } = useTranslation();
   const handlePress = useMemoizedFn(() => {
@@ -202,6 +205,9 @@ export const BrowserSearchEntry: React.FC = () => {
   });
 
   const handleTabPress = useMemoizedFn(() => {
+    if (!displayedTabs?.length) {
+      setActiveTab('favorites');
+    }
     setPartialBrowserState({
       isShowBrowser: false,
       isShowSearch: false,
