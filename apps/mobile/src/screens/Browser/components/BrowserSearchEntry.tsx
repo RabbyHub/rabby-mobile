@@ -1,5 +1,5 @@
 import { RcNextSearchCC } from '@/assets/icons/common';
-import { RcIconTabsCC } from '@/assets2024/icons/browser';
+import { RcIconStarCC, RcIconTabsCC } from '@/assets2024/icons/browser';
 import { useBrowser, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -55,7 +55,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-5'],
     position: 'relative',
     paddingLeft: 12,
-    paddingRight: 9,
+    paddingRight: 12,
   },
   icon: {},
   text: {
@@ -287,18 +287,26 @@ export const BrowserSearchEntry: React.FC = () => {
               <TouchableOpacity
                 style={[styles.navControlItem]}
                 onPress={handleTabPress}>
-                <View style={styles.tabIconContainer}>
-                  <RcIconTabsCC
-                    color={colors2024['neutral-body']}
+                {displayedTabs?.length ? (
+                  <View style={styles.tabIconContainer}>
+                    <RcIconTabsCC
+                      color={colors2024['neutral-body']}
+                      width={24}
+                      height={24}
+                    />
+                    <View style={styles.tabCountContainer}>
+                      <Text style={styles.tabCount}>
+                        {displayedTabs?.length || 0}
+                      </Text>
+                    </View>
+                  </View>
+                ) : (
+                  <RcIconStarCC
+                    color={colors2024['neutral-secondary']}
                     width={24}
                     height={24}
                   />
-                  <View style={styles.tabCountContainer}>
-                    <Text style={styles.tabCount}>
-                      {displayedTabs?.length || 0}
-                    </Text>
-                  </View>
-                </View>
+                )}
               </TouchableOpacity>
             </View>
           </LinearGradient>
