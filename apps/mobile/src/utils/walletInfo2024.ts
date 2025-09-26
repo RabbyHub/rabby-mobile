@@ -10,6 +10,7 @@ import SeedPNG from '@/assets2024/icons/wallet/seed.png';
 import WatchPNG from '@/assets2024/icons/wallet/watch.png';
 import WatchDarkDark from '@/assets2024/icons/wallet/watch_dark.png';
 import SafePNG from '@/assets2024/icons/wallet/safe.png';
+import TrezorPNG from '@/assets2024/icons/wallet/trezor.png';
 import blockies from 'ethereum-blockies-base64';
 import { preferenceService } from '@/core/services';
 
@@ -49,6 +50,10 @@ export const getWalletIcon2024 = (
     return OneKeyPNG;
   }
 
+  if (brandName === KEYRING_CLASS.HARDWARE.TREZOR) {
+    return TrezorPNG;
+  }
+
   if (
     brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName ||
     brandName === KEYRING_CLASS.HARDWARE.KEYSTONE
@@ -74,6 +79,7 @@ export const showSubWalletIcon = (brandName: string | undefined) => {
     brandName === KEYRING_CLASS.HARDWARE.LEDGER ||
     brandName === KEYRING_CLASS.HARDWARE.ONEKEY ||
     brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName ||
-    brandName === KEYRING_CLASS.HARDWARE.KEYSTONE
+    brandName === KEYRING_CLASS.HARDWARE.KEYSTONE ||
+    brandName === KEYRING_CLASS.HARDWARE.TREZOR
   );
 };

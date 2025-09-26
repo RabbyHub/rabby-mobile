@@ -40,6 +40,7 @@ import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
 import { OfflineChainService } from './offlineChain';
 import { BrowserService } from './browserService';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
+import { TrezorKeyring } from '../keyring-bridge/trezor/trezor-keyring';
 import { MetamaskModeService } from './metamaskModeService';
 import { SyncChainService } from './syncChainService';
 import { PerpsService } from './perpsService';
@@ -80,6 +81,7 @@ const keyringClasses = [
   GnosisKeyring,
   SimpleKeyring,
   HDKeyring,
+  TrezorKeyring,
 ] as any;
 
 export const contactService = new ContactBookService({

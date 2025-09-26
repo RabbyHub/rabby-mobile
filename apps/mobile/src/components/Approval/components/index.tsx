@@ -5,6 +5,8 @@ import { SignTx } from './SignTx/SignTx';
 import { LedgerHardwareWaiting } from './LedgerHardwareWaiting/LedgerHardwareWaiting';
 import { OneKeyHardwareWaiting } from './OneKeyHardwareWaiting/OneKeyHardwareWaiting';
 import { KeystoneHardwareWaiting } from './KeystoneHardwareWaiting/KeystoneHardwareWaiting';
+import { TrezorHardwareWaiting } from './TrezorHardwareWaiting/TrezorHardwareWaiting';
+
 import { PrivatekeyWaiting } from './PrivatekeyWaiting/PrivatekeyWaiting';
 import { ETHSign } from './ETHSign/ETHSign';
 import { Unknown } from './Unknown/Unknown';
@@ -18,6 +20,7 @@ export const ApprovalComponent = {
   SignTx,
   LedgerHardwareWaiting,
   OneKeyHardwareWaiting,
+  TrezorHardwareWaiting,
   KeystoneHardwareWaiting,
   PrivatekeyWaiting,
   ETHSign,
