@@ -189,8 +189,6 @@ export const GlobalBottomSheetModal = () => {
   const { panResponder } = useRefreshAutoLockPanResponder();
   const { androidOnlyBottomOffset } = useSafeSizes();
 
-  console.log('modals', modals);
-
   return (
     <View>
       {modals.map(modal => {
