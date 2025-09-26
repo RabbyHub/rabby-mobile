@@ -41,6 +41,7 @@ import { PerpsIntro } from '../PerpsMarketDetail/components/PerpsIntro';
 import { PerpsClosePositionPopup } from '../PerpsMarketDetail/components/PerpsClosePositionPopup ';
 import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { toast } from '@/components2024/Toast';
+import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { PerpsSelectTokenPopup } from './components/PerpsDepositPopup/PerpsSelectTokenPopup';
 import { PerpsDepositTokenModal } from './components/PerpsDepositPopup/PerpsDepositTokenModal';
 import { openapi } from '@/core/request';
@@ -135,6 +136,7 @@ export const PerpsScreen = () => {
           isBuy: direction === 'Short',
           size,
           midPx: price,
+          builder: PERPS_BUILDER_INFO,
         });
 
         const filled = res?.response?.data?.statuses[0]?.filled;
@@ -419,11 +421,12 @@ export const PerpsScreen = () => {
             setClosePositionVisible(false);
           }}
           handleClosePosition={async () => {
+            const marketDataItem = marketDataMap[closePosition.coin];
             await handleClosePosition({
               coin: closePosition.coin,
               size: Math.abs(Number(closePosition.szi || 0)).toString() || '0',
               direction: Number(closePosition.szi || 0) > 0 ? 'Long' : 'Short',
-              price: closePosition.entryPx || '0',
+              price: marketDataItem?.markPx || '0',
             });
           }}
         />

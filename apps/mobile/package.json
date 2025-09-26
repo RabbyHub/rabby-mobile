@@ -66,7 +66,7 @@
     "@rabby-wallet/eth-keyring-onekey": "workspace:^",
     "@rabby-wallet/eth-keyring-watch": "*",
     "@rabby-wallet/eth-simple-keyring": "5.0.2",
-    "@rabby-wallet/hyperliquid-sdk": "1.0.7",
+    "@rabby-wallet/hyperliquid-sdk": "1.0.8",
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.13",
