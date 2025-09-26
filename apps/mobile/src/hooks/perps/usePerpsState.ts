@@ -151,11 +151,7 @@ export const usePerpsInitial = () => {
       if (!res) {
         console.error('Failed to set builder fee');
         Sentry.captureException(
-          new Error(
-            'PERPS set builder fee error, no max builder fee' +
-              'account: ' +
-              JSON.stringify(currentPerpsAccount),
-          ),
+          new Error('PERPS set builder fee error, no max builder fee'),
         );
       }
     } catch (error) {
