@@ -271,6 +271,7 @@ export const usePerpsState = () => {
   const [popupSate, setPopupState] = usePerspPopupState();
   const { t } = useTranslation();
   const deleteAgentCbRef = useRef<(() => Promise<void>) | null>(null);
+  const { checkBuilderFee } = usePerpsInitial();
   const {
     state: perpsState,
     setApproveSignatures,
