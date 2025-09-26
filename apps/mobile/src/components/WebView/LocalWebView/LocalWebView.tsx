@@ -1,0 +1,205 @@
+import React, { useCallback, useMemo } from 'react';
+import WebView, { WebViewProps } from 'react-native-webview';
+
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import {
+  refAssetForLocalWebView,
+  WEBVIEW_BASEURL,
+} from '@/core/storage/webviewAssets';
+import { Platform, View } from 'react-native';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useDevServerSettings } from '@/core/utils/devServerSettings';
+import {
+  FALLBACK_HTML,
+  formatDevURI,
+  getBaseURL,
+  getLocalWebViewDefaultProps,
+  makeRuntimeInfo,
+  sendMessageToWebview,
+} from './utils';
+import { stringUtils } from '@rabby-wallet/base-utils';
+import { OnShouldStartLoadWithRequest } from 'react-native-webview/lib/WebViewTypes';
+
+type LocalWebViewProps = WebViewProps & {
+  entryPath: string;
+  webviewSize?: { width?: number; height?: number };
+  forceUseLocalResource?: boolean;
+  /**
+   * @default true disable http request in webview (for local resource security purpose)
+   */
+  disableHttpRequest?: boolean;
+};
+
+function defaultOnShouldStartLoadWithRequest(
+  request: Parameters<OnShouldStartLoadWithRequest>[0],
+  disableHttpRequest = true,
+): ReturnType<OnShouldStartLoadWithRequest> {
+  if (disableHttpRequest) {
+    if (
+      request.url.startsWith('http://') ||
+      request.url.startsWith('https://')
+    ) {
+      // Prevent loading of HTTP URLs
+      console.debug('[LocalWebView] Blocked HTTP request:', request.url);
+      return false;
+    }
+  }
+
+  // Allow all other URLs (e.g., HTTPS, file://)
+  return true;
+}
+
+export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
+  (
+    {
+      entryPath,
+      webviewSize,
+      forceUseLocalResource = !__DEV__,
+      disableHttpRequest = !__DEV__,
+      ...webviewProps
+    },
+    ref,
+  ) => {
+    const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+    // const { width: viewWidth = '100%', height: viewHeight = 300 } = viewSize || {};
+    const { width: webviewWidth = '100%', height: webviewHeight = 300 } =
+      webviewSize || {};
+
+    const { devServerSettings } = useDevServerSettings();
+
+    if (__DEV__ && !forceUseLocalResource && !devServerSettings.devServerHost) {
+      throw new Error('devServerHost is not set');
+    }
+
+    const { webviewSource } = useMemo(() => {
+      const localUri = IS_ANDROID
+        ? refAssetForLocalWebView(
+            stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
+          ).rawPath
+        : refAssetForLocalWebView(
+            stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
+          ).rawPath;
+
+      const devUri = formatDevURI({
+        host: devServerSettings.devServerHost!,
+        port: 5173,
+        protocol: 'http:',
+        path: entryPath,
+      });
+
+      return {
+        localUri,
+        devUri,
+        webviewSource:
+          __DEV__ && !forceUseLocalResource
+            ? {
+                uri: devUri,
+                baseUrl: getBaseURL(devUri || ''),
+              }
+            : IS_ANDROID
+            ? {
+                uri: localUri,
+                baseUrl: `${stringUtils.ensureSuffix(WEBVIEW_BASEURL, '/')}`,
+              }
+            : {
+                uri: `${WEBVIEW_BASEURL}${stringUtils.ensurePrefix(
+                  entryPath,
+                  '/builtin-pages',
+                )}`,
+                baseUrl: WEBVIEW_BASEURL,
+              },
+      };
+    }, [entryPath, devServerSettings, forceUseLocalResource]);
+
+    const { onShouldStartLoadWithRequest: _onShouldStartLoadWithRequest } =
+      webviewProps;
+    const onShouldStartLoadWithRequest =
+      useCallback<OnShouldStartLoadWithRequest>(
+        request => {
+          const internalAllowed = defaultOnShouldStartLoadWithRequest(
+            request,
+            disableHttpRequest,
+          );
+
+          const externalAllowed =
+            _onShouldStartLoadWithRequest?.(request) !== false;
+
+          return internalAllowed && externalAllowed;
+        },
+        [_onShouldStartLoadWithRequest, disableHttpRequest],
+      );
+
+    // console.debug('[debug] webviewSource', webviewSource);
+
+    const webviewRef: React.MutableRefObject<WebView | null> =
+      React.useRef<WebView>(null);
+
+    return (
+      <WebView
+        {...(IS_IOS
+          ? getLocalWebViewDefaultProps().iosWebViewProps
+          : getLocalWebViewDefaultProps().androidWebViewProps)}
+        onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+        {...webviewProps}
+        style={[
+          styles.webView,
+          {
+            height: webviewHeight,
+            width: webviewWidth,
+            minHeight: webviewHeight,
+          },
+          webviewProps.style,
+        ]}
+        ref={(instance: WebView) => {
+          webviewRef.current = instance;
+          if (typeof ref === 'function') {
+            ref(instance);
+          } else if (ref) {
+            (ref as React.MutableRefObject<WebView | null>).current = instance;
+          }
+        }}
+        source={{
+          ...webviewProps.source,
+          ...webviewSource,
+        }}
+        injectedJavaScriptObject={{
+          ...webviewProps.injectedJavaScriptObject,
+          ...makeRuntimeInfo({
+            baseUrl: webviewSource.baseUrl!,
+            isDev: __DEV__ && !forceUseLocalResource,
+          }),
+        }}
+        onMessage={event => {
+          webviewProps.onMessage?.(event);
+          const parseInfo = stringUtils.safeParseJSON(event.nativeEvent.data);
+
+          switch (parseInfo?.type) {
+            case 'GET_RUNTIME_INFO': {
+              sendMessageToWebview(webviewRef.current, {
+                type: 'GOT_RUNTIME_INFO',
+                info: makeRuntimeInfo({
+                  baseUrl: webviewSource.baseUrl!,
+                  isDev: __DEV__ && !forceUseLocalResource,
+                }),
+              });
+              break;
+            }
+            default: {
+              console.warn('Unknown message from WebView', parseInfo);
+            }
+          }
+        }}
+      />
+    );
+  },
+);
+
+const getStyle = createGetStyles2024(ctx => ({
+  container: {
+    flex: 1,
+  },
+  webView: {
+    flex: 1,
+  },
+}));

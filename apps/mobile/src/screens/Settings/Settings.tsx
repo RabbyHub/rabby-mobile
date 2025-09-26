@@ -52,7 +52,7 @@ import {
 } from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { type SettingConfBlock, Block } from './Block';
-import { useSheetWebViewTester } from './sheetModals/hooks';
+// import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 import type { SwitchToggleType } from '@/components';
@@ -141,9 +141,9 @@ import DevScreenRecordingModal, {
   useDevScreenRecordingModalVisiable,
 } from './sheetModals/DevScreenRecording';
 import {
-  DevModalReactotron,
-  useReactotronModalVisible,
-} from './Modals/DevModalReactotron';
+  DevModalDevServer,
+  useDevServerModalVisible,
+} from './Modals/DevModalDevServer';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   useScreenshotToReportEnabled,
@@ -578,7 +578,7 @@ function DevSettingsBlocks() {
     }, [fetchBiometrics]),
   );
 
-  const { openMetaMaskTestDapp } = useSheetWebViewTester();
+  // const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
@@ -598,7 +598,7 @@ function DevSettingsBlocks() {
     useDevScreenRecordingModalVisiable();
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
-  const { setReactotronModalVisible } = useReactotronModalVisible();
+  const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
@@ -725,12 +725,19 @@ function DevSettingsBlocks() {
           icon: RcEarth,
           items: [
             {
-              label: 'WebView Test',
-              icon: RcEarth,
-              onPress: () => {
-                openMetaMaskTestDapp();
+              label: 'LAN Server Settings',
+              icon: RcCode,
+              onPress: async () => {
+                setDevServerSettingsModalVisible(true);
               },
             },
+            // {
+            //   label: 'WebView Test',
+            //   icon: RcEarth,
+            //   onPress: () => {
+            //     openMetaMaskTestDapp();
+            //   },
+            // },
             {
               label: 'Markdown Webview Test',
               icon: RcEarth,
@@ -824,13 +831,6 @@ function DevSettingsBlocks() {
                 });
               },
             },
-            {
-              label: 'Reactotron Settings',
-              icon: RcCode,
-              onPress: async () => {
-                setReactotronModalVisible(true);
-              },
-            },
             // {
             //   label: 'Test Biometrics',
             //   icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
@@ -884,7 +884,7 @@ function DevSettingsBlocks() {
       <DevUIPlaygroundModal />
       <DevDataPlayground />
       <DevScreenRecordingModal />
-      {__DEV__ && <DevModalReactotron />}
+      {__DEV__ && <DevModalDevServer />}
       <OpenApiPopup
         visible={isShowOpenApiPopup}
         onClose={() => {

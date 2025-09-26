@@ -2,12 +2,16 @@ import { NativeModules } from 'react-native';
 import Reactotron, { ReactotronReactNative } from 'reactotron-react-native';
 import { useAtom } from 'jotai';
 
-import { REACTOTRON_HOSTNAME as REACTOTRON_HOSTNAME_ } from '@env';
+import { DEV_SERVER_HOSTNAME as DEV_SERVER_HOSTNAME_ } from '@env';
 import { appJsonStore, atomByMMKV } from '../storage/mmkv';
 import { useCallback } from 'react';
 import { isNonPublicProductionEnv } from '@/constant/env';
 
-const PERSIST_KEY = '@expReactotronSettings';
+const PERSIST_KEY = '@devServerSettings';
+
+export function getDevServerHost() {
+  return appJsonStore.getItem(PERSIST_KEY, {})?.devServerHost;
+}
 
 const instanceRef = { current: null as null | ReactotronReactNative };
 export function setupReactotronConnection() {
@@ -21,7 +25,7 @@ export function setupReactotronConnection() {
       );
       scriptHostname = new URL(NativeModules.SourceCode?.scriptURL).hostname;
 
-      // why: for usb connection, the scriptHostname is often 'localhost', then developer need to set REACTOTRON_HOSTNAME on .env[.local] file
+      // why: for usb connection, the scriptHostname is often 'localhost', then developer need to set DEV_SERVER_HOSTNAME on .env[.local] file
       if (scriptHostname === 'localhost') {
         console.debug(
           '[ReactotronConfig] scriptHostname localhost, set to empty string',
@@ -34,18 +38,18 @@ export function setupReactotronConnection() {
   }
 
   if (isNonPublicProductionEnv) {
-    persistedHostname = appJsonStore.getItem(PERSIST_KEY, {})?.metroServer;
+    persistedHostname = getDevServerHost();
   }
 
   console.debug(
-    '[ReactotronConfig] REACTOTRON_HOSTNAME_ %s; scriptHostname %s; persistedHostname: %s',
-    REACTOTRON_HOSTNAME_,
+    '[ReactotronConfig] DEV_SERVER_HOSTNAME_ %s; scriptHostname %s; persistedHostname: %s',
+    DEV_SERVER_HOSTNAME_,
     scriptHostname,
     persistedHostname,
   );
 
   const finalScriptHostname =
-    REACTOTRON_HOSTNAME_ || persistedHostname || scriptHostname;
+    DEV_SERVER_HOSTNAME_ || persistedHostname || scriptHostname;
 
   if (instanceRef.current) {
     instanceRef.current.close();
@@ -69,29 +73,29 @@ export function setupReactotronConnection() {
   return instanceRef.current;
 }
 
-const reactotronSettingsAtom = atomByMMKV(PERSIST_KEY, {
+const devServerSettingsAtom = atomByMMKV(PERSIST_KEY, {
   /** @sample 192.168.0.1:9090 */
-  metroServer: '',
+  devServerHost: '',
 });
 
-export function useReactotronSettings() {
-  const [reactotronSettings, setReactotronSettings] = useAtom(
-    reactotronSettingsAtom,
+export function useDevServerSettings() {
+  const [devServerSettings, setDevServerSettings] = useAtom(
+    devServerSettingsAtom,
   );
 
-  const setReactotronServer = useCallback(
-    (metroServer: string) => {
-      setReactotronSettings(prev => {
-        if (metroServer) {
+  const setDevServerHost = useCallback(
+    (devServerHost: string) => {
+      setDevServerSettings(prev => {
+        if (devServerHost) {
           setTimeout(() => {
             setupReactotronConnection();
           }, 2000);
         }
-        return { ...prev, metroServer };
+        return { ...prev, devServerHost };
       });
     },
-    [setReactotronSettings],
+    [setDevServerSettings],
   );
 
-  return { reactotronSettings, setReactotronServer };
+  return { devServerSettings, setDevServerHost };
 }

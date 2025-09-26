@@ -1,4 +1,4 @@
-import { setupReactotronConnection } from '@/core/utils/devReactotron';
+import { setupReactotronConnection } from '@/core/utils/devServerSettings';
 
 if (__DEV__) {
   setTimeout(() => {
