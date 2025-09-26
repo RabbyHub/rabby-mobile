@@ -172,6 +172,7 @@ export const usePerpsInitial = () => {
         const currentAccount = await apisPerps.getPerpsCurrentAccount();
         if (!currentAccount || !currentAccount.address) {
           // 如果没有登录状态，则只获取市场数据即可
+          toast.show('no find currentAccount');
           await noLoginAction();
           return false;
         }
@@ -184,6 +185,7 @@ export const usePerpsInitial = () => {
 
         if (!targetTypeAccount) {
           // 地址列表没找到
+          toast.show('no find targetTypeAccount');
           await noLoginAction();
           return false;
         }
@@ -191,6 +193,7 @@ export const usePerpsInitial = () => {
         const res = await apisPerps.getPerpsAgentWallet(currentAccount.address);
         if (!res) {
           // 没有找到store对应的 agent wallet
+          toast.show('no find PerpsAgentWallet');
           await noLoginAction();
           return false;
         }
