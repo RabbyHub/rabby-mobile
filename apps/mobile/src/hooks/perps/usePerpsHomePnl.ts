@@ -1,7 +1,8 @@
 import { useMemoizedFn } from 'ahooks';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { apisPerps } from './../../core/apis/perps';
 import { usePerpsStore } from './usePerpsStore';
+import { useFocusEffect } from '@react-navigation/native';
 
 export const usePerpsHomePnl = () => {
   const { state: perpsState, setHomePositionPnl } = usePerpsStore();
@@ -24,9 +25,11 @@ export const usePerpsHomePnl = () => {
     }
   });
 
-  useEffect(() => {
-    fetch();
-  }, [fetch]);
+  useFocusEffect(
+    useCallback(() => {
+      fetch();
+    }, [fetch]),
+  );
 
   return {
     perpsPositionInfo: perpsState.homePositionPnl,
