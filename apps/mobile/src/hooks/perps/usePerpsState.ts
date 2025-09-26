@@ -149,7 +149,6 @@ export const usePerpsInitial = () => {
         PERPS_BUILD_FEE_RECEIVE_ADDRESS,
       );
       if (!res) {
-        currentPerpsAccount?.address && logout(currentPerpsAccount?.address);
         console.error('Failed to set builder fee');
         Sentry.captureException(
           new Error(
