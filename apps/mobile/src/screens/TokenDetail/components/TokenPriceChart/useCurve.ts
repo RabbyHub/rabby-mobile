@@ -1,22 +1,11 @@
 import { openapi } from '@/core/request';
+import { CurvePoint } from '@/hooks/useCurve';
 import { patchCurveData } from '@/utils/curve';
 import { formatPrice } from '@/utils/number';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
 import { findLastIndex } from 'lodash';
 import { useMemo } from 'react';
-
-export type CurvePoint = {
-  value: number;
-  netWorth: string;
-  change: string;
-  isLoss: boolean;
-  changePercent: string;
-  timestamp: number;
-  dateString: string;
-  clockTimeString: string;
-  dateTimeString: string;
-};
 
 export const use24hCurveData = ({
   tokenId,

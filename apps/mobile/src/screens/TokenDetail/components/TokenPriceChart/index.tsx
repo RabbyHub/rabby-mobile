@@ -29,7 +29,6 @@ import { CurveLoader } from './CurveLoader';
 import { DataHeaderInfo, DataHeaderInfoSkeleton } from './DataHeaderInfo';
 import { REAL_TIME_TAB_LIST, TabKey, TIME_TAB_LIST, TimeTab } from './TimeTab';
 import {
-  CurvePoint,
   formatTokenDateCurve,
   use24hCurveData,
   useDateCurveData,
@@ -39,6 +38,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { useTranslation } from 'react-i18next';
 import { unionBy } from 'lodash';
+import { CurvePoint } from '@/hooks/useCurve';
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
 const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);

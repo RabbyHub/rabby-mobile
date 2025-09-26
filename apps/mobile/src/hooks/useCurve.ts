@@ -19,6 +19,7 @@ export type CurvePoint = {
   value: number;
   netWorth: string;
   change: string;
+  rawChange: number;
   isLoss: boolean;
   changePercent: string;
   timestamp: number;
@@ -97,6 +98,7 @@ export const formChartData = (
           value: x.usd_value || 0,
           netWorth: formatSmallUsdValue(x.usd_value),
           change: `${formatUsdValue(Math.abs(change))}`,
+          rawChange: Math.abs(change),
           isLoss: change < 0,
           changePercent:
             startData.usd_value === 0
@@ -117,6 +119,7 @@ export const formChartData = (
       value: realtimeNetWorth || 0,
       netWorth: formatSmallUsdValue(realtimeNetWorth),
       change: `${formatUsdValue(Math.abs(realtimeChange))}`,
+      rawChange: Math.abs(realtimeChange),
       isLoss: realtimeChange < 0,
       changePercent:
         startData.usd_value === 0

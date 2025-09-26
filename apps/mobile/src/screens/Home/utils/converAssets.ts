@@ -27,17 +27,26 @@ export const convertSmallTokenList = (tokens?: AbstractPortfolioToken[]) => {
       ]
     : [];
 };
-export const getTotalFoldToken = (tokens?: AbstractPortfolioToken[]) => {
+export const getTotalFoldToken = (
+  tokens?: AbstractPortfolioToken[],
+  usdRate = 1,
+  symbol = '$',
+) => {
   const tokensTotalValue = tokens
     ?.reduce(
       (acc, item) => acc.plus(item._isExcludeBalance ? 0 : item._usdValue || 0),
       new BigNumber(0),
     )
+    ?.times(usdRate)
     .toNumber();
-  return formatNetworth(tokensTotalValue);
+  return formatNetworth(tokensTotalValue, false, symbol);
 };
 
-export const getAllDefiCount = (portfolios: DisplayedProject[]) => {
+export const getAllDefiCount = (
+  portfolios: DisplayedProject[],
+  usdRate = 1,
+  symbol = '$',
+) => {
   let tokensTotalValue = 0;
   portfolios?.forEach(portfolio => {
     // portfolio._isExcludeBalance
@@ -53,9 +62,10 @@ export const getAllDefiCount = (portfolios: DisplayedProject[]) => {
               ),
             new BigNumber(0),
           )
+          ?.times(usdRate)
           .toNumber();
   });
-  return formatNetworth(tokensTotalValue);
+  return formatNetworth(tokensTotalValue, false, symbol);
 };
 
 export const getDisplayedPortfolioUsdValue = (
