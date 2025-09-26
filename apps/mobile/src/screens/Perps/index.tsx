@@ -23,7 +23,10 @@ import { PerpsDepositPopup } from './components/PerpsDepositPopup';
 import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import { usePerspPopupState } from './hooks/usePerpsPopupState';
+import {
+  usePerspPopupState,
+  useSelectedToken,
+} from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
@@ -39,6 +42,14 @@ import { PerpsClosePositionPopup } from '../PerpsMarketDetail/components/PerpsCl
 import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { toast } from '@/components2024/Toast';
 import { PERPS_BUILDER_INFO } from '@/constant/perps';
+import { PerpsSelectTokenPopup } from './components/PerpsDepositPopup/PerpsSelectTokenPopup';
+import { PerpsDepositTokenModal } from './components/PerpsDepositPopup/PerpsDepositTokenModal';
+import { openapi } from '@/core/request';
+import {
+  ARB_USDC_TOKEN_ID,
+  ARB_USDC_TOKEN_SERVER_CHAIN,
+} from '@/constant/perps';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -73,7 +84,9 @@ export const PerpsScreen = () => {
   const [closePosition, setClosePosition] = useState<
     AssetPosition['position'] | null
   >(null);
+  const [selectedToken, setSelectedToken] = useSelectedToken();
   const [popupState, setPopupState] = usePerspPopupState();
+  const [isShowModal, setIsShowModal] = useState(false);
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
     if (currentPerpsAccount?.address) {
@@ -296,6 +309,13 @@ export const PerpsScreen = () => {
       <PerpsDepositPopup
         account={currentPerpsAccount}
         visible={popupState.isShowDepositPopup}
+        accountSummary={accountSummary}
+        showSelectTokenPopup={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowDepositTokenPopup: true,
+          }));
+        }}
         onClose={() => {
           setPopupState(prev => ({
             ...prev,
@@ -311,6 +331,62 @@ export const PerpsScreen = () => {
           // await sleep(5000);
           setPopupState(prev => ({
             ...prev,
+            isShowDepositPopup: false,
+          }));
+        }}
+      />
+      <PerpsSelectTokenPopup
+        account={currentPerpsAccount}
+        visible={popupState.isShowDepositTokenPopup}
+        onClose={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowDepositTokenPopup: false,
+          }));
+        }}
+        onSelect={async token => {
+          setSelectedToken(token);
+          if (
+            token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+            isSameAddress(token._tokenId, ARB_USDC_TOKEN_ID)
+          ) {
+            setPopupState(prev => ({
+              ...prev,
+              isShowDepositTokenPopup: false,
+              isShowDepositPopup: true,
+            }));
+            return;
+          }
+
+          const res = await openapi.getPerpsBridgeIsSupportToken({
+            token_id: token._tokenId,
+            chain_id: token.chain,
+          });
+
+          if (res?.success) {
+            // bridge token with liFi dex
+            setPopupState(prev => ({
+              ...prev,
+              isShowDepositTokenPopup: false,
+              isShowDepositPopup: true,
+            }));
+            // setClickLoading(false);
+          } else {
+            setIsShowModal(true);
+          }
+        }}
+      />
+      <PerpsDepositTokenModal
+        visible={isShowModal}
+        onCancel={() => {
+          setIsShowModal(false);
+        }}
+        token={selectedToken}
+        onNavigate={() => {
+          setIsShowModal(false);
+          setPopupState(prev => ({
+            ...prev,
+            isShowDepositTokenPopup: false,
             isShowDepositPopup: false,
           }));
         }}

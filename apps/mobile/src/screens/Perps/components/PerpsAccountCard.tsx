@@ -79,7 +79,7 @@ export const PerpsAccountCard: React.FC<{
               onPress={() => {
                 setPopupState(prev => ({
                   ...prev,
-                  isShowDepositPopup: true,
+                  isShowDepositTokenPopup: true,
                 }));
               }}
               titleStyle={styles.smBtnTitle}

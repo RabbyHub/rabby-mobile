@@ -21,4 +21,5 @@ export * as apiToken from './token';
 export { apiCustomTestnet } from './customTestnet';
 export { apiCustomRPC } from './customRPC';
 export * as apisAccount from './account';
+export * as apiTrezor from './trezor';
 export * from './perps';

@@ -139,13 +139,13 @@ export class RabbyOrmDeployedConsoleLogger
     super(options);
   }
 
-  async #sentryReport(
+  #sentryReport(
     time: number,
     query: string,
     parameters?: any[],
     queryRunner?: QueryRunner,
   ) {
-    const onlineConfig = await getOnlineConfig();
+    const onlineConfig = getOnlineConfig();
     if (!onlineConfig?.switches?.['20250820.reportSentry_slowQuery']) return;
 
     try {

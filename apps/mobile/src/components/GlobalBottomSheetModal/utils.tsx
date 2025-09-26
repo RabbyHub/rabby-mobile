@@ -142,6 +142,7 @@ export function makeClassicalBottomSheetProps(ctx: {
         APPROVAL_MODAL_NAMES.LedgerHardwareWaiting,
         APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
         APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
+        APPROVAL_MODAL_NAMES.TrezorHardwareWaiting,
         APPROVAL_MODAL_NAMES.WatchAddressWaiting,
         APPROVAL_MODAL_NAMES.ETHSign,
         APPROVAL_MODAL_NAMES.AddAsset,
