@@ -72,6 +72,7 @@ import { CurrentDappPopup } from './CurrentDappPopup';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { useHyperliquidReferral } from '../../hooks/useHyperliquidReferral';
 import { useAccounts } from '@/hooks/account';
+import { getOnlineConfig } from '@/core/config/online';
 
 type BrowserTabProps = {
   origin: string;
@@ -638,7 +639,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         scalesPageToFit: true,
                       })}
                       onLoadStart={e => {
-                        let treatAsReload = IS_IOS || e.nativeEvent.isReload;
+                        const alwaysTreatReloadAsTrue =
+                          IS_ANDROID &&
+                          !!getOnlineConfig()?.['switches']?.[
+                            '20250924.android_webview_always_treat_as_reload'
+                          ];
+
+                        let treatAsReload =
+                          IS_IOS ||
+                          e.nativeEvent.isReload ||
+                          alwaysTreatReloadAsTrue;
 
                         if (!treatAsReload) {
                           const eventUrlOrigin = urlUtils.canoicalizeDappUrl(
