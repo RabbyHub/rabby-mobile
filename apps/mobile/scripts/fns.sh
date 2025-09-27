@@ -166,7 +166,11 @@ reset_builtin_assets() {
   echo "cleanup and copy custom js to $android_assets_target/custom..."
   mkdir -p $project_dir/android/app/src/main/assets/custom/builtin-pages;
   rm -rf $project_dir/android/app/src/main/assets/custom/builtin-pages/*;
-  cp -r $project_dir/assets/android/builtin-pages/* $project_dir/android/app/src/main/assets/custom/builtin-pages/
+  if [ -d $project_dir/assets/android/builtin-pages/ ]; then
+    cp -r $project_dir/assets/android/builtin-pages/* $project_dir/android/app/src/main/assets/custom/builtin-pages/
+  else
+    echo "haven't build $project_dir/assets/android/builtin-pages/, skipped copy";
+  fi
 
   # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }
