@@ -36,6 +36,12 @@ export const usePerpsPosition = ({
     apisPerps.setSendApproveAfterDeposit(address, []);
   });
 
+  const formatTriggerPx = (px?: string) => {
+    // avoid '.15' input error from hy validator
+    // '.15' -> '0.15'
+    return px ? Number(px).toString() : undefined;
+  };
+
   const handleSetAutoClose = useMemoizedFn(
     async (params: {
       coin: string;
@@ -46,13 +52,8 @@ export const usePerpsPosition = ({
       try {
         const sdk = apisPerps.getPerpsSDK();
         const { coin, tpTriggerPx, slTriggerPx, direction } = params;
-        // avoid '.15' input error from hy validator
-        const formattedTpTriggerPx = tpTriggerPx
-          ? Number(tpTriggerPx).toString()
-          : undefined;
-        const formattedSlTriggerPx = slTriggerPx
-          ? Number(slTriggerPx).toString()
-          : undefined;
+        const formattedTpTriggerPx = formatTriggerPx(tpTriggerPx);
+        const formattedSlTriggerPx = formatTriggerPx(slTriggerPx);
         const res = await sdk.exchange?.bindTpslByOrderId({
           coin,
           isBuy: direction === 'Long',
@@ -209,12 +210,8 @@ export const usePerpsPosition = ({
         ];
 
         // avoid '.15' input error from hy validator
-        const formattedTpTriggerPx = tpTriggerPx
-          ? Number(tpTriggerPx).toString()
-          : undefined;
-        const formattedSlTriggerPx = slTriggerPx
-          ? Number(slTriggerPx).toString()
-          : undefined;
+        const formattedTpTriggerPx = formatTriggerPx(tpTriggerPx);
+        const formattedSlTriggerPx = formatTriggerPx(slTriggerPx);
 
         if (tpTriggerPx || slTriggerPx) {
           promises.push(
