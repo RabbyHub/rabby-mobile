@@ -43,6 +43,8 @@ import Safe from '@rabby-wallet/gnosis-sdk';
 import { SAFE_API_KEY } from './constant/env';
 Safe.apiKey = SAFE_API_KEY;
 
+import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
+
 const rneuiTheme = createTheme({
   lightColors: {
     grey4: ThemeColors.light['neutral-card-2'],
@@ -72,6 +74,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useTriggerI18nChangeOnAppTop();
   useIAPListener();
   useGasAccountInfo();
+  useTrezorConnectOnUrl();
   useIncreaseTxCountOnAppTop({ isTop: true });
   useIntervalSyncDDefaultRPCs();
   useUserDidTakeScreenshot({ isTop: true });

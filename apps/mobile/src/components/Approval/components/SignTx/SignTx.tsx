@@ -988,6 +988,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     } else {
       (transaction as Tx).gasPrice = tx.gasPrice;
     }
+
     const approval = (await getApproval())!;
     // gaEvent('allow');
 

@@ -13,6 +13,7 @@ const CONFIG_URL = `${BASE_URL}/rabby-mobile.json`;
 type OnlineConfig = {
   ['switches']?: {
     ['20250820.reportSentry_slowQuery']?: boolean;
+    ['20250924.android_webview_always_treat_as_reload']?: boolean;
   };
 };
 
@@ -20,6 +21,7 @@ function getDefaultOnlineConfig(): OnlineConfig {
   return {
     switches: {
       '20250820.reportSentry_slowQuery': false,
+      '20250924.android_webview_always_treat_as_reload': true,
     },
   };
 }
@@ -51,6 +53,6 @@ export async function fetchConfigOnBootstrap() {
   }, 5 * 60 * 1e3); // every 5 minutes
 })();
 
-export async function getOnlineConfig() {
+export function getOnlineConfig() {
   return configRef.current;
 }

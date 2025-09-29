@@ -15,6 +15,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { WalletIcon, WalletIconProps } from '../WalletIcon/WalletIcon';
 import RcIconPin from '@/assets2024/icons/address/pin-cc.svg';
+import { useCurrency } from '@/hooks/useCurrency';
+import BigNumber from 'bignumber.js';
 
 const { isSameAddress } = addressUtils;
 
@@ -72,10 +74,17 @@ export const AddressItem = (props: AddressItemProps) => {
     () => ellipsisAddress(account.address),
     [account?.address],
   );
+
+  const { currency } = useCurrency();
+
   const usdValue = useMemo(() => {
-    const b = account.balance || 0;
-    return `$${splitNumberByStep(b > 10 ? Math.floor(b) : b.toFixed(2))}`;
-  }, [account?.balance]);
+    const b = new BigNumber(account.balance || 0).times(currency.usd_rate);
+    return `${currency.symbol}${splitNumberByStep(
+      b.isGreaterThan(10)
+        ? b.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString()
+        : b.toFixed(2),
+    )}`;
+  }, [account.balance, currency.symbol, currency.usd_rate]);
 
   const WalletIconWrapper = useCallback(
     (_props: Omit<WalletIconProps, 'type'>) => {

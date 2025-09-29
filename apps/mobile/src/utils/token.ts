@@ -226,6 +226,7 @@ export class DisplayedToken implements AbstractPortfolioToken {
   price: number;
   decimals: number;
   display_symbol: string | null;
+  raw_amount_hex_str?: string;
   is_core: boolean;
   is_wallet: boolean;
   name: string;
@@ -286,6 +287,8 @@ export class DisplayedToken implements AbstractPortfolioToken {
     // 默认是它
     this._usdValueChangeStr = '-';
     this.support_market_data = token.support_market_data;
+    this.raw_amount_hex_str = token.raw_amount_hex_str;
+    this.decimals = token.decimals;
   }
 
   patchHistory(h: PortfolioItemToken) {
