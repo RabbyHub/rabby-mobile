@@ -46,17 +46,24 @@ export const usePerpsPosition = ({
       try {
         const sdk = apisPerps.getPerpsSDK();
         const { coin, tpTriggerPx, slTriggerPx, direction } = params;
+        // avoid '.15' input error from hy validator
+        const formattedTpTriggerPx = tpTriggerPx
+          ? Number(tpTriggerPx).toString()
+          : undefined;
+        const formattedSlTriggerPx = slTriggerPx
+          ? Number(slTriggerPx).toString()
+          : undefined;
         const res = await sdk.exchange?.bindTpslByOrderId({
           coin,
           isBuy: direction === 'Long',
-          tpTriggerPx,
-          slTriggerPx,
+          tpTriggerPx: formattedTpTriggerPx,
+          slTriggerPx: formattedSlTriggerPx,
           builder: PERPS_BUILDER_INFO,
         });
 
         setCurrentTpOrSl({
-          tpPrice: tpTriggerPx,
-          slPrice: slTriggerPx,
+          tpPrice: formattedTpTriggerPx,
+          slPrice: formattedSlTriggerPx,
         });
         setTimeout(() => {
           fetchPositionOpenOrders();
@@ -201,6 +208,14 @@ export const usePerpsPosition = ({
           }),
         ];
 
+        // avoid '.15' input error from hy validator
+        const formattedTpTriggerPx = tpTriggerPx
+          ? Number(tpTriggerPx).toString()
+          : undefined;
+        const formattedSlTriggerPx = slTriggerPx
+          ? Number(slTriggerPx).toString()
+          : undefined;
+
         if (tpTriggerPx || slTriggerPx) {
           promises.push(
             (async () => {
@@ -208,8 +223,8 @@ export const usePerpsPosition = ({
               const result = await sdk.exchange?.bindTpslByOrderId({
                 coin,
                 isBuy: direction === 'Long',
-                tpTriggerPx,
-                slTriggerPx,
+                tpTriggerPx: formattedTpTriggerPx,
+                slTriggerPx: formattedSlTriggerPx,
                 builder: PERPS_BUILDER_INFO,
               });
               return result as OrderResponse;
@@ -241,8 +256,8 @@ export const usePerpsPosition = ({
               : msg,
           );
           setCurrentTpOrSl({
-            tpPrice: tpTriggerPx,
-            slPrice: slTriggerPx,
+            tpPrice: formattedTpTriggerPx,
+            slPrice: formattedSlTriggerPx,
           });
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
