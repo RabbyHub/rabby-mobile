@@ -1542,7 +1542,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-get-random-values (1.11.0):
+  - react-native-get-random-values (1.10.0):
     - React-Core
   - react-native-ios-context-menu (1.15.3):
     - React-Core
@@ -2722,7 +2722,7 @@ SPEC CHECKSUMS:
   react-native-blur: 89fca766002a2cf738ff37cca82a9776700841e6
   react-native-cloud-storage: c6dcdd85718315adf3a2598b34fb7d3e7de7715a
   react-native-compat: 39946b7c56b5f95619353d20d3dcd39c8c7003c5
-  react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
+  react-native-get-random-values: 384787fd76976f5aec9465aff6fa9e9129af1e74
   react-native-ios-context-menu: e529171ba760a1af7f2ef0729f5a7f4d226171c5
   react-native-keyboard-controller: 88ad370bd43ecaa7b3aea76f9df4726edb0236c9
   react-native-mmkv: 5fc4966efbe7bf2b317be36c613518b6672d5855
