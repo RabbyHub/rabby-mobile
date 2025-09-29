@@ -36,7 +36,7 @@ function DevUIBuiltInPages() {
           <Text style={[{ fontSize: 18, fontWeight: '700' }]}>
             Summary{' '.repeat(100)}
           </Text>
-          <Text style={{ marginBottom: 12 }}>
+          <Text style={[styles.text, { marginBottom: 12 }]}>
             This page is used to show usages of built-in webview pages
           </Text>
         </Text>
@@ -46,11 +46,26 @@ function DevUIBuiltInPages() {
             Sample widgets:
           </Text>
 
-          <View>
-            <Switch
-              value={forceUseLocalResource}
-              onValueChange={setForceUseLocalResource}
-            />
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 12,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 12,
+              }}>
+              <Text style={[styles.text, { marginRight: 16, fontSize: 16 }]}>
+                Force Use Local
+              </Text>
+              <Switch
+                value={forceUseLocalResource}
+                onValueChange={setForceUseLocalResource}
+              />
+            </View>
           </View>
 
           <Text
@@ -91,9 +106,13 @@ const getStyles = createGetStyles2024(ctx =>
       justifyContent: 'center',
       height: '100%',
     },
+    text: {
+      color: ctx.colors2024['neutral-title-1'],
+    },
     areaTitle: {
       fontSize: 36,
       marginBottom: 12,
+      color: ctx.colors2024['neutral-title-1'],
     },
     screenScrollableView: {
       minHeight: '100%',
@@ -138,6 +157,7 @@ const getStyles = createGetStyles2024(ctx =>
       alignItems: 'flex-start',
       justifyContent: 'flex-start',
       marginRight: 8,
+      color: ctx.colors2024['neutral-title-1'],
     },
     propertyType: {
       color: ctx.colors2024['blue-default'],

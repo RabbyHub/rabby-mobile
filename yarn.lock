@@ -28470,6 +28470,7 @@ __metadata:
     typescript: ~5.8.3
     typescript-eslint: ^8.44.0
     vite: ^7.1.7
+    zustand: ^5.0.8
   languageName: unknown
   linkType: soft
 
@@ -40442,6 +40443,27 @@ __metadata:
   version: 3.22.4
   resolution: "zod@npm:3.22.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fzod%2F-%2Fzod-3.22.4.tgz"
   checksum: 80bfd7f8039b24fddeb0718a2ec7c02aa9856e4838d6aa4864335a047b6b37a3273b191ef335bf0b2002e5c514ef261ffcda5a589fb084a48c336ffc4cdbab7f
+  languageName: node
+  linkType: hard
+
+"zustand@npm:^5.0.8":
+  version: 5.0.8
+  resolution: "zustand@npm:5.0.8"
+  peerDependencies:
+    "@types/react": ">=18.0.0"
+    immer: ">=9.0.6"
+    react: ">=18.0.0"
+    use-sync-external-store: ">=1.2.0"
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    immer:
+      optional: true
+    react:
+      optional: true
+    use-sync-external-store:
+      optional: true
+  checksum: 1a0f896f335e21841509a605fb61db34342497c5073f8c4b69889a669f829c9cf39d0282d68ac8fec1c8814cdaa89ee6711d59989feb80dc0364f19ac72e75e0
   languageName: node
   linkType: hard
 

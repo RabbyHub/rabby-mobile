@@ -8,7 +8,7 @@ export function resolvePublicResourcePath(path: string) {
     const object = getInjectedObject();
     return [
       `${stringUtils.unSuffix(object.runtimeBaseUrl, '/')}`,
-      object.isDev ? '' : 'builtin-pages',
+      object.useDevResource ? '' : 'builtin-pages',
       `${stringUtils.unPrefix(path, '/')}`
     ].filter(Boolean).join('/');
   }

@@ -167,7 +167,8 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
           ...webviewProps.injectedJavaScriptObject,
           ...makeRuntimeInfo({
             baseUrl: webviewSource.baseUrl!,
-            isDev: __DEV__ && !forceUseLocalResource,
+            useDevResource: __DEV__ && !forceUseLocalResource,
+            isDark: isLight,
           }),
         }}
         onMessage={event => {
@@ -180,7 +181,8 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
                 type: 'GOT_RUNTIME_INFO',
                 info: makeRuntimeInfo({
                   baseUrl: webviewSource.baseUrl!,
-                  isDev: __DEV__ && !forceUseLocalResource,
+                  useDevResource: __DEV__ && !forceUseLocalResource,
+                  isDark: isLight,
                 }),
               });
               break;

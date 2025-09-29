@@ -4,7 +4,7 @@ const tinycolor2 = require('tinycolor2');
 const {
   themeColors,
   themeColorsNext2024,
-} = require('./src/constant/theme-colors');
+} = require('@rabby-wallet/base-utils');
 
 const [classicalColors, next2024Colors] = [
   themeColors,

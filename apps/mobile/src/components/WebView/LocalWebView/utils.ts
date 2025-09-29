@@ -1,3 +1,4 @@
+import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { atom, useAtom } from 'jotai';
 import { useCallback } from 'react';
 import { Platform } from 'react-native';
@@ -110,15 +111,19 @@ export function useLocalWebViewSettings() {
 
 export function makeRuntimeInfo({
   baseUrl,
-  isDev = __DEV__,
+  useDevResource = __DEV__,
+  isDark = false,
 }: {
   baseUrl: string;
-  isDev?: boolean;
+  useDevResource?: boolean;
+  isDark: boolean;
 }) {
   return {
     runtimeBaseUrl: baseUrl,
     platform: Platform.OS,
-    isDev: isDev,
+    useDevResource: useDevResource,
+    isDark: isDark,
+    colors2024: ThemeColors2024[isDark ? 'dark' : 'light'],
   };
 }
 
