@@ -135,7 +135,7 @@ export const usePerpsPosition = ({
           toast.error(msg || 'close position error');
           Sentry.captureException(
             new Error(
-              'PERPS close position noFills' +
+              'PERPS close position noFills ' +
                 'params: ' +
                 JSON.stringify(params) +
                 'res: ' +

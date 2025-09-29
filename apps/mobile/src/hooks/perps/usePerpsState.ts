@@ -95,6 +95,25 @@ export const usePerpsInitial = () => {
     },
   );
 
+  const checkBuilderFee = useMemoizedFn(async address => {
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      const res = await sdk.info.getMaxBuilderFee(
+        PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+      );
+      if (!res) {
+        console.error('Failed to set builder fee');
+        Sentry.captureException(
+          new Error(
+            `PERPS set builder fee error, no max builder fee, address: ${address}`,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error('Failed to set builder fee:', error);
+    }
+  });
+
   const checkIsNeedAutoLoginOut = useMemoizedFn(
     async (masterAddress: string, agentAddress: string) => {
       const sdk = apisPerps.getPerpsSDK();
@@ -133,27 +152,12 @@ export const usePerpsInitial = () => {
           //       masterAddress,
           //   ),
           // );
+        } else {
+          checkBuilderFee(masterAddress);
         }
       }
     },
   );
-
-  const checkBuilderFee = useMemoizedFn(async () => {
-    try {
-      const sdk = apisPerps.getPerpsSDK();
-      const res = await sdk.info.getMaxBuilderFee(
-        PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-      );
-      if (!res) {
-        console.error('Failed to set builder fee');
-        Sentry.captureException(
-          new Error('PERPS set builder fee error, no max builder fee'),
-        );
-      }
-    } catch (error) {
-      console.error('Failed to set builder fee:', error);
-    }
-  });
 
   useEffect(() => {
     if (isInitialized) {
@@ -203,7 +207,6 @@ export const usePerpsInitial = () => {
           res.preference.agentAddress,
           PERPS_AGENT_NAME,
         );
-        checkBuilderFee();
         await loginPerpsAccount(targetTypeAccount);
         await fetchMarketData();
 
@@ -222,7 +225,6 @@ export const usePerpsInitial = () => {
     initIsLogin();
   }, [
     isInitialized,
-    checkBuilderFee,
     loginPerpsAccount,
     fetchMarketData,
     checkIsNeedAutoLoginOut,
@@ -589,6 +591,7 @@ export const usePerpsState = () => {
           );
           // 未到过期时间无需签名直接登录即可
           await loginPerpsAccount(account);
+          checkBuilderFee(account.address);
         } else {
           // 过期或者没sendApprove过，需要创建新的agent，同时签名
           await handleLoginWithSignApprove(account);
