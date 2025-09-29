@@ -2133,6 +2133,10 @@
         "title": "Hyperliquid Referral Program",
         "desc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Hyperliquid fees.",
         "btn": "Join Now"
+      },
+      "WebviewError": {
+        "failedToLoad": "Failed to load the page",
+        "error": "Error:"
       }
     },
     "browserManage": {
