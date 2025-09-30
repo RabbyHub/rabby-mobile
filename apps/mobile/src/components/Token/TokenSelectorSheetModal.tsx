@@ -102,6 +102,8 @@ import {
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { useRefState } from '@/hooks/common/useRefState';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/ExchangeLogos';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -304,6 +306,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
       useSheetModal();
     const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
+    const { list: cexList } = useCexSupportList();
 
     useImperativeHandle(ref, () => {
       return {
@@ -655,6 +658,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
           $originMaybeToken.isExcludeBalance &&
           isFromModalType &&
           (token._netWorth || 0) > 0;
+        const formatToken = token.$origin as TokenRowDataType;
+        const cexLogos = formatToken?.cex_ids
+          ? formatToken?.cex_ids
+              .map(id => cexList.find(item => item.id === id)?.logo_url || '')
+              .filter(i => !!i) || []
+          : formatToken?.identity?.cex_list?.map(item => item.logo_url) || [];
 
         if (token.id === SCAM_TOKEN_HAEDER_ID) {
           return (
@@ -839,6 +848,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         {ellipsisOverflowedText(token?._symbol, 15)}
                       </Text>
                       {isManualFold && <TextBadge type="folded" />}
+                      {needToTokenMarketInfo && (
+                        <ExchangeLogos logos={cexLogos} />
+                      )}
                     </View>
                     {showOwnerAccount ? (
                       !ownerAccount ? null : (
@@ -976,6 +988,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         disabledTips,
         removePinedToken,
         pinToken,
+        cexList,
       ],
     );
 
@@ -1505,11 +1518,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tokenLeft: {
       flexDirection: 'row',
       alignItems: 'center',
+      flex: 1,
+      overflow: 'hidden',
     },
     tokenRight: {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
+      flex: 0,
     },
     tokenInfoCol: {
       flexDirection: 'column',
