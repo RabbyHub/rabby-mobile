@@ -66,13 +66,13 @@ import { BrowserProgressBar } from './BrowserProgressBar';
 import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
 import { Freeze } from 'react-freeze';
 import { HyperliquidInvitePopup } from './HyperliquidInvitePopup';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { PERPS_INVITE_URL } from '@/constant/perps';
 import { CurrentDappPopup } from './CurrentDappPopup';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { useHyperliquidReferral } from '../../hooks/useHyperliquidReferral';
 import { useAccounts } from '@/hooks/account';
 import { getOnlineConfig } from '@/core/config/online';
+import { WebviewError } from './WebivewError';
 
 type BrowserTabProps = {
   origin: string;
@@ -413,6 +413,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         }
 
         onOpenTab?.(targetUrl);
+      },
+    );
+
+    const renderError = useMemoizedFn(
+      (
+        errorDomain: string | undefined,
+        errorCode: number,
+        errorDesc: string,
+      ) => {
+        return <WebviewError message={errorDesc} onRefresh={handleReload} />;
       },
     );
 
@@ -800,6 +810,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                           };
                         });
                       }}
+                      renderError={renderError}
                       onMessage={event => {
                         // // leave here for debug
                         // if (__DEV__) {
