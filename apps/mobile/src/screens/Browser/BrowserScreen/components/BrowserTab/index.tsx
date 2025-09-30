@@ -66,14 +66,12 @@ import { BrowserProgressBar } from './BrowserProgressBar';
 import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
 import { Freeze } from 'react-freeze';
 import { HyperliquidInvitePopup } from './HyperliquidInvitePopup';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { PERPS_INVITE_URL } from '@/constant/perps';
 import { CurrentDappPopup } from './CurrentDappPopup';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { useHyperliquidReferral } from '../../hooks/useHyperliquidReferral';
 import { useAccounts } from '@/hooks/account';
 import { getOnlineConfig } from '@/core/config/online';
-import { EmptyHolder } from '@/components/EmptyHolder';
 import { WebviewError } from './WebivewError';
 
 type BrowserTabProps = {
