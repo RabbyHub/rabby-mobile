@@ -422,7 +422,13 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         errorCode: number,
         errorDesc: string,
       ) => {
-        return <WebviewError message={errorDesc} onRefresh={handleReload} />;
+        return (
+          <WebviewError
+            code={errorCode}
+            message={errorDesc}
+            onRefresh={handleReload}
+          />
+        );
       },
     );
 
