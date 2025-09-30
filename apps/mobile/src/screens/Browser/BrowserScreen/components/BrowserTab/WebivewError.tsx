@@ -1,5 +1,5 @@
-import OfflineDarkPng from '@/assets2024/images/offline-dark.png';
-import OfflinePng from '@/assets2024/images/offline.png';
+import OfflineDarkPng from '@/assets2024/images/offline-dark-1.png';
+import OfflinePng from '@/assets2024/images/offline-1.png';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
