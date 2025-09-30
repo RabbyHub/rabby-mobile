@@ -7,11 +7,12 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleProp, Text, View, ViewStyle } from 'react-native';
 
 interface Props {
+  code: number;
   message: string;
   style?: StyleProp<ViewStyle>;
   onRefresh?: () => void;
 }
-export function WebviewError({ style, message, onRefresh }: Props) {
+export function WebviewError({ style, code, message, onRefresh }: Props) {
   const { styles, isLight } = useTheme2024({
     getStyle,
   });
@@ -28,7 +29,7 @@ export function WebviewError({ style, message, onRefresh }: Props) {
           {t('page.browser.WebviewError.failedToLoad')}
         </Text>
         <Text style={styles.text}>
-          {t('page.browser.WebviewError.error')} {message}
+          {t('page.browser.WebviewError.error')} {message} ({code})
         </Text>
       </View>
       <Button
