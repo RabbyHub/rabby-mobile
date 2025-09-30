@@ -544,6 +544,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           direction={direction}
           size={Number(tradeSize)}
           pxDecimals={pxDecimals}
+          szDecimals={szDecimals}
           onClose={() => setAutoCloseVisible(false)}
           handleSetAutoClose={async (params: {
             tpPrice: string;
