@@ -7,10 +7,12 @@ import { createGetStyles2024 } from '@/utils/styles';
 import Activity from './Activity';
 import Holder from './Holder';
 import { useHolderInfo } from './hooks';
+import Pools from './Pools';
 
 const enum TabKey {
   activity = 'activity',
   holders = 'holders',
+  pools = 'pools',
 }
 
 const ActivityAndHolders = ({
@@ -23,7 +25,7 @@ const ActivityAndHolders = ({
   hideActivity?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const [activeTabKey, setActiveTabKey] = useState<TabKey>(TabKey.activity);
+  const [activeTabKey, setActiveTabKey] = useState<TabKey>(TabKey.pools);
   const { t } = useTranslation();
 
   const { summaryData, detailsData, isHolderEmpty } = useHolderInfo(
@@ -83,6 +85,15 @@ const ActivityAndHolders = ({
             {t('page.tokenDetail.marketInfo.holders')}
           </Text>
         )}
+
+        <Text
+          style={[
+            styles.headerText,
+            activeTabKey === TabKey.pools && styles.activeText,
+          ]}
+          onPress={() => setActiveTabKey(TabKey.pools)}>
+          Pools
+        </Text>
       </View>
       <View style={styles.content}>
         <View
@@ -103,6 +114,13 @@ const ActivityAndHolders = ({
             data={detailsData?.data_list || []}
             isEmpty={isHolderEmpty}
           />
+        </View>
+        <View
+          style={[
+            styles.hideContent,
+            activeTabKey === TabKey.pools && styles.visibleContent,
+          ]}>
+          <Pools tokenId={tokenId} chainId={chainId} />
         </View>
       </View>
     </View>
