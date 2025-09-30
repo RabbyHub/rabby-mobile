@@ -70,6 +70,7 @@ export const ClearPendingPopup: React.FC<{
         linearGradientType: 'linear',
         colors: colors2024,
       })}
+      handleStyle={styles.handleStyle}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
       <BottomSheetScrollView style={styles.popup}>
@@ -115,10 +116,15 @@ export const ClearPendingPopup: React.FC<{
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  handleStyle: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
   popup: {
     margin: 0,
     height: '100%',
     minHeight: 364,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopWidth: 0,
   },
   header: {
     justifyContent: 'center',

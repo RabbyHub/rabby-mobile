@@ -4,13 +4,14 @@ import { RcIconCheckmarkCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { makeThemeOptions, useAppTheme, useThemeStyles } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { makeThemeOptions, useAppTheme, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTranslation } from 'react-i18next';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 
 const themeSelectorModalVisibleAtom = atom(false);
 export function useThemeSelectorModalVisible() {
@@ -60,7 +61,7 @@ export default function ThemeSelectorModal({
     toggleShowSheetModal('selectThemeMode', visible || 'destroy');
   }, [visible, toggleShowSheetModal]);
 
-  const { styles, colors } = useThemeStyles(getStyles);
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const { appTheme, toggleThemeMode } = useAppTheme();
 
@@ -71,15 +72,17 @@ export default function ThemeSelectorModal({
 
   return (
     <AppBottomSheetModal
-      backgroundStyle={styles.sheet}
       ref={modalRef}
       index={0}
       snapPoints={[safeSizes.sheetHeight]}
-      handleStyle={styles.handleStyle}
+      {...makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+      })}
       onDismiss={handleCancel}
-      enableContentPanningGesture={false}>
+      enableContentPanningGesture={true}>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {
@@ -105,7 +108,7 @@ export default function ThemeSelectorModal({
                 <Text style={styles.settingItemLabel}>{item.title}</Text>
                 {isSelected && (
                   <View>
-                    <RcIconCheckmarkCC color={colors['green-default']} />
+                    <RcIconCheckmarkCC color={colors2024['green-default']} />
                   </View>
                 )}
               </TouchableView>
@@ -126,15 +129,8 @@ const SIZES = {
   HANDLE_HEIGHT: 8,
   containerPb: 42,
 };
-const getStyles = createGetStyles((colors, ctx) => {
+const getStyles = createGetStyles2024(ctx => {
   return {
-    sheet: {
-      backgroundColor: colors['neutral-bg-2'],
-    },
-    handleStyle: {
-      height: 8,
-      backgroundColor: colors['neutral-bg-2'],
-    },
     container: {
       flex: 1,
       paddingVertical: 0,
@@ -149,7 +145,7 @@ const getStyles = createGetStyles((colors, ctx) => {
     title: {
       fontSize: 20,
       fontWeight: '500',
-      color: colors['neutral-title-1'],
+      color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',
 
       marginTop: SIZES.titleMt,
@@ -168,9 +164,9 @@ const getStyles = createGetStyles((colors, ctx) => {
       paddingTop: 18,
       paddingBottom: 18,
       paddingHorizontal: 20,
-      backgroundColor: !ctx?.isLight
-        ? colors['neutral-card1']
-        : colors['neutral-bg1'],
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
       borderRadius: 8,
 
       flexDirection: 'row',
@@ -181,7 +177,7 @@ const getStyles = createGetStyles((colors, ctx) => {
       marginTop: SIZES.ITEM_GAP,
     },
     settingItemLabel: {
-      color: colors['neutral-title-1'],
+      color: ctx.colors2024['neutral-title-1'],
       fontSize: 16,
       fontStyle: 'normal',
       fontWeight: '500',

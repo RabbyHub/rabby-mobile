@@ -118,9 +118,6 @@ const themeColorsNext2024 = {
     'blue-disable': 'rgba(10, 132, 255, 0.27)',
     'blue-light-4': 'rgba(10, 132, 255, 0.14)',
 
-    /**
-     * bg0 only light theme
-     */
     'neutral-bg-0': 'rgba(246, 247, 247, 1)',
     'neutral-bg-1': 'rgba(255, 255, 255, 1)',
     'neutral-bg-2': 'rgba(242, 244, 247, 1)',
@@ -178,6 +175,7 @@ const themeColorsNext2024 = {
     'blue-disable': 'rgba(10, 132, 255, 0.27)',
     'blue-light-4': 'rgba(10, 132, 255, 0.14)',
 
+    'neutral-bg-0': 'rgba(19, 20, 22, 1)',
     'neutral-bg-1': 'rgba(19, 20, 22, 1)',
     'neutral-bg-2': 'rgba(35, 36, 40, 1)',
     'neutral-bg-3': 'rgba(28, 28, 29, 1)',

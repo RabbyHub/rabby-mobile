@@ -59,6 +59,7 @@ const getStyles = createGetStyles2024(ctx => ({
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
+    color: ctx.colors2024['neutral-bg-1'],
   },
   title: {
     color: ctx.colors2024['neutral-title-1'],

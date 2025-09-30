@@ -151,7 +151,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     },
     ref,
   ) => {
-    const { styles, colors, colors2024 } = useTheme2024({
+    const { styles, isLight } = useTheme2024({
       getStyle: getStyles,
     });
 
@@ -207,9 +207,11 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         return `${DESKTOP_MODE_UA} ${APP_UA_PARIALS.UA_FULL_NAME}}`;
       }
       return `${
-        Platform.OS === 'android' ? USER_AGENT.ANDROID : USER_AGENT.IOS
+        Platform.OS === 'android'
+          ? `${USER_AGENT.ANDROID}${isLight ? ' Light' : ' Dark'}`
+          : USER_AGENT.IOS
       } ${APP_UA_PARIALS.UA_FULL_NAME}`;
-    }, [contentMode]);
+    }, [contentMode, isLight]);
 
     const changeViewPortForDesktop = useCallback(
       (contentMode: WebViewProps['contentMode'], delayMs = 0) => {
@@ -599,6 +601,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       allowsInlineMediaPlayback={false}
                       originWhitelist={['*']}
                       pullToRefreshEnabled={true}
+                      // {...(IS_ANDROID && {
+                      //   forceDarkOn: !isLight,
+                      // })}
                       {...webviewProps}
                       style={[styles.dappWebView, webviewProps?.style]}
                       ref={webviewRef}

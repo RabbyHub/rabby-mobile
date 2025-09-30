@@ -8,9 +8,9 @@ import {
 import { Text, View, StyleSheet } from 'react-native';
 
 import { AppBottomSheetModal } from '@/components';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { TIME_SETTINGS } from '@/constant/autoLock';
@@ -20,6 +20,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { useAutoLockTimeMs } from '@/hooks/appSettings';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'green-default');
 
@@ -56,8 +57,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
   });
   const { t } = useTranslation();
 
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const { autoLockMs, onAutoLockTimeMsChange } = useAutoLockTimeMs();
 
@@ -76,10 +76,12 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
   );
   return (
     <AppBottomSheetModal
-      backgroundStyle={styles.sheet}
       index={0}
       ref={sheetModalRef}
-      handleStyle={styles.handleStyle}
+      {...makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+      })}
       snapPoints={[safeSizes.sheetHeight]}
       onChange={index => {
         if (index <= 0) {
@@ -124,17 +126,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
   );
 });
 
-const getStyles = createGetStyles((colors, ctx) => ({
-  sheet: {
-    // backgroundColor: colors['neutral-bg-1'],
-    backgroundColor: colors['neutral-bg-2'],
-    // height: SIZES.FULL_HEIGHT,
-  },
-  handleStyle: {
-    height: SIZES.HANDLE_HEIGHT,
-    backgroundColor: colors['neutral-bg-2'],
-    // ...makeDebugBorder(),
-  },
+const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
     paddingVertical: 0,
@@ -150,7 +142,7 @@ const getStyles = createGetStyles((colors, ctx) => ({
   title: {
     fontSize: 20,
     fontWeight: '500',
-    color: colors['neutral-title-1'],
+    color: ctx.colors2024['neutral-title-1'],
     textAlign: 'center',
 
     marginTop: SIZES.titleMt,
@@ -170,9 +162,9 @@ const getStyles = createGetStyles((colors, ctx) => ({
     paddingTop: 18,
     paddingBottom: 18,
     paddingHorizontal: 20,
-    backgroundColor: !ctx?.isLight
-      ? colors['neutral-card1']
-      : colors['neutral-bg1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
     borderRadius: 8,
 
     flexDirection: 'row',
@@ -184,7 +176,7 @@ const getStyles = createGetStyles((colors, ctx) => ({
   },
   settingItemLabel: {
     // color: var(--r-neutral-title1, #192945);
-    color: colors['neutral-title-1'],
+    color: ctx.colors2024['neutral-title-1'],
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '500',
@@ -193,7 +185,7 @@ const getStyles = createGetStyles((colors, ctx) => ({
   border: {
     height: 0,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors['neutral-bg1'],
+    borderTopColor: ctx.colors2024['neutral-bg-1'],
     position: 'absolute',
     top: 0,
     left: 0,
