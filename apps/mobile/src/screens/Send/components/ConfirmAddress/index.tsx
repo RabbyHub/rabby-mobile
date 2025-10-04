@@ -132,7 +132,11 @@ const ConfirmAddress = ({
       {!loading && !disableWhiteSwitch && (
         <View style={styles.whitelist}>
           <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
-          <AppSwitch2024 onValueChange={setInWhiteList} value={inWhiteList} />
+          <AppSwitch2024
+            changeValueImmediately={false}
+            onValueChange={setInWhiteList}
+            value={inWhiteList}
+          />
         </View>
       )}
       <View

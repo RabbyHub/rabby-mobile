@@ -23,15 +23,15 @@
     },
     {
       "path": "assets/custom/bignumber.js@9.3.1-bignumber.min.js",
-      "sha1": "32ab9004c67aa36ba387ceb0d6ce52c0b25fc226"
+      "sha1": "09467302eb67e5242fce85907c41404d8736bbe3"
     },
     {
       "path": "assets/custom/lightweight-charts.standalone.production.js",
-      "sha1": "209de8063106da3dbfdb59d6b6ad565727517aa5"
+      "sha1": "32a6a882c2c565b348c39d15921863350e11b4ec"
     },
     {
       "path": "assets/custom/vconsole.min.js",
-      "sha1": "f14c26a8bc8928808c4f163dd5279100e471494e"
+      "sha1": "cc79a9522ef457188c18283228b2b8759b7faf1e"
     }
   ]
 }

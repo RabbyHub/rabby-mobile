@@ -1,5 +1,5 @@
 import { RcNextSearchCC } from '@/assets/icons/common';
-import { RcIconTabsCC } from '@/assets2024/icons/browser';
+import { RcIconStarCC, RcIconTabsCC } from '@/assets2024/icons/browser';
 import { useBrowser, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -12,6 +12,8 @@ import { useTranslation } from 'react-i18next';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { BrowserTabCard } from '../BrowserScreen/components/BrowserManage/BrowserTabList/BrowserTabCard';
+import { activeTabAtom } from '../BrowserScreen/components/BrowserManage';
+import { useAtom } from 'jotai';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -55,7 +57,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-5'],
     position: 'relative',
     paddingLeft: 12,
-    paddingRight: 9,
+    paddingRight: 12,
   },
   icon: {},
   text: {
@@ -188,6 +190,7 @@ export const BrowserSearchEntry: React.FC = () => {
   } = useBrowser();
 
   const tabs = useHomeDisplayedTabs();
+  const [, setActiveTab] = useAtom(activeTabAtom);
 
   const { t } = useTranslation();
   const handlePress = useMemoizedFn(() => {
@@ -202,6 +205,9 @@ export const BrowserSearchEntry: React.FC = () => {
   });
 
   const handleTabPress = useMemoizedFn(() => {
+    if (!displayedTabs?.length) {
+      setActiveTab('favorites');
+    }
     setPartialBrowserState({
       isShowBrowser: false,
       isShowSearch: false,
@@ -287,18 +293,26 @@ export const BrowserSearchEntry: React.FC = () => {
               <TouchableOpacity
                 style={[styles.navControlItem]}
                 onPress={handleTabPress}>
-                <View style={styles.tabIconContainer}>
-                  <RcIconTabsCC
-                    color={colors2024['neutral-body']}
+                {displayedTabs?.length ? (
+                  <View style={styles.tabIconContainer}>
+                    <RcIconTabsCC
+                      color={colors2024['neutral-body']}
+                      width={24}
+                      height={24}
+                    />
+                    <View style={styles.tabCountContainer}>
+                      <Text style={styles.tabCount}>
+                        {displayedTabs?.length || 0}
+                      </Text>
+                    </View>
+                  </View>
+                ) : (
+                  <RcIconStarCC
+                    color={colors2024['neutral-secondary']}
                     width={24}
                     height={24}
                   />
-                  <View style={styles.tabCountContainer}>
-                    <Text style={styles.tabCount}>
-                      {displayedTabs?.length || 0}
-                    </Text>
-                  </View>
-                </View>
+                )}
               </TouchableOpacity>
             </View>
           </LinearGradient>

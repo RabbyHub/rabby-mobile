@@ -60,6 +60,7 @@ import { StackActions } from '@react-navigation/native';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { CombineDefiItem } from '@/screens/Home/hooks/store';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
@@ -83,6 +84,7 @@ export const Portfolios = () => {
   });
   const focusedTab = useFocusedTab();
   const hasBeenFocusedRef = useRef(false);
+  const { currency } = useCurrency();
 
   const isFocused = useMemo(() => {
     const currentFocused = focusedTab === 'portfolios';
@@ -210,7 +212,11 @@ export const Portfolios = () => {
         data: [
           {
             type: 'toggle_token_fold',
-            data: getTotalFoldToken(tokens.filter(i => i._isFold)),
+            data: getTotalFoldToken(
+              tokens.filter(i => i._isFold),
+              currency.usd_rate,
+              currency.symbol,
+            ),
           },
           ...(foldHideList ? [] : foldTokenList),
         ],
@@ -262,6 +268,8 @@ export const Portfolios = () => {
               portfolios.filter(
                 i => i._isFold,
               ) as unknown as DisplayedProject[],
+              currency.usd_rate,
+              currency.symbol,
             ),
           },
           ...(foldDefi ? [] : defiLists.foldDefiList),
@@ -291,15 +299,21 @@ export const Portfolios = () => {
       .map(item => item.data)
       .flat();
   }, [
-    foldDefi,
+    tokenLists.foldAndIncludeBalanceTokenList,
+    tokenLists.foldAndExcludeBalanceTokenList,
+    tokenLists.unFoldList,
+    tokenLists.scamTokens,
+    tokens,
+    currency.usd_rate,
+    currency.symbol,
     foldHideList,
     foldScam,
     isLoading,
-    portfolios,
     t,
-    tokens,
-    tokenLists,
-    defiLists,
+    defiLists.unFoldDefiList,
+    defiLists.foldDefiList,
+    portfolios,
+    foldDefi,
   ]);
 
   const handleOpenTokenDetail = React.useCallback(

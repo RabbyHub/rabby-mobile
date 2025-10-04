@@ -171,7 +171,8 @@
         "totalApprovedAmount": "Số tiền được phê duyệt hiện tại",
         "BuyAgain": "Mua lại",
         "AddToWhitelist": "Thêm vào Danh sách Trắng",
-        "RecipientAddress": "Ví nhận"
+        "RecipientAddress": "Ví nhận",
+        "Simulation Results": "Kết quả mô phỏng"
       },
       "empty": {
         "title": "Không có giao dịch",
@@ -693,7 +694,8 @@
         "priceDiff": "Giá chênh lệch",
         "token1": "Thêm Token 2",
         "title": "Thêm Tính Thanh Khoản"
-      }
+      },
+      "gasSetting": "Cài đặt Gas"
     },
     "sendNFT": {
       "sendButton": "Gửi",
@@ -936,7 +938,8 @@
       "historyTitle": "Lịch sử Swap",
       "swapped": "Đã trao đổi",
       "selectChainModalTitle": "Chọn Chuỗi",
-      "results": "Kết quả"
+      "results": "Kết quả",
+      "approve": "Phê duyệt"
     },
     "bridge": {
       "for-available-quote": "để có báo giá khả dụng",
@@ -963,7 +966,8 @@
       "bridgeFrom": "Cầu từ",
       "showMore": {
         "source": "Bridge Source",
-        "title": "Hiển thị thêm"
+        "title": "Hiển thị thêm",
+        "signWarning": "Tôi hiểu thông báo và muốn tiếp tục."
       },
       "From": "Từ",
       "loss-tips": "Bạn đang mất {{usd}}. Thử một số tiền khác.",
@@ -975,7 +979,8 @@
       "no-route-found": "Không tìm thấy tuyến đường",
       "via-bridge": "thông qua {{bridge}}",
       "duration": "{{duration}} phút",
-      "bridged": "Đã cầu nối"
+      "bridged": "Đã cầu nối",
+      "gasFeeTooHight": "Phí Gas cao hơn bình thường. Chỉ xác nhận nếu bạn muốn tiếp tục."
     },
     "manageAddress": {
       "enterThePassphrase": "Nhập Passphrase",
@@ -1526,7 +1531,8 @@
         "txCreated": "Giao dịch đã được tạo",
         "txSigned": "Đã ký. Đang tạo giao dịch",
         "txSendings": "Đang gửi yêu cầu ký ({{current}}/{{total}})"
-      }
+      },
+      "fixedModeText": "Chế độ cố định: Luôn sử dụng cài đặt gas tùy chỉnh của bạn"
     },
     "search": {
       "sectionHeader": {
@@ -1603,7 +1609,9 @@
         "applePayFeeDesc": "Bao gồm phí Apple Pay. Không cho phép rút tiền",
         "googlePayFeeDesc": "Bao gồm phí Google Pay. Không có rút tiền",
         "paymentAddress": "Ví thanh toán",
-        "inSufficientTip1": "Ví dụ này không có đủ token. Vui lòng chọn một ví khác."
+        "inSufficientTip1": "Ví dụ này không có đủ token. Vui lòng chọn một ví khác.",
+        "pay": "Thanh toán",
+        "applePayFeeDesc1": "Bao gồm phí App Store. Không có rút tiền."
       },
       "paymentAddressPopup": {
         "confirm": "Xác nhận",
@@ -1644,7 +1652,8 @@
         "depositFailed": "Nạp tiền thất bại",
         "balance": "Số dư GasAccount Hiện Tại: ",
         "title": "Mua với Apple Pay",
-        "titleAndroid": "Mua bằng Google Pay"
+        "titleAndroid": "Mua bằng Google Pay",
+        "titleApple": "Mua trong App Store"
       },
       "depositSelectPopup": {
         "title": "Nạp vào GasAccount",
@@ -1652,7 +1661,8 @@
         "depositToken": "Nạp bằng Token",
         "buyWithDesc": "30% phí, không rút tiền",
         "depositTokenDesc": "Không có phí bổ sung, rút tiền ngay lập tức",
-        "desc": "Trả Phí Gas trên Tất Cả Các Chuỗi"
+        "desc": "Trả Phí Gas trên Tất Cả Các Chuỗi",
+        "buyWithApple": "Mua trong App Store"
       },
       "gasAccountList": {
         "balance": "Số dư",
@@ -1774,7 +1784,38 @@
         "holders": "Người nắm giữ",
         "volume24h": "24h Khối lượng",
         "totalSupply": "Tổng cung",
-        "marketCap": "Vốn Hoá Thị Trường"
+        "marketCap": "Vốn Hoá Thị Trường",
+        "holderSections": {
+          "tableHeader": {
+            "ratio": "Tỷ lệ",
+            "position": "Vị trí",
+            "address": "Địa chỉ"
+          },
+          "top100HoldersRatio": "Tỷ lệ 100 Người Giữ Hàng Đầu",
+          "top10HoldersRatio": "Tỷ lệ 10 người nắm giữ hàng đầu"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "buy": "Mua",
+            "time": "Thời gian",
+            "addresses": "Địa chỉ",
+            "min": "min",
+            "hour": "Giờ",
+            "all": "Tất cả",
+            "volume": "Khối lượng",
+            "type": "Loại",
+            "sell": "Bán",
+            "address": "Địa chỉ",
+            "tradingCount": "Số lượng giao dịch",
+            "price": "Giá",
+            "value": "Giá trị",
+            "qnt": "Qnt"
+          }
+        },
+        "activity": "Hoạt động",
+        "summary": "Dữ liệu Tóm tắt",
+        "details": "Chi tiết",
+        "empty": "Không có dữ liệu"
       }
     },
     "backupPrivateKey": {
@@ -2111,6 +2152,11 @@
         "disconnect": "Ngắt kết nối",
         "favorite": "Yêu thích",
         "contentModeDesktop": "Yêu cầu Trang Web Máy Tính"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "Tham gia ngay",
+        "title": "Chương trình Giới thiệu Hyperliquid",
+        "desc": "Tham gia ngay bằng mã của Rabby để nhận <1>giảm giá 4%</1> trên khoản phí Hyperliquid của bạn."
       }
     },
     "browserManage": {
@@ -2143,7 +2189,10 @@
     "defiDetail": {
       "viewSiteInApp": "Xem trong Dapp",
       "viewSiteInWebsite": "Xem trên Website",
-      "appChain": "Trên tài khoản {{chain}}"
+      "appChain": "Trên tài khoản {{chain}}",
+      "dappActions": {
+        "queueDescription": "Rút tiền hiện tại sẽ vào hàng chờ. Khi được xử lý, bạn có thể rút về ví của mình."
+      }
     },
     "component": {
       "ChainSelector": {

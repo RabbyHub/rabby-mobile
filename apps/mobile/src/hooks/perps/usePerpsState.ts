@@ -13,7 +13,6 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useAccounts } from '../account';
 import { apisPerps } from './../../core/apis/perps';
 import { useSendMiniSignTypedData } from './../useMiniSignTypedDataApproval';
 import { usePerpsStore } from './usePerpsStore';
@@ -22,6 +21,7 @@ import { toast } from '@/components2024/Toast';
 import { minBy } from 'lodash';
 import { usePerspPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
+import { getAllMyAccount } from '@/core/apis/address';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
 interface SignAction {
@@ -31,10 +31,6 @@ interface SignAction {
 }
 
 export const usePerpsInitial = () => {
-  const { accounts: accountsList } = useAccounts({
-    disableAutoFetch: true,
-  });
-
   const {
     state: perpsState,
     setApproveSignatures,
@@ -99,6 +95,25 @@ export const usePerpsInitial = () => {
     },
   );
 
+  const checkBuilderFee = useMemoizedFn(async address => {
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      const res = await sdk.info.getMaxBuilderFee(
+        PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+      );
+      if (!res) {
+        console.error('Failed to set builder fee');
+        Sentry.captureException(
+          new Error(
+            `PERPS set builder fee error, no max builder fee, address: ${address}`,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error('Failed to set builder fee:', error);
+    }
+  });
+
   const checkIsNeedAutoLoginOut = useMemoizedFn(
     async (masterAddress: string, agentAddress: string) => {
       const sdk = apisPerps.getPerpsSDK();
@@ -137,23 +152,12 @@ export const usePerpsInitial = () => {
           //       masterAddress,
           //   ),
           // );
+        } else {
+          checkBuilderFee(masterAddress);
         }
       }
     },
   );
-
-  const safeSetBuilderFee = useMemoizedFn(async () => {
-    const sdk = apisPerps.getPerpsSDK();
-    const res = await sdk.info.getMaxBuilderFee(
-      PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-    );
-    if (res) {
-      sdk.exchange?.updateBuilder(
-        PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-        PERPS_BUILD_FEE,
-      );
-    }
-  });
 
   useEffect(() => {
     if (isInitialized) {
@@ -175,6 +179,7 @@ export const usePerpsInitial = () => {
           await noLoginAction();
           return false;
         }
+        const accountsList = await getAllMyAccount();
         const targetTypeAccount = accountsList.find(
           acc =>
             isSameAddress(acc.address, currentAccount.address) &&
@@ -202,7 +207,6 @@ export const usePerpsInitial = () => {
           res.preference.agentAddress,
           PERPS_AGENT_NAME,
         );
-        safeSetBuilderFee();
         await loginPerpsAccount(targetTypeAccount);
         await fetchMarketData();
 
@@ -221,8 +225,6 @@ export const usePerpsInitial = () => {
     initIsLogin();
   }, [
     isInitialized,
-    accountsList,
-    safeSetBuilderFee,
     loginPerpsAccount,
     fetchMarketData,
     checkIsNeedAutoLoginOut,
@@ -262,7 +264,7 @@ export const usePerpsInitial = () => {
     accountSummary,
     positionAndOpenOrders,
     isLogin,
-    safeSetBuilderFee,
+    checkBuilderFee,
     perpsPositionInfo,
   };
 };
@@ -271,7 +273,7 @@ export const usePerpsState = () => {
   const [popupSate, setPopupState] = usePerspPopupState();
   const { t } = useTranslation();
   const deleteAgentCbRef = useRef<(() => Promise<void>) | null>(null);
-  const { safeSetBuilderFee } = usePerpsInitial();
+  const { checkBuilderFee } = usePerpsInitial();
   const {
     state: perpsState,
     setApproveSignatures,
@@ -516,11 +518,6 @@ export const usePerpsState = () => {
               nonce: action?.nonce || 0,
               signature: signature || '',
             });
-            res &&
-              sdk.exchange?.updateBuilder(
-                PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-                PERPS_BUILD_FEE,
-              );
             return res;
           }
         }),
@@ -592,9 +589,9 @@ export const usePerpsState = () => {
             res.preference.agentAddress,
             PERPS_AGENT_NAME,
           );
-          safeSetBuilderFee();
           // 未到过期时间无需签名直接登录即可
           await loginPerpsAccount(account);
+          checkBuilderFee(account.address);
         } else {
           // 过期或者没sendApprove过，需要创建新的agent，同时签名
           await handleLoginWithSignApprove(account);

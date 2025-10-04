@@ -80,6 +80,7 @@ export const GlobalBottomSheetModal = () => {
           APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
           APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
           APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
+          APPROVAL_MODAL_NAMES.TrezorHardwareWaiting,
         ].includes(approvalComponent);
 
       setModals(prev => {
@@ -105,11 +106,12 @@ export const GlobalBottomSheetModal = () => {
         };
         modalRefs.current[id] = newModal.ref;
 
+        setTimeout(() => {
+          handlePresent(id);
+        }, 100);
+
         return [...prev, newModal];
       });
-      setTimeout(() => {
-        handlePresent(id);
-      }, 0);
     },
     [getApproval, handlePresent],
   );

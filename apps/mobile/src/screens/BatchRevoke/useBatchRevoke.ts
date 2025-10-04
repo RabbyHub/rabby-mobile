@@ -1,7 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { apiApprovals } from '@/core/apis';
 import { naviPush } from '@/utils/navigation';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import {
   ApprovalSpenderItemToBeRevoked,
@@ -12,6 +11,7 @@ import { useApprovalAlertCounts } from '../Home/hooks/approvals';
 import { useRevokeOne } from './useRevokeOne';
 import { findIndexRevokeList } from './utils';
 import { Account } from '@/core/services/preference';
+import { isAccountSupportMiniApproval } from '@/utils/account';
 
 export const useBatchRevoke = ({
   account: currentAccount,
@@ -60,9 +60,7 @@ export const useBatchRevoke = ({
       // not support batch revoke
       if (
         currentAccount &&
-        (currentAccount.type === KEYRING_TYPE.KeystoneKeyring ||
-          currentAccount.type === KEYRING_TYPE.WatchAddressKeyring ||
-          currentAccount.type === KEYRING_TYPE.GnosisKeyring)
+        !isAccountSupportMiniApproval(currentAccount?.type)
       ) {
         forceUpdate();
         await apiApprovals.revoke({

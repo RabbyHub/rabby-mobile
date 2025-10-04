@@ -22,24 +22,64 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
+import { pick } from 'lodash';
+import { ReactSetStateValueOrFunc } from '@rabby-wallet/base-utils';
 
 export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = IS_ANDROID && !__DEV__;
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
-const screenshotFeedbackAtom = atomByMMKV('@screenshotFeedback', {
+type ScreenshotFeedbackStore = {
+  viewedHomeTip: boolean;
+  feedbacks: LocalUserFeedbackItem[];
+  showFeedbackOnScreenshot_20250923: boolean | null;
+  disableScreenshotToReportUntil: number; // timestamp
+};
+const getDefaultValueFeedback = (): ScreenshotFeedbackStore => ({
   viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   feedbacks: [] as LocalUserFeedbackItem[],
-  showFeedbackOnScreenshot: false,
+  showFeedbackOnScreenshot_20250923: true,
   disableScreenshotToReportUntil: -1,
 });
+const Keys = Object.keys(
+  getDefaultValueFeedback(),
+) as (keyof ScreenshotFeedbackStore)[];
+function trimScreenshotFeedbackStore<T extends ScreenshotFeedbackStore>(
+  input: T,
+): ScreenshotFeedbackStore {
+  return pick(input, Keys);
+}
+const screenshotFeedbackAtom = atomByMMKV(
+  '@screenshotFeedback',
+  getDefaultValueFeedback(),
+);
+
+function useScreenshotFeedbackStore() {
+  const [screenshotFeedback, _setScreenshotFeedback] = useAtom(
+    screenshotFeedbackAtom,
+  );
+
+  const setScreenshotFeedback = useCallback(
+    (valOrFunc: ReactSetStateValueOrFunc<ScreenshotFeedbackStore>) => {
+      _setScreenshotFeedback(prev => {
+        const nextVal =
+          typeof valOrFunc === 'function' ? valOrFunc(prev) : valOrFunc;
+
+        return trimScreenshotFeedbackStore(nextVal);
+      });
+    },
+    [_setScreenshotFeedback],
+  );
+
+  return { screenshotFeedback, setScreenshotFeedback };
+}
 
 function isEnabledScreenshotToReport({
   showFeedbackOnScreenshot,
   disableScreenshotToReportUntil,
 }: {
   showFeedbackOnScreenshot: boolean | null;
-  disableScreenshotToReportUntil?: number | null;
+  disableScreenshotToReportUntil: number | null;
 }) {
-  if (!showFeedbackOnScreenshot) return false;
+  if (showFeedbackOnScreenshot === false) return false;
 
   disableScreenshotToReportUntil = disableScreenshotToReportUntil || 0;
 
@@ -47,25 +87,24 @@ function isEnabledScreenshotToReport({
 }
 
 export function useScreenshotToReportEnabled() {
-  const [screenshotFeedback, setScreenshotFeedback] = useAtom(
-    screenshotFeedbackAtom,
-  );
+  const { screenshotFeedback, setScreenshotFeedback } =
+    useScreenshotFeedbackStore();
 
   const isShowFeedbackOnScreenshot = useMemo(() => {
-    return !!screenshotFeedback.showFeedbackOnScreenshot;
+    return screenshotFeedback.showFeedbackOnScreenshot_20250923 != false;
   }, [screenshotFeedback]);
 
   const toggleScreenshotToReport = useCallback(
     (nextVal?: boolean) => {
       setScreenshotFeedback(prev => {
         if (nextVal === undefined) {
-          const prevEnabled = !!prev.showFeedbackOnScreenshot;
+          const prevEnabled = !!prev.showFeedbackOnScreenshot_20250923;
           nextVal = !prevEnabled;
         }
 
         return {
           ...prev,
-          showFeedbackOnScreenshot: nextVal,
+          showFeedbackOnScreenshot_20250923: nextVal,
         };
       });
     },
@@ -102,16 +141,19 @@ export function useScreenshotToReportEnabled() {
 
 export function useGetShowFeedbackOnScreenshotCapture() {
   const getShowFeedbackOnScreenshotCapture = useAtomCallback(get => {
-    return isEnabledScreenshotToReport(get(screenshotFeedbackAtom));
+    const values = get(screenshotFeedbackAtom);
+    return isEnabledScreenshotToReport({
+      showFeedbackOnScreenshot: values.showFeedbackOnScreenshot_20250923,
+      disableScreenshotToReportUntil: values.disableScreenshotToReportUntil,
+    });
   });
 
   return { getShowFeedbackOnScreenshotCapture };
 }
 
 export function useViewedHomeTip() {
-  const [screenshotFeedback, setScreenshotFeedback] = useAtom(
-    screenshotFeedbackAtom,
-  );
+  const { screenshotFeedback, setScreenshotFeedback } =
+    useScreenshotFeedbackStore();
 
   const markViewedHomeTip = useCallback(() => {
     if (screenshotFeedback.viewedHomeTip) return;
@@ -146,11 +188,11 @@ export function sortFeedbackItemByCreateAtDesc(
 }
 export const LATEST_LOCAL_FEEDBACK_LIMIT = 10;
 function useScreenshotFeedbacks() {
-  const [, setScreenshotFeedbacks] = useAtom(screenshotFeedbackAtom);
+  const { setScreenshotFeedback } = useScreenshotFeedbackStore();
 
   const onFeedbackSubmitted = useCallback(
     (idOrItem: LocalUserFeedbackItem) => {
-      setScreenshotFeedbacks(prev => {
+      setScreenshotFeedback(prev => {
         const list = prev.feedbacks;
 
         const newFeedback = {
@@ -167,16 +209,16 @@ function useScreenshotFeedbacks() {
         };
       });
     },
-    [setScreenshotFeedbacks],
+    [setScreenshotFeedback],
   );
 
   const clearFeedbacks = useCallback(() => {
-    setScreenshotFeedbacks(prev => ({ ...prev, feedbacks: [] }));
-  }, [setScreenshotFeedbacks]);
+    setScreenshotFeedback(prev => ({ ...prev, feedbacks: [] }));
+  }, [setScreenshotFeedback]);
 
   const removeLocalFeedback = useCallback(
     (id: string) => {
-      setScreenshotFeedbacks(prev => {
+      setScreenshotFeedback(prev => {
         const list = prev.feedbacks.filter(item => item.id !== id);
         return {
           ...prev,
@@ -184,7 +226,7 @@ function useScreenshotFeedbacks() {
         };
       });
     },
-    [setScreenshotFeedbacks],
+    [setScreenshotFeedback],
   );
 
   return {
@@ -195,17 +237,17 @@ function useScreenshotFeedbacks() {
 }
 
 export function useLatestRepliedFeedbacks() {
-  const [screenshotFeedbacks] = useAtom(screenshotFeedbackAtom);
+  const { screenshotFeedback } = useScreenshotFeedbackStore();
 
   const { localFeedbacks } = useMemo(() => {
-    const feedbacks = screenshotFeedbacks.feedbacks.sort(
+    const feedbacks = screenshotFeedback.feedbacks.sort(
       sortFeedbackItemByCreateAtDesc,
     );
 
     return {
       localFeedbacks: feedbacks.slice(0, LATEST_LOCAL_FEEDBACK_LIMIT),
     };
-  }, [screenshotFeedbacks]);
+  }, [screenshotFeedback]);
 
   const [{ value: lastRepliedFeedback, loading, error }, loadFeedbacks] =
     useAsyncFn(async () => {

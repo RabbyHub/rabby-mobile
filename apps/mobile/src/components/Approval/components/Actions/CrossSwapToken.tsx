@@ -204,8 +204,8 @@ const CrossSwapToken = ({
             id="1104"
             dangerText={
               <>
-                <Values.Percentage value={usdValuePercentage!} /> (
-                <Text>{formatUsdValue(usdValueDiff || '')})</Text>
+                <Values.Percentage value={usdValuePercentage!} />
+                <Text>({formatUsdValue(usdValueDiff || '')})</Text>
               </>
             }
             warningText={
@@ -214,9 +214,8 @@ const CrossSwapToken = ({
                   style={commonStyle.subRowText}
                   value={usdValuePercentage!}
                 />{' '}
-                (
                 <Text style={commonStyle.subRowText}>
-                  {formatUsdValue(usdValueDiff || '')})
+                  ({formatUsdValue(usdValueDiff || '')})
                 </Text>
               </>
             }

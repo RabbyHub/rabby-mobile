@@ -180,7 +180,8 @@
         "totalApprovedAmount": "当前批准金额",
         "Collection": "收藏",
         "AddToWhitelist": "添加至白名单",
-        "RecipientAddress": "接收方钱包"
+        "RecipientAddress": "接收方钱包",
+        "Simulation Results": "模拟结果"
       },
       "empty": {
         "title": "暂无交易",
@@ -532,7 +533,8 @@
         "marketPrice": "市场价格",
         "priceDiff": "价格差异",
         "poolPrice": "池价格"
-      }
+      },
+      "gasSetting": "气体设置"
     },
     "activities": {
       "signedTx": {
@@ -851,7 +853,8 @@
       "gas-fee": "GasFee: {{gasUsed}}",
       "showMore": {
         "title": "显示更多",
-        "source": "Bridge Source"
+        "source": "Bridge Source",
+        "signWarning": "我理解警报并希望继续"
       },
       "bridgeFrom": "桥接自",
       "best": "最优",
@@ -866,7 +869,8 @@
       "bridgeTo": "桥接到",
       "loss-tips": "您正在损失 {{usd}}。请尝试不同的金额。",
       "title": "Bridge",
-      "bridged": "跨链已完成"
+      "bridged": "跨链已完成",
+      "gasFeeTooHight": "Gas费用高于正常情况。仅在您希望继续时确认。"
     },
     "approvals": {
       "tab-switch": {
@@ -1019,7 +1023,8 @@
       "swapped": "已交换",
       "historyTitle": "Swap 历史记录",
       "selectChainModalTitle": "选择链",
-      "results": "结果"
+      "results": "结果",
+      "approve": "批准"
     },
     "dashboard": {
       "home": {
@@ -1629,7 +1634,8 @@
         "txCreated": "交易已创建",
         "txSigned": "已签名。创建交易",
         "txSendings": "发送签名请求（{{current}}/{{total}}）"
-      }
+      },
+      "fixedModeText": "固定模式：始终使用您的自定义 Gas 设置"
     },
     "customTestnet": {
       "currency": "货币",
@@ -1709,7 +1715,9 @@
         "applePayFeeDesc": "包含 Apple Pay 手续费。无法提现",
         "googlePayFeeDesc": "包括 Google Pay 费用。不允许提款",
         "inSufficientTip1": "这个钱包没有足够的 tokens，请选择其他钱包。",
-        "paymentAddress": "支付钱包"
+        "paymentAddress": "支付钱包",
+        "pay": "支付",
+        "applePayFeeDesc1": "包含应用商店费用。无提款。"
       },
       "paymentAddressPopup": {
         "balance": "Balance",
@@ -1747,7 +1755,8 @@
         "depositCanceled": "存款已取消",
         "depositFailed": "存款失败",
         "titleAndroid": "使用 Google Pay 购买",
-        "balance": "当前 GasAccount 余额："
+        "balance": "当前 GasAccount 余额：",
+        "titleApple": "在应用商店购买"
       },
       "depositSelectPopup": {
         "depositTokenDesc": "无额外费用，即时提款",
@@ -1755,7 +1764,8 @@
         "title": "存入GasAccount",
         "buyWithDesc": "30% 手续费，不可提款",
         "desc": "在所有链上支付 Gas 费用",
-        "depositToken": "使用 Token 存款"
+        "depositToken": "使用 Token 存款",
+        "buyWithApple": "在应用商店购买"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 余额",
@@ -1881,7 +1891,38 @@
         "marketCap": "市场总值",
         "totalSupply": "总供应量",
         "holders": "持有者",
-        "txns24h": "24h 交易次数"
+        "txns24h": "24h 交易次数",
+        "holderSections": {
+          "tableHeader": {
+            "address": "地址",
+            "position": "位置",
+            "ratio": "比例"
+          },
+          "top100HoldersRatio": "前100名持有者比例",
+          "top10HoldersRatio": "前10大持有者比例"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "addresses": "地址",
+            "hour": "小时",
+            "time": "时间",
+            "all": "所有",
+            "volume": "交易量",
+            "buy": "购买",
+            "address": "地址",
+            "tradingCount": "交易数量",
+            "min": "最小值",
+            "type": "类型",
+            "sell": "出售",
+            "qnt": "Qnt",
+            "price": "价格",
+            "value": "价值"
+          }
+        },
+        "empty": "无数据",
+        "details": "详情",
+        "summary": "摘要数据",
+        "activity": "活动"
       }
     },
     "customRpc": {
@@ -2120,6 +2161,11 @@
         "favorite": "最喜欢",
         "disconnect": "断开连接",
         "contentModeMobile": "请求移动站点"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "立即加入",
+        "title": "Hyperliquid 邀请计划",
+        "desc": "现在使用Rabby的代码加入，可享受<1>4%</1>的Hyperliquid费用折扣。"
       }
     },
     "browserManage": {
@@ -2152,7 +2198,10 @@
     "defiDetail": {
       "viewSiteInApp": "在 Dapp 中查看",
       "viewSiteInWebsite": "在网站中查看",
-      "appChain": "在 {{chain}} 账户"
+      "appChain": "在 {{chain}} 账户",
+      "dappActions": {
+        "queueDescription": "当前提款将进入等待队列。一旦处理完成，可以提取到您的钱包中。"
+      }
     },
     "component": {
       "ChainSelector": {
