@@ -1,0 +1,26 @@
+diff --git a/src/components/bottomSheetDraggableView/BottomSheetDraggableView.tsx b/src/components/bottomSheetDraggableView/BottomSheetDraggableView.tsx
+index d721fee7a0b133027df45d00d6fcf07e66b797f4..34e7982120159917291a3e8ec02973f2be659113 100644
+--- a/src/components/bottomSheetDraggableView/BottomSheetDraggableView.tsx
++++ b/src/components/bottomSheetDraggableView/BottomSheetDraggableView.tsx
+@@ -30,7 +30,7 @@ const BottomSheetDraggableViewComponent = ({
+ 
+   //#region variables
+   const simultaneousHandlers = useMemo(() => {
+-    const refs = [];
++    const refs: any[] = [];
+ 
+     if (nativeGestureRef) {
+       refs.push(nativeGestureRef);
+diff --git a/src/components/bottomSheetHandle/BottomSheetHandleContainer.tsx b/src/components/bottomSheetHandle/BottomSheetHandleContainer.tsx
+index 9b6a054459bb7f109249d80c5ffde3c395fa70eb..c52f43a02b2882b0ffbeb99857f4b011cb2e1327 100644
+--- a/src/components/bottomSheetHandle/BottomSheetHandleContainer.tsx
++++ b/src/components/bottomSheetHandle/BottomSheetHandleContainer.tsx
+@@ -41,7 +41,7 @@ function BottomSheetHandleContainerComponent({
+ 
+   //#region variables
+   const simultaneousHandlers = useMemo<unknown[]>(() => {
+-    const refs = [];
++    const refs: any[] = [];
+ 
+     if (_internalSimultaneousHandlers) {
+       refs.push(_internalSimultaneousHandlers);

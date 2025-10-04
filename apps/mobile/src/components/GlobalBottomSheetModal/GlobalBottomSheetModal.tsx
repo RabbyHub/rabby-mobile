@@ -80,6 +80,7 @@ export const GlobalBottomSheetModal = () => {
           APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
           APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
           APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
+          APPROVAL_MODAL_NAMES.TrezorHardwareWaiting,
         ].includes(approvalComponent);
 
       setModals(prev => {
@@ -192,7 +193,10 @@ export const GlobalBottomSheetModal = () => {
       {modals.map(modal => {
         const ModalView = MODAL_VIEWS[modal.params.name];
         const bottomSheetModalProps = modal.params.bottomSheetModalProps;
+        const rootViewType = bottomSheetModalProps?.rootViewType;
         const enableDynamicSizing = bottomSheetModalProps?.enableDynamicSizing;
+
+        const RootView = rootViewType === 'View' ? View : BottomSheetView;
 
         const modalViewProps = {
           ...modal.params,
@@ -216,9 +220,9 @@ export const GlobalBottomSheetModal = () => {
             name={modal.id}
             children={
               enableDynamicSizing ? (
-                <BottomSheetView {...panResponder.panHandlers}>
+                <RootView {...panResponder.panHandlers}>
                   <ModalView {...modalViewProps} />
-                </BottomSheetView>
+                </RootView>
               ) : (
                 <ModalView {...modalViewProps} />
               )

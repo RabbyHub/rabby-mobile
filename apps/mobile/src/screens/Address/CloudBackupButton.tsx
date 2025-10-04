@@ -1,5 +1,5 @@
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript/src/types';
+import { NativeStackHeaderRightProps } from '@react-navigation/native-stack';
 import React from 'react';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
@@ -14,7 +14,9 @@ const hitSlop = {
 };
 
 /** @deprecated */
-export const CloudBackupButton: React.FC<HeaderButtonProps> = ({}) => {
+export const CloudBackupButton: React.FC<
+  NativeStackHeaderRightProps
+> = ({}) => {
   const onPress = React.useCallback(() => {
     navigate(RootNames.StackAddress, {
       screen: RootNames.RestoreFromCloud,

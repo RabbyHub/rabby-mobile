@@ -19,7 +19,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { useAppState } from '@react-native-community/hooks';
 import { atom, useAtom } from 'jotai';
 
-const activeTabAtom = atom('favorites');
+export const activeTabAtom = atom('favorites');
 
 export function BrowserManage(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
@@ -59,8 +59,7 @@ export function BrowserManage(): JSX.Element {
     ];
   }, [t]);
 
-  // todo fix any
-  const tabRef = React.useRef<any>();
+  const tabRef = React.useRef<React.ComponentRef<typeof Tabs.Container>>();
   // const navigation = useRabbyAppNavigation();
   const isChangingTabRef = React.useRef(false);
   const activeTabRef = React.useRef(activeTab);

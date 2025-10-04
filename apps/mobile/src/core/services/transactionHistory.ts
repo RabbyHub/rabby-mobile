@@ -144,15 +144,26 @@ export interface SendTxHistoryItem {
   completedAt?: number;
 }
 
+export interface ApproveTokenTxHistoryItem {
+  address: string;
+  chainId: number;
+  amount: number;
+  token: TokenItem;
+  status: 'pending' | 'success' | 'failed';
+  hash: string;
+  createdAt: number;
+  completedAt?: number;
+}
+
 interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
   swapTxHistory: SwapTxHistoryItem[];
   sendTxHistory: SendTxHistoryItem[];
   bridgeTxHistory: BridgeTxHistoryItem[];
+  approveSwapTxHistory: ApproveTokenTxHistoryItem[];
+  approveBridgeTxHistory: ApproveTokenTxHistoryItem[];
   successList: string[];
   failList: string[];
-  sendSuccessList: string[];
-  sendFailList: string[];
   isNeedFetchTxHistory: Record<string, boolean>;
   clearSuccessAndFailListTs: number;
   clearSuccessAndFailListTsObj: Record<string, number>;
@@ -182,10 +193,10 @@ export class TransactionHistoryService {
           transactions: [],
           swapTxHistory: [],
           bridgeTxHistory: [],
+          approveSwapTxHistory: [],
+          approveBridgeTxHistory: [],
           successList: [],
           failList: [],
-          sendSuccessList: [],
-          sendFailList: [],
           isNeedFetchTxHistory: {},
           clearSuccessAndFailListTs: new Date().getTime(),
           clearSuccessAndFailListTsObj: {},
@@ -207,10 +218,6 @@ export class TransactionHistoryService {
       this.store.failList = [];
     }
 
-    if (!Array.isArray(this.store.sendSuccessList)) {
-      this.store.sendSuccessList = [];
-    }
-
     if (!Array.isArray(this.store.swapTxHistory)) {
       this.store.swapTxHistory = [];
     }
@@ -219,12 +226,16 @@ export class TransactionHistoryService {
       this.store.sendTxHistory = [];
     }
 
-    if (!Array.isArray(this.store.sendFailList)) {
-      this.store.sendFailList = [];
-    }
-
     if (!Array.isArray(this.store.bridgeTxHistory)) {
       this.store.bridgeTxHistory = [];
+    }
+
+    if (!Array.isArray(this.store.approveSwapTxHistory)) {
+      this.store.approveSwapTxHistory = [];
+    }
+
+    if (!Array.isArray(this.store.approveBridgeTxHistory)) {
+      this.store.approveBridgeTxHistory = [];
     }
 
     if (typeof this.store.isNeedFetchTxHistory !== 'object') {
@@ -272,32 +283,17 @@ export class TransactionHistoryService {
     });
   }
 
+  getStore() {
+    return this.store['approveSwapTxHistory'];
+  }
+
   getSucceedCount(address?: string) {
     return this.store.successList.filter(item =>
       address ? item.startsWith(address) : true,
     ).length;
   }
-
-  getSendSucceedCount(address?: string) {
-    return this.store.sendSuccessList.filter(item =>
-      address ? item.startsWith(address) : true,
-    ).length;
-  }
-
   getSucceedList() {
     return this.store.successList;
-  }
-
-  getSendSucceedList(address?: string) {
-    return this.store.sendSuccessList.filter(item =>
-      address ? item.startsWith(address) : true,
-    );
-  }
-
-  getSendFailedList(address?: string) {
-    return this.store.sendFailList.filter(item =>
-      address ? item.startsWith(address) : true,
-    );
   }
 
   setSucceedList(id: string) {
@@ -318,12 +314,6 @@ export class TransactionHistoryService {
     ).length;
   }
 
-  getSendFailedCount(address?: string) {
-    return this.store.sendFailList.filter(item =>
-      address ? item.startsWith(address) : true,
-    ).length;
-  }
-
   getClearSuccessAndFailListTs() {
     return this.store.clearSuccessAndFailListTs;
   }
@@ -338,6 +328,21 @@ export class TransactionHistoryService {
         this.store.isNeedFetchTxHistory[address] = true;
       }, 5000);
     }
+  }
+
+  addApproveSwapTokenTxHistory(tx: ApproveTokenTxHistoryItem) {
+    this.store.approveSwapTxHistory = [...this.store.approveSwapTxHistory, tx]
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 200);
+  }
+
+  addApproveBridgeTokenTxHistory(tx: ApproveTokenTxHistoryItem) {
+    this.store.approveBridgeTxHistory = [
+      ...this.store.approveBridgeTxHistory,
+      tx,
+    ]
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 200);
   }
 
   addSwapTxHistory(tx: SwapTxHistoryItem) {
@@ -361,7 +366,10 @@ export class TransactionHistoryService {
       .slice(0, 200);
   }
 
-  getRecentPendingTxHistory(address: string, type: 'swap' | 'send' | 'bridge') {
+  getRecentPendingTxHistory(
+    address: string,
+    type: 'swap' | 'send' | 'bridge' | 'approveSwap' | 'approveBridge',
+  ) {
     const recentItem = this.store[`${type}TxHistory`]
       .filter(item => {
         return isSameAddress(address, item.address);
@@ -378,7 +386,7 @@ export class TransactionHistoryService {
     address: string,
     hash: string,
     chainId: number,
-    type: 'swap' | 'send',
+    type: 'swap' | 'send' | 'approveSwap' | 'approveBridge',
   ) {
     return this.store[`${type}TxHistory`].find(
       item =>
@@ -397,11 +405,25 @@ export class TransactionHistoryService {
       this.store.swapTxHistory,
       this.store.sendTxHistory,
       this.store.bridgeTxHistory,
+      this.store.approveSwapTxHistory,
+      this.store.approveBridgeTxHistory,
     ];
     const hashArr = txs.map(item => item.hash);
+
+    eventBus.emit(EVENTS.INNER_HISTORY_ITEM_COMPLETE, {
+      hashArr,
+      chainId,
+    });
+
     arr.forEach(async history => {
       const index = history.findIndex(
-        (item: SwapTxHistoryItem | SendTxHistoryItem | BridgeTxHistoryItem) =>
+        (
+          item:
+            | SwapTxHistoryItem
+            | SendTxHistoryItem
+            | BridgeTxHistoryItem
+            | ApproveTokenTxHistoryItem,
+        ) =>
           ('fromChainId' in item ? item.fromChainId : item.chainId) ===
             chainId && hashArr.includes(item.hash),
       );
@@ -476,20 +498,6 @@ export class TransactionHistoryService {
     }
   }
 
-  clearSendSuccessAndFailList(address?: string) {
-    if (address) {
-      this.store.sendSuccessList = this.store.sendSuccessList.filter(
-        item => !item.startsWith(address),
-      );
-      this.store.sendFailList = this.store.sendFailList.filter(
-        item => !item.startsWith(address),
-      );
-    } else {
-      this.store.sendSuccessList = [];
-      this.store.sendFailList = [];
-    }
-  }
-
   clearSuccessAndFailSingleId(id: string) {
     const successIdx = this.store.successList.findIndex(item => item === id);
     if (successIdx !== -1) {
@@ -500,20 +508,6 @@ export class TransactionHistoryService {
     const failIdx = this.store.failList.findIndex(item => item === id);
     if (failIdx !== -1) {
       this.store.failList.splice(failIdx, 1);
-    }
-  }
-
-  clearSendSuccessAndFailSingleId(id: string) {
-    const successIdx = this.store.sendSuccessList.findIndex(
-      item => item === id,
-    );
-    if (successIdx !== -1) {
-      this.store.sendSuccessList.splice(successIdx, 1);
-    }
-
-    const failIdx = this.store.sendFailList.findIndex(item => item === id);
-    if (failIdx !== -1) {
-      this.store.sendFailList.splice(failIdx, 1);
     }
   }
 
@@ -838,15 +832,8 @@ export class TransactionHistoryService {
         };
         this.updateTx(newTx);
         const id = tx.hash || tx.reqId;
-        const isSendToken = tx.$ctx?.ga?.source === 'sendToken';
-        if (success) {
-          id && this.store.successList.push(`${address.toLowerCase()}-${id}`);
-          isSendToken &&
-            this.store.sendSuccessList.push(`${address.toLowerCase()}-${id}`);
-        } else {
+        if (!success) {
           id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
-          isSendToken &&
-            this.store.sendFailList.push(`${address.toLowerCase()}-${id}`);
         }
         loadTxSaveFromLocalStore(newTx); // send type tx save local db
         this.setNeedFetchTxHistory(address.toLowerCase());

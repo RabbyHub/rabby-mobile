@@ -104,6 +104,7 @@ export function ChainInfo2024({
       titleText: t('page.swap.selectChainModalTitle'),
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
+        rootViewType: 'View',
       },
       onChange: chain => {
         removeChainModal();

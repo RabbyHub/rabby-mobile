@@ -7,7 +7,7 @@ import {
 import BigNumber from 'bignumber.js';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, View, ViewProps } from 'react-native';
 // import useBalanceChange from '../..//hooks/useBalanceChange';
 // import { Table, Col, Row } from '../Actions/components/Table';
 // import LogoWithText from '../Actions/components/LogoWithText';
@@ -153,11 +153,15 @@ export const BalanceChange = ({
   version,
   isSingleAddress,
   account,
+  successTitle,
+  containerStyle,
 }: {
   data?: IBalanceChange;
   version: 'v0' | 'v1' | 'v2';
   isSingleAddress?: boolean;
   account?: Account;
+  successTitle?: string;
+  containerStyle?: ViewProps['style'];
 }) => {
   const { t } = useTranslation();
   const isSuccess = data?.success;
@@ -206,10 +210,10 @@ export const BalanceChange = ({
   }
 
   return (
-    <View style={styles.tokenBalanceChange}>
+    <View style={[styles.tokenBalanceChange, containerStyle]}>
       <View style={styles.tokenBalanceChangeHeader}>
         <Text style={styles.titleText}>
-          {t('page.transactions.detail.InteractionResults')}
+          {successTitle || t('page.transactions.detail.InteractionResults')}
         </Text>
       </View>
       <View style={styles.list}>

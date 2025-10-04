@@ -1,5 +1,8 @@
 import { RcNextLeftCC } from '@/assets/icons/common';
-import { NextSearchBar } from '@/components2024/SearchBar';
+import {
+  NextSearchBar,
+  NextSearchBarMethods,
+} from '@/components2024/SearchBar';
 import { toast } from '@/components2024/Toast';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
 import { DappInfo } from '@/core/services/dappService';
@@ -74,8 +77,7 @@ export function DappsScreen(): JSX.Element {
     toast.success('Removed from History');
   });
 
-  // todo fix any
-  const inputRef = useRef<any>(null);
+  const inputRef = useRef<NextSearchBarMethods>(null);
 
   const handleEmptyPress = useMemoizedFn(() => {
     searchState.setState({

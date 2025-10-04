@@ -20,7 +20,7 @@ export const useAddressDetailModal = () => {
       const id = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.ADDRESS_DETAIL,
         bottomSheetModalProps: {
-          useBottomSheetScrollView: true,
+          rootViewType: 'BottomSheetScrollView',
           enableContentPanningGesture: true,
         },
         account,

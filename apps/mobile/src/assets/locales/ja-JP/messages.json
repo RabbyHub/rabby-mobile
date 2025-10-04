@@ -139,7 +139,8 @@
         "WillReceive": "受け取る予定: ≈ {{token}}",
         "PurchaseFrom": "から購入",
         "AddToWhitelist": "ホワイトリストに追加",
-        "RecipientAddress": "受取財布"
+        "RecipientAddress": "受取財布",
+        "Simulation Results": "シミュレーション結果"
       },
       "empty": {
         "desc": "<1>サポートされているチェーン</1>で取引が見つかりませんでした。",
@@ -211,7 +212,8 @@
         "maxGas": "最大Gas:",
         "estimatedGas": "推定ガス: ",
         "sendGas": "現在の取引のためにあなたに送られるGas：",
-        "gasCost": "ガスをあなたのアドレスに転送する際のガスコスト："
+        "gasCost": "ガスをあなたのアドレスに転送する際のガスコスト：",
+        "description": "GasAccountを使用してガス料金を支払います。以下に支払いの詳細を表示します："
       },
       "recommendGasLimitTip": "推定 {{est}}。現在は {{current}}x、推奨",
       "moreSafeSigNeeded": "{{0}} つの確認が必要です",
@@ -484,7 +486,8 @@
         "receiver": "受取人",
         "title": "流動性を追加する",
         "marketPrice": "市場価格"
-      }
+      },
+      "gasSetting": "ガス設定"
     },
     "sendNFT": {
       "sendButton": "送る",
@@ -857,7 +860,8 @@
       "historyTitle": "スワップ履歴",
       "swapped": "スワップ完了",
       "selectChainModalTitle": "チェーンを選択します",
-      "results": "結果"
+      "results": "結果",
+      "approve": "承認"
     },
     "signTypedData": {
       "createKey": {
@@ -914,7 +918,9 @@
         "websites": "ウェブサイト",
         "search": "Search Token",
         "copyTrading": "コピー取引",
-        "watchlist": "ウォッチリスト"
+        "watchlist": "ウォッチリスト",
+        "perps": "パープス",
+        "perpsMarketList": "より多くのPerps"
       }
     },
     "nextComponent": {
@@ -1011,7 +1017,8 @@
       "liquidity": "流動性",
       "showMore": {
         "title": "もっと表示",
-        "source": "ブリッジソース"
+        "source": "ブリッジソース",
+        "signWarning": "警告を理解し、続行します"
       },
       "gas-x-price": "ガス価格: {{price}} Gwei.",
       "actual": "実際：",
@@ -1040,7 +1047,8 @@
       "no-route-found": "ルートが見つかりません",
       "best": "最高",
       "Select": "選択",
-      "bridged": "ブリッジ済み"
+      "bridged": "ブリッジ済み",
+      "gasFeeTooHight": "ガス料金は通常より高いです。続行したい場合のみ確認してください。"
     },
     "dashboard": {
       "hd": {
@@ -1471,7 +1479,9 @@
         "applePayFeeDesc": "Apple Pay 手数料が含まれています。出金不可",
         "googlePayFeeDesc": "Google Pay手数料が含まれています。出金不可",
         "paymentAddress": "ペイメントウォレット",
-        "inSufficientTip1": "このウォレットには十分なトークンがありません。他のウォレットを選んでください。"
+        "inSufficientTip1": "このウォレットには十分なトークンがありません。他のウォレットを選んでください。",
+        "pay": "支払い",
+        "applePayFeeDesc1": "アプリストア手数料が含まれています。引き出しはできません。"
       },
       "paymentAddressPopup": {
         "balance": "バランス",
@@ -1512,7 +1522,8 @@
         "title": "Apple Payで購入",
         "balance": "現在のGasAccount残高：",
         "depositFailed": "入金に失敗しました",
-        "depositCanceled": "入金がキャンセルされました。"
+        "depositCanceled": "入金がキャンセルされました。",
+        "titleApple": "アプリストアで購入"
       },
       "depositSelectPopup": {
         "buyWith": "購入方法",
@@ -1520,7 +1531,8 @@
         "depositTokenDesc": "追加手数料なし、即時引き出し",
         "buyWithDesc": "30％の手数料、出金不可",
         "desc": "すべてのチェーンでGas手数料を支払う",
-        "title": "GasAccountに入金"
+        "title": "GasAccountに入金",
+        "buyWithApple": "アプリストアで購入"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 残高",
@@ -1600,7 +1612,8 @@
         "txSendings": "署名リクエストを送信中（{{current}}/{{total}}）",
         "txCreated": "トランザクションが作成されました",
         "txSending": "署名リクエストを送信中"
-      }
+      },
+      "fixedModeText": "固定モード: カスタムガス設定を常に使用する"
     },
     "backupSeedPhrase": {
       "qrCodePopupTitle": "QR Code",
@@ -1713,6 +1726,54 @@
       "tabs": {
         "tokenSecurity": "トークンセキュリティ",
         "marketData": "マーケットデータ"
+      },
+      "interval": {
+        "1M": "1M",
+        "1W": "1W",
+        "4H": "4H",
+        "1H": "1H",
+        "1D": "1D",
+        "15M": "15M",
+        "30M": "30M",
+        "5M": "5M"
+      },
+      "marketInfo": {
+        "holders": "保有者",
+        "marketCap": "時価総額",
+        "volume24h": "24時間取引量",
+        "totalSupply": "総供給量",
+        "txns24h": "24時間取引",
+        "holderSections": {
+          "tableHeader": {
+            "position": "ポジション",
+            "address": "アドレス",
+            "ratio": "比率"
+          },
+          "top100HoldersRatio": "トップ100保有者比率",
+          "top10HoldersRatio": "上位10保持者の割合"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "hour": "時間",
+            "min": "最小",
+            "time": "時間",
+            "buy": "購入する",
+            "type": "タイプ",
+            "volume": "ボリューム",
+            "address": "アドレス",
+            "sell": "売却",
+            "addresses": "アドレス",
+            "all": "すべて",
+            "price": "価格",
+            "value": "価値",
+            "tradingCount": "取引回数",
+            "qnt": "Qnt"
+          }
+        },
+        "details": "詳細情報",
+        "empty": "データがありません",
+        "summary": "サマリーデータ",
+        "activity": "アクティビティ"
       }
     },
     "customTestnet": {
@@ -1870,7 +1931,10 @@
       "clearPendingToast": "ローカルの保留中のトランザクションが削除されました",
       "clearPendingResetDesc": "ローカルの nonce データと署名記録もリセットします。",
       "clearPendingWarning": "削除されたトランザクションは、置き換えられない限り、オンチェーンでまだ確認される可能性があります。",
-      "clearBrowserData": "ブラウザデータをクリア"
+      "clearBrowserData": "ブラウザデータをクリア",
+      "searchCurrency": "通貨を検索",
+      "currency": "通貨",
+      "screenshotReportSwitch": "バグを報告するためのスクリーンショット"
     },
     "settingModal": {
       "themeMode": {
@@ -2050,6 +2114,11 @@
         "contentModeDesktop": "デスクトップ版サイトをリクエスト",
         "favorite": "お気に入り",
         "contentModeMobile": "モバイルサイトをリクエスト"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "今すぐ参加",
+        "title": "ハイパーリキッド紹介プログラム",
+        "desc": "今すぐRabbyのコードを使って、Hyperliquidの手数料が<1>4%割引</1>になります。"
       }
     },
     "browserManage": {
@@ -2082,7 +2151,10 @@
     "defiDetail": {
       "viewSiteInApp": "Dappで表示",
       "viewSiteInWebsite": "ウェブサイトで表示",
-      "appChain": "{{chain}} アカウント"
+      "appChain": "{{chain}} アカウント",
+      "dappActions": {
+        "queueDescription": "現在の引き出しは待機キューに入ります。処理が完了すると、あなたのウォレットに引き出すことができます。"
+      }
     },
     "component": {
       "ChainSelector": {
@@ -2162,6 +2234,9 @@
         "setupWalletFirst": "最初にウォレットの設定を完了してください。",
         "unlockWalletFirst": "アプリをアンロックしてリンクを開いてください。"
       }
+    },
+    "perpsHistory": {
+      "title": "履歴"
     }
   },
   "global": {
@@ -2235,7 +2310,9 @@
         "title": "位置の権限",
         "message": "このアプリは、位置情報に基づく機能を提供するために、あなたの位置情報へのアクセスが必要です。"
       }
-    }
+    },
+    "check": "チェック",
+    "gotIt": "わかった"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -2445,9 +2522,11 @@
       "feedbackInput": {
         "placeholder": "問題を説明してください。"
       },
-      "feedbackLabel": "バグの説明:",
-      "title": "バグを報告するためのスナップショット",
-      "submitButtonText": "送信"
+      "submitButtonText": "送信",
+      "switchArea": {
+        "skipText": "このポップアップを1日間スキップする"
+      },
+      "title": "バグを報告するためのスクリーンショット"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "説明:",
@@ -2457,7 +2536,10 @@
       "pendingTitle": "Rabby サポートが返信していません。"
     },
     "submitFeedbackSuccessModal": {
-      "desc": "正常に提出されました。"
+      "desc": "正常に提出されました！"
+    },
+    "GlobalTipsPopup": {
+      "btn": "理解しました"
     }
   },
   "common": {

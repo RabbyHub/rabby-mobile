@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import * as Yup from 'yup';
 import { RootNames } from '@/constant/layout';
-import { useFocusEffect, useNavigationState } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -186,17 +187,14 @@ function MainListBlocks() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
-  const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SetPassword2024)?.params,
-  ) as {
-    finishGoToScreen: (AddressNavigatorParamList['SetPassword2024'] &
-      object)['finishGoToScreen'];
-    title?: string;
-    hideProgress?: boolean;
-    delaySetPassword?: boolean;
-    hideBackIcon?: boolean;
-    isFirstImportPassword?: boolean;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'AddressNavigatorParamList', 'SetPassword2024'>
+    >();
+  const state = route.params;
+  if (!state) {
+    throw new Error('[SetPassword2024] state is undefined');
+  }
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const {
@@ -357,7 +355,7 @@ function MainListBlocks() {
                     if (!couldSetupBiometrics) {
                       toast.show(
                         t('page.createPassword.phoneNotSupport', {
-                          type: defaultTypeLabel,
+                          bioType: defaultTypeLabel,
                         }),
                       );
                       return;

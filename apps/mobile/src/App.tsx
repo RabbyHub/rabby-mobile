@@ -40,6 +40,8 @@ import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
 import { useUserDidTakeScreenshot } from './components/Screenshot/hooks';
 
+import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
+
 const rneuiTheme = createTheme({
   lightColors: {
     grey4: ThemeColors.light['neutral-card-2'],
@@ -69,6 +71,7 @@ function MainScreen({ rabbitCode, turboModuleEnabled }: AppProps) {
   useTriggerI18nChangeOnAppTop();
   useIAPListener();
   useGasAccountInfo();
+  useTrezorConnectOnUrl();
   useIncreaseTxCountOnAppTop({ isTop: true });
   useIntervalSyncDDefaultRPCs();
   useUserDidTakeScreenshot({ isTop: true });

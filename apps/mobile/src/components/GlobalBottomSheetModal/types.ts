@@ -48,6 +48,7 @@ export enum APPROVAL_MODAL_NAMES {
   'LedgerHardwareWaiting' = 'LedgerHardwareWaiting',
   'KeystoneHardwareWaiting' = 'KeystoneHardwareWaiting',
   'OneKeyHardwareWaiting' = 'OneKeyHardwareWaiting',
+  'TrezorHardwareWaiting' = 'TrezorHardwareWaiting',
   'PrivatekeyWaiting' = 'PrivatekeyWaiting',
   'ETHSign' = 'ETHSign',
   'Unknown' = 'Unknown',
@@ -79,7 +80,14 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
   approvalComponent?: APPROVAL_MODAL_NAMES;
   /** @deprecated use bottomSheetModalProps.onDismiss directly */
   onCancel?: () => void;
-  bottomSheetModalProps?: Partial<BottomSheetModalProps>;
+  bottomSheetModalProps?: Partial<BottomSheetModalProps> & {
+    /**
+     * @description by default we use BottomSheetView, but if your sub views contain scrollable content, you MUST use View as modal's inner root
+     * @see https://gorhom.dev/react-native-bottom-sheet/scrollables
+     * @default 'BottomSheetView'
+     */
+    rootViewType?: 'View' | 'BottomSheetView';
+  };
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,
    * @default false

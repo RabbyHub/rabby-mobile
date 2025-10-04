@@ -16,28 +16,21 @@ import { useTranslation } from 'react-i18next';
 import { preferenceService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
 import { useMyAccounts } from '@/hooks/account';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   visible?: boolean;
   onClose?: () => void;
   dapp: DappInfo;
+  account?: Account;
 }
 
-export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
+export function CurrentDappPopup({ visible, onClose, dapp, account }: Props) {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
 
   const { t } = useTranslation();
-
-  const { accounts } = useMyAccounts();
-  const account = useMemo(() => {
-    return (
-      dapp?.currentAccount ||
-      accounts?.[0] ||
-      preferenceService.getFallbackAccount()
-    );
-  }, [accounts, dapp?.currentAccount]);
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 

@@ -12,6 +12,11 @@ import { keyringService } from '@/core/services';
 import { throttle } from 'lodash';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  AsName,
+  MakePropsByAsMap,
+  useComponentByAsProp,
+} from '@/hooks/common/useComponentAsProp';
 
 const implUiRefreshTimeout = throttle(
   () => {
@@ -74,34 +79,21 @@ export function useRefreshAutoLockPanResponder() {
   }, []);
 }
 
-type ViewAsMap = {
-  View: typeof View;
-  BottomSheetView: typeof BottomSheetView;
+const ViewMap = {
+  View,
+  BottomSheetView,
 };
-export type NativeViewAs = keyof ViewAsMap;
 
-export function getViewComponentByAs<T extends NativeViewAs>(
-  as: T = 'View' as T,
-) {
-  switch (as) {
-    case 'BottomSheetView':
-      return BottomSheetView;
-    case 'View':
-    default:
-      return View;
-  }
-}
-
-type Props<T extends NativeViewAs> = {
-  as?: T;
-} & React.ComponentProps<ViewAsMap[T]>;
-export default function AutoLockView<T extends NativeViewAs = 'View'>({
-  as = 'View' as T,
-  ...props
-}: Props<T>) {
+type Props<A extends AsName<typeof ViewMap>> = MakePropsByAsMap<
+  typeof ViewMap,
+  A
+>;
+export default function AutoLockView<
+  T extends AsName<typeof ViewMap> = 'View',
+>({ as = 'View' as T, ...props }: Props<T>) {
   const { panResponder } = useRefreshAutoLockPanResponder();
 
-  const ViewComp = React.useMemo(() => getViewComponentByAs(as), [as]);
+  const { Component: ViewComp } = useComponentByAsProp(as, ViewMap);
 
   return (
     <ViewComp {...props} {...panResponder.panHandlers}>

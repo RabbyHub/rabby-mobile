@@ -2,6 +2,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useState, useEffect, useRef } from 'react';
 import { useMemoizedFn } from 'ahooks';
 import {
+  AssetCtx,
   AssetPosition,
   ClearinghouseState,
   MarginSummary,
@@ -54,7 +55,7 @@ export type MarketDataMap = Record<string, MarketData>;
 export interface AccountHistoryItem {
   time: number;
   hash: string;
-  type: 'deposit' | 'withdraw';
+  type: 'deposit' | 'withdraw' | 'receive';
   status: 'pending' | 'success' | 'failed';
   usdValue: string;
 }
@@ -115,14 +116,12 @@ const initialState: PerpsState = {
 const perpsAtom = atom(initialState);
 
 const wsSubscriptionsAtom = atom<(() => void)[]>([]);
-const pollingTimerAtom = atom<NodeJS.Timeout | null>(null);
 
 export const usePerpsStore = () => {
   const [state, setState] = useAtom(perpsAtom);
   const appState = useAppState();
 
   const [wsSubscriptions, setWsSubscriptions] = useAtom(wsSubscriptionsAtom);
-  const [pollingTimer, setPollingTimer] = useAtom(pollingTimerAtom);
 
   const setFillsOrderTpOrSl = useMemoizedFn(
     (payload: Record<string, 'tp' | 'sl'>) => {
@@ -181,14 +180,12 @@ export const usePerpsStore = () => {
           order => order.openOrders,
         );
 
-        const positionAndOpenOrders = payload.assetPositions
-          .filter(position => position.position.leverage.type === 'isolated')
-          .map(position => ({
-            ...position,
-            openOrders: openOrders.filter(
-              order => order.coin === position.position.coin,
-            ),
-          }));
+        const positionAndOpenOrders = payload.assetPositions.map(position => ({
+          ...position,
+          openOrders: openOrders.filter(
+            order => order.coin === position.position.coin,
+          ),
+        }));
 
         return {
           ...prev,
@@ -220,15 +217,21 @@ export const usePerpsStore = () => {
       const withdrawList = newHistoryList.filter(
         item => item.type === 'withdraw',
       );
+      const receiveList = newHistoryList.filter(
+        item => item.type === 'receive',
+      );
       const maxTimeItemDeposit = maxBy(depositList, 'time');
       const maxTimeItemWithdraw = maxBy(withdrawList, 'time');
+      const maxTimeItemReceive = maxBy(receiveList, 'time');
       setState(prev => {
         // 使用当前userAccountHistory过滤 localLoadingHistory
         const filteredLocalHistory = state.localLoadingHistory.filter(item => {
           if (item.type === 'deposit') {
             return item.time >= (maxTimeItemDeposit?.time || 0);
-          } else {
+          } else if (item.type === 'withdraw') {
             return item.time >= (maxTimeItemWithdraw?.time || 0);
+          } else {
+            return item.time >= (maxTimeItemReceive?.time || 0);
           }
         });
         return {
@@ -253,16 +256,44 @@ export const usePerpsStore = () => {
     }));
   });
 
+  const updateMarketData = useMemoizedFn((payload: AssetCtx[]) => {
+    setState(prev => {
+      const list = payload || [];
+      const newMarketData = prev.marketData.map(item => {
+        return {
+          ...item,
+          ...list[item.index],
+        };
+      });
+      return {
+        ...prev,
+        marketData: newMarketData,
+        marketDataMap: buildMarketDataMap(newMarketData),
+      };
+    });
+  });
+
   const setPositionAndOpenOrders = useMemoizedFn(
-    (payload: PositionAndOpenOrder[] | []) => {
+    (clearinghouseState: ClearinghouseState, openOrders: OpenOrder[]) => {
       setState(prev => ({
         ...prev,
-        positionAndOpenOrders: payload,
+        accountSummary: {
+          ...clearinghouseState.marginSummary,
+          withdrawable: clearinghouseState.withdrawable,
+        },
+        positionAndOpenOrders: clearinghouseState.assetPositions.map(
+          position => ({
+            ...position,
+            openOrders: openOrders.filter(
+              order => order.coin === position.position.coin,
+            ),
+          }),
+        ),
         homePositionPnl: {
-          pnl: payload.reduce((acc, order) => {
+          pnl: clearinghouseState.assetPositions.reduce((acc, order) => {
             return acc + Number(order.position.unrealizedPnl);
           }, 0),
-          show: payload.length > 0,
+          show: clearinghouseState.assetPositions.length > 0,
         },
       }));
     },
@@ -306,6 +337,7 @@ export const usePerpsStore = () => {
   const resetState = useMemoizedFn(() => {
     setState(prev => ({
       ...prev,
+      accountSummary: null,
       positionAndOpenOrders: [],
       currentPerpsAccount: null,
       isLogin: false,
@@ -345,16 +377,7 @@ export const usePerpsStore = () => {
         sdk.info.getFrontendOpenOrders(),
       ]);
 
-      const positionAndOpenOrders = clearinghouseState.assetPositions
-        .filter(position => position.position.leverage.type === 'isolated')
-        .map(position => ({
-          ...position,
-          openOrders: openOrders.filter(
-            order => order.coin === position.position.coin,
-          ),
-        }));
-
-      setPositionAndOpenOrders(positionAndOpenOrders);
+      setPositionAndOpenOrders(clearinghouseState, openOrders);
       setAccountSummary({
         ...clearinghouseState.marginSummary,
         withdrawable: clearinghouseState.withdrawable,
@@ -375,7 +398,6 @@ export const usePerpsStore = () => {
     setCurrentPerpsAccount(account);
     await refreshData();
     subscribeToUserData(account.address);
-    startPolling();
     fetchPerpPermission(account.address);
     setTimeout(() => {
       fetchPerpFee();
@@ -409,6 +431,7 @@ export const usePerpsStore = () => {
           if (
             item.delta.type === 'deposit' ||
             item.delta.type === 'withdraw' ||
+            item.delta.type === 'internalTransfer' ||
             item.delta.type === 'accountClassTransfer'
           ) {
             return true;
@@ -416,6 +439,17 @@ export const usePerpsStore = () => {
           return false;
         })
         .map(item => {
+          if (item.delta.type === 'internalTransfer') {
+            const fee = (item.delta as any).fee as string;
+            const realUsdValue = Number(item.delta.usdc) - Number(fee || '0');
+            return {
+              time: item.time,
+              hash: item.hash,
+              type: 'receive' as const,
+              status: 'success' as const,
+              usdValue: realUsdValue.toString(),
+            };
+          }
           const type =
             item.delta.type === 'accountClassTransfer'
               ? item.delta.toPerp
@@ -433,7 +467,6 @@ export const usePerpsStore = () => {
         });
 
       updateUserAccountHistory({ newHistoryList: list });
-      console.log('fetchUserNonFundingLedgerUpdates', list);
     } catch (error) {
       console.error('Failed to fetch user non-funding ledger updates:', error);
     }
@@ -521,10 +554,26 @@ export const usePerpsStore = () => {
   const subscribeToUserData = useMemoizedFn((address: string) => {
     const sdk = apisPerps.getPerpsSDK();
 
+    const { unsubscribe: unsubscribeWebData2 } = sdk.ws.subscribeToWebData2(
+      data => {
+        const { clearinghouseState, assetCtxs, openOrders, serverTime, user } =
+          data;
+        if (!isSameAddress(user, address)) {
+          return;
+        }
+
+        setPositionAndOpenOrders(clearinghouseState, openOrders);
+
+        updateMarketData(assetCtxs);
+      },
+    );
+
     const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
       data => {
         // Only process data when app is active
-        if (appState !== 'active') return;
+        if (appState !== 'active') {
+          return;
+        }
 
         console.log('User fills update:', data.fills.length);
         const { fills, isSnapshot, user } = data;
@@ -541,26 +590,8 @@ export const usePerpsStore = () => {
     );
 
     setWsSubscriptions(prev => {
-      return [...prev, unsubscribeFills];
+      return [...prev, unsubscribeWebData2, unsubscribeFills];
     });
-  });
-
-  const startPolling = useMemoizedFn(() => {
-    stopPolling();
-    setPollingTimer(
-      setInterval(() => {
-        fetchClearinghouseState();
-      }, 30 * 1000),
-    );
-    console.log('开始轮询ClearingHouseState, 间隔5秒');
-  });
-
-  const stopPolling = useMemoizedFn(() => {
-    if (pollingTimer) {
-      clearInterval(pollingTimer);
-      setPollingTimer(null);
-      console.log('停止轮询ClearingHouseState');
-    }
   });
 
   const unsubscribeAll = useMemoizedFn(() => {
@@ -571,7 +602,6 @@ export const usePerpsStore = () => {
   });
 
   const logout = useMemoizedFn(() => {
-    stopPolling();
     unsubscribeAll();
     resetState();
     fetchPerpPermission('');
@@ -587,31 +617,25 @@ export const usePerpsStore = () => {
     if (prevAppStateRef.current !== appState) {
       if (appState !== 'active') {
         unsubscribeAll();
-        stopPolling();
         const sdk = apisPerps.getPerpsSDK();
         sdk.ws.disconnect();
       } else if (
         appState === 'active' &&
         state.isLogin &&
         state.currentPerpsAccount &&
-        wsSubscriptions.length === 0 &&
-        !pollingTimer
+        wsSubscriptions.length === 0
       ) {
         subscribeToUserData(state.currentPerpsAccount.address);
-        startPolling();
       }
       prevAppStateRef.current = appState;
     }
   }, [
     appState,
     unsubscribeAll,
-    stopPolling,
     subscribeToUserData,
-    startPolling,
     state.isLogin,
     state.currentPerpsAccount,
     wsSubscriptions.length,
-    pollingTimer,
   ]);
 
   return {
@@ -652,8 +676,6 @@ export const usePerpsStore = () => {
     fetchMarketData,
     fetchPerpFee,
     subscribeToUserData,
-    startPolling,
-    stopPolling,
     unsubscribeAll,
     logout,
     initEventBus,

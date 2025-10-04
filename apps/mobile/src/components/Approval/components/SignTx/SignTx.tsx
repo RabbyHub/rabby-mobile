@@ -26,7 +26,14 @@ import {
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import BigNumber from 'bignumber.js';
-import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
@@ -410,6 +417,28 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   }, [engineResults, currentTx]);
 
   const isGasTopUp = tx.to?.toLowerCase() === GAS_TOP_UP_ADDRESS.toLowerCase();
+
+  const gasCalcMethod = useCallback(
+    (price: number) => {
+      return explainGas({
+        gasUsed,
+        gasPrice: price,
+        chainId,
+        nativeTokenPrice: txDetail?.native_token.price || 0,
+        tx,
+        gasLimit,
+        account: currentAccount,
+      });
+    },
+    [
+      chainId,
+      currentAccount,
+      gasLimit,
+      gasUsed,
+      tx,
+      txDetail?.native_token.price,
+    ],
+  );
 
   const gasExplainResponse = useExplainGas({
     gasUsed,
@@ -959,6 +988,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     } else {
       (transaction as Tx).gasPrice = tx.gasPrice;
     }
+
     const approval = (await getApproval())!;
     // gaEvent('allow');
 
@@ -1200,7 +1230,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       const res = await openapi.gasLessTxCheck({
         tx: {
           ...tx,
-          nonce: realNonce,
+          nonce: realNonce || tx.nonce,
           gasPrice: tx.gasPrice || tx.maxFeePerGas,
           gas: gasLimit,
         },
@@ -1782,17 +1812,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                   gasCostUsd: gasExplainResponse.gasCostUsd,
                   gasCostAmount: gasExplainResponse.gasCostAmount,
                 }}
-                gasCalcMethod={price => {
-                  return explainGas({
-                    gasUsed,
-                    gasPrice: price,
-                    chainId,
-                    nativeTokenPrice: txDetail?.native_token.price || 0,
-                    tx,
-                    gasLimit,
-                    account: currentAccount,
-                  });
-                }}
+                gasCalcMethod={gasCalcMethod}
                 recommendGasLimit={recommendGasLimit}
                 recommendNonce={recommendNonce}
                 chainId={chainId}

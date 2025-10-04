@@ -19,6 +19,7 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { renderText } from '@/utils/renderNode';
 import { createGetStyles2024 } from '@/utils/styles';
+import { CircleSpinnerCC } from '../CircleSpinner/CircleSpinnerCC';
 
 export type ButtonProps = Omit<
   TouchableOpacityProps &
@@ -42,6 +43,8 @@ export type ButtonProps = Omit<
       noShadow?: boolean;
       icon?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
       iconRight?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
+      showTextOnLoading?: boolean;
+      loadingType?: 'indicator' | 'circle';
     },
   'children'
 >;
@@ -56,8 +59,10 @@ export const Button = ({
   type = 'primary',
   loading = false,
   loadingStyle,
+  loadingType = 'indicator',
   noShadow = false,
   disabled = false,
+  showTextOnLoading = false,
   disabledTitleStyle,
   icon,
   iconRight,
@@ -196,12 +201,23 @@ export const Button = ({
         <ViewComponent style={innerStyle}>
           {/* Activity Indicator on loading */}
           {loading && (
-            <ActivityIndicator
-              style={StyleSheet.flatten([styles.loading, loadingStyle])}
-              color={loadingProps.color}
-              size={loadingProps.size}
-              {...loadingProps}
-            />
+            <>
+              {loadingType === 'indicator' ? (
+                <ActivityIndicator
+                  style={StyleSheet.flatten([styles.loading, loadingStyle])}
+                  color={loadingProps.color}
+                  size={loadingProps.size}
+                  {...loadingProps}
+                />
+              ) : (
+                <CircleSpinnerCC size={24} style={loadingStyle} />
+              )}
+              {!!showTextOnLoading &&
+                !!textNode &&
+                renderText(textNode, {
+                  style: titleStyle,
+                })}
+            </>
           )}
           {!loading && (
             <>

@@ -231,10 +231,12 @@ export const fetchTokenPriceData = async (
     tokenId: string;
   },
   interval: string,
+  afterTimeAt?: number,
 ): Promise<CandleData> => {
   const data = await openapi.getTokenKlineData({
     token_id: token.tokenId,
     chain_id: token.chain,
+    after_time_at: afterTimeAt,
     interval,
   });
 

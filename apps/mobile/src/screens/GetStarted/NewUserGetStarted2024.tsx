@@ -92,7 +92,9 @@ function GetStartedScreen2024(): JSX.Element {
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
     );
-    navigate(RootNames.StackAddress, { screen: RootNames.ImportMethods });
+    navigate(RootNames.StackAddress, {
+      screen: RootNames.ImportMethods,
+    });
   }, [getStaretd.processedInit]);
 
   const handleGoToSyncExtension = useCallback(async () => {

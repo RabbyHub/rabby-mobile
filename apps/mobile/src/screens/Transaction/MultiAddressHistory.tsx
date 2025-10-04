@@ -59,7 +59,7 @@ import {
   judgeIsSmallUsdTx,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
@@ -129,10 +129,10 @@ function History({
   const { top10Addresses, list: accountList } = useAccountInfo();
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
+      GetNestedScreenRouteProp<
         'TransactionNavigatorParamList',
         'MultiAddressHistory'
-      >['route']
+      >
     >();
   const { tokenItem, isInTokenDetail, currentAddress } = route.params || {};
   const { t } = useTranslation();

@@ -9,6 +9,8 @@ import { GasLessAnimatedWrapper } from '../FooterBar/GasLessComponents';
 import { Button } from '@/components2024/Button';
 import { useGetMiniSigningTypedData } from '@/hooks/useMiniApprovalDirectSignTypedData';
 import useDebounce from 'react-use/lib/useDebounce';
+import { useAtomValue } from 'jotai';
+import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
@@ -75,8 +77,24 @@ export const MiniProcessActions: React.FC<Props> = ({
       : {},
   ]);
 
-  const signingTypedData = useGetMiniSigningTypedData();
+  const signingTx = useAtomValue(directSigningAtom);
 
+  useDebounce(
+    () => {
+      if (
+        isMiniSignTx &&
+        !disabledProcess &&
+        signingTx &&
+        directSubmit &&
+        miniSignType === 'tx'
+      ) {
+        onSubmit();
+      }
+    },
+    300,
+    [signingTx, disabledProcess, isMiniSignTx, directSubmit],
+  );
+  const signingTypedData = useGetMiniSigningTypedData();
   useDebounce(
     () => {
       if (signingTypedData && directSubmit && miniSignType === 'typedData') {

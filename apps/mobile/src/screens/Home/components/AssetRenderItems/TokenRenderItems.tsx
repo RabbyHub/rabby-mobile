@@ -36,6 +36,11 @@ import { formatPrice, formatUsdValue } from '@/utils/number';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { formatUsdValueKMB } from '../../utils/price';
 import { ellipsisAddress } from '@/utils/address';
+import { ExchangeLogos } from './ExchangeLogos';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { formatNetworth } from '@/utils/math';
+import BigNumber from 'bignumber.js';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -79,6 +84,7 @@ export const TokenRow = memo(
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
+    const { currency } = useCurrency();
     const percentColor = useMemo(() => {
       if (
         !data?.price_24h_change ||
@@ -182,7 +188,13 @@ export const TokenRow = memo(
                 (data._usdValue || 0) > 0 &&
                 styles.exclude,
             ]}>
-            {data._usdValueStr}
+            {formatNetworth(
+              new BigNumber(data._usdValue || 0)
+                .times(currency.usd_rate)
+                .toNumber(),
+              false,
+              currency.symbol,
+            )}
           </Text>
           {data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
             <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
@@ -257,7 +269,7 @@ export const ExternalTokenRow = memo(
     touchable = true,
     decimalPrecision = false,
     isPined = false,
-    leftSlot,
+    rightSlot,
     onPressRightIcon,
   }: {
     data: TokenRowDataType;
@@ -270,7 +282,7 @@ export const ExternalTokenRow = memo(
     onTokenPress?(token: TokenRowDataType): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
-    leftSlot?: ReactNode;
+    rightSlot?: ReactNode;
     onPressRightIcon?(): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -281,6 +293,7 @@ export const ExternalTokenRow = memo(
     );
 
     const isGasToken = useMemo(() => data.id === data.chain, [data]);
+    const { list: cexList } = useCexSupportList();
 
     const onPressToken = useCallback(() => {
       return onTokenPress?.(data);
@@ -295,6 +308,7 @@ export const ExternalTokenRow = memo(
 
     const ExtraContent = useMemo(() => {
       const notVerified = data.is_verified === false;
+      const isSuspicious = data.is_suspicious;
       return (
         <Pressable
           onPress={e => {
@@ -340,7 +354,7 @@ export const ExternalTokenRow = memo(
             )}
           </View>
           <View style={styles.rightSection}>
-            {notVerified && (
+            {(notVerified || isSuspicious) && (
               <View>
                 <RcTipCC
                   style={styles.tips}
@@ -360,7 +374,7 @@ export const ExternalTokenRow = memo(
                 color={
                   notVerified
                     ? colors2024['red-default']
-                    : data.is_suspicious
+                    : isSuspicious
                     ? colors2024['orange-default']
                     : colors2024['neutral-title-1']
                 }
@@ -402,7 +416,6 @@ export const ExternalTokenRow = memo(
         onPress={onPressToken}>
         <View style={styles.serachTokenRowTokenWrap}>
           <View style={styles.serachTokenContent}>
-            {leftSlot}
             <AssetAvatar
               logo={data?.logo_url}
               chain={data?.chain}
@@ -420,6 +433,20 @@ export const ExternalTokenRow = memo(
                     ellipsizeMode="tail">
                     {getTokenSymbol(data)}
                   </Text>
+                  <ExchangeLogos
+                    logos={
+                      data.cex_ids
+                        ? data.cex_ids
+                            .map(
+                              id =>
+                                cexList.find(item => item.id === id)
+                                  ?.logo_url || '',
+                            )
+                            .filter(i => !!i) || []
+                        : data.identity?.cex_list?.map(item => item.logo_url) ||
+                          []
+                    }
+                  />
                 </View>
                 <Text style={styles.usdValue}>
                   {decimalPrecision ? '$' : ''}
@@ -438,6 +465,7 @@ export const ExternalTokenRow = memo(
                 </Text>
               </View>
             </View>
+            {rightSlot}
           </View>
 
           {ExtraContent}
@@ -645,10 +673,15 @@ const getStyles = createGetStyles2024(ctx => ({
   colContent: {
     flexDirection: 'column',
     justifyContent: 'center',
+    alignItems: 'flex-end',
     gap: 0,
+    flex: 0,
   },
   leftColContent: {
     maxWidth: '70%',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    flex: 1,
     overflow: 'hidden',
   },
   verticalLine: {

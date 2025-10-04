@@ -2,6 +2,7 @@ import { RcArrowRightCC } from '@/assets2024/icons/perps';
 import { AssetAvatar } from '@/components';
 import { Button } from '@/components2024/Button';
 import { RootNames } from '@/constant/layout';
+import { ARB_USDC_TOKEN_ITEM } from '@/constant/perps';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
@@ -16,7 +17,6 @@ import { Modal, Text, View } from 'react-native';
 interface Props {
   visible: boolean;
   token?: AbstractPortfolioToken | null;
-  arbUsdcToken?: AbstractPortfolioToken | null;
   onCancel?: () => void;
   onNavigate?: () => void;
 }
@@ -26,19 +26,18 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
   onCancel,
   onNavigate,
   token,
-  arbUsdcToken,
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
 
-  const isSwap = token?.chain === arbUsdcToken?.chain;
+  const isSwap = token?.chain === ARB_USDC_TOKEN_ITEM?.chain;
   const navigation = useRabbyAppNavigation();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { state } = usePerpsStore();
 
-  if (!token || !arbUsdcToken) {
+  if (!token) {
     return null;
   }
 
@@ -65,8 +64,8 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
             <RcArrowRightCC color={colors2024['neutral-foot']} />
             <AssetAvatar
               size={46}
-              chain={arbUsdcToken.chain}
-              logo={arbUsdcToken.logo_url}
+              chain={ARB_USDC_TOKEN_ITEM.chain}
+              logo={ARB_USDC_TOKEN_ITEM.logo_url}
               chainSize={18}
             />
           </View>
@@ -98,7 +97,7 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                       params: {
                         swapAgain: true,
                         chainEnum: findChain({ serverId: token.chain })?.enum,
-                        swapTokenId: [token._tokenId, arbUsdcToken._tokenId],
+                        swapTokenId: [token._tokenId, ARB_USDC_TOKEN_ITEM.id],
                       },
                     });
                   } else {
@@ -108,9 +107,10 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                       params: {
                         chainEnum: findChain({ serverId: token.chain })?.enum,
                         tokenId: token._tokenId,
-                        toChainEnum: findChain({ serverId: arbUsdcToken.chain })
-                          ?.enum,
-                        toTokenId: arbUsdcToken._tokenId,
+                        toChainEnum: findChain({
+                          serverId: ARB_USDC_TOKEN_ITEM.chain,
+                        })?.enum,
+                        toTokenId: ARB_USDC_TOKEN_ITEM.id,
                       },
                     });
                   }

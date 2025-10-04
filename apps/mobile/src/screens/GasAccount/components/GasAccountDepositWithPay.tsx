@@ -122,7 +122,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
         <Text style={styles.title}>
           {Platform.OS === 'android'
             ? t('page.gasAccount.depositPayPopup.titleAndroid')
-            : t('page.gasAccount.depositPayPopup.title')}
+            : t('page.gasAccount.depositPayPopup.titleApple')}
         </Text>
         <Text style={styles.description}>
           {t('page.gasAccount.depositPayPopup.balance')}
@@ -163,12 +163,14 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
                 {Platform.OS === 'android' ? (
                   <RcIconGooglePayCC />
                 ) : (
-                  <RcIconApplePayCC />
+                  <Text style={styles.btnTitle}>
+                    {t('page.gasAccount.depositPopup.pay')}
+                  </Text>
                 )}
               </View>
               <Text style={styles.btnDesc}>
                 {Platform.OS === 'ios'
-                  ? t('page.gasAccount.depositPopup.applePayFeeDesc')
+                  ? t('page.gasAccount.depositPopup.applePayFeeDesc1')
                   : t('page.gasAccount.depositPopup.googlePayFeeDesc')}
               </Text>
             </View>

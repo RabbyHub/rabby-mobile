@@ -24,7 +24,7 @@ export const useOneKeyStatus = (
   let toastHiddenRef = React.useRef<() => void>(() => {});
 
   React.useEffect(() => {
-    if (extra?.autoConnect) {
+    if (extra?.autoConnect ?? true) {
       apiOneKey.isConnected(address).then(([isConnected, id]) => {
         setStatus(isConnected ? 'CONNECTED' : 'DISCONNECTED');
         if (id) {

@@ -13,7 +13,6 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { useTranslation } from 'react-i18next';
-import { HighlightText } from '@/components2024/HighlightText';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
 import {
   ContextMenuView,
@@ -23,6 +22,9 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { CombineDefiItem } from '../../hooks/store';
 import { isAppChain } from '../../utils/appchain';
+import { formatNetworth } from '@/utils/math';
+import { useCurrency } from '@/hooks/useCurrency';
+import BigNumber from 'bignumber.js';
 
 const hitSlop = {
   top: 10,
@@ -63,7 +65,6 @@ interface DefiRowProps {
   data: CombineDefiItem;
   style?: ViewStyle;
   logoSize?: number;
-  filterText?: string;
   getMenuActions?: (defi: CombineDefiItem) => MenuAction[];
   disableMenu?: boolean;
   hideFoldTag?: boolean;
@@ -75,7 +76,6 @@ interface DefiRowProps {
 export const DefiRow = memo(
   ({
     data,
-    filterText,
     style,
     logoSize = 40,
     getMenuActions,
@@ -85,6 +85,7 @@ export const DefiRow = memo(
   }: DefiRowProps) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
+    const { currency } = useCurrency();
 
     const isFromAppChain = useMemo(() => {
       return isAppChain(data?.chain || '');
@@ -186,7 +187,13 @@ export const DefiRow = memo(
                 styles.projectHeaderNetWorth,
                 data._isExcludeBalance && styles.exclude,
               ]}>
-              {data._netWorth}
+              {formatNetworth(
+                new BigNumber(data.totalUsdValue || data.netWorth || 0)
+                  .times(currency.usd_rate)
+                  .toNumber(),
+                false,
+                currency.symbol,
+              )}
             </Text>
           )}
           {data._isExcludeBalance && data._netWorth && (

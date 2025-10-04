@@ -13,7 +13,6 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useAccounts } from '../account';
 import { apisPerps } from './../../core/apis/perps';
 import { useSendMiniSignTypedData } from './../useMiniSignTypedDataApproval';
 import { usePerpsStore } from './usePerpsStore';
@@ -22,6 +21,7 @@ import { toast } from '@/components2024/Toast';
 import { minBy } from 'lodash';
 import { usePerspPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
+import { getAllMyAccount } from '@/core/apis/address';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
 interface SignAction {
@@ -31,10 +31,6 @@ interface SignAction {
 }
 
 export const usePerpsInitial = () => {
-  const { accounts: accountsList } = useAccounts({
-    disableAutoFetch: true,
-  });
-
   const {
     state: perpsState,
     setApproveSignatures,
@@ -64,8 +60,6 @@ export const usePerpsInitial = () => {
     fetchMarketData,
     fetchPerpFee,
     subscribeToUserData,
-    startPolling,
-    stopPolling,
     unsubscribeAll,
     logout: _logout,
   } = usePerpsStore();
@@ -100,6 +94,25 @@ export const usePerpsInitial = () => {
       }
     },
   );
+
+  const checkBuilderFee = useMemoizedFn(async address => {
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      const res = await sdk.info.getMaxBuilderFee(
+        PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+      );
+      if (!res) {
+        console.error('Failed to set builder fee');
+        Sentry.captureException(
+          new Error(
+            `PERPS set builder fee error, no max builder fee, address: ${address}`,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error('Failed to set builder fee:', error);
+    }
+  });
 
   const checkIsNeedAutoLoginOut = useMemoizedFn(
     async (masterAddress: string, agentAddress: string) => {
@@ -139,23 +152,12 @@ export const usePerpsInitial = () => {
           //       masterAddress,
           //   ),
           // );
+        } else {
+          checkBuilderFee(masterAddress);
         }
       }
     },
   );
-
-  const safeSetBuilderFee = useMemoizedFn(async () => {
-    const sdk = apisPerps.getPerpsSDK();
-    const res = await sdk.info.getMaxBuilderFee(
-      PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-    );
-    if (res) {
-      sdk.exchange?.updateBuilder(
-        PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-        PERPS_BUILD_FEE,
-      );
-    }
-  });
 
   useEffect(() => {
     if (isInitialized) {
@@ -177,6 +179,7 @@ export const usePerpsInitial = () => {
           await noLoginAction();
           return false;
         }
+        const accountsList = await getAllMyAccount();
         const targetTypeAccount = accountsList.find(
           acc =>
             isSameAddress(acc.address, currentAccount.address) &&
@@ -204,7 +207,6 @@ export const usePerpsInitial = () => {
           res.preference.agentAddress,
           PERPS_AGENT_NAME,
         );
-        safeSetBuilderFee();
         await loginPerpsAccount(targetTypeAccount);
         await fetchMarketData();
 
@@ -223,8 +225,6 @@ export const usePerpsInitial = () => {
     initIsLogin();
   }, [
     isInitialized,
-    accountsList,
-    safeSetBuilderFee,
     loginPerpsAccount,
     fetchMarketData,
     checkIsNeedAutoLoginOut,
@@ -264,7 +264,7 @@ export const usePerpsInitial = () => {
     accountSummary,
     positionAndOpenOrders,
     isLogin,
-    safeSetBuilderFee,
+    checkBuilderFee,
     perpsPositionInfo,
   };
 };
@@ -273,7 +273,7 @@ export const usePerpsState = () => {
   const [popupSate, setPopupState] = usePerspPopupState();
   const { t } = useTranslation();
   const deleteAgentCbRef = useRef<(() => Promise<void>) | null>(null);
-  const { safeSetBuilderFee } = usePerpsInitial();
+  const { checkBuilderFee } = usePerpsInitial();
   const {
     state: perpsState,
     setApproveSignatures,
@@ -303,17 +303,11 @@ export const usePerpsState = () => {
     fetchMarketData,
     fetchPerpFee,
     subscribeToUserData,
-    startPolling,
-    stopPolling,
     unsubscribeAll,
     logout: _logout,
   } = usePerpsStore();
   const { isInitialized, currentPerpsAccount, isLogin, positionAndOpenOrders } =
     perpsState;
-  // const wallet = useWallet();
-  const { accounts: accountsList } = useAccounts({
-    disableAutoFetch: true,
-  });
 
   const sendMiniSignTypedData = useSendMiniSignTypedData();
 
@@ -329,7 +323,7 @@ export const usePerpsState = () => {
     }
   });
 
-  const checkIsExtraAgentIsExpired = useMemoizedFn(
+  const checkExtraAgent = useMemoizedFn(
     async (account: Account, agentAddress: string) => {
       const sdk = apisPerps.getPerpsSDK();
       const extraAgents = await sdk.info.extraAgents(account.address);
@@ -419,6 +413,26 @@ export const usePerpsState = () => {
     return signActions;
   });
 
+  const judgeIsUserAgentIsExpired = useMemoizedFn(
+    async (errorMessage: string) => {
+      const masterAddress = currentPerpsAccount?.address;
+      if (!masterAddress) {
+        return false;
+      }
+
+      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
+        masterAddress,
+      );
+      const agentAddress = agentWalletPreference?.agentAddress;
+      if (agentAddress && errorMessage.includes(agentAddress)) {
+        console.warn('handle action agent is expired, logout');
+        toast.error('Agent is expired, please login again');
+        logout(masterAddress);
+        return true;
+      }
+    },
+  );
+
   const executeSignatures = useMemoizedFn(
     async (signActions: SignAction[], account: Account): Promise<void> => {
       const isLocalWallet =
@@ -504,11 +518,6 @@ export const usePerpsState = () => {
               nonce: action?.nonce || 0,
               signature: signature || '',
             });
-            res &&
-              sdk.exchange?.updateBuilder(
-                PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-                PERPS_BUILD_FEE,
-              );
             return res;
           }
         }),
@@ -562,16 +571,17 @@ export const usePerpsState = () => {
       // const { privateKey, publicKey } = await getOrCreateAgentWallet(account);
       const sdk = apisPerps.getPerpsSDK();
       const res = await apisPerps.getPerpsAgentWallet(account.address);
+      const agentAddress = res?.preference?.agentAddress || '';
+      const { isExpired, needDelete } = await checkExtraAgent(
+        account,
+        agentAddress,
+      );
+      if (needDelete) {
+        // 先不登录，防止hl服务状态不同步
+        return false;
+      }
+
       if (res) {
-        // 如果存在 agent wallet, 则检查是否过期
-        const { isExpired, needDelete } = await checkIsExtraAgentIsExpired(
-          account,
-          res.preference.agentAddress,
-        );
-        if (needDelete) {
-          // 先不登录，防止hl服务状态不同步
-          return false;
-        }
         if (!isExpired) {
           sdk.initAccount(
             account.address,
@@ -579,9 +589,9 @@ export const usePerpsState = () => {
             res.preference.agentAddress,
             PERPS_AGENT_NAME,
           );
-          safeSetBuilderFee();
           // 未到过期时间无需签名直接登录即可
           await loginPerpsAccount(account);
+          checkBuilderFee(account.address);
         } else {
           // 过期或者没sendApprove过，需要创建新的agent，同时签名
           await handleLoginWithSignApprove(account);
@@ -594,14 +604,6 @@ export const usePerpsState = () => {
     } catch (error: any) {
       console.error('Failed to login Perps account:', error);
       toast.error(error.message || 'Login failed');
-      // Sentry.captureException(
-      //   new Error(
-      //     'PERPS Login failed' +
-      //       JSON.stringify({
-      //         error,
-      //       }),
-      //   ),
-      // );
     }
   });
 
@@ -747,6 +749,7 @@ export const usePerpsState = () => {
     userFills: perpsState.userFills,
     hasPermission: perpsState.hasPermission,
     homeHistoryList,
+    perpFee: perpsState.perpFee,
 
     // Actions
     login,
@@ -756,5 +759,8 @@ export const usePerpsState = () => {
     refreshData: refreshData,
     handleDeleteAgent,
     fetchMarketData,
+    fetchClearinghouseState,
+
+    judgeIsUserAgentIsExpired,
   };
 };

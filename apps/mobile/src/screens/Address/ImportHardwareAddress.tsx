@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -16,13 +16,20 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { apiKeystone } from '@/core/apis';
+import { apiKeystone, apiTrezor } from '@/core/apis';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { trigger } from 'react-native-haptic-feedback';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { keyringService, preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { useFocusEffect } from '@react-navigation/native';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { useAtom } from 'jotai';
+import { settingAtom } from '@/components/HDSetting/MainContainer';
+import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { toast } from '@/components2024/Toast';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -135,6 +142,56 @@ export function ImportHardwareAddressScreen(): JSX.Element {
     });
   }, []);
 
+  const [_2, setSetting] = useAtom(settingAtom);
+  const { showImportMorePopup } = useShowImportMoreAddressPopup();
+
+  const importFirstAddress = React.useCallback(async () => {
+    let trezorImportedAddress = [] as string[];
+    try {
+      trezorImportedAddress = await apiTrezor.getAccounts();
+    } catch (error) {}
+
+    await apiTrezor.cleanUp();
+    const address = await apiTrezor.importFirstAddress({});
+
+    const isImportedAddress =
+      address?.[0] && trezorImportedAddress.length
+        ? trezorImportedAddress?.some(e => isSameAddress(e, address?.[0] || ''))
+        : false;
+
+    if (address && !isImportedAddress) {
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.ImportSuccess2024,
+        params: {
+          type: KEYRING_TYPE.TrezorKeyring,
+          brandName: KEYRING_CLASS.HARDWARE.TREZOR,
+          address,
+          isFirstImport: true,
+        },
+      });
+    } else {
+      setSetting({
+        startNumber: 1,
+        hdPath: LedgerHDPathType.BIP44,
+      });
+
+      showImportMorePopup({
+        type: KEYRING_TYPE.TrezorKeyring,
+        brand: KEYRING_CLASS.HARDWARE.TREZOR,
+      });
+    }
+  }, [setSetting, showImportMorePopup]);
+
+  const handleTrezor = React.useCallback(async () => {
+    try {
+      await importFirstAddress();
+    } catch (error) {
+      toast.error(`error ${(error as any)?.message || String(error)}`);
+
+      console.log('error', error);
+    }
+  }, [importFirstAddress]);
+
   return (
     <NormalScreenContainer2024>
       <View style={styles.root}>
@@ -165,6 +222,14 @@ export function ImportHardwareAddressScreen(): JSX.Element {
             }
             title="OneKey"
             onPress={handleOneKey}
+          />
+          <ListItem
+            style={styles.item}
+            Icon={
+              <WalletIcon type={KEYRING_TYPE.TrezorKeyring} borderRadius={20} />
+            }
+            title="Trezor"
+            onPress={handleTrezor}
           />
         </Card>
       </View>

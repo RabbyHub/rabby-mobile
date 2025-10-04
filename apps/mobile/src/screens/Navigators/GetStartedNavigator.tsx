@@ -3,7 +3,6 @@ import { RootNames } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import GetStartedScreen from '../GetStarted/GetStarted';
 import GetStartedScreen2024 from '../GetStarted/NewUserGetStarted2024';
 

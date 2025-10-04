@@ -143,9 +143,6 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - MMKV (1.3.5):
-    - MMKVCore (~> 1.3.5)
-  - MMKVCore (1.3.14)
   - MultiplatformBleAdapter (0.2.0)
   - nanopb (2.30909.1):
     - nanopb/decode (= 2.30909.1)
@@ -1542,7 +1539,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-get-random-values (1.11.0):
+  - react-native-get-random-values (1.10.0):
     - React-Core
   - react-native-ios-context-menu (1.15.3):
     - React-Core
@@ -1567,11 +1564,10 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-mmkv (2.12.2):
+  - react-native-mmkv (3.3.1):
     - DoubleConversion
     - glog
     - hermes-engine
-    - MMKV (= 1.3.5)
     - RCT-Folly (= 2024.10.14.00)
     - RCTRequired
     - RCTTypeSafety
@@ -1591,7 +1587,7 @@ PODS:
     - Yoga
   - react-native-netinfo (11.4.1):
     - React-Core
-  - react-native-pager-view (6.7.0):
+  - react-native-pager-view (6.9.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1688,8 +1684,27 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-view-shot (3.7.0):
+  - react-native-view-shot (4.0.3):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.10.14.00)
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-webview (13.10.5):
     - DoubleConversion
     - glog
@@ -1995,12 +2010,12 @@ PODS:
     - React-Core
     - SDWebImage (~> 5.11.1)
     - SDWebImageWebPCoder (~> 0.8.4)
-  - RNFBAnalytics (18.8.0):
-    - Firebase/Analytics (= 10.20.0)
+  - RNFBAnalytics (21.3.0):
+    - Firebase/Analytics (<= 11.4.0)
     - React-Core
     - RNFBApp
-  - RNFBApp (18.8.0):
-    - Firebase/CoreOnly (= 10.20.0)
+  - RNFBApp (21.3.0):
+    - Firebase/CoreOnly (<= 11.4.0)
     - React-Core
   - RNFlashList (1.8.0):
     - DoubleConversion
@@ -2419,8 +2434,6 @@ SPEC REPOS:
     - GTMSessionFetcher
     - libwebp
     - lottie-ios
-    - MMKV
-    - MMKVCore
     - MultiplatformBleAdapter
     - nanopb
     - OpenSSL-Universal
@@ -2680,8 +2693,6 @@ SPEC CHECKSUMS:
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
   lottie-react-native: a068f2f23e19d825a0db2f3991af322deb42f7b9
-  MMKV: 506311d0494023c2f7e0b62cc1f31b7370fa3cfb
-  MMKVCore: 3f40b896e9ab522452df9df3ce983471aa2449ba
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
   OpenSSL-Universal: 6082b0bf950e5636fe0d78def171184e2b3899c2
@@ -2722,12 +2733,12 @@ SPEC CHECKSUMS:
   react-native-blur: 89fca766002a2cf738ff37cca82a9776700841e6
   react-native-cloud-storage: c6dcdd85718315adf3a2598b34fb7d3e7de7715a
   react-native-compat: 39946b7c56b5f95619353d20d3dcd39c8c7003c5
-  react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
+  react-native-get-random-values: 384787fd76976f5aec9465aff6fa9e9129af1e74
   react-native-ios-context-menu: e529171ba760a1af7f2ef0729f5a7f4d226171c5
   react-native-keyboard-controller: 88ad370bd43ecaa7b3aea76f9df4726edb0236c9
-  react-native-mmkv: 5fc4966efbe7bf2b317be36c613518b6672d5855
+  react-native-mmkv: fe6cb18b10463c8f1a4cde3fe69e3f4bae146202
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
-  react-native-pager-view: 31ec5d2c3bb0298e353bb704234dd94e6240a6fc
+  react-native-pager-view: bd603218c5b8175a62f1d7905f74b9da82753fb7
   react-native-quick-crypto: dc51e77fcb59697adaff88b30b36fcfdc4804a3f
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: 8870dc3e45c8d241336cd8ee3fa3fc76f3a040ac
@@ -2735,7 +2746,7 @@ SPEC CHECKSUMS:
   react-native-sqlite-storage: 539c4cc1ad30de152e3e04ee8d556e825fec4432
   react-native-version-check: 6cd36aad4e30b8e3216747e3b4ddeb09e0647af8
   react-native-video: dceb1fe91d9c495885c0a57ef1aa384f15ec07b3
-  react-native-view-shot: f5507655f122e6b104888a11130f267a427f0d57
+  react-native-view-shot: 4d1484f4902d1f60129205c4aae76cf44534c574
   react-native-webview: f05bd802524a640e3d2eff578a8fb62e71e301ff
   React-nativeconfig: 415626a63057638759bcc75e0a96e2e07771a479
   React-NativeModulesApple: bffc60f55895c2723b1e5472fa40567fe3df4923
@@ -2762,15 +2773,15 @@ SPEC CHECKSUMS:
   React-runtimescheduler: 222c73a654f32e3544a1384b2ced809bd51df2af
   React-timing: a693c531e5627dcc200fc7286cbbebf73d73469d
   React-utils: 52cb73e127a39fc2d9f02f503b2a7b3b0abd23dd
-  ReactCodegen: 31fcff227d0035956575be0c013a2edcc687a53c
+  ReactCodegen: 8e0386e1b1b895debc4e026488d742eb0fb5936f
   ReactCommon: 78c49c7cf7df16983ebc3c646b4f47398437f2ec
   ReactNativeExceptionHandler: b11ff67c78802b2f62eed0e10e75cb1ef7947c60
   RNCClipboard: 60fed4b71560d7bfe40e9d35dea9762b024da86d
   RNCMaskedView: 090213d32d8b3bb83a4dcb7d12c18f0152591906
   RNDeviceInfo: feea80a690d2bde1fe51461cf548039258bd03f2
   RNFastImage: 5c9c9fed9c076e521b3f509fe79e790418a544e8
-  RNFBAnalytics: 991772a4cd8c90de9a5eec33ef24dbba6e028c5b
-  RNFBApp: a4f5b074984cf612e4c97d68b42be690c59e2638
+  RNFBAnalytics: f2d2de1d546f626bbe9ca1be75fdf156930a8efe
+  RNFBApp: def68a9cfa45d685d540a2934bab81bc32e8cc87
   RNFlashList: 6803b075d8c3134c1ea3a413bedbf7e3d1736db8
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: db8f75c5eeead4943d127b5e261b830c2680c738

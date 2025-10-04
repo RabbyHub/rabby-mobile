@@ -83,7 +83,8 @@
         "RevokeToken": "Batalkan Token",
         "GasFee": "Biaya Gas",
         "AddToWhitelist": "Tambahkan ke Daftar Putih",
-        "RecipientAddress": "Dompet penerima"
+        "RecipientAddress": "Dompet penerima",
+        "Simulation Results": "Hasil Simulasi"
       },
       "empty": {
         "title": "Tidak ada transaksi",
@@ -127,7 +128,8 @@
         "maxGas": "Max Gas:",
         "sendGas": "Gas transfer ke Anda untuk transaksi saat ini:",
         "gasCost": "Biaya gas untuk mentransfer gas ke alamat Anda:",
-        "estimatedGas": "Estimasi Gas:"
+        "estimatedGas": "Estimasi Gas:",
+        "description": "Menggunakan GasAccount untuk membayar biaya gas. Lihat detail pembayaran di bawah:"
       },
       "balanceChange": {
         "successTitle": "Hasil Simulasi",
@@ -422,7 +424,8 @@
         "token1": "Tambahkan Token 2",
         "title": "Tambahkan Likuiditas",
         "poolPrice": "Harga Pool"
-      }
+      },
+      "gasSetting": "Pengaturan Gas"
     },
     "importSuccess": {
       "addressCount": "{{count}} Alamat",
@@ -909,12 +912,14 @@
       "swapped": "Ditukar",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "Transaksi mungkin akan terfront-run karena toleransi slippage yang tinggi",
       "selectChainModalTitle": "Pilih Rantai",
-      "results": "Hasil"
+      "results": "Hasil",
+      "approve": "Setujui"
     },
     "bridge": {
       "showMore": {
         "source": "Jembatan Sumber",
-        "title": "Tampilkan Lebih Banyak"
+        "title": "Tampilkan Lebih Banyak",
+        "signWarning": "Saya mengerti peringatan tersebut dan ingin melanjutkan."
       },
       "value": "Saldo",
       "est-receiving": "Est. Menerima:",
@@ -948,7 +953,8 @@
       "gas-x-price": "Harga gas: {{price}} Gwei.",
       "via-bridge": "via {{bridge}}",
       "no-route-found": "Tidak ada rute yang ditemukan",
-      "best": "Terbaik"
+      "best": "Terbaik",
+      "gasFeeTooHight": "Biaya gas lebih tinggi dari biasanya. Konfirmasi hanya jika Anda ingin melanjutkan."
     },
     "manageAddress": {
       "cancel": "Batal",
@@ -980,7 +986,9 @@
         "websites": "Situs Web",
         "approvals": "Persetujuan",
         "copyTrading": "Copy Trading",
-        "watchlist": "Daftar Pantauan"
+        "watchlist": "Daftar Pantauan",
+        "perps": "Perps",
+        "perpsMarketList": "Lebih Banyak Perp"
       }
     },
     "dashboard": {
@@ -1629,7 +1637,8 @@
         "txSigned": "Ditandatangani. Membuat transaksi",
         "txCreated": "Transaksi dibuat"
       },
-      "signWithLedger": "Tanda Tangan"
+      "signWithLedger": "Tanda Tangan",
+      "fixedModeText": "Mode Tetap: Selalu gunakan pengaturan gas kustom Anda"
     },
     "gasAccount": {
       "history": {
@@ -1659,7 +1668,9 @@
         "googlePayFeeDesc": "Termasuk biaya Google Pay. Tidak ada penarikan.",
         "applePayFeeDesc": "Termasuk biaya Apple Pay. Tidak ada penarikan.",
         "paymentAddress": "Wallet Pembayaran",
-        "inSufficientTip1": "Dompet ini tidak memiliki cukup token Silakan pilih dompet lain"
+        "inSufficientTip1": "Dompet ini tidak memiliki cukup token Silakan pilih dompet lain",
+        "pay": "Bayar",
+        "applePayFeeDesc1": "Termasuk biaya App Store. Tidak ada penarikan."
       },
       "paymentAddressPopup": {
         "balance": "Saldo",
@@ -1704,7 +1715,8 @@
         "title": "Beli dengan Apple Pay",
         "depositFailed": "Setoran Gagal",
         "balance": "Saldo GasAccount Saat Ini:",
-        "titleAndroid": "Beli dengan Google Pay"
+        "titleAndroid": "Beli dengan Google Pay",
+        "titleApple": "Beli di App Store"
       },
       "depositSelectPopup": {
         "buyWith": "Beli dengan",
@@ -1712,7 +1724,8 @@
         "title": "Setor ke GasAccount",
         "desc": "Bayar Biaya Gas di Semua Rantai",
         "buyWithDesc": "30% biaya, tidak ada penarikan",
-        "depositToken": "Setor dengan Token"
+        "depositToken": "Setor dengan Token",
+        "buyWithApple": "Beli di App Store"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount Saldo",
@@ -1795,6 +1808,54 @@
       "tabs": {
         "marketData": "Data pasar",
         "tokenSecurity": "Keamanan Token"
+      },
+      "interval": {
+        "1D": "1D",
+        "4H": "4H",
+        "30M": "30M",
+        "1M": "1M",
+        "5M": "5M",
+        "1H": "1H",
+        "1W": "1W",
+        "15M": "15M"
+      },
+      "marketInfo": {
+        "marketCap": "Kapitalisasi Pasar",
+        "volume24h": "24h Volume",
+        "totalSupply": "Total Supply",
+        "holders": "Pemegang",
+        "txns24h": "24h Txns",
+        "holderSections": {
+          "tableHeader": {
+            "address": "Alamat",
+            "ratio": "Rasio",
+            "position": "Posisi"
+          },
+          "top100HoldersRatio": "Rasio 100 Pemegang Teratas",
+          "top10HoldersRatio": "Rasio 10 Pemegang Teratas"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "address": "Alamat",
+            "min": "min",
+            "time": "Waktu",
+            "addresses": "Alamat",
+            "all": "Semua",
+            "hour": "Jam",
+            "sell": "Jual",
+            "buy": "Beli",
+            "volume": "Volume",
+            "tradingCount": "Jumlah Perdagangan",
+            "type": "Jenis",
+            "value": "Nilai",
+            "price": "Harga",
+            "qnt": "Qnt"
+          }
+        },
+        "empty": "Tidak Ada Data",
+        "details": "Detail",
+        "summary": "Ringkasan Data",
+        "activity": "Aktivitas"
       }
     },
     "approvalsAddressList": {
@@ -1881,7 +1942,10 @@
       "clearPendingDesc2": "Ini tidak akan mengubah saldo di akun Anda atau mengharuskan Anda untuk memasukkan kembali frase benih Anda. Semua aset dan informasi akun Anda akan tetap aman.",
       "modifyRPCURL": "Ubah URL RPC",
       "clearPendingDesc1": "Ini akan menghapus semua transaksi yang tertunda. Ini bisa membantu Anda menyelesaikan masalah bahwa dalam beberapa kasus status transaksi di Rabby tidak sesuai dengan status on-chain.",
-      "clearBrowserData": "Hapus Data Peramban"
+      "clearBrowserData": "Hapus Data Peramban",
+      "searchCurrency": "Cari Mata Uang",
+      "screenshotReportSwitch": "Ambil tangkapan layar untuk melaporkan bug",
+      "currency": "Mata Uang"
     },
     "settingModal": {
       "themeMode": {
@@ -1997,6 +2061,11 @@
         "refresh": "Menyegarkan",
         "disconnect": "Putuskan Sambungan",
         "favorite": "Favorit"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "Bergabung Sekarang",
+        "title": "Program Referal Hyperliquid",
+        "desc": "Bergabung sekarang menggunakan kode Rabby untuk mendapatkan <1>diskon 4%</1> pada biaya Hyperliquid Anda."
       }
     },
     "browserManage": {
@@ -2029,7 +2098,10 @@
     "defiDetail": {
       "viewSiteInApp": "Lihat di Dapp",
       "viewSiteInWebsite": "Lihat di Situs Web",
-      "appChain": "Pada Akun {{chain}}"
+      "appChain": "Pada Akun {{chain}}",
+      "dappActions": {
+        "queueDescription": "Penarikan saat ini akan masuk ke antrean tunggu. Setelah diproses, itu dapat ditarik ke dompet Anda."
+      }
     },
     "component": {
       "ChainSelector": {
@@ -2109,6 +2181,9 @@
         "setupWalletFirst": "Silakan selesaikan pengaturan dompet terlebih dahulu.",
         "unlockWalletFirst": "Silakan buka kunci aplikasi untuk membuka tautan tersebut."
       }
+    },
+    "perpsHistory": {
+      "title": "Sejarah"
     }
   },
   "component": {
@@ -2299,9 +2374,11 @@
       "feedbackInput": {
         "placeholder": "Jelaskan masalahnya"
       },
-      "title": "Snapshot untuk Melaporkan Bug",
-      "feedbackLabel": "Deskripsi bug:",
-      "submitButtonText": "Kirim"
+      "submitButtonText": "Kirim",
+      "switchArea": {
+        "skipText": "Lewati popup ini selama 1 hari"
+      },
+      "title": "Screenshot untuk Melaporkan Bug"
     },
     "feedbackModal": {
       "issueDescription": "Ini adalah masalah yang Anda laporkan:",
@@ -2311,7 +2388,10 @@
       "repliedTitle": "Dukungan Rabby telah membalas:"
     },
     "submitFeedbackSuccessModal": {
-      "desc": "Dikirim dengan Sukses"
+      "desc": "Dikirim Berhasil!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Saya Mengerti"
     }
   },
   "native": {
@@ -2400,7 +2480,9 @@
         "title": "Izin Lokasi",
         "message": "Aplikasi ini memerlukan akses ke lokasi Anda untuk menyediakan fitur berbasis lokasi."
       }
-    }
+    },
+    "gotIt": "Dapatkan",
+    "check": "Periksa"
   },
   "background": {
     "error": {

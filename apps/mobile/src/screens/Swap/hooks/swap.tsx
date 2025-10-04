@@ -125,6 +125,8 @@ export const dexSwap = async (
     postSwapParams,
     swapPreferMEVGuarded,
     account,
+    isTwoStep,
+    isApprove,
   }: {
     chain: CHAINS_ENUM;
     quote: QuoteResult;
@@ -141,6 +143,8 @@ export const dexSwap = async (
       'tx_id' | 'tx'
     >;
     account: Account;
+    isApprove?: boolean;
+    isTwoStep?: boolean;
   },
   $ctx?: any,
   addSwapTxHistoryObj?: Omit<SwapTxHistoryItem, 'hash'>,

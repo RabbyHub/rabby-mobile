@@ -23,7 +23,6 @@ import {
 } from '../../hooks/useDappView';
 import { devLog } from '@/utils/logger';
 import {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModalProps,
   useBottomSheet,

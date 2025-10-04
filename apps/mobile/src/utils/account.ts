@@ -103,3 +103,30 @@ export const isAccountSupportDirectSign = (type?: string) => {
     [KEYRING_CLASS.MNEMONIC, KEYRING_CLASS.PRIVATE_KEY] as string[]
   ).includes(type);
 };
+
+export function stableSortByAddress<T extends { address: string }[] | string[]>(
+  accounts: T,
+) {
+  return accounts.sort((a, b) => {
+    const aAddr = typeof a === 'string' ? a : a.address;
+    const bAddr = typeof b === 'string' ? b : b.address;
+    return aAddr.localeCompare(bAddr);
+  }) as T;
+}
+
+export function stableSerializeAccounts<T extends KeyringAccountWithAlias[]>(
+  accounts: T,
+) {
+  return JSON.stringify(
+    accounts.sort((a, b) => a.address.localeCompare(b.address)),
+    null,
+    0,
+  );
+}
+
+export function stableSerializeItems<
+  T extends any[],
+  Sorter extends (a: T[number], b: T[number]) => number,
+>(items: T, sorter: Sorter) {
+  return JSON.stringify(items.sort(sorter), null, 0);
+}

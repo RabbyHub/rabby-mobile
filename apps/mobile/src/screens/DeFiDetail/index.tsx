@@ -4,13 +4,13 @@ import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar, Text } from '@/components';
 import { RcIconMore } from '@/assets/icons/home';
 import { RootNames } from '@/constant/layout';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { MemoItem } from '../Home/components/ProtocolMoreItem';
+import { WrapperDappActionsMemoItem } from '../Home/components/ProtocolMoreItem';
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { toast } from '@/components2024/Toast';
 import { AbstractPortfolio, AbstractProject } from '../Home/types';
@@ -43,6 +43,7 @@ import { isAppChain } from '../Home/utils/appchain';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { GetRootScreenRouteProp } from '@/navigation-type';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -69,6 +70,9 @@ export const RightMore: React.FC<{
   const { t } = useTranslation();
 
   const menuActions = React.useMemo(() => {
+    if (!token) {
+      return [];
+    }
     return [
       {
         title: token._isFold
@@ -154,25 +158,19 @@ export const RightMore: React.FC<{
 };
 
 export const DeFiDetailScreen = () => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
+  const route = useRoute<GetRootScreenRouteProp<'DeFiDetail'>>();
+  if (!route.params) {
+    throw new Error('[DefiDetail] route.params is undefined');
+  }
+
   const {
     data: routeData,
     portfolioList,
     isSingleAddress,
     account: routeAccount,
-  } = useNavigationState(
-    s =>
-      s.routes
-        .slice()
-        .reverse()
-        .find(r => r.name === RootNames.DeFiDetail)?.params,
-  ) as {
-    data: AbstractProject;
-    portfolioList: AbstractPortfolio[];
-    account: KeyringAccountWithAlias;
-    isSingleAddress?: boolean;
-  };
+  } = route.params;
 
   const fallbackAccount = useFallbackAccount();
 
@@ -286,10 +284,16 @@ export const DeFiDetailScreen = () => {
   const sectionsMultiProject = useMemo(() => {
     const sectionsList: SectionListItem[] = [];
     if (isSingleAddress) {
+      const currAddressPortfolio = currentPortfolio?.find(
+        item => item.id === data?.id,
+      );
+      if (!currAddressPortfolio || !data) {
+        return sectionsList;
+      }
       sectionsList.push({
-        data: data._portfolios || portfolioList,
-        project: data,
-        totalUsdValue: new BigNumber(data.netWorth),
+        data: currAddressPortfolio._portfolios || portfolioList,
+        project: currAddressPortfolio,
+        totalUsdValue: new BigNumber(currAddressPortfolio?.netWorth || 0),
         type: finalAccount.type,
         address: finalAccount.address,
         aliasName:
@@ -308,7 +312,7 @@ export const DeFiDetailScreen = () => {
       const { portfolios } = assetsMap[address];
 
       portfolios?.map(portfolio => {
-        if (portfolio.id === data.id && portfolio.chain === data.chain) {
+        if (portfolio.id === data?.id && portfolio.chain === data?.chain) {
           tempList.push({
             data: portfolio._portfolios,
             project: portfolio,
@@ -334,7 +338,17 @@ export const DeFiDetailScreen = () => {
     return sectionsList.sort((a, b) =>
       new BigNumber(b.totalUsdValue).comparedTo(new BigNumber(a.totalUsdValue)),
     );
-  }, [data, assetsMap, accounts, isSingleAddress, finalAccount, portfolioList]);
+  }, [
+    isSingleAddress,
+    data,
+    assetsMap,
+    accounts,
+    currentPortfolio,
+    portfolioList,
+    finalAccount.type,
+    finalAccount.address,
+    finalAccount.aliasName,
+  ]);
 
   // 来自同一个地址的totalUsdValue不重复计算
   const sumNetWorth = useMemo(() => {
@@ -347,8 +361,34 @@ export const DeFiDetailScreen = () => {
     const res = Array.from(addressMap.values()).reduce((pre, cur) => {
       return pre.plus(cur.totalUsdValue);
     }, new BigNumber(0));
-    return res ? formatNetworth(res.toNumber()) : data._netWorth;
-  }, [data._netWorth, sectionsMultiProject]);
+    return res ? formatNetworth(res.toNumber()) : data?._netWorth || 0;
+  }, [data?._netWorth, sectionsMultiProject]);
+
+  const handleRefresh = useCallback(async () => {
+    try {
+      if (isSingleAddress) {
+        await updateSpecificProtocol(data?.id, data?.chain || '');
+      } else {
+        const addresses = [
+          ...new Set(sectionsMultiProject.map(section => section.address)),
+        ];
+        await Promise.all(
+          addresses.map(address =>
+            loadSpecificDefi(address, data?.id, data?.chain || ''),
+          ),
+        );
+      }
+    } catch (error) {
+      console.error('Failed to refresh specific protocol:', error);
+    }
+  }, [
+    data?.chain,
+    data?.id,
+    isSingleAddress,
+    loadSpecificDefi,
+    sectionsMultiProject,
+    updateSpecificProtocol,
+  ]);
 
   const renderItem = useCallback(
     ({
@@ -359,13 +399,18 @@ export const DeFiDetailScreen = () => {
       section: SectionListItem;
     }) => {
       return (
-        <MemoItem
+        <WrapperDappActionsMemoItem
           item={item}
+          chain={data?.chain}
+          protocolLogo={data?.logo}
+          address={section.address}
+          addressType={section.type}
+          onRefresh={handleRefresh}
           key={`${item.id}-${section.address}-${section.totalUsdValue}`}
         />
       );
     },
-    [],
+    [data?.chain, data?.logo, handleRefresh],
   );
 
   const { bottom } = useSafeAreaInsets();
@@ -406,9 +451,13 @@ export const DeFiDetailScreen = () => {
     [styles.accountBox, styles.titleText, styles.walletIcon],
   );
 
+  if (!data) {
+    return null;
+  }
+
   return (
     <NormalScreenContainer2024
-      type="bg1"
+      type={isLight ? 'bg0' : 'bg1'}
       overwriteStyle={[
         styles.container,
         { paddingBottom: androidBottomOffset },
@@ -444,44 +493,22 @@ export const DeFiDetailScreen = () => {
         }
         renderSectionHeader={renderSectionHeader}
         refreshControl={
-          <RefreshControl
-            onRefresh={async () => {
-              try {
-                if (isSingleAddress) {
-                  await updateSpecificProtocol(data.id, data.chain || '');
-                } else {
-                  const addresses = [
-                    ...new Set(
-                      sectionsMultiProject.map(section => section.address),
-                    ),
-                  ];
-                  await Promise.all(
-                    addresses.map(address =>
-                      loadSpecificDefi(address, data.id, data.chain || ''),
-                    ),
-                  );
-                }
-              } catch (error) {
-                console.error('Failed to refresh specific protocol:', error);
-              }
-            }}
-            refreshing={refreshing}
-          />
+          <RefreshControl onRefresh={handleRefresh} refreshing={refreshing} />
         }
       />
       {data?.site_url ? (
         <View style={styles.footer}>
           <Button
-            type="primary"
+            type="ghost"
             title={
               Platform.OS === 'ios'
                 ? t('page.defiDetail.viewSiteInWebsite')
                 : t('page.defiDetail.viewSiteInApp')
             }
             onPress={() => {
-              if (data.site_url) {
-                openTab(data.site_url);
-                const origin = safeGetOrigin(data.site_url);
+              if (data?.site_url) {
+                openTab(data?.site_url);
+                const origin = safeGetOrigin(data?.site_url);
                 if (origin) {
                   matomoRequestEvent({
                     category: 'Websites Usage',
@@ -498,7 +525,7 @@ export const DeFiDetailScreen = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   scrollContainer: {
     flex: 1,
     width: '100%',
@@ -511,7 +538,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
     paddingTop: 20,
     paddingBottom: 8,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   backButtonStyle: {
     // width: 56,

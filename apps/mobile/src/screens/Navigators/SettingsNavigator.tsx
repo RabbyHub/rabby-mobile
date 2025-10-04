@@ -2,7 +2,6 @@ import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CustomTestnetScreen } from '../CustomTestnet';
 import { CustomRPCScreen } from '../CustomRPC';
 import { registerAppScreen } from '@/perfs/apis';

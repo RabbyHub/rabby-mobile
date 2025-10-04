@@ -113,7 +113,9 @@
         "title": "位置权限",
         "message": "该应用需要访问您的位置，以提供基于位置的功能。"
       }
-    }
+    },
+    "check": "检查",
+    "gotIt": "明白了"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -178,7 +180,8 @@
         "totalApprovedAmount": "当前批准金额",
         "Collection": "收藏",
         "AddToWhitelist": "添加至白名单",
-        "RecipientAddress": "接收方钱包"
+        "RecipientAddress": "接收方钱包",
+        "Simulation Results": "模拟结果"
       },
       "empty": {
         "title": "暂无交易",
@@ -356,7 +359,8 @@
         "sendGas": "当前交易的Gas转移给你：",
         "maxGas": "最大 Gas: ",
         "estimatedGas": "预估 Gas:",
-        "gasCost": "将 gas 转移到您的地址的 gas 费用："
+        "gasCost": "将 gas 转移到您的地址的 gas 费用：",
+        "description": "使用 GasAccount 支付 gas 费用。查看支付详情如下："
       },
       "gasLimitLessThanGasUsed": "Gas limit 太低。交易有 95% 的可能性会失败。",
       "interactContract": "交互合约",
@@ -529,7 +533,8 @@
         "marketPrice": "市场价格",
         "priceDiff": "价格差异",
         "poolPrice": "池价格"
-      }
+      },
+      "gasSetting": "气体设置"
     },
     "activities": {
       "signedTx": {
@@ -806,7 +811,9 @@
         "approvals": "授权",
         "search": "搜索 Token",
         "copyTrading": "跟单交易",
-        "watchlist": "观察列表"
+        "watchlist": "观察列表",
+        "perpsMarketList": "更多 Perps",
+        "perps": "合约"
       }
     },
     "manageAddress": {
@@ -846,7 +853,8 @@
       "gas-fee": "GasFee: {{gasUsed}}",
       "showMore": {
         "title": "显示更多",
-        "source": "Bridge Source"
+        "source": "Bridge Source",
+        "signWarning": "我理解警报并希望继续"
       },
       "bridgeFrom": "桥接自",
       "best": "最优",
@@ -861,7 +869,8 @@
       "bridgeTo": "桥接到",
       "loss-tips": "您正在损失 {{usd}}。请尝试不同的金额。",
       "title": "Bridge",
-      "bridged": "跨链已完成"
+      "bridged": "跨链已完成",
+      "gasFeeTooHight": "Gas费用高于正常情况。仅在您希望继续时确认。"
     },
     "approvals": {
       "tab-switch": {
@@ -1014,7 +1023,8 @@
       "swapped": "已交换",
       "historyTitle": "Swap 历史记录",
       "selectChainModalTitle": "选择链",
-      "results": "结果"
+      "results": "结果",
+      "approve": "批准"
     },
     "dashboard": {
       "home": {
@@ -1624,7 +1634,8 @@
         "txCreated": "交易已创建",
         "txSigned": "已签名。创建交易",
         "txSendings": "发送签名请求（{{current}}/{{total}}）"
-      }
+      },
+      "fixedModeText": "固定模式：始终使用您的自定义 Gas 设置"
     },
     "customTestnet": {
       "currency": "货币",
@@ -1704,7 +1715,9 @@
         "applePayFeeDesc": "包含 Apple Pay 手续费。无法提现",
         "googlePayFeeDesc": "包括 Google Pay 费用。不允许提款",
         "inSufficientTip1": "这个钱包没有足够的 tokens，请选择其他钱包。",
-        "paymentAddress": "支付钱包"
+        "paymentAddress": "支付钱包",
+        "pay": "支付",
+        "applePayFeeDesc1": "包含应用商店费用。无提款。"
       },
       "paymentAddressPopup": {
         "balance": "Balance",
@@ -1742,7 +1755,8 @@
         "depositCanceled": "存款已取消",
         "depositFailed": "存款失败",
         "titleAndroid": "使用 Google Pay 购买",
-        "balance": "当前 GasAccount 余额："
+        "balance": "当前 GasAccount 余额：",
+        "titleApple": "在应用商店购买"
       },
       "depositSelectPopup": {
         "depositTokenDesc": "无额外费用，即时提款",
@@ -1750,7 +1764,8 @@
         "title": "存入GasAccount",
         "buyWithDesc": "30% 手续费，不可提款",
         "desc": "在所有链上支付 Gas 费用",
-        "depositToken": "使用 Token 存款"
+        "depositToken": "使用 Token 存款",
+        "buyWithApple": "在应用商店购买"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 余额",
@@ -1860,6 +1875,54 @@
       "tabs": {
         "tokenSecurity": "代币安全",
         "marketData": "市场数据"
+      },
+      "interval": {
+        "1D": "1D",
+        "1H": "1H",
+        "15M": "15M",
+        "30M": "30M",
+        "5M": "5M",
+        "1W": "1W",
+        "4H": "4H",
+        "1M": "1M"
+      },
+      "marketInfo": {
+        "volume24h": "24小时交易量",
+        "marketCap": "市场总值",
+        "totalSupply": "总供应量",
+        "holders": "持有者",
+        "txns24h": "24h 交易次数",
+        "holderSections": {
+          "tableHeader": {
+            "address": "地址",
+            "position": "位置",
+            "ratio": "比例"
+          },
+          "top100HoldersRatio": "前100名持有者比例",
+          "top10HoldersRatio": "前10大持有者比例"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "addresses": "地址",
+            "hour": "小时",
+            "time": "时间",
+            "all": "所有",
+            "volume": "交易量",
+            "buy": "购买",
+            "address": "地址",
+            "tradingCount": "交易数量",
+            "min": "最小值",
+            "type": "类型",
+            "sell": "出售",
+            "qnt": "Qnt",
+            "price": "价格",
+            "value": "价值"
+          }
+        },
+        "empty": "无数据",
+        "details": "详情",
+        "summary": "摘要数据",
+        "activity": "活动"
       }
     },
     "customRpc": {
@@ -1915,7 +1978,10 @@
       "clearPendingWarning": "被移除的交易可能仍会在链上确认，除非它被替换。",
       "clearPendingResetDesc": "还重置了我的本地 nonce 数据和签名记录。",
       "clearPendingToast": "本地待处理交易已被移除",
-      "clearBrowserData": "清除浏览器数据"
+      "clearBrowserData": "清除浏览器数据",
+      "currency": "货币",
+      "searchCurrency": "搜索货币",
+      "screenshotReportSwitch": "截图以报告错误"
     },
     "settingModal": {
       "themeMode": {
@@ -2095,6 +2161,11 @@
         "favorite": "最喜欢",
         "disconnect": "断开连接",
         "contentModeMobile": "请求移动站点"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "立即加入",
+        "title": "Hyperliquid 邀请计划",
+        "desc": "现在使用Rabby的代码加入，可享受<1>4%</1>的Hyperliquid费用折扣。"
       }
     },
     "browserManage": {
@@ -2127,7 +2198,10 @@
     "defiDetail": {
       "viewSiteInApp": "在 Dapp 中查看",
       "viewSiteInWebsite": "在网站中查看",
-      "appChain": "在 {{chain}} 账户"
+      "appChain": "在 {{chain}} 账户",
+      "dappActions": {
+        "queueDescription": "当前提款将进入等待队列。一旦处理完成，可以提取到您的钱包中。"
+      }
     },
     "component": {
       "ChainSelector": {
@@ -2207,6 +2281,9 @@
         "setupWalletFirst": "请先完成钱包设置。",
         "unlockWalletFirst": "请解锁应用以打开链接。"
       }
+    },
+    "perpsHistory": {
+      "title": "历史"
     }
   },
   "component": {
@@ -2397,9 +2474,11 @@
       "feedbackInput": {
         "placeholder": "描述问题"
       },
-      "feedbackLabel": "错误描述：",
-      "title": "截图以报告错误",
-      "submitButtonText": "提交"
+      "submitButtonText": "提交",
+      "switchArea": {
+        "skipText": "在此弹窗上跳过 1 天"
+      },
+      "title": "截图以报告bug"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "描述：",
@@ -2409,7 +2488,10 @@
       "repliedTitle": "Rabby Support 已回复："
     },
     "submitFeedbackSuccessModal": {
-      "desc": "提交成功"
+      "desc": "提交成功！"
+    },
+    "GlobalTipsPopup": {
+      "btn": "我明白了"
     }
   },
   "bluetooth": {

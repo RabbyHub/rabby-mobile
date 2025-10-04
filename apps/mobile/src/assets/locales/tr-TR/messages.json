@@ -83,7 +83,8 @@
         "InteractionResults": "Etkileşim Sonuçları",
         "Pending": "Beklemede",
         "AddToWhitelist": "Beyaz Listeye Ekle",
-        "RecipientAddress": "Alıcı cüzdan"
+        "RecipientAddress": "Alıcı cüzdan",
+        "Simulation Results": "Simülasyon Sonuçları"
       },
       "empty": {
         "title": "Hiç işlem yok",
@@ -127,7 +128,8 @@
         "gasCost": "Adresinize gaz transferi için gaz maliyeti:",
         "estimatedGas": "Tahmini Gas:",
         "sendGas": "Bu işlem için size transfer edilen Gas:",
-        "maxGas": "Maksimum Gas:"
+        "maxGas": "Maksimum Gas:",
+        "description": "GasAccount ile gaz ücretlerini ödemek. Ödeme detaylarını aşağıda görüntüleyin:"
       },
       "balanceChange": {
         "errorTitle": "Bakiye değişikliği alınamadı",
@@ -422,7 +424,8 @@
         "title": "Likidite Ekle",
         "token0": "Token 1 Ekle",
         "marketPrice": "Piyasa Fiyatı"
-      }
+      },
+      "gasSetting": "Gaz Ayarı"
     },
     "importSuccess": {
       "addressCount": "{{count}} Adresler",
@@ -909,12 +912,14 @@
       "swapped": "Değiştirildi",
       "no-transaction-records": "Hiçbir işlem kaydı yok",
       "historyTitle": "Takasa geçmişi",
-      "results": "Sonuçlar"
+      "results": "Sonuçlar",
+      "approve": "Onayla"
     },
     "bridge": {
       "showMore": {
         "title": "Daha Fazla Göster",
-        "source": "Köprü Kaynağı"
+        "source": "Köprü Kaynağı",
+        "signWarning": "Alarmı anlıyorum ve devam etmek istiyorum."
       },
       "From": "Den",
       "Pending": "Beklemede",
@@ -948,7 +953,8 @@
       "actual": "Gerçek:",
       "bridgeTo": "Köprüye Doğru",
       "no-route-found": "Yol bulunamadı",
-      "need-to-approve-token-before-bridge": "Token'u köprülemeden önce onaylamanız gerekiyor."
+      "need-to-approve-token-before-bridge": "Token'u köprülemeden önce onaylamanız gerekiyor.",
+      "gasFeeTooHight": "Gaz ücreti normalden daha yüksektir. Devam etmek istiyorsanız yalnızca onaylayın."
     },
     "manageAddress": {
       "watch-address": "Adres İzle",
@@ -980,7 +986,9 @@
         "queue": "Kuyruk",
         "websites": "Web Siteleri",
         "copyTrading": "Copy Trading",
-        "watchlist": "Göz Atma Listesi"
+        "watchlist": "Göz Atma Listesi",
+        "perps": "Perps",
+        "perpsMarketList": "Daha Fazla Perps"
       }
     },
     "dashboard": {
@@ -1629,7 +1637,8 @@
         "txSendings": "İmzalama talebi gönderiliyor ({{current}}/{{total}})",
         "txSigned": "İmzalandı. İşlem oluşturuluyor"
       },
-      "signWithLedger": "İmza"
+      "signWithLedger": "İmza",
+      "fixedModeText": "Sabit Mod: Her zaman özel gaz ayarınızı kullanın"
     },
     "gasAccount": {
       "history": {
@@ -1659,7 +1668,9 @@
         "applePayDesc": "${{amount}} Apple Pay ücreti içerir. Çekim yoktur.",
         "applePayFeeDesc": "Apple Pay ücreti içerir. Para çekme yok.",
         "paymentAddress": "Ödeme Cüzdanı",
-        "inSufficientTip1": "Bu cüzdanın yeterli token'i yok. Lütfen farklı bir cüzdan seçin."
+        "inSufficientTip1": "Bu cüzdanın yeterli token'i yok. Lütfen farklı bir cüzdan seçin.",
+        "pay": "Öde",
+        "applePayFeeDesc1": "Uygulama Mağazası ücreti içerir. Çekim yoktur."
       },
       "paymentAddressPopup": {
         "confirm": "Onayla",
@@ -1704,7 +1715,8 @@
         "balance": "Mevcut GasAccount Bakiyesi:",
         "depositFailed": "Para Yatırma Başarısız",
         "title": "Apple Pay ile satın al",
-        "depositCanceled": "Mevduat İptal Edildi"
+        "depositCanceled": "Mevduat İptal Edildi",
+        "titleApple": "Uygulama Mağazası'ndan Satın Al"
       },
       "depositSelectPopup": {
         "depositTokenDesc": "Ekstra ücret yok, anında çekimler",
@@ -1712,7 +1724,8 @@
         "buyWithDesc": "%30 ücret, para çekme yok",
         "desc": "Tüm Ağırlıklarında Gas Ücretlerini Ödeyin",
         "buyWith": "Alım yapın ile",
-        "title": "GasAccount'a Yatır"
+        "title": "GasAccount'a Yatır",
+        "buyWithApple": "Uygulama Mağazası'ndan Satın Al"
       },
       "gasAccountList": {
         "address": "Adres",
@@ -1795,6 +1808,54 @@
       "tabs": {
         "marketData": "Piyasa verileri",
         "tokenSecurity": "Token Güvenliği"
+      },
+      "interval": {
+        "1D": "1G",
+        "30M": "30M",
+        "1W": "1W",
+        "4H": "4H",
+        "15M": "15M",
+        "1H": "1H",
+        "1M": "1M",
+        "5M": "5M"
+      },
+      "marketInfo": {
+        "txns24h": "24 saat Txns",
+        "volume24h": "24h İşlem Hacmi",
+        "holders": "Sahipler",
+        "marketCap": "Piyasa Değeri",
+        "totalSupply": "Toplam Arz",
+        "holderSections": {
+          "tableHeader": {
+            "address": "Adres",
+            "position": "Pozisyon",
+            "ratio": "Oran"
+          },
+          "top100HoldersRatio": "En Fazla 100 Sahip Oranı",
+          "top10HoldersRatio": "En İyi 10 Hissedar Oranı"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "address": "Adres",
+            "min": "min",
+            "time": "Zaman",
+            "type": "Türü",
+            "sell": "Satılık",
+            "buy": "Satın Al",
+            "hour": "Saat",
+            "addresses": "Adresler",
+            "volume": "Hacim",
+            "tradingCount": "İşlem Sayısı",
+            "all": "Hepsi",
+            "qnt": "Qnt",
+            "price": "Fiyat",
+            "value": "Değer"
+          }
+        },
+        "activity": "Etkinlik",
+        "empty": "Veri Yok",
+        "details": "Ayrıntılar",
+        "summary": "Özet Verisi"
       }
     },
     "approvalsAddressList": {
@@ -1881,7 +1942,10 @@
       "clearPendingDesc1": "Bu, tüm bekleyen işlemlerinizi temizleyecektir. Bu, bazı durumlarda Rabby'deki işlemin durumunun zincirdeki durumla eşleşmemesi sorununu çözmenize yardımcı olabilir.",
       "clearPendingDesc2": "Bu, hesaplarınızdaki bakiyeleri değiştirmeyecek veya seed phrase'inizi yeniden girmenizi gerektirmeyecektir. Tüm varlıklarınız ve hesap bilgilerinizi güvende kalacaktır.",
       "addCustomNetwork": "Özel Ağ Ekle",
-      "clearBrowserData": "Tarayıcı Verilerini Temizle"
+      "clearBrowserData": "Tarayıcı Verilerini Temizle",
+      "currency": "Para Birimi",
+      "searchCurrency": "Para Araştırması",
+      "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın"
     },
     "settingModal": {
       "themeMode": {
@@ -1997,6 +2061,11 @@
         "contentModeMobile": "Mobil Sitei Talep Et",
         "disconnect": "Bağlantıyı kesmek",
         "contentModeDesktop": "Masaüstü Siteyi İsteği"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "Şimdi Katıl",
+        "title": "Hyperliquid Referans Programı",
+        "desc": "Şimdi Rabby’nin kodunu kullanarak Hyperliquid ücretlerinizde <1>4% indirim</1> kazanın."
       }
     },
     "browserManage": {
@@ -2029,7 +2098,10 @@
     "defiDetail": {
       "viewSiteInApp": "Dapp'ta Görüntüle",
       "viewSiteInWebsite": "Websitesi Görüntüle",
-      "appChain": "{{chain}} Hesabı üzerinde"
+      "appChain": "{{chain}} Hesabı üzerinde",
+      "dappActions": {
+        "queueDescription": "Mevcut çekim, bir bekleme kuyruğuna girecektir. İşlem tamamlandığında, cüzdanınıza çekebilirsiniz."
+      }
     },
     "component": {
       "ChainSelector": {
@@ -2109,6 +2181,9 @@
         "unlockWalletFirst": "Lütfen bağlantıyı açmak için uygulamayı açın.",
         "setupWalletFirst": "Lütfen önce cüzdanı kurmayı tamamlayın."
       }
+    },
+    "perpsHistory": {
+      "title": "Geçmiş"
     }
   },
   "component": {
@@ -2300,8 +2375,10 @@
         "placeholder": "Sorunu tanımlayın"
       },
       "submitButtonText": "Gönder",
-      "feedbackLabel": "Hata tanımı:",
-      "title": "Hata Bildirmek için Anlık Görüntü Alın"
+      "switchArea": {
+        "skipText": "Bu açılır pencereyi 1 gün için atla"
+      },
+      "title": "Hata Bildirmek için Ekran Görüntüsü"
     },
     "feedbackModal": {
       "repliedTitle": "Rabby Destek yanıtladı:",
@@ -2311,7 +2388,10 @@
       "issueDescription": "İşte bildirdiğiniz sorun:"
     },
     "submitFeedbackSuccessModal": {
-      "desc": "Başarıyla Gönderildi"
+      "desc": "Başarıyla Gönderildi!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Anladım"
     }
   },
   "native": {
@@ -2400,7 +2480,9 @@
         "message": "Bu uygulama, konum tabanlı özellikler sağlamak için konumunuza erişim gerektirir.",
         "title": "Konum İzni"
       }
-    }
+    },
+    "gotIt": "Tamamdır",
+    "check": "Kontrol Et"
   },
   "background": {
     "error": {

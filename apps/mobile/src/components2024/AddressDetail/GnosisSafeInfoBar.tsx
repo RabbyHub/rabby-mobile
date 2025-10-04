@@ -61,11 +61,11 @@ export const GnosisSafeInfoBar = ({
     },
   );
 
-  useEffect(() => {
-    if (address) {
-      apisSafe.syncGnosisNetworks(address);
-    }
-  }, [address]);
+  // useEffect(() => {
+  //   if (address) {
+  //     apisSafe.syncGnosisNetworks(address);
+  //   }
+  // }, [address]);
 
   if (!safeInfo) {
     return null;

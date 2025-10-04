@@ -214,16 +214,20 @@ export const GlobalBottomSheetModal2024 = () => {
 
   const { panResponder } = useRefreshAutoLockPanResponder();
   const { colors2024 } = useTheme2024();
-  const { androidOnlyBottomOffset } = useSafeSizes();
 
   return (
     <View>
       {modals.map(modal => {
         const ModalView = MODAL_VIEWS[modal.params.name];
         const bottomSheetModalProps = modal.params.bottomSheetModalProps;
-        const RootView = bottomSheetModalProps?.useBottomSheetScrollView
-          ? BottomSheetScrollView
-          : BottomSheetView;
+        const rootViewType =
+          bottomSheetModalProps?.rootViewType || 'BottomSheetView';
+        const RootView =
+          rootViewType === 'BottomSheetScrollView'
+            ? BottomSheetScrollView
+            : rootViewType === 'View'
+            ? View
+            : BottomSheetView;
 
         const modalViewProps = {
           ...modal.params,

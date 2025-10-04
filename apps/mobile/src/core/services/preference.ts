@@ -20,6 +20,7 @@ import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { BALANCE_HIDE_TYPE } from '@/screens/Home/hooks/useHideBalance';
 
 const { isSameAddress } = addressUtils;
 
@@ -172,6 +173,14 @@ export interface PreferenceStore {
   watchlistSkip?: boolean;
 
   lastReportTime?: number;
+
+  balanceHideType?: BALANCE_HIDE_TYPE;
+
+  currency?: string;
+
+  hyperliquidInvite?: {
+    lastTime?: number;
+  };
 }
 
 export interface AddressSortStore {
@@ -253,6 +262,12 @@ export class PreferenceService {
           addressAvatarMap: {},
           hasOpenCopyTrading: false,
           watchlistSkip: false,
+          balanceHideType: BALANCE_HIDE_TYPE.SHOW,
+          currency: 'USD',
+
+          hyperliquidInvite: {
+            lastTime: 0,
+          },
         },
       },
       {
@@ -610,18 +625,7 @@ export class PreferenceService {
 
   getLastTimeGasSelection = (chainId: keyof GasCache): ChainGas | null => {
     const cache = this.store.gasCache[chainId];
-    if (cache && cache.lastTimeSelect === 'gasPrice') {
-      if (cache.gasLevel) {
-        return {
-          lastTimeSelect: 'gasLevel',
-          gasLevel: cache.gasLevel,
-        };
-      } else {
-        return null;
-      }
-    } else {
-      return cache;
-    }
+    return cache;
   };
 
   updateLastTimeGasSelection = (chainId: keyof GasCache, gas: ChainGas) => {
@@ -1002,18 +1006,9 @@ export class PreferenceService {
     }
   };
 
+  /** @deprecated use getUserTokenSettingsSync as possible */
   getUserTokenSettings = async () => {
-    return {
-      foldTokens: this.store.foldTokens || [],
-      unfoldTokens: this.store.unfoldTokens || [],
-      includeDefiAndTokens: this.store.includeDefiAndTokens || [],
-      excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
-      pinedQueue: this.store.pinedQueue || [],
-      foldNfts: this.store.foldNfts || [],
-      unfoldNfts: this.store.unFoldNfts || [],
-      foldDefis: this.store.foldDefis || [],
-      unFoldDefis: this.store.unFoldDefis || [],
-    };
+    return this.getUserTokenSettingsSync();
   };
 
   getUserTokenSettingsSync = () => {

@@ -25,6 +25,7 @@ export function getLatestNavigationName() {
 }
 
 /**
+ * @deprecated
  * navigate in pure function
  *
  * https://reactnavigation.org/docs/navigating-without-navigation-prop

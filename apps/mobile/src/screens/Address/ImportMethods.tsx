@@ -33,8 +33,9 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   StackActions,
   useNavigation,
-  useNavigationState,
+  useRoute,
 } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useSetPasswordFirst } from '@/hooks/useLock';
@@ -58,15 +59,11 @@ function ImportMethods(): JSX.Element {
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
-  const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.ImportMethods)?.params,
-  ) as
-    | {
-        isNotNewUserProc?: boolean; // if has address
-        isFromEmptyAddress?: boolean;
-      }
-    | undefined;
-  // const state = undefined;
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'AddressNavigatorParamList', 'ImportMethods'>
+    >();
+  const state = route.params;
 
   const onPressCloud = React.useCallback(() => {
     Keyboard.dismiss();

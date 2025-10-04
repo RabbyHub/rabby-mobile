@@ -33,8 +33,8 @@ import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
   visible?: boolean;
-  account: Account;
-  onSelect?(token: AbstractPortfolioToken): void;
+  account?: Account | null;
+  onSelect?(token: AbstractPortfolioToken): Promise<void>;
 }> = ({ onClose, visible, account, onSelect }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
@@ -42,7 +42,7 @@ export const PerpsSelectTokenPopup: React.FC<{
   });
 
   const { tokens: _tokens, updateData } = useTokens(
-    account.address,
+    account?.address,
     false,
     0,
     undefined,
@@ -51,15 +51,19 @@ export const PerpsSelectTokenPopup: React.FC<{
 
   const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(
     async () => {
+      if (!account?.address) {
+        return;
+      }
+
       const arbUsdcToken = await openapi.getToken(
-        account.address,
+        account?.address,
         ARB_USDC_TOKEN_SERVER_CHAIN,
         ARB_USDC_TOKEN_ID,
       );
       return ensureAbstractPortfolioToken(arbUsdcToken);
     },
     {
-      refreshDeps: [account.address],
+      refreshDeps: [account?.address],
       manual: true,
     },
   );
@@ -169,11 +173,6 @@ export const PerpsSelectTokenPopup: React.FC<{
           />
         </AutoLockView>
       </AppBottomSheetModal>
-      <PerpsDepositTokenModal
-        visible={false}
-        arbUsdcToken={arbUsdc}
-        token={tokens?.[1]}
-      />
     </>
   );
 };

@@ -3,7 +3,6 @@ import React from 'react';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressListScreen } from '@/screens/Address/AddressListScreen';
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';

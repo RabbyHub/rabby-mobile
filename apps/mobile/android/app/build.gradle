@@ -95,8 +95,8 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100132
-        versionName "0.6.35"
+        versionCode 100142
+        versionName "0.6.40"
         missingDimensionStrategy "store", "play"
         buildConfigField("boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString())
     }

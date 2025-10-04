@@ -4,6 +4,7 @@ import { atom, useAtom } from 'jotai';
 import {
   KeyringAccount,
   CORE_KEYRING_TYPES,
+  KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 import * as Sentry from '@sentry/react-native';
 
@@ -15,7 +16,6 @@ import {
 } from '@/core/services';
 import { removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
-import { addressUtils } from '@rabby-wallet/base-utils';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import {
@@ -32,9 +32,10 @@ import { appServiceEvents } from '@/core/services/_utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
-import { unionBy } from 'lodash';
+import { isEqual, unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
 import { useHistoryTokenDict } from './historyTokenDict';
+import { useCreationWithShallowCompare } from './common/useMemozied';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -59,6 +60,11 @@ pinAddressesAtom.onMount = setAtom => {
   setAtom(addresses);
 };
 
+/**
+ * @description if new fetched accounts are same from the existing ones, return the existing ones
+ * to keep same ref to avoid later re-renders on React Hooks
+ */
+const existedAccountsRef = { current: [] as KeyringAccountWithAlias[] };
 async function fetchAllAccounts() {
   let nextAccounts: KeyringAccountWithAlias[] = [];
   try {
@@ -88,7 +94,11 @@ async function fetchAllAccounts() {
   } catch (err) {
     Sentry.captureException(err);
   } finally {
-    return nextAccounts;
+    if (!isEqual(existedAccountsRef.current, nextAccounts)) {
+      existedAccountsRef.current = nextAccounts;
+    }
+
+    return existedAccountsRef.current;
   }
 }
 
@@ -100,7 +110,11 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
 
   const doFetchAccounts = useCallback(async () => {
     const nextAccounts = await fetchAllAccounts();
-    setAccounts(nextAccounts);
+    setAccounts(prev => {
+      if (isEqual(prev, nextAccounts)) return prev;
+
+      return nextAccounts;
+    });
   }, [setAccounts]);
 
   const { fetchAction: fetchAccounts } = useAtomicRequest({
@@ -114,10 +128,12 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
     }
   }, [disableAutoFetch, fetchAccounts]);
 
+  const stableAccounts = useCreationWithShallowCompare(() => {
+    return accounts;
+  }, [accounts]);
+
   return {
-    accounts: useMemo(() => {
-      return [...accounts];
-    }, [accounts]),
+    accounts: stableAccounts,
     fetchAccounts,
   };
 }
@@ -218,6 +234,37 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
     getPinAddressesAsync,
     togglePinAddressAsync,
   };
+};
+
+export const usePinnedAccountList = (opts?: { disableAutoFetch?: boolean }) => {
+  const { disableAutoFetch = false } = opts || {};
+  const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
+  const { accounts } = useAccounts(opts);
+
+  const pinnedAccountList = useMemo(() => {
+    const res: KeyringAccountWithAlias[] = [];
+    pinAddresses?.forEach(pinAddr => {
+      const acc = accounts.find(account => {
+        return (
+          isSameAddress(pinAddr.address, account.address) &&
+          account.brandName === pinAddr.brandName
+        );
+      });
+      if (
+        acc &&
+        ![
+          KEYRING_TYPE.GnosisKeyring,
+          KEYRING_TYPE.WatchAddressKeyring,
+          KEYRING_TYPE.WalletConnectKeyring,
+        ].includes(acc.type)
+      ) {
+        res.push(acc);
+      }
+    });
+    return res;
+  }, [accounts, pinAddresses]);
+
+  return pinnedAccountList;
 };
 
 export function useRemoveAccount() {

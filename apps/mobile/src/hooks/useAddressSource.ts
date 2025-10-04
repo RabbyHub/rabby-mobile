@@ -10,7 +10,7 @@ export const KEYRING_TYPE_TEXT = {
   [KEYRING_TYPE.WatchAddressKeyring]: 'Contact',
   // [KEYRING_CLASS.HARDWARE.BITBOX02]: 'Imported by BitBox02',
   [KEYRING_CLASS.HARDWARE.LEDGER]: 'Imported by Ledger',
-  // [KEYRING_CLASS.HARDWARE.TREZOR]: 'Imported by Trezor',
+  [KEYRING_CLASS.HARDWARE.TREZOR]: 'Imported by Trezor',
   [KEYRING_CLASS.HARDWARE.ONEKEY]: 'Imported by Onekey',
   // [KEYRING_CLASS.HARDWARE.GRIDPLUS]: 'Imported by GridPlus',
   [KEYRING_CLASS.GNOSIS]: 'Imported by Safe',

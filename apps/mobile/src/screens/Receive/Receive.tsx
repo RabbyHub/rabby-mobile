@@ -11,7 +11,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { useNavigationState, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
@@ -36,7 +36,7 @@ import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc
 import { RcArrowRightCC } from '@/assets/icons/common';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 
 function ReceiveScreen(): JSX.Element {
   const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
@@ -45,10 +45,7 @@ function ReceiveScreen(): JSX.Element {
 
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
-        'TransactionNavigatorParamList',
-        'Receive'
-      >['route']
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'Receive'>
     >();
 
   const account = route.params.account;
@@ -168,11 +165,7 @@ function ReceiveScreen(): JSX.Element {
     }
   }, [isWatchMode]);
 
-  const navState = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.Receive)?.params,
-  ) as
-    | { chainEnum?: CHAINS_ENUM | undefined; tokenSymbol?: TokenItem['symbol'] }
-    | undefined;
+  const navState = route.params;
 
   useEffect(() => {
     if (navState?.chainEnum) {
@@ -187,6 +180,7 @@ function ReceiveScreen(): JSX.Element {
       account: account,
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
+        rootViewType: 'View',
         enablePanDownToClose: true,
       },
       supportChains: isSafe ? safeChains.map(item => item.enum) : undefined,

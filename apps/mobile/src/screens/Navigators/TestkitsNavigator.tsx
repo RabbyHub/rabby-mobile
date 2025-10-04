@@ -2,7 +2,6 @@ import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { registerAppScreen } from '@/perfs/apis';
 import {

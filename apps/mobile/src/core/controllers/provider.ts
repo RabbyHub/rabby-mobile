@@ -71,6 +71,7 @@ import { isString } from 'lodash';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
 import { ProviderRequest } from './type';
+import { isAddress } from 'viem';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -1473,7 +1474,29 @@ class ProviderController extends BaseController {
     return null;
   };
 
-  @Reflect.metadata('APPROVAL', ['AddAsset', () => null, { height: 600 }])
+  @Reflect.metadata('APPROVAL', [
+    'AddAsset',
+    ({ data, session }) => {
+      if (!data.params) {
+        throw ethErrors.rpc.invalidParams('params is required');
+      }
+      if (!data.params.type) {
+        throw ethErrors.rpc.invalidParams('Asset type is required');
+      }
+      if (
+        !data.params.options?.address ||
+        !isAddress(data.params.options?.address, {
+          strict: false,
+        })
+      ) {
+        throw ethErrors.rpc.invalidParams(
+          `Invalid address '${data.params.options?.address}'.`,
+        );
+      }
+      return null;
+    },
+    { height: 600 },
+  ])
   walletWatchAsset = ({
     approvalRes,
   }: {
@@ -1575,6 +1598,20 @@ class ProviderController extends BaseController {
     );
 
     return keyring;
+  };
+
+  ethGetTransactionReceipt = async req => {
+    try {
+      const res = await this.ethRpc(req);
+      return res;
+    } catch (e: any) {
+      const idxKeyPhrases = ['index', 'progress'];
+      if (idxKeyPhrases.some(phrase => e.message?.includes(phrase))) {
+        return null;
+      } else {
+        throw e;
+      }
+    }
   };
 }
 

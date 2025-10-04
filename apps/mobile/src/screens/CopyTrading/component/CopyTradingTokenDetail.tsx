@@ -48,7 +48,8 @@ import { removeAllGlobalBottomSheetModals2024 } from '@/components2024/GlobalBot
 import { matomoRequestEvent } from '@/utils/analytics';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { TransactionNavigatorParamList } from '@/navigation-type';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useProfitData } from './useProfit';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -61,10 +62,14 @@ export default function CopyTradingTokenDetail() {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { safeOffHeader } = useSafeSizes();
-  const navState = useNavigationState(
-    s =>
-      s.routes.find(r => r.name === RootNames.CopyTradingTokenDetail)?.params,
-  ) as TransactionNavigatorParamList['CopyTradingTokenDetail'];
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        'CopyTradingTokenDetail'
+      >
+    >();
+  const navState = route.params;
 
   const { tradingTokenItem, showTabType } = navState!;
   const { updateSingleTokenPrice, profitData } = useProfitData();

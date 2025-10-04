@@ -5,6 +5,9 @@ import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
 import { Dimensions, Platform, Text } from 'react-native';
+import { PERPS_BUILDER_INFO } from '@/constant/perps';
+import { sleep } from '@/utils/async';
+import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
 
 export const usePerpsPosition = ({
   setCurrentTpOrSl,
@@ -23,6 +26,8 @@ export const usePerpsPosition = ({
     currentPerpsAccount,
     isLogin,
     hasPermission,
+
+    judgeIsUserAgentIsExpired,
   } = usePerpsState();
 
   const logout = useMemoizedFn((address: string) => {
@@ -31,25 +36,11 @@ export const usePerpsPosition = ({
     apisPerps.setSendApproveAfterDeposit(address, []);
   });
 
-  const judgeIsUserAgentIsExpired = useMemoizedFn(
-    async (errorMessage: string) => {
-      const masterAddress = currentPerpsAccount?.address;
-      if (!masterAddress) {
-        return false;
-      }
-
-      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
-        masterAddress,
-      );
-      const agentAddress = agentWalletPreference?.agentAddress;
-      if (agentAddress && errorMessage.includes(agentAddress)) {
-        console.warn('handle action agent is expired, logout');
-        toast.error('Agent is expired, please login again');
-        logout(masterAddress);
-        return true;
-      }
-    },
-  );
+  const formatTriggerPx = (px?: string) => {
+    // avoid '.15' input error from hy validator
+    // '.15' -> '0.15'
+    return px ? Number(px).toString() : undefined;
+  };
 
   const handleSetAutoClose = useMemoizedFn(
     async (params: {
@@ -61,16 +52,19 @@ export const usePerpsPosition = ({
       try {
         const sdk = apisPerps.getPerpsSDK();
         const { coin, tpTriggerPx, slTriggerPx, direction } = params;
+        const formattedTpTriggerPx = formatTriggerPx(tpTriggerPx);
+        const formattedSlTriggerPx = formatTriggerPx(slTriggerPx);
         const res = await sdk.exchange?.bindTpslByOrderId({
           coin,
           isBuy: direction === 'Long',
-          tpTriggerPx,
-          slTriggerPx,
+          tpTriggerPx: formattedTpTriggerPx,
+          slTriggerPx: formattedSlTriggerPx,
+          builder: PERPS_BUILDER_INFO,
         });
 
         setCurrentTpOrSl({
-          tpPrice: tpTriggerPx,
-          slPrice: slTriggerPx,
+          tpPrice: formattedTpTriggerPx,
+          slPrice: formattedSlTriggerPx,
         });
         setTimeout(() => {
           fetchPositionOpenOrders();
@@ -110,6 +104,7 @@ export const usePerpsPosition = ({
           isBuy: direction === 'Short',
           size,
           midPx: price,
+          builder: PERPS_BUILDER_INFO,
         });
 
         const filled = res?.response?.data?.statuses[0]?.filled;
@@ -148,7 +143,7 @@ export const usePerpsPosition = ({
           toast.error(msg || 'close position error');
           Sentry.captureException(
             new Error(
-              'PERPS close position noFills' +
+              'PERPS close position noFills ' +
                 'params: ' +
                 JSON.stringify(params) +
                 'res: ' +
@@ -205,20 +200,40 @@ export const usePerpsPosition = ({
           isCross: false,
         });
 
-        const res = await sdk.exchange?.marketOrderOpen({
-          coin,
-          isBuy: direction === 'Long',
-          size,
-          midPx,
-          tpTriggerPx,
-          slTriggerPx,
-        });
+        const promises = [
+          sdk.exchange?.marketOrderOpen({
+            coin,
+            isBuy: direction === 'Long',
+            size,
+            midPx,
+          }),
+        ];
 
+        // avoid '.15' input error from hy validator
+        const formattedTpTriggerPx = formatTriggerPx(tpTriggerPx);
+        const formattedSlTriggerPx = formatTriggerPx(slTriggerPx);
+
+        if (tpTriggerPx || slTriggerPx) {
+          promises.push(
+            (async () => {
+              await sleep(10); // little delay to ensure nonce is correct
+              const result = await sdk.exchange?.bindTpslByOrderId({
+                coin,
+                isBuy: direction === 'Long',
+                tpTriggerPx: formattedTpTriggerPx,
+                slTriggerPx: formattedSlTriggerPx,
+                builder: PERPS_BUILDER_INFO,
+              });
+              return result as OrderResponse;
+            })(),
+          );
+        }
+
+        const results = await Promise.all(promises);
+        const res = results[0];
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
           fetchClearinghouseState();
-          // no need
-          // fetchUserHistoricalOrders();
 
           const { totalSz, avgPx } = filled;
           const msg = `Opened ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
@@ -238,8 +253,8 @@ export const usePerpsPosition = ({
               : msg,
           );
           setCurrentTpOrSl({
-            tpPrice: tpTriggerPx,
-            slPrice: slTriggerPx,
+            tpPrice: formattedTpTriggerPx,
+            slPrice: formattedSlTriggerPx,
           });
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;

@@ -1,7 +1,6 @@
 import 'react-native-gesture-handler';
 import { makeHeadersPresets, RootNames } from '@/constant/layout';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeNonTabNavigatorParamsList } from '@/navigation-type';
 import SearchScreen from '../Search';
 import WatchlistScreen from '../Watchlist';

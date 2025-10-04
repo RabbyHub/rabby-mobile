@@ -113,7 +113,9 @@
         "message": "Ứng dụng này cần quyền truy cập vào vị trí của bạn để cung cấp các tính năng dựa trên vị trí.",
         "title": "Quyền truy cập vị trí"
       }
-    }
+    },
+    "check": "Kiểm tra",
+    "gotIt": "Đã hiểu"
   },
   "page": {
     "transactions": {
@@ -169,7 +171,8 @@
         "totalApprovedAmount": "Số tiền được phê duyệt hiện tại",
         "BuyAgain": "Mua lại",
         "AddToWhitelist": "Thêm vào Danh sách Trắng",
-        "RecipientAddress": "Ví nhận"
+        "RecipientAddress": "Ví nhận",
+        "Simulation Results": "Kết quả mô phỏng"
       },
       "empty": {
         "title": "Không có giao dịch",
@@ -418,7 +421,8 @@
         "sendGas": "Gas chuyển đến bạn cho giao dịch hiện tại:",
         "estimatedGas": "Ước tính Gas:",
         "maxGas": "Max Gas: ",
-        "gasCost": "Chi phí Gas để chuyển gas đến địa chỉ của bạn:"
+        "gasCost": "Chi phí Gas để chuyển gas đến địa chỉ của bạn:",
+        "description": "Sử dụng GasAccount để thanh toán phí gas. Xem chi tiết thanh toán bên dưới:"
       },
       "crossChain": {
         "title": "Cross Chain"
@@ -690,7 +694,8 @@
         "priceDiff": "Giá chênh lệch",
         "token1": "Thêm Token 2",
         "title": "Thêm Tính Thanh Khoản"
-      }
+      },
+      "gasSetting": "Cài đặt Gas"
     },
     "sendNFT": {
       "sendButton": "Gửi",
@@ -933,7 +938,8 @@
       "historyTitle": "Lịch sử Swap",
       "swapped": "Đã trao đổi",
       "selectChainModalTitle": "Chọn Chuỗi",
-      "results": "Kết quả"
+      "results": "Kết quả",
+      "approve": "Phê duyệt"
     },
     "bridge": {
       "for-available-quote": "để có báo giá khả dụng",
@@ -960,7 +966,8 @@
       "bridgeFrom": "Cầu từ",
       "showMore": {
         "source": "Bridge Source",
-        "title": "Hiển thị thêm"
+        "title": "Hiển thị thêm",
+        "signWarning": "Tôi hiểu thông báo và muốn tiếp tục."
       },
       "From": "Từ",
       "loss-tips": "Bạn đang mất {{usd}}. Thử một số tiền khác.",
@@ -972,7 +979,8 @@
       "no-route-found": "Không tìm thấy tuyến đường",
       "via-bridge": "thông qua {{bridge}}",
       "duration": "{{duration}} phút",
-      "bridged": "Đã cầu nối"
+      "bridged": "Đã cầu nối",
+      "gasFeeTooHight": "Phí Gas cao hơn bình thường. Chỉ xác nhận nếu bạn muốn tiếp tục."
     },
     "manageAddress": {
       "enterThePassphrase": "Nhập Passphrase",
@@ -1180,7 +1188,9 @@
         "websites": "Websites",
         "search": "Tìm kiếm Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Danh sách theo dõi"
+        "watchlist": "Danh sách theo dõi",
+        "perps": "Perps",
+        "perpsMarketList": "Thêm Perps"
       }
     },
     "securityEngine": {
@@ -1521,7 +1531,8 @@
         "txCreated": "Giao dịch đã được tạo",
         "txSigned": "Đã ký. Đang tạo giao dịch",
         "txSendings": "Đang gửi yêu cầu ký ({{current}}/{{total}})"
-      }
+      },
+      "fixedModeText": "Chế độ cố định: Luôn sử dụng cài đặt gas tùy chỉnh của bạn"
     },
     "search": {
       "sectionHeader": {
@@ -1598,7 +1609,9 @@
         "applePayFeeDesc": "Bao gồm phí Apple Pay. Không cho phép rút tiền",
         "googlePayFeeDesc": "Bao gồm phí Google Pay. Không có rút tiền",
         "paymentAddress": "Ví thanh toán",
-        "inSufficientTip1": "Ví dụ này không có đủ token. Vui lòng chọn một ví khác."
+        "inSufficientTip1": "Ví dụ này không có đủ token. Vui lòng chọn một ví khác.",
+        "pay": "Thanh toán",
+        "applePayFeeDesc1": "Bao gồm phí App Store. Không có rút tiền."
       },
       "paymentAddressPopup": {
         "confirm": "Xác nhận",
@@ -1639,7 +1652,8 @@
         "depositFailed": "Nạp tiền thất bại",
         "balance": "Số dư GasAccount Hiện Tại: ",
         "title": "Mua với Apple Pay",
-        "titleAndroid": "Mua bằng Google Pay"
+        "titleAndroid": "Mua bằng Google Pay",
+        "titleApple": "Mua trong App Store"
       },
       "depositSelectPopup": {
         "title": "Nạp vào GasAccount",
@@ -1647,7 +1661,8 @@
         "depositToken": "Nạp bằng Token",
         "buyWithDesc": "30% phí, không rút tiền",
         "depositTokenDesc": "Không có phí bổ sung, rút tiền ngay lập tức",
-        "desc": "Trả Phí Gas trên Tất Cả Các Chuỗi"
+        "desc": "Trả Phí Gas trên Tất Cả Các Chuỗi",
+        "buyWithApple": "Mua trong App Store"
       },
       "gasAccountList": {
         "balance": "Số dư",
@@ -1686,7 +1701,10 @@
       "clearPendingToast": "Giao dịch chờ địa phương đã bị xóa",
       "clearPendingResetDesc": "Cũng đặt lại dữ liệu nonce địa phương và bản ghi chữ ký của tôi",
       "clearPendingWarning": "Giao dịch đã bị xóa có thể vẫn được xác nhận trên chuỗi trừ khi nó bị thay thế.",
-      "clearBrowserData": "Xóa Dữ Liệu Trình Duyệt"
+      "clearBrowserData": "Xóa Dữ Liệu Trình Duyệt",
+      "currency": "Tiền tệ",
+      "searchCurrency": "Tìm kiếm Tiền tệ",
+      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -1750,6 +1768,54 @@
       "tabs": {
         "tokenSecurity": "Bảo mật Token",
         "marketData": "Dữ liệu thị trường"
+      },
+      "interval": {
+        "5M": "5M",
+        "1D": "1D",
+        "15M": "15M",
+        "4H": "4H",
+        "1H": "1H",
+        "1M": "1M",
+        "1W": "1W",
+        "30M": "30M"
+      },
+      "marketInfo": {
+        "txns24h": "24h Txns",
+        "holders": "Người nắm giữ",
+        "volume24h": "24h Khối lượng",
+        "totalSupply": "Tổng cung",
+        "marketCap": "Vốn Hoá Thị Trường",
+        "holderSections": {
+          "tableHeader": {
+            "ratio": "Tỷ lệ",
+            "position": "Vị trí",
+            "address": "Địa chỉ"
+          },
+          "top100HoldersRatio": "Tỷ lệ 100 Người Giữ Hàng Đầu",
+          "top10HoldersRatio": "Tỷ lệ 10 người nắm giữ hàng đầu"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "buy": "Mua",
+            "time": "Thời gian",
+            "addresses": "Địa chỉ",
+            "min": "min",
+            "hour": "Giờ",
+            "all": "Tất cả",
+            "volume": "Khối lượng",
+            "type": "Loại",
+            "sell": "Bán",
+            "address": "Địa chỉ",
+            "tradingCount": "Số lượng giao dịch",
+            "price": "Giá",
+            "value": "Giá trị",
+            "qnt": "Qnt"
+          }
+        },
+        "activity": "Hoạt động",
+        "summary": "Dữ liệu Tóm tắt",
+        "details": "Chi tiết",
+        "empty": "Không có dữ liệu"
       }
     },
     "backupPrivateKey": {
@@ -2086,6 +2152,11 @@
         "disconnect": "Ngắt kết nối",
         "favorite": "Yêu thích",
         "contentModeDesktop": "Yêu cầu Trang Web Máy Tính"
+      },
+      "HyperliquidInvitePopup": {
+        "btn": "Tham gia ngay",
+        "title": "Chương trình Giới thiệu Hyperliquid",
+        "desc": "Tham gia ngay bằng mã của Rabby để nhận <1>giảm giá 4%</1> trên khoản phí Hyperliquid của bạn."
       }
     },
     "browserManage": {
@@ -2118,7 +2189,10 @@
     "defiDetail": {
       "viewSiteInApp": "Xem trong Dapp",
       "viewSiteInWebsite": "Xem trên Website",
-      "appChain": "Trên tài khoản {{chain}}"
+      "appChain": "Trên tài khoản {{chain}}",
+      "dappActions": {
+        "queueDescription": "Rút tiền hiện tại sẽ vào hàng chờ. Khi được xử lý, bạn có thể rút về ví của mình."
+      }
     },
     "component": {
       "ChainSelector": {
@@ -2198,6 +2272,9 @@
         "setupWalletFirst": "Vui lòng hoàn tất việc thiết lập ví trước.",
         "unlockWalletFirst": "Vui lòng mở khóa ứng dụng để truy cập liên kết."
       }
+    },
+    "perpsHistory": {
+      "title": "Lịch sử"
     }
   },
   "component": {
@@ -2388,9 +2465,11 @@
       "feedbackInput": {
         "placeholder": "Mô tả vấn đề"
       },
-      "feedbackLabel": "Mô tả lỗi:",
       "submitButtonText": "Gửi đi",
-      "title": "Ảnh chụp màn hình để báo cáo lỗi"
+      "switchArea": {
+        "skipText": "Bỏ qua thông báo này trong 1 ngày"
+      },
+      "title": "Chụp màn hình để Báo cáo Lỗi"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "Mô tả:",
@@ -2400,7 +2479,10 @@
       "issueDescription": "Đây là vấn đề bạn đã báo cáo:"
     },
     "submitFeedbackSuccessModal": {
-      "desc": "Gửi thành công"
+      "desc": "Gửi thành công!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Tôi hiểu rồi"
     }
   },
   "constant": {

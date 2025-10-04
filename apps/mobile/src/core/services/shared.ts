@@ -40,10 +40,12 @@ import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
 import { OfflineChainService } from './offlineChain';
 import { BrowserService } from './browserService';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
+import { TrezorKeyring } from '../keyring-bridge/trezor/trezor-keyring';
 import { MetamaskModeService } from './metamaskModeService';
 import { SyncChainService } from './syncChainService';
 import { PerpsService } from './perpsService';
-import { matomoRequestEvent, setPreferenceServiceRef } from '@/utils/analytics';
+import { setPreferenceServiceRef } from '@/utils/analytics';
+import { CurrencyService } from './currencyService';
 
 migrateAppStorage(appStorage);
 
@@ -80,6 +82,7 @@ const keyringClasses = [
   GnosisKeyring,
   SimpleKeyring,
   HDKeyring,
+  TrezorKeyring,
 ] as any;
 
 export const contactService = new ContactBookService({
@@ -227,6 +230,10 @@ export const perpsService = new PerpsService({
   storageAdapter: appStorage,
 });
 
+export const currencyService = new CurrencyService({
+  storageAdapter: appStorage,
+});
+
 migrateServices({
   contactBook: contactService,
   dapps: dappService,
@@ -247,4 +254,5 @@ migrateServices({
   metamaskMode: metamaskModeService,
   syncChain: syncChainService,
   perps: perpsService,
+  currency: currencyService,
 });
