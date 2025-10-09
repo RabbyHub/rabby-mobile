@@ -402,7 +402,7 @@ const Top5Pools = ({
                   />
                   <Pressable
                     style={styles.projectNameContainer}
-                    onPress={() => handleCopyAddress(item?.project?.id)}>
+                    onPress={() => handleCopyAddress(item?.pool_id)}>
                     <Text style={styles.projectName}>
                       {item?.project?.name}
                     </Text>

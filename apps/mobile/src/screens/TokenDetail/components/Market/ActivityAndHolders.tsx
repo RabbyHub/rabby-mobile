@@ -25,7 +25,7 @@ const ActivityAndHolders = ({
   hideActivity?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const [activeTabKey, setActiveTabKey] = useState<TabKey>(TabKey.pools);
+  const [activeTabKey, setActiveTabKey] = useState<TabKey>(TabKey.activity);
   const { t } = useTranslation();
 
   const { summaryData, detailsData, isHolderEmpty } = useHolderInfo(
@@ -45,19 +45,41 @@ const ActivityAndHolders = ({
       <View style={styles.container}>
         <View style={styles.header}>
           <Text
-            style={[styles.headerText, styles.activeText]}
+            style={[
+              styles.headerText,
+              activeTabKey === TabKey.activity && styles.activeText,
+            ]}
             onPress={() => setActiveTabKey(TabKey.holders)}>
             {t('page.tokenDetail.marketInfo.holders')}
           </Text>
+          <Text
+            style={[
+              styles.headerText,
+              activeTabKey === TabKey.pools && styles.activeText,
+            ]}
+            onPress={() => setActiveTabKey(TabKey.pools)}>
+            {t('page.tokenDetail.marketInfo.pools')}
+          </Text>
         </View>
         <View style={styles.content}>
-          <View style={[styles.hideContent, styles.visibleContent]}>
+          <View
+            style={[
+              styles.hideContent,
+              activeTabKey === TabKey.holders && styles.visibleContent,
+            ]}>
             <Holder
               top10ratio={summaryData?.ratio_top10 || 0}
               top100ratio={summaryData?.ratio_top100 || 0}
               data={detailsData?.data_list || []}
               isEmpty={isHolderEmpty}
             />
+          </View>
+          <View
+            style={[
+              styles.hideContent,
+              activeTabKey === TabKey.pools && styles.visibleContent,
+            ]}>
+            <Pools tokenId={tokenId} chainId={chainId} />
           </View>
         </View>
       </View>
