@@ -1533,7 +1533,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       // ...makeDebugBorder(),
-      width: '100%',
+      width: 150,
       maxWidth: 150,
     },
     tokenNameBoxWithLogos: {
@@ -1556,6 +1556,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
       fontWeight: '700',
       lineHeight: 20,
+      width: '100%',
       fontFamily: 'SF Pro Rounded',
     },
     chainLogo: {
