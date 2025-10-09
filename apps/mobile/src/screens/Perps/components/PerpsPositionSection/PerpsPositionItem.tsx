@@ -103,7 +103,9 @@ export const PerpsPositionItem: React.FC<{
               {t('page.perpsDetail.PerpsPosition.entryPrice')}
             </Text>
             <Text style={styles.dataValue}>
-              {splitNumberByStep(Number(entryPx).toFixed(2))}
+              {splitNumberByStep(
+                Number(entryPx).toFixed(marketData?.pxDecimals || 2),
+              )}
             </Text>
           </View>
 
@@ -118,7 +120,9 @@ export const PerpsPositionItem: React.FC<{
               {t('page.perpsDetail.PerpsPosition.markPrice')}
             </Text>
             <Text style={styles.dataValue}>
-              {splitNumberByStep(Number(markPrice).toFixed(2))}
+              {splitNumberByStep(
+                Number(markPrice).toFixed(marketData?.pxDecimals || 2),
+              )}
             </Text>
           </View>
 
@@ -133,7 +137,9 @@ export const PerpsPositionItem: React.FC<{
               {t('page.perpsDetail.PerpsPosition.liqPrice')}
             </Text>
             <Text style={styles.dataValue}>
-              {splitNumberByStep(Number(liquidationPx).toFixed(2))}
+              {splitNumberByStep(
+                Number(liquidationPx).toFixed(marketData?.pxDecimals || 2),
+              )}
             </Text>
           </View>
         </View>

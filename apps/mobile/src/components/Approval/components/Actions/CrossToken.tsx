@@ -196,8 +196,8 @@ const Swap = ({
             id="1105"
             dangerText={
               <>
-                <Values.Percentage value={usdValuePercentage!} /> (
-                <Text>{formatUsdValue(usdValueDiff || '')})</Text>
+                <Values.Percentage value={usdValuePercentage!} />
+                <Text>({formatUsdValue(usdValueDiff || '')})</Text>
               </>
             }
             warningText={
@@ -206,9 +206,8 @@ const Swap = ({
                   style={commonStyle.subRowText}
                   value={usdValuePercentage!}
                 />{' '}
-                (
                 <Text style={commonStyle.subRowText}>
-                  {formatUsdValue(usdValueDiff || '')})
+                  ({formatUsdValue(usdValueDiff || '')})
                 </Text>
               </>
             }
