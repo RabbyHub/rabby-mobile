@@ -73,6 +73,7 @@ import { useHyperliquidReferral } from '../../hooks/useHyperliquidReferral';
 import { useAccounts } from '@/hooks/account';
 import { getOnlineConfig } from '@/core/config/online';
 import { WebviewError } from './WebivewError';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
 
 type BrowserTabProps = {
   origin: string;
@@ -749,6 +750,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         //     handleViewShot(nativeEvent.url);
                         //   }, 200);
                         // }
+                      }}
+                      onFileDownload={e => {
+                        Linking.openURL(e.nativeEvent.downloadUrl);
                       }}
                       onShouldStartLoadWithRequest={nativeEvent => {
                         const origin = safeGetOrigin(nativeEvent.url);
