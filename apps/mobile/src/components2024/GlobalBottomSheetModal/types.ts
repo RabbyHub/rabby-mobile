@@ -125,6 +125,7 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
      * @default 'BottomSheetView'
      */
     rootViewType?: 'View' | 'BottomSheetView' | 'BottomSheetScrollView';
+    rootViewStyle?: RNViewProps['style'];
   };
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,

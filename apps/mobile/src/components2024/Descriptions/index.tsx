@@ -28,7 +28,7 @@ export const Descriptions: React.FC<{
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
+    <AutoLockView as="View" style={styles.container}>
       {!!logoDom && logoDom}
       {!!title && <Text style={[styles.title, titleStyle]}>{title}</Text>}
       <View style={styles.sectionContainer}>

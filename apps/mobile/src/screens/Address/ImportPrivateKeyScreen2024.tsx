@@ -196,26 +196,30 @@ export const ImportPrivateKeyScreen2024 = () => {
             onPress={() => {
               const modalId = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.DESCRIPTION,
-                title: "What's a private key",
+                title: t('page.newAddress.whatIsPrivateKey.title'),
                 sections: [
                   {
-                    description:
-                      'A private key is a string of letters and numbers used to access and control your wallet. You can use it to recover your wallet on any device.',
+                    description: t(
+                      'page.newAddress.whatIsPrivateKey.description1',
+                    ),
                   },
                   {
-                    title: 'Backup',
-                    description:
-                      'If you lose your private key, you won’t be able to restore your wallet.',
+                    title: t('page.newAddress.whatIsPrivateKey.title2'),
+                    description: t(
+                      'page.newAddress.whatIsPrivateKey.description2',
+                    ),
                   },
                   {
-                    title: 'Never Share It',
-                    description:
-                      'Never share your private key—anyone with access to it can control your funds.',
+                    title: t('page.newAddress.whatIsPrivateKey.title3'),
+                    description: t(
+                      'page.newAddress.whatIsPrivateKey.description3',
+                    ),
                   },
                   {
-                    title: 'Safety',
-                    description:
-                      'Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.',
+                    title: t('page.newAddress.whatIsPrivateKey.title4'),
+                    description: t(
+                      'page.newAddress.whatIsPrivateKey.description4',
+                    ),
                   },
                 ],
                 bottomSheetModalProps: {
@@ -224,7 +228,9 @@ export const ImportPrivateKeyScreen2024 = () => {
                 },
                 nextButtonProps: {
                   title: (
-                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                    <Text style={styles.modalNextButtonText}>
+                      {t('page.newAddress.whatIsPrivateKey.ButtonGotIt')}
+                    </Text>
                   ),
                   titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
                   onPress: () => {
@@ -233,7 +239,9 @@ export const ImportPrivateKeyScreen2024 = () => {
                 },
               });
             }}>
-            <Text style={styles.tip}>What's a private key</Text>
+            <Text style={styles.tip}>
+              {t('page.newAddress.whatIsPrivateKey.title')}
+            </Text>
             <HelpIcon style={styles.tipIcon} />
           </Pressable>
         </View>

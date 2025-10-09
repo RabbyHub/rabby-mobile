@@ -1,4 +1,4 @@
-import { MODAL_NAMES } from './types';
+import { CreateParams, MODAL_NAMES } from './types';
 import { Approval } from '@/components//Approval';
 import { SwitchAddress } from '@/components/CommonPopup/SwitchAddress';
 import { SwitchChain } from '@/components/CommonPopup/SwitchChain';
@@ -55,112 +55,215 @@ import { AddressHightDesc } from '../AddressHightDesc';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
-type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
-export const SNAP_POINTS: SnapPoints = {
-  [MODAL_NAMES.APPROVAL]: ['100%'],
-  [MODAL_NAMES.CANCEL_APPROVAL]: [288],
-  [MODAL_NAMES.SWITCH_ADDRESS]: ['45%'],
-  [MODAL_NAMES.SWITCH_CHAIN]: ['45%'],
-  [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
-  [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: ['80%'],
-  [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: ['80%'],
-  // [MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL]: ['80%'],
-  [MODAL_NAMES.COPY_TRADING_EARNINGS]: ['80%'],
-  [MODAL_NAMES.CANCEL_CONNECT]: [244],
-  [MODAL_NAMES.SELECT_CHAIN]: ['80%'],
-  [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
-  [MODAL_NAMES.VIEW_RAW_DETAILS]: ['80%'],
-  [MODAL_NAMES.CANCEL_TX_POPUP]: [272],
-  [MODAL_NAMES.CONNECT_LEDGER]: ['95%'],
-  [MODAL_NAMES.SETTING_LEDGER]: ['85%'],
-  [MODAL_NAMES.SETTING_HDKEYRING]: ['85%'],
-  [MODAL_NAMES.COLLECTION_NFTS]: [422],
-  [MODAL_NAMES.CONNECT_KEYSTONE]: ['95%'],
-  [MODAL_NAMES.SETTING_KEYSTONE]: ['65%'],
-  [MODAL_NAMES.CONNECT_ONEKEY]: ['95%'],
-  [MODAL_NAMES.SETTING_ONEKEY]: ['55%'],
-  [MODAL_NAMES.SETTING_TREZOR]: ['85%'],
-  [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
-  [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: ['80%'],
-  [MODAL_NAMES.TIP_PRIVACY_POLICY]: ['80%'],
-  [MODAL_NAMES.TIP_TERM_OF_USE]: ['80%'],
-  [MODAL_NAMES.ONEKEY_INPUT_PIN]: [540],
-  [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
-  [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: ['95%'],
-  [MODAL_NAMES.AUTHENTICATION]: undefined,
-  [MODAL_NAMES.CONFIRM_ADDRESS]: undefined,
-  [MODAL_NAMES.SELECT_CEX]: ['80%'],
-  [MODAL_NAMES.NFT_DETAIL]: ['85%'],
-  [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: [526],
-  [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: ['95%'],
-  [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: [],
-  [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]: [],
-  [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
-  [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: [508],
-  [MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG]: [MODAL_MAX_HEIGHT],
-  [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: [384],
-  [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: [492],
-  [MODAL_NAMES.DESCRIPTION]: [674],
-  [MODAL_NAMES.ADDRESS_HIGHT_DESC]: [273],
-  [MODAL_NAMES.RESTORE_FROM_CLOUD]: ['85%'],
-  [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: undefined,
-  [MODAL_NAMES.ADDRESS_DETAIL]: [MODAL_MAX_HEIGHT],
-  [MODAL_NAMES.IMPORT_MORE_ADDRESS]: [MODAL_MAX_HEIGHT],
-  [MODAL_NAMES.NO_LONGER_SUPPORTS]: ['85%'],
-  [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: undefined,
-};
-
-export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
-  [MODAL_NAMES.APPROVAL]: Approval,
-  // [MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL]: CopyTradingTokenDetail,
-  [MODAL_NAMES.COPY_TRADING_EARNINGS]: EarningDialog,
-  [MODAL_NAMES.CANCEL_APPROVAL]: CancelApproval,
-  [MODAL_NAMES.SWITCH_ADDRESS]: SwitchAddress,
-  [MODAL_NAMES.SWITCH_CHAIN]: SwitchChain,
-  [MODAL_NAMES.CANCEL_CONNECT]: CancelConnect,
-  [MODAL_NAMES.SELECT_CHAIN]: SelectChain,
-  [MODAL_NAMES.SIMPLE_CONFIRM]: SimpleConfirmInner,
-  [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
-  [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: SelectChainWithSummary,
-  [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: SelectChainWithDistribute,
-  [MODAL_NAMES.COLLECTION_NFTS]: CollectionNFTs,
-  [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
-  [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
-  [MODAL_NAMES.CONNECT_LEDGER]: ConnectLedger,
-  [MODAL_NAMES.SETTING_LEDGER]: SettingLedger,
-  [MODAL_NAMES.CONNECT_KEYSTONE]: ConnectKeystone,
-  [MODAL_NAMES.SETTING_KEYSTONE]: SettingKeystone,
-  [MODAL_NAMES.CONNECT_ONEKEY]: ConnectOneKey,
-  [MODAL_NAMES.SETTING_ONEKEY]: SettingOneKey,
-  [MODAL_NAMES.SETTING_TREZOR]: SettingTrezor,
-  [MODAL_NAMES.SETTING_HDKEYRING]: SettingHDKeyring,
-  [MODAL_NAMES.ONEKEY_INPUT_PIN]: OneKeyInputPin,
-  [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: OneKeyInputPassphrase,
-  [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: OneKeyPinOrPassphrase,
-  [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: SeedPhraseBackupToCloud,
-  [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: AddAddressSelectMethod,
-  [MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG]: NotMatterAddressDialog,
-  [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: FundYourWallet,
-  [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: AddWhitelistSelectMethod,
-  [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: SeedPhraseManualBackup,
-  [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: SeedPhraseRestoreFromCloud2024,
-  [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]:
-    SeedPhraseRestoreFromCloud2024,
-  [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: BackupNotAvailableScreen,
-  [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
-  [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,
-  [MODAL_NAMES.TIP_PRIVACY_POLICY]: TipPrivacyPolicyInner,
-  [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
-  [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal2024,
-  [MODAL_NAMES.CONFIRM_ADDRESS]: ConfirmAddress,
-  [MODAL_NAMES.SELECT_CEX]: SelectCex,
-  [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
-  [MODAL_NAMES.DESCRIPTION]: Descriptions,
-  [MODAL_NAMES.ADDRESS_HIGHT_DESC]: AddressHightDesc,
-  [MODAL_NAMES.RESTORE_FROM_CLOUD]: RestoreFromCloud2024,
-  [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: AddressQuickManager,
-  [MODAL_NAMES.ADDRESS_DETAIL]: AddressDetail,
-  [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ImportMoreAddress,
-  [MODAL_NAMES.NO_LONGER_SUPPORTS]: NoLongerSupports,
-  [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: BatchRevokeErrorReason,
+export const MODAL_CONFIGS: Record<
+  MODAL_NAMES,
+  {
+    snapPoints: (string | number)[] | undefined;
+    Component: React.FC<any>;
+    globalModalPropsPreset?: CreateParams<MODAL_NAMES>['bottomSheetModalProps'];
+  }
+> = {
+  [MODAL_NAMES.APPROVAL]: { snapPoints: ['100%'], Component: Approval },
+  [MODAL_NAMES.CANCEL_APPROVAL]: {
+    snapPoints: [288],
+    Component: CancelApproval,
+  },
+  [MODAL_NAMES.SWITCH_ADDRESS]: {
+    snapPoints: ['45%'],
+    Component: SwitchAddress,
+  },
+  [MODAL_NAMES.SWITCH_CHAIN]: { snapPoints: ['45%'], Component: SwitchChain },
+  [MODAL_NAMES.SELECT_SORTED_CHAIN]: {
+    snapPoints: ['80%'],
+    Component: SelectSortedChain,
+  },
+  [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: {
+    snapPoints: ['80%'],
+    Component: SelectChainWithSummary,
+  },
+  [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: {
+    snapPoints: ['80%'],
+    Component: SelectChainWithDistribute,
+  },
+  [MODAL_NAMES.COPY_TRADING_EARNINGS]: {
+    snapPoints: ['80%'],
+    Component: EarningDialog,
+  },
+  [MODAL_NAMES.CANCEL_CONNECT]: { snapPoints: [244], Component: CancelConnect },
+  [MODAL_NAMES.SELECT_CHAIN]: { snapPoints: ['80%'], Component: SelectChain },
+  [MODAL_NAMES.SIMPLE_CONFIRM]: {
+    snapPoints: [229],
+    Component: SimpleConfirmInner,
+  },
+  [MODAL_NAMES.VIEW_RAW_DETAILS]: {
+    snapPoints: ['80%'],
+    Component: ViewRawDetail,
+  },
+  [MODAL_NAMES.CANCEL_TX_POPUP]: {
+    snapPoints: [272],
+    Component: CancelTxPopup,
+  },
+  [MODAL_NAMES.CONNECT_LEDGER]: {
+    snapPoints: ['95%'],
+    Component: ConnectLedger,
+  },
+  [MODAL_NAMES.SETTING_LEDGER]: {
+    snapPoints: ['85%'],
+    Component: SettingLedger,
+  },
+  [MODAL_NAMES.SETTING_HDKEYRING]: {
+    snapPoints: ['85%'],
+    Component: SettingHDKeyring,
+  },
+  [MODAL_NAMES.COLLECTION_NFTS]: {
+    snapPoints: [422],
+    Component: CollectionNFTs,
+  },
+  [MODAL_NAMES.CONNECT_KEYSTONE]: {
+    snapPoints: ['95%'],
+    Component: ConnectKeystone,
+  },
+  [MODAL_NAMES.SETTING_KEYSTONE]: {
+    snapPoints: ['65%'],
+    Component: SettingKeystone,
+  },
+  [MODAL_NAMES.CONNECT_ONEKEY]: {
+    snapPoints: ['95%'],
+    Component: ConnectOneKey,
+  },
+  [MODAL_NAMES.SETTING_ONEKEY]: {
+    snapPoints: ['55%'],
+    Component: SettingOneKey,
+  },
+  [MODAL_NAMES.SETTING_TREZOR]: {
+    snapPoints: ['85%'],
+    Component: SettingTrezor,
+  },
+  [MODAL_NAMES.ONEKEY_INPUT_PIN]: {
+    snapPoints: [540],
+    Component: OneKeyInputPin,
+  },
+  [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: {
+    snapPoints: [540],
+    Component: OneKeyInputPassphrase,
+  },
+  [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: {
+    snapPoints: ['95%'],
+    Component: OneKeyPinOrPassphrase,
+  },
+  [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: {
+    snapPoints: [526],
+    Component: SeedPhraseBackupToCloud,
+  },
+  [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: {
+    snapPoints: [508],
+    Component: AddAddressSelectMethod,
+  },
+  [MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: NotMatterAddressDialog,
+    globalModalPropsPreset: {
+      rootViewType: 'View',
+      rootViewStyle: { height: '100%' },
+      enablePanDownToClose: true,
+      enableContentPanningGesture: true,
+    },
+  },
+  [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: {
+    snapPoints: [384],
+    Component: FundYourWallet,
+  },
+  [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: {
+    snapPoints: [492],
+    Component: AddWhitelistSelectMethod,
+  },
+  [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: {
+    snapPoints: ['95%'],
+    Component: SeedPhraseManualBackup,
+  },
+  [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: {
+    snapPoints: [],
+    Component: SeedPhraseRestoreFromCloud2024,
+  },
+  [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]: {
+    snapPoints: [],
+    Component: SeedPhraseRestoreFromCloud2024,
+  },
+  [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: {
+    snapPoints: [348],
+    Component: BackupNotAvailableScreen,
+  },
+  [MODAL_NAMES.TIP_UPGRADE]: {
+    snapPoints: ['50%'],
+    Component: TipUpgradeModalInner,
+  },
+  [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: {
+    snapPoints: ['80%'],
+    Component: MarkdownInWebViewInner,
+  },
+  [MODAL_NAMES.TIP_PRIVACY_POLICY]: {
+    snapPoints: ['80%'],
+    Component: TipPrivacyPolicyInner,
+  },
+  [MODAL_NAMES.TIP_TERM_OF_USE]: {
+    snapPoints: ['80%'],
+    Component: TipTermOfUseModalInner,
+  },
+  [MODAL_NAMES.AUTHENTICATION]: {
+    snapPoints: undefined,
+    Component: AuthenticationModal2024,
+  },
+  [MODAL_NAMES.CONFIRM_ADDRESS]: {
+    snapPoints: undefined,
+    Component: ConfirmAddress,
+  },
+  [MODAL_NAMES.SELECT_CEX]: { snapPoints: ['80%'], Component: SelectCex },
+  [MODAL_NAMES.NFT_DETAIL]: {
+    snapPoints: ['85%'],
+    Component: NFTDetailPopupInner,
+  },
+  [MODAL_NAMES.DESCRIPTION]: {
+    snapPoints: [674],
+    Component: Descriptions,
+    globalModalPropsPreset: {
+      rootViewType: 'View',
+      rootViewStyle: { height: '100%' },
+      enableContentPanningGesture: true,
+      enablePanDownToClose: true,
+    },
+  },
+  [MODAL_NAMES.ADDRESS_HIGHT_DESC]: {
+    snapPoints: [273],
+    Component: AddressHightDesc,
+  },
+  [MODAL_NAMES.RESTORE_FROM_CLOUD]: {
+    snapPoints: ['85%'],
+    Component: RestoreFromCloud2024,
+    globalModalPropsPreset: {
+      rootViewType: 'View',
+      rootViewStyle: { height: '100%' },
+      enableContentPanningGesture: true,
+      enablePanDownToClose: true,
+    },
+  },
+  [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: {
+    snapPoints: undefined,
+    Component: AddressQuickManager,
+  },
+  [MODAL_NAMES.ADDRESS_DETAIL]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: AddressDetail,
+  },
+  [MODAL_NAMES.IMPORT_MORE_ADDRESS]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: ImportMoreAddress,
+  },
+  [MODAL_NAMES.NO_LONGER_SUPPORTS]: {
+    snapPoints: ['85%'],
+    Component: NoLongerSupports,
+  },
+  [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: {
+    snapPoints: undefined,
+    Component: BatchRevokeErrorReason,
+  },
 };
