@@ -481,7 +481,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
   },
   tableHeaderItem: {
     fontSize: 12,
@@ -666,12 +665,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: 12,
-    marginTop: 12,
+    marginTop: 0,
   },
   details: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 12,
+    gap: 4,
   },
   firstItem: {
     flex: 0,
@@ -683,6 +682,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     overflow: 'hidden',
     paddingVertical: 12,
     paddingHorizontal: 12,
+    paddingBottom: 2,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
