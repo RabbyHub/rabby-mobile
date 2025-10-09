@@ -31,7 +31,7 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   getTokenSymbol,
@@ -831,21 +831,22 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   // isSwapTo && { paddingRight: 0, paddingVertical: 0 },
                   (disabled || lightDisable) && styles.tokenItemDisabled,
                 ]}>
-                <View style={styles.tokenLeft}>
+                <View style={[styles.tokenLeft, styles.tokenLeftLoaded]}>
                   <AssetAvatar
                     logo={token?._logo}
                     size={40}
                     chain={token?._chain}
                     chainSize={18}
                     innerChainStyle={styles.chainLogo}
+                    style={styles.tokenAvatarCol}
                   />
-                  <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
+                  <View style={[styles.tokenInfoCol, styles.tokenInfoColLeft]}>
                     <View style={styles.tokenNameBox}>
                       <Text
                         style={styles.tokenName}
                         ellipsizeMode="tail"
                         numberOfLines={1}>
-                        {ellipsisOverflowedText(token?._symbol, 15)}
+                        {token?._symbol}
                       </Text>
                       {isManualFold && <TextBadge type="folded" />}
                       {needToTokenMarketInfo && (
@@ -950,33 +951,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         query,
         needToTokenMarketInfo,
         type,
-        styles.tokenItem,
-        styles.tokenItemDisabled,
-        styles.tokenLeft,
-        styles.chainLogo,
-        styles.tokenInfoCol,
-        styles.tokenNameBox,
-        styles.tokenName,
-        styles.tokenPrice,
-        styles.tokenInfoColRight,
-        styles.tardeLevel,
-        styles.tardeLevelText,
-        styles.tokenRight,
-        styles.tokenHeaderNetworth,
-        styles.tips,
-        styles.tokenHeaderAmount,
-        styles.textSecondary,
-        styles.favorite,
-        styles.scamHeader,
-        styles.tokenRowWrap,
-        styles.tokenRowTokenWrap,
-        styles.tokenRowTokenInner,
-        styles.tokenRowTokenInnerSmallToken,
-        styles.actionText,
-        styles.arrow,
-        styles.tokenRowUsdValueWrap,
-        styles.tokenRowUsdValue,
-        styles.rightSlot,
+        styles,
         isBridgeTo,
         colors2024,
         t,
@@ -1520,12 +1495,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       flex: 1,
       overflow: 'hidden',
+      // ...makeDebugBorder('yellow'),
+    },
+    tokenLeftLoaded: {
+      flexShrink: 1,
+      width: '100%',
+      flexWrap: 'nowrap',
     },
     tokenRight: {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      flex: 0,
+      flexShrink: 0,
+    },
+    tokenAvatarCol: {
+      flexShrink: 0,
+    },
+    tokenInfoColLeft: {
+      width: '100%',
+      flexShrink: 1,
+      // ...makeDebugBorder('red'),
     },
     tokenInfoCol: {
       flexDirection: 'column',
@@ -1536,6 +1525,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tokenNameBox: {
       flexDirection: 'row',
       alignItems: 'center',
+      // ...makeDebugBorder(),
+      width: 150,
+      maxWidth: 150,
     },
     tokenName: {
       marginRight: 8,
@@ -1544,7 +1536,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
       fontWeight: '700',
       lineHeight: 20,
-      maxWidth: 150,
+      width: '100%',
       fontFamily: 'SF Pro Rounded',
     },
     chainLogo: {
