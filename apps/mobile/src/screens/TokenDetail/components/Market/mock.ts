@@ -117,6 +117,7 @@ export const addData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xaaa111',
     time_at: 1696040000,
     action: 'add',
+    usd_value: 2660,
     tokens: [
       { id: 'eth', amount: 1.2, symbol: 'ETH', price: 1800, usd_value: 2160 },
       { id: 'usdc', amount: 500, symbol: 'USDC', price: 1, usd_value: 500 },
@@ -127,6 +128,7 @@ export const addData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xaaa112',
     time_at: 1696041000,
     action: 'add',
+    usd_value: 1350,
     tokens: [
       { id: 'btc', amount: 0.05, symbol: 'BTC', price: 27000, usd_value: 1350 },
     ],
@@ -136,6 +138,7 @@ export const addData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xaaa113',
     time_at: 1696042000,
     action: 'add',
+    usd_value: 460,
     tokens: [
       { id: 'sol', amount: 10, symbol: 'SOL', price: 20, usd_value: 200 },
       { id: 'avax', amount: 15, symbol: 'AVAX', price: 12, usd_value: 180 },
@@ -147,6 +150,7 @@ export const addData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xaaa114',
     time_at: 1696043000,
     action: 'add',
+    usd_value: 420,
     tokens: [
       { id: 'bnb', amount: 2, symbol: 'BNB', price: 210, usd_value: 420 },
     ],
@@ -156,6 +160,7 @@ export const addData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xaaa115',
     time_at: 1696044000,
     action: 'add',
+    usd_value: 105,
     tokens: [
       { id: 'arb', amount: 50, symbol: 'ARB', price: 1.2, usd_value: 60 },
       { id: 'op', amount: 30, symbol: 'OP', price: 1.5, usd_value: 45 },
@@ -170,6 +175,7 @@ export const removeData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xbbb111',
     time_at: 1696045000,
     action: 'remove',
+    usd_value: 546,
     tokens: [
       { id: 'eth', amount: 0.3, symbol: 'ETH', price: 1820, usd_value: 546 },
     ],
@@ -179,6 +185,7 @@ export const removeData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xbbb112',
     time_at: 1696046000,
     action: 'remove',
+    usd_value: 1200,
     tokens: [
       { id: 'usdt', amount: 1000, symbol: 'USDT', price: 1, usd_value: 1000 },
       { id: 'dai', amount: 200, symbol: 'DAI', price: 1, usd_value: 200 },
@@ -189,6 +196,7 @@ export const removeData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xbbb113',
     time_at: 1696047000,
     action: 'remove',
+    usd_value: 470,
     tokens: [
       { id: 'link', amount: 40, symbol: 'LINK', price: 6.5, usd_value: 260 },
       { id: 'dot', amount: 25, symbol: 'DOT', price: 4.2, usd_value: 105 },
@@ -200,6 +208,7 @@ export const removeData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xbbb114',
     time_at: 1696048000,
     action: 'remove',
+    usd_value: 75,
     tokens: [
       { id: 'ftm', amount: 300, symbol: 'FTM', price: 0.25, usd_value: 75 },
     ],
@@ -209,6 +218,7 @@ export const removeData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xbbb115',
     time_at: 1696049000,
     action: 'remove',
+    usd_value: 223,
     tokens: [
       { id: 'gmx', amount: 5, symbol: 'GMX', price: 35, usd_value: 175 },
       { id: 'uni', amount: 12, symbol: 'UNI', price: 4, usd_value: 48 },
@@ -223,6 +233,7 @@ export const mixedData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xccc111',
     time_at: 1696050000,
     action: 'add',
+    usd_value: 600,
     tokens: [
       {
         id: 'doge',
@@ -238,6 +249,7 @@ export const mixedData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xccc112',
     time_at: 1696051000,
     action: 'remove',
+    usd_value: 17,
     tokens: [
       {
         id: 'shib',
@@ -260,6 +272,7 @@ export const mixedData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xccc113',
     time_at: 1696052000,
     action: 'add',
+    usd_value: 2696.5,
     tokens: [
       {
         id: 'steth',
@@ -283,6 +296,7 @@ export const mixedData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xccc114',
     time_at: 1696053000,
     action: 'remove',
+    usd_value: 80,
     tokens: [
       { id: 'lido', amount: 50, symbol: 'LDO', price: 1.6, usd_value: 80 },
     ],
@@ -292,6 +306,7 @@ export const mixedData: LiquidityPoolHistoryItem[] = [
     tx_id: '0xccc115',
     time_at: 1696054000,
     action: 'add',
+    usd_value: 190,
     tokens: [
       { id: 'crv', amount: 300, symbol: 'CRV', price: 0.4, usd_value: 120 },
       { id: 'bal', amount: 20, symbol: 'BAL', price: 3.5, usd_value: 70 },

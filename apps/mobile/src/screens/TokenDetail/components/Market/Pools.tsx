@@ -35,11 +35,15 @@ import AddressView from './AddressView';
 import { formatPrice } from '@/utils/number';
 import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
-import { pools as mockPools } from './mock';
+import { pools as mockPools, addData, removeData, mixedData } from './mock';
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import { trigger } from 'react-native-haptic-feedback';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
+import { getChain } from '@/utils/chain';
+import { openTxExternalUrl } from '@/utils/transaction';
+import { toast } from '@/components2024/Toast';
 
 interface PoolsProps {
   tokenId: string;
@@ -53,8 +57,8 @@ const enum TabKey {
 
 const enum DetailsTabKey {
   all = 'all',
-  buy = 'add',
-  sell = 'remove',
+  add = 'add',
+  remove = 'remove',
 }
 
 const LiquidityDetail = ({
@@ -74,22 +78,47 @@ const LiquidityDetail = ({
       nextCursor?: string;
       hasMore: boolean;
     }) => {
-      const res = await openapi.getLiquidityPoolHistoryList({
-        token_id: tokenId,
-        chain_id: chainId,
-        action: activeTab === DetailsTabKey.all ? undefined : activeTab,
-        limit: 20,
-        cursor: d?.nextCursor,
-      });
-      const page = res?.pagination || {};
-      const merged = [...(res?.data_list || [])];
+      // const res = await openapi.getLiquidityPoolHistoryList({
+      //   token_id: tokenId,
+      //   chain_id: chainId,
+      //   action: activeTab === DetailsTabKey.all ? undefined : activeTab,
+      //   limit: 20,
+      //   cursor: d?.nextCursor,
+      // });
+      // const page = res?.pagination || {};
+      // const merged = [...(res?.data_list || [])];
+      // 使用mock数据替代API调用
+      const allMockData = [...mixedData, ...addData, ...removeData];
+
+      // 根据activeTab过滤数据
+      let filteredData = allMockData;
+      if (activeTab === DetailsTabKey.add) {
+        filteredData = allMockData.filter(item => item.action === 'add');
+      } else if (activeTab === DetailsTabKey.remove) {
+        filteredData = allMockData.filter(item => item.action === 'remove');
+      }
+
+      // 模拟分页逻辑
+      const pageSize = 20;
+      const currentPage = d?.nextCursor ? parseInt(d.nextCursor) : 0;
+      const startIndex = currentPage * pageSize;
+      const endIndex = startIndex + pageSize;
+      const pageData = filteredData.slice(startIndex, endIndex);
+
+      // 模拟分页信息
+      const hasMore = endIndex < filteredData.length;
+      const nextCursor = hasMore ? (currentPage + 1).toString() : undefined;
       return {
-        list: merged,
-        nextCursor: page?.next_cursor,
-        hasMore: !!page?.has_next,
+        // list: merged,
+        // nextCursor: page?.next_cursor,
+        // hasMore: !!page?.has_next,
+        list: pageData,
+        nextCursor,
+        hasMore,
       };
     },
-    [activeTab, chainId, tokenId],
+    // [activeTab, chainId, tokenId],
+    [activeTab],
   );
 
   const { data, loadMore, reloadAsync, loading, loadingMore } =
@@ -134,34 +163,33 @@ const LiquidityDetail = ({
     reloadAsync();
   }, [activeTab, reloadAsync]);
 
+  const onOpenTxHash = useCallback(
+    (txHash?: string) => {
+      const info = typeof chainId === 'string' ? getChain(chainId) : chainId;
+
+      if (info?.scanLink) {
+        openTxExternalUrl({ chain: info, txHash });
+      } else {
+        toast.error('Unknown chain');
+      }
+    },
+    [chainId],
+  );
+
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.tableHeader}>
-        <Text style={styles.tableHeaderItem}>
-          {t('page.tokenDetail.marketInfo.activitySections.tableHeader.type')}|
-          {t('page.tokenDetail.marketInfo.activitySections.tableHeader.time')}
-        </Text>
-        <Text style={styles.tableHeaderItem}>
-          {t('page.tokenDetail.marketInfo.activitySections.tableHeader.price')}
-        </Text>
-        <Text style={styles.tableHeaderItem}>
-          {t('page.tokenDetail.marketInfo.activitySections.tableHeader.qnt')}
-        </Text>
-        <Text style={styles.tableHeaderItem}>
-          {t('page.tokenDetail.marketInfo.activitySections.tableHeader.value')}
-        </Text>
-        <Text style={[styles.tableHeaderItem, styles.lastItem]}>
-          {t(
-            'page.tokenDetail.marketInfo.activitySections.tableHeader.address',
-          )}
-        </Text>
+        <Text style={styles.tableHeaderItem}>Time</Text>
+        <Text style={styles.tableHeaderItem}>Amount</Text>
+        <Text style={styles.tableHeaderItem}>Value</Text>
+        <Text style={[styles.tableHeaderItem, styles.lastItem]} />
       </View>
     );
-  }, [styles.lastItem, styles.tableHeader, styles.tableHeaderItem, t]);
+  }, [styles.lastItem, styles.tableHeader, styles.tableHeaderItem]);
 
   const renderItem = useCallback(
     ({ item, index }) => {
-      const isBuy = item.action === 'buy';
+      const isAdd = item.action === 'add';
       return (
         <View
           key={item.id}
@@ -170,31 +198,41 @@ const LiquidityDetail = ({
             index === list.length - 1 && styles.hideBottomBorder,
           ]}>
           <View style={styles.actionAndTime}>
-            <Text
-              style={[styles.chatTopText, !isBuy && styles.chatTopTextRight]}>
-              {isBuy
-                ? t(
-                    'page.tokenDetail.marketInfo.activitySections.tableHeader.buy',
-                  )
-                : t(
-                    'page.tokenDetail.marketInfo.activitySections.tableHeader.sell',
-                  )}
-            </Text>
+            <View style={styles.chatTop}>
+              <Text
+                style={[styles.chatTopText, !isAdd && styles.chatTopTextRight]}>
+                {isAdd ? 'Add' : 'Remove'}
+              </Text>
+            </View>
             <Text style={styles.timeAtItem}>{formatTime(item.time_at)}</Text>
           </View>
-          <Text style={styles.indexItem}>{formatPrice(item.price)}</Text>
-          <Text style={styles.ratioItem}>
-            {formatAmountValueKMB(item.amount)}
-          </Text>
-          <Text
-            style={[
-              styles.amountItem,
-              isBuy ? styles.amountItemGreen : styles.amountItemRed,
-            ]}>
+          <View style={styles.ratioItem}>
+            {item.tokens.map(token => (
+              <Text key={token.symbol} style={styles.ratioItemText}>
+                <Text
+                  style={
+                    isAdd ? styles.ratioItemTextAdd : styles.ratioItemTextRemove
+                  }>
+                  {isAdd ? '+' : '-'} {formatAmountValueKMB(token.amount)}
+                </Text>{' '}
+                {token.symbol}
+              </Text>
+            ))}
+          </View>
+          <Text style={[styles.amountItem]}>
             {formatUsdValueKMB(item.usd_value)}
           </Text>
           <View style={styles.addressItem}>
-            <AddressView address={item.user_addr} />
+            <Pressable
+              onPress={() => {
+                onOpenTxHash(item.tx_id);
+              }}>
+              <RcIconJumpCC
+                width={12}
+                height={12}
+                color={colors2024['neutral-foot']}
+              />
+            </Pressable>
           </View>
         </View>
       );
@@ -203,17 +241,19 @@ const LiquidityDetail = ({
       styles.tableRow,
       styles.hideBottomBorder,
       styles.actionAndTime,
+      styles.chatTop,
       styles.chatTopText,
       styles.chatTopTextRight,
       styles.timeAtItem,
-      styles.indexItem,
       styles.ratioItem,
       styles.amountItem,
-      styles.amountItemGreen,
-      styles.amountItemRed,
       styles.addressItem,
+      styles.ratioItemText,
+      styles.ratioItemTextAdd,
+      styles.ratioItemTextRemove,
       list.length,
-      t,
+      colors2024,
+      onOpenTxHash,
     ],
   );
   const footerRef = useRef<any>(null);
@@ -255,41 +295,37 @@ const LiquidityDetail = ({
                   styles.switchTabItemText,
                   activeTab === DetailsTabKey.all && styles.activeTabItemText,
                 ]}>
-                {t(
-                  'page.tokenDetail.marketInfo.activitySections.tableHeader.all',
-                )}
+                All
               </Text>
             </Pressable>
             <Pressable
               style={[
                 styles.switchTabItem,
-                activeTab === DetailsTabKey.buy && styles.switchTabItemActive,
+                activeTab === DetailsTabKey.add && styles.switchTabItemActive,
               ]}
-              onPress={() => setActiveTab(DetailsTabKey.buy)}>
+              onPress={() => setActiveTab(DetailsTabKey.add)}>
               <Text
                 style={[
                   styles.switchTabItemText,
-                  activeTab === DetailsTabKey.buy && styles.activeTabItemText,
+                  activeTab === DetailsTabKey.add && styles.activeTabItemText,
                 ]}>
-                {t(
-                  'page.tokenDetail.marketInfo.activitySections.tableHeader.buy',
-                )}
+                Add
               </Text>
             </Pressable>
             <Pressable
               style={[
                 styles.switchTabItem,
-                activeTab === DetailsTabKey.sell && styles.switchTabItemActive,
+                activeTab === DetailsTabKey.remove &&
+                  styles.switchTabItemActive,
               ]}
-              onPress={() => setActiveTab(DetailsTabKey.sell)}>
+              onPress={() => setActiveTab(DetailsTabKey.remove)}>
               <Text
                 style={[
                   styles.switchTabItemText,
-                  activeTab === DetailsTabKey.sell && styles.activeTabItemText,
+                  activeTab === DetailsTabKey.remove &&
+                    styles.activeTabItemText,
                 ]}>
-                {t(
-                  'page.tokenDetail.marketInfo.activitySections.tableHeader.sell',
-                )}
+                Remove
               </Text>
             </Pressable>
           </View>
@@ -347,7 +383,7 @@ const Top5Pools = ({
           <Text style={[styles.tableHeaderItem, styles.firstItem]}>Dex</Text>
           <Text style={styles.tableHeaderItem}>Pair</Text>
           <Text style={styles.tableHeaderItem}>Amount</Text>
-          <Text style={[styles.tableHeaderItem, styles.lastItem]}>Value</Text>
+          <Text style={[styles.tableHeaderItem, styles.valueItem]}>Value</Text>
         </View>
         <View style={styles.tableBody}>
           {mockPools?.map((item, index) => (
@@ -491,7 +527,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   lastItem: {
     textAlign: 'right',
+    flex: 0,
+  },
+  valueItem: {
     flex: 1,
+    textAlign: 'right',
   },
   tableRow: {
     display: 'flex',
@@ -514,6 +554,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   chatTopRight: {
     justifyContent: 'flex-end',
   },
+  chatTop: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   chatTopText: {
     fontSize: 14,
     fontWeight: '500',
@@ -521,11 +566,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     backgroundColor: colors2024['green-light-4'],
     borderRadius: 6,
-    width: 32,
     lineHeight: 26,
     height: 26,
     textAlign: 'center',
     overflow: 'hidden',
+    paddingHorizontal: 4,
   },
   chatTopTextRight: {
     color: colors2024['red-default'],
@@ -548,6 +593,18 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 2,
     flex: 1,
   },
+  ratioItemText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  ratioItemTextAdd: {
+    color: colors2024['green-default'],
+  },
+  ratioItemTextRemove: {
+    color: colors2024['red-default'],
+  },
   pairNames: {
     display: 'flex',
     flexDirection: 'column',
@@ -566,8 +623,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   amountItem: {
     fontSize: 12,
-    fontWeight: '500',
-    color: colors2024['green-default'],
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     flex: 1,
   },
@@ -606,7 +663,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   addressItem: {
     display: 'flex',
     justifyContent: 'flex-end',
-    flex: 1.1,
+    flex: 0,
   },
   loading: {
     paddingBottom: 10,
@@ -637,7 +694,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   switchTabItemActive: {
     borderRadius: 8,
     backgroundColor: isLight
-      ? colors2024['neutral-bg-2']
+      ? colors2024['neutral-line']
       : colors2024['neutral-bg-4'],
   },
   switchTabItemText: {
@@ -655,11 +712,15 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   detailsContainer: {
     display: 'flex',
     flexDirection: 'column',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
+    gap: 12,
   },
   detailWrapper: {
     borderRadius: 16,
     overflow: 'hidden',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   tableBody: {
     display: 'flex',
