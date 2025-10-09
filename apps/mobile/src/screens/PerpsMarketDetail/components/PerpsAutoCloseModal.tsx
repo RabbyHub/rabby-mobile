@@ -18,7 +18,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toast } from '@/components2024/Toast';
-import { useUsdInput } from '@/hooks/useUsdInput';
+import { useSlTpUsdInput } from '@/hooks/useUsdInput';
 
 interface Props {
   visible?: boolean;
@@ -28,6 +28,7 @@ interface Props {
   size: number;
   liqPrice: number;
   pxDecimals: number;
+  szDecimals: number;
   onClose: () => void;
   type: 'openPosition' | 'hasPosition';
   handleSetAutoClose: (params: {
@@ -44,6 +45,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
   size,
   liqPrice,
   pxDecimals,
+  szDecimals,
   onClose,
   type,
   handleSetAutoClose,
@@ -57,13 +59,13 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
     value: tpPrice,
     onChangeText: setTpPrice,
     displayedValue: displayedTpPrice,
-  } = useUsdInput();
+  } = useSlTpUsdInput({ szDecimals });
 
   const {
     value: slPrice,
     onChangeText: setSlPrice,
     displayedValue: displayedSlPrice,
-  } = useUsdInput();
+  } = useSlTpUsdInput({ szDecimals });
 
   const tpInputRef = React.useRef<any>(null);
 
