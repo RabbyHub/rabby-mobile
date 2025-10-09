@@ -27,15 +27,10 @@ import { throttle, uniqBy } from 'lodash';
 import { every10sEvent } from '../../event';
 import {
   formatAmountValueKMB,
-  formatPercent,
   formatTime,
   formatUsdValueKMB,
 } from '../../util';
-import AddressView from './AddressView';
-import { formatPrice } from '@/utils/number';
-import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
-import { pools as mockPools, addData, removeData, mixedData } from './mock';
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import { trigger } from 'react-native-haptic-feedback';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -44,6 +39,8 @@ import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { toast } from '@/components2024/Toast';
+import { Skeleton } from '@rneui/themed';
+import { LoadingLinear } from '../TokenPriceChart/LoadingLinear';
 
 interface PoolsProps {
   tokenId: string;
@@ -78,47 +75,22 @@ const LiquidityDetail = ({
       nextCursor?: string;
       hasMore: boolean;
     }) => {
-      // const res = await openapi.getLiquidityPoolHistoryList({
-      //   token_id: tokenId,
-      //   chain_id: chainId,
-      //   action: activeTab === DetailsTabKey.all ? undefined : activeTab,
-      //   limit: 20,
-      //   cursor: d?.nextCursor,
-      // });
-      // const page = res?.pagination || {};
-      // const merged = [...(res?.data_list || [])];
-      // 使用mock数据替代API调用
-      const allMockData = [...mixedData, ...addData, ...removeData];
-
-      // 根据activeTab过滤数据
-      let filteredData = allMockData;
-      if (activeTab === DetailsTabKey.add) {
-        filteredData = allMockData.filter(item => item.action === 'add');
-      } else if (activeTab === DetailsTabKey.remove) {
-        filteredData = allMockData.filter(item => item.action === 'remove');
-      }
-
-      // 模拟分页逻辑
-      const pageSize = 20;
-      const currentPage = d?.nextCursor ? parseInt(d.nextCursor) : 0;
-      const startIndex = currentPage * pageSize;
-      const endIndex = startIndex + pageSize;
-      const pageData = filteredData.slice(startIndex, endIndex);
-
-      // 模拟分页信息
-      const hasMore = endIndex < filteredData.length;
-      const nextCursor = hasMore ? (currentPage + 1).toString() : undefined;
+      const res = await openapi.getLiquidityPoolHistoryList({
+        token_id: tokenId,
+        chain_id: chainId,
+        action: activeTab === DetailsTabKey.all ? undefined : activeTab,
+        limit: 20,
+        cursor: d?.nextCursor,
+      });
+      const page = res?.pagination || {};
+      const merged = [...(res?.data_list || [])];
       return {
-        // list: merged,
-        // nextCursor: page?.next_cursor,
-        // hasMore: !!page?.has_next,
-        list: pageData,
-        nextCursor,
-        hasMore,
+        list: merged,
+        nextCursor: page?.next_cursor,
+        hasMore: !!page?.has_next,
       };
     },
-    // [activeTab, chainId, tokenId],
-    [activeTab],
+    [activeTab, chainId, tokenId],
   );
 
   const { data, loadMore, reloadAsync, loading, loadingMore } =
@@ -349,7 +321,12 @@ const LiquidityDetail = ({
             ListFooterComponent={renderFooter}
           />
         </View>
-      ) : loading ? null : (
+      ) : loading ? (
+        <Skeleton
+          style={styles.skeletonBlock}
+          LinearGradientComponent={LoadingLinear}
+        />
+      ) : (
         <EmptyData />
       )}
     </View>
@@ -365,13 +342,13 @@ const Top5Pools = ({
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  // const { data, loading } = useRequest(async () => {
-  //   const res = await openapi.getLiquidityPoolList({
-  //     token_id: tokenId,
-  //     chain_id: chainId,
-  //   });
-  //   return res;
-  // });
+  const { data, loading } = useRequest(async () => {
+    const res = await openapi.getLiquidityPoolList({
+      token_id: tokenId,
+      chain_id: chainId,
+    });
+    return res;
+  });
 
   const handleCopyAddress = useCallback((address: string) => {
     if (!address) {
@@ -403,56 +380,67 @@ const Top5Pools = ({
           </Text>
         </View>
         <View style={styles.tableBody}>
-          {mockPools?.map((item, index) => (
-            <View
-              key={item.id}
-              style={[
-                styles.tableRow,
-                index === mockPools.length - 1 && styles.hideBottomBorder,
-              ]}>
-              <View style={styles.indexItem}>
-                <Image
-                  source={{ uri: item.project.logo_url }}
-                  style={styles.indexItemImage}
-                />
-                <Pressable
-                  style={styles.projectNameContainer}
-                  onPress={() => handleCopyAddress(item.project.id)}>
-                  <Text style={styles.projectName}>{item.project.name}</Text>
-                  <RcIconCopy width={10} height={10} style={styles.copy} />
-                </Pressable>
-              </View>
-              <View style={styles.pairNames}>
-                {item.tokens.map((token, _index) => (
-                  <Text
-                    key={token.symbol}
-                    style={[
-                      styles.pairName,
-                      _index === 0 && styles.firstPairName,
-                    ]}>
-                    {token.symbol}
+          {loading ? (
+            <Skeleton
+              style={styles.skeletonBlock}
+              LinearGradientComponent={LoadingLinear}
+            />
+          ) : data?.length === 0 ? (
+            <EmptyData />
+          ) : (
+            data?.map((item, index) => (
+              <View
+                key={item.id}
+                style={[
+                  styles.tableRow,
+                  index === data.length - 1 && styles.hideBottomBorder,
+                ]}>
+                <View style={styles.indexItem}>
+                  <Image
+                    source={{ uri: item?.project?.logo_url }}
+                    style={styles.indexItemImage}
+                  />
+                  <Pressable
+                    style={styles.projectNameContainer}
+                    onPress={() => handleCopyAddress(item?.project?.id)}>
+                    <Text style={styles.projectName}>
+                      {item?.project?.name}
+                    </Text>
+                    <RcIconCopy width={10} height={10} style={styles.copy} />
+                  </Pressable>
+                </View>
+                <View style={styles.pairNames}>
+                  {item.tokens.map((token, _index) => (
+                    <Text
+                      key={token.symbol}
+                      style={[
+                        styles.pairName,
+                        _index === 0 && styles.firstPairName,
+                      ]}>
+                      {token.symbol}
+                    </Text>
+                  ))}
+                </View>
+                <View style={styles.amountItems}>
+                  {item.tokens.map((token, _index) => (
+                    <Text
+                      key={token.symbol}
+                      style={[
+                        styles.amountItemValue,
+                        _index === 0 && styles.firstAmountItemValue,
+                      ]}>
+                      {formatAmountValueKMB(token.amount)}
+                    </Text>
+                  ))}
+                </View>
+                <View style={styles.usdValueItem}>
+                  <Text style={styles.poolUsdValue}>
+                    {formatUsdValueKMB(item.usd_value)}
                   </Text>
-                ))}
+                </View>
               </View>
-              <View style={styles.amountItems}>
-                {item.tokens.map((token, _index) => (
-                  <Text
-                    key={token.symbol}
-                    style={[
-                      styles.amountItemValue,
-                      _index === 0 && styles.firstAmountItemValue,
-                    ]}>
-                    {formatAmountValueKMB(token.amount)}
-                  </Text>
-                ))}
-              </View>
-              <View style={styles.usdValueItem}>
-                <Text style={styles.poolUsdValue}>
-                  {formatUsdValueKMB(item.usd_value)}
-                </Text>
-              </View>
-            </View>
-          ))}
+            ))
+          )}
         </View>
       </View>
     </View>
@@ -601,7 +589,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 4,
   },
   indexItem: {
-    flex: 1,
+    flex: 1.3,
     gap: 2,
   },
   ratioItem: {
@@ -751,8 +739,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
   },
   firstItem: {
-    flex: 0,
-    width: 80,
+    flex: 1.3,
   },
   holderContainer: {
     position: 'relative',
@@ -783,4 +770,13 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   copy: {},
+  skeletonBlock: {
+    height: 250,
+    borderRadius: 16,
+    marginTop: 12,
+    marginBottom: 12,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
 }));
