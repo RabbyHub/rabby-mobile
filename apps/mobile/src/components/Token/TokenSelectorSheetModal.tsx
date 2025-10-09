@@ -841,7 +841,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     style={styles.tokenAvatarCol}
                   />
                   <View style={[styles.tokenInfoCol, styles.tokenInfoColLeft]}>
-                    <View style={styles.tokenNameBox}>
+                    <View
+                      style={[
+                        styles.tokenNameBox,
+                        needToTokenMarketInfo && styles.tokenNameBoxWithLogos,
+                      ]}>
                       <Text
                         style={styles.tokenName}
                         ellipsizeMode="tail"
@@ -1526,8 +1530,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       // ...makeDebugBorder(),
-      width: 150,
+      width: '100%',
       maxWidth: 150,
+    },
+    tokenNameBoxWithLogos: {
+      // ...makeDebugBorder('yellow'),
+      maxWidth: Math.max(
+        Dimensions.get('window').width -
+          16 * 2 /* outer padding  */ -
+          40 /* avatar */ -
+          12 /* gap */ -
+          22 /* favorite */ -
+          40 /* right col */ -
+          8 /* right col gap */,
+        200,
+      ),
     },
     tokenName: {
       marginRight: 8,
@@ -1536,7 +1553,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
       fontWeight: '700',
       lineHeight: 20,
-      width: '100%',
       fontFamily: 'SF Pro Rounded',
     },
     chainLogo: {
