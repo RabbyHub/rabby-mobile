@@ -21,11 +21,12 @@ import { useAutoLockTimeMs } from '@/hooks/appSettings';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { FontWeightEnum } from '@/core/utils/fonts';
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'green-default');
 
 const SIZES = {
-  ITEM_HEIGHT: 60,
+  ITEM_HEIGHT: 72,
   ITEM_GAP: 12,
   titleMt: 6,
   titleHeight: 24,
@@ -89,7 +90,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
         }
       }}>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         // scrollEnabled={false}
         style={[
           styles.container,
@@ -140,8 +141,10 @@ const getStyles = createGetStyles2024(ctx => ({
     // ...makeDebugBorder('yellow'),
   },
   title: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '500',
+    fontWeight: FontWeightEnum.heavy,
+    lineHeight: 24,
     color: ctx.colors2024['neutral-title-1'],
     textAlign: 'center',
 
@@ -159,13 +162,13 @@ const getStyles = createGetStyles2024(ctx => ({
   settingItem: {
     width: '100%',
     height: SIZES.ITEM_HEIGHT,
-    paddingTop: 18,
-    paddingBottom: 18,
-    paddingHorizontal: 20,
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 24,
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
       : ctx.colors2024['neutral-bg-2'],
-    borderRadius: 8,
+    borderRadius: 16,
 
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -175,11 +178,12 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: SIZES.ITEM_GAP,
   },
   settingItemLabel: {
-    // color: var(--r-neutral-title1, #192945);
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
     fontStyle: 'normal',
-    fontWeight: '500',
+    fontWeight: FontWeightEnum.bold,
   },
 
   border: {

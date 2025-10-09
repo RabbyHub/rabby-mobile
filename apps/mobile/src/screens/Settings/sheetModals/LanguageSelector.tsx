@@ -16,6 +16,7 @@ import { SupportedLangs } from '@/utils/i18n';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { FontWeightEnum } from '@/core/utils/fonts';
 
 const currentLanguageModalVisibleAtom = atom(false);
 export function useCurrentLanguageModalVisible() {
@@ -77,7 +78,7 @@ export default function CurrentLanguageSelectorModal({
       onDismiss={handleCancel}
       enableContentPanningGesture={true}>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {
@@ -116,7 +117,7 @@ export default function CurrentLanguageSelectorModal({
 }
 
 const SIZES = {
-  ITEM_HEIGHT: 60,
+  ITEM_HEIGHT: 72,
   ITEM_GAP: 12,
   titleMt: 6,
   titleHeight: 24,
@@ -147,8 +148,10 @@ const getStyles = createGetStyles2024(ctx => {
       // ...makeDebugBorder('blue')
     },
     title: {
+      fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '500',
+      fontWeight: FontWeightEnum.heavy,
+      lineHeight: 24,
       color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',
 
@@ -165,13 +168,13 @@ const getStyles = createGetStyles2024(ctx => {
     settingItem: {
       width: '100%',
       height: SIZES.ITEM_HEIGHT,
-      paddingTop: 18,
-      paddingBottom: 18,
-      paddingHorizontal: 20,
+      paddingTop: 0,
+      paddingBottom: 0,
+      paddingHorizontal: 24,
       backgroundColor: ctx.isLight
         ? ctx.colors2024['neutral-bg-1']
         : ctx.colors2024['neutral-bg-2'],
-      borderRadius: 8,
+      borderRadius: 16,
 
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -183,8 +186,10 @@ const getStyles = createGetStyles2024(ctx => {
     settingItemLabel: {
       color: ctx.colors2024['neutral-title-1'],
       fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
       fontStyle: 'normal',
-      fontWeight: '500',
+      fontWeight: FontWeightEnum.bold,
     },
   };
 });

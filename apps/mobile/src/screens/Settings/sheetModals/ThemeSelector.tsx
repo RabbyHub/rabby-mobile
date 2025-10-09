@@ -4,7 +4,7 @@ import { RcIconCheckmarkCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { makeThemeOptions, useAppTheme, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom } from 'jotai';
@@ -12,6 +12,11 @@ import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTranslation } from 'react-i18next';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { FontWeightEnum } from '@/core/utils/fonts';
+
+import { default as RcThemeSystemCC } from './icons/theme-system-cc.svg';
+import { default as RcThemeLightCC } from './icons/theme-light-cc.svg';
+import { default as RcThemeDarkCC } from './icons/theme-dark-cc.svg';
 
 const themeSelectorModalVisibleAtom = atom(false);
 export function useThemeSelectorModalVisible() {
@@ -36,7 +41,17 @@ export default function ThemeSelectorModal({
   const { ThemeModeOptions, FULL_HEIGHT } = useMemo(() => {
     const options = makeThemeOptions(t);
     return {
-      ThemeModeOptions: options,
+      ThemeModeOptions: options.map(item => {
+        return {
+          ...item,
+          Icon:
+            item.value === 'light'
+              ? RcThemeLightCC
+              : item.value === 'dark'
+              ? RcThemeDarkCC
+              : RcThemeSystemCC,
+        };
+      }),
       FULL_HEIGHT:
         SIZES.HANDLE_HEIGHT +
         (SIZES.titleMt + SIZES.titleHeight + SIZES.titleMb) +
@@ -78,6 +93,15 @@ export default function ThemeSelectorModal({
       {...makeBottomSheetProps({
         colors: colors2024,
         linearGradientType: isLight ? 'bg0' : 'bg1',
+        // ...__DEV__ && {
+        //   createParams: {
+        //     bottomSheetModalProps: {
+        //       handleStyle: {
+        //         backgroundColor: 'black',
+        //       }
+        //     }
+        //   }
+        // }
       })}
       onDismiss={handleCancel}
       enableContentPanningGesture={true}>
@@ -105,7 +129,15 @@ export default function ThemeSelectorModal({
                   toggleThemeMode(item.value);
                   setThemeSelectorModalVisible(false);
                 }}>
-                <Text style={styles.settingItemLabel}>{item.title}</Text>
+                <View style={styles.leftCol}>
+                  <item.Icon
+                    style={styles.icon}
+                    width={20}
+                    height={20}
+                    color={colors2024['neutral-title-1']}
+                  />
+                  <Text style={styles.settingItemLabel}>{item.title}</Text>
+                </View>
                 {isSelected && (
                   <View>
                     <RcIconCheckmarkCC color={colors2024['green-default']} />
@@ -121,7 +153,7 @@ export default function ThemeSelectorModal({
 }
 
 const SIZES = {
-  ITEM_HEIGHT: 60,
+  ITEM_HEIGHT: 72,
   ITEM_GAP: 12,
   titleMt: 6,
   titleHeight: 24,
@@ -143,8 +175,10 @@ const getStyles = createGetStyles2024(ctx => {
       // ...makeDebugBorder('blue')
     },
     title: {
+      fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '500',
+      fontWeight: FontWeightEnum.heavy,
+      lineHeight: 24,
       color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',
 
@@ -161,13 +195,13 @@ const getStyles = createGetStyles2024(ctx => {
     settingItem: {
       width: '100%',
       height: SIZES.ITEM_HEIGHT,
-      paddingTop: 18,
-      paddingBottom: 18,
-      paddingHorizontal: 20,
+      paddingTop: 0,
+      paddingBottom: 0,
+      paddingHorizontal: 24,
       backgroundColor: ctx.isLight
         ? ctx.colors2024['neutral-bg-1']
         : ctx.colors2024['neutral-bg-2'],
-      borderRadius: 8,
+      borderRadius: 16,
 
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -176,11 +210,20 @@ const getStyles = createGetStyles2024(ctx => {
     notFirstOne: {
       marginTop: SIZES.ITEM_GAP,
     },
+    leftCol: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    icon: {
+      marginRight: 12,
+    },
     settingItemLabel: {
       color: ctx.colors2024['neutral-title-1'],
       fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
       fontStyle: 'normal',
-      fontWeight: '500',
+      fontWeight: FontWeightEnum.bold,
     },
   };
 });
