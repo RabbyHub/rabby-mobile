@@ -41,7 +41,7 @@ import { AddressQuickManager } from '../AddressQuickManager/AddressQuickManager'
 import { AddressDetail } from '../AddressDetail/AddressDetail';
 import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
 import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
-import { Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import { CollectionNFTs } from '../CollectionNFTs';
 import { AddWhitelistSelectMethod } from '@/components/AddWhitelistSelectMethod';
 import ConfirmAddress from '@/screens/Send/components/ConfirmAddress';
@@ -55,12 +55,30 @@ import { AddressHightDesc } from '../AddressHightDesc';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
+type ModalProps = CreateParams<MODAL_NAMES>['bottomSheetModalProps'];
+function getDefaultViewTypePropsPreset(
+  input?: Partial<ModalProps>,
+): ModalProps {
+  return {
+    rootViewType: 'View',
+    enablePanDownToClose: true,
+    enableContentPanningGesture: true,
+    ...input,
+    rootViewStyle: StyleSheet.flatten([
+      {
+        height: '100%',
+      },
+      input?.rootViewStyle || {},
+    ]),
+  };
+}
+
 export const MODAL_CONFIGS: Record<
   MODAL_NAMES,
   {
     snapPoints: (string | number)[] | undefined;
     Component: React.FC<any>;
-    globalModalPropsPreset?: CreateParams<MODAL_NAMES>['bottomSheetModalProps'];
+    globalModalPropsPreset?: ModalProps;
   }
 > = {
   [MODAL_NAMES.APPROVAL]: { snapPoints: ['100%'], Component: Approval },
@@ -80,6 +98,7 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: {
     snapPoints: ['80%'],
     Component: SelectChainWithSummary,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: {
     snapPoints: ['80%'],
@@ -106,6 +125,7 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.CONNECT_LEDGER]: {
     snapPoints: ['95%'],
     Component: ConnectLedger,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.SETTING_LEDGER]: {
     snapPoints: ['85%'],
@@ -122,6 +142,7 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.CONNECT_KEYSTONE]: {
     snapPoints: ['95%'],
     Component: ConnectKeystone,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.SETTING_KEYSTONE]: {
     snapPoints: ['65%'],
@@ -130,6 +151,7 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.CONNECT_ONEKEY]: {
     snapPoints: ['95%'],
     Component: ConnectOneKey,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.SETTING_ONEKEY]: {
     snapPoints: ['55%'],
@@ -158,16 +180,12 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: {
     snapPoints: [508],
     Component: AddAddressSelectMethod,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: NotMatterAddressDialog,
-    globalModalPropsPreset: {
-      rootViewType: 'View',
-      rootViewStyle: { height: '100%' },
-      enablePanDownToClose: true,
-      enableContentPanningGesture: true,
-    },
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: {
     snapPoints: [384],
@@ -225,12 +243,7 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.DESCRIPTION]: {
     snapPoints: [674],
     Component: Descriptions,
-    globalModalPropsPreset: {
-      rootViewType: 'View',
-      rootViewStyle: { height: '100%' },
-      enableContentPanningGesture: true,
-      enablePanDownToClose: true,
-    },
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.ADDRESS_HIGHT_DESC]: {
     snapPoints: [273],
@@ -239,12 +252,7 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: {
     snapPoints: ['85%'],
     Component: RestoreFromCloud2024,
-    globalModalPropsPreset: {
-      rootViewType: 'View',
-      rootViewStyle: { height: '100%' },
-      enableContentPanningGesture: true,
-      enablePanDownToClose: true,
-    },
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: {
     snapPoints: undefined,

@@ -16,6 +16,7 @@ import { ConnectDeviceScreen } from './ConnectDeviceScreen';
 import { eventBus, EVENTS } from '@/utils/events';
 import AutoLockView from '../AutoLockView';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
+import { makeDebugBorder } from '@/utils/styles';
 
 export const ConnectOneKey: React.FC<{
   onDone?: () => void;
@@ -106,7 +107,7 @@ export const ConnectOneKey: React.FC<{
   }, [devices, handleScanDone]);
 
   return (
-    <AutoLockView as="BottomSheetView">
+    <AutoLockView as="View" style={{ height: '100%' }}>
       {currentScreen === 'ble' && (
         <BluetoothPermissionScreen onNext={handleBleNext} />
       )}

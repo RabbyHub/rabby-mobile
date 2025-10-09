@@ -45,7 +45,7 @@ export const ConnectKeystone: React.FC<{
   }, [goImport, onDone]);
 
   return (
-    <AutoLockView as="BottomSheetView">
+    <AutoLockView as="View" style={{ height: '100%' }}>
       {currentScreen === 'camera' && (
         <CameraPermissionScreen onNext={handleCameraNext} />
       )}

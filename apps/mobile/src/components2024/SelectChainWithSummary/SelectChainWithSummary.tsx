@@ -217,7 +217,7 @@ export default function SelectChainWithSummary({
           ? colors2024['neutral-bg-1']
           : colors2024['neutral-bg-0'],
       }}>
-      <BottomSheetHandlableView>
+      <BottomSheetHandlableView style={styles.innerBlock}>
         {!canSearch && (
           <View style={{ ...styles.titleView, ...styles.titleViewWithText }}>
             {titleText && (
@@ -319,7 +319,7 @@ export default function SelectChainWithSummary({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     height: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     paddingTop: 10,
   },
   searchBar: {
@@ -340,7 +340,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 20,
   },
   innerBlock: {
-    paddingHorizontal: 0,
+    paddingHorizontal: 16,
   },
   inputContainerStyle: {
     height: 46,

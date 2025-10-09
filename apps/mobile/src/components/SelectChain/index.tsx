@@ -1,7 +1,6 @@
 import RcIconFind from '@/assets/icons/select-chain/icon-find.svg';
 import RcIconSearch from '@/assets/icons/select-chain/icon-search.svg';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { CHAINS_ENUM, getChainList } from '@/constant/chains';
 import { Input } from '@rneui/themed';
 import React from 'react';
@@ -9,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { SelectChainList } from './SelectChainList';
 import AutoLockView from '../AutoLockView';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export const SelectChain = ({
   value,
@@ -18,8 +18,7 @@ export const SelectChain = ({
   onChange?: (value: CHAINS_ENUM) => void;
 }) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors, isLight } = useTheme2024({ getStyle: getStyles });
   const [search, setSearch] = React.useState('');
 
   const list = React.useMemo(() => {
@@ -35,7 +34,13 @@ export const SelectChain = ({
   }, [search]);
 
   return (
-    <AutoLockView className="h-full px-[20] pt-[10] pb-[32]">
+    <AutoLockView
+      style={{
+        height: '100%',
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        paddingBottom: 32,
+      }}>
       <Input
         leftIcon={<RcIconSearch />}
         containerStyle={styles.containerStyle}
@@ -49,9 +54,19 @@ export const SelectChain = ({
       {list?.length ? (
         <SelectChainList data={list} value={value} onChange={onChange} />
       ) : (
-        <View className="items-center pt-[180]">
+        <View
+          style={{
+            alignItems: 'center',
+            paddingTop: 180,
+          }}>
           <RcIconFind />
-          <Text className="pt-[12] text-[13] leading-[16] text-r-neutral-body">
+          <Text
+            style={{
+              paddingTop: 12,
+              fontSize: 13,
+              lineHeight: 16,
+              color: colors['neutral-body'],
+            }}>
             No Chains
           </Text>
         </View>
@@ -60,7 +75,7 @@ export const SelectChain = ({
   );
 };
 
-const getStyles = (colors: AppColorsVariants) => {
+const getStyles = createGetStyles2024(ctx => {
   return StyleSheet.create({
     containerStyle: {
       paddingHorizontal: 0,
@@ -70,8 +85,8 @@ const getStyles = (colors: AppColorsVariants) => {
     inputContainerStyle: {
       borderWidth: 1,
       borderRadius: 8,
-      borderColor: colors['neutral-line'],
+      borderColor: ctx.colors['neutral-line'],
       paddingHorizontal: 16,
     },
   });
-};
+});

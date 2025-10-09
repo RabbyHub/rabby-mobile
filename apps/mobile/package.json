@@ -51,7 +51,7 @@
     "@ethereumjs/common": "4.2.0",
     "@ethereumjs/tx": "5.1.0",
     "@ethereumjs/util": "^9.0.1",
-    "@gorhom/bottom-sheet": "5.1.8",
+    "@gorhom/bottom-sheet": "5.0.6",
     "@ledgerhq/react-native-hw-transport-ble": "6.33.4",
     "@metamask/abi-utils": "3.0.0",
     "@metamask/browser-passworder": "6.0.0",

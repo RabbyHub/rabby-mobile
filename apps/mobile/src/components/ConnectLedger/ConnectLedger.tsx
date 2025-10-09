@@ -180,7 +180,7 @@ export const ConnectLedger: React.FC<{
   }, []);
 
   return (
-    <AutoLockView as="BottomSheetView">
+    <AutoLockView as="View" style={{ height: '100%' }}>
       {currentScreen === 'ble' && (
         <BluetoothPermissionScreen onNext={handleBleNext} />
       )}
