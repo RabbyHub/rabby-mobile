@@ -1390,7 +1390,19 @@
         },
         "manageAddressFrom": "Gérer le portefeuille de {{0}} à {{1}}",
         "customAddressHdPath": "Chemin HD de portefeuille personnalisé",
-        "selectIndexTip": "Sélectionnez le numéro de série des portefeuilles à partir duquel commencer :"
+        "selectIndexTip": "Sélectionnez le numéro de série des portefeuilles à partir duquel commencer :",
+        "trezor": {
+          "hdPathType": {
+            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger.",
+            "bip44": "BIP44 : HDpath défini par le protocole BIP44.",
+            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto."
+          },
+          "hdPathTypeNoChain": {
+            "ledgerLive": "Ledger Live : Chemin HD officiel de Ledger.",
+            "legacy": "Héritage : Chemin HD utilisé par MEW / Mycrypto.",
+            "bip44": "BIP44 : HDpath défini par le protocole BIP44."
+          }
+        }
       },
       "seedPhrase": {
         "showSeedPhrase": "Afficher la Phrase de Récupération",
@@ -2076,6 +2088,10 @@
         "title": "Programme de parrainage Hyperliquid",
         "btn": "Rejoignez maintenant",
         "desc": "Rejoignez maintenant en utilisant le code de Rabby pour obtenir une <1>remise de 4%</1> sur vos frais Hyperliquid."
+      },
+      "WebviewError": {
+        "error": "Erreur :",
+        "failedToLoad": "Échec du chargement de la page"
       }
     },
     "browserManage": {
@@ -2194,6 +2210,243 @@
     },
     "perpsHistory": {
       "title": "Historique"
+    },
+    "perps": {
+      "PerpsCard": {
+        "available": "Disponible",
+        "loginBtn": "Connectez-vous à Trading Perps",
+        "depositBtn": "Dépôt",
+        "withdrawBtn": "Retirer",
+        "title": "Échanger des Perps",
+        "learnBtn": "En savoir plus sur les Perps",
+        "loginDesc": "Connectez-vous avec votre adresse et déposez des fonds pour commencer à trader des perps."
+      },
+      "PerpsGuidePopup": {
+        "step5Title": "Liquidation",
+        "step2Title": "Long",
+        "step3Title": "Vendre à découvert",
+        "step1Title": "Maîtriser les contrats à terme perpétuels",
+        "step4Title": "Ajustement de l'effet de levier",
+        "step4Desc": "L'effet de levier vous permet de trader avec plus que ce que vous avez investi. Il peut augmenter à la fois vos gains et vos pertes.",
+        "step3Desc": "Lorsque vous vous attendez à ce que le prix baisse, vous ouvrez une position short. Si le prix baisse, vous gagnez. Si le prix augmente, vous perdez.",
+        "step2Desc": "Lorsque vous vous attendez à ce que le prix augmente, vous ouvrez un long. Si le prix augmente, vous gagnez. S'il baisse, vous perdez.",
+        "step5Desc": "Chaque position a un prix de liquidation. Si le prix du marché atteint ce niveau, votre position sera fermée. Utiliser un effet de levier plus élevé augmente le risque de liquidation.",
+        "step1Desc": "Avec les contrats à terme perpétuels, vous ne tradez pas seulement des actifs. Vous tradez ce que vous pensez se passer ensuite."
+      },
+      "PerpsDepositPopup": {
+        "amount": "Montant",
+        "title": "Dépôt",
+        "balance": "Solde",
+        "insufficientBalance": "Solde insuffisant",
+        "invalidNumber": "Veuillez saisir un nombre valide",
+        "depositBtn": "Dépôt",
+        "estReceive": "Est. Recevoir : {{balance}}",
+        "fetchQuoteFailed": "Échec de la récupération du devis de dépôt. Veuillez changer de jeton.",
+        "minimumDepositSize": "Le montant minimum de dépôt est de 5 $.",
+        "estReceiveTooltip": "Le dépôt cross-chain est traité via LiFi, ce qui peut entraîner un certain glissement. Arrivée estimée dans {{number}} secondes."
+      },
+      "PerpsWithdrawPopup": {
+        "available": "disponible",
+        "title": "Retirer",
+        "withdrawBtn": "Retirer",
+        "invalidNumber": "Veuillez entrer un numéro valide.",
+        "amount": "Montant",
+        "feeTip": "Frais : 1,00 $",
+        "feeTooltipTitle": "Frais",
+        "feeTooltipDesc": "Frais de retrait facturés par Hyperliquid : 1 $",
+        "insufficientBalance": "Solde insuffisant",
+        "minimumWithdrawSize": "Le montant de retrait minimum est de 2 $."
+      },
+      "PerpsWithdrawFeePopup": {
+        "title": "Frais",
+        "desc": "Frais de retrait facturés par Hyperliquid : 1 $",
+        "btn": "Je l'ai compris"
+      },
+      "historyDetail": {
+        "title": {
+          "closeLong": "Fermer Long",
+          "openLong": "Ouvrir une position longue",
+          "openShort": "Ouvrir une position Short",
+          "closeLongSl": "Fermer Long Stop Loss",
+          "closeShort": "Fermer Short",
+          "closeLongLiquidation": "Fermeture Long Liquidation",
+          "closeShortSl": "Fermer Short Stop Loss",
+          "closeShortLiquidation": "Fermer Short Liquidation",
+          "closeShortTp": "Fermer Short Prendre Profit",
+          "closeLongTp": "Fermer Long Prendre Profit"
+        },
+        "size": "Taille",
+        "fee": "Frais",
+        "tradeValue": "Valeur de transaction",
+        "date": "Date",
+        "price": "Prix",
+        "provider": "Fournisseur",
+        "closedPnl": "PNL fermé",
+        "perps": "Perps",
+        "gotItBtn": "J'ai compris",
+        "sizeTips": "La valeur totale ou la quantité de votre trade, déterminée par la marge et l'effet de levier."
+      },
+      "PerpsAutoCloseModal": {
+        "profit": "Profit",
+        "stopLossTipsShort": "Le prix de stop loss doit être supérieur au prix actuel.",
+        "takeProfit": "Prendre profit",
+        "stopLossTipsLongLiquidation": "Le prix est inférieur au prix de liquidation ({{price}})",
+        "loss": "Perte",
+        "stopLossTipsLong": "Le prix de stop loss doit être inférieur au prix actuel",
+        "takeProfitTipsShort": "Le prix de prise de profit doit être inférieur au prix actuel.",
+        "takeProfitTipsLong": "Le prix de prise de profit doit être supérieur au prix actuel.",
+        "stopLoss": "Ordre de stop loss",
+        "stopLossTipsShortLiquidation": "Le prix est supérieur au prix de liquidation ({{price}})"
+      },
+      "PerpsDepositTokenModal": {
+        "bridgeBtn": "Pont",
+        "directTag": "Dépôt Direct",
+        "swapBtn": "Échanger",
+        "goBridgeDesc": "Seul USDC sur Arbitrum est pris en charge pour le dépôt direct. Veuillez transférer votre token actuel vers USDC sur Arbitrum avant de déposer.",
+        "goSwapDesc": "Seul l'USDC sur Arbitrum est supporté pour le dépôt direct. Veuillez échanger votre jeton actuel contre de l'USDC avant de déposer."
+      },
+      "history": {
+        "status": {
+          "pending": "En attente",
+          "completed": "Terminé"
+        },
+        "title": "Historique",
+        "closeLongSl": "Fermer Long stop loss",
+        "closeLongTp": "Fermer Long Prendre Profit",
+        "closeShortTp": "Fermer Short Prendre Profit",
+        "closeShort": "Fermer Short",
+        "closeLongLiquidation": "Fermer Long Liquidation",
+        "withdraw": "Retirer",
+        "openLong": "Ouvrir une position longue",
+        "closeLong": "Fermer Long",
+        "deposit": "Dépôt",
+        "closeShortSl": "Fermer Short Stop Loss",
+        "openShort": "Ouvrir une position courte",
+        "closeShortLiquidation": "Fermer une position de vente à découvert liquidation"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "Sélectionner le jeton à déposer"
+      },
+      "PerpsAccountLogoutPopup": {
+        "logout": "Déconnexion",
+        "title": "Déconnexion de l'adresse actuelle",
+        "desc": "Vous vous déconnectez de votre compte Perps actuel. Vous pouvez le restaurer à tout moment en vous reconnectant avec cette adresse."
+      },
+      "PerpsDepositCard": {
+        "availableToTrade": "Disponible à trader :",
+        "deposit": "Dépôt"
+      },
+      "PerpsAccountSelectorPopup": {
+        "notActivatedAddress": "Non activé",
+        "lastUsed": "Dernière utilisation",
+        "activatedAddress": "Activé",
+        "hyperliquidBalance": "Solde Perps",
+        "noPosition": "Aucune Position"
+      },
+      "title": "Perps",
+      "selectAccountTitle": "Sélectionnez un portefeuille pour vous connecter",
+      "more": "Plus",
+      "explorePerps": "Explorer les Perps",
+      "positions": "Positions",
+      "deleteAgentSuccess": "Agent supprimé avec succès",
+      "regionNotSupport": "L'ouverture de positions n'est pas prise en charge dans votre région.",
+      "leverageRangeMaxError": "Le levier maximum est de {{max}}x",
+      "deleteAgentModal": "Vous avez atteint le nombre maximum d'agents. Souhaitez-vous supprimer un agent existant pour en créer un nouveau ?",
+      "leverageRangeMinError": "Le levier minimum est de {{min}}x."
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "title": "Position",
+        "cross": "Cross",
+        "isolated": "Isolé",
+        "pnl": "PNL",
+        "direction": "Direction",
+        "liquidationPrice": "Prix de liquidation",
+        "liqPrice": "Prix de liquidité",
+        "marginIsolated": "Marge (isolée)",
+        "margin": "Marge (Isolée)",
+        "autoClose": "Fermeture automatique",
+        "markPrice": "Prix de Marquage",
+        "justMargin": "Marge",
+        "size": "Taille",
+        "fundingPayments": "Paiements de financement",
+        "closePosition": "Fermer {{direction}}",
+        "tpPrice": "Prix de prise de bénéfices",
+        "sizeTips": "La valeur totale ou la quantité de votre trade, déterminée par la marge et l'effet de levier.",
+        "liquidationPriceTips": "Le prix auquel votre position est automatiquement fermée par l'échange pour éviter d'autres pertes lorsque votre marge tombe en dessous du niveau de marge de maintenance.",
+        "fundingPaymentsTips": "Ceci est le paiement net de financement depuis l'ouverture de la position. Le financement est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp proche du prix réel du jeton.",
+        "slPrice": "Prix de Stop-Loss",
+        "entryPrice": "Prix d'entrée",
+        "marginCross": "Marge (Croisée)"
+      },
+      "PerpsInfo": {
+        "openInterest": "Intérêt Ouvert",
+        "funding": "Financement",
+        "24Vol": "Volume sur 24h",
+        "title": "Infos",
+        "openInterestTips": "La position totale en cours de tous les utilisateurs sur ce contrat.",
+        "fundingTips": "Ceci est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp près du prix réel du token. S'il est positif, le long paie le short. S'il est négatif, le short paie le long."
+      },
+      "PerpsIntro": {
+        "title": "Qu'est-ce que les Perps ?",
+        "desc": "Le trading de contrats perpétuels implique des risques significatifs, y compris la possibilité de perdre rapidement votre investissement et votre collatéral en raison d'un effet de levier élevé et de la volatilité du marché. Ce type de trading peut ne pas convenir à tous les utilisateurs. Les prix peuvent être affectés par les taux de financement et la liquidité, et vous pourriez être automatiquement liquidé sans préavis. Les données de marché sont fournies par Hyperliquid."
+      },
+      "PerpsClosePositionPopup": {
+        "title": "Fermer la position {{direction}} {{coin}}",
+        "pnl": "PNL",
+        "providerFeeTips": "Frais Hyperliquid : {{fee}}",
+        "positionSize": "Taille de position",
+        "fee": "Frais :",
+        "rabbyFeeTips": "Frais Rabby : 0,04 %",
+        "closeBtn": "Fermer {{direction}}"
+      },
+      "PerpsOpenPositionPopup": {
+        "margin": "Marge",
+        "insufficientBalance": "Solde insuffisant",
+        "size": "Taille",
+        "autoClose": "Fermeture automatique",
+        "invalidNumber": "Veuillez saisir un nombre valide.",
+        "leverage": "Effet de levier",
+        "minimumOrderSize": "La taille minimale de commande est de 10 $.",
+        "slPrice": "Prix de Stop-Loss",
+        "tpPrice": "Prix de prise de bénéfices",
+        "maximumOrderSize": "La taille maximum de l'ordre est {{amount}}",
+        "available": "disponible",
+        "sizeTips": "La valeur totale ou la quantité de votre trade, déterminée par la marge et l'effet de levier."
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "price": "Prix",
+        "perps": "Perps",
+        "initialMargin": "Marge Initiale",
+        "tpPrice": "Prix de prise de bénéfice",
+        "autoClose": "Fermeture automatique",
+        "slPrice": "Prix de stop-loss",
+        "direction": "Direction",
+        "fee": "Frais",
+        "btn": "Ouvrir une position {{direction}}",
+        "title": "Vérifier la commande",
+        "estLqPrice": "Prix de liquidation estimé",
+        "size": "Taille",
+        "providerFeeTips": "Frais Hyperliquid : {{fee}}",
+        "rabbyFeeTips": "Frais Rabby : 0%",
+        "sizeTips": "La valeur totale ou la quantité de votre trade, définie par la marge et l'effet de levier.",
+        "margin": "Marge (Isolée)",
+        "liquidationPriceTips": "Le prix auquel votre position est automatiquement clôturée par l'échange pour éviter d'autres pertes lorsque votre marge tombe en dessous du niveau de marge d'entretien."
+      },
+      "action": {
+        "short": "Vendre à découvert",
+        "long": "Long",
+        "closePosition": "Fermer la position {{direction}}",
+        "noPermission": "L'ouverture de positions n'est pas prise en charge dans votre région."
+      },
+      "PerpsAutoCloseModal": {
+        "price": "Prix :",
+        "tpPrice": "Prix de prise de profit",
+        "entryPrice": "Prix d'entrée :",
+        "slPrice": "Prix de Stop Loss",
+        "setTpPrice": "Définir le prix de prise de profit",
+        "setSlPrice": "Définir le prix de stop-loss"
+      }
     }
   },
   "native": {
