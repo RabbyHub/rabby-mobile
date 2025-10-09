@@ -179,13 +179,19 @@ const LiquidityDetail = ({
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.tableHeader}>
-        <Text style={styles.tableHeaderItem}>Time</Text>
-        <Text style={styles.tableHeaderItem}>Amount</Text>
-        <Text style={styles.tableHeaderItem}>Value</Text>
+        <Text style={styles.tableHeaderItem}>
+          {t('page.tokenDetail.marketInfo.pool.headers.time')}
+        </Text>
+        <Text style={styles.tableHeaderItem}>
+          {t('page.tokenDetail.marketInfo.pool.headers.amount')}
+        </Text>
+        <Text style={styles.tableHeaderItem}>
+          {t('page.tokenDetail.marketInfo.pool.headers.value')}
+        </Text>
         <Text style={[styles.tableHeaderItem, styles.lastItem]} />
       </View>
     );
-  }, [styles.lastItem, styles.tableHeader, styles.tableHeaderItem]);
+  }, [styles.lastItem, styles.tableHeader, styles.tableHeaderItem, t]);
 
   const renderItem = useCallback(
     ({ item, index }) => {
@@ -201,7 +207,9 @@ const LiquidityDetail = ({
             <View style={styles.chatTop}>
               <Text
                 style={[styles.chatTopText, !isAdd && styles.chatTopTextRight]}>
-                {isAdd ? 'Add' : 'Remove'}
+                {isAdd
+                  ? t('page.tokenDetail.marketInfo.pool.actions.add')
+                  : t('page.tokenDetail.marketInfo.pool.actions.remove')}
               </Text>
             </View>
             <Text style={styles.timeAtItem}>{formatTime(item.time_at)}</Text>
@@ -254,6 +262,7 @@ const LiquidityDetail = ({
       list.length,
       colors2024,
       onOpenTxHash,
+      t,
     ],
   );
   const footerRef = useRef<any>(null);
@@ -295,7 +304,7 @@ const LiquidityDetail = ({
                   styles.switchTabItemText,
                   activeTab === DetailsTabKey.all && styles.activeTabItemText,
                 ]}>
-                All
+                {t('page.tokenDetail.marketInfo.pool.actions.all')}
               </Text>
             </Pressable>
             <Pressable
@@ -309,7 +318,7 @@ const LiquidityDetail = ({
                   styles.switchTabItemText,
                   activeTab === DetailsTabKey.add && styles.activeTabItemText,
                 ]}>
-                Add
+                {t('page.tokenDetail.marketInfo.pool.actions.add')}
               </Text>
             </Pressable>
             <Pressable
@@ -325,7 +334,7 @@ const LiquidityDetail = ({
                   activeTab === DetailsTabKey.remove &&
                     styles.activeTabItemText,
                 ]}>
-                Remove
+                {t('page.tokenDetail.marketInfo.pool.actions.remove')}
               </Text>
             </Pressable>
           </View>
@@ -380,10 +389,18 @@ const Top5Pools = ({
     <View style={styles.holderContainer}>
       <View style={styles.details}>
         <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderItem, styles.firstItem]}>Dex</Text>
-          <Text style={styles.tableHeaderItem}>Pair</Text>
-          <Text style={styles.tableHeaderItem}>Amount</Text>
-          <Text style={[styles.tableHeaderItem, styles.valueItem]}>Value</Text>
+          <Text style={[styles.tableHeaderItem, styles.firstItem]}>
+            {t('page.tokenDetail.marketInfo.pool.dex')}
+          </Text>
+          <Text style={styles.tableHeaderItem}>
+            {t('page.tokenDetail.marketInfo.pool.pair')}
+          </Text>
+          <Text style={styles.tableHeaderItem}>
+            {t('page.tokenDetail.marketInfo.pool.amount')}
+          </Text>
+          <Text style={[styles.tableHeaderItem, styles.valueItem]}>
+            {t('page.tokenDetail.marketInfo.pool.value')}
+          </Text>
         </View>
         <View style={styles.tableBody}>
           {mockPools?.map((item, index) => (
@@ -456,7 +473,7 @@ const Pools = ({ tokenId, chainId }: PoolsProps) => {
               styles.headerText,
               activeTabKey === TabKey.top5 && styles.activeText,
             ]}>
-            Top 5 pools
+            {t('page.tokenDetail.marketInfo.pool.tab.top5')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -466,7 +483,7 @@ const Pools = ({ tokenId, chainId }: PoolsProps) => {
               styles.headerText,
               activeTabKey === TabKey.liquidityDetail && styles.activeText,
             ]}>
-            Liquidity Detail
+            {t('page.tokenDetail.marketInfo.pool.tab.liquidityDetail')}
           </Text>
         </TouchableOpacity>
       </View>

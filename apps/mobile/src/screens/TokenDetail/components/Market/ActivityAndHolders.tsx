@@ -92,7 +92,7 @@ const ActivityAndHolders = ({
             activeTabKey === TabKey.pools && styles.activeText,
           ]}
           onPress={() => setActiveTabKey(TabKey.pools)}>
-          Pools
+          {t('page.tokenDetail.marketInfo.pools')}
         </Text>
       </View>
       <View style={styles.content}>
