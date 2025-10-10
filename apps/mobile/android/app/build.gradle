@@ -181,6 +181,7 @@ android {
     }
     // packagingOptions {
     //   jniLibs {
+    //     useLegacyPackaging true
     //     pickFirsts += [
     //       'lib/**/libssl.so',
     //       'lib/**/libcrypto.so'
