@@ -11,7 +11,7 @@ import { AppBottomSheetModal } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { TIME_SETTINGS } from '@/constant/autoLock';
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
@@ -22,6 +22,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { FontWeightEnum } from '@/core/utils/fonts';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'green-default');
 
@@ -32,14 +33,18 @@ const SIZES = {
   titleHeight: 24,
   titleMb: 16,
   HANDLE_HEIGHT: 8,
-  containerPb: 42,
+  containerPb: 0,
+  listBottomSpace: 48,
   get FULL_HEIGHT() {
     return (
       SIZES.HANDLE_HEIGHT +
       (SIZES.titleMt + SIZES.titleHeight + SIZES.titleMb) +
-      (SIZES.ITEM_HEIGHT + SIZES.ITEM_GAP) * (TIME_SETTINGS.length - 1) +
+      (SIZES.ITEM_HEIGHT + SIZES.ITEM_GAP) *
+        Math.min(5, TIME_SETTINGS.length - 1) +
       SIZES.ITEM_HEIGHT +
-      SIZES.containerPb
+      SIZES.containerPb +
+      SIZES.listBottomSpace +
+      (IS_ANDROID ? 30 : 0) /* compensation distance */
     );
   },
 };
@@ -54,7 +59,6 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
   const sheetModalRef = useRef<BottomSheetModal>(null);
   const { safeSizes } = useSafeAndroidBottomSizes({
     sheetHeight: SIZES.FULL_HEIGHT,
-    containerPaddingBottom: SIZES.containerPb,
   });
   const { t } = useTranslation();
 
@@ -83,23 +87,25 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
         colors: colors2024,
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
-      snapPoints={[safeSizes.sheetHeight]}
+      snapPoints={[SIZES.FULL_HEIGHT]}
       onChange={index => {
         if (index <= 0) {
           onCancel?.();
         }
-      }}>
+      }}
+      enableContentPanningGesture
+      enablePanDownToClose>
       <AutoLockView
         as="View"
         // scrollEnabled={false}
         style={[
           styles.container,
           {
-            paddingBottom: safeSizes.containerPaddingBottom,
+            paddingBottom: 0,
           },
         ]}>
         <Text style={styles.title}>{t('page.setting.autoLockTime')}</Text>
-        <View style={styles.mainContainer}>
+        <BottomSheetScrollView style={styles.mainContainer}>
           {TIME_SETTINGS.map((item, idx) => {
             const labelText = item.getLabel();
             const itemKey = `timesetting-${labelText}-${item.milliseconds}`;
@@ -121,7 +127,8 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
               </TouchableView>
             );
           })}
-        </View>
+          {!!TIME_SETTINGS.length && <View style={styles.bottomSpacer} />}
+        </BottomSheetScrollView>
       </AutoLockView>
     </AppBottomSheetModal>
   );
@@ -176,6 +183,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   notFirstOne: {
     marginTop: SIZES.ITEM_GAP,
+  },
+  bottomSpacer: {
+    height: SIZES.listBottomSpace,
   },
   settingItemLabel: {
     color: ctx.colors2024['neutral-title-1'],

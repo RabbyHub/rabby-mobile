@@ -17,6 +17,7 @@ import { FontWeightEnum } from '@/core/utils/fonts';
 import { default as RcThemeSystemCC } from './icons/theme-system-cc.svg';
 import { default as RcThemeLightCC } from './icons/theme-light-cc.svg';
 import { default as RcThemeDarkCC } from './icons/theme-dark-cc.svg';
+import { IS_IOS } from '@/core/native/utils';
 
 const themeSelectorModalVisibleAtom = atom(false);
 export function useThemeSelectorModalVisible() {
@@ -57,13 +58,14 @@ export default function ThemeSelectorModal({
         (SIZES.titleMt + SIZES.titleHeight + SIZES.titleMb) +
         (SIZES.ITEM_HEIGHT + SIZES.ITEM_GAP) * (options.length - 1) +
         SIZES.ITEM_HEIGHT +
-        SIZES.containerPb,
+        SIZES.containerPb +
+        SIZES.listBottomSpace,
     };
   }, [t]);
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     sheetHeight: FULL_HEIGHT,
-    containerPaddingBottom: SIZES.containerPb,
+    containerBottomSpace: SIZES.containerPb,
   });
   const { toggleShowSheetModal } = useSheetModals({
     selectThemeMode: modalRef,
@@ -104,13 +106,14 @@ export default function ThemeSelectorModal({
         // }
       })}
       onDismiss={handleCancel}
-      enableContentPanningGesture={true}>
+      enableContentPanningGesture
+      enablePanDownToClose>
       <AutoLockView
         as="View"
         style={[
           styles.container,
           {
-            paddingBottom: safeSizes.containerPaddingBottom,
+            paddingBottom: IS_IOS ? safeSizes.containerBottomSpace : 0,
           },
         ]}>
         <Text style={styles.title}>
@@ -146,6 +149,7 @@ export default function ThemeSelectorModal({
               </TouchableView>
             );
           })}
+          {!!ThemeModeOptions.length && <View style={styles.bottomSpacer} />}
         </View>
       </AutoLockView>
     </AppBottomSheetModal>
@@ -160,6 +164,7 @@ const SIZES = {
   titleMb: 16,
   HANDLE_HEIGHT: 8,
   containerPb: 42,
+  listBottomSpace: 48,
 };
 const getStyles = createGetStyles2024(ctx => {
   return {
@@ -210,12 +215,17 @@ const getStyles = createGetStyles2024(ctx => {
     notFirstOne: {
       marginTop: SIZES.ITEM_GAP,
     },
+    bottomSpacer: {
+      height: SIZES.listBottomSpace,
+    },
     leftCol: {
       flexDirection: 'row',
       alignItems: 'center',
     },
     icon: {
       marginRight: 12,
+      width: 20,
+      height: 20,
     },
     settingItemLabel: {
       color: ctx.colors2024['neutral-title-1'],

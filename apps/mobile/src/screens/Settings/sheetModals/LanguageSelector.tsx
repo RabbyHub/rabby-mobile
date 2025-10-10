@@ -42,7 +42,6 @@ export default function CurrentLanguageSelectorModal({
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { safeSizes } = useSafeAndroidBottomSizes({
     sheetHeight: SIZES.FULL_HEIGHT,
-    containerPaddingBottom: SIZES.containerPb,
   });
   const { toggleShowSheetModal } = useSheetModals({
     selectThemeMode: modalRef,
@@ -76,18 +75,19 @@ export default function CurrentLanguageSelectorModal({
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       onDismiss={handleCancel}
-      enableContentPanningGesture={true}>
+      enableContentPanningGesture
+      enablePanDownToClose>
       <AutoLockView
         as="View"
         style={[
           styles.container,
           {
-            paddingBottom: safeSizes.containerPaddingBottom,
+            paddingBottom: 0,
           },
         ]}>
-        <BottomSheetHandlableView>
+        <View>
           <Text style={styles.title}>Current Language</Text>
-        </BottomSheetHandlableView>
+        </View>
         <BottomSheetScrollView style={styles.mainContainer}>
           {SupportedLangs.map((item, idx) => {
             const itemKey = `thememode-${item.lang}`;
@@ -110,6 +110,7 @@ export default function CurrentLanguageSelectorModal({
               </TouchableView>
             );
           })}
+          {!!SupportedLangs.length && <View style={styles.bottomSpacer} />}
         </BottomSheetScrollView>
       </AutoLockView>
     </AppBottomSheetModal>
@@ -123,7 +124,8 @@ const SIZES = {
   titleHeight: 24,
   titleMb: 16,
   HANDLE_HEIGHT: 8,
-  containerPb: 42,
+  containerPb: 0,
+  listBottomSpace: 48,
   get FULL_HEIGHT() {
     return (
       SIZES.HANDLE_HEIGHT +
@@ -182,6 +184,9 @@ const getStyles = createGetStyles2024(ctx => {
     },
     notFirstOne: {
       marginTop: SIZES.ITEM_GAP,
+    },
+    bottomSpacer: {
+      height: SIZES.listBottomSpace,
     },
     settingItemLabel: {
       color: ctx.colors2024['neutral-title-1'],
