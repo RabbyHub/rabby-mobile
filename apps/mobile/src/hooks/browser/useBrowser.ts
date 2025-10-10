@@ -240,31 +240,35 @@ export function useBrowser() {
       url: string,
       options?: {
         isDapp?: boolean;
+        isNewTab?: boolean;
       },
     ) => {
       if (!url?.trim() || !/^https?:\/\//.test(url)) {
         // switchToTab(emptyTab.id);
         return;
       }
+      const { isNewTab, ...rest } = options || {};
       const newTab: Tab = {
         url,
         initialUrl: url,
         id: uuid(),
         openTime: Date.now(),
-        ...options,
+        ...rest,
       };
 
       const { httpOrigin: targetOrigin, urlInfo } = canoicalizeDappUrl(
         newTab.url,
       );
 
-      const sameOriginTab = displayedTabs.find(
-        item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
-      );
+      if (!isNewTab) {
+        const sameOriginTab = displayedTabs.find(
+          item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
+        );
 
-      if (sameOriginTab && !isGoogle(targetOrigin)) {
-        switchToTab(sameOriginTab.id);
-        return true;
+        if (sameOriginTab && !isGoogle(targetOrigin)) {
+          switchToTab(sameOriginTab.id);
+          return true;
+        }
       }
 
       if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) {
