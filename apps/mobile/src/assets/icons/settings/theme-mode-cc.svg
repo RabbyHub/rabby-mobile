@@ -1,16 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none">
-  <circle cx="11" cy="11" r="5.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-    stroke-linejoin="round" />
-  <path d="M2 11.5H2.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
-  <path d="M19.5 11.5H20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
-  <path d="M11 2V2.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
-  <path d="M11 19.5V20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
-  <path d="M4.63672 4.63281L4.99027 4.98637" stroke="currentColor" stroke-width="2.5"
-    stroke-linecap="round" />
-  <path d="M17.0117 17.0078L17.3653 17.3614" stroke="currentColor" stroke-width="2.5"
-    stroke-linecap="round" />
-  <path d="M4.63672 17.3594L4.99027 17.0058" stroke="currentColor" stroke-width="2.5"
-    stroke-linecap="round" />
-  <path d="M17.0117 4.98438L17.3653 4.63082" stroke="currentColor" stroke-width="2.5"
-    stroke-linecap="round" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none">
+  <circle cx="10" cy="10" r="5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M1.5 10.5H2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M18 10.5H18.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M10 1.5V2.00001" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M10 18V18.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M3.64062 3.63281L3.99418 3.98637" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M16.0156 16.0078L16.3692 16.3614" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M3.64062 16.3594L3.99418 16.0058" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M16.0156 3.98438L16.3692 3.63082" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
 </svg>
