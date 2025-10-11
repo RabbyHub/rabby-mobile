@@ -1,18 +1,19 @@
 {
   "name": "mobile-local-pages",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
     "build": "tsc -b && vite build",
     "bundle": "yarn build && yarn ../mobile link-assets",
-    "bundle:android": "yarn build --mode android && yarn ../mobile link-assets",
-    "bundle:ios": "yarn build --mode ios && yarn ../mobile link-assets",
     "bundle:all": "yarn build --mode android && yarn build --mode ios",
     "bundle:all:link": "yarn build --mode android && yarn build --mode ios && yarn ../mobile link-assets",
-    "make-theme": "node ./scripts/make-theme.cjs",
+    "bundle:android": "yarn build --mode android && yarn ../mobile link-assets",
+    "bundle:ios": "yarn build --mode ios && yarn ../mobile link-assets",
+    "dev": "vite --host",
     "lint": "eslint .",
+    "lint:commit:fix": "eslint --fix --quiet --ext .js,.ts,.tsx ./src",
+    "make-theme": "node ./scripts/make-theme.cjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -37,6 +38,7 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.4.0",
     "jotai": "^2.15.0",
+    "lint-staged": "^15.2.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.14",
     "tinycolor2": "^1.6.0",

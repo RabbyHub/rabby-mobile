@@ -30320,6 +30320,7 @@ __metadata:
     jotai: ^2.15.0
     less: ^4.4.1
     lightweight-charts: ^5.0.8
+    lint-staged: ^15.2.0
     postcss: ^8.5.6
     react: ^19.1.1
     react-dom: ^19.1.1
@@ -31994,7 +31995,7 @@ __metadata:
 
 "pidtree@npm:0.6.0":
   version: 0.6.0
-  resolution: "pidtree@npm:0.6.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fpidtree%2F-%2Fpidtree-0.6.0.tgz"
+  resolution: "pidtree@npm:0.6.0"
   bin:
     pidtree: bin/pidtree.js
   checksum: 8fbc073ede9209dd15e80d616e65eb674986c93be49f42d9ddde8dbbd141bb53d628a7ca4e58ab5c370bb00383f67d75df59a9a226dede8fa801267a7030c27a
@@ -37867,7 +37868,7 @@ __metadata:
 
 "string-argv@npm:0.3.2":
   version: 0.3.2
-  resolution: "string-argv@npm:0.3.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fstring-argv%2F-%2Fstring-argv-0.3.2.tgz"
+  resolution: "string-argv@npm:0.3.2"
   checksum: 8703ad3f3db0b2641ed2adbb15cf24d3945070d9a751f9e74a924966db9f325ac755169007233e8985a39a6a292f14d4fee20482989b89b96e473c4221508a0f
   languageName: node
   linkType: hard

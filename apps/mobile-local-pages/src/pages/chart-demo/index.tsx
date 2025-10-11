@@ -1,10 +1,8 @@
-import { StrictMode, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { AreaSeries, createChart, ColorType } from 'lightweight-charts';
-import { createRoot } from 'react-dom/client';
 
 import '../../imports';
-import { onDomReady } from '../../utils/webview-runtime';
 import { bootstrapApp } from '../../utils/page-store';
 
 type ChartComponentProps = {
@@ -16,8 +14,8 @@ type ChartComponentProps = {
     areaTopColor?: string;
     areaBottomColor?: string;
   };
-}
-function ChartComponent (props: ChartComponentProps) {
+};
+function ChartComponent(props: ChartComponentProps) {
   const {
     data,
     colors: {
@@ -31,42 +29,46 @@ function ChartComponent (props: ChartComponentProps) {
 
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(
-    () => {
-      const handleResize = () => {
-        chart.applyOptions({ width: chartContainerRef.current?.clientWidth });
-      };
+  useEffect(() => {
+    const handleResize = () => {
+      chart.applyOptions({ width: chartContainerRef.current?.clientWidth });
+    };
 
-      const chart = createChart(chartContainerRef.current!, {
-        layout: {
-          background: { type: ColorType.Solid, color: backgroundColor },
-          textColor,
-        },
-        width: chartContainerRef.current?.clientWidth,
-        height: 300,
-      });
-      chart.timeScale().fitContent();
+    const chart = createChart(chartContainerRef.current!, {
+      layout: {
+        background: { type: ColorType.Solid, color: backgroundColor },
+        textColor,
+      },
+      width: chartContainerRef.current?.clientWidth,
+      height: 300,
+    });
+    chart.timeScale().fitContent();
 
-      const newSeries = chart.addSeries(AreaSeries, { lineColor, topColor: areaTopColor, bottomColor: areaBottomColor });
-      newSeries.setData(data);
+    const newSeries = chart.addSeries(AreaSeries, {
+      lineColor,
+      topColor: areaTopColor,
+      bottomColor: areaBottomColor,
+    });
+    newSeries.setData(data);
 
-      window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize);
 
-      return () => {
-        window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
 
-        chart.remove();
-      };
-    },
-    [data, backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]
-  );
+      chart.remove();
+    };
+  }, [
+    data,
+    backgroundColor,
+    lineColor,
+    textColor,
+    areaTopColor,
+    areaBottomColor,
+  ]);
 
-  return (
-    <div
-     ref={chartContainerRef}
-    />
-  );
-};
+  return <div ref={chartContainerRef} />;
+}
 
 const initialData = [
   { time: '2018-12-22', value: 32.51 },
@@ -82,9 +84,7 @@ const initialData = [
 ];
 
 export function App(props: Partial<ChartComponentProps>) {
-  return (
-    <ChartComponent {...props} data={initialData} />
-  );
+  return <ChartComponent {...props} data={initialData} />;
 }
 
 bootstrapApp(App);

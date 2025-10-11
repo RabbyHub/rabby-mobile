@@ -1,38 +1,43 @@
 /// <reference path="../types/duplex.d.ts" />
 
-import { atom, createStore } from 'jotai';
+import { atom } from 'jotai';
 import { pageStore } from './page-store';
 
 const injectedObjectRef = {
   current: null as RuntimeInfo | null,
-}
+};
 
 type StringOrObject<T extends object> = T | string;
 
-function postMessageToRN (message: StringOrObject<DuplexPost>) {
+function postMessageToRN(message: StringOrObject<DuplexPost>) {
   if (!window.ReactNativeWebView || !window.ReactNativeWebView.postMessage) {
     console.warn('ReactNativeWebView is not ready');
     return;
   }
 
   window.ReactNativeWebView.postMessage(
-    typeof message === 'string' ? message : JSON.stringify(message)
+    typeof message === 'string' ? message : JSON.stringify(message),
   );
 }
 
-const waitDomContentLoadedPromise = new Promise<void>((resolve) => {
+const waitDomContentLoadedPromise = new Promise<void>(resolve => {
   document.addEventListener('DOMContentLoaded', () => {
     resolve();
     if (!injectedObjectRef.current) {
-      if (window.ReactNativeWebView && window.ReactNativeWebView.injectedObjectJson) {
-        const injectedData = JSON.parse(window.ReactNativeWebView.injectedObjectJson()) as RuntimeInfo;
+      if (
+        window.ReactNativeWebView &&
+        window.ReactNativeWebView.injectedObjectJson
+      ) {
+        const injectedData = JSON.parse(
+          window.ReactNativeWebView.injectedObjectJson(),
+        ) as RuntimeInfo;
         injectedObjectRef.current = injectedData;
         setRuntimeInfo(injectedData);
       }
     }
 
     postMessageToRN({ type: 'GET_RUNTIME_INFO' });
-  })
+  });
 });
 
 export async function onDomReady() {
@@ -50,7 +55,7 @@ export function getPlatform(): 'ios' | 'android' {
   return getInjectedObject().platform;
 }
 
-window.onMessageFromReactNative = function(message) {
+window.onMessageFromReactNative = function (message) {
   console.debug('[debug] onMessageFromReactNative', message.info);
 
   switch (message.type) {
@@ -63,11 +68,14 @@ window.onMessageFromReactNative = function(message) {
       console.warn('Unknown message from ReactNative', message);
     }
   }
-}
+};
 
 function setDocumentTheme(isDark: boolean) {
   try {
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    document.documentElement.setAttribute(
+      'data-theme',
+      isDark ? 'dark' : 'light',
+    );
   } catch (error) {
     console.error('setDocumentTheme error', error);
   }
@@ -93,12 +101,13 @@ function isIOS() {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
-export function setRuntimeInfo (runtimeInfo: Partial<RuntimeInfo>) {
+export function setRuntimeInfo(runtimeInfo: Partial<RuntimeInfo>) {
   pageStore.set(runtimeInfoAtom, prev => {
     const newInfo: RuntimeInfo = {
       ...prev,
       runtimeBaseUrl: runtimeInfo.runtimeBaseUrl ?? prev.runtimeBaseUrl,
-      platform: runtimeInfo.platform ?? prev.platform ?? (isIOS() ? 'ios' : 'android'),
+      platform:
+        runtimeInfo.platform ?? prev.platform ?? (isIOS() ? 'ios' : 'android'),
       useDevResource: runtimeInfo.useDevResource ?? prev.useDevResource,
       isDark: runtimeInfo.isDark ?? prev.isDark,
       language: (runtimeInfo.language ?? prev.language) || 'en-US',
