@@ -105,7 +105,8 @@ export interface Props {
     | 'ble'
     | 'keystone'
     | 'onekey'
-    | 'ledger';
+    | 'ledger'
+    | 'trezor';
   status:
     | 'SENDING'
     | 'WAITING'
@@ -169,6 +170,8 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return ConnectKeystoneSVG;
       case 'onekey':
         return ConnectOneKeySVG;
+      case 'trezor':
+        return;
       case 'qrcode':
       default:
         return ConnectQRCodeSVG;

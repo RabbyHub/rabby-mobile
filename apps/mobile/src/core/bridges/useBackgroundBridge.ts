@@ -163,7 +163,11 @@ export function useSetupWebview({
         // sendActiveAccount();
 
         // icon.current = null;
-        if (treatAsReload || currentBridgeRef.current?.disconnected) {
+        if (
+          treatAsReload ||
+          !currentBridgeRef.current ||
+          currentBridgeRef.current.disconnected
+        ) {
           destroyCurrentBridge();
           putBackgroundBridge(null, false);
           // // Cancel loading the page if we detect its a phishing page

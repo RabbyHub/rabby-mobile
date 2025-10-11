@@ -31,6 +31,14 @@ mk_ios_icons() {
     # iPhone App
     120 120 "2x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
     180 180 "3x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
+    # iPad Support
+    128 128 "2x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
+    192 192 "3x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
+    76 76 "2x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
+    114 114 "3x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
+    136 136 "2x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
+    152 152 "2x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
+    167 167 "2x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
     # App Store
     1024 1024 "1x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
 
@@ -47,6 +55,14 @@ mk_ios_icons() {
     # iPhone App
     120 120 "2x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
     180 180 "3x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
+    # iPad Support
+    128 128 "2x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
+    192 192 "3x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
+    76 76 "2x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
+    114 114 "3x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
+    136 136 "2x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
+    152 152 "2x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
+    167 167 "2x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
     # App Store
     1024 1024 "1x" logo-debug-512w.png $ios_icons_dir/AppIconDebug.appiconset
 
@@ -63,13 +79,21 @@ mk_ios_icons() {
     # iPhone App
     120 120 "2x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
     180 180 "3x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    # iPad Support
+    128 128 "2x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    192 192 "3x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    76 76 "2x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    114 114 "3x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    136 136 "2x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    152 152 "2x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
+    167 167 "2x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
     # App Store
     1024 1024 "1x" logo-reg-512w.png $ios_icons_dir/AppIconRegression.appiconset
 
     ## LaunchScreen.imageset
-    91 79 "1x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset
-    182 158 "2x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset
-    273 237 "3x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset
+    # 91 79 "1x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset
+    # 182 158 "2x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset
+    # 273 237 "3x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset
 
     ## For Deployment
     512 512 "512w" logo-1024w.png $script_dir/deployments/ios/

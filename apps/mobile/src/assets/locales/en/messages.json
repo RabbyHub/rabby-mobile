@@ -1349,6 +1349,18 @@
             "legacy": "Legacy: HD path used by MEW / Mycrypto."
           }
         },
+        "trezor": {
+          "hdPathType": {
+            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+          },
+          "hdPathTypeNoChain": {
+            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+          }
+        },
         "selectIndexTip": "Select the serial number of wallets to start from:",
         "manageAddressFrom": "Manage wallet from {{0}} to {{1}}",
         "customAddressHdPath": "Custom Wallet HD path",
@@ -2121,6 +2133,10 @@
         "title": "Hyperliquid Referral Program",
         "desc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Hyperliquid fees.",
         "btn": "Join Now"
+      },
+      "WebviewError": {
+        "failedToLoad": "Failed to load the page",
+        "error": "Error:"
       }
     },
     "browserManage": {
@@ -2364,7 +2380,7 @@
         "pnl": "PNL",
         "closeBtn": "Close {{direction}}",
         "fee": "Fee:",
-        "rabbyFeeTips": "Rabby fee: 0.05%",
+        "rabbyFeeTips": "Rabby fee: 0.04%",
         "providerFeeTips": "Hyperliquid fee: {{fee}}"
       },
       "PerpsOpenPositionPopup": {
@@ -2394,7 +2410,7 @@
         "tpPrice": "Take-Profit Price",
         "fee": "Fee",
         "btn": "Open {{direction}} Position",
-        "rabbyFeeTips": "Rabby fee: 0.05%",
+        "rabbyFeeTips": "Rabby fee: 0%",
         "providerFeeTips": "Hyperliquid fee: {{fee}}",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",

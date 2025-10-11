@@ -22,7 +22,7 @@ export const useAccountInfo = (
   }>();
   const isLedger = type === KEYRING_CLASS.HARDWARE.LEDGER;
   const isTrezorLike =
-    // type === KEYRING_CLASS.HARDWARE.TREZOR ||
+    type === KEYRING_CLASS.HARDWARE.TREZOR ||
     type === KEYRING_CLASS.HARDWARE.ONEKEY;
   const isMnemonics = type === KEYRING_CLASS.MNEMONIC;
   const isKeystone = brand === 'Keystone';

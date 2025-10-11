@@ -92,6 +92,7 @@ export const AddressDetailInner: React.FC<
             value={
               <AppSwitch2024
                 onValueChange={setInWhitelist}
+                changeValueImmediately={false}
                 value={inWhiteList}
               />
             }

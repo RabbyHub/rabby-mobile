@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { PerpsMarketItem } from './PerpsMarketItem';
 import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
+import { sortBy } from 'lodash';
 
 export const PerpsMarketSection: React.FC<{
   marketData: MarketData[];
@@ -17,7 +18,7 @@ export const PerpsMarketSection: React.FC<{
   const navigation = useRabbyAppNavigation();
 
   const list = useMemo(() => {
-    return marketData.slice(0, 3);
+    return sortBy(marketData, item => -(item.dayNtlVlm || 0)).slice(0, 3);
   }, [marketData]);
 
   return (

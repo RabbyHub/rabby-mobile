@@ -163,18 +163,22 @@ export const formatNum = (
 };
 
 // -> assets
-export const formatNetworth = (num?: number, trimFractionZero = false) => {
+export const formatNetworth = (
+  num?: number,
+  trimFractionZero = false,
+  prefix = '$',
+) => {
   if (!num && num !== 0) {
     return '';
   }
 
   // >1b || <1m
   if (num > 1000000000 || num < 1000000) {
-    return formatNum(num, 2, { prefix: '$', floor: 0.01, trimFractionZero });
+    return formatNum(num, 2, { prefix, floor: 0.01, trimFractionZero });
   }
 
   // 1m
-  return formatNum(num, 0, { prefix: '$', trimFractionZero });
+  return formatNum(num, 0, { prefix, trimFractionZero });
 };
 
 export const formatPriceMainsite = (num?: number) => {

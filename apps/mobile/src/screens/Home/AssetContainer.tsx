@@ -38,6 +38,7 @@ import { Account } from '@/core/services/preference';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
 import { CurveDayType } from '@/utils/curveDayType';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -82,6 +83,7 @@ export const AssetContainer: React.FC<Props> = ({
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
 
+  const { currency } = useCurrency();
   const { isDisConnect } = useGlobalStatus();
 
   const {
@@ -441,7 +443,11 @@ export const AssetContainer: React.FC<Props> = ({
         case 'fold_token':
           return (
             <TokenRowSectionHeader
-              str={getTotalFoldToken(sortTokens.filter(i => i._isFold))}
+              str={getTotalFoldToken(
+                sortTokens.filter(i => i._isFold),
+                currency.usd_rate,
+                currency.symbol,
+              )}
               fold={foldHideList}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
@@ -459,7 +465,11 @@ export const AssetContainer: React.FC<Props> = ({
         case 'fold_defi':
           return (
             <TokenRowSectionHeader
-              str={getAllDefiCount(portfolios.filter(i => i._isFold))}
+              str={getAllDefiCount(
+                portfolios.filter(i => i._isFold),
+                currency.usd_rate,
+                currency.symbol,
+              )}
               fold={foldDefi}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
@@ -487,6 +497,8 @@ export const AssetContainer: React.FC<Props> = ({
       }
     },
     [
+      currency.symbol,
+      currency.usd_rate,
       foldDefi,
       foldHideList,
       foldNft,
@@ -600,8 +612,14 @@ export const AssetContainer: React.FC<Props> = ({
           foldNftAmount={foldNftList.length}
           totalFoldTokenValue={getTotalFoldToken(
             sortTokens.filter(i => i._isFold),
+            currency.usd_rate,
+            currency.symbol,
           )}
-          foldDefiAmount={getAllDefiCount(portfolios.filter(i => i._isFold))}
+          foldDefiAmount={getAllDefiCount(
+            portfolios.filter(i => i._isFold),
+            currency.usd_rate,
+            currency.symbol,
+          )}
           foldHideList={foldHideList}
           setFoldHideList={setFoldHideList}
           foldNft={foldNft}

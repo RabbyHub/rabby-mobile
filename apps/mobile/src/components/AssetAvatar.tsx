@@ -7,6 +7,7 @@ import { memo, ReactNode, useMemo } from 'react';
 import { Image, ImageStyle, StyleSheet, View, ViewStyle } from 'react-native';
 import FastImage, { FastImageProps } from 'react-native-fast-image';
 import { TestnetChainLogo } from './Chain/TestnetChainLogo';
+import { SvgUri } from 'react-native-svg';
 
 type AssetAvatarProps = {
   logo?: string;
@@ -85,6 +86,14 @@ export const AssetAvatar = memo(
       [logo],
     );
 
+    const isSvgLogo = useMemo(
+      () =>
+        typeof logo === 'string' &&
+        /\.svg(\?|$)/i.test(logo) &&
+        /^https?:\/\//i.test(logo),
+      [logo],
+    );
+
     const avatarStyle = useMemo(() => ({ width: size, height: size }), [size]);
 
     const tokenStyle = useMemo(
@@ -111,6 +120,8 @@ export const AssetAvatar = memo(
         <View style={tokenStyle}>
           {!logo || on ? (
             <DefaultToken size={size} style={avatarStyle} isLight={isLight} />
+          ) : isSvgLogo ? (
+            <SvgUri uri={logo!} width={size} height={size} onError={turnOn} />
           ) : (
             <FastImage
               source={source}

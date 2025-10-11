@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.packages.build.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "references": [
+    {
+      "path": "../keyring-utils/tsconfig.build.json"
+    },
+    {
+      "path": "../base-utils/tsconfig.build.json"
+    }
+  ],
+  "include": ["../../types", "./src"]
+}
