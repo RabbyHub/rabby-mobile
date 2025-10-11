@@ -43,7 +43,10 @@ const [classicalColors, next2024Colors] = [
   return rabbyColors;
 });
 
-/** @type {import('tailwindcss').Config} */
+/**
+ * @deprecated will not support in the future
+ * @type {import('tailwindcss').Config}
+ */
 module.exports = {
   content: [
     './index.js',

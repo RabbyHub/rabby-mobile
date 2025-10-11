@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootProject = resolve(__dirname, '../..');
@@ -24,12 +25,27 @@ const isProduction = process.env.NODE_ENV === 'production';
 export default defineConfig({
   define: {
   },
+  resolve: {
+    alias: [
+      { find: '@', replacement: resolve(__dirname, 'src') },
+      // { find: '@styles', replacement: resolve(__dirname, 'src/styles') },
+    ],
+  },
+  css: {
+    preprocessorOptions: {
+      less: {
+        // You can inject Less code directly as a string
+        additionalData: `@import "@/styles/tailwind-theme-v4.css";`,
+      }
+    }
+  },
   plugins: [
     react({
       babel: {
         plugins: [['babel-plugin-react-compiler']],
       },
     }),
+    tailwindcss(),
   ],
   ...isProduction && {
     // base: `./`,

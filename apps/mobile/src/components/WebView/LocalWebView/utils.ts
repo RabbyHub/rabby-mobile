@@ -1,3 +1,4 @@
+import { SupportedLang } from '@/utils/i18n';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { atom, useAtom } from 'jotai';
 import { useCallback } from 'react';
@@ -113,17 +114,23 @@ export function makeRuntimeInfo({
   baseUrl,
   useDevResource = __DEV__,
   isDark = false,
+  language = SupportedLang['en-US'],
+  i18nTexts = {},
 }: {
   baseUrl: string;
   useDevResource?: boolean;
   isDark: boolean;
+  language?: SupportedLang;
+  i18nTexts?: Record<string, string>;
 }) {
   return {
     runtimeBaseUrl: baseUrl,
     platform: Platform.OS,
     useDevResource: useDevResource,
     isDark: isDark,
-    colors2024: ThemeColors2024[isDark ? 'dark' : 'light'],
+    language,
+    // colors2024: ThemeColors2024[isDark ? 'dark' : 'light'],
+    i18nTexts,
   };
 }
 

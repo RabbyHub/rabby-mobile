@@ -8,17 +8,27 @@ import {
   View,
 } from 'react-native';
 
-import { useTheme2024 } from '@/hooks/theme';
+import { useAppTheme, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { Switch } from 'react-native-switch';
+import { Button } from '@rneui/themed';
+import { useTranslation } from 'react-i18next';
+import { useAppLanguage } from '@/hooks/lang';
+import { SupportedLang } from '@/utils/i18n';
 
 function DevUIBuiltInPages() {
   const { styles, colors2024, colors } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
+
+  const { appTheme, toggleThemeMode } = useAppTheme();
+
+  const { currentLanguage, setCurrentLanguage } = useAppLanguage();
+
+  const { t } = useTranslation();
 
   const [forceUseLocalResource, setForceUseLocalResource] = useState(!__DEV__);
 
@@ -68,17 +78,111 @@ function DevUIBuiltInPages() {
             </View>
           </View>
 
-          <Text
-            style={[styles.componentName, { fontSize: 16, marginBottom: 12 }]}>
-            Chart Demo
-          </Text>
-          <View style={styles.widgetItem}>
-            <LocalWebView
-              forceUseLocalResource={forceUseLocalResource}
-              entryPath={'/pages/chart-demo.html'}
-              webviewSize={{ height: 300 }}
-            />
+          {/* switch theme :start */}
+          <View
+            style={{
+              flexDirection: 'column',
+              marginBottom: 12,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 12,
+              }}>
+              <Text style={[styles.text, { marginRight: 16, fontSize: 16 }]}>
+                Switch App Theme
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+              }}>
+              <Button
+                type="outline"
+                containerStyle={[
+                  { width: 80 },
+                  appTheme === 'system' && styles.btnContainerActive,
+                ]}
+                titleStyle={[appTheme === 'system' && styles.btnTextActive]}
+                onPress={() => toggleThemeMode('system')}>
+                System
+              </Button>
+              <Button
+                type="outline"
+                containerStyle={[
+                  { width: 80 },
+                  appTheme === 'light' && styles.btnContainerActive,
+                ]}
+                titleStyle={[appTheme === 'light' && styles.btnTextActive]}
+                onPress={() => toggleThemeMode('light')}>
+                Light
+              </Button>
+              <Button
+                type="outline"
+                containerStyle={[
+                  { width: 80 },
+                  appTheme === 'dark' && styles.btnContainerActive,
+                ]}
+                titleStyle={[appTheme === 'dark' && styles.btnTextActive]}
+                onPress={() => toggleThemeMode('dark')}>
+                Dark
+              </Button>
+            </View>
           </View>
+          {/* switch theme :end */}
+
+          {/* switch lang :start */}
+          <View
+            style={{
+              flexDirection: 'column',
+              marginBottom: 12,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 12,
+              }}>
+              <Text style={[styles.text, { marginRight: 16, fontSize: 16 }]}>
+                Switch Language
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+              }}>
+              <Button
+                type="outline"
+                containerStyle={[
+                  { width: 80 },
+                  currentLanguage === 'en-US' && styles.btnContainerActive,
+                ]}
+                titleStyle={[
+                  currentLanguage === 'en-US' && styles.btnTextActive,
+                ]}
+                onPress={() => setCurrentLanguage(SupportedLang['en-US'])}>
+                English
+              </Button>
+              <Button
+                type="outline"
+                containerStyle={[
+                  { width: 80 },
+                  currentLanguage === 'zh-CN' && styles.btnContainerActive,
+                ]}
+                titleStyle={[
+                  currentLanguage === 'zh-CN' && styles.btnTextActive,
+                ]}
+                onPress={() => setCurrentLanguage(SupportedLang['zh-CN'])}>
+                中文
+              </Button>
+            </View>
+          </View>
+          {/* switch lang :end */}
 
           <Text
             style={[styles.componentName, { fontSize: 16, marginBottom: 12 }]}>
@@ -88,9 +192,27 @@ function DevUIBuiltInPages() {
             <LocalWebView
               forceUseLocalResource={forceUseLocalResource}
               entryPath={'/pages/index.html'}
-              webviewSize={{ height: 500 }}
+              webviewSize={{ height: 390 }}
+              nestedScrollEnabled={false}
+              i18nTexts={{
+                'page.devUIBuiltInPages.builtInPageTitle': t(
+                  'page.devUIBuiltInPages.builtInPageTitle',
+                ),
+              }}
             />
           </View>
+
+          {/* <Text
+            style={[styles.componentName, { fontSize: 16, marginBottom: 12 }]}>
+            Chart Demo
+          </Text>
+          <View style={styles.widgetItem}>
+            <LocalWebView
+              forceUseLocalResource={forceUseLocalResource}
+              entryPath={'/pages/chart-demo.html'}
+              webviewSize={{ height: 300 }}
+            />
+          </View> */}
         </View>
       </ScrollView>
     </NormalScreenContainer>
@@ -171,6 +293,14 @@ const getStyles = createGetStyles2024(ctx =>
     openedDappRecord: {
       borderBottomColor: ctx.colors2024['neutral-line'],
       borderBottomWidth: 1,
+    },
+
+    btnContainerActive: {
+      backgroundColor: ctx.colors2024['blue-default'],
+    },
+
+    btnTextActive: {
+      color: ctx.colors2024['neutral-card-2'],
     },
   }),
 );

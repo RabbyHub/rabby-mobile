@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import WebView, { WebViewProps } from 'react-native-webview';
 
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
@@ -6,7 +6,7 @@ import {
   refAssetForLocalWebView,
   WEBVIEW_BASEURL,
 } from '@/core/storage/webviewAssets';
-import { Platform, View } from 'react-native';
+import { Dimensions, Platform, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useDevServerSettings } from '@/core/utils/devServerSettings';
@@ -20,6 +20,11 @@ import {
 } from './utils';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { OnShouldStartLoadWithRequest } from 'react-native-webview/lib/WebViewTypes';
+import {
+  useCreationWithDeepCompare,
+  useCreationWithShallowCompare,
+} from '@/hooks/common/useMemozied';
+import { useAppLanguage } from '@/hooks/lang';
 
 type LocalWebViewProps = WebViewProps & {
   entryPath: string;
@@ -29,6 +34,7 @@ type LocalWebViewProps = WebViewProps & {
    * @default true disable http request in webview (for local resource security purpose)
    */
   disableHttpRequest?: boolean;
+  i18nTexts?: Record<string, string>;
 };
 
 function defaultOnShouldStartLoadWithRequest(
@@ -57,11 +63,13 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
       webviewSize,
       forceUseLocalResource = !__DEV__,
       disableHttpRequest = !__DEV__,
+      i18nTexts = {},
       ...webviewProps
     },
     ref,
   ) => {
-    const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+    const { styles, isLight } = useTheme2024({ getStyle });
+    const { currentLanguage } = useAppLanguage();
     // const { width: viewWidth = '100%', height: viewHeight = 300 } = viewSize || {};
     const { width: webviewWidth = '100%', height: webviewHeight = 300 } =
       webviewSize || {};
@@ -130,10 +138,34 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
         [_onShouldStartLoadWithRequest, disableHttpRequest],
       );
 
-    // console.debug('[debug] webviewSource', webviewSource);
-
     const webviewRef: React.MutableRefObject<WebView | null> =
       React.useRef<WebView>(null);
+
+    const deepComparedI18nText = useCreationWithDeepCompare(
+      () => i18nTexts,
+      [i18nTexts],
+    );
+    const runtimeInfo = useCreationWithShallowCompare(() => {
+      return makeRuntimeInfo({
+        baseUrl: webviewSource.baseUrl!,
+        useDevResource: __DEV__ && !forceUseLocalResource,
+        isDark: !isLight,
+        language: currentLanguage,
+        i18nTexts: deepComparedI18nText,
+      });
+    }, [
+      webviewSource.baseUrl,
+      forceUseLocalResource,
+      isLight,
+      currentLanguage,
+      deepComparedI18nText,
+    ]);
+    useEffect(() => {
+      sendMessageToWebview(webviewRef.current, {
+        type: 'GOT_RUNTIME_INFO',
+        info: runtimeInfo,
+      });
+    }, [runtimeInfo]);
 
     return (
       <WebView
@@ -165,11 +197,7 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
         }}
         injectedJavaScriptObject={{
           ...webviewProps.injectedJavaScriptObject,
-          ...makeRuntimeInfo({
-            baseUrl: webviewSource.baseUrl!,
-            useDevResource: __DEV__ && !forceUseLocalResource,
-            isDark: isLight,
-          }),
+          ...runtimeInfo,
         }}
         onMessage={event => {
           webviewProps.onMessage?.(event);
@@ -179,11 +207,7 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
             case 'GET_RUNTIME_INFO': {
               sendMessageToWebview(webviewRef.current, {
                 type: 'GOT_RUNTIME_INFO',
-                info: makeRuntimeInfo({
-                  baseUrl: webviewSource.baseUrl!,
-                  useDevResource: __DEV__ && !forceUseLocalResource,
-                  isDark: isLight,
-                }),
+                info: runtimeInfo,
               });
               break;
             }

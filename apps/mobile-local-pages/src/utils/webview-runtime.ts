@@ -1,5 +1,8 @@
 /// <reference path="../types/duplex.d.ts" />
 
+import { atom, createStore } from 'jotai';
+import { pageStore } from './page-store';
+
 const injectedObjectRef = {
   current: null as RuntimeInfo | null,
 }
@@ -24,6 +27,7 @@ const waitDomContentLoadedPromise = new Promise<void>((resolve) => {
       if (window.ReactNativeWebView && window.ReactNativeWebView.injectedObjectJson) {
         const injectedData = JSON.parse(window.ReactNativeWebView.injectedObjectJson()) as RuntimeInfo;
         injectedObjectRef.current = injectedData;
+        setRuntimeInfo(injectedData);
       }
     }
 
@@ -52,10 +56,58 @@ window.onMessageFromReactNative = function(message) {
   switch (message.type) {
     case 'GOT_RUNTIME_INFO': {
       injectedObjectRef.current = message.info;
+      setRuntimeInfo(message.info);
       break;
     }
     default: {
       console.warn('Unknown message from ReactNative', message);
     }
   }
+}
+
+function setDocumentTheme(isDark: boolean) {
+  try {
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  } catch (error) {
+    console.error('setDocumentTheme error', error);
+  }
+}
+
+function setDocumentLanguage(lang: string) {
+  try {
+    document.documentElement.setAttribute('lang', lang);
+  } catch (error) {
+    console.error('setDocumentLanguage error', error);
+  }
+}
+
+export const runtimeInfoAtom = atom<RuntimeInfo>({
+  runtimeBaseUrl: '',
+  platform: 'ios',
+  useDevResource: false,
+  isDark: false,
+});
+
+function isIOS() {
+  if (typeof navigator === 'undefined') return false;
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+export function setRuntimeInfo (runtimeInfo: Partial<RuntimeInfo>) {
+  pageStore.set(runtimeInfoAtom, prev => {
+    const newInfo: RuntimeInfo = {
+      ...prev,
+      runtimeBaseUrl: runtimeInfo.runtimeBaseUrl ?? prev.runtimeBaseUrl,
+      platform: runtimeInfo.platform ?? prev.platform ?? (isIOS() ? 'ios' : 'android'),
+      useDevResource: runtimeInfo.useDevResource ?? prev.useDevResource,
+      isDark: runtimeInfo.isDark ?? prev.isDark,
+      language: (runtimeInfo.language ?? prev.language) || 'en-US',
+      i18nTexts: (runtimeInfo.i18nTexts ?? prev.i18nTexts) || {},
+    };
+
+    setDocumentTheme(newInfo.isDark);
+    setDocumentLanguage(newInfo?.language || 'en-US');
+
+    return newInfo;
+  });
 }

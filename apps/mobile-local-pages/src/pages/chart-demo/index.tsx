@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 
 import '../../imports';
 import { onDomReady } from '../../utils/webview-runtime';
+import { bootstrapApp } from '../../utils/page-store';
 
 type ChartComponentProps = {
   data: { time: string; value: number }[];
@@ -86,10 +87,4 @@ export function App(props: Partial<ChartComponentProps>) {
   );
 }
 
-onDomReady().then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
-})
+bootstrapApp(App);

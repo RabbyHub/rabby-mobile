@@ -2,8 +2,11 @@ type RuntimeInfo = {
   runtimeBaseUrl: string;
   platform: 'ios' | 'android';
   useDevResource: boolean;
+  // TODO: add type
+  language?: string;
   isDark: boolean;
-  colors2024: import('@rabby-wallet/base-utils').AppColors2024Variants;
+  i18nTexts?: Record<string, string>;
+  // colors2024: import('@rabby-wallet/base-utils').AppColors2024Variants;
 }
 
 type DuplexDefs = {
