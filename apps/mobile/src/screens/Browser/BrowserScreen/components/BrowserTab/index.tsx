@@ -182,6 +182,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
       webviewActions,
     } = useWebViewControl({ initialTabId: tabId });
+    const webStates = useRef<
+      Record<string, { requested: boolean; started: boolean; ended: boolean }>
+    >({});
     const [contentMode, setContentMode] =
       useState<WebViewProps['contentMode']>('mobile');
 
@@ -671,6 +674,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                             '20250924.android_webview_always_treat_as_reload'
                           ];
 
+                        webStates.current[e.nativeEvent.url] = {
+                          ...webStates.current[e.nativeEvent.url],
+                          started: true,
+                        };
                         let treatAsReload =
                           IS_IOS ||
                           e.nativeEvent.isReload ||
@@ -744,7 +751,22 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                             resolvedUrl: nativeEvent.url,
                           };
                         });
-                        resolvedUrlRef.current = nativeEvent.url;
+                        webStates.current[url] = {
+                          ...webStates.current[url],
+                          ended: true,
+                        };
+                        const { started, ended } = webStates.current[url];
+                        const incomingOrigin = safeGetOrigin(url);
+                        const activeOrigin = safeGetOrigin(
+                          resolvedUrlRef.current,
+                        );
+                        if (
+                          (started && ended) ||
+                          incomingOrigin === activeOrigin
+                        ) {
+                          delete webStates.current[url];
+                          resolvedUrlRef.current = nativeEvent.url;
+                        }
 
                         onUpdateHistory?.({
                           name: nativeEvent.title,
@@ -766,6 +788,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       }}
                       onShouldStartLoadWithRequest={nativeEvent => {
                         const origin = safeGetOrigin(nativeEvent.url);
+                        const urlToLoad = nativeEvent.url;
+                        webStates.current[urlToLoad] = {
+                          ...webStates.current[urlToLoad],
+                          requested: true,
+                        };
+
                         if (
                           isGoogle(webviewState.resolvedUrl) &&
                           dappService.getDapp(origin)?.isDapp &&
