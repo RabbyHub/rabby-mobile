@@ -117,6 +117,7 @@ export const BottomSheetBrowser = () => {
       enableDismissOnClose={false}
       keyboardBehavior="extend"
       android_keyboardInputMode="adjustResize"
+      backdropProps={{ pressBehavior: 'none' }}
       // enableBlurKeyboardOnGesture
       // handleStyle={styles.hidden}
       handleComponent={BrowserHandler}

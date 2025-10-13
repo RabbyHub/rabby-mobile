@@ -156,9 +156,9 @@ export const BrowserHandler = () => {
   return (
     <TouchableWithoutFeedback
       onPress={() => {
-        setPartialBrowserState({
-          isShowBrowser: false,
-        });
+        // setPartialBrowserState({
+        //   isShowBrowser: false,
+        // });
       }}>
       {browserState.isShowBrowser &&
       !browserState.isShowSearch &&
