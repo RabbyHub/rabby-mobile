@@ -51,7 +51,14 @@ export const BrowserHandler = () => {
   const [activeTabState] = useBrowserActiveTabState();
 
   const handleAction = useMemoizedFn(
-    (type: 'refresh' | 'disconnect' | 'favorite' | 'contentMode') => {
+    (
+      type:
+        | 'refresh'
+        | 'disconnect'
+        | 'favorite'
+        | 'contentMode'
+        | 'clearCache',
+    ) => {
       eventBus.emit(EVENT_BROWSER_ACTION, {
         type,
       });
@@ -107,6 +114,20 @@ export const BrowserHandler = () => {
         key: 'contentMode',
         onSelect: () => {
           handleAction('contentMode');
+        },
+      },
+      {
+        title: t('page.browser.menu.clearCache'),
+        iosIconSource: isLight
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear_cache.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear_cache_dark.png'),
+
+        androidIconName: isLight
+          ? 'ic_rabby_menu_clear_cache'
+          : 'ic_rabby_menu_clear_cache_dark',
+        key: 'clearCache',
+        onSelect: () => {
+          handleAction('clearCache');
         },
       },
 

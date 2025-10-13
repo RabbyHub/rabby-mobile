@@ -491,27 +491,27 @@ function SettingsBlocks() {
               );
             },
           },
-          {
-            label: t('page.setting.clearBrowserData'),
-            icon: RcClearPending,
-            onPress: () => {
-              Alert.alert(
-                t('page.settingModal.clearBrowserData.title'),
-                t('page.settingModal.clearBrowserData.desc'),
-                [
-                  { text: t('common.dialog.button.cancel'), onPress: () => {} },
-                  {
-                    text: t('page.settingModal.clearBrowserData.button'),
-                    style: 'destructive',
-                    onPress: async () => {
-                      clearBrowserData();
-                      toast.success('Cleared');
-                    },
-                  },
-                ],
-              );
-            },
-          },
+          // {
+          //   label: t('page.setting.clearBrowserData'),
+          //   icon: RcClearPending,
+          //   onPress: () => {
+          //     Alert.alert(
+          //       t('page.settingModal.clearBrowserData.title'),
+          //       t('page.settingModal.clearBrowserData.desc'),
+          //       [
+          //         { text: t('common.dialog.button.cancel'), onPress: () => {} },
+          //         {
+          //           text: t('page.settingModal.clearBrowserData.button'),
+          //           style: 'destructive',
+          //           onPress: async () => {
+          //             clearBrowserData();
+          //             toast.success('Cleared');
+          //           },
+          //         },
+          //       ],
+          //     );
+          //   },
+          // },
         ],
       },
     };

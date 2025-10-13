@@ -213,6 +213,25 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       },
     );
 
+    const handleClearCache = useMemoizedFn(async () => {
+      webviewRef.current?.injectJavaScript(`;(function() {
+        try {
+          document.cookie.split(';').forEach(cookie => {
+            const eqPos = cookie.indexOf('=');
+            const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
+            document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          });
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch(e) {
+          console.log('clear cache error', e);
+        }
+      })();`);
+      setTimeout(() => {
+        setRefreshKey(prev => prev + 1);
+      }, 50);
+    });
+
     const userAgent = useMemo(() => {
       if (contentMode === 'desktop') {
         return `${DESKTOP_MODE_UA} ${APP_UA_PARIALS.UA_FULL_NAME}}`;
@@ -557,6 +576,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           handleContentModeChange(
             contentMode === 'desktop' ? 'mobile' : 'desktop',
           );
+        } else if (payload.type === 'clearCache') {
+          handleClearCache();
         }
       },
     );
