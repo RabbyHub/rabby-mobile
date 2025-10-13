@@ -50,7 +50,9 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
       // update ref first, then trigger state update
       urlRef.current = newNavState.url || '';
       titleRef.current = newNavState.title || '';
-
+      if (newNavState.navigationType === 'backforward') {
+        resolvedUrlRef.current = newNavState.url;
+      }
       setWebViewState(prev => ({
         canGoBack: newNavState.canGoBack,
         canGoForward: newNavState.canGoForward,

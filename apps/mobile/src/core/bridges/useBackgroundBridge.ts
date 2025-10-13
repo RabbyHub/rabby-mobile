@@ -64,7 +64,6 @@ export function useSetupWebview({
 
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
-      urlRef.current = urlBridge;
       const newBridge = new BackgroundBridge({
         webview: webviewRef,
         webviewIdRef: webviewIdRef,
@@ -159,7 +158,7 @@ export function useSetupWebview({
 
         // setError(false);
 
-        changeUrl(nativeEvent);
+        // changeUrl(nativeEvent);
         // sendActiveAccount();
 
         // icon.current = null;
@@ -191,7 +190,6 @@ export function useSetupWebview({
     },
     [
       destroyCurrentBridge,
-      changeUrl,
       initializeBackgroundBridge,
       urlRef,
       putBackgroundBridge,

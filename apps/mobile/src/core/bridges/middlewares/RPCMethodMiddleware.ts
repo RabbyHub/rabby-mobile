@@ -93,7 +93,8 @@ RPCMethodsMiddleParameters) =>
 
     const providerSessionBase: ProviderRequest['session'] & object = {
       name: titleRef.current,
-      origin: req.origin,
+      // origin: req.origin,
+      origin: urlRef.current || '',
       icon: iconRef.current || '',
       $mobileCtx: {
         fromTabId: bridge.webviewId,
