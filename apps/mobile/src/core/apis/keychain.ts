@@ -1,6 +1,6 @@
 import { EncryptorAdapter } from '@rabby-wallet/service-keyring';
 import { Platform } from 'react-native';
-import RNKeychain from 'react-native-keychain';
+import RNKeychain, { UserCredentials, SetOptions } from 'react-native-keychain';
 import { MMKV } from 'react-native-mmkv';
 
 import { appEncryptor } from '../services';
@@ -65,11 +65,10 @@ class SKCls {
     return this.encryptor.decrypt(
       privates.get(this).salt,
       encryptedPassword,
-    ) as Promise<RNKeychain.UserCredentials>;
+    ) as Promise<UserCredentials>;
   }
 }
 
-const isAndroid = Platform.OS === 'android';
 export function makeSecureKeyChainInstance(
   options: Omit<SKClsOptions, 'encryptor'>,
 ) {
@@ -109,7 +108,7 @@ async function waitInstance() {
 
 /* ===================== Biometrics:start ===================== */
 const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
-const DEFAULT_OPTIONS: RNKeychain.Options = {
+const DEFAULT_OPTIONS: SetOptions = {
   service: 'com.debank',
   authenticationPrompt: {
     title: i18n.t('native.authentication.auth_prompt_title'),
@@ -117,7 +116,7 @@ const DEFAULT_OPTIONS: RNKeychain.Options = {
     description: i18n.t('native.authentication.auth_prompt_desc'),
     cancel: i18n.t('native.authentication.auth_prompt_cancel'),
   },
-  authenticationType: RNKeychain.AUTHENTICATION_TYPE.BIOMETRICS,
+  // authenticationType: RNKeychain.AUTHENTICATION_TYPE.BIOMETRICS,
   // accessControl: RNKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
   // rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
 };
@@ -161,7 +160,7 @@ export function makeKeyChainError(code: 'NIL_KEYCHAIN_OBJECT', msg: string) {
   return error;
 }
 
-type PlainUserCredentials = RNKeychain.UserCredentials & {
+type PlainUserCredentials = UserCredentials & {
   rawPassword?: string;
 };
 export enum RequestGenericPurpose {
@@ -258,7 +257,7 @@ export async function setGenericPassword(
   password: string,
   type: KEYCHAIN_AUTH_TYPES = KEYCHAIN_AUTH_TYPES.BIOMETRICS,
 ) {
-  const authOptions: Partial<RNKeychain.Options> = {
+  const authOptions: Partial<SetOptions> = {
     accessible: RNKeychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   };
 

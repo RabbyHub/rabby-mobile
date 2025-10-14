@@ -128,10 +128,10 @@ export function DappWebViewStubScreen() {
       return shouldPrevent;
     };
 
-    BackHandler.addEventListener('hardwareBackPress', listener);
+    const sub = BackHandler.addEventListener('hardwareBackPress', listener);
 
     return () => {
-      BackHandler.removeEventListener('hardwareBackPress', listener);
+      sub.remove();
     };
   }, [backToDappsScreen]);
 
