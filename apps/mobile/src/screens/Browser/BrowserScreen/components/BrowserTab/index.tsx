@@ -90,13 +90,7 @@ type BrowserTabProps = {
   onSelfClose?: (reason: 'phishing') => void;
   tabsCount?: number;
   onUpdateTab?: (params: Partial<Tab>) => void;
-  onOpenTab?(
-    url: string,
-    options?: {
-      isNewTab?: boolean;
-      isDapp?: boolean;
-    },
-  ): void;
+  onOpenTab?(url: string): void;
   onUpdateHistory?: (params: { url: string; name?: string }) => void;
   onCloseTab?(url: string): void;
 };
@@ -442,9 +436,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           return;
         }
 
-        onOpenTab?.(targetUrl, {
-          isNewTab: true,
-        });
+        onOpenTab?.(targetUrl);
       },
     );
 
