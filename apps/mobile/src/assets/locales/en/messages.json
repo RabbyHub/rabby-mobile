@@ -2362,7 +2362,7 @@
       },
       "PerpsInfo": {
         "title": "Info",
-        "24Vol": "24h Volumn",
+        "24Vol": "24h Volume",
         "openInterest": "Open Interest",
         "funding": "Funding",
         "openInterestTips": "The total outstanding position of all users on this contract.",
