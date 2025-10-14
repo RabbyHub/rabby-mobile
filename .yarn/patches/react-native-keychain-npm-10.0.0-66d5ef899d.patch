@@ -1,0 +1,26 @@
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
+index 6b6e626161945d21d2cf1392a5d16d41d1675b57..aec25ae774a0084e39c69959bb365482f6d13dbe 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
+@@ -158,7 +158,7 @@ class CipherStorageKeystoreAesGcm(
+     ): KeyGenParameterSpec.Builder {
+         val purposes = KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_ENCRYPT
+ 
+-        val validityDuration = 5
++        val validityDuration = 60
+         val keyGenParameterSpecBuilder =
+             KeyGenParameterSpec.Builder(alias, purposes).setBlockModes(BLOCK_MODE_GCM)
+                 .setEncryptionPaddings(PADDING_NONE).setRandomizedEncryptionRequired(true)
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
+index fc8ebf18c60c1efb5f2b44ec7d8e0762c519213c..440b442a2afaf9a44b31b16f2db37c28a3452ccd 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
+@@ -182,7 +182,7 @@ class CipherStorageKeystoreRsaEcb(reactContext: ReactApplicationContext) :
+ 
+         val keySize = ENCRYPTION_KEY_SIZE
+ 
+-        val validityDuration = 5
++        val validityDuration = 60
+         val keyGenParameterSpecBuilder =
+             KeyGenParameterSpec.Builder(alias, purposes)
+                 .setBlockModes(BLOCK_MODE_ECB)

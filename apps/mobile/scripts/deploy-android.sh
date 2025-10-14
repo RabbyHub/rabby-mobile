@@ -16,14 +16,14 @@ check_build_params;
 check_s3_params;
 checkout_s3_pub_deployment_params;
 
+cd $project_dir;
+
 # prepare variables
 # TODO: read from gradle
 proj_version=$(node --eval="process.stdout.write(require('./package.json').version)");
 app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)");
 android_version_name=$(grep -m1 "versionName" ./android/app/build.gradle | cut -d'"' -f2)
 android_version_code=$(grep -m1 "versionCode" ./android/app/build.gradle | xargs | cut -c 13-)
-
-cd $project_dir;
 
 BUILD_DATE=`date '+%Y%m%d_%H%M%S'`
 
