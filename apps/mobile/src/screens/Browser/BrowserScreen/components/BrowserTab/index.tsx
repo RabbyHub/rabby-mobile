@@ -670,7 +670,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         // });
                         return webviewActions.onNavigationStateChange(event);
                       }}
-                      onOpenWindow={handleOnOpenWindow}
+                      // onOpenWindow={handleOnOpenWindow}
                       webviewDebuggingEnabled={isNonPublicProductionEnv}
                       contentMode={contentMode}
                       {...(contentMode === 'desktop' && {
