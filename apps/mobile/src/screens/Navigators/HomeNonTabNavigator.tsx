@@ -9,6 +9,7 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 
 const HomeNonTabStack =
   createNativeStackNavigator<HomeNonTabNavigatorParamsList>();
@@ -69,6 +70,14 @@ export default function HomeNonTabNavigator() {
         options={mergeScreenOptions({
           title: 'Lending',
           ...headerPresets.withBgCard1_2024,
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="MakeTransactionAbout"
+                titleText={ctx.children}
+              />
+            );
+          },
           headerTintColor: colors['neutral-title-1'],
           headerStyle: {
             backgroundColor: isLight

@@ -52,6 +52,7 @@ import { SettingTrezor } from '@/components/HDSetting/SettingTrezor';
 import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
 import EarningDialog from '@/screens/CopyTrading/component/EarningDialog';
 import { AddressHightDesc } from '../AddressHightDesc';
+import SelectLendingChain from '@/screens/Lending/ChainSelector/SelectLendingChain';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -63,6 +64,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SWITCH_CHAIN]: ['45%'],
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
   [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: ['80%'],
+  [MODAL_NAMES.SELECT_LENDING_CHAIN]: ['80%'],
   [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: ['80%'],
   // [MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL]: ['80%'],
   [MODAL_NAMES.COPY_TRADING_EARNINGS]: ['80%'],
@@ -122,6 +124,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SIMPLE_CONFIRM]: SimpleConfirmInner,
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
   [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: SelectChainWithSummary,
+  [MODAL_NAMES.SELECT_LENDING_CHAIN]: SelectLendingChain,
   [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: SelectChainWithDistribute,
   [MODAL_NAMES.COLLECTION_NFTS]: CollectionNFTs,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
