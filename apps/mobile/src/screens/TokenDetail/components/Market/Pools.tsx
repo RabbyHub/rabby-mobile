@@ -18,9 +18,12 @@ import {
   FlatList,
   Image,
 } from 'react-native';
-import { LiquidityPoolHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  LiquidityPoolHistoryItem,
+  LiquidityPoolItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
-import { useInfiniteScroll, useRequest } from 'ahooks';
+import { useInfiniteScroll } from 'ahooks';
 import { Service } from 'ahooks/lib/useInfiniteScroll/types';
 import { scrollEndCallBack } from './hooks';
 import { throttle, uniqBy } from 'lodash';
@@ -41,10 +44,14 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import { toast } from '@/components2024/Toast';
 import { Skeleton } from '@rneui/themed';
 import { LoadingLinear } from '../TokenPriceChart/LoadingLinear';
+import { sortTokenWithSymbol } from './utils';
 
 interface PoolsProps {
   tokenId: string;
   chainId: string;
+  symbol: string;
+  top5Pools: LiquidityPoolItem[];
+  top5PoolsLoading: boolean;
 }
 
 const enum TabKey {
@@ -259,6 +266,14 @@ const LiquidityDetail = ({
     styles.hideFooter,
     styles.loading,
   ]);
+  if (loading) {
+    return (
+      <Skeleton
+        style={styles.skeletonBlock}
+        LinearGradientComponent={LoadingLinear}
+      />
+    );
+  }
 
   return (
     <View style={styles.detailWrapper}>
@@ -321,11 +336,6 @@ const LiquidityDetail = ({
             ListFooterComponent={renderFooter}
           />
         </View>
-      ) : loading ? (
-        <Skeleton
-          style={styles.skeletonBlock}
-          LinearGradientComponent={LoadingLinear}
-        />
       ) : (
         <EmptyData />
       )}
@@ -334,21 +344,16 @@ const LiquidityDetail = ({
 };
 
 const Top5Pools = ({
-  chainId,
-  tokenId,
+  data,
+  loading,
+  symbol,
 }: {
-  chainId: string;
-  tokenId: string;
+  data: LiquidityPoolItem[];
+  loading: boolean;
+  symbol: string;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { data, loading } = useRequest(async () => {
-    const res = await openapi.getLiquidityPoolList({
-      token_id: tokenId,
-      chain_id: chainId,
-    });
-    return res;
-  });
 
   const handleCopyAddress = useCallback((address: string) => {
     if (!address) {
@@ -362,92 +367,105 @@ const Top5Pools = ({
     toastCopyAddressSuccess(address);
   }, []);
 
+  if (loading) {
+    return (
+      <Skeleton
+        style={styles.skeletonBlock}
+        LinearGradientComponent={LoadingLinear}
+      />
+    );
+  }
+
   return (
     <View style={styles.holderContainer}>
-      <View style={styles.details}>
-        <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderItem, styles.firstItem]}>
-            {t('page.tokenDetail.marketInfo.pool.dex')}
-          </Text>
-          <Text style={styles.tableHeaderItem}>
-            {t('page.tokenDetail.marketInfo.pool.pair')}
-          </Text>
-          <Text style={styles.tableHeaderItem}>
-            {t('page.tokenDetail.marketInfo.pool.amount')}
-          </Text>
-          <Text style={[styles.tableHeaderItem, styles.valueItem]}>
-            {t('page.tokenDetail.marketInfo.pool.value')}
-          </Text>
+      {data?.length === 0 ? (
+        <EmptyData />
+      ) : (
+        <View style={styles.details}>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderItem, styles.firstItem]}>
+              {t('page.tokenDetail.marketInfo.pool.dex')}
+            </Text>
+            <Text style={styles.tableHeaderItem}>
+              {t('page.tokenDetail.marketInfo.pool.pair')}
+            </Text>
+            <Text style={styles.tableHeaderItem}>
+              {t('page.tokenDetail.marketInfo.pool.amount')}
+            </Text>
+            <Text style={[styles.tableHeaderItem, styles.valueItem]}>
+              {t('page.tokenDetail.marketInfo.pool.value')}
+            </Text>
+          </View>
+          <View style={styles.tableBody}>
+            {data?.map((item, index) => {
+              const sortedTokens = sortTokenWithSymbol(item.tokens, symbol);
+              return (
+                <View
+                  key={item.id}
+                  style={[
+                    styles.tableRow,
+                    index === data.length - 1 && styles.hideBottomBorder,
+                  ]}>
+                  <View style={styles.indexItem}>
+                    <Image
+                      source={{ uri: item?.project?.logo_url }}
+                      style={styles.indexItemImage}
+                    />
+                    <Pressable
+                      style={styles.projectNameContainer}
+                      onPress={() => handleCopyAddress(item?.pool_id)}>
+                      <Text style={styles.projectName}>
+                        {item?.project?.name}
+                      </Text>
+                      <RcIconCopy width={10} height={10} style={styles.copy} />
+                    </Pressable>
+                  </View>
+                  <View style={styles.pairNames}>
+                    {sortedTokens.map((token, _index) => (
+                      <Text
+                        key={`${token.symbol}_${_index}`}
+                        style={[
+                          styles.pairName,
+                          _index === 0 && styles.firstPairName,
+                        ]}>
+                        {token.symbol}
+                      </Text>
+                    ))}
+                  </View>
+                  <View style={styles.amountItems}>
+                    {sortedTokens.map((token, _index) => (
+                      <Text
+                        key={`${token.symbol}_${_index}`}
+                        style={[
+                          styles.amountItemValue,
+                          _index === 0 && styles.firstAmountItemValue,
+                        ]}>
+                        {formatAmountValueKMB(token.amount)}
+                      </Text>
+                    ))}
+                  </View>
+                  <View style={styles.usdValueItem}>
+                    <Text style={styles.poolUsdValue}>
+                      {formatUsdValueKMB(item.usd_value)}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
         </View>
-        <View style={styles.tableBody}>
-          {loading ? (
-            <Skeleton
-              style={styles.skeletonBlock}
-              LinearGradientComponent={LoadingLinear}
-            />
-          ) : data?.length === 0 ? (
-            <EmptyData />
-          ) : (
-            data?.map((item, index) => (
-              <View
-                key={item.id}
-                style={[
-                  styles.tableRow,
-                  index === data.length - 1 && styles.hideBottomBorder,
-                ]}>
-                <View style={styles.indexItem}>
-                  <Image
-                    source={{ uri: item?.project?.logo_url }}
-                    style={styles.indexItemImage}
-                  />
-                  <Pressable
-                    style={styles.projectNameContainer}
-                    onPress={() => handleCopyAddress(item?.pool_id)}>
-                    <Text style={styles.projectName}>
-                      {item?.project?.name}
-                    </Text>
-                    <RcIconCopy width={10} height={10} style={styles.copy} />
-                  </Pressable>
-                </View>
-                <View style={styles.pairNames}>
-                  {item.tokens.map((token, _index) => (
-                    <Text
-                      key={token.symbol}
-                      style={[
-                        styles.pairName,
-                        _index === 0 && styles.firstPairName,
-                      ]}>
-                      {token.symbol}
-                    </Text>
-                  ))}
-                </View>
-                <View style={styles.amountItems}>
-                  {item.tokens.map((token, _index) => (
-                    <Text
-                      key={token.symbol}
-                      style={[
-                        styles.amountItemValue,
-                        _index === 0 && styles.firstAmountItemValue,
-                      ]}>
-                      {formatAmountValueKMB(token.amount)}
-                    </Text>
-                  ))}
-                </View>
-                <View style={styles.usdValueItem}>
-                  <Text style={styles.poolUsdValue}>
-                    {formatUsdValueKMB(item.usd_value)}
-                  </Text>
-                </View>
-              </View>
-            ))
-          )}
-        </View>
-      </View>
+      )}
     </View>
   );
 };
 
-const Pools = ({ tokenId, chainId }: PoolsProps) => {
+const Pools = ({
+  tokenId,
+  chainId,
+  symbol,
+  top5Pools,
+  top5PoolsLoading,
+}: PoolsProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [activeTabKey, setActiveTabKey] = useState<TabKey>(TabKey.top5);
@@ -477,7 +495,11 @@ const Pools = ({ tokenId, chainId }: PoolsProps) => {
       </View>
       <View style={styles.content}>
         {activeTabKey === TabKey.top5 && (
-          <Top5Pools chainId={chainId} tokenId={tokenId} />
+          <Top5Pools
+            data={top5Pools}
+            loading={top5PoolsLoading}
+            symbol={symbol}
+          />
         )}
         {activeTabKey === TabKey.liquidityDetail && (
           <LiquidityDetail tokenId={tokenId} chainId={chainId} />
@@ -542,7 +564,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: colors2024['neutral-line'],
     alignItems: 'center',
@@ -730,7 +752,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tableBody: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 12,
     marginTop: 0,
   },
   details: {
@@ -768,12 +789,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    maxWidth: 80,
   },
   copy: {},
   skeletonBlock: {
     height: 250,
     borderRadius: 16,
-    marginTop: 12,
     marginBottom: 12,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
