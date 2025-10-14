@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -138,7 +139,7 @@ const LiquidityDetail = ({
     return uniqBy(data?.list, 'id');
   }, [data?.list]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     reloadAsync();
   }, [activeTab, reloadAsync]);
 
@@ -266,6 +267,7 @@ const LiquidityDetail = ({
     styles.hideFooter,
     styles.loading,
   ]);
+
   if (loading) {
     return (
       <Skeleton
