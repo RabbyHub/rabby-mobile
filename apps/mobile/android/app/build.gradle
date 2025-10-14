@@ -94,7 +94,7 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100143
+        versionCode 100144
         versionName "0.6.40"
         missingDimensionStrategy "store", "play"
         externalNativeBuild {
@@ -220,7 +220,6 @@ dependencies {
     implementation project(':react-native-splash-screen')
     // implementation project(':isudaji_react-native-install-apk')
 
-    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.10'
-    // implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.28'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.29'
     implementation 'com.android.billingclient:billing:7.0.0'
 }
