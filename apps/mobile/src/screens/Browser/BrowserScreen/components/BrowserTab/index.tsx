@@ -166,7 +166,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const {
       webviewRef,
       webviewIdRef,
-      resolvedUrlRef,
       urlRef,
       titleRef,
       iconRef,
@@ -298,7 +297,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       webviewRef,
       webviewIdRef,
       siteInfoRefs: {
-        urlRef: resolvedUrlRef,
+        urlRef,
         titleRef,
         iconRef,
       },
@@ -671,7 +670,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         // });
                         return webviewActions.onNavigationStateChange(event);
                       }}
-                      // onOpenWindow={handleOnOpenWindow}
+                      onOpenWindow={handleOnOpenWindow}
                       webviewDebuggingEnabled={isNonPublicProductionEnv}
                       contentMode={contentMode}
                       {...(contentMode === 'desktop' && {
@@ -757,7 +756,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                             resolvedUrl: nativeEvent.url,
                           };
                         });
-                        resolvedUrlRef.current = nativeEvent.url;
 
                         onUpdateHistory?.({
                           name: nativeEvent.title,
