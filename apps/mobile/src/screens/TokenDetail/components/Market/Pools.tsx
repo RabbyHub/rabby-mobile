@@ -28,7 +28,6 @@ import { useInfiniteScroll } from 'ahooks';
 import { Service } from 'ahooks/lib/useInfiniteScroll/types';
 import { scrollEndCallBack } from './hooks';
 import { throttle, uniqBy } from 'lodash';
-import { every10sEvent } from '../../event';
 import {
   formatAmountValueKMB,
   formatTime,
@@ -122,18 +121,6 @@ const LiquidityDetail = ({
   useEffect(() => {
     scrollEndCallBack.cb = throttle(loadMore, 1000);
   }, [loadMore]);
-
-  useEffect(() => {
-    if (
-      (data?.list?.length && data?.list?.length > 20) ||
-      (!data?.list && !loading)
-    ) {
-      return;
-    }
-    return every10sEvent.on(() => {
-      reloadAsync();
-    });
-  }, [reloadAsync, data?.list?.length, data?.list, loading]);
 
   const list = useMemo(() => {
     return uniqBy(data?.list, 'id');
@@ -268,7 +255,7 @@ const LiquidityDetail = ({
     styles.loading,
   ]);
 
-  if (loading) {
+  if (loading && !list.length) {
     return (
       <Skeleton
         style={styles.skeletonBlock}
