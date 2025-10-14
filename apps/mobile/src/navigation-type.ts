@@ -127,6 +127,7 @@ export type HomeNavigatorParamsList = {
 export type HomeNonTabNavigatorParamsList = {
   [RootNames.Search]?: {};
   [RootNames.Watchlist]?: {};
+  [RootNames.Lending]?: {};
 };
 
 export type DappsNavigatorParamsList = {

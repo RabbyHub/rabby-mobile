@@ -62,6 +62,7 @@ import { BadgeText } from './components/HomeTopArea';
 import { useApprovalAlertCounts } from './hooks/approvals';
 
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
+import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
 import { RateModal } from '@/components/RateModal/RateModal';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
 import { useExposureRateGuide } from '@/components/RateModal/hooks';
@@ -175,6 +176,11 @@ function MultiAddressHome(): JSX.Element {
           key: MultiHomeFeatTitle.Perps,
           title: t('page.home.services.perps'),
           icon: RcIconPerps,
+        },
+        {
+          key: MultiHomeFeatTitle.Lending,
+          title: 'Lending',
+          icon: RcIconLending,
         },
         {
           key: MultiHomeFeatTitle.History,
@@ -579,6 +585,12 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.Perps:
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Perps,
+            params: {},
+          });
+          break;
+        case MultiHomeFeatTitle.Lending:
+          navigation.navigate(RootNames.StackHomeNonTab, {
+            screen: RootNames.Lending,
             params: {},
           });
           break;

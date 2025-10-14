@@ -94,6 +94,7 @@ export const RootNames = {
   FavoriteDapps: 'FavoriteDapps',
   Search: 'Search',
   Watchlist: 'Watchlist',
+  Lending: 'Lending',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
