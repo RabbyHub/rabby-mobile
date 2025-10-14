@@ -51,6 +51,7 @@ import { filterMyAccounts } from '@/utils/account';
 import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPasswordScreen';
 import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
 import { AddressAssetsOverview } from '@/screens/Address/AddressAssetsOverviewScreen';
+import PointsScreen from '../Points';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 
@@ -493,6 +494,18 @@ export function AddressNavigator() {
         options={mergeScreenOptions({
           headerShadowVisible: false,
           headerShown: false,
+        })}
+      />
+
+      <AddressStack.Screen
+        name={RootNames.Points}
+        component={PointsScreen}
+        options={mergeScreenOptions({
+          headerTitleAlign: 'center',
+          headerShown: true,
+          headerTintColor: colors2024['neutral-title-1'],
+          headerTitleStyle: styles.headerTitleText,
+          headerTitle: t('page.rabbyPoints.title'),
         })}
       />
     </AddressStack.Navigator>

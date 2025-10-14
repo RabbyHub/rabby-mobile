@@ -11,6 +11,7 @@ import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
+import RcIconPoints from '@/assets2024/icons/home/IconPoints.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -177,6 +178,11 @@ function MultiAddressHome(): JSX.Element {
           icon: RcIconPerps,
         },
         {
+          key: MultiHomeFeatTitle.Points,
+          title: t('page.rabbyPoints.title'),
+          icon: RcIconPoints,
+        },
+        {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
           icon: RcIconHistoryCC,
@@ -214,10 +220,6 @@ function MultiAddressHome(): JSX.Element {
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
         //   icon: RcIconEcosystem,
-        // },
-        // {
-        //   title: MultiHomeFeatTitle.Points,
-        //   icon: RcIconPoints,
         // },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
@@ -579,6 +581,12 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.Perps:
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Perps,
+            params: {},
+          });
+          break;
+        case MultiHomeFeatTitle.Points:
+          navigation.push(RootNames.StackAddress, {
+            screen: RootNames.Points,
             params: {},
           });
           break;

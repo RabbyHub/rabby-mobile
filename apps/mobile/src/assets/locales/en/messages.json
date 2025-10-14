@@ -1607,12 +1607,14 @@
     },
     "rabbyPoints": {
       "title": "Rabby Points",
+      "titleWithStar": " Rabby Points ✨ ",
       "out-of-x-current-total-points": "Out of {{total}} Total Distributed Points",
       "earn-points": "Earn Points",
       "top-100": "Top 100",
       "claimItem": {
         "claim": "Claim"
       },
+      "xPoints": "{{point}} Points",
       "claimModal": {
         "title": "Claim Initial Points",
         "snapshotTime": "Snapshot time: {{time}}",
@@ -1647,7 +1649,8 @@
       },
       "code-set-successfully": "Referral code set successfully",
       "initialPointsClaimEnded": "Initial Points claim ended",
-      "firstRoundEnded": "🎉 The first round of Rabby Points has ended"
+      "firstRoundEnded": "🎉 The first round of Rabby Points has ended",
+      "ClaimComing": "Claim coming!"
     },
     "customTestnet": {
       "desc": "Rabby cannot verify the security of custom networks. Please add trusted networks only.",
