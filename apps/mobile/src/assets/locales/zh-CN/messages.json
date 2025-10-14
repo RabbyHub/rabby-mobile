@@ -1397,7 +1397,19 @@
         },
         "manageAddressFrom": "从{{0}}管理钱包到{{1}}",
         "customAddressHdPath": "自定义钱包 HD 路径",
-        "selectIndexTip": "选择要开始的钱包序列号："
+        "selectIndexTip": "选择要开始的钱包序列号：",
+        "trezor": {
+          "hdPathType": {
+            "bip44": "BIP44：由 BIP44 协议定义的 HDpath。",
+            "ledgerLive": "Ledger Live: Ledger 官方 HD 路径。",
+            "legacy": "遗产：MEW / Mycrypto 使用的 HD 路径。"
+          },
+          "hdPathTypeNoChain": {
+            "legacy": "遗产：MEW / Mycrypto 使用的 HD 路径。",
+            "bip44": "BIP44：由 BIP44 协议定义的 HDpath。",
+            "ledgerLive": "Ledger Live：Ledger 官方 HD 路径。"
+          }
+        }
       },
       "createNewAddress": "创建新钱包"
     },
@@ -2166,6 +2178,10 @@
         "btn": "立即加入",
         "title": "Hyperliquid 邀请计划",
         "desc": "现在使用Rabby的代码加入，可享受<1>4%</1>的Hyperliquid费用折扣。"
+      },
+      "WebviewError": {
+        "error": "错误：",
+        "failedToLoad": "无法加载页面"
       }
     },
     "browserManage": {
@@ -2284,6 +2300,243 @@
     },
     "perpsHistory": {
       "title": "历史"
+    },
+    "perps": {
+      "PerpsCard": {
+        "depositBtn": "存款",
+        "withdrawBtn": "提取",
+        "available": "可用的",
+        "title": "交易永续合约",
+        "loginBtn": "登录交易永续合约",
+        "learnBtn": "了解永续合约",
+        "loginDesc": "使用您的地址登录并存入资金以开始交易永续合约"
+      },
+      "PerpsGuidePopup": {
+        "step5Title": "清算",
+        "step2Title": "做多",
+        "step1Title": "主永续合约",
+        "step4Desc": "杠杆让你可以用超过你投入的资金进行交易。它可以增加你的收益和损失。",
+        "step3Title": "做空",
+        "step1Desc": "在永续合约中，你不仅在交易资产。你在交易你对下一步将会发生什么的看法。",
+        "step5Desc": "每个头寸都有一个清算价格。如果市场价格达到该价格，您的头寸将会被平仓。使用更高的杠杆会增加被清算的风险。",
+        "step4Title": "调整杠杆",
+        "step2Desc": "当你预计价格会上涨时，你会选择做多。如果价格上涨，你将获利。如果价格下跌，你将亏损。",
+        "step3Desc": "当你预期价格会下跌时，你可以选择做空。如果价格下跌，你获得收益。如果价格上涨，你将亏损。"
+      },
+      "PerpsDepositPopup": {
+        "balance": "余额",
+        "amount": "数量",
+        "title": "存款",
+        "invalidNumber": "请输入一个有效的数字",
+        "depositBtn": "存款",
+        "fetchQuoteFailed": "获取存款报价失败。请切换代币。",
+        "estReceive": "预计接收：{{balance}}",
+        "minimumDepositSize": "最低存款金额为 $5",
+        "estReceiveTooltip": "跨链存款通过 LiFi 处理，可能会产生一定的滑点。预计在 {{number}} 秒内到达。",
+        "insufficientBalance": "余额不足"
+      },
+      "PerpsWithdrawPopup": {
+        "insufficientBalance": "余额不足",
+        "feeTooltipTitle": "费用",
+        "withdrawBtn": "提取",
+        "available": "可用",
+        "minimumWithdrawSize": "最小提现金额为 $2",
+        "title": "提取",
+        "feeTooltipDesc": "Hyperliquid 收取的提现费用：$1",
+        "amount": "数量",
+        "feeTip": "费用：$1.00",
+        "invalidNumber": "请输入一个有效的数字"
+      },
+      "PerpsWithdrawFeePopup": {
+        "btn": "我明白了",
+        "desc": "Hyperliquid 收取的提款手续费：$1",
+        "title": "费用"
+      },
+      "historyDetail": {
+        "title": {
+          "openLong": "开多",
+          "closeLong": "平仓多头",
+          "closeLongTp": "平仓做多止盈",
+          "closeShortSl": "平仓做空止损",
+          "closeShortTp": "平仓做空止盈",
+          "closeLongSl": "平仓多头止损",
+          "openShort": "开空头",
+          "closeShort": "平掉空头",
+          "closeShortLiquidation": "平仓做空清算",
+          "closeLongLiquidation": "平仓多头清算"
+        },
+        "price": "价格",
+        "fee": "费用",
+        "date": "日期",
+        "size": "规模",
+        "tradeValue": "交易价值",
+        "closedPnl": "已结算盈亏",
+        "provider": "提供者",
+        "gotItBtn": "我明白了",
+        "sizeTips": "您的交易的总价值或数量，由保证金和杠杆设置。",
+        "perps": "永续合约"
+      },
+      "PerpsAutoCloseModal": {
+        "takeProfit": "止盈",
+        "stopLoss": "止损",
+        "takeProfitTipsShort": "止盈价格必须低于当前价格",
+        "loss": "损失",
+        "takeProfitTipsLong": "止盈价格必须高于当前价格",
+        "stopLossTipsShort": "止损价格必须高于当前价格",
+        "stopLossTipsLong": "止损价格必须低于当前价格",
+        "stopLossTipsShortLiquidation": "价格高于清算价格 ({{price}})",
+        "profit": "利润",
+        "stopLossTipsLongLiquidation": "价格低于清算价格 ({{price}})"
+      },
+      "PerpsDepositTokenModal": {
+        "swapBtn": "兑换",
+        "directTag": "直接存款",
+        "bridgeBtn": "桥接",
+        "goBridgeDesc": "仅支持在 Arbitrum 上直接存入 USDC。请在存入之前将您当前的代币桥接到 Arbitrum 上的 USDC。",
+        "goSwapDesc": "仅支持在 Arbitrum 上直接存入 USDC。在存入之前，请将您当前的代币兑换为 USDC。"
+      },
+      "history": {
+        "status": {
+          "pending": "待处理",
+          "completed": "已完成"
+        },
+        "title": "历史",
+        "closeLongSl": "平仓多头止损",
+        "closeLongTp": "平仓多单获利",
+        "closeShort": "平空",
+        "deposit": "存款",
+        "openLong": "开多",
+        "openShort": "开空单",
+        "withdraw": "提取",
+        "closeLongLiquidation": "平仓做多强平",
+        "closeShortSl": "平仓做空止损",
+        "closeShortLiquidation": "平仓做空清算",
+        "closeShortTp": "平仓做空止盈",
+        "closeLong": "平仓做多"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "选择要存入的 Token"
+      },
+      "PerpsAccountLogoutPopup": {
+        "title": "登出当前地址",
+        "logout": "登出",
+        "desc": "您正在退出当前的 Perps 账户。您可以随时通过使用此地址登录来恢复它。"
+      },
+      "PerpsDepositCard": {
+        "availableToTrade": "可交易：",
+        "deposit": "存款"
+      },
+      "PerpsAccountSelectorPopup": {
+        "notActivatedAddress": "未激活",
+        "lastUsed": "最后使用时间",
+        "hyperliquidBalance": "永续合约余额",
+        "activatedAddress": "已激活",
+        "noPosition": "没有头寸"
+      },
+      "title": "永续合约",
+      "selectAccountTitle": "选择一个钱包登录",
+      "more": "更多",
+      "explorePerps": "探索永续合约",
+      "positions": "仓位",
+      "deleteAgentSuccess": "代理已成功删除",
+      "leverageRangeMinError": "最低杠杆为 {{min}}x",
+      "regionNotSupport": "在您的地区不支持开仓。",
+      "leverageRangeMaxError": "最大杠杆为 {{max}}x",
+      "deleteAgentModal": "您已达到代理的最大数量。您想删除一个现有的代理以创建新的代理吗？"
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "title": "头寸",
+        "tpPrice": "止盈价格",
+        "marginCross": "保证金（跨）",
+        "markPrice": "标记价格",
+        "justMargin": "保证金",
+        "size": "大小",
+        "entryPrice": "入场价格",
+        "autoClose": "自动平仓",
+        "liqPrice": "清算价格",
+        "closePosition": "关闭 {{direction}}",
+        "direction": "方向",
+        "marginIsolated": "保证金（孤立）",
+        "isolated": "隔离模式",
+        "pnl": "盈亏",
+        "slPrice": "止损价格",
+        "cross": "交叉",
+        "liquidationPrice": "清算价格",
+        "fundingPayments": "资金支付",
+        "margin": "保证金（隔离）",
+        "sizeTips": "您交易的总价值或数量，由保证金和杠杆设置。",
+        "liquidationPriceTips": "当您的保证金低于维持保证金水平时，交易所自动关闭您的仓位以防止进一步亏损的价格。",
+        "fundingPaymentsTips": "这是自开仓以来的净资金支付。资金费用是交易者支付或收取的每小时费用，以保持永续合约的价格接近代币的实际价格。"
+      },
+      "PerpsInfo": {
+        "title": "信息",
+        "funding": "资金",
+        "openInterest": "未平仓合约",
+        "24Vol": "24小时交易量",
+        "openInterestTips": "该合约上所有用户的总未平仓头寸。",
+        "fundingTips": "这是交易者支付或收到的每小时费用，用于保持永续合约的价格接近代币的实际价格。如果是正值，多头支付空头。如果是负值，空头支付多头。"
+      },
+      "PerpsIntro": {
+        "title": "什么是 Perps？",
+        "desc": "交易永续合约涉及重大风险，包括由于高杠杆和市场波动而快速失去您的投资和抵押品的可能性。此类交易可能不适合所有用户。价格可能会受到资金利率和流动性的影响，您可能会在没有事先通知的情况下自动被平仓。市场数据由 Hyperliquid 提供。"
+      },
+      "PerpsClosePositionPopup": {
+        "title": "平仓 {{coin}} {{direction}} 头寸",
+        "pnl": "PNL",
+        "providerFeeTips": "Hyperliquid 费用：{{fee}}",
+        "positionSize": "持仓大小",
+        "rabbyFeeTips": "Rabby 费用：0.04%",
+        "fee": "费用：",
+        "closeBtn": "关闭 {{direction}}"
+      },
+      "PerpsOpenPositionPopup": {
+        "leverage": "杠杆",
+        "margin": "保证金",
+        "size": "大小",
+        "tpPrice": "止盈价格",
+        "maximumOrderSize": "最大订单大小为 {{amount}}",
+        "insufficientBalance": "余额不足",
+        "invalidNumber": "请输入一个有效的数字",
+        "minimumOrderSize": "最小订单金额为 $10",
+        "slPrice": "止损价",
+        "available": "可用的",
+        "sizeTips": "您交易的总价值或数量，由保证金和杠杆设置。",
+        "autoClose": "自动平仓"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "price": "价格",
+        "tpPrice": "止盈价格",
+        "size": "大小",
+        "direction": "方向",
+        "title": "检查订单",
+        "fee": "费用",
+        "perps": "永续合约",
+        "autoClose": "自动平仓",
+        "btn": "开仓 {{direction}} 位置",
+        "initialMargin": "初始保证金",
+        "slPrice": "止损价格",
+        "estLqPrice": "预计清算价格",
+        "providerFeeTips": "Hyperliquid 费用：{{fee}}",
+        "rabbyFeeTips": "Rabby 费用：0%",
+        "sizeTips": "您交易的总价值或数量，由保证金和杠杆设定。",
+        "liquidationPriceTips": "当您的保证金低于维持保证金水平时，交易所会自动以此价格平仓以防止进一步亏损。",
+        "margin": "保证金（孤立）"
+      },
+      "action": {
+        "long": "做多",
+        "short": "做空",
+        "noPermission": "在您的地区不支持开仓。",
+        "closePosition": "关闭 {{direction}} 头寸"
+      },
+      "PerpsAutoCloseModal": {
+        "slPrice": "止损价",
+        "tpPrice": "止盈价格",
+        "price": "价格：",
+        "entryPrice": "入场价格：",
+        "setTpPrice": "设置止盈价格",
+        "setSlPrice": "设置止损价格"
+      }
     }
   },
   "component": {
