@@ -1818,7 +1818,6 @@
             "type": "Loại",
             "sell": "Bán",
             "address": "Địa chỉ",
-            "tradingCount": "Số lượng giao dịch",
             "price": "Giá",
             "value": "Giá trị",
             "qnt": "Qnt"

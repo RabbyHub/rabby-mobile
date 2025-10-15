@@ -1965,7 +1965,6 @@
         "activitySections": {
           "tableHeader": {
             "sell": "Продажа",
-            "tradingCount": "Количество сделок",
             "min": "мин",
             "time": "Время",
             "hour": "Час",
