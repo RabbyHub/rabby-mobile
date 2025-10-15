@@ -2131,7 +2131,9 @@
       },
       "HyperliquidInvitePopup": {
         "title": "Hyperliquid Referral Program",
+        "asterTitle": "Aster Referral Program",
         "desc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Hyperliquid fees.",
+        "asterDesc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Aster fees.",
         "btn": "Join Now"
       },
       "WebviewError": {

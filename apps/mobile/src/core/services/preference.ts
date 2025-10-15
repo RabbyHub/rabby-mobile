@@ -178,6 +178,8 @@ export interface PreferenceStore {
 
   currency?: string;
 
+  hasShowAsterReferralMap: Record<string, boolean>;
+
   hyperliquidInvite?: {
     lastTime?: number;
   };
@@ -260,7 +262,7 @@ export class PreferenceService {
           watchlistSkip: false,
           balanceHideType: BALANCE_HIDE_TYPE.SHOW,
           currency: 'USD',
-
+          hasShowAsterReferralMap: {},
           hyperliquidInvite: {
             lastTime: 0,
           },
@@ -365,6 +367,13 @@ export class PreferenceService {
   getTokenApprovalChain = (address: string) => {
     const key = address.toLowerCase();
     return this.store.tokenApprovalChain[key] || CHAINS_ENUM.ETH;
+  };
+
+  setAsterReferral = (address: string, isShow: boolean) => {
+    this.store.hasShowAsterReferralMap = {
+      ...this.store.hasShowAsterReferralMap,
+      [address]: isShow,
+    };
   };
 
   setTokenApprovalChain = (address: string, chain: CHAINS_ENUM) => {
