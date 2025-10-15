@@ -1097,7 +1097,6 @@
           "title": "Apakah aman untuk mengimpor ke Rabby?",
           "description": "Data Anda dienkripsi dengan aman dan disimpan secara lokal di perangkat Anda. Rabby tidak memiliki akses ke informasi pribadi Anda, dan informasi tersebut tidak pernah dibagikan dengan pihak ketiga."
         },
-        "safe": "Aman",
         "seedPhrase": "Impor Frasa Benih",
         "hardWare": "Sambungkan Dompet Perangkat Keras",
         "privateKey": "Impor Kunci Pribadi",
@@ -1820,16 +1819,6 @@
       "tabs": {
         "marketData": "Data pasar",
         "tokenSecurity": "Keamanan Token"
-      },
-      "interval": {
-        "1D": "1D",
-        "4H": "4H",
-        "30M": "30M",
-        "1M": "1M",
-        "5M": "5M",
-        "1H": "1H",
-        "1W": "1W",
-        "15M": "15M"
       },
       "marketInfo": {
         "marketCap": "Kapitalisasi Pasar",

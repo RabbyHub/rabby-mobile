@@ -1196,7 +1196,6 @@
       "importAddress": {
         "seedPhrase": "Importar Seed Phrase",
         "privateKey": "Importar Clave Privada",
-        "safe": "Seguro",
         "hardWare": "Conectar Monederos de Hardware",
         "tips": {
           "gotIt": "Lo tengo.",
@@ -1933,16 +1932,6 @@
       "tabs": {
         "tokenSecurity": "Seguridad del Token",
         "marketData": "Datos del mercado"
-      },
-      "interval": {
-        "1D": "1D",
-        "15M": "15M",
-        "30M": "30M",
-        "1W": "1W",
-        "1H": "1H",
-        "5M": "5M",
-        "1M": "1M",
-        "4H": "4H"
       },
       "marketInfo": {
         "holders": "Poseedores",

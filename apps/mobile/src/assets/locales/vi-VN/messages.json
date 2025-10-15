@@ -1072,7 +1072,6 @@
         "selectAddMethod": "Chọn Thêm Phương Thức"
       },
       "importAddress": {
-        "safe": "An toàn",
         "hardWare": "Kết nối ví phần cứng",
         "privateKey": "Nhập Private Key",
         "seedPhrase": "Nhập Seed Phrase",
@@ -1780,16 +1779,6 @@
       "tabs": {
         "tokenSecurity": "Bảo mật Token",
         "marketData": "Dữ liệu thị trường"
-      },
-      "interval": {
-        "5M": "5M",
-        "1D": "1D",
-        "15M": "15M",
-        "4H": "4H",
-        "1H": "1H",
-        "1M": "1M",
-        "1W": "1W",
-        "30M": "30M"
       },
       "marketInfo": {
         "txns24h": "24h Txns",
