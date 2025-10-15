@@ -38,44 +38,65 @@ async function fetchContractData(address?: string) {
   if (!address) {
     return { userSummary: null };
   }
-  // 纯池子信息
-  const reserves = await poolDataProviderContract.getReservesHumanized({
-    lendingPoolAddressProvider: markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
-  });
+  try {
+    // 纯池子信息
+    const reserves = await poolDataProviderContract.getReservesHumanized({
+      lendingPoolAddressProvider:
+        markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
+    });
+    console.log('CUSTOM_LOGGER:=>: reserves', reserves);
 
-  // 用户在各个仓位的信息
-  const userReserves = await poolDataProviderContract.getUserReservesHumanized({
-    lendingPoolAddressProvider: markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
-    user: address,
-  });
+    // 用户在各个仓位的信息
+    const userReserves =
+      await poolDataProviderContract.getUserReservesHumanized({
+        lendingPoolAddressProvider:
+          markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
+        user: address,
+      });
 
-  const reservesArray = reserves.reservesData;
-  const baseCurrencyData = reserves.baseCurrencyData;
-  const userReservesArray = userReserves.userReserves;
+    const reservesArray = reserves.reservesData;
+    const baseCurrencyData = reserves.baseCurrencyData;
+    const userReservesArray = userReserves.userReserves;
 
-  const currentTimestamp = dayjs().unix();
+    const currentTimestamp = dayjs().unix();
 
-  const formattedReserves = formatReserves({
-    reserves: reservesArray,
-    currentTimestamp,
-    marketReferenceCurrencyDecimals:
-      baseCurrencyData.marketReferenceCurrencyDecimals,
-    marketReferencePriceInUsd:
-      baseCurrencyData.marketReferenceCurrencyPriceInUsd,
-  });
+    const formattedReserves = formatReserves({
+      reserves: reservesArray,
+      currentTimestamp,
+      marketReferenceCurrencyDecimals:
+        baseCurrencyData.marketReferenceCurrencyDecimals,
+      marketReferencePriceInUsd:
+        baseCurrencyData.marketReferenceCurrencyPriceInUsd,
+    });
 
-  const userSummary = formatUserSummary({
-    currentTimestamp,
-    marketReferencePriceInUsd:
-      baseCurrencyData.marketReferenceCurrencyPriceInUsd,
-    marketReferenceCurrencyDecimals:
-      baseCurrencyData.marketReferenceCurrencyDecimals,
-    userReserves: userReservesArray,
-    formattedReserves,
-    userEmodeCategoryId: userReserves.userEmodeCategoryId,
-  });
+    const formattedPoolReservesAndIncentives = formatReservesAndIncentives({
+      reserves: reservesArray,
+      currentTimestamp,
+      marketReferenceCurrencyDecimals:
+        baseCurrencyData.marketReferenceCurrencyDecimals,
+      marketReferencePriceInUsd:
+        baseCurrencyData.marketReferenceCurrencyPriceInUsd,
+      reserveIncentives: [],
+    });
 
-  return { userSummary };
+    const iUserSummary = formatUserSummaryAndIncentives({
+      currentTimestamp,
+      marketReferencePriceInUsd:
+        baseCurrencyData.marketReferenceCurrencyPriceInUsd,
+      marketReferenceCurrencyDecimals:
+        baseCurrencyData.marketReferenceCurrencyDecimals,
+      userReserves: userReservesArray,
+      formattedReserves,
+      userEmodeCategoryId: userReserves.userEmodeCategoryId,
+      reserveIncentives: [],
+      userIncentives: [],
+    });
+
+    return { formattedPoolReservesAndIncentives, iUserSummary };
+  } catch (error) {
+    console.error('CUSTOM_LOGGER:=>: error', error);
+    return { userSummary: null };
+  }
 }
 
 export { fetchContractData };

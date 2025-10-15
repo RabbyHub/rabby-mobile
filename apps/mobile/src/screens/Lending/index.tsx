@@ -24,6 +24,8 @@ import { ChainSelector } from './ChainSelector';
 import { fetchContractData } from './providers';
 import { useRequest } from 'ahooks';
 import SummaryCard from './SummaryCard';
+import { formatUserYield } from './utils/apy';
+import SupplyPoolList from './SupplyPoolList';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -34,14 +36,26 @@ function DashBoardScreen(): JSX.Element {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-  const { data: userSummary, loading: userSummaryLoading } = useRequest(
+  const { data, loading: userSummaryLoading } = useRequest(
     () => fetchContractData(currentAccount?.address),
     {
       refreshDeps: [currentAccount?.address],
     },
   );
 
-  console.log('CUSTOM_LOGGER:=>: currentAccount', currentAccount?.address);
+  const apy = useMemo(() => {
+    if (data?.formattedPoolReservesAndIncentives && data?.iUserSummary) {
+      return formatUserYield(
+        data?.formattedPoolReservesAndIncentives || [],
+        data?.iUserSummary,
+      );
+    }
+    return {
+      netAPY: '',
+      earnedAPY: '',
+      debtAPY: '',
+    };
+  }, [data?.formattedPoolReservesAndIncentives, data?.iUserSummary]);
 
   return (
     <NormalScreenContainer2024
@@ -50,8 +64,16 @@ function DashBoardScreen(): JSX.Element {
       <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       <View>
         <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
-        <SummaryCard />
-        <Text>Lending</Text>
+        <SummaryCard
+          netWorth={data?.iUserSummary?.netWorthUSD || ''}
+          supplied={data?.iUserSummary?.totalLiquidityUSD || ''}
+          borrowed={data?.iUserSummary?.totalBorrowsUSD || ''}
+          estDaily={apy?.netAPY || ''}
+          netApy={apy.netAPY || ''}
+          healthFactor={data?.iUserSummary?.healthFactor || ''}
+        />
+        <Text>{userSummaryLoading ? 'loading' : 'end'}</Text>
+        <SupplyPoolList data={data?.formattedPoolReservesAndIncentives || []} />
       </View>
     </NormalScreenContainer2024>
   );

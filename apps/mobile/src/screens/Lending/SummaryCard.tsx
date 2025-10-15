@@ -5,8 +5,21 @@ import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
+import { formatNetworth, formatNum } from '@/utils/math';
+import { formatPercent } from '../TokenDetail/util';
+import { estDaily } from './utils/format';
+import { getHealthStatusColor } from './utils';
 
-const SummaryCard = () => {
+interface IProps {
+  netWorth: string;
+  supplied: string;
+  borrowed: string;
+  estDaily: string;
+  netApy: string;
+  healthFactor: string;
+}
+
+const SummaryCard = (props: IProps) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
@@ -16,11 +29,14 @@ const SummaryCard = () => {
         <View style={styles.netWorthContainer}>
           <View style={styles.netWorthHeader}>
             <Text style={styles.netWorthTitle}>Net worth</Text>
-            <Text style={styles.netWorthValue}>$1,224.01</Text>
+            <Text style={styles.netWorthValue}>
+              {formatNetworth(Number(props.netWorth || '0'))}
+            </Text>
           </View>
           <View style={styles.suppliedAndBorrowedContainer}>
             <Text style={styles.suppliedAndBorrowedTitle}>
-              Supplied: $1,300 | Borrowed: $60
+              Supplied: {formatNetworth(Number(props.supplied || '0'))} |
+              Borrowed: {formatNetworth(Number(props.borrowed || '0'))}
             </Text>
           </View>
         </View>
@@ -28,8 +44,12 @@ const SummaryCard = () => {
           <View style={styles.estDailyContainer}>
             <Text style={styles.sectionHeader}>Est.Daily</Text>
             <View style={styles.sectionContent}>
-              <Text style={styles.estDailyValue}>+$22.5</Text>
-              <Text style={styles.netApy}>(+4.5%)</Text>
+              <Text style={styles.estDailyValue}>
+                {estDaily(props.netWorth, props.netApy)}
+              </Text>
+              <Text style={styles.netApy}>
+                (+{formatPercent(Number(props.netApy || '0'))})
+              </Text>
             </View>
           </View>
           <View style={styles.healthFactorContainer}>
@@ -46,8 +66,34 @@ const SummaryCard = () => {
               />
             </View>
             <View style={styles.sectionContent}>
-              <Text style={styles.healthFactorValue}>16.84</Text>
-              <Text style={styles.healthFactorStatus}>Healthy</Text>
+              <Text
+                style={[
+                  styles.healthFactorValue,
+                  {
+                    color: getHealthStatusColor(
+                      isLight,
+                      Number(props.healthFactor || '0'),
+                    ).color,
+                  },
+                ]}>
+                {formatNum(props.healthFactor)}
+              </Text>
+              <Text
+                style={[
+                  styles.healthFactorStatus,
+                  {
+                    color: getHealthStatusColor(
+                      isLight,
+                      Number(props.healthFactor || '0'),
+                    ).color,
+                    backgroundColor: getHealthStatusColor(
+                      isLight,
+                      Number(props.healthFactor || '0'),
+                    ).backgroundColor,
+                  },
+                ]}>
+                Healthy
+              </Text>
             </View>
           </View>
         </View>
