@@ -500,13 +500,15 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.Points}
         component={PointsScreen}
-        options={mergeScreenOptions({
-          headerTitleAlign: 'center',
-          headerShown: true,
-          headerTintColor: colors2024['neutral-title-1'],
-          headerTitleStyle: styles.headerTitleText,
-          headerTitle: t('page.rabbyPoints.title'),
-        })}
+        options={mergeScreenOptions2024([
+          {
+            headerTitleAlign: 'center',
+            headerShown: true,
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: [styles.headerTitleText, { fontWeight: '900' }],
+            headerTitle: t('page.rabbyPoints.title'),
+          },
+        ])}
       />
     </AddressStack.Navigator>
   );
