@@ -64,6 +64,7 @@ import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import { BridgeSlippage } from './BridgeSlippage';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -935,9 +936,27 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                   onOk={fillRecommendFromToken}
                 />
               ) : (
-                <Text style={styles.noRecoomedTokenText}>
-                  {t('page.bridge.no-quote-found')}
-                </Text>
+                <>
+                  <Text style={styles.noRecoomedTokenText}>
+                    {t('page.bridge.no-quote-found')}
+                  </Text>
+                  <View style={{ marginHorizontal: 24, marginTop: 12 }}>
+                    <BridgeSlippage
+                      value={slippage}
+                      displaySlippage={slippage}
+                      onChange={e => {
+                        setSlippageChanged(true);
+                        setSlippage(e);
+                      }}
+                      autoSlippage={autoSlippage}
+                      isCustomSlippage={isCustomSlippage}
+                      setAutoSlippage={setAutoSlippage}
+                      setIsCustomSlippage={setIsCustomSlippage}
+                      type="bridge"
+                      loading={quoteLoading}
+                    />
+                  </View>
+                </>
               )}
             </>
           )}
