@@ -538,9 +538,9 @@ export default function AppNavigation({
       <BackgroundSecureBlurView />
       <FloatViewAutoLockCount />
       <GlobalMiniApproval />
-      <GlobalSignerPortal />
       <GlobalMiniSignTypedDataApproval />
       <GlobalTipsPopup />
+      <GlobalSignerPortal />
     </AutoLockView.ForAppNav>
   );
 }

@@ -32,6 +32,7 @@ import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataAppro
 import RcCheckSecurity from '@/assets2024/icons/common/check-security.svg';
 import { Text } from 'react-native';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { createGetStyles2024 } from '@/utils/styles';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -78,109 +79,108 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   disableSignBtn?: boolean;
 }
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    wrapper: {
-      paddingHorizontal: 20,
-      paddingTop: 10,
-      paddingBottom: 52,
-      // borderTopLeftRadius: 16,
-      // borderTopRightRadius: 16,
-      // backgroundColor: colors['neutral-bg-1'],
-      position: 'relative',
-      // shadow
-      // shadowColor: colors['neutral-line'],
-      // shadowOffset: {
-      //   width: 0,
-      //   height: 6,
-      // },
-      // shadowOpacity: 0.5,
-      // shadowRadius: 16,
+const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
+  wrapper: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 52,
+    // borderTopLeftRadius: 16,
+    // borderTopRightRadius: 16,
+    // backgroundColor: colors['neutral-bg-1'],
+    position: 'relative',
+    // shadow
+    // shadowColor: colors['neutral-line'],
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 6,
+    // },
+    // shadowOpacity: 0.5,
+    // shadowRadius: 16,
 
-      // elevation: 12,
-    },
-    dappIconWrapper: {
-      position: 'relative',
-      marginRight: 8,
-    },
-    dappIcon: {
-      width: 24,
-      height: 24,
-      borderRadius: 4,
-    },
-    chainLogo: {
-      width: 14,
-      height: 14,
-      borderRadius: 100,
-      position: 'absolute',
-      bottom: -5,
-      right: -5,
-    },
-    requestOrigin: {
-      height: 30,
-      fontWeight: '500',
-      fontSize: 13,
-      lineHeight: 15,
-      color: colors['neutral-foot'],
-      paddingBottom: 12,
-      position: 'relative',
-      marginBottom: 12,
-      display: 'flex',
-      alignItems: 'center',
-      flexDirection: 'row',
-    },
-    requestOriginBorder: {
-      position: 'absolute',
-      bottom: 0,
-      left: -20,
-      right: -20,
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: colors['neutral-line'],
-    },
-    origin: {
-      color: colors['neutral-title-1'],
-      flex: 1,
-      overflow: 'hidden',
-      // textOverflow: 'ellipsis',
-      // whiteSpace: 'nowrap',
-      fontSize: 15,
-      lineHeight: 18,
-    },
-    right: {
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-foot'],
-    },
-    securityLevelTip: {
-      marginTop: 10,
-      borderRadius: 4,
-      paddingVertical: 6,
-      paddingHorizontal: 8,
-      display: 'flex',
-      position: 'relative',
-      flexDirection: 'row',
-    },
-    securityLevelTipText: {
-      fontWeight: '500',
-      fontSize: 13,
-      lineHeight: 15,
-    },
-    iconLevel: {
-      width: 14,
-      height: 14,
-      marginRight: 6,
-    },
-    securityLevelTag: {
-      marginTop: -15,
-    },
-    container: {
-      position: 'relative',
-      backgroundColor: '#fff',
-    },
-    actions: {
-      // backgroundColor: 'red',
-    },
-  });
+    // elevation: 12,
+  },
+  dappIconWrapper: {
+    position: 'relative',
+    marginRight: 8,
+  },
+  dappIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+  },
+  chainLogo: {
+    width: 14,
+    height: 14,
+    borderRadius: 100,
+    position: 'absolute',
+    bottom: -5,
+    right: -5,
+  },
+  requestOrigin: {
+    height: 30,
+    fontWeight: '500',
+    fontSize: 13,
+    lineHeight: 15,
+    color: colors['neutral-foot'],
+    paddingBottom: 12,
+    position: 'relative',
+    marginBottom: 12,
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  requestOriginBorder: {
+    position: 'absolute',
+    bottom: 0,
+    left: -20,
+    right: -20,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors['neutral-line'],
+  },
+  origin: {
+    color: colors['neutral-title-1'],
+    flex: 1,
+    overflow: 'hidden',
+    // textOverflow: 'ellipsis',
+    // whiteSpace: 'nowrap',
+    fontSize: 15,
+    lineHeight: 18,
+  },
+  right: {
+    fontSize: 12,
+    lineHeight: 14,
+    color: colors['neutral-foot'],
+  },
+  securityLevelTip: {
+    marginTop: 10,
+    borderRadius: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    display: 'flex',
+    position: 'relative',
+    flexDirection: 'row',
+  },
+  securityLevelTipText: {
+    fontWeight: '500',
+    fontSize: 13,
+    lineHeight: 15,
+  },
+  iconLevel: {
+    width: 14,
+    height: 14,
+    marginRight: 6,
+  },
+  securityLevelTag: {
+    marginTop: -15,
+  },
+  container: {
+    position: 'relative',
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  actions: {
+    // backgroundColor: 'red',
+  },
+}));
 
 const getSecurityLevelTipColor = (colors: AppColorsVariants) => ({
   [Level.FORBIDDEN]: {
@@ -248,8 +248,7 @@ export const MiniFooterBar: React.FC<Props> = ({
   const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
     null,
   );
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors } = useTheme2024({ getStyle: getStyles });
 
   const { rules, ...apiApprovalSecurityEngine } = useApprovalSecurityEngine();
 

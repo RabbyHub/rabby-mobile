@@ -88,7 +88,6 @@ export const GlobalSignerPortal: React.FC = () => {
           <AutoLockView
             style={{
               minHeight: 164,
-              backgroundColor: 'green',
             }}>
             {ctx?.txs?.length ? <MiniSignTxV2 /> : null}
           </AutoLockView>
