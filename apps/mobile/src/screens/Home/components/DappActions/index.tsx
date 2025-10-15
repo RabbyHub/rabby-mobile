@@ -17,7 +17,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useDappAction } from './hook';
 import { sendRequest } from '@/core/apis/provider';
 import { toast } from '@/components2024/Toast';
-import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { DappActionHeader } from './DappActionHeader';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -25,6 +24,7 @@ import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { debounce } from 'lodash';
+import { useMiniSigner } from '@/hooks/useSigner';
 
 export const enum ActionType {
   Withdraw = 'withdraw',
@@ -55,6 +55,7 @@ export const DappActions = ({
   address,
   addressType,
   onRefresh,
+  session = INTERNAL_REQUEST_SESSION,
 }: {
   data?: WithdrawAction[];
   chain?: string;
@@ -62,6 +63,7 @@ export const DappActions = ({
   address?: string;
   addressType?: KEYRING_TYPE;
   onRefresh?: () => Promise<void>;
+  session?: typeof INTERNAL_REQUEST_SESSION;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -107,17 +109,21 @@ export const DappActions = ({
     chain,
     currentAccount,
   );
+
   const {
-    sendMiniTransactions,
-    setMiniSignExtraProps,
-    resetMiniSignExtraProps,
-  } = useMiniApproval();
+    openUI,
+    close: closeMiniSigner,
+    updateConfig,
+    resetGasStore,
+  } = useMiniSigner({
+    account: currentAccount!,
+  });
 
   const setDisableSignBtn = useCallback(
     (v: boolean) => {
-      setMiniSignExtraProps(pre => ({ ...pre, disableSignBtn: v }));
+      updateConfig({ disableSignBtn: v });
     },
-    [setMiniSignExtraProps],
+    [updateConfig],
   );
   const onPreExecChange = useCallback(
     (r: ExplainTxResponse) => {
@@ -147,29 +153,33 @@ export const DappActions = ({
     async (action: () => Promise<Tx[]>, title?: string) => {
       const txs = await action();
       if (canDirectSign) {
-        resetMiniSignExtraProps();
-        setMiniSignExtraProps(pre => ({
-          ...pre,
-          title: (
-            <DappActionHeader
-              logo={protocolLogo}
-              chain={chain}
-              title={title}
-              showQueueDesc={isQueueWithdraw}
-            />
-          ),
-          showSimulateChange: true,
-          autoThrowPreExecError: false,
-          onPreExecChange,
-        }));
         try {
-          await sendMiniTransactions({
+          closeMiniSigner();
+          resetGasStore();
+          await openUI({
             txs: txs,
-            account: currentAccount!,
-            waitTime: 0,
+            title: (
+              <DappActionHeader
+                logo={protocolLogo}
+                chain={chain}
+                title={title}
+                showQueueDesc={isQueueWithdraw}
+              />
+            ),
+            enableSecurityEngine: true,
+            showSimulateChange: true,
+            onPreExecChange,
+            disableSignBtn: false,
+            ga: {
+              category: 'DappActions',
+              action: title,
+            },
+            showCheck: true,
+            session,
           });
           setTimeout(() => {
             onRefresh?.();
+            closeMiniSigner();
           }, 500);
         } catch (error) {
           console.error('error occur', error);
@@ -182,7 +192,7 @@ export const DappActions = ({
                 method: 'eth_sendTransaction',
                 params: [tx],
               },
-              session: INTERNAL_REQUEST_SESSION,
+              session,
               account: currentAccount!,
             });
           }
@@ -202,14 +212,15 @@ export const DappActions = ({
     [
       canDirectSign,
       chain,
+      closeMiniSigner,
       currentAccount,
       isQueueWithdraw,
       onPreExecChange,
       onRefresh,
+      openUI,
       protocolLogo,
-      resetMiniSignExtraProps,
-      sendMiniTransactions,
-      setMiniSignExtraProps,
+      resetGasStore,
+      session,
     ],
   );
   if (!showWithdraw && !showClaim) {

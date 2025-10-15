@@ -78,3 +78,48 @@ export const useLedgerStatus = (
     status,
   };
 };
+
+export const callConnectLedgerModal = ({
+  deviceId,
+  cb,
+  reject,
+  address,
+  onDismiss,
+}: {
+  deviceId?: string;
+  cb?: () => void;
+  reject?: () => void;
+  address: string;
+  onDismiss?: () => void;
+}) => {
+  let isConnected = false;
+  const id = createGlobalBottomSheetModal2024({
+    name: MODAL_NAMES.CONNECT_LEDGER,
+    deviceId,
+    onSelectDevice: async (d: Device) => {
+      console.log('selected device', d.id);
+      try {
+        await TransportBLE.open(d.id);
+        apiLedger.fixDeviceId(address, d.id);
+        isConnected = true;
+        cb?.();
+      } catch (e) {
+        console.log('ledger connect error', e);
+        await TransportBLE.disconnectDevice(d.id);
+        reject?.();
+      } finally {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal2024(id);
+        }, 0);
+      }
+    },
+    bottomSheetModalProps: {
+      onDismiss: () => {
+        if (!isConnected) {
+          reject?.();
+        }
+        onDismiss?.();
+      },
+    },
+  });
+};

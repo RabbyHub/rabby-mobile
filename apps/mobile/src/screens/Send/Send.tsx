@@ -220,6 +220,7 @@ function SendScreen({
     handleFieldChange,
     handleClickMaxButton,
     handleGasLevelChanged,
+    handleIgnoreGasFeeChange,
 
     checkCexSupport,
     loadCurrentToken,
@@ -496,6 +497,7 @@ function SendScreen({
           checkCexSupport,
           handleClickMaxButton,
           handleGasLevelChanged,
+          handleIgnoreGasFeeChange,
         },
       }}>
       <NormalScreenContainer2024 type="bg1">

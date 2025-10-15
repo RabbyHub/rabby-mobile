@@ -11,15 +11,7 @@ import {
   isHardWareAccountAccountSupportMiniApproval,
 } from '@/utils/account';
 import { useMemoizedFn } from 'ahooks';
-import {
-  AbortedDirectSubmitError,
-  directSigningAtom,
-  useDirectSigningDisabledProcess,
-  useGetDirectSubmitInnerError,
-  useMiniDirectSignGasFeeDisableProcess,
-  useResetMiniApprovalDirectSignState,
-  useSetMiniSignChain,
-} from '@/hooks/useMiniApprovalDirectSign';
+
 import { useMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
 import { useAtom } from 'jotai';
 import { MiniSignTx } from './MiniSignTx';
@@ -30,259 +22,259 @@ import { useHardwareWalletMiniSignBleStatus } from './atom';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { findChainByID } from '@/utils/chain';
 
-export const MiniDirectSubmitApproval = ({
-  txs,
-  visible,
-  onResolve,
-  onReject,
-  onVisibleChange,
-  ga,
-  onSubmitting,
-  onSubmitted,
-  id,
-  account,
-  showMaskLoading = true,
-  transparentMask,
-  checkGasFee,
-}: {
-  txs?: Tx[];
-  visible?: boolean;
-  onReject?: (e?: any) => void;
-  onResolve?: (res: Awaited<ReturnType<typeof sendTransaction>>[]) => void;
-  onVisibleChange?: (v: boolean) => void;
-  ga?: Record<string, any>;
-  onSubmitting?: () => void;
-  onSubmitted?: (isSuccess: boolean) => void;
-  id?: string;
-  account: Account;
-  showMaskLoading?: boolean;
-  transparentMask?: boolean;
-  checkGasFee?: boolean;
-}) => {
-  const { styles } = useTheme2024({
-    getStyle: getSheetStyles,
-  });
+// export const MiniDirectSubmitApproval = ({
+//   txs,
+//   visible,
+//   onResolve,
+//   onReject,
+//   onVisibleChange,
+//   ga,
+//   onSubmitting,
+//   onSubmitted,
+//   id,
+//   account,
+//   showMaskLoading = true,
+//   transparentMask,
+//   checkGasFee,
+// }: {
+//   txs?: Tx[];
+//   visible?: boolean;
+//   onReject?: (e?: any) => void;
+//   onResolve?: (res: Awaited<ReturnType<typeof sendTransaction>>[]) => void;
+//   onVisibleChange?: (v: boolean) => void;
+//   ga?: Record<string, any>;
+//   onSubmitting?: () => void;
+//   onSubmitted?: (isSuccess: boolean) => void;
+//   id?: string;
+//   account: Account;
+//   showMaskLoading?: boolean;
+//   transparentMask?: boolean;
+//   checkGasFee?: boolean;
+// }) => {
+//   const { styles } = useTheme2024({
+//     getStyle: getSheetStyles,
+//   });
 
-  const dismissedByCodeRef = useRef(false);
+//   const dismissedByCodeRef = useRef(false);
 
-  const [overlayLoading, setOverlayLoading] = React.useState(false);
-  const currentAccount = account;
+//   const [overlayLoading, setOverlayLoading] = React.useState(false);
+//   const currentAccount = account;
 
-  const onSubmittingCb = useCallback(() => {
-    onSubmitting?.();
-    if (isAccountSupportDirectSign(currentAccount?.type)) {
-      setOverlayLoading(true);
-    }
-  }, [currentAccount?.type, onSubmitting]);
+//   const onSubmittingCb = useCallback(() => {
+//     onSubmitting?.();
+//     if (isAccountSupportDirectSign(currentAccount?.type)) {
+//       setOverlayLoading(true);
+//     }
+//   }, [currentAccount?.type, onSubmitting]);
 
-  const onSubmittedCb = useCallback(
-    (isSuccess: boolean) => {
-      onSubmitted?.(isSuccess);
-      setOverlayLoading(false);
-    },
-    [onSubmitted],
-  );
+//   const onSubmittedCb = useCallback(
+//     (isSuccess: boolean) => {
+//       onSubmitted?.(isSuccess);
+//       setOverlayLoading(false);
+//     },
+//     [onSubmitted],
+//   );
 
-  const cancelOverlayLoading = useMemoizedFn(() => {
-    setOverlayLoading?.(false);
-  });
+//   const cancelOverlayLoading = useMemoizedFn(() => {
+//     setOverlayLoading?.(false);
+//   });
 
-  const resetMiniApprovalDirectSignState =
-    useResetMiniApprovalDirectSignState();
+//   const resetMiniApprovalDirectSignState =
+//     useResetMiniApprovalDirectSignState();
 
-  const handleClearTask = useMemoizedFn((e: any) => {
-    task.clear();
-    resetMiniApprovalDirectSignState();
-    onVisibleChange?.(false);
-    cancelOverlayLoading();
+//   const handleClearTask = useMemoizedFn((e: any) => {
+//     task.clear();
+//     resetMiniApprovalDirectSignState();
+//     onVisibleChange?.(false);
+//     cancelOverlayLoading();
 
-    if (!visible) {
-      onReject?.(e);
-    }
-  });
+//     if (!visible) {
+//       onReject?.(e);
+//     }
+//   });
 
-  const setMiniSignChain = useSetMiniSignChain();
-  const { setCheckGasFee } = useMiniDirectSignGasFeeDisableProcess();
+//   const setMiniSignChain = useSetMiniSignChain();
+//   const { setCheckGasFee } = useMiniDirectSignGasFeeDisableProcess();
 
-  useEffect(() => {
-    if (txs?.[0]?.chainId) {
-      const chainInfo = findChainByID(txs?.[0]?.chainId);
-      if (chainInfo?.enum) {
-        setMiniSignChain(chainInfo?.enum);
-      }
-    }
-  }, [setMiniSignChain, txs]);
+//   useEffect(() => {
+//     if (txs?.[0]?.chainId) {
+//       const chainInfo = findChainByID(txs?.[0]?.chainId);
+//       if (chainInfo?.enum) {
+//         setMiniSignChain(chainInfo?.enum);
+//       }
+//     }
+//   }, [setMiniSignChain, txs]);
 
-  const task = useMiniApprovalTask({
-    ga,
-  });
+//   const task = useMiniApprovalTask({
+//     ga,
+//   });
 
-  const [isDirectSigning] = useAtom(directSigningAtom);
+//   const [isDirectSigning] = useAtom(directSigningAtom);
 
-  const directSubmitInnerError = useGetDirectSubmitInnerError();
+//   const directSubmitInnerError = useGetDirectSubmitInnerError();
 
-  useEffect(() => {
-    resetMiniApprovalDirectSignState();
-  }, [resetMiniApprovalDirectSignState, txs]);
+//   useEffect(() => {
+//     resetMiniApprovalDirectSignState();
+//   }, [resetMiniApprovalDirectSignState, txs]);
 
-  useEffect(() => {
-    setCheckGasFee(!!checkGasFee);
-  }, [checkGasFee, setCheckGasFee, txs]);
+//   useEffect(() => {
+//     setCheckGasFee(!!checkGasFee);
+//   }, [checkGasFee, setCheckGasFee, txs]);
 
-  useEffect(() => {
-    if (isDirectSigning) {
-      setOverlayLoading?.(true);
-    }
-  }, [isDirectSigning]);
+//   useEffect(() => {
+//     if (isDirectSigning) {
+//       setOverlayLoading?.(true);
+//     }
+//   }, [isDirectSigning]);
 
-  useEffect(() => {
-    if (overlayLoading && directSubmitInnerError) {
-      setOverlayLoading?.(false);
-      DirectSubmitReject?.(new AbortedDirectSubmitError('abort'));
-    }
-  }, [overlayLoading, directSubmitInnerError]);
+//   useEffect(() => {
+//     if (overlayLoading && directSubmitInnerError) {
+//       setOverlayLoading?.(false);
+//       DirectSubmitReject?.(new AbortedDirectSubmitError('abort'));
+//     }
+//   }, [overlayLoading, directSubmitInnerError]);
 
-  useEffect(() => {
-    if (task.error) {
-      setOverlayLoading?.(false);
-    }
-  }, [task.error]);
-  const cantSubmit = useDirectSigningDisabledProcess();
+//   useEffect(() => {
+//     if (task.error) {
+//       setOverlayLoading?.(false);
+//     }
+//   }, [task.error]);
+//   const cantSubmit = useDirectSigningDisabledProcess();
 
-  useEffect(() => {
-    if (overlayLoading && cantSubmit) {
-      setOverlayLoading?.(false);
-      DirectSubmitReject?.(new AbortedDirectSubmitError('abort'));
-    }
-  }, [cantSubmit, overlayLoading]);
+//   useEffect(() => {
+//     if (overlayLoading && cantSubmit) {
+//       setOverlayLoading?.(false);
+//       DirectSubmitReject?.(new AbortedDirectSubmitError('abort'));
+//     }
+//   }, [cantSubmit, overlayLoading]);
 
-  const transAnim = React.useRef(new Animated.Value(0));
+//   const transAnim = React.useRef(new Animated.Value(0));
 
-  React.useEffect(() => {
-    if (overlayLoading) {
-      Animated.loop(
-        Animated.timing(transAnim.current, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
-      transAnim.current.resetAnimation();
-    }
-  }, [overlayLoading]);
+//   React.useEffect(() => {
+//     if (overlayLoading) {
+//       Animated.loop(
+//         Animated.timing(transAnim.current, {
+//           toValue: 1,
+//           duration: 1000,
+//           easing: Easing.linear,
+//           useNativeDriver: true,
+//         }),
+//       ).start();
+//     } else {
+//       transAnim.current.resetAnimation();
+//     }
+//   }, [overlayLoading]);
 
-  const rotate = transAnim.current.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+//   const rotate = transAnim.current.interpolate({
+//     inputRange: [0, 1],
+//     outputRange: ['0deg', '360deg'],
+//   });
 
-  const { oneKeyCheckBlePending, ledgerCheckBlePending } =
-    useHardwareWalletMiniSignBleStatus();
+//   const { oneKeyCheckBlePending, ledgerCheckBlePending } =
+//     useHardwareWalletMiniSignBleStatus();
 
-  const isHardwareWallet = isHardWareAccountAccountSupportMiniApproval(
-    account?.type,
-  );
+//   const isHardwareWallet = isHardWareAccountAccountSupportMiniApproval(
+//     account?.type,
+//   );
 
-  const checkBlePending = useMemo(() => {
-    if (account?.type === KEYRING_CLASS.HARDWARE.LEDGER) {
-      return ledgerCheckBlePending;
-    }
-    if (account?.type === KEYRING_CLASS.HARDWARE.ONEKEY) {
-      return oneKeyCheckBlePending;
-    }
-    return false;
-  }, [account?.type, ledgerCheckBlePending, oneKeyCheckBlePending]);
+//   const checkBlePending = useMemo(() => {
+//     if (account?.type === KEYRING_CLASS.HARDWARE.LEDGER) {
+//       return ledgerCheckBlePending;
+//     }
+//     if (account?.type === KEYRING_CLASS.HARDWARE.ONEKEY) {
+//       return oneKeyCheckBlePending;
+//     }
+//     return false;
+//   }, [account?.type, ledgerCheckBlePending, oneKeyCheckBlePending]);
 
-  const maskLoading =
-    (showMaskLoading && overlayLoading && !isHardwareWallet) ||
-    checkBlePending ||
-    (isHardwareWallet && task.status !== 'idle');
+//   const maskLoading =
+//     (showMaskLoading && overlayLoading && !isHardwareWallet) ||
+//     checkBlePending ||
+//     (isHardwareWallet && task.status !== 'idle');
 
-  return (
-    <>
-      {txs?.length ? (
-        <View style={styles.hiddenPortal}>
-          <MiniSignTx
-            directSubmit
-            task={task}
-            txs={txs}
-            ga={ga}
-            key={`${currentAccount?.type}-${currentAccount?.address}-${id}`}
-            onVisibleChange={v => {
-              onVisibleChange?.(v);
-            }}
-            onReject={handleClearTask}
-            onResolve={res => {
-              onResolve?.(res);
-            }}
-            onSubmitting={onSubmittingCb}
-            onSubmitted={onSubmittedCb}
-            account={account}
-          />
-        </View>
-      ) : null}
+//   return (
+//     <>
+//       {txs?.length ? (
+//         <View style={styles.hiddenPortal}>
+//           <MiniSignTx
+//             directSubmit
+//             task={task}
+//             txs={txs}
+//             ga={ga}
+//             key={`${currentAccount?.type}-${currentAccount?.address}-${id}`}
+//             onVisibleChange={v => {
+//               onVisibleChange?.(v);
+//             }}
+//             onReject={handleClearTask}
+//             onResolve={res => {
+//               onResolve?.(res);
+//             }}
+//             onSubmitting={onSubmittingCb}
+//             onSubmitted={onSubmittedCb}
+//             account={account}
+//           />
+//         </View>
+//       ) : null}
 
-      <MiniWaiting
-        visible={!!task.error}
-        error={task.error}
-        onCancel={handleClearTask}
-        onRetry={async () => {
-          try {
-            onSubmittingCb?.();
-            const res = await task.retry();
-            // todo check this
-            onResolve?.(res || []);
-            onSubmittedCb?.(true);
-            dismissedByCodeRef.current = true;
-          } catch (e) {
-            console.error(e);
-            onSubmittedCb?.(false);
-          }
-        }}
-        account={account}
-      />
+//       <MiniWaiting
+//         visible={!!task.error}
+//         error={task.error}
+//         onCancel={handleClearTask}
+//         onRetry={async () => {
+//           try {
+//             onSubmittingCb?.();
+//             const res = await task.retry();
+//             // todo check this
+//             onResolve?.(res || []);
+//             onSubmittedCb?.(true);
+//             dismissedByCodeRef.current = true;
+//           } catch (e) {
+//             console.error(e);
+//             onSubmittedCb?.(false);
+//           }
+//         }}
+//         account={account}
+//       />
 
-      {maskLoading && transparentMask ? (
-        <Modal
-          visible={overlayLoading}
-          transparent
-          animationType="fade"
-          onRequestClose={cancelOverlayLoading}
-          statusBarTranslucent>
-          <View style={styles.transparentOverlay} />
-        </Modal>
-      ) : null}
+//       {maskLoading && transparentMask ? (
+//         <Modal
+//           visible={overlayLoading}
+//           transparent
+//           animationType="fade"
+//           onRequestClose={cancelOverlayLoading}
+//           statusBarTranslucent>
+//           <View style={styles.transparentOverlay} />
+//         </Modal>
+//       ) : null}
 
-      {maskLoading && !transparentMask ? (
-        <Modal
-          visible={overlayLoading}
-          transparent
-          animationType="fade"
-          onRequestClose={cancelOverlayLoading}
-          statusBarTranslucent>
-          <Pressable style={styles.overlay}>
-            <View style={styles.loadingContainer}>
-              <Animated.View
-                style={[
-                  {
-                    transform: [
-                      {
-                        rotate,
-                      },
-                    ],
-                  },
-                ]}>
-                <IconLoadingCC color={'white'} width={24} height={24} />
-              </Animated.View>
-            </View>
-          </Pressable>
-        </Modal>
-      ) : null}
-    </>
-  );
-};
+//       {maskLoading && !transparentMask ? (
+//         <Modal
+//           visible={overlayLoading}
+//           transparent
+//           animationType="fade"
+//           onRequestClose={cancelOverlayLoading}
+//           statusBarTranslucent>
+//           <Pressable style={styles.overlay}>
+//             <View style={styles.loadingContainer}>
+//               <Animated.View
+//                 style={[
+//                   {
+//                     transform: [
+//                       {
+//                         rotate,
+//                       },
+//                     ],
+//                   },
+//                 ]}>
+//                 <IconLoadingCC color={'white'} width={24} height={24} />
+//               </Animated.View>
+//             </View>
+//           </Pressable>
+//         </Modal>
+//       ) : null}
+//     </>
+//   );
+// };
 
 const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
   overlay: {

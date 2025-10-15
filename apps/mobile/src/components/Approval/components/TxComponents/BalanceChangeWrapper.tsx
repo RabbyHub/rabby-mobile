@@ -3,6 +3,7 @@ import { BalanceChange as BalanceChangeType } from '@rabby-wallet/rabby-api/dist
 import React from 'react';
 import { Divide } from '../Actions/components/Divide';
 import BalanceChange from './BalanceChange';
+import { View } from 'react-native';
 
 interface Props {
   data: ParsedActionData | null;
@@ -65,9 +66,9 @@ export const BalanceChangeWrapper: React.FC<Props> = ({
   }, [balanceChange, data, preExecSuccess]);
 
   return notShowBalanceChange || !balanceChange ? null : (
-    <>
+    <View style={{ paddingHorizontal: 12, paddingBottom: 12 }}>
       <Divide />
       <BalanceChange version={preExecVersion} data={balanceChange} />
-    </>
+    </View>
   );
 };

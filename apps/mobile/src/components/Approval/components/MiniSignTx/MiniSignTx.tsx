@@ -69,17 +69,13 @@ import {
 import { sendTransaction } from '@/utils/sendTransaction';
 import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
 import AutoLockView from '@/components/AutoLockView';
-import {
-  directSigningAtom,
-  useSetDirectSubmitInnerError,
-} from '@/hooks/useMiniApprovalDirectSign';
+
 import { useAtom } from 'jotai';
 import { MiniApprovalError } from './error';
 import {
   useMiniSignFixedMode,
   useMiniSignGasStore,
 } from '@/hooks/miniSignGasStore';
-import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { View } from 'react-native';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
 import { useGetMiniSignTxExtraProps } from '@/hooks/useMiniApproval';
@@ -637,8 +633,6 @@ export const MiniSignTx = ({
     );
   };
 
-  const setDirectSubmitInnerError = useSetDirectSubmitInnerError();
-
   const init = async () => {
     if (!chainId) {
       return;
@@ -742,9 +736,6 @@ export const MiniSignTx = ({
       setInited(true);
     } catch (e: any) {
       toast.show(e.message || JSON.stringify(e));
-      if (directSubmit) {
-        setDirectSubmitInnerError(true);
-      }
     }
   };
 
@@ -761,10 +752,13 @@ export const MiniSignTx = ({
 
   const [initdTxs, setInitdTxs] = useState<typeof txsResult>([]);
 
-  const checkGasLevelIsNotEnough = useCallback(
-    (gas: GasSelectorResponse): Promise<[number, boolean, boolean]> => {
+  const checkGasLevelIsNotEnough = useMemoizedFn(
+    (
+      gas: GasSelectorResponse,
+      type?: 'gasAccount' | 'native',
+    ): Promise<[boolean, number]> => {
       if (!isReady || !initdTxs.length) {
-        return Promise.resolve([0, false, true]);
+        return Promise.resolve([true, 0]);
       }
       let _txsResult = initdTxs;
       return Promise.all(
@@ -800,14 +794,40 @@ export const MiniSignTx = ({
         _txsResult = arr;
 
         if (!_txsResult.length) {
-          return [0, false, true];
+          return [true, 0];
         }
 
+        if (type === 'native') {
+          const checkResult = _txsResult.map((item, index) => {
+            const result = checkGasAndNonce({
+              recommendGasLimitRatio: item.recommendGasLimitRatio,
+              recommendGasLimit: item.gasLimit,
+              recommendNonce: item.tx.nonce,
+              tx: item.tx,
+              gasLimit: item.gasLimit,
+              nonce: item.tx.nonce,
+              isCancel: isCancel,
+              gasExplainResponse: item.gasCost,
+              isSpeedUp: isSpeedUp,
+              isGnosisAccount: false,
+              nativeTokenBalance: balance,
+            });
+            balance = new BigNumber(balance)
+              .minus(new BigNumber(item.tx.value || 0))
+              .minus(new BigNumber(item.gasCost.maxGasCostAmount || 0))
+              .toFixed();
+            return result;
+          });
+          return [_.flatten(checkResult)?.some(e => e.code === 3001), 0] as [
+            boolean,
+            number,
+          ];
+        }
         return openapi
           .checkGasAccountTxs({
             sig: sig || '',
             account_id: gasAccountAddress,
-            tx_list: arr.map(item => {
+            tx_list: arr.map((item, index) => {
               return {
                 ...item.tx,
                 gas: item.gasLimit,
@@ -816,45 +836,14 @@ export const MiniSignTx = ({
             }),
           })
           .then(gasAccountRes => {
-            const checkResult = _txsResult.map(item => {
-              const result = checkGasAndNonce({
-                recommendGasLimitRatio: item.recommendGasLimitRatio,
-                recommendGasLimit: item.gasLimit,
-                recommendNonce: item.tx.nonce,
-                tx: item.tx,
-                gasLimit: item.gasLimit,
-                nonce: item.tx.nonce,
-                isCancel: false,
-                gasExplainResponse: item.gasCost,
-                isSpeedUp: false,
-                isGnosisAccount: false,
-                nativeTokenBalance: balance,
-              });
-              balance = new BigNumber(balance)
-                .minus(new BigNumber(item.tx.value || 0))
-                .minus(new BigNumber(item.gasCost.maxGasCostAmount || 0))
-                .toFixed();
-              return result;
-            });
             return [
+              !gasAccountRes.balance_is_enough,
               (gasAccountRes.gas_account_cost.estimate_tx_cost || 0) +
                 (gasAccountRes.gas_account_cost?.gas_cost || 0),
-              gasAccountRes.balance_is_enough,
-              _.flatten(checkResult)?.some(e => e.code === 3001),
             ];
           });
       });
     },
-    [
-      isReady,
-      initdTxs,
-      support1559,
-      chain.id,
-      account,
-      nativeTokenBalance,
-      sig,
-      gasAccountAddress,
-    ],
   );
   const [simulateError, setSimulateError] = useState<Error | null>(null);
 
@@ -1009,19 +998,11 @@ export const MiniSignTx = ({
     }
   });
 
-  const [isDirectSigning] = useAtom(directSigningAtom);
-
   useEffect(() => {
     if (visible && simulateError) {
       onReject?.(simulateError);
     }
   }, [onReject, simulateError, visible]);
-
-  useEffect(() => {
-    if (directSubmit && simulateError && isDirectSigning) {
-      onReject?.(simulateError);
-    }
-  }, [onReject, simulateError, directSubmit, isDirectSigning]);
 
   useEffect(() => {
     if (

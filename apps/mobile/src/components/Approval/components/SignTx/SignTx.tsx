@@ -813,7 +813,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     try {
       setIsReady(false);
       await explainTx(currentAccount.address);
-      setIsReady(true);
+      // setIsReady(true);
     } catch (e: any) {
       console.error(e);
       toast.show(e.message || JSON.stringify(e));

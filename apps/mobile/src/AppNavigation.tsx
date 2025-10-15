@@ -81,6 +81,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
+import { GlobalSignerPortal } from './components2024/MiniSignV2/components/GlobalSignerPortal';
 import { EVENT_ROUTE_CHANGE, eventBus } from './utils/events';
 import { useOpenedActiveDappState } from './screens/Dapps/hooks/useDappView';
 import {
@@ -537,6 +538,7 @@ export default function AppNavigation({
       <BackgroundSecureBlurView />
       <FloatViewAutoLockCount />
       <GlobalMiniApproval />
+      <GlobalSignerPortal />
       <GlobalMiniSignTypedDataApproval />
       <GlobalTipsPopup />
     </AutoLockView.ForAppNav>

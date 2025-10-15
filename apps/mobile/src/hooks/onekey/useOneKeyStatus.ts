@@ -6,6 +6,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { apiOneKey } from '@/core/apis';
 import { atom, useAtom } from 'jotai';
+import { noop } from 'lodash';
 import React from 'react';
 
 export const oneKeyStatusAtom = atom<'CONNECTED' | 'DISCONNECTED' | undefined>(
@@ -87,4 +88,53 @@ export const useOneKeyStatus = (
     onClickConnect,
     status,
   };
+};
+
+export const callConnectOneKeyModal = ({
+  deviceId,
+  cb,
+  reject: rej,
+  address,
+  onDismiss,
+}: {
+  deviceId?: string;
+  cb?: () => void;
+  reject?: () => void;
+  address: string;
+  onDismiss?: () => void;
+}) => {
+  let isConnected = false;
+  let toastCb = noop;
+  const id = createGlobalBottomSheetModal2024({
+    name: MODAL_NAMES.CONNECT_ONEKEY,
+    deviceId,
+    onSelectDeviceId: async (connectDeviceId: string) => {
+      toastCb = toastIndicator('Connecting', {
+        isTop: true,
+      });
+
+      try {
+        await apiOneKey.setDeviceConnectId(connectDeviceId);
+        await apiOneKey.unlockDevice();
+        await apiOneKey.fixConnectId(address, connectDeviceId);
+        isConnected = true;
+        cb?.();
+      } catch (e) {
+        rej?.();
+      } finally {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal2024(id);
+        }, 0);
+        toastCb?.();
+      }
+    },
+    bottomSheetModalProps: {
+      onDismiss: () => {
+        if (!isConnected) {
+          rej?.();
+        }
+        onDismiss?.();
+      },
+    },
+  });
 };

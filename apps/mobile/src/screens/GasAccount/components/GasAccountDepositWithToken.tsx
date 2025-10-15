@@ -61,7 +61,7 @@ import {
   isAccountSupportMiniApproval,
 } from '@/utils/account';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
-import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { useMiniSigner } from '@/hooks/useSigner';
 
 const amountList = [10, 100];
 
@@ -479,8 +479,6 @@ export const GasAccountDepositWithToken = ({
     }
   };
 
-  const { sendMiniTransactions } = useMiniApproval();
-
   const handleTopUp = async () => {
     if (isAccountSupportMiniApproval(depositAccount.type)) {
       if (token && depositAccount && !loading) {
@@ -498,11 +496,12 @@ export const GasAccountDepositWithToken = ({
             account: depositAccount,
           });
           if (tx) {
-            const res = await sendMiniTransactions({
+            resetGasStore();
+            closeMiniSign();
+            const res = await openUI({
               txs: [tx],
-              account: depositAccount,
             });
-            const hash = res?.[0]?.txHash;
+            const hash = res?.[0];
 
             await afterTopUpGasAccount({
               to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
@@ -605,6 +604,11 @@ export const GasAccountDepositWithToken = ({
     const list = filterMyAccounts(accounts);
     return maxBy(list, a => a.balance || 0) || list[0];
   });
+  const {
+    openUI,
+    resetGasStore,
+    close: closeMiniSign,
+  } = useMiniSigner({ account: depositAccount });
 
   const onChangeAccount = useCallback((account: Account) => {
     setDepositAccount(pre => {

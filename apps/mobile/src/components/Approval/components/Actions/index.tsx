@@ -5,8 +5,7 @@ import { Chain } from '@/constant/chains';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   ActionRequireData,
   ParsedActionData,
@@ -28,9 +27,10 @@ import { getActionTypeText } from './utils';
 import { TransactionActionList } from './components/TransactionActionList';
 import { Account } from '@/core/services/preference';
 import { MultiActionProps } from '../TypedDataActions';
+import { createGetStyles2024 } from '@/utils/styles';
 
-export const getActionsStyle = (colors: AppColorsVariants) =>
-  StyleSheet.create({
+export const getActionsStyle = createGetStyles2024(
+  ({ colors, colors2024 }) => ({
     signTitle: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -106,7 +106,6 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
     signTitleRight: {
       flexDirection: 'row',
       alignItems: 'center',
-      // @ts-expect-error maybe invalid style
       float: 'right',
     },
     tipContent: {
@@ -148,7 +147,8 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
       width: 8,
       height: 8,
     },
-  });
+  }),
+);
 
 const ActionItem = ({
   isSpeedUp,
@@ -175,8 +175,7 @@ const ActionItem = ({
     return getActionTypeText(data);
   }, [data]);
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = getActionsStyle(colors);
+  const { styles } = useTheme2024({ getStyle: getActionsStyle });
   const commonStyle = useCommonStyle();
 
   const handleViewRawClick = () => {
@@ -307,8 +306,7 @@ const Actions = ({
   const isMultiAction = useMemo(() => {
     return !!multiAction;
   }, [multiAction]);
-  const colors = useThemeColors();
-  const styles = getActionsStyle(colors);
+  const { styles } = useTheme2024({ getStyle: getActionsStyle });
 
   return (
     <View style={styles.actionWrapper}>

@@ -589,3 +589,173 @@ export const sendTransaction = async ({
     };
   }
 };
+
+export const sendTransactionByMiniSignV2 = async ({
+  tx,
+  chainServerId,
+  onProgress,
+  lowGasDeadline,
+  isGasLess,
+  isGasAccount,
+  pushType = 'default',
+  ga,
+  sig,
+  session,
+  account: _account,
+}: {
+  tx: Tx;
+  chainServerId: string;
+  onProgress?: (status: ProgressStatus) => void;
+  lowGasDeadline?: number;
+  isGasLess?: boolean;
+  isGasAccount?: boolean;
+  pushType?: TxPushType;
+  ga?: Record<string, any>;
+  sig?: string;
+  session?: Parameters<typeof apiProvider.ethSendTransaction>[0]['session'];
+  account: Account;
+}) => {
+  onProgress?.('building');
+
+  const chain = findChain({
+    serverId: chainServerId,
+  })!;
+  const support1559 = chain.eip['1559'];
+
+  const currentAccount = _account;
+
+  const signingTxId = await transactionHistoryService.addSigningTx(tx);
+
+  stats.report('createTransaction', {
+    type: currentAccount.brandName,
+    category: KEYRING_CATEGORY_MAP[currentAccount.type],
+    chainId: chain.serverId,
+    createdBy: ga ? 'rabby' : 'dapp',
+    source: ga?.source || '',
+    trigger: ga?.trigger || '',
+    networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
+    swapUseSlider: ga?.swapUseSlider ?? '',
+  });
+
+  const transaction: Tx = {
+    from: tx.from,
+    to: tx.to,
+    data: tx.data,
+    nonce: tx.nonce,
+    value: tx.value,
+    chainId: tx.chainId,
+    gas: tx.gas,
+  };
+
+  const maxPriorityFee = +(tx.maxPriorityFeePerGas || '');
+  const maxFeePerGas = tx.maxFeePerGas || tx.gasPrice;
+
+  if (support1559) {
+    transaction.maxFeePerGas = maxFeePerGas;
+    transaction.maxPriorityFeePerGas =
+      maxPriorityFee <= 0
+        ? tx.maxFeePerGas
+        : intToHex(Math.round(maxPriorityFee));
+  } else {
+    (transaction as Tx).gasPrice = maxFeePerGas;
+  }
+
+  await transactionHistoryService.updateSigningTx(signingTxId, {
+    rawTx: {
+      nonce: tx.nonce,
+    },
+  });
+
+  onProgress?.('builded');
+
+  const handleSendAfter = async () => {
+    const statsData = await notificationService.getStatsData();
+
+    if (statsData?.signed) {
+      const sData: any = {
+        type: statsData?.type,
+        chainId: statsData?.chainId,
+        category: statsData?.category,
+        success: statsData?.signedSuccess,
+        preExecSuccess: statsData?.preExecSuccess,
+        createdBy: statsData?.createdBy,
+        source: statsData?.source,
+        trigger: statsData?.trigger,
+        networkType: statsData?.networkType,
+      };
+      if (statsData.signMethod) {
+        sData.signMethod = statsData.signMethod;
+      }
+      stats.report('signedTransaction', sData);
+    }
+    if (statsData?.submit) {
+      stats.report('submitTransaction', {
+        type: statsData?.type,
+        chainId: statsData?.chainId,
+        category: statsData?.category,
+        success: statsData?.submitSuccess,
+        preExecSuccess: statsData?.preExecSuccess,
+        createdBy: statsData?.createdBy,
+        source: statsData?.source,
+        trigger: statsData?.trigger,
+        networkType: statsData?.networkType || '',
+      });
+    }
+  };
+
+  stats.report('signTransaction', {
+    type: currentAccount.brandName,
+    category: KEYRING_CATEGORY_MAP[currentAccount.type],
+    chainId: chain.serverId,
+    createdBy: ga ? 'rabby' : 'dapp',
+    source: ga?.source || '',
+    trigger: ga?.trigger || '',
+    networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
+  });
+
+  // submit tx
+  let hash = '';
+  const account = currentAccount;
+  try {
+    hash = await apiProvider.ethSendTransaction({
+      data: {
+        $ctx: {
+          ga,
+        },
+        params: [
+          {
+            ...transaction,
+            isSpeedUp: (tx as any)?.isSpeedUp,
+            isCancel: (tx as any)?.isCancel,
+          },
+        ],
+      },
+      session: session || INTERNAL_REQUEST_SESSION,
+      approvalRes: {
+        ...transaction,
+        signingTxId,
+        lowGasDeadline,
+        isGasLess,
+        isGasAccount,
+        pushType,
+        sig,
+      },
+      pushed: false,
+      result: undefined,
+      account: account,
+    });
+    await handleSendAfter();
+  } catch (e) {
+    await handleSendAfter();
+    const err = new Error((e as any).message);
+    err.name = FailedCode.SubmitTxFailed;
+    eventBus.emit(EVENTS.COMMON_HARDWARE.REJECTED, err.message);
+    throw err;
+  }
+
+  onProgress?.('signed');
+
+  return {
+    txHash: hash,
+  };
+};
