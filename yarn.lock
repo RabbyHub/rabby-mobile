@@ -12,6 +12,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@aave/contract-helpers@npm:1.36.1":
+  version: 1.36.1
+  resolution: "@aave/contract-helpers@npm:1.36.1"
+  dependencies:
+    isomorphic-unfetch: ^3.1.0
+  peerDependencies:
+    bignumber.js: ^9.x
+    ethers: ^5.x
+    reflect-metadata: ^0.1.x
+    tslib: ^2.4.x
+  checksum: bf80cc4aba1633c9a476e827892c1d677867e2e3e2c6fe504bdb5c95123c8140d81f3d6574bbbe0fbca7138c6d34c96d5ab5483f2946e44c3c26010571a74901
+  languageName: node
+  linkType: hard
+
+"@aave/math-utils@npm:1.36.1":
+  version: 1.36.1
+  resolution: "@aave/math-utils@npm:1.36.1"
+  peerDependencies:
+    bignumber.js: ^9.x
+    tslib: ^2.4.x
+  checksum: 2d65de196b231611838f2d491807c047221a328614f4a77afcd895a6ad55e9bfbe1c0cbf05b27033f664133076b669eedf58f4cf8286b465ab34781a262b10f6
+  languageName: node
+  linkType: hard
+
 "@adraffy/ens-normalize@npm:1.10.0, @adraffy/ens-normalize@npm:^1.8.8":
   version: 1.10.0
   resolution: "@adraffy/ens-normalize@npm:1.10.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40adraffy%2Fens-normalize%2F-%2Fens-normalize-1.10.0.tgz"
@@ -3358,6 +3382,15 @@ __metadata:
   version: 0.2.3
   resolution: "@bcoe/v8-coverage@npm:0.2.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40bcoe%2Fv8-coverage%2F-%2Fv8-coverage-0.2.3.tgz"
   checksum: 850f9305536d0f2bd13e9e0881cb5f02e4f93fad1189f7b2d4bebf694e3206924eadee1068130d43c11b750efcc9405f88a8e42ef098b6d75239c0f047de1a27
+  languageName: node
+  linkType: hard
+
+"@bgd-labs/aave-address-book@npm:4.30.3":
+  version: 4.30.3
+  resolution: "@bgd-labs/aave-address-book@npm:4.30.3"
+  peerDependencies:
+    viem: ^2.23.5
+  checksum: 7d722dfbecea933d6a26f859f0f343cef669b1d9b309668460b90147bb7ec910e1096c346973531aff22ba33097558dd611f5045a4a86e9042b9d28546742eea
   languageName: node
   linkType: hard
 
@@ -25440,6 +25473,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"isomorphic-unfetch@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "isomorphic-unfetch@npm:3.1.0"
+  dependencies:
+    node-fetch: ^2.6.1
+    unfetch: ^4.2.0
+  checksum: 82b92fe4ec2823a81ab0fc0d11bd94d710e6f9a940d56b3cba31896d4345ec9ffc7949f4ff31ebcae84f6b95f7ebf3474c4c7452b834eb4078ea3f2c37e459c5
+  languageName: node
+  linkType: hard
+
 "isomorphic-ws@npm:^5.0.0":
   version: 5.0.0
   resolution: "isomorphic-ws@npm:5.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fisomorphic-ws%2F-%2Fisomorphic-ws-5.0.0.tgz"
@@ -32780,11 +32823,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "rabby-mobile@workspace:apps/mobile"
   dependencies:
+    "@aave/contract-helpers": 1.36.1
+    "@aave/math-utils": 1.36.1
     "@babel/core": ^7.25.2
     "@babel/plugin-proposal-decorators": ^7.25.9
     "@babel/plugin-transform-export-namespace-from": ^7.25.9
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
+    "@bgd-labs/aave-address-book": 4.30.3
     "@craftzdog/react-native-buffer": ^6.0.5
     "@debank/common": 0.3.60
     "@debank/festats": 1.0.4
@@ -39197,6 +39243,13 @@ __metadata:
   version: 7.8.0
   resolution: "undici-types@npm:7.8.0"
   checksum: 59521a5b9b50e72cb838a29466b3557b4eacbc191a83f4df5a2f7b156bc8263072b145dc4bb8ec41da7d56a7e9b178892458da02af769243d57f801a50ac5751
+  languageName: node
+  linkType: hard
+
+"unfetch@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "unfetch@npm:4.2.0"
+  checksum: 6a4b2557e1d921eaa80c4425ce27a404945ec26491ed06e62598f333996a91a44c7908cb26dc7c2746d735762b13276cf4aa41829b4c8f438dde63add3045d7a
   languageName: node
   linkType: hard
 
