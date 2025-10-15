@@ -21,6 +21,9 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { CHAINS_ENUM } from '@debank/common';
 import { ChainSelector } from './ChainSelector';
+import { fetchContractData } from './providers';
+import { useRequest } from 'ahooks';
+import SummaryCard from './SummaryCard';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -31,6 +34,12 @@ function DashBoardScreen(): JSX.Element {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+  const { data: userSummary, loading: userSummaryLoading } = useRequest(
+    () => fetchContractData(currentAccount?.address),
+    {
+      refreshDeps: [currentAccount?.address],
+    },
+  );
 
   console.log('CUSTOM_LOGGER:=>: currentAccount', currentAccount?.address);
 
@@ -41,6 +50,7 @@ function DashBoardScreen(): JSX.Element {
       <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       <View>
         <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
+        <SummaryCard />
         <Text>Lending</Text>
       </View>
     </NormalScreenContainer2024>
