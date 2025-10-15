@@ -20,6 +20,11 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
+import RcIconCopy from '@/assets2024/icons/tokenDetail/copy.svg';
+
+import { useMemoizedFn } from 'ahooks';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 interface Props {
   token: AbstractPortfolioToken;
   tokenEntity?: TokenEntityDetail;
@@ -49,6 +54,17 @@ export const TokenChainAndContract: React.FC<Props> = ({
         : token._tokenId,
     };
   }, [token]);
+
+  const handleCopyAddress = useMemoizedFn<
+    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
+  >(evt => {
+    evt.stopPropagation();
+    if (!token?._tokenId) {
+      return;
+    }
+    Clipboard.setString(token._tokenId);
+    toastCopyAddressSuccess(token._tokenId);
+  });
 
   return (
     <View style={styles.container}>
@@ -87,15 +103,9 @@ export const TokenChainAndContract: React.FC<Props> = ({
         </View>
         {isContractToken && (
           <View style={styles.itemContainer}>
-            <Text style={styles.titleTexet}>
-              {t('page.sendToken.ContractAddress')}
-            </Text>
-            <View style={styles.token}>
-              <Text
-                style={styles.contentText}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {ellipsisAddress(tokenAddress)}
+            <View style={styles.titleContainer}>
+              <Text style={styles.titleTexet}>
+                {t('page.sendToken.ContractAddress')}
               </Text>
               <TouchableOpacity
                 style={styles.iconJump}
@@ -110,13 +120,23 @@ export const TokenChainAndContract: React.FC<Props> = ({
                   color={colors2024['neutral-foot']}
                 />
               </TouchableOpacity>
-              {/* <TouchableOpacity onPress={handleCopyAddress}>
-                <RcIconCopyRegularCC
+            </View>
+            <TouchableOpacity
+              onPress={handleCopyAddress}
+              style={[styles.token, styles.bgContainer]}>
+              <Text
+                style={styles.contentText}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {ellipsisAddress(tokenAddress)}
+              </Text>
+              <View>
+                <RcIconCopy
                   style={styles.icon}
                   color={colors2024['neutral-foot']}
                 />
-              </TouchableOpacity> */}
-            </View>
+              </View>
+            </TouchableOpacity>
           </View>
         )}
         {
@@ -261,6 +281,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 4,
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   titleTexet: {
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -281,5 +306,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   iconJump: {
     // marginLeft: 6,
+  },
+  bgContainer: {
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 4,
   },
 }));
