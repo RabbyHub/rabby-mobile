@@ -1,6 +1,7 @@
 import { openapi } from '@/core/request';
 import { Account } from '@/core/services/preference';
 import { useAccounts } from '@/hooks/account';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import PQueue from 'p-queue';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -13,6 +14,8 @@ const AddrPointsQueue = new PQueue({
   concurrency: 10,
 });
 
+export const FILTER_ACCOUNT_TYPES = [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS];
+
 export const useGetRabbyPoints = () => {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
@@ -22,9 +25,13 @@ export const useGetRabbyPoints = () => {
 
   const allAddrString = useMemo(
     () =>
-      Array.from(new Set(accounts.map(e => e.address?.toLowerCase()))).join(
-        ';',
-      ),
+      Array.from(
+        new Set(
+          accounts
+            .filter(e => !FILTER_ACCOUNT_TYPES.includes(e.type))
+            .map(e => e.address?.toLowerCase()),
+        ),
+      ).join(';'),
     [accounts],
   );
 
@@ -55,6 +62,7 @@ export const useGetRabbyPoints = () => {
 
   const accountsWithPoints: AccountPoints[] = useMemo(() => {
     return accounts
+      .filter(e => !FILTER_ACCOUNT_TYPES.includes(e.type))
       .map(e => {
         const addrPointInfo = points[e.address.toLowerCase()];
         if (points[e.address.toLowerCase()]) {

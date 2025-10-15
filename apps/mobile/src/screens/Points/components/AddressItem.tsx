@@ -11,7 +11,7 @@ import { AccountPoints } from '../hooks';
 import RcIconPoints from '@/assets2024/icons/home/IconPoints.svg';
 import { formatTokenAmount } from '@/utils/number';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -19,7 +19,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexGrow: 1,
     padding: 16,
     paddingRight: 24,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
 
     borderRadius: 20,
     borderWidth: 1,
@@ -151,7 +153,7 @@ export const AddressPointItem = (props: AddressItemProps) => {
               </View>
               {!isLoading ? (
                 <View style={styles.pointsBox}>
-                  <RcIconPoints />
+                  <RcIconPoints width={20} height={20} />
                   <Text style={styles.points}>
                     {t('page.rabbyPoints.xPoints', {
                       point: formatTokenAmount(account.claimed_points || 0, 0),

@@ -177,7 +177,7 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 12,
   },
   itemGap: {
-    marginBottom: 12,
+    marginTop: 12,
   },
 }));
 
@@ -196,9 +196,10 @@ const PointsScreen = () => {
         renderItem={({ item, index }) => (
           <View
             key={`${item.address}-${item.type}-${item.brandName}-${index}`}
-            style={
-              index < accountPoints.length - 1 ? styles.itemGap : undefined
-            }>
+            style={[
+              styles.itemGap,
+              index === accountPoints.length - 1 && { marginBottom: 32 },
+            ]}>
             <AddressItemContextMenu account={item} actions={['copy', 'edit']}>
               <AddressPointItem
                 account={item}
