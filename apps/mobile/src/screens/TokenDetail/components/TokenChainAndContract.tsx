@@ -1,11 +1,10 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
-import { Text } from '@/components';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisAddress } from '@/utils/address';
@@ -308,7 +307,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     // marginLeft: 6,
   },
   bgContainer: {
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
