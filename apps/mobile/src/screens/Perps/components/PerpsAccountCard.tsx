@@ -1,4 +1,5 @@
 import { RcTradPerps } from '@/assets2024/icons/perps';
+import RcIconPerps from '@/assets2024/icons/perps/IconPerps.svg';
 import { Button } from '@/components2024/Button';
 import {
   AccountSummary,
@@ -39,19 +40,22 @@ export const PerpsAccountCard: React.FC<{
     return (
       <View style={[styles.card, styles.balanceCard]}>
         <View style={styles.balanceCardContent}>
-          <Text style={styles.balance}>
-            {formatUsdValue(Number(accountSummary?.accountValue || 0))}
-          </Text>
-          {positionAndOpenOrders?.length ? (
-            <Text
-              style={[
-                styles.pnl,
-                positionAllPnl >= 0 ? styles.pnlGreen : styles.pnlRed,
-              ]}>
-              {positionAllPnl >= 0 ? '+' : '-'}$
-              {splitNumberByStep(Math.abs(positionAllPnl).toFixed(2))}
+          <RcIconPerps style={styles.relativeIcon} />
+          <View style={styles.balanceCardContentLeft}>
+            <Text style={styles.balance}>
+              {formatUsdValue(Number(accountSummary?.accountValue || 0))}
             </Text>
-          ) : null}
+            {positionAndOpenOrders?.length ? (
+              <Text
+                style={[
+                  styles.pnl,
+                  positionAllPnl >= 0 ? styles.pnlGreen : styles.pnlRed,
+                ]}>
+                {positionAllPnl >= 0 ? '+' : '-'}$
+                {splitNumberByStep(Math.abs(positionAllPnl).toFixed(2))}
+              </Text>
+            ) : null}
+          </View>
           <Text style={styles.availableBalance}>
             {t('page.perps.PerpsCard.available')}:{' '}
             {formatUsdValue(Number(accountSummary?.withdrawable))}
@@ -151,6 +155,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 20,
     height: 20,
   },
+  relativeIcon: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+  },
   loginCardTitle: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
@@ -174,9 +183,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   smBtnTitle: {
     fontSize: 18,
     lineHeight: 22,
+    color: '#F7FAFC',
   },
   withdrawBtn: {
-    backgroundColor: 'transparent',
+    backgroundColor: colors2024['brand-light-1'],
+    borderColor: 'transparent',
   },
   loginCardContent: {
     display: 'flex',
@@ -206,20 +217,33 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 24,
     paddingHorizontal: 16,
     paddingBottom: 20,
+    borderWidth: 2,
+    borderColor: '#0F2F3A',
+
+    backgroundColor: '#0E1A1E',
+    boxShadow: '0 4 40 0 rgba(0, 0, 0, 0.40)',
   },
   balanceCardContent: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    minHeight: 93,
+    position: 'relative',
+    // alignItems: 'center',
+    // minHeight: 93,
     marginBottom: 20,
+  },
+  balanceCardContentLeft: {
+    display: 'flex',
+    gap: 4,
+    flexDirection: 'row',
+    // justifyContent: 'space-between',
+    alignItems: 'center',
   },
   balance: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 40,
     lineHeight: 48,
     fontWeight: '900',
-    color: colors2024['neutral-title-1'],
+    color: '#F7FAFC',
   },
   pnl: {
     fontFamily: 'SF Pro Rounded',
@@ -239,13 +263,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '400',
-    color: colors2024['neutral-foot'],
-    marginTop: 5,
+    color: '#717380',
+    marginTop: 4,
   },
   balanceCardBtns: {
     display: 'flex',
     flexDirection: 'row',
     gap: 12,
+    marginTop: 12,
     width: '100%',
   },
   btnItem: {
