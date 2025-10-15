@@ -602,6 +602,7 @@ export const sendTransactionByMiniSignV2 = async ({
   sig,
   session,
   account: _account,
+  preExecResult,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -614,6 +615,7 @@ export const sendTransactionByMiniSignV2 = async ({
   sig?: string;
   session?: Parameters<typeof apiProvider.ethSendTransaction>[0]['session'];
   account: Account;
+  preExecResult: ExplainTxResponse;
 }) => {
   onProgress?.('building');
 
@@ -660,9 +662,71 @@ export const sendTransactionByMiniSignV2 = async ({
     (transaction as Tx).gasPrice = maxFeePerGas;
   }
 
+  // fetch action data
+  const actionData = await openapi.parseTx({
+    chainId: chain.serverId,
+    tx: {
+      ...tx,
+      gas: '0x0',
+      nonce: tx.nonce || '0x1',
+      value: tx.value || '0x0',
+      to: tx.to || '',
+    },
+    origin: INTERNAL_REQUEST_SESSION.origin || '',
+    addr: currentAccount.address,
+  });
+  const parsed = parseAction({
+    type: 'transaction',
+    data: actionData.action,
+    balanceChange: preExecResult.balance_change,
+    tx: {
+      ...tx,
+      gas: '0x0',
+      nonce: tx.nonce || '0x1',
+      value: tx.value || '0x0',
+    },
+    preExecVersion: preExecResult.pre_exec_version,
+    gasUsed: preExecResult.gas.gas_used,
+    sender: tx.from,
+  });
+  const cexInfo = getCexInfo(parsed.send?.to || '');
+  const requiredData = await fetchActionRequiredData({
+    type: 'transaction',
+    actionData: parsed,
+    contractCall: actionData.contract_call,
+    chainId: chain.serverId,
+    sender: currentAccount.address,
+    cex: cexInfo,
+    walletProvider: {
+      hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
+      hasAddress: keyringService.hasAddress.bind(keyringService),
+      getWhitelist: async () => whitelistService.getWhitelist(),
+      isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+      getPendingTxsByNonce: async (...args) =>
+        transactionHistoryService.getPendingTxsByNonce(...args),
+      findChain,
+      ALIAS_ADDRESS,
+    },
+    tx: {
+      ...tx,
+      gas: '0x0',
+      nonce: tx.nonce || '0x1',
+      value: tx.value || '0x0',
+    },
+    apiProvider: openapi,
+  });
+
   await transactionHistoryService.updateSigningTx(signingTxId, {
     rawTx: {
       nonce: tx.nonce,
+    },
+    explain: {
+      ...preExecResult,
+      calcSuccess: true,
+    },
+    action: {
+      actionData: parsed,
+      requiredData,
     },
   });
 
