@@ -142,16 +142,14 @@ export const NotMatterAddressDialog: React.FC<{
   );
 
   return (
-    <AutoLockView style={styles.container}>
-      <BottomSheetHandlableView>
-        <View style={styles.listHeader}>
-          <View style={styles.titleContainer}>
-            <Text style={styles.listTitle}>
-              {t('page.addressDetail.notMatterAddressDialog.title')}
-            </Text>
-          </View>
+    <AutoLockView as="View" style={styles.container}>
+      <View style={styles.listHeader}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.listTitle}>
+            {t('page.addressDetail.notMatterAddressDialog.title')}
+          </Text>
         </View>
-      </BottomSheetHandlableView>
+      </View>
       <BottomSheetSectionList
         sections={sections}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}

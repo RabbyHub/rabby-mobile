@@ -10,7 +10,7 @@ import { apisAddress } from '@/core/apis';
 import { openapi } from '@/core/request';
 import { useThemeColors } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -74,7 +74,7 @@ export const ImportWatchAddressScreen = () => {
     try {
       Keyboard.dismiss();
       await apisAddress.addWatchAddress(input);
-      navigate(RootNames.StackAddress, {
+      navigateDeprecated(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess,
         params: {
           type: KEYRING_TYPE.WatchAddressKeyring,

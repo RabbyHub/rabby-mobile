@@ -18,6 +18,7 @@ export enum MODAL_NAMES {
   'SWITCH_CHAIN' = 'SWITCH_CHAIN',
   'CANCEL_CONNECT' = 'CANCEL_CONNECT',
   'CANCEL_APPROVAL' = 'CANCEL_APPROVAL',
+  /** @deprecated */
   'SELECT_CHAIN' = 'SELECT_CHAIN',
   'SIMPLE_CONFIRM' = 'SIMPLE_CONFIRM',
   // 'TMP_CONFIRM_VERIFY' = 'TMP_CONFIRM_VERIFY',
@@ -125,6 +126,7 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
      * @default 'BottomSheetView'
      */
     rootViewType?: 'View' | 'BottomSheetView' | 'BottomSheetScrollView';
+    rootViewStyle?: RNViewProps['style'];
   };
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,

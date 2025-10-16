@@ -370,7 +370,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         isShowManage: true,
       });
 
-      // navigation.navigate(RootNames.StackBrowser, {
+      // navigation.navigateDeprecated(RootNames.StackBrowser, {
       //   screen: RootNames.BrowserManageScreen,
       // });
     });
