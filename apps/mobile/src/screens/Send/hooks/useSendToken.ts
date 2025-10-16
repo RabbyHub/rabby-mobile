@@ -1140,7 +1140,12 @@ export function useSendTokenForm({
   );
 
   const loadCurrentToken = useCallback(
-    async (id: string, chainId: string, currentAddress: string) => {
+    async (
+      id: string,
+      chainId: string,
+      currentAddress: string,
+      disableBalanceCheck?: boolean,
+    ) => {
       const chain = findChain({
         serverId: chainId,
       });
@@ -1172,6 +1177,7 @@ export function useSendTokenForm({
       putScreenState({ isLoading: false });
 
       if (
+        !disableBalanceCheck &&
         new BigNumber(formValues.amount || 0).isGreaterThan(
           new BigNumber(result?.raw_amount_hex_str || 0).div(
             10 ** (result?.decimals || 18),
@@ -1206,7 +1212,9 @@ export function useSendTokenForm({
       if (!account) {
         console.error('[handleCurrentTokenChange] no account');
       }
-      if (token.id !== currentToken.id || token.chain !== currentToken.chain) {
+      const newToken =
+        token.id !== currentToken.id || token.chain !== currentToken.chain;
+      if (newToken) {
         patchFormValues({
           amount: '',
         });
@@ -1234,7 +1242,12 @@ export function useSendTokenForm({
       });
 
       if (account) {
-        await loadCurrentToken(token.id, token.chain, account.address);
+        await loadCurrentToken(
+          token.id,
+          token.chain,
+          account.address,
+          newToken,
+        );
       }
     },
     [
