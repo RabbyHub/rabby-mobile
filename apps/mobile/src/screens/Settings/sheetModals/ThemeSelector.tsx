@@ -134,12 +134,6 @@ export default function ThemeSelectorModal({
                   setThemeSelectorModalVisible(false);
                 }}>
                 <View style={styles.leftCol}>
-                  {/* <item.Icon
-                    style={[styles.icon, { height: item.size, width: item.size }]}
-                    width={item.size}
-                    height={item.size}
-                    color={colors2024['neutral-title-1']}
-                  /> */}
                   <item.Icon
                     style={styles.icon}
                     width={20}
