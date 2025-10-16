@@ -130,8 +130,8 @@ export const getActionsStyle = createGetStyles2024(
       position: 'relative',
     },
     icon: {
-      // width: 14,
-      // height: 14,
+      width: 20,
+      height: 20,
       marginRight: 2,
       marginTop: 2,
       color: colors2024['neutral-info'],
@@ -233,8 +233,8 @@ const ActionItem = ({
                 />
               }>
               <IconQuestionMark
-                // width={styles.icon.width}
-                // height={styles.icon.height}
+                width={styles.icon.width}
+                height={styles.icon.height}
                 color={styles.icon.color}
                 style={styles.icon}
               />
