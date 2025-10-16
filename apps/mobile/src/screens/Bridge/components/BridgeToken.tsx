@@ -58,6 +58,7 @@ const BridgeToken = ({
   disabled,
   slider,
   onChangeSlider,
+  onSliderScrollEnabledChange,
 }: {
   clickMaxBtnCount?: number;
   handleMax?: () => void;
@@ -78,6 +79,7 @@ const BridgeToken = ({
   disabled?: boolean;
   slider?: number;
   onChangeSlider?: (value: number, syncAmount?: boolean) => void;
+  onSliderScrollEnabledChange?: (enabled: boolean) => void;
 } & (
   | {
       type?: 'from';
@@ -179,15 +181,17 @@ const BridgeToken = ({
   const onSlidingStart = useCallback(() => {
     if (!disabled) {
       showBubble.value = true;
+      onSliderScrollEnabledChange?.(false);
     }
-  }, [showBubble, disabled]);
+  }, [showBubble, disabled, onSliderScrollEnabledChange]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {
       onChangeSlider?.(v, true);
       showBubble.value = false;
+      onSliderScrollEnabledChange?.(true);
     },
-    [onChangeSlider, showBubble],
+    [onChangeSlider, showBubble, onSliderScrollEnabledChange],
   );
 
   useEffect(() => {

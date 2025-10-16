@@ -803,6 +803,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   const showRiskTips =
     isSlippageHigh || isSlippageLow || showLoss || miniSignGasFeeTooHigh;
 
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+
   return (
     <NormalScreenContainer overwriteStyle={styles.screen}>
       {isForMultipleAddress && (
@@ -814,7 +816,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
           paddingBottom: 150 + bottom + (showRiskTips ? 26 : 0),
         }}
         enableOnAndroid
-        scrollEnabled
+        scrollEnabled={scrollEnabled}
         extraHeight={200}
         keyboardOpeningTime={0}>
         <View style={styles.card}>
@@ -831,6 +833,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               isMaxRef={isMaxRef}
               clickMaxBtnCount={clickMaxBtnCount}
               handleMax={handleMax}
+              onSliderScrollEnabledChange={setScrollEnabled}
               onChangeToken={token => {
                 const normalSetChainToken = () => {
                   handleAmountChange('');
