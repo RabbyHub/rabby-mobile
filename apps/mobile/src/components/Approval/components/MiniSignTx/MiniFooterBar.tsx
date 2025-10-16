@@ -35,6 +35,7 @@ import RcCheckSecurityDark from '@/assets2024/icons/common/check-security-dark.s
 import { Text } from 'react-native';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useTranslation } from 'react-i18next';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -245,6 +246,7 @@ export const MiniFooterBar: React.FC<Props> = ({
   disableSignBtn,
   ...props
 }) => {
+  const { t } = useTranslation();
   const { colors2024, isLight } = useTheme2024();
 
   const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
@@ -477,17 +479,17 @@ export const MiniFooterBar: React.FC<Props> = ({
                       fontWeight: '500',
                       lineHeight: 18,
                     }}>
-                    Check
+                    {t('global.check')}
                   </Text>
                   <ArrowRightSVG
                     width={14}
                     height={14}
                     style={[
                       {
-                        transform: [{ rotate: '90deg' }],
+                        transform: [{ rotate: '-90deg' }],
                       },
                       showCheckSecurity && {
-                        transform: [{ rotate: '-90deg' }],
+                        transform: [{ rotate: '90deg' }],
                       },
                     ]}
                     color={colors2024['neutral-secondary']}
