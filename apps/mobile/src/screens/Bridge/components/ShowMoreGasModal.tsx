@@ -21,17 +21,18 @@ import BigNumber from 'bignumber.js';
 import { getGasLevelI18nKey } from '@/utils/trans';
 import { formatGasHeaderUsdValue } from '@/utils/number';
 import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
-import { createGlobalState } from 'react-use/lib/factory/createGlobalState';
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { signatureStore, useSignatureStore } from '@/components2024/MiniSignV2';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 
-export const useShowMoreGasSelectModalVisible = createGlobalState(false);
+const showMoreGasSelectModalVisibleAtom = atom(false);
 
 export const useGetShowMoreGasSelectVisible = () =>
-  useShowMoreGasSelectModalVisible()[0];
-
-const useGasInfoByUI = createGlobalState<
+  useAtomValue(showMoreGasSelectModalVisibleAtom);
+const useSetShowMoreGasSelectVisible = () =>
+  useSetAtom(showMoreGasSelectModalVisibleAtom);
+const gasInfoByUIAtom = atom<
   | {
       externalPanelSelection: (gas: GasLevel) => void;
       handleClickEdit: () => void;
@@ -62,8 +63,8 @@ const useGasInfoByUI = createGlobalState<
 >(undefined);
 
 export const [useGetGasInfoByUI, useSetGasInfoByUI] = [
-  () => useGasInfoByUI()[0],
-  () => useGasInfoByUI()[1],
+  () => useAtomValue(gasInfoByUIAtom),
+  () => useSetAtom(gasInfoByUIAtom),
 ];
 
 const GasMethod = (props: {
@@ -141,11 +142,10 @@ export default function ShowMoreGasSelectModal({
     return formatGasHeaderUsdValue(n || '0');
   }, []);
 
-  const hasCustomRpc = !ctx?.noCustomRPC;
+  // const hasCustomRpc = !ctx?.noCustomRPC;
 
-  const [_, setVisible] = useShowMoreGasSelectModalVisible();
+  const setVisible = useSetShowMoreGasSelectVisible();
 
-  // Gas 方法切换 - 添加异步处理
   const handleChangeGasMethod = useCallback(
     async (method: 'native' | 'gasAccount') => {
       try {
