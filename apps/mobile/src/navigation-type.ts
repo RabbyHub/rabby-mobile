@@ -152,6 +152,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
+  [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
 };
 

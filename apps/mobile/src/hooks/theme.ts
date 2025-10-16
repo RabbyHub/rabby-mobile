@@ -28,7 +28,7 @@ const FORCE_THEME = 'light' as const;
 function coerceBinaryTheme(
   appTheme: AppThemeScheme,
   rnColorScheme: ColorSchemeName = 'light',
-): ColorSchemeName {
+): Exclude<ColorSchemeName, void | null> {
   if (SHOULD_SUPPORT_DARK_MODE) {
     return appTheme === 'system' ? rnColorScheme || 'light' : appTheme;
   }

@@ -1916,7 +1916,7 @@
             "buy": "Buy",
             "sell": "Sell",
             "volume": "Volume",
-            "tradingCount": "Trading Count",
+            "transactionCount": "Transaction Count",
             "address": "Address",
             "addresses": "Addresses",
             "type": "Type",
@@ -2204,7 +2204,6 @@
       }
     },
     "perps": {
-      "__skip_translation": true,
       "title": "Perps",
       "PerpsCard": {
         "title": "Trade Perps",
@@ -2348,7 +2347,6 @@
       }
     },
     "perpsDetail": {
-      "__skip_translation": true,
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
@@ -2375,7 +2373,7 @@
       },
       "PerpsInfo": {
         "title": "Info",
-        "24Vol": "24h Volumn",
+        "24Vol": "24h Volume",
         "openInterest": "Open Interest",
         "funding": "Funding",
         "openInterestTips": "The total outstanding position of all users on this contract.",
@@ -2444,6 +2442,9 @@
     },
     "perpsHistory": {
       "title": "History"
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Build-In Page"
     }
   },
   "component": {

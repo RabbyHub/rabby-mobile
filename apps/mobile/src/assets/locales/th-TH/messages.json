@@ -1601,7 +1601,19 @@
         },
         "customAddressHdPath": "custom wallet HD path",
         "selectIndexTip": "เลือกหมายเลขประจำตัวของกระเป๋าเงินที่จะเริ่มจาก:",
-        "manageAddressFrom": "จัดการกระเป๋าเงินจาก {{0}} ถึง {{1}}"
+        "manageAddressFrom": "จัดการกระเป๋าเงินจาก {{0}} ถึง {{1}}",
+        "trezor": {
+          "hdPathType": {
+            "legacy": "Legacy: HD path ที่ใช้โดย MEW / Mycrypto。",
+            "bip44": "BIP44: HDpath ที่กำหนดโดยโปรโตคอล BIP44.",
+            "ledgerLive": "Ledger Live: เส้นทาง HD อย่างเป็นทางการของ Ledger."
+          },
+          "hdPathTypeNoChain": {
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "legacy": "Legacy: HD path ที่ใช้โดย MEW / Mycrypto.",
+            "bip44": "BIP44: HDpath ที่กำหนดโดยโปรโตคอล BIP44。"
+          }
+        }
       },
       "createNewAddress": "สร้างกระเป๋าใหม่"
     },
@@ -2051,7 +2063,6 @@
             "hour": "ชั่วโมง",
             "sell": "ขาย",
             "type": "ประเภท",
-            "tradingCount": "จำนวนการซื้อขาย",
             "qnt": "Qnt",
             "price": "ราคา",
             "value": "ค่า"
@@ -2275,6 +2286,10 @@
         "btn": "เข้าร่วมตอนนี้",
         "title": "โปรแกรมแนะนำ Hyperliquid",
         "desc": "เข้าร่วมตอนนี้โดยใช้รหัสของ Rabby เพื่อรับส่วนลด <1>4%</1> สำหรับค่าธรรมเนียม Hyperliquid ของคุณ。"
+      },
+      "WebviewError": {
+        "failedToLoad": "ไม่สามารถโหลดหน้าเว็บได้",
+        "error": "ข้อผิดพลาด:"
       }
     },
     "browserManage": {
@@ -2393,6 +2408,243 @@
     },
     "perpsHistory": {
       "title": "ประวัติศาสตร์"
+    },
+    "perps": {
+      "PerpsCard": {
+        "withdrawBtn": "ถอนเงิน",
+        "loginBtn": "เข้าสู่ระบบเพื่อซื้อขาย Perps",
+        "title": "เทรด Perps",
+        "available": "พร้อมใช้งาน",
+        "learnBtn": "เรียนรู้เกี่ยวกับ Perps",
+        "depositBtn": "ฝากเงิน",
+        "loginDesc": "เข้าสู่ระบบด้วยที่อยู่ของคุณและฝากเงินเพื่อเริ่มการเทรด perps"
+      },
+      "PerpsGuidePopup": {
+        "step3Title": "ชอร์ต",
+        "step1Title": "มาสเตอร์ฟิวเจอร์สถาวร",
+        "step5Title": "การชำระหนี้",
+        "step4Title": "ปรับแต่งเลเวอเรจ",
+        "step2Desc": "เมื่อคุณคาดว่าราคาจะเพิ่มขึ้น คุณจะเปิดทำการ Long หากราคาขึ้น คุณจะมีกำไร หากราคาลดลง คุณจะขาดทุน",
+        "step3Desc": "เมื่อคุณคาดว่าราคาจะลดลง คุณจะเปิดทำสัญญา Short หากราคาลดลง คุณจะได้กำไร หากราคาขึ้น คุณจะขาดทุน。",
+        "step4Desc": "เลเวอเรจทำให้คุณสามารถเทรดด้วยจำนวนเงินมากกว่าที่คุณใส่เข้าไป มันสามารถเพิ่มทั้งกำไรและขาดทุนของคุณได้",
+        "step2Title": "ยาว",
+        "step1Desc": "ด้วยสัญญาฟิวเจอร์สถาวร คุณไม่ได้แค่ซื้อขายสินทรัพย์ คุณกำลังซื้อขายสิ่งที่คุณคิดว่าจะเกิดขึ้นถัดไป",
+        "step5Desc": "ทุกตำแหน่งมีราคาล้างบัญชี หากราคาตลาดถึงราคาในจุดนั้น ตำแหน่งของคุณจะถูกปิด การใช้เลเวอเรจที่สูงขึ้นจะเพิ่มความเสี่ยงของการถูกล้างบัญชี"
+      },
+      "PerpsDepositPopup": {
+        "title": "ฝากเงิน",
+        "balance": "ยอดเงิน",
+        "depositBtn": "ฝากเงิน",
+        "amount": "จำนวนเงิน",
+        "minimumDepositSize": "จำนวนเงินฝากขั้นต่ำคือ $5",
+        "invalidNumber": "โปรดป้อนหมายเลขที่ถูกต้อง",
+        "estReceive": "ประมาณการรับ: {{balance}}",
+        "fetchQuoteFailed": "ไม่สามารถดึงการเสนอราคาสำหรับการฝากได้ โปรดเปลี่ยนโทเค็น",
+        "estReceiveTooltip": "การฝากข้ามเชนจะดำเนินการผ่าน LiFi อาจมีการเกิด slippage บ้าง เวลาที่คาดว่าจะมาถึงคือ {{number}} วินาที",
+        "insufficientBalance": "ยอดคงเหลือไม่เพียงพอ"
+      },
+      "PerpsWithdrawPopup": {
+        "amount": "จำนวน",
+        "title": "ถอนเงิน",
+        "feeTip": "ค่าธรรมเนียม: $1.00",
+        "feeTooltipDesc": "ค่าธรรมเนียมการถอนที่เรียกเก็บโดย Hyperliquid: $1",
+        "available": "มีให้ใช้งาน",
+        "feeTooltipTitle": "ค่าธรรมเนียม",
+        "withdrawBtn": "ถอนเงิน",
+        "minimumWithdrawSize": "จำนวนเงินถอนขั้นต่ำคือ 2 ดอลลาร์",
+        "insufficientBalance": "ยอดเงินไม่เพียงพอ",
+        "invalidNumber": "กรุณาใส่หมายเลขที่ถูกต้อง"
+      },
+      "PerpsWithdrawFeePopup": {
+        "title": "ค่าธรรมเนียม",
+        "desc": "ค่าธรรมเนียมการถอนที่เรียกเก็บโดย Hyperliquid: $1",
+        "btn": "ฉันเข้าใจแล้ว"
+      },
+      "historyDetail": {
+        "title": {
+          "closeLong": "ปิด Long",
+          "openShort": "เปิดสถานะชอร์ต",
+          "closeShortTp": "ปิดการ Short ทำกำไร",
+          "closeLongLiquidation": "ปิด Long Liquidation",
+          "closeShortLiquidation": "ปิดการขายชอร์ต การบังคับขาย",
+          "closeShort": "ปิดตำแหน่งขาย",
+          "closeLongSl": "ปิด Long หยุดการขาดทุน",
+          "closeLongTp": "ปิด Long ทำกำไร",
+          "closeShortSl": "ปิดการทำสั้น หยุดขาดทุน",
+          "openLong": "เปิด Long"
+        },
+        "date": "วันที่",
+        "tradeValue": "มูลค่าการซื้อขาย",
+        "closedPnl": "ปิด PNL",
+        "size": "ขนาด",
+        "provider": "ผู้ให้บริการ",
+        "fee": "ค่าธรรมเนียม",
+        "price": "ราคา",
+        "perps": "Perps",
+        "gotItBtn": "เข้าใจแล้ว",
+        "sizeTips": "มูลค่าหรือปริมาณรวมของการเทรดของคุณ ซึ่งกำหนดโดยมาร์จิ้นและเลเวอเรจ。"
+      },
+      "PerpsAutoCloseModal": {
+        "takeProfit": "ทำกำไร",
+        "stopLoss": "หยุดขาดทุน",
+        "takeProfitTipsLong": "ราคาผลกำไรต้องสูงกว่าราคาในปัจจุบัน",
+        "stopLossTipsLongLiquidation": "ราคาอยู่ต่ำกว่าราคาลLiquidation ({{price}})",
+        "stopLossTipsLong": "ราคา Stop loss ต้องต่ำกว่าราคาในปัจจุบัน",
+        "loss": "การขาดทุน",
+        "stopLossTipsShort": "ราคาหยุดขาดทุนต้องสูงกว่าราคาปัจจุบัน",
+        "profit": "กำไร",
+        "takeProfitTipsShort": "ราคาทำกำไรต้องต่ำกว่าราคาปัจจุบัน",
+        "stopLossTipsShortLiquidation": "ราคาอยู่สูงกว่าราคาลLiquidation ({{price}})"
+      },
+      "PerpsDepositTokenModal": {
+        "directTag": "ฝากตรง",
+        "swapBtn": "สลับ",
+        "bridgeBtn": "สะพาน",
+        "goSwapDesc": "รองรับเฉพาะ USDC บน Arbitrum สำหรับการฝากโดยตรง โปรดแลกเปลี่ยนโทเค็นปัจจุบันของคุณเป็น USDC ก่อนไปฝาก",
+        "goBridgeDesc": "เพียง USDC บน Arbitrum เท่านั้นที่รองรับสำหรับการฝากโดยตรง โปรดทำการย้ายโทเค็นปัจจุบันของคุณไปยัง USDC บน Arbitrum ก่อนที่จะทำการฝาก"
+      },
+      "history": {
+        "status": {
+          "pending": "รอดำเนินการ",
+          "completed": "เสร็จสิ้น"
+        },
+        "closeLongTp": "ปิด Long ทำกำไร",
+        "closeLongSl": "ปิด Long stop loss",
+        "title": "ประวัติ",
+        "deposit": "ฝากเงิน",
+        "closeLongLiquidation": "ปิดการทำกำไร Long",
+        "closeShortSl": "ปิดการ Short Stop Loss",
+        "openLong": "เปิด Long",
+        "openShort": "เปิดสถานะขายสั้น",
+        "closeShortTp": "ปิดการทำสัญญาสั้น ทำกำไร",
+        "withdraw": "ถอนเงิน",
+        "closeShort": "ปิดสถานะขายสั้น",
+        "closeLong": "ปิด Long",
+        "closeShortLiquidation": "ปิดการขายชอร์ต ลิควิดation"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "เลือกโทเค็นเพื่อนำฝาก"
+      },
+      "PerpsAccountLogoutPopup": {
+        "logout": "ออกจากระบบ",
+        "title": "ออกจากที่อยู่ปัจจุบัน",
+        "desc": "คุณกำลังออกจากบัญชี Perps ปัจจุบันของคุณ คุณสามารถกู้คืนได้ทุกเมื่อโดยการเข้าสู่ระบบด้วยที่อยู่นี้"
+      },
+      "PerpsDepositCard": {
+        "deposit": "ฝากเงิน",
+        "availableToTrade": "พร้อมให้เทรด:"
+      },
+      "PerpsAccountSelectorPopup": {
+        "activatedAddress": "เปิดใช้งาน",
+        "hyperliquidBalance": "ยอดดุล Perps",
+        "lastUsed": "ใช้ล่าสุด",
+        "noPosition": "ไม่มีตำแหน่ง",
+        "notActivatedAddress": "ยังไม่ได้เปิดใช้งาน"
+      },
+      "selectAccountTitle": "เลือกกระเป๋าเงินเพื่อล็อกอิน",
+      "title": "Perps",
+      "more": "เพิ่มเติม",
+      "explorePerps": "สำรวจ Perps",
+      "leverageRangeMinError": "เลเวอเรจขั้นต่ำคือ {{min}}x",
+      "positions": "สถานะ",
+      "regionNotSupport": "การเปิดตำแหน่งไม่ได้รับการสนับสนุนในภูมิภาคของคุณ",
+      "deleteAgentSuccess": "ลบตัวแทนเรียบร้อยแล้ว",
+      "leverageRangeMaxError": "เลเวอเรจสูงสุดคือ {{max}}x",
+      "deleteAgentModal": "คุณได้ถึงจำนวนตัวแทนสูงสุดแล้ว คุณต้องลบตัวแทนที่มีอยู่เพื่อสร้างตัวแทนใหม่หรือไม่?"
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "marginCross": "มาร์จิ้น (ข้าม)",
+        "markPrice": "ราคา Mark",
+        "slPrice": "ราคา Stop-Loss",
+        "size": "ขนาด",
+        "closePosition": "ปิด {{direction}}",
+        "autoClose": "ปิดอัตโนมัติ",
+        "title": "ตำแหน่ง",
+        "entryPrice": "ราคาเข้าซื้อ",
+        "margin": "มาร์จิ้น (แยก)",
+        "justMargin": "มาร์จิ้น",
+        "liqPrice": "Liq. Price",
+        "sizeTips": "มูลค่าหรือปริมาณรวมของการเทรดของคุณ ซึ่งตั้งโดยมาร์จินและเลเวอเรจ。",
+        "liquidationPriceTips": "ราคาที่ตำแหน่งของคุณถูกปิดโดยอัตโนมัติจากการแลกเปลี่ยนเพื่อป้องกันการขาดทุนเพิ่มเติมเมื่อมาร์จิ้นของคุณต่ำกว่าระดับมาร์จิ้นขั้นต่ำ",
+        "pnl": "PNL",
+        "marginIsolated": "มาร์จิ้น (แยก)",
+        "liquidationPrice": "ราคาบังคับขาย",
+        "cross": "ข้าม",
+        "fundingPaymentsTips": "นี่คือการชำระเงินค่าฟันด์สุทธิจากช่วงเวลาที่ตำแหน่งเปิดขึ้น ค่าฟันด์คือค่าธรรมเนียมรายชั่วโมงที่ผู้ค้าใช้จ่ายหรือรับเพื่อให้ราคาของสัญญา perp ใกล้เคียงกับราคาที่แท้จริงของโทเค็น",
+        "tpPrice": "ราคา Take-Profit",
+        "fundingPayments": "การชำระเงินเงินทุน",
+        "isolated": "แยกออก",
+        "direction": "ทิศทาง"
+      },
+      "PerpsInfo": {
+        "title": "ข้อมูล",
+        "openInterest": "ความสนใจที่เปิดอยู่",
+        "openInterestTips": "ยอดตำแหน่งคงค้างทั้งหมดของผู้ใช้ทุกคนในสัญญานี้。",
+        "funding": "การระดมทุน",
+        "24Vol": "24h ปริมาณ",
+        "fundingTips": "นี่คือค่าธรรมเนียมรายชั่วโมงที่ผู้ค้าใช้จ่ายหรือได้รับเพื่อรักษาราคาของสัญญา perp ให้ใกล้เคียงกับราคาจริงของโทเค็น หากเป็นบวก long จะจ่ายให้กับ short หากเป็นลบ short จะจ่ายให้กับ long"
+      },
+      "PerpsIntro": {
+        "title": "Perps คืออะไร?",
+        "desc": "การซื้อขายสัญญา perpetual มีความเสี่ยงที่สำคัญ รวมถึงความเป็นไปได้ที่จะสูญเสียการลงทุนและหลักประกันของคุณอย่างรวดเร็วเนื่องจากเลเวอเรจสูงและความผันผวนของตลาด การซื้อขายดังกล่าวอาจไม่เหมาะสมกับผู้ใช้ทุกคน ราคาอาจได้รับผลกระทบจากอัตราการระดมทุนและสภาพคล่อง และคุณอาจถูกบังคับขายโดยอัตโนมัติโดยไม่ต้องแจ้งล่วงหน้า ข้อมูลตลาดให้บริการโดย Hyperliquid"
+      },
+      "PerpsClosePositionPopup": {
+        "title": "ปิดตำแหน่ง {{direction}} {{coin}}",
+        "closeBtn": "ปิด {{direction}}",
+        "providerFeeTips": "Hyperliquid ค่าธรรมเนียม: {{fee}}",
+        "fee": "ค่าธรรมเนียม:",
+        "rabbyFeeTips": "ค่าธรรมเนียม Rabby: 0.04%",
+        "positionSize": "ขนาดตำแหน่ง",
+        "pnl": "PNL"
+      },
+      "PerpsOpenPositionPopup": {
+        "size": "ขนาด",
+        "slPrice": "ราคา Stop-Loss",
+        "leverage": "เลเวอเรจ",
+        "tpPrice": "ราคาทำกำไร",
+        "minimumOrderSize": "ขนาดคำสั่งขั้นต่ำคือ $10",
+        "margin": "มาร์จิ้น",
+        "autoClose": "ปิดอัตโนมัติ",
+        "available": "พร้อมใช้งาน",
+        "insufficientBalance": "ยอดคงเหลือน้อยเกินไป",
+        "maximumOrderSize": "ขนาดคำสั่งสูงสุดคือ {{amount}}",
+        "sizeTips": "มูลค่าหรือปริมาณรวมของการซื้อขายของคุณ ตั้งโดยมาร์จินและเลเวอเรจ",
+        "invalidNumber": "กรุณาใส่หมายเลขที่ถูกต้อง"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "fee": "ค่าธรรมเนียม",
+        "size": "ขนาด",
+        "perps": "永续合约",
+        "btn": "เปิดตำแหน่ง {{direction}}",
+        "autoClose": "ปิดอัตโนมัติ",
+        "tpPrice": "ราคา Take-Profit",
+        "title": "ตรวจสอบคำสั่ง",
+        "estLqPrice": "ราคาที่คาดว่าจะถูกขายทอดตลาด",
+        "initialMargin": "มาร์จิ้นเริ่มต้น",
+        "slPrice": "ราคา Stop-Loss",
+        "direction": "ทิศทาง",
+        "price": "ราคา",
+        "sizeTips": "มูลค่าหรือปริมาณรวมของการซื้อขายของคุณ ซึ่งกำหนดโดยมาร์จิ้นและเลเวอเรจ。",
+        "liquidationPriceTips": "ราคาที่ตำแหน่งของคุณถูกปิดโดยอัตโนมัติจากการแลกเปลี่ยนเพื่อป้องกันการขาดทุนเพิ่มเติมเมื่อมาร์จิ้นของคุณต่ำกว่าระดับมาร์จิ้นขั้นต่ำ",
+        "rabbyFeeTips": "ค่าธรรมเนียม Rabby: 0%",
+        "margin": "มาร์จิ้น (แยก)",
+        "providerFeeTips": "ค่าใช้จ่ายของ Hyperliquid: {{fee}}"
+      },
+      "action": {
+        "short": "ขายทำกำไร",
+        "closePosition": "ปิดตำแหน่ง {{direction}}",
+        "long": "ทำให้ยาว",
+        "noPermission": "การเปิดตำแหน่งไม่สามารถทำได้ในภูมิภาคของคุณ"
+      },
+      "PerpsAutoCloseModal": {
+        "setSlPrice": "ตั้งราคา Stop-Loss",
+        "price": "ราคา:",
+        "setTpPrice": "ตั้งราคา Take-Profit",
+        "entryPrice": "ราค entrada:",
+        "tpPrice": "ราคาทำกำไร",
+        "slPrice": "ราคาหยุดขาดทุน"
+      }
     }
   },
   "native": {

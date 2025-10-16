@@ -31,7 +31,7 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   getTokenSymbol,
@@ -105,6 +105,8 @@ import {
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { useRefState } from '@/hooks/common/useRefState';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/ExchangeLogos';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -307,6 +309,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
       useSheetModal();
     const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
+    const { list: cexList } = useCexSupportList();
 
     useImperativeHandle(ref, () => {
       return {
@@ -658,6 +661,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
           $originMaybeToken.isExcludeBalance &&
           isFromModalType &&
           (token._netWorth || 0) > 0;
+        const formatToken = token.$origin as TokenRowDataType;
+        const cexLogos = formatToken?.cex_ids
+          ? formatToken?.cex_ids
+              .map(id => cexList.find(item => item.id === id)?.logo_url || '')
+              .filter(i => !!i) || []
+          : formatToken?.identity?.cex_list?.map(item => item.logo_url) || [];
 
         if (token.id === SCAM_TOKEN_HAEDER_ID) {
           return (
@@ -825,23 +834,31 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   // isSwapTo && { paddingRight: 0, paddingVertical: 0 },
                   (disabled || lightDisable) && styles.tokenItemDisabled,
                 ]}>
-                <View style={styles.tokenLeft}>
+                <View style={[styles.tokenLeft, styles.tokenLeftLoaded]}>
                   <AssetAvatar
                     logo={token?._logo}
                     size={40}
                     chain={token?._chain}
                     chainSize={18}
                     innerChainStyle={styles.chainLogo}
+                    style={styles.tokenAvatarCol}
                   />
-                  <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
-                    <View style={styles.tokenNameBox}>
+                  <View style={[styles.tokenInfoCol, styles.tokenInfoColLeft]}>
+                    <View
+                      style={[
+                        styles.tokenNameBox,
+                        needToTokenMarketInfo && styles.tokenNameBoxWithLogos,
+                      ]}>
                       <Text
                         style={styles.tokenName}
                         ellipsizeMode="tail"
                         numberOfLines={1}>
-                        {ellipsisOverflowedText(token?._symbol, 15)}
+                        {token?._symbol}
                       </Text>
                       {isManualFold && <TextBadge type="folded" />}
+                      {needToTokenMarketInfo && (
+                        <ExchangeLogos logos={cexLogos} />
+                      )}
                     </View>
                     {showOwnerAccount ? (
                       !ownerAccount ? null : (
@@ -941,33 +958,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         query,
         needToTokenMarketInfo,
         type,
-        styles.tokenItem,
-        styles.tokenItemDisabled,
-        styles.tokenLeft,
-        styles.chainLogo,
-        styles.tokenInfoCol,
-        styles.tokenNameBox,
-        styles.tokenName,
-        styles.tokenPrice,
-        styles.tokenInfoColRight,
-        styles.tardeLevel,
-        styles.tardeLevelText,
-        styles.tokenRight,
-        styles.tokenHeaderNetworth,
-        styles.tips,
-        styles.tokenHeaderAmount,
-        styles.textSecondary,
-        styles.favorite,
-        styles.scamHeader,
-        styles.tokenRowWrap,
-        styles.tokenRowTokenWrap,
-        styles.tokenRowTokenInner,
-        styles.tokenRowTokenInnerSmallToken,
-        styles.actionText,
-        styles.arrow,
-        styles.tokenRowUsdValueWrap,
-        styles.tokenRowUsdValue,
-        styles.rightSlot,
+        styles,
         isBridgeTo,
         colors2024,
         t,
@@ -979,6 +970,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         disabledTips,
         removePinedToken,
         pinToken,
+        cexList,
       ],
     );
 
@@ -1508,11 +1500,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tokenLeft: {
       flexDirection: 'row',
       alignItems: 'center',
+      flex: 1,
+      overflow: 'hidden',
+      // ...makeDebugBorder('yellow'),
+    },
+    tokenLeftLoaded: {
+      flexShrink: 1,
+      width: '100%',
+      flexWrap: 'nowrap',
     },
     tokenRight: {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
+      flexShrink: 0,
+    },
+    tokenAvatarCol: {
+      flexShrink: 0,
+    },
+    tokenInfoColLeft: {
+      width: '100%',
+      flexShrink: 1,
+      // ...makeDebugBorder('red'),
     },
     tokenInfoCol: {
       flexDirection: 'column',
@@ -1523,6 +1532,22 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tokenNameBox: {
       flexDirection: 'row',
       alignItems: 'center',
+      // ...makeDebugBorder(),
+      width: '100%',
+      maxWidth: 150,
+    },
+    tokenNameBoxWithLogos: {
+      // ...makeDebugBorder('yellow'),
+      maxWidth: Math.max(
+        Dimensions.get('window').width -
+          16 * 2 /* outer padding  */ -
+          40 /* avatar */ -
+          12 /* gap */ -
+          22 /* favorite */ -
+          40 /* right col */ -
+          8 /* right col gap */,
+        200,
+      ),
     },
     tokenName: {
       marginRight: 8,
@@ -1531,7 +1556,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
       fontWeight: '700',
       lineHeight: 20,
-      maxWidth: 150,
       fontFamily: 'SF Pro Rounded',
     },
     chainLogo: {

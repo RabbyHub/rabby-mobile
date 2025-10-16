@@ -5,4 +5,4 @@ export * as stringUtils from './isomorphic/string';
 export * as hashUtils from './isomorphic/hash';
 export * as urlUtils from './isomorphic/url';
 
-export { RNEventEmitter } from './react-native/patch/event';
+export * from './isomorphic/theme-colors';
