@@ -139,9 +139,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   netWorthValue: {
-    color: isLight
-      ? ThemeColors.dark['neutral-title-1']
-      : ThemeColors.light['neutral-title-1'],
+    color: ThemeColors.dark['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 36,
     fontWeight: '800',
@@ -191,9 +189,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    color: isLight
-      ? ThemeColors2024.dark['neutral-body']
-      : ThemeColors2024.light['neutral-body'],
+    color: colors2024['green-default'],
   },
   healthFactorValue: {
     fontSize: 20,

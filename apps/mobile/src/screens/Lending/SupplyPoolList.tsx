@@ -1,40 +1,137 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { Tabs } from 'react-native-collapsible-tab-view';
+
+import { ComputedUserReserve } from '@aave/math-utils';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
-import { FormatReserveUSDResponse } from '@aave/math-utils';
-import { ReserveDataHumanized } from '@aave/contract-helpers';
+import { formatUsdValueKMB } from '../Home/utils/price';
+import { formatPercent } from '../TokenDetail/util';
 
 interface IProps {
-  data: (FormatReserveUSDResponse & ReserveDataHumanized)[];
+  data: ComputedUserReserve[];
 }
 const SupplyPoolList = (props: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
+  const sortReserves = useMemo(() => {
+    return [...(props?.data || [])].sort((a, b) => {
+      return Number(b.underlyingBalanceUSD) - Number(a.underlyingBalanceUSD);
+    });
+  }, [props.data]);
+
+  const handlePressItem = item => {
+    console.log('handlePressItem', item);
+  };
 
   return (
-    <View style={styles.container}>
-      {props.data.map((item, index) => (
-        <View style={styles.item} key={index}>
-          <Text>{item.symbol}</Text>
-          <Text>{item.supplyAPY}</Text>
-          <Text>{item.variableBorrowAPY}</Text>
-        </View>
-      ))}
-    </View>
+    <Tabs.FlatList
+      data={sortReserves}
+      style={styles.container}
+      renderItem={({ item, index }) => (
+        <TouchableOpacity
+          style={styles.item}
+          key={index}
+          onPress={() => handlePressItem(item)}>
+          <View style={styles.left}>
+            <View style={styles.ava} />
+            <View style={styles.symbolContainer}>
+              <Text style={styles.symbol}>{item.reserve.symbol}</Text>
+              <Text style={styles.tvl}>
+                TVL:{' '}
+                {formatUsdValueKMB(
+                  Number(item.reserve.totalLiquidityUSD || '0'),
+                )}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.apy}>
+            {formatPercent(Number(item.reserve.supplyAPY || '0'))}
+          </Text>
+          <View style={styles.right}>
+            <Text style={styles.yourSupplied}>
+              {formatUsdValueKMB(Number(item.underlyingBalanceUSD || '0'))}
+            </Text>
+            <Text style={styles.yourBalance}>your balance</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+    />
   );
 };
 
 export default SupplyPoolList;
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     position: 'relative',
-    color: colors2024['red-default'],
+    flex: 1,
+    width: '100%',
   },
   item: {
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    justifyContent: 'space-between',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  ava: {
+    width: 46,
+    height: 46,
+    borderRadius: 46,
+    backgroundColor: colors2024['neutral-bg-2'],
+  },
+  left: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  apy: {
+    flex: 0,
+    width: 60,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  right: {
+    flex: 0,
+    marginLeft: 26,
+    gap: 2,
+  },
+  symbolContainer: {
+    gap: 2,
+  },
+  symbol: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  tvl: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  yourSupplied: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  yourBalance: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));

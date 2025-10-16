@@ -26,6 +26,7 @@ import { useRequest } from 'ahooks';
 import SummaryCard from './SummaryCard';
 import { formatUserYield } from './utils/apy';
 import SupplyPoolList from './SupplyPoolList';
+import PoolContainer from './PoolContainer';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -62,7 +63,7 @@ function DashBoardScreen(): JSX.Element {
       type={isLight ? 'bg0' : 'bg1'}
       overwriteStyle={styles.overwriteStyle}>
       <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
-      <View>
+      <View style={styles.container}>
         <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
         <SummaryCard
           netWorth={data?.iUserSummary?.netWorthUSD || ''}
@@ -72,8 +73,7 @@ function DashBoardScreen(): JSX.Element {
           netApy={apy.netAPY || ''}
           healthFactor={data?.iUserSummary?.healthFactor || ''}
         />
-        <Text>{userSummaryLoading ? 'loading' : 'end'}</Text>
-        <SupplyPoolList data={data?.formattedPoolReservesAndIncentives || []} />
+        <PoolContainer reserves={data?.iUserSummary?.userReservesData || []} />
       </View>
     </NormalScreenContainer2024>
   );
@@ -110,6 +110,9 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   header: {
     height: isAndroid ? 46 : 44,
+  },
+  container: {
+    flex: 1,
   },
 }));
 

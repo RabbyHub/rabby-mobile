@@ -5,6 +5,12 @@ export const getHealthStatusColor = (
   isLight: boolean,
   healthFactor: number,
 ) => {
+  if (!healthFactor) {
+    return {
+      color: 'transparent',
+      backgroundColor: 'transparent',
+    };
+  }
   if (healthFactor < HF_COLOR_BAD_THRESHOLD) {
     return {
       color: isLight

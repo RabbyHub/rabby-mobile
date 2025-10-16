@@ -44,7 +44,6 @@ async function fetchContractData(address?: string) {
       lendingPoolAddressProvider:
         markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
     });
-    console.log('CUSTOM_LOGGER:=>: reserves', reserves);
 
     // 用户在各个仓位的信息
     const userReserves =
@@ -92,6 +91,7 @@ async function fetchContractData(address?: string) {
       userIncentives: [],
     });
 
+    console.log('CUSTOM_LOGGER:=>: iUserSummary', iUserSummary);
     return { formattedPoolReservesAndIncentives, iUserSummary };
   } catch (error) {
     console.error('CUSTOM_LOGGER:=>: error', error);
