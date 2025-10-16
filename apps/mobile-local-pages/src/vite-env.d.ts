@@ -6,11 +6,11 @@ declare const __PLATFORM__: 'ios' | 'android';
 declare const ReactNativeWebView: {
   injectedObjectJson: () => string;
   postMessage: (message: string) => void;
-}
+};
 
 interface Window {
   ReactNativeWebView: typeof ReactNativeWebView;
   onMessageFromReactNative: {
-    (message: DuplexReceive): void
+    (message: DuplexReceive): void;
   };
 }

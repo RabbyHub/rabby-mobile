@@ -3,10 +3,7 @@ const mobileConfig = require('../mobile/tailwind.config');
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   ...mobileConfig,
-  content: [
-    './index.js',
-    './src/**/*.{js,jsx,ts,tsx,html}'
-  ],
+  content: ['./index.js', './src/**/*.{js,jsx,ts,tsx,html}'],
   theme: {
     ...mobileConfig.theme,
     colors: {

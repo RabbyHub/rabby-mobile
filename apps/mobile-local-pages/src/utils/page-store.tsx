@@ -1,8 +1,8 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
-import { createStore, Provider } from "jotai";
-import { onDomReady } from "./webview-runtime";
+import { createStore, Provider } from 'jotai';
+import { onDomReady } from './webview-runtime';
 
 export const pageStore = createStore();
 
@@ -11,7 +11,7 @@ function withPageStore<T extends React.FC<any>>(Component: T) {
     <Provider store={pageStore}>
       <Component {...props} />
     </Provider>
-  )
+  );
 }
 
 export async function bootstrapApp(App: React.FC) {
@@ -23,5 +23,5 @@ export async function bootstrapApp(App: React.FC) {
         <AppWithStore />
       </StrictMode>,
     );
-  })
+  });
 }
