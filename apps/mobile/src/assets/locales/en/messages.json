@@ -2138,6 +2138,9 @@
       "WebviewError": {
         "failedToLoad": "Failed to load the page",
         "error": "Error:"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache cleared"
       }
     },
     "browserManage": {

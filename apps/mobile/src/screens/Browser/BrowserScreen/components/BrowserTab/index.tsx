@@ -74,6 +74,8 @@ import { useAccounts } from '@/hooks/account';
 import { getOnlineConfig } from '@/core/config/online';
 import { WebviewError } from './WebivewError';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { toast } from '@/components2024/Toast';
+import { useTranslation } from 'react-i18next';
 
 type BrowserTabProps = {
   origin: string;
@@ -155,6 +157,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const { styles, colors, colors2024 } = useTheme2024({
       getStyle: getStyles,
     });
+    const { t } = useTranslation();
 
     const isEmptyTab = !url;
     const [isLoading, setIsLoading] = useState(false);
@@ -219,6 +222,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       })();`);
       setTimeout(() => {
         setRefreshKey(prev => prev + 1);
+        toast.success(t('page.browser.toast.clearCacheSuccess'));
       }, 50);
     });
 
