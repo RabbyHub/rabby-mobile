@@ -95,6 +95,8 @@ scripts/tmp
 /android/app/src/main/res/font/*.otf
 /ios/RabbyMobile/Resources/*.ttf
 /ios/RabbyMobile/Resources/*.otf
+/ios/builtin-pages
+/assets/**/builtin-pages
 
 # android/sentry.properties
 # ios/sentry.properties

@@ -1383,7 +1383,19 @@
         },
         "customAddressHdPath": "カスタムウォレット HD パス",
         "selectIndexTip": "ウォレットのシリアル番号を選択して開始してください:",
-        "manageAddressFrom": "{{0}} から {{1}} までのウォレットを管理する"
+        "manageAddressFrom": "{{0}} から {{1}} までのウォレットを管理する",
+        "trezor": {
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Ledger公式HDパス。",
+            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。",
+            "bip44": "BIP44: BIP44プロトコルによって定義されたHDpath。"
+          },
+          "hdPathTypeNoChain": {
+            "bip44": "BIP44: BIP44プロトコルによって定義されたHDパス。",
+            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。",
+            "ledgerLive": "Ledger Live: Ledger公式HDパス。"
+          }
+        }
       },
       "createNewAddress": "新しいウォレットを作成"
     },
@@ -1766,7 +1778,6 @@
             "all": "すべて",
             "price": "価格",
             "value": "価値",
-            "tradingCount": "取引回数",
             "qnt": "Qnt"
           }
         },
@@ -2119,6 +2130,10 @@
         "btn": "今すぐ参加",
         "title": "ハイパーリキッド紹介プログラム",
         "desc": "今すぐRabbyのコードを使って、Hyperliquidの手数料が<1>4%割引</1>になります。"
+      },
+      "WebviewError": {
+        "failedToLoad": "ページの読み込みに失敗しました",
+        "error": "エラー："
       }
     },
     "browserManage": {
@@ -2237,6 +2252,243 @@
     },
     "perpsHistory": {
       "title": "履歴"
+    },
+    "perps": {
+      "PerpsCard": {
+        "depositBtn": "入金",
+        "available": "利用可能",
+        "withdrawBtn": "引き出す",
+        "loginBtn": "Trading Perpsにログイン",
+        "title": "永続契約を取引する",
+        "loginDesc": "アドレスでログインし、資金を入金してperpsの取引を開始してください。",
+        "learnBtn": "Perpsについて学ぶ"
+      },
+      "PerpsGuidePopup": {
+        "step5Title": "清算",
+        "step2Title": "ロング",
+        "step4Title": "レバレッジの調整",
+        "step1Title": "マスターパー​​ペチュアルフューチャーズ",
+        "step3Title": "ショート",
+        "step4Desc": "レバレッジは、あなたが投入した金額以上で取引できるようにします。これにより、利益と損失の両方が増加する可能性があります。",
+        "step1Desc": "永続的な先物契約では、資産を取引しているだけではありません。次に何が起こると考えているかを取引しています。",
+        "step2Desc": "価格が上昇すると予想する場合は、ロングを開きます。価格が上昇すれば利益を得ますが、下落すれば損失が発生します。",
+        "step3Desc": "価格が下がると予想したら、ショートを開きます。価格が下がれば利益が得られます。価格が上がれば損失が出ます。",
+        "step5Desc": "すべてのポジションには清算価格があります。もし市場価格がその価格に達すると、あなたのポジションは閉じられます。高いレバレッジを使用すると、清算されるリスクが高まります。"
+      },
+      "PerpsDepositPopup": {
+        "title": "入金",
+        "amount": "金額",
+        "balance": "残高",
+        "insufficientBalance": "残高不足",
+        "depositBtn": "入金",
+        "minimumDepositSize": "最小入金額は5ドルです。",
+        "invalidNumber": "有効な数値を入力してください。",
+        "fetchQuoteFailed": "入金見積もりの取得に失敗しました。トークンを切り替えてください。",
+        "estReceive": "推定受取額: {{balance}}",
+        "estReceiveTooltip": "クロスチェーン入金はLiFiを介して処理され、スリippageが発生する可能性があります。到着予定は{{number}}秒です。"
+      },
+      "PerpsWithdrawPopup": {
+        "available": "利用可能",
+        "insufficientBalance": "残高不足",
+        "title": "引き出す",
+        "feeTip": "手数料 : $1.00",
+        "amount": "金額",
+        "withdrawBtn": "引き出す",
+        "feeTooltipTitle": "手数料",
+        "invalidNumber": "有効な数値を入力してください",
+        "feeTooltipDesc": "Hyperliquidによって請求される出金手数料: $1",
+        "minimumWithdrawSize": "最低出金額は$2です。"
+      },
+      "PerpsWithdrawFeePopup": {
+        "title": "手数料",
+        "btn": "分かりました",
+        "desc": "Hyperliquidによる引き出し手数料: $1"
+      },
+      "historyDetail": {
+        "title": {
+          "openShort": "ショートを開く",
+          "openLong": "ロングをオープン",
+          "closeShortSl": "ショートをクローズ ストップロス",
+          "closeShort": "ショートをクローズ",
+          "closeLongLiquidation": "ロング清算をクローズ",
+          "closeLongTp": "ロング決済 利益確定",
+          "closeShortLiquidation": "ショート決済清算",
+          "closeLongSl": "ロングストップロスをクローズ",
+          "closeLong": "ロングをクローズ",
+          "closeShortTp": "ショートをクローズして利益確定"
+        },
+        "fee": "手数料",
+        "date": "日付",
+        "tradeValue": "取引額",
+        "size": "サイズ",
+        "closedPnl": "クローズドPNL",
+        "price": "価格",
+        "gotItBtn": "わかった",
+        "perps": "パープス",
+        "sizeTips": "あなたの取引の総価値または数量は、マージンとレバレッジによって設定されます。",
+        "provider": "プロバイダー"
+      },
+      "PerpsAutoCloseModal": {
+        "takeProfit": "利確",
+        "profit": "利益",
+        "takeProfitTipsLong": "利益確定価格は現在の価格よりも高くなければなりません。",
+        "stopLoss": "ストップロス",
+        "stopLossTipsLongLiquidation": "価格は清算価格 ({{price}}) よりも低いです。",
+        "loss": "損失",
+        "takeProfitTipsShort": "利益確定価格は現在の価格よりも低くなければなりません。",
+        "stopLossTipsShort": "ストップロス価格は現在の価格よりも高くなければなりません",
+        "stopLossTipsLong": "損切り価格は現在の価格よりも低く設定する必要があります。",
+        "stopLossTipsShortLiquidation": "価格は清算価格 ({{price}}) よりも高いです。"
+      },
+      "PerpsDepositTokenModal": {
+        "swapBtn": "スワップ",
+        "directTag": "直接入金",
+        "bridgeBtn": "ブリッジ",
+        "goSwapDesc": "Arbitrum上では、直接入金がサポートされているのはUSDCのみです。入金する前に、現在のトークンをUSDCにスワップしてください。",
+        "goBridgeDesc": "Arbitrumでの直接入金はUSDCのみサポートされています。入金する前に、現在のトークンをArbitrumのUSDCにブリッジしてください。"
+      },
+      "history": {
+        "status": {
+          "pending": "保留中",
+          "completed": "完了"
+        },
+        "closeLongTp": "ロングをクローズして利益確定",
+        "title": "履歴",
+        "closeLongSl": "ロングのストップロスをクローズ",
+        "deposit": "入金",
+        "withdraw": "出金",
+        "openLong": "ロングを開く",
+        "openShort": "ショートポジションをオープン",
+        "closeShortLiquidation": "ショートの強制清算をクローズ",
+        "closeLong": "ロングをクローズ",
+        "closeShortSl": "ショートをクローズしてストップロスを設定する",
+        "closeShortTp": "ショートを閉じて利益確定",
+        "closeLongLiquidation": "ロングの清算をクローズ",
+        "closeShort": "ショートをクローズ"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "入金するトークンを選択してください"
+      },
+      "PerpsAccountLogoutPopup": {
+        "logout": "ログアウト",
+        "title": "現在のアドレスからログアウト",
+        "desc": "現在のPerpsアカウントからログアウトしています。このアドレスでログインすることで、いつでも復元できます。"
+      },
+      "PerpsDepositCard": {
+        "availableToTrade": "取引可能:",
+        "deposit": "入金"
+      },
+      "PerpsAccountSelectorPopup": {
+        "hyperliquidBalance": "パープス残高",
+        "noPosition": "ポジションなし",
+        "notActivatedAddress": "未アクティブ",
+        "lastUsed": "最後の使用",
+        "activatedAddress": "アクティブ化された"
+      },
+      "title": "永続契約",
+      "selectAccountTitle": "ウォレットを選択してログインしてください",
+      "more": "もっと見る",
+      "explorePerps": "Perpsを探る",
+      "positions": "ポジション",
+      "leverageRangeMinError": "最小レバレッジは{{min}}xです。",
+      "regionNotSupport": "あなたの地域ではポジションのオープンはサポートされていません",
+      "leverageRangeMaxError": "最大レバレッジは {{max}}x です",
+      "deleteAgentSuccess": "エージェントが正常に削除されました。",
+      "deleteAgentModal": "最大エージェント数に達しました。新しいエージェントを作成するために、既存のエージェントを削除しますか？"
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "title": "ポジション",
+        "markPrice": "マーク価格",
+        "direction": "方向",
+        "size": "サイズ",
+        "isolated": "分離",
+        "pnl": "PNL",
+        "cross": "クロス",
+        "tpPrice": "テイクプロフィット価格",
+        "liqPrice": "清算価格",
+        "marginIsolated": "マージン (アイソレート)",
+        "fundingPayments": "ファンディングペイメント",
+        "autoClose": "自動クローズ",
+        "closePosition": "{{direction}}をクローズ",
+        "marginCross": "マージン（クロス）",
+        "margin": "マージン（アイソレーテッド）",
+        "justMargin": "マージン",
+        "liquidationPrice": "清算価格",
+        "slPrice": "ストップロス価格",
+        "sizeTips": "あなたの取引の総価値または数量で、マージンとレバレッジによって設定されます。",
+        "entryPrice": "エントリープライス",
+        "fundingPaymentsTips": "これはポジションがオープンされて以来のネットファンディングペイメントです。ファンディングは、トレーダーが永続契約の価格をトークンの実際の価格に近づけるために支払うか受け取る毎時の手数料です。",
+        "liquidationPriceTips": "あなたのマージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によって自動的にポジションが閉じられる価格。"
+      },
+      "PerpsInfo": {
+        "funding": "資金調達",
+        "title": "情報",
+        "24Vol": "24時間取引量",
+        "openInterest": "オープンインタレスト",
+        "openInterestTips": "この契約における全ユーザーの合計未決済ポジション。",
+        "fundingTips": "これは、トレーダーが永続契約の価格をトークンの実際の価格に近づけるために支払うか受け取る毎時料金です。正の場合、ロングはショートに支払います。負の場合、ショートはロングに支払います。"
+      },
+      "PerpsIntro": {
+        "title": "Perps とは何ですか？",
+        "desc": "永続契約の取引は、レバレッジの高さや市場のボラティリティにより、投資や担保を迅速に失う可能性を含む重要なリスクを伴います。このような取引はすべてのユーザーに適しているわけではありません。価格は資金調達レートや流動性の影響を受ける可能性があり、事前通知なしに自動的にロスカットされることがあります。市場データはHyperliquidによって提供されています。"
+      },
+      "PerpsClosePositionPopup": {
+        "title": "{{coin}} {{direction}}ポジションをクローズ",
+        "pnl": "PNL",
+        "closeBtn": "{{direction}}をクローズ",
+        "positionSize": "ポジションサイズ",
+        "fee": "手数料：",
+        "rabbyFeeTips": "Rabby手数料: 0.04%",
+        "providerFeeTips": "Hyperliquid 手数料: {{fee}}"
+      },
+      "PerpsOpenPositionPopup": {
+        "minimumOrderSize": "最小注文サイズは$10です。",
+        "insufficientBalance": "残高不足",
+        "tpPrice": "テイクプロフィット価格",
+        "size": "サイズ",
+        "available": "利用可能",
+        "slPrice": "ストップロス価格",
+        "autoClose": "自動クローズ",
+        "margin": "マージン",
+        "leverage": "レバレッジ",
+        "maximumOrderSize": "最大注文サイズは {{amount}} です",
+        "sizeTips": "取引の総価値または数量は、マージンとレバレッジによって設定されます。",
+        "invalidNumber": "有効な数字を入力してください"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "direction": "方向",
+        "title": "注文を確認",
+        "tpPrice": "利益確定価格",
+        "fee": "手数料",
+        "initialMargin": "初期証拠金",
+        "size": "サイズ",
+        "perps": "パーペツ",
+        "btn": "{{direction}}ポジションを開く",
+        "slPrice": "ストップロス価格",
+        "price": "価格",
+        "estLqPrice": "推定清算価格",
+        "rabbyFeeTips": "Rabby 手数料: 0%",
+        "autoClose": "自動クローズ",
+        "margin": "マージン（アイソレーテッド）",
+        "providerFeeTips": "Hyperliquid手数料: {{fee}}",
+        "sizeTips": "あなたの取引の総価値または数量は、マージンとレバレッジによって設定されます。",
+        "liquidationPriceTips": "マージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によってあなたのポジションが自動的にクローズされる価格です。"
+      },
+      "action": {
+        "short": "ショート",
+        "long": "ロング",
+        "noPermission": "あなたの地域ではポジションをオープンすることはサポートされていません。",
+        "closePosition": "{{direction}} ポジションをクローズ"
+      },
+      "PerpsAutoCloseModal": {
+        "price": "価格:",
+        "tpPrice": "利確価格",
+        "slPrice": "ストップロス価格",
+        "setSlPrice": "ストップロス価格を設定する",
+        "entryPrice": "エントリー価格：",
+        "setTpPrice": "テイクプロフィット価格を設定する"
+      }
     }
   },
   "global": {

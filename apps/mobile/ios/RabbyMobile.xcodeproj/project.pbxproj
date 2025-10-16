@@ -17,6 +17,7 @@
 		01C69DD92C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */; };
+		01DBDDA02E86FFF70060C03B /* builtin-pages in Resources */ = {isa = PBXBuildFile; fileRef = 01DBDD9F2E86FFF70060C03B /* builtin-pages */; };
 		01E584B62C370990007F3280 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 01E584B52C370990007F3280 /* LaunchScreen.xib */; };
 		01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */; };
 		0FDFDF1FBA404AB3A3E6ECCA /* SF-Pro-Rounded-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */; };
@@ -24,7 +25,7 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */; };
-		61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
+		61119C058F0C8F2FBCC8530A /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		8925A16245A440BDB7B251AA /* bignumber.js@9.3.1-bignumber.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 711FC567ED124413A1B9C352 /* bignumber.js@9.3.1-bignumber.min.js */; };
@@ -33,7 +34,7 @@
 		ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */; };
 		AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */; };
 		E576F98C62E44D04A874C8B7 /* SF-Pro-Rounded-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */; };
-		94F13299C647459F8D94873C /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = 3E8E718C66D84678939C5A12 /* InpageBridgeWeb3.js */; };
+		5EE661F197D0425E824520F4 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = 8E9AD328E8F6407FBCE15FC1 /* InpageBridgeWeb3.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,6 +64,7 @@
 		01D18D942C804A750067DA5F /* RabbyMobileDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobileDebug.entitlements; path = RabbyMobile/RabbyMobileDebug.entitlements; sourceTree = "<group>"; };
 		01D49C742CBE7D5E008C5EE2 /* RNTimeChanged.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RNTimeChanged.h; path = RabbyMobile/RNTimeChanged.h; sourceTree = "<group>"; };
 		01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = RNTimeChanged.mm; path = RabbyMobile/RNTimeChanged.mm; sourceTree = "<group>"; };
+		01DBDD9F2E86FFF70060C03B /* builtin-pages */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "builtin-pages"; path = "../assets/ios/builtin-pages"; sourceTree = "<group>"; };
 		01E584B52C370990007F3280 /* LaunchScreen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LaunchScreen.xib; path = RabbyMobile/LaunchScreen.xib; sourceTree = "<group>"; };
 		01EF41A82C36CAFF009D8053 /* ReactNativeSecurity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReactNativeSecurity.h; path = RabbyMobile/ReactNativeSecurity.h; sourceTree = "<group>"; };
 		01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ReactNativeSecurity.mm; path = RabbyMobile/ReactNativeSecurity.mm; sourceTree = "<group>"; };
@@ -74,12 +76,12 @@
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = RabbyMobile/main.m; sourceTree = "<group>"; };
 		1B2D9C4676E5EA7E90C5705F /* Pods-RabbyMobile.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.regression.xcconfig"; sourceTree = "<group>"; };
 		322D3F7B9B8D39882C19A512 /* Pods-RabbyMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.release.xcconfig"; sourceTree = "<group>"; };
-		370EA128F5694C408EE79381 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
+		370EA128F5694C408EE79381 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-RabbyMobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.debug.xcconfig"; sourceTree = "<group>"; };
 		48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Regular.otf"; path = "../assets/fonts/SF-Pro-Rounded-Regular.otf"; sourceTree = "<group>"; };
 		5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Bold.otf"; path = "../assets/fonts/SF-Pro-Rounded-Bold.otf"; sourceTree = "<group>"; };
 		6B576D0FC998649BFE6FCB60 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig"; sourceTree = "<group>"; };
-		711FC567ED124413A1B9C352 /* bignumber.js@9.3.1-bignumber.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "bignumber.js@9.3.1-bignumber.min.js"; path = "../assets/custom/bignumber.js@9.3.1-bignumber.min.js"; sourceTree = "<group>"; };
+		711FC567ED124413A1B9C352 /* bignumber.js@9.3.1-bignumber.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "bignumber.js@9.3.1-bignumber.min.js"; path = "../assets/custom/bignumber.js@9.3.1-bignumber.min.js"; sourceTree = "<group>"; };
 		78D83D9843CA8EDE71C932CD /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7B058EEE4A749EF25D46127C /* Pods_RabbyMobile_RabbyMobileTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile_RabbyMobileTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = RabbyMobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -88,10 +90,10 @@
 		A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobile.entitlements; path = RabbyMobile/RabbyMobile.entitlements; sourceTree = "<group>"; };
 		ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		BF21624835D04B968B97155F /* lightweight-charts.standalone.production.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "lightweight-charts.standalone.production.js"; path = "../assets/custom/lightweight-charts.standalone.production.js"; sourceTree = "<group>"; };
+		BF21624835D04B968B97155F /* lightweight-charts.standalone.production.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "lightweight-charts.standalone.production.js"; path = "../assets/custom/lightweight-charts.standalone.production.js"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Heavy.otf"; path = "../assets/fonts/SF-Pro-Rounded-Heavy.otf"; sourceTree = "<group>"; };
-		3E8E718C66D84678939C5A12 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; name = "InpageBridgeWeb3.js"; path = "../assets/custom/InpageBridgeWeb3.js"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		8E9AD328E8F6407FBCE15FC1 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; name = "InpageBridgeWeb3.js"; path = "../assets/custom/InpageBridgeWeb3.js"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,7 +109,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */,
+				61119C058F0C8F2FBCC8530A /* (null) in Frameworks */,
 				AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -181,6 +183,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				01DBDD9F2E86FFF70060C03B /* builtin-pages */,
 				014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */,
 				ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */,
 				13B07FAE1A68108700A75B9A /* RabbyMobile */,
@@ -228,7 +231,7 @@
 				BF21624835D04B968B97155F /* lightweight-charts.standalone.production.js */,
 				711FC567ED124413A1B9C352 /* bignumber.js@9.3.1-bignumber.min.js */,
 				370EA128F5694C408EE79381 /* vconsole.min.js */,
-				3E8E718C66D84678939C5A12 /* InpageBridgeWeb3.js */,
+				8E9AD328E8F6407FBCE15FC1 /* InpageBridgeWeb3.js */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -330,6 +333,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01DBDDA02E86FFF70060C03B /* builtin-pages in Resources */,
 				01E584B62C370990007F3280 /* LaunchScreen.xib in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */,
@@ -343,7 +347,7 @@
 				96A45DAAAFB8427296BC0254 /* lightweight-charts.standalone.production.js in Resources */,
 				8925A16245A440BDB7B251AA /* bignumber.js@9.3.1-bignumber.min.js in Resources */,
 				A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */,
-				94F13299C647459F8D94873C /* InpageBridgeWeb3.js in Resources */,
+				5EE661F197D0425E824520F4 /* InpageBridgeWeb3.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
