@@ -26,7 +26,7 @@ const waitQueueFinished = (q: PQueue) => {
   });
 };
 
-const balanceAtom = atom<balanceAccountType[]>([]);
+export const balanceAtom = atom<balanceAccountType[]>([]);
 const balanceCacheAtom = atom<balanceAccountType[]>([]);
 const lengthAtom = atom<number>(0);
 

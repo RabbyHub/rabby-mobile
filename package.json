@@ -48,6 +48,9 @@
     "apps/mobile/*.{js,jsx,ts,tsx}": [
       "yarn workspace rabby-mobile lint:commit:fix"
     ],
+    "apps/mobile-local-pages/*.{js,jsx,ts,tsx}": [
+      "yarn workspace mobile-local-pages lint:commit:fix"
+    ],
     "apps/dev-console-cra/*.{js,jsx,ts,tsx}": [
       "yarn workspace dev-console-cra lint:commit:fix"
     ]

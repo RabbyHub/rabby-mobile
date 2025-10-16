@@ -136,7 +136,12 @@ export const MiniApprovalPopupContainer: React.FC<Props> = ({
   retryUpdateType = 'origin',
 }) => {
   const [iconColor, setIconColor] = React.useState('');
-  const [contentColor, setContentColor] = React.useState('');
+  const [contentColor, setContentColor] = React.useState<
+    keyof AppColorsVariants
+  >(
+    // @ts-expect-error
+    '', // FIXME
+  );
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
