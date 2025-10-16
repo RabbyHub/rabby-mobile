@@ -753,7 +753,7 @@ export const TokenMarketInfoScreen = () => {
                     }
                     totalSupply={supplyInfo?.total_supply?.toString() ?? ''}
                     volume24h={
-                      marketInfo?.market?.volume_amount_24h?.toString() ?? ''
+                      marketInfo?.market?.volume_usd_value_24h?.toString() ?? ''
                     }
                     txns24h={marketInfo?.market?.txns_24h?.toString() ?? ''}
                     holders={holdInfo?.holder_count?.toString() ?? ''}

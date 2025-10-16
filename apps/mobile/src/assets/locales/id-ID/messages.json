@@ -1307,7 +1307,19 @@
         "balance": "Saldo",
         "customAddressHdPath": "Jalur HD Dompet Kustom",
         "manageAddressFrom": "Kelola dompet dari {{0}} ke {{1}}",
-        "selectIndexTip": "Pilih nomor seri dompet untuk memulai:"
+        "selectIndexTip": "Pilih nomor seri dompet untuk memulai:",
+        "trezor": {
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger.",
+            "bip44": "BIP44: HDpath yang ditentukan oleh protokol BIP44.",
+            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto."
+          },
+          "hdPathTypeNoChain": {
+            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger.",
+            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto.",
+            "bip44": "BIP44: HDpath yang ditentukan oleh protokol BIP44."
+          }
+        }
       },
       "Quick": "Cepat",
       "createNewSeedPhrase": "Buat Frasa Benih Baru",
@@ -1845,7 +1857,6 @@
             "sell": "Jual",
             "buy": "Beli",
             "volume": "Volume",
-            "tradingCount": "Jumlah Perdagangan",
             "type": "Jenis",
             "value": "Nilai",
             "price": "Harga",
@@ -2066,6 +2077,10 @@
         "btn": "Bergabung Sekarang",
         "title": "Program Referal Hyperliquid",
         "desc": "Bergabung sekarang menggunakan kode Rabby untuk mendapatkan <1>diskon 4%</1> pada biaya Hyperliquid Anda."
+      },
+      "WebviewError": {
+        "error": "Error:",
+        "failedToLoad": "Gagal memuat halaman"
       }
     },
     "browserManage": {
@@ -2184,6 +2199,243 @@
     },
     "perpsHistory": {
       "title": "Sejarah"
+    },
+    "perps": {
+      "PerpsCard": {
+        "withdrawBtn": "Tarik",
+        "available": "Tersedia",
+        "title": "Perdagangan Perpetual",
+        "learnBtn": "Pelajari tentang Perps",
+        "depositBtn": "Setor",
+        "loginDesc": "Masuk dengan alamat Anda dan setorkan dana untuk mulai trading perps",
+        "loginBtn": "Masuk ke Trading Perps"
+      },
+      "PerpsGuidePopup": {
+        "step3Title": "Pendek",
+        "step4Title": "Mengatur Leverage",
+        "step5Title": "Likuidasi",
+        "step1Desc": "Dengan futures perpetual, Anda tidak hanya memperdagangkan aset. Anda memperdagangkan apa yang Anda pikir akan terjadi selanjutnya.",
+        "step1Title": "Master Perpetual Futures",
+        "step3Desc": "Ketika Anda mengharapkan harga turun, Anda membuka posisi short. Jika harga turun, Anda mendapatkan keuntungan. Jika harga naik, Anda mengalami kerugian.",
+        "step4Desc": "Leverage memungkinkan Anda untuk berdagang dengan lebih dari yang Anda setor. Ini dapat meningkatkan baik keuntungan maupun kerugian Anda.",
+        "step2Desc": "Saat Anda mengharapkan harga naik, Anda membuka posisi long. Jika harga naik, Anda mendapatkan keuntungan. Jika turun, Anda mengalami kerugian.",
+        "step2Title": "Long",
+        "step5Desc": "Setiap posisi memiliki harga likuidasi. Jika harga pasar mencapainya, posisi Anda akan ditutup. Menggunakan leverage yang lebih tinggi meningkatkan risiko dilikuidasi."
+      },
+      "PerpsDepositPopup": {
+        "amount": "Jumlah",
+        "balance": "Saldo",
+        "title": "Setor",
+        "depositBtn": "Setoran",
+        "minimumDepositSize": "Jumlah setoran minimum adalah $5",
+        "insufficientBalance": "Saldo tidak cukup",
+        "estReceive": "Estimasi Terima: {{balance}}",
+        "invalidNumber": "Silakan masukkan angka yang valid",
+        "fetchQuoteFailed": "Gagal untuk mengambil kutipan deposit. Silakan ganti token.",
+        "estReceiveTooltip": "Setoran lintas-rantai diproses melalui LiFi, mungkin mengalami sedikit slippage. Perkiraan tiba dalam {{number}} detik."
+      },
+      "PerpsWithdrawPopup": {
+        "feeTip": "Biaya: $1,00",
+        "amount": "Jumlah",
+        "feeTooltipTitle": "Biaya",
+        "title": "Tarik",
+        "insufficientBalance": "Saldo tidak cukup",
+        "invalidNumber": "Silakan masukkan nomor yang valid",
+        "minimumWithdrawSize": "Jumlah penarikan minimum adalah $2",
+        "available": "tersedia",
+        "feeTooltipDesc": "Biaya Penarikan yang dikenakan oleh Hyperliquid: $1",
+        "withdrawBtn": "Tarik Pulang"
+      },
+      "PerpsWithdrawFeePopup": {
+        "title": "Biaya",
+        "desc": "Biaya Penarikan yang dikenakan oleh Hyperliquid: $1",
+        "btn": "Saya Mengerti"
+      },
+      "historyDetail": {
+        "title": {
+          "openShort": "Buka Short",
+          "closeLong": "Tutup Long",
+          "openLong": "Buka Long",
+          "closeShort": "Tutup Short",
+          "closeShortLiquidation": "Tutup Short Likuidasi",
+          "closeShortSl": "Tutup Short Stop Loss",
+          "closeLongLiquidation": "Tutup Long Likuidasi",
+          "closeShortTp": "Tutup Short Ambil Keuntungan",
+          "closeLongSl": "Tutup Long Stop Loss",
+          "closeLongTp": "Tutup Long Ambil Untung"
+        },
+        "fee": "Biaya",
+        "provider": "Penyedia",
+        "tradeValue": "Nilai Perdagangan",
+        "date": "Tanggal",
+        "size": "Ukuran",
+        "price": "Harga",
+        "closedPnl": "Closed PNL",
+        "perps": "Perpetual Contracts",
+        "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
+        "gotItBtn": "Saya mengerti"
+      },
+      "PerpsAutoCloseModal": {
+        "stopLossTipsLong": "Harga stop loss harus lebih rendah dari harga saat ini",
+        "stopLossTipsShort": "Harga stop loss harus lebih tinggi dari harga saat ini.",
+        "stopLoss": "Stop loss",
+        "loss": "Kerugian",
+        "takeProfitTipsLong": "Harga ambil keuntungan harus lebih tinggi dari harga saat ini.",
+        "stopLossTipsLongLiquidation": "Harga lebih rendah dari harga likuidasi ({{price}})",
+        "takeProfitTipsShort": "Harga ambil untung harus lebih rendah dari harga saat ini.",
+        "stopLossTipsShortLiquidation": "Harga lebih tinggi dari harga likuidasi ({{price}})",
+        "profit": "Keuntungan",
+        "takeProfit": "Ambil untung"
+      },
+      "PerpsDepositTokenModal": {
+        "bridgeBtn": "Jembatan",
+        "goSwapDesc": "Hanya USDC di Arbitrum yang didukung untuk deposit langsung. Silakan tukar token Anda saat ini dengan USDC sebelum melakukan deposit.",
+        "directTag": "Setoran Langsung",
+        "swapBtn": "Tukar",
+        "goBridgeDesc": "Hanya USDC di Arbitrum yang didukung untuk deposit langsung. Silakan jembatani token Anda saat ini ke USDC di Arbitrum sebelum melakukan deposit."
+      },
+      "history": {
+        "status": {
+          "completed": "Selesai",
+          "pending": "Menunggu"
+        },
+        "closeLongSl": "Tutup Long stop loss",
+        "closeLongTp": "Tutup Long Ambil Untung",
+        "title": "Riwayat",
+        "withdraw": "Tarik",
+        "openLong": "Buka Long",
+        "closeShortTp": "Tutup Short Ambil Keuntungan",
+        "deposit": "Setor",
+        "closeLong": "Tutup Long",
+        "closeShortLiquidation": "Tutup Short Likuidasi",
+        "closeShortSl": "Tutup Short Stop Loss",
+        "openShort": "Buka Short",
+        "closeLongLiquidation": "Tutup Long Likuidasi",
+        "closeShort": "Tutup Short"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "Pilih Token untuk Setor"
+      },
+      "PerpsAccountLogoutPopup": {
+        "logout": "Keluar",
+        "title": "Keluar Alamat Saat Ini",
+        "desc": "Anda sedang keluar dari akun Perps Anda saat ini. Anda dapat memulihkannya kapan saja dengan masuk menggunakan alamat ini."
+      },
+      "PerpsDepositCard": {
+        "deposit": "Setor",
+        "availableToTrade": "Tersedia untuk diperdagangkan:"
+      },
+      "PerpsAccountSelectorPopup": {
+        "notActivatedAddress": "Tidak Diaktifkan",
+        "activatedAddress": "Diaktifkan",
+        "lastUsed": "Terakhir Digunakan",
+        "noPosition": "Tidak Ada Posisi",
+        "hyperliquidBalance": "Saldo Perps"
+      },
+      "title": "Perps",
+      "selectAccountTitle": "Pilih Dompet untuk Masuk",
+      "explorePerps": "Jelajahi Perps",
+      "leverageRangeMaxError": "Leverage maksimum adalah {{max}}x",
+      "deleteAgentSuccess": "Agen berhasil dihapus",
+      "regionNotSupport": "Membuka posisi tidak didukung di wilayah Anda",
+      "leverageRangeMinError": "Leverage minimum adalah {{min}}x",
+      "positions": "Kedudukan",
+      "deleteAgentModal": "Anda telah mencapai jumlah maksimum agen. Apakah Anda ingin menghapus agen yang ada untuk membuat yang baru?",
+      "more": "Lebih banyak"
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "isolated": "Isolasi",
+        "liqPrice": "Liq.Harga",
+        "marginIsolated": "Margin (terpisah)",
+        "tpPrice": "Harga Ambil Keuntungan",
+        "justMargin": "Margin",
+        "direction": "Arah",
+        "pnl": "PNL",
+        "margin": "Margin(Isolated)",
+        "marginCross": "Margin (Cross)",
+        "fundingPayments": "Pembayaran Pendanaan",
+        "autoClose": "Tutup Otomatis",
+        "entryPrice": "Harga Masuk",
+        "size": "Ukuran",
+        "markPrice": "Harga Mark",
+        "cross": "Cross",
+        "title": "Posisi",
+        "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
+        "liquidationPrice": "Harga Likuidasi",
+        "fundingPaymentsTips": "Ini adalah total pembayaran pendanaan sejak posisi dibuka. Pendanaan adalah biaya per jam yang dibayar atau diterima oleh trader untuk menjaga harga kontrak perp dekat dengan harga aktual token.",
+        "liquidationPriceTips": "Harga di mana posisi Anda secara otomatis ditutup oleh bursa untuk mencegah kerugian lebih lanjut ketika margin Anda jatuh di bawah level margin pemeliharaan.",
+        "slPrice": "Harga Henti-Rugi",
+        "closePosition": "Tutup {{direction}}"
+      },
+      "PerpsInfo": {
+        "openInterestTips": "Total posisi terbuka dari semua pengguna pada kontrak ini.",
+        "24Vol": "24h Volume",
+        "title": "Info",
+        "openInterest": "Bunga Terbuka",
+        "funding": "Pendanaan",
+        "fundingTips": "Ini adalah biaya per jam yang dibayar atau diterima oleh trader untuk menjaga harga kontrak perp mendekati harga aktual token. Jika positif, long membayar short. Jika negatif, short membayar long."
+      },
+      "PerpsIntro": {
+        "title": "Apa itu Perps?",
+        "desc": "Perdagangan kontrak perpetual melibatkan risiko signifikan, termasuk kemungkinan kehilangan investasi dan jaminan Anda dengan cepat karena leverage tinggi dan volatilitas pasar. Perdagangan semacam itu mungkin tidak cocok untuk semua pengguna. Harga dapat dipengaruhi oleh suku bunga pendanaan dan likuiditas, dan Anda bisa dilikuidasi secara otomatis tanpa pemberitahuan sebelumnya. Data pasar disediakan oleh Hyperliquid."
+      },
+      "PerpsClosePositionPopup": {
+        "fee": "Biaya:",
+        "providerFeeTips": "Biaya Hyperliquid: {{fee}}",
+        "positionSize": "Ukuran Posisi",
+        "rabbyFeeTips": "Biaya Rabby: 0,04%",
+        "pnl": "PNL",
+        "title": "Tutup Posisi {{coin}} {{direction}}",
+        "closeBtn": "Tutup {{direction}}"
+      },
+      "PerpsOpenPositionPopup": {
+        "minimumOrderSize": "Ukuran pesanan minimum adalah $10",
+        "tpPrice": "Harga Ambil Keuntungan",
+        "insufficientBalance": "Saldo tidak cukup",
+        "slPrice": "Harga Stop-Loss",
+        "invalidNumber": "Silakan masukkan angka yang valid",
+        "maximumOrderSize": "Ukuran pesanan maksimum adalah {{amount}}",
+        "margin": "Margin",
+        "available": "tersedia",
+        "autoClose": "Tutup Otomatis",
+        "size": "Ukuran",
+        "sizeTips": "Total nilai atau kuantitas perdagangan Anda, ditentukan oleh margin dan leverage.",
+        "leverage": "Leverage"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "direction": "Arah",
+        "tpPrice": "Harga Ambil Keuntungan",
+        "btn": "Buka Posisi {{direction}}",
+        "autoClose": "Tutup Otomatis",
+        "fee": "Biaya",
+        "price": "Harga",
+        "initialMargin": "Margin Awal",
+        "estLqPrice": "Harga Likuidasi Perkiraan",
+        "perps": "Perpetual Contracts",
+        "size": "Ukuran",
+        "slPrice": "Harga Stop-Loss",
+        "title": "Periksa Pesanan",
+        "margin": "Margin(Terpisah)",
+        "providerFeeTips": "Biaya Hyperliquid: {{fee}}",
+        "rabbyFeeTips": "Biaya Rabby: 0%",
+        "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
+        "liquidationPriceTips": "Harga di mana posisi Anda secara otomatis ditutup oleh bursa untuk mencegah kerugian lebih lanjut ketika margin Anda jatuh di bawah tingkat margin pemeliharaan."
+      },
+      "action": {
+        "closePosition": "Tutup Posisi {{direction}}",
+        "short": "Short",
+        "noPermission": "Membuka posisi tidak didukung di wilayah Anda",
+        "long": "Long"
+      },
+      "PerpsAutoCloseModal": {
+        "slPrice": "Harga Stop Loss",
+        "price": "Harga:",
+        "setSlPrice": "Atur Harga Stop-Loss",
+        "entryPrice": "Harga Masuk:",
+        "tpPrice": "Harga Ambil Untung",
+        "setTpPrice": "Atur Harga Ambil Keuntungan"
+      }
     }
   },
   "component": {
