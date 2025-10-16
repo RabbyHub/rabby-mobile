@@ -18,7 +18,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     flexGrow: 1,
     padding: 16,
-    paddingRight: 24,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -40,7 +39,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   itemInfo: {
-    gap: 4,
+    gap: 0,
     flexGrow: 1,
     flex: 1,
   },
@@ -148,9 +147,7 @@ export const AddressPointItem = (props: AddressItemProps) => {
               borderRadius={12}
             />
             <View style={styles.itemInfo}>
-              <View style={styles.itemName}>
-                <WalletName style={styles.itemNameText} />
-              </View>
+              <WalletName style={styles.itemNameText} />
               {!isLoading ? (
                 <View style={styles.pointsBox}>
                   <RcIconPoints width={20} height={20} />

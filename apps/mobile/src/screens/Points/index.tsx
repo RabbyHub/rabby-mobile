@@ -201,17 +201,11 @@ const PointsScreen = () => {
               index === accountPoints.length - 1 && { marginBottom: 32 },
             ]}>
             <AddressItemContextMenu account={item} actions={['copy', 'edit']}>
-              <AddressPointItem
-                account={item}
-                // alertCount={alertInfo.address2count?.[item.address]}
-                // approvalCount={address2Count?.[item.address]}
-                // onSelect={() => handleSelect(item)}
-              />
+              <AddressPointItem account={item} />
             </AddressItemContextMenu>
           </View>
         )}
         ListHeaderComponent={<InfoBanner />}
-        // ListEmptyComponent={AddressEmptyContainer}
       />
     </NormalScreenContainer2024>
   );

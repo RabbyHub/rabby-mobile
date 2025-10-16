@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
-import RcIconPointsStar from '@/assets2024/icons/points/rabby-points-start.svg';
+import RcIconPointsStar from '@/assets2024/icons/points/rabby-points-star.svg';
 import RcIconClaimComingCC from '@/assets2024/icons/points/claim-coming-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 
@@ -35,7 +35,7 @@ const getStyles = createGetStyles2024(ctx => ({
   bannerTitle: {
     fontSize: 18,
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '800',
+    fontWeight: '900',
     color: ctx.colors2024['neutral-title-1'],
     lineHeight: 22,
     marginBottom: 6,
