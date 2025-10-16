@@ -209,9 +209,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
       expiredTimer.current = setTimeout(() => {
         if (enableRefreshRef.current) {
-          // setRefreshId(e => e + 1);
-          // setRefreshId(e => e + 1);
-          setRefreshId;
+          setRefreshId(e => e + 1);
         }
       }, 1000 * 20);
     },
