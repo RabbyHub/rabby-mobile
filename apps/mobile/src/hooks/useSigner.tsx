@@ -1,7 +1,7 @@
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 
 import { useMemoizedFn } from 'ahooks';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { omit } from 'lodash';
 import {
   GasSelectionOptions,
@@ -11,9 +11,7 @@ import {
 import { Account } from '@/core/services/preference';
 import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
 import {
-  useClearMiniGasStateEffect,
   useMemoMiniSignGasStore,
-  useMiniSignGasStore,
   useMiniSignGasStoreOrigin,
 } from './miniSignGasStore';
 
@@ -48,18 +46,23 @@ export const useMiniSigner = ({
     return resetGasStore;
   }, [resetGasStore]);
 
-  const [previousChainServerId, setPreviousChainServerId] =
-    useState(chainServerId);
+  const previousChainServerIdRef = useRef(chainServerId);
 
-  if (
-    previousChainServerId !== chainServerId &&
-    autoResetGasStoreOnChainChange
-  ) {
-    setPreviousChainServerId(chainServerId);
+  useEffect(() => {
+    if (!autoResetGasStoreOnChainChange) return;
+    if (previousChainServerIdRef.current === chainServerId) return;
+
+    previousChainServerIdRef.current = chainServerId;
+
     if (miniGasLevel === 'custom') {
       resetGasStore();
     }
-  }
+  }, [
+    autoResetGasStoreOnChainChange,
+    chainServerId,
+    miniGasLevel,
+    resetGasStore,
+  ]);
 
   const updateMiniGasStore = useCallback(
     (params: {
@@ -80,7 +83,6 @@ export const useMiniSigner = ({
       );
 
       const isFixedMode = isCustom && !!params.fixed;
-      console.log('isFixedMode updateMiniGas', isFixedMode);
 
       setFixedCustomGas(pre => {
         let data = { ...pre };
@@ -89,8 +91,6 @@ export const useMiniSigner = ({
         if (isFixedMode) {
           data[params.chainId] = params.customGasPrice || 0;
         }
-
-        console.log('setFixedCustomGas data', params.chainId, data);
 
         return data;
       });
@@ -124,30 +124,19 @@ export const useMiniSigner = ({
     return txs || [];
   });
 
-  const prefetch = useMemoizedFn(async (cfg: SimpleSignConfig) => {
-    const txs = await ensureTxs(cfg);
-    if (!txs.length) {
-      signatureStore.close();
-      return;
-    }
+  const buildGasSelection = useMemoizedFn(
+    (tx: Tx, incoming?: GasSelectionOptions): GasSelectionOptions => {
+      if (incoming) return incoming;
 
-    const { isSwap, isBridge, isSend, isSpeedUp, isCancel } = normalizeTxParams(
-      txs[0],
-    );
+      const { isSwap, isBridge, isSend, isSpeedUp, isCancel } =
+        normalizeTxParams(tx);
+      const chainId = tx.chainId;
+      const currentMiniSignGasLevel =
+        fixedCustomGas?.[chainId] !== undefined ? 'custom' : miniGasLevel;
+      const currentMiniCustomGas =
+        fixedCustomGas?.[chainId] ?? miniCustomPrice?.[chainId];
 
-    const signerCfg = toSignerConfig(cfg);
-
-    const chainId = txs[0].chainId;
-    const currentMiniSignGasLevel =
-      fixedCustomGas?.[chainId] !== undefined ? 'custom' : miniGasLevel;
-    const currentMiniCustomGas =
-      fixedCustomGas?.[chainId] ?? miniCustomPrice?.[chainId];
-
-    await signatureStore.prefetch({
-      txs,
-      config: signerCfg,
-      enableSecurityEngine: cfg.enableSecurityEngine,
-      gasSelection: cfg.gasSelection || {
+      return {
         flags: {
           isSwap,
           isBridge,
@@ -161,82 +150,71 @@ export const useMiniSigner = ({
           gasLevel: currentMiniSignGasLevel,
           gasPrice: currentMiniCustomGas,
         },
-      },
+      };
+    },
+  );
+
+  const prepareSignerPayload = useMemoizedFn(
+    async (
+      cfg: SimpleSignConfig,
+    ): Promise<{
+      txs: Tx[];
+      signerConfig: SignerConfig;
+      gasSelection: GasSelectionOptions;
+    } | null> => {
+      const txs = await ensureTxs(cfg);
+      if (!txs.length) return null;
+      const signerConfig = toSignerConfig(cfg);
+      return {
+        txs,
+        signerConfig,
+        gasSelection: buildGasSelection(txs[0], cfg.gasSelection),
+      };
+    },
+  );
+
+  const prefetch = useMemoizedFn(async (cfg: SimpleSignConfig) => {
+    const payload = await prepareSignerPayload(cfg);
+    if (!payload) {
+      signatureStore.close();
+      return;
+    }
+
+    await signatureStore.prefetch({
+      txs: payload.txs,
+      config: payload.signerConfig,
+      enableSecurityEngine: cfg.enableSecurityEngine,
+      gasSelection: payload.gasSelection,
     });
   });
 
   const openUI = useMemoizedFn(
     async (cfg: SimpleSignConfig): Promise<string[]> => {
-      const txs = await ensureTxs(cfg);
-      if (!txs.length) {
+      const payload = await prepareSignerPayload(cfg);
+      if (!payload) {
         throw new Error('No transactions to sign');
       }
-      const signerCfg = toSignerConfig(cfg);
-      const { isSwap, isBridge, isSend, isSpeedUp, isCancel } =
-        normalizeTxParams(txs[0]);
-
-      const chainId = txs[0].chainId;
-      const currentMiniSignGasLevel =
-        fixedCustomGas?.[chainId] !== undefined ? 'custom' : miniGasLevel;
-      const currentMiniCustomGas =
-        fixedCustomGas?.[chainId] ?? miniCustomPrice?.[chainId];
 
       return signatureStore.startUI({
-        txs,
-        config: signerCfg,
+        txs: payload.txs,
+        config: payload.signerConfig,
         enableSecurityEngine: cfg.enableSecurityEngine,
-        gasSelection: cfg.gasSelection || {
-          flags: {
-            isSwap,
-            isBridge,
-            isSend,
-            isSpeedUp,
-            isCancel,
-          },
-          lastSelection: {
-            lastTimeSelect:
-              currentMiniSignGasLevel === 'custom' ? 'gasPrice' : 'gasLevel',
-            gasLevel: currentMiniSignGasLevel,
-            gasPrice: currentMiniCustomGas,
-          },
-        },
+        gasSelection: payload.gasSelection,
       });
     },
   );
 
   const openDirect = useMemoizedFn(
     async (cfg: SimpleSignConfig): Promise<string[]> => {
-      const txs = await ensureTxs(cfg);
-      if (!txs.length) {
+      const payload = await prepareSignerPayload(cfg);
+      if (!payload) {
         throw new Error('No transactions to sign');
       }
-      const { isSwap, isBridge, isSend, isSpeedUp, isCancel } =
-        normalizeTxParams(txs[0]);
-      const signerCfg = toSignerConfig(cfg);
-      const chainId = txs[0].chainId;
-      const currentMiniSignGasLevel =
-        fixedCustomGas?.[chainId] !== undefined ? 'custom' : miniGasLevel;
-      const currentMiniCustomGas =
-        fixedCustomGas?.[chainId] ?? miniCustomPrice?.[chainId];
       return signatureStore.openDirect({
-        txs,
-        config: signerCfg,
+        txs: payload.txs,
+        config: payload.signerConfig,
         enableSecurityEngine: false,
-        gasSelection: cfg.gasSelection || {
-          flags: {
-            isSwap,
-            isBridge,
-            isSend,
-            isSpeedUp,
-            isCancel,
-          },
-          lastSelection: {
-            lastTimeSelect:
-              currentMiniSignGasLevel === 'custom' ? 'gasPrice' : 'gasLevel',
-            gasLevel: currentMiniSignGasLevel,
-            gasPrice: currentMiniCustomGas,
-          },
-        },
+        gasSelection: payload.gasSelection,
       });
     },
   );

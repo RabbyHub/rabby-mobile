@@ -1,7 +1,7 @@
 import React from 'react';
 import { findChainByID } from '@/utils/chain';
 import { noop } from 'lodash';
-import { INTERNAL_REQUEST_SESSION, INTERNAL_REQUEST_ORIGIN } from '@/constant';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 
 import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
 import { TxTypeComponent } from '@/components/Approval/components/SignTx/TxTypeComponent';
@@ -62,6 +62,7 @@ export const MiniSecurityHeader: React.FC<{
             }
           : undefined
       }
+      inDappAction
     />
   );
 };

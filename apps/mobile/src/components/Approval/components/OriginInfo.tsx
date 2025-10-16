@@ -19,6 +19,7 @@ interface Props {
   origin?: string;
   originLogo?: string;
   engineResults?: Result[];
+  inDappAction?: boolean;
 }
 
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
@@ -41,7 +42,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
   },
   chainLogo: {
@@ -63,6 +64,7 @@ export const OriginInfo: React.FC<Props> = ({
   chain,
   originLogo,
   engineResults = [],
+  inDappAction,
 }) => {
   const security = useApprovalSecurityEngine();
   const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
@@ -71,6 +73,9 @@ export const OriginInfo: React.FC<Props> = ({
   const { styles } = useTheme2024({ getStyle });
 
   const currentChain = useMemo(() => {
+    if (inDappAction) {
+      return chain || CHAINS.ETH;
+    }
     if (origin === INTERNAL_REQUEST_ORIGIN) {
       return chain || CHAINS.ETH;
     } else {
@@ -81,7 +86,7 @@ export const OriginInfo: React.FC<Props> = ({
         enum: connectedSite.chainId,
       })!;
     }
-  }, [chain, origin, connectedSite]);
+  }, [inDappAction, origin, chain, connectedSite]);
 
   const displayOrigin = useMemo(() => {
     if (origin === INTERNAL_REQUEST_ORIGIN) {

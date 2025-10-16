@@ -19,6 +19,10 @@ import { useSyncExternalStore } from 'react';
 import { apiLedger, apiOneKey } from '@/core/apis';
 import { callConnectLedgerModal } from '@/hooks/ledger/useLedgerStatus';
 import { callConnectOneKeyModal } from '@/hooks/onekey/useOneKeyStatus';
+import {
+  notificationService,
+  transactionHistoryService,
+} from '@/core/services';
 
 const ETH_GAS_USD_LIMIT = 15;
 const OTHER_GAS_USD_LIMIT = 5;
@@ -63,29 +67,8 @@ class SignatureManager {
   private dispatch(action: SignatureAction) {
     const next = signatureReducer(this.state, action);
     if (next === this.state) return;
+    this.applyRuntimeState(next);
     this.state = next;
-    if (this.state.ctx?.txs) {
-      this.state.ctx.disabledProcess = !this.canProcess();
-
-      if (this.state.ctx) {
-        this.state.ctx.disabledProcess = !this.canProcess();
-        this.state.ctx.gasFeeTooHigh = false;
-
-        const chainInfo = findChain({ id: this.state.ctx.txs[0]?.chainId });
-
-        if (
-          this.state.config?.checkGasFeeTooHigh &&
-          this.state.ctx?.selectedGasCost?.gasCostUsd.gt(
-            chainInfo?.enum === CHAINS_ENUM.ETH
-              ? ETH_GAS_USD_LIMIT
-              : OTHER_GAS_USD_LIMIT,
-          )
-        ) {
-          this.state.ctx.gasFeeTooHigh = true;
-        }
-      }
-    }
-
     this.notify();
   }
 
@@ -99,6 +82,41 @@ class SignatureManager {
         fn(snapshot);
       }
     });
+  }
+
+  private applyRuntimeState(nextState: SignatureFlowState) {
+    const ctx = nextState.ctx;
+    if (!ctx?.txs?.length) return;
+    ctx.disabledProcess = !this.canProcess(nextState);
+    ctx.gasFeeTooHigh = this.isGasFeeTooHighFor(ctx, nextState.config);
+  }
+
+  private getFingerprint(txs: Tx[]) {
+    return signatureService.fingerprint(txs);
+  }
+
+  private getGasUsdLimit(chainId?: number) {
+    const chainInfo = findChain({ id: chainId });
+    return chainInfo?.enum === CHAINS_ENUM.ETH
+      ? ETH_GAS_USD_LIMIT
+      : OTHER_GAS_USD_LIMIT;
+  }
+
+  private isGasFeeTooHighFor(
+    ctx?: SignerCtx | null,
+    config?: SignerConfig | null,
+  ) {
+    if (!ctx || !config?.checkGasFeeTooHigh || config.ignoreGasFeeTooHigh) {
+      return false;
+    }
+    const limit = this.getGasUsdLimit(ctx.chainId);
+    const gasCost = ctx.selectedGasCost?.gasCostUsd;
+    return !!gasCost?.gt(limit);
+  }
+
+  private clearRunState() {
+    this.run = null;
+    this.pendingCtx.clear();
   }
 
   private markRun(fingerprint: string, currentPendingId?: number) {
@@ -117,7 +135,7 @@ class SignatureManager {
   }
 
   private ensureContext(request: SignatureRequest, opId?: number) {
-    const fingerprint = signatureService.fingerprint(request.txs);
+    const fingerprint = this.getFingerprint(request.txs);
 
     this.dispatch({ type: 'SET_CONFIG', payload: request.config });
 
@@ -156,7 +174,6 @@ class SignatureManager {
       })
       .catch(error => {
         console.error('PREFETCH_FAILURE error', error);
-        const message = createErrorMessage(error);
         if (this.isActive(currentOpId, fingerprint)) {
           this.dispatch({
             type: 'PREFETCH_FAILURE',
@@ -205,8 +222,8 @@ class SignatureManager {
     };
   }
 
-  private canProcess() {
-    const { ctx, status } = this.state;
+  private canProcess(state: SignatureFlowState = this.state) {
+    const { ctx } = state;
     const gasMethod = ctx?.gasMethod;
     const gasAccountCanPay =
       ctx?.gasMethod === 'gasAccount' &&
@@ -261,11 +278,12 @@ class SignatureManager {
   }
 
   public prefetch(request: SignatureRequest) {
+    this.close();
     return this.ensureContext(request);
   }
 
   public async openUI(request: SignatureRequest) {
-    const fingerprint = signatureService.fingerprint(request.txs);
+    const fingerprint = this.getFingerprint(request.txs);
     const opId = this.markRun(fingerprint);
     this.dispatch({ type: 'SET_CONFIG', payload: request.config });
 
@@ -401,14 +419,22 @@ class SignatureManager {
     }
   }
 
+  private removeSigningTx() {
+    const signingTxId = notificationService.currentMiniApproval?.signingTxId;
+    if (signingTxId) {
+      transactionHistoryService.removeSigningTx(signingTxId);
+      notificationService.currentMiniApproval = null;
+    }
+  }
+
   public reset() {
-    this.run = null;
-    this.pendingCtx.clear();
+    this.clearRunState();
     this.seq++;
     if (this.pendingResult) {
       this.pendingResult.reject(MINI_SIGN_ERROR.USER_CANCELLED);
       this.pendingResult = null;
     }
+    this.removeSigningTx();
     this.dispatch({ type: 'RESET' });
   }
 
@@ -470,7 +496,7 @@ class SignatureManager {
   }
 
   public async openDirect(request: SignatureRequest) {
-    const fingerprint = signatureService.fingerprint(request.txs);
+    const fingerprint = this.getFingerprint(request.txs);
     const resultPromise = this.createResultPromise();
     if (this.state.status === 'prefetch_failure') {
       this.rejectPending(MINI_SIGN_ERROR.PREFETCH_FAILURE);
@@ -489,16 +515,7 @@ class SignatureManager {
         this.pendingCtx.get(fingerprint) ||
         this.ensureContext(request, this.run?.id);
       await prepared;
-      const chainInfo = findChain({ id: request.txs[0]?.chainId });
-      if (
-        this.state.config?.checkGasFeeTooHigh &&
-        !this.state.config.ignoreGasFeeTooHigh &&
-        this.state.ctx?.selectedGasCost?.gasCostUsd.gt(
-          chainInfo?.enum === CHAINS_ENUM.ETH
-            ? ETH_GAS_USD_LIMIT
-            : OTHER_GAS_USD_LIMIT,
-        )
-      ) {
+      if (this.isGasFeeTooHighFor(this.state.ctx, this.state.config)) {
         this.rejectPending(MINI_SIGN_ERROR.GAS_FEE_TOO_HIGH);
         return resultPromise;
       }
@@ -578,8 +595,8 @@ class SignatureManager {
       this.pendingResult.resolve(hashes);
       this.pendingResult = null;
     }
-    this.run = null;
-    this.pendingCtx.clear();
+    this.clearRunState();
+    this.removeSigningTx();
     this.dispatch({ type: 'RESET' });
   }
 
@@ -588,8 +605,8 @@ class SignatureManager {
       this.pendingResult.reject(message);
       this.pendingResult = null;
     }
-    this.run = null;
-    this.pendingCtx.clear();
+    this.clearRunState();
+    this.removeSigningTx();
   }
 }
 

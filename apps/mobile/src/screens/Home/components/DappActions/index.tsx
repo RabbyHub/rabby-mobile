@@ -192,7 +192,7 @@ export const DappActions = ({
                 method: 'eth_sendTransaction',
                 params: [tx],
               },
-              session,
+              session: INTERNAL_REQUEST_SESSION,
               account: currentAccount!,
             });
           }

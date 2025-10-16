@@ -29,17 +29,17 @@ import BigNumber from 'bignumber.js';
 import { toast as toast2024 } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 
-const MiniSignTxV2 = () => {
+const MiniSignTxV2 = ({
+  showCheckSecurity,
+  onToggleCheckSecurity,
+}: {
+  showCheckSecurity: boolean;
+  onToggleCheckSecurity: () => void;
+}) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({
     getStyle: getSheetStyles,
   });
-
-  const [showCheckSecurity, setShowCheckSecurity] = useState(false);
-
-  const onToggleCheckSecurity = useCallback(() => {
-    setShowCheckSecurity(e => !e);
-  }, []);
 
   const state = useSignatureStore();
 

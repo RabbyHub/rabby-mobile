@@ -5,7 +5,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { dappService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
-import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { navigate } from '@/utils/navigation';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -30,6 +30,8 @@ import {
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
 import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataApprovalTask';
 import RcCheckSecurity from '@/assets2024/icons/common/check-security.svg';
+import RcCheckSecurityDark from '@/assets2024/icons/common/check-security-dark.svg';
+
 import { Text } from 'react-native';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -82,8 +84,8 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
 const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   wrapper: {
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 52,
+    paddingTop: 16,
+    paddingBottom: 48,
     // borderTopLeftRadius: 16,
     // borderTopRightRadius: 16,
     // backgroundColor: colors['neutral-bg-1'],
@@ -243,7 +245,7 @@ export const MiniFooterBar: React.FC<Props> = ({
   disableSignBtn,
   ...props
 }) => {
-  const { colors2024 } = useTheme2024();
+  const { colors2024, isLight } = useTheme2024();
 
   const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
     null,
@@ -455,7 +457,11 @@ export const MiniFooterBar: React.FC<Props> = ({
                 onPress={() => {
                   onChangeCheckSecurity?.();
                 }}>
-                <RcCheckSecurity width={28} height={28} />
+                {isLight ? (
+                  <RcCheckSecurity width={28} height={28} />
+                ) : (
+                  <RcCheckSecurityDark width={28} height={28} />
+                )}
                 <View
                   style={{
                     flexDirection: 'row',

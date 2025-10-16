@@ -48,10 +48,12 @@ export const getActionsStyle = createGetStyles2024(
       flex: 1,
     },
     leftText: {
-      fontSize: 16,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontStyle: 'normal',
+      fontWeight: '700',
       lineHeight: 18,
-      color: colors['neutral-title-1'],
-      fontWeight: '500',
     },
     speedUpIcon: {
       width: 16,
@@ -77,7 +79,7 @@ export const getActionsStyle = createGetStyles2024(
     },
     isUnknown: {},
     isUnknownText: {
-      color: colors['neutral-foot'],
+      // color: colors['neutral-foot'],
     },
     container: {
       paddingHorizontal: 16,
@@ -99,9 +101,12 @@ export const getActionsStyle = createGetStyles2024(
       color: '#999999',
     },
     viewRawText: {
-      fontSize: 13,
-      lineHeight: 16,
-      color: colors['neutral-foot'],
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 20,
     },
     signTitleRight: {
       flexDirection: 'row',
@@ -125,11 +130,11 @@ export const getActionsStyle = createGetStyles2024(
       position: 'relative',
     },
     icon: {
-      width: 14,
-      height: 14,
+      // width: 14,
+      // height: 14,
       marginRight: 2,
       marginTop: 2,
-      color: colors['neutral-foot'],
+      color: colors2024['neutral-info'],
     },
     signTitleLeft: {
       flexDirection: 'row',
@@ -228,8 +233,8 @@ const ActionItem = ({
                 />
               }>
               <IconQuestionMark
-                width={styles.icon.width}
-                height={styles.icon.height}
+                // width={styles.icon.width}
+                // height={styles.icon.height}
                 color={styles.icon.color}
                 style={styles.icon}
               />
@@ -289,6 +294,7 @@ const Actions = ({
   originLogo,
   account,
   multiAction,
+  inDappAction,
 }: {
   data: ParsedActionData;
   requireData: ActionRequireData;
@@ -302,6 +308,7 @@ const Actions = ({
   originLogo?: string;
   account: Account;
   multiAction?: MultiActionProps;
+  inDappAction?: boolean;
 }) => {
   const isMultiAction = useMemo(() => {
     return !!multiAction;
@@ -316,6 +323,7 @@ const Actions = ({
           origin={origin}
           originLogo={originLogo}
           engineResults={engineResults}
+          inDappAction={inDappAction}
         />
         <BalanceChangeWrapper
           data={data}

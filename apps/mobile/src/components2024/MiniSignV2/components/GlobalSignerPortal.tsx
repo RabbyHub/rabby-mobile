@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Dimensions, Modal, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -16,7 +16,7 @@ export const GlobalSignerPortal: React.FC = () => {
   const state = useSignatureStore();
   const { config, ctx, status, error } = state;
   console.log('useSignatureStore state', state);
-  const { styles } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle: getSheetStyles,
   });
   const handleRetry = () => {
@@ -61,6 +61,17 @@ export const GlobalSignerPortal: React.FC = () => {
 
     return false;
   }, [ctx?.mode, status]);
+  const [showCheckSecurity, setShowCheckSecurity] = useState(false);
+
+  const onToggleCheckSecurity = useCallback(() => {
+    setShowCheckSecurity(e => !e);
+  }, []);
+
+  useEffect(() => {
+    if (config?.account || state.status === 'idle' || !ctx?.txs.length) {
+      setShowCheckSecurity(false);
+    }
+  }, [config?.account, state.status, ctx?.txs.length]);
 
   if (!config?.account || state.status === 'idle' || !ctx?.txs.length) {
     return null;
@@ -72,7 +83,12 @@ export const GlobalSignerPortal: React.FC = () => {
         index={!showUI ? -1 : 0}
         ref={sheetModalRef}
         style={styles.sheet}
-        handleStyle={styles.handleStyle}
+        handleStyle={[
+          styles.handleStyle,
+          showCheckSecurity && {
+            backgroundColor: colors2024['neutral-bg-0'],
+          },
+        ]}
         handleIndicatorStyle={styles.handleIndicatorStyle}
         enableDynamicSizing
         maxDynamicContentSize={Dimensions.get('screen').height * 0.9}
@@ -89,7 +105,12 @@ export const GlobalSignerPortal: React.FC = () => {
             style={{
               minHeight: 164,
             }}>
-            {ctx?.txs?.length ? <MiniSignTxV2 /> : null}
+            {ctx?.txs?.length ? (
+              <MiniSignTxV2
+                showCheckSecurity={showCheckSecurity}
+                onToggleCheckSecurity={onToggleCheckSecurity}
+              />
+            ) : null}
           </AutoLockView>
         </BottomSheetView>
       </AppBottomSheetModal>

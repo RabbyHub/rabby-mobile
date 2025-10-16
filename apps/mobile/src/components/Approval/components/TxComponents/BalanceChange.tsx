@@ -15,8 +15,7 @@ import * as Values from '../Actions/components/Values';
 import RcIconAlert from '@/assets/icons/sign/tx/alert-currentcolor.svg';
 import { formatNumber, formatUsdValue } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
 import NoBalanceSVG from '@/assets/icons/sign/no-balance-cc.svg';
@@ -25,11 +24,13 @@ import TouchableText from '@/components/Touchable/TouchableText';
 import { Account } from '@/core/services/preference';
 import { createGetStyles2024 } from '@/utils/styles';
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   tokenBalanceChange: {
     marginTop: 16,
     paddingHorizontal: 16,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-line'],
     borderRadius: 8,
     paddingTop: 12,
     paddingBottom: 8,
@@ -171,14 +172,14 @@ const NFTBalanceChange = ({
                   <Text
                     style={{
                       ...commonStyle.primaryText,
-                      color: colors['red-default'],
+                      color: colors2024['red-default'],
                     }}>
                     - {item.amount}{' '}
                   </Text>
                   <Text
                     style={{
                       ...commonStyle.primaryText,
-                      color: colors['red-default'],
+                      color: colors2024['red-default'],
                     }}>
                     {item.collection ? item.collection.name : item.name}
                   </Text>
@@ -394,7 +395,7 @@ const BalanceChange = ({
                       <Text
                         style={StyleSheet.flatten({
                           ...commonStyle.primaryText,
-                          color: colors['red-default'],
+                          color: colors2024['red-default'],
                           fontSize: 16,
                         })}>
                         - {formatAmount(token.amount)}{' '}
@@ -404,7 +405,7 @@ const BalanceChange = ({
                         style={StyleSheet.flatten([
                           {
                             ...commonStyle.primaryText,
-                            color: colors['red-default'],
+                            color: colors2024['red-default'],
                             fontSize: 16,
                           },
                           commonStyle.clickableTokenText,
@@ -453,7 +454,7 @@ const BalanceChange = ({
                       <Text
                         style={StyleSheet.flatten({
                           ...commonStyle.primaryText,
-                          color: colors['green-default'],
+                          color: colors2024['green-default'],
                           fontSize: 16,
                         })}>
                         + {formatAmount(token.amount)}{' '}
@@ -461,7 +462,7 @@ const BalanceChange = ({
                       <Text
                         style={StyleSheet.flatten({
                           ...commonStyle.primaryText,
-                          color: colors['green-default'],
+                          color: colors2024['green-default'],
                           fontSize: 16,
                         })}
                         onPress={() => handleClickToken(token)}>

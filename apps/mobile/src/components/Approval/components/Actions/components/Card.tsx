@@ -12,12 +12,14 @@ import { Divide } from './Divide';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) =>
+const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) =>
   StyleSheet.create({
     card: {
       borderRadius: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
-      borderColor: colors['neutral-card-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      borderColor: isLight ? colors['neutral-card-1'] : 'transparent',
       borderWidth: 1,
       borderStyle: 'solid',
     },

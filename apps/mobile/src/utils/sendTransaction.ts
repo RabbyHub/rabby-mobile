@@ -794,7 +794,7 @@ export const sendTransactionByMiniSignV2 = async ({
           },
         ],
       },
-      session: session || INTERNAL_REQUEST_SESSION,
+      session: INTERNAL_REQUEST_SESSION,
       approvalRes: {
         ...transaction,
         signingTxId,
