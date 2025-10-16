@@ -1218,7 +1218,6 @@
         "selectAddMethod": "選擇添加方法"
       },
       "importAddress": {
-        "safe": "安全",
         "seedPhrase": "匯入助記詞",
         "privateKey": "導入私人密鑰",
         "hardWare": "連接硬體錢包",
@@ -1856,16 +1855,6 @@
       "tabs": {
         "tokenSecurity": "代幣安全",
         "marketData": "市場數據"
-      },
-      "interval": {
-        "5M": "5M",
-        "1W": "1W",
-        "30M": "30M",
-        "1D": "1天",
-        "1M": "1M",
-        "4H": "4H",
-        "15M": "15M",
-        "1H": "1H"
       },
       "marketInfo": {
         "holders": "持有者",
