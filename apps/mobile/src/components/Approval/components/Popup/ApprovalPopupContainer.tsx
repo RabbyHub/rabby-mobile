@@ -145,7 +145,12 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   retryUpdateType = 'origin',
 }) => {
   const [iconColor, setIconColor] = React.useState('');
-  const [contentColor, setContentColor] = React.useState('');
+  const [contentColor, setContentColor] = React.useState<
+    keyof AppColorsVariants
+  >(
+    // @ts-expect-error
+    '', // FIXME
+  );
   const { t } = useTranslation();
   const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
 

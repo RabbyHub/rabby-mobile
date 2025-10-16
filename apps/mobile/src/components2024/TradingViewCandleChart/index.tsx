@@ -10,10 +10,7 @@ import React, {
 } from 'react';
 import { Platform, StyleProp, Text, View, ViewStyle } from 'react-native';
 import { WebView } from 'react-native-webview';
-import {
-  createTradingViewChartTemplate,
-  TradeViewJSGlobalUtils,
-} from './template';
+import { createTradingViewChartTemplate } from './template';
 import { CandleData, CandleStick } from './type';
 import { openExternalUrl } from '@/core/utils/linking';
 import { useTranslation } from 'react-i18next';

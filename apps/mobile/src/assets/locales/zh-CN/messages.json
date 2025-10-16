@@ -2300,6 +2300,9 @@
     "perpsHistory": {
       "title": "历史"
     },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "内建页面"
+    },
     "perps": {
       "PerpsCard": {
         "depositBtn": "存款",
