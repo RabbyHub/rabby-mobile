@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -26,10 +26,25 @@ const SupplyPoolList = (props: IProps) => {
     console.log('handlePressItem', item);
   };
 
+  const ListHeaderComponent = useCallback(() => {
+    return (
+      <View style={styles.listHeader}>
+        <Text style={styles.headerToken}>Token</Text>
+        <Text style={styles.headerApy}>APY</Text>
+        <Text style={styles.headerMySupplies}>My Supplies</Text>
+      </View>
+    );
+  }, [
+    styles.headerApy,
+    styles.headerMySupplies,
+    styles.headerToken,
+    styles.listHeader,
+  ]);
   return (
     <Tabs.FlatList
       data={sortReserves}
       style={styles.container}
+      ListHeaderComponent={ListHeaderComponent}
       renderItem={({ item, index }) => (
         <TouchableOpacity
           style={styles.item}
@@ -104,7 +119,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   right: {
     flex: 0,
-    marginLeft: 26,
+    marginLeft: 10,
+    width: 80,
     gap: 2,
   },
   symbolContainer: {
@@ -127,11 +143,40 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    textAlign: 'right',
   },
   yourBalance: {
     fontSize: 14,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    textAlign: 'right',
+  },
+  listHeader: {
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    marginBottom: 2,
+  },
+  headerToken: {
+    fontSize: 14,
+    color: colors2024['neutral-secondary'],
+    flex: 1,
+  },
+  headerApy: {
+    fontSize: 14,
+    color: colors2024['neutral-secondary'],
+    width: 60,
+    flex: 0,
+  },
+  headerMySupplies: {
+    fontSize: 14,
+    color: colors2024['neutral-secondary'],
+    flex: 0,
+    marginLeft: 10,
+    width: 80,
   },
 }));
