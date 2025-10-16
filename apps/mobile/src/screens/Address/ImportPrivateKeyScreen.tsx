@@ -7,7 +7,7 @@ import { PasteTextArea } from './components/PasteTextArea';
 import { QandASection } from './components/QandASection';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { apiPrivateKey } from '@/core/apis';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
@@ -41,7 +41,7 @@ export const ImportPrivateKeyScreen = () => {
     apiPrivateKey
       .importPrivateKey(privateKey)
       .then(([account]) => {
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess,
           params: {
             type: KEYRING_TYPE.SimpleKeyring,

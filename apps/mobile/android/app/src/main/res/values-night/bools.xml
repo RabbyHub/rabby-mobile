@@ -1,0 +1,5 @@
+<resources>
+    <bool name="appIsLight">false</bool>
+    <bool name="webviewIsLight">false</bool>
+    <bool name="windowLightStatusBar">false</bool>
+</resources>

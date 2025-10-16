@@ -36,6 +36,7 @@ import { isEqual, unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
 import { useHistoryTokenDict } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
+import { balanceAtom } from './useAccountsBalance';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -236,33 +237,40 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   };
 };
 
-export const usePinnedAccountList = (opts?: { disableAutoFetch?: boolean }) => {
-  const { disableAutoFetch = false } = opts || {};
-  const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
-  const { accounts } = useAccounts(opts);
+export const usePinnedAccountList = () => {
+  const [pinAddresses] = useAtom(pinAddressesAtom);
+  const [accounts] = useAtom(accountsAtom);
+  const [balanceAccounts] = useAtom(balanceAtom);
 
   const pinnedAccountList = useMemo(() => {
     const res: KeyringAccountWithAlias[] = [];
     pinAddresses?.forEach(pinAddr => {
-      const acc = accounts.find(account => {
+      const item = accounts.find(account => {
         return (
           isSameAddress(pinAddr.address, account.address) &&
           account.brandName === pinAddr.brandName
         );
       });
       if (
-        acc &&
+        item &&
         ![
           KEYRING_TYPE.GnosisKeyring,
           KEYRING_TYPE.WatchAddressKeyring,
           KEYRING_TYPE.WalletConnectKeyring,
-        ].includes(acc.type)
+        ].includes(item.type)
       ) {
-        res.push(acc);
+        const account = balanceAccounts.find(acc =>
+          isSameAddress(acc.address, item.address),
+        );
+        res.push({
+          ...item,
+          balance: account?.balance || item.balance || 0,
+          evmBalance: account?.evmBalance || item.evmBalance || 0,
+        });
       }
     });
     return res;
-  }, [accounts, pinAddresses]);
+  }, [accounts, balanceAccounts, pinAddresses]);
 
   return pinnedAccountList;
 };

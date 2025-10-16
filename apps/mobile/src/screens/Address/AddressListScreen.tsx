@@ -71,13 +71,13 @@ export function AddressListScreen(): JSX.Element {
 
   const list = useSortAddressList(filterAccounts);
   const onGotoWatchAddress = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
+    navigation.navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.WatchAddressList,
     });
   }, [navigation]);
 
   const onGotoSafeAddress = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
+    navigation.navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.SafeAddressList,
     });
   }, [navigation]);

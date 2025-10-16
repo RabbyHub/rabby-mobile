@@ -1628,7 +1628,19 @@
         },
         "customAddressHdPath": "사용자 정의 지갑 HD 경로",
         "selectIndexTip": "지갑의 일련번호를 선택하여 시작하세요:",
-        "manageAddressFrom": "{{0}}에서 {{1}}까지 지갑 관리"
+        "manageAddressFrom": "{{0}}에서 {{1}}까지 지갑 관리",
+        "trezor": {
+          "hdPathType": {
+            "legacy": "레거시: MEW / Mycrypto에서 사용하는 HD 경로.",
+            "bip44": "BIP44: BIP44 프로토콜에 의해 정의된 HDpath.",
+            "ledgerLive": "레저 라이브: 레저 공식 HD 경로."
+          },
+          "hdPathTypeNoChain": {
+            "legacy": "유산: MEW / Mycrypto에서 사용되는 HD 경로.",
+            "bip44": "BIP44: BIP44 프로토콜에 의해 정의된 HD 경로.",
+            "ledgerLive": "Ledger Live: Ledger 공식 HD 경로."
+          }
+        }
       },
       "seedPhrase": {
         "showSeedPhrase": "시드 구문 표시",
@@ -1836,7 +1848,6 @@
             "hour": "시간",
             "min": "최소",
             "time": "시간",
-            "tradingCount": "거래 수",
             "buy": "구입하기",
             "addresses": "주소",
             "address": "주소",
@@ -2067,6 +2078,10 @@
         "btn": "지금 가입하세요",
         "title": "하이퍼리퀴드 추천 프로그램",
         "desc": "지금 Rabby의 코드를 사용하여 Hyperliquid 수수료에서 <1>4% 할인</1>을 받으세요."
+      },
+      "WebviewError": {
+        "error": "오류:",
+        "failedToLoad": "페이지를 불러오는 데 실패했습니다."
       }
     },
     "browserManage": {
@@ -2185,6 +2200,243 @@
     },
     "perpsHistory": {
       "title": "역사"
+    },
+    "perps": {
+      "PerpsCard": {
+        "withdrawBtn": "출금",
+        "loginBtn": "영구 계약 거래에 로그인",
+        "available": "사용 가능",
+        "depositBtn": "입금",
+        "learnBtn": "Perps에 대해 알아보기",
+        "loginDesc": "주소로 로그인하고 자금을 입금하여 영구 계약 거래를 시작하세요.",
+        "title": "Perps 거래하기"
+      },
+      "PerpsGuidePopup": {
+        "step1Title": "마스터 영구선물 계약",
+        "step3Title": "숏",
+        "step5Title": "청산",
+        "step2Title": "롱",
+        "step4Title": "레버리지 조정",
+        "step1Desc": "영구 선물 계약을 통해, 당신은 단순히 자산을 거래하는 것이 아닙니다. 당신은 다음에 일어날 것이라고 생각하는 것을 거래하고 있습니다.",
+        "step3Desc": "가격이 하락할 것으로 예상할 때, 숏 포지션을 엽니다. 가격이 하락하면 이익을 얻고, 상승하면 손실을 봅니다.",
+        "step2Desc": "가격이 상승할 것으로 예상할 때 롱 포지션을 엽니다. 가격이 상승하면 이익을 얻습니다. 가격이 하락하면 손실을 봅니다.",
+        "step4Desc": "레버리지는 당신이 투입한 것보다 더 많은 거래를 할 수 있게 해줍니다. 이는 당신의 수익과 손실을 모두 증가시킬 수 있습니다.",
+        "step5Desc": "모든 포지션에는 청산 가격이 있습니다. 만약 시장 가격이 해당 가격에 도달하면 귀하의 포지션은 청산됩니다. 높은 레버리지를 사용할수록 청산될 위험이 커집니다."
+      },
+      "PerpsDepositPopup": {
+        "amount": "금액",
+        "title": "입금",
+        "balance": "잔고",
+        "depositBtn": "입금",
+        "insufficientBalance": "잔액 부족",
+        "minimumDepositSize": "최소 입금 금액은 $5입니다.",
+        "invalidNumber": "유효한 숫자를 입력해 주세요",
+        "fetchQuoteFailed": "입금 견적을 가져오는 데 실패했습니다. 토큰을 전환해 주세요.",
+        "estReceiveTooltip": "크로스체인 예치는 LiFi를 통해 처리되며, 일부 슬ippage가 발생할 수 있습니다. 예상 도착 시간: {{number}}초.",
+        "estReceive": "예상 수령액: {{balance}}"
+      },
+      "PerpsWithdrawPopup": {
+        "amount": "금액",
+        "feeTooltipTitle": "수수료",
+        "insufficientBalance": "잔액 부족",
+        "feeTooltipDesc": "Hyperliquid에서 청구하는 출금 수수료: $1",
+        "invalidNumber": "유효한 숫자를 입력하십시오",
+        "withdrawBtn": "출금",
+        "feeTip": "수수료: $1.00",
+        "title": "출금",
+        "available": "사용 가능",
+        "minimumWithdrawSize": "최소 인출 금액은 $2입니다."
+      },
+      "PerpsWithdrawFeePopup": {
+        "btn": "알겠어요",
+        "title": "수수료",
+        "desc": "Hyperliquid에서 부과하는 출금 수수료: $1"
+      },
+      "historyDetail": {
+        "title": {
+          "openLong": "롱 포지션 열기",
+          "openShort": "Short 열기",
+          "closeLong": "롱 청산",
+          "closeShortLiquidation": "Close Short 청산",
+          "closeLongLiquidation": "롱 청산 종료",
+          "closeShort": "숏 닫기",
+          "closeShortTp": "숏 청산 이익 실현",
+          "closeLongSl": "롱 포지션 청산 손절매",
+          "closeLongTp": "롱 청산 이익 실현",
+          "closeShortSl": "쇼트 정리 손실 단차"
+        },
+        "date": "날짜",
+        "price": "가격",
+        "provider": "제공자",
+        "size": "규모",
+        "tradeValue": "거래 가치",
+        "closedPnl": "종료된 PNL",
+        "fee": "수수료",
+        "gotItBtn": "알겠습니다",
+        "perps": "영구 계약",
+        "sizeTips": "거래의 총 가치 또는 수량으로, 마진과 레버리지에 의해 설정됩니다."
+      },
+      "PerpsAutoCloseModal": {
+        "loss": "손실",
+        "stopLoss": "손절매",
+        "profit": "이익",
+        "stopLossTipsShort": "손절 가격은 현재 가격보다 높아야 합니다.",
+        "takeProfitTipsLong": "익절 가격은 현재 가격보다 높아야 합니다.",
+        "takeProfitTipsShort": "이익 실현가는 현재 가격보다 낮아야 합니다.",
+        "takeProfit": "익스펙트 수익",
+        "stopLossTipsLong": "손절매 가격은 현재 가격보다 낮아야 합니다.",
+        "stopLossTipsShortLiquidation": "가격이 청산 가격({{price}})보다 높습니다.",
+        "stopLossTipsLongLiquidation": "가격이 청산 가격 ({{price}}) 보다 낮습니다."
+      },
+      "PerpsDepositTokenModal": {
+        "directTag": "직접 입금",
+        "bridgeBtn": "브릿지",
+        "swapBtn": "스왑",
+        "goSwapDesc": "현재 직접 입금은 Arbitrum에서 USDC만 지원됩니다. 입금하기 전에 현재 토큰을 USDC로 교환해 주세요.",
+        "goBridgeDesc": "Arbitrum에서 직접 입금을 지원하는 것은 USDC만 가능합니다. 입금 전에 현재 토큰을 Arbitrum의 USDC로 브릿징해 주세요."
+      },
+      "history": {
+        "status": {
+          "completed": "완료됨",
+          "pending": "대기 중"
+        },
+        "title": "기록",
+        "closeLongSl": "롱 포지션 청산 손절매",
+        "closeLongTp": "롱 포지션 청산 이익 실현",
+        "deposit": "입금",
+        "closeShortTp": "숏 청산 이익 실현",
+        "closeLongLiquidation": "롱 청산 종료",
+        "closeShort": "Short 청산",
+        "closeShortLiquidation": "Short 청산 종료",
+        "openShort": "쇼트 열기",
+        "withdraw": "출금",
+        "openLong": "롱 포지션 열기",
+        "closeLong": "Long 청산",
+        "closeShortSl": "숏 청산 손절매"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "토큰 선택하여 입금"
+      },
+      "PerpsAccountLogoutPopup": {
+        "logout": "로그아웃",
+        "title": "현재 주소 로그아웃",
+        "desc": "현재 Perps 계정에서 로그아웃하고 있습니다. 이 주소로 로그인하면 언제든지 계정을 복구할 수 있습니다."
+      },
+      "PerpsDepositCard": {
+        "availableToTrade": "거래 가능:",
+        "deposit": "입금"
+      },
+      "PerpsAccountSelectorPopup": {
+        "lastUsed": "마지막 사용",
+        "noPosition": "포지션 없음",
+        "notActivatedAddress": "활성화되지 않음",
+        "hyperliquidBalance": "Perps 잔고",
+        "activatedAddress": "활성화됨"
+      },
+      "title": "영구 계약",
+      "selectAccountTitle": "로그인할 지갑 선택",
+      "explorePerps": "Perps 탐색하기",
+      "more": "더 보기",
+      "positions": "포지션",
+      "deleteAgentSuccess": "에이전트가 성공적으로 삭제되었습니다.",
+      "regionNotSupport": "귀하의 지역에서는 포지션을 열 수 없습니다.",
+      "leverageRangeMaxError": "최대 레버리지는 {{max}}배입니다",
+      "leverageRangeMinError": "최소 레버리지는 {{min}}x입니다.",
+      "deleteAgentModal": "최대 에이전트 수에 도달했습니다. 새 에이전트를 생성하기 위해 기존 에이전트를 삭제하시겠습니까?"
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "title": "포지션",
+        "direction": "방향",
+        "cross": "크로스",
+        "markPrice": "마크 가격",
+        "closePosition": "{{direction}} 닫기",
+        "isolated": "격리된",
+        "pnl": "PNL",
+        "justMargin": "마진",
+        "slPrice": "손절매 가격",
+        "marginCross": "마진 (교차)",
+        "liquidationPrice": "청산 가격",
+        "fundingPayments": "자금 지급",
+        "liqPrice": "청산가",
+        "sizeTips": "마진과 레버리지에 의해 설정된 거래의 총 가치 또는 수량입니다.",
+        "marginIsolated": "마진 (격리)",
+        "autoClose": "자동 종료",
+        "tpPrice": "이익 실현 가격",
+        "size": "크기",
+        "margin": "마진(격리)",
+        "entryPrice": "진입 가격",
+        "fundingPaymentsTips": "포지션이 열린 이후 순 자금 지급액입니다. 자금은 트레이더가 perp 계약의 가격을 실제 토큰 가격에 가깝게 유지하기 위해 지불하거나 받는 시간당 수수료입니다.",
+        "liquidationPriceTips": "교환이 유지 마진 수준 아래로 마진이 떨어졌을 때 추가 손실을 방지하기 위해 귀하의 포지션이 자동으로 청산되는 가격입니다."
+      },
+      "PerpsInfo": {
+        "title": "정보",
+        "24Vol": "24시간 거래량",
+        "funding": "펀딩",
+        "openInterest": "열린 거래량",
+        "openInterestTips": "이 계약에서 모든 사용자의 총 미결제 포지션입니다.",
+        "fundingTips": "이것은 거래자들이 perp 계약의 가격을 토큰의 실제 가격에 가깝게 유지하기 위해 지불하거나 받는 시간당 수수료입니다. 긍정적인 경우, 롱 포지션이 숏 포지션에게 지불합니다. 부정적인 경우, 숏 포지션이 롱 포지션에게 지불합니다."
+      },
+      "PerpsIntro": {
+        "title": "Perps란 무엇인가요?",
+        "desc": "영구 계약 거래는 높은 레버리지와 시장 변동성으로 인해 투자와 담보를 빠르게 잃을 가능성을 포함한 상당한 위험이 따릅니다. 이러한 거래는 모든 사용자에게 적합하지 않을 수 있습니다. 가격은 펀딩 비율 및 유동성의 영향을 받을 수 있으며, 사전 통보 없이 자동으로 청산될 수 있습니다. 시장 데이터는 Hyperliquid에서 제공됩니다."
+      },
+      "PerpsClosePositionPopup": {
+        "title": "{{coin}} {{direction}} 포지션 닫기",
+        "positionSize": "포지션 크기",
+        "closeBtn": "닫기 {{direction}}",
+        "pnl": "PNL",
+        "fee": "수수료:",
+        "rabbyFeeTips": "Rabby 수수료: 0.04%",
+        "providerFeeTips": "하이퍼리퀴드 수수료: {{fee}}"
+      },
+      "PerpsOpenPositionPopup": {
+        "minimumOrderSize": "최소 주문 크기는 $10입니다.",
+        "margin": "마진",
+        "invalidNumber": "유효한 번호를 입력하십시오",
+        "leverage": "레버리지",
+        "slPrice": "청산가격",
+        "size": "사이즈",
+        "maximumOrderSize": "최대 주문 크기는 {{amount}}입니다.",
+        "available": "사용 가능",
+        "autoClose": "자동 닫기",
+        "sizeTips": "당신의 거래의 총 가치 또는 수량으로, 마진 및 레버리지에 의해 설정됩니다.",
+        "insufficientBalance": "잔액 부족",
+        "tpPrice": "이익 실현 가격"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "initialMargin": "초기 증거금",
+        "estLqPrice": "예상 청산 가격",
+        "direction": "방향",
+        "fee": "수수료",
+        "slPrice": "손절매 가격",
+        "autoClose": "자동 종료",
+        "perps": "퍼프스",
+        "size": "크기",
+        "title": "주문 확인",
+        "tpPrice": "이익 실현 가격",
+        "price": "가격",
+        "btn": "Open {{direction}} 포지션",
+        "rabbyFeeTips": "Rabby 수수료: 0%",
+        "margin": "마진(격리)",
+        "providerFeeTips": "하이퍼리퀴드 수수료: {{fee}}",
+        "sizeTips": "거래의 총 가치 또는 수량으로, 마진 및 레버리지에 의해 설정됩니다.",
+        "liquidationPriceTips": "관계 유지 마진 수준 이하로 마진이 떨어졌을 때, 추가 손실을 방지하기 위해 거래소에서 귀하의 포지션이 자동으로 청산되는 가격입니다."
+      },
+      "action": {
+        "long": "롱",
+        "short": "숏",
+        "noPermission": "귀하의 지역에서는 포지션 열기가 지원되지 않습니다.",
+        "closePosition": "{{direction}} 포지션 닫기"
+      },
+      "PerpsAutoCloseModal": {
+        "price": "가격:",
+        "entryPrice": "진입 가격:",
+        "tpPrice": "이익 실현 가격",
+        "setSlPrice": "손절가 설정",
+        "setTpPrice": "이익 실현 가격 설정",
+        "slPrice": "손절가"
+      }
     }
   },
   "global": {

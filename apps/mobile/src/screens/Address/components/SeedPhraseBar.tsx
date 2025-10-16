@@ -2,7 +2,7 @@ import { AuthenticationModal } from '@/components/AuthenticationModal/Authentica
 import { RootNames } from '@/constant/layout';
 import { apiMnemonic } from '@/core/apis';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
@@ -35,7 +35,7 @@ export const SeedPhraseBar: React.FC<Props> = ({ address }) => {
           passphrase,
         );
         const keyringId = result.keyringId;
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.ImportMoreAddress,
           params: {
             type: KEYRING_TYPE.HdKeyring,

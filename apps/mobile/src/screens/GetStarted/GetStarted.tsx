@@ -13,7 +13,10 @@ import { RcIconLogo } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
 import { keyringService, preferenceService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
-import { navigate, redirectToAddAddressEntry } from '@/utils/navigation';
+import {
+  navigateDeprecated,
+  redirectToAddAddressEntry,
+} from '@/utils/navigation';
 import { Button } from '@rneui/themed';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import axios from 'axios';
@@ -58,13 +61,13 @@ function GetStartedScreen(): JSX.Element {
   const handleGetStarted = useCallback(async () => {
     if (!isInited) return;
     if (!keyringService.isUnlocked()) {
-      navigate(RootNames.Unlock);
+      navigateDeprecated(RootNames.Unlock);
       return;
     }
 
     redirectToAddAddressEntry();
     // if (preferenceService.getPreference('isInvited')) {
-    //   navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
+    //   navigateDeprecated(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
     // } else {
     //   setIsShowModal(true);
     // }
@@ -87,7 +90,7 @@ function GetStartedScreen(): JSX.Element {
         preferenceService.setPreference({
           isInvited: true,
         });
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.ImportNewAddress,
         });
         setIsShowModal(false);

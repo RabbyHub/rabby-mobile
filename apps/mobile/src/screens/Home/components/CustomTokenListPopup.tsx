@@ -15,7 +15,7 @@ import { useMemoizedFn } from 'ahooks';
 import { AbstractPortfolioToken } from '../types';
 import { TokenList } from './TokenList';
 import { useChainList } from '@/hooks/useChainList';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import AutoLockView from '@/components/AutoLockView';
 
@@ -137,7 +137,7 @@ export const CustomTokenListPopup = ({
             onPress={() => {
               setIsShowDialog(false);
               onClose?.();
-              navigate(RootNames.StackSettings, {
+              navigateDeprecated(RootNames.StackSettings, {
                 screen: RootNames.CustomTestnet,
               });
             }}

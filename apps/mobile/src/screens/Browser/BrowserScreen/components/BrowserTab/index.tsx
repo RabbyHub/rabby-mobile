@@ -151,7 +151,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     },
     ref,
   ) => {
-    const { styles, colors, colors2024 } = useTheme2024({
+    const { styles } = useTheme2024({
       getStyle: getStyles,
     });
 
@@ -370,7 +370,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         isShowManage: true,
       });
 
-      // navigation.navigate(RootNames.StackBrowser, {
+      // navigation.navigateDeprecated(RootNames.StackBrowser, {
       //   screen: RootNames.BrowserManageScreen,
       // });
     });

@@ -231,7 +231,7 @@ const Summary = ({ data, isEmpty }: ISummaryData) => {
             <View style={styles.summaryBottomItem}>
               <Text style={styles.summaryBottomItemText}>
                 {t(
-                  'page.tokenDetail.marketInfo.activitySections.tableHeader.tradingCount',
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.transactionCount',
                 )}
               </Text>
               <Text style={styles.summaryBottomItemValue}>
@@ -719,7 +719,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 16,
     paddingBottom: 12,
     justifyContent: 'space-between',
-    gap: 12,
   },
   summaryBottomItem: {
     flex: 1,

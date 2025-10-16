@@ -16,7 +16,7 @@ import { formatUsdValue } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 
 export const TokenInfoPopup = () => {
   const windowWidth = Dimensions.get('window').width;
@@ -105,7 +105,7 @@ export const TokenInfoPopup = () => {
             }}
             onPressRightIcon={() => {
               if (longPressToken.tokenItem) {
-                navigate(RootNames.TokenDetail, {
+                navigateDeprecated(RootNames.TokenDetail, {
                   token: {
                     ...ensureAbstractPortfolioToken(longPressToken.tokenItem),
                   },

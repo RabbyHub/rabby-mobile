@@ -1183,6 +1183,17 @@
         "description4": "Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.",
         "GotIt": "I Got It."
       },
+      "whatIsPrivateKey": {
+        "title": "What's a private key",
+        "description1": "A private key is a string of letters and numbers used to access and control your wallet. You can use it to recover your wallet on any device.",
+        "title2": "Backup",
+        "description2": "If you lose your private key, you won’t be able to restore your wallet.",
+        "title3": "Never Share It",
+        "description3": "Never share your private key—anyone with access to it can control your funds.",
+        "title4": "Safety",
+        "description4": "Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.",
+        "ButtonGotIt": "I Got It."
+      },
       "addContacts": {
         "cameraTitle": "Please scan the QR code with your camera"
       },
@@ -1905,7 +1916,7 @@
             "buy": "Buy",
             "sell": "Sell",
             "volume": "Volume",
-            "tradingCount": "Trading Count",
+            "transactionCount": "Transaction Count",
             "address": "Address",
             "addresses": "Addresses",
             "type": "Type",
@@ -2193,7 +2204,6 @@
       }
     },
     "perps": {
-      "__skip_translation": true,
       "title": "Perps",
       "PerpsCard": {
         "title": "Trade Perps",
@@ -2337,7 +2347,6 @@
       }
     },
     "perpsDetail": {
-      "__skip_translation": true,
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
@@ -2364,7 +2373,7 @@
       },
       "PerpsInfo": {
         "title": "Info",
-        "24Vol": "24h Volumn",
+        "24Vol": "24h Volume",
         "openInterest": "Open Interest",
         "funding": "Funding",
         "openInterestTips": "The total outstanding position of all users on this contract.",
@@ -2433,6 +2442,9 @@
     },
     "perpsHistory": {
       "title": "History"
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Build-In Page"
     }
   },
   "component": {

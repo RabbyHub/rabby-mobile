@@ -24,44 +24,46 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { Modal } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import { FormInput } from '@/components/Form/Input';
-import { useReactotronSettings } from '@/core/utils/devReactotron';
+import { useDevServerSettings } from '@/core/utils/devServerSettings';
 
 const modalVisibleAtom = atom(false);
-export function useReactotronModalVisible() {
-  const [reactotronModalVisible, setReactotronModalVisible] =
+export function useDevServerModalVisible() {
+  const { devServerSettings } = useDevServerSettings();
+  const [devServerSettingsModalVisible, setDevServerSettingsModalVisible] =
     useAtom(modalVisibleAtom);
 
   return {
-    reactotronModalVisible,
-    setReactotronModalVisible,
+    haventSetDevServer: !devServerSettings.devServerHost,
+    devServerSettingsModalVisible,
+    setDevServerSettingsModalVisible,
   };
 }
 
-export function DevModalReactotron() {
+export function DevModalDevServer() {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { reactotronSettings, setReactotronServer } = useReactotronSettings();
+  const { devServerSettings, setDevServerHost } = useDevServerSettings();
   const {
-    reactotronModalVisible: visible,
-    setReactotronModalVisible: setVisible,
-  } = useReactotronModalVisible();
+    devServerSettingsModalVisible: visible,
+    setDevServerSettingsModalVisible: setVisible,
+  } = useDevServerModalVisible();
   const modalRef = useRef<AppBottomSheetModal>(null);
 
-  const [hostname, setHostname] = useState(reactotronSettings.metroServer);
+  const [hostname, setHostname] = useState(devServerSettings.devServerHost);
 
   useEffect(() => {
     if (visible) {
-      setHostname(reactotronSettings.metroServer);
+      setHostname(devServerSettings.devServerHost);
     }
-  }, [visible, reactotronSettings.metroServer]);
+  }, [visible, devServerSettings.devServerHost]);
 
   const handleClose = useCallback(() => {
     setVisible(false);
   }, [setVisible]);
 
   const handleConfirm = useCallback(() => {
-    setReactotronServer(hostname);
+    setDevServerHost(hostname);
     setVisible(false);
-  }, [hostname, setVisible, setReactotronServer]);
+  }, [hostname, setVisible, setDevServerHost]);
 
   useEffect(() => {
     if (!visible) {
@@ -81,7 +83,7 @@ export function DevModalReactotron() {
         <KeyboardAvoidingView behavior={IS_IOS ? 'padding' : 'height'}>
           <View style={styles.modal}>
             <View style={styles.header}>
-              <Text style={styles.title}>Reactotron Settings</Text>
+              <Text style={styles.title}>Dev Server Settings</Text>
             </View>
             <View style={styles.body}>
               <View style={styles.inputBlock}>

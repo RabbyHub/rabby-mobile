@@ -3,6 +3,7 @@ import {
   DarkTheme,
   DefaultTheme,
   NavigationContainer,
+  NavigationIndependentTree,
 } from '@react-navigation/native';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Appearance, BackHandler, ColorSchemeName } from 'react-native';
@@ -477,46 +478,47 @@ export default function AppNavigation({
       <GlobalBottomSheetModal />
       <GlobalBottomSheetModal2024 />
       {/* <GlobalAccountSwitcherStub /> */}
-      <NavigationContainer
-        linking={linking}
-        ref={navigationRef}
-        // key={userId}
-        onReady={onReady}
-        onStateChange={onStateChange}
-        independent
-        // linking={LinkingConfiguration}
-        theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <DuplicateAddressModal />
-        <AliasNameEditModal />
-        <QrCodeModal />
-        <HomeHiddenTabStack.Navigator
-          screenOptions={
-            /* mergeScreenOptions */ {
-              // gestureEnabled: false,
-              headerTitleAlign: 'center',
-              headerStyle: {
-                backgroundColor: 'transparent',
-              },
-              // headerShadowVisible: true,
-              headerTintColor: colors['neutral-title-1'],
-              headerTitleStyle: {
-                color: colors['neutral-title-1'],
-                fontWeight: '500',
-                fontSize: DEFAULT_NAVBAR_FONT_SIZE,
-              },
-              // headerTransparent: true,
+      <NavigationIndependentTree>
+        <NavigationContainer
+          navigationInChildEnabled
+          linking={linking}
+          ref={navigationRef}
+          // key={userId}
+          onReady={onReady}
+          onStateChange={onStateChange}
+          // linking={LinkingConfiguration}
+          theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <DuplicateAddressModal />
+          <AliasNameEditModal />
+          <QrCodeModal />
+          <HomeHiddenTabStack.Navigator
+            screenOptions={
+              /* mergeScreenOptions */ {
+                // gestureEnabled: false,
+                headerTitleAlign: 'center',
+                headerStyle: {
+                  backgroundColor: 'transparent',
+                },
+                // headerShadowVisible: true,
+                headerTintColor: colors['neutral-title-1'],
+                headerTitleStyle: {
+                  color: colors['neutral-title-1'],
+                  fontWeight: '500',
+                  fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+                },
+                // headerTransparent: true,
+              }
             }
-          }
-          tabBar={() => null}>
-          <HomeHiddenTabStack.Screen
-            name={RootNames.StackMain}
-            component={StackMain}
-            options={{
-              headerShown: false,
-            }}
-          />
+            tabBar={() => null}>
+            <HomeHiddenTabStack.Screen
+              name={RootNames.StackMain}
+              component={StackMain}
+              options={{
+                headerShown: false,
+              }}
+            />
 
-          {/* <HomeHiddenTabStack.Screen
+            {/* <HomeHiddenTabStack.Screen
             name={RootNames.StackBrowser}
             component={BrowserNavigator}
             options={{
@@ -525,12 +527,13 @@ export default function AppNavigation({
               headerShown: false,
             }}
           /> */}
-        </HomeHiddenTabStack.Navigator>
-        <BiometricsStubModal />
-        <ApprovalTokenDetailSheetModalStub />
-        <BottomSheetBrowser />
-        <BrowserManagePopup />
-      </NavigationContainer>
+          </HomeHiddenTabStack.Navigator>
+          <BiometricsStubModal />
+          <ApprovalTokenDetailSheetModalStub />
+          <BottomSheetBrowser />
+          <BrowserManagePopup />
+        </NavigationContainer>
+      </NavigationIndependentTree>
       <ModalsSubmitFeedbackByScreenshotStub />
 
       {/** @warning put all business stub components before this modal */}

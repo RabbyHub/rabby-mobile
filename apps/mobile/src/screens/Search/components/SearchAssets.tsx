@@ -16,7 +16,7 @@ import {
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import {
@@ -105,7 +105,7 @@ export const SearchAssets: React.FC<Props> = ({
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      navigate(RootNames.TokenMarketInfo, {
+      navigateDeprecated(RootNames.TokenMarketInfo, {
         token: token,
         unHold: token._unHold,
         needUseCacheToken: true,
