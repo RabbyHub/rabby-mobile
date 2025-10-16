@@ -108,6 +108,10 @@ export const L2_ENUMS = [
   'DBK',
   'MINT',
   'CYBER',
+  'KATANA',
+  'WORLD',
+  'INK',
+  'SONEIUM',
 ];
 
 // opstack L2 chains
@@ -121,6 +125,10 @@ export const OP_STACK_ENUMS = [
   'DBK',
   'MINT',
   'CYBER',
+  'KATANA',
+  'WORLD',
+  'INK',
+  'SONEIUM',
 ];
 
 export const ARB_LIKE_L2_CHAINS = [CHAINS_ENUM.ARBITRUM, CHAINS_ENUM.AURORA];

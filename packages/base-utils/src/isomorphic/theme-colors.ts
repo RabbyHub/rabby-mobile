@@ -1,4 +1,4 @@
-const themeColors = {
+export const themeColors = {
   light: {
     'blue-default': 'rgba(112, 132, 255, 1)',
     'blue-light1': 'rgba(238, 241, 255, 1)',
@@ -81,7 +81,7 @@ const themeColors = {
   },
 };
 
-const themeColorsNext2024 = {
+export const themeColorsNext2024 = {
   light: {
     'brand-default': 'rgba(76, 101, 255, 1)',
     'brand-default-light': 'rgba(76, 101, 255, 0.7)',
@@ -198,7 +198,9 @@ const themeColorsNext2024 = {
   },
 };
 
-module.exports = {
-  themeColors,
-  themeColorsNext2024,
-};
+export const ThemeColors = themeColors;
+export type AppColorsVariants = (typeof ThemeColors)['light'];
+
+export const ThemeColors2024 = themeColorsNext2024;
+export type AppColors2024Variants = (typeof ThemeColors2024)['light'];
+

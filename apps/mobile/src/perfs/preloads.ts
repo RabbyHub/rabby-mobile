@@ -20,6 +20,7 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevUIScreenContainerShowCase]: 'DevUIScreenContainerShowCase',
   [RootNames.DevUIDapps]: 'DevUIDapps',
   [RootNames.DevUIPermissions]: 'DevUIPermissions',
+  [RootNames.DevUIBuiltInPages]: 'DevUIBuiltInPages',
   [RootNames.DevDataSQLite]: 'DevDataSQLite',
 };
 
