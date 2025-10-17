@@ -92,9 +92,7 @@ export const useAsterReferral = (options?: {
       }
 
       const hasShowAsterReferral =
-        preferenceService.getPreference('hasShowAsterReferralMap')?.[
-          connectedAddress
-        ] || false;
+        preferenceService.getPreference('hasShowAsterPopup');
 
       if (hasShowAsterReferral) {
         return false;

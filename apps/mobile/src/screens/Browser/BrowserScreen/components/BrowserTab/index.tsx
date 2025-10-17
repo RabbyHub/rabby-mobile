@@ -984,18 +984,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               }
               onClose={() => {
                 setIsShowAsterInvite(false);
-                preferenceService.setAsterReferral(
-                  dappInfo?.currentAccount?.address || '',
-                  true,
-                );
+                preferenceService.setHasShowAsterPopup(true);
               }}
               onInvite={() => {
                 handleGoTo(PERPS_ASTER_INVITE_URL);
                 setIsShowAsterInvite(false);
-                preferenceService.setAsterReferral(
-                  dappInfo?.currentAccount?.address || '',
-                  true,
-                );
+                preferenceService.setHasShowAsterPopup(true);
               }}
               footer={
                 <View style={styles.dappWebViewNavControl}>
