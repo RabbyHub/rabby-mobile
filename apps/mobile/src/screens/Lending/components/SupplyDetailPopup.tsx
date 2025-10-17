@@ -1,11 +1,22 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View, Text, StyleProp, TextStyle, ViewStyle } from 'react-native';
-import { Button, ButtonProps } from '@/components2024/Button';
+import { View, Text } from 'react-native';
+import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
+import { DisplayPoolReserveInfo } from '../type';
+import { formatUsdValueKMB } from '@/screens/Home/utils/price';
+import {
+  formatAmountValueKMB,
+  formatPercent,
+} from '@/screens/TokenDetail/util';
 
-export const SupplyDetailPopup: React.FC<{}> = () => {
+export interface ISupplyDetailPopupProps {
+  reserve: DisplayPoolReserveInfo;
+}
+export const SupplyDetailPopup: React.FC<ISupplyDetailPopupProps> = ({
+  reserve,
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
@@ -15,16 +26,21 @@ export const SupplyDetailPopup: React.FC<{}> = () => {
         <View style={[styles.poolInfoContainer, styles.card]}>
           <View style={styles.tokenInfos}>
             <View />
-            <Text style={styles.symbol}>Doge</Text>
+            <Text style={styles.symbol}>{reserve.reserve.symbol}</Text>
           </View>
           <View style={styles.poolInfoItems}>
             <View style={styles.poolInfoItem}>
               <Text style={styles.poolInfoItemTitle}>Total Supplied</Text>
-              <Text style={styles.poolInfoItemValue}>7.88B of 9.50B</Text>
+              <Text style={styles.poolInfoItemValue}>
+                {formatUsdValueKMB(reserve.reserve.totalLiquidityUSD)} of{' '}
+                {formatUsdValueKMB(reserve.reserve.supplyCapUSD || '0')}
+              </Text>
             </View>
             <View style={styles.poolInfoItem}>
               <Text style={styles.poolInfoItemTitle}>APY</Text>
-              <Text style={styles.poolInfoItemValue}>10.00%</Text>
+              <Text style={styles.poolInfoItemValue}>
+                {formatPercent(Number(reserve.reserve.supplyAPY || '0'))}
+              </Text>
             </View>
           </View>
         </View>
@@ -33,15 +49,21 @@ export const SupplyDetailPopup: React.FC<{}> = () => {
             <View style={styles.userInfoItem}>
               <Text style={styles.supplyItemTitle}>My Supply</Text>
             </View>
-            <Text style={styles.supplyItemValue}>$0.00</Text>
+            <Text style={styles.supplyItemValue}>
+              {formatUsdValueKMB(reserve.underlyingBalanceUSD || '0')}
+            </Text>
           </View>
           <View style={styles.userInfoItem}>
             <Text style={styles.userInfoItemTitle}>Wallet Balance</Text>
-            <Text style={styles.userInfoItemValue}>4353 Doge</Text>
+            <Text style={styles.userInfoItemValue}>
+              {formatAmountValueKMB(reserve.walletBalance || '0')}
+            </Text>
           </View>
           <View style={styles.userInfoItem}>
             <Text style={styles.userInfoItemTitle}>Available to Supply</Text>
-            <Text style={styles.userInfoItemValue}>$1234</Text>
+            <Text style={styles.userInfoItemValue}>
+              {formatAmountValueKMB(reserve.walletBalanceUSD || '0')}
+            </Text>
           </View>
         </View>
       </View>

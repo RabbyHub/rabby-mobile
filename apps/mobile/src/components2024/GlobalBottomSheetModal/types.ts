@@ -8,6 +8,8 @@ import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGrad
 import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddress';
 import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
 import { ButtonProps } from '../Button';
+import { DisplayPoolReserveInfo } from '@/screens/Lending/type';
+import { IBorrowDetailPopupProps } from '@/screens/Lending/components/BorrowDetailPopup';
 
 export enum MODAL_NAMES {
   // 'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
@@ -107,7 +109,10 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.DESCRIPTION]: React.ComponentProps<
     typeof import('../Descriptions').Descriptions
   >;
-  [MODAL_NAMES.SUPPLY_DETAIL]: {};
+  [MODAL_NAMES.SUPPLY_DETAIL]: {
+    reserve: DisplayPoolReserveInfo;
+  };
+  [MODAL_NAMES.BORROW_DETAIL]: IBorrowDetailPopupProps;
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: {};
   [MODAL_NAMES.ADDRESS_HIGHT_DESC]: {
     address: string;

@@ -1,18 +1,18 @@
 import React, { useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { Tabs } from 'react-native-collapsible-tab-view';
 import { formatPercent, formatUsdValueKMB } from '../TokenDetail/util';
 import { useLendingSummary } from './hooks';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const BorrowPoolList = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
 
-  const { displayPoolReserves } = useLendingSummary();
+  const { displayPoolReserves, iUserSummary } = useLendingSummary();
   const sortReserves = useMemo(() => {
     return [...(displayPoolReserves || [])].sort((a, b) => {
       return Number(b.totalBorrowsUSD) - Number(a.totalBorrowsUSD);
@@ -20,7 +20,17 @@ const BorrowPoolList = () => {
   }, [displayPoolReserves]);
 
   const handlePressItem = item => {
-    console.log('handlePressItem', item);
+    createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.BORROW_DETAIL,
+      reserve: item,
+      availableBorrowsUSD: iUserSummary?.availableBorrowsUSD || '0',
+      healthFactor: iUserSummary?.healthFactor || '0',
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+      },
+    });
   };
 
   const ListHeaderComponent = useCallback(() => {

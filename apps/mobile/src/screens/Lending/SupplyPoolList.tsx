@@ -21,10 +21,9 @@ const SupplyPoolList = () => {
   }, [displayPoolReserves]);
 
   const handlePressItem = item => {
-    console.log('handlePressItem', item);
-
-    const modalId = createGlobalBottomSheetModal2024({
+    createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SUPPLY_DETAIL,
+      reserve: item,
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
