@@ -22,7 +22,7 @@ import { filterMyAccounts } from '@/utils/account';
 import SendInputScreen from '../SendInput';
 import { useInputSwitch } from '../SendInput/useInputSwitch';
 import { SendHeaderLeft } from './HeaderLeft';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { usePollSendPendingCount } from '../../hooks/useSendPendingCount';
 
@@ -85,7 +85,7 @@ const SendPolyScreen = () => {
     (autoScan: boolean) => {
       toggleInput();
       if (autoScan) {
-        navigate(RootNames.Scanner);
+        navigateDeprecated(RootNames.Scanner);
       }
     },
     [toggleInput],

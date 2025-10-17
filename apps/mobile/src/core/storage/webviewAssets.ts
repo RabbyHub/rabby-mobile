@@ -11,14 +11,28 @@ import { IS_ANDROID } from '../native/utils';
 
 export const WEBVIEW_BASEURL = IS_ANDROID
   ? 'file:///android_asset/custom/'
-  : stringUtils.unSuffix(RNFS.MainBundlePath, '/');
+  : stringUtils.ensureSuffix(RNFS.MainBundlePath, '/');
 const ASSETS_BASE = IS_ANDROID ? 'file:///android_asset/custom/' : './';
 
-export function refAssetForTradeView(p: string) {
+export function refAssetForLocalWebView(p: string) {
   const path = stringUtils.unPrefix(p, '/');
   const rawPath = `${ASSETS_BASE}${path}`;
+  const fullPath = `${WEBVIEW_BASEURL}${path}`;
+
   return {
     quoted: JSON.stringify(rawPath),
     rawPath,
+    fullPath,
   };
+}
+
+export function isValidUrlForWebView(url: string) {
+  // allow any url in dev mode
+  if (!__DEV__) return true;
+
+  if (IS_ANDROID) {
+    return url.startsWith('file:///android_asset/custom/');
+  }
+
+  return url.startsWith('./');
 }

@@ -189,7 +189,7 @@ export function MultiAddressHomeHeader(
           <TouchableWithoutFeedback
             style={styles.settingEntry}
             onPress={() => {
-              navigation.navigate(RootNames.StackSettings, {
+              navigation.navigateDeprecated(RootNames.StackSettings, {
                 screen: RootNames.Settings,
                 params: {},
               });

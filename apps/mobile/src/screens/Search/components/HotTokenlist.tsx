@@ -6,7 +6,7 @@ import {
   TokenItemSkeleton,
 } from '@/screens/Watchlist/components/TokenItem';
 import { useHotTokenList } from '@/screens/Watchlist/hooks/useHotTokenList';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +39,7 @@ export const HotTokenList = () => {
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
-      navigate(RootNames.TokenDetail, {
+      navigateDeprecated(RootNames.TokenDetail, {
         token: ensureAbstractPortfolioToken(token),
         unHold: false,
         needUseCacheToken: true,

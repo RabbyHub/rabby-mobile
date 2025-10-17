@@ -48,6 +48,9 @@
     "apps/mobile/*.{js,jsx,ts,tsx}": [
       "yarn workspace rabby-mobile lint:commit:fix"
     ],
+    "apps/mobile-local-pages/*.{js,jsx,ts,tsx}": [
+      "yarn workspace mobile-local-pages lint:commit:fix"
+    ],
     "apps/dev-console-cra/*.{js,jsx,ts,tsx}": [
       "yarn workspace dev-console-cra lint:commit:fix"
     ]
@@ -89,10 +92,12 @@
     "@babel/runtime": "^7.20.0",
     "@debank/common": "^0.3.54",
     "@exodus/patch-broken-hermes-typed-arrays": "^1.0.0-alpha.1",
+    "@rabby-wallet/gnosis-sdk": "1.4.5",
     "@rabby-wallet/rabby-api": "0.9.43",
     "human-standard-token-abi": "^2.0.0"
   },
   "devDependencies": {
+    "@babel/plugin-transform-class-static-block": "7.28.3",
     "@lavamoat/allow-scripts": "^2.3.1",
     "@metamask/create-release-branch": "^1.1.0",
     "@metamask/eslint-config": "^12.2.0",

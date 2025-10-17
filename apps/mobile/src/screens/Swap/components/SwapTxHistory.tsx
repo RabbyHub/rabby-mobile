@@ -20,7 +20,7 @@ import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
 import { SwapHistoryItem } from '@/components2024/HistoryItem/SwapHistoryItem';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
@@ -265,7 +265,7 @@ export const SwapTxHistory = ({
         } as HistoryDisplayItem;
 
         onDismiss();
-        navigate(RootNames.StackTransaction, {
+        navigateDeprecated(RootNames.StackTransaction, {
           screen: RootNames.HistoryDetail,
           params: {
             isForMultipleAddress,
@@ -282,7 +282,7 @@ export const SwapTxHistory = ({
 
         if (itemData) {
           onDismiss();
-          navigate(RootNames.StackTransaction, {
+          navigateDeprecated(RootNames.StackTransaction, {
             screen: RootNames.HistoryLocalDetail,
             params: {
               isForMultipleAddress,

@@ -1,6 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { apiKeystone } from '@/core/apis';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import {
   HARDWARE_KEYRING_TYPES,
   KEYRING_TYPE,
@@ -28,7 +28,7 @@ export const ConnectKeystone: React.FC<{
     const address = await apiKeystone.importFirstAddress({});
 
     if (address) {
-      navigate(RootNames.StackAddress, {
+      navigateDeprecated(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
           type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
@@ -45,7 +45,7 @@ export const ConnectKeystone: React.FC<{
   }, [goImport, onDone]);
 
   return (
-    <AutoLockView as="BottomSheetView">
+    <AutoLockView as="View" style={{ height: '100%' }}>
       {currentScreen === 'camera' && (
         <CameraPermissionScreen onNext={handleCameraNext} />
       )}

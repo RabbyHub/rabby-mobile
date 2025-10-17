@@ -27,7 +27,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RcIconRightCC } from '@/assets/icons/common';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKRCategoryByType } from '@/utils/transaction';
@@ -186,7 +186,7 @@ export const ImportSuccessScreen = () => {
     if (!state.isFirstImport) {
       return;
     }
-    navigate(RootNames.StackAddress, {
+    navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.ImportMoreAddress,
       params: {
         type: state.type,

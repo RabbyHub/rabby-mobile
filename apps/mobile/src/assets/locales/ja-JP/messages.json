@@ -973,7 +973,6 @@
       },
       "importAddress": {
         "privateKey": "プライベートキーをインポートする",
-        "safe": "安全",
         "hardWare": "ハードウェアウォレットを接続",
         "tips": {
           "gotIt": "了解しました。",
@@ -1738,16 +1737,6 @@
       "tabs": {
         "tokenSecurity": "トークンセキュリティ",
         "marketData": "マーケットデータ"
-      },
-      "interval": {
-        "1M": "1M",
-        "1W": "1W",
-        "4H": "4H",
-        "1H": "1H",
-        "1D": "1D",
-        "15M": "15M",
-        "30M": "30M",
-        "5M": "5M"
       },
       "marketInfo": {
         "holders": "保有者",

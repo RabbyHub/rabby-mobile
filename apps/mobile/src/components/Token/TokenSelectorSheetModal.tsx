@@ -91,7 +91,10 @@ import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/Scam
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { Favorite } from '@/components2024/Favorite';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { getLatestNavigationName, navigate } from '@/utils/navigation';
+import {
+  getLatestNavigationName,
+  navigateDeprecated,
+} from '@/utils/navigation';
 import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
 import { useAtom } from 'jotai';
 import {
@@ -775,7 +778,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         toggleShowSheetModal('destroy');
                       }, 100);
 
-                      navigate(
+                      navigateDeprecated(
                         needToTokenMarketInfo
                           ? RootNames.TokenMarketInfo
                           : RootNames.TokenDetail,

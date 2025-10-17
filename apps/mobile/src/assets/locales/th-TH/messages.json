@@ -1191,7 +1191,7 @@
         "hardwareWallet": "ฮาร์ดแวร์วอลเล็ต",
         "syncRabbyExtension": "ซิงค์ Rabby Extension",
         "createAddress": "สร้างกระเป๋าเงิน",
-        "importAddress": "นำเข้าสูตรคลัง",
+        "importAddress": "นำเข้ากระเป๋าเงิน",
         "selectAddMethod": "เลือกวิธีการเพิ่ม"
       },
       "multiAddressHome": {
@@ -1213,7 +1213,6 @@
         "privateKey": "นำเข้าคีย์ส่วนตัว",
         "seedPhrase": "นำเข้าประโยคเมล็ดพันธุ์",
         "hardWare": "เชื่อมต่อกระเป๋าฮาร์ดแวร์",
-        "safe": "ปลอดภัย",
         "tips": {
           "gotIt": "ฉันเข้าใจแล้ว",
           "entry": "นำเข้าไปยัง Rabby ปลอดภัยหรือไม่",
@@ -1223,7 +1222,7 @@
         "safeTitle": "นำเข้ากระเป๋า Safe Wallet",
         "importTitle": "นำเข้ากระเป๋าเงิน",
         "watch": "กระเป๋าเงินเฉพาะดู",
-        "watchOnlyTitle": "นำเข้าสินทรัพย์ที่ตรวจสอบได้เท่านั้น",
+        "watchOnlyTitle": "นำเข้ากระเป๋าเงินเฉพาะดู",
         "ImportCloud": "นำเข้าจาก {{cloud}}"
       },
       "createNewAddress": {
@@ -2025,16 +2024,6 @@
       "tabs": {
         "marketData": "ข้อมูลตลาด",
         "tokenSecurity": "ความปลอดภัยของโทเคน"
-      },
-      "interval": {
-        "1W": "1W",
-        "1D": "1D",
-        "1H": "1ชั่วโมง",
-        "4H": "4H",
-        "5M": "5M",
-        "15M": "15M",
-        "30M": "30M",
-        "1M": "1M"
       },
       "marketInfo": {
         "holders": "ผู้ถือ",

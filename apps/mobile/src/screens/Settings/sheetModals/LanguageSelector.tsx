@@ -6,8 +6,8 @@ import { RcIconCheckmarkCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
@@ -15,6 +15,8 @@ import { useAppLanguage } from '@/hooks/lang';
 import { SupportedLangs } from '@/utils/i18n';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { FontWeightEnum } from '@/core/utils/fonts';
 
 const currentLanguageModalVisibleAtom = atom(false);
 export function useCurrentLanguageModalVisible() {
@@ -40,7 +42,6 @@ export default function CurrentLanguageSelectorModal({
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { safeSizes } = useSafeAndroidBottomSizes({
     sheetHeight: SIZES.FULL_HEIGHT,
-    containerPaddingBottom: SIZES.containerPb,
   });
   const { toggleShowSheetModal } = useSheetModals({
     selectThemeMode: modalRef,
@@ -57,7 +58,7 @@ export default function CurrentLanguageSelectorModal({
     toggleShowSheetModal('selectThemeMode', visible || 'destroy');
   }, [visible, toggleShowSheetModal]);
 
-  const { styles, colors } = useThemeStyles(getStyles);
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const handleCancel = useCallback(() => {
     setCurrentLanguageModalVisible(false);
@@ -66,24 +67,27 @@ export default function CurrentLanguageSelectorModal({
 
   return (
     <AppBottomSheetModal
-      backgroundStyle={styles.sheet}
       ref={modalRef}
       index={0}
       snapPoints={[640]}
-      handleStyle={styles.handleStyle}
+      {...makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+      })}
       onDismiss={handleCancel}
-      enableContentPanningGesture={false}>
+      enableContentPanningGesture
+      enablePanDownToClose>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {
-            paddingBottom: safeSizes.containerPaddingBottom,
+            paddingBottom: 0,
           },
         ]}>
-        <BottomSheetHandlableView>
+        <View>
           <Text style={styles.title}>Current Language</Text>
-        </BottomSheetHandlableView>
+        </View>
         <BottomSheetScrollView style={styles.mainContainer}>
           {SupportedLangs.map((item, idx) => {
             const itemKey = `thememode-${item.lang}`;
@@ -100,12 +104,13 @@ export default function CurrentLanguageSelectorModal({
                 <Text style={styles.settingItemLabel}>{item.label}</Text>
                 {isSelected && (
                   <View>
-                    <RcIconCheckmarkCC color={colors['green-default']} />
+                    <RcIconCheckmarkCC color={colors2024['green-default']} />
                   </View>
                 )}
               </TouchableView>
             );
           })}
+          {!!SupportedLangs.length && <View style={styles.bottomSpacer} />}
         </BottomSheetScrollView>
       </AutoLockView>
     </AppBottomSheetModal>
@@ -113,13 +118,14 @@ export default function CurrentLanguageSelectorModal({
 }
 
 const SIZES = {
-  ITEM_HEIGHT: 60,
+  ITEM_HEIGHT: 72,
   ITEM_GAP: 12,
   titleMt: 6,
   titleHeight: 24,
   titleMb: 16,
   HANDLE_HEIGHT: 8,
-  containerPb: 42,
+  containerPb: 0,
+  listBottomSpace: 48,
   get FULL_HEIGHT() {
     return (
       SIZES.HANDLE_HEIGHT +
@@ -130,15 +136,8 @@ const SIZES = {
     );
   },
 };
-const getStyles = createGetStyles((colors, ctx) => {
+const getStyles = createGetStyles2024(ctx => {
   return {
-    sheet: {
-      backgroundColor: colors['neutral-bg-2'],
-    },
-    handleStyle: {
-      height: 8,
-      backgroundColor: colors['neutral-bg-2'],
-    },
     container: {
       flex: 1,
       paddingVertical: 0,
@@ -151,9 +150,11 @@ const getStyles = createGetStyles((colors, ctx) => {
       // ...makeDebugBorder('blue')
     },
     title: {
+      fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
+      fontWeight: FontWeightEnum.heavy,
+      lineHeight: 24,
+      color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',
 
       marginTop: SIZES.titleMt,
@@ -169,13 +170,13 @@ const getStyles = createGetStyles((colors, ctx) => {
     settingItem: {
       width: '100%',
       height: SIZES.ITEM_HEIGHT,
-      paddingTop: 18,
-      paddingBottom: 18,
-      paddingHorizontal: 20,
-      backgroundColor: !ctx?.isLight
-        ? colors['neutral-card1']
-        : colors['neutral-bg1'],
-      borderRadius: 8,
+      paddingTop: 0,
+      paddingBottom: 0,
+      paddingHorizontal: 24,
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
+      borderRadius: 16,
 
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -184,11 +185,16 @@ const getStyles = createGetStyles((colors, ctx) => {
     notFirstOne: {
       marginTop: SIZES.ITEM_GAP,
     },
+    bottomSpacer: {
+      height: SIZES.listBottomSpace,
+    },
     settingItemLabel: {
-      color: colors['neutral-title-1'],
+      color: ctx.colors2024['neutral-title-1'],
       fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
       fontStyle: 'normal',
-      fontWeight: '500',
+      fontWeight: FontWeightEnum.bold,
     },
   };
 });

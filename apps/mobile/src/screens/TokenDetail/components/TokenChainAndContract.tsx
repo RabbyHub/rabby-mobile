@@ -4,7 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
-import HelpIcon from '@/assets2024/icons/common/help.svg';
+import HelpIconCC from '@/assets2024/icons/common/help-cc.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisAddress } from '@/utils/address';
@@ -172,7 +172,11 @@ export const TokenChainAndContract: React.FC<Props> = ({
                     },
                   });
                 }}>
-                <HelpIcon width={20} height={20} />
+                <HelpIconCC
+                  width={20}
+                  height={20}
+                  color={colors2024['neutral-info']}
+                />
               </TouchableOpacity>
             </View>
             <View style={styles.token}>

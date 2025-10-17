@@ -5,7 +5,7 @@ import { RcIconLogoBlue } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
 import { keyringService, preferenceService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { Button } from '@/components2024/Button';
 import { useMemoizedFn } from 'ahooks';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -44,11 +44,11 @@ function GetStartedScreen2024(): JSX.Element {
       return;
     }
     if (!keyringService.isUnlocked()) {
-      navigate(RootNames.Unlock);
+      navigateDeprecated(RootNames.Unlock);
       return;
     }
 
-    navigate(RootNames.StackRoot, { screen: RootNames.Home });
+    navigateDeprecated(RootNames.StackRoot, { screen: RootNames.Home });
   }, [getStaretd.processedInit]);
 
   const { startCreateAddressProc, resetCreateAddressProc } =
@@ -67,7 +67,7 @@ function GetStartedScreen2024(): JSX.Element {
       return;
     }
     if (!keyringService.isUnlocked()) {
-      navigate(RootNames.Unlock);
+      navigateDeprecated(RootNames.Unlock);
       return;
     }
 
@@ -75,7 +75,7 @@ function GetStartedScreen2024(): JSX.Element {
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
     );
-    navigate(RootNames.StackAddress, {
+    navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.CreateNewAddress,
     });
   }, [getStaretd.processedInit, startCreateAddressProc]);
@@ -85,14 +85,14 @@ function GetStartedScreen2024(): JSX.Element {
       return;
     }
     if (!keyringService.isUnlocked()) {
-      navigate(RootNames.Unlock);
+      navigateDeprecated(RootNames.Unlock);
       return;
     }
 
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
     );
-    navigate(RootNames.StackAddress, {
+    navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.ImportMethods,
     });
   }, [getStaretd.processedInit]);
@@ -102,12 +102,12 @@ function GetStartedScreen2024(): JSX.Element {
       return;
     }
     if (!keyringService.isUnlocked()) {
-      navigate(RootNames.Unlock);
+      navigateDeprecated(RootNames.Unlock);
 
       return;
     }
 
-    navigate(RootNames.Scanner, {
+    navigateDeprecated(RootNames.Scanner, {
       syncExtension: true,
     });
     preferenceService.setReportActionTs(

@@ -54,7 +54,7 @@ import {
 } from './hook';
 import { RightMore } from './components/RightMore';
 import HeaderBalanceCard from './components/HeaderBalanceCard';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 import CustomLabel from './components/CustomLabel';
@@ -512,7 +512,7 @@ export const TokenMarketInfoScreen = () => {
   const { t } = useTranslation();
 
   const handleOpenTokenDetail = useCallback(() => {
-    navigate(RootNames.TokenDetail, {
+    navigateDeprecated(RootNames.TokenDetail, {
       ...route.params,
     });
   }, [route.params]);

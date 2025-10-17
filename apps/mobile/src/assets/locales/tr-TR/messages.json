@@ -1097,7 +1097,6 @@
           "entry": "Rabby'e aktarmak güvenli mi?",
           "description": "Verileriniz güvenli bir şekilde şifrelendi ve cihazınızda yerel olarak depolandı. Rabby, özel bilgilerinize erişemez ve bu bilgiler asla üçüncü şahıslarla paylaşılmaz."
         },
-        "safe": "Güvenli",
         "seedPhrase": "Seed Kelimesini İçe Aktar",
         "privateKey": "Özel Anahtarı İçe Aktar",
         "hardWare": "Donanım Cüzdanlarını Bağlayın",
@@ -1820,16 +1819,6 @@
       "tabs": {
         "marketData": "Piyasa verileri",
         "tokenSecurity": "Token Güvenliği"
-      },
-      "interval": {
-        "1D": "1G",
-        "30M": "30M",
-        "1W": "1W",
-        "4H": "4H",
-        "15M": "15M",
-        "1H": "1H",
-        "1M": "1M",
-        "5M": "5M"
       },
       "marketInfo": {
         "txns24h": "24 saat Txns",

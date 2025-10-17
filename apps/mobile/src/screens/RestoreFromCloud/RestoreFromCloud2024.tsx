@@ -12,7 +12,7 @@ import {
 } from '@/core/utils/cloudBackup';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -152,7 +152,7 @@ export const RestoreFromCloud2024: React.FC<{
   const len = selectedFilenames.length;
 
   return (
-    <BottomSheetView style={styles.screenContainer}>
+    <View style={styles.screenContainer}>
       <View style={styles.body}>
         <BottomSheetHandlableView>
           <View>
@@ -162,7 +162,9 @@ export const RestoreFromCloud2024: React.FC<{
               isDown={true}
             />
             <Text style={styles.restoreTitle}>
-              {`Restore From ${IS_IOS ? 'iCloud' : 'Google Drive'}`}
+              {t('screens.addressStackTitle.RestoreFromCloud', {
+                type: IS_IOS ? 'iCloud' : 'Google Drive',
+              })}
             </Text>
           </View>
         </BottomSheetHandlableView>
@@ -200,11 +202,11 @@ export const RestoreFromCloud2024: React.FC<{
         disabled={!len || loading}
         containerStyle={styles.importConfirm}
       />
-    </BottomSheetView>
+    </View>
   );
 };
 
-const getStyle = createGetStyles2024(colors => ({
+const getStyle = createGetStyles2024(ctx => ({
   loading: {
     alignItems: 'center',
     marginTop: 20,
@@ -231,11 +233,11 @@ const getStyle = createGetStyles2024(colors => ({
     lineHeight: 24,
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-    color: colors.colors2024['neutral-title-1'],
+    color: ctx.colors2024['neutral-title-1'],
   },
   loadingText: {
     marginTop: 14,
-    color: colors.colors2024['neutral-secondary'],
+    color: ctx.colors2024['neutral-secondary'],
     fontSize: 17,
     fontFamily: 'SF Pro Rounded',
     lineHeight: 22,
@@ -245,7 +247,7 @@ const getStyle = createGetStyles2024(colors => ({
     // justifyContent: 'center',
   },
   title: {
-    color: colors['neutral-title-1'],
+    color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
     fontWeight: '500',
     marginTop: 24,

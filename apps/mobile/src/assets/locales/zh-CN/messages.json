@@ -1122,7 +1122,6 @@
         "privateKey": "导入私人密钥",
         "seedPhrase": "导入助记词",
         "hardWare": "连接硬件钱包",
-        "safe": "安全",
         "tips": {
           "gotIt": "我知道了。",
           "title": "导入到 Rabby 安全吗？",
@@ -1888,16 +1887,6 @@
         "tokenSecurity": "代币安全",
         "marketData": "市场数据"
       },
-      "interval": {
-        "1D": "1D",
-        "1H": "1H",
-        "15M": "15M",
-        "30M": "30M",
-        "5M": "5M",
-        "1W": "1W",
-        "4H": "4H",
-        "1M": "1M"
-      },
       "marketInfo": {
         "volume24h": "24小时交易量",
         "marketCap": "市场总值",
@@ -2299,6 +2288,9 @@
     },
     "perpsHistory": {
       "title": "历史"
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "内建页面"
     },
     "perps": {
       "PerpsCard": {

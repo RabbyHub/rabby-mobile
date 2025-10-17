@@ -9,7 +9,7 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useFocusEffect } from '@react-navigation/native';
@@ -22,7 +22,7 @@ export const PinedTokenList = () => {
   const { data: pinTokens, handleFetchTokens } = usePinTokens();
   const { removePinedToken } = useUserTokenSettings();
   const handleOpenTokenDetail = useCallback((token: AbstractPortfolioToken) => {
-    navigate(RootNames.TokenDetail, {
+    navigateDeprecated(RootNames.TokenDetail, {
       token: token,
       unHold: false,
       needUseCacheToken: true,
