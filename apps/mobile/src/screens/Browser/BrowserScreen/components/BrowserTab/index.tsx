@@ -65,11 +65,14 @@ import { BrowserHeader } from './BrowserHeader';
 import { BrowserProgressBar } from './BrowserProgressBar';
 import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
 import { Freeze } from 'react-freeze';
-import { HyperliquidInvitePopup } from './HyperliquidInvitePopup';
-import { PERPS_INVITE_URL } from '@/constant/perps';
+import { PerpsInvitePopup } from './PerpsInvitePopup';
+import { PERPS_ASTER_INVITE_URL, PERPS_INVITE_URL } from '@/constant/perps';
 import { CurrentDappPopup } from './CurrentDappPopup';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
-import { useHyperliquidReferral } from '../../hooks/useHyperliquidReferral';
+import {
+  useAsterReferral,
+  useHyperliquidReferral,
+} from '../../hooks/useHyperliquidReferral';
 import { useAccounts } from '@/hooks/account';
 import { getOnlineConfig } from '@/core/config/online';
 import { WebviewError } from './WebivewError';
@@ -237,8 +240,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const changeViewPortForDesktop = useCallback(
       (contentMode: WebViewProps['contentMode'], delayMs = 0) => {
-        if (contentMode !== 'desktop') return;
-        if (!IS_ANDROID) return;
+        if (contentMode !== 'desktop') {
+          return;
+        }
+        if (!IS_ANDROID) {
+          return;
+        }
 
         const change = () => {
           const screenWidth = Dimensions.get('screen').width;
@@ -409,7 +416,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
       matomoRequestEvent({
         category: 'Websites Usage',
-        action: `Website_Exit`,
+        action: 'Website_Exit',
         label: 'Click Home',
       });
     });
@@ -591,6 +598,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         : null,
     });
 
+    const {
+      isShowInvite: isShowAsterInvite,
+      setIsShowInvite: setIsShowAsterInvite,
+    } = useAsterReferral({
+      url: webviewState.resolvedUrl,
+      connectedAddress: dappInfo?.isConnected
+        ? dappInfo?.currentAccount?.address
+        : null,
+    });
+
     const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
     const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
 
@@ -683,7 +700,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       onLoadStart={e => {
                         const alwaysTreatReloadAsTrue =
                           IS_ANDROID &&
-                          !!getOnlineConfig()?.['switches']?.[
+                          !!getOnlineConfig()?.switches?.[
                             '20250924.android_webview_always_treat_as_reload'
                           ];
 
@@ -924,7 +941,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           ) : null}
           {safeGetOrigin(webviewState.resolvedUrl) ===
             safeGetOrigin(PERPS_INVITE_URL) && dappInfo?.isConnected ? (
-            <HyperliquidInvitePopup
+            <PerpsInvitePopup
+              type="hyperliquid"
               visible={
                 isShowInvite &&
                 isActive &&
@@ -949,6 +967,58 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     lastTime: Date.now(),
                   },
                 });
+              }}
+              footer={
+                <View style={styles.dappWebViewNavControl}>
+                  <BrowserHeader
+                    dapp={dappInfo}
+                    url={webviewState.resolvedUrl}
+                    onViewTabs={handleViewTabs}
+                    onLocationBarPress={str => {
+                      setPartialBrowserState({
+                        isShowSearch: true,
+                        searchText: str,
+                        searchTabId: tabId,
+                        trigger: 'browser',
+                      });
+                    }}
+                    account={account}
+                    tabsCount={tabsCount}
+                    canGoBack={webviewState.canGoBack}
+                    onGoBack={handleGoBack}
+                    onGoHome={handleGoHome}
+                    onAccountPress={() => {
+                      if (dappInfo?.isConnected) {
+                        setIsShowCurrentDappPopup(true);
+                      } else {
+                        setIsShowAccountPopup(true);
+                      }
+                    }}
+                  />
+                </View>
+              }
+            />
+          ) : null}
+          {safeGetOrigin(webviewState.resolvedUrl) ===
+            safeGetOrigin(PERPS_ASTER_INVITE_URL) && dappInfo?.isConnected ? (
+            <PerpsInvitePopup
+              type="aster"
+              visible={
+                isShowAsterInvite &&
+                isActive &&
+                !browserState.isShowSearch &&
+                browserState.isShowBrowser &&
+                !isShowAccountPopup &&
+                !isShowCurrentDappPopup
+              }
+              onClose={() => {
+                setIsShowAsterInvite(false);
+                preferenceService.setHasShowAsterPopup(true);
+              }}
+              onInvite={() => {
+                handleGoTo(PERPS_ASTER_INVITE_URL);
+                setIsShowAsterInvite(false);
+                preferenceService.setHasShowAsterPopup(true);
               }}
               footer={
                 <View style={styles.dappWebViewNavControl}>
