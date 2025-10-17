@@ -74,6 +74,7 @@ export const BrowserHandler = () => {
         iosIconSource: isLight
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_refresh.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_refresh_dark.png'),
+        androidIcon: { color: colors2024['neutral-body'] },
         androidIconName: isLight
           ? 'ic_rabby_menu_refresh'
           : 'ic_rabby_menu_refresh_dark',
@@ -89,6 +90,7 @@ export const BrowserHandler = () => {
           : isLight
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_dark.png'),
+        androidIcon: { color: colors2024['neutral-body'] },
         androidIconName: activeTabState.isBookmark
           ? 'ic_rabby_menu_favorite_filled'
           : isLight
@@ -108,6 +110,7 @@ export const BrowserHandler = () => {
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_content_mode.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_content_mode_dark.png'),
 
+        androidIcon: { color: colors2024['neutral-body'] },
         androidIconName: isLight
           ? 'ic_rabby_menu_content_mode'
           : 'ic_rabby_menu_content_mode_dark',
@@ -122,6 +125,7 @@ export const BrowserHandler = () => {
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear_cache.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear_cache_dark.png'),
 
+        androidIcon: { color: colors2024['neutral-body'] },
         androidIconName: isLight
           ? 'ic_rabby_menu_clear_cache'
           : 'ic_rabby_menu_clear_cache_dark',
@@ -135,6 +139,7 @@ export const BrowserHandler = () => {
         title: t('page.browser.menu.disconnect'),
         textColor: colors2024['red-dark'],
         iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_disconnect.png'),
+        androidIcon: { color: colors2024['neutral-body'] },
         androidIconName: 'ic_rabby_menu_disconnect',
         key: 'disconnect',
         onSelect: () => {
