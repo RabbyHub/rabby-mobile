@@ -674,7 +674,8 @@
       "noSupprotTokenForDex": "Bu token bu borsa tarafından desteklenmeyebilir. Kaybı önlemek için işlem yapmadan önce kontrol edin.",
       "noSupprotTokenForSafe": "Gönderdiğiniz tokenların olduğu Safe adresi bu zincirde dağıtılmamıştır. Devam etmeden önce kontrol edin, kaybı önlemek için.",
       "noSupportTokenForChain": "Alıcı adresi farklı bir zincirde bir kontrat adresidir. İşleme devam etmeden önce kontrol edin, kayıpları önlemek için.",
-      "addressDetail": "Adres Detayı"
+      "addressDetail": "Adres Detayı",
+      "newAmount": "Miktar"
     },
     "sendPoly": {
       "modals": {
@@ -1322,7 +1323,18 @@
       },
       "Quick": "Hızlı",
       "createNewSeedPhrase": "Yeni Seed Phrase Oluştur",
-      "createNewAddress": "Yeni Cüzdan Oluştur"
+      "createNewAddress": "Yeni Cüzdan Oluştur",
+      "whatIsPrivateKey": {
+        "title4": "Güvenlik",
+        "ButtonGotIt": "Anladım.",
+        "description2": "Eğer özel anahtarınızı kaybedersez, cüzdanınızı geri yükleyemezsiniz.",
+        "title2": "Yedekleme",
+        "title": "Özel anahtar nedir",
+        "description4": "Özel anahtarınız cihazınızda yerel olarak saklanır ve şifrenizle şifrelenir. Ona yalnızca siz erişebilirsiniz. Rabby özel anahtarınıza erişemez veya onu geri alamaz.",
+        "description3": "Asla özel anahtarınızı paylaşmayın—ona erişimi olan herkes fonlarınızı kontrol edebilir.",
+        "description1": "Özel anahtar, cüzdanınıza erişmek ve kontrol etmek için kullanılan harf ve rakamlar dizisidir. Cüzdanınızı herhangi bir cihazda kurtarmak için bunu kullanabilirsiniz.",
+        "title3": "Asla Paylaşma"
+      }
     },
     "unlock": {
       "btn": {
@@ -1599,7 +1611,8 @@
       "top-100": "En İyi 100",
       "initialPointsClaimEnded": "Başlangıç Noktaları talebi sona erdi",
       "code-set-successfully": "Referral kodu başarıyla ayarlandı.",
-      "firstRoundEnded": "🎉 Rabby Points'ın ilk turu sona erdi"
+      "firstRoundEnded": "🎉 Rabby Points'ın ilk turu sona erdi",
+      "xPoints": "{{point}} Puan"
     },
     "customTestnet": {
       "CustomTestnetForm": {
@@ -1849,13 +1862,35 @@
             "all": "Hepsi",
             "qnt": "Qnt",
             "price": "Fiyat",
-            "value": "Değer"
+            "value": "Değer",
+            "transactionCount": "İşlem Sayısı"
           }
         },
         "activity": "Etkinlik",
         "empty": "Veri Yok",
         "details": "Ayrıntılar",
-        "summary": "Özet Verisi"
+        "summary": "Özet Verisi",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "Likidite Detayı",
+            "top5": "En iyi 5 havuz"
+          },
+          "actions": {
+            "all": "Tüm",
+            "remove": "Kaldır",
+            "add": "Ekle"
+          },
+          "headers": {
+            "time": "Zaman",
+            "amount": "Miktar",
+            "value": "Değer"
+          },
+          "value": "Değer",
+          "pair": "Çift",
+          "amount": "Miktar",
+          "dex": "Dex"
+        },
+        "pools": "Havuzlar"
       }
     },
     "approvalsAddressList": {
@@ -2060,16 +2095,22 @@
         "refresh": "Yenile",
         "contentModeMobile": "Mobil Sitei Talep Et",
         "disconnect": "Bağlantıyı kesmek",
-        "contentModeDesktop": "Masaüstü Siteyi İsteği"
+        "contentModeDesktop": "Masaüstü Siteyi İsteği",
+        "clearCache": "Önbelleği temizle"
       },
       "HyperliquidInvitePopup": {
         "btn": "Şimdi Katıl",
         "title": "Hyperliquid Referans Programı",
-        "desc": "Şimdi Rabby’nin kodunu kullanarak Hyperliquid ücretlerinizde <1>4% indirim</1> kazanın."
+        "desc": "Şimdi Rabby’nin kodunu kullanarak Hyperliquid ücretlerinizde <1>4% indirim</1> kazanın.",
+        "asterTitle": "Aster Referans Programı",
+        "asterDesc": "Şimdi Rabby’nin kodunu kullanarak Aster ücretlerinizde <1> %4 indirim </1> almak için katılın."
       },
       "WebviewError": {
         "error": "Hata:",
         "failedToLoad": "Sayfa yüklenemedi"
+      },
+      "toast": {
+        "clearCacheSuccess": "Önbellek temizlendi"
       }
     },
     "browserManage": {
@@ -2208,7 +2249,8 @@
         "step1Desc": "Sonsuz vadeli işlemlerle, yalnızca varlık ticareti yapmıyorsunuz. Gelecekte ne olacağını düşündüğünüzü ticaretini yapıyorsunuz.",
         "step3Desc": "Fiyata düşmesini beklediğinizde, kısa pozisyon açarsınız. Fiyat düşerse, kazanırsınız. Fiyat yükselirse, kaybedersiniz.",
         "step4Desc": "Kaldıraç, yatırdığınızdan daha fazla işlem yapmanızı sağlar. Bu, hem kazançlarınızı hem de zararlarınızı artırabilir.",
-        "step5Desc": "Her pozisyonun bir likidasyon fiyatı vardır. Eğer piyasa fiyatı bu seviyeye ulaşırsa, pozisyonunuz kapatılacaktır. Daha yüksek kaldıraç kullanmak, likide olma riskini artırır."
+        "step5Desc": "Her pozisyonun bir likidasyon fiyatı vardır. Eğer piyasa fiyatı bu seviyeye ulaşırsa, pozisyonunuz kapatılacaktır. Daha yüksek kaldıraç kullanmak, likide olma riskini artırır.",
+        "step3Title": "Kısa"
       },
       "PerpsDepositPopup": {
         "amount": "Miktar",
@@ -2424,6 +2466,9 @@
         "entryPrice": "Giriş Fiyatı:",
         "slPrice": "Zarar Durdurma Fiyatı"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Yerleşik Sayfa"
     }
   },
   "component": {

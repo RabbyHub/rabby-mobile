@@ -674,7 +674,8 @@
       "whitelistAlert__temporaryGranted": "Izin sementara diberikan",
       "whitelistAlert__whitelisted": "Alamat telah tercantum dalam daftar putih",
       "noSupportTokenForChain": "Alamat penerima adalah alamat kontrak di rantai yang berbeda. Periksa sebelum melanjutkan untuk menghindari kerugian.",
-      "addressDetail": "Detail Alamat"
+      "addressDetail": "Detail Alamat",
+      "newAmount": "Jumlah"
     },
     "sendPoly": {
       "modals": {
@@ -1322,7 +1323,18 @@
       },
       "Quick": "Cepat",
       "createNewSeedPhrase": "Buat Frasa Benih Baru",
-      "createNewAddress": "Buat Dompet Baru"
+      "createNewAddress": "Buat Dompet Baru",
+      "whatIsPrivateKey": {
+        "title": "Apa itu private key",
+        "title3": "Jangan Pernah Membagikannya",
+        "description2": "Jika Anda kehilangan private key Anda, Anda tidak akan dapat memulihkan dompet Anda.",
+        "title2": "Cadangan",
+        "description4": "Kunci pribadi Anda disimpan secara lokal di perangkat Anda dan dienkripsi dengan kata sandi Anda. Hanya Anda yang dapat mengaksesnya. Rabby tidak dapat mengambil atau mengakses kunci pribadi Anda.",
+        "title4": "Keamanan",
+        "ButtonGotIt": "Saya sudah mengerti.",
+        "description3": "Jangan pernah membagikan kunci pribadi Anda—siapa pun yang memiliki akses ke sana dapat mengendalikan dana Anda.",
+        "description1": "Sebuah kunci privat adalah sekumpulan huruf dan angka yang digunakan untuk mengakses dan mengontrol dompet Anda. Anda dapat menggunakannya untuk memulihkan dompet Anda di perangkat apa pun."
+      }
     },
     "unlock": {
       "btn": {
@@ -1599,7 +1611,8 @@
       "out-of-x-current-total-points": "Dari {{total}} Total Poin yang Didistribusikan",
       "initialPointsClaimEnded": "Klaim Poin Awal telah berakhir",
       "code-set-successfully": "Kode rujukan berhasil diatur",
-      "firstRoundEnded": "🎉 Putaran pertama Rabby Points telah berakhir"
+      "firstRoundEnded": "🎉 Putaran pertama Rabby Points telah berakhir",
+      "xPoints": "{{point}} Poin"
     },
     "customTestnet": {
       "CustomTestnetForm": {
@@ -1849,13 +1862,35 @@
             "type": "Jenis",
             "value": "Nilai",
             "price": "Harga",
-            "qnt": "Qnt"
+            "qnt": "Qnt",
+            "transactionCount": "Jumlah Transaksi"
           }
         },
         "empty": "Tidak Ada Data",
         "details": "Detail",
         "summary": "Ringkasan Data",
-        "activity": "Aktivitas"
+        "activity": "Aktivitas",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "Detail Likuiditas",
+            "top5": "5 kolam teratas"
+          },
+          "actions": {
+            "all": "Semua",
+            "add": "Tambahkan",
+            "remove": "Hapus"
+          },
+          "headers": {
+            "value": "Nilai",
+            "time": "Waktu",
+            "amount": "Jumlah"
+          },
+          "pair": "Pasangan",
+          "amount": "Jumlah",
+          "dex": "Dex",
+          "value": "Nilai"
+        },
+        "pools": "Kolam"
       }
     },
     "approvalsAddressList": {
@@ -2060,16 +2095,22 @@
         "contentModeMobile": "Permintaan Situs Seluler",
         "refresh": "Menyegarkan",
         "disconnect": "Putuskan Sambungan",
-        "favorite": "Favorit"
+        "favorite": "Favorit",
+        "clearCache": "Bersihkan cache"
       },
       "HyperliquidInvitePopup": {
         "btn": "Bergabung Sekarang",
         "title": "Program Referal Hyperliquid",
-        "desc": "Bergabung sekarang menggunakan kode Rabby untuk mendapatkan <1>diskon 4%</1> pada biaya Hyperliquid Anda."
+        "desc": "Bergabung sekarang menggunakan kode Rabby untuk mendapatkan <1>diskon 4%</1> pada biaya Hyperliquid Anda.",
+        "asterTitle": "Program Referral Aster",
+        "asterDesc": "Bergabunglah sekarang dengan menggunakan kode Rabby untuk mendapatkan diskon <1>4%</1> pada biaya Aster Anda."
       },
       "WebviewError": {
         "error": "Error:",
         "failedToLoad": "Gagal memuat halaman"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache dibersihkan"
       }
     },
     "browserManage": {
@@ -2425,6 +2466,9 @@
         "tpPrice": "Harga Ambil Untung",
         "setTpPrice": "Atur Harga Ambil Keuntungan"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Halaman Bawaan"
     }
   },
   "component": {

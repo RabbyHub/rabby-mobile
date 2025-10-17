@@ -785,7 +785,8 @@
       "From": "De",
       "noSupprotTokenForSafe": "L'adresse Safe à laquelle vous envoyez des jetons n'est pas déployée sur cette chaîne. Vérifiez avant de continuer pour éviter toute perte.",
       "noSupportTokenForChain": "L'adresse du destinataire est une adresse de contrat sur une autre chaîne. Vérifiez avant de continuer pour éviter toute perte.",
-      "addressDetail": "Détails de l'adresse"
+      "addressDetail": "Détails de l'adresse",
+      "newAmount": "Montant"
     },
     "gasTopUp": {
       "Value": "Valeur",
@@ -1448,7 +1449,18 @@
         "backupRestoreImported": "Importé",
         "googleDriveBackup": "Sauvegarde sur Google Drive"
       },
-      "createNewAddress": "Créer un nouveau Wallet"
+      "createNewAddress": "Créer un nouveau Wallet",
+      "whatIsPrivateKey": {
+        "title4": "Sécurité",
+        "title3": "Ne jamais le partager",
+        "title2": "Sauvegarde",
+        "ButtonGotIt": "Je l'ai.",
+        "description3": "Ne partagez jamais votre clé privée : quiconque y a accès peut contrôler vos fonds.",
+        "description2": "Si vous perdez votre clé privée, vous ne pourrez pas restaurer votre wallet.",
+        "description1": "Une clé privée est une chaîne de lettres et de chiffres utilisée pour accéder et contrôler votre wallet. Vous pouvez l'utiliser pour récupérer votre wallet sur n'importe quel appareil.",
+        "description4": "Votre clé privée est stockée localement sur votre appareil et cryptée avec votre mot de passe. Uniquement vous pouvez y accéder. Rabby ne peut pas récupérer ou accéder à votre clé privée.",
+        "title": "Qu'est-ce qu'une clé privée"
+      }
     },
     "importSafe": {
       "error": {
@@ -1778,13 +1790,35 @@
             "min": "min",
             "price": "Prix",
             "qnt": "Qnt",
-            "value": "Valeur"
+            "value": "Valeur",
+            "transactionCount": "Nombre de Transactions"
           }
         },
         "empty": "Pas de données",
         "activity": "Activité",
         "summary": "Résumé des données",
-        "details": "Détails"
+        "details": "Détails",
+        "pool": {
+          "tab": {
+            "top5": "Top 5 pools",
+            "liquidityDetail": "Détails de la liquidité"
+          },
+          "actions": {
+            "all": "Tout",
+            "add": "Ajouter",
+            "remove": "Supprimer"
+          },
+          "headers": {
+            "amount": "Montant",
+            "value": "Valeur",
+            "time": "Temps"
+          },
+          "amount": "Montant",
+          "dex": "Dex",
+          "pair": "Couple",
+          "value": "Valeur"
+        },
+        "pools": "Pools"
       }
     },
     "rabbyPoints": {
@@ -1829,7 +1863,8 @@
           "verify-address": "Vérifier l'adresse"
         }
       },
-      "code-set-successfully": "Le code de recommandation a été défini avec succès"
+      "code-set-successfully": "Le code de recommandation a été défini avec succès",
+      "xPoints": "{{point}} Points"
     },
     "customTestnet": {
       "add": "Ajouter un réseau personnalisé",
@@ -2070,16 +2105,22 @@
         "contentModeDesktop": "Demander le site de bureau",
         "contentModeMobile": "Demander le site mobile",
         "disconnect": "Déconnexion",
-        "refresh": "Rafraîchir"
+        "refresh": "Rafraîchir",
+        "clearCache": "Vider le cache"
       },
       "HyperliquidInvitePopup": {
         "title": "Programme de parrainage Hyperliquid",
         "btn": "Rejoignez maintenant",
-        "desc": "Rejoignez maintenant en utilisant le code de Rabby pour obtenir une <1>remise de 4%</1> sur vos frais Hyperliquid."
+        "desc": "Rejoignez maintenant en utilisant le code de Rabby pour obtenir une <1>remise de 4%</1> sur vos frais Hyperliquid.",
+        "asterTitle": "Programme de parrainage Aster",
+        "asterDesc": "Rejoignez maintenant en utilisant le code de Rabby pour obtenir une <1>remise de 4%</1> sur vos frais Aster."
       },
       "WebviewError": {
         "error": "Erreur :",
         "failedToLoad": "Échec du chargement de la page"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache vidé"
       }
     },
     "browserManage": {
@@ -2435,6 +2476,9 @@
         "setTpPrice": "Définir le prix de prise de profit",
         "setSlPrice": "Définir le prix de stop-loss"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Page intégrée"
     }
   },
   "native": {
