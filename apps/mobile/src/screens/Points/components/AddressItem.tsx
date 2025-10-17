@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
 import { AccountPoints } from '../hooks';
-import RcIconPoints from '@/assets2024/icons/home/IconPoints.svg';
+import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { formatTokenAmount } from '@/utils/number';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
@@ -130,7 +130,7 @@ interface AddressItemProps {
 }
 export const AddressPointItem = (props: AddressItemProps) => {
   const { account } = props;
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   const isLoading = account.claimed_points === undefined;
@@ -150,7 +150,11 @@ export const AddressPointItem = (props: AddressItemProps) => {
               <WalletName style={styles.itemNameText} />
               {!isLoading ? (
                 <View style={styles.pointsBox}>
-                  <RcIconPoints width={20} height={20} />
+                  <RcIconPointsCC
+                    width={20}
+                    height={20}
+                    color={colors2024['brand-default-icon']}
+                  />
                   <Text style={styles.points}>
                     {t('page.rabbyPoints.xPoints', {
                       point: formatTokenAmount(account.claimed_points || 0, 0),

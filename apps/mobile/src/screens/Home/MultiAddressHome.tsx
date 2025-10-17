@@ -11,7 +11,7 @@ import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
-import RcIconPoints from '@/assets2024/icons/home/IconPoints.svg';
+import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -187,7 +187,7 @@ function MultiAddressHome(): JSX.Element {
         {
           key: MultiHomeFeatTitle.Points,
           title: t('page.rabbyPoints.title'),
-          icon: RcIconPoints,
+          icon: RcIconPointsCC,
         },
         {
           key: MultiHomeFeatTitle.Approvals,
