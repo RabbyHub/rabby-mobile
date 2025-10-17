@@ -1391,6 +1391,7 @@ export const MiniApproval = ({
           }
         }}
         account={account}
+        ga={ga}
       />
     </>
   );

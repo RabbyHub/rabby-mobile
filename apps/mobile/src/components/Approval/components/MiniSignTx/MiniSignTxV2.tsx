@@ -13,7 +13,7 @@ import {
   signatureStore,
   useSignatureStore,
 } from '@/components2024/MiniSignV2';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { findChain } from '@/utils/chain';
 import { useMemoizedFn } from 'ahooks';
@@ -32,9 +32,11 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 const MiniSignTxV2 = ({
   showCheckSecurity,
   onToggleCheckSecurity,
+  synGasHeaderInfo,
 }: {
   showCheckSecurity: boolean;
   onToggleCheckSecurity: () => void;
+  synGasHeaderInfo?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({
@@ -327,6 +329,49 @@ const MiniSignTxV2 = ({
     !ctx?.txsCalc?.length ||
     !!ctx.checkErrors?.some(e => e.level === 'forbidden');
 
+  if (synGasHeaderInfo) {
+    return (
+      <View style={{ position: 'absolute', left: -999999, bottom: -999999 }}>
+        <GasSelectorHeader
+          fixedMode
+          defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
+          tx={txs[0]}
+          gasAccountCost={gasAccountCost}
+          gasMethod={gasMethod}
+          onChangeGasMethod={setGasMethod}
+          pushType={pushType}
+          isDisabledGasPopup={task.status !== 'idle'}
+          disabled={false}
+          isReady={isReady}
+          gasLimit={gasLimit}
+          noUpdate={false}
+          gasList={gasList}
+          selectedGas={selectedGas}
+          version={txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0'}
+          recommendGasLimit={recommendGasLimit}
+          recommendNonce={recommendNonce}
+          chainId={chainId}
+          onChange={handleGasChange}
+          nonce={realNonce}
+          disableNonce={true}
+          isSpeedUp={false}
+          isCancel={false}
+          is1559={support1559}
+          isHardware={isHardware}
+          manuallyChangeGasLimit={manuallyChangeGasLimit}
+          errors={checkErrors}
+          engineResults={engineResults?.engineResult}
+          nativeTokenBalance={nativeTokenBalance}
+          gasPriceMedian={gasPriceMedian}
+          gas={totalGasCost}
+          gasCalcMethod={gasCalcMethod}
+          directSubmit={true}
+          checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
+          account={currentAccount}
+        />
+      </View>
+    );
+  }
   return (
     <View style={showCheckSecurity ? styles.wrapper : undefined}>
       {showCheckSecurity ? (

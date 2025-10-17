@@ -8,8 +8,7 @@ import { useSignatureStore } from '../state/SignatureManager';
 import { signatureStore } from '../state';
 import MiniSignTxV2 from '@/components/Approval/components/MiniSignTx/MiniSignTxV2';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { useSheetModal } from '@/hooks/useSheetModal';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import AutoLockView from '@/components/AutoLockView';
 
 export const GlobalSignerPortal: React.FC = () => {
@@ -27,7 +26,8 @@ export const GlobalSignerPortal: React.FC = () => {
     signatureStore.close();
   };
 
-  const { sheetModalRef } = useSheetModal();
+  const sheetModalRef = useRef<BottomSheetModal>(null);
+
   const pressBackdropRef = useRef(false);
   const indexRef = useRef(-1);
   const dismissedByCodeRef = useRef(false);
@@ -46,21 +46,20 @@ export const GlobalSignerPortal: React.FC = () => {
 
   const visible = (ctx?.txs?.length || 0) > 0;
 
-  useEffect(() => {
-    if (visible) {
-      sheetModalRef.current?.present();
-    } else {
-      sheetModalRef.current?.dismiss();
-    }
-  }, [sheetModalRef, visible]);
-
   const showUI = React.useMemo(() => {
-    if (ctx?.mode === 'ui') {
+    if (ctx?.mode === 'ui' && visible) {
       return ['ui-open', 'signing', 'error'].includes(status);
     }
 
     return false;
-  }, [ctx?.mode, status]);
+  }, [ctx?.mode, status, visible]);
+
+  useEffect(() => {
+    if (showUI) {
+      sheetModalRef.current?.present();
+    }
+  }, [sheetModalRef, showUI]);
+
   const [showCheckSecurity, setShowCheckSecurity] = useState(false);
 
   const onToggleCheckSecurity = useCallback(() => {
@@ -79,8 +78,16 @@ export const GlobalSignerPortal: React.FC = () => {
 
   return (
     <>
+      {config?.synGasHeaderInfo ? (
+        <MiniSignTxV2
+          showCheckSecurity={showCheckSecurity}
+          onToggleCheckSecurity={onToggleCheckSecurity}
+          synGasHeaderInfo
+        />
+      ) : null}
       <AppBottomSheetModal
-        index={!showUI ? -1 : 0}
+        enableDynamicSizing
+        enableDismissOnClose
         ref={sheetModalRef}
         style={styles.sheet}
         handleStyle={[
@@ -90,7 +97,6 @@ export const GlobalSignerPortal: React.FC = () => {
           },
         ]}
         handleIndicatorStyle={styles.handleIndicatorStyle}
-        enableDynamicSizing
         maxDynamicContentSize={Dimensions.get('screen').height * 0.9}
         backgroundStyle={styles.sheetBg}
         backdropProps={{
@@ -98,19 +104,16 @@ export const GlobalSignerPortal: React.FC = () => {
             pressBackdropRef.current = true;
           },
         }}
-        // containerStyle={{ zIndex: 2001 }}
         onChange={onChange}>
         <BottomSheetView>
           <AutoLockView
             style={{
               minHeight: 164,
             }}>
-            {ctx?.txs?.length ? (
-              <MiniSignTxV2
-                showCheckSecurity={showCheckSecurity}
-                onToggleCheckSecurity={onToggleCheckSecurity}
-              />
-            ) : null}
+            <MiniSignTxV2
+              showCheckSecurity={showCheckSecurity}
+              onToggleCheckSecurity={onToggleCheckSecurity}
+            />
           </AutoLockView>
         </BottomSheetView>
       </AppBottomSheetModal>
@@ -121,6 +124,7 @@ export const GlobalSignerPortal: React.FC = () => {
         onCancel={handleCancel}
         onRetry={handleRetry}
         account={config?.account}
+        ga={config?.ga}
       />
       {ctx?.mode === 'direct' && status !== 'ready' && status !== 'error' ? (
         <Modal

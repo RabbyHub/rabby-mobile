@@ -556,7 +556,6 @@ const Swap = ({
   }, []);
 
   const handleSwap = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
-    console.log('handleSwaphandleSwaphandleSwap', isSubmitting);
     if (isSubmitting) {
       return;
     }
@@ -824,6 +823,7 @@ const Swap = ({
       txs: currentTxs,
       ga: miniSignGa,
       checkGasFeeTooHigh: true,
+      synGasHeaderInfo: true,
     }).catch(error => {
       console.error('swap mini signer prefetch failed', error);
     });

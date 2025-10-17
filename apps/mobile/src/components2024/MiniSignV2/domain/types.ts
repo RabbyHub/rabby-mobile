@@ -57,6 +57,7 @@ export type SignerConfig = {
     fixed?: boolean;
   }) => void;
   showCheck?: boolean;
+  synGasHeaderInfo?: boolean;
 };
 
 export type PreparedContext = {

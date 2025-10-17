@@ -624,6 +624,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       txs,
       ga: miniSignGa,
       checkGasFeeTooHigh: true,
+      synGasHeaderInfo: true,
     }).catch(error => {
       console.error('bridge mini signer prefetch failed', error);
     });

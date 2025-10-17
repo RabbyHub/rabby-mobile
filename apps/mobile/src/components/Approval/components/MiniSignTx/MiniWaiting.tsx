@@ -9,8 +9,6 @@ import { MiniLedgerHardwareWaiting } from './MiniLedgerHardwareWaiting';
 import { MiniPrivatekeyWaiting } from './MiniPrivatekeyWaiting';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { MiniOneKeyHardwareWaiting } from './MiniOneKeyHardwareWaiting';
-import { miniApprovalAtom } from '@/hooks/useMiniApproval';
-import { useAtom } from 'jotai';
 import { useMemoizedFn } from 'ahooks';
 import { Account } from '@/core/services/preference';
 
@@ -21,6 +19,7 @@ export const MiniWaiting = ({
   onDone,
   error: _error,
   account,
+  ga,
 }: {
   visible?: boolean;
   onRetry?: () => void;
@@ -28,9 +27,8 @@ export const MiniWaiting = ({
   onDone?: () => void;
   error?: BatchSignTxTaskType['error'];
   account: Account;
+  ga?: Record<string, any>;
 }) => {
-  const [{ ga }] = useAtom(miniApprovalAtom);
-
   const error = useMemo(() => {
     if (ga?.category && _error?.status === 'FAILED') {
       return {

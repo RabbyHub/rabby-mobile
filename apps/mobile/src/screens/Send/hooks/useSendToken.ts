@@ -547,7 +547,7 @@ export function useSendTokenForm({
     });
   }, [loadGasListAndResolve, putScreenState]);
 
-  const { openDirect, prefetch } = useMiniSigner({
+  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
     account,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
@@ -823,7 +823,7 @@ export function useSendTokenForm({
 
       if (ref === prepareCountRef.current) {
         if (tx) {
-          prefetch({
+          prefetchMiniSigner({
             txs: [tx],
             ga: {
               category: 'Send',
@@ -832,6 +832,7 @@ export function useSendTokenForm({
               trigger: 'sendToken',
             },
             checkGasFeeTooHigh: true,
+            synGasHeaderInfo: true,
           });
           return tx as Tx;
         }
@@ -993,7 +994,7 @@ export function useSendTokenForm({
 
               prepareCountRef.current++;
               putScreenState({ buildTxsCount: prepareCountRef.current });
-              prefetch({ txs: [] });
+              prefetchMiniSigner({ txs: [] });
               prepareRef.current = prepareDirectSubmitMiniTx(
                 prepareCountRef.current,
               );
@@ -1057,7 +1058,7 @@ export function useSendTokenForm({
     },
     [
       ignoreMiniSignGasFee,
-      prefetch,
+      prefetchMiniSigner,
       putScreenState,
       currentToken,
       getParams,
@@ -1615,12 +1616,12 @@ export function useSendTokenForm({
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
     ) {
-      prefetch({
+      prefetchMiniSigner({
         txs: [],
       });
     }
   }, [
-    prefetch,
+    prefetchMiniSigner,
     chainItem?.id,
     formValues.to,
     formValues.amount,
