@@ -29,8 +29,6 @@ import {
   notificationService,
   transactionHistoryService,
 } from '@/core/services';
-import { sleep } from '@/utils/async';
-import { IS_ANDROID } from '@/core/native/utils';
 
 const ETH_GAS_USD_LIMIT = 15;
 const OTHER_GAS_USD_LIMIT = 5;
@@ -463,11 +461,11 @@ class SignatureManager {
     }
     if (account.type === KEYRING_CLASS.HARDWARE.LEDGER) {
       try {
-        const [isConnected, id] = await apiLedger.isConnected(account.address);
+        const [isConnected, id] = await apiLedger.isConnected(
+          account.address,
+          true,
+        );
         setLedgerStatus(isConnected);
-        if (IS_ANDROID) {
-          await sleep(1000);
-        }
         if (isConnected) {
           cb();
         } else {

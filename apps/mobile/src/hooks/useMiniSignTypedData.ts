@@ -14,8 +14,6 @@ import {
 } from '@/hooks/onekey/useOneKeyStatus';
 import { t } from 'i18next';
 import type { BatchSignTxTaskType } from '@/components/Approval/components/MiniSignTx/useBatchSignTxTask';
-import { IS_ANDROID } from '@/core/native/utils';
-import { sleep } from '@/utils/async';
 
 type ProgressStatus = 'building' | 'builded' | 'signed' | 'submitted';
 
@@ -259,12 +257,10 @@ const ensureHardwareConnected = async (account: Account) => {
       try {
         const [isConnected, deviceId] = await apiLedger.isConnected(
           account.address,
+          true,
         );
         setLedgerStatus(isConnected);
         setLedgerStatus(isConnected);
-        if (IS_ANDROID) {
-          await sleep(1000);
-        }
         if (isConnected) {
           safeResolve();
           return;
