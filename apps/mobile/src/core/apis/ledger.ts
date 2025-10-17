@@ -10,6 +10,7 @@ import PQueue from 'p-queue';
 import { t } from 'i18next';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
+import { IS_ANDROID } from '../native/utils';
 
 let queue: PQueue;
 setTimeout(() => {
@@ -71,7 +72,7 @@ export async function isConnected(
 
   keyring.setDeviceId(detail.deviceId);
   try {
-    await TransportBLE.open(detail.deviceId, 1000);
+    await TransportBLE.open(detail.deviceId, IS_ANDROID ? 2000 : 1000);
     return [true, detail.deviceId];
   } catch (e) {
     TransportBLE.disconnectDevice(detail.deviceId);

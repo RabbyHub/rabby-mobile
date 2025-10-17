@@ -29,6 +29,8 @@ import {
   notificationService,
   transactionHistoryService,
 } from '@/core/services';
+import { sleep } from '@/utils/async';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const ETH_GAS_USD_LIMIT = 15;
 const OTHER_GAS_USD_LIMIT = 5;
@@ -463,6 +465,9 @@ class SignatureManager {
       try {
         const [isConnected, id] = await apiLedger.isConnected(account.address);
         setLedgerStatus(isConnected);
+        if (IS_ANDROID) {
+          await sleep(100);
+        }
         if (isConnected) {
           cb();
         } else {
