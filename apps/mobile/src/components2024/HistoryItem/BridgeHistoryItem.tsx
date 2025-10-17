@@ -18,6 +18,7 @@ export const BridgeHistoryItem: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const isPending = data.status === 'pending';
+  const isFailed = data.status === 'failed';
   const fromChainItem = React.useMemo(
     () =>
       findChain({
@@ -49,6 +50,7 @@ export const BridgeHistoryItem: React.FC<Props> = ({
       showSuccess={
         Boolean(recentShowTime) && data.create_at > recentShowTime / 1000
       }
+      isFailed={isFailed}
       title={t('page.bridge.bridged')}
       subTitle={`${fromChainItem?.name} -> ${toChainItem?.name}`}
       isPending={isPending}
