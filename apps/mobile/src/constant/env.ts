@@ -40,3 +40,5 @@ export const NEED_DEVSETTINGBLOCKS = isSelfhostRegPkg || __DEV__;
 
 export const appIsProd = process.env.NODE_ENV === 'production';
 export const appIsDev = __DEV__;
+
+export const SAFE_API_KEY = process.env.MOBILE_SAFE_API_KEY || '';

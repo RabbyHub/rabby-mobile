@@ -167,6 +167,7 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
+          MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
 
       # - name: Upload artifact
       #   uses: actions/upload-artifact@v3
