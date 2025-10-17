@@ -18,3 +18,5 @@ export const HF_COLOR_BAD_THRESHOLD = 1.1; // 1.1
 
 // 清算线
 export const LIQUIDATION_HF_THRESHOLD = 1.0; // 1.0
+
+export const USD_DECIMALS = 8;

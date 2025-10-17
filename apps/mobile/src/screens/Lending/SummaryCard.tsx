@@ -14,8 +14,7 @@ interface IProps {
   netWorth: string;
   supplied: string;
   borrowed: string;
-  estDaily: string;
-  netApy: string;
+  netApy: number;
   healthFactor: string;
 }
 

@@ -10,11 +10,15 @@ import BorrowPoolList from './BorrowPoolList';
 import { DynamicCustomMaterialTabBar } from '../TokenDetail/components/CustomTabBar';
 import { ComputedUserReserve } from '@aave/math-utils';
 import CustomLabel from '../TokenDetail/components/CustomLabel';
+import { IWalletBalance } from './type';
+import { PoolBaseCurrencyHumanized } from '@aave/contract-helpers';
 
 const screenWidth = Dimensions.get('window').width;
 
 interface IProps {
   reserves: ComputedUserReserve[];
+  mappedBalances: IWalletBalance[];
+  baseCurrencyData?: PoolBaseCurrencyHumanized;
 }
 const PoolContainer = (props: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -83,10 +87,18 @@ const PoolContainer = (props: IProps) => {
       containerStyle={styles.container}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab label={renderSupplyLabel} name="supply">
-        <SupplyPoolList data={props.reserves} />
+        <SupplyPoolList
+          data={props.reserves}
+          mappedBalances={props.mappedBalances}
+          baseCurrencyData={props.baseCurrencyData}
+        />
       </Tabs.Tab>
       <Tabs.Tab label={renderBorrowLabel} name="borrow">
-        <BorrowPoolList data={props.reserves} />
+        <BorrowPoolList
+          data={props.reserves}
+          mappedBalances={props.mappedBalances}
+          baseCurrencyData={props.baseCurrencyData}
+        />
       </Tabs.Tab>
     </Tabs.Container>
   );

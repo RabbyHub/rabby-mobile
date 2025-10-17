@@ -25,7 +25,6 @@ import { fetchContractData } from './providers';
 import { useRequest } from 'ahooks';
 import SummaryCard from './SummaryCard';
 import { formatUserYield } from './utils/apy';
-import SupplyPoolList from './SupplyPoolList';
 import PoolContainer from './PoolContainer';
 
 const isAndroid = Platform.OS === 'android';
@@ -52,7 +51,7 @@ function DashBoardScreen(): JSX.Element {
       );
     }
     return {
-      netAPY: '',
+      netAPY: 0,
       earnedAPY: '',
       debtAPY: '',
     };
@@ -69,11 +68,14 @@ function DashBoardScreen(): JSX.Element {
           netWorth={data?.iUserSummary?.netWorthUSD || ''}
           supplied={data?.iUserSummary?.totalLiquidityUSD || ''}
           borrowed={data?.iUserSummary?.totalBorrowsUSD || ''}
-          estDaily={apy?.netAPY || ''}
-          netApy={apy.netAPY || ''}
+          netApy={apy.netAPY}
           healthFactor={data?.iUserSummary?.healthFactor || ''}
         />
-        <PoolContainer reserves={data?.iUserSummary?.userReservesData || []} />
+        <PoolContainer
+          reserves={data?.iUserSummary?.userReservesData || []}
+          mappedBalances={data?.mappedBalances || []}
+          baseCurrencyData={data?.baseCurrencyData}
+        />
       </View>
     </NormalScreenContainer2024>
   );

@@ -29,10 +29,10 @@ const poolDataProviderContract = new UiPoolDataProvider({
 //   chainId: ChainId.mainnet,
 // });
 
-// const walletBalanceProviderContract = new WalletBalanceProvider({
-//   walletBalanceProviderAddress: markets.AaveV3Ethereum.WALLET_BALANCE_PROVIDER,
-//   provider,
-// });
+const walletBalanceProviderContract = new WalletBalanceProvider({
+  walletBalanceProviderAddress: markets.AaveV3Ethereum.WALLET_BALANCE_PROVIDER,
+  provider,
+});
 
 async function fetchContractData(address?: string) {
   if (!address) {
@@ -91,8 +91,23 @@ async function fetchContractData(address?: string) {
       userIncentives: [],
     });
 
+    const { 0: tokenAddresses, 1: balances } =
+      await walletBalanceProviderContract.getUserWalletBalancesForLendingPoolProvider(
+        address,
+        markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
+      );
+    const mappedBalances = tokenAddresses.map((_address, ix) => ({
+      address: _address.toLowerCase(),
+      amount: balances[ix].toString(),
+    }));
+
     console.log('CUSTOM_LOGGER:=>: iUserSummary', iUserSummary);
-    return { formattedPoolReservesAndIncentives, iUserSummary };
+    return {
+      formattedPoolReservesAndIncentives,
+      iUserSummary,
+      mappedBalances,
+      baseCurrencyData: reserves.baseCurrencyData,
+    };
   } catch (error) {
     console.error('CUSTOM_LOGGER:=>: error', error);
     return { userSummary: null };

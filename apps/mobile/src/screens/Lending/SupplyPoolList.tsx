@@ -3,15 +3,27 @@ import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
-import { ComputedUserReserve } from '@aave/math-utils';
+import {
+  ComputedUserReserve,
+  nativeToUSD,
+  normalize,
+  USD_DECIMALS,
+} from '@aave/math-utils';
+import BigNumber from 'bignumber.js';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValueKMB } from '../Home/utils/price';
 import { formatPercent } from '../TokenDetail/util';
+import { IWalletBalance } from './type';
+import { formatAmount } from '@/utils/number';
+import { PoolBaseCurrencyHumanized } from '@aave/contract-helpers';
+import { formatNetworth } from '@/utils/math';
 
 interface IProps {
   data: ComputedUserReserve[];
+  mappedBalances: IWalletBalance[];
+  baseCurrencyData?: PoolBaseCurrencyHumanized;
 }
 const SupplyPoolList = (props: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -45,34 +57,57 @@ const SupplyPoolList = (props: IProps) => {
       data={sortReserves}
       style={styles.container}
       ListHeaderComponent={ListHeaderComponent}
-      renderItem={({ item, index }) => (
-        <TouchableOpacity
-          style={styles.item}
-          key={index}
-          onPress={() => handlePressItem(item)}>
-          <View style={styles.left}>
-            <View style={styles.ava} />
-            <View style={styles.symbolContainer}>
-              <Text style={styles.symbol}>{item.reserve.symbol}</Text>
-              <Text style={styles.tvl}>
-                TVL:{' '}
+      renderItem={({ item, index }) => {
+        const balance = props.mappedBalances.find(
+          balance =>
+            balance.address === item.reserve.underlyingAsset.toLowerCase(),
+        );
+        return (
+          <TouchableOpacity
+            style={styles.item}
+            key={index}
+            onPress={() => handlePressItem(item)}>
+            <View style={styles.left}>
+              <View style={styles.ava} />
+              <View style={styles.symbolContainer}>
+                <Text style={styles.symbol}>{item.reserve.symbol}</Text>
+                <Text style={styles.tvl}>
+                  TVL:{' '}
+                  {formatUsdValueKMB(
+                    Number(item.reserve.totalLiquidityUSD || '0'),
+                  )}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.apy}>
+              {formatPercent(Number(item.reserve.supplyAPY || '0'))}
+            </Text>
+            <View style={styles.right}>
+              <Text style={styles.yourSupplied}>
+                {formatUsdValueKMB(Number(item.underlyingBalanceUSD || '0'))}
+              </Text>
+              <Text style={styles.yourBalance}>
                 {formatUsdValueKMB(
-                  Number(item.reserve.totalLiquidityUSD || '0'),
+                  nativeToUSD({
+                    amount: new BigNumber(balance?.amount || '0'),
+                    currencyDecimals: item.reserve.decimals,
+                    priceInMarketReferenceCurrency:
+                      item.reserve.priceInMarketReferenceCurrency,
+                    marketReferenceCurrencyDecimals:
+                      props.baseCurrencyData?.marketReferenceCurrencyDecimals ||
+                      0,
+                    normalizedMarketReferencePriceInUsd: normalize(
+                      props.baseCurrencyData
+                        ?.marketReferenceCurrencyPriceInUsd || '0',
+                      USD_DECIMALS,
+                    ),
+                  }),
                 )}
               </Text>
             </View>
-          </View>
-          <Text style={styles.apy}>
-            {formatPercent(Number(item.reserve.supplyAPY || '0'))}
-          </Text>
-          <View style={styles.right}>
-            <Text style={styles.yourSupplied}>
-              {formatUsdValueKMB(Number(item.underlyingBalanceUSD || '0'))}
-            </Text>
-            <Text style={styles.yourBalance}>your balance</Text>
-          </View>
-        </TouchableOpacity>
-      )}
+          </TouchableOpacity>
+        );
+      }}
     />
   );
 };
