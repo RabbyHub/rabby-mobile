@@ -79,20 +79,13 @@ const ActivityAndHolders = ({
       <View style={styles.container}>
         <View style={styles.header}>
           <Text
-            style={[
-              styles.headerText,
-              activeTabKey === TabKey.activity && styles.activeText,
-            ]}
+            style={[styles.headerText, styles.activeText]}
             onPress={() => setActiveTabKey(TabKey.holders)}>
             {t('page.tokenDetail.marketInfo.holders')}
           </Text>
         </View>
         <View style={styles.content}>
-          <View
-            style={[
-              styles.hideContent,
-              activeTabKey === TabKey.holders && styles.visibleContent,
-            ]}>
+          <View style={[styles.hideContent, styles.visibleContent]}>
             <Holder
               top10ratio={summaryData?.ratio_top10 || 0}
               top100ratio={summaryData?.ratio_top100 || 0}

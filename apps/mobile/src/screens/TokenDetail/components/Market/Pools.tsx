@@ -75,6 +75,7 @@ const LiquidityDetail = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(DetailsTabKey.all);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const service = useCallback(
     async (d?: {
@@ -127,7 +128,10 @@ const LiquidityDetail = ({
   }, [data?.list]);
 
   useLayoutEffect(() => {
-    reloadAsync();
+    setIsInitialized(false);
+    reloadAsync().finally(() => {
+      setIsInitialized(true);
+    });
   }, [activeTab, reloadAsync]);
 
   const onOpenTxHash = useCallback(
@@ -255,7 +259,7 @@ const LiquidityDetail = ({
     styles.loading,
   ]);
 
-  if (loading && !list.length) {
+  if ((loading || !isInitialized) && !list.length) {
     return (
       <Skeleton
         style={styles.skeletonBlock}
