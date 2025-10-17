@@ -516,6 +516,7 @@ export const PerpsMarketDetailScreen = () => {
           direction={(positionData?.direction || 'Long') as 'Long' | 'Short'}
           size={Math.abs(positionData?.size || 0)}
           pxDecimals={currentAssetCtx?.pxDecimals || 2}
+          szDecimals={currentAssetCtx?.szDecimals || 0}
           onClose={() => setAutoCloseVisible(false)}
           handleSetAutoClose={async (params: {
             tpPrice: string;

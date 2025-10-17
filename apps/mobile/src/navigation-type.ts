@@ -152,6 +152,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
+  [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
 };
 
@@ -451,6 +452,7 @@ export type GetNestedScreenNavigationProps<
   T extends _NestedScreensParamsName,
   K extends keyof _NestedScreensParamsDict[T] & string,
 > = CompositeScreenProps<
+  // @ts-expect-error
   NativeStackScreenProps<_NestedScreensParamsDict[T], K>,
   NativeStackScreenProps<RootStackParamsList>
 >;

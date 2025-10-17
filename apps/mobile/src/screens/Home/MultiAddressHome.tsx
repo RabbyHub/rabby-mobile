@@ -51,7 +51,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { resetNavigationTo } from '@/hooks/navigation';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { useAppState } from '@react-native-community/hooks';
 import { useMemoizedFn } from 'ahooks';
 import { debounce, unionBy } from 'lodash';
@@ -504,7 +504,7 @@ function MultiAddressHome(): JSX.Element {
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
   const handlePressWatchlist = useCallback(() => {
-    navigation.navigate(RootNames.StackHomeNonTab, {
+    navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
       screen: RootNames.Watchlist,
       params: {},
     });
@@ -552,7 +552,7 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Approvals:
-          navigate(RootNames.StackAddress, {
+          navigateDeprecated(RootNames.StackAddress, {
             screen: RootNames.ApprovalAddressList,
           });
           break;

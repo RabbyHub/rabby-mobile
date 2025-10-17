@@ -1097,7 +1097,6 @@
           "entry": "Rabby'e aktarmak güvenli mi?",
           "description": "Verileriniz güvenli bir şekilde şifrelendi ve cihazınızda yerel olarak depolandı. Rabby, özel bilgilerinize erişemez ve bu bilgiler asla üçüncü şahıslarla paylaşılmaz."
         },
-        "safe": "Güvenli",
         "seedPhrase": "Seed Kelimesini İçe Aktar",
         "privateKey": "Özel Anahtarı İçe Aktar",
         "hardWare": "Donanım Cüzdanlarını Bağlayın",
@@ -1307,7 +1306,19 @@
         "balance": "Bakiye",
         "customAddressHdPath": "Özel Cüzdan HD yolu",
         "manageAddressFrom": "{{0}}'dan {{1}}'e cüzdanı yönet",
-        "selectIndexTip": "Cüzdanların başlangıç seri numarasını seçin:"
+        "selectIndexTip": "Cüzdanların başlangıç seri numarasını seçin:",
+        "trezor": {
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Ledger resmi HD yolu.",
+            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu.",
+            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HDpath."
+          },
+          "hdPathTypeNoChain": {
+            "legacy": "Eski: MEW / Mycrypto tarafından kullanılan HD yolu.",
+            "ledgerLive": "Ledger Live: Ledger resmi HD yolu.",
+            "bip44": "BIP44: BIP44 protokolü tarafından tanımlanan HDpath."
+          }
+        }
       },
       "Quick": "Hızlı",
       "createNewSeedPhrase": "Yeni Seed Phrase Oluştur",
@@ -1809,16 +1820,6 @@
         "marketData": "Piyasa verileri",
         "tokenSecurity": "Token Güvenliği"
       },
-      "interval": {
-        "1D": "1G",
-        "30M": "30M",
-        "1W": "1W",
-        "4H": "4H",
-        "15M": "15M",
-        "1H": "1H",
-        "1M": "1M",
-        "5M": "5M"
-      },
       "marketInfo": {
         "txns24h": "24 saat Txns",
         "volume24h": "24h İşlem Hacmi",
@@ -1845,7 +1846,6 @@
             "hour": "Saat",
             "addresses": "Adresler",
             "volume": "Hacim",
-            "tradingCount": "İşlem Sayısı",
             "all": "Hepsi",
             "qnt": "Qnt",
             "price": "Fiyat",
@@ -2066,6 +2066,10 @@
         "btn": "Şimdi Katıl",
         "title": "Hyperliquid Referans Programı",
         "desc": "Şimdi Rabby’nin kodunu kullanarak Hyperliquid ücretlerinizde <1>4% indirim</1> kazanın."
+      },
+      "WebviewError": {
+        "error": "Hata:",
+        "failedToLoad": "Sayfa yüklenemedi"
       }
     },
     "browserManage": {
@@ -2184,6 +2188,242 @@
     },
     "perpsHistory": {
       "title": "Geçmiş"
+    },
+    "perps": {
+      "PerpsCard": {
+        "depositBtn": "Para Yatırma",
+        "loginBtn": "Perps'a Giriş Yap",
+        "title": "Perps Ticaret Yapın",
+        "available": "Mevcut",
+        "withdrawBtn": "Çekilme",
+        "loginDesc": "Adresinizle giriş yapın ve perps ticaretine başlamak için fon yatırın.",
+        "learnBtn": "Perps hakkında bilgi edinin"
+      },
+      "PerpsGuidePopup": {
+        "step4Title": "Kaldıraç Ayarlama",
+        "step1Title": "Master Süreli Vadeli İşlemler",
+        "step2Title": "Uzun",
+        "step5Title": "Tasfiye",
+        "step2Desc": "Fiyatın yükselebileceğini düşündüğünüzde, bir long açarsınız. Eğer fiyat yükselirse, kazanırsınız. Eğer düşerse, kaybedersiniz.",
+        "step1Desc": "Sonsuz vadeli işlemlerle, yalnızca varlık ticareti yapmıyorsunuz. Gelecekte ne olacağını düşündüğünüzü ticaretini yapıyorsunuz.",
+        "step3Desc": "Fiyata düşmesini beklediğinizde, kısa pozisyon açarsınız. Fiyat düşerse, kazanırsınız. Fiyat yükselirse, kaybedersiniz.",
+        "step4Desc": "Kaldıraç, yatırdığınızdan daha fazla işlem yapmanızı sağlar. Bu, hem kazançlarınızı hem de zararlarınızı artırabilir.",
+        "step5Desc": "Her pozisyonun bir likidasyon fiyatı vardır. Eğer piyasa fiyatı bu seviyeye ulaşırsa, pozisyonunuz kapatılacaktır. Daha yüksek kaldıraç kullanmak, likide olma riskini artırır."
+      },
+      "PerpsDepositPopup": {
+        "amount": "Miktar",
+        "balance": "Bakiye",
+        "title": "Yatırma",
+        "depositBtn": "Deposit",
+        "estReceive": "Tahmini Alım: {{balance}}",
+        "insufficientBalance": "Yetersiz bakiye",
+        "minimumDepositSize": "Minimum para yatırma miktarı 5$'dır.",
+        "invalidNumber": "Lütfen geçerli bir sayı girin",
+        "fetchQuoteFailed": "Yatırım teklifi alınamadı. Lütfen token'ı değiştirin.",
+        "estReceiveTooltip": "Cross-chain deposit LiFi üzerinden işlenmektedir, bazı kaymalar meydana gelebilir. Tahmini varış süresi {{number}}sn."
+      },
+      "PerpsWithdrawPopup": {
+        "feeTooltipTitle": "Ücret",
+        "title": "Çekilme",
+        "amount": "Miktar",
+        "withdrawBtn": "Para Çekme",
+        "invalidNumber": "Lütfen geçerli bir sayı girin",
+        "available": "kullanılabilir",
+        "feeTip": "Ücret: $1.00",
+        "insufficientBalance": "Yetersiz bakiye",
+        "feeTooltipDesc": "Hyperliquid tarafından alınan Çekim Ücreti: 1 $",
+        "minimumWithdrawSize": "Minimum çekim tutarı 2 $'dır."
+      },
+      "PerpsWithdrawFeePopup": {
+        "title": "Ücret",
+        "desc": "Hyperliquid tarafından alınan Çekim Ücreti: 1 $",
+        "btn": "Tamam, anladım."
+      },
+      "historyDetail": {
+        "title": {
+          "openLong": "Açık Uzun",
+          "closeLong": "Uzun Pozisyonu Kapat",
+          "openShort": "Kısa Pozisyon Aç",
+          "closeLongTp": "Kapat Long Kar Al",
+          "closeShort": "Kapat Short",
+          "closeShortSl": "Kısa Pozisyonu Kapat Stop Loss",
+          "closeLongLiquidation": "Kapat Uzun Likidasyon",
+          "closeShortLiquidation": "Kapat Kısa Tasfiye",
+          "closeLongSl": "Kapat Long Stop Loss",
+          "closeShortTp": "Kapat Kısa Kar Al"
+        },
+        "price": "Fiyat",
+        "tradeValue": "Ticaret Değeri",
+        "fee": "Ücret",
+        "date": "Tarih",
+        "provider": "Sağlayıcı",
+        "size": "Büyüklük",
+        "closedPnl": "Kapanmış PNL",
+        "gotItBtn": "Tamamdır",
+        "perps": "Perps",
+        "sizeTips": "Ticaretinizin toplam değeri veya miktarı, teminat ve kaldıraç tarafından belirlenir."
+      },
+      "PerpsAutoCloseModal": {
+        "profit": "Kar Sırası",
+        "takeProfitTipsLong": "Kar alım fiyatı mevcut fiyattan yüksek olmalıdır.",
+        "takeProfitTipsShort": "Kar alım fiyatı mevcut fiyatın altında olmalıdır.",
+        "takeProfit": "Kar al",
+        "stopLossTipsShortLiquidation": "Fiyat, tasfiye fiyatından ({{price}}) yüksektir.",
+        "stopLossTipsLong": "Stop loss fiyatı mevcut fiyatın altında olmalıdır.",
+        "stopLoss": "Stop loss",
+        "stopLossTipsLongLiquidation": "Fiyat likidasyon fiyatından ({{price}}) daha düşük.",
+        "stopLossTipsShort": "Stop loss fiyatı mevcut fiyatın üstünde olmalıdır.",
+        "loss": "Kayıp"
+      },
+      "PerpsDepositTokenModal": {
+        "swapBtn": "Değiştir",
+        "bridgeBtn": "Köprü",
+        "goSwapDesc": "Arbitrum'da yalnızca USDC doğrudan yatırma için desteklenmektedir. Lütfen mevcut token'ınızı yatırmadan önce USDC ile değiştirin.",
+        "directTag": "Doğrudan Depozito",
+        "goBridgeDesc": "Sadece Arbitrum'daki USDC doğrudan depozitolar için desteklenmektedir. Lütfen mevcut token'inizi Arbitrum'daki USDC'ye köprüleyin ve ardından depozito yapın."
+      },
+      "history": {
+        "status": {
+          "pending": "Bekleyen",
+          "completed": "Tamamlandı"
+        },
+        "title": "Geçmiş",
+        "closeLongTp": "Uzun Pozisyon Kapat Kar Al",
+        "openLong": "Açık Long",
+        "closeLong": "Uzun Pozisyon Kapat",
+        "withdraw": "Çekim",
+        "closeShort": "Kapat Short",
+        "deposit": "Para Yatırma",
+        "closeShortSl": "Kapat Kısa Zarar Durdurma",
+        "closeLongLiquidation": "Kapat Uzun Tasfiye",
+        "closeShortLiquidation": "Kapat Kısa Tasfiye",
+        "closeLongSl": "Close Long zararı durdurma",
+        "openShort": "Kısa Pozisyon Aç",
+        "closeShortTp": "Kapat Kısa Kar Al"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "Token Yatırmak İçin Seçin"
+      },
+      "PerpsAccountLogoutPopup": {
+        "title": "Mevcut Adresten Çıkış Yap",
+        "logout": "Çıkış yap",
+        "desc": "Mevcut Perps hesabınızdan çıkış yapıyorsunuz. Bu adresle giriş yaparak istediğiniz zaman geri yükleyebilirsiniz."
+      },
+      "PerpsDepositCard": {
+        "deposit": "Yatırma",
+        "availableToTrade": "Ticaret için mevcut:"
+      },
+      "PerpsAccountSelectorPopup": {
+        "lastUsed": "Son Kullanım",
+        "noPosition": "Hiç Pozisyon Yok",
+        "activatedAddress": "Aktif edilmiş",
+        "notActivatedAddress": "Aktive Değil",
+        "hyperliquidBalance": "Perps Bakiyesi"
+      },
+      "selectAccountTitle": "Cüzdan Seçin ve Giriş Yapın",
+      "title": "Perps",
+      "more": "Daha Fazla",
+      "positions": "Pozisyonlar",
+      "deleteAgentModal": "Maksimum ajan sayısına ulaştınız. Yeni bir oluşturmak için mevcut bir ajanın silinmesini ister misiniz?",
+      "explorePerps": "Perps'ı Keşfet",
+      "leverageRangeMaxError": "Maksimum kaldıraç {{max}}x'dir.",
+      "deleteAgentSuccess": "Ajan başarıyla silindi",
+      "leverageRangeMinError": "Minimum kaldıraç {{min}}x'dir.",
+      "regionNotSupport": "Pozisyon açma işlemine bulunduğunuz bölgede desteklenmiyor."
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "slPrice": "Zarar Durdurma Fiyatı",
+        "justMargin": "Marjinal",
+        "markPrice": "Mark Price",
+        "title": "Pozisyon",
+        "marginIsolated": "Marjin (yalnız)",
+        "margin": "Marj (İzole)",
+        "liquidationPrice": "Tasfiye Fiyatı",
+        "entryPrice": "Giriş Fiyatı",
+        "size": "Boyut",
+        "tpPrice": "Kar Alma Fiyatı",
+        "isolated": "İzole edilmiş",
+        "marginCross": "Teminat (Çapraz)",
+        "fundingPayments": "Fonlama Ödemeleri",
+        "cross": "Cross",
+        "pnl": "PNL",
+        "direction": "Yön",
+        "liqPrice": "Liq.Fiyat",
+        "closePosition": "Kapat {{direction}}",
+        "sizeTips": "Marj ve kaldıraçla belirlenen ticaretinizin toplam değeri veya miktarı.",
+        "liquidationPriceTips": "Pozisyonunuzun marjınız bakım marjı seviyesinin altına düştüğünde daha fazla kayıpları önlemek için borsa tarafından otomatik olarak kapatıldığı fiyat.",
+        "autoClose": "Otomatik Kapat",
+        "fundingPaymentsTips": "Bu, pozisyonun açıldığı günden bu yana net finansman ödemeleridir. Finansman, tüccarların, perp sözleşmesinin fiyatını jetonun gerçek fiyatına yakın tutmak için ödediği veya aldığı saatlik bir ücrettir."
+      },
+      "PerpsInfo": {
+        "24Vol": "24s Hacim",
+        "title": "Bilgi",
+        "openInterest": "Açık Faiz",
+        "funding": "Finansman",
+        "openInterestTips": "Bu sözleşmedeki tüm kullanıcıların toplam açık pozisyonu.",
+        "fundingTips": "Bu, türev sözleşmenin fiyatını token'ın gerçek fiyatına yakın tutmak için yatırımcıların ödediği veya aldığı saatlik bir ücrettir. Eğer pozitifse, long short'a ödeme yapar. Eğer negatifse, short long'a ödeme yapar."
+      },
+      "PerpsIntro": {
+        "title": "Perps nedir?",
+        "desc": "Sürekli sözleşmelerle ticaret yapmanın önemli riskleri vardır; özellikle yüksek kaldıraç ve piyasa volatilitesi nedeniyle yatırımınızın ve teminatınızın hızla kaybolma olasılığı bulunmaktadır. Bu tür ticaret her kullanıcı için uygun olmayabilir. Fiyatlar, finansman oranları ve likiditeden etkilenebilir ve önceden bildirim yapılmadan otomatik olarak tasfiye edilebilirsiniz. Piyasa verileri Hyperliquid tarafından sağlanmaktadır."
+      },
+      "PerpsClosePositionPopup": {
+        "title": "Kapat {{coin}} {{direction}} Pozisyonu",
+        "pnl": "PNL",
+        "positionSize": "Pozisyon Boyutu",
+        "providerFeeTips": "Hyperliquid ücreti: {{fee}}",
+        "rabbyFeeTips": "Rabby ücreti: 0.04%",
+        "fee": "Ücret:",
+        "closeBtn": "Kapat {{direction}}"
+      },
+      "PerpsOpenPositionPopup": {
+        "maximumOrderSize": "Maksimum emir büyüklüğü {{amount}}'dir.",
+        "tpPrice": "Kar Alım Fiyatı",
+        "sizeTips": "Ticaretinizin toplam değeri veya miktarı, marj ve kaldıraçla belirlenir.",
+        "available": "uygun",
+        "margin": "Marjinal",
+        "autoClose": "Otomatik Kapatma",
+        "size": "Büyüklük",
+        "slPrice": "Zarar Durdurma Fiyatı",
+        "leverage": "Kaldıraç",
+        "minimumOrderSize": "Minimum emir miktarı 10 $'dır.",
+        "invalidNumber": "Lütfen geçerli bir sayı girin",
+        "insufficientBalance": "Yetersiz bakiye"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "direction": "Yön",
+        "slPrice": "Zarar Durdurma Fiyatı",
+        "perps": "Perps",
+        "autoClose": "Otomatik Kapatma",
+        "title": "Sipari Kontrolü",
+        "initialMargin": "Başlangıç Marjı",
+        "estLqPrice": "Tahmini Likidasyon Fiyatı",
+        "btn": "Açık {{direction}} Pozisyon",
+        "size": "Boyut",
+        "tpPrice": "Kar Alım Fiyatı",
+        "fee": "Ücret",
+        "sizeTips": "Ticaretinizin toplam değeri veya miktarı, marj ve kaldıraçla belirlenir.",
+        "price": "Fiyat",
+        "margin": "Marj (İzole)",
+        "rabbyFeeTips": "Rabby ücreti: %0",
+        "providerFeeTips": "Hyperliquid ücreti: {{fee}}",
+        "liquidationPriceTips": "Pozisyonunuzun, marjınız bakım marjı seviyesinin altına düştüğünde daha fazla kaybı önlemek için borsa tarafından otomatik olarak kapatıldığı fiyat."
+      },
+      "action": {
+        "long": "Uzun",
+        "short": "Kısa",
+        "closePosition": "Kapat {{direction}} Pozisyonu",
+        "noPermission": "Açık pozisyon açma işlemi bölgenizde desteklenmemektedir."
+      },
+      "PerpsAutoCloseModal": {
+        "tpPrice": "Kar Alım Fiyatı",
+        "setSlPrice": "Zararı Durdur Fiyatını Belirle",
+        "setTpPrice": "Kar Al-Karı Fiyatını Belirle",
+        "price": "Fiyat:",
+        "entryPrice": "Giriş Fiyatı:",
+        "slPrice": "Zarar Durdurma Fiyatı"
+      }
     }
   },
   "component": {

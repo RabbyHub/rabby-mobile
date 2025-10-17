@@ -1072,7 +1072,6 @@
         "selectAddMethod": "Chọn Thêm Phương Thức"
       },
       "importAddress": {
-        "safe": "An toàn",
         "hardWare": "Kết nối ví phần cứng",
         "privateKey": "Nhập Private Key",
         "seedPhrase": "Nhập Seed Phrase",
@@ -1348,7 +1347,19 @@
         },
         "manageAddressFrom": "Quản lý ví từ {{0}} đến {{1}}",
         "customAddressHdPath": "Custom Wallet HD path",
-        "selectIndexTip": "Chọn số serial của ví để bắt đầu:"
+        "selectIndexTip": "Chọn số serial của ví để bắt đầu:",
+        "trezor": {
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger.",
+            "legacy": "Di sản: Đường HD được sử dụng bởi MEW / Mycrypto.",
+            "bip44": "BIP44: HDpath được xác định bởi giao thức BIP44."
+          },
+          "hdPathTypeNoChain": {
+            "bip44": "BIP44: HDpath được định nghĩa bởi giao thức BIP44.",
+            "legacy": "Di sản: Đường dẫn HD được sử dụng bởi MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger."
+          }
+        }
       },
       "seedPhrase": {
         "backupRestoreUnlockTitle": "Nhập Mật khẩu Sao lưu",
@@ -1769,16 +1780,6 @@
         "tokenSecurity": "Bảo mật Token",
         "marketData": "Dữ liệu thị trường"
       },
-      "interval": {
-        "5M": "5M",
-        "1D": "1D",
-        "15M": "15M",
-        "4H": "4H",
-        "1H": "1H",
-        "1M": "1M",
-        "1W": "1W",
-        "30M": "30M"
-      },
       "marketInfo": {
         "txns24h": "24h Txns",
         "holders": "Người nắm giữ",
@@ -1806,7 +1807,6 @@
             "type": "Loại",
             "sell": "Bán",
             "address": "Địa chỉ",
-            "tradingCount": "Số lượng giao dịch",
             "price": "Giá",
             "value": "Giá trị",
             "qnt": "Qnt"
@@ -2157,6 +2157,10 @@
         "btn": "Tham gia ngay",
         "title": "Chương trình Giới thiệu Hyperliquid",
         "desc": "Tham gia ngay bằng mã của Rabby để nhận <1>giảm giá 4%</1> trên khoản phí Hyperliquid của bạn."
+      },
+      "WebviewError": {
+        "error": "Lỗi:",
+        "failedToLoad": "Không thể tải trang"
       }
     },
     "browserManage": {
@@ -2275,6 +2279,243 @@
     },
     "perpsHistory": {
       "title": "Lịch sử"
+    },
+    "perps": {
+      "PerpsCard": {
+        "title": "Giao dịch Perps",
+        "depositBtn": "Nạp tiền",
+        "available": "Có sẵn",
+        "withdrawBtn": "Rút tiền",
+        "learnBtn": "Tìm hiểu về Perps",
+        "loginBtn": "Đăng nhập vào Trading Perps",
+        "loginDesc": "Đăng nhập bằng địa chỉ của bạn và gửi tiền để bắt đầu giao dịch perps"
+      },
+      "PerpsGuidePopup": {
+        "step5Title": "Giải chấp",
+        "step3Title": "Short",
+        "step2Title": "Mua dài",
+        "step1Title": "Master Perpetual Futures",
+        "step4Title": "Điều chỉnh đòn bẩy",
+        "step4Desc": "Đòn bẩy cho phép bạn giao dịch với nhiều hơn số tiền bạn bỏ ra. Nó có thể làm tăng cả lợi nhuận và thua lỗ của bạn.",
+        "step3Desc": "Khi bạn mong đợi giá sẽ giảm, bạn mở một vị thế bán. Nếu giá giảm, bạn sẽ có lãi. Nếu giá tăng, bạn sẽ lỗ.",
+        "step2Desc": "Khi bạn mong đợi giá sẽ tăng, bạn mở một vị thế long. Nếu giá tăng, bạn sẽ có lãi. Nếu giá giảm, bạn sẽ lỗ.",
+        "step5Desc": "Mọi vị thế đều có giá thanh lý. Nếu giá thị trường đạt đến mức đó, vị thế của bạn sẽ bị đóng. Sử dụng đòn bẩy cao hơn sẽ tăng rủi ro bị thanh lý.",
+        "step1Desc": "Với các hợp đồng tương lai vĩnh viễn, bạn không chỉ giao dịch tài sản. Bạn đang giao dịch những gì bạn nghĩ sẽ xảy ra tiếp theo."
+      },
+      "PerpsDepositPopup": {
+        "amount": "Số lượng",
+        "balance": "Số dư",
+        "title": "Nạp tiền",
+        "depositBtn": "Gửi tiền",
+        "estReceive": "Ước tính nhận được: {{balance}}",
+        "invalidNumber": "Vui lòng nhập một số hợp lệ",
+        "fetchQuoteFailed": "Không thể lấy báo giá gửi tiền. Vui lòng chuyển đổi token.",
+        "minimumDepositSize": "Số tiền gửi tối thiểu là 5 đô la.",
+        "estReceiveTooltip": "Gửi tiền liên chuỗi được xử lý qua LiFi, có thể phát sinh một số trượt giá. Dự kiến đến nơi trong {{number}}s.",
+        "insufficientBalance": "Số dư không đủ"
+      },
+      "PerpsWithdrawPopup": {
+        "title": "Rút tiền",
+        "feeTooltipTitle": "Phí",
+        "minimumWithdrawSize": "Số tiền rút tối thiểu là 2 đô la",
+        "feeTip": "Phí : $1.00",
+        "insufficientBalance": "Số dư không đủ",
+        "amount": "Số lượng",
+        "withdrawBtn": "Rút tiền",
+        "invalidNumber": "Vui lòng nhập một số hợp lệ",
+        "feeTooltipDesc": "Phí rút tiền do Hyperliquid thu: $1",
+        "available": "có sẵn"
+      },
+      "PerpsWithdrawFeePopup": {
+        "btn": "Tôi đã hiểu.",
+        "title": "Phí",
+        "desc": "Phí rút tiền do Hyperliquid tính: 1 đô la"
+      },
+      "historyDetail": {
+        "title": {
+          "closeLong": "Đóng Long",
+          "openLong": "Mở Long",
+          "openShort": "Mở vị thế Short",
+          "closeShortLiquidation": "Đóng vị thế bán thanh lý",
+          "closeLongLiquidation": "Đóng Long Thanh lý",
+          "closeShortSl": "Đóng Lệnh Bán Cắt Lỗ",
+          "closeLongTp": "Đóng Long Chốt Lợi Nhuận",
+          "closeShortTp": "Đóng vị thế Short Chốt lời",
+          "closeShort": "Đóng Short",
+          "closeLongSl": "Đóng Long Stop Loss"
+        },
+        "size": "Kích thước",
+        "tradeValue": "Giá trị giao dịch",
+        "fee": "Phí",
+        "date": "Ngày",
+        "provider": "Nhà cung cấp",
+        "closedPnl": "PNL đã đóng",
+        "price": "Giá",
+        "gotItBtn": "Tôi hiểu rồi",
+        "perps": "Perps",
+        "sizeTips": "Giá trị hoặc số lượng tổng thể của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy."
+      },
+      "PerpsAutoCloseModal": {
+        "profit": "Lợi nhuận",
+        "loss": "Lỗ",
+        "stopLoss": "Cắt lỗ",
+        "takeProfitTipsLong": "Giá chốt lời phải cao hơn giá hiện tại.",
+        "stopLossTipsLongLiquidation": "Giá thấp hơn giá thanh lý ({{price}})",
+        "stopLossTipsShort": "Giá dừng lỗ phải cao hơn giá hiện tại.",
+        "stopLossTipsLong": "Giá dừng lỗ phải thấp hơn giá hiện tại.",
+        "stopLossTipsShortLiquidation": "Giá cao hơn mức thanh lý ({{price}})",
+        "takeProfit": "Chốt lợi nhuận",
+        "takeProfitTipsShort": "Giá chốt lời phải thấp hơn giá hiện tại."
+      },
+      "PerpsDepositTokenModal": {
+        "bridgeBtn": "Cầu",
+        "directTag": "Gửi tiền trực tiếp",
+        "swapBtn": "Hoán đổi",
+        "goSwapDesc": "Chỉ USDC trên Arbitrum được hỗ trợ cho việc nạp thẳng. Vui lòng hoán đổi token hiện tại của bạn sang USDC trước khi nạp.",
+        "goBridgeDesc": "Chỉ USDC trên Arbitrum được hỗ trợ để gửi trực tiếp. Vui lòng chuyển token hiện tại của bạn thành USDC trên Arbitrum trước khi gửi."
+      },
+      "history": {
+        "status": {
+          "completed": "Hoàn tất",
+          "pending": "Đang chờ xử lý"
+        },
+        "closeLongSl": "Đóng Long cắt lỗ",
+        "title": "Lịch sử",
+        "closeLongTp": "Đóng Long Lấy Lợi Nhuận",
+        "openLong": "Mở Long",
+        "closeLong": "Đóng Long",
+        "deposit": "Gửi tiền",
+        "openShort": "Mở vị thế Short",
+        "closeShortSl": "Đóng vị thế Short Cắt lỗ",
+        "closeLongLiquidation": "Đóng Long Thanh lý",
+        "closeShortLiquidation": "Đóng Short Thanh lý",
+        "withdraw": "Rút tiền",
+        "closeShortTp": "Đóng Short Lấy Lợi Nhuận",
+        "closeShort": "Đóng Short"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "Chọn Token để Gửi"
+      },
+      "PerpsAccountLogoutPopup": {
+        "title": "Đăng xuất Địa chỉ Hiện tại",
+        "desc": "Bạn đang đăng xuất khỏi tài khoản Perps hiện tại của mình. Bạn có thể khôi phục nó bất kỳ lúc nào bằng cách đăng nhập với địa chỉ này.",
+        "logout": "Đăng xuất"
+      },
+      "PerpsDepositCard": {
+        "deposit": "Nạp tiền",
+        "availableToTrade": "Có sẵn để giao dịch:"
+      },
+      "PerpsAccountSelectorPopup": {
+        "activatedAddress": "Kích hoạt",
+        "lastUsed": "Cuối cùng được sử dụng",
+        "noPosition": "Không có vị thế",
+        "notActivatedAddress": "Chưa được kích hoạt",
+        "hyperliquidBalance": "Số Dư Perps"
+      },
+      "title": "Perps",
+      "selectAccountTitle": "Chọn Ví Để Đăng Nhập",
+      "more": "Thêm",
+      "explorePerps": "Khám phá Perps",
+      "positions": "Vị trí",
+      "deleteAgentSuccess": "Đại lý đã xóa thành công",
+      "regionNotSupport": "Việc mở các vị trí không được hỗ trợ ở khu vực của bạn.",
+      "leverageRangeMinError": "Tỉ lệ đòn bẩy tối thiểu là {{min}}x",
+      "deleteAgentModal": "Bạn đã đạt đến số lượng đại lý tối đa. Bạn có muốn xóa một đại lý hiện có để tạo một đại lý mới không?",
+      "leverageRangeMaxError": "Tỷ lệ đòn bẩy tối đa là {{max}}x"
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "title": "Vị trí",
+        "marginCross": "Margin (Giao chéo)",
+        "size": "Kích thước",
+        "liquidationPrice": "Giá thanh lý",
+        "cross": "Giao thoa",
+        "markPrice": "Giá đánh dấu",
+        "closePosition": "Đóng {{direction}}",
+        "direction": "Hướng",
+        "tpPrice": "Giá Chốt Lợi Nhuận",
+        "margin": "Ký quỹ (Isolated)",
+        "slPrice": "Giá Cắt Lỗ",
+        "isolated": "Isolated",
+        "liqPrice": "Giá thanh lý",
+        "entryPrice": "Giá Vào Lệnh",
+        "justMargin": "Biên độ",
+        "fundingPayments": "Khoản thanh toán phí tài trợ",
+        "marginIsolated": "Margin (isolation)",
+        "pnl": "PNL",
+        "autoClose": "Tự động Đóng",
+        "sizeTips": "Giá trị hoặc số lượng tổng của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy.",
+        "liquidationPriceTips": "Giá mà vị thế của bạn bị tự động đóng bởi sàn giao dịch để ngăn chặn tổn thất thêm khi ký quỹ của bạn giảm xuống dưới mức ký quỹ duy trì.",
+        "fundingPaymentsTips": "Đây là khoản thanh toán vốn ròng kể từ khi vị thế được mở. Funding là một khoản phí theo giờ mà các trader phải trả hoặc nhận để giữ cho giá của hợp đồng perp gần với giá thực tế của token."
+      },
+      "PerpsInfo": {
+        "title": "Thông tin",
+        "openInterest": "Lãi Suất Mở",
+        "openInterestTips": "Tổng vị thế đang mở của tất cả người dùng trên hợp đồng này.",
+        "funding": "Quỹ",
+        "fundingTips": "Đây là một khoản phí theo giờ mà các trader phải trả hoặc nhận để giữ cho giá của hợp đồng perp gần với giá thực tế của token. Nếu dương, long trả cho short. Nếu âm, short trả cho long.",
+        "24Vol": "24h Khối lượng"
+      },
+      "PerpsIntro": {
+        "title": "Perps là gì?",
+        "desc": "Giao dịch hợp đồng vĩnh viễn liên quan đến những rủi ro đáng kể, bao gồm khả năng mất khoản đầu tư và tài sản thế chấp của bạn một cách nhanh chóng do đòn bẩy cao và biến động thị trường. Giao dịch như vậy có thể không phù hợp với tất cả người dùng. Giá có thể bị ảnh hưởng bởi tỷ lệ tài trợ và tính thanh khoản, và bạn có thể bị thanh lý tự động mà không có thông báo trước. Dữ liệu thị trường được cung cấp bởi Hyperliquid."
+      },
+      "PerpsClosePositionPopup": {
+        "title": "Đóng vị thế {{coin}} {{direction}}",
+        "fee": "Phí:",
+        "closeBtn": "Đóng {{direction}}",
+        "pnl": "PNL",
+        "providerFeeTips": "Phí Hyperliquid: {{fee}}",
+        "positionSize": "Kích thước vị thế",
+        "rabbyFeeTips": "Phí Rabby: 0.04%"
+      },
+      "PerpsOpenPositionPopup": {
+        "leverage": "Đòn bẩy",
+        "slPrice": "Giá Dừng Lỗ",
+        "size": "Kích thước",
+        "maximumOrderSize": "Kích thước đơn hàng tối đa là {{amount}}",
+        "minimumOrderSize": "Kích thước đơn hàng tối thiểu là 10 USD",
+        "insufficientBalance": "Số dư không đủ",
+        "autoClose": "Tự Động Đóng",
+        "tpPrice": "Giá Chốt Lợi Nhuận",
+        "margin": "Ký quỹ",
+        "available": "có sẵn",
+        "sizeTips": "Giá trị hoặc số lượng tổng của giao dịch của bạn, được xác định bởi margin và leverage.",
+        "invalidNumber": "Vui lòng nhập một số hợp lệ"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "fee": "Phí",
+        "price": "Giá",
+        "title": "Kiểm tra Đơn hàng",
+        "size": "Kích thước",
+        "tpPrice": "Giá chốt lời",
+        "direction": "Hướng đi",
+        "autoClose": "Đóng tự động",
+        "btn": "Mở vị trí {{direction}}",
+        "perps": "Perps",
+        "slPrice": "Giá cắt lỗ",
+        "initialMargin": "Ký quỹ ban đầu",
+        "rabbyFeeTips": "Rabby phí: 0%",
+        "providerFeeTips": "Phí Hyperliquid: {{fee}}",
+        "margin": "Đòn bẩy (Cô lập)",
+        "estLqPrice": "Giá thanh lý ước tính",
+        "sizeTips": "Giá trị hoặc số lượng tổng cộng của giao dịch của bạn, được thiết lập bởi ký quỹ và đòn bẩy.",
+        "liquidationPriceTips": "Giá mà vị thế của bạn bị sàn giao dịch tự động đóng để ngăn chặn tổn thất thêm khi ký quỹ của bạn giảm xuống dưới mức ký quỹ duy trì."
+      },
+      "action": {
+        "short": "Ngắn",
+        "noPermission": "Việc mở vị thế không được hỗ trợ trong khu vực của bạn.",
+        "long": "Mở vị thế dài",
+        "closePosition": "Đóng vị trí {{direction}}"
+      },
+      "PerpsAutoCloseModal": {
+        "price": "Giá:",
+        "setTpPrice": "Đặt giá chốt lời",
+        "tpPrice": "Giá chốt lời",
+        "entryPrice": "Giá Vào Lệnh:",
+        "slPrice": "Giá Dừng Lỗ",
+        "setSlPrice": "Đặt giá dừng lỗ"
+      }
     }
   },
   "component": {

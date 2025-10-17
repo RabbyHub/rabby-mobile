@@ -21,7 +21,7 @@ import {
 } from '../hooks/useSendNFT';
 import { SelectAddressSheetModal } from '@/components/Address/SelectAddressSheetModal';
 import { ModalEditContact } from '@/components/Address/SheetModalEditContact';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -60,7 +60,7 @@ export default function ToAddressControl({
   const { errors } = useSendNFTFormik();
 
   const openCamera = useCallback(() => {
-    navigate(RootNames.Scanner);
+    navigateDeprecated(RootNames.Scanner);
   }, []);
 
   useEffect(() => {

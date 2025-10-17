@@ -219,6 +219,14 @@ export const PerpsOpenPositionPopup: React.FC<{
     t,
   ]);
 
+  const handleMax = useMemoizedFn(() => {
+    setMargin(
+      new BigNumber(availableBalance)
+        .decimalPlaces(2, BigNumber.ROUND_DOWN)
+        .toFixed(),
+    );
+  });
+
   const leverageRangeValidation = React.useMemo(() => {
     if (selectedLeverage == null || Number.isNaN(+selectedLeverage)) {
       return {
@@ -345,10 +353,17 @@ export const PerpsOpenPositionPopup: React.FC<{
                 value={displayedValue}
                 onChangeText={setMargin}
               />
-              <Text style={styles.formItemDesc}>
-                {formatUsdValue(availableBalance)}{' '}
-                {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
-              </Text>
+              <View style={styles.availableBalanceWrapper}>
+                <Text style={styles.formItemDesc}>
+                  {formatPerpsUsdValue(availableBalance, BigNumber.ROUND_DOWN)}{' '}
+                  {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
+                </Text>
+                <TouchableOpacity
+                  style={styles.maxButtonWrapper}
+                  onPress={handleMax}>
+                  <Text style={styles.maxButtonText}>MAX</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.errorMsgContainer}>
                 {marginValidation.error ? (
                   <Text style={styles.errorMsg}>
@@ -529,6 +544,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           direction={direction}
           size={Number(tradeSize)}
           pxDecimals={pxDecimals}
+          szDecimals={szDecimals}
           onClose={() => setAutoCloseVisible(false)}
           handleSetAutoClose={async (params: {
             tpPrice: string;
@@ -710,6 +726,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     hasError: {
       color: colors2024['red-default'],
+    },
+    availableBalanceWrapper: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    maxButtonWrapper: {
+      padding: 4,
+      backgroundColor: colors2024['brand-light-1'],
+      borderRadius: 8,
+    },
+    maxButtonText: {
+      color: colors2024['brand-default'],
+      fontSize: 14,
+      fontWeight: '700',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });

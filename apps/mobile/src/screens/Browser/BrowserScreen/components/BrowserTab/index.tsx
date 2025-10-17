@@ -66,13 +66,16 @@ import { BrowserProgressBar } from './BrowserProgressBar';
 import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
 import { Freeze } from 'react-freeze';
 import { HyperliquidInvitePopup } from './HyperliquidInvitePopup';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { PERPS_INVITE_URL } from '@/constant/perps';
 import { CurrentDappPopup } from './CurrentDappPopup';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { useHyperliquidReferral } from '../../hooks/useHyperliquidReferral';
 import { useAccounts } from '@/hooks/account';
 import { getOnlineConfig } from '@/core/config/online';
+import { WebviewError } from './WebivewError';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { toast } from '@/components2024/Toast';
+import { useTranslation } from 'react-i18next';
 
 type BrowserTabProps = {
   origin: string;
@@ -151,9 +154,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     },
     ref,
   ) => {
-    const { styles, colors, colors2024 } = useTheme2024({
+    const { styles } = useTheme2024({
       getStyle: getStyles,
     });
+    const { t } = useTranslation();
 
     const isEmptyTab = !url;
     const [isLoading, setIsLoading] = useState(false);
@@ -201,6 +205,26 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         setContentMode(mode);
       },
     );
+
+    const handleClearCache = useMemoizedFn(async () => {
+      webviewRef.current?.injectJavaScript(`;(function() {
+        try {
+          document.cookie.split(';').forEach(cookie => {
+            const eqPos = cookie.indexOf('=');
+            const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
+            document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          });
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch(e) {
+          console.log('clear cache error', e);
+        }
+      })();`);
+      setTimeout(() => {
+        setRefreshKey(prev => prev + 1);
+        toast.success(t('page.browser.toast.clearCacheSuccess'));
+      }, 50);
+    });
 
     const userAgent = useMemo(() => {
       if (contentMode === 'desktop') {
@@ -370,7 +394,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         isShowManage: true,
       });
 
-      // navigation.navigate(RootNames.StackBrowser, {
+      // navigation.navigateDeprecated(RootNames.StackBrowser, {
       //   screen: RootNames.BrowserManageScreen,
       // });
     });
@@ -413,6 +437,22 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         }
 
         onOpenTab?.(targetUrl);
+      },
+    );
+
+    const renderError = useMemoizedFn(
+      (
+        errorDomain: string | undefined,
+        errorCode: number,
+        errorDesc: string,
+      ) => {
+        return (
+          <WebviewError
+            code={errorCode}
+            message={errorDesc}
+            onRefresh={handleReload}
+          />
+        );
       },
     );
 
@@ -528,6 +568,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           handleContentModeChange(
             contentMode === 'desktop' ? 'mobile' : 'desktop',
           );
+        } else if (payload.type === 'clearCache') {
+          handleClearCache();
         }
       },
     );
@@ -734,6 +776,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         //   }, 200);
                         // }
                       }}
+                      onFileDownload={e => {
+                        Linking.openURL(e.nativeEvent.downloadUrl);
+                      }}
                       onShouldStartLoadWithRequest={nativeEvent => {
                         const origin = safeGetOrigin(nativeEvent.url);
                         if (
@@ -800,6 +845,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                           };
                         });
                       }}
+                      renderError={renderError}
                       onMessage={event => {
                         // // leave here for debug
                         // if (__DEV__) {

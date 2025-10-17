@@ -10,7 +10,7 @@ export function makeBottomSheetProps({
   createParams,
   linearGradientType: _linearGradientType,
 }: {
-  createParams?: CreateParams;
+  createParams?: Partial<CreateParams>;
   linearGradientType?: (CreateParams['bottomSheetModalProps'] &
     object)['linearGradientType'];
   colors: AppColors2024Variants;

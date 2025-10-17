@@ -21,6 +21,9 @@ import type { SemVer } from 'semver';
 import semverSatisfies from 'semver/functions/satisfies';
 import { isAddress, toChecksumAddress } from 'web3-utils';
 
+// eslint-disable-next-line n/no-process-env
+Safe.apiKey = process.env.MOBILE_SAFE_API_KEY || '';
+
 export const keyringType = 'Gnosis';
 export const TransactionBuiltEvent = 'TransactionBuilt';
 export const TransactionConfirmedEvent = 'TransactionConfirmed';

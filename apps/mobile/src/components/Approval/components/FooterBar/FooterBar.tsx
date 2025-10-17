@@ -7,7 +7,7 @@ import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
@@ -356,7 +356,7 @@ export const FooterBar: React.FC<Props> = ({
                   }}
                   onGotoGasAccount={() => {
                     rejectApproval?.();
-                    navigate(RootNames.StackTransaction, {
+                    navigateDeprecated(RootNames.StackTransaction, {
                       screen: RootNames.GasAccount,
                       params: {},
                     });
@@ -377,7 +377,7 @@ export const FooterBar: React.FC<Props> = ({
                   onDeposit={onDeposit}
                   onGotoGasAccount={() => {
                     rejectApproval?.();
-                    navigate(RootNames.StackTransaction, {
+                    navigateDeprecated(RootNames.StackTransaction, {
                       screen: RootNames.GasAccount,
                       params: {},
                     });

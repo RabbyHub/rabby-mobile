@@ -4,10 +4,7 @@ import {
 } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { TransactionNavigatorParamList } from '@/navigation-type';
-import {
-  UNSTABLE_usePreventRemove as usePreventRemove,
-  useRoute,
-} from '@react-navigation/native';
+import { usePreventRemove, useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

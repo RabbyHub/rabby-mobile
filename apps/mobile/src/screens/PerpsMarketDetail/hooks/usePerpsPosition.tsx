@@ -36,6 +36,12 @@ export const usePerpsPosition = ({
     apisPerps.setSendApproveAfterDeposit(address, []);
   });
 
+  const formatTriggerPx = (px?: string) => {
+    // avoid '.15' input error from hy validator
+    // '.15' -> '0.15'
+    return px ? Number(px).toString() : undefined;
+  };
+
   const handleSetAutoClose = useMemoizedFn(
     async (params: {
       coin: string;
@@ -46,17 +52,19 @@ export const usePerpsPosition = ({
       try {
         const sdk = apisPerps.getPerpsSDK();
         const { coin, tpTriggerPx, slTriggerPx, direction } = params;
+        const formattedTpTriggerPx = formatTriggerPx(tpTriggerPx);
+        const formattedSlTriggerPx = formatTriggerPx(slTriggerPx);
         const res = await sdk.exchange?.bindTpslByOrderId({
           coin,
           isBuy: direction === 'Long',
-          tpTriggerPx,
-          slTriggerPx,
+          tpTriggerPx: formattedTpTriggerPx,
+          slTriggerPx: formattedSlTriggerPx,
           builder: PERPS_BUILDER_INFO,
         });
 
         setCurrentTpOrSl({
-          tpPrice: tpTriggerPx,
-          slPrice: slTriggerPx,
+          tpPrice: formattedTpTriggerPx,
+          slPrice: formattedSlTriggerPx,
         });
         setTimeout(() => {
           fetchPositionOpenOrders();
@@ -135,7 +143,7 @@ export const usePerpsPosition = ({
           toast.error(msg || 'close position error');
           Sentry.captureException(
             new Error(
-              'PERPS close position noFills' +
+              'PERPS close position noFills ' +
                 'params: ' +
                 JSON.stringify(params) +
                 'res: ' +
@@ -201,6 +209,10 @@ export const usePerpsPosition = ({
           }),
         ];
 
+        // avoid '.15' input error from hy validator
+        const formattedTpTriggerPx = formatTriggerPx(tpTriggerPx);
+        const formattedSlTriggerPx = formatTriggerPx(slTriggerPx);
+
         if (tpTriggerPx || slTriggerPx) {
           promises.push(
             (async () => {
@@ -208,8 +220,8 @@ export const usePerpsPosition = ({
               const result = await sdk.exchange?.bindTpslByOrderId({
                 coin,
                 isBuy: direction === 'Long',
-                tpTriggerPx,
-                slTriggerPx,
+                tpTriggerPx: formattedTpTriggerPx,
+                slTriggerPx: formattedSlTriggerPx,
                 builder: PERPS_BUILDER_INFO,
               });
               return result as OrderResponse;
@@ -241,8 +253,8 @@ export const usePerpsPosition = ({
               : msg,
           );
           setCurrentTpOrSl({
-            tpPrice: tpTriggerPx,
-            slPrice: slTriggerPx,
+            tpPrice: formattedTpTriggerPx,
+            slPrice: formattedSlTriggerPx,
           });
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;

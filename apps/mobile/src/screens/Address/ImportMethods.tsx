@@ -69,10 +69,6 @@ function ImportMethods(): JSX.Element {
     Keyboard.dismiss();
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.RESTORE_FROM_CLOUD,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: false,
-        enablePanDownToClose: true,
-      },
       shouldRedirect2SetPassword: shouldRedirectToSetPasswordBefore2024,
       onDone: () => {
         setTimeout(() => {

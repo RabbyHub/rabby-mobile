@@ -1138,6 +1138,7 @@
         "buyWithFiatDesc": "Simple crypto purchase"
       },
       "importAddress": {
+        "__skip_translation": ["safe"],
         "importTitle": "Import Wallet",
         "seedPhrase": "Import Seed Phrase",
         "privateKey": "Import Private Key",
@@ -1182,6 +1183,17 @@
         "title3": "Safety",
         "description4": "Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.",
         "GotIt": "I Got It."
+      },
+      "whatIsPrivateKey": {
+        "title": "What's a private key",
+        "description1": "A private key is a string of letters and numbers used to access and control your wallet. You can use it to recover your wallet on any device.",
+        "title2": "Backup",
+        "description2": "If you lose your private key, you won’t be able to restore your wallet.",
+        "title3": "Never Share It",
+        "description3": "Never share your private key—anyone with access to it can control your funds.",
+        "title4": "Safety",
+        "description4": "Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.",
+        "ButtonGotIt": "I Got It."
       },
       "addContacts": {
         "cameraTitle": "Please scan the QR code with your camera"
@@ -1869,6 +1881,7 @@
         "tokenSecurity": "Token Security"
       },
       "interval": {
+        "__skip_translation": true,
         "1M": "1M",
         "5M": "5M",
         "15M": "15M",
@@ -1906,7 +1919,7 @@
             "buy": "Buy",
             "sell": "Sell",
             "volume": "Volume",
-            "tradingCount": "Trading Count",
+            "transactionCount": "Transaction Count",
             "address": "Address",
             "addresses": "Addresses",
             "type": "Type",
@@ -2148,12 +2161,20 @@
         "favorite": "Favorite",
         "contentModeMobile": "Request Mobile Site",
         "contentModeDesktop": "Request DeskTop Site",
-        "disconnect": "Disconnect"
+        "disconnect": "Disconnect",
+        "clearCache": "Clear cache"
       },
       "HyperliquidInvitePopup": {
         "title": "Hyperliquid Referral Program",
         "desc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Hyperliquid fees.",
         "btn": "Join Now"
+      },
+      "WebviewError": {
+        "failedToLoad": "Failed to load the page",
+        "error": "Error:"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache cleared"
       }
     },
     "browserManage": {
@@ -2210,7 +2231,6 @@
       }
     },
     "perps": {
-      "__skip_translation": true,
       "title": "Perps",
       "PerpsCard": {
         "title": "Trade Perps",
@@ -2354,7 +2374,6 @@
       }
     },
     "perpsDetail": {
-      "__skip_translation": true,
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
@@ -2381,7 +2400,7 @@
       },
       "PerpsInfo": {
         "title": "Info",
-        "24Vol": "24h Volumn",
+        "24Vol": "24h Volume",
         "openInterest": "Open Interest",
         "funding": "Funding",
         "openInterestTips": "The total outstanding position of all users on this contract.",
@@ -2450,6 +2469,9 @@
     },
     "perpsHistory": {
       "title": "History"
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Build-In Page"
     }
   },
   "component": {

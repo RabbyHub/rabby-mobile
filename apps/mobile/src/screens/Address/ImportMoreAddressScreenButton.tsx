@@ -5,7 +5,7 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { RcIconHeaderSettings } from '@/assets/icons/home';
-import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript/src/types';
+import { NativeStackHeaderRightProps } from '@react-navigation/native-stack';
 import { useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
@@ -19,9 +19,9 @@ const hitSlop = {
   right: 10,
 };
 
-export const ImportMoreAddressScreenButton: React.FC<HeaderButtonProps> = ({
-  tintColor,
-}) => {
+export const ImportMoreAddressScreenButton: React.FC<
+  NativeStackHeaderRightProps
+> = ({ tintColor }) => {
   const route =
     useRoute<
       GetNestedScreenRouteProp<'AddressNavigatorParamList', 'ImportMoreAddress'>
