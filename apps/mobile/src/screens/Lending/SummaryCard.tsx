@@ -57,11 +57,7 @@ const SummaryCard = (props: IProps) => {
               <WarningFillCC
                 width={12}
                 height={12}
-                color={
-                  isLight
-                    ? ThemeColors2024.dark['neutral-secondary']
-                    : ThemeColors2024.light['neutral-secondary']
-                }
+                color={ThemeColors2024.dark['neutral-secondary']}
               />
             </View>
             <View style={styles.sectionContent}>

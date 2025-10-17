@@ -9,6 +9,7 @@ export const Descriptions: React.FC<{
   title?: string;
   titleStyle?: StyleProp<TextStyle>;
   sectionStyle?: StyleProp<ViewStyle>;
+  sectionDescStyle?: StyleProp<TextStyle>;
   sections: Array<{
     title?: string;
     description?: string;
@@ -24,6 +25,7 @@ export const Descriptions: React.FC<{
   sectionStyle,
   content,
   logoDom,
+  sectionDescStyle,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -40,7 +42,9 @@ export const Descriptions: React.FC<{
               <Text style={styles.sectionTitle}>{section.title}</Text>
             )}
             {!!section.description && (
-              <Text style={styles.sectionDesc}>{section.description}</Text>
+              <Text style={[styles.sectionDesc, sectionDescStyle]}>
+                {section.description}
+              </Text>
             )}
           </View>
         ))}

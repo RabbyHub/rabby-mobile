@@ -1,13 +1,19 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
 import { DisplayPoolReserveInfo } from '../type';
 import { formatPercent, formatUsdValueKMB } from '@/screens/TokenDetail/util';
 import { formatNum } from '@/utils/math';
+import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import { getHealthStatusColor } from '../utils';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 export interface IBorrowDetailPopupProps {
   reserve: DisplayPoolReserveInfo;
@@ -20,6 +26,83 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
   healthFactor,
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+
+  const handleShowLqBonusPopup = () => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.DESCRIPTION,
+      title: 'Liquidity Penalty',
+      titleStyle: {
+        marginTop: 12,
+      },
+      sectionStyle: {
+        marginTop: 8,
+      },
+      sectionDescStyle: {
+        lineHeight: 20,
+      },
+      sections: [
+        {
+          description:
+            'When a liquidation occurs, liquidators repay up to 50% of the outstanding borrowed amount on behalf of the borrower. In return, they can buy the collateral at a discount and keep the difference (liquidation penalty) as a bonus.',
+        },
+      ],
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        snapPoints: [308],
+      },
+      nextButtonProps: {
+        title: 'Got it',
+        onPress: () => {
+          removeGlobalBottomSheetModal2024(modalId);
+        },
+        containerStyle: {
+          position: 'absolute',
+          bottom: 48,
+          width: '100%',
+        },
+      },
+    });
+  };
+  const handleShowAvailableToBorrowPopup = () => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.DESCRIPTION,
+      title: 'Available to borrow',
+      titleStyle: {
+        marginTop: 12,
+      },
+      sectionStyle: {
+        marginTop: 8,
+      },
+      sectionDescStyle: {
+        lineHeight: 20,
+      },
+      sections: [
+        {
+          description:
+            'You can borrow based on your supplied collateral and until the borrow cap is reached.',
+        },
+      ],
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        snapPoints: [308],
+      },
+      nextButtonProps: {
+        title: 'Got it',
+        onPress: () => {
+          removeGlobalBottomSheetModal2024(modalId);
+        },
+        containerStyle: {
+          position: 'absolute',
+          bottom: 48,
+          width: '100%',
+        },
+      },
+    });
+  };
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
@@ -86,7 +169,18 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
                 </Text>
               </View>
               <View style={styles.userInfoItem}>
-                <Text style={styles.userInfoItemTitle}>Liquidity Penalty</Text>
+                <View style={styles.leftTitleContainer}>
+                  <Text style={styles.userInfoItemTitle}>
+                    Liquidity Penalty
+                  </Text>
+                  <Pressable hitSlop={20} onPress={handleShowLqBonusPopup}>
+                    <WarningFillCC
+                      width={12}
+                      height={12}
+                      color={colors2024['neutral-info']}
+                    />
+                  </Pressable>
+                </View>
                 <Text style={styles.userInfoItemValue}>
                   {formatPercent(
                     Number(
@@ -98,7 +192,19 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
             </>
           )}
           <View style={styles.userInfoItem}>
-            <Text style={styles.userInfoItemTitle}>Available to Borrow</Text>
+            <View style={styles.leftTitleContainer}>
+              <Text style={styles.userInfoItemTitle}>Available to Borrow</Text>
+              <Pressable
+                hitSlop={20}
+                onPress={handleShowAvailableToBorrowPopup}>
+                <WarningFillCC
+                  width={12}
+                  height={12}
+                  color={colors2024['neutral-info']}
+                />
+              </Pressable>
+            </View>
+
             <Text style={styles.userInfoItemValue}>
               {formatUsdValueKMB(availableBorrowsUSD || '0')}
             </Text>
@@ -250,5 +356,10 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   button: {
     flex: 1,
+  },
+  leftTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 }));
