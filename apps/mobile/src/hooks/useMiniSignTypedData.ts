@@ -263,7 +263,7 @@ const ensureHardwareConnected = async (account: Account) => {
         setLedgerStatus(isConnected);
         setLedgerStatus(isConnected);
         if (IS_ANDROID) {
-          await sleep(100);
+          await sleep(1000);
         }
         if (isConnected) {
           safeResolve();

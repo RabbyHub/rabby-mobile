@@ -466,7 +466,7 @@ class SignatureManager {
         const [isConnected, id] = await apiLedger.isConnected(account.address);
         setLedgerStatus(isConnected);
         if (IS_ANDROID) {
-          await sleep(100);
+          await sleep(1000);
         }
         if (isConnected) {
           cb();
