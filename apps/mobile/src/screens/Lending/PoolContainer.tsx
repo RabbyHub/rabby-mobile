@@ -1,28 +1,18 @@
 import React, { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Dimensions } from 'react-native';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Dimensions } from 'react-native';
-import { Tabs } from 'react-native-collapsible-tab-view';
 import SupplyPoolList from './SupplyPoolList';
 import BorrowPoolList from './BorrowPoolList';
 import { DynamicCustomMaterialTabBar } from '../TokenDetail/components/CustomTabBar';
-import { ComputedUserReserve } from '@aave/math-utils';
 import CustomLabel from '../TokenDetail/components/CustomLabel';
-import { IWalletBalance } from './type';
-import { PoolBaseCurrencyHumanized } from '@aave/contract-helpers';
 
 const screenWidth = Dimensions.get('window').width;
 
-interface IProps {
-  reserves: ComputedUserReserve[];
-  mappedBalances: IWalletBalance[];
-  baseCurrencyData?: PoolBaseCurrencyHumanized;
-}
-const PoolContainer = (props: IProps) => {
+const PoolContainer = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
   const renderSupplyLabel = useCallback(
     ({ index, indexDecimal }) => (
       <CustomLabel
@@ -87,18 +77,10 @@ const PoolContainer = (props: IProps) => {
       containerStyle={styles.container}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab label={renderSupplyLabel} name="supply">
-        <SupplyPoolList
-          data={props.reserves}
-          mappedBalances={props.mappedBalances}
-          baseCurrencyData={props.baseCurrencyData}
-        />
+        <SupplyPoolList />
       </Tabs.Tab>
       <Tabs.Tab label={renderBorrowLabel} name="borrow">
-        <BorrowPoolList
-          data={props.reserves}
-          mappedBalances={props.mappedBalances}
-          baseCurrencyData={props.baseCurrencyData}
-        />
+        <BorrowPoolList />
       </Tabs.Tab>
     </Tabs.Container>
   );

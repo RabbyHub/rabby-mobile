@@ -1,40 +1,24 @@
 import React, { useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
-
-import {
-  ComputedUserReserve,
-  nativeToUSD,
-  normalize,
-  USD_DECIMALS,
-} from '@aave/math-utils';
-import BigNumber from 'bignumber.js';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValueKMB } from '../Home/utils/price';
 import { formatPercent } from '../TokenDetail/util';
-import { IWalletBalance } from './type';
-import { formatAmount } from '@/utils/number';
-import { PoolBaseCurrencyHumanized } from '@aave/contract-helpers';
-import { formatNetworth } from '@/utils/math';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useLendingSummary } from './hooks';
 
-interface IProps {
-  data: ComputedUserReserve[];
-  mappedBalances: IWalletBalance[];
-  baseCurrencyData?: PoolBaseCurrencyHumanized;
-}
-const SupplyPoolList = (props: IProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+const SupplyPoolList = () => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { displayPoolReserves } = useLendingSummary();
+
   const sortReserves = useMemo(() => {
-    return [...(props?.data || [])].sort((a, b) => {
+    return [...(displayPoolReserves || [])].sort((a, b) => {
       return Number(b.underlyingBalanceUSD) - Number(a.underlyingBalanceUSD);
     });
-  }, [props.data]);
+  }, [displayPoolReserves]);
 
   const handlePressItem = item => {
     console.log('handlePressItem', item);
@@ -45,7 +29,6 @@ const SupplyPoolList = (props: IProps) => {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
         enableDismissOnClose: true,
-        snapPoints: ['40%'],
       },
     });
   };
@@ -70,10 +53,6 @@ const SupplyPoolList = (props: IProps) => {
       style={styles.container}
       ListHeaderComponent={ListHeaderComponent}
       renderItem={({ item, index }) => {
-        const balance = props.mappedBalances.find(
-          balance =>
-            balance.address === item.reserve.underlyingAsset.toLowerCase(),
-        );
         return (
           <TouchableOpacity
             style={styles.item}
@@ -99,22 +78,7 @@ const SupplyPoolList = (props: IProps) => {
                 {formatUsdValueKMB(Number(item.underlyingBalanceUSD || '0'))}
               </Text>
               <Text style={styles.yourBalance}>
-                {formatUsdValueKMB(
-                  nativeToUSD({
-                    amount: new BigNumber(balance?.amount || '0'),
-                    currencyDecimals: item.reserve.decimals,
-                    priceInMarketReferenceCurrency:
-                      item.reserve.priceInMarketReferenceCurrency,
-                    marketReferenceCurrencyDecimals:
-                      props.baseCurrencyData?.marketReferenceCurrencyDecimals ||
-                      0,
-                    normalizedMarketReferencePriceInUsd: normalize(
-                      props.baseCurrencyData
-                        ?.marketReferenceCurrencyPriceInUsd || '0',
-                      USD_DECIMALS,
-                    ),
-                  }),
-                )}
+                {formatUsdValueKMB(item.walletBalanceUSD || '0')}
               </Text>
             </View>
           </TouchableOpacity>

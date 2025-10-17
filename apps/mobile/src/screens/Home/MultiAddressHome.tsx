@@ -591,18 +591,10 @@ function MultiAddressHome(): JSX.Element {
           });
           break;
         case MultiHomeFeatTitle.Lending:
-          const modalId = createGlobalBottomSheetModal2024({
-            name: MODAL_NAMES.SUPPLY_DETAIL,
-            bottomSheetModalProps: {
-              enableContentPanningGesture: true,
-              enablePanDownToClose: true,
-              enableDismissOnClose: true,
-            },
+          navigation.navigate(RootNames.StackHomeNonTab, {
+            screen: RootNames.Lending,
+            params: {},
           });
-          // navigation.navigate(RootNames.StackHomeNonTab, {
-          //   screen: RootNames.Lending,
-          //   params: {},
-          // });
           break;
         default:
           break;

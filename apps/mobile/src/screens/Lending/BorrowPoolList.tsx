@@ -4,22 +4,20 @@ import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { ComputedUserReserve } from '@aave/math-utils';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { formatPercent, formatUsdValueKMB } from '../TokenDetail/util';
+import { useLendingSummary } from './hooks';
 
-interface IProps {
-  data: ComputedUserReserve[];
-}
-const BorrowPoolList = (props: IProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+const BorrowPoolList = () => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
+  const { displayPoolReserves } = useLendingSummary();
   const sortReserves = useMemo(() => {
-    return [...(props?.data || [])].sort((a, b) => {
+    return [...(displayPoolReserves || [])].sort((a, b) => {
       return Number(b.totalBorrowsUSD) - Number(a.totalBorrowsUSD);
     });
-  }, [props.data]);
+  }, [displayPoolReserves]);
 
   const handlePressItem = item => {
     console.log('handlePressItem', item);

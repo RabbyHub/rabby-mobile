@@ -1,19 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAtom } from 'jotai';
-import {
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-  RefreshControl,
-  Platform,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Platform } from 'react-native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { useTranslation } from 'react-i18next';
 import {
   PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
@@ -21,41 +12,20 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { CHAINS_ENUM } from '@debank/common';
 import { ChainSelector } from './ChainSelector';
-import { fetchContractData } from './providers';
-import { useRequest } from 'ahooks';
 import SummaryCard from './SummaryCard';
-import { formatUserYield } from './utils/apy';
 import PoolContainer from './PoolContainer';
+import { useLendingData, useLendingSummary } from './hooks';
 
 const isAndroid = Platform.OS === 'android';
 
 function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
   const [chainEnum, setChainEnum] = useState<CHAINS_ENUM>(CHAINS_ENUM.ETH);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-  const { data, loading: userSummaryLoading } = useRequest(
-    () => fetchContractData(currentAccount?.address),
-    {
-      refreshDeps: [currentAccount?.address],
-    },
-  );
-
-  const apy = useMemo(() => {
-    if (data?.formattedPoolReservesAndIncentives && data?.iUserSummary) {
-      return formatUserYield(
-        data?.formattedPoolReservesAndIncentives || [],
-        data?.iUserSummary,
-      );
-    }
-    return {
-      netAPY: 0,
-      earnedAPY: '',
-      debtAPY: '',
-    };
-  }, [data?.formattedPoolReservesAndIncentives, data?.iUserSummary]);
+  useLendingData(currentAccount?.address);
+  const { apyInfo, iUserSummary } = useLendingSummary();
 
   return (
     <NormalScreenContainer2024
@@ -65,17 +35,13 @@ function DashBoardScreen(): JSX.Element {
       <View style={styles.container}>
         <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
         <SummaryCard
-          netWorth={data?.iUserSummary?.netWorthUSD || ''}
-          supplied={data?.iUserSummary?.totalLiquidityUSD || ''}
-          borrowed={data?.iUserSummary?.totalBorrowsUSD || ''}
-          netApy={apy.netAPY}
-          healthFactor={data?.iUserSummary?.healthFactor || ''}
+          netWorth={iUserSummary?.netWorthUSD || ''}
+          supplied={iUserSummary?.totalLiquidityUSD || ''}
+          borrowed={iUserSummary?.totalBorrowsUSD || ''}
+          netApy={apyInfo?.netAPY || 0}
+          healthFactor={iUserSummary?.healthFactor || ''}
         />
-        <PoolContainer
-          reserves={data?.iUserSummary?.userReservesData || []}
-          mappedBalances={data?.mappedBalances || []}
-          baseCurrencyData={data?.baseCurrencyData}
-        />
+        <PoolContainer />
       </View>
     </NormalScreenContainer2024>
   );
