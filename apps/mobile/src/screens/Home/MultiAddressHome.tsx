@@ -101,6 +101,8 @@ import {
 } from './components/OfflineChainNotify';
 import { PerpsPnl } from './components/PerpsPnl';
 import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const HeaderHeight = 24;
 
@@ -589,10 +591,18 @@ function MultiAddressHome(): JSX.Element {
           });
           break;
         case MultiHomeFeatTitle.Lending:
-          navigation.navigate(RootNames.StackHomeNonTab, {
-            screen: RootNames.Lending,
-            params: {},
+          const modalId = createGlobalBottomSheetModal2024({
+            name: MODAL_NAMES.SUPPLY_DETAIL,
+            bottomSheetModalProps: {
+              enableContentPanningGesture: true,
+              enablePanDownToClose: true,
+              enableDismissOnClose: true,
+            },
           });
+          // navigation.navigate(RootNames.StackHomeNonTab, {
+          //   screen: RootNames.Lending,
+          //   params: {},
+          // });
           break;
         default:
           break;

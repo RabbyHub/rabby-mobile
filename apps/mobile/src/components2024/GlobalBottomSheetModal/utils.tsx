@@ -53,6 +53,8 @@ import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog
 import EarningDialog from '@/screens/CopyTrading/component/EarningDialog';
 import { AddressHightDesc } from '../AddressHightDesc';
 import SelectLendingChain from '@/screens/Lending/ChainSelector/SelectLendingChain';
+import { SupplyDetailPopup } from '@/screens/Lending/components/SupplyDetailPopup';
+import { BorrowDetailPopup } from '@/screens/Lending/components/BorrowDetailPopup';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -110,6 +112,8 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.NO_LONGER_SUPPORTS]: ['85%'],
   [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: undefined,
+  [MODAL_NAMES.SUPPLY_DETAIL]: [510],
+  [MODAL_NAMES.BORROW_DETAIL]: [554],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -166,4 +170,6 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ImportMoreAddress,
   [MODAL_NAMES.NO_LONGER_SUPPORTS]: NoLongerSupports,
   [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: BatchRevokeErrorReason,
+  [MODAL_NAMES.SUPPLY_DETAIL]: SupplyDetailPopup,
+  [MODAL_NAMES.BORROW_DETAIL]: BorrowDetailPopup,
 };

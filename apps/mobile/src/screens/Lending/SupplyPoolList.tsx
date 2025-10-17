@@ -19,6 +19,8 @@ import { IWalletBalance } from './type';
 import { formatAmount } from '@/utils/number';
 import { PoolBaseCurrencyHumanized } from '@aave/contract-helpers';
 import { formatNetworth } from '@/utils/math';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 interface IProps {
   data: ComputedUserReserve[];
@@ -36,6 +38,16 @@ const SupplyPoolList = (props: IProps) => {
 
   const handlePressItem = item => {
     console.log('handlePressItem', item);
+
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.SUPPLY_DETAIL,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        snapPoints: ['40%'],
+      },
+    });
   };
 
   const ListHeaderComponent = useCallback(() => {
