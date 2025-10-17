@@ -1606,8 +1606,9 @@
       "gnosisChainDesc": "This address was found deployed on {{count}} chains"
     },
     "rabbyPoints": {
+      "__skip_translation": ["titleWithStar"],
       "title": "Rabby Points",
-      "titleWithStar": " Rabby Points ✨ ",
+      "titleWithStar": "Rabby Points ✨",
       "out-of-x-current-total-points": "Out of {{total}} Total Distributed Points",
       "earn-points": "Earn Points",
       "top-100": "Top 100",
