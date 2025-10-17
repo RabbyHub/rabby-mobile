@@ -1039,7 +1039,6 @@
         "privateKey": "Importer une clé privée",
         "seedPhrase": "Importer la phrase secrète",
         "hardWare": "Connecter des portefeuilles matériels",
-        "safe": "Sûr",
         "tips": {
           "gotIt": "J'ai compris.",
           "entry": "Est-il sûr d'importer dans Rabby",
@@ -1749,16 +1748,6 @@
       "tabs": {
         "tokenSecurity": "Sécurité des tokens",
         "marketData": "Données de marché"
-      },
-      "interval": {
-        "1M": "1M",
-        "5M": "5M",
-        "1W": "1W",
-        "1H": "1H",
-        "30M": "30M",
-        "4H": "4H",
-        "15M": "15M",
-        "1D": "1D"
       },
       "marketInfo": {
         "holders": "Détenteurs",

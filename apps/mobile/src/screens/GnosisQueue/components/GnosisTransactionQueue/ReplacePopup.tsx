@@ -115,14 +115,11 @@ const getStyles = createGetStyles(colors => ({
     marginBottom: 12,
   },
   optionListItemHover: {
-    // @ts-expect-error
-    borderColor: colors.rBlueDefault, // FIXME
-    // @ts-expect-error
-    backgroundColor: colors.rBlueLight1, // FIXME
+    borderColor: colors['blue-default'],
+    backgroundColor: colors['blue-light-1'],
   },
   optionListItemContent: {
-    // @ts-expect-error
-    color: colors.rNeutralTitle1, // FIXME
+    color: colors['neutral-title-1'],
     fontSize: 15,
     fontWeight: '500',
     lineHeight: 18,

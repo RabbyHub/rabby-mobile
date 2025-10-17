@@ -1327,7 +1327,6 @@
       "importAddress": {
         "privateKey": "Importar Private Key",
         "seedPhrase": "Importar Seed Phrase",
-        "safe": "Seguro",
         "hardWare": "Ligar Carteiras de Hardware",
         "tips": {
           "gotIt": "Entendi.",
@@ -1975,16 +1974,6 @@
       "tabs": {
         "tokenSecurity": "Token Security",
         "marketData": "Dados de mercado"
-      },
-      "interval": {
-        "15M": "15M",
-        "1M": "1M",
-        "1D": "1D",
-        "4H": "4H",
-        "5M": "5M",
-        "1W": "1W",
-        "1H": "1H",
-        "30M": "30M"
       },
       "marketInfo": {
         "marketCap": "Capitalização de Mercado",

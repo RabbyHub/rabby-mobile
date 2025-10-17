@@ -90,7 +90,7 @@ export function TestkitsNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        statusBarColor: colors['blue-default'],
+        statusBarBackgroundColor: colors['blue-default'],
       }}>
       <Stack.Screen
         name={RootNames.NewUserGetStarted2024}

@@ -5,32 +5,43 @@ import 'react-native-gesture-handler';
  */
 import {
   createNavigatorFactory,
-  EventArg,
-  ParamListBase,
-  StackActionHelpers,
+  type EventArg,
+  type NavigatorTypeBagBase,
+  type ParamListBase,
+  type StackActionHelpers,
   StackActions,
-  StackNavigationState,
-  StackRouterOptions,
+  type StackNavigationState,
+  StackRouter,
+  type StackRouterOptions,
+  type StaticConfig,
+  type TypedNavigator,
   useNavigationBuilder,
 } from '@react-navigation/native';
-import { NativeStackView } from '@react-navigation/native-stack';
-import type {
-  NativeStackNavigationEventMap,
-  NativeStackNavigationOptions,
-  NativeStackNavigatorProps,
-} from '@react-navigation/native-stack/lib/typescript/src/types';
 import * as React from 'react';
 
 import { CustomStackRouter } from './CustomStackRouter';
 
+import {
+  NativeStackView,
+  type NativeStackNavigationEventMap,
+  type NativeStackNavigationOptions,
+  type NativeStackNavigationProp,
+  type NativeStackNavigatorProps,
+} from '@react-navigation/native-stack';
+// import { NativeStackView } from '../views/NativeStackView';
+
 function NativeStackNavigator({
+  id,
   initialRouteName,
   children,
+  layout,
   screenListeners,
   screenOptions,
+  screenLayout,
+  UNSTABLE_router,
   ...rest
 }: NativeStackNavigatorProps) {
-  const { state, descriptors, navigation, NavigationContent } =
+  const { state, describe, descriptors, navigation, NavigationContent } =
     useNavigationBuilder<
       StackNavigationState<ParamListBase>,
       StackRouterOptions,
@@ -38,15 +49,19 @@ function NativeStackNavigator({
       NativeStackNavigationOptions,
       NativeStackNavigationEventMap
     >(CustomStackRouter, {
+      id,
       initialRouteName,
       children,
+      layout,
       screenListeners,
       screenOptions,
+      screenLayout,
+      UNSTABLE_router,
     });
 
   React.useEffect(
     () =>
-      // @ts-expect-error
+      // @ts-expect-error: there may not be a tab navigator in parent
       navigation?.addListener?.('tabPress', (e: any) => {
         const isFocused = navigation.isFocused();
 
@@ -77,16 +92,31 @@ function NativeStackNavigator({
         state={state}
         navigation={navigation}
         descriptors={descriptors}
+        describe={describe}
       />
     </NavigationContent>
   );
 }
 
-export const createCustomNativeStackNavigator = createNavigatorFactory<
-  StackNavigationState<ParamListBase>,
-  NativeStackNavigationOptions,
-  NativeStackNavigationEventMap,
-  typeof NativeStackNavigator
->(NativeStackNavigator);
-
-export default createCustomNativeStackNavigator;
+export function createCustomNativeStackNavigator<
+  const ParamList extends ParamListBase,
+  const NavigatorID extends string | undefined = undefined,
+  const TypeBag extends NavigatorTypeBagBase = {
+    ParamList: ParamList;
+    NavigatorID: NavigatorID;
+    State: StackNavigationState<ParamList>;
+    ScreenOptions: NativeStackNavigationOptions;
+    EventMap: NativeStackNavigationEventMap;
+    NavigationList: {
+      [RouteName in keyof ParamList]: NativeStackNavigationProp<
+        ParamList,
+        RouteName,
+        NavigatorID
+      >;
+    };
+    Navigator: typeof NativeStackNavigator;
+  },
+  const Config extends StaticConfig<TypeBag> = StaticConfig<TypeBag>,
+>(config?: Config): TypedNavigator<TypeBag, Config> {
+  return createNavigatorFactory(NativeStackNavigator)(config);
+}

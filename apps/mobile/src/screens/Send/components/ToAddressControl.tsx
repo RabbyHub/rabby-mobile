@@ -23,7 +23,7 @@ import {
 import { SelectAddressSheetModal } from '@/components/Address/SelectAddressSheetModal';
 import { ModalEditContact } from '@/components/Address/SheetModalEditContact';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 
 export default function ToAddressControl({
@@ -61,7 +61,7 @@ export default function ToAddressControl({
   useInputBlurOnEvents(formInputRef);
 
   const openCamera = useCallback(() => {
-    navigate(RootNames.Scanner);
+    navigateDeprecated(RootNames.Scanner);
   }, []);
 
   useEffect(() => {
