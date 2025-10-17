@@ -1552,6 +1552,11 @@ class ProviderController extends BaseController {
     if (keyringService.isUnlocked() && dappService.getConnectedDapp(origin)) {
       if (params?.[0] && 'eth_accounts' in params[0]) {
         dappService.disconnect(origin);
+        sessionService.broadcastEvent(
+          BroadcastEvent.accountsChanged,
+          [],
+          origin,
+        );
       }
     }
     return null;
