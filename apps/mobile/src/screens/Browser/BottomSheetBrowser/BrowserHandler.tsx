@@ -51,7 +51,14 @@ export const BrowserHandler = () => {
   const [activeTabState] = useBrowserActiveTabState();
 
   const handleAction = useMemoizedFn(
-    (type: 'refresh' | 'disconnect' | 'favorite' | 'contentMode') => {
+    (
+      type:
+        | 'refresh'
+        | 'disconnect'
+        | 'favorite'
+        | 'contentMode'
+        | 'clearCache',
+    ) => {
       eventBus.emit(EVENT_BROWSER_ACTION, {
         type,
       });
@@ -109,6 +116,20 @@ export const BrowserHandler = () => {
           handleAction('contentMode');
         },
       },
+      {
+        title: t('page.browser.menu.clearCache'),
+        iosIconSource: isLight
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear_cache.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear_cache_dark.png'),
+
+        androidIconName: isLight
+          ? 'ic_rabby_menu_clear_cache'
+          : 'ic_rabby_menu_clear_cache_dark',
+        key: 'clearCache',
+        onSelect: () => {
+          handleAction('clearCache');
+        },
+      },
 
       activeTabState.isConnected && {
         title: t('page.browser.menu.disconnect'),
@@ -156,9 +177,9 @@ export const BrowserHandler = () => {
   return (
     <TouchableWithoutFeedback
       onPress={() => {
-        setPartialBrowserState({
-          isShowBrowser: false,
-        });
+        // setPartialBrowserState({
+        //   isShowBrowser: false,
+        // });
       }}>
       {browserState.isShowBrowser &&
       !browserState.isShowSearch &&
@@ -167,27 +188,33 @@ export const BrowserHandler = () => {
           <View style={styles.handleComponentContainer}>
             {activeTabState.url ? (
               <DropdownMenuView menuConfig={menuConfigs}>
+                <View style={styles.handleItem}>
+                  <RcIconMore1CC
+                    width={24}
+                    height={24}
+                    color={colors2024['neutral-title-1']}
+                  />
+                </View>
+              </DropdownMenuView>
+            ) : (
+              <View style={styles.handleItem}>
                 <RcIconMore1CC
                   width={24}
                   height={24}
                   color={colors2024['neutral-title-1']}
                 />
-              </DropdownMenuView>
-            ) : (
-              <RcIconMore1CC
-                width={24}
-                height={24}
-                color={colors2024['neutral-title-1']}
-              />
+              </View>
             )}
             <View style={styles.divider} />
 
             <TouchableOpacity onPress={handleCloseBrowser} hitSlop={5}>
-              <RcIconClose1CC
-                width={24}
-                height={24}
-                color={colors2024['neutral-title-1']}
-              />
+              <View style={styles.handleItemLast}>
+                <RcIconClose1CC
+                  width={24}
+                  height={24}
+                  color={colors2024['neutral-title-1']}
+                />
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -215,13 +242,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         : colors2024['neutral-bg-5'],
       alignItems: 'center',
       flexDirection: 'row',
-      paddingVertical: 4,
-      paddingHorizontal: 12,
       borderRadius: 19,
       gap: 8,
 
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: isLight ? colors2024['neutral-InvertHighlight'] : '#000',
+    },
+    handleItem: {
+      paddingVertical: 4,
+      paddingLeft: 12,
+    },
+    handleItemLast: {
+      paddingVertical: 4,
+      paddingRight: 12,
     },
     divider: {
       // width: StyleSheet.hairlineWidth,

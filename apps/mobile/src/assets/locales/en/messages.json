@@ -2140,7 +2140,8 @@
         "favorite": "Favorite",
         "contentModeMobile": "Request Mobile Site",
         "contentModeDesktop": "Request DeskTop Site",
-        "disconnect": "Disconnect"
+        "disconnect": "Disconnect",
+        "clearCache": "Clear cache"
       },
       "HyperliquidInvitePopup": {
         "title": "Hyperliquid Referral Program",
@@ -2150,6 +2151,9 @@
       "WebviewError": {
         "failedToLoad": "Failed to load the page",
         "error": "Error:"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache cleared"
       }
     },
     "browserManage": {

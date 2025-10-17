@@ -73,6 +73,9 @@ import { useHyperliquidReferral } from '../../hooks/useHyperliquidReferral';
 import { useAccounts } from '@/hooks/account';
 import { getOnlineConfig } from '@/core/config/online';
 import { WebviewError } from './WebivewError';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { toast } from '@/components2024/Toast';
+import { useTranslation } from 'react-i18next';
 
 type BrowserTabProps = {
   origin: string;
@@ -154,6 +157,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const { styles } = useTheme2024({
       getStyle: getStyles,
     });
+    const { t } = useTranslation();
 
     const isEmptyTab = !url;
     const [isLoading, setIsLoading] = useState(false);
@@ -201,6 +205,26 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         setContentMode(mode);
       },
     );
+
+    const handleClearCache = useMemoizedFn(async () => {
+      webviewRef.current?.injectJavaScript(`;(function() {
+        try {
+          document.cookie.split(';').forEach(cookie => {
+            const eqPos = cookie.indexOf('=');
+            const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
+            document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          });
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch(e) {
+          console.log('clear cache error', e);
+        }
+      })();`);
+      setTimeout(() => {
+        setRefreshKey(prev => prev + 1);
+        toast.success(t('page.browser.toast.clearCacheSuccess'));
+      }, 50);
+    });
 
     const userAgent = useMemo(() => {
       if (contentMode === 'desktop') {
@@ -544,6 +568,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           handleContentModeChange(
             contentMode === 'desktop' ? 'mobile' : 'desktop',
           );
+        } else if (payload.type === 'clearCache') {
+          handleClearCache();
         }
       },
     );
@@ -749,6 +775,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         //     handleViewShot(nativeEvent.url);
                         //   }, 200);
                         // }
+                      }}
+                      onFileDownload={e => {
+                        Linking.openURL(e.nativeEvent.downloadUrl);
                       }}
                       onShouldStartLoadWithRequest={nativeEvent => {
                         const origin = safeGetOrigin(nativeEvent.url);

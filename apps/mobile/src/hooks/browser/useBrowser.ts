@@ -180,16 +180,9 @@ export function useBrowser() {
           tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
         );
 
-        // if (tabs.length <= MAX_ACTIVE_TABS_COUNT) {
-        //   return prev;
-        // }
-
         const time = tabs[MAX_ACTIVE_TABS_COUNT - 1]?.openTime || 0;
-        if (!time) {
-          return prev;
-        }
 
-        const finalTabs = prev.tabs.map(tab => {
+        const finalTabs = tabs.map(tab => {
           if (tab.openTime < time && tab.id !== prev.activeTabId) {
             return {
               ...tab,
