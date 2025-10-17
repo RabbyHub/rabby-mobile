@@ -3,9 +3,11 @@ import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
 import { ImageSourcePropType } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
 import { MenuTriggerProps } from 'zeego/lib/typescript/menu';
+import { useTheme2024 } from '@/hooks/theme';
 
 export interface MenuAction {
   title: string;
+  titleColor?: string;
   action?: () => void;
   key: string;
   icon: ImageSourcePropType;
@@ -13,6 +15,7 @@ export interface MenuAction {
   // like delete, text will be red
   destructive?: boolean;
   androidIconName?: string;
+  androidIconColor?: string;
 }
 
 type Props = {
@@ -34,6 +37,8 @@ export const ContextMenuView: React.FC<Props> = ({
   triggerProps,
   preViewBorderRadius = 30,
 }) => {
+  const { colors2024 } = useTheme2024();
+
   return (
     <ContextMenu.Root
       __unsafeIosProps={{
@@ -53,21 +58,33 @@ export const ContextMenuView: React.FC<Props> = ({
         {menuConfig.menuTitle && (
           <ContextMenu.Label>{menuConfig.menuTitle}</ContextMenu.Label>
         )}
-        {menuConfig.menuActions?.map(action => (
-          <ContextMenu.Item
-            destructive={action.destructive}
-            disabled={action.disabled}
-            key={action.key}
-            onSelect={action.action}>
-            <ContextMenu.ItemTitle>{action.title}</ContextMenu.ItemTitle>
+        {menuConfig.menuActions?.map(action => {
+          const defaultAndroidColor = action.destructive
+            ? colors2024['red-default']
+            : colors2024['neutral-body'];
 
-            {IS_ANDROID ? (
-              <ContextMenu.ItemIcon androidIconName={action.androidIconName} />
-            ) : (
-              <ContextMenu.ItemImage source={action.icon} />
-            )}
-          </ContextMenu.Item>
-        ))}
+          return (
+            <ContextMenu.Item
+              androidTitleColor={action.titleColor || defaultAndroidColor}
+              destructive={action.destructive}
+              disabled={action.disabled}
+              key={action.key}
+              onSelect={action.action}>
+              <ContextMenu.ItemTitle>{action.title}</ContextMenu.ItemTitle>
+
+              {IS_ANDROID ? (
+                <ContextMenu.ItemIcon
+                  androidIcon={{
+                    color: action.androidIconColor || defaultAndroidColor,
+                  }}
+                  androidIconName={action.androidIconName}
+                />
+              ) : (
+                <ContextMenu.ItemImage source={action.icon} />
+              )}
+            </ContextMenu.Item>
+          );
+        })}
       </ContextMenu.Content>
     </ContextMenu.Root>
   );

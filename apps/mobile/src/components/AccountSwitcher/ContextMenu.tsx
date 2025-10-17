@@ -2,7 +2,7 @@ import {
   ContextMenuView,
   MenuAction,
 } from '@/components2024/ContextMenuView/ContextMenuView';
-import { useGetBinaryMode } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -19,12 +19,12 @@ export const AccountSwitcherContextMenu: React.FC<Props> = props => {
   const { children, account } = props;
   const editAliasName = useAliasNameEditModal();
   const { t } = useTranslation();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
+  const { isLight, colors2024 } = useTheme2024();
   const menuActions = React.useMemo(
     () => [
       {
         title: t('page.whitelist.copyAddress'),
-        icon: isDarkTheme
+        icon: !isLight
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
         androidIconName: 'ic_rabby_menu_copy',
@@ -36,7 +36,7 @@ export const AccountSwitcherContextMenu: React.FC<Props> = props => {
       },
       {
         title: t('page.addressDetail.addressListScreen.edit'),
-        icon: isDarkTheme
+        icon: !isLight
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
         androidIconName: 'ic_rabby_menu_edit',
@@ -46,7 +46,7 @@ export const AccountSwitcherContextMenu: React.FC<Props> = props => {
         },
       },
     ],
-    [t, editAliasName, account, isDarkTheme],
+    [t, editAliasName, account, isLight],
   );
 
   if (IS_ANDROID) {
