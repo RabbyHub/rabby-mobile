@@ -611,6 +611,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
     const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
 
+    useEffect(() => {
+      if (!dappInfo?.isConnected) {
+        setIsShowCurrentDappPopup(false);
+      }
+    }, [dappInfo?.isConnected]);
+
     const { accounts } = useAccounts({
       disableAutoFetch: true,
     });
