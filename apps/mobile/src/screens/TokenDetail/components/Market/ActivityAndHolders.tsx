@@ -7,20 +7,45 @@ import { createGetStyles2024 } from '@/utils/styles';
 import Activity from './Activity';
 import Holder from './Holder';
 import { useHolderInfo } from './hooks';
+import Pools from './Pools';
+import { openapi } from '@/core/request';
+import { useRequest } from 'ahooks';
 
 const enum TabKey {
   activity = 'activity',
   holders = 'holders',
+  pools = 'pools',
 }
+
+const EmptyHolder = () => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={[styles.headerText]}>
+          {t('page.tokenDetail.marketInfo.activity')}
+        </Text>
+      </View>
+      <View style={styles.content}>
+        <View style={[styles.hideContent, styles.visibleContent]}>
+          <Activity tokenId="" chainId="" />
+        </View>
+      </View>
+    </View>
+  );
+};
 
 const ActivityAndHolders = ({
   tokenId,
   chainId,
   hideActivity,
+  symbol,
 }: {
   tokenId: string;
   chainId: string;
   hideActivity?: boolean;
+  symbol: string;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [activeTabKey, setActiveTabKey] = useState<TabKey>(TabKey.activity);
@@ -31,13 +56,24 @@ const ActivityAndHolders = ({
     chainId,
   );
 
+  const { data: top5Pools, loading: top5PoolsLoading } = useRequest(
+    async () => {
+      const res = await openapi.getLiquidityPoolList({
+        token_id: tokenId,
+        chain_id: chainId,
+      });
+      return res;
+    },
+  );
+
+  // only show holders
   if (hideActivity) {
     if (
       !summaryData?.ratio_top10 &&
       !summaryData?.ratio_top100 &&
       !detailsData?.data_list.length
     ) {
-      return null;
+      return <EmptyHolder />;
     }
     return (
       <View style={styles.container}>
@@ -83,6 +119,17 @@ const ActivityAndHolders = ({
             {t('page.tokenDetail.marketInfo.holders')}
           </Text>
         )}
+
+        {!!top5Pools?.length && (
+          <Text
+            style={[
+              styles.headerText,
+              activeTabKey === TabKey.pools && styles.activeText,
+            ]}
+            onPress={() => setActiveTabKey(TabKey.pools)}>
+            {t('page.tokenDetail.marketInfo.pools')}
+          </Text>
+        )}
       </View>
       <View style={styles.content}>
         <View
@@ -104,6 +151,21 @@ const ActivityAndHolders = ({
             isEmpty={isHolderEmpty}
           />
         </View>
+        <View
+          style={[
+            styles.hideContent,
+            !!top5Pools?.length &&
+              activeTabKey === TabKey.pools &&
+              styles.visibleContent,
+          ]}>
+          <Pools
+            tokenId={tokenId}
+            chainId={chainId}
+            symbol={symbol}
+            top5Pools={top5Pools || []}
+            top5PoolsLoading={top5PoolsLoading}
+          />
+        </View>
       </View>
     </View>
   );
@@ -115,6 +177,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
     paddingHorizontal: 16,
+    marginTop: 8,
   },
   header: {
     gap: 12,

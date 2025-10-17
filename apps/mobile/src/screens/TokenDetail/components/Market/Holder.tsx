@@ -187,13 +187,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tableBody: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 12,
   },
   tableRow: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: colors2024['neutral-line'],
   },
@@ -209,14 +208,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   ratioItem: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     flex: 1,
   },
   amountItem: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     flex: 1,

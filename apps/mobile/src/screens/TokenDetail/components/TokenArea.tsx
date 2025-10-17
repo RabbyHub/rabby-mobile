@@ -1,4 +1,3 @@
-import { Text } from '@/components';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
@@ -6,7 +5,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { TokenFromAddressItem } from '..';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
@@ -163,6 +162,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   content: {
     // alignItems: 'center',
+    gap: 4,
     justifyContent: 'center',
   },
   accountBox: {
