@@ -114,7 +114,6 @@ export type RootStackParamsList = {
 export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
   /** @deprecated */
-  [RootNames.Points]?: {};
   [RootNames.DappWebViewStubOnHome]?: {
     dappsWebViewFromRoute?:
       | typeof RootNames.Dapps
@@ -266,6 +265,7 @@ export type AddressNavigatorParamList = {
   [RootNames.SyncExtensionAccountSuccess]?: {
     newAccounts: Account[];
   };
+  [RootNames.Points]?: {};
 };
 
 export type AccountNavigatorParamList = {
