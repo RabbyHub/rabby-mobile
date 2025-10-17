@@ -4,8 +4,14 @@ import { sendSignTypedData } from '@/utils/sendTypedData';
 import { MiniTypedData } from './useMiniSignTypedDataApprovalTask';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apiLedger, apiOneKey } from '@/core/apis';
-import { callConnectLedgerModal } from '@/hooks/ledger/useLedgerStatus';
-import { callConnectOneKeyModal } from '@/hooks/onekey/useOneKeyStatus';
+import {
+  callConnectLedgerModal,
+  setLedgerStatus,
+} from '@/hooks/ledger/useLedgerStatus';
+import {
+  callConnectOneKeyModal,
+  setOneKeyStatus,
+} from '@/hooks/onekey/useOneKeyStatus';
 import { t } from 'i18next';
 import type { BatchSignTxTaskType } from '@/components/Approval/components/MiniSignTx/useBatchSignTxTask';
 
@@ -252,6 +258,7 @@ const ensureHardwareConnected = async (account: Account) => {
         const [isConnected, deviceId] = await apiLedger.isConnected(
           account.address,
         );
+        setLedgerStatus(isConnected);
         if (isConnected) {
           safeResolve();
           return;
@@ -286,6 +293,7 @@ const ensureHardwareConnected = async (account: Account) => {
         const [isConnected, deviceId] = await apiOneKey.isConnected(
           account.address,
         );
+        setOneKeyStatus(isConnected);
         if (isConnected) {
           safeResolve();
           return;

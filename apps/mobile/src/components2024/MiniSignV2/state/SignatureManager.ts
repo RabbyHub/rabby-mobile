@@ -17,8 +17,14 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { t } from 'i18next';
 import { useSyncExternalStore } from 'react';
 import { apiLedger, apiOneKey } from '@/core/apis';
-import { callConnectLedgerModal } from '@/hooks/ledger/useLedgerStatus';
-import { callConnectOneKeyModal } from '@/hooks/onekey/useOneKeyStatus';
+import {
+  callConnectLedgerModal,
+  setLedgerStatus,
+} from '@/hooks/ledger/useLedgerStatus';
+import {
+  callConnectOneKeyModal,
+  setOneKeyStatus,
+} from '@/hooks/onekey/useOneKeyStatus';
 import {
   notificationService,
   transactionHistoryService,
@@ -456,6 +462,7 @@ class SignatureManager {
     if (account.type === KEYRING_CLASS.HARDWARE.LEDGER) {
       try {
         const [isConnected, id] = await apiLedger.isConnected(account.address);
+        setLedgerStatus(isConnected);
         if (isConnected) {
           cb();
         } else {
@@ -476,6 +483,7 @@ class SignatureManager {
     if (account.type === KEYRING_CLASS.HARDWARE.ONEKEY) {
       try {
         const [isConnected, id] = await apiOneKey.isConnected(account.address);
+        setOneKeyStatus(isConnected);
         if (isConnected) {
           cb();
         } else {
@@ -527,15 +535,10 @@ class SignatureManager {
         fingerprint,
         ctx: { ...this.state.ctx, mode: 'direct' } as SignerCtx,
       });
+
       await this.checkHardWareConnected(() =>
         this.send().catch(() => undefined),
       );
-      // console.log('hardwareConnected', hardwareConnected);
-      // if (hardwareConnected) {
-      //   this.send().catch(() => undefined);
-      // } else {
-      //   eventBus.emit(EVENTS.COMMON_HARDWARE.REJECTED, 'DISCONNECTED');
-      // }
     } catch (error) {
       const message = createErrorMessage(error);
       this.rejectPending(message);

@@ -5,7 +5,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { apiOneKey } from '@/core/apis';
-import { atom, useAtom } from 'jotai';
+import { atom, getDefaultStore, useAtom } from 'jotai';
 import { noop } from 'lodash';
 import React from 'react';
 
@@ -90,6 +90,13 @@ export const useOneKeyStatus = (
   };
 };
 
+export const setOneKeyStatus = (connected?: boolean) => {
+  getDefaultStore().set(
+    oneKeyStatusAtom,
+    connected ? 'CONNECTED' : 'DISCONNECTED',
+  );
+};
+
 export const callConnectOneKeyModal = ({
   deviceId,
   cb,
@@ -118,8 +125,10 @@ export const callConnectOneKeyModal = ({
         await apiOneKey.unlockDevice();
         await apiOneKey.fixConnectId(address, connectDeviceId);
         isConnected = true;
+        setOneKeyStatus(true);
         cb?.();
       } catch (e) {
+        setOneKeyStatus(false);
         rej?.();
       } finally {
         setTimeout(() => {
