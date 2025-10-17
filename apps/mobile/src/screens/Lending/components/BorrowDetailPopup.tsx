@@ -19,7 +19,7 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
   availableBorrowsUSD,
   healthFactor,
 }) => {
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
@@ -58,7 +58,13 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
             <View style={styles.userInfoItem}>
               <Text style={styles.supplyItemTitle}>My Borrow</Text>
             </View>
-            <Text style={styles.supplyItemValue}>
+            <Text
+              style={[
+                styles.supplyItemValue,
+                reserve.variableBorrows === '0' && {
+                  color: colors2024['neutral-title-1'],
+                },
+              ]}>
               {formatUsdValueKMB(reserve.variableBorrowsUSD || '0')}
             </Text>
           </View>
@@ -188,7 +194,7 @@ const getStyles = createGetStyles2024(ctx => ({
   supplyItemValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: ctx.colors2024['neutral-title-1'],
+    color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
   },
   userInfoItem: {

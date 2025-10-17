@@ -11,7 +11,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useLendingSummary } from './hooks';
 
 const SupplyPoolList = () => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { displayPoolReserves } = useLendingSummary();
 
   const sortReserves = useMemo(() => {
@@ -28,6 +28,9 @@ const SupplyPoolList = () => {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
         enableDismissOnClose: true,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-2'],
+        },
       },
     });
   };

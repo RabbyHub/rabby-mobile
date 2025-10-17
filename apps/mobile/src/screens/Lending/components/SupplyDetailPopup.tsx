@@ -17,7 +17,7 @@ export interface ISupplyDetailPopupProps {
 export const SupplyDetailPopup: React.FC<ISupplyDetailPopupProps> = ({
   reserve,
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
@@ -49,7 +49,13 @@ export const SupplyDetailPopup: React.FC<ISupplyDetailPopupProps> = ({
             <View style={styles.userInfoItem}>
               <Text style={styles.supplyItemTitle}>My Supply</Text>
             </View>
-            <Text style={styles.supplyItemValue}>
+            <Text
+              style={[
+                styles.supplyItemValue,
+                reserve.underlyingBalance === '0' && {
+                  color: colors2024['neutral-title-1'],
+                },
+              ]}>
               {formatUsdValueKMB(reserve.underlyingBalanceUSD || '0')}
             </Text>
           </View>
@@ -156,7 +162,7 @@ const getStyles = createGetStyles2024(ctx => ({
   supplyItemValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: ctx.colors2024['neutral-title-1'],
+    color: ctx.colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
   },
   userInfoItem: {

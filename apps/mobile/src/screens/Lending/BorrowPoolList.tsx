@@ -10,7 +10,7 @@ import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomS
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const BorrowPoolList = () => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { displayPoolReserves, iUserSummary } = useLendingSummary();
   const sortReserves = useMemo(() => {
@@ -29,6 +29,9 @@ const BorrowPoolList = () => {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
         enableDismissOnClose: true,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-2'],
+        },
       },
     });
   };
