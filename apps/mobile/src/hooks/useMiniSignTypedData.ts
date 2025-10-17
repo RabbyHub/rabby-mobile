@@ -260,7 +260,6 @@ const ensureHardwareConnected = async (account: Account) => {
           true,
         );
         setLedgerStatus(isConnected);
-        setLedgerStatus(isConnected);
         if (isConnected) {
           safeResolve();
           return;
