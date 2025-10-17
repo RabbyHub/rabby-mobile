@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Platform } from 'react-native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 
@@ -15,6 +15,7 @@ import { ChainSelector } from './ChainSelector';
 import SummaryCard from './SummaryCard';
 import PoolContainer from './PoolContainer';
 import { useLendingData, useLendingSummary } from './hooks';
+import EmptySummaryCard from './EmptySummaryCard';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -25,7 +26,13 @@ function DashBoardScreen(): JSX.Element {
     forScene: 'MakeTransactionAbout',
   });
   useLendingData(currentAccount?.address);
-  const { apyInfo, iUserSummary } = useLendingSummary();
+  const { apyInfo, iUserSummary, loading } = useLendingSummary();
+
+  const isEmpty = useMemo(() => {
+    return (
+      !loading && iUserSummary?.totalLiquidityMarketReferenceCurrency === '0'
+    );
+  }, [loading, iUserSummary]);
 
   return (
     <NormalScreenContainer2024
@@ -34,13 +41,17 @@ function DashBoardScreen(): JSX.Element {
       <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       <View style={styles.container}>
         <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
-        <SummaryCard
-          netWorth={iUserSummary?.netWorthUSD || ''}
-          supplied={iUserSummary?.totalLiquidityUSD || ''}
-          borrowed={iUserSummary?.totalBorrowsUSD || ''}
-          netApy={apyInfo?.netAPY || 0}
-          healthFactor={iUserSummary?.healthFactor || ''}
-        />
+        {isEmpty ? (
+          <EmptySummaryCard />
+        ) : (
+          <SummaryCard
+            netWorth={iUserSummary?.netWorthUSD || ''}
+            supplied={iUserSummary?.totalLiquidityUSD || ''}
+            borrowed={iUserSummary?.totalBorrowsUSD || ''}
+            netApy={apyInfo?.netAPY || 0}
+            healthFactor={iUserSummary?.healthFactor || ''}
+          />
+        )}
         <PoolContainer />
       </View>
     </NormalScreenContainer2024>
