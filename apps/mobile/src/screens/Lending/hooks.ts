@@ -1,5 +1,6 @@
 import {
   ChainId,
+  Pool,
   PoolBundle,
   ReservesDataHumanized,
   UiPoolDataProvider,
@@ -40,6 +41,19 @@ const walletBalanceProviderContract = new WalletBalanceProvider({
 
 export const poolBundle = new PoolBundle(provider, {
   POOL: marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+  WETH_GATEWAY:
+    marketsData[CustomMarket.proto_mainnet_v3].addresses.WETH_GATEWAY,
+  L2_ENCODER: marketsData[CustomMarket.proto_mainnet_v3].addresses.L2_ENCODER,
+});
+
+export const pool = new Pool(provider, {
+  POOL: marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+  REPAY_WITH_COLLATERAL_ADAPTER:
+    marketsData[CustomMarket.proto_mainnet_v3].addresses
+      .REPAY_WITH_COLLATERAL_ADAPTER,
+  SWAP_COLLATERAL_ADAPTER:
+    marketsData[CustomMarket.proto_mainnet_v3].addresses
+      .SWAP_COLLATERAL_ADAPTER,
   WETH_GATEWAY:
     marketsData[CustomMarket.proto_mainnet_v3].addresses.WETH_GATEWAY,
   L2_ENCODER: marketsData[CustomMarket.proto_mainnet_v3].addresses.L2_ENCODER,

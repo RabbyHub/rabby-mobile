@@ -57,6 +57,23 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
       },
     });
   };
+  const handlePressWithdraw = () => {
+    createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.WITHDRAW_ACTION_DETAIL,
+      reserve: reserve,
+      userSummary,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-1']
+            : colors2024['neutral-bg-1'],
+        },
+      },
+    });
+  };
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
@@ -125,6 +142,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
             titleStyle={styles.withdrawButtonTitle}
             containerStyle={styles.button}
             title={'Withdraw'}
+            onPress={handlePressWithdraw}
           />
         )}
         <Button
