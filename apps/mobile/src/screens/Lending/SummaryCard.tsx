@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,13 @@ import { formatNetworth, formatNum } from '@/utils/math';
 import { formatPercent } from '../TokenDetail/util';
 import { estDaily } from './utils/format';
 import { getHealthStatusColor } from './utils';
+import IconCloseCC from '@/assets2024/icons/common/close-bold-cc.svg';
+import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
+import {
+  HF_COLOR_BAD_THRESHOLD,
+  HF_COLOR_GOOD_THRESHOLD,
+} from './utils/constant';
+import { useLendingService } from './hooks/useLendingService';
 
 interface IProps {
   netWorth: string;
@@ -19,12 +26,42 @@ interface IProps {
 }
 
 const SummaryCard = (props: IProps) => {
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { skipHealthFactorWarning, setSkipHealthFactorWarning } =
+    useLendingService();
   const { t } = useTranslation();
+  const extraInfo = useMemo(() => {
+    const healthFactor = Number(props.healthFactor || '0');
+    if (healthFactor < HF_COLOR_BAD_THRESHOLD) {
+      return {
+        showWarning: true,
+        showClose: false,
+        color: ThemeColors2024.dark['red-default'],
+        backgroundColor: 'rgba(255, 214, 212, 1)',
+      };
+    }
+    if (healthFactor < HF_COLOR_GOOD_THRESHOLD) {
+      return {
+        showWarning: true,
+        showClose: false,
+        color: ThemeColors2024.dark['orange-default'],
+        backgroundColor: 'rgba(255, 239, 213, 1)',
+      };
+    }
+    if (skipHealthFactorWarning) {
+      return null;
+    }
+    return {
+      showWarning: false,
+      showClose: true,
+      color: ThemeColors2024.dark['green-default'],
+      backgroundColor: colors2024['neutral-line'],
+    };
+  }, [colors2024, props.healthFactor, skipHealthFactorWarning]);
 
   return (
     <>
-      <View style={styles.container}>
+      <View style={[styles.container, !extraInfo && styles.patchBottom]}>
         <View style={styles.netWorthContainer}>
           <View style={styles.netWorthHeader}>
             <Text style={styles.netWorthTitle}>Net worth</Text>
@@ -92,11 +129,40 @@ const SummaryCard = (props: IProps) => {
             </View>
           </View>
         </View>
+        {!!extraInfo && (
+          <View
+            style={[
+              styles.extraContainer,
+              { backgroundColor: extraInfo.backgroundColor },
+            ]}>
+            <View style={styles.extraLeft}>
+              {extraInfo.showWarning && (
+                <RcIconWarningCircleCC
+                  width={14}
+                  height={14}
+                  color={extraInfo.color}
+                />
+              )}
+              <Text style={styles.extraLeftText}>
+                If goes below 1, the liquidation might be triggered.
+              </Text>
+              <TouchableOpacity>
+                <Text style={styles.extraLeftMore}>More</Text>
+              </TouchableOpacity>
+            </View>
+            {extraInfo.showClose && (
+              <TouchableOpacity
+                onPress={() => setSkipHealthFactorWarning(true)}>
+                <IconCloseCC
+                  width={14}
+                  height={14}
+                  color={colors2024['neutral-title-1']}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
-      {/* TODO: ext TIPS */}
-      {/* <View style={styles.extraContainer}>
-        <Text>ext</Text>
-      </View> */}
     </>
   );
 };
@@ -108,12 +174,42 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'relative',
     backgroundColor: 'rgba(27, 32, 48, 1)',
     borderRadius: 16,
-    padding: 20,
+    paddingTop: 20,
     marginTop: 12,
+  },
+  patchBottom: {
+    paddingBottom: 20,
   },
   extraContainer: {
     position: 'relative',
     color: colors2024['red-default'],
+    backgroundColor: colors2024['red-light-4'],
+    marginTop: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingRight: 16,
+  },
+  extraLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  extraLeftText: {
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
+  extraLeftMore: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['brand-default'],
   },
   suppliedAndBorrowedContainer: {
     flexDirection: 'row',
@@ -122,6 +218,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   netWorthContainer: {
     gap: 2,
+    paddingHorizontal: 20,
   },
   netWorthHeader: {
     gap: 2,
@@ -150,6 +247,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-around',
     marginTop: 20,
+    paddingHorizontal: 20,
   },
   estDailyContainer: {
     flex: 1,

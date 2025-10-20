@@ -45,6 +45,7 @@ import { MetamaskModeService } from './metamaskModeService';
 import { SyncChainService } from './syncChainService';
 import { PerpsService } from './perpsService';
 import { CurrencyService } from './currencyService';
+import { LendingService } from './lendingService';
 
 migrateAppStorage(appStorage);
 
@@ -228,6 +229,10 @@ export const perpsService = new PerpsService({
   storageAdapter: appStorage,
 });
 
+export const lendingService = new LendingService({
+  storageAdapter: appStorage,
+});
+
 export const currencyService = new CurrencyService({
   storageAdapter: appStorage,
 });
@@ -252,5 +257,6 @@ migrateServices({
   metamaskMode: metamaskModeService,
   syncChain: syncChainService,
   perps: perpsService,
+  lending: lendingService,
   currency: currencyService,
 });
