@@ -10,6 +10,8 @@ import {
   formatAmountValueKMB,
   formatPercent,
 } from '@/screens/TokenDetail/util';
+import TokenIcon from './TokenIcon';
+import { useLendingService } from '../hooks/useLendingService';
 
 export interface ISupplyDetailPopupProps {
   reserve: DisplayPoolReserveInfo;
@@ -18,6 +20,7 @@ export const SupplyDetailPopup: React.FC<ISupplyDetailPopupProps> = ({
   reserve,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { lastSelectedChain } = useLendingService();
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
@@ -25,7 +28,12 @@ export const SupplyDetailPopup: React.FC<ISupplyDetailPopupProps> = ({
       <View style={styles.contentContainer}>
         <View style={[styles.poolInfoContainer, styles.card]}>
           <View style={styles.tokenInfos}>
-            <View />
+            <TokenIcon
+              size={30}
+              chain={lastSelectedChain}
+              chainSize={14}
+              tokenSymbol={reserve.reserve.symbol}
+            />
             <Text style={styles.symbol}>{reserve.reserve.symbol}</Text>
           </View>
           <View style={styles.poolInfoItems}>
@@ -116,6 +124,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenInfos: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
   },
   poolInfoItems: {
     flexDirection: 'row',

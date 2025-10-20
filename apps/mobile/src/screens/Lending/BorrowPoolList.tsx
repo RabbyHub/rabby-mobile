@@ -8,6 +8,7 @@ import { formatPercent, formatUsdValueKMB } from '../TokenDetail/util';
 import { useLendingSummary } from './hooks';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import TokenIcon from './components/TokenIcon';
 
 const BorrowPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
@@ -64,7 +65,7 @@ const BorrowPoolList = () => {
           key={index}
           onPress={() => handlePressItem(item)}>
           <View style={styles.left}>
-            <View style={styles.ava}></View>
+            <TokenIcon size={46} tokenSymbol={item.reserve.symbol} />
             <View style={styles.symbolContainer}>
               <Text style={styles.symbol}>{item.reserve.symbol}</Text>
             </View>

@@ -14,6 +14,8 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import TokenIcon from './TokenIcon';
+import { useLendingService } from '../hooks/useLendingService';
 
 export interface IBorrowDetailPopupProps {
   reserve: DisplayPoolReserveInfo;
@@ -26,6 +28,7 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
   healthFactor,
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { lastSelectedChain } = useLendingService();
 
   const handleShowLqBonusPopup = () => {
     const modalId = createGlobalBottomSheetModal2024({
@@ -110,7 +113,12 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
       <View style={styles.contentContainer}>
         <View style={[styles.poolInfoContainer, styles.card]}>
           <View style={styles.tokenInfos}>
-            <View />
+            <TokenIcon
+              size={30}
+              chain={lastSelectedChain}
+              chainSize={14}
+              tokenSymbol={reserve.reserve.symbol}
+            />
             <Text style={styles.symbol}>{reserve.reserve.symbol}</Text>
           </View>
           <View style={styles.poolInfoItems}>
@@ -254,6 +262,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenInfos: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
   },
   poolInfoItems: {
     flexDirection: 'row',

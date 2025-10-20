@@ -9,6 +9,8 @@ import { formatPercent } from '../TokenDetail/util';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useLendingSummary } from './hooks';
+import TokenIcon from './components/TokenIcon';
+import { CHAINS_ENUM } from '@debank/common';
 
 const SupplyPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
@@ -63,9 +65,17 @@ const SupplyPoolList = () => {
             key={index}
             onPress={() => handlePressItem(item)}>
             <View style={styles.left}>
-              <View style={styles.ava} />
+              <TokenIcon
+                tokenSymbol={item.reserve.symbol}
+                chain={CHAINS_ENUM.ETH}
+              />
               <View style={styles.symbolContainer}>
-                <Text style={styles.symbol}>{item.reserve.symbol}</Text>
+                <Text
+                  style={styles.symbol}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {item.reserve.symbol}
+                </Text>
                 <Text style={styles.tvl}>
                   TVL:{' '}
                   {formatUsdValueKMB(
@@ -146,6 +156,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    maxWidth: 80,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   tvl: {
     fontSize: 14,

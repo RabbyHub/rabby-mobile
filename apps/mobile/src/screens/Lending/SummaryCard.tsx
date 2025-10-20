@@ -31,6 +31,9 @@ const SummaryCard = (props: IProps) => {
     useLendingService();
   const { t } = useTranslation();
   const extraInfo = useMemo(() => {
+    if (!props?.healthFactor) {
+      return null;
+    }
     const healthFactor = Number(props.healthFactor || '0');
     if (healthFactor < HF_COLOR_BAD_THRESHOLD) {
       return {
