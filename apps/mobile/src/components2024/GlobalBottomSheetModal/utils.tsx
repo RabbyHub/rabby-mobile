@@ -57,6 +57,7 @@ import { SupplyDetailPopup } from '@/screens/Lending/components/SupplyDetailPopu
 import { BorrowDetailPopup } from '@/screens/Lending/components/BorrowDetailPopup';
 import { SupplyActionPopup } from '@/screens/Lending/components/actions/SupplyActionPopup';
 import { WithdrawActionPopup } from '@/screens/Lending/components/actions/WithdrawActionPopup';
+import { BorrowActionPopup } from '@/screens/Lending/components/actions/BorrowActionPopup';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -180,6 +181,6 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.BORROW_DETAIL]: BorrowDetailPopup,
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: SupplyActionPopup,
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: WithdrawActionPopup,
-  [MODAL_NAMES.BORROW_ACTION_DETAIL]: WithdrawActionPopup,
-  [MODAL_NAMES.REPAY_ACTION_DETAIL]: SupplyActionPopup,
+  [MODAL_NAMES.BORROW_ACTION_DETAIL]: BorrowActionPopup,
+  [MODAL_NAMES.REPAY_ACTION_DETAIL]: BorrowActionPopup,
 };

@@ -1,5 +1,11 @@
 import { pool, poolBundle } from './hooks';
 
+export enum InterestRate {
+  None = 'None',
+  Stable = 'Stable',
+  Variable = 'Variable',
+}
+
 export const buildSupplyTx = async ({
   amount,
   address,
@@ -33,6 +39,27 @@ export const buildWithdrawTx = async ({
     reserve,
     amount,
     aTokenAddress,
+    useOptimizedPath: false, // 主网上没有优化，其他链有优化，下次需要配置
+  });
+};
+
+export const buildBorrowTx = async ({
+  amount,
+  address,
+  reserve,
+  debtTokenAddress,
+}: {
+  amount: string;
+  address: string;
+  reserve: string;
+  debtTokenAddress: string;
+}) => {
+  return poolBundle.borrowTxBuilder.generateTxData({
+    user: address,
+    amount: amount,
+    reserve: reserve,
+    debtTokenAddress,
+    interestRateMode: InterestRate.Variable,
     useOptimizedPath: false, // 主网上没有优化，其他链有优化，下次需要配置
   });
 };

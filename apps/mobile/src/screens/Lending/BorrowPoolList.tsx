@@ -37,8 +37,7 @@ const BorrowPoolList = () => {
     createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.BORROW_DETAIL,
       reserve: item,
-      availableBorrowsUSD: iUserSummary?.availableBorrowsUSD || '0',
-      healthFactor: iUserSummary?.healthFactor || '0',
+      userSummary: iUserSummary,
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,

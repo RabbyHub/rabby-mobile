@@ -111,16 +111,23 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       return true;
     }
     return (
-      !userSummary.availableBorrowsUSD ||
-      userSummary.availableBorrowsUSD === '0' ||
-      userSummary.availableBorrowsUSD === '$0'
+      !userSummary?.availableBorrowsUSD ||
+      userSummary?.availableBorrowsUSD === '0' ||
+      userSummary?.availableBorrowsUSD === '$0'
     );
   }, [
     reserve.reserve.borrowCap,
     reserve.reserve.totalDebt,
-    userSummary.availableBorrowsUSD,
+    userSummary?.availableBorrowsUSD,
   ]);
 
+  const handlePressBorrow = () => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.BORROW_ACTION_DETAIL,
+      reserve,
+      userSummary,
+    });
+  };
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
       <Text style={styles.title}>Borrow Details</Text>
@@ -183,11 +190,11 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
                     {
                       color: getHealthStatusColor(
                         isLight,
-                        Number(userSummary.healthFactor || '0'),
+                        Number(userSummary?.healthFactor || '0'),
                       ).color,
                     },
                   ]}>
-                  {formatNum(userSummary.healthFactor)}
+                  {formatNum(userSummary?.healthFactor)}
                 </Text>
               </View>
               <View style={styles.userInfoItem}>
@@ -228,7 +235,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
             </View>
 
             <Text style={styles.userInfoItemValue}>
-              {formatUsdValueKMB(userSummary.availableBorrowsUSD || '0')}
+              {formatUsdValueKMB(userSummary?.availableBorrowsUSD || '0')}
             </Text>
           </View>
         </View>
@@ -247,6 +254,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
           containerStyle={styles.button}
           disabled={disableBorrowButton}
           titleStyle={styles.borrowButtonTitle}
+          onPress={handlePressBorrow}
           title={'Borrow'}
         />
       </View>
