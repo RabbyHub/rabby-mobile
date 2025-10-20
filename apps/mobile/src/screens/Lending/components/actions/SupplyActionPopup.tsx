@@ -29,6 +29,7 @@ import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { toast } from '@/components2024/Toast';
 import { useAtom } from 'jotai';
 import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
+import { ETH_USDT_CONTRACT } from '@/constant/swap';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -40,7 +41,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   const [needApprove, setNeedApprove] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [supplyTx, setSupplyTx] = useState<any>(null);
-  const [approveTx, setApproveTx] = useState<any>(null);
+  const [approveTxs, setApproveTxs] = useState<any>();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -145,7 +146,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   const buildTransactions = useCallback(async () => {
     if (!amount || amount === '0' || !currentAccount) {
       setSupplyTx(null);
-      setApproveTx(null);
+      setApproveTxs(null);
       return;
     }
 
@@ -160,10 +161,11 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
       // 实时检查approve状态，避免依赖状态备份
       let actualNeedApprove = false;
+      let allowance = '0';
       if (
         !isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress)
       ) {
-        const allowance = await getERC20Allowance(
+        allowance = await getERC20Allowance(
           chainInfo.serverId,
           reserve.underlyingAsset,
           marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
@@ -186,6 +188,40 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           .multipliedBy(10 ** reserve.reserve.decimals)
           .toString();
 
+        // 检查是否需要两步approve（针对以太坊上的USDT）
+        let shouldTwoStepApprove = false;
+        if (
+          chainInfo?.enum === CHAINS_ENUM.ETH &&
+          isSameAddress(reserve.underlyingAsset, ETH_USDT_CONTRACT) &&
+          Number(allowance) !== 0 &&
+          !new BigNumber(allowance || '0').gte(requiredAmount)
+        ) {
+          shouldTwoStepApprove = true;
+        }
+
+        // 如果需要两步approve，先执行0额度approve
+        if (shouldTwoStepApprove) {
+          const zeroApproveResult = await approveToken({
+            chainServerId: chainInfo.serverId,
+            id: reserve.underlyingAsset,
+            spender:
+              marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+            amount: 0,
+            account: currentAccount,
+            isBuild: true,
+          });
+
+          const zeroApproveTxBuilt = {
+            ...zeroApproveResult.params[0],
+            from: zeroApproveResult.params[0].from || currentAccount.address,
+            value: zeroApproveResult.params[0].value ?? '0x0',
+            chainId: zeroApproveResult.params[0].chainId || chainInfo.id,
+          };
+
+          txs.push(zeroApproveTxBuilt);
+        }
+
+        // 执行正常额度的approve
         const approveResult = await approveToken({
           chainServerId: chainInfo.serverId,
           id: reserve.underlyingAsset,
@@ -204,7 +240,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         };
 
         txs.push(approveTxBuilt);
-        setApproveTx(approveTxBuilt);
+        setApproveTxs(txs);
       }
 
       // 构建supply交易
@@ -233,14 +269,14 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
   const txsForMiniApproval: Tx[] = useMemo(() => {
     const list: any[] = [];
-    if (approveTx) {
-      list.push(approveTx);
+    if (approveTxs?.length) {
+      list.push(...approveTxs);
     }
     if (supplyTx) {
       list.push(supplyTx);
     }
     return list as Tx[];
-  }, [approveTx, supplyTx]);
+  }, [approveTxs, supplyTx]);
 
   // 执行supply交易
   const handleSupply = useCallback(async () => {
@@ -263,7 +299,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       const res = await sendPrepareMiniTransactions({
         directSubmit: true,
       });
-      const txHash = last(res)?.txHash || '';
+      last(res)?.txHash || '';
 
       setAmount(undefined);
       onClose?.();

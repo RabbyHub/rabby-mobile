@@ -29,6 +29,7 @@ import { calculateHFAfterRepay } from '../../utils/hfUtils';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { CustomMarket, marketsData } from '../../config/market';
 import { approveToken } from '@/core/apis/approvals';
+import { ETH_USDT_CONTRACT } from '@/constant/swap';
 
 export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -40,7 +41,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [needApprove, setNeedApprove] = useState(false);
   const [repayTx, setRepayTx] = useState<any>(null);
-  const [approveTx, setApproveTx] = useState<any>(null);
+  const [approveTxs, setApproveTxs] = useState<any>(null);
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -124,7 +125,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   const buildTransactions = useCallback(async () => {
     if (!amount || amount === '0' || !currentAccount) {
       setRepayTx(null);
-      setApproveTx(null);
+      setApproveTxs(null);
       return;
     }
 
@@ -142,10 +143,11 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       const txs: any[] = [];
 
       let actualNeedApprove = false;
+      let allowance = '0';
       if (
         !isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress)
       ) {
-        const allowance = await getERC20Allowance(
+        allowance = await getERC20Allowance(
           chainInfo.serverId,
           reserve.underlyingAsset,
           marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
@@ -168,6 +170,40 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           .multipliedBy(10 ** reserve.reserve.decimals)
           .toString();
 
+        // 检查是否需要两步approve（针对以太坊上的USDT）
+        let shouldTwoStepApprove = false;
+        if (
+          chainInfo?.enum === CHAINS_ENUM.ETH &&
+          isSameAddress(reserve.underlyingAsset, ETH_USDT_CONTRACT) &&
+          Number(allowance) !== 0 &&
+          !new BigNumber(allowance || '0').gte(requiredAmount)
+        ) {
+          shouldTwoStepApprove = true;
+        }
+
+        // 如果需要两步approve，先执行0额度approve
+        if (shouldTwoStepApprove) {
+          const zeroApproveResult = await approveToken({
+            chainServerId: chainInfo.serverId,
+            id: reserve.underlyingAsset,
+            spender:
+              marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+            amount: 0,
+            account: currentAccount,
+            isBuild: true,
+          });
+
+          const zeroApproveTxBuilt = {
+            ...zeroApproveResult.params[0],
+            from: zeroApproveResult.params[0].from || currentAccount.address,
+            value: zeroApproveResult.params[0].value ?? '0x0',
+            chainId: zeroApproveResult.params[0].chainId || chainInfo.id,
+          };
+
+          txs.push(zeroApproveTxBuilt);
+        }
+
+        // 执行正常额度的approve
         const approveResult = await approveToken({
           chainServerId: chainInfo.serverId,
           id: reserve.underlyingAsset,
@@ -186,21 +222,21 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         };
 
         txs.push(approveTxBuilt);
-        setApproveTx(approveTxBuilt);
+        setApproveTxs(txs);
       }
 
       if (!targetPool?.aTokenAddress) {
         return;
       }
-      const repayTx = await buildRepayTx({
+      const repayResult = await buildRepayTx({
         amount: parseUnits(amount, targetPool.decimals).toString(),
         address: currentAccount.address,
         reserve: reserve.underlyingAsset,
       });
-      delete repayTx.gasLimit;
+      delete repayResult.gasLimit;
 
       setRepayTx({
-        ...repayTx,
+        ...repayResult,
         chainId: chainInfo.id,
       });
     } catch (error) {
@@ -218,14 +254,14 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
 
   const txsForMiniApproval: Tx[] = useMemo(() => {
     const list: any[] = [];
-    if (approveTx) {
-      list.push(approveTx);
+    if (approveTxs?.length) {
+      list.push(...approveTxs);
     }
     if (repayTx) {
       list.push(repayTx);
     }
     return list as Tx[];
-  }, [approveTx, repayTx]);
+  }, [approveTxs, repayTx]);
 
   const handleRepay = useCallback(async () => {
     if (
