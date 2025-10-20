@@ -13,7 +13,10 @@ import {
 import TokenIcon from './TokenIcon';
 import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
-import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -21,6 +24,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
+  onClose,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
@@ -45,10 +49,14 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const handlePressSupply = () => {
-    createGlobalBottomSheetModal2024({
+    onClose?.();
+    const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
       reserve: reserve,
       userSummary,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
@@ -62,10 +70,14 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
     });
   };
   const handlePressWithdraw = () => {
-    createGlobalBottomSheetModal2024({
+    onClose?.();
+    const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.WITHDRAW_ACTION_DETAIL,
       reserve: reserve,
       userSummary,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,

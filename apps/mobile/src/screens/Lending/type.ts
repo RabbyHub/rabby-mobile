@@ -22,4 +22,5 @@ export type PopupDetailProps = {
   userSummary: FormatUserSummaryAndIncentivesResponse<
     ReserveDataHumanized & FormatReserveUSDResponse
   >;
+  onClose?: () => void;
 };

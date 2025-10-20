@@ -23,6 +23,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
+  onClose,
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
@@ -126,17 +127,25 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const handlePressBorrow = () => {
-    createGlobalBottomSheetModal2024({
+    onClose?.();
+    const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.BORROW_ACTION_DETAIL,
       reserve,
       userSummary,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
     });
   };
   const handlePressRepay = () => {
-    createGlobalBottomSheetModal2024({
+    onClose?.();
+    const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.REPAY_ACTION_DETAIL,
       reserve,
       userSummary,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
     });
   };
   return (

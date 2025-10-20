@@ -32,6 +32,7 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
+  onClose,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
@@ -165,16 +166,18 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       last(res)?.txHash || '';
 
       setAmount(undefined);
+      onClose?.();
     } catch (error) {
     } finally {
       setIsLoading(false);
     }
   }, [
     currentAccount,
-    amount,
     supplyTxs.length,
+    amount,
     isDirectSigning,
     sendPrepareMiniTransactions,
+    onClose,
     setDirectSigning,
   ]);
 

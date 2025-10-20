@@ -6,7 +6,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValueKMB } from '../Home/utils/price';
 import { formatPercent } from '../TokenDetail/util';
-import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useLendingData, useLendingSummary } from './hooks';
 import TokenIcon from './components/TokenIcon';
@@ -30,10 +33,13 @@ const SupplyPoolList = () => {
   }, [displayPoolReserves]);
 
   const handlePressItem = item => {
-    createGlobalBottomSheetModal2024({
+    const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SUPPLY_DETAIL,
       reserve: item,
       userSummary: iUserSummary,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,

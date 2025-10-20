@@ -33,6 +33,7 @@ import { approveToken } from '@/core/apis/approvals';
 export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
+  onClose,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
@@ -254,16 +255,18 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       last(res)?.txHash || '';
 
       setAmount(undefined);
+      onClose?.();
     } catch (error) {
     } finally {
       setIsLoading(false);
     }
   }, [
     currentAccount,
-    amount,
     txsForMiniApproval?.length,
+    amount,
     isDirectSigning,
     sendPrepareMiniTransactions,
+    onClose,
     setDirectSigning,
   ]);
 

@@ -36,6 +36,7 @@ import { HF_COLOR_BAD_THRESHOLD } from '../../utils/constant';
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
+  onClose,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
@@ -154,16 +155,18 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       last(res)?.txHash || '';
 
       setAmount(undefined);
+      onClose?.();
     } catch (error) {
     } finally {
       setIsLoading(false);
     }
   }, [
     currentAccount,
-    amount,
     txs.length,
+    amount,
     isDirectSigning,
     sendPrepareMiniTransactions,
+    onClose,
     setDirectSigning,
   ]);
 

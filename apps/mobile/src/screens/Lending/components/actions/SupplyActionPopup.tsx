@@ -33,6 +33,7 @@ import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
+  onClose,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
@@ -265,6 +266,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       const txHash = last(res)?.txHash || '';
 
       setAmount(undefined);
+      onClose?.();
     } catch (error) {
     } finally {
       setIsLoading(false);
@@ -276,6 +278,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     txsForMiniApproval?.length,
     isDirectSigning,
     sendPrepareMiniTransactions,
+    onClose,
     setDirectSigning,
   ]);
 
