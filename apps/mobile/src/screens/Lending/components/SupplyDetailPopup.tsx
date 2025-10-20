@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
@@ -12,6 +12,7 @@ import {
 } from '@/screens/TokenDetail/util';
 import TokenIcon from './TokenIcon';
 import { useLendingService } from '../hooks/useLendingService';
+import BigNumber from 'bignumber.js';
 
 export interface ISupplyDetailPopupProps {
   reserve: DisplayPoolReserveInfo;
@@ -21,6 +22,23 @@ export const SupplyDetailPopup: React.FC<ISupplyDetailPopupProps> = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
+
+  const hasSupplyBalance = useMemo(() => {
+    return reserve?.underlyingBalance && reserve.underlyingBalance !== '0';
+  }, [reserve.underlyingBalance]);
+
+  const disableSupplyButton = useMemo(() => {
+    if (
+      BigNumber(reserve.reserve.totalLiquidity).gte(reserve.reserve.supplyCap)
+    ) {
+      return true;
+    }
+    return !reserve?.walletBalance || reserve.walletBalance === '0';
+  }, [
+    reserve.reserve.supplyCap,
+    reserve.reserve.totalLiquidity,
+    reserve.walletBalance,
+  ]);
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
@@ -82,8 +100,21 @@ export const SupplyDetailPopup: React.FC<ISupplyDetailPopupProps> = ({
         </View>
       </View>
       <View style={styles.buttonContainer}>
-        <Button containerStyle={styles.button} title={'Supply'} />
-        <Button containerStyle={styles.button} title={'Withdraw'} />
+        {hasSupplyBalance && (
+          <Button
+            type="ghost"
+            buttonStyle={styles.withdrawButton}
+            titleStyle={styles.withdrawButtonTitle}
+            containerStyle={styles.button}
+            title={'Withdraw'}
+          />
+        )}
+        <Button
+          disabled={disableSupplyButton}
+          containerStyle={styles.button}
+          titleStyle={styles.supplyButtonTitle}
+          title={'Supply'}
+        />
       </View>
     </AutoLockView>
   );
@@ -227,5 +258,20 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   button: {
     flex: 1,
+  },
+  withdrawButton: {
+    borderWidth: 0,
+    backgroundColor: ctx.colors2024['neutral-line'],
+  },
+  withdrawButtonTitle: {
+    color: ctx.colors2024['neutral-title-1'],
+    fontSize: 17,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  supplyButtonTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
 }));

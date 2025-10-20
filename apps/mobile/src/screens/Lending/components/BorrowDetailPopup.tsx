@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
@@ -16,6 +16,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import TokenIcon from './TokenIcon';
 import { useLendingService } from '../hooks/useLendingService';
+import BigNumber from 'bignumber.js';
 
 export interface IBorrowDetailPopupProps {
   reserve: DisplayPoolReserveInfo;
@@ -106,6 +107,25 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
       },
     });
   };
+
+  const hasBorrowBalance = useMemo(() => {
+    return reserve?.variableBorrows && reserve.variableBorrows !== '0';
+  }, [reserve.variableBorrows]);
+
+  const disableBorrowButton = useMemo(() => {
+    if (BigNumber(reserve.reserve.totalDebt).gte(reserve.reserve.borrowCap)) {
+      return true;
+    }
+    return (
+      !availableBorrowsUSD ||
+      availableBorrowsUSD === '0' ||
+      availableBorrowsUSD === '$0'
+    );
+  }, [
+    availableBorrowsUSD,
+    reserve.reserve.borrowCap,
+    reserve.reserve.totalDebt,
+  ]);
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
@@ -220,8 +240,21 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
         </View>
       </View>
       <View style={styles.buttonContainer}>
-        <Button containerStyle={styles.button} title={'Repay'} />
-        <Button containerStyle={styles.button} title={'Borrow'} />
+        {hasBorrowBalance && (
+          <Button
+            type="ghost"
+            buttonStyle={styles.repayButton}
+            titleStyle={styles.repayButtonTitle}
+            containerStyle={styles.button}
+            title={'Repay'}
+          />
+        )}
+        <Button
+          containerStyle={styles.button}
+          disabled={disableBorrowButton}
+          titleStyle={styles.borrowButtonTitle}
+          title={'Borrow'}
+        />
       </View>
     </AutoLockView>
   );
@@ -370,5 +403,20 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  repayButton: {
+    borderWidth: 0,
+    backgroundColor: ctx.colors2024['neutral-line'],
+  },
+  repayButtonTitle: {
+    color: ctx.colors2024['neutral-title-1'],
+    fontSize: 17,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  borrowButtonTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
 }));

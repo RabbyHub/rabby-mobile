@@ -11,15 +11,26 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import TokenIcon from './components/TokenIcon';
 import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
+import BigNumber from 'bignumber.js';
 
 const BorrowPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const { displayPoolReserves, iUserSummary, loading } = useLendingSummary();
   const sortReserves = useMemo(() => {
-    return [...(displayPoolReserves || [])].sort((a, b) => {
-      return Number(b.totalBorrowsUSD) - Number(a.totalBorrowsUSD);
-    });
+    return [...(displayPoolReserves || [])]
+      .filter(item => {
+        if (item.variableBorrows && item.variableBorrows !== '0') {
+          return true;
+        }
+        if (BigNumber(item.reserve.totalDebt).gte(item.reserve.borrowCap)) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        return Number(b.totalBorrowsUSD) - Number(a.totalBorrowsUSD);
+      });
   }, [displayPoolReserves]);
 
   const handlePressItem = item => {
@@ -74,7 +85,12 @@ const BorrowPoolList = () => {
           <View style={styles.left}>
             <TokenIcon size={46} tokenSymbol={item.reserve.symbol} />
             <View style={styles.symbolContainer}>
-              <Text style={styles.symbol}>{item.reserve.symbol}</Text>
+              <Text
+                style={styles.symbol}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {item.reserve.symbol}
+              </Text>
             </View>
           </View>
           <Text style={styles.apy}>
@@ -144,6 +160,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    maxWidth: 80,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   tvl: {
     fontSize: 14,
