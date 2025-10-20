@@ -20,6 +20,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import LinearGradient from 'react-native-linear-gradient';
 
 interface IProps {
   netWorth: string;
@@ -75,112 +76,119 @@ const SummaryCard = (props: IProps) => {
   }, [colors2024, props.healthFactor, skipHealthFactorWarning]);
 
   return (
-    <>
-      <View style={[styles.container, !extraInfo && styles.patchBottom]}>
-        <View style={styles.netWorthContainer}>
-          <View style={styles.netWorthHeader}>
-            <Text style={styles.netWorthTitle}>Net worth</Text>
-            <Text style={styles.netWorthValue}>
-              {formatNetworth(Number(props.netWorth || '0'))}
-            </Text>
-          </View>
-          <View style={styles.suppliedAndBorrowedContainer}>
-            <Text style={styles.suppliedAndBorrowedTitle}>
-              Supplied: {formatNetworth(Number(props.supplied || '0'))} |
-              Borrowed: {formatNetworth(Number(props.borrowed || '0'))}
-            </Text>
-          </View>
+    <LinearGradient
+      colors={['#0F2F3A', '#041920']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.container, !extraInfo && styles.patchBottom]}>
+      <WarningFillCC
+        width={50}
+        height={50}
+        style={styles.relativeIcon}
+        color={colors2024['red-default']}
+      />
+      <View style={styles.netWorthContainer}>
+        <View style={styles.netWorthHeader}>
+          <Text style={styles.netWorthTitle}>Net worth</Text>
+          <Text style={styles.netWorthValue}>
+            {formatNetworth(Number(props.netWorth || '0'))}
+          </Text>
         </View>
-        <View style={styles.estAndHealthContainer}>
-          <View style={styles.estDailyContainer}>
-            <Text style={styles.sectionHeader}>Est.Daily</Text>
-            <View style={styles.sectionContent}>
-              <Text style={styles.estDailyValue}>
-                {estDaily(props.netWorth, props.netApy)}
-              </Text>
-              <Text style={styles.netApy}>
-                (+{formatPercent(Number(props.netApy || '0'))})
-              </Text>
-            </View>
-          </View>
-          <View style={styles.healthFactorContainer}>
-            <View style={styles.healthFactorHeader}>
-              <Text style={styles.sectionHeader}>Health factor</Text>
-              <Pressable onPress={handleShowHFDescription}>
-                <WarningFillCC
-                  width={12}
-                  height={12}
-                  color={ThemeColors2024.dark['neutral-secondary']}
-                />
-              </Pressable>
-            </View>
-            <View style={styles.sectionContent}>
-              <Text
-                style={[
-                  styles.healthFactorValue,
-                  {
-                    color: getHealthStatusColor(
-                      isLight,
-                      Number(props.healthFactor || '0'),
-                    ).color,
-                  },
-                ]}>
-                {formatNum(props.healthFactor)}
-              </Text>
-              <Text
-                style={[
-                  styles.healthFactorStatus,
-                  {
-                    color: getHealthStatusColor(
-                      isLight,
-                      Number(props.healthFactor || '0'),
-                    ).color,
-                    backgroundColor: getHealthStatusColor(
-                      isLight,
-                      Number(props.healthFactor || '0'),
-                    ).backgroundColor,
-                  },
-                ]}>
-                Healthy
-              </Text>
-            </View>
-          </View>
+        <View style={styles.suppliedAndBorrowedContainer}>
+          <Text style={styles.suppliedAndBorrowedTitle}>
+            Supplied: {formatNetworth(Number(props.supplied || '0'))} |
+            Borrowed: {formatNetworth(Number(props.borrowed || '0'))}
+          </Text>
         </View>
-        {!!extraInfo && (
-          <View
-            style={[
-              styles.extraContainer,
-              { backgroundColor: extraInfo.backgroundColor },
-            ]}>
-            <View style={styles.extraLeft}>
-              {extraInfo.showWarning && (
-                <RcIconWarningCircleCC
-                  width={14}
-                  height={14}
-                  color={extraInfo.color}
-                />
-              )}
-              <Text style={styles.extraLeftText}>
-                If goes below 1, the liquidation might be triggered.
-              </Text>
-              <TouchableOpacity>
-                <Text style={styles.extraLeftMore}>More</Text>
-              </TouchableOpacity>
-            </View>
-            {extraInfo.showClose && (
-              <TouchableOpacity
-                onPress={() => setSkipHealthFactorWarning(true)}>
-                <IconCloseCC
-                  width={14}
-                  height={14}
-                  color={colors2024['neutral-title-1']}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
       </View>
-    </>
+      <View style={styles.estAndHealthContainer}>
+        <View style={styles.estDailyContainer}>
+          <Text style={styles.sectionHeader}>Est.Daily</Text>
+          <View style={styles.sectionContent}>
+            <Text style={styles.estDailyValue}>
+              {estDaily(props.netWorth, props.netApy)}
+            </Text>
+            <Text style={styles.netApy}>
+              (+{formatPercent(Number(props.netApy || '0'))})
+            </Text>
+          </View>
+        </View>
+        <View style={styles.healthFactorContainer}>
+          <View style={styles.healthFactorHeader}>
+            <Text style={styles.sectionHeader}>Health factor</Text>
+            <Pressable onPress={handleShowHFDescription}>
+              <WarningFillCC
+                width={12}
+                height={12}
+                color={ThemeColors2024.dark['neutral-secondary']}
+              />
+            </Pressable>
+          </View>
+          <View style={styles.sectionContent}>
+            <Text
+              style={[
+                styles.healthFactorValue,
+                {
+                  color: getHealthStatusColor(
+                    isLight,
+                    Number(props.healthFactor || '0'),
+                  ).color,
+                },
+              ]}>
+              {formatNum(props.healthFactor)}
+            </Text>
+            <Text
+              style={[
+                styles.healthFactorStatus,
+                {
+                  color: getHealthStatusColor(
+                    isLight,
+                    Number(props.healthFactor || '0'),
+                  ).color,
+                  backgroundColor: getHealthStatusColor(
+                    isLight,
+                    Number(props.healthFactor || '0'),
+                  ).backgroundColor,
+                },
+              ]}>
+              Healthy
+            </Text>
+          </View>
+        </View>
+      </View>
+      {!!extraInfo && (
+        <View
+          style={[
+            styles.extraContainer,
+            { backgroundColor: extraInfo.backgroundColor },
+          ]}>
+          <View style={styles.extraLeft}>
+            {extraInfo.showWarning && (
+              <RcIconWarningCircleCC
+                width={14}
+                height={14}
+                color={extraInfo.color}
+              />
+            )}
+            <Text style={styles.extraLeftText}>
+              If goes below 1, the liquidation might be triggered.
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.extraLeftMore}>More</Text>
+            </TouchableOpacity>
+          </View>
+          {extraInfo.showClose && (
+            <TouchableOpacity onPress={() => setSkipHealthFactorWarning(true)}>
+              <IconCloseCC
+                width={14}
+                height={14}
+                color={colors2024['neutral-title-1']}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+    </LinearGradient>
   );
 };
 
@@ -189,7 +197,6 @@ export default SummaryCard;
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     position: 'relative',
-    backgroundColor: 'rgba(27, 32, 48, 1)',
     borderRadius: 16,
     paddingTop: 20,
     marginTop: 12,
@@ -314,5 +321,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 1,
     borderRadius: 4,
     overflow: 'hidden',
+  },
+  relativeIcon: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
   },
 }));
