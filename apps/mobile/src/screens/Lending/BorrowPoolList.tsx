@@ -1,22 +1,27 @@
 import React, { useCallback, useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatPercent, formatUsdValueKMB } from '../TokenDetail/util';
-import { useLendingSummary } from './hooks';
+import { useLendingData, useLendingSummary } from './hooks';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import TokenIcon from './components/TokenIcon';
 import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
 import BigNumber from 'bignumber.js';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const BorrowPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const { displayPoolReserves, iUserSummary, loading } = useLendingSummary();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+  const { fetchData } = useLendingData(currentAccount?.address);
   const sortReserves = useMemo(() => {
     return [...(displayPoolReserves || [])]
       .filter(item => {
@@ -75,6 +80,9 @@ const BorrowPoolList = () => {
       data={loading ? [] : sortReserves}
       style={styles.container}
       ListHeaderComponent={ListHeaderComponent}
+      refreshControl={
+        <RefreshControl refreshing={false} onRefresh={fetchData} />
+      }
       ListEmptyComponent={<PoolListLoading />}
       renderItem={({ item, index }) => (
         <TouchableOpacity

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,15 +8,20 @@ import { formatUsdValueKMB } from '../Home/utils/price';
 import { formatPercent } from '../TokenDetail/util';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useLendingSummary } from './hooks';
+import { useLendingData, useLendingSummary } from './hooks';
 import TokenIcon from './components/TokenIcon';
 import { CHAINS_ENUM } from '@debank/common';
 import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const SupplyPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { displayPoolReserves, loading, iUserSummary } = useLendingSummary();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+  const { fetchData } = useLendingData(currentAccount?.address);
 
   const sortReserves = useMemo(() => {
     return [...(displayPoolReserves || [])].sort((a, b) => {
@@ -64,6 +69,9 @@ const SupplyPoolList = () => {
     <Tabs.FlatList
       data={loading ? [] : sortReserves}
       style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={false} onRefresh={fetchData} />
+      }
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={<PoolListLoading />}
       renderItem={({ item, index }) => {

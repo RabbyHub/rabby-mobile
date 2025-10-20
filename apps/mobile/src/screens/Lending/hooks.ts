@@ -20,7 +20,7 @@ import { ethers } from 'ethers';
 import * as markets from '@bgd-labs/aave-address-book';
 import dayjs from 'dayjs';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { DisplayPoolReserveInfo } from './type';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
@@ -111,17 +111,10 @@ const useLendingData = (address?: string) => {
   const [loading, setLoading] = useAtom(loadingAtom);
   const [currentAddress, setCurrentAddress] = useAtom(addressAtom);
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!address) {
       return;
     }
-    if (currentAddress && isSameAddress(currentAddress, address) && reserves) {
-      return;
-    }
-    if (loading) {
-      return;
-    }
-
     setLoading(true);
     fetchContractData(address)
       .then(data => {
@@ -135,21 +128,33 @@ const useLendingData = (address?: string) => {
       });
   }, [
     address,
-    reserves,
+    setCurrentAddress,
     setLoading,
     setReserves,
     setUserReserves,
     setWalletBalances,
-    setCurrentAddress,
-    currentAddress,
-    loading,
   ]);
+
+  useEffect(() => {
+    if (!address) {
+      return;
+    }
+    if (currentAddress && isSameAddress(currentAddress, address) && reserves) {
+      return;
+    }
+    if (loading) {
+      return;
+    }
+
+    fetchData();
+  }, [address, reserves, currentAddress, loading, fetchData]);
 
   return {
     reserves,
     userReserves,
     walletBalances,
     loading,
+    fetchData,
   };
 };
 

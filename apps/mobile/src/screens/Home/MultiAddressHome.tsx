@@ -103,6 +103,7 @@ import { PerpsPnl } from './components/PerpsPnl';
 import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { LendingHF } from './components/LendingHF';
 
 const HeaderHeight = 24;
 
@@ -637,6 +638,10 @@ function MultiAddressHome(): JSX.Element {
       // 显示gift图标
       if (el.key === MultiHomeFeatTitle.GasAccount && el.showGiftIcon) {
         return <IconGift width={24} height={24} />;
+      }
+
+      if (el.key === MultiHomeFeatTitle.Lending) {
+        return <LendingHF />;
       }
 
       return (
