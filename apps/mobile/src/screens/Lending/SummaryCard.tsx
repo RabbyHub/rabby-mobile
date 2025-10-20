@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
-import { useTranslation } from 'react-i18next';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import { formatNetworth, formatNum } from '@/utils/math';
 import { formatPercent } from '../TokenDetail/util';
@@ -16,6 +15,11 @@ import {
   HF_COLOR_GOOD_THRESHOLD,
 } from './utils/constant';
 import { useLendingService } from './hooks/useLendingService';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 interface IProps {
   netWorth: string;
@@ -29,7 +33,15 @@ const SummaryCard = (props: IProps) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { skipHealthFactorWarning, setSkipHealthFactorWarning } =
     useLendingService();
-  const { t } = useTranslation();
+  const handleShowHFDescription = () => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.HF_DESCRIPTION,
+      hf: props.healthFactor,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+    });
+  };
   const extraInfo = useMemo(() => {
     if (!props?.healthFactor) {
       return null;
@@ -94,11 +106,13 @@ const SummaryCard = (props: IProps) => {
           <View style={styles.healthFactorContainer}>
             <View style={styles.healthFactorHeader}>
               <Text style={styles.sectionHeader}>Health factor</Text>
-              <WarningFillCC
-                width={12}
-                height={12}
-                color={ThemeColors2024.dark['neutral-secondary']}
-              />
+              <Pressable onPress={handleShowHFDescription}>
+                <WarningFillCC
+                  width={12}
+                  height={12}
+                  color={ThemeColors2024.dark['neutral-secondary']}
+                />
+              </Pressable>
             </View>
             <View style={styles.sectionContent}>
               <Text

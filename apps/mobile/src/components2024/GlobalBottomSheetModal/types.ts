@@ -72,6 +72,7 @@ export enum MODAL_NAMES {
   'BORROW_ACTION_DETAIL' = 'BORROW_ACTION_DETAIL',
   'WITHDRAW_ACTION_DETAIL' = 'WITHDRAW_ACTION_DETAIL',
   'REPAY_ACTION_DETAIL' = 'REPAY_ACTION_DETAIL',
+  'HF_DESCRIPTION' = 'HF_DESCRIPTION',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -122,6 +123,9 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.ADDRESS_HIGHT_DESC]: {
     address: string;
     nextButtonProps?: ButtonProps;
+  };
+  [MODAL_NAMES.HF_DESCRIPTION]: {
+    hf: string;
   };
 };
 
