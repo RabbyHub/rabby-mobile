@@ -24,6 +24,7 @@ import { DisplayPoolReserveInfo } from './type';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
 import { CustomMarket, marketsData } from './config/market';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const provider = new ethers.providers.JsonRpcProvider('https://rpc.payload.de');
 
@@ -86,6 +87,7 @@ const walletBalancesAtom = atom<UserWalletBalancesResponse>({
   0: [],
   1: [],
 });
+const addressAtom = atom<string | undefined>(undefined);
 const loadingAtom = atom<boolean>(false);
 
 const useLendingData = (address?: string) => {
@@ -93,20 +95,30 @@ const useLendingData = (address?: string) => {
   const [userReserves, setUserReserves] = useAtom(userReservesAtom);
   const [walletBalances, setWalletBalances] = useAtom(walletBalancesAtom);
   const [loading, setLoading] = useAtom(loadingAtom);
+  const [currentAddress, setCurrentAddress] = useAtom(addressAtom);
 
   useEffect(() => {
-    if (address && !reserves) {
-      setLoading(true);
-      fetchContractData(address)
-        .then(data => {
-          setReserves(data?.reserves);
-          setUserReserves(data?.userReserves);
-          setWalletBalances(data?.walletBalances || { 0: [], 1: [] });
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+    if (!address) {
+      return;
     }
+    if (currentAddress && isSameAddress(currentAddress, address) && reserves) {
+      return;
+    }
+    if (loading) {
+      return;
+    }
+
+    setLoading(true);
+    fetchContractData(address)
+      .then(data => {
+        setReserves(data?.reserves);
+        setUserReserves(data?.userReserves);
+        setWalletBalances(data?.walletBalances || { 0: [], 1: [] });
+        setCurrentAddress(address);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [
     address,
     reserves,
@@ -114,6 +126,9 @@ const useLendingData = (address?: string) => {
     setReserves,
     setUserReserves,
     setWalletBalances,
+    setCurrentAddress,
+    currentAddress,
+    loading,
   ]);
 
   return {

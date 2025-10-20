@@ -73,7 +73,7 @@ const BorrowPoolList = () => {
 
   return (
     <Tabs.FlatList
-      data={sortReserves}
+      data={loading ? [] : sortReserves}
       style={styles.container}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={<PoolListLoading />}

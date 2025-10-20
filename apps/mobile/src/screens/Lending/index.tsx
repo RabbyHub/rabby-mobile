@@ -30,7 +30,7 @@ function DashBoardScreen(): JSX.Element {
 
   const isEmpty = useMemo(() => {
     return (
-      !loading && iUserSummary?.totalLiquidityMarketReferenceCurrency === '0'
+      loading || iUserSummary?.totalLiquidityMarketReferenceCurrency === '0'
     );
   }, [loading, iUserSummary]);
 
