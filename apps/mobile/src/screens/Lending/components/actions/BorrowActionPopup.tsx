@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -29,12 +29,15 @@ import {
   valueToBigNumber,
 } from '@aave/math-utils';
 import { parseUnits } from 'viem';
+import { CheckBoxRect } from '@/components2024/CheckBox';
+import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
+import { HF_COLOR_BAD_THRESHOLD } from '../../utils/constant';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
@@ -42,6 +45,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+  const [isChecked, setIsChecked] = useState(false);
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
@@ -73,6 +77,13 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       currentLiquidationThreshold: userSummary.currentLiquidationThreshold,
     }).toString();
   }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
+
+  const isRisky = useMemo(() => {
+    if (!afterHF) {
+      return false;
+    }
+    return Number(afterHF) < HF_COLOR_BAD_THRESHOLD;
+  }, [afterHF]);
 
   const buildTransactions = useCallback(async () => {
     if (!amount || amount === '0' || !currentAccount) {
@@ -228,6 +239,32 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>
+        {isRisky && (
+          <>
+            <View style={styles.warningContainer}>
+              <RcIconWarningCircleCC
+                width={16}
+                height={16}
+                color={colors2024['red-default']}
+              />
+              <Text style={styles.warningText}>
+                Borrowing this amount will lower your Health Factor to a risky
+                level for liquidation.
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.checkbox}
+              onPress={() => {
+                setIsChecked(prev => !prev);
+              }}>
+              <CheckBoxRect size={16} checked={isChecked} />
+              <Text style={styles.checkboxText}>
+                I understand the alert and want to continue.
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+
         <DirectSignBtn
           loading={isLoading}
           loadingType="circle"
@@ -242,7 +279,8 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             amount === '0' ||
             !txs.length ||
             isLoading ||
-            !currentAccount
+            !currentAccount ||
+            (isRisky && !isChecked)
           }
           type="primary"
           syncUnlockTime
@@ -409,13 +447,11 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   buttonContainer: {
-    height: 116,
     paddingTop: 12,
-    marginTop: 'auto',
+    marginBottom: 48,
     width: '100%',
     display: 'flex',
-    flexDirection: 'row',
-    gap: 12,
+    flexDirection: 'column',
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   directSignBtn: {
@@ -465,6 +501,36 @@ const getStyles = createGetStyles2024(ctx => ({
   borrowButtonTitle: {
     fontSize: 17,
     fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  checkbox: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    marginTop: 12,
+  },
+  checkboxText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-foot'],
+  },
+  warningContainer: {
+    flexDirection: 'row',
+    gap: 4,
+    backgroundColor: ctx.colors2024['red-light-1'],
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  warningText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
   },
 }));

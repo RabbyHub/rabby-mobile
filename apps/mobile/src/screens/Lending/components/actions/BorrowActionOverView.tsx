@@ -5,6 +5,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
 import { formatNum } from '@/utils/math';
 import { getHealthStatusColor } from '../../utils';
+import HealthFactorText from '../HealthFactorText';
 
 const BorrowActionOverView: React.FC<
   PopupDetailProps & {
@@ -31,9 +32,15 @@ const BorrowActionOverView: React.FC<
                 color: hfColors.color,
               },
             ]}>
-            {afterHF
-              ? `${formatNum(healthFactor)} → ${formatNum(afterHF)}`
-              : formatNum(healthFactor)}
+            {afterHF ? (
+              <>
+                <HealthFactorText healthFactor={healthFactor} />
+                <Text style={styles.arrow}>→</Text>
+                <HealthFactorText healthFactor={afterHF} />
+              </>
+            ) : (
+              <HealthFactorText healthFactor={healthFactor} />
+            )}
           </Text>
         </View>
         <View style={[styles.item, styles.hfDescContainer]}>
@@ -51,6 +58,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     width: '100%',
     marginTop: 24,
+  },
+  arrow: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
   },
   header: {
     color: colors2024['neutral-title-1'],

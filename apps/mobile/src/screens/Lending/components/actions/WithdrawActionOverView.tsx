@@ -4,8 +4,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
-import { formatNum } from '@/utils/math';
 import { getHealthStatusColor } from '../../utils';
+import HealthFactorText from '../HealthFactorText';
 
 const WithdrawActionOverView: React.FC<
   PopupDetailProps & {
@@ -58,9 +58,15 @@ const WithdrawActionOverView: React.FC<
                 color: hfColors.color,
               },
             ]}>
-            {afterHF
-              ? `${formatNum(healthFactor)} → ${formatNum(afterHF)}`
-              : formatNum(healthFactor)}
+            {afterHF ? (
+              <>
+                <HealthFactorText healthFactor={healthFactor} />
+                <Text style={styles.arrow}>→</Text>
+                <HealthFactorText healthFactor={afterHF} />
+              </>
+            ) : (
+              <HealthFactorText healthFactor={healthFactor} />
+            )}
           </Text>
         </View>
         <View style={[styles.item, styles.hfDescContainer]}>
@@ -149,5 +155,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   hfDescContainer: {
     justifyContent: 'flex-end',
     marginTop: 8,
+  },
+  arrow: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));
