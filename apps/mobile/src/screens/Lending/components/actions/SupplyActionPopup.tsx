@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -12,13 +12,14 @@ import { calculateHFAfterSupply } from '../../utils/hfUtils';
 import { useLendingSummary } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
 }) => {
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const [amount, setAmount] = useState('0');
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const [amount, setAmount] = useState<string | undefined>(undefined);
   const { iUserSummary, formattedPoolReservesAndIncentives } =
     useLendingSummary();
 
@@ -45,6 +46,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const afterAvailable = useMemo(() => {
+    if (!amount || amount === '0') {
+      return undefined;
+    }
     return BigNumber(amount)
       .multipliedBy(reserve.reserve.priceInUSD)
       .multipliedBy(reserve.reserve.formattedBaseLTVasCollateral)
@@ -80,12 +84,14 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         style={styles.amountInput}
         chain={CHAINS_ENUM.ETH}
       />
-      <SupplyActionOverView
-        reserve={reserve}
-        userSummary={userSummary}
-        afterHF={afterHF}
-        afterAvailable={afterAvailable}
-      />
+      <BottomSheetScrollView>
+        <SupplyActionOverView
+          reserve={reserve}
+          userSummary={userSummary}
+          afterHF={afterHF}
+          afterAvailable={afterAvailable}
+        />
+      </BottomSheetScrollView>
     </AutoLockView>
   );
 };

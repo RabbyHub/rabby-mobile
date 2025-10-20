@@ -40,7 +40,11 @@ const SupplyActionOverView: React.FC<
           <Text style={styles.title}>Available to borrow</Text>
           <View style={styles.availableValueContainer}>
             <Text style={styles.availableValue}>
-              {availableText}-{formatAmountValueKMB(afterAvailable || '0')}
+              {afterAvailable
+                ? `${availableText} → ${formatAmountValueKMB(
+                    afterAvailable || '0',
+                  )}`
+                : availableText}
             </Text>
             <WarningFillCC
               width={12}
@@ -64,7 +68,9 @@ const SupplyActionOverView: React.FC<
                 color: hfColors.color,
               },
             ]}>
-            {formatNum(healthFactor)} {formatNum(afterHF)}
+            {afterHF
+              ? `${formatNum(healthFactor)} → ${formatNum(afterHF)}`
+              : formatNum(healthFactor)}
           </Text>
         </View>
         <View style={[styles.item, styles.hfDescContainer]}>

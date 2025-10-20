@@ -94,6 +94,7 @@ export const TokenAmountInput = React.forwardRef<
                 onChangeText={(v: string) => {
                   onChange?.(formatSpeicalAmount(v));
                 }}
+                max={tokenAmount}
                 placeholder="0"
                 placeholderTextColor={colors2024['neutral-info']}
                 inputMode="decimal"
