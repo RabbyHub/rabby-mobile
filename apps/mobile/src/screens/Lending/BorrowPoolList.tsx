@@ -9,11 +9,13 @@ import { useLendingSummary } from './hooks';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import TokenIcon from './components/TokenIcon';
+import { PoolListLoading } from './components/Loading';
+import { Skeleton } from '@rneui/themed';
 
 const BorrowPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
-  const { displayPoolReserves, iUserSummary } = useLendingSummary();
+  const { displayPoolReserves, iUserSummary, loading } = useLendingSummary();
   const sortReserves = useMemo(() => {
     return [...(displayPoolReserves || [])].sort((a, b) => {
       return Number(b.totalBorrowsUSD) - Number(a.totalBorrowsUSD);
@@ -40,7 +42,9 @@ const BorrowPoolList = () => {
   };
 
   const ListHeaderComponent = useCallback(() => {
-    return (
+    return loading ? (
+      <Skeleton style={styles.loading} width={124} height={20} circle />
+    ) : (
       <View style={styles.listHeader}>
         <Text style={styles.headerToken}>Token</Text>
         <Text style={styles.headerApy}>APY</Text>
@@ -48,10 +52,12 @@ const BorrowPoolList = () => {
       </View>
     );
   }, [
+    loading,
     styles.headerApy,
     styles.headerMyBorrows,
     styles.headerToken,
     styles.listHeader,
+    styles.loading,
   ]);
 
   return (
@@ -59,6 +65,7 @@ const BorrowPoolList = () => {
       data={sortReserves}
       style={styles.container}
       ListHeaderComponent={ListHeaderComponent}
+      ListEmptyComponent={<PoolListLoading />}
       renderItem={({ item, index }) => (
         <TouchableOpacity
           style={styles.item}
@@ -183,5 +190,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 0,
     marginLeft: 10,
     width: 80,
+  },
+  loading: {
+    width: 124,
+    marginTop: 16,
+    backgroundColor: colors2024['neutral-bg-5'],
+    marginBottom: 2,
+    marginLeft: 8,
   },
 }));

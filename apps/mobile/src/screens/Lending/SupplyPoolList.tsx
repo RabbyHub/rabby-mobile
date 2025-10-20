@@ -11,10 +11,12 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useLendingSummary } from './hooks';
 import TokenIcon from './components/TokenIcon';
 import { CHAINS_ENUM } from '@debank/common';
+import { PoolListLoading } from './components/Loading';
+import { Skeleton } from '@rneui/themed';
 
 const SupplyPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
-  const { displayPoolReserves } = useLendingSummary();
+  const { displayPoolReserves, loading } = useLendingSummary();
 
   const sortReserves = useMemo(() => {
     return [...(displayPoolReserves || [])].sort((a, b) => {
@@ -40,7 +42,9 @@ const SupplyPoolList = () => {
   };
 
   const ListHeaderComponent = useCallback(() => {
-    return (
+    return loading ? (
+      <Skeleton style={styles.loading} width={124} height={20} circle />
+    ) : (
       <View style={styles.listHeader}>
         <Text style={styles.headerToken}>Token</Text>
         <Text style={styles.headerApy}>APY</Text>
@@ -48,16 +52,19 @@ const SupplyPoolList = () => {
       </View>
     );
   }, [
+    loading,
     styles.headerApy,
     styles.headerMySupplies,
     styles.headerToken,
     styles.listHeader,
+    styles.loading,
   ]);
   return (
     <Tabs.FlatList
       data={sortReserves}
       style={styles.container}
       ListHeaderComponent={ListHeaderComponent}
+      ListEmptyComponent={<PoolListLoading />}
       renderItem={({ item, index }) => {
         return (
           <TouchableOpacity
@@ -189,6 +196,13 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     marginTop: 16,
     marginBottom: 2,
+  },
+  loading: {
+    width: 124,
+    marginTop: 16,
+    backgroundColor: colors2024['neutral-bg-5'],
+    marginBottom: 2,
+    marginLeft: 8,
   },
   headerToken: {
     fontSize: 14,
