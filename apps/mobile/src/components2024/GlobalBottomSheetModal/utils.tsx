@@ -55,6 +55,7 @@ import { AddressHightDesc } from '../AddressHightDesc';
 import SelectLendingChain from '@/screens/Lending/ChainSelector/SelectLendingChain';
 import { SupplyDetailPopup } from '@/screens/Lending/components/SupplyDetailPopup';
 import { BorrowDetailPopup } from '@/screens/Lending/components/BorrowDetailPopup';
+import { SupplyActionPopup } from '@/screens/Lending/components/actions/SupplyActionPopup';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -114,6 +115,10 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: undefined,
   [MODAL_NAMES.SUPPLY_DETAIL]: [510],
   [MODAL_NAMES.BORROW_DETAIL]: [554],
+  [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: [666],
+  [MODAL_NAMES.BORROW_ACTION_DETAIL]: [666],
+  [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: [666],
+  [MODAL_NAMES.REPAY_ACTION_DETAIL]: [666],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -172,4 +177,8 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: BatchRevokeErrorReason,
   [MODAL_NAMES.SUPPLY_DETAIL]: SupplyDetailPopup,
   [MODAL_NAMES.BORROW_DETAIL]: BorrowDetailPopup,
+  [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: SupplyActionPopup,
+  [MODAL_NAMES.BORROW_ACTION_DETAIL]: SupplyActionPopup,
+  [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: SupplyActionPopup,
+  [MODAL_NAMES.REPAY_ACTION_DETAIL]: SupplyActionPopup,
 };

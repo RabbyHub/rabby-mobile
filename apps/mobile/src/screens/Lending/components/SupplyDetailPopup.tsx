@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
-import { DisplayPoolReserveInfo } from '../type';
+import { PopupDetailProps } from '../type';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import {
   formatAmountValueKMB,
@@ -13,14 +13,14 @@ import {
 import TokenIcon from './TokenIcon';
 import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
-export interface ISupplyDetailPopupProps {
-  reserve: DisplayPoolReserveInfo;
-}
-export const SupplyDetailPopup: React.FC<ISupplyDetailPopupProps> = ({
+export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
+  userSummary,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
 
   const hasSupplyBalance = useMemo(() => {
@@ -39,6 +39,24 @@ export const SupplyDetailPopup: React.FC<ISupplyDetailPopupProps> = ({
     reserve.reserve.totalLiquidity,
     reserve.walletBalance,
   ]);
+
+  const handlePressSupply = () => {
+    createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
+      reserve: reserve,
+      userSummary,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-1']
+            : colors2024['neutral-bg-1'],
+        },
+      },
+    });
+  };
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
@@ -110,6 +128,7 @@ export const SupplyDetailPopup: React.FC<ISupplyDetailPopupProps> = ({
           />
         )}
         <Button
+          onPress={handlePressSupply}
           disabled={disableSupplyButton}
           containerStyle={styles.button}
           titleStyle={styles.supplyButtonTitle}

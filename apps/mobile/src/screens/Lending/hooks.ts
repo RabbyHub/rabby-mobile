@@ -121,7 +121,12 @@ const useLendingSummary = () => {
   const walletBalances = useAtomValue(walletBalancesAtom);
   const loading = useAtomValue(loadingAtom);
 
-  const { displayPoolReserves, iUserSummary, apyInfo } = useMemo(() => {
+  const {
+    displayPoolReserves,
+    iUserSummary,
+    apyInfo,
+    formattedPoolReservesAndIncentives,
+  } = useMemo(() => {
     if (!reserves || !userReserves) {
       return {
         formattedPoolReservesAndIncentives: [],
@@ -142,7 +147,7 @@ const useLendingSummary = () => {
       marketReferencePriceInUsd:
         baseCurrencyData.marketReferenceCurrencyPriceInUsd,
     });
-    const formattedPoolReservesAndIncentives = formatReservesAndIncentives({
+    const _formattedPoolReservesAndIncentives = formatReservesAndIncentives({
       reserves: reservesArray,
       currentTimestamp,
       marketReferenceCurrencyDecimals:
@@ -195,13 +200,14 @@ const useLendingSummary = () => {
       });
 
     const _apyInfo = formatUserYield(
-      formattedPoolReservesAndIncentives || [],
+      _formattedPoolReservesAndIncentives || [],
       _iUserSummary,
     );
     return {
       displayPoolReserves: _displayPoolReserves,
       iUserSummary: _iUserSummary,
       apyInfo: _apyInfo,
+      formattedPoolReservesAndIncentives: _formattedPoolReservesAndIncentives,
     };
   }, [reserves, userReserves, walletBalances]);
 
@@ -211,6 +217,7 @@ const useLendingSummary = () => {
     walletBalances,
     displayPoolReserves,
     iUserSummary,
+    formattedPoolReservesAndIncentives,
     apyInfo,
     loading,
   };

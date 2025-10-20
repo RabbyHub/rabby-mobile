@@ -1,10 +1,10 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
-import { DisplayPoolReserveInfo } from '../type';
+import { PopupDetailProps } from '../type';
 import { formatPercent, formatUsdValueKMB } from '@/screens/TokenDetail/util';
 import { formatNum } from '@/utils/math';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
@@ -18,15 +18,9 @@ import TokenIcon from './TokenIcon';
 import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
 
-export interface IBorrowDetailPopupProps {
-  reserve: DisplayPoolReserveInfo;
-  availableBorrowsUSD: string;
-  healthFactor: string;
-}
-export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
+export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
-  availableBorrowsUSD,
-  healthFactor,
+  userSummary,
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
@@ -117,14 +111,14 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
       return true;
     }
     return (
-      !availableBorrowsUSD ||
-      availableBorrowsUSD === '0' ||
-      availableBorrowsUSD === '$0'
+      !userSummary.availableBorrowsUSD ||
+      userSummary.availableBorrowsUSD === '0' ||
+      userSummary.availableBorrowsUSD === '$0'
     );
   }, [
-    availableBorrowsUSD,
     reserve.reserve.borrowCap,
     reserve.reserve.totalDebt,
+    userSummary.availableBorrowsUSD,
   ]);
 
   return (
@@ -189,11 +183,11 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
                     {
                       color: getHealthStatusColor(
                         isLight,
-                        Number(healthFactor || '0'),
+                        Number(userSummary.healthFactor || '0'),
                       ).color,
                     },
                   ]}>
-                  {formatNum(healthFactor)}
+                  {formatNum(userSummary.healthFactor)}
                 </Text>
               </View>
               <View style={styles.userInfoItem}>
@@ -234,7 +228,7 @@ export const BorrowDetailPopup: React.FC<IBorrowDetailPopupProps> = ({
             </View>
 
             <Text style={styles.userInfoItemValue}>
-              {formatUsdValueKMB(availableBorrowsUSD || '0')}
+              {formatUsdValueKMB(userSummary.availableBorrowsUSD || '0')}
             </Text>
           </View>
         </View>

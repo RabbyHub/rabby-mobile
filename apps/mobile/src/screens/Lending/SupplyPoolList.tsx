@@ -16,7 +16,7 @@ import { Skeleton } from '@rneui/themed';
 
 const SupplyPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
-  const { displayPoolReserves, loading } = useLendingSummary();
+  const { displayPoolReserves, loading, iUserSummary } = useLendingSummary();
 
   const sortReserves = useMemo(() => {
     return [...(displayPoolReserves || [])].sort((a, b) => {
@@ -28,6 +28,7 @@ const SupplyPoolList = () => {
     createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SUPPLY_DETAIL,
       reserve: item,
+      userSummary: iUserSummary,
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
