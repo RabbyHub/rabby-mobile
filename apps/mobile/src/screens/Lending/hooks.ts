@@ -1,5 +1,6 @@
 import {
   ChainId,
+  PoolBundle,
   ReservesDataHumanized,
   UiPoolDataProvider,
   UserReserveDataHumanized,
@@ -22,6 +23,7 @@ import { useEffect, useMemo } from 'react';
 import { DisplayPoolReserveInfo } from './type';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
+import { CustomMarket, marketsData } from './config/market';
 
 const provider = new ethers.providers.JsonRpcProvider('https://rpc.payload.de');
 
@@ -33,6 +35,13 @@ const poolDataProviderContract = new UiPoolDataProvider({
 const walletBalanceProviderContract = new WalletBalanceProvider({
   walletBalanceProviderAddress: markets.AaveV3Ethereum.WALLET_BALANCE_PROVIDER,
   provider,
+});
+
+export const poolBundle = new PoolBundle(provider, {
+  POOL: marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+  WETH_GATEWAY:
+    marketsData[CustomMarket.proto_mainnet_v3].addresses.WETH_GATEWAY,
+  L2_ENCODER: marketsData[CustomMarket.proto_mainnet_v3].addresses.L2_ENCODER,
 });
 
 async function fetchContractData(address: string) {

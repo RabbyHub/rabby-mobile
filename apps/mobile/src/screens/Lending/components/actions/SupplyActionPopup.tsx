@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
@@ -13,6 +13,22 @@ import { useLendingSummary } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { buildSupplyTx } from '../../poolService';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import { getERC20Allowance } from '@/core/apis/provider';
+import { approveToken } from '@/core/apis/approvals';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { findChain } from '@/utils/chain';
+import { CustomMarket, marketsData } from '../../config/market';
+import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
+import { last, noop } from 'lodash';
+import { isAccountSupportMiniApproval } from '@/utils/account';
+import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import { parseUnits } from 'ethers/lib/utils';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { toast } from '@/components2024/Toast';
+import { useAtom } from 'jotai';
+import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -20,8 +36,22 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
-  const { iUserSummary, formattedPoolReservesAndIncentives } =
-    useLendingSummary();
+  const [needApprove, setNeedApprove] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [supplyTx, setSupplyTx] = useState<any>(null);
+  const [approveTx, setApproveTx] = useState<any>(null);
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const canShowDirectSubmit = useMemo(
+    () => isAccountSupportMiniApproval(currentAccount?.type || ''),
+    [currentAccount?.type],
+  );
+  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
+
+  const { prepareMiniTransactions, sendPrepareMiniTransactions } =
+    useMiniApproval();
 
   const afterHF = useMemo(() => {
     if (!amount || amount === '0') {
@@ -61,6 +91,219 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     userSummary.availableBorrowsUSD,
   ]);
 
+  // 检查approve额度
+  const checkApproveStatus = useCallback(async () => {
+    if (!amount || amount === '0' || !currentAccount) {
+      setNeedApprove(false);
+      return;
+    }
+
+    try {
+      const chainInfo = findChain({ serverId: 'eth' });
+      if (!chainInfo) {
+        return;
+      }
+
+      // 如果是原生代币，不需要approve
+      if (
+        isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress)
+      ) {
+        setNeedApprove(false);
+        return;
+      }
+
+      // 获取当前approve额度
+      const allowance = await getERC20Allowance(
+        chainInfo.serverId,
+        reserve.underlyingAsset,
+        marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+        currentAccount.address,
+        currentAccount,
+      );
+
+      // 计算需要的额度（包含decimals）
+      const requiredAmount = new BigNumber(amount)
+        .multipliedBy(10 ** reserve.reserve.decimals)
+        .toString();
+
+      // 检查当前额度是否足够
+      const isApproved = new BigNumber(allowance || '0').gte(requiredAmount);
+      setNeedApprove(!isApproved);
+    } catch (error) {
+      console.error('Check approve status error:', error);
+      setNeedApprove(true); // 出错时默认需要approve
+    }
+  }, [
+    amount,
+    reserve.underlyingAsset,
+    reserve.reserve.decimals,
+    currentAccount,
+  ]);
+
+  // 构建交易和估算gas
+  const buildTransactions = useCallback(async () => {
+    if (!amount || amount === '0' || !currentAccount) {
+      setSupplyTx(null);
+      setApproveTx(null);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const chainInfo = findChain({ serverId: 'eth' });
+      if (!chainInfo) {
+        return;
+      }
+
+      const txs: any[] = [];
+
+      // 实时检查approve状态，避免依赖状态备份
+      let actualNeedApprove = false;
+      if (
+        !isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress)
+      ) {
+        const allowance = await getERC20Allowance(
+          chainInfo.serverId,
+          reserve.underlyingAsset,
+          marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          currentAccount.address,
+          currentAccount,
+        );
+
+        const requiredAmount = new BigNumber(amount)
+          .multipliedBy(10 ** reserve.reserve.decimals)
+          .toString();
+
+        actualNeedApprove = !new BigNumber(allowance || '0').gte(
+          requiredAmount,
+        );
+      }
+
+      // 如果需要approve，构建approve交易
+      if (actualNeedApprove) {
+        const requiredAmount = new BigNumber(amount)
+          .multipliedBy(10 ** reserve.reserve.decimals)
+          .toString();
+
+        const approveResult = await approveToken({
+          chainServerId: chainInfo.serverId,
+          id: reserve.underlyingAsset,
+          spender:
+            marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          amount: requiredAmount,
+          account: currentAccount,
+          isBuild: true,
+        });
+
+        const approveTxBuilt = {
+          ...approveResult.params[0],
+          from: approveResult.params[0].from || currentAccount.address,
+          value: approveResult.params[0].value ?? '0x0',
+          chainId: approveResult.params[0].chainId || chainInfo.id,
+        };
+
+        txs.push(approveTxBuilt);
+        setApproveTx(approveTxBuilt);
+      }
+
+      // 构建supply交易
+      const supplyResult = await buildSupplyTx({
+        amount: parseUnits(amount, reserve.reserve.decimals).toString(),
+        address: currentAccount.address,
+        reserve: reserve.underlyingAsset,
+      });
+      delete supplyResult.gasLimit;
+
+      const formattedSupplyResult = {
+        ...supplyResult,
+        from: supplyResult.from || currentAccount.address,
+        value: supplyResult.value || '0x0',
+        chainId: chainInfo.id,
+      };
+
+      txs.push(formattedSupplyResult);
+      setSupplyTx(formattedSupplyResult);
+    } catch (error) {
+      console.error('Build transactions error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [amount, reserve, currentAccount]);
+
+  const txsForMiniApproval: Tx[] = useMemo(() => {
+    const list: any[] = [];
+    if (approveTx) {
+      list.push(approveTx);
+    }
+    if (supplyTx) {
+      list.push(supplyTx);
+    }
+    return list as Tx[];
+  }, [approveTx, supplyTx]);
+
+  // 执行supply交易
+  const handleSupply = useCallback(async () => {
+    if (!currentAccount || !supplyTx || !amount || amount === '0') {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      if (!txsForMiniApproval?.length) {
+        toast.info('please retry');
+        throw new Error('no txs');
+      }
+      if (isDirectSigning) {
+        return;
+      } else {
+        setDirectSigning(true);
+      }
+
+      const res = await sendPrepareMiniTransactions({
+        directSubmit: true,
+      });
+      const txHash = last(res)?.txHash || '';
+
+      setAmount(undefined);
+    } catch (error) {
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    currentAccount,
+    supplyTx,
+    amount,
+    txsForMiniApproval?.length,
+    isDirectSigning,
+    sendPrepareMiniTransactions,
+    setDirectSigning,
+  ]);
+
+  useEffect(() => {
+    checkApproveStatus();
+  }, [checkApproveStatus]);
+
+  useEffect(() => {
+    buildTransactions();
+  }, [buildTransactions]);
+
+  useEffect(() => {
+    if (currentAccount && canShowDirectSubmit) {
+      prepareMiniTransactions({
+        txs: txsForMiniApproval?.length ? txsForMiniApproval : [],
+        directSubmit: true,
+        account: currentAccount!,
+        checkGasFee: true,
+        showMaskLoading: true,
+      });
+    }
+  }, [
+    prepareMiniTransactions,
+    canShowDirectSubmit,
+    currentAccount,
+    txsForMiniApproval,
+  ]);
+
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
       <Text style={styles.title}>Supply {reserve.reserve.symbol}</Text>
@@ -84,14 +327,54 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         style={styles.amountInput}
         chain={CHAINS_ENUM.ETH}
       />
-      <BottomSheetScrollView>
+      <BottomSheetScrollView
+        contentContainerStyle={styles.transactionContainer}>
         <SupplyActionOverView
           reserve={reserve}
           userSummary={userSummary}
           afterHF={afterHF}
           afterAvailable={afterAvailable}
         />
+
+        <View style={styles.gasPreContainer}>
+          <DirectSignGasInfo
+            supportDirectSign={true}
+            loading={isLoading}
+            openShowMore={noop}
+            chainServeId="eth"
+          />
+        </View>
       </BottomSheetScrollView>
+
+      <View style={styles.buttonContainer}>
+        <DirectSignBtn
+          loading={isLoading}
+          loadingType="circle"
+          key={`${amount}-${needApprove}`}
+          showTextOnLoading
+          wrapperStyle={styles.directSignBtn}
+          authTitle="confirmPassword"
+          title={
+            !amount || amount === '0'
+              ? 'enterAmount'
+              : needApprove
+              ? 'approveAndSupply'
+              : 'supply'
+          }
+          onFinished={handleSupply}
+          disabled={
+            !amount ||
+            amount === '0' ||
+            !supplyTx ||
+            isLoading ||
+            !currentAccount
+          }
+          type="primary"
+          syncUnlockTime
+          account={currentAccount}
+          showHardWalletProcess
+        />
+      </View>
     </AutoLockView>
   );
 };
@@ -137,6 +420,12 @@ const getStyles = createGetStyles2024(ctx => ({
   contentContainer: {
     paddingHorizontal: 16,
     width: '100%',
+  },
+  transactionContainer: {
+    gap: 12,
+  },
+  gasPreContainer: {
+    paddingHorizontal: 8,
   },
   poolInfoContainer: {
     marginTop: 16,
@@ -252,8 +541,33 @@ const getStyles = createGetStyles2024(ctx => ({
     display: 'flex',
     flexDirection: 'row',
     gap: 12,
-    paddingHorizontal: 16,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  directSignBtn: {
+    width: '100%',
+  },
+  gasInfoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  gasInfoTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: ctx.colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  gasInfoValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: ctx.colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  gasInfoNote: {
+    fontSize: 12,
+    color: ctx.colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    marginTop: 4,
   },
   button: {
     flex: 1,
