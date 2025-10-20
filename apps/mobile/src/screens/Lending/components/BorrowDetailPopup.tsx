@@ -122,8 +122,15 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const handlePressBorrow = () => {
-    const modalId = createGlobalBottomSheetModal2024({
+    createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.BORROW_ACTION_DETAIL,
+      reserve,
+      userSummary,
+    });
+  };
+  const handlePressRepay = () => {
+    createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.REPAY_ACTION_DETAIL,
       reserve,
       userSummary,
     });
@@ -247,6 +254,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
             buttonStyle={styles.repayButton}
             titleStyle={styles.repayButtonTitle}
             containerStyle={styles.button}
+            onPress={handlePressRepay}
             title={'Repay'}
           />
         )}

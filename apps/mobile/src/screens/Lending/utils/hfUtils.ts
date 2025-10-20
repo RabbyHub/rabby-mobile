@@ -1,5 +1,6 @@
 import { ReserveDataHumanized } from '@aave/contract-helpers';
 import {
+  BigNumberValue,
   calculateHealthFactorFromBalancesBigUnits,
   FormatReserveUSDResponse,
   FormatUserSummaryAndIncentivesResponse,
@@ -15,6 +16,15 @@ interface CalculateHFAfterWithdrawProps {
   poolReserve: ReserveDataHumanized & FormatReserveUSDResponse;
   userReserve: UserReserveData;
   withdrawAmount: string;
+}
+
+interface CalculateHFAfterSwapRepayProps {
+  amount: string;
+  debt: string;
+  usdPrice?: string;
+  user: FormatUserSummaryAndIncentivesResponse<
+    ReserveDataHumanized & FormatReserveUSDResponse
+  >;
 }
 
 export const calculateHFAfterSupply = (
@@ -119,4 +129,30 @@ export const calculateHFAfterWithdraw = ({
   }
 
   return healthFactorAfterWithdraw;
+};
+
+export const calculateHFAfterRepay = ({
+  user,
+  amount,
+  usdPrice,
+  debt,
+}: CalculateHFAfterSwapRepayProps) => {
+  const repayAmountInUsd = valueToBigNumber(
+    BigNumber.min(amount || '0', debt || '0'),
+  )
+    .multipliedBy(usdPrice || '1')
+    .toString(10);
+
+  let debtLeftInUsd = valueToBigNumber(user.totalBorrowsUSD).minus(
+    repayAmountInUsd,
+  );
+  debtLeftInUsd = BigNumber.max(debtLeftInUsd, valueToBigNumber('0'));
+
+  const hfAfterRepay = calculateHealthFactorFromBalancesBigUnits({
+    collateralBalanceMarketReferenceCurrency: user.totalCollateralUSD,
+    borrowBalanceMarketReferenceCurrency: debtLeftInUsd.toString(10),
+    currentLiquidationThreshold: user.currentLiquidationThreshold,
+  });
+
+  return hfAfterRepay.isLessThan(0) && !hfAfterRepay.eq(-1) ? 0 : hfAfterRepay;
 };

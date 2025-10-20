@@ -7,12 +7,11 @@ import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
 import { CHAINS_ENUM } from '@debank/common';
-import { calculateHFAfterWithdraw } from '../../utils/hfUtils';
 import { useLendingSummary } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { buildWithdrawTx } from '../../poolService';
+import { buildRepayTx } from '../../poolService';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { findChain } from '@/utils/chain';
@@ -24,16 +23,23 @@ import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { toast } from '@/components2024/Toast';
 import { useAtom } from 'jotai';
 import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
-import WithdrawActionOverView from './WithdrawActionOverView';
+import RepayActionOverView from './RepayActionOverView';
+import { parseUnits } from 'viem';
+import { calculateHFAfterRepay } from '../../utils/hfUtils';
+import { getERC20Allowance } from '@/core/apis/provider';
+import { CustomMarket, marketsData } from '../../config/market';
+import { approveToken } from '@/core/apis/approvals';
 
-export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
+export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
-  const [supplyTxs, setSupplyTxs] = useState<Tx[]>([]);
+  const [needApprove, setNeedApprove] = useState(false);
+  const [repayTx, setRepayTx] = useState<any>(null);
+  const [approveTx, setApproveTx] = useState<any>(null);
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -58,33 +64,66 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     if (!targetPool) {
       return undefined;
     }
-    return calculateHFAfterWithdraw({
+    return calculateHFAfterRepay({
       user: userSummary,
-      userReserve: reserve,
-      poolReserve: targetPool,
-      withdrawAmount: amount,
+      amount,
+      debt: reserve.variableBorrows,
+      usdPrice: reserve.reserve.priceInUSD,
     }).toString();
   }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
 
-  const afterSupply = useMemo(() => {
-    if (!amount || amount === '0') {
-      return undefined;
+  const checkApproveStatus = useCallback(async () => {
+    if (!amount || amount === '0' || !currentAccount) {
+      setNeedApprove(false);
+      return;
     }
-    const balance = BigNumber(reserve.underlyingBalance || '0').minus(
-      BigNumber(amount),
-    );
-    const balanceUSD = BigNumber(balance).multipliedBy(
-      BigNumber(reserve.reserve.priceInUSD),
-    );
-    return {
-      balance: balance.toString(),
-      balanceUSD: balanceUSD.toString(),
-    };
-  }, [amount, reserve.reserve.priceInUSD, reserve.underlyingBalance]);
+
+    try {
+      const chainInfo = findChain({ serverId: 'eth' });
+      if (!chainInfo) {
+        return;
+      }
+
+      // 如果是原生代币，不需要approve
+      if (
+        isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress)
+      ) {
+        setNeedApprove(false);
+        return;
+      }
+
+      // 获取当前approve额度
+      const allowance = await getERC20Allowance(
+        chainInfo.serverId,
+        reserve.underlyingAsset,
+        marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+        currentAccount.address,
+        currentAccount,
+      );
+
+      // 计算需要的额度（包含decimals）
+      const requiredAmount = new BigNumber(amount)
+        .multipliedBy(10 ** reserve.reserve.decimals)
+        .toString();
+
+      // 检查当前额度是否足够
+      const isApproved = new BigNumber(allowance || '0').gte(requiredAmount);
+      setNeedApprove(!isApproved);
+    } catch (error) {
+      console.error('Check approve status error:', error);
+      setNeedApprove(true); // 出错时默认需要approve
+    }
+  }, [
+    amount,
+    reserve.underlyingAsset,
+    reserve.reserve.decimals,
+    currentAccount,
+  ]);
 
   const buildTransactions = useCallback(async () => {
     if (!amount || amount === '0' || !currentAccount) {
-      setSupplyTxs([]);
+      setRepayTx(null);
+      setApproveTx(null);
       return;
     }
 
@@ -99,25 +138,70 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
       );
 
+      const txs: any[] = [];
+
+      let actualNeedApprove = false;
+      if (
+        !isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress)
+      ) {
+        const allowance = await getERC20Allowance(
+          chainInfo.serverId,
+          reserve.underlyingAsset,
+          marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          currentAccount.address,
+          currentAccount,
+        );
+
+        const requiredAmount = new BigNumber(amount)
+          .multipliedBy(10 ** reserve.reserve.decimals)
+          .toString();
+
+        actualNeedApprove = !new BigNumber(allowance || '0').gte(
+          requiredAmount,
+        );
+      }
+
+      // 如果需要approve，构建approve交易
+      if (actualNeedApprove) {
+        const requiredAmount = new BigNumber(amount)
+          .multipliedBy(10 ** reserve.reserve.decimals)
+          .toString();
+
+        const approveResult = await approveToken({
+          chainServerId: chainInfo.serverId,
+          id: reserve.underlyingAsset,
+          spender:
+            marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          amount: requiredAmount,
+          account: currentAccount,
+          isBuild: true,
+        });
+
+        const approveTxBuilt = {
+          ...approveResult.params[0],
+          from: approveResult.params[0].from || currentAccount.address,
+          value: approveResult.params[0].value ?? '0x0',
+          chainId: approveResult.params[0].chainId || chainInfo.id,
+        };
+
+        txs.push(approveTxBuilt);
+        setApproveTx(approveTxBuilt);
+      }
+
       if (!targetPool?.aTokenAddress) {
         return;
       }
-      const withdrawResult = await buildWithdrawTx({
-        amount,
+      const repayTx = await buildRepayTx({
+        amount: parseUnits(amount, targetPool.decimals).toString(),
         address: currentAccount.address,
         reserve: reserve.underlyingAsset,
-        aTokenAddress: targetPool?.aTokenAddress || '',
       });
-      const txs = await Promise.all(withdrawResult.map(i => i.tx()));
-      const formatTxs = txs.map(item => {
-        delete item.gasLimit;
-        return {
-          ...item,
-          chainId: chainInfo.id,
-        };
-      });
+      delete repayTx.gasLimit;
 
-      setSupplyTxs(formatTxs as unknown as Tx[]);
+      setRepayTx({
+        ...repayTx,
+        chainId: chainInfo.id,
+      });
     } catch (error) {
       console.error('Build transactions error:', error);
     } finally {
@@ -127,18 +211,34 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     amount,
     currentAccount,
     formattedPoolReservesAndIncentives,
+    reserve.reserve.decimals,
     reserve.underlyingAsset,
   ]);
 
-  // 执行supply交易
-  const handleSupply = useCallback(async () => {
-    if (!currentAccount || !supplyTxs.length || !amount || amount === '0') {
+  const txsForMiniApproval: Tx[] = useMemo(() => {
+    const list: any[] = [];
+    if (approveTx) {
+      list.push(approveTx);
+    }
+    if (repayTx) {
+      list.push(repayTx);
+    }
+    return list as Tx[];
+  }, [approveTx, repayTx]);
+
+  const handleRepay = useCallback(async () => {
+    if (
+      !currentAccount ||
+      !txsForMiniApproval?.length ||
+      !amount ||
+      amount === '0'
+    ) {
       return;
     }
 
     try {
       setIsLoading(true);
-      if (!supplyTxs?.length) {
+      if (!txsForMiniApproval?.length) {
         toast.info('please retry');
         throw new Error('no txs');
       }
@@ -161,11 +261,46 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   }, [
     currentAccount,
     amount,
-    supplyTxs.length,
+    txsForMiniApproval?.length,
     isDirectSigning,
     sendPrepareMiniTransactions,
     setDirectSigning,
   ]);
+
+  const repayAmount = useMemo(() => {
+    const miniAmount = BigNumber(reserve?.walletBalance || '0').gt(
+      reserve.variableBorrows,
+    )
+      ? reserve.variableBorrows
+      : reserve.walletBalance;
+    const usdValue = BigNumber(miniAmount || '0')
+      .multipliedBy(reserve.reserve.priceInUSD)
+      .toString();
+    return {
+      amount: miniAmount,
+      usdValue,
+    };
+  }, [
+    reserve.walletBalance,
+    reserve.variableBorrows,
+    reserve.reserve.priceInUSD,
+  ]);
+
+  const afterRepayAmount = useMemo(() => {
+    return BigNumber(reserve.variableBorrows)
+      .minus(amount || '0')
+      .toString();
+  }, [amount, reserve.variableBorrows]);
+
+  const afterRepayUsdValue = useMemo(() => {
+    return BigNumber(afterRepayAmount || '0')
+      .multipliedBy(reserve.reserve.priceInUSD)
+      .toString();
+  }, [afterRepayAmount, reserve.reserve.priceInUSD]);
+
+  useEffect(() => {
+    checkApproveStatus();
+  }, [checkApproveStatus]);
 
   useEffect(() => {
     buildTransactions();
@@ -174,7 +309,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   useEffect(() => {
     if (currentAccount && canShowDirectSubmit && amount && amount !== '0') {
       prepareMiniTransactions({
-        txs: supplyTxs?.length ? supplyTxs : [],
+        txs: txsForMiniApproval?.length ? txsForMiniApproval : [],
         directSubmit: true,
         account: currentAccount!,
         checkGasFee: true,
@@ -186,18 +321,18 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     canShowDirectSubmit,
     currentAccount,
     amount,
-    supplyTxs,
+    txsForMiniApproval,
   ]);
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>Withdraw {reserve.reserve.symbol}</Text>
+      <Text style={styles.title}>Repay {reserve.reserve.symbol}</Text>
       <View style={styles.amountHeader}>
         <Text style={styles.amountHeaderTitle}>Amount</Text>
         <Text style={styles.amountValueDescription}>{`${formatAmountValueKMB(
-          reserve.underlyingBalance || '0',
-        )}${reserve.reserve.symbol}($${formatAmountValueKMB(
-          reserve.underlyingBalanceUSD || '0',
+          repayAmount.amount || '0',
+        )} ${reserve.reserve.symbol} ($${formatAmountValueKMB(
+          repayAmount.usdValue || '0',
         )}) available`}</Text>
       </View>
       <TokenAmountInput
@@ -205,20 +340,21 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         onChange={setAmount}
         symbol={reserve.reserve.symbol}
         handleClickMaxButton={() => {
-          setAmount(reserve.underlyingBalance || '0');
+          setAmount(repayAmount.amount || '0');
         }}
-        tokenAmount={Number(reserve.underlyingBalance || '0')}
+        tokenAmount={Number(repayAmount.amount || '0')}
         price={Number(reserve.reserve.priceInUSD || '0')}
         style={styles.amountInput}
         chain={CHAINS_ENUM.ETH}
       />
       <BottomSheetScrollView
         contentContainerStyle={styles.transactionContainer}>
-        <WithdrawActionOverView
+        <RepayActionOverView
           reserve={reserve}
           userSummary={userSummary}
+          afterRepayAmount={afterRepayAmount}
+          afterRepayUsdValue={afterRepayUsdValue}
           afterHF={afterHF}
-          afterSupply={afterSupply}
         />
 
         {!!amount && amount !== '0' && (
@@ -237,16 +373,22 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         <DirectSignBtn
           loading={isLoading}
           loadingType="circle"
-          key={`${amount}`}
+          key={`${amount}-${needApprove}`}
           showTextOnLoading
           wrapperStyle={styles.directSignBtn}
-          authTitle="Withdraw"
-          title={!amount || amount === '0' ? 'Enter Amount' : 'Withdraw'}
-          onFinished={handleSupply}
+          authTitle="Repay"
+          title={
+            !amount || amount === '0'
+              ? 'Enter Amount'
+              : needApprove
+              ? 'approveAndRepay'
+              : 'repay'
+          }
+          onFinished={handleRepay}
           disabled={
             !amount ||
             amount === '0' ||
-            !supplyTxs.length ||
+            !txsForMiniApproval?.length ||
             isLoading ||
             !currentAccount
           }

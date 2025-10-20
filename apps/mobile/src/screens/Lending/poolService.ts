@@ -63,3 +63,21 @@ export const buildBorrowTx = async ({
     useOptimizedPath: false, // 主网上没有优化，其他链有优化，下次需要配置
   });
 };
+
+export const buildRepayTx = async ({
+  amount,
+  address,
+  reserve,
+}: {
+  amount: string;
+  address: string;
+  reserve: string;
+}) => {
+  return poolBundle.repayTxBuilder.generateTxData({
+    user: address,
+    reserve,
+    amount,
+    interestRateMode: InterestRate.Variable,
+    useOptimizedPath: false,
+  });
+};
