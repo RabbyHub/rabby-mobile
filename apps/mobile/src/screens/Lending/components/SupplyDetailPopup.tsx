@@ -15,6 +15,8 @@ import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -22,7 +24,9 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
-
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const hasSupplyBalance = useMemo(() => {
     return reserve?.underlyingBalance && reserve.underlyingBalance !== '0';
   }, [reserve.underlyingBalance]);
@@ -108,6 +112,13 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
         <View style={[styles.userInfoContainer, styles.card]}>
           <View style={styles.userInfoItem}>
             <View style={styles.userInfoItem}>
+              <WalletIcon
+                type={currentAccount?.type}
+                address={currentAccount?.address}
+                width={30}
+                height={30}
+                borderRadius={8}
+              />
               <Text style={styles.supplyItemTitle}>My Supply</Text>
             </View>
             <Text
@@ -246,6 +257,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 4,
   },
   userInfoItemTitle: {
     fontSize: 14,

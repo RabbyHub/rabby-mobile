@@ -17,6 +17,8 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import TokenIcon from './TokenIcon';
 import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -24,7 +26,9 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
-
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const handleShowLqBonusPopup = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DESCRIPTION,
@@ -175,6 +179,13 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
         <View style={[styles.userInfoContainer, styles.card]}>
           <View style={styles.userInfoItem}>
             <View style={styles.userInfoItem}>
+              <WalletIcon
+                type={currentAccount?.type}
+                address={currentAccount?.address}
+                width={30}
+                height={30}
+                borderRadius={8}
+              />
               <Text style={styles.supplyItemTitle}>My Borrow</Text>
             </View>
             <Text
@@ -359,6 +370,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 4,
   },
   userInfoItemTitle: {
     fontSize: 14,
