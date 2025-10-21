@@ -24,3 +24,5 @@ export const USD_DECIMALS = 8;
 // 模拟原生代币的地址
 export const API_ETH_MOCK_ADDRESS =
   '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
+export const referralCode = '1608';

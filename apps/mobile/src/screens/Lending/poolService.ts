@@ -1,4 +1,5 @@
 import { pool, poolBundle } from './hooks';
+import { referralCode } from './utils/constant';
 
 export enum InterestRate {
   None = 'None',
@@ -20,6 +21,7 @@ export const buildSupplyTx = async ({
     reserve: reserve,
     amount: amount,
     useOptimizedPath: false, // 主网上没有优化，其他链有优化，下次需要配置
+    referralCode,
   });
 };
 
@@ -61,6 +63,7 @@ export const buildBorrowTx = async ({
     debtTokenAddress,
     interestRateMode: InterestRate.Variable,
     useOptimizedPath: false, // 主网上没有优化，其他链有优化，下次需要配置
+    referralCode,
   });
 };
 
