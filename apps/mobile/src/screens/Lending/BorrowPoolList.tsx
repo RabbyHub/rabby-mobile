@@ -156,13 +156,18 @@ const BorrowPoolList = () => {
         <RefreshControl refreshing={false} onRefresh={fetchData} />
       }
       ListEmptyComponent={<PoolListLoading />}
+      ListFooterComponent={<View style={{ height: 100 }} />}
       renderItem={({ item, index }) => (
         <TouchableOpacity
           style={styles.item}
           key={index}
           onPress={() => handlePressItem(item)}>
           <View style={styles.left}>
-            <TokenIcon size={46} tokenSymbol={item.reserve.symbol} />
+            <TokenIcon
+              size={46}
+              chainSize={0}
+              tokenSymbol={item.reserve.symbol}
+            />
             <View style={styles.symbolContainer}>
               <Text
                 style={styles.symbol}

@@ -108,6 +108,7 @@ const SupplyPoolList = () => {
       keyExtractor={item => item.reserve.underlyingAsset}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={<PoolListLoading />}
+      ListFooterComponent={<View style={{ height: 100 }} />}
       renderItem={({ item, index }) => {
         return (
           <TouchableOpacity
@@ -117,6 +118,7 @@ const SupplyPoolList = () => {
             <View style={styles.left}>
               <TokenIcon
                 tokenSymbol={item.reserve.symbol}
+                chainSize={0}
                 chain={CHAINS_ENUM.ETH}
               />
               <View style={styles.symbolContainer}>
