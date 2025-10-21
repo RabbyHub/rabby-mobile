@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { formatNum } from '@/utils/math';
 import { getHealthStatusColor } from '../utils';
 import LinearGradient from 'react-native-linear-gradient';
+import { HF_COLOR_GOOD_THRESHOLD } from '../utils/constant';
 
 interface HealthFactorBarProps {
   healthFactor: string;
@@ -17,14 +18,15 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
 
   const hfNumber = Number(healthFactor || '0');
 
-  // 计算点的位置，最大显示到10
   const dotPosition = hfNumber > 10 ? 100 : (hfNumber / 10) * 100;
 
-  const hfColor = getHealthStatusColor(isLight, hfNumber);
+  const hfColor = useMemo(
+    () => getHealthStatusColor(isLight, hfNumber),
+    [hfNumber, isLight],
+  );
 
   return (
     <View style={styles.container}>
-      {/* 渐变风险条 */}
       <LinearGradient
         colors={['red', '#F89F1A', 'orange', 'green']}
         locations={[0, 0.15, 0.34, 1]}
@@ -33,7 +35,6 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
         style={styles.riskBar}
       />
 
-      {/* Health Factor 数值和标记点 */}
       <View
         style={[
           styles.dotContainer,
@@ -43,6 +44,18 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
           <Text style={[styles.hfValue, { color: hfColor.color }]}>
             {formatNum(healthFactor)}
           </Text>
+          {hfNumber < HF_COLOR_GOOD_THRESHOLD && (
+            <Text
+              style={
+                (styles.riskyText,
+                {
+                  color: hfColor.color,
+                  backgroundColor: hfColor.backgroundColor,
+                })
+              }>
+              Risky
+            </Text>
+          )}
         </View>
 
         <View
@@ -57,7 +70,6 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
         />
       </View>
 
-      {/* 清算线标记 */}
       <View style={styles.liquidationContainer}>
         <View style={styles.liquidationMarker} />
         <Text style={styles.liquidationValue}>1.00</Text>
@@ -88,14 +100,15 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'center',
   },
   valueContainer: {
-    position: 'relative',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 5,
     marginBottom: 2,
   },
   hfValue: {
-    fontSize: 16,
+    fontSize: 18,
     lineHeight: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
   },
@@ -113,24 +126,36 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   liquidationMarker: {
     position: 'absolute',
-    top: '-30%',
+    top: '-22%',
     left: '50%',
     height: 12,
     width: 3,
     backgroundColor: ctx.colors2024['red-default'],
   },
   liquidationValue: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
   },
   liquidationText: {
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 14,
+    fontWeight: '500',
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
+  },
+  riskyText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: ctx.colors2024['orange-default'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    backgroundColor: ctx.colors2024['orange-light-1'],
+    paddingVertical: 1,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
 }));

@@ -246,8 +246,8 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           <>
             <View style={styles.warningContainer}>
               <RcIconWarningCircleCC
-                width={16}
-                height={16}
+                width={15}
+                height={15}
                 color={colors2024['red-default']}
               />
               <Text style={styles.warningText}>
@@ -524,14 +524,14 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   warningContainer: {
     flexDirection: 'row',
-    gap: 4,
+    gap: 8,
     backgroundColor: ctx.colors2024['red-light-1'],
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
   },
   warningText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',

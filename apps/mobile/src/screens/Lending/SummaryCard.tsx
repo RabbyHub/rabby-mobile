@@ -10,6 +10,7 @@ import { estDaily } from './utils/format';
 import { getHealthStatusColor } from './utils';
 import IconCloseCC from '@/assets2024/icons/common/close-bold-cc.svg';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
+import AAVEIcon from '@/assets2024/icons/lending/aave.svg';
 import {
   HF_COLOR_BAD_THRESHOLD,
   HF_COLOR_GOOD_THRESHOLD,
@@ -77,13 +78,13 @@ const SummaryCard = (props: IProps) => {
 
   return (
     <LinearGradient
-      colors={['#0F2F3A', '#041920']}
+      colors={['rgba(35, 46, 73, 1)', 'rgba(4, 25, 32, 1)']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.container, !extraInfo && styles.patchBottom]}>
-      <WarningFillCC
-        width={50}
-        height={50}
+      <AAVEIcon
+        width={118}
+        height={61.5}
         style={styles.relativeIcon}
         color={colors2024['red-default']}
       />
@@ -173,7 +174,7 @@ const SummaryCard = (props: IProps) => {
             <Text style={styles.extraLeftText}>
               If goes below 1, the liquidation might be triggered.
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleShowHFDescription}>
               <Text style={styles.extraLeftMore}>More</Text>
             </TouchableOpacity>
           </View>
@@ -324,7 +325,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   relativeIcon: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: 20,
+    right: -10,
   },
 }));

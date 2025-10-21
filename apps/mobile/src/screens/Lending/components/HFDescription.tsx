@@ -5,12 +5,6 @@ import { View, Text } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
-import { formatNum } from '@/utils/math';
-import {
-  HF_COLOR_BAD_THRESHOLD,
-  HF_COLOR_GOOD_THRESHOLD,
-} from '../utils/constant';
-import { getHealthStatusColor } from '../utils';
 import { HealthFactorBar } from './HealthFactorBar';
 
 export const HFDescription: React.FC<{
@@ -89,7 +83,7 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     lineHeight: 24,
     textAlign: 'center',
     marginTop: 0,
@@ -97,12 +91,12 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   contentContainer: {
     width: '100%',
-    paddingTop: 10,
+    paddingTop: 8,
   },
   introText: {
     fontSize: 16,
     lineHeight: 18,
-    color: ctx.colors2024['neutral-foot'],
+    color: ctx.colors2024['neutral-secondary'],
     marginBottom: 20,
     fontFamily: 'SF Pro Rounded',
   },
@@ -140,23 +134,23 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   greenRuleText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
     color: '#22C55E',
     fontFamily: 'SF Pro Rounded',
   },
   redRuleText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
   },
   greyRuleText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
-    color: ctx.colors2024['neutral-foot'],
+    color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
   warningContainer: {
@@ -164,15 +158,16 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'flex-start',
     backgroundColor: ctx.colors2024['red-light-1'],
     borderRadius: 8,
-    padding: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
   },
   warningText: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     color: ctx.colors2024['red-default'],
-    fontWeight: '600',
-    marginLeft: 9,
+    fontWeight: '500',
+    marginLeft: 10,
     fontFamily: 'SF Pro Rounded',
   },
   button: {

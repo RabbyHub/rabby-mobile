@@ -20,6 +20,9 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { RESERVE_USAGE_WARNING_THRESHOLD } from '../utils/constant';
+import WarningFillCC from '@/assets2024/icons/lending/warning-cc.svg';
+import { Tip } from '@/components/Tip';
 
 export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -46,6 +49,43 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
     reserve.reserve.supplyCap,
     reserve.reserve.totalLiquidity,
     reserve.walletBalance,
+  ]);
+
+  const errorMessage = useMemo(() => {
+    if (
+      reserve.reserve.totalLiquidity &&
+      reserve.reserve.totalLiquidity !== '0' &&
+      reserve.reserve.supplyCap &&
+      reserve.reserve.supplyCap !== '0' &&
+      BigNumber(reserve.reserve.totalLiquidity).gte(reserve.reserve.supplyCap)
+    ) {
+      return 'This asset has reached its supply cap. Nothing is available to be supplied from this market.';
+    }
+    // 占比大于98% 显示警告
+    if (
+      reserve.reserve.totalLiquidity &&
+      reserve.reserve.totalLiquidity !== '0' &&
+      reserve.reserve.supplyCap &&
+      reserve.reserve.supplyCap !== '0' &&
+      BigNumber(reserve.reserve.totalLiquidity).gte(
+        BigNumber(reserve.reserve.supplyCap).multipliedBy(
+          RESERVE_USAGE_WARNING_THRESHOLD,
+        ),
+      )
+    ) {
+      const available = BigNumber(reserve.reserve.supplyCapUSD)
+        .minus(BigNumber(reserve.reserve.totalLiquidityUSD))
+        .toString();
+      return `This asset has almost reached its borrow cap. There is only ${formatUsdValueKMB(
+        available,
+      )} available to be borrowed from this market.`;
+    }
+    return undefined;
+  }, [
+    reserve.reserve.supplyCap,
+    reserve.reserve.supplyCapUSD,
+    reserve.reserve.totalLiquidity,
+    reserve.reserve.totalLiquidityUSD,
   ]);
 
   const handlePressSupply = () => {
@@ -151,9 +191,20 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
           </View>
           <View style={styles.userInfoItem}>
             <Text style={styles.userInfoItemTitle}>Available to Supply</Text>
-            <Text style={styles.userInfoItemValue}>
-              {formatAmountValueKMB(reserve.walletBalanceUSD || '0')}
-            </Text>
+            <View style={styles.userInfoItemValueContainer}>
+              <Text style={styles.userInfoItemValue}>
+                {formatAmountValueKMB(reserve.walletBalanceUSD || '0')}
+              </Text>
+              {errorMessage ? (
+                <Tip content={errorMessage}>
+                  <WarningFillCC
+                    width={14}
+                    height={14}
+                    color={colors2024['red-default']}
+                  />
+                </Tip>
+              ) : null}
+            </View>
           </View>
         </View>
       </View>
@@ -282,6 +333,11 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '700',
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+  },
+  userInfoItemValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   sectionContainer: {
     paddingBottom: 32,

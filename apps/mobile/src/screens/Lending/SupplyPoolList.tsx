@@ -17,6 +17,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 
 const SupplyPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
@@ -113,9 +114,17 @@ const SupplyPoolList = () => {
               <Text style={styles.yourSupplied}>
                 {formatUsdValueKMB(Number(item.underlyingBalanceUSD || '0'))}
               </Text>
-              <Text style={styles.yourBalance}>
-                {formatUsdValueKMB(item.walletBalanceUSD || '0')}
-              </Text>
+              <View style={styles.yourBalanceContainer}>
+                <WalletFillCC
+                  width={16}
+                  height={16}
+                  style={styles.walletIcon}
+                  color={colors2024['secondary-foot']}
+                />
+                <Text style={styles.yourBalance}>
+                  {formatUsdValueKMB(item.walletBalanceUSD || '0')}
+                </Text>
+              </View>
             </View>
           </TouchableOpacity>
         );
@@ -196,8 +205,21 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
   },
+  yourBalanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    justifyContent: 'flex-end',
+  },
+  walletIcon: {
+    width: 16,
+    height: 16,
+    color: colors2024['neutral-secondary'],
+    marginTop: -2,
+  },
   yourBalance: {
     fontSize: 14,
+    lineHeight: 16,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',

@@ -16,6 +16,7 @@ import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
 import BigNumber from 'bignumber.js';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 
 const BorrowPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
@@ -62,17 +63,65 @@ const BorrowPoolList = () => {
     });
   };
 
+  const availableCard = useMemo(() => {
+    if (loading || !iUserSummary?.totalLiquidityUSD) {
+      return null;
+    }
+    return (
+      <View style={styles.availableCard}>
+        <View style={styles.availableCardHeader}>
+          {iUserSummary?.availableBorrowsUSD &&
+          iUserSummary?.availableBorrowsUSD !== '0' ? (
+            <RcIconWarningCircleCC
+              width={14}
+              height={14}
+              color={colors2024['neutral-info']}
+            />
+          ) : null}
+          <Text style={styles.availableCardTitle}>
+            Available to borrow: ${' '}
+            <Text style={styles.usdValue}>
+              {formatUsdValueKMB(
+                Number(iUserSummary?.availableBorrowsUSD || '0'),
+              )}
+            </Text>
+          </Text>
+        </View>
+        <Text style={styles.availableCardValue}>
+          {iUserSummary?.availableBorrowsUSD &&
+          iUserSummary?.availableBorrowsUSD !== '0'
+            ? ' To borrow, you need to supply assets as collateral.'
+            : 'You can borrow based on your supplied collateral, up to the borrow cap.'}
+        </Text>
+      </View>
+    );
+  }, [
+    colors2024,
+    iUserSummary?.availableBorrowsUSD,
+    iUserSummary?.totalLiquidityUSD,
+    loading,
+    styles.availableCard,
+    styles.availableCardHeader,
+    styles.availableCardTitle,
+    styles.availableCardValue,
+    styles.usdValue,
+  ]);
+
   const ListHeaderComponent = useCallback(() => {
     return loading ? (
       <Skeleton style={styles.loading} width={124} height={20} circle />
     ) : (
-      <View style={styles.listHeader}>
-        <Text style={styles.headerToken}>Token</Text>
-        <Text style={styles.headerApy}>APY</Text>
-        <Text style={styles.headerMyBorrows}>My borrows</Text>
-      </View>
+      <>
+        {availableCard}
+        <View style={styles.listHeader}>
+          <Text style={styles.headerToken}>Token</Text>
+          <Text style={styles.headerApy}>APY</Text>
+          <Text style={styles.headerMyBorrows}>My borrows</Text>
+        </View>
+      </>
     );
   }, [
+    availableCard,
     loading,
     styles.headerApy,
     styles.headerMyBorrows,
@@ -230,5 +279,36 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-5'],
     marginBottom: 2,
     marginLeft: 8,
+  },
+  availableCard: {
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    backgroundColor: colors2024['neutral-bg-5'],
+    borderRadius: 6,
+    marginTop: 8,
+    gap: 2,
+  },
+  availableCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  availableCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  usdValue: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  availableCardValue: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));
