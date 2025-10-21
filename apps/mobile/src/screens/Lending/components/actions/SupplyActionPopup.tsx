@@ -375,14 +375,16 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           afterAvailable={afterAvailable}
         />
 
-        <View style={styles.gasPreContainer}>
-          <DirectSignGasInfo
-            supportDirectSign={true}
-            loading={isLoading}
-            openShowMore={noop}
-            chainServeId="eth"
-          />
-        </View>
+        {!!amount && amount !== '0' && (
+          <View style={styles.gasPreContainer}>
+            <DirectSignGasInfo
+              supportDirectSign={true}
+              loading={isLoading}
+              openShowMore={noop}
+              chainServeId="eth"
+            />
+          </View>
+        )}
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>
