@@ -6,7 +6,7 @@ export const SUPPLY_UI_SAFE_MARGIN = 0.995;
 export const BORROW_UI_SAFE_MARGIN = 0.99;
 
 // 池子警告阈值
-export const RESERVE_USAGE_WARNING_THRESHOLD = 0.18;
+export const RESERVE_USAGE_WARNING_THRESHOLD = 0.98;
 // 池子禁止阈值
 export const RESERVE_USAGE_BLOCK_THRESHOLD = 0.9999;
 

@@ -31,7 +31,12 @@ import {
 import { parseUnits } from 'viem';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
-import { HF_COLOR_BAD_THRESHOLD } from '../../utils/constant';
+import {
+  BORROW_SAFE_MARGIN,
+  HF_COLOR_BAD_THRESHOLD,
+  RESERVE_USAGE_BLOCK_THRESHOLD,
+  RESERVE_USAGE_WARNING_THRESHOLD,
+} from '../../utils/constant';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -173,6 +178,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   const availableToBorrowBalance = useMemo(() => {
     return BigNumber(userSummary?.availableBorrowsUSD || '0')
       .dividedBy(BigNumber(reserve.reserve.priceInUSD || '0'))
+      .multipliedBy(BORROW_SAFE_MARGIN)
       .toString();
   }, [userSummary?.availableBorrowsUSD, reserve.reserve.priceInUSD]);
 
@@ -198,9 +204,45 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     txs,
   ]);
 
+  const errorMessage = useMemo(() => {
+    if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
+      return undefined;
+    }
+    if (
+      BigNumber(reserve.reserve.totalDebt).gte(
+        BigNumber(reserve.reserve.borrowCap).multipliedBy(
+          RESERVE_USAGE_BLOCK_THRESHOLD,
+        ),
+      )
+    ) {
+      return 'Protocol borrow cap is at 100% for this asset. Further borrowing unavailable.';
+    }
+
+    if (
+      BigNumber(reserve.reserve.totalDebt).gte(
+        BigNumber(reserve.reserve.borrowCap).multipliedBy(
+          RESERVE_USAGE_WARNING_THRESHOLD,
+        ),
+      )
+    ) {
+      return 'Maximum amount available to borrow is limited because protocol borrow cap is nearly reached.';
+    }
+    return undefined;
+  }, [reserve.reserve.borrowCap, reserve.reserve.totalDebt]);
+
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
       <Text style={styles.title}>Borrow {reserve.reserve.symbol}</Text>
+      {errorMessage ? (
+        <View style={styles.errorMessageContainer}>
+          <RcIconWarningCircleCC
+            width={15}
+            height={15}
+            color={colors2024['orange-default']}
+          />
+          <Text style={styles.errorMessage}>{errorMessage}</Text>
+        </View>
+      ) : null}
       <View style={styles.amountHeader}>
         <Text style={styles.amountHeaderTitle}>Amount</Text>
         <Text style={styles.amountValueDescription}>{`${formatAmountValueKMB(
@@ -534,6 +576,23 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 14,
     fontWeight: '500',
     color: ctx.colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  errorMessageContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: ctx.colors2024['orange-light-1'],
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 28,
+    width: '100%',
+  },
+  errorMessage: {
+    fontSize: 14,
+    fontWeight: '500',
+    width: '100%',
+    flex: 1,
+    color: ctx.colors2024['orange-default'],
     fontFamily: 'SF Pro Rounded',
   },
 }));
