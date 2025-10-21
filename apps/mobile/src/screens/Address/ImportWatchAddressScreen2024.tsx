@@ -4,7 +4,7 @@ import { RootNames } from '@/constant/layout';
 import { apisAddress } from '@/core/apis';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate, replaceToFirst } from '@/utils/navigation';
+import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useEffect } from 'react';
@@ -199,7 +199,7 @@ export const ImportWatchAddressScreen2024 = () => {
                   <TouchableOpacity
                     style={ctx.wrapperStyle}
                     onPress={() => {
-                      navigate(RootNames.Scanner);
+                      navigateDeprecated(RootNames.Scanner);
                     }}>
                     <RcIconScannerCC
                       style={ctx.iconStyle}

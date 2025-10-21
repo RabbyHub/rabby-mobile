@@ -1,4 +1,4 @@
-const themeColors = {
+export const themeColors = {
   light: {
     'blue-default': 'rgba(112, 132, 255, 1)',
     'blue-light1': 'rgba(238, 241, 255, 1)',
@@ -81,7 +81,7 @@ const themeColors = {
   },
 };
 
-const themeColorsNext2024 = {
+export const themeColorsNext2024 = {
   light: {
     'brand-default': 'rgba(76, 101, 255, 1)',
     'brand-default-light': 'rgba(76, 101, 255, 0.7)',
@@ -118,9 +118,6 @@ const themeColorsNext2024 = {
     'blue-disable': 'rgba(10, 132, 255, 0.27)',
     'blue-light-4': 'rgba(10, 132, 255, 0.14)',
 
-    /**
-     * bg0 only light theme
-     */
     'neutral-bg-0': 'rgba(246, 247, 247, 1)',
     'neutral-bg-1': 'rgba(255, 255, 255, 1)',
     'neutral-bg-2': 'rgba(242, 244, 247, 1)',
@@ -178,6 +175,7 @@ const themeColorsNext2024 = {
     'blue-disable': 'rgba(10, 132, 255, 0.27)',
     'blue-light-4': 'rgba(10, 132, 255, 0.14)',
 
+    'neutral-bg-0': 'rgba(19, 20, 22, 1)',
     'neutral-bg-1': 'rgba(19, 20, 22, 1)',
     'neutral-bg-2': 'rgba(35, 36, 40, 1)',
     'neutral-bg-3': 'rgba(28, 28, 29, 1)',
@@ -200,7 +198,9 @@ const themeColorsNext2024 = {
   },
 };
 
-module.exports = {
-  themeColors,
-  themeColorsNext2024,
-};
+export const ThemeColors = themeColors;
+export type AppColorsVariants = (typeof ThemeColors)['light'];
+
+export const ThemeColors2024 = themeColorsNext2024;
+export type AppColors2024Variants = (typeof ThemeColors2024)['light'];
+

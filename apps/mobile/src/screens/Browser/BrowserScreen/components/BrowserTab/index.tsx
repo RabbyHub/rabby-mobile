@@ -65,14 +65,20 @@ import { BrowserHeader } from './BrowserHeader';
 import { BrowserProgressBar } from './BrowserProgressBar';
 import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
 import { Freeze } from 'react-freeze';
-import { HyperliquidInvitePopup } from './HyperliquidInvitePopup';
-import { PERPS_INVITE_URL } from '@/constant/perps';
+import { PerpsInvitePopup } from './PerpsInvitePopup';
+import { PERPS_ASTER_INVITE_URL, PERPS_INVITE_URL } from '@/constant/perps';
 import { CurrentDappPopup } from './CurrentDappPopup';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
-import { useHyperliquidReferral } from '../../hooks/useHyperliquidReferral';
+import {
+  useAsterReferral,
+  useHyperliquidReferral,
+} from '../../hooks/useHyperliquidReferral';
 import { useAccounts } from '@/hooks/account';
 import { getOnlineConfig } from '@/core/config/online';
 import { WebviewError } from './WebivewError';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { toast } from '@/components2024/Toast';
+import { useTranslation } from 'react-i18next';
 
 type BrowserTabProps = {
   origin: string;
@@ -151,9 +157,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     },
     ref,
   ) => {
-    const { styles, colors, colors2024 } = useTheme2024({
+    const { styles } = useTheme2024({
       getStyle: getStyles,
     });
+    const { t } = useTranslation();
 
     const isEmptyTab = !url;
     const [isLoading, setIsLoading] = useState(false);
@@ -202,6 +209,26 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       },
     );
 
+    const handleClearCache = useMemoizedFn(async () => {
+      webviewRef.current?.injectJavaScript(`;(function() {
+        try {
+          document.cookie.split(';').forEach(cookie => {
+            const eqPos = cookie.indexOf('=');
+            const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
+            document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          });
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch(e) {
+          console.log('clear cache error', e);
+        }
+      })();`);
+      setTimeout(() => {
+        setRefreshKey(prev => prev + 1);
+        toast.success(t('page.browser.toast.clearCacheSuccess'));
+      }, 50);
+    });
+
     const userAgent = useMemo(() => {
       if (contentMode === 'desktop') {
         return `${DESKTOP_MODE_UA} ${APP_UA_PARIALS.UA_FULL_NAME}}`;
@@ -213,8 +240,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const changeViewPortForDesktop = useCallback(
       (contentMode: WebViewProps['contentMode'], delayMs = 0) => {
-        if (contentMode !== 'desktop') return;
-        if (!IS_ANDROID) return;
+        if (contentMode !== 'desktop') {
+          return;
+        }
+        if (!IS_ANDROID) {
+          return;
+        }
 
         const change = () => {
           const screenWidth = Dimensions.get('screen').width;
@@ -370,7 +401,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         isShowManage: true,
       });
 
-      // navigation.navigate(RootNames.StackBrowser, {
+      // navigation.navigateDeprecated(RootNames.StackBrowser, {
       //   screen: RootNames.BrowserManageScreen,
       // });
     });
@@ -385,7 +416,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
       matomoRequestEvent({
         category: 'Websites Usage',
-        action: `Website_Exit`,
+        action: 'Website_Exit',
         label: 'Click Home',
       });
     });
@@ -544,6 +575,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           handleContentModeChange(
             contentMode === 'desktop' ? 'mobile' : 'desktop',
           );
+        } else if (payload.type === 'clearCache') {
+          handleClearCache();
         }
       },
     );
@@ -565,8 +598,24 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         : null,
     });
 
+    const {
+      isShowInvite: isShowAsterInvite,
+      setIsShowInvite: setIsShowAsterInvite,
+    } = useAsterReferral({
+      url: webviewState.resolvedUrl,
+      connectedAddress: dappInfo?.isConnected
+        ? dappInfo?.currentAccount?.address
+        : null,
+    });
+
     const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
     const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
+
+    useEffect(() => {
+      if (!dappInfo?.isConnected) {
+        setIsShowCurrentDappPopup(false);
+      }
+    }, [dappInfo?.isConnected]);
 
     const { accounts } = useAccounts({
       disableAutoFetch: true,
@@ -657,7 +706,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       onLoadStart={e => {
                         const alwaysTreatReloadAsTrue =
                           IS_ANDROID &&
-                          !!getOnlineConfig()?.['switches']?.[
+                          !!getOnlineConfig()?.switches?.[
                             '20250924.android_webview_always_treat_as_reload'
                           ];
 
@@ -749,6 +798,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         //     handleViewShot(nativeEvent.url);
                         //   }, 200);
                         // }
+                      }}
+                      onFileDownload={e => {
+                        Linking.openURL(e.nativeEvent.downloadUrl);
                       }}
                       onShouldStartLoadWithRequest={nativeEvent => {
                         const origin = safeGetOrigin(nativeEvent.url);
@@ -895,7 +947,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           ) : null}
           {safeGetOrigin(webviewState.resolvedUrl) ===
             safeGetOrigin(PERPS_INVITE_URL) && dappInfo?.isConnected ? (
-            <HyperliquidInvitePopup
+            <PerpsInvitePopup
+              type="hyperliquid"
               visible={
                 isShowInvite &&
                 isActive &&
@@ -920,6 +973,58 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     lastTime: Date.now(),
                   },
                 });
+              }}
+              footer={
+                <View style={styles.dappWebViewNavControl}>
+                  <BrowserHeader
+                    dapp={dappInfo}
+                    url={webviewState.resolvedUrl}
+                    onViewTabs={handleViewTabs}
+                    onLocationBarPress={str => {
+                      setPartialBrowserState({
+                        isShowSearch: true,
+                        searchText: str,
+                        searchTabId: tabId,
+                        trigger: 'browser',
+                      });
+                    }}
+                    account={account}
+                    tabsCount={tabsCount}
+                    canGoBack={webviewState.canGoBack}
+                    onGoBack={handleGoBack}
+                    onGoHome={handleGoHome}
+                    onAccountPress={() => {
+                      if (dappInfo?.isConnected) {
+                        setIsShowCurrentDappPopup(true);
+                      } else {
+                        setIsShowAccountPopup(true);
+                      }
+                    }}
+                  />
+                </View>
+              }
+            />
+          ) : null}
+          {safeGetOrigin(webviewState.resolvedUrl) ===
+            safeGetOrigin(PERPS_ASTER_INVITE_URL) && dappInfo?.isConnected ? (
+            <PerpsInvitePopup
+              type="aster"
+              visible={
+                isShowAsterInvite &&
+                isActive &&
+                !browserState.isShowSearch &&
+                browserState.isShowBrowser &&
+                !isShowAccountPopup &&
+                !isShowCurrentDappPopup
+              }
+              onClose={() => {
+                setIsShowAsterInvite(false);
+                preferenceService.setHasShowAsterPopup(true);
+              }}
+              onInvite={() => {
+                handleGoTo(PERPS_ASTER_INVITE_URL);
+                setIsShowAsterInvite(false);
+                preferenceService.setHasShowAsterPopup(true);
               }}
               footer={
                 <View style={styles.dappWebViewNavControl}>

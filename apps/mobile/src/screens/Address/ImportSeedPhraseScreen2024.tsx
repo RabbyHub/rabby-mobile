@@ -3,7 +3,7 @@ import React, { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import HdKeyring from '@rabby-wallet/eth-hd-keyring';
 import { apiMnemonic } from '@/core/apis';
-import { navigate, replaceToFirst } from '@/utils/navigation';
+import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
@@ -362,7 +362,7 @@ export const ImportSeedPhraseScreen2024 = () => {
                   <TouchableView
                     style={ctx.wrapperStyle}
                     onPress={() => {
-                      navigate(RootNames.Scanner);
+                      navigateDeprecated(RootNames.Scanner);
                     }}>
                     <RcIconScannerCC
                       style={ctx.iconStyle}

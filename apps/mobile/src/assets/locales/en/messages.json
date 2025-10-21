@@ -618,6 +618,7 @@
       "To": "To",
       "From": "From",
       "Amount": "Amount:",
+      "newAmount": "Amount",
       "addressNotInContract": "Not on address list. <1></1><2>Add to contacts</2>",
       "AddToContactsModal": {
         "addedAsContacts": "Added as contacts",
@@ -1138,6 +1139,7 @@
         "buyWithFiatDesc": "Simple crypto purchase"
       },
       "importAddress": {
+        "__skip_translation": ["safe"],
         "importTitle": "Import Wallet",
         "seedPhrase": "Import Seed Phrase",
         "privateKey": "Import Private Key",
@@ -1182,6 +1184,17 @@
         "title3": "Safety",
         "description4": "Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.",
         "GotIt": "I Got It."
+      },
+      "whatIsPrivateKey": {
+        "title": "What's a private key",
+        "description1": "A private key is a string of letters and numbers used to access and control your wallet. You can use it to recover your wallet on any device.",
+        "title2": "Backup",
+        "description2": "If you lose your private key, you won’t be able to restore your wallet.",
+        "title3": "Never Share It",
+        "description3": "Never share your private key—anyone with access to it can control your funds.",
+        "title4": "Safety",
+        "description4": "Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.",
+        "ButtonGotIt": "I Got It."
       },
       "addContacts": {
         "cameraTitle": "Please scan the QR code with your camera"
@@ -1606,13 +1619,16 @@
       "gnosisChainDesc": "This address was found deployed on {{count}} chains"
     },
     "rabbyPoints": {
+      "__skip_translation": ["titleWithStar", "ClaimComing"],
       "title": "Rabby Points",
+      "titleWithStar": "Rabby Points ✨",
       "out-of-x-current-total-points": "Out of {{total}} Total Distributed Points",
       "earn-points": "Earn Points",
       "top-100": "Top 100",
       "claimItem": {
         "claim": "Claim"
       },
+      "xPoints": "{{point}} Points",
       "claimModal": {
         "title": "Claim Initial Points",
         "snapshotTime": "Snapshot time: {{time}}",
@@ -1647,7 +1663,8 @@
       },
       "code-set-successfully": "Referral code set successfully",
       "initialPointsClaimEnded": "Initial Points claim ended",
-      "firstRoundEnded": "🎉 The first round of Rabby Points has ended"
+      "firstRoundEnded": "🎉 The first round of Rabby Points has ended",
+      "ClaimComing": "Claim coming!"
     },
     "customTestnet": {
       "desc": "Rabby cannot verify the security of custom networks. Please add trusted networks only.",
@@ -1869,6 +1886,7 @@
         "tokenSecurity": "Token Security"
       },
       "interval": {
+        "__skip_translation": true,
         "1M": "1M",
         "5M": "5M",
         "15M": "15M",
@@ -1884,6 +1902,7 @@
         "volume24h": "24h Volume",
         "txns24h": "24h Txns",
         "holders": "Holders",
+        "pools": "Pools",
         "empty": "No Data",
         "activity": "Activity",
         "summary": "Summary Data",
@@ -1905,13 +1924,33 @@
             "buy": "Buy",
             "sell": "Sell",
             "volume": "Volume",
-            "tradingCount": "Trading Count",
+            "transactionCount": "Transaction Count",
             "address": "Address",
             "addresses": "Addresses",
             "type": "Type",
             "time": "Time",
             "price": "Price",
             "qnt": "Qnt",
+            "value": "Value"
+          }
+        },
+        "pool": {
+          "tab": {
+            "top5": "Top 5 pools",
+            "liquidityDetail": "Liquidity Detail"
+          },
+          "actions": {
+            "add": "Add",
+            "remove": "Remove",
+            "all": "All"
+          },
+          "dex": "Dex",
+          "pair": "Pair",
+          "amount": "Amount",
+          "value": "Value",
+          "headers": {
+            "time": "Time",
+            "amount": "Amount",
             "value": "Value"
           }
         }
@@ -2127,16 +2166,22 @@
         "favorite": "Favorite",
         "contentModeMobile": "Request Mobile Site",
         "contentModeDesktop": "Request DeskTop Site",
-        "disconnect": "Disconnect"
+        "disconnect": "Disconnect",
+        "clearCache": "Clear cache"
       },
       "HyperliquidInvitePopup": {
         "title": "Hyperliquid Referral Program",
+        "asterTitle": "Aster Referral Program",
         "desc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Hyperliquid fees.",
+        "asterDesc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Aster fees.",
         "btn": "Join Now"
       },
       "WebviewError": {
         "failedToLoad": "Failed to load the page",
         "error": "Error:"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache cleared"
       }
     },
     "browserManage": {
@@ -2193,7 +2238,6 @@
       }
     },
     "perps": {
-      "__skip_translation": true,
       "title": "Perps",
       "PerpsCard": {
         "title": "Trade Perps",
@@ -2337,7 +2381,6 @@
       }
     },
     "perpsDetail": {
-      "__skip_translation": true,
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
@@ -2364,7 +2407,7 @@
       },
       "PerpsInfo": {
         "title": "Info",
-        "24Vol": "24h Volumn",
+        "24Vol": "24h Volume",
         "openInterest": "Open Interest",
         "funding": "Funding",
         "openInterestTips": "The total outstanding position of all users on this contract.",
@@ -2433,6 +2476,9 @@
     },
     "perpsHistory": {
       "title": "History"
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Build-In Page"
     }
   },
   "component": {

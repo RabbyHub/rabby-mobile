@@ -7,7 +7,7 @@ import {
   PrivateKeySVG,
   SeedPhraseSVG,
 } from '@/assets/icons/address';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 
@@ -31,7 +31,7 @@ export const ImportAddressList = () => {
     )
       return;
 
-    navigate(RootNames.StackAddress, {
+    navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.ImportPrivateKey,
     });
   }, [shouldRedirectToSetPasswordBefore]);
@@ -44,7 +44,7 @@ export const ImportAddressList = () => {
     )
       return;
 
-    navigate(RootNames.StackAddress, {
+    navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.ImportMnemonic,
     });
   }, [shouldRedirectToSetPasswordBefore]);

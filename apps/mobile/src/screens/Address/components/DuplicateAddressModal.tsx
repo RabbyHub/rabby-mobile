@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Modal, Text, View } from 'react-native';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
@@ -57,7 +57,7 @@ export const DuplicateAddressModal: React.FC = () => {
 
   const handleSwitch = React.useCallback(async () => {
     if (currentAccount) {
-      navigate(RootNames.SingleAddressStack, {
+      navigateDeprecated(RootNames.SingleAddressStack, {
         screen: RootNames.SingleAddressHome,
         params: {
           account: currentAccount,

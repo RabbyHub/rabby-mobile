@@ -231,7 +231,7 @@ const Summary = ({ data, isEmpty }: ISummaryData) => {
             <View style={styles.summaryBottomItem}>
               <Text style={styles.summaryBottomItemText}>
                 {t(
-                  'page.tokenDetail.marketInfo.activitySections.tableHeader.tradingCount',
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.transactionCount',
                 )}
               </Text>
               <Text style={styles.summaryBottomItemValue}>
@@ -294,6 +294,9 @@ const Details = ({
       nextCursor?: string;
       hasMore: boolean;
     }) => {
+      if (!tokenId || !chainId) {
+        return undefined;
+      }
       const res = await openapi.getMarketTradingHistory({
         token_id: tokenId,
         chain_id: chainId,
@@ -546,6 +549,9 @@ const Activity = ({
   } = useRequest(
     async () => {
       try {
+        if (!tokenId || !chainId) {
+          return undefined;
+        }
         const res = await openapi.getMarketSummary({
           token_id: tokenId,
           chain_id: chainId,
@@ -719,7 +725,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 16,
     paddingBottom: 12,
     justifyContent: 'space-between',
-    gap: 12,
   },
   summaryBottomItem: {
     flex: 1,
@@ -795,7 +800,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tableBody: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 12,
     marginTop: 12,
   },
   tableRow: {
@@ -812,14 +816,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   indexItem: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     flex: 1,
   },
   ratioItem: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     flex: 1,

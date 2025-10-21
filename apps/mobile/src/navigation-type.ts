@@ -114,7 +114,6 @@ export type RootStackParamsList = {
 export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
   /** @deprecated */
-  [RootNames.Points]?: {};
   [RootNames.DappWebViewStubOnHome]?: {
     dappsWebViewFromRoute?:
       | typeof RootNames.Dapps
@@ -153,6 +152,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
+  [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
 };
 
@@ -266,6 +266,7 @@ export type AddressNavigatorParamList = {
   [RootNames.SyncExtensionAccountSuccess]?: {
     newAccounts: Account[];
   };
+  [RootNames.Points]?: {};
 };
 
 export type AccountNavigatorParamList = {
@@ -452,6 +453,7 @@ export type GetNestedScreenNavigationProps<
   T extends _NestedScreensParamsName,
   K extends keyof _NestedScreensParamsDict[T] & string,
 > = CompositeScreenProps<
+  // @ts-expect-error
   NativeStackScreenProps<_NestedScreensParamsDict[T], K>,
   NativeStackScreenProps<RootStackParamsList>
 >;

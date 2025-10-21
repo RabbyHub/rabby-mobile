@@ -31,7 +31,6 @@ import ImportMethods from '../Address/ImportMethods';
 import { ImportHardwareAddressScreen } from '../Address/ImportHardwareAddress';
 import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen2024';
 import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
-import { CloudBackupButton2024 } from '../Address/CloudBackupButton2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { createGetStyles2024 } from '@/utils/styles';
 import CreateNewAddress from '../Address/CreateNewAddress';
@@ -51,6 +50,7 @@ import { filterMyAccounts } from '@/utils/account';
 import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPasswordScreen';
 import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
 import { AddressAssetsOverview } from '@/screens/Address/AddressAssetsOverviewScreen';
+import PointsScreen from '../Points';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 
@@ -217,7 +217,7 @@ export function AddressNavigator() {
         options={{
           title: t('screens.addressStackTitle.ImportSuccess'),
           headerTintColor: colors2024['neutral-bg-1'],
-          statusBarColor: colors2024['neutral-bg-1'],
+          statusBarBackgroundColor: colors2024['neutral-bg-1'],
         }}
       />
       <AddressStack.Screen
@@ -396,7 +396,6 @@ export function AddressNavigator() {
           headerTitle: t('screens.addressStackTitle.ImportMnemonic'),
           title: t('screens.addressStackTitle.ImportMnemonic'),
           headerTitleStyle: styles.headerTitleText,
-          // headerRight: CloudBackupButton2024,
         }}
       />
       <AddressStack.Screen
@@ -494,6 +493,20 @@ export function AddressNavigator() {
           headerShadowVisible: false,
           headerShown: false,
         })}
+      />
+
+      <AddressStack.Screen
+        name={RootNames.Points}
+        component={PointsScreen}
+        options={mergeScreenOptions2024([
+          {
+            headerTitleAlign: 'center',
+            headerShown: true,
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: [styles.headerTitleText, { fontWeight: '900' }],
+            headerTitle: t('page.rabbyPoints.title'),
+          },
+        ])}
       />
     </AddressStack.Navigator>
   );

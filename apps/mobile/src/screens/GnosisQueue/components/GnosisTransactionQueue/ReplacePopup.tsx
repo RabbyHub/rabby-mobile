@@ -115,11 +115,11 @@ const getStyles = createGetStyles(colors => ({
     marginBottom: 12,
   },
   optionListItemHover: {
-    borderColor: colors.rBlueDefault,
-    backgroundColor: colors.rBlueLight1,
+    borderColor: colors['blue-default'],
+    backgroundColor: colors['blue-light-1'],
   },
   optionListItemContent: {
-    color: colors.rNeutralTitle1,
+    color: colors['neutral-title-1'],
     fontSize: 15,
     fontWeight: '500',
     lineHeight: 18,

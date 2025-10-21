@@ -1,6 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { apiOneKey } from '@/core/apis';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -16,6 +16,7 @@ import { ConnectDeviceScreen } from './ConnectDeviceScreen';
 import { eventBus, EVENTS } from '@/utils/events';
 import AutoLockView from '../AutoLockView';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
+import { makeDebugBorder } from '@/utils/styles';
 
 export const ConnectOneKey: React.FC<{
   onDone?: () => void;
@@ -49,7 +50,7 @@ export const ConnectOneKey: React.FC<{
     const address = await apiOneKey.importFirstAddress({});
 
     if (address) {
-      navigate(RootNames.StackAddress, {
+      navigateDeprecated(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
           type: KEYRING_TYPE.OneKeyKeyring,
@@ -64,7 +65,7 @@ export const ConnectOneKey: React.FC<{
         startNumber: 1,
         hdPath: LedgerHDPathType.BIP44,
       });
-      // navigate(RootNames.StackAddress, {
+      // navigateDeprecated(RootNames.StackAddress, {
       //   screen: RootNames.ImportMoreAddress,
       //   params: {
       //     type: KEYRING_TYPE.OneKeyKeyring,
@@ -106,7 +107,7 @@ export const ConnectOneKey: React.FC<{
   }, [devices, handleScanDone]);
 
   return (
-    <AutoLockView as="BottomSheetView">
+    <AutoLockView as="View" style={{ height: '100%' }}>
       {currentScreen === 'ble' && (
         <BluetoothPermissionScreen onNext={handleBleNext} />
       )}

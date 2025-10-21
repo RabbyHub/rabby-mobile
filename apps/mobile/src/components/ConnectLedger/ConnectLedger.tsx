@@ -2,7 +2,7 @@ import { apiLedger } from '@/core/apis';
 import { RootNames } from '@/constant/layout';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useLedgerImport } from '@/hooks/ledger/useLedgerImport';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
@@ -118,7 +118,7 @@ export const ConnectLedger: React.FC<{
       });
 
       if (address) {
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess2024,
           params: {
             type: KEYRING_TYPE.LedgerKeyring,
@@ -129,7 +129,7 @@ export const ConnectLedger: React.FC<{
         });
         onDone?.();
       } else {
-        // navigate(RootNames.StackAddress, {
+        // navigateDeprecated(RootNames.StackAddress, {
         //   screen: RootNames.ImportMoreAddress,
         //   params: {
         //     type: KEYRING_TYPE.LedgerKeyring,
@@ -180,7 +180,7 @@ export const ConnectLedger: React.FC<{
   }, []);
 
   return (
-    <AutoLockView as="BottomSheetView">
+    <AutoLockView as="View" style={{ height: '100%' }}>
       {currentScreen === 'ble' && (
         <BluetoothPermissionScreen onNext={handleBleNext} />
       )}

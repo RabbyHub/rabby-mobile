@@ -117,6 +117,7 @@ export const RootNames = {
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
   DevUIDapps: 'DevUIDapps',
   DevDataSQLite: 'DevDataSQLite',
+  DevUIBuiltInPages: 'DevUIBuiltInPages',
   DevUIPermissions: 'DevUIPermissions',
   /* warning: testkits only ------ start */
 

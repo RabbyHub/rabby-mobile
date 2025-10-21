@@ -54,7 +54,7 @@ import {
 } from './hook';
 import { RightMore } from './components/RightMore';
 import HeaderBalanceCard from './components/HeaderBalanceCard';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 import CustomLabel from './components/CustomLabel';
@@ -512,7 +512,7 @@ export const TokenMarketInfoScreen = () => {
   const { t } = useTranslation();
 
   const handleOpenTokenDetail = useCallback(() => {
-    navigate(RootNames.TokenDetail, {
+    navigateDeprecated(RootNames.TokenDetail, {
       ...route.params,
     });
   }, [route.params]);
@@ -753,7 +753,7 @@ export const TokenMarketInfoScreen = () => {
                     }
                     totalSupply={supplyInfo?.total_supply?.toString() ?? ''}
                     volume24h={
-                      marketInfo?.market?.volume_amount_24h?.toString() ?? ''
+                      marketInfo?.market?.volume_usd_value_24h?.toString() ?? ''
                     }
                     txns24h={marketInfo?.market?.txns_24h?.toString() ?? ''}
                     holders={holdInfo?.holder_count?.toString() ?? ''}
@@ -798,6 +798,7 @@ export const TokenMarketInfoScreen = () => {
               hideActivity={!tokenWithAmount?.support_market_data}
               tokenId={token._tokenId}
               chainId={token.chain}
+              symbol={token.symbol}
             />
             <View style={{ height: isAndroid ? 200 + safeOffBottom : 156 }} />
           </ScrollView>

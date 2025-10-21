@@ -11,6 +11,7 @@ import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
+import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -51,7 +52,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { resetNavigationTo } from '@/hooks/navigation';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { useAppState } from '@react-native-community/hooks';
 import { useMemoizedFn } from 'ahooks';
 import { debounce, unionBy } from 'lodash';
@@ -193,6 +194,11 @@ function MultiAddressHome(): JSX.Element {
           isSuccess: !historyCount?.fail,
         },
         {
+          key: MultiHomeFeatTitle.Points,
+          title: t('page.rabbyPoints.title'),
+          icon: RcIconPointsCC,
+        },
+        {
           key: MultiHomeFeatTitle.Approvals,
           title: t('page.home.services.approvals'),
           icon: RcIconApprovalsCC,
@@ -223,10 +229,6 @@ function MultiAddressHome(): JSX.Element {
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
         //   icon: RcIconEcosystem,
-        // },
-        // {
-        //   title: MultiHomeFeatTitle.Points,
-        //   icon: RcIconPoints,
         // },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
@@ -513,7 +515,7 @@ function MultiAddressHome(): JSX.Element {
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
   const handlePressWatchlist = useCallback(() => {
-    navigation.navigate(RootNames.StackHomeNonTab, {
+    navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
       screen: RootNames.Watchlist,
       params: {},
     });
@@ -561,7 +563,7 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Approvals:
-          navigate(RootNames.StackAddress, {
+          navigateDeprecated(RootNames.StackAddress, {
             screen: RootNames.ApprovalAddressList,
           });
           break;
@@ -594,6 +596,12 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.Lending:
           navigation.navigate(RootNames.StackHomeNonTab, {
             screen: RootNames.Lending,
+            params: {},
+          });
+          break;
+        case MultiHomeFeatTitle.Points:
+          navigation.push(RootNames.StackAddress, {
+            screen: RootNames.Points,
             params: {},
           });
           break;

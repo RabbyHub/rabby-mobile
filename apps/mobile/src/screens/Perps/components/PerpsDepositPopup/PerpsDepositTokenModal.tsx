@@ -91,7 +91,7 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                     state.currentPerpsAccount,
                   );
                   if (isSwap) {
-                    navigation.navigate(RootNames.StackTransaction, {
+                    navigation.navigateDeprecated(RootNames.StackTransaction, {
                       screen: RootNames.MultiSwap,
 
                       params: {
@@ -101,7 +101,7 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                       },
                     });
                   } else {
-                    navigation.navigate(RootNames.StackTransaction, {
+                    navigation.navigateDeprecated(RootNames.StackTransaction, {
                       screen: RootNames.MultiBridge,
 
                       params: {

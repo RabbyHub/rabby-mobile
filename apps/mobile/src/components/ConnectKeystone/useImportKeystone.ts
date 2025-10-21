@@ -1,5 +1,5 @@
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import {
   HARDWARE_KEYRING_TYPES,
@@ -19,7 +19,7 @@ export const useImportKeystone = () => {
       startNumber: 1,
       hdPath: LedgerHDPathType.BIP44,
     });
-    // navigate(RootNames.StackAddress, {
+    // navigateDeprecated(RootNames.StackAddress, {
     //   screen: RootNames.ImportMoreAddress,
     //   params: {
     //     type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,

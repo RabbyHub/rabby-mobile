@@ -5,7 +5,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TypeKeyringGroup, useWalletTypeData } from './useWalletTypeData';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { apiMnemonic } from '@/core/apis';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 
@@ -35,7 +35,7 @@ export const useSeedPhrase = () => {
           'publickey',
           publicKey,
         );
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.ImportMoreAddress,
           params: {
             type: KEYRING_TYPE.HdKeyring,
@@ -57,7 +57,7 @@ export const useSeedPhrase = () => {
           publicKey,
         );
 
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.CreateNewAddress,
           params: {
             useCurrentSeed: true,

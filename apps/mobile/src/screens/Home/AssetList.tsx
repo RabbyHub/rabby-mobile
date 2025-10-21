@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { FlashList } from '@shopify/flash-list';
 
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   AbstractPortfolio,
@@ -135,7 +135,7 @@ export const AssetList = forwardRef<FlatList<any>, Props>(
 
     const handleOpenTokenDetail = React.useCallback(
       (token: AbstractPortfolioToken) => {
-        navigate(RootNames.TokenDetail, {
+        navigateDeprecated(RootNames.TokenDetail, {
           token: token,
           isSingleAddress: true,
           account: currentAccount as any,
@@ -146,7 +146,7 @@ export const AssetList = forwardRef<FlatList<any>, Props>(
     );
     const handleOpenDefiDetail = useCallback(
       (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-        navigate(RootNames.DeFiDetail, {
+        navigateDeprecated(RootNames.DeFiDetail, {
           data,
           portfolioList: itemList,
           rawPortfolios,
@@ -172,7 +172,7 @@ export const AssetList = forwardRef<FlatList<any>, Props>(
             },
             titleText: `${item.name}(${item.nft_list.length})`,
             onPressItem: (v: DisplayNftItem) => {
-              navigate(RootNames.NftDetail, {
+              navigateDeprecated(RootNames.NftDetail, {
                 token: v,
                 isSingleAddress: true,
                 account: currentAccount as any,
@@ -184,7 +184,7 @@ export const AssetList = forwardRef<FlatList<any>, Props>(
             },
           });
         } else {
-          navigate(RootNames.NftDetail, {
+          navigateDeprecated(RootNames.NftDetail, {
             token: item as DisplayNftItem,
             isSingleAddress: true,
             account: currentAccount as any,

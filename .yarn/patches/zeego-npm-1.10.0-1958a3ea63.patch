@@ -1,8 +1,39 @@
 diff --git a/lib/module/menu/create-android-menu/index.android.js b/lib/module/menu/create-android-menu/index.android.js
-index 59d62eb2c278ce9ea5e47ed4c736062459ee2d2b..b0504fab0744632faf8df281704e6966be5beca2 100644
+index 59d62eb2c278ce9ea5e47ed4c736062459ee2d2b..61def9da4a140de33d08870624eb0fdd7ebfbf45 100644
 --- a/lib/module/menu/create-android-menu/index.android.js
 +++ b/lib/module/menu/create-android-menu/index.android.js
-@@ -176,7 +176,12 @@ If you want to use a custom component as your <Content />, you can use the creat
+@@ -3,7 +3,7 @@ import { MenuView } from '@react-native-menu/menu';
+ import { flattenChildren, pickChildren, isInstanceOfComponent } from '../children';
+ import { create } from '../display-names';
+ import { filterNull } from '../filter-null';
+-import { View } from 'react-native';
++import { View, useColorScheme } from 'react-native';
+ 
+ const createAndroidMenu = Menu => {
+   const Trigger = create(_ref => {
+@@ -57,6 +57,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+ 
+     return /*#__PURE__*/React.createElement(React.Fragment, null, children);
+   }, 'Content');
++
+   const ItemTitle = create(_ref5 => {
+     let {
+       children
+@@ -158,8 +159,13 @@ If you want to use a custom component as your <Content />, you can use the creat
+     const content = (_pickChildren$targetC = pickChildren(props.children, Content).targetChildren) === null || _pickChildren$targetC === void 0 ? void 0 : _pickChildren$targetC[0];
+     const callbacks = {};
+ 
++    const colorScheme = useColorScheme();
++    const isDarkMode = colorScheme === 'dark';
++    const defaultTextColor = isDarkMode ? 'white' : 'dark';
++
+     const getItemFromChild = (child, index) => {
+       let title;
++      let androidTitleColor = child.props.androidTitleColor || defaultTextColor;
+       const key = child.key ? `${child.key}` : `item-${index}`;
+       let subtitle;
+       const menuAttributes = {};
+@@ -176,7 +182,12 @@ If you want to use a custom component as your <Content />, you can use the creat
          menuAttributes.hidden = true;
        }
  
@@ -15,7 +46,16 @@ index 59d62eb2c278ce9ea5e47ed4c736062459ee2d2b..b0504fab0744632faf8df281704e6966
  
        if (typeof child.props.children == 'string') {
          title = child.props.children;
-@@ -212,6 +217,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+@@ -190,7 +201,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+           title = maybeTitle;
+         } else {
+           console.error(`[zeego] Invalid <${Menu}.Item key="${key}" /> Missing valid title. Make sure you do one of the following:
+-  
++
+   1. pass a string as the child of <${Menu}.ItemTitle />, nested directly inside of <${Menu}.Item />.
+   2. OR, use the textValue prop on <${Menu}.Item textValue="Some value" />`);
+         }
+@@ -212,6 +223,7 @@ If you want to use a custom component as your <Content />, you can use the creat
  
            if (imageChild) {
              const {
@@ -23,7 +63,7 @@ index 59d62eb2c278ce9ea5e47ed4c736062459ee2d2b..b0504fab0744632faf8df281704e6966
                androidIconName
              } = imageChild.props;
  
-@@ -228,6 +234,10 @@ If you want to use a custom component as your <Content />, you can use the creat
+@@ -228,6 +240,10 @@ If you want to use a custom component as your <Content />, you can use the creat
              }
            }
          }
@@ -34,8 +74,11 @@ index 59d62eb2c278ce9ea5e47ed4c736062459ee2d2b..b0504fab0744632faf8df281704e6966
        }
  
        if (title) {
-@@ -259,7 +269,8 @@ If you want to use a custom component as your <Content />, you can use the creat
+@@ -257,9 +273,11 @@ If you want to use a custom component as your <Content />, you can use the creat
+         return {
+           key,
            title,
++          androidTitleColor,
            subtitle,
            menuAttributes,
 -          icon
@@ -44,23 +87,59 @@ index 59d62eb2c278ce9ea5e47ed4c736062459ee2d2b..b0504fab0744632faf8df281704e6966
          };
        }
  
-@@ -282,6 +293,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+@@ -282,7 +300,9 @@ If you want to use a custom component as your <Content />, you can use the creat
            if (item) {
              const {
                icon,
 +              androidIconDesc,
                title,
++              androidTitleColor,
                key,
                menuAttributes,
-@@ -291,6 +303,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+               subtitle
+@@ -290,7 +310,9 @@ If you want to use a custom component as your <Content />, you can use the creat
+             const finalItem = {
                id: key,
                title,
++              titleColor: androidTitleColor,
                image: icon,
 +              imageColor: androidIconDesc ? androidIconDesc.color : undefined,
                attributes: menuAttributes,
                subtitle
              };
-@@ -373,11 +386,16 @@ If you want to use a custom component as your <Content />, you can use the creat
+@@ -306,6 +328,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+             const {
+               icon,
+               title,
++              androidTitleColor,
+               key,
+               menuAttributes,
+               subtitle
+@@ -322,6 +345,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+             const finalItem = {
+               id: key,
+               title,
++              titleColor: androidTitleColor,
+               image,
+               attributes: menuAttributes,
+               subtitle,
+@@ -349,6 +373,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+                 const menuConfig = {
+                   id: key,
+                   title: triggerItem === null || triggerItem === void 0 ? void 0 : triggerItem.title,
++                  titleColor: triggerItem === null || triggerItem === void 0 ? void 0 : triggerItem.androidTitleColor,
+                   image: triggerItem === null || triggerItem === void 0 ? void 0 : triggerItem.icon,
+                   subactions: nestedItems,
+                   attributes: triggerItem.menuAttributes
+@@ -364,6 +389,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+     };
+ 
+     const menuItems = mapItemsChildren(content === null || content === void 0 ? void 0 : content.props.children).filter(filterNull);
++
+     const label = (_pickChildren$targetC6 = pickChildren(content === null || content === void 0 ? void 0 : content.props.children, Label).targetChildren) === null || _pickChildren$targetC6 === void 0 ? void 0 : (_pickChildren$targetC7 = _pickChildren$targetC6[0]) === null || _pickChildren$targetC7 === void 0 ? void 0 : _pickChildren$targetC7.props.children;
+     let menuTitle = '';
+ 
+@@ -373,11 +399,16 @@ If you want to use a custom component as your <Content />, you can use the creat
  
      const triggerItem = (_trigger$targetChildr = trigger.targetChildren) === null || _trigger$targetChildr === void 0 ? void 0 : _trigger$targetChildr[0];
      let shouldOpenOnLongPress = Menu === 'ContextMenu';
@@ -77,7 +156,7 @@ index 59d62eb2c278ce9ea5e47ed4c736062459ee2d2b..b0504fab0744632faf8df281704e6966
      return /*#__PURE__*/React.createElement(MenuView, {
        title: menuTitle,
        onPressAction: _ref11 => {
-@@ -389,7 +407,8 @@ If you want to use a custom component as your <Content />, you can use the creat
+@@ -389,7 +420,8 @@ If you want to use a custom component as your <Content />, you can use the creat
          (_callbacks$nativeEven = callbacks[nativeEvent.event]) === null || _callbacks$nativeEven === void 0 ? void 0 : _callbacks$nativeEven.call(callbacks);
        },
        shouldOpenOnLongPress: shouldOpenOnLongPress,
@@ -88,7 +167,7 @@ index 59d62eb2c278ce9ea5e47ed4c736062459ee2d2b..b0504fab0744632faf8df281704e6966
    }, 'Root');
    const Separator = create(_ => {
 diff --git a/lib/typescript/menu/types.d.ts b/lib/typescript/menu/types.d.ts
-index 4ecd41495309a5cde5f12f5357072073173890cf..ea890fa93f8c840427c55cf57ee7c7241cdd5125 100644
+index 4ecd41495309a5cde5f12f5357072073173890cf..b93b3c4c0a8328d0bb010b84b36634ccfe54f1a3 100644
 --- a/lib/typescript/menu/types.d.ts
 +++ b/lib/typescript/menu/types.d.ts
 @@ -39,6 +39,7 @@ export type MenuTriggerProps = {
@@ -99,7 +178,20 @@ index 4ecd41495309a5cde5f12f5357072073173890cf..ea890fa93f8c840427c55cf57ee7c724
  };
  export type MenuContentProps = {
      children: React.ReactNode;
-@@ -96,6 +97,14 @@ export interface MenuItemCommonProps {
+@@ -71,6 +72,12 @@ export type MenuItemProps = {
+     onBlur?: () => void;
+     key: string;
+     shouldDismissMenuOnSelect?: boolean;
++    /**
++     * customize the color of the android title
++     *
++     * @platform android
++     */
++    androidTitleColor?: string;
+ };
+ export interface MenuItemCommonProps {
+     /**
+@@ -96,6 +103,14 @@ export interface MenuItemCommonProps {
       * @platform android
       */
      androidIconName?: string;
@@ -114,3 +206,16 @@ index 4ecd41495309a5cde5f12f5357072073173890cf..ea890fa93f8c840427c55cf57ee7c724
  }
  export type MenuItemIconProps = MenuItemCommonProps & {
      /**
+diff --git a/src/menu/create-android-menu/index.android.tsx b/src/menu/create-android-menu/index.android.tsx
+index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..208e63ad38b067b2ce8687323883438bcda5d008 100644
+--- a/src/menu/create-android-menu/index.android.tsx
++++ b/src/menu/create-android-menu/index.android.tsx
+@@ -232,7 +232,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+         } else {
+           console.error(
+             `[zeego] Invalid <${Menu}.Item key="${key}" /> Missing valid title. Make sure you do one of the following:
+-  
++
+   1. pass a string as the child of <${Menu}.ItemTitle />, nested directly inside of <${Menu}.Item />.
+   2. OR, use the textValue prop on <${Menu}.Item textValue="Some value" />`
+           )

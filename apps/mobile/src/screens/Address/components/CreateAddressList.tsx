@@ -5,7 +5,7 @@ import {
 } from '@/assets/icons/address';
 import { RootNames } from '@/constant/layout';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
@@ -28,7 +28,7 @@ export const CreateAddressList = () => {
 
   const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
   const handleAddSeedPhrase = React.useCallback(() => {
-    navigate(RootNames.StackAddress, {
+    navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.AddMnemonic,
     });
   }, []);
@@ -39,7 +39,7 @@ export const CreateAddressList = () => {
     )
       return;
 
-    navigate(RootNames.StackAddress, {
+    navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.PreCreateMnemonic,
     });
   }, [shouldRedirectToSetPasswordBefore]);
