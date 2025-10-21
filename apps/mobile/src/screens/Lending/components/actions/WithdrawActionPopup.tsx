@@ -25,7 +25,10 @@ import { toast } from '@/components2024/Toast';
 import { useAtom } from 'jotai';
 import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 import WithdrawActionOverView from './WithdrawActionOverView';
-import { HF_COLOR_BAD_THRESHOLD } from '../../utils/constant';
+import {
+  API_ETH_MOCK_ADDRESS,
+  HF_COLOR_BAD_THRESHOLD,
+} from '../../utils/constant';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 
@@ -40,10 +43,15 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const [supplyTxs, setSupplyTxs] = useState<Tx[]>([]);
   const [isChecked, setIsChecked] = useState(false);
 
+  const isNativeToken = useMemo(() => {
+    return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
+  }, [reserve.underlyingAsset]);
+
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { formattedPoolReservesAndIncentives, wrapperPoolReserve } =
+    useLendingSummary();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
@@ -107,9 +115,11 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
 
-      const targetPool = formattedPoolReservesAndIncentives.find(item =>
-        isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
-      );
+      const targetPool = isNativeToken
+        ? wrapperPoolReserve
+        : formattedPoolReservesAndIncentives.find(item =>
+            isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
+          );
 
       if (!targetPool?.aTokenAddress) {
         return;
@@ -117,7 +127,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       const withdrawResult = await buildWithdrawTx({
         amount,
         address: currentAccount.address,
-        reserve: reserve.underlyingAsset,
+        reserve: targetPool.underlyingAsset,
         aTokenAddress: targetPool?.aTokenAddress || '',
       });
       const txs = await Promise.all(withdrawResult.map(i => i.tx()));
@@ -139,7 +149,9 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     amount,
     currentAccount,
     formattedPoolReservesAndIncentives,
+    isNativeToken,
     reserve.underlyingAsset,
+    wrapperPoolReserve,
   ]);
 
   // 执行supply交易

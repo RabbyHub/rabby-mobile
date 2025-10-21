@@ -253,7 +253,7 @@ const useLendingSummary = () => {
     });
     const _wrapperPoolReserve = _formattedPoolReservesAndIncentives.find(
       item => {
-        return !isSameAddress(
+        return isSameAddress(
           item.underlyingAsset,
           wrapperToken[CHAINS_ENUM.ETH].address,
         );

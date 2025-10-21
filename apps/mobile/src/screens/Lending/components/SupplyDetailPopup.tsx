@@ -20,13 +20,9 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import {
-  API_ETH_MOCK_ADDRESS,
-  RESERVE_USAGE_WARNING_THRESHOLD,
-} from '../utils/constant';
+import { RESERVE_USAGE_WARNING_THRESHOLD } from '../utils/constant';
 import WarningFillCC from '@/assets2024/icons/lending/warning-cc.svg';
 import { Tip } from '@/components/Tip';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -115,14 +111,8 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   };
   const handlePressWithdraw = () => {
     onClose?.();
-    const isNativeToken = isSameAddress(
-      reserve.underlyingAsset,
-      API_ETH_MOCK_ADDRESS,
-    );
     const modalId = createGlobalBottomSheetModal2024({
-      name: isNativeToken
-        ? MODAL_NAMES.WITHDRAW_UNWRAP_ACTION_DETAIL
-        : MODAL_NAMES.WITHDRAW_ACTION_DETAIL,
+      name: MODAL_NAMES.WITHDRAW_ACTION_DETAIL,
       reserve: reserve,
       userSummary,
       onClose: () => {
