@@ -60,6 +60,7 @@ import { WithdrawActionPopup } from '@/screens/Lending/components/actions/Withdr
 import { BorrowActionPopup } from '@/screens/Lending/components/actions/BorrowActionPopup';
 import { RepayActionPopup } from '@/screens/Lending/components/actions/RepayActionPopup';
 import { HFDescription } from '@/screens/Lending/components/HFDescription';
+import { WithdrawUnWrapActionPopup } from '@/screens/Lending/components/actions/WithdrawUnWrapActionPopup';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -297,6 +298,10 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: {
     snapPoints: [666],
     Component: WithdrawActionPopup,
+  },
+  [MODAL_NAMES.WITHDRAW_UNWRAP_ACTION_DETAIL]: {
+    snapPoints: [666],
+    Component: WithdrawUnWrapActionPopup,
   },
   [MODAL_NAMES.BORROW_ACTION_DETAIL]: {
     snapPoints: [666],

@@ -172,6 +172,7 @@ const useLendingSummary = () => {
     iUserSummary,
     apyInfo,
     formattedPoolReservesAndIncentives,
+    wrapperPoolReserve,
   } = useMemo(() => {
     if (!reserves || !userReserves) {
       return {
@@ -250,6 +251,14 @@ const useLendingSummary = () => {
         wrapperToken[CHAINS_ENUM.ETH].address,
       );
     });
+    const _wrapperPoolReserve = _formattedPoolReservesAndIncentives.find(
+      item => {
+        return !isSameAddress(
+          item.underlyingAsset,
+          wrapperToken[CHAINS_ENUM.ETH].address,
+        );
+      },
+    );
     if (wrapperReserve) {
       const balance = mappedBalances.find(x =>
         isSameAddress(x.address, API_ETH_MOCK_ADDRESS),
@@ -290,6 +299,7 @@ const useLendingSummary = () => {
       iUserSummary: _iUserSummary,
       apyInfo: _apyInfo,
       formattedPoolReservesAndIncentives: _formattedPoolReservesAndIncentives,
+      wrapperPoolReserve: _wrapperPoolReserve,
     };
   }, [reserves, userReserves, walletBalances]);
 
@@ -300,6 +310,7 @@ const useLendingSummary = () => {
     displayPoolReserves,
     iUserSummary,
     formattedPoolReservesAndIncentives,
+    wrapperPoolReserve,
     apyInfo,
     loading,
   };
