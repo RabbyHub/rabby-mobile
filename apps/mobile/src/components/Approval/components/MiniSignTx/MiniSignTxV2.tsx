@@ -328,6 +328,7 @@ const MiniSignTxV2 = ({
     !!loading ||
     !ctx?.txsCalc?.length ||
     !!ctx.checkErrors?.some(e => e.level === 'forbidden');
+  const nativeTokenInsufficient = !!ctx.checkErrors?.some(e => e.code === 3001);
 
   if (synGasHeaderInfo) {
     return (
@@ -460,6 +461,7 @@ const MiniSignTxV2 = ({
               directSubmit={true}
               checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
               account={currentAccount}
+              nativeTokenInsufficient={nativeTokenInsufficient}
             />
           </View>
         }

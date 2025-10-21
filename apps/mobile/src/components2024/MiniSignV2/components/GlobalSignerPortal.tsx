@@ -48,7 +48,7 @@ export const GlobalSignerPortal: React.FC = () => {
 
   const showUI = React.useMemo(() => {
     if (ctx?.mode === 'ui' && visible) {
-      return ['ui-open', 'signing', 'error'].includes(status);
+      return ['ui-open', 'signing'].includes(status);
     }
 
     return false;

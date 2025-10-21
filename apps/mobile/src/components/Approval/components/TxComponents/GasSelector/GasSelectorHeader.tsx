@@ -145,6 +145,7 @@ interface GasSelectorProps {
   account: Account;
   fixedMode?: boolean;
   defaultFixedModeOnCurrentChain?: boolean;
+  nativeTokenInsufficient?: boolean;
 }
 
 const useExplainGas = ({
@@ -203,6 +204,7 @@ export const GasSelectorHeader = ({
   account,
   fixedMode,
   defaultFixedModeOnCurrentChain = false,
+  nativeTokenInsufficient,
 }: GasSelectorProps) => {
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
@@ -566,6 +568,7 @@ export const GasSelectorHeader = ({
       setGasLimit(Number(gasLimit));
       setCustomNonce(Number(nonce));
       setIsSelectCustom(true);
+      setCustomGas(undefined);
     }
     matomoRequestEvent({
       category: 'Transaction',
@@ -789,6 +792,12 @@ export const GasSelectorHeader = ({
   const isNilCustomGas = customGas === undefined || customGas === '';
   const notSelectCustomGasAndIsNil = !isSelectCustom && isNilCustomGas;
   const isLoadingGas = loadingGasEstimated || isNilCustomGas;
+
+  const isCustomLoading =
+    isSelectCustom && !isNilCustomGas && loadingGasEstimated;
+
+  const isCustomDisabled =
+    isCustomLoading || (isSelectCustom && isNilCustomGas);
 
   useEffect(() => {
     if (!isReady || !selectedGas) {
@@ -1026,7 +1035,13 @@ export const GasSelectorHeader = ({
                       setIsGasAccountHovering(true);
                     }}>
                     <Text numberOfLines={1}>
-                      <Text style={styles.gasSelectorCardAmountLabelUsd}>
+                      <Text
+                        style={[
+                          styles.gasSelectorCardAmountLabelUsd,
+                          !gasAccountCost?.balance_is_enough && {
+                            color: colors2024['red-default'],
+                          },
+                        ]}>
                         {formatGasHeaderUsdValue(
                           (gasAccountCost?.gas_account_cost.estimate_tx_cost ||
                             0) +
@@ -1130,7 +1145,14 @@ export const GasSelectorHeader = ({
                           ? { color: colors2024['orange-default'] }
                           : {},
                       ])}>
-                      <Text style={styles.gasSelectorCardAmountLabelUsd}>
+                      <Text
+                        style={[
+                          styles.gasSelectorCardAmountLabelUsd,
+                          gasMethod === 'native' &&
+                            nativeTokenInsufficient && {
+                              color: colors2024['red-default'],
+                            },
+                        ]}>
                         {gasCostUsdStr}
                       </Text>
                       <Text style={styles.gasSelectorCardAmountLabelAmount}>
@@ -1377,22 +1399,25 @@ export const GasSelectorHeader = ({
                     }
                   />
                 </Tip>
-
-                {fixedMode &&
-                (selectedGas?.level === 'custom' || isSelectCustom) ? (
-                  <Pressable
-                    style={styles.fixedModeContainer}
-                    onPress={() => {
-                      setCheckedFixedMode(e => !e);
-                    }}>
-                    <CheckBoxRect checked={checkedFixedMode} />
-                    <Text style={styles.fixedModeText}>
-                      {t('page.miniSignFooterBar.fixedModeText')}
-                    </Text>
-                  </Pressable>
-                ) : null}
               </>
             )}
+
+            {fixedMode &&
+            ((selectedGas?.level === 'custom' && selectedGas.price) ||
+              (isSelectCustom &&
+                selectedGas?.level !== 'custom' &&
+                customGas)) ? (
+              <Pressable
+                style={styles.fixedModeContainer}
+                onPress={() => {
+                  setCheckedFixedMode(e => !e);
+                }}>
+                <CheckBoxRect checked={checkedFixedMode} />
+                <Text style={styles.fixedModeText}>
+                  {t('page.miniSignFooterBar.fixedModeText')}
+                </Text>
+              </Pressable>
+            ) : null}
 
             {hasTip && (
               <View style={styles.gasPriceDesc}>
@@ -1407,7 +1432,12 @@ export const GasSelectorHeader = ({
             footerStyle={styles.footer}
             type="primary"
             onPress={handleModalConfirmGas}
-            disabled={!isReady || validateStatus.customGas.status === 'error'}
+            disabled={
+              !isReady ||
+              validateStatus.customGas.status === 'error' ||
+              isCustomDisabled
+            }
+            loading={isCustomLoading}
             title={t('global.confirm')}
           />
         </BottomSheetScrollView>
