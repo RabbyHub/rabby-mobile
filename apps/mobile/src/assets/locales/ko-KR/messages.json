@@ -326,7 +326,8 @@
       "noSupprotTokenForSafe": "전송하려는 토큰의 Safe 주소가 이 체인에 배포되어 있지 않습니다. 손실을 피하기 위해 진행하기 전에 확인하십시오.",
       "From": "에서",
       "noSupportTokenForChain": "수신자 주소는 다른 체인의 계약 주소입니다. 손실을 방지하기 위해 진행하기 전에 확인하십시오.",
-      "addressDetail": "주소 세부정보"
+      "addressDetail": "주소 세부정보",
+      "newAmount": "금액"
     },
     "signTx": {
       "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.  \n가스 한도가 낮습니다. 거래가 실패할 가능성이 1% 있습니다.",
@@ -1036,7 +1037,6 @@
           "title": "Rabby에 가져오기가 안전한가요?",
           "description": "귀하의 데이터는 안전하게 암호화되어 기기 내에 로컬로 저장됩니다. Rabby는 귀하의 개인 정보에 접근할 수 없으며, 제삼자와 공유되지 않습니다."
         },
-        "safe": "안전",
         "safeTitle": "안전한 지갑 가져오기",
         "importTitle": "지갑 가져오기",
         "watch": "보기 전용 지갑",
@@ -1267,7 +1267,8 @@
         "placeholder": "추천 코드 입력하여 추가 포인트 받기 (선택 사항)",
         "addressBalance": "지갑 잔액",
         "snapshotTime": "스냅샷 시간: {{time}}"
-      }
+      },
+      "xPoints": "{{point}} 포인트"
     },
     "safeQueue": {
       "viewBtn": "보기",
@@ -1720,7 +1721,18 @@
           "title": "연결 중"
         }
       },
-      "createNewAddress": "새로운 Wallet 생성"
+      "createNewAddress": "새로운 Wallet 생성",
+      "whatIsPrivateKey": {
+        "title3": "절대 공유하지 마세요",
+        "ButtonGotIt": "알겠어요.",
+        "title4": "안전성",
+        "title2": "백업",
+        "description2": "개인 키를 잃어버리면 지갑을 복구할 수 없습니다.",
+        "description3": "절대 개인 키를 공유하지 마세요. 접근할 수 있는 누구나 귀하의 자금을 제어할 수 있습니다.",
+        "description1": "개인 키는 지갑에 접근하고 제어하는 데 사용되는 문자와 숫자의 문자열입니다. 이를 사용하여 모든 장치에서 지갑을 복구할 수 있습니다.",
+        "title": "프라이빗 키란 무엇인가요?",
+        "description4": "당신의 개인 키는 장치에 로컬로 저장되며 비밀번호로 암호화됩니다. 오직 당신만이 접근할 수 있습니다. Rabby는 당신의 개인 키를 검색하거나 접근할 수 없습니다."
+      }
     },
     "customTestnet": {
       "id": "ID",
@@ -1818,16 +1830,6 @@
         "marketData": "시장 데이터",
         "tokenSecurity": "토큰 보안"
       },
-      "interval": {
-        "4H": "4시간",
-        "30M": "30M",
-        "1H": "1H",
-        "15M": "15M",
-        "1M": "1M",
-        "5M": "5M",
-        "1W": "1W",
-        "1D": "1D"
-      },
       "marketInfo": {
         "marketCap": "시가총액",
         "volume24h": "24시간 거래량",
@@ -1857,13 +1859,35 @@
             "volume": "볼륨",
             "price": "가격",
             "qnt": "Qnt",
-            "value": "값"
+            "value": "값",
+            "transactionCount": "거래 수"
           }
         },
         "details": "세부 정보",
         "empty": "데이터 없음",
         "activity": "활동",
-        "summary": "요약 데이터"
+        "summary": "요약 데이터",
+        "pool": {
+          "tab": {
+            "top5": "상위 5개 POOL",
+            "liquidityDetail": "유동성 세부정보"
+          },
+          "actions": {
+            "all": "모두",
+            "remove": "제거",
+            "add": "추가"
+          },
+          "headers": {
+            "time": "시간",
+            "amount": "금액",
+            "value": "값"
+          },
+          "value": "가치",
+          "amount": "금액",
+          "pair": "쌍",
+          "dex": "Dex"
+        },
+        "pools": "풀"
       }
     },
     "setting": {
@@ -2072,16 +2096,22 @@
         "contentModeMobile": "모바일 사이트 요청",
         "disconnect": "연결 해제",
         "favorite": "즐겨찾기",
-        "contentModeDesktop": "데스크톱 사이트 요청"
+        "contentModeDesktop": "데스크톱 사이트 요청",
+        "clearCache": "캐시 지우기"
       },
       "HyperliquidInvitePopup": {
         "btn": "지금 가입하세요",
         "title": "하이퍼리퀴드 추천 프로그램",
-        "desc": "지금 Rabby의 코드를 사용하여 Hyperliquid 수수료에서 <1>4% 할인</1>을 받으세요."
+        "desc": "지금 Rabby의 코드를 사용하여 Hyperliquid 수수료에서 <1>4% 할인</1>을 받으세요.",
+        "asterTitle": "Aster 추천 프로그램",
+        "asterDesc": "지금 Rabby의 코드를 사용하여 Aster 수수료에서 <1>4% 할인</1>을 받으세요."
       },
       "WebviewError": {
         "error": "오류:",
         "failedToLoad": "페이지를 불러오는 데 실패했습니다."
+      },
+      "toast": {
+        "clearCacheSuccess": "캐시가 지워졌습니다"
       }
     },
     "browserManage": {
@@ -2437,6 +2467,9 @@
         "setTpPrice": "이익 실현 가격 설정",
         "slPrice": "손절가"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "빌트인 페이지"
     }
   },
   "global": {

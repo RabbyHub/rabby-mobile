@@ -1,8 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Image, Text, View } from 'react-native';
 
 import ImageInviteDark from '@/assets2024/icons/perps/hyperliquid-invite-dark.png';
 import ImageInviteLight from '@/assets2024/icons/perps/hyperliquid-invite-light.png';
+import ImageAsterDark from '@/assets2024/icons/perps/aster-invite-dark.png';
+import ImageAsterLight from '@/assets2024/icons/perps/aster-invite-light.png';
+
 import { AppBottomSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { Button } from '@/components2024/Button';
@@ -22,14 +25,16 @@ interface Props {
   onInvite?: () => void;
   onUnmount?: () => void;
   footer?: React.ReactNode;
+  type?: 'hyperliquid' | 'aster';
 }
 
-export const HyperliquidInvitePopup: React.FC<Props> = ({
+export const PerpsInvitePopup: React.FC<Props> = ({
   visible,
   onClose,
   onInvite,
   onUnmount,
   footer,
+  type = 'hyperliquid',
 }) => {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
@@ -52,6 +57,13 @@ export const HyperliquidInvitePopup: React.FC<Props> = ({
   useUnmount(() => {
     onUnmount?.();
   });
+
+  const sourceImage = useMemo(() => {
+    if (type === 'hyperliquid') {
+      return isLight ? ImageInviteLight : ImageInviteDark;
+    }
+    return isLight ? ImageAsterLight : ImageAsterDark;
+  }, [type, isLight]);
 
   return (
     <AppBottomSheetModal
@@ -81,13 +93,15 @@ export const HyperliquidInvitePopup: React.FC<Props> = ({
           ]}>
           <View style={styles.header}>
             <Text style={styles.title}>
-              {t('page.browser.HyperliquidInvitePopup.title')}
+              {type === 'hyperliquid'
+                ? t('page.browser.HyperliquidInvitePopup.title')
+                : t('page.browser.HyperliquidInvitePopup.asterTitle')}
             </Text>
           </View>
           <View style={styles.body}>
             <View style={styles.content}>
               <Image
-                source={isLight ? ImageInviteLight : ImageInviteDark}
+                source={sourceImage}
                 style={styles.image}
                 resizeMode="contain"
               />
@@ -95,7 +109,11 @@ export const HyperliquidInvitePopup: React.FC<Props> = ({
                 <Text style={styles.desc}>
                   <Trans
                     t={t}
-                    i18nKey={t('page.browser.HyperliquidInvitePopup.desc')}
+                    i18nKey={
+                      type === 'hyperliquid'
+                        ? t('page.browser.HyperliquidInvitePopup.desc')
+                        : t('page.browser.HyperliquidInvitePopup.asterDesc')
+                    }
                     components={{
                       1: <Text style={styles.strong} />,
                     }}

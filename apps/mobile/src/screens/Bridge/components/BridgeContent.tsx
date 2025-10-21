@@ -62,14 +62,17 @@ import {
   MINI_SIGN_ERROR,
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { BridgeSlippage } from './BridgeSlippage';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
     backgroundColor: colors2024['neutral-bg-1'],
+    overflow: 'visible',
   },
   container: {
     flex: 1,
     paddingTop: 16,
+    overflow: 'visible',
   },
   noRecoomedTokenText: {
     fontSize: 14,
@@ -821,6 +824,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   const showRiskTips =
     isSlippageHigh || isSlippageLow || showLoss || miniSignGasFeeTooHigh;
 
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+
   return (
     <NormalScreenContainer overwriteStyle={styles.screen}>
       {isForMultipleAddress && (
@@ -832,7 +837,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
           paddingBottom: 150 + bottom + (showRiskTips ? 26 : 0),
         }}
         enableOnAndroid
-        scrollEnabled
+        scrollEnabled={scrollEnabled}
         extraHeight={200}
         keyboardOpeningTime={0}>
         <View style={styles.card}>
@@ -849,6 +854,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               isMaxRef={isMaxRef}
               clickMaxBtnCount={clickMaxBtnCount}
               handleMax={handleMax}
+              onSliderScrollEnabledChange={setScrollEnabled}
               onChangeToken={token => {
                 const normalSetChainToken = () => {
                   handleAmountChange('');
@@ -956,9 +962,27 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                   onOk={fillRecommendFromToken}
                 />
               ) : (
-                <Text style={styles.noRecoomedTokenText}>
-                  {t('page.bridge.no-quote-found')}
-                </Text>
+                <>
+                  <Text style={styles.noRecoomedTokenText}>
+                    {t('page.bridge.no-quote-found')}
+                  </Text>
+                  <View style={{ marginHorizontal: 24, marginTop: 12 }}>
+                    <BridgeSlippage
+                      value={slippage}
+                      displaySlippage={slippage}
+                      onChange={e => {
+                        setSlippageChanged(true);
+                        setSlippage(e);
+                      }}
+                      autoSlippage={autoSlippage}
+                      isCustomSlippage={isCustomSlippage}
+                      setAutoSlippage={setAutoSlippage}
+                      setIsCustomSlippage={setIsCustomSlippage}
+                      type="bridge"
+                      loading={quoteLoading}
+                    />
+                  </View>
+                </>
               )}
             </>
           )}

@@ -772,7 +772,8 @@
       "From": "Từ",
       "noSupprotTokenForSafe": "Địa chỉ Safe mà bạn đang gửi token không được triển khai trên chuỗi này. Vui lòng kiểm tra trước khi tiếp tục để tránh mất mát.",
       "noSupportTokenForChain": "Địa chỉ người nhận là một địa chỉ hợp đồng trên một chuỗi khác. Kiểm tra trước khi tiếp tục để tránh mất mát.",
-      "addressDetail": "Chi tiết địa chỉ"
+      "addressDetail": "Chi tiết địa chỉ",
+      "newAmount": "Số lượng"
     },
     "approvals": {
       "list": {
@@ -1072,7 +1073,6 @@
         "selectAddMethod": "Chọn Thêm Phương Thức"
       },
       "importAddress": {
-        "safe": "An toàn",
         "hardWare": "Kết nối ví phần cứng",
         "privateKey": "Nhập Private Key",
         "seedPhrase": "Nhập Seed Phrase",
@@ -1435,7 +1435,18 @@
           "description": "Bật Bluetooth và mở khóa OneKey"
         }
       },
-      "createNewAddress": "Tạo ví mới"
+      "createNewAddress": "Tạo ví mới",
+      "whatIsPrivateKey": {
+        "title2": "Sao lưu",
+        "title4": "An toàn",
+        "title3": "Không bao giờ chia sẻ nó",
+        "title": "Khóa riêng là gì",
+        "description2": "Nếu bạn mất keyring riêng của mình, bạn sẽ không thể khôi phục ví của mình.",
+        "ButtonGotIt": "Tôi đã hiểu.",
+        "description3": "Không bao giờ chia sẻ khóa riêng của bạn - bất kỳ ai có quyền truy cập vào nó đều có thể kiểm soát tài sản của bạn.",
+        "description1": "Một khóa riêng là một chuỗi các chữ cái và số được sử dụng để truy cập và kiểm soát ví của bạn. Bạn có thể sử dụng nó để phục hồi ví của mình trên bất kỳ thiết bị nào.",
+        "description4": "Khoá riêng của bạn được lưu trữ cục bộ trên thiết bị của bạn và được mã hoá bằng mật khẩu của bạn. Chỉ có bạn mới có thể truy cập nó. Rabby không thể lấy lại hoặc truy cập khoá riêng của bạn."
+      }
     },
     "addressDetail": {
       "pin-in-list": "Ghim trong Danh sách",
@@ -1781,16 +1792,6 @@
         "tokenSecurity": "Bảo mật Token",
         "marketData": "Dữ liệu thị trường"
       },
-      "interval": {
-        "5M": "5M",
-        "1D": "1D",
-        "15M": "15M",
-        "4H": "4H",
-        "1H": "1H",
-        "1M": "1M",
-        "1W": "1W",
-        "30M": "30M"
-      },
       "marketInfo": {
         "txns24h": "24h Txns",
         "holders": "Người nắm giữ",
@@ -1820,13 +1821,35 @@
             "address": "Địa chỉ",
             "price": "Giá",
             "value": "Giá trị",
-            "qnt": "Qnt"
+            "qnt": "Qnt",
+            "transactionCount": "Số lượng giao dịch"
           }
         },
         "activity": "Hoạt động",
         "summary": "Dữ liệu Tóm tắt",
         "details": "Chi tiết",
-        "empty": "Không có dữ liệu"
+        "empty": "Không có dữ liệu",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "Chi tiết thanh khoản",
+            "top5": "Top 5 pools"
+          },
+          "actions": {
+            "all": "Tất cả",
+            "remove": "Gỡ bỏ",
+            "add": "Thêm"
+          },
+          "headers": {
+            "value": "Giá trị",
+            "amount": "Số lượng",
+            "time": "Thời gian"
+          },
+          "amount": "Số lượng",
+          "pair": "Cặp",
+          "value": "Giá trị",
+          "dex": "Dex"
+        },
+        "pools": "Pools"
       }
     },
     "backupPrivateKey": {
@@ -1975,7 +1998,8 @@
         "max-15-characters-use-numbers-and-letters-only": "Tối đa 15 ký tự, chỉ sử dụng số và chữ cái.",
         "set-my-code": "Đặt mã của tôi",
         "set-my-referral-code": "Thiết lập mã giới thiệu của tôi"
-      }
+      },
+      "xPoints": "{{point}} Điểm"
     },
     "backupSeedPhrase": {
       "showQrCode": "Hiển thị mã QR",
@@ -2162,16 +2186,22 @@
         "refresh": "Làm mới",
         "disconnect": "Ngắt kết nối",
         "favorite": "Yêu thích",
-        "contentModeDesktop": "Yêu cầu Trang Web Máy Tính"
+        "contentModeDesktop": "Yêu cầu Trang Web Máy Tính",
+        "clearCache": "Xóa bộ nhớ cache"
       },
       "HyperliquidInvitePopup": {
         "btn": "Tham gia ngay",
         "title": "Chương trình Giới thiệu Hyperliquid",
-        "desc": "Tham gia ngay bằng mã của Rabby để nhận <1>giảm giá 4%</1> trên khoản phí Hyperliquid của bạn."
+        "desc": "Tham gia ngay bằng mã của Rabby để nhận <1>giảm giá 4%</1> trên khoản phí Hyperliquid của bạn.",
+        "asterTitle": "Chương trình giới thiệu Aster",
+        "asterDesc": "Tham gia ngay bằng mã của Rabby để nhận <1>giảm giá 4%</1> trên phí Aster của bạn."
       },
       "WebviewError": {
         "error": "Lỗi:",
         "failedToLoad": "Không thể tải trang"
+      },
+      "toast": {
+        "clearCacheSuccess": "Bộ nhớ cache đã được xóa"
       }
     },
     "browserManage": {
@@ -2527,6 +2557,9 @@
         "slPrice": "Giá Dừng Lỗ",
         "setSlPrice": "Đặt giá dừng lỗ"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Trang xây dựng sẵn"
     }
   },
   "component": {

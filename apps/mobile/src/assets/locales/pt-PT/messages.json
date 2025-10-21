@@ -915,7 +915,8 @@
       "From": "De",
       "noSupprotTokenForSafe": "O endereço Safe para o qual está a enviar tokens não está implantado nesta cadeia. Verifique antes de prosseguir para evitar perdas.",
       "noSupportTokenForChain": "O endereço do destinatário é um endereço de contrato em uma cadeia diferente. Verifique antes de prosseguir para evitar perdas.",
-      "addressDetail": "Detalhe do Endereço"
+      "addressDetail": "Detalhe do Endereço",
+      "newAmount": "Quantidade"
     },
     "signFooterBar": {
       "importedByLedger": "Importado por Ledger",
@@ -1327,7 +1328,6 @@
       "importAddress": {
         "privateKey": "Importar Private Key",
         "seedPhrase": "Importar Seed Phrase",
-        "safe": "Seguro",
         "hardWare": "Ligar Carteiras de Hardware",
         "tips": {
           "gotIt": "Entendi.",
@@ -1557,7 +1557,18 @@
           }
         }
       },
-      "createNewAddress": "Criar nova Wallet"
+      "createNewAddress": "Criar nova Wallet",
+      "whatIsPrivateKey": {
+        "title2": "Backup",
+        "title": "O que é uma key privada",
+        "ButtonGotIt": "Eu consegui.",
+        "title4": "Segurança",
+        "description2": "Se você perder sua chave privada, não poderá restaurar sua wallet.",
+        "title3": "Nunca o partilhe",
+        "description1": "Uma chave privada é uma sequência de letras e números usada para acessar e controlar a sua wallet. Você pode usá-la para recuperar a sua wallet em qualquer dispositivo.",
+        "description3": "Nunca partilhe a sua private key—qualquer pessoa com acesso a ela pode controlar os seus fundos.",
+        "description4": "A sua chave privada é armazenada localmente no seu dispositivo e encriptada com a sua palavra-passe. Apenas você pode aceder a ela. Rabby não pode recuperar ou aceder à sua chave privada."
+      }
     },
     "unlock": {
       "btn": {
@@ -1796,7 +1807,8 @@
         "rabbyValuedUserBadge": "Distintivo de Utilizador Valorizado do Rabby",
         "title": "Reivindicar Pontos Iniciais"
       },
-      "code-set-successfully": "Código de recomendação definido com sucesso"
+      "code-set-successfully": "Código de recomendação definido com sucesso",
+      "xPoints": "{{point}} Pontos"
     },
     "safeQueue": {
       "cancelExplain": "Cancelar {{token}} Aprovação para {{protocol}}",
@@ -1976,16 +1988,6 @@
         "tokenSecurity": "Token Security",
         "marketData": "Dados de mercado"
       },
-      "interval": {
-        "15M": "15M",
-        "1M": "1M",
-        "1D": "1D",
-        "4H": "4H",
-        "5M": "5M",
-        "1W": "1W",
-        "1H": "1H",
-        "30M": "30M"
-      },
       "marketInfo": {
         "marketCap": "Capitalização de Mercado",
         "holders": "Titulares",
@@ -2015,13 +2017,35 @@
             "min": "mín",
             "qnt": "Qnt",
             "price": "Preço",
-            "value": "Valor"
+            "value": "Valor",
+            "transactionCount": "Contagem de Transações"
           }
         },
         "summary": "Dados Resumidos",
         "activity": "Atividade",
         "details": "Detalhes",
-        "empty": "Sem Dados"
+        "empty": "Sem Dados",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "Detalhe de Liquidez",
+            "top5": "Top 5 pools"
+          },
+          "actions": {
+            "add": "Adicionar",
+            "all": "Todos",
+            "remove": "Remover"
+          },
+          "headers": {
+            "value": "Valor",
+            "time": "Tempo",
+            "amount": "Quantidade"
+          },
+          "value": "Valor",
+          "pair": "Par",
+          "dex": "Dex",
+          "amount": "Montante"
+        },
+        "pools": "Pools"
       }
     },
     "customTestnet": {
@@ -2370,16 +2394,22 @@
         "refresh": "Atualizar",
         "contentModeDesktop": "Solicitar Site de Desktop",
         "favorite": "Favorito",
-        "contentModeMobile": "Solicitar Site Móvel"
+        "contentModeMobile": "Solicitar Site Móvel",
+        "clearCache": "Limpar cache"
       },
       "HyperliquidInvitePopup": {
         "title": "Programa de Referência Hyperliquid",
         "btn": "Junte-se Agora",
-        "desc": "Junte-se agora utilizando o código da Rabby para obter um <1>desconto de 4%</1> nas suas taxas de Hyperliquid."
+        "desc": "Junte-se agora utilizando o código da Rabby para obter um <1>desconto de 4%</1> nas suas taxas de Hyperliquid.",
+        "asterTitle": "Programa de Recompensas Aster",
+        "asterDesc": "Junte-se agora usando o código do Rabby para obter um <1>desconto de 4%</1> nas suas taxas do Aster."
       },
       "WebviewError": {
         "error": "Erro:",
         "failedToLoad": "Falha ao carregar a página"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache limpo"
       }
     },
     "browserManage": {
@@ -2735,6 +2765,9 @@
         "tpPrice": "Preço de Fecho de Lucro",
         "entryPrice": "Preço de Entrada:"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Página Integrada"
     }
   },
   "constant": {

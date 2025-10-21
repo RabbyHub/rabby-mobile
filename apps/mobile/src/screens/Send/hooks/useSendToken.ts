@@ -67,6 +67,8 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
+import { tokenAmountBn } from '@/screens/Swap/utils';
 
 function makeDefaultToken(): TokenItem & {
   tokenId?: string;
@@ -1160,7 +1162,12 @@ export function useSendTokenForm({
   );
 
   const loadCurrentToken = useCallback(
-    async (id: string, chainId: string, currentAddress: string) => {
+    async (
+      id: string,
+      chainId: string,
+      currentAddress: string,
+      disableBalanceCheck?: boolean,
+    ) => {
       const chain = findChain({
         serverId: chainId,
       });
@@ -1192,6 +1199,7 @@ export function useSendTokenForm({
       putScreenState({ isLoading: false });
 
       if (
+        !disableBalanceCheck &&
         new BigNumber(formValues.amount || 0).isGreaterThan(
           new BigNumber(result?.raw_amount_hex_str || 0).div(
             10 ** (result?.decimals || 18),
@@ -1215,111 +1223,6 @@ export function useSendTokenForm({
       setRouteParams,
       putChainToken,
       t,
-    ],
-  );
-
-  const handleCurrentTokenChange = useCallback(
-    async (token: TokenItem) => {
-      if (screenState.showGasReserved) {
-        putScreenState({ showGasReserved: false });
-      }
-      if (!account) {
-        console.error('[handleCurrentTokenChange] no account');
-      }
-      if (token.id !== currentToken.id || token.chain !== currentToken.chain) {
-        patchFormValues({
-          amount: '',
-        });
-      }
-      const nextChainItem = findChainByServerID(token.chain);
-      putChainToken({
-        chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
-        currentToken: token,
-      });
-      setRouteParams(pre => ({
-        ...pre,
-        chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
-        tokenId: token.id,
-      }));
-      putScreenState({
-        estimatedGas: 0,
-      });
-
-      // await persistPageStateCache({ currentToken: token });
-
-      putScreenState({
-        balanceError: null,
-        balanceWarn: null,
-        isLoading: true,
-      });
-
-      if (account) {
-        await loadCurrentToken(token.id, token.chain, account.address);
-      }
-    },
-    [
-      screenState.showGasReserved,
-      account,
-      currentToken.id,
-      currentToken.chain,
-      putChainToken,
-      setRouteParams,
-      putScreenState,
-      patchFormValues,
-      loadCurrentToken,
-    ],
-  );
-
-  const checkCexSupport = useCallback(
-    async (token: TokenItem) => {
-      const { reason } = disableItemCheck?.(token) || {};
-      const confirmCallback = () => {
-        if (!isForMultipleAddress) {
-          handleCurrentTokenChange(token);
-        } else {
-          const { accountSwitchTo } = switchAccountOnSelectedToken({
-            token,
-            currentAccount,
-          });
-          if (!accountSwitchTo) {
-            handleCurrentTokenChange(token);
-          } else {
-            const currChainItem = findChainByServerID(token.chain);
-            naviReplace(RootNames.StackTransaction, {
-              screen: RootNames.MultiSend,
-              params: {
-                ...(multiNavParams || {}),
-                chainEnum: currChainItem?.enum,
-                tokenId: token.id,
-              },
-            });
-          }
-        }
-      };
-      if (toAddress && reason) {
-        Alert.alert(reason, '', [
-          {
-            text: t('page.sendToken.noSupportBtns.cancel'),
-            style: 'cancel',
-          },
-          {
-            text: t('page.sendToken.noSupportBtns.confirm'),
-            onPress: confirmCallback,
-          },
-        ]);
-        return;
-      }
-      confirmCallback();
-    },
-    [
-      currentAccount,
-      disableItemCheck,
-      handleCurrentTokenChange,
-      isForMultipleAddress,
-      multiNavParams,
-      switchAccountOnSelectedToken,
-      t,
-      toAddress,
     ],
   );
 
@@ -1493,6 +1396,161 @@ export function useSendTokenForm({
     }
   }, [couldReserveGas, putScreenState, handleMaxInfoChanged]);
 
+  const handleSlider100 = useCallback(async () => {
+    if (currentToken && couldReserveGas) {
+      if (screenState.gasList) {
+        const gasLevel = screenState.gasList.find(e => e.level === 'fast');
+        if (gasLevel) {
+          putScreenState({ selectedGasLevel: gasLevel });
+          handleMaxInfoChanged({ gasLevel });
+        } else {
+          patchFormValues({ amount: tokenAmountBn(currentToken).toString(10) });
+        }
+      } else {
+        patchFormValues({ amount: tokenAmountBn(currentToken).toString(10) });
+      }
+    } else {
+      patchFormValues({ amount: tokenAmountBn(currentToken).toString(10) });
+    }
+  }, [
+    currentToken,
+    couldReserveGas,
+    patchFormValues,
+    putScreenState,
+    handleMaxInfoChanged,
+    screenState,
+  ]);
+
+  const {
+    onChangeSlider,
+    slider,
+    setSlider,
+    isDraggingSlider,
+    setIsDraggingSlider,
+  } = useSwapBridgeSlider({
+    setAmount: (amount: string) => {
+      patchFormValues({ amount });
+    },
+    fromToken: currentToken,
+    handleSlider100: handleSlider100,
+  });
+
+  const handleCurrentTokenChange = useCallback(
+    async (token: TokenItem) => {
+      if (screenState.showGasReserved) {
+        putScreenState({ showGasReserved: false });
+      }
+      if (!account) {
+        console.error('[handleCurrentTokenChange] no account');
+      }
+      const newToken =
+        token.id !== currentToken.id || token.chain !== currentToken.chain;
+      if (newToken) {
+        patchFormValues({
+          amount: '',
+        });
+        setSlider(0);
+        setIsDraggingSlider(false);
+      }
+      const nextChainItem = findChainByServerID(token.chain);
+      putChainToken({
+        chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
+        currentToken: token,
+      });
+      setRouteParams(pre => ({
+        ...pre,
+        chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
+        tokenId: token.id,
+      }));
+      putScreenState({
+        estimatedGas: 0,
+      });
+
+      // await persistPageStateCache({ currentToken: token });
+
+      putScreenState({
+        balanceError: null,
+        balanceWarn: null,
+        isLoading: true,
+      });
+
+      if (account) {
+        await loadCurrentToken(
+          token.id,
+          token.chain,
+          account.address,
+          newToken,
+        );
+      }
+    },
+    [
+      screenState.showGasReserved,
+      account,
+      currentToken.id,
+      currentToken.chain,
+      putChainToken,
+      setRouteParams,
+      putScreenState,
+      patchFormValues,
+      loadCurrentToken,
+      setSlider,
+      setIsDraggingSlider,
+    ],
+  );
+
+  const checkCexSupport = useCallback(
+    async (token: TokenItem) => {
+      const { reason } = disableItemCheck?.(token) || {};
+      const confirmCallback = () => {
+        if (!isForMultipleAddress) {
+          handleCurrentTokenChange(token);
+        } else {
+          const { accountSwitchTo } = switchAccountOnSelectedToken({
+            token,
+            currentAccount,
+          });
+          if (!accountSwitchTo) {
+            handleCurrentTokenChange(token);
+          } else {
+            const currChainItem = findChainByServerID(token.chain);
+            naviReplace(RootNames.StackTransaction, {
+              screen: RootNames.MultiSend,
+              params: {
+                ...(multiNavParams || {}),
+                chainEnum: currChainItem?.enum,
+                tokenId: token.id,
+              },
+            });
+          }
+        }
+      };
+      if (toAddress && reason) {
+        Alert.alert(reason, '', [
+          {
+            text: t('page.sendToken.noSupportBtns.cancel'),
+            style: 'cancel',
+          },
+          {
+            text: t('page.sendToken.noSupportBtns.confirm'),
+            onPress: confirmCallback,
+          },
+        ]);
+        return;
+      }
+      confirmCallback();
+    },
+    [
+      currentAccount,
+      disableItemCheck,
+      handleCurrentTokenChange,
+      isForMultipleAddress,
+      multiNavParams,
+      switchAccountOnSelectedToken,
+      t,
+      toAddress,
+    ],
+  );
+
   const handleChainChanged = useCallback(
     async (val: CHAINS_ENUM) => {
       putScreenState(prev => ({ ...prev, clickedMax: false }));
@@ -1540,6 +1598,8 @@ export function useSendTokenForm({
       patchFormValues({
         amount: '',
       });
+      setSlider(0);
+      setIsDraggingSlider(false);
       putScreenState({ showGasReserved: false });
       handleFormValuesChange(
         { amount: '' },
@@ -1557,6 +1617,8 @@ export function useSendTokenForm({
       handleFormValuesChange,
       loadCurrentToken,
       account.address,
+      setSlider,
+      setIsDraggingSlider,
     ],
   );
 
@@ -1682,6 +1744,9 @@ export function useSendTokenForm({
     handleGasLevelChanged,
     handleClickMaxButton,
     handleIgnoreGasFeeChange,
+    onChangeSlider,
+    setSlider,
+    slider,
 
     sendTokenEvents: sendTokenEventsRef.current,
     formik,
@@ -1723,6 +1788,7 @@ type InternalContext = {
 
   formik: ReturnType<typeof useSendTokenFormikContext>;
   events: EventEmitter;
+  slider: number;
   fns: {
     putScreenState: (patch: Partial<SendScreenState>) => void;
     fetchContactAccounts: () => void;
@@ -1743,6 +1809,8 @@ type InternalContext = {
     //   gasLimit?: number;
     // }) => void;
     // onFormValuesChange: (changedValues: Partial<FormSendToken>) => void;
+    onChangeSlider: (v: number, syncAmount?: boolean) => void;
+    setSlider: (v: number) => void;
   };
 };
 const SendTokenInternalContext = React.createContext<InternalContext>({
@@ -1762,6 +1830,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
 
   formik: null as any,
   events: null as any,
+  slider: 0,
   fns: {
     putScreenState: () => {},
     fetchContactAccounts: () => {},
@@ -1773,6 +1842,8 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     handleGasLevelChanged: () => {},
     handleClickMaxButton: () => {},
     handleIgnoreGasFeeChange: () => {},
+    onChangeSlider: () => {},
+    setSlider: () => {},
   },
 });
 

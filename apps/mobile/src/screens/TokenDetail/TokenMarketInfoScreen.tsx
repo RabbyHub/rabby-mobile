@@ -798,6 +798,7 @@ export const TokenMarketInfoScreen = () => {
               hideActivity={!tokenWithAmount?.support_market_data}
               tokenId={token._tokenId}
               chainId={token.chain}
+              symbol={token.symbol}
             />
             <View style={{ height: isAndroid ? 200 + safeOffBottom : 156 }} />
           </ScrollView>

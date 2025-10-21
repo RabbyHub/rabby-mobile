@@ -918,7 +918,8 @@
       "From": "Von",
       "noSupprotTokenForSafe": "Die Safe-Adresse, an die Sie Tokens senden, ist nicht auf dieser Chain bereitgestellt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden.",
       "noSupportTokenForChain": "Der Empfängeradresse ist eine Vertragsadresse auf einer anderen Kette. Überprüfen Sie dies, bevor Sie fortfahren, um einen Verlust zu vermeiden.",
-      "addressDetail": "Adressdetails"
+      "addressDetail": "Adressdetails",
+      "newAmount": "Betrag"
     },
     "signFooterBar": {
       "signAndSubmitButton": "Signieren",
@@ -1276,7 +1277,6 @@
       "importAddress": {
         "privateKey": "Private Key importieren",
         "seedPhrase": "Seed Phrase importieren",
-        "safe": "Sicher",
         "hardWare": "Verbinden Sie Hardware Wallets",
         "tips": {
           "title": "Ist es sicher, in Rabby zu importieren?",
@@ -1607,7 +1607,18 @@
           }
         }
       },
-      "createNewAddress": "Neue Wallet erstellen"
+      "createNewAddress": "Neue Wallet erstellen",
+      "whatIsPrivateKey": {
+        "title": "Was ist ein private key",
+        "ButtonGotIt": "Ich hab's.",
+        "title2": "Sicherung",
+        "title3": "Nie teilen",
+        "description2": "Wenn Sie Ihren privaten Schlüssel verlieren, können Sie Ihre Wallet nicht wiederherstellen.",
+        "title4": "Sicherheit",
+        "description4": "Ihr privater Schlüssel wird lokal auf Ihrem Gerät gespeichert und mit Ihrem Passwort verschlüsselt. Nur Sie können darauf zugreifen. Rabby kann Ihren privaten Schlüssel nicht abrufen oder darauf zugreifen.",
+        "description1": "Ein privater Schlüssel ist eine Zeichenfolge aus Buchstaben und Zahlen, die verwendet wird, um auf Ihr Wallet zuzugreifen und es zu steuern. Sie können ihn verwenden, um Ihr Wallet auf einem beliebigen Gerät wiederherzustellen.",
+        "description3": "Teilen Sie niemals Ihren privaten Schlüssel – jeder, der Zugriff darauf hat, kann Ihre Mittel kontrollieren."
+      }
     },
     "addressDetail": {
       "address": "Adresse",
@@ -1803,7 +1814,8 @@
           "please-sign-this-text-message-to-verify-that-you-are-the-owner-of-this-address": "Bitte unterschreiben Sie diese Textnachricht, um zu verifizieren, dass Sie der Besitzer dieser Adresse sind",
           "sign": "Signieren"
         }
-      }
+      },
+      "xPoints": "{{point}} Punkte"
     },
     "connect": {
       "markRemovedToast": "Mark entfernt",
@@ -2073,16 +2085,6 @@
         "tokenSecurity": "Token-Sicherheit",
         "marketData": "Marktdaten"
       },
-      "interval": {
-        "4H": "4H",
-        "1M": "1M",
-        "1H": "1H",
-        "1D": "1D",
-        "5M": "5M",
-        "1W": "1W",
-        "15M": "15M",
-        "30M": "30M"
-      },
       "marketInfo": {
         "txns24h": "24h Txns",
         "totalSupply": "Gesamtvorrat",
@@ -2112,13 +2114,35 @@
             "type": "Typ",
             "qnt": "Qnt",
             "price": "Preis",
-            "value": "Wert"
+            "value": "Wert",
+            "transactionCount": "Transaktionsanzahl"
           }
         },
         "empty": "Keine Daten",
         "summary": "Zusammenfassungsdaten",
         "activity": "Aktivität",
-        "details": "Details"
+        "details": "Details",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "Liquiditätsdetails",
+            "top5": "Top 5 POOLs"
+          },
+          "actions": {
+            "add": "Hinzufügen",
+            "remove": "Entfernen",
+            "all": "Alle"
+          },
+          "headers": {
+            "time": "Zeit",
+            "value": "Wert",
+            "amount": "Betrag"
+          },
+          "dex": "Dex",
+          "pair": "Paar",
+          "amount": "Betrag",
+          "value": "Wert"
+        },
+        "pools": "Pools"
       }
     },
     "setting": {
@@ -2370,16 +2394,22 @@
         "disconnect": "Trennen",
         "favorite": "Favorit",
         "contentModeMobile": "Mobile-Seite anfordern",
-        "refresh": "Aktualisieren"
+        "refresh": "Aktualisieren",
+        "clearCache": "Cache löschen"
       },
       "HyperliquidInvitePopup": {
         "title": "Hyperliquid Empfehlungsprogramm",
         "btn": "Jetzt beitreten",
-        "desc": "Tritt jetzt mit dem Code von Rabby bei, um einen <1>4% Rabatt</1> auf deine Hyperliquid-Gebühren zu erhalten."
+        "desc": "Tritt jetzt mit dem Code von Rabby bei, um einen <1>4% Rabatt</1> auf deine Hyperliquid-Gebühren zu erhalten.",
+        "asterTitle": "Aster Empfehlungsprogramm",
+        "asterDesc": "Tritt jetzt bei und verwende Rabby’s Code, um einen <1>4% Rabatt</1> auf deine Aster-Gebühren zu erhalten."
       },
       "WebviewError": {
         "failedToLoad": "Seite konnte nicht geladen werden",
         "error": "Fehler:"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache gelöscht"
       }
     },
     "browserManage": {
@@ -2735,6 +2765,9 @@
         "entryPrice": "Einstiegspreis:",
         "slPrice": "Stop-Loss-Preis"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Integrierte Seite"
     }
   },
   "constant": {

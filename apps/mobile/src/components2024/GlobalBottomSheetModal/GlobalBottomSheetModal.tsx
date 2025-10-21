@@ -224,7 +224,7 @@ export const GlobalBottomSheetModal2024 = () => {
           MODAL_CONFIGS[modal.params.name].globalModalPropsPreset;
         const finalBottomSheetModalProps: typeof propsPreset & object = {
           ...propsPreset,
-          ...modal.params.finalBottomSheetModalProps,
+          ...modal.params.bottomSheetModalProps,
         };
 
         const rootViewType =

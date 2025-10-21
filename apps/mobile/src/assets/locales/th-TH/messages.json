@@ -449,7 +449,8 @@
       "From": "จาก",
       "noSupprotTokenForSafe": "ที่อยู่ Safe ที่คุณส่งโทเคนไปยังไม่ได้ถูกปรับใช้ในเครือข่ายนี้ กรุณาตรวจสอบก่อนดำเนินการเพื่อลดความเสี่ยงในการสูญเสีย。",
       "noSupportTokenForChain": "ที่อยู่ผู้รับเป็นที่อยู่สัญญาบนเชนที่ต่างกัน โปรดตรวจสอบก่อนดำเนินการเพื่อหลีกเลี่ยงการสูญเสีย",
-      "addressDetail": "รายละเอียดที่อยู่"
+      "addressDetail": "รายละเอียดที่อยู่",
+      "newAmount": "จำนวน"
     },
     "importSuccess": {
       "addressCount": "{{count}} Addresses",
@@ -1191,7 +1192,7 @@
         "hardwareWallet": "ฮาร์ดแวร์วอลเล็ต",
         "syncRabbyExtension": "ซิงค์ Rabby Extension",
         "createAddress": "สร้างกระเป๋าเงิน",
-        "importAddress": "นำเข้าสูตรคลัง",
+        "importAddress": "นำเข้ากระเป๋าเงิน",
         "selectAddMethod": "เลือกวิธีการเพิ่ม"
       },
       "multiAddressHome": {
@@ -1213,7 +1214,6 @@
         "privateKey": "นำเข้าคีย์ส่วนตัว",
         "seedPhrase": "นำเข้าประโยคเมล็ดพันธุ์",
         "hardWare": "เชื่อมต่อกระเป๋าฮาร์ดแวร์",
-        "safe": "ปลอดภัย",
         "tips": {
           "gotIt": "ฉันเข้าใจแล้ว",
           "entry": "นำเข้าไปยัง Rabby ปลอดภัยหรือไม่",
@@ -1223,7 +1223,7 @@
         "safeTitle": "นำเข้ากระเป๋า Safe Wallet",
         "importTitle": "นำเข้ากระเป๋าเงิน",
         "watch": "กระเป๋าเงินเฉพาะดู",
-        "watchOnlyTitle": "นำเข้าสินทรัพย์ที่ตรวจสอบได้เท่านั้น",
+        "watchOnlyTitle": "นำเข้ากระเป๋าเงินเฉพาะดู",
         "ImportCloud": "นำเข้าจาก {{cloud}}"
       },
       "createNewAddress": {
@@ -1615,7 +1615,18 @@
           }
         }
       },
-      "createNewAddress": "สร้างกระเป๋าใหม่"
+      "createNewAddress": "สร้างกระเป๋าใหม่",
+      "whatIsPrivateKey": {
+        "title2": "สำรองข้อมูล",
+        "title4": "ความปลอดภัย",
+        "title3": "อย่าแชร์มัน",
+        "title": "กุญแจส่วนตัวคืออะไร",
+        "description3": "อย่าเล่private keyของคุณให้ผู้อื่นฟัง—ใครก็ตามที่เข้าถึงมันสามารถควบคุมเงินของคุณได้。",
+        "description1": "คีย์ส่วนตัวคือชุดของตัวอักษรและตัวเลขที่ใช้ในการเข้าถึงและควบคุมกระเป๋าเงินของคุณ คุณสามารถใช้มันในการกู้คืนกระเป๋าเงินของคุณบนอุปกรณ์ใดก็ได้",
+        "description4": "กุญแจส่วนตัวของคุณถูกเก็บไว้ในเครื่องของคุณและเข้ารหัสด้วยรหัสผ่านของคุณ เท่านั้นที่คุณสามารถเข้าถึงได้ Rabby ไม่สามารถดึงหรือเข้าถึงกุญแจส่วนตัวของคุณได้",
+        "description2": "หากคุณสูญเสีย keyring ของคุณ คุณจะไม่สามารถกู้คืนกระเป๋าเงินของคุณได้",
+        "ButtonGotIt": "ฉันเข้าใจแล้ว。"
+      }
     },
     "safeQueue": {
       "unknownProtocol": "Unknown protocol",
@@ -1744,7 +1755,8 @@
           "verify-address": "ยืนยันที่อยู่",
           "cancel": "ยกเลิก"
         }
-      }
+      },
+      "xPoints": "{{point}} คะแนน"
     },
     "approvalsAddressList": {
       "title": "Approvals"
@@ -2026,16 +2038,6 @@
         "marketData": "ข้อมูลตลาด",
         "tokenSecurity": "ความปลอดภัยของโทเคน"
       },
-      "interval": {
-        "1W": "1W",
-        "1D": "1D",
-        "1H": "1ชั่วโมง",
-        "4H": "4H",
-        "5M": "5M",
-        "15M": "15M",
-        "30M": "30M",
-        "1M": "1M"
-      },
       "marketInfo": {
         "holders": "ผู้ถือ",
         "txns24h": "24h Txns",
@@ -2065,13 +2067,35 @@
             "type": "ประเภท",
             "qnt": "Qnt",
             "price": "ราคา",
-            "value": "ค่า"
+            "value": "ค่า",
+            "transactionCount": "จำนวนธุรกรรม"
           }
         },
         "details": "รายละเอียด",
         "summary": "ข้อมูลสรุป",
         "activity": "กิจกรรม",
-        "empty": "ไม่มีข้อมูล"
+        "empty": "ไม่มีข้อมูล",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "รายละเอียดสภาพคล่อง",
+            "top5": "5 สระที่ดีที่สุด"
+          },
+          "actions": {
+            "remove": "ลบ",
+            "all": "ทั้งหมด",
+            "add": "เพิ่ม"
+          },
+          "headers": {
+            "time": "เวลา",
+            "value": "ค่า",
+            "amount": "จำนวน"
+          },
+          "value": "ค่า",
+          "dex": "Dex",
+          "pair": "คู่",
+          "amount": "จำนวน"
+        },
+        "pools": "พูล"
       }
     },
     "setting": {
@@ -2280,16 +2304,22 @@
         "refresh": "รีเฟรช",
         "favorite": "รายการโปรด",
         "disconnect": "ตัดการเชื่อมต่อ",
-        "contentModeDesktop": "ขอเว็บไซต์เดสก์ท็อป"
+        "contentModeDesktop": "ขอเว็บไซต์เดสก์ท็อป",
+        "clearCache": "ล้างแคช"
       },
       "HyperliquidInvitePopup": {
         "btn": "เข้าร่วมตอนนี้",
         "title": "โปรแกรมแนะนำ Hyperliquid",
-        "desc": "เข้าร่วมตอนนี้โดยใช้รหัสของ Rabby เพื่อรับส่วนลด <1>4%</1> สำหรับค่าธรรมเนียม Hyperliquid ของคุณ。"
+        "desc": "เข้าร่วมตอนนี้โดยใช้รหัสของ Rabby เพื่อรับส่วนลด <1>4%</1> สำหรับค่าธรรมเนียม Hyperliquid ของคุณ。",
+        "asterTitle": "โปรแกรมแนะนำของ Aster",
+        "asterDesc": "เข้าร่วมตอนนี้โดยใช้รหัสของ Rabby เพื่อรับส่วนลด <1>4%</1> สำหรับค่าธรรมเนียม Aster ของคุณ。"
       },
       "WebviewError": {
         "failedToLoad": "ไม่สามารถโหลดหน้าเว็บได้",
         "error": "ข้อผิดพลาด:"
+      },
+      "toast": {
+        "clearCacheSuccess": "เคลียร์แคชเรียบร้อยแล้ว"
       }
     },
     "browserManage": {
@@ -2645,6 +2675,9 @@
         "tpPrice": "ราคาทำกำไร",
         "slPrice": "ราคาหยุดขาดทุน"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Build-In Page"
     }
   },
   "native": {

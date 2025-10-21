@@ -97,6 +97,7 @@ import {
   MINI_SIGN_ERROR,
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { BridgeSlippage } from '../Bridge/components/BridgeSlippage';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -1072,7 +1073,25 @@ const Swap = ({
           </View>
 
           {noQuote ? (
-            <Text style={styles.errorTip}>{t('page.swap.no-quote-found')}</Text>
+            <>
+              <Text style={styles.errorTip}>
+                {t('page.swap.no-quote-found')}
+              </Text>
+              <View>
+                <BridgeSlippage
+                  value={slippage}
+                  displaySlippage={slippage}
+                  onChange={setSlippage}
+                  autoSlippage={autoSlippage}
+                  isCustomSlippage={isCustomSlippage}
+                  setAutoSlippage={setAutoSlippage}
+                  setIsCustomSlippage={setIsCustomSlippage}
+                  type="swap"
+                  loading={quoteLoading}
+                  autoSuggestSlippage={autoSuggestSlippage}
+                />
+              </View>
+            </>
           ) : null}
 
           {isShowMoreVisible &&

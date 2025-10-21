@@ -355,7 +355,8 @@
       "From": "從",
       "noSupprotTokenForSafe": "您要发送令牌的 Safe 地址未在此链上部署。请在继续操作之前检查，以避免损失。",
       "noSupportTokenForChain": "收件人地址是不同链上的合约地址。在继续之前请检查，以避免损失。",
-      "addressDetail": "地址詳情"
+      "addressDetail": "地址詳情",
+      "newAmount": "金額"
     },
     "sendTokenComponents": {
       "GasReserved": "預留 <1>0</1> {{ tokenName }} 用於 gas 費用"
@@ -1218,7 +1219,6 @@
         "selectAddMethod": "選擇添加方法"
       },
       "importAddress": {
-        "safe": "安全",
         "seedPhrase": "匯入助記詞",
         "privateKey": "導入私人密鑰",
         "hardWare": "連接硬體錢包",
@@ -1551,7 +1551,18 @@
           }
         }
       },
-      "createNewAddress": "建立新的 Wallet"
+      "createNewAddress": "建立新的 Wallet",
+      "whatIsPrivateKey": {
+        "title": "什麼是 private key",
+        "ButtonGotIt": "我懂了。",
+        "title3": "永遠不要分享它",
+        "title4": "安全",
+        "description3": "切勿分享您的私钥——任何能够访问它的人都可以控制您的资金。",
+        "title2": "備份",
+        "description2": "如果您丟失了您的私鑰，您將無法恢復您的錢包。",
+        "description4": "您的私钥会本地存储在您的设备上，并使用您的密码进行加密。只有您可以访问它。Rabby 无法检索或访问您的私钥。",
+        "description1": "私鑰是一串字母和數字，用於訪問和控制您的錢包。您可以使用它在任何設備上恢復您的錢包。"
+      }
     },
     "importSafe": {
       "title": "添加 Safe 地址",
@@ -1634,7 +1645,8 @@
           "please-sign-this-text-message-to-verify-that-you-are-the-owner-of-this-address": "請簽署此文本消息以驗證您是此地址的擁有者"
         },
         "max-15-characters-use-numbers-and-letters-only": "最多 15 個字符，僅使用數字和字母。"
-      }
+      },
+      "xPoints": "{{point}} 點"
     },
     "search": {
       "header": {
@@ -1857,16 +1869,6 @@
         "tokenSecurity": "代幣安全",
         "marketData": "市場數據"
       },
-      "interval": {
-        "5M": "5M",
-        "1W": "1W",
-        "30M": "30M",
-        "1D": "1天",
-        "1M": "1M",
-        "4H": "4H",
-        "15M": "15M",
-        "1H": "1H"
-      },
       "marketInfo": {
         "holders": "持有者",
         "marketCap": "市值",
@@ -1896,13 +1898,35 @@
             "buy": "購買",
             "qnt": "Qnt",
             "price": "價格",
-            "value": "值"
+            "value": "值",
+            "transactionCount": "交易次數"
           }
         },
         "details": "詳情",
         "empty": "無資料",
         "activity": "活動",
-        "summary": "摘要資料"
+        "summary": "摘要資料",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "流動性明細",
+            "top5": "前 5 個 POOL"
+          },
+          "actions": {
+            "remove": "移除",
+            "add": "新增",
+            "all": "所有"
+          },
+          "headers": {
+            "value": "價值",
+            "time": "時間",
+            "amount": "數量"
+          },
+          "dex": "Dex",
+          "amount": "金額",
+          "pair": "配對",
+          "value": "價值"
+        },
+        "pools": "池子"
       }
     },
     "customTestnet": {
@@ -2219,16 +2243,22 @@
         "contentModeDesktop": "請求桌面網站",
         "refresh": "刷新",
         "disconnect": "斷開連接",
-        "favorite": "最愛"
+        "favorite": "最愛",
+        "clearCache": "清除快取"
       },
       "HyperliquidInvitePopup": {
         "btn": "立即加入",
         "title": "Hyperliquid 介紹計劃",
-        "desc": "現在使用 Rabby 的代碼加入，獲得 <1>4% 折扣</1> 於你的 Hyperliquid 費用。"
+        "desc": "現在使用 Rabby 的代碼加入，獲得 <1>4% 折扣</1> 於你的 Hyperliquid 費用。",
+        "asterTitle": "Aster 推介計劃",
+        "asterDesc": "立即使用 Rabby 的代码加入，以获得您的 Aster 手续费 <1>4% 折扣</1>。"
       },
       "WebviewError": {
         "error": "錯誤：",
         "failedToLoad": "無法加載頁面"
+      },
+      "toast": {
+        "clearCacheSuccess": "快取已清除"
       }
     },
     "browserManage": {
@@ -2584,6 +2614,9 @@
         "entryPrice": "進場價格：",
         "slPrice": "止損價格"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "內建頁面"
     }
   },
   "component": {

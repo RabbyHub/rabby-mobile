@@ -219,6 +219,9 @@ function SendScreen({
     formValues,
     handleFieldChange,
     handleClickMaxButton,
+    onChangeSlider,
+    slider,
+    setSlider,
     handleGasLevelChanged,
     handleIgnoreGasFeeChange,
 
@@ -486,6 +489,7 @@ function SendScreen({
         },
         events: sendTokenEvents,
         formik,
+        slider,
         fns: {
           putScreenState,
           fetchContactAccounts,
@@ -496,6 +500,8 @@ function SendScreen({
           handleFieldChange,
           checkCexSupport,
           handleClickMaxButton,
+          onChangeSlider,
+          setSlider,
           handleGasLevelChanged,
           handleIgnoreGasFeeChange,
         },

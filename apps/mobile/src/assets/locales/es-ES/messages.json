@@ -999,7 +999,8 @@
       "From": "Desde",
       "noSupprotTokenForSafe": "La dirección Safe a la que estás enviando tokens no está desplegada en esta cadena. Verifica antes de continuar para evitar pérdidas.",
       "noSupportTokenForChain": "La dirección del destinatario es una dirección de contrato en una cadena diferente. Verifica antes de continuar para evitar pérdidas.",
-      "addressDetail": "Detalles de la dirección"
+      "addressDetail": "Detalles de la dirección",
+      "newAmount": "Cantidad"
     },
     "gasTopUp": {
       "No_Tokens": "Sin tokens",
@@ -1196,7 +1197,6 @@
       "importAddress": {
         "seedPhrase": "Importar Seed Phrase",
         "privateKey": "Importar Clave Privada",
-        "safe": "Seguro",
         "hardWare": "Conectar Monederos de Hardware",
         "tips": {
           "gotIt": "Lo tengo.",
@@ -1482,7 +1482,18 @@
           "description": "Ingrese el código PIN de acuerdo con la disposición numérica que se muestra en la pantalla del dispositivo"
         }
       },
-      "createNewAddress": "Crear nueva Wallet"
+      "createNewAddress": "Crear nueva Wallet",
+      "whatIsPrivateKey": {
+        "title4": "Seguridad",
+        "ButtonGotIt": "Lo tengo.",
+        "title": "¿Qué es una clave privada?",
+        "description2": "Si pierdes tu clave privada, no podrás recuperar tu wallet.",
+        "title2": "Copia de seguridad",
+        "description3": "Nunca compartas tu clave privada; cualquiera que tenga acceso a ella puede controlar tus fondos.",
+        "description4": "Tu clave privada se almacena localmente en tu dispositivo y está encriptada con tu contraseña. Solo tú puedes acceder a ella. Rabby no puede recuperar ni acceder a tu clave privada.",
+        "description1": "Una clave privada es una cadena de letras y números utilizada para acceder y controlar tu wallet. Puedes usarla para recuperar tu wallet en cualquier dispositivo.",
+        "title3": "Nunca lo compartas"
+      }
     },
     "switchChain": {
       "requestRabbyToSupport": "Solicitar a Rabby que ofrezca soporte",
@@ -1769,7 +1780,8 @@
           "please-sign-this-text-message-to-verify-that-you-are-the-owner-of-this-address": "Por favor, firme este mensaje de texto para verificar que es el propietario de esta dirección.",
           "verify-address": "Verificar dirección"
         }
-      }
+      },
+      "xPoints": "{{point}} Puntos"
     },
     "addChain": {
       "title": "Agregar red personalizada a Rabby",
@@ -1934,16 +1946,6 @@
         "tokenSecurity": "Seguridad del Token",
         "marketData": "Datos del mercado"
       },
-      "interval": {
-        "1D": "1D",
-        "15M": "15M",
-        "30M": "30M",
-        "1W": "1W",
-        "1H": "1H",
-        "5M": "5M",
-        "1M": "1M",
-        "4H": "4H"
-      },
       "marketInfo": {
         "holders": "Poseedores",
         "totalSupply": "Suministro total",
@@ -1973,13 +1975,35 @@
             "min": "mín",
             "value": "Valor",
             "price": "Precio",
-            "qnt": "Qnt"
+            "qnt": "Qnt",
+            "transactionCount": "Conteo de Transacciones"
           }
         },
         "empty": "Sin Datos",
         "activity": "Actividad",
         "summary": "Resumen de Datos",
-        "details": "Detalles"
+        "details": "Detalles",
+        "pool": {
+          "tab": {
+            "top5": "Top 5 pools",
+            "liquidityDetail": "Detalles de Liquidez"
+          },
+          "actions": {
+            "all": "Todo",
+            "add": "Añadir",
+            "remove": "Eliminar"
+          },
+          "headers": {
+            "amount": "Cantidad",
+            "time": "Tiempo",
+            "value": "Valor"
+          },
+          "pair": "Par de",
+          "value": "Valor",
+          "dex": "Dex",
+          "amount": "Cantidad"
+        },
+        "pools": "Pools"
       }
     },
     "setting": {
@@ -2295,16 +2319,22 @@
         "refresh": "Actualizar",
         "favorite": "Favorito",
         "contentModeMobile": "Solicitar sitio móvil",
-        "contentModeDesktop": "Solicitar sitio de escritorio"
+        "contentModeDesktop": "Solicitar sitio de escritorio",
+        "clearCache": "Borrar caché"
       },
       "HyperliquidInvitePopup": {
         "btn": "Únete ahora",
         "title": "Programa de Referidos de Hyperliquid",
-        "desc": "Únete ahora usando el código de Rabby para obtener un <1>4% de descuento</1> en tus tarifas de Hyperliquid."
+        "desc": "Únete ahora usando el código de Rabby para obtener un <1>4% de descuento</1> en tus tarifas de Hyperliquid.",
+        "asterTitle": "Programa de Referidos Aster",
+        "asterDesc": "Únete ahora usando el código de Rabby para obtener un <1>4% de descuento</1> en tus tarifas de Aster."
       },
       "WebviewError": {
         "error": "Error:",
         "failedToLoad": "Error al cargar la página"
+      },
+      "toast": {
+        "clearCacheSuccess": "Caché vaciado"
       }
     },
     "browserManage": {
@@ -2660,6 +2690,9 @@
         "tpPrice": "Precio de Toma de Ganancias",
         "setSlPrice": "Establecer Precio de Stop-Loss"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Página Integrada"
     }
   },
   "global": {

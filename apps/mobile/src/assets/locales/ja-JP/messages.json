@@ -798,7 +798,8 @@
       "From": "から",
       "noSupprotTokenForSafe": "あなたがトークンを送信しているSafeアドレスは、このチェーンにデプロイされていません。損失を避けるために、進む前に確認してください。",
       "noSupportTokenForChain": "受取人アドレスは異なるチェーン上のコントラクトアドレスです。損失を避けるために、進む前に確認してください。",
-      "addressDetail": "アドレス詳細"
+      "addressDetail": "アドレス詳細",
+      "newAmount": "金額"
     },
     "swap": {
       "hidden-no-quote-rates_other": "{{count}} のレートが利用できません。",
@@ -973,7 +974,6 @@
       },
       "importAddress": {
         "privateKey": "プライベートキーをインポートする",
-        "safe": "安全",
         "hardWare": "ハードウェアウォレットを接続",
         "tips": {
           "gotIt": "了解しました。",
@@ -1397,7 +1397,18 @@
           }
         }
       },
-      "createNewAddress": "新しいウォレットを作成"
+      "createNewAddress": "新しいウォレットを作成",
+      "whatIsPrivateKey": {
+        "title4": "安全性",
+        "ButtonGotIt": "わかりました。",
+        "title2": "バックアップ",
+        "title": "プライベートキーとは何ですか",
+        "description2": "プライベートキーを失うと、ウォレットを復元することができなくなります。",
+        "description1": "プライベートキーは、あなたのウォレットにアクセスし、制御するために使用される文字と数字の文字列です。これを使用して、任意のデバイスでウォレットを復元することができます。",
+        "title3": "絶対に共有しないでください",
+        "description3": "自分のプライベートキーを決して共有しないでください。アクセスできる人は誰でもあなたの資金を管理できます。",
+        "description4": "あなたの秘密鍵はデバイスにローカルに保存されており、パスワードで暗号化されています。あなたにしかアクセスできません。Rabbyはあなたの秘密鍵を取得したりアクセスしたりすることはできません。"
+      }
     },
     "sign": {
       "transactionSpeed": "トランザクションスピード"
@@ -1739,16 +1750,6 @@
         "tokenSecurity": "トークンセキュリティ",
         "marketData": "マーケットデータ"
       },
-      "interval": {
-        "1M": "1M",
-        "1W": "1W",
-        "4H": "4H",
-        "1H": "1H",
-        "1D": "1D",
-        "15M": "15M",
-        "30M": "30M",
-        "5M": "5M"
-      },
       "marketInfo": {
         "holders": "保有者",
         "marketCap": "時価総額",
@@ -1778,13 +1779,35 @@
             "all": "すべて",
             "price": "価格",
             "value": "価値",
-            "qnt": "Qnt"
+            "qnt": "Qnt",
+            "transactionCount": "取引回数"
           }
         },
         "details": "詳細情報",
         "empty": "データがありません",
         "summary": "サマリーデータ",
-        "activity": "アクティビティ"
+        "activity": "アクティビティ",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "流動性の詳細",
+            "top5": "トップ5プール"
+          },
+          "actions": {
+            "add": "追加",
+            "remove": "削除",
+            "all": "すべて"
+          },
+          "headers": {
+            "amount": "金額",
+            "value": "価値",
+            "time": "時間"
+          },
+          "pair": "ペア",
+          "amount": "金額",
+          "value": "価値",
+          "dex": "Dex"
+        },
+        "pools": "プール"
       }
     },
     "customTestnet": {
@@ -1862,7 +1885,8 @@
         "snapshotTime": "スナップショット時間: {{time}}",
         "addressBalance": "ウォレット残高",
         "placeholder": "紹介コードを入力して追加ポイントを獲得 (オプション)"
-      }
+      },
+      "xPoints": "{{point}} ポイント"
     },
     "search": {
       "header": {
@@ -2124,16 +2148,22 @@
         "disconnect": "切断",
         "contentModeDesktop": "デスクトップ版サイトをリクエスト",
         "favorite": "お気に入り",
-        "contentModeMobile": "モバイルサイトをリクエスト"
+        "contentModeMobile": "モバイルサイトをリクエスト",
+        "clearCache": "キャッシュをクリア"
       },
       "HyperliquidInvitePopup": {
         "btn": "今すぐ参加",
         "title": "ハイパーリキッド紹介プログラム",
-        "desc": "今すぐRabbyのコードを使って、Hyperliquidの手数料が<1>4%割引</1>になります。"
+        "desc": "今すぐRabbyのコードを使って、Hyperliquidの手数料が<1>4%割引</1>になります。",
+        "asterTitle": "Aster 紹介プログラム",
+        "asterDesc": "今すぐRabbyのコードを使って、Asterの手数料で<1>4%の割引</1>を受けましょう。"
       },
       "WebviewError": {
         "failedToLoad": "ページの読み込みに失敗しました",
         "error": "エラー："
+      },
+      "toast": {
+        "clearCacheSuccess": "キャッシュがクリアされました"
       }
     },
     "browserManage": {
@@ -2489,6 +2519,9 @@
         "entryPrice": "エントリー価格：",
         "setTpPrice": "テイクプロフィット価格を設定する"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "ビルトインページ"
     }
   },
   "global": {

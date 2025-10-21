@@ -121,7 +121,7 @@ export const AssetAvatar = memo(
           {!logo || on ? (
             <DefaultToken size={size} style={avatarStyle} isLight={isLight} />
           ) : isSvgLogo ? (
-            <SvgUri uri={logo!} width={size} height={size} onError={turnOn} />
+            <DefaultToken size={size} style={avatarStyle} isLight={isLight} />
           ) : (
             <FastImage
               source={source}

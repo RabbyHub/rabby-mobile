@@ -1551,6 +1551,11 @@ class ProviderController extends BaseController {
   walletRevokePermissions = ({ session: { origin }, data: { params } }) => {
     if (keyringService.isUnlocked() && dappService.getConnectedDapp(origin)) {
       if (params?.[0] && 'eth_accounts' in params[0]) {
+        sessionService.broadcastEvent(
+          BroadcastEvent.accountsChanged,
+          [],
+          origin,
+        );
         dappService.disconnect(origin);
       }
     }
