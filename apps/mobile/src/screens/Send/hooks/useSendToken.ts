@@ -1062,10 +1062,10 @@ export function useSendTokenForm({
     ],
   );
 
-  useEffect(() => {
-    toAddress && handleFieldChange('to', toAddress);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toAddress]);
+  // useEffect(() => {
+  //   toAddress && handleFieldChange('to', toAddress);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [toAddress]);
 
   const estimateGasOnChain = useCallback(
     async (input?: {

@@ -102,7 +102,7 @@ export const useSendRoutes = () => {
         return;
       }
       navigation.push(RootNames.StackTransaction, {
-        screen: RootNames.SendTo,
+        screen: RootNames.Send,
       });
     },
     [

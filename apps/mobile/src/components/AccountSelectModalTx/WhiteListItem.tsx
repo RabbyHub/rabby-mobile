@@ -21,13 +21,9 @@ import {
 import { trigger } from 'react-native-haptic-feedback';
 import { ellipsisAddress } from '@/utils/address';
 import { RcIconLockCC, RcIconSwitchCC } from '@/assets/icons/send';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions } from '@react-navigation/native';
-import { RootNames } from '@/constant/layout';
 import { useWhitelist } from '@/hooks/whitelist';
 import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -38,24 +34,25 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
-import { useAlias2 } from '@/hooks/alias';
 
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
   addrDesc?: AddrDescResponse['desc'];
   inWhiteList?: boolean;
-  disableMenu?: boolean;
+  enableMenu?: boolean;
   isMyImported?: boolean;
   hideBalance?: boolean;
+  onPress?: () => void;
 }
-export const WhiteListItem = ({
+export const WhiteListItemInSheetModal = ({
   account,
   style,
   inWhiteList,
-  disableMenu,
-  hideBalance,
+  enableMenu,
   isMyImported,
+  hideBalance,
+  onPress,
 }: IProps) => {
   const [cexInfo, setCexInfo] = useState<Cex | undefined>();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -139,13 +136,11 @@ export const WhiteListItem = ({
     };
   }, [account.address, account.aliasName]);
 
-  const { navigateToSendScreen } = useSendRoutes();
-
   const children = (
     <AddressItemShadowView
       style={[
         styles.shadowView,
-        !disableMenu && isPressing && styles.rootPressing,
+        !enableMenu && isPressing && styles.rootPressing,
       ]}>
       <TouchableOpacity
         activeOpacity={1}
@@ -155,10 +150,7 @@ export const WhiteListItem = ({
         delayLongPress={200} // long press delay
         onPress={() => {
           if (inWhiteList || isMyImported) {
-            navigateToSendScreen({
-              toAddress: account.address,
-              addressBrandName: account.brandName,
-            });
+            onPress?.();
           } else {
             const id = createGlobalBottomSheetModal2024({
               name: MODAL_NAMES.CONFIRM_ADDRESS,
@@ -171,17 +163,13 @@ export const WhiteListItem = ({
               },
               onConfirm: (acc, addressDesc) => {
                 removeGlobalBottomSheetModal2024(id);
-                navigateToSendScreen({
-                  addressBrandName: acc.brandName,
-                  addrDesc: addressDesc,
-                  toAddress: acc.address,
-                });
+                onPress?.();
               },
             });
           }
         }}
         onLongPress={() => {
-          if (disableMenu) {
+          if (enableMenu) {
             return;
           }
           trigger('impactLight', {
@@ -193,7 +181,7 @@ export const WhiteListItem = ({
           style={StyleSheet.flatten([
             styles.card,
             style,
-            !disableMenu && isPressing && styles.cardPressing,
+            enableMenu && isPressing && styles.cardPressing,
           ])}>
           <InnerAddressItem style={styles.rootItem} account={account}>
             {({ WalletIcon, WalletBalance }) => (
@@ -264,7 +252,7 @@ export const WhiteListItem = ({
       </TouchableOpacity>
     </AddressItemShadowView>
   );
-  if (disableMenu) {
+  if (!enableMenu) {
     return children;
   }
   return (

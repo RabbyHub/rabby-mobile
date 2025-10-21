@@ -38,7 +38,7 @@ import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { CaretDownIconCC } from '@/components/AccountSwitcher/icons/CaretDownIconCC';
+import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import { SendHistory } from '@/screens/Send/SubScreens/SelectPolyScreen/SendHistory';
 import { whitelistAtom } from '@/hooks/whitelist';
 import { contactService, whitelistService } from '@/core/services';
@@ -413,7 +413,8 @@ const WhitelistInputScreen = () => {
                         {t('page.whitelist.placeholder.exchange')}
                       </Text>
                     )}
-                    <CaretDownIconCC
+                    <CaretArrowIconCC
+                      dir="down"
                       style={[styles.caretIcon]}
                       width={26}
                       height={26}

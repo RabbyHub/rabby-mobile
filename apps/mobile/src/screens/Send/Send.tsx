@@ -81,6 +81,7 @@ import { PendingTxItem } from '../Swap/components/PendingTxItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
+import { SheetModalSelectAccountSend } from './components/SelectAccountSheetModal';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -505,7 +506,8 @@ function SendScreen({
         },
       }}>
       <NormalScreenContainer2024 type="bg1">
-        {isForMultipleAddress && (
+        {/* TODO: clean it */}
+        {(isForMultipleAddress || !isForMultipleAddress) && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
         <TouchableWithoutFeedback
@@ -518,14 +520,13 @@ function SendScreen({
               {/* FromToSection */}
               <View>
                 {/* From */}
-                <FromAddressControl2024 disableSwitch={!isForMultipleAddress} />
+                <FromAddressControl2024 disableSwitch={false} />
                 {/* To */}
                 <ToAddressControl2024
                   style={{
                     marginTop: 24,
                     marginBottom: 0,
                   }}
-                  address={navParams?.toAddress || ''}
                   addrDesc={addrDesc}
                   brandName={navParams?.addressBrandName}
                 />

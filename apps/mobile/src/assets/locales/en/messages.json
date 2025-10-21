@@ -653,7 +653,8 @@
       "sectionTo": {
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
-        "searchInputPlaceholder": "Enter an address or scan"
+        "searchInputPlaceholder": "Enter an address or scan",
+        "selectPlaceholder": "Select Address"
       },
       "whitelistAlert__disabled": "Whitelist disabled. You can transfer to any address.",
       "whitelistAlert__notWhitelisted_tip": "The address is not whitelisted.",
@@ -2479,6 +2480,12 @@
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Build-In Page"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "sendFrom": "Send From",
+        "sendTo": "Send To"
+      }
     }
   },
   "component": {
@@ -2702,6 +2709,11 @@
     },
     "GlobalTipsPopup": {
       "btn": "I Got it"
+    },
+    "accountSelectModalTx": {
+      "recentAccounts": "Recent",
+      "whitelistAccounts": "Whitelist",
+      "importedAccounts": "Imported Wallets"
     }
   },
   "native": {

@@ -66,6 +66,12 @@ function markFirstItems(
   return newArr;
 }
 
+export type RecentHistoryItem = {
+  toAddress: string;
+  time: number;
+  isFailed: boolean;
+  isPending: boolean;
+};
 export const useRecentSend = ({
   useAllHistory,
 }: { useAllHistory?: boolean } = {}) => {
@@ -133,7 +139,7 @@ export const useRecentSend = ({
     );
   }, [historyList]);
 
-  const recentHistory = useMemo(() => {
+  const recentHistory: RecentHistoryItem[] = useMemo(() => {
     return markedList
       .sort((a, b) => b.time - a.time)
       .filter(item => item.time > Date.now() - 60 * 60 * 1000) // in 1 hours

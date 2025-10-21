@@ -122,10 +122,14 @@ export const RootNames = {
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',
+  /** @deprecated */
   SendTo: 'SendTo',
   SendHistory: 'SendHistory',
+  /** @deprecated */
   SendInput: 'SendInput',
+  /** @deprecated */
   WhitelistInput: 'WhitelistInput',
+  /** @deprecated */
   SelectImportAddress: 'SelectImportAddress',
   ImportAddress2Whitelist: 'ImportAddress2Whitelist',
   SelectTypeAddress: 'SelectTypeAddress',
