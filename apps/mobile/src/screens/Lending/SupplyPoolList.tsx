@@ -105,6 +105,7 @@ const SupplyPoolList = () => {
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={fetchData} />
       }
+      keyExtractor={item => item.reserve.underlyingAsset}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={<PoolListLoading />}
       renderItem={({ item, index }) => {

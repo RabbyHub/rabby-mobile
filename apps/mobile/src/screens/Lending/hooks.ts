@@ -26,6 +26,9 @@ import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
 import { CustomMarket, marketsData } from './config/market';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import wrapperToken from './config/wrapperToken';
+import { CHAINS_ENUM } from '@debank/common';
+import { API_ETH_MOCK_ADDRESS } from './utils/constant';
 
 const provider = new ethers.providers.JsonRpcProvider('https://rpc.payload.de');
 
@@ -241,7 +244,43 @@ const useLendingSummary = () => {
           }),
         };
       });
-
+    const wrapperReserve = _displayPoolReserves.find(item => {
+      return isSameAddress(
+        item.reserve.underlyingAsset,
+        wrapperToken[CHAINS_ENUM.ETH].address,
+      );
+    });
+    if (wrapperReserve) {
+      const balance = mappedBalances.find(x =>
+        isSameAddress(x.address, API_ETH_MOCK_ADDRESS),
+      );
+      _displayPoolReserves.unshift({
+        ...wrapperReserve,
+        underlyingAsset: API_ETH_MOCK_ADDRESS.toLowerCase(),
+        reserve: {
+          ...wrapperReserve.reserve,
+          symbol: 'ETH',
+          name: 'ETH',
+          underlyingAsset: API_ETH_MOCK_ADDRESS.toLowerCase(),
+        },
+        walletBalance: normalize(
+          balance?.amount || '0',
+          wrapperReserve.reserve.decimals,
+        ),
+        walletBalanceUSD: nativeToUSD({
+          amount: new BigNumber(balance?.amount || '0'),
+          currencyDecimals: wrapperReserve.reserve.decimals,
+          priceInMarketReferenceCurrency:
+            wrapperReserve.reserve.priceInMarketReferenceCurrency,
+          marketReferenceCurrencyDecimals:
+            baseCurrencyData?.marketReferenceCurrencyDecimals || 0,
+          normalizedMarketReferencePriceInUsd: normalize(
+            baseCurrencyData?.marketReferenceCurrencyPriceInUsd || '0',
+            USD_DECIMALS,
+          ),
+        }),
+      });
+    }
     const _apyInfo = formatUserYield(
       _formattedPoolReservesAndIncentives || [],
       _iUserSummary,

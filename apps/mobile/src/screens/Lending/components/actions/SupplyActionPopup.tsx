@@ -30,6 +30,7 @@ import { toast } from '@/components2024/Toast';
 import { useAtom } from 'jotai';
 import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
+import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -54,6 +55,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
   const { prepareMiniTransactions, sendPrepareMiniTransactions } =
     useMiniApproval();
+  const isNativeToken = useMemo(() => {
+    return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
+  }, [reserve.underlyingAsset]);
 
   const afterHF = useMemo(() => {
     if (!amount || amount === '0') {
@@ -108,7 +112,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
       // 如果是原生代币，不需要approve
       if (
-        isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress)
+        isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress) ||
+        isNativeToken
       ) {
         setNeedApprove(false);
         return;
@@ -137,9 +142,10 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     }
   }, [
     amount,
+    currentAccount,
     reserve.underlyingAsset,
     reserve.reserve.decimals,
-    currentAccount,
+    isNativeToken,
   ]);
 
   // 构建交易和估算gas
@@ -163,7 +169,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       let actualNeedApprove = false;
       let allowance = '0';
       if (
-        !isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress)
+        !isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress) &&
+        !isNativeToken
       ) {
         allowance = await getERC20Allowance(
           chainInfo.serverId,
@@ -182,8 +189,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         );
       }
 
-      // 如果需要approve，构建approve交易
-      if (actualNeedApprove) {
+      if (actualNeedApprove && !isNativeToken) {
         const requiredAmount = new BigNumber(amount)
           .multipliedBy(10 ** reserve.reserve.decimals)
           .toString();
@@ -254,7 +260,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       const formattedSupplyResult = {
         ...supplyResult,
         from: supplyResult.from || currentAccount.address,
-        value: supplyResult.value || '0x0',
+        value: supplyResult.value?.toHexString() || '0x0',
         chainId: chainInfo.id,
       };
 
@@ -265,7 +271,13 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [amount, reserve, currentAccount]);
+  }, [
+    amount,
+    currentAccount,
+    reserve.underlyingAsset,
+    reserve.reserve.decimals,
+    isNativeToken,
+  ]);
 
   const txsForMiniApproval: Tx[] = useMemo(() => {
     const list: any[] = [];

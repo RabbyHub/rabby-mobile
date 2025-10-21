@@ -20,3 +20,7 @@ export const HF_COLOR_BAD_THRESHOLD = 1.1; // 1.1
 export const LIQUIDATION_HF_THRESHOLD = 1.0; // 1.0
 
 export const USD_DECIMALS = 8;
+
+// 模拟原生代币的地址
+export const API_ETH_MOCK_ADDRESS =
+  '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';

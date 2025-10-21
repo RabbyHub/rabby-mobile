@@ -47,10 +47,12 @@ import WeethSVG from '@/assets2024/images/tokens/weeth.svg';
 import WethSVG from '@/assets2024/images/tokens/weth.svg';
 import WstethSVG from '@/assets2024/images/tokens/wsteth.svg';
 import XautSVG from '@/assets2024/images/tokens/xaut.svg';
+import EthSVG from '@/assets2024/images/tokens/eth.svg';
 
 // Token symbol到SVG组件的映射（一期需要的代币，全部小写）
 const TOKEN_ICON_MAP: Record<string, React.FC<SvgProps>> = {
   // 基础代币
+  eth: EthSVG,
   weth: WethSVG,
   wbtc: WbtcSVG,
   usdc: UsdcSVG,
