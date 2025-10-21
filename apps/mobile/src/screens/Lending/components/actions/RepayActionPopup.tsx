@@ -420,8 +420,8 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
             !amount || amount === '0'
               ? 'Enter Amount'
               : needApprove
-              ? 'approveAndRepay'
-              : 'repay'
+              ? 'Approve and Repay'
+              : 'Repay'
           }
           onFinished={handleRepay}
           disabled={

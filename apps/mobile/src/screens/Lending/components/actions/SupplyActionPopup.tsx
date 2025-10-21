@@ -394,13 +394,13 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           key={`${amount}-${needApprove}`}
           showTextOnLoading
           wrapperStyle={styles.directSignBtn}
-          authTitle="confirmPassword"
+          authTitle="Supply"
           title={
             !amount || amount === '0'
-              ? 'enterAmount'
+              ? 'Enter Amount'
               : needApprove
-              ? 'approveAndSupply'
-              : 'supply'
+              ? 'Approve and Supply'
+              : 'Supply'
           }
           onFinished={handleSupply}
           disabled={
