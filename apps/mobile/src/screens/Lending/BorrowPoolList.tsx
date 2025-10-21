@@ -17,11 +17,13 @@ import { Skeleton } from '@rneui/themed';
 import BigNumber from 'bignumber.js';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const BorrowPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
-  const { displayPoolReserves, iUserSummary, loading } = useLendingSummary();
+  const { displayPoolReserves, reserves, iUserSummary, loading } =
+    useLendingSummary();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -35,12 +37,23 @@ const BorrowPoolList = () => {
         if (BigNumber(item.reserve.totalDebt).gte(item.reserve.borrowCap)) {
           return false;
         }
+        const reserve = reserves?.reservesData?.find(x =>
+          isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
+        );
+        if (
+          reserve?.borrowingEnabled === false ||
+          reserve?.isActive === false ||
+          reserve?.isFrozen ||
+          reserve?.isPaused
+        ) {
+          return false;
+        }
         return true;
       })
       .sort((a, b) => {
         return Number(b.totalBorrowsUSD) - Number(a.totalBorrowsUSD);
       });
-  }, [displayPoolReserves]);
+  }, [displayPoolReserves, reserves?.reservesData]);
 
   const handlePressItem = item => {
     const modalId = createGlobalBottomSheetModal2024({

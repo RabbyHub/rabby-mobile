@@ -149,8 +149,8 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
             <View style={styles.poolInfoItem}>
               <Text style={styles.poolInfoItemTitle}>Total Supplied</Text>
               <Text style={styles.poolInfoItemValue}>
-                {formatUsdValueKMB(reserve.reserve.totalLiquidityUSD)} of{' '}
-                {formatUsdValueKMB(reserve.reserve.supplyCapUSD || '0')}
+                {formatUsdValueKMB(reserve.reserve.totalLiquidityUSD, 0)} of{' '}
+                {formatUsdValueKMB(reserve.reserve.supplyCapUSD || '0', 0)}
               </Text>
             </View>
             <View style={styles.poolInfoItem}>

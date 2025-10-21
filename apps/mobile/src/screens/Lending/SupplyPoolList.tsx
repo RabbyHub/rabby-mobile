@@ -18,20 +18,46 @@ import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import BigNumber from 'bignumber.js';
 
 const SupplyPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
-  const { displayPoolReserves, loading, iUserSummary } = useLendingSummary();
+  const { displayPoolReserves, reserves, loading, iUserSummary } =
+    useLendingSummary();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
   const { fetchData } = useLendingData(currentAccount?.address);
 
   const sortReserves = useMemo(() => {
-    return [...(displayPoolReserves || [])].sort((a, b) => {
-      return Number(b.underlyingBalanceUSD) - Number(a.underlyingBalanceUSD);
-    });
-  }, [displayPoolReserves]);
+    return [...(displayPoolReserves || [])]
+      .filter(item => {
+        if (item.underlyingBalance && item.underlyingBalance !== '0') {
+          return true;
+        }
+        if (
+          BigNumber(item.reserve.totalLiquidity).gte(item.reserve.supplyCap)
+        ) {
+          return false;
+        }
+        const reserve = reserves?.reservesData?.find(x =>
+          isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
+        );
+        if (
+          reserve?.usageAsCollateralEnabled === false ||
+          reserve?.isActive === false ||
+          reserve?.isFrozen ||
+          reserve?.isPaused
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        return Number(b.underlyingBalanceUSD) - Number(a.underlyingBalanceUSD);
+      });
+  }, [displayPoolReserves, reserves?.reservesData]);
 
   const handlePressItem = item => {
     const modalId = createGlobalBottomSheetModal2024({
