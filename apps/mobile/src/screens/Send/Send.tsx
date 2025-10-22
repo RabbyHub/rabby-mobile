@@ -223,6 +223,7 @@ function SendScreen({
     slider,
     setSlider,
     handleGasLevelChanged,
+    handleIgnoreGasFeeChange,
 
     checkCexSupport,
     loadCurrentToken,
@@ -502,6 +503,7 @@ function SendScreen({
           onChangeSlider,
           setSlider,
           handleGasLevelChanged,
+          handleIgnoreGasFeeChange,
         },
       }}>
       <NormalScreenContainer2024 type="bg1">

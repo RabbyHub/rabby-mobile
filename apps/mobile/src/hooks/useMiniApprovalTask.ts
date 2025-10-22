@@ -5,7 +5,6 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import _, { uniqueId } from 'lodash';
 import React, { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useResetMiniApprovalDirectSignState } from './useMiniApprovalDirectSign';
 import {
   getRetryTxRecommendNonce,
   getRetryTxType,
@@ -278,14 +277,11 @@ export const useClearMiniApprovalTask = () => {
   const [, setList] = useAtom(taskListAtom);
   const [, setStatus] = useAtom(taskStatusAtom);
   const [, setError] = useAtom(taskErrorAtom);
-  const resetMiniApprovalDirectSignState =
-    useResetMiniApprovalDirectSignState();
 
   const clear = useMemoizedFn(() => {
     setList([]);
     setStatus('idle');
     setError(null);
-    resetMiniApprovalDirectSignState();
     globalCurrentTaskId = uniqueId();
   });
 

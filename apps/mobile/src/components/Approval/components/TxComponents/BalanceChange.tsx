@@ -15,55 +15,66 @@ import * as Values from '../Actions/components/Values';
 import RcIconAlert from '@/assets/icons/sign/tx/alert-currentcolor.svg';
 import { formatNumber, formatUsdValue } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
 import NoBalanceSVG from '@/assets/icons/sign/no-balance-cc.svg';
 import NFTDefaultSVG from '@/assets/nft-default.svg';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { Account } from '@/core/services/preference';
+import { createGetStyles2024 } from '@/utils/styles';
 
-const getStyle = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    tokenBalanceChange: {
-      marginTop: 16,
-      paddingHorizontal: 16,
-    },
-    titleText: {
-      fontSize: 14,
-      color: colors['neutral-title-1'],
-      fontWeight: '500',
-    },
-    usdValueDiff: {
-      flex: 1,
-      color: colors['neutral-title-1'],
-      textAlign: 'right',
-      fontSize: 14,
-    },
-    iconAlert: {
-      width: 16,
-      marginTop: 2,
-      marginRight: 4,
-      color: colors['orange-default'],
-      position: 'relative',
-    },
-    headline: {
-      fontSize: 14,
-      lineHeight: 16,
-      fontWeight: '500',
-      marginBottom: 8,
-      display: 'flex',
-      alignItems: 'center',
-      color: colors['neutral-title-1'],
-    },
-    nftIcon: {
-      marginRight: 8,
-      width: 24,
-      height: 24,
-      borderRadius: 2,
-    },
-  });
+const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
+  tokenBalanceChange: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-line'],
+    borderRadius: 8,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  titleText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  usdValueDiff: {
+    flex: 1,
+    textAlign: 'right',
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 18,
+  },
+  iconAlert: {
+    width: 16,
+    marginTop: 2,
+    marginRight: 4,
+    color: colors['orange-default'],
+    position: 'relative',
+  },
+  headline: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  nftIcon: {
+    marginRight: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 2,
+  },
+}));
 
 const NFTBalanceChange = ({
   data,
@@ -74,8 +85,7 @@ const NFTBalanceChange = ({
 }) => {
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();
-  const colors = useThemeColors();
-  const styles = getStyle(colors);
+  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const { hasReceives, receiveNftList, hasTransferedOut, sendNftList } =
     React.useMemo(() => {
       const sendNftList = data.send_nft_list.slice(0);
@@ -162,14 +172,14 @@ const NFTBalanceChange = ({
                   <Text
                     style={{
                       ...commonStyle.primaryText,
-                      color: colors['red-default'],
+                      color: colors2024['red-default'],
                     }}>
                     - {item.amount}{' '}
                   </Text>
                   <Text
                     style={{
                       ...commonStyle.primaryText,
-                      color: colors['red-default'],
+                      color: colors2024['red-default'],
                     }}>
                     {item.collection ? item.collection.name : item.name}
                   </Text>
@@ -207,8 +217,7 @@ const BalanceChange = ({
 }) => {
   const { t } = useTranslation();
   const isSuccess = data?.success;
-  const colors = useThemeColors();
-  const styles = getStyle(colors);
+  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const commonStyle = useCommonStyle();
 
   const { hasTokenChange, hasNFTChange } = useBalanceChange({
@@ -386,7 +395,7 @@ const BalanceChange = ({
                       <Text
                         style={StyleSheet.flatten({
                           ...commonStyle.primaryText,
-                          color: colors['red-default'],
+                          color: colors2024['red-default'],
                           fontSize: 16,
                         })}>
                         - {formatAmount(token.amount)}{' '}
@@ -396,7 +405,7 @@ const BalanceChange = ({
                         style={StyleSheet.flatten([
                           {
                             ...commonStyle.primaryText,
-                            color: colors['red-default'],
+                            color: colors2024['red-default'],
                             fontSize: 16,
                           },
                           commonStyle.clickableTokenText,
@@ -420,7 +429,6 @@ const BalanceChange = ({
                 <Text
                   style={StyleSheet.flatten({
                     ...commonStyle.secondaryText,
-                    fontSize: 14,
                   })}>
                   ≈{' '}
                   {formatUsdValue(
@@ -446,7 +454,7 @@ const BalanceChange = ({
                       <Text
                         style={StyleSheet.flatten({
                           ...commonStyle.primaryText,
-                          color: colors['green-default'],
+                          color: colors2024['green-default'],
                           fontSize: 16,
                         })}>
                         + {formatAmount(token.amount)}{' '}
@@ -454,7 +462,7 @@ const BalanceChange = ({
                       <Text
                         style={StyleSheet.flatten({
                           ...commonStyle.primaryText,
-                          color: colors['green-default'],
+                          color: colors2024['green-default'],
                           fontSize: 16,
                         })}
                         onPress={() => handleClickToken(token)}>

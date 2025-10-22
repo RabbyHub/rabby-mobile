@@ -6,43 +6,44 @@ import {
   ViewStyle,
 } from 'react-native';
 import React, { ReactNode } from 'react';
-import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import IconQuestionMark from '@/assets2024/icons/common/help-cc.svg';
+import { useTheme2024 } from '@/hooks/theme';
 import { Tip } from '@/components/Tip';
+import { createGetStyles2024 } from '@/utils/styles';
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    colWrapper: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    hasTip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
+const getStyles = createGetStyles2024(({ colors, colors2024, isLight }) => ({
+  colWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  hasTip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
 
-    rowWrapper: {
-      position: 'relative',
-      // whiteSpace: 'nowrap',
-    },
-    notTitle: {
-      textAlign: 'right',
-      justifyContent: 'flex-end',
-    },
-    title: {
-      flex: 1,
-      flexShrink: 0,
-    },
-    table: {
-      borderRadius: 6,
-      backgroundColor: colors['neutral-card3'],
-      padding: 12,
-      rowGap: 12,
-      flexDirection: 'column',
-      marginBottom: 12,
-    },
-  });
+  rowWrapper: {
+    position: 'relative',
+    // whiteSpace: 'nowrap',
+  },
+  notTitle: {
+    textAlign: 'right',
+    justifyContent: 'flex-end',
+  },
+  title: {
+    flex: 1,
+    flexShrink: 0,
+  },
+  table: {
+    borderRadius: 6,
+    backgroundColor: isLight
+      ? colors['neutral-card3']
+      : colors2024['neutral-line'],
+    padding: 12,
+    rowGap: 12,
+    flexDirection: 'column',
+    marginBottom: 12,
+  },
+}));
 
 const WIDTH = Dimensions.get('window').width;
 export const SubTable = ({
@@ -54,8 +55,7 @@ export const SubTable = ({
   style?: ViewStyle;
   target?: React.RefObject<View>;
 }) => {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const [left, setLeft] = React.useState(WIDTH - 100);
   const [visible, setVisible] = React.useState(true);
 
@@ -108,8 +108,7 @@ export const SubCol = ({
   style?: ViewStyle;
   nested?: boolean;
 }) => {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <View
@@ -136,8 +135,8 @@ export const SubRow = ({
   style?: ViewStyle;
   itemsCenter?: boolean;
 }) => {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+
   return (
     <View
       style={StyleSheet.flatten([
@@ -156,6 +155,7 @@ export const SubRow = ({
             style={StyleSheet.flatten({
               marginLeft: 6,
             })}
+            color={colors2024['neutral-info']}
           />
         </Tip>
       )}

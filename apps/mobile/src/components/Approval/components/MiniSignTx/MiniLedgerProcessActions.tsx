@@ -39,10 +39,13 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
         if (!isConnected) {
           onClickConnect(
             () => {
-              props.onSubmit();
               setIsSubmitting(false);
+              props.onSubmit();
             },
-            () => props.onCancel?.(),
+            () => {
+              setIsSubmitting(false);
+              props.onCancel?.();
+            },
           );
           return;
         } else {
@@ -51,6 +54,7 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
         }
       })
       .finally(() => {
+        setIsSubmitting(false);
         setLedgerCheckBlePending(false);
       });
   });
