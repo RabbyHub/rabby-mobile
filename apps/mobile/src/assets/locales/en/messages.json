@@ -2484,7 +2484,10 @@
     "selectAccountSheetModal": {
       "title": {
         "sendFrom": "Send From",
-        "sendTo": "Send To"
+        "sendTo": "Send To",
+        "addNewWhitelistAddr": "Add New Whitelist Address",
+        "selectFromHistory": "Select from History",
+        "viewSentTx": "Sent"
       }
     }
   },

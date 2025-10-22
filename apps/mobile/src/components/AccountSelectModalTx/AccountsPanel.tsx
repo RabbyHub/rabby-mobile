@@ -3,6 +3,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import {
   FlatList,
+  Pressable as RNPressable,
   StyleProp,
   StyleSheet,
   Text,
@@ -26,7 +27,7 @@ import { AddressItemShadowView } from '@/screens/Address/components/AddressItemS
 import { ellipsisAddress } from '@/utils/address';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList, TouchableHighlight } from '@gorhom/bottom-sheet';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
 import {
   RecentHistoryItem,
@@ -38,6 +39,9 @@ import { filterMyAccounts } from '@/utils/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { WhiteListItemInSheetModal } from './WhiteListItem';
 import { AddressItemInSheetModal } from './AddressItem';
+import EmptyWhiteListHolder from './EmptyWhiteListHolder';
+import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
+import { useAccountSelectModalInternal } from './hooks';
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -170,7 +174,8 @@ export function AccountsPanelInSheetModal({
     typeof AddressItemInSheetModal
   >['defaultPressAction'];
 }) {
-  const { styles } = useTheme2024({ getStyle: getPanelStyle });
+  const { fnNavTo } = useAccountSelectModalInternal();
+  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
 
   // const { whitelist, isAddrOnWhitelist } = useWhitelist({
   //   disableAutoFetch: false,
@@ -246,6 +251,49 @@ export function AccountsPanelInSheetModal({
     safeAddresses,
     watchAddresses,
   ]);
+
+  const renderHeader = useCallback(
+    () => (
+      <View>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={styles.searchInputWrapper}
+          onPress={() => {
+            fnNavTo('enter-addr');
+          }}>
+          <View style={styles.placeHolderWrapper}>
+            <Text style={styles.placeHolder}>
+              {t('page.sendPoly.enterAddress')}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={evt => {
+              evt.stopPropagation();
+              // handleGotoInputAddress(true)
+            }}>
+            <ICONS_COMMON_2024.RcScanner
+              color={colors2024['neutral-title-1']}
+            />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
+    ),
+    [
+      fnNavTo,
+      colors2024,
+      styles.searchInputWrapper,
+      styles.placeHolder,
+      styles.placeHolderWrapper,
+      t,
+    ],
+  );
+
+  const renderEmpty = useCallback(
+    () => <EmptyWhiteListHolder onAddWhitelist={() => {}} />,
+    [
+      // handleGotoAddWhitelist
+    ],
+  );
 
   const ListHeaderComponent = useCallback(
     (title: TxAccountPannelSectionTitle) => {
@@ -364,7 +412,8 @@ export function AccountsPanelInSheetModal({
           data={combinedData}
           // ref={scrollViewRef}
           // contentContainerStyle={styles.scrollViewContentContainer}
-          ListHeaderComponent={null}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={renderEmpty}
           renderItem={({
             item: combinedItem,
           }: {
@@ -469,18 +518,52 @@ export function AccountsPanelInSheetModal({
   );
 }
 const getPanelStyle = createGetStyles2024(ctx => {
+  const { colors2024 } = ctx;
   return {
     panel: {
       position: 'relative',
-      backgroundColor: ctx.colors2024['neutral-bg-1'],
-      ...makeDevOnlyStyle({
-        backgroundColor: ctx.colors2024['neutral-bg-2'],
-      }),
+      backgroundColor: colors2024['neutral-bg-1'],
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: colors2024['neutral-bg-2'],
+      // }),
       width: '100%',
       minHeight: 453,
       maxHeight: '100%',
       flexDirection: 'column',
     },
+
+    /* renderHeader :start */
+
+    searchInputWrapper: {
+      position: 'relative',
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderRadius: 16,
+      display: 'flex',
+      justifyContent: 'space-between',
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      gap: 8,
+      marginHorizontal: 4,
+      height: 58,
+    },
+    item: {
+      marginBottom: 12,
+    },
+    placeHolderWrapper: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    placeHolder: {
+      color: colors2024['neutral-secondary'],
+      fontSize: 17,
+      lineHeight: 58,
+      fontWeight: '400',
+      flex: 1,
+      fontFamily: 'SF Pro Rounded',
+    },
+    /* renderHeader :end */
+
     scrollViewContainer: {
       height: '100%',
       flexShrink: 1,
@@ -525,7 +608,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       fontWeight: '500',
       lineHeight: 20,
       paddingLeft: 4,
-      color: ctx.colors2024['neutral-secondary'],
+      color: colors2024['neutral-secondary'],
     },
     addressListContainer: {
       flexDirection: 'column',

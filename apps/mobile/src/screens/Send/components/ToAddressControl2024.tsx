@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useWhiteListAddress } from '../hooks/useWhiteListAddress';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { contactService } from '@/core/services';
-import { SheetModalSelectAccountSend } from './SelectAccountSheetModal';
+import { SheetModalSelectAccountSend } from '@/components/AccountSelectModalTx/SelectAccountSheetModal';
 
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';

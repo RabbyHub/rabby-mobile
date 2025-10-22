@@ -8,11 +8,11 @@ import { Pressable, View, Text } from 'react-native';
 import { RcIconMan } from '@/assets2024/icons/whitelist';
 import { RcIconLockCC } from '@/assets/icons/send';
 
-interface IHeaderProps {
-  gotoAddWhitelist: () => void;
-}
-/** @deprecated */
-const EmptyWhiteListHolder = ({ gotoAddWhitelist }: IHeaderProps) => {
+const EmptyWhiteListHolder = ({
+  onAddWhitelist,
+}: {
+  onAddWhitelist?: () => void;
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   return (
@@ -49,7 +49,7 @@ const EmptyWhiteListHolder = ({ gotoAddWhitelist }: IHeaderProps) => {
         <Text style={styles.footerText}>
           {t('page.sendPoly.emptyWhitelistTip')}
         </Text>
-        <Pressable style={styles.footerBtn} onPress={gotoAddWhitelist}>
+        <Pressable style={styles.footerBtn} onPress={onAddWhitelist}>
           <Text style={styles.footerBtnText}>
             {t('page.sendPoly.emptyWhitelistBtn')}
           </Text>

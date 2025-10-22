@@ -81,7 +81,6 @@ import { PendingTxItem } from '../Swap/components/PendingTxItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
-import { SheetModalSelectAccountSend } from './components/SelectAccountSheetModal';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,

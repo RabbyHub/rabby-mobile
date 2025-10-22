@@ -21,3 +21,15 @@ export const RcIconAddWhitelist = makeThemeIcon2024FromCC(
     onDark: ctx.colors2024['neutral-secondary'],
   }),
 );
+
+import RcIconNavLeftCC from './nav-left-cc.svg';
+export const RcIconNavLeft = makeThemeIcon2024FromCC(RcIconNavLeftCC, ctx => ({
+  onLight: ctx.colors2024['neutral-body'],
+  onDark: ctx.colors2024['neutral-body'],
+}));
+
+import RcIconHistoryCC from './history-cc.svg';
+export const RcIconHistory = makeThemeIcon2024FromCC(RcIconHistoryCC, ctx => ({
+  onLight: ctx.colors2024['neutral-body'],
+  onDark: ctx.colors2024['neutral-body'],
+}));
