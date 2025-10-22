@@ -66,7 +66,7 @@ export const GlobalSignerPortal: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (config?.account || state.status === 'idle' || !ctx?.txs.length) {
+    if (!config?.account || state.status === 'idle' || !ctx?.txs.length) {
       setShowCheckSecurity(false);
     }
   }, [config?.account, state.status, ctx?.txs.length]);
