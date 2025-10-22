@@ -14,7 +14,6 @@ import AutoLockView from '@/components/AutoLockView';
 export const GlobalSignerPortal: React.FC = () => {
   const state = useSignatureStore();
   const { config, ctx, status, error } = state;
-  console.log('useSignatureStore state', state);
   const { styles, colors2024 } = useTheme2024({
     getStyle: getSheetStyles,
   });
