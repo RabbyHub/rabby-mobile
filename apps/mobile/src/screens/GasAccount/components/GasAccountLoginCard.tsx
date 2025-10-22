@@ -58,12 +58,17 @@ export const GasAccountLoginCard: React.FC<Props> = ({
       <View style={styles.quoteContainer}>
         <RcIconQuoteStart style={styles.quoteStart} />
         <Text style={styles.loginTip}>
-          {t('component.gasAccount.loginInTip.title')}
+          {t('component.gasAccount.loginInTip.login1')}
+        </Text>
+      </View>
+      <View>
+        <Text style={styles.loginTip}>
+          {t('component.gasAccount.loginInTip.login2')}
         </Text>
       </View>
       <View style={styles.quoteContainer}>
         <Text style={styles.loginDesc}>
-          {t('component.gasAccount.loginInTip.desc')}
+          {t('component.gasAccount.loginInTip.login3')}
         </Text>
         <RcIconQuoteEnd style={styles.quoteEnd} />
       </View>
