@@ -1,3 +1,4 @@
+import { contactService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -6,6 +7,7 @@ import {
   KeyringTypeName,
 } from '@rabby-wallet/keyring-utils/src/types';
 import BigNumber from 'bignumber.js';
+import { ellipsisAddress } from './address';
 
 const priority = {
   [KEYRING_TYPE.HdKeyring]: 1,
@@ -119,6 +121,8 @@ export function makeAccountObject<T extends Account>(address: string): T {
     address,
     brandName: KEYRING_CLASS.WATCH,
     type: KEYRING_CLASS.WATCH,
-    aliasName: '',
+    aliasName:
+      contactService.getAliasByAddress(address)?.alias ||
+      ellipsisAddress(address),
   } as any as T;
 }

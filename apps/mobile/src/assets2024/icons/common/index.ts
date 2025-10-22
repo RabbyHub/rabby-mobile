@@ -17,10 +17,14 @@ export const ICONS_COMMON_2024 = {
 
   RcCheckboxEmpty,
   RcCheckboxFilledBrand,
-  RcScanner: makeThemeIcon2024FromCC(RcScannerCC, ctx => ({
-    onLight: ctx.colors2024['neutral-body'],
-    onDark: ctx.colors2024['neutral-body'],
-  })),
+  RcScanner: makeThemeIcon2024FromCC(
+    RcScannerCC,
+    ctx => ({
+      onLight: ctx.colors2024['neutral-body'],
+      onDark: ctx.colors2024['neutral-body'],
+    }),
+    { allowColorProp: true },
+  ),
 };
 
 export { RcIconWarningCC };

@@ -2488,6 +2488,9 @@
         "addNewWhitelistAddr": "Add New Whitelist Address",
         "selectFromHistory": "Select from History",
         "viewSentTx": "Sent"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "Name the address"
       }
     }
   },

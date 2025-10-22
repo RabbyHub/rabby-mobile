@@ -74,6 +74,8 @@ export type RootStackParamsList = {
   };
   [RootNames.Scanner]?: {
     syncExtension?: boolean;
+    /** @description for some scene scan in place, such as scan from modal */
+    disableGoBack?: boolean;
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;

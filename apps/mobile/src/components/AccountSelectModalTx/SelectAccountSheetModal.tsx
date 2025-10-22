@@ -20,6 +20,8 @@ import {
 } from './hooks';
 import { RcIconHistory, RcIconNavLeft } from './icons';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import ScreenPanelEnterAddress from './modalScreens/EnterAddress';
+import { SelectAccountSheetModalSizes } from './layout';
 
 export function SheetModalSelectAccountSend({
   type,
@@ -38,9 +40,13 @@ export function SheetModalSelectAccountSend({
   const { styles } = useTheme2024({ getStyle });
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal(null);
-
   useEffect(() => {
-    toggleShowSheetModal(!!visible);
+    if (visible) {
+      toggleShowSheetModal(!!visible ? 1 : false);
+      // toggleShowSheetModal(true);
+    } else {
+      toggleShowSheetModal(false);
+    }
   }, [visible, toggleShowSheetModal]);
 
   const { t } = useTranslation();
@@ -111,6 +117,22 @@ export function SheetModalSelectAccountSend({
     setCurrentScreen(screen);
   }, []);
 
+  const cbOnScanStageChanged = useCallback(
+    (stage: 'start' | 'end') => {
+      switch (stage) {
+        case 'start':
+          onVisibleChange?.(false);
+          break;
+        case 'end':
+          setTimeout(() => onVisibleChange?.(true), 300);
+          break;
+        default:
+          break;
+      }
+    },
+    [onVisibleChange],
+  );
+
   const onPressNavBack = useCallback(() => {
     switch (currentScreen) {
       case 'default':
@@ -132,21 +154,26 @@ export function SheetModalSelectAccountSend({
     return {
       modalScreen: currentScreen,
       fnNavTo,
+      cbOnScanStageChanged,
       computed: {
         canNavBack: currentScreen !== 'default',
         needShowHistory: currentScreen === 'enter-addr',
       },
     };
-  }, [currentScreen, fnNavTo]);
+  }, [currentScreen, fnNavTo, cbOnScanStageChanged]);
 
   return (
     <AppBottomSheetModal
       ref={sheetModalRef}
-      snapPoints={['80%']}
-      enablePanDownToClose={!__DEV__}
+      index={0}
+      snapPoints={[1, '80%']}
+      enablePanDownToClose={false}
+      enableDismissOnClose={false}
       onChange={index => {
         const isVisible = index >= 0;
-        onVisibleChange?.(isVisible);
+        if (!isVisible) {
+          onVisibleChange?.(false);
+        }
       }}>
       <AutoLockView
         as="View"
@@ -187,6 +214,7 @@ export function SheetModalSelectAccountSend({
                 onSelectAccount={onSelectAccount}
               />
             )}
+            {currentScreen === 'enter-addr' && <ScreenPanelEnterAddress />}
           </View>
         </AccountSelectModalProvider>
       </AutoLockView>
@@ -195,8 +223,6 @@ export function SheetModalSelectAccountSend({
 }
 
 const SIZES = {
-  sectionPx: 20,
-
   ITEM_HEIGHT: 72,
   ITEM_GAP: 12,
   titleMt: 6,
@@ -226,7 +252,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
-      paddingHorizontal: SIZES.sectionPx,
+      paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
     },
     headerIconPlaceholder: { width: 24, height: 24 },
     navBack: {},

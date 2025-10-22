@@ -484,9 +484,7 @@ export default function ToAddressControl2024({
       <SheetModalSelectAccountSend
         visible={isSelectingAccount}
         onVisibleChange={visible => {
-          if (!visible) {
-            setIsSelectingAccount(false);
-          }
+          setIsSelectingAccount(!!visible);
         }}
         onSelectAccount={account => {
           // setCurrentAccount(account);

@@ -14,7 +14,9 @@ export type SelectAccountSheetModalScreen =
   | 'view-sent-tx';
 export type SelectAccountSheetModalValues = {
   modalScreen: SelectAccountSheetModalScreen;
+
   fnNavTo: (screen: SelectAccountSheetModalScreen) => void;
+  cbOnScanStageChanged: (stage: 'start' | 'end') => void;
 
   computed: {
     canNavBack: boolean;
@@ -24,11 +26,13 @@ export type SelectAccountSheetModalValues = {
 const AccountSelectModalContext =
   React.createContext<SelectAccountSheetModalValues>({
     modalScreen: 'default',
+
     computed: {
       canNavBack: false,
       needShowHistory: false,
     },
     fnNavTo: getNoop(),
+    cbOnScanStageChanged: getNoop(),
   });
 
 export const AccountSelectModalProvider = AccountSelectModalContext.Provider;
@@ -54,5 +58,6 @@ export function useAccountSelectModalInternal() {
     canNavBack: values.computed.canNavBack,
     needShowHistory: values.computed.needShowHistory,
     fnNavTo: values.fnNavTo,
+    cbOnScanStageChanged: values.cbOnScanStageChanged,
   };
 }

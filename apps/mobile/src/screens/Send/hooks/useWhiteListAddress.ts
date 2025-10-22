@@ -116,7 +116,7 @@ export const useWhiteListAddress = () => {
       );
       const myAccountsInner = filterMyAccounts(accounts);
       let balance = 0;
-      const defaultAccount = {
+      const defaultAccount: KeyringAccountWithAlias = {
         address,
         aliasName:
           contactService.getAliasByAddress(address)?.alias ||

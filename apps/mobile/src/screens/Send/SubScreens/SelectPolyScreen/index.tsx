@@ -46,6 +46,7 @@ const WhiteListHeader = ({ hideIcon, gotoAddWhitelist }: IHeaderProps) => {
   );
 };
 
+/** @deprecated */
 const SendPolyScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
