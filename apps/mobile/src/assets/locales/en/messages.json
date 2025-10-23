@@ -2512,9 +2512,9 @@
         "desc": "Pay Gas Fees on All Chains",
         "login": "Log in GasAccount",
         "loginAndClaim": "Log in and Claim {{amount}}",
-        "login1": "Use one account to cover gas fees",
-        "login2": "for any address and any chain",
-        "login3": "No more gas worries"
+        "loginTips1": "Pay gas fees for",
+        "loginTips2": "any address on any chain",
+        "loginTips3": "when you're out of gas"
       },
       "loginConfirmModal": {
         "title": "Select Wallet to Login",
