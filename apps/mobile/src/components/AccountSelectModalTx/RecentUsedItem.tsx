@@ -29,6 +29,7 @@ import {
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { touchedFeedback } from '@/utils/touch';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -107,23 +108,18 @@ export const RecentUsedItem = ({
       },
     ] as MenuAction[];
   }, [account, editAliasName, isLight, t]);
-  // const { navigateToSendScreen } = useSendRoutes();
 
   const children = (
-    <AddressItemShadowView style={styles.shadow}>
+    <AddressItemShadowView style={[styles.shadow, style]}>
       <TouchableOpacity
-        // activeOpacity={1}
         style={StyleSheet.flatten([styles.root])}
         delayLongPress={200} // long press delay
         onPress={onPress}
         onLongPress={() => {
           if (!enableMenu) return;
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
+          touchedFeedback();
         }}>
-        <Card style={StyleSheet.flatten([styles.card, style])}>
+        <Card style={StyleSheet.flatten([styles.card])}>
           <InnerAddressItem style={styles.rootItem} account={account}>
             {({ WalletIcon }) => (
               <View style={styles.item}>

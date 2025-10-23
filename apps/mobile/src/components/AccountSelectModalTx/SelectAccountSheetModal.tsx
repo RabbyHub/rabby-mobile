@@ -364,7 +364,10 @@ export function SheetModalSelectAccountSend({
           </View>
           <View style={styles.mainContainer}>
             {currentScreen === 'default' && (
-              <AccountsPanelInSheetModal scene="SendTo" />
+              <AccountsPanelInSheetModal
+                parentVisible={!!visible}
+                scene="SendTo"
+              />
             )}
             {currentScreen === 'enter-addr' && (
               <ScreenPanelEnterAddress

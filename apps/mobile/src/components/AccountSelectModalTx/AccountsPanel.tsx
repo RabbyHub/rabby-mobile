@@ -14,7 +14,7 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { RcIconAddWhitelist, RcIconCopy, RcIconQR } from './icons';
 import { Account } from '@/core/services/preference';
@@ -165,10 +165,12 @@ function extractMixedItem(item?: RecentHistoryItem | AccountToSelect | null) {
 
 export function AccountsPanelInSheetModal({
   containerStyle,
+  parentVisible = false,
   scene,
   defaultPressItemAction = 'asPress',
 }: {
   containerStyle?: StyleProp<ViewStyle>;
+  parentVisible: boolean;
   scene?: SelectAccountSheetModalType;
   defaultPressItemAction?: React.ComponentProps<
     typeof AddressItemInSheetModal
@@ -177,17 +179,13 @@ export function AccountsPanelInSheetModal({
   const { fnNavTo, cbOnSelectedAccount } = useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
 
-  // const { whitelist, isAddrOnWhitelist } = useWhitelist({
-  //   disableAutoFetch: false,
-  // });
-
   const { isPinnedAccount, myAddresses, safeAddresses, watchAddresses } =
     useSortAccountOnSelector();
 
-  const scrollViewRef = React.useRef<typeof BottomSheetFlatList>(null);
-  const scrollToBottom = useCallback(() => {
-    // scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, []);
+  // const scrollViewRef = React.useRef<typeof BottomSheetFlatList>(null);
+  // const scrollToBottom = useCallback(() => {
+  //   // scrollViewRef.current?.scrollToEnd({ animated: true });
+  // }, []);
 
   const [safeAddressNavCollapsed, setSafeAddressNavCollapsed] =
     React.useState(true);
@@ -195,13 +193,21 @@ export function AccountsPanelInSheetModal({
     React.useState(true);
   const { t } = useTranslation();
 
-  const { recentHistory } = useRecentSend({ useAllHistory: true });
+  const { recentHistory, runAsync: fetchRecentHistory } = useRecentSend({
+    useAllHistory: true,
+  });
   const {
     list: whitelistAccounts,
     whitelist,
     myAccounts,
     findAccountWithoutBalance,
   } = useWhiteListAddress();
+
+  useEffect(() => {
+    if (parentVisible) {
+      fetchRecentHistory();
+    }
+  }, [parentVisible, fetchRecentHistory]);
 
   const recentUsedAddresses = useMemo(() => {
     return recentHistory.filter(
@@ -499,6 +505,7 @@ export function AccountsPanelInSheetModal({
                             onPress={() => {
                               cbOnSelectedAccount?.(account);
                             }}
+                            style={[index > 0 && styles.addressItemTopGap]}
                           />
                         );
                       }

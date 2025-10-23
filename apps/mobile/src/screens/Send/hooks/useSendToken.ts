@@ -65,7 +65,10 @@ import {
   directSigningAtom,
   isAbortedDirectSubmitError,
 } from '@/hooks/useMiniApprovalDirectSign';
-import { useRecentSendPendingTx } from './useRecentSend';
+import {
+  useRecentSendToHistoryFor,
+  useRecentSendPendingTx,
+} from './useRecentSend';
 import { last } from 'lodash';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -227,8 +230,8 @@ export type SendScreenState = {
 
   buildTxsCount?: number;
 
-  agreeCheckedOrNoRisk: boolean;
-  toAddrAccountInfo: FoundAccountResult | null;
+  agreeRequiredChecked: boolean;
+  // toAddrAccountInfo: FoundAccountResult | null;
   toAddrDesc: null | AddrDescResponse['desc'];
 };
 const DFLT_SEND_STATE: SendScreenState = {
@@ -269,8 +272,8 @@ const DFLT_SEND_STATE: SendScreenState = {
   addressToAddAsContacts: null,
   addressToEditAlias: null,
 
-  agreeCheckedOrNoRisk: false,
-  toAddrAccountInfo: null,
+  agreeRequiredChecked: false,
+  // toAddrAccountInfo: null,
   toAddrDesc: null,
 };
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
@@ -1624,12 +1627,18 @@ export function useSendTokenForm({
   const { list: cexList } = useCexSupportList();
 
   const { whitelist, enable: whitelistEnabled } = useWhitelist();
+  const { recentHistory: recentSendToHistory } = useRecentSendToHistoryFor(
+    formValues.to,
+  );
+  const toAddressIsRecentlySend = recentSendToHistory.length > 0;
+
   const computed = useMemo(() => {
     const toAddressInWhitelist = !!whitelist.find(item =>
       addressUtils.isSameAddress(item, formValues.to),
     );
     return {
       toAddressIsValid: !!formValues.to && isValidAddress(formValues.to),
+      toAddressIsRecentlySend,
       toAddressInWhitelist,
       toAddressIsCex:
         !!screenState.toAddrDesc?.cex?.id &&
@@ -1653,6 +1662,7 @@ export function useSendTokenForm({
   }, [
     whitelist,
     formValues.to,
+    toAddressIsRecentlySend,
     formValues.amount,
     cexList,
     isAddrOnContactBook,
@@ -1800,6 +1810,7 @@ type InternalContext = {
     whitelistEnabled: boolean;
     canSubmit: boolean;
     canDirectSign: boolean;
+    toAddressIsRecentlySend: boolean;
     toAddressInWhitelist: boolean;
     toAddressIsCex: boolean;
     toAddressIsValid: boolean;
@@ -1842,6 +1853,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     currentTokenBalance: '',
     whitelistEnabled: false,
     canSubmit: false,
+    toAddressIsRecentlySend: false,
     toAddressInWhitelist: false,
     toAddressIsCex: false,
     toAddressIsValid: false,

@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
+  SendTokenEvents,
+  subscribeEvent,
   useSendTokenFormik,
   useSendTokenInternalContext,
 } from '../hooks/useSendToken';
@@ -29,6 +31,7 @@ import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { Skeleton } from '@rneui/themed';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
+import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -53,6 +56,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
   const { handleSubmit } = useSendTokenFormik();
 
   const {
+    events: sendTokenEvents,
     formValues,
     screenState,
     computed: {
@@ -83,20 +87,32 @@ export default function BottomArea({ account }: { account: Account | null }) {
   const {
     loading: loadingRisks,
     risks,
-    addressDesc,
-  } = useRisks(
-    formValues.to,
-    !!screenState.toAddrAccountInfo?.account?.balance,
-    toAddrCex,
-  );
+    fetchRisks,
+  } = useRisks(formValues.to, {
+    // balance: !!screenState.toAddrAccountInfo?.account?.balance,
+    cex: toAddrCex,
+    onLoadFinished: useCallback(
+      ctx => {
+        putScreenState({ agreeRequiredChecked: false });
+      },
+      [putScreenState],
+    ),
+  });
 
-  const stableRisks = useCreationWithDeepCompare(() => risks, [risks]);
   useEffect(() => {
-    stableRisks;
-    if (loadingRisks) {
-      putScreenState({ agreeCheckedOrNoRisk: false });
-    }
-  }, [stableRisks, loadingRisks, putScreenState]);
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
+      txDetail => {
+        fetchRisks();
+        setTimeout(() => {
+          fetchRisks();
+        }, 5000);
+      };
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+    };
+  }, [fetchRisks]);
 
   const mostImportantRisks = React.useMemo(() => {
     if (risks.length === 0) {
@@ -107,7 +123,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
   }, [risks]);
 
   const disableSubmitDueToBasic =
-    !canSubmit || !screenState.agreeCheckedOrNoRisk;
+    !canSubmit || (!!risks.length && !screenState.agreeRequiredChecked);
 
   return (
     <View
@@ -137,12 +153,12 @@ export default function BottomArea({ account }: { account: Account | null }) {
             style={styles.checkbox}
             onPress={() => {
               putScreenState({
-                agreeCheckedOrNoRisk: !screenState.agreeCheckedOrNoRisk,
+                agreeRequiredChecked: !screenState.agreeRequiredChecked,
               });
             }}>
             <CheckBoxRect
               size={16}
-              checked={screenState.agreeCheckedOrNoRisk}
+              checked={screenState.agreeRequiredChecked}
             />
             <Text style={styles.checkboxText}>
               {t('page.confirmAddress.checkbox')}

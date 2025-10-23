@@ -227,6 +227,7 @@ function SendScreen({
     computed: {
       toAddressInContactBook,
       toAddressIsValid,
+      toAddressIsRecentlySend,
       toAddressInWhitelist,
       toAddressIsCex,
       canSubmit,
@@ -445,7 +446,7 @@ function SendScreen({
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [sendTokenEvents, resetScreenState, navigation]);
+  }, [sendTokenEvents, resetScreenState]);
 
   useLayoutEffect(() => {
     return () => {
@@ -484,6 +485,7 @@ function SendScreen({
         formValues,
         computed: {
           canSubmit,
+          toAddressIsRecentlySend,
           toAddressInWhitelist,
           toAddressIsCex,
           whitelistEnabled,
@@ -610,10 +612,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       paddingTop: 16,
       position: 'relative',
       height: '100%',
-      paddingBottom: 220,
     },
     mainContent: {
       paddingHorizontal: 24,
+      paddingBottom: 220,
     },
     balance: {
       marginTop: 24,

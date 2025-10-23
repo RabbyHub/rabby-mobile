@@ -15,6 +15,7 @@ import { atom, useAtom } from 'jotai';
 import { sortBy, unionBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
+import { Hex, isValidHexAddress } from '@metamask/utils';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -66,15 +67,38 @@ function markFirstItems(
   return newArr;
 }
 
+/**
+ * @description fetch local sending/sent tx
+ * @param address
+ */
+const fetchLocalSendTx = (address: string) => {
+  const { completeds: _completeds, pendings: _pendings } =
+    transactionHistoryService.getList(address);
+
+  return [..._pendings, ..._completeds].filter(item => {
+    const chain = findChain({ id: item.chainId });
+    return (
+      !chain?.isTestnet &&
+      !item.maxGasTx.action?.actionData.cancelTx &&
+      item.$ctx?.ga?.source === 'sendToken'
+    );
+  });
+};
+
 export type RecentHistoryItem = {
   toAddress: string;
+  /**
+   * @description unix timestamp in seconds
+   */
   time: number;
   isFailed: boolean;
   isPending: boolean;
 };
 export const useRecentSend = ({
   useAllHistory,
-}: { useAllHistory?: boolean } = {}) => {
+}: {
+  useAllHistory?: boolean;
+} = {}) => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -99,25 +123,11 @@ export const useRecentSend = ({
         continue;
       }
       const addr = account.address.toLowerCase();
-      const localTxs = fetchLocalTx(addr);
+      const localTxs = fetchLocalSendTx(addr);
       list.push(...localTxs);
     }
     return list;
   };
-
-  const fetchLocalTx = useMemoizedFn((address: string) => {
-    const { completeds: _completeds, pendings: _pendings } =
-      transactionHistoryService.getList(address);
-
-    return [..._pendings, ..._completeds].filter(item => {
-      const chain = findChain({ id: item.chainId });
-      return (
-        !chain?.isTestnet &&
-        !item.maxGasTx.action?.actionData.cancelTx &&
-        item.$ctx?.ga?.source === 'sendToken'
-      );
-    });
-  });
 
   const markedList = useMemo(() => {
     const sortedList = historyList?.sort(
@@ -247,3 +257,15 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
     runFetchLocalPendingTx,
   };
 };
+
+export function useRecentSendToHistoryFor(toAddress?: string) {
+  const { recentHistory } = useRecentSend({ useAllHistory: true });
+
+  return {
+    recentHistory: recentHistory.filter(item =>
+      toAddress && isValidHexAddress(toAddress as Hex)
+        ? item.toAddress.toLowerCase() === toAddress.toLowerCase()
+        : [],
+    ),
+  };
+}

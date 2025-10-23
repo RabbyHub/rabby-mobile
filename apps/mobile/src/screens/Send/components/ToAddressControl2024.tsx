@@ -427,17 +427,13 @@ export default function ToAddressControl2024({
   const { findAccountWithoutBalance } = useWhiteListAddress();
   const {
     formValues,
-    screenState: { toAddrAccountInfo: foundAccountInfo },
-    fns: { putScreenState },
+    computed: { toAddressIsRecentlySend },
     callbacks: { handleFieldChange },
   } = useSendTokenInternalContext();
 
-  useEffect(() => {
-    if (formValues.to) {
-      const res = findAccountWithoutBalance(formValues.to, { brandName });
-      putScreenState({ toAddrAccountInfo: res });
-    }
-  }, [formValues.to, brandName, findAccountWithoutBalance, putScreenState]);
+  const foundAccountInfo = useMemo(() => {
+    return findAccountWithoutBalance(formValues.to, { brandName });
+  }, [formValues.to, brandName, findAccountWithoutBalance]);
 
   const { t } = useTranslation();
 
@@ -451,7 +447,9 @@ export default function ToAddressControl2024({
   }
 
   const hasPositiveTips =
-    !!foundAccountInfo?.isMyImported || !!foundAccountInfo?.inWhitelist;
+    !!foundAccountInfo?.isMyImported ||
+    !!foundAccountInfo?.inWhitelist ||
+    toAddressIsRecentlySend;
 
   return (
     <View style={[styles.control, style]}>
@@ -475,9 +473,9 @@ export default function ToAddressControl2024({
                     'page.sendToken.sectionTo.positiveTips.whitelistedAddress',
                   )}
                 </Text>
+              ) : toAddressIsRecentlySend ? (
+                t('page.sendToken.sectionTo.positiveTips.sentRecently')
               ) : null}
-              {/* {t('page.sendToken.sectionTo.positiveTips.whitelistedAddress')}
-            {t('page.sendToken.sectionTo.positiveTips.sentRecently')} */}
             </Text>
           </View>
         )}
