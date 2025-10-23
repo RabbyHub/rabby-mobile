@@ -63,6 +63,7 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { SelectAccountSheetModalSizes } from '../layout';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RcIconScannerCC } from '@/assets/icons/address';
+import { touchedFeedback } from '@/utils/touch';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -171,6 +172,7 @@ export const ScreenAddNewWhitelistAddress = ({
     setInput(text);
   }, []);
   const openSendHistory = useCallback(() => {
+    touchedFeedback();
     fnNavTo('select-from-history');
     Keyboard.dismiss();
   }, [fnNavTo]);

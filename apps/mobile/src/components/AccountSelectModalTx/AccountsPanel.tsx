@@ -42,6 +42,7 @@ import { AddressItemInSheetModal } from './AddressItem';
 import EmptyWhiteListHolder from './EmptyWhiteListHolder';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import { useAccountSelectModalCtx } from './hooks';
+import { touchedFeedback } from '@/utils/touch';
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -114,6 +115,7 @@ const SectionCollapsableNav = function ({
       {title === TxAccountPannelSectionTitle.Whitelist && (
         <TouchableOpacity
           onPress={evt => {
+            touchedFeedback();
             evt.stopPropagation();
             onAction?.({
               title: TxAccountPannelSectionTitle.Whitelist,
@@ -257,6 +259,7 @@ export function AccountsPanelInSheetModal({
           activeOpacity={0.85}
           style={styles.searchInputWrapper}
           onPress={() => {
+            touchedFeedback();
             fnNavTo('enter-addr');
           }}>
           <View style={styles.placeHolderWrapper}>
@@ -267,10 +270,10 @@ export function AccountsPanelInSheetModal({
           <TouchableOpacity
             onPress={evt => {
               evt.stopPropagation();
+              touchedFeedback();
               fnNavTo('enter-addr', {
                 autoScan: true,
               });
-              // handleGotoInputAddress(true)
             }}>
             <ICONS_COMMON_2024.RcScanner
               color={colors2024['neutral-title-1']}

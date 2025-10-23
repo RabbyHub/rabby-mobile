@@ -28,6 +28,7 @@ import { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components
 import { Account } from '@/core/services/preference';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
+import { touchedFeedback } from '@/utils/touch';
 
 function getDefaultScreenStates(): {
   isScanning: boolean;
@@ -242,6 +243,7 @@ export function SheetModalSelectAccountSend({
   >([screenStates.currentScreen]);
 
   const onPressNavBack = useCallback(() => {
+    touchedFeedback();
     switch (currentScreen) {
       case 'default':
         break;
@@ -352,6 +354,7 @@ export function SheetModalSelectAccountSend({
                 <Pressable
                   disabled={!providerValues.computed.needShowHistory}
                   onPress={() => {
+                    touchedFeedback();
                     fnNavTo('select-from-history');
                   }}>
                   <RcIconHistory width={24} height={24} />

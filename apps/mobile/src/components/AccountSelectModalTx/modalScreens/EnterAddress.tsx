@@ -33,6 +33,7 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { Button } from '@/components2024/Button';
 import { AddressEditorBadge } from '../AddressEditorBadge';
+import { touchedFeedback } from '@/utils/touch';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -252,6 +253,7 @@ const ScreenPanelEnterAddress = ({
                   />
                   <TouchableOpacity
                     onPress={() => {
+                      touchedFeedback();
                       handleGoToScanner();
                     }}>
                     <RcIconScannerCC
@@ -277,6 +279,7 @@ const ScreenPanelEnterAddress = ({
                 <TouchableOpacity
                   style={styles.ensResultBox}
                   onPress={() => {
+                    touchedFeedback();
                     Keyboard.dismiss();
                     setInput(ensResult.addr);
                   }}>
