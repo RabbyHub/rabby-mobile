@@ -32,7 +32,7 @@ export const enum RiskType {
 export const useRisks = (
   address: string,
   disableBalance?: boolean,
-  cex?: ProjectItem,
+  cex?: ProjectItem | null,
 ) => {
   const [risks, setRisks] = useState<Array<{ type: RiskType; value: string }>>(
     [],
@@ -40,7 +40,7 @@ export const useRisks = (
   const { t } = useTranslation();
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!address);
   const riskGetRef = useRef(false);
 
   const [addressDesc, setAddressDesc] = useState<
@@ -52,10 +52,10 @@ export const useRisks = (
   }, [loading, risks]);
 
   useEffect(() => {
-    if (riskGetRef.current) {
-      return;
-    }
+    if (!address) return;
+    if (riskGetRef.current) return;
     riskGetRef.current = true;
+
     (async () => {
       setLoading(true);
       const currRisks: Array<{ type: RiskType; value: string }> = [];
@@ -82,6 +82,7 @@ export const useRisks = (
                   acc.address,
                   address,
                 );
+
                 if (res?.has_transfer) {
                   hasSended = true;
                 }
@@ -125,7 +126,7 @@ export const useRisks = (
           if (addressRes?.cex?.id && !addressRes.cex.is_deposit) {
             currRisks.push({
               type: RiskType.CEX_NO_DEPOSIT,
-              value: t('page.confirmAddress.risks.dexNoDeposite'),
+              value: t('page.confirmAddress.risks.cexNoDeposite'),
             });
           }
           const isContract = Object.keys(addressRes?.contract || {}).length > 0;
@@ -170,8 +171,10 @@ export const useRisks = (
           },
         ]);
       }
+    })().finally(() => {
+      riskGetRef.current = false;
       setLoading(false);
-    })();
+    });
   }, [address, cex, disableBalance, sortedAccounts, t]);
   return {
     risks,

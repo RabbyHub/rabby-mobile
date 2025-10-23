@@ -39,6 +39,9 @@ import { useAlias2 } from '@/hooks/alias';
 import { default as RcIconUnknownAddressAvatarCC } from '../icons/unknown-address-avatar-cc.svg';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import { useSendTokenInternalContext } from '../hooks/useSendToken';
+import { RcIconTipRightCC } from '../icons';
+import { makeAccountObject } from '@/utils/account';
+import { IExtractFromPromise } from '@/utils/type';
 
 export const ToAccountEntry = ({
   account,
@@ -52,7 +55,7 @@ export const ToAccountEntry = ({
   isSelectingAccount: boolean;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
-  addrDesc?: AddrDescResponse['desc'];
+  addrDesc?: AddrDescResponse['desc'] | null;
   inWhiteList?: boolean;
   disableMenu?: boolean;
   isMyImported?: boolean;
@@ -102,14 +105,10 @@ export const ToAccountEntry = ({
             isEmptyAddress && styles.emptyBg,
             style,
           ])}
-          onPress={
-            !isEmptyAddress
-              ? undefined
-              : evt => {
-                  evt.stopPropagation();
-                  onPress();
-                }
-          }>
+          onPress={evt => {
+            evt.stopPropagation();
+            onPress();
+          }}>
           <InnerAddressItem style={styles.rootItem} account={account}>
             {({ WalletIcon }) => (
               <View style={styles.item}>
@@ -415,57 +414,73 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
 
 export default function ToAddressControl2024({
   style,
-  // address,
   brandName,
   addrDesc,
 }: React.PropsWithChildren<
   RNViewProps & {
-    // address: string;
     brandName?: string;
-    addrDesc?: AddrDescResponse['desc'];
+    addrDesc?: AddrDescResponse['desc'] | null;
   }
 >) {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist } = useWhitelist();
-  const { findAccount } = useWhiteListAddress();
+  const { findAccountWithoutBalance } = useWhiteListAddress();
   const {
     formValues,
+    screenState: { toAddrAccountInfo: foundAccountInfo },
+    fns: { putScreenState },
     callbacks: { handleFieldChange },
   } = useSendTokenInternalContext();
 
-  const [currentAccount, setCurrentAccount] = useState<KeyringAccountWithAlias>(
-    {
-      address: formValues.to,
-      brandName: brandName || KEYRING_CLASS.WATCH,
-      aliasName:
-        contactService.getAliasByAddress(formValues.to)?.alias ||
-        ellipsisAddress(formValues.to),
-      balance: 0,
-      type: KEYRING_CLASS.WATCH,
-    },
-  );
-
   useEffect(() => {
     if (formValues.to) {
-      findAccount(formValues.to, brandName).then(res => {
-        if (res.account) {
-          setCurrentAccount(res.account);
-        }
-      });
+      const res = findAccountWithoutBalance(formValues.to, { brandName });
+      putScreenState({ toAddrAccountInfo: res });
     }
-  }, [formValues.to, brandName, findAccount]);
+  }, [formValues.to, brandName, findAccountWithoutBalance, putScreenState]);
+
   const { t } = useTranslation();
 
   const [isSelectingAccount, setIsSelectingAccount] = useState(false);
 
+  const currentAccount =
+    foundAccountInfo?.account ||
+    makeAccountObject({ address: formValues.to, brandName });
   if (!currentAccount) {
     return null;
   }
+
+  const hasPositiveTips =
+    !!foundAccountInfo?.isMyImported || !!foundAccountInfo?.inWhitelist;
 
   return (
     <View style={[styles.control, style]}>
       <View style={styles.titleContainer}>
         <Text style={styles.sectionTitle}>{t('page.sendToken.To')}</Text>
+        {!!hasPositiveTips && (
+          <View style={styles.positiveTipsInfo}>
+            <RcIconTipRightCC
+              width={18}
+              height={18}
+              color={colors2024['green-default']}
+            />
+            <Text style={styles.positiveTipsText}>
+              {foundAccountInfo?.isMyImported ? (
+                <Text>
+                  {t('page.sendToken.sectionTo.positiveTips.yourOwnAddress')}
+                </Text>
+              ) : foundAccountInfo?.inWhitelist ? (
+                <Text>
+                  {t(
+                    'page.sendToken.sectionTo.positiveTips.whitelistedAddress',
+                  )}
+                </Text>
+              ) : null}
+              {/* {t('page.sendToken.sectionTo.positiveTips.whitelistedAddress')}
+            {t('page.sendToken.sectionTo.positiveTips.sentRecently')} */}
+            </Text>
+          </View>
+        )}
       </View>
       <ToAccountEntry
         isSelectingAccount={isSelectingAccount}
@@ -510,6 +525,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontSize: 17,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
+    },
+
+    positiveTipsInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    positiveTipsText: {
+      marginLeft: 4,
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontWeight: 500,
+      lineHeight: 18,
     },
   };
 });

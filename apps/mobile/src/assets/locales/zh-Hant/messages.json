@@ -2150,7 +2150,7 @@
         "noSend": "您在過去 180 天內沒有向此地址發送資金。請確認您是否希望繼續。",
         "scamAddress": "接收者地址是一個被 Rabby 標記為詐騙地址的地址",
         "contractAddress": "收款地址是合約地址，可能導致資金損失",
-        "dexNoDeposite": "接收地址是一個來自 CEX 的非存款地址。請確保您的存款地址正確。"
+        "cexNoDeposite": "接收地址是一個來自 CEX 的非存款地址。請確保您的存款地址正確。"
       },
       "dexNameTail": "存款地址",
       "brandNameTail": "地址",

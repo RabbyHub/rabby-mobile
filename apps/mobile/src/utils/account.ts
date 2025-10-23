@@ -116,13 +116,20 @@ export function stableSerializeItems<
   return JSON.stringify(items.sort(sorter), null, 0);
 }
 
-export function makeAccountObject<T extends Account>(address: string): T {
+export function makeAccountObject<T extends Account>({
+  address,
+  brandName,
+}: {
+  address: string;
+  brandName?: string;
+}): T {
   return {
     address,
-    brandName: KEYRING_CLASS.WATCH,
-    type: KEYRING_CLASS.WATCH,
+    brandName: brandName || KEYRING_CLASS.WATCH,
     aliasName:
       contactService.getAliasByAddress(address)?.alias ||
       ellipsisAddress(address),
+    balance: 0,
+    type: KEYRING_CLASS.WATCH,
   } as any as T;
 }

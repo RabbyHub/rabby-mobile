@@ -13,7 +13,13 @@ import {
 } from '@/core/services';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { GasLevel, TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  AddrDescResponse,
+  GasLevel,
+  ProjectItem,
+  TokenItem,
+  Tx,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 import { openapi } from '@/core/request';
 import { TFunction } from 'i18next';
@@ -67,6 +73,9 @@ import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import useAsync from 'react-use/lib/useAsync';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { IExtractFromPromise } from '@/utils/type';
+import { useWhiteListAddress } from './useWhiteListAddress';
 
 function makeDefaultToken(): TokenItem & {
   tokenId?: string;
@@ -217,6 +226,10 @@ export type SendScreenState = {
   addressToEditAlias: string | null;
 
   buildTxsCount?: number;
+
+  agreeCheckedOrNoRisk: boolean;
+  toAddrAccountInfo: FoundAccountResult | null;
+  toAddrDesc: null | AddrDescResponse['desc'];
 };
 const DFLT_SEND_STATE: SendScreenState = {
   inited: false,
@@ -255,6 +268,10 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   addressToAddAsContacts: null,
   addressToEditAlias: null,
+
+  agreeCheckedOrNoRisk: false,
+  toAddrAccountInfo: null,
+  toAddrDesc: null,
 };
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 export function useSendTokenScreenState() {
@@ -1604,6 +1621,7 @@ export function useSendTokenForm({
   );
 
   const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
+  const { list: cexList } = useCexSupportList();
 
   const { whitelist, enable: whitelistEnabled } = useWhitelist();
   const computed = useMemo(() => {
@@ -1613,7 +1631,14 @@ export function useSendTokenForm({
     return {
       toAddressIsValid: !!formValues.to && isValidAddress(formValues.to),
       toAddressInWhitelist,
+      toAddressIsCex:
+        !!screenState.toAddrDesc?.cex?.id &&
+        !!screenState.toAddrDesc?.cex?.is_deposit,
       toAddressInContactBook: isAddrOnContactBook(formValues.to),
+
+      toAddrCex: cexList.find(
+        item => item.id === screenState.toAddrDesc?.cex?.id,
+      ),
 
       canSubmit:
         isValidAddress(formValues.to) &&
@@ -1629,7 +1654,9 @@ export function useSendTokenForm({
     whitelist,
     formValues.to,
     formValues.amount,
+    cexList,
     isAddrOnContactBook,
+    screenState.toAddrDesc,
     screenState.balanceError,
     screenState.isLoading,
     currentAccount?.type,
@@ -1759,6 +1786,10 @@ export function useSendTokenFormik() {
   return formik;
 }
 
+type FoundAccountResult = IExtractFromPromise<
+  ReturnType<ReturnType<typeof useWhiteListAddress>['findAccount']>
+>;
+
 type InternalContext = {
   screenState: SendScreenState;
   formValues: FormSendToken;
@@ -1770,8 +1801,10 @@ type InternalContext = {
     canSubmit: boolean;
     canDirectSign: boolean;
     toAddressInWhitelist: boolean;
+    toAddressIsCex: boolean;
     toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
+    toAddrCex: null | undefined | ProjectItem;
   };
 
   formik: ReturnType<typeof useSendTokenFormikContext>;
@@ -1810,9 +1843,12 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     whitelistEnabled: false,
     canSubmit: false,
     toAddressInWhitelist: false,
+    toAddressIsCex: false,
     toAddressIsValid: false,
     toAddressInContactBook: false,
     canDirectSign: false,
+
+    toAddrCex: null,
   },
 
   formik: null as any,

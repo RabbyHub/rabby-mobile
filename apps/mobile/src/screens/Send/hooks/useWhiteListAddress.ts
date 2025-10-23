@@ -69,12 +69,21 @@ export const useWhiteListAddress = () => {
   }, [accounts]);
 
   const findAccount = useCallback(
-    async (address: string, brandName?: string, disableBalance?: boolean) => {
+    async (
+      address: string,
+      options: {
+        brandName?: string;
+        disableBalance?: boolean;
+        /** @default true */
+        useEllipsisAsFallback?: boolean;
+      },
+    ) => {
       const targetAccounts = accounts.filter(item =>
         isSameAddress(item.address, address),
       );
       const myAccountsInner = filterMyAccounts(accounts);
 
+      const { brandName, disableBalance, useEllipsisAsFallback } = options;
       let balance = 0;
       if (!targetAccounts.length && !disableBalance) {
         const userTokenSettings = await getTokenSettings();
@@ -88,8 +97,9 @@ export const useWhiteListAddress = () => {
       const defaultAccount = {
         address,
         aliasName:
-          contactService.getAliasByAddress(address)?.alias ||
-          ellipsisAddress(address),
+          contactService.getAliasByAddress(address, {
+            keepEmptyIfNotFound: !useEllipsisAsFallback,
+          })?.alias || (useEllipsisAsFallback ? ellipsisAddress(address) : ''),
         balance,
         type: KEYRING_CLASS.WATCH,
         brandName: KEYRING_CLASS.WATCH,

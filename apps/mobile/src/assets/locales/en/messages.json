@@ -654,7 +654,12 @@
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
         "searchInputPlaceholder": "Enter an address or scan",
-        "selectPlaceholder": "Select Address"
+        "selectPlaceholder": "Select Address",
+        "positiveTips": {
+          "yourOwnAddress": "Your own address",
+          "whitelistedAddress": "Whitelisted address",
+          "sentRecently": "Sent recently"
+        }
       },
       "whitelistAlert__disabled": "Whitelist disabled. You can transfer to any address.",
       "whitelistAlert__notWhitelisted_tip": "The address is not whitelisted.",
@@ -710,7 +715,7 @@
       "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time",
       "risks": {
         "noSend": "No transfers to this address in 180 days",
-        "dexNoDeposite": "Not a CEX deposit address, funds may be lost",
+        "cexNoDeposite": "Not a CEX deposit address, funds may be lost",
         "contractAddress": "Contract address detected, funds may be lost",
         "scamAddress": "Scam address flagged by Rabby"
       },

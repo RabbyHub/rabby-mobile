@@ -2102,7 +2102,7 @@
         "scamAddress": "接收地址是一个被 Rabby 标记的诈骗地址。",
         "contractAddress": "收款地址是一个合约地址，可能导致资金损失",
         "noSend": "过去180天内您未曾向此地址发送资金。请确认是否继续。",
-        "dexNoDeposite": "接收地址是来自 CEX 的非充值地址。请确保您的充值地址正确。"
+        "cexNoDeposite": "接收地址是来自 CEX 的非充值地址。请确保您的充值地址正确。"
       },
       "brandNameTail": "地址",
       "dexNameTail": "充值地址",
