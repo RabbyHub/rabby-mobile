@@ -24,14 +24,15 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { openapi } from '@/core/request';
 import { debounce, throttle } from 'lodash';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
-import { useAccountSelectModalInternal } from '../hooks';
+import {
+  useAccountSelectModalCtx,
+  useRestoreModalOnBackFromScanner,
+} from '../hooks';
 import { SelectAccountSheetModalSizes } from '../layout';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { Button } from '@/components2024/Button';
 import { AddressEditorBadge } from '../AddressEditorBadge';
-import usePrevious from 'react-use/lib/usePrevious';
-import { Account } from '@/core/services/preference';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -61,15 +62,19 @@ const debouncedGetEnsAddress = debounce(
 
 const ScreenPanelEnterAddress = ({
   onCleanupInput,
+  autoScan,
 }: {
   onCleanupInput?: () => void;
+  autoScan?: boolean;
 }) => {
-  const { cbOnScanStageChanged } = useAccountSelectModalInternal();
+  const { cbOnScanStageChanged, cbOnSelectedAccount } =
+    useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, _setInput] = React.useState(
     __DEV__
-      ? '0x5853eD4f26A3fceA565b3FBC698bb19cdF6DEB85'
-      : // __DEV__ ? 'hongbo.eth'
+      ? ''
+      : // __DEV__ ? '0x5853eD4f26A3fceA565b3FBC698bb19cdF6DEB85'
+        // __DEV__ ? 'hongbo.eth'
         '',
   );
   const setInput = useCallback((text: string) => {
@@ -91,41 +96,12 @@ const ScreenPanelEnterAddress = ({
   const { foundAccountInfo } = useMemo(() => {
     let info: null | ReturnType<typeof findAccountWithoutBalance> = null;
     if (isValidHexAddress(input as `0x${string}`)) {
-      info = findAccountWithoutBalance(input, undefined); // clear input when enter screen
+      info = findAccountWithoutBalance(input, { useEllipsisAsFallback: false }); // clear input when enter screen
     }
     return {
       foundAccountInfo: info,
     };
   }, [findAccountWithoutBalance, input]);
-
-  // const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
-  // const { accounts } = useAccounts({
-  //   disableAutoFetch: true,
-  // });
-  // const setInWhitelist = useCallback(
-  //   async (bool: boolean) => {
-  //     if (bool) {
-  //       const isImported = accounts.some(i =>
-  //         addressUtils.isSameAddress(i.address, account.address),
-  //       );
-  //       matomoRequestEvent({
-  //         category: 'Send Popup Usage',
-  //         action: isImported
-  //           ? 'Send_AddWhitelist_imported'
-  //           : 'Send_AddWhitelist_notImported',
-  //       });
-  //       return addWhitelist(account.address, {
-  //         hasValidated: true,
-  //         onAdded: () => {
-  //           toast.success(t('page.whitelist.addSuccessful'));
-  //         },
-  //       });
-  //     } else {
-  //       return removeWhitelist(account.address);
-  //     }
-  //   },
-  //   [account.address, addWhitelist, removeWhitelist, t, accounts],
-  // );
 
   const handleDone = useCallback(async () => {
     if (!input) {
@@ -144,43 +120,19 @@ const ScreenPanelEnterAddress = ({
     try {
       setLoading(true);
       Keyboard.dismiss();
+
       const { inWhitelist, account, isMyImported } = findAccountWithoutBalance(
         address,
         undefined,
       );
 
-      // TODO: no need this, just confirm it
-      if (inWhitelist || isMyImported) {
-        // navigateToSendScreen({
-        //   toAddress: account.address,
-        //   addressBrandName: account.brandName,
-        // });
-      } else {
-        // const id = createGlobalBottomSheetModal2024({
-        //   name: MODAL_NAMES.CONFIRM_ADDRESS,
-        //   account,
-        //   bottomSheetModalProps: {
-        //     enableDynamicSizing: true,
-        //   },
-        //   onCancel: () => {
-        //     removeGlobalBottomSheetModal2024(id);
-        //   },
-        //   onConfirm: (acc, addressDesc) => {
-        //     removeGlobalBottomSheetModal2024(id);
-        //     // navigateToSendScreen({
-        //     //   addressBrandName: acc.brandName,
-        //     //   addrDesc: addressDesc,
-        //     //   toAddress: acc.address,
-        //     // });
-        //   },
-        // });
-      }
+      cbOnSelectedAccount?.(account);
     } catch (err: any) {
       console.error('[EnterAddress] err', err);
     } finally {
       setLoading(false);
     }
-  }, [ensResult, findAccountWithoutBalance, input]);
+  }, [ensResult, input, findAccountWithoutBalance, cbOnSelectedAccount]);
 
   const handleInputChange = React.useCallback(
     (text: string) => {
@@ -197,26 +149,7 @@ const ScreenPanelEnterAddress = ({
     }
   }, [scanner, setInput]);
 
-  useEffect(() => {
-    const unsubscribe = onScannerEvent(
-      ScannerEventType.navBack,
-      throttle(() => {
-        cbOnScanStageChanged('end');
-      }, 300),
-    );
-    return () => {
-      unsubscribe();
-    };
-  }, [cbOnScanStageChanged]);
-
-  const { currentScreen } = useAccountSelectModalInternal();
-
-  // TODO: finish autoscan logic
-  const prevScreen = usePrevious(currentScreen);
-  useEffect(() => {
-    if (prevScreen !== 'enter-addr' && currentScreen === 'enter-addr') {
-    }
-  }, [currentScreen, prevScreen]);
+  useRestoreModalOnBackFromScanner(cbOnScanStageChanged);
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPb: 20,
@@ -255,6 +188,20 @@ const ScreenPanelEnterAddress = ({
       },
     );
   }, [input]);
+
+  const handleGoToScanner = useCallback(() => {
+    cbOnScanStageChanged('start');
+    Keyboard.dismiss();
+    setTimeout(() => {
+      navigateDeprecated(RootNames.Scanner);
+    }, 200);
+  }, [cbOnScanStageChanged]);
+
+  useEffect(() => {
+    if (autoScan) {
+      handleGoToScanner();
+    }
+  }, [autoScan, handleGoToScanner]);
 
   return (
     <TouchableWithoutFeedback
@@ -297,7 +244,7 @@ const ScreenPanelEnterAddress = ({
                 <View style={[ctx.wrapperStyle, styles.customIconContainer]}>
                   <PasteButton
                     style={styles.pasteButton}
-                    cleanClipboardAfterPaste={false}
+                    cleanClipboardAfterPaste={!__DEV__}
                     onPaste={text => {
                       handleInputChange(text);
                       Keyboard.dismiss();
@@ -305,10 +252,7 @@ const ScreenPanelEnterAddress = ({
                   />
                   <TouchableOpacity
                     onPress={() => {
-                      cbOnScanStageChanged('start');
-                      setTimeout(() => {
-                        navigateDeprecated(RootNames.Scanner);
-                      }, 200);
+                      handleGoToScanner();
                     }}>
                     <RcIconScannerCC
                       style={ctx.iconStyle}

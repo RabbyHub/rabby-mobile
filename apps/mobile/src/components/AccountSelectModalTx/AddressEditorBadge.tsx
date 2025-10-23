@@ -35,7 +35,9 @@ export function AddressEditorBadge({
   const [storedAlias, setStoredAlias] = useState('');
   const fetchAlias = useCallback(() => {
     if (isValidHexAddress(account.address as `0x${string}`)) {
-      const alias = contactService.getAliasByAddress(account.address)?.alias;
+      const alias = contactService.getAliasByAddress(account.address, {
+        keepEmptyIfNotFound: true,
+      })?.alias;
       setStoredAlias(alias || '');
     }
   }, [account.address]);

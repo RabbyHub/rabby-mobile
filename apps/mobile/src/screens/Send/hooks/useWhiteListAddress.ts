@@ -110,7 +110,15 @@ export const useWhiteListAddress = () => {
     [accounts, whitelist],
   );
   const findAccountWithoutBalance = useCallback(
-    (address: string, brandName?: string) => {
+    (
+      address: string,
+      options?: {
+        brandName?: string;
+        /** @default true */
+        useEllipsisAsFallback?: boolean;
+      },
+    ) => {
+      const { brandName, useEllipsisAsFallback = true } = options || {};
       const targetAccounts = accounts.filter(item =>
         isSameAddress(item.address, address),
       );
@@ -119,8 +127,9 @@ export const useWhiteListAddress = () => {
       const defaultAccount: KeyringAccountWithAlias = {
         address,
         aliasName:
-          contactService.getAliasByAddress(address)?.alias ||
-          ellipsisAddress(address),
+          contactService.getAliasByAddress(address, {
+            keepEmptyIfNotFound: !useEllipsisAsFallback,
+          })?.alias || (useEllipsisAsFallback ? ellipsisAddress(address) : ''),
         balance,
         type: KEYRING_CLASS.WATCH,
         brandName: KEYRING_CLASS.WATCH,

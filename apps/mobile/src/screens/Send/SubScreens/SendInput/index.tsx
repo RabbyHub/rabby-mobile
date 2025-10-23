@@ -94,10 +94,8 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
     try {
       setLoading(true);
       Keyboard.dismiss();
-      const { inWhitelist, account, isMyImported } = findAccountWithoutBalance(
-        address,
-        undefined,
-      );
+      const { inWhitelist, account, isMyImported } =
+        findAccountWithoutBalance(address);
 
       if (inWhitelist || isMyImported) {
         navigateToSendScreen({

@@ -1,11 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
-import { ModalLayouts } from '@/constant/layout';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { AppBottomSheetModal, AppBottomSheetModalTitle } from '@/components';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
@@ -15,14 +11,13 @@ import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { useTranslation } from 'react-i18next';
-import { useRecentSend } from '../../hooks/useRecentSend';
 import { SendAction } from '@rabby-wallet/rabby-api/dist/types';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
-import { transactionHistoryService } from '@/core/services';
-import { useMemoizedFn } from 'ahooks';
 import { useGetCexList } from '@/screens/Transaction/hook';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useRecentSend } from '@/screens/Send/hooks/useRecentSend';
+import { useAccountSelectModalCtx } from '../hooks';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -31,23 +26,18 @@ interface DisplayHistoryItem {
 }
 
 interface IProps {
-  visible: boolean;
-  onClose: () => void;
   title?: string;
   isForMultipleAddress?: boolean;
   onPressAddToWhitelistButton?: (data: SendAction) => void;
 }
-export const SendHistory = ({
-  visible,
-  onClose,
+export const ScreenSentHistory = ({
   title,
   isForMultipleAddress = true,
   onPressAddToWhitelistButton,
 }: IProps) => {
+  const { fnNavTo } = useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const bottomRef = useRef<BottomSheetModalMethods>(null);
   const { t } = useTranslation();
-  const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
   const { markedList, runAsync } = useRecentSend({
     useAllHistory: isForMultipleAddress,
   });
@@ -58,15 +48,8 @@ export const SendHistory = ({
   const { getCexInfoByAddress } = useGetCexList();
 
   useEffect(() => {
-    if (visible) {
-      bottomRef.current?.present();
-      runAsync();
-    } else {
-      bottomRef.current?.dismiss();
-    }
-  }, [visible, runAsync]);
-
-  const isDarkTheme = useGetBinaryMode() === 'dark';
+    runAsync();
+  }, [runAsync]);
 
   const renderItem = ({ item }: { item: DisplayHistoryItem }) => {
     if ('project_item' in item.data) {
@@ -98,7 +81,11 @@ export const SendHistory = ({
             canCancel={canCancel}
             getCexInfoByAddress={getCexInfoByAddress}
             isInSendHistory={true}
-            closeHistoryPopup={onClose}
+            onPressItem={ctx => {
+              fnNavTo('view-sent-tx', {
+                viewingHistoryTxData: ctx,
+              });
+            }}
             onPressAddToWhitelistButton={onPressAddToWhitelistButton}
           />
         </>
@@ -107,28 +94,7 @@ export const SendHistory = ({
   };
 
   return (
-    <AppBottomSheetModal
-      ref={bottomRef}
-      snapPoints={snapPoints}
-      onDismiss={onClose}
-      // enablePanDownToClose={true}
-      // enableDismissOnClose={true}
-      {...makeBottomSheetProps({
-        colors: colors2024,
-        linearGradientType: isDarkTheme ? 'bg1' : 'bg2',
-      })}>
-      {/* <BottomSheetScrollView> */}
-      <AppBottomSheetModalTitle
-        title={title || t('page.sendPoly.SendHistory')}
-        style={{
-          paddingTop: ModalLayouts.titleTopOffset,
-          fontFamily: 'SF Pro Rounded',
-          fontWeight: '800',
-          fontSize: 20,
-          lineHeight: 24,
-          marginBottom: 10,
-        }}
-      />
+    <>
       {Boolean(!isForMultipleAddress && currentAccount) && (
         <AddressItem account={currentAccount!}>
           {({ WalletIcon, WalletAddress }) => {
@@ -162,7 +128,7 @@ export const SendHistory = ({
           // onPresssItem={handlePressItem}
         /> */}
       {/* </BottomSheetScrollView> */}
-    </AppBottomSheetModal>
+    </>
   );
 };
 

@@ -41,7 +41,7 @@ import { WhiteListItemInSheetModal } from './WhiteListItem';
 import { AddressItemInSheetModal } from './AddressItem';
 import EmptyWhiteListHolder from './EmptyWhiteListHolder';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
-import { useAccountSelectModalInternal } from './hooks';
+import { useAccountSelectModalCtx } from './hooks';
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -163,18 +163,16 @@ function extractMixedItem(item?: RecentHistoryItem | AccountToSelect | null) {
 
 export function AccountsPanelInSheetModal({
   containerStyle,
-  onSelectAccount,
   scene,
   defaultPressItemAction = 'asPress',
 }: {
   containerStyle?: StyleProp<ViewStyle>;
-  onSelectAccount?: (account: Account | null) => void;
   scene?: SelectAccountSheetModalType;
   defaultPressItemAction?: React.ComponentProps<
     typeof AddressItemInSheetModal
   >['defaultPressAction'];
 }) {
-  const { fnNavTo } = useAccountSelectModalInternal();
+  const { fnNavTo, cbOnSelectedAccount } = useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
 
   // const { whitelist, isAddrOnWhitelist } = useWhitelist({
@@ -269,6 +267,9 @@ export function AccountsPanelInSheetModal({
           <TouchableOpacity
             onPress={evt => {
               evt.stopPropagation();
+              fnNavTo('enter-addr', {
+                autoScan: true,
+              });
               // handleGotoInputAddress(true)
             }}>
             <ICONS_COMMON_2024.RcScanner
@@ -302,7 +303,7 @@ export function AccountsPanelInSheetModal({
           return (
             !!recentUsedAddresses.length && (
               <>
-                <View style={{ marginTop: 30 }} />
+                <View style={{ marginTop: 20 }} />
                 <SectionCollapsableNav
                   title={t('component.accountSelectModalTx.recentAccounts')}
                 />
@@ -313,9 +314,14 @@ export function AccountsPanelInSheetModal({
           return (
             !!whitelistAccounts.length && (
               <>
-                <View style={{ marginTop: 30 }} />
+                <View style={{ marginTop: 20 }} />
                 <SectionCollapsableNav
                   title={t('component.accountSelectModalTx.whitelistAccounts')}
+                  onAction={ctx => {
+                    if (ctx.action === 'add-whitelist') {
+                      fnNavTo('add-new-whitelist-addr');
+                    }
+                  }}
                 />
               </>
             )
@@ -324,7 +330,7 @@ export function AccountsPanelInSheetModal({
           return (
             !!myAddresses.length && (
               <>
-                <View style={{ marginTop: 30 }} />
+                <View style={{ marginTop: 20 }} />
                 <SectionCollapsableNav
                   title={t('component.accountSelectModalTx.importedAccounts')}
                 />
@@ -335,7 +341,7 @@ export function AccountsPanelInSheetModal({
           return (
             !!safeAddresses.length && (
               <>
-                <View style={{ marginTop: 30 }} />
+                <View style={{ marginTop: 24 }} />
                 <SectionCollapsableNav
                   title={t(
                     'page.addressDetail.addressListScreen.importSafeAddress',
@@ -353,7 +359,7 @@ export function AccountsPanelInSheetModal({
           return (
             !!watchAddresses.length && (
               <>
-                <View style={{ height: 30 }} />
+                <View style={{ height: 24 }} />
                 <SectionCollapsableNav
                   title={t(
                     'page.addressDetail.addressListScreen.importWatchAddress',
@@ -374,6 +380,7 @@ export function AccountsPanelInSheetModal({
     [
       t,
       safeAddressNavCollapsed,
+      fnNavTo,
       // scrollToBottom,
       myAddresses.length,
       recentUsedAddresses.length,
@@ -442,6 +449,7 @@ export function AccountsPanelInSheetModal({
                             account={account}
                             hideBalance
                             inWhiteList
+                            enableMenu={__DEV__}
                             isMyImported={myAccounts.some(i =>
                               addressUtils.isSameAddress(
                                 i.address,
@@ -449,7 +457,7 @@ export function AccountsPanelInSheetModal({
                               ),
                             )}
                             onPress={() => {
-                              onSelectAccount?.(account);
+                              cbOnSelectedAccount?.(account);
                             }}
                           />
                         ) : (
@@ -458,7 +466,7 @@ export function AccountsPanelInSheetModal({
                             recentAddressData={null}
                             addressItemProps={{ account: account }}
                             isPinned={isPinnedAccount(account)}
-                            onPressAccount={onSelectAccount}
+                            onPressAccount={cbOnSelectedAccount}
                             replaceNameWithAliasAddress={false}
                             isReceive={false}
                             showCopyAndQR={false}
@@ -486,7 +494,7 @@ export function AccountsPanelInSheetModal({
                             timeStamp={history.time}
                             inWhiteList={inWhitelist}
                             onPress={() => {
-                              onSelectAccount?.(account);
+                              cbOnSelectedAccount?.(account);
                             }}
                           />
                         );
@@ -571,7 +579,9 @@ const getPanelStyle = createGetStyles2024(ctx => {
     },
     scrollView: {
       // width: '100%',
-      padding: 16,
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 16,
     },
     scrollViewContentContainer: {
       alignItems: 'flex-start',

@@ -12,17 +12,49 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Keyboard, Pressable, Text, View } from 'react-native';
 import {
   AccountSelectModalProvider,
   SelectAccountSheetModalScreen,
   SelectAccountSheetModalValues,
 } from './hooks';
 import { RcIconHistory, RcIconNavLeft } from './icons';
-import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import ScreenPanelEnterAddress from './modalScreens/EnterAddress';
 import { SelectAccountSheetModalSizes } from './layout';
+import { ScreenAddNewWhitelistAddress } from './modalScreens/AddNewWhitelistAddress';
+import { ScreenSentHistory } from './modalScreens/SentHistory';
+import { ScreenHistoryLocalDetail } from './modalScreens/TxHistoryDetail';
+import { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components/TransactionItem2025';
+import { Account } from '@/core/services/preference';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
 
+function getDefaultScreenStates(): {
+  isScanning: boolean;
+  currentScreen: SelectAccountSheetModalScreen;
+  viewingHistoryTxData: HistoryLocalDetailParams | null;
+  nextInitValues: {
+    'add-new-whitelist-addr': string;
+    'enter-addr': {
+      autoScan: boolean;
+    };
+  };
+} {
+  return {
+    isScanning: false,
+    currentScreen: 'default',
+    viewingHistoryTxData: null,
+    nextInitValues: {
+      'add-new-whitelist-addr': '',
+      'enter-addr': {
+        autoScan: false,
+      },
+    },
+  };
+}
+const SNAPSHOTS = [1, '80%'];
+// const SNAPSHOTS = ['80%'];
+const SHOW_IDX = SNAPSHOTS.length === 1 ? true : SNAPSHOTS.length - 1;
 export function SheetModalSelectAccountSend({
   type,
   // visible = __DEV__ ? type === 'SendTo' : false,
@@ -33,18 +65,25 @@ export function SheetModalSelectAccountSend({
   type: SelectAccountSheetModalType;
   visible?: boolean;
   onVisibleChange?: (visible: boolean) => void;
-  onSelectAccount?: React.ComponentProps<
-    typeof AccountsPanelInSheetModal
-  >['onSelectAccount'];
+  onSelectAccount?: SelectAccountSheetModalValues['cbOnSelectedAccount'];
 }) {
   const { styles } = useTheme2024({ getStyle });
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal(null);
+  const mountRef = useRef(false);
   useEffect(() => {
     if (visible) {
-      toggleShowSheetModal(!!visible ? 1 : false);
-      // toggleShowSheetModal(true);
+      if (!mountRef.current) {
+        toggleShowSheetModal(true);
+        mountRef.current = true;
+        setTimeout(() => {
+          toggleShowSheetModal(SHOW_IDX);
+        }, 300);
+      } else {
+        toggleShowSheetModal(SHOW_IDX);
+      }
     } else {
+      Keyboard.dismiss();
       toggleShowSheetModal(false);
     }
   }, [visible, toggleShowSheetModal]);
@@ -69,8 +108,20 @@ export function SheetModalSelectAccountSend({
     containerBottomSpace: SIZES.containerPb,
   });
 
-  const [currentScreen, setCurrentScreen] =
-    useState<SelectAccountSheetModalScreen>('default');
+  const [screenStates, setScreenStates] = useState(getDefaultScreenStates());
+
+  const resetScreenStates = useCallback(() => {
+    setScreenStates(getDefaultScreenStates());
+  }, []);
+
+  const resetInitValues = useCallback(() => {
+    setScreenStates(prev => ({
+      ...prev,
+      nextInitValues: getDefaultScreenStates().nextInitValues,
+    }));
+  }, []);
+
+  const { currentScreen } = screenStates;
 
   const { modalTitle } = useMemo(() => {
     const ret = {
@@ -113,18 +164,59 @@ export function SheetModalSelectAccountSend({
     return ret;
   }, [currentScreen, type, t]);
 
-  const fnNavTo = useCallback((screen: SelectAccountSheetModalScreen) => {
-    setCurrentScreen(screen);
-  }, []);
+  const fnNavTo = useCallback<SelectAccountSheetModalValues['fnNavTo']>(
+    (screen, extra) => {
+      setScreenStates(prev => {
+        const nextState = { ...prev, currentScreen: screen };
+
+        switch (screen) {
+          case 'view-sent-tx':
+            // pass data to history detail screen
+            if (!extra?.viewingHistoryTxData) {
+              throw new Error(
+                '[AccountSelectModalTx] fnNavTo to view-sent-tx must provide viewingHistoryTxData',
+              );
+            }
+            nextState.viewingHistoryTxData = extra.viewingHistoryTxData;
+            break;
+          case 'add-new-whitelist-addr':
+            nextState.nextInitValues['add-new-whitelist-addr'] =
+              extra?.inputValue || '';
+            break;
+          case 'enter-addr': {
+            nextState.nextInitValues['enter-addr'] = {
+              autoScan: extra?.autoScan || false,
+            };
+            break;
+          }
+          default:
+            nextState.viewingHistoryTxData = null;
+            nextState.nextInitValues['add-new-whitelist-addr'] = '';
+            break;
+        }
+
+        return nextState;
+      });
+
+      setTimeout(() => {
+        resetInitValues();
+      }, 1e3);
+    },
+    [resetInitValues],
+  );
 
   const cbOnScanStageChanged = useCallback(
     (stage: 'start' | 'end') => {
       switch (stage) {
         case 'start':
+          setScreenStates(prev => ({ ...prev, isScanning: true }));
           onVisibleChange?.(false);
           break;
         case 'end':
-          setTimeout(() => onVisibleChange?.(true), 300);
+          setTimeout(() => {
+            setScreenStates(prev => ({ ...prev, isScanning: false }));
+            onVisibleChange?.(true);
+          }, 300);
           break;
         default:
           break;
@@ -133,44 +225,103 @@ export function SheetModalSelectAccountSend({
     [onVisibleChange],
   );
 
+  const cbOnSelectedAccount = useCallback<
+    SelectAccountSheetModalValues['cbOnSelectedAccount']
+  >(
+    (account: Account | null) => {
+      onSelectAccount?.(account);
+      onVisibleChange?.(false);
+      resetScreenStates();
+      Keyboard.dismiss();
+    },
+    [onSelectAccount, onVisibleChange, resetScreenStates],
+  );
+
+  const [_simpleScreenStack, setSimpleScreenStack] = useState<
+    SelectAccountSheetModalScreen[]
+  >([screenStates.currentScreen]);
+
   const onPressNavBack = useCallback(() => {
     switch (currentScreen) {
       case 'default':
         break;
       case 'enter-addr':
+      case 'add-new-whitelist-addr':
         fnNavTo('default');
         break;
-      case 'add-new-whitelist-addr':
       case 'select-from-history':
+        fnNavTo('add-new-whitelist-addr');
+        break;
       case 'view-sent-tx':
-        fnNavTo('default');
+        fnNavTo('select-from-history');
         break;
       default:
         break;
     }
   }, [currentScreen, fnNavTo]);
 
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      const onHome = screenStates.currentScreen === 'default';
+      if (visible && !onHome) {
+        onPressNavBack();
+      } else if (visible && onHome) {
+        onVisibleChange?.(false);
+      }
+      return !visible;
+    }, [onPressNavBack, visible, onVisibleChange, screenStates.currentScreen]),
+  );
+
+  useFocusEffect(onHardwareBackHandler);
+
+  const fnCloseModal = useCallback(() => {
+    onVisibleChange?.(false);
+  }, [onVisibleChange]);
+
   const providerValues = useMemo<SelectAccountSheetModalValues>(() => {
     return {
-      modalScreen: currentScreen,
+      __isUnderContext__: true,
+      modalScreen: screenStates.currentScreen,
+      viewingHistoryTxData: screenStates.viewingHistoryTxData,
+      fnCloseModal,
       fnNavTo,
       cbOnScanStageChanged,
+      cbOnSelectedAccount,
       computed: {
-        canNavBack: currentScreen !== 'default',
-        needShowHistory: currentScreen === 'enter-addr',
+        canNavBack: screenStates.currentScreen !== 'default',
+        needShowHistory: false, // screenStates.currentScreen === 'enter-addr',
       },
     };
-  }, [currentScreen, fnNavTo, cbOnScanStageChanged]);
+  }, [
+    screenStates,
+    fnCloseModal,
+    fnNavTo,
+    cbOnScanStageChanged,
+    cbOnSelectedAccount,
+  ]);
+
+  const useGrayBg = ['select-from-history', 'view-sent-tx'].includes(
+    screenStates.currentScreen,
+  );
 
   return (
     <AppBottomSheetModal
       ref={sheetModalRef}
-      index={0}
-      snapPoints={[1, '80%']}
-      enablePanDownToClose={false}
+      index={SNAPSHOTS.length - 1}
+      snapPoints={SNAPSHOTS}
+      enableContentPanningGesture={currentScreen === 'default'}
       enableDismissOnClose={false}
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustPan"
+      handleStyle={[useGrayBg && styles.handleGrayStyle]}
       onChange={index => {
-        const isVisible = index >= 0;
+        const isHidden = index <= 0;
+        if (isHidden && !screenStates.isScanning) {
+          resetScreenStates();
+          Keyboard.dismiss();
+        }
+
+        const isVisible = index >= SNAPSHOTS.length - 1;
         if (!isVisible) {
           onVisibleChange?.(false);
         }
@@ -179,6 +330,7 @@ export function SheetModalSelectAccountSend({
         as="View"
         style={[
           styles.container,
+          useGrayBg && styles.containerGrayStyle,
           {
             paddingBottom: safeSizes.containerBottomSpace,
           },
@@ -209,12 +361,26 @@ export function SheetModalSelectAccountSend({
           </View>
           <View style={styles.mainContainer}>
             {currentScreen === 'default' && (
-              <AccountsPanelInSheetModal
-                scene="SendTo"
-                onSelectAccount={onSelectAccount}
+              <AccountsPanelInSheetModal scene="SendTo" />
+            )}
+            {currentScreen === 'enter-addr' && (
+              <ScreenPanelEnterAddress
+                onCleanupInput={() => {
+                  // back to default screen
+                  fnNavTo('default');
+                }}
+                autoScan={screenStates.nextInitValues['enter-addr'].autoScan}
               />
             )}
-            {currentScreen === 'enter-addr' && <ScreenPanelEnterAddress />}
+            {currentScreen === 'add-new-whitelist-addr' && (
+              <ScreenAddNewWhitelistAddress
+                nextInitAddressValue={
+                  screenStates.nextInitValues['add-new-whitelist-addr']
+                }
+              />
+            )}
+            {currentScreen === 'select-from-history' && <ScreenSentHistory />}
+            {currentScreen === 'view-sent-tx' && <ScreenHistoryLocalDetail />}
           </View>
         </AccountSelectModalProvider>
       </AutoLockView>
@@ -247,6 +413,12 @@ const getStyle = createGetStyles2024(ctx => {
       paddingBottom: SIZES.containerPb,
       // ...makeDebugBorder('blue')
     },
+    containerGrayStyle: {
+      backgroundColor: ctx.colors2024['neutral-bg-0'],
+    },
+    handleGrayStyle: {
+      backgroundColor: ctx.colors2024['neutral-bg-0'],
+    },
     modalHeader: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -254,14 +426,22 @@ const getStyle = createGetStyles2024(ctx => {
       width: '100%',
       paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
     },
-    headerIconPlaceholder: { width: 24, height: 24 },
-    navBack: {},
-    rightIcon: {},
+    headerIconPlaceholder: {
+      width: 48,
+      height: 24,
+      // ...makeDebugBorder(),
+    },
+    navBack: {
+      alignItems: 'flex-start',
+    },
+    rightIcon: {
+      alignItems: 'flex-end',
+    },
     title: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       fontWeight: FontWeightEnum.heavy,
-      lineHeight: 24,
+      lineHeight: 20,
       color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',
 

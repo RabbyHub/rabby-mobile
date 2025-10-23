@@ -1,5 +1,19 @@
+import React, { useEffect } from 'react';
+import { isValidHexAddress, Hex } from '@metamask/utils';
+import { useTranslation } from 'react-i18next';
+import { useWhitelist } from '@/hooks/whitelist';
+import { Alert } from 'react-native';
+import { contactService } from '@/core/services';
 import { devLog } from '@/utils/logger';
-import React, { useMemo } from 'react';
+import {
+  onScannerEvent,
+  ScannerEventType,
+} from '@/screens/Scanner/ScannerScreen';
+import { throttle } from 'lodash';
+import type { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components/TransactionItem2025';
+import { atomByMMKV } from '@/core/storage/mmkv';
+import { useAtom } from 'jotai';
+import { Account } from '@/core/services/preference';
 
 function getNoop() {
   return () => {
@@ -13,10 +27,21 @@ export type SelectAccountSheetModalScreen =
   | 'select-from-history'
   | 'view-sent-tx';
 export type SelectAccountSheetModalValues = {
+  __isUnderContext__: boolean;
   modalScreen: SelectAccountSheetModalScreen;
+  viewingHistoryTxData: HistoryLocalDetailParams | null;
 
-  fnNavTo: (screen: SelectAccountSheetModalScreen) => void;
+  fnNavTo: (
+    screen: SelectAccountSheetModalScreen,
+    extra?: {
+      inputValue?: string;
+      autoScan?: boolean;
+      viewingHistoryTxData?: HistoryLocalDetailParams;
+    },
+  ) => void;
+  fnCloseModal: () => void;
   cbOnScanStageChanged: (stage: 'start' | 'end') => void;
+  cbOnSelectedAccount: (account: Account | null) => void;
 
   computed: {
     canNavBack: boolean;
@@ -25,14 +50,19 @@ export type SelectAccountSheetModalValues = {
 };
 const AccountSelectModalContext =
   React.createContext<SelectAccountSheetModalValues>({
+    __isUnderContext__: false,
     modalScreen: 'default',
+    viewingHistoryTxData: null,
+
+    fnNavTo: getNoop(),
+    fnCloseModal: getNoop(),
+    cbOnScanStageChanged: getNoop(),
+    cbOnSelectedAccount: getNoop(),
 
     computed: {
       canNavBack: false,
       needShowHistory: false,
     },
-    fnNavTo: getNoop(),
-    cbOnScanStageChanged: getNoop(),
   });
 
 export const AccountSelectModalProvider = AccountSelectModalContext.Provider;
@@ -49,15 +79,121 @@ function useDevWarningMustBeInContext() {
   }
 }
 
-export function useAccountSelectModalInternal() {
+export function useIsUnderAccountSelectModalContext() {
+  try {
+    return React.useContext(AccountSelectModalContext).__isUnderContext__;
+  } catch (e) {
+    return false;
+  }
+}
+
+export function useAccountSelectModalCtx() {
   useDevWarningMustBeInContext();
   const values = React.useContext(AccountSelectModalContext);
 
   return {
+    isUnderContext: values.__isUnderContext__,
     currentScreen: values.modalScreen,
+    viewingHistoryTxData: values.viewingHistoryTxData,
+    fnNavTo: values.fnNavTo,
+    fnCloseModal: values.fnCloseModal,
+    cbOnScanStageChanged: values.cbOnScanStageChanged,
+    cbOnSelectedAccount: values.cbOnSelectedAccount,
     canNavBack: values.computed.canNavBack,
     needShowHistory: values.computed.needShowHistory,
-    fnNavTo: values.fnNavTo,
-    cbOnScanStageChanged: values.cbOnScanStageChanged,
   };
+}
+
+export const useAlertAddress = (address: string, onConfirm: () => void) => {
+  const { t } = useTranslation();
+  const { isAddrOnWhitelist } = useWhitelist({
+    disableAutoFetch: false,
+  });
+  useEffect(() => {
+    if (address && isValidHexAddress(address as Hex)) {
+      if (isAddrOnWhitelist(address)) {
+        const aliasName =
+          contactService.getAliasByAddress(address)?.alias || '';
+        Alert.alert(
+          t('page.whitelist.alreadyInYour'),
+          `${address}` + (aliasName ? ` (${aliasName})` : ''),
+          [{ text: t('global.ok'), onPress: onConfirm }],
+        );
+      }
+    }
+  }, [address, isAddrOnWhitelist, onConfirm, t]);
+};
+
+export function useRestoreModalOnBackFromScanner(
+  cbOnScanStageChanged: (stage: 'start' | 'end') => void,
+) {
+  useEffect(() => {
+    const unsubscribe = onScannerEvent(
+      ScannerEventType.navBack,
+      throttle(() => {
+        cbOnScanStageChanged('end');
+      }, 300),
+    );
+    return () => {
+      unsubscribe();
+    };
+  }, [cbOnScanStageChanged]);
+}
+
+const newlyAddedWhitelistAtom = atomByMMKV<
+  Record<
+    string,
+    {
+      addTime: number;
+    }
+  >
+>('@newlyAddedWhitelist', {});
+
+export function useRecordWhitelistAddTime() {
+  const [newlyAddedWhitelist, setNewlyAddedWhitelist] = useAtom(
+    newlyAddedWhitelistAtom,
+  );
+
+  const recordAddTime = React.useCallback(
+    (address: string) => {
+      setNewlyAddedWhitelist(prev => ({
+        ...prev,
+        [address]: { addTime: Date.now() },
+      }));
+    },
+    [setNewlyAddedWhitelist],
+  );
+
+  return {
+    recordAddTime,
+    newlyAddedWhitelist,
+  };
+}
+
+export function useSortWhitelistByAddTime<
+  T extends string | { address: string },
+>(whitelist: T[]) {
+  const [newlyAddedWhitelist] = useAtom(newlyAddedWhitelistAtom);
+
+  const sortedList = React.useMemo(() => {
+    return [...whitelist].sort((a, b) => {
+      const addrA = typeof a === 'string' ? a : a.address;
+      const addrB = typeof b === 'string' ? b : b.address;
+
+      const timeA = newlyAddedWhitelist[addrA]?.addTime || 0;
+      const timeB = newlyAddedWhitelist[addrB]?.addTime || 0;
+
+      if (timeA && timeB) {
+        return timeB - timeA; // Both have addTime, sort by addTime descending
+      } else if (timeA) {
+        return -1; // Only A has addTime, A comes first
+      } else if (timeB) {
+        return 1; // Only B has addTime, B comes first
+      } else {
+        return 0; // Neither has addTime, maintain original order
+      }
+    });
+  }, [newlyAddedWhitelist, whitelist]);
+
+  return sortedList;
 }

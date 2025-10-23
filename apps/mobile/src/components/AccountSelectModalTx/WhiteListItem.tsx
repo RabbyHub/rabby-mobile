@@ -34,6 +34,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
+import { IS_ANDROID } from '@/core/native/utils';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -147,7 +148,7 @@ export const WhiteListItemInSheetModal = ({
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([styles.root])}
-        delayLongPress={200} // long press delay
+        delayLongPress={IS_ANDROID ? 350 : 200} // long press delay
         onPress={() => {
           if (inWhiteList || isMyImported) {
             onPress?.();
@@ -204,7 +205,7 @@ export const WhiteListItemInSheetModal = ({
                   {inWhiteList && (
                     <RcIconLockCC
                       style={styles.lockIcon}
-                      color={colors2024['brand-default']}
+                      color={colors2024['green-default']}
                       surroundColor={colors2024['neutral-bg-1']}
                       width={22}
                       height={22}

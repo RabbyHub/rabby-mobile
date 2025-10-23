@@ -46,18 +46,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Account } from '@/core/services/preference';
 import { findAccountByPriority } from '@/utils/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import {
+  useAccountSelectModalCtx,
+  useIsUnderAccountSelectModalContext,
+} from '@/components/AccountSelectModalTx/hooks';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
-  onPressBottomBtn?: (data: SendAction) => void;
+  onPressAddToWhitelistButton?: (data: SendAction) => void;
   account?: Account;
 }
 
 export const Send: React.FC<Props> = ({
   data,
   isSingleAddress,
-  onPressBottomBtn,
+  onPressAddToWhitelistButton,
   account,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -116,7 +120,9 @@ export const Send: React.FC<Props> = ({
     }
   });
 
+  const accountSelectCtx = useAccountSelectModalCtx();
   const handleGotoTokenDetail = useMemoizedFn(() => {
+    if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
     naviPush(RootNames.TokenDetail, {
       token: ensureAbstractPortfolioToken(actionData.token),
       needUseCacheToken: true,
@@ -206,6 +212,7 @@ export const Send: React.FC<Props> = ({
             <AddressItemInDetail
               address={data.maxGasTx.address}
               accounts={unionAccounts}
+              // disableNavigate={isUnderModalContext}
             />
           </View>
 
@@ -216,6 +223,7 @@ export const Send: React.FC<Props> = ({
             <AddressItemInDetail
               address={actionData.to}
               accounts={unionAccounts}
+              // disableNavigate={isUnderModalContext}
             />
           </View>
 
@@ -253,7 +261,7 @@ export const Send: React.FC<Props> = ({
       {
         <View style={[styles.buttonContainer, { paddingBottom: bottom + 27 }]}>
           <View style={{ flex: 1 }}>
-            {isAddrOnWhitelist(actionData.to) && onPressBottomBtn ? (
+            {isAddrOnWhitelist(actionData.to) && onPressAddToWhitelistButton ? (
               <Tip content={t('page.whitelist.alreadyIn')}>
                 <Button
                   disabled
@@ -263,8 +271,8 @@ export const Send: React.FC<Props> = ({
             ) : (
               <Button
                 onPress={async () => {
-                  if (onPressBottomBtn) {
-                    onPressBottomBtn(actionData);
+                  if (onPressAddToWhitelistButton) {
+                    onPressAddToWhitelistButton(actionData);
                     return;
                   }
                   const canUseAccountList = accounts.filter(acc => {
@@ -289,7 +297,7 @@ export const Send: React.FC<Props> = ({
                   });
                 }}
                 title={
-                  onPressBottomBtn
+                  onPressAddToWhitelistButton
                     ? t('page.transactions.detail.AddToWhitelist')
                     : t('page.transactions.detail.SendAgain')
                 }

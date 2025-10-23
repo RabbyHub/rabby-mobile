@@ -53,7 +53,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
     isForMultipleAddress,
     title,
     type,
-    onPressBottomBtn,
+    onPressAddToWhitelistButton,
   } = route.params || {};
   const [data, setData] = React.useState<TransactionGroup>(_data);
   const isPending = useMemo(() => data.isPending, [data]);
@@ -206,7 +206,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
         <Send
           data={data}
           isSingleAddress={!isForMultipleAddress}
-          onPressBottomBtn={onPressBottomBtn}
+          onPressAddToWhitelistButton={onPressAddToWhitelistButton}
           account={txAccount}
         />
       ) : (

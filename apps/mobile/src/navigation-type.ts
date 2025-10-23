@@ -305,7 +305,7 @@ export type TransactionNavigatorParamList = {
     isForMultipleAddress?: boolean;
     title?: string;
     type?: HistoryItemCateType;
-    onPressBottomBtn?: (data: SendAction) => void;
+    onPressAddToWhitelistButton?: (data: SendAction) => void;
     isInSendHistory?: boolean;
   };
   [RootNames.Send]?:

@@ -59,9 +59,8 @@ export const ToAccountEntry = ({
   hideBalance?: boolean;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getToItemStyles });
-  const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const [cacheCexDes, setCacheCexDes] = useState<Cex | undefined>();
+  const [cacheCexDes, setCacheCexDes] = useState<Cex | null>(null);
   const cexDes = useMemo(
     () => addrDesc?.cex || cacheCexDes,
     [addrDesc?.cex, cacheCexDes],
@@ -76,16 +75,15 @@ export const ToAccountEntry = ({
   }, [account.address, account.aliasName, adderssAlias]);
 
   useLayoutEffect(() => {
-    if (cacheCexDes || cexDes) {
-      return;
-    }
+    if (cexDes) return;
+
+    setCacheCexDes(null);
     getCexWithLocalCache(account.address, false, true).then(res => {
       if (res?.id) {
         setCacheCexDes(res);
       }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cexDes, account.address]);
 
   const isEmptyAddress = !account.address;
 
@@ -103,7 +101,15 @@ export const ToAccountEntry = ({
             styles.card,
             isEmptyAddress && styles.emptyBg,
             style,
-          ])}>
+          ])}
+          onPress={
+            !isEmptyAddress
+              ? undefined
+              : evt => {
+                  evt.stopPropagation();
+                  onPress();
+                }
+          }>
           <InnerAddressItem style={styles.rootItem} account={account}>
             {({ WalletIcon }) => (
               <View style={styles.item}>
@@ -211,20 +217,7 @@ export const ToAccountEntry = ({
               </View>
             )}
           </InnerAddressItem>
-          <Pressable
-            style={styles.arrow}
-            hitSlop={10}
-            onPress={evt => {
-              evt.stopPropagation();
-              onPress();
-              // navigation.popToTop();
-              // navigation.dispatch(
-              //   StackActions.push(RootNames.StackTransaction, {
-              //     screen: RootNames.SendTo,
-              //     params: {},
-              //   }),
-              // );
-            }}>
+          <View style={styles.arrow} hitSlop={10}>
             {isEmptyAddress ? (
               <CaretArrowIconCC
                 dir={!isSelectingAccount ? 'right' : 'down'}
@@ -242,7 +235,7 @@ export const ToAccountEntry = ({
                 height={24}
               />
             )}
-          </Pressable>
+          </View>
         </Card>
       </View>
     </AddressItemShadowView>

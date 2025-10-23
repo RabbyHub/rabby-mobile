@@ -72,6 +72,7 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
+/** @deprecated */
 const WhitelistInputScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, setInput] = useState('');
@@ -130,7 +131,7 @@ const WhitelistInputScreen = () => {
       Keyboard.dismiss();
 
       const { inWhitelist, account, isImported } =
-        await findAccountWithoutBalance(address, undefined);
+        await findAccountWithoutBalance(address);
       if (inWhitelist) {
         toast.show(t('page.whitelist.alreadyAdded'));
       } else {
@@ -433,7 +434,7 @@ const WhitelistInputScreen = () => {
         onClose={closeHistory}
         isForMultipleAddress={!isSingleAddress}
         title={t('page.sendPoly.SelectFromHistory')}
-        onPressBottomBtn={data => {
+        onPressAddToWhitelistButton={data => {
           if (data?.to && isValidHexAddress(data?.to as Hex)) {
             if (nav.canGoBack()) {
               nav.goBack();
