@@ -2613,6 +2613,11 @@
       },
       "favoriteFilter": {
         "all": "All"
+      },
+      "riskDetected": {
+        "title": "Risk Detected",
+        "proceedBtn": "Proceed",
+        "simpleExplanation": "Not supported by this exchange"
       }
     },
     "ModalPreviewNFTItem": {

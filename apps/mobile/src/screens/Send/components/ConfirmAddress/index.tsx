@@ -36,6 +36,8 @@ export interface ConfirmAddressScreenProps {
   ) => void;
   onCancel?: () => void;
 }
+
+/** @deprecated */
 const ConfirmAddress = ({
   account,
   onCancel,
