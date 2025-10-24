@@ -13,7 +13,8 @@ export const LendingHF: React.FC<{}> = () => {
   });
   useLendingData(currentAccount?.address);
   const { iUserSummary } = useLendingSummary();
-  return iUserSummary?.healthFactor ? (
+
+  return iUserSummary?.healthFactor && Number(iUserSummary.healthFactor) > 0 ? (
     <Text
       style={[
         styles.text,

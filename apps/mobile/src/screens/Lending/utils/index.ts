@@ -1,5 +1,5 @@
 import { ThemeColors2024 } from '@/constant/theme';
-import { HF_COLOR_BAD_THRESHOLD, HF_RISK_CHECKBOX_THRESHOLD } from './constant';
+import { HF_COLOR_BAD_THRESHOLD, HF_COLOR_GOOD_THRESHOLD } from './constant';
 
 export const getHealthStatusColor = (
   isLight: boolean,
@@ -21,7 +21,7 @@ export const getHealthStatusColor = (
         : ThemeColors2024.light['red-light-4'],
     };
   }
-  if (healthFactor < HF_RISK_CHECKBOX_THRESHOLD) {
+  if (healthFactor < HF_COLOR_GOOD_THRESHOLD) {
     return {
       color: isLight
         ? ThemeColors2024.dark['orange-default']

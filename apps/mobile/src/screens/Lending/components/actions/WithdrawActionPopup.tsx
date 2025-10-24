@@ -17,13 +17,10 @@ import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { findChain } from '@/utils/chain';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { last, noop } from 'lodash';
+import { noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { toast } from '@/components2024/Toast';
-import { useAtom } from 'jotai';
-import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 import WithdrawActionOverView from './WithdrawActionOverView';
 import {
   API_ETH_MOCK_ADDRESS,
@@ -31,6 +28,7 @@ import {
 } from '../../utils/constant';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
+import { useMiniSigner } from '@/hooks/useSigner';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -40,7 +38,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
-  const [supplyTxs, setSupplyTxs] = useState<Tx[]>([]);
+  const [withdrawTxs, setWithdrawTxs] = useState<Tx[]>([]);
   const [isChecked, setIsChecked] = useState(false);
 
   const isNativeToken = useMemo(() => {
@@ -56,10 +54,11 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
-  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
-
-  const { prepareMiniTransactions, sendPrepareMiniTransactions } =
-    useMiniApproval();
+  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+    account: currentAccount!,
+    chainServerId: withdrawTxs.length ? withdrawTxs?.[0]?.chainId + '' : '',
+    autoResetGasStoreOnChainChange: true,
+  });
 
   const afterHF = useMemo(() => {
     if (!amount || amount === '0') {
@@ -104,7 +103,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   const buildTransactions = useCallback(async () => {
     if (!amount || amount === '0' || !currentAccount) {
-      setSupplyTxs([]);
+      setWithdrawTxs([]);
       return;
     }
 
@@ -139,7 +138,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         };
       });
 
-      setSupplyTxs(formatTxs as unknown as Tx[]);
+      setWithdrawTxs(formatTxs as unknown as Tx[]);
     } catch (error) {
       console.error('Build transactions error:', error);
     } finally {
@@ -154,28 +153,21 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     wrapperPoolReserve,
   ]);
 
-  // 执行supply交易
-  const handleSupply = useCallback(async () => {
-    if (!currentAccount || !supplyTxs.length || !amount || amount === '0') {
+  // 执行withdraw交易
+  const handleWithdraw = useCallback(async () => {
+    if (!currentAccount || !withdrawTxs.length || !amount || amount === '0') {
       return;
     }
 
     try {
       setIsLoading(true);
-      if (!supplyTxs?.length) {
+      if (!withdrawTxs?.length) {
         toast.info('please retry');
         throw new Error('no txs');
       }
-      if (isDirectSigning) {
-        return;
-      } else {
-        setDirectSigning(true);
-      }
-
-      const res = await sendPrepareMiniTransactions({
-        directSubmit: true,
+      await openDirect({
+        txs: withdrawTxs,
       });
-      last(res)?.txHash || '';
 
       setAmount(undefined);
       onClose?.();
@@ -183,15 +175,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [
-    currentAccount,
-    supplyTxs.length,
-    amount,
-    isDirectSigning,
-    sendPrepareMiniTransactions,
-    onClose,
-    setDirectSigning,
-  ]);
+  }, [currentAccount, withdrawTxs, amount, openDirect, onClose]);
 
   useEffect(() => {
     buildTransactions();
@@ -199,20 +183,17 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     if (currentAccount && canShowDirectSubmit && amount && amount !== '0') {
-      prepareMiniTransactions({
-        txs: supplyTxs?.length ? supplyTxs : [],
-        directSubmit: true,
-        account: currentAccount!,
-        checkGasFee: true,
-        showMaskLoading: true,
+      prefetchMiniSigner({
+        txs: withdrawTxs?.length ? withdrawTxs : [],
+        synGasHeaderInfo: true,
       });
     }
   }, [
-    prepareMiniTransactions,
     canShowDirectSubmit,
     currentAccount,
     amount,
-    supplyTxs,
+    withdrawTxs,
+    prefetchMiniSigner,
   ]);
 
   return (
@@ -293,11 +274,11 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           wrapperStyle={styles.directSignBtn}
           authTitle="Withdraw"
           title={!amount || amount === '0' ? 'Enter Amount' : 'Withdraw'}
-          onFinished={handleSupply}
+          onFinished={handleWithdraw}
           disabled={
             !amount ||
             amount === '0' ||
-            !supplyTxs.length ||
+            !withdrawTxs.length ||
             isLoading ||
             !currentAccount ||
             (isRisky && !isChecked)

@@ -12,6 +12,7 @@ export const RESERVE_USAGE_BLOCK_THRESHOLD = 0.9999;
 
 // 借款/质押等操作后的健康因子低于该值时，显示风险确认复选框
 export const HF_RISK_CHECKBOX_THRESHOLD = 1.5; // 1.5
+
 // 顶部/通用健康因子颜色阈值：>=3 绿色，<1.1 红色，其余为黄色
 export const HF_COLOR_GOOD_THRESHOLD = 3; // 3.0
 export const HF_COLOR_BAD_THRESHOLD = 1.1; // 1.1

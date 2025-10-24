@@ -16,13 +16,10 @@ import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { findChain } from '@/utils/chain';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { last, noop } from 'lodash';
+import { noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { toast } from '@/components2024/Toast';
-import { useAtom } from 'jotai';
-import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 import BorrowActionOverView from './BorrowActionOverView';
 import {
   calculateHealthFactorFromBalancesBigUnits,
@@ -37,6 +34,7 @@ import {
   RESERVE_USAGE_BLOCK_THRESHOLD,
   RESERVE_USAGE_WARNING_THRESHOLD,
 } from '../../utils/constant';
+import { useMiniSigner } from '@/hooks/useSigner';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -57,10 +55,11 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
-  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
-
-  const { prepareMiniTransactions, sendPrepareMiniTransactions } =
-    useMiniApproval();
+  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+    account: currentAccount!,
+    chainServerId: txs.length ? txs?.[0]?.chainId + '' : '',
+    autoResetGasStoreOnChainChange: true,
+  });
 
   const afterHF = useMemo(() => {
     if (!amount || amount === '0') {
@@ -148,16 +147,9 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         toast.info('please retry');
         throw new Error('no txs');
       }
-      if (isDirectSigning) {
-        return;
-      } else {
-        setDirectSigning(true);
-      }
-
-      const res = await sendPrepareMiniTransactions({
-        directSubmit: true,
+      await openDirect({
+        txs,
       });
-      last(res)?.txHash || '';
 
       setAmount(undefined);
       onClose?.();
@@ -165,15 +157,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [
-    currentAccount,
-    txs.length,
-    amount,
-    isDirectSigning,
-    sendPrepareMiniTransactions,
-    onClose,
-    setDirectSigning,
-  ]);
+  }, [currentAccount, txs, amount, openDirect, onClose]);
 
   const availableToBorrowBalance = useMemo(() => {
     return BigNumber(userSummary?.availableBorrowsUSD || '0')
@@ -188,21 +172,12 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     if (currentAccount && canShowDirectSubmit && amount && amount !== '0') {
-      prepareMiniTransactions({
+      prefetchMiniSigner({
         txs: txs?.length ? txs : [],
-        directSubmit: true,
-        account: currentAccount!,
-        checkGasFee: true,
-        showMaskLoading: true,
+        synGasHeaderInfo: true,
       });
     }
-  }, [
-    prepareMiniTransactions,
-    canShowDirectSubmit,
-    currentAccount,
-    amount,
-    txs,
-  ]);
+  }, [canShowDirectSubmit, currentAccount, amount, txs, prefetchMiniSigner]);
 
   const errorMessage = useMemo(() => {
     if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {

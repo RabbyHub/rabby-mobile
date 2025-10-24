@@ -45,16 +45,23 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
             {formatNum(healthFactor)}
           </Text>
           {hfNumber < HF_COLOR_GOOD_THRESHOLD && (
-            <Text
-              style={
-                (styles.riskyText,
+            <View
+              style={[
+                styles.riskyTextContainer,
                 {
-                  color: hfColor.color,
                   backgroundColor: hfColor.backgroundColor,
-                })
-              }>
-              Risky
-            </Text>
+                },
+              ]}>
+              <Text
+                style={[
+                  styles.riskyText,
+                  {
+                    color: hfColor.color,
+                  },
+                ]}>
+                Risky
+              </Text>
+            </View>
           )}
         </View>
 
@@ -146,16 +153,20 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
   },
-  riskyText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: ctx.colors2024['orange-default'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    backgroundColor: ctx.colors2024['orange-light-1'],
+  riskyTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 1,
     paddingHorizontal: 4,
     borderRadius: 4,
     overflow: 'hidden',
+  },
+  riskyText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: ctx.colors2024['orange-default'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
   },
 }));

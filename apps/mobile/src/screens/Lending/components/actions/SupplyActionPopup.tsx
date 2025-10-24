@@ -21,16 +21,14 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { findChain } from '@/utils/chain';
 import { CustomMarket, marketsData } from '../../config/market';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { last, noop } from 'lodash';
+import { noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { parseUnits } from 'ethers/lib/utils';
-import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { toast } from '@/components2024/Toast';
-import { useAtom } from 'jotai';
-import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
+import { useMiniSigner } from '@/hooks/useSigner';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -51,10 +49,6 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
-  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
-
-  const { prepareMiniTransactions, sendPrepareMiniTransactions } =
-    useMiniApproval();
   const isNativeToken = useMemo(() => {
     return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
   }, [reserve.underlyingAsset]);
@@ -290,6 +284,14 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     return list as Tx[];
   }, [approveTxs, supplyTx]);
 
+  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+    account: currentAccount!,
+    chainServerId: txsForMiniApproval.length
+      ? txsForMiniApproval?.[0]?.chainId + ''
+      : '',
+    autoResetGasStoreOnChainChange: true,
+  });
+
   // 执行supply交易
   const handleSupply = useCallback(async () => {
     if (!currentAccount || !supplyTx || !amount || amount === '0') {
@@ -302,16 +304,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         toast.info('please retry');
         throw new Error('no txs');
       }
-      if (isDirectSigning) {
-        return;
-      } else {
-        setDirectSigning(true);
-      }
-
-      const res = await sendPrepareMiniTransactions({
-        directSubmit: true,
+      await openDirect({
+        txs: txsForMiniApproval,
       });
-      last(res)?.txHash || '';
 
       setAmount(undefined);
       onClose?.();
@@ -323,11 +318,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     currentAccount,
     supplyTx,
     amount,
-    txsForMiniApproval?.length,
-    isDirectSigning,
-    sendPrepareMiniTransactions,
+    txsForMiniApproval,
+    openDirect,
     onClose,
-    setDirectSigning,
   ]);
 
   useEffect(() => {
@@ -340,19 +333,16 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     if (currentAccount && canShowDirectSubmit) {
-      prepareMiniTransactions({
+      prefetchMiniSigner({
         txs: txsForMiniApproval?.length ? txsForMiniApproval : [],
-        directSubmit: true,
-        account: currentAccount!,
-        checkGasFee: true,
-        showMaskLoading: true,
+        synGasHeaderInfo: true,
       });
     }
   }, [
-    prepareMiniTransactions,
     canShowDirectSubmit,
     currentAccount,
     txsForMiniApproval,
+    prefetchMiniSigner,
   ]);
 
   return (

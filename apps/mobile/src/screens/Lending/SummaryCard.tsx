@@ -104,7 +104,7 @@ const SummaryCard = (props: IProps) => {
       </View>
       <View style={styles.estAndHealthContainer}>
         <View style={styles.estDailyContainer}>
-          <Text style={styles.sectionHeader}>Est.Daily</Text>
+          <Text style={styles.sectionHeader}>Est.Daily Earning</Text>
           <View style={styles.sectionContent}>
             <Text style={styles.estDailyValue}>
               {estDaily(props.netWorth, props.netApy)}

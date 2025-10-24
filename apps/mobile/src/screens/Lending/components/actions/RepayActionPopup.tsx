@@ -16,13 +16,9 @@ import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { findChain } from '@/utils/chain';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { toast } from '@/components2024/Toast';
-import { useAtom } from 'jotai';
-import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 import RepayActionOverView from './RepayActionOverView';
 import { parseUnits } from 'viem';
 import { calculateHFAfterRepay } from '../../utils/hfUtils';
@@ -30,6 +26,8 @@ import { getERC20Allowance } from '@/core/apis/provider';
 import { CustomMarket, marketsData } from '../../config/market';
 import { approveToken } from '@/core/apis/approvals';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
+import { useMiniSigner } from '@/hooks/useSigner';
+import { noop } from 'lodash';
 
 export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -51,10 +49,6 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
-  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
-
-  const { prepareMiniTransactions, sendPrepareMiniTransactions } =
-    useMiniApproval();
 
   const afterHF = useMemo(() => {
     if (!amount || amount === '0') {
@@ -263,6 +257,14 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     return list as Tx[];
   }, [approveTxs, repayTx]);
 
+  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+    account: currentAccount!,
+    chainServerId: txsForMiniApproval.length
+      ? txsForMiniApproval?.[0]?.chainId + ''
+      : '',
+    autoResetGasStoreOnChainChange: true,
+  });
+
   const handleRepay = useCallback(async () => {
     if (
       !currentAccount ||
@@ -279,16 +281,9 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         toast.info('please retry');
         throw new Error('no txs');
       }
-      if (isDirectSigning) {
-        return;
-      } else {
-        setDirectSigning(true);
-      }
-
-      const res = await sendPrepareMiniTransactions({
-        directSubmit: true,
+      await openDirect({
+        txs: txsForMiniApproval,
       });
-      last(res)?.txHash || '';
 
       setAmount(undefined);
       onClose?.();
@@ -296,15 +291,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [
-    currentAccount,
-    txsForMiniApproval?.length,
-    amount,
-    isDirectSigning,
-    sendPrepareMiniTransactions,
-    onClose,
-    setDirectSigning,
-  ]);
+  }, [currentAccount, txsForMiniApproval, amount, openDirect, onClose]);
 
   const repayAmount = useMemo(() => {
     const miniAmount = BigNumber(reserve?.walletBalance || '0').gt(
@@ -347,20 +334,17 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
 
   useEffect(() => {
     if (currentAccount && canShowDirectSubmit && amount && amount !== '0') {
-      prepareMiniTransactions({
+      prefetchMiniSigner({
         txs: txsForMiniApproval?.length ? txsForMiniApproval : [],
-        directSubmit: true,
-        account: currentAccount!,
-        checkGasFee: true,
-        showMaskLoading: true,
+        synGasHeaderInfo: true,
       });
     }
   }, [
-    prepareMiniTransactions,
     canShowDirectSubmit,
     currentAccount,
     amount,
     txsForMiniApproval,
+    prefetchMiniSigner,
   ]);
 
   return (
