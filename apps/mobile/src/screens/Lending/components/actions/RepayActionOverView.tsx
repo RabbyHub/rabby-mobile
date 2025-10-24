@@ -44,7 +44,9 @@ const RepayActionOverView: React.FC<
                   } → ${formatAmountValueKMB(afterRepayAmount || '0')} ${
                     reserve.reserve.symbol
                   }`
-                : formatAmountValueKMB(reserve?.variableBorrows || '0')}
+                : `${formatAmountValueKMB(reserve?.variableBorrows || '0')} ${
+                    reserve.reserve.symbol
+                  }`}
             </Text>
           </View>
         </View>
@@ -54,7 +56,7 @@ const RepayActionOverView: React.FC<
               ? `$${formatAmountValueKMB(
                   reserve.variableBorrowsUSD || '0',
                 )} → $${formatAmountValueKMB(afterRepayUsdValue || '0')}`
-              : formatAmountValueKMB(reserve.variableBorrowsUSD || '0')}
+              : `$${formatAmountValueKMB(reserve.variableBorrowsUSD || '0')}`}
           </Text>
         </View>
         <View style={[styles.item, styles.hfContainer]}>
