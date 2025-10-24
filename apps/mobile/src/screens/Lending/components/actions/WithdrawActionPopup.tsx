@@ -24,7 +24,7 @@ import { toast } from '@/components2024/Toast';
 import WithdrawActionOverView from './WithdrawActionOverView';
 import {
   API_ETH_MOCK_ADDRESS,
-  HF_COLOR_BAD_THRESHOLD,
+  HF_RISK_CHECKBOX_THRESHOLD,
 } from '../../utils/constant';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
@@ -82,7 +82,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     if (!afterHF) {
       return false;
     }
-    return Number(afterHF) < HF_COLOR_BAD_THRESHOLD;
+    return Number(afterHF) < HF_RISK_CHECKBOX_THRESHOLD;
   }, [afterHF]);
 
   const afterSupply = useMemo(() => {

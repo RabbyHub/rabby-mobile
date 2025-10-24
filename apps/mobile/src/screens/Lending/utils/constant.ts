@@ -5,9 +5,9 @@ export const BORROW_SAFE_MARGIN = 0.99;
 export const SUPPLY_UI_SAFE_MARGIN = 0.995;
 export const BORROW_UI_SAFE_MARGIN = 0.99;
 
-// 池子警告阈值
+// 池子黄色警告阈值
 export const RESERVE_USAGE_WARNING_THRESHOLD = 0.98;
-// 池子禁止阈值
+// 池子红色警告阈值
 export const RESERVE_USAGE_BLOCK_THRESHOLD = 0.9999;
 
 // 借款/质押等操作后的健康因子低于该值时，显示风险确认复选框

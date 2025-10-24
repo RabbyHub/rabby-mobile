@@ -30,7 +30,7 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import {
   BORROW_SAFE_MARGIN,
-  HF_COLOR_BAD_THRESHOLD,
+  HF_RISK_CHECKBOX_THRESHOLD,
   RESERVE_USAGE_BLOCK_THRESHOLD,
   RESERVE_USAGE_WARNING_THRESHOLD,
 } from '../../utils/constant';
@@ -87,7 +87,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     if (!afterHF) {
       return false;
     }
-    return Number(afterHF) < HF_COLOR_BAD_THRESHOLD;
+    return Number(afterHF) < HF_RISK_CHECKBOX_THRESHOLD;
   }, [afterHF]);
 
   const buildTransactions = useCallback(async () => {
