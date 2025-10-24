@@ -374,6 +374,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         contentContainerStyle={styles.transactionContainer}>
         <RepayActionOverView
           reserve={reserve}
+          amount={amount}
           userSummary={userSummary}
           afterRepayAmount={afterRepayAmount}
           afterRepayUsdValue={afterRepayUsdValue}

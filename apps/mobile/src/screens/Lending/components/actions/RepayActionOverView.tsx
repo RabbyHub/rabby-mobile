@@ -10,6 +10,7 @@ import HealthFactorText from '../HealthFactorText';
 
 const RepayActionOverView: React.FC<
   PopupDetailProps & {
+    amount?: string;
     afterHF?: string;
     afterRepayAmount?: string;
     afterRepayUsdValue?: string;
@@ -17,6 +18,7 @@ const RepayActionOverView: React.FC<
 > = ({
   reserve,
   userSummary,
+  amount,
   afterHF,
   afterRepayAmount,
   afterRepayUsdValue,
@@ -36,7 +38,7 @@ const RepayActionOverView: React.FC<
           <Text style={styles.title}>Remaining debt</Text>
           <View style={styles.availableValueContainer}>
             <Text style={styles.availableValue}>
-              {afterRepayAmount
+              {amount
                 ? `${formatAmountValueKMB(reserve?.variableBorrows || '0')} ${
                     reserve.reserve.symbol
                   } → ${formatAmountValueKMB(afterRepayAmount || '0')} ${
@@ -48,7 +50,7 @@ const RepayActionOverView: React.FC<
         </View>
         <View style={[styles.item, styles.hfDescContainer]}>
           <Text style={styles.hfDesc}>
-            {afterRepayUsdValue
+            {amount
               ? `$${formatAmountValueKMB(
                   reserve.variableBorrowsUSD || '0',
                 )} → $${formatAmountValueKMB(afterRepayUsdValue || '0')}`

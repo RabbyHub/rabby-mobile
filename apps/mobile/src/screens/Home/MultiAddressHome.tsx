@@ -187,16 +187,16 @@ function MultiAddressHome(): JSX.Element {
           icon: RcIconLending,
         },
         {
+          key: MultiHomeFeatTitle.Points,
+          title: t('page.rabbyPoints.title'),
+          icon: RcIconPointsCC,
+        },
+        {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
           icon: RcIconHistoryCC,
           badge: historyCount?.fail || historyCount?.success,
           isSuccess: !historyCount?.fail,
-        },
-        {
-          key: MultiHomeFeatTitle.Points,
-          title: t('page.rabbyPoints.title'),
-          icon: RcIconPointsCC,
         },
         {
           key: MultiHomeFeatTitle.Approvals,

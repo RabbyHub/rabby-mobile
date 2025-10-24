@@ -6,6 +6,7 @@ import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { HealthFactorBar } from './HealthFactorBar';
+import { HF_COLOR_GOOD_THRESHOLD } from '../utils/constant';
 
 export const HFDescription: React.FC<{
   hf: string;
@@ -52,18 +53,21 @@ export const HFDescription: React.FC<{
 
         <HealthFactorBar healthFactor={hf} />
       </View>
-      <View style={styles.warningContainer}>
-        <RcIconWarningCircleCC
-          width={16}
-          height={16}
-          color={colors2024['red-default']}
-        />
-        <Text style={styles.warningText}>
-          Your Health Factor is too low. To avoid liquidation:{'\n'}
-          1. Repay part or all of your loan{'\n'}
-          2. Add more collateral
-        </Text>
-      </View>
+      {Number(hf) < HF_COLOR_GOOD_THRESHOLD && (
+        <View style={styles.warningContainer}>
+          <RcIconWarningCircleCC
+            width={16}
+            height={16}
+            color={colors2024['red-default']}
+          />
+          <Text style={styles.warningText}>
+            Your Health Factor is too low. To avoid liquidation:{'\n'}
+            1. Repay part or all of your loan{'\n'}
+            2. Add more collateral
+          </Text>
+        </View>
+      )}
+
       <Button
         containerStyle={styles.button}
         title={'Got it'}
