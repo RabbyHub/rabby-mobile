@@ -243,7 +243,7 @@ export const ScreenAddNewWhitelistAddress = ({
           <Text style={styles.headerText}>
             {t('page.whitelist.header.address')}
           </Text>
-          <TouchableOpacity onPress={openSendHistory}>
+          <TouchableOpacity onPress={openSendHistory} hitSlop={10}>
             <RcIconSwapHistory
               style={styles.icon}
               color={colors2024['neutral-body']}
@@ -252,7 +252,7 @@ export const ScreenAddNewWhitelistAddress = ({
         </View>
         <View>
           <NextInput.TextArea
-            as="BottomSheetTextInput"
+            as="TextInput"
             style={styles.textContainer}
             inputStyle={styles.textArea}
             tipText={''}

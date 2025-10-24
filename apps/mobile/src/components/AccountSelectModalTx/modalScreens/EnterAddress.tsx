@@ -190,7 +190,7 @@ const ScreenPanelEnterAddress = ({
         <BottomSheetScrollView contentContainerStyle={styles.topContent}>
           <View>
             <NextInput.TextArea
-              as="BottomSheetTextInput"
+              as="TextInput"
               style={styles.textContainer}
               inputStyle={styles.textArea}
               tipText={''}
