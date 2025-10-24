@@ -30,7 +30,7 @@ const gnosisPQueue = new PQueue({
   interval: 1000,
   intervalCap: 5,
   carryoverConcurrencyCount: false,
-  concurrency: 5,
+  concurrency: 2,
 });
 
 GnosisKeyring.setApiKey(SAFE_API_KEY);
