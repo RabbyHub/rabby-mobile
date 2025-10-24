@@ -1646,7 +1646,8 @@
         },
         "max-15-characters-use-numbers-and-letters-only": "最多 15 個字符，僅使用數字和字母。"
       },
-      "xPoints": "{{point}} 點"
+      "xPoints": "{{point}} 點",
+      "alreadyClaimedXPoints": "已領取：{{point}}"
     },
     "search": {
       "header": {
@@ -2729,7 +2730,10 @@
         "login": "登入 GasAccount",
         "title": "存款 USDC / USDT",
         "desc": "支付所有鏈上的Gas費用",
-        "loginAndClaim": "登錄並領取 {{amount}}"
+        "loginAndClaim": "登錄並領取 {{amount}}",
+        "loginTips3": "當你沒有 Gas 時",
+        "loginTips1": "支付 gas 費用給",
+        "loginTips2": "任何鏈上的任何地址"
       },
       "deposit": "充值",
       "withdrawConfirmModal": {
