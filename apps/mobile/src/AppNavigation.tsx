@@ -82,6 +82,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
+import { GlobalSignerPortal } from './components2024/MiniSignV2/components/GlobalSignerPortal';
 import { EVENT_ROUTE_CHANGE, eventBus } from './utils/events';
 import { useOpenedActiveDappState } from './screens/Dapps/hooks/useDappView';
 import {
@@ -90,8 +91,8 @@ import {
 } from './screens/Browser/BottomSheetBrowser';
 import { TokenMarketInfoScreen } from './screens/TokenDetail/TokenMarketInfoScreen';
 import { ModalsSubmitFeedbackByScreenshotStub } from './components/Screenshot/ScreenshotModal';
-import { GlobalMiniSignTypedDataApproval } from './components/Approval/components/MiniSignTypedData/GlobalMiniApproval';
 import { GlobalTipsPopup } from './components2024/GlobalTipsPopup';
+import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -540,8 +541,9 @@ export default function AppNavigation({
       <BackgroundSecureBlurView />
       <FloatViewAutoLockCount />
       <GlobalMiniApproval />
-      <GlobalMiniSignTypedDataApproval />
+      <GlobalMiniSignTypedDataPortal />
       <GlobalTipsPopup />
+      <GlobalSignerPortal />
     </AutoLockView.ForAppNav>
   );
 }

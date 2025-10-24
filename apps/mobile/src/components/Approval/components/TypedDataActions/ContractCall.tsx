@@ -10,7 +10,7 @@ import * as Values from '../Actions/components/Values';
 import ViewMore from '../Actions/components/ViewMore';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
 import { SecurityListItem } from '../Actions/components/SecurityListItem';
-import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
+import IconQuestionMark from '@/assets2024/icons/common/help-cc.svg';
 import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -18,6 +18,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Tip } from '@/components/Tip';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
+import { useTheme2024 } from '@/hooks/theme';
 const { isSameAddress } = addressUtils;
 
 const ContractCall = ({
@@ -33,6 +34,8 @@ const ContractCall = ({
   engineResults: Result[];
 }) => {
   const { t } = useTranslation();
+  const { colors2024 } = useTheme2024();
+
   const operation = useMemo(() => {
     if (raw.primaryType) {
       return raw.primaryType as string;
@@ -171,6 +174,7 @@ const ContractCall = ({
                     height: 16,
                     marginLeft: 6,
                   })}
+                  color={colors2024['neutral-info']}
                 />
               </Tip>
             </View>

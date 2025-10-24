@@ -83,20 +83,29 @@ const LiquidityDetail = ({
       nextCursor?: string;
       hasMore: boolean;
     }) => {
-      const res = await openapi.getLiquidityPoolHistoryList({
-        token_id: tokenId,
-        chain_id: chainId,
-        action: activeTab === DetailsTabKey.all ? undefined : activeTab,
-        limit: 20,
-        cursor: d?.nextCursor,
-      });
-      const page = res?.pagination || {};
-      const merged = [...(res?.data_list || [])];
-      return {
-        list: merged,
-        nextCursor: page?.next_cursor,
-        hasMore: !!page?.has_next,
-      };
+      try {
+        const res = await openapi.getLiquidityPoolHistoryList({
+          token_id: tokenId,
+          chain_id: chainId,
+          action: activeTab === DetailsTabKey.all ? undefined : activeTab,
+          limit: 20,
+          cursor: d?.nextCursor,
+        });
+        const page = res?.pagination || {};
+        const merged = [...(res?.data_list || [])];
+        return {
+          list: merged,
+          nextCursor: page?.next_cursor,
+          hasMore: !!page?.has_next,
+        };
+      } catch (error) {
+        console.error('getLiquidityPoolHistoryList error:', error);
+        return {
+          list: [],
+          nextCursor: undefined,
+          hasMore: false,
+        };
+      }
     },
     [activeTab, chainId, tokenId],
   );
@@ -124,7 +133,7 @@ const LiquidityDetail = ({
   }, [loadMore]);
 
   const list = useMemo(() => {
-    return uniqBy(data?.list, 'id');
+    return uniqBy(data?.list || [], 'id');
   }, [data?.list]);
 
   useLayoutEffect(() => {

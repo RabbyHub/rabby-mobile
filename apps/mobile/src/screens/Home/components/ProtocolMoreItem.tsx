@@ -61,6 +61,7 @@ export const WrapperDappActionsMemoItem = ({
   address,
   addressType,
   onRefresh,
+  session,
 }: {
   item: AbstractPortfolio;
   chain?: string;
@@ -68,6 +69,7 @@ export const WrapperDappActionsMemoItem = ({
   address?: string;
   addressType?: KEYRING_TYPE;
   onRefresh?: () => Promise<void>;
+  session?: React.ComponentProps<typeof DappActions>['session'];
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
@@ -82,6 +84,7 @@ export const WrapperDappActionsMemoItem = ({
             address={address}
             addressType={addressType}
             onRefresh={onRefresh}
+            session={session}
           />
         )}
     </View>

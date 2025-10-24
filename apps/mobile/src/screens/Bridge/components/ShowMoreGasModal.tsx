@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Text,
@@ -10,7 +10,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SwapModal } from '@/screens/Swap/components/Modal';
 import { SvgProps } from 'react-native-svg';
-import { useAtomValue } from 'jotai';
 import IconGasTokenCC from '@/assets2024/icons/gas-account/gas-token-cc.svg';
 import IconGasAccountCC from '@/assets2024/icons/gas-account/gas-account-cc.svg';
 import IconGasTokenActive from '@/assets2024/icons/gas-account/gas-token-active.svg';
@@ -20,9 +19,53 @@ import IconGasLevelChecked from '@/assets2024/icons/gas-account/check.svg';
 
 import BigNumber from 'bignumber.js';
 import { getGasLevelI18nKey } from '@/utils/trans';
-import { miniApprovalGasAtom } from '@/hooks/useMiniApprovalDirectSign';
 import { formatGasHeaderUsdValue } from '@/utils/number';
 import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
+import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
+import { signatureStore, useSignatureStore } from '@/components2024/MiniSignV2';
+import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
+
+const showMoreGasSelectModalVisibleAtom = atom(false);
+
+export const useGetShowMoreGasSelectVisible = () =>
+  useAtomValue(showMoreGasSelectModalVisibleAtom);
+const useSetShowMoreGasSelectVisible = () =>
+  useSetAtom(showMoreGasSelectModalVisibleAtom);
+const gasInfoByUIAtom = atom<
+  | {
+      externalPanelSelection: (gas: GasLevel) => void;
+      handleClickEdit: () => void;
+      gasCostUsdStr: string;
+      gasUsdList: {
+        slow: string;
+        normal: string;
+        fast: string;
+      };
+      gasIsNotEnough: {
+        slow: boolean;
+        normal: boolean;
+        fast: boolean;
+      };
+      gasAccountIsNotEnough: {
+        slow: [boolean, string];
+        normal: [boolean, string];
+        fast: [boolean, string];
+      };
+      gasAccountCost?: {
+        total_cost: number;
+        tx_cost: number;
+        gas_cost: number;
+        estimate_tx_cost: number;
+      };
+    }
+  | undefined
+>(undefined);
+
+export const [useGetGasInfoByUI, useSetGasInfoByUI] = [
+  () => useAtomValue(gasInfoByUIAtom),
+  () => useSetAtom(gasInfoByUIAtom),
+];
 
 const GasMethod = (props: {
   active: boolean;
@@ -75,11 +118,23 @@ export default function ShowMoreGasSelectModal({
 }) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const miniApprovalGas = useAtomValue(miniApprovalGasAtom);
 
   const { height, width } = useWindowDimensions();
 
-  const calcGasAccountUsd = useCallback((n: number | string) => {
+  const fixedMode = useMiniSignFixedMode(chainId);
+
+  const state = useSignatureStore();
+  const { ctx, config, status } = state;
+  const gasInfoByUI = useGetGasInfoByUI();
+  const setGasInfoByUI = useSetGasInfoByUI();
+
+  useEffect(() => {
+    if (['idle', 'prefetching'].includes(status) || !ctx?.txsCalc?.length) {
+      setGasInfoByUI(undefined);
+    }
+  }, [setGasInfoByUI, status, ctx?.txsCalc?.length]);
+
+  const calcGasAccountUsd = useCallback(n => {
     const v = Number(n);
     if (!Number.isNaN(v) && v < 0.0001) {
       return `$${n}`;
@@ -87,11 +142,50 @@ export default function ShowMoreGasSelectModal({
     return formatGasHeaderUsdValue(n || '0');
   }, []);
 
-  const fixedMode = useMiniSignFixedMode(chainId);
+  // const hasCustomRpc = !ctx?.noCustomRPC;
 
-  if (!miniApprovalGas) {
-    return null;
-  }
+  const setVisible = useSetShowMoreGasSelectVisible();
+
+  const handleChangeGasMethod = useCallback(
+    async (method: 'native' | 'gasAccount') => {
+      try {
+        signatureStore.setGasMethod(method);
+      } catch (error) {
+        console.error('Gas method change error:', error);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    setVisible(false);
+    return () => {
+      setVisible(false);
+    };
+  }, [setVisible]);
+
+  useEffect(() => {
+    if (visible) {
+      setVisible(true);
+    }
+  }, [visible, setVisible]);
+
+  const {
+    externalPanelSelection,
+    handleClickEdit,
+    gasCostUsdStr,
+    gasUsdList,
+    gasIsNotEnough,
+    gasAccountIsNotEnough,
+    gasAccountCost,
+  } = gasInfoByUI || {};
+  const gasAccountErrorMsg = (ctx?.gasAccount as any)?.err_msg as string;
+  const gasAccountError =
+    !!gasAccountErrorMsg &&
+    gasAccountErrorMsg?.toLowerCase() !==
+      GAS_ACCOUNT_INSUFFICIENT_TIP.toLowerCase();
+
+  if (!ctx?.txsCalc?.length) return null;
 
   return (
     <SwapModal
@@ -110,47 +204,53 @@ export default function ShowMoreGasSelectModal({
         ]}>
         <View style={styles.header}>
           <GasMethod
-            active={miniApprovalGas.gasMethod === 'native'}
-            onChange={() => miniApprovalGas?.onChangeGasMethod?.('native')}
+            active={ctx.gasMethod === 'native'}
+            onChange={() => handleChangeGasMethod?.('native')}
             ActiveComponent={IconGasTokenActive}
             BlurComponent={IconGasTokenCC}
             title={'Use Gas token'}
           />
 
           <GasMethod
-            active={miniApprovalGas.gasMethod === 'gasAccount'}
-            onChange={() => miniApprovalGas?.onChangeGasMethod?.('gasAccount')}
+            active={ctx.gasMethod === 'gasAccount'}
+            onChange={() => handleChangeGasMethod?.('gasAccount')}
             ActiveComponent={IconGasAccountActive}
             BlurComponent={IconGasAccountCC}
             title={'Use Gasaccount'}
           />
         </View>
         <View>
-          {miniApprovalGas.gasList?.map((gas, index) => {
+          {ctx?.gasList?.map(gas => {
             const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
             const levelTitle = t(getGasLevelI18nKey(gas.level));
-            const isActive = miniApprovalGas.selectedGas?.level === gas.level;
+            const isActive = ctx.selectedGas?.level === gas.level;
             const isCustom = gas.level === 'custom';
             let costUsd =
-              miniApprovalGas?.gasMethod === 'native'
-                ? miniApprovalGas.gasUsdList?.[gas.level]
-                : miniApprovalGas?.gasAccountIsNotEnough?.[gas.level]?.[1];
+              ctx.gasMethod === 'native'
+                ? gasUsdList?.[gas.level]
+                : gasAccountIsNotEnough?.[gas.level]?.[1];
+
             const isNotEnough =
-              miniApprovalGas?.gasMethod === 'native'
-                ? miniApprovalGas?.gasIsNotEnough?.[gas.level]
-                : miniApprovalGas?.gasAccountIsNotEnough?.[gas.level]?.[0];
+              ctx.gasMethod === 'native'
+                ? gasIsNotEnough?.[gas.level]
+                : gasAccountIsNotEnough?.[gas.level]?.[0];
+
+            const isGasAccountLoading =
+              !isActive &&
+              ctx.gasMethod === 'gasAccount' &&
+              (gasAccountIsNotEnough?.[gas.level]?.[1] === '' ||
+                gasAccountIsNotEnough?.[gas.level]?.[1] === 0);
 
             const errorOnGasAccount =
-              miniApprovalGas.gasMethod === 'gasAccount' &&
-              !!miniApprovalGas?.gasAccountError;
+              ctx.gasMethod === 'gasAccount' && !!gasAccountError;
 
             costUsd = isActive
-              ? miniApprovalGas.gasMethod === 'gasAccount'
+              ? ctx.gasMethod === 'gasAccount'
                 ? calcGasAccountUsd(
-                    (miniApprovalGas?.gasAccountCost?.estimate_tx_cost || 0) +
-                      (miniApprovalGas?.gasAccountCost?.gas_cost || 0),
+                    (gasAccountCost?.estimate_tx_cost || 0) +
+                      (gasAccountCost?.gas_cost || 0),
                   )
-                : miniApprovalGas!.gasCostUsdStr
+                : gasCostUsdStr
               : costUsd;
 
             return (
@@ -164,9 +264,9 @@ export default function ShowMoreGasSelectModal({
                   },
                 ]}
                 onPress={() => {
-                  miniApprovalGas?.externalPanelSelection?.(gas);
+                  externalPanelSelection?.(gas);
                   if (gas.level === 'custom') {
-                    miniApprovalGas?.handleClickEdit?.();
+                    handleClickEdit?.();
                   }
                   onCancel();
                 }}>

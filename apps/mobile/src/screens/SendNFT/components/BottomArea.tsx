@@ -13,12 +13,10 @@ import { apiBalance } from '@/core/apis';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import AuthButton from '@/components2024/AuthButton';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  directSigningAtom,
-  useCanProcessDirectSubmit,
-} from '@/hooks/useMiniApprovalDirectSign';
+
 import { useAtom } from 'jotai';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useSignatureStore } from '@/components2024/MiniSignV2';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -47,9 +45,11 @@ export default function BottomArea() {
 
   const { safeOffBottom } = useSafeSizes();
 
-  const [isDirectSigning] = useAtom(directSigningAtom);
+  const { status, ctx } = useSignatureStore();
 
-  const canDirectSign = useCanProcessDirectSubmit();
+  const isDirectSigning = status === 'signing';
+
+  const canDirectSign = !ctx?.disabledProcess;
 
   return (
     <View

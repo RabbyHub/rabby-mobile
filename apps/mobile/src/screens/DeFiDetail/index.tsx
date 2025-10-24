@@ -406,10 +406,19 @@ export const DeFiDetailScreen = () => {
           addressType={section.type}
           onRefresh={handleRefresh}
           key={`${item.id}-${section.address}-${section.totalUsdValue}`}
+          session={
+            data?.site_url && data?.logo
+              ? {
+                  name: data?.name,
+                  icon: data?.logo || '',
+                  origin: data?.site_url || '',
+                }
+              : undefined
+          }
         />
       );
     },
-    [data?.chain, data?.logo, handleRefresh],
+    [data?.chain, data?.logo, data?.name, data?.site_url, handleRefresh],
   );
 
   const { bottom } = useSafeAreaInsets();

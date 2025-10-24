@@ -10,7 +10,7 @@ import { Tip } from '@/components/Tip';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import ViewRawModal from '../TxComponents/ViewRawModal';
 import { CommonAction } from '../CommonAction';
 import { Card } from '../Actions/components/Card';
@@ -90,7 +90,9 @@ const Actions = ({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getMessageStyles(colors), [colors]);
-  const actionStyles = getActionsStyle(colors);
+  const { styles: actionStyles } = useTheme2024({
+    getStyle: getActionsStyle,
+  });
 
   const handleViewRawClick = () => {
     ViewRawModal.open({

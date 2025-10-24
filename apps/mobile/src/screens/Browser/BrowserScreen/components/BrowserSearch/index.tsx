@@ -116,15 +116,16 @@ export function BrowserSearch({
   });
 
   const handleSubmitEditing = useMemoizedFn(() => {
-    // if (!searchText) {
-    //   return;
-    // }
-    // isOpenURLRef.current = true;
-    // if (isValidDomain) {
-    //   onOpenURL?.(
-    //     /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
-    //   );
-    // } else {
+    if (!searchText) {
+      return;
+    }
+    isOpenURLRef.current = true;
+    if (isValidDomain) {
+      onOpenURL?.(
+        /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
+      );
+    }
+    // else {
     //   onOpenURL?.(
     //     `https://www.google.com/search?q=${encodeURIComponent(searchText)}`,
     //   );

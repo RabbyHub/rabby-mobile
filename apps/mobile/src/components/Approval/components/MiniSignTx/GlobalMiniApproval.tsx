@@ -6,7 +6,7 @@ import { useAtom } from 'jotai';
 import React, { useRef } from 'react';
 import { toastWithDotAnimation } from '@/components2024/Toast';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { MiniDirectSubmitApproval } from './DirectSubmitMiniSigntx';
+// import { MiniDirectSubmitApproval } from './DirectSubmitMiniSigntx';
 import { MiniApproval } from './MiniSignTx';
 import {
   useMemoMiniSignGasStore,
@@ -81,25 +81,25 @@ export const GlobalMiniApproval = () => {
     return null;
   }
 
-  if (state.directSubmit) {
-    return (
-      <MiniDirectSubmitApproval
-        {...state}
-        account={currentAccount}
-        key={`${currentAccount?.type}-${currentAccount?.address}-${state.id}`}
-        onSubmitting={handleSubmitting}
-        onSubmitted={handleSubmitted}
-        onVisibleChange={v => {
-          setState(prev => {
-            return {
-              ...prev,
-              visible: v,
-            };
-          });
-        }}
-      />
-    );
-  }
+  // if (state.directSubmit) {
+  //   return (
+  //     <MiniDirectSubmitApproval
+  //       {...state}
+  //       account={currentAccount}
+  //       key={`${currentAccount?.type}-${currentAccount?.address}-${state.id}`}
+  //       onSubmitting={handleSubmitting}
+  //       onSubmitted={handleSubmitted}
+  //       onVisibleChange={v => {
+  //         setState(prev => {
+  //           return {
+  //             ...prev,
+  //             visible: v,
+  //           };
+  //         });
+  //       }}
+  //     />
+  //   );
+  // }
 
   return (
     <MiniApproval

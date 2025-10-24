@@ -12,14 +12,10 @@ import { apiBalance } from '@/core/apis';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
-import {
-  directSigningAtom,
-  useCanProcessDirectSubmit,
-  useMiniDirectSignGasFeeTooHigh,
-} from '@/hooks/useMiniApprovalDirectSign';
-import { useAtomValue } from 'jotai';
+
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
+import { useSignatureStore } from '@/components2024/MiniSignV2';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -37,6 +33,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
       canDirectSign: canShowDirectSign,
       toAddressInContactBook,
     },
+    callbacks: { handleIgnoreGasFeeChange },
 
     fns: { putScreenState, fetchContactAccounts },
   } = useSendTokenInternalContext();
@@ -48,11 +45,13 @@ export default function BottomArea({ account }: { account: Account | null }) {
 
   const { safeOffBottom } = useSafeSizes();
 
-  const isDirectSigning = useAtomValue(directSigningAtom);
+  const { status, ctx } = useSignatureStore();
 
-  const canDirectSign = useCanProcessDirectSubmit();
+  const isDirectSigning = status === 'signing';
 
-  const showRiskTips = useMiniDirectSignGasFeeTooHigh();
+  const canDirectSign = !ctx?.disabledProcess;
+
+  const showRiskTips = !!ctx?.gasFeeTooHigh;
 
   return (
     <View
@@ -68,7 +67,10 @@ export default function BottomArea({ account }: { account: Account | null }) {
           loadingType="circle"
           authTitle={t('page.whitelist.confirmPassword')}
           title={t('global.confirm')}
-          onFinished={handleSubmit}
+          onFinished={p => {
+            handleIgnoreGasFeeChange(p?.ignoreGasFee || false);
+            handleSubmit();
+          }}
           disabled={!canSubmit || !canDirectSign || isDirectSigning}
           loading={isSubmitLoading}
           type={'primary'}
