@@ -324,8 +324,16 @@ export function SheetModalSelectAccountSend({
     screenStates.currentScreen,
   )
     ? {
-        container: { backgroundColor: colors2024['neutral-bg-2'] },
-        handle: { backgroundColor: colors2024['neutral-bg-2'] },
+        container: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-2']
+            : colors2024['neutral-bg-1'],
+        },
+        handle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-2']
+            : colors2024['neutral-bg-1'],
+        },
         title: undefined,
       }
     : ['scan-qr-code'].includes(screenStates.currentScreen)
