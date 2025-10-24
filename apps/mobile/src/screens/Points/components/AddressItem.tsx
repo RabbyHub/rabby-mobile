@@ -156,7 +156,7 @@ export const AddressPointItem = (props: AddressItemProps) => {
                     color={colors2024['brand-default-icon']}
                   />
                   <Text style={styles.points}>
-                    {t('page.rabbyPoints.xPoints', {
+                    {t('page.rabbyPoints.alreadyClaimedXPoints', {
                       point: formatTokenAmount(account.claimed_points || 0, 0),
                     })}
                   </Text>
@@ -178,11 +178,11 @@ export const AddressPointItem = (props: AddressItemProps) => {
       </InnerAddressItem>
 
       <View style={styles.right}>
-        <View style={styles.claimBox}>
+        {/* <View style={styles.claimBox}>
           <Text style={styles.claimText}>
             {t('page.rabbyPoints.claimItem.claim')}
           </Text>
-        </View>
+        </View> */}
       </View>
     </Card>
   );
