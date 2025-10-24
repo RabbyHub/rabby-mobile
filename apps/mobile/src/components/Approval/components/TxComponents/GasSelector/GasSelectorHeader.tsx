@@ -879,7 +879,6 @@ export const GasSelectorHeader = ({
     if (pressedConfirmRef.current) {
       return;
     }
-    console.log('rawSelectedGas', JSON.stringify(rawSelectedGas));
     setCustomGas(e =>
       rawSelectedGas?.level === 'custom'
         ? Number(e) * 1e9 === rawSelectedGas.price
