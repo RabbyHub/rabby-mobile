@@ -29,7 +29,7 @@ import { TxAccountPannelSectionTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { ellipsisAddress } from '@/utils/address';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BottomSheetFlatList, TouchableHighlight } from '@gorhom/bottom-sheet';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
@@ -522,7 +522,7 @@ export function AccountsPanelInSheetModal({
                             account={account}
                             hideBalance
                             inWhiteList
-                            enableMenu={__DEV__}
+                            enableMenu={IS_IOS}
                             isMyImported={myAccounts.some(i =>
                               addressUtils.isSameAddress(
                                 i.address,

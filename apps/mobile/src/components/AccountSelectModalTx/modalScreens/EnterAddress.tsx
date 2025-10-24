@@ -25,6 +25,7 @@ import { Button } from '@/components2024/Button';
 import { AddressEditorBadge } from '../AddressEditorBadge';
 import { touchedFeedback } from '@/utils/touch';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { IS_IOS } from '@/core/native/utils';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -61,13 +62,7 @@ const ScreenPanelEnterAddress = ({
 }) => {
   const { fnNavTo, cbOnSelectedAccount } = useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const [input, _setInput] = React.useState(
-    __DEV__
-      ? ''
-      : // __DEV__ ? '0x5853eD4f26A3fceA565b3FBC698bb19cdF6DEB85'
-        // __DEV__ ? 'hongbo.eth'
-        '',
-  );
+  const [input, _setInput] = React.useState('');
   const setInput = useCallback((text: string) => {
     _setInput(text);
     setEnsResult(null);
@@ -133,8 +128,9 @@ const ScreenPanelEnterAddress = ({
   );
 
   const { safeSizes } = useSafeAndroidBottomSizes({
-    containerPb: SIZES.bottomContentH + SIZES.containerPb,
-    bottomContentBottom: 0,
+    containerPb:
+      SIZES.bottomContentH + SIZES.bottomContentBottom + SIZES.containerPb,
+    bottomContentBottom: SIZES.bottomContentBottom,
   });
 
   const onSubmitEditing = React.useCallback(() => {
@@ -253,32 +249,32 @@ const ScreenPanelEnterAddress = ({
                 </View>
               )}
             />
-            <View style={styles.afterInput}>
-              {!error && !ensResult && foundAccountInfo?.account && (
-                <AddressEditorBadge
-                  style={styles.addressEditor}
-                  account={foundAccountInfo?.account}
-                />
-              )}
-              {!error && ensResult && input === ensResult.addr && (
-                <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
-              )}
+          </View>
+          <View style={styles.afterInput}>
+            {!error && !ensResult && foundAccountInfo?.account && (
+              <AddressEditorBadge
+                style={styles.addressEditor}
+                account={foundAccountInfo?.account}
+              />
+            )}
+            {!error && ensResult && input === ensResult.addr && (
+              <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
+            )}
 
-              {!error && ensResult && input !== ensResult.addr && (
-                <TouchableOpacity
-                  style={styles.ensResultBox}
-                  onPress={() => {
-                    touchedFeedback();
-                    Keyboard.dismiss();
-                    setInput(ensResult.addr);
-                  }}>
-                  <Text style={styles.ensResult}>{ensResult.addr}</Text>
-                </TouchableOpacity>
-              )}
-              {error && (
-                <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
-              )}
-            </View>
+            {!error && ensResult && input !== ensResult.addr && (
+              <TouchableOpacity
+                style={styles.ensResultBox}
+                onPress={() => {
+                  touchedFeedback();
+                  Keyboard.dismiss();
+                  setInput(ensResult.addr);
+                }}>
+                <Text style={styles.ensResult}>{ensResult.addr}</Text>
+              </TouchableOpacity>
+            )}
+            {error && (
+              <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
+            )}
           </View>
         </BottomSheetScrollView>
 
@@ -308,24 +304,25 @@ export default ScreenPanelEnterAddress;
 
 const SIZES = {
   bottomContentH: 56,
-  containerPb: 30,
+  bottomContentBottom: IS_IOS ? 48 : 0,
+  containerPb: 20,
 };
 const getStyles = createGetStyles2024(ctx => ({
   container: {
+    // position: 'relative',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    position: 'relative',
     height: '100%',
     width: '100%',
-    paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
+    paddingHorizontal: 0,
     paddingTop: 16,
-    paddingBottom: SIZES.bottomContentH + SIZES.containerPb,
+    paddingBottom:
+      SIZES.bottomContentH + SIZES.bottomContentBottom + SIZES.containerPb,
     // ...makeDebugBorder('red'),
   },
   topContent: {
-    alignItems: 'center',
-    flexShrink: 0,
+    paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
   },
   errorMessage: {
     color: ctx.colors2024['red-default'],
@@ -393,12 +390,14 @@ const getStyles = createGetStyles2024(ctx => ({
   },
 
   bottomContent: {
+    paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
     width: '100%',
     position: 'absolute',
-    bottom: 0,
+    bottom: SIZES.bottomContentBottom,
     // ...makeDebugBorder(),
     height: SIZES.bottomContentH,
     flexDirection: 'column',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
+    flex: 1,
   },
 }));

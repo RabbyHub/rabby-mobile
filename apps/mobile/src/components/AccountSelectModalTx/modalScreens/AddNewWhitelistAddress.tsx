@@ -57,6 +57,7 @@ import { SelectAccountSheetModalSizes } from '../layout';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { touchedFeedback } from '@/utils/touch';
+import { IS_IOS } from '@/core/native/utils';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -153,8 +154,9 @@ export const ScreenAddNewWhitelistAddress = ({
   );
 
   const { safeSizes } = useSafeAndroidBottomSizes({
-    containerPb: SIZES.bottomContentH + SIZES.containerPb,
-    bottomContentBottom: 0,
+    containerPb:
+      SIZES.bottomContentH + SIZES.bottomContentBottom + SIZES.containerPb,
+    bottomContentBottom: SIZES.bottomContentBottom,
   });
 
   const handleInputChange = useCallback((text: string) => {
@@ -271,6 +273,7 @@ export const ScreenAddNewWhitelistAddress = ({
             )}
             inputProps={{
               autoFocus: true,
+              ...(__DEV__ && { autoFocus: false }),
               placeholder: t('page.sendPoly.enterAddress'),
               placeholderTextColor: colors2024['neutral-secondary'],
               value: input,
@@ -409,6 +412,7 @@ export default ScreenAddNewWhitelistAddress;
 
 const SIZES = {
   bottomContentH: 56,
+  bottomContentBottom: IS_IOS ? 48 : 0,
   containerPb: 20,
 };
 const getStyles = createGetStyles2024(ctx => ({
@@ -421,7 +425,8 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
     paddingHorizontal: 0,
     paddingTop: 24,
-    paddingBottom: SIZES.bottomContentH + SIZES.containerPb,
+    paddingBottom:
+      SIZES.bottomContentH + SIZES.bottomContentBottom + SIZES.containerPb,
     // ...makeDebugBorder('red'),
   },
   topContent: {
@@ -552,10 +557,11 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
     width: '100%',
     position: 'absolute',
-    bottom: 0,
+    bottom: SIZES.bottomContentBottom,
     // ...makeDebugBorder(),
     height: SIZES.bottomContentH,
     flexDirection: 'column',
     justifyContent: 'flex-end',
+    flex: 1,
   },
 }));

@@ -13,7 +13,13 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -50,6 +56,9 @@ import {
   useAccountSelectModalCtx,
   useIsUnderAccountSelectModalContext,
 } from '@/components/AccountSelectModalTx/hooks';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { IS_IOS } from '@/core/native/utils';
 
 interface Props {
   data: TransactionGroup;
@@ -66,7 +75,10 @@ export const Send: React.FC<Props> = ({
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
-  const { bottom } = useSafeAreaInsets();
+  const { safeSizes } = useSafeAndroidBottomSizes({
+    inModalContainerPb: SIZES.buttonHeight + SIZES.bottomContentBottom,
+    inModalButtonContainerBottom: 0,
+  });
   const { t } = useTranslation();
   const { actionData, sendAmount, sendUsdValue, chain } = useMemo(() => {
     const maxGasTx = data.maxGasTx;
@@ -131,9 +143,20 @@ export const Send: React.FC<Props> = ({
     });
   });
 
+  const ViewComp = accountSelectCtx.isUnderContext
+    ? BottomSheetScrollView
+    : ScrollView;
+
   return (
     <>
-      <ScrollView style={{ paddingHorizontal: 16 }}>
+      <ViewComp
+        style={{ paddingHorizontal: 16 }}
+        contentContainerStyle={[
+          accountSelectCtx.isUnderContext && styles.inModalBsContainer,
+          accountSelectCtx.isUnderContext && {
+            paddingBottom: safeSizes.inModalContainerPb,
+          },
+        ]}>
         <TouchableOpacity onPress={handleGotoTokenDetail}>
           <View style={[styles.singleBox]}>
             <View
@@ -257,57 +280,76 @@ export const Send: React.FC<Props> = ({
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
-      {
-        <View style={[styles.buttonContainer, { paddingBottom: bottom + 27 }]}>
-          <View style={{ flex: 1 }}>
-            {isAddrOnWhitelist(actionData.to) && onPressAddToWhitelistButton ? (
-              <Tip content={t('page.whitelist.alreadyIn')}>
-                <Button
-                  disabled
-                  title={t('page.transactions.detail.AddToWhitelist')}
-                />
-              </Tip>
-            ) : (
+      </ViewComp>
+      <View
+        style={[
+          styles.buttonContainer,
+          accountSelectCtx.isUnderContext
+            ? StyleSheet.flatten([
+                styles.inModalButtonContainer,
+                { bottom: safeSizes.inModalButtonContainerBottom },
+              ])
+            : { paddingBottom: SIZES.containerPb },
+        ]}>
+        <View style={{ flex: 1 }}>
+          {isAddrOnWhitelist(actionData.to) && onPressAddToWhitelistButton ? (
+            <Tip content={t('page.whitelist.alreadyIn')}>
               <Button
-                onPress={async () => {
-                  if (onPressAddToWhitelistButton) {
-                    onPressAddToWhitelistButton(actionData);
-                    return;
-                  }
-                  const canUseAccountList = accounts.filter(acc => {
-                    return (
-                      addressUtils.isSameAddress(
-                        acc.address,
-                        data.maxGasTx.address || '',
-                      ) && acc.type !== KEYRING_TYPE.WatchAddressKeyring
-                    );
-                  });
-                  const fromAccount = findAccountByPriority(canUseAccountList);
-                  if (!isSingleAddress && fromAccount) {
-                    await switchSceneCurrentAccount(
-                      'MakeTransactionAbout',
-                      fromAccount,
-                    );
-                  }
-                  navigateToSendPolyScreen(!!isSingleAddress, {
-                    chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-                    tokenId: actionData.token?.id,
-                    toAddress: actionData.to,
-                  });
-                }}
-                title={
-                  onPressAddToWhitelistButton
-                    ? t('page.transactions.detail.AddToWhitelist')
-                    : t('page.transactions.detail.SendAgain')
-                }
+                disabled
+                title={t('page.transactions.detail.AddToWhitelist')}
               />
-            )}
-          </View>
+            </Tip>
+          ) : (
+            <Button
+              containerStyle={[
+                accountSelectCtx.isUnderContext && {
+                  height: SIZES.buttonHeight,
+                },
+              ]}
+              onPress={async () => {
+                if (onPressAddToWhitelistButton) {
+                  onPressAddToWhitelistButton(actionData);
+                  return;
+                }
+                const canUseAccountList = accounts.filter(acc => {
+                  return (
+                    addressUtils.isSameAddress(
+                      acc.address,
+                      data.maxGasTx.address || '',
+                    ) && acc.type !== KEYRING_TYPE.WatchAddressKeyring
+                  );
+                });
+                const fromAccount = findAccountByPriority(canUseAccountList);
+                if (!isSingleAddress && fromAccount) {
+                  await switchSceneCurrentAccount(
+                    'MakeTransactionAbout',
+                    fromAccount,
+                  );
+                }
+                navigateToSendPolyScreen(!!isSingleAddress, {
+                  chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+                  tokenId: actionData.token?.id,
+                  toAddress: actionData.to,
+                });
+              }}
+              title={
+                onPressAddToWhitelistButton
+                  ? t('page.transactions.detail.AddToWhitelist')
+                  : t('page.transactions.detail.SendAgain')
+              }
+            />
+          )}
         </View>
-      }
+      </View>
     </>
   );
+};
+
+const SIZES = {
+  buttonHeight: 56,
+  bottomAreaPt: 20,
+  bottomContentBottom: IS_IOS ? 48 : 0,
+  containerPb: 27,
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
@@ -319,6 +361,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+  },
+  inModalBsContainer: {
+    // flexShrink: 1,
+    paddingBottom: SIZES.buttonHeight + 12,
+    justifyContent: 'flex-end',
   },
   ghostButton: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -438,17 +485,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     flexDirection: 'row',
-    // height: 120,
-    paddingTop: 20,
+    paddingTop: SIZES.bottomAreaPt,
     marginTop: 16,
     bottom: 0,
     width: '100%',
-    paddingBottom: 27,
-    // paddingTop: 16,
+    paddingBottom: SIZES.containerPb,
     alignItems: 'center',
-    // gap: 16,
-    // left: 16,
     paddingHorizontal: 16,
+  },
+  inModalButtonContainer: {
+    position: 'absolute',
+    marginTop: 0,
+    width: '100%',
+    height: SIZES.buttonHeight + SIZES.bottomContentBottom,
+    bottom: SIZES.bottomContentBottom,
   },
   itemAliaName: {
     flexDirection: 'row',

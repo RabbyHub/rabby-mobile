@@ -58,7 +58,7 @@ function getDefaultScreenStates(): {
   };
 }
 // const SNAPSHOTS = [1, '80%'];
-const SNAPSHOTS = ['80%'];
+const SNAPSHOTS = [__DEV__ ? '80%' : '80%'];
 const SHOW_IDX = SNAPSHOTS.length === 1 ? true : SNAPSHOTS.length - 1;
 export function SheetModalSelectAccountSend({
   type,
@@ -363,7 +363,9 @@ export function SheetModalSelectAccountSend({
       ref={sheetModalRef}
       // index={SNAPSHOTS.length - 2}
       snapPoints={SNAPSHOTS}
-      enablePanDownToClose={['default'].includes(screenStates.currentScreen)}
+      enablePanDownToClose={
+        IS_IOS ? true : ['default'].includes(screenStates.currentScreen)
+      }
       backgroundStyle={{ backgroundColor: 'transparent' }}
       enableDismissOnClose={SNAPSHOTS.length === 1}
       keyboardBlurBehavior="restore"
@@ -429,7 +431,6 @@ export function SheetModalSelectAccountSend({
             {currentScreen === 'enter-addr' && (
               <ScreenPanelEnterAddress
                 onCleanupInput={() => {
-                  // back to default screen
                   fnNavTo('default');
                 }}
                 newValue={screenStates.nextInitValues['enter-addr'].inputValue}

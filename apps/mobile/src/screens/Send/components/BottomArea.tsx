@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -80,7 +80,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
 
   const {
     loading: loadingRisks,
-    risks,
+    risks: _risks,
     fetchRisks,
   } = useRisks(formValues.to, {
     // balance: !!screenState.toAddrAccountInfo?.account?.balance,
@@ -92,6 +92,10 @@ export default function BottomArea({ account }: { account: Account | null }) {
       [putScreenState],
     ),
   });
+
+  const risks = useMemo(() => {
+    return _risks.filter(item => item.type !== RiskType.NEVER_SEND);
+  }, [_risks]);
 
   useEffect(() => {
     const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =

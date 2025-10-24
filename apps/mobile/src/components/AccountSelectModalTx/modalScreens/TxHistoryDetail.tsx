@@ -123,7 +123,7 @@ function ScreenHistoryLocalDetail(): JSX.Element {
   );
 
   return (
-    <BottomSheetScrollView contentContainerStyle={styles.detailContainer}>
+    <View style={styles.detailContainer}>
       {data.maxGasTx.action?.actionData?.approveToken ? (
         <ApproveToken
           data={data}
@@ -192,7 +192,7 @@ function ScreenHistoryLocalDetail(): JSX.Element {
           account={txAccount}
         />
       )}
-    </BottomSheetScrollView>
+    </View>
   );
 }
 
@@ -202,6 +202,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     marginTop: 20,
     borderRadius: 16,
+    position: 'relative',
+    paddingTop: 0,
+    paddingBottom: 27,
     // backgroundColor: colors2024['neutral-bg-1'],
   },
 }));
