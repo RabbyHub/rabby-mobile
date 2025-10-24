@@ -165,6 +165,7 @@ function AlertBuildInfo() {
     Alert.alert(
       'Build Info',
       [
+        `Build Channel: ${BUILD_CHANNEL}`,
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
         `Hermes Enabled: ${IS_HERMES_ENABLED}`,
@@ -188,6 +189,7 @@ function AlertBuildInfo() {
     Alert.alert(
       'Build Info',
       [
+        `Build Channel: ${BUILD_CHANNEL}`,
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Revision: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
         `Hermes Enabled: ${IS_HERMES_ENABLED}`,
