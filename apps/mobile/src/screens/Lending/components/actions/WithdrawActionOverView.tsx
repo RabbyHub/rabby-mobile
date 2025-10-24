@@ -6,16 +6,18 @@ import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { getHealthStatusColor } from '../../utils';
 import HealthFactorText from '../HealthFactorText';
+import { formatTokenAmount } from '@/utils/number';
 
 const WithdrawActionOverView: React.FC<
   PopupDetailProps & {
+    amount?: string;
     afterHF?: string;
     afterSupply?: {
       balance: string;
       balanceUSD: string;
     };
   }
-> = ({ reserve, userSummary, afterHF, afterSupply }) => {
+> = ({ reserve, userSummary, afterHF, afterSupply, amount }) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { healthFactor = '0' } = userSummary;
   const availableText = useMemo(() => {
@@ -34,8 +36,15 @@ const WithdrawActionOverView: React.FC<
           <Text style={styles.title}>Remaining supply</Text>
           <View style={styles.availableValueContainer}>
             <Text style={styles.availableValue}>
-              {formatAmountValueKMB(afterSupply?.balance || '0')}{' '}
-              {reserve.reserve.symbol}
+              {amount
+                ? `${formatTokenAmount(reserve?.underlyingBalance || '0')} ${
+                    reserve.reserve.symbol
+                  } → ${formatTokenAmount(afterSupply?.balance || '0')} ${
+                    reserve.reserve.symbol
+                  }`
+                : `${formatTokenAmount(reserve?.underlyingBalance || '0')} ${
+                    reserve.reserve.symbol
+                  }`}
             </Text>
           </View>
         </View>

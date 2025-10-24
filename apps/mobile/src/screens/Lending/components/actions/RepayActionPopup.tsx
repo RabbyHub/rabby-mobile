@@ -28,6 +28,7 @@ import { approveToken } from '@/core/apis/approvals';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { noop } from 'lodash';
+import { formatTokenAmount } from '@/utils/number';
 
 export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -352,7 +353,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       <Text style={styles.title}>Repay {reserve.reserve.symbol}</Text>
       <View style={styles.amountHeader}>
         <Text style={styles.amountHeaderTitle}>Amount</Text>
-        <Text style={styles.amountValueDescription}>{`${formatAmountValueKMB(
+        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
           repayAmount.amount || '0',
         )} ${reserve.reserve.symbol} ($${formatAmountValueKMB(
           repayAmount.usdValue || '0',

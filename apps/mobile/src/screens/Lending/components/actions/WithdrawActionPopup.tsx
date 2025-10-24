@@ -29,6 +29,7 @@ import {
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { useMiniSigner } from '@/hooks/useSigner';
+import { formatTokenAmount } from '@/utils/number';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -201,7 +202,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       <Text style={styles.title}>Withdraw {reserve.reserve.symbol}</Text>
       <View style={styles.amountHeader}>
         <Text style={styles.amountHeaderTitle}>Amount</Text>
-        <Text style={styles.amountValueDescription}>{`${formatAmountValueKMB(
+        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
           reserve.underlyingBalance || '0',
         )}${reserve.reserve.symbol}($${formatAmountValueKMB(
           reserve.underlyingBalanceUSD || '0',
@@ -225,6 +226,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           reserve={reserve}
           userSummary={userSummary}
           afterHF={afterHF}
+          amount={amount}
           afterSupply={afterSupply}
         />
 

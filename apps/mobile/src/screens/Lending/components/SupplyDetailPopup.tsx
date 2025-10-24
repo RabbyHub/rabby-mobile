@@ -23,6 +23,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { RESERVE_USAGE_WARNING_THRESHOLD } from '../utils/constant';
 import WarningFillCC from '@/assets2024/icons/lending/warning-cc.svg';
 import { Tip } from '@/components/Tip';
+import { formatTokenAmount } from '@debank/common';
 
 export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -186,14 +187,15 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
           <View style={styles.userInfoItem}>
             <Text style={styles.userInfoItemTitle}>Wallet Balance</Text>
             <Text style={styles.userInfoItemValue}>
-              {formatAmountValueKMB(reserve.walletBalance || '0')}
+              {formatTokenAmount(reserve.walletBalance || '0')}{' '}
+              {reserve.reserve.symbol}
             </Text>
           </View>
           <View style={styles.userInfoItem}>
             <Text style={styles.userInfoItemTitle}>Available to Supply</Text>
             <View style={styles.userInfoItemValueContainer}>
               <Text style={styles.userInfoItemValue}>
-                {formatAmountValueKMB(reserve.walletBalanceUSD || '0')}
+                ${formatAmountValueKMB(reserve.walletBalanceUSD || '0')}
               </Text>
               {errorMessage ? (
                 <Tip content={errorMessage}>

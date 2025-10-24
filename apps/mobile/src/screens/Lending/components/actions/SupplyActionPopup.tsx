@@ -29,6 +29,7 @@ import { toast } from '@/components2024/Toast';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import { useMiniSigner } from '@/hooks/useSigner';
+import { formatTokenAmount } from '@/utils/number';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -350,7 +351,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       <Text style={styles.title}>Supply {reserve.reserve.symbol}</Text>
       <View style={styles.amountHeader}>
         <Text style={styles.amountHeaderTitle}>Amount</Text>
-        <Text style={styles.amountValueDescription}>{`${formatAmountValueKMB(
+        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
           reserve.walletBalance || '0',
         )}${reserve.reserve.symbol}($${formatAmountValueKMB(
           reserve.walletBalanceUSD || '0',

@@ -6,6 +6,7 @@ import { PopupDetailProps } from '../../type';
 import { getHealthStatusColor } from '../../utils';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import HealthFactorText from '../HealthFactorText';
+import { formatTokenAmount } from '@/utils/number';
 
 const RepayActionOverView: React.FC<
   PopupDetailProps & {
@@ -38,12 +39,12 @@ const RepayActionOverView: React.FC<
           <View style={styles.availableValueContainer}>
             <Text style={styles.availableValue}>
               {amount
-                ? `${formatAmountValueKMB(reserve?.variableBorrows || '0')} ${
+                ? `${formatTokenAmount(reserve?.variableBorrows || '0')} ${
                     reserve.reserve.symbol
-                  } → ${formatAmountValueKMB(afterRepayAmount || '0')} ${
+                  } → ${formatTokenAmount(afterRepayAmount || '0')} ${
                     reserve.reserve.symbol
                   }`
-                : `${formatAmountValueKMB(reserve?.variableBorrows || '0')} ${
+                : `${formatTokenAmount(reserve?.variableBorrows || '0')} ${
                     reserve.reserve.symbol
                   }`}
             </Text>
