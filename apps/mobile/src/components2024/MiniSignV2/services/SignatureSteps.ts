@@ -56,6 +56,7 @@ import { isLedgerLockError } from '@/utils/ledger';
 import { buildFingerprint, SignerCtx } from '../domain/ctx';
 import { openapi, testOpenapi } from '@/core/request';
 import {
+  customRPCService,
   gasAccountService,
   keyringService,
   transactionHistoryService,
@@ -374,6 +375,7 @@ export class SignatureSteps {
         account,
       ),
       openapi.gasPriceStats(chain.serverId),
+      customRPCService.syncDefaultRPC().catch(() => {}),
     ]);
 
     const selectedGas = selectInitialGas({
