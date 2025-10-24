@@ -88,15 +88,15 @@ const BorrowPoolList = () => {
       <View style={styles.availableCard}>
         <View style={styles.availableCardHeader}>
           {iUserSummary?.availableBorrowsUSD &&
-          iUserSummary?.availableBorrowsUSD !== '0' ? (
+          iUserSummary?.availableBorrowsUSD !== '0' ? null : (
             <RcIconWarningCircleCC
               width={14}
               height={14}
               color={colors2024['neutral-info']}
             />
-          ) : null}
+          )}
           <Text style={styles.availableCardTitle}>
-            Available to borrow: ${' '}
+            Available to borrow:{' '}
             <Text style={styles.usdValue}>
               {formatUsdValueKMB(
                 Number(iUserSummary?.availableBorrowsUSD || '0'),
@@ -107,8 +107,8 @@ const BorrowPoolList = () => {
         <Text style={styles.availableCardValue}>
           {iUserSummary?.availableBorrowsUSD &&
           iUserSummary?.availableBorrowsUSD !== '0'
-            ? ' To borrow, you need to supply assets as collateral.'
-            : 'You can borrow based on your supplied collateral, up to the borrow cap.'}
+            ? 'You can borrow based on your supplied collateral, up to the borrow cap.'
+            : 'To borrow, you need to supply assets as collateral.'}
         </Text>
       </View>
     );

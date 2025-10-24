@@ -3,7 +3,6 @@ import { Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
-import { formatNum } from '@/utils/math';
 import { getHealthStatusColor } from '../../utils';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import HealthFactorText from '../HealthFactorText';
