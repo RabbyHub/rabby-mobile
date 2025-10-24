@@ -8,7 +8,7 @@ import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
 
 @Entity('cache_portocolitem')
-export class PortocolItemEntity extends EntityAddressAssetBase {
+export class ProtocolItemEntity extends EntityAddressAssetBase {
   // id
   @Column('text', { default: '' })
   id: ComplexProtocol['id'] = '';
@@ -44,7 +44,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
   }
 
   static fillEntity(
-    e: PortocolItemEntity,
+    e: ProtocolItemEntity,
     owner_addr: string,
     input: ComplexProtocol,
   ) {
@@ -144,7 +144,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     const tenMinutesAgo = Date.now() - ASSET_EXPIRED_TIME + (offest || 0);
     return this.getRepository()
       .createQueryBuilder()
-      .update(PortocolItemEntity)
+      .update(ProtocolItemEntity)
       .set({ _local_updated_at: tenMinutesAgo })
       .where('owner_addr = :owner_addr', { owner_addr })
       .execute();
@@ -164,7 +164,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     const deleteResult = await this.getRepository()
       .createQueryBuilder()
       .delete()
-      .from(PortocolItemEntity)
+      .from(ProtocolItemEntity)
       .where('owner_addr = :owner_addr', { owner_addr })
       .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
       .execute();

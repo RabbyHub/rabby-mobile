@@ -9,7 +9,7 @@ import { preferenceService } from '@/core/services';
 import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
 import { singleDeFiNonceAtom } from './refresh';
 import { useAtom, atom } from 'jotai';
-import { PortocolItemEntity } from '@/databases/entities/portocolItem';
+import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { debounce } from 'lodash';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
@@ -147,7 +147,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       }
       setHasValue(false);
       if (!force) {
-        const cachePortocols = await PortocolItemEntity.batchQueryPortocols(
+        const cachePortocols = await ProtocolItemEntity.batchQueryPortocols(
           userAddr,
         );
         if (cachePortocols.length) {
@@ -196,7 +196,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     if (!userAddr) {
       return;
     }
-    const cachePortocols = await PortocolItemEntity.batchQueryPortocols(
+    const cachePortocols = await ProtocolItemEntity.batchQueryPortocols(
       userAddr,
     );
     if (cachePortocols.length) {
