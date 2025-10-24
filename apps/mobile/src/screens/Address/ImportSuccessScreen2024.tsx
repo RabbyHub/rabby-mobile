@@ -31,7 +31,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKRCategoryByType } from '@/utils/transaction';
-import { Chain } from '@/constant/chains';
 import { Button } from '@/components2024/Button';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';
@@ -50,6 +49,7 @@ import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { syncTokens, syncProtocols } from '@/databases/hooks/assets';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -186,13 +186,13 @@ export const ImportSuccessScreen2024 = () => {
       state.type !== KEYRING_TYPE.WatchAddressKeyring &&
       state.type !== KEYRING_TYPE.GnosisKeyring
     ) {
-      if (addresses.length > 10) {
-        // just sync 10 addresses
-        const top10Account = addresses.slice(0, 10);
-        Promise.all(top10Account.map(address => syncSingleAddress(address)));
-      } else {
-        Promise.all(addresses.map(address => syncSingleAddress(address)));
-      }
+      const syncAddresses =
+        addresses.length > 10 ? addresses.slice(0, 10) : addresses;
+      syncAddresses.forEach(address => {
+        syncSingleAddress(address);
+        syncTokens(address);
+        syncProtocols(address);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
