@@ -20,6 +20,7 @@ import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.s
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 
+const FOOT_HEIGHT = 100;
 const BorrowPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
@@ -164,7 +165,7 @@ const BorrowPoolList = () => {
         <RefreshControl refreshing={false} onRefresh={fetchData} />
       }
       ListEmptyComponent={<PoolListLoading />}
-      ListFooterComponent={<View style={{ height: 100 }} />}
+      ListFooterComponent={<View style={{ height: FOOT_HEIGHT }} />}
       renderItem={({ item, index }) => (
         <TouchableOpacity
           style={styles.item}

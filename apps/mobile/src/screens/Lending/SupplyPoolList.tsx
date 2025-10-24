@@ -21,6 +21,7 @@ import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 
+const FOOT_HEIGHT = 100;
 const SupplyPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { displayPoolReserves, reserves, loading, iUserSummary } =
@@ -123,7 +124,7 @@ const SupplyPoolList = () => {
       keyExtractor={item => item.reserve.underlyingAsset}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={<PoolListLoading />}
-      ListFooterComponent={<View style={{ height: 100 }} />}
+      ListFooterComponent={<View style={{ height: FOOT_HEIGHT }} />}
       renderItem={({ item, index }) => {
         return (
           <TouchableOpacity
