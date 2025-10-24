@@ -14,8 +14,6 @@ import { useSubmitAction } from '../FooterBar/useSubmitAction';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Button } from '@/components2024/Button';
-import { useAtomValue } from 'jotai';
-import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 import useDebounce from 'react-use/lib/useDebounce';
 import { useGetMiniSigningTypedData } from '@/hooks/useMiniApprovalDirectSignTypedData';
 
@@ -66,32 +64,7 @@ export const MiniSubmitActions: React.FC<Props> = ({
     onPress(onSubmit, () => setPressedConfirm(false));
   }, [onSubmit, setPressedConfirm, onPress]);
 
-  const directSigning = useAtomValue(directSigningAtom);
-
   const signingTypedData = useGetMiniSigningTypedData();
-
-  useDebounce(
-    () => {
-      if (
-        isMiniSignTx &&
-        !disabledProcess &&
-        !pressedConfirm &&
-        directSigning &&
-        directSubmit
-      ) {
-        handlePress();
-      }
-    },
-    300,
-    [
-      directSigning,
-      disabledProcess,
-      handlePress,
-      isMiniSignTx,
-      pressedConfirm,
-      directSubmit,
-    ],
-  );
 
   useDebounce(
     () => {

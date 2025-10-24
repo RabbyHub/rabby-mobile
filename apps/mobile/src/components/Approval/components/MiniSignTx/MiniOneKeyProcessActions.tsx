@@ -39,10 +39,11 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
         if (!isConnected) {
           onClickConnect(
             () => {
-              props.onSubmit();
               setIsSubmitting(false);
+              props.onSubmit();
             },
             () => {
+              setIsSubmitting(false);
               props.onCancel?.();
             },
           );
@@ -52,6 +53,7 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
         setIsSubmitting(false);
       })
       .finally(() => {
+        setIsSubmitting(false);
         setOneKeyCheckBlePending(false);
       });
   }, [

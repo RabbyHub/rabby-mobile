@@ -18,20 +18,15 @@ import { apiBalance } from '@/core/apis';
 import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
-import {
-  directSigningAtom,
-  useCanProcessDirectSubmit,
-  useMiniDirectSignGasFeeTooHigh,
-} from '@/hooks/useMiniApprovalDirectSign';
-import { useAtomValue } from 'jotai';
+
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
 import { RiskType, useRisks } from './ConfirmAddress/risk';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { Skeleton } from '@rneui/themed';
 import { CheckBoxRect } from '@/components2024/CheckBox';
-import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
+import { useSignatureStore } from '@/components2024/MiniSignV2';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -65,6 +60,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
       toAddressInContactBook,
       toAddrCex,
     },
+    callbacks: { handleIgnoreGasFeeChange },
 
     fns: { putScreenState, fetchContactAccounts },
   } = useSendTokenInternalContext();
@@ -78,11 +74,9 @@ export default function BottomArea({ account }: { account: Account | null }) {
     containerPb: SIZES.containerPb,
   });
 
-  const isDirectSigning = useAtomValue(directSigningAtom);
+  const { status, ctx } = useSignatureStore();
 
-  const canDirectSign = useCanProcessDirectSubmit();
-
-  const showRiskTipsForMiniSign = useMiniDirectSignGasFeeTooHigh();
+  const isDirectSigning = status === 'signing';
 
   const {
     loading: loadingRisks,
@@ -124,6 +118,9 @@ export default function BottomArea({ account }: { account: Account | null }) {
 
   const disableSubmitDueToBasic =
     !canSubmit || (!!risks.length && !screenState.agreeRequiredChecked);
+
+  const canDirectSign = !ctx?.disabledProcess;
+  const showRiskTipsForMiniSign = !!ctx?.gasFeeTooHigh;
 
   return (
     <View
@@ -174,7 +171,10 @@ export default function BottomArea({ account }: { account: Account | null }) {
           loadingType="circle"
           authTitle={t('page.whitelist.confirmPassword')}
           title={t('global.confirm')}
-          onFinished={handleSubmit}
+          onFinished={p => {
+            handleIgnoreGasFeeChange(p?.ignoreGasFee || false);
+            handleSubmit();
+          }}
           disabled={
             disableSubmitDueToBasic || !canDirectSign || isDirectSigning
           }

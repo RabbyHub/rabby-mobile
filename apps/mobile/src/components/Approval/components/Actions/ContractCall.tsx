@@ -14,12 +14,13 @@ import * as Values from './components/Values';
 import ViewMore from './components/ViewMore';
 import { ProtocolListItem } from './components/ProtocolListItem';
 import { SecurityListItem } from './components/SecurityListItem';
-import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
+import IconQuestionMark from '@/assets2024/icons/common/help-cc.svg';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from './components/SubTable';
 import { Tip } from '@/components';
+import { useTheme2024 } from '@/hooks/theme';
 
 const { isSameAddress } = addressUtils;
 
@@ -39,6 +40,7 @@ const ContractCall = ({
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();
   const { contractWhitelist } = userData;
+  const { colors2024 } = useTheme2024();
 
   const isInWhitelist = useMemo(() => {
     return contractWhitelist.some(
@@ -174,6 +176,7 @@ const ContractCall = ({
                     height: 16,
                     marginLeft: 6,
                   })}
+                  color={colors2024['neutral-info']}
                 />
               </Tip>
             </View>

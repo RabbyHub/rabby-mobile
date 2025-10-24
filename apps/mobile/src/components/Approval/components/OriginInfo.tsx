@@ -6,70 +6,76 @@ import SecurityLevelTagNoText from './SecurityEngine/SecurityLevelTagNoText';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import { dappService } from '@/core/services';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
 import { Tip } from '@/components';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
+import { createGetStyles2024 } from '@/utils/styles';
 
 interface Props {
   chain?: Chain;
   origin?: string;
   originLogo?: string;
   engineResults?: Result[];
+  inDappAction?: boolean;
 }
 
-const getStyle = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    dappIcon: {
-      width: 24,
-      height: 24,
-    },
-    requestOrigin: {
-      position: 'relative',
-      paddingTop: 10,
-      paddingBottom: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'row',
-    },
-    originText: {
-      color: colors['neutral-title-1'],
-      overflow: 'hidden',
-      // whiteSpace: 'nowrap',
-      fontSize: 16,
-      lineHeight: 18,
-      fontWeight: '500',
-    },
-    chainLogo: {
-      position: 'absolute',
-      bottom: -4,
-      right: -4,
-      width: 14,
-      height: 14,
-      borderRadius: 14,
-    },
-    originLogo: {
-      position: 'relative',
-      marginRight: 8,
-    },
-  });
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
+  dappIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 24,
+  },
+  requestOrigin: {
+    position: 'relative',
+    paddingTop: 10,
+    paddingBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  originText: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '900',
+    lineHeight: 24,
+  },
+  chainLogo: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 14,
+    height: 14,
+    borderRadius: 14,
+  },
+  originLogo: {
+    position: 'relative',
+    marginRight: 8,
+  },
+}));
 
 export const OriginInfo: React.FC<Props> = ({
   origin,
   chain,
   originLogo,
   engineResults = [],
+  inDappAction,
 }) => {
   const security = useApprovalSecurityEngine();
   const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
     null,
   );
-  const { styles } = useThemeStyles(getStyle);
+  const { styles } = useTheme2024({ getStyle });
 
   const currentChain = useMemo(() => {
+    if (inDappAction) {
+      return chain || CHAINS.ETH;
+    }
     if (origin === INTERNAL_REQUEST_ORIGIN) {
       return chain || CHAINS.ETH;
     } else {
@@ -80,7 +86,7 @@ export const OriginInfo: React.FC<Props> = ({
         enum: connectedSite.chainId,
       })!;
     }
-  }, [chain, origin, connectedSite]);
+  }, [inDappAction, origin, chain, connectedSite]);
 
   const displayOrigin = useMemo(() => {
     if (origin === INTERNAL_REQUEST_ORIGIN) {
