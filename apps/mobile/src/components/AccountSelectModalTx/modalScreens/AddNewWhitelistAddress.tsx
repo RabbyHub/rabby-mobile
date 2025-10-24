@@ -45,19 +45,12 @@ import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { setCexId } from '@/utils/addressCexId';
 import { useAtom } from 'jotai';
 import { toast } from '@/components2024/Toast';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { matomoRequestEvent } from '@/utils/analytics';
-import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 import { ellipsisAddress } from '@/utils/address';
 import { useAccounts } from '@/hooks/account';
 import { useMemoizedFn } from 'ahooks';
 import { debounce } from 'lodash';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
-import {
-  useAccountSelectModalCtx,
-  useAlertAddress,
-  useRestoreModalOnBackFromScanner,
-} from '../hooks';
+import { useAccountSelectModalCtx, useAlertAddress } from '../hooks';
 import { Button } from '@/components2024/Button';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { SelectAccountSheetModalSizes } from '../layout';
@@ -80,18 +73,17 @@ const ERROR_MESSAGE = {
 };
 
 export const ScreenAddNewWhitelistAddress = ({
-  nextInitAddressValue = '',
+  newValue = '',
 }: {
-  nextInitAddressValue?: string;
+  newValue?: string;
 }) => {
-  const { fnNavTo, cbOnScanStageChanged } = useAccountSelectModalCtx();
+  const { fnNavTo } = useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const [input, setInput] = useState(nextInitAddressValue);
+  const [input, setInput] = useState(newValue);
   const [isCex, setIsCex] = useState(false);
   const [aliasName, setAliasName] = useState('');
   const [cex, setCex] = useState<ProjectItem | undefined>();
   const [error, setError] = useState<INPUT_ERROR>();
-  const scanner = useScanner();
   const [loading, setLoading] = useState(false);
 
   const { list } = useCexSupportList();
@@ -110,62 +102,60 @@ export const ScreenAddNewWhitelistAddress = ({
   // TODO: make auto focus
   // const { inputCallbackRef } = useAutoFocusInput(false);
 
-  const handleDone = useMemoizedFn(async () => {
-    if (!input) {
-      setError(INPUT_ERROR.REQUIRED);
-      return;
-    }
-
-    let address = input;
-    if (!isValidHexAddress(address as any)) {
-      setError(INPUT_ERROR.INVALID_ADDRESS);
-      return;
-    }
-    try {
-      setLoading(true);
-      Keyboard.dismiss();
-
-      const { inWhitelist, isImported } = await findAccountWithoutBalance(
-        address,
-      );
-      if (inWhitelist) {
-        toast.show(t('page.whitelist.alreadyAdded'));
-      } else {
-        Keyboard.dismiss();
-        matomoRequestEvent({
-          category: 'Send Usage',
-          action: isImported
-            ? 'Send_AddWhitelist_imported'
-            : 'Send_AddWhitelist_notImported',
-        });
-        if (isCex && cex?.id) {
-          setCexId(address, cex.id);
-        }
-        contactService.updateAlias({
-          address,
-          name: aliasName || ellipsisAddress(address),
-        });
-        fetchAccounts();
-        setInput('');
-        await whitelistService.addWhitelist(address);
-        await getWhitelist();
-        toast.success(t('page.whitelist.addSuccessful'));
-        fnNavTo('default');
+  const handleDone = useMemoizedFn(
+    debounce(async () => {
+      if (!input) {
+        setError(INPUT_ERROR.REQUIRED);
+        return;
       }
-    } catch (err: any) {
-    } finally {
-      setLoading(false);
-    }
-  });
+
+      let address = input;
+      if (!isValidHexAddress(address as any)) {
+        setError(INPUT_ERROR.INVALID_ADDRESS);
+        return;
+      }
+      try {
+        setLoading(true);
+        Keyboard.dismiss();
+
+        const { inWhitelist, isImported } = await findAccountWithoutBalance(
+          address,
+        );
+        if (inWhitelist) {
+          toast.show(t('page.whitelist.alreadyAdded'));
+        } else {
+          Keyboard.dismiss();
+          matomoRequestEvent({
+            category: 'Send Usage',
+            action: isImported
+              ? 'Send_AddWhitelist_imported'
+              : 'Send_AddWhitelist_notImported',
+          });
+          if (isCex && cex?.id) {
+            setCexId(address, cex.id);
+          }
+          contactService.updateAlias({
+            address,
+            name: aliasName || ellipsisAddress(address),
+          });
+          fetchAccounts();
+          setInput('');
+          await whitelistService.addWhitelist(address);
+          await getWhitelist();
+          toast.success(t('page.whitelist.addSuccessful'));
+          fnNavTo('default');
+        }
+      } catch (err: any) {
+      } finally {
+        setLoading(false);
+      }
+    }, 300),
+  );
 
   const { safeSizes } = useSafeAndroidBottomSizes({
-    containerPb: 20,
+    containerPb: SIZES.bottomContentH + SIZES.containerPb,
+    bottomContentBottom: 0,
   });
-
-  const debouncedHandleDone = useMemo(
-    () => debounce(handleDone, 300),
-    [handleDone],
-  );
 
   const handleInputChange = useCallback((text: string) => {
     setError(undefined);
@@ -222,13 +212,6 @@ export const ScreenAddNewWhitelistAddress = ({
   );
 
   useEffect(() => {
-    if (scanner.text) {
-      setInput(scanner.text);
-      scanner.clear();
-    }
-  }, [scanner]);
-
-  useEffect(() => {
     setIsCex(false);
     setCex(undefined);
     setAliasName('');
@@ -253,15 +236,9 @@ export const ScreenAddNewWhitelistAddress = ({
   }, []);
   useAlertAddress(input, onReaptAdd);
 
-  useRestoreModalOnBackFromScanner(cbOnScanStageChanged);
-
   return (
-    <BottomSheetScrollView
-      contentContainerStyle={[
-        styles.container,
-        { paddingBlock: safeSizes.containerPb },
-      ]}>
-      <View style={styles.topContent}>
+    <View style={[styles.container, { paddingBottom: safeSizes.containerPb }]}>
+      <BottomSheetScrollView contentContainerStyle={styles.topContent}>
         <View style={styles.header}>
           <Text style={styles.headerText}>
             {t('page.whitelist.header.address')}
@@ -275,7 +252,7 @@ export const ScreenAddNewWhitelistAddress = ({
         </View>
         <View>
           <NextInput.TextArea
-            // as="BottomSheetTextInput"
+            as="BottomSheetTextInput"
             style={styles.textContainer}
             inputStyle={styles.textArea}
             tipText={''}
@@ -302,7 +279,15 @@ export const ScreenAddNewWhitelistAddress = ({
               onChangeText: handleInputChange,
             }}
             customIcon={ctx => (
-              <View style={[ctx.wrapperStyle, styles.customContainer]}>
+              <View
+                style={[
+                  ctx.wrapperStyle,
+                  styles.customContainer,
+                  {
+                    right: 0,
+                    paddingRight: 0,
+                  },
+                ]}>
                 <PasteButton
                   style={styles.pasteButton}
                   cleanClipboardAfterPaste={!__DEV__}
@@ -313,10 +298,15 @@ export const ScreenAddNewWhitelistAddress = ({
                 />
                 <TouchableOpacity
                   onPress={() => {
-                    cbOnScanStageChanged('start');
-                    setTimeout(() => {
-                      navigateDeprecated(RootNames.Scanner);
-                    }, 200);
+                    fnNavTo('scan-qr-code', {
+                      nextScanFor: 'add-new-whitelist-addr',
+                    });
+                  }}
+                  style={{
+                    height: '100%',
+                    justifyContent: 'center',
+                    alignItems: 'flex-start',
+                    paddingRight: 20,
                   }}>
                   <RcIconScannerCC
                     style={ctx.iconStyle}
@@ -392,37 +382,51 @@ export const ScreenAddNewWhitelistAddress = ({
             </TouchableView>
           )}
         </View>
-      </View>
+      </BottomSheetScrollView>
 
-      <View style={styles.bottomContent}>
+      <View
+        style={[
+          styles.bottomContent,
+          {
+            bottom: safeSizes.bottomContentBottom,
+          },
+        ]}>
         <Button
           type={'primary'}
           {...{
             title: t('global.Confirm'),
-            onPress: debouncedHandleDone,
+            onPress: handleDone,
             loading: loading,
             disabled: !input || !!error || !aliasName,
           }}
         />
       </View>
-    </BottomSheetScrollView>
+    </View>
   );
 };
 
 export default ScreenAddNewWhitelistAddress;
 
+const SIZES = {
+  bottomContentH: 56,
+  containerPb: 20,
+};
 const getStyles = createGetStyles2024(ctx => ({
   container: {
+    // position: 'relative',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 500,
+    height: '100%',
     width: '100%',
-    paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
+    paddingHorizontal: 0,
     paddingTop: 24,
-    // ...makeDebugBorder(),
+    paddingBottom: SIZES.bottomContentH + SIZES.containerPb,
+    // ...makeDebugBorder('red'),
   },
-  topContent: {},
+  topContent: {
+    paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
+  },
   nameContent: {
     width: '100%',
     marginTop: 30,
@@ -491,11 +495,6 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
-  button: {
-    padding: 5,
-    backgroundColor: ctx.colors2024['neutral-line'],
-    borderRadius: 30,
-  },
   editContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     borderRadius: 16,
@@ -550,6 +549,13 @@ const getStyles = createGetStyles2024(ctx => ({
   },
 
   bottomContent: {
+    paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
     width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    // ...makeDebugBorder(),
+    height: SIZES.bottomContentH,
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
   },
 }));

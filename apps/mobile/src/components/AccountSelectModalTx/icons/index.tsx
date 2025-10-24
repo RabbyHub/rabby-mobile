@@ -23,10 +23,16 @@ export const RcIconAddWhitelist = makeThemeIcon2024FromCC(
 );
 
 import RcIconNavLeftCC from './nav-left-cc.svg';
-export const RcIconNavLeft = makeThemeIcon2024FromCC(RcIconNavLeftCC, ctx => ({
-  onLight: ctx.colors2024['neutral-body'],
-  onDark: ctx.colors2024['neutral-body'],
-}));
+export const RcIconNavLeft = makeThemeIcon2024FromCC(
+  RcIconNavLeftCC,
+  ctx => ({
+    onLight: ctx.colors2024['neutral-body'],
+    onDark: ctx.colors2024['neutral-body'],
+  }),
+  {
+    allowColorProp: true,
+  },
+);
 
 import RcIconHistoryCC from './history-cc.svg';
 export const RcIconHistory = makeThemeIcon2024FromCC(RcIconHistoryCC, ctx => ({

@@ -2729,7 +2729,11 @@
     "accountSelectModalTx": {
       "recentAccounts": "Recent",
       "whitelistAccounts": "Whitelist",
-      "importedAccounts": "Imported Wallets"
+      "importedAccounts": "Imported Wallets",
+      "addTrustedAddress": {
+        "desc": "Add trusted address to Whitelist",
+        "addBtn": "Add now"
+      }
     }
   },
   "native": {

@@ -11,29 +11,20 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
-import {
-  onScannerEvent,
-  ScannerEventType,
-  useScanner,
-} from '@/screens/Scanner/ScannerScreen';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { openapi } from '@/core/request';
 import { debounce, throttle } from 'lodash';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
-import {
-  useAccountSelectModalCtx,
-  useRestoreModalOnBackFromScanner,
-} from '../hooks';
+import { useAccountSelectModalCtx } from '../hooks';
 import { SelectAccountSheetModalSizes } from '../layout';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { Button } from '@/components2024/Button';
 import { AddressEditorBadge } from '../AddressEditorBadge';
 import { touchedFeedback } from '@/utils/touch';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -63,13 +54,12 @@ const debouncedGetEnsAddress = debounce(
 
 const ScreenPanelEnterAddress = ({
   onCleanupInput,
-  autoScan,
+  newValue,
 }: {
   onCleanupInput?: () => void;
-  autoScan?: boolean;
+  newValue?: string;
 }) => {
-  const { cbOnScanStageChanged, cbOnSelectedAccount } =
-    useAccountSelectModalCtx();
+  const { fnNavTo, cbOnSelectedAccount } = useAccountSelectModalCtx();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, _setInput] = React.useState(
     __DEV__
@@ -83,7 +73,6 @@ const ScreenPanelEnterAddress = ({
     setEnsResult(null);
   }, []);
   const [error, setError] = React.useState<INPUT_ERROR>();
-  const scanner = useScanner();
   const [loading, setLoading] = useState(false);
   const [ensResult, setEnsResult] = React.useState<null | {
     addr: string;
@@ -143,17 +132,9 @@ const ScreenPanelEnterAddress = ({
     [setInput],
   );
 
-  React.useEffect(() => {
-    if (scanner.text) {
-      setInput(scanner.text);
-      scanner.clear();
-    }
-  }, [scanner, setInput]);
-
-  useRestoreModalOnBackFromScanner(cbOnScanStageChanged);
-
   const { safeSizes } = useSafeAndroidBottomSizes({
-    containerPb: 20,
+    containerPb: SIZES.bottomContentH + SIZES.containerPb,
+    bottomContentBottom: 0,
   });
 
   const onSubmitEditing = React.useCallback(() => {
@@ -190,19 +171,11 @@ const ScreenPanelEnterAddress = ({
     );
   }, [input]);
 
-  const handleGoToScanner = useCallback(() => {
-    cbOnScanStageChanged('start');
-    Keyboard.dismiss();
-    setTimeout(() => {
-      navigateDeprecated(RootNames.Scanner);
-    }, 200);
-  }, [cbOnScanStageChanged]);
-
   useEffect(() => {
-    if (autoScan) {
-      handleGoToScanner();
+    if (newValue) {
+      setInput(newValue);
     }
-  }, [autoScan, handleGoToScanner]);
+  }, [newValue, setInput]);
 
   return (
     <TouchableWithoutFeedback
@@ -212,10 +185,12 @@ const ScreenPanelEnterAddress = ({
           onCleanupInput?.();
         }
       }}>
-      <View style={[styles.container, { paddingBlock: safeSizes.containerPb }]}>
-        <View style={styles.topContent}>
+      <View
+        style={[styles.container, { paddingBottom: safeSizes.containerPb }]}>
+        <BottomSheetScrollView contentContainerStyle={styles.topContent}>
           <View>
             <NextInput.TextArea
+              as="BottomSheetTextInput"
               style={styles.textContainer}
               inputStyle={styles.textArea}
               tipText={''}
@@ -242,7 +217,15 @@ const ScreenPanelEnterAddress = ({
                 onSubmitEditing: onSubmitEditing,
               }}
               customIcon={ctx => (
-                <View style={[ctx.wrapperStyle, styles.customIconContainer]}>
+                <View
+                  style={[
+                    ctx.wrapperStyle,
+                    styles.customIconContainer,
+                    {
+                      right: 0,
+                      paddingRight: 0,
+                    },
+                  ]}>
                   <PasteButton
                     style={styles.pasteButton}
                     cleanClipboardAfterPaste={!__DEV__}
@@ -254,7 +237,13 @@ const ScreenPanelEnterAddress = ({
                   <TouchableOpacity
                     onPress={() => {
                       touchedFeedback();
-                      handleGoToScanner();
+                      fnNavTo('scan-qr-code', { nextScanFor: 'enter-addr' });
+                    }}
+                    style={{
+                      height: '100%',
+                      justifyContent: 'center',
+                      alignItems: 'flex-start',
+                      paddingRight: 20,
                     }}>
                     <RcIconScannerCC
                       style={ctx.iconStyle}
@@ -291,9 +280,15 @@ const ScreenPanelEnterAddress = ({
               )}
             </View>
           </View>
-        </View>
+        </BottomSheetScrollView>
 
-        <View style={styles.bottomContent}>
+        <View
+          style={[
+            styles.bottomContent,
+            {
+              bottom: safeSizes.bottomContentBottom,
+            },
+          ]}>
           <Button
             type={'primary'}
             {...{
@@ -311,6 +306,10 @@ const ScreenPanelEnterAddress = ({
 
 export default ScreenPanelEnterAddress;
 
+const SIZES = {
+  bottomContentH: 56,
+  containerPb: 30,
+};
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     display: 'flex',
@@ -321,6 +320,8 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
     paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
     paddingTop: 16,
+    paddingBottom: SIZES.bottomContentH + SIZES.containerPb,
+    // ...makeDebugBorder('red'),
   },
   topContent: {
     alignItems: 'center',
@@ -393,5 +394,11 @@ const getStyles = createGetStyles2024(ctx => ({
 
   bottomContent: {
     width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    // ...makeDebugBorder(),
+    height: SIZES.bottomContentH,
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
   },
 }));

@@ -1,6 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import {
   FlatList,
   Pressable as RNPressable,
@@ -35,7 +39,7 @@ import {
 } from '@/screens/Send/hooks/useRecentSend';
 import { RecentUsedItem } from './RecentUsedItem';
 import { isAddrInWhitelist } from '@/hooks/whitelist';
-import { filterMyAccounts } from '@/utils/account';
+import { filterMyAccounts, makeAccountObject } from '@/utils/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { WhiteListItemInSheetModal } from './WhiteListItem';
 import { AddressItemInSheetModal } from './AddressItem';
@@ -43,6 +47,9 @@ import EmptyWhiteListHolder from './EmptyWhiteListHolder';
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import { useAccountSelectModalCtx } from './hooks';
 import { touchedFeedback } from '@/utils/touch';
+import { RcIconLockCC } from '@/assets/icons/send';
+import { default as RcIconUnknownAddressAvatarCC } from '@/screens/Send/icons/unknown-address-avatar-cc.svg';
+import { SelectAccountSheetModalSizes } from './layout';
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -114,9 +121,10 @@ const SectionCollapsableNav = function ({
       </View>
       {title === TxAccountPannelSectionTitle.Whitelist && (
         <TouchableOpacity
+          style={{ paddingRight: 8 }}
           onPress={evt => {
-            touchedFeedback();
             evt.stopPropagation();
+            touchedFeedback();
             onAction?.({
               title: TxAccountPannelSectionTitle.Whitelist,
               action: 'add-whitelist',
@@ -274,11 +282,16 @@ export function AccountsPanelInSheetModal({
             </Text>
           </View>
           <TouchableOpacity
+            style={{
+              height: '100%',
+              justifyContent: 'center',
+              paddingRight: SelectAccountSheetModalSizes.sectionPx,
+            }}
             onPress={evt => {
               evt.stopPropagation();
               touchedFeedback();
-              fnNavTo('enter-addr', {
-                autoScan: true,
+              fnNavTo('scan-qr-code', {
+                nextScanFor: 'enter-addr',
               });
             }}>
             <ICONS_COMMON_2024.RcScanner
@@ -321,19 +334,68 @@ export function AccountsPanelInSheetModal({
           );
         case TxAccountPannelSectionTitle.Whitelist:
           return (
-            !!whitelistAccounts.length && (
-              <>
-                <View style={{ marginTop: 20 }} />
-                <SectionCollapsableNav
-                  title={t('component.accountSelectModalTx.whitelistAccounts')}
-                  onAction={ctx => {
-                    if (ctx.action === 'add-whitelist') {
-                      fnNavTo('add-new-whitelist-addr');
-                    }
-                  }}
-                />
-              </>
-            )
+            <View style={{ marginTop: 20 }}>
+              <SectionCollapsableNav
+                title={t('component.accountSelectModalTx.whitelistAccounts')}
+                onAction={ctx => {
+                  if (ctx.action === 'add-whitelist') {
+                    fnNavTo('add-new-whitelist-addr');
+                  }
+                }}
+              />
+              {!whitelistAccounts.length && (
+                <View style={styles.addWhitelistHintContainer}>
+                  <View style={styles.addWhitelistHintIcon}>
+                    <RcIconUnknownAddressAvatarCC
+                      style={{
+                        width: 24,
+                        height: 28,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                      color={colors2024['green-light-2']}
+                    />
+                    <RcIconLockCC
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        transform: [{ translateX: 5 }, { translateY: 2 }],
+                      }}
+                      color={colors2024['green-default']}
+                      surroundColor={colors2024['neutral-bg-1']}
+                      width={22}
+                      height={22}
+                    />
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={styles.addWhitelistHintText}>
+                      {t(
+                        'component.accountSelectModalTx.addTrustedAddress.desc',
+                      )}
+                    </Text>
+                    <TouchableOpacity
+                      style={{ marginLeft: 8 }}
+                      onPress={() => {
+                        fnNavTo('add-new-whitelist-addr');
+                      }}>
+                      <Text
+                        style={[
+                          styles.addWhitelistHintText,
+                          {
+                            color: colors2024['brand-default'],
+                            fontWeight: 700,
+                          },
+                        ]}>
+                        {t(
+                          'component.accountSelectModalTx.addTrustedAddress.addBtn',
+                        )}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
           );
         case TxAccountPannelSectionTitle.MyAddresses:
           return (
@@ -390,6 +452,8 @@ export function AccountsPanelInSheetModal({
       t,
       safeAddressNavCollapsed,
       fnNavTo,
+      colors2024,
+      styles,
       // scrollToBottom,
       myAddresses.length,
       recentUsedAddresses.length,
@@ -540,7 +604,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
   return {
     panel: {
       position: 'relative',
-      backgroundColor: colors2024['neutral-bg-1'],
+      // backgroundColor: ctx.colors2024['neutral-bg-1'],
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['neutral-bg-2'],
       // }),
@@ -560,7 +624,8 @@ const getPanelStyle = createGetStyles2024(ctx => {
       justifyContent: 'space-between',
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 20,
+      paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
+      paddingRight: 0,
       gap: 8,
       marginHorizontal: 4,
       height: 58,
@@ -630,6 +695,39 @@ const getPanelStyle = createGetStyles2024(ctx => {
       paddingLeft: 4,
       color: colors2024['neutral-secondary'],
     },
+
+    addWhitelistHintContainer: {
+      marginTop: 12,
+      height: 106,
+      paddingHorizontal: 10,
+      paddingVertical: 16,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      backgroundColor: ctx.isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-1'],
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    addWhitelistHintIcon: {
+      marginBottom: 8,
+      position: 'relative',
+      width: 46,
+      height: 46,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors2024['green-light-4'],
+      borderRadius: 12,
+    },
+    addWhitelistHintText: {
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontWeight: 400,
+      lineHeight: 20,
+    },
+
     addressListContainer: {
       flexDirection: 'column',
       marginTop: 12,

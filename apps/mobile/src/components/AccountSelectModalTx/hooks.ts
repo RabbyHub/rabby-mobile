@@ -5,15 +5,12 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { Alert } from 'react-native';
 import { contactService } from '@/core/services';
 import { devLog } from '@/utils/logger';
-import {
-  onScannerEvent,
-  ScannerEventType,
-} from '@/screens/Scanner/ScannerScreen';
 import { throttle } from 'lodash';
 import type { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { useAtom } from 'jotai';
 import { Account } from '@/core/services/preference';
+import EventEmitter from 'events';
 
 function getNoop() {
   return () => {
@@ -25,21 +22,24 @@ export type SelectAccountSheetModalScreen =
   | 'enter-addr'
   | 'add-new-whitelist-addr'
   | 'select-from-history'
-  | 'view-sent-tx';
+  | 'view-sent-tx'
+  | 'scan-qr-code';
 export type SelectAccountSheetModalValues = {
   __isUnderContext__: boolean;
   modalScreen: SelectAccountSheetModalScreen;
   viewingHistoryTxData: HistoryLocalDetailParams | null;
+  nextScanFor: null | 'enter-addr' | 'add-new-whitelist-addr';
 
   fnNavTo: (
     screen: SelectAccountSheetModalScreen,
     extra?: {
       inputValue?: string;
-      autoScan?: boolean;
+      nextScanFor?: 'enter-addr' | 'add-new-whitelist-addr';
       viewingHistoryTxData?: HistoryLocalDetailParams;
     },
   ) => void;
   fnCloseModal: () => void;
+  /** @deprecated */
   cbOnScanStageChanged: (stage: 'start' | 'end') => void;
   cbOnSelectedAccount: (account: Account | null) => void;
 
@@ -53,6 +53,7 @@ const AccountSelectModalContext =
     __isUnderContext__: false,
     modalScreen: 'default',
     viewingHistoryTxData: null,
+    nextScanFor: null,
 
     fnNavTo: getNoop(),
     fnCloseModal: getNoop(),
@@ -95,6 +96,7 @@ export function useAccountSelectModalCtx() {
     isUnderContext: values.__isUnderContext__,
     currentScreen: values.modalScreen,
     viewingHistoryTxData: values.viewingHistoryTxData,
+    nextScanFor: values.nextScanFor,
     fnNavTo: values.fnNavTo,
     fnCloseModal: values.fnCloseModal,
     cbOnScanStageChanged: values.cbOnScanStageChanged,
@@ -123,22 +125,6 @@ export const useAlertAddress = (address: string, onConfirm: () => void) => {
     }
   }, [address, isAddrOnWhitelist, onConfirm, t]);
 };
-
-export function useRestoreModalOnBackFromScanner(
-  cbOnScanStageChanged: (stage: 'start' | 'end') => void,
-) {
-  useEffect(() => {
-    const unsubscribe = onScannerEvent(
-      ScannerEventType.navBack,
-      throttle(() => {
-        cbOnScanStageChanged('end');
-      }, 300),
-    );
-    return () => {
-      unsubscribe();
-    };
-  }, [cbOnScanStageChanged]);
-}
 
 const newlyAddedWhitelistAtom = atomByMMKV<
   Record<
@@ -196,4 +182,20 @@ export function useSortWhitelistByAddTime<
   }, [newlyAddedWhitelist, whitelist]);
 
   return sortedList;
+}
+
+/** @deprecated */
+export const modalScannerEvents = new EventEmitter();
+export const enum ModalScannerEventType {
+  scanned = 'scanned',
+}
+
+export function onModalScannerEvent(
+  type: ModalScannerEventType,
+  callback: (ctx: { data: string }) => void,
+) {
+  modalScannerEvents.addListener(type, callback);
+  return () => {
+    modalScannerEvents.removeListener(type, callback);
+  };
 }
