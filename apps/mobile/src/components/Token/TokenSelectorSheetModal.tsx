@@ -770,80 +770,80 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     if (alertDisabledToken()) return true;
                     onConfirm($originMaybeToken);
                     toggleShowSheetModal('collapse');
-                  }}
-                  style={styles.tokenItemOuter}>
-                  <View style={styles.tokenItem}>
-                    <ExternalTokenRow
-                      decimalPrecision
-                      data={token.$origin as TokenRowDataType}
-                      logoSize={40}
-                      touchable={false}
-                      rightSlot={
-                        <Pressable
-                          style={styles.rightSlot}
-                          onPress={e => {
-                            e.stopPropagation();
-                            if (isPined) {
-                              removePinedToken(token.$origin as any);
-                            } else {
-                              pinToken(token.$origin as any);
-                            }
-                          }}
-                          hitSlop={{
-                            top: 20,
-                            bottom: 20,
-                            left: 20,
-                            right: 20,
-                          }}>
-                          <RcIconFavorite
-                            width={22}
-                            height={21}
-                            color={
-                              isPined
-                                ? colors2024['orange-default']
-                                : colors2024['neutral-line']
-                            }
-                          />
-                        </Pressable>
-                      }
-                      onPressRightIcon={() => {
-                        setTimeout(() => {
-                          toggleShowSheetModal('destroy');
-                        }, 100);
+                  }}>
+                  <ExternalTokenRow
+                    decimalPrecision
+                    data={token.$origin as TokenRowDataType}
+                    logoSize={40}
+                    touchable={false}
+                    style={[
+                      (disabled || lightDisable) && styles.tokenItemDisabled,
+                    ]}
+                    rightSlot={
+                      <Pressable
+                        style={styles.rightSlot}
+                        onPress={e => {
+                          e.stopPropagation();
+                          if (isPined) {
+                            removePinedToken(token.$origin as any);
+                          } else {
+                            pinToken(token.$origin as any);
+                          }
+                        }}
+                        hitSlop={{
+                          top: 20,
+                          bottom: 20,
+                          left: 20,
+                          right: 20,
+                        }}>
+                        <RcIconFavorite
+                          width={22}
+                          height={21}
+                          color={
+                            isPined
+                              ? colors2024['orange-default']
+                              : colors2024['neutral-line']
+                          }
+                        />
+                      </Pressable>
+                    }
+                    onPressRightIcon={() => {
+                      setTimeout(() => {
+                        toggleShowSheetModal('destroy');
+                      }, 100);
 
-                        navigateDeprecated(
-                          needToTokenMarketInfo
-                            ? RootNames.TokenMarketInfo
-                            : RootNames.TokenDetail,
-                          {
-                            token: {
-                              ...ensureAbstractPortfolioToken(
-                                $originMaybeToken,
-                              ),
-                              _isPined: isPined,
-                            },
-                            needUseCacheToken: true,
-                            tokenSelectType: type,
+                      navigateDeprecated(
+                        needToTokenMarketInfo
+                          ? RootNames.TokenMarketInfo
+                          : RootNames.TokenDetail,
+                        {
+                          token: {
+                            ...ensureAbstractPortfolioToken($originMaybeToken),
+                            _isPined: isPined,
                           },
-                        );
-                      }}
-                    />
-                  </View>
-                  {lightDisable && (
-                    <View style={styles.lightDisableBadge}>
-                      <RcIconWarningCircleCC
-                        width={20}
-                        height={20}
-                        color={colors2024['red-default']}
-                        style={styles.lightDisableIcon}
-                      />
-                      <Text style={styles.lightDisableText}>
-                        {t(
-                          'component.TokenSelector.riskDetected.simpleExplanation',
-                        )}
-                      </Text>
-                    </View>
-                  )}
+                          needUseCacheToken: true,
+                          tokenSelectType: type,
+                        },
+                      );
+                    }}
+                    afterNode={
+                      lightDisable && (
+                        <View style={styles.lightDisableBadge}>
+                          <RcIconWarningCircleCC
+                            width={20}
+                            height={20}
+                            color={colors2024['red-default']}
+                            style={styles.lightDisableIcon}
+                          />
+                          <Text style={styles.lightDisableText}>
+                            {t(
+                              'component.TokenSelector.riskDetected.simpleExplanation',
+                            )}
+                          </Text>
+                        </View>
+                      )
+                    }
+                  />
                 </TouchableOpacity>
               </TokenItemContextMenu>
             </View>
@@ -998,7 +998,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 </View>
 
                 {lightDisable && (
-                  <View style={styles.lightDisableBadge}>
+                  <View
+                    style={[styles.lightDisableBadge, { marginBottom: 12 }]}>
                     <RcIconWarningCircleCC
                       width={20}
                       height={20}
@@ -1744,7 +1745,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 4,
       flex: 1,
       minHeight: 32,
-      marginBottom: 12,
+      marginBottom: 0,
     },
     lightDisableIcon: {},
     lightDisableText: {

@@ -41,6 +41,7 @@ import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { formatNetworth } from '@/utils/math';
 import BigNumber from 'bignumber.js';
 import { useCurrency } from '@/hooks/useCurrency';
+import { StyleProp } from 'react-native';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -271,9 +272,10 @@ export const ExternalTokenRow = memo(
     isPined = false,
     rightSlot,
     onPressRightIcon,
+    afterNode,
   }: {
     data: TokenRowDataType;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
     logoStyle?: ViewStyle;
     fold?: boolean;
     logoSize?: number;
@@ -284,6 +286,7 @@ export const ExternalTokenRow = memo(
     decimalPrecision?: boolean;
     rightSlot?: ReactNode;
     onPressRightIcon?(): void;
+    afterNode?: ReactNode;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -469,6 +472,8 @@ export const ExternalTokenRow = memo(
           </View>
 
           {ExtraContent}
+
+          {afterNode || null}
         </View>
         {isPined && (
           <View style={[styles.favoriteBadge]}>
