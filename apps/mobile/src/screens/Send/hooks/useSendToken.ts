@@ -982,6 +982,15 @@ export function useSendTokenForm({
                   MINI_SIGN_ERROR.CANT_PROCESS,
                 ].includes(error)
               ) {
+                if (error === MINI_SIGN_ERROR.CANT_PROCESS) {
+                  prepareCountRef.current++;
+                  putScreenState({ buildTxsCount: prepareCountRef.current });
+                  prefetchMiniSigner({ txs: [] });
+                  prepareRef.current = prepareDirectSubmitMiniTx(
+                    prepareCountRef.current,
+                  );
+                }
+
                 return;
               } else {
                 handleSubmit({
