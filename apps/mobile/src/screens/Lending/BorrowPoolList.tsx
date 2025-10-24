@@ -55,6 +55,14 @@ const BorrowPoolList = () => {
         return true;
       })
       .sort((a, b) => {
+        if (
+          Number(a.totalBorrowsUSD) === 0 &&
+          Number(b.totalBorrowsUSD) === 0
+        ) {
+          return (
+            Number(b.reserve.totalDebtUSD) - Number(a.reserve.totalDebtUSD)
+          );
+        }
         return Number(b.totalBorrowsUSD) - Number(a.totalBorrowsUSD);
       });
   }, [displayPoolReserves, reserves?.reservesData]);

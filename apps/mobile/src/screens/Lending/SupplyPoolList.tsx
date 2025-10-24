@@ -55,6 +55,21 @@ const SupplyPoolList = () => {
         return true;
       })
       .sort((a, b) => {
+        if (
+          Number(a.underlyingBalanceUSD) === 0 &&
+          Number(b.underlyingBalanceUSD) === 0
+        ) {
+          if (
+            Number(a.walletBalanceUSD) === 0 &&
+            Number(b.walletBalanceUSD) === 0
+          ) {
+            return (
+              Number(b.reserve.totalLiquidityUSD) -
+              Number(a.reserve.totalLiquidityUSD)
+            );
+          }
+          return Number(b.walletBalanceUSD) - Number(a.walletBalanceUSD);
+        }
         return Number(b.underlyingBalanceUSD) - Number(a.underlyingBalanceUSD);
       });
   }, [displayPoolReserves, reserves?.reservesData]);

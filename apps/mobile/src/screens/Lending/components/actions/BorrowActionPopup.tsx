@@ -550,6 +550,7 @@ const getStyles = createGetStyles2024(ctx => ({
   warningText: {
     fontSize: 14,
     fontWeight: '500',
+    flex: 1,
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
   },
