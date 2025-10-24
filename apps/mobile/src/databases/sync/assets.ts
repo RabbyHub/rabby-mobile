@@ -12,7 +12,7 @@ import {
   TxAllHistoryResult,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { PortocolItemEntity } from '../entities/portocolItem';
+import { ProtocolItemEntity } from '../entities/portocolItem';
 import {
   EMPTY_NFT_ITEM,
   EMPTY_PROTOCOL_ITEM,
@@ -308,15 +308,15 @@ export async function syncRemotePortocols(
   }
   const syncTimestamp = Date.now();
   const items = data.map(raw => {
-    const protocalItem = new PortocolItemEntity();
-    PortocolItemEntity.fillEntity(protocalItem, address, raw);
+    const protocalItem = new ProtocolItemEntity();
+    ProtocolItemEntity.fillEntity(protocalItem, address, raw);
     protocalItem._local_updated_at = syncTimestamp;
 
     return protocalItem;
   });
 
   await prepareAppDataSource();
-  await batchSaveWithPQueueAndTransaction(PortocolItemEntity, items, {
+  await batchSaveWithPQueueAndTransaction(ProtocolItemEntity, items, {
     owner_addr: address,
     taskFor: 'protocols',
     batchSize: 200,
@@ -327,7 +327,7 @@ export async function syncRemotePortocols(
     .then(({ taskSignal, taskKey, queueCompleted }) => {
       if (queueCompleted) {
         console.debug(`[${taskKey}] batch upsert tasks completed`);
-        PortocolItemEntity.cleanupStaleProtocols(address, syncTimestamp);
+        ProtocolItemEntity.cleanupStaleProtocols(address, syncTimestamp);
       } else {
         console.warn(`[${taskKey}] batch upsert tasks aborted.`);
       }
@@ -342,17 +342,17 @@ export async function syncRemotePortocol(
   protocol: ComplexProtocol | null | undefined,
   opts?: { deleteId?: string },
 ) {
-  const repo = PortocolItemEntity.getRepository();
+  const repo = ProtocolItemEntity.getRepository();
 
   if (protocol) {
     const syncTimestamp = Date.now();
-    const protocolItem = new PortocolItemEntity();
-    PortocolItemEntity.fillEntity(protocolItem, address, protocol);
+    const protocolItem = new ProtocolItemEntity();
+    ProtocolItemEntity.fillEntity(protocolItem, address, protocol);
     protocolItem._local_updated_at = syncTimestamp;
 
     await prepareAppDataSource();
     await batchSaveWithPQueueAndTransaction(
-      PortocolItemEntity,
+      ProtocolItemEntity,
       [protocolItem],
       {
         owner_addr: address,
@@ -426,7 +426,7 @@ export const deleteDBResourceForAddress = async (_address: string) => {
     await Promise.all([
       TokenItemEntity.deleteForAddress(address),
       NFTItemEntity.deleteForAddress(address),
-      PortocolItemEntity.deleteForAddress(address),
+      ProtocolItemEntity.deleteForAddress(address),
       HistoryItemEntity.deleteForAddress(address),
       SwapItemEntity.deleteForAddress(address),
       BalanceEntity.deleteForAddress(address),
