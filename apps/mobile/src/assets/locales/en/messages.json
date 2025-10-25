@@ -673,14 +673,19 @@
         "insufficientBalance": "Insufficient balance"
       },
       "ContractAddress": "Contract Address",
-      "noSupprotTokenForDex": "This token may not be supported by this exchange. Check before proceeding to avoid loss",
-      "noSupprotTokenForSafe": "The Safe address you're sending tokens to isn't deployed on this chain. Check before proceeding to avoid loss.",
-      "noSupportTokenForChain": "Recipient address is a contract address on a different chain. Check before proceeding to avoid loss",
       "noSupportBtns": {
         "confirm": "Proceed",
         "cancel": "Cancel"
       },
-      "addressDetail": "Address Detail"
+      "addressDetail": "Address Detail",
+      "noSupportTokenReason": {
+        "forDex": "This token may not be supported by this exchange. Check before proceeding to avoid loss",
+        "forDexSimple": "This token may not be supported by this exchange",
+        "forSafe": "The Safe address you're sending tokens to isn't deployed on this chain. Check before proceeding to avoid loss.",
+        "forSafeSimple": "This Safe address isn't deployed on this chain",
+        "forChain": "Recipient address is a contract address on a different chain. Check before proceeding to avoid loss",
+        "forChainSimple": "Recipient address is a contract address on a different chain"
+      }
     },
     "sendPoly": {
       "enterAddress": "Enter Address",
@@ -2617,7 +2622,7 @@
       "riskDetected": {
         "title": "Risk Detected",
         "proceedBtn": "Proceed",
-        "simpleExplanation": "Not supported by this exchange"
+        "simpleExplanation": "Not supported"
       }
     },
     "ModalPreviewNFTItem": {

@@ -995,10 +995,7 @@
         "confirm": "Proceder",
         "cancel": "Cancelar"
       },
-      "noSupprotTokenForDex": "Este token puede no ser compatible con este exchange. Verifique antes de continuar para evitar pérdidas",
       "From": "Desde",
-      "noSupprotTokenForSafe": "La dirección Safe a la que estás enviando tokens no está desplegada en esta cadena. Verifica antes de continuar para evitar pérdidas.",
-      "noSupportTokenForChain": "La dirección del destinatario es una dirección de contrato en una cadena diferente. Verifica antes de continuar para evitar pérdidas.",
       "addressDetail": "Detalles de la dirección",
       "newAmount": "Cantidad"
     },

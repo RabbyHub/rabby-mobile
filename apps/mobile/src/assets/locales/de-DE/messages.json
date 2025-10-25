@@ -914,10 +914,7 @@
         "cancel": "Abbrechen",
         "confirm": "Fortfahren"
       },
-      "noSupprotTokenForDex": "Dieser Token wird möglicherweise von dieser Börse nicht unterstützt. Überprüfen Sie es, bevor Sie fortfahren, um Verluste zu vermeiden.",
       "From": "Von",
-      "noSupprotTokenForSafe": "Die Safe-Adresse, an die Sie Tokens senden, ist nicht auf dieser Chain bereitgestellt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden.",
-      "noSupportTokenForChain": "Der Empfängeradresse ist eine Vertragsadresse auf einer anderen Kette. Überprüfen Sie dies, bevor Sie fortfahren, um einen Verlust zu vermeiden.",
       "addressDetail": "Adressdetails",
       "newAmount": "Betrag"
     },

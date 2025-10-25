@@ -84,6 +84,7 @@ import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { isValidHexAddress } from '@metamask/utils';
+import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -151,11 +152,12 @@ function SendScreen({
     });
   }, [Header, setNavigationOptions]);
 
-  const disableItemCheck = useCallback(
+  const disableItemCheck = useCallback<ITokenCheck>(
     (token: TokenItem & { cex_ids?: string[] }) => {
       if (!screenState.toAddrDesc) {
         return {
           disable: false,
+          simpleReason: '',
           reason: '',
         };
       }
@@ -167,7 +169,8 @@ function SendScreen({
         if (!token?.cex_ids?.length || noSupportToken) {
           return {
             disable: true,
-            reason: t('page.sendToken.noSupprotTokenForDex'),
+            simpleReason: t('page.sendToken.noSupportTokenReason.forDexSimple'),
+            reason: t('page.sendToken.noSupportTokenReason.forDex'),
           };
         }
       } else {
@@ -184,7 +187,10 @@ function SendScreen({
         ) {
           return {
             disable: true,
-            reason: t('page.sendToken.noSupprotTokenForSafe'),
+            simpleReason: t(
+              'page.sendToken.noSupportTokenReason.forSafeSimple',
+            ),
+            reason: t('page.sendToken.noSupportTokenReason.forSafe'),
           };
         }
         const contactChains = Object.entries(
@@ -196,12 +202,14 @@ function SendScreen({
         ) {
           return {
             disable: true,
-            reason: t('page.sendToken.noSupportTokenForChain'),
+            simpleReason: t('page.sendToken.noSupportTokenReason.forChain'),
+            reason: t('page.sendToken.noSupportTokenReason.forChain'),
           };
         }
       }
       return {
         disable: false,
+        simpleReason: '',
         reason: '',
       };
     },

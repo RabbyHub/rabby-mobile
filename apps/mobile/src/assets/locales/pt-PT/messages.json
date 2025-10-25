@@ -911,10 +911,7 @@
         "cancel": "Cancelar",
         "confirm": "Prosseguir"
       },
-      "noSupprotTokenForDex": "Este token pode não ser suportado por esta bolsa. Verifique antes de continuar para evitar perdas",
       "From": "De",
-      "noSupprotTokenForSafe": "O endereço Safe para o qual está a enviar tokens não está implantado nesta cadeia. Verifique antes de prosseguir para evitar perdas.",
-      "noSupportTokenForChain": "O endereço do destinatário é um endereço de contrato em uma cadeia diferente. Verifique antes de prosseguir para evitar perdas.",
       "addressDetail": "Detalhe do Endereço",
       "newAmount": "Quantidade"
     },

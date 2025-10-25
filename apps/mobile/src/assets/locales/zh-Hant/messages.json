@@ -351,10 +351,7 @@
         "confirm": "繼續",
         "cancel": "取消"
       },
-      "noSupprotTokenForDex": "該代幣可能不受此交易所支持。在繼續之前請檢查以避免損失。",
       "From": "從",
-      "noSupprotTokenForSafe": "您要发送令牌的 Safe 地址未在此链上部署。请在继续操作之前检查，以避免损失。",
-      "noSupportTokenForChain": "收件人地址是不同链上的合约地址。在继续之前请检查，以避免损失。",
       "addressDetail": "地址詳情",
       "newAmount": "金額"
     },

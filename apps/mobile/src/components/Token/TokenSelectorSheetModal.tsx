@@ -135,6 +135,7 @@ const hitSlop = {
 
 export type ITokenCheck = (token: TokenItem) => {
   disable: boolean;
+  simpleReason: string;
   reason: string;
 };
 
@@ -632,8 +633,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
         const $originMaybeToken =
           token.$origin as TokenItemFromAbstractPortfolioTokenWithExtra;
 
-        const { disable: lightDisable, reason: disableReason } =
-          disableItemCheck?.($originMaybeToken) || {};
+        const {
+          disable: lightDisable,
+          reason: disableReason,
+          simpleReason: disableSimpleReason,
+        } = disableItemCheck?.($originMaybeToken) || {};
 
         const ownerAccount =
           'ownerAccount' in token.$origin ? token.$origin.ownerAccount : null;
@@ -836,9 +840,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
                             style={styles.lightDisableIcon}
                           />
                           <Text style={styles.lightDisableText}>
-                            {t(
-                              'component.TokenSelector.riskDetected.simpleExplanation',
-                            )}
+                            {disableSimpleReason ||
+                              t(
+                                'component.TokenSelector.riskDetected.simpleExplanation',
+                              )}
                           </Text>
                         </View>
                       )
@@ -1007,10 +1012,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
                       style={styles.lightDisableIcon}
                     />
                     <Text style={styles.lightDisableText}>
-                      {/* {disableReason} */}
-                      {t(
-                        'component.TokenSelector.riskDetected.simpleExplanation',
-                      )}
+                      {disableSimpleReason ||
+                        t(
+                          'component.TokenSelector.riskDetected.simpleExplanation',
+                        )}
                     </Text>
                   </View>
                 )}
