@@ -1626,7 +1626,8 @@
           "cancel": "Отменить"
         }
       },
-      "xPoints": "{{point}} Очков"
+      "xPoints": "{{point}} Очков",
+      "alreadyClaimedXPoints": "Уже получено: {{point}}"
     },
     "importSafe": {
       "title": "Добавить адрес Safe",
@@ -2674,7 +2675,10 @@
         "desc": "Оплата Gas-сборов на всех цепочках",
         "login": "Войти в GasAccount",
         "title": "Депозит USDC / USDT",
-        "loginAndClaim": "Войдите в систему и получите {{amount}}"
+        "loginAndClaim": "Войдите в систему и получите {{amount}}",
+        "loginTips3": "когда у вас закончился Gas",
+        "loginTips1": "Оплатите газовые сборы за",
+        "loginTips2": "любой адрес на любой цепи"
       },
       "loginConfirmModal": {
         "title": "Выберите кошелек для входа",

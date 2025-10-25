@@ -148,7 +148,10 @@
         "desc": "Pagar tarifas de Gas en todas las cadenas",
         "title": "Depósito USDC / USDT",
         "login": "Iniciar sesión en GasAccount",
-        "loginAndClaim": "Iniciar sesión y reclamar {{amount}}"
+        "loginAndClaim": "Iniciar sesión y reclamar {{amount}}",
+        "loginTips2": "cualquier dirección en cualquier cadena",
+        "loginTips1": "Pagar las tarifas de gas para",
+        "loginTips3": "cuando te quedes sin Gas"
       },
       "loginConfirmModal": {
         "desc": "Una vez que inicie sesión, solo puede depositarlo en esta dirección.",
@@ -1778,7 +1781,8 @@
           "verify-address": "Verificar dirección"
         }
       },
-      "xPoints": "{{point}} Puntos"
+      "xPoints": "{{point}} Puntos",
+      "alreadyClaimedXPoints": "Ya reclamado: {{point}}"
     },
     "addChain": {
       "title": "Agregar red personalizada a Rabby",

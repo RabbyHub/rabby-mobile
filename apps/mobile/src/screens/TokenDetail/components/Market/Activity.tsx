@@ -294,23 +294,36 @@ const Details = ({
       nextCursor?: string;
       hasMore: boolean;
     }) => {
-      if (!tokenId || !chainId) {
-        return undefined;
+      try {
+        if (!tokenId || !chainId) {
+          return {
+            list: [],
+            nextCursor: undefined,
+            hasMore: false,
+          };
+        }
+        const res = await openapi.getMarketTradingHistory({
+          token_id: tokenId,
+          chain_id: chainId,
+          action: activeTab === DetailsTabKey.all ? undefined : activeTab,
+          limit: 20,
+          cursor: d?.nextCursor,
+        });
+        const page = res?.pagination || {};
+        const merged = [...(res?.data_list || [])];
+        return {
+          list: merged,
+          nextCursor: page?.next_cursor,
+          hasMore: !!page?.has_next,
+        };
+      } catch (error) {
+        console.error('getMarketTradingHistory error:', error);
+        return {
+          list: [],
+          nextCursor: undefined,
+          hasMore: false,
+        };
       }
-      const res = await openapi.getMarketTradingHistory({
-        token_id: tokenId,
-        chain_id: chainId,
-        action: activeTab === DetailsTabKey.all ? undefined : activeTab,
-        limit: 20,
-        cursor: d?.nextCursor,
-      });
-      const page = res?.pagination || {};
-      const merged = [...(res?.data_list || [])];
-      return {
-        list: merged,
-        nextCursor: page?.next_cursor,
-        hasMore: !!page?.has_next,
-      };
     },
     [activeTab, chainId, tokenId],
   );
@@ -350,7 +363,7 @@ const Details = ({
   }, [reloadAsync, data?.list?.length, data?.list, loading]);
 
   const list = useMemo(() => {
-    return uniqBy(data?.list, 'id');
+    return uniqBy(data?.list || [], 'id');
   }, [data?.list]);
 
   useEffect(() => {

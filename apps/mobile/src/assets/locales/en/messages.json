@@ -1639,6 +1639,7 @@
       "claimItem": {
         "claim": "Claim"
       },
+      "alreadyClaimedXPoints": "Already claimed: {{point}} ",
       "xPoints": "{{point}} Points",
       "claimModal": {
         "title": "Claim Initial Points",
@@ -2534,7 +2535,10 @@
         "title": "Deposit USDC / USDT",
         "desc": "Pay Gas Fees on All Chains",
         "login": "Log in GasAccount",
-        "loginAndClaim": "Log in and Claim {{amount}}"
+        "loginAndClaim": "Log in and Claim {{amount}}",
+        "loginTips1": "Pay gas fees for",
+        "loginTips2": "any address on any chain",
+        "loginTips3": "when you're out of gas"
       },
       "loginConfirmModal": {
         "title": "Select Wallet to Login",

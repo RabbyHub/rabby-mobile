@@ -637,8 +637,6 @@ export const Portfolios = () => {
   }, [top10Addresses.length]);
 
   useEffect(() => {
-    let checkIsExpireAndUpdateId: NodeJS.Timeout | null = null;
-
     const cacheTop10AssetsId = setTimeout(() => {
       if (!isFocused) {
         return;
@@ -647,23 +645,18 @@ export const Portfolios = () => {
         return;
       }
       inited.current = true;
-      checkIsExpireAndUpdateId && clearTimeout(checkIsExpireAndUpdateId);
       getCacheTop10Assets({
         disableNFT: true,
         realTimeAddresses: top10Addresses,
-      }).then(() => {
-        checkIsExpireAndUpdateId = setTimeout(() => {
-          checkIsExpireAndUpdate(false, {
-            disableNFT: true,
-            realTimeAddresses: top10Addresses,
-            ignoreLoading: !top10Balance,
-          });
-        }, 500);
+      });
+      checkIsExpireAndUpdate(false, {
+        disableNFT: true,
+        realTimeAddresses: top10Addresses,
+        ignoreLoading: !top10Balance,
       });
     }, 50);
     return () => {
       cacheTop10AssetsId && clearTimeout(cacheTop10AssetsId);
-      checkIsExpireAndUpdateId && clearTimeout(checkIsExpireAndUpdateId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, !top10Balance, top10Addresses.length]);

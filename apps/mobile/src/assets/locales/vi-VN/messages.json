@@ -1996,7 +1996,8 @@
         "set-my-code": "Đặt mã của tôi",
         "set-my-referral-code": "Thiết lập mã giới thiệu của tôi"
       },
-      "xPoints": "{{point}} Điểm"
+      "xPoints": "{{point}} Điểm",
+      "alreadyClaimedXPoints": "Đã yêu cầu: {{point}}"
     },
     "backupSeedPhrase": {
       "showQrCode": "Hiển thị mã QR",
@@ -2671,7 +2672,10 @@
         "title": "Gửi tiền USDC / USDT",
         "login": "Đăng nhập GasAccount",
         "desc": "Thanh toán phí Gas trên tất cả các chuỗi",
-        "loginAndClaim": "Đăng nhập và Nhận {{amount}}"
+        "loginAndClaim": "Đăng nhập và Nhận {{amount}}",
+        "loginTips1": "Thanh toán phí gas cho",
+        "loginTips3": "khi bạn hết gas",
+        "loginTips2": "bất kỳ địa chỉ nào trên bất kỳ chuỗi nào"
       },
       "depositPopup": {
         "title": "Gửi tiền",

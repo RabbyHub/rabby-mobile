@@ -1861,7 +1861,8 @@
         }
       },
       "code-set-successfully": "Le code de recommandation a été défini avec succès",
-      "xPoints": "{{point}} Points"
+      "xPoints": "{{point}} Points",
+      "alreadyClaimedXPoints": "Déjà réclamé : {{point}}"
     },
     "customTestnet": {
       "add": "Ajouter un réseau personnalisé",
@@ -2588,7 +2589,10 @@
         "login": "Se connecter à GasAccount",
         "desc": "Payer les frais de Gas sur toutes les chaînes",
         "title": "Dépôt USDC / USDT",
-        "loginAndClaim": "Connectez-vous et réclamez {{amount}}"
+        "loginAndClaim": "Connectez-vous et réclamez {{amount}}",
+        "loginTips1": "Payer des frais de gaz pour",
+        "loginTips2": "n'importe quelle adresse sur n'importe quelle chaîne",
+        "loginTips3": "lorsque vous êtes à court de Gas"
       },
       "loginConfirmModal": {
         "desc": "Une fois connecté, vous ne pouvez le déposer qu'à cette adresse.",

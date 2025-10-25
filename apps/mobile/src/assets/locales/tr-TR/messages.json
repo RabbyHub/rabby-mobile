@@ -1609,7 +1609,8 @@
       "initialPointsClaimEnded": "Başlangıç Noktaları talebi sona erdi",
       "code-set-successfully": "Referral kodu başarıyla ayarlandı.",
       "firstRoundEnded": "🎉 Rabby Points'ın ilk turu sona erdi",
-      "xPoints": "{{point}} Puan"
+      "xPoints": "{{point}} Puan",
+      "alreadyClaimedXPoints": "Zaten talep edildi: {{point}}"
     },
     "customTestnet": {
       "CustomTestnetForm": {
@@ -2477,7 +2478,10 @@
         "login": "GasAccount'a giriş yapın",
         "desc": "Tüm Zincirlerde Gas Ücretlerini Ödeyin",
         "title": "USDC / USDT Yatırın",
-        "loginAndClaim": "Giriş Yap ve {{amount}} Talep Et"
+        "loginAndClaim": "Giriş Yap ve {{amount}} Talep Et",
+        "loginTips1": "Gaz ücretlerini ödeyin için",
+        "loginTips3": "gazınız bittiğinde",
+        "loginTips2": "herhangi bir adres herhangi bir zincirde"
       },
       "loginConfirmModal": {
         "desc": "Oturum açtığınızda, bunu yalnızca bu adrese yatırabilirsiniz.",

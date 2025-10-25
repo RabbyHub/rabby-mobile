@@ -895,99 +895,140 @@ export const TokenSelectorSheetModal = React.forwardRef<
                       size={40}
                       chain={token?._chain}
                       chainSize={18}
-                      innerChainStyle={styles.chainLogo}
+                      innerChainStyle={styles.avatarLogo}
                       style={styles.tokenAvatarCol}
                     />
+                  </View>
+                  <View style={styles.tokenCenter}>
                     <View
-                      style={[styles.tokenInfoCol, styles.tokenInfoColLeft]}>
+                      style={[
+                        styles.tokenCenterFloor,
+                        styles.utilMl,
+                        styles.tokenCenterFloor1,
+                      ]}>
                       <View
                         style={[
-                          styles.tokenNameBox,
-                          needToTokenMarketInfo && styles.tokenNameBoxWithLogos,
+                          styles.tokenInfoCol,
+                          styles.tokenInfoColSecondaryGrow,
                         ]}>
-                        <Text
-                          style={styles.tokenName}
-                          ellipsizeMode="tail"
-                          numberOfLines={1}>
-                          {token?._symbol}
-                        </Text>
-                        {isManualFold && <TextBadge type="folded" />}
-                        {needToTokenMarketInfo && (
-                          <ExchangeLogos logos={cexLogos} />
-                        )}
-                      </View>
-                      {showOwnerAccount ? (
-                        !ownerAccount ? null : (
-                          <AccountInfoInTokenRow
-                            containerStyle={{ marginTop: 2 }}
-                            ownerAccount={ownerAccount}
-                          />
-                        )
-                      ) : (
-                        <Text
-                          style={[styles.tokenPrice, { marginTop: 4 }]}
-                          numberOfLines={1}>
-                          {token._price}
-                        </Text>
-                      )}
-                      {isBridgeTo && (
-                        <View
-                          style={[
-                            styles.tokenInfoColRight,
-                            styles.tardeLevel,
-                            {
-                              backgroundColor:
-                                token.trade_volume_level === 'low'
-                                  ? colors2024['orange-light-4']
-                                  : colors2024['green-light-4'],
-                            },
-                          ]}>
+                        <View style={styles.tokenNameBox}>
                           <Text
                             style={[
-                              styles.tardeLevelText,
+                              styles.tokenName,
+                              !needToTokenMarketInfo &&
+                                styles.tokenNameFullWidth,
+                            ]}
+                            ellipsizeMode="tail"
+                            numberOfLines={1}>
+                            {token?._symbol}
+                          </Text>
+                          {isManualFold && <TextBadge type="folded" />}
+                          {needToTokenMarketInfo && (
+                            <View style={styles.exchangeLogosContainer}>
+                              <ExchangeLogos logos={cexLogos} />
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                      <View
+                        style={[
+                          styles.tokenInfoCol,
+                          styles.tokenInfoColPrimaryShrink,
+                          styles.utilMl,
+                          styles.tokenInfoColRight,
+                        ]}>
+                        <Text style={[styles.tokenHeaderNetworth]}>
+                          {isExcludeBalanceShowTips ? (
+                            <TouchableOpacity
+                              hitSlop={hitSlop}
+                              onPress={handleShowExcludeTips}>
+                              <RcTipCC
+                                style={styles.tips}
+                                color={colors2024['neutral-info']}
+                              />
+                            </TouchableOpacity>
+                          ) : (
+                            token._netWorthStr
+                          )}
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      style={[
+                        styles.tokenCenterFloor,
+                        styles.utilMl,
+                        styles.tokenCenterFloor2,
+                      ]}>
+                      <View
+                        style={[
+                          styles.tokenInfoCol,
+                          styles.tokenInfoColPrimaryShrink,
+                        ]}>
+                        {showOwnerAccount ? (
+                          !ownerAccount ? null : (
+                            <AccountInfoInTokenRow
+                              containerStyle={{ marginTop: 2 }}
+                              ownerAccount={ownerAccount}
+                            />
+                          )
+                        ) : (
+                          <Text
+                            style={[styles.tokenPrice, { marginTop: 4 }]}
+                            numberOfLines={1}>
+                            {token._price}
+                          </Text>
+                        )}
+                        {isBridgeTo && (
+                          <View
+                            style={[
+                              styles.tokenInfoColRight,
+                              styles.tardeLevel,
                               {
-                                color:
+                                backgroundColor:
                                   token.trade_volume_level === 'low'
-                                    ? colors2024['orange-default']
-                                    : colors2024['green-default'],
+                                    ? colors2024['orange-light-4']
+                                    : colors2024['green-light-4'],
                               },
                             ]}>
-                            {token.trade_volume_level === 'low'
-                              ? t('component.TokenSelector.bridgeTo.low')
-                              : t('component.TokenSelector.bridgeTo.high')}
-                          </Text>
-                        </View>
-                      )}
+                            <Text
+                              style={[
+                                styles.tardeLevelText,
+                                {
+                                  color:
+                                    token.trade_volume_level === 'low'
+                                      ? colors2024['orange-default']
+                                      : colors2024['green-default'],
+                                },
+                              ]}>
+                              {token.trade_volume_level === 'low'
+                                ? t('component.TokenSelector.bridgeTo.low')
+                                : t('component.TokenSelector.bridgeTo.high')}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+
+                      <View
+                        style={[
+                          styles.tokenInfoCol,
+                          styles.tokenInfoColSecondaryGrow,
+                          styles.utilMl,
+                          styles.tokenInfoColRight,
+                        ]}>
+                        <Text
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                          style={[
+                            styles.tokenHeaderAmount,
+                            { marginTop: 4 },
+                            isExcludeBalanceShowTips && styles.textSecondary,
+                          ]}>
+                          {token._amount} {token._symbol}
+                        </Text>
+                      </View>
                     </View>
                   </View>
                   <View style={styles.tokenRight}>
-                    <View
-                      style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
-                      <Text style={[styles.tokenHeaderNetworth]}>
-                        {isExcludeBalanceShowTips ? (
-                          <TouchableOpacity
-                            hitSlop={hitSlop}
-                            onPress={handleShowExcludeTips}>
-                            <RcTipCC
-                              style={styles.tips}
-                              color={colors2024['neutral-info']}
-                            />
-                          </TouchableOpacity>
-                        ) : (
-                          token._netWorthStr
-                        )}
-                      </Text>
-                      <Text
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        style={[
-                          styles.tokenHeaderAmount,
-                          { marginTop: 4 },
-                          isExcludeBalanceShowTips && styles.textSecondary,
-                        ]}>
-                        {token._amount} {token._symbol}
-                      </Text>
-                    </View>
                     <Favorite
                       favorite={isPined}
                       style={styles.favorite}
@@ -1001,7 +1042,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     />
                   </View>
                 </View>
-
                 {lightDisable && (
                   <View
                     style={[styles.lightDisableBadge, { marginBottom: 12 }]}>
@@ -1435,25 +1475,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     container: {
       flex: 1,
     },
-    headerBox: {
-      // paddingHorizontal: 16,
-      // height: 48,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
-      // backgroundColor: isLight
-      //   ? colors2024['neutral-bg-0']
-      //   : colors2024['neutral-bg-1'],
-      marginHorizontal: 24,
-      marginBottom: 16,
-    },
-    headerBoxText: {
-      fontSize: 17,
-      fontWeight: '400',
-      fontFamily: 'SF Pro Rounded',
-      color: colors2024['neutral-secondary'],
+
+    avatarLogo: {
+      borderWidth: 1.5,
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
     },
     tardeLevel: {
       borderRadius: 900,
@@ -1583,14 +1610,29 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tokenLeft: {
       flexDirection: 'row',
       alignItems: 'center',
-      flex: 1,
       overflow: 'hidden',
-      // ...makeDebugBorder('yellow'),
+      flexShrink: 0,
     },
     tokenLeftLoaded: {
+      flexWrap: 'nowrap',
+    },
+    tokenCenter: {
       flexShrink: 1,
       width: '100%',
-      flexWrap: 'nowrap',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    tokenCenterFloor: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    tokenCenterFloor1: {
+      // ...makeDebugBorder('green'),
+    },
+    tokenCenterFloor2: {
+      // ...makeDebugBorder('yellow'),
+      marginTop: 4,
     },
     tokenRight: {
       flexDirection: 'row',
@@ -1601,36 +1643,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tokenAvatarCol: {
       flexShrink: 0,
     },
-    tokenInfoColLeft: {
+    tokenInfoColSecondaryGrow: {
       width: '100%',
       flexShrink: 1,
-      // ...makeDebugBorder('red'),
+      // ...makeDebugBorder('red')
+    },
+    tokenInfoColPrimaryShrink: {
+      flexShrink: 0,
+      // ...makeDebugBorder('yellow')
     },
     tokenInfoCol: {
       flexDirection: 'column',
       alignItems: 'flex-start',
       justifyContent: 'center',
+    },
+    utilMl: {
       marginLeft: 12,
     },
     tokenNameBox: {
       flexDirection: 'row',
       alignItems: 'center',
+      overflow: 'hidden',
       // ...makeDebugBorder(),
-      width: '100%',
-      maxWidth: 150,
-    },
-    tokenNameBoxWithLogos: {
-      // ...makeDebugBorder('yellow'),
-      maxWidth: Math.max(
-        Dimensions.get('window').width -
-          16 * 2 /* outer padding  */ -
-          40 /* avatar */ -
-          12 /* gap */ -
-          22 /* favorite */ -
-          40 /* right col */ -
-          8 /* right col gap */,
-        200,
-      ),
     },
     tokenName: {
       marginRight: 8,
@@ -1641,11 +1675,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 20,
       fontFamily: 'SF Pro Rounded',
     },
-    chainLogo: {
-      borderWidth: 1.5,
-      borderColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
+    tokenNameFullWidth: {
+      width: '100%',
+    },
+    exchangeLogosContainer: {
+      maxWidth: '100%',
+      flexShrink: 1,
     },
     tokenPrice: {
       color: colors2024['neutral-secondary'],
@@ -1667,7 +1702,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       lineHeight: 18,
       textAlign: 'right',
-      maxWidth: 100,
+      width: '100%',
+      maxWidth: '100%',
       fontFamily: 'SF Pro Rounded',
     },
     textSecondary: {
@@ -1712,16 +1748,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     netSwitchTabsItem: {
       height: 32,
       borderRadius: 16,
-    },
-    favoriteBadge: {
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      paddingHorizontal: 12,
-      paddingVertical: 3,
-      backgroundColor: colors2024['orange-light-1'],
-      borderBottomLeftRadius: 12,
-      borderTopRightRadius: 16,
     },
     absoluteContainer: {
       position: 'absolute',

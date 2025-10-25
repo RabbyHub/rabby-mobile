@@ -1609,7 +1609,8 @@
       "initialPointsClaimEnded": "Klaim Poin Awal telah berakhir",
       "code-set-successfully": "Kode rujukan berhasil diatur",
       "firstRoundEnded": "🎉 Putaran pertama Rabby Points telah berakhir",
-      "xPoints": "{{point}} Poin"
+      "xPoints": "{{point}} Poin",
+      "alreadyClaimedXPoints": "Sudah diklaim: {{point}}"
     },
     "customTestnet": {
       "CustomTestnetForm": {
@@ -2477,7 +2478,10 @@
         "title": "Setor USDC / USDT",
         "desc": "Bayar Biaya Gas di Semua Rantai",
         "login": "Masuk GasAccount",
-        "loginAndClaim": "Masuk dan Klaim {{amount}}"
+        "loginAndClaim": "Masuk dan Klaim {{amount}}",
+        "loginTips1": "Bayar biaya gas untuk",
+        "loginTips2": "alamat mana pun di mana pun",
+        "loginTips3": "ketika Anda kehabisan gas"
       },
       "loginConfirmModal": {
         "title": "Pilih Dompet untuk Masuk",

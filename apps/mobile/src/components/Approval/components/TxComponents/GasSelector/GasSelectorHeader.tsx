@@ -513,10 +513,19 @@ export const GasSelectorHeader = ({
   );
 
   useEffect(() => {
-    if (selectedGas && selectedGas?.level !== 'custom') {
+    if (
+      (selectedGas && selectedGas?.level !== 'custom') ||
+      (selectedGas?.level === 'custom' && !selectedGas.price)
+    ) {
       setCheckedFixedMode(false);
     }
   }, [selectedGas]);
+
+  useEffect(() => {
+    if (isSelectCustom && !customGas) {
+      setCheckedFixedMode(false);
+    }
+  }, [isSelectCustom, customGas]);
 
   const handleConfirmGas = () => {
     if (!selectedGas) return;
@@ -1403,12 +1412,23 @@ export const GasSelectorHeader = ({
             )}
 
             {fixedMode &&
-            ((selectedGas?.level === 'custom' && selectedGas.price) ||
-              (isSelectCustom &&
-                selectedGas?.level !== 'custom' &&
-                customGas)) ? (
+            (selectedGas?.level === 'custom' || isSelectCustom) ? (
               <Pressable
-                style={styles.fixedModeContainer}
+                disabled={
+                  (selectedGas?.level === 'custom' && !selectedGas.price) ||
+                  (isSelectCustom &&
+                    selectedGas?.level !== 'custom' &&
+                    !customGas)
+                }
+                style={[
+                  styles.fixedModeContainer,
+                  (selectedGas?.level === 'custom' && !selectedGas.price) ||
+                  (isSelectCustom &&
+                    selectedGas?.level !== 'custom' &&
+                    !customGas)
+                    ? { opacity: 0.5 }
+                    : {},
+                ]}
                 onPress={() => {
                   setCheckedFixedMode(e => !e);
                 }}>

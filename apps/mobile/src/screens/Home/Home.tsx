@@ -12,7 +12,6 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RightArea } from './SingleHomeRightArea';
-import { HomeNativeStackHeader } from './components/NativeStackHeader';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();

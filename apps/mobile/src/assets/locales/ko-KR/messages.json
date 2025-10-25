@@ -1265,7 +1265,8 @@
         "addressBalance": "지갑 잔액",
         "snapshotTime": "스냅샷 시간: {{time}}"
       },
-      "xPoints": "{{point}} 포인트"
+      "xPoints": "{{point}} 포인트",
+      "alreadyClaimedXPoints": "이미 청구됨: {{point}}"
     },
     "safeQueue": {
       "viewBtn": "보기",
@@ -2667,7 +2668,10 @@
         "login": "GasAccount 로그인",
         "desc": "모든 체인에서 Gas 수수료 지불하기",
         "title": "USDC / USDT 예치",
-        "loginAndClaim": "로그인하고 {{amount}}를 청구하십시오."
+        "loginAndClaim": "로그인하고 {{amount}}를 청구하십시오.",
+        "loginTips3": "가스가 떨어졌을 때",
+        "loginTips2": "모든 체인의 모든 주소",
+        "loginTips1": "가스 요금을 지불하세요 для"
       },
       "depositPopup": {
         "selectToken": "입금할 토큰 선택",

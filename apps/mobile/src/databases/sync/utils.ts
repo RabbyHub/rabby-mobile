@@ -1,6 +1,6 @@
 import { RefLikeObject } from '@/utils/type';
 import { NFTItemEntity } from '../entities/nftItem';
-import { PortocolItemEntity } from '../entities/portocolItem';
+import { ProtocolItemEntity } from '../entities/portocolItem';
 
 export const updateExpiredTime = async (_address: string, offest?: number) => {
   const address = _address.toLowerCase();
@@ -8,7 +8,7 @@ export const updateExpiredTime = async (_address: string, offest?: number) => {
     await Promise.all([
       // TokenItemEntity.willExpired(address, offest),
       NFTItemEntity.willExpired(address, offest),
-      PortocolItemEntity.willExpired(address, offest),
+      ProtocolItemEntity.willExpired(address, offest),
     ]);
   } catch (error) {
     console.log('update expired', error);

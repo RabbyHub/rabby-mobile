@@ -249,7 +249,10 @@
         "login": "Bei GasAccount anmelden",
         "desc": "Zahlen Sie Gasgebühren auf allen Chains",
         "title": "USDC / USDT einzahlen",
-        "loginAndClaim": "Melde dich an und fordere {{amount}} an"
+        "loginAndClaim": "Melde dich an und fordere {{amount}} an",
+        "loginTips3": "wenn du kein Gas mehr hast",
+        "loginTips1": "Zahle Gasgebühren für",
+        "loginTips2": "jede Adresse auf jeder Kette"
       },
       "withdrawPopup": {
         "amount": "Betrag",
@@ -1812,7 +1815,8 @@
           "sign": "Signieren"
         }
       },
-      "xPoints": "{{point}} Punkte"
+      "xPoints": "{{point}} Punkte",
+      "alreadyClaimedXPoints": "Bereits beansprucht: {{point}}"
     },
     "connect": {
       "markRemovedToast": "Mark entfernt",

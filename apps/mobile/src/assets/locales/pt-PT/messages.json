@@ -140,7 +140,10 @@
         "login": "Iniciar sessão GasAccount",
         "desc": "Pagar Taxas de Gas em Todas as Chains",
         "title": "Depositar USDC / USDT",
-        "loginAndClaim": "Inicie sessão e reivindique {{amount}}"
+        "loginAndClaim": "Inicie sessão e reivindique {{amount}}",
+        "loginTips3": "quando você estiver sem Gas",
+        "loginTips1": "Pague taxas de gás para",
+        "loginTips2": "qualquer endereço em qualquer cadeia"
       },
       "gasExceed": "O saldo do GasAccount não pode exceder $1000",
       "withdrawConfirmModal": {
@@ -1805,7 +1808,8 @@
         "title": "Reivindicar Pontos Iniciais"
       },
       "code-set-successfully": "Código de recomendação definido com sucesso",
-      "xPoints": "{{point}} Pontos"
+      "xPoints": "{{point}} Pontos",
+      "alreadyClaimedXPoints": "Já reivindicado: {{point}}"
     },
     "safeQueue": {
       "cancelExplain": "Cancelar {{token}} Aprovação para {{protocol}}",

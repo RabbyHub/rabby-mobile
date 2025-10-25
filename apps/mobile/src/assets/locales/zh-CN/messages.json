@@ -1615,7 +1615,8 @@
         },
         "max-15-characters-use-numbers-and-letters-only": "最多 15 个字符，仅使用数字和字母。"
       },
-      "xPoints": "{{point}} 积分"
+      "xPoints": "{{point}} 积分",
+      "alreadyClaimedXPoints": "已领取：{{point}}"
     },
     "addChain": {
       "desc": "Rabby 无法验证自定义网络的安全性。请仅添加可信网络。",
@@ -2682,7 +2683,10 @@
         "login": "登录 GasAccount",
         "desc": "支付所有链上的Gas费用",
         "title": "存款 USDC / USDT",
-        "loginAndClaim": "登录并领取 {{amount}}"
+        "loginAndClaim": "登录并领取 {{amount}}",
+        "loginTips2": "任何链上的任何地址",
+        "loginTips3": "当你的 GasAccount 用尽时",
+        "loginTips1": "支付 gas 费用给"
       },
       "loginConfirmModal": {
         "title": "选择钱包登录",
