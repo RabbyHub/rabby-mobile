@@ -21,9 +21,6 @@ import type { SemVer } from 'semver';
 import semverSatisfies from 'semver/functions/satisfies';
 import { isAddress, toChecksumAddress } from 'web3-utils';
 
-// eslint-disable-next-line n/no-process-env
-Safe.apiKey = process.env.MOBILE_SAFE_API_KEY || '';
-
 export const keyringType = 'Gnosis';
 export const TransactionBuiltEvent = 'TransactionBuilt';
 export const TransactionConfirmedEvent = 'TransactionConfirmed';
@@ -187,6 +184,12 @@ export const generateTypedDataFrom = ({
 export class GnosisKeyring extends EventEmitter implements KeyringIntf {
   static type = keyringType;
 
+  static #apiSet = false;
+  static setApiKey (apiKey: string) {
+    Safe.apiKey = apiKey;
+    GnosisKeyring.#apiSet = true;
+  }
+
   type = keyringType;
 
   accounts: string[] = [];
@@ -214,6 +217,10 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
 
   constructor(options: DeserializeOption = {}) {
     super();
+    if (!GnosisKeyring.#apiSet) {
+      throw new Error('GnosisKeyring API key is not set, please call GnosisKeyring.setApiKey first');
+    }
+
     this.deserialize(options);
   }
 
