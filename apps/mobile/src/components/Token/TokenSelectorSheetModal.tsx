@@ -107,6 +107,7 @@ import { useRefState } from '@/hooks/common/useRefState';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/ExchangeLogos';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { touchedFeedback } from '@/utils/touch';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -729,6 +730,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   delayLongPress={200}
                   onLongPress={() => {
                     longPressTriggered.current = true;
+                    touchedFeedback();
                   }}
                   onPressOut={() => {
                     longPressTriggered.current = false;
@@ -813,6 +815,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 delayLongPress={200}
                 onLongPress={() => {
                   longPressTriggered.current = true;
+                  touchedFeedback();
                 }}
                 onPressOut={() => {
                   longPressTriggered.current = false;
