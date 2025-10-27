@@ -76,8 +76,9 @@ export const Send: React.FC<Props> = ({
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { safeSizes } = useSafeAndroidBottomSizes({
-    inModalContainerPb: SIZES.buttonHeight + SIZES.bottomContentBottom,
-    inModalButtonContainerBottom: 0,
+    inModalContainerPb:
+      SIZES.buttonHeight + SIZES.containerPb + SIZES.bottomContentBottom,
+    inModalButtonContainerBottom: SIZES.bottomContentBottom,
   });
   const { t } = useTranslation();
   const { actionData, sendAmount, sendUsdValue, chain } = useMemo(() => {
@@ -348,8 +349,8 @@ export const Send: React.FC<Props> = ({
 const SIZES = {
   buttonHeight: 56,
   bottomAreaPt: 20,
-  bottomContentBottom: IS_IOS ? 48 : 0,
-  containerPb: 27,
+  bottomContentBottom: IS_IOS ? 16 : 0,
+  containerPb: 12,
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({

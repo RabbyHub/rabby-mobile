@@ -522,7 +522,7 @@ export function AccountsPanelInSheetModal({
                             account={account}
                             hideBalance
                             inWhiteList
-                            enableMenu={IS_IOS}
+                            enableMenu
                             isMyImported={myAccounts.some(i =>
                               addressUtils.isSameAddress(
                                 i.address,
