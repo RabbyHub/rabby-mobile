@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
-import * as DropdownMenu from 'zeego/dropdown-menu';
+import * as DropdownMenu from 'zeego/src/dropdown-menu';
 
 interface Props {
   gasList: GasLevel[];
@@ -143,7 +143,9 @@ export const GasMenuButton: React.FC<Props> = ({
         loop
         alignOffset={5}
         avoidCollisions
+        // @ts-expect-error TODO: fix it
         side
+        // @ts-expect-error TODO: fix it
         align
         collisionPadding={0}
         sideOffset={0}>

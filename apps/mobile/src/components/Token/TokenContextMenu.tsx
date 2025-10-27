@@ -115,10 +115,6 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       .filter(v => v);
   }, [menuActionDict]);
 
-  if (IS_ANDROID) {
-    return <>{children}</>;
-  }
-
   return (
     <ContextMenuView
       menuConfig={{
