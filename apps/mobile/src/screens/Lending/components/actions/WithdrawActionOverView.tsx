@@ -7,6 +7,7 @@ import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { getHealthStatusColor } from '../../utils';
 import HealthFactorText from '../HealthFactorText';
 import { formatTokenAmount } from '@/utils/number';
+import { useTranslation } from 'react-i18next';
 
 const WithdrawActionOverView: React.FC<
   PopupDetailProps & {
@@ -19,6 +20,7 @@ const WithdrawActionOverView: React.FC<
   }
 > = ({ reserve, userSummary, afterHF, afterSupply, amount }) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   const { healthFactor = '0' } = userSummary;
   const availableText = useMemo(() => {
     return `$${formatAmountValueKMB(reserve.underlyingBalanceUSD || '0')}`;
@@ -30,10 +32,12 @@ const WithdrawActionOverView: React.FC<
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Transaction Overview</Text>
+      <Text style={styles.header}>{t('page.Lending.popup.title')}</Text>
       <View style={styles.content}>
         <View style={styles.item}>
-          <Text style={styles.title}>Remaining supply</Text>
+          <Text style={styles.title}>
+            {t('page.Lending.withdrawDetail.remainingSupply')}
+          </Text>
           <View style={styles.availableValueContainer}>
             <Text style={styles.availableValue}>
               {amount
@@ -59,7 +63,7 @@ const WithdrawActionOverView: React.FC<
         </View>
 
         <View style={[styles.item, styles.hfContainer]}>
-          <Text style={styles.title}>Health factor</Text>
+          <Text style={styles.title}>{t('page.Lending.hf')}</Text>
           <Text
             style={[
               styles.hfValue,
@@ -79,7 +83,9 @@ const WithdrawActionOverView: React.FC<
           </Text>
         </View>
         <View style={[styles.item, styles.hfDescContainer]}>
-          <Text style={styles.hfDesc}>{'Liquidation at < 1.0'}</Text>
+          <Text style={styles.hfDesc}>
+            {t('page.Lending.popup.liquidationAt')}
+          </Text>
         </View>
       </View>
     </View>

@@ -19,6 +19,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
+import { useTranslation } from 'react-i18next';
 
 const FOOT_HEIGHT = 100;
 const BorrowPoolList = () => {
@@ -29,6 +30,7 @@ const BorrowPoolList = () => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+  const { t } = useTranslation();
   const { fetchData } = useLendingData(currentAccount?.address);
   const sortReserves = useMemo(() => {
     return [...(displayPoolReserves || [])]
@@ -140,9 +142,15 @@ const BorrowPoolList = () => {
       <>
         {availableCard}
         <View style={styles.listHeader}>
-          <Text style={styles.headerToken}>Token</Text>
-          <Text style={styles.headerApy}>APY</Text>
-          <Text style={styles.headerMyBorrows}>My borrows</Text>
+          <Text style={styles.headerToken}>
+            {t('page.Lending.list.headers.token')}
+          </Text>
+          <Text style={styles.headerApy}>
+            {t('page.Lending.list.headers.apy')}
+          </Text>
+          <Text style={styles.headerMyBorrows}>
+            {t('page.Lending.list.headers.myBorrows')}
+          </Text>
         </View>
       </>
     );
@@ -154,6 +162,7 @@ const BorrowPoolList = () => {
     styles.headerToken,
     styles.listHeader,
     styles.loading,
+    t,
   ]);
 
   return (

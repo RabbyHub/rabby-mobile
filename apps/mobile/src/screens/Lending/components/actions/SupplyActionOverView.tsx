@@ -15,6 +15,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useTranslation } from 'react-i18next';
 
 const SupplyActionOverView: React.FC<
   PopupDetailProps & {
@@ -24,6 +25,7 @@ const SupplyActionOverView: React.FC<
 > = ({ reserve, userSummary, afterHF, afterAvailable }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { availableBorrowsUSD = '0', healthFactor = '0' } = userSummary;
+  const { t } = useTranslation();
 
   const apyText = useMemo(() => {
     return formatPercent(Number(reserve?.reserve?.supplyAPY || '0'));
@@ -78,10 +80,12 @@ const SupplyActionOverView: React.FC<
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Transaction Overview</Text>
+      <Text style={styles.header}>{t('page.Lending.popup.title')}</Text>
       <View style={styles.content}>
         <View style={styles.item}>
-          <Text style={styles.title}>Available to borrow</Text>
+          <Text style={styles.title}>
+            {t('page.Lending.supplyDetail.availableToBorrow')}
+          </Text>
           <View style={styles.availableValueContainer}>
             <Text style={styles.availableValue}>
               {afterAvailable
@@ -101,12 +105,14 @@ const SupplyActionOverView: React.FC<
         </View>
 
         <View style={[styles.item, styles.apyContainer]}>
-          <Text style={styles.title}>Supply APY</Text>
+          <Text style={styles.title}>
+            {t('page.Lending.supplyDetail.supplyAPY')}
+          </Text>
           <Text style={styles.apy}>{apyText}</Text>
         </View>
 
         <View style={[styles.item, styles.hfContainer]}>
-          <Text style={styles.title}>Health factor</Text>
+          <Text style={styles.title}>{t('page.Lending.hf')}</Text>
           <Text
             style={[
               styles.hfValue,
@@ -126,7 +132,9 @@ const SupplyActionOverView: React.FC<
           </Text>
         </View>
         <View style={[styles.item, styles.hfDescContainer]}>
-          <Text style={styles.hfDesc}>{'Liquidation at < 1.0'}</Text>
+          <Text style={styles.hfDesc}>
+            {t('page.Lending.popup.liquidationAt')}
+          </Text>
         </View>
       </View>
     </View>

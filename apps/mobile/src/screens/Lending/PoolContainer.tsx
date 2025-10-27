@@ -8,11 +8,13 @@ import SupplyPoolList from './SupplyPoolList';
 import BorrowPoolList from './BorrowPoolList';
 import { DynamicCustomMaterialTabBar } from '../TokenDetail/components/CustomTabBar';
 import CustomLabel from '../TokenDetail/components/CustomLabel';
+import { useTranslation } from 'react-i18next';
 
 const screenWidth = Dimensions.get('window').width;
 
 const PoolContainer = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   const renderSupplyLabel = useCallback(
     ({ index, indexDecimal }) => (
       <CustomLabel
@@ -24,10 +26,10 @@ const PoolContainer = () => {
         inactiveFontSize={17}
         index={index}
         indexDecimal={indexDecimal}
-        text="Supply"
+        text={t('page.Lending.supplyDetail.actions')}
       />
     ),
-    [colors2024],
+    [colors2024, t],
   );
   const renderBorrowLabel = useCallback(
     ({ index, indexDecimal }) => (
@@ -40,10 +42,10 @@ const PoolContainer = () => {
         inactiveFontSize={17}
         index={index}
         indexDecimal={indexDecimal}
-        text="Borrow"
+        text={t('page.Lending.borrowDetail.actions')}
       />
     ),
-    [colors2024],
+    [colors2024, t],
   );
   const renderTabBar = React.useCallback(
     (_props: any) => (

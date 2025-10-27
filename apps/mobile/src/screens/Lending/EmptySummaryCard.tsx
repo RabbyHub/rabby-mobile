@@ -13,9 +13,9 @@ const EmptySummaryCard = () => {
   return (
     <View style={styles.container}>
       <Image style={styles.image} source={EmptySummaryCardImage} />
-      <Text style={styles.title}>Earn Interest, Borrow Anytime</Text>
+      <Text style={styles.title}>{t('page.Lending.summary.empty.title')}</Text>
       <Text style={styles.description}>
-        Powered by AAVE. Secure and zero fees.
+        {t('page.Lending.summary.empty.description')}
       </Text>
     </View>
   );

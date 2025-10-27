@@ -75,7 +75,7 @@ export function ChainSelector({
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_LENDING_CHAIN,
       value: chainEnum,
-      titleText: t('page.swap.selectChainModalTitle'),
+      titleText: t('page.Lending.selectChain'),
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         rootViewType: 'View',
@@ -98,7 +98,9 @@ export function ChainSelector({
             chainEnum={chainEnum}
             isShowRPCStatus={true}
           />
-          <Text style={[styles.chainName]}>{chainItem?.name} Market</Text>
+          <Text style={[styles.chainName]}>
+            {chainItem?.name} {t('page.Lending.market')}
+          </Text>
         </View>
 
         <View>

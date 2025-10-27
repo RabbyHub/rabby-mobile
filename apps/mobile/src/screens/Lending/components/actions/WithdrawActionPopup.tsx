@@ -30,6 +30,7 @@ import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.s
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { formatTokenAmount } from '@/utils/number';
+import { useTranslation } from 'react-i18next';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -42,6 +43,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const [withdrawTxs, setWithdrawTxs] = useState<Tx[]>([]);
   const [isChecked, setIsChecked] = useState(false);
 
+  const { t } = useTranslation();
   const isNativeToken = useMemo(() => {
     return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
   }, [reserve.underlyingAsset]);
@@ -199,14 +201,18 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>Withdraw {reserve.reserve.symbol}</Text>
+      <Text style={styles.title}>
+        {t('page.Lending.withdrawDetail.actions')} {reserve.reserve.symbol}
+      </Text>
       <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>Amount</Text>
+        <Text style={styles.amountHeaderTitle}>
+          {t('page.Lending.popup.amount')}
+        </Text>
         <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
           reserve.underlyingBalance || '0',
         )}${reserve.reserve.symbol}($${formatAmountValueKMB(
           reserve.underlyingBalanceUSD || '0',
-        )}) available`}</Text>
+        )}) ${t('page.Lending.popup.available')}`}</Text>
       </View>
       <TokenAmountInput
         value={amount}
@@ -275,8 +281,12 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           key={`${amount}`}
           showTextOnLoading
           wrapperStyle={styles.directSignBtn}
-          authTitle="Withdraw"
-          title={!amount || amount === '0' ? 'Enter Amount' : 'Withdraw'}
+          authTitle={t('page.Lending.withdrawDetail.actions')}
+          title={
+            !amount || amount === '0'
+              ? t('page.Lending.enterAmount')
+              : t('page.Lending.withdrawDetail.actions')
+          }
           onFinished={handleWithdraw}
           disabled={
             !amount ||

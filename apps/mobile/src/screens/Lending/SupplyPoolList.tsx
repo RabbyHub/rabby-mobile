@@ -20,12 +20,14 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
+import { useTranslation } from 'react-i18next';
 
 const FOOT_HEIGHT = 100;
 const SupplyPoolList = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { displayPoolReserves, reserves, loading, iUserSummary } =
     useLendingSummary();
+  const { t } = useTranslation();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -101,9 +103,15 @@ const SupplyPoolList = () => {
       <Skeleton style={styles.loading} width={124} height={20} circle />
     ) : (
       <View style={styles.listHeader}>
-        <Text style={styles.headerToken}>Token</Text>
-        <Text style={styles.headerApy}>APY</Text>
-        <Text style={styles.headerMySupplies}>My Supplies</Text>
+        <Text style={styles.headerToken}>
+          {t('page.Lending.list.headers.token')}
+        </Text>
+        <Text style={styles.headerApy}>
+          {t('page.Lending.list.headers.apy')}
+        </Text>
+        <Text style={styles.headerMySupplies}>
+          {t('page.Lending.list.headers.mySupplies')}
+        </Text>
       </View>
     );
   }, [
@@ -113,6 +121,7 @@ const SupplyPoolList = () => {
     styles.headerToken,
     styles.listHeader,
     styles.loading,
+    t,
   ]);
   return (
     <Tabs.FlatList
@@ -145,7 +154,7 @@ const SupplyPoolList = () => {
                   {item.reserve.symbol}
                 </Text>
                 <Text style={styles.tvl}>
-                  TVL:{' '}
+                  {t('page.Lending.list.item.tvl')}:{' '}
                   {formatUsdValueKMB(
                     Number(item.reserve.totalLiquidityUSD || '0'),
                   )}

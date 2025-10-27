@@ -19,6 +19,7 @@ import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useTranslation } from 'react-i18next';
 
 export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -27,6 +28,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
+  const { t } = useTranslation();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -150,7 +152,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   };
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>Borrow Details</Text>
+      <Text style={styles.title}>{t('page.Lending.borrowOverview.title')}</Text>
       <View style={styles.contentContainer}>
         <View style={[styles.poolInfoContainer, styles.card]}>
           <View style={styles.tokenInfos}>
@@ -164,13 +166,17 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
           </View>
           <View style={styles.poolInfoItems}>
             <View style={styles.poolInfoItem}>
-              <Text style={styles.poolInfoItemTitle}>Total Borrowed</Text>
+              <Text style={styles.poolInfoItemTitle}>
+                {t('page.Lending.borrowOverview.totalBorrowed')}
+              </Text>
               <Text style={styles.poolInfoItemValue}>
                 {formatUsdValueKMB(reserve.reserve.totalVariableDebtUSD)}
               </Text>
             </View>
             <View style={styles.poolInfoItem}>
-              <Text style={styles.poolInfoItemTitle}>APY</Text>
+              <Text style={styles.poolInfoItemTitle}>
+                {t('page.Lending.apy')}
+              </Text>
               <Text style={styles.poolInfoItemValue}>
                 {formatPercent(
                   Number(reserve.reserve.variableBorrowAPY || '0'),
@@ -178,7 +184,9 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
               </Text>
             </View>
             <View style={styles.poolInfoItem}>
-              <Text style={styles.poolInfoItemTitle}>Borrow Cap</Text>
+              <Text style={styles.poolInfoItemTitle}>
+                {t('page.Lending.borrowOverview.borrowCap')}
+              </Text>
               <Text style={styles.poolInfoItemValue}>
                 {formatUsdValueKMB(reserve.reserve.borrowCapUSD || '0')}
               </Text>
@@ -195,7 +203,9 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
                 height={30}
                 borderRadius={8}
               />
-              <Text style={styles.supplyItemTitle}>My Borrow</Text>
+              <Text style={styles.supplyItemTitle}>
+                {t('page.Lending.borrowOverview.myBorrow')}
+              </Text>
             </View>
             <Text
               style={[
@@ -210,7 +220,9 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
           {reserve.underlyingBalance !== '0' && (
             <>
               <View style={styles.userInfoItem}>
-                <Text style={styles.userInfoItemTitle}>Health Factor</Text>
+                <Text style={styles.userInfoItemTitle}>
+                  {t('page.Lending.hf')}
+                </Text>
                 <Text
                   style={[
                     styles.userInfoItemValue,
@@ -227,7 +239,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
               <View style={styles.userInfoItem}>
                 <View style={styles.leftTitleContainer}>
                   <Text style={styles.userInfoItemTitle}>
-                    Liquidity Penalty
+                    {t('page.Lending.borrowOverview.liquidityPenalty')}
                   </Text>
                   <Pressable hitSlop={20} onPress={handleShowLqBonusPopup}>
                     <WarningFillCC
@@ -249,7 +261,9 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
           )}
           <View style={styles.userInfoItem}>
             <View style={styles.leftTitleContainer}>
-              <Text style={styles.userInfoItemTitle}>Available to Borrow</Text>
+              <Text style={styles.userInfoItemTitle}>
+                {t('page.Lending.borrowOverview.availableToBorrow')}
+              </Text>
               <Pressable
                 hitSlop={20}
                 onPress={handleShowAvailableToBorrowPopup}>
@@ -275,7 +289,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
             titleStyle={styles.repayButtonTitle}
             containerStyle={styles.button}
             onPress={handlePressRepay}
-            title={'Repay'}
+            title={t('page.Lending.repayDetail.actions')}
           />
         )}
         <Button
@@ -283,7 +297,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
           disabled={disableBorrowButton}
           titleStyle={styles.borrowButtonTitle}
           onPress={handlePressBorrow}
-          title={'Borrow'}
+          title={t('page.Lending.borrowDetail.actions')}
         />
       </View>
     </AutoLockView>

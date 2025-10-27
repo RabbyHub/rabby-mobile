@@ -35,6 +35,7 @@ import {
   RESERVE_USAGE_WARNING_THRESHOLD,
 } from '../../utils/constant';
 import { useMiniSigner } from '@/hooks/useSigner';
+import { useTranslation } from 'react-i18next';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -45,6 +46,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
+  const { t } = useTranslation();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -207,7 +209,9 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>Borrow {reserve.reserve.symbol}</Text>
+      <Text style={styles.title}>
+        {t('page.Lending.borrowDetail.actions')} {reserve.reserve.symbol}
+      </Text>
       {errorMessage ? (
         <View style={styles.errorMessageContainer}>
           <RcIconWarningCircleCC
@@ -219,12 +223,14 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         </View>
       ) : null}
       <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>Amount</Text>
+        <Text style={styles.amountHeaderTitle}>
+          {t('page.Lending.popup.amount')}
+        </Text>
         <Text style={styles.amountValueDescription}>{`${formatAmountValueKMB(
           availableToBorrowBalance || '0',
         )}${reserve.reserve.symbol} ($${formatAmountValueKMB(
           userSummary.availableBorrowsUSD || '0',
-        )}) available`}</Text>
+        )}) ${t('page.Lending.popup.available')}`}</Text>
       </View>
       <TokenAmountInput
         value={amount}
@@ -269,8 +275,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
                 color={colors2024['red-default']}
               />
               <Text style={styles.warningText}>
-                Borrowing this amount will lower your Health Factor to a risky
-                level for liquidation.
+                {t('page.Lending.risk.warning')}
               </Text>
             </View>
             <TouchableOpacity
@@ -280,7 +285,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               }}>
               <CheckBoxRect size={16} checked={isChecked} />
               <Text style={styles.checkboxText}>
-                I understand the alert and want to continue.
+                {t('page.Lending.risk.checkbox')}
               </Text>
             </TouchableOpacity>
           </>

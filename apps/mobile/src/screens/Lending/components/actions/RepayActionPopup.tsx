@@ -29,6 +29,7 @@ import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { noop } from 'lodash';
 import { formatTokenAmount } from '@/utils/number';
+import { useTranslation } from 'react-i18next';
 
 export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -41,6 +42,8 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   const [needApprove, setNeedApprove] = useState(false);
   const [repayTx, setRepayTx] = useState<any>(null);
   const [approveTxs, setApproveTxs] = useState<any>(null);
+
+  const { t } = useTranslation();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -350,14 +353,18 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>Repay {reserve.reserve.symbol}</Text>
+      <Text style={styles.title}>
+        {t('page.Lending.repayDetail.actions')} {reserve.reserve.symbol}
+      </Text>
       <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>Amount</Text>
+        <Text style={styles.amountHeaderTitle}>
+          {t('page.Lending.popup.amount')}
+        </Text>
         <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
           repayAmount.amount || '0',
         )} ${reserve.reserve.symbol} ($${formatAmountValueKMB(
           repayAmount.usdValue || '0',
-        )}) available`}</Text>
+        )}) ${t('page.Lending.popup.available')}`}</Text>
       </View>
       <TokenAmountInput
         value={amount}
@@ -402,13 +409,13 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           key={`${amount}-${needApprove}`}
           showTextOnLoading
           wrapperStyle={styles.directSignBtn}
-          authTitle="Repay"
+          authTitle={t('page.Lending.repayDetail.actions')}
           title={
             !amount || amount === '0'
-              ? 'Enter Amount'
+              ? t('page.Lending.enterAmount')
               : needApprove
-              ? 'Approve and Repay'
-              : 'Repay'
+              ? t('page.Lending.repayDetail.approveAndRepay')
+              : t('page.Lending.repayDetail.actions')
           }
           onFinished={handleRepay}
           disabled={

@@ -22,6 +22,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import LinearGradient from 'react-native-linear-gradient';
+import { useTranslation } from 'react-i18next';
 
 interface IProps {
   netWorth: string;
@@ -33,6 +34,7 @@ interface IProps {
 
 const SummaryCard = (props: IProps) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   const { skipHealthFactorWarning, setSkipHealthFactorWarning } =
     useLendingService();
   const handleShowHFDescription = () => {
@@ -84,21 +86,25 @@ const SummaryCard = (props: IProps) => {
       />
       <View style={styles.netWorthContainer}>
         <View style={styles.netWorthHeader}>
-          <Text style={styles.netWorthTitle}>Net worth</Text>
+          <Text style={styles.netWorthTitle}>{t('page.Lending.netWorth')}</Text>
           <Text style={styles.netWorthValue}>
             {formatNetworth(Number(props.netWorth || '0'))}
           </Text>
         </View>
         <View style={styles.suppliedAndBorrowedContainer}>
           <Text style={styles.suppliedAndBorrowedTitle}>
-            Supplied: {formatNetworth(Number(props.supplied || '0'))} |
-            Borrowed: {formatNetworth(Number(props.borrowed || '0'))}
+            {t('page.Lending.supplied')}:{' '}
+            {formatNetworth(Number(props.supplied || '0'))} |
+            {t('page.Lending.borrowed')}:{' '}
+            {formatNetworth(Number(props.borrowed || '0'))}
           </Text>
         </View>
       </View>
       <View style={styles.estAndHealthContainer}>
         <View style={styles.estDailyContainer}>
-          <Text style={styles.sectionHeader}>Est.Daily Earning</Text>
+          <Text style={styles.sectionHeader}>
+            {t('page.Lending.estDailyEarning')}
+          </Text>
           <View style={styles.sectionContent}>
             <Text style={styles.estDailyValue}>
               {estDaily(props.netWorth, props.netApy)}
@@ -110,7 +116,7 @@ const SummaryCard = (props: IProps) => {
         </View>
         <View style={styles.healthFactorContainer}>
           <View style={styles.healthFactorHeader}>
-            <Text style={styles.sectionHeader}>Health factor</Text>
+            <Text style={styles.sectionHeader}>{t('page.Lending.hf')}</Text>
             <Pressable hitSlop={20} onPress={handleShowHFDescription}>
               <WarningFillCC
                 width={12}
@@ -162,10 +168,12 @@ const SummaryCard = (props: IProps) => {
               />
             )}
             <Text style={styles.extraLeftText}>
-              If goes below 1, the liquidation might be triggered.
+              {t('page.Lending.summary.lq')}
             </Text>
             <TouchableOpacity onPress={handleShowHFDescription}>
-              <Text style={styles.extraLeftMore}>More</Text>
+              <Text style={styles.extraLeftMore}>
+                {t('page.Lending.summary.more')}
+              </Text>
             </TouchableOpacity>
           </View>
           {extraInfo.showClose && (

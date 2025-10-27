@@ -5,6 +5,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
 import { getHealthStatusColor } from '../../utils';
 import HealthFactorText from '../HealthFactorText';
+import { useTranslation } from 'react-i18next';
 
 const BorrowActionOverView: React.FC<
   PopupDetailProps & {
@@ -12,6 +13,7 @@ const BorrowActionOverView: React.FC<
   }
 > = ({ userSummary, afterHF }) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   const { healthFactor = '0' } = userSummary;
 
   const hfColors = useMemo(() => {
@@ -20,10 +22,10 @@ const BorrowActionOverView: React.FC<
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Transaction Overview</Text>
+      <Text style={styles.header}>{t('page.Lending.popup.title')}</Text>
       <View style={styles.content}>
         <View style={[styles.item, styles.hfContainer]}>
-          <Text style={styles.title}>Health factor</Text>
+          <Text style={styles.title}>{t('page.Lending.hf')}</Text>
           <Text
             style={[
               styles.hfValue,
@@ -43,7 +45,9 @@ const BorrowActionOverView: React.FC<
           </Text>
         </View>
         <View style={[styles.item, styles.hfDescContainer]}>
-          <Text style={styles.hfDesc}>{'Liquidation at < 1.0'}</Text>
+          <Text style={styles.hfDesc}>
+            {t('page.Lending.popup.liquidationAt')}
+          </Text>
         </View>
       </View>
     </View>

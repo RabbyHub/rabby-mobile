@@ -30,6 +30,7 @@ import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { formatTokenAmount } from '@/utils/number';
+import { useTranslation } from 'react-i18next';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -46,6 +47,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     forScene: 'MakeTransactionAbout',
   });
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { t } = useTranslation();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
@@ -348,14 +350,18 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>Supply {reserve.reserve.symbol}</Text>
+      <Text style={styles.title}>
+        {t('page.Lending.supplyDetail.actions')} {reserve.reserve.symbol}
+      </Text>
       <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>Amount</Text>
+        <Text style={styles.amountHeaderTitle}>
+          {t('page.Lending.popup.amount')}
+        </Text>
         <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
           reserve.walletBalance || '0',
         )}${reserve.reserve.symbol}($${formatAmountValueKMB(
           reserve.walletBalanceUSD || '0',
-        )}) available`}</Text>
+        )}) ${t('page.Lending.popup.available')}`}</Text>
       </View>
       <TokenAmountInput
         value={amount}
@@ -398,13 +404,13 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           key={`${amount}-${needApprove}`}
           showTextOnLoading
           wrapperStyle={styles.directSignBtn}
-          authTitle="Supply"
+          authTitle={t('page.Lending.supplyDetail.actions')}
           title={
             !amount || amount === '0'
-              ? 'Enter Amount'
+              ? t('page.Lending.enterAmount')
               : needApprove
-              ? 'Approve and Supply'
-              : 'Supply'
+              ? t('page.Lending.supplyDetail.approveAndSupply')
+              : t('page.Lending.supplyDetail.actions')
           }
           onFinished={handleSupply}
           disabled={

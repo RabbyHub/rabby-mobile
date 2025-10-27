@@ -24,6 +24,7 @@ import { RESERVE_USAGE_WARNING_THRESHOLD } from '../utils/constant';
 import WarningFillCC from '@/assets2024/icons/lending/warning-cc.svg';
 import { Tip } from '@/components/Tip';
 import { formatTokenAmount } from '@debank/common';
+import { useTranslation } from 'react-i18next';
 
 export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -35,6 +36,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+  const { t } = useTranslation();
   const hasSupplyBalance = useMemo(() => {
     return reserve?.underlyingBalance && reserve.underlyingBalance !== '0';
   }, [reserve.underlyingBalance]);
@@ -134,7 +136,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>Supply Details</Text>
+      <Text style={styles.title}>{t('page.Lending.supplyOverview.title')}</Text>
       <View style={styles.contentContainer}>
         <View style={[styles.poolInfoContainer, styles.card]}>
           <View style={styles.tokenInfos}>
@@ -148,14 +150,18 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
           </View>
           <View style={styles.poolInfoItems}>
             <View style={styles.poolInfoItem}>
-              <Text style={styles.poolInfoItemTitle}>Total Supplied</Text>
+              <Text style={styles.poolInfoItemTitle}>
+                {t('page.Lending.supplyOverview.totalSupplied')}
+              </Text>
               <Text style={styles.poolInfoItemValue}>
                 {formatUsdValueKMB(reserve.reserve.totalLiquidityUSD, 0)} of{' '}
                 {formatUsdValueKMB(reserve.reserve.supplyCapUSD || '0', 0)}
               </Text>
             </View>
             <View style={styles.poolInfoItem}>
-              <Text style={styles.poolInfoItemTitle}>APY</Text>
+              <Text style={styles.poolInfoItemTitle}>
+                {t('page.Lending.apy')}
+              </Text>
               <Text style={styles.poolInfoItemValue}>
                 {formatPercent(Number(reserve.reserve.supplyAPY || '0'))}
               </Text>
@@ -172,7 +178,9 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
                 height={30}
                 borderRadius={8}
               />
-              <Text style={styles.supplyItemTitle}>My Supply</Text>
+              <Text style={styles.supplyItemTitle}>
+                {t('page.Lending.supplyOverview.mySupply')}
+              </Text>
             </View>
             <Text
               style={[
@@ -185,14 +193,18 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
             </Text>
           </View>
           <View style={styles.userInfoItem}>
-            <Text style={styles.userInfoItemTitle}>Wallet Balance</Text>
+            <Text style={styles.userInfoItemTitle}>
+              {t('page.Lending.supplyOverview.walletBalance')}
+            </Text>
             <Text style={styles.userInfoItemValue}>
               {formatTokenAmount(reserve.walletBalance || '0')}{' '}
               {reserve.reserve.symbol}
             </Text>
           </View>
           <View style={styles.userInfoItem}>
-            <Text style={styles.userInfoItemTitle}>Available to Supply</Text>
+            <Text style={styles.userInfoItemTitle}>
+              {t('page.Lending.supplyOverview.availableToSupply')}
+            </Text>
             <View style={styles.userInfoItemValueContainer}>
               <Text style={styles.userInfoItemValue}>
                 ${formatAmountValueKMB(reserve.walletBalanceUSD || '0')}
@@ -217,7 +229,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
             buttonStyle={styles.withdrawButton}
             titleStyle={styles.withdrawButtonTitle}
             containerStyle={styles.button}
-            title={'Withdraw'}
+            title={t('page.Lending.withdrawDetail.actions')}
             onPress={handlePressWithdraw}
           />
         )}
@@ -226,7 +238,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
           disabled={disableSupplyButton}
           containerStyle={styles.button}
           titleStyle={styles.supplyButtonTitle}
-          title={'Supply'}
+          title={t('page.Lending.supplyDetail.actions')}
         />
       </View>
     </AutoLockView>

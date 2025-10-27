@@ -77,7 +77,9 @@ export default function SelectLendingChain({
         {!canSearch && (
           <View style={{ ...styles.titleView, ...styles.titleViewWithText }}>
             <View style={styles.titleTextWrapper}>
-              <Text style={styles.titleText}>Select Chain</Text>
+              <Text style={styles.titleText}>
+                {t('page.Lending.selectChain')}
+              </Text>
             </View>
             <Pressable onPress={handleToggleSearch} style={styles.iconSearch}>
               <RcNextSearchCC

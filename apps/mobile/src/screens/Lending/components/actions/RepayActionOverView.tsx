@@ -7,6 +7,7 @@ import { getHealthStatusColor } from '../../utils';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import HealthFactorText from '../HealthFactorText';
 import { formatTokenAmount } from '@/utils/number';
+import { useTranslation } from 'react-i18next';
 
 const RepayActionOverView: React.FC<
   PopupDetailProps & {
@@ -25,6 +26,7 @@ const RepayActionOverView: React.FC<
 }) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { healthFactor = '0' } = userSummary;
+  const { t } = useTranslation();
 
   const hfColors = useMemo(() => {
     return getHealthStatusColor(isLight, Number(healthFactor || '0'));
@@ -32,10 +34,12 @@ const RepayActionOverView: React.FC<
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Transaction Overview</Text>
+      <Text style={styles.header}>{t('page.Lending.popup.title')}</Text>
       <View style={styles.content}>
         <View style={styles.item}>
-          <Text style={styles.title}>Remaining debt</Text>
+          <Text style={styles.title}>
+            {t('page.Lending.popup.remainingDebt')}
+          </Text>
           <View style={styles.availableValueContainer}>
             <Text style={styles.availableValue}>
               {amount
@@ -60,7 +64,7 @@ const RepayActionOverView: React.FC<
           </Text>
         </View>
         <View style={[styles.item, styles.hfContainer]}>
-          <Text style={styles.title}>Health factor</Text>
+          <Text style={styles.title}>{t('page.Lending.hf')}</Text>
           <Text
             style={[
               styles.hfValue,
@@ -80,7 +84,9 @@ const RepayActionOverView: React.FC<
           </Text>
         </View>
         <View style={[styles.item, styles.hfDescContainer]}>
-          <Text style={styles.hfDesc}>{'Liquidation at < 1.0'}</Text>
+          <Text style={styles.hfDesc}>
+            {t('page.Lending.popup.liquidationAt')}
+          </Text>
         </View>
       </View>
     </View>

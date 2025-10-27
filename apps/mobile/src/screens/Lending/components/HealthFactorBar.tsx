@@ -6,6 +6,7 @@ import { formatNum } from '@/utils/math';
 import { getHealthStatusColor } from '../utils';
 import LinearGradient from 'react-native-linear-gradient';
 import { HF_COLOR_GOOD_THRESHOLD } from '../utils/constant';
+import { useTranslation } from 'react-i18next';
 
 interface HealthFactorBarProps {
   healthFactor: string;
@@ -16,6 +17,7 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
 }) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
 
+  const { t } = useTranslation();
   const hfNumber = Number(healthFactor || '0');
 
   const dotPosition = hfNumber > 10 ? 100 : (hfNumber / 10) * 100;
@@ -59,7 +61,7 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
                     color: hfColor.color,
                   },
                 ]}>
-                Risky
+                {t('page.Lending.lqDescription.risky')}
               </Text>
             </View>
           )}
@@ -80,7 +82,9 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
       <View style={styles.liquidationContainer}>
         <View style={styles.liquidationMarker} />
         <Text style={styles.liquidationValue}>1.00</Text>
-        <Text style={styles.liquidationText}>Liquidation value</Text>
+        <Text style={styles.liquidationText}>
+          {t('page.Lending.lqDescription.desc')}
+        </Text>
       </View>
     </View>
   );

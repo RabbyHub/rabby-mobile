@@ -7,46 +7,48 @@ import AutoLockView from '@/components/AutoLockView';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { HealthFactorBar } from './HealthFactorBar';
 import { HF_COLOR_GOOD_THRESHOLD } from '../utils/constant';
+import { useTranslation } from 'react-i18next';
 
 export const HFDescription: React.FC<{
   hf: string;
   onClose?: () => void;
 }> = ({ hf, onClose }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
       <Text style={styles.title}>Health Factor</Text>
       <View style={styles.contentContainer}>
         <Text style={styles.introText}>
-          Your Health Factor shows how safe your borrowing position is. If it
-          drops too low, your collateral could be liquidated.
+          {t('page.Lending.lqDescription.introText')}
         </Text>
 
         <View style={styles.rulesContainer}>
           <View style={styles.ruleItem}>
             <View style={styles.greenBullet} />
             <Text style={styles.greyRuleText}>
-              <Text style={styles.greenRuleText}>{'Health factor > 3.0:'}</Text>{' '}
-              Your positions are safe
+              <Text style={styles.greenRuleText}>
+                {t('page.Lending.lqDescription.over3title')}
+              </Text>{' '}
+              {t('page.Lending.lqDescription.over3desc')}
             </Text>
           </View>
 
           <View style={styles.ruleItem}>
             <View style={styles.greenBullet} />
             <Text style={styles.greyRuleText}>
-              <Text style={styles.redRuleText}>Health Factor ≤ 1.0:</Text> Your
-              position is at risk of liquidation.
+              <Text style={styles.redRuleText}>
+                {t('page.Lending.lqDescription.below1title')}
+              </Text>{' '}
+              {t('page.Lending.lqDescription.below1desc')}
             </Text>
           </View>
 
           <View style={styles.ruleItem}>
             <View style={styles.greenBullet} />
             <Text style={styles.greyRuleText}>
-              Liquidation: If your Health Factor falls below 1.0, part of your
-              collateral may be automatically sold to repay the debt. A
-              liquidation penalty will apply, resulting in a partial loss of
-              your collateral.
+              {t('page.Lending.lqDescription.liquidation')}
             </Text>
           </View>
         </View>
@@ -61,16 +63,14 @@ export const HFDescription: React.FC<{
             color={colors2024['red-default']}
           />
           <Text style={styles.warningText}>
-            Your Health Factor is too low. To avoid liquidation:{'\n'}
-            1. Repay part or all of your loan{'\n'}
-            2. Add more collateral
+            {t('page.Lending.lqDescription.warningText')}
           </Text>
         </View>
       )}
 
       <Button
         containerStyle={styles.button}
-        title={'Got it'}
+        title={t('page.Lending.gotIt')}
         onPress={onClose}
       />
     </AutoLockView>
