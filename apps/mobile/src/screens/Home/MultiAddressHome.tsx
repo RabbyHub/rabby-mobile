@@ -45,7 +45,6 @@ import {
   preferenceService,
   transactionHistoryService,
 } from '@/core/services';
-import { useSyncAssetsDB } from '@/databases/hooks/assets';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -105,8 +104,6 @@ import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { LendingHF } from './components/LendingHF';
-
-const HeaderHeight = 24;
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -319,7 +316,6 @@ function MultiAddressHome(): JSX.Element {
     }, [top50PrivateKeyAccounts, checkAddressesEligibility]),
   );
 
-  const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
 
   const { mockData } = useMockDataForHomeCenterArea();
@@ -477,7 +473,6 @@ function MultiAddressHome(): JSX.Element {
       if (appState === 'active') {
         triggerUpdate();
         triggerUpdateAlert();
-        syncTop10Assets();
         syncTop10History();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -498,7 +493,6 @@ function MultiAddressHome(): JSX.Element {
     ]).finally(() => {
       // update at background
       forceUpdate();
-      syncTop10Assets(true);
       syncTop10History(true);
       currencyService.syncCurrencyList(true);
     });
@@ -506,7 +500,6 @@ function MultiAddressHome(): JSX.Element {
     triggerUpdate,
     refreshCurve,
     forceUpdate,
-    syncTop10Assets,
     syncTop10History,
     checkAddressesEligibility,
     top50PrivateKeyAccounts,

@@ -3,7 +3,7 @@ import { chunk } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { runOnJS } from 'react-native-reanimated';
 
-import { PortocolItemEntity } from '@/databases/entities/portocolItem';
+import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import {
   syncRemotePortocols,
   syncRemotePortocol,
@@ -78,6 +78,7 @@ export const syncTokens = async (
   if (!address) {
     return [];
   }
+  console.log('syncTokens', address);
   const tokenRes = await batchQueryTokensWithLocalCache(
     {
       user_id: address,
@@ -101,10 +102,10 @@ export const syncProtocols = async (
   if (!address) {
     return [];
   }
-  const isExpired = await PortocolItemEntity.isExpired(address);
+  const isExpired = await ProtocolItemEntity.isExpired(address);
 
   if (!isExpired && !force) {
-    return onlySync ? [] : PortocolItemEntity.batchQueryPortocols(address);
+    return onlySync ? [] : ProtocolItemEntity.batchQueryPortocols(address);
   }
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
   const { list } = snapshot2Display(snapshotRes || []);

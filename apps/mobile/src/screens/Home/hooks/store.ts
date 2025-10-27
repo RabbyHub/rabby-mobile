@@ -17,7 +17,7 @@ import { usePinTokens } from '@/screens/Search/usePinTokens';
 import { tagTokenList } from '../utils/token';
 import { tagProfiles } from './usePortfolio';
 import { tagNfts } from './nft';
-import { tokenNounceAtom, deFiNounceAtom, nftNounceAtom } from './refresh';
+import { tokenNonceAtom, deFiNonceAtom, nftNonceAtom } from './refresh';
 
 let top20TokensCache: CombineTokensItem[] = [];
 let top10PortfoliosCache: CombineDefiItem[] = [];
@@ -331,9 +331,9 @@ export const useAssetsMap = ({
 }) => {
   const [assetsMap, setAssetsMap] = useAtom(assetAtom);
   const { handleFetchTokens } = usePinTokens();
-  const [tokenNounce, setTokenNounce] = useAtom(tokenNounceAtom);
-  const [defiNounce, setDefiNounce] = useAtom(deFiNounceAtom);
-  const [nftNounce, setNftNounce] = useAtom(nftNounceAtom);
+  const [tokenNonce, setTokenNonce] = useAtom(tokenNonceAtom);
+  const [defiNonce, setDefiNonce] = useAtom(deFiNonceAtom);
+  const [nftNonce, setNftNonce] = useAtom(nftNonceAtom);
 
   const updateTokens = useCallback(
     ({
@@ -449,25 +449,25 @@ export const useAssetsMap = ({
   }, [setAssetsMap]);
 
   useEffect(() => {
-    if (tokenNounce > 0) {
+    if (tokenNonce > 0) {
       refreshTagToken();
-      setTokenNounce(0);
+      setTokenNonce(0);
     }
-  }, [refreshTagToken, setTokenNounce, tokenNounce]);
+  }, [refreshTagToken, setTokenNonce, tokenNonce]);
 
   useEffect(() => {
-    if (defiNounce > 0) {
+    if (defiNonce > 0) {
       refreshTagPortfolio();
-      setDefiNounce(0);
+      setDefiNonce(0);
     }
-  }, [refreshTagPortfolio, defiNounce, setDefiNounce]);
+  }, [refreshTagPortfolio, defiNonce, setDefiNonce]);
 
   useEffect(() => {
-    if (nftNounce > 0) {
+    if (nftNonce > 0) {
       refreshTagNft();
-      setNftNounce(0);
+      setNftNonce(0);
     }
-  }, [refreshTagNft, nftNounce, setNftNounce]);
+  }, [refreshTagNft, nftNonce, setNftNonce]);
 
   const getTokenCombined = useCallback(
     (tokenId: string, chain: string) => {

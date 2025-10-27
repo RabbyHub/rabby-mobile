@@ -1886,7 +1886,8 @@
         "addressBalance": "ウォレット残高",
         "placeholder": "紹介コードを入力して追加ポイントを獲得 (オプション)"
       },
-      "xPoints": "{{point}} ポイント"
+      "xPoints": "{{point}} ポイント",
+      "alreadyClaimedXPoints": "既にクレーム済み: {{point}}"
     },
     "search": {
       "header": {
@@ -2711,7 +2712,10 @@
         "desc": "すべてのチェーンでガス費用を支払う",
         "title": "USDC / USDT を入金",
         "login": "GasAccountにログイン",
-        "loginAndClaim": "ログインして{{amount}}を受け取る"
+        "loginAndClaim": "ログインして{{amount}}を受け取る",
+        "loginTips3": "ガスが切れたとき",
+        "loginTips1": "ガス料金を支払うために",
+        "loginTips2": "任意のチェーンの任意のアドレス"
       },
       "withdrawConfirmModal": {
         "title": "DeBank L2 Walletに転送されました。",

@@ -142,7 +142,10 @@
         "title": "ฝาก USDC / USDT",
         "desc": "จ่ายค่าธรรมเนียม Gas บนทุกเชน",
         "login": "เข้าสู่ระบบ GasAccount",
-        "loginAndClaim": "เข้าสู่ระบบและเรียกร้อง {{amount}}"
+        "loginAndClaim": "เข้าสู่ระบบและเรียกร้อง {{amount}}",
+        "loginTips3": "เมื่อคุณหมด Gas",
+        "loginTips2": "ที่อยู่ใดก็ได้ในทุกเครือข่าย",
+        "loginTips1": "ชำระค่าธรรมเนียมแก๊สสำหรับ"
       },
       "gasExceed": "ยอดคงเหลือใน GasAccount ไม่เกิน $1000",
       "loginConfirmModal": {
@@ -1756,7 +1759,8 @@
           "cancel": "ยกเลิก"
         }
       },
-      "xPoints": "{{point}} คะแนน"
+      "xPoints": "{{point}} คะแนน",
+      "alreadyClaimedXPoints": "已经领取：{{point}}"
     },
     "approvalsAddressList": {
       "title": "Approvals"
