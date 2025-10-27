@@ -132,11 +132,12 @@ export default function BottomArea({ account }: { account: Account | null }) {
       <View style={styles.riskTipsArea}>
         <View style={[styles.riskList]}>
           {loadingRisks ? (
-            <View style={styles.tipItem}>
-              <Skeleton circle width={20} height={20} />
-              <Skeleton style={styles.loadingRisks} height={40} />
-            </View>
+            <></>
           ) : (
+            // <View style={styles.tipItem}>
+            //   <Skeleton circle width={20} height={20} />
+            //   <Skeleton style={styles.loadingRisks} height={40} />
+            // </View>
             mostImportantRisks.map(risk => (
               <View key={risk.type} style={styles.tipItem}>
                 <RcIconWarningCircleCC
