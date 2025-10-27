@@ -240,10 +240,14 @@ const getStyles = createGetStyles2024(ctx => ({
     display: 'flex',
     alignItems: 'center',
     flexDirection: 'column',
-    backgroundColor: ctx.colors2024['neutral-bg-0'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
   },
   card: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
     padding: 12,
     borderRadius: 16,
     width: '100%',
@@ -280,7 +284,9 @@ const getStyles = createGetStyles2024(ctx => ({
   poolInfoItem: {
     flex: 1,
     borderRadius: 8,
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-2']
+      : ctx.colors2024['neutral-bg-5'],
     paddingVertical: 10,
     paddingHorizontal: 12,
     gap: 4,
@@ -373,7 +379,9 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 16,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
   },
   button: {
     flex: 1,
