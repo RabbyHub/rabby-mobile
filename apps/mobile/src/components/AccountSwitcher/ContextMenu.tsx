@@ -14,13 +14,9 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 interface Props {
   children: React.ReactElement;
   account: KeyringAccountWithAlias;
-  /**
-   * @default false
-   */
-  disableOnAndroid?: boolean;
 }
 export const AccountSwitcherContextMenu: React.FC<Props> = props => {
-  const { children, account, disableOnAndroid = false } = props;
+  const { children, account } = props;
   const editAliasName = useAliasNameEditModal();
   const { t } = useTranslation();
   const { isLight, colors2024 } = useTheme2024();
@@ -53,7 +49,7 @@ export const AccountSwitcherContextMenu: React.FC<Props> = props => {
     [t, editAliasName, account, isLight],
   );
 
-  if (disableOnAndroid && IS_ANDROID) {
+  if (IS_ANDROID) {
     return <>{children}</>;
   }
 

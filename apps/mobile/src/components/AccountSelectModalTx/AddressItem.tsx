@@ -90,8 +90,7 @@ export function AddressItemInSheetModal({
   return (
     <AddressItemShadowView
       style={isCurrent || isPressing ? styles.active : null}>
-      {/* TODO: set disableOnAndroid = true later */}
-      <AccountSwitcherContextMenu disableOnAndroid={false} account={account}>
+      <AccountSwitcherContextMenu account={account}>
         <TouchableOpacity
           style={StyleSheet.flatten([
             styles.addressItemContainer,
