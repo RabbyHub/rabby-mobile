@@ -18,7 +18,7 @@ export const HFDescription: React.FC<{
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>Health Factor</Text>
+      <Text style={styles.title}>{t('page.Lending.hfTitle')}</Text>
       <View style={styles.contentContainer}>
         <Text style={styles.introText}>
           {t('page.Lending.lqDescription.introText')}

@@ -42,7 +42,7 @@ const SupplyActionOverView: React.FC<
   const handleSupplyDescription = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DESCRIPTION,
-      title: 'Available to borrow',
+      title: t('page.Lending.modalDesc.availableToBorrow'),
       titleStyle: {
         marginTop: 12,
       },
@@ -54,8 +54,7 @@ const SupplyActionOverView: React.FC<
       },
       sections: [
         {
-          description:
-            'This is the maximum amount you can borrow based on all your supplied collateral. Your total borrowing power is calculated by multiplying the market value of each collateral asset by its Max LTV, then summing the results.',
+          description: t('page.Lending.modalDesc.maxAmount'),
         },
       ],
       bottomSheetModalProps: {
@@ -65,7 +64,7 @@ const SupplyActionOverView: React.FC<
         snapPoints: [308],
       },
       nextButtonProps: {
-        title: 'Got it',
+        title: t('page.Lending.gotIt'),
         onPress: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },

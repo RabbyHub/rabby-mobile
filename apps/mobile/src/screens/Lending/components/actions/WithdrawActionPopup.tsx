@@ -259,8 +259,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
                 color={colors2024['red-default']}
               />
               <Text style={styles.warningText}>
-                Borrowing this amount will lower your Health Factor to a risky
-                level for liquidation.
+                {t('page.Lending.risk.warning')}
               </Text>
             </View>
             <TouchableOpacity
@@ -270,7 +269,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               }}>
               <CheckBoxRect size={16} checked={isChecked} />
               <Text style={styles.checkboxText}>
-                I understand the alert and want to continue.
+                {t('page.Lending.risk.checkbox')}
               </Text>
             </TouchableOpacity>
           </>

@@ -118,8 +118,8 @@ const BorrowPoolList = () => {
         <Text style={styles.availableCardValue}>
           {iUserSummary?.availableBorrowsUSD &&
           iUserSummary?.availableBorrowsUSD !== '0'
-            ? 'You can borrow based on your supplied collateral, up to the borrow cap.'
-            : 'To borrow, you need to supply assets as collateral.'}
+            ? t('page.Lending.availableCard.canBorrow')
+            : t('page.Lending.availableCard.needSupply')}
         </Text>
       </View>
     );
@@ -133,6 +133,7 @@ const BorrowPoolList = () => {
     styles.availableCardTitle,
     styles.availableCardValue,
     styles.usdValue,
+    t,
   ]);
 
   const ListHeaderComponent = useCallback(() => {

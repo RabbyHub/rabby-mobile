@@ -35,7 +35,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   const handleShowLqBonusPopup = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DESCRIPTION,
-      title: 'Liquidity Penalty',
+      title: t('page.Lending.borrowOverview.liquidityPenalty'),
       titleStyle: {
         marginTop: 12,
       },
@@ -47,8 +47,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       },
       sections: [
         {
-          description:
-            'When a liquidation occurs, liquidators repay up to 50% of the outstanding borrowed amount on behalf of the borrower. In return, they can buy the collateral at a discount and keep the difference (liquidation penalty) as a bonus.',
+          description: t('page.Lending.modalDesc.lqDesc'),
         },
       ],
       bottomSheetModalProps: {
@@ -58,7 +57,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
         snapPoints: [308],
       },
       nextButtonProps: {
-        title: 'Got it',
+        title: t('page.Lending.gotIt'),
         onPress: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
@@ -73,7 +72,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   const handleShowAvailableToBorrowPopup = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DESCRIPTION,
-      title: 'Available to borrow',
+      title: t('page.Lending.borrowOverview.availableToBorrow'),
       titleStyle: {
         marginTop: 12,
       },
@@ -85,8 +84,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       },
       sections: [
         {
-          description:
-            'You can borrow based on your supplied collateral and until the borrow cap is reached.',
+          description: t('page.Lending.modalDesc.availableToBorrowDesc'),
         },
       ],
       bottomSheetModalProps: {
@@ -96,7 +94,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
         snapPoints: [308],
       },
       nextButtonProps: {
-        title: 'Got it',
+        title: t('page.Lending.gotIt'),
         onPress: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },

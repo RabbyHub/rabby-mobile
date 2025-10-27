@@ -2491,7 +2491,12 @@
       "estDailyEarning": "Est.Daily Earning",
       "selectChain": "Select Chain",
       "hf": "Health factor",
+      "hfTitle": "Health Factor",
       "enterAmount": "Enter Amount",
+      "availableCard": {
+        "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
+        "needSupply": "To borrow, you need to supply assets as collateral."
+      },
       "list": {
         "headers": {
           "token": "Token",
@@ -2509,7 +2514,8 @@
           "description": "Powered by AAVE. Secure and zero fees."
         },
         "lq": "If goes below 1, the liquidation might be triggered.",
-        "more": "More"
+        "more": "More",
+        "healthy": "Healthy"
       },
       "repayDetail": {
         "actions": "Repay",
@@ -2527,7 +2533,9 @@
       },
       "borrowDetail": {
         "actions": "Borrow",
-        "approveAndBorrow": "Approve and Borrow"
+        "approveAndBorrow": "Approve and Borrow",
+        "almostReachedWarning": "Protocol borrow cap is at 100% for this asset. Further borrowing unavailable.",
+        "almostReachedError": "Maximum amount available to borrow is limited because protocol borrow cap is nearly reached."
       },
       "popup": {
         "amount": "Amount",
@@ -2549,7 +2557,9 @@
         "totalSupplied": "Total Supplied",
         "mySupply": "My Supply",
         "walletBalance": "Wallet Balance",
-        "availableToSupply": "Available to Supply"
+        "availableToSupply": "Available to Supply",
+        "reachCap": "This asset has reached its supply cap. Nothing is available to be supplied from this market.",
+        "almostCap": "This asset has almost reached its borrow cap. There is only {{available}} available to be borrowed from this market."
       },
       "risk": {
         "warning": "Borrowing this amount will lower your Health Factor to a risky level for liquidation.",
@@ -2565,6 +2575,12 @@
         "below1desc": "Your position is at risk of liquidation.",
         "liquidation": "Liquidation: If your Health Factor falls below 1.0, part of your collateral may be automatically sold to repay the debt. A liquidation penalty will apply, resulting in a partial loss of your collateral.",
         "warningText": "Your Health Factor is too low. To avoid liquidation:\n1. Repay part or all of your loan\n2. Add more collateral"
+      },
+      "modalDesc": {
+        "availableToBorrow": "Available to borrow",
+        "maxAmount": "This is the maximum amount you can borrow based on all your supplied collateral. Your total borrowing power is calculated by multiplying the market value of each collateral asset by its Max LTV, then summing the results.",
+        "lqDesc": "When a liquidation occurs, liquidators repay up to 50% of the outstanding borrowed amount on behalf of the borrower. In return, they can buy the collateral at a discount and keep the difference (liquidation penalty) as a bonus.",
+        "availableToBorrowDesc": "You can borrow based on your supplied collateral and until the borrow cap is reached."
       }
     }
   },

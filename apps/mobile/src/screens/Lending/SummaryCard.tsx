@@ -152,7 +152,7 @@ const SummaryCard = (props: IProps) => {
                   ).backgroundColor,
                 },
               ]}>
-              Healthy
+              {t('page.Lending.summary.healthy')}
             </Text>
           </View>
         </View>

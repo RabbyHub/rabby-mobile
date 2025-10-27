@@ -62,7 +62,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
       reserve.reserve.supplyCap !== '0' &&
       BigNumber(reserve.reserve.totalLiquidity).gte(reserve.reserve.supplyCap)
     ) {
-      return 'This asset has reached its supply cap. Nothing is available to be supplied from this market.';
+      return t('page.Lending.supplyOverview.reachCap');
     }
     // 占比大于98% 显示警告
     if (
@@ -79,9 +79,9 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
       const available = BigNumber(reserve.reserve.supplyCapUSD)
         .minus(BigNumber(reserve.reserve.totalLiquidityUSD))
         .toString();
-      return `This asset has almost reached its borrow cap. There is only ${formatUsdValueKMB(
-        available,
-      )} available to be borrowed from this market.`;
+      return t('page.Lending.supplyOverview.almostCap', {
+        available: formatUsdValueKMB(available),
+      });
     }
     return undefined;
   }, [
@@ -89,6 +89,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
     reserve.reserve.supplyCapUSD,
     reserve.reserve.totalLiquidity,
     reserve.reserve.totalLiquidityUSD,
+    t,
   ]);
 
   const handlePressSupply = () => {

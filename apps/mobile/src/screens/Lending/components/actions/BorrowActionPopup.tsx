@@ -192,7 +192,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         ),
       )
     ) {
-      return 'Protocol borrow cap is at 100% for this asset. Further borrowing unavailable.';
+      return t('page.Lending.borrowDetail.almostReachedWarning');
     }
 
     if (
@@ -202,10 +202,10 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         ),
       )
     ) {
-      return 'Maximum amount available to borrow is limited because protocol borrow cap is nearly reached.';
+      return t('page.Lending.borrowDetail.almostReachedError');
     }
     return undefined;
-  }, [reserve.reserve.borrowCap, reserve.reserve.totalDebt]);
+  }, [reserve.reserve.borrowCap, reserve.reserve.totalDebt, t]);
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
@@ -297,8 +297,12 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           key={`${amount}`}
           showTextOnLoading
           wrapperStyle={styles.directSignBtn}
-          authTitle="Borrow"
-          title={!amount || amount === '0' ? 'Enter Amount' : 'Borrow'}
+          authTitle={t('page.Lending.borrowDetail.actions')}
+          title={
+            !amount || amount === '0'
+              ? t('page.Lending.enterAmount')
+              : t('page.Lending.borrowDetail.actions')
+          }
           onFinished={handleBorrow}
           disabled={
             !amount ||
