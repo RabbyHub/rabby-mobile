@@ -125,11 +125,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
   },
   apyContainer: {
     marginTop: 26,
   },
   availableValue: {
+    flex: 1,
+    textAlign: 'right',
     color: colors2024['neutral-title-1'],
     fontSize: 16,
     fontWeight: '700',

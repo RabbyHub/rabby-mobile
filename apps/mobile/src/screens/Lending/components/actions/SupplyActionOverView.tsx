@@ -7,7 +7,6 @@ import {
   formatAmountValueKMB,
   formatPercent,
 } from '@/screens/TokenDetail/util';
-import { formatNum } from '@/utils/math';
 import { getHealthStatusColor } from '../../utils';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import HealthFactorText from '../HealthFactorText';
@@ -127,11 +126,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
   },
   apyContainer: {
     marginTop: 26,
   },
   availableValue: {
+    textAlign: 'right',
+    flex: 1,
     color: colors2024['neutral-title-1'],
     fontSize: 16,
     fontWeight: '700',

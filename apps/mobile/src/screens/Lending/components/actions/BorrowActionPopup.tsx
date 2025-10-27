@@ -239,6 +239,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         chain={CHAINS_ENUM.ETH}
       />
       <BottomSheetScrollView
+        style={styles.bottomSheetScrollView}
         contentContainerStyle={styles.transactionContainer}>
         <BorrowActionOverView
           reserve={reserve}
@@ -354,8 +355,12 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 16,
     width: '100%',
   },
+  bottomSheetScrollView: {
+    width: '100%',
+  },
   transactionContainer: {
     gap: 12,
+    width: '100%',
   },
   gasPreContainer: {
     paddingHorizontal: 8,
