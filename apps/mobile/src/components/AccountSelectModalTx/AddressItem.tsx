@@ -20,17 +20,11 @@ import { TxAccountPannelSectionTitle } from '@/constant/newStyle';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { ellipsisAddress } from '@/utils/address';
 import { IS_ANDROID } from '@/core/native/utils';
-
-const MY_ADDRESS_LIMIT = 3;
+import { AccountSwitcherContextMenu } from '../AccountSwitcher/ContextMenu';
 
 const SIZES = {
   itemH: 78,
   itemGap: 12,
-  get myAddressesAreaVisiableH() {
-    return (
-      SIZES.itemH * MY_ADDRESS_LIMIT + SIZES.itemGap * (MY_ADDRESS_LIMIT - 1)
-    );
-  },
 };
 
 const triggerLight = () => {
@@ -96,98 +90,86 @@ export function AddressItemInSheetModal({
   return (
     <AddressItemShadowView
       style={isCurrent || isPressing ? styles.active : null}>
-      <TouchableOpacity
-        style={StyleSheet.flatten([
-          styles.addressItemContainer,
-          style,
-          isCurrent && styles.addressItemContainerCurrent,
-          isPressing && styles.containerPressing,
-        ])}
-        activeOpacity={1}
-        delayLongPress={200}
-        onPressIn={() => setIsPressing(true)}
-        onPressOut={() => setIsPressing(false)}
-        onLongPress={() => {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }}
-        onPress={() => {
-          triggerLight();
-          defaultPressAction === 'copy'
-            ? handleCopyAddress?.()
-            : onPressAccount?.();
-        }}>
-        <AddressItem {...addressItemProps}>
-          {({
-            WalletIcon,
-            WalletAddress,
-            WalletBalance,
-            WalletName,
-            walletName,
-          }) => {
-            const hasAlias =
-              walletName?.toLowerCase() !==
-              ellipsisAddress(account.address).toLowerCase();
-            return (
-              <View style={styles.addressItemInner}>
-                <View style={styles.walletIconWrapper}>
-                  <WalletIcon style={styles.walletIcon} />
-                </View>
-                <View style={styles.centerInfo}>
-                  <View style={styles.nameAndAddress}>
-                    {[
-                      TxAccountPannelSectionTitle.Recent,
-                      TxAccountPannelSectionTitle.Whitelist,
-                    ].includes(ofTitleType!) ? (
-                      <WalletName style={styles.addressAliasName} />
-                    ) : (
-                      <Text style={styles.addressAlias} numberOfLines={1}>
-                        {hasAlias ? (
-                          <>
-                            <WalletName style={styles.addressAlias} />
-                            <Text style={styles.addressTruncate}>
-                              ({ellipsisAddress(account.address)})
-                            </Text>
-                          </>
-                        ) : (
-                          <Text style={styles.addressAlias}>
-                            {ellipsisAddress(account.address)}
-                          </Text>
-                        )}
-                      </Text>
-                    )}
-                  </View>
-                  <View style={styles.bottomArea}>
-                    <WalletBalance
-                      style={[
-                        styles.addressUsdValue,
-                        isCurrent && styles.addressUsdValueCurrent,
-                      ]}
-                    />
-                    {/* {!isHideToken && !!tokens?.length && (
-                      <>
-                        <View style={styles.divider} />
-                        <View style={styles.chainLogos}>
-                          {tokens.map(item => (
-                            <AssetAvatar
-                              key={`${item.chain}-${item.id}`}
-                              logo={item.logo_url}
-                              size={14}
-                              logoStyle={styles.chainLogoItem}
-                            />
-                          ))}
-                        </View>
-                      </>
-                    )} */}
-                  </View>
-                </View>
-              </View>
-            );
+      {/* TODO: set disableOnAndroid = true later */}
+      <AccountSwitcherContextMenu disableOnAndroid={false} account={account}>
+        <TouchableOpacity
+          style={StyleSheet.flatten([
+            styles.addressItemContainer,
+            style,
+            isCurrent && styles.addressItemContainerCurrent,
+            isPressing && styles.containerPressing,
+          ])}
+          activeOpacity={1}
+          delayLongPress={200}
+          onPressIn={() => setIsPressing(true)}
+          onPressOut={() => setIsPressing(false)}
+          onLongPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
           }}
-        </AddressItem>
-      </TouchableOpacity>
+          onPress={() => {
+            triggerLight();
+            defaultPressAction === 'copy'
+              ? handleCopyAddress?.()
+              : onPressAccount?.();
+          }}>
+          <AddressItem {...addressItemProps}>
+            {({
+              WalletIcon,
+              WalletAddress,
+              WalletBalance,
+              WalletName,
+              walletName,
+            }) => {
+              const hasAlias =
+                walletName?.toLowerCase() !==
+                ellipsisAddress(account.address).toLowerCase();
+              return (
+                <View style={styles.addressItemInner}>
+                  <View style={styles.walletIconWrapper}>
+                    <WalletIcon style={styles.walletIcon} />
+                  </View>
+                  <View style={styles.centerInfo}>
+                    <View style={styles.nameAndAddress}>
+                      {[
+                        TxAccountPannelSectionTitle.Recent,
+                        TxAccountPannelSectionTitle.Whitelist,
+                      ].includes(ofTitleType!) ? (
+                        <WalletName style={styles.addressAliasName} />
+                      ) : (
+                        <Text style={styles.addressAlias} numberOfLines={1}>
+                          {hasAlias ? (
+                            <>
+                              <WalletName style={styles.addressAlias} />
+                              <Text style={styles.addressTruncate}>
+                                ({ellipsisAddress(account.address)})
+                              </Text>
+                            </>
+                          ) : (
+                            <Text style={styles.addressAlias}>
+                              {ellipsisAddress(account.address)}
+                            </Text>
+                          )}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={styles.bottomArea}>
+                      <WalletBalance
+                        style={[
+                          styles.addressUsdValue,
+                          isCurrent && styles.addressUsdValueCurrent,
+                        ]}
+                      />
+                    </View>
+                  </View>
+                </View>
+              );
+            }}
+          </AddressItem>
+        </TouchableOpacity>
+      </AccountSwitcherContextMenu>
     </AddressItemShadowView>
   );
 }
@@ -203,7 +185,9 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressItemContainer: {
       borderRadius: 16,
-      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
       padding: 16,
       paddingRight: 24,
       height: SIZES.itemH,
@@ -214,7 +198,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     addressItemInner: {
       flexDirection: 'row',
       alignItems: 'center',
-      height: 52,
+      // height: 52,
       width: '100%',
     },
     walletIconWrapper: {

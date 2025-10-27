@@ -14,7 +14,11 @@ import { EventEmitter } from 'events';
 import { preferenceService } from '@/core/services';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { GasLevel, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  AddrDescResponse,
+  GasLevel,
+  NFTItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 import { openapi } from '@/core/request';
 import { TFunction } from 'i18next';
@@ -39,6 +43,8 @@ import {
   isAccountSupportDirectSign,
   isAccountSupportMiniApproval,
 } from '@/utils/account';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { useRecentSendToHistoryFor } from '@/screens/Send/hooks/useRecentSend';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -69,6 +75,8 @@ export type SendScreenState = {
 
   addressToAddAsContacts: string | null;
   addressToEditAlias: string | null;
+
+  toAddrDesc: null | AddrDescResponse['desc'];
 };
 const DFLT_SEND_STATE: SendScreenState = {
   inited: false,
@@ -92,6 +100,8 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   addressToAddAsContacts: null,
   addressToEditAlias: null,
+
+  toAddrDesc: null,
 };
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 export function useSendNFTScreenState() {
@@ -345,16 +355,27 @@ export function useSendNFTForm({
   );
 
   const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
+  const { list: cexList } = useCexSupportList();
 
   const { whitelist, enable: whitelistEnabled } = useWhitelist();
+  const { recentHistory: recentSendToHistory } = useRecentSendToHistoryFor(
+    formValues.to,
+  );
+  const toAddressIsRecentlySend = recentSendToHistory.length > 0;
+
   const computed = useMemo(() => {
     const toAddressInWhitelist = !!whitelist.find(item =>
       addressUtils.isSameAddress(item, formValues.to),
     );
     return {
       toAddressIsValid: !!formValues.to && isValidAddress(formValues.to),
+      toAddressIsRecentlySend,
       toAddressInWhitelist,
       toAddressInContactBook: isAddrOnContactBook(formValues.to),
+
+      toAddrCex: cexList.find(
+        item => item.id === screenState.toAddrDesc?.cex?.id,
+      ),
 
       canSubmit:
         isValidAddress(formValues.to) &&
@@ -371,8 +392,10 @@ export function useSendNFTForm({
     whitelist,
     isAddrOnContactBook,
     formValues.to,
+    toAddressIsRecentlySend,
     screenState,
     formValues.amount,
+    cexList,
     currentAccount?.type,
     chainItem?.isTestnet,
   ]);
@@ -420,6 +443,8 @@ type InternalContext = {
     toAddressInWhitelist: boolean;
     toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
+
+    toAddressIsRecentlySend: boolean;
   };
 
   formik: ReturnType<typeof useFormik<FormSendNFT>>;
@@ -447,6 +472,8 @@ const SendNFTInternalContext = React.createContext<InternalContext>({
     toAddressInWhitelist: false,
     toAddressIsValid: false,
     toAddressInContactBook: false,
+
+    toAddressIsRecentlySend: false,
   },
 
   formik: null as any,

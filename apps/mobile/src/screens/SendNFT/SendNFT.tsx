@@ -8,8 +8,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { NFTSection, SendNFTSection } from './Section';
-import ToAddressControl2024 from '@/screens/Send/components/ToAddressControl2024';
-import FromAddressControl2024 from '@/screens/Send/components/FromAddressControl';
+import ToAddressControl2024 from '@/screens/SendNFT/components/ToAddressControl2024';
+import FromAddressControl2024 from '@/screens/SendNFT/components/FromAddressControl';
 import {
   SendNFTEvents,
   SendNFTInternalContextProvider,
@@ -61,6 +61,7 @@ export default function SendNFT() {
     computed: {
       toAddressInContactBook,
       toAddressIsValid,
+      toAddressIsRecentlySend,
       toAddressInWhitelist,
       canSubmit,
       canDirectSign,
@@ -118,6 +119,7 @@ export default function SendNFT() {
         formValues,
         computed: {
           canSubmit,
+          toAddressIsRecentlySend,
           toAddressInWhitelist,
           whitelistEnabled,
           toAddressIsValid,

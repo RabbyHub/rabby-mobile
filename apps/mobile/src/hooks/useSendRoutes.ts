@@ -21,17 +21,14 @@ type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
 export const isSingleAddressAtom = atom<boolean>(false);
 export const useSendRoutes = () => {
-  // const navigation = useNavigation<HomeProps['navigation']>();
   const { findAccountWithoutBalance } = useWhiteListAddress();
   const [params, setParams] = useAtom(sendScreenParamsAtom);
   const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
 
-  // check if has nft params
   const hasNftParams = useCallback((mergedParams: { [key: string]: any }) => {
     return !!mergedParams.nftItem;
   }, []);
 
-  // get target screen by params and mode
   const getTargetScreen = useCallback(
     (mergedParams: { [key: string]: any }, isForSingleAddress: boolean) => {
       const hasNft = hasNftParams(mergedParams);
@@ -73,11 +70,13 @@ export const useSendRoutes = () => {
       });
       setParams(p || {});
       setIsSingleAddress(!!isForSingleAddress);
+
+      const mergedParams = { ...params, ...p };
+
       if (p?.toAddress) {
         const { inWhitelist, account, isMyImported } =
           findAccountWithoutBalance(p.toAddress);
         if (inWhitelist || isMyImported) {
-          const mergedParams = { ...params, ...p };
           navigateToTargetScreen(mergedParams, isForSingleAddress);
         } else {
           const id = createGlobalBottomSheetModal2024({
@@ -102,9 +101,22 @@ export const useSendRoutes = () => {
         }
         return;
       }
-      naviPush(RootNames.StackTransaction, {
-        screen: RootNames.Send,
-      });
+
+      naviPush(
+        RootNames.StackTransaction,
+        !mergedParams.nftItem
+          ? {
+              screen: RootNames.Send,
+            }
+          : {
+              screen: RootNames.SendNFT,
+              params: {
+                nftItem: mergedParams.nftItem,
+                collectionName: mergedParams.collectionName,
+                fromAccount: mergedParams.fromAccount,
+              },
+            },
+      );
     },
     [
       findAccountWithoutBalance,

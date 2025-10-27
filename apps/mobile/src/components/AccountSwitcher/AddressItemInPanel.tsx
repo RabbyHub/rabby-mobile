@@ -63,7 +63,7 @@ export function AddressItemInPanel({
         style,
         isCurrent || isPressing ? styles.active : null,
       ]}>
-      <AccountSwitcherContextMenu account={account}>
+      <AccountSwitcherContextMenu disableOnAndroid={true} account={account}>
         <TouchableOpacity
           style={StyleSheet.flatten([
             styles.addressItemContainer,

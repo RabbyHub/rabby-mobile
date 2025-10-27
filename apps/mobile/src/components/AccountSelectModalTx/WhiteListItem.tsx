@@ -36,6 +36,11 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { IS_ANDROID } from '@/core/native/utils';
 
+const SIZES = {
+  itemH: 78,
+  itemGap: 12,
+};
+
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
@@ -269,7 +274,7 @@ export const WhiteListItemInSheetModal = ({
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   root: {
     // borderRadius: 20,
     overflow: 'hidden',
@@ -280,7 +285,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   shadowView: {
     borderRadius: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   card: {
     flexDirection: 'row',
@@ -290,9 +297,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 20,
     flex: 1,
     flexGrow: 1,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     padding: 16,
     paddingRight: 24,
+    height: SIZES.itemH,
   },
   rootItem: {
     flexDirection: 'row',
