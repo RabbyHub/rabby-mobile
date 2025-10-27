@@ -9,7 +9,7 @@ import { formatPercent } from '../TokenDetail/util';
 import { estDaily } from './utils/format';
 import { getHealthStatusColor } from './utils';
 import IconCloseCC from '@/assets2024/icons/common/close-bold-cc.svg';
-import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
+import RcIconWarningCircleCC from '@/assets2024/icons/lending/more.svg';
 import AAVEIcon from '@/assets2024/icons/lending/aave.svg';
 import {
   HF_COLOR_BAD_THRESHOLD,
@@ -53,16 +53,12 @@ const SummaryCard = (props: IProps) => {
       return {
         showWarning: true,
         showClose: false,
-        color: ThemeColors2024.dark['red-default'],
-        backgroundColor: 'rgba(255, 214, 212, 1)',
       };
     }
     if (healthFactor < HF_COLOR_GOOD_THRESHOLD) {
       return {
         showWarning: true,
         showClose: false,
-        color: ThemeColors2024.dark['orange-default'],
-        backgroundColor: 'rgba(255, 239, 213, 1)',
       };
     }
     if (skipHealthFactorWarning) {
@@ -71,10 +67,8 @@ const SummaryCard = (props: IProps) => {
     return {
       showWarning: false,
       showClose: true,
-      color: ThemeColors2024.dark['green-default'],
-      backgroundColor: colors2024['neutral-line'],
     };
-  }, [colors2024, props.healthFactor, skipHealthFactorWarning]);
+  }, [props.healthFactor, skipHealthFactorWarning]);
 
   return (
     <LinearGradient
@@ -158,17 +152,13 @@ const SummaryCard = (props: IProps) => {
         </View>
       </View>
       {!!extraInfo && (
-        <View
-          style={[
-            styles.extraContainer,
-            { backgroundColor: extraInfo.backgroundColor },
-          ]}>
+        <View style={[styles.extraContainer]}>
           <View style={styles.extraLeft}>
             {extraInfo.showWarning && (
               <RcIconWarningCircleCC
                 width={14}
                 height={14}
-                color={extraInfo.color}
+                color={ThemeColors2024.dark['neutral-body']}
               />
             )}
             <Text style={styles.extraLeftText}>
@@ -208,7 +198,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   extraContainer: {
     position: 'relative',
     color: colors2024['red-default'],
-    backgroundColor: colors2024['red-light-4'],
+    backgroundColor: 'rgba(50, 60, 89, 1)',
     marginTop: 6,
     flexDirection: 'row',
     alignItems: 'center',
@@ -222,19 +212,19 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   extraLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   extraLeftText: {
     fontSize: 12,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
+    color: ThemeColors2024.dark['neutral-foot'],
   },
   extraLeftMore: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['brand-default'],
+    color: ThemeColors2024.dark['neutral-title-1'],
   },
   suppliedAndBorrowedContainer: {
     flexDirection: 'row',
