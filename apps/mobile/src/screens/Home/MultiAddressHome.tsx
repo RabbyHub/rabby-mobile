@@ -180,7 +180,7 @@ function MultiAddressHome(): JSX.Element {
         },
         {
           key: MultiHomeFeatTitle.Lending,
-          title: 'Lending',
+          title: t('page.home.services.lending'),
           icon: RcIconLending,
         },
         {

@@ -107,7 +107,7 @@ const BorrowPoolList = () => {
             />
           )}
           <Text style={styles.availableCardTitle}>
-            Available to borrow:{' '}
+            {t('page.Lending.modalDesc.availableToBorrow')}:{' '}
             <Text style={styles.usdValue}>
               {formatUsdValueKMB(
                 Number(iUserSummary?.availableBorrowsUSD || '0'),
