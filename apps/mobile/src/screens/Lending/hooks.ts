@@ -29,9 +29,11 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import wrapperToken from './config/wrapperToken';
 import { CHAINS_ENUM } from '@debank/common';
 import { API_ETH_MOCK_ADDRESS } from './utils/constant';
+import buildinProvider from '@/core/apis/buildinProvider';
 
-const provider = new ethers.providers.JsonRpcProvider('https://rpc.payload.de');
-
+const provider = new ethers.providers.Web3Provider(
+  buildinProvider.currentProvider,
+);
 const poolDataProviderContract = new UiPoolDataProvider({
   uiPoolDataProviderAddress: markets.AaveV3Ethereum.UI_POOL_DATA_PROVIDER,
   provider,
