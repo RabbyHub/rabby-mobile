@@ -111,7 +111,7 @@ const SummaryCard = (props: IProps) => {
         <View style={styles.healthFactorContainer}>
           <View style={styles.healthFactorHeader}>
             <Text style={styles.sectionHeader}>Health factor</Text>
-            <Pressable onPress={handleShowHFDescription}>
+            <Pressable hitSlop={20} onPress={handleShowHFDescription}>
               <WarningFillCC
                 width={12}
                 height={12}

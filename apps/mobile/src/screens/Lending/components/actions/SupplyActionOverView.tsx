@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
@@ -10,6 +10,11 @@ import {
 import { getHealthStatusColor } from '../../utils';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import HealthFactorText from '../HealthFactorText';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const SupplyActionOverView: React.FC<
   PopupDetailProps & {
@@ -32,6 +37,45 @@ const SupplyActionOverView: React.FC<
     return getHealthStatusColor(isLight, Number(healthFactor || '0'));
   }, [healthFactor, isLight]);
 
+  const handleSupplyDescription = () => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.DESCRIPTION,
+      title: 'Available to borrow',
+      titleStyle: {
+        marginTop: 12,
+      },
+      sectionStyle: {
+        marginTop: 8,
+      },
+      sectionDescStyle: {
+        lineHeight: 20,
+      },
+      sections: [
+        {
+          description:
+            'This is the maximum amount you can borrow based on all your supplied collateral. Your total borrowing power is calculated by multiplying the market value of each collateral asset by its Max LTV, then summing the results.',
+        },
+      ],
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        snapPoints: [308],
+      },
+      nextButtonProps: {
+        title: 'Got it',
+        onPress: () => {
+          removeGlobalBottomSheetModal2024(modalId);
+        },
+        containerStyle: {
+          position: 'absolute',
+          bottom: 48,
+          width: '100%',
+        },
+      },
+    });
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Transaction Overview</Text>
@@ -46,11 +90,13 @@ const SupplyActionOverView: React.FC<
                   )}`
                 : availableText}
             </Text>
-            <WarningFillCC
-              width={12}
-              height={12}
-              color={colors2024['neutral-info']}
-            />
+            <Pressable hitSlop={20} onPress={handleSupplyDescription}>
+              <WarningFillCC
+                width={12}
+                height={12}
+                color={colors2024['neutral-info']}
+              />
+            </Pressable>
           </View>
         </View>
 
