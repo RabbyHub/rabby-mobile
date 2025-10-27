@@ -5,7 +5,6 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { TransactionNavigatorParamList } from '@/navigation-type';
 import { StackActions, useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { NFTSection, SendNFTSection } from './Section';
@@ -147,7 +146,7 @@ export default function SendNFT() {
 
             {/* To */}
             <ToAddressControl2024
-              address={toAddress}
+              // address={toAddress}
               brandName={addressBrandName}
               addrDesc={addrDesc}
             />
