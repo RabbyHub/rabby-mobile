@@ -108,7 +108,8 @@ export const BottomSheetBrowser = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowBrowser ? 0 : -1}
-      enableContentPanningGesture={browserState.isShowSearch}
+      // enableContentPanningGesture={browserState.isShowSearch}
+      enableContentPanningGesture={false}
       enablePanDownToClose
       enableHandlePanningGesture
       name="urlWebviewContainerRef"
