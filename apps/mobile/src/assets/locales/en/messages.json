@@ -2486,6 +2486,7 @@
       "apy": "APY",
       "gotIt": "Got it",
       "market": "Market",
+      "submitted": "submitted",
       "netWorth": "Net worth",
       "supplied": "Supplied",
       "borrowed": "Borrowed",
@@ -2564,6 +2565,7 @@
       },
       "risk": {
         "warning": "Borrowing this amount will lower your Health Factor to a risky level for liquidation.",
+        "withdrawWarning": "Withdrawing this amount will lower your Health Factor to a risky level for liquidation.",
         "checkbox": "I understand the alert and want to continue."
       },
       "lqDescription": {

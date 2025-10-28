@@ -128,7 +128,7 @@ const SupplyPoolList = () => {
       data={loading ? [] : sortReserves}
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={false} onRefresh={fetchData} />
+        <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
       keyExtractor={item => item.reserve.underlyingAsset}
       ListHeaderComponent={ListHeaderComponent}

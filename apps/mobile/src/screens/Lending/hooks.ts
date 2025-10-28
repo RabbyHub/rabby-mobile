@@ -117,35 +117,39 @@ const useLendingData = (address?: string, init: boolean = false) => {
   const [loading, setLoading] = useAtom(loadingAtom);
   const [currentAddress, setCurrentAddress] = useAtom(addressAtom);
 
-  const fetchData = useCallback(async () => {
-    if (!address || loading || !init) {
-      return;
-    }
-    setLoading(true);
-    fetchContractData(address)
-      .then(data => {
-        setReserves(data?.reserves);
-        setUserReserves(data?.userReserves);
-        setWalletBalances(data?.walletBalances || { 0: [], 1: [] });
-        setCurrentAddress(address);
-        setLoading(false);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [
-    address,
-    init,
-    loading,
-    setCurrentAddress,
-    setLoading,
-    setReserves,
-    setUserReserves,
-    setWalletBalances,
-  ]);
+  const fetchData = useCallback(
+    async (ignoreLoading: boolean = false) => {
+      if (!address || loading) {
+        return;
+      }
+      if (!ignoreLoading) {
+        setLoading(true);
+      }
+      fetchContractData(address)
+        .then(data => {
+          setReserves(data?.reserves);
+          setUserReserves(data?.userReserves);
+          setWalletBalances(data?.walletBalances || { 0: [], 1: [] });
+          setCurrentAddress(address);
+          setLoading(false);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    },
+    [
+      address,
+      loading,
+      setCurrentAddress,
+      setLoading,
+      setReserves,
+      setUserReserves,
+      setWalletBalances,
+    ],
+  );
 
   useEffect(() => {
-    if (!address) {
+    if (!address || !init) {
       return;
     }
     if (currentAddress && isSameAddress(currentAddress, address) && reserves) {
@@ -156,7 +160,7 @@ const useLendingData = (address?: string, init: boolean = false) => {
     }
 
     fetchData();
-  }, [address, reserves, currentAddress, loading, fetchData]);
+  }, [address, reserves, currentAddress, loading, fetchData, init]);
 
   return {
     reserves,

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Platform } from 'react-native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 
@@ -25,8 +25,13 @@ function DashBoardScreen(): JSX.Element {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-  useLendingData(currentAccount?.address, true);
+  const { fetchData } = useLendingData(currentAccount?.address, true);
   const { apyInfo, iUserSummary, loading } = useLendingSummary();
+
+  useEffect(() => {
+    fetchData(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isEmpty = useMemo(() => {
     return (

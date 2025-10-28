@@ -152,6 +152,11 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       await openDirect({
         txs,
       });
+      toast.success(
+        `${t('page.Lending.borrowDetail.actions')} ${t(
+          'page.Lending.submitted',
+        )}`,
+      );
 
       setAmount(undefined);
       onClose?.();
@@ -159,7 +164,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [currentAccount, txs, amount, openDirect, onClose]);
+  }, [currentAccount, txs, amount, openDirect, t, onClose]);
 
   const availableToBorrowBalance = useMemo(() => {
     return BigNumber(userSummary?.availableBorrowsUSD || '0')

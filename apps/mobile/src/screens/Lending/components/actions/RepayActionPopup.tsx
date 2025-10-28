@@ -288,6 +288,11 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       await openDirect({
         txs: txsForMiniApproval,
       });
+      toast.success(
+        `${t('page.Lending.repayDetail.actions')} ${t(
+          'page.Lending.submitted',
+        )}`,
+      );
 
       setAmount(undefined);
       onClose?.();
@@ -295,7 +300,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [currentAccount, txsForMiniApproval, amount, openDirect, onClose]);
+  }, [currentAccount, txsForMiniApproval, amount, openDirect, t, onClose]);
 
   const repayAmount = useMemo(() => {
     const miniAmount = BigNumber(reserve?.walletBalance || '0').gt(

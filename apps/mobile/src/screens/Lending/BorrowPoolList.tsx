@@ -172,7 +172,7 @@ const BorrowPoolList = () => {
       style={styles.container}
       ListHeaderComponent={ListHeaderComponent}
       refreshControl={
-        <RefreshControl refreshing={false} onRefresh={fetchData} />
+        <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
       ListEmptyComponent={<PoolListLoading />}
       ListFooterComponent={<View style={{ height: FOOT_HEIGHT }} />}

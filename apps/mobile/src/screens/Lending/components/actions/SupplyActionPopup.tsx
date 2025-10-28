@@ -310,6 +310,11 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       await openDirect({
         txs: txsForMiniApproval,
       });
+      toast.success(
+        `${t('page.Lending.supplyDetail.actions')} ${t(
+          'page.Lending.submitted',
+        )}`,
+      );
 
       setAmount(undefined);
       onClose?.();
@@ -323,6 +328,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     amount,
     txsForMiniApproval,
     openDirect,
+    t,
     onClose,
   ]);
 
