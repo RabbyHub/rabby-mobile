@@ -66,23 +66,21 @@ export const pool = new Pool(provider, {
 
 async function fetchContractData(address: string) {
   try {
-    const reserves = await poolDataProviderContract.getReservesHumanized({
-      lendingPoolAddressProvider:
-        markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
-    });
-
-    const userReserves =
-      await poolDataProviderContract.getUserReservesHumanized({
+    const [reserves, userReserves, walletBalances] = await Promise.all([
+      poolDataProviderContract.getReservesHumanized({
+        lendingPoolAddressProvider:
+          markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
+      }),
+      poolDataProviderContract.getUserReservesHumanized({
         lendingPoolAddressProvider:
           markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
         user: address,
-      });
-
-    const walletBalances =
-      await walletBalanceProviderContract.getUserWalletBalancesForLendingPoolProvider(
+      }),
+      walletBalanceProviderContract.getUserWalletBalancesForLendingPoolProvider(
         address,
         markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
-      );
+      ),
+    ]);
     return {
       reserves,
       userReserves,
@@ -109,7 +107,7 @@ const walletBalancesAtom = atom<UserWalletBalancesResponse>({
 const addressAtom = atom<string | undefined>(undefined);
 const loadingAtom = atom<boolean>(false);
 
-const useLendingData = (address?: string) => {
+const useLendingData = (address?: string, init: boolean = false) => {
   const [reserves, setReserves] = useAtom(reservesAtom);
   const [userReserves, setUserReserves] = useAtom(userReservesAtom);
   const [walletBalances, setWalletBalances] = useAtom(walletBalancesAtom);
@@ -117,7 +115,7 @@ const useLendingData = (address?: string) => {
   const [currentAddress, setCurrentAddress] = useAtom(addressAtom);
 
   const fetchData = useCallback(async () => {
-    if (!address) {
+    if (!address || loading || !init) {
       return;
     }
     setLoading(true);
@@ -127,12 +125,15 @@ const useLendingData = (address?: string) => {
         setUserReserves(data?.userReserves);
         setWalletBalances(data?.walletBalances || { 0: [], 1: [] });
         setCurrentAddress(address);
+        setLoading(false);
       })
       .finally(() => {
         setLoading(false);
       });
   }, [
     address,
+    init,
+    loading,
     setCurrentAddress,
     setLoading,
     setReserves,
@@ -169,43 +170,58 @@ const useLendingSummary = () => {
   const walletBalances = useAtomValue(walletBalancesAtom);
   const loading = useAtomValue(loadingAtom);
 
-  const {
-    displayPoolReserves,
-    iUserSummary,
-    apyInfo,
-    formattedPoolReservesAndIncentives,
-    wrapperPoolReserve,
-  } = useMemo(() => {
-    if (!reserves || !userReserves) {
+  const { formattedReserves, formattedPoolReservesAndIncentives } =
+    useMemo(() => {
+      if (!reserves) {
+        return {
+          formattedReserves: null,
+          formattedPoolReservesAndIncentives: [],
+        };
+      }
+
+      const reservesArray = reserves.reservesData;
+      const baseCurrencyData = reserves.baseCurrencyData;
+      const currentTimestamp = dayjs().unix();
+
+      const _formattedReserves = formatReserves({
+        reserves: reservesArray,
+        currentTimestamp,
+        marketReferenceCurrencyDecimals:
+          baseCurrencyData.marketReferenceCurrencyDecimals,
+        marketReferencePriceInUsd:
+          baseCurrencyData.marketReferenceCurrencyPriceInUsd,
+      });
+
+      const _formattedPoolReservesAndIncentives = formatReservesAndIncentives({
+        reserves: reservesArray,
+        currentTimestamp,
+        marketReferenceCurrencyDecimals:
+          baseCurrencyData.marketReferenceCurrencyDecimals,
+        marketReferencePriceInUsd:
+          baseCurrencyData.marketReferenceCurrencyPriceInUsd,
+        reserveIncentives: [],
+      });
+
       return {
-        formattedPoolReservesAndIncentives: [],
-        iUserSummary: null,
+        formattedReserves: _formattedReserves,
+        formattedPoolReservesAndIncentives: _formattedPoolReservesAndIncentives,
       };
+    }, [reserves]);
+
+  const iUserSummary = useMemo(() => {
+    if (!userReserves || !formattedReserves) {
+      return null;
     }
-    const { 0: tokenAddresses, 1: balances } = walletBalances;
-    const reservesArray = reserves.reservesData;
-    const baseCurrencyData = reserves.baseCurrencyData;
-    const userReservesArray = userReserves.userReserves;
+
+    const baseCurrencyData = reserves?.baseCurrencyData;
+    if (!baseCurrencyData) {
+      return null;
+    }
 
     const currentTimestamp = dayjs().unix();
-    const formattedReserves = formatReserves({
-      reserves: reservesArray,
-      currentTimestamp,
-      marketReferenceCurrencyDecimals:
-        baseCurrencyData.marketReferenceCurrencyDecimals,
-      marketReferencePriceInUsd:
-        baseCurrencyData.marketReferenceCurrencyPriceInUsd,
-    });
-    const _formattedPoolReservesAndIncentives = formatReservesAndIncentives({
-      reserves: reservesArray,
-      currentTimestamp,
-      marketReferenceCurrencyDecimals:
-        baseCurrencyData.marketReferenceCurrencyDecimals,
-      marketReferencePriceInUsd:
-        baseCurrencyData.marketReferenceCurrencyPriceInUsd,
-      reserveIncentives: [],
-    });
-    const _iUserSummary = formatUserSummaryAndIncentives({
+    const userReservesArray = userReserves.userReserves;
+
+    return formatUserSummaryAndIncentives({
       currentTimestamp,
       marketReferencePriceInUsd:
         baseCurrencyData.marketReferenceCurrencyPriceInUsd,
@@ -217,43 +233,66 @@ const useLendingSummary = () => {
       reserveIncentives: [],
       userIncentives: [],
     });
-    const mappedBalances = tokenAddresses.map((_address, ix) => ({
+  }, [userReserves, formattedReserves, reserves?.baseCurrencyData]);
+
+  const mappedBalances = useMemo(() => {
+    const { 0: tokenAddresses, 1: balances } = walletBalances;
+    return tokenAddresses.map((_address, ix) => ({
       address: _address.toLowerCase(),
       amount: balances[ix].toString(),
     }));
-    const _displayPoolReserves: DisplayPoolReserveInfo[] =
-      _iUserSummary.userReservesData.map(item => {
-        const balance = mappedBalances.find(
-          x => x.address === item.reserve.underlyingAsset.toLowerCase(),
-        );
-        return {
-          ...item,
-          chain: 'ETH',
-          walletBalance: normalize(
-            balance?.amount || '0',
-            item.reserve.decimals,
+  }, [walletBalances]);
+
+  const displayPoolReserves = useMemo(() => {
+    if (!iUserSummary || !reserves?.baseCurrencyData) {
+      return [];
+    }
+
+    const baseCurrencyData = reserves.baseCurrencyData;
+
+    return iUserSummary.userReservesData.map(item => {
+      const balance = mappedBalances.find(
+        x => x.address === item.reserve.underlyingAsset.toLowerCase(),
+      );
+      return {
+        ...item,
+        chain: 'ETH',
+        walletBalance: normalize(balance?.amount || '0', item.reserve.decimals),
+        walletBalanceUSD: nativeToUSD({
+          amount: new BigNumber(balance?.amount || '0'),
+          currencyDecimals: item.reserve.decimals,
+          priceInMarketReferenceCurrency:
+            item.reserve.priceInMarketReferenceCurrency,
+          marketReferenceCurrencyDecimals:
+            baseCurrencyData?.marketReferenceCurrencyDecimals || 0,
+          normalizedMarketReferencePriceInUsd: normalize(
+            baseCurrencyData?.marketReferenceCurrencyPriceInUsd || '0',
+            USD_DECIMALS,
           ),
-          walletBalanceUSD: nativeToUSD({
-            amount: new BigNumber(balance?.amount || '0'),
-            currencyDecimals: item.reserve.decimals,
-            priceInMarketReferenceCurrency:
-              item.reserve.priceInMarketReferenceCurrency,
-            marketReferenceCurrencyDecimals:
-              baseCurrencyData?.marketReferenceCurrencyDecimals || 0,
-            normalizedMarketReferencePriceInUsd: normalize(
-              baseCurrencyData?.marketReferenceCurrencyPriceInUsd || '0',
-              USD_DECIMALS,
-            ),
-          }),
-        };
-      });
-    const wrapperReserve = _displayPoolReserves.find(item => {
+        }),
+      };
+    });
+  }, [iUserSummary, mappedBalances, reserves?.baseCurrencyData]);
+
+  const { wrapperPoolReserve, finalDisplayPoolReserves } = useMemo(() => {
+    if (
+      !displayPoolReserves.length ||
+      !formattedPoolReservesAndIncentives.length
+    ) {
+      return {
+        wrapperPoolReserve: null,
+        finalDisplayPoolReserves: displayPoolReserves,
+      };
+    }
+
+    const wrapperReserve = displayPoolReserves.find(item => {
       return isSameAddress(
         item.reserve.underlyingAsset,
         wrapperToken[CHAINS_ENUM.ETH].address,
       );
     });
-    const _wrapperPoolReserve = _formattedPoolReservesAndIncentives.find(
+
+    const _wrapperPoolReserve = formattedPoolReservesAndIncentives.find(
       item => {
         return isSameAddress(
           item.underlyingAsset,
@@ -261,11 +300,16 @@ const useLendingSummary = () => {
         );
       },
     );
-    if (wrapperReserve) {
+
+    let _finalDisplayPoolReserves = [...displayPoolReserves];
+
+    if (wrapperReserve && reserves?.baseCurrencyData) {
       const balance = mappedBalances.find(x =>
         isSameAddress(x.address, API_ETH_MOCK_ADDRESS),
       );
-      _displayPoolReserves.unshift({
+      const baseCurrencyData = reserves.baseCurrencyData;
+
+      _finalDisplayPoolReserves.unshift({
         ...wrapperReserve,
         underlyingAsset: API_ETH_MOCK_ADDRESS.toLowerCase(),
         reserve: {
@@ -292,24 +336,31 @@ const useLendingSummary = () => {
         }),
       });
     }
-    const _apyInfo = formatUserYield(
-      _formattedPoolReservesAndIncentives || [],
-      _iUserSummary,
-    );
+
     return {
-      displayPoolReserves: _displayPoolReserves,
-      iUserSummary: _iUserSummary,
-      apyInfo: _apyInfo,
-      formattedPoolReservesAndIncentives: _formattedPoolReservesAndIncentives,
       wrapperPoolReserve: _wrapperPoolReserve,
+      finalDisplayPoolReserves: _finalDisplayPoolReserves,
     };
-  }, [reserves, userReserves, walletBalances]);
+  }, [
+    displayPoolReserves,
+    formattedPoolReservesAndIncentives,
+    mappedBalances,
+    reserves?.baseCurrencyData,
+  ]);
+
+  const apyInfo = useMemo(() => {
+    if (!formattedPoolReservesAndIncentives.length || !iUserSummary) {
+      return null;
+    }
+
+    return formatUserYield(formattedPoolReservesAndIncentives, iUserSummary);
+  }, [formattedPoolReservesAndIncentives, iUserSummary]);
 
   return {
     reserves,
     userReserves,
     walletBalances,
-    displayPoolReserves,
+    displayPoolReserves: finalDisplayPoolReserves,
     iUserSummary,
     formattedPoolReservesAndIncentives,
     wrapperPoolReserve,

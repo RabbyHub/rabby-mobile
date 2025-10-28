@@ -25,7 +25,7 @@ function DashBoardScreen(): JSX.Element {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-  useLendingData(currentAccount?.address);
+  useLendingData(currentAccount?.address, true);
   const { apyInfo, iUserSummary, loading } = useLendingSummary();
 
   const isEmpty = useMemo(() => {
