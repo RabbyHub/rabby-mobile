@@ -93,7 +93,7 @@
     "@debank/common": "^0.3.54",
     "@exodus/patch-broken-hermes-typed-arrays": "^1.0.0-alpha.1",
     "@rabby-wallet/gnosis-sdk": "1.4.5",
-    "@rabby-wallet/rabby-api": "0.9.44",
+    "@rabby-wallet/rabby-api": "0.9.45-beta.1",
     "human-standard-token-abi": "^2.0.0"
   },
   "devDependencies": {
