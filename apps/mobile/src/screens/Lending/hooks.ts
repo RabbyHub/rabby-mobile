@@ -1,5 +1,4 @@
 import {
-  ChainId,
   Pool,
   PoolBundle,
   ReservesDataHumanized,
@@ -17,11 +16,9 @@ import {
   USD_DECIMALS,
 } from '@aave/math-utils';
 import { ethers } from 'ethers';
-import * as markets from '@bgd-labs/aave-address-book';
 import dayjs from 'dayjs';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo } from 'react';
-import { DisplayPoolReserveInfo } from './type';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
 import { CustomMarket, marketsData } from './config/market';
@@ -35,12 +32,15 @@ const provider = new ethers.providers.Web3Provider(
   buildinProvider.currentProvider,
 );
 const poolDataProviderContract = new UiPoolDataProvider({
-  uiPoolDataProviderAddress: markets.AaveV3Ethereum.UI_POOL_DATA_PROVIDER,
+  uiPoolDataProviderAddress:
+    marketsData[CustomMarket.proto_mainnet_v3].addresses.UI_POOL_DATA_PROVIDER,
   provider,
-  chainId: ChainId.mainnet,
+  chainId: marketsData[CustomMarket.proto_mainnet_v3].chainId,
 });
 const walletBalanceProviderContract = new WalletBalanceProvider({
-  walletBalanceProviderAddress: markets.AaveV3Ethereum.WALLET_BALANCE_PROVIDER,
+  walletBalanceProviderAddress:
+    marketsData[CustomMarket.proto_mainnet_v3].addresses
+      .WALLET_BALANCE_PROVIDER,
   provider,
 });
 
@@ -69,16 +69,19 @@ async function fetchContractData(address: string) {
     const [reserves, userReserves, walletBalances] = await Promise.all([
       poolDataProviderContract.getReservesHumanized({
         lendingPoolAddressProvider:
-          markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
+          marketsData[CustomMarket.proto_mainnet_v3].addresses
+            .LENDING_POOL_ADDRESS_PROVIDER,
       }),
       poolDataProviderContract.getUserReservesHumanized({
         lendingPoolAddressProvider:
-          markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
+          marketsData[CustomMarket.proto_mainnet_v3].addresses
+            .LENDING_POOL_ADDRESS_PROVIDER,
         user: address,
       }),
       walletBalanceProviderContract.getUserWalletBalancesForLendingPoolProvider(
         address,
-        markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
+        marketsData[CustomMarket.proto_mainnet_v3].addresses
+          .LENDING_POOL_ADDRESS_PROVIDER,
       ),
     ]);
     return {
