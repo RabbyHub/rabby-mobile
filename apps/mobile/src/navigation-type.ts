@@ -322,15 +322,6 @@ export type TransactionNavigatorParamList = {
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
       };
-  [RootNames.SendTo]?: {};
-  [RootNames.SendInput]?: {
-    autoScan?: boolean;
-  };
-  [RootNames.WhitelistInput]?: { autoScan?: boolean };
-  [RootNames.SelectImportAddress]?: {};
-  [RootNames.SelectTypeAddress]?: {
-    type: 'watch' | 'safe';
-  };
   [RootNames.MultiSend]?: TransactionNavigatorParamList['Send'] & object;
   [RootNames.SendNFT]: {
     nftItem: NFTItem;

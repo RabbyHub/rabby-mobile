@@ -1542,7 +1542,7 @@ export function useSendTokenForm({
           } else {
             const currChainItem = findChainByServerID(token.chain);
             naviReplace(RootNames.StackTransaction, {
-              screen: RootNames.MultiSend,
+              screen: RootNames.Send,
               params: {
                 ...(multiNavParams || {}),
                 chainEnum: currChainItem?.enum,

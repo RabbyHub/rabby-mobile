@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { SendHistory } from './SendHistory';
-import PendingTx from '@/screens/Bridge/components/PendingTx';
 import {
   useReadSendFailTxList,
   useReadSendPendingCount,

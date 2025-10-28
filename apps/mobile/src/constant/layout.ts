@@ -122,20 +122,8 @@ export const RootNames = {
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',
-  /** @deprecated */
-  SendTo: 'SendTo',
   SendHistory: 'SendHistory',
   /** @deprecated */
-  SendInput: 'SendInput',
-  /** @deprecated */
-  WhitelistInput: 'WhitelistInput',
-  /** @deprecated */
-  SelectImportAddress: 'SelectImportAddress',
-  ImportAddress2Whitelist: 'ImportAddress2Whitelist',
-  SelectTypeAddress: 'SelectTypeAddress',
-  TypeAddress2Whitelist: 'TypeAddress2Whitelist',
-  ConfirmAddress: 'ConfirmAddress',
-  WhitelistConfirm: 'WhitelistConfirm',
   MultiSend: 'MultiSend',
   SendNFT: 'SendNFT',
   MultiSendNFT: 'MultiSendNFT',

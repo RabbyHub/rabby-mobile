@@ -589,6 +589,7 @@ function SendScreen({
   );
 }
 
+/** @deprecated */
 const ForMultipleAddress = (
   props: Omit<
     React.ComponentProps<typeof SendScreen>,

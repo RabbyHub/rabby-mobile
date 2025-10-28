@@ -19,8 +19,6 @@ import { useRecentSend } from '../../hooks/useRecentSend';
 import { SendAction } from '@rabby-wallet/rabby-api/dist/types';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
-import { transactionHistoryService } from '@/core/services';
-import { useMemoizedFn } from 'ahooks';
 import { useGetCexList } from '@/screens/Transaction/hook';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
