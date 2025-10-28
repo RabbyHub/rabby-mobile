@@ -9,13 +9,13 @@ import { GasAccountWrapperBg } from '../components/WrapperBg';
 import { GasAccountBlueLogo } from './GasAccountBlueLogo';
 import { ClaimedGiftAddress } from '@/core/services/gasAccount';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { useGasAccountMethods } from '../hooks';
 import {
   useGasAccountHistoryRefresh,
   useGasBalanceRefresh,
 } from '../hooks/atom';
 import IconGift from '@/assets2024/icons/gas-account/gift-01.svg';
 import { formatUsdValue } from '@/utils/number';
+import { GasAccountGuidePopup } from './GasAccountGuide';
 interface Props {
   onLoginPress?(): void;
   currentEligibleAddress?: ClaimedGiftAddress;
@@ -30,6 +30,8 @@ export const GasAccountLoginCard: React.FC<Props> = ({
   const { claimGift, checkEligibility } = useGasAccountEligibility();
   const { styles } = useTheme2024({ getStyle });
   const [loading, setLoading] = useState(false);
+  const [guideVisible, setGuideVisible] = useState(false);
+
   const handleClick = async () => {
     try {
       setLoading(true);
@@ -94,6 +96,25 @@ export const GasAccountLoginCard: React.FC<Props> = ({
           }
         />
       </View>
+
+      <Button
+        containerStyle={[styles.confirmButton, { marginTop: 12 }]}
+        onPress={() => {
+          setGuideVisible(true);
+        }}
+        type={'ghost'}
+        title={t('component.gasAccount.loginInTip.learnAbout')}
+      />
+
+      <GasAccountGuidePopup
+        visible={guideVisible}
+        onClose={() => {
+          setGuideVisible(false);
+        }}
+        onComplete={() => {
+          setGuideVisible(false);
+        }}
+      />
     </GasAccountWrapperBg>
   );
 };
