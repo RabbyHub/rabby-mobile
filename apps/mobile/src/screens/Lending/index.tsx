@@ -40,7 +40,7 @@ function DashBoardScreen(): JSX.Element {
       overwriteStyle={styles.overwriteStyle}>
       <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       <View style={styles.container}>
-        <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
+        <ChainSelector disable chainEnum={chainEnum} onChange={setChainEnum} />
         {isEmpty ? (
           <EmptySummaryCard />
         ) : (

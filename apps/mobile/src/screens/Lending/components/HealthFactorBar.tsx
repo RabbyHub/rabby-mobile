@@ -15,7 +15,7 @@ interface HealthFactorBarProps {
 export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
   healthFactor,
 }) => {
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
   const hfNumber = Number(healthFactor || '0');
@@ -73,7 +73,7 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
             makeTriangleStyle({
               dir: 'down',
               size: 6,
-              color: 'black',
+              color: colors2024['neutral-title-1'],
             }),
           ]}
         />

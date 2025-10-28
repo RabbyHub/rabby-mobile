@@ -50,10 +50,12 @@ export function ChainSelector({
   chainEnum,
   style,
   onChange,
+  disable,
 }: React.PropsWithChildren<
   RNViewProps & {
     chainEnum?: CHAINS_ENUM;
     onChange?: (chain: CHAINS_ENUM) => void;
+    disable?: boolean;
   }
 >) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -91,6 +93,7 @@ export function ChainSelector({
     <>
       <TouchableOpacity
         style={[styles.container, style]}
+        disabled={disable}
         onPress={createChainModal}>
         <View style={styles.left}>
           <ChainIconImage
@@ -103,12 +106,14 @@ export function ChainSelector({
           </Text>
         </View>
 
-        <View>
-          <ArrowRightSVG
-            style={styles.icon}
-            color={colors2024['neutral-title-1']}
-          />
-        </View>
+        {!disable ? (
+          <View>
+            <ArrowRightSVG
+              style={styles.icon}
+              color={colors2024['neutral-title-1']}
+            />
+          </View>
+        ) : null}
       </TouchableOpacity>
     </>
   );

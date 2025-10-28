@@ -16,12 +16,6 @@ const LENDING_CHIAN_LIST = [
   {
     chain: CHAINS_ENUM.ETH,
   },
-  {
-    chain: CHAINS_ENUM.ARBITRUM,
-  },
-  {
-    chain: CHAINS_ENUM.AVAX,
-  },
 ];
 
 export type SelectSortedChainProps = {
