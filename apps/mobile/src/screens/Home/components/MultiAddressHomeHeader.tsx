@@ -101,11 +101,11 @@ export function MultiAddressHomeHeader(
         );
         const assetsChange =
           (balanceAccount?.evmBalance || 0) -
-          address24hBalanceData.total_usd_value;
+          address24hBalanceData?.total_usd_value;
         let changePercent =
           address24hBalanceData?.total_usd_value !== 0
             ? `${Math.abs(
-                (assetsChange * 100) / address24hBalanceData.total_usd_value,
+                (assetsChange * 100) / address24hBalanceData?.total_usd_value,
               ).toFixed(2)}%`
             : `${balanceAccount?.evmBalance === 0 ? '0' : '100.00'}%`;
 
