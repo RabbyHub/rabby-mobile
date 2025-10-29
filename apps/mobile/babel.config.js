@@ -58,8 +58,8 @@ module.exports = {
         'process.env.RABBY_MOBILE_BUILD_ENV':
           process.env.RABBY_MOBILE_BUILD_ENV || 'production',
         'process.env.buildchannel':
-          process.env.RABBY_MOBILE_BUILD_CHANNEL ||
           process.env.buildchannel ||
+          process.env.RABBY_MOBILE_BUILD_CHANNEL ||
           'selfhost-reg',
         'process.env.BUILD_GIT_INFO': JSON.stringify({
           BUILD_GIT_HASH: buildGitInfo.BUILD_GIT_HASH,
