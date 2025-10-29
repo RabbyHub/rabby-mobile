@@ -3,17 +3,32 @@ import OfflineDarkPng from '@/assets2024/images/offline-dark.png';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useTranslation } from 'react-i18next';
-import { Image, StyleProp, Text, View, ViewStyle } from 'react-native';
+import { Trans, useTranslation } from 'react-i18next';
+import {
+  Image,
+  StyleProp,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
+import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 
 interface Props {
   code: number;
   message: string;
   style?: StyleProp<ViewStyle>;
   onRefresh?: () => void;
+  onOpenInBrowser?(): void;
 }
-export function WebviewError({ style, code, message, onRefresh }: Props) {
-  const { styles, isLight } = useTheme2024({
+export function WebviewError({
+  style,
+  code,
+  message,
+  onRefresh,
+  onOpenInBrowser,
+}: Props) {
+  const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();
@@ -39,6 +54,20 @@ export function WebviewError({ style, code, message, onRefresh }: Props) {
         buttonStyle={styles.btn}
         titleStyle={styles.btnText}
       />
+      <View style={styles.alertContainer}>
+        <View style={styles.alert}>
+          <RcIconWarningCircleCC color={colors2024['neutral-info']} />
+          <Text style={styles.alertText}>
+            <Trans t={t} i18nKey="page.browser.WebviewError.alertText">
+              Try{' '}
+              <Text style={styles.link} onPress={onOpenInBrowser}>
+                Open in browser
+              </Text>{' '}
+              to check if it is a website issue
+            </Trans>
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -82,5 +111,37 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   btnText: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  alertContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 33,
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'column',
+  },
+  alert: {
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 2,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors2024['neutral-bg-5'],
+  },
+  alertText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+  },
+  link: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['brand-default'],
   },
 }));

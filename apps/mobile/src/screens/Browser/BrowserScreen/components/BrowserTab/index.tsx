@@ -392,6 +392,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       // }
     });
 
+    const handleOpenInBrowser = useMemoizedFn(() => {
+      Linking.openURL(webviewState.resolvedUrl);
+    });
+
     const handleViewTabs = useMemoizedFn(async () => {
       if (isActive && debounceProgress === 1) {
         await handleViewShot();
@@ -458,6 +462,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             code={errorCode}
             message={errorDesc}
             onRefresh={handleReload}
+            onOpenInBrowser={handleOpenInBrowser}
           />
         );
       },
