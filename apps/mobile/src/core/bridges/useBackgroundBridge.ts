@@ -119,6 +119,18 @@ export function useSetupWebview({
 
         const data = fromData as WebViewDataPayload;
         if (data.name) {
+          console.log('onMessage is called', JSON.stringify(data));
+          const msgOrigin = (data as any).origin;
+          if (
+            msgOrigin == null ||
+            (msgOrigin != currentBridgeRef.current?.origin &&
+              msgOrigin !== currentBridgeRef.current?.origin + '/')
+          ) {
+            console.warn(
+              `[onMessage] origin mismatch: msgOrigin=${msgOrigin},current=${currentBridgeRef.current?.origin}`,
+            );
+            return;
+          }
           currentBridgeRef.current?.onMessage(data);
           return;
         } else if (data.type.startsWith(RABBY_DECLARED_PREFIX)) {
