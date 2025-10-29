@@ -24,7 +24,6 @@ import { toChecksumAddress } from '@ethereumjs/util';
 import { hashSafeMessage } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
 import PQueue from 'p-queue';
 import { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
-import { SAFE_API_KEY } from '@/constant/env';
 
 const gnosisPQueue = new PQueue({
   interval: 1000,
@@ -32,8 +31,6 @@ const gnosisPQueue = new PQueue({
   carryoverConcurrencyCount: false,
   concurrency: 2,
 });
-
-GnosisKeyring.setApiKey(SAFE_API_KEY);
 
 export const createSafeService = async ({
   address,
