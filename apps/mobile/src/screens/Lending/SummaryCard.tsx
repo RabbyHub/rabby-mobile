@@ -152,7 +152,9 @@ const SummaryCard = (props: IProps) => {
                   ).backgroundColor,
                 },
               ]}>
-              {t('page.Lending.summary.healthy')}
+              {Number(props.healthFactor || '0') < HF_COLOR_GOOD_THRESHOLD
+                ? t('page.Lending.summary.risky')
+                : t('page.Lending.summary.healthy')}
             </Text>
           </View>
         </View>

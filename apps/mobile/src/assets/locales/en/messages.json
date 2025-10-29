@@ -2521,7 +2521,8 @@
         },
         "lq": "If goes below 1, the liquidation might be triggered.",
         "more": "More",
-        "healthy": "Healthy"
+        "healthy": "Healthy",
+        "risky": "Risky"
       },
       "repayDetail": {
         "actions": "Repay",

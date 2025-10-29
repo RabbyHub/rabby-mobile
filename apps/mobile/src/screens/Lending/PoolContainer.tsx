@@ -187,7 +187,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     shadowOpacity: 0,
     elevation: 0,
     backgroundColor: isLight
-      ? colors2024['neutral-bg-2']
+      ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
   },
   tabBar: {
