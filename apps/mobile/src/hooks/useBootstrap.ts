@@ -26,6 +26,7 @@ import { useBiometrics } from './biometrics';
 import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
 import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
+import { JSBridgeHarden } from '../../../../packages/rn-webview-bridge/src/browserScripts';
 
 const syncCustomTestChainList = () => {
   try {
@@ -180,6 +181,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
   const fullScript = React.useMemo(() => {
     return [
       // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
+      JSBridgeHarden,
       entryScripts.inPageWeb3,
       BROWSER_SCRIPT_BASE,
       __DEV__ ? JS_GET_WINDOW_INFO_AFTER_LOAD : '',
