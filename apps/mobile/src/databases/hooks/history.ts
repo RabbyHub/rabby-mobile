@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { KeyringAccountWithAlias } from '@/hooks/account';
 import { runOnJS } from 'react-native-reanimated';
-import {
-  syncRemoteBuyHistory,
-  syncRemoteHistory,
-  syncRemoteSwapHistory,
-} from '../sync/assets';
+import { syncRemoteHistory, syncRemoteSwapHistory } from '../sync/assets';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { useSafeState } from '@/hooks/useSafeState';
 import { openapi } from '@/core/request';
@@ -16,9 +11,7 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
-import { BuyHistoryList, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { BuyItemEntity } from '../entities/buyItem';
-import dayjs from 'dayjs';
+import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -129,11 +122,32 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           'startTime:',
           startTime,
         );
-        const res = await openapi.listTxHisotry({
-          id: address,
-          start_time: startTime,
-          page_count: 20,
-        });
+        let hasNewTx = true;
+        if (startTime !== 0) {
+          try {
+            const { has_new_tx } = await openapi.hasNewTxFrom({
+              address,
+              startTime,
+            });
+            hasNewTx = has_new_tx;
+          } catch (e) {
+            // NOTHING
+          }
+        }
+        let res = {
+          cate_dict: {},
+          history_list: [] as TxHistoryResult['history_list'],
+          project_dict: {},
+          token_dict: {},
+        };
+        if (hasNewTx) {
+          console.log('listTxHisotry', address);
+          res = await openapi.listTxHisotry({
+            id: address,
+            start_time: startTime,
+            page_count: 20,
+          });
+        }
 
         const ninetyDaysAgo = new Date().getTime() / 1000 - 90 * 24 * 60 * 60; // 90 days ago
         res.history_list = res.history_list.filter(
@@ -288,14 +302,14 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
       }
     },
   );
-  const isNeedSyncData = useMemoizedFn(async (add: string) => {
-    if (transactionHistoryService.getIsNeedFetchTxHistory(add)) {
+  const isNeedSyncData = useMemoizedFn(async (address: string) => {
+    if (transactionHistoryService.getIsNeedFetchTxHistory(address)) {
       // some tx done need to update
       console.debug('🔍syncTop10History some tx done so isNeedSyncData');
       return true;
     }
 
-    const latestTime = updateHistoryTime[add] || 0;
+    const latestTime = updateHistoryTime[address] || 0;
 
     const currentTime = Date.now();
     const gap = currentTime - latestTime;
@@ -306,7 +320,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
       'isExpire:',
       gap > expireTime,
       'add:',
-      add.slice(-4),
+      address.slice(-4),
     );
     return gap > expireTime;
   });
