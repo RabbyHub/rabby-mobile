@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { FlatList, Text, View } from 'react-native';
 
 import { RcArrowRight3CC } from '@/assets/icons/common';
@@ -13,6 +13,7 @@ import { dappService } from '@/core/services';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTranslation } from 'react-i18next';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { useMemoizedFn } from 'ahooks';
 
 export function BrowserSearchResult({
   data,
@@ -35,9 +36,23 @@ export function BrowserSearchResult({
 
   const { t } = useTranslation();
 
+  const handlePress = useMemoizedFn((dapp: DappInfo) => {
+    if (!dappService.getDapp(safeGetOrigin(dapp.url || dapp.origin))?.isDapp) {
+      dappService.updateDapp(dapp);
+    }
+    onOpenURL?.(dapp.url || dapp.origin);
+    if (dapp.origin) {
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: 'Website_Visit_Search Results',
+        label: dapp.origin,
+      });
+    }
+  });
+
   return (
     <Component
-      data={data}
+      data={data?.slice(1)}
       style={styles.dappList}
       keyExtractor={item => item.origin}
       // onEndReached={onEndReached}
@@ -49,6 +64,18 @@ export function BrowserSearchResult({
         <>
           {searchText ? (
             <View style={styles.list}>
+              {data?.[0] ? (
+                <View>
+                  <BrowserSiteCard
+                    keyword={searchText}
+                    data={data[0]}
+                    onPress={handlePress}
+                    isShowBorder
+                    isShowFavorite
+                    isShowListBy
+                  />
+                </View>
+              ) : null}
               <TouchableOpacity
                 style={styles.listItem}
                 hitSlop={10}
@@ -119,7 +146,7 @@ export function BrowserSearchResult({
               ) : null}
             </View>
           ) : null}
-          {data?.length ? (
+          {data?.length > 1 ? (
             <View style={styles.header}>
               <Text style={styles.title}>
                 {t('page.browser.BrowserSearch.results')}
@@ -132,30 +159,11 @@ export function BrowserSearchResult({
         return (
           <View style={styles.dappListItem}>
             <BrowserSiteCard
-              // keyword={keyword}
               data={item}
-              onPress={dapp => {
-                if (
-                  !dappService.getDapp(safeGetOrigin(dapp.url || dapp.origin))
-                    ?.isDapp
-                ) {
-                  dappService.updateDapp(dapp);
-                }
-                onOpenURL?.(dapp.url || dapp.origin);
-                if (dapp.origin) {
-                  matomoRequestEvent({
-                    category: 'Websites Usage',
-                    action: 'Website_Visit_Search Results',
-                    label: dapp.origin,
-                  });
-                }
-              }}
+              onPress={handlePress}
               isShowBorder
               isShowFavorite
               isShowListBy
-              // onFavoritePress={onFavoritePress}
-              // onPress={onPress}
-              // isShowDesc
             />
           </View>
         );
@@ -181,7 +189,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   dappList: {
     paddingHorizontal: 20,
-    paddingTop: 22,
+    // paddingTop: 22,
+    paddingTop: 0,
   },
   dappListItem: {
     marginBottom: 12,
@@ -190,7 +199,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    gap: 24,
+    gap: 20,
     marginBottom: 30,
   },
   listItem: {
