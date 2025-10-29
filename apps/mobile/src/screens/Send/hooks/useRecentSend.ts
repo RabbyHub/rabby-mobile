@@ -262,10 +262,11 @@ export function useRecentSendToHistoryFor(toAddress?: string) {
   const { recentHistory } = useRecentSend({ useAllHistory: true });
 
   return {
-    recentHistory: recentHistory.filter(item =>
+    recentHistory:
       toAddress && isValidHexAddress(toAddress as Hex)
-        ? item.toAddress.toLowerCase() === toAddress.toLowerCase()
+        ? recentHistory.filter(
+            item => item.toAddress.toLowerCase() === toAddress.toLowerCase(),
+          )
         : [],
-    ),
   };
 }
