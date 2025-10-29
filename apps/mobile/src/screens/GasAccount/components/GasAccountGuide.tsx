@@ -1,6 +1,7 @@
 import ImgGuide1 from '@/assets2024/images/gasAccount/guide1.png';
 import ImgGuide2 from '@/assets2024/images/gasAccount/guide2.png';
 import ImgGuide3 from '@/assets2024/images/gasAccount/guide3.png';
+import ImgGuide4 from '@/assets2024/images/gasAccount/guide4.png';
 
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -70,6 +71,12 @@ export const GasAccountGuidePopup: React.FC<{
         title: t('component.gasAccount.about.title3'),
         description: t('component.gasAccount.about.desc3'),
         image: ImgGuide3,
+        button: t('global.next'),
+      },
+      {
+        title: t('component.gasAccount.about.title4'),
+        description: t('component.gasAccount.about.desc4'),
+        image: ImgGuide4,
         button: t('global.gotIt'),
       },
     ];
