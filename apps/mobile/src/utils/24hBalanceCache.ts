@@ -62,7 +62,6 @@ export const get24hBalanceWithCache = async (
     return cache;
   }
   const { total_usd_value } = await openapi.get24hTotalBalance(address);
-  console.log('address', address, total_usd_value, realtimeEVMNetWorth);
   const data = {
     total_usd_value: total_usd_value,
   };

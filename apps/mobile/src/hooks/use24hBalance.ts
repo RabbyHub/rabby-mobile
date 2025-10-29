@@ -118,7 +118,6 @@ export const useMulti24hBalance = (
       const data = multi24hBalance[address.toLowerCase()];
       return data?.data;
     });
-    console.log('list', list);
     const isAllGet = list.length === addresses.length;
     const total24hBalance = list.reduce((res, item) => {
       return res + (item?.total_usd_value || 0);

@@ -102,7 +102,6 @@ export function MultiAddressHomeHeader(
         const assetsChange =
           (balanceAccount?.evmBalance || 0) -
           address24hBalanceData.total_usd_value;
-        console.log('>>> assetsChange', item.address, assetsChange);
         let changePercent =
           address24hBalanceData?.total_usd_value !== 0
             ? `${Math.abs(
