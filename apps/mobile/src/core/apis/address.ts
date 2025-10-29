@@ -5,6 +5,7 @@ import {
   contactService,
   dappService,
   keyringService,
+  perpsService,
   preferenceService,
   sessionService,
   transactionHistoryService,
@@ -13,6 +14,7 @@ import {
 import { getKeyring } from './keyring';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { BroadcastEvent } from '@/constant/event';
+import { apisPerps } from './perps';
 
 export async function addWatchAddress(address: string) {
   const keyring = await getKeyring(KEYRING_TYPE.WatchAddressKeyring);
@@ -60,6 +62,7 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
     contactService.removeAlias(account.address);
     whitelistService.removeWhitelist(account.address);
     transactionHistoryService.removeList(account.address);
+    perpsService.removeAgentWallet(account.address);
   }
   preferenceService.removePinAddress(account);
 
