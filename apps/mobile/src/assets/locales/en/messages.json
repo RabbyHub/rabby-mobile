@@ -46,6 +46,10 @@
       "Yesterday": "Yesterday",
       "ViewSmallItems": "View transactions < $0.1",
       "itemTitle": {
+        "LendingSupply": "Supply",
+        "LendingWithdraw": "Withdraw",
+        "LendingBorrow": "Borrow",
+        "LendingRepay": "Repay",
         "ReceivedGas": "Received Gas",
         "WithdrawnGas": "Withdrawn Gas",
         "DepositedGas": "Deposited Gas",

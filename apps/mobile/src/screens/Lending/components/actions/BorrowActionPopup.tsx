@@ -16,7 +16,7 @@ import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { findChain } from '@/utils/chain';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { noop } from 'lodash';
+import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
@@ -36,6 +36,12 @@ import {
 } from '../../utils/constant';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { useTranslation } from 'react-i18next';
+import {
+  CUSTOM_HISTORY_ACTION,
+  CUSTOM_HISTORY_TITLE_TYPE,
+} from '@/screens/Transaction/components/type';
+import { transactionHistoryService } from '@/core/services/shared';
+import { useRefreshHistoryId } from '../../hooks';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -44,6 +50,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
+  const { refresh } = useRefreshHistoryId();
   const [isLoading, setIsLoading] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
   const { t } = useTranslation();
@@ -149,9 +156,23 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         toast.info('please retry');
         throw new Error('no txs');
       }
-      await openDirect({
+      const result = await openDirect({
         txs,
+        ga: {
+          customAction: CUSTOM_HISTORY_ACTION.LENDING,
+          customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW,
+        },
       });
+      const txId = last(result);
+      if (txId) {
+        transactionHistoryService.setCustomTxItem(
+          currentAccount.address,
+          txs[0].chainId,
+          txId,
+          { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW },
+        );
+      }
+      refresh();
       toast.success(
         `${t('page.Lending.borrowDetail.actions')} ${t(
           'page.Lending.submitted',
@@ -164,7 +185,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [currentAccount, txs, amount, openDirect, t, onClose]);
+  }, [currentAccount, txs, amount, openDirect, t, onClose, refresh]);
 
   const availableToBorrowBalance = useMemo(() => {
     return BigNumber(userSummary?.availableBorrowsUSD || '0')

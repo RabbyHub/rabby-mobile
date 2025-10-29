@@ -39,6 +39,7 @@ import { PerpsScreen } from '../Perps';
 import { PerpsMarketListScreen } from '../PerpsMarketList';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
+import LendingHistory from '../Lending/components/LendingHistory';
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
@@ -184,6 +185,19 @@ export default function TransactionNavigator() {
               />
             );
           },
+          headerStyle: {
+            backgroundColor: makeTxPageBackgroundColors({
+              isLight,
+              colors2024,
+            }),
+          },
+        }}
+      />
+      <TransactionStack.Screen
+        name={RootNames.LendingHistory}
+        component={LendingHistory}
+        options={{
+          title: 'Lending History',
           headerStyle: {
             backgroundColor: makeTxPageBackgroundColors({
               isLight,

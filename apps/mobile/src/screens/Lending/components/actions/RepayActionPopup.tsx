@@ -27,9 +27,15 @@ import { CustomMarket, marketsData } from '../../config/market';
 import { approveToken } from '@/core/apis/approvals';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { useMiniSigner } from '@/hooks/useSigner';
-import { noop } from 'lodash';
+import { last, noop } from 'lodash';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
+import { transactionHistoryService } from '@/core/services/shared';
+import {
+  CUSTOM_HISTORY_ACTION,
+  CUSTOM_HISTORY_TITLE_TYPE,
+} from '@/screens/Transaction/components/type';
+import { useRefreshHistoryId } from '../../hooks';
 
 export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -41,6 +47,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [needApprove, setNeedApprove] = useState(false);
   const [repayTx, setRepayTx] = useState<any>(null);
+  const { refresh } = useRefreshHistoryId();
   const [approveTxs, setApproveTxs] = useState<any>(null);
 
   const { t } = useTranslation();
@@ -285,9 +292,23 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         toast.info('please retry');
         throw new Error('no txs');
       }
-      await openDirect({
+      const result = await openDirect({
         txs: txsForMiniApproval,
+        ga: {
+          customAction: CUSTOM_HISTORY_ACTION.LENDING,
+          customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY,
+        },
       });
+      const txId = last(result);
+      if (txId) {
+        transactionHistoryService.setCustomTxItem(
+          currentAccount.address,
+          txsForMiniApproval[0].chainId,
+          txId,
+          { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY },
+        );
+      }
+      refresh();
       toast.success(
         `${t('page.Lending.repayDetail.actions')} ${t(
           'page.Lending.submitted',
@@ -300,7 +321,15 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [currentAccount, txsForMiniApproval, amount, openDirect, t, onClose]);
+  }, [
+    currentAccount,
+    txsForMiniApproval,
+    amount,
+    openDirect,
+    t,
+    onClose,
+    refresh,
+  ]);
 
   const repayAmount = useMemo(() => {
     const miniAmount = BigNumber(reserve?.walletBalance || '0').gt(

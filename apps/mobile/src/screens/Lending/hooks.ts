@@ -109,6 +109,15 @@ const walletBalancesAtom = atom<UserWalletBalancesResponse>({
 });
 const addressAtom = atom<string | undefined>(undefined);
 const loadingAtom = atom<boolean>(false);
+const refreshHistoryIdAtom = atom<number>(0);
+
+const useRefreshHistoryId = () => {
+  const [refreshHistoryId, setRefreshHistoryId] = useAtom(refreshHistoryIdAtom);
+  const refresh = useCallback(() => {
+    setRefreshHistoryId(e => e + 1);
+  }, [setRefreshHistoryId]);
+  return { refreshHistoryId, refresh };
+};
 
 const useLendingData = (address?: string, init: boolean = false) => {
   const [reserves, setReserves] = useAtom(reservesAtom);
@@ -376,4 +385,4 @@ const useLendingSummary = () => {
   };
 };
 
-export { useLendingData, useLendingSummary };
+export { useLendingData, useLendingSummary, useRefreshHistoryId };

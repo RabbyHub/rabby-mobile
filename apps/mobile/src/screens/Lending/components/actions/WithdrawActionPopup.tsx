@@ -17,7 +17,7 @@ import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { findChain } from '@/utils/chain';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { noop } from 'lodash';
+import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
@@ -31,6 +31,13 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
+import { transactionHistoryService } from '@/core/services/shared';
+import {
+  CUSTOM_HISTORY_ACTION,
+  CUSTOM_HISTORY_TITLE_TYPE,
+} from '@/screens/Transaction/components/type';
+import { useAtomValue } from 'jotai';
+import { useRefreshHistoryId } from '../../hooks';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -42,7 +49,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [withdrawTxs, setWithdrawTxs] = useState<Tx[]>([]);
   const [isChecked, setIsChecked] = useState(false);
-
+  const { refresh } = useRefreshHistoryId();
   const { t } = useTranslation();
   const isNativeToken = useMemo(() => {
     return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
@@ -168,9 +175,23 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         toast.info('please retry');
         throw new Error('no txs');
       }
-      await openDirect({
+      const result = await openDirect({
         txs: withdrawTxs,
+        ga: {
+          customAction: CUSTOM_HISTORY_ACTION.LENDING,
+          customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW,
+        },
       });
+      const txId = last(result);
+      if (txId) {
+        transactionHistoryService.setCustomTxItem(
+          currentAccount.address,
+          withdrawTxs[0].chainId,
+          txId,
+          { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW },
+        );
+      }
+      refresh();
       toast.success(
         `${t('page.Lending.withdrawDetail.actions')} ${t(
           'page.Lending.submitted',
@@ -183,7 +204,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [currentAccount, withdrawTxs, amount, openDirect, t, onClose]);
+  }, [currentAccount, withdrawTxs, amount, openDirect, t, onClose, refresh]);
 
   useEffect(() => {
     buildTransactions();

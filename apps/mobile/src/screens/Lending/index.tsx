@@ -16,12 +16,14 @@ import SummaryCard from './SummaryCard';
 import PoolContainer from './PoolContainer';
 import { useLendingData, useLendingSummary } from './hooks';
 import EmptySummaryCard from './EmptySummaryCard';
-
+import { LendingHeader } from './components/Header';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 const isAndroid = Platform.OS === 'android';
 
 function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
   const [chainEnum, setChainEnum] = useState<CHAINS_ENUM>(CHAINS_ENUM.ETH);
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -32,6 +34,14 @@ function DashBoardScreen(): JSX.Element {
     fetchData(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const Header = React.useCallback(() => <LendingHeader />, []);
+
+  useEffect(() => {
+    setNavigationOptions({
+      headerRight: Header,
+    });
+  }, [Header, setNavigationOptions]);
 
   const isEmpty = useMemo(() => {
     return (

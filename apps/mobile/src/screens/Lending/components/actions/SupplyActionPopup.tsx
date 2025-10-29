@@ -21,7 +21,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { findChain } from '@/utils/chain';
 import { CustomMarket, marketsData } from '../../config/market';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { noop } from 'lodash';
+import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { parseUnits } from 'ethers/lib/utils';
@@ -31,6 +31,12 @@ import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
+import {
+  CUSTOM_HISTORY_ACTION,
+  CUSTOM_HISTORY_TITLE_TYPE,
+} from '@/screens/Transaction/components/type';
+import { transactionHistoryService } from '@/core/services';
+import { useRefreshHistoryId } from '../../hooks';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -43,6 +49,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [supplyTx, setSupplyTx] = useState<any>(null);
   const [approveTxs, setApproveTxs] = useState<any>();
+  const { refresh } = useRefreshHistoryId();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -307,9 +314,23 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         toast.info('please retry');
         throw new Error('no txs');
       }
-      await openDirect({
+      const result = await openDirect({
         txs: txsForMiniApproval,
+        ga: {
+          customAction: CUSTOM_HISTORY_ACTION.LENDING,
+          customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY,
+        },
       });
+      const txId = last(result);
+      if (txId) {
+        transactionHistoryService.setCustomTxItem(
+          currentAccount.address,
+          txsForMiniApproval[0].chainId,
+          txId,
+          { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY },
+        );
+      }
+      refresh();
       toast.success(
         `${t('page.Lending.supplyDetail.actions')} ${t(
           'page.Lending.submitted',
@@ -330,6 +351,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     openDirect,
     t,
     onClose,
+    refresh,
   ]);
 
   useEffect(() => {
