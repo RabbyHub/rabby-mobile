@@ -4,7 +4,7 @@ import { openapi } from '@/core/request';
 
 export const CURE_CACHE_TIME = 10 * 60 * 1000; // 10 min
 // export const CURE_CACHE_TIME = 7 * 24 * 60 * 60 * 1000; // TODO: 7 days min tmp for test
-export const LONG_TIME_UNTIL_EXPIRED = 4 * 60 * 60 * 1000; // 4 days expired is invalid
+export const LONG_TIME_UNTIL_EXPIRED = 5 * 24 * 60 * 60 * 1000; // 5 days expired is invalid
 
 export interface IBalance24hData {
   data: { total_usd_value: number };

@@ -100,6 +100,7 @@ import {
 } from './components/OfflineChainNotify';
 import { PerpsPnl } from './components/PerpsPnl';
 import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
+import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -359,6 +360,7 @@ function MultiAddressHome(): JSX.Element {
   useEffect(() => {
     setTimeout(() => {
       deleteLongTimeCurveCache();
+      deleteLongTime24hBalanceCache();
     }, 0);
   }, []);
 
