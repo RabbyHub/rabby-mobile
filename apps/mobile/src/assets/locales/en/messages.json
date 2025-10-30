@@ -2512,6 +2512,8 @@
         "title": "Deposit USDC / USDT",
         "desc": "Pay Gas Fees on All Chains",
         "login": "Log in GasAccount",
+        "depositTitle": "Deposit USDC/USDT Pay Gas Fees",
+        "depositDesc": "on All Chains when you’re out of gas",
         "loginAndClaim": "Log in and Claim {{amount}}",
         "loginTips1": "Pay gas fees for",
         "loginTips2": "any address on any chain",

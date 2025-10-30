@@ -2,6 +2,10 @@ import ImgGuide1 from '@/assets2024/images/gasAccount/guide1.png';
 import ImgGuide2 from '@/assets2024/images/gasAccount/guide2.png';
 import ImgGuide3 from '@/assets2024/images/gasAccount/guide3.png';
 import ImgGuide4 from '@/assets2024/images/gasAccount/guide4.png';
+import ImgGuideDark1 from '@/assets2024/images/gasAccount/guide1-dark.png';
+import ImgGuideDark2 from '@/assets2024/images/gasAccount/guide2-dark.png';
+import ImgGuideDark3 from '@/assets2024/images/gasAccount/guide3-dark.png';
+import ImgGuideDark4 from '@/assets2024/images/gasAccount/guide4-dark.png';
 
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -58,29 +62,29 @@ export const GasAccountGuidePopup: React.FC<{
       {
         title: t('component.gasAccount.about.title1'),
         description: t('component.gasAccount.about.desc1'),
-        image: ImgGuide1,
+        image: isLight ? ImgGuide1 : ImgGuideDark1,
         button: t('global.next'),
       },
       {
         title: t('component.gasAccount.about.title2'),
         description: t('component.gasAccount.about.desc2'),
-        image: ImgGuide2,
+        image: isLight ? ImgGuide2 : ImgGuideDark2,
         button: t('global.next'),
       },
       {
         title: t('component.gasAccount.about.title3'),
         description: t('component.gasAccount.about.desc3'),
-        image: ImgGuide3,
+        image: isLight ? ImgGuide3 : ImgGuideDark3,
         button: t('global.next'),
       },
       {
         title: t('component.gasAccount.about.title4'),
         description: t('component.gasAccount.about.desc4'),
-        image: ImgGuide4,
+        image: isLight ? ImgGuide4 : ImgGuideDark4,
         button: t('global.gotIt'),
       },
     ];
-  }, [t]);
+  }, [isLight, t]);
 
   const activeStep = useMemo(() => {
     return steps[activeIndex];
