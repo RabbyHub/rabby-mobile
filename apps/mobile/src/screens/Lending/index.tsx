@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect } from 'react';
 import { View, Platform } from 'react-native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 
@@ -10,25 +10,19 @@ import {
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
-import { CHAINS_ENUM } from '@debank/common';
-import { ChainSelector } from './ChainSelector';
-import SummaryCard from './SummaryCard';
 import PoolContainer from './PoolContainer';
-import { useLendingData, useLendingSummary } from './hooks';
-import EmptySummaryCard from './EmptySummaryCard';
+import { useLendingData } from './hooks';
 import { LendingHeader } from './components/Header';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 const isAndroid = Platform.OS === 'android';
 
 function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
-  const [chainEnum, setChainEnum] = useState<CHAINS_ENUM>(CHAINS_ENUM.ETH);
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
   const { fetchData } = useLendingData(currentAccount?.address, true);
-  const { apyInfo, iUserSummary, loading } = useLendingSummary();
 
   useEffect(() => {
     fetchData(true);
@@ -54,30 +48,12 @@ function DashBoardScreen(): JSX.Element {
     });
   }, [Header, setNavigationOptions]);
 
-  const isEmpty = useMemo(() => {
-    return (
-      loading || iUserSummary?.totalLiquidityMarketReferenceCurrency === '0'
-    );
-  }, [loading, iUserSummary]);
-
   return (
     <NormalScreenContainer2024
       type={isLight ? 'bg0' : 'bg1'}
       overwriteStyle={styles.overwriteStyle}>
       <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       <View style={styles.container}>
-        <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
-        {isEmpty ? (
-          <EmptySummaryCard />
-        ) : (
-          <SummaryCard
-            netWorth={iUserSummary?.netWorthUSD || ''}
-            supplied={iUserSummary?.totalLiquidityUSD || ''}
-            borrowed={iUserSummary?.totalBorrowsUSD || ''}
-            netApy={apyInfo?.netAPY || 0}
-            healthFactor={iUserSummary?.healthFactor || ''}
-          />
-        )}
         <PoolContainer />
       </View>
     </NormalScreenContainer2024>

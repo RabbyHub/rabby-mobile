@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { Dimensions } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Dimensions, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -9,6 +9,11 @@ import BorrowPoolList from './BorrowPoolList';
 import { DynamicCustomMaterialTabBar } from '../TokenDetail/components/CustomTabBar';
 import CustomLabel from '../TokenDetail/components/CustomLabel';
 import { useTranslation } from 'react-i18next';
+import EmptySummaryCard from './EmptySummaryCard';
+import SummaryCard from './SummaryCard';
+import { useLendingSummary } from './hooks';
+import { CHAINS_ENUM } from '@debank/common';
+import { ChainSelector } from './ChainSelector';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -49,6 +54,44 @@ const PoolContainer = () => {
     ),
     [colors2024, t, styles.label],
   );
+  const [chainEnum, setChainEnum] = useState<CHAINS_ENUM>(CHAINS_ENUM.ETH);
+
+  const { apyInfo, iUserSummary, loading } = useLendingSummary();
+
+  const isEmpty = useMemo(() => {
+    return (
+      loading || iUserSummary?.totalLiquidityMarketReferenceCurrency === '0'
+    );
+  }, [loading, iUserSummary]);
+
+  const renderHeader = useCallback(() => {
+    return (
+      <View style={styles.headerContainer}>
+        <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
+        {isEmpty ? (
+          <EmptySummaryCard />
+        ) : (
+          <SummaryCard
+            netWorth={iUserSummary?.netWorthUSD || ''}
+            supplied={iUserSummary?.totalLiquidityUSD || ''}
+            borrowed={iUserSummary?.totalBorrowsUSD || ''}
+            netApy={apyInfo?.netAPY || 0}
+            healthFactor={iUserSummary?.healthFactor || ''}
+          />
+        )}
+      </View>
+    );
+  }, [
+    apyInfo?.netAPY,
+    chainEnum,
+    iUserSummary?.healthFactor,
+    iUserSummary?.netWorthUSD,
+    iUserSummary?.totalBorrowsUSD,
+    iUserSummary?.totalLiquidityUSD,
+    isEmpty,
+    styles.headerContainer,
+  ]);
+
   const renderTabBar = React.useCallback(
     (_props: any) => (
       <DynamicCustomMaterialTabBar
@@ -76,7 +119,9 @@ const PoolContainer = () => {
   return (
     <Tabs.Container
       renderTabBar={renderTabBar}
-      tabBarHeight={30}
+      tabBarHeight={0}
+      renderHeader={renderHeader}
+      headerHeight={0}
       minHeaderHeight={0}
       containerStyle={styles.container}
       headerContainerStyle={styles.tabBarWrap}>
@@ -98,7 +143,9 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
   },
-
+  headerContainer: {
+    marginBottom: 24,
+  },
   riskContainer: {
     paddingHorizontal: 20,
     marginTop: 12,
@@ -106,7 +153,6 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   container: {
     flex: 1,
     width: '100%',
-    marginTop: 24,
   },
   innerContainer: {
     height: '100%',
