@@ -123,11 +123,11 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           startTime,
         );
         let hasNewTx = true;
-        if (startTime !== 0) {
+        if (latest_time !== 0) {
           try {
             const { has_new_tx } = await openapi.hasNewTxFrom({
               address,
-              startTime,
+              startTime: latest_time,
             });
             hasNewTx = has_new_tx;
           } catch (e) {
@@ -141,7 +141,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           token_dict: {},
         };
         if (hasNewTx) {
-          console.log('listTxHisotry', address);
           res = await openapi.listTxHisotry({
             id: address,
             start_time: startTime,
@@ -400,7 +399,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
         const address = item.toLowerCase();
         const latestUpdateTime = updateHistoryTime[address] || 0;
         const isUserRealTimeApi =
-          latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
+          latestUpdateTime > Date.now() - 24 * 5 * 60 * 60 * 1000; // 5 days ago
         updateHistoryTimeSingleAddress(address);
         queue.add(async () => {
           try {
