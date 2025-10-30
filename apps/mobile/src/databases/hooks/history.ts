@@ -13,6 +13,8 @@ import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
 import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 
+const USE_REALTIME_API_DURATION = 24 * 5 * 60 * 60 * 1000; // use async history api if user not opened app in 5 days
+
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
     q.on('empty', () => {
@@ -352,8 +354,8 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           const isForceFetchFromApi = force || (await isNeedSyncData(address));
           if (isForceFetchFromApi) {
             const latestUpdateTime = updateHistoryTime[address] || 0;
-            const isUserRealTiemApi =
-              latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
+            const isUseRealTimeApi =
+              latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
             updateHistoryTimeSingleAddress(address);
             console.debug(
               '🔍syncTop10History CUSTOM_LOGGER:=>: update sync address:',
@@ -361,7 +363,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
             );
             queue.add(async () => {
               try {
-                await syncUserAllHistory(address, 0, 0, isUserRealTiemApi);
+                await syncUserAllHistory(address, 0, 0, isUseRealTimeApi);
               } catch (error) {
                 console.error(
                   `syncTop10History Error fetching data for ${address.slice(
@@ -399,7 +401,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
         const address = item.toLowerCase();
         const latestUpdateTime = updateHistoryTime[address] || 0;
         const isUserRealTimeApi =
-          latestUpdateTime > Date.now() - 24 * 5 * 60 * 60 * 1000; // 5 days ago
+          latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
         updateHistoryTimeSingleAddress(address);
         queue.add(async () => {
           try {
@@ -425,10 +427,10 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
 
   const syncSingleAddress = useMemoizedFn(address => {
     const latestUpdateTime = updateHistoryTime[address] || 0;
-    const isUserRealTiemApi =
-      latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
+    const isUseRealTimeApi =
+      latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
     updateHistoryTimeSingleAddress(address);
-    syncUserAllHistory(address.toLowerCase(), 0, 0, isUserRealTiemApi);
+    syncUserAllHistory(address.toLowerCase(), 0, 0, isUseRealTimeApi);
   });
 
   return {
