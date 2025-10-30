@@ -28,6 +28,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { API_ETH_MOCK_ADDRESS } from './utils/constant';
 import buildinProvider from '@/core/apis/buildinProvider';
 import { DisplayPoolReserveInfo } from './type';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const provider = new ethers.providers.Web3Provider(
   buildinProvider.currentProvider,
@@ -120,7 +121,10 @@ const useRefreshHistoryId = () => {
   return { refreshHistoryId, refresh };
 };
 
-const useLendingData = (address?: string, init: boolean = false) => {
+const useLendingData = (init: boolean = false) => {
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const [reserves, setReserves] = useAtom(reservesAtom);
   const [userReserves, setUserReserves] = useAtom(userReservesAtom);
   const [walletBalances, setWalletBalances] = useAtom(walletBalancesAtom);
@@ -129,18 +133,18 @@ const useLendingData = (address?: string, init: boolean = false) => {
 
   const fetchData = useCallback(
     async (ignoreLoading: boolean = false) => {
-      if (!address || loading) {
+      if (!currentAccount?.address || loading) {
         return;
       }
       if (!ignoreLoading) {
         setLoading(true);
       }
-      fetchContractData(address)
+      fetchContractData(currentAccount?.address)
         .then(data => {
           setReserves(data?.reserves);
           setUserReserves(data?.userReserves);
           setWalletBalances(data?.walletBalances || { 0: [], 1: [] });
-          setCurrentAddress(address);
+          setCurrentAddress(currentAccount?.address);
           setLoading(false);
         })
         .finally(() => {
@@ -148,7 +152,7 @@ const useLendingData = (address?: string, init: boolean = false) => {
         });
     },
     [
-      address,
+      currentAccount?.address,
       loading,
       setCurrentAddress,
       setLoading,
@@ -159,10 +163,14 @@ const useLendingData = (address?: string, init: boolean = false) => {
   );
 
   useEffect(() => {
-    if (!address || !init) {
+    if (!currentAccount?.address || !init) {
       return;
     }
-    if (currentAddress && isSameAddress(currentAddress, address) && reserves) {
+    if (
+      currentAddress &&
+      isSameAddress(currentAddress, currentAccount?.address) &&
+      reserves
+    ) {
       return;
     }
     if (loading) {
@@ -170,7 +178,14 @@ const useLendingData = (address?: string, init: boolean = false) => {
     }
 
     fetchData();
-  }, [address, reserves, currentAddress, loading, fetchData, init]);
+  }, [
+    currentAccount?.address,
+    reserves,
+    currentAddress,
+    loading,
+    fetchData,
+    init,
+  ]);
 
   return {
     reserves,

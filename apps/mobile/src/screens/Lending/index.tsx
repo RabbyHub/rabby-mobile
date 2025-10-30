@@ -19,10 +19,7 @@ const isAndroid = Platform.OS === 'android';
 function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
-  const { fetchData } = useLendingData(currentAccount?.address, true);
+  const { fetchData } = useLendingData();
 
   useEffect(() => {
     fetchData(true);

@@ -15,7 +15,6 @@ import TokenIcon from './components/TokenIcon';
 import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
 import BigNumber from 'bignumber.js';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
@@ -27,11 +26,8 @@ const BorrowPoolList = () => {
 
   const { displayPoolReserves, reserves, iUserSummary, loading } =
     useLendingSummary();
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
   const { t } = useTranslation();
-  const { fetchData } = useLendingData(currentAccount?.address);
+  const { fetchData } = useLendingData();
   const sortReserves = useMemo(() => {
     return [...(displayPoolReserves || [])]
       .filter(item => {

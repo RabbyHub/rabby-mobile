@@ -16,7 +16,6 @@ import TokenIcon from './components/TokenIcon';
 import { CHAINS_ENUM } from '@debank/common';
 import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
@@ -28,10 +27,7 @@ const SupplyPoolList = () => {
   const { displayPoolReserves, reserves, loading, iUserSummary } =
     useLendingSummary();
   const { t } = useTranslation();
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
-  const { fetchData } = useLendingData(currentAccount?.address);
+  const { fetchData } = useLendingData();
 
   const sortReserves = useMemo(() => {
     return [...(displayPoolReserves || [])]

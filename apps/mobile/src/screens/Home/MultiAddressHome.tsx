@@ -104,6 +104,7 @@ import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { LendingHF } from './components/LendingHF';
+import { useLendingData } from '../Lending/hooks';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -145,6 +146,8 @@ function MultiAddressHome(): JSX.Element {
     forceUpdate,
     triggerUpdate: triggerUpdateAlert,
   } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
+  const { fetchData: fetchLendingData } = useLendingData();
+
   const MENU_ARR = useMemo(
     () =>
       [
@@ -501,16 +504,18 @@ function MultiAddressHome(): JSX.Element {
     ]).finally(() => {
       // update at background
       forceUpdate();
+      fetchLendingData();
       syncTop10History(true);
       currencyService.syncCurrencyList(true);
     });
   }, [
     triggerUpdate,
     refreshCurve,
-    forceUpdate,
-    syncTop10History,
     checkAddressesEligibility,
     top50PrivateKeyAccounts,
+    forceUpdate,
+    fetchLendingData,
+    syncTop10History,
   ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();

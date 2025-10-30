@@ -1,4 +1,3 @@
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { useLendingData, useLendingSummary } from '@/screens/Lending/hooks';
 import { getHealthStatusColor } from '@/screens/Lending/utils';
@@ -8,10 +7,7 @@ import { Text } from 'react-native-gesture-handler';
 
 export const LendingHF: React.FC<{}> = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
-  useLendingData(currentAccount?.address);
+  useLendingData(true);
   const { iUserSummary } = useLendingSummary();
 
   return iUserSummary?.healthFactor && Number(iUserSummary.healthFactor) > 0 ? (
