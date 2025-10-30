@@ -5,7 +5,7 @@ export const getHealthStatusColor = (
   isLight: boolean,
   healthFactor: number,
 ) => {
-  if (!healthFactor) {
+  if (!healthFactor || healthFactor <= 0) {
     return {
       color: 'transparent',
       backgroundColor: 'transparent',
@@ -33,4 +33,8 @@ export const getHealthStatusColor = (
       : ThemeColors2024.light['green-default'],
     backgroundColor: ThemeColors2024.light['green-light-4'],
   };
+};
+
+export const isHFEmpty = (healthFactor: number) => {
+  return !healthFactor || healthFactor <= 0;
 };

@@ -7,7 +7,7 @@ import {
   formatAmountValueKMB,
   formatPercent,
 } from '@/screens/TokenDetail/util';
-import { getHealthStatusColor } from '../../utils';
+import { getHealthStatusColor, isHFEmpty } from '../../utils';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import HealthFactorText from '../HealthFactorText';
 import {
@@ -110,7 +110,12 @@ const SupplyActionOverView: React.FC<
           <Text style={styles.apy}>{apyText}</Text>
         </View>
 
-        <View style={[styles.item, styles.hfContainer]}>
+        <View
+          style={[
+            styles.item,
+            styles.hfContainer,
+            isHFEmpty(Number(healthFactor || '0')) && styles.hidden,
+          ]}>
           <Text style={styles.title}>{t('page.Lending.hf')}</Text>
           <Text
             style={[
@@ -201,6 +206,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   hfContainer: {
     gap: 6,
     marginTop: 26,
+  },
+  hidden: {
+    display: 'none',
   },
   hfValue: {
     fontSize: 17,

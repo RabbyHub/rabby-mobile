@@ -4,7 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
-import { getHealthStatusColor } from '../../utils';
+import { getHealthStatusColor, isHFEmpty } from '../../utils';
 import HealthFactorText from '../HealthFactorText';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
@@ -62,7 +62,12 @@ const WithdrawActionOverView: React.FC<
           </Text>
         </View>
 
-        <View style={[styles.item, styles.hfContainer]}>
+        <View
+          style={[
+            styles.item,
+            styles.hfContainer,
+            isHFEmpty(Number(healthFactor || '0')) && styles.hidden,
+          ]}>
           <Text style={styles.title}>{t('page.Lending.hf')}</Text>
           <Text
             style={[
@@ -153,6 +158,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   hfContainer: {
     gap: 6,
     marginTop: 26,
+  },
+  hidden: {
+    display: 'none',
   },
   hfValue: {
     fontSize: 17,

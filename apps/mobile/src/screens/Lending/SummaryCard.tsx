@@ -7,7 +7,7 @@ import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import { formatNetworth, formatNum } from '@/utils/math';
 import { formatPercent } from '../TokenDetail/util';
 import { estDaily } from './utils/format';
-import { getHealthStatusColor } from './utils';
+import { getHealthStatusColor, isHFEmpty } from './utils';
 import IconCloseCC from '@/assets2024/icons/common/close-bold-cc.svg';
 import RcIconWarningCircleCC from '@/assets2024/icons/lending/more.svg';
 import AAVEIcon from '@/assets2024/icons/lending/aave.svg';
@@ -47,7 +47,7 @@ const SummaryCard = (props: IProps) => {
     });
   };
   const extraInfo = useMemo(() => {
-    if (!props?.healthFactor) {
+    if (!props?.healthFactor || isHFEmpty(Number(props.healthFactor || '0'))) {
       return null;
     }
     const healthFactor = Number(props.healthFactor || '0');
@@ -114,7 +114,11 @@ const SummaryCard = (props: IProps) => {
             </Text>
           </View>
         </View>
-        <View style={styles.healthFactorContainer}>
+        <View
+          style={[
+            styles.healthFactorContainer,
+            isHFEmpty(Number(props.healthFactor || '0')) && styles.hidden,
+          ]}>
           <View style={styles.healthFactorHeader}>
             <Text style={styles.sectionHeader}>{t('page.Lending.hf')}</Text>
             <Pressable hitSlop={20} onPress={handleShowHFDescription}>
@@ -286,6 +290,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   healthFactorContainer: {
     flex: 1,
     gap: 2,
+  },
+  hidden: {
+    display: 'none',
   },
   healthFactorHeader: {
     flexDirection: 'row',
