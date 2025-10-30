@@ -25,6 +25,8 @@ import WithdrawActionOverView from './WithdrawActionOverView';
 import {
   API_ETH_MOCK_ADDRESS,
   HF_RISK_CHECKBOX_THRESHOLD,
+  MANUAL_INPUT_LIQUIDATION_HF_THRESHOLD,
+  MAX_CLICK_WITHDRAW_HF_THRESHOLD,
 } from '../../utils/constant';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
@@ -38,6 +40,7 @@ import {
 } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
+import { calculateMaxWithdrawAmount } from '../../utils/calculateMaxWithdrawAmount';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -93,6 +96,37 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     }).toString();
   }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
 
+  const withdrawAmounts = useMemo(() => {
+    const targetPool = formattedPoolReservesAndIncentives.find(item => {
+      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+        ? isSameAddress(
+            item.underlyingAsset,
+            wrapperToken[reserve.chain].address,
+          )
+        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+    });
+    if (!targetPool) {
+      return {
+        clickAmount: 0,
+        manualAmount: 0,
+      };
+    }
+    return {
+      clickAmount: calculateMaxWithdrawAmount(
+        userSummary,
+        reserve,
+        targetPool,
+        MAX_CLICK_WITHDRAW_HF_THRESHOLD,
+      ).toNumber(),
+      manualAmount: calculateMaxWithdrawAmount(
+        userSummary,
+        reserve,
+        targetPool,
+        MANUAL_INPUT_LIQUIDATION_HF_THRESHOLD,
+      ).toNumber(),
+    };
+  }, [formattedPoolReservesAndIncentives, userSummary, reserve]);
+
   const isRisky = useMemo(() => {
     if (!afterHF) {
       return false;
@@ -108,13 +142,17 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       BigNumber(amount),
     );
     const balanceUSD = BigNumber(balance).multipliedBy(
-      BigNumber(reserve.reserve.priceInUSD),
+      BigNumber(reserve.reserve.formattedPriceInMarketReferenceCurrency),
     );
     return {
       balance: balance.toString(),
       balanceUSD: balanceUSD.toString(),
     };
-  }, [amount, reserve.reserve.priceInUSD, reserve.underlyingBalance]);
+  }, [
+    amount,
+    reserve.reserve.formattedPriceInMarketReferenceCurrency,
+    reserve.underlyingBalance,
+  ]);
 
   const buildTransactions = useCallback(async () => {
     if (!amount || amount === '0' || !currentAccount) {
@@ -240,9 +278,15 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           {t('page.Lending.popup.amount')}
         </Text>
         <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-          reserve.underlyingBalance || '0',
+          withdrawAmounts.clickAmount.toString() || '0',
         )}${reserve.reserve.symbol}($${formatAmountValueKMB(
-          reserve.underlyingBalanceUSD || '0',
+          BigNumber(withdrawAmounts.clickAmount)
+            .multipliedBy(
+              BigNumber(
+                reserve.reserve.formattedPriceInMarketReferenceCurrency,
+              ),
+            )
+            .toString(),
         )}) ${t('page.Lending.popup.available')}`}</Text>
       </View>
       <TokenAmountInput
@@ -250,10 +294,12 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         onChange={setAmount}
         symbol={reserve.reserve.symbol}
         handleClickMaxButton={() => {
-          setAmount(reserve.underlyingBalance || '0');
+          setAmount(withdrawAmounts.clickAmount.toString() || '0');
         }}
-        tokenAmount={Number(reserve.underlyingBalance || '0')}
-        price={Number(reserve.reserve.priceInUSD || '0')}
+        tokenAmount={withdrawAmounts.manualAmount}
+        price={Number(
+          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+        )}
         style={styles.amountInput}
         chain={CHAINS_ENUM.ETH}
       />

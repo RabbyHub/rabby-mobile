@@ -75,7 +75,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       user: userSummary,
       amount,
       debt: reserve.variableBorrows,
-      usdPrice: reserve.reserve.priceInUSD,
+      usdPrice: reserve.reserve.formattedPriceInMarketReferenceCurrency,
     }).toString();
   }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
 
@@ -338,7 +338,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       ? reserve.variableBorrows
       : reserve.walletBalance;
     const usdValue = BigNumber(miniAmount || '0')
-      .multipliedBy(reserve.reserve.priceInUSD)
+      .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
       .toString();
     return {
       amount: miniAmount,
@@ -347,7 +347,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   }, [
     reserve.walletBalance,
     reserve.variableBorrows,
-    reserve.reserve.priceInUSD,
+    reserve.reserve.formattedPriceInMarketReferenceCurrency,
   ]);
 
   const afterRepayAmount = useMemo(() => {
@@ -358,9 +358,12 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
 
   const afterRepayUsdValue = useMemo(() => {
     return BigNumber(afterRepayAmount || '0')
-      .multipliedBy(reserve.reserve.priceInUSD)
+      .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
       .toString();
-  }, [afterRepayAmount, reserve.reserve.priceInUSD]);
+  }, [
+    afterRepayAmount,
+    reserve.reserve.formattedPriceInMarketReferenceCurrency,
+  ]);
 
   useEffect(() => {
     checkApproveStatus();
@@ -408,7 +411,9 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           setAmount(repayAmount.amount || '0');
         }}
         tokenAmount={Number(repayAmount.amount || '0')}
-        price={Number(reserve.reserve.priceInUSD || '0')}
+        price={Number(
+          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+        )}
         style={styles.amountInput}
         chain={CHAINS_ENUM.ETH}
       />

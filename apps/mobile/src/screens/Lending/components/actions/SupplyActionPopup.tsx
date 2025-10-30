@@ -99,14 +99,14 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       return undefined;
     }
     return BigNumber(amount)
-      .multipliedBy(reserve.reserve.priceInUSD)
+      .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
       .multipliedBy(reserve.reserve.formattedBaseLTVasCollateral)
       .plus(BigNumber(userSummary?.availableBorrowsUSD || '0'))
       .toString();
   }, [
     amount,
     reserve.reserve.formattedBaseLTVasCollateral,
-    reserve.reserve.priceInUSD,
+    reserve.reserve.formattedPriceInMarketReferenceCurrency,
     userSummary?.availableBorrowsUSD,
   ]);
 
@@ -408,7 +408,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           setAmount(reserve.walletBalance || '0');
         }}
         tokenAmount={Number(reserve.walletBalance || '0')}
-        price={Number(reserve.reserve.priceInUSD || '0')}
+        price={Number(
+          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+        )}
         style={styles.amountInput}
         chain={CHAINS_ENUM.ETH}
       />

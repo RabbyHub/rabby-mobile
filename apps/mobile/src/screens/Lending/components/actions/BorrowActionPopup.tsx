@@ -189,10 +189,17 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
   const availableToBorrowBalance = useMemo(() => {
     return BigNumber(userSummary?.availableBorrowsUSD || '0')
-      .dividedBy(BigNumber(reserve.reserve.priceInUSD || '0'))
+      .dividedBy(
+        BigNumber(
+          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+        ),
+      )
       .multipliedBy(BORROW_SAFE_MARGIN)
       .toString();
-  }, [userSummary?.availableBorrowsUSD, reserve.reserve.priceInUSD]);
+  }, [
+    userSummary?.availableBorrowsUSD,
+    reserve.reserve.formattedPriceInMarketReferenceCurrency,
+  ]);
 
   useEffect(() => {
     buildTransactions();
@@ -266,7 +273,9 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           setAmount(availableToBorrowBalance || '0');
         }}
         tokenAmount={Number(availableToBorrowBalance || '0')}
-        price={Number(reserve.reserve.priceInUSD || '0')}
+        price={Number(
+          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+        )}
         style={styles.amountInput}
         chain={CHAINS_ENUM.ETH}
       />

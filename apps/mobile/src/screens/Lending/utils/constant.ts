@@ -27,3 +27,9 @@ export const API_ETH_MOCK_ADDRESS =
   '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
 export const referralCode = '1608';
+
+// withdraw：手动输入 最大可提取金额的健康因子阈值
+export const MANUAL_INPUT_LIQUIDATION_HF_THRESHOLD = 1.01;
+
+// withdraw：max点击输入 最大可提取金额的健康因子阈值
+export const MAX_CLICK_WITHDRAW_HF_THRESHOLD = 1.05;
