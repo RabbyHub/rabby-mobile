@@ -25,7 +25,6 @@ import WithdrawActionOverView from './WithdrawActionOverView';
 import {
   API_ETH_MOCK_ADDRESS,
   HF_RISK_CHECKBOX_THRESHOLD,
-  MANUAL_INPUT_LIQUIDATION_HF_THRESHOLD,
   MAX_CLICK_WITHDRAW_HF_THRESHOLD,
 } from '../../utils/constant';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
@@ -96,7 +95,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     }).toString();
   }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
 
-  const withdrawAmounts = useMemo(() => {
+  const withdrawAmount = useMemo(() => {
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
@@ -106,25 +105,14 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
     });
     if (!targetPool) {
-      return {
-        clickAmount: 0,
-        manualAmount: 0,
-      };
+      return 0;
     }
-    return {
-      clickAmount: calculateMaxWithdrawAmount(
-        userSummary,
-        reserve,
-        targetPool,
-        MAX_CLICK_WITHDRAW_HF_THRESHOLD,
-      ).toNumber(),
-      manualAmount: calculateMaxWithdrawAmount(
-        userSummary,
-        reserve,
-        targetPool,
-        MANUAL_INPUT_LIQUIDATION_HF_THRESHOLD,
-      ).toNumber(),
-    };
+    return calculateMaxWithdrawAmount(
+      userSummary,
+      reserve,
+      targetPool,
+      MAX_CLICK_WITHDRAW_HF_THRESHOLD,
+    ).toNumber();
   }, [formattedPoolReservesAndIncentives, userSummary, reserve]);
 
   const isRisky = useMemo(() => {
@@ -278,9 +266,9 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           {t('page.Lending.popup.amount')}
         </Text>
         <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-          withdrawAmounts.clickAmount.toString() || '0',
+          withdrawAmount.toString() || '0',
         )}${reserve.reserve.symbol}($${formatAmountValueKMB(
-          BigNumber(withdrawAmounts.clickAmount)
+          BigNumber(withdrawAmount)
             .multipliedBy(
               BigNumber(
                 reserve.reserve.formattedPriceInMarketReferenceCurrency,
@@ -294,9 +282,9 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         onChange={setAmount}
         symbol={reserve.reserve.symbol}
         handleClickMaxButton={() => {
-          setAmount(withdrawAmounts.clickAmount.toString() || '0');
+          setAmount(withdrawAmount.toString() || '0');
         }}
-        tokenAmount={withdrawAmounts.manualAmount}
+        tokenAmount={withdrawAmount}
         price={Number(
           reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
         )}
