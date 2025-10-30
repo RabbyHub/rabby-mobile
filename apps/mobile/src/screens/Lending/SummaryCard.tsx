@@ -257,7 +257,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: 'rgba(50, 60, 89, 1)',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     paddingHorizontal: 12,
@@ -306,7 +306,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   suppliedAndBorrowedTitle: {
     fontSize: 12,
-    color: ThemeColors2024.light['neutral-secondary'],
+    color: ThemeColors2024.dark['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
   estAndHealthContainer: {
@@ -358,8 +358,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
   },
   healthFactorValue: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['green-default'],
   },
@@ -381,7 +382,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   triangle: {
     position: 'absolute',
-    bottom: -14,
+    bottom: -16,
     left: '50%',
     color: 'black',
     transform: [{ translateX: -6 }],

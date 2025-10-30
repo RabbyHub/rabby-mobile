@@ -182,6 +182,7 @@ function MultiAddressHome(): JSX.Element {
           key: MultiHomeFeatTitle.Lending,
           title: t('page.home.services.lending'),
           icon: RcIconLending,
+          color: colors2024['brand-default'],
         },
         {
           key: MultiHomeFeatTitle.Points,
@@ -236,7 +237,14 @@ function MultiAddressHome(): JSX.Element {
         isSuccess?: boolean;
         showGiftIcon?: boolean;
       }[],
-    [alertInfo.total, t, historyCount, isEligible],
+    [
+      t,
+      colors2024,
+      historyCount?.fail,
+      historyCount?.success,
+      alertInfo.total,
+      isEligible,
+    ],
   );
 
   useEffect(() => {

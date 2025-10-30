@@ -15,7 +15,7 @@ interface HealthFactorBarProps {
 export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
   healthFactor,
 }) => {
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
   const hfNumber = Number(healthFactor || '0');
@@ -43,9 +43,21 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
           { left: `${Math.min(dotPosition, 100)}%` },
         ]}>
         <View style={styles.valueContainer}>
-          <Text style={[styles.hfValue, { color: hfColor.color }]}>
-            {formatNum(healthFactor)}
-          </Text>
+          <View>
+            <Text style={[styles.hfValue, { color: hfColor.color }]}>
+              {formatNum(healthFactor)}
+            </Text>
+            <View
+              style={[
+                styles.triangle,
+                makeTriangleStyle({
+                  dir: 'down',
+                  size: 6,
+                  color: hfColor.color,
+                }),
+              ]}
+            />
+          </View>
           {hfNumber < HF_COLOR_GOOD_THRESHOLD && (
             <View
               style={[
@@ -66,17 +78,6 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
             </View>
           )}
         </View>
-
-        <View
-          style={[
-            styles.triangle,
-            makeTriangleStyle({
-              dir: 'down',
-              size: 6,
-              color: hfColor.color,
-            }),
-          ]}
-        />
       </View>
 
       <View style={styles.liquidationContainer}>
@@ -126,6 +127,8 @@ const getStyles = createGetStyles2024(ctx => ({
   triangle: {
     position: 'absolute',
     top: '100%',
+    left: '50%',
+    transform: [{ translateX: -6 }],
     color: 'black',
   },
   liquidationContainer: {

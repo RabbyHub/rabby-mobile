@@ -58,7 +58,7 @@ export function ChainSelector({
     disable?: boolean;
   }
 >) {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const chainItem = useFindChain({
     enum: chainEnum,
@@ -81,13 +81,18 @@ export function ChainSelector({
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         rootViewType: 'View',
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
       },
       onChange: chain => {
         removeChainModal();
         onChange?.(chain);
       },
     });
-  }, [chainEnum, removeChainModal, t, onChange]);
+  }, [removeChainModal, chainEnum, t, isLight, colors2024, onChange]);
 
   return (
     <>

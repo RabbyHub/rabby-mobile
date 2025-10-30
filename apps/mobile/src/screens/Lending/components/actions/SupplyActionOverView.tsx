@@ -45,6 +45,7 @@ const SupplyActionOverView: React.FC<
       title: t('page.Lending.modalDesc.availableToBorrow'),
       titleStyle: {
         marginTop: 12,
+        fontWeight: '900',
       },
       sectionStyle: {
         marginTop: 8,

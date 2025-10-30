@@ -167,7 +167,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
         </View>
         <View style={[styles.userInfoContainer, styles.card, styles.infoCard]}>
           <View style={styles.userInfoItem}>
-            <View style={styles.userInfoItem}>
+            <View style={styles.availableToSupplyItem}>
               <WalletIcon
                 type={currentAccount?.type}
                 address={currentAccount?.address}
@@ -284,7 +284,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenInfos: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   poolInfoItems: {
     flexDirection: 'row',
@@ -341,6 +341,11 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 4,
+  },
+  availableToSupplyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   userInfoItemTitle: {
     fontSize: 14,

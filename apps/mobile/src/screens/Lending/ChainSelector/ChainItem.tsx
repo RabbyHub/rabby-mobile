@@ -73,10 +73,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     width: '100%',
     gap: 12,
-    paddingTop: 14,
-    paddingBottom: 14,
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingLeft: 12,
+    paddingRight: 12,
     marginBottom: 8,
     borderRadius: 20,
     borderWidth: 1,
@@ -87,9 +87,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['brand-light-2'],
   },
   logo: {
-    width: 38,
-    height: 38,
-    borderRadius: 16,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
   },
   contentContainer: {
     flexDirection: 'row',
@@ -103,8 +103,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   nameText: {
     fontSize: 16,
     lineHeight: 20,
-    color: colors2024['neutral-foot'],
-    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
   selectChainItemBalance: {

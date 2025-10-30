@@ -91,7 +91,7 @@ const SupplyPoolList = () => {
         enableDismissOnClose: true,
         handleStyle: {
           backgroundColor: isLight
-            ? colors2024['neutral-bg-2']
+            ? colors2024['neutral-bg-0']
             : colors2024['neutral-bg-1'],
         },
       },

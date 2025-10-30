@@ -38,6 +38,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       title: t('page.Lending.borrowOverview.liquidityPenalty'),
       titleStyle: {
         marginTop: 12,
+        fontWeight: '900',
       },
       sectionStyle: {
         marginTop: 8,
@@ -75,6 +76,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       title: t('page.Lending.borrowOverview.availableToBorrow'),
       titleStyle: {
         marginTop: 12,
+        fontWeight: '900',
       },
       sectionStyle: {
         marginTop: 8,
@@ -209,7 +211,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
         </View>
         <View style={[styles.userInfoContainer, styles.card, styles.infoCard]}>
           <View style={styles.userInfoItem}>
-            <View style={styles.userInfoItem}>
+            <View style={styles.myBorrowItem}>
               <WalletIcon
                 type={currentAccount?.type}
                 address={currentAccount?.address}
@@ -360,7 +362,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenInfos: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   poolInfoItems: {
     flexDirection: 'row',
@@ -417,6 +419,11 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 4,
+  },
+  myBorrowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   userInfoItemTitle: {
     fontSize: 14,

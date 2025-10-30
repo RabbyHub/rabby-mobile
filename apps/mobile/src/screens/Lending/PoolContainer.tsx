@@ -225,6 +225,6 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   label: {
     margin: 0,
-    marginBottom: 11,
+    marginBottom: 10,
   },
 }));

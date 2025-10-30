@@ -122,7 +122,7 @@ export const TokenAmountInput = ({
         <View style={styles.tokenInfoContainer}>
           <TokenIcon
             size={26}
-            chainSize={10}
+            chainSize={12}
             tokenSymbol={symbol}
             chain={chain}
           />
