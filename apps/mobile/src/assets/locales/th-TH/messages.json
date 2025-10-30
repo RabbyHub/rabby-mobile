@@ -1332,9 +1332,9 @@
         "title_other": "{{count}} กระเป๋าเงิน",
         "importWatchAddress": "นำเข้ากระเป๋าเงินแบบดูเฉพาะ",
         "addAddress": "เพิ่มกระเป๋าเงิน",
-        "moreWallets": "更多 Wallets",
         "notIncludedInTotalBalance": "ไม่รวมในยอดรวม",
-        "notIncludedInTransactions": "ไม่รวมในธุรกรรม"
+        "notIncludedInTransactions": "ไม่รวมในธุรกรรม",
+        "moreWallets": "กระเป๋าเงินเพิ่มเติม"
       },
       "add-to-whitelist": "เพิ่มใน Whitelist",
       "pin-in-list": "ปักหมุดในรายการ",
@@ -1760,7 +1760,7 @@
         }
       },
       "xPoints": "{{point}} คะแนน",
-      "alreadyClaimedXPoints": "已经领取：{{point}}"
+      "alreadyClaimedXPoints": "เรียบร้อยแล้ว: {{point}}"
     },
     "approvalsAddressList": {
       "title": "Approvals"
@@ -2649,7 +2649,6 @@
       "PerpsOpenPositionCheckPopup": {
         "fee": "ค่าธรรมเนียม",
         "size": "ขนาด",
-        "perps": "永续合约",
         "btn": "เปิดตำแหน่ง {{direction}}",
         "autoClose": "ปิดอัตโนมัติ",
         "tpPrice": "ราคา Take-Profit",
@@ -2663,7 +2662,8 @@
         "liquidationPriceTips": "ราคาที่ตำแหน่งของคุณถูกปิดโดยอัตโนมัติจากการแลกเปลี่ยนเพื่อป้องกันการขาดทุนเพิ่มเติมเมื่อมาร์จิ้นของคุณต่ำกว่าระดับมาร์จิ้นขั้นต่ำ",
         "rabbyFeeTips": "ค่าธรรมเนียม Rabby: 0%",
         "margin": "มาร์จิ้น (แยก)",
-        "providerFeeTips": "ค่าใช้จ่ายของ Hyperliquid: {{fee}}"
+        "providerFeeTips": "ค่าใช้จ่ายของ Hyperliquid: {{fee}}",
+        "perps": "Perps"
       },
       "action": {
         "short": "ขายทำกำไร",
