@@ -168,3 +168,23 @@ export const useMulti24hBalance = (
     refresh,
   };
 };
+
+export const getChangeData = (
+  data: IBalance24hData['data'],
+  realtimeNetWorth = 0,
+  realtimeTimestamp?: number,
+) => {
+  const startData = data || { total_usd_value: 0 };
+  const endNetWorth = realtimeTimestamp ? realtimeNetWorth : 0;
+  const assetsChange = endNetWorth - startData?.total_usd_value;
+
+  return {
+    changePercent:
+      startData?.total_usd_value !== 0
+        ? `${Math.abs(
+            (assetsChange * 100) / startData?.total_usd_value,
+          ).toFixed(2)}%`
+        : `${endNetWorth === 0 ? '0' : '100.00'}%`,
+    isLoss: assetsChange < 0,
+  };
+};
