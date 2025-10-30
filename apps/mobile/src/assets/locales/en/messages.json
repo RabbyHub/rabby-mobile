@@ -2240,6 +2240,19 @@
     },
     "perps": {
       "title": "Perps",
+      "PerpsRiskPopup": {
+        "title": "Risk Level",
+        "subtitle": "Real-time liquidation distance (%)",
+        "distanceLabel": "Liquidation Distance",
+        "currentPrice": "Current Price",
+        "liquidationPrice": "Liquidation Price",
+        "liqIntro": "Liquidation Distance (%) shows how far the current price is from your liquidation price. A larger distance indicates a safer position, while a smaller distance means higher liquidation risk.",
+        "level": {
+          "safe": "Safe",
+          "warning": "Warning",
+          "danger": "Danger"
+        }
+      },
       "PerpsCard": {
         "title": "Trade Perps",
         "loginDesc": "Log in with your address and deposit funds to start trading perps",
@@ -2327,6 +2340,8 @@
         "profit": "Profit",
         "stopLoss": "Stop loss "
       },
+      "closeAllConfirmTitle": "Confirm Close All Positions",
+      "closeAllConfirmMessage": "All your open positions will be closed at market price.",
       "PerpsDepositTokenModal": {
         "goSwapDesc": "Only USDC on Arbitrum is supported for direct deposit. Please swap your current token to USDC before depositing.",
         "goBridgeDesc": "Only USDC on Arbitrum is supported for direct deposit. Please bridge your current token to USDC on Arbitrum before depositing.",
@@ -2334,6 +2349,7 @@
         "bridgeBtn": "Bridge",
         "directTag": "Direct Deposit"
       },
+      "closeAll": "Close All",
       "explorePerps": "Explore Perps",
       "more": "More",
       "history": {

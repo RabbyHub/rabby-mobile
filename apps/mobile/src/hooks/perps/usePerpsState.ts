@@ -752,6 +752,7 @@ export const usePerpsState = () => {
     hasPermission: perpsState.hasPermission,
     homeHistoryList,
     perpFee: perpsState.perpFee,
+    userAccountHistory: perpsState.userAccountHistory,
 
     // Actions
     login,

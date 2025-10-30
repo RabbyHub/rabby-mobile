@@ -8,6 +8,7 @@ import { Dimensions, Platform, Text } from 'react-native';
 import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { sleep } from '@/utils/async';
 import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
+import Toast from 'react-native-root-toast';
 
 export const usePerpsPosition = ({
   setCurrentTpOrSl,
@@ -69,13 +70,17 @@ export const usePerpsPosition = ({
         setTimeout(() => {
           fetchPositionOpenOrders();
         }, 1000);
-        toast.success('Auto close set successfully');
+        toast.success('Auto close set successfully', {
+          position: Toast.positions.CENTER,
+        });
       } catch (error: any) {
         const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
         if (isExpired) {
           return;
         }
-        toast.error(error?.message || 'Set auto close error');
+        toast.error(error?.message || 'Set auto close error', {
+          position: Toast.positions.CENTER,
+        });
         Sentry.captureException(
           new Error(
             'Set auto close error' +
@@ -128,6 +133,9 @@ export const usePerpsPosition = ({
                   </Text>
                 )
               : msg,
+            {
+              position: Toast.positions.CENTER,
+            },
           );
           setCurrentTpOrSl({
             tpPrice: undefined,
@@ -140,7 +148,9 @@ export const usePerpsPosition = ({
           };
         } else {
           const msg = res?.response?.data?.statuses[0]?.error;
-          toast.error(msg || 'close position error');
+          toast.error(msg || 'close position error', {
+            position: Toast.positions.CENTER,
+          });
           Sentry.captureException(
             new Error(
               'PERPS close position noFills ' +
@@ -158,7 +168,9 @@ export const usePerpsPosition = ({
           return null;
         }
         console.error('close position error', e);
-        toast.error(e?.message || 'close position error');
+        toast.error(e?.message || 'close position error', {
+          position: Toast.positions.CENTER,
+        });
         Sentry.captureException(
           new Error(
             'PERPS close position error' +
@@ -251,6 +263,9 @@ export const usePerpsPosition = ({
                   </Text>
                 )
               : msg,
+            {
+              position: Toast.positions.CENTER,
+            },
           );
           setCurrentTpOrSl({
             tpPrice: formattedTpTriggerPx,
@@ -263,7 +278,9 @@ export const usePerpsPosition = ({
           };
         } else {
           const msg = res?.response?.data?.statuses[0]?.error;
-          toast.error(msg || 'open position error');
+          toast.error(msg || 'open position error', {
+            position: Toast.positions.CENTER,
+          });
           Sentry.captureException(
             new Error(
               'PERPS open position noFills' +
@@ -280,7 +297,9 @@ export const usePerpsPosition = ({
           return;
         }
         console.error(error);
-        toast.error(error?.message || 'open position error');
+        toast.error(error?.message || 'open position error', {
+          position: Toast.positions.CENTER,
+        });
         Sentry.captureException(
           new Error(
             'PERPS open position error' +

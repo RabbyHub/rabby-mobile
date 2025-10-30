@@ -2,7 +2,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
@@ -50,6 +50,9 @@ import {
   ARB_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { BridgeHeader } from '../Bridge/components/BridgeHeader';
+import { PerpHeader } from './components/PerpHeader';
+import Toast from 'react-native-root-toast';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -76,6 +79,7 @@ export const PerpsScreen = () => {
     fetchMarketData,
     perpFee,
 
+    userAccountHistory,
     judgeIsUserAgentIsExpired,
     fetchClearinghouseState,
   } = usePerpsState();
@@ -115,11 +119,24 @@ export const PerpsScreen = () => {
     currentPerpsAccount,
   });
 
+  const Header = useCallback(
+    () =>
+      isLogin ? (
+        <PerpHeader userAccountHistory={userAccountHistory} />
+      ) : undefined,
+    [isLogin, userAccountHistory],
+  );
+  const Title = useCallback(
+    () => <PerpsHeaderTitle account={currentPerpsAccount} />,
+    [currentPerpsAccount],
+  );
+
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <PerpsHeaderTitle account={currentPerpsAccount} />,
+      headerTitle: Title,
+      headerRight: Header,
     });
-  }, [currentPerpsAccount, navigation]);
+  }, [currentPerpsAccount, navigation, Header, Title]);
 
   const handleClosePosition = useMemoizedFn(
     async (params: {
@@ -158,6 +175,9 @@ export const PerpsScreen = () => {
                   </Text>
                 )
               : msg,
+            {
+              position: Toast.positions.CENTER,
+            },
           );
         } else {
           const msg = res?.response?.data?.statuses[0]?.error;
@@ -231,19 +251,19 @@ export const PerpsScreen = () => {
           <PerpsPositionSection
             positionAndOpenOrders={positionAndOpenOrders}
             marketDataMap={marketDataMap}
-            onClosePosition={position => {
-              setClosePosition(position);
-              setClosePositionVisible(true);
+            onClosePosition={async position => {
+              // setClosePosition(position);
+              // setClosePositionVisible(true);
+              const marketDataItem = marketDataMap[position.coin];
+              await handleClosePosition({
+                coin: position.coin,
+                size: Math.abs(Number(position.szi || 0)).toString() || '0',
+                direction: Number(position.szi || 0) > 0 ? 'Long' : 'Short',
+                price: marketDataItem?.markPx || '0',
+              });
             }}
           />
           <PerpsMarketSection marketData={marketData} />
-          {isLogin ? (
-            <PerpsHistorySection
-              marketDataMap={marketDataMap}
-              historyList={homeHistoryList}
-            />
-          ) : null}
-          <PerpsIntro />
         </ScrollView>
       </NormalScreenContainer2024>
       <PerpsAccountSelectorPopup

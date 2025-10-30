@@ -723,3 +723,9 @@ export const PERPS_BUILDER_INFO = {
   address: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
   fee: PERPS_BUILD_FEE,
 };
+
+export enum PERPS_POSITION_RISK_LEVEL {
+  SAFE = 'safe',
+  WARNING = 'warning',
+  DANGER = 'danger',
+}

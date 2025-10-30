@@ -44,6 +44,7 @@ import { useSelectedToken } from '../Perps/hooks/usePerpsPopupState';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { openapi } from '@/core/request';
 import { PerpsDepositTokenModal } from '../Perps/components/PerpsDepositPopup/PerpsDepositTokenModal';
+import Toast from 'react-native-root-toast';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -296,7 +297,9 @@ export const PerpsMarketDetailScreen = () => {
             item => (item as unknown as string) === 'success',
           )
         ) {
-          toast.success('Auto close canceled successfully');
+          toast.success('Auto close canceled successfully', {
+            position: Toast.positions.CENTER,
+          });
           setCurrentTpOrSl({
             tpPrice: undefined,
             slPrice: undefined,
@@ -305,7 +308,9 @@ export const PerpsMarketDetailScreen = () => {
             fetchPositionOpenOrders();
           }, 1000);
         } else {
-          toast.error('Auto close cancel error');
+          toast.error('Auto close cancel error', {
+            position: Toast.positions.CENTER,
+          });
           Sentry.captureException(
             new Error(
               'Auto close cancel error' +
@@ -317,7 +322,9 @@ export const PerpsMarketDetailScreen = () => {
           );
         }
       } catch (error) {
-        toast.error('Auto close cancel error');
+        toast.error('Auto close cancel error', {
+          position: Toast.positions.CENTER,
+        });
         Sentry.captureException(
           new Error(
             'Auto close position cancel error' +
