@@ -25,11 +25,12 @@ const PoolContainer = () => {
         activeFontSize={18}
         inactiveFontSize={17}
         index={index}
+        style={styles.label}
         indexDecimal={indexDecimal}
         text={t('page.Lending.supplyDetail.actions')}
       />
     ),
-    [colors2024, t],
+    [colors2024, t, styles.label],
   );
   const renderBorrowLabel = useCallback(
     ({ index, indexDecimal }) => (
@@ -41,11 +42,12 @@ const PoolContainer = () => {
         activeFontSize={18}
         inactiveFontSize={17}
         index={index}
+        style={styles.label}
         indexDecimal={indexDecimal}
         text={t('page.Lending.borrowDetail.actions')}
       />
     ),
-    [colors2024, t],
+    [colors2024, t, styles.label],
   );
   const renderTabBar = React.useCallback(
     (_props: any) => (
@@ -200,7 +202,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   tabsBarContainer: {
     display: 'flex',
-    paddingLeft: 20,
+    paddingLeft: 4,
     position: 'relative',
     height: 30,
     overflow: 'hidden',
@@ -220,5 +222,9 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   klineContainer: {
     paddingHorizontal: 16,
     marginBottom: 12,
+  },
+  label: {
+    margin: 0,
+    marginBottom: 11,
   },
 }));

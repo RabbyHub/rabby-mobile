@@ -135,6 +135,14 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-1'],
+        },
+      },
     });
   };
   const handlePressRepay = () => {
@@ -145,6 +153,14 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       userSummary,
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
+      },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-1'],
+        },
       },
     });
   };
@@ -191,7 +207,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
             </View>
           </View>
         </View>
-        <View style={[styles.userInfoContainer, styles.card]}>
+        <View style={[styles.userInfoContainer, styles.card, styles.infoCard]}>
           <View style={styles.userInfoItem}>
             <View style={styles.userInfoItem}>
               <WalletIcon
@@ -321,6 +337,9 @@ const getStyles = createGetStyles2024(ctx => ({
     borderRadius: 16,
     width: '100%',
   },
+  infoCard: {
+    paddingBottom: 21,
+  },
   contentContainer: {
     paddingHorizontal: 16,
     width: '100%',
@@ -375,10 +394,10 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     textAlign: 'center',
-    marginTop: 0,
+    marginTop: 12,
     fontFamily: 'SF Pro Rounded',
   },
   supplyItemTitle: {

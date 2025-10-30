@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
@@ -44,6 +44,11 @@ const SummaryCard = (props: IProps) => {
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+      },
     });
   };
   const extraInfo = useMemo(() => {
@@ -77,89 +82,113 @@ const SummaryCard = (props: IProps) => {
       colors={['rgba(35, 46, 73, 1)', 'rgba(4, 25, 32, 1)']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={[styles.container, !extraInfo && styles.patchBottom]}>
-      <AAVEIcon
-        width={118}
-        height={61.5}
-        style={styles.relativeIcon}
-        color={colors2024['red-default']}
-      />
-      <View style={styles.netWorthContainer}>
-        <View style={styles.netWorthHeader}>
-          <Text style={styles.netWorthTitle}>{t('page.Lending.netWorth')}</Text>
-          <Text style={styles.netWorthValue}>
-            {formatNetworth(Number(props.netWorth || '0'))}
-          </Text>
-        </View>
-        <View style={styles.suppliedAndBorrowedContainer}>
-          <Text style={styles.suppliedAndBorrowedTitle}>
-            {t('page.Lending.supplied')}:{' '}
-            {formatNetworth(Number(props.supplied || '0'))} |
-            {t('page.Lending.borrowed')}:{' '}
-            {formatNetworth(Number(props.borrowed || '0'))}
-          </Text>
-        </View>
-      </View>
-      <View style={styles.estAndHealthContainer}>
-        <View style={styles.estDailyContainer}>
-          <Text style={styles.sectionHeader}>
-            {t('page.Lending.estDailyEarning')}
-          </Text>
-          <View style={styles.sectionContent}>
-            <Text style={styles.estDailyValue}>
-              {estDaily(props.netWorth, props.netApy)}
+      style={[styles.container]}>
+      <View
+        style={[
+          styles.contentContainer,
+          extraInfo ? styles.noBottom : styles.patchBottom,
+        ]}>
+        <AAVEIcon
+          width={118}
+          height={61.5}
+          style={styles.relativeIcon}
+          color={colors2024['red-default']}
+        />
+        <View style={styles.netWorthContainer}>
+          <View style={styles.netWorthHeader}>
+            <Text style={styles.netWorthTitle}>
+              {t('page.Lending.netWorth')}
             </Text>
-            <Text style={styles.netApy}>
-              (+{formatPercent(Number(props.netApy || '0'))})
+            <Text style={styles.netWorthValue}>
+              {formatNetworth(Number(props.netWorth || '0'))}
+            </Text>
+          </View>
+          <View style={styles.suppliedAndBorrowedContainer}>
+            <Text style={styles.suppliedAndBorrowedTitle}>
+              {t('page.Lending.supplied')}:{' '}
+              {formatNetworth(Number(props.supplied || '0'))} |
+              {t('page.Lending.borrowed')}:{' '}
+              {formatNetworth(Number(props.borrowed || '0'))}
             </Text>
           </View>
         </View>
-        <View
-          style={[
-            styles.healthFactorContainer,
-            isHFEmpty(Number(props.healthFactor || '0')) && styles.hidden,
-          ]}>
-          <View style={styles.healthFactorHeader}>
-            <Text style={styles.sectionHeader}>{t('page.Lending.hf')}</Text>
-            <Pressable hitSlop={20} onPress={handleShowHFDescription}>
-              <WarningFillCC
-                width={12}
-                height={12}
-                color={ThemeColors2024.dark['neutral-secondary']}
-              />
-            </Pressable>
+        <View style={styles.estAndHealthContainer}>
+          <View style={styles.estDailyContainer}>
+            <Text style={styles.sectionHeader}>
+              {t('page.Lending.estDailyEarning')}
+            </Text>
+            <View style={styles.sectionContent}>
+              <Text style={styles.estDailyValue}>
+                {estDaily(props.netWorth, props.netApy)}
+              </Text>
+              <Text style={styles.netApy}>
+                (+{formatPercent(Number(props.netApy || '0'))})
+              </Text>
+            </View>
           </View>
-          <View style={styles.sectionContent}>
-            <Text
-              style={[
-                styles.healthFactorValue,
-                {
-                  color: getHealthStatusColor(
-                    isLight,
-                    Number(props.healthFactor || '0'),
-                  ).color,
-                },
-              ]}>
-              {formatNum(props.healthFactor)}
-            </Text>
-            <Text
-              style={[
-                styles.healthFactorStatus,
-                {
-                  color: getHealthStatusColor(
-                    isLight,
-                    Number(props.healthFactor || '0'),
-                  ).color,
-                  backgroundColor: getHealthStatusColor(
-                    isLight,
-                    Number(props.healthFactor || '0'),
-                  ).backgroundColor,
-                },
-              ]}>
-              {Number(props.healthFactor || '0') < HF_COLOR_GOOD_THRESHOLD
-                ? t('page.Lending.summary.risky')
-                : t('page.Lending.summary.healthy')}
-            </Text>
+          <View
+            style={[
+              styles.healthFactorContainer,
+              isHFEmpty(Number(props.healthFactor || '0')) && styles.hidden,
+            ]}>
+            <View style={styles.healthFactorHeader}>
+              <Text style={styles.sectionHeader}>{t('page.Lending.hf')}</Text>
+              {Number(props.healthFactor || '0') >= HF_COLOR_GOOD_THRESHOLD && (
+                <Pressable hitSlop={20} onPress={handleShowHFDescription}>
+                  <WarningFillCC
+                    width={12}
+                    height={12}
+                    color={ThemeColors2024.dark['neutral-secondary']}
+                  />
+                </Pressable>
+              )}
+            </View>
+            <View style={styles.sectionContent}>
+              <View style={styles.healthFactorValueContainer}>
+                <Text
+                  style={[
+                    styles.healthFactorValue,
+                    {
+                      color: getHealthStatusColor(
+                        isLight,
+                        Number(props.healthFactor || '0'),
+                      ).color,
+                    },
+                  ]}>
+                  {formatNum(props.healthFactor)}
+                </Text>
+                {!!extraInfo && (
+                  <View
+                    style={[
+                      styles.triangle,
+                      makeTriangleStyle({
+                        dir: 'up',
+                        size: 8,
+                        color: 'rgba(50, 60, 89, 1)',
+                      }),
+                    ]}
+                  />
+                )}
+              </View>
+              <Text
+                style={[
+                  styles.healthFactorStatus,
+                  {
+                    color: getHealthStatusColor(
+                      isLight,
+                      Number(props.healthFactor || '0'),
+                    ).color,
+                    backgroundColor: getHealthStatusColor(
+                      isLight,
+                      Number(props.healthFactor || '0'),
+                    ).backgroundColor,
+                  },
+                ]}>
+                {Number(props.healthFactor || '0') < HF_COLOR_GOOD_THRESHOLD
+                  ? t('page.Lending.summary.risky')
+                  : t('page.Lending.summary.healthy')}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
@@ -199,29 +228,41 @@ const SummaryCard = (props: IProps) => {
 
 export default SummaryCard;
 
-const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
-    borderRadius: 16,
-    paddingTop: 20,
     marginTop: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(27, 32, 48, 1)',
+  },
+  contentContainer: {
+    position: 'relative',
+    borderRadius: 16,
+    paddingTop: 18,
+    margin: 2,
+    backgroundColor: 'rgba(27, 32, 48, 1)',
+    overflow: 'hidden',
   },
   patchBottom: {
     paddingBottom: 20,
   },
+  noBottom: {
+    marginBottom: 0,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    paddingBottom: 13,
+  },
   extraContainer: {
     position: 'relative',
-    color: colors2024['red-default'],
     backgroundColor: 'rgba(50, 60, 89, 1)',
-    marginTop: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
-    paddingVertical: 8,
     paddingHorizontal: 12,
     paddingRight: 16,
+    height: 40,
   },
   extraLeft: {
     flexDirection: 'row',
@@ -236,7 +277,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   extraLeftMore: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     color: ThemeColors2024.dark['neutral-title-1'],
   },
@@ -253,9 +294,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 2,
   },
   netWorthTitle: {
-    color: isLight
-      ? ThemeColors2024.dark['neutral-foot']
-      : ThemeColors2024.light['neutral-foot'],
+    color: ThemeColors2024.dark['neutral-foot'],
     fontSize: 12,
     fontFamily: 'SF Pro Rounded',
   },
@@ -263,12 +302,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: ThemeColors.dark['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 36,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   suppliedAndBorrowedTitle: {
-    color: isLight
-      ? ThemeColors2024.dark['neutral-secondary']
-      : ThemeColors2024.light['neutral-secondary'],
+    fontSize: 12,
+    color: ThemeColors2024.light['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
   estAndHealthContainer: {
@@ -283,9 +321,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 2,
   },
   sectionHeader: {
-    color: isLight
-      ? ThemeColors2024.dark['neutral-foot']
-      : ThemeColors2024.light['neutral-foot'],
+    color: ThemeColors2024.dark['neutral-foot'],
+    fontSize: 12,
+    fontFamily: 'SF Pro Rounded',
   },
   healthFactorContainer: {
     flex: 1,
@@ -314,7 +352,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['green-default'],
+    color: ThemeColors2024.dark['neutral-body'],
+  },
+  healthFactorValueContainer: {
+    position: 'relative',
   },
   healthFactorValue: {
     fontSize: 20,
@@ -328,11 +369,21 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
+    fontSize: 12,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
     overflow: 'hidden',
   },
   relativeIcon: {
     position: 'absolute',
     top: 20,
     right: -10,
+  },
+  triangle: {
+    position: 'absolute',
+    bottom: -14,
+    left: '50%',
+    color: 'black',
+    transform: [{ translateX: -6 }],
   },
 }));

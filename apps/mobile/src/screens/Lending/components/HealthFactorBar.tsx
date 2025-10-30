@@ -73,7 +73,7 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
             makeTriangleStyle({
               dir: 'down',
               size: 6,
-              color: colors2024['neutral-title-1'],
+              color: hfColor.color,
             }),
           ]}
         />

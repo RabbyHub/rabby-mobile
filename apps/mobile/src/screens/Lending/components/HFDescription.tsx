@@ -87,10 +87,10 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     textAlign: 'center',
-    marginTop: 0,
+    marginTop: 12,
     fontFamily: 'SF Pro Rounded',
   },
   contentContainer: {
@@ -105,7 +105,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   rulesContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   ruleItem: {
     flexDirection: 'row',
@@ -158,6 +158,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   warningContainer: {
+    marginTop: 20,
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: ctx.colors2024['red-light-1'],

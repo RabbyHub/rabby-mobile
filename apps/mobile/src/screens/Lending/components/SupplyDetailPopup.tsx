@@ -31,7 +31,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   userSummary,
   onClose,
 }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -106,9 +106,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
         enablePanDownToClose: true,
         enableDismissOnClose: true,
         handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-1']
-            : colors2024['neutral-bg-1'],
+          backgroundColor: colors2024['neutral-bg-1'],
         },
       },
     });
@@ -127,9 +125,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
         enablePanDownToClose: true,
         enableDismissOnClose: true,
         handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-1']
-            : colors2024['neutral-bg-1'],
+          backgroundColor: colors2024['neutral-bg-1'],
         },
       },
     });
@@ -169,7 +165,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
             </View>
           </View>
         </View>
-        <View style={[styles.userInfoContainer, styles.card]}>
+        <View style={[styles.userInfoContainer, styles.card, styles.infoCard]}>
           <View style={styles.userInfoItem}>
             <View style={styles.userInfoItem}>
               <WalletIcon
@@ -265,6 +261,9 @@ const getStyles = createGetStyles2024(ctx => ({
     borderRadius: 16,
     width: '100%',
   },
+  infoCard: {
+    paddingBottom: 24,
+  },
   contentContainer: {
     paddingHorizontal: 16,
     width: '100%',
@@ -319,10 +318,10 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     textAlign: 'center',
-    marginTop: 0,
+    marginTop: 12,
     fontFamily: 'SF Pro Rounded',
   },
   supplyItemTitle: {

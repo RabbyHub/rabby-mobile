@@ -24,7 +24,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       paddingVertical: 16,
       backgroundColor: isLight
         ? colors2024['neutral-line']
-        : colors2024['neutral-bg-5'],
+        : colors2024['neutral-bg-2'],
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',

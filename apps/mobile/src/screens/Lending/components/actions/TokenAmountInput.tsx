@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -24,119 +24,114 @@ interface TokenAmountInputProps {
   isEstimatingGas?: boolean;
 }
 
-export const TokenAmountInput = React.forwardRef<
-  TextInput,
-  React.PropsWithChildren<RNViewProps & TokenAmountInputProps>
->(
-  ({
-    symbol,
-    value,
-    price = 1,
-    tokenAmount,
-    onChange,
-    chain,
-    inlinePrize,
-    style,
-    handleClickMaxButton,
-    isEstimatingGas,
-  }) => {
-    const { styles, colors2024 } = useTheme2024({ getStyle });
+export const TokenAmountInput = ({
+  symbol,
+  value,
+  price = 1,
+  tokenAmount,
+  onChange,
+  chain,
+  inlinePrize,
+  style,
+  handleClickMaxButton,
+  isEstimatingGas,
+}: React.PropsWithChildren<RNViewProps & TokenAmountInputProps>) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
-    const { valueText } = useMemo(() => {
-      const num = Number(value);
+  const { valueText } = useMemo(() => {
+    const num = Number(value);
 
-      const _valueText = num
-        ? `≈$${splitNumberByStep(((num || 0) * price || 0).toFixed(2))}`
-        : '≈$0';
+    const _valueText = num
+      ? `$${splitNumberByStep(((num || 0) * price || 0).toFixed(2))}`
+      : '$0';
 
-      return {
-        valueNum: num,
-        valueText: _valueText,
-      };
-    }, [value, price]);
+    return {
+      valueNum: num,
+      valueText: _valueText,
+    };
+  }, [value, price]);
 
-    const Linear = useCallback(() => {
-      return (
-        <LinearGradient
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          // eslint-disable-next-line react-native/no-inline-styles
-          style={{ height: '100%' }}
-          colors={[colors2024['neutral-line'], colors2024['neutral-bg-2']]}
-        />
-      );
-    }, [colors2024]);
-
+  const Linear = useCallback(() => {
     return (
-      <>
-        <View style={[styles.container, style]}>
-          <SilentTouchableView
-            viewStyle={[
-              styles.leftInputContainer,
-              inlinePrize && !!valueText && styles.containerHasInlinePrize,
-            ]}
-            onPress={evt => {
-              evt.stopPropagation();
-            }}>
-            {!value && tokenAmount > 0 && isEstimatingGas ? (
-              <CustomSkeleton
-                animation="wave"
-                LinearGradientComponent={Linear}
-                style={styles.skeleton}
-              />
-            ) : (
-              <NumericInput
-                style={[
-                  inlinePrize && !!valueText && styles.inputHasInlinePrize,
-                  styles.input,
-                ]}
-                value={value}
-                onChangeText={(v: string) => {
-                  onChange?.(formatSpeicalAmount(v));
-                }}
-                max={tokenAmount}
-                placeholder="0"
-                placeholderTextColor={colors2024['neutral-info']}
-                inputMode="decimal"
-                keyboardType="numeric"
-                numberOfLines={1}
-              />
-            )}
-            <View style={styles.inlinePrizeContainer}>
-              <Text
-                style={styles.inlinePrizeText}
-                ellipsizeMode="tail"
-                numberOfLines={1}>
-                {valueText}
-              </Text>
-            </View>
-          </SilentTouchableView>
-          {/* max button */}
-          {!value &&
-            tokenAmount > 0 &&
-            (isEstimatingGas ? null : (
-              <TouchableOpacity
-                disabled={isEstimatingGas}
-                style={styles.maxButtonWrapper}
-                onPress={handleClickMaxButton}>
-                <Text style={styles.maxButtonText}>MAX</Text>
-              </TouchableOpacity>
-            ))}
-          <View style={styles.placeholder} />
-          <View style={styles.tokenInfoContainer}>
-            <TokenIcon
-              size={26}
-              chainSize={10}
-              tokenSymbol={symbol}
-              chain={chain}
-            />
-            <Text style={styles.tokenSymbol}>{symbol}</Text>
-          </View>
-        </View>
-      </>
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        // eslint-disable-next-line react-native/no-inline-styles
+        style={{ height: '100%' }}
+        colors={[colors2024['neutral-line'], colors2024['neutral-bg-2']]}
+      />
     );
-  },
-);
+  }, [colors2024]);
+
+  return (
+    <>
+      <View style={[styles.container, style]}>
+        <SilentTouchableView
+          viewStyle={[
+            styles.leftInputContainer,
+            inlinePrize && !!valueText && styles.containerHasInlinePrize,
+          ]}
+          onPress={evt => {
+            evt.stopPropagation();
+          }}>
+          {!value && tokenAmount > 0 && isEstimatingGas ? (
+            <CustomSkeleton
+              animation="wave"
+              LinearGradientComponent={Linear}
+              style={styles.skeleton}
+            />
+          ) : (
+            <NumericInput
+              style={[
+                inlinePrize && !!valueText && styles.inputHasInlinePrize,
+                styles.input,
+              ]}
+              value={value}
+              onChangeText={(v: string) => {
+                onChange?.(formatSpeicalAmount(v));
+              }}
+              max={tokenAmount}
+              placeholder="0"
+              placeholderTextColor={colors2024['neutral-info']}
+              inputMode="decimal"
+              keyboardType="numeric"
+              numberOfLines={1}
+            />
+          )}
+          <View style={styles.inlinePrizeContainer}>
+            <Text
+              style={styles.inlinePrizeText}
+              ellipsizeMode="tail"
+              numberOfLines={1}>
+              {valueText}
+            </Text>
+          </View>
+        </SilentTouchableView>
+        {/* max button */}
+        {!value &&
+          tokenAmount > 0 &&
+          (isEstimatingGas ? null : (
+            <TouchableOpacity
+              disabled={isEstimatingGas}
+              style={styles.maxButtonWrapper}
+              onPress={handleClickMaxButton}>
+              <Text style={styles.maxButtonText}>MAX</Text>
+            </TouchableOpacity>
+          ))}
+        <View style={styles.placeholder} />
+        <View style={styles.tokenInfoContainer}>
+          <TokenIcon
+            size={26}
+            chainSize={10}
+            tokenSymbol={symbol}
+            chain={chain}
+          />
+          <Text style={styles.tokenSymbol}>{symbol}</Text>
+        </View>
+      </View>
+    </>
+  );
+};
 
 const PADDING = 12;
 
@@ -185,7 +180,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     leftInputContainer: {
       flex: 1,
       paddingLeft: PADDING,
-      paddingBottom: 16,
+      paddingVertical: 20,
       // ...makeDebugBorder('red'),
     },
     containerHasInlinePrize: {},
@@ -195,7 +190,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       position: 'relative',
       fontFamily: 'SF Pro Rounded',
       color: colors2024['neutral-title-1'],
-      marginLeft: 7,
+      marginLeft: 8,
       flex: 1,
       paddingTop: 0,
       paddingBottom: 0,
@@ -205,6 +200,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     inlinePrizeContainer: {
       height: 18,
+      marginLeft: 8,
       // ...makeDebugBorder(),
     },
     // 'text-r-neutral-foot text-12 text-right max-w-full truncate'

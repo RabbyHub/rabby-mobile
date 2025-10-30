@@ -449,13 +449,9 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           showTextOnLoading
           wrapperStyle={styles.directSignBtn}
           authTitle={t('page.Lending.repayDetail.actions')}
-          title={
-            !amount || amount === '0'
-              ? t('page.Lending.enterAmount')
-              : needApprove
-              ? t('page.Lending.repayDetail.approveAndRepay')
-              : t('page.Lending.repayDetail.actions')
-          }
+          title={`${t('page.Lending.repayDetail.actions')} ${
+            reserve.reserve.symbol
+          }`}
           onFinished={handleRepay}
           disabled={
             !amount ||
@@ -574,7 +570,7 @@ const getStyles = createGetStyles2024(ctx => ({
   title: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     textAlign: 'center',
     marginTop: 0,
