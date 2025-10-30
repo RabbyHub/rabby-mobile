@@ -35,7 +35,18 @@ function DashBoardScreen(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const Header = React.useCallback(() => <LendingHeader />, []);
+  const Header = React.useCallback(
+    () => (
+      <LendingHeader
+        onPendingClear={() => {
+          setTimeout(() => {
+            fetchData(true);
+          }, 200);
+        }}
+      />
+    ),
+    [fetchData],
+  );
 
   useEffect(() => {
     setNavigationOptions({

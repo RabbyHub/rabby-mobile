@@ -49,7 +49,12 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   },
 }));
 
-export const LendingHeader = () => {
+let preCount = 0;
+
+interface LendingHeaderProps {
+  onPendingClear?: () => void;
+}
+export const LendingHeader = ({ onPendingClear }: LendingHeaderProps) => {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const { navigation } = useSafeSetNavigationOptions();
 
@@ -88,6 +93,13 @@ export const LendingHeader = () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fetchLocalTx, refreshHistoryId]),
   );
+
+  useEffect(() => {
+    if (pendingCount === 0 && preCount > 0) {
+      onPendingClear?.();
+    }
+    preCount = pendingCount;
+  }, [pendingCount, onPendingClear]);
 
   useEffect(() => {
     eventBus.addListener(EVENTS.RELOAD_TX, fetchLocalTx);
