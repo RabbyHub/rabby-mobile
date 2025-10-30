@@ -38,6 +38,10 @@ import {
 import { transactionHistoryService } from '@/core/services';
 import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { apiProvider } from '@/core/apis';
+import { Button } from '@/components2024/Button';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -312,56 +316,91 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   });
 
   // 执行supply交易
-  const handleSupply = useCallback(async () => {
-    if (!currentAccount || !supplyTx || !amount || amount === '0') {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      if (!txsForMiniApproval?.length) {
-        toast.info('please retry');
-        throw new Error('no txs');
+  const handleSupply = useCallback(
+    async (forceFullSign?: boolean) => {
+      if (!currentAccount || !supplyTx || !amount || amount === '0') {
+        return;
       }
-      const result = await openDirect({
-        txs: txsForMiniApproval,
-        ga: {
-          customAction: CUSTOM_HISTORY_ACTION.LENDING,
-          customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY,
-        },
-      });
-      const txId = last(result);
-      if (txId) {
-        transactionHistoryService.setCustomTxItem(
-          currentAccount.address,
-          txsForMiniApproval[0].chainId,
-          txId,
-          { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY },
+
+      try {
+        setIsLoading(true);
+        if (!txsForMiniApproval?.length) {
+          toast.info('please retry');
+          throw new Error('no txs');
+        }
+        let result: string[] = [];
+        if (canShowDirectSubmit && !forceFullSign) {
+          try {
+            result = await openDirect({
+              txs: txsForMiniApproval,
+              ga: {
+                customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY,
+              },
+            });
+          } catch (error) {
+            if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+              setAmount(undefined);
+              onClose?.();
+              return;
+            }
+            if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
+              handleSupply(true);
+              return;
+            }
+          }
+        } else {
+          await apiProvider.sendRequest({
+            data: {
+              method: 'eth_sendTransaction',
+              params: txsForMiniApproval,
+              $ctx: {
+                ga: {
+                  customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                  customActionTitleType:
+                    CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY,
+                },
+              },
+            },
+            session: INTERNAL_REQUEST_SESSION,
+            account: currentAccount,
+          });
+        }
+        const txId = last(result);
+        if (txId) {
+          transactionHistoryService.setCustomTxItem(
+            currentAccount.address,
+            txsForMiniApproval[0].chainId,
+            txId,
+            { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY },
+          );
+        }
+        refresh();
+        toast.success(
+          `${t('page.Lending.supplyDetail.actions')} ${t(
+            'page.Lending.submitted',
+          )}`,
         );
-      }
-      refresh();
-      toast.success(
-        `${t('page.Lending.supplyDetail.actions')} ${t(
-          'page.Lending.submitted',
-        )}`,
-      );
 
-      setAmount(undefined);
-      onClose?.();
-    } catch (error) {
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    currentAccount,
-    supplyTx,
-    amount,
-    txsForMiniApproval,
-    openDirect,
-    t,
-    onClose,
-    refresh,
-  ]);
+        setAmount(undefined);
+        onClose?.();
+      } catch (error) {
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      currentAccount,
+      supplyTx,
+      amount,
+      txsForMiniApproval,
+      canShowDirectSubmit,
+      refresh,
+      t,
+      onClose,
+      openDirect,
+    ],
+  );
 
   useEffect(() => {
     checkApproveStatus();
@@ -424,7 +463,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           afterAvailable={afterAvailable}
         />
 
-        {!!amount && amount !== '0' && (
+        {!!amount && amount !== '0' && canShowDirectSubmit && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
               supportDirectSign={true}
@@ -437,29 +476,49 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>
-        <DirectSignBtn
-          loading={isLoading}
-          loadingType="circle"
-          key={`${amount}-${needApprove}`}
-          showTextOnLoading
-          wrapperStyle={styles.directSignBtn}
-          authTitle={t('page.Lending.supplyDetail.actions')}
-          title={`${t('page.Lending.supplyDetail.actions')} ${
-            reserve.reserve.symbol
-          }`}
-          onFinished={handleSupply}
-          disabled={
-            !amount ||
-            amount === '0' ||
-            !supplyTx ||
-            isLoading ||
-            !currentAccount
-          }
-          type="primary"
-          syncUnlockTime
-          account={currentAccount}
-          showHardWalletProcess
-        />
+        {canShowDirectSubmit ? (
+          <DirectSignBtn
+            loading={isLoading}
+            loadingType="circle"
+            key={`${amount}-${needApprove}`}
+            showTextOnLoading
+            wrapperStyle={styles.directSignBtn}
+            authTitle={t('page.Lending.supplyDetail.actions')}
+            title={`${t('page.Lending.supplyDetail.actions')} ${
+              reserve.reserve.symbol
+            }`}
+            onFinished={() => handleSupply()}
+            disabled={
+              !amount ||
+              amount === '0' ||
+              !supplyTx ||
+              isLoading ||
+              !currentAccount
+            }
+            type="primary"
+            syncUnlockTime
+            account={currentAccount}
+            showHardWalletProcess
+          />
+        ) : (
+          <Button
+            loadingType="circle"
+            showTextOnLoading
+            containerStyle={styles.fullWidthButton}
+            onPress={() => handleSupply()}
+            title={`${t('page.Lending.supplyDetail.actions')} ${
+              reserve.reserve.symbol
+            }`}
+            loading={isLoading}
+            disabled={
+              !amount ||
+              amount === '0' ||
+              !supplyTx ||
+              isLoading ||
+              !currentAccount
+            }
+          />
+        )}
       </View>
     </AutoLockView>
   );
@@ -557,6 +616,9 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     gap: 12,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  fullWidthButton: {
+    flex: 1,
   },
   directSignBtn: {
     width: '100%',

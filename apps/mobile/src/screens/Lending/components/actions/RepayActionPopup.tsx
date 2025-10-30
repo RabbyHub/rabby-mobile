@@ -36,6 +36,10 @@ import {
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../../hooks';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { apiProvider } from '@/core/apis';
+import { Button } from '@/components2024/Button';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 
 export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -276,60 +280,95 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     autoResetGasStoreOnChainChange: true,
   });
 
-  const handleRepay = useCallback(async () => {
-    if (
-      !currentAccount ||
-      !txsForMiniApproval?.length ||
-      !amount ||
-      amount === '0'
-    ) {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      if (!txsForMiniApproval?.length) {
-        toast.info('please retry');
-        throw new Error('no txs');
+  const handleRepay = useCallback(
+    async (forceFullSign?: boolean) => {
+      if (
+        !currentAccount ||
+        !txsForMiniApproval?.length ||
+        !amount ||
+        amount === '0'
+      ) {
+        return;
       }
-      const result = await openDirect({
-        txs: txsForMiniApproval,
-        ga: {
-          customAction: CUSTOM_HISTORY_ACTION.LENDING,
-          customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY,
-        },
-      });
-      const txId = last(result);
-      if (txId) {
-        transactionHistoryService.setCustomTxItem(
-          currentAccount.address,
-          txsForMiniApproval[0].chainId,
-          txId,
-          { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY },
+
+      try {
+        setIsLoading(true);
+        if (!txsForMiniApproval?.length) {
+          toast.info('please retry');
+          throw new Error('no txs');
+        }
+        let result: string[] = [];
+        if (canShowDirectSubmit && !forceFullSign) {
+          try {
+            result = await openDirect({
+              txs: txsForMiniApproval,
+              ga: {
+                customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY,
+              },
+            });
+          } catch (error) {
+            if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+              setAmount(undefined);
+              onClose?.();
+              return;
+            }
+            if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
+              handleRepay(true);
+              return;
+            }
+          }
+        } else {
+          await apiProvider.sendRequest({
+            data: {
+              method: 'eth_sendTransaction',
+              params: txsForMiniApproval,
+              $ctx: {
+                ga: {
+                  customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                  customActionTitleType:
+                    CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY,
+                },
+              },
+            },
+            session: INTERNAL_REQUEST_SESSION,
+            account: currentAccount,
+          });
+        }
+        const txId = last(result);
+        if (txId) {
+          transactionHistoryService.setCustomTxItem(
+            currentAccount.address,
+            txsForMiniApproval[0].chainId,
+            txId,
+            { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY },
+          );
+        }
+        refresh();
+        toast.success(
+          `${t('page.Lending.repayDetail.actions')} ${t(
+            'page.Lending.submitted',
+          )}`,
         );
-      }
-      refresh();
-      toast.success(
-        `${t('page.Lending.repayDetail.actions')} ${t(
-          'page.Lending.submitted',
-        )}`,
-      );
 
-      setAmount(undefined);
-      onClose?.();
-    } catch (error) {
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    currentAccount,
-    txsForMiniApproval,
-    amount,
-    openDirect,
-    t,
-    onClose,
-    refresh,
-  ]);
+        setAmount(undefined);
+        onClose?.();
+      } catch (error) {
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      currentAccount,
+      txsForMiniApproval,
+      amount,
+      canShowDirectSubmit,
+      refresh,
+      t,
+      onClose,
+      openDirect,
+    ],
+  );
 
   const repayAmount = useMemo(() => {
     const miniAmount = BigNumber(reserve?.walletBalance || '0').gt(
@@ -429,7 +468,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           afterHF={afterHF}
         />
 
-        {!!amount && amount !== '0' && (
+        {!!amount && amount !== '0' && canShowDirectSubmit && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
               supportDirectSign={true}
@@ -442,29 +481,49 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>
-        <DirectSignBtn
-          loading={isLoading}
-          loadingType="circle"
-          key={`${amount}-${needApprove}`}
-          showTextOnLoading
-          wrapperStyle={styles.directSignBtn}
-          authTitle={t('page.Lending.repayDetail.actions')}
-          title={`${t('page.Lending.repayDetail.actions')} ${
-            reserve.reserve.symbol
-          }`}
-          onFinished={handleRepay}
-          disabled={
-            !amount ||
-            amount === '0' ||
-            !txsForMiniApproval?.length ||
-            isLoading ||
-            !currentAccount
-          }
-          type="primary"
-          syncUnlockTime
-          account={currentAccount}
-          showHardWalletProcess
-        />
+        {canShowDirectSubmit ? (
+          <DirectSignBtn
+            loading={isLoading}
+            loadingType="circle"
+            key={`${amount}-${needApprove}`}
+            showTextOnLoading
+            wrapperStyle={styles.directSignBtn}
+            authTitle={t('page.Lending.repayDetail.actions')}
+            title={`${t('page.Lending.repayDetail.actions')} ${
+              reserve.reserve.symbol
+            }`}
+            onFinished={() => handleRepay()}
+            disabled={
+              !amount ||
+              amount === '0' ||
+              !txsForMiniApproval?.length ||
+              isLoading ||
+              !currentAccount
+            }
+            type="primary"
+            syncUnlockTime
+            account={currentAccount}
+            showHardWalletProcess
+          />
+        ) : (
+          <Button
+            loadingType="circle"
+            showTextOnLoading
+            containerStyle={styles.fullWidthButton}
+            onPress={() => handleRepay()}
+            title={`${t('page.Lending.repayDetail.actions')} ${
+              reserve.reserve.symbol
+            }`}
+            loading={isLoading}
+            disabled={
+              !amount ||
+              amount === '0' ||
+              !txsForMiniApproval?.length ||
+              isLoading ||
+              !currentAccount
+            }
+          />
+        )}
       </View>
     </AutoLockView>
   );
@@ -564,5 +623,8 @@ const getStyles = createGetStyles2024(ctx => ({
   repayButton: {
     borderWidth: 0,
     backgroundColor: ctx.colors2024['neutral-line'],
+  },
+  fullWidthButton: {
+    flex: 1,
   },
 }));

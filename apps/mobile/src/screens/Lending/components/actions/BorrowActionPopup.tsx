@@ -42,6 +42,10 @@ import {
 } from '@/screens/Transaction/components/type';
 import { transactionHistoryService } from '@/core/services/shared';
 import { useRefreshHistoryId } from '../../hooks';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { apiProvider } from '@/core/apis';
+import { Button } from '@/components2024/Button';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -145,47 +149,90 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     reserve.underlyingAsset,
   ]);
 
-  const handleBorrow = useCallback(async () => {
-    if (!currentAccount || !txs.length || !amount || amount === '0') {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      if (!txs?.length) {
-        toast.info('please retry');
-        throw new Error('no txs');
+  const handleBorrow = useCallback(
+    async (forceFullSign?: boolean) => {
+      if (!currentAccount || !txs.length || !amount || amount === '0') {
+        return;
       }
-      const result = await openDirect({
-        txs,
-        ga: {
-          customAction: CUSTOM_HISTORY_ACTION.LENDING,
-          customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW,
-        },
-      });
-      const txId = last(result);
-      if (txId) {
-        transactionHistoryService.setCustomTxItem(
-          currentAccount.address,
-          txs[0].chainId,
-          txId,
-          { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW },
+
+      try {
+        setIsLoading(true);
+        if (!txs?.length) {
+          toast.info('please retry');
+          throw new Error('no txs');
+        }
+        let result: string[] = [];
+        if (canShowDirectSubmit && !forceFullSign) {
+          try {
+            result = await openDirect({
+              txs,
+              ga: {
+                customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW,
+              },
+            });
+          } catch (error) {
+            if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+              setAmount(undefined);
+              onClose?.();
+              return;
+            }
+            if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
+              handleBorrow(true);
+              return;
+            }
+          }
+        } else {
+          await apiProvider.sendRequest({
+            data: {
+              method: 'eth_sendTransaction',
+              params: txs,
+              $ctx: {
+                ga: {
+                  customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                  customActionTitleType:
+                    CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW,
+                },
+              },
+            },
+            session: INTERNAL_REQUEST_SESSION,
+            account: currentAccount,
+          });
+        }
+        const txId = last(result);
+        if (txId) {
+          transactionHistoryService.setCustomTxItem(
+            currentAccount.address,
+            txs[0].chainId,
+            txId,
+            { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW },
+          );
+        }
+        refresh();
+        toast.success(
+          `${t('page.Lending.borrowDetail.actions')} ${t(
+            'page.Lending.submitted',
+          )}`,
         );
-      }
-      refresh();
-      toast.success(
-        `${t('page.Lending.borrowDetail.actions')} ${t(
-          'page.Lending.submitted',
-        )}`,
-      );
 
-      setAmount(undefined);
-      onClose?.();
-    } catch (error) {
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentAccount, txs, amount, openDirect, t, onClose, refresh]);
+        setAmount(undefined);
+        onClose?.();
+      } catch (error) {
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      currentAccount,
+      txs,
+      amount,
+      canShowDirectSubmit,
+      refresh,
+      t,
+      onClose,
+      openDirect,
+    ],
+  );
 
   const availableToBorrowBalance = useMemo(() => {
     return BigNumber(userSummary?.availableBorrowsUSD || '0')
@@ -288,7 +335,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           afterHF={afterHF}
         />
 
-        {!!amount && amount !== '0' && (
+        {!!amount && amount !== '0' && canShowDirectSubmit && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
               supportDirectSign={true}
@@ -326,30 +373,51 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           </>
         )}
 
-        <DirectSignBtn
-          loading={isLoading}
-          loadingType="circle"
-          key={`${amount}`}
-          showTextOnLoading
-          wrapperStyle={styles.directSignBtn}
-          authTitle={t('page.Lending.borrowDetail.actions')}
-          title={`${t('page.Lending.borrowDetail.actions')} ${
-            reserve.reserve.symbol
-          }`}
-          onFinished={handleBorrow}
-          disabled={
-            !amount ||
-            amount === '0' ||
-            !txs.length ||
-            isLoading ||
-            !currentAccount ||
-            (isRisky && !isChecked)
-          }
-          type="primary"
-          syncUnlockTime
-          account={currentAccount}
-          showHardWalletProcess
-        />
+        {canShowDirectSubmit ? (
+          <DirectSignBtn
+            loading={isLoading}
+            loadingType="circle"
+            key={`${amount}`}
+            showTextOnLoading
+            wrapperStyle={styles.directSignBtn}
+            authTitle={t('page.Lending.borrowDetail.actions')}
+            title={`${t('page.Lending.borrowDetail.actions')} ${
+              reserve.reserve.symbol
+            }`}
+            onFinished={() => handleBorrow()}
+            disabled={
+              !amount ||
+              amount === '0' ||
+              !txs.length ||
+              isLoading ||
+              !currentAccount ||
+              (isRisky && !isChecked)
+            }
+            type="primary"
+            syncUnlockTime
+            account={currentAccount}
+            showHardWalletProcess
+          />
+        ) : (
+          <Button
+            loadingType="circle"
+            showTextOnLoading
+            containerStyle={styles.fullWidthButton}
+            onPress={() => handleBorrow()}
+            title={`${t('page.Lending.borrowDetail.actions')} ${
+              reserve.reserve.symbol
+            }`}
+            loading={isLoading}
+            disabled={
+              !amount ||
+              amount === '0' ||
+              !txs.length ||
+              isLoading ||
+              !currentAccount ||
+              (isRisky && !isChecked)
+            }
+          />
+        )}
       </View>
     </AutoLockView>
   );
@@ -545,5 +613,10 @@ const getStyles = createGetStyles2024(ctx => ({
     flex: 1,
     color: ctx.colors2024['orange-default'],
     fontFamily: 'SF Pro Rounded',
+  },
+  fullWidthButton: {
+    flex: 1,
+    width: '100%',
+    paddingBottom: 58,
   },
 }));

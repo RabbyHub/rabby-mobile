@@ -40,6 +40,10 @@ import {
 import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
 import { calculateMaxWithdrawAmount } from '../../utils/calculateMaxWithdrawAmount';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { apiProvider } from '@/core/apis';
+import { Button } from '@/components2024/Button';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -195,47 +199,92 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   // 执行withdraw交易
-  const handleWithdraw = useCallback(async () => {
-    if (!currentAccount || !withdrawTxs.length || !amount || amount === '0') {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      if (!withdrawTxs?.length) {
-        toast.info('please retry');
-        throw new Error('no txs');
+  const handleWithdraw = useCallback(
+    async (forceFullSign?: boolean) => {
+      if (!currentAccount || !withdrawTxs.length || !amount || amount === '0') {
+        return;
       }
-      const result = await openDirect({
-        txs: withdrawTxs,
-        ga: {
-          customAction: CUSTOM_HISTORY_ACTION.LENDING,
-          customActionTitleType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW,
-        },
-      });
-      const txId = last(result);
-      if (txId) {
-        transactionHistoryService.setCustomTxItem(
-          currentAccount.address,
-          withdrawTxs[0].chainId,
-          txId,
-          { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW },
+
+      try {
+        setIsLoading(true);
+        if (!withdrawTxs?.length) {
+          toast.info('please retry');
+          throw new Error('no txs');
+        }
+        let result: string[] = [];
+        if (canShowDirectSubmit && !forceFullSign) {
+          try {
+            result = await openDirect({
+              txs: withdrawTxs,
+              ga: {
+                customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                customActionTitleType:
+                  CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW,
+              },
+            });
+          } catch (error) {
+            if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+              setAmount(undefined);
+              onClose?.();
+              return;
+            }
+            if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
+              handleWithdraw(true);
+              return;
+            }
+          }
+        } else {
+          await apiProvider.sendRequest({
+            data: {
+              method: 'eth_sendTransaction',
+              params: withdrawTxs,
+              $ctx: {
+                ga: {
+                  customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                  customActionTitleType:
+                    CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW,
+                },
+              },
+            },
+            session: INTERNAL_REQUEST_SESSION,
+            account: currentAccount,
+          });
+        }
+
+        const txId = last(result);
+        if (txId) {
+          transactionHistoryService.setCustomTxItem(
+            currentAccount.address,
+            withdrawTxs[0].chainId,
+            txId,
+            { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW },
+          );
+        }
+        refresh();
+        toast.success(
+          `${t('page.Lending.withdrawDetail.actions')} ${t(
+            'page.Lending.submitted',
+          )}`,
         );
-      }
-      refresh();
-      toast.success(
-        `${t('page.Lending.withdrawDetail.actions')} ${t(
-          'page.Lending.submitted',
-        )}`,
-      );
 
-      setAmount(undefined);
-      onClose?.();
-    } catch (error) {
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentAccount, withdrawTxs, amount, openDirect, t, onClose, refresh]);
+        setAmount(undefined);
+        onClose?.();
+      } catch (error) {
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      currentAccount,
+      withdrawTxs,
+      amount,
+      canShowDirectSubmit,
+      refresh,
+      t,
+      onClose,
+      openDirect,
+    ],
+  );
 
   useEffect(() => {
     buildTransactions();
@@ -302,7 +351,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           afterSupply={afterSupply}
         />
 
-        {!!amount && amount !== '0' && (
+        {!!amount && amount !== '0' && canShowDirectSubmit && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
               supportDirectSign={true}
@@ -339,30 +388,51 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             </TouchableOpacity>
           </>
         )}
-        <DirectSignBtn
-          loading={isLoading}
-          loadingType="circle"
-          key={`${amount}`}
-          showTextOnLoading
-          wrapperStyle={styles.directSignBtn}
-          authTitle={t('page.Lending.withdrawDetail.actions')}
-          title={`${t('page.Lending.withdrawDetail.actions')} ${
-            reserve.reserve.symbol
-          }`}
-          onFinished={handleWithdraw}
-          disabled={
-            !amount ||
-            amount === '0' ||
-            !withdrawTxs.length ||
-            isLoading ||
-            !currentAccount ||
-            (isRisky && !isChecked)
-          }
-          type="primary"
-          syncUnlockTime
-          account={currentAccount}
-          showHardWalletProcess
-        />
+        {canShowDirectSubmit ? (
+          <DirectSignBtn
+            loading={isLoading}
+            loadingType="circle"
+            key={`${amount}`}
+            showTextOnLoading
+            wrapperStyle={styles.directSignBtn}
+            authTitle={t('page.Lending.withdrawDetail.actions')}
+            title={`${t('page.Lending.withdrawDetail.actions')} ${
+              reserve.reserve.symbol
+            }`}
+            onFinished={() => handleWithdraw()}
+            disabled={
+              !amount ||
+              amount === '0' ||
+              !withdrawTxs.length ||
+              isLoading ||
+              !currentAccount ||
+              (isRisky && !isChecked)
+            }
+            type="primary"
+            syncUnlockTime
+            account={currentAccount}
+            showHardWalletProcess
+          />
+        ) : (
+          <Button
+            loadingType="circle"
+            showTextOnLoading
+            containerStyle={styles.fullWidthButton}
+            onPress={() => handleWithdraw()}
+            title={`${t('page.Lending.withdrawDetail.actions')} ${
+              reserve.reserve.symbol
+            }`}
+            loading={isLoading}
+            disabled={
+              !amount ||
+              amount === '0' ||
+              !withdrawTxs.length ||
+              isLoading ||
+              !currentAccount ||
+              (isRisky && !isChecked)
+            }
+          />
+        )}
       </View>
     </AutoLockView>
   );
@@ -492,5 +562,8 @@ const getStyles = createGetStyles2024(ctx => ({
     flex: 1,
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
+  },
+  fullWidthButton: {
+    flex: 1,
   },
 }));
