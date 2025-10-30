@@ -270,12 +270,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   },
-  tvl: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-  },
   yourSupplied: {
     fontSize: 16,
     lineHeight: 20,
@@ -283,12 +277,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
-  },
-  yourBalance: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
   },
   listHeader: {
     paddingVertical: 2,

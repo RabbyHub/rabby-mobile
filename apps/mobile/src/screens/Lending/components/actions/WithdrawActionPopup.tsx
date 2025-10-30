@@ -429,44 +429,6 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 12,
     gap: 24,
   },
-  symbol: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  tokenInfos: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  poolInfoItems: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginTop: 12,
-  },
-  poolInfoItem: {
-    flex: 1,
-    borderRadius: 8,
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    gap: 4,
-  },
-  poolInfoItemTitle: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: ctx.colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  poolInfoItemValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
   title: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 20,
@@ -474,58 +436,6 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 24,
     textAlign: 'center',
     marginTop: 0,
-    fontFamily: 'SF Pro Rounded',
-  },
-  supplyItemTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  supplyItemValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: ctx.colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  userInfoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  userInfoItemTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: ctx.colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  userInfoItemValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  sectionContainer: {
-    paddingBottom: 32,
-    width: '100%',
-  },
-  section: {
-    marginTop: 28,
-    lineHeight: 24,
-  },
-  sectionTitle: {
-    marginBottom: 5,
-    fontWeight: '700',
-    fontSize: 20,
-    lineHeight: 24,
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  sectionDesc: {
-    fontWeight: '400',
-    fontSize: 16,
-    lineHeight: 24,
-    color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
   buttonContainer: {
@@ -539,29 +449,6 @@ const getStyles = createGetStyles2024(ctx => ({
   directSignBtn: {
     width: '100%',
   },
-  gasInfoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  gasInfoTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: ctx.colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  gasInfoValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: ctx.colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  gasInfoNote: {
-    fontSize: 12,
-    color: ctx.colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-    marginTop: 4,
-  },
   button: {
     flex: 1,
   },
@@ -574,17 +461,6 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 0,
     backgroundColor: ctx.colors2024['neutral-line'],
   },
-  repayButtonTitle: {
-    color: ctx.colors2024['neutral-title-1'],
-    fontSize: 17,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
-  borrowButtonTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
   checkbox: {
     display: 'flex',
     flexDirection: 'row',
@@ -596,7 +472,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   checkboxText: {
     fontSize: 16,
-    lineHeight: 20,
+    lineHeight: 18,
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-foot'],
@@ -611,6 +487,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   warningText: {
     fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     flex: 1,
     color: ctx.colors2024['red-default'],

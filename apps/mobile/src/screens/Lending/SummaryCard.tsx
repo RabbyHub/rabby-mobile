@@ -385,7 +385,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   relativeIcon: {
     position: 'absolute',
     top: 20,
-    right: -10,
+    right: 20,
   },
   triangle: {
     position: 'absolute',
