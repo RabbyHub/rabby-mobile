@@ -490,12 +490,14 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   amountHeaderTitle: {
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   amountValueDescription: {
     fontSize: 14,
+    lineHeight: 18,
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },

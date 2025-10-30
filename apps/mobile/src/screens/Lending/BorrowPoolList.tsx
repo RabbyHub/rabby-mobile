@@ -246,6 +246,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 0,
     width: 60,
     fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
@@ -260,6 +261,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   symbol: {
     fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -276,6 +278,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   yourSupplied: {
     fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -298,17 +301,20 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   headerToken: {
     fontSize: 14,
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     flex: 1,
   },
   headerApy: {
     fontSize: 14,
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     width: 60,
     flex: 0,
   },
   headerMyBorrows: {
     fontSize: 14,
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     flex: 0,
     marginLeft: 10,
@@ -336,18 +342,21 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   availableCardTitle: {
     fontSize: 14,
+    lineHeight: 18,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   usdValue: {
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   availableCardValue: {
     fontSize: 14,
+    lineHeight: 18,
     fontWeight: '400',
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',

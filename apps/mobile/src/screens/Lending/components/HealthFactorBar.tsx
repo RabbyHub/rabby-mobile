@@ -119,7 +119,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   hfValue: {
     fontSize: 18,
-    lineHeight: 20,
+    lineHeight: 22,
     fontWeight: '700',
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
@@ -148,6 +148,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   liquidationValue: {
     fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
@@ -155,6 +156,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   liquidationText: {
     fontSize: 14,
+    lineHeight: 14,
     fontWeight: '500',
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',

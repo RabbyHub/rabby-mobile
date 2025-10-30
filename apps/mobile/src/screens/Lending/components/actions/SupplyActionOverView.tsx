@@ -157,6 +157,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   header: {
     color: colors2024['neutral-title-1'],
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
@@ -178,6 +179,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   title: {
     color: colors2024['neutral-foot'],
     fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
@@ -195,12 +197,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     color: colors2024['neutral-title-1'],
     fontSize: 16,
+    lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
   apy: {
     color: colors2024['neutral-title-1'],
     fontSize: 16,
+    lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
@@ -213,6 +217,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   hfValue: {
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     paddingHorizontal: 4,
@@ -224,6 +229,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   hfDesc: {
     color: colors2024['neutral-body'],
     fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
   },
@@ -233,6 +239,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   arrow: {
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',

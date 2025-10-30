@@ -296,16 +296,19 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   netWorthTitle: {
     color: ThemeColors2024.dark['neutral-foot'],
     fontSize: 12,
+    lineHeight: 12,
     fontFamily: 'SF Pro Rounded',
   },
   netWorthValue: {
     color: ThemeColors.dark['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 36,
+    lineHeight: 42,
     fontWeight: '900',
   },
   suppliedAndBorrowedTitle: {
     fontSize: 12,
+    lineHeight: 16,
     color: ThemeColors2024.dark['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -323,6 +326,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   sectionHeader: {
     color: ThemeColors2024.dark['neutral-foot'],
     fontSize: 12,
+    lineHeight: 12,
     fontFamily: 'SF Pro Rounded',
   },
   healthFactorContainer: {
@@ -344,12 +348,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   estDailyValue: {
     fontSize: 20,
+    lineHeight: 24,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['green-default'],
   },
   netApy: {
     fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: ThemeColors2024.dark['neutral-body'],
@@ -371,6 +377,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 1,
     borderRadius: 4,
     fontSize: 12,
+    lineHeight: 16,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     overflow: 'hidden',

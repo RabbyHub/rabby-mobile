@@ -355,6 +355,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   symbol: {
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -383,12 +384,14 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   poolInfoItemTitle: {
     fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
   poolInfoItemValue: {
     fontSize: 14,
+    lineHeight: 18,
     fontWeight: '700',
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -404,12 +407,14 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   supplyItemTitle: {
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   supplyItemValue: {
     fontSize: 20,
+    lineHeight: 24,
     fontWeight: '700',
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
@@ -427,12 +432,14 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   userInfoItemTitle: {
     fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
   userInfoItemValue: {
     fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -488,11 +495,13 @@ const getStyles = createGetStyles2024(ctx => ({
   repayButtonTitle: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
   borrowButtonTitle: {
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },

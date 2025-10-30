@@ -223,6 +223,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 0,
     width: 60,
     fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
@@ -238,6 +239,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   symbol: {
     fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -248,12 +250,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tvl: {
     fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
   yourSupplied: {
     fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -273,7 +277,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   yourBalance: {
     fontSize: 14,
-    lineHeight: 16,
+    lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
@@ -297,17 +301,20 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   headerToken: {
     fontSize: 14,
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     flex: 1,
   },
   headerApy: {
     fontSize: 14,
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     width: 60,
     flex: 0,
   },
   headerMySupplies: {
     fontSize: 14,
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     flex: 0,
     marginLeft: 10,

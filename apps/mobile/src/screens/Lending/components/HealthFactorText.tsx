@@ -28,6 +28,7 @@ export default HealthFactorText;
 const getStyles = createGetStyles2024(() => ({
   hfValue: {
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     paddingHorizontal: 4,
