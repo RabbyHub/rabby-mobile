@@ -24,6 +24,7 @@ import {
   GasLevel,
   ProjectItem,
   TokenItem,
+  TokenItemWithEntity,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
@@ -81,9 +82,8 @@ import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { IExtractFromPromise } from '@/utils/type';
 import { useWhiteListAddress } from './useWhiteListAddress';
 
-function makeDefaultToken(): TokenItem & {
+function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
-  cex_ids?: string[];
 } {
   return {
     id: 'eth',
@@ -231,7 +231,10 @@ export type SendScreenState = {
 
   buildTxsCount?: number;
 
-  agreeRequiredChecked: boolean;
+  agreeRequiredChecks: {
+    forToAddress: boolean;
+    forToken: boolean;
+  };
   // toAddrAccountInfo: FoundAccountResult | null;
   toAddrDesc: null | AddrDescResponse['desc'];
 };
@@ -273,7 +276,10 @@ const DFLT_SEND_STATE: SendScreenState = {
   addressToAddAsContacts: null,
   addressToEditAlias: null,
 
-  agreeRequiredChecked: false,
+  agreeRequiredChecks: {
+    forToAddress: false,
+    forToken: false,
+  },
   // toAddrAccountInfo: null,
   toAddrDesc: null,
 };
@@ -283,12 +289,8 @@ export function useSendTokenScreenState() {
     sendTokenScreenStateAtom,
   );
 
-  const putScreenState = useCallback(
-    (
-      patchOrUpdateFunc:
-        | Partial<SendScreenState>
-        | ((prev: SendScreenState) => SendScreenState),
-    ) => {
+  const putScreenState = useCallback<InternalContext['fns']['putScreenState']>(
+    patchOrUpdateFunc => {
       setSendScreenState(prev => {
         const patch =
           typeof patchOrUpdateFunc === 'function'
@@ -1223,6 +1225,12 @@ export function useSendTokenForm({
           tokenId: id,
         }));
         putChainToken({ currentToken: { ...result, tokenId: id } });
+        putScreenState(prev => ({
+          agreeRequiredChecks: {
+            ...prev.agreeRequiredChecks,
+            forToken: false,
+          },
+        }));
       }
       putScreenState({ isLoading: false });
 
@@ -1842,8 +1850,13 @@ type InternalContext = {
   events: EventEmitter;
   slider: number;
   fns: {
-    putScreenState: (patch: Partial<SendScreenState>) => void;
+    putScreenState: (
+      patch:
+        | Partial<SendScreenState>
+        | ((prev: SendScreenState) => Partial<SendScreenState>),
+    ) => void;
     fetchContactAccounts: () => void;
+    disableItemCheck: ITokenCheck;
   };
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
@@ -1890,6 +1903,11 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   fns: {
     putScreenState: () => {},
     fetchContactAccounts: () => {},
+    disableItemCheck: () => ({
+      disable: false,
+      reason: '',
+      simpleReason: '',
+    }),
   },
   callbacks: {
     handleCurrentTokenChange: () => {},

@@ -6,6 +6,7 @@ import {
   subscribeEvent,
   useSendTokenFormik,
   useSendTokenInternalContext,
+  useSendTokenScreenChainToken,
 } from '../hooks/useSendToken';
 import {
   createGetStyles2024,
@@ -62,8 +63,10 @@ export default function BottomArea({ account }: { account: Account | null }) {
     },
     callbacks: { handleIgnoreGasFeeChange },
 
-    fns: { putScreenState, fetchContactAccounts },
+    fns: { putScreenState, fetchContactAccounts, disableItemCheck },
   } = useSendTokenInternalContext();
+
+  const { currentToken } = useSendTokenScreenChainToken();
 
   const { isSubmitLoading, addressToAddAsContacts } = screenState;
 
@@ -87,7 +90,13 @@ export default function BottomArea({ account }: { account: Account | null }) {
     cex: toAddrCex,
     onLoadFinished: useCallback(
       ctx => {
-        putScreenState({ agreeRequiredChecked: false });
+        putScreenState(prev => ({
+          ...prev,
+          agreeRequiredChecks: {
+            ...prev.agreeRequiredChecks,
+            forToAddress: false,
+          },
+        }));
       },
       [putScreenState],
     ),
@@ -112,16 +121,59 @@ export default function BottomArea({ account }: { account: Account | null }) {
     };
   }, [fetchRisks]);
 
-  const mostImportantRisks = React.useMemo(() => {
-    if (risks.length === 0) {
-      return [];
-    }
-    const sorted = [...risks].sort(sortRisksDesc);
-    return sorted.slice(0, 1);
-  }, [risks]);
+  const { mostImportantRisks, hasRiskForToAddress, hasRiskForToken } =
+    React.useMemo(() => {
+      const ret = {
+        risksForToAddress: [] as { value: string }[],
+        risksForToken: [] as { value: string }[],
+        mostImportantRisks: [] as { value: string }[],
+      };
+      if (risks.length) {
+        const sorted = [...risks]
+          .filter(item => item.type !== RiskType.NEVER_SEND)
+          .sort(sortRisksDesc);
+
+        ret.risksForToAddress = sorted
+          .slice(0, 1)
+          .map(item => ({ value: item.value }));
+      }
+
+      if (!ret.risksForToAddress.length) {
+        const disableCheck = currentToken
+          ? disableItemCheck(currentToken)
+          : null;
+
+        if (disableCheck?.disable) {
+          ret.risksForToken.push({ value: disableCheck.simpleReason });
+        }
+      }
+
+      if (__DEV__) {
+        if (ret.risksForToAddress.length && ret.risksForToken.length) {
+          throw new Error(
+            'Address risk and Token risk should not appear at the same time',
+          );
+        }
+      }
+
+      ret.mostImportantRisks = [
+        ...ret.risksForToAddress,
+        ...ret.risksForToken,
+      ].slice(0, 1);
+
+      return {
+        mostImportantRisks: ret.mostImportantRisks,
+        hasRiskForToAddress: !!ret.risksForToAddress.length,
+        hasRiskForToken: !!ret.risksForToken.length,
+      };
+    }, [currentToken, risks, disableItemCheck]);
+
+  const agreeRequiredChecked =
+    (hasRiskForToAddress && screenState.agreeRequiredChecks.forToAddress) ||
+    (hasRiskForToken && screenState.agreeRequiredChecks.forToken);
 
   const disableSubmitDueToBasic =
-    !canSubmit || (!!risks.length && !screenState.agreeRequiredChecked);
+    !canSubmit || (!!mostImportantRisks.length && !agreeRequiredChecked);
 
   const canDirectSign = !ctx?.disabledProcess;
   const showRiskTipsForMiniSign = !!ctx?.gasFeeTooHigh;
@@ -139,7 +191,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
             //   <Skeleton style={styles.loadingRisks} height={40} />
             // </View>
             mostImportantRisks.map(risk => (
-              <View key={risk.type} style={styles.tipItem}>
+              <View key={risk.value} style={styles.tipItem}>
                 <RcIconWarningCircleCC
                   width={20}
                   height={20}
@@ -154,14 +206,22 @@ export default function BottomArea({ account }: { account: Account | null }) {
           <TouchableOpacity
             style={styles.checkbox}
             onPress={() => {
-              putScreenState({
-                agreeRequiredChecked: !screenState.agreeRequiredChecked,
+              putScreenState(prev => {
+                return {
+                  ...prev,
+                  agreeRequiredChecks: {
+                    ...prev.agreeRequiredChecks,
+                    ...(hasRiskForToAddress && {
+                      forToAddress: !agreeRequiredChecked,
+                    }),
+                    ...(hasRiskForToken && {
+                      forToken: !agreeRequiredChecked,
+                    }),
+                  },
+                };
               });
             }}>
-            <CheckBoxRect
-              size={16}
-              checked={screenState.agreeRequiredChecked}
-            />
+            <CheckBoxRect size={16} checked={agreeRequiredChecked} />
             <Text style={styles.checkboxText}>
               {t('page.confirmAddress.checkbox')}
             </Text>

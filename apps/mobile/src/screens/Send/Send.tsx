@@ -41,6 +41,7 @@ import { preferenceService } from '@/core/services';
 import {
   AddrDescResponse,
   TokenItem,
+  TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
@@ -132,7 +133,7 @@ function SendScreen({
     >();
   const navParams = route.params;
 
-  const { chainItem, currentToken, setCurrentToken, setChainEnum } =
+  const { chainItem, currentToken, setChainEnum } =
     useSendTokenScreenChainToken();
   const [routeParams] = useAtom(sendScreenParamsAtom);
 
@@ -153,7 +154,7 @@ function SendScreen({
   }, [Header, setNavigationOptions]);
 
   const disableItemCheck = useCallback<ITokenCheck>(
-    (token: TokenItem & { cex_ids?: string[] }) => {
+    (token: TokenItemWithEntity) => {
       if (!screenState.toAddrDesc) {
         return {
           disable: false,
@@ -163,10 +164,12 @@ function SendScreen({
       }
       const toCexId = screenState.toAddrDesc?.cex?.id;
       if (toCexId) {
-        const noSupportToken = token.cex_ids?.every?.(
+        const cex_ids =
+          token.cex_ids || token.identity?.cex_list.map(item => item.id);
+        const noSupportToken = cex_ids?.every?.(
           id => id.toLowerCase() !== toCexId.toLowerCase(),
         );
-        if (!token?.cex_ids?.length || noSupportToken) {
+        if (!cex_ids?.length || noSupportToken) {
           return {
             disable: true,
             simpleReason: t('page.sendToken.noSupportTokenReason.forDexSimple'),
@@ -513,6 +516,7 @@ function SendScreen({
         fns: {
           putScreenState,
           fetchContactAccounts,
+          disableItemCheck,
         },
 
         callbacks: {
