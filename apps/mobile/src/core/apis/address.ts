@@ -14,7 +14,6 @@ import {
 import { getKeyring } from './keyring';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { BroadcastEvent } from '@/constant/event';
-import { apisPerps } from './perps';
 
 export async function addWatchAddress(address: string) {
   const keyring = await getKeyring(KEYRING_TYPE.WatchAddressKeyring);
