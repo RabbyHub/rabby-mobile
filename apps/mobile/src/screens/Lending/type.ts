@@ -4,6 +4,7 @@ import {
   FormatReserveUSDResponse,
   FormatUserSummaryAndIncentivesResponse,
 } from '@aave/math-utils';
+import { CHAINS_ENUM } from '@debank/common';
 
 export interface IWalletBalance {
   address: string;
@@ -13,7 +14,7 @@ export interface IWalletBalance {
 export type DisplayPoolReserveInfo = ComputedUserReserve & {
   walletBalance?: string;
   walletBalanceUSD?: string;
-  chain?: string;
+  chain: CHAINS_ENUM;
   tokenLogo?: string;
 };
 

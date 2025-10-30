@@ -37,6 +37,7 @@ import {
 } from '@/screens/Transaction/components/type';
 import { transactionHistoryService } from '@/core/services';
 import { useRefreshHistoryId } from '../../hooks';
+import wrapperToken from '../../config/wrapperToken';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -67,20 +68,28 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     if (!amount || amount === '0') {
       return undefined;
     }
-    const targetPool = formattedPoolReservesAndIncentives.find(item =>
-      isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
-    );
+    const targetPool = formattedPoolReservesAndIncentives.find(item => {
+      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+        ? isSameAddress(
+            item.underlyingAsset,
+            wrapperToken[reserve.chain].address,
+          )
+        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+    });
     if (!targetPool) {
       return undefined;
     }
     return calculateHFAfterSupply(
       userSummary,
       targetPool,
-      BigNumber(amount),
+      BigNumber(amount).multipliedBy(
+        targetPool.formattedPriceInMarketReferenceCurrency,
+      ),
     ).toString();
   }, [
     amount,
     formattedPoolReservesAndIncentives,
+    reserve.chain,
     reserve.underlyingAsset,
     userSummary,
   ]);

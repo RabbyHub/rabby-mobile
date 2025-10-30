@@ -36,8 +36,8 @@ import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/screens/Transaction/components/type';
-import { useAtomValue } from 'jotai';
 import { useRefreshHistoryId } from '../../hooks';
+import wrapperToken from '../../config/wrapperToken';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -74,9 +74,14 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     if (!amount || amount === '0') {
       return undefined;
     }
-    const targetPool = formattedPoolReservesAndIncentives.find(item =>
-      isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
-    );
+    const targetPool = formattedPoolReservesAndIncentives.find(item => {
+      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+        ? isSameAddress(
+            item.underlyingAsset,
+            wrapperToken[reserve.chain].address,
+          )
+        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+    });
     if (!targetPool) {
       return undefined;
     }

@@ -81,7 +81,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       return undefined;
     }
     const borrowAmountInUsd = BigNumber(amount)
-      .multipliedBy(reserve.reserve.priceInUSD)
+      .multipliedBy(targetPool.formattedPriceInMarketReferenceCurrency)
       .toString();
     return calculateHealthFactorFromBalancesBigUnits({
       collateralBalanceMarketReferenceCurrency: userSummary.totalCollateralUSD,

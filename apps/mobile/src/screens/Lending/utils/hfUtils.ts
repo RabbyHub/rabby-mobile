@@ -1,6 +1,5 @@
 import { ReserveDataHumanized } from '@aave/contract-helpers';
 import {
-  BigNumberValue,
   calculateHealthFactorFromBalancesBigUnits,
   FormatReserveUSDResponse,
   FormatUserSummaryAndIncentivesResponse,

@@ -27,6 +27,7 @@ import wrapperToken from './config/wrapperToken';
 import { CHAINS_ENUM } from '@debank/common';
 import { API_ETH_MOCK_ADDRESS } from './utils/constant';
 import buildinProvider from '@/core/apis/buildinProvider';
+import { DisplayPoolReserveInfo } from './type';
 
 const provider = new ethers.providers.Web3Provider(
   buildinProvider.currentProvider,
@@ -259,7 +260,7 @@ const useLendingSummary = () => {
     }));
   }, [walletBalances]);
 
-  const displayPoolReserves = useMemo(() => {
+  const displayPoolReserves: DisplayPoolReserveInfo[] = useMemo(() => {
     if (!iUserSummary || !reserves?.baseCurrencyData) {
       return [];
     }
@@ -272,7 +273,7 @@ const useLendingSummary = () => {
       );
       return {
         ...item,
-        chain: 'ETH',
+        chain: CHAINS_ENUM.ETH,
         walletBalance: normalize(balance?.amount || '0', item.reserve.decimals),
         walletBalanceUSD: nativeToUSD({
           amount: new BigNumber(balance?.amount || '0'),
@@ -338,6 +339,7 @@ const useLendingSummary = () => {
           balance?.amount || '0',
           wrapperReserve.reserve.decimals,
         ),
+        chain: CHAINS_ENUM.ETH,
         walletBalanceUSD: nativeToUSD({
           amount: new BigNumber(balance?.amount || '0'),
           currencyDecimals: wrapperReserve.reserve.decimals,
