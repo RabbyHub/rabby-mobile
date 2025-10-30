@@ -31,7 +31,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    height: 187,
+    height: 174,
     marginTop: 12,
     borderRadius: 16,
     backgroundColor: isLight

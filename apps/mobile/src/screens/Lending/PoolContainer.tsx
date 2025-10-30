@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Dimensions, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
@@ -14,6 +14,13 @@ import SummaryCard from './SummaryCard';
 import { useLendingSummary } from './hooks';
 import { CHAINS_ENUM } from '@debank/common';
 import { ChainSelector } from './ChainSelector';
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -64,21 +71,76 @@ const PoolContainer = () => {
     );
   }, [loading, iUserSummary]);
 
+  const [primaryIsEmpty, setPrimaryIsEmpty] = useState<boolean>(isEmpty);
+  const overlayOpacity = useSharedValue(0);
+  const primaryOpacity = useSharedValue(1);
+  useEffect(() => {
+    if (isEmpty === primaryIsEmpty) {
+      return;
+    }
+    // 仅在 true -> false（空到非空）时执行交叉淡入淡出
+    if (primaryIsEmpty && !isEmpty) {
+      overlayOpacity.value = withTiming(
+        1,
+        { duration: 300, easing: Easing.linear },
+        finished => {
+          if (finished) {
+            runOnJS(setPrimaryIsEmpty)(isEmpty);
+          }
+        },
+      );
+      primaryOpacity.value = withTiming(0, {
+        duration: 100,
+        easing: Easing.linear,
+      });
+    } else {
+      // 其他方向（false -> true）直接切换，无动画
+      runOnJS(setPrimaryIsEmpty)(isEmpty);
+      primaryOpacity.value = 1;
+      overlayOpacity.value = 0;
+    }
+  }, [isEmpty, primaryIsEmpty, overlayOpacity, primaryOpacity]);
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.value,
+  }));
+  const primaryStyle = useAnimatedStyle(() => ({
+    opacity: primaryOpacity.value,
+  }));
+
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
         <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
-        {isEmpty ? (
-          <EmptySummaryCard />
-        ) : (
-          <SummaryCard
-            netWorth={iUserSummary?.netWorthUSD || ''}
-            supplied={iUserSummary?.totalLiquidityUSD || ''}
-            borrowed={iUserSummary?.totalBorrowsUSD || ''}
-            netApy={apyInfo?.netAPY || 0}
-            healthFactor={iUserSummary?.healthFactor || ''}
-          />
-        )}
+        <View style={styles.fadeWrapper}>
+          <Animated.View style={primaryStyle}>
+            {primaryIsEmpty ? (
+              <EmptySummaryCard />
+            ) : (
+              <SummaryCard
+                netWorth={iUserSummary?.netWorthUSD || ''}
+                supplied={iUserSummary?.totalLiquidityUSD || ''}
+                borrowed={iUserSummary?.totalBorrowsUSD || ''}
+                netApy={apyInfo?.netAPY || 0}
+                healthFactor={iUserSummary?.healthFactor || ''}
+              />
+            )}
+          </Animated.View>
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.overlayAbsolute, overlayStyle]}>
+            {isEmpty ? (
+              <EmptySummaryCard />
+            ) : (
+              <SummaryCard
+                netWorth={iUserSummary?.netWorthUSD || ''}
+                supplied={iUserSummary?.totalLiquidityUSD || ''}
+                borrowed={iUserSummary?.totalBorrowsUSD || ''}
+                netApy={apyInfo?.netAPY || 0}
+                healthFactor={iUserSummary?.healthFactor || ''}
+              />
+            )}
+          </Animated.View>
+        </View>
       </View>
     );
   }, [
@@ -90,6 +152,11 @@ const PoolContainer = () => {
     iUserSummary?.totalLiquidityUSD,
     isEmpty,
     styles.headerContainer,
+    primaryIsEmpty,
+    overlayStyle,
+    primaryStyle,
+    styles.fadeWrapper,
+    styles.overlayAbsolute,
   ]);
 
   const renderTabBar = React.useCallback(
@@ -145,6 +212,15 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   headerContainer: {
     marginBottom: 24,
+  },
+  fadeWrapper: {
+    position: 'relative',
+  },
+  overlayAbsolute: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
   },
   riskContainer: {
     paddingHorizontal: 20,
