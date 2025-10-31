@@ -122,7 +122,8 @@ const SummaryCard = (props: IProps) => {
                 {estDaily(props.netWorth, props.netApy)}
               </Text>
               <Text style={styles.netApy}>
-                (+{formatPercent(Number(props.netApy || '0'))})
+                ({props.netApy > 0 ? '+' : ''}
+                {formatPercent(Number(props.netApy || '0'))})
               </Text>
             </View>
           </View>
