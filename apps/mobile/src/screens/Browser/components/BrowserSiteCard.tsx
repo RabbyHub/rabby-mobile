@@ -1,4 +1,5 @@
 import RcIconStarFull from '@/assets/icons/dapp/icon-star-mini-full.svg';
+import { HighlightText } from '@/components2024/HighlightText';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
@@ -48,6 +49,7 @@ interface DappCardProps {
   isShowListBy?: boolean;
   isShowFavorite?: boolean;
   isShowBorder?: boolean;
+  keyword?: string;
 }
 
 export const BrowserSiteCard: React.FC<DappCardProps> = ({
@@ -73,6 +75,7 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
   isActive,
   data,
   onFavoritePress,
+  keyword,
   style,
   isShowDesc = false,
   isShowListBy = false,
@@ -128,9 +131,21 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
         </View>
         <View style={styles.dappContent}>
           {data.name ? (
-            <Text style={[styles.dappTitle]} numberOfLines={1}>
-              {data.name}
-            </Text>
+            <>
+              {keyword ? (
+                <HighlightText
+                  style={styles.dappTitle}
+                  highlightStyle={styles.dappOriginHighlight}
+                  numberOfLines={1}
+                  searchWords={[keyword]}
+                  textToHighlight={data.name}
+                />
+              ) : (
+                <Text style={[styles.dappTitle]} numberOfLines={1}>
+                  {data.name}
+                </Text>
+              )}
+            </>
           ) : null}
           <View style={styles.dappInfo}>
             <Text style={styles.dappOrigin} numberOfLines={1}>
