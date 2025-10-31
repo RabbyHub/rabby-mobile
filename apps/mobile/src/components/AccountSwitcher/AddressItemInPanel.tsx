@@ -155,7 +155,9 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
     },
     addressItemContainer: {
       padding: 16,
-      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
       height: AddressItemSizes.itemH,
     },
     addressItemContainerCurrent: {

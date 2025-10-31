@@ -24,7 +24,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { TxStatusItem } from '../HistoryDetailScreen';
 import { useTranslation } from 'react-i18next';
-import { HistoryItemCateType } from './type';
+import { CUSTOM_HISTORY_TITLE_TYPE, HistoryItemCateType } from './type';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { HistoryItemTokenArea } from './HistoryItemTokenArea';
 import { getTokenSymbol } from '@/utils/token';
@@ -86,6 +86,19 @@ export const HistoryItem = React.memo(
     }, [data]);
 
     const formatTitle = useMemo(() => {
+      if (data.historyCustomType) {
+        switch (data.historyCustomType) {
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY:
+            return t('page.transactions.itemTitle.LendingSupply');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW:
+            return t('page.transactions.itemTitle.LendingWithdraw');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW:
+            return t('page.transactions.itemTitle.LendingBorrow');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY:
+            return t('page.transactions.itemTitle.LendingRepay');
+        }
+      }
+
       switch (formatType) {
         case HistoryItemCateType.GAS_DEPOSIT:
           return t('page.transactions.itemTitle.DepositedGas');

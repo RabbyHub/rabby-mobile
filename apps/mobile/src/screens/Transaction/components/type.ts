@@ -13,3 +13,14 @@ export enum HistoryItemCateType {
   GAS_WITHDRAW = 'gas_withdraw',
   GAS_RECEIVED = 'gas_received',
 }
+
+export enum CUSTOM_HISTORY_ACTION {
+  LENDING = 'LENDING',
+}
+
+export enum CUSTOM_HISTORY_TITLE_TYPE {
+  LENDING_WITHDRAW = 'LENDING_WITHDRAW', // withdraw from lending
+  LENDING_REPAY = 'LENDING_REPAY', // repay loan
+  LENDING_BORROW = 'LENDING_BORROW', // borrow from lending
+  LENDING_SUPPLY = 'LENDING_SUPPLY', // supply to lending
+}

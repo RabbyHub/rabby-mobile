@@ -52,6 +52,14 @@ import { SettingTrezor } from '@/components/HDSetting/SettingTrezor';
 import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
 import EarningDialog from '@/screens/CopyTrading/component/EarningDialog';
 import { AddressHightDesc } from '../AddressHightDesc';
+import SelectLendingChain from '@/screens/Lending/ChainSelector/SelectLendingChain';
+import { SupplyDetailPopup } from '@/screens/Lending/components/SupplyDetailPopup';
+import { BorrowDetailPopup } from '@/screens/Lending/components/BorrowDetailPopup';
+import { SupplyActionPopup } from '@/screens/Lending/components/actions/SupplyActionPopup';
+import { WithdrawActionPopup } from '@/screens/Lending/components/actions/WithdrawActionPopup';
+import { BorrowActionPopup } from '@/screens/Lending/components/actions/BorrowActionPopup';
+import { RepayActionPopup } from '@/screens/Lending/components/actions/RepayActionPopup';
+import { HFDescription } from '@/screens/Lending/components/HFDescription';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -273,5 +281,37 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: {
     snapPoints: undefined,
     Component: BatchRevokeErrorReason,
+  },
+  [MODAL_NAMES.SUPPLY_DETAIL]: {
+    snapPoints: [510],
+    Component: SupplyDetailPopup,
+  },
+  [MODAL_NAMES.BORROW_DETAIL]: {
+    snapPoints: [554],
+    Component: BorrowDetailPopup,
+  },
+  [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: {
+    snapPoints: [666],
+    Component: SupplyActionPopup,
+  },
+  [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: {
+    snapPoints: [734],
+    Component: WithdrawActionPopup,
+  },
+  [MODAL_NAMES.BORROW_ACTION_DETAIL]: {
+    snapPoints: [686],
+    Component: BorrowActionPopup,
+  },
+  [MODAL_NAMES.REPAY_ACTION_DETAIL]: {
+    snapPoints: [666],
+    Component: RepayActionPopup,
+  },
+  [MODAL_NAMES.HF_DESCRIPTION]: {
+    snapPoints: [674],
+    Component: HFDescription,
+  },
+  [MODAL_NAMES.SELECT_LENDING_CHAIN]: {
+    snapPoints: ['80%'],
+    Component: SelectLendingChain,
   },
 };

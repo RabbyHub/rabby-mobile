@@ -1,7 +1,7 @@
 import { Account } from '@/core/services/preference';
 import AuthButton, { IAuthButtonProps } from '../AuthButton';
 import { isHardWareAccountAccountSupportMiniApproval } from '@/utils/account';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleProp, Text, View, ViewStyle } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -19,6 +19,7 @@ export const DirectSignBtn = ({
   showHardWalletProcess,
   riskReset,
   showRiskTips,
+  wrapperStyle,
   // isProcess,
   ...props
 }: Omit<IAuthButtonProps, 'onFinished'> & {
@@ -26,6 +27,7 @@ export const DirectSignBtn = ({
   showHardWalletProcess?: boolean;
   riskReset?: boolean;
   showRiskTips?: boolean;
+  wrapperStyle?: StyleProp<ViewStyle>;
   onFinished?: (p?: { ignoreGasFee?: boolean }) => any;
 
   // isProcess?: boolean;
@@ -83,7 +85,7 @@ export const DirectSignBtn = ({
     ? !riskChecked || props.disabled
     : props.disabled;
   return (
-    <View>
+    <View style={wrapperStyle}>
       {showRiskTips ? (
         <Pressable
           style={styles.riskContainer}

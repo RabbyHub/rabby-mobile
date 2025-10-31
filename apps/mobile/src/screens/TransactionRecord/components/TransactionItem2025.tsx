@@ -31,7 +31,10 @@ import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { getAlianName, getAliasName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
 import { transactionHistoryService } from '@/core/services';
-import { HistoryItemCateType } from '@/screens/Transaction/components/type';
+import {
+  CUSTOM_HISTORY_TITLE_TYPE,
+  HistoryItemCateType,
+} from '@/screens/Transaction/components/type';
 import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
 import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryItemTokenArea';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
@@ -270,6 +273,19 @@ export const TransactionItem = ({
   }, [data]);
 
   const formatTitle = useMemo(() => {
+    if (data.customActionInfo.customActionTitleType) {
+      switch (data.customActionInfo.customActionTitleType) {
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY:
+          return t('page.transactions.itemTitle.LendingSupply');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW:
+          return t('page.transactions.itemTitle.LendingWithdraw');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW:
+          return t('page.transactions.itemTitle.LendingBorrow');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY:
+          return t('page.transactions.itemTitle.LendingRepay');
+      }
+    }
+
     switch (formatType) {
       case HistoryItemCateType.GAS_DEPOSIT:
         return t('page.transactions.itemTitle.DepositedGas');
@@ -301,7 +317,7 @@ export const TransactionItem = ({
       default:
         return t('page.transactions.itemTitle.Default');
     }
-  }, [formatType, t, tokenApproveData]);
+  }, [formatType, t, tokenApproveData, data]);
 
   const formatDescribe = useMemo(() => {
     const ToText = t('page.swap.to') + ' ';
