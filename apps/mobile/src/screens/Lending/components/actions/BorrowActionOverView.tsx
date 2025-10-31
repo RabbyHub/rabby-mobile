@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
-import { getHealthStatusColor, isHFEmpty } from '../../utils';
+import { isHFEmpty } from '../../utils';
 import HealthFactorText from '../HealthFactorText';
 import { useTranslation } from 'react-i18next';
 
@@ -16,23 +16,13 @@ const BorrowActionOverView: React.FC<
   const { t } = useTranslation();
   const { healthFactor = '0' } = userSummary;
 
-  const hfColors = useMemo(() => {
-    return getHealthStatusColor(Number(healthFactor || '0'));
-  }, [healthFactor]);
-
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{t('page.Lending.popup.title')}</Text>
       <View style={styles.content}>
         <View style={[styles.item, styles.hfContainer]}>
           <Text style={styles.title}>{t('page.Lending.hf')}</Text>
-          <Text
-            style={[
-              styles.hfValue,
-              {
-                color: hfColors.color,
-              },
-            ]}>
+          <Text style={styles.hfValue}>
             {afterHF ? (
               isHFEmpty(Number(healthFactor || '0')) ? (
                 <HealthFactorText healthFactor={afterHF} />

@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
-import { getHealthStatusColor } from '../../utils';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import HealthFactorText from '../HealthFactorText';
 import { formatTokenAmount } from '@/utils/number';
@@ -27,10 +26,6 @@ const RepayActionOverView: React.FC<
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { healthFactor = '0' } = userSummary;
   const { t } = useTranslation();
-
-  const hfColors = useMemo(() => {
-    return getHealthStatusColor(Number(healthFactor || '0'));
-  }, [healthFactor]);
 
   return (
     <View style={styles.container}>
@@ -65,13 +60,7 @@ const RepayActionOverView: React.FC<
         </View>
         <View style={[styles.item, styles.hfContainer]}>
           <Text style={styles.title}>{t('page.Lending.hf')}</Text>
-          <Text
-            style={[
-              styles.hfValue,
-              {
-                color: hfColors.color,
-              },
-            ]}>
+          <Text style={styles.hfValue}>
             {afterHF ? (
               <>
                 <HealthFactorText healthFactor={healthFactor} />

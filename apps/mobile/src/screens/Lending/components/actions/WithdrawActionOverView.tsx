@@ -4,7 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
-import { getHealthStatusColor, isHFEmpty } from '../../utils';
+import { isHFEmpty } from '../../utils';
 import HealthFactorText from '../HealthFactorText';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
@@ -25,10 +25,6 @@ const WithdrawActionOverView: React.FC<
   const availableText = useMemo(() => {
     return `$${formatAmountValueKMB(reserve.underlyingBalanceUSD || '0')}`;
   }, [reserve.underlyingBalanceUSD]);
-
-  const hfColors = useMemo(() => {
-    return getHealthStatusColor(Number(healthFactor || '0'));
-  }, [healthFactor]);
 
   return (
     <View style={styles.container}>
@@ -69,13 +65,7 @@ const WithdrawActionOverView: React.FC<
             isHFEmpty(Number(healthFactor || '0')) && styles.hidden,
           ]}>
           <Text style={styles.title}>{t('page.Lending.hf')}</Text>
-          <Text
-            style={[
-              styles.hfValue,
-              {
-                color: hfColors.color,
-              },
-            ]}>
+          <Text style={styles.hfValue}>
             {afterHF ? (
               <>
                 <HealthFactorText healthFactor={healthFactor} />

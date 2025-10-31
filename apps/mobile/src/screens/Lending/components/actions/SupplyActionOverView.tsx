@@ -7,7 +7,7 @@ import {
   formatAmountValueKMB,
   formatPercent,
 } from '@/screens/TokenDetail/util';
-import { getHealthStatusColor, isHFEmpty } from '../../utils';
+import { isHFEmpty } from '../../utils';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import HealthFactorText from '../HealthFactorText';
 import {
@@ -34,10 +34,6 @@ const SupplyActionOverView: React.FC<
   const availableText = useMemo(() => {
     return `$${formatAmountValueKMB(availableBorrowsUSD || '0')}`;
   }, [availableBorrowsUSD]);
-
-  const hfColors = useMemo(() => {
-    return getHealthStatusColor(Number(healthFactor || '0'));
-  }, [healthFactor]);
 
   const handleSupplyDescription = () => {
     const modalId = createGlobalBottomSheetModal2024({
@@ -118,13 +114,7 @@ const SupplyActionOverView: React.FC<
             isHFEmpty(Number(healthFactor || '0')) && styles.hidden,
           ]}>
           <Text style={styles.title}>{t('page.Lending.hf')}</Text>
-          <Text
-            style={[
-              styles.hfValue,
-              {
-                color: hfColors.color,
-              },
-            ]}>
+          <Text style={styles.hfValue}>
             {afterHF ? (
               <>
                 <HealthFactorText healthFactor={healthFactor} />
