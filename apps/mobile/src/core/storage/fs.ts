@@ -1,4 +1,5 @@
 import RNFS from 'react-native-fs';
+import * as Sentry from '@sentry/react-native';
 
 import { APP_IDS, INITIAL_OPENAPI_URL } from '@/constant';
 import { stringUtils } from '@rabby-wallet/base-utils';
@@ -7,7 +8,7 @@ import { IS_ANDROID, IS_IOS } from '../native/utils';
 const TMPDIR = RNFS.TemporaryDirectoryPath || RNFS.CachesDirectoryPath;
 
 const DIRS = {
-  SCREEN_SHOT_TMP: `${TMPDIR}/.screenshots`,
+  SCREEN_SHOT_TMP: `${stringUtils.unSuffix(TMPDIR)}/.screenshots`,
 };
 
 export class AppScreenshotFS {
@@ -20,7 +21,11 @@ export class AppScreenshotFS {
     this.#dir = DIRS['SCREEN_SHOT_TMP'];
 
     this._cleanDirectoryOnBootstrap();
-    RNFS.mkdir(this.#dir, { NSURLIsExcludedFromBackupKey: false });
+    RNFS.mkdir(this.#dir, { NSURLIsExcludedFromBackupKey: false }).catch(
+      error => {
+        Sentry.captureException(error);
+      },
+    );
   }
 
   static #inst: AppScreenshotFS;
@@ -32,6 +37,8 @@ export class AppScreenshotFS {
   }
 
   private async _cleanDirectoryOnBootstrap() {
+    if (!(await RNFS.exists(this.#dir))) return;
+
     await RNFS.unlink(this.#dir);
   }
 
