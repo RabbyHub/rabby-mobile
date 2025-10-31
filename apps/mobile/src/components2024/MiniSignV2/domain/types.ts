@@ -58,6 +58,7 @@ export type SignerConfig = {
   }) => void;
   showCheck?: boolean;
   synGasHeaderInfo?: boolean;
+  autoUseGasFree?: boolean;
 };
 
 export type PreparedContext = {
