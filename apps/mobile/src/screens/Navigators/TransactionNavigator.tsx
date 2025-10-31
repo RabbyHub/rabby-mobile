@@ -198,6 +198,13 @@ export default function TransactionNavigator() {
         component={LendingHistory}
         options={{
           title: 'Lending History',
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
           headerStyle: {
             backgroundColor: makeTxPageBackgroundColors({
               isLight,
