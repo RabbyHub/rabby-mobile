@@ -1,22 +1,18 @@
 import { MMKV } from 'react-native-mmkv';
 import { MMKV_FILE_NAMES } from '@/core/utils/appFS';
 import { openapi } from '@/core/request';
-import { CurveDayType } from './curveDayType';
 
-export interface ITIME_STEP_ITEM {
-  timestamp: number;
-  usd_value: number;
-}
-interface ICURVE_DATA {
-  data: ITIME_STEP_ITEM[];
-  updateTime: number;
-}
 export const CURE_CACHE_TIME = 10 * 60 * 1000; // 10 min
 // export const CURE_CACHE_TIME = 7 * 24 * 60 * 60 * 1000; // TODO: 7 days min tmp for test
 export const LONG_TIME_UNTIL_EXPIRED = 5 * 24 * 60 * 60 * 1000; // 5 days expired is invalid
 
+export interface IBalance24hData {
+  data: { total_usd_value: number };
+  updateTime: number;
+}
+
 const storage = new MMKV({
-  id: MMKV_FILE_NAMES.DAYCURVE,
+  id: MMKV_FILE_NAMES.BALANCE_24H,
 });
 
 const isExpired = (updateTime: number) => {
@@ -27,11 +23,11 @@ const isLongTimeExpired = (updateTime: number) => {
   return Date.now() - updateTime > LONG_TIME_UNTIL_EXPIRED;
 };
 
-export const getCurveCache = (_address: string) => {
+export const getBalance24hCache = (_address: string) => {
   const address = _address.toLowerCase();
   const data = storage.getString(address);
   if (data) {
-    const cache = JSON.parse(data) as ICURVE_DATA;
+    const cache = JSON.parse(data) as IBalance24hData;
     return {
       data: cache.data,
       updateTime: cache.updateTime,
@@ -41,57 +37,59 @@ export const getCurveCache = (_address: string) => {
   return null;
 };
 
-export const setCurveCache = (_address: string, data: ICURVE_DATA) => {
+export const setBalance24hCache = (_address: string, data: IBalance24hData) => {
   const address = _address.toLowerCase();
   storage.set(address, JSON.stringify(data));
 };
 
-export const getNetCurve = async (
+export const get24hBalance = async (
   addr: string,
-  days?: CurveDayType,
+  realtimeEVMNetWorth: number,
   force?: boolean,
 ) => {
-  if (days === CurveDayType.DAY) {
-    const res = await get24hCurveDataWithCache(addr, force);
-    return res?.data;
-  }
-  return openapi.getNetCurve(addr, days);
+  const res = await get24hBalanceWithCache(addr, realtimeEVMNetWorth, force);
+  return res?.data;
 };
 
-export const get24hCurveDataWithCache = async (
+export const get24hBalanceWithCache = async (
   _address: string,
+  realtimeEVMNetWorth: number,
   force = false,
 ) => {
   const address = _address.toLowerCase();
-  const cache = getCurveCache(address);
+  const cache = getBalance24hCache(address);
   if (cache && !force && !cache.isExpired) {
     return cache;
   }
-  const curve = await openapi.getNetCurve(address, 1);
-  setCurveCache(address, {
-    data: curve,
-    updateTime: Date.now(),
+  const { total_usd_value } = await openapi.get24hTotalBalance(address);
+  const data = {
+    total_usd_value: total_usd_value,
+  };
+  const updateTime = Date.now();
+  setBalance24hCache(address, {
+    data,
+    updateTime,
   });
   return {
-    data: curve,
-    updateTime: Date.now(),
+    data,
+    updateTime,
     isExpired: false,
   };
 };
 
-export const deleteCurveCache = (_address: string) => {
+export const delete24hBalanceCache = (_address: string) => {
   const address = _address.toLowerCase();
   storage.delete(address);
 };
 
 // delete all curve cache that is long time expired
-export const deleteLongTimeCurveCache = () => {
+export const deleteLongTime24hBalanceCache = () => {
   try {
     const keys = storage.getAllKeys();
     keys.forEach(key => {
-      const cache = getCurveCache(key);
+      const cache = getBalance24hCache(key);
       if (cache && isLongTimeExpired(cache.updateTime)) {
-        deleteCurveCache(key);
+        delete24hBalanceCache(key);
       }
     });
   } catch (error) {

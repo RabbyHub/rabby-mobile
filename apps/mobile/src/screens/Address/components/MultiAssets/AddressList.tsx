@@ -18,14 +18,13 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useSetPasswordFirst } from '@/hooks/useLock';
-import { getChangeData } from '@/hooks/useCurve';
-import { useMultiCurve } from '@/hooks/useMultiCurve';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useBalanceUpdate } from './hooks/balance';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
 
 const SPACING_HEIGHT = 8;
 export const AddressList = () => {
@@ -52,7 +51,7 @@ export const AddressList = () => {
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
 
-  const { multiTimeStamp, refresh: refreshCurve } = useMultiCurve(
+  const { multi24hBalance, refresh: refresh24hBalance } = useMulti24hBalance(
     top10Addresses,
     true,
     top10Balance.total,
@@ -77,23 +76,21 @@ export const AddressList = () => {
   const addressListData = useMemo(() => {
     return [
       ...list.map(item => {
-        const hasChangeData = multiTimeStamp[
-          item.address.toLowerCase()
-        ]?.data?.some(i => i.usd_value !== 0);
+        const changeData = multi24hBalance[item.address.toLowerCase()]?.data;
         const chartData = getChangeData(
-          multiTimeStamp[item.address.toLowerCase()]?.data || [],
+          changeData,
           item.evmBalance,
           new Date().getTime(),
         );
         return {
           ...item,
           balance: item.balance,
-          changPercent: hasChangeData ? chartData?.changePercent : undefined,
-          isLoss: hasChangeData ? chartData?.isLoss : undefined,
+          changPercent: changeData ? chartData?.changePercent : undefined,
+          isLoss: changeData ? chartData?.isLoss : undefined,
         };
       }),
     ];
-  }, [list, multiTimeStamp]);
+  }, [list, multi24hBalance]);
 
   const renderItem = useCallback(
     ({ item }) => {
@@ -251,13 +248,13 @@ export const AddressList = () => {
     try {
       await Promise.all([
         triggerUpdate(true),
-        refreshCurve(true),
+        refresh24hBalance(true),
         fetchAccounts(),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [fetchAccounts, refreshCurve, triggerUpdate]);
+  }, [fetchAccounts, refresh24hBalance, triggerUpdate]);
 
   return (
     <Tabs.FlatList

@@ -2184,7 +2184,8 @@
       },
       "WebviewError": {
         "failedToLoad": "Failed to load the page",
-        "error": "Error:"
+        "error": "Error:",
+        "alertText": "Try<1/><2>Open in browser</2><3/>to check if it is a website issue"
       },
       "toast": {
         "clearCacheSuccess": "Cache cleared"
@@ -2816,6 +2817,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "I Got it"
+    },
+    "Prediction": {
+      "side": "Side",
+      "amount": "Amount",
+      "price": "Price",
+      "usdValue": "USD Value"
     }
   },
   "native": {
