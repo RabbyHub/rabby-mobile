@@ -88,6 +88,11 @@
       },
       "favoriteFilter": {
         "all": "Todos"
+      },
+      "riskDetected": {
+        "simpleExplanation": "Não suportado",
+        "title": "Risco Detectado",
+        "proceedBtn": "Prosseguir"
       }
     },
     "PillsSwitch": {
@@ -143,7 +148,10 @@
         "loginAndClaim": "Inicie sessão e reivindique {{amount}}",
         "loginTips3": "quando você estiver sem Gas",
         "loginTips1": "Pague taxas de gás para",
-        "loginTips2": "qualquer endereço em qualquer cadeia"
+        "loginTips2": "qualquer endereço em qualquer cadeia",
+        "depositDesc": "em Todas as Chains quando você estiver sem gas",
+        "learnAbout": "Saiba mais sobre GasAccount",
+        "depositTitle": "Depositar USDC/USDT Pagar Taxas de Gas"
       },
       "gasExceed": "O saldo do GasAccount não pode exceder $1000",
       "withdrawConfirmModal": {
@@ -172,6 +180,16 @@
         "noWithdrawableBalanceTitle": "{{amount}} Não retirável",
         "giftTips": "Recompensa de Gas para utilizadores ativos",
         "noWithdrawableBalanceDescription": "{{amount}} do seu saldo de gas não pode ser retirado:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
+      "about": {
+        "title4": "O GasAccount é seguro?",
+        "title3": "O GasAccount tem taxas adicionais?",
+        "title2": "Como usar a Gas Account",
+        "title1": "O que é GasAccount",
+        "desc3": "A Rabby Wallet não cobra taxas adicionais. Você paga apenas o gás pela sua transação e uma pequena quantidade de gás para enviar esse gás da GasAccount para o seu endereço.",
+        "desc1": "GasAccount é uma nova forma de pagar taxas de gas. Em vez de usar tokens nativos em cada cadeia, você pode usar uma conta para cobrir o gas de todos os seus endereços em todas as cadeias. Simples, opcional e nunca sem gas.",
+        "desc2": "Adicione fundos à sua GasAccount e use-a para qualquer transação. Ao assinar, escolha pagar o gás com tokens nativos ou GasAccount, mude a qualquer momento.",
+        "desc4": "GasAccount não requer aprovações ou permissões de contrato. Você deposita no endereço GasAccount do Rabby, e o Rabby envia gás para o seu endereço quando necessário. Totalmente seguro por design."
       }
     },
     "Contact": {
@@ -257,6 +275,15 @@
       "amount": "Montante",
       "price": "Preço",
       "side": "Lado"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "addBtn": "Adicionar agora",
+        "desc": "Adicionar endereço confiável à Whitelist"
+      },
+      "whitelistAccounts": "Lista Branca",
+      "recentAccounts": "Recente",
+      "importedAccounts": "Carteiras Importadas"
     }
   },
   "global": {
@@ -359,7 +386,11 @@
         "Revoke": "Revogação de Aprovação de {{token}}",
         "ReceivedGas": "Recebido Gas",
         "DepositedGas": "Gás depositado",
-        "WithdrawnGas": "Gás Retirado"
+        "WithdrawnGas": "Gás Retirado",
+        "LendingSupply": "Fornecer",
+        "LendingWithdraw": "Retirar",
+        "LendingBorrow": "Emprestar",
+        "LendingRepay": "Reembolsar"
       },
       "detail": {
         "SpeedUp": "Acelerar",
@@ -881,7 +912,13 @@
       "sectionTo": {
         "addrValidator__empty": "Por favor, insira o endereço",
         "addrValidator__invalid": "Este endereço é inválido",
-        "searchInputPlaceholder": "Insira um endereço ou digitalize"
+        "searchInputPlaceholder": "Insira um endereço ou digitalize",
+        "positiveTips": {
+          "whitelistedAddress": "Morada na lista branca",
+          "yourOwnAddress": "O seu próprio endereço",
+          "sentRecently": "Enviado recentemente"
+        },
+        "selectPlaceholder": "Selecionar Endereço"
       },
       "To": "Para",
       "AddToContactsModal": {
@@ -922,7 +959,15 @@
       },
       "From": "De",
       "addressDetail": "Detalhe do Endereço",
-      "newAmount": "Quantidade"
+      "newAmount": "Quantidade",
+      "noSupportTokenReason": {
+        "forSafeSimple": "Este endereço Safe não está implantado nesta cadeia",
+        "forDexSimple": "Este token pode não ser suportado por esta bolsa.",
+        "forChain": "O endereço do destinatário é um endereço de contrato em uma cadeia diferente. Verifique antes de prosseguir para evitar perdas.",
+        "forChainSimple": "O endereço do destinatário é um endereço de contrato em uma cadeia diferente",
+        "forDex": "Este token pode não ser suportado por esta exchange. Verifique antes de prosseguir para evitar perdas.",
+        "forSafe": "O endereço Safe para o qual está a enviar tokens não está implementado nesta cadeia. Verifique antes de prosseguir para evitar perdas."
+      }
     },
     "signFooterBar": {
       "importedByLedger": "Importado por Ledger",
@@ -1019,7 +1064,8 @@
         "copyTrading": "Copy Trading",
         "watchlist": "Lista de Observação de Tokens",
         "perpsMarketList": "Mais Perps",
-        "perps": "Perps"
+        "perps": "Perps",
+        "lending": "Empréstimo"
       }
     },
     "manageAddress": {
@@ -2776,6 +2822,123 @@
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Página Integrada"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "sendTo": "Enviar Para",
+        "selectFromHistory": "Selecione a partir do Histórico",
+        "viewSentTx": "Enviado",
+        "addNewWhitelistAddr": "Adicionar Novo Endereço à Lista Branca",
+        "sendFrom": "Enviar De"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "Nome o endereço"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "needSupply": "Para pedir emprestado, precisa fornecer ativos como colateral.",
+        "canBorrow": "Você pode tomar emprestado com base na sua garantia fornecida, até o limite de empréstimo."
+      },
+      "list": {
+        "headers": {
+          "token": "Token",
+          "myBorrows": "Meus empréstimos",
+          "apy": "APY",
+          "mySupplies": "Meus suprimentos"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "description": "Impulsionado pela AAVE. Seguro e sem taxas.",
+          "title": "Ganhe Juros, Empreste a Qualquer Momento"
+        },
+        "risky": "Arriscado",
+        "more": "Mais",
+        "lq": "Se descer abaixo de 1, a liquidação pode ser acionada.",
+        "healthy": "Saudável"
+      },
+      "repayDetail": {
+        "actions": "Reembolsar",
+        "approveAndRepay": "Aprovar e Reembolsar"
+      },
+      "supplyDetail": {
+        "availableToBorrow": "Disponível para emprestar",
+        "actions": "Fornecimento",
+        "approveAndSupply": "Aprovar e Fornecer",
+        "supplyAPY": "Fornecer APY"
+      },
+      "withdrawDetail": {
+        "actions": "Retirar",
+        "remainingSupply": "Fornecimento restante"
+      },
+      "borrowDetail": {
+        "actions": "Emprestar",
+        "approveAndBorrow": "Aprovar e Pedir Emprestado",
+        "almostReachedError": "O montante máximo disponível para empréstimo é limitado porque o limite de empréstimo do protocolo está quase atingido.",
+        "almostReachedWarning": "O limite de empréstimo do protocolo está em 100% para este ativo. Novos empréstimos não estão disponíveis."
+      },
+      "popup": {
+        "amount": "Montante",
+        "available": "disponível",
+        "title": "Visão Geral da Transação",
+        "liquidationAt": "Liquidação a < 1.0",
+        "remainingDebt": "Divida restante"
+      },
+      "borrowOverview": {
+        "totalBorrowed": "Total Emprestado",
+        "borrowCap": "Limite de Empréstimo",
+        "availableToBorrow": "Disponível para emprestar",
+        "title": "Detalhes do Empréstimo",
+        "myBorrow": "Meu Empréstimo",
+        "liquidityPenalty": "Penalização de Liquidação"
+      },
+      "supplyOverview": {
+        "totalSupplied": "Total Fornecido",
+        "title": "Detalhes da Oferta",
+        "walletBalance": "Saldo da Carteira",
+        "mySupply": "Meu Fornecimento",
+        "almostCap": "Este ativo quase atingiu o seu limite de empréstimo. Há apenas {{available}} disponível para ser emprestado a partir deste mercado.",
+        "reachCap": "Este ativo atingiu o seu limite de fornecimento. Não há nada disponível para ser fornecido a partir deste mercado.",
+        "availableToSupply": "Disponível para Fornecer"
+      },
+      "risk": {
+        "checkbox": "Eu entendo o alerta e quero continuar.",
+        "warning": "Emprestar esta quantia irá reduzir o seu Fator de Saúde para um nível arriscado para liquidação.",
+        "withdrawWarning": "Retirar este montante irá baixar o seu Fator de Saúde para um nível arriscado de liquidação."
+      },
+      "lqDescription": {
+        "over3title": "Fator de saúde > 3.0:",
+        "risky": "Arriscado",
+        "over3desc": "As suas posições estão seguras",
+        "below1desc": "A sua posição está em risco de liquidação.",
+        "desc": "Valor de liquidação",
+        "below1title": "Fator de Saúde ≤ 1.0:",
+        "warningText": "O seu Fator de Saúde está muito baixo. Para evitar a liquidação:\n1. Reembolse parte ou toda a sua dívida\n2. Adicione mais colateral",
+        "liquidation": "Liquidação: Se o seu Fator de Saúde cair abaixo de 1.0, parte do seu colateral pode ser vendida automaticamente para reembolsar a dívida. Uma penalização de liquidação será aplicada, resultando em uma perda parcial do seu colateral.",
+        "introText": "O seu Fator de Saúde mostra quão segura é a sua posição de empréstimo. Se ele cair demasiado baixo, o seu colateral pode ser liquidado."
+      },
+      "modalDesc": {
+        "availableToBorrow": "Disponível para emprestar",
+        "maxAmount": "Este é o montante máximo que você pode emprestar com base em todo o seu colateral fornecido. O seu poder total de empréstimo é calculado multiplicando o valor de mercado de cada ativo colateral pelo seu LTV Máx, e, em seguida, somando os resultados.",
+        "availableToBorrowDesc": "Você pode pegar emprestado com base na sua garantia fornecida e até que o limite de empréstimo seja alcançado.",
+        "lqDesc": "Quando ocorre uma liquidação, os liquidatários reembolsam até 50% do montante emprestado em aberto em nome do devedor. Em troca, podem comprar o colateral a um desconto e manter a diferença (penalização de liquidação) como um bónus."
+      },
+      "supplied": "Fornecido",
+      "gotIt": "Entendi",
+      "submitted": "submetido",
+      "netWorth": "Valor líquido",
+      "market": "Mercado",
+      "estDailyEarning": "Est. Ganhos Diários",
+      "selectChain": "Selecionar Cadeia",
+      "apy": "APY",
+      "borrowed": "Emprestado",
+      "hfTitle": "Fator de Saúde",
+      "enterAmount": "Introduza o montante",
+      "hf": "Fator de saúde"
     }
   },
   "constant": {

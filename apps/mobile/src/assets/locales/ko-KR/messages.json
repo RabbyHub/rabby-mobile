@@ -46,7 +46,11 @@
         "Revoke": "{{token}} 승인 취소됨",
         "DepositedGas": "입금된 Gas",
         "WithdrawnGas": "인출된 Gas",
-        "ReceivedGas": "받은 Gas"
+        "ReceivedGas": "받은 Gas",
+        "LendingRepay": "상환",
+        "LendingWithdraw": "출금",
+        "LendingSupply": "공급",
+        "LendingBorrow": "빌리기"
       },
       "detail": {
         "ApproveToken": "토큰 승인",
@@ -278,7 +282,13 @@
       "sectionTo": {
         "addrValidator__invalid": "지갑 주소가 유효하지 않습니다.",
         "searchInputPlaceholder": "주소를 입력하거나 스캔하세요.",
-        "addrValidator__empty": "주소를 입력해 주세요."
+        "addrValidator__empty": "주소를 입력해 주세요.",
+        "positiveTips": {
+          "yourOwnAddress": "당신의 주소",
+          "whitelistedAddress": "허용된 주소",
+          "sentRecently": "최근 전송됨"
+        },
+        "selectPlaceholder": "주소 선택"
       },
       "balanceWarn": {
         "gasFeeReservation": "가스 요금 예약 필요"
@@ -324,7 +334,15 @@
       },
       "From": "에서",
       "addressDetail": "주소 세부정보",
-      "newAmount": "금액"
+      "newAmount": "금액",
+      "noSupportTokenReason": {
+        "forSafeSimple": "이 Safe 주소는 이 체인에 배포되지 않았습니다.",
+        "forDex": "이 토큰은 이 거래소에서 지원되지 않을 수 있습니다. 손실을 피하기 위해 진행하기 전에 확인하십시오.",
+        "forChainSimple": "수신 주소는 다른 체인의 계약 주소입니다.",
+        "forChain": "받는 주소는 다른 체인의 계약 주소입니다. 손실을 피하기 위해 진행하기 전에 확인하세요.",
+        "forSafe": "전송하려는 Safe 주소가 이 체인에 배포되어 있지 않습니다. 손실을 방지하기 위해 진행하기 전에 확인하세요.",
+        "forDexSimple": "이 토큰은 이 거래소에서 지원되지 않을 수 있습니다."
+      }
     },
     "signTx": {
       "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.  \n가스 한도가 낮습니다. 거래가 실패할 가능성이 1% 있습니다.",
@@ -775,7 +793,8 @@
         "copyTrading": "복사 거래",
         "watchlist": "토큰 워치리스트",
         "perps": "펍스",
-        "perpsMarketList": "더 많은 Perps"
+        "perpsMarketList": "더 많은 Perps",
+        "lending": "대출"
       }
     },
     "bridge": {
@@ -2469,6 +2488,123 @@
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "빌트인 페이지"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "viewSentTx": "전송됨",
+        "selectFromHistory": "기록에서 선택",
+        "sendTo": "보내기",
+        "addNewWhitelistAddr": "새로운 화이트리스트 주소 추가",
+        "sendFrom": "보내기"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "주소 이름 지정"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "needSupply": "빌리려면 자산을 담보로 제공해야 합니다.",
+        "canBorrow": "담보를 제공한 만큼 최대 차입 한도까지 빌릴 수 있습니다."
+      },
+      "list": {
+        "headers": {
+          "mySupplies": "내 자산",
+          "myBorrows": "내 차입금",
+          "token": "토큰",
+          "apy": "APY"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "title": "이자 얻기, 언제든지 대출하기",
+          "description": "AAVE에 의해 지원됩니다. 안전하고 수수료가 없습니다."
+        },
+        "healthy": "건강한",
+        "risky": "위험한",
+        "more": "더 보기",
+        "lq": "1 이하로 떨어지면 청산이 발생할 수 있습니다."
+      },
+      "repayDetail": {
+        "actions": "상환",
+        "approveAndRepay": "승인 및 상환"
+      },
+      "supplyDetail": {
+        "actions": "공급",
+        "availableToBorrow": "대출 가능",
+        "supplyAPY": "공급 APY",
+        "approveAndSupply": "승인 및 공급"
+      },
+      "withdrawDetail": {
+        "actions": "출금",
+        "remainingSupply": "남은 공급량"
+      },
+      "borrowDetail": {
+        "approveAndBorrow": "승인 및 대출",
+        "actions": "빌리다",
+        "almostReachedWarning": "이 자산에 대한 프로토콜 대출 한도가 100%입니다. 추가 대출이 불가능합니다.",
+        "almostReachedError": "대출할 수 있는 최대 금액은 프로토콜 대출 한도가 거의 도달했기 때문에 제한됩니다."
+      },
+      "popup": {
+        "available": "사용 가능",
+        "amount": "금액",
+        "remainingDebt": "남은 부채",
+        "title": "거래 개요",
+        "liquidationAt": "< 1.0에서 청산"
+      },
+      "borrowOverview": {
+        "myBorrow": "내 빌리기",
+        "totalBorrowed": "총 대출액",
+        "title": "대출 세부 정보",
+        "borrowCap": "대출 한도",
+        "availableToBorrow": "대여 가능",
+        "liquidityPenalty": "청산 패널티"
+      },
+      "supplyOverview": {
+        "mySupply": "내 공급",
+        "title": "공급 세부사항",
+        "walletBalance": "지갑 잔고",
+        "totalSupplied": "총 공급량",
+        "reachCap": "이 자산은 공급 한도에 도달했습니다. 이 시장에서 공급할 수 있는 것이 없습니다.",
+        "almostCap": "이 자산은 거의 대출 한도에 도달했습니다. 이 시장에서 빌릴 수 있는 것은 {{available}}뿐입니다.",
+        "availableToSupply": "사용 가능 공급"
+      },
+      "risk": {
+        "checkbox": "알림을 이해하고 계속 진행하겠습니다.",
+        "warning": "이 금액을 빌리면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다.",
+        "withdrawWarning": "이 금액을 인출하면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다."
+      },
+      "lqDescription": {
+        "below1title": "건강 지수 ≤ 1.0:",
+        "below1desc": "귀하의 포지션은 청산 위험에 처해 있습니다.",
+        "desc": "청산 가치",
+        "over3title": "건강 요소 > 3.0:",
+        "over3desc": "당신의 포지션은 안전합니다.",
+        "risky": "위험한",
+        "introText": "당신의 Health Factor는 당신의 대출 위치가 얼마나 안전한지를 보여줍니다. 만약 이 수치가 너무 낮아지면, 당신의 담보가 청산될 수 있습니다.",
+        "warningText": "당신의 건강 지수가 너무 낮습니다. 청산을 피하려면:\n1. 대출의 일부 또는 전부를 상환하세요.\n2. 더 많은 담보를 추가하세요.",
+        "liquidation": "청산: 귀하의 건강 지수가 1.0 이하로 떨어지면, 채무를 상환하기 위해 귀하의 담보 중 일부가 자동으로 매각될 수 있습니다. 청산 패널티가 적용되며, 이로 인해 귀하의 담보 일부가 손실될 수 있습니다."
+      },
+      "modalDesc": {
+        "availableToBorrow": "대출 가능",
+        "maxAmount": "이것은 제공한 모든 담보를 기반으로 당신이 빌릴 수 있는 최대 금액입니다. 당신의 총 차입 가능 금액은 각 담보 자산의 시장 가치에 해당 자산의 Max LTV를 곱한 다음 결과를 합산하여 계산됩니다.",
+        "availableToBorrowDesc": "담보로 제공한 자산을 기반으로 대출할 수 있으며, 대출 한도에 도달할 때까지 가능합니다.",
+        "lqDesc": "청산이 발생하면 청산자는 차용자를 대신하여 미결제 차입 금액의 최대 50%를 상환합니다. 그 대가로 그들은 담보를 할인된 가격에 구매할 수 있으며, 차액(청산 벌금)을 보너스로 유지할 수 있습니다."
+      },
+      "apy": "APY",
+      "borrowed": "빌려진",
+      "supplied": "제공됨",
+      "netWorth": "순자산",
+      "market": "시장",
+      "selectChain": "체인 선택",
+      "submitted": "제출됨",
+      "gotIt": "알겠습니다",
+      "estDailyEarning": "예상 일일 수익",
+      "hf": "건강 지수",
+      "hfTitle": "건강 지수",
+      "enterAmount": "금액 입력"
     }
   },
   "global": {
@@ -2585,6 +2721,11 @@
       },
       "favoriteFilter": {
         "all": "모두"
+      },
+      "riskDetected": {
+        "proceedBtn": "진행하십시오",
+        "simpleExplanation": "지원되지 않음",
+        "title": "위험 감지됨"
       }
     },
     "NFTNumberInput": {
@@ -2672,7 +2813,10 @@
         "loginAndClaim": "로그인하고 {{amount}}를 청구하십시오.",
         "loginTips3": "가스가 떨어졌을 때",
         "loginTips2": "모든 체인의 모든 주소",
-        "loginTips1": "가스 요금을 지불하세요 для"
+        "loginTips1": "가스 요금을 지불하세요 для",
+        "depositDesc": "가스가 바닥났을 때 모든 체인에서",
+        "depositTitle": "USDC/USDT 입금 가스 수수료 지불",
+        "learnAbout": "GasAccount에 대해 자세히 알아보기"
       },
       "depositPopup": {
         "selectToken": "입금할 토큰 선택",
@@ -2700,6 +2844,16 @@
         "giftTips": "활동 사용자에 대한 Gas 보상",
         "noWithdrawableBalanceTitle": "{{amount}} 인출 불가능",
         "noWithdrawableBalanceDescription": "{{amount}}의 가스 잔액 중 인출할 수 없는 부분은 다음과 같습니다:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
+      "about": {
+        "title2": "Gas Account 사용 방법",
+        "title1": "GasAccount은 무엇인가요?",
+        "title3": "GasAccount에 추가 수수료가 있나요?",
+        "desc2": "GasAccount에 자금을 추가하고 모든 거래에 사용하세요. 서명할 때 네이티브 토큰 또는 GasAccount로 가스를 지불할지 선택할 수 있으며, 언제든지 전환이 가능합니다.",
+        "desc3": "Rabby Wallet은 추가 요금을 부과하지 않습니다. 거래에 대한 가스 요금과 GasAccount에서 귀하의 주소로 가스를 전송하는 데 필요한 소량의 가스 요금만 지불하면 됩니다.",
+        "desc1": "GasAccount는 가스 요금을 지불하는 새로운 방법입니다. 각 체인에서 기본 토큰을 사용하는 대신, 모든 체인의 모든 주소에 대한 가스를 충당하기 위해 하나의 계정을 사용할 수 있습니다. 간단하고 선택적이며, 결코 가스 부족이 없습니다.",
+        "title4": "GasAccount은 안전한가요?",
+        "desc4": "GasAccount은 계약 승인이나 권한이 필요하지 않습니다. 사용자는 Rabby의 GasAccount 주소로 입금하고, 필요할 때 Rabby가 사용자의 주소로 가스를 전송합니다. 설계상 완전히 안전합니다."
       }
     },
     "NoLongerSupports": {
@@ -2776,6 +2930,15 @@
       "amount": "금액",
       "price": "가격",
       "side": "측면"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "desc": "신뢰할 수 있는 주소를 화이트리스트에 추가하십시오.",
+        "addBtn": "지금 추가하세요"
+      },
+      "recentAccounts": "최근",
+      "importedAccounts": "가져온 지갑",
+      "whitelistAccounts": "화이트리스트"
     }
   },
   "constant": {

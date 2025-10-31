@@ -136,7 +136,11 @@
         "Revoke": "Thu hồi chấp thuận {{token}}",
         "ReceivedGas": "Nhận Gas",
         "WithdrawnGas": "Gas đã rút",
-        "DepositedGas": "Gas đã nạp"
+        "DepositedGas": "Gas đã nạp",
+        "LendingSupply": "Cung cấp",
+        "LendingWithdraw": "Rút tiền",
+        "LendingBorrow": "Vay mượn",
+        "LendingRepay": "Trả nợ"
       },
       "detail": {
         "From": "Từ",
@@ -732,7 +736,13 @@
       "sectionTo": {
         "addrValidator__invalid": "Địa chỉ này không hợp lệ",
         "addrValidator__empty": "Vui lòng nhập địa chỉ",
-        "searchInputPlaceholder": "Nhập địa chỉ hoặc quét"
+        "searchInputPlaceholder": "Nhập địa chỉ hoặc quét",
+        "positiveTips": {
+          "yourOwnAddress": "Địa chỉ của bạn",
+          "whitelistedAddress": "Địa chỉ trong danh sách trắng",
+          "sentRecently": "Đã gửi gần đây"
+        },
+        "selectPlaceholder": "Chọn Địa chỉ"
       },
       "whitelistAlert__whitelisted": "Địa chỉ đã được đưa vào danh sách trắng",
       "whitelistAlert__temporaryGranted": "Quyền tạm thời đã được cấp",
@@ -770,7 +780,15 @@
       },
       "From": "Từ",
       "addressDetail": "Chi tiết địa chỉ",
-      "newAmount": "Số lượng"
+      "newAmount": "Số lượng",
+      "noSupportTokenReason": {
+        "forDexSimple": "Mã thông báo này có thể không được sàn giao dịch này hỗ trợ.",
+        "forSafeSimple": "Địa chỉ Safe này chưa được triển khai trên chuỗi này",
+        "forChainSimple": "Địa chỉ người nhận là địa chỉ hợp đồng trên một chuỗi khác.",
+        "forDex": "Mã thông báo này có thể không được sàn giao dịch này hỗ trợ. Kiểm tra trước khi tiếp tục để tránh mất mát.",
+        "forSafe": "Địa chỉ Safe mà bạn đang gửi token không được triển khai trên chuỗi này. Vui lòng kiểm tra trước khi tiếp tục để tránh mất mát.",
+        "forChain": "Địa chỉ người nhận là địa chỉ hợp đồng trên một chuỗi khác. Kiểm tra trước khi tiếp tục để tránh mất mát."
+      }
     },
     "approvals": {
       "list": {
@@ -1187,7 +1205,8 @@
         "copyTrading": "Copy Trading",
         "watchlist": "Danh sách theo dõi Token",
         "perps": "Perps",
-        "perpsMarketList": "Thêm Perps"
+        "perpsMarketList": "Thêm Perps",
+        "lending": "Cho vay"
       }
     },
     "securityEngine": {
@@ -2559,6 +2578,123 @@
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Trang xây dựng sẵn"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "sendFrom": "Gửi từ",
+        "viewSentTx": "Gửi",
+        "sendTo": "Gửi tới",
+        "selectFromHistory": "Chọn từ Lịch sử",
+        "addNewWhitelistAddr": "Thêm Địa Chỉ Vào Danh Sách Trắng Mới"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "Đặt tên cho địa chỉ"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "needSupply": "Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp.",
+        "canBorrow": "Bạn có thể vay dựa trên tài sản thế chấp mà bạn cung cấp, lên đến giới hạn vay."
+      },
+      "list": {
+        "headers": {
+          "token": "Token",
+          "apy": "APY",
+          "mySupplies": "Cung cấp của tôi",
+          "myBorrows": "Các khoản vay của tôi"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "title": "Kiếm lãi, Vay bất cứ khi nào",
+          "description": "Được phát triển bởi AAVE. An toàn và không có phí."
+        },
+        "risky": "Rủi ro",
+        "healthy": "Khỏe mạnh",
+        "lq": "Nếu xuống dưới 1, việc thanh lý có thể được kích hoạt.",
+        "more": "Thêm"
+      },
+      "repayDetail": {
+        "actions": "Trả nợ",
+        "approveAndRepay": "Phê duyệt và Thanh toán lại"
+      },
+      "supplyDetail": {
+        "actions": "Cung cấp",
+        "approveAndSupply": "Chấp thuận và Cung cấp",
+        "availableToBorrow": "Có sẵn để vay",
+        "supplyAPY": "Cung cấp APY"
+      },
+      "withdrawDetail": {
+        "actions": "Rút tiền",
+        "remainingSupply": "Nguồn cung còn lại"
+      },
+      "borrowDetail": {
+        "actions": "Vay mượn",
+        "approveAndBorrow": "Chấp thuận và Vay",
+        "almostReachedError": "Số tiền tối đa có sẵn để vay bị giới hạn vì giới hạn vay của giao thức gần đạt.",
+        "almostReachedWarning": "Mức giới hạn vay của giao thức cho tài sản này là 100%. Không có khả năng vay thêm."
+      },
+      "popup": {
+        "amount": "Số lượng",
+        "available": "có sẵn",
+        "remainingDebt": "Nợ còn lại",
+        "title": "Tổng quan giao dịch",
+        "liquidationAt": "Thanh lý tại < 1.0"
+      },
+      "borrowOverview": {
+        "myBorrow": "Cho vay của tôi",
+        "title": "Chi tiết vay",
+        "availableToBorrow": "Có sẵn để vay",
+        "borrowCap": "Mức Vay",
+        "totalBorrowed": "Tổng tiền vay",
+        "liquidityPenalty": "Phí thanh lý"
+      },
+      "supplyOverview": {
+        "title": "Thông tin cung cấp",
+        "totalSupplied": "Tổng cung cấp",
+        "availableToSupply": "Có sẵn để cung cấp",
+        "walletBalance": "Số dư Ví",
+        "mySupply": "Cung cấp của tôi",
+        "almostCap": "Tài sản này gần như đã đạt giới hạn vay của nó. Chỉ còn {{available}} có sẵn để vay từ thị trường này.",
+        "reachCap": "Tài sản này đã đạt đến giới hạn cung cấp của nó. Không có gì có sẵn để cung cấp từ thị trường này."
+      },
+      "risk": {
+        "checkbox": "Tôi hiểu thông báo và muốn tiếp tục.",
+        "withdrawWarning": "Rút số tiền này sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý.",
+        "warning": "Vay số tiền này sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý."
+      },
+      "lqDescription": {
+        "desc": "Giá trị thanh lý",
+        "below1title": "Health Factor ≤ 1.0:",
+        "risky": "Rủi ro",
+        "below1desc": "Vị trí của bạn đang có nguy cơ bị thanh lý.",
+        "over3desc": "Các vị trí của bạn được an toàn",
+        "over3title": "Health factor > 3.0:",
+        "introText": "Yếu tố sức khỏe của bạn cho thấy vị thế vay của bạn an toàn cỡ nào. Nếu nó giảm quá thấp, tài sản thế chấp của bạn có thể bị thanh lý.",
+        "liquidation": "Thanh lý: Nếu Hệ số Sức khỏe của bạn giảm xuống dưới 1.0, một phần tài sản đảm bảo của bạn có thể bị bán tự động để trả nợ. Sẽ áp dụng phí thanh lý, dẫn đến một phần tài sản đảm bảo của bạn bị mất.",
+        "warningText": "Hệ số sức khỏe của bạn quá thấp. Để tránh thanh lý:\n1. Trả lại một phần hoặc toàn bộ khoản vay của bạn\n2. Thêm tài sản thế chấpเพิ่มเติม"
+      },
+      "modalDesc": {
+        "availableToBorrow": "Có sẵn để vay",
+        "maxAmount": "Đây là số tiền tối đa bạn có thể vay dựa trên tất cả tài sản thế chấp mà bạn cung cấp. Tổng sức vay của bạn được tính bằng cách nhân giá trị thị trường của mỗi tài sản thế chấp với Max LTV của nó, sau đó cộng tổng lại.",
+        "availableToBorrowDesc": "Bạn có thể vay dựa trên tài sản thế chấp mà bạn cung cấp và cho đến khi đạt trần vay.",
+        "lqDesc": "Khi một vụ thanh lý xảy ra, những người thanh lý sẽ trả lại tối đa 50% số tiền đã vay còn lại thay mặt cho người vay. Đổi lại, họ có thể mua tài sản thế chấp với giá giảm và giữ phần chênh lệch (phạt thanh lý) như một phần thưởng."
+      },
+      "submitted": "đã gửi",
+      "supplied": "Cung cấp",
+      "borrowed": "Vay mượn",
+      "market": "Thị trường",
+      "netWorth": "Giá trị tài sản ròng",
+      "apy": "APY",
+      "selectChain": "Chọn Chuỗi",
+      "estDailyEarning": "Ước tính thu nhập hàng ngày",
+      "gotIt": "Hiểu rồi",
+      "hf": "Hệ số sức khỏe",
+      "enterAmount": "Nhập số tiền",
+      "hfTitle": "Yếu tố sức khỏe"
     }
   },
   "component": {
@@ -2588,6 +2724,11 @@
       },
       "favoriteFilter": {
         "all": "Tất cả"
+      },
+      "riskDetected": {
+        "title": "Rủi ro đã được phát hiện",
+        "proceedBtn": "Tiến hành",
+        "simpleExplanation": "Không được hỗ trợ"
       }
     },
     "PillsSwitch": {
@@ -2676,7 +2817,10 @@
         "loginAndClaim": "Đăng nhập và Nhận {{amount}}",
         "loginTips1": "Thanh toán phí gas cho",
         "loginTips3": "khi bạn hết gas",
-        "loginTips2": "bất kỳ địa chỉ nào trên bất kỳ chuỗi nào"
+        "loginTips2": "bất kỳ địa chỉ nào trên bất kỳ chuỗi nào",
+        "depositTitle": "Nạp USDC/USDT Thanh toán phí Gas",
+        "learnAbout": "Tìm hiểu thêm về GasAccount",
+        "depositDesc": "trên Tất cả Các Chuỗi khi bạn hết gas"
       },
       "depositPopup": {
         "title": "Gửi tiền",
@@ -2704,6 +2848,16 @@
         "giftTips": "Phần thưởng Gas cho người dùng tích cực",
         "gotIt": "Tôi đã hiểu rồi",
         "noWithdrawableBalanceDescription": "{{amount}} trong số dư gas của bạn không thể rút:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
+      "about": {
+        "title1": "GasAccount là gì",
+        "title4": "GasAccount có an toàn không",
+        "title3": "GasAccount có phí bổ sung không",
+        "title2": "Cách sử dụng Gas Account",
+        "desc4": "GasAccount không yêu cầu phê duyệt hoặc quyền hợp đồng. Bạn gửi vào địa chỉ GasAccount của Rabby, và Rabby sẽ gửi gas đến địa chỉ của bạn khi cần. Hoàn toàn an toàn theo thiết kế.",
+        "desc3": "Rabby Wallet không tính phí bổ sung. Bạn chỉ phải trả phí gas cho giao dịch của mình và một khoản phí gas nhỏ để chuyển gas đó từ GasAccount đến địa chỉ của bạn.",
+        "desc2": "Thêm quỹ vào GasAccount của bạn và sử dụng nó cho bất kỳ giao dịch nào. Khi ký, hãy chọn thanh toán phí gas bằng token gốc hoặc GasAccount, có thể chuyển đổi bất cứ lúc nào.",
+        "desc1": "GasAccount là một cách mới để thanh toán phí gas. Thay vì sử dụng token gốc trên mỗi chuỗi, bạn có thể sử dụng một tài khoản để phủ phí gas cho tất cả các địa chỉ của bạn trên tất cả các chuỗi. Đơn giản, tùy chọn và không bao giờ hết gas."
       }
     },
     "NoLongerSupports": {
@@ -2776,6 +2930,15 @@
       "side": "Bên cạnh",
       "usdValue": "Giá trị USD",
       "amount": "Số lượng"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "addBtn": "Thêm ngay",
+        "desc": "Thêm địa chỉ tin cậy vào Danh sách trắng"
+      },
+      "importedAccounts": "Ví Wallet Nhập khẩu",
+      "recentAccounts": "Gần đây",
+      "whitelistAccounts": "Danh sách trắng"
     }
   },
   "constant": {

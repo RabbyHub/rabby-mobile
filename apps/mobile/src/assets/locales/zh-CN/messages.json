@@ -145,7 +145,11 @@
         "Revoke": "撤销{{token}}授权",
         "WithdrawnGas": "已提取 Gas",
         "ReceivedGas": "收到 Gas",
-        "DepositedGas": "存入 Gas"
+        "DepositedGas": "存入 Gas",
+        "LendingBorrow": "借入",
+        "LendingSupply": "供应",
+        "LendingRepay": "偿还",
+        "LendingWithdraw": "提取"
       },
       "detail": {
         "Cancel": "取消",
@@ -635,7 +639,13 @@
       "sectionTo": {
         "addrValidator__invalid": "此地址无效",
         "searchInputPlaceholder": "输入地址或扫描",
-        "addrValidator__empty": "请输入地址"
+        "addrValidator__empty": "请输入地址",
+        "positiveTips": {
+          "yourOwnAddress": "您的地址",
+          "sentRecently": "最近发送",
+          "whitelistedAddress": "白名单地址"
+        },
+        "selectPlaceholder": "选择地址"
       },
       "AddToContactsModal": {
         "editAddressNote": "编辑地址备注",
@@ -670,7 +680,15 @@
       },
       "From": "来自",
       "addressDetail": "地址详情",
-      "newAmount": "金额"
+      "newAmount": "金额",
+      "noSupportTokenReason": {
+        "forDex": "此代币可能不被该交易所支持。请在继续之前进行检查以避免损失。",
+        "forDexSimple": "此代币可能不受此交易所支持",
+        "forChainSimple": "接收地址是不同链上的合约地址",
+        "forSafeSimple": "此 Safe 地址未在此链上部署",
+        "forChain": "收款地址是不同链上的合约地址。在继续前，请检查以避免损失。",
+        "forSafe": "您正在发送代币的 Safe 地址尚未在此链上部署。在继续之前请检查，以避免损失。"
+      }
     },
     "receive": {
       "title": "接收{{chain}}上的{{token}}",
@@ -811,7 +829,8 @@
         "copyTrading": "跟单交易",
         "watchlist": "代币关注列表",
         "perpsMarketList": "更多 Perps",
-        "perps": "合约"
+        "perps": "合约",
+        "lending": "借贷"
       }
     },
     "manageAddress": {
@@ -2568,6 +2587,123 @@
         "setTpPrice": "设置止盈价格",
         "setSlPrice": "设置止损价格"
       }
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "selectFromHistory": "从历史中选择",
+        "sendFrom": "发送自",
+        "viewSentTx": "发送",
+        "addNewWhitelistAddr": "添加新的白名单地址",
+        "sendTo": "发送至"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "给地址命名"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "needSupply": "要借款，您需要提供资产作为抵押。",
+        "canBorrow": "您可以根据提供的抵押品借款，最高可达借款上限。"
+      },
+      "list": {
+        "headers": {
+          "token": "代币",
+          "myBorrows": "我的借款",
+          "mySupplies": "我的供应",
+          "apy": "年化收益率"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "title": "赚取利息，随时借款",
+          "description": "由 AAVE 提供技术支持。安全且零费用。"
+        },
+        "more": "更多",
+        "risky": "风险大",
+        "healthy": "健康",
+        "lq": "如果低于1，可能会触发清算。"
+      },
+      "repayDetail": {
+        "actions": "还款",
+        "approveAndRepay": "批准和还款"
+      },
+      "supplyDetail": {
+        "actions": "供应",
+        "approveAndSupply": "批准与供应",
+        "availableToBorrow": "可借款",
+        "supplyAPY": "供应 APY"
+      },
+      "withdrawDetail": {
+        "actions": "提取",
+        "remainingSupply": "剩余供应"
+      },
+      "borrowDetail": {
+        "actions": "借入",
+        "approveAndBorrow": "批准并借入",
+        "almostReachedWarning": "该资产的协议借款上限为100%。进一步借款不可用。",
+        "almostReachedError": "可借用的最大金额受限，因为协议借款上限几乎已达到。"
+      },
+      "popup": {
+        "remainingDebt": "剩余债务",
+        "title": "交易概览",
+        "available": "可用",
+        "amount": "金额",
+        "liquidationAt": "清算在 < 1.0"
+      },
+      "borrowOverview": {
+        "title": "借款详情",
+        "totalBorrowed": "总借款",
+        "availableToBorrow": "可借用",
+        "myBorrow": "我的借款",
+        "borrowCap": "借贷上限",
+        "liquidityPenalty": "清算罚金"
+      },
+      "supplyOverview": {
+        "walletBalance": "钱包余额",
+        "title": "供给详情",
+        "totalSupplied": "总供应量",
+        "availableToSupply": "可供供应",
+        "mySupply": "我的供应",
+        "almostCap": "该资产几乎达到了其借款上限。此市场中只剩下 {{available}} 可供借用。",
+        "reachCap": "该资产已达到其供应上限。该市场没有可供供应的资产。"
+      },
+      "risk": {
+        "checkbox": "我理解该提示并想继续。",
+        "warning": "借用此金额将使您的健康因子降至风险清算的水平。",
+        "withdrawWarning": "提取这个金额将使您的健康因子降低到风险清算的水平。"
+      },
+      "lqDescription": {
+        "risky": "风险较高",
+        "desc": "清算价值",
+        "over3desc": "您的持仓是安全的",
+        "over3title": "健康因子 > 3.0：",
+        "below1desc": "您的头寸面临清算风险。",
+        "warningText": "您的健康因子太低。为避免清算：\n1. 部分或全部偿还您的贷款\n2. 添加更多抵押品",
+        "introText": "您的健康指数显示您的借款头寸是多么安全。如果它下降得太低，您的抵押品可能会被清算。",
+        "liquidation": "清算：如果您的健康系数降到 1.0 以下，您的部分抵押品可能会被自动出售以偿还债务。将适用清算罚款，导致您部分抵押品损失。",
+        "below1title": "健康因子 ≤ 1.0:"
+      },
+      "modalDesc": {
+        "availableToBorrow": "可借用",
+        "availableToBorrowDesc": "您可以根据提供的抵押品进行借款，直到达到借款上限。",
+        "maxAmount": "这是您可以借入的最大金额，基于您提供的所有抵押品。您的总借款能力是通过将每个抵押资产的市场价值乘以其最大贷款价值比（Max LTV），然后将结果相加来计算的。",
+        "lqDesc": "当发生清算时，清算人会代表借款人偿还高达 50% 的未偿还借款金额。作为回报，他们可以以折扣购买抵押品，并将差额（清算罚金）作为奖励保留。"
+      },
+      "apy": "APY",
+      "submitted": "提交成功",
+      "market": "市场",
+      "gotIt": "明白了",
+      "enterAmount": "输入金额",
+      "hf": "健康因子",
+      "netWorth": "净资产",
+      "estDailyEarning": "预计每日收入",
+      "borrowed": "借用",
+      "hfTitle": "健康因子",
+      "selectChain": "选择链",
+      "supplied": "提供"
     }
   },
   "component": {
@@ -2624,6 +2760,11 @@
       },
       "favoriteFilter": {
         "all": "所有"
+      },
+      "riskDetected": {
+        "proceedBtn": "继续",
+        "title": "风险检测到",
+        "simpleExplanation": "不支持"
       }
     },
     "NoLongerSupports": {
@@ -2687,7 +2828,10 @@
         "loginAndClaim": "登录并领取 {{amount}}",
         "loginTips2": "任何链上的任何地址",
         "loginTips3": "当你的 GasAccount 用尽时",
-        "loginTips1": "支付 gas 费用给"
+        "loginTips1": "支付 gas 费用给",
+        "learnAbout": "了解更多关于 GasAccount 的信息",
+        "depositDesc": "在所有链上，当您没有 Gas 时",
+        "depositTitle": "存入 USDC/USDT 支付 Gas Fees"
       },
       "loginConfirmModal": {
         "title": "选择钱包登录",
@@ -2715,6 +2859,16 @@
         "gotIt": "我明白了",
         "giftTips": "活跃用户的 Gas Reward",
         "noWithdrawableBalanceDescription": "{{amount}} 的您燃气余额不可提现：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
+      "about": {
+        "title1": "GasAccount是什么",
+        "title2": "如何使用 GasAccount",
+        "title4": "GasAccount安全吗",
+        "title3": "GasAccount 是否有额外费用",
+        "desc2": "将资金添加到您的 GasAccount，并用于任何交易。签名时，选择使用原生代币或 GasAccount 支付燃料费用，随时切换。",
+        "desc3": "Rabby Wallet 不收取额外费用。您只需为您的交易支付 gas 费用，并为从 GasAccount 发送 gas 到您的地址支付少量 gas。",
+        "desc1": "GasAccount是一种新的支付手续费的方式。您可以使用一个账户为所有链上的所有地址覆盖手续费，而无需在每条链上使用本地代币。简单、可选，并且永远不会出现没有手续费的情况。",
+        "desc4": "GasAccount 无需合约批准或权限。您将资金存入 Rabby 的 GasAccount 地址，Rabby 在需要时将燃料发送到您的地址。设计上完全安全。"
       }
     },
     "ReserveGasPopup": {
@@ -2785,6 +2939,15 @@
       "side": "侧边",
       "amount": "数量",
       "usdValue": "USD 价值"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "addBtn": "立即添加",
+        "desc": "将信任的地址添加到白名单"
+      },
+      "importedAccounts": "导入的钱包",
+      "whitelistAccounts": "白名单",
+      "recentAccounts": "最近"
     }
   },
   "bluetooth": {

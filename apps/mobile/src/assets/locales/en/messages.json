@@ -2581,7 +2581,7 @@
         "borrowCap": "Borrow Cap",
         "myBorrow": "My Borrow",
         "availableToBorrow": "Available to borrow",
-        "liquidityPenalty": "Liquidity Penalty"
+        "liquidityPenalty": "Liquidation Penalty"
       },
       "supplyOverview": {
         "title": "Supply Details",
