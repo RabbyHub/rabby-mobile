@@ -15,22 +15,20 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { naviPush } from '@/utils/navigation';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
 export const isSingleAddressAtom = atom<boolean>(false);
 export const useSendRoutes = () => {
-  const navigation = useNavigation<HomeProps['navigation']>();
   const { findAccountWithoutBalance } = useWhiteListAddress();
   const [params, setParams] = useAtom(sendScreenParamsAtom);
   const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
 
-  // check if has nft params
   const hasNftParams = useCallback((mergedParams: { [key: string]: any }) => {
     return !!mergedParams.nftItem;
   }, []);
 
-  // get target screen by params and mode
   const getTargetScreen = useCallback(
     (mergedParams: { [key: string]: any }, isForSingleAddress: boolean) => {
       const hasNft = hasNftParams(mergedParams);
@@ -48,12 +46,12 @@ export const useSendRoutes = () => {
     (mergedParams: { [key: string]: any }, isForSingleAddress: boolean) => {
       const targetScreen = getTargetScreen(mergedParams, isForSingleAddress);
 
-      navigation.push(RootNames.StackTransaction, {
+      naviPush(RootNames.StackTransaction, {
         screen: targetScreen,
         params: mergedParams,
       } as NavigatorScreenParams<TransactionNavigatorParamList>);
     },
-    [navigation, getTargetScreen],
+    [getTargetScreen],
   );
 
   const navigateToSendScreen = useCallback(
@@ -72,11 +70,13 @@ export const useSendRoutes = () => {
       });
       setParams(p || {});
       setIsSingleAddress(!!isForSingleAddress);
+
+      const mergedParams = { ...params, ...p };
+
       if (p?.toAddress) {
         const { inWhitelist, account, isMyImported } =
-          findAccountWithoutBalance(p.toAddress, undefined);
+          findAccountWithoutBalance(p.toAddress);
         if (inWhitelist || isMyImported) {
-          const mergedParams = { ...params, ...p };
           navigateToTargetScreen(mergedParams, isForSingleAddress);
         } else {
           const id = createGlobalBottomSheetModal2024({
@@ -101,14 +101,26 @@ export const useSendRoutes = () => {
         }
         return;
       }
-      navigation.push(RootNames.StackTransaction, {
-        screen: RootNames.SendTo,
-      });
+
+      naviPush(
+        RootNames.StackTransaction,
+        !mergedParams.nftItem
+          ? {
+              screen: RootNames.Send,
+            }
+          : {
+              screen: RootNames.SendNFT,
+              params: {
+                nftItem: mergedParams.nftItem,
+                collectionName: mergedParams.collectionName,
+                fromAccount: mergedParams.fromAccount,
+              },
+            },
+      );
     },
     [
       findAccountWithoutBalance,
       navigateToSendScreen,
-      navigation,
       params,
       setIsSingleAddress,
       setParams,

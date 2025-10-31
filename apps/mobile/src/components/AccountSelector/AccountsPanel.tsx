@@ -71,11 +71,14 @@ function AddressItemInSheetModal({
 }: {
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
+  /** @deprecated */
   isPinned?: boolean;
   showCopyAndQR?: boolean;
+  /** @deprecated */
   replaceNameWithAliasAddress?: boolean;
   defaultPressAction?: 'copy' | 'asPress';
   onPressAccount?: (account: Account) => void;
+  /** @deprecated */
   isReceive?: boolean;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({

@@ -1004,10 +1004,7 @@
         "confirm": "Proceder",
         "cancel": "Cancelar"
       },
-      "noSupprotTokenForDex": "Este token puede no ser compatible con este exchange. Verifique antes de continuar para evitar pérdidas",
       "From": "Desde",
-      "noSupprotTokenForSafe": "La dirección Safe a la que estás enviando tokens no está desplegada en esta cadena. Verifica antes de continuar para evitar pérdidas.",
-      "noSupportTokenForChain": "La dirección del destinatario es una dirección de contrato en una cadena diferente. Verifica antes de continuar para evitar pérdidas.",
       "addressDetail": "Detalles de la dirección",
       "newAmount": "Cantidad"
     },
@@ -2233,7 +2230,7 @@
     },
     "confirmAddress": {
       "risks": {
-        "dexNoDeposite": "La dirección del destinatario es una dirección no depositaria de un CEX. Por favor, asegúrate de que tu dirección de depósito sea correcta.",
+        "cexNoDeposite": "La dirección del destinatario es una dirección no depositaria de un CEX. Por favor, asegúrate de que tu dirección de depósito sea correcta.",
         "contractAddress": "La dirección del destinatario es una dirección de contrato, lo que podría causar la pérdida de fondos",
         "noSend": "No has enviado fondos a esta dirección en los últimos 180 días. Por favor, confirma si deseas continuar.",
         "scamAddress": "La dirección del destinatario es una dirección fraudulenta señalada por Rabby"

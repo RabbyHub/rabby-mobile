@@ -42,6 +42,12 @@ import { ellipsisAddress } from '@/utils/address';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { naviPush } from '@/utils/navigation';
 import FastImage from 'react-native-fast-image';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
+
+export type HistoryLocalDetailParams = GetNestedScreenRouteProp<
+  'TransactionNavigatorParamList',
+  'HistoryLocalDetail'
+>['params'];
 
 export const TransactionItem = ({
   historySuccessList,
@@ -50,7 +56,8 @@ export const TransactionItem = ({
   onRefresh,
   isForMultipleAddress,
   isInSendHistory,
-  onPressBottomBtn,
+  onPressItem,
+  onPressAddToWhitelistButton,
   closeHistoryPopup,
   getCexInfoByAddress,
 }: {
@@ -61,7 +68,8 @@ export const TransactionItem = ({
   canCancel?: boolean;
   onRefresh?: () => void;
   isInSendHistory?: boolean;
-  onPressBottomBtn?: (data: SendAction) => void;
+  onPressItem?: (ctx: HistoryLocalDetailParams) => void;
+  onPressAddToWhitelistButton?: (data: SendAction) => void;
   closeHistoryPopup?: () => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -399,8 +407,18 @@ export const TransactionItem = ({
     );
   }, [formatType, data, t, styles.describeText, getCexInfoByAddress]);
 
-  // const navigation = useRabbyAppNavigation();
-  const hanldeNavigateDetail = useCallback(() => {
+  const handlePressItem = useCallback(() => {
+    if (onPressItem) {
+      onPressItem({
+        isForMultipleAddress,
+        data,
+        type: formatType,
+        canCancel,
+        title: formatTitle,
+      });
+      return;
+    }
+
     if (isInSendHistory) {
       closeHistoryPopup?.();
     }
@@ -412,17 +430,18 @@ export const TransactionItem = ({
         type: formatType,
         canCancel,
         title: formatTitle,
-        onPressBottomBtn: onPressBottomBtn,
+        onPressAddToWhitelistButton: onPressAddToWhitelistButton,
       },
     });
   }, [
+    onPressItem,
     isForMultipleAddress,
     canCancel,
     data,
     formatTitle,
     formatType,
     isInSendHistory,
-    onPressBottomBtn,
+    onPressAddToWhitelistButton,
     closeHistoryPopup,
   ]);
 
@@ -450,7 +469,7 @@ export const TransactionItem = ({
   }, [data]);
 
   return (
-    <TouchableOpacity onPress={hanldeNavigateDetail} style={[styles.card]}>
+    <TouchableOpacity onPress={handlePressItem} style={[styles.card]}>
       <View
         style={[
           styles.leftContent,

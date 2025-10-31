@@ -781,10 +781,7 @@
         "cancel": "Annuler",
         "confirm": "Continuer"
       },
-      "noSupprotTokenForDex": "Ce token peut ne pas être pris en charge par cet échange. Vérifiez avant de procéder pour éviter toute perte.",
       "From": "De",
-      "noSupprotTokenForSafe": "L'adresse Safe à laquelle vous envoyez des jetons n'est pas déployée sur cette chaîne. Vérifiez avant de continuer pour éviter toute perte.",
-      "noSupportTokenForChain": "L'adresse du destinataire est une adresse de contrat sur une autre chaîne. Vérifiez avant de continuer pour éviter toute perte.",
       "addressDetail": "Détails de l'adresse",
       "newAmount": "Montant"
     },
@@ -2012,7 +2009,7 @@
       "risks": {
         "scamAddress": "L'adresse du destinataire est une adresse frauduleuse signalée par Rabby",
         "contractAddress": "L'adresse du destinataire est une adresse de contrat, ce qui peut potentiellement entraîner une perte de fonds",
-        "dexNoDeposite": "L'adresse du destinataire est une adresse non-dépôt d'un CEX. Veuillez vous assurer que votre adresse de dépôt est correcte.",
+        "cexNoDeposite": "L'adresse du destinataire est une adresse non-dépôt d'un CEX. Veuillez vous assurer que votre adresse de dépôt est correcte.",
         "noSend": "Vous n'avez pas envoyé de fonds à cette adresse au cours des 180 derniers jours. Veuillez confirmer si vous souhaitez continuer."
       },
       "brandNameTail": "Adresse",

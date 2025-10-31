@@ -19,7 +19,14 @@ import {
 } from '@/core/services';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { GasLevel, TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  AddrDescResponse,
+  GasLevel,
+  ProjectItem,
+  TokenItem,
+  TokenItemWithEntity,
+  Tx,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 import { openapi } from '@/core/request';
 import { TFunction } from 'i18next';
@@ -58,10 +65,12 @@ import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { usePollSendPendingCount } from './useSendPendingCount';
-import { eventBus, EVENTS } from '@/utils/events';
+import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { useMemoizedFn } from 'ahooks';
-
-import { useRecentSendPendingTx } from './useRecentSend';
+import {
+  useRecentSendToHistoryFor,
+  useRecentSendPendingTx,
+} from './useRecentSend';
 import { last } from 'lodash';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -69,10 +78,13 @@ import { useMiniSigner } from '@/hooks/useSigner';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { tokenAmountBn } from '@/screens/Swap/utils';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { IExtractFromPromise } from '@/utils/type';
+import { useWhiteListAddress } from './useWhiteListAddress';
+import useDebounceValue from '@/hooks/common/useDebounceValue';
 
-function makeDefaultToken(): TokenItem & {
+function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
-  cex_ids?: string[];
 } {
   return {
     id: 'eth',
@@ -219,6 +231,13 @@ export type SendScreenState = {
   addressToEditAlias: string | null;
 
   buildTxsCount?: number;
+
+  agreeRequiredChecks: {
+    forToAddress: boolean;
+    forToken: boolean;
+  };
+  // toAddrAccountInfo: FoundAccountResult | null;
+  toAddrDesc: null | AddrDescResponse['desc'];
 };
 const DFLT_SEND_STATE: SendScreenState = {
   inited: false,
@@ -257,6 +276,13 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   addressToAddAsContacts: null,
   addressToEditAlias: null,
+
+  agreeRequiredChecks: {
+    forToAddress: false,
+    forToken: false,
+  },
+  // toAddrAccountInfo: null,
+  toAddrDesc: null,
 };
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 export function useSendTokenScreenState() {
@@ -264,12 +290,8 @@ export function useSendTokenScreenState() {
     sendTokenScreenStateAtom,
   );
 
-  const putScreenState = useCallback(
-    (
-      patchOrUpdateFunc:
-        | Partial<SendScreenState>
-        | ((prev: SendScreenState) => SendScreenState),
-    ) => {
+  const putScreenState = useCallback<InternalContext['fns']['putScreenState']>(
+    patchOrUpdateFunc => {
       setSendScreenState(prev => {
         const patch =
           typeof patchOrUpdateFunc === 'function'
@@ -401,6 +423,7 @@ export function useSendTokenForm({
   const multiNavParams = route.params;
   const [formValues, setFormValues] = React.useState<FormSendToken>({
     ...DF_SEND_TOKEN_FORM,
+    to: toAddress || '',
   });
 
   const { addressType } = useCheckAddressType(
@@ -1089,10 +1112,10 @@ export function useSendTokenForm({
     ],
   );
 
-  useEffect(() => {
-    toAddress && handleFieldChange('to', toAddress);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toAddress]);
+  // useEffect(() => {
+  //   toAddress && handleFieldChange('to', toAddress);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [toAddress]);
 
   const estimateGasOnChain = useCallback(
     async (input?: {
@@ -1204,6 +1227,12 @@ export function useSendTokenForm({
           tokenId: id,
         }));
         putChainToken({ currentToken: { ...result, tokenId: id } });
+        putScreenState(prev => ({
+          agreeRequiredChecks: {
+            ...prev.agreeRequiredChecks,
+            forToken: false,
+          },
+        }));
       }
       putScreenState({ isLoading: false });
 
@@ -1523,7 +1552,7 @@ export function useSendTokenForm({
           } else {
             const currChainItem = findChainByServerID(token.chain);
             naviReplace(RootNames.StackTransaction, {
-              screen: RootNames.MultiSend,
+              screen: RootNames.Send,
               params: {
                 ...(multiNavParams || {}),
                 chainEnum: currChainItem?.enum,
@@ -1632,16 +1661,45 @@ export function useSendTokenForm({
   );
 
   const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
+  const { list: cexList } = useCexSupportList();
 
   const { whitelist, enable: whitelistEnabled } = useWhitelist();
+  const { recentHistory: recentSendToHistory, reFetch } =
+    useRecentSendToHistoryFor(formValues.to);
+
+  useEffect(() => {
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
+      txDetail => {
+        reFetch();
+        setTimeout(() => {
+          reFetch();
+        }, 5000);
+      };
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+    };
+  }, [reFetch]);
+
+  const toAddressIsRecentlySend = recentSendToHistory.length > 0;
+
   const computed = useMemo(() => {
     const toAddressInWhitelist = !!whitelist.find(item =>
       addressUtils.isSameAddress(item, formValues.to),
     );
     return {
       toAddressIsValid: !!formValues.to && isValidAddress(formValues.to),
+      toAddressIsRecentlySend,
       toAddressInWhitelist,
+      toAddressIsCex:
+        !!screenState.toAddrDesc?.cex?.id &&
+        !!screenState.toAddrDesc?.cex?.is_deposit,
       toAddressInContactBook: isAddrOnContactBook(formValues.to),
+
+      toAddrCex: cexList.find(
+        item => item.id === screenState.toAddrDesc?.cex?.id,
+      ),
 
       canSubmit:
         isValidAddress(formValues.to) &&
@@ -1656,8 +1714,11 @@ export function useSendTokenForm({
   }, [
     whitelist,
     formValues.to,
+    toAddressIsRecentlySend,
     formValues.amount,
+    cexList,
     isAddrOnContactBook,
+    screenState.toAddrDesc,
     screenState.balanceError,
     screenState.isLoading,
     currentAccount?.type,
@@ -1682,6 +1743,7 @@ export function useSendTokenForm({
 
   const isFocused = useIsFocused();
 
+  const stableAmountValue = useDebounceValue(formValues.amount, 300);
   useEffect(() => {
     if (
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
@@ -1695,7 +1757,7 @@ export function useSendTokenForm({
     prefetchMiniSigner,
     chainItem?.id,
     formValues.to,
-    formValues.amount,
+    stableAmountValue,
     formValues.messageDataForSendToEoa,
     formValues.messageDataForContractCall,
     currentAccount?.type,
@@ -1711,7 +1773,7 @@ export function useSendTokenForm({
       !chainItem?.isTestnet &&
       computed.canSubmit &&
       formValues.to &&
-      formValues.amount
+      stableAmountValue
     ) {
       prepareCountRef.current += 1;
       putScreenState({ buildTxsCount: prepareCountRef.current });
@@ -1724,7 +1786,7 @@ export function useSendTokenForm({
     chainItem?.isTestnet,
     computed.canSubmit,
     formValues.to,
-    formValues.amount,
+    stableAmountValue,
     formValues.messageDataForSendToEoa,
     formValues.messageDataForContractCall,
     currentAccount?.type,
@@ -1780,6 +1842,10 @@ export function useSendTokenFormik() {
   return formik;
 }
 
+type FoundAccountResult = IExtractFromPromise<
+  ReturnType<ReturnType<typeof useWhiteListAddress>['findAccount']>
+>;
+
 type InternalContext = {
   screenState: SendScreenState;
   formValues: FormSendToken;
@@ -1790,17 +1856,25 @@ type InternalContext = {
     whitelistEnabled: boolean;
     canSubmit: boolean;
     canDirectSign: boolean;
+    toAddressIsRecentlySend: boolean;
     toAddressInWhitelist: boolean;
+    toAddressIsCex: boolean;
     toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
+    toAddrCex: null | undefined | ProjectItem;
   };
 
   formik: ReturnType<typeof useSendTokenFormikContext>;
   events: EventEmitter;
   slider: number;
   fns: {
-    putScreenState: (patch: Partial<SendScreenState>) => void;
+    putScreenState: (
+      patch:
+        | Partial<SendScreenState>
+        | ((prev: SendScreenState) => Partial<SendScreenState>),
+    ) => void;
     fetchContactAccounts: () => void;
+    disableItemCheck: ITokenCheck;
   };
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
@@ -1831,10 +1905,14 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     currentTokenBalance: '',
     whitelistEnabled: false,
     canSubmit: false,
+    toAddressIsRecentlySend: false,
     toAddressInWhitelist: false,
+    toAddressIsCex: false,
     toAddressIsValid: false,
     toAddressInContactBook: false,
     canDirectSign: false,
+
+    toAddrCex: null,
   },
 
   formik: null as any,
@@ -1843,6 +1921,11 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   fns: {
     putScreenState: () => {},
     fetchContactAccounts: () => {},
+    disableItemCheck: () => ({
+      disable: false,
+      reason: '',
+      simpleReason: '',
+    }),
   },
   callbacks: {
     handleCurrentTokenChange: () => {},

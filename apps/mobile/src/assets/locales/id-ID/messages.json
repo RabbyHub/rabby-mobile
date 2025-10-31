@@ -667,13 +667,10 @@
       "Chain": "Rantai",
       "ContractAddress": "Alamat Kontrak",
       "whitelistAlert__disabled": "Whitelist dinonaktifkan. Anda dapat mentransfer ke alamat mana pun.",
-      "noSupprotTokenForDex": "Token ini mungkin tidak didukung oleh bursa ini. Periksa sebelum melanjutkan untuk menghindari kerugian.",
       "whitelistAlert__notWhitelisted_tip": "Alamat tidak ada dalam daftar putih.",
-      "noSupprotTokenForSafe": "Alamat Safe yang Anda kirimkan token tidak dikerahkan di rantai ini. Periksa sebelum melanjutkan untuk menghindari kehilangan.",
       "whitelistAlert__notWhitelisted": "Alamat tidak ada dalam daftar putih. Saya setuju untuk memberikan izin sementara untuk mentransfer.",
       "whitelistAlert__temporaryGranted": "Izin sementara diberikan",
       "whitelistAlert__whitelisted": "Alamat telah tercantum dalam daftar putih",
-      "noSupportTokenForChain": "Alamat penerima adalah alamat kontrak di rantai yang berbeda. Periksa sebelum melanjutkan untuk menghindari kerugian.",
       "addressDetail": "Detail Alamat",
       "newAmount": "Jumlah"
     },
@@ -705,7 +702,7 @@
       "risks": {
         "scamAddress": "Alamat penerima adalah alamat penipuan yang ditandai oleh Rabby.",
         "noSend": "Anda belum mengirimkan dana ke alamat ini dalam 180 hari terakhir. Silakan konfirmasi apakah Anda ingin melanjutkan.",
-        "dexNoDeposite": "Alamat penerima adalah alamat non-setoran dari CEX. Harap pastikan alamat setoran Anda benar.",
+        "cexNoDeposite": "Alamat penerima adalah alamat non-setoran dari CEX. Harap pastikan alamat setoran Anda benar.",
         "contractAddress": "Alamat penerima adalah alamat kontrak, yang berpotensi menyebabkan kehilangan dana."
       },
       "sendTo": "Kirim ke Alamat Ini",

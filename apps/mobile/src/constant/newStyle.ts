@@ -24,3 +24,11 @@ export enum AccountPannelSectionTitle {
   SafeAddresses = 'Safe Addresses',
   WatchAddresses = 'Watch Addresses',
 }
+
+export enum TxAccountPannelSectionTitle {
+  Recent = 'Recent',
+  Whitelist = 'Whitelist',
+  MyAddresses = 'My Addresses',
+  SafeAddresses = 'Safe Addresses',
+  WatchAddresses = 'Watch Addresses',
+}

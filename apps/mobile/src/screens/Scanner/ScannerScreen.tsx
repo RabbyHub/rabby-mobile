@@ -1,5 +1,5 @@
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Dimensions, Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
@@ -17,6 +17,9 @@ import { RootNames } from '@/constant/layout';
 import { URDecoder } from '@ngraveio/bc-ur';
 import { strFromU8, gunzipSync } from 'fflate';
 import { useTranslation } from 'react-i18next';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import EventEmitter from 'events';
+import { throttle } from 'lodash';
 
 const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 
@@ -30,11 +33,29 @@ export const useScanner = () => {
   return { text, clear };
 };
 
+const scannerEvents = new EventEmitter();
+
+export const enum ScannerEventType {
+  scanned = 'scanned',
+  navBack = 'navBack',
+}
+export const onScannerEvent = (
+  type: ScannerEventType,
+  callback: (data: string) => void,
+) => {
+  scannerEvents.addListener(type, callback);
+
+  return () => {
+    scannerEvents.removeListener(type, callback);
+  };
+};
+
 export const ScannerScreen = () => {
   const { t } = useTranslation();
   const [_, setText] = useAtom(textAtom);
   const { styles } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenRouteProp<'Scanner'>>();
+  const navigation = useRabbyAppNavigation();
   const navState = route.params;
   const nav = useNavigation();
   const [decoder] = useState(new URDecoder());
@@ -46,6 +67,7 @@ export const ScannerScreen = () => {
 
   const handleCodeScanned = React.useCallback(
     (data: Code[]) => {
+      scannerEvents.emit(ScannerEventType.scanned);
       if (navState?.syncExtension) {
         const value = data[0]?.value;
         if (value && value.startsWith('ur:')) {
@@ -90,6 +112,19 @@ export const ScannerScreen = () => {
       };
     }
   }, [navState, setText]);
+
+  useLayoutEffect(() => {
+    const unsub = navigation.addListener(
+      'beforeRemove',
+      throttle(() => {
+        scannerEvents.emit(ScannerEventType.navBack);
+      }, 300),
+    );
+
+    return () => {
+      unsub();
+    };
+  }, [navigation]);
 
   return (
     <View style={styles.main}>

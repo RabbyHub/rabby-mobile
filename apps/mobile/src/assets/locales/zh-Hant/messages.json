@@ -351,10 +351,7 @@
         "confirm": "繼續",
         "cancel": "取消"
       },
-      "noSupprotTokenForDex": "該代幣可能不受此交易所支持。在繼續之前請檢查以避免損失。",
       "From": "從",
-      "noSupprotTokenForSafe": "您要发送令牌的 Safe 地址未在此链上部署。请在继续操作之前检查，以避免损失。",
-      "noSupportTokenForChain": "收件人地址是不同链上的合约地址。在继续之前请检查，以避免损失。",
       "addressDetail": "地址詳情",
       "newAmount": "金額"
     },
@@ -2151,7 +2148,7 @@
         "noSend": "您在過去 180 天內沒有向此地址發送資金。請確認您是否希望繼續。",
         "scamAddress": "接收者地址是一個被 Rabby 標記為詐騙地址的地址",
         "contractAddress": "收款地址是合約地址，可能導致資金損失",
-        "dexNoDeposite": "接收地址是一個來自 CEX 的非存款地址。請確保您的存款地址正確。"
+        "cexNoDeposite": "接收地址是一個來自 CEX 的非存款地址。請確保您的存款地址正確。"
       },
       "dexNameTail": "存款地址",
       "brandNameTail": "地址",

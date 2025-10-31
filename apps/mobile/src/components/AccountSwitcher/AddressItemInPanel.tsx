@@ -1,5 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import React, { useCallback } from 'react';
@@ -31,14 +31,11 @@ export function AddressItemInPanel({
   style,
   addressItemProps,
   isCurrent,
-  isPinned,
   isHideToken,
   onPressAddress: proponPressAddress,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
-  isPinned?: boolean;
-  showCopyAndQR?: boolean;
   onPressAddress?: (account: Account) => void;
   isHideToken?: boolean;
 } & RNViewProps) {

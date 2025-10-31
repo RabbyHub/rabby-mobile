@@ -10,6 +10,7 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
+  ScrollView,
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -40,6 +41,7 @@ import { preferenceService } from '@/core/services';
 import {
   AddrDescResponse,
   TokenItem,
+  TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
@@ -81,6 +83,9 @@ import { PendingTxItem } from '../Swap/components/PendingTxItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { isValidHexAddress } from '@metamask/utils';
+import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -128,19 +133,8 @@ function SendScreen({
     >();
   const navParams = route.params;
 
-  const { chainItem, currentToken, setCurrentToken, setChainEnum } =
+  const { chainItem, currentToken, setChainEnum } =
     useSendTokenScreenChainToken();
-  const [addrDesc, setAddrDesc] = useState<
-    AddrDescResponse['desc'] | undefined
-  >(navParams?.addrDesc || getInitDescWithCexLocalCache(navParams?.toAddress));
-  useEffect(() => {
-    if (addrDesc || !navParams?.toAddress) {
-      return;
-    }
-    getAddrDescWithCexLocalCacheSync(navParams.toAddress).then(res => {
-      setAddrDesc(res);
-    });
-  }, [addrDesc, navParams?.toAddress]);
   const [routeParams] = useAtom(sendScreenParamsAtom);
 
   const {
@@ -148,6 +142,7 @@ function SendScreen({
     putScreenState,
     resetScreenState,
   } = useSendTokenScreenState();
+
   const Header = useCallback(
     () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
     [isForMultipleAddress],
@@ -158,27 +153,33 @@ function SendScreen({
     });
   }, [Header, setNavigationOptions]);
 
-  const disableItemCheck = useCallback(
-    (token: TokenItem & { cex_ids?: string[] }) => {
-      if (!addrDesc) {
+  const disableItemCheck = useCallback<ITokenCheck>(
+    (token: TokenItemWithEntity) => {
+      if (!screenState.toAddrDesc) {
         return {
           disable: false,
+          simpleReason: '',
           reason: '',
         };
       }
-      const toCexId = addrDesc?.cex?.id;
+      const toCexId = screenState.toAddrDesc?.cex?.id;
       if (toCexId) {
-        const noSupportToken = token.cex_ids?.every?.(
+        const cex_ids =
+          token.cex_ids || token.identity?.cex_list.map(item => item.id);
+        const noSupportToken = cex_ids?.every?.(
           id => id.toLowerCase() !== toCexId.toLowerCase(),
         );
-        if (!token?.cex_ids?.length || noSupportToken) {
+        if (!cex_ids?.length || noSupportToken) {
           return {
             disable: true,
-            reason: t('page.sendToken.noSupprotTokenForDex'),
+            simpleReason: t('page.sendToken.noSupportTokenReason.forDexSimple'),
+            reason: t('page.sendToken.noSupportTokenReason.forDex'),
           };
         }
       } else {
-        const safeChains = Object.entries(addrDesc?.contract || {})
+        const safeChains = Object.entries(
+          screenState.toAddrDesc?.contract || {},
+        )
           .filter(([, contract]) => {
             return contract.multisig;
           })
@@ -189,28 +190,33 @@ function SendScreen({
         ) {
           return {
             disable: true,
-            reason: t('page.sendToken.noSupprotTokenForSafe'),
+            simpleReason: t(
+              'page.sendToken.noSupportTokenReason.forSafeSimple',
+            ),
+            reason: t('page.sendToken.noSupportTokenReason.forSafe'),
           };
         }
-        const contactChains = Object.entries(addrDesc?.contract || {}).map(
-          ([chain]) => chain?.toLowerCase(),
-        );
+        const contactChains = Object.entries(
+          screenState.toAddrDesc?.contract || {},
+        ).map(([chain]) => chain?.toLowerCase());
         if (
           contactChains.length > 0 &&
           !contactChains.includes(token?.chain?.toLowerCase())
         ) {
           return {
             disable: true,
-            reason: t('page.sendToken.noSupportTokenForChain'),
+            simpleReason: t('page.sendToken.noSupportTokenReason.forChain'),
+            reason: t('page.sendToken.noSupportTokenReason.forChain'),
           };
         }
       }
       return {
         disable: false,
+        simpleReason: '',
         reason: '',
       };
     },
-    [addrDesc, t],
+    [screenState.toAddrDesc, t],
   );
 
   const {
@@ -233,9 +239,12 @@ function SendScreen({
     computed: {
       toAddressInContactBook,
       toAddressIsValid,
+      toAddressIsRecentlySend,
       toAddressInWhitelist,
+      toAddressIsCex,
       canSubmit,
       canDirectSign,
+      toAddrCex,
     },
   } = useSendTokenForm({
     toAddress: navParams?.toAddress,
@@ -243,6 +252,17 @@ function SendScreen({
     disableItemCheck,
     currentAccount: currentAccount!,
   });
+
+  useEffect(() => {
+    if (!formValues.to) return;
+    if (!isValidHexAddress(formValues.to as `0x${string}`)) return;
+
+    getAddrDescWithCexLocalCacheSync(formValues.to).then(res => {
+      putScreenState({
+        toAddrDesc: res,
+      });
+    });
+  }, [formValues.to, putScreenState]);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
     account: currentAccount!,
@@ -438,7 +458,7 @@ function SendScreen({
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [sendTokenEvents, resetScreenState, navigation]);
+  }, [sendTokenEvents, resetScreenState]);
 
   useLayoutEffect(() => {
     return () => {
@@ -477,11 +497,14 @@ function SendScreen({
         formValues,
         computed: {
           canSubmit,
+          toAddressIsRecentlySend,
           toAddressInWhitelist,
+          toAddressIsCex,
           whitelistEnabled,
           toAddressIsValid,
           toAddressInContactBook,
           canDirectSign,
+          toAddrCex,
 
           chainItem,
           currentToken,
@@ -493,6 +516,7 @@ function SendScreen({
         fns: {
           putScreenState,
           fetchContactAccounts,
+          disableItemCheck,
         },
 
         callbacks: {
@@ -506,8 +530,12 @@ function SendScreen({
           handleIgnoreGasFeeChange,
         },
       }}>
-      <NormalScreenContainer2024 type="bg1">
-        {isForMultipleAddress && (
+      <NormalScreenContainer2024
+        type="bg1"
+        // overwriteStyle={styles.screenContainer}
+      >
+        {/* TODO: clean it */}
+        {(isForMultipleAddress || !isForMultipleAddress) && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
         <TouchableWithoutFeedback
@@ -515,20 +543,19 @@ function SendScreen({
             sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
             Keyboard.dismiss();
           }}>
-          <View style={styles.sendScreen}>
+          <ScrollView contentContainerStyle={styles.sendScreen}>
             <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
               {/* FromToSection */}
               <View>
                 {/* From */}
-                <FromAddressControl2024 disableSwitch={!isForMultipleAddress} />
+                <FromAddressControl2024 disableSwitch={false} />
                 {/* To */}
                 <ToAddressControl2024
                   style={{
                     marginTop: 24,
                     marginBottom: 0,
                   }}
-                  address={navParams?.toAddress || ''}
-                  addrDesc={addrDesc}
+                  addrDesc={screenState.toAddrDesc}
                   brandName={navParams?.addressBrandName}
                 />
                 {/* balance info */}
@@ -548,7 +575,7 @@ function SendScreen({
               )}
             </KeyboardAwareScrollView>
             <BottomArea account={currentAccount} />
-          </View>
+          </ScrollView>
         </TouchableWithoutFeedback>
         <TokenInfoPopup />
         <BlockedAddressDialog
@@ -566,6 +593,7 @@ function SendScreen({
   );
 }
 
+/** @deprecated */
 const ForMultipleAddress = (
   props: Omit<
     React.ComponentProps<typeof SendScreen>,
@@ -597,10 +625,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       justifyContent: 'space-between',
       flex: 1,
       paddingTop: 16,
+      position: 'relative',
+      height: '100%',
     },
     mainContent: {
       paddingHorizontal: 24,
-      paddingBottom: 200,
+      paddingBottom: 220,
     },
     balance: {
       marginTop: 24,

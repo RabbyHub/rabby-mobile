@@ -25,13 +25,8 @@ import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 import { BuyScreen } from '../Buy';
-import SendPolyScreen from '../Send/SubScreens/SelectPolyScreen';
-import SendInputScreen from '../Send/SubScreens/SendInput';
-import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
-import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
 import { CopyTradingScreen } from '../CopyTrading';
 import { GnosisQueueScreen } from '../GnosisQueue';
-import WhitelistInputScreen from '../WhiteList/InputScreen';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
 import CopyTradingTokenDetail from '../CopyTrading/component/CopyTradingTokenDetail';
@@ -62,66 +57,6 @@ export default function TransactionNavigator() {
         headerShadowVisible: false,
         headerShown: true,
       })}>
-      <TransactionStack.Screen
-        name={RootNames.SendTo}
-        component={SendPolyScreen}
-        options={mergeScreenOptions({
-          title: 'Send to',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-
-      <TransactionStack.Screen
-        name={RootNames.SendInput}
-        component={SendInputScreen}
-        options={mergeScreenOptions({
-          title: 'Send to',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.WhitelistInput}
-        component={WhitelistInputScreen}
-        options={mergeScreenOptions({
-          title: 'Add New Whitelist Address',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.SelectImportAddress}
-        component={SelectMyAddressScreen}
-        options={mergeScreenOptions({
-          title: 'Select Imported Wallet',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.SelectTypeAddress}
-        component={SelectWatchScreenScreen}
-        options={mergeScreenOptions({
-          title: '',
-        })}
-      />
       <TransactionStack.Screen
         name={RootNames.Send}
         component={SendScreen}

@@ -768,10 +768,7 @@
         "cancel": "Hủy",
         "confirm": "Tiếp tục"
       },
-      "noSupprotTokenForDex": "Token này có thể không được hỗ trợ bởi sàn giao dịch này. Kiểm tra trước khi tiếp tục để tránh mất mát.",
       "From": "Từ",
-      "noSupprotTokenForSafe": "Địa chỉ Safe mà bạn đang gửi token không được triển khai trên chuỗi này. Vui lòng kiểm tra trước khi tiếp tục để tránh mất mát.",
-      "noSupportTokenForChain": "Địa chỉ người nhận là một địa chỉ hợp đồng trên một chuỗi khác. Kiểm tra trước khi tiếp tục để tránh mất mát.",
       "addressDetail": "Chi tiết địa chỉ",
       "newAmount": "Số lượng"
     },
@@ -2091,7 +2088,7 @@
     },
     "confirmAddress": {
       "risks": {
-        "dexNoDeposite": "Địa chỉ người nhận là một địa chỉ không phải là địa chỉ nạp tiền từ một CEX. Vui lòng đảm bảo địa chỉ nạp tiền của bạn là chính xác.",
+        "cexNoDeposite": "Địa chỉ người nhận là một địa chỉ không phải là địa chỉ nạp tiền từ một CEX. Vui lòng đảm bảo địa chỉ nạp tiền của bạn là chính xác.",
         "contractAddress": "Địa chỉ người nhận là một địa chỉ hợp đồng, có thể gây mất tiền",
         "noSend": "Bạn chưa gửi tiền đến địa chỉ này trong vòng 180 ngày qua. Vui lòng xác nhận nếu bạn muốn tiếp tục.",
         "scamAddress": "Địa chỉ người nhận là địa chỉ lừa đảo được Rabby đánh dấu"

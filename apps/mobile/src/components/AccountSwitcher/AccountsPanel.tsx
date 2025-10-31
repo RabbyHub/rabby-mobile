@@ -234,7 +234,7 @@ AccountSwitcherAopProps<{
                   key={key}
                   addressItemProps={{ account }}
                   isCurrent={isCurrent}
-                  isPinned={false}
+                  // isPinned={false}
                   onPressAddress={handlePressAccount}
                   style={[
                     styles.addressItem,
@@ -399,7 +399,7 @@ AccountSwitcherAopProps<{
                       key={key}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
-                      isPinned={false}
+                      // isPinned={false}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -436,7 +436,7 @@ AccountSwitcherAopProps<{
                       key={key}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
-                      isPinned={false}
+                      // isPinned={false}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -505,7 +505,7 @@ AccountSwitcherAopProps<{
                     key={key}
                     addressItemProps={{ account }}
                     isCurrent={isCurrent}
-                    isPinned={isPinnedAccount(account)}
+                    // isPinned={isPinnedAccount(account)}
                     isHideToken={isHideToken}
                     onPressAddress={handlePressAccount}
                     style={[

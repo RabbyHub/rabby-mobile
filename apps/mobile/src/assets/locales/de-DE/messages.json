@@ -923,10 +923,7 @@
         "cancel": "Abbrechen",
         "confirm": "Fortfahren"
       },
-      "noSupprotTokenForDex": "Dieser Token wird möglicherweise von dieser Börse nicht unterstützt. Überprüfen Sie es, bevor Sie fortfahren, um Verluste zu vermeiden.",
       "From": "Von",
-      "noSupprotTokenForSafe": "Die Safe-Adresse, an die Sie Tokens senden, ist nicht auf dieser Chain bereitgestellt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden.",
-      "noSupportTokenForChain": "Der Empfängeradresse ist eine Vertragsadresse auf einer anderen Kette. Überprüfen Sie dies, bevor Sie fortfahren, um einen Verlust zu vermeiden.",
       "addressDetail": "Adressdetails",
       "newAmount": "Betrag"
     },
@@ -2311,7 +2308,7 @@
         "scamAddress": "Die Empfängeradresse ist eine von Rabby markierte Betrugsadresse.",
         "noSend": "Sie haben in den letzten 180 Tagen keine Gelder an diese Adresse gesendet. Bitte bestätigen Sie, ob Sie fortfahren möchten.",
         "contractAddress": "Die Empfängeradresse ist eine Vertragsadresse, was möglicherweise zu einem Verlust von Geldern führen kann",
-        "dexNoDeposite": "Die Empfängeradresse ist eine Nicht-Einzahlungsadresse von einer CEX. Bitte stellen Sie sicher, dass Ihre Einzahlungsadresse korrekt ist."
+        "cexNoDeposite": "Die Empfängeradresse ist eine Nicht-Einzahlungsadresse von einer CEX. Bitte stellen Sie sicher, dass Ihre Einzahlungsadresse korrekt ist."
       },
       "addToWhitelist": "Zur Whitelist hinzufügen",
       "brandNameTail": "Adresse",
