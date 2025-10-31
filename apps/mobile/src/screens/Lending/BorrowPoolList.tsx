@@ -168,6 +168,7 @@ const BorrowPoolList = () => {
       style={styles.container}
       ListHeaderComponent={ListHeaderComponent}
       showsVerticalScrollIndicator={false}
+      ListHeaderComponentStyle={styles.headerContainer}
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
@@ -304,6 +305,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 0,
     marginLeft: 10,
     width: 80,
+  },
+  headerContainer: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   loading: {
     width: 124,
