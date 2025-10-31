@@ -1,5 +1,5 @@
-import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
-import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
+import IconEmpty from '@/assets2024/images/lending/empty.png';
+import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -23,7 +23,7 @@ export const Empty = ({
     <View style={[styles.container, style]}>
       <View style={styles.empty}>
         <Image
-          source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+          source={isLight ? IconEmpty : IconEmptyDark}
           style={styles.image}
         />
         <Text style={styles.title}>

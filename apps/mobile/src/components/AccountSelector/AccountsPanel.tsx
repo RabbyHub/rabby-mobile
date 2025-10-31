@@ -363,7 +363,7 @@ export function AccountsPanelInSheetModal({
 }: {
   containerStyle?: StyleProp<ViewStyle>;
   onSelectAccount?: (account: Account | null) => void;
-  scene?: 'GasAccount' | 'receive' | undefined;
+  scene?: 'GasAccount' | 'receive' | 'Lending' | undefined;
   defaultPressItemAction?: React.ComponentProps<
     typeof AddressItemInSheetModal
   >['defaultPressAction'];

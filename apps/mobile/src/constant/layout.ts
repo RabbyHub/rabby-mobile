@@ -94,6 +94,7 @@ export const RootNames = {
   FavoriteDapps: 'FavoriteDapps',
   Search: 'Search',
   Watchlist: 'Watchlist',
+  Lending: 'Lending',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
@@ -138,6 +139,7 @@ export const RootNames = {
   HistoryDetail: 'HistoryDetail',
   HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',
+  LendingHistory: 'LendingHistory',
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',

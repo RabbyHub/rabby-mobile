@@ -29,6 +29,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Account } from '@/core/services/preference';
+import { ellipsisOverflowedText } from '@/utils/text';
 
 const NFTBalanceChange = ({
   data,
@@ -227,7 +228,8 @@ export const BalanceChange = ({
             <View style={styles.logoWithText}>
               <AssetAvatar logo={token.logo_url} size={33} />
               <Text style={styles.changeText}>
-                - {formatTokenAmount(token.amount)} {getTokenSymbol(token)}
+                - {formatTokenAmount(token.amount)}{' '}
+                {ellipsisOverflowedText(getTokenSymbol(token), 12)}
               </Text>
             </View>
             <View style={styles.listItemRight}>
@@ -251,7 +253,8 @@ export const BalanceChange = ({
             <View style={styles.logoWithText}>
               <AssetAvatar logo={token.logo_url} size={33} />
               <Text style={[styles.changeText, styles.changeTextPositive]}>
-                + {formatTokenAmount(token.amount)} {getTokenSymbol(token)}
+                + {formatTokenAmount(token.amount)}{' '}
+                {ellipsisOverflowedText(getTokenSymbol(token), 12)}
               </Text>
             </View>
             <View style={styles.listItemRight}>

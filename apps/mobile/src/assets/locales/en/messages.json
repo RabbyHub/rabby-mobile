@@ -46,6 +46,10 @@
       "Yesterday": "Yesterday",
       "ViewSmallItems": "View transactions < $0.1",
       "itemTitle": {
+        "LendingSupply": "Supply",
+        "LendingWithdraw": "Withdraw",
+        "LendingBorrow": "Borrow",
+        "LendingRepay": "Repay",
         "ReceivedGas": "Received Gas",
         "WithdrawnGas": "Withdrawn Gas",
         "DepositedGas": "Deposited Gas",
@@ -999,6 +1003,7 @@
         "search": "Search Token",
         "watchlist": "Token Watchlist",
         "perps": "Perps",
+        "lending": "Lending",
         "perpsMarketList": "More Perps"
       }
     },
@@ -2503,6 +2508,111 @@
       },
       "addressEditorBadge": {
         "nameUnknown": "Name the address"
+      }
+    },
+    "Lending": {
+      "apy": "APY",
+      "gotIt": "Got it",
+      "market": "Market",
+      "submitted": "submitted",
+      "netWorth": "Net worth",
+      "supplied": "Supplied",
+      "borrowed": "Borrowed",
+      "estDailyEarning": "Est.Daily Earning",
+      "selectChain": "Select Chain",
+      "hf": "Health factor",
+      "hfTitle": "Health Factor",
+      "enterAmount": "Enter Amount",
+      "availableCard": {
+        "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
+        "needSupply": "To borrow, you need to supply assets as collateral."
+      },
+      "list": {
+        "headers": {
+          "token": "Token",
+          "apy": "APY",
+          "myBorrows": "My borrows",
+          "mySupplies": "My supplies"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "title": "Earn Interest, Borrow Anytime",
+          "description": "Powered by AAVE. Secure and zero fees."
+        },
+        "lq": "If goes below 1, the liquidation might be triggered.",
+        "more": "More",
+        "healthy": "Healthy",
+        "risky": "Risky"
+      },
+      "repayDetail": {
+        "actions": "Repay",
+        "approveAndRepay": "Approve and Repay"
+      },
+      "supplyDetail": {
+        "actions": "Supply",
+        "approveAndSupply": "Approve and Supply",
+        "availableToBorrow": "Available to borrow",
+        "supplyAPY": "Supply APY"
+      },
+      "withdrawDetail": {
+        "actions": "Withdraw",
+        "remainingSupply": "Remaining supply"
+      },
+      "borrowDetail": {
+        "actions": "Borrow",
+        "approveAndBorrow": "Approve and Borrow",
+        "almostReachedWarning": "Protocol borrow cap is at 100% for this asset. Further borrowing unavailable.",
+        "almostReachedError": "Maximum amount available to borrow is limited because protocol borrow cap is nearly reached."
+      },
+      "popup": {
+        "amount": "Amount",
+        "available": "available",
+        "title": "Transaction Overview",
+        "liquidationAt": "Liquidation at < 1.0",
+        "remainingDebt": "Remaining debt"
+      },
+      "borrowOverview": {
+        "title": "Borrow Details",
+        "totalBorrowed": "Total Borrowed",
+        "borrowCap": "Borrow Cap",
+        "myBorrow": "My Borrow",
+        "availableToBorrow": "Available to borrow",
+        "liquidityPenalty": "Liquidity Penalty"
+      },
+      "supplyOverview": {
+        "title": "Supply Details",
+        "totalSupplied": "Total Supplied",
+        "mySupply": "My Supply",
+        "walletBalance": "Wallet Balance",
+        "availableToSupply": "Available to Supply",
+        "reachCap": "This asset has reached its supply cap. Nothing is available to be supplied from this market.",
+        "almostCap": "This asset has almost reached its borrow cap. There is only {{available}} available to be borrowed from this market."
+      },
+      "risk": {
+        "warning": "Borrowing this amount will lower your Health Factor to a risky level for liquidation.",
+        "withdrawWarning": "Withdrawing this amount will lower your Health Factor to a risky level for liquidation.",
+        "checkbox": "I understand the alert and want to continue."
+      },
+      "lqDescription": {
+        "desc": "Liquidation value",
+        "risky": "Risky",
+        "introText": " Your Health Factor shows how safe your borrowing position is. If it drops too low, your collateral could be liquidated.",
+        "over3title": "Health factor > 3.0:",
+        "over3desc": "Your positions are safe",
+        "below1title": "Health Factor ≤ 1.0:",
+        "below1desc": "Your position is at risk of liquidation.",
+        "liquidation": "Liquidation: If your Health Factor falls below 1.0, part of your collateral may be automatically sold to repay the debt. A liquidation penalty will apply, resulting in a partial loss of your collateral.",
+        "warningText": "Your Health Factor is too low. To avoid liquidation:\n1. Repay part or all of your loan\n2. Add more collateral"
+      },
+      "modalDesc": {
+        "availableToBorrow": "Available to borrow",
+        "maxAmount": "This is the maximum amount you can borrow based on all your supplied collateral. Your total borrowing power is calculated by multiplying the market value of each collateral asset by its Max LTV, then summing the results.",
+        "lqDesc": "When a liquidation occurs, liquidators repay up to 50% of the outstanding borrowed amount on behalf of the borrower. In return, they can buy the collateral at a discount and keep the difference (liquidation penalty) as a bonus.",
+        "availableToBorrowDesc": "You can borrow based on your supplied collateral and until the borrow cap is reached."
       }
     }
   },

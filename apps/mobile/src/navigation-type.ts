@@ -293,6 +293,7 @@ export type TransactionNavigatorParamList = {
     tokenItem?: AbstractPortfolioToken;
     currentAddress?: string;
   };
+  [RootNames.LendingHistory]?: {};
   [RootNames.CopyTrading]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
@@ -381,6 +382,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.PerpsMarketDetail]: {
     market: string;
   };
+  [RootNames.Lending]?: {};
 };
 
 export type SettingNavigatorParamList = {
