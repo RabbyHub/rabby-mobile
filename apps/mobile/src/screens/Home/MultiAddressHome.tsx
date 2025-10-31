@@ -185,7 +185,7 @@ function MultiAddressHome(): JSX.Element {
           key: MultiHomeFeatTitle.Lending,
           title: t('page.home.services.lending'),
           icon: RcIconLending,
-          color: colors2024['brand-default'],
+          color: colors2024['brand-default-icon'],
         },
         {
           key: MultiHomeFeatTitle.Points,
