@@ -294,14 +294,15 @@ export default function BottomArea({ account }: { account: Account | null }) {
 
 const SIZES = {
   containerPt: 16,
-  containerPb: 26,
+  containerPb: 0,
   height: 220,
+  bottom: 48,
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     bottomDockArea: {
-      bottom: 0,
+      bottom: SIZES.bottom,
       width: '100%',
       paddingHorizontal: 24,
       position: 'absolute',

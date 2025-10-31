@@ -9,7 +9,7 @@ import {
   formatTokenAmount,
   formatUsdValue,
 } from '@/utils/number';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
@@ -78,6 +78,12 @@ export const Send: React.FC<Props> = ({
   const { safeSizes } = useSafeAndroidBottomSizes({
     inModalContainerPb:
       SIZES.buttonHeight + SIZES.containerPb + SIZES.bottomContentBottom,
+    // inModalButtonContainerPt: SIZES.containerPt,
+    inModalButtonContainerHeight:
+      SIZES.containerPt +
+      SIZES.buttonHeight +
+      SIZES.containerPb +
+      SIZES.bottomContentBottom,
     inModalButtonContainerBottom: SIZES.bottomContentBottom,
   });
   const { t } = useTranslation();
@@ -161,7 +167,13 @@ export const Send: React.FC<Props> = ({
         <TouchableOpacity onPress={handleGotoTokenDetail}>
           <View style={[styles.singleBox]}>
             <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                width: '100%',
+                flexShrink: 1,
+              }}>
               <HistoryItemIcon
                 isInDetail={true}
                 type={HistoryItemCateType.Send}
@@ -169,17 +181,25 @@ export const Send: React.FC<Props> = ({
                 isNft={false}
               />
               <View style={[styles.colomnBox]}>
-                <>
+                <View style={styles.tokenSymbolBox}>
                   <Text
-                    style={[styles.tokenAmountText, styles.isSendTextColor]}>
+                    style={[styles.tokenAmountText, styles.isSendTextColor]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
                     - {sendAmount}{' '}
-                    {getTokenSymbol(actionData.token as TokenItem)}
+                    {getTokenSymbol(actionData.token as TokenItem).repeat(1000)}
                   </Text>
-                  <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
-                </>
+                </View>
+                <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
               </View>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                flexShrink: 0,
+                width: 32,
+              }}>
               <RcIconSingleArrow
                 width={32}
                 height={32}
@@ -288,11 +308,20 @@ export const Send: React.FC<Props> = ({
           accountSelectCtx.isUnderContext
             ? StyleSheet.flatten([
                 styles.inModalButtonContainer,
-                { bottom: safeSizes.inModalButtonContainerBottom },
+                {
+                  paddingTop: SIZES.containerPt,
+                  height: safeSizes.inModalButtonContainerHeight,
+                  bottom: 0,
+                },
               ])
-            : { paddingBottom: SIZES.containerPb },
+            : {},
         ]}>
-        <View style={{ flex: 1 }}>
+        <View
+          style={[
+            { flex: 1 },
+            accountSelectCtx.isUnderContext && styles.inModalButtonInner,
+            // accountSelectCtx.isUnderContext && { height: safeSizes.inModalButtonContainerHeight }
+          ]}>
           {isAddrOnWhitelist(actionData.to) && onPressAddToWhitelistButton ? (
             <Tip content={t('page.whitelist.alreadyIn')}>
               <Button
@@ -348,8 +377,9 @@ export const Send: React.FC<Props> = ({
 
 const SIZES = {
   buttonHeight: 56,
-  bottomAreaPt: 20,
-  bottomContentBottom: IS_IOS ? 16 : 0,
+  // bottomAreaPt: 0,
+  bottomContentBottom: IS_IOS ? 48 : 0,
+  containerPt: 12,
   containerPb: 12,
 };
 
@@ -404,6 +434,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   colomnBox: {
     flexDirection: 'column',
+    overflow: 'hidden',
+    width: '100%',
+  },
+  tokenSymbolBox: {
+    flexDirection: 'row',
+    maxWidth: '70%',
+  },
+  usdValue: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    marginTop: 4,
   },
   isSendTextColor: {
     color: colors2024['neutral-title-1'],
@@ -452,14 +496,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 28,
     lineHeight: 36,
     fontWeight: '700',
-  },
-  usdValue: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '500',
-    marginTop: 4,
+    maxWidth: '100%',
   },
   mutliBox: {
     width: '100%',
@@ -486,11 +523,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     flexDirection: 'row',
-    paddingTop: SIZES.bottomAreaPt,
+    paddingTop: 0,
     marginTop: 16,
     bottom: 0,
     width: '100%',
-    paddingBottom: SIZES.containerPb,
+    paddingBottom: SIZES.bottomContentBottom,
     alignItems: 'center',
     paddingHorizontal: 16,
   },
@@ -498,8 +535,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'absolute',
     marginTop: 0,
     width: '100%',
-    height: SIZES.buttonHeight + SIZES.bottomContentBottom,
+    height: SIZES.containerPt + SIZES.buttonHeight + SIZES.bottomContentBottom,
     bottom: SIZES.bottomContentBottom,
+    // ...makeDebugBorder(),
+    paddingTop: SIZES.containerPt,
+  },
+  inModalButtonInner: {
+    height: '100%',
+    width: '100%',
+    flex: 0,
+    // ...makeDebugBorder('yellow'),
   },
   itemAliaName: {
     flexDirection: 'row',
