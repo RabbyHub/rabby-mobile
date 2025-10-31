@@ -38,6 +38,7 @@ const DefaultStates: {
 
   History: makeDefaultState(),
   MultiHistory: makeDefaultState(),
+  Lending: makeDefaultState(),
 
   // Receive: makeDefaultState(),
   // GasAccount: makeDefaultState(),
