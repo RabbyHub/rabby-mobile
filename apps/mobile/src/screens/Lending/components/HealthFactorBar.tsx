@@ -22,9 +22,9 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
 
   const dotPosition = useMemo(() => {
     if (hfNumber > 10) {
-      return 100;
+      return 95;
     } else if (hfNumber > 3) {
-      return 50 + ((hfNumber - 3) / 7) * 50;
+      return 50 + ((hfNumber - 3) / 7) * 45;
     } else if (hfNumber > 1) {
       return 10 + ((hfNumber - 1) / 2) * 40;
     } else {
