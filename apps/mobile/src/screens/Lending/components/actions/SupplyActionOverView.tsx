@@ -85,7 +85,7 @@ const SupplyActionOverView: React.FC<
           <View style={styles.availableValueContainer}>
             <Text style={styles.availableValue}>
               {afterAvailable
-                ? `${availableText} → ${formatAmountValueKMB(
+                ? `${availableText} → $${formatAmountValueKMB(
                     afterAvailable || '0',
                   )}`
                 : availableText}
@@ -126,7 +126,12 @@ const SupplyActionOverView: React.FC<
             )}
           </Text>
         </View>
-        <View style={[styles.item, styles.hfDescContainer]}>
+        <View
+          style={[
+            styles.item,
+            styles.hfDescContainer,
+            isHFEmpty(Number(healthFactor || '0')) && styles.hidden,
+          ]}>
           <Text style={styles.hfDesc}>
             {t('page.Lending.popup.liquidationAt')}
           </Text>

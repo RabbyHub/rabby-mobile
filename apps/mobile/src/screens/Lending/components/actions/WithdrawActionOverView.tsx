@@ -51,7 +51,7 @@ const WithdrawActionOverView: React.FC<
         <View style={[styles.item, styles.hfDescContainer]}>
           <Text style={styles.hfDesc}>
             {afterSupply
-              ? `${availableText} → ${formatAmountValueKMB(
+              ? `${availableText} → $${formatAmountValueKMB(
                   afterSupply.balanceUSD || '0',
                 )}`
               : availableText}
@@ -77,7 +77,12 @@ const WithdrawActionOverView: React.FC<
             )}
           </Text>
         </View>
-        <View style={[styles.item, styles.hfDescContainer]}>
+        <View
+          style={[
+            styles.item,
+            styles.hfDescContainer,
+            isHFEmpty(Number(healthFactor || '0')) && styles.hidden,
+          ]}>
           <Text style={styles.hfDesc}>
             {t('page.Lending.popup.liquidationAt')}
           </Text>

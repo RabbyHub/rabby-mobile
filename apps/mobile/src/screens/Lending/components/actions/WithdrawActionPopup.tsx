@@ -120,7 +120,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   }, [formattedPoolReservesAndIncentives, userSummary, reserve]);
 
   const isRisky = useMemo(() => {
-    if (!afterHF) {
+    if (!afterHF || Number(afterHF) < 0) {
       return false;
     }
     return Number(afterHF) < HF_RISK_CHECKBOX_THRESHOLD;
