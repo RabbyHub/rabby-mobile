@@ -137,8 +137,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       BigNumber(reserve.reserve.formattedPriceInMarketReferenceCurrency),
     );
     return {
-      balance: balance.toString(),
-      balanceUSD: balanceUSD.toString(),
+      balance: balance.lte('0') ? '0' : balance.toString(),
+      balanceUSD: balanceUSD.lte('0') ? '0' : balanceUSD.toString(),
     };
   }, [
     amount,
