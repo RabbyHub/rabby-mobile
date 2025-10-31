@@ -63,6 +63,7 @@ export const MultiAssets = ({
   const combineData = useMemo(() => {
     return {
       ...combineCurveData,
+      rawNetWorth: combine24hBalanceData.rawNetWorth,
       rawChange: combine24hBalanceData.rawChange,
       change: combine24hBalanceData.change,
       changePercent: combine24hBalanceData.changePercent,
