@@ -281,8 +281,6 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         value: supplyResult.value?.toHexString() || '0x0',
         chainId: chainInfo.id,
       };
-
-      txs.push(formattedSupplyResult);
       setSupplyTx(formattedSupplyResult);
     } catch (error) {
       console.error('Build transactions error:', error);
