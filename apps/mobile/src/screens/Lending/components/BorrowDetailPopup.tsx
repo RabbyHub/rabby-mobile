@@ -232,7 +232,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
               {formatUsdValueKMB(reserve.variableBorrowsUSD || '0')}
             </Text>
           </View>
-          {reserve.underlyingBalance !== '0' && (
+          {hasBorrowBalance && (
             <>
               <View style={styles.userInfoItem}>
                 <Text style={styles.userInfoItemTitle}>

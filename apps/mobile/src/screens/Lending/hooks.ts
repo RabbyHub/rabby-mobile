@@ -133,18 +133,19 @@ const useLendingData = (init: boolean = false) => {
 
   const fetchData = useCallback(
     async (ignoreLoading: boolean = false) => {
-      if (!currentAccount?.address || loading) {
+      const requestAddress = currentAccount?.address;
+      if (!requestAddress || loading) {
         return;
       }
       if (!ignoreLoading) {
         setLoading(true);
       }
-      fetchContractData(currentAccount?.address)
+      fetchContractData(requestAddress)
         .then(data => {
           setReserves(data?.reserves);
           setUserReserves(data?.userReserves);
           setWalletBalances(data?.walletBalances || { 0: [], 1: [] });
-          setCurrentAddress(currentAccount?.address);
+          setCurrentAddress(requestAddress);
           setLoading(false);
         })
         .finally(() => {

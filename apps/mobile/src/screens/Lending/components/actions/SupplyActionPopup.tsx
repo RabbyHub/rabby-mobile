@@ -42,6 +42,7 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { SUPPLY_UI_SAFE_MARGIN } from '../../utils/constant';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -296,6 +297,30 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     isNativeToken,
   ]);
 
+  const supplyAmount = useMemo(() => {
+    const myAmount = BigNumber(reserve.walletBalance || '0');
+    const poolAmount = BigNumber(reserve.reserve.supplyCap)
+      .minus(BigNumber(reserve.reserve.totalLiquidity))
+      .multipliedBy(SUPPLY_UI_SAFE_MARGIN);
+    const miniAmount = myAmount.gte(poolAmount) ? poolAmount : myAmount;
+    const usdValue = miniAmount
+      .multipliedBy(
+        BigNumber(
+          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+        ),
+      )
+      .toString();
+    return {
+      amount: miniAmount.toString(),
+      usdValue,
+    };
+  }, [
+    reserve.walletBalance,
+    reserve.reserve.supplyCap,
+    reserve.reserve.totalLiquidity,
+    reserve.reserve.formattedPriceInMarketReferenceCurrency,
+  ]);
+
   const txsForMiniApproval: Tx[] = useMemo(() => {
     const list: any[] = [];
     if (approveTxs?.length) {
@@ -437,9 +462,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           {t('page.Lending.popup.amount')}
         </Text>
         <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-          reserve.walletBalance || '0',
+          supplyAmount.amount || '0',
         )}${reserve.reserve.symbol}($${formatAmountValueKMB(
-          reserve.walletBalanceUSD || '0',
+          supplyAmount.usdValue || '0',
         )}) ${t('page.Lending.popup.available')}`}</Text>
       </View>
       <TokenAmountInput
@@ -447,9 +472,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         onChange={setAmount}
         symbol={reserve.reserve.symbol}
         handleClickMaxButton={() => {
-          setAmount(reserve.walletBalance || '0');
+          setAmount(supplyAmount.amount || '0');
         }}
-        tokenAmount={Number(reserve.walletBalance || '0')}
+        tokenAmount={Number(supplyAmount.amount || '0')}
         price={Number(
           reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
         )}

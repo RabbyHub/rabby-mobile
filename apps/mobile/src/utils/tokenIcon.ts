@@ -40,7 +40,7 @@ const TOKEN_ICON_MAP_PNG: Record<string, string> = {
   USCC: 'https://static.debank.com/image/eth_token/logo_url/0x14d60e7fdc0d71d8611742720e4c50e7a974020c/e8a4d40c295db75998a4dc97b935ad85.png',
   PYUSD:
     'https://static.debank.com/image/eth_token/logo_url/0x6c3ea9036406852006290770bedfcaba0e23a0e8/8af98a6a2c36c107eeb4b349fddb51b0.png',
-  FBTC: 'https://static.debank.com/image/eth_token/logo_url/0xc96de26018a54d51c097160568752c4e3bd6c364/fef24aea0e8d4cdd45f26eb5cd0e6c5e.png',
+  FBTC: 'https://static-assets.debank.com/files/15048fad-89ae-4248-9200-93b296fd3d2e.png',
   USDTB:
     'https://static.debank.com/image/eth_token/logo_url/0xc139190f447e929f090edeb554d95abb8b18ac1c/8bb5a15dce452282f8bd987d29a6746d.png',
   LTF: 'https://static.debank.com/image/base_token/logo_url/0x8c213ee79581ff4984583c6a801e5263418c4b86/df46d2f49ff2097c72c070583efc92bf.png',

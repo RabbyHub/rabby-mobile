@@ -237,18 +237,34 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     ],
   );
 
-  const availableToBorrowBalance = useMemo(() => {
-    return BigNumber(userSummary?.availableBorrowsUSD || '0')
+  const availableToBorrow = useMemo(() => {
+    const myAmount = BigNumber(userSummary?.availableBorrowsUSD || '0')
       .dividedBy(
         BigNumber(
           reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
         ),
       )
-      .multipliedBy(BORROW_SAFE_MARGIN)
+      .multipliedBy(BORROW_SAFE_MARGIN);
+    const poolAmount = BigNumber(reserve.reserve.borrowCap)
+      .minus(BigNumber(reserve.reserve.totalDebt))
+      .multipliedBy(BORROW_SAFE_MARGIN);
+    const miniAmount = myAmount.gte(poolAmount) ? poolAmount : myAmount;
+    const usdValue = miniAmount
+      .multipliedBy(
+        BigNumber(
+          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+        ),
+      )
       .toString();
+    return {
+      amount: miniAmount.toString(),
+      usdValue,
+    };
   }, [
-    userSummary?.availableBorrowsUSD,
+    reserve.reserve.borrowCap,
     reserve.reserve.formattedPriceInMarketReferenceCurrency,
+    reserve.reserve.totalDebt,
+    userSummary?.availableBorrowsUSD,
   ]);
 
   useEffect(() => {
@@ -310,9 +326,9 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           {t('page.Lending.popup.amount')}
         </Text>
         <Text style={styles.amountValueDescription}>{`${formatAmountValueKMB(
-          availableToBorrowBalance || '0',
+          availableToBorrow.amount || '0',
         )}${reserve.reserve.symbol} ($${formatAmountValueKMB(
-          userSummary.availableBorrowsUSD || '0',
+          availableToBorrow.usdValue || '0',
         )}) ${t('page.Lending.popup.available')}`}</Text>
       </View>
       <TokenAmountInput
@@ -320,9 +336,9 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         onChange={setAmount}
         symbol={reserve.reserve.symbol}
         handleClickMaxButton={() => {
-          setAmount(availableToBorrowBalance || '0');
+          setAmount(availableToBorrow.amount || '0');
         }}
-        tokenAmount={Number(availableToBorrowBalance || '0')}
+        tokenAmount={Number(availableToBorrow.amount || '0')}
         price={Number(
           reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
         )}
