@@ -49,10 +49,6 @@ export const AccountSwitcherContextMenu: React.FC<Props> = props => {
     [t, editAliasName, account, isLight],
   );
 
-  if (IS_ANDROID) {
-    return <>{children}</>;
-  }
-
   return (
     <ContextMenuView
       menuConfig={{
