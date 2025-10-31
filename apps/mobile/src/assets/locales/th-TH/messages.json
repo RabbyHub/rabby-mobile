@@ -236,6 +236,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "ฉันเข้าใจแล้ว"
+    },
+    "Prediction": {
+      "amount": "จำนวน",
+      "price": "ราคา",
+      "usdValue": "มูลค่า USD",
+      "side": "ข้าง"
     }
   },
   "page": {
@@ -940,7 +946,7 @@
         "queue": "คิว",
         "search": "ค้นหา Token",
         "copyTrading": "การคัดลอกการซื้อขาย",
-        "watchlist": "รายการเฝ้าติดตาม",
+        "watchlist": "รายการติดตามโทเคน",
         "perps": "Perps",
         "perpsMarketList": "มากขึ้น Perps"
       }
@@ -2320,7 +2326,8 @@
       },
       "WebviewError": {
         "failedToLoad": "ไม่สามารถโหลดหน้าเว็บได้",
-        "error": "ข้อผิดพลาด:"
+        "error": "ข้อผิดพลาด:",
+        "alertText": "ลอง<1/><2>เปิดในเบราว์เซอร์</2><3/>เพื่อตรวจสอบว่ามันเป็นปัญหาเกี่ยวกับเว็บไซต์หรือไม่"
       },
       "toast": {
         "clearCacheSuccess": "เคลียร์แคชเรียบร้อยแล้ว"

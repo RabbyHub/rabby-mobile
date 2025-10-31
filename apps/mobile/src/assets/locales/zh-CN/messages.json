@@ -812,7 +812,7 @@
         "approvals": "授权",
         "search": "搜索 Token",
         "copyTrading": "跟单交易",
-        "watchlist": "观察列表",
+        "watchlist": "代币关注列表",
         "perpsMarketList": "更多 Perps",
         "perps": "合约"
       }
@@ -2208,7 +2208,8 @@
       },
       "WebviewError": {
         "error": "错误：",
-        "failedToLoad": "无法加载页面"
+        "failedToLoad": "无法加载页面",
+        "alertText": "尝试<1/><2>在浏览器中打开</2><3/>以检查是否是网站问题"
       },
       "toast": {
         "clearCacheSuccess": "缓存已清除"
@@ -2781,6 +2782,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "我明白了"
+    },
+    "Prediction": {
+      "price": "价格",
+      "side": "侧边",
+      "amount": "数量",
+      "usdValue": "USD 价值"
     }
   },
   "bluetooth": {

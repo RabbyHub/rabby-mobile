@@ -776,7 +776,7 @@
         "approvals": "승인",
         "search": "토큰 검색",
         "copyTrading": "복사 거래",
-        "watchlist": "관심 목록",
+        "watchlist": "토큰 워치리스트",
         "perps": "펍스",
         "perpsMarketList": "더 많은 Perps"
       }
@@ -2109,7 +2109,8 @@
       },
       "WebviewError": {
         "error": "오류:",
-        "failedToLoad": "페이지를 불러오는 데 실패했습니다."
+        "failedToLoad": "페이지를 불러오는 데 실패했습니다.",
+        "alertText": "브라우저에서 열어보세요<1/><2>웹사이트 문제인지 확인하기 위해</2><3/>"
       },
       "toast": {
         "clearCacheSuccess": "캐시가 지워졌습니다"
@@ -2772,6 +2773,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "알겠어요"
+    },
+    "Prediction": {
+      "usdValue": "USD 가치",
+      "amount": "금액",
+      "price": "가격",
+      "side": "측면"
     }
   },
   "constant": {
