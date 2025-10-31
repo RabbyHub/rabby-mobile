@@ -1,7 +1,7 @@
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import React, { ReactNode } from 'react';
-import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
-import { useThemeColors } from '@/hooks/theme';
+import IconQuestionMark from '@/assets2024/icons/common/help-cc.svg';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import { Tip } from '@/components/Tip';
 
@@ -81,6 +81,8 @@ const Row = ({
   itemsCenter?: boolean;
 }) => {
   const colors = useThemeColors();
+  const { colors2024 } = useTheme2024();
+
   const styles = getStyles(colors);
   return (
     <View
@@ -100,6 +102,7 @@ const Row = ({
             style={StyleSheet.flatten({
               marginLeft: 6,
             })}
+            color={colors2024['neutral-info']}
           />
         </Tip>
       )}

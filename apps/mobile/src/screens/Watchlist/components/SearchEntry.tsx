@@ -104,7 +104,7 @@ const SearchEntry: React.FC = () => {
 
   const { t } = useTranslation();
   const handlePress = () => {
-    navigation.navigate(RootNames.StackHomeNonTab, {
+    navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
       screen: RootNames.Search,
       params: {},
     });

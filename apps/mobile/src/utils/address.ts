@@ -3,6 +3,11 @@ export const ellipsis = (text: string, length = 6) => {
   return text.toString().replace(reg, '$1...$3');
 };
 
+export const shortEllipsisAddress = (text: string, length = 6) => {
+  const reg = new RegExp(`^(.{${length}})(.*)(.{${length}})$`);
+  return text.toString().replace(reg, '$1...$3');
+};
+
 export const ellipsisAddress = ellipsis;
 
 export function formatAddressToShow(

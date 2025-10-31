@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { AppBottomSheetModal, AssetAvatar, Text } from '@/components';
+import { AppBottomSheetModal, AssetAvatar } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolio, AbstractProject } from '@/screens/Home/types';
 import { formatTokenAmount } from '@/utils/number';
@@ -8,7 +8,7 @@ import { RcIconRightCC } from '@/assets/icons/common';
 import BigNumber from 'bignumber.js';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RelatedDeFiType } from '..';
@@ -331,7 +331,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '900',
   },
   rightContent: {
     alignItems: 'center',
@@ -357,6 +357,7 @@ const getStyles = createGetStyles2024(ctx => ({
   content: {
     // alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
   defiItemAmoutText: {
     color: ctx.colors2024['neutral-title-1'],

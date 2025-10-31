@@ -47,7 +47,7 @@ import { useRealTimeTokenInfo, useTokenBalance } from './hook';
 import TokenActions from './components/TokenActions';
 import BottomFloatGuide from './components/BottomFloatGuide';
 import { RootNames } from '@/constant/layout';
-import { navigate, naviPush } from '@/utils/navigation';
+import { navigateDeprecated, naviPush } from '@/utils/navigation';
 import { RightMore } from './components/RightMore';
 import { currentPortfolioAtom } from '../Home/hooks/usePortfolio';
 import { RelatedDeFi } from './components/RelatedDeFi';
@@ -365,7 +365,7 @@ export const TokenDetailScreen = () => {
   );
 
   const handleOpenTokenMarketInfo = useCallback(() => {
-    navigate(RootNames.TokenMarketInfo, {
+    navigateDeprecated(RootNames.TokenMarketInfo, {
       ...route.params,
     });
   }, [route.params]);

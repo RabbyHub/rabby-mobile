@@ -3,7 +3,7 @@ import { apisPerps } from '@/core/apis';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   CancelOrderParams,
@@ -31,10 +31,19 @@ import { PerpsPosition } from './components/PerpsPosition';
 import { usePerpsPosition } from './hooks/usePerpsPosition';
 import { toast } from '@/components2024/Toast';
 import * as Sentry from '@sentry/react-native';
-import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
+import {
+  ARB_USDC_TOKEN_ID,
+  ARB_USDC_TOKEN_SERVER_CHAIN,
+  PERPS_MAX_NTL_VALUE,
+} from '@/constant/perps';
 import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
 import { trigger } from 'react-native-haptic-feedback';
 import { useAppState } from '@react-native-community/hooks';
+import { PerpsSelectTokenPopup } from '../Perps/components/PerpsDepositPopup/PerpsSelectTokenPopup';
+import { useSelectedToken } from '../Perps/hooks/usePerpsPopupState';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { openapi } from '@/core/request';
+import { PerpsDepositTokenModal } from '../Perps/components/PerpsDepositPopup/PerpsDepositTokenModal';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -45,10 +54,10 @@ export const PerpsMarketDetailScreen = () => {
 
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
+      GetNestedScreenRouteProp<
         'TransactionNavigatorParamList',
         'PerpsMarketDetail'
-      >['route']
+      >
     >();
 
   const marketName = route.params.market;
@@ -69,7 +78,10 @@ export const PerpsMarketDetailScreen = () => {
   //   hasPermission,
   // } = usePerpsPosition();
 
+  const [isShowModal, setIsShowModal] = useState(false);
   const [amountVisible, setAmountVisible] = useState(false);
+  const [selectedToken, setSelectedToken] = useSelectedToken();
+  const [showDepositTokenPopup, setShowDepositTokenPopup] = useState(false);
 
   const market = useMemo(() => {
     return marketDataMap[marketName.toUpperCase()];
@@ -347,7 +359,7 @@ export const PerpsMarketDetailScreen = () => {
               <PerpsDepositCard
                 availableBalance={availableBalance}
                 onDepositPress={() => {
-                  setAmountVisible(true);
+                  setShowDepositTokenPopup(true);
                 }}
               />
             ) : null}
@@ -391,8 +403,12 @@ export const PerpsMarketDetailScreen = () => {
       <PerpsDepositPopup
         account={currentPerpsAccount}
         visible={amountVisible}
+        accountSummary={accountSummary}
         onClose={() => {
           setAmountVisible(false);
+        }}
+        showSelectTokenPopup={() => {
+          setShowDepositTokenPopup(true);
         }}
         onDeposit={async (txs, amount, cacheBridgeHistory) => {
           try {
@@ -400,6 +416,50 @@ export const PerpsMarketDetailScreen = () => {
           } catch (e) {
             console.error(e);
           }
+          setAmountVisible(false);
+        }}
+      />
+      <PerpsSelectTokenPopup
+        account={currentPerpsAccount}
+        visible={showDepositTokenPopup}
+        onClose={() => {
+          setShowDepositTokenPopup(false);
+        }}
+        onSelect={async token => {
+          setSelectedToken(token);
+          if (
+            token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+            isSameAddress(token._tokenId, ARB_USDC_TOKEN_ID)
+          ) {
+            setAmountVisible(true);
+            setShowDepositTokenPopup(false);
+            return;
+          }
+
+          const res = await openapi.getPerpsBridgeIsSupportToken({
+            token_id: token._tokenId,
+            chain_id: token.chain,
+          });
+
+          if (res?.success) {
+            // bridge token with liFi dex
+            setAmountVisible(true);
+            setShowDepositTokenPopup(false);
+            // setClickLoading(false);
+          } else {
+            setIsShowModal(true);
+          }
+        }}
+      />
+      <PerpsDepositTokenModal
+        visible={isShowModal}
+        onCancel={() => {
+          setIsShowModal(false);
+        }}
+        token={selectedToken}
+        onNavigate={() => {
+          setIsShowModal(false);
+          setShowDepositTokenPopup(false);
           setAmountVisible(false);
         }}
       />
@@ -423,26 +483,28 @@ export const PerpsMarketDetailScreen = () => {
           setOpenPositionVisible(false);
         }}
       />
-      <PerpsClosePositionPopup
-        visible={closePositionVisible}
-        coin={coin}
-        providerFee={providerFee}
-        direction={positionDirection}
-        positionSize={positionData?.size.toString() || '0'}
-        pnl={positionData?.pnl || 0}
-        onCancel={() => setClosePositionVisible(false)}
-        onConfirm={() => {
-          setClosePositionVisible(false);
-        }}
-        handleClosePosition={async () => {
-          await handleClosePosition({
-            coin,
-            size: positionData?.size.toString() || '0',
-            direction: positionData?.direction as 'Long' | 'Short',
-            price: (activeAssetCtx?.markPx as unknown as string) || '0',
-          });
-        }}
-      />
+      {positionData ? (
+        <PerpsClosePositionPopup
+          visible={closePositionVisible}
+          coin={coin}
+          providerFee={providerFee}
+          direction={positionData?.direction as 'Long' | 'Short'}
+          positionSize={positionData?.size.toString() || '0'}
+          pnl={positionData?.pnl || 0}
+          onCancel={() => setClosePositionVisible(false)}
+          onConfirm={() => {
+            setClosePositionVisible(false);
+          }}
+          handleClosePosition={async () => {
+            await handleClosePosition({
+              coin,
+              size: positionData?.size.toString() || '0',
+              direction: positionData?.direction as 'Long' | 'Short',
+              price: (activeAssetCtx?.markPx as unknown as string) || '0',
+            });
+          }}
+        />
+      ) : null}
 
       {autoCloseVisible ? (
         <PerpsAutoCloseModal
@@ -454,6 +516,7 @@ export const PerpsMarketDetailScreen = () => {
           direction={(positionData?.direction || 'Long') as 'Long' | 'Short'}
           size={Math.abs(positionData?.size || 0)}
           pxDecimals={currentAssetCtx?.pxDecimals || 2}
+          szDecimals={currentAssetCtx?.szDecimals || 0}
           onClose={() => setAutoCloseVisible(false)}
           handleSetAutoClose={async (params: {
             tpPrice: string;

@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
-import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { registerAppScreen } from '@/perfs/apis';
 import {
@@ -47,6 +47,12 @@ const DevUIDapps = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevUIDapps'),
   name: TESTKITS_PRELOAD_SCREENS.DevUIDapps,
 });
+const DevUIBuiltInPages = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIBuiltInPages').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIBuiltInPages'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIBuiltInPages,
+});
 const DevUIPermissions = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIPermissions').default
 >({
@@ -60,7 +66,7 @@ const DevDataSQLite = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
 });
 
-const Stack = createCustomNativeStackNavigator();
+const Stack = createNativeStackNavigator();
 
 // devOnlyDelayNavi(
 //   ({ naviPush, RootNames }) => {
@@ -84,7 +90,7 @@ export function TestkitsNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        statusBarColor: colors['blue-default'],
+        statusBarBackgroundColor: colors['blue-default'],
       }}>
       <Stack.Screen
         name={RootNames.NewUserGetStarted2024}
@@ -110,6 +116,10 @@ export function TestkitsNavigator() {
         component={DevUIScreenContainerShowCase}
       />
       <Stack.Screen name={RootNames.DevUIDapps} component={DevUIDapps} />
+      <Stack.Screen
+        name={RootNames.DevUIBuiltInPages}
+        component={DevUIBuiltInPages}
+      />
       <Stack.Screen
         name={RootNames.DevUIPermissions}
         component={DevUIPermissions}

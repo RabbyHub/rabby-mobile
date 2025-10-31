@@ -46,18 +46,22 @@ export const GasAccountDepositTipSelect: React.FC<{
           title={
             <View style={styles.depositWithTitle}>
               <View style={styles.depositWithPayRow}>
-                <Text style={styles.btnTitle}>
-                  {t('page.gasAccount.depositSelectPopup.buyWith')}
-                </Text>
                 {Platform.OS === 'android' ? (
-                  <RcIconGooglePayCC />
+                  <>
+                    <Text style={styles.btnTitle}>
+                      {t('page.gasAccount.depositSelectPopup.buyWith')}
+                    </Text>
+                    <RcIconGooglePayCC />
+                  </>
                 ) : (
-                  <RcIconApplePayCC />
+                  <Text style={styles.btnTitle}>
+                    {t('page.gasAccount.depositSelectPopup.buyWithApple')}
+                  </Text>
                 )}
               </View>
               <Text style={styles.btnDesc}>
                 {Platform.OS === 'ios'
-                  ? t('page.gasAccount.depositPopup.applePayFeeDesc')
+                  ? t('page.gasAccount.depositPopup.applePayFeeDesc1')
                   : t('page.gasAccount.depositPopup.googlePayFeeDesc')}
               </Text>
             </View>

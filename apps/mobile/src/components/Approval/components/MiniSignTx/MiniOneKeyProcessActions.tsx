@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Props } from '../FooterBar/ActionsContainer';
 import { MiniProcessActions } from './MiniProcessActions';
 import { apiOneKey } from '@/core/apis';
+import { useSetHardWareWalletSignBleStatus } from './atom';
 
 export const MiniOneKeyProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
@@ -34,16 +35,18 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
         if (!isConnected) {
           onClickConnect(
             () => {
-              props.onSubmit();
               setIsSubmitting(false);
+              props.onSubmit();
             },
             () => {
+              setIsSubmitting(false);
               props.onCancel?.();
             },
           );
           return;
         }
         props.onSubmit();
+        setIsSubmitting(false);
       })
       .finally(() => {
         setIsSubmitting(false);

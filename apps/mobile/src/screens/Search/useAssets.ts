@@ -23,7 +23,7 @@ import {
 } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import _, { debounce } from 'lodash';
-import { PortocolItemEntity } from '@/databases/entities/portocolItem';
+import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { atom, useAtom, useAtomValue } from 'jotai';
@@ -229,7 +229,7 @@ export const useAssets = ({
         return;
       }
       setLoading(true);
-      const cachedTokens = await TokenItemEntity.batchMultAddressTokens(
+      const cachedTokens = await TokenItemEntity.batchMultiAddressTokens(
         addresses,
         options?.core,
         options?.maxLength,
@@ -300,7 +300,7 @@ export const useAssets = ({
       if (!addresses.length) {
         return;
       }
-      const cachedPortcols = await PortocolItemEntity.batchMultAddressPortocols(
+      const cachedPortcols = await ProtocolItemEntity.batchMultAddressPortocols(
         addresses,
         options?.maxLength,
       );

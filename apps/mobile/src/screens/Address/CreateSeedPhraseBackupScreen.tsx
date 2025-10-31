@@ -10,7 +10,7 @@ import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
 import { apiMnemonic } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +25,7 @@ export const CreateSeedPhraseBackupScreen = () => {
   const copyAddressRef = React.useRef<CopyAddressIconType>(null);
 
   const handleConfirm = useMemoizedFn(() => {
-    navigate(RootNames.StackAddress, {
+    navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.CreateMnemonicVerify,
     });
   });

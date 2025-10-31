@@ -219,7 +219,7 @@ export const DexQuoteItem = (
       t,
     ]);
 
-  const gasFeeTooHight = useMemo(() => {
+  const gasFeeTooHigh = useMemo(() => {
     return (
       new BigNumber(preExecResult?.gasUsed || 0).gte(GAS_USE_AMOUNT_LIMIT) &&
       chain === CHAINS_ENUM.ETH
@@ -232,7 +232,7 @@ export const DexQuoteItem = (
     (
       key:
         | 'inSufficient'
-        | 'gasFeeTooHight'
+        | 'gasFeeTooHigh'
         | 'approve'
         | 'wrapToken'
         | 'verified',
@@ -243,7 +243,7 @@ export const DexQuoteItem = (
         case 'inSufficient':
           tips = t('page.swap.insufficient-balance');
           break;
-        case 'gasFeeTooHight':
+        case 'gasFeeTooHigh':
           tips = t('page.swap.gas-fee-too-high');
           break;
         case 'approve':
@@ -267,8 +267,8 @@ export const DexQuoteItem = (
   );
 
   const handleClick = useCallback(() => {
-    if (gasFeeTooHight) {
-      handleTips('gasFeeTooHight');
+    if (gasFeeTooHigh) {
+      handleTips('gasFeeTooHigh');
       return;
     }
 
@@ -299,7 +299,7 @@ export const DexQuoteItem = (
 
     openSwapQuote(false);
   }, [
-    gasFeeTooHight,
+    gasFeeTooHigh,
     inSufficient,
     disabled,
     setActiveProvider,
@@ -345,15 +345,15 @@ export const DexQuoteItem = (
 
   return (
     <TouchableOpacity
-      activeOpacity={inSufficient || gasFeeTooHight ? 1 : 0.2}
+      activeOpacity={inSufficient || gasFeeTooHigh ? 1 : 0.2}
       style={[
         styles.dexContainer,
         {
           position: 'relative',
-          backgroundColor: !(disabled || inSufficient || gasFeeTooHight)
+          backgroundColor: !(disabled || inSufficient || gasFeeTooHigh)
             ? colors2024['neutral-bg-1']
             : colors2024['neutral-bg-1'],
-          borderColor: !(disabled || inSufficient || gasFeeTooHight)
+          borderColor: !(disabled || inSufficient || gasFeeTooHigh)
             ? colors2024['neutral-line']
             : colors2024['neutral-line'],
           borderWidth: 1,
@@ -434,7 +434,7 @@ export const DexQuoteItem = (
               alignItems: 'center',
               paddingLeft: 4,
             },
-            gasFeeTooHight && {
+            gasFeeTooHigh && {
               backgroundColor: colors2024['red-light'],
             },
           ]}>
@@ -443,7 +443,7 @@ export const DexQuoteItem = (
               <Text
                 style={[
                   styles.gasUsd,
-                  gasFeeTooHight && { color: colors2024['red-default'] },
+                  gasFeeTooHigh && { color: colors2024['red-default'] },
                 ]}>
                 Gas: {preExecResult?.gasUsd}
               </Text>

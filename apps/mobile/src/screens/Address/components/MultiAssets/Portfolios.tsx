@@ -34,7 +34,7 @@ import {
   getAllDefiCount,
   getTotalFoldToken,
 } from '@/screens/Home/utils/converAssets';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
@@ -60,6 +60,7 @@ import { StackActions } from '@react-navigation/native';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { CombineDefiItem } from '@/screens/Home/hooks/store';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
@@ -83,6 +84,7 @@ export const Portfolios = () => {
   });
   const focusedTab = useFocusedTab();
   const hasBeenFocusedRef = useRef(false);
+  const { currency } = useCurrency();
 
   const isFocused = useMemo(() => {
     const currentFocused = focusedTab === 'portfolios';
@@ -210,7 +212,11 @@ export const Portfolios = () => {
         data: [
           {
             type: 'toggle_token_fold',
-            data: getTotalFoldToken(tokens.filter(i => i._isFold)),
+            data: getTotalFoldToken(
+              tokens.filter(i => i._isFold),
+              currency.usd_rate,
+              currency.symbol,
+            ),
           },
           ...(foldHideList ? [] : foldTokenList),
         ],
@@ -262,6 +268,8 @@ export const Portfolios = () => {
               portfolios.filter(
                 i => i._isFold,
               ) as unknown as DisplayedProject[],
+              currency.usd_rate,
+              currency.symbol,
             ),
           },
           ...(foldDefi ? [] : defiLists.foldDefiList),
@@ -291,15 +299,21 @@ export const Portfolios = () => {
       .map(item => item.data)
       .flat();
   }, [
-    foldDefi,
+    tokenLists.foldAndIncludeBalanceTokenList,
+    tokenLists.foldAndExcludeBalanceTokenList,
+    tokenLists.unFoldList,
+    tokenLists.scamTokens,
+    tokens,
+    currency.usd_rate,
+    currency.symbol,
     foldHideList,
     foldScam,
     isLoading,
-    portfolios,
     t,
-    tokens,
-    tokenLists,
-    defiLists,
+    defiLists.unFoldDefiList,
+    defiLists.foldDefiList,
+    portfolios,
+    foldDefi,
   ]);
 
   const handleOpenTokenDetail = React.useCallback(
@@ -307,7 +321,7 @@ export const Portfolios = () => {
       if (isTabsSwiping.value) {
         return;
       }
-      navigate(RootNames.TokenDetail, {
+      navigateDeprecated(RootNames.TokenDetail, {
         token: token,
         unHold: token._unHold,
         needUseCacheToken: true,
@@ -325,7 +339,7 @@ export const Portfolios = () => {
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      navigate(RootNames.DeFiDetail, {
+      navigateDeprecated(RootNames.DeFiDetail, {
         data,
         portfolioList: itemList,
         cache: true,
@@ -623,8 +637,6 @@ export const Portfolios = () => {
   }, [top10Addresses.length]);
 
   useEffect(() => {
-    let checkIsExpireAndUpdateId: NodeJS.Timeout | null = null;
-
     const cacheTop10AssetsId = setTimeout(() => {
       if (!isFocused) {
         return;
@@ -633,23 +645,18 @@ export const Portfolios = () => {
         return;
       }
       inited.current = true;
-      checkIsExpireAndUpdateId && clearTimeout(checkIsExpireAndUpdateId);
       getCacheTop10Assets({
         disableNFT: true,
         realTimeAddresses: top10Addresses,
-      }).then(() => {
-        checkIsExpireAndUpdateId = setTimeout(() => {
-          checkIsExpireAndUpdate(false, {
-            disableNFT: true,
-            realTimeAddresses: top10Addresses,
-            ignoreLoading: !top10Balance,
-          });
-        }, 500);
+      });
+      checkIsExpireAndUpdate(false, {
+        disableNFT: true,
+        realTimeAddresses: top10Addresses,
+        ignoreLoading: !top10Balance,
       });
     }, 50);
     return () => {
       cacheTop10AssetsId && clearTimeout(cacheTop10AssetsId);
-      checkIsExpireAndUpdateId && clearTimeout(checkIsExpireAndUpdateId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, !top10Balance, top10Addresses.length]);

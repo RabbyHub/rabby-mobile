@@ -1,10 +1,14 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { Dimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import { CurvePoint, formChartData } from '@/hooks/useCurve';
+import {
+  CurvePoint,
+  formatSmallCurrencyValue,
+  formChartData,
+} from '@/hooks/useCurve';
 import {
   useAnimatedProps,
   useAnimatedStyle,
@@ -14,6 +18,7 @@ import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { useCurrency } from '@/hooks/useCurrency';
 const ScreenWidth = Dimensions.get('screen').width;
 
 function Chart({
@@ -49,8 +54,7 @@ function Chart({
         <LineChart.Provider data={data.list}>
           {isInitialized ? (
             <ChartHeader
-              netWorth={data.netWorth}
-              change={data.change}
+              rawNetWorth={data.rawNetWorth}
               changePercent={data.changePercent}
               isLoss={data.isLoss}
               data={data.list}
@@ -91,24 +95,39 @@ function Chart({
 export const HomeTopChart = memo(Chart);
 
 interface IHeaderProps {
-  netWorth: string;
-  change: string;
+  rawNetWorth: number;
   changePercent: string;
   isLoss: boolean;
   loading: boolean;
   data: CurvePoint[];
 }
 export const ChartHeader = ({
-  netWorth,
-  change,
+  rawNetWorth,
   changePercent,
   isLoss,
   loading,
-  data,
+  data: _data,
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const [isInitialized, setIsInitialized] = useState(false);
+  const { currency, formatCurrentCurrency } = useCurrency();
+
+  const netWorth = useMemo(() => {
+    return formatSmallCurrencyValue(rawNetWorth, { currency });
+  }, [rawNetWorth, currency]);
+
+  const data = useMemo(() => {
+    return (
+      _data?.map(item => {
+        return {
+          ...item,
+          netWorth: formatSmallCurrencyValue(item.value, { currency }),
+          change: formatCurrentCurrency(item.rawChange),
+        };
+      }) || []
+    );
+  }, [_data, currency, formatCurrentCurrency]);
 
   useEffect(() => {
     // 延迟初始化动画计算
@@ -141,7 +160,7 @@ export const ChartHeader = ({
       return changePercent;
     }
     return `${formatLoss ? '-' : '+'}${formatChangePercent}`;
-  }, [data, currentIndex.value, change, changePercent, isLoss, isInitialized]);
+  }, [data, currentIndex.value, changePercent, isLoss, isInitialized]);
 
   const dateTime = useDerivedValue(() => {
     // 如果还没初始化，返回默认值

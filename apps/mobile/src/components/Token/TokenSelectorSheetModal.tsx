@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useState,
   useRef,
+  useImperativeHandle,
 } from 'react';
 import {
   View,
@@ -29,13 +30,13 @@ import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import { useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles2024 } from '@/utils/styles';
+import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
-  DisplayedTokenWithOwner,
   getTokenSymbol,
-  TokenItemFromAbstractPortfolioToken,
+  type DisplayedTokenWithOwner,
+  type TokenItemFromAbstractPortfolioToken,
 } from '@/utils/token';
 import { formatAmount, formatPrice } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
@@ -63,6 +64,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import {
   CompositeScreenProps,
+  useFocusEffect,
   useIsFocused,
   useRoute,
 } from '@react-navigation/native';
@@ -89,7 +91,10 @@ import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/Scam
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { Favorite } from '@/components2024/Favorite';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { getLatestNavigationName, navigate } from '@/utils/navigation';
+import {
+  getLatestNavigationName,
+  navigateDeprecated,
+} from '@/utils/navigation';
 import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
 import { useAtom } from 'jotai';
 import {
@@ -98,6 +103,10 @@ import {
   useSharedValue,
 } from 'react-native-reanimated';
 import { PanGestureHandler } from 'react-native-gesture-handler';
+import { useRefState } from '@/hooks/common/useRefState';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/ExchangeLogos';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -154,6 +163,7 @@ export type TokenItemForRender = {
 export interface TokenSelectorProps<
   T extends TokenSelectType = TokenSelectType,
 > {
+  // visibleRef: SharedValue<boolean>;
   visible: boolean;
   list: TokenItemMaybeWithOwner[];
   foldTokensList?: TokenItemMaybeWithOwner[];
@@ -202,9 +212,67 @@ const screenHeight = Dimensions.get('window').height;
 const modalHeight = screenHeight - 120;
 const snapPoints = [modalHeight];
 
-type TokenSelectorInst = {};
+export function useTokenSelectorModalVisible(options?: {
+  onVisibleChanged?: (visible: boolean) => void;
+}) {
+  const {
+    state: visible,
+    stateRef: visibleRef,
+    setRefState: setVisible,
+  } = useRefState(false);
+
+  const { onVisibleChanged } = options || {};
+  const onVisibleChangedRef = useRef(onVisibleChanged);
+  useEffect(() => {
+    onVisibleChangedRef.current = onVisibleChanged;
+  }, [onVisibleChanged]);
+
+  const tokenSelectorModalRef = useRef<TokenSelectorSheetModalInst>(null);
+  const setTokenSelectorVisible = useCallback(
+    (
+      visible: boolean,
+      options?: {
+        delayShowModal?: number;
+        delaySetState?: number;
+        noTriggerRerender?: boolean;
+      },
+    ) => {
+      onVisibleChangedRef.current?.(visible);
+
+      const {
+        delayShowModal = 0,
+        delaySetState = 100,
+        noTriggerRerender = false,
+      } = options || {};
+      if (delayShowModal) {
+        setTimeout(() => {
+          tokenSelectorModalRef.current?.toggleShow(visible);
+        }, delayShowModal);
+      } else {
+        tokenSelectorModalRef.current?.toggleShow(visible);
+      }
+
+      // setVisible(visible, !noTriggerRerender);
+      const delayMs = Math.max(delaySetState, 100);
+      setTimeout(() => {
+        setVisible(visible, !noTriggerRerender);
+      }, delayMs);
+    },
+    [onVisibleChangedRef, setVisible],
+  );
+
+  return {
+    visible,
+    visibleRef,
+    setTokenSelectorVisible,
+    tokenSelectorModalRef,
+  };
+}
+export type TokenSelectorSheetModalInst = {
+  toggleShow: (nextShown: SheetModalShowType) => void;
+};
 export const TokenSelectorSheetModal = React.forwardRef<
-  TokenSelectorInst,
+  TokenSelectorSheetModalInst,
   RNViewProps & TokenSelectorProps
 >(
   (
@@ -236,16 +304,23 @@ export const TokenSelectorSheetModal = React.forwardRef<
       onFavoriteFilterChange,
       disableSort = false,
     },
-    _ref,
+    ref,
   ) => {
-    const { sheetModalRef: tokenSelectorModal, toggleShowSheetModal } =
+    const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
       useSheetModal();
     const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
+    const { list: cexList } = useCexSupportList();
 
-    // 记录组件最初渲染的页面，用于判断是否还在原页面
+    useImperativeHandle(ref, () => {
+      return {
+        toggleShow: nextShown => {
+          toggleShowSheetModal(nextShown);
+        },
+      };
+    });
+
     const initialRouteRef = useRef<string | undefined>();
-    React.useEffect(() => {
-      // 组件挂载时记录当前页面
+    useEffect(() => {
       if (!initialRouteRef.current && visible) {
         initialRouteRef.current = getLatestNavigationName();
       }
@@ -260,13 +335,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const isSend = type === 'send';
 
     useEffect(() => {
-      toggleShowSheetModal(visible ? true : false);
       if (!visible) {
         setIsInputActive(false);
         setFold(true);
         setIsScamFold(true);
+        setQuery('');
       }
-    }, [visible, toggleShowSheetModal]);
+    }, [visible]);
 
     const handleShowExcludeTips = useMemoizedFn(() => {
       const modalId = createGlobalBottomSheetModal2024({
@@ -327,7 +402,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     ) {
       toggleShowSheetModal('destroy');
     }
-    // 监听当前路由变化
+
     const currentRoute = getLatestNavigationName();
     const isInInitialRoute = useMemo(() => {
       if (!visible || !initialRouteRef.current) {
@@ -337,7 +412,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
     }, [currentRoute, visible]);
 
     useEffect(() => {
-      // 如果不是从返回按钮进入的，则关闭弹窗
       if (!isFromBack && visible) {
         toggleShowSheetModal('destroy');
         setIsFromBack(false);
@@ -375,12 +449,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const handleInputBlur = () => {
       setIsInputActive(false);
     };
-
-    useEffect(() => {
-      if (!visible) {
-        setQuery('');
-      }
-    }, [visible]);
 
     const displayList = useMemo(() => {
       if (isBridgeTo || isSend) {
@@ -593,6 +661,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
           $originMaybeToken.isExcludeBalance &&
           isFromModalType &&
           (token._netWorth || 0) > 0;
+        const formatToken = token.$origin as TokenRowDataType;
+        const cexLogos = formatToken?.cex_ids
+          ? formatToken?.cex_ids
+              .map(id => cexList.find(item => item.id === id)?.logo_url || '')
+              .filter(i => !!i) || []
+          : formatToken?.identity?.cex_list?.map(item => item.logo_url) || [];
 
         if (token.id === SCAM_TOKEN_HAEDER_ID) {
           return (
@@ -704,7 +778,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         toggleShowSheetModal('destroy');
                       }, 100);
 
-                      navigate(
+                      navigateDeprecated(
                         needToTokenMarketInfo
                           ? RootNames.TokenMarketInfo
                           : RootNames.TokenDetail,
@@ -760,95 +834,144 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   // isSwapTo && { paddingRight: 0, paddingVertical: 0 },
                   (disabled || lightDisable) && styles.tokenItemDisabled,
                 ]}>
-                <View style={styles.tokenLeft}>
+                <View style={[styles.tokenLeft, styles.tokenLeftLoaded]}>
                   <AssetAvatar
                     logo={token?._logo}
                     size={40}
                     chain={token?._chain}
                     chainSize={18}
-                    innerChainStyle={styles.chainLogo}
+                    innerChainStyle={styles.avatarLogo}
+                    style={styles.tokenAvatarCol}
                   />
-                  <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
-                    <View style={styles.tokenNameBox}>
-                      <Text
-                        style={styles.tokenName}
-                        ellipsizeMode="tail"
-                        numberOfLines={1}>
-                        {ellipsisOverflowedText(token?._symbol, 15)}
-                      </Text>
-                      {isManualFold && <TextBadge type="folded" />}
-                    </View>
-                    {showOwnerAccount ? (
-                      !ownerAccount ? null : (
-                        <AccountInfoInTokenRow
-                          containerStyle={{ marginTop: 2 }}
-                          ownerAccount={ownerAccount}
-                        />
-                      )
-                    ) : (
-                      <Text
-                        style={[styles.tokenPrice, { marginTop: 4 }]}
-                        numberOfLines={1}>
-                        {token._price}
-                      </Text>
-                    )}
-                    {isBridgeTo && (
-                      <View
-                        style={[
-                          styles.tokenInfoColRight,
-                          styles.tardeLevel,
-                          {
-                            backgroundColor:
-                              token.trade_volume_level === 'low'
-                                ? colors2024['orange-light-4']
-                                : colors2024['green-light-4'],
-                          },
-                        ]}>
+                </View>
+                <View style={styles.tokenCenter}>
+                  <View
+                    style={[
+                      styles.tokenCenterFloor,
+                      styles.utilMl,
+                      styles.tokenCenterFloor1,
+                    ]}>
+                    <View
+                      style={[
+                        styles.tokenInfoCol,
+                        styles.tokenInfoColSecondaryGrow,
+                      ]}>
+                      <View style={styles.tokenNameBox}>
                         <Text
                           style={[
-                            styles.tardeLevelText,
+                            styles.tokenName,
+                            !needToTokenMarketInfo && styles.tokenNameFullWidth,
+                          ]}
+                          ellipsizeMode="tail"
+                          numberOfLines={1}>
+                          {token?._symbol}
+                        </Text>
+                        {isManualFold && <TextBadge type="folded" />}
+                        {needToTokenMarketInfo && (
+                          <View style={styles.exchangeLogosContainer}>
+                            <ExchangeLogos logos={cexLogos} />
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                    <View
+                      style={[
+                        styles.tokenInfoCol,
+                        styles.tokenInfoColPrimaryShrink,
+                        styles.utilMl,
+                        styles.tokenInfoColRight,
+                      ]}>
+                      <Text style={[styles.tokenHeaderNetworth]}>
+                        {isExcludeBalanceShowTips ? (
+                          <TouchableOpacity
+                            hitSlop={hitSlop}
+                            onPress={handleShowExcludeTips}>
+                            <RcTipCC
+                              style={styles.tips}
+                              color={colors2024['neutral-info']}
+                            />
+                          </TouchableOpacity>
+                        ) : (
+                          token._netWorthStr
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+                  <View
+                    style={[
+                      styles.tokenCenterFloor,
+                      styles.utilMl,
+                      styles.tokenCenterFloor2,
+                    ]}>
+                    <View
+                      style={[
+                        styles.tokenInfoCol,
+                        styles.tokenInfoColPrimaryShrink,
+                      ]}>
+                      {showOwnerAccount ? (
+                        !ownerAccount ? null : (
+                          <AccountInfoInTokenRow
+                            containerStyle={{ marginTop: 2 }}
+                            ownerAccount={ownerAccount}
+                          />
+                        )
+                      ) : (
+                        <Text
+                          style={[styles.tokenPrice, { marginTop: 4 }]}
+                          numberOfLines={1}>
+                          {token._price}
+                        </Text>
+                      )}
+                      {isBridgeTo && (
+                        <View
+                          style={[
+                            styles.tokenInfoColRight,
+                            styles.tardeLevel,
                             {
-                              color:
+                              backgroundColor:
                                 token.trade_volume_level === 'low'
-                                  ? colors2024['orange-default']
-                                  : colors2024['green-default'],
+                                  ? colors2024['orange-light-4']
+                                  : colors2024['green-light-4'],
                             },
                           ]}>
-                          {token.trade_volume_level === 'low'
-                            ? t('component.TokenSelector.bridgeTo.low')
-                            : t('component.TokenSelector.bridgeTo.high')}
-                        </Text>
-                      </View>
-                    )}
+                          <Text
+                            style={[
+                              styles.tardeLevelText,
+                              {
+                                color:
+                                  token.trade_volume_level === 'low'
+                                    ? colors2024['orange-default']
+                                    : colors2024['green-default'],
+                              },
+                            ]}>
+                            {token.trade_volume_level === 'low'
+                              ? t('component.TokenSelector.bridgeTo.low')
+                              : t('component.TokenSelector.bridgeTo.high')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View
+                      style={[
+                        styles.tokenInfoCol,
+                        styles.tokenInfoColSecondaryGrow,
+                        styles.utilMl,
+                        styles.tokenInfoColRight,
+                      ]}>
+                      <Text
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        style={[
+                          styles.tokenHeaderAmount,
+                          isExcludeBalanceShowTips && styles.textSecondary,
+                        ]}>
+                        {token._amount} {token._symbol}
+                      </Text>
+                    </View>
                   </View>
                 </View>
                 <View style={styles.tokenRight}>
-                  <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
-                    <Text style={[styles.tokenHeaderNetworth]}>
-                      {isExcludeBalanceShowTips ? (
-                        <TouchableOpacity
-                          hitSlop={hitSlop}
-                          onPress={handleShowExcludeTips}>
-                          <RcTipCC
-                            style={styles.tips}
-                            color={colors2024['neutral-info']}
-                          />
-                        </TouchableOpacity>
-                      ) : (
-                        token._netWorthStr
-                      )}
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                      style={[
-                        styles.tokenHeaderAmount,
-                        { marginTop: 4 },
-                        isExcludeBalanceShowTips && styles.textSecondary,
-                      ]}>
-                      {token._amount} {token._symbol}
-                    </Text>
-                  </View>
                   <Favorite
                     favorite={isPined}
                     style={styles.favorite}
@@ -876,33 +999,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         query,
         needToTokenMarketInfo,
         type,
-        styles.tokenItem,
-        styles.tokenItemDisabled,
-        styles.tokenLeft,
-        styles.chainLogo,
-        styles.tokenInfoCol,
-        styles.tokenNameBox,
-        styles.tokenName,
-        styles.tokenPrice,
-        styles.tokenInfoColRight,
-        styles.tardeLevel,
-        styles.tardeLevelText,
-        styles.tokenRight,
-        styles.tokenHeaderNetworth,
-        styles.tips,
-        styles.tokenHeaderAmount,
-        styles.textSecondary,
-        styles.favorite,
-        styles.scamHeader,
-        styles.tokenRowWrap,
-        styles.tokenRowTokenWrap,
-        styles.tokenRowTokenInner,
-        styles.tokenRowTokenInnerSmallToken,
-        styles.actionText,
-        styles.arrow,
-        styles.tokenRowUsdValueWrap,
-        styles.tokenRowUsdValue,
-        styles.rightSlot,
+        styles,
         isBridgeTo,
         colors2024,
         t,
@@ -914,6 +1011,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         disabledTips,
         removePinedToken,
         pinToken,
+        cexList,
       ],
     );
 
@@ -945,7 +1043,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 trade_volume_level: tmpX?.trade_volume_level,
                 $origin: x as
                   | TokenItemForRender
-                  | (TokenItemFromAbstractPortfolioToken & { group?: string }),
+                  | (TokenItemFromAbstractPortfolioToken & {
+                      group?: string;
+                    }),
               };
             }),
           })),
@@ -954,6 +1054,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           },
         ];
       }
+
       return [
         {
           data: tokens,
@@ -989,7 +1090,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
         hideChainFilter,
         showFavoriteFilter,
       ]);
-    // 用于防止重复触发的状态
+
+    // Used to prevent repeated triggering
     const hasTriggered = useSharedValue(false);
 
     const onGestureEvent = useAnimatedGestureHandler({
@@ -1000,7 +1102,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         if (!onFavoriteFilterChange || hasTriggered.value) {
           return;
         }
-        // 设置阈值，超过阈值就触发
+        // Set threshold, trigger if exceeded
         const threshold = 50;
         if (Math.abs(event.translationX) > Math.abs(event.translationY)) {
           if (event.translationX > threshold) {
@@ -1014,16 +1116,24 @@ export const TokenSelectorSheetModal = React.forwardRef<
       },
     });
 
+    const { onHardwareBackHandler } = useHandleBackPressClosable(
+      useCallback(() => {
+        onCancel();
+        return !visible;
+      }, [onCancel, visible]),
+    );
+
+    useFocusEffect(onHardwareBackHandler);
+
     return (
       <AppBottomSheetModal
-        ref={tokenSelectorModal}
+        ref={tokenSelectorModalRef}
         snapPoints={snapPoints}
         enableContentPanningGesture
+        // enableDismissOnClose={false}
         enableDismissOnClose
         onChange={idx => {
-          if (idx < 0) {
-            onCancel();
-          }
+          if (idx < 0) onCancel();
         }}
         {...{
           containerStyle:
@@ -1220,6 +1330,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
               }
               extraData={isLoading}
               initialNumToRender={20}
+              maxToRenderPerBatch={20}
+              onEndReachedThreshold={0.3}
               renderItem={renderItemRenderComponent}
             />
           </PanGestureHandler>
@@ -1288,25 +1400,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     container: {
       flex: 1,
     },
-    headerBox: {
-      // paddingHorizontal: 16,
-      // height: 48,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
-      // backgroundColor: isLight
-      //   ? colors2024['neutral-bg-0']
-      //   : colors2024['neutral-bg-1'],
-      marginHorizontal: 24,
-      marginBottom: 16,
-    },
-    headerBoxText: {
-      fontSize: 17,
-      fontWeight: '400',
-      fontFamily: 'SF Pro Rounded',
-      color: colors2024['neutral-secondary'],
+
+    avatarLogo: {
+      borderWidth: 1.5,
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
     },
     tardeLevel: {
       borderRadius: 900,
@@ -1392,11 +1491,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // borderRadius: 24,
       // paddingHorizontal: 16,
     },
-    noTopBorder: {
-      borderTopWidth: 0,
-      borderTopLeftRadius: 0,
-      borderTopRightRadius: 0,
-    },
     tokenItem: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -1429,21 +1523,61 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tokenLeft: {
       flexDirection: 'row',
       alignItems: 'center',
+      overflow: 'hidden',
+      flexShrink: 0,
+    },
+    tokenLeftLoaded: {
+      flexWrap: 'nowrap',
+    },
+    tokenCenter: {
+      flexShrink: 1,
+      width: '100%',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    tokenCenterFloor: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    tokenCenterFloor1: {
+      // ...makeDebugBorder('green'),
+    },
+    tokenCenterFloor2: {
+      // ...makeDebugBorder('yellow'),
+      marginTop: 4,
     },
     tokenRight: {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
+      flexShrink: 0,
+    },
+    tokenAvatarCol: {
+      flexShrink: 0,
+    },
+    tokenInfoColSecondaryGrow: {
+      width: '100%',
+      flexShrink: 1,
+      // ...makeDebugBorder('red')
+    },
+    tokenInfoColPrimaryShrink: {
+      flexShrink: 0,
+      // ...makeDebugBorder('yellow')
     },
     tokenInfoCol: {
       flexDirection: 'column',
       alignItems: 'flex-start',
       justifyContent: 'center',
+    },
+    utilMl: {
       marginLeft: 12,
     },
     tokenNameBox: {
       flexDirection: 'row',
       alignItems: 'center',
+      overflow: 'hidden',
+      // ...makeDebugBorder(),
     },
     tokenName: {
       marginRight: 8,
@@ -1452,14 +1586,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
       fontWeight: '700',
       lineHeight: 20,
-      maxWidth: 150,
       fontFamily: 'SF Pro Rounded',
     },
-    chainLogo: {
-      borderWidth: 1.5,
-      borderColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
+    tokenNameFullWidth: {
+      width: '100%',
+    },
+    exchangeLogosContainer: {
+      maxWidth: '100%',
+      flexShrink: 1,
     },
     tokenPrice: {
       color: colors2024['neutral-secondary'],
@@ -1481,7 +1615,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       lineHeight: 18,
       textAlign: 'right',
-      maxWidth: 100,
+      width: '100%',
+      maxWidth: '100%',
       fontFamily: 'SF Pro Rounded',
     },
     textSecondary: {
@@ -1526,16 +1661,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     netSwitchTabsItem: {
       height: 32,
       borderRadius: 16,
-    },
-    favoriteBadge: {
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      paddingHorizontal: 12,
-      paddingVertical: 3,
-      backgroundColor: colors2024['orange-light-1'],
-      borderBottomLeftRadius: 12,
-      borderTopRightRadius: 16,
     },
     absoluteContainer: {
       position: 'absolute',

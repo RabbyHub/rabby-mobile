@@ -77,7 +77,6 @@ export const MiniProcessActions: React.FC<Props> = ({
   ]);
 
   const signingTypedData = useGetMiniSigningTypedData();
-
   useDebounce(
     () => {
       if (signingTypedData && directSubmit && miniSignType === 'typedData') {

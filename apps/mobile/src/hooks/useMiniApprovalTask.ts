@@ -1,11 +1,10 @@
 import { FailedCode, sendTransaction } from '@/utils/sendTransaction';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import _, { uniqueId } from 'lodash';
 import React, { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useResetMiniApprovalDirectSignState } from './useMiniApprovalDirectSign';
 import {
   getRetryTxRecommendNonce,
   getRetryTxType,
@@ -34,6 +33,21 @@ const taskErrorAtom = atom<{
   content: string;
   description: string;
 } | null>(null);
+
+const miniSignTxInfoAtom = atom(get => {
+  const index = _.findLastIndex(
+    get(taskListAtom),
+    item => item.status !== 'idle',
+  );
+  return {
+    status: get(taskStatusAtom),
+    totalTxLength: get(taskListAtom).length,
+    error: get(taskErrorAtom),
+    currentActiveIndex: index <= -1 ? 0 : index,
+  };
+});
+
+export const useGetMiniSignInfo = () => useAtomValue(miniSignTxInfoAtom);
 
 let globalCurrentTaskId = uniqueId();
 export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
@@ -263,14 +277,11 @@ export const useClearMiniApprovalTask = () => {
   const [, setList] = useAtom(taskListAtom);
   const [, setStatus] = useAtom(taskStatusAtom);
   const [, setError] = useAtom(taskErrorAtom);
-  const resetMiniApprovalDirectSignState =
-    useResetMiniApprovalDirectSignState();
 
   const clear = useMemoizedFn(() => {
     setList([]);
     setStatus('idle');
     setError(null);
-    resetMiniApprovalDirectSignState();
     globalCurrentTaskId = uniqueId();
   });
 

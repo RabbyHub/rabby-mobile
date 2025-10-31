@@ -174,8 +174,8 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
   }, [clearTimer]);
 
   const clearLocalPendingTxData = () => {
-    // setLocalPendingTxData(null);
-    setPendingTxData(null);
+    setLocalPendingTxData(null);
+    // setPendingTxData(null);
   };
 
   const clearBridgeHistoryRedDot = useCallback(() => {

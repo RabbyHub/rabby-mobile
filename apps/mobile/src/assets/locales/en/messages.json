@@ -91,6 +91,7 @@
         "name": "Name",
         "RevokeToken": "Revoke Token",
         "InteractionResults": "Interaction Results",
+        "Simulation Results": "Simulation Results",
         "totalApprovedAmount": "Current Approved Amount",
         "PurchaseFrom": "Purchased from",
         "WillReceive": "Will Receive: ≈ {{token}}"
@@ -135,6 +136,7 @@
       "safeAddressNotSupportChain": "Current safe address is not supported on {{0}} chain",
       "noGasRequired": "No gas required",
       "gasSelectorTitle": "Gas",
+      "gasSetting": "Gas Setting",
       "failToFetchGasCost": "Fail to estimate gas",
       "manuallySetGasLimitAlert": "You have manually set the Gas limit to",
       "gasNotRequireForSafeTransaction": "Gas fee is not required for Safe transactions",
@@ -616,6 +618,7 @@
       "To": "To",
       "From": "From",
       "Amount": "Amount:",
+      "newAmount": "Amount",
       "addressNotInContract": "Not on address list. <1></1><2>Add to contacts</2>",
       "AddToContactsModal": {
         "addedAsContacts": "Added as contacts",
@@ -853,6 +856,7 @@
       "title": "Swap",
       "pendingTip": "Tx submitted. If the tx is pending for long hours, you can try to clear pending in settings.",
       "Pending": "Pending",
+      "approve": "Approve",
       "completedTip": "Transaction on chain, decoding data to generate record",
       "Completed": "Completed",
       "slippage_tolerance": "Slippage tolerance:",
@@ -914,12 +918,14 @@
     "bridge": {
       "showMore": {
         "title": "Show More",
-        "source": "Bridge Source"
+        "source": "Bridge Source",
+        "signWarning": "I understand the alert and want to continue"
       },
       "est-payment": "Est. Payment:",
       "est-receiving": "Est. Receiving:",
       "est-difference": "Est. Difference:",
       "loss-tips": "You're losing {{usd}}. Try a different amount.",
+      "gasFeeTooHight": "Gas fee is higher than normal. Confirm only if you wish to proceed.",
       "price-impact": "Price Impact",
       "From": "From",
       "bridgeFrom": "Bridge From",
@@ -980,7 +986,7 @@
         "websites": "Websites",
         "copyTrading": "Copy Trading",
         "search": "Search Token",
-        "watchlist": "Watchlist",
+        "watchlist": "Token Watchlist",
         "perps": "Perps",
         "perpsMarketList": "More Perps"
       }
@@ -1133,6 +1139,7 @@
         "buyWithFiatDesc": "Simple crypto purchase"
       },
       "importAddress": {
+        "__skip_translation": ["safe"],
         "importTitle": "Import Wallet",
         "seedPhrase": "Import Seed Phrase",
         "privateKey": "Import Private Key",
@@ -1177,6 +1184,17 @@
         "title3": "Safety",
         "description4": "Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.",
         "GotIt": "I Got It."
+      },
+      "whatIsPrivateKey": {
+        "title": "What's a private key",
+        "description1": "A private key is a string of letters and numbers used to access and control your wallet. You can use it to recover your wallet on any device.",
+        "title2": "Backup",
+        "description2": "If you lose your private key, you won’t be able to restore your wallet.",
+        "title3": "Never Share It",
+        "description3": "Never share your private key—anyone with access to it can control your funds.",
+        "title4": "Safety",
+        "description4": "Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.",
+        "ButtonGotIt": "I Got It."
       },
       "addContacts": {
         "cameraTitle": "Please scan the QR code with your camera"
@@ -1341,6 +1359,18 @@
           "hdPathTypeNoChain": {
             "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
             "ledgerLive": "Ledger Live: Ledger official HD path. You can only manage 10 addresses with Ledger Live path.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+          }
+        },
+        "trezor": {
+          "hdPathType": {
+            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+          },
+          "hdPathTypeNoChain": {
+            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
             "legacy": "Legacy: HD path used by MEW / Mycrypto."
           }
         },
@@ -1589,13 +1619,17 @@
       "gnosisChainDesc": "This address was found deployed on {{count}} chains"
     },
     "rabbyPoints": {
+      "__skip_translation": ["titleWithStar", "ClaimComing"],
       "title": "Rabby Points",
+      "titleWithStar": "Rabby Points ✨",
       "out-of-x-current-total-points": "Out of {{total}} Total Distributed Points",
       "earn-points": "Earn Points",
       "top-100": "Top 100",
       "claimItem": {
         "claim": "Claim"
       },
+      "alreadyClaimedXPoints": "Already claimed: {{point}} ",
+      "xPoints": "{{point}} Points",
       "claimModal": {
         "title": "Claim Initial Points",
         "snapshotTime": "Snapshot time: {{time}}",
@@ -1630,7 +1664,8 @@
       },
       "code-set-successfully": "Referral code set successfully",
       "initialPointsClaimEnded": "Initial Points claim ended",
-      "firstRoundEnded": "🎉 The first round of Rabby Points has ended"
+      "firstRoundEnded": "🎉 The first round of Rabby Points has ended",
+      "ClaimComing": "Claim coming!"
     },
     "customTestnet": {
       "desc": "Rabby cannot verify the security of custom networks. Please add trusted networks only.",
@@ -1679,7 +1714,8 @@
         "txSigned": "Signed. Creating transaction",
         "txSending": "Sending signing request",
         "txSendings": "Sending signing request({{current}}/{{total}})"
-      }
+      },
+      "fixedModeText": "Fixed Mode: Always use your custom gas setting"
     },
     "gasAccount": {
       "deposit": "Deposit",
@@ -1715,7 +1751,9 @@
         "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
         "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals",
         "googlePayFeeDesc": "Includes a Google Pay fee. No withdrawals",
-        "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals"
+        "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals",
+        "applePayFeeDesc1": "Includes an App Store fee. No withdrawls.",
+        "pay": "Pay"
       },
       "paymentAddressPopup": {
         "title": "Select Payment Wallet",
@@ -1760,7 +1798,8 @@
         "titleAndroid": "Buy with Google Pay",
         "balance": "Current GasAccount Balance: ",
         "depositFailed": "Deposit Failed",
-        "depositCanceled": "Deposit Canceled"
+        "depositCanceled": "Deposit Canceled",
+        "titleApple": "Buy in App Store"
       },
       "depositSelectPopup": {
         "title": "Deposit to GasAccount",
@@ -1768,7 +1807,8 @@
         "depositToken": "Deposit with Token",
         "depositTokenDesc": "No extra fee, instant withdrawals",
         "buyWith": "Buy with",
-        "buyWithDesc": "30% fee, no withdrawals"
+        "buyWithDesc": "30% fee, no withdrawals",
+        "buyWithApple": "Buy in App Store"
       },
       "switchAccount": "Switch GasAccount",
       "gasAccountList": {
@@ -1847,6 +1887,7 @@
         "tokenSecurity": "Token Security"
       },
       "interval": {
+        "__skip_translation": true,
         "1M": "1M",
         "5M": "5M",
         "15M": "15M",
@@ -1861,13 +1902,68 @@
         "totalSupply": "Total Supply",
         "volume24h": "24h Volume",
         "txns24h": "24h Txns",
-        "holders": "Holders"
+        "holders": "Holders",
+        "pools": "Pools",
+        "empty": "No Data",
+        "activity": "Activity",
+        "summary": "Summary Data",
+        "details": "Details",
+        "holderSections": {
+          "top10HoldersRatio": "Top 10 Holders Ratio",
+          "top100HoldersRatio": "Top 100 Holders Ratio",
+          "tableHeader": {
+            "address": "Address",
+            "ratio": "Ratio",
+            "position": "Position"
+          }
+        },
+        "activitySections": {
+          "tableHeader": {
+            "all": "All",
+            "min": "min",
+            "hour": "Hour",
+            "buy": "Buy",
+            "sell": "Sell",
+            "volume": "Volume",
+            "transactionCount": "Transaction Count",
+            "address": "Address",
+            "addresses": "Addresses",
+            "type": "Type",
+            "time": "Time",
+            "price": "Price",
+            "qnt": "Qnt",
+            "value": "Value"
+          }
+        },
+        "pool": {
+          "tab": {
+            "top5": "Top 5 pools",
+            "liquidityDetail": "Liquidity Detail"
+          },
+          "actions": {
+            "add": "Add",
+            "remove": "Remove",
+            "all": "All"
+          },
+          "dex": "Dex",
+          "pair": "Pair",
+          "amount": "Amount",
+          "value": "Value",
+          "headers": {
+            "time": "Time",
+            "amount": "Amount",
+            "value": "Value"
+          }
+        }
       }
     },
     "defiDetail": {
       "viewSiteInApp": "View in Dapp",
       "viewSiteInWebsite": "View in Website",
-      "appChain": "On {{chain}} Account"
+      "appChain": "On {{chain}} Account",
+      "dappActions": {
+        "queueDescription": "Current withdrawal​ will enter a waiting queue. Once processed, it can be ​withdrawn​ to your wallet."
+      }
     },
     "approvalsAddressList": {
       "title": "Approvals"
@@ -2071,7 +2167,23 @@
         "favorite": "Favorite",
         "contentModeMobile": "Request Mobile Site",
         "contentModeDesktop": "Request DeskTop Site",
-        "disconnect": "Disconnect"
+        "disconnect": "Disconnect",
+        "clearCache": "Clear cache"
+      },
+      "HyperliquidInvitePopup": {
+        "title": "Hyperliquid Referral Program",
+        "asterTitle": "Aster Referral Program",
+        "desc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Hyperliquid fees.",
+        "asterDesc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Aster fees.",
+        "btn": "Join Now"
+      },
+      "WebviewError": {
+        "failedToLoad": "Failed to load the page",
+        "error": "Error:",
+        "alertText": "Try<1/><2>Open in browser</2><3/>to check if it is a website issue"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache cleared"
       }
     },
     "browserManage": {
@@ -2128,7 +2240,6 @@
       }
     },
     "perps": {
-      "__skip_translation": true,
       "title": "Perps",
       "PerpsCard": {
         "title": "Trade Perps",
@@ -2139,7 +2250,7 @@
         "withdrawBtn": "Withdraw",
         "depositBtn": "Deposit"
       },
-      "selectAccountTitle": "Select an address to log in",
+      "selectAccountTitle": "Select a Wallet to Log In",
       "PerpsGuidePopup": {
         "step1Title": "Master Perpetual Futures",
         "step1Desc": "With perpetual futures, you're not just trading assets. You're trading what you think will happen next",
@@ -2264,11 +2375,14 @@
       "leverageRangeMinError": "The minimum leverage is {{min}}x",
       "leverageRangeMaxError": "The maximum leverage is {{max}}x",
       "PerpsAccountSelectorPopup": {
-        "lastUsed": "Last Used"
+        "lastUsed": "Last Used",
+        "activatedAddress": "Activated",
+        "hyperliquidBalance": "Perps Balance",
+        "notActivatedAddress": "Not Activated",
+        "noPosition": "No Position"
       }
     },
     "perpsDetail": {
-      "__skip_translation": true,
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
@@ -2295,7 +2409,7 @@
       },
       "PerpsInfo": {
         "title": "Info",
-        "24Vol": "24h Volumn",
+        "24Vol": "24h Volume",
         "openInterest": "Open Interest",
         "funding": "Funding",
         "openInterestTips": "The total outstanding position of all users on this contract.",
@@ -2311,8 +2425,8 @@
         "pnl": "PNL",
         "closeBtn": "Close {{direction}}",
         "fee": "Fee:",
-        "rabbyFeeTips": "Rabby fee: 0.05%",
-        "providerFeeTips": "Provider fee: {{fee}}"
+        "rabbyFeeTips": "Rabby fee: 0.04%",
+        "providerFeeTips": "Hyperliquid fee: {{fee}}"
       },
       "PerpsOpenPositionPopup": {
         "margin": "Margin",
@@ -2341,8 +2455,8 @@
         "tpPrice": "Take-Profit Price",
         "fee": "Fee",
         "btn": "Open {{direction}} Position",
-        "rabbyFeeTips": "Rabby fee: 0.05%",
-        "providerFeeTips": "Provider fee: {{fee}}",
+        "rabbyFeeTips": "Rabby fee: 0%",
+        "providerFeeTips": "Hyperliquid fee: {{fee}}",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
         "margin": "Margin(Isolated)"
@@ -2364,6 +2478,9 @@
     },
     "perpsHistory": {
       "title": "History"
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Build-In Page"
     }
   },
   "component": {
@@ -2396,7 +2513,23 @@
         "title": "Deposit USDC / USDT",
         "desc": "Pay Gas Fees on All Chains",
         "login": "Log in GasAccount",
-        "loginAndClaim": "Log in and Claim {{amount}}"
+        "depositTitle": "Deposit USDC/USDT Pay Gas Fees",
+        "depositDesc": "on All Chains when you’re out of gas",
+        "loginAndClaim": "Log in and Claim {{amount}}",
+        "loginTips1": "Pay gas fees for",
+        "loginTips2": "any address on any chain",
+        "loginTips3": "when you're out of gas",
+        "learnAbout": "Learn more about GasAccount"
+      },
+      "about": {
+        "title1": "What is GasAccount",
+        "desc1": "GasAccount is a new way to pay gas fees. Instead of using native tokens on each chain, you can use one account to cover gas for all your addresses on all chains. Simple, optional, and never out of gas.",
+        "title2": "How to use Gas Account",
+        "desc2": "Add funds to your GasAccount and use it for any transaction. When signing, choose to pay gas with native tokens or GasAccount, switch anytime.",
+        "title3": "Does GasAccount have extra fees",
+        "desc3": "Rabby Wallet charges no extra fees. You only pay the gas for your transaction and a small amount of gas for sending that gas from GasAccount to your address.",
+        "title4": "Is GasAccount safe",
+        "desc4": "GasAccount requires no contract approvals or permissions. You deposit to Rabby’s GasAccount address, and Rabby sends gas to your address when needed. Fully secure by design."
       },
       "loginConfirmModal": {
         "title": "Select Wallet to Login",
@@ -2587,6 +2720,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "I Got it"
+    },
+    "Prediction": {
+      "side": "Side",
+      "amount": "Amount",
+      "price": "Price",
+      "usdValue": "USD Value"
     }
   },
   "native": {

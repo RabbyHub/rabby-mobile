@@ -5,8 +5,9 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { RcIconHeaderSettings } from '@/assets/icons/home';
-import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript/src/types';
-import { useNavigationState } from '@react-navigation/native';
+import { NativeStackHeaderRightProps } from '@react-navigation/native-stack';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React from 'react';
@@ -18,16 +19,17 @@ const hitSlop = {
   right: 10,
 };
 
-export const ImportMoreAddressScreenButton: React.FC<HeaderButtonProps> = ({
-  tintColor,
-}) => {
-  const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.ImportMoreAddress)?.params,
-  ) as {
-    type: KEYRING_TYPE;
-    brand: string;
-    keyringId?: number;
-  };
+export const ImportMoreAddressScreenButton: React.FC<
+  NativeStackHeaderRightProps
+> = ({ tintColor }) => {
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'AddressNavigatorParamList', 'ImportMoreAddress'>
+    >();
+  const state = route.params;
+  if (!state) {
+    throw new Error('[ImportMoreAddressScreenButton] state is required');
+  }
 
   const settingModalName = React.useMemo(() => {
     switch (state.type) {

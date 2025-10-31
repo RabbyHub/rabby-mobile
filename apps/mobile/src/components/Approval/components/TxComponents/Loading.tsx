@@ -2,7 +2,7 @@ import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { getActionsStyle } from '../Actions';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { Card } from '../Actions/components/Card';
 import { Divide } from '../Actions/components/Divide';
 import { SubTable } from '../Actions/components/SubTable';
@@ -82,9 +82,9 @@ const RowLoading: React.FC<{
 };
 
 const Loading = () => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getActionsStyle(colors), [colors]);
-
+  const { styles } = useTheme2024({
+    getStyle: getActionsStyle,
+  });
   return (
     <>
       <View style={styles.actionWrapper}>

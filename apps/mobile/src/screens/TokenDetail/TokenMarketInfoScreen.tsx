@@ -54,7 +54,7 @@ import {
 } from './hook';
 import { RightMore } from './components/RightMore';
 import HeaderBalanceCard from './components/HeaderBalanceCard';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 import CustomLabel from './components/CustomLabel';
@@ -65,6 +65,9 @@ import TradingViewCandleChart, {
 import TimePanel from './components/TimePanel';
 import MarketInfo from './components/MarketInfo';
 import { atomByMMKV } from '@/core/storage/mmkv';
+import ActivityAndHolders from './components/Market/ActivityAndHolders';
+import { scrollEndCallBack } from './components/Market/hooks';
+import { every10sEvent, useEvery10sEvent } from './event';
 
 const currentIntervalAtom = atomByMMKV<CandlePeriod>(
   '@tokenDetail.currentInterval',
@@ -509,7 +512,7 @@ export const TokenMarketInfoScreen = () => {
   const { t } = useTranslation();
 
   const handleOpenTokenDetail = useCallback(() => {
-    navigate(RootNames.TokenDetail, {
+    navigateDeprecated(RootNames.TokenDetail, {
       ...route.params,
     });
   }, [route.params]);
@@ -646,6 +649,43 @@ export const TokenMarketInfoScreen = () => {
     },
     [setCurrentInterval, token._tokenId, token.chain],
   );
+  const handleScroll = useCallback(event => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    if (contentOffset.y + layoutMeasurement.height >= contentSize.height - 20) {
+      scrollEndCallBack?.cb?.();
+    }
+  }, []);
+
+  const handleRefreshChart = useCallback(() => {
+    if (!tokenWithAmount?.support_market_data) {
+      return;
+    }
+    fetchTokenPriceData(
+      {
+        chain: token.chain,
+        tokenId: token._tokenId,
+      },
+      currentInterval,
+      Math.floor(Date.now() / 1000),
+    ).then(res => {
+      chartWebViewRef.current?.updateCandleData(res.candles[0]);
+    });
+  }, [
+    currentInterval,
+    token._tokenId,
+    token.chain,
+    tokenWithAmount?.support_market_data,
+  ]);
+
+  useEvery10sEvent();
+
+  useEffect(() => {
+    return every10sEvent.on(() => {
+      refreshTokenEntity();
+      refreshAsync();
+      handleRefreshChart();
+    });
+  }, [handleRefresh, handleRefreshChart, refreshAsync, refreshTokenEntity]);
 
   if (isSingleAddress && !finalAccount) {
     return null;
@@ -679,6 +719,8 @@ export const TokenMarketInfoScreen = () => {
         pagerProps={{ scrollEnabled: !isAndroid }}>
         <Tabs.Tab label={renderMarketDataLabel} name="marketData">
           <ScrollView
+            onScroll={handleScroll}
+            scrollEventThrottle={200}
             refreshControl={
               <RefreshControl refreshing={false} onRefresh={handleRefresh} />
             }
@@ -699,7 +741,7 @@ export const TokenMarketInfoScreen = () => {
                 position: 'relative',
                 marginTop: 12,
               }}>
-              {tokenWithAmountLoading ? (
+              {tokenWithAmountLoading && !tokenWithAmount ? (
                 <View style={styles.skeleton} />
               ) : tokenWithAmount?.support_market_data ? (
                 <>
@@ -711,7 +753,7 @@ export const TokenMarketInfoScreen = () => {
                     }
                     totalSupply={supplyInfo?.total_supply?.toString() ?? ''}
                     volume24h={
-                      marketInfo?.market?.volume_amount_24h?.toString() ?? ''
+                      marketInfo?.market?.volume_usd_value_24h?.toString() ?? ''
                     }
                     txns24h={marketInfo?.market?.txns_24h?.toString() ?? ''}
                     holders={holdInfo?.holder_count?.toString() ?? ''}
@@ -752,7 +794,12 @@ export const TokenMarketInfoScreen = () => {
                 />
               )}
             </View>
-            <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
+            <ActivityAndHolders
+              hideActivity={!tokenWithAmount?.support_market_data}
+              tokenId={token._tokenId}
+              chainId={token.chain}
+              symbol={token.symbol}
+            />
             <View style={{ height: isAndroid ? 200 + safeOffBottom : 156 }} />
           </ScrollView>
         </Tabs.Tab>
@@ -763,6 +810,7 @@ export const TokenMarketInfoScreen = () => {
             }
             style={styles.innerContainer}>
             {riskInfo.content}
+            <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
             <IssuerAndListSite
               tokenEntity={tokenEntity}
               entityLoading={entityLoading}

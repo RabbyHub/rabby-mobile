@@ -1,7 +1,14 @@
+/**
+ * @type {import('@react-native-community/cli-types').Config}
+ */
 module.exports = {
   assets: ['./assets/fonts', './assets/custom'],
-  iosAssets: [],
-  androidAssets: [],
+  iosAssets: [
+    // './assets/android/builtin-pages'
+  ],
+  androidAssets: [
+    // './assets/ios/builtin-pages'
+  ],
   dependencies: {
     'react-native-ios-context-menu': {
       platforms: {

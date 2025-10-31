@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApproval } from '@/hooks/useApproval';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import {
@@ -12,7 +12,7 @@ import {
   MODAL_NAMES,
   RemoveParams,
 } from './types';
-import { MODAL_VIEWS, SNAP_POINTS } from './utils';
+import { MODAL_CONFIGS } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
@@ -106,9 +106,8 @@ export const GlobalBottomSheetModal2024 = () => {
           APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
         ].includes(approvalComponent);
 
-      setModals(prev => [
-        ...prev,
-        {
+      setModals(prev => {
+        const newModal = {
           id,
           params: {
             ...params,
@@ -125,10 +124,13 @@ export const GlobalBottomSheetModal2024 = () => {
             : approvalComponent && params.name === MODAL_NAMES.APPROVAL
             ? APPROVAL_SNAP_POINTS[approvalComponent] ??
               APPROVAL_SNAP_POINTS.Unknown
-            : SNAP_POINTS[params.name],
+            : MODAL_CONFIGS[params.name].snapPoints,
           ref: React.createRef<AppBottomSheetModal>(),
-        },
-      ]);
+        };
+        modalRefs.current[id] = newModal.ref;
+
+        return [...prev, newModal];
+      });
       if (params.preventScreenshotOnModalOpen) {
         markAtSensitiveModal(id);
       }
@@ -216,16 +218,31 @@ export const GlobalBottomSheetModal2024 = () => {
   return (
     <View>
       {modals.map(modal => {
-        const ModalView = MODAL_VIEWS[modal.params.name];
-        const bottomSheetModalProps = modal.params.bottomSheetModalProps;
+        const ModalView = MODAL_CONFIGS[modal.params.name].Component;
+
+        const propsPreset =
+          MODAL_CONFIGS[modal.params.name].globalModalPropsPreset;
+        const finalBottomSheetModalProps: typeof propsPreset & object = {
+          ...propsPreset,
+          ...modal.params.bottomSheetModalProps,
+        };
+
         const rootViewType =
-          bottomSheetModalProps?.rootViewType || 'BottomSheetView';
+          finalBottomSheetModalProps?.rootViewType || 'BottomSheetView';
         const RootView =
           rootViewType === 'BottomSheetScrollView'
             ? BottomSheetScrollView
             : rootViewType === 'View'
             ? View
             : BottomSheetView;
+
+        override_nested_object_props: {
+          finalBottomSheetModalProps.rootViewStyle = StyleSheet.flatten([
+            propsPreset?.rootViewStyle || {},
+            finalBottomSheetModalProps?.enableDynamicSizing ? {} : { flex: 1 },
+            finalBottomSheetModalProps?.rootViewStyle || {},
+          ]);
+        }
 
         const modalViewProps = {
           ...modal.params,
@@ -240,10 +257,10 @@ export const GlobalBottomSheetModal2024 = () => {
             enableDismissOnClose
             keyboardBlurBehavior="restore"
             snapPoints={modal.snapPoints}
-            {...bottomSheetModalProps}
+            {...finalBottomSheetModalProps}
             onDismiss={() => {
               handleDismiss(modal.id);
-              bottomSheetModalProps?.onDismiss?.();
+              finalBottomSheetModalProps?.onDismiss?.();
             }}
             key={modal.id}
             ref={modal.ref}
@@ -252,9 +269,7 @@ export const GlobalBottomSheetModal2024 = () => {
               <RootView
                 // eslint-disable-next-line react-native/no-inline-styles
                 // TODO: need check
-                style={
-                  bottomSheetModalProps?.enableDynamicSizing ? {} : { flex: 1 }
-                }
+                style={finalBottomSheetModalProps.rootViewStyle}
                 {...panResponder.panHandlers}>
                 <ModalView {...modalViewProps} />
               </RootView>

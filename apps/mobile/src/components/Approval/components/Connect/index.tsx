@@ -49,8 +49,9 @@ import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { AccountSelector } from '@/components2024/AccountSelector';
 import { Account } from '@/core/services/preference';
 import { ConnectSkeleton } from './ConnectSkeleton';
-import { useMyAccounts } from '@/hooks/account';
+import { useAccounts, useMyAccounts } from '@/hooks/account';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { getDappAccount } from '@/hooks/useDapps';
 
 const RuleDesc = [
   {
@@ -123,7 +124,7 @@ export const Connect = ({
  */
 // forScene = '@ActiveDappWebViewModal'
 ConnectProps) => {
-  const { accounts } = useMyAccounts();
+  const { accounts } = useAccounts();
   const [selectedAccount, setSelectedAccount] = useState<
     Account | undefined | null
   >(accounts?.[0] || preferenceService.getFallbackAccount());
@@ -350,10 +351,7 @@ ConnectProps) => {
 
   const init = async () => {
     const site = await dappService.getDapp(origin);
-    const _selectedAccount =
-      site?.currentAccount ||
-      accounts?.[0] ||
-      preferenceService.getFallbackAccount();
+    const _selectedAccount = getDappAccount({ dappInfo: site, accounts });
     setSelectedAccount(_selectedAccount);
     let level: 'very_low' | 'low' | 'medium' | 'high' = 'low';
     let collectList: { name: string; logo_url: string }[] = [];

@@ -1,6 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { Skeleton } from '@rneui/themed';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+} from 'react-native';
+import { Skeleton, Slider } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
@@ -13,9 +19,17 @@ import { GasLevelType } from '@/components/ReserveGasPopup';
 import { SendReserveGasPopup } from './components/SendReserveGasPopup';
 import { checkIfTokenBalanceEnough } from '@/utils/token';
 import { noop } from 'lodash';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { TokenAmountInput } from '@/components/Token/TokenAmountInput';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { IS_ANDROID } from '@/core/native/utils';
+import { BubbleWithText } from '@/screens/Swap/components/Slider';
+import { tokenAmountBn } from '../Swap/utils';
+import BigNumber from 'bignumber.js';
 
 export function BalanceSection({
   style,
@@ -23,7 +37,7 @@ export function BalanceSection({
 }: RNViewProps & {
   disableItemCheck?: ITokenCheck;
 }) {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -32,6 +46,7 @@ export function BalanceSection({
   const {
     screenState,
 
+    slider,
     formValues,
     computed: { chainItem, currentToken, currentTokenBalance },
 
@@ -42,6 +57,8 @@ export function BalanceSection({
       handleFieldChange,
       handleClickMaxButton,
       checkCexSupport,
+      onChangeSlider,
+      setSlider,
     },
   } = useSendTokenInternalContext();
 
@@ -65,50 +82,104 @@ export function BalanceSection({
     }
   }, [putScreenState, currentToken, screenState.gasList]);
 
-  if (!chainItem || !currentToken) return null;
+  const showBubble = useSharedValue(false);
+
+  const { width } = useWindowDimensions();
+
+  const onSlidingStart = useCallback(() => {
+    showBubble.value = true;
+  }, [showBubble]);
+
+  const sliderStyle = useAnimatedStyle(
+    () => ({
+      opacity: showBubble.value ? 1 : 0,
+      display: showBubble.value ? 'flex' : 'none',
+      position: 'absolute',
+      top: IS_ANDROID ? -72 : -60,
+      left: 0,
+      height: 70,
+      width,
+      transform: [
+        {
+          translateX: 0 - width / 2 + (IS_ANDROID ? 7 : 6),
+        },
+      ],
+    }),
+    [width],
+  );
+
+  const onAfterChangeSlider = useCallback(
+    (v: number) => {
+      onChangeSlider?.(v, true);
+      showBubble.value = false;
+    },
+    [onChangeSlider, showBubble],
+  );
+
+  const handleAmountChange = useCallback(
+    (value: string) => {
+      try {
+        handleFieldChange?.('amount', value);
+        const sliderValue = value
+          ? Number(
+              new BigNumber(value || 0)
+                .div(currentToken?.amount ? tokenAmountBn(currentToken) : 1)
+                .times(100)
+                .toFixed(0),
+            )
+          : 0;
+        setSlider(sliderValue < 0 ? 0 : sliderValue > 100 ? 100 : sliderValue);
+      } catch (e) {
+        console.error('handleAmountChange error', e);
+      }
+    },
+    [handleFieldChange, currentToken, setSlider],
+  );
+
+  const sliderDisable = useMemo(() => {
+    return screenState.isLoading || screenState.isEstimatingGas;
+  }, [screenState]);
+
+  if (!chainItem || !currentToken) {
+    return null;
+  }
 
   return (
     <View style={style}>
       <View style={styles.titleSection}>
-        <Text style={styles.sectionTitle}>{t('page.sendToken.Amount')}</Text>
+        <Text style={styles.sectionTitle}>{t('page.sendToken.newAmount')}</Text>
 
-        <View style={styles.titleRight}>
-          <View style={styles.issueBlock}>
-            {screenState.showGasReserved && !screenState.selectedGasLevel && (
-              <Skeleton style={styles.issueBlockSkeleton} />
-            )}
-          </View>
+        <View style={styles.sliderContainer}>
+          <Slider
+            key={`${currentToken?.id}-${currentToken?.chain}`}
+            allowTouchTrack={!sliderDisable}
+            disabled={sliderDisable}
+            style={styles.slider}
+            value={slider}
+            onSlidingStart={onSlidingStart}
+            onValueChange={onChangeSlider}
+            onSlidingComplete={onAfterChangeSlider}
+            minimumValue={0}
+            maximumValue={100}
+            minimumTrackTintColor={colors2024['brand-default']}
+            maximumTrackTintColor={colors2024['neutral-line']}
+            step={1}
+            thumbStyle={styles.thumbStyle}
+            thumbProps={{
+              children: (
+                <View>
+                  <View style={[styles.outerThumb, { position: 'relative' }]}>
+                    <View style={styles.innerThumb} />
 
-          <TouchableOpacity
-            style={styles.balanceArea}
-            onPress={screenState.isLoading ? noop : handleClickMaxButton}>
-            {screenState.isLoading ? (
-              <Skeleton style={{ width: 100, height: 16 }} />
-            ) : (
-              <>
-                {!screenState.showGasReserved &&
-                (screenState.balanceError || screenState.balanceWarn) ? (
-                  <Text style={[styles.issueText]}>
-                    {screenState.balanceError ? (
-                      <>
-                        {screenState.balanceError}: {currentTokenBalance}
-                      </>
-                    ) : screenState.balanceWarn ? (
-                      <>{screenState.balanceWarn}</>
-                    ) : null}
-                  </Text>
-                ) : (
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    style={styles.balanceText}>
-                    {t('page.sendToken.sectionBalance.title')}:{' '}
-                    {currentTokenBalance}
-                  </Text>
-                )}
-              </>
-            )}
-          </TouchableOpacity>
+                    <Animated.View style={sliderStyle}>
+                      <BubbleWithText slide={slider || 0} />
+                    </Animated.View>
+                  </View>
+                </View>
+              ),
+            }}
+          />
+          <Text style={styles.sliderValue}>{slider}%</Text>
         </View>
       </View>
 
@@ -118,21 +189,22 @@ export function BalanceSection({
             ref={amountInputRef}
             defaultAccount={currentAccount}
             value={formValues.amount}
-            onChange={value => {
-              handleFieldChange?.('amount', value);
-            }}
+            onChange={handleAmountChange}
             disableItemCheck={disableItemCheck}
             chainId={chainItem.serverId}
             token={currentToken}
             isEstimatingGas={screenState.isEstimatingGas}
             handleClickMaxButton={handleClickMaxButton}
             onTokenChange={checkCexSupport}
+            inSufficient={new BigNumber(formValues.amount).gt(
+              new BigNumber(currentTokenBalance),
+            )}
             inlinePrize
           />
         )}
       </View>
 
-      <SendReserveGasPopup
+      {/* <SendReserveGasPopup
         selectedItem={screenState.selectedGasLevel?.level as GasLevelType}
         chain={chainItem?.enum}
         limit={Math.max(screenState.estimatedGas, MINIMUM_GAS_LIMIT)}
@@ -143,7 +215,7 @@ export function BalanceSection({
         visible={screenState.reserveGasOpen}
         rawHexBalance={currentToken.raw_amount_hex_str}
         onClose={gasLevel => handleGasLevelChanged(gasLevel)}
-      />
+      /> */}
     </View>
   );
 }
@@ -157,6 +229,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
     },
 
+    slider: {
+      maxWidth: 126,
+      flex: 1,
+      height: 4,
+    },
     balanceText: {
       color: colors2024['neutral-foot'],
       fontSize: 14,
@@ -181,7 +258,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 
     titleRight: {
       flexDirection: 'row',
-      alignItems: 'center',
+      // alignItems: 'center',
     },
 
     issueBlock: {
@@ -262,6 +339,45 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
+    },
+
+    sliderContainer: {
+      flex: 1,
+      marginLeft: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      position: 'relative',
+      gap: 0,
+    },
+    sliderValue: {
+      width: 40,
+      textAlign: 'right',
+      color: colors2024['brand-default'],
+      fontSize: 13,
+      fontWeight: '500',
+      fontFamily: 'SF Pro',
+    },
+    thumbStyle: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 14,
+      height: 14,
+      backgroundColor: 'transparent',
+    },
+    outerThumb: {
+      width: 14,
+      height: 14,
+      borderRadius: 14,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors2024['neutral-bg-1'],
+    },
+    innerThumb: {
+      width: 10,
+      height: 10,
+      borderRadius: 10,
+      backgroundColor: colors2024['brand-default'],
     },
   };
 });

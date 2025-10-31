@@ -131,7 +131,7 @@ export const formatPrice = (
     return formatNumber(price, 0);
   }
   if ((price as number) >= 0.1) {
-    return formatNumber(price);
+    return formatNumber(price, (price as number) > 1 ? 2 : 4);
   }
   if ((price as number) < 0.0001) {
     return formatLittleNumber(new BigNumber(price).toFixed(), 6);

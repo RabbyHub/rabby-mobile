@@ -1,4 +1,3 @@
-import { Text } from '@/components';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
@@ -6,14 +5,14 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { TokenFromAddressItem } from '..';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 interface Props {
@@ -37,7 +36,7 @@ export const TokenArea: React.FC<Props> = ({
         a => isSameAddress(a.address, item.address) && item.type === a.type,
       );
       if (account) {
-        navigate(RootNames.SingleAddressStack, {
+        navigateDeprecated(RootNames.SingleAddressStack, {
           screen: RootNames.SingleAddressHome,
           params: {
             account: account,
@@ -163,6 +162,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   content: {
     // alignItems: 'center',
+    gap: 4,
     justifyContent: 'center',
   },
   accountBox: {
@@ -193,7 +193,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '900',
   },
 
   itemCard: {

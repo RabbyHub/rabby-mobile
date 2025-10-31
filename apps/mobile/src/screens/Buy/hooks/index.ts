@@ -3,11 +3,14 @@ import { RootNames } from '@/constant/layout';
 import { getChainDefaultToken } from '@/constant/swap';
 import { openapi } from '@/core/request';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { TransactionNavigatorParamList } from '@/navigation-type';
+import {
+  GetNestedScreenRouteProp,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
 import { formatSpeicalAmount } from '@/utils/number';
 import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { atom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard } from 'react-native';
@@ -77,14 +80,14 @@ const useTokenInfo = ({
 };
 
 export const useBuy = (isForMultipleAddress?: boolean) => {
-  const navState = useNavigationState(
-    s =>
-      s.routes.find(
-        r =>
-          r.name ===
-          (isForMultipleAddress ? RootNames.MultiBuy : RootNames.Buy),
-      )?.params,
-  ) as TransactionNavigatorParamList['Buy'] | undefined;
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        'MultiBuy' | 'Buy'
+      >
+    >();
+  const navState = route.params || {};
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',

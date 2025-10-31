@@ -105,7 +105,8 @@ export interface Props {
     | 'ble'
     | 'keystone'
     | 'onekey'
-    | 'ledger';
+    | 'ledger'
+    | 'trezor';
   status:
     | 'SENDING'
     | 'WAITING'
@@ -144,7 +145,12 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   retryUpdateType = 'origin',
 }) => {
   const [iconColor, setIconColor] = React.useState('');
-  const [contentColor, setContentColor] = React.useState('');
+  const [contentColor, setContentColor] = React.useState<
+    keyof AppColorsVariants
+  >(
+    // @ts-expect-error
+    '', // FIXME
+  );
   const { t } = useTranslation();
   const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
 
@@ -164,6 +170,8 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return ConnectKeystoneSVG;
       case 'onekey':
         return ConnectOneKeySVG;
+      case 'trezor':
+        return;
       case 'qrcode':
       default:
         return ConnectQRCodeSVG;

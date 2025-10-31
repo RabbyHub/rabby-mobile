@@ -1,7 +1,11 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import { formChartData, CurvePoint } from '@/hooks/useCurve';
+import {
+  formChartData,
+  CurvePoint,
+  formatSmallCurrencyValue,
+} from '@/hooks/useCurve';
 import { memo, useEffect, useMemo, useCallback, useState } from 'react';
 import { Dimensions, ImageBackground, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -21,6 +25,7 @@ import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useTranslation } from 'react-i18next';
 import { useTriggerUpdate } from '../hooks/triggerUpdate';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -125,12 +130,11 @@ function Chart({
       <View style={styles.chartContainer}>
         <LineChart.Provider data={data.list}>
           <ChartHeader
-            netWorth={data.netWorth}
-            change={data.change}
+            rawNetWorth={data.rawNetWorth}
+            rawChange={data.rawChange}
             changePercent={data.changePercent}
             isLoss={data.isLoss}
             data={data.list}
-            loading={loading}
           />
           {isOffline || isNoAssets ? null : !loading ? (
             isInitialized ? (
@@ -166,24 +170,42 @@ function Chart({
 export const MultiChart = memo(Chart);
 
 interface IHeaderProps {
-  netWorth: string;
-  change: string;
+  rawNetWorth: number;
+  rawChange: number;
   changePercent: string;
   isLoss: boolean;
-  loading: boolean;
   data: CurvePoint[];
 }
 export const ChartHeader = ({
-  netWorth,
-  change,
+  rawNetWorth,
+  rawChange,
   changePercent,
   isLoss,
-  loading,
-  data,
+  data: _data,
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const [isInitialized, setIsInitialized] = useState(false);
+  const { currency, formatCurrentCurrency } = useCurrency();
+
+  const netWorth = useMemo(() => {
+    return formatSmallCurrencyValue(rawNetWorth, { currency });
+  }, [rawNetWorth, currency]);
+  const change = useMemo(() => {
+    return formatCurrentCurrency(Math.abs(rawChange));
+  }, [formatCurrentCurrency, rawChange]);
+
+  const data = useMemo(() => {
+    return (
+      _data?.map(item => {
+        return {
+          ...item,
+          netWorth: formatSmallCurrencyValue(item.value, { currency }),
+          change: formatCurrentCurrency(item.rawChange),
+        };
+      }) || []
+    );
+  }, [_data, currency, formatCurrentCurrency]);
 
   useEffect(() => {
     // 延迟初始化动画计算
@@ -246,7 +268,7 @@ export const ChartHeader = ({
     if (!isInitialized) {
       return {
         ...styles.changePercent,
-        display: loading ? 'none' : 'flex',
+        display: 'flex',
         color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
       };
     }
@@ -254,7 +276,7 @@ export const ChartHeader = ({
     if (data?.[currentIndex?.value]) {
       return {
         ...styles.changePercent,
-        display: loading ? 'none' : 'flex',
+        display: 'flex',
         color: data?.[currentIndex?.value]?.isLoss
           ? colors2024['red-default']
           : colors2024['green-default'],
@@ -262,10 +284,10 @@ export const ChartHeader = ({
     }
     return {
       ...styles.changePercent,
-      display: loading ? 'none' : 'flex',
+      display: 'flex',
       color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
     };
-  }, [isLoss, data, currentIndex, colors2024, styles, loading, isInitialized]);
+  }, [isLoss, data, currentIndex, colors2024, styles, isInitialized]);
 
   const netWorthAnimatedProps = useAnimatedProps(() => {
     return {
@@ -285,18 +307,6 @@ export const ChartHeader = ({
     };
   }, [dateTime.value]);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <Skeleton
-          width={181}
-          height={42}
-          style={styles.skeleton}
-          LinearGradientComponent={LoadingLinear}
-        />
-      </View>
-    );
-  }
   return (
     <View style={styles.charHeader}>
       <AnimateableText

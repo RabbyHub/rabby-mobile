@@ -1,13 +1,16 @@
 import React from 'react';
 
-import { AppSwitch, SwitchToggleType } from '@/components';
+import {
+  AppSwitch2024,
+  SwitchToggleType,
+} from '@/components/customized/Switch2024';
 import { useThemeColors } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { useToggleShowAutoLockCountdown } from '@/hooks/appSettings';
 
 export const SwitchShowFloatingAutoLockCountdown = React.forwardRef<
   SwitchToggleType,
-  React.ComponentProps<typeof AppSwitch>
+  React.ComponentProps<typeof AppSwitch2024>
 >((props, ref) => {
   const { showAutoLockCountdown, toggleShowAutoLockCountdown } =
     useToggleShowAutoLockCountdown();
@@ -21,7 +24,7 @@ export const SwitchShowFloatingAutoLockCountdown = React.forwardRef<
   }));
 
   return (
-    <AppSwitch
+    <AppSwitch2024
       {...props}
       circleSize={20}
       value={!!showAutoLockCountdown}

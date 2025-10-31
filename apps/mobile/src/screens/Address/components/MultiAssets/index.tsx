@@ -22,6 +22,7 @@ import { useAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useAtomValue } from 'jotai';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
+import { useMulti24hBalance } from '@/hooks/use24hBalance';
 
 export const MultiAssets = ({
   onUpdateIsDecrease,
@@ -43,15 +44,32 @@ export const MultiAssets = ({
 
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10Addresses.join(','), getTotalBalance]);
+  }, [top10Addresses, getTotalBalance]);
 
-  const { combineData, isLoadingNew: isLoadingCurve } = useMultiCurve(
+  const { combineData: combineCurveData, isLoadingNew: isLoadingCurve } =
+    useMultiCurve(
+      top10Addresses,
+      false,
+      top10Balance.total,
+      top10Balance.totalEvm,
+    );
+
+  const { combineData: combine24hBalanceData } = useMulti24hBalance(
     top10Addresses,
     false,
     top10Balance.total,
     top10Balance.totalEvm,
   );
+  const combineData = useMemo(() => {
+    return {
+      ...combineCurveData,
+      rawNetWorth: combine24hBalanceData.rawNetWorth,
+      rawChange: combine24hBalanceData.rawChange,
+      change: combine24hBalanceData.change,
+      changePercent: combine24hBalanceData.changePercent,
+      isLoss: combine24hBalanceData.isLoss,
+    };
+  }, [combineCurveData, combine24hBalanceData]);
 
   const { isDisConnect } = useGlobalStatus();
 

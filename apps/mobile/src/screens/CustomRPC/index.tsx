@@ -23,8 +23,9 @@ import { EditCustomRPCPopup } from './components/EditCustomRPCPopup';
 import { CustomRPCItem } from './components/CustomRPCItem';
 import Toast from 'react-native-root-toast';
 import { toast } from '@/components/Toast';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { findChain } from '@/utils/chain';
 
 export function CustomRPCScreen(): JSX.Element {
@@ -130,14 +131,11 @@ export function CustomRPCScreen(): JSX.Element {
     },
   );
 
-  const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.CustomRPC)?.params,
-  ) as
-    | {
-        chainId: number;
-        rpcUrl: string;
-      }
-    | undefined;
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'SettingNavigatorParamList', 'CustomRPC'>
+    >();
+  const state = route.params;
 
   useMount(() => {
     if (state) {

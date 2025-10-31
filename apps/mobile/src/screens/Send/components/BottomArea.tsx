@@ -11,17 +11,15 @@ import { ModalAddToContacts } from '@/components/Address/SheetModalAddToContacts
 import { apiBalance } from '@/core/apis';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { Button } from '@/components2024/Button';
-import AuthButton from '@/components2024/AuthButton';
 import { useTranslation } from 'react-i18next';
-import {
-  directSigningAtom,
-  useCanProcessDirectSubmit,
-} from '@/hooks/useMiniApprovalDirectSign';
-import { useAtom } from 'jotai';
+
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import { Account } from '@/core/services/preference';
+import { useSignatureStore } from '@/components2024/MiniSignV2';
 
 const isAndroid = Platform.OS === 'android';
 
-export default function BottomArea() {
+export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
 
@@ -35,6 +33,8 @@ export default function BottomArea() {
       canDirectSign: canShowDirectSign,
       toAddressInContactBook,
     },
+    callbacks: { handleIgnoreGasFeeChange },
+
     fns: { putScreenState, fetchContactAccounts },
   } = useSendTokenInternalContext();
 
@@ -45,9 +45,13 @@ export default function BottomArea() {
 
   const { safeOffBottom } = useSafeSizes();
 
-  const [isDirectSigning] = useAtom(directSigningAtom);
+  const { status, ctx } = useSignatureStore();
 
-  const canDirectSign = useCanProcessDirectSubmit();
+  const isDirectSigning = status === 'signing';
+
+  const canDirectSign = !ctx?.disabledProcess;
+
+  const showRiskTips = !!ctx?.gasFeeTooHigh;
 
   return (
     <View
@@ -56,13 +60,24 @@ export default function BottomArea() {
         isAndroid && { paddingBottom: 20 + safeOffBottom },
       ]}>
       {canShowDirectSign ? (
-        <AuthButton
+        <DirectSignBtn
+          // refresh  risk check
+          key={screenState?.buildTxsCount + ''}
+          showTextOnLoading
+          loadingType="circle"
           authTitle={t('page.whitelist.confirmPassword')}
           title={t('global.confirm')}
-          onFinished={handleSubmit}
+          onFinished={p => {
+            handleIgnoreGasFeeChange(p?.ignoreGasFee || false);
+            handleSubmit();
+          }}
           disabled={!canSubmit || !canDirectSign || isDirectSigning}
+          loading={isSubmitLoading}
           type={'primary'}
           syncUnlockTime
+          account={account}
+          showHardWalletProcess
+          showRiskTips={showRiskTips && canSubmit}
         />
       ) : (
         <Button

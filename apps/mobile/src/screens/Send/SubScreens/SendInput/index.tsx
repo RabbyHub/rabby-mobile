@@ -3,7 +3,7 @@ import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
 import {
   Keyboard,
@@ -18,8 +18,9 @@ import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -60,11 +61,11 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
   const [loading, setLoading] = useState(false);
-  const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SendInput)?.params,
-  ) as {
-    autoScan?: boolean;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'SendInput'>
+    >();
+  const navParams = route.params || {};
   const [ensResult, setEnsResult] = React.useState<null | {
     addr: string;
     name: string;
@@ -142,7 +143,7 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
   }, [scanner]);
   useEffect(() => {
     if (navParams?.autoScan) {
-      navigate(RootNames.Scanner);
+      navigateDeprecated(RootNames.Scanner);
     }
   }, [navParams?.autoScan]);
 
@@ -236,7 +237,7 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
                   <TouchableOpacity
                     style={ctx.wrapperStyle}
                     onPress={() => {
-                      navigate(RootNames.Scanner);
+                      navigateDeprecated(RootNames.Scanner);
                     }}>
                     <ScannerCC
                       style={ctx.iconStyle}

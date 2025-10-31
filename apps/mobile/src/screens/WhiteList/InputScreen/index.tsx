@@ -9,7 +9,7 @@ import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { isValidHexAddress, Hex } from '@metamask/utils';
 import {
   Keyboard,
@@ -24,7 +24,7 @@ import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
-import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import {
   createGlobalBottomSheetModal2024,
   globalBottomSheetModalAddListener2024,
@@ -56,6 +56,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { useAccounts } from '@/hooks/account';
 import { useMemoizedFn } from 'ahooks';
 import { debounce } from 'lodash';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -80,11 +81,14 @@ const WhitelistInputScreen = () => {
   const [error, setError] = useState<INPUT_ERROR>();
   const scanner = useScanner();
   const [loading, setLoading] = useState(false);
-  const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SendInput)?.params,
-  ) as {
-    autoScan?: boolean;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        'WhitelistInput'
+      >
+    >();
+  const navParams = route.params;
   const nav = useNavigation();
   const { isSingleAddress } = useSendRoutes();
 
@@ -250,7 +254,7 @@ const WhitelistInputScreen = () => {
   }, [scanner]);
   useEffect(() => {
     if (navParams?.autoScan) {
-      navigate(RootNames.Scanner);
+      navigateDeprecated(RootNames.Scanner);
     }
   }, [navParams?.autoScan]);
   useEffect(() => {
@@ -344,7 +348,7 @@ const WhitelistInputScreen = () => {
                       />
                       <TouchableOpacity
                         onPress={() => {
-                          navigate(RootNames.Scanner);
+                          navigateDeprecated(RootNames.Scanner);
                         }}>
                         <ScannerCC
                           style={ctx.iconStyle}

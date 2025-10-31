@@ -40,10 +40,12 @@ import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
 import { OfflineChainService } from './offlineChain';
 import { BrowserService } from './browserService';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
+import { TrezorKeyring } from '../keyring-bridge/trezor/trezor-keyring';
 import { MetamaskModeService } from './metamaskModeService';
 import { SyncChainService } from './syncChainService';
 import { PerpsService } from './perpsService';
 import { CurrencyService } from './currencyService';
+import { SAFE_API_KEY } from '@/constant/env';
 
 migrateAppStorage(appStorage);
 
@@ -70,6 +72,8 @@ function try_catch_issue_on_preference({
 
 try_catch_issue_on_preference({ pos: 'before_preference' });
 
+GnosisKeyring.setApiKey(SAFE_API_KEY);
+
 // TODO: add other keyring classes
 const keyringClasses = [
   MockWalletConnectKeyring,
@@ -80,6 +84,7 @@ const keyringClasses = [
   GnosisKeyring,
   SimpleKeyring,
   HDKeyring,
+  TrezorKeyring,
 ] as any;
 
 export const contactService = new ContactBookService({

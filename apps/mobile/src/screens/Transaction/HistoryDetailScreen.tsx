@@ -30,7 +30,7 @@ import { formatIntlTimestamp } from '@/utils/time';
 import { useRoute } from '@react-navigation/native';
 import { getAlianName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
@@ -42,7 +42,7 @@ import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { HistoryBottomBtn } from './components/HistoryBottomBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AssetAvatar } from '@/components';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { ellipsisOverflowedText } from '@/utils/text';
@@ -157,7 +157,7 @@ export const AddressItemInDetail = ({
     );
 
     if (idx > -1) {
-      navigate(RootNames.SingleAddressStack, {
+      navigateDeprecated(RootNames.SingleAddressStack, {
         screen: RootNames.SingleAddressHome,
         params: {
           account: accounts[idx],
@@ -209,10 +209,7 @@ export const AddressItemInDetail = ({
 function HistoryDetailScreen(): JSX.Element {
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
-        'TransactionNavigatorParamList',
-        'HistoryDetail'
-      >['route']
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'HistoryDetail'>
     >();
   const { data, isForMultipleAddress, title } = route.params || {};
 
@@ -278,7 +275,10 @@ function HistoryDetailScreen(): JSX.Element {
         cate === HistoryItemCateType.Approve ||
         cate === HistoryItemCateType.Revoke;
       const commonItem =
-        cate === HistoryItemCateType.Send ? data.sends[0] : data.receives[0];
+        cate === HistoryItemCateType.Send ||
+        cate === HistoryItemCateType.GAS_DEPOSIT
+          ? data.sends[0]
+          : data.receives[0];
 
       const tokenId = isApprove
         ? (data.token_approve?.token_id as string)

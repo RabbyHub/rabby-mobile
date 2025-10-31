@@ -3,12 +3,11 @@ import { IS_IOS } from '@/core/native/utils';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { BrowserNavigatorParamsList } from '@/navigation-type';
-import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import 'react-native-gesture-handler';
 import { BrowserScreen } from '../Browser/BrowserScreen';
 
-const BrowserStack =
-  createCustomNativeStackNavigator<BrowserNavigatorParamsList>();
+const BrowserStack = createNativeStackNavigator<BrowserNavigatorParamsList>();
 
 export function BrowserNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();

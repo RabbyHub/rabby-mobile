@@ -4,7 +4,6 @@ import { atom, useAtom } from 'jotai';
 import _, { uniqueId } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useResetMiniApprovalDirectSignState } from './useMiniApprovalDirectSign';
 import { sendSignTypedData } from '@/utils/sendTypedData';
 
 type TxStatus = 'sended' | 'signed' | 'idle' | 'failed';
@@ -209,14 +208,11 @@ export const useClearMiniTypedDataApprovalTask = () => {
   const [, setList] = useAtom(taskListAtom);
   const [, setStatus] = useAtom(taskStatusAtom);
   const [, setError] = useAtom(taskErrorAtom);
-  const resetMiniApprovalDirectSignState =
-    useResetMiniApprovalDirectSignState();
 
   const clear = useMemoizedFn(() => {
     setList([]);
     setStatus('idle');
     setError(null);
-    resetMiniApprovalDirectSignState();
     globalCurrentTaskId = uniqueId();
   });
 

@@ -11,6 +11,7 @@ export { default as RcIconClose1CC } from './close-1-cc.svg';
 export { default as RcIconTabsCC } from './tabs-cc.svg';
 export { default as RcIconArrowTopLeftCC } from './arrow-top-left-cc.svg';
 export { default as RcIconHomeCC } from './home-cc.svg';
+export { default as RcIconStarCC } from './star-cc.svg';
 
 export const RcIconAddPlusCircle = ({
   backgroundColor,

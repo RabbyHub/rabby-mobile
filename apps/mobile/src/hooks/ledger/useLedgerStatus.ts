@@ -1,6 +1,6 @@
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { apiLedger } from '@/core/apis';
-import { atom, useAtom } from 'jotai';
+import { atom, getDefaultStore, useAtom } from 'jotai';
 import React from 'react';
 import { Device } from 'react-native-ble-plx';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
@@ -77,4 +77,58 @@ export const useLedgerStatus = (
     onClickConnect,
     status,
   };
+};
+
+export const setLedgerStatus = (connected?: boolean) => {
+  getDefaultStore().set(
+    ledgerStatusAtom,
+    connected ? 'CONNECTED' : 'DISCONNECTED',
+  );
+};
+
+export const callConnectLedgerModal = ({
+  deviceId,
+  cb,
+  reject,
+  address,
+  onDismiss,
+}: {
+  deviceId?: string;
+  cb?: () => void;
+  reject?: () => void;
+  address: string;
+  onDismiss?: () => void;
+}) => {
+  let isConnected = false;
+  const id = createGlobalBottomSheetModal2024({
+    name: MODAL_NAMES.CONNECT_LEDGER,
+    deviceId,
+    onSelectDevice: async (d: Device) => {
+      console.log('selected device', d.id);
+      try {
+        await TransportBLE.open(d.id);
+        apiLedger.fixDeviceId(address, d.id);
+        isConnected = true;
+        setLedgerStatus(true);
+        cb?.();
+      } catch (e) {
+        console.log('ledger connect error', e);
+        await TransportBLE.disconnectDevice(d.id);
+        setLedgerStatus(false);
+        reject?.();
+      } finally {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal2024(id);
+        }, 0);
+      }
+    },
+    bottomSheetModalProps: {
+      onDismiss: () => {
+        if (!isConnected) {
+          reject?.();
+        }
+        onDismiss?.();
+      },
+    },
+  });
 };

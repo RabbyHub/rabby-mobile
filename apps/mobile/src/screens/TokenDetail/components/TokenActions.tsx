@@ -120,7 +120,7 @@ const TokenActions = ({
 
           await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
           setIsFromBack(false);
-          navigation.navigate(RootNames.StackTransaction, {
+          navigation.navigateDeprecated(RootNames.StackTransaction, {
             screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
             params: {
               chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
@@ -143,7 +143,7 @@ const TokenActions = ({
 
           await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
           setIsFromBack(false);
-          navigation.navigate(RootNames.StackTransaction, {
+          navigation.navigateDeprecated(RootNames.StackTransaction, {
             screen: isSingleAddress ? RootNames.Bridge : RootNames.MultiBridge,
             params: {
               chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,

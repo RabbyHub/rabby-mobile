@@ -26,7 +26,7 @@ const getStyles = (colors: AppColorsVariants) =>
 const bounceHeight = 5;
 
 export const Dots: React.FC<{
-  color?: string;
+  color?: keyof AppColorsVariants;
   style?: StyleProp<TextStyle>;
 }> = ({ color, style }) => {
   const colors = useThemeColors();
@@ -100,6 +100,7 @@ export const Dots: React.FC<{
             style={[
               styles.dot,
               {
+                // @ts-expect-error
                 color: colors[color],
               },
               style,

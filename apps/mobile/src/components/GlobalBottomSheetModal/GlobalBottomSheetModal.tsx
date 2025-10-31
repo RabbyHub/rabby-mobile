@@ -80,11 +80,11 @@ export const GlobalBottomSheetModal = () => {
           APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
           APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
           APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
+          APPROVAL_MODAL_NAMES.TrezorHardwareWaiting,
         ].includes(approvalComponent);
 
-      setModals(prev => [
-        ...prev,
-        {
+      setModals(prev => {
+        const newModal = {
           id,
           params: {
             ...params,
@@ -103,11 +103,15 @@ export const GlobalBottomSheetModal = () => {
               APPROVAL_SNAP_POINTS.Unknown
             : SNAP_POINTS[params.name],
           ref: React.createRef<AppBottomSheetModal>(),
-        },
-      ]);
-      setTimeout(() => {
-        handlePresent(id);
-      }, 0);
+        };
+        modalRefs.current[id] = newModal.ref;
+
+        setTimeout(() => {
+          handlePresent(id);
+        }, 100);
+
+        return [...prev, newModal];
+      });
     },
     [getApproval, handlePresent],
   );

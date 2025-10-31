@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { useTranslation } from 'react-i18next';
@@ -46,7 +46,7 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
           return;
         }
         onCancel();
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.BackupPrivateKey,
           params: {
             data,
@@ -75,7 +75,7 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
           return;
         }
         onCancel();
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.BackupMnemonic,
           params: {
             data,

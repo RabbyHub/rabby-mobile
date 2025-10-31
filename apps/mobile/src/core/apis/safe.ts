@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 import { GNOSIS_SUPPORT_CHAINS } from '@/constant';
 import { Chain } from '@/constant/chains';
 import { findChain } from '@/utils/chain';
-import Safe from '@rabby-wallet/gnosis-sdk';
+import Safe, { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { t } from 'i18next';
 import { isAddress } from 'web3-utils';
 import buildinProvider, { EthereumProvider } from './buildinProvider';
@@ -19,9 +19,18 @@ import {
 } from '@rabby-wallet/eth-keyring-gnosis';
 import { EVENTS, eventBus } from '@/utils/events';
 import { Account } from '../services/preference';
-import { uniq } from 'lodash';
+import { isEqual, sortBy, uniq, without } from 'lodash';
 import { toChecksumAddress } from '@ethereumjs/util';
 import { hashSafeMessage } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
+import PQueue from 'p-queue';
+import { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
+
+const gnosisPQueue = new PQueue({
+  interval: 1000,
+  intervalCap: 5,
+  carryoverConcurrencyCount: false,
+  concurrency: 2,
+});
 
 export const createSafeService = async ({
   address,
@@ -51,27 +60,29 @@ export const createSafeService = async ({
 };
 
 class ApisSafe {
-  fetchGnosisChainList = (address: string) => {
+  fetchGnosisChainList = (address: string, excludeChains?: string[]) => {
     if (!isAddress(address)) {
       return Promise.reject(new Error(t('background.error.invalidAddress')));
     }
     return Promise.all(
-      GNOSIS_SUPPORT_CHAINS.map(async chainEnum => {
-        const chain = findChain({ enum: chainEnum });
-        try {
-          const safe = await createSafeService({
-            address,
-            networkId: chain!.network,
-          });
-          const owners = await safe.getOwners();
-          if (owners) {
-            return chain;
+      without(GNOSIS_SUPPORT_CHAINS, ...(excludeChains || [])).map(
+        async chainEnum => {
+          const chain = findChain({ enum: chainEnum });
+          try {
+            const safe = await createSafeService({
+              address,
+              networkId: chain!.network,
+            });
+            const owners = await safe.getOwners();
+            if (owners) {
+              return chain;
+            }
+          } catch (e) {
+            console.error(e);
+            return null;
           }
-        } catch (e) {
-          console.error(e);
-          return null;
-        }
-      }),
+        },
+      ),
     ).then(chains => chains.filter((chain): chain is Chain => !!chain));
   };
   importGnosisAddress = async (address: string, networkIds: string[]) => {
@@ -110,15 +121,27 @@ class ApisSafe {
     if (!keyring) {
       return;
     }
+    let isChanged = false;
     Object.entries(keyring.networkIdsMap).forEach(
       async ([address, networks]) => {
-        const chainList = await this.fetchGnosisChainList(address);
-        keyring.setNetworkIds(
+        const chainList = await this.fetchGnosisChainList(
           address,
-          uniq((networks || []).concat(chainList.map(chain => chain.network))),
+          networks.map(id => findChain({ networkId: id })?.enum || ''),
         );
+        const nextNetworks = uniq(
+          (networks || []).concat(chainList.map(chain => chain.network)),
+        );
+        const isSame = isEqual(sortBy(networks), sortBy(nextNetworks));
+        if (isSame) {
+          return;
+        }
+        isChanged = true;
+        keyring.setNetworkIds(address, nextNetworks);
       },
     );
+    if (isChanged) {
+      await keyringService.persistAllKeyrings();
+    }
   };
 
   syncGnosisNetworks = async (address: string) => {
@@ -127,11 +150,19 @@ class ApisSafe {
       return;
     }
     const networks = keyring.networkIdsMap[address];
-    const chainList = await this.fetchGnosisChainList(address);
-    keyring.setNetworkIds(
+    const chainList = await this.fetchGnosisChainList(
       address,
-      uniq((networks || []).concat(chainList.map(chain => chain.network))),
+      networks.map(id => findChain({ networkId: id })?.enum || ''),
     );
+    const nextNetworks = uniq(
+      (networks || []).concat(chainList.map(chain => chain.network)),
+    );
+    const isSame = isEqual(sortBy(networks), sortBy(nextNetworks));
+    if (isSame) {
+      return;
+    }
+    keyring.setNetworkIds(address, nextNetworks);
+    await keyringService.persistAllKeyrings();
   };
   getSafeVersion = async ({
     address,
@@ -278,35 +309,39 @@ class ApisSafe {
     if (!networks || !networks.length) {
       return null;
     }
-    const results = await Promise.all(
-      networks.map(async networkId => {
-        try {
-          const safe = await createSafeService({
-            networkId: networkId,
-            address,
+    const results = (
+      await Promise.all(
+        networks.map(async networkId => {
+          return gnosisPQueue.add(async () => {
+            try {
+              const safe = await createSafeService({
+                networkId: networkId,
+                address,
+              });
+              const { results } = await safe.getPendingTransactions();
+              return {
+                networkId,
+                txs: results,
+              };
+            } catch (e) {
+              console.error(e);
+              return {
+                networkId,
+                txs: [],
+              };
+            }
           });
-          const { results } = await safe.getPendingTransactions();
-          return {
-            networkId,
-            txs: results,
-          };
-        } catch (e) {
-          console.error(e);
-          return {
-            networkId,
-            txs: [],
-          };
-        }
-      }),
-    );
+        }),
+      )
+    ).filter(Boolean);
 
     const total = results.reduce((t, item) => {
-      return t + item.txs.length;
+      return t + (item ? item.txs.length : 0);
     }, 0);
 
     return {
       total,
-      results,
+      results: results as { networkId: string; txs: SafeTransactionItem[] }[],
     };
   };
 
@@ -320,38 +355,42 @@ class ApisSafe {
       return null;
     }
     const safeAddress = toChecksumAddress(address);
-    const results = await Promise.all(
-      networks.map(async networkId => {
-        try {
-          const safe = await createSafeService({
-            networkId: networkId,
-            address: safeAddress,
+    const results = (
+      await Promise.all(
+        networks.map(async networkId => {
+          return gnosisPQueue.add(async () => {
+            try {
+              const safe = await createSafeService({
+                networkId: networkId,
+                address: safeAddress,
+              });
+              const threshold = await safe.getThreshold();
+              const { results } = await safe.apiKit.getMessages(safeAddress);
+              return {
+                networkId,
+                messages: results.filter(
+                  item => item.confirmations.length < threshold,
+                ),
+              };
+            } catch (e) {
+              console.error(e);
+              return {
+                networkId,
+                messages: [],
+              };
+            }
           });
-          const threshold = await safe.getThreshold();
-          const { results } = await safe.apiKit.getMessages(safeAddress);
-          return {
-            networkId,
-            messages: results.filter(
-              item => item.confirmations.length < threshold,
-            ),
-          };
-        } catch (e) {
-          console.error(e);
-          return {
-            networkId,
-            messages: [],
-          };
-        }
-      }),
-    );
+        }),
+      )
+    ).filter(Boolean);
 
     const total = results.reduce((t, item) => {
-      return t + item.messages.length;
+      return t + (item ? item.messages.length : 0);
     }, 0);
 
     return {
       total,
-      results,
+      results: results as { networkId: string; messages: SafeMessage[] }[],
     };
   };
 

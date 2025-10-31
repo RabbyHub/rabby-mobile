@@ -11,6 +11,7 @@ import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
+import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -44,14 +45,13 @@ import {
   preferenceService,
   transactionHistoryService,
 } from '@/core/services';
-import { useSyncAssetsDB } from '@/databases/hooks/assets';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { resetNavigationTo } from '@/hooks/navigation';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { useAppState } from '@react-native-community/hooks';
 import { useMemoizedFn } from 'ahooks';
 import { debounce, unionBy } from 'lodash';
@@ -81,7 +81,7 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -100,8 +100,7 @@ import {
 } from './components/OfflineChainNotify';
 import { PerpsPnl } from './components/PerpsPnl';
 import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
-
-const HeaderHeight = 24;
+import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -184,6 +183,11 @@ function MultiAddressHome(): JSX.Element {
           isSuccess: !historyCount?.fail,
         },
         {
+          key: MultiHomeFeatTitle.Points,
+          title: t('page.rabbyPoints.title'),
+          icon: RcIconPointsCC,
+        },
+        {
           key: MultiHomeFeatTitle.Approvals,
           title: t('page.home.services.approvals'),
           icon: RcIconApprovalsCC,
@@ -214,10 +218,6 @@ function MultiAddressHome(): JSX.Element {
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
         //   icon: RcIconEcosystem,
-        // },
-        // {
-        //   title: MultiHomeFeatTitle.Points,
-        //   icon: RcIconPoints,
         // },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
@@ -265,7 +265,7 @@ function MultiAddressHome(): JSX.Element {
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
-  } = useMultiCurve(
+  } = useMulti24hBalance(
     top10Addresses,
     true,
     top10Balance.total,
@@ -308,7 +308,6 @@ function MultiAddressHome(): JSX.Element {
     }, [top50PrivateKeyAccounts, checkAddressesEligibility]),
   );
 
-  const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
 
   const { mockData } = useMockDataForHomeCenterArea();
@@ -361,15 +360,9 @@ function MultiAddressHome(): JSX.Element {
   useEffect(() => {
     setTimeout(() => {
       deleteLongTimeCurveCache();
+      deleteLongTime24hBalanceCache();
     }, 0);
   }, []);
-
-  // useMount(() => {  no use ?
-  //   eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);
-  //   return () => {
-  //     eventBus.removeListener(EVENTS.TX_COMPLETED, fetchHistory);
-  //   };
-  // });
 
   const getSuccessAndFailList = useCallback(async () => {
     const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
@@ -466,7 +459,6 @@ function MultiAddressHome(): JSX.Element {
       if (appState === 'active') {
         triggerUpdate();
         triggerUpdateAlert();
-        syncTop10Assets();
         syncTop10History();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -487,7 +479,6 @@ function MultiAddressHome(): JSX.Element {
     ]).finally(() => {
       // update at background
       forceUpdate();
-      syncTop10Assets(true);
       syncTop10History(true);
       currencyService.syncCurrencyList(true);
     });
@@ -495,7 +486,6 @@ function MultiAddressHome(): JSX.Element {
     triggerUpdate,
     refreshCurve,
     forceUpdate,
-    syncTop10Assets,
     syncTop10History,
     checkAddressesEligibility,
     top50PrivateKeyAccounts,
@@ -504,7 +494,7 @@ function MultiAddressHome(): JSX.Element {
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
   const handlePressWatchlist = useCallback(() => {
-    navigation.navigate(RootNames.StackHomeNonTab, {
+    navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
       screen: RootNames.Watchlist,
       params: {},
     });
@@ -552,7 +542,7 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Approvals:
-          navigate(RootNames.StackAddress, {
+          navigateDeprecated(RootNames.StackAddress, {
             screen: RootNames.ApprovalAddressList,
           });
           break;
@@ -579,6 +569,12 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.Perps:
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Perps,
+            params: {},
+          });
+          break;
+        case MultiHomeFeatTitle.Points:
+          navigation.push(RootNames.StackAddress, {
+            screen: RootNames.Points,
             params: {},
           });
           break;
@@ -750,6 +746,7 @@ function MultiAddressHome(): JSX.Element {
             loading={loading}
             loadingNewCurve={loadingNewCurve}
             onRefresh={onRefresh}
+            balanceAccounts={balanceAccounts}
           />
           <View
             style={[

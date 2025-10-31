@@ -29,21 +29,28 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
       return;
     }
     setIsSubmitting(true);
-    isConnectedPromise.then(([isConnected]) => {
-      if (!isConnected) {
-        onClickConnect(
-          () => {
-            props.onSubmit();
-            setIsSubmitting(false);
-          },
-          () => props.onCancel?.(),
-        );
-        return;
-      } else {
-        props.onSubmit();
+    isConnectedPromise
+      .then(([isConnected]) => {
+        if (!isConnected) {
+          onClickConnect(
+            () => {
+              setIsSubmitting(false);
+              props.onSubmit();
+            },
+            () => {
+              setIsSubmitting(false);
+              props.onCancel?.();
+            },
+          );
+          return;
+        } else {
+          props.onSubmit();
+          setIsSubmitting(false);
+        }
+      })
+      .finally(() => {
         setIsSubmitting(false);
-      }
-    });
+      });
   });
 
   return (

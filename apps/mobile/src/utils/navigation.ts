@@ -25,6 +25,7 @@ export function getLatestNavigationName() {
 }
 
 /**
+ * @deprecated
  * navigate in pure function
  *
  * https://reactnavigation.org/docs/navigating-without-navigation-prop
@@ -40,6 +41,24 @@ export const navigate: NativeStackScreenProps<RootStackParamsList>['navigation']
       // You can ignore this, or add these actions to a queue you can call later
     }
   }) as typeof navigationRef.navigate;
+
+/**
+ * behave like `navigate` in v6.x
+ *
+ * https://reactnavigation.org/docs/upgrading-from-6.x/#the-navigate-method-no-longer-goes-back-use-popto-instead
+ */
+export const navigateDeprecated: NativeStackScreenProps<RootStackParamsList>['navigation']['navigateDeprecated'] =
+  ((...arg: any) => {
+    if (navigationRef.isReady()) {
+      // Perform navigation if the react navigation is ready to handle actions
+      navigationRef.navigateDeprecated(...arg);
+    } else {
+      __DEV__ &&
+        console.warn('[navigateDeprecated] navigationRef is not ready');
+      // You can decide what to do if react navigation is not ready
+      // You can ignore this, or add these actions to a queue you can call later
+    }
+  }) as typeof navigationRef.navigateDeprecated;
 
 // @ts-expect-error
 export const naviPush: NativeStackScreenProps<RootStackParamsList>['navigation']['push'] =
@@ -93,7 +112,7 @@ export const redirectBackErrorHandler = (
 export function redirectToAddAddressEntry(options?: {
   action?: `${'' | 'classical:'}${'push' | 'replace' | 'resetTo'}`;
 }) {
-  // navigate(RootNames.StackAddress, {
+  // navigateDeprecated(RootNames.StackAddress, {
   //   screen: RootNames.ImportNewAddress,
   // });
 
@@ -101,7 +120,7 @@ export function redirectToAddAddressEntry(options?: {
 
   switch (action) {
     case 'classical:push': {
-      navigate(RootNames.StackAddress, {
+      navigateDeprecated(RootNames.StackAddress, {
         screen: RootNames.ImportNewAddress,
       });
       break;
@@ -148,7 +167,7 @@ export function redirectToAddAddressEntry(options?: {
       break;
     case 'push':
     default:
-      navigate(RootNames.StackGetStarted, {
+      navigateDeprecated(RootNames.StackGetStarted, {
         screen: RootNames.GetStartedScreen2024,
       });
       break;

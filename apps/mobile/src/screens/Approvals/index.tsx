@@ -29,7 +29,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterialTabBar';
 import { Account } from '@/core/services/preference';
 import { useRoute } from '@react-navigation/native';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 const isAndroid = Platform.OS === 'android';
 
 const ApprovalScreenContainer: React.FC<{
@@ -170,10 +170,7 @@ export default function ApprovalsScreen() {
   const { styles } = useTheme2024({ getStyle });
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
-        'TransactionNavigatorParamList',
-        'Approvals'
-      >['route']
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'Approvals'>
     >();
 
   const account = route.params.account;

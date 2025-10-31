@@ -1,5 +1,4 @@
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import {
   StyleProp,
@@ -11,13 +10,16 @@ import {
 } from 'react-native';
 import { Divide } from './Divide';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
+import { createGetStyles2024 } from '@/utils/styles';
 
-const getStyle = (colors: AppColorsVariants) =>
+const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) =>
   StyleSheet.create({
     card: {
-      borderRadius: 8,
-      backgroundColor: colors['neutral-card-1'],
-      borderColor: colors['neutral-card-1'],
+      borderRadius: 16,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      borderColor: isLight ? colors['neutral-card-1'] : 'transparent',
       borderWidth: 1,
       borderStyle: 'solid',
     },
@@ -46,7 +48,8 @@ const getStyle = (colors: AppColorsVariants) =>
       fontSize: 13,
       lineHeight: 16,
     },
-  });
+  }),
+);
 
 interface CardProps {
   headline?: string;
@@ -65,7 +68,7 @@ const CardInner: React.FC<CardProps> = ({
   children,
   style,
 }) => {
-  const { styles } = useThemeStyles(getStyle);
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <View style={StyleSheet.flatten([styles.card, style])}>
@@ -102,7 +105,7 @@ export const CardTitle: React.FC<
     hasAction: boolean;
   }
 > = ({ headline, actionText, onAction, hasAction }) => {
-  const { styles } = useThemeStyles(getStyle);
+  const { styles } = useTheme2024({ getStyle });
 
   return (
     <View style={styles.cardTitle}>

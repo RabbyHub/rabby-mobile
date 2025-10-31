@@ -249,7 +249,10 @@
         "login": "Bei GasAccount anmelden",
         "desc": "Zahlen Sie Gasgebühren auf allen Chains",
         "title": "USDC / USDT einzahlen",
-        "loginAndClaim": "Melde dich an und fordere {{amount}} an"
+        "loginAndClaim": "Melde dich an und fordere {{amount}} an",
+        "loginTips3": "wenn du kein Gas mehr hast",
+        "loginTips1": "Zahle Gasgebühren für",
+        "loginTips2": "jede Adresse auf jeder Kette"
       },
       "withdrawPopup": {
         "amount": "Betrag",
@@ -323,6 +326,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "Ich habe es verstanden"
+    },
+    "Prediction": {
+      "usdValue": "USD-Wert",
+      "amount": "Betrag",
+      "price": "Preis",
+      "side": "Seite"
     }
   },
   "page": {
@@ -379,7 +388,8 @@
         "WillReceive": "Erhalten wird: ≈ {{token}}",
         "BuyAgain": "Erneut kaufen",
         "AddToWhitelist": "Zur Whitelist hinzufügen",
-        "RecipientAddress": "Empfänger-Wallet"
+        "RecipientAddress": "Empfänger-Wallet",
+        "Simulation Results": "Simulations Ergebnisse"
       },
       "empty": {
         "title": "Keine Transaktionen",
@@ -803,7 +813,8 @@
         "priceDiff": "Preis-Diff",
         "receiver": "Empfänger",
         "marketPrice": "Marktpreis"
-      }
+      },
+      "gasSetting": "Gas-Einstellungen"
     },
     "sendNFT": {
       "sendButton": "Senden",
@@ -916,7 +927,8 @@
       "From": "Von",
       "noSupprotTokenForSafe": "Die Safe-Adresse, an die Sie Tokens senden, ist nicht auf dieser Chain bereitgestellt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden.",
       "noSupportTokenForChain": "Der Empfängeradresse ist eine Vertragsadresse auf einer anderen Kette. Überprüfen Sie dies, bevor Sie fortfahren, um einen Verlust zu vermeiden.",
-      "addressDetail": "Adressdetails"
+      "addressDetail": "Adressdetails",
+      "newAmount": "Betrag"
     },
     "signFooterBar": {
       "signAndSubmitButton": "Signieren",
@@ -1099,7 +1111,7 @@
         "queue": "Warteschlange",
         "search": "Token suchen",
         "copyTrading": "Copy Trading",
-        "watchlist": "Überwachungsliste",
+        "watchlist": "Token-Watchlist",
         "perps": "Perps",
         "perpsMarketList": "Mehr Perps"
       }
@@ -1179,7 +1191,8 @@
       "swapped": "Getauscht",
       "historyTitle": "Tauschhistorie",
       "selectChainModalTitle": "Kette auswählen",
-      "results": "Ergebnisse"
+      "results": "Ergebnisse",
+      "approve": "Genehmigen"
     },
     "bridge": {
       "liquidity": "Liquidität",
@@ -1195,7 +1208,8 @@
       "To": "Zu",
       "showMore": {
         "source": "Bridge Source",
-        "title": "Mehr anzeigen"
+        "title": "Mehr anzeigen",
+        "signWarning": "Ich verstehe die Warnung und möchte fortfahren"
       },
       "the-following-bridge-route-are-found": "Gefundene folgende Kurse",
       "Pending": "Ausstehend",
@@ -1218,7 +1232,8 @@
       "est-difference": "Geschätzter Unterschied:",
       "duration": "{{duration}} Min.",
       "no-quote": "Kein Angebot",
-      "bridged": "Überbrückt"
+      "bridged": "Überbrückt",
+      "gasFeeTooHight": "Die Gasgebühren sind höher als normal. Bestätigen Sie nur, wenn Sie fortfahren möchten."
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -1271,7 +1286,6 @@
       "importAddress": {
         "privateKey": "Private Key importieren",
         "seedPhrase": "Seed Phrase importieren",
-        "safe": "Sicher",
         "hardWare": "Verbinden Sie Hardware Wallets",
         "tips": {
           "title": "Ist es sicher, in Rabby zu importieren?",
@@ -1588,9 +1602,32 @@
         },
         "customAddressHdPath": "Benutzerdefinierter Wallet HD-Pfad",
         "selectIndexTip": "Wählen Sie die Seriennummer der Wallets aus, mit denen Sie beginnen möchten:",
-        "manageAddressFrom": "Verwalten Sie die Brieftasche von {{0}} bis {{1}}"
+        "manageAddressFrom": "Verwalten Sie die Brieftasche von {{0}} bis {{1}}",
+        "trezor": {
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad.",
+            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird.",
+            "bip44": "BIP44: HD-Pfad, der durch das BIP44-Protokoll definiert ist."
+          },
+          "hdPathTypeNoChain": {
+            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird.",
+            "bip44": "BIP44: HD-Pfad, der durch das BIP44-Protokoll definiert ist.",
+            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad."
+          }
+        }
       },
-      "createNewAddress": "Neue Wallet erstellen"
+      "createNewAddress": "Neue Wallet erstellen",
+      "whatIsPrivateKey": {
+        "title": "Was ist ein private key",
+        "ButtonGotIt": "Ich hab's.",
+        "title2": "Sicherung",
+        "title3": "Nie teilen",
+        "description2": "Wenn Sie Ihren privaten Schlüssel verlieren, können Sie Ihre Wallet nicht wiederherstellen.",
+        "title4": "Sicherheit",
+        "description4": "Ihr privater Schlüssel wird lokal auf Ihrem Gerät gespeichert und mit Ihrem Passwort verschlüsselt. Nur Sie können darauf zugreifen. Rabby kann Ihren privaten Schlüssel nicht abrufen oder darauf zugreifen.",
+        "description1": "Ein privater Schlüssel ist eine Zeichenfolge aus Buchstaben und Zahlen, die verwendet wird, um auf Ihr Wallet zuzugreifen und es zu steuern. Sie können ihn verwenden, um Ihr Wallet auf einem beliebigen Gerät wiederherzustellen.",
+        "description3": "Teilen Sie niemals Ihren privaten Schlüssel – jeder, der Zugriff darauf hat, kann Ihre Mittel kontrollieren."
+      }
     },
     "addressDetail": {
       "address": "Adresse",
@@ -1786,7 +1823,9 @@
           "please-sign-this-text-message-to-verify-that-you-are-the-owner-of-this-address": "Bitte unterschreiben Sie diese Textnachricht, um zu verifizieren, dass Sie der Besitzer dieser Adresse sind",
           "sign": "Signieren"
         }
-      }
+      },
+      "xPoints": "{{point}} Punkte",
+      "alreadyClaimedXPoints": "Bereits beansprucht: {{point}}"
     },
     "connect": {
       "markRemovedToast": "Mark entfernt",
@@ -1896,7 +1935,9 @@
         "googlePayFeeDesc": "Enthält eine Google Pay-Gebühr. Keine Abhebungen",
         "applePayFeeDesc": "Enthält eine Apple Pay Gebühr. Keine Abhebungen",
         "paymentAddress": "Zahlungs-Wallet",
-        "inSufficientTip1": "Diese Wallet hat nicht genügend Tokens. Bitte wählen Sie eine andere Wallet."
+        "inSufficientTip1": "Diese Wallet hat nicht genügend Tokens. Bitte wählen Sie eine andere Wallet.",
+        "pay": "Zahlen",
+        "applePayFeeDesc1": "Beinhaltet eine Gebühr für den App Store. Keine Abhebungen."
       },
       "paymentAddressPopup": {
         "confirm": "Bestätigen",
@@ -1937,7 +1978,8 @@
         "balance": "Aktuelles GasAccount-Guthaben:",
         "depositFailed": "Einzahlung fehlgeschlagen",
         "depositCanceled": "Einzahlung abgebrochen",
-        "title": "Mit Apple Pay kaufen"
+        "title": "Mit Apple Pay kaufen",
+        "titleApple": "In App Store kaufen"
       },
       "depositSelectPopup": {
         "depositToken": "Mit Token einzahlen",
@@ -1945,7 +1987,8 @@
         "buyWith": "Kaufen mit",
         "desc": "Zahlen Sie Gasgebühren auf allen Chains",
         "buyWithDesc": "30 % Gebühr, keine Abhebungen",
-        "depositTokenDesc": "Keine zusätzlichen Gebühren, sofortige Auszahlungen"
+        "depositTokenDesc": "Keine zusätzlichen Gebühren, sofortige Auszahlungen",
+        "buyWithApple": "Im App Store kaufen"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount-Guthaben",
@@ -2052,22 +2095,64 @@
         "tokenSecurity": "Token-Sicherheit",
         "marketData": "Marktdaten"
       },
-      "interval": {
-        "4H": "4H",
-        "1M": "1M",
-        "1H": "1H",
-        "1D": "1D",
-        "5M": "5M",
-        "1W": "1W",
-        "15M": "15M",
-        "30M": "30M"
-      },
       "marketInfo": {
         "txns24h": "24h Txns",
         "totalSupply": "Gesamtvorrat",
         "volume24h": "24h Volumen",
         "marketCap": "Marktkapitalisierung",
-        "holders": "Inhaber"
+        "holders": "Inhaber",
+        "holderSections": {
+          "tableHeader": {
+            "ratio": "Verhältnis",
+            "address": "Adresse",
+            "position": "Position"
+          },
+          "top10HoldersRatio": "Top 10 Halter Anteil",
+          "top100HoldersRatio": "Top 100 Holders Verhältnis"
+        },
+        "activitySections": {
+          "tableHeader": {
+            "min": "min",
+            "address": "Adresse",
+            "time": "Zeit",
+            "sell": "Verkaufen",
+            "hour": "Stunde",
+            "buy": "Kaufen",
+            "all": "Alle",
+            "volume": "Volumen",
+            "addresses": "Adressen",
+            "type": "Typ",
+            "qnt": "Qnt",
+            "price": "Preis",
+            "value": "Wert",
+            "transactionCount": "Transaktionsanzahl"
+          }
+        },
+        "empty": "Keine Daten",
+        "summary": "Zusammenfassungsdaten",
+        "activity": "Aktivität",
+        "details": "Details",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "Liquiditätsdetails",
+            "top5": "Top 5 POOLs"
+          },
+          "actions": {
+            "add": "Hinzufügen",
+            "remove": "Entfernen",
+            "all": "Alle"
+          },
+          "headers": {
+            "time": "Zeit",
+            "value": "Wert",
+            "amount": "Betrag"
+          },
+          "dex": "Dex",
+          "pair": "Paar",
+          "amount": "Betrag",
+          "value": "Wert"
+        },
+        "pools": "Pools"
       }
     },
     "setting": {
@@ -2106,7 +2191,8 @@
         "txSending": "Signaturanfrage senden",
         "txSigned": "Signiert. Transaktion wird erstellt",
         "txCreated": "Transaktion erstellt"
-      }
+      },
+      "fixedModeText": "Festgelegter Modus: Verwenden Sie immer Ihre benutzerdefinierte Gas-Einstellung"
     },
     "customTestnet": {
       "currency": "Währung",
@@ -2318,7 +2404,23 @@
         "disconnect": "Trennen",
         "favorite": "Favorit",
         "contentModeMobile": "Mobile-Seite anfordern",
-        "refresh": "Aktualisieren"
+        "refresh": "Aktualisieren",
+        "clearCache": "Cache löschen"
+      },
+      "HyperliquidInvitePopup": {
+        "title": "Hyperliquid Empfehlungsprogramm",
+        "btn": "Jetzt beitreten",
+        "desc": "Tritt jetzt mit dem Code von Rabby bei, um einen <1>4% Rabatt</1> auf deine Hyperliquid-Gebühren zu erhalten.",
+        "asterTitle": "Aster Empfehlungsprogramm",
+        "asterDesc": "Tritt jetzt bei und verwende Rabby’s Code, um einen <1>4% Rabatt</1> auf deine Aster-Gebühren zu erhalten."
+      },
+      "WebviewError": {
+        "failedToLoad": "Seite konnte nicht geladen werden",
+        "error": "Fehler:",
+        "alertText": "Versuchen Sie<1/><2>im Browser zu öffnen</2><3/>um zu überprüfen, ob es sich um ein Website-Problem handelt"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache gelöscht"
       }
     },
     "browserManage": {
@@ -2351,7 +2453,10 @@
     "defiDetail": {
       "viewSiteInApp": "In Dapp anzeigen",
       "viewSiteInWebsite": "Auf der Website ansehen",
-      "appChain": "Auf {{chain}} Konto"
+      "appChain": "Auf {{chain}} Konto",
+      "dappActions": {
+        "queueDescription": "Der aktuelle Abhebungsantrag wird in eine Warteschlange eingeordnet. Sobald er bearbeitet wurde, kann er an Ihre Wallet abgehoben werden."
+      }
     },
     "component": {
       "ChainSelector": {
@@ -2434,6 +2539,246 @@
     },
     "perpsHistory": {
       "title": "Verlauf"
+    },
+    "perps": {
+      "PerpsCard": {
+        "loginBtn": "Melden Sie sich bei Trading Perps an",
+        "withdrawBtn": "Abheben",
+        "available": "Verfügbar",
+        "title": "Perps traden",
+        "depositBtn": "Einzahlen",
+        "loginDesc": "Melden Sie sich mit Ihrer Adresse an und hinterlegen Sie Gelder, um mit dem Handel von perps zu beginnen.",
+        "learnBtn": "Lerne mehr über Perps"
+      },
+      "PerpsGuidePopup": {
+        "step1Title": "Master Perpetual Futures",
+        "step4Title": "Leverage anpassen",
+        "step5Desc": "Jede Position hat einen Liquidationspreis. Wenn der Marktpreis ihn erreicht, wird Ihre Position geschlossen. Die Verwendung höherer Hebel erhöht das Risiko einer Liquidation.",
+        "step3Desc": "Wenn Sie erwarten, dass der Preis fällt, eröffnen Sie einen Short. Wenn der Preis fällt, gewinnen Sie. Wenn er steigt, verlieren Sie.",
+        "step2Title": "Long",
+        "step2Desc": "Wenn Sie erwarten, dass der Preis steigt, eröffnen Sie eine Long-Position. Wenn der Preis steigt, gewinnen Sie. Wenn er fällt, verlieren Sie.",
+        "step3Title": "Short",
+        "step1Desc": "Mit Perpetual Futures handelst du nicht nur mit Vermögenswerten. Du handelst mit dem, was du denkst, was als Nächstes passieren wird.",
+        "step5Title": "Liquidation",
+        "step4Desc": "Der Hebel ermöglicht es Ihnen, mit mehr zu handeln, als Sie einsetzen. Er kann sowohl Ihre Gewinne als auch Ihre Verluste erhöhen."
+      },
+      "PerpsDepositPopup": {
+        "balance": "Guthaben",
+        "amount": "Betrag",
+        "depositBtn": "Einzahlen",
+        "insufficientBalance": "Unzureichendes Guthaben",
+        "estReceive": "Geschätzter Erhalt: {{balance}}",
+        "invalidNumber": "Bitte geben Sie eine gültige Zahl ein.",
+        "minimumDepositSize": "Der Mindestbetrag für die Einzahlung beträgt 5 $.",
+        "title": "Einzahlen",
+        "estReceiveTooltip": "Der Cross-Chain-Einzahlung wird über LiFi abgewickelt und kann zu einigen Slippage führen. Voraussichtliche Ankunft in {{number}}s.",
+        "fetchQuoteFailed": "Fehler beim Abrufen des Einzahlungspreises. Bitte wechseln Sie das Token."
+      },
+      "PerpsWithdrawPopup": {
+        "amount": "Betrag",
+        "withdrawBtn": "Abheben",
+        "invalidNumber": "Bitte geben Sie eine gültige Zahl ein.",
+        "title": "Abheben",
+        "feeTip": "Gebühr : $1,00",
+        "minimumWithdrawSize": "Der minimale Auszahlungsbetrag beträgt 2 $.",
+        "available": "verfügbar",
+        "feeTooltipDesc": "Abhebungsgebühr, die von Hyperliquid erhoben wird: 1 $",
+        "insufficientBalance": "Unzureichendes Guthaben",
+        "feeTooltipTitle": "Gebühr"
+      },
+      "PerpsWithdrawFeePopup": {
+        "btn": "Ich habe es verstanden",
+        "desc": "Abhebungsgebühr, die von Hyperliquid erhoben wird: 1 $",
+        "title": "Gebühr"
+      },
+      "historyDetail": {
+        "title": {
+          "openLong": "Öffne Long",
+          "closeLong": "Long schließen",
+          "closeLongTp": "Long schließen Gewinnmitnahme",
+          "closeLongLiquidation": "Schließe Long Liquidation",
+          "closeShortTp": "Close Short Gewinnmitnahme",
+          "closeShort": "Short schließen",
+          "closeLongSl": "Long schließen Stop-Loss",
+          "closeShortLiquidation": "Close Short Liquidation",
+          "openShort": "Open Short",
+          "closeShortSl": "Short schließen Stop-Loss"
+        },
+        "provider": "Anbieter",
+        "closedPnl": "Geschlossene PNL",
+        "price": "Preis",
+        "fee": "Gebühr",
+        "size": "Größe",
+        "date": "Datum",
+        "tradeValue": "Handelswert",
+        "perps": "Perps",
+        "gotItBtn": "Ich habe es verstanden.",
+        "sizeTips": "Der Gesamtwert oder die Menge Ihres Handels, festgelegt durch Margin und Hebel."
+      },
+      "PerpsAutoCloseModal": {
+        "loss": "Verlust",
+        "takeProfit": "Gewinnmitnahme",
+        "stopLossTipsShortLiquidation": "Der Preis liegt über dem Liquidationspreis ({{price}})",
+        "profit": "Gewinn",
+        "takeProfitTipsShort": "Der Take-Profit-Preis muss niedriger als der aktuelle Preis sein.",
+        "stopLossTipsLong": "Der Stop-Loss-Preis muss unter dem aktuellen Preis liegen.",
+        "stopLossTipsLongLiquidation": "Der Preis liegt unter dem Liquidationspreis ({{price}})",
+        "stopLoss": "Stop-Loss",
+        "stopLossTipsShort": "Der Stop-Loss-Preis muss höher sein als der aktuelle Preis.",
+        "takeProfitTipsLong": "Der Take-Profit-Preis muss höher als der aktuelle Preis sein."
+      },
+      "PerpsDepositTokenModal": {
+        "swapBtn": "Tausch",
+        "directTag": "Direkte Einzahlung",
+        "bridgeBtn": "Brücke",
+        "goSwapDesc": "Nur USDC auf Arbitrum wird für direkte Einzahlungen unterstützt. Bitte tauschen Sie Ihren aktuellen Token gegen USDC, bevor Sie eine Einzahlung vornehmen.",
+        "goBridgeDesc": "Nur USDC auf Arbitrum wird für direkte Einzahlungen unterstützt. Bitte überbrücken Sie Ihr aktuelles Token zu USDC auf Arbitrum, bevor Sie einzahlen."
+      },
+      "history": {
+        "status": {
+          "completed": "Abgeschlossen",
+          "pending": "Ausstehend"
+        },
+        "closeLongTp": "Schließe Long Take Profit",
+        "title": "Verlauf",
+        "deposit": "Einzahlen",
+        "closeShortSl": "Close Short Stop Loss",
+        "closeShortTp": "Short schließen Gewinnmitnahme",
+        "openLong": "Long eröffnen",
+        "withdraw": "Abheben",
+        "closeLong": "Long schließen",
+        "closeShortLiquidation": "Close Short Liquidation",
+        "openShort": "Open Short",
+        "closeShort": "Short schließen",
+        "closeLongLiquidation": "Long schließen Liquidation",
+        "closeLongSl": "Close Long Stop-Loss"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "Token auswählen, um einzuzahlen"
+      },
+      "PerpsAccountLogoutPopup": {
+        "logout": "Ausloggen",
+        "title": "Von aktuellem Konto abmelden",
+        "desc": "Sie melden sich von Ihrem aktuellen Perps-Konto ab. Sie können es jederzeit wiederherstellen, indem Sie sich mit dieser Adresse anmelden."
+      },
+      "PerpsDepositCard": {
+        "deposit": "Einzahlen",
+        "availableToTrade": "Verfügbar zum Handel:"
+      },
+      "PerpsAccountSelectorPopup": {
+        "noPosition": "Keine Position",
+        "hyperliquidBalance": "Perps-Bilanz",
+        "lastUsed": "Zuletzt verwendet",
+        "notActivatedAddress": "Nicht aktiviert",
+        "activatedAddress": "Aktiviert"
+      },
+      "title": "Perps",
+      "selectAccountTitle": "Wählen Sie eine Wallet zum Anmelden aus",
+      "more": "Mehr",
+      "explorePerps": "Erkunde Perps",
+      "positions": "Positionen",
+      "regionNotSupport": "Das Eröffnen von Positionen wird in Ihrer Region nicht unterstützt.",
+      "deleteAgentSuccess": "Agent erfolgreich gelöscht",
+      "deleteAgentModal": "Sie haben die maximale Anzahl von Agenten erreicht. Möchten Sie einen vorhandenen Agenten löschen, um einen neuen zu erstellen?",
+      "leverageRangeMinError": "Der minimale Hebel beträgt {{min}}x",
+      "leverageRangeMaxError": "Die maximale Hebelwirkung beträgt {{max}}x"
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "title": "Position",
+        "tpPrice": "Take-Profit Preis",
+        "direction": "Richtung",
+        "cross": "Kreuz",
+        "isolated": "Isoliert",
+        "slPrice": "Stop-Loss-Preis",
+        "marginIsolated": "Margin (isoliert)",
+        "size": "Größe",
+        "liquidationPrice": "Liquidation-Preis",
+        "markPrice": "Marktpreis",
+        "justMargin": "Margin",
+        "entryPrice": "Einstiegspreis",
+        "fundingPayments": "Finanzierungszahlungen",
+        "pnl": "PNL",
+        "margin": "Margin (Isoliert)",
+        "marginCross": "Margin (Kreuz)",
+        "liqPrice": "Liq. Preis",
+        "sizeTips": "Der Gesamtwert oder die Menge Ihres Handels, festgelegt durch Margin und Hebel.",
+        "liquidationPriceTips": "Der Preis, zu dem Ihre Position automatisch von der Börse geschlossen wird, um weitere Verluste zu verhindern, wenn Ihr Margin unter das Wartemargin-Niveau fällt.",
+        "fundingPaymentsTips": "Dies sind die Nettogebühren, seit die Position eröffnet wurde. Die Funding ist eine stündliche Gebühr, die Händler zahlen oder erhalten, um den Preis des Perpetual Contracts nahe am tatsächlichen Preis des Tokens zu halten.",
+        "closePosition": "Schließe {{direction}}",
+        "autoClose": "Automatisches Schließen"
+      },
+      "PerpsInfo": {
+        "funding": "Finanzierung",
+        "title": "Info",
+        "24Vol": "24h Volumen",
+        "openInterestTips": "Die insgesamt ausstehende Position aller Benutzer in diesem Vertrag.",
+        "openInterest": "Offene Interessen",
+        "fundingTips": "Dies ist eine stündliche Gebühr, die Trader zahlen oder erhalten, um den Preis des Perpetual-Contracts nahe dem tatsächlichen Preis des Tokens zu halten. Ist sie positiv, zahlt Long an Short. Ist sie negativ, zahlt Short an Long."
+      },
+      "PerpsIntro": {
+        "title": "Was sind Perps?",
+        "desc": "Der Handel mit perpetual contracts birgt erhebliche Risiken, einschließlich der Möglichkeit, Ihr Investment und Ihre Sicherheiten aufgrund von hohem Leverage und Marktvolatilität schnell zu verlieren. Ein solcher Handel ist möglicherweise nicht für alle Benutzer geeignet. Die Preise können von Funding Rates und Liquidität beeinflusst werden, und Sie könnten ohne vorherige Ankündigung automatisch liquidiert werden. Marktdaten werden von Hyperliquid bereitgestellt."
+      },
+      "PerpsClosePositionPopup": {
+        "title": "Schließe {{coin}} {{direction}} Position",
+        "positionSize": "Positionsgröße",
+        "pnl": "PNL",
+        "fee": "Gebühr:",
+        "rabbyFeeTips": "Rabby Gebühr: 0,04%",
+        "closeBtn": "Schließe {{direction}}",
+        "providerFeeTips": "Hyperliquid-Gebühr: {{fee}}"
+      },
+      "PerpsOpenPositionPopup": {
+        "insufficientBalance": "Unzureichendes Guthaben",
+        "invalidNumber": "Bitte geben Sie eine gültige Zahl ein.",
+        "available": "verfügbar",
+        "size": "Größe",
+        "tpPrice": "Take-Profit-Preis",
+        "leverage": "Hebel",
+        "maximumOrderSize": "Die maximale Bestellgröße beträgt {{amount}}",
+        "sizeTips": "Der Gesamtwert oder die Gesamtmenge Ihres Handels, festgelegt durch Margin und Leverage.",
+        "minimumOrderSize": "Die Mindestsordergröße beträgt 10 $.",
+        "autoClose": "Automatisches Schließen",
+        "slPrice": "Stop-Loss-Preis",
+        "margin": "Marge"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "perps": "Perps",
+        "autoClose": "Automatisches Schließen",
+        "size": "Größe",
+        "btn": "Öffne {{direction}} Position",
+        "slPrice": "Stop-Loss Preis",
+        "fee": "Gebühr",
+        "price": "Preis",
+        "estLqPrice": "Geschätzter Liquidationspreis",
+        "tpPrice": "Take-Profit Preis",
+        "title": "Bestellung überprüfen",
+        "initialMargin": "Initial Margin",
+        "rabbyFeeTips": "Rabby Gebühr: 0%",
+        "providerFeeTips": "Hyperliquid Gebühr: {{fee}}",
+        "sizeTips": "Der Gesamtwert oder die Gesamtmenge Ihres Handels, festgelegt durch Margin und Hebel.",
+        "margin": "Margin (Isoliert)",
+        "liquidationPriceTips": "Der Preis, zu dem Ihre Position automatisch von der Börse geschlossen wird, um weitere Verluste zu verhindern, wenn Ihr Margin unter das Wartungsmargin-Niveau fällt.",
+        "direction": "Richtung"
+      },
+      "action": {
+        "short": "Short",
+        "long": "Long",
+        "noPermission": "Das Eröffnen von Positionen wird in Ihrer Region nicht unterstützt.",
+        "closePosition": "Schließe {{direction}} Position"
+      },
+      "PerpsAutoCloseModal": {
+        "setSlPrice": "Stop-Loss-Preis festlegen",
+        "price": "Preis:",
+        "setTpPrice": "Take-Profit-Preis festlegen",
+        "tpPrice": "Take Profit Preis",
+        "entryPrice": "Einstiegspreis:",
+        "slPrice": "Stop-Loss-Preis"
+      }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Integrierte Seite"
     }
   },
   "constant": {

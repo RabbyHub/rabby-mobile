@@ -8,8 +8,6 @@ import {
 } from 'react-native';
 import { enableLayoutAnimations } from 'react-native-reanimated';
 
-const isTurboModuleEnabled = global.__turboModuleProxy != null;
-
 interface NativeModulesStatic {
   ReactNativeSecurity: /* NativeModule &  */ {
     blockScreen(): void;

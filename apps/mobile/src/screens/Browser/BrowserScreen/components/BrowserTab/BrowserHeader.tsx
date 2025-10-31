@@ -1,33 +1,32 @@
 import React, { useMemo, useState } from 'react';
 import {
   Image,
-  Platform,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
 
-import { RcNextSearchCC } from '@/assets/icons/common';
 import { RcIconDisconnectCC } from '@/assets/icons/dapp';
-import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
-import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { IS_IOS } from '@/core/native/utils';
-import { dappService, preferenceService } from '@/core/services';
-import { DappInfo } from '@/core/services/dappService';
-import { useMyAccounts } from '@/hooks/account';
 import {
   RcIconBack1CC,
   RcIconTabsCC,
   ReactIconHome,
 } from '@/assets2024/icons/browser';
+import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
+import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { IS_IOS } from '@/core/native/utils';
+import { dappService } from '@/core/services';
+import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
+import { useGetDappAccount } from '@/hooks/useDapps';
 import { getAddressBarTitle, isGoogle } from '@/utils/browser';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { CurrentDappPopup } from './CurrentDappPopup';
+import { Account } from '@/core/services/preference';
 
 export function BrowserHeader({
   dapp,
@@ -38,6 +37,8 @@ export function BrowserHeader({
   canGoBack,
   onGoBack,
   onGoHome,
+  onAccountPress,
+  account,
 }: {
   dapp?: DappInfo;
   url?: string;
@@ -45,8 +46,10 @@ export function BrowserHeader({
   onLocationBarPress?(str?: string): void;
   tabsCount?: number;
   canGoBack?: boolean;
+  account?: Account;
   onGoBack?(): void;
   onGoHome?(): void;
+  onAccountPress?(): void;
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
@@ -54,20 +57,7 @@ export function BrowserHeader({
 
   const { t } = useTranslation();
 
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-
-  const account = useMemo(() => {
-    return (
-      dapp?.currentAccount ||
-      accounts?.[0] ||
-      preferenceService.getFallbackAccount()
-    );
-  }, [accounts, dapp?.currentAccount]);
-
-  const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
-  const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
+  // const account = useGetDappAccount(dapp);
 
   const chain = useMemo(() => {
     if (!dapp?.isConnected) {
@@ -147,11 +137,7 @@ export function BrowserHeader({
             <TouchableOpacity
               style={styles.account}
               onPress={() => {
-                if (dapp?.isConnected) {
-                  setIsShowCurrentDappPopup(true);
-                } else {
-                  setIsShowAccountPopup(true);
-                }
+                onAccountPress?.();
               }}>
               {account ? (
                 <WalletIcon
@@ -186,31 +172,6 @@ export function BrowserHeader({
           </View>
         ) : null}
       </View>
-      {dapp ? (
-        <>
-          <CurrentDappPopup
-            visible={isShowCurrentDappPopup}
-            onClose={() => {
-              setIsShowCurrentDappPopup(false);
-            }}
-            dapp={dapp}
-          />
-          <AccountSelectorPopup
-            visible={isShowAccountPopup}
-            onClose={() => {
-              setIsShowAccountPopup(false);
-            }}
-            value={account}
-            onChange={v => {
-              dappService.updateDapp({
-                ...dapp,
-                currentAccount: v,
-              });
-              setIsShowAccountPopup(false);
-            }}
-          />
-        </>
-      ) : null}
     </>
   );
 }

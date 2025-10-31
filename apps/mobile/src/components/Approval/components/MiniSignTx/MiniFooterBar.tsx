@@ -1,4 +1,3 @@
-import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { Chain } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
 import { SecurityEngineLevel } from '@/constant/security';
@@ -6,17 +5,16 @@ import { AppColorsVariants } from '@/constant/theme';
 import { dappService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import clsx from 'clsx';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Props as ActionGroupProps } from '../FooterBar/ActionGroup';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
@@ -29,14 +27,15 @@ import {
   EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY,
   eventBus,
 } from '@/utils/events';
-import { useSetAtom } from 'jotai';
-import {
-  canDirectSignAtom,
-  gasRelativeComponentAtom,
-  miniApprovalGasAtom,
-} from '@/hooks/useMiniApprovalDirectSign';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
 import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataApprovalTask';
+import RcCheckSecurity from '@/assets2024/icons/common/check-security.svg';
+import RcCheckSecurityDark from '@/assets2024/icons/common/check-security-dark.svg';
+
+import { Text } from 'react-native';
+import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTranslation } from 'react-i18next';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -76,110 +75,115 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   directSubmit?: boolean;
   account: Account;
   miniType?: 'tx' | 'typedData';
+  showCheckSecurityBtn?: boolean;
+  showCheckSecurityBtnDisabled?: boolean;
+  showCheckSecurity?: boolean;
+  onToggleCheckSecurity?: () => void;
+  disableSignBtn?: boolean;
 }
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    wrapper: {
-      paddingHorizontal: 20,
-      paddingTop: 10,
-      paddingBottom: 52,
-      // borderTopLeftRadius: 16,
-      // borderTopRightRadius: 16,
-      // backgroundColor: colors['neutral-bg-1'],
-      position: 'relative',
-      // shadow
-      // shadowColor: colors['neutral-line'],
-      // shadowOffset: {
-      //   width: 0,
-      //   height: 6,
-      // },
-      // shadowOpacity: 0.5,
-      // shadowRadius: 16,
+const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
+  wrapper: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 48,
+    // borderTopLeftRadius: 16,
+    // borderTopRightRadius: 16,
+    // backgroundColor: colors['neutral-bg-1'],
+    position: 'relative',
+    // shadow
+    // shadowColor: colors['neutral-line'],
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 6,
+    // },
+    // shadowOpacity: 0.5,
+    // shadowRadius: 16,
 
-      // elevation: 12,
-    },
-    dappIconWrapper: {
-      position: 'relative',
-      marginRight: 8,
-    },
-    dappIcon: {
-      width: 24,
-      height: 24,
-      borderRadius: 4,
-    },
-    chainLogo: {
-      width: 14,
-      height: 14,
-      borderRadius: 100,
-      position: 'absolute',
-      bottom: -5,
-      right: -5,
-    },
-    requestOrigin: {
-      height: 30,
-      fontWeight: '500',
-      fontSize: 13,
-      lineHeight: 15,
-      color: colors['neutral-foot'],
-      paddingBottom: 12,
-      position: 'relative',
-      marginBottom: 12,
-      display: 'flex',
-      alignItems: 'center',
-      flexDirection: 'row',
-    },
-    requestOriginBorder: {
-      position: 'absolute',
-      bottom: 0,
-      left: -20,
-      right: -20,
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: colors['neutral-line'],
-    },
-    origin: {
-      color: colors['neutral-title-1'],
-      flex: 1,
-      overflow: 'hidden',
-      // textOverflow: 'ellipsis',
-      // whiteSpace: 'nowrap',
-      fontSize: 15,
-      lineHeight: 18,
-    },
-    right: {
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-foot'],
-    },
-    securityLevelTip: {
-      marginTop: 10,
-      borderRadius: 4,
-      paddingVertical: 6,
-      paddingHorizontal: 8,
-      display: 'flex',
-      position: 'relative',
-      flexDirection: 'row',
-    },
-    securityLevelTipText: {
-      fontWeight: '500',
-      fontSize: 13,
-      lineHeight: 15,
-    },
-    iconLevel: {
-      width: 14,
-      height: 14,
-      marginRight: 6,
-    },
-    securityLevelTag: {
-      marginTop: -15,
-    },
-    container: {
-      position: 'relative',
-    },
-    actions: {
-      // backgroundColor: 'red',
-    },
-  });
+    // elevation: 12,
+  },
+  dappIconWrapper: {
+    position: 'relative',
+    marginRight: 8,
+  },
+  dappIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+  },
+  chainLogo: {
+    width: 14,
+    height: 14,
+    borderRadius: 100,
+    position: 'absolute',
+    bottom: -5,
+    right: -5,
+  },
+  requestOrigin: {
+    height: 30,
+    fontWeight: '500',
+    fontSize: 13,
+    lineHeight: 15,
+    color: colors['neutral-foot'],
+    paddingBottom: 12,
+    position: 'relative',
+    marginBottom: 12,
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  requestOriginBorder: {
+    position: 'absolute',
+    bottom: 0,
+    left: -20,
+    right: -20,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors['neutral-line'],
+  },
+  origin: {
+    color: colors['neutral-title-1'],
+    flex: 1,
+    overflow: 'hidden',
+    // textOverflow: 'ellipsis',
+    // whiteSpace: 'nowrap',
+    fontSize: 15,
+    lineHeight: 18,
+  },
+  right: {
+    fontSize: 12,
+    lineHeight: 14,
+    color: colors['neutral-foot'],
+  },
+  securityLevelTip: {
+    marginTop: 10,
+    borderRadius: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    display: 'flex',
+    position: 'relative',
+    flexDirection: 'row',
+  },
+  securityLevelTipText: {
+    fontWeight: '500',
+    fontSize: 13,
+    lineHeight: 15,
+  },
+  iconLevel: {
+    width: 14,
+    height: 14,
+    marginRight: 6,
+  },
+  securityLevelTag: {
+    marginTop: -15,
+  },
+  container: {
+    position: 'relative',
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  actions: {
+    // backgroundColor: 'red',
+  },
+}));
 
 const getSecurityLevelTipColor = (colors: AppColorsVariants) => ({
   [Level.FORBIDDEN]: {
@@ -235,63 +239,24 @@ export const MiniFooterBar: React.FC<Props> = ({
   directSubmit,
   account,
   miniType: miniSignType = 'tx',
+  showCheckSecurityBtnDisabled,
+  showCheckSecurityBtn,
+  showCheckSecurity,
+  onToggleCheckSecurity: onChangeCheckSecurity,
+  disableSignBtn,
   ...props
 }) => {
+  const { t } = useTranslation();
+  const { colors2024, isLight } = useTheme2024();
+
   const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
     null,
   );
-  const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const SecurityLevelTipColor = getSecurityLevelTipColor(colors);
+  const { styles, colors } = useTheme2024({ getStyle: getStyles });
 
-  const displayOrigin = useMemo(() => {
-    if (origin === INTERNAL_REQUEST_ORIGIN) {
-      return 'Rabby Wallet';
-    }
-    return origin;
-  }, [origin]);
-
-  const {
-    rules,
-    currentTx: { processedRules },
-    ...apiApprovalSecurityEngine
-  } = useApprovalSecurityEngine();
-
-  // const currentChain = useMemo(() => {
-  //   if (origin === INTERNAL_REQUEST_ORIGIN) {
-  //     return props.chain || CHAINS.ETH;
-  //   } else {
-  //     if (!connectedSite) {
-  //       return CHAINS.ETH;
-  //     }
-  //     return CHAINS[connectedSite.chainId];
-  //   }
-  // }, [props.chain, origin, connectedSite]);
-
-  const engineResultMap = useMemo(() => {
-    const map: Record<string, Result> = {};
-    engineResults.forEach(item => {
-      map[item.id] = item;
-    });
-    return map;
-  }, [engineResults]);
+  const { rules, ...apiApprovalSecurityEngine } = useApprovalSecurityEngine();
 
   const payGasByGasAccount = gasMethod === 'gasAccount';
-
-  const handleClickRule = (id: string) => {
-    const rule = rules.find(item => item.id === id);
-    if (!rule) {
-      return;
-    }
-    const result = engineResultMap[id];
-    apiApprovalSecurityEngine.openRuleDrawer({
-      ruleConfig: rule,
-      value: result?.value,
-      level: result?.level,
-      ignored: processedRules.includes(id),
-    });
-  };
 
   const init = async () => {
     apiApprovalSecurityEngine.init();
@@ -310,10 +275,6 @@ export const MiniFooterBar: React.FC<Props> = ({
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const setMiniApprovalGas = useSetAtom(miniApprovalGasAtom);
-
-  const setCanDirectSign = useSetAtom(canDirectSignAtom);
 
   const isSetGasMethodRef = useRef(false);
   const [isInited, setIsInited] = useState(false);
@@ -363,62 +324,6 @@ export const MiniFooterBar: React.FC<Props> = ({
   const isMiniSignTx = miniSignType === 'tx';
 
   useEffect(() => {
-    if (!isMiniSignTx) {
-      return;
-    }
-
-    if (isInited && directSubmit) {
-      if (
-        (showGasLess && !useGasLess && !canGotoUseGasAccount) ||
-        (payGasByGasAccount &&
-          !(
-            !isWalletConnect &&
-            gasAccountCost?.balance_is_enough &&
-            !gasAccountCost?.chain_not_support &&
-            noCustomRPC
-          ))
-      ) {
-        setCanDirectSign(false);
-      } else {
-        setCanDirectSign(true);
-      }
-
-      const disabledProcess = payGasByGasAccount
-        ? !gasAccountCanPay
-        : useGasLess
-        ? false
-        : props.disabledProcess;
-
-      setMiniApprovalGas(pre => ({
-        ...pre,
-        disabledProcess,
-        showGasLevelPopup: disabledProcess,
-        gasAccountError:
-          !!gasAccountCost?.err_msg &&
-          gasAccountCost?.err_msg?.toLowerCase() !==
-            GAS_ACCOUNT_INSUFFICIENT_TIP.toLowerCase(),
-      }));
-    }
-  }, [
-    isMiniSignTx,
-    gasAccountCost,
-    canGotoUseGasAccount,
-    gasAccountCanPay,
-    isInited,
-    payGasByGasAccount,
-    setMiniApprovalGas,
-    showGasLess,
-    noCustomRPC,
-    isWalletConnect,
-    gasAccountCost?.balance_is_enough,
-    gasAccountCost?.chain_not_support,
-    setCanDirectSign,
-    useGasLess,
-    directSubmit,
-    props.disabledProcess,
-  ]);
-
-  useEffect(() => {
     if (!gasAccountCanPay) {
       eventBus.emit(
         EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY,
@@ -427,155 +332,17 @@ export const MiniFooterBar: React.FC<Props> = ({
     }
   }, [gasAccountCanPay, payGasByGasAccount]);
 
-  const setGasRelativeComponent = useSetAtom(gasRelativeComponentAtom);
-
-  useEffect(() => {
-    if (!isMiniSignTx) {
-      return;
-    }
-    if (!account || !directSubmit) {
-      setGasRelativeComponent(null);
-      return;
-    }
-
-    const showGasLessToSign =
-      showGasLess && !canGotoUseGasAccount && canUseGasLess;
-
-    setGasRelativeComponent(
-      !isInited ? null : (
-        <>
-          {showGasLessToSign ? (
-            <GasLessActivityToSign
-              gasLessEnable={useGasLess}
-              handleFreeGas={() => {
-                enableGasLess?.();
-              }}
-              gasLessConfig={gasLessConfig}
-            />
-          ) : null}
-
-          {showGasLess && !payGasByGasAccount && !canUseGasLess ? (
-            <GasLessNotEnough
-              inShowMore
-              canGotoUseGasAccount={canGotoUseGasAccount}
-              canDepositUseGasAccount={canDepositUseGasAccount}
-              onChangeGasAccount={onChangeGasAccount}
-              gasAccountAddress={gasAccountAddress!}
-              gasAccountCost={gasAccountCost}
-              onDeposit={() => {
-                onDeposit?.();
-                onChangeGasAccount?.();
-              }}
-              onGotoGasAccount={() => {
-                rejectApproval?.();
-                navigate(RootNames.StackTransaction, {
-                  screen: RootNames.GasAccount,
-                  params: {},
-                });
-              }}
-            />
-          ) : null}
-
-          {payGasByGasAccount && !gasAccountCanPay ? (
-            <GasAccountTips
-              inShowMore
-              gasAccountAddress={gasAccountAddress!}
-              gasAccountCost={gasAccountCost}
-              isGasAccountLogin={isGasAccountLogin}
-              isWalletConnect={isWalletConnect}
-              noCustomRPC={noCustomRPC}
-              onDeposit={onDeposit}
-              onGotoGasAccount={() => {
-                rejectApproval?.();
-                navigate(RootNames.StackTransaction, {
-                  screen: RootNames.GasAccount,
-                  params: {},
-                });
-              }}
-            />
-          ) : null}
-        </>
-      ),
-    );
-    return () => {
-      setGasRelativeComponent(null);
-    };
-  }, [
-    isMiniSignTx,
-    directSubmit,
-    account,
-    account?.type,
-    canDepositUseGasAccount,
-    canGotoUseGasAccount,
-    canUseGasLess,
-    enableGasLess,
-    gasAccountAddress,
-    gasAccountCanPay,
-    gasAccountCost,
-    gasLessConfig,
-    hasUnProcessSecurityResult,
-    isGasAccountLogin,
-    isInited,
-    isWalletConnect,
-    isWatchAddr,
-    noCustomRPC,
-    onChangeGasAccount,
-    onDeposit,
-    payGasByGasAccount,
-    rejectApproval,
-    securityLevel,
-    setGasRelativeComponent,
-    showGasLess,
-    useGasLess,
-  ]);
-
   if (!account) {
     return null;
   }
-  const Icon = securityLevel
-    ? SecurityLevelTipColor[securityLevel].icon
-    : undefined;
 
-  const isInternalRequest = origin === INTERNAL_REQUEST_SESSION.origin;
-
-  const footer = (
-    <>
-      {securityLevel && hasUnProcessSecurityResult && (
-        <View
-          className="security-level-tip"
-          style={StyleSheet.flatten([
-            styles.securityLevelTip,
-            {
-              backgroundColor: SecurityLevelTipColor[securityLevel].bg,
-            },
-          ])}>
-          <Icon style={styles.iconLevel} />
-          <Text
-            className="flex-1"
-            style={StyleSheet.flatten([
-              styles.securityLevelTipText,
-              {
-                color: SecurityLevelTipColor[securityLevel].text,
-              },
-            ])}>
-            {t('page.signFooterBar.processRiskAlert')}
-          </Text>
-          <TouchableOpacity onPress={onIgnoreAllRules}>
-            <Text
-              className="underline text-13 font-medium"
-              style={StyleSheet.flatten([
-                styles.securityLevelTipText,
-                {
-                  color: SecurityLevelTipColor[securityLevel].text,
-                },
-              ])}>
-              {t('page.signFooterBar.ignoreAll')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </>
-  );
+  const overWriteDisabledProcess = disableSignBtn
+    ? true
+    : payGasByGasAccount
+    ? !gasAccountCanPay
+    : useGasLess
+    ? false
+    : props.disabledProcess;
 
   return (
     <View style={styles.container}>
@@ -585,98 +352,152 @@ export const MiniFooterBar: React.FC<Props> = ({
           // 'has-shadow': !isDarkTheme && hasShadow,
         })}>
         {Header}
+        <View>
+          {!isInited ? null : (
+            <>
+              {showGasLess &&
+              !payGasByGasAccount &&
+              (!securityLevel || !hasUnProcessSecurityResult) ? (
+                canUseGasLess ? (
+                  <GasLessActivityToSign
+                    gasLessEnable={useGasLess}
+                    handleFreeGas={() => {
+                      enableGasLess?.();
+                    }}
+                    gasLessConfig={gasLessConfig}
+                  />
+                ) : isWatchAddr ||
+                  account.type === KEYRING_TYPE.GnosisKeyring ? null : (
+                  <GasLessNotEnough
+                    canGotoUseGasAccount={canGotoUseGasAccount}
+                    canDepositUseGasAccount={canDepositUseGasAccount}
+                    onChangeGasAccount={onChangeGasAccount}
+                    gasAccountAddress={gasAccountAddress!}
+                    gasAccountCost={gasAccountCost}
+                    onDeposit={() => {
+                      onDeposit?.();
+                      onChangeGasAccount?.();
+                    }}
+                    onGotoGasAccount={() => {
+                      rejectApproval?.();
+                      navigateDeprecated(RootNames.StackTransaction, {
+                        screen: RootNames.GasAccount,
+                        params: {},
+                      });
+                    }}
+                  />
+                )
+              ) : null}
 
-        {!isInited ? null : (
-          <>
-            {showGasLess &&
-            !payGasByGasAccount &&
-            (!securityLevel || !hasUnProcessSecurityResult) ? (
-              canUseGasLess ? (
-                <GasLessActivityToSign
-                  gasLessEnable={useGasLess}
-                  handleFreeGas={() => {
-                    enableGasLess?.();
-                  }}
-                  gasLessConfig={gasLessConfig}
-                />
-              ) : isWatchAddr ||
+              {payGasByGasAccount && !gasAccountCanPay ? (
+                isWatchAddr ||
                 account.type === KEYRING_TYPE.GnosisKeyring ? null : (
-                <GasLessNotEnough
-                  canGotoUseGasAccount={canGotoUseGasAccount}
-                  canDepositUseGasAccount={canDepositUseGasAccount}
-                  onChangeGasAccount={onChangeGasAccount}
-                  gasAccountAddress={gasAccountAddress!}
-                  gasAccountCost={gasAccountCost}
-                  onDeposit={() => {
-                    onDeposit?.();
-                    onChangeGasAccount?.();
-                  }}
-                  onGotoGasAccount={() => {
-                    rejectApproval?.();
-                    navigate(RootNames.StackTransaction, {
-                      screen: RootNames.GasAccount,
-                      params: {},
-                    });
-                  }}
-                />
-              )
-            ) : null}
-
-            {payGasByGasAccount && !gasAccountCanPay ? (
-              isWatchAddr ||
-              account.type === KEYRING_TYPE.GnosisKeyring ? null : (
-                <GasAccountTips
-                  gasAccountAddress={gasAccountAddress!}
-                  gasAccountCost={gasAccountCost}
-                  isGasAccountLogin={isGasAccountLogin}
-                  isWalletConnect={isWalletConnect}
-                  noCustomRPC={noCustomRPC}
-                  onDeposit={onDeposit}
-                  onGotoGasAccount={() => {
-                    rejectApproval?.();
-                    navigate(RootNames.StackTransaction, {
-                      screen: RootNames.GasAccount,
-                      params: {},
-                    });
-                  }}
-                />
-              )
-            ) : null}
-          </>
-        )}
-
-        <View style={styles.actions}>
-          {task.status === 'idle' ? (
-            <MiniActionGroup
-              miniSignType={miniSignType}
-              directSubmit
-              isMiniSignTx={isMiniSignTx}
-              account={account}
-              gasLess={useGasLess && !payGasByGasAccount}
-              {...props}
-              disabledProcess={
-                payGasByGasAccount
-                  ? !gasAccountCanPay
-                  : useGasLess
-                  ? false
-                  : props.disabledProcess
-              }
-              enableTooltip={
-                payGasByGasAccount
-                  ? false
-                  : useGasLess
-                  ? false
-                  : props.enableTooltip
-              }
-              gasLessThemeColor={
-                isDarkTheme
-                  ? gasLessConfig?.dark_color
-                  : gasLessConfig?.theme_color
-              }
-            />
-          ) : (
-            <MiniActionStatus account={account} task={task} />
+                  <GasAccountTips
+                    gasAccountAddress={gasAccountAddress!}
+                    gasAccountCost={gasAccountCost}
+                    isGasAccountLogin={isGasAccountLogin}
+                    isWalletConnect={isWalletConnect}
+                    noCustomRPC={noCustomRPC}
+                    onDeposit={onDeposit}
+                    onGotoGasAccount={() => {
+                      rejectApproval?.();
+                      navigateDeprecated(RootNames.StackTransaction, {
+                        screen: RootNames.GasAccount,
+                        params: {},
+                      });
+                    }}
+                  />
+                )
+              ) : null}
+            </>
           )}
+
+          <View
+            style={[
+              styles.actions,
+              {
+                flexDirection: 'row',
+                gap: 8,
+              },
+            ]}>
+            <View style={{ flex: 1 }}>
+              {task.status === 'idle' ? (
+                <MiniActionGroup
+                  miniSignType={miniSignType}
+                  directSubmit
+                  isMiniSignTx={isMiniSignTx}
+                  account={account}
+                  gasLess={useGasLess && !payGasByGasAccount}
+                  {...props}
+                  disabledProcess={overWriteDisabledProcess}
+                  enableTooltip={
+                    payGasByGasAccount
+                      ? false
+                      : useGasLess
+                      ? false
+                      : props.enableTooltip
+                  }
+                  gasLessThemeColor={
+                    isDarkTheme
+                      ? gasLessConfig?.dark_color
+                      : gasLessConfig?.theme_color
+                  }
+                />
+              ) : (
+                <MiniActionStatus account={account} task={task} />
+              )}
+            </View>
+
+            {showCheckSecurityBtn ? (
+              <TouchableOpacity
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: showCheckSecurityBtnDisabled ? 0.5 : 1,
+                }}
+                disabled={showCheckSecurityBtnDisabled}
+                onPress={() => {
+                  onChangeCheckSecurity?.();
+                }}>
+                {isLight ? (
+                  <RcCheckSecurity width={28} height={28} />
+                ) : (
+                  <RcCheckSecurityDark width={28} height={28} />
+                )}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      color: colors2024['neutral-secondary'],
+                      fontFamily: 'SF Pro Rounded',
+                      fontSize: 14,
+                      fontStyle: 'normal',
+                      fontWeight: '500',
+                      lineHeight: 18,
+                    }}>
+                    {t('global.check')}
+                  </Text>
+                  <ArrowRightSVG
+                    width={14}
+                    height={14}
+                    style={[
+                      {
+                        transform: [{ rotate: '-90deg' }],
+                      },
+                      showCheckSecurity && {
+                        transform: [{ rotate: '90deg' }],
+                      },
+                    ]}
+                    color={colors2024['neutral-secondary']}
+                  />
+                </View>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
       </View>
     </View>

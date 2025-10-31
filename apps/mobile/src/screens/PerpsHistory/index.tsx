@@ -3,7 +3,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRoute } from '@react-navigation/native';
 import { sortBy } from 'lodash';
@@ -29,10 +29,7 @@ export const PerpsHistoryScreen = () => {
 
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
-        'TransactionNavigatorParamList',
-        'PerpsHistory'
-      >['route']
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'PerpsHistory'>
     >();
 
   const coin = route.params?.coin;

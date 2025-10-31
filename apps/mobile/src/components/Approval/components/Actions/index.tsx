@@ -5,8 +5,7 @@ import { Chain } from '@/constant/chains';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   ActionRequireData,
   ParsedActionData,
@@ -28,9 +27,10 @@ import { getActionTypeText } from './utils';
 import { TransactionActionList } from './components/TransactionActionList';
 import { Account } from '@/core/services/preference';
 import { MultiActionProps } from '../TypedDataActions';
+import { createGetStyles2024 } from '@/utils/styles';
 
-export const getActionsStyle = (colors: AppColorsVariants) =>
-  StyleSheet.create({
+export const getActionsStyle = createGetStyles2024(
+  ({ colors, colors2024 }) => ({
     signTitle: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -48,10 +48,12 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
       flex: 1,
     },
     leftText: {
-      fontSize: 16,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontStyle: 'normal',
+      fontWeight: '700',
       lineHeight: 18,
-      color: colors['neutral-title-1'],
-      fontWeight: '500',
     },
     speedUpIcon: {
       width: 16,
@@ -77,7 +79,7 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
     },
     isUnknown: {},
     isUnknownText: {
-      color: colors['neutral-foot'],
+      // color: colors['neutral-foot'],
     },
     container: {
       paddingHorizontal: 16,
@@ -99,14 +101,16 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
       color: '#999999',
     },
     viewRawText: {
-      fontSize: 13,
-      lineHeight: 16,
-      color: colors['neutral-foot'],
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 20,
     },
     signTitleRight: {
       flexDirection: 'row',
       alignItems: 'center',
-      // @ts-expect-error maybe invalid style
       float: 'right',
     },
     tipContent: {
@@ -126,11 +130,11 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
       position: 'relative',
     },
     icon: {
-      width: 14,
-      height: 14,
+      width: 20,
+      height: 20,
       marginRight: 2,
       marginTop: 2,
-      color: colors['neutral-foot'],
+      color: colors2024['neutral-info'],
     },
     signTitleLeft: {
       flexDirection: 'row',
@@ -148,7 +152,8 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
       width: 8,
       height: 8,
     },
-  });
+  }),
+);
 
 const ActionItem = ({
   isSpeedUp,
@@ -175,8 +180,7 @@ const ActionItem = ({
     return getActionTypeText(data);
   }, [data]);
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = getActionsStyle(colors);
+  const { styles } = useTheme2024({ getStyle: getActionsStyle });
   const commonStyle = useCommonStyle();
 
   const handleViewRawClick = () => {
@@ -290,6 +294,7 @@ const Actions = ({
   originLogo,
   account,
   multiAction,
+  inDappAction,
 }: {
   data: ParsedActionData;
   requireData: ActionRequireData;
@@ -303,12 +308,12 @@ const Actions = ({
   originLogo?: string;
   account: Account;
   multiAction?: MultiActionProps;
+  inDappAction?: boolean;
 }) => {
   const isMultiAction = useMemo(() => {
     return !!multiAction;
   }, [multiAction]);
-  const colors = useThemeColors();
-  const styles = getActionsStyle(colors);
+  const { styles } = useTheme2024({ getStyle: getActionsStyle });
 
   return (
     <View style={styles.actionWrapper}>
@@ -318,6 +323,7 @@ const Actions = ({
           origin={origin}
           originLogo={originLogo}
           engineResults={engineResults}
+          inDappAction={inDappAction}
         />
         <BalanceChangeWrapper
           data={data}
