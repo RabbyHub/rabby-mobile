@@ -6,18 +6,26 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { formatNum } from '@/utils/math';
 import { getHealthStatusColor } from '../utils';
 
-const HealthFactorText = ({ healthFactor }: { healthFactor: string }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+const HealthFactorText = ({
+  healthFactor,
+  limitless,
+}: {
+  healthFactor: string;
+  limitless?: boolean;
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   return (
     <Text
       style={[
         styles.hfValue,
         {
-          color: getHealthStatusColor(Number(healthFactor || '0')).color,
+          color: limitless
+            ? colors2024['green-default']
+            : getHealthStatusColor(Number(healthFactor || '0')).color,
         },
       ]}>
-      {formatNum(healthFactor)}
+      {limitless ? ' ∞' : formatNum(healthFactor)}
     </Text>
   );
 };

@@ -65,7 +65,10 @@ const RepayActionOverView: React.FC<
               <>
                 <HealthFactorText healthFactor={healthFactor} />
                 <Text style={styles.arrow}>→</Text>
-                <HealthFactorText healthFactor={afterHF} />
+                <HealthFactorText
+                  healthFactor={afterHF}
+                  limitless={afterHF === '-1'}
+                />
               </>
             ) : (
               <HealthFactorText healthFactor={healthFactor} />
