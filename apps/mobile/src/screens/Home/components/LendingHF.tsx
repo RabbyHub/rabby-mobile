@@ -3,7 +3,7 @@ import { useLendingData, useLendingSummary } from '@/screens/Lending/hooks';
 import { getHealthStatusColor } from '@/screens/Lending/utils';
 import { formatNum } from '@/utils/math';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text } from 'react-native-gesture-handler';
+import { Text } from 'react-native';
 
 export const LendingHF: React.FC<{}> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
