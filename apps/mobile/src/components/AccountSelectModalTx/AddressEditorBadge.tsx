@@ -10,6 +10,7 @@ import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
 import { contactService } from '@/core/services';
 import { isValidHexAddress } from '@metamask/utils';
+import { IS_IOS } from '@/core/native/utils';
 
 export function AddressEditorBadge({
   style,
@@ -97,5 +98,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 23,
     marginLeft: 2,
+    ...(IS_IOS && {
+      position: 'relative',
+      top: -2,
+    }),
   },
 }));
