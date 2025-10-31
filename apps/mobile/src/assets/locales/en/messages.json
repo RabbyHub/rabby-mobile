@@ -2707,6 +2707,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "I Got it"
+    },
+    "Prediction": {
+      "side": "Side",
+      "amount": "Amount",
+      "price": "Price",
+      "usdValue": "USD Value"
     }
   },
   "native": {
