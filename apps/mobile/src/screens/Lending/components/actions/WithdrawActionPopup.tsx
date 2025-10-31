@@ -62,7 +62,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   }, [reserve.underlyingAsset]);
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
+    forScene: 'Lending',
   });
   const { formattedPoolReservesAndIncentives, wrapperPoolReserve } =
     useLendingSummary();

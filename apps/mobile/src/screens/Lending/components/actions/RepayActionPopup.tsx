@@ -57,7 +57,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   const { t } = useTranslation();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
+    forScene: 'Lending',
   });
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
   const canShowDirectSubmit = useMemo(

@@ -49,7 +49,7 @@ function DashBoardScreen(): JSX.Element {
     <NormalScreenContainer2024
       type={isLight ? 'bg0' : 'bg1'}
       overwriteStyle={styles.overwriteStyle}>
-      <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+      <AccountSwitcherModal forScene="Lending" inScreen />
       <View style={styles.container}>
         <PoolContainer />
       </View>
@@ -64,14 +64,14 @@ const ForMultipleAddress = (
   >,
 ) => {
   const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
+    forScene: 'Lending',
   });
   return (
     <ScreenSceneAccountProvider
       value={{
-        forScene: 'MakeTransactionAbout',
-        ofScreen: 'MultiSwap',
-        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSwap`,
+        forScene: 'Lending',
+        ofScreen: 'Lending',
+        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-Lending`,
       }}>
       <DashBoardScreen {...props} />
     </ScreenSceneAccountProvider>

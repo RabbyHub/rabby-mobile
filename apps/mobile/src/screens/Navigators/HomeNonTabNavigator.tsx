@@ -73,7 +73,7 @@ export default function HomeNonTabNavigator() {
           headerTitle: ctx => {
             return (
               <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
+                forScene="Lending"
                 titleText={ctx.children}
               />
             );

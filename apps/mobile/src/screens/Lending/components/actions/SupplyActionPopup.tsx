@@ -56,7 +56,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   const [approveTxs, setApproveTxs] = useState<any>();
   const { refresh } = useRefreshHistoryId();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
+    forScene: 'Lending',
   });
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
   const { t } = useTranslation();

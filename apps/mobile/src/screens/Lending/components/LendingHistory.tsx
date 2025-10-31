@@ -78,7 +78,7 @@ function LendingHistory(): JSX.Element {
 
   const { finalSceneCurrentAccount, sceneCurrentAccountDepKey } =
     useSceneAccountInfo({
-      forScene: 'MakeTransactionAbout',
+      forScene: 'Lending',
     });
   const isSceneUsingAllAccounts = false;
   const [firstFetchDone, setFirstFetchDone] = useState(false);

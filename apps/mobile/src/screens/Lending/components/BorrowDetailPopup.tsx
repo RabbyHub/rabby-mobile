@@ -30,7 +30,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   const { lastSelectedChain } = useLendingService();
   const { t } = useTranslation();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
+    forScene: 'Lending',
   });
   const handleShowLqBonusPopup = () => {
     const modalId = createGlobalBottomSheetModal2024({

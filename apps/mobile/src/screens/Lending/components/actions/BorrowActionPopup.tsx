@@ -60,7 +60,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   const { t } = useTranslation();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
+    forScene: 'Lending',
   });
   const [isChecked, setIsChecked] = useState(false);
   const { formattedPoolReservesAndIncentives } = useLendingSummary();

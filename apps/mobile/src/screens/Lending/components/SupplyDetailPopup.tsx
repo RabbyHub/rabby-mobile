@@ -34,7 +34,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
+    forScene: 'Lending',
   });
   const { t } = useTranslation();
   const hasSupplyBalance = useMemo(() => {

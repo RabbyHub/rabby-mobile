@@ -62,7 +62,7 @@ export const LendingHeader = ({ onPendingClear }: LendingHeaderProps) => {
   const { refreshHistoryId } = useRefreshHistoryId();
   const [showGreenDot, setShowGreenDot] = useState(false);
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
+    forScene: 'Lending',
   });
   const fetchLocalTx = useCallback(async () => {
     const address = finalSceneCurrentAccount?.address.toLowerCase()!;

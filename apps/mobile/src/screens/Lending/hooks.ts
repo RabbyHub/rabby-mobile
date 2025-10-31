@@ -123,7 +123,7 @@ const useRefreshHistoryId = () => {
 
 const useLendingData = (init: boolean = false) => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
+    forScene: 'Lending',
   });
   const [reserves, setReserves] = useAtom(reservesAtom);
   const [userReserves, setUserReserves] = useAtom(userReservesAtom);
