@@ -238,13 +238,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   contentContainer: {
     position: 'relative',
     borderRadius: 16,
-    paddingTop: 18,
+    paddingTop: 20,
     margin: 2,
     backgroundColor: 'rgba(27, 32, 48, 1)',
     overflow: 'hidden',
   },
   patchBottom: {
-    paddingBottom: 20,
+    paddingBottom: 22,
   },
   noBottom: {
     marginBottom: 0,
@@ -296,7 +296,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   netWorthTitle: {
     color: ThemeColors2024.dark['neutral-foot'],
     fontSize: 12,
-    lineHeight: 12,
+    lineHeight: 14,
     fontFamily: 'SF Pro Rounded',
   },
   netWorthValue: {
@@ -326,7 +326,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   sectionHeader: {
     color: ThemeColors2024.dark['neutral-foot'],
     fontSize: 12,
-    lineHeight: 12,
+    lineHeight: 14,
     fontFamily: 'SF Pro Rounded',
   },
   healthFactorContainer: {

@@ -167,6 +167,7 @@ const BorrowPoolList = () => {
       data={loading ? [] : sortReserves}
       style={styles.container}
       ListHeaderComponent={ListHeaderComponent}
+      showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }

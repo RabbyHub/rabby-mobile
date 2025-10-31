@@ -123,6 +123,7 @@ const SupplyPoolList = () => {
     <Tabs.FlatList
       data={loading ? [] : sortReserves}
       style={styles.container}
+      showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
