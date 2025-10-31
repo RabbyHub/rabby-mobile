@@ -211,10 +211,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           toast.info('please retry');
           throw new Error('no txs');
         }
-        let result: string[] = [];
+        let results: string[] = [];
         if (canShowDirectSubmit && !forceFullSign) {
           try {
-            result = await openDirect({
+            results = await openDirect({
               txs: withdrawTxs,
               ga: {
                 customAction: CUSTOM_HISTORY_ACTION.LENDING,
@@ -234,24 +234,27 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             }
           }
         } else {
-          await apiProvider.sendRequest({
-            data: {
-              method: 'eth_sendTransaction',
-              params: withdrawTxs,
-              $ctx: {
-                ga: {
-                  customAction: CUSTOM_HISTORY_ACTION.LENDING,
-                  customActionTitleType:
-                    CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW,
+          for (const tx of withdrawTxs) {
+            const result = await apiProvider.sendRequest({
+              data: {
+                method: 'eth_sendTransaction',
+                params: [tx],
+                $ctx: {
+                  ga: {
+                    customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                    customActionTitleType:
+                      CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW,
+                  },
                 },
               },
-            },
-            session: INTERNAL_REQUEST_SESSION,
-            account: currentAccount,
-          });
+              session: INTERNAL_REQUEST_SESSION,
+              account: currentAccount,
+            });
+            results.push(result);
+          }
         }
 
-        const txId = last(result);
+        const txId = last(results);
         if (txId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
@@ -565,5 +568,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   fullWidthButton: {
     flex: 1,
+    paddingBottom: 58,
   },
 }));
