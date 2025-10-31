@@ -24,13 +24,13 @@ const RepayActionOverView: React.FC<
   afterRepayAmount,
   afterRepayUsdValue,
 }) => {
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { healthFactor = '0' } = userSummary;
   const { t } = useTranslation();
 
   const hfColors = useMemo(() => {
-    return getHealthStatusColor(isLight, Number(healthFactor || '0'));
-  }, [healthFactor, isLight]);
+    return getHealthStatusColor(Number(healthFactor || '0'));
+  }, [healthFactor]);
 
   return (
     <View style={styles.container}>

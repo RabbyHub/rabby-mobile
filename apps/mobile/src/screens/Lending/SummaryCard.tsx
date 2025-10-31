@@ -33,7 +33,7 @@ interface IProps {
 }
 
 const SummaryCard = (props: IProps) => {
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { skipHealthFactorWarning, setSkipHealthFactorWarning } =
     useLendingService();
@@ -150,7 +150,6 @@ const SummaryCard = (props: IProps) => {
                     styles.healthFactorValue,
                     {
                       color: getHealthStatusColor(
-                        isLight,
                         Number(props.healthFactor || '0'),
                       ).color,
                     },
@@ -175,11 +174,9 @@ const SummaryCard = (props: IProps) => {
                   styles.healthFactorStatus,
                   {
                     color: getHealthStatusColor(
-                      isLight,
                       Number(props.healthFactor || '0'),
                     ).color,
                     backgroundColor: getHealthStatusColor(
-                      isLight,
                       Number(props.healthFactor || '0'),
                     ).backgroundColor,
                   },
@@ -212,7 +209,9 @@ const SummaryCard = (props: IProps) => {
             </TouchableOpacity>
           </View>
           {extraInfo.showClose && (
-            <TouchableOpacity onPress={() => setSkipHealthFactorWarning(true)}>
+            <TouchableOpacity
+              style={styles.extraClose}
+              onPress={() => setSkipHealthFactorWarning(true)}>
               <IconCloseCC
                 width={14}
                 height={14}
@@ -393,5 +392,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     left: '50%',
     color: 'black',
     transform: [{ translateX: -6 }],
+  },
+  extraClose: {
+    marginLeft: 8,
   },
 }));

@@ -6,7 +6,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from 'react-native-gesture-handler';
 
 export const LendingHF: React.FC<{}> = () => {
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
   useLendingData(true);
   const { iUserSummary } = useLendingSummary();
 
@@ -15,10 +15,8 @@ export const LendingHF: React.FC<{}> = () => {
       style={[
         styles.text,
         {
-          color: getHealthStatusColor(
-            isLight,
-            Number(iUserSummary.healthFactor || '0'),
-          ).color,
+          color: getHealthStatusColor(Number(iUserSummary.healthFactor || '0'))
+            .color,
         },
       ]}>
       {formatNum(iUserSummary.healthFactor)}

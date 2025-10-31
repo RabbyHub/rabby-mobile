@@ -7,15 +7,14 @@ import { formatNum } from '@/utils/math';
 import { getHealthStatusColor } from '../utils';
 
 const HealthFactorText = ({ healthFactor }: { healthFactor: string }) => {
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <Text
       style={[
         styles.hfValue,
         {
-          color: getHealthStatusColor(isLight, Number(healthFactor || '0'))
-            .color,
+          color: getHealthStatusColor(Number(healthFactor || '0')).color,
         },
       ]}>
       {formatNum(healthFactor)}

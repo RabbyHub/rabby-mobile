@@ -26,7 +26,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   userSummary,
   onClose,
 }) => {
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { lastSelectedChain } = useLendingService();
   const { t } = useTranslation();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -243,7 +243,6 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
                     styles.userInfoItemValue,
                     {
                       color: getHealthStatusColor(
-                        isLight,
                         Number(userSummary?.healthFactor || '0'),
                       ).color,
                     },

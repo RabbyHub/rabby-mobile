@@ -19,7 +19,7 @@ const WithdrawActionOverView: React.FC<
     };
   }
 > = ({ reserve, userSummary, afterHF, afterSupply, amount }) => {
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { healthFactor = '0' } = userSummary;
   const availableText = useMemo(() => {
@@ -27,8 +27,8 @@ const WithdrawActionOverView: React.FC<
   }, [reserve.underlyingBalanceUSD]);
 
   const hfColors = useMemo(() => {
-    return getHealthStatusColor(isLight, Number(healthFactor || '0'));
-  }, [healthFactor, isLight]);
+    return getHealthStatusColor(Number(healthFactor || '0'));
+  }, [healthFactor]);
 
   return (
     <View style={styles.container}>

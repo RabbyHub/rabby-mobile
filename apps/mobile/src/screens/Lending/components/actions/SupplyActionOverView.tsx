@@ -23,7 +23,7 @@ const SupplyActionOverView: React.FC<
     afterAvailable?: string;
   }
 > = ({ reserve, userSummary, afterHF, afterAvailable }) => {
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { availableBorrowsUSD = '0', healthFactor = '0' } = userSummary;
   const { t } = useTranslation();
 
@@ -36,8 +36,8 @@ const SupplyActionOverView: React.FC<
   }, [availableBorrowsUSD]);
 
   const hfColors = useMemo(() => {
-    return getHealthStatusColor(isLight, Number(healthFactor || '0'));
-  }, [healthFactor, isLight]);
+    return getHealthStatusColor(Number(healthFactor || '0'));
+  }, [healthFactor]);
 
   const handleSupplyDescription = () => {
     const modalId = createGlobalBottomSheetModal2024({

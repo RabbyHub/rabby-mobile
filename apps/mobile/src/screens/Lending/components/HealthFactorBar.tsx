@@ -15,17 +15,14 @@ interface HealthFactorBarProps {
 export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
   healthFactor,
 }) => {
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
   const hfNumber = Number(healthFactor || '0');
 
   const dotPosition = hfNumber > 10 ? 100 : (hfNumber / 10) * 100;
 
-  const hfColor = useMemo(
-    () => getHealthStatusColor(isLight, hfNumber),
-    [hfNumber, isLight],
-  );
+  const hfColor = useMemo(() => getHealthStatusColor(hfNumber), [hfNumber]);
 
   return (
     <View style={styles.container}>
