@@ -1,8 +1,8 @@
+import { MenuTriggerProps } from 'zeego/src/menu';
+import * as DropdownMenu from 'zeego/src/dropdown-menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
 import { ImageSourcePropType } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
-import { MenuTriggerProps } from 'zeego/lib/typescript/menu';
-import * as DropdownMenu from 'zeego/dropdown-menu';
 
 export interface MenuAction {
   title: string;
@@ -47,7 +47,8 @@ export const DropDownMenuView: React.FC<Props> = ({
         loop={loop}
         sideOffset={5}
         align={'end'}
-        side={{ default: 'end', right: 'start' }}
+        // side={{ default: 'end', right: 'start' }}
+        side={'bottom'}
         alignOffset={alignOffset}
         avoidCollisions={avoidCollisions}
         collisionPadding={10}>

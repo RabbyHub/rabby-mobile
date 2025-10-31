@@ -229,7 +229,7 @@ class SignatureManager {
   }
 
   private canProcess(state: SignatureFlowState = this.state) {
-    const { ctx } = state;
+    const { ctx, config } = state;
     const gasMethod = ctx?.gasMethod;
     const gasAccountCanPay =
       ctx?.gasMethod === 'gasAccount' &&
@@ -268,6 +268,18 @@ class SignatureManager {
           !ctx?.txsCalc?.length ||
           !!ctx.checkErrors?.some(e => e.level === 'forbidden')
       : false;
+
+    const autoUseGasFreeMethod =
+      !loading &&
+      disabledProcess &&
+      config?.autoUseGasFree &&
+      (ctx?.isGasNotEnough || !!gasLessConfig) &&
+      !!canUseGasLess;
+
+    if (autoUseGasFreeMethod && state.ctx) {
+      state.ctx.useGasless = true;
+      return true;
+    }
 
     return !disabledProcess;
   }

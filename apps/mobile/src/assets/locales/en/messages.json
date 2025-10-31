@@ -997,7 +997,7 @@
         "websites": "Websites",
         "copyTrading": "Copy Trading",
         "search": "Search Token",
-        "watchlist": "Watchlist",
+        "watchlist": "Token Watchlist",
         "perps": "Perps",
         "perpsMarketList": "More Perps"
       }
@@ -2190,7 +2190,8 @@
       },
       "WebviewError": {
         "failedToLoad": "Failed to load the page",
-        "error": "Error:"
+        "error": "Error:",
+        "alertText": "Try<1/><2>Open in browser</2><3/>to check if it is a website issue"
       },
       "toast": {
         "clearCacheSuccess": "Cache cleared"
@@ -2535,10 +2536,23 @@
         "title": "Deposit USDC / USDT",
         "desc": "Pay Gas Fees on All Chains",
         "login": "Log in GasAccount",
+        "depositTitle": "Deposit USDC/USDT Pay Gas Fees",
+        "depositDesc": "on All Chains when you’re out of gas",
         "loginAndClaim": "Log in and Claim {{amount}}",
         "loginTips1": "Pay gas fees for",
         "loginTips2": "any address on any chain",
-        "loginTips3": "when you're out of gas"
+        "loginTips3": "when you're out of gas",
+        "learnAbout": "Learn more about GasAccount"
+      },
+      "about": {
+        "title1": "What is GasAccount",
+        "desc1": "GasAccount is a new way to pay gas fees. Instead of using native tokens on each chain, you can use one account to cover gas for all your addresses on all chains. Simple, optional, and never out of gas.",
+        "title2": "How to use Gas Account",
+        "desc2": "Add funds to your GasAccount and use it for any transaction. When signing, choose to pay gas with native tokens or GasAccount, switch anytime.",
+        "title3": "Does GasAccount have extra fees",
+        "desc3": "Rabby Wallet charges no extra fees. You only pay the gas for your transaction and a small amount of gas for sending that gas from GasAccount to your address.",
+        "title4": "Is GasAccount safe",
+        "desc4": "GasAccount requires no contract approvals or permissions. You deposit to Rabby’s GasAccount address, and Rabby sends gas to your address when needed. Fully secure by design."
       },
       "loginConfirmModal": {
         "title": "Select Wallet to Login",
@@ -2743,6 +2757,12 @@
         "desc": "Add trusted address to Whitelist",
         "addBtn": "Add now"
       }
+    },
+    "Prediction": {
+      "side": "Side",
+      "amount": "Amount",
+      "price": "Price",
+      "usdValue": "USD Value"
     }
   },
   "native": {

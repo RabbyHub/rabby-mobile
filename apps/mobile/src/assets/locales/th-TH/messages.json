@@ -236,6 +236,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "ฉันเข้าใจแล้ว"
+    },
+    "Prediction": {
+      "amount": "จำนวน",
+      "price": "ราคา",
+      "usdValue": "มูลค่า USD",
+      "side": "ข้าง"
     }
   },
   "page": {
@@ -937,7 +943,7 @@
         "queue": "คิว",
         "search": "ค้นหา Token",
         "copyTrading": "การคัดลอกการซื้อขาย",
-        "watchlist": "รายการเฝ้าติดตาม",
+        "watchlist": "รายการติดตามโทเคน",
         "perps": "Perps",
         "perpsMarketList": "มากขึ้น Perps"
       }
@@ -1329,9 +1335,9 @@
         "title_other": "{{count}} กระเป๋าเงิน",
         "importWatchAddress": "นำเข้ากระเป๋าเงินแบบดูเฉพาะ",
         "addAddress": "เพิ่มกระเป๋าเงิน",
-        "moreWallets": "更多 Wallets",
         "notIncludedInTotalBalance": "ไม่รวมในยอดรวม",
-        "notIncludedInTransactions": "ไม่รวมในธุรกรรม"
+        "notIncludedInTransactions": "ไม่รวมในธุรกรรม",
+        "moreWallets": "กระเป๋าเงินเพิ่มเติม"
       },
       "add-to-whitelist": "เพิ่มใน Whitelist",
       "pin-in-list": "ปักหมุดในรายการ",
@@ -1757,7 +1763,7 @@
         }
       },
       "xPoints": "{{point}} คะแนน",
-      "alreadyClaimedXPoints": "已经领取：{{point}}"
+      "alreadyClaimedXPoints": "เรียบร้อยแล้ว: {{point}}"
     },
     "approvalsAddressList": {
       "title": "Approvals"
@@ -2317,7 +2323,8 @@
       },
       "WebviewError": {
         "failedToLoad": "ไม่สามารถโหลดหน้าเว็บได้",
-        "error": "ข้อผิดพลาด:"
+        "error": "ข้อผิดพลาด:",
+        "alertText": "ลอง<1/><2>เปิดในเบราว์เซอร์</2><3/>เพื่อตรวจสอบว่ามันเป็นปัญหาเกี่ยวกับเว็บไซต์หรือไม่"
       },
       "toast": {
         "clearCacheSuccess": "เคลียร์แคชเรียบร้อยแล้ว"
@@ -2646,7 +2653,6 @@
       "PerpsOpenPositionCheckPopup": {
         "fee": "ค่าธรรมเนียม",
         "size": "ขนาด",
-        "perps": "永续合约",
         "btn": "เปิดตำแหน่ง {{direction}}",
         "autoClose": "ปิดอัตโนมัติ",
         "tpPrice": "ราคา Take-Profit",
@@ -2660,7 +2666,8 @@
         "liquidationPriceTips": "ราคาที่ตำแหน่งของคุณถูกปิดโดยอัตโนมัติจากการแลกเปลี่ยนเพื่อป้องกันการขาดทุนเพิ่มเติมเมื่อมาร์จิ้นของคุณต่ำกว่าระดับมาร์จิ้นขั้นต่ำ",
         "rabbyFeeTips": "ค่าธรรมเนียม Rabby: 0%",
         "margin": "มาร์จิ้น (แยก)",
-        "providerFeeTips": "ค่าใช้จ่ายของ Hyperliquid: {{fee}}"
+        "providerFeeTips": "ค่าใช้จ่ายของ Hyperliquid: {{fee}}",
+        "perps": "Perps"
       },
       "action": {
         "short": "ขายทำกำไร",

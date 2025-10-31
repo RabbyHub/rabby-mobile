@@ -8864,7 +8864,7 @@ __metadata:
     "@metamask/json-rpc-engine": ^7.3.0
     "@metamask/utils": ^8.2.0
     "@rabby-wallet/gnosis-sdk": 1.4.5
-    "@rabby-wallet/rabby-api": 0.9.44
+    "@rabby-wallet/rabby-api": 0.9.45
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^5.62.0
     "@typescript-eslint/parser": ^5.62.0
@@ -8980,16 +8980,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-action@npm:0.1.13":
-  version: 0.1.13
-  resolution: "@rabby-wallet/rabby-action@npm:0.1.13"
+"@rabby-wallet/rabby-action@npm:0.1.14":
+  version: 0.1.14
+  resolution: "@rabby-wallet/rabby-action@npm:0.1.14"
   peerDependencies:
     "@debank/common": "*"
     "@rabby-wallet/rabby-api": "*"
     "@rabby-wallet/rabby-security-engine": "*"
     bignumber.js: "*"
     p-queue: ^7.3.0
-  checksum: 501604d19d37be7272a17fe57ff225bc77a7caa3d9732700ba7cf2aba982dd39541c2da457b2c0cc7bf20eadaa1f8830e23c1d4794da85414d8f41effe5f5b2c
+  checksum: d7cd445f6cca089f396d951b753fdf3d945605674338c96f2fe2b6619b1b6ba181bab26485b1fc4b294bdc07724b6ec736cb00f7b7ea898829e361a85800a9d8
   languageName: node
   linkType: hard
 
@@ -9010,9 +9010,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.44":
-  version: 0.9.44
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.44"
+"@rabby-wallet/rabby-api@npm:0.9.45":
+  version: 0.9.45
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.45"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -9023,7 +9023,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 5caf9eaab24d2e39c3e395147a19108c61ec3f2f15f6875432bba70b59322043576015b39b3be88a96227df88e1eac6bed75f534505abb09b41d0993f29df748
+  checksum: d5fa3b107c094906d3e0d1fe7ccc752e35315a8cbb1fbce822851ecb66f03b4e12707b18d08d132ba05b59e6496ed0e803e796087581c4408c5a98827017e1e0
   languageName: node
   linkType: hard
 
@@ -10034,6 +10034,16 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: b19dbb1d9583e2e065238c6d343c16b6ed00bc6297a59cc142d9f877484c4e3406cbe5e8f4fb9368b7cfb9eef11cbe0d1c79cccc8b0d725533d15dab02966b95
+  languageName: node
+  linkType: hard
+
+"@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A1.2.3#./.yarn/patches/@react-native-menu-menu-npm-1.2.3-182506938b.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 1.2.3
+  resolution: "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A1.2.3#./.yarn/patches/@react-native-menu-menu-npm-1.2.3-182506938b.patch::version=1.2.3&hash=22d005&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 1b136f2afd6d1a67eb2d749e54e266a162a8624bdb560f2694e0c4ddbaf9e36163b31033d725fe378c2932c57426a0dd708c1d350a1c261304add375bd930d0e
   languageName: node
   linkType: hard
 
@@ -33775,8 +33785,8 @@ __metadata:
     "@rabby-wallet/hyperliquid-sdk": 1.0.9
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-action": 0.1.13
-    "@rabby-wallet/rabby-api": 0.9.44
+    "@rabby-wallet/rabby-action": 0.1.14
+    "@rabby-wallet/rabby-api": 0.9.45
     "@rabby-wallet/rabby-security-engine": 2.0.11
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.67
@@ -42739,7 +42749,7 @@ __metadata:
 
 "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.10.0
-  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=abb230&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=169feb&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@radix-ui/react-context-menu": ^2.0.1
     "@radix-ui/react-dropdown-menu": ^2.0.1
@@ -42749,7 +42759,7 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-ios-context-menu: ^2.3.2
-  checksum: 64cac998ced92fe05a5442ec27fe13869ff63a191df0789135373c8c96409114222fe211b5a91ccd566b26ae0afadc7d9b3d447afc9f2239c622eef317c10a38
+  checksum: e259c4932bb50c892f7a5189590afcc12bdac216992158081195301a1f1ef8a1e147178ebe3b2255959d131b8bd8583f7b8b32522e1f2b290ec19cfc6d9b97ec
   languageName: node
   linkType: hard
 

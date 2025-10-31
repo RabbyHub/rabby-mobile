@@ -984,7 +984,7 @@
         "websites": "Situs Web",
         "approvals": "Persetujuan",
         "copyTrading": "Copy Trading",
-        "watchlist": "Daftar Pantauan",
+        "watchlist": "Token Watchlist",
         "perps": "Perps",
         "perpsMarketList": "Lebih Banyak Perp"
       }
@@ -2105,7 +2105,8 @@
       },
       "WebviewError": {
         "error": "Error:",
-        "failedToLoad": "Gagal memuat halaman"
+        "failedToLoad": "Gagal memuat halaman",
+        "alertText": "Coba<1/><2> Buka di browser</2><3/> untuk memeriksa apakah itu masalah situs web"
       },
       "toast": {
         "clearCacheSuccess": "Cache dibersihkan"
@@ -2678,6 +2679,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "Saya Mengerti"
+    },
+    "Prediction": {
+      "amount": "Jumlah",
+      "price": "Harga",
+      "side": "Sisi",
+      "usdValue": "Nilai USD"
     }
   },
   "native": {

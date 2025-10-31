@@ -251,6 +251,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "Eu entendi"
+    },
+    "Prediction": {
+      "usdValue": "Valor em USD",
+      "amount": "Montante",
+      "price": "Preço",
+      "side": "Lado"
     }
   },
   "global": {
@@ -1011,7 +1017,7 @@
         "websites": "Websites",
         "search": "Pesquisar Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Lista de Vigilância",
+        "watchlist": "Lista de Observação de Tokens",
         "perpsMarketList": "Mais Perps",
         "perps": "Perps"
       }
@@ -2407,7 +2413,8 @@
       },
       "WebviewError": {
         "error": "Erro:",
-        "failedToLoad": "Falha ao carregar a página"
+        "failedToLoad": "Falha ao carregar a página",
+        "alertText": "Tente<1/><2>Abrir no navegador</2><3/>para verificar se é um problema do site"
       },
       "toast": {
         "clearCacheSuccess": "Cache limpo"

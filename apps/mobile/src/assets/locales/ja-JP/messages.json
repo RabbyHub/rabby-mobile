@@ -916,7 +916,7 @@
         "websites": "ウェブサイト",
         "search": "Search Token",
         "copyTrading": "コピー取引",
-        "watchlist": "ウォッチリスト",
+        "watchlist": "トークンウォッチリスト",
         "perps": "パープス",
         "perpsMarketList": "より多くのPerps"
       }
@@ -2158,7 +2158,8 @@
       },
       "WebviewError": {
         "failedToLoad": "ページの読み込みに失敗しました",
-        "error": "エラー："
+        "error": "エラー：",
+        "alertText": "試してみてください<1/><2>ブラウザで開く</2><3/>ウェブサイトの問題か確認するために"
       },
       "toast": {
         "clearCacheSuccess": "キャッシュがクリアされました"
@@ -2826,6 +2827,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "理解しました"
+    },
+    "Prediction": {
+      "price": "価格",
+      "amount": "金額",
+      "side": "サイド",
+      "usdValue": "USDの価値"
     }
   },
   "common": {

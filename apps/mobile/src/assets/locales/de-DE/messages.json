@@ -326,6 +326,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "Ich habe es verstanden"
+    },
+    "Prediction": {
+      "usdValue": "USD-Wert",
+      "amount": "Betrag",
+      "price": "Preis",
+      "side": "Seite"
     }
   },
   "page": {
@@ -1102,7 +1108,7 @@
         "queue": "Warteschlange",
         "search": "Token suchen",
         "copyTrading": "Copy Trading",
-        "watchlist": "Überwachungsliste",
+        "watchlist": "Token-Watchlist",
         "perps": "Perps",
         "perpsMarketList": "Mehr Perps"
       }
@@ -2407,7 +2413,8 @@
       },
       "WebviewError": {
         "failedToLoad": "Seite konnte nicht geladen werden",
-        "error": "Fehler:"
+        "error": "Fehler:",
+        "alertText": "Versuchen Sie<1/><2>im Browser zu öffnen</2><3/>um zu überprüfen, ob es sich um ein Website-Problem handelt"
       },
       "toast": {
         "clearCacheSuccess": "Cache gelöscht"

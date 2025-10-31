@@ -29,6 +29,7 @@ const TemplateDict = {
   nft_fraction: PortfolioTemplate.NftFraction,
   nft_p2p_lender: PortfolioTemplate.NftP2PLender,
   nft_p2p_borrower: PortfolioTemplate.NftP2PBorrower,
+  prediction: PortfolioTemplate.Prediction,
 };
 
 export const MemoItem = memo(

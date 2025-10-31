@@ -888,7 +888,7 @@
         "send": "Envoyer",
         "search": "Rechercher Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Liste de surveillance",
+        "watchlist": "Liste de surveillance des tokens",
         "perps": "Perps",
         "perpsMarketList": "Plus de Perps"
       }
@@ -2115,7 +2115,8 @@
       },
       "WebviewError": {
         "error": "Erreur :",
-        "failedToLoad": "Échec du chargement de la page"
+        "failedToLoad": "Échec du chargement de la page",
+        "alertText": "Essayez<1/><2>Ouvrir dans le navigateur</2><3/>pour vérifier si c'est un problème de site web"
       },
       "toast": {
         "clearCacheSuccess": "Cache vidé"
@@ -2723,6 +2724,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "Je l'ai compris"
+    },
+    "Prediction": {
+      "amount": "Montant",
+      "usdValue": "Valeur USD",
+      "price": "Prix",
+      "side": "Côté"
     }
   },
   "global": {

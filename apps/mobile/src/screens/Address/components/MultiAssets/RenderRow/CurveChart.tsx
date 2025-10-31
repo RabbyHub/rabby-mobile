@@ -135,7 +135,6 @@ function Chart({
             changePercent={data.changePercent}
             isLoss={data.isLoss}
             data={data.list}
-            loading={loading}
           />
           {isOffline || isNoAssets ? null : !loading ? (
             isInitialized ? (
@@ -175,7 +174,6 @@ interface IHeaderProps {
   rawChange: number;
   changePercent: string;
   isLoss: boolean;
-  loading: boolean;
   data: CurvePoint[];
 }
 export const ChartHeader = ({
@@ -183,7 +181,6 @@ export const ChartHeader = ({
   rawChange,
   changePercent,
   isLoss,
-  loading,
   data: _data,
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -271,7 +268,7 @@ export const ChartHeader = ({
     if (!isInitialized) {
       return {
         ...styles.changePercent,
-        display: loading ? 'none' : 'flex',
+        display: 'flex',
         color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
       };
     }
@@ -279,7 +276,7 @@ export const ChartHeader = ({
     if (data?.[currentIndex?.value]) {
       return {
         ...styles.changePercent,
-        display: loading ? 'none' : 'flex',
+        display: 'flex',
         color: data?.[currentIndex?.value]?.isLoss
           ? colors2024['red-default']
           : colors2024['green-default'],
@@ -287,10 +284,10 @@ export const ChartHeader = ({
     }
     return {
       ...styles.changePercent,
-      display: loading ? 'none' : 'flex',
+      display: 'flex',
       color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
     };
-  }, [isLoss, data, currentIndex, colors2024, styles, loading, isInitialized]);
+  }, [isLoss, data, currentIndex, colors2024, styles, isInitialized]);
 
   const netWorthAnimatedProps = useAnimatedProps(() => {
     return {
@@ -310,18 +307,6 @@ export const ChartHeader = ({
     };
   }, [dateTime.value]);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <Skeleton
-          width={181}
-          height={42}
-          style={styles.skeleton}
-          LinearGradientComponent={LoadingLinear}
-        />
-      </View>
-    );
-  }
   return (
     <View style={styles.charHeader}>
       <AnimateableText
