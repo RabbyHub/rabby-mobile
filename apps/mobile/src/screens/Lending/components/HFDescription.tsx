@@ -26,7 +26,7 @@ export const HFDescription: React.FC<{
 
         <View style={styles.rulesContainer}>
           <View style={styles.ruleItem}>
-            <View style={styles.greenBullet} />
+            <View style={styles.grayBullet} />
             <Text style={styles.greyRuleText}>
               <Text style={styles.greenRuleText}>
                 {t('page.Lending.lqDescription.over3title')}
@@ -36,7 +36,7 @@ export const HFDescription: React.FC<{
           </View>
 
           <View style={styles.ruleItem}>
-            <View style={styles.greenBullet} />
+            <View style={styles.grayBullet} />
             <Text style={styles.greyRuleText}>
               <Text style={styles.redRuleText}>
                 {t('page.Lending.lqDescription.below1title')}
@@ -46,7 +46,7 @@ export const HFDescription: React.FC<{
           </View>
 
           <View style={styles.ruleItem}>
-            <View style={styles.greenBullet} />
+            <View style={styles.grayBullet} />
             <Text style={styles.greyRuleText}>
               {t('page.Lending.lqDescription.liquidation')}
             </Text>
@@ -112,11 +112,11 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'flex-start',
     marginBottom: 6,
   },
-  greenBullet: {
+  grayBullet: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#22C55E',
+    backgroundColor: ctx.colors2024['neutral-secondary'],
     marginTop: 9,
     marginRight: 12,
   },
