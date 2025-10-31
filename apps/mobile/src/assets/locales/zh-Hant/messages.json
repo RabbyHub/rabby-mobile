@@ -901,7 +901,7 @@
         "gasAccount": "GasAccount",
         "search": "搜尋 Token",
         "copyTrading": "複製交易",
-        "watchlist": "觀察清單",
+        "watchlist": "代幣觀察列表",
         "perpsMarketList": "更多 Perps",
         "perps": "永续合约"
       }
@@ -2256,7 +2256,8 @@
       },
       "WebviewError": {
         "error": "錯誤：",
-        "failedToLoad": "無法加載頁面"
+        "failedToLoad": "無法加載頁面",
+        "alertText": "嘗試<1/><2>在瀏覽器中打開</2><3/>以檢查是否是網站問題"
       },
       "toast": {
         "clearCacheSuccess": "快取已清除"
@@ -2829,6 +2830,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "我明白了"
+    },
+    "Prediction": {
+      "side": "側邊",
+      "amount": "金額",
+      "price": "價格",
+      "usdValue": "USD 價值"
     }
   },
   "common": {

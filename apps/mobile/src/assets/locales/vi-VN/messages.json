@@ -1188,7 +1188,7 @@
         "websites": "Websites",
         "search": "Tìm kiếm Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Danh sách theo dõi",
+        "watchlist": "Danh sách theo dõi Token",
         "perps": "Perps",
         "perpsMarketList": "Thêm Perps"
       }
@@ -2199,7 +2199,8 @@
       },
       "WebviewError": {
         "error": "Lỗi:",
-        "failedToLoad": "Không thể tải trang"
+        "failedToLoad": "Không thể tải trang",
+        "alertText": "Thử<1/><2>Mở trong trình duyệt</2><3/>để kiểm tra xem có phải là vấn đề của trang web không"
       },
       "toast": {
         "clearCacheSuccess": "Bộ nhớ cache đã được xóa"
@@ -2772,6 +2773,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "Tôi hiểu rồi"
+    },
+    "Prediction": {
+      "price": "Giá",
+      "side": "Bên cạnh",
+      "usdValue": "Giá trị USD",
+      "amount": "Số lượng"
     }
   },
   "constant": {

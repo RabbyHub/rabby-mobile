@@ -987,7 +987,7 @@
         "queue": "Kuyruk",
         "websites": "Web Siteleri",
         "copyTrading": "Copy Trading",
-        "watchlist": "Göz Atma Listesi",
+        "watchlist": "Token İzleme Listesi",
         "perps": "Perps",
         "perpsMarketList": "Daha Fazla Perps"
       }
@@ -2108,7 +2108,8 @@
       },
       "WebviewError": {
         "error": "Hata:",
-        "failedToLoad": "Sayfa yüklenemedi"
+        "failedToLoad": "Sayfa yüklenemedi",
+        "alertText": "Denemek için <1/><2>Tarayıcıda aç</2><3/> bunun bir web sitesi sorunu olup olmadığını kontrol et."
       },
       "toast": {
         "clearCacheSuccess": "Önbellek temizlendi"
@@ -2681,6 +2682,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "Anladım"
+    },
+    "Prediction": {
+      "price": "Fiyat",
+      "amount": "Miktar",
+      "side": "Taraf",
+      "usdValue": "USD Değeri"
     }
   },
   "native": {

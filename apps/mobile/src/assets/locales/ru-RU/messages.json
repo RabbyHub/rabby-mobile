@@ -950,7 +950,7 @@
         "send": "Отправить",
         "search": "Поиск токена",
         "copyTrading": "Копирование торговли",
-        "watchlist": "Список наблюдения",
+        "watchlist": "Токен Наблюдательный Список",
         "perps": "Перпсы",
         "perpsMarketList": "Больше Perps"
       }
@@ -2199,7 +2199,8 @@
       },
       "WebviewError": {
         "failedToLoad": "Не удалось загрузить страницу",
-        "error": "Ошибка:"
+        "error": "Ошибка:",
+        "alertText": "Попробуйте<1/><2>Открыть в браузере</2><3/>чтобы проверить, проблема ли это с сайтом."
       },
       "toast": {
         "clearCacheSuccess": "Кэш очищен"
@@ -2772,6 +2773,12 @@
     },
     "GlobalTipsPopup": {
       "btn": "Я понял это"
+    },
+    "Prediction": {
+      "price": "Цена",
+      "usdValue": "USD Значение",
+      "amount": "Сумма",
+      "side": "Сторона"
     }
   },
   "constant": {
