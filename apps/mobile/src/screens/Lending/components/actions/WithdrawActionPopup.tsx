@@ -100,6 +100,9 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
 
   const withdrawAmount = useMemo(() => {
+    if (!userSummary.totalBorrowsUSD || userSummary.totalBorrowsUSD === '0') {
+      return Number(reserve.underlyingBalance || '0');
+    }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
@@ -137,8 +140,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       BigNumber(reserve.reserve.formattedPriceInMarketReferenceCurrency),
     );
     return {
-      balance: balance.lte('0') ? '0' : balance.toString(),
-      balanceUSD: balanceUSD.lte('0') ? '0' : balanceUSD.toString(),
+      balance: balance.toString(),
+      balanceUSD: balanceUSD.toString(),
     };
   }, [
     amount,
@@ -211,7 +214,6 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           toast.info('please retry');
           throw new Error('no txs');
         }
-        setAmount(undefined);
         let results: string[] = [];
         if (canShowDirectSubmit && !forceFullSign) {
           try {
@@ -256,7 +258,6 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         }
 
         const txId = last(results);
-        onClose?.();
         if (txId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
@@ -271,6 +272,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             'page.Lending.submitted',
           )}`,
         );
+        setAmount(undefined);
+        onClose?.();
       } catch (error) {
       } finally {
         setIsLoading(false);

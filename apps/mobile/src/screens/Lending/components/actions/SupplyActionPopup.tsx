@@ -351,7 +351,6 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           toast.info('please retry');
           throw new Error('no txs');
         }
-        setAmount(undefined);
         let results: string[] = [];
         if (canShowDirectSubmit && !forceFullSign) {
           try {
@@ -394,7 +393,6 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           }
         }
         const txId = last(results);
-        onClose?.();
         if (txId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
@@ -409,6 +407,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             'page.Lending.submitted',
           )}`,
         );
+        setAmount(undefined);
+        onClose?.();
       } catch (error) {
       } finally {
         setIsLoading(false);
