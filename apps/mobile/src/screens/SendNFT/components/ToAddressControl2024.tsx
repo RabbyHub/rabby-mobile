@@ -459,15 +459,15 @@ export default function ToAddressControl2024({
               color={colors2024['green-default']}
             />
             <Text style={styles.positiveTipsText}>
-              {foundAccountInfo?.isMyImported ? (
-                <Text>
-                  {t('page.sendToken.sectionTo.positiveTips.yourOwnAddress')}
-                </Text>
-              ) : foundAccountInfo?.inWhitelist ? (
+              {foundAccountInfo?.inWhitelist ? (
                 <Text>
                   {t(
                     'page.sendToken.sectionTo.positiveTips.whitelistedAddress',
                   )}
+                </Text>
+              ) : foundAccountInfo?.isMyImported ? (
+                <Text>
+                  {t('page.sendToken.sectionTo.positiveTips.yourOwnAddress')}
                 </Text>
               ) : toAddressIsRecentlySend ? (
                 t('page.sendToken.sectionTo.positiveTips.sentRecently')

@@ -30,6 +30,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { BubbleWithText } from '@/screens/Swap/components/Slider';
 import { tokenAmountBn } from '../Swap/utils';
 import BigNumber from 'bignumber.js';
+import usePrevious from 'react-use/lib/usePrevious';
 
 export function BalanceSection({
   style,
@@ -139,6 +140,13 @@ export function BalanceSection({
   const sliderDisable = useMemo(() => {
     return screenState.isLoading || screenState.isEstimatingGas;
   }, [screenState]);
+
+  const previousAddress = usePrevious(currentAccount?.address);
+  useEffect(() => {
+    if (previousAddress && previousAddress !== currentAccount?.address) {
+      onChangeSlider(0, true);
+    }
+  }, [previousAddress, currentAccount?.address, onChangeSlider]);
 
   if (!chainItem || !currentToken) {
     return null;

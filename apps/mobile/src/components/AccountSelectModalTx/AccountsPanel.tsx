@@ -245,14 +245,14 @@ export function AccountsPanelInSheetModal({
           type: 'myAddresses' as const,
         },
         {
-          title: TxAccountPannelSectionTitle.SafeAddresses,
-          data: safeAddresses,
-          type: 'safeAddresses' as const,
-        },
-        {
           title: TxAccountPannelSectionTitle.WatchAddresses,
           data: watchAddresses,
           type: 'watchAddresses' as const,
+        },
+        {
+          title: TxAccountPannelSectionTitle.SafeAddresses,
+          data: safeAddresses,
+          type: 'safeAddresses' as const,
         },
       ],
     };

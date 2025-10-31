@@ -45,6 +45,7 @@ import {
 } from '@/utils/account';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useRecentSendToHistoryFor } from '@/screens/Send/hooks/useRecentSend';
+import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -163,9 +164,11 @@ const DF_SEND_TOKEN_FORM: FormSendNFT = {
   amount: 1,
 };
 export function useSendNFTForm({
+  toAddress,
   nftToken,
   account: currentAccount,
 }: {
+  toAddress?: string;
   nftToken?: NFTItem;
   account?: Account;
 }) {
@@ -179,6 +182,7 @@ export function useSendNFTForm({
   // const [formValues, setFormValues] = useAtom(sendTokenScreenFormAtom);
   const [formValues, setFormValues] = React.useState<FormSendNFT>({
     ...DF_SEND_TOKEN_FORM,
+    to: toAddress || '',
   });
 
   const { validationSchema } = useMemo(() => {
@@ -358,9 +362,24 @@ export function useSendNFTForm({
   const { list: cexList } = useCexSupportList();
 
   const { whitelist, enable: whitelistEnabled } = useWhitelist();
-  const { recentHistory: recentSendToHistory } = useRecentSendToHistoryFor(
-    formValues.to,
-  );
+  const { recentHistory: recentSendToHistory, reFetch } =
+    useRecentSendToHistoryFor(formValues.to);
+
+  useEffect(() => {
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
+      txDetail => {
+        reFetch();
+        setTimeout(() => {
+          reFetch();
+        }, 5000);
+      };
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+    };
+  }, [reFetch]);
+
   const toAddressIsRecentlySend = recentSendToHistory.length > 0;
 
   const computed = useMemo(() => {

@@ -44,7 +44,7 @@ export const RecentUsedItem = ({
   style,
   timeStamp,
   inWhiteList,
-  enableMenu,
+  enableMenu = true,
   onPress,
 }: IProps) => {
   const [cexInfo, setCexInfo] = useState<Cex | undefined>();

@@ -52,7 +52,6 @@ export default function BottomArea({ account }: { account: Account | null }) {
   const { handleSubmit } = useSendTokenFormik();
 
   const {
-    events: sendTokenEvents,
     formValues,
     screenState,
     computed: {

@@ -66,7 +66,11 @@ export default function SendNFT() {
       canSubmit,
       canDirectSign,
     },
-  } = useSendNFTForm({ nftToken: nftItem, account });
+  } = useSendNFTForm({
+    toAddress: navParams?.toAddress,
+    nftToken: nftItem,
+    account,
+  });
 
   const { fetchContactAccounts } = useContactAccounts();
   const { t } = useTranslation();

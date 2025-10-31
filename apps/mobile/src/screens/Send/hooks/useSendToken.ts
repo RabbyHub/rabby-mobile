@@ -65,7 +65,7 @@ import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { usePollSendPendingCount } from './useSendPendingCount';
-import { eventBus, EVENTS } from '@/utils/events';
+import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { useMemoizedFn } from 'ahooks';
 import {
   useRecentSendToHistoryFor,
@@ -81,6 +81,7 @@ import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { IExtractFromPromise } from '@/utils/type';
 import { useWhiteListAddress } from './useWhiteListAddress';
+import useDebounceValue from '@/hooks/common/useDebounceValue';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -422,6 +423,7 @@ export function useSendTokenForm({
   const multiNavParams = route.params;
   const [formValues, setFormValues] = React.useState<FormSendToken>({
     ...DF_SEND_TOKEN_FORM,
+    to: toAddress || '',
   });
 
   const { addressType } = useCheckAddressType(
@@ -1662,9 +1664,24 @@ export function useSendTokenForm({
   const { list: cexList } = useCexSupportList();
 
   const { whitelist, enable: whitelistEnabled } = useWhitelist();
-  const { recentHistory: recentSendToHistory } = useRecentSendToHistoryFor(
-    formValues.to,
-  );
+  const { recentHistory: recentSendToHistory, reFetch } =
+    useRecentSendToHistoryFor(formValues.to);
+
+  useEffect(() => {
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
+      txDetail => {
+        reFetch();
+        setTimeout(() => {
+          reFetch();
+        }, 5000);
+      };
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+    };
+  }, [reFetch]);
+
   const toAddressIsRecentlySend = recentSendToHistory.length > 0;
 
   const computed = useMemo(() => {
@@ -1726,6 +1743,7 @@ export function useSendTokenForm({
 
   const isFocused = useIsFocused();
 
+  const stableAmountValue = useDebounceValue(formValues.amount, 300);
   useEffect(() => {
     if (
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
@@ -1739,7 +1757,7 @@ export function useSendTokenForm({
     prefetchMiniSigner,
     chainItem?.id,
     formValues.to,
-    formValues.amount,
+    stableAmountValue,
     formValues.messageDataForSendToEoa,
     formValues.messageDataForContractCall,
     currentAccount?.type,
@@ -1755,7 +1773,7 @@ export function useSendTokenForm({
       !chainItem?.isTestnet &&
       computed.canSubmit &&
       formValues.to &&
-      formValues.amount
+      stableAmountValue
     ) {
       prepareCountRef.current += 1;
       putScreenState({ buildTxsCount: prepareCountRef.current });
@@ -1768,7 +1786,7 @@ export function useSendTokenForm({
     chainItem?.isTestnet,
     computed.canSubmit,
     formValues.to,
-    formValues.amount,
+    stableAmountValue,
     formValues.messageDataForSendToEoa,
     formValues.messageDataForContractCall,
     currentAccount?.type,

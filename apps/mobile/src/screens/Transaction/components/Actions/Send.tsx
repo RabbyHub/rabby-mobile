@@ -58,7 +58,7 @@ import {
 } from '@/components/AccountSelectModalTx/hooks';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 
 interface Props {
   data: TransactionGroup;
@@ -311,7 +311,9 @@ export const Send: React.FC<Props> = ({
                 {
                   paddingTop: SIZES.containerPt,
                   height: safeSizes.inModalButtonContainerHeight,
-                  bottom: 0,
+                  bottom: IS_ANDROID
+                    ? safeSizes.inModalButtonContainerBottom
+                    : 0,
                 },
               ])
             : {},
@@ -378,7 +380,7 @@ export const Send: React.FC<Props> = ({
 const SIZES = {
   buttonHeight: 56,
   // bottomAreaPt: 0,
-  bottomContentBottom: IS_IOS ? 48 : 0,
+  bottomContentBottom: IS_IOS ? 48 : 48,
   containerPt: 12,
   containerPb: 12,
 };
@@ -439,7 +441,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tokenSymbolBox: {
     flexDirection: 'row',
-    maxWidth: '70%',
+    ...(IS_IOS
+      ? {
+          maxWidth: '70%',
+        }
+      : {
+          width: '100%',
+        }),
   },
   usdValue: {
     color: colors2024['neutral-secondary'],
@@ -497,6 +505,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 36,
     fontWeight: '700',
     maxWidth: '100%',
+    ...(IS_ANDROID && {
+      width: '75%',
+    }),
   },
   mutliBox: {
     width: '100%',
@@ -506,7 +517,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 16,
-    // flexDirection: 'row',
     gap: 12,
   },
   doubleBox: {

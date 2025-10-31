@@ -259,7 +259,7 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
 };
 
 export function useRecentSendToHistoryFor(toAddress?: string) {
-  const { recentHistory } = useRecentSend({ useAllHistory: true });
+  const { recentHistory, runAsync } = useRecentSend({ useAllHistory: true });
 
   return {
     recentHistory:
@@ -268,5 +268,6 @@ export function useRecentSendToHistoryFor(toAddress?: string) {
             item => item.toAddress.toLowerCase() === toAddress.toLowerCase(),
           )
         : [],
+    reFetch: runAsync,
   };
 }

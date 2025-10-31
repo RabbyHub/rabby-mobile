@@ -103,6 +103,7 @@ export const ScreenAddNewWhitelistAddress = ({
   // TODO: make auto focus
   // const { inputCallbackRef } = useAutoFocusInput(false);
 
+  const confirmModalIRef = useRef<any>(null);
   const handleDone = useMemoizedFn(
     debounce(async () => {
       if (!input) {
@@ -119,32 +120,59 @@ export const ScreenAddNewWhitelistAddress = ({
         setLoading(true);
         Keyboard.dismiss();
 
-        const { inWhitelist, isImported } = await findAccountWithoutBalance(
-          address,
-        );
+        const { inWhitelist, account, isImported } =
+          findAccountWithoutBalance(address);
         if (inWhitelist) {
           toast.show(t('page.whitelist.alreadyAdded'));
         } else {
-          Keyboard.dismiss();
-          matomoRequestEvent({
-            category: 'Send Usage',
-            action: isImported
-              ? 'Send_AddWhitelist_imported'
-              : 'Send_AddWhitelist_notImported',
-          });
-          if (isCex && cex?.id) {
-            setCexId(address, cex.id);
+          if (confirmModalIRef.current) {
+            // clear last modal
+            removeGlobalBottomSheetModal2024(confirmModalIRef.current);
           }
-          contactService.updateAlias({
-            address,
-            name: aliasName || ellipsisAddress(address),
+          confirmModalIRef.current = createGlobalBottomSheetModal2024({
+            name: MODAL_NAMES.CONFIRM_ADDRESS,
+            account: {
+              ...account,
+              aliasName: aliasName || account.aliasName,
+            },
+            title: t('page.confirmAddress.addToWhitelist'),
+            cex: isCex ? cex : undefined,
+            disableWhiteSwitch: true,
+            bottomSheetModalProps: {
+              enableDynamicSizing: true,
+            },
+            onCancel: () => {
+              confirmModalIRef.current &&
+                removeGlobalBottomSheetModal2024(confirmModalIRef.current);
+              confirmModalIRef.current = null;
+            },
+            onConfirm: async () => {
+              Keyboard.dismiss();
+              confirmModalIRef.current &&
+                removeGlobalBottomSheetModal2024(confirmModalIRef.current);
+              confirmModalIRef.current = null;
+
+              matomoRequestEvent({
+                category: 'Send Usage',
+                action: isImported
+                  ? 'Send_AddWhitelist_imported'
+                  : 'Send_AddWhitelist_notImported',
+              });
+              if (isCex && cex?.id) {
+                setCexId(address, cex.id);
+              }
+              contactService.updateAlias({
+                address,
+                name: aliasName || ellipsisAddress(address),
+              });
+              fetchAccounts();
+              setInput('');
+              await whitelistService.addWhitelist(address);
+              await getWhitelist();
+              toast.success(t('page.whitelist.addSuccessful'));
+              fnNavTo('default');
+            },
           });
-          fetchAccounts();
-          setInput('');
-          await whitelistService.addWhitelist(address);
-          await getWhitelist();
-          toast.success(t('page.whitelist.addSuccessful'));
-          fnNavTo('default');
         }
       } catch (err: any) {
       } finally {
@@ -228,7 +256,7 @@ export const ScreenAddNewWhitelistAddress = ({
       });
     }
   }, [input, list]);
-  const onReaptAdd = useCallback(() => {
+  const onRepeatAdd = useCallback(() => {
     setError(undefined);
     setInput('');
     setIsCex(false);
@@ -236,7 +264,7 @@ export const ScreenAddNewWhitelistAddress = ({
     setAliasName('');
     setCex(undefined);
   }, []);
-  useAlertAddress(input, onReaptAdd);
+  useAlertAddress(input, onRepeatAdd);
 
   return (
     <View style={[styles.container, { paddingBottom: safeSizes.containerPb }]}>
