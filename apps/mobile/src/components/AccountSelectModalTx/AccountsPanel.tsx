@@ -201,7 +201,7 @@ export function AccountsPanelInSheetModal({
     React.useState(true);
   const { t } = useTranslation();
 
-  const { recentHistory, runAsync: fetchRecentHistory } = useRecentSend({
+  const { unionedRecentHistory, runAsync: fetchRecentHistory } = useRecentSend({
     useAllHistory: true,
   });
   const {
@@ -218,10 +218,10 @@ export function AccountsPanelInSheetModal({
   }, [parentVisible, fetchRecentHistory]);
 
   const recentUsedAddresses = useMemo(() => {
-    return recentHistory.filter(
+    return unionedRecentHistory.filter(
       item => !isAddrInWhitelist(item.toAddress, whitelist),
     );
-  }, [recentHistory, whitelist]);
+  }, [unionedRecentHistory, whitelist]);
 
   // combine data for a entire Flatlist
   const { combinedData } = useMemo(() => {

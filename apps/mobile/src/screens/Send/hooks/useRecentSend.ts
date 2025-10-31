@@ -149,8 +149,8 @@ export const useRecentSend = ({
     );
   }, [historyList]);
 
-  const recentHistory: RecentHistoryItem[] = useMemo(() => {
-    return markedList
+  const { recentHistory, unionedRecentHistory } = useMemo(() => {
+    const recentList = markedList
       .sort((a, b) => b.time - a.time)
       .filter(item => item.time > Date.now() - 60 * 60 * 1000) // in 1 hours
       .map(item => {
@@ -183,12 +183,22 @@ export const useRecentSend = ({
           item.time &&
           !item.isFailed &&
           !item.isPending,
-      )
-      .slice(0, 3);
+      );
+
+    const unionedRecentHistory = unionBy(
+      recentList,
+      item => `${item.toAddress.toLowerCase()}`,
+    ).slice(0, 3);
+
+    return {
+      recentHistory: recentList,
+      unionedRecentHistory: unionedRecentHistory,
+    };
   }, [markedList]);
 
   return {
     markedList,
+    unionedRecentHistory,
     runAsync,
     recentHistory,
   };
