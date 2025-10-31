@@ -40,6 +40,8 @@ import { PerpsMarketListScreen } from '../PerpsMarketList';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
 import LendingHistory from '../Lending/components/LendingHistory';
+import AAVEScreen from '../Lending';
+
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
@@ -525,6 +527,34 @@ export default function TransactionNavigator() {
                 titleText={ctx.children}
               />
             );
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.Lending}
+        component={AAVEScreen}
+        options={mergeScreenOptions({
+          title: t('page.home.services.lending'),
+          ...headerPresets.withBgCard1_2024,
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="Lending"
+                titleText={ctx.children}
+              />
+            );
+          },
+          headerTintColor: colors['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
           },
         })}
       />

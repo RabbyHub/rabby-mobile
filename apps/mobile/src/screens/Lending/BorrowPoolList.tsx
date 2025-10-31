@@ -29,8 +29,8 @@ const BorrowPoolList = () => {
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
   const sortReserves = useMemo(() => {
-    return [...(displayPoolReserves || [])]
-      .filter(item => {
+    return displayPoolReserves
+      ?.filter(item => {
         if (isSameAddress(item.underlyingAsset, API_ETH_MOCK_ADDRESS)) {
           return false;
         }

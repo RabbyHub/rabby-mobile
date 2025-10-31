@@ -593,7 +593,7 @@ function MultiAddressHome(): JSX.Element {
           });
           break;
         case MultiHomeFeatTitle.Lending:
-          navigation.navigate(RootNames.StackHomeNonTab, {
+          navigation.navigate(RootNames.StackTransaction, {
             screen: RootNames.Lending,
             params: {},
           });

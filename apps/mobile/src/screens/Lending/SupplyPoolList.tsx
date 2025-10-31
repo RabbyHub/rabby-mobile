@@ -30,8 +30,8 @@ const SupplyPoolList = () => {
   const { fetchData } = useLendingData();
 
   const sortReserves = useMemo(() => {
-    return [...(displayPoolReserves || [])]
-      .filter(item => {
+    return displayPoolReserves
+      ?.filter(item => {
         if (item.underlyingBalance && item.underlyingBalance !== '0') {
           return true;
         }

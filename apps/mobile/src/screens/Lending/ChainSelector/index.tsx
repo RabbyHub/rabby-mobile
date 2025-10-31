@@ -13,7 +13,7 @@ import {
   MODAL_ID,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
-import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
+import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
 import { useTranslation } from 'react-i18next';
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
@@ -24,7 +24,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       paddingVertical: 16,
       backgroundColor: isLight
         ? colors2024['neutral-line']
-        : colors2024['neutral-bg-2'],
+        : colors2024['neutral-bg-5'],
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -42,7 +42,17 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       marginLeft: 9,
     },
     icon: {
-      transform: [{ rotate: '90deg' }],
+      // transform: [{ rotate: '90deg' }],
+    },
+    iconContainer: {
+      width: 26,
+      height: 26,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 100,
+      backgroundColor: isLight
+        ? 'rgba(0, 0, 0, 0.1)'
+        : colors2024['neutral-line'],
     },
   };
 });
@@ -113,10 +123,12 @@ export function ChainSelector({
         </View>
 
         {!disable ? (
-          <View>
-            <ArrowRightSVG
+          <View style={styles.iconContainer}>
+            <ArrowDownSVG
+              width={16}
+              height={16}
               style={styles.icon}
-              color={colors2024['neutral-title-1']}
+              color={colors2024['neutral-body']}
             />
           </View>
         ) : null}

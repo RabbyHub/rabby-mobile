@@ -126,7 +126,6 @@ export type HomeNavigatorParamsList = {
 export type HomeNonTabNavigatorParamsList = {
   [RootNames.Search]?: {};
   [RootNames.Watchlist]?: {};
-  [RootNames.Lending]?: {};
 };
 
 export type DappsNavigatorParamsList = {
@@ -390,6 +389,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.PerpsMarketDetail]: {
     market: string;
   };
+  [RootNames.Lending]?: {};
 };
 
 export type SettingNavigatorParamList = {

@@ -119,8 +119,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
     }
     return (
       !userSummary?.availableBorrowsUSD ||
-      userSummary?.availableBorrowsUSD === '0' ||
-      userSummary?.availableBorrowsUSD === '$0'
+      userSummary?.availableBorrowsUSD === '0'
     );
   }, [
     reserve.reserve.borrowCap,
