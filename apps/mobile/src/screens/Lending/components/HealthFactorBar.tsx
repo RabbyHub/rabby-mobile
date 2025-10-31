@@ -15,20 +15,35 @@ interface HealthFactorBarProps {
 export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
   healthFactor,
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
   const hfNumber = Number(healthFactor || '0');
 
-  const dotPosition = hfNumber > 10 ? 100 : (hfNumber / 10) * 100;
+  const dotPosition = useMemo(() => {
+    if (hfNumber > 10) {
+      return 100;
+    } else if (hfNumber > 3) {
+      return 50 + ((hfNumber - 3) / 7) * 50;
+    } else if (hfNumber > 1) {
+      return 10 + ((hfNumber - 1) / 2) * 40;
+    } else {
+      return (hfNumber / 1) * 10;
+    }
+  }, [hfNumber]);
 
   const hfColor = useMemo(() => getHealthStatusColor(hfNumber), [hfNumber]);
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['red', '#F89F1A', 'orange', 'green']}
-        locations={[0, 0.15, 0.34, 1]}
+        colors={[
+          colors2024['red-default'],
+          colors2024['orange-default'],
+          colors2024['orange-default'],
+          colors2024['green-default'],
+        ]}
+        locations={[0, 0.18, 0.2, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.riskBar}
