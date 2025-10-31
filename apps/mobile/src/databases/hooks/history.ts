@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { KeyringAccountWithAlias } from '@/hooks/account';
 import { runOnJS } from 'react-native-reanimated';
-import {
-  syncRemoteBuyHistory,
-  syncRemoteHistory,
-  syncRemoteSwapHistory,
-} from '../sync/assets';
+import { syncRemoteHistory, syncRemoteSwapHistory } from '../sync/assets';
 import { HistoryItemEntity } from '../entities/historyItem';
 import { useSafeState } from '@/hooks/useSafeState';
 import { openapi } from '@/core/request';
@@ -16,9 +11,9 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
 import { prepareAppDataSource } from '../imports';
-import { BuyHistoryList, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { BuyItemEntity } from '../entities/buyItem';
-import dayjs from 'dayjs';
+import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
+
+const USE_REALTIME_API_DURATION = 24 * 5 * 60 * 60 * 1000; // use async history api if user not opened app in 5 days
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -129,11 +124,31 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           'startTime:',
           startTime,
         );
-        const res = await openapi.listTxHisotry({
-          id: address,
-          start_time: startTime,
-          page_count: 20,
-        });
+        let hasNewTx = true;
+        if (latest_time !== 0) {
+          try {
+            const { has_new_tx } = await openapi.hasNewTxFrom({
+              address,
+              startTime: latest_time,
+            });
+            hasNewTx = has_new_tx;
+          } catch (e) {
+            // NOTHING
+          }
+        }
+        let res = {
+          cate_dict: {},
+          history_list: [] as TxHistoryResult['history_list'],
+          project_dict: {},
+          token_dict: {},
+        };
+        if (hasNewTx) {
+          res = await openapi.listTxHisotry({
+            id: address,
+            start_time: startTime,
+            page_count: 20,
+          });
+        }
 
         const ninetyDaysAgo = new Date().getTime() / 1000 - 90 * 24 * 60 * 60; // 90 days ago
         res.history_list = res.history_list.filter(
@@ -288,14 +303,14 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
       }
     },
   );
-  const isNeedSyncData = useMemoizedFn(async (add: string) => {
-    if (transactionHistoryService.getIsNeedFetchTxHistory(add)) {
+  const isNeedSyncData = useMemoizedFn(async (address: string) => {
+    if (transactionHistoryService.getIsNeedFetchTxHistory(address)) {
       // some tx done need to update
       console.debug('🔍syncTop10History some tx done so isNeedSyncData');
       return true;
     }
 
-    const latestTime = updateHistoryTime[add] || 0;
+    const latestTime = updateHistoryTime[address] || 0;
 
     const currentTime = Date.now();
     const gap = currentTime - latestTime;
@@ -306,7 +321,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
       'isExpire:',
       gap > expireTime,
       'add:',
-      add.slice(-4),
+      address.slice(-4),
     );
     return gap > expireTime;
   });
@@ -339,8 +354,8 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           const isForceFetchFromApi = force || (await isNeedSyncData(address));
           if (isForceFetchFromApi) {
             const latestUpdateTime = updateHistoryTime[address] || 0;
-            const isUserRealTiemApi =
-              latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
+            const isUseRealTimeApi =
+              latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
             updateHistoryTimeSingleAddress(address);
             console.debug(
               '🔍syncTop10History CUSTOM_LOGGER:=>: update sync address:',
@@ -348,7 +363,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
             );
             queue.add(async () => {
               try {
-                await syncUserAllHistory(address, 0, 0, isUserRealTiemApi);
+                await syncUserAllHistory(address, 0, 0, isUseRealTimeApi);
               } catch (error) {
                 console.error(
                   `syncTop10History Error fetching data for ${address.slice(
@@ -386,7 +401,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
         const address = item.toLowerCase();
         const latestUpdateTime = updateHistoryTime[address] || 0;
         const isUserRealTimeApi =
-          latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
+          latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
         updateHistoryTimeSingleAddress(address);
         queue.add(async () => {
           try {
@@ -412,10 +427,10 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
 
   const syncSingleAddress = useMemoizedFn(address => {
     const latestUpdateTime = updateHistoryTime[address] || 0;
-    const isUserRealTiemApi =
-      latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
+    const isUseRealTimeApi =
+      latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
     updateHistoryTimeSingleAddress(address);
-    syncUserAllHistory(address.toLowerCase(), 0, 0, isUserRealTiemApi);
+    syncUserAllHistory(address.toLowerCase(), 0, 0, isUseRealTimeApi);
   });
 
   return {
