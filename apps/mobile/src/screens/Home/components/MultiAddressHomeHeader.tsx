@@ -42,7 +42,7 @@ import { usePinnedAccountList } from '@/hooks/account';
 import { useCurrency } from '@/hooks/useCurrency';
 import { formatSmallCurrencyValue, getChangeData } from '@/hooks/useCurve';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
-import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { Skeleton } from '@rneui/base';
 import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
@@ -56,7 +56,7 @@ const HeaderHeight = 24;
 
 export function MultiAddressHomeHeader(
   props: {
-    data: ReturnType<typeof useMultiCurve>['combineData'];
+    data: ReturnType<typeof useMulti24hBalance>['combineData'];
     loading: boolean;
     loadingNewCurve: boolean;
     onRefresh?: () => void;
@@ -85,7 +85,7 @@ export function MultiAddressHomeHeader(
     }
   });
 
-  const { multiTimeStamp } = useMultiCurve(
+  const { multi24hBalance } = useMulti24hBalance(
     pinnedAccountList.map(item => item.address),
     true,
   );
@@ -93,29 +93,33 @@ export function MultiAddressHomeHeader(
   const addressListData = useMemo(() => {
     return sortBy(
       pinnedAccountList.map(item => {
-        const hasChangeData = multiTimeStamp[
-          item.address.toLowerCase()
-        ]?.data?.some(i => i.usd_value !== 0);
-        const chartData = getChangeData(
-          multiTimeStamp[item.address.toLowerCase()]?.data || [],
-          item.evmBalance,
-          new Date().getTime(),
-        );
+        const address24hBalanceData =
+          multi24hBalance[item.address.toLowerCase()]?.data;
+        const hasChangeData = address24hBalanceData;
         const balanceAccount = balanceAccounts?.find(acc =>
           isSameAddress(acc.address, item.address),
         );
+        const assetsChange =
+          (balanceAccount?.evmBalance || 0) -
+          address24hBalanceData?.total_usd_value;
+        let changePercent =
+          address24hBalanceData?.total_usd_value !== 0
+            ? `${Math.abs(
+                (assetsChange * 100) / address24hBalanceData?.total_usd_value,
+              ).toFixed(2)}%`
+            : `${balanceAccount?.evmBalance === 0 ? '0' : '100.00'}%`;
 
         return {
           ...item,
           balance: balanceAccount?.balance || item.balance || 0,
           evmBalance: balanceAccount?.evmBalance || item.evmBalance || 0,
-          changePercent: hasChangeData ? chartData?.changePercent : undefined,
-          isLoss: hasChangeData ? chartData?.isLoss : undefined,
+          changePercent: hasChangeData ? changePercent : undefined,
+          isLoss: hasChangeData ? assetsChange < 0 : undefined,
         };
       }),
       item => -(item.balance || 0),
     ).slice(0, 3);
-  }, [pinnedAccountList, multiTimeStamp, balanceAccounts]);
+  }, [pinnedAccountList, multi24hBalance, balanceAccounts]);
 
   const { accountsLength } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes

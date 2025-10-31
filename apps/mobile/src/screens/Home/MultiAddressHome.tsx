@@ -81,7 +81,7 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -100,6 +100,7 @@ import {
 } from './components/OfflineChainNotify';
 import { PerpsPnl } from './components/PerpsPnl';
 import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
+import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -264,7 +265,7 @@ function MultiAddressHome(): JSX.Element {
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
-  } = useMultiCurve(
+  } = useMulti24hBalance(
     top10Addresses,
     true,
     top10Balance.total,
@@ -359,15 +360,9 @@ function MultiAddressHome(): JSX.Element {
   useEffect(() => {
     setTimeout(() => {
       deleteLongTimeCurveCache();
+      deleteLongTime24hBalanceCache();
     }, 0);
   }, []);
-
-  // useMount(() => {  no use ?
-  //   eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);
-  //   return () => {
-  //     eventBus.removeListener(EVENTS.TX_COMPLETED, fetchHistory);
-  //   };
-  // });
 
   const getSuccessAndFailList = useCallback(async () => {
     const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
