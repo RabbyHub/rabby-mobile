@@ -4,6 +4,7 @@ import {
   Appearance,
   useColorScheme,
   AppState,
+  Platform,
 } from 'react-native';
 import { atom, useAtom, useAtomValue } from 'jotai';
 
@@ -21,6 +22,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
 import { useThemeMode } from '@rneui/themed';
 import { TFunction } from 'i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
 
@@ -169,12 +171,14 @@ export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
       ? opts?.isLight
       : appThemeMode === 'light';
 
+  const { bottom: bottomSafeArea } = useSafeAreaInsets();
+
   const cs = React.useMemo(() => {
     return {
       colors,
-      styles: getStyle(colors, { isLight }) as ReturnType<T>,
+      styles: getStyle(colors, { isLight, bottomSafeArea }) as ReturnType<T>,
     };
-  }, [colors, getStyle, isLight]);
+  }, [colors, getStyle, isLight, bottomSafeArea]);
 
   return {
     ...cs,
@@ -183,11 +187,14 @@ export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
   };
 }
 
+const isAndroid = Platform.OS === 'android';
 export function useTheme2024<
   T extends ReturnType<typeof createGetStyles2024>,
 >(opts?: { getStyle?: T; isLight?: boolean }) {
-  const { getStyle } = opts || {};
   const appThemeMode = useGetBinaryMode();
+  const { bottom: bottomSafeArea } = useSafeAreaInsets();
+  const { getStyle } = opts || {};
+
   const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
   const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
 
@@ -203,9 +210,11 @@ export function useTheme2024<
         colors2024,
         classicalColors,
         isLight,
+        bottomSafeArea,
+        // androidOnlyBottomSafeArea: isAndroid ? bottomSafeArea : 0,
       }) as T extends void ? void : ReturnType<T>,
     };
-  }, [colors2024, classicalColors, getStyle, isLight]);
+  }, [colors2024, classicalColors, getStyle, isLight, bottomSafeArea]);
 
   return {
     ...cs,
