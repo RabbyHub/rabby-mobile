@@ -39,10 +39,8 @@ import {
   BUILD_CHANNEL,
   BUILD_GIT_INFO,
   IS_HERMES_ENABLED,
-  isNonPublicProductionEnv,
-  isSelfhostRegPkg,
-  NEED_DEVSETTINGBLOCKS,
 } from '@/constant/env';
+import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import {
   makeThemeOptions,
@@ -605,7 +603,7 @@ function DevSettingsBlocks() {
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
-      ...(isSelfhostRegPkg && {
+      ...(isNonPublicProductionEnv && {
         testkits: {
           label: 'Test Kits (Not present on production package)',
           items: [

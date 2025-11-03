@@ -19,7 +19,7 @@ import {
   useCreateAddressProc,
   useImportAddressProc,
 } from '@/hooks/address/useNewUser';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import {
   useSafeAreaFrame,
