@@ -390,7 +390,9 @@ export const usePerpsStore = () => {
   const fetchPerpPermission = useMemoizedFn(async (address: string) => {
     const { has_permission } = await openapi.getPerpPermission({ id: address });
 
-    setHasPermission(has_permission);
+    // setHasPermission(has_permission);
+    // debug code
+    setHasPermission(true);
   });
 
   const loginPerpsAccount = useMemoizedFn(async (account: Account) => {

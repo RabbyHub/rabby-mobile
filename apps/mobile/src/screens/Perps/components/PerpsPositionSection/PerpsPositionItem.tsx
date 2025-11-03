@@ -77,11 +77,6 @@ export const PerpsPositionItem: React.FC<{
   const hasTakeProfit = !!tpPrice;
   const hasStopLoss = !!slPrice;
 
-  const distanceLiquidation = calculateDistanceToLiquidation(
-    liquidationPx,
-    marketData?.markPx,
-  );
-
   const handleDistanceTagPress = useMemoizedFn(() => {
     onShowRiskPopup(coin);
   });
@@ -124,7 +119,8 @@ export const PerpsPositionItem: React.FC<{
               </Text>
             </View>
             <DistanceToLiquidationTag
-              distanceLiquidation={distanceLiquidation}
+              liquidationPrice={liquidationPx}
+              markPrice={marketData?.markPx}
               onPress={handleDistanceTagPress}
             />
           </View>

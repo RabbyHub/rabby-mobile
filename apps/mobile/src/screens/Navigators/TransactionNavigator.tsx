@@ -412,22 +412,6 @@ export default function TransactionNavigator() {
       />
 
       <TransactionStack.Screen
-        name={RootNames.PerpsMarketList}
-        component={PerpsMarketListScreen}
-        options={mergeScreenOptions({
-          title: t('page.home.services.perpsMarketList'),
-          // ...headerPresets.withBgCard1_2024,
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            color: colors['neutral-title-1'],
-          },
-        })}
-      />
-
-      <TransactionStack.Screen
         name={RootNames.PerpsMarketDetail}
         component={PerpsMarketDetailScreen}
         options={mergeScreenOptions({

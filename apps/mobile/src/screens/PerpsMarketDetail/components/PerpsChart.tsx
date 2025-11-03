@@ -294,6 +294,19 @@ export const PerpsChart: React.FC<{
     }
   }, [isReady, lineTagInfo]);
 
+  // Reset chart when market changes
+  useEffect(() => {
+    // Reset chart state
+    setIsReady(false);
+    chartIsReadyRef.current = false;
+
+    // Unsubscribe from previous market
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = () => {};
+    }
+  }, [market.name]);
+
   return (
     <View style={styles.chart}>
       <View style={styles.header}>

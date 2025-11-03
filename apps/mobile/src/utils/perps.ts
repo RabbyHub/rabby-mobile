@@ -113,3 +113,5 @@ export const calLiquidationPrice = (
   // liq_price = price - side * margin_available / position_size / (1 - l * side)
   return liq_price;
 };
+
+export const formatPerpsPct = (v: number) => `${(v * 100).toFixed(2)}%`;

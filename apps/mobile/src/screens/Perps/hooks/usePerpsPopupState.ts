@@ -9,11 +9,12 @@ const visibleAtom = atom({
   isShowDepositTokenPopup: false,
   isShowWithdrawPopup: false,
   isShowDeleteAgentPopup: false,
+  isShowSearchListPopup: false,
 });
 
 const selectedTokenAtom = atom<AbstractPortfolioToken | null>(null);
 
-export const usePerspPopupState = () => {
+export const usePerpsPopupState = () => {
   return useAtom(visibleAtom);
 };
 

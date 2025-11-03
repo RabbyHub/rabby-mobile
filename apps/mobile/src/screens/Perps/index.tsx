@@ -2,15 +2,24 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
+  FlatList,
   Platform,
   RefreshControl,
-  ScrollView,
   Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
@@ -23,8 +32,9 @@ import { PerpsDepositPopup } from './components/PerpsDepositPopup';
 import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
 import {
-  usePerspPopupState,
+  usePerpsPopupState,
   useSelectedToken,
 } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -32,8 +42,13 @@ import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsHistorySection } from './components/PerpsHistorySection';
-import { PerpsMarketSection } from './components/PerpsMarketSection';
+import {
+  PerpsMarketSection,
+  PerpsMarketSectionHeader,
+} from './components/PerpsMarketSection';
+import { PerpsMarketItem } from './components/PerpsMarketSection/PerpsMarketItem';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
+import { sortBy } from 'lodash';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
@@ -53,6 +68,11 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { BridgeHeader } from '../Bridge/components/BridgeHeader';
 import { PerpHeader } from './components/PerpHeader';
 import Toast from 'react-native-root-toast';
+import { PerpSearchListPopup } from './components/PerpSearchListPopup';
+import { RcNextSearchCC } from '@/assets/icons/common';
+import { FAB } from '@rneui/themed';
+import { RootNames } from '@/constant/layout';
+import { naviPush } from '@/utils/navigation';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -89,8 +109,27 @@ export const PerpsScreen = () => {
     AssetPosition['position'] | null
   >(null);
   const [selectedToken, setSelectedToken] = useSelectedToken();
-  const [popupState, setPopupState] = usePerspPopupState();
+  const [popupState, setPopupState] = usePerpsPopupState();
   const [isShowModal, setIsShowModal] = useState(false);
+
+  // Scroll related states
+  const flatListRef = useRef<FlatList>(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  // Prepare sorted market data with header as first item
+  const listData = useMemo(() => {
+    const sorted = sortBy(marketData, item => -(item.dayNtlVlm || 0));
+    // Add a special header item as first element for sticky header
+    return [{ _isStickyHeader: true }, ...sorted];
+  }, [marketData]);
+
+  const positionCoinSet = useMemo(() => {
+    const set = new Set();
+    positionAndOpenOrders?.forEach(order => {
+      set.add(order.position.coin);
+    });
+    return set;
+  }, [positionAndOpenOrders]);
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
     if (currentPerpsAccount?.address) {
@@ -232,39 +271,146 @@ export const PerpsScreen = () => {
     fetchMarketData(false);
   });
 
+  // Handle scroll event
+  const handleScroll = useMemoizedFn((event: any) => {
+    const scrollY = event.nativeEvent.contentOffset.y;
+
+    // Show back to top button when scrolling down 200px
+    const shouldShow = scrollY > 200;
+    if (shouldShow !== showBackToTop) {
+      setShowBackToTop(shouldShow);
+    }
+  });
+
+  // Scroll to top
+  const scrollToTop = useMemoizedFn(() => {
+    setShowBackToTop(false);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  });
+
+  // Render header component (account card and positions)
+  const renderListHeader = useCallback(() => {
+    return (
+      <>
+        <PerpsAccountCard
+          isLogin={isLogin}
+          accountSummary={accountSummary}
+          positionAndOpenOrders={positionAndOpenOrders}
+        />
+        <PerpsPositionSection
+          positionAndOpenOrders={positionAndOpenOrders}
+          marketDataMap={marketDataMap}
+          onClosePosition={async position => {
+            const marketDataItem = marketDataMap[position.coin];
+            await handleClosePosition({
+              coin: position.coin,
+              size: Math.abs(Number(position.szi || 0)).toString() || '0',
+              direction: Number(position.szi || 0) > 0 ? 'Long' : 'Short',
+              price: marketDataItem?.markPx || '0',
+            });
+          }}
+        />
+      </>
+    );
+  }, [
+    isLogin,
+    accountSummary,
+    positionAndOpenOrders,
+    marketDataMap,
+    handleClosePosition,
+  ]);
+
+  // Render item - either sticky header or market item
+  const renderItem = useCallback(
+    ({ item }: { item: any }) => {
+      // First item is the sticky market section header
+      if (item._isStickyHeader) {
+        return <PerpsMarketSectionHeader />;
+      }
+
+      // Rest are market items
+      return (
+        <PerpsMarketItem
+          item={item}
+          hasPosition={positionCoinSet.has(item.name)}
+          onPress={() => {
+            naviPush(RootNames.StackTransaction, {
+              screen: RootNames.PerpsMarketDetail,
+              params: {
+                market: item.name,
+              },
+            });
+          }}
+        />
+      );
+    },
+    [positionCoinSet],
+  );
+
+  const keyExtractor = useCallback(
+    (item: any) => (item._isStickyHeader ? 'sticky-header' : item.name),
+    [],
+  );
+
+  const ItemSeparator = useCallback(
+    ({ leadingItem }: any) => {
+      // No separator after sticky header
+      if (leadingItem?._isStickyHeader) {
+        return null;
+      }
+      return <View style={styles.itemSeparator} />;
+    },
+    [styles],
+  );
+
   return (
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
         {!hasPermission ? <PerpsRegionAlert /> : null}
-        <ScrollView
-          style={styles.container}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl refreshing={false} onRefresh={onRefresh} />
-          }>
-          <PerpsAccountCard
-            isLogin={isLogin}
-            accountSummary={accountSummary}
-            positionAndOpenOrders={positionAndOpenOrders}
+        <View style={styles.screenContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={listData}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            ListHeaderComponent={renderListHeader}
+            ItemSeparatorComponent={ItemSeparator}
+            style={styles.container}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            refreshControl={
+              <RefreshControl refreshing={false} onRefresh={onRefresh} />
+            }
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            initialNumToRender={10}
+            windowSize={5}
+            onEndReachedThreshold={0.5}
           />
-          <PerpsPositionSection
-            positionAndOpenOrders={positionAndOpenOrders}
-            marketDataMap={marketDataMap}
-            onClosePosition={async position => {
-              // setClosePosition(position);
-              // setClosePositionVisible(true);
-              const marketDataItem = marketDataMap[position.coin];
-              await handleClosePosition({
-                coin: position.coin,
-                size: Math.abs(Number(position.szi || 0)).toString() || '0',
-                direction: Number(position.szi || 0) > 0 ? 'Long' : 'Short',
-                price: marketDataItem?.markPx || '0',
-              });
-            }}
-          />
-          <PerpsMarketSection marketData={marketData} />
-        </ScrollView>
+
+          {/* Back to Top Button */}
+          {showBackToTop && (
+            <TouchableOpacity
+              style={styles.backToTopButton}
+              onPress={scrollToTop}>
+              <RcIconBackTopCC color={colors2024['neutral-body']} />
+            </TouchableOpacity>
+          )}
+          <View style={styles.footer}>
+            <Button
+              type="primary"
+              title={t('page.perps.searchPerpsPopup.openPosition')}
+              onPress={() => {
+                setPopupState(prev => ({
+                  ...prev,
+                  isShowSearchListPopup: true,
+                }));
+              }}
+            />
+          </View>
+        </View>
       </NormalScreenContainer2024>
       <PerpsAccountSelectorPopup
         visible={popupState.isShowLoginPopup}
@@ -428,6 +574,25 @@ export const PerpsScreen = () => {
           }));
         }}
       />
+      <PerpSearchListPopup
+        visible={popupState.isShowSearchListPopup}
+        onSelect={name => {
+          naviPush(RootNames.StackTransaction, {
+            screen: RootNames.PerpsMarketDetail,
+            params: {
+              market: name,
+            },
+          });
+        }}
+        onCancel={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowSearchListPopup: false,
+          }));
+        }}
+        marketData={marketData}
+        positionAndOpenOrders={positionAndOpenOrders}
+      />
       {closePosition && (
         <PerpsClosePositionPopup
           visible={closePositionVisible}
@@ -461,7 +626,39 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     height: '100%',
     paddingHorizontal: 16,
   },
+  screenContainer: {
+    position: 'relative',
+    flex: 1,
+    height: '100%',
+  },
   scrollContent: {
+    // paddingBottom: 10,
+  },
+  footer: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    paddingTop: 12,
+    paddingHorizontal: 16,
     paddingBottom: 56,
+  },
+  backToTopButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: 140,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors2024['neutral-bg-1'],
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+  },
+  itemSeparator: {
+    height: 8,
+  },
+  listFooter: {
+    height: 56,
   },
 }));

@@ -12,7 +12,13 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
@@ -45,6 +51,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { openapi } from '@/core/request';
 import { PerpsDepositTokenModal } from '../Perps/components/PerpsDepositPopup/PerpsDepositTokenModal';
 import Toast from 'react-native-root-toast';
+import { PerpSearchListPopup } from '../Perps/components/PerpSearchListPopup';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -62,11 +69,16 @@ export const PerpsMarketDetailScreen = () => {
     >();
 
   const marketName = route.params.market;
-  const coin = marketName;
+  const [coin, setCoin] = useState(marketName);
 
   const { state, fetchPositionOpenOrders } = usePerpsStore();
-  const { positionAndOpenOrders, accountSummary, marketDataMap, perpFee } =
-    state;
+  const {
+    positionAndOpenOrders,
+    accountSummary,
+    marketDataMap,
+    perpFee,
+    marketData,
+  } = state;
 
   // const {
   //   refreshData,
@@ -83,10 +95,10 @@ export const PerpsMarketDetailScreen = () => {
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
   const [showDepositTokenPopup, setShowDepositTokenPopup] = useState(false);
-
+  const [showSearchListPopup, setShowSearchListPopup] = useState(false);
   const market = useMemo(() => {
-    return marketDataMap[marketName.toUpperCase()];
-  }, [marketDataMap, marketName]);
+    return marketDataMap[coin.toUpperCase()];
+  }, [marketDataMap, coin]);
 
   const [activeAssetCtx, setActiveAssetCtx] = React.useState<
     WsActiveAssetCtx['ctx'] | null
@@ -227,7 +239,7 @@ export const PerpsMarketDetailScreen = () => {
         unsubscribeActiveAssetRef.current = () => {};
       }
     }
-  }, [subscribeActiveAssetCtx, appState]);
+  }, [subscribeActiveAssetCtx, appState, coin]);
 
   // Available balance for trading
   const availableBalance = Number(accountSummary?.withdrawable || 0);
@@ -336,13 +348,27 @@ export const PerpsMarketDetailScreen = () => {
     }
   });
 
+  const HeaderTitle = useCallback(() => {
+    return (
+      <PerpsHeaderTitle
+        popupIsOpen={showSearchListPopup}
+        market={market}
+        onSelectCoin={() => {
+          setShowSearchListPopup(true);
+        }}
+      />
+    );
+  }, [market, setShowSearchListPopup, showSearchListPopup]);
+
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <PerpsHeaderTitle market={market} />,
+      headerTitle: HeaderTitle,
     });
-  }, [market, navigation]);
+  }, [market, navigation, HeaderTitle]);
 
   if (!market) {
+    navigation.goBack();
+    toast.error('Market not found');
     return null;
   }
 
@@ -374,6 +400,7 @@ export const PerpsMarketDetailScreen = () => {
           <PerpsPosition
             positionData={positionData}
             coin={coin}
+            markPrice={markPrice}
             hasAutoClose={hasAutoClose}
             slPrice={currentTpOrSl.slPrice}
             tpPrice={currentTpOrSl.tpPrice}
@@ -471,6 +498,7 @@ export const PerpsMarketDetailScreen = () => {
         }}
       />
       <PerpsOpenPositionPopup
+        marketDataItem={marketDataMap[coin.toUpperCase()]}
         visible={openPositionVisible}
         direction={positionDirection}
         providerFee={providerFee}
@@ -539,6 +567,18 @@ export const PerpsMarketDetailScreen = () => {
           }}
         />
       ) : null}
+
+      <PerpSearchListPopup
+        visible={showSearchListPopup}
+        onSelect={item => {
+          setCoin(item);
+        }}
+        onCancel={() => {
+          setShowSearchListPopup(false);
+        }}
+        marketData={marketData}
+        positionAndOpenOrders={positionAndOpenOrders}
+      />
     </>
   );
 };

@@ -5,18 +5,25 @@ import { createGetStyles2024 } from '@/utils/styles';
 import RcIconArrowRightCC from '@/assets2024/icons/perps/IconArrowRightCC.svg';
 import { PERPS_POSITION_RISK_LEVEL } from '@/constant/perps';
 import { getRiskLevel } from './utils';
+import { calculateDistanceToLiquidation } from './utils';
 
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
 interface DistanceToLiquidationTagProps {
-  distanceLiquidation: number;
+  liquidationPrice: string | number | undefined;
+  markPrice: string | number | undefined;
   onPress?: () => void;
 }
 
 export const DistanceToLiquidationTag: React.FC<
   DistanceToLiquidationTagProps
-> = ({ distanceLiquidation, onPress }) => {
+> = ({ liquidationPrice, markPrice, onPress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+
+  const distanceLiquidation = calculateDistanceToLiquidation(
+    liquidationPrice,
+    markPrice,
+  );
 
   const riskLevel = useMemo(() => {
     return getRiskLevel(distanceLiquidation);

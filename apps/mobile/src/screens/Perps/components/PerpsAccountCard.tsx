@@ -13,7 +13,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { usePerspPopupState } from '../hooks/usePerpsPopupState';
+import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 
 export const PerpsAccountCard: React.FC<{
   isLogin: boolean;
@@ -22,7 +22,7 @@ export const PerpsAccountCard: React.FC<{
 }> = ({ isLogin, accountSummary, positionAndOpenOrders }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const [popupState, setPopupState] = usePerspPopupState();
+  const [popupState, setPopupState] = usePerpsPopupState();
 
   const positionAllPnl = useMemo(() => {
     return (

@@ -2240,6 +2240,11 @@
     },
     "perps": {
       "title": "Perps",
+      "searchPerpsPopup": {
+        "searchPlaceholder": "Search Perps",
+        "openPosition": "Open Position",
+        "searchPerps": "Search Perps"
+      },
       "PerpsRiskPopup": {
         "title": "Risk Level",
         "subtitle": "Real-time liquidation distance (%)",
@@ -2454,6 +2459,8 @@
         "size": "Size",
         "autoClose": "Auto Close",
         "tpPrice": "Take-Profit Price",
+        "takeProfitWhen": "Take Profit When",
+        "stopLossWhen": "Stop Loss When",
         "slPrice": "Stop-Loss Price",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
@@ -2483,6 +2490,15 @@
         "noPermission": "Opening positions is not supported in your region"
       },
       "PerpsAutoCloseModal": {
+        "takeProfitExpectedPNL": "Take profit expected PNL",
+        "stopLossExpectedPNL": "Stop loss expected PNL",
+        "priceReaches": "Price Reaches",
+        "youGain": "You Gain",
+        "youLoss": "You Loss",
+        "currentPrice": "Current {{price}}",
+        "EntryAndCurrentPrice": "Entry {{entryPrice}}  Current {{price}}",
+        "takeProfitWhen": "Take Profit When",
+        "stopLossWhen": "Stop Loss When",
         "slPrice": "Stop Loss Price",
         "tpPrice": "Take Profit Price",
         "price": "Price:",
