@@ -17,6 +17,17 @@ const { isSameAddress } = addressUtils;
 export const whitelistAtom = atom<string[]>([]);
 const enableAtom = atom<boolean>(whitelistService.isWhitelistEnabled());
 
+export const isAddrInWhitelist = (
+  address?: string,
+  whitelist: string[] = [],
+) => {
+  if (!address) {
+    return false;
+  }
+
+  return whitelist.some(item => isSameAddress(item, address.toLowerCase()));
+};
+
 export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
   const [whitelist, setWL] = useAtom(whitelistAtom);
   const [enable, setEnable] = useAtom(enableAtom);
@@ -107,11 +118,7 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
 
   const isAddrOnWhitelist = React.useCallback(
     (address?: string) => {
-      if (!address) {
-        return false;
-      }
-
-      return whitelist.some(item => isSameAddress(item, address.toLowerCase()));
+      return isAddrInWhitelist(address, whitelist);
     },
     [whitelist],
   );

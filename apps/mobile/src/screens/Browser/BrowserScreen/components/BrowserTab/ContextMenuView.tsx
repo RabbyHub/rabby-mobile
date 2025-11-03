@@ -1,7 +1,7 @@
-import * as ContextMenu from 'zeego/context-menu';
+import * as ContextMenu from 'zeego/src/context-menu';
+import { MenuItemCommonProps } from 'zeego/src/menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
 import { ImageSourcePropType } from 'react-native';
-import { MenuItemCommonProps } from 'zeego/lib/typescript/menu';
 
 export interface MenuAction {
   title: string;

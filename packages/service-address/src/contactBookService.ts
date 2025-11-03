@@ -78,15 +78,19 @@ export class ContactBookService {
     return Object.values(this.store.aliases);
   }
 
-  getAliasByAddress(address: string): AddressAliasItem | undefined {
+  getAliasByAddress(address: string, options?: {
+    /** @default false */
+    keepEmptyIfNotFound?: boolean;
+  }): AddressAliasItem | undefined {
     if (!address) {
       return undefined;
     }
     const alias = this.store.aliases[address.toLowerCase()];
     if (!alias) {
+      const { keepEmptyIfNotFound = false } = options || {};
       return {
         address: address.toLowerCase(),
-        alias: ellipsis(address, 6),
+        alias: keepEmptyIfNotFound ? '' : ellipsis(address, 6),
         isDefaultAlias: true,
       };
     }

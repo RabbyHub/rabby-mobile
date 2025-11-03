@@ -6,7 +6,7 @@ import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 
 export const BalanceChangeLoading = () => {
   const { t } = useTranslation();
-  const { colors } = useTheme2024();
+  const { colors2024 } = useTheme2024();
 
   const styles = React.useMemo(
     () =>
@@ -14,26 +14,26 @@ export const BalanceChangeLoading = () => {
         container: {
           paddingVertical: 16,
           paddingHorizontal: 12,
-          backgroundColor: colors['neutral-bg-2'],
+          backgroundColor: colors2024['neutral-bg-2'],
           borderRadius: 8,
           marginBottom: 16,
         },
         title: {
+          color: colors2024['neutral-title-1'],
+          fontFamily: 'SF Pro Rounded',
           fontSize: 14,
-          lineHeight: 16,
-          fontWeight: '500',
-          marginBottom: 8,
-          display: 'flex',
-          alignItems: 'center',
-          color: colors['neutral-title-1'],
+          fontStyle: 'normal',
+          fontWeight: '700',
+          lineHeight: 18,
         },
         row: {
+          paddingTop: 15,
           flexDirection: 'row',
           alignItems: 'center',
           gap: 8,
         },
       }),
-    [colors],
+    [colors2024],
   );
 
   return (
@@ -41,6 +41,10 @@ export const BalanceChangeLoading = () => {
       <Text style={styles.title}>
         {t('page.signTx.balanceChange.successTitle')}
       </Text>
+      <View style={styles.row}>
+        <CustomSkeleton circle width={24} height={24} />
+        <CustomSkeleton width={158} height={20} style={{ borderRadius: 8 }} />
+      </View>
       <View style={styles.row}>
         <CustomSkeleton circle width={24} height={24} />
         <CustomSkeleton width={158} height={20} style={{ borderRadius: 8 }} />

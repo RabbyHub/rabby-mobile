@@ -8,6 +8,7 @@ import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGrad
 import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddress';
 import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
 import { ButtonProps } from '../Button';
+import { PopupDetailProps } from '@/screens/Lending/type';
 
 export enum MODAL_NAMES {
   // 'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
@@ -18,11 +19,13 @@ export enum MODAL_NAMES {
   'SWITCH_CHAIN' = 'SWITCH_CHAIN',
   'CANCEL_CONNECT' = 'CANCEL_CONNECT',
   'CANCEL_APPROVAL' = 'CANCEL_APPROVAL',
+  /** @deprecated */
   'SELECT_CHAIN' = 'SELECT_CHAIN',
   'SIMPLE_CONFIRM' = 'SIMPLE_CONFIRM',
   // 'TMP_CONFIRM_VERIFY' = 'TMP_CONFIRM_VERIFY',
   'SELECT_SORTED_CHAIN' = 'SELECT_SORTED_CHAIN',
   'SELECT_CHAIN_WITH_SUMMARY' = 'SELECT_CHAIN_WITH_SUMMARY',
+  'SELECT_LENDING_CHAIN' = 'SELECT_LENDING_CHAIN',
   'SELECT_CHAIN_WITH_DISTRIBUTE' = 'SELECT_CHAIN_WITH_DISTRIBUTE',
   'VIEW_RAW_DETAILS' = 'VIEW_RAW_DETAILS',
   'CANCEL_TX_POPUP' = 'CANCEL_TX_POPUP',
@@ -64,6 +67,13 @@ export enum MODAL_NAMES {
   'NO_LONGER_SUPPORTS' = 'NO_LONGER_SUPPORTS',
   'COLLECTION_NFTS' = 'COLLECTION_NFTS',
   'BATCH_REVOKE_ERROR_REASON' = 'BATCH_REVOKE_ERROR_REASON',
+  'SUPPLY_DETAIL' = 'SUPPLY_DETAIL',
+  'BORROW_DETAIL' = 'BORROW_DETAIL',
+  'SUPPLY_ACTION_DETAIL' = 'SUPPLY_ACTION_DETAIL',
+  'BORROW_ACTION_DETAIL' = 'BORROW_ACTION_DETAIL',
+  'WITHDRAW_ACTION_DETAIL' = 'WITHDRAW_ACTION_DETAIL',
+  'REPAY_ACTION_DETAIL' = 'REPAY_ACTION_DETAIL',
+  'HF_DESCRIPTION' = 'HF_DESCRIPTION',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -104,10 +114,19 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.DESCRIPTION]: React.ComponentProps<
     typeof import('../Descriptions').Descriptions
   >;
+  [MODAL_NAMES.SUPPLY_DETAIL]: PopupDetailProps;
+  [MODAL_NAMES.BORROW_DETAIL]: PopupDetailProps;
+  [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: PopupDetailProps;
+  [MODAL_NAMES.BORROW_ACTION_DETAIL]: PopupDetailProps;
+  [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: PopupDetailProps;
+  [MODAL_NAMES.REPAY_ACTION_DETAIL]: PopupDetailProps;
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: {};
   [MODAL_NAMES.ADDRESS_HIGHT_DESC]: {
     address: string;
     nextButtonProps?: ButtonProps;
+  };
+  [MODAL_NAMES.HF_DESCRIPTION]: {
+    hf: string;
   };
 };
 
@@ -125,6 +144,7 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
      * @default 'BottomSheetView'
      */
     rootViewType?: 'View' | 'BottomSheetView' | 'BottomSheetScrollView';
+    rootViewStyle?: RNViewProps['style'];
   };
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,

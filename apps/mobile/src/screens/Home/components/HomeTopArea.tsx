@@ -130,7 +130,8 @@ export const HomeTopArea = ({
 
   const isGnosisKeyring = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
   const { total: gnosisTotal, refreshAsync } = useGnosisQueueTotalPending({
-    address: isGnosisKeyring ? currentAccount?.address : undefined,
+    // address: isGnosisKeyring ? currentAccount?.address : undefined,
+    address: undefined,
   });
 
   useFocusEffect(

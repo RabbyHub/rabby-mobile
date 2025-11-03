@@ -30,7 +30,7 @@ import { formatIntlTimestamp } from '@/utils/time';
 import { useRoute } from '@react-navigation/native';
 import { getAlianName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
@@ -54,6 +54,7 @@ import { HistoryItemCateType } from './components/type';
 import { findAccountByPriority } from '@/utils/account';
 import { useGetCexList } from './hook';
 import FastImage from 'react-native-fast-image';
+import { useAccountSelectModalCtx } from '@/components/AccountSelectModalTx/hooks';
 
 export const TxStatusItem = ({
   status,
@@ -134,22 +135,25 @@ export const TxStatusItem = ({
 export const AddressItemInDetail = ({
   address,
   accounts,
+  disableNavigate: propdisableNavigate = false,
 }: {
   address: string;
   accounts: KeyringAccountWithAlias[];
+  disableNavigate?: boolean;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const isInAccounts = useMemo(() => {
-    const idx = accounts.findIndex(account =>
-      isSameAddress(account.address, address),
-    );
-    return idx > -1;
-  }, [accounts, address]);
+  const disableNavigate = useMemo(() => {
+    if (propdisableNavigate) return true;
+
+    return !accounts.find(account => isSameAddress(account.address, address));
+  }, [propdisableNavigate, accounts, address]);
   const { getCexInfoByAddress } = useGetCexList();
   const cexInfo = useMemo(() => {
     return getCexInfoByAddress(address);
   }, [address, getCexInfoByAddress]);
+
+  const accountSelectCtx = useAccountSelectModalCtx();
 
   const handleGoAddressDetail = useCallback(() => {
     const idx = accounts.findIndex(account =>
@@ -157,7 +161,8 @@ export const AddressItemInDetail = ({
     );
 
     if (idx > -1) {
-      navigate(RootNames.SingleAddressStack, {
+      if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
+      navigateDeprecated(RootNames.SingleAddressStack, {
         screen: RootNames.SingleAddressHome,
         params: {
           account: accounts[idx],
@@ -167,12 +172,12 @@ export const AddressItemInDetail = ({
       // popup
       console.debug('itemAliaName press open popup', address);
     }
-  }, [accounts, address]);
+  }, [accounts, address, accountSelectCtx]);
 
   return (
     <View>
       <TouchableOpacity
-        disabled={!isInAccounts}
+        disabled={disableNavigate}
         style={styles.itemAliaName}
         onPress={handleGoAddressDetail}>
         <View style={{ alignItems: 'flex-end', flexDirection: 'column' }}>
@@ -191,7 +196,7 @@ export const AddressItemInDetail = ({
             <Text style={styles.itemContentText}>
               {getAlianName(address) || ellipsisAddress(address)}
             </Text>
-            {isInAccounts && (
+            {!disableNavigate && (
               <RcIconRightCC
                 width={12}
                 height={12}

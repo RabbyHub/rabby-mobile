@@ -46,6 +46,10 @@
       "Yesterday": "Yesterday",
       "ViewSmallItems": "View transactions < $0.1",
       "itemTitle": {
+        "LendingSupply": "Supply",
+        "LendingWithdraw": "Withdraw",
+        "LendingBorrow": "Borrow",
+        "LendingRepay": "Repay",
         "ReceivedGas": "Received Gas",
         "WithdrawnGas": "Withdrawn Gas",
         "DepositedGas": "Deposited Gas",
@@ -618,6 +622,7 @@
       "To": "To",
       "From": "From",
       "Amount": "Amount:",
+      "newAmount": "Amount",
       "addressNotInContract": "Not on address list. <1></1><2>Add to contacts</2>",
       "AddToContactsModal": {
         "addedAsContacts": "Added as contacts",
@@ -652,7 +657,13 @@
       "sectionTo": {
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
-        "searchInputPlaceholder": "Enter an address or scan"
+        "searchInputPlaceholder": "Enter an address or scan",
+        "selectPlaceholder": "Select Address",
+        "positiveTips": {
+          "yourOwnAddress": "Your own address",
+          "whitelistedAddress": "Whitelisted address",
+          "sentRecently": "Sent recently"
+        }
       },
       "whitelistAlert__disabled": "Whitelist disabled. You can transfer to any address.",
       "whitelistAlert__notWhitelisted_tip": "The address is not whitelisted.",
@@ -666,14 +677,19 @@
         "insufficientBalance": "Insufficient balance"
       },
       "ContractAddress": "Contract Address",
-      "noSupprotTokenForDex": "This token may not be supported by this exchange. Check before proceeding to avoid loss",
-      "noSupprotTokenForSafe": "The Safe address you're sending tokens to isn't deployed on this chain. Check before proceeding to avoid loss.",
-      "noSupportTokenForChain": "Recipient address is a contract address on a different chain. Check before proceeding to avoid loss",
       "noSupportBtns": {
         "confirm": "Proceed",
         "cancel": "Cancel"
       },
-      "addressDetail": "Address Detail"
+      "addressDetail": "Address Detail",
+      "noSupportTokenReason": {
+        "forDex": "This token may not be supported by this exchange. Check before proceeding to avoid loss",
+        "forDexSimple": "This token may not be supported by this exchange",
+        "forSafe": "The Safe address you're sending tokens to isn't deployed on this chain. Check before proceeding to avoid loss.",
+        "forSafeSimple": "This Safe address isn't deployed on this chain",
+        "forChain": "Recipient address is a contract address on a different chain. Check before proceeding to avoid loss",
+        "forChainSimple": "Recipient address is a contract address on a different chain"
+      }
     },
     "sendPoly": {
       "enterAddress": "Enter Address",
@@ -708,9 +724,9 @@
       "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time",
       "risks": {
         "noSend": "No transfers to this address in 180 days",
-        "dexNoDeposite": "Not a CEX deposit address, funds may be lost",
-        "contractAddress": "Contract address detected, funds may be lost",
-        "scamAddress": "Scam address flagged by Rabby"
+        "cexNoDeposite": "You're sending to a non-deposit exchange address",
+        "contractAddress": "You're sending to a contract – funds may be lost",
+        "scamAddress": "You're sending to a scam address"
       },
       "checkbox": "I understand the risks and want to continue"
     },
@@ -985,8 +1001,9 @@
         "websites": "Websites",
         "copyTrading": "Copy Trading",
         "search": "Search Token",
-        "watchlist": "Watchlist",
+        "watchlist": "Token Watchlist",
         "perps": "Perps",
+        "lending": "Lending",
         "perpsMarketList": "More Perps"
       }
     },
@@ -1138,6 +1155,7 @@
         "buyWithFiatDesc": "Simple crypto purchase"
       },
       "importAddress": {
+        "__skip_translation": ["safe"],
         "importTitle": "Import Wallet",
         "seedPhrase": "Import Seed Phrase",
         "privateKey": "Import Private Key",
@@ -1182,6 +1200,17 @@
         "title3": "Safety",
         "description4": "Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.",
         "GotIt": "I Got It."
+      },
+      "whatIsPrivateKey": {
+        "title": "What's a private key",
+        "description1": "A private key is a string of letters and numbers used to access and control your wallet. You can use it to recover your wallet on any device.",
+        "title2": "Backup",
+        "description2": "If you lose your private key, you won’t be able to restore your wallet.",
+        "title3": "Never Share It",
+        "description3": "Never share your private key—anyone with access to it can control your funds.",
+        "title4": "Safety",
+        "description4": "Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.",
+        "ButtonGotIt": "I Got It."
       },
       "addContacts": {
         "cameraTitle": "Please scan the QR code with your camera"
@@ -1606,13 +1635,17 @@
       "gnosisChainDesc": "This address was found deployed on {{count}} chains"
     },
     "rabbyPoints": {
+      "__skip_translation": ["titleWithStar", "ClaimComing"],
       "title": "Rabby Points",
+      "titleWithStar": "Rabby Points ✨",
       "out-of-x-current-total-points": "Out of {{total}} Total Distributed Points",
       "earn-points": "Earn Points",
       "top-100": "Top 100",
       "claimItem": {
         "claim": "Claim"
       },
+      "alreadyClaimedXPoints": "Already claimed: {{point}} ",
+      "xPoints": "{{point}} Points",
       "claimModal": {
         "title": "Claim Initial Points",
         "snapshotTime": "Snapshot time: {{time}}",
@@ -1647,7 +1680,8 @@
       },
       "code-set-successfully": "Referral code set successfully",
       "initialPointsClaimEnded": "Initial Points claim ended",
-      "firstRoundEnded": "🎉 The first round of Rabby Points has ended"
+      "firstRoundEnded": "🎉 The first round of Rabby Points has ended",
+      "ClaimComing": "Claim coming!"
     },
     "customTestnet": {
       "desc": "Rabby cannot verify the security of custom networks. Please add trusted networks only.",
@@ -1869,6 +1903,7 @@
         "tokenSecurity": "Token Security"
       },
       "interval": {
+        "__skip_translation": true,
         "1M": "1M",
         "5M": "5M",
         "15M": "15M",
@@ -1884,6 +1919,7 @@
         "volume24h": "24h Volume",
         "txns24h": "24h Txns",
         "holders": "Holders",
+        "pools": "Pools",
         "empty": "No Data",
         "activity": "Activity",
         "summary": "Summary Data",
@@ -1905,13 +1941,33 @@
             "buy": "Buy",
             "sell": "Sell",
             "volume": "Volume",
-            "tradingCount": "Trading Count",
+            "transactionCount": "Transaction Count",
             "address": "Address",
             "addresses": "Addresses",
             "type": "Type",
             "time": "Time",
             "price": "Price",
             "qnt": "Qnt",
+            "value": "Value"
+          }
+        },
+        "pool": {
+          "tab": {
+            "top5": "Top 5 pools",
+            "liquidityDetail": "Liquidity Detail"
+          },
+          "actions": {
+            "add": "Add",
+            "remove": "Remove",
+            "all": "All"
+          },
+          "dex": "Dex",
+          "pair": "Pair",
+          "amount": "Amount",
+          "value": "Value",
+          "headers": {
+            "time": "Time",
+            "amount": "Amount",
             "value": "Value"
           }
         }
@@ -2127,16 +2183,23 @@
         "favorite": "Favorite",
         "contentModeMobile": "Request Mobile Site",
         "contentModeDesktop": "Request DeskTop Site",
-        "disconnect": "Disconnect"
+        "disconnect": "Disconnect",
+        "clearCache": "Clear cache"
       },
       "HyperliquidInvitePopup": {
         "title": "Hyperliquid Referral Program",
+        "asterTitle": "Aster Referral Program",
         "desc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Hyperliquid fees.",
+        "asterDesc": "Join now using Rabby’s code to get a <1>4% discount</1> on your Aster fees.",
         "btn": "Join Now"
       },
       "WebviewError": {
         "failedToLoad": "Failed to load the page",
-        "error": "Error:"
+        "error": "Error:",
+        "alertText": "Try<1/><2>Open in browser</2><3/>to check if it is a website issue"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache cleared"
       }
     },
     "browserManage": {
@@ -2193,7 +2256,6 @@
       }
     },
     "perps": {
-      "__skip_translation": true,
       "title": "Perps",
       "PerpsCard": {
         "title": "Trade Perps",
@@ -2337,7 +2399,6 @@
       }
     },
     "perpsDetail": {
-      "__skip_translation": true,
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
@@ -2364,7 +2425,7 @@
       },
       "PerpsInfo": {
         "title": "Info",
-        "24Vol": "24h Volumn",
+        "24Vol": "24h Volume",
         "openInterest": "Open Interest",
         "funding": "Funding",
         "openInterestTips": "The total outstanding position of all users on this contract.",
@@ -2433,6 +2494,126 @@
     },
     "perpsHistory": {
       "title": "History"
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Build-In Page"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "sendFrom": "Send From",
+        "sendTo": "Send To",
+        "addNewWhitelistAddr": "Add New Whitelist Address",
+        "selectFromHistory": "Select from History",
+        "viewSentTx": "Sent"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "Name the address"
+      }
+    },
+    "Lending": {
+      "apy": "APY",
+      "gotIt": "Got it",
+      "market": "Market",
+      "submitted": "submitted",
+      "netWorth": "Net worth",
+      "supplied": "Supplied",
+      "borrowed": "Borrowed",
+      "estDailyEarning": "Est.Daily Earning",
+      "selectChain": "Select Chain",
+      "hf": "Health factor",
+      "hfTitle": "Health Factor",
+      "enterAmount": "Enter Amount",
+      "availableCard": {
+        "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
+        "needSupply": "To borrow, you need to supply assets as collateral."
+      },
+      "list": {
+        "headers": {
+          "token": "Token",
+          "apy": "APY",
+          "myBorrows": "My borrows",
+          "mySupplies": "My supplies"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "title": "Earn Interest, Borrow Anytime",
+          "description": "Powered by AAVE. Secure and zero fees."
+        },
+        "lq": "If goes below 1, the liquidation might be triggered.",
+        "more": "More",
+        "healthy": "Healthy",
+        "risky": "Risky"
+      },
+      "repayDetail": {
+        "actions": "Repay",
+        "approveAndRepay": "Approve and Repay"
+      },
+      "supplyDetail": {
+        "actions": "Supply",
+        "approveAndSupply": "Approve and Supply",
+        "availableToBorrow": "Available to borrow",
+        "supplyAPY": "Supply APY"
+      },
+      "withdrawDetail": {
+        "actions": "Withdraw",
+        "remainingSupply": "Remaining supply"
+      },
+      "borrowDetail": {
+        "actions": "Borrow",
+        "approveAndBorrow": "Approve and Borrow",
+        "almostReachedWarning": "Protocol borrow cap is at 100% for this asset. Further borrowing unavailable.",
+        "almostReachedError": "Maximum amount available to borrow is limited because protocol borrow cap is nearly reached."
+      },
+      "popup": {
+        "amount": "Amount",
+        "available": "available",
+        "title": "Transaction Overview",
+        "liquidationAt": "Liquidation at < 1.0",
+        "remainingDebt": "Remaining debt"
+      },
+      "borrowOverview": {
+        "title": "Borrow Details",
+        "totalBorrowed": "Total Borrowed",
+        "borrowCap": "Borrow Cap",
+        "myBorrow": "My Borrow",
+        "availableToBorrow": "Available to borrow",
+        "liquidityPenalty": "Liquidation Penalty"
+      },
+      "supplyOverview": {
+        "title": "Supply Details",
+        "totalSupplied": "Total Supplied",
+        "mySupply": "My Supply",
+        "walletBalance": "Wallet Balance",
+        "availableToSupply": "Available to Supply",
+        "reachCap": "This asset has reached its supply cap. Nothing is available to be supplied from this market.",
+        "almostCap": "This asset has almost reached its borrow cap. There is only {{available}} available to be borrowed from this market."
+      },
+      "risk": {
+        "warning": "Borrowing this amount will lower your Health Factor to a risky level for liquidation.",
+        "withdrawWarning": "Withdrawing this amount will lower your Health Factor to a risky level for liquidation.",
+        "checkbox": "I understand the alert and want to continue."
+      },
+      "lqDescription": {
+        "desc": "Liquidation value",
+        "risky": "Risky",
+        "introText": " Your Health Factor shows how safe your borrowing position is. If it drops too low, your collateral could be liquidated.",
+        "over3title": "Health factor > 3.0:",
+        "over3desc": "Your positions are safe",
+        "below1title": "Health Factor ≤ 1.0:",
+        "below1desc": "Your position is at risk of liquidation.",
+        "liquidation": "Liquidation: If your Health Factor falls below 1.0, part of your collateral may be automatically sold to repay the debt. A liquidation penalty will apply, resulting in a partial loss of your collateral.",
+        "warningText": "Your Health Factor is too low. To avoid liquidation:\n1. Repay part or all of your loan\n2. Add more collateral"
+      },
+      "modalDesc": {
+        "availableToBorrow": "Available to borrow",
+        "maxAmount": "This is the maximum amount you can borrow based on all your supplied collateral. Your total borrowing power is calculated by multiplying the market value of each collateral asset by its Max LTV, then summing the results.",
+        "lqDesc": "When a liquidation occurs, liquidators repay up to 50% of the outstanding borrowed amount on behalf of the borrower. In return, they can buy the collateral at a discount and keep the difference (liquidation penalty) as a bonus.",
+        "availableToBorrowDesc": "You can borrow based on your supplied collateral and until the borrow cap is reached."
+      }
     }
   },
   "component": {
@@ -2465,7 +2646,23 @@
         "title": "Deposit USDC / USDT",
         "desc": "Pay Gas Fees on All Chains",
         "login": "Log in GasAccount",
-        "loginAndClaim": "Log in and Claim {{amount}}"
+        "depositTitle": "Deposit USDC/USDT Pay Gas Fees",
+        "depositDesc": "on All Chains when you’re out of gas",
+        "loginAndClaim": "Log in and Claim {{amount}}",
+        "loginTips1": "Pay gas fees for",
+        "loginTips2": "any address on any chain",
+        "loginTips3": "when you're out of gas",
+        "learnAbout": "Learn more about GasAccount"
+      },
+      "about": {
+        "title1": "What is GasAccount",
+        "desc1": "GasAccount is a new way to pay gas fees. Instead of using native tokens on each chain, you can use one account to cover gas for all your addresses on all chains. Simple, optional, and never out of gas.",
+        "title2": "How to use Gas Account",
+        "desc2": "Add funds to your GasAccount and use it for any transaction. When signing, choose to pay gas with native tokens or GasAccount, switch anytime.",
+        "title3": "Does GasAccount have extra fees",
+        "desc3": "Rabby Wallet charges no extra fees. You only pay the gas for your transaction and a small amount of gas for sending that gas from GasAccount to your address.",
+        "title4": "Is GasAccount safe",
+        "desc4": "GasAccount requires no contract approvals or permissions. You deposit to Rabby’s GasAccount address, and Rabby sends gas to your address when needed. Fully secure by design."
       },
       "loginConfirmModal": {
         "title": "Select Wallet to Login",
@@ -2549,6 +2746,11 @@
       },
       "favoriteFilter": {
         "all": "All"
+      },
+      "riskDetected": {
+        "title": "Risk Detected",
+        "proceedBtn": "Proceed",
+        "simpleExplanation": "Not supported"
       }
     },
     "ModalPreviewNFTItem": {
@@ -2656,6 +2858,21 @@
     },
     "GlobalTipsPopup": {
       "btn": "I Got it"
+    },
+    "accountSelectModalTx": {
+      "recentAccounts": "Recent",
+      "whitelistAccounts": "Whitelist",
+      "importedAccounts": "Imported Wallets",
+      "addTrustedAddress": {
+        "desc": "Add trusted address to Whitelist",
+        "addBtn": "Add now"
+      }
+    },
+    "Prediction": {
+      "side": "Side",
+      "amount": "Amount",
+      "price": "Price",
+      "usdValue": "USD Value"
     }
   },
   "native": {

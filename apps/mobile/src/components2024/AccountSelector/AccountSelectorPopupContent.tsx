@@ -176,7 +176,6 @@ export const AccountSelectorPopupContent: React.FC<{
                     key={key}
                     addressItemProps={{ account }}
                     isCurrent={isCurrent}
-                    isPinned={isPinnedAccount(account)}
                     isHideToken={isHideToken}
                     onPressAddress={handlePressAccount}
                     style={[
@@ -210,7 +209,6 @@ export const AccountSelectorPopupContent: React.FC<{
                         key={key}
                         addressItemProps={{ account }}
                         isCurrent={isCurrent}
-                        isPinned={false}
                         onPressAddress={handlePressAccount}
                         style={[
                           styles.addressItem,
@@ -245,7 +243,6 @@ export const AccountSelectorPopupContent: React.FC<{
                         key={key}
                         addressItemProps={{ account }}
                         isCurrent={isCurrent}
-                        isPinned={false}
                         onPressAddress={handlePressAccount}
                         style={[
                           styles.addressItem,

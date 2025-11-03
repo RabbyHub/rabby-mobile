@@ -29,6 +29,7 @@ const TemplateDict = {
   nft_fraction: PortfolioTemplate.NftFraction,
   nft_p2p_lender: PortfolioTemplate.NftP2PLender,
   nft_p2p_borrower: PortfolioTemplate.NftP2PBorrower,
+  prediction: PortfolioTemplate.Prediction,
 };
 
 export const MemoItem = memo(
@@ -61,6 +62,7 @@ export const WrapperDappActionsMemoItem = ({
   address,
   addressType,
   onRefresh,
+  session,
 }: {
   item: AbstractPortfolio;
   chain?: string;
@@ -68,6 +70,7 @@ export const WrapperDappActionsMemoItem = ({
   address?: string;
   addressType?: KEYRING_TYPE;
   onRefresh?: () => Promise<void>;
+  session?: React.ComponentProps<typeof DappActions>['session'];
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
@@ -82,6 +85,7 @@ export const WrapperDappActionsMemoItem = ({
             address={address}
             addressType={addressType}
             onRefresh={onRefresh}
+            session={session}
           />
         )}
     </View>

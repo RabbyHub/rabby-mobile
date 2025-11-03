@@ -17,10 +17,17 @@ import IconPaste from '@/assets2024/icons/common/paste.svg';
 interface IProps {
   onPaste: (text: string) => void;
   disableTrigger?: boolean;
+  /** @default true */
+  cleanClipboardAfterPaste?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
-const PasteButton: React.FC<IProps> = ({ onPaste, style, disableTrigger }) => {
+const PasteButton: React.FC<IProps> = ({
+  onPaste,
+  style,
+  disableTrigger,
+  cleanClipboardAfterPaste = true,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const onPressPaste = () => {
@@ -32,7 +39,9 @@ const PasteButton: React.FC<IProps> = ({ onPaste, style, disableTrigger }) => {
     }
     Clipboard.getString().then(text => {
       onPaste(text);
-      Clipboard.setString('');
+      if (cleanClipboardAfterPaste) {
+        Clipboard.setString('');
+      }
     });
   };
   return (

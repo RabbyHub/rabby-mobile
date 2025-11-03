@@ -1,7 +1,7 @@
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React, { useCallback } from 'react';
@@ -71,7 +71,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
     onSelect?.();
     handleGoDetail?.();
-    navigate(RootNames.SingleAddressStack, {
+    navigateDeprecated(RootNames.SingleAddressStack, {
       screen: RootNames.SingleAddressHome,
       params: {
         account,

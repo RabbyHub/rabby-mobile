@@ -10,13 +10,13 @@ case $RABBY_GO_ENV in
     RABBY_GO_ENV="mobile-regression"
     echo "Deploying regression build..."
     local_dir="mobile-regression"
-    s3_dir="rabby-go/$local_dir"
+    s3_dir="rabby-go-regression/$local_dir"
     ;;
   debug|mobile-debug|*)
     RABBY_GO_ENV="mobile-debug"
     echo "Deploying debug build..."
     local_dir="mobile-debug"
-    s3_dir="rabby-go/$local_dir"
+    s3_dir="rabby-go-debug/$local_dir"
     ;;
   production|mobile-production)
     RABBY_GO_ENV="mobile-production"

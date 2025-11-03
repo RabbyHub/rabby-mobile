@@ -8,7 +8,7 @@ import { apisAddress } from '@/core/apis';
 import { apisSafe } from '@/core/apis/safe';
 import { useThemeColors } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { isValidAddress } from '@ethereumjs/util';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -112,7 +112,7 @@ export const ImportSafeAddressScreen = () => {
         input,
         (chainList || []).map(chain => chain.network),
       );
-      navigate(RootNames.StackAddress, {
+      navigateDeprecated(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess,
         params: {
           type: KEYRING_TYPE.GnosisKeyring,

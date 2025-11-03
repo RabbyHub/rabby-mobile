@@ -68,6 +68,7 @@ function HomeScreen(): JSX.Element {
 
   React.useEffect(() => {
     setNavigationOptions({
+      // header: props => <HomeNativeStackHeader {...props} />,
       headerTitle: renderHeaderTitle,
       headerRight: renderHeaderRight,
     });

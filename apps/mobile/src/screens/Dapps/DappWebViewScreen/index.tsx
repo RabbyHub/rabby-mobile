@@ -76,7 +76,7 @@ export function DappWebViewStubScreen() {
     switch (dappsWebViewFromRoute) {
       case RootNames.Dapps:
       case RootNames.FavoriteDapps: {
-        navigation.navigate(RootNames.StackDapps, {
+        navigation.navigateDeprecated(RootNames.StackDapps, {
           screen: dappsWebViewFromRoute,
         });
         break;

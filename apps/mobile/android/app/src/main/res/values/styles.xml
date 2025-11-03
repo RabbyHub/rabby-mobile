@@ -1,28 +1,25 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.EdgeToEdge.Light">
+    <style name="AppTheme" parent="Theme.EdgeToEdge">
         <!-- Customize your theme here. -->
         <item name="android:textColor">@color/text</item>
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
-        <item name="android:forceDarkAllowed">false</item>
         <item name="enforceNavigationBarContrast">false</item>
+        <item name="android:isLightTheme">@bool/appIsLight</item>
         <!-- <item name="android:fontFamily">@font/sf_pro</item> -->
     </style>
     <style name="SplashScreenTheme" parent="SplashScreen_SplashTheme">
         <!-- <item name="android:statusBarColor">@color/primary</item> -->
         <!-- Add the following line to set the default status bar text color for all the app  to be a light color (false) or a dark color (true) -->
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">@bool/windowLightStatusBar</item>
         <!-- <item name="android:windowBackground">@drawable/background_splash</item> -->
         <!-- Prevents white screen from appearing when opening the app -->
         <item name="android:windowDisablePreview">true</item>
     </style>
-    <!-- <style name="SplashScreenThemeNotUsedNow" parent="Theme.AppCompat.Light.NoActionBar">
-      <item name="android:windowBackground">@drawable/background_splash</item>
-      <item name="android:statusBarColor">@color/primary</item>
-      <item name="android:navigationBarColor">@color/primary</item>
-      <item name="android:windowLightStatusBar">true</item>
-      <item name="android:textColor">@color/text</item>
-    </style> -->
+    <style name="Theme.WebView" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:isLightTheme">@bool/webviewIsLight</item>
+        <item name="android:forceDarkAllowed">true</item>
+    </style>
 
 </resources>

@@ -104,7 +104,11 @@
         "Revoke": "{{token}} の承認を取り消しました",
         "ReceivedGas": "受け取ったGas",
         "DepositedGas": "預入したGas",
-        "WithdrawnGas": "Withdrawn Gas"
+        "WithdrawnGas": "Withdrawn Gas",
+        "LendingBorrow": "借りる",
+        "LendingWithdraw": "出金",
+        "LendingSupply": "供給",
+        "LendingRepay": "返済"
       },
       "detail": {
         "SpeedUp": "速度アップ",
@@ -769,7 +773,13 @@
       "sectionTo": {
         "addrValidator__empty": "アドレスを入力してください",
         "searchInputPlaceholder": "アドレスを入力するか、スキャンする",
-        "addrValidator__invalid": "このアドレスは無効です"
+        "addrValidator__invalid": "このアドレスは無効です",
+        "positiveTips": {
+          "yourOwnAddress": "あなたのアドレス",
+          "sentRecently": "最近送信されました",
+          "whitelistedAddress": "ホワイトリストに登録されたアドレス"
+        },
+        "selectPlaceholder": "アドレスを選択"
       },
       "allowTransferModal": {
         "addWhitelist": "ホワイトリストに追加",
@@ -794,11 +804,17 @@
         "confirm": "進む",
         "cancel": "キャンセル"
       },
-      "noSupprotTokenForDex": "このトークンはこの取引所でサポートされていない可能性があります。損失を避けるために、事前に確認してください。",
       "From": "から",
-      "noSupprotTokenForSafe": "あなたがトークンを送信しているSafeアドレスは、このチェーンにデプロイされていません。損失を避けるために、進む前に確認してください。",
-      "noSupportTokenForChain": "受取人アドレスは異なるチェーン上のコントラクトアドレスです。損失を避けるために、進む前に確認してください。",
-      "addressDetail": "アドレス詳細"
+      "addressDetail": "アドレス詳細",
+      "newAmount": "金額",
+      "noSupportTokenReason": {
+        "forChainSimple": "受取人アドレスは異なるチェーンのコントラクトアドレスです।",
+        "forSafeSimple": "このSafeアドレスはこのチェーンに展開されていません。",
+        "forDex": "このトークンはこの取引所ではサポートされていない可能性があります。損失を避けるために、進む前に確認してください。",
+        "forChain": "受取人アドレスは別のチェーンのコントラクトアドレスです。損失を避けるために進む前に確認してください。",
+        "forSafe": "送信先の Safe アドレスはこのチェーンにはデプロイされていません。損失を避けるために、進む前に確認してください。",
+        "forDexSimple": "このトークンはこの取引所でサポートされていない可能性があります。"
+      }
     },
     "swap": {
       "hidden-no-quote-rates_other": "{{count}} のレートが利用できません。",
@@ -918,9 +934,10 @@
         "websites": "ウェブサイト",
         "search": "Search Token",
         "copyTrading": "コピー取引",
-        "watchlist": "ウォッチリスト",
+        "watchlist": "トークンウォッチリスト",
         "perps": "パープス",
-        "perpsMarketList": "より多くのPerps"
+        "perpsMarketList": "より多くのPerps",
+        "lending": "貸し出し"
       }
     },
     "nextComponent": {
@@ -973,7 +990,6 @@
       },
       "importAddress": {
         "privateKey": "プライベートキーをインポートする",
-        "safe": "安全",
         "hardWare": "ハードウェアウォレットを接続",
         "tips": {
           "gotIt": "了解しました。",
@@ -1383,9 +1399,32 @@
         },
         "customAddressHdPath": "カスタムウォレット HD パス",
         "selectIndexTip": "ウォレットのシリアル番号を選択して開始してください:",
-        "manageAddressFrom": "{{0}} から {{1}} までのウォレットを管理する"
+        "manageAddressFrom": "{{0}} から {{1}} までのウォレットを管理する",
+        "trezor": {
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Ledger公式HDパス。",
+            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。",
+            "bip44": "BIP44: BIP44プロトコルによって定義されたHDpath。"
+          },
+          "hdPathTypeNoChain": {
+            "bip44": "BIP44: BIP44プロトコルによって定義されたHDパス。",
+            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。",
+            "ledgerLive": "Ledger Live: Ledger公式HDパス。"
+          }
+        }
       },
-      "createNewAddress": "新しいウォレットを作成"
+      "createNewAddress": "新しいウォレットを作成",
+      "whatIsPrivateKey": {
+        "title4": "安全性",
+        "ButtonGotIt": "わかりました。",
+        "title2": "バックアップ",
+        "title": "プライベートキーとは何ですか",
+        "description2": "プライベートキーを失うと、ウォレットを復元することができなくなります。",
+        "description1": "プライベートキーは、あなたのウォレットにアクセスし、制御するために使用される文字と数字の文字列です。これを使用して、任意のデバイスでウォレットを復元することができます。",
+        "title3": "絶対に共有しないでください",
+        "description3": "自分のプライベートキーを決して共有しないでください。アクセスできる人は誰でもあなたの資金を管理できます。",
+        "description4": "あなたの秘密鍵はデバイスにローカルに保存されており、パスワードで暗号化されています。あなたにしかアクセスできません。Rabbyはあなたの秘密鍵を取得したりアクセスしたりすることはできません。"
+      }
     },
     "sign": {
       "transactionSpeed": "トランザクションスピード"
@@ -1727,16 +1766,6 @@
         "tokenSecurity": "トークンセキュリティ",
         "marketData": "マーケットデータ"
       },
-      "interval": {
-        "1M": "1M",
-        "1W": "1W",
-        "4H": "4H",
-        "1H": "1H",
-        "1D": "1D",
-        "15M": "15M",
-        "30M": "30M",
-        "5M": "5M"
-      },
       "marketInfo": {
         "holders": "保有者",
         "marketCap": "時価総額",
@@ -1766,14 +1795,35 @@
             "all": "すべて",
             "price": "価格",
             "value": "価値",
-            "tradingCount": "取引回数",
-            "qnt": "Qnt"
+            "qnt": "Qnt",
+            "transactionCount": "取引回数"
           }
         },
         "details": "詳細情報",
         "empty": "データがありません",
         "summary": "サマリーデータ",
-        "activity": "アクティビティ"
+        "activity": "アクティビティ",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "流動性の詳細",
+            "top5": "トップ5プール"
+          },
+          "actions": {
+            "add": "追加",
+            "remove": "削除",
+            "all": "すべて"
+          },
+          "headers": {
+            "amount": "金額",
+            "value": "価値",
+            "time": "時間"
+          },
+          "pair": "ペア",
+          "amount": "金額",
+          "value": "価値",
+          "dex": "Dex"
+        },
+        "pools": "プール"
       }
     },
     "customTestnet": {
@@ -1851,7 +1901,9 @@
         "snapshotTime": "スナップショット時間: {{time}}",
         "addressBalance": "ウォレット残高",
         "placeholder": "紹介コードを入力して追加ポイントを獲得 (オプション)"
-      }
+      },
+      "xPoints": "{{point}} ポイント",
+      "alreadyClaimedXPoints": "既にクレーム済み: {{point}}"
     },
     "search": {
       "header": {
@@ -2020,7 +2072,7 @@
         "noSend": "過去180日間、このアドレスに資金を送っていません。続行するかどうかを確認してください。",
         "scamAddress": "受信者のアドレスは、Rabby によってフラグが立てられた詐欺アドレスです。",
         "contractAddress": "受取人のアドレスはコントラクトアドレスであり、資金損失の可能性があります。",
-        "dexNoDeposite": "受取人アドレスはCEXからの非預金アドレスです。預金アドレスが正しいことを確認してください。"
+        "cexNoDeposite": "受取人アドレスはCEXからの非預金アドレスです。預金アドレスが正しいことを確認してください。"
       },
       "brandNameTail": "アドレス",
       "dexNameTail": "入金アドレス",
@@ -2113,12 +2165,23 @@
         "disconnect": "切断",
         "contentModeDesktop": "デスクトップ版サイトをリクエスト",
         "favorite": "お気に入り",
-        "contentModeMobile": "モバイルサイトをリクエスト"
+        "contentModeMobile": "モバイルサイトをリクエスト",
+        "clearCache": "キャッシュをクリア"
       },
       "HyperliquidInvitePopup": {
         "btn": "今すぐ参加",
         "title": "ハイパーリキッド紹介プログラム",
-        "desc": "今すぐRabbyのコードを使って、Hyperliquidの手数料が<1>4%割引</1>になります。"
+        "desc": "今すぐRabbyのコードを使って、Hyperliquidの手数料が<1>4%割引</1>になります。",
+        "asterTitle": "Aster 紹介プログラム",
+        "asterDesc": "今すぐRabbyのコードを使って、Asterの手数料で<1>4%の割引</1>を受けましょう。"
+      },
+      "WebviewError": {
+        "failedToLoad": "ページの読み込みに失敗しました",
+        "error": "エラー：",
+        "alertText": "試してみてください<1/><2>ブラウザで開く</2><3/>ウェブサイトの問題か確認するために"
+      },
+      "toast": {
+        "clearCacheSuccess": "キャッシュがクリアされました"
       }
     },
     "browserManage": {
@@ -2237,6 +2300,363 @@
     },
     "perpsHistory": {
       "title": "履歴"
+    },
+    "perps": {
+      "PerpsCard": {
+        "depositBtn": "入金",
+        "available": "利用可能",
+        "withdrawBtn": "引き出す",
+        "loginBtn": "Trading Perpsにログイン",
+        "title": "永続契約を取引する",
+        "loginDesc": "アドレスでログインし、資金を入金してperpsの取引を開始してください。",
+        "learnBtn": "Perpsについて学ぶ"
+      },
+      "PerpsGuidePopup": {
+        "step5Title": "清算",
+        "step2Title": "ロング",
+        "step4Title": "レバレッジの調整",
+        "step1Title": "マスターパー​​ペチュアルフューチャーズ",
+        "step3Title": "ショート",
+        "step4Desc": "レバレッジは、あなたが投入した金額以上で取引できるようにします。これにより、利益と損失の両方が増加する可能性があります。",
+        "step1Desc": "永続的な先物契約では、資産を取引しているだけではありません。次に何が起こると考えているかを取引しています。",
+        "step2Desc": "価格が上昇すると予想する場合は、ロングを開きます。価格が上昇すれば利益を得ますが、下落すれば損失が発生します。",
+        "step3Desc": "価格が下がると予想したら、ショートを開きます。価格が下がれば利益が得られます。価格が上がれば損失が出ます。",
+        "step5Desc": "すべてのポジションには清算価格があります。もし市場価格がその価格に達すると、あなたのポジションは閉じられます。高いレバレッジを使用すると、清算されるリスクが高まります。"
+      },
+      "PerpsDepositPopup": {
+        "title": "入金",
+        "amount": "金額",
+        "balance": "残高",
+        "insufficientBalance": "残高不足",
+        "depositBtn": "入金",
+        "minimumDepositSize": "最小入金額は5ドルです。",
+        "invalidNumber": "有効な数値を入力してください。",
+        "fetchQuoteFailed": "入金見積もりの取得に失敗しました。トークンを切り替えてください。",
+        "estReceive": "推定受取額: {{balance}}",
+        "estReceiveTooltip": "クロスチェーン入金はLiFiを介して処理され、スリippageが発生する可能性があります。到着予定は{{number}}秒です。"
+      },
+      "PerpsWithdrawPopup": {
+        "available": "利用可能",
+        "insufficientBalance": "残高不足",
+        "title": "引き出す",
+        "feeTip": "手数料 : $1.00",
+        "amount": "金額",
+        "withdrawBtn": "引き出す",
+        "feeTooltipTitle": "手数料",
+        "invalidNumber": "有効な数値を入力してください",
+        "feeTooltipDesc": "Hyperliquidによって請求される出金手数料: $1",
+        "minimumWithdrawSize": "最低出金額は$2です。"
+      },
+      "PerpsWithdrawFeePopup": {
+        "title": "手数料",
+        "btn": "分かりました",
+        "desc": "Hyperliquidによる引き出し手数料: $1"
+      },
+      "historyDetail": {
+        "title": {
+          "openShort": "ショートを開く",
+          "openLong": "ロングをオープン",
+          "closeShortSl": "ショートをクローズ ストップロス",
+          "closeShort": "ショートをクローズ",
+          "closeLongLiquidation": "ロング清算をクローズ",
+          "closeLongTp": "ロング決済 利益確定",
+          "closeShortLiquidation": "ショート決済清算",
+          "closeLongSl": "ロングストップロスをクローズ",
+          "closeLong": "ロングをクローズ",
+          "closeShortTp": "ショートをクローズして利益確定"
+        },
+        "fee": "手数料",
+        "date": "日付",
+        "tradeValue": "取引額",
+        "size": "サイズ",
+        "closedPnl": "クローズドPNL",
+        "price": "価格",
+        "gotItBtn": "わかった",
+        "perps": "パープス",
+        "sizeTips": "あなたの取引の総価値または数量は、マージンとレバレッジによって設定されます。",
+        "provider": "プロバイダー"
+      },
+      "PerpsAutoCloseModal": {
+        "takeProfit": "利確",
+        "profit": "利益",
+        "takeProfitTipsLong": "利益確定価格は現在の価格よりも高くなければなりません。",
+        "stopLoss": "ストップロス",
+        "stopLossTipsLongLiquidation": "価格は清算価格 ({{price}}) よりも低いです。",
+        "loss": "損失",
+        "takeProfitTipsShort": "利益確定価格は現在の価格よりも低くなければなりません。",
+        "stopLossTipsShort": "ストップロス価格は現在の価格よりも高くなければなりません",
+        "stopLossTipsLong": "損切り価格は現在の価格よりも低く設定する必要があります。",
+        "stopLossTipsShortLiquidation": "価格は清算価格 ({{price}}) よりも高いです。"
+      },
+      "PerpsDepositTokenModal": {
+        "swapBtn": "スワップ",
+        "directTag": "直接入金",
+        "bridgeBtn": "ブリッジ",
+        "goSwapDesc": "Arbitrum上では、直接入金がサポートされているのはUSDCのみです。入金する前に、現在のトークンをUSDCにスワップしてください。",
+        "goBridgeDesc": "Arbitrumでの直接入金はUSDCのみサポートされています。入金する前に、現在のトークンをArbitrumのUSDCにブリッジしてください。"
+      },
+      "history": {
+        "status": {
+          "pending": "保留中",
+          "completed": "完了"
+        },
+        "closeLongTp": "ロングをクローズして利益確定",
+        "title": "履歴",
+        "closeLongSl": "ロングのストップロスをクローズ",
+        "deposit": "入金",
+        "withdraw": "出金",
+        "openLong": "ロングを開く",
+        "openShort": "ショートポジションをオープン",
+        "closeShortLiquidation": "ショートの強制清算をクローズ",
+        "closeLong": "ロングをクローズ",
+        "closeShortSl": "ショートをクローズしてストップロスを設定する",
+        "closeShortTp": "ショートを閉じて利益確定",
+        "closeLongLiquidation": "ロングの清算をクローズ",
+        "closeShort": "ショートをクローズ"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "入金するトークンを選択してください"
+      },
+      "PerpsAccountLogoutPopup": {
+        "logout": "ログアウト",
+        "title": "現在のアドレスからログアウト",
+        "desc": "現在のPerpsアカウントからログアウトしています。このアドレスでログインすることで、いつでも復元できます。"
+      },
+      "PerpsDepositCard": {
+        "availableToTrade": "取引可能:",
+        "deposit": "入金"
+      },
+      "PerpsAccountSelectorPopup": {
+        "hyperliquidBalance": "パープス残高",
+        "noPosition": "ポジションなし",
+        "notActivatedAddress": "未アクティブ",
+        "lastUsed": "最後の使用",
+        "activatedAddress": "アクティブ化された"
+      },
+      "title": "永続契約",
+      "selectAccountTitle": "ウォレットを選択してログインしてください",
+      "more": "もっと見る",
+      "explorePerps": "Perpsを探る",
+      "positions": "ポジション",
+      "leverageRangeMinError": "最小レバレッジは{{min}}xです。",
+      "regionNotSupport": "あなたの地域ではポジションのオープンはサポートされていません",
+      "leverageRangeMaxError": "最大レバレッジは {{max}}x です",
+      "deleteAgentSuccess": "エージェントが正常に削除されました。",
+      "deleteAgentModal": "最大エージェント数に達しました。新しいエージェントを作成するために、既存のエージェントを削除しますか？"
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "title": "ポジション",
+        "markPrice": "マーク価格",
+        "direction": "方向",
+        "size": "サイズ",
+        "isolated": "分離",
+        "pnl": "PNL",
+        "cross": "クロス",
+        "tpPrice": "テイクプロフィット価格",
+        "liqPrice": "清算価格",
+        "marginIsolated": "マージン (アイソレート)",
+        "fundingPayments": "ファンディングペイメント",
+        "autoClose": "自動クローズ",
+        "closePosition": "{{direction}}をクローズ",
+        "marginCross": "マージン（クロス）",
+        "margin": "マージン（アイソレーテッド）",
+        "justMargin": "マージン",
+        "liquidationPrice": "清算価格",
+        "slPrice": "ストップロス価格",
+        "sizeTips": "あなたの取引の総価値または数量で、マージンとレバレッジによって設定されます。",
+        "entryPrice": "エントリープライス",
+        "fundingPaymentsTips": "これはポジションがオープンされて以来のネットファンディングペイメントです。ファンディングは、トレーダーが永続契約の価格をトークンの実際の価格に近づけるために支払うか受け取る毎時の手数料です。",
+        "liquidationPriceTips": "あなたのマージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によって自動的にポジションが閉じられる価格。"
+      },
+      "PerpsInfo": {
+        "funding": "資金調達",
+        "title": "情報",
+        "24Vol": "24時間取引量",
+        "openInterest": "オープンインタレスト",
+        "openInterestTips": "この契約における全ユーザーの合計未決済ポジション。",
+        "fundingTips": "これは、トレーダーが永続契約の価格をトークンの実際の価格に近づけるために支払うか受け取る毎時料金です。正の場合、ロングはショートに支払います。負の場合、ショートはロングに支払います。"
+      },
+      "PerpsIntro": {
+        "title": "Perps とは何ですか？",
+        "desc": "永続契約の取引は、レバレッジの高さや市場のボラティリティにより、投資や担保を迅速に失う可能性を含む重要なリスクを伴います。このような取引はすべてのユーザーに適しているわけではありません。価格は資金調達レートや流動性の影響を受ける可能性があり、事前通知なしに自動的にロスカットされることがあります。市場データはHyperliquidによって提供されています。"
+      },
+      "PerpsClosePositionPopup": {
+        "title": "{{coin}} {{direction}}ポジションをクローズ",
+        "pnl": "PNL",
+        "closeBtn": "{{direction}}をクローズ",
+        "positionSize": "ポジションサイズ",
+        "fee": "手数料：",
+        "rabbyFeeTips": "Rabby手数料: 0.04%",
+        "providerFeeTips": "Hyperliquid 手数料: {{fee}}"
+      },
+      "PerpsOpenPositionPopup": {
+        "minimumOrderSize": "最小注文サイズは$10です。",
+        "insufficientBalance": "残高不足",
+        "tpPrice": "テイクプロフィット価格",
+        "size": "サイズ",
+        "available": "利用可能",
+        "slPrice": "ストップロス価格",
+        "autoClose": "自動クローズ",
+        "margin": "マージン",
+        "leverage": "レバレッジ",
+        "maximumOrderSize": "最大注文サイズは {{amount}} です",
+        "sizeTips": "取引の総価値または数量は、マージンとレバレッジによって設定されます。",
+        "invalidNumber": "有効な数字を入力してください"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "direction": "方向",
+        "title": "注文を確認",
+        "tpPrice": "利益確定価格",
+        "fee": "手数料",
+        "initialMargin": "初期証拠金",
+        "size": "サイズ",
+        "perps": "パーペツ",
+        "btn": "{{direction}}ポジションを開く",
+        "slPrice": "ストップロス価格",
+        "price": "価格",
+        "estLqPrice": "推定清算価格",
+        "rabbyFeeTips": "Rabby 手数料: 0%",
+        "autoClose": "自動クローズ",
+        "margin": "マージン（アイソレーテッド）",
+        "providerFeeTips": "Hyperliquid手数料: {{fee}}",
+        "sizeTips": "あなたの取引の総価値または数量は、マージンとレバレッジによって設定されます。",
+        "liquidationPriceTips": "マージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によってあなたのポジションが自動的にクローズされる価格です。"
+      },
+      "action": {
+        "short": "ショート",
+        "long": "ロング",
+        "noPermission": "あなたの地域ではポジションをオープンすることはサポートされていません。",
+        "closePosition": "{{direction}} ポジションをクローズ"
+      },
+      "PerpsAutoCloseModal": {
+        "price": "価格:",
+        "tpPrice": "利確価格",
+        "slPrice": "ストップロス価格",
+        "setSlPrice": "ストップロス価格を設定する",
+        "entryPrice": "エントリー価格：",
+        "setTpPrice": "テイクプロフィット価格を設定する"
+      }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "ビルトインページ"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "sendTo": "送信先",
+        "viewSentTx": "送信済み",
+        "selectFromHistory": "履歴から選択",
+        "addNewWhitelistAddr": "新しいホワイトリストアドレスを追加",
+        "sendFrom": "送信元"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "アドレスに名前を付けてください"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "needSupply": "借りるには、資産を担保として提供する必要があります。",
+        "canBorrow": "提供した担保に基づいて、借入上限まで借りることができます。"
+      },
+      "list": {
+        "headers": {
+          "apy": "APY",
+          "token": "トークン",
+          "myBorrows": "私の借入",
+          "mySupplies": "私のサプライ"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "description": "AAVEによって提供されています。安全で手数料ゼロです。",
+          "title": "利子を得る、いつでも借りる"
+        },
+        "more": "もっと",
+        "healthy": "健康",
+        "risky": "リスキー",
+        "lq": "1を下回ると、清算がトリガーされる可能性があります。"
+      },
+      "repayDetail": {
+        "actions": "返済",
+        "approveAndRepay": "承認と返済"
+      },
+      "supplyDetail": {
+        "approveAndSupply": "承認と供給",
+        "actions": "供給",
+        "availableToBorrow": "借りることができます",
+        "supplyAPY": "供給APY"
+      },
+      "withdrawDetail": {
+        "actions": "出金",
+        "remainingSupply": "残りの供給"
+      },
+      "borrowDetail": {
+        "actions": "借りる",
+        "approveAndBorrow": "承認と借入",
+        "almostReachedError": "借入可能的最大金额受到限制，因为协议借入上限已接近。",
+        "almostReachedWarning": "この資産のプロトコル借入上限は100%です。これ以上の借入はできません。"
+      },
+      "popup": {
+        "available": "利用可能",
+        "amount": "金額",
+        "remainingDebt": "残りの債務",
+        "liquidationAt": "1.0未満での清算",
+        "title": "取引概要"
+      },
+      "borrowOverview": {
+        "myBorrow": "私の借入",
+        "availableToBorrow": "貸出可能",
+        "totalBorrowed": "合計借入額",
+        "borrowCap": "借入上限",
+        "title": "借入詳細情報",
+        "liquidityPenalty": "清算ペナルティ"
+      },
+      "supplyOverview": {
+        "title": "供給の詳細",
+        "walletBalance": "ウォレット残高",
+        "totalSupplied": "供給総額",
+        "mySupply": "私の供給",
+        "availableToSupply": "提供可能",
+        "reachCap": "この資産は供給上限に達しました。この市場から供給されるものはありません。",
+        "almostCap": "この資産は借入限度額にほぼ達しています。この市場から借りられるのは{{available}}のみです。"
+      },
+      "risk": {
+        "checkbox": "アラートを理解し、続行したいと思います。",
+        "withdrawWarning": "この金額を引き出すと、あなたのヘルスファクターが清算のリスクがあるレベルに下がります。",
+        "warning": "この金額を借りると、あなたのヘルスファクターが清算のリスクレベルまで下がります。"
+      },
+      "lqDescription": {
+        "desc": "清算価値",
+        "below1title": "ヘルスファクター ≤ 1.0:",
+        "risky": "リスキー",
+        "over3title": "ヘルスファクター > 3.0:",
+        "over3desc": "あなたのポジションは安全です",
+        "below1desc": "あなたのポジションは清算のリスクにさらされています。",
+        "liquidation": "清算：健康係数が1.0未満になると、担保の一部が自動的に売却されて債務が返済される可能性があります。清算ペナルティが適用されるため、担保の一部が損失となります。",
+        "warningText": "あなたのヘルスファクターは低すぎます。清算を避けるために：\n1. ローンの一部または全額を返済する\n2. さらなる担保を追加する",
+        "introText": "あなたのヘルスファクターは、あなたの借入ポジションがどれほど安全かを示しています。もしそれがあまりにも低下すると、あなたの担保は清算される可能性があります。"
+      },
+      "modalDesc": {
+        "availableToBorrow": "借りられるアイテム",
+        "maxAmount": "これは、提供した担保に基づいて借りられる最大金額です。借入れの総力は、各担保資産の市場価値にその最大LTVを掛けて計算し、その結果を合計することによって算出されます。",
+        "availableToBorrowDesc": "提供した担保に基づいて借り入れができ、借入上限に達するまで借りることができます。",
+        "lqDesc": "清算が発生した場合、清算業者は借り手のために未払いの借入額の最大50%を返済します。その見返りとして、彼らは担保を割引価格で購入し、その差額（清算ペナルティ）をボーナスとして保持できます。"
+      },
+      "apy": "APY",
+      "supplied": "供給された",
+      "estDailyEarning": "推定日収入",
+      "selectChain": "チェーンを選択",
+      "market": "市場",
+      "submitted": "提出されました",
+      "netWorth": "ネットワース",
+      "gotIt": "わかりました",
+      "borrowed": "借入",
+      "enterAmount": "金額を入力してください",
+      "hfTitle": "ヘルスファクター",
+      "hf": "ヘルスファクター"
     }
   },
   "global": {
@@ -2350,6 +2770,11 @@
       },
       "favoriteFilter": {
         "all": "すべて"
+      },
+      "riskDetected": {
+        "proceedBtn": "進む",
+        "simpleExplanation": "サポートされていません",
+        "title": "リスクが検出されました"
       }
     },
     "accountSwitcher": {
@@ -2426,7 +2851,13 @@
         "desc": "すべてのチェーンでガス費用を支払う",
         "title": "USDC / USDT を入金",
         "login": "GasAccountにログイン",
-        "loginAndClaim": "ログインして{{amount}}を受け取る"
+        "loginAndClaim": "ログインして{{amount}}を受け取る",
+        "loginTips3": "ガスが切れたとき",
+        "loginTips1": "ガス料金を支払うために",
+        "loginTips2": "任意のチェーンの任意のアドレス",
+        "learnAbout": "GasAccountについて詳しく学ぶ",
+        "depositTitle": "USDC/USDTを入金してガス代を支払う",
+        "depositDesc": "ガス切れのとき、すべてのチェーンで"
       },
       "withdrawConfirmModal": {
         "title": "DeBank L2 Walletに転送されました。",
@@ -2461,6 +2892,16 @@
         "gotIt": "私が取得しました",
         "giftTips": "アクティブユーザーのためのGas Reward",
         "noWithdrawableBalanceDescription": "{{amount}}のガス残高は引き出せません：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
+      "about": {
+        "title3": "GasAccountには追加料金がありますか？",
+        "title1": "GasAccountとは何ですか",
+        "title4": "GasAccountは安全ですか？",
+        "title2": "Gas Account の使い方",
+        "desc3": "Rabby Walletは追加料金を一切請求しません。あなたは取引のためのガスと、そのガスをGasAccountからあなたのアドレスに送るための少額のガスだけを支払います。",
+        "desc2": "GasAccountに資金を追加し、任意の取引に利用してください。署名するときは、ネイティブトークンまたはGasAccountでガスを支払うことを選択し、いつでも切り替えてください。",
+        "desc4": "GasAccount は契約承認や権限を必要としません。あなたは Rabby の GasAccount アドレスに入金し、必要に応じて Rabby があなたのアドレスにガスを送ります。設計上、完全に安全です。",
+        "desc1": "GasAccountは、ガス料金を支払う新しい方法です。各チェーンのネイティブトークンを使用する代わりに、1つのアカウントで全てのチェーンの全てのアドレスのガスをカバーできます。シンプルでオプションで、ガス切れになることはありません。"
       }
     },
     "AuthenticationModals": {
@@ -2540,6 +2981,21 @@
     },
     "GlobalTipsPopup": {
       "btn": "理解しました"
+    },
+    "Prediction": {
+      "price": "価格",
+      "amount": "金額",
+      "side": "サイド",
+      "usdValue": "USDの価値"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "addBtn": "今すぐ追加",
+        "desc": "信頼できるアドレスをホワイトリストに追加する"
+      },
+      "recentAccounts": "最近",
+      "whitelistAccounts": "ホワイトリスト",
+      "importedAccounts": "インポートされたウォレット"
     }
   },
   "common": {

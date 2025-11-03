@@ -279,153 +279,6 @@ export const WhiteListItem = ({
     </ContextMenuView>
   );
 };
-export const WhiteListItemSwitch = ({
-  account,
-  style,
-  addrDesc,
-  inWhiteList,
-}: IProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { navigation } = useSafeSetNavigationOptions();
-  const { t } = useTranslation();
-  const [cacheCexDes, setCacheCexDes] = useState<Cex | undefined>();
-  const cexDes = useMemo(
-    () => addrDesc?.cex || cacheCexDes,
-    [addrDesc?.cex, cacheCexDes],
-  );
-  const { adderssAlias } = useAlias2(account.address, { autoFetch: true });
-  const { formatName } = useMemo(() => {
-    const ellipisName = ellipsisAddress(account.address);
-    const name = adderssAlias || account.aliasName || ellipisName;
-    return {
-      formatName: name,
-    };
-  }, [account.address, account.aliasName, adderssAlias]);
-
-  useLayoutEffect(() => {
-    if (cacheCexDes || cexDes) {
-      return;
-    }
-    getCexWithLocalCache(account.address, false, true).then(res => {
-      if (res?.id) {
-        setCacheCexDes(res);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return (
-    <AddressItemShadowView>
-      <View style={styles.root}>
-        <Card style={StyleSheet.flatten([styles.card, style])}>
-          <InnerAddressItem style={styles.rootItem} account={account}>
-            {({ WalletIcon }) => (
-              <View style={styles.item}>
-                <View style={styles.iconWrapper}>
-                  {cexDes?.is_deposit && cexDes?.logo_url ? (
-                    <Image
-                      source={{ uri: cexDes?.logo_url }}
-                      style={styles.walletIcon}
-                      width={46}
-                      height={46}
-                    />
-                  ) : (
-                    <WalletIcon
-                      style={styles.walletIcon}
-                      width={46}
-                      height={46}
-                    />
-                  )}
-                  {inWhiteList && (
-                    <RcIconLockCC
-                      style={styles.lockIcon}
-                      color={colors2024['brand-default']}
-                      surroundColor={colors2024['neutral-bg-1']}
-                      width={22}
-                      height={22}
-                    />
-                  )}
-                </View>
-                <View style={styles.itemInfo}>
-                  <View style={styles.itemNameNoBalance}>
-                    <Text
-                      style={[styles.itemNameText, styles.hideBalanceNameText]}
-                      ellipsizeMode="tail"
-                      numberOfLines={1}>
-                      {formatName}
-                    </Text>
-                    <Pressable
-                      onPress={() => {
-                        const modalId = createGlobalBottomSheetModal2024({
-                          name: MODAL_NAMES.ADDRESS_HIGHT_DESC,
-                          address: account.address,
-                          bottomSheetModalProps: {
-                            enableContentPanningGesture: true,
-                            enablePanDownToClose: true,
-                            enableDismissOnClose: true,
-                          },
-                          nextButtonProps: {
-                            title: (
-                              <Text style={styles.modalNextButtonText}>
-                                {t('global.ok')}
-                              </Text>
-                            ),
-                            titleStyle: StyleSheet.flatten([
-                              styles.modalNextButtonText,
-                            ]),
-                            onPress: () => {
-                              removeGlobalBottomSheetModal2024(modalId);
-                            },
-                          },
-                        });
-                      }}
-                      hitSlop={10}>
-                      <View style={styles.underlineContainer}>
-                        <Text style={styles.hideBalanceAddress}>
-                          {ellipsisAddress(account.address)}
-                        </Text>
-                        <View style={styles.customDashedLine}>
-                          {Array.from({ length: 40 }, (_, index) => (
-                            <View
-                              key={index}
-                              style={[
-                                styles.dashSegment,
-                                { marginRight: index % 2 === 0 ? 3 : 0 },
-                              ]}
-                            />
-                          ))}
-                        </View>
-                      </View>
-                    </Pressable>
-                  </View>
-                </View>
-              </View>
-            )}
-          </InnerAddressItem>
-          <Pressable
-            style={styles.arrow}
-            hitSlop={10}
-            onPress={() => {
-              navigation.popToTop();
-              navigation.dispatch(
-                StackActions.push(RootNames.StackTransaction, {
-                  screen: RootNames.SendTo,
-                  params: {},
-                }),
-              );
-            }}>
-            <RcIconSwitchCC
-              fillColor={colors2024['neutral-bg-2']}
-              strokeColor={colors2024['neutral-body']}
-              width={24}
-              height={24}
-            />
-          </Pressable>
-        </Card>
-      </View>
-    </AddressItemShadowView>
-  );
-};
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -491,12 +344,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
   },
-  itemNameTextHasPinned: {
-    paddingRight: 52,
-  },
-  itemNamePinned: {
-    marginLeft: -52,
-  },
   itemBalanceText: {
     fontSize: 16,
     lineHeight: 20,
@@ -527,41 +374,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
-  underlineContainer: {
-    position: 'relative',
-    width: '100%',
-    paddingBottom: 0,
-    overflow: 'hidden',
-  },
-  customDashedLine: {
-    position: 'absolute',
-    bottom: 1,
-    left: 0,
-    right: 0,
-    height: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dashSegment: {
-    width: 3,
-    height: 1,
-    backgroundColor: colors2024['neutral-secondary'],
-    marginRight: 3,
-  },
-  arrow: {
-    width: 30,
-    height: 30,
-    backgroundColor: colors2024['neutral-bg-2'],
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   cardPressing: {
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 16,
-  },
-  arrowPressing: {
-    backgroundColor: colors2024['brand-light-1'],
   },
   walletIcon: {
     borderRadius: 12,

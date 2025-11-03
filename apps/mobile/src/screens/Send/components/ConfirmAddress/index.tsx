@@ -36,6 +36,8 @@ export interface ConfirmAddressScreenProps {
   ) => void;
   onCancel?: () => void;
 }
+
+/** @deprecated */
 const ConfirmAddress = ({
   account,
   onCancel,
@@ -54,11 +56,7 @@ const ConfirmAddress = ({
   const shouldPasswordValidation = useMemo(() => {
     return disableWhiteSwitch || inWhiteList;
   }, [disableWhiteSwitch, inWhiteList]);
-  const { loading, risks, addressDesc } = useRisks(
-    account.address,
-    !!account.balance,
-    cex,
-  );
+  const { loading, risks, addressDesc } = useRisks(account.address, { cex });
   const [isChecked, setIsChecked] = useState(false);
   const { accounts } = useAccounts({
     disableAutoFetch: true,

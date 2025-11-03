@@ -5,12 +5,11 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { TransactionNavigatorParamList } from '@/navigation-type';
 import { StackActions, useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { NFTSection, SendNFTSection } from './Section';
-import ToAddressControl2024 from '@/screens/Send/components/ToAddressControl2024';
-import FromAddressControl2024 from '@/screens/Send/components/FromAddressControl';
+import ToAddressControl2024 from '@/screens/SendNFT/components/ToAddressControl2024';
+import FromAddressControl2024 from '@/screens/SendNFT/components/FromAddressControl';
 import {
   SendNFTEvents,
   SendNFTInternalContextProvider,
@@ -62,11 +61,16 @@ export default function SendNFT() {
     computed: {
       toAddressInContactBook,
       toAddressIsValid,
+      toAddressIsRecentlySend,
       toAddressInWhitelist,
       canSubmit,
       canDirectSign,
     },
-  } = useSendNFTForm({ nftToken: nftItem, account });
+  } = useSendNFTForm({
+    toAddress: navParams?.toAddress,
+    nftToken: nftItem,
+    account,
+  });
 
   const { fetchContactAccounts } = useContactAccounts();
   const { t } = useTranslation();
@@ -119,6 +123,7 @@ export default function SendNFT() {
         formValues,
         computed: {
           canSubmit,
+          toAddressIsRecentlySend,
           toAddressInWhitelist,
           whitelistEnabled,
           toAddressIsValid,
@@ -147,7 +152,7 @@ export default function SendNFT() {
 
             {/* To */}
             <ToAddressControl2024
-              address={toAddress}
+              // address={toAddress}
               brandName={addressBrandName}
               addrDesc={addrDesc}
             />

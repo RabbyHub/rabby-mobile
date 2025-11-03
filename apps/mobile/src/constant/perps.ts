@@ -716,6 +716,9 @@ export const DELETE_AGENT_EMPTY_ADDRESS =
 
 export const PERPS_INVITE_URL = 'https://app.hyperliquid.xyz/join/RABBYWALLET';
 
+export const PERPS_ASTER_INVITE_URL =
+  'https://www.asterdex.com/en/referral/2303dB';
+
 export const PERPS_BUILDER_INFO = {
   address: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
   fee: PERPS_BUILD_FEE,

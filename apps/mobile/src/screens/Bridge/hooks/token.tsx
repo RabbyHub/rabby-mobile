@@ -268,7 +268,6 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
             to_chain_id: findChainByEnum(toChain)!.serverId,
             to_token_id: toToken?.id,
           });
-          console.log('data123', data);
           return data?.every(e => e.is_same);
         } catch (error) {
           return false;

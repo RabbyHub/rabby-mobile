@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { preferenceService } from '@/core/services';
 import { useWatchlistTokens } from './hooks/useWatchlistTokens';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '../Home/utils/token';
@@ -134,7 +134,7 @@ function WatchlistScreen(): JSX.Element {
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
-      navigate(RootNames.TokenMarketInfo, {
+      navigateDeprecated(RootNames.TokenMarketInfo, {
         token: ensureAbstractPortfolioToken(token),
         unHold: false,
         needUseCacheToken: true,

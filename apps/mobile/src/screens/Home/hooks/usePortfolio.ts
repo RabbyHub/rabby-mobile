@@ -7,9 +7,9 @@ import { DisplayedProject } from '../utils/project';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
-import { singleDeFiNounceAtom } from './refresh';
+import { singleDeFiNonceAtom } from './refresh';
 import { useAtom, atom } from 'jotai';
-import { PortocolItemEntity } from '@/databases/entities/portocolItem';
+import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { debounce } from 'lodash';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
@@ -119,7 +119,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
   }, [_data.address, _data.data, _setData, userAddr]);
   const [isLoading, setLoading] = useSafeState(true);
   const [hasValue, setHasValue] = useSafeState(false);
-  const [singleDeFiNounce, setSingleDeFiNounce] = useAtom(singleDeFiNounceAtom);
+  const [singleDeFiNonce, setSingleDeFiNonce] = useAtom(singleDeFiNonceAtom);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -147,7 +147,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       }
       setHasValue(false);
       if (!force) {
-        const cachePortocols = await PortocolItemEntity.batchQueryPortocols(
+        const cachePortocols = await ProtocolItemEntity.batchQueryPortocols(
           userAddr,
         );
         if (cachePortocols.length) {
@@ -196,7 +196,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     if (!userAddr) {
       return;
     }
-    const cachePortocols = await PortocolItemEntity.batchQueryPortocols(
+    const cachePortocols = await ProtocolItemEntity.batchQueryPortocols(
       userAddr,
     );
     if (cachePortocols.length) {
@@ -260,11 +260,11 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
   });
 
   useEffect(() => {
-    if (singleDeFiNounce > 0) {
+    if (singleDeFiNonce > 0) {
       refreshTagPortfolio();
-      setSingleDeFiNounce(0);
+      setSingleDeFiNonce(0);
     }
-  }, [refreshTagPortfolio, setSingleDeFiNounce, singleDeFiNounce]);
+  }, [refreshTagPortfolio, setSingleDeFiNonce, singleDeFiNonce]);
 
   const updateSpecificProtocol = useCallback(
     async (protocolId: string, chain: string) => {

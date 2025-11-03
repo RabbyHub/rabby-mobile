@@ -1,37 +1,37 @@
 import { atom, useSetAtom } from 'jotai';
 
-export const singleTokenNounceAtom = atom<number>(0);
-export const singleDeFiNounceAtom = atom<number>(0);
-export const singleNFTNounceAtom = atom<number>(0);
-export const tokenNounceAtom = atom<number>(0);
-export const deFiNounceAtom = atom<number>(0);
-export const nftNounceAtom = atom<number>(0);
+export const singleTokenNonceAtom = atom<number>(0);
+export const singleDeFiNonceAtom = atom<number>(0);
+export const singleNFTNonceAtom = atom<number>(0);
+export const tokenNonceAtom = atom<number>(0);
+export const deFiNonceAtom = atom<number>(0);
+export const nftNonceAtom = atom<number>(0);
 
 export const useTriggerTagAssets = () => {
-  const singleTokenNounceUpdate = useSetAtom(singleTokenNounceAtom);
-  const singleDeFiNounceUpdate = useSetAtom(singleDeFiNounceAtom);
-  const singleNFTNounceUpdate = useSetAtom(singleNFTNounceAtom);
-  const tokenNounceUpdate = useSetAtom(tokenNounceAtom);
-  const deFiNounceUpdate = useSetAtom(deFiNounceAtom);
-  const nftNounceUpdate = useSetAtom(nftNounceAtom);
+  const singleTokenNonceUpdate = useSetAtom(singleTokenNonceAtom);
+  const singleDeFiNonceUpdate = useSetAtom(singleDeFiNonceAtom);
+  const singleNFTNonceUpdate = useSetAtom(singleNFTNonceAtom);
+  const tokenNonceUpdate = useSetAtom(tokenNonceAtom);
+  const deFiNonceUpdate = useSetAtom(deFiNonceAtom);
+  const nftNonceUpdate = useSetAtom(nftNonceAtom);
   return {
     singleTokenRefresh: () => {
-      singleTokenNounceUpdate(prev => prev + 1);
+      singleTokenNonceUpdate(prev => prev + 1);
     },
     singleDeFiRefresh: () => {
-      singleDeFiNounceUpdate(prev => prev + 1);
+      singleDeFiNonceUpdate(prev => prev + 1);
     },
     singleNFTRefresh: () => {
-      singleNFTNounceUpdate(prev => prev + 1);
+      singleNFTNonceUpdate(prev => prev + 1);
     },
     tokenRefresh: () => {
-      tokenNounceUpdate(prev => prev + 1);
+      tokenNonceUpdate(prev => prev + 1);
     },
     deFiRefresh: () => {
-      deFiNounceUpdate(prev => prev + 1);
+      deFiNonceUpdate(prev => prev + 1);
     },
     nftRefresh: () => {
-      nftNounceUpdate(prev => prev + 1);
+      nftNonceUpdate(prev => prev + 1);
     },
   };
 };

@@ -1,8 +1,7 @@
 import { Account } from '@/core/services/preference';
 import AuthButton, { IAuthButtonProps } from '../AuthButton';
-import { useGetMiniSignInfo } from '@/hooks/useMiniApprovalTask';
 import { isHardWareAccountAccountSupportMiniApproval } from '@/utils/account';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleProp, Text, View, ViewStyle } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -13,27 +12,28 @@ import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '../Button';
 import { CheckBoxRect } from '../CheckBox';
-import { useMiniDirectSignGasFeeDisableProcess } from '@/hooks/useMiniApprovalDirectSign';
+import { SignatureFlowState, useSignatureStore } from '../MiniSignV2';
 
 export const DirectSignBtn = ({
   account,
   showHardWalletProcess,
   riskReset,
-  riskLabel,
   showRiskTips,
+  wrapperStyle,
   // isProcess,
   ...props
-}: IAuthButtonProps & {
+}: Omit<IAuthButtonProps, 'onFinished'> & {
   account?: Account | null;
   showHardWalletProcess?: boolean;
   riskReset?: boolean;
-  riskLabel?: React.ReactNode;
   showRiskTips?: boolean;
+  wrapperStyle?: StyleProp<ViewStyle>;
+  onFinished?: (p?: { ignoreGasFee?: boolean }) => any;
 
   // isProcess?: boolean;
 }) => {
   const {
-    onFinished,
+    onFinished: _onFinished,
     onCancel: _onCancel,
     onBeforeAuth,
     authTitle,
@@ -43,37 +43,31 @@ export const DirectSignBtn = ({
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle });
+  const [riskChecked, setRiskChecked] = useState(false);
+
+  const onFinished = useCallback(() => {
+    _onFinished?.({ ignoreGasFee: riskChecked });
+  }, [_onFinished, riskChecked]);
 
   const isHardwareWallet = useMemo(
     () => isHardWareAccountAccountSupportMiniApproval(account?.type),
     [account?.type],
   );
 
-  const {
-    setCheckGasFee,
-    checkGasFee: checkGasFee,
-    gasFeeDisableProcess,
-  } = useMiniDirectSignGasFeeDisableProcess();
-
-  const {
-    status,
-    totalTxLength: total,
-    currentActiveIndex: current,
-  } = useGetMiniSignInfo();
+  const { ctx, status } = useSignatureStore() as SignatureFlowState;
 
   const showProcess =
     // !!isProcess &&
     !!showHardWalletProcess &&
     !!account &&
     isHardwareWallet &&
-    status === 'active';
+    status === 'signing';
 
   const hardwareWalletOnPress = useCallback(() => {
     onBeforeAuth?.();
     onFinished?.();
   }, [onBeforeAuth, onFinished]);
 
-  const [riskChecked, setRiskChecked] = useState(false);
   useEffect(() => {
     if (riskReset) {
       setRiskChecked(false);
@@ -91,15 +85,12 @@ export const DirectSignBtn = ({
     ? !riskChecked || props.disabled
     : props.disabled;
   return (
-    <View>
+    <View style={wrapperStyle}>
       {showRiskTips ? (
         <Pressable
           style={styles.riskContainer}
           onPress={() => {
             setRiskChecked(!riskChecked);
-            if (checkGasFee && !riskChecked) {
-              setCheckGasFee(false);
-            }
           }}>
           <CheckBoxRect checked={riskChecked} />
           <Text style={styles.warningText}>
@@ -120,12 +111,12 @@ export const DirectSignBtn = ({
               <OneKeySvg width={22} height={22} />
             </View>
           ) : null}
-          {total > 1 ? (
+          {(ctx?.signInfo?.totalTxs || 0) > 1 ? (
             <>
               <Text style={styles.statusText}>
                 {t('page.miniSignFooterBar.status.txSendings', {
-                  current: current + 1,
-                  total: total,
+                  current: (ctx?.signInfo?.currentTxIndex || 0) + 1,
+                  total: ctx?.signInfo?.totalTxs || 0,
                 })}
               </Text>
             </>
@@ -151,7 +142,12 @@ export const DirectSignBtn = ({
           onPress={hardwareWalletOnPress}
         />
       ) : (
-        <AuthButton {...props} onCancel={onCancel} disabled={disabled} />
+        <AuthButton
+          {...props}
+          onCancel={onCancel}
+          onFinished={onFinished}
+          disabled={disabled}
+        />
       )}
     </View>
   );

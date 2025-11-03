@@ -5,17 +5,21 @@ import { Image, Text, View, ViewProps } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import EmptyDataPNG from '@/assets2024/images/detail/empty-mark-info.png';
-
+import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 interface Props {
   style?: ViewProps['style'];
 }
 const EmptyData = ({ style }: Props) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   return (
     <View style={[styles.container, style]}>
-      <Image source={EmptyDataPNG} style={styles.image} />
+      {isLight ? (
+        <Image source={EmptyDataPNG} style={styles.image} />
+      ) : (
+        <RcIconEmptyTokenDark style={styles.image} />
+      )}
       <Text style={styles.text}>{t('page.tokenDetail.marketInfo.empty')}</Text>
     </View>
   );

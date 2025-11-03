@@ -30,7 +30,7 @@ import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
 import { Chain } from '@/constant/chains';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Tip } from '@/components';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import CoboSafeCreate from './CoboSafeCreate';
 import CoboSafeModificationDelegatedAddress from './CoboSafeModificationDelegatedAddress';
 import CoboSafeModificationRule from './CoboSafeModificationRule';
@@ -83,7 +83,8 @@ const ActionItem = ({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getMessageStyles(colors), [colors]);
-  const actionStyles = getActionsStyle(colors);
+  const { styles: actionStyles } = useTheme2024({ getStyle: getActionsStyle });
+
   const commonStyle = useCommonStyle();
 
   const isUnknown = (!data?.actionType && !data?.common) || data?.contractCall;
@@ -337,7 +338,7 @@ const Actions = ({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getMessageStyles(colors), [colors]);
-  const actionStyles = getActionsStyle(colors);
+  const { styles: actionStyles } = useTheme2024({ getStyle: getActionsStyle });
 
   const isMultiAction = useMemo(() => {
     return !!multiAction;
