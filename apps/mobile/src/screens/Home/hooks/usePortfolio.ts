@@ -145,6 +145,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       if (!userAddr) {
         return;
       }
+      console.log('CUSTOM_LOGGER:=>: loadProcess defi');
       setHasValue(false);
       if (!force) {
         const cachePortocols = await ProtocolItemEntity.batchQueryPortocols(

@@ -1,4 +1,11 @@
-import { View, Text, Pressable, ViewStyle, StyleProp } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  ViewStyle,
+  StyleProp,
+  StyleSheet,
+} from 'react-native';
 import React, { memo } from 'react';
 import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -7,6 +14,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useFindChain } from '@/hooks/useFindChain';
 import ChainFilterItem from '@/components/Token/ChainFilterItem';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { findChainByServerID } from '@/utils/chain';
 
 export type AsssetKey = 'token' | 'defi' | 'nft';
 type Props = {
@@ -103,6 +112,62 @@ export const AssestAllHeader = memo(
   },
 );
 
+export const ChainSelector = ({
+  top3Chains,
+  onChainClick,
+  chainServerId,
+}: {
+  chainServerId?: string;
+  top3Chains?: string[];
+  onChainClick?: (clear: boolean) => void;
+}) => {
+  const chainInfo = useFindChain({
+    serverId: chainServerId || null,
+  });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+
+  return (
+    !!top3Chains?.length &&
+    (chainInfo?.id ? (
+      <View style={styles.chainContainer}>
+        <ChainFilterItem
+          style={styles.chainFilterItem}
+          chainItem={chainInfo}
+          onPress={() => onChainClick?.(false)}
+          onRemoveFilter={() => onChainClick?.(true)}
+        />
+      </View>
+    ) : (
+      <Pressable
+        style={styles.chainContainer}
+        onPress={() => onChainClick?.(false)}>
+        <View style={styles.chainIconsContainer}>
+          {top3Chains.map((chainId, index) => (
+            <View
+              style={StyleSheet.flatten([
+                styles.chainIconContainer,
+                { marginLeft: index === 0 ? 0 : -8 },
+              ])}>
+              <ChainIconImage
+                containerStyle={styles.chainIcon}
+                size={18}
+                chainEnum={findChainByServerID(chainId)?.enum}
+                key={index}
+              />
+            </View>
+          ))}
+        </View>
+        <Text style={styles.countChain}>All</Text>
+        <ArrowRightSVG
+          style={styles.icon}
+          width={16}
+          color={colors2024['neutral-secondary']}
+        />
+      </Pressable>
+    ))
+  );
+};
+
 const getStyle = createGetStyles2024(ctx => ({
   container: {
     flexDirection: 'row',
@@ -125,9 +190,10 @@ const getStyle = createGetStyles2024(ctx => ({
   countChain: {
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '700',
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-body'],
+    color: ctx.colors2024['neutral-foot'],
+    marginLeft: 2,
   },
   active: {
     fontSize: 18,
@@ -158,13 +224,39 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   icon: {
     transform: [{ rotate: '90deg' }],
+    marginLeft: 4,
   },
   chainContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 0,
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+    height: 32,
+    overflow: 'hidden',
   },
   chainFilterItem: {
     backgroundColor: 'transparent',
+    gap: 0,
+  },
+  chainIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chainIconContainer: {
+    width: 20,
+    height: 20,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    borderRadius: 8,
+  },
+  chainIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 }));
