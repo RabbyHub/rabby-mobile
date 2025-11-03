@@ -68,16 +68,13 @@ const SectionCollapsableNav = function ({
   onCollapsedChange,
   isCollapsable = typeof onCollapsedChange === 'function',
   title,
-  onAction,
+  afterNode,
 }: {
   isCollapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
   isCollapsable?: boolean;
   title: React.ReactNode;
-  onAction?: (ctx: {
-    title: TxAccountPannelSectionTitle.Whitelist;
-    action: 'add-whitelist';
-  }) => void;
+  afterNode?: React.ReactNode;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
 
@@ -119,20 +116,7 @@ const SectionCollapsableNav = function ({
           />
         )}
       </View>
-      {title === TxAccountPannelSectionTitle.Whitelist && (
-        <TouchableOpacity
-          style={{ paddingRight: 8 }}
-          onPress={evt => {
-            evt.stopPropagation();
-            touchedFeedback();
-            onAction?.({
-              title: TxAccountPannelSectionTitle.Whitelist,
-              action: 'add-whitelist',
-            });
-          }}>
-          <RcIconAddWhitelist width={20} height={20} />
-        </TouchableOpacity>
-      )}
+      {afterNode}
     </TouchableOpacity>
   );
 };
@@ -337,11 +321,17 @@ export function AccountsPanelInSheetModal({
             <View style={{ marginTop: 20 }}>
               <SectionCollapsableNav
                 title={t('component.accountSelectModalTx.whitelistAccounts')}
-                onAction={ctx => {
-                  if (ctx.action === 'add-whitelist') {
-                    fnNavTo('add-new-whitelist-addr');
-                  }
-                }}
+                afterNode={
+                  <TouchableOpacity
+                    style={{ paddingRight: 8 }}
+                    onPress={evt => {
+                      evt.stopPropagation();
+                      touchedFeedback();
+                      fnNavTo('add-new-whitelist-addr');
+                    }}>
+                    <RcIconAddWhitelist width={20} height={20} />
+                  </TouchableOpacity>
+                }
               />
               {!whitelistAccounts.length && (
                 <View style={styles.addWhitelistHintContainer}>
