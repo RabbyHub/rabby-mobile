@@ -186,9 +186,6 @@ export const AssetContainer: React.FC<Props> = ({
     isLoadingCurve,
     onUpdateIsDecrease,
   ]);
-  // const renderTabBar = useCallback(() => {
-  //   return null;
-  // }, []);
 
   const hasNotAssets = useMemo(() => {
     return (

@@ -399,8 +399,6 @@ export const TokenList = ({
             />
           );
         case 'empty-assets':
-        case 'empty-defi':
-        case 'empty-nft':
           return <EmptyAssets desc={data} type={type} />;
         case 'loading-skeleton':
           return (

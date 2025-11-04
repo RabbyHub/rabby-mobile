@@ -240,6 +240,7 @@ const getStyle = createGetStyles2024(ctx => ({
   chainFilterItem: {
     backgroundColor: 'transparent',
     gap: 0,
+    paddingHorizontal: 0,
   },
   chainIconsContainer: {
     flexDirection: 'row',
