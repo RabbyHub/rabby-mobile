@@ -12,6 +12,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@aave/contract-helpers@npm:1.36.1":
+  version: 1.36.1
+  resolution: "@aave/contract-helpers@npm:1.36.1"
+  dependencies:
+    isomorphic-unfetch: ^3.1.0
+  peerDependencies:
+    bignumber.js: ^9.x
+    ethers: ^5.x
+    reflect-metadata: ^0.1.x
+    tslib: ^2.4.x
+  checksum: bf80cc4aba1633c9a476e827892c1d677867e2e3e2c6fe504bdb5c95123c8140d81f3d6574bbbe0fbca7138c6d34c96d5ab5483f2946e44c3c26010571a74901
+  languageName: node
+  linkType: hard
+
+"@aave/math-utils@npm:1.36.1":
+  version: 1.36.1
+  resolution: "@aave/math-utils@npm:1.36.1"
+  peerDependencies:
+    bignumber.js: ^9.x
+    tslib: ^2.4.x
+  checksum: 2d65de196b231611838f2d491807c047221a328614f4a77afcd895a6ad55e9bfbe1c0cbf05b27033f664133076b669eedf58f4cf8286b465ab34781a262b10f6
+  languageName: node
+  linkType: hard
+
 "@adraffy/ens-normalize@npm:1.10.0, @adraffy/ens-normalize@npm:^1.8.8":
   version: 1.10.0
   resolution: "@adraffy/ens-normalize@npm:1.10.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40adraffy%2Fens-normalize%2F-%2Fens-normalize-1.10.0.tgz"
@@ -3498,6 +3522,15 @@ __metadata:
   version: 0.2.3
   resolution: "@bcoe/v8-coverage@npm:0.2.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40bcoe%2Fv8-coverage%2F-%2Fv8-coverage-0.2.3.tgz"
   checksum: 850f9305536d0f2bd13e9e0881cb5f02e4f93fad1189f7b2d4bebf694e3206924eadee1068130d43c11b750efcc9405f88a8e42ef098b6d75239c0f047de1a27
+  languageName: node
+  linkType: hard
+
+"@bgd-labs/aave-address-book@npm:4.30.3":
+  version: 4.30.3
+  resolution: "@bgd-labs/aave-address-book@npm:4.30.3"
+  peerDependencies:
+    viem: ^2.23.5
+  checksum: 7d722dfbecea933d6a26f859f0f343cef669b1d9b309668460b90147bb7ec910e1096c346973531aff22ba33097558dd611f5045a4a86e9042b9d28546742eea
   languageName: node
   linkType: hard
 
@@ -9967,6 +10000,16 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: b19dbb1d9583e2e065238c6d343c16b6ed00bc6297a59cc142d9f877484c4e3406cbe5e8f4fb9368b7cfb9eef11cbe0d1c79cccc8b0d725533d15dab02966b95
+  languageName: node
+  linkType: hard
+
+"@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A1.2.3#./.yarn/patches/@react-native-menu-menu-npm-1.2.3-182506938b.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 1.2.3
+  resolution: "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A1.2.3#./.yarn/patches/@react-native-menu-menu-npm-1.2.3-182506938b.patch::version=1.2.3&hash=22d005&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 1b136f2afd6d1a67eb2d749e54e266a162a8624bdb560f2694e0c4ddbaf9e36163b31033d725fe378c2932c57426a0dd708c1d350a1c261304add375bd930d0e
   languageName: node
   linkType: hard
 
@@ -26226,6 +26269,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"isomorphic-unfetch@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "isomorphic-unfetch@npm:3.1.0"
+  dependencies:
+    node-fetch: ^2.6.1
+    unfetch: ^4.2.0
+  checksum: 82b92fe4ec2823a81ab0fc0d11bd94d710e6f9a940d56b3cba31896d4345ec9ffc7949f4ff31ebcae84f6b95f7ebf3474c4c7452b834eb4078ea3f2c37e459c5
+  languageName: node
+  linkType: hard
+
 "isomorphic-ws@npm:^5.0.0":
   version: 5.0.0
   resolution: "isomorphic-ws@npm:5.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fisomorphic-ws%2F-%2Fisomorphic-ws-5.0.0.tgz"
@@ -33739,11 +33792,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "rabby-mobile@workspace:apps/mobile"
   dependencies:
+    "@aave/contract-helpers": 1.36.1
+    "@aave/math-utils": 1.36.1
     "@babel/core": ^7.25.2
     "@babel/plugin-proposal-decorators": ^7.25.9
     "@babel/plugin-transform-export-namespace-from": ^7.25.9
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
+    "@bgd-labs/aave-address-book": 4.30.3
     "@craftzdog/react-native-buffer": ^6.0.5
     "@debank/common": 0.3.60
     "@debank/festats": 1.0.4
@@ -40188,6 +40244,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"unfetch@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "unfetch@npm:4.2.0"
+  checksum: 6a4b2557e1d921eaa80c4425ce27a404945ec26491ed06e62598f333996a91a44c7908cb26dc7c2746d735762b13276cf4aa41829b4c8f438dde63add3045d7a
+  languageName: node
+  linkType: hard
+
 "unicode-canonical-property-names-ecmascript@npm:^2.0.0":
   version: 2.0.0
   resolution: "unicode-canonical-property-names-ecmascript@npm:2.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Funicode-canonical-property-names-ecmascript%2F-%2Funicode-canonical-property-names-ecmascript-2.0.0.tgz"
@@ -42659,7 +42722,7 @@ __metadata:
 
 "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.10.0
-  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=abb230&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=169feb&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@radix-ui/react-context-menu": ^2.0.1
     "@radix-ui/react-dropdown-menu": ^2.0.1
@@ -42669,7 +42732,7 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-ios-context-menu: ^2.3.2
-  checksum: 64cac998ced92fe05a5442ec27fe13869ff63a191df0789135373c8c96409114222fe211b5a91ccd566b26ae0afadc7d9b3d447afc9f2239c622eef317c10a38
+  checksum: e259c4932bb50c892f7a5189590afcc12bdac216992158081195301a1f1ef8a1e147178ebe3b2255959d131b8bd8583f7b8b32522e1f2b290ec19cfc6d9b97ec
   languageName: node
   linkType: hard
 

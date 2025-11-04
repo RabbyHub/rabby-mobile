@@ -18,6 +18,7 @@ import {
   TextInput,
   Pressable,
   Dimensions,
+  Alert,
 } from 'react-native';
 import {
   BottomSheetBackdropProps,
@@ -31,7 +32,11 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   getTokenSymbol,
@@ -107,6 +112,8 @@ import { useRefState } from '@/hooks/common/useRefState';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/ExchangeLogos';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
+import { touchedFeedback } from '@/utils/touch';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -129,6 +136,7 @@ const hitSlop = {
 
 export type ITokenCheck = (token: TokenItem) => {
   disable: boolean;
+  simpleReason: string;
   reason: string;
 };
 
@@ -626,8 +634,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
         const $originMaybeToken =
           token.$origin as TokenItemFromAbstractPortfolioTokenWithExtra;
 
-        const { disable: lightDisable } =
-          disableItemCheck?.($originMaybeToken) || {};
+        const {
+          disable: lightDisable,
+          reason: disableReason,
+          simpleReason: disableSimpleReason,
+        } = disableItemCheck?.($originMaybeToken) || {};
 
         const ownerAccount =
           'ownerAccount' in token.$origin ? token.$origin.ownerAccount : null;
@@ -715,6 +726,29 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
+        const alertDisabledToken = () => {
+          if (disabled) {
+            disabledTips && toast.info(disabledTips);
+            return true;
+          } else if (lightDisable) {
+            Alert.alert(
+              t('component.TokenSelector.riskDetected.title'),
+              disableReason,
+              [
+                { text: t('global.cancel'), style: 'cancel' },
+                {
+                  text: t('component.TokenSelector.riskDetected.proceedBtn'),
+                  onPress: () => {
+                    onConfirm($originMaybeToken);
+                    toggleShowSheetModal('collapse');
+                  },
+                },
+              ],
+            );
+            return true;
+          }
+        };
+
         if (query) {
           return (
             <View style={{ marginTop: 8, marginHorizontal: 16 }}>
@@ -729,6 +763,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   delayLongPress={200}
                   onLongPress={() => {
                     longPressTriggered.current = true;
+                    touchedFeedback();
                   }}
                   onPressOut={() => {
                     longPressTriggered.current = false;
@@ -738,10 +773,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                       longPressTriggered.current = false;
                       return;
                     }
-                    if (disabled) {
-                      disabledTips && toast.info(disabledTips);
-                      return;
-                    }
+                    if (alertDisabledToken()) return true;
                     onConfirm($originMaybeToken);
                     toggleShowSheetModal('collapse');
                   }}>
@@ -750,6 +782,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     data={token.$origin as TokenRowDataType}
                     logoSize={40}
                     touchable={false}
+                    style={[
+                      (disabled || lightDisable) && styles.tokenItemDisabled,
+                    ]}
                     rightSlot={
                       <Pressable
                         style={styles.rightSlot}
@@ -761,7 +796,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
                             pinToken(token.$origin as any);
                           }
                         }}
-                        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+                        hitSlop={{
+                          top: 20,
+                          bottom: 20,
+                          left: 20,
+                          right: 20,
+                        }}>
                         <RcIconFavorite
                           width={22}
                           height={21}
@@ -792,6 +832,24 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         },
                       );
                     }}
+                    afterNode={
+                      lightDisable && (
+                        <View style={styles.lightDisableBadge}>
+                          <RcIconWarningCircleCC
+                            width={20}
+                            height={20}
+                            color={colors2024['red-default']}
+                            style={styles.lightDisableIcon}
+                          />
+                          <Text style={styles.lightDisableText}>
+                            {disableSimpleReason ||
+                              t(
+                                'component.TokenSelector.riskDetected.simpleExplanation',
+                              )}
+                          </Text>
+                        </View>
+                      )
+                    }
                   />
                 </TouchableOpacity>
               </TokenItemContextMenu>
@@ -813,177 +871,197 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 delayLongPress={200}
                 onLongPress={() => {
                   longPressTriggered.current = true;
+                  touchedFeedback();
                 }}
                 onPressOut={() => {
                   longPressTriggered.current = false;
                 }}
-                onPress={() => {
+                onPress={async () => {
                   if (longPressTriggered.current) {
                     longPressTriggered.current = false;
                     return;
                   }
-                  if (disabled) {
-                    disabledTips && toast.info(disabledTips);
-                    return;
-                  }
+
+                  if (alertDisabledToken()) return true;
                   onConfirm($originMaybeToken);
                   toggleShowSheetModal('collapse');
                 }}
                 style={[
-                  styles.tokenItem,
+                  styles.tokenItemOuter,
                   // isSwapTo && { paddingRight: 0, paddingVertical: 0 },
                   (disabled || lightDisable) && styles.tokenItemDisabled,
                 ]}>
-                <View style={[styles.tokenLeft, styles.tokenLeftLoaded]}>
-                  <AssetAvatar
-                    logo={token?._logo}
-                    size={40}
-                    chain={token?._chain}
-                    chainSize={18}
-                    innerChainStyle={styles.avatarLogo}
-                    style={styles.tokenAvatarCol}
-                  />
-                </View>
-                <View style={styles.tokenCenter}>
-                  <View
-                    style={[
-                      styles.tokenCenterFloor,
-                      styles.utilMl,
-                      styles.tokenCenterFloor1,
-                    ]}>
+                <View style={styles.tokenItem}>
+                  <View style={[styles.tokenLeft, styles.tokenLeftLoaded]}>
+                    <AssetAvatar
+                      logo={token?._logo}
+                      size={40}
+                      chain={token?._chain}
+                      chainSize={18}
+                      innerChainStyle={styles.avatarLogo}
+                      style={styles.tokenAvatarCol}
+                    />
+                  </View>
+                  <View style={styles.tokenCenter}>
                     <View
                       style={[
-                        styles.tokenInfoCol,
-                        styles.tokenInfoColSecondaryGrow,
+                        styles.tokenCenterFloor,
+                        styles.utilMl,
+                        styles.tokenCenterFloor1,
                       ]}>
-                      <View style={styles.tokenNameBox}>
-                        <Text
-                          style={[
-                            styles.tokenName,
-                            !needToTokenMarketInfo && styles.tokenNameFullWidth,
-                          ]}
-                          ellipsizeMode="tail"
-                          numberOfLines={1}>
-                          {token?._symbol}
+                      <View
+                        style={[
+                          styles.tokenInfoCol,
+                          styles.tokenInfoColSecondaryGrow,
+                        ]}>
+                        <View style={styles.tokenNameBox}>
+                          <Text
+                            style={[
+                              styles.tokenName,
+                              !needToTokenMarketInfo &&
+                                styles.tokenNameFullWidth,
+                            ]}
+                            ellipsizeMode="tail"
+                            numberOfLines={1}>
+                            {token?._symbol}
+                          </Text>
+                          {isManualFold && <TextBadge type="folded" />}
+                          {needToTokenMarketInfo && (
+                            <View style={styles.exchangeLogosContainer}>
+                              <ExchangeLogos logos={cexLogos} />
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                      <View
+                        style={[
+                          styles.tokenInfoCol,
+                          styles.tokenInfoColPrimaryShrink,
+                          styles.utilMl,
+                          styles.tokenInfoColRight,
+                        ]}>
+                        <Text style={[styles.tokenHeaderNetworth]}>
+                          {isExcludeBalanceShowTips ? (
+                            <TouchableOpacity
+                              hitSlop={hitSlop}
+                              onPress={handleShowExcludeTips}>
+                              <RcTipCC
+                                style={styles.tips}
+                                color={colors2024['neutral-info']}
+                              />
+                            </TouchableOpacity>
+                          ) : (
+                            token._netWorthStr
+                          )}
                         </Text>
-                        {isManualFold && <TextBadge type="folded" />}
-                        {needToTokenMarketInfo && (
-                          <View style={styles.exchangeLogosContainer}>
-                            <ExchangeLogos logos={cexLogos} />
-                          </View>
-                        )}
                       </View>
                     </View>
                     <View
                       style={[
-                        styles.tokenInfoCol,
-                        styles.tokenInfoColPrimaryShrink,
+                        styles.tokenCenterFloor,
                         styles.utilMl,
-                        styles.tokenInfoColRight,
+                        styles.tokenCenterFloor2,
                       ]}>
-                      <Text style={[styles.tokenHeaderNetworth]}>
-                        {isExcludeBalanceShowTips ? (
-                          <TouchableOpacity
-                            hitSlop={hitSlop}
-                            onPress={handleShowExcludeTips}>
-                            <RcTipCC
-                              style={styles.tips}
-                              color={colors2024['neutral-info']}
+                      <View
+                        style={[
+                          styles.tokenInfoCol,
+                          styles.tokenInfoColPrimaryShrink,
+                        ]}>
+                        {showOwnerAccount ? (
+                          !ownerAccount ? null : (
+                            <AccountInfoInTokenRow
+                              containerStyle={{ marginTop: 2 }}
+                              ownerAccount={ownerAccount}
                             />
-                          </TouchableOpacity>
+                          )
                         ) : (
-                          token._netWorthStr
-                        )}
-                      </Text>
-                    </View>
-                  </View>
-                  <View
-                    style={[
-                      styles.tokenCenterFloor,
-                      styles.utilMl,
-                      styles.tokenCenterFloor2,
-                    ]}>
-                    <View
-                      style={[
-                        styles.tokenInfoCol,
-                        styles.tokenInfoColPrimaryShrink,
-                      ]}>
-                      {showOwnerAccount ? (
-                        !ownerAccount ? null : (
-                          <AccountInfoInTokenRow
-                            containerStyle={{ marginTop: 2 }}
-                            ownerAccount={ownerAccount}
-                          />
-                        )
-                      ) : (
-                        <Text
-                          style={[styles.tokenPrice, { marginTop: 4 }]}
-                          numberOfLines={1}>
-                          {token._price}
-                        </Text>
-                      )}
-                      {isBridgeTo && (
-                        <View
-                          style={[
-                            styles.tokenInfoColRight,
-                            styles.tardeLevel,
-                            {
-                              backgroundColor:
-                                token.trade_volume_level === 'low'
-                                  ? colors2024['orange-light-4']
-                                  : colors2024['green-light-4'],
-                            },
-                          ]}>
                           <Text
+                            style={[styles.tokenPrice, { marginTop: 4 }]}
+                            numberOfLines={1}>
+                            {token._price}
+                          </Text>
+                        )}
+                        {isBridgeTo && (
+                          <View
                             style={[
-                              styles.tardeLevelText,
+                              styles.tokenInfoColRight,
+                              styles.tardeLevel,
                               {
-                                color:
+                                backgroundColor:
                                   token.trade_volume_level === 'low'
-                                    ? colors2024['orange-default']
-                                    : colors2024['green-default'],
+                                    ? colors2024['orange-light-4']
+                                    : colors2024['green-light-4'],
                               },
                             ]}>
-                            {token.trade_volume_level === 'low'
-                              ? t('component.TokenSelector.bridgeTo.low')
-                              : t('component.TokenSelector.bridgeTo.high')}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
+                            <Text
+                              style={[
+                                styles.tardeLevelText,
+                                {
+                                  color:
+                                    token.trade_volume_level === 'low'
+                                      ? colors2024['orange-default']
+                                      : colors2024['green-default'],
+                                },
+                              ]}>
+                              {token.trade_volume_level === 'low'
+                                ? t('component.TokenSelector.bridgeTo.low')
+                                : t('component.TokenSelector.bridgeTo.high')}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
 
-                    <View
-                      style={[
-                        styles.tokenInfoCol,
-                        styles.tokenInfoColSecondaryGrow,
-                        styles.utilMl,
-                        styles.tokenInfoColRight,
-                      ]}>
-                      <Text
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
+                      <View
                         style={[
-                          styles.tokenHeaderAmount,
-                          isExcludeBalanceShowTips && styles.textSecondary,
+                          styles.tokenInfoCol,
+                          styles.tokenInfoColSecondaryGrow,
+                          styles.utilMl,
+                          styles.tokenInfoColRight,
                         ]}>
-                        {token._amount} {token._symbol}
-                      </Text>
+                        <Text
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                          style={[
+                            styles.tokenHeaderAmount,
+                            { marginTop: 4 },
+                            isExcludeBalanceShowTips && styles.textSecondary,
+                          ]}>
+                          {token._amount} {token._symbol}
+                        </Text>
+                      </View>
                     </View>
                   </View>
+                  <View style={styles.tokenRight}>
+                    <Favorite
+                      favorite={isPined}
+                      style={styles.favorite}
+                      handlePressFavorite={() => {
+                        if (isPined) {
+                          removePinedToken(token.$origin as any);
+                        } else {
+                          pinToken(token.$origin as any);
+                        }
+                      }}
+                    />
+                  </View>
                 </View>
-                <View style={styles.tokenRight}>
-                  <Favorite
-                    favorite={isPined}
-                    style={styles.favorite}
-                    handlePressFavorite={() => {
-                      if (isPined) {
-                        removePinedToken(token.$origin as any);
-                      } else {
-                        pinToken(token.$origin as any);
-                      }
-                    }}
-                  />
-                </View>
+                {lightDisable && (
+                  <View
+                    style={[styles.lightDisableBadge, { marginBottom: 12 }]}>
+                    <RcIconWarningCircleCC
+                      width={20}
+                      height={20}
+                      color={colors2024['red-default']}
+                      style={styles.lightDisableIcon}
+                    />
+                    <Text style={styles.lightDisableText}>
+                      {disableSimpleReason ||
+                        t(
+                          'component.TokenSelector.riskDetected.simpleExplanation',
+                        )}
+                    </Text>
+                  </View>
+                )}
               </TouchableOpacity>
             </TokenItemContextMenu>
           </View>
@@ -1491,20 +1569,27 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // borderRadius: 24,
       // paddingHorizontal: 16,
     },
+    noTopBorder: {
+      borderTopWidth: 0,
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+    },
+    tokenItemOuter: {
+      flexDirection: 'column',
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      paddingRight: 12,
+      paddingLeft: 12,
+      gap: 12,
+      borderRadius: 16,
+    },
     tokenItem: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       height: ITEM_HEIGHT,
-      // paddingHorizontal: 8,
-      paddingRight: 12,
-      paddingLeft: 12,
-      // marginHorizontal: 12,
-      // marginTop: 8,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      borderRadius: 16,
+      // ...makeDebugBorder(),
       // // leave here for debug
       // borderWidth: 1,
       // borderColor: 'blue',
@@ -1519,7 +1604,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: 14,
       height: 14,
     },
-    tokenItemDisabled: { opacity: 0.5 },
+    tokenItemDisabled: {
+      opacity: 0.5,
+      ...makeDevOnlyStyle({
+        opacity: 0.7,
+      }),
+    },
     tokenLeft: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -1675,6 +1765,30 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     rightSlot: {
       marginLeft: 8,
+    },
+    lightDisableBadge: {
+      backgroundColor: colors2024['red-light-1'],
+      paddingHorizontal: 16,
+      paddingVertical: 4,
+      borderRadius: 0,
+      width: '100%',
+      marginTop: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+      flex: 1,
+      minHeight: 32,
+      marginBottom: 0,
+    },
+    lightDisableIcon: {},
+    lightDisableText: {
+      color: colors2024['red-default'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontStyle: 'normal',
+      fontWeight: 400,
+      lineHeight: 18,
     },
   };
 });

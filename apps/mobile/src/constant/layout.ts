@@ -94,6 +94,7 @@ export const RootNames = {
   FavoriteDapps: 'FavoriteDapps',
   Search: 'Search',
   Watchlist: 'Watchlist',
+  Lending: 'Lending',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
@@ -122,16 +123,8 @@ export const RootNames = {
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',
-  SendTo: 'SendTo',
   SendHistory: 'SendHistory',
-  SendInput: 'SendInput',
-  WhitelistInput: 'WhitelistInput',
-  SelectImportAddress: 'SelectImportAddress',
-  ImportAddress2Whitelist: 'ImportAddress2Whitelist',
-  SelectTypeAddress: 'SelectTypeAddress',
-  TypeAddress2Whitelist: 'TypeAddress2Whitelist',
-  ConfirmAddress: 'ConfirmAddress',
-  WhitelistConfirm: 'WhitelistConfirm',
+  /** @deprecated */
   MultiSend: 'MultiSend',
   SendNFT: 'SendNFT',
   MultiSendNFT: 'MultiSendNFT',
@@ -146,6 +139,7 @@ export const RootNames = {
   HistoryDetail: 'HistoryDetail',
   HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',
+  LendingHistory: 'LendingHistory',
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',

@@ -38,7 +38,6 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
         />
         <ListItem
           onPress={() => {
-            // navigateTo(RootNames.ImportAddress2Whitelist);
             onDone();
           }}
           style={styles.importItem}

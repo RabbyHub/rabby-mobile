@@ -173,6 +173,11 @@
       },
       "favoriteFilter": {
         "all": "Alle"
+      },
+      "riskDetected": {
+        "proceedBtn": "Fortfahren",
+        "simpleExplanation": "Nicht unterstützt",
+        "title": "Risiko erkannt"
       }
     },
     "AuthenticationModals": {
@@ -252,7 +257,10 @@
         "loginAndClaim": "Melde dich an und fordere {{amount}} an",
         "loginTips3": "wenn du kein Gas mehr hast",
         "loginTips1": "Zahle Gasgebühren für",
-        "loginTips2": "jede Adresse auf jeder Kette"
+        "loginTips2": "jede Adresse auf jeder Kette",
+        "learnAbout": "Erfahren Sie mehr über GasAccount",
+        "depositTitle": "USDC/USDT einzahlen Gebühren zahlen",
+        "depositDesc": "auf allen Chains, wenn du kein Gas mehr hast"
       },
       "withdrawPopup": {
         "amount": "Betrag",
@@ -269,6 +277,16 @@
         "noWithdrawableBalanceDescription": "{{amount}} von Ihrem Gas-Guthaben ist nicht abhebbar:\n1. Apple Pay / Google Pay\n2. Gas Rewards",
         "noWithdrawableBalanceTitle": "{{amount}} Nicht abhebbar",
         "giftTips": "Gas Belohnung für aktive Nutzer"
+      },
+      "about": {
+        "title1": "Was ist GasAccount",
+        "title2": "Wie man Gas Account verwendet",
+        "title4": "Ist GasAccount sicher?",
+        "title3": "Hat GasAccount zusätzliche Gebühren?",
+        "desc3": "Rabby Wallet erhebt keine zusätzlichen Gebühren. Sie zahlen nur die Gasgebühren für Ihre Transaktion und einen kleinen Betrag an Gas, um dieses Gas von GasAccount an Ihre Adresse zu senden.",
+        "desc4": "GasAccount erfordert keine Vertragsgenehmigungen oder -berechtigungen. Sie zahlen auf die GasAccount-Adresse von Rabby ein, und Rabby sendet Gas an Ihre Adresse, wenn es benötigt wird. Vollständig sicher durch Design.",
+        "desc1": "GasAccount ist eine neue Möglichkeit, Gasgebühren zu bezahlen. Anstatt native Token auf jeder Kette zu verwenden, können Sie ein Konto nutzen, um die Gasgebühren für all Ihre Adressen auf allen Ketten zu decken. Einfach, optional und niemals ohne Gas.",
+        "desc2": "Fügen Sie Ihrem GasAccount Gelder hinzu und verwenden Sie es für jede Transaktion. Wählen Sie beim Signieren, ob Sie die Gasgebühren mit nativen Token oder dem GasAccount bezahlen möchten, und wechseln Sie jederzeit."
       }
     },
     "externalSwapBrideDappPopup": {
@@ -332,6 +350,15 @@
       "amount": "Betrag",
       "price": "Preis",
       "side": "Seite"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "addBtn": "Jetzt hinzufügen",
+        "desc": "Fügen Sie die vertrauenswürdige Adresse zur Whitelist hinzu"
+      },
+      "whitelistAccounts": "Whitelist",
+      "recentAccounts": "Neueste",
+      "importedAccounts": "Importierte Wallets"
     }
   },
   "page": {
@@ -353,7 +380,11 @@
         "Revoke": "Widerrufene {{token}} Genehmigung",
         "DepositedGas": "Eingezahltes Gas",
         "WithdrawnGas": "Abgehobenes Gas",
-        "ReceivedGas": "Empfangene Gas"
+        "ReceivedGas": "Empfangene Gas",
+        "LendingRepay": "Zurückzahlen",
+        "LendingWithdraw": "Abheben",
+        "LendingBorrow": "Ausleihen",
+        "LendingSupply": "Angebot"
       },
       "detail": {
         "InteractionResults": "Interaktionsergebnisse",
@@ -902,7 +933,13 @@
       "sectionTo": {
         "addrValidator__empty": "Bitte Adresse eingeben",
         "addrValidator__invalid": "Diese Adresse ist ungültig",
-        "searchInputPlaceholder": "Geben Sie eine Adresse ein oder scannen Sie"
+        "searchInputPlaceholder": "Geben Sie eine Adresse ein oder scannen Sie",
+        "positiveTips": {
+          "yourOwnAddress": "Ihre eigene Adresse",
+          "sentRecently": "Vor kurzem gesendet",
+          "whitelistedAddress": "Zugelassene Adresse"
+        },
+        "selectPlaceholder": "Wählen Sie die Adresse"
       },
       "ContractAddress": "Vertragsadresse",
       "GasSelector": {
@@ -923,12 +960,17 @@
         "cancel": "Abbrechen",
         "confirm": "Fortfahren"
       },
-      "noSupprotTokenForDex": "Dieser Token wird möglicherweise von dieser Börse nicht unterstützt. Überprüfen Sie es, bevor Sie fortfahren, um Verluste zu vermeiden.",
       "From": "Von",
-      "noSupprotTokenForSafe": "Die Safe-Adresse, an die Sie Tokens senden, ist nicht auf dieser Chain bereitgestellt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden.",
-      "noSupportTokenForChain": "Der Empfängeradresse ist eine Vertragsadresse auf einer anderen Kette. Überprüfen Sie dies, bevor Sie fortfahren, um einen Verlust zu vermeiden.",
       "addressDetail": "Adressdetails",
-      "newAmount": "Betrag"
+      "newAmount": "Betrag",
+      "noSupportTokenReason": {
+        "forSafeSimple": "Diese Safe-Adresse ist auf dieser Chain nicht deployed.",
+        "forDexSimple": "Dieses Token wird möglicherweise von dieser Börse nicht unterstützt.",
+        "forChain": "Der Empfängeradresse ist eine Vertragsadresse auf einer anderen Kette. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden.",
+        "forChainSimple": "Empfängeradresse ist eine Vertragsadresse auf einer anderen Chain",
+        "forDex": "Dieses Token wird möglicherweise von dieser Börse nicht unterstützt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden.",
+        "forSafe": "Die Safe-Adresse, an die Sie Token senden, ist nicht auf dieser Kette bereitgestellt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden."
+      }
     },
     "signFooterBar": {
       "signAndSubmitButton": "Signieren",
@@ -1113,7 +1155,8 @@
         "copyTrading": "Copy Trading",
         "watchlist": "Token-Watchlist",
         "perps": "Perps",
-        "perpsMarketList": "Mehr Perps"
+        "perpsMarketList": "Mehr Perps",
+        "lending": "Kredite"
       }
     },
     "manageAddress": {
@@ -2311,7 +2354,7 @@
         "scamAddress": "Die Empfängeradresse ist eine von Rabby markierte Betrugsadresse.",
         "noSend": "Sie haben in den letzten 180 Tagen keine Gelder an diese Adresse gesendet. Bitte bestätigen Sie, ob Sie fortfahren möchten.",
         "contractAddress": "Die Empfängeradresse ist eine Vertragsadresse, was möglicherweise zu einem Verlust von Geldern führen kann",
-        "dexNoDeposite": "Die Empfängeradresse ist eine Nicht-Einzahlungsadresse von einer CEX. Bitte stellen Sie sicher, dass Ihre Einzahlungsadresse korrekt ist."
+        "cexNoDeposite": "Die Empfängeradresse ist eine Nicht-Einzahlungsadresse von einer CEX. Bitte stellen Sie sicher, dass Ihre Einzahlungsadresse korrekt ist."
       },
       "addToWhitelist": "Zur Whitelist hinzufügen",
       "brandNameTail": "Adresse",
@@ -2779,6 +2822,123 @@
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Integrierte Seite"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "sendFrom": "Von senden",
+        "sendTo": "Senden an",
+        "viewSentTx": "Gesendet",
+        "addNewWhitelistAddr": "Neue Whitelist-Adresse hinzufügen",
+        "selectFromHistory": "Aus Verlauf auswählen"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "Benennen Sie die Adresse"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "canBorrow": "Sie können basierend auf Ihrem bereitgestellten Sicherheiten bis zur Kreditobergrenze leihen.",
+        "needSupply": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen."
+      },
+      "list": {
+        "headers": {
+          "token": "Token",
+          "mySupplies": "Meine Vorräte",
+          "myBorrows": "Mein Darlehen",
+          "apy": "APY"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "title": "Zinsen verdienen, jederzeit leihen",
+          "description": "Betrieben von AAVE. Sicher und null Gebühren."
+        },
+        "healthy": "Gesund",
+        "more": "Mehr",
+        "lq": "Wenn es unter 1 fällt, könnte die Liquidation ausgelöst werden.",
+        "risky": "Risikohaft"
+      },
+      "repayDetail": {
+        "approveAndRepay": "Genehmigen und Rückzahlen",
+        "actions": "Rückzahlung"
+      },
+      "supplyDetail": {
+        "supplyAPY": "Liefer-APY",
+        "approveAndSupply": "Genehmigen und Bereitstellen",
+        "actions": "Lieferung",
+        "availableToBorrow": "Verfügbar zum Ausleihen"
+      },
+      "withdrawDetail": {
+        "remainingSupply": "Verbleibender Vorrat",
+        "actions": "Abheben"
+      },
+      "borrowDetail": {
+        "actions": "Leihen",
+        "approveAndBorrow": "Genehmigen und Ausleihen",
+        "almostReachedWarning": "Der Protokoll-Verleihlimit beträgt 100% für dieses Asset. Weitere Kredite sind nicht verfügbar.",
+        "almostReachedError": "Der maximale Betrag, der ausgeliehen werden kann, ist begrenzt, da die Kreditobergrenze des Protokolls nahezu erreicht ist."
+      },
+      "popup": {
+        "available": "verfügbar",
+        "amount": "Betrag",
+        "remainingDebt": "Verbleibende Schulden",
+        "title": "Transaktionsübersicht",
+        "liquidationAt": "Liquidation bei < 1,0"
+      },
+      "borrowOverview": {
+        "myBorrow": "Mein Kredit",
+        "title": "Ausleihe Details",
+        "availableToBorrow": "Verfügbar zum Ausleihen",
+        "liquidityPenalty": "Liquiditätsstrafe",
+        "borrowCap": "Leihobergrenze",
+        "totalBorrowed": "Total Borrowed"
+      },
+      "supplyOverview": {
+        "availableToSupply": "Verfügbar zur Lieferung",
+        "totalSupplied": "Gesamtangebot",
+        "walletBalance": "Wallet-Balance",
+        "mySupply": "Mein Angebot",
+        "title": "Bereitstellungsdetails",
+        "reachCap": "Dieses Asset hat sein Angebotshöchstlimit erreicht. Nichts kann aus diesem Markt bereitgestellt werden.",
+        "almostCap": "Dieses Asset hat fast seine Leihobergrenze erreicht. Es sind nur {{available}} verfügbar, um von diesem Markt geliehen zu werden."
+      },
+      "risk": {
+        "checkbox": "Ich verstehe die Warnung und möchte fortfahren.",
+        "withdrawWarning": "Die Abhebung dieses Betrags wird Ihren Gesundheitsfaktor auf ein riskantes Niveau für eine Liquidation senken.",
+        "warning": "Das Leihen dieses Betrags wird Ihren Health Factor auf ein riskantes Niveau für die Liquidation senken."
+      },
+      "lqDescription": {
+        "over3title": "Gesundheitsfaktor > 3.0:",
+        "over3desc": "Ihre Positionen sind sicher",
+        "risky": "Risikohaft",
+        "desc": "Liquidationswert",
+        "below1title": "Health-Faktor ≤ 1,0:",
+        "below1desc": "Ihre Position ist gefährdet, liquidiert zu werden.",
+        "introText": "Ihr Gesundheitsfaktor zeigt an, wie sicher Ihre Kreditposition ist. Wenn er zu niedrig fällt, könnte Ihre Sicherheiten liquidiert werden.",
+        "warningText": "Ihr Gesundheitsfaktor ist zu niedrig. Um eine Liquidation zu vermeiden:\n1. Zahlen Sie einen Teil oder die gesamte Darlehenssumme zurück\n2. Fügen Sie mehr Sicherheiten hinzu",
+        "liquidation": "Liquidation: Wenn Ihr Gesundheitsfaktor unter 1,0 fällt, kann ein Teil Ihrer Sicherheiten automatisch verkauft werden, um die Schulden zu begleichen. Eine Liquidationsstrafe wird angewendet, was zu einem teilweisen Verlust Ihrer Sicherheiten führen kann."
+      },
+      "modalDesc": {
+        "maxAmount": "Dies ist der maximale Betrag, den Sie basierend auf allen von Ihnen bereitgestellten Sicherheiten ausleihen können. Ihre gesamte Kreditaufnahmefähigkeit wird berechnet, indem der Marktwert jedes Sicherheitenvermögenswerts mit seinem maximalen LTV multipliziert und die Ergebnisse dann summiert werden.",
+        "availableToBorrow": "Verfügbar zum Ausleihen",
+        "availableToBorrowDesc": "Sie können basierend auf Ihrer hinterlegten Sicherheiten leihen, bis die Kreditobergrenze erreicht ist.",
+        "lqDesc": "Wenn eine Liquidation erfolgt, zahlen Liquidatoren bis zu 50% des ausstehenden geliehenen Betrags im Namen des Kreditnehmers zurück. Im Gegenzug können sie die Sicherheiten zu einem reduzierten Preis kaufen und die Differenz (Liquidationsstrafe) als Bonus behalten."
+      },
+      "supplied": "Geliefert",
+      "netWorth": "Vermögen",
+      "market": "Markt",
+      "selectChain": "Kette auswählen",
+      "apy": "APY",
+      "borrowed": "Ausgeliehen",
+      "estDailyEarning": "Est. Tägliches Einkommen",
+      "gotIt": "Verstanden",
+      "submitted": "eingereicht",
+      "hf": "Gesundheitsfaktor",
+      "hfTitle": "Gesundheitsfaktor",
+      "enterAmount": "Betrag eingeben"
     }
   },
   "constant": {

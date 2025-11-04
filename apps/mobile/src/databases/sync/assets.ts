@@ -158,11 +158,13 @@ export async function syncRemoteHistory(
     const projectDict = project_dict;
 
     const pinedQueue = preferenceService.getPinToken();
+    const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
     const swapFailHistoryList =
       transactionHistoryService.getSwapFailTransactions(address);
     const historyItems = history_list
       .filter(i => Boolean(i.tx))
       .map(raw => {
+        const customKey = `${address.toLowerCase()}-${raw.chain}-${raw.id}`;
         const item = new HistoryItemEntity();
         HistoryItemEntity.fillEntity(
           item,
@@ -171,6 +173,7 @@ export async function syncRemoteHistory(
           tokenDict,
           projectDict,
           pinedQueue,
+          customTxItemsMap[customKey] || undefined,
         );
         updateSwapFailHistoryItem(item, swapFailHistoryList);
         return item;

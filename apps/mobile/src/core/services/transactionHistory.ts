@@ -36,6 +36,10 @@ import {
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { matomoRequestEvent } from '@/utils/analytics';
+import {
+  CUSTOM_HISTORY_ACTION,
+  CUSTOM_HISTORY_TITLE_TYPE,
+} from '@/screens/Transaction/components/type';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -154,6 +158,11 @@ export interface ApproveTokenTxHistoryItem {
   completedAt?: number;
 }
 
+export interface CustomTxItem {
+  actionType: CUSTOM_HISTORY_TITLE_TYPE;
+  customData?: any;
+}
+
 interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
   swapTxHistory: SwapTxHistoryItem[];
@@ -166,6 +175,8 @@ interface TxHistoryStore {
   isNeedFetchTxHistory: Record<string, boolean>;
   clearSuccessAndFailListTs: number;
   clearSuccessAndFailListTsObj: Record<string, number>;
+  lendingSuccessHistoryList: string[];
+  customTxItemsMap: Record<string, CustomTxItem>; // key is address-chain-txId
 }
 
 // TODO
@@ -199,6 +210,8 @@ export class TransactionHistoryService {
           isNeedFetchTxHistory: {},
           clearSuccessAndFailListTs: new Date().getTime(),
           clearSuccessAndFailListTsObj: {},
+          lendingSuccessHistoryList: [],
+          customTxItemsMap: {},
         },
       },
       {
@@ -249,6 +262,14 @@ export class TransactionHistoryService {
       this.store.clearSuccessAndFailListTsObj = {};
     }
 
+    if (!Array.isArray(this.store.lendingSuccessHistoryList)) {
+      this.store.lendingSuccessHistoryList = [];
+    }
+
+    if (typeof this.store.customTxItemsMap !== 'object') {
+      this.store.customTxItemsMap = {};
+    }
+
     this.init();
 
     // this._populateAvailableTxs();
@@ -283,7 +304,33 @@ export class TransactionHistoryService {
   }
 
   getStore() {
-    return this.store['approveSwapTxHistory'];
+    return this.store.approveSwapTxHistory;
+  }
+
+  getLendingSuccessHistoryList(address: string) {
+    const list = this.store.lendingSuccessHistoryList.filter(item => {
+      return item.startsWith(address.toLowerCase());
+    });
+    return list;
+  }
+
+  setLendingSuccessHistoryList(address: string, id: string) {
+    if (
+      !this.store.lendingSuccessHistoryList.includes(
+        `${address.toLowerCase()}-${id}`,
+      )
+    ) {
+      this.store.lendingSuccessHistoryList.push(
+        `${address.toLowerCase()}-${id}`,
+      );
+    }
+  }
+
+  clearLendingSuccessHistoryList(address: string) {
+    this.store.lendingSuccessHistoryList =
+      this.store.lendingSuccessHistoryList.filter(item => {
+        return !item.startsWith(address.toLowerCase());
+      });
   }
 
   getSucceedCount(address?: string) {
@@ -311,6 +358,23 @@ export class TransactionHistoryService {
     return this.store.failList.filter(item =>
       address ? item.startsWith(address) : true,
     ).length;
+  }
+
+  getCustomTxItemMap() {
+    return this.store.customTxItemsMap;
+  }
+
+  setCustomTxItem(
+    address: string,
+    chainId: number,
+    txId: string,
+    item: CustomTxItem,
+  ) {
+    const serverId = findChain({ id: chainId })?.serverId;
+    this.store.customTxItemsMap = {
+      ...this.store.customTxItemsMap,
+      [`${address.toLowerCase()}-${serverId}-${txId}`]: item,
+    };
   }
 
   getClearSuccessAndFailListTs() {
@@ -834,6 +898,13 @@ export class TransactionHistoryService {
         if (!success) {
           id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
         }
+        if (
+          target?.customActionInfo?.customAction ===
+            CUSTOM_HISTORY_ACTION.LENDING &&
+          id
+        ) {
+          this.setLendingSuccessHistoryList(address, id);
+        }
         loadTxSaveFromLocalStore(newTx); // send type tx save local db
         this.setNeedFetchTxHistory(address.toLowerCase());
         txDonePatchTokenAmountInDb(newTx);
@@ -1269,5 +1340,28 @@ export class TransactionGroup {
 
   get keyringType() {
     return this.maxGasTx.keyringType;
+  }
+
+  get customActionInfo() {
+    const approveData =
+      this.maxGasTx.action?.actionData.approveToken ||
+      this.maxGasTx.action?.actionData.approveNFT ||
+      this.maxGasTx.action?.actionData.approveNFTCollection;
+
+    if (approveData) {
+      // magic method to filter approve txs before action tx
+      return {
+        customAction: undefined,
+        customActionTitleType: undefined,
+      };
+    }
+
+    const ga = this.maxGasTx.$ctx?.ga;
+    return {
+      customAction: ga?.customAction as CUSTOM_HISTORY_ACTION | undefined,
+      customActionTitleType: ga?.customActionTitleType as
+        | CUSTOM_HISTORY_TITLE_TYPE
+        | undefined,
+    };
   }
 }

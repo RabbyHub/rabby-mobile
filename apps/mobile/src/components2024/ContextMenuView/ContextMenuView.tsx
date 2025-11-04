@@ -1,9 +1,14 @@
-import * as ContextMenu from 'zeego/context-menu';
+import * as ContextMenu from 'zeego/src/context-menu';
+import { MenuTriggerProps } from 'zeego/src/menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
 import { ImageSourcePropType } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
-import { MenuTriggerProps } from 'zeego/lib/typescript/menu';
 import { useTheme2024 } from '@/hooks/theme';
+import { useCallback, useLayoutEffect, useRef } from 'react';
+import { MenuComponentRef } from '@react-native-menu/menu';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
+// import { touchedFeedback } from '@/utils/touch';
 
 export interface MenuAction {
   title: string;
@@ -26,6 +31,7 @@ type Props = {
   preViewBorderRadius?: number;
   children: React.ReactElement;
   triggerProps?: Omit<MenuTriggerProps, 'children'>;
+  androidLongPressDuration?: number;
 } & ContextMenuContentProps;
 
 export const ContextMenuView: React.FC<Props> = ({
@@ -36,8 +42,25 @@ export const ContextMenuView: React.FC<Props> = ({
   avoidCollisions = true,
   triggerProps,
   preViewBorderRadius = 30,
+  androidLongPressDuration = 350,
 }) => {
   const { colors2024 } = useTheme2024();
+
+  const androidMenuViewRef = useRef<MenuComponentRef>(null);
+
+  const androidShowMenu = useCallback(() => {
+    // touchedFeedback();
+    androidMenuViewRef.current?.show();
+  }, []);
+
+  const longPressGesture = Gesture.LongPress()
+    .minDuration(androidLongPressDuration)
+    .runOnJS(false)
+    .onStart(e => {
+      runOnJS(androidShowMenu)();
+    });
+
+  const needUseGdOnAndroid = IS_ANDROID && triggerProps?.action === 'longPress';
 
   return (
     <ContextMenu.Root
@@ -45,9 +68,23 @@ export const ContextMenuView: React.FC<Props> = ({
         previewConfig: {
           borderRadius: preViewBorderRadius,
         },
-      }}>
-      <ContextMenu.Trigger {...triggerProps} isAnchoredToRight>
-        {children}
+      }}
+      androidMenuViewRef={androidMenuViewRef}>
+      <ContextMenu.Trigger
+        action="longPress"
+        {...triggerProps}
+        isAnchoredToRight
+        {...(needUseGdOnAndroid && {
+          androidSuppressNativeLongPress: true,
+          action: 'longPress',
+        })}>
+        {needUseGdOnAndroid ? (
+          <GestureDetector gesture={longPressGesture}>
+            {children}
+          </GestureDetector>
+        ) : (
+          children
+        )}
       </ContextMenu.Trigger>
 
       <ContextMenu.Content
