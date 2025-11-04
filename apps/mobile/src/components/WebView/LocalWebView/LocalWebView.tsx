@@ -12,7 +12,7 @@ import {
   refAssetForLocalWebView,
   WEBVIEW_BASEURL,
 } from '@/core/storage/webviewAssets';
-import { Dimensions, Platform, View } from 'react-native';
+import { Alert, Dimensions, Platform, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useDevServerSettings } from '@/core/utils/devServerSettings';
@@ -87,7 +87,10 @@ export const LocalWebView = React.forwardRef<LocalWebView, LocalWebViewProps>(
 
     if (__DEV__ && !forceUseLocalResource && !devServerSettings.devServerHost) {
       // throw new Error('devServerHost is not set');
-      console.warn('devServerHost is not set');
+      const errorMsg =
+        'devServerHost is not set, will use local resource fallback';
+      console.warn(errorMsg);
+      forceUseLocalResource = true;
     }
 
     const { webviewSource } = useMemo(() => {
