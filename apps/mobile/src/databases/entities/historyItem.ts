@@ -192,6 +192,12 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     }
 
     const receives = item.receives;
+    const sends = item.sends;
+    if (sends && sends.length) {
+      // has sends token is not filter
+      return false;
+    }
+
     if (!receives || !receives.length) {
       return true;
     }
@@ -215,7 +221,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
         pinedQueue.find(
           p => p.chainId === item.chain && p.tokenId === i.token_id,
         );
-      const price = isCore ? i?.price || 0 : 0; // is not core token price to 0
+      const price = isCore ? i?.price || token?.price || 0 : 0; // is not core token price to 0
       const usd = i.amount * price;
       allUsd += usd;
     }
