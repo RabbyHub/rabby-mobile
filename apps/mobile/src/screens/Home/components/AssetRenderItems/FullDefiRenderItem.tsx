@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, ViewStyle, StyleProp } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -30,8 +30,14 @@ interface Props {
   data: AbstractProject;
   account: KeyringAccountWithAlias;
   showAccount?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
-export const FullDefiRenderItem = ({ data, account, showAccount }: Props) => {
+export const FullDefiRenderItem = ({
+  data,
+  account,
+  showAccount,
+  style,
+}: Props) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const isFromAppChain = useMemo(() => {
@@ -89,7 +95,7 @@ export const FullDefiRenderItem = ({ data, account, showAccount }: Props) => {
   }
 
   return (
-    <View style={[styles.container]}>
+    <View style={[styles.container, style]}>
       <View style={styles.headerArea}>
         <View style={styles.headerLeft}>
           <AssetAvatar
@@ -114,23 +120,25 @@ export const FullDefiRenderItem = ({ data, account, showAccount }: Props) => {
                 20,
               )}
             </Text>
-            <View style={styles.accountBox}>
-              <View className="relative">
-                <WalletIcon
-                  type={account.type as KEYRING_TYPE}
-                  address={account.address}
-                  width={styles.walletIcon.width}
-                  height={styles.walletIcon.height}
-                  style={styles.walletIcon}
-                />
+            {showAccount && (
+              <View style={styles.accountBox}>
+                <View className="relative">
+                  <WalletIcon
+                    type={account.type as KEYRING_TYPE}
+                    address={account.address}
+                    width={styles.walletIcon.width}
+                    height={styles.walletIcon.height}
+                    style={styles.walletIcon}
+                  />
+                </View>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.titleText}>
+                  {account.aliasName}
+                </Text>
               </View>
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={styles.titleText}>
-                {account.aliasName}
-              </Text>
-            </View>
+            )}
           </View>
         </View>
         <Text style={styles.projectHeaderNetWorth}>{sumNetWorth}</Text>

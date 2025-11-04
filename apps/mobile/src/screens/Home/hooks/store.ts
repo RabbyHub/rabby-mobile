@@ -46,9 +46,7 @@ export type CombineTokensItem = Omit<
 type OriginalCombineDefiItem = DisplayedProjectWithoutMethods & {
   totalUsdValue: BigNumber;
   filterTokenDesc?: string;
-  fromAddress: Array<{
-    address: string;
-  }>;
+  address: string;
 };
 export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'> & {
   totalUsdValue: number;
@@ -198,7 +196,7 @@ export const combinedTokens = (
 export const combinedProtocols = (assetsMap: {
   [address: string]: IAssets;
 }): CombineDefiItem[] => {
-  const defiMap: Record<string, OriginalCombineDefiItem> = {};
+  const portfolios: OriginalCombineDefiItem[] = [];
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
   );
@@ -212,30 +210,14 @@ export const combinedProtocols = (assetsMap: {
       if (!key) {
         return;
       }
-
-      if (!defiMap[key]) {
-        defiMap[key] = {
-          ...defi,
-          totalUsdValue: getDisplayedPortfolioUsdValue(defi._portfolios),
-          fromAddress: [
-            {
-              address,
-            },
-          ],
-        };
-      } else {
-        const existingDefi = defiMap[key];
-        existingDefi.totalUsdValue = existingDefi.totalUsdValue?.plus(
-          getDisplayedPortfolioUsdValue(defi._portfolios),
-        );
-        existingDefi.fromAddress.push({
-          address,
-        });
-      }
+      portfolios.push({
+        ...defi,
+        address,
+        totalUsdValue: getDisplayedPortfolioUsdValue(defi._portfolios),
+      });
     });
   });
 
-  const portfolios = Object.values(defiMap);
   const listLength = portfolios.length || 0;
   const totalValue = portfolios.reduce((acc, curr) => {
     return acc + (curr.totalUsdValue.toNumber() || 0);
@@ -248,7 +230,7 @@ export const combinedProtocols = (assetsMap: {
   const hasExpandSwitch =
     listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
 
-  return Object.values(defiMap)
+  return portfolios
     .sort((a, b) =>
       a.totalUsdValue.gt(b.totalUsdValue)
         ? -1
@@ -264,61 +246,6 @@ export const combinedProtocols = (assetsMap: {
       _isMiniFold: hasExpandSwitch
         ? p.totalUsdValue.toNumber() < threshold
         : false,
-    }));
-};
-
-export const combinedNFTs = (assetsMap: {
-  [address: string]: IAssets;
-}): CombineNFTItem[] => {
-  const nftMap: Record<string, OriginalCombineNFTItem> = {};
-  const lowerAddresses = new Set(
-    Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
-  );
-  Object.entries(assetsMap).forEach(([address, assets]) => {
-    if (!lowerAddresses.has(address.toLowerCase())) {
-      return;
-    }
-    lowerAddresses.delete(address.toLowerCase());
-    assets.nfts?.forEach(nft => {
-      const key = `${nft.chain}-${nft.id}-${nft.name || ''}`;
-      if (!key) {
-        return;
-      }
-
-      if (!nftMap[key]) {
-        nftMap[key] = {
-          ...nft,
-          totalAmount: new BigNumber(nft.amount || 0),
-          fromAddress: [
-            {
-              address,
-            },
-          ],
-        };
-      } else {
-        const existingNFT = nftMap[key];
-        existingNFT.totalAmount = existingNFT.totalAmount?.plus(
-          nft.amount || 0,
-        );
-        existingNFT.fromAddress.push({
-          address,
-        });
-      }
-    });
-  });
-
-  return Object.values(nftMap)
-    .sort((a, b) =>
-      a.totalAmount.gt(b.totalAmount)
-        ? -1
-        : a.totalAmount.lt(b.totalAmount)
-        ? 1
-        : 0,
-    )
-    .map(nft => ({
-      ...nft,
-      totalAmount: nft.totalAmount.toNumber(),
-      amount: nft.totalAmount?.toNumber() || 0,
     }));
 };
 
