@@ -59,6 +59,8 @@ import { useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
+import { IS_IOS } from '@/core/native/utils';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 const HeaderHeight = 24;
 
@@ -237,9 +239,9 @@ export function MultiAddressHomeHeader(
       />
       <BlurShadowView
         isLight={isLight}
-        viewTypeOnNoShadow="view"
+        viewTypeOnNoShadow={'view'}
         viewProps={{
-          style: styles.curveBoxWrapper,
+          style: [styles.curveBoxWrapper, { minHeight: 100 }],
         }}>
         <View pointerEvents="none" style={styles.localWebViewWrapper}>
           <LocalWebView
@@ -250,6 +252,7 @@ export function MultiAddressHomeHeader(
               marginHorizontal: 'auto',
               backgroundColor: 'transparent',
             }}
+            forceUseLocalResource={isNonPublicProductionEnv}
             entryPath={'/pages/gasket-blurview.html'}
             webviewSize={{
               width: Dimensions.get('window').width - 15 * 2,
@@ -550,6 +553,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'relative',
     marginTop: 12,
     paddingTop: 0,
+    // backgroundColor: 'transparent',
     // ...makeDebugBorder('red'),
     paddingHorizontal: 15,
     alignItems: 'center',
@@ -563,7 +567,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: -1,
+    zIndex: IS_IOS ? 1 : -1,
     borderRadius: 0,
     // ...(__DEV__ && {
     //   zIndex: 100,
@@ -576,7 +580,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 0,
     paddingVertical: 0,
     padding: 0,
-    borderWidth: 2,
+    borderWidth: IS_IOS ? 1 : 2,
     borderColor: 'transparent',
     borderRadius: 20,
     // ...makeDebugBorder(),

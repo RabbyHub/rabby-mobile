@@ -2,9 +2,13 @@
   --border-width: var(--app-border-width, 2px);
   --radius: var(--app-border-radius, 21px);
   --animation-ms: var(--app-animation-ms, 2000);
+  --animation-ms-ios: var(--app-animation-ms-ios, 1000);
 
   --rect-width: var(--app-rect-width, 330px);
   --rect-height: var(--app-rect-height, 240px);
+}
+html[data-os='ios'] {
+  --animation-ms: var(--animation-ms-ios);
 }
 
 html,

@@ -73,22 +73,22 @@ window.addEventListener('messageFromRN', function (event) {
   }
 });
 
-function setDocumentTheme(isDark: boolean) {
+function setDocumentRuntimeInfo(
+  runtimeInfo: Partial<Pick<RuntimeInfo, 'isDark' | 'language'>>,
+) {
   try {
     document.documentElement.setAttribute(
       'data-theme',
-      isDark ? 'dark' : 'light',
+      runtimeInfo.isDark ? 'dark' : 'light',
     );
-  } catch (error) {
-    console.error('setDocumentTheme error', error);
-  }
-}
+    document.documentElement.setAttribute(
+      'lang',
+      runtimeInfo.language || 'en-US',
+    );
 
-function setDocumentLanguage(lang: string) {
-  try {
-    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('data-os', getPlatform());
   } catch (error) {
-    console.error('setDocumentLanguage error', error);
+    console.error('setDocumentRuntimeInfo error', error);
   }
 }
 
@@ -117,8 +117,7 @@ export function setRuntimeInfo(runtimeInfo: Partial<RuntimeInfo>) {
       i18nTexts: (runtimeInfo.i18nTexts ?? prev.i18nTexts) || {},
     };
 
-    setDocumentTheme(newInfo.isDark);
-    setDocumentLanguage(newInfo?.language || 'en-US');
+    setDocumentRuntimeInfo(newInfo);
 
     return newInfo;
   });
