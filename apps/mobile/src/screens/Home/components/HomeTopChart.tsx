@@ -2,7 +2,7 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useState } from 'react';
-import { Dimensions, View } from 'react-native';
+import { Dimensions, Pressable, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   CurvePoint,
@@ -19,6 +19,12 @@ import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/Cu
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useCurrency } from '@/hooks/useCurrency';
+import {
+  FOLD_ASSETS_HEADER_HEIGHT,
+  UNFOLD_ASSETS_HEADER_HEIGHT,
+} from '@/constant/layout';
+import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
+
 const ScreenWidth = Dimensions.get('screen').width;
 
 function Chart({
@@ -27,12 +33,16 @@ function Chart({
   loading,
   isNoAssets,
   pathColor,
+  fold,
+  setFold,
 }: {
   isOffline: boolean;
   data: ReturnType<typeof formChartData>;
   loading: boolean;
   isNoAssets: boolean;
   pathColor: string;
+  fold: boolean;
+  setFold: (fold: boolean) => void;
 }) {
   const { styles, colors } = useTheme2024({ getStyle });
   const [isInitialized, setIsInitialized] = useState(false);
@@ -49,11 +59,21 @@ function Chart({
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          height: fold
+            ? FOLD_ASSETS_HEADER_HEIGHT
+            : UNFOLD_ASSETS_HEADER_HEIGHT,
+        },
+      ]}>
       <View style={styles.chartContainer}>
         <LineChart.Provider data={data.list}>
           {isInitialized ? (
             <ChartHeader
+              fold={fold}
+              setFold={setFold}
               rawNetWorth={data.rawNetWorth}
               changePercent={data.changePercent}
               isLoss={data.isLoss}
@@ -61,7 +81,7 @@ function Chart({
               loading={loading}
             />
           ) : null}
-          {isOffline || isNoAssets ? null : !loading ? (
+          {fold ? null : isOffline || isNoAssets ? null : !loading ? (
             isInitialized ? (
               <LineChart
                 height={104}
@@ -100,6 +120,8 @@ interface IHeaderProps {
   isLoss: boolean;
   loading: boolean;
   data: CurvePoint[];
+  fold: boolean;
+  setFold: (fold: boolean) => void;
 }
 export const ChartHeader = ({
   rawNetWorth,
@@ -107,6 +129,8 @@ export const ChartHeader = ({
   isLoss,
   loading,
   data: _data,
+  fold,
+  setFold,
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
@@ -258,14 +282,25 @@ export const ChartHeader = ({
         style={styles.netWorth}
         animatedProps={netWorthAnimatedProps}
       />
-      <AnimateableText
-        style={lossStyleProps}
-        animatedProps={percentChangeAnimatedProps}
-      />
-      <AnimateableText
-        style={styles.changeTime}
-        animatedProps={dateTimeAnimatedProps}
-      />
+      <View style={styles.percentChangeContainer}>
+        <AnimateableText
+          style={lossStyleProps}
+          animatedProps={percentChangeAnimatedProps}
+        />
+        <AnimateableText
+          style={styles.changeTime}
+          animatedProps={dateTimeAnimatedProps}
+        />
+        <Pressable hitSlop={10} onPress={() => setFold(!fold)}>
+          <ArrowRightSVG
+            style={{
+              transform: fold ? [{ rotate: '90deg' }] : [{ rotate: '270deg' }],
+            }}
+            width={16}
+            color={colors2024['neutral-secondary']}
+          />
+        </Pressable>
+      </View>
     </View>
   );
 };
@@ -287,10 +322,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   charHeader: {
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     flexDirection: 'row',
     paddingLeft: 8,
     width: ScreenWidth - 32,
+  },
+  percentChangeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   netWorth: {
     fontSize: 42,
@@ -332,7 +372,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 4,
   },
   container: {
-    height: 159,
     width: ScreenWidth,
     overflow: 'hidden',
   },

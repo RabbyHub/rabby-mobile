@@ -1,13 +1,11 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useQueryProjects } from './hooks';
 import {
-  ALERT_HEIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
   DEFI_ITEM_HEIGHT,
-  HEADER_TOP_AREA_HEIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -32,7 +30,6 @@ import { NFTList } from './NFTList';
 import { DynamicCustomMaterialTabBar } from './components/Tabs/CustomTabBar';
 import CustomLabel from './components/Tabs/CustomLabel';
 import { ChainSelector } from './components/AssetRenderItems/SectionHeaders';
-import { CHAINS_ENUM } from '@debank/common';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -45,7 +42,6 @@ export const icons = {
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
 
-const SPACE_BETWEEN_HEADER_AND_CHART = 17;
 interface Props {
   onRefresh(): void;
   onUpdateIsDecrease?: (isDecrease: boolean) => void;
@@ -166,7 +162,6 @@ export const AssetContainer: React.FC<Props> = ({
       // }}
       >
         <HomeTopArea
-          currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
           curveData={curveData}
           isLoadingCurve={isLoadingCurve || (balanceLoading && !evmBalance)}
@@ -179,7 +174,6 @@ export const AssetContainer: React.FC<Props> = ({
   }, [
     evmBalance,
     balanceLoading,
-    currentAccount,
     curveData,
     handleRefresh,
     isDisConnect,

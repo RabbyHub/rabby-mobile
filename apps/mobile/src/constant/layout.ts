@@ -45,6 +45,9 @@ export const ADDRESS_ENTRY_HEIGHT = 78;
 export const ADDRESS_ENTRY_GAP = 12;
 export const TOGGLE_SPLIT_HEIGHT = 24;
 
+export const FOLD_ASSETS_HEADER_HEIGHT = 46 + 32;
+export const UNFOLD_ASSETS_HEADER_HEIGHT = 161 + 20;
+
 // for DappWebViewControl2
 export const ScreenLayouts2 = {
   headerAreaHeight: 52,
