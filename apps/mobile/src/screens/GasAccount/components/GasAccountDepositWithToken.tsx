@@ -500,6 +500,7 @@ export const GasAccountDepositWithToken = ({
             closeMiniSign();
             const res = await openUI({
               txs: [tx],
+              autoUseGasFree: true,
             });
             const hash = res?.[0];
 

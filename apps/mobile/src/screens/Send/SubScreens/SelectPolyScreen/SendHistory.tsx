@@ -19,8 +19,6 @@ import { useRecentSend } from '../../hooks/useRecentSend';
 import { SendAction } from '@rabby-wallet/rabby-api/dist/types';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
-import { transactionHistoryService } from '@/core/services';
-import { useMemoizedFn } from 'ahooks';
 import { useGetCexList } from '@/screens/Transaction/hook';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
@@ -35,14 +33,14 @@ interface IProps {
   onClose: () => void;
   title?: string;
   isForMultipleAddress?: boolean;
-  onPressBottomBtn?: (data: SendAction) => void;
+  onPressAddToWhitelistButton?: (data: SendAction) => void;
 }
 export const SendHistory = ({
   visible,
   onClose,
   title,
   isForMultipleAddress = true,
-  onPressBottomBtn,
+  onPressAddToWhitelistButton,
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const bottomRef = useRef<BottomSheetModalMethods>(null);
@@ -99,7 +97,7 @@ export const SendHistory = ({
             getCexInfoByAddress={getCexInfoByAddress}
             isInSendHistory={true}
             closeHistoryPopup={onClose}
-            onPressBottomBtn={onPressBottomBtn}
+            onPressAddToWhitelistButton={onPressAddToWhitelistButton}
           />
         </>
       );

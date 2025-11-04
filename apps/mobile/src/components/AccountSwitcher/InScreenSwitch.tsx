@@ -3,7 +3,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { memo } from 'react';
 import { Text, View } from 'react-native';
 
-import { CaretDownIconCC } from './icons/CaretDownIconCC';
 import TouchableView from '../Touchable/TouchableView';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import {
@@ -14,6 +13,7 @@ import {
 import { ellipsisAddress } from '@/utils/address';
 import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { CaretArrowIconCC } from '../Icons/CaretArrowIconCC';
 
 function AccountSwitcherComponent({
   forScene,
@@ -70,8 +70,9 @@ function AccountSwitcherComponent({
           </AddressItem>
         )}
         {!disableSwitch && (
-          <CaretDownIconCC
-            style={[styles.addressCaretIcon, isOpen && styles.reverseCaret]}
+          <CaretArrowIconCC
+            dir={!isOpen ? 'right' : 'down'}
+            style={[styles.addressCaretIcon]}
             width={26}
             height={26}
             bgColor={colors2024['neutral-line']}
@@ -125,7 +126,7 @@ const getStyle = createGetStyles2024(ctx => {
       marginLeft: 'auto',
     },
     reverseCaret: {
-      transform: [{ rotate: '180deg' }],
+      // transform: [{ rotate: '180deg' }],
     },
   };
 });

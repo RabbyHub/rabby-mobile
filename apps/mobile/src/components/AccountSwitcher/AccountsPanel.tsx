@@ -234,7 +234,7 @@ AccountSwitcherAopProps<{
                   key={key}
                   addressItemProps={{ account }}
                   isCurrent={isCurrent}
-                  isPinned={false}
+                  // isPinned={false}
                   onPressAddress={handlePressAccount}
                   style={[
                     styles.addressItem,
@@ -399,7 +399,7 @@ AccountSwitcherAopProps<{
                       key={key}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
-                      isPinned={false}
+                      // isPinned={false}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -436,7 +436,7 @@ AccountSwitcherAopProps<{
                       key={key}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
-                      isPinned={false}
+                      // isPinned={false}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -469,7 +469,7 @@ AccountSwitcherAopProps<{
 
   return (
     <LinearGradientContainer
-      type="linear"
+      type="bg1"
       {...linearContainerProps}
       style={[styles.panel, containerStyle]}>
       <View style={styles.header}>
@@ -505,7 +505,7 @@ AccountSwitcherAopProps<{
                     key={key}
                     addressItemProps={{ account }}
                     isCurrent={isCurrent}
-                    isPinned={isPinnedAccount(account)}
+                    // isPinned={isPinnedAccount(account)}
                     isHideToken={isHideToken}
                     onPressAddress={handlePressAccount}
                     style={[
@@ -596,7 +596,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     title: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '800',
+      fontWeight: '900',
       lineHeight: 24,
       color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',

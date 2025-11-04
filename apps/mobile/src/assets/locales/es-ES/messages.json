@@ -120,6 +120,11 @@
       },
       "favoriteFilter": {
         "all": "Todo"
+      },
+      "riskDetected": {
+        "simpleExplanation": "No soportado",
+        "title": "Riesgo Detectado",
+        "proceedBtn": "Continuar"
       }
     },
     "NFTNumberInput": {
@@ -151,7 +156,10 @@
         "loginAndClaim": "Iniciar sesión y reclamar {{amount}}",
         "loginTips2": "cualquier dirección en cualquier cadena",
         "loginTips1": "Pagar las tarifas de gas para",
-        "loginTips3": "cuando te quedes sin Gas"
+        "loginTips3": "cuando te quedes sin Gas",
+        "depositDesc": "en todas las cadenas cuando te quedes sin gas",
+        "depositTitle": "Depositar USDC/USDT Pagar Gas Fees",
+        "learnAbout": "Aprender más sobre GasAccount"
       },
       "loginConfirmModal": {
         "desc": "Una vez que inicie sesión, solo puede depositarlo en esta dirección.",
@@ -172,6 +180,16 @@
         "giftTips": "Recompensa de Gas para usuarios activos",
         "gotIt": "Lo Tengo",
         "noWithdrawableBalanceDescription": "{{amount}} de tu saldo de gas no es retirado:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
+      "about": {
+        "title3": "¿GasAccount tiene tarifas adicionales?",
+        "title1": "¿Qué es GasAccount?",
+        "title2": "Cómo usar Gas Account",
+        "title4": "¿Es seguro GasAccount?",
+        "desc3": "Rabby Wallet no cobra tarifas adicionales. Solo pagas el gas por tu transacción y una pequeña cantidad de gas por enviar ese gas de GasAccount a tu dirección.",
+        "desc2": "Agrega fondos a tu GasAccount y úsalos para cualquier transacción. Al firmar, elige pagar el gas con tokens nativos o GasAccount, cambia en cualquier momento.",
+        "desc4": "GasAccount no requiere aprobaciones ni permisos de contrato. Depositas en la dirección del GasAccount de Rabby, y Rabby envía gas a tu dirección cuando es necesario. Totalmente seguro por diseño.",
+        "desc1": "GasAccount es una nueva forma de pagar las tarifas de gas. En lugar de usar tokens nativos en cada cadena, puedes usar una cuenta para cubrir el gas para todas tus direcciones en todas las cadenas. Simple, opcional y nunca te quedas sin gas."
       }
     },
     "NoLongerSupports": {
@@ -251,6 +269,21 @@
     },
     "GlobalTipsPopup": {
       "btn": "Lo tengo"
+    },
+    "Prediction": {
+      "price": "Precio",
+      "amount": "Cantidad",
+      "usdValue": "Valor USD",
+      "side": "Lado"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "desc": "Añadir dirección confiable a la Whitelist",
+        "addBtn": "Añadir ahora"
+      },
+      "importedAccounts": "Carteras Importadas",
+      "whitelistAccounts": "Lista blanca",
+      "recentAccounts": "Reciente"
     }
   },
   "page": {
@@ -278,7 +311,11 @@
         "Revoke": "Revocación de la aprobación de {{token}}",
         "WithdrawnGas": "Gas retirado",
         "DepositedGas": "Gas depositado",
-        "ReceivedGas": "Recibido Gas"
+        "ReceivedGas": "Recibido Gas",
+        "LendingBorrow": "Pedir prestado",
+        "LendingRepay": "Reembolsar",
+        "LendingSupply": "Suministro",
+        "LendingWithdraw": "Retirar"
       },
       "detail": {
         "Cancel": "Cancelar",
@@ -956,7 +993,13 @@
       "sectionTo": {
         "searchInputPlaceholder": "Introduce una dirección o escanea",
         "addrValidator__empty": "Por favor, introduzca la dirección",
-        "addrValidator__invalid": "Esta dirección no es válida"
+        "addrValidator__invalid": "Esta dirección no es válida",
+        "positiveTips": {
+          "sentRecently": "Enviado recientemente",
+          "yourOwnAddress": "Tu propia dirección",
+          "whitelistedAddress": "Dirección en la lista blanca"
+        },
+        "selectPlaceholder": "Seleccionar Dirección"
       },
       "AddToContactsModal": {
         "editAddr": {
@@ -998,12 +1041,17 @@
         "confirm": "Proceder",
         "cancel": "Cancelar"
       },
-      "noSupprotTokenForDex": "Este token puede no ser compatible con este exchange. Verifique antes de continuar para evitar pérdidas",
       "From": "Desde",
-      "noSupprotTokenForSafe": "La dirección Safe a la que estás enviando tokens no está desplegada en esta cadena. Verifica antes de continuar para evitar pérdidas.",
-      "noSupportTokenForChain": "La dirección del destinatario es una dirección de contrato en una cadena diferente. Verifica antes de continuar para evitar pérdidas.",
       "addressDetail": "Detalles de la dirección",
-      "newAmount": "Cantidad"
+      "newAmount": "Cantidad",
+      "noSupportTokenReason": {
+        "forSafeSimple": "Esta dirección Safe no está desplegada en esta cadena.",
+        "forDexSimple": "Este token puede no ser compatible con este intercambio.",
+        "forDex": "Este token puede no ser compatible con este intercambio. Verifica antes de proceder para evitar pérdidas.",
+        "forChainSimple": "La dirección del destinatario es una dirección de contrato en una cadena diferente.",
+        "forChain": "La dirección del destinatario es una dirección de contrato en una cadena diferente. Verifica antes de proceder para evitar pérdidas.",
+        "forSafe": "La dirección Safe a la que estás enviando tokens no está desplegada en esta cadena. Verifica antes de continuar para evitar pérdidas."
+      }
     },
     "gasTopUp": {
       "No_Tokens": "Sin tokens",
@@ -1030,9 +1078,10 @@
         "queue": "Cola",
         "search": "Buscar Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Lista de seguimiento",
+        "watchlist": "Lista de Observación de Tokens",
         "perpsMarketList": "Más Perps",
-        "perps": "Perps"
+        "perps": "Perps",
+        "lending": "Préstamo"
       }
     },
     "dashboard": {
@@ -2227,7 +2276,7 @@
     },
     "confirmAddress": {
       "risks": {
-        "dexNoDeposite": "La dirección del destinatario es una dirección no depositaria de un CEX. Por favor, asegúrate de que tu dirección de depósito sea correcta.",
+        "cexNoDeposite": "La dirección del destinatario es una dirección no depositaria de un CEX. Por favor, asegúrate de que tu dirección de depósito sea correcta.",
         "contractAddress": "La dirección del destinatario es una dirección de contrato, lo que podría causar la pérdida de fondos",
         "noSend": "No has enviado fondos a esta dirección en los últimos 180 días. Por favor, confirma si deseas continuar.",
         "scamAddress": "La dirección del destinatario es una dirección fraudulenta señalada por Rabby"
@@ -2335,7 +2384,8 @@
       },
       "WebviewError": {
         "error": "Error:",
-        "failedToLoad": "Error al cargar la página"
+        "failedToLoad": "Error al cargar la página",
+        "alertText": "Intenta<1/><2>abrir en el navegador</2><3/>para comprobar si es un problema del sitio web"
       },
       "toast": {
         "clearCacheSuccess": "Caché vaciado"
@@ -2697,6 +2747,123 @@
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Página Integrada"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "sendTo": "Enviar a",
+        "sendFrom": "Enviar desde",
+        "viewSentTx": "Enviado",
+        "addNewWhitelistAddr": "Agregar nueva dirección a la lista blanca",
+        "selectFromHistory": "Seleccionar del Historial"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "Nombrar la dirección"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "needSupply": "Para pedir prestado, necesitas aportar activos como garantía.",
+        "canBorrow": "Puedes pedir prestado basado en tu colateral proporcionado, hasta el límite de préstamo."
+      },
+      "list": {
+        "headers": {
+          "myBorrows": "Mis préstamos",
+          "token": "Token",
+          "mySupplies": "Mis suministros",
+          "apy": "APY"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "title": "Gana intereses, pide prestado en cualquier momento",
+          "description": "Impulsado por AAVE. Seguro y sin comisiones."
+        },
+        "healthy": "Saludable",
+        "more": "Más",
+        "risky": "Arriesgado",
+        "lq": "Si cae por debajo de 1, se podría activar la liquidación."
+      },
+      "repayDetail": {
+        "actions": "Reembolso",
+        "approveAndRepay": "Aprueba y Reembolsa"
+      },
+      "supplyDetail": {
+        "actions": "Suministro",
+        "supplyAPY": "Suministrar APY",
+        "approveAndSupply": "Aprobar y Suministrar",
+        "availableToBorrow": "Disponible para pedir prestado"
+      },
+      "withdrawDetail": {
+        "actions": "Retirar",
+        "remainingSupply": "Suministro restante"
+      },
+      "borrowDetail": {
+        "approveAndBorrow": "Aprobar y Prestar",
+        "actions": "Pedir prestado",
+        "almostReachedError": "El monto máximo disponible para pedir prestado está limitado porque se ha alcanzado casi el límite de préstamo del protocolo.",
+        "almostReachedWarning": "El límite de préstamo del protocolo está en el 100% para este activo. No se puede realizar más préstamos."
+      },
+      "popup": {
+        "amount": "Cantidad",
+        "available": "disponible",
+        "remainingDebt": "Deuda pendiente",
+        "title": "Resumen de Transacciones",
+        "liquidationAt": "Liquidación en < 1.0"
+      },
+      "borrowOverview": {
+        "title": "Detalles del préstamo",
+        "totalBorrowed": "Total Tomado",
+        "myBorrow": "Mi Préstamo",
+        "borrowCap": "Límite de Préstamo",
+        "availableToBorrow": "Disponible para pedir prestado",
+        "liquidityPenalty": "Penalización por Liquidación"
+      },
+      "supplyOverview": {
+        "title": "Detalles de suministro",
+        "walletBalance": "Saldo de la billetera",
+        "availableToSupply": "Disponible para Suministrar",
+        "totalSupplied": "Total Suministrado",
+        "mySupply": "Mi Suministro",
+        "almostCap": "Este activo ha alcanzado casi su límite de préstamo. Solo hay {{available}} disponible para ser prestado de este mercado.",
+        "reachCap": "Este activo ha alcanzado su límite de suministro. No hay nada disponible para ser suministrado desde este mercado."
+      },
+      "risk": {
+        "checkbox": "Entiendo la alerta y quiero continuar.",
+        "warning": "Tomar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
+        "withdrawWarning": "Retirar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación."
+      },
+      "lqDescription": {
+        "over3desc": "Tus posiciones están seguras",
+        "risky": "Arriesgado",
+        "below1desc": "Su posición está en riesgo de liquidación.",
+        "below1title": "Factor de Salud ≤ 1.0:",
+        "desc": "Valor de liquidación",
+        "over3title": "Factor de salud > 3.0:",
+        "warningText": "Tu factor de salud es demasiado bajo. Para evitar la liquidación:\n1. Devuelve parte o la totalidad de tu préstamo.\n2. Agrega más colateral.",
+        "liquidation": "Liquidación: Si tu Factor de Salud cae por debajo de 1.0, parte de tu garantía puede ser vendida automáticamente para reembolsar la deuda. Se aplicará una penalización por liquidación, lo que resultará en una pérdida parcial de tu garantía.",
+        "introText": "Tu Factor de Salud muestra qué tan segura es tu posición de préstamo. Si baja demasiado, tu colateral podría ser liquidado."
+      },
+      "modalDesc": {
+        "availableToBorrow": "Disponible para pedir prestado",
+        "maxAmount": "Esta es la cantidad máxima que puedes pedir prestada basada en toda tu garantía proporcionada. Tu poder de préstamo total se calcula multiplicando el valor de mercado de cada activo de garantía por su LTV máximo y luego sumando los resultados.",
+        "availableToBorrowDesc": "Puedes pedir prestado en función de tu garantía proporcionada y hasta que se alcance el límite de préstamo.",
+        "lqDesc": "Cuando ocurre una liquidación, los liquidadores reembolsan hasta el 50% del monto pendiente prestado en nombre del prestatario. A cambio, pueden comprar la garantía a un precio con descuento y quedarse con la diferencia (penalización por liquidación) como bonificación."
+      },
+      "gotIt": "Entendido",
+      "market": "Mercado",
+      "borrowed": "Prestado",
+      "supplied": "Suministrado",
+      "submitted": "enviado",
+      "estDailyEarning": "Est. Ganancia Diaria",
+      "selectChain": "Seleccionar cadena",
+      "apy": "APY",
+      "hfTitle": "Factor de Salud",
+      "netWorth": "Valor neto",
+      "hf": "Factor de salud",
+      "enterAmount": "Introducir cantidad"
     }
   },
   "global": {

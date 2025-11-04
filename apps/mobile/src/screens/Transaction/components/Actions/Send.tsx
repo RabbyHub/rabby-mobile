@@ -9,11 +9,17 @@ import {
   formatTokenAmount,
   formatUsdValue,
 } from '@/utils/number';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -46,23 +52,40 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Account } from '@/core/services/preference';
 import { findAccountByPriority } from '@/utils/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import {
+  useAccountSelectModalCtx,
+  useIsUnderAccountSelectModalContext,
+} from '@/components/AccountSelectModalTx/hooks';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
-  onPressBottomBtn?: (data: SendAction) => void;
+  onPressAddToWhitelistButton?: (data: SendAction) => void;
   account?: Account;
 }
 
 export const Send: React.FC<Props> = ({
   data,
   isSingleAddress,
-  onPressBottomBtn,
+  onPressAddToWhitelistButton,
   account,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
-  const { bottom } = useSafeAreaInsets();
+  const { safeSizes } = useSafeAndroidBottomSizes({
+    inModalContainerPb:
+      SIZES.buttonHeight + SIZES.containerPb + SIZES.bottomContentBottom,
+    // inModalButtonContainerPt: SIZES.containerPt,
+    inModalButtonContainerHeight:
+      SIZES.containerPt +
+      SIZES.buttonHeight +
+      SIZES.containerPb +
+      SIZES.bottomContentBottom,
+    inModalButtonContainerBottom: SIZES.bottomContentBottom,
+  });
   const { t } = useTranslation();
   const { actionData, sendAmount, sendUsdValue, chain } = useMemo(() => {
     const maxGasTx = data.maxGasTx;
@@ -116,7 +139,9 @@ export const Send: React.FC<Props> = ({
     }
   });
 
+  const accountSelectCtx = useAccountSelectModalCtx();
   const handleGotoTokenDetail = useMemoizedFn(() => {
+    if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
     naviPush(RootNames.TokenDetail, {
       token: ensureAbstractPortfolioToken(actionData.token),
       needUseCacheToken: true,
@@ -125,13 +150,30 @@ export const Send: React.FC<Props> = ({
     });
   });
 
+  const ViewComp = accountSelectCtx.isUnderContext
+    ? BottomSheetScrollView
+    : ScrollView;
+
   return (
     <>
-      <ScrollView style={{ paddingHorizontal: 16 }}>
+      <ViewComp
+        style={{ paddingHorizontal: 16 }}
+        contentContainerStyle={[
+          accountSelectCtx.isUnderContext && styles.inModalBsContainer,
+          accountSelectCtx.isUnderContext && {
+            paddingBottom: safeSizes.inModalContainerPb,
+          },
+        ]}>
         <TouchableOpacity onPress={handleGotoTokenDetail}>
           <View style={[styles.singleBox]}>
             <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                width: '100%',
+                flexShrink: 1,
+              }}>
               <HistoryItemIcon
                 isInDetail={true}
                 type={HistoryItemCateType.Send}
@@ -139,17 +181,25 @@ export const Send: React.FC<Props> = ({
                 isNft={false}
               />
               <View style={[styles.colomnBox]}>
-                <>
+                <View style={styles.tokenSymbolBox}>
                   <Text
-                    style={[styles.tokenAmountText, styles.isSendTextColor]}>
+                    style={[styles.tokenAmountText, styles.isSendTextColor]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
                     - {sendAmount}{' '}
-                    {getTokenSymbol(actionData.token as TokenItem)}
+                    {getTokenSymbol(actionData.token as TokenItem).repeat(1000)}
                   </Text>
-                  <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
-                </>
+                </View>
+                <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
               </View>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                flexShrink: 0,
+                width: 32,
+              }}>
               <RcIconSingleArrow
                 width={32}
                 height={32}
@@ -206,6 +256,7 @@ export const Send: React.FC<Props> = ({
             <AddressItemInDetail
               address={data.maxGasTx.address}
               accounts={unionAccounts}
+              // disableNavigate={isUnderModalContext}
             />
           </View>
 
@@ -216,6 +267,7 @@ export const Send: React.FC<Props> = ({
             <AddressItemInDetail
               address={actionData.to}
               accounts={unionAccounts}
+              // disableNavigate={isUnderModalContext}
             />
           </View>
 
@@ -249,57 +301,88 @@ export const Send: React.FC<Props> = ({
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
-      {
-        <View style={[styles.buttonContainer, { paddingBottom: bottom + 27 }]}>
-          <View style={{ flex: 1 }}>
-            {isAddrOnWhitelist(actionData.to) && onPressBottomBtn ? (
-              <Tip content={t('page.whitelist.alreadyIn')}>
-                <Button
-                  disabled
-                  title={t('page.transactions.detail.AddToWhitelist')}
-                />
-              </Tip>
-            ) : (
+      </ViewComp>
+      <View
+        style={[
+          styles.buttonContainer,
+          accountSelectCtx.isUnderContext
+            ? StyleSheet.flatten([
+                styles.inModalButtonContainer,
+                {
+                  paddingTop: SIZES.containerPt,
+                  height: safeSizes.inModalButtonContainerHeight,
+                  bottom: IS_ANDROID
+                    ? safeSizes.inModalButtonContainerBottom
+                    : 0,
+                },
+              ])
+            : {},
+        ]}>
+        <View
+          style={[
+            { flex: 1 },
+            accountSelectCtx.isUnderContext && styles.inModalButtonInner,
+            // accountSelectCtx.isUnderContext && { height: safeSizes.inModalButtonContainerHeight }
+          ]}>
+          {isAddrOnWhitelist(actionData.to) && onPressAddToWhitelistButton ? (
+            <Tip content={t('page.whitelist.alreadyIn')}>
               <Button
-                onPress={async () => {
-                  if (onPressBottomBtn) {
-                    onPressBottomBtn(actionData);
-                    return;
-                  }
-                  const canUseAccountList = accounts.filter(acc => {
-                    return (
-                      addressUtils.isSameAddress(
-                        acc.address,
-                        data.maxGasTx.address || '',
-                      ) && acc.type !== KEYRING_TYPE.WatchAddressKeyring
-                    );
-                  });
-                  const fromAccount = findAccountByPriority(canUseAccountList);
-                  if (!isSingleAddress && fromAccount) {
-                    await switchSceneCurrentAccount(
-                      'MakeTransactionAbout',
-                      fromAccount,
-                    );
-                  }
-                  navigateToSendPolyScreen(!!isSingleAddress, {
-                    chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-                    tokenId: actionData.token?.id,
-                    toAddress: actionData.to,
-                  });
-                }}
-                title={
-                  onPressBottomBtn
-                    ? t('page.transactions.detail.AddToWhitelist')
-                    : t('page.transactions.detail.SendAgain')
-                }
+                disabled
+                title={t('page.transactions.detail.AddToWhitelist')}
               />
-            )}
-          </View>
+            </Tip>
+          ) : (
+            <Button
+              containerStyle={[
+                accountSelectCtx.isUnderContext && {
+                  height: SIZES.buttonHeight,
+                },
+              ]}
+              onPress={async () => {
+                if (onPressAddToWhitelistButton) {
+                  onPressAddToWhitelistButton(actionData);
+                  return;
+                }
+                const canUseAccountList = accounts.filter(acc => {
+                  return (
+                    addressUtils.isSameAddress(
+                      acc.address,
+                      data.maxGasTx.address || '',
+                    ) && acc.type !== KEYRING_TYPE.WatchAddressKeyring
+                  );
+                });
+                const fromAccount = findAccountByPriority(canUseAccountList);
+                if (!isSingleAddress && fromAccount) {
+                  await switchSceneCurrentAccount(
+                    'MakeTransactionAbout',
+                    fromAccount,
+                  );
+                }
+                navigateToSendPolyScreen(!!isSingleAddress, {
+                  chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+                  tokenId: actionData.token?.id,
+                  toAddress: actionData.to,
+                });
+              }}
+              title={
+                onPressAddToWhitelistButton
+                  ? t('page.transactions.detail.AddToWhitelist')
+                  : t('page.transactions.detail.SendAgain')
+              }
+            />
+          )}
         </View>
-      }
+      </View>
     </>
   );
+};
+
+const SIZES = {
+  buttonHeight: 56,
+  // bottomAreaPt: 0,
+  bottomContentBottom: IS_IOS ? 48 : 48,
+  containerPt: 12,
+  containerPb: 12,
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
@@ -311,6 +394,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+  },
+  inModalBsContainer: {
+    // flexShrink: 1,
+    paddingBottom: SIZES.buttonHeight + 12,
+    justifyContent: 'flex-end',
   },
   ghostButton: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -348,6 +436,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   colomnBox: {
     flexDirection: 'column',
+    overflow: 'hidden',
+    width: '100%',
+  },
+  tokenSymbolBox: {
+    flexDirection: 'row',
+    ...(IS_IOS
+      ? {
+          maxWidth: '70%',
+        }
+      : {
+          width: '100%',
+        }),
+  },
+  usdValue: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    marginTop: 4,
   },
   isSendTextColor: {
     color: colors2024['neutral-title-1'],
@@ -396,14 +504,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 28,
     lineHeight: 36,
     fontWeight: '700',
-  },
-  usdValue: {
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '500',
-    marginTop: 4,
+    maxWidth: '100%',
+    ...(IS_ANDROID && {
+      width: '75%',
+    }),
   },
   mutliBox: {
     width: '100%',
@@ -413,7 +517,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 16,
-    // flexDirection: 'row',
     gap: 12,
   },
   doubleBox: {
@@ -430,17 +533,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     flexDirection: 'row',
-    // height: 120,
-    paddingTop: 20,
+    paddingTop: 0,
     marginTop: 16,
     bottom: 0,
     width: '100%',
-    paddingBottom: 27,
-    // paddingTop: 16,
+    paddingBottom: SIZES.bottomContentBottom,
     alignItems: 'center',
-    // gap: 16,
-    // left: 16,
     paddingHorizontal: 16,
+  },
+  inModalButtonContainer: {
+    position: 'absolute',
+    marginTop: 0,
+    width: '100%',
+    height: SIZES.containerPt + SIZES.buttonHeight + SIZES.bottomContentBottom,
+    bottom: SIZES.bottomContentBottom,
+    // ...makeDebugBorder(),
+    paddingTop: SIZES.containerPt,
+  },
+  inModalButtonInner: {
+    height: '100%',
+    width: '100%',
+    flex: 0,
+    // ...makeDebugBorder('yellow'),
   },
   itemAliaName: {
     flexDirection: 'row',

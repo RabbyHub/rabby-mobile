@@ -151,7 +151,7 @@ const getStyle = createGetStyles2024(ctx => {
     address: {
       margin: 4,
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '700',
+      fontWeight: '500',
       lineHeight: 20,
       fontSize: 16,
       color: ctx.colors2024['neutral-foot'],

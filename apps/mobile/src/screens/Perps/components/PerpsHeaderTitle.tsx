@@ -8,8 +8,8 @@ import { apiContact } from '@/core/apis';
 import { Account } from '@/core/services/preference';
 import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
-import { CaretDownIconCC } from '@/components/AccountSwitcher/icons/CaretDownIconCC';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
+import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 
 export const PerpsHeaderTitle: React.FC<{
   account?: Account | null;
@@ -48,7 +48,8 @@ export const PerpsHeaderTitle: React.FC<{
             <Text style={styles.address}>
               {alias || ellipsisAddress(account?.address)}
             </Text>
-            <CaretDownIconCC
+            <CaretArrowIconCC
+              dir="down"
               style={[popupState.isShowLoginPopup ? styles.reverseCaret : null]}
               width={18}
               height={18}

@@ -74,6 +74,8 @@ export type RootStackParamsList = {
   };
   [RootNames.Scanner]?: {
     syncExtension?: boolean;
+    /** @description for some scene scan in place, such as scan from modal */
+    disableGoBack?: boolean;
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
@@ -291,6 +293,7 @@ export type TransactionNavigatorParamList = {
     tokenItem?: AbstractPortfolioToken;
     currentAddress?: string;
   };
+  [RootNames.LendingHistory]?: {};
   [RootNames.CopyTrading]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
@@ -303,7 +306,7 @@ export type TransactionNavigatorParamList = {
     isForMultipleAddress?: boolean;
     title?: string;
     type?: HistoryItemCateType;
-    onPressBottomBtn?: (data: SendAction) => void;
+    onPressAddToWhitelistButton?: (data: SendAction) => void;
     isInSendHistory?: boolean;
   };
   [RootNames.Send]?:
@@ -320,15 +323,6 @@ export type TransactionNavigatorParamList = {
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
       };
-  [RootNames.SendTo]?: {};
-  [RootNames.SendInput]?: {
-    autoScan?: boolean;
-  };
-  [RootNames.WhitelistInput]?: { autoScan?: boolean };
-  [RootNames.SelectImportAddress]?: {};
-  [RootNames.SelectTypeAddress]?: {
-    type: 'watch' | 'safe';
-  };
   [RootNames.MultiSend]?: TransactionNavigatorParamList['Send'] & object;
   [RootNames.SendNFT]: {
     nftItem: NFTItem;
@@ -388,6 +382,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.PerpsMarketDetail]: {
     market: string;
   };
+  [RootNames.Lending]?: {};
 };
 
 export type SettingNavigatorParamList = {

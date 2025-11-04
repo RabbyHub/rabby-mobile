@@ -62,6 +62,7 @@ import { BadgeText } from './components/HomeTopArea';
 import { useApprovalAlertCounts } from './hooks/approvals';
 
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
+import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
 import { RateModal } from '@/components/RateModal/RateModal';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
 import { useExposureRateGuide } from '@/components/RateModal/hooks';
@@ -81,7 +82,7 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -100,6 +101,9 @@ import {
 } from './components/OfflineChainNotify';
 import { PerpsPnl } from './components/PerpsPnl';
 import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
+import { LendingHF } from './components/LendingHF';
+import { useLendingData } from '../Lending/hooks';
+import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -141,6 +145,8 @@ function MultiAddressHome(): JSX.Element {
     forceUpdate,
     triggerUpdate: triggerUpdateAlert,
   } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
+  const { fetchData: fetchLendingData } = useLendingData();
+
   const MENU_ARR = useMemo(
     () =>
       [
@@ -175,16 +181,22 @@ function MultiAddressHome(): JSX.Element {
           icon: RcIconPerps,
         },
         {
-          key: MultiHomeFeatTitle.History,
-          title: t('page.home.services.history'),
-          icon: RcIconHistoryCC,
-          badge: historyCount?.fail || historyCount?.success,
-          isSuccess: !historyCount?.fail,
+          key: MultiHomeFeatTitle.Lending,
+          title: t('page.home.services.lending'),
+          icon: RcIconLending,
+          color: colors2024['brand-default-icon'],
         },
         {
           key: MultiHomeFeatTitle.Points,
           title: t('page.rabbyPoints.title'),
           icon: RcIconPointsCC,
+        },
+        {
+          key: MultiHomeFeatTitle.History,
+          title: t('page.home.services.history'),
+          icon: RcIconHistoryCC,
+          badge: historyCount?.fail || historyCount?.success,
+          isSuccess: !historyCount?.fail,
         },
         {
           key: MultiHomeFeatTitle.Approvals,
@@ -227,7 +239,14 @@ function MultiAddressHome(): JSX.Element {
         isSuccess?: boolean;
         showGiftIcon?: boolean;
       }[],
-    [alertInfo.total, t, historyCount, isEligible],
+    [
+      t,
+      colors2024,
+      historyCount?.fail,
+      historyCount?.success,
+      alertInfo.total,
+      isEligible,
+    ],
   );
 
   useEffect(() => {
@@ -264,7 +283,7 @@ function MultiAddressHome(): JSX.Element {
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
-  } = useMultiCurve(
+  } = useMulti24hBalance(
     top10Addresses,
     true,
     top10Balance.total,
@@ -359,15 +378,9 @@ function MultiAddressHome(): JSX.Element {
   useEffect(() => {
     setTimeout(() => {
       deleteLongTimeCurveCache();
+      deleteLongTime24hBalanceCache();
     }, 0);
   }, []);
-
-  // useMount(() => {  no use ?
-  //   eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);
-  //   return () => {
-  //     eventBus.removeListener(EVENTS.TX_COMPLETED, fetchHistory);
-  //   };
-  // });
 
   const getSuccessAndFailList = useCallback(async () => {
     const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
@@ -484,16 +497,18 @@ function MultiAddressHome(): JSX.Element {
     ]).finally(() => {
       // update at background
       forceUpdate();
+      fetchLendingData();
       syncTop10History(true);
       currencyService.syncCurrencyList(true);
     });
   }, [
     triggerUpdate,
     refreshCurve,
-    forceUpdate,
-    syncTop10History,
     checkAddressesEligibility,
     top50PrivateKeyAccounts,
+    forceUpdate,
+    fetchLendingData,
+    syncTop10History,
   ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
@@ -577,6 +592,12 @@ function MultiAddressHome(): JSX.Element {
             params: {},
           });
           break;
+        case MultiHomeFeatTitle.Lending:
+          navigation.navigate(RootNames.StackTransaction, {
+            screen: RootNames.Lending,
+            params: {},
+          });
+          break;
         case MultiHomeFeatTitle.Points:
           navigation.push(RootNames.StackAddress, {
             screen: RootNames.Points,
@@ -624,6 +645,10 @@ function MultiAddressHome(): JSX.Element {
       // 显示gift图标
       if (el.key === MultiHomeFeatTitle.GasAccount && el.showGiftIcon) {
         return <IconGift width={24} height={24} />;
+      }
+
+      if (el.key === MultiHomeFeatTitle.Lending) {
+        return <LendingHF />;
       }
 
       return (
