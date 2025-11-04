@@ -12,6 +12,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RightArea } from './SingleHomeRightArea';
+import { BottomBtns } from './components/BottomBtns';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -110,6 +111,9 @@ function HomeScreen(): JSX.Element {
           account={currentAccount}
         />
       </View>
+      <View style={styles.bottomContainer}>
+        <BottomBtns currentAccount={currentAccount} />
+      </View>
     </NormalScreenContainer2024>
   );
 }
@@ -120,6 +124,16 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   rootScreenContainer: {
     // paddingHorizontal: 16,
     backgroundColor: colors2024['neutral-bg-gray'],
+    borderWidth: 1,
+  },
+  bottomContainer: {
+    width: '100%',
+    height: 130,
+    backgroundColor: colors2024['neutral-bg-1'],
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   safeView: {
     flex: 1,
