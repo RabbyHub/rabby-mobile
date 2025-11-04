@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { Props } from '../FooterBar/ActionsContainer';
 import { MiniProcessActions } from './MiniProcessActions';
 import { apiOneKey } from '@/core/apis';
-import { useSetHardWareWalletSignBleStatus } from './atom';
 
 export const MiniOneKeyProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
