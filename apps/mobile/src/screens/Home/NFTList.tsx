@@ -14,7 +14,6 @@ import { AbstractProject, ActionItem, DisplayNftItem } from './types';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
-  DEFI_ITEM_HEIGHT,
   RootNames,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -24,12 +23,7 @@ import { NftRow, TokenRowSectionHeader } from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
 import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
-import { StackActions, useNavigation } from '@react-navigation/native';
 import { useTriggerTagAssets } from './hooks/refresh';
-import { EmptyTokenRow } from './components/AssetRenderItems/EmptyToken';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamsList } from '@/navigation-type';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -41,7 +35,7 @@ import {
   useQueryNft,
 } from './hooks/nft';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
-import { DefiItemLoader, ItemLoader } from './components/Skeleton';
+import { ItemLoader } from './components/Skeleton';
 import {
   Tabs,
   useCurrentTabScrollY,
@@ -70,7 +64,7 @@ interface Props {
   chain?: string;
   account: Account;
 }
-const FOOTER_HEIGHT = 56;
+const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
 export const NFTList = ({
@@ -83,8 +77,6 @@ export const NFTList = ({
     getStyle: getStyles,
   });
   const { t } = useTranslation();
-  const navigation =
-    useNavigation<NativeStackScreenProps<RootStackParamsList>['navigation']>();
 
   const [foldNft, setFoldNft] = useState(true);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
@@ -175,8 +167,6 @@ export const NFTList = ({
   }, [foldNft, foldNftList, loadingNft, nftList.length, t, unFoldNftList]);
 
   const { singleNFTRefresh } = useTriggerTagAssets();
-
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const handlePressNft = useCallback(
     (item: NftItemWithCollection) => {
@@ -280,33 +270,6 @@ export const NFTList = ({
     [isLight, singleNFTRefresh, t],
   );
 
-  const handleOnReceive = useCallback(async () => {
-    if (!currentAccount?.address) {
-      return;
-    }
-    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-    navigation.dispatch(
-      StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.Receive,
-        params: {
-          account: currentAccount,
-        },
-      }),
-    );
-  }, [currentAccount, navigation, switchSceneCurrentAccount]);
-
-  const handleOnImport = useCallback(async () => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.ImportMethods,
-        params: {
-          isNotNewUserProc: true,
-          isFromEmptyAddress: true,
-        },
-      }),
-    );
-  }, [navigation]);
-
   const renderItem = useCallback(
     (_type, _data) => {
       const { type, data } = _data;
@@ -347,15 +310,7 @@ export const NFTList = ({
               onPressFold={() => setFoldNft(pre => !pre)}
             />
           );
-        case 'empty-token':
-          return (
-            <EmptyTokenRow
-              onReceive={handleOnReceive}
-              onImport={handleOnImport}
-            />
-          );
         case 'empty-assets':
-        case 'empty-defi':
         case 'empty-nft':
           return <EmptyAssets desc={data} type={type} />;
         case 'loading-skeleton':
@@ -364,8 +319,6 @@ export const NFTList = ({
               <ItemLoader style={styles.removeLeft} />
             </View>
           );
-        case 'loading-defi-skeleton':
-          return <DefiItemLoader />;
         default:
           return null;
       }
@@ -374,8 +327,6 @@ export const NFTList = ({
       foldNft,
       foldNftList.length,
       getNftMenuAction,
-      handleOnImport,
-      handleOnReceive,
       handlePressNft,
       isLight,
       styles.bg2,
@@ -473,19 +424,6 @@ const getStyles = createGetStyles2024(ctx => ({
     height: ASSETS_ITEM_HEIGHT_NEW,
     paddingLeft: 12,
     width: '100%',
-  },
-  defiGroups: {
-    flexDirection: 'row',
-    height: DEFI_ITEM_HEIGHT,
-    gap: 12,
-    paddingHorizontal: 16,
-  },
-  renderDefiItemWrapper: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 16,
-    height: DEFI_ITEM_HEIGHT,
-    paddingLeft: 12,
-    paddingRight: 16,
   },
   bg2: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],

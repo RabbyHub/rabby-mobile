@@ -5,7 +5,6 @@ import { useQueryProjects } from './hooks';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
-  DEFI_ITEM_HEIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -315,19 +314,6 @@ const getStyles = createGetStyles2024(ctx => ({
     height: ASSETS_ITEM_HEIGHT_NEW,
     paddingLeft: 12,
     width: '100%',
-  },
-  defiGroups: {
-    flexDirection: 'row',
-    height: DEFI_ITEM_HEIGHT,
-    gap: 12,
-    paddingHorizontal: 16,
-  },
-  renderDefiItemWrapper: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 16,
-    height: DEFI_ITEM_HEIGHT,
-    paddingLeft: 12,
-    paddingRight: 16,
   },
   bg2: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],

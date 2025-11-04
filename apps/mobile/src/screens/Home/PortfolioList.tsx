@@ -13,12 +13,11 @@ import { AbstractProject, ActionItem } from './types';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
-  DEFI_ITEM_HEIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
 import { TokenRowSectionHeader } from './components/AssetRenderItems';
-import { FullDefiRenderItem } from './components/AssetRenderItems/FullDefiRenderItem';
+import { FullDefiRenderItem } from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
 import { DisplayedProject } from './utils/project';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
@@ -53,7 +52,7 @@ interface Props {
   chain?: string;
   account: Account;
 }
-const FOOTER_HEIGHT = 56;
+const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
 export const PortfolioList = ({
@@ -320,19 +319,6 @@ const getStyles = createGetStyles2024(ctx => ({
     height: ASSETS_ITEM_HEIGHT_NEW,
     paddingLeft: 12,
     width: '100%',
-  },
-  defiGroups: {
-    flexDirection: 'row',
-    height: DEFI_ITEM_HEIGHT,
-    gap: 12,
-    paddingHorizontal: 16,
-  },
-  renderDefiItemWrapper: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 16,
-    height: DEFI_ITEM_HEIGHT,
-    paddingLeft: 12,
-    paddingRight: 16,
   },
   bg2: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
