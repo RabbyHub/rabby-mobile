@@ -24,6 +24,7 @@ import { findChain } from '@/utils/chain';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useTranslation } from 'react-i18next';
 import { createGetStyles2024 } from '@/utils/styles';
+import { ShowMoreOnSendNFT } from './components/ShowMoreOnSendNFT';
 
 export default function SendNFT() {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -163,6 +164,7 @@ export default function SendNFT() {
               nftItem={nftItem}
               chainItem={chainItem}
             />
+            <ShowMoreOnSendNFT chainServeId={chainItem?.serverId || ''} />
           </KeyboardAwareScrollView>
           <BottomArea />
         </View>
@@ -190,8 +192,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     padding: 20,
     paddingTop: 16,
+    paddingBottom: 220,
   },
-
   bottomDockArea: {
     bottom: 0,
     width: '100%',

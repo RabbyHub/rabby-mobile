@@ -15,6 +15,7 @@ import {
   Animated,
   Pressable,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +24,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BridgeSlippage } from './BridgeSlippage';
 import { tokenPriceImpact } from '../hooks/token';
 import { AppSwitch, AssetAvatar, Tip } from '@/components';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatGasHeaderUsdValue, formatTokenAmount } from '@/utils/number';
@@ -316,13 +317,18 @@ export const DirectSignGasInfo = ({
   loading,
   noQuote,
   chainServeId,
+  style,
+  gasFeeListItemStyle,
+  gasFeeListItemInnerStyle,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
   openShowMore: (v: boolean) => void;
   noQuote?: boolean;
   chainServeId: string;
-}) => {
+  gasFeeListItemStyle?: RNViewProps['style'];
+  gasFeeListItemInnerStyle?: RNViewProps['style'];
+} & RNViewProps) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [gasModalVisible, setGasModalVisible] = useState(false);
@@ -530,9 +536,11 @@ export const DirectSignGasInfo = ({
   );
 
   return (
-    <View>
+    <View style={style}>
       <ListItem
         name={<>{'Gas Fee'}</>}
+        style={gasFeeListItemStyle}
+        innerStyle={gasFeeListItemInnerStyle}
         LeftIcon={
           <>
             {ctx?.gasMethod === 'gasAccount' &&
@@ -717,41 +725,16 @@ export const DirectSignGasInfo = ({
   );
 };
 
-export const SendShowMore = ({
-  supportDirectSign,
-  loading,
-  chainServeId,
-}: {
-  open: boolean;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  supportDirectSign: boolean;
-  loading: boolean;
-  chainServeId: string;
-}) => {
-  const { styles } = useTheme2024({ getStyle });
-  if (!supportDirectSign) {
-    return null;
-  }
-  return (
-    <View style={StyleSheet.flatten([styles.container])}>
-      <DirectSignGasInfo
-        supportDirectSign={supportDirectSign}
-        loading={loading}
-        openShowMore={noop}
-        chainServeId={chainServeId}
-      />
-    </View>
-  );
-};
-
 function ListItem({
   name,
   style,
+  innerStyle,
   children,
   LeftIcon,
 }: {
   name: React.ReactNode;
-  style?: object;
+  style?: RNViewProps['style'];
+  innerStyle?: RNViewProps['style'];
   children: React.ReactNode;
   LeftIcon?: React.ReactNode;
 }) {
@@ -759,10 +742,13 @@ function ListItem({
   return (
     <View style={[styles.listItemContainer, style]}>
       <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-        }}>
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+          },
+          innerStyle,
+        ]}>
         <Text style={styles.listItemText}>{name}</Text>
         {LeftIcon}
       </View>

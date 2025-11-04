@@ -78,7 +78,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { getRecommendToken } from '@/utils/addressSupport';
 import { lowcaseSame } from '@/utils/common';
 import { noop } from 'lodash';
-import { ShowMoreOnSend } from './components/SendShowMore';
+import { ShowMoreOnSend } from './components/ShowMoreOnSend';
 import { PendingTxItem } from '../Swap/components/PendingTxItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
