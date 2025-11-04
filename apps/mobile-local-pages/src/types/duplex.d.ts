@@ -19,6 +19,27 @@ type DuplexDefs = {
       info: RuntimeInfo;
     };
   };
+  WindowInfo: {
+    post: {
+      type: 'GET_WINDOW_INFO';
+    };
+    receive: {
+      type: 'GOT_WINDOW_INFO';
+      info: {
+        width: number;
+        height: number;
+      };
+    };
+  };
+  GASKETVIEW_TOGGLE_LOADING: {
+    receive: {
+      type: 'GASKETVIEW:TOGGLE_LOADING';
+      info: {
+        loading: boolean;
+      };
+    };
+    post: never;
+  };
 };
 
 type DuplexPost = DuplexDefs[keyof DuplexDefs]['post'];

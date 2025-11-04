@@ -9,7 +9,7 @@ const injectedObjectRef = {
 
 type StringOrObject<T extends object> = T | string;
 
-function postMessageToRN(message: StringOrObject<DuplexPost>) {
+export function postMessageToRN(message: StringOrObject<DuplexPost>) {
   if (!window.ReactNativeWebView || !window.ReactNativeWebView.postMessage) {
     console.warn('ReactNativeWebView is not ready');
     return;
@@ -55,8 +55,8 @@ export function getPlatform(): 'ios' | 'android' {
   return getInjectedObject().platform;
 }
 
-window.onMessageFromReactNative = function (message) {
-  console.debug('[debug] onMessageFromReactNative', message.info);
+window.addEventListener('messageFromRN', function (event) {
+  const message = (event as any as CustomEvent).detail as DuplexReceive;
 
   switch (message.type) {
     case 'GOT_RUNTIME_INFO': {
@@ -64,11 +64,14 @@ window.onMessageFromReactNative = function (message) {
       setRuntimeInfo(message.info);
       break;
     }
+    case 'GOT_WINDOW_INFO': {
+      break;
+    }
     default: {
-      console.warn('Unknown message from ReactNative', message);
+      console.warn('Unknown message from RN', message);
     }
   }
-};
+});
 
 function setDocumentTheme(isDark: boolean) {
   try {
