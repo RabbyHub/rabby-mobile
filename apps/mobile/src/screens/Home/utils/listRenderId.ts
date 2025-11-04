@@ -5,6 +5,7 @@ import { DisplayedProject } from './project';
 const getSingleTokenTags = (type: string, item: AbstractPortfolioToken) => {
   return [
     `type: ${type}`,
+    `addr: ${'address' in item ? item.address : ''}`,
     `chain: ${item.chain}`,
     `symbol: ${item.symbol}`,
     `tokenId: ${item._tokenId}`,
@@ -24,6 +25,7 @@ const getSingleDefiTags = (type: string, item: DisplayedProject) => {
   return [
     `type: ${type}`,
     `id: ${item.id}`,
+    `addr: ${'address' in item ? item.address : ''}`,
     `chain: ${item.chain}`,
     `price_24h_change: ${item.netWorthChange}`,
     `price: ${item.netWorth}`,

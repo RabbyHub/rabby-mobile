@@ -528,6 +528,7 @@ export const Portfolios = () => {
                 logoSize={46}
                 style={styles.renderItemWrapper}
                 chainLogoSize={18}
+                account={getAccountByAddress(data.address)}
                 getMenuActions={getTokenMenuActions}
               />
             </View>

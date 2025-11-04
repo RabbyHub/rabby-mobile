@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { WrapperDappActionsMemoItem } from '../../components/ProtocolMoreItem';
 import { AbstractPortfolio, AbstractProject } from '../../types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
 import { formatNetworth } from '@/utils/math';
@@ -17,6 +16,7 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { AccountOverview } from '../AccountOverview';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -38,13 +38,11 @@ export const FullDefiRenderItem = ({
   showAccount,
   style,
 }: Props) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   const isFromAppChain = useMemo(() => {
     return isAppChain(data?.chain || '');
   }, [data?.chain]);
-
-  const { t } = useTranslation();
 
   const { openTab } = useBrowser();
 
@@ -120,25 +118,7 @@ export const FullDefiRenderItem = ({
                 20,
               )}
             </Text>
-            {showAccount && (
-              <View style={styles.accountBox}>
-                <View className="relative">
-                  <WalletIcon
-                    type={account.type as KEYRING_TYPE}
-                    address={account.address}
-                    width={styles.walletIcon.width}
-                    height={styles.walletIcon.height}
-                    style={styles.walletIcon}
-                  />
-                </View>
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={styles.titleText}>
-                  {account.aliasName}
-                </Text>
-              </View>
-            )}
+            {showAccount && <AccountOverview account={account} />}
           </View>
         </View>
         <Text style={styles.projectHeaderNetWorth}>{sumNetWorth}</Text>
@@ -176,11 +156,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     marginTop: 8,
     // backgroundColor: colors2024['neutral-bg-4'],
   },
-  accountBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
   backButtonStyle: {
     // width: 56,
     // height: 56,
@@ -188,20 +163,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexDirection: 'row',
     marginLeft: -16,
     paddingLeft: 16,
-  },
-  titleText: {
-    flexShrink: 1,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    flexWrap: 'nowrap',
-  },
-  walletIcon: {
-    width: 14,
-    height: 14,
-    borderRadius: 4,
   },
   projectHeaderBalance: {
     color: colors2024['neutral-secondary'],

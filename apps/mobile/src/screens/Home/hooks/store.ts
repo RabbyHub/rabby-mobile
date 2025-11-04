@@ -30,10 +30,7 @@ type DisplayedProjectWithoutMethods = Omit<
 type OriginalCombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
   totalUsdValue: BigNumber;
-  fromAddress: Array<{
-    address: string;
-    amount: number;
-  }>;
+  address: string;
 };
 export type CombineTokensItem = Omit<
   OriginalCombineTokensItem,
@@ -89,7 +86,7 @@ export const combinedTokens = (
 ): CombineTokensItem[] => {
   const { unfoldTokens = [] } =
     preferenceService.getUserTokenSettingsSync() || {};
-  const tokenMap: Record<string, OriginalCombineTokensItem> = {};
+  const tokens: OriginalCombineTokensItem[] = [];
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()),
   );
@@ -110,36 +107,16 @@ export const combinedTokens = (
           }
         }
       }
-      const key = `${token._tokenId}-${token.chain}`;
-      if (!tokenMap[key]) {
-        tokenMap[key] = {
-          ...token,
-          totalAmount: new BigNumber(token.amount || 0),
-          totalUsdValue: new BigNumber(token._usdValue || 0),
-          fromAddress: [
-            {
-              address,
-              amount: token.amount,
-            },
-          ],
-        };
-      } else {
-        const existingToken = tokenMap[key];
-        existingToken.totalAmount = existingToken.totalAmount.plus(
-          token.amount || 0,
-        );
-        existingToken.totalUsdValue = existingToken.totalUsdValue?.plus(
-          token._usdValue || 0,
-        );
-        existingToken.fromAddress.push({
-          address,
-          amount: token.amount,
-        });
-      }
+      tokens.push({
+        ...token,
+        totalAmount: new BigNumber(token.amount || 0),
+        totalUsdValue: new BigNumber(token._usdValue || 0),
+        address,
+      });
     });
   });
 
-  const coreTokens = Object.values(tokenMap).filter(i => i.is_core);
+  const coreTokens = tokens.filter(i => i.is_core);
   const listLength = coreTokens.length || 0;
   const totalValue = coreTokens.reduce(
     (acc, curr) => acc + (curr.totalUsdValue.toNumber() || 0),
@@ -152,7 +129,7 @@ export const combinedTokens = (
 
   const hasExpandSwitch =
     listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
-  return Object.values(tokenMap)
+  return tokens
     .sort((a, b) =>
       a.totalUsdValue.gt(b.totalUsdValue)
         ? -1
