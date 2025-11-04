@@ -11283,6 +11283,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@shopify/react-native-skia@npm:1.12.4":
+  version: 1.12.4
+  resolution: "@shopify/react-native-skia@npm:1.12.4"
+  dependencies:
+    canvaskit-wasm: 0.40.0
+    react-reconciler: 0.27.0
+  peerDependencies:
+    react: ">=18.0 <19.0.0"
+    react-native: ">=0.64 <0.78.0"
+    react-native-reanimated: ">=2.0.0"
+  peerDependenciesMeta:
+    react-native:
+      optional: true
+    react-native-reanimated:
+      optional: true
+  bin:
+    setup-skia-web: scripts/setup-canvaskit.js
+  checksum: da2c12e8032bf41871e3d64ff40b13a6da3dba15d58a140a15031b309964764a97b1e8c14d3b270fd76deb4e7906095a405537a9417c6b071d353f5e11ac75fb
+  languageName: node
+  linkType: hard
+
 "@sideway/address@npm:^4.1.5":
   version: 4.1.5
   resolution: "@sideway/address@npm:4.1.5"
@@ -15151,6 +15172,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@webgpu/types@npm:0.1.21":
+  version: 0.1.21
+  resolution: "@webgpu/types@npm:0.1.21"
+  checksum: b16ddc4d46a3c507a7f243f14b08b96ebbdb4495f9ea703441ad3525dd5e7e4a5f743f2879e51d74c78846f950e7d60c1349670f75cb7ca03ac3ddf51d46aabe
+  languageName: node
+  linkType: hard
+
 "@webpack-cli/configtest@npm:^2.1.1":
   version: 2.1.1
   resolution: "@webpack-cli/configtest@npm:2.1.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40webpack-cli%2Fconfigtest%2F-%2Fconfigtest-2.1.1.tgz"
@@ -17968,6 +17996,15 @@ __metadata:
   version: 1.0.30001712
   resolution: "caniuse-lite@npm:1.0.30001712"
   checksum: 83760e735d1d7ab9ff7270747d70b71da4341bdc1c90df9fe2008ada382653e13d7501bfd7068e1d835184b03b8ac598b127bfe3e7d53419b9d7827730b4ae1a
+  languageName: node
+  linkType: hard
+
+"canvaskit-wasm@npm:0.40.0":
+  version: 0.40.0
+  resolution: "canvaskit-wasm@npm:0.40.0"
+  dependencies:
+    "@webgpu/types": 0.1.21
+  checksum: 983e6b2a32babcbf0a8c29412fee57305d55b7e9603d5ba1e4c68f082fb649433cd1eb8cfddf17dda6dc041ef2c77eb9d9c7f0cba852f6f75f4e78809547d9c5
   languageName: node
   linkType: hard
 
@@ -33863,6 +33900,7 @@ __metadata:
     "@rneui/themed": ^4.0.0-rc.8
     "@sentry/react-native": 6.10.0
     "@shopify/flash-list": ^1.8.0
+    "@shopify/react-native-skia": 1.12.4
     "@trezor/connect-mobile": 9.6.2
     "@tsconfig/react-native": 3.0.5
     "@types/highlight-words-core": 1.2.3
@@ -35328,6 +35366,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-reconciler@npm:0.27.0":
+  version: 0.27.0
+  resolution: "react-reconciler@npm:0.27.0"
+  dependencies:
+    loose-envify: ^1.1.0
+    scheduler: ^0.21.0
+  peerDependencies:
+    react: ^18.0.0
+  checksum: c2ae111f150c2a46970182df12ea8254719fdfec5e26574711b1838fc37863c63671460a351570fd359c088d891e7bb0ff89023c2f7c1582393b57dd517b92c2
+  languageName: node
+  linkType: hard
+
 "react-refresh@npm:^0.11.0":
   version: 0.11.0
   resolution: "react-refresh@npm:0.11.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-refresh%2F-%2Freact-refresh-0.11.0.tgz"
@@ -36755,6 +36805,15 @@ __metadata:
   dependencies:
     loose-envify: ^1.1.0
   checksum: 232149125c10f10193b1340ec4bbf14a8e6a845152790d6fd6f58207642db801abdb5a21227561a0a93871b98ba47539a6233b4e6155aae72d6db6db9f9f09b3
+  languageName: node
+  linkType: hard
+
+"scheduler@npm:^0.21.0":
+  version: 0.21.0
+  resolution: "scheduler@npm:0.21.0"
+  dependencies:
+    loose-envify: ^1.1.0
+  checksum: 4f8285076041ed2c81acdd1faa987f1655fdbd30554bc667c1ea64743fc74fb3a04ca7d27454b3d678735df5a230137a3b84756061b43dc5796e80701b66d124
   languageName: node
   linkType: hard
 

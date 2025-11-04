@@ -1639,6 +1639,29 @@ PODS:
     - React-Core
   - react-native-safe-area-context (5.4.0):
     - React-Core
+  - react-native-skia (1.12.4):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.10.14.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-splash-screen (3.3.0):
     - React-Core
   - react-native-sqlite-storage (7.0.0-alpha.1):
@@ -2345,6 +2368,7 @@ DEPENDENCIES:
   - react-native-quick-crypto (from `../node_modules/react-native-quick-crypto`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
   - react-native-splash-screen (from `../node_modules/react-native-splash-screen`)
   - "react-native-sqlite-storage (from `../node_modules/@rabby-wallet/react-native-sqlite-storage`)"
   - react-native-version-check (from `../node_modules/react-native-version-check`)
@@ -2540,6 +2564,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-randombytes"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-skia:
+    :path: "../node_modules/@shopify/react-native-skia"
   react-native-splash-screen:
     :path: "../node_modules/react-native-splash-screen"
   react-native-sqlite-storage:
@@ -2731,6 +2757,7 @@ SPEC CHECKSUMS:
   react-native-quick-crypto: dc51e77fcb59697adaff88b30b36fcfdc4804a3f
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: 8870dc3e45c8d241336cd8ee3fa3fc76f3a040ac
+  react-native-skia: aa6a3335e3280f429fb7799028dae2c3d79c0c80
   react-native-splash-screen: 4312f786b13a81b5169ef346d76d33bc0c6dc457
   react-native-sqlite-storage: 539c4cc1ad30de152e3e04ee8d556e825fec4432
   react-native-version-check: 6cd36aad4e30b8e3216747e3b4ddeb09e0647af8

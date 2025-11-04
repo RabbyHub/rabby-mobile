@@ -23,6 +23,9 @@
    *;
 }
 
+# react native skia
+-keep class com.shopify.reactnative.skia.** { *; }
+
 # Keep SQLite classes
 -keep class io.liteglue.** { *; }
 
