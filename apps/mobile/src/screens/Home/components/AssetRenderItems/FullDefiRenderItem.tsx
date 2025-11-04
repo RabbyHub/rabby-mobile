@@ -1,49 +1,22 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { View, SectionList, RefreshControl, Platform } from 'react-native';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { AssetAvatar, Text } from '@/components';
-import { RcIconMore } from '@/assets/icons/home';
-import { RootNames } from '@/constant/layout';
-import { useRoute } from '@react-navigation/native';
-import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { ellipsisOverflowedText } from '@/utils/text';
+import React, { useCallback, useMemo } from 'react';
+import { View, Text } from 'react-native';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { WrapperDappActionsMemoItem } from '../../components/ProtocolMoreItem';
-import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { toast } from '@/components2024/Toast';
 import { AbstractPortfolio, AbstractProject } from '../../types';
-import { useMemoizedFn } from 'ahooks';
-import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { resetNavigationTo } from '@/hooks/navigation';
-import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
-import { useTriggerTagAssets } from '../../hooks/refresh';
-import { preferenceService } from '@/core/services';
-import {
-  KeyringAccountWithAlias,
-  useFallbackAccount,
-  useMyAccounts,
-} from '@/hooks/account';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
-import { useAssets } from '../../../Search/useAssets';
 import { formatNetworth } from '@/utils/math';
-import { getDisplayedPortfolioUsdValue } from '../../utils/converAssets';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IS_ANDROID } from '@/core/native/utils';
 import { ellipsisAddress } from '@/utils/address';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { Button } from '@/components2024/Button';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { usePortfolios } from '../../hooks/usePortfolio';
 import { isAppChain } from '../../utils/appchain';
-import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { GetRootScreenRouteProp } from '@/navigation-type';
+import { AssetAvatar } from '@/components/AssetAvatar';
+import { ellipsisOverflowedText } from '@/utils/text';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -53,301 +26,49 @@ type SectionListItem = {
   aliasName: string;
   totalUsdValue: BigNumber;
 };
-
-const hitSlop = {
-  top: 10,
-  bottom: 10,
-  left: 10,
-  right: 10,
-};
-
-export const RightMore: React.FC<{
-  token: AbstractProject;
-  refreshBalance: () => void;
-  refreshTags: () => void;
-}> = ({ token, refreshBalance, refreshTags }) => {
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { t } = useTranslation();
-
-  const menuActions = React.useMemo(() => {
-    if (!token) {
-      return [];
-    }
-    return [
-      {
-        title: token._isFold
-          ? t('page.tokenDetail.action.unfold')
-          : t('page.tokenDetail.action.fold'),
-        icon: token._isFold
-          ? isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
-          : isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-        androidIconName: token._isFold
-          ? 'ic_rabby_menu_unfold'
-          : 'ic_rabby_menu_fold',
-        key: 'fold',
-        action() {
-          if (token._isFold) {
-            preferenceService.manualUnFoldDefi(token.id);
-            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-          } else {
-            preferenceService.manualFoldDefi(token.id);
-            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-          }
-          token._isFold = !token._isFold;
-          refreshTags();
-        },
-      },
-      {
-        title: token._isExcludeBalance
-          ? t('page.tokenDetail.action.includeBalance')
-          : t('page.tokenDetail.action.excludeBalance'),
-        icon: token._isExcludeBalance
-          ? isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
-          : isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png'),
-        key: 'balance',
-        androidIconName: token._isExcludeBalance
-          ? 'ic_rabby_menu_include_balance'
-          : 'ic_rabby_menu_exclude_balance',
-        action() {
-          if (token._isExcludeBalance) {
-            preferenceService.includeBalanceToken({
-              id: token.id,
-              chainid: token.chain!,
-              type: 'defi',
-            });
-            toast.success(
-              t('page.tokenDetail.actionsTips.includeBalance_success'),
-            );
-          } else {
-            preferenceService.excludeBalance({
-              id: token.id,
-              chainid: token.chain!,
-              type: 'defi',
-            });
-            toast.success(
-              t('page.tokenDetail.actionsTips.excludeBalance_success'),
-            );
-          }
-          token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTags();
-          refreshBalance();
-        },
-      },
-    ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTags, refreshBalance]);
-
-  return (
-    <DropDownMenuView
-      menuConfig={{
-        menuActions: menuActions,
-      }}
-      triggerProps={{ action: 'press' }}>
-      <CustomTouchableOpacity hitSlop={hitSlop}>
-        <RcIconMore width={24} height={24} />
-      </CustomTouchableOpacity>
-    </DropDownMenuView>
-  );
-};
-
-export const DeFiDetailScreen = () => {
+interface Props {
+  data: AbstractProject;
+  account: KeyringAccountWithAlias;
+  showAccount?: boolean;
+}
+export const FullDefiRenderItem = ({ data, account, showAccount }: Props) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
-  const route = useRoute<GetRootScreenRouteProp<'DeFiDetail'>>();
-  if (!route.params) {
-    throw new Error('[DefiDetail] route.params is undefined');
-  }
-
-  const {
-    data: routeData,
-    portfolioList,
-    isSingleAddress,
-    account: routeAccount,
-  } = route.params;
-
-  const fallbackAccount = useFallbackAccount();
-
-  const finalAccount = useMemo(
-    () => routeAccount || fallbackAccount,
-    [fallbackAccount, routeAccount],
-  );
-
-  const { data: currentPortfolio, updateSpecificProtocol } = usePortfolios(
-    finalAccount?.address,
-    false,
-  );
-
-  const data = useMemo(
-    // 优先使用内存defi列表中的实时数据，兜底用页面参数数据
-    () => currentPortfolio.find(item => item.id === routeData.id) || routeData,
-    [currentPortfolio, routeData],
-  );
 
   const isFromAppChain = useMemo(() => {
     return isAppChain(data?.chain || '');
   }, [data?.chain]);
 
   const { t } = useTranslation();
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
-  const { deFiRefresh, singleDeFiRefresh } = useTriggerTagAssets();
-
-  const refreshTag = useCallback(() => {
-    if (isSingleAddress) {
-      singleDeFiRefresh();
-    } else {
-      deFiRefresh();
-    }
-  }, [deFiRefresh, isSingleAddress, singleDeFiRefresh]);
-
-  const getHeaderTitle = useMemoizedFn(() => {
-    return (
-      <View style={styles.headerArea}>
-        <AssetAvatar
-          logo={data?.logo || sectionsMultiProject[0]?.project?.logo}
-          logoStyle={styles.assetIcon}
-          size={40}
-          chain={
-            isFromAppChain
-              ? ''
-              : data?.chain || sectionsMultiProject[0]?.project?.chain
-          }
-          chainSize={16}
-        />
-        <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
-          {/* {token?.name} */}
-          {ellipsisOverflowedText(
-            data?.name || sectionsMultiProject[0]?.project?.name,
-            20,
-          )}
-        </Text>
-      </View>
-    );
-  });
-
-  const navBack = useCallback(() => {
-    if (navigation?.canGoBack()) {
-      navigation.goBack();
-    } else if (navigation) {
-      resetNavigationTo(navigation, 'Home');
-    }
-  }, [navigation]);
-
-  const getHeaderLeft = useMemoizedFn(() => {
-    return (
-      <CustomTouchableOpacity
-        style={styles.backButtonStyle}
-        hitSlop={24}
-        onPress={navBack}>
-        <RcIconHeaderBack
-          width={24}
-          height={24}
-          color={colors2024['neutral-title-1']}
-        />
-      </CustomTouchableOpacity>
-    );
-  });
-
-  const getHeaderRight = useMemoizedFn(() => {
-    return (
-      <RightMore
-        token={data}
-        refreshBalance={triggerUpdate}
-        refreshTags={refreshTag}
-      />
-    );
-  });
 
   const { openTab } = useBrowser();
 
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-      headerLeft: getHeaderLeft,
-      headerRight: getHeaderRight,
-    });
-  }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
-
-  const { getCacheTop10Assets, refreshing, assetsMap, loadSpecificDefi } =
-    useAssets({ hideCombined: true });
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-
-  const sectionsMultiProject = useMemo(() => {
-    const sectionsList: SectionListItem[] = [];
-    if (isSingleAddress) {
-      const currAddressPortfolio = currentPortfolio?.find(
-        item => item.id === data?.id,
-      );
-      if (!currAddressPortfolio || !data) {
-        return sectionsList;
-      }
-      sectionsList.push({
-        data: currAddressPortfolio._portfolios || portfolioList,
-        project: currAddressPortfolio,
-        totalUsdValue: new BigNumber(currAddressPortfolio?.netWorth || 0),
-        type: finalAccount.type,
-        address: finalAccount.address,
-        aliasName:
-          finalAccount.aliasName || ellipsisAddress(finalAccount.address),
-      });
-      return sectionsList;
-    }
-
-    const tempList: {
-      data: SectionListItem['data'];
-      project: SectionListItem['project'];
-      totalUsdValue: SectionListItem['totalUsdValue'];
-      address: SectionListItem['address'];
-    }[] = [];
-    Object.keys(assetsMap).forEach(address => {
-      const { portfolios } = assetsMap[address];
-
-      portfolios?.map(portfolio => {
-        if (portfolio.id === data?.id && portfolio.chain === data?.chain) {
-          tempList.push({
-            data: portfolio._portfolios,
-            project: portfolio,
-            totalUsdValue: getDisplayedPortfolioUsdValue(portfolio._portfolios),
-            address,
-          });
-        }
-      });
-    });
-
-    accounts.forEach(account => {
-      const idx = tempList.findIndex(item =>
-        isSameAddress(item.address, account.address),
-      );
-      if (idx > -1) {
-        sectionsList.push({
-          ...tempList[idx],
-          type: account.type,
-          aliasName: account.aliasName || ellipsisAddress(account.address),
+  const handleOpenSite = useCallback(() => {
+    if (data?.site_url) {
+      openTab(data?.site_url);
+      const origin = safeGetOrigin(data?.site_url);
+      if (origin) {
+        matomoRequestEvent({
+          category: 'Websites Usage',
+          action: 'Website_Visit_Defi Detail',
+          label: origin,
         });
       }
-    });
-    return sectionsList.sort((a, b) =>
-      new BigNumber(b.totalUsdValue).comparedTo(new BigNumber(a.totalUsdValue)),
-    );
-  }, [
-    isSingleAddress,
-    data,
-    assetsMap,
-    accounts,
-    currentPortfolio,
-    portfolioList,
-    finalAccount.type,
-    finalAccount.address,
-    finalAccount.aliasName,
-  ]);
+    }
+  }, [data?.site_url, openTab]);
+
+  const sectionsMultiProject = useMemo(() => {
+    const sectionsList: SectionListItem[] = [
+      {
+        data: data?._portfolios || [],
+        project: data,
+        totalUsdValue: new BigNumber(data?.netWorth || 0),
+        type: account.type,
+        address: account.address,
+        aliasName: account.aliasName || ellipsisAddress(account.address),
+      },
+    ];
+    return sectionsList;
+  }, [data, account.type, account.address, account.aliasName]);
 
   // 来自同一个地址的totalUsdValue不重复计算
   const sumNetWorth = useMemo(() => {
@@ -363,173 +84,80 @@ export const DeFiDetailScreen = () => {
     return res ? formatNetworth(res.toNumber()) : data?._netWorth || 0;
   }, [data?._netWorth, sectionsMultiProject]);
 
-  const handleRefresh = useCallback(async () => {
-    try {
-      if (isSingleAddress) {
-        await updateSpecificProtocol(data?.id, data?.chain || '');
-      } else {
-        const addresses = [
-          ...new Set(sectionsMultiProject.map(section => section.address)),
-        ];
-        await Promise.all(
-          addresses.map(address =>
-            loadSpecificDefi(address, data?.id, data?.chain || ''),
-          ),
-        );
-      }
-    } catch (error) {
-      console.error('Failed to refresh specific protocol:', error);
-    }
-  }, [
-    data?.chain,
-    data?.id,
-    isSingleAddress,
-    loadSpecificDefi,
-    sectionsMultiProject,
-    updateSpecificProtocol,
-  ]);
-
-  const renderItem = useCallback(
-    ({
-      item,
-      section,
-    }: {
-      item: AbstractPortfolio;
-      section: SectionListItem;
-    }) => {
-      return (
-        <WrapperDappActionsMemoItem
-          item={item}
-          chain={data?.chain}
-          protocolLogo={data?.logo}
-          address={section.address}
-          addressType={section.type}
-          onRefresh={handleRefresh}
-          key={`${item.id}-${section.address}-${section.totalUsdValue}`}
-          session={
-            data?.site_url && data?.logo
-              ? {
-                  name: data?.name,
-                  icon: data?.logo || '',
-                  origin: data?.site_url || '',
-                }
-              : undefined
-          }
-        />
-      );
-    },
-    [data?.chain, data?.logo, data?.name, data?.site_url, handleRefresh],
-  );
-
-  const { bottom } = useSafeAreaInsets();
-  useEffect(() => {
-    const id = setTimeout(() => {
-      getCacheTop10Assets({
-        disableNFT: true,
-        disableToken: true,
-      });
-    }, 200);
-    return () => {
-      clearTimeout(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const androidBottomOffset = IS_ANDROID ? bottom : 0;
-
-  const renderSectionHeader = useCallback(
-    ({ section }: { section: SectionListItem }) => {
-      return (
-        <View style={styles.accountBox}>
-          <View className="relative">
-            <WalletIcon
-              type={section.type as KEYRING_TYPE}
-              address={section.address}
-              width={styles.walletIcon.width}
-              height={styles.walletIcon.height}
-              style={styles.walletIcon}
-            />
-          </View>
-          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
-            {section.aliasName}
-          </Text>
-        </View>
-      );
-    },
-    [styles.accountBox, styles.titleText, styles.walletIcon],
-  );
-
   if (!data) {
     return null;
   }
 
   return (
-    <NormalScreenContainer2024
-      type={isLight ? 'bg0' : 'bg1'}
-      overwriteStyle={[
-        styles.container,
-        { paddingBottom: androidBottomOffset },
-      ]}>
-      <SectionList
-        sections={sectionsMultiProject}
-        renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={item => `${item.id}`}
-        windowSize={10}
-        ListHeaderComponent={
-          <>
-            {!!isFromAppChain && (
-              <View style={styles.appChainHeader}>
-                <RcIconInfoCC
-                  style={{ marginLeft: 4 }}
-                  width={16}
-                  height={16}
-                  color={colors2024['neutral-foot']}
-                />
-                <Text style={styles.appChainHeaderText}>
-                  {t('page.defiDetail.appChain', {
-                    chain: data?.name,
-                  })}
-                </Text>
-              </View>
-            )}
-            <Text style={styles.projectHeaderBalance}>
-              {t('page.nextComponent.multiAddressHome.totalBalance')}
-            </Text>
-            <Text style={styles.projectHeaderNetWorth}>{sumNetWorth}</Text>
-          </>
-        }
-        renderSectionHeader={renderSectionHeader}
-        refreshControl={
-          <RefreshControl onRefresh={handleRefresh} refreshing={refreshing} />
-        }
-      />
-      {data?.site_url ? (
-        <View style={styles.footer}>
-          <Button
-            type="ghost"
-            title={
-              Platform.OS === 'ios'
-                ? t('page.defiDetail.viewSiteInWebsite')
-                : t('page.defiDetail.viewSiteInApp')
+    <View style={[styles.container]}>
+      <View style={styles.headerArea}>
+        <View style={styles.headerLeft}>
+          <AssetAvatar
+            logo={data?.logo}
+            logoStyle={styles.assetIcon}
+            size={40}
+            chain={
+              isFromAppChain
+                ? ''
+                : data?.chain || sectionsMultiProject[0]?.project?.chain
             }
-            onPress={() => {
-              if (data?.site_url) {
-                openTab(data?.site_url);
-                const origin = safeGetOrigin(data?.site_url);
-                if (origin) {
-                  matomoRequestEvent({
-                    category: 'Websites Usage',
-                    action: 'Website_Visit_Defi Detail',
-                    label: origin,
-                  });
-                }
-              }
-            }}
+            chainSize={16}
           />
+          <View style={styles.tokenInfo}>
+            <Text
+              style={styles.tokenSymbol}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {/* {token?.name} */}
+              {ellipsisOverflowedText(
+                data?.name || sectionsMultiProject[0]?.project?.name,
+                20,
+              )}
+            </Text>
+            <View style={styles.accountBox}>
+              <View className="relative">
+                <WalletIcon
+                  type={account.type as KEYRING_TYPE}
+                  address={account.address}
+                  width={styles.walletIcon.width}
+                  height={styles.walletIcon.height}
+                  style={styles.walletIcon}
+                />
+              </View>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.titleText}>
+                {account.aliasName}
+              </Text>
+            </View>
+          </View>
         </View>
-      ) : null}
-    </NormalScreenContainer2024>
+        <Text style={styles.projectHeaderNetWorth}>{sumNetWorth}</Text>
+      </View>
+
+      <View style={styles.portfoliosContainer}>
+        {data?._portfolios?.map?.(item => (
+          <WrapperDappActionsMemoItem
+            item={item}
+            chain={data?.chain}
+            protocolLogo={data?.logo}
+            address={account.address}
+            addressType={account.type}
+            key={`${item.id}-${account.address}-${data.netWorth}`}
+            session={
+              data?.site_url && data?.logo
+                ? {
+                    name: data?.name,
+                    icon: data?.logo || '',
+                    origin: data?.site_url || '',
+                  }
+                : undefined
+            }
+          />
+        ))}
+      </View>
+    </View>
   );
 };
 
@@ -542,13 +170,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   accountBox: {
     flexDirection: 'row',
-    paddingLeft: 25,
+    alignItems: 'center',
     gap: 4,
-    paddingTop: 20,
-    paddingBottom: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
   },
   backButtonStyle: {
     // width: 56,
@@ -562,14 +185,14 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexShrink: 1,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '500',
     flexWrap: 'nowrap',
   },
   walletIcon: {
-    width: 18,
-    height: 18,
+    width: 14,
+    height: 14,
     borderRadius: 4,
   },
   projectHeaderBalance: {
@@ -584,39 +207,58 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   projectHeaderNetWorth: {
     color: colors2024['neutral-title-1'],
-    fontSize: 36,
-    lineHeight: 42,
-    fontWeight: '800',
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'left',
-    marginLeft: 25,
-    // marginBottom: 20,
   },
   headerArea: {
     width: '100%',
     height: 'auto',
-    marginLeft: 8,
+    // marginLeft: 4,
+    paddingLeft: 4,
+    paddingRight: 12,
     display: 'flex',
     flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 8,
     alignItems: 'center',
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   assetIcon: {
-    borderRadius: 8,
+    borderRadius: 40,
+  },
+  tokenInfo: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: 2,
   },
   tokenSymbol: {
     flexShrink: 1,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '800',
     flexWrap: 'nowrap',
   },
   container: {
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
+    backgroundColor: colors2024['neutral-bg-1'],
+    marginHorizontal: 16,
+    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+  },
+  portfoliosContainer: {
+    width: '100%',
   },
   footer: {
     width: '100%',

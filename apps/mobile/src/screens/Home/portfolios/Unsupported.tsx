@@ -22,7 +22,7 @@ export default React.memo(
     const styles = getStyle(colors);
 
     return (
-      <Card style={style} shadow>
+      <Card style={style}>
         <PortfolioHeader data={data} name={name} showDescription />
         <Text style={styles.unsupported}>Unsupported pool type</Text>
       </Card>

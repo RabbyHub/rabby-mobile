@@ -51,7 +51,7 @@ export default React.memo(
     ];
 
     return (
-      <Card style={style} shadow>
+      <Card style={style}>
         <PortfolioHeader data={data} name={name} showDescription />
         <Supplements data={supplements} />
         <TokenList

@@ -73,10 +73,8 @@ export const getItemId = (item: ActionItem) => {
     return getSingleTokenTags(item.type, item.data).join('/');
   }
   if (item.type === 'unfold_defi' || item.type === 'fold_defi') {
-    const defis = item.data as DisplayedProject[];
-    return defis
-      .map(defi => getSingleDefiTags(item.type, defi).join('/'))
-      .join('/');
+    const defi = item.data as DisplayedProject;
+    return getSingleDefiTags(item.type, defi).join('/');
   }
   if (item.type === 'unfold_nft' || item.type === 'fold_nft') {
     if ('nft_list' in item.data) {

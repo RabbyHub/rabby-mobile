@@ -365,7 +365,7 @@ const getStyles = createGetStyles2024(ctx => ({
     height: FOOTER_HEIGHT,
   },
   tabBarWrap: {
-    backgroundColor: 'transparent',
+    backgroundColor: ctx.colors2024['neutral-bg-3'],
     shadowColor: 'transparent',
     shadowOpacity: 0,
     elevation: 0,

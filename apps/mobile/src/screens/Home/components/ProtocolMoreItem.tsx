@@ -94,18 +94,15 @@ export const WrapperDappActionsMemoItem = ({
 
 const getStyles = createGetStyles2024(ctx => ({
   portfolioCard: {
+    marginTop: 12,
+    width: '100%',
     marginBottom: 12,
     paddingVertical: 12,
-    // paddingHorizontal: 8,
-    marginHorizontal: 20,
+    paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-1']
-      : ctx.colors2024['neutral-bg-2'],
+    backgroundColor: ctx.colors2024['neutral-bg-5'],
   },
   detail: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-1']
-      : ctx.colors2024['neutral-bg-2'],
+    backgroundColor: 'transparent',
   },
 }));

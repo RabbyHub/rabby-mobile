@@ -8,25 +8,19 @@ import React, {
 import { StyleSheet, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
-import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { AbstractPortfolio, AbstractProject, ActionItem } from './types';
+import { AbstractProject, ActionItem } from './types';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
   DEFI_ITEM_HEIGHT,
-  RootNames,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 
-import { DefiRow, TokenRowSectionHeader } from './components/AssetRenderItems';
+import { TokenRowSectionHeader } from './components/AssetRenderItems';
+import { FullDefiRenderItem } from './components/AssetRenderItems/FullDefiRenderItem';
 import { useTranslation } from 'react-i18next';
-import { preferenceService } from '@/core/services';
-import { toast } from '@/components2024/Toast';
 import { DisplayedProject } from './utils/project';
-import { useTriggerTagAssets } from './hooks/refresh';
-import { NftItemWithCollection } from './hooks/nft';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader, ItemLoader } from './components/Skeleton';
 import {
@@ -37,10 +31,8 @@ import {
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
 import { Account } from '@/core/services/preference';
-import { CombineDefiItem } from './hooks/store';
 import { getItemId } from './utils/listRenderId';
 import { usePortfolios } from './hooks/usePortfolio';
-import { chunk } from 'lodash';
 import { getAllDefiCount } from './utils/converAssets';
 import { useCurrency } from '@/hooks/useCurrency';
 
@@ -88,9 +80,6 @@ export const PortfolioList = ({
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
-  const { singleDeFiRefresh, singleNFTRefresh, deFiRefresh } =
-    useTriggerTagAssets();
-
   const {
     data: _rawPortfolios,
     // hasValue: hasPortfolios,
@@ -115,20 +104,19 @@ export const PortfolioList = ({
     const foldAndExcludeBalanceDefiList = portfolios.filter(
       i => i._isFold && (i._isExcludeBalance || i.netWorth === 0),
     );
-    const foldDefiList: ActionItem[] = chunk(
-      [...foldAndIncludeBalanceDefiList, ...foldAndExcludeBalanceDefiList],
-      2,
-    ).map(item => ({
+    const foldDefiList: ActionItem[] = [
+      ...foldAndIncludeBalanceDefiList,
+      ...foldAndExcludeBalanceDefiList,
+    ].map(item => ({
       type: 'fold_defi',
       data: item,
     }));
-    const unFoldDefiList: ActionItem[] = chunk(
-      portfolios.filter(i => !i._isFold),
-      2,
-    ).map(item => ({
-      type: 'unfold_defi',
-      data: item,
-    }));
+    const unFoldDefiList: ActionItem[] = portfolios
+      .filter(i => !i._isFold)
+      .map(item => ({
+        type: 'unfold_defi',
+        data: item as unknown as DisplayedProject,
+      }));
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -178,108 +166,6 @@ export const PortfolioList = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused]);
 
-  const handleOpenDefiDetail = useCallback(
-    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      navigateDeprecated(RootNames.DeFiDetail, {
-        data,
-        portfolioList: itemList,
-        account: currentAccount,
-        cache: true,
-        isSingleAddress: true,
-      });
-    },
-    [currentAccount],
-  );
-  const getDefiOrNftMenuAction = useCallback(
-    (
-      type: 'nft' | 'defi',
-      data: DisplayedProject | NftItemWithCollection,
-    ): MenuAction[] => {
-      const isFold =
-        'nft_list' in data && data.nft_list.length
-          ? data.nft_list?.every(i => (i as unknown as AbstractProject)._isFold)
-          : (data as AbstractProject)._isFold;
-      return [
-        {
-          title: isFold
-            ? t('page.tokenDetail.action.unfold')
-            : t('page.tokenDetail.action.fold'),
-          icon: isFold
-            ? isLight
-              ? icons.unfoldLight
-              : icons.unfoldDark
-            : isLight
-            ? icons.foldLight
-            : icons.foldDark,
-          androidIconName: isFold
-            ? 'ic_rabby_menu_unfold'
-            : 'ic_rabby_menu_fold',
-          key: 'fold',
-          action() {
-            if (isFold) {
-              if (type === 'defi') {
-                preferenceService.manualUnFoldDefi(data.id);
-                toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-              } else if (type === 'nft' && data.chain) {
-                if ('nft_list' in data && data.nft_list.length) {
-                  data.nft_list.forEach(i => {
-                    preferenceService.manualUnFoldNft({
-                      chain: i.chain,
-                      id: i.id,
-                    });
-                  });
-                } else {
-                  preferenceService.manualUnFoldNft({
-                    chain: data.chain,
-                    id: data.id,
-                  });
-                }
-                toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-              }
-            } else {
-              if (type === 'defi') {
-                preferenceService.manualFoldDefi(data.id);
-                toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-              } else if (type === 'nft' && data.chain) {
-                if ('nft_list' in data && data.nft_list.length) {
-                  data.nft_list.forEach(i => {
-                    preferenceService.manualFoldNft({
-                      chain: i.chain,
-                      id: i.id,
-                    });
-                  });
-                } else {
-                  preferenceService.manualFoldNft({
-                    chain: data.chain,
-                    id: data.id,
-                  });
-                }
-                toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-              }
-            }
-            if (type === 'defi') {
-              singleDeFiRefresh();
-              deFiRefresh();
-            } else if (type === 'nft') {
-              singleNFTRefresh();
-            }
-          },
-        },
-      ];
-    },
-    [deFiRefresh, isLight, singleDeFiRefresh, singleNFTRefresh, t],
-  );
-
-  const getDefiMenuActions = useCallback(
-    (data: CombineDefiItem): MenuAction[] => {
-      return getDefiOrNftMenuAction(
-        'defi',
-        data as unknown as DisplayedProject,
-      );
-    },
-    [getDefiOrNftMenuAction],
-  );
-
   const foldDefiAmount = useMemo(() => {
     return getAllDefiCount(
       portfolios.filter(i => i._isFold),
@@ -289,36 +175,17 @@ export const PortfolioList = ({
   }, [currency.symbol, currency.usd_rate, portfolios]);
 
   const renderItem = useCallback(
-    (_type, _data) => {
+    (_type, _data: ActionItem) => {
       const { type, data } = _data;
       switch (type) {
         case 'unfold_defi':
         case 'fold_defi':
           return (
-            <View style={styles.defiGroups}>
-              <DefiRow
-                data={data[0]}
-                style={StyleSheet.flatten([
-                  styles.renderDefiItemWrapper,
-                  !isLight && styles.bg2,
-                ])}
-                getMenuActions={getDefiMenuActions}
-                logoSize={40}
-                onPress={handleOpenDefiDetail}
-              />
-              {data[1] && (
-                <DefiRow
-                  data={data[1]}
-                  style={StyleSheet.flatten([
-                    styles.renderDefiItemWrapper,
-                    !isLight && styles.bg2,
-                  ])}
-                  getMenuActions={getDefiMenuActions}
-                  logoSize={40}
-                  onPress={handleOpenDefiDetail}
-                />
-              )}
-            </View>
+            <FullDefiRenderItem
+              data={data as unknown as AbstractProject}
+              showAccount={false}
+              account={currentAccount}
+            />
           );
         case 'defi_header':
           return (
@@ -341,7 +208,7 @@ export const PortfolioList = ({
           );
         case 'empty-assets':
         case 'empty-defi':
-          return <EmptyAssets desc={data} type={type} />;
+          return <EmptyAssets desc={data || ''} type={type} />;
         case 'loading-skeleton':
           return (
             <View style={styles.rowWrap}>
@@ -355,16 +222,13 @@ export const PortfolioList = ({
       }
     },
     [
+      currentAccount,
       foldDefi,
       foldDefiAmount,
-      getDefiMenuActions,
-      handleOpenDefiDetail,
       isLight,
       styles.bg2,
       styles.buttonHeader,
-      styles.defiGroups,
       styles.removeLeft,
-      styles.renderDefiItemWrapper,
       styles.rowWrap,
       styles.sectionHeader,
       styles.symbol,
