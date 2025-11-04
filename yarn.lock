@@ -7444,7 +7444,7 @@ __metadata:
     "@ledgerhq/errors": ^6.25.0
     "@ledgerhq/hw-transport": ^6.31.10
     "@ledgerhq/logs": ^6.13.0
-    react-native-ble-plx: 3.4.0
+    react-native-ble-plx: 3.5.0
     rxjs: ^7.8.1
     uuid: ^9.0.1
   checksum: b66f98b936e8fda09ba0590479efbc7564cfb148816ff45d5e994d6a411118f4fcc55dce71768c97520b3a0226e09112c7f120dd98fa15967fcc5078e5810197
@@ -34393,16 +34393,6 @@ __metadata:
   peerDependencies:
     react-native: ">=0.60.0"
   checksum: c70516d1e6a86bd2d198f7732d472afdb1e959a105818b13ae66bcb7019630514102201f94d52c4e09c1b8f876ec2b029abed542d2f4f15edf2ff2e78fca38ab
-  languageName: node
-  linkType: hard
-
-"react-native-ble-plx@npm:3.4.0":
-  version: 3.4.0
-  resolution: "react-native-ble-plx@npm:3.4.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: f255e4ffc621b3656561a571c75d199677eb1332d5ea36c4ed5c5b88926c7135c67f7fea2a09e00cba0fe33df7577ab02308d12bce4b65e6c25f3f9df54d09e1
   languageName: node
   linkType: hard
 

@@ -475,7 +475,7 @@ class SignatureManager {
       try {
         const [isConnected, id] = await apiLedger.isConnected(
           account.address,
-          true,
+          // true,
         );
         setLedgerStatus(isConnected);
         if (isConnected) {

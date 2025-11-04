@@ -40,7 +40,10 @@
     "json-rpc-engine/eth-rpc-errors": "^4.0.3",
     "readable-stream": "3.6.2",
     "@safe-global/types-kit": "1.0.4",
-    "@ledgerhq/react-native-hw-transport-ble/react-native-ble-plx": "3.5.0"
+    "react-native-ble-plx": "3.5.0",
+    "@ledgerhq/react-native-hw-transport-ble/react-native-ble-plx": "3.5.0",
+    "@ledgerhq/react-native-hw-transport-ble": "patch:@ledgerhq/react-native-hw-transport-ble@npm:6.35.3#./patches/@ledgerhq-react-native-hw-transport-ble-npm-6.35.3-android-subscription.patch",
+    "@onekeyfe/hd-transport-react-native": "patch:@onekeyfe/hd-transport-react-native@npm:1.1.13#./patches/@onekeyfe+hd-transport-react-native+1.1.13-android-subscription.patch"
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
