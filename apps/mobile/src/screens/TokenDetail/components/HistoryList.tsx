@@ -1,139 +1,260 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
-import { RcArrowRight3CC } from '@/assets/icons/common';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
-import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemoizedFn } from 'ahooks';
+import { useInfiniteScroll, useMemoizedFn, useMount } from 'ahooks';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
+import {
+  fetchHistoryTokenItem,
+  getHistoryItemType,
+} from '@/screens/Transaction/components/utils';
 import { useTranslation } from 'react-i18next';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions } from '@react-navigation/native';
-import { RootNames } from '@/constant/layout';
+import { HistoryList } from '@/screens/Transaction/components/HistoryGroupList';
+import { transactionHistoryService } from '@/core/services';
+import { openapi } from '@/core/request';
+import {
+  TxAllHistoryResult,
+  TxHistoryResult,
+} from '@rabby-wallet/rabby-api/dist/types';
+import { debounce, last, orderBy } from 'lodash';
+import { toast } from '@/components2024/Toast';
 
-export const HistoryList = ({
-  isForMultipleAddress,
+interface IFetchHistory {
+  last: number;
+  list: HistoryDisplayItem[];
+}
+
+const PAGE_COUNT = 20;
+
+export const TokenDetailHistoryList = ({
   finalAccount,
   token,
-  top10Addresses,
+  onRefresh,
 }: {
   finalAccount: KeyringAccountWithAlias | null;
-  isForMultipleAddress: boolean;
   token: AbstractPortfolioToken;
-  top10Addresses: string[];
+  onRefresh?: () => void;
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [data, setData] = React.useState<HistoryDisplayItem[]>([]);
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { navigation } = useSafeSetNavigationOptions();
 
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const tokenItem = token;
+  const currentAddress = finalAccount?.address;
 
-  const openHistory = useCallback(async () => {
-    await switchSceneCurrentAccount('History', finalAccount);
-    navigation.dispatch(
-      StackActions.push(RootNames.StackTransaction, {
-        screen: isForMultipleAddress
-          ? RootNames.MultiAddressHistory
-          : RootNames.History,
-        params: {
-          isInTokenDetail: true,
-          tokenItem: token,
-          isMultiAddress: isForMultipleAddress,
-        },
+  const isReady = useRef(false);
+  const lastMap = useRef<Record<string, number>>({});
+  const dbLastCursorRef = useRef<number>(0);
+  const hasMoreMap = useRef<Record<string, boolean>>({});
+
+  const [historySuccessList, setHistorySuccessList] = useState<string[]>(
+    transactionHistoryService.getSucceedList(),
+  );
+
+  const historyListRef = useRef<{ scrollToTop: () => void }>(null);
+
+  const fetchData = async (
+    address: string,
+    startTime = 0,
+    chain_id?: string,
+    token_id?: string,
+  ): Promise<IFetchHistory> => {
+    if (!address) {
+      throw new Error('no account');
+    }
+
+    try {
+      const res = await openapi.listTxHisotry({
+        id: address,
+        start_time: startTime,
+        page_count: PAGE_COUNT,
+        chain_id,
+        token_id,
+      });
+
+      const { project_dict, history_list: list } = res;
+      const token_dict = (res as TxHistoryResult).token_dict;
+      const token_uuid_dict = (res as unknown as TxAllHistoryResult)
+        .token_uuid_dict;
+      const tokenDict = token_dict || token_uuid_dict;
+
+      const displayList = list
+        .map(item => ({
+          ...item,
+          address,
+          key: `${address}_${item.chain}_${item.id}`,
+          project_item: project_dict[item.project_id || ''] || null,
+          token_approve: item.token_approve
+            ? {
+                ...item.token_approve,
+                token: fetchHistoryTokenItem(
+                  item.token_approve?.token_id || '',
+                  item.chain,
+                  tokenDict,
+                ),
+              }
+            : null,
+          receives: item.receives.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          sends: item.sends.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          historyType: getHistoryItemType(item),
+        }))
+        .sort((v1, v2) => v2.time_at - v1.time_at);
+      return {
+        last: last(displayList)?.time_at || 0,
+        list: displayList,
+      };
+    } catch (e) {
+      toast.error(`${address} fetch failed, ${e}`);
+      return {
+        last: 0,
+        list: [],
+      };
+    }
+  };
+
+  const batchFetchData = useMemoizedFn(async () => {
+    const list: HistoryDisplayItem[] = [];
+    const account = finalAccount;
+    if (!account) {
+      return {
+        list: [],
+        hasMore: false,
+      };
+    }
+    const addr = account.address.toLowerCase();
+    if (addr in hasMoreMap.current && !hasMoreMap.current[addr]) {
+      return {
+        list: [],
+        hasMore: false,
+      };
+    }
+    const result = await fetchData(
+      addr,
+      lastMap.current[addr] || 0,
+      tokenItem.chain,
+      tokenItem._tokenId,
+    );
+    if (result.list.length < PAGE_COUNT) {
+      hasMoreMap.current[addr] = false;
+    } else {
+      hasMoreMap.current[addr] = true;
+    }
+    lastMap.current[addr] = result.last || 0;
+    list.push(
+      ...result.list.map(item => {
+        return {
+          ...item,
+          account,
+        };
       }),
     );
-  }, [
-    navigation,
-    switchSceneCurrentAccount,
-    finalAccount,
-    isForMultipleAddress,
-    token,
-  ]);
 
-  const fetchHistoryItem = useCallback(async () => {
-    const addresses = isForMultipleAddress
-      ? top10Addresses.map(a => a.toLowerCase())
-      : [finalAccount?.address.toLowerCase()!];
-    const [historyList] = await Promise.all([
-      HistoryItemEntity.getTokenHistoryItemSortedByTime(
-        addresses,
-        token._tokenId,
-        token.chain,
-        4,
-      ),
-    ]);
-
-    const list = historyList.map(item => {
-      return {
-        ...ensureHistoryListItemFromDb(item),
-        isSmallUsdTx: false,
-        isShowSuccess: false,
-      } as HistoryDisplayItem;
-    });
-    setData(list);
-  }, [
-    finalAccount?.address,
-    token._tokenId,
-    token.chain,
-    isForMultipleAddress,
-    top10Addresses,
-  ]);
-
-  useEffect(() => {
-    fetchHistoryItem();
-  }, [fetchHistoryItem]);
-
-  const hasMore = useMemo(() => data && data?.length > 3, [data]);
-
-  const renderItem = useMemoizedFn(({ item }: { item: HistoryDisplayItem }) => {
-    return (
-      <HistoryItem
-        key={`${item.address}-${item.id}`}
-        data={item}
-        isForMultipleAddress={isForMultipleAddress}
-      />
-    );
+    if (!isReady.current) {
+      isReady.current = true;
+    }
+    return {
+      list: orderBy(list, 'time_at', 'desc'),
+      hasMore: Object.values(hasMoreMap.current).some(item => item),
+    };
   });
 
+  const refresh = useMemoizedFn(() => {
+    lastMap.current = {};
+    hasMoreMap.current = {};
+    reloadAsync();
+    onRefresh?.();
+  });
+
+  const {
+    data: fetchApiData,
+    loading,
+    loadingMore,
+    loadMore,
+    noMore,
+    reloadAsync,
+  } = useInfiniteScroll(() => batchFetchData(), {
+    isNoMore: d => (d ? !d.hasMore : false),
+    onSuccess() {},
+  });
+
+  const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
+    dbLastCursorRef.current = 0;
+    reloadAsync();
+  });
+
+  const throttleBatchFetchData = useMemo(
+    () =>
+      debounce(batchFetchDataFromDbUpsert, 1000, {
+        leading: true,
+        trailing: true,
+      }),
+    [batchFetchDataFromDbUpsert],
+  );
+
+  useEffect(() => {
+    return () => {
+      throttleBatchFetchData.cancel();
+    };
+  }, [throttleBatchFetchData]);
+
+  useMount(() => {
+    const list = transactionHistoryService.getSucceedList();
+    setHistorySuccessList(list);
+    transactionHistoryService.clearSuccessAndFailList(currentAddress);
+  });
+
+  const displayList = useMemo(() => {
+    return (
+      fetchApiData?.list.filter(tx => {
+        const shouldShowBasedOnType = !tx.is_scam;
+        return shouldShowBasedOnType;
+      }) || []
+    );
+  }, [fetchApiData]);
+
   return (
-    data.length > 0 && (
-      <View style={styles.container}>
-        <View style={styles.historyHeader}>
-          <Text style={styles.relateTitle}>
-            {t('page.tokenDetail.Transaction')}
-          </Text>
-          {hasMore && (
-            <TouchableOpacity style={styles.rightContent} onPress={openHistory}>
-              <Text style={styles.headerContent}>
-                {t('page.tokenDetail.SeeMore')}
-              </Text>
-              <RcArrowRight3CC
-                style={styles.arrowStyle}
-                width={12}
-                height={12}
-                color={colors2024['neutral-secondary']}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-        {Boolean(data.length) &&
-          data.slice(0, 3).map(item => renderItem({ item }))}
+    <View style={styles.container}>
+      <View style={styles.historyHeader}>
+        <Text style={styles.relateTitle}>
+          {t('page.tokenDetail.Transaction')}
+        </Text>
       </View>
-    )
+      <HistoryList
+        ref={historyListRef}
+        historySuccessList={historySuccessList}
+        list={displayList}
+        loading={loading}
+        isNeedFetchFromApi
+        firstFetchDone={false}
+        loadingMore={loadingMore}
+        refreshLoading={loading}
+        isForMultipleAddress={false}
+        appendBottom={200}
+        loadMore={() => {
+          // avoid exec multi times loadMore
+          if (loadingMore || noMore) {
+            return;
+          }
+          loadMore();
+        }}
+        onRefresh={refresh}
+      />
+    </View>
   );
 };
 
 const getStyle = createGetStyles2024(ctx => ({
   container: {
     width: '100%',
-    paddingHorizontal: 15,
-    marginTop: 30,
+    // paddingHorizontal: 15,
+    marginTop: 0,
     gap: 0,
   },
   bottomBg: {
@@ -193,7 +314,7 @@ const getStyle = createGetStyles2024(ctx => ({
     paddingRight: 1,
   },
   historyHeader: {
-    paddingLeft: 4,
+    paddingHorizontal: 15,
     marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
