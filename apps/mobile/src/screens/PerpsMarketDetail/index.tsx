@@ -93,9 +93,6 @@ export const PerpsMarketDetailScreen = () => {
     WsActiveAssetCtx['ctx'] | null
   >(null);
 
-  const [openPositionVisible, setOpenPositionVisible] = React.useState(
-    fromSource === 'openPosition' && hasPermission ? true : false,
-  );
   const [positionDirection, setPositionDirection] = React.useState<
     'Long' | 'Short'
   >('Long');
@@ -177,7 +174,6 @@ export const PerpsMarketDetailScreen = () => {
     currentPerpsAccount,
     isLogin,
     userFills,
-    hasPermission,
   } = usePerpsPosition({
     setCurrentTpOrSl,
   });
