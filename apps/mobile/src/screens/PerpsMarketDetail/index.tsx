@@ -77,6 +77,7 @@ export const PerpsMarketDetailScreen = () => {
     marketDataMap,
     perpFee,
     marketData,
+    hasPermission,
   } = state;
 
   const [isShowModal, setIsShowModal] = useState(false);
@@ -93,7 +94,7 @@ export const PerpsMarketDetailScreen = () => {
   >(null);
 
   const [openPositionVisible, setOpenPositionVisible] = React.useState(
-    fromSource === 'openPosition' ? true : false,
+    fromSource === 'openPosition' && hasPermission ? true : false,
   );
   const [positionDirection, setPositionDirection] = React.useState<
     'Long' | 'Short'
