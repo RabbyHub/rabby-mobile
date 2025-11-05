@@ -20,18 +20,13 @@ export function useOneKeyImport() {
       isBluetoothEnabled,
     });
 
-    apiOneKey
-      .searchDevices({
-        maxRetryCount: 2,
-        retryDelayMs: 500,
-      })
-      .then(res => {
-        if (res.success) {
-          setDevices(res.payload as SearchDevice[]);
-        } else {
-          setError(res.payload.code);
-        }
-      });
+    apiOneKey.searchDevices().then(res => {
+      if (res.success) {
+        setDevices(res.payload as SearchDevice[]);
+      } else {
+        setError(res.payload.code);
+      }
+    });
   }, [setDevices]);
 
   const cleanDevices = React.useCallback(() => {

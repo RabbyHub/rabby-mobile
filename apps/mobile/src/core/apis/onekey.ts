@@ -67,17 +67,11 @@ export async function fixConnectId(address: string, connectId: string) {
   return;
 }
 
-export async function searchDevices({
-  maxRetryCount = 3,
-  retryDelayMs = 800,
-}: {
-  maxRetryCount?: number;
-  retryDelayMs?: number;
-} = {}) {
+export async function searchDevices() {
   const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
 
   let retryCount = 0;
-  const MAX_RETRY_COUNT = Math.max(0, maxRetryCount);
+  const MAX_RETRY_COUNT = 10;
   const pollScan = () => {
     return keyring.bridge.searchDevices().then(res => {
       if (!res.success) {
@@ -85,9 +79,7 @@ export async function searchDevices({
           return res;
         }
         retryCount++;
-        return new Promise(resolve => setTimeout(resolve, retryDelayMs)).then(
-          pollScan,
-        );
+        return new Promise(resolve => setTimeout(resolve, 1000)).then(pollScan);
       }
 
       return res;
