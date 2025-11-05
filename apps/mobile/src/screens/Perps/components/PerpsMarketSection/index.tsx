@@ -35,14 +35,6 @@ export const PerpsMarketSectionHeader: React.FC = () => {
   );
 };
 
-// This component is no longer used, kept for backward compatibility
-export const PerpsMarketSection: React.FC<{
-  marketData: MarketData[];
-  positionAndOpenOrders?: any[];
-}> = () => {
-  return null;
-};
-
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {},
   footer: {

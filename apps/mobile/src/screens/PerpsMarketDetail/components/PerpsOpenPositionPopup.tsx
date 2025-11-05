@@ -91,8 +91,6 @@ export const PerpsOpenPositionPopup: React.FC<{
   });
 
   const { t } = useTranslation();
-  const [_leveragePopupVisible, _setLeveragePopupVisible] =
-    React.useState(false);
   const [isReviewMode, setIsReviewMode] = React.useState(false);
   const { showTipsPopup } = useTipsPopup();
   const [direction, setSelectedDirection] = React.useState<'Long' | 'Short'>(
@@ -105,11 +103,6 @@ export const PerpsOpenPositionPopup: React.FC<{
   } = useUsdInput();
   const [selectedLeverage, setLeverage] = React.useState<number | undefined>(5);
   const leverage = selectedLeverage || 1;
-  const [autoClose, setAutoClose] = React.useState({
-    isOpen: false,
-    tpTriggerPx: '',
-    slTriggerPx: '',
-  });
   const [tpTriggerPx, setTpTriggerPx] = React.useState<string>('');
   const [slTriggerPx, setSlTriggerPx] = React.useState<string>('');
 
@@ -263,12 +256,8 @@ export const PerpsOpenPositionPopup: React.FC<{
     if (!visible) {
       setMargin('');
       setLeverage(Math.min(leverageRang[1], 5));
-      setAutoClose({
-        isOpen: false,
-        tpTriggerPx: '',
-        slTriggerPx: '',
-      });
-      _setLeveragePopupVisible(false);
+      setTpTriggerPx('');
+      setSlTriggerPx('');
       setIsReviewMode(false);
     }
   }, [visible, leverageRang, setMargin]);
@@ -285,14 +274,8 @@ export const PerpsOpenPositionPopup: React.FC<{
       leverage,
       direction,
       midPx: markPrice.toString(),
-      tpTriggerPx:
-        autoClose.isOpen && autoClose.tpTriggerPx
-          ? autoClose.tpTriggerPx
-          : undefined,
-      slTriggerPx:
-        autoClose.isOpen && autoClose.slTriggerPx
-          ? autoClose.slTriggerPx
-          : undefined,
+      tpTriggerPx: tpTriggerPx ? tpTriggerPx : undefined,
+      slTriggerPx: slTriggerPx ? slTriggerPx : undefined,
     });
     onConfirm();
   });

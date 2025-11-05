@@ -41,11 +41,7 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
-import { PerpsHistorySection } from './components/PerpsHistorySection';
-import {
-  PerpsMarketSection,
-  PerpsMarketSectionHeader,
-} from './components/PerpsMarketSection';
+import { PerpsMarketSectionHeader } from './components/PerpsMarketSection';
 import { PerpsMarketItem } from './components/PerpsMarketSection/PerpsMarketItem';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { sortBy } from 'lodash';
@@ -66,8 +62,6 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { PerpHeader } from './components/PerpHeader';
 import Toast from 'react-native-root-toast';
 import { PerpSearchListPopup } from './components/PerpSearchListPopup';
-import { RcNextSearchCC } from '@/assets/icons/common';
-import { FAB } from '@rneui/themed';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 
@@ -101,10 +95,6 @@ export const PerpsScreen = () => {
     fetchClearinghouseState,
   } = usePerpsState();
 
-  const [closePositionVisible, setClosePositionVisible] = React.useState(false);
-  const [closePosition, setClosePosition] = useState<
-    AssetPosition['position'] | null
-  >(null);
   const [selectedToken, setSelectedToken] = useSelectedToken();
   const [popupState, setPopupState] = usePerpsPopupState();
   const [isShowModal, setIsShowModal] = useState(false);
