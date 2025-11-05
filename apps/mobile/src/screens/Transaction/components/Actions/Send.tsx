@@ -125,8 +125,6 @@ export const Send: React.FC<Props> = ({
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
-  const { navigateToSendPolyScreen, navigateToSendScreen } = useSendRoutes();
-
   const { isAddrOnWhitelist } = useWhitelist();
 
   const handleOpenTxId = useMemoizedFn(() => {
@@ -187,7 +185,8 @@ export const Send: React.FC<Props> = ({
                     numberOfLines={1}
                     ellipsizeMode="tail">
                     - {sendAmount}{' '}
-                    {getTokenSymbol(actionData.token as TokenItem).repeat(1000)}
+                    {/* {getTokenSymbol(actionData.token as TokenItem).repeat(__DEV__ ? 1000 : 1)} */}
+                    {getTokenSymbol(actionData.token as TokenItem).repeat(1)}
                   </Text>
                 </View>
                 <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
@@ -358,10 +357,8 @@ export const Send: React.FC<Props> = ({
                     fromAccount,
                   );
                 }
-                navigateToSendPolyScreen(!!isSingleAddress, {
-                  chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-                  tokenId: actionData.token?.id,
-                  toAddress: actionData.to,
+                naviPush(RootNames.StackTransaction, {
+                  screen: RootNames.Send,
                 });
               }}
               title={

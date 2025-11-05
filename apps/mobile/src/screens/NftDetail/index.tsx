@@ -11,7 +11,7 @@ import { Media } from '@/components/Media';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
-import { useRoute } from '@react-navigation/native';
+import { StackActions, useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { GetRootScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -19,7 +19,7 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
-import { navigate } from '@/utils/navigation';
+import { navigate, naviPush } from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
 import FastImage from 'react-native-fast-image';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
@@ -132,7 +132,6 @@ export const NFTDetailScreen = () => {
   const { styles, colors } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { navigateToSendPolyScreen } = useSendRoutes();
   const route = useRoute<GetRootScreenRouteProp<'NftDetail'>>();
   const { token, isSingleAddress, account: routeAccount } = route.params || {};
   type NonListType = Exclude<typeof token, TokenItem[]>;
@@ -240,18 +239,17 @@ export const NFTDetailScreen = () => {
         return;
       }
       await switchSceneCurrentAccount('SendNFT', fromAccount);
-      navigateToSendPolyScreen(!!isSingleAddress, {
-        collectionName: iToken.contract_name || iToken?.collection?.name || '',
-        nftItem: iToken,
-        fromAccount,
+      naviPush(RootNames.StackTransaction, {
+        screen: RootNames.SendNFT,
+        params: {
+          collectionName:
+            iToken.contract_name || iToken?.collection?.name || '',
+          nftItem: iToken,
+          fromAccount,
+        },
       });
     },
-    [
-      accounts,
-      navigateToSendPolyScreen,
-      isSingleAddress,
-      switchSceneCurrentAccount,
-    ],
+    [accounts, switchSceneCurrentAccount],
   );
 
   const { assetsMap, getCacheTop10Assets } = useAssets({ hideCombined: true });

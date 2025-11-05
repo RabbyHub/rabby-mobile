@@ -25,101 +25,119 @@ export async function transferNFT(
     amount?: number;
     account: Account;
   },
-  $ctx?: any,
+  options: {
+    $ctx?: any;
+    isBuild?: boolean;
+  },
 ) {
   if (!account) throw new Error(t('background.error.noCurrentAccount'));
   const chainId = findChain({
     serverId: chainServerId,
   })?.id;
   if (!chainId) throw new Error(t('background.error.invalidChainId'));
+
+  const { $ctx, isBuild = false } = options;
+  const dataBase = {
+    $ctx,
+    method: 'eth_sendTransaction',
+    ...(isBuild && {
+      chainId: chainId,
+      from: account.address,
+      to: contractId,
+    }),
+  };
   if (abi === 'ERC721') {
-    await sendRequest({
-      data: {
-        $ctx,
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: account.address,
-            to: contractId,
-            chainId: chainId,
-            data: abiCoder.encodeFunctionCall(
-              {
-                constant: false,
-                inputs: [
-                  { internalType: 'address', name: 'from', type: 'address' },
-                  { internalType: 'address', name: 'to', type: 'address' },
-                  {
-                    internalType: 'uint256',
-                    name: 'tokenId',
-                    type: 'uint256',
-                  },
-                ],
-                name: 'safeTransferFrom',
-                outputs: [],
-                payable: false,
-                stateMutability: 'nonpayable',
-                type: 'function',
-              },
-              [account.address, to, tokenId],
-            ),
-          },
-        ],
+    return sendRequest(
+      {
+        data: {
+          ...dataBase,
+          params: [
+            {
+              from: account.address,
+              to: contractId,
+              chainId: chainId,
+              data: abiCoder.encodeFunctionCall(
+                {
+                  constant: false,
+                  inputs: [
+                    { internalType: 'address', name: 'from', type: 'address' },
+                    { internalType: 'address', name: 'to', type: 'address' },
+                    {
+                      internalType: 'uint256',
+                      name: 'tokenId',
+                      type: 'uint256',
+                    },
+                  ],
+                  name: 'safeTransferFrom',
+                  outputs: [],
+                  payable: false,
+                  stateMutability: 'nonpayable',
+                  type: 'function',
+                },
+                [account.address, to, tokenId],
+              ),
+            },
+          ],
+        },
+        session: INTERNAL_REQUEST_SESSION,
+        account,
       },
-      session: INTERNAL_REQUEST_SESSION,
-      account,
-    });
+      isBuild,
+    );
   } else if (abi === 'ERC1155') {
-    await sendRequest({
-      data: {
-        $ctx,
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: account.address,
-            to: contractId,
-            chainId: chainId,
-            data: abiCoder.encodeFunctionCall(
-              {
-                inputs: [
-                  {
-                    internalType: 'address',
-                    name: 'from',
-                    type: 'address',
-                  },
-                  {
-                    internalType: 'address',
-                    name: 'to',
-                    type: 'address',
-                  },
-                  {
-                    internalType: 'uint256',
-                    name: 'id',
-                    type: 'uint256',
-                  },
-                  {
-                    internalType: 'uint256',
-                    name: 'amount',
-                    type: 'uint256',
-                  },
-                  {
-                    internalType: 'bytes',
-                    name: 'data',
-                    type: 'bytes',
-                  },
-                ],
-                name: 'safeTransferFrom',
-                outputs: [],
-                stateMutability: 'nonpayable',
-                type: 'function',
-              },
-              [account.address, to, tokenId, amount, []] as any,
-            ),
-          },
-        ],
+    return await sendRequest(
+      {
+        data: {
+          ...dataBase,
+          params: [
+            {
+              from: account.address,
+              to: contractId,
+              chainId: chainId,
+              data: abiCoder.encodeFunctionCall(
+                {
+                  inputs: [
+                    {
+                      internalType: 'address',
+                      name: 'from',
+                      type: 'address',
+                    },
+                    {
+                      internalType: 'address',
+                      name: 'to',
+                      type: 'address',
+                    },
+                    {
+                      internalType: 'uint256',
+                      name: 'id',
+                      type: 'uint256',
+                    },
+                    {
+                      internalType: 'uint256',
+                      name: 'amount',
+                      type: 'uint256',
+                    },
+                    {
+                      internalType: 'bytes',
+                      name: 'data',
+                      type: 'bytes',
+                    },
+                  ],
+                  name: 'safeTransferFrom',
+                  outputs: [],
+                  stateMutability: 'nonpayable',
+                  type: 'function',
+                },
+                [account.address, to, tokenId, amount, []] as any,
+              ),
+            },
+          ],
+        },
+        session: INTERNAL_REQUEST_SESSION,
+        account,
       },
-      session: INTERNAL_REQUEST_SESSION,
-      account,
-    });
+      isBuild,
+    );
   } else {
     throw new Error(t('background.error.unknownAbi'));
   }
