@@ -22,6 +22,7 @@ export const PerpsMarketSectionHeader: React.FC = () => {
           setPopupState(prev => ({
             ...prev,
             isShowSearchListPopup: true,
+            searchListOpenFrom: 'searchPerps',
           }));
         }}>
         <RcNextSearchCC

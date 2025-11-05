@@ -42,11 +42,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     markPrice: number;
     providerFee: number;
     bothFee: number;
-    autoClose?: {
-      isOpen: boolean;
-      tpTriggerPx: string;
-      slTriggerPx: string;
-    };
+    tpTriggerPx: string;
+    slTriggerPx: string;
     estimatedLiquidationPrice: string | number;
   };
 }> = ({ visible, onClose, info, onConfirm }) => {
@@ -70,7 +67,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     providerFee,
     bothFee,
     estimatedLiquidationPrice,
-    autoClose,
+    tpTriggerPx,
+    slTriggerPx,
   } = info;
 
   const { t } = useTranslation();
@@ -98,10 +96,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       onDismiss={onClose}
-      enableDynamicSizing
-      maxDynamicContentSize={maxHeight}>
-      <BottomSheetScrollView>
-        <AutoLockView style={[styles.container]}>
+      snapPoints={[maxHeight]}>
+      <AutoLockView style={[styles.container]}>
+        <BottomSheetScrollView contentContainerStyle={styles.scrollViewContent}>
           <View>
             <Text style={styles.title}>
               {t('page.perpsDetail.PerpsOpenPositionCheckPopup.title')}
@@ -173,52 +170,31 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 </Text>
               </View>
             </View>
-            {autoClose?.isOpen ? (
-              <View style={styles.listItemContainer}>
-                <View style={styles.listItemRow}>
-                  <View style={styles.listItemMain}>
-                    <Text style={styles.label}>
-                      {t(
-                        'page.perpsDetail.PerpsOpenPositionCheckPopup.autoClose',
-                      )}
-                    </Text>
-                  </View>
+            {tpTriggerPx ? (
+              <View style={styles.listItem}>
+                <View style={styles.listItemMain}>
+                  <Text style={styles.label}>
+                    {t('page.perpsDetail.PerpsPosition.tpPrice')}
+                  </Text>
                 </View>
-                <View style={styles.listSub}>
-                  {autoClose.tpTriggerPx ? (
-                    <View style={styles.listSubItem}>
-                      <Text style={styles.listSubItemLabel}>
-                        {t(
-                          'page.perpsDetail.PerpsOpenPositionCheckPopup.tpPrice',
-                        )}
-                      </Text>
-                      <Text style={styles.value}>
-                        ${splitNumberByStep(autoClose.tpTriggerPx || 0)}
-                      </Text>
-                      {/* <RcArrowRight2CC
-                      width={16}
-                      height={16}
-                      color={colors2024['neutral-body']}
-                    /> */}
-                    </View>
-                  ) : null}
-                  {autoClose.slTriggerPx ? (
-                    <View style={styles.listSubItem}>
-                      <Text style={styles.listSubItemLabel}>
-                        {t(
-                          'page.perpsDetail.PerpsOpenPositionCheckPopup.slPrice',
-                        )}
-                      </Text>
-                      <Text style={styles.value}>
-                        ${splitNumberByStep(autoClose.slTriggerPx || 0)}
-                      </Text>
-                      {/* <RcArrowRight2CC
-                      width={16}
-                      height={16}
-                      color={colors2024['neutral-body']}
-                    /> */}
-                    </View>
-                  ) : null}
+                <View>
+                  <Text style={styles.value}>
+                    ${splitNumberByStep(Number(tpTriggerPx))}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+            {slTriggerPx ? (
+              <View style={styles.listItem}>
+                <View style={styles.listItemMain}>
+                  <Text style={styles.label}>
+                    {t('page.perpsDetail.PerpsPosition.slPrice')}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.value}>
+                    ${splitNumberByStep(Number(slTriggerPx))}
+                  </Text>
                 </View>
               </View>
             ) : null}
@@ -271,39 +247,39 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 </Text>
               </View>
             </View>
+
             <View style={styles.listItem}>
-              <TouchableOpacity
-                onPress={() => {
-                  showTipsPopup({
-                    title: t(
-                      'page.perpsDetail.PerpsOpenPositionCheckPopup.fee',
-                    ),
-                    desc: `${t(
-                      'page.perpsDetail.PerpsOpenPositionCheckPopup.rabbyFeeTips',
-                    )} \n ${t(
-                      'page.perpsDetail.PerpsOpenPositionCheckPopup.providerFeeTips',
-                      {
-                        fee: formatPercent(providerFee, 4),
-                      },
-                    )}`,
-                  });
-                }}>
-                <View style={styles.listItemMain}>
-                  <Text style={styles.label}>
-                    {t('page.perpsDetail.PerpsOpenPositionCheckPopup.fee')}
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.rabbyFee')}
+                </Text>
+              </View>
+              <View style={styles.listTagRow}>
+                <View style={styles.tagContainer}>
+                  <Text style={styles.tagText}>
+                    {t('page.perpsDetail.PerpsOpenPositionCheckPopup.free')}
                   </Text>
-                  <RcIconInfoFill1CC
-                    width={15}
-                    height={15}
-                    color={colors2024['neutral-info']}
-                  />
                 </View>
-              </TouchableOpacity>
+                <Text style={styles.value}>0%</Text>
+              </View>
+            </View>
+            <View style={styles.listItem}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t(
+                    'page.perpsDetail.PerpsOpenPositionCheckPopup.providerFee',
+                  )}
+                </Text>
+              </View>
               <View>
-                <Text style={styles.value}>{formatPercent(bothFee, 4)}</Text>
+                <Text style={styles.value}>
+                  {formatPercent(providerFee, 4)}
+                </Text>
               </View>
             </View>
           </View>
+        </BottomSheetScrollView>
+        <View style={styles.footer}>
           <Button
             type="primary"
             title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.btn', {
@@ -316,8 +292,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             }}
             loading={loading}
           />
-        </AutoLockView>
-      </BottomSheetScrollView>
+        </View>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 };
@@ -326,9 +302,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     container: {
       height: '100%',
-      paddingBottom: 56,
-      paddingHorizontal: 20,
+      // paddingBottom: 56,
+      // paddingHorizontal: 20,
       // minHeight: 544,
+    },
+    scrollViewContent: {
+      paddingHorizontal: 20,
+      flex: 1,
+    },
+    footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      paddingTop: 12,
+      paddingHorizontal: 16,
+      paddingBottom: 56,
     },
     title: {
       fontFamily: 'SF Pro Rounded',
@@ -412,6 +398,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
+    },
+    tagContainer: {
+      paddingVertical: 2,
+      paddingHorizontal: 6,
+      backgroundColor: colors2024['brand-light-1'],
+      borderRadius: 4,
+    },
+    listTagRow: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    tagText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      color: colors2024['brand-default'],
     },
   };
 });

@@ -44,6 +44,12 @@ export const PerpsFooter: React.FC<{
           <View style={styles.btnContainer}>
             <Button
               type="primary"
+              buttonStyle={{
+                backgroundColor: colors2024['green-light-4'],
+              }}
+              titleStyle={{
+                color: colors2024['green-default'],
+              }}
               title={t('page.perpsDetail.action.long')}
               onPress={onLongPress}
             />
@@ -51,6 +57,12 @@ export const PerpsFooter: React.FC<{
           <View style={styles.btnContainer}>
             <Button
               type="primary"
+              buttonStyle={{
+                backgroundColor: colors2024['red-light-1'],
+              }}
+              titleStyle={{
+                color: colors2024['red-default'],
+              }}
               title={t('page.perpsDetail.action.short')}
               onPress={onShortPress}
             />

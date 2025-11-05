@@ -275,6 +275,9 @@ export const PerpsChart: React.FC<{
   // Subscribe to real-time candle updates
   useEffect(() => {
     if (appState === 'active') {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
       const unsubscribe = subscribeCandle();
       unsubscribeRef.current = unsubscribe;
       return () => {
@@ -286,7 +289,7 @@ export const PerpsChart: React.FC<{
         unsubscribeRef.current = () => {};
       }
     }
-  }, [subscribeCandle, appState]);
+  }, [subscribeCandle, appState, market.name]);
 
   useEffect(() => {
     if (isReady && lineTagInfo) {
@@ -294,18 +297,18 @@ export const PerpsChart: React.FC<{
     }
   }, [isReady, lineTagInfo]);
 
-  // Reset chart when market changes
-  useEffect(() => {
-    // Reset chart state
-    setIsReady(false);
-    chartIsReadyRef.current = false;
+  // // Reset chart when market changes
+  // useEffect(() => {
+  //   // Reset chart state
+  //   setIsReady(false);
+  //   chartIsReadyRef.current = false;
 
-    // Unsubscribe from previous market
-    if (unsubscribeRef.current) {
-      unsubscribeRef.current();
-      unsubscribeRef.current = () => {};
-    }
-  }, [market.name]);
+  //   // Unsubscribe from previous market
+  //   if (unsubscribeRef.current) {
+  //     unsubscribeRef.current();
+  //     unsubscribeRef.current = () => {};
+  //   }
+  // }, [market.name]);
 
   return (
     <View style={styles.chart}>

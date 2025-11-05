@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Keyboard,
@@ -17,6 +17,7 @@ import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
+import IconPerpDelete from '@/assets2024/icons/perps/IconTagClearCC.svg';
 import { toast } from '@/components2024/Toast';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
 
@@ -24,35 +25,40 @@ interface Props {
   coin: string;
   entryPrice?: number;
   markPrice: number;
+  initTpOrSlPrice: string;
   direction: 'Long' | 'Short';
   size: number;
+  margin: number;
   liqPrice: number;
   pxDecimals: number;
   szDecimals: number;
   actionType: 'tp' | 'sl';
   type: 'openPosition' | 'hasPosition';
   handleSetAutoClose: (price: string) => Promise<void>;
+  handleCancelAutoClose: () => Promise<void>;
 }
 
 export const PerpEditTpSlPriceTag: React.FC<Props> = ({
-  coin: _coin,
+  coin,
   entryPrice,
   markPrice,
+  initTpOrSlPrice,
   direction,
   size,
+  margin,
   liqPrice,
   pxDecimals,
   szDecimals,
   actionType,
   type,
   handleSetAutoClose,
+  handleCancelAutoClose,
 }) => {
-  const { t } = useTranslation();
   const [modalVisible, setModalVisible] = React.useState(false);
+  const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
-
   const {
     value: autoClosePrice,
     onChangeText: setAutoClosePrice,
@@ -65,35 +71,29 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   const autoCloseInputRef = React.useRef<any>(null);
   const gainInputRef = React.useRef<any>(null);
 
+  const disableEdit = useMemo(() => {
+    return !size || !margin;
+  }, [size, margin]);
+
   // Calculate gain percentage from price
-  const calculatedGainPct = React.useMemo(() => {
+  const calculatedAbsPnl = React.useMemo(() => {
     if (!autoClosePrice) {
       return '';
     }
-    const priceDifference = Math.abs(Number(autoClosePrice) - markPrice);
-    const pnlUsdValue = priceDifference * size;
-    const costValue =
-      type === 'hasPosition'
-        ? (entryPrice || markPrice) * size
-        : markPrice * size;
-    const pnlPctValue = (pnlUsdValue / costValue) * 100;
-
-    return pnlPctValue.toFixed(2);
-  }, [autoClosePrice, entryPrice, markPrice, size, type]);
+    const pnlUsdValue = Math.abs(Number(autoClosePrice) - markPrice) * size;
+    return pnlUsdValue;
+  }, [autoClosePrice, markPrice, size]);
 
   // Handle price input change
-  const handlePriceChange = useMemoizedFn((value: string) => {
+  const handlePriceChange = useMemoizedFn((v: string) => {
     setIsEditingPrice(true);
-    setAutoClosePrice(value);
+    setAutoClosePrice(v);
     // Auto update gain percentage
+    const value = v.startsWith('$') ? v.slice(1) : v;
     if (value) {
       const priceDifference = Math.abs(Number(value) - markPrice);
       const pnlUsdValue = priceDifference * size;
-      const costValue =
-        type === 'hasPosition'
-          ? (entryPrice || markPrice) * size
-          : markPrice * size;
-      const pnlPctValue = (pnlUsdValue / costValue) * 100;
+      const pnlPctValue = (pnlUsdValue / margin) * 100;
       setGainPct(pnlPctValue.toFixed(2));
     } else {
       setGainPct('');
@@ -102,38 +102,45 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   });
 
   // Handle gain percentage input change
-  const handleGainPctChange = useMemoizedFn((value: string) => {
-    if (isEditingPrice) {
-      return;
-    }
+  const handleGainPctChange = useMemoizedFn((v: string) => {
+    try {
+      if (isEditingPrice) {
+        return;
+      }
 
-    setGainPct(value);
+      const value = v.replace(/[^0-9.]/g, '');
 
-    if (!value) {
-      setAutoClosePrice('');
-      return;
-    }
+      setGainPct(value);
 
-    const pctValue = Number(value) / 100;
-    const costValue =
-      type === 'hasPosition'
-        ? (entryPrice || markPrice) * size
-        : markPrice * size;
-    const pnlUsdValue = costValue * pctValue;
-    const priceDifference = pnlUsdValue / size;
+      if (!value) {
+        setAutoClosePrice('');
+        return;
+      }
 
-    if (actionType === 'tp') {
-      const newPrice =
-        direction === 'Long'
-          ? markPrice + priceDifference
-          : markPrice - priceDifference;
-      setAutoClosePrice(newPrice.toFixed(pxDecimals));
-    } else {
-      const newPrice =
-        direction === 'Long'
-          ? markPrice - priceDifference
-          : markPrice + priceDifference;
-      setAutoClosePrice(newPrice.toFixed(pxDecimals));
+      const pctValue = Number(value) / 100;
+      const costValue = margin;
+      const pnlUsdValue = costValue * pctValue;
+      const priceDifference = pnlUsdValue / size;
+
+      // Check decimal places: less than (6 - szDecimals)
+      const maxDecimals = 6 - szDecimals;
+      const decimalPlaces = Math.max(0, maxDecimals - 1);
+
+      if (actionType === 'tp') {
+        const newPrice =
+          direction === 'Long'
+            ? markPrice + priceDifference
+            : markPrice - priceDifference;
+        setAutoClosePrice(newPrice.toFixed(decimalPlaces));
+      } else {
+        const newPrice =
+          direction === 'Long'
+            ? markPrice - priceDifference
+            : markPrice + priceDifference;
+        setAutoClosePrice(newPrice.toFixed(decimalPlaces));
+      }
+    } catch (error) {
+      console.error('Failed to handle gain percentage change:', error);
     }
   });
 
@@ -235,7 +242,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
         toast.error(error.message || 'Failed to set auto close');
       },
       onSuccess() {
-        // onClose?.();
+        setModalVisible(false);
       },
     },
   );
@@ -247,6 +254,17 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
       cancel();
     }
   }, [cancel, setAutoClosePrice, modalVisible]);
+
+  React.useEffect(() => {
+    if (modalVisible) {
+      if (initTpOrSlPrice) {
+        handlePriceChange(initTpOrSlPrice);
+      } else {
+        handleGainPctChange(actionType === 'tp' ? '5' : '4.5');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalVisible]);
 
   useEffect(() => {
     if (modalVisible) {
@@ -260,28 +278,61 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     <>
       <TouchableOpacity
         style={styles.tagContainer}
-        onPress={() => setModalVisible(true)}>
-        <Text style={styles.tagText}>
-          {displayedAutoClosePrice ? `$${displayedAutoClosePrice}` : '-'}
+        onPress={async () => {
+          if (initTpOrSlPrice) {
+            await handleCancelAutoClose();
+            return;
+          }
+
+          if (disableEdit) {
+            toast.error(t('page.perps.PerpsAutoCloseModal.noPosition'));
+            return;
+          }
+          setModalVisible(true);
+        }}>
+        <Text style={[styles.tagText, disableEdit && styles.tagTextDisabled]}>
+          {initTpOrSlPrice ? `$${initTpOrSlPrice}` : '-'}
         </Text>
-        <IconPerpEdit
-          width={16}
-          height={16}
-          color={colors2024['brand-default']}
-        />
+        {initTpOrSlPrice ? (
+          <IconPerpDelete
+            width={16}
+            height={16}
+            color={colors2024['neutral-secondary']}
+          />
+        ) : (
+          <IconPerpEdit
+            width={16}
+            height={16}
+            color={
+              disableEdit
+                ? colors2024['brand-disable']
+                : colors2024['brand-default']
+            }
+          />
+        )}
       </TouchableOpacity>
       <Modal
         transparent={true}
         visible={modalVisible}
         animationType="fade"
-        onRequestClose={() => setModalVisible(false)}>
+        onRequestClose={() => {
+          if (loading) {
+            return;
+          }
+          setModalVisible(false);
+        }}>
         <KeyboardAvoidingView
           style={styles.keyboardAvoidView}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <TouchableOpacity
             activeOpacity={1}
             style={styles.modalOverlay}
-            onPress={() => setModalVisible(false)}>
+            onPress={() => {
+              if (loading) {
+                return;
+              }
+              setModalVisible(false);
+            }}>
             <TouchableOpacity
               onPress={event => {
                 Keyboard.dismiss();
@@ -292,14 +343,12 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
               <View style={styles.inner}>
                 <View style={styles.header}>
                   <Text style={styles.title}>
-                    {actionType === 'tp'
-                      ? t('page.perpsDetail.PerpsAutoCloseModal.takeProfitWhen')
-                      : t('page.perpsDetail.PerpsAutoCloseModal.stopLossWhen')}
+                    {direction} {coin}-USD
                   </Text>
                   {type === 'openPosition' ? (
                     <Text style={styles.subTitle}>
                       {t('page.perpsDetail.PerpsAutoCloseModal.currentPrice', {
-                        price: splitNumberByStep(markPrice),
+                        price: `$${splitNumberByStep(markPrice)}`,
                       })}
                     </Text>
                   ) : (
@@ -307,16 +356,21 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                       {t(
                         'page.perpsDetail.PerpsAutoCloseModal.EntryAndCurrentPrice',
                         {
-                          entryPrice: splitNumberByStep(
+                          entryPrice: `$${splitNumberByStep(
                             entryPrice || markPrice,
-                          ),
-                          price: splitNumberByStep(markPrice),
+                          )}`,
+                          price: `$${splitNumberByStep(markPrice)}`,
                         },
                       )}
                     </Text>
                   )}
                 </View>
                 <View style={styles.body}>
+                  <Text style={styles.bodyTitle}>
+                    {actionType === 'tp'
+                      ? t('page.perpsDetail.PerpsAutoCloseModal.takeProfitWhen')
+                      : t('page.perpsDetail.PerpsAutoCloseModal.stopLossWhen')}
+                  </Text>
                   <View style={styles.formRow}>
                     <View style={styles.formItemHalf}>
                       <Text style={styles.formItemLabel}>
@@ -326,9 +380,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                         keyboardType="numeric"
                         style={[
                           styles.input,
-                          priceValidation.error && autoClosePrice !== ''
-                            ? styles.inputError
-                            : null,
+                          priceValidation.error ? styles.inputError : null,
                         ]}
                         placeholder="$0"
                         value={displayedAutoClosePrice}
@@ -346,9 +398,12 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                       <View style={styles.gainInputWrapper}>
                         <TextInput
                           keyboardType="numeric"
-                          style={styles.input}
+                          style={[
+                            styles.input,
+                            priceValidation.error ? styles.inputError : null,
+                          ]}
                           placeholder="0"
-                          value={gainPct}
+                          value={priceValidation.error ? '-' : gainPct}
                           onChangeText={handleGainPctChange}
                           ref={gainInputRef}
                         />
@@ -385,7 +440,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                             },
                           ]}>
                           {actionType === 'tp' ? '+' : '-'}
-                          {gainPct}%
+                          {formatUsdValue(calculatedAbsPnl)}
                         </Text>
                       </>
                     ) : null}
@@ -427,6 +482,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
+  },
+  tagTextDisabled: {
+    color: colors2024['brand-disable'],
   },
   keyboardAvoidView: {
     height: '100%',
@@ -488,9 +546,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
-    gap: 16,
+    gap: 8,
     alignItems: 'flex-start',
     marginBottom: 24,
+  },
+
+  bodyTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    lineHeight: 22,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    textAlign: 'left',
   },
 
   formRow: {

@@ -2259,6 +2259,7 @@
       "title": "Perps",
       "searchPerpsPopup": {
         "searchPlaceholder": "Search Perps",
+        "searchPosition": "Search Position",
         "openPosition": "Open Position",
         "searchPerps": "Search Perps"
       },
@@ -2351,6 +2352,7 @@
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
       "PerpsAutoCloseModal": {
+        "noPosition": "You must input margin first.",
         "takeProfitTipsLong": "Take profit price must be higher than current price",
         "stopLossTipsLong": "Stop loss price must be lower than current price",
         "takeProfitTipsShort": "Take profit price must be lower than current price",
@@ -2457,13 +2459,27 @@
         "desc": "Trading perpetual contracts involves significant risks, including the possibility of losing your investment and collateral rapidly due to high leverage and market volatility. Such trading may not be suitable for all users. Prices may be affected by funding rates and liquidity, and you could be automatically liquidated without prior notice. Market data is provided by Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "Close {{coin}} {{direction}} Position",
-        "positionSize": "Position Size",
-        "pnl": "PNL",
-        "closeBtn": "Close {{direction}}",
-        "fee": "Fee:",
+        "title": "Close Position",
+        "amount": "Amount",
+        "total": "Total",
+        "minimumWarning": "Minimum mount is {{percent}}%",
+        "closedPnl": "Closed PNL:",
+        "confirm": "Confirm",
+        "fee": "Fee",
         "rabbyFeeTips": "Rabby fee: 0.04%",
         "providerFeeTips": "Hyperliquid fee: {{fee}}"
+      },
+      "PerpsEditMarginPopup": {
+        "title": "Adjust margin",
+        "currentPrice": "Current Price",
+        "addMargin": "Add Margin",
+        "reduceMargin": "Reduce Margin",
+        "amountToAdd": "Amount to add",
+        "amountToReduce": "Amount to reduce",
+        "liqPrice": "Liq. Price:",
+        "insufficientMargin": "Insufficient margin to reduce position.",
+        "perpsBalance": "Perps Balance",
+        "available": "available"
       },
       "PerpsOpenPositionPopup": {
         "margin": "Margin",
@@ -2494,6 +2510,9 @@
         "tpPrice": "Take-Profit Price",
         "fee": "Fee",
         "btn": "Open {{direction}} Position",
+        "free": "Free",
+        "rabbyFee": "Rabby fee",
+        "providerFee": "Hyperliquid fee",
         "rabbyFeeTips": "Rabby fee: 0%",
         "providerFeeTips": "Hyperliquid fee: {{fee}}",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",

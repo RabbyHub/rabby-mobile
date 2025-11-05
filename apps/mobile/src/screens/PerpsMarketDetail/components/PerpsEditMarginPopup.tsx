@@ -1,18 +1,22 @@
 /* eslint-disable react-native/no-inline-styles */
-import { AssetAvatar } from '@/components';
+import { AssetAvatar, Tip } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatPerpsUsdValue } from '@/utils/number';
-import { calLiquidationPrice, formatPerpsPct } from '@/utils/perps';
+import {
+  formatPerpsUsdValue,
+  formatUsdValue,
+  splitNumberByStep,
+} from '@/utils/number';
+import { calLiquidationPrice, calTransferMarginRequired } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -22,67 +26,54 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
-
 const isAndroid = Platform.OS === 'android';
-import { StepInput } from '@/components2024/StepInput';
-import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import BigNumber from 'bignumber.js';
 import { useUsdInput } from '@/hooks/useUsdInput';
-import { RcIconInfoFill1CC } from '@/assets/icons/common';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
-import { formatUsdValueKMB } from '@/screens/Home/utils/price';
-import { MarketData } from '@/hooks/perps/usePerpsStore';
-import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsSlider } from './PerpsSlider';
+import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
+import { toast } from '@/components/Toast';
 
-export const PerpsOpenPositionPopup: React.FC<{
-  visible?: boolean;
+export const PerpsEditMarginPopup: React.FC<{
+  visible: boolean;
   direction: 'Long' | 'Short';
-  providerFee: number;
   coin: string;
   coinLogo?: string;
   markPrice: number;
-  leverageRang: [number, number]; // [min, max]
+  entryPrice: number;
+  leverage: number;
+  leverageMax: number;
   pxDecimals: number;
   szDecimals: number;
-  maxNtlValue: number;
   availableBalance: number;
+  liquidationPx: number;
+  positionSize: number;
+  marginUsed: number;
+  pnlPercent: number;
+  pnl: number;
+  handlePressRiskTag: () => void;
   onCancel: () => void;
-  onConfirm: () => void;
-  marketDataItem: MarketData;
-  handleOpenPosition: (params: {
-    coin: string;
-    size: string;
-    leverage: number;
-    direction: 'Long' | 'Short';
-    midPx: string;
-    tpTriggerPx?: string;
-    slTriggerPx?: string;
-  }) => Promise<
-    | {
-        oid: number;
-        avgPx: string;
-        totalSz: string;
-      }
-    | undefined
-  >;
+  onConfirm: (action: 'add' | 'reduce', margin: number) => Promise<void>;
 }> = ({
   visible,
-  direction: _direction,
-  providerFee,
+  direction,
   coin,
   coinLogo,
   markPrice,
-  leverageRang,
+  leverage,
+  leverageMax,
   pxDecimals,
+  entryPrice,
   szDecimals,
   availableBalance,
   onCancel,
   onConfirm,
-  handleOpenPosition,
-  maxNtlValue,
-  marketDataItem,
+  liquidationPx,
+  positionSize,
+  marginUsed,
+  pnlPercent,
+  pnl,
+  handlePressRiskTag,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -91,27 +82,15 @@ export const PerpsOpenPositionPopup: React.FC<{
   });
 
   const { t } = useTranslation();
-  const [_leveragePopupVisible, _setLeveragePopupVisible] =
-    React.useState(false);
-  const [isReviewMode, setIsReviewMode] = React.useState(false);
-  const { showTipsPopup } = useTipsPopup();
-  const [direction, setSelectedDirection] = React.useState<'Long' | 'Short'>(
-    _direction,
+  const [action, setAction] = React.useState<'add' | 'reduce'>(
+    'add' as 'add' | 'reduce',
   );
+
   const {
     value: margin,
     displayedValue,
     onChangeText: setMargin,
   } = useUsdInput();
-  const [selectedLeverage, setLeverage] = React.useState<number | undefined>(5);
-  const leverage = selectedLeverage || 1;
-  const [autoClose, setAutoClose] = React.useState({
-    isOpen: false,
-    tpTriggerPx: '',
-    slTriggerPx: '',
-  });
-  const [tpTriggerPx, setTpTriggerPx] = React.useState<string>('');
-  const [slTriggerPx, setSlTriggerPx] = React.useState<string>('');
 
   // Calculate slider percentage
   const sliderPercentage = React.useMemo(() => {
@@ -122,55 +101,52 @@ export const PerpsOpenPositionPopup: React.FC<{
     return Math.min((marginValue / availableBalance) * 100, 100);
   }, [margin, availableBalance]);
 
-  // 计算交易金额
-  const tradeAmount = React.useMemo(() => {
-    const marginValue = Number(margin) || 0;
-    return marginValue * leverage;
-  }, [margin, leverage]);
-
-  // 计算交易数量
-  const tradeSize = React.useMemo(() => {
-    if (!markPrice || !tradeAmount) {
-      return '0';
-    }
-    return Number(tradeAmount / markPrice).toFixed(szDecimals);
-  }, [markPrice, tradeAmount, szDecimals]);
-
   // 计算预估清算价格
   const estimatedLiquidationPrice = React.useMemo(() => {
-    if (!markPrice || !leverage) {
-      return 0;
+    if (!margin || margin === '0') {
+      return '';
     }
-    const maxLeverage = leverageRang[1];
+    const marginNormalized = margin.startsWith('$') ? margin.slice(1) : margin;
+    const newMargin =
+      action === 'add'
+        ? Number(marginUsed) + Number(marginNormalized)
+        : Number(marginUsed) - Number(marginNormalized);
     return calLiquidationPrice(
       markPrice,
-      Number(margin),
+      newMargin,
       direction,
-      Number(tradeSize),
+      Number(positionSize),
       leverage,
-      maxLeverage,
+      leverageMax,
     ).toFixed(pxDecimals);
   }, [
+    marginUsed,
     markPrice,
+    action,
     leverage,
-    leverageRang,
+    leverageMax,
     margin,
     direction,
-    tradeSize,
+    positionSize,
     pxDecimals,
   ]);
 
-  const bothFee = React.useMemo(() => {
-    return providerFee;
-  }, [providerFee]);
+  const availableToReduce = useMemo(() => {
+    // transfer_margin_required = max(initial_margin_required, 0.1 * total_position_value)
+    const transferMarginRequired = calTransferMarginRequired(
+      entryPrice,
+      markPrice,
+      positionSize,
+      leverage,
+    );
+    return marginUsed - transferMarginRequired;
+  }, [entryPrice, markPrice, positionSize, leverage, marginUsed]);
 
   // 验证 margin 输入
   const marginValidation = React.useMemo(() => {
     const marginValue = Number(margin) || 0;
-    const usdValue = marginValue * leverage;
-    const sizeValue = Number(tradeSize) * markPrice;
-    const maxValue = maxNtlValue || PERPS_MAX_NTL_VALUE;
 
+    const available = action === 'add' ? availableBalance : availableToReduce;
     if (marginValue === 0) {
       return { isValid: false, error: null };
     }
@@ -185,7 +161,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       };
     }
 
-    if (marginValue > availableBalance) {
+    if (marginValue > available) {
       return {
         isValid: false,
         error: 'insufficient_balance',
@@ -195,111 +171,27 @@ export const PerpsOpenPositionPopup: React.FC<{
       };
     }
 
-    if (usdValue < PERPS_MINI_USD_VALUE || sizeValue < PERPS_MINI_USD_VALUE) {
-      // 最小订单限制 $10
-      return {
-        isValid: false,
-        error: 'minimum_limit',
-        errorMessage: t(
-          'page.perpsDetail.PerpsOpenPositionPopup.minimumOrderSize',
-        ),
-      };
-    }
-
-    if (usdValue > maxValue) {
-      return {
-        isValid: false,
-        error: 'maximum_limit',
-        errorMessage: t(
-          'page.perpsDetail.PerpsOpenPositionPopup.maximumOrderSize',
-          {
-            amount: `$${maxValue}`,
-          },
-        ),
-      };
-    }
-
     return { isValid: true, error: null };
-  }, [
-    margin,
-    leverage,
-    tradeSize,
-    markPrice,
-    maxNtlValue,
-    availableBalance,
-    t,
-  ]);
-
-  const leverageRangeValidation = React.useMemo(() => {
-    if (selectedLeverage == null || Number.isNaN(+selectedLeverage)) {
-      return {
-        error: true,
-        errorMessage: t('page.perps.leverageRangeMinError', {
-          min: leverageRang[0],
-        }),
-      };
-    }
-    if (selectedLeverage > leverageRang[1]) {
-      return {
-        error: true,
-        errorMessage: t('page.perps.leverageRangeMaxError', {
-          max: leverageRang[1],
-        }),
-      };
-    }
-
-    if (selectedLeverage < leverageRang[0]) {
-      return {
-        error: true,
-        errorMessage: t('page.perps.leverageRangeMinError', {
-          min: leverageRang[0],
-        }),
-      };
-    }
-    return { error: false, errorMessage: '' };
-  }, [selectedLeverage, leverageRang, t]);
+  }, [margin, availableBalance, t, action, availableToReduce]);
 
   React.useEffect(() => {
     if (!visible) {
       setMargin('');
-      setLeverage(Math.min(leverageRang[1], 5));
-      setAutoClose({
-        isOpen: false,
-        tpTriggerPx: '',
-        slTriggerPx: '',
-      });
-      _setLeveragePopupVisible(false);
-      setIsReviewMode(false);
     }
-  }, [visible, leverageRang, setMargin]);
+  }, [visible, setMargin]);
 
   useEffect(() => {
-    setSelectedDirection(_direction);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setAction('add');
   }, [visible]);
 
-  const openPosition = useMemoizedFn(async () => {
-    await handleOpenPosition({
-      coin,
-      size: tradeSize,
-      leverage,
-      direction,
-      midPx: markPrice.toString(),
-      tpTriggerPx:
-        autoClose.isOpen && autoClose.tpTriggerPx
-          ? autoClose.tpTriggerPx
-          : undefined,
-      slTriggerPx:
-        autoClose.isOpen && autoClose.slTriggerPx
-          ? autoClose.slTriggerPx
-          : undefined,
-    });
-    onConfirm();
-  });
+  const canReduce = useMemo(() => {
+    return availableToReduce > 0.01;
+  }, [availableToReduce]);
 
   // Handle slider change
   const handleSliderChange = useMemoizedFn((value: number) => {
-    const newMargin = (availableBalance * value) / 100;
+    const available = action === 'add' ? availableBalance : availableToReduce;
+    const newMargin = (available * value) / 100;
     setMargin(
       new BigNumber(newMargin).decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed(),
     );
@@ -307,16 +199,8 @@ export const PerpsOpenPositionPopup: React.FC<{
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
-    return height - 100;
+    return Math.min(height - 100, 610);
   }, [height]);
-
-  const isUp =
-    Number(marketDataItem.markPx) - Number(marketDataItem.prevDayPx) > 0;
-  const absPnlUsd = Math.abs(
-    Number(marketDataItem.markPx) - Number(marketDataItem.prevDayPx),
-  );
-  const absPnlPct = Math.abs(absPnlUsd / Number(marketDataItem.prevDayPx));
-  const pnlText = `${isUp ? '+' : '-'}${formatPerpsPct(absPnlPct)}`;
 
   useEffect(() => {
     if (visible) {
@@ -326,11 +210,30 @@ export const PerpsOpenPositionPopup: React.FC<{
     }
   }, [visible]);
 
+  const {
+    runAsync: handleConfirm,
+    cancel,
+    loading,
+  } = useRequest(
+    async () => {
+      await onConfirm(action, Number(margin));
+    },
+    {
+      manual: true,
+      onError(error: any) {
+        console.error('Failed to update margin:', error);
+        toast.error(error?.message || 'Failed to update margin');
+      },
+      onSuccess() {
+        onCancel();
+      },
+    },
+  );
+
   return (
     <>
       <AppBottomSheetModal
         ref={modalRef}
-        // snapPoints={snapPoints}
         {...makeBottomSheetProps({
           colors: colors2024,
           linearGradientType: 'bg1',
@@ -344,98 +247,113 @@ export const PerpsOpenPositionPopup: React.FC<{
             contentContainerStyle={styles.scrollViewContent}>
             <View>
               <Text style={styles.title}>
-                {t('page.perpsDetail.PerpsOpenPositionPopup.title', {
-                  defaultValue: 'Open Position',
-                })}
+                {t('page.perpsDetail.PerpsEditMarginPopup.title')}
               </Text>
             </View>
-
-            {/* Long/Short Toggle */}
+            <Text style={styles.currentPriceTitle}>
+              {t('page.perpsDetail.PerpsEditMarginPopup.currentPrice')}:
+              {` $${splitNumberByStep(Number(markPrice))}`}
+            </Text>
             <View style={styles.directionToggle}>
               <TouchableOpacity
                 style={[
                   styles.directionButton,
                   styles.directionButtonLeft,
-                  direction === 'Long' && {
-                    backgroundColor: colors2024['green-light-4'],
+                  action === 'add' && {
+                    backgroundColor: colors2024['brand-light-1'],
                     borderRadius: 8,
                   },
                 ]}
-                onPress={() => setSelectedDirection('Long')}>
+                onPress={() => setAction('add')}>
                 <Text
                   style={[
                     styles.directionButtonText,
-                    direction === 'Long' && {
-                      color: colors2024['green-default'],
+                    action === 'add' && {
+                      color: colors2024['brand-default'],
                     },
                   ]}>
-                  {t('page.perpsDetail.action.long')}
+                  {t('page.perpsDetail.PerpsEditMarginPopup.addMargin')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.directionButton,
                   styles.directionButtonRight,
-                  direction === 'Short' && {
-                    backgroundColor: colors2024['red-light-1'],
+                  action === 'reduce' && {
+                    backgroundColor: colors2024['brand-light-1'],
                     borderRadius: 8,
                   },
                 ]}
-                onPress={() => setSelectedDirection('Short')}>
+                onPress={() => setAction('reduce')}>
                 <Text
                   style={[
                     styles.directionButtonText,
-                    direction === 'Short' && {
-                      color: colors2024['red-default'],
+                    action === 'reduce' && {
+                      color: colors2024['brand-default'],
                     },
                   ]}>
-                  {t('page.perpsDetail.action.short')}
+                  {t('page.perpsDetail.PerpsEditMarginPopup.reduceMargin')}
                 </Text>
               </TouchableOpacity>
             </View>
 
             {/* Coin Info */}
             <View style={styles.card}>
-              <AssetAvatar
-                logo={marketDataItem.logoUrl}
-                logoStyle={styles.icon}
-                size={46}
-              />
-              <View style={styles.content}>
-                <View style={styles.row}>
-                  <View style={styles.nameContainer}>
-                    <Text style={styles.name}>{marketDataItem.name}</Text>
-                  </View>
-                  <Text style={styles.price}>
-                    {' '}
-                    {`$${marketDataItem.markPx}`}
-                  </Text>
+              <View style={styles.leftSection}>
+                <View style={styles.coinInfoRow}>
+                  <AssetAvatar logo={coinLogo} size={28} />
+                  <Text style={styles.coinName}>{coin}</Text>
                 </View>
-                <View style={styles.row}>
-                  <View style={styles.infoContainer}>
-                    <Text style={styles.volText}>
-                      {marketDataItem.maxLeverage}x
-                    </Text>
-                    <Text style={styles.volText}>|</Text>
-                    <Text style={styles.volText}>
-                      VOL: {formatUsdValueKMB(marketDataItem.dayNtlVlm || 0)}
-                    </Text>
-                  </View>
-                  <Text
+                <View style={styles.tagRow}>
+                  <View
                     style={[
-                      styles.priceChange,
-                      isUp ? null : styles.priceChangeDown,
+                      styles.leverageTag,
+                      {
+                        backgroundColor:
+                          direction === 'Long'
+                            ? colors2024['green-light-4']
+                            : colors2024['red-light-1'],
+                      },
                     ]}>
-                    {pnlText}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.leverageText,
+                        direction === 'Long'
+                          ? styles.longText
+                          : styles.shortText,
+                      ]}>
+                      {direction} {`${leverage}x`}
+                    </Text>
+                  </View>
+                  <DistanceToLiquidationTag
+                    liquidationPrice={liquidationPx}
+                    markPrice={markPrice}
+                    onPress={handlePressRiskTag}
+                  />
                 </View>
+              </View>
+              <View style={styles.rightSection}>
+                <Text style={styles.priceText}>
+                  {formatUsdValue(Number(marginUsed))}
+                </Text>
+                <Text
+                  style={[
+                    styles.pnlText,
+                    pnl >= 0 ? styles.pnlTextUp : styles.pnlTextDown,
+                  ]}>
+                  {pnl >= 0 ? '+' : '-'}${Math.abs(pnl || 0).toFixed(2)} (
+                  {pnl >= 0 ? '+' : ''}
+                  {pnlPercent.toFixed(2)}%)
+                </Text>
               </View>
             </View>
 
             {/* Margin Section */}
             <View style={styles.marginSection}>
               <Text style={styles.marginLabel}>
-                {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
+                {action === 'add'
+                  ? t('page.perpsDetail.PerpsEditMarginPopup.amountToAdd')
+                  : t('page.perpsDetail.PerpsEditMarginPopup.amountToReduce')}
               </Text>
 
               {/* Input Field */}
@@ -460,13 +378,25 @@ export const PerpsOpenPositionPopup: React.FC<{
                 </View>
               ) : (
                 <View style={styles.marginAvailableWrapper}>
-                  <Text style={styles.marginAvailable}>
-                    {formatPerpsUsdValue(
-                      availableBalance,
-                      BigNumber.ROUND_DOWN,
-                    )}{' '}
-                    {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
-                  </Text>
+                  {action === 'add' ? (
+                    <Text style={styles.marginAvailable}>
+                      {t('page.perpsDetail.PerpsEditMarginPopup.perpsBalance')}
+                      {': '}
+                      {formatPerpsUsdValue(
+                        availableBalance,
+                        BigNumber.ROUND_DOWN,
+                      )}
+                    </Text>
+                  ) : (
+                    <Text style={styles.marginAvailable}>
+                      {t('page.perpsDetail.PerpsEditMarginPopup.available')}
+                      {': '}
+                      {formatPerpsUsdValue(
+                        availableToReduce,
+                        BigNumber.ROUND_DOWN,
+                      )}
+                    </Text>
+                  )}
                 </View>
               )}
 
@@ -477,160 +407,52 @@ export const PerpsOpenPositionPopup: React.FC<{
                 showPercentage={true}
               />
             </View>
-            <View style={styles.list}>
-              <View style={[styles.listItem, styles.stepInputContainer]}>
-                <View style={styles.listItemMain}>
-                  <Text
-                    style={[
-                      styles.label,
-                      leverageRangeValidation.errorMessage
-                        ? styles.hasError
-                        : null,
-                    ]}>
-                    {t('page.perpsDetail.PerpsOpenPositionPopup.leverage')}
-                    <Text
-                      style={[
-                        styles.labelInfo,
-                        leverageRangeValidation.errorMessage
-                          ? styles.hasError
-                          : null,
-                      ]}>
-                      （{leverageRang[0]}-{leverageRang[1]}x）
-                    </Text>
-                  </Text>
-                </View>
-                <View>
-                  <StepInput
-                    suffix="x"
-                    value={selectedLeverage}
-                    onChange={setLeverage}
-                    step={1}
-                    inputStyle={
-                      leverageRangeValidation.error ? styles.hasError : null
-                    }
-                    min={leverageRang[0]}
-                    max={leverageRang[1]}
-                    as="BottomSheetTextInput"
-                  />
-                </View>
-              </View>
-              <View style={styles.listItem}>
-                <TouchableOpacity
-                  onPress={() => {
-                    showTipsPopup({
-                      title: t('page.perpsDetail.PerpsOpenPositionPopup.size'),
-                      desc: t(
-                        'page.perpsDetail.PerpsOpenPositionPopup.sizeTips',
-                      ),
-                    });
-                  }}>
-                  <View style={styles.listItemMain}>
-                    <Text style={styles.label}>
-                      {t('page.perpsDetail.PerpsOpenPositionPopup.size')}
-                    </Text>
-                    <RcIconInfoFill1CC
-                      width={15}
-                      height={15}
-                      color={colors2024['neutral-info']}
-                    />
-                  </View>
-                </TouchableOpacity>
-                <View>
-                  <Text style={styles.value}>
-                    {formatPerpsUsdValue(
-                      Number(tradeSize) * markPrice,
-                      BigNumber.ROUND_DOWN,
-                    )}{' '}
-                    = {tradeSize} {coin}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.listItem}>
-                <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhen')}
+            <View style={styles.liqPriceRow}>
+              <Text style={styles.liqPrice}>
+                {t('page.perpsDetail.PerpsEditMarginPopup.liqPrice')}
+              </Text>
+              <Text style={styles.liqPriceAmount}>
+                {`$${splitNumberByStep(Number(liquidationPx))}`}
+              </Text>
+              {margin && estimatedLiquidationPrice && (
+                <Text style={styles.liqPriceAmount}>
+                  {`→ $${splitNumberByStep(Number(estimatedLiquidationPrice))}`}
                 </Text>
-                <PerpEditTpSlPriceTag
-                  coin={coin}
-                  actionType="tp"
-                  type="openPosition"
-                  markPrice={markPrice}
-                  initTpOrSlPrice={tpTriggerPx}
-                  direction={direction}
-                  size={Number(tradeSize)}
-                  margin={Number(margin)}
-                  liqPrice={Number(estimatedLiquidationPrice)}
-                  pxDecimals={pxDecimals}
-                  szDecimals={szDecimals}
-                  handleCancelAutoClose={async () => {
-                    setTpTriggerPx('');
-                  }}
-                  handleSetAutoClose={async (price: string) => {
-                    setTpTriggerPx(price);
-                  }}
-                />
-              </View>
-              <View style={styles.listItem}>
-                <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsOpenPositionPopup.stopLossWhen')}
-                </Text>
-                <PerpEditTpSlPriceTag
-                  coin={coin}
-                  actionType="sl"
-                  type="openPosition"
-                  markPrice={markPrice}
-                  initTpOrSlPrice={slTriggerPx}
-                  direction={direction}
-                  size={Number(tradeSize)}
-                  margin={Number(margin)}
-                  liqPrice={Number(estimatedLiquidationPrice)}
-                  pxDecimals={pxDecimals}
-                  szDecimals={szDecimals}
-                  handleCancelAutoClose={async () => {
-                    setSlTriggerPx('');
-                  }}
-                  handleSetAutoClose={async (price: string) => {
-                    setSlTriggerPx(price);
-                  }}
-                />
-              </View>
+              )}
             </View>
           </BottomSheetScrollView>
           <View style={styles.footer}>
-            <Button
-              type="primary"
-              title={t('global.check')}
-              disabled={
-                !marginValidation.isValid || leverageRangeValidation.error
-              }
-              onPress={() => {
-                setIsReviewMode(true);
-              }}
-            />
+            {!canReduce && action === 'reduce' ? (
+              <Tip
+                content={t(
+                  'page.perpsDetail.PerpsEditMarginPopup.insufficientMargin',
+                )}>
+                <Button
+                  type="primary"
+                  title={t(
+                    'page.perpsDetail.PerpsEditMarginPopup.reduceMargin',
+                  )}
+                  loading={loading}
+                  disabled={true}
+                  onPress={handleConfirm}
+                />
+              </Tip>
+            ) : (
+              <Button
+                type="primary"
+                title={
+                  action === 'add'
+                    ? t('page.perpsDetail.PerpsEditMarginPopup.addMargin')
+                    : t('page.perpsDetail.PerpsEditMarginPopup.reduceMargin')
+                }
+                loading={loading}
+                disabled={!marginValidation.isValid}
+                onPress={handleConfirm}
+              />
+            )}
           </View>
         </AutoLockView>
       </AppBottomSheetModal>
-      <PerpsOpenPositionCheckPopup
-        info={{
-          coin: coin,
-          margin,
-          direction,
-          leverage,
-          tradeAmount,
-          tradeSize,
-          markPrice,
-          providerFee,
-          bothFee,
-          tpTriggerPx,
-          slTriggerPx,
-          estimatedLiquidationPrice,
-          coinLogo,
-        }}
-        visible={isReviewMode}
-        onClose={() => {
-          setIsReviewMode(false);
-        }}
-        onConfirm={openPosition}
-      />
     </>
   );
 };
@@ -708,6 +530,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 24,
       fontWeight: '900',
       color: colors2024['neutral-title-1'],
+      marginBottom: 6,
+      textAlign: 'center',
+    },
+    currentPriceTitle: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
       marginBottom: 16,
       textAlign: 'center',
     },
@@ -722,6 +553,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingTop: 12,
       paddingHorizontal: 16,
       paddingBottom: 56,
+    },
+    liqPrice: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+    },
+    liqPriceAmount: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+    },
+    liqPriceRow: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
     },
     row: {
       display: 'flex',
@@ -892,18 +743,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
     },
-    coinInfo: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 16,
-      paddingHorizontal: 16,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      borderRadius: 12,
-      marginBottom: 16,
-    },
     coinInfoLeft: {
       flex: 1,
     },
@@ -911,17 +750,40 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'flex-end',
     },
     coinName: {
-      fontSize: 18,
+      fontSize: 16,
+      lineHeight: 20,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      marginBottom: 4,
     },
     coinDetail: {
       fontSize: 14,
       fontWeight: '500',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
+    },
+    rightSection: {
+      alignItems: 'flex-end',
+      gap: 4,
+    },
+    priceText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+    },
+    pnlText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+    },
+    pnlTextUp: {
+      color: colors2024['green-default'],
+    },
+    pnlTextDown: {
+      color: colors2024['red-default'],
     },
     coinPrice: {
       fontSize: 18,
@@ -995,6 +857,49 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     priceChangeDown: {
       color: colors2024['red-default'],
     },
+    mainContent: {
+      flexDirection: 'row',
+      paddingHorizontal: 14,
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    leftSection: {
+      flexDirection: 'column',
+      gap: 4,
+      flex: 1,
+    },
+    coinInfoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    tagRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    coinNameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    leverageTag: {
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    leverageText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+    },
+    longText: {
+      color: colors2024['green-default'],
+    },
+    shortText: {
+      color: colors2024['red-default'],
+    },
     card: {
       borderRadius: 16,
       paddingVertical: 14,
@@ -1006,6 +911,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         : colors2024['neutral-bg-2'],
       display: 'flex',
       flexDirection: 'row',
+      justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: 16,
       gap: 8,

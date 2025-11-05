@@ -32,7 +32,9 @@ export const formatMarkData = (
     if (Array.isArray(meta.marginTables)) {
       for (const entry of meta.marginTables) {
         const [id, table] = entry || [];
-        if (id != null) marginTableMap[id] = table;
+        if (id != null) {
+          marginTableMap[id] = table;
+        }
       }
     }
 
@@ -41,9 +43,13 @@ export const formatMarkData = (
         const index = topAsset.id;
         const hlDataAsset = meta.universe[index];
 
-        if (!hlDataAsset) return null;
+        if (!hlDataAsset) {
+          return null;
+        }
 
-        if (hlDataAsset.isDelisted) return null;
+        if (hlDataAsset.isDelisted) {
+          return null;
+        }
 
         const m = metrics[index] || {};
         const table = marginTableMap[hlDataAsset?.marginTableId];
@@ -67,7 +73,9 @@ export const formatMarkData = (
           // 根据 markPx 推断价格精度
           pxDecimals: (() => {
             const markPx = m?.markPx;
-            if (!markPx) return 2;
+            if (!markPx) {
+              return 2;
+            }
             const parts = markPx.split('.');
             return parts.length > 1 ? parts[1].length : 2;
           })(),
@@ -105,13 +113,31 @@ export const calLiquidationPrice = (
 ) => {
   const MMR = 1 / maxLeverage / 2;
   const side = direction === 'Long' ? 1 : -1;
-  const nationalValue = margin * leverage;
+  // const nationalValue = margin * leverage;
+  const nationalValue = positionSize * markPrice;
   const maintenance_margin_required = nationalValue * MMR;
   const margin_available = margin - maintenance_margin_required;
   const liq_price =
     markPrice - (side * margin_available) / positionSize / (1 - MMR * side);
   // liq_price = price - side * margin_available / position_size / (1 - l * side)
   return liq_price;
+};
+
+// transfer_margin_required = max(initial_margin_required, 0.1 * total_position_value)
+export const calTransferMarginRequired = (
+  entryPrice: number,
+  markPrice: number,
+  positionSize: number,
+  leverage: number,
+) => {
+  const nationalValue = Number(positionSize) * Number(markPrice);
+  const initialNationalValue = Number(positionSize) * Number(entryPrice);
+  const initialMarginRequired = initialNationalValue * (1 / leverage);
+  const transferMarginRequired = Math.max(
+    initialMarginRequired,
+    0.1 * nationalValue,
+  );
+  return transferMarginRequired;
 };
 
 export const formatPerpsPct = (v: number) => `${(v * 100).toFixed(2)}%`;

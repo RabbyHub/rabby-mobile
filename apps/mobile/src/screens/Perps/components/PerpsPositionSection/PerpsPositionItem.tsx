@@ -25,7 +25,7 @@ export const PerpsPositionItem: React.FC<{
   const {
     coin,
     leverage,
-    positionValue,
+    marginUsed,
     unrealizedPnl,
     returnOnEquity,
     liquidationPx,
@@ -82,7 +82,7 @@ export const PerpsPositionItem: React.FC<{
   });
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.6}>
+    <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.mainContent}>
         {/* Left section: icon + coin info */}
         <View style={styles.leftSection}>
@@ -129,7 +129,7 @@ export const PerpsPositionItem: React.FC<{
         {/* Right section: price + PnL */}
         <View style={styles.rightSection}>
           <Text style={styles.priceText}>
-            {formatUsdValue(Number(positionValue))}
+            {formatUsdValue(Number(marginUsed))}
           </Text>
           <Text
             style={[

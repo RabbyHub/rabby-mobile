@@ -1,27 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import {
-  RcArrowRight2CC,
-  RcIconInfoFill1CC,
-  RcIconInfoFillCC,
-} from '@/assets/icons/common';
-import { AppSwitch } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { useTheme2024 } from '@/hooks/theme';
-import { useTipsPopup } from '@/hooks/useTipsPopup';
-import { formatPercent } from '@/screens/Home/utils/price';
-import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  BottomSheetFlatList,
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
-import { useMemoizedFn } from 'ahooks';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -31,21 +15,26 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { PerpsMarketSection } from '../PerpsMarketSection';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { PerpsMarketItem } from '../PerpsMarketSection/PerpsMarketItem';
 import { sortBy } from 'lodash';
-import { naviPush, naviReplace } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
 
 export const PerpSearchListPopup: React.FC<{
   visible: boolean;
+  openFromSource: 'openPosition' | 'searchPerps';
   onCancel: () => void;
   marketData: MarketData[];
   positionAndOpenOrders?: PositionAndOpenOrder[];
   onSelect: (coin: string) => void;
-}> = ({ visible, onCancel, marketData, positionAndOpenOrders, onSelect }) => {
+}> = ({
+  visible,
+  openFromSource,
+  onCancel,
+  marketData,
+  positionAndOpenOrders,
+  onSelect,
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
@@ -134,7 +123,9 @@ export const PerpSearchListPopup: React.FC<{
       <AutoLockView style={[styles.container]}>
         <View>
           <Text style={styles.title}>
-            {t('page.perps.searchPerpsPopup.searchPerps')}
+            {openFromSource === 'openPosition'
+              ? t('page.perps.searchPerpsPopup.openPosition')
+              : t('page.perps.searchPerpsPopup.searchPerps')}
           </Text>
         </View>
         <View style={styles.barContainerView}>
@@ -149,7 +140,11 @@ export const PerpSearchListPopup: React.FC<{
             inputStyle={{
               flex: inputNotActiveAndNoQuery ? 0 : 1,
             }}
-            placeholder={t('page.perps.searchPerpsPopup.searchPlaceholder')}
+            placeholder={
+              openFromSource === 'openPosition'
+                ? t('page.perps.searchPerpsPopup.searchPosition')
+                : t('page.perps.searchPerpsPopup.searchPlaceholder')
+            }
             value={search}
             onChangeText={v => {
               setSearch(v);
@@ -186,7 +181,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     container: {
       height: '100%',
-      paddingHorizontal: 20,
+      // paddingHorizontal: 20,
       // minHeight: 544,
     },
     searchBar: {
@@ -196,6 +191,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       flexDirection: 'row',
       width: '100%',
+      paddingHorizontal: 20,
       alignItems: 'center',
       marginBottom: 16,
     },
@@ -212,6 +208,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     content: {
       display: 'flex',
       flexDirection: 'column',
+      paddingHorizontal: 20,
       gap: 8,
     },
     list: {

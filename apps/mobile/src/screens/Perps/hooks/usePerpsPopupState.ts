@@ -10,6 +10,7 @@ const visibleAtom = atom({
   isShowWithdrawPopup: false,
   isShowDeleteAgentPopup: false,
   isShowSearchListPopup: false,
+  searchListOpenFrom: 'searchPerps' as 'openPosition' | 'searchPerps',
 });
 
 const selectedTokenAtom = atom<AbstractPortfolioToken | null>(null);

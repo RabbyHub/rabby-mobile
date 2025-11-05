@@ -8,8 +8,11 @@ import { calculateDistanceToLiquidation } from '@/screens/Perps/components/Perps
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
+import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
+import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 
 export const PerpsPosition: React.FC<{
   positionData?: {
@@ -17,33 +20,54 @@ export const PerpsPosition: React.FC<{
     positionValue: number;
     size: number;
     marginUsed: number;
-    side: string;
     leverage: number;
     type: 'isolated' | 'cross';
     entryPrice: number;
     liquidationPrice: string;
     autoClose: boolean;
-    direction: string;
+    direction: 'Long' | 'Short';
     pnlPercent: number;
     fundingPayments: string;
   } | null;
   coin: string;
-  hasAutoClose?: boolean;
+  coinLogo: string;
+  leverageMax: number;
+  availableBalance: number;
   tpPrice?: string;
   slPrice?: string;
+  pxDecimals: number;
+  szDecimals: number;
   markPrice: number;
-  onAutoCloseChange?(v: boolean): void;
+  handleSetAutoClose(params: {
+    coin: string;
+    tpTriggerPx: string;
+    slTriggerPx: string;
+    direction: 'Long' | 'Short';
+  }): Promise<void>;
+  handleCancelAutoClose(actionType: 'tp' | 'sl'): Promise<void>;
+  handleUpdateMargin(
+    coin: string,
+    action: 'add' | 'reduce',
+    margin: number,
+  ): Promise<void>;
 }> = ({
   positionData,
   coin,
-  hasAutoClose,
+  coinLogo,
+  leverageMax,
   tpPrice,
   slPrice,
   markPrice,
-  onAutoCloseChange,
+  availableBalance,
+  pxDecimals,
+  szDecimals,
+  handleSetAutoClose,
+  handleCancelAutoClose,
+  handleUpdateMargin,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const [editMarginVisible, setEditMarginVisible] = useState(false);
   const [showRiskPopup, setShowRiskPopup] = useState(false);
 
   const distanceLiquidation = calculateDistanceToLiquidation(
@@ -130,60 +154,95 @@ export const PerpsPosition: React.FC<{
               </Text>
             </View>
             <View>
-              <Text style={styles.value}>
-                $
-                {splitNumberByStep(
-                  Number(positionData?.marginUsed || 0).toFixed(2),
-                )}
-              </Text>
+              {positionData?.type !== 'cross' ? (
+                <TouchableOpacity
+                  style={styles.tagContainer}
+                  onPress={() => setEditMarginVisible(true)}>
+                  <Text style={[styles.tagText]}>
+                    $
+                    {splitNumberByStep(
+                      Number(positionData?.marginUsed || 0).toFixed(2),
+                    )}
+                  </Text>
+                  <IconPerpEdit
+                    width={16}
+                    height={16}
+                    color={colors2024['brand-default']}
+                  />
+                </TouchableOpacity>
+              ) : (
+                <Text style={styles.value}>
+                  $
+                  {splitNumberByStep(
+                    Number(positionData?.marginUsed || 0).toFixed(2),
+                  )}
+                </Text>
+              )}
             </View>
           </View>
-          <View style={styles.listItemContainer}>
-            <View style={styles.listItemRow}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsPosition.autoClose')}
-                </Text>
-              </View>
-              <View>
-                <AppSwitch
-                  value={hasAutoClose}
-                  circleSize={20}
-                  circleBorderWidth={2}
-                  onValueChange={onAutoCloseChange}
-                />
-              </View>
+          <View style={styles.listItem}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhen')}
+              </Text>
             </View>
-            {hasAutoClose ? (
-              <View style={styles.listSub}>
-                {tpPrice ? (
-                  <View style={styles.listSubItem}>
-                    <Text style={styles.listSubItemLabel}>
-                      {t('page.perpsDetail.PerpsPosition.tpPrice')}
-                    </Text>
-                    <Text style={styles.value}>${tpPrice || 0}</Text>
-                    {/* <RcArrowRight2CC
-                  width={16}
-                  height={16}
-                  color={colors2024['neutral-body']}
-                /> */}
-                  </View>
-                ) : null}
-                {slPrice ? (
-                  <View style={styles.listSubItem}>
-                    <Text style={styles.listSubItemLabel}>
-                      {t('page.perpsDetail.PerpsPosition.slPrice')}
-                    </Text>
-                    <Text style={styles.value}>${slPrice || 0}</Text>
-                    {/* <RcArrowRight2CC
-                  width={16}
-                  height={16}
-                  color={colors2024['neutral-body']}
-                /> */}
-                  </View>
-                ) : null}
-              </View>
-            ) : null}
+            <PerpEditTpSlPriceTag
+              coin={coin}
+              actionType="tp"
+              type="hasPosition"
+              entryPrice={positionData?.entryPrice}
+              markPrice={markPrice}
+              initTpOrSlPrice={tpPrice || ''}
+              direction={positionData?.direction as 'Long' | 'Short'}
+              size={positionData?.size}
+              margin={positionData?.positionValue}
+              liqPrice={Number(positionData?.liquidationPrice || 0)}
+              pxDecimals={pxDecimals}
+              szDecimals={szDecimals}
+              handleCancelAutoClose={async () => {
+                await handleCancelAutoClose('tp');
+              }}
+              handleSetAutoClose={async (price: string) => {
+                await handleSetAutoClose({
+                  coin,
+                  tpTriggerPx: price,
+                  slTriggerPx: '',
+                  direction: positionData?.direction as 'Long' | 'Short',
+                });
+              }}
+            />
+          </View>
+          <View style={styles.listItem}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsOpenPositionPopup.stopLossWhen')}
+              </Text>
+            </View>
+            <PerpEditTpSlPriceTag
+              coin={coin}
+              actionType="sl"
+              type="hasPosition"
+              entryPrice={positionData?.entryPrice}
+              markPrice={markPrice}
+              initTpOrSlPrice={slPrice || ''}
+              direction={positionData?.direction as 'Long' | 'Short'}
+              size={positionData?.size}
+              margin={positionData?.positionValue}
+              liqPrice={Number(positionData?.liquidationPrice || 0)}
+              pxDecimals={pxDecimals}
+              szDecimals={szDecimals}
+              handleCancelAutoClose={async () => {
+                await handleCancelAutoClose('sl');
+              }}
+              handleSetAutoClose={async (price: string) => {
+                await handleSetAutoClose({
+                  coin,
+                  tpTriggerPx: '',
+                  slTriggerPx: price,
+                  direction: positionData?.direction as 'Long' | 'Short',
+                });
+              }}
+            />
           </View>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
@@ -257,7 +316,7 @@ export const PerpsPosition: React.FC<{
             </TouchableOpacity>
             <View>
               <Text style={styles.value}>
-                {Number(positionData?.fundingPayments || 0) > 0 ? '+' : '-'}$
+                {Number(positionData?.fundingPayments || 0) >= 0 ? '+' : '-'}$
                 {Math.abs(Number(positionData?.fundingPayments || 0))}
               </Text>
             </View>
@@ -274,6 +333,34 @@ export const PerpsPosition: React.FC<{
         currentPrice={markPrice}
         liquidationPrice={Number(positionData?.liquidationPrice)}
       />
+      <PerpsEditMarginPopup
+        visible={editMarginVisible}
+        pnl={positionData?.pnl}
+        pnlPercent={positionData?.pnlPercent}
+        marginUsed={positionData?.marginUsed}
+        positionSize={positionData?.size}
+        direction={positionData?.direction as 'Long' | 'Short'}
+        coin={coin}
+        coinLogo={coinLogo}
+        markPrice={markPrice}
+        entryPrice={positionData?.entryPrice}
+        leverage={Number(positionData?.leverage || 1)}
+        leverageMax={leverageMax}
+        pxDecimals={pxDecimals}
+        szDecimals={szDecimals}
+        availableBalance={availableBalance}
+        liquidationPx={Number(positionData?.liquidationPrice || 0)}
+        handlePressRiskTag={() => {
+          setShowRiskPopup(true);
+        }}
+        onCancel={() => {
+          setEditMarginVisible(false);
+        }}
+        onConfirm={async (action: 'add' | 'reduce', margin: number) => {
+          await handleUpdateMargin(coin, action, margin);
+          setEditMarginVisible(false);
+        }}
+      />
     </>
   );
 };
@@ -281,6 +368,23 @@ export const PerpsPosition: React.FC<{
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   section: {
     marginBottom: 24,
+  },
+  tagContainer: {
+    borderRadius: 100,
+    backgroundColor: colors2024['brand-light-1'],
+    paddingVertical: 4,
+    paddingLeft: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingRight: 6,
+  },
+  tagText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
   },
   header: {
     paddingHorizontal: 4,

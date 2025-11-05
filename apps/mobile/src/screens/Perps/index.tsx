@@ -52,8 +52,6 @@ import { sortBy } from 'lodash';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
-import { PerpsIntro } from '../PerpsMarketDetail/components/PerpsIntro';
-import { PerpsClosePositionPopup } from '../PerpsMarketDetail/components/PerpsClosePositionPopup ';
 import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { toast } from '@/components2024/Toast';
 import { PERPS_BUILDER_INFO } from '@/constant/perps';
@@ -65,7 +63,6 @@ import {
   ARB_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { BridgeHeader } from '../Bridge/components/BridgeHeader';
 import { PerpHeader } from './components/PerpHeader';
 import Toast from 'react-native-root-toast';
 import { PerpSearchListPopup } from './components/PerpSearchListPopup';
@@ -338,6 +335,7 @@ export const PerpsScreen = () => {
               screen: RootNames.PerpsMarketDetail,
               params: {
                 market: item.name,
+                fromSource: 'openPosition',
               },
             });
           }}
@@ -406,6 +404,7 @@ export const PerpsScreen = () => {
                 setPopupState(prev => ({
                   ...prev,
                   isShowSearchListPopup: true,
+                  searchListOpenFrom: 'openPosition',
                 }));
               }}
             />
@@ -576,11 +575,13 @@ export const PerpsScreen = () => {
       />
       <PerpSearchListPopup
         visible={popupState.isShowSearchListPopup}
+        openFromSource={popupState.searchListOpenFrom}
         onSelect={name => {
           naviPush(RootNames.StackTransaction, {
             screen: RootNames.PerpsMarketDetail,
             params: {
               market: name,
+              fromSource: 'openPosition',
             },
           });
         }}
@@ -593,29 +594,6 @@ export const PerpsScreen = () => {
         marketData={marketData}
         positionAndOpenOrders={positionAndOpenOrders}
       />
-      {closePosition && (
-        <PerpsClosePositionPopup
-          visible={closePositionVisible}
-          coin={closePosition?.coin}
-          providerFee={perpFee}
-          direction={Number(closePosition.szi || 0) > 0 ? 'Long' : 'Short'}
-          positionSize={Math.abs(Number(closePosition.szi || 0)).toString()}
-          pnl={Number(closePosition.unrealizedPnl || 0)}
-          onCancel={() => setClosePositionVisible(false)}
-          onConfirm={() => {
-            setClosePositionVisible(false);
-          }}
-          handleClosePosition={async () => {
-            const marketDataItem = marketDataMap[closePosition.coin];
-            await handleClosePosition({
-              coin: closePosition.coin,
-              size: Math.abs(Number(closePosition.szi || 0)).toString() || '0',
-              direction: Number(closePosition.szi || 0) > 0 ? 'Long' : 'Short',
-              price: marketDataItem?.markPx || '0',
-            });
-          }}
-        />
-      )}
     </>
   );
 };

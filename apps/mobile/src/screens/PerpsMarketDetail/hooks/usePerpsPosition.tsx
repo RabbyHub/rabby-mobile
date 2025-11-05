@@ -43,6 +43,87 @@ export const usePerpsPosition = ({
     return px ? Number(px).toString() : undefined;
   };
 
+  const handleCancelOrder = useMemoizedFn(
+    async (oid: number, coin: string, actionType: 'tp' | 'sl') => {
+      const actionText = actionType === 'tp' ? 'Take profit' : 'Stop loss';
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+        const res = await sdk.exchange?.cancelOrder([
+          {
+            oid,
+            coin,
+          },
+        ]);
+        if (
+          res?.response.data.statuses.every(
+            item => (item as unknown as string) === 'success',
+          )
+        ) {
+          toast.success(actionText + ' canceled successfully', {
+            position: Toast.positions.CENTER,
+          });
+          setTimeout(() => {
+            fetchPositionOpenOrders();
+          }, 1000);
+        } else {
+          toast.error(actionText + ' cancel error', {
+            position: Toast.positions.CENTER,
+          });
+          Sentry.captureException(
+            new Error(
+              actionText + ' cancel error' + 'res: ' + JSON.stringify(res),
+            ),
+          );
+        }
+      } catch (error) {
+        toast.error(actionText + ' cancel error', {
+          position: Toast.positions.CENTER,
+        });
+        Sentry.captureException(
+          new Error(
+            actionText + ' cancel error' + 'error: ' + JSON.stringify(error),
+          ),
+        );
+      }
+    },
+  );
+
+  const handleUpdateMargin = useMemoizedFn(
+    async (coin: string, action: 'add' | 'reduce', margin: number) => {
+      const actionText = action === 'add' ? 'Add Margin' : 'Reduce Margin';
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+        const marginNormalized = action === 'add' ? margin : -margin;
+        console.log('marginNormalized', marginNormalized);
+        const res = await sdk.exchange?.updateIsolatedMargin({
+          coin,
+          value: marginNormalized,
+        });
+        if (res?.status === 'ok') {
+          toast.success(actionText + ' successfully', {
+            position: Toast.positions.CENTER,
+          });
+          fetchClearinghouseState();
+        } else {
+          toast.error(res?.response?.data?.error || actionText + ' error', {
+            position: Toast.positions.CENTER,
+          });
+          Sentry.captureException(
+            new Error(actionText + ' error' + 'res: ' + JSON.stringify(res)),
+          );
+        }
+      } catch (error: any) {
+        console.error(actionText + ' error', error);
+        toast.error(error?.message || actionText + ' error', {
+          position: Toast.positions.CENTER,
+        });
+        Sentry.captureException(
+          new Error(actionText + ' error' + 'error: ' + JSON.stringify(error)),
+        );
+      }
+    },
+  );
+
   const handleSetAutoClose = useMemoizedFn(
     async (params: {
       coin: string;
@@ -63,16 +144,18 @@ export const usePerpsPosition = ({
           builder: PERPS_BUILDER_INFO,
         });
 
-        setCurrentTpOrSl({
-          tpPrice: formattedTpTriggerPx,
-          slPrice: formattedSlTriggerPx,
+        const nextCurrentTpOrSl = {} as { tpPrice?: string; slPrice?: string };
+        formattedTpTriggerPx &&
+          (nextCurrentTpOrSl.tpPrice = formattedTpTriggerPx);
+        formattedSlTriggerPx &&
+          (nextCurrentTpOrSl.slPrice = formattedSlTriggerPx);
+        setCurrentTpOrSl(nextCurrentTpOrSl);
+        toast.success('Auto close set successfully', {
+          position: Toast.positions.CENTER,
         });
         setTimeout(() => {
           fetchPositionOpenOrders();
         }, 1000);
-        toast.success('Auto close set successfully', {
-          position: Toast.positions.CENTER,
-        });
       } catch (error: any) {
         const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
         if (isExpired) {
@@ -317,6 +400,8 @@ export const usePerpsPosition = ({
     handleOpenPosition,
     handleClosePosition,
     handleSetAutoClose,
+    handleUpdateMargin,
+    handleCancelOrder,
     userFills,
     isLogin,
     currentPerpsAccount,
