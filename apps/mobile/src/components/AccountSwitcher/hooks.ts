@@ -5,7 +5,8 @@ import { type AccountSwitcherScene } from '@/hooks/sceneAccountInfoAtom';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { apisAccount } from '@/core/apis';
-import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { useRequest } from 'ahooks';
 
 type AccountSwitcherState = {
   /**
@@ -39,6 +40,7 @@ const DefaultStates: {
   History: makeDefaultState(),
   MultiHistory: makeDefaultState(),
   Lending: makeDefaultState(),
+  TokenDetail: makeDefaultState(),
 
   // Receive: makeDefaultState(),
   // GasAccount: makeDefaultState(),
@@ -218,4 +220,29 @@ export function useTopTokensForAddress(options?: {
     tokenList,
     fetchTokensByAddress,
   };
+}
+
+export function useTokenAmountForAddress(options?: {
+  accountAddress?: string;
+  token?: AbstractPortfolioToken;
+}) {
+  const { accountAddress, token } = options || {};
+
+  const { data: amount, loading } = useRequest(
+    () => {
+      if (!accountAddress || !token) {
+        return Promise.resolve(0);
+      }
+      return TokenItemEntity.getAddressesAmount({
+        address: accountAddress,
+        chain: token.chain,
+        tokenId: token._tokenId,
+      });
+    },
+    {
+      refreshDeps: [accountAddress, token?.chain, token?._tokenId],
+    },
+  );
+
+  return { tokenAmount: amount, loading };
 }

@@ -21,13 +21,18 @@ import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Account } from '@/core/services/preference';
 import { LinearGradientContainer } from '@/components2024/ScreenContainer/LinearGradientContainer';
-import { AddressItemInPanel, AddressItemSizes } from './AddressItemInPanel';
+import {
+  AddressItemInPanel,
+  AddressItemInPanelForTokenDetail,
+  AddressItemSizes,
+} from './AddressItemInPanel';
 import { UseAllAccountsItemInPanel } from './AddressItemUseAll';
 import { ScreenWithAccountSwitcherLayouts } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { IS_ANDROID } from '@/core/native/utils';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
 const SectionCollapsableNav = function ({
   isCollapsed = false,
   title,
@@ -79,6 +84,7 @@ export function AccountsPanelInModal({
   containerStyle,
   linearContainerProps,
   onSwitchSceneAccount,
+  token,
   scrollToBottom,
 }: // isVisible = false,
 AccountSwitcherAopProps<{
@@ -89,11 +95,16 @@ AccountSwitcherAopProps<{
     switchAction: () => Promise<void>;
     sceneAccount: Account;
   }) => void;
+  token?: AbstractPortfolioToken;
   scrollToBottom(): void;
 }>) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
 
   const { toggleSceneVisible } = useAccountSceneVisible(forScene);
+
+  const ItemRenderItem = useMemo(() => {
+    return token ? AddressItemInPanelForTokenDetail : AddressItemInPanel;
+  }, [token]);
 
   const {
     isPinnedAccount,
@@ -230,10 +241,11 @@ AccountSwitcherAopProps<{
                 !isSceneUsingAllAccounts &&
                 isSameAccount(account, finalSceneCurrentAccount);
               return (
-                <AddressItemInPanel
+                <ItemRenderItem
                   key={key}
                   addressItemProps={{ account }}
                   isCurrent={isCurrent}
+                  token={token}
                   // isPinned={false}
                   onPressAddress={handlePressAccount}
                   style={[
@@ -248,10 +260,15 @@ AccountSwitcherAopProps<{
       );
     },
     [
+      ItemRenderItem,
       finalSceneCurrentAccount,
       handlePressAccount,
       isSceneUsingAllAccounts,
-      styles,
+      styles.addressItem,
+      styles.addressItemTopGap,
+      styles.sectionTitle,
+      styles.sectionTitleContainerNew,
+      token,
     ],
   );
 
@@ -395,11 +412,11 @@ AccountSwitcherAopProps<{
                     isSameAccount(account, finalSceneCurrentAccount);
 
                   return (
-                    <AddressItemInPanel
+                    <ItemRenderItem
                       key={key}
+                      token={token}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
-                      // isPinned={false}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -432,11 +449,11 @@ AccountSwitcherAopProps<{
                     isSameAccount(account, finalSceneCurrentAccount);
 
                   return (
-                    <AddressItemInPanel
+                    <ItemRenderItem
                       key={key}
+                      token={token}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
-                      // isPinned={false}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -452,15 +469,21 @@ AccountSwitcherAopProps<{
       </>
     );
   }, [
-    styles,
-    t,
     safeAddresses,
+    styles.section,
+    styles.addressListContainer,
+    styles.addressItem,
+    styles.addressItemTopGap,
+    t,
+    navsCollapsed.safe,
+    navsCollapsed.watch,
     watchAddresses,
-    finalSceneCurrentAccount,
-    handlePressAccount,
-    isSceneUsingAllAccounts,
-    navsCollapsed,
     changeCollapsed,
+    isSceneUsingAllAccounts,
+    finalSceneCurrentAccount,
+    ItemRenderItem,
+    token,
+    handlePressAccount,
   ]);
 
   const myAddressesList = useCreationWithShallowCompare(() => {
@@ -501,11 +524,11 @@ AccountSwitcherAopProps<{
                   isSameAccount(account, finalCurrentAccount);
 
                 return (
-                  <AddressItemInPanel
+                  <ItemRenderItem
                     key={key}
+                    token={token}
                     addressItemProps={{ account }}
                     isCurrent={isCurrent}
-                    // isPinned={isPinnedAccount(account)}
                     isHideToken={isHideToken}
                     onPressAddress={handlePressAccount}
                     style={[

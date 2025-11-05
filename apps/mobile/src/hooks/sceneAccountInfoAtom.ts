@@ -41,6 +41,7 @@ export const AccountSwitcherInfos = {
   Receive: makeSceneAccount(),
   GasAccount: makeSceneAccount(),
   Lending: makeSceneAccount(),
+  TokenDetail: makeSceneAccount(),
   Approvals: makeSceneAccount(),
 
   '@ActiveDappWebViewModal': makeSceneAccount(),

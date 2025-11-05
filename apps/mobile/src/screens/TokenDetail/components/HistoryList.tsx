@@ -20,6 +20,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { debounce, last, orderBy } from 'lodash';
 import { toast } from '@/components2024/Toast';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 interface IFetchHistory {
   last: number;
@@ -40,6 +41,10 @@ export const TokenDetailHistoryList = ({
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
+  const { isSceneUsingAllAccounts, sceneCurrentAccountDepKey } =
+    useSceneAccountInfo({
+      forScene: 'TokenDetail',
+    });
   const tokenItem = token;
   const currentAddress = finalAccount?.address;
 
@@ -179,10 +184,19 @@ export const TokenDetailHistoryList = ({
     loadMore,
     noMore,
     reloadAsync,
+    cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
     isNoMore: d => (d ? !d.hasMore : false),
     onSuccess() {},
   });
+
+  useEffect(() => {
+    if (isReady.current) {
+      cancel();
+      refresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
     dbLastCursorRef.current = 0;
@@ -236,7 +250,7 @@ export const TokenDetailHistoryList = ({
         loadingMore={loadingMore}
         refreshLoading={loading}
         isForMultipleAddress={false}
-        appendBottom={200}
+        appendBottom={300}
         loadMore={() => {
           // avoid exec multi times loadMore
           if (loadingMore || noMore) {

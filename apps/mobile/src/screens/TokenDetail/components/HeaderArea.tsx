@@ -25,7 +25,9 @@ interface Props {
   tokenSize?: number;
   chainSize?: number;
   borderChain?: boolean;
+  title?: string;
   titleStyle?: StyleProp<TextStyle>;
+  rootStyle?: StyleProp<ViewStyle>;
 }
 export const TokenDetailHeaderArea: React.FC<Props> = ({
   token,
@@ -33,13 +35,15 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   tokenSize = 35,
   chainSize = 16,
   borderChain = false,
+  title,
   titleStyle,
+  rootStyle,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssetsRefreshing();
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, rootStyle]}>
       <View style={[styles.container, style]}>
         <View style={styles.token}>
           <AssetAvatar
@@ -54,7 +58,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             style={[styles.tokenSymbol, titleStyle]}
             numberOfLines={1}
             ellipsizeMode="tail">
-            {ellipsisOverflowedText(getTokenSymbol(token), 15)}
+            {title || ellipsisOverflowedText(getTokenSymbol(token), 15)}
           </Text>
           {refreshing && <LoadingCircle />}
         </View>

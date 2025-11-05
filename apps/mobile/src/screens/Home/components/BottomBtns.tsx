@@ -36,8 +36,6 @@ const MORE_SHEET_MODAL_SNAPPOINTS = (actionsNum: number) => [
   80 + 70 * actionsNum,
 ];
 
-// TODO: check badge count
-
 export const BottomBtns = ({
   currentAccount,
 }: {
@@ -51,8 +49,6 @@ export const BottomBtns = ({
   const { approvalRiskAlert, loadApprovalStatus } = useApprovalAlert({
     account: currentAccount,
   });
-  const totalAlertCount = useMemo(() => approvalRiskAlert, [approvalRiskAlert]);
-
   // const isGnosisKeyring = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
   const isGnosisKeyring = true;
   const { total: gnosisTotal, refreshAsync } = useGnosisQueueTotalPending({

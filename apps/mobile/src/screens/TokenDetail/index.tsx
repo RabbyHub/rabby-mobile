@@ -9,7 +9,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ImageBackground, Platform, Pressable, Text, View } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
@@ -28,6 +28,13 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { RightMore } from './components/RightMore';
 import { useSetAtom } from 'jotai';
 import { TokenDetailBottomBtns } from './components/BottomBtns';
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import {
+  ScreenSceneAccountProvider,
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '@/hooks/accountsSwitcher';
+import { AccountSwitcher } from './components/InScreenSwitch';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -44,7 +51,7 @@ export type RelatedDeFiType = AbstractProject & {
   address: string;
 };
 
-export const TokenDetailScreen = () => {
+const TokenDetailContent = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
   const { token, account, tokenSelectType } = route.params || {};
@@ -57,7 +64,18 @@ export const TokenDetailScreen = () => {
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
   const { safeOffBottom } = useSafeSizes();
-  const [currentAddress, setCurrentAddress] = useState(account?.address);
+
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'TokenDetail',
+  });
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
+  useEffect(() => {
+    if (account) {
+      switchSceneCurrentAccount('TokenDetail', account);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
@@ -65,21 +83,28 @@ export const TokenDetailScreen = () => {
     useRequest(
       async () => {
         const res = await openapi.getToken(
-          currentAddress!,
+          currentAccount?.address!,
           token.chain,
           token._tokenId,
         );
         return ensureAbstractPortfolioToken({
           ...abstractTokenToTokenItem(token),
+          amount: res?.amount,
           price_24h_change: res?.price_24h_change,
           usd_value: res?.usd_value,
           price: res?.price,
         });
       },
       {
-        refreshDeps: [token.chain, token._tokenId, currentAddress],
+        refreshDeps: [token.chain, token._tokenId, currentAccount?.address],
       },
     );
+
+  console.log(
+    'CUSTOM_LOGGER:=>: baseTokenInfo',
+    currentAccount?.address,
+    baseTokenInfo?.amount,
+  );
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
@@ -93,11 +118,11 @@ export const TokenDetailScreen = () => {
     return (
       <TokenDetailHeaderArea
         style={{ marginLeft: -3 }}
-        key={currentAddress}
+        key={currentAccount?.address}
         token={token}
       />
     );
-  }, [currentAddress, token]);
+  }, [currentAccount?.address, token]);
 
   const handleOpenTokenMarketInfo = useCallback(() => {
     navigateDeprecated(RootNames.TokenMarketInfo, {
@@ -144,7 +169,7 @@ export const TokenDetailScreen = () => {
     refreshTag();
   }, [refreshBaseTokenInfo, refreshTag]);
 
-  if (!currentAddress || !account) {
+  if (!currentAccount?.address) {
     return null;
   }
 
@@ -191,6 +216,7 @@ export const TokenDetailScreen = () => {
         }}
       />
       <View style={styles.balanceOverviewContainer}>
+        <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
         <View style={styles.balanceOverviewContent}>
           <BalanceOverview usdValue={usdValue} amount={amountSum} />
           {is24hNoChange && !!baseTokenInfo ? null : (
@@ -233,20 +259,38 @@ export const TokenDetailScreen = () => {
       </View>
       <TokenDetailHistoryList
         onRefresh={onRefresh}
-        finalAccount={account}
+        finalAccount={currentAccount}
         token={token}
       />
       <View style={{ height: isAndroid ? 220 + safeOffBottom : 56 }} />
       <View style={styles.bottomContainer}>
         <TokenDetailBottomBtns
           token={token}
-          finalAccount={account}
+          finalAccount={currentAccount}
           tokenSelectType={tokenSelectType}
         />
       </View>
+      <AccountSwitcherModal token={token} forScene="TokenDetail" inScreen />
     </NormalScreenContainer2024>
   );
 };
+
+export const TokenDetailScreen = () => {
+  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+    forScene: 'TokenDetail',
+  });
+  return (
+    <ScreenSceneAccountProvider
+      value={{
+        forScene: 'TokenDetail',
+        ofScreen: 'TokenDetail',
+        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-TokenDetail`,
+      }}>
+      <TokenDetailContent />
+    </ScreenSceneAccountProvider>
+  );
+};
+
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     rootScreenContainer: {
@@ -258,7 +302,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     balanceOverviewContainer: {
       paddingHorizontal: 23,
       marginBottom: 24,
-      gap: 24,
     },
     bottomContainer: {
       width: '100%',
