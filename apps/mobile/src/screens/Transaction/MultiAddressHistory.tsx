@@ -875,13 +875,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 }));
 
-// const ForSingleAddress = () => {
-//   // const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
-//   //   forScene: 'MakeTransactionAbout',
-//   // });
+const ForSingleAddress = () => {
+  // const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
+  //   forScene: 'MakeTransactionAbout',
+  // });
 
-//   return <HistoryScreen isForMultipleAddress={false} />;
-// };
-// HistoryScreen.ForSingleAddress = ForSingleAddress;
+  return <HistoryScreen isForMultipleAddress={false} />;
+};
+HistoryScreen.ForSingleAddress = ForSingleAddress;
 
 export default HistoryScreen;

@@ -51,6 +51,10 @@ export default function SendNFT() {
   const addrDesc = navParams?.addrDesc;
   const account = fromAccount || currentAccount;
 
+  if (!account) {
+    throw new Error('Account is required to send NFT');
+  }
+
   const {
     sendNFTScreenState: screenState,
     putScreenState,
@@ -175,7 +179,7 @@ export default function SendNFT() {
             />
             <ShowMoreOnSendNFT chainServeId={chainItem?.serverId || ''} />
           </KeyboardAwareScrollView>
-          <BottomArea account={currentAccount} />
+          <BottomArea account={account} />
         </View>
       </NormalScreenContainer>
     </SendNFTInternalContextProvider>

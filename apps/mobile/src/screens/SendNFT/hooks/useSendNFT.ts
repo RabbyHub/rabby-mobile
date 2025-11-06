@@ -177,11 +177,11 @@ const DF_SEND_TOKEN_FORM: FormSendNFT = {
 export function useSendNFTForm({
   toAddress,
   nftToken,
-  account: currentAccount,
+  account,
 }: {
   toAddress?: string;
   nftToken?: NFTItem;
-  account?: Account | null;
+  account: Account;
 }) {
   const { t } = useTranslation();
 
@@ -205,8 +205,7 @@ export function useSendNFTForm({
   const chainItem = findChain({ serverId: nftToken?.chain });
 
   const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
-    // TODO: fix account undefined case
-    account: currentAccount!,
+    account: account,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
   });
@@ -329,7 +328,7 @@ export function useSendNFTForm({
   );
 
   const prepareDirectSubmitMiniTx = useMemoizedFn(async (ref: number) => {
-    if (!nftToken || !currentAccount) return;
+    if (!nftToken || !account) return;
 
     const { to, amount } = formValues;
 
@@ -341,7 +340,7 @@ export function useSendNFTForm({
         chainServerId: nftToken?.chain,
         contractId: nftToken?.contract_id,
         abi: nftToken?.is_erc1155 ? 'ERC1155' : 'ERC721',
-        account: currentAccount,
+        account: account,
       },
       {
         $ctx: {
@@ -356,8 +355,8 @@ export function useSendNFTForm({
 
     if (
       ref === prepareCountRef.current &&
-      currentAccount &&
-      isAccountSupportMiniApproval(currentAccount?.type || '') &&
+      account &&
+      isAccountSupportMiniApproval(account?.type || '') &&
       !chainItem?.isTestnet
     ) {
       const res = await apiProvider.sendRequest(
@@ -373,7 +372,7 @@ export function useSendNFTForm({
             },
           },
           session: INTERNAL_REQUEST_SESSION,
-          account: currentAccount,
+          account: account,
         },
         true,
       );
@@ -412,12 +411,12 @@ export function useSendNFTForm({
         action: 'createTx',
         label: [
           chainItem?.name,
-          getKRCategoryByType(currentAccount?.type),
-          currentAccount?.brandName,
+          getKRCategoryByType(account?.type),
+          account?.brandName,
           'nft',
         ].join('|'),
       });
-      if (!currentAccount) {
+      if (!account) {
         return;
       }
 
@@ -430,7 +429,7 @@ export function useSendNFTForm({
           chainServerId: nftToken.chain,
           contractId: nftToken.contract_id,
           abi: nftToken.is_erc1155 ? 'ERC1155' : 'ERC721',
-          account: currentAccount,
+          account: account,
         },
         {
           $ctx: {
@@ -443,12 +442,12 @@ export function useSendNFTForm({
         },
       );
       const directSubmit =
-        isAccountSupportMiniApproval(currentAccount?.type || '') &&
+        isAccountSupportMiniApproval(account?.type || '') &&
         !chainItem?.isTestnet;
       try {
         if (
           !isForceSignTx &&
-          isAccountSupportMiniApproval(currentAccount?.type || '') &&
+          isAccountSupportMiniApproval(account?.type || '') &&
           !chainItem?.isTestnet
         ) {
           if (!prepareRef.current) {
@@ -579,7 +578,7 @@ export function useSendNFTForm({
       prefetchMiniSigner,
       prepareDirectSubmitMiniTx,
       toAddress,
-      currentAccount,
+      account,
       putScreenState,
       chainItem?.name,
       nftToken,
@@ -651,8 +650,8 @@ export function useSendNFTForm({
         !screenState.isLoading,
 
       canDirectSign:
-        isAccountSupportMiniApproval(currentAccount?.type || '') &&
-        isAccountSupportDirectSign(currentAccount?.type) &&
+        isAccountSupportMiniApproval(account?.type || '') &&
+        isAccountSupportDirectSign(account?.type) &&
         !chainItem?.isTestnet,
     };
   }, [
@@ -663,7 +662,7 @@ export function useSendNFTForm({
     screenState,
     formValues.amount,
     cexList,
-    currentAccount?.type,
+    account?.type,
     chainItem?.isTestnet,
   ]);
 
@@ -680,7 +679,7 @@ export function useSendNFTForm({
 
   useEffect(() => {
     if (
-      isAccountSupportMiniApproval(currentAccount?.type || '') &&
+      isAccountSupportMiniApproval(account?.type || '') &&
       !chainItem?.isTestnet
     ) {
       prefetchMiniSigner({
@@ -691,7 +690,7 @@ export function useSendNFTForm({
     prefetchMiniSigner,
     chainItem?.id,
     formValues.to,
-    currentAccount?.type,
+    account?.type,
     chainItem?.isTestnet,
     toAddress,
   ]);
@@ -699,7 +698,7 @@ export function useSendNFTForm({
   useEffect(() => {
     if (
       isFocused &&
-      isAccountSupportMiniApproval(currentAccount?.type || '') &&
+      isAccountSupportMiniApproval(account?.type || '') &&
       !chainItem?.isTestnet &&
       computed.canSubmit &&
       formValues.to &&
@@ -717,7 +716,7 @@ export function useSendNFTForm({
     computed.canSubmit,
     formValues.to,
     stableAmountValue,
-    currentAccount?.type,
+    account?.type,
     prepareDirectSubmitMiniTx,
   ]);
 
