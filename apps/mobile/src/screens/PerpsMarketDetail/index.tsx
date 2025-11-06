@@ -93,9 +93,6 @@ export const PerpsMarketDetailScreen = () => {
     WsActiveAssetCtx['ctx'] | null
   >(null);
 
-  const [openPositionVisible, setOpenPositionVisible] = React.useState(
-    fromSource === 'openPosition' && hasPermission ? true : false,
-  );
   const [positionDirection, setPositionDirection] = React.useState<
     'Long' | 'Short'
   >('Long');
@@ -209,6 +206,12 @@ export const PerpsMarketDetailScreen = () => {
   const hasPosition = useMemo(() => {
     return !!currentPosition;
   }, [currentPosition]);
+
+  const [openPositionVisible, setOpenPositionVisible] = React.useState(
+    fromSource === 'openPosition' && !hasPosition && hasPermission
+      ? true
+      : false,
+  );
 
   const subscribeActiveAssetCtx = useMemoizedFn(() => {
     const sdk = apisPerps.getPerpsSDK();

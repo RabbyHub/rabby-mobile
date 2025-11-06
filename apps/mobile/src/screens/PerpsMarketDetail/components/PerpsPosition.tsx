@@ -183,7 +183,13 @@ export const PerpsPosition: React.FC<{
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhen')}
+                {positionData?.direction === 'Long'
+                  ? t(
+                      'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceAbove',
+                    )
+                  : t(
+                      'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceBelow',
+                    )}
               </Text>
             </View>
             <PerpEditTpSlPriceTag
@@ -195,7 +201,7 @@ export const PerpsPosition: React.FC<{
               initTpOrSlPrice={tpPrice || ''}
               direction={positionData?.direction as 'Long' | 'Short'}
               size={positionData?.size}
-              margin={positionData?.positionValue}
+              margin={positionData?.marginUsed}
               liqPrice={Number(positionData?.liquidationPrice || 0)}
               pxDecimals={pxDecimals}
               szDecimals={szDecimals}
@@ -215,7 +221,13 @@ export const PerpsPosition: React.FC<{
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsOpenPositionPopup.stopLossWhen')}
+                {positionData?.direction === 'Long'
+                  ? t(
+                      'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceBelow',
+                    )
+                  : t(
+                      'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceAbove',
+                    )}
               </Text>
             </View>
             <PerpEditTpSlPriceTag
@@ -227,7 +239,7 @@ export const PerpsPosition: React.FC<{
               initTpOrSlPrice={slPrice || ''}
               direction={positionData?.direction as 'Long' | 'Short'}
               size={positionData?.size}
-              margin={positionData?.positionValue}
+              margin={positionData?.marginUsed}
               liqPrice={Number(positionData?.liquidationPrice || 0)}
               pxDecimals={pxDecimals}
               szDecimals={szDecimals}

@@ -64,6 +64,8 @@ import Toast from 'react-native-root-toast';
 import { PerpSearchListPopup } from './components/PerpSearchListPopup';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
+import { calculateDistanceToLiquidation } from './components/PerpsPositionSection/utils';
+import { PerpsRiskLevelPopup } from './components/PerpsPositionSection/PerpsRiskLevelPopup';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -109,6 +111,7 @@ export const PerpsScreen = () => {
     // Add a special header item as first element for sticky header
     return [{ _isStickyHeader: true }, ...sorted];
   }, [marketData]);
+  const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
 
   const positionCoinSet = useMemo(() => {
     const set = new Set();
@@ -275,6 +278,44 @@ export const PerpsScreen = () => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   });
 
+  const handleShowRiskPopup = useMemoizedFn((coin: string) => {
+    setSelectedCoin(coin);
+  });
+
+  const handleCloseRiskPopup = useMemoizedFn(() => {
+    setSelectedCoin(null);
+  });
+
+  // Calculate real-time popup data based on selectedCoin
+  const riskPopupData = useMemo(() => {
+    if (!selectedCoin) {
+      return null;
+    }
+
+    const selectedPosition = positionAndOpenOrders?.find(
+      item => item.position.coin === selectedCoin,
+    );
+    if (!selectedPosition) {
+      return null;
+    }
+
+    const marketDataItem = marketDataMap[selectedCoin];
+    const markPrice = Number(marketDataItem?.markPx || 0);
+    const liquidationPrice = Number(
+      selectedPosition.position.liquidationPx || 0,
+    );
+
+    const distanceLiquidation = calculateDistanceToLiquidation(
+      selectedPosition.position.liquidationPx,
+      marketDataItem?.markPx,
+    );
+    return {
+      distanceLiquidation,
+      currentPrice: markPrice,
+      liquidationPrice,
+    };
+  }, [selectedCoin, positionAndOpenOrders, marketDataMap]);
+
   // Render header component (account card and positions)
   const renderListHeader = useCallback(() => {
     return (
@@ -285,6 +326,8 @@ export const PerpsScreen = () => {
           positionAndOpenOrders={positionAndOpenOrders}
         />
         <PerpsPositionSection
+          handleShowRiskPopup={handleShowRiskPopup}
+          handleCloseRiskPopup={handleCloseRiskPopup}
           positionAndOpenOrders={positionAndOpenOrders}
           marketDataMap={marketDataMap}
           onClosePosition={async position => {
@@ -305,6 +348,8 @@ export const PerpsScreen = () => {
     positionAndOpenOrders,
     marketDataMap,
     handleClosePosition,
+    handleShowRiskPopup,
+    handleCloseRiskPopup,
   ]);
 
   // Render item - either sticky header or market item
@@ -584,6 +629,16 @@ export const PerpsScreen = () => {
         marketData={marketData}
         positionAndOpenOrders={positionAndOpenOrders}
       />
+      {/* Shared Risk Level Popup */}
+      {riskPopupData && (
+        <PerpsRiskLevelPopup
+          visible={!!riskPopupData}
+          onClose={handleCloseRiskPopup}
+          distanceLiquidation={riskPopupData.distanceLiquidation}
+          currentPrice={riskPopupData.currentPrice}
+          liquidationPrice={riskPopupData.liquidationPrice}
+        />
+      )}
     </>
   );
 };

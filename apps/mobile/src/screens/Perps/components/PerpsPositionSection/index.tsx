@@ -20,14 +20,19 @@ import { sleep } from '@/utils/async';
 export const PerpsPositionSection: React.FC<{
   positionAndOpenOrders?: PositionAndOpenOrder[];
   marketDataMap: MarketDataMap;
+  handleShowRiskPopup: (coin: string) => void;
+  handleCloseRiskPopup: () => void;
   onClosePosition: (position: AssetPosition['position']) => Promise<void>;
-}> = ({ positionAndOpenOrders, marketDataMap, onClosePosition }) => {
+}> = ({
+  positionAndOpenOrders,
+  marketDataMap,
+  handleShowRiskPopup,
+  handleCloseRiskPopup,
+  onClosePosition,
+}) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
-  // Store the coin identifier to track which position's risk popup is open
-  const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
-
   const list = useMemo(() => {
     return sortBy(
       positionAndOpenOrders || [],
@@ -57,44 +62,6 @@ export const PerpsPositionSection: React.FC<{
       ],
     );
   });
-
-  const handleShowRiskPopup = useMemoizedFn((coin: string) => {
-    setSelectedCoin(coin);
-  });
-
-  const handleCloseRiskPopup = useMemoizedFn(() => {
-    setSelectedCoin(null);
-  });
-
-  // Calculate real-time popup data based on selectedCoin
-  const riskPopupData = useMemo(() => {
-    if (!selectedCoin) {
-      return null;
-    }
-
-    const selectedPosition = list.find(
-      item => item.position.coin === selectedCoin,
-    );
-    if (!selectedPosition) {
-      return null;
-    }
-
-    const marketData = marketDataMap[selectedCoin];
-    const markPrice = Number(marketData?.markPx || 0);
-    const liquidationPrice = Number(
-      selectedPosition.position.liquidationPx || 0,
-    );
-
-    const distanceLiquidation = calculateDistanceToLiquidation(
-      selectedPosition.position.liquidationPx,
-      marketData?.markPx,
-    );
-    return {
-      distanceLiquidation,
-      currentPrice: markPrice,
-      liquidationPrice,
-    };
-  }, [selectedCoin, list, marketDataMap]);
 
   if (!positionAndOpenOrders?.length) {
     return null;
@@ -133,17 +100,6 @@ export const PerpsPositionSection: React.FC<{
           );
         })}
       </View>
-
-      {/* Shared Risk Level Popup */}
-      {riskPopupData && (
-        <PerpsRiskLevelPopup
-          visible={!!riskPopupData}
-          onClose={handleCloseRiskPopup}
-          distanceLiquidation={riskPopupData.distanceLiquidation}
-          currentPrice={riskPopupData.currentPrice}
-          liquidationPrice={riskPopupData.liquidationPrice}
-        />
-      )}
     </View>
   );
 };

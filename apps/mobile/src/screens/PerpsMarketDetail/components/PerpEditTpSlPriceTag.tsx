@@ -76,13 +76,19 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   }, [size, margin]);
 
   // Calculate gain percentage from price
-  const calculatedAbsPnl = React.useMemo(() => {
+  const calculatedPnl = React.useMemo(() => {
     if (!autoClosePrice) {
       return '';
     }
-    const pnlUsdValue = Math.abs(Number(autoClosePrice) - markPrice) * size;
+    const costPrice =
+      type === 'openPosition' ? markPrice : entryPrice || markPrice;
+    const pnlUsdValue = (Number(autoClosePrice) - costPrice) * size;
     return pnlUsdValue;
-  }, [autoClosePrice, markPrice, size]);
+  }, [autoClosePrice, markPrice, size, type, entryPrice]);
+
+  const gainOrLoss = useMemo(() => {
+    return Number(calculatedPnl) >= 0 ? 'gain' : 'loss';
+  }, [calculatedPnl]);
 
   // Handle price input change
   const handlePriceChange = useMemoizedFn((v: string) => {
@@ -91,8 +97,12 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     // Auto update gain percentage
     const value = v.startsWith('$') ? v.slice(1) : v;
     if (value) {
-      const priceDifference = Math.abs(Number(value) - markPrice);
+      const costPrice =
+        type === 'openPosition' ? markPrice : entryPrice || markPrice;
+      const priceDifference = Math.abs(Number(value) - costPrice);
       const pnlUsdValue = priceDifference * size;
+      console.log('pnlUsdValue', pnlUsdValue);
+      console.log('margin', margin);
       const pnlPctValue = (pnlUsdValue / margin) * 100;
       setGainPct(pnlPctValue.toFixed(2));
     } else {
@@ -108,7 +118,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
         return;
       }
 
-      const value = v.replace(/[^0-9.]/g, '');
+      const value = v.replace(/[^0-9.-]/g, '');
 
       setGainPct(value);
 
@@ -125,18 +135,20 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
       // Check decimal places: less than (6 - szDecimals)
       const maxDecimals = 6 - szDecimals;
       const decimalPlaces = Math.max(0, maxDecimals - 1);
+      const costPrice =
+        type === 'openPosition' ? markPrice : entryPrice || markPrice;
 
       if (actionType === 'tp') {
         const newPrice =
           direction === 'Long'
-            ? markPrice + priceDifference
-            : markPrice - priceDifference;
+            ? costPrice + priceDifference
+            : costPrice - priceDifference;
         setAutoClosePrice(newPrice.toFixed(decimalPlaces));
       } else {
         const newPrice =
           direction === 'Long'
-            ? markPrice - priceDifference
-            : markPrice + priceDifference;
+            ? costPrice - priceDifference
+            : costPrice + priceDifference;
         setAutoClosePrice(newPrice.toFixed(decimalPlaces));
       }
     } catch (error) {
@@ -157,6 +169,9 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
       resObj.isValid = false;
       return resObj;
     }
+
+    const costPrice =
+      type === 'openPosition' ? markPrice : entryPrice || markPrice;
 
     // 验证止盈价格
     if (actionType === 'tp') {
@@ -223,6 +238,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     liqPrice,
     pxDecimals,
     actionType,
+    type,
+    entryPrice,
   ]);
 
   const isValidPrice = priceValidation.isValid;
@@ -260,7 +277,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
       if (initTpOrSlPrice) {
         handlePriceChange(initTpOrSlPrice);
       } else {
-        handleGainPctChange(actionType === 'tp' ? '5' : '4.5');
+        handleGainPctChange(actionType === 'tp' ? '5.00' : '4.50');
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -374,7 +391,19 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                   <View style={styles.formRow}>
                     <View style={styles.formItemHalf}>
                       <Text style={styles.formItemLabel}>
-                        {t('page.perpsDetail.PerpsAutoCloseModal.priceReaches')}
+                        {direction === 'Long'
+                          ? actionType === 'tp'
+                            ? t(
+                                'page.perpsDetail.PerpsAutoCloseModal.priceAbove',
+                              )
+                            : t(
+                                'page.perpsDetail.PerpsAutoCloseModal.priceBelow',
+                              )
+                          : actionType === 'tp'
+                          ? t('page.perpsDetail.PerpsAutoCloseModal.priceBelow')
+                          : t(
+                              'page.perpsDetail.PerpsAutoCloseModal.priceAbove',
+                            )}
                       </Text>
                       <TextInput
                         keyboardType="numeric"
@@ -391,7 +420,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
 
                     <View style={styles.formItemHalf}>
                       <Text style={styles.formItemLabel}>
-                        {actionType === 'tp'
+                        {gainOrLoss === 'gain'
                           ? t('page.perpsDetail.PerpsAutoCloseModal.youGain')
                           : t('page.perpsDetail.PerpsAutoCloseModal.youLoss')}
                       </Text>
@@ -403,7 +432,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                             priceValidation.error ? styles.inputError : null,
                           ]}
                           placeholder="0"
-                          value={priceValidation.error ? '-' : gainPct}
+                          value={gainPct}
                           onChangeText={handleGainPctChange}
                           ref={gainInputRef}
                         />
@@ -434,13 +463,13 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                             styles.pnlValueText,
                             {
                               color:
-                                actionType === 'tp'
+                                gainOrLoss === 'gain'
                                   ? colors2024['green-default']
                                   : colors2024['red-default'],
                             },
                           ]}>
-                          {actionType === 'tp' ? '+' : '-'}
-                          {formatUsdValue(calculatedAbsPnl)}
+                          {gainOrLoss === 'gain' ? '+' : '-'}
+                          {formatUsdValue(Math.abs(Number(calculatedPnl)))}
                         </Text>
                       </>
                     ) : null}

@@ -92,15 +92,6 @@ export const PerpsEditMarginPopup: React.FC<{
     onChangeText: setMargin,
   } = useUsdInput();
 
-  // Calculate slider percentage
-  const sliderPercentage = React.useMemo(() => {
-    const marginValue = Number(margin) || 0;
-    if (marginValue === 0 || availableBalance === 0) {
-      return 0;
-    }
-    return Math.min((marginValue / availableBalance) * 100, 100);
-  }, [margin, availableBalance]);
-
   // 计算预估清算价格
   const estimatedLiquidationPrice = React.useMemo(() => {
     if (!margin || margin === '0') {
@@ -141,6 +132,16 @@ export const PerpsEditMarginPopup: React.FC<{
     );
     return marginUsed - transferMarginRequired;
   }, [entryPrice, markPrice, positionSize, leverage, marginUsed]);
+
+  // Calculate slider percentage
+  const sliderPercentage = React.useMemo(() => {
+    const marginValue = Number(margin) || 0;
+    const available = action === 'add' ? availableBalance : availableToReduce;
+    if (marginValue === 0 || available === 0) {
+      return 0;
+    }
+    return Math.min((marginValue / available) * 100, 100);
+  }, [margin, availableBalance, action, availableToReduce]);
 
   // 验证 margin 输入
   const marginValidation = React.useMemo(() => {
@@ -264,7 +265,10 @@ export const PerpsEditMarginPopup: React.FC<{
                     borderRadius: 8,
                   },
                 ]}
-                onPress={() => setAction('add')}>
+                onPress={() => {
+                  setAction('add');
+                  setMargin('');
+                }}>
                 <Text
                   style={[
                     styles.directionButtonText,
@@ -284,7 +288,10 @@ export const PerpsEditMarginPopup: React.FC<{
                     borderRadius: 8,
                   },
                 ]}
-                onPress={() => setAction('reduce')}>
+                onPress={() => {
+                  setAction('reduce');
+                  setMargin('');
+                }}>
                 <Text
                   style={[
                     styles.directionButtonText,
@@ -402,6 +409,7 @@ export const PerpsEditMarginPopup: React.FC<{
 
               {/* Slider */}
               <PerpsSlider
+                key={action}
                 value={sliderPercentage}
                 onValueChange={handleSliderChange}
                 showPercentage={true}

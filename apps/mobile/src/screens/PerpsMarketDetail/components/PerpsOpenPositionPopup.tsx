@@ -530,7 +530,13 @@ export const PerpsOpenPositionPopup: React.FC<{
               </View>
               <View style={styles.listItem}>
                 <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhen')}
+                  {direction === 'Long'
+                    ? t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceAbove',
+                      )
+                    : t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceBelow',
+                      )}
                 </Text>
                 <PerpEditTpSlPriceTag
                   coin={coin}
@@ -554,7 +560,13 @@ export const PerpsOpenPositionPopup: React.FC<{
               </View>
               <View style={styles.listItem}>
                 <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsOpenPositionPopup.stopLossWhen')}
+                  {direction === 'Long'
+                    ? t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceBelow',
+                      )
+                    : t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceAbove',
+                      )}
                 </Text>
                 <PerpEditTpSlPriceTag
                   coin={coin}

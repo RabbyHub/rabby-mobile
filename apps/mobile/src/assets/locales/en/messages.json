@@ -2358,6 +2358,7 @@
         "takeProfitTipsShort": "Take profit price must be lower than current price",
         "stopLossTipsLongLiquidation": "Price is lower than the liquidation price ({{price}})",
         "stopLossTipsShort": "Stop loss price must be higher than current price",
+
         "stopLossTipsShortLiquidation": "Price is higher than the liquidation price ({{price}})",
         "takeProfit": "Take profit",
         "loss": "Loss",
@@ -2492,7 +2493,10 @@
         "size": "Size",
         "autoClose": "Auto Close",
         "tpPrice": "Take-Profit Price",
-        "takeProfitWhen": "Take Profit When",
+        "takeProfitWhenPriceAbove": "Take Profit When Price Above",
+        "takeProfitWhenPriceBelow": "Take Profit When Price Below",
+        "stopLossWhenPriceBelow": "Stop Loss When Price Below",
+        "stopLossWhenPriceAbove": "Stop Loss When Price Above",
         "stopLossWhen": "Stop Loss When",
         "slPrice": "Stop-Loss Price",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
@@ -2529,6 +2533,8 @@
         "takeProfitExpectedPNL": "Take profit expected PNL",
         "stopLossExpectedPNL": "Stop loss expected PNL",
         "priceReaches": "Price Reaches",
+        "priceAbove": "Price above",
+        "priceBelow": "Price below",
         "youGain": "You Gain",
         "youLoss": "You Loss",
         "currentPrice": "Current {{price}}",

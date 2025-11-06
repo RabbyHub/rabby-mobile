@@ -154,6 +154,15 @@ export const PerpSearchListPopup: React.FC<{
             onBlur={handleInputBlur}
             ref={inputRef}
           />
+          {/* for mask touch event in input to emit focus event */}
+          {inputNotActiveAndNoQuery && (
+            <TouchableOpacity
+              style={[styles.absoluteContainer]}
+              onPress={() => {
+                inputRef.current?.focus();
+              }}
+            />
+          )}
         </View>
         <BottomSheetFlatList
           contentContainerStyle={styles.content}
@@ -194,6 +203,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 20,
       alignItems: 'center',
       marginBottom: 16,
+      position: 'relative',
     },
 
     title: {
@@ -210,6 +220,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'column',
       paddingHorizontal: 20,
       gap: 8,
+    },
+    absoluteContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 1,
     },
     list: {
       borderRadius: 16,

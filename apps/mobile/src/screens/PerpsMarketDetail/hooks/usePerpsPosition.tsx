@@ -131,6 +131,7 @@ export const usePerpsPosition = ({
       slTriggerPx: string;
       direction: 'Long' | 'Short';
     }) => {
+      const autoCloseText = params.tpTriggerPx ? 'Take profit' : 'Stop loss';
       try {
         const sdk = apisPerps.getPerpsSDK();
         const { coin, tpTriggerPx, slTriggerPx, direction } = params;
@@ -150,7 +151,7 @@ export const usePerpsPosition = ({
         formattedSlTriggerPx &&
           (nextCurrentTpOrSl.slPrice = formattedSlTriggerPx);
         setCurrentTpOrSl(nextCurrentTpOrSl);
-        toast.success('Auto close set successfully', {
+        toast.success(autoCloseText + ' set successfully', {
           position: Toast.positions.CENTER,
         });
         setTimeout(() => {
@@ -161,12 +162,13 @@ export const usePerpsPosition = ({
         if (isExpired) {
           return;
         }
-        toast.error(error?.message || 'Set auto close error', {
+        toast.error(error?.message || autoCloseText + ' set error', {
           position: Toast.positions.CENTER,
         });
         Sentry.captureException(
           new Error(
-            'Set auto close error' +
+            autoCloseText +
+              ' set error' +
               'params: ' +
               JSON.stringify(params) +
               'error: ' +
