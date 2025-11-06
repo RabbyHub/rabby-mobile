@@ -350,6 +350,7 @@ export function MultiAddressHomeHeader(
                 </View>
               ) : null}
             </Card>
+
             <Image
               source={require('@/assets2024/icons/home/border-b-bg.png')}
               style={[
@@ -358,8 +359,9 @@ export function MultiAddressHomeHeader(
                   left: 0,
                   right: 0,
                   bottom: 0,
+                  zIndex: -2,
                 },
-                { width: '100%', height: '100%' },
+                { width: 361, height: 120 },
               ]}
               resizeMode="cover"
             />
