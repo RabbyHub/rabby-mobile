@@ -47,10 +47,8 @@ export const GlobalSearchBottomSheet = () => {
   useEffect(() => {
     if (showSearchBottomSheet) {
       modalRef.current?.present();
-      console.log('modalRef.current?.present');
     } else {
-      modalRef.current?.dismiss();
-      console.log('modalRef.current?.dismiss');
+      modalRef.current?.close();
       setSearchText('');
     }
   }, [showSearchBottomSheet]);
@@ -74,12 +72,11 @@ export const GlobalSearchBottomSheet = () => {
 
   return (
     <AppBottomSheetModal
-      // index={showSearchBottomSheet ? 0 : -1}
+      index={showSearchBottomSheet ? 0 : -1}
       // enableContentPanningGesture={browserState.isShowSearch}
       enableContentPanningGesture={false}
       enablePanDownToClose
       enableHandlePanningGesture
-      name="urlWebviewContainerRef"
       ref={modalRef}
       snapPoints={snapPoints}
       enableDismissOnClose={false}
@@ -108,7 +105,9 @@ export const GlobalSearchBottomSheet = () => {
             <View style={styles.customHandle} />
           </BottomSheetHandlableView>
         ) : null}
-        <SearchInner searchText={searchText} setSearchText={setSearchText} />
+        {showSearchBottomSheet ? (
+          <SearchInner searchText={searchText} setSearchText={setSearchText} />
+        ) : null}
       </AutoLockView>
     </AppBottomSheetModal>
   );

@@ -46,11 +46,8 @@ export const SearchInner = ({
 
     Keyboard.dismiss();
     await waitKeyboardHide();
+    openTab(url);
     setShowSearchBottomSheet(false);
-
-    setTimeout(() => {
-      openTab(url);
-    }, 100);
   });
 
   const { bottom } = useSafeAreaInsets();
