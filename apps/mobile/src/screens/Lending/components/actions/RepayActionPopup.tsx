@@ -47,12 +47,36 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   onClose,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const [amount, setAmount] = useState<string | undefined>(undefined);
+  const [_amount, setAmount] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [needApprove, setNeedApprove] = useState(false);
   const [repayTx, setRepayTx] = useState<any>(null);
   const { refresh } = useRefreshHistoryId();
   const [approveTxs, setApproveTxs] = useState<any>(null);
+
+  const repayAmount = useMemo(() => {
+    const miniAmount = BigNumber(reserve?.walletBalance || '0').gt(
+      reserve.variableBorrows,
+    )
+      ? reserve.variableBorrows
+      : reserve.walletBalance;
+    const usdValue = BigNumber(miniAmount || '0')
+      .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
+      .toString();
+    const isDebtUp = BigNumber(miniAmount || '0').eq(reserve.variableBorrows);
+    return {
+      amount: miniAmount,
+      usdValue,
+      isDebtUp,
+    };
+  }, [
+    reserve.walletBalance,
+    reserve.variableBorrows,
+    reserve.reserve.formattedPriceInMarketReferenceCurrency,
+  ]);
+  const amount = useMemo(() => {
+    return _amount === '-1' ? repayAmount.amount : _amount;
+  }, [_amount, repayAmount.amount]);
 
   const { t } = useTranslation();
 
@@ -238,7 +262,10 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
       const repayResult = await buildRepayTx({
-        amount: parseUnits(amount, targetPool.decimals).toString(),
+        amount:
+          _amount === '-1'
+            ? '-1'
+            : parseUnits(amount, targetPool.decimals).toString(),
         address: currentAccount.address,
         reserve: reserve.underlyingAsset,
       });
@@ -254,6 +281,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       setIsLoading(false);
     }
   }, [
+    _amount,
     amount,
     currentAccount,
     formattedPoolReservesAndIncentives,
@@ -372,25 +400,6 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     ],
   );
 
-  const repayAmount = useMemo(() => {
-    const miniAmount = BigNumber(reserve?.walletBalance || '0').gt(
-      reserve.variableBorrows,
-    )
-      ? reserve.variableBorrows
-      : reserve.walletBalance;
-    const usdValue = BigNumber(miniAmount || '0')
-      .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
-      .toString();
-    return {
-      amount: miniAmount,
-      usdValue,
-    };
-  }, [
-    reserve.walletBalance,
-    reserve.variableBorrows,
-    reserve.reserve.formattedPriceInMarketReferenceCurrency,
-  ]);
-
   const afterRepayAmount = useMemo(() => {
     return BigNumber(reserve.variableBorrows)
       .minus(amount || '0')
@@ -405,6 +414,23 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     afterRepayAmount,
     reserve.reserve.formattedPriceInMarketReferenceCurrency,
   ]);
+
+  const handleChangeAmount = useCallback(
+    (value: string) => {
+      const maxSelected = value === '-1';
+      if (maxSelected) {
+        // 还清所有债务
+        if (repayAmount.isDebtUp) {
+          setAmount('-1');
+        } else {
+          setAmount(repayAmount.amount?.toString() || '0');
+        }
+      } else {
+        setAmount(value);
+      }
+    },
+    [repayAmount.isDebtUp, repayAmount.amount],
+  );
 
   useEffect(() => {
     checkApproveStatus();
@@ -446,10 +472,10 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       </View>
       <TokenAmountInput
         value={amount}
-        onChange={setAmount}
+        onChange={handleChangeAmount}
         symbol={reserve.reserve.symbol}
         handleClickMaxButton={() => {
-          setAmount(repayAmount.amount || '0');
+          handleChangeAmount('-1');
         }}
         tokenAmount={Number(repayAmount.amount || '0')}
         price={Number(

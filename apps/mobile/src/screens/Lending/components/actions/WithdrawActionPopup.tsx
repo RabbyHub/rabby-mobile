@@ -51,12 +51,42 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   onClose,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const [amount, setAmount] = useState<string | undefined>(undefined);
+  const [_amount, setAmount] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [withdrawTxs, setWithdrawTxs] = useState<Tx[]>([]);
   const [isChecked, setIsChecked] = useState(false);
   const { refresh } = useRefreshHistoryId();
   const { t } = useTranslation();
+
+  const { formattedPoolReservesAndIncentives, wrapperPoolReserve } =
+    useLendingSummary();
+  const withdrawAmount = useMemo(() => {
+    if (!userSummary.totalBorrowsUSD || userSummary.totalBorrowsUSD === '0') {
+      return Number(reserve.underlyingBalance || '0');
+    }
+    const targetPool = formattedPoolReservesAndIncentives.find(item => {
+      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+        ? isSameAddress(
+            item.underlyingAsset,
+            wrapperToken[reserve.chain].address,
+          )
+        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+    });
+    if (!targetPool) {
+      return 0;
+    }
+    return calculateMaxWithdrawAmount(
+      userSummary,
+      reserve,
+      targetPool,
+      MAX_CLICK_WITHDRAW_HF_THRESHOLD,
+    ).toNumber();
+  }, [formattedPoolReservesAndIncentives, userSummary, reserve]);
+
+  const amount = useMemo(() => {
+    return _amount === '-1' ? withdrawAmount.toString() : _amount;
+  }, [_amount, withdrawAmount]);
+
   const isNativeToken = useMemo(() => {
     return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
   }, [reserve.underlyingAsset]);
@@ -64,8 +94,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
-  const { formattedPoolReservesAndIncentives, wrapperPoolReserve } =
-    useLendingSummary();
+
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
@@ -98,29 +127,6 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       withdrawAmount: amount,
     }).toString();
   }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
-
-  const withdrawAmount = useMemo(() => {
-    if (!userSummary.totalBorrowsUSD || userSummary.totalBorrowsUSD === '0') {
-      return Number(reserve.underlyingBalance || '0');
-    }
-    const targetPool = formattedPoolReservesAndIncentives.find(item => {
-      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
-        ? isSameAddress(
-            item.underlyingAsset,
-            wrapperToken[reserve.chain].address,
-          )
-        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
-    });
-    if (!targetPool) {
-      return 0;
-    }
-    return calculateMaxWithdrawAmount(
-      userSummary,
-      reserve,
-      targetPool,
-      MAX_CLICK_WITHDRAW_HF_THRESHOLD,
-    ).toNumber();
-  }, [formattedPoolReservesAndIncentives, userSummary, reserve]);
 
   const isRisky = useMemo(() => {
     if (!afterHF || Number(afterHF) < 0) {
@@ -172,7 +178,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
       const withdrawResult = await buildWithdrawTx({
-        amount,
+        amount: _amount === '-1' ? '-1' : amount,
         address: currentAccount.address,
         reserve: targetPool.underlyingAsset,
         aTokenAddress: targetPool?.aTokenAddress || '',
@@ -193,6 +199,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       setIsLoading(false);
     }
   }, [
+    _amount,
     amount,
     currentAccount,
     formattedPoolReservesAndIncentives,
@@ -291,6 +298,23 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     ],
   );
 
+  const handleChangeAmount = useCallback(
+    (value: string) => {
+      const maxSelected = value === '-1';
+      if (maxSelected) {
+        // 提取所有资产
+        if (BigNumber(withdrawAmount).eq(reserve.underlyingBalance)) {
+          setAmount('-1');
+        } else {
+          setAmount(withdrawAmount.toString());
+        }
+      } else {
+        setAmount(value);
+      }
+    },
+    [reserve.underlyingBalance, withdrawAmount],
+  );
+
   useEffect(() => {
     buildTransactions();
   }, [buildTransactions]);
@@ -333,10 +357,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       </View>
       <TokenAmountInput
         value={amount}
-        onChange={setAmount}
+        onChange={handleChangeAmount}
         symbol={reserve.reserve.symbol}
         handleClickMaxButton={() => {
-          setAmount(withdrawAmount.toString() || '0');
+          handleChangeAmount('-1');
         }}
         tokenAmount={withdrawAmount}
         price={Number(
