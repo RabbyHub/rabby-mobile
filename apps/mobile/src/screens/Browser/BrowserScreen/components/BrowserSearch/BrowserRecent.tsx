@@ -96,7 +96,9 @@ export function BrowserRecent({
                 origin={data.origin}
                 style={styles.dappIcon}
               />
-              <Text style={styles.dappName}>{data.name}</Text>
+              <Text style={styles.dappName}>
+                {data.info?.name || data?.name}
+              </Text>
             </TouchableOpacity>
           ))}
       </View>
