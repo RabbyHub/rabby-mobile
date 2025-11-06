@@ -26,13 +26,15 @@ const CustomLabel = ({
   text,
   style,
 }: CustomLabelProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const stylez = useAnimatedStyle(() => {
     return {
       color:
         Math.abs(index - indexDecimal.value) < 0.5
-          ? 'white'
+          ? isLight
+            ? ThemeColors2024.dark['neutral-title-1']
+            : ThemeColors2024.light['neutral-title-1']
           : colors2024['neutral-secondary'],
     } as DefaultStyle;
   });
@@ -40,7 +42,9 @@ const CustomLabel = ({
     return {
       backgroundColor:
         Math.abs(index - indexDecimal.value) < 0.5
-          ? ThemeColors2024.dark['neutral-bg-1']
+          ? isLight
+            ? ThemeColors2024.dark['neutral-bg-1']
+            : '#FFF'
           : 'transparent',
     } as DefaultStyle;
   });

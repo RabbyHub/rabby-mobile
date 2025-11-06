@@ -117,12 +117,13 @@ export const FullDefiRenderItem = ({
             logo={data?.logo}
             logoStyle={styles.assetIcon}
             size={40}
+            innerChainStyle={styles.chainLogo}
             chain={
               isFromAppChain
                 ? ''
                 : data?.chain || sectionsMultiProject[0]?.project?.chain
             }
-            chainSize={16}
+            chainSize={18}
           />
           <View style={styles.tokenInfo}>
             <Text
@@ -232,6 +233,10 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   assetIcon: {
     borderRadius: 40,
   },
+  chainLogo: {
+    borderWidth: 1.5,
+    borderColor: colors2024['neutral-bg-1'],
+  },
   tokenInfo: {
     flexDirection: 'column',
     justifyContent: 'center',
@@ -243,7 +248,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     flexWrap: 'nowrap',
   },
   container: {
@@ -253,7 +258,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     alignItems: 'flex-start',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+      : colors2024['neutral-bg-3'],
     marginHorizontal: 16,
     borderRadius: 16,
     paddingHorizontal: 8,
@@ -296,6 +301,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     left: 0,
     borderRadius: 16,
     right: 0,
-    bottom: 0,
+    height: 82,
   },
 }));

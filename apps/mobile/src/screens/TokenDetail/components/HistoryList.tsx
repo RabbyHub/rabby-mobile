@@ -326,7 +326,7 @@ const getStyle = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
-    lineHeight: 20,
+    lineHeight: 22,
     fontWeight: '900',
   },
   rightContent: {
@@ -337,7 +337,6 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   historyHeader: {
     paddingHorizontal: 15,
-    marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

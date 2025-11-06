@@ -57,7 +57,7 @@ const TokenDetailContent = () => {
     useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
   const { token, account, tokenSelectType } = route.params || {};
 
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();
@@ -130,6 +130,9 @@ const TokenDetailContent = () => {
     return (
       <TokenDetailHeaderArea
         style={{ marginLeft: -3 }}
+        tokenSize={49}
+        chainSize={20}
+        borderChain
         key={effectiveAccount?.address}
         token={token}
       />
@@ -193,12 +196,8 @@ const TokenDetailContent = () => {
       <ImageBackground
         source={
           !isLoss
-            ? isLight
-              ? require('@/assets2024/singleHome/home-profit-bg-1.png')
-              : require('@/assets2024/singleHome/home-profit-dark-bg-1.png')
-            : isLight
-            ? require('@/assets2024/singleHome/home-loss-bg-1.png')
-            : require('@/assets2024/singleHome/home-loss-dark-bg-1.png')
+            ? require('@/assets2024/singleHome/up.png')
+            : require('@/assets2024/singleHome/loss.png')
         }
         resizeMode="cover"
         style={{
@@ -206,28 +205,10 @@ const TokenDetailContent = () => {
           top: 0,
           left: 0,
           width: '100%',
-          height: safeOffHeader + 10,
+          height: safeOffHeader + 120,
         }}
       />
-      <ImageBackground
-        source={
-          !isLoss
-            ? isLight
-              ? require('@/assets2024/singleHome/home-profit-bg-2.png')
-              : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
-            : isLight
-            ? require('@/assets2024/singleHome/home-loss-bg-2.png')
-            : require('@/assets2024/singleHome/home-loss-dark-bg-2.png')
-        }
-        resizeMode="cover"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: 150,
-        }}
-      />
+
       <View style={styles.balanceOverviewContainer}>
         <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
         <View style={styles.balanceOverviewContent}>
@@ -236,12 +217,13 @@ const TokenDetailContent = () => {
             <Pressable
               style={[
                 styles.floatingBarContent,
+                isLoss ? styles.lossShadow : styles.upShadow,
                 {
                   borderColor: is24hNoChange
                     ? colors2024['neutral-secondary']
                     : isLoss
-                    ? colors2024['red-default']
-                    : colors2024['green-default'],
+                    ? colors2024['red-disable']
+                    : colors2024['green-disable'],
                   backgroundColor: is24hNoChange
                     ? colors2024['neutral-bg-1']
                     : isLoss
@@ -328,12 +310,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingBottom: 20,
     },
     balanceOverviewContainer: {
-      paddingHorizontal: 23,
+      paddingLeft: 23,
+      paddingRight: 16,
       marginBottom: 24,
     },
     bottomContainer: {
       width: '100%',
-      height: 130,
+      height: 116,
       backgroundColor: colors2024['neutral-bg-1'],
       position: 'absolute',
       bottom: 0,
@@ -356,6 +339,32 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 12,
       borderRadius: 16,
       borderBottomRightRadius: 2,
+    },
+    upShadow: {
+      ...Platform.select({
+        ios: {
+          shadowColor: 'rgb(88, 198, 105)',
+          shadowOffset: {
+            width: 0,
+            height: 6,
+          },
+          shadowOpacity: 0.04,
+          shadowRadius: 29,
+        },
+      }),
+    },
+    lossShadow: {
+      ...Platform.select({
+        ios: {
+          shadowColor: 'rgb(255, 69, 58)',
+          shadowOffset: {
+            width: 0,
+            height: 6,
+          },
+          shadowOpacity: 0.04,
+          shadowRadius: 29,
+        },
+      }),
     },
     floatBalanceTitle: {
       color: colors2024['neutral-foot'],

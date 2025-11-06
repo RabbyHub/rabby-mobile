@@ -17,7 +17,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const [isDecrease, setIsDecrease] = React.useState<boolean>(false);
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const route =
@@ -31,21 +31,6 @@ function HomeScreen(): JSX.Element {
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const headerHeight = useHeaderHeight();
   const { safeOffHeader } = useSafeSizes();
-  const topBg = React.useMemo(() => {
-    if (isDecrease) {
-      if (isLight) {
-        return require('@/assets2024/singleHome/home-loss-bg-1.png');
-      } else {
-        return require('@/assets2024/singleHome/home-loss-dark-bg-1.png');
-      }
-    } else {
-      if (isLight) {
-        return require('@/assets2024/singleHome/home-profit-bg-1.png');
-      } else {
-        return require('@/assets2024/singleHome/home-profit-dark-bg-1.png');
-      }
-    }
-  }, [isDecrease, isLight]);
 
   const handleUpdateIsDecrease = React.useCallback((status: boolean) => {
     setIsDecrease(status);
@@ -87,21 +72,31 @@ function HomeScreen(): JSX.Element {
     <NormalScreenContainer2024
       type="bg1"
       overwriteStyle={styles.rootScreenContainer}>
-      <ImageBackground
-        source={
-          !isDecrease
-            ? require('@/assets2024/singleHome/up.png')
-            : require('@/assets2024/singleHome/loss.png')
-        }
-        resizeMode="cover"
+      <Animated.View
         style={{
           position: 'absolute',
           top: 0,
-          left: 0,
+          right: 0,
           width: '100%',
-          height: safeOffHeader + 120,
-        }}
-      />
+          height: Math.max(headerHeight, 130),
+          opacity: fadeAnim,
+        }}>
+        <ImageBackground
+          source={
+            !isDecrease
+              ? require('@/assets2024/singleHome/up.png')
+              : require('@/assets2024/singleHome/loss.png')
+          }
+          resizeMode="cover"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: safeOffHeader + 120,
+          }}
+        />
+      </Animated.View>
       <View style={styles.safeView}>
         <AssetContainer
           onRefresh={triggerUpdate}
@@ -126,7 +121,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   bottomContainer: {
     width: '100%',
-    height: 130,
+    height: 116,
     backgroundColor: colors2024['neutral-bg-1'],
     position: 'absolute',
     bottom: 0,

@@ -8,26 +8,11 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useHeaderHeight } from '@react-navigation/elements';
 
 export function AddressAssetsOverview(): JSX.Element {
-  const { styles, isLight } = useTheme2024({ getStyle });
-  const { safeTop } = useSafeSizes();
+  const { styles } = useTheme2024({ getStyle });
+  const { safeTop, safeOffHeader } = useSafeSizes();
   const headerHeight = useHeaderHeight();
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const [isDecrease, setIsDecrease] = useState(false);
-  const topBg = React.useMemo(() => {
-    if (isDecrease) {
-      if (isLight) {
-        return require('@/assets2024/singleHome/home-loss-bg-1.png');
-      } else {
-        return require('@/assets2024/singleHome/home-loss-dark-bg-1.png');
-      }
-    } else {
-      if (isLight) {
-        return require('@/assets2024/singleHome/home-profit-bg-1.png');
-      } else {
-        return require('@/assets2024/singleHome/home-profit-dark-bg-1.png');
-      }
-    }
-  }, [isDecrease, isLight]);
 
   const handleReachTopStatusChange = React.useCallback(
     (status: boolean) => {
@@ -39,7 +24,6 @@ export function AddressAssetsOverview(): JSX.Element {
     },
     [fadeAnim],
   );
-
   return (
     <AddressListScreenContainer
       style={[
@@ -58,11 +42,18 @@ export function AddressAssetsOverview(): JSX.Element {
           opacity: fadeAnim,
         }}>
         <ImageBackground
-          source={topBg}
+          source={
+            !isDecrease
+              ? require('@/assets2024/singleHome/up.png')
+              : require('@/assets2024/singleHome/loss.png')
+          }
           resizeMode="cover"
           style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
             width: '100%',
-            height: Math.max(headerHeight, 80),
+            height: safeOffHeader + 150,
           }}
         />
       </Animated.View>

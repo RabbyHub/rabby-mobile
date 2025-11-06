@@ -290,13 +290,14 @@ export const ChartHeader = ({
           />
         )}
       </View>
-      <View style={styles.percentChangeContainer}>
+      <Pressable
+        onPress={() => setFold(!fold)}
+        style={styles.percentChangeContainer}>
         <AnimateableText
           style={lossStyleProps}
           animatedProps={percentChangeAnimatedProps}
         />
-
-        <Pressable hitSlop={10} onPress={() => setFold(!fold)}>
+        <View>
           <ArrowRightSVG
             style={{
               transform: fold ? [{ rotate: '90deg' }] : [{ rotate: '270deg' }],
@@ -304,8 +305,8 @@ export const ChartHeader = ({
             width={16}
             color={colors2024['neutral-secondary']}
           />
-        </Pressable>
-      </View>
+        </View>
+      </Pressable>
     </View>
   );
 };

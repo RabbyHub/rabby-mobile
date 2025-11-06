@@ -230,7 +230,9 @@ const getStyle = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 0,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 6,

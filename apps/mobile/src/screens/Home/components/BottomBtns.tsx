@@ -15,7 +15,7 @@ import {
 } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemoizedFn } from 'ahooks';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ColorValue, Pressable, Text, View } from 'react-native';
 import { useApprovalAlert } from '../hooks/approvals';
@@ -29,6 +29,7 @@ import RcIconMoreCC from '@/assets/icons/home/more-cc.svg';
 import RcIconReceiveCC from '@/assets2024/singleHome/receive-cc.svg';
 import RcIconApprovalCC from '@/assets2024/singleHome/approvals-cc.svg';
 import RcIconQueueCC from '@/assets2024/singleHome/queue-cc.svg';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -49,8 +50,7 @@ export const BottomBtns = ({
   const { approvalRiskAlert, loadApprovalStatus } = useApprovalAlert({
     account: currentAccount,
   });
-  // const isGnosisKeyring = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
-  const isGnosisKeyring = true;
+  const isGnosisKeyring = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
   const { total: gnosisTotal, refreshAsync } = useGnosisQueueTotalPending({
     // address: isGnosisKeyring ? currentAccount?.address : undefined,
     address: undefined,
@@ -279,7 +279,6 @@ const getStyles = createGetStyles2024(ctx => ({
   item: {
     height: 60,
     paddingHorizontal: 16,
-    backgroundColor: ctx.colors2024['neutral-card-1'],
     borderRadius: 4,
     flexDirection: 'row',
     alignItems: 'center',
