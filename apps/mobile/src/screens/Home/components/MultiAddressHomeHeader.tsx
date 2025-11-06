@@ -8,6 +8,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
+  Image,
   Platform,
   StyleSheet,
   Text,
@@ -25,8 +26,9 @@ import { useUpgradeInfo } from '@/hooks/version';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useTranslation } from 'react-i18next';
 
-import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
-import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
+import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
+import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
+
 import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
 import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
@@ -223,11 +225,11 @@ export function MultiAddressHomeHeader(
           <LinearGradient
             colors={
               isLight
-                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 1)']
+                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
                 : ['rgba(37,38,40,1)', 'rgba(28,27,27,1)']
             }
             style={{
-              padding: 1,
+              padding: 2,
               borderRadius: 21,
             }}>
             <Card
@@ -254,6 +256,7 @@ export function MultiAddressHomeHeader(
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
               />
+
               <View style={styles.curveCardInner}>
                 <View style={styles.curveContainer}>
                   {loadingNewCurve ? (
@@ -309,11 +312,11 @@ export function MultiAddressHomeHeader(
                 </View>
               </View>
               <View style={[styles.accountBg]}>
-                <RcIconSmallWallet />
+                <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
                 <Text style={styles.accountText}>
                   {accountsLength >= 10 ? '10' : accountsLength}
                 </Text>
-                <RcIconSmallArrow />
+                <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
               </View>
               {addressListData?.length ? (
                 <View
@@ -347,6 +350,19 @@ export function MultiAddressHomeHeader(
                 </View>
               ) : null}
             </Card>
+            <Image
+              source={require('@/assets2024/icons/home/border-b-bg.png')}
+              style={[
+                {
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                },
+                { width: '100%', height: '100%' },
+              ]}
+              resizeMode="cover"
+            />
           </LinearGradient>
         </BlurShadowView>
       </View>
@@ -452,9 +468,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 8,
     paddingLeft: 11,
     borderRadius: 10,
-    backgroundColor: isLight
-      ? ThemeColors2024.dark['neutral-bg-1']
-      : colors2024['brand-default'],
+    backgroundColor: colors2024['neutral-line'],
     shadowColor: colors2024['brand-light-1'],
     shadowOffset: { width: 0, height: 9.411 },
     shadowOpacity: 0.1,
@@ -491,9 +505,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'left',
-    color: colors2024['neutral-InvertHighlight'],
+    color: colors2024['neutral-title-1'],
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
+    paddingLeft: 6,
   },
   pinBox: {
     flexDirection: 'row',
@@ -502,7 +517,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
   },
   curveBox: {
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingTop: 12,
   },
   curveCard: {

@@ -178,9 +178,12 @@ const BlurViewOnlyIOSWrapper = ({
   );
 };
 
-export const BrowserSearchEntry: React.FC = () => {
+export const BrowserSearchEntry: React.FC<{ alwaysShowSearch?: boolean }> = ({
+  alwaysShowSearch,
+}) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const {
+    browserState,
     setPartialBrowserState,
     displayedTabs,
     forceShowBrowser,
@@ -266,58 +269,60 @@ export const BrowserSearchEntry: React.FC = () => {
       ) : (
         <View style={styles.empty} />
       )}
-      <TouchableOpacity style={styles.fabContainer} onPress={handlePress}>
-        <BlurViewOnlyIOSWrapper
-          isLight={isLight}
-          blurAmount={14.5}
-          borderRadius={20}>
-          <LinearGradient
-            colors={
-              isLight
-                ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
-                : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.8)']
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.gradient}>
-            <View style={styles.innerCircle}>
-              <RcNextSearchCC
-                width={20}
-                height={20}
-                style={styles.icon}
-                color={colors2024['neutral-secondary']}
-              />
-              <Text style={styles.text}>
-                {t('page.browser.BrowserSearchEntry.openWebsites')}
-              </Text>
-              <TouchableOpacity
-                style={[styles.navControlItem]}
-                onPress={handleTabPress}>
-                {displayedTabs?.length ? (
-                  <View style={styles.tabIconContainer}>
-                    <RcIconTabsCC
-                      color={colors2024['neutral-body']}
+      {alwaysShowSearch && browserState.isShowBrowser && (
+        <TouchableOpacity style={styles.fabContainer} onPress={handlePress}>
+          <BlurViewOnlyIOSWrapper
+            isLight={isLight}
+            blurAmount={14.5}
+            borderRadius={20}>
+            <LinearGradient
+              colors={
+                isLight
+                  ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
+                  : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.8)']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.gradient}>
+              <View style={styles.innerCircle}>
+                <RcNextSearchCC
+                  width={20}
+                  height={20}
+                  style={styles.icon}
+                  color={colors2024['neutral-secondary']}
+                />
+                <Text style={styles.text}>
+                  {t('page.browser.BrowserSearchEntry.openWebsites')}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.navControlItem]}
+                  onPress={handleTabPress}>
+                  {displayedTabs?.length ? (
+                    <View style={styles.tabIconContainer}>
+                      <RcIconTabsCC
+                        color={colors2024['neutral-body']}
+                        width={24}
+                        height={24}
+                      />
+                      <View style={styles.tabCountContainer}>
+                        <Text style={styles.tabCount}>
+                          {displayedTabs?.length || 0}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : (
+                    <RcIconStarCC
+                      color={colors2024['neutral-secondary']}
                       width={24}
                       height={24}
                     />
-                    <View style={styles.tabCountContainer}>
-                      <Text style={styles.tabCount}>
-                        {displayedTabs?.length || 0}
-                      </Text>
-                    </View>
-                  </View>
-                ) : (
-                  <RcIconStarCC
-                    color={colors2024['neutral-secondary']}
-                    width={24}
-                    height={24}
-                  />
-                )}
-              </TouchableOpacity>
-            </View>
-          </LinearGradient>
-        </BlurViewOnlyIOSWrapper>
-      </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </BlurViewOnlyIOSWrapper>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

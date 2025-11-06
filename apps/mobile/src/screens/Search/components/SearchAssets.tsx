@@ -4,10 +4,19 @@ import RcIconRight from '@/assets2024/icons/search/IconRight.svg';
 import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
 import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+import RcIconStarFull from '@/assets/icons/dapp/icon-star-mini-full.svg';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Keyboard, Pressable, Text, View } from 'react-native';
+import {
+  FlatList,
+  FlatListProps,
+  Keyboard,
+  Pressable,
+  Text,
+  View,
+  ViewProps,
+} from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -42,6 +51,10 @@ interface Props {
   resultTokens: AbstractPortfolioToken[];
   loading: boolean;
   searchState: string;
+  inGlobalSearch?: boolean;
+  Header?: React.ReactNode;
+  stickyHeaderStyle?: ViewProps['style'];
+  onTokenSelect?: () => void;
 }
 
 const STICKY_HEADER_HEIGHT = 28;
@@ -50,6 +63,10 @@ export const SearchAssets: React.FC<Props> = ({
   resultTokens,
   loading,
   searchState,
+  inGlobalSearch = false,
+  Header,
+  stickyHeaderStyle,
+  onTokenSelect,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
@@ -101,17 +118,28 @@ export const SearchAssets: React.FC<Props> = ({
     [fetchPinedTokenList, t, watchlistTokenList],
   );
 
-  useFocusEffect(fetchPinedTokenList);
+  // ignore
+  if (inGlobalSearch) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      fetchPinedTokenList();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+  } else {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useFocusEffect(fetchPinedTokenList);
+  }
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
+      onTokenSelect?.();
       navigateDeprecated(RootNames.TokenMarketInfo, {
         token: token,
         unHold: token._unHold,
         needUseCacheToken: true,
       });
     },
-    [],
+    [onTokenSelect],
   );
 
   const renderItem = useCallback(
@@ -125,31 +153,43 @@ export const SearchAssets: React.FC<Props> = ({
             logoSize={40}
             decimalPrecision
             rightSlot={
-              <Pressable
-                style={styles.rightSlot}
-                onPress={e => {
-                  e.stopPropagation();
-                  handlePressFavorite(item.id, item.chain);
-                }}
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-                <RcIconFavorite
-                  width={22}
-                  height={21}
-                  color={
-                    watchlistTokenList.some(
-                      t => t.chainId === item.chain && t.tokenId === item.id,
-                    )
-                      ? colors2024['orange-default']
-                      : colors2024['neutral-line']
-                  }
-                />
-              </Pressable>
+              inGlobalSearch ? (
+                watchlistTokenList.some(
+                  t => t.chainId === item.chain && t.tokenId === item.id,
+                ) ? (
+                  <View style={styles.badge}>
+                    <RcIconStarFull width={12} height={12} />
+                  </View>
+                ) : null
+              ) : (
+                <Pressable
+                  style={styles.rightSlot}
+                  onPress={e => {
+                    e.stopPropagation();
+                    handlePressFavorite(item.id, item.chain);
+                  }}
+                  hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+                  <RcIconFavorite
+                    width={22}
+                    height={21}
+                    color={
+                      watchlistTokenList.some(
+                        t => t.chainId === item.chain && t.tokenId === item.id,
+                      )
+                        ? colors2024['orange-default']
+                        : colors2024['neutral-line']
+                    }
+                  />
+                </Pressable>
+              )
             }
           />
         )
       );
     },
     [
+      styles.badge,
+      inGlobalSearch,
       colors2024,
       handleOpenTokenDetail,
       handlePressFavorite,
@@ -218,14 +258,21 @@ export const SearchAssets: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      <View style={[styles.bgContainer, styles.stickyHeader]}>
+      {Header}
+      <View
+        style={[
+          styles.bgContainer,
+          styles.stickyHeader,
+          inGlobalSearch && { paddingHorizontal: 0 },
+          stickyHeaderStyle,
+        ]}>
         <View
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}>
-          {isValidHexAddress(add0x(searchState)) ? (
+          {isValidHexAddress(add0x(searchState)) && !inGlobalSearch ? (
             <View
               style={{
                 flexDirection: 'row',
@@ -240,7 +287,9 @@ export const SearchAssets: React.FC<Props> = ({
               )}"`}</Text>
             </View>
           ) : (
-            <Text style={styles.sectionHeader}>{t('page.swap.results')}</Text>
+            <Text style={styles.sectionHeader}>
+              {inGlobalSearch ? t('global.Token') : t('page.swap.results')}
+            </Text>
           )}
           {chainInfo ? (
             <View
@@ -288,7 +337,7 @@ export const SearchAssets: React.FC<Props> = ({
         data={filterTokens}
         ListEmptyComponent={ListEmptyComponent}
         renderItem={({ item }) => renderItem({ item })}
-        style={styles.list}
+        style={[styles.list, inGlobalSearch && { paddingHorizontal: 0 }]}
       />
     </View>
   );
@@ -297,6 +346,7 @@ export const SearchAssets: React.FC<Props> = ({
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
+    height: '100%',
   },
   skeletonBlock: {
     backgroundColor: ctx.isLight
@@ -427,5 +477,15 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   rightSlot: {
     marginLeft: 8,
+  },
+  badge: {
+    position: 'absolute',
+    top: -14,
+    right: -16,
+    backgroundColor: ctx.colors2024['orange-light-1'],
+    paddingVertical: 3,
+    paddingHorizontal: 12,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 12,
   },
 }));

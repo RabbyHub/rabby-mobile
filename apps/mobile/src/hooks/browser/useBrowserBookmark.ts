@@ -100,3 +100,19 @@ export function useBrowserBookmark() {
     getBookmarkList,
   };
 }
+
+export const useDappsBadge = () => {
+  const { bookmarkList } = useBrowserBookmark();
+
+  const badgeList = useMemo(() => {
+    const list = bookmarkList
+      .filter(e => e.isFavorite)
+      .sort((a, b) => (a as any).createdAt - (b as any).createdAt);
+    if (list.length < 3) {
+      return list;
+    }
+    return list.slice(list.length - 3);
+  }, [bookmarkList]);
+
+  return badgeList;
+};
