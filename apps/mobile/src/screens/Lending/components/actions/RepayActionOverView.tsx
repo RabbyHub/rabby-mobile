@@ -3,10 +3,10 @@ import { Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
-import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import HealthFactorText from '../HealthFactorText';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
+import { formatNetworth } from '@/utils/math';
 
 const RepayActionOverView: React.FC<
   PopupDetailProps & {
@@ -52,10 +52,10 @@ const RepayActionOverView: React.FC<
         <View style={[styles.item, styles.hfDescContainer]}>
           <Text style={styles.hfDesc}>
             {amount
-              ? `$${formatAmountValueKMB(
-                  reserve.variableBorrowsUSD || '0',
-                )} → $${formatAmountValueKMB(afterRepayUsdValue || '0')}`
-              : `$${formatAmountValueKMB(reserve.variableBorrowsUSD || '0')}`}
+              ? `${formatNetworth(
+                  Number(reserve.variableBorrowsUSD || '0'),
+                )} → ${formatNetworth(Number(afterRepayUsdValue || '0'))}`
+              : `${formatNetworth(Number(reserve.variableBorrowsUSD || '0'))}`}
           </Text>
         </View>
         <View style={[styles.item, styles.hfContainer]}>

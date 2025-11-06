@@ -25,6 +25,7 @@ import WarningFillCC from '@/assets2024/icons/lending/warning-cc.svg';
 import { Tip } from '@/components/Tip';
 import { formatTokenAmount } from '@debank/common';
 import { useTranslation } from 'react-i18next';
+import { formatNetworth } from '@/utils/math';
 
 export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -186,7 +187,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
                   color: colors2024['neutral-title-1'],
                 },
               ]}>
-              {formatUsdValueKMB(reserve.underlyingBalanceUSD || '0')}
+              {formatNetworth(Number(reserve.underlyingBalanceUSD || '0'))}
             </Text>
           </View>
           <View style={styles.userInfoItem}>

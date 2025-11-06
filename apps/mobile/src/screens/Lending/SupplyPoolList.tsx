@@ -20,6 +20,7 @@ import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
+import { formatNetworth } from '@/utils/math';
 
 const FOOT_HEIGHT = 100;
 const SupplyPoolList = () => {
@@ -164,7 +165,7 @@ const SupplyPoolList = () => {
             </Text>
             <View style={styles.right}>
               <Text style={styles.yourSupplied}>
-                {formatUsdValueKMB(Number(item.underlyingBalanceUSD || '0'))}
+                {formatNetworth(Number(item.underlyingBalanceUSD || '0'))}
               </Text>
               <View style={styles.yourBalanceContainer}>
                 <WalletFillCC

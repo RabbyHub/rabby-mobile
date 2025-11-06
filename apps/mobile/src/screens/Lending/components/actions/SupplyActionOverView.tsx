@@ -3,10 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
-import {
-  formatAmountValueKMB,
-  formatPercent,
-} from '@/screens/TokenDetail/util';
+import { formatPercent } from '@/screens/TokenDetail/util';
 import { isHFEmpty } from '../../utils';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import HealthFactorText from '../HealthFactorText';
@@ -16,6 +13,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTranslation } from 'react-i18next';
+import { formatNetworth } from '@/utils/math';
 
 const SupplyActionOverView: React.FC<
   PopupDetailProps & {
@@ -32,7 +30,7 @@ const SupplyActionOverView: React.FC<
   }, [reserve?.reserve?.supplyAPY]);
 
   const availableText = useMemo(() => {
-    return `$${formatAmountValueKMB(availableBorrowsUSD || '0')}`;
+    return `${formatNetworth(Number(availableBorrowsUSD || '0'))}`;
   }, [availableBorrowsUSD]);
 
   const handleSupplyDescription = () => {
@@ -85,8 +83,8 @@ const SupplyActionOverView: React.FC<
           <View style={styles.availableValueContainer}>
             <Text style={styles.availableValue}>
               {afterAvailable
-                ? `${availableText} → $${formatAmountValueKMB(
-                    afterAvailable || '0',
+                ? `${availableText} → ${formatNetworth(
+                    Number(afterAvailable || '0'),
                   )}`
                 : availableText}
             </Text>
