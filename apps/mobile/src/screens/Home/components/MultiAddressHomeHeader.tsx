@@ -2,7 +2,11 @@ import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { StackActions } from '@react-navigation/native';
 import React, {
   useEffect,
@@ -252,7 +256,7 @@ export function MultiAddressHomeHeader(
               marginHorizontal: 'auto',
               backgroundColor: 'transparent',
             }}
-            forceUseLocalResource={isNonPublicProductionEnv}
+            forceUseLocalResource={!isNonPublicProductionEnv}
             entryPath={'/pages/gasket-blurview.html'}
             webviewSize={{
               width: Dimensions.get('window').width - 15 * 2,
@@ -401,6 +405,11 @@ export function MultiAddressHomeHeader(
     </View>
   );
 }
+
+const SIZES = {
+  cardLayoutPaddingHorizontal: 15 /* ITEM_LAYOUT_PADDING_HORIZONTAL */,
+  cardContentRadius: 20,
+};
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   screenContainer: {
@@ -553,14 +562,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'relative',
     marginTop: 12,
     paddingTop: 0,
-    // backgroundColor: 'transparent',
+    backgroundColor: 'transparent',
     // ...makeDebugBorder('red'),
-    paddingHorizontal: 15,
+    paddingHorizontal: SIZES.cardLayoutPaddingHorizontal,
+    borderRadius: SIZES.cardContentRadius,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
   },
-  curveBoxWrapperLoading: {},
   localWebViewWrapper: {
     position: 'absolute',
     top: 0,
@@ -568,19 +576,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     left: 0,
     right: 0,
     zIndex: IS_IOS ? 1 : -1,
-    borderRadius: 0,
-    // ...(__DEV__ && {
-    //   zIndex: 100,
-    // }),
+    marginHorizontal: SIZES.cardLayoutPaddingHorizontal,
+    borderRadius: SIZES.cardContentRadius,
+    // ...makeDebugBorder('yellow'),
   },
+  curveBoxWrapperLoading: {},
   curveBox: {
-    // paddingHorizontal: 15,
-    // paddingTop: 12,
+    ...makeDevOnlyStyle({
+      // opacity: 0,
+    }),
     paddingHorizontal: 0,
     paddingTop: 0,
     paddingVertical: 0,
     padding: 0,
-    borderWidth: IS_IOS ? 1 : 2,
+    borderWidth: IS_IOS ? 1 : 1,
     borderColor: 'transparent',
     borderRadius: 20,
     // ...makeDebugBorder(),
