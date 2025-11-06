@@ -5,7 +5,7 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { RcIconInfoFill1CC } from '@/assets/icons/common';
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import RcImgSafe from '@/assets2024/icons/perps/ImgSafe.svg';
 import RcImgWarning from '@/assets2024/icons/perps/ImgWarning.svg';
 import RcImgDanger from '@/assets2024/icons/perps/ImgDanger.svg';
@@ -138,7 +138,7 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
               <Text style={[styles.distanceLabel, { color: riskConfig.color }]}>
                 {t('page.perps.PerpsRiskPopup.distanceLabel')}
               </Text>
-              <RcIconInfoFill1CC
+              <RcIconInfoCC
                 width={16}
                 height={16}
                 color={riskConfig.infoColor}
@@ -167,9 +167,10 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
               </Text>
             </View>
           </View>
-
-          <Button type="primary" title={t('global.gotIt')} onPress={onClose} />
         </AutoLockView>
+        <View style={styles.footer}>
+          <Button type="primary" title={t('global.gotIt')} onPress={onClose} />
+        </View>
       </BottomSheetView>
     </AppBottomSheetModal>
   );
@@ -178,13 +179,13 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     paddingHorizontal: 20,
-    paddingBottom: 56,
+    // paddingBottom: 56,
   },
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
     marginBottom: 8,
@@ -268,5 +269,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 48,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
 }));

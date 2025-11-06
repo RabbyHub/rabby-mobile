@@ -1,4 +1,4 @@
-import { RcIconInfoFill1CC, RcIconInfoFillCC } from '@/assets/icons/common';
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { RcIconLong } from '@/assets2024/icons/perps';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
@@ -53,9 +53,9 @@ export const PerpsInfo: React.FC<{
               <Text style={styles.label}>
                 {t('page.perpsDetail.PerpsInfo.openInterest')}
               </Text>
-              <RcIconInfoFill1CC
-                width={15}
-                height={15}
+              <RcIconInfoCC
+                width={16}
+                height={16}
                 color={colors2024['neutral-info']}
               />
             </View>
@@ -84,9 +84,9 @@ export const PerpsInfo: React.FC<{
               <Text style={styles.label}>
                 {t('page.perpsDetail.PerpsInfo.funding')}
               </Text>
-              <RcIconInfoFill1CC
-                width={15}
-                height={15}
+              <RcIconInfoCC
+                width={16}
+                height={16}
                 color={colors2024['neutral-info']}
               />
             </View>

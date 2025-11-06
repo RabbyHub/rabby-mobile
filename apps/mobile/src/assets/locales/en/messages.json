@@ -2463,6 +2463,7 @@
         "title": "Close Position",
         "amount": "Amount",
         "total": "Total",
+        "receive": "Receive:",
         "minimumWarning": "Minimum mount is {{percent}}%",
         "closedPnl": "Closed PNL:",
         "confirm": "Confirm",

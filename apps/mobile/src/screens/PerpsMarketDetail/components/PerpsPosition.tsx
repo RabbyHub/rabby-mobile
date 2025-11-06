@@ -1,4 +1,4 @@
-import { RcIconInfoFill1CC, RcIconInfoFillCC } from '@/assets/icons/common';
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { AppSwitch } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
@@ -128,9 +128,9 @@ export const PerpsPosition: React.FC<{
                 <Text style={styles.label}>
                   {t('page.perpsDetail.PerpsPosition.size')}
                 </Text>
-                <RcIconInfoFill1CC
-                  width={15}
-                  height={15}
+                <RcIconInfoCC
+                  width={16}
+                  height={16}
                   color={colors2024['neutral-info']}
                 />
               </View>
@@ -294,9 +294,9 @@ export const PerpsPosition: React.FC<{
                 <Text style={styles.label}>
                   {t('page.perpsDetail.PerpsPosition.liquidationPrice')}
                 </Text>
-                <RcIconInfoFill1CC
-                  width={15}
-                  height={15}
+                <RcIconInfoCC
+                  width={16}
+                  height={16}
                   color={colors2024['neutral-info']}
                 />
               </View>
@@ -319,9 +319,9 @@ export const PerpsPosition: React.FC<{
                 <Text style={styles.label}>
                   {t('page.perpsDetail.PerpsPosition.fundingPayments')}
                 </Text>
-                <RcIconInfoFill1CC
-                  width={15}
-                  height={15}
+                <RcIconInfoCC
+                  width={16}
+                  height={16}
                   color={colors2024['neutral-info']}
                 />
               </View>

@@ -215,7 +215,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 'auto',
   },
   learnBtn: {
-    backgroundColor: colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-5'],
   },
   learnBtnTitle: {
     fontFamily: 'SF Pro Rounded',

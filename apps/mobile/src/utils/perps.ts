@@ -140,4 +140,37 @@ export const calTransferMarginRequired = (
   return transferMarginRequired;
 };
 
+const MAX_SIGNIFICANT_FIGURES = 6;
+
 export const formatPerpsPct = (v: number) => `${(v * 100).toFixed(2)}%`;
+
+export const formatTpOrSlPrice = (v: number, szDecimal: number) => {
+  const vStr = v.toString();
+  if (!vStr.includes('.')) {
+    return vStr;
+  }
+
+  const [integerPart, decimalPart] = vStr.split('.');
+
+  // Check decimal places: less than (6 - szDecimals)
+  const maxDecimals = MAX_SIGNIFICANT_FIGURES - szDecimal;
+  const decimalPlaces = Math.max(0, maxDecimals);
+  if (decimalPlaces === 0 || integerPart.length >= MAX_SIGNIFICANT_FIGURES) {
+    return `${integerPart}`;
+  }
+  // decimalPlaces >= 1
+  if (decimalPart.length > decimalPlaces) {
+    const newDecimalPart = decimalPart.slice(0, decimalPlaces);
+    // Calculate significant figures (remove leading zeros)
+    const allDigits = (integerPart + decimalPart).replace(/^0+/, '');
+    if (allDigits.length > 5) {
+      const integerPartLength = integerPart.length;
+      const newDecimalPlaces = Math.max(1, 5 - integerPartLength);
+      return `${integerPart}.${decimalPart.slice(0, newDecimalPlaces)}`;
+    } else {
+      return `${integerPart}.${newDecimalPart}`;
+    }
+  } else {
+    return `${integerPart}.${decimalPart}`;
+  }
+};

@@ -226,7 +226,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   leverageTag: {
     borderRadius: 4,
     paddingHorizontal: 4,
-    paddingVertical: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 20,
   },
   leverageText: {
     fontFamily: 'SF Pro Rounded',

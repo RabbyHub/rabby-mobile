@@ -130,7 +130,7 @@ export const PerpsEditMarginPopup: React.FC<{
       positionSize,
       leverage,
     );
-    return marginUsed - transferMarginRequired;
+    return Math.max(marginUsed - transferMarginRequired, 0);
   }, [entryPrice, markPrice, positionSize, leverage, marginUsed]);
 
   // Calculate slider percentage
@@ -274,6 +274,7 @@ export const PerpsEditMarginPopup: React.FC<{
                     styles.directionButtonText,
                     action === 'add' && {
                       color: colors2024['brand-default'],
+                      fontWeight: '800',
                     },
                   ]}>
                   {t('page.perpsDetail.PerpsEditMarginPopup.addMargin')}
@@ -297,6 +298,7 @@ export const PerpsEditMarginPopup: React.FC<{
                     styles.directionButtonText,
                     action === 'reduce' && {
                       color: colors2024['brand-default'],
+                      fontWeight: '800',
                     },
                   ]}>
                   {t('page.perpsDetail.PerpsEditMarginPopup.reduceMargin')}
@@ -368,7 +370,7 @@ export const PerpsEditMarginPopup: React.FC<{
                 keyboardType="numeric"
                 style={[
                   styles.input,
-                  !marginValidation.isValid && margin !== ''
+                  !marginValidation.isValid && Number(margin) > 0
                     ? styles.inputError
                     : null,
                 ]}
@@ -558,9 +560,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingTop: 12,
+      paddingTop: 16,
       paddingHorizontal: 16,
-      paddingBottom: 56,
+      paddingBottom: 48,
     },
     liqPrice: {
       fontFamily: 'SF Pro Rounded',
@@ -747,7 +749,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     directionButtonText: {
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '700',
+      fontWeight: '500',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -894,7 +896,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     leverageTag: {
       borderRadius: 4,
       paddingHorizontal: 4,
-      paddingVertical: 1,
+      height: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     leverageText: {
       fontFamily: 'SF Pro Rounded',
@@ -923,6 +927,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       marginBottom: 16,
       gap: 8,
+      ...(isLight
+        ? {
+            // shadow: 0 10px 11.9px 0 rgba(0, 0, 0, 0.02)
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.02,
+            shadowRadius: 11.9,
+            elevation: 6,
+          }
+        : null),
     },
     icon: {
       width: 46,

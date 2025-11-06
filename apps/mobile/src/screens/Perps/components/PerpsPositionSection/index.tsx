@@ -43,11 +43,11 @@ export const PerpsPositionSection: React.FC<{
   const handleCloseAll = useMemoizedFn(() => {
     Alert.alert(
       t('page.perps.closeAllConfirmTitle'),
-      t('page.perps.closeAllConfirmMessage', { count: list.length }),
+      t('page.perps.closeAllConfirmMessage'),
       [
         {
           text: t('global.cancel'),
-          style: 'cancel',
+          style: 'default',
         },
         {
           text: t('global.confirm'),
@@ -119,7 +119,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '700',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },
   sectionAction: {

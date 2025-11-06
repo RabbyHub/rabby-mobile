@@ -1,5 +1,4 @@
-import { RcIconInfoFill1CC, RcIconInfoFillCC } from '@/assets/icons/common';
-import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -194,10 +193,10 @@ export const PerpsWithdrawPopup: React.FC<{
                 <Text style={styles.fee}>
                   {t('page.perps.PerpsWithdrawPopup.feeTip')}
                 </Text>
-                <RcIconInfoFill1CC
+                <RcIconInfoCC
                   color={colors2024['neutral-info']}
-                  width={15}
-                  height={15}
+                  width={16}
+                  height={16}
                 />
               </View>
             </TouchableOpacity>

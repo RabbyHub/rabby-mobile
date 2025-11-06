@@ -91,11 +91,12 @@ export const DistanceToLiquidationTag: React.FC<
 const getStyles = createGetStyles2024(() => ({
   distanceTag: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 4,
     borderRadius: 100,
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 20,
     borderWidth: 0.8,
   },
   distanceDotContainer: {

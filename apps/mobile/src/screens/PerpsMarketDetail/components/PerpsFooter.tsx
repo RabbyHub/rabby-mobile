@@ -88,9 +88,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    paddingTop: 12,
+    paddingTop: 16,
     paddingHorizontal: 16,
-    paddingBottom: 56,
+    paddingBottom: 48,
   },
   btnGroup: {
     display: 'flex',

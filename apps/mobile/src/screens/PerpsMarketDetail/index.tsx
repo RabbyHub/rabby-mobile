@@ -79,7 +79,6 @@ export const PerpsMarketDetailScreen = () => {
     marketData,
     hasPermission,
   } = state;
-
   const [isShowModal, setIsShowModal] = useState(false);
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
@@ -279,10 +278,10 @@ export const PerpsMarketDetailScreen = () => {
     async (actionType: 'tp' | 'sl') => {
       if (actionType === 'tp') {
         if (tpOid) {
-          await handleCancelOrder(tpOid, coin, 'tp');
           setCurrentTpOrSl({
             tpPrice: undefined,
           });
+          await handleCancelOrder(tpOid, coin, 'tp');
         } else {
           toast.error('Take profit not found', {
             position: Toast.positions.CENTER,
@@ -290,10 +289,10 @@ export const PerpsMarketDetailScreen = () => {
         }
       } else if (actionType === 'sl') {
         if (slOid) {
-          await handleCancelOrder(slOid, coin, 'sl');
           setCurrentTpOrSl({
             slPrice: undefined,
           });
+          await handleCancelOrder(slOid, coin, 'sl');
         } else {
           toast.error('Stop loss not found', {
             position: Toast.positions.CENTER,

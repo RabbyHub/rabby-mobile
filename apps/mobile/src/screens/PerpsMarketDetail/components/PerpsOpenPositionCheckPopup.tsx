@@ -1,8 +1,4 @@
-import {
-  RcArrowRight2CC,
-  RcIconInfoFill1CC,
-  RcIconInfoFillCC,
-} from '@/assets/icons/common';
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { AppSwitch, AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -157,9 +153,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                   <Text style={styles.label}>
                     {t('page.perpsDetail.PerpsOpenPositionCheckPopup.size')}
                   </Text>
-                  <RcIconInfoFill1CC
-                    width={15}
-                    height={15}
+                  <RcIconInfoCC
+                    width={16}
+                    height={16}
                     color={colors2024['neutral-info']}
                   />
                 </View>
@@ -231,9 +227,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                       'page.perpsDetail.PerpsOpenPositionCheckPopup.estLqPrice',
                     )}
                   </Text>
-                  <RcIconInfoFill1CC
-                    width={15}
-                    height={15}
+                  <RcIconInfoCC
+                    width={16}
+                    height={16}
                     color={colors2024['neutral-info']}
                   />
                 </View>

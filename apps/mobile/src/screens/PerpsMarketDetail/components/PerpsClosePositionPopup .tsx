@@ -1,5 +1,5 @@
-import { RcIconInfoFill1CC } from '@/assets/icons/common';
 import AutoLockView from '@/components/AutoLockView';
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -160,18 +160,31 @@ export const PerpsClosePositionPopup: React.FC<{
             />
           </View>
 
-          <View style={styles.pnlRow}>
-            <Text style={styles.pnlLabel}>
-              {t('page.perpsDetail.PerpsClosePositionPopup.closedPnl')}
-            </Text>
-            <Text
-              style={[
-                styles.pnlValue,
-                closedPnl >= 0 ? styles.green : styles.red,
-              ]}>
-              {closedPnl >= 0 ? '+' : '-'}$
-              {splitNumberByStep(Math.abs(closedPnl).toFixed(2))}
-            </Text>
+          <View style={styles.pnlCard}>
+            <View style={styles.pnlCardRow}>
+              <Text style={styles.pnlLabel}>
+                {t('page.perpsDetail.PerpsClosePositionPopup.receive')}
+              </Text>
+              <Text style={[styles.pnlValue]}>
+                {'+'}$
+                {splitNumberByStep(
+                  ((marginUsed * closePercent) / 100).toFixed(2),
+                )}
+              </Text>
+            </View>
+            <View style={styles.pnlCardRow}>
+              <Text style={styles.pnlLabel}>
+                {t('page.perpsDetail.PerpsClosePositionPopup.closedPnl')}
+              </Text>
+              <Text
+                style={[
+                  styles.pnlValue,
+                  closedPnl >= 0 ? styles.green : styles.red,
+                ]}>
+                {closedPnl >= 0 ? '+' : '-'}$
+                {splitNumberByStep(Math.abs(closedPnl).toFixed(2))}
+              </Text>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -194,10 +207,10 @@ export const PerpsClosePositionPopup: React.FC<{
                 {t('page.perpsDetail.PerpsClosePositionPopup.fee')}:{' '}
                 {formatPercent(bothFee, 4)}
               </Text>
-              <RcIconInfoFill1CC
+              <RcIconInfoCC
                 color={colors2024['neutral-info']}
-                width={15}
-                height={15}
+                width={16}
+                height={16}
               />
             </View>
           </TouchableOpacity>
@@ -226,7 +239,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '800',
+      fontWeight: '900',
       color: colors2024['neutral-title-1'],
       marginBottom: 20,
       textAlign: 'center',
@@ -237,9 +250,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderColor: colors2024['neutral-line'],
       borderRadius: 20,
       paddingVertical: 16,
-      paddingBottom: 8,
+      paddingBottom: 20,
       paddingHorizontal: 20,
-      marginBottom: 10,
+      marginBottom: 12,
     },
     amountHeader: {
       flexDirection: 'row',
@@ -251,14 +264,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '800',
+      fontWeight: '900',
       color: colors2024['brand-default'],
     },
     percentageText: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 36,
       lineHeight: 42,
-      fontWeight: '800',
+      fontWeight: '900',
       color: colors2024['brand-default'],
     },
     amountValueContainer: {
@@ -276,7 +289,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
-      fontWeight: '800',
+      fontWeight: '900',
       color: colors2024['neutral-title-1'],
     },
     totalLabel: {
@@ -297,13 +310,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // marginBottom: 12,
       height: 14,
     },
-    pnlRow: {
+    pnlCardRow: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    pnlCard: {
       backgroundColor: colors2024['neutral-bg-1'],
       borderRadius: 16,
-      paddingVertical: 16,
       paddingHorizontal: 16,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+      paddingVertical: 16,
+      flexDirection: 'column',
+      gap: 12,
+      width: '100%',
+      alignContent: 'center',
       alignItems: 'center',
       marginBottom: 30,
     },
@@ -311,14 +332,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '500',
+      fontWeight: '700',
       color: colors2024['neutral-title-1'],
     },
     pnlValue: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '900',
     },
     red: {
       color: colors2024['red-default'],

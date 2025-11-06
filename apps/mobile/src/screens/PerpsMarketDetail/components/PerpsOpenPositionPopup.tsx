@@ -1,4 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -29,7 +30,6 @@ import { StepInput } from '@/components2024/StepInput';
 import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import BigNumber from 'bignumber.js';
 import { useUsdInput } from '@/hooks/useUsdInput';
-import { RcIconInfoFill1CC } from '@/assets/icons/common';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
@@ -350,6 +350,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                     styles.directionButtonText,
                     direction === 'Long' && {
                       color: colors2024['green-default'],
+                      fontWeight: '800',
                     },
                   ]}>
                   {t('page.perpsDetail.action.long')}
@@ -370,6 +371,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                     styles.directionButtonText,
                     direction === 'Short' && {
                       color: colors2024['red-default'],
+                      fontWeight: '800',
                     },
                   ]}>
                   {t('page.perpsDetail.action.short')}
@@ -511,9 +513,9 @@ export const PerpsOpenPositionPopup: React.FC<{
                     <Text style={styles.label}>
                       {t('page.perpsDetail.PerpsOpenPositionPopup.size')}
                     </Text>
-                    <RcIconInfoFill1CC
-                      width={15}
-                      height={15}
+                    <RcIconInfoCC
+                      width={16}
+                      height={16}
                       color={colors2024['neutral-info']}
                     />
                   </View>
@@ -685,7 +687,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 40,
       paddingVertical: 0,
       lineHeight: 48,
-      fontWeight: '800',
+      fontWeight: '900',
       color: colors2024['neutral-title-1'],
       flex: 1,
       textAlign: 'center',
@@ -883,7 +885,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     directionButtonText: {
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '700',
+      fontWeight: '500',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -937,11 +939,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['red-default'],
     },
     marginSection: {
-      paddingVertical: 16,
+      paddingVertical: 20,
       paddingHorizontal: 16,
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 16,
-      marginBottom: 16,
+      paddingBottom: 12,
+      marginBottom: 12,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -1004,6 +1007,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       marginBottom: 16,
       gap: 8,
+      ...(isLight
+        ? {
+            // shadow: 0 10px 11.9px 0 rgba(0, 0, 0, 0.02)
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.02,
+            shadowRadius: 11.9,
+            elevation: 6,
+          }
+        : null),
     },
     icon: {
       width: 46,

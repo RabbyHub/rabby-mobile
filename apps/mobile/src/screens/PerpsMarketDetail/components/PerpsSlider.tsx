@@ -115,9 +115,11 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sliderContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
+    justifyContent: 'flex-end',
+    position: 'relative',
     gap: 8,
   },
   sliderWrapper: {

@@ -366,6 +366,7 @@ export const PerpsScreen = () => {
           item={item}
           hasPosition={positionCoinSet.has(item.name)}
           onPress={() => {
+            scrollToTop();
             naviPush(RootNames.StackTransaction, {
               screen: RootNames.PerpsMarketDetail,
               params: {
@@ -377,7 +378,7 @@ export const PerpsScreen = () => {
         />
       );
     },
-    [positionCoinSet],
+    [positionCoinSet, scrollToTop],
   );
 
   const keyExtractor = useCallback(
@@ -612,6 +613,7 @@ export const PerpsScreen = () => {
         visible={popupState.isShowSearchListPopup}
         openFromSource={popupState.searchListOpenFrom}
         onSelect={name => {
+          scrollToTop();
           naviPush(RootNames.StackTransaction, {
             screen: RootNames.PerpsMarketDetail,
             params: {
@@ -661,9 +663,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    paddingTop: 12,
+    paddingTop: 16,
     paddingHorizontal: 16,
-    paddingBottom: 56,
+    paddingBottom: 48,
   },
   backToTopButton: {
     position: 'absolute',
