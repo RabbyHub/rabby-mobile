@@ -56,7 +56,6 @@ const TokenDetailContent = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
   const { token, account, tokenSelectType } = route.params || {};
-  console.log('CUSTOM_LOGGER:=>: token', token);
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
