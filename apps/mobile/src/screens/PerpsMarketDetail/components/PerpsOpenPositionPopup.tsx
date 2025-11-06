@@ -252,15 +252,19 @@ export const PerpsOpenPositionPopup: React.FC<{
     return { error: false, errorMessage: '' };
   }, [selectedLeverage, leverageRang, t]);
 
+  const resetInitValue = useMemoizedFn(() => {
+    setTpTriggerPx('');
+    setSlTriggerPx('');
+    setLeverage(Math.min(leverageRang[1], 5));
+  });
+
   React.useEffect(() => {
     if (!visible) {
       setMargin('');
-      setLeverage(Math.min(leverageRang[1], 5));
-      setTpTriggerPx('');
-      setSlTriggerPx('');
+      resetInitValue();
       setIsReviewMode(false);
     }
-  }, [visible, leverageRang, setMargin]);
+  }, [visible, leverageRang, setMargin, resetInitValue]);
 
   useEffect(() => {
     setSelectedDirection(_direction);
@@ -344,13 +348,16 @@ export const PerpsOpenPositionPopup: React.FC<{
                     borderRadius: 8,
                   },
                 ]}
-                onPress={() => setSelectedDirection('Long')}>
+                onPress={() => {
+                  setSelectedDirection('Long');
+                  resetInitValue();
+                }}>
                 <Text
                   style={[
                     styles.directionButtonText,
                     direction === 'Long' && {
                       color: colors2024['green-default'],
-                      fontWeight: '800',
+                      fontWeight: '700',
                     },
                   ]}>
                   {t('page.perpsDetail.action.long')}
@@ -365,13 +372,16 @@ export const PerpsOpenPositionPopup: React.FC<{
                     borderRadius: 8,
                   },
                 ]}
-                onPress={() => setSelectedDirection('Short')}>
+                onPress={() => {
+                  setSelectedDirection('Short');
+                  resetInitValue();
+                }}>
                 <Text
                   style={[
                     styles.directionButtonText,
                     direction === 'Short' && {
                       color: colors2024['red-default'],
-                      fontWeight: '800',
+                      fontWeight: '700',
                     },
                   ]}>
                   {t('page.perpsDetail.action.short')}
@@ -428,12 +438,12 @@ export const PerpsOpenPositionPopup: React.FC<{
                 keyboardType="numeric"
                 style={[
                   styles.input,
-                  !marginValidation.isValid && margin !== ''
+                  !marginValidation.isValid && Number(margin) > 0
                     ? styles.inputError
                     : null,
                 ]}
                 placeholder="$0"
-                value={displayedValue}
+                value={Number(margin) > 0 ? displayedValue : ''}
                 onChangeText={setMargin}
               />
 
@@ -514,8 +524,8 @@ export const PerpsOpenPositionPopup: React.FC<{
                       {t('page.perpsDetail.PerpsOpenPositionPopup.size')}
                     </Text>
                     <RcIconInfoCC
-                      width={16}
-                      height={16}
+                      width={18}
+                      height={18}
                       color={colors2024['neutral-info']}
                     />
                   </View>
@@ -943,7 +953,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 16,
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 16,
-      paddingBottom: 12,
+      paddingBottom: 16,
       marginBottom: 12,
       display: 'flex',
       flexDirection: 'column',

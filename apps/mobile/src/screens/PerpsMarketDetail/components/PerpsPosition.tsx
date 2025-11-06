@@ -129,8 +129,8 @@ export const PerpsPosition: React.FC<{
                   {t('page.perpsDetail.PerpsPosition.size')}
                 </Text>
                 <RcIconInfoCC
-                  width={16}
-                  height={16}
+                  width={18}
+                  height={18}
                   color={colors2024['neutral-info']}
                 />
               </View>
@@ -295,8 +295,8 @@ export const PerpsPosition: React.FC<{
                   {t('page.perpsDetail.PerpsPosition.liquidationPrice')}
                 </Text>
                 <RcIconInfoCC
-                  width={16}
-                  height={16}
+                  width={18}
+                  height={18}
                   color={colors2024['neutral-info']}
                 />
               </View>
@@ -320,8 +320,8 @@ export const PerpsPosition: React.FC<{
                   {t('page.perpsDetail.PerpsPosition.fundingPayments')}
                 </Text>
                 <RcIconInfoCC
-                  width={16}
-                  height={16}
+                  width={18}
+                  height={18}
                   color={colors2024['neutral-info']}
                 />
               </View>
@@ -408,7 +408,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '700',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },
   list: {

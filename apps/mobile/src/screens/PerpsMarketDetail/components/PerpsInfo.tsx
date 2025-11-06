@@ -54,7 +54,7 @@ export const PerpsInfo: React.FC<{
                 {t('page.perpsDetail.PerpsInfo.openInterest')}
               </Text>
               <RcIconInfoCC
-                width={16}
+                width={18}
                 height={16}
                 color={colors2024['neutral-info']}
               />
@@ -85,8 +85,8 @@ export const PerpsInfo: React.FC<{
                 {t('page.perpsDetail.PerpsInfo.funding')}
               </Text>
               <RcIconInfoCC
-                width={16}
-                height={16}
+                width={18}
+                height={18}
                 color={colors2024['neutral-info']}
               />
             </View>

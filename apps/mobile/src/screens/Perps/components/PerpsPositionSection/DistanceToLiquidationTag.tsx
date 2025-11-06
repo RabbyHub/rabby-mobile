@@ -113,8 +113,8 @@ const getStyles = createGetStyles2024(() => ({
   },
   distanceText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 16,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 }));

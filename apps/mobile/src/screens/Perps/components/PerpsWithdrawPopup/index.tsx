@@ -195,8 +195,8 @@ export const PerpsWithdrawPopup: React.FC<{
                 </Text>
                 <RcIconInfoCC
                   color={colors2024['neutral-info']}
-                  width={16}
-                  height={16}
+                  width={18}
+                  height={18}
                 />
               </View>
             </TouchableOpacity>

@@ -139,8 +139,8 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
                 {t('page.perps.PerpsRiskPopup.distanceLabel')}
               </Text>
               <RcIconInfoCC
-                width={16}
-                height={16}
+                width={18}
+                height={18}
                 color={riskConfig.infoColor}
               />
             </TouchableOpacity>

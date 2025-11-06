@@ -595,7 +595,7 @@ export const PerpsDepositPopup: React.FC<{
         })}
         onDismiss={onClose}
         // enableDynamicSizing
-        snapPoints={[376]}
+        snapPoints={[400]}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore">
         <BottomSheetView style={[styles.container]}>
@@ -698,53 +698,6 @@ export const PerpsDepositPopup: React.FC<{
           )}
         </BottomSheetView>
       </AppBottomSheetModal>
-      {/* <PerpsSelectTokenPopup
-        account={account}
-        visible={isShowTokenPopup}
-        onClose={() => {
-          if (!selectedToken) {
-            onClose?.();
-          }
-
-          setIsShowTokenPopup(false);
-        }}
-        onSelect={async token => {
-          setUsdValue('');
-          setSelectedToken(token);
-          if (
-            token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-            isSameAddress(token._tokenId, ARB_USDC_TOKEN_ID)
-          ) {
-            setIsShowTokenPopup(false);
-            return;
-          }
-
-          const res = await openapi.getPerpsBridgeIsSupportToken({
-            token_id: token._tokenId,
-            chain_id: token.chain,
-          });
-
-          if (res?.success) {
-            // bridge token with liFi dex
-            setIsShowTokenPopup(false);
-            // setClickLoading(false);
-          } else {
-            setIsShowModal(true);
-          }
-        }}
-      />
-      <PerpsDepositTokenModal
-        visible={isShowModal}
-        onCancel={() => {
-          setIsShowModal(false);
-        }}
-        token={selectedToken}
-        onNavigate={() => {
-          setIsShowModal(false);
-          setIsShowTokenPopup(false);
-          onClose?.();
-        }}
-      /> */}
     </>
   );
 };

@@ -21,6 +21,7 @@ import IconPerpDelete from '@/assets2024/icons/perps/IconTagClearCC.svg';
 import { toast } from '@/components2024/Toast';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
 import { formatPerpsPct, formatTpOrSlPrice } from '@/utils/perps';
+import RcIconCloseCC from '@/assets2024/icons/perps/IconCloseCC.svg';
 
 interface Props {
   coin: string;
@@ -79,9 +80,12 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     }
     const costPrice =
       type === 'openPosition' ? markPrice : entryPrice || markPrice;
-    const pnlUsdValue = (Number(autoClosePrice) - costPrice) * size;
+    const pnlUsdValue =
+      direction === 'Long'
+        ? (Number(autoClosePrice) - costPrice) * size
+        : (costPrice - Number(autoClosePrice)) * size;
     return pnlUsdValue;
-  }, [autoClosePrice, markPrice, size, type, entryPrice]);
+  }, [autoClosePrice, markPrice, size, type, direction, entryPrice]);
 
   const gainOrLoss = useMemo(() => {
     return Number(calculatedPnl) >= 0 ? 'gain' : 'loss';
@@ -222,6 +226,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   }, [cancel, setAutoClosePrice, modalVisible]);
 
   const handleInitGainPct = useMemoizedFn(() => {
+    // console.log('szDecimals', szDecimals);
     const pct = actionType === 'tp' ? 5.0 : 4.5;
     const pctValue = Number(pct) / 100;
     const costValue = margin;
@@ -334,6 +339,17 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
               activeOpacity={1}
               style={styles.container}>
               <View style={styles.inner}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => {
+                    setModalVisible(false);
+                  }}>
+                  <RcIconCloseCC
+                    width={20}
+                    height={20}
+                    color={colors2024['neutral-secondary']}
+                  />
+                </TouchableOpacity>
                 <View style={styles.header}>
                   <Text style={styles.title}>
                     {direction} {coin}-USD
@@ -400,16 +416,23 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                       <Text style={styles.errorMsg}>
                         {priceValidation.errorMessage}
                       </Text>
-                    ) : autoClosePrice && gainPct ? (
-                      <>
-                        <Text style={[styles.youGainOrLossText]}>
-                          {gainOrLoss === 'gain'
-                            ? t('page.perpsDetail.PerpsAutoCloseModal.youGain')
-                            : t('page.perpsDetail.PerpsAutoCloseModal.youLoss')}
-                        </Text>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.pnlCardWrapper}>
+                    <View style={styles.pnlCardWrapperItem}>
+                      <Text style={[styles.pnlText]}>
+                        {gainOrLoss === 'gain'
+                          ? t('page.perpsDetail.PerpsAutoCloseModal.youGain')
+                          : t('page.perpsDetail.PerpsAutoCloseModal.youLoss')}
+                        :
+                      </Text>
+                      {priceValidation.error ? (
+                        <Text style={styles.infoText}>-</Text>
+                      ) : (
                         <Text
                           style={[
-                            styles.youGainOrLossValueText,
+                            styles.infoText,
                             {
                               color:
                                 gainOrLoss === 'gain'
@@ -420,38 +443,37 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                           {gainOrLoss === 'gain' ? '+' : '-'}
                           {formatPerpsPct(Math.abs(Number(gainPct)))}
                         </Text>
-                      </>
-                    ) : null}
-                  </View>
-
-                  <View style={styles.pnlCardWrapper}>
-                    <Text style={[styles.pnlText]}>
-                      {actionType === 'tp'
-                        ? t(
-                            'page.perpsDetail.PerpsAutoCloseModal.takeProfitExpectedPNL',
-                          )
-                        : t(
-                            'page.perpsDetail.PerpsAutoCloseModal.stopLossExpectedPNL',
-                          )}
-                      :
-                    </Text>
-                    {priceValidation.error ? (
-                      <Text style={styles.infoText}>-</Text>
-                    ) : (
-                      <Text
-                        style={[
-                          styles.pnlValueText,
-                          {
-                            color:
-                              gainOrLoss === 'gain'
-                                ? colors2024['green-default']
-                                : colors2024['red-default'],
-                          },
-                        ]}>
-                        {gainOrLoss === 'gain' ? '+' : '-'}
-                        {formatUsdValue(Math.abs(Number(calculatedPnl)))}
+                      )}
+                    </View>
+                    <View style={styles.pnlCardWrapperItem}>
+                      <Text style={[styles.pnlText]}>
+                        {actionType === 'tp'
+                          ? t(
+                              'page.perpsDetail.PerpsAutoCloseModal.takeProfitExpectedPNL',
+                            )
+                          : t(
+                              'page.perpsDetail.PerpsAutoCloseModal.stopLossExpectedPNL',
+                            )}
+                        :
                       </Text>
-                    )}
+                      {priceValidation.error ? (
+                        <Text style={styles.infoText}>-</Text>
+                      ) : (
+                        <Text
+                          style={[
+                            styles.infoText,
+                            {
+                              color:
+                                gainOrLoss === 'gain'
+                                  ? colors2024['green-default']
+                                  : colors2024['red-default'],
+                            },
+                          ]}>
+                          {gainOrLoss === 'gain' ? '+' : '-'}
+                          {formatUsdValue(Math.abs(Number(calculatedPnl)))}
+                        </Text>
+                      )}
+                    </View>
                   </View>
                 </View>
                 <View style={styles.footer}>
@@ -516,6 +538,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: 20,
+    position: 'relative',
+  },
+
+  closeButton: {
+    position: 'absolute',
+    right: 20,
+    top: 20,
   },
 
   footer: {
@@ -556,7 +585,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     gap: 8,
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 20,
   },
 
   bodyTitle: {
@@ -604,24 +633,31 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   pnlCardWrapper: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-between',
     width: '100%',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
     marginTop: 12,
+    gap: 16,
     padding: 16,
+  },
+
+  pnlCardWrapperItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
   },
 
   pnlText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['neutral-body'],
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
   },
 
   pnlValueText: {
@@ -695,7 +731,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     width: '100%',
     gap: 4,
-    paddingHorizontal: 6,
+    // paddingHorizontal: 6,
   },
   errorMsgWarning: {
     color: colors2024['orange-default'],

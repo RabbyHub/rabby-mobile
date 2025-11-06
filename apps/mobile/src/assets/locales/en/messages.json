@@ -2464,7 +2464,7 @@
         "amount": "Amount",
         "total": "Total",
         "receive": "Receive:",
-        "minimumWarning": "Minimum mount is {{percent}}%",
+        "minimumWarning": "Minimum amount is {{percent}}%",
         "closedPnl": "Closed PNL:",
         "confirm": "Confirm",
         "fee": "Fee",
@@ -2479,7 +2479,7 @@
         "amountToAdd": "Amount to add",
         "amountToReduce": "Amount to reduce",
         "liqPrice": "Liq. Price:",
-        "insufficientMargin": "Insufficient margin to reduce position.",
+        "insufficientMargin": "Insufficient margin",
         "perpsBalance": "Perps Balance",
         "available": "available"
       },

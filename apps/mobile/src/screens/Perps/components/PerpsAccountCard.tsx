@@ -194,7 +194,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: '#F7FAFC',
   },
   withdrawBtn: {
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: '#2F3135',
     borderColor: 'transparent',
   },
   btnHeight: {
@@ -215,7 +215,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 'auto',
   },
   learnBtn: {
-    backgroundColor: colors2024['neutral-bg-5'],
+    backgroundColor: colors2024['neutral-line'],
   },
   learnBtnTitle: {
     fontFamily: 'SF Pro Rounded',

@@ -206,10 +206,12 @@ export const PerpsMarketDetailScreen = () => {
     return !!currentPosition;
   }, [currentPosition]);
 
+  const canOpenPosition = useMemo(() => {
+    return hasPermission && isLogin && !hasPosition;
+  }, [hasPermission, isLogin, hasPosition]);
+
   const [openPositionVisible, setOpenPositionVisible] = React.useState(
-    fromSource === 'openPosition' && !hasPosition && hasPermission
-      ? true
-      : false,
+    fromSource === 'openPosition' && canOpenPosition,
   );
 
   const subscribeActiveAssetCtx = useMemoizedFn(() => {

@@ -176,8 +176,8 @@ export const PerpsHistoryDetailPopup: React.FC<{
                       {t('page.perps.historyDetail.size')}
                     </Text>
                     <RcIconInfoCC
-                      width={16}
-                      height={16}
+                      width={18}
+                      height={18}
                       color={colors2024['neutral-info']}
                     />
                   </View>

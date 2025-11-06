@@ -154,8 +154,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                     {t('page.perpsDetail.PerpsOpenPositionCheckPopup.size')}
                   </Text>
                   <RcIconInfoCC
-                    width={16}
-                    height={16}
+                    width={18}
+                    height={18}
                     color={colors2024['neutral-info']}
                   />
                 </View>
@@ -228,8 +228,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                     )}
                   </Text>
                   <RcIconInfoCC
-                    width={16}
-                    height={16}
+                    width={18}
+                    height={18}
                     color={colors2024['neutral-info']}
                   />
                 </View>

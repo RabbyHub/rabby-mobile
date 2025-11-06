@@ -274,7 +274,7 @@ export const PerpsEditMarginPopup: React.FC<{
                     styles.directionButtonText,
                     action === 'add' && {
                       color: colors2024['brand-default'],
-                      fontWeight: '800',
+                      fontWeight: '700',
                     },
                   ]}>
                   {t('page.perpsDetail.PerpsEditMarginPopup.addMargin')}
@@ -298,7 +298,7 @@ export const PerpsEditMarginPopup: React.FC<{
                     styles.directionButtonText,
                     action === 'reduce' && {
                       color: colors2024['brand-default'],
-                      fontWeight: '800',
+                      fontWeight: '700',
                     },
                   ]}>
                   {t('page.perpsDetail.PerpsEditMarginPopup.reduceMargin')}
@@ -375,7 +375,7 @@ export const PerpsEditMarginPopup: React.FC<{
                     : null,
                 ]}
                 placeholder="$0"
-                value={displayedValue}
+                value={Number(margin) > 0 ? displayedValue : ''}
                 onChangeText={setMargin}
               />
 
@@ -522,7 +522,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 40,
       paddingVertical: 0,
       lineHeight: 48,
-      fontWeight: '800',
+      fontWeight: '900',
       color: colors2024['neutral-title-1'],
       flex: 1,
       textAlign: 'center',
@@ -818,6 +818,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 16,
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 16,
+      paddingBottom: 16,
       marginBottom: 16,
       display: 'flex',
       flexDirection: 'column',

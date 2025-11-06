@@ -112,10 +112,10 @@ export const PerpsClosePositionPopup: React.FC<{
       ref={modalRef}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg0',
+        linearGradientType: 'bg1',
       })}
       onDismiss={onCancel}
-      snapPoints={[468]}>
+      snapPoints={[472]}>
       <BottomSheetView>
         <AutoLockView style={[styles.container]}>
           <View>
@@ -209,8 +209,8 @@ export const PerpsClosePositionPopup: React.FC<{
               </Text>
               <RcIconInfoCC
                 color={colors2024['neutral-info']}
-                width={16}
-                height={16}
+                width={18}
+                height={18}
               />
             </View>
           </TouchableOpacity>
@@ -245,7 +245,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       textAlign: 'center',
     },
     amountSection: {
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-2'],
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       borderRadius: 20,
@@ -317,7 +317,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'space-between',
     },
     pnlCard: {
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 16,
       paddingHorizontal: 16,
       paddingVertical: 16,

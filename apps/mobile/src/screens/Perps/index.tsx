@@ -432,19 +432,21 @@ export const PerpsScreen = () => {
               <RcIconBackTopCC color={colors2024['neutral-body']} />
             </TouchableOpacity>
           )}
-          <View style={styles.footer}>
-            <Button
-              type="primary"
-              title={t('page.perps.searchPerpsPopup.openPosition')}
-              onPress={() => {
-                setPopupState(prev => ({
-                  ...prev,
-                  isShowSearchListPopup: true,
-                  searchListOpenFrom: 'openPosition',
-                }));
-              }}
-            />
-          </View>
+          {hasPermission && isLogin && (
+            <View style={styles.footer}>
+              <Button
+                type="primary"
+                title={t('page.perps.searchPerpsPopup.openPosition')}
+                onPress={() => {
+                  setPopupState(prev => ({
+                    ...prev,
+                    isShowSearchListPopup: true,
+                    searchListOpenFrom: 'openPosition',
+                  }));
+                }}
+              />
+            </View>
+          )}
         </View>
       </NormalScreenContainer2024>
       <PerpsAccountSelectorPopup

@@ -140,37 +140,96 @@ export const calTransferMarginRequired = (
   return transferMarginRequired;
 };
 
-const MAX_SIGNIFICANT_FIGURES = 6;
+export const MAX_SIGNIFICANT_FIGURES = 6;
 
 export const formatPerpsPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
-export const formatTpOrSlPrice = (v: number, szDecimal: number) => {
-  const vStr = v.toString();
+/**
+ * Format price to ensure it passes validatePriceInput validation
+ * Rules:
+ * 1. Decimal places <= (6 - szDecimals)
+ * 2. Significant figures <= 5
+ * 3. Can be downgraded to integer if decimal part is all zeros
+ * @param price - The price number to format
+ * @param szDecimals - Size decimals parameter
+ * @returns Formatted price string that will always pass validatePriceInput
+ */
+export const formatTpOrSlPrice = (
+  price: number,
+  szDecimals: number,
+): string => {
+  if (!price || price === 0) {
+    return '0';
+  }
+
+  const vStr = price.toString();
   if (!vStr.includes('.')) {
+    // Integer: always valid
     return vStr;
   }
 
   const [integerPart, decimalPart] = vStr.split('.');
 
-  // Check decimal places: less than (6 - szDecimals)
-  const maxDecimals = MAX_SIGNIFICANT_FIGURES - szDecimal;
-  const decimalPlaces = Math.max(0, maxDecimals);
-  if (decimalPlaces === 0 || integerPart.length >= MAX_SIGNIFICANT_FIGURES) {
+  // Rule: if integer part has 6+ digits, force integer to always pass validator
+  if (integerPart.length >= 6) {
+    return integerPart;
+  }
+
+  // Calculate max decimal places: (6 - szDecimals)
+  const maxDecimals = MAX_SIGNIFICANT_FIGURES - szDecimals;
+
+  // Calculate significant figures (same logic as validatePriceInput)
+  // Merge integer and decimal parts first, then remove leading zeros
+  const allSignificantDigits = (integerPart + decimalPart).replace(/^0+/, '');
+  const integerDigits = integerPart.replace(/^0+/, '');
+
+  // If significant digits <= 5, just limit decimal places
+  if (allSignificantDigits.length <= 5) {
+    if (decimalPart.length > maxDecimals) {
+      const newDecimalPart = decimalPart.slice(0, maxDecimals);
+      // Remove trailing zeros
+      const trimmedDecimal = newDecimalPart.replace(/0+$/, '');
+      if (trimmedDecimal) {
+        return `${integerPart}.${trimmedDecimal}`;
+      }
+      return `${integerPart}`;
+    }
+    // Remove trailing zeros from original
+    const trimmedDecimal = decimalPart.replace(/0+$/, '');
+    if (trimmedDecimal) {
+      return `${integerPart}.${trimmedDecimal}`;
+    }
     return `${integerPart}`;
   }
-  // decimalPlaces >= 1
-  if (decimalPart.length > decimalPlaces) {
-    const newDecimalPart = decimalPart.slice(0, decimalPlaces);
-    // Calculate significant figures (remove leading zeros)
-    const allDigits = (integerPart + decimalPart).replace(/^0+/, '');
-    if (allDigits.length > 5) {
-      const integerPartLength = integerPart.length;
-      const newDecimalPlaces = Math.max(1, 5 - integerPartLength);
-      return `${integerPart}.${decimalPart.slice(0, newDecimalPlaces)}`;
-    } else {
-      return `${integerPart}.${newDecimalPart}`;
-    }
-  } else {
-    return `${integerPart}.${decimalPart}`;
+
+  // Significant digits > 5
+  // Integer significant digits = non-zero digits in integer part (leading zeros removed)
+  const integerPartLength = integerDigits.length;
+
+  if (integerPartLength >= 5) {
+    // When integer already occupies 5 digits, drop decimals to pass validator
+    return integerPart;
   }
+
+  // Some digits are in decimal part
+  const remainingDigits = 5 - integerPartLength;
+
+  // Keep leading zeros but count significant digits after them
+  const leadingZerosInDecimal = decimalPart.match(/^0*/)?.[0] || '';
+  const sigDigitsInDecimal = decimalPart.slice(leadingZerosInDecimal.length);
+  const desiredSig = Math.min(remainingDigits, sigDigitsInDecimal.length);
+  const takenSig = sigDigitsInDecimal.slice(0, desiredSig);
+
+  // Compose decimal respecting maxDecimals
+  let composedDecimal = (leadingZerosInDecimal + takenSig).slice(
+    0,
+    maxDecimals,
+  );
+
+  // Remove trailing zeros
+  composedDecimal = composedDecimal.replace(/0+$/, '');
+  if (composedDecimal) {
+    return `${integerPart}.${composedDecimal}`;
+  }
+  return `${integerPart}`;
 };
