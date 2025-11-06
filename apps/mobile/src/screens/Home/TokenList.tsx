@@ -63,6 +63,7 @@ interface Props {
   onReachTopStatusChange?: (status: boolean) => void;
   chain?: string;
   account: Account;
+  updateToken: (tokens: AbstractPortfolioToken[]) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
@@ -72,6 +73,7 @@ export const TokenList = ({
   chain,
   account: currentAccount,
   onReachTopStatusChange,
+  updateToken,
 }: Props) => {
   const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
@@ -85,6 +87,13 @@ export const TokenList = ({
     isLoading: loadingToken,
     updateData,
   } = useTokens(currentAccount?.address?.toLowerCase(), false, 0, undefined);
+
+  useEffect(() => {
+    if (_rawTokens && !loadingToken) {
+      updateToken(_rawTokens);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_rawTokens?.length, loadingToken, updateToken]);
 
   const focusedTab = useFocusedTab();
   const hasBeenFocusedRef = useRef(false);
@@ -398,7 +407,9 @@ export const TokenList = ({
             />
           );
         case 'empty-assets':
-          return <EmptyAssets desc={data} type={type} />;
+          return (
+            <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
+          );
         case 'loading-skeleton':
           return (
             <View style={styles.rowWrap}>
@@ -416,12 +427,7 @@ export const TokenList = ({
       handleOnReceive,
       handleOpenTokenDetail,
       isLight,
-      styles.bg2,
-      styles.buttonHeader,
-      styles.removeLeft,
-      styles.renderItemWrapper,
-      styles.rowWrap,
-      styles.sectionHeader,
+      styles,
       totalFoldTokenValue,
     ],
   );
@@ -468,6 +474,7 @@ export const TokenList = ({
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={() => {
+              updateData?.(true);
               onRefresh?.();
             }}
             refreshing={false}
@@ -539,5 +546,10 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-secondary'],
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
+  },
+  emptyAssets: {
+    backgroundColor: 'transparent',
+    height: '100%',
+    marginTop: -100,
   },
 }));

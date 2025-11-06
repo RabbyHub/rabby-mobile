@@ -13,6 +13,7 @@ import { useRoute } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RightArea } from './SingleHomeRightArea';
 import { BottomBtns } from './components/BottomBtns';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -29,6 +30,7 @@ function HomeScreen(): JSX.Element {
   const currentAccount = route?.params?.account;
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const headerHeight = useHeaderHeight();
+  const { safeOffHeader } = useSafeSizes();
   const topBg = React.useMemo(() => {
     if (isDecrease) {
       if (isLight) {
@@ -85,24 +87,21 @@ function HomeScreen(): JSX.Element {
     <NormalScreenContainer2024
       type="bg1"
       overwriteStyle={styles.rootScreenContainer}>
-      <Animated.View
+      <ImageBackground
+        source={
+          !isDecrease
+            ? require('@/assets2024/singleHome/up.png')
+            : require('@/assets2024/singleHome/loss.png')
+        }
+        resizeMode="cover"
         style={{
           position: 'absolute',
           top: 0,
-          right: 0,
+          left: 0,
           width: '100%',
-          height: Math.max(headerHeight, 130),
-          opacity: fadeAnim,
-        }}>
-        <ImageBackground
-          source={topBg}
-          resizeMode="cover"
-          style={{
-            width: '100%',
-            height: Math.max(headerHeight, 130),
-          }}
-        />
-      </Animated.View>
+          height: safeOffHeader + 120,
+        }}
+      />
       <View style={styles.safeView}>
         <AssetContainer
           onRefresh={triggerUpdate}
@@ -124,7 +123,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   rootScreenContainer: {
     // paddingHorizontal: 16,
     backgroundColor: colors2024['neutral-bg-gray'],
-    borderWidth: 1,
   },
   bottomContainer: {
     width: '100%',

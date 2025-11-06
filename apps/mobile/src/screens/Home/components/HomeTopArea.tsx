@@ -1,4 +1,3 @@
-import { ALERT_HEIGHT, HEADER_TOP_AREA_HEIGHT } from '@/constant/layout';
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { useTheme2024 } from '@/hooks/theme';
 import { formChartData } from '@/hooks/useCurve';
@@ -8,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ImageBackground, View } from 'react-native';
 import { HomeTopChart } from './HomeTopChart';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export const HomeTopArea = ({
   onUpdateIsDecrease,
@@ -23,25 +23,10 @@ export const HomeTopArea = ({
   onRefresh: () => void;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const isDecrease = useCachedValue(curveData, 'isLoss');
   const [fold, setFold] = useState(true);
-
-  const topBg = React.useMemo(() => {
-    if (isDecrease) {
-      if (isLight) {
-        return require('@/assets2024/singleHome/home-loss-bg-2.png');
-      } else {
-        return require('@/assets2024/singleHome/home-loss-dark-bg-2.png');
-      }
-    } else {
-      if (isLight) {
-        return require('@/assets2024/singleHome/home-profit-bg-2.png');
-      } else {
-        return require('@/assets2024/singleHome/home-profit-dark-bg-2.png');
-      }
-    }
-  }, [isDecrease, isLight]);
+  const { safeOffHeader } = useSafeSizes();
 
   const pathColor = useMemo(
     () =>
@@ -58,26 +43,24 @@ export const HomeTopArea = ({
   }, [isDecrease, onUpdateIsDecrease]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          // height: HEADER_TOP_AREA_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0),
-        },
-      ]}>
-      {/* TODO: add background image */}
-      <ImageBackground
-        source={topBg}
-        resizeMode="cover"
-        // eslint-disable-next-line react-native/no-inline-styles
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: fold ? 70 : 150,
-        }}
-      />
+    <View style={[styles.container]}>
+      <View style={styles.relativeWrapper}>
+        <ImageBackground
+          source={
+            !isDecrease
+              ? require('@/assets2024/singleHome/up.png')
+              : require('@/assets2024/singleHome/loss.png')
+          }
+          resizeMode="cover"
+          style={[
+            styles.bg,
+            {
+              top: 0 - safeOffHeader,
+              height: safeOffHeader + 110,
+            },
+          ]}
+        />
+      </View>
 
       <GlobalWarning
         hasError={isDisConnect}
@@ -119,5 +102,20 @@ const getStyles = createGetStyles2024(() => ({
   globalWarning: {
     marginHorizontal: 16,
     marginBottom: 13,
+  },
+  relativeWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: 78,
+    zIndex: -100,
+    overflow: 'hidden',
+  },
+  bg: {
+    position: 'absolute',
+    left: 0,
+    width: '100%',
+    zIndex: -100,
   },
 }));

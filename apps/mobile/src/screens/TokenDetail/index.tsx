@@ -35,6 +35,7 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { AccountSwitcher } from './components/InScreenSwitch';
+import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -55,6 +56,7 @@ const TokenDetailContent = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
   const { token, account, tokenSelectType } = route.params || {};
+  console.log('CUSTOM_LOGGER:=>: token', token);
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
@@ -77,13 +79,30 @@ const TokenDetailContent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [acceptSceneAccount, setAcceptSceneAccount] = React.useState(false);
+  const prevSceneAddrRef = React.useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const currAddr = currentAccount?.address;
+    if (
+      prevSceneAddrRef.current !== undefined &&
+      prevSceneAddrRef.current !== currAddr
+    ) {
+      setAcceptSceneAccount(true);
+    }
+    prevSceneAddrRef.current = currAddr;
+  }, [currentAccount?.address]);
+
+  const effectiveAccount = acceptSceneAccount
+    ? currentAccount
+    : account || currentAccount;
+
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const { data: baseTokenInfo, refreshAsync: refreshBaseTokenInfo } =
     useRequest(
       async () => {
         const res = await openapi.getToken(
-          currentAccount?.address!,
+          effectiveAccount?.address!,
           token.chain,
           token._tokenId,
         );
@@ -96,15 +115,9 @@ const TokenDetailContent = () => {
         });
       },
       {
-        refreshDeps: [token.chain, token._tokenId, currentAccount?.address],
+        refreshDeps: [token.chain, token._tokenId, effectiveAccount?.address],
       },
     );
-
-  console.log(
-    'CUSTOM_LOGGER:=>: baseTokenInfo',
-    currentAccount?.address,
-    baseTokenInfo?.amount,
-  );
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
@@ -118,17 +131,19 @@ const TokenDetailContent = () => {
     return (
       <TokenDetailHeaderArea
         style={{ marginLeft: -3 }}
-        key={currentAccount?.address}
+        key={effectiveAccount?.address}
         token={token}
       />
     );
-  }, [currentAccount?.address, token]);
+  }, [effectiveAccount?.address, token]);
 
   const handleOpenTokenMarketInfo = useCallback(() => {
     navigateDeprecated(RootNames.TokenMarketInfo, {
       ...route.params,
+      token: baseTokenInfo || token,
+      account: effectiveAccount,
     });
-  }, [route.params]);
+  }, [baseTokenInfo, effectiveAccount, route.params, token]);
 
   const getHeaderRight = useCallback(() => {
     return (
@@ -166,10 +181,9 @@ const TokenDetailContent = () => {
 
   const onRefresh = useCallback(async () => {
     refreshBaseTokenInfo();
-    refreshTag();
-  }, [refreshBaseTokenInfo, refreshTag]);
+  }, [refreshBaseTokenInfo]);
 
-  if (!currentAccount?.address) {
+  if (!effectiveAccount?.address) {
     return null;
   }
 
@@ -219,15 +233,19 @@ const TokenDetailContent = () => {
         <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
         <View style={styles.balanceOverviewContent}>
           <BalanceOverview usdValue={usdValue} amount={amountSum} />
-          {is24hNoChange && !!baseTokenInfo ? null : (
+          {!baseTokenInfo ? null : (
             <Pressable
               style={[
                 styles.floatingBarContent,
                 {
-                  borderColor: isLoss
+                  borderColor: is24hNoChange
+                    ? colors2024['neutral-secondary']
+                    : isLoss
                     ? colors2024['red-default']
                     : colors2024['green-default'],
-                  backgroundColor: isLoss
+                  backgroundColor: is24hNoChange
+                    ? colors2024['neutral-bg-1']
+                    : isLoss
                     ? colors2024['red-light-1']
                     : colors2024['green-light-4'],
                 },
@@ -242,7 +260,7 @@ const TokenDetailContent = () => {
                     styles.floatPriceChange,
                     {
                       color: is24hNoChange
-                        ? colors2024['neutral-secondary']
+                        ? colors2024['neutral-body']
                         : isLoss
                         ? colors2024['red-default']
                         : colors2024['green-default'],
@@ -252,6 +270,17 @@ const TokenDetailContent = () => {
                   {is24hNoChange ? '0.0%' : isLoss ? '-' : '+'}
                   {percentChange})
                 </Text>
+                <RcIconRightArrowCC
+                  width={16}
+                  height={16}
+                  color={
+                    is24hNoChange
+                      ? colors2024['neutral-body']
+                      : isLoss
+                      ? colors2024['red-default']
+                      : colors2024['green-default']
+                  }
+                />
               </View>
             </Pressable>
           )}
@@ -259,14 +288,14 @@ const TokenDetailContent = () => {
       </View>
       <TokenDetailHistoryList
         onRefresh={onRefresh}
-        finalAccount={currentAccount}
+        finalAccount={effectiveAccount}
         token={token}
       />
       <View style={{ height: isAndroid ? 220 + safeOffBottom : 56 }} />
       <View style={styles.bottomContainer}>
         <TokenDetailBottomBtns
           token={token}
-          finalAccount={currentAccount}
+          finalAccount={effectiveAccount}
           tokenSelectType={tokenSelectType}
         />
       </View>

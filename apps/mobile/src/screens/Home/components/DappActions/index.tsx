@@ -19,9 +19,7 @@ import { sendRequest } from '@/core/apis/provider';
 import { toast } from '@/components2024/Toast';
 import { DappActionHeader } from './DappActionHeader';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { debounce } from 'lodash';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -52,35 +50,18 @@ export const DappActions = ({
   data,
   chain,
   protocolLogo,
-  address,
-  addressType,
+  currentAccount,
   onRefresh,
   session = INTERNAL_REQUEST_SESSION,
 }: {
   data?: WithdrawAction[];
   chain?: string;
   protocolLogo?: string;
-  address?: string;
-  addressType?: KEYRING_TYPE;
+  currentAccount?: KeyringAccountWithAlias;
   onRefresh?: () => Promise<void>;
   session?: typeof INTERNAL_REQUEST_SESSION;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
-
-  const currentAccount = useMemo(
-    () =>
-      accounts.find(
-        item =>
-          address &&
-          isSameAddress(item.address, address) &&
-          item.type === addressType,
-      ),
-    [accounts, address, addressType],
-  );
 
   const withdrawAction = useMemo(
     () =>

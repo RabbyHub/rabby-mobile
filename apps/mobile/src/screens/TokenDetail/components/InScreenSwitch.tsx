@@ -3,7 +3,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import TouchableView from '@/components/Touchable/TouchableView';
 import {
   AccountSwitcherAopProps,
   useAccountSceneVisible,

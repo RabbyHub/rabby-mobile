@@ -31,6 +31,7 @@ import { useAssets } from '@/screens/Search/useAssets';
 import { useRoute } from '@react-navigation/native';
 import { ensureAbstractPortfolioToken } from '../utils/token';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 export const PortfolioHeader = ({
   data,
@@ -104,6 +105,7 @@ export const TokenList = ({
   tokens,
   style,
   nfts,
+  currentAccount,
   fraction,
 }: {
   name: string;
@@ -115,6 +117,7 @@ export const TokenList = ({
     value: number;
     shareToken: PortfolioItemToken;
   };
+  currentAccount?: KeyringAccountWithAlias;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenNavigationProps<'DeFiDetail'>['route']>();
@@ -247,6 +250,9 @@ export const TokenList = ({
 
   const handleOpenTokenDetail = React.useCallback(
     (token: TokenItem) => {
+      if (!currentAccount && !account) {
+        return;
+      }
       naviPush(RootNames.TokenDetail, {
         token: {
           // just need id and chain to search cache
@@ -257,11 +263,11 @@ export const TokenList = ({
           _tokenId: token.id,
         } as any, // to do fix type
         isSingleAddress,
-        account,
+        account: currentAccount || account,
         fromPortfolio: true,
       });
     },
-    [account, isSingleAddress],
+    [account, currentAccount, isSingleAddress],
   );
 
   return list.length ? (

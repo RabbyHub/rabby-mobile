@@ -23,7 +23,6 @@ import {
   FullDefiRenderItem,
 } from '@/screens/Home/components/AssetRenderItems';
 import {
-  AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
   ActionItem,
@@ -57,7 +56,6 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
-import { CombineDefiItem } from '@/screens/Home/hooks/store';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -323,7 +321,7 @@ export const Portfolios = () => {
   ]);
 
   const handleOpenTokenDetail = React.useCallback(
-    (token: AbstractPortfolioToken) => {
+    (token: AbstractPortfolioToken, account?: KeyringAccountWithAlias) => {
       if (isTabsSwiping.value) {
         return;
       }
@@ -331,6 +329,7 @@ export const Portfolios = () => {
         token: token,
         unHold: token._unHold,
         needUseCacheToken: true,
+        account,
       });
     },
     [],
@@ -341,17 +340,6 @@ export const Portfolios = () => {
     true,
     top10Balance.total,
     top10Balance.totalEvm,
-  );
-
-  const handleOpenDefiDetail = useCallback(
-    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      navigateDeprecated(RootNames.DeFiDetail, {
-        data,
-        portfolioList: itemList,
-        cache: true,
-      });
-    },
-    [],
   );
 
   const { tokenRefresh } = useTriggerTagAssets();
@@ -426,41 +414,6 @@ export const Portfolios = () => {
     [t, isLight, tokenRefresh],
   );
 
-  const getDefiOrNftMenuAction = useCallback(
-    (type: 'defi', data: DisplayedProject): MenuAction[] => {
-      const isFold = data._isFold;
-      return [
-        {
-          title: isFold
-            ? t('page.tokenDetail.action.unfold')
-            : t('page.tokenDetail.action.fold'),
-          icon: isFold
-            ? isLight
-              ? icons.unfoldLight
-              : icons.unfoldDark
-            : isLight
-            ? icons.foldLight
-            : icons.foldDark,
-          androidIconName: isFold
-            ? 'ic_rabby_menu_unfold'
-            : 'ic_rabby_menu_fold',
-          key: 'fold',
-          action() {
-            if (isFold) {
-              preferenceService.manualUnFoldDefi(data.id);
-              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-            } else {
-              preferenceService.manualFoldDefi(data.id);
-              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-            }
-            tokenRefresh();
-          },
-        },
-      ];
-    },
-    [isLight, t, tokenRefresh],
-  );
-
   const hasNotAssets = useMemo(() => {
     return (
       tokens.length === 0 && portfolios.length === 0 && !isLoading && isFocused
@@ -503,16 +456,6 @@ export const Portfolios = () => {
     setFoldHideList(pre => !pre);
   }, [foldHideList]);
 
-  const getDefiMenuActions = useCallback(
-    (data: CombineDefiItem): MenuAction[] => {
-      return getDefiOrNftMenuAction(
-        'defi',
-        data as unknown as DisplayedProject,
-      );
-    },
-    [getDefiOrNftMenuAction],
-  );
-
   const renderItem = useCallback(
     ({ item }) => {
       const { type, data } = item;
@@ -523,7 +466,12 @@ export const Portfolios = () => {
             <View style={styles.rowWrap}>
               <MemoizedTokenRow
                 data={data}
-                onTokenPress={handleOpenTokenDetail}
+                onTokenPress={token =>
+                  handleOpenTokenDetail(
+                    token,
+                    getAccountByAddress(data.address),
+                  )
+                }
                 logoSize={46}
                 style={styles.renderItemWrapper}
                 chainLogoSize={18}

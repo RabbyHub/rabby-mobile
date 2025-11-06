@@ -21,6 +21,7 @@ import {
 import { debounce, last, orderBy } from 'lodash';
 import { toast } from '@/components2024/Toast';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { Empty } from '@/screens/Transaction/components/Empty';
 
 interface IFetchHistory {
   last: number;
@@ -170,13 +171,6 @@ export const TokenDetailHistoryList = ({
     };
   });
 
-  const refresh = useMemoizedFn(() => {
-    lastMap.current = {};
-    hasMoreMap.current = {};
-    reloadAsync();
-    onRefresh?.();
-  });
-
   const {
     data: fetchApiData,
     loading,
@@ -188,6 +182,13 @@ export const TokenDetailHistoryList = ({
   } = useInfiniteScroll(() => batchFetchData(), {
     isNoMore: d => (d ? !d.hasMore : false),
     onSuccess() {},
+  });
+
+  const refresh = useMemoizedFn(() => {
+    lastMap.current = {};
+    hasMoreMap.current = {};
+    reloadAsync();
+    onRefresh?.();
   });
 
   useEffect(() => {
@@ -240,17 +241,24 @@ export const TokenDetailHistoryList = ({
           {t('page.tokenDetail.Transaction')}
         </Text>
       </View>
+      {!loading && !displayList.length && noMore && (
+        <Empty
+          style={styles.emptyStyle}
+          title={t('page.activities.signedTx.empty.title')}
+        />
+      )}
       <HistoryList
         ref={historyListRef}
         historySuccessList={historySuccessList}
         list={displayList}
-        loading={loading}
+        loading={false}
         isNeedFetchFromApi
         firstFetchDone={false}
         loadingMore={loadingMore}
         refreshLoading={loading}
         isForMultipleAddress={false}
         appendBottom={300}
+        moreLoadingLength={5}
         loadMore={() => {
           // avoid exec multi times loadMore
           if (loadingMore || noMore) {
@@ -407,5 +415,13 @@ const getStyle = createGetStyles2024(ctx => ({
     fontSize: 17,
     lineHeight: 22,
     fontWeight: '700',
+  },
+  emptyStyle: {
+    height: 150,
+  },
+  skeletonContainer: {
+    paddingHorizontal: 20,
+    flexDirection: 'column',
+    gap: 12,
   },
 }));

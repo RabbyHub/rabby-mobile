@@ -63,6 +63,7 @@ interface Props {
   onReachTopStatusChange?: (status: boolean) => void;
   chain?: string;
   account: Account;
+  updateNft: (nftList: DisplayNftItem[]) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
@@ -72,6 +73,7 @@ export const NFTList = ({
   onReachTopStatusChange,
   chain,
   account: currentAccount,
+  updateNft: updateNftCallback,
 }: Props) => {
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle: getStyles,
@@ -97,6 +99,13 @@ export const NFTList = ({
     reload: reloadNftList,
     isLoading: loadingNft,
   } = useQueryNft(currentAccount?.address?.toLowerCase(), false);
+
+  useEffect(() => {
+    if (_rawNftList && !loadingNft) {
+      updateNftCallback(_rawNftList);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_rawNftList?.length, loadingNft, updateNftCallback]);
 
   useEffect(() => {
     if (isFocused) {
@@ -312,7 +321,9 @@ export const NFTList = ({
           );
         case 'empty-assets':
         case 'empty-nft':
-          return <EmptyAssets desc={data} type={type} />;
+          return (
+            <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
+          );
         case 'loading-skeleton':
           return (
             <View style={styles.rowWrap}>
@@ -329,13 +340,7 @@ export const NFTList = ({
       getNftMenuAction,
       handlePressNft,
       isLight,
-      styles.bg2,
-      styles.buttonHeader,
-      styles.removeLeft,
-      styles.renderItemWrapper,
-      styles.rowWrap,
-      styles.sectionHeader,
-      styles.symbol,
+      styles,
       t,
     ],
   );
@@ -382,6 +387,7 @@ export const NFTList = ({
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={() => {
+              reloadNftList?.(true);
               onRefresh?.();
             }}
             refreshing={false}
@@ -453,5 +459,10 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-secondary'],
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
+  },
+  emptyAssets: {
+    backgroundColor: 'transparent',
+    height: '100%',
+    marginTop: -100,
   },
 }));

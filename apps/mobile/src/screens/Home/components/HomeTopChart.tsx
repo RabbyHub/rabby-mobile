@@ -278,19 +278,24 @@ export const ChartHeader = ({
   }
   return (
     <View style={styles.charHeader}>
-      <AnimateableText
-        style={styles.netWorth}
-        animatedProps={netWorthAnimatedProps}
-      />
+      <View style={styles.leftContainer}>
+        <AnimateableText
+          style={styles.netWorth}
+          animatedProps={netWorthAnimatedProps}
+        />
+        {fold ? null : (
+          <AnimateableText
+            style={styles.changeTime}
+            animatedProps={dateTimeAnimatedProps}
+          />
+        )}
+      </View>
       <View style={styles.percentChangeContainer}>
         <AnimateableText
           style={lossStyleProps}
           animatedProps={percentChangeAnimatedProps}
         />
-        <AnimateableText
-          style={styles.changeTime}
-          animatedProps={dateTimeAnimatedProps}
-        />
+
         <Pressable hitSlop={10} onPress={() => setFold(!fold)}>
           <ArrowRightSVG
             style={{
@@ -327,6 +332,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingLeft: 8,
     width: ScreenWidth - 32,
   },
+  leftContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
   percentChangeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -334,7 +344,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   netWorth: {
     fontSize: 42,
-    lineHeight: 42,
+    lineHeight: 48,
     // textAlign: 'center',
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
@@ -364,12 +374,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   changeTime: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    marginLeft: 4,
   },
   container: {
     width: ScreenWidth,

@@ -51,6 +51,7 @@ interface Props {
   onReachTopStatusChange?: (status: boolean) => void;
   chain?: string;
   account: Account;
+  updatePortfolio: (portfolios: DisplayedProject[]) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
@@ -60,6 +61,7 @@ export const PortfolioList = ({
   onReachTopStatusChange,
   chain,
   account: currentAccount,
+  updatePortfolio: updatePortfolioCallback,
 }: Props) => {
   const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
@@ -85,6 +87,13 @@ export const PortfolioList = ({
     updateData: updatePortfolio,
     isLoading: loadingPortfolio,
   } = usePortfolios(currentAccount?.address?.toLowerCase(), false);
+
+  useEffect(() => {
+    if (_rawPortfolios && !loadingPortfolio) {
+      updatePortfolioCallback(_rawPortfolios);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_rawPortfolios?.length, loadingPortfolio, updatePortfolioCallback]);
 
   const { currency } = useCurrency();
 
@@ -207,7 +216,13 @@ export const PortfolioList = ({
           );
         case 'empty-assets':
         case 'empty-defi':
-          return <EmptyAssets desc={data || ''} type={type} />;
+          return (
+            <EmptyAssets
+              style={styles.emptyAssets}
+              desc={data || ''}
+              type={type}
+            />
+          );
         case 'loading-skeleton':
           return (
             <View style={styles.rowWrap}>
@@ -220,19 +235,7 @@ export const PortfolioList = ({
           return null;
       }
     },
-    [
-      currentAccount,
-      foldDefi,
-      foldDefiAmount,
-      isLight,
-      styles.bg2,
-      styles.buttonHeader,
-      styles.removeLeft,
-      styles.rowWrap,
-      styles.sectionHeader,
-      styles.symbol,
-      t,
-    ],
+    [currentAccount, foldDefi, foldDefiAmount, isLight, styles, t],
   );
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -277,6 +280,7 @@ export const PortfolioList = ({
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={() => {
+              updatePortfolio?.(true);
               onRefresh?.();
             }}
             refreshing={false}
@@ -348,5 +352,10 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-secondary'],
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
+  },
+  emptyAssets: {
+    backgroundColor: 'transparent',
+    height: '100%',
+    marginTop: -100,
   },
 }));

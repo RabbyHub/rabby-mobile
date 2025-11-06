@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { Dimensions, ImageBackground, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useQueryProjects } from './hooks';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
@@ -29,7 +28,11 @@ import { NFTList } from './NFTList';
 import { DynamicCustomMaterialTabBar } from './components/Tabs/CustomTabBar';
 import CustomLabel from './components/Tabs/CustomLabel';
 import { ChainSelector } from './components/AssetRenderItems/SectionHeaders';
+import { useChainInfo } from './useChainInfo';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import useCachedValue from '@/hooks/common/useCachedValue';
 
+const ScreenWidth = Dimensions.get('window').width;
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
   unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
@@ -67,14 +70,8 @@ export const AssetContainer: React.FC<Props> = ({
   >();
   const { isDisConnect } = useGlobalStatus();
 
-  const {
-    refreshPositions,
-    loadingToken,
-    loadingNft,
-    loadingPortfolio,
-    chainsInfo,
-  } = useQueryProjects(currentAccount?.address?.toLowerCase());
-
+  const { chainsInfo, updateToken, updatePortfolio, updateNft } =
+    useChainInfo();
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
       if (clear) {
@@ -139,27 +136,19 @@ export const AssetContainer: React.FC<Props> = ({
     balance,
   );
 
+  const isDecrease = useCachedValue(curveData, 'isLoss');
+
   const handleRefresh = useCallback(
     async (ignoreLoading?: boolean) => {
       onRefresh?.();
       refreshCurve(ignoreLoading);
-      refreshPositions(true);
     },
-    [onRefresh, refreshCurve, refreshPositions],
+    [onRefresh, refreshCurve],
   );
 
   const renderHeader = useCallback(() => {
     return (
-      <View
-      // style={{
-      //   // height:
-      //     // HEADER_TOP_AREA_HEIGHT +
-      //     // ASSETS_SECTION_HEADER +
-      //     // SPACE_BETWEEN_HEADER_AND_CHART +
-      //     // ASSETS_SECTION_HEADER +
-      //     // (isDisConnect ? ALERT_HEIGHT : 0),
-      // }}
-      >
+      <View>
         <HomeTopArea
           onUpdateIsDecrease={onUpdateIsDecrease}
           curveData={curveData}
@@ -167,7 +156,6 @@ export const AssetContainer: React.FC<Props> = ({
           isDisConnect={isDisConnect}
           onRefresh={() => handleRefresh(true)}
         />
-        {/* <View style={{ height: SPACE_BETWEEN_HEADER_AND_CHART }} /> */}
       </View>
     );
   }, [
@@ -181,17 +169,14 @@ export const AssetContainer: React.FC<Props> = ({
   ]);
 
   const hasNotAssets = useMemo(() => {
-    return (
-      chainsInfo.chainLength === 0 &&
-      !loadingPortfolio &&
-      !loadingToken &&
-      !loadingNft
-    );
-  }, [chainsInfo.chainLength, loadingNft, loadingPortfolio, loadingToken]);
+    return chainsInfo.chainLength === 0;
+  }, [chainsInfo.chainLength]);
 
   const errorNotAssets = useMemo(() => {
     return isDisConnect && hasNotAssets && hasNoCurveData;
   }, [hasNoCurveData, hasNotAssets, isDisConnect]);
+
+  const { safeOffHeader } = useSafeSizes();
 
   const renderTabBar = React.useCallback(
     (_props: any) => (
@@ -202,6 +187,23 @@ export const AssetContainer: React.FC<Props> = ({
         }}
         containerStyle={styles.tabsBarContainer}
         indicatorStyle={styles.indicator}
+        bgComponent={
+          <ImageBackground
+            source={
+              !isDecrease
+                ? require('@/assets2024/singleHome/up.png')
+                : require('@/assets2024/singleHome/loss.png')
+            }
+            resizeMode="cover"
+            style={[
+              styles.bg,
+              {
+                top: 0 - safeOffHeader - 78,
+                height: safeOffHeader + 110,
+              },
+            ]}
+          />
+        }
         externalContent={
           <ChainSelector
             top3Chains={chainsInfo.chainAssets
@@ -216,7 +218,10 @@ export const AssetContainer: React.FC<Props> = ({
     [
       chainsInfo.chainAssets,
       handleOnChainClick,
+      isDecrease,
+      safeOffHeader,
       selectChainItem?.chain,
+      styles.bg,
       styles.indicator,
       styles.tabBar,
       styles.tabsBarContainer,
@@ -249,9 +254,9 @@ export const AssetContainer: React.FC<Props> = ({
     <Tabs.Container
       containerStyle={styles.container}
       // minHeaderHeight={ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER}
-      headerHeight={0}
+      headerHeight={78}
       // renderTabBar={renderTabBar}
-      tabBarHeight={0}
+      tabBarHeight={32}
       renderTabBar={renderTabBar}
       renderHeader={renderHeader}
       headerContainerStyle={styles.tabBarWrap}>
@@ -261,6 +266,7 @@ export const AssetContainer: React.FC<Props> = ({
           account={currentAccount}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
+          updateToken={updateToken}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('DeFi')} name="defi">
@@ -269,6 +275,7 @@ export const AssetContainer: React.FC<Props> = ({
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
           account={currentAccount}
+          updatePortfolio={updatePortfolio}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('NFT')} name="nft">
@@ -277,6 +284,7 @@ export const AssetContainer: React.FC<Props> = ({
           account={currentAccount}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
+          updateNft={updateNft}
         />
       </Tabs.Tab>
     </Tabs.Container>
@@ -351,7 +359,9 @@ const getStyles = createGetStyles2024(ctx => ({
     height: FOOTER_HEIGHT,
   },
   tabBarWrap: {
-    backgroundColor: ctx.colors2024['neutral-bg-3'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
     shadowColor: 'transparent',
     shadowOpacity: 0,
     elevation: 0,
@@ -385,5 +395,12 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   indicator: {
     height: 0,
+  },
+  bg: {
+    position: 'absolute',
+    left: 0,
+    width: ScreenWidth,
+    height: 32,
+    zIndex: -100,
   },
 }));

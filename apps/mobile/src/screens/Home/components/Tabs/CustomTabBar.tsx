@@ -15,6 +15,7 @@ interface DynamicCustomMaterialTabBarProps {
   containerStyle: StyleProp<ViewStyle>;
   indicatorStyle: AnimatedStyle;
   externalContent?: React.ReactNode;
+  bgComponent?: React.ReactNode;
 }
 export const DynamicCustomMaterialTabBar = (
   props: DynamicCustomMaterialTabBarProps,
@@ -33,6 +34,7 @@ export const DynamicCustomMaterialTabBar = (
         indicatorStyle={disableInnerIndicator}
       />
       {props.externalContent}
+      {props.bgComponent}
     </View>
   );
 };

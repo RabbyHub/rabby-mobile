@@ -1,8 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, ViewStyle, StyleProp } from 'react-native';
+import { View, Text, ViewStyle, StyleProp, Pressable } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useTranslation } from 'react-i18next';
 import { WrapperDappActionsMemoItem } from '../../components/ProtocolMoreItem';
 import { AbstractPortfolio, AbstractProject } from '../../types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -17,6 +16,9 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { AccountOverview } from '../AccountOverview';
+import { useProtocolConfig } from '../../utils/portocolConfig';
+import LinearGradient from 'react-native-linear-gradient';
+import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -38,7 +40,7 @@ export const FullDefiRenderItem = ({
   showAccount,
   style,
 }: Props) => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const isFromAppChain = useMemo(() => {
     return isAppChain(data?.chain || '');
@@ -74,7 +76,6 @@ export const FullDefiRenderItem = ({
     return sectionsList;
   }, [data, account.type, account.address, account.aliasName]);
 
-  // 来自同一个地址的totalUsdValue不重复计算
   const sumNetWorth = useMemo(() => {
     const addressMap = new Map<string, SectionListItem>();
     sectionsMultiProject.forEach(item => {
@@ -88,12 +89,28 @@ export const FullDefiRenderItem = ({
     return res ? formatNetworth(res.toNumber()) : data?._netWorth || 0;
   }, [data?._netWorth, sectionsMultiProject]);
 
+  const { config } = useProtocolConfig();
+  const isInnerProtocol = useMemo(() => !!config[data.id], [data.id, config]);
+  const ProtocolIcon = useMemo(
+    () => config[data.id]?.icon || null,
+    [data.id, config],
+  );
+
   if (!data) {
     return null;
   }
 
   return (
     <View style={[styles.container, style]}>
+      {isInnerProtocol && (
+        <LinearGradient
+          pointerEvents="none"
+          colors={[config[data.id]?.bgColor1, config[data.id]?.bgColor2]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.gradientBg}
+        />
+      )}
       <View style={styles.headerArea}>
         <View style={styles.headerLeft}>
           <AssetAvatar
@@ -120,8 +137,20 @@ export const FullDefiRenderItem = ({
             </Text>
             {showAccount && <AccountOverview account={account} />}
           </View>
+          <Pressable onPress={handleOpenSite}>
+            <JumpIconCC
+              width={14}
+              height={14}
+              color={colors2024['neutral-secondary']}
+            />
+          </Pressable>
         </View>
         <Text style={styles.projectHeaderNetWorth}>{sumNetWorth}</Text>
+        {isInnerProtocol && (
+          <View style={styles.innerProtocolContainer}>
+            <ProtocolIcon width={125} height={70} />
+          </View>
+        )}
       </View>
 
       <View style={styles.portfoliosContainer}>
@@ -132,6 +161,7 @@ export const FullDefiRenderItem = ({
             protocolLogo={data?.logo}
             address={account.address}
             addressType={account.type}
+            manageAction={config[data.id]?.onManage}
             key={`${item.id}-${account.address}-${data.netWorth}`}
             session={
               data?.site_url && data?.logo
@@ -185,7 +215,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   headerArea: {
     width: '100%',
     height: 'auto',
-    // marginLeft: 4,
+    position: 'relative',
     paddingLeft: 4,
     paddingRight: 12,
     display: 'flex',
@@ -217,10 +247,13 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexWrap: 'nowrap',
   },
   container: {
+    position: 'relative',
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     marginHorizontal: 16,
     borderRadius: 16,
     paddingHorizontal: 8,
@@ -251,5 +284,18 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
+  },
+  innerProtocolContainer: {
+    position: 'absolute',
+    top: -12,
+    right: 0,
+  },
+  gradientBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    borderRadius: 16,
+    right: 0,
+    bottom: 0,
   },
 }));
