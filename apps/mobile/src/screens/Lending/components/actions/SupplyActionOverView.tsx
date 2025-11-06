@@ -14,6 +14,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTranslation } from 'react-i18next';
 import { formatNetworth } from '@/utils/math';
+import IsolatedTag from '../IsolatedTag';
 
 const SupplyActionOverView: React.FC<
   PopupDetailProps & {
@@ -97,6 +98,12 @@ const SupplyActionOverView: React.FC<
             </Pressable>
           </View>
         </View>
+
+        {reserve?.reserve?.isIsolated && (
+          <View style={[styles.item, styles.hfDescContainer]}>
+            <IsolatedTag />
+          </View>
+        )}
 
         <View style={[styles.item, styles.apyContainer]}>
           <Text style={styles.title}>
