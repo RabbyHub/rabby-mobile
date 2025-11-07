@@ -214,16 +214,21 @@ export function useBrowser() {
         !payload?.url || !/^https?:\/\//.test(payload.url)
           ? omit(payload, 'url')
           : payload;
-      updateBrowserTabs({
-        tabs: store.tabs.map(item => {
-          if (item.id === tabId) {
-            return {
-              ...item,
-              ..._payload,
-            };
-          }
-          return item;
-        }),
+      setStore(prev => {
+        const res = {
+          ...prev,
+          tabs: prev.tabs.map(item => {
+            if (item.id === tabId) {
+              return {
+                ...item,
+                ..._payload,
+              };
+            }
+            return item;
+          }),
+        };
+        browserService.updateBrowserTabs(res);
+        return res;
       });
     },
   );
