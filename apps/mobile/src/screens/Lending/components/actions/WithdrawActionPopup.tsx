@@ -43,7 +43,10 @@ import { calculateMaxWithdrawAmount } from '../../utils/calculateMaxWithdrawAmou
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
-import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import {
+  MINI_SIGN_ERROR,
+  useSignatureStore,
+} from '@/components2024/MiniSignV2/state/SignatureManager';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -70,6 +73,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const { ctx } = useSignatureStore();
   const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
     account: currentAccount!,
     chainServerId: withdrawTxs.length ? withdrawTxs?.[0]?.chainId + '' : '',
@@ -411,6 +415,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               !withdrawTxs.length ||
               isLoading ||
               !currentAccount ||
+              !!ctx?.disabledProcess ||
               (isRisky && !isChecked)
             }
             type="primary"

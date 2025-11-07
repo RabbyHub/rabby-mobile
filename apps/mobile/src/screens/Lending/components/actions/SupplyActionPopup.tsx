@@ -41,7 +41,10 @@ import wrapperToken from '../../config/wrapperToken';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
-import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import {
+  MINI_SIGN_ERROR,
+  useSignatureStore,
+} from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SUPPLY_UI_SAFE_MARGIN } from '../../utils/constant';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
@@ -61,6 +64,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   });
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
   const { t } = useTranslation();
+  const { ctx } = useSignatureStore();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
@@ -518,7 +522,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
               amount === '0' ||
               !supplyTx ||
               isLoading ||
-              !currentAccount
+              !currentAccount ||
+              !!ctx?.disabledProcess
             }
             type="primary"
             syncUnlockTime
