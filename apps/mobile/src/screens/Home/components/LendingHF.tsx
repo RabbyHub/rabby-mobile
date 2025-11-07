@@ -26,10 +26,14 @@ export const LendingHF: React.FC<{}> = () => {
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   text: {
-    fontFamily: 'SF Pro Display',
+    position: 'relative',
+    right: -4,
+    paddingTop: 4,
+    alignSelf: 'flex-start',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   green: {
     color: colors2024['green-default'],

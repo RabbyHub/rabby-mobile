@@ -81,11 +81,11 @@ export const useGetRabbyPoints = () => {
   }, [points, accounts]);
 
   useEffect(() => {
-    const totalPoints = accountsWithPoints.reduce((acc, curr) => {
+    const totalPoints = Object.values(points).reduce((acc, curr) => {
       return acc + (curr.claimed_points || 0);
     }, 0);
     setPointsBadgeAtom(totalPoints);
-  }, [accountsWithPoints, setPointsBadgeAtom]);
+  }, [points, setPointsBadgeAtom]);
 
   return accountsWithPoints;
 };

@@ -1,17 +1,14 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { FlatList, Text, useWindowDimensions, View } from 'react-native';
 
 import { RcIconDynamicArrowDownCC } from '@/assets/icons/dapp';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import { DappInfo } from '@/core/services/dappService';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
-import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetFlatList, TouchableOpacity } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
-import { Image } from 'react-native-reanimated/lib/typescript/Animated';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import dayjs from 'dayjs';
 
@@ -30,11 +27,9 @@ export function BrowserRecent({
 
   const { t } = useTranslation();
 
-  const { width } = useWindowDimensions();
+  // const { width } = useWindowDimensions();
 
-  const itemW = (width - 20 * 2 - 8 * 2) / 4;
-
-  const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
+  // const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
 
   if (!list?.length) {
     return (
@@ -76,7 +71,6 @@ export function BrowserRecent({
               .add(3, 'day')
               .isAfter(dayjs()),
           )
-          ?.sort((a, b) => (b?.infoUpdateAt || 0) - (a?.infoUpdateAt || 0))
           .slice(0, 8)
           .map(data => (
             <TouchableOpacity
@@ -84,7 +78,7 @@ export function BrowserRecent({
                 onPress?.(data);
               }}
               key={data.url || data.origin}
-              style={[styles.gridItem, { width: itemW }]}>
+              style={[styles.gridItem, { width: '25%' }]}>
               <DappIcon
                 source={
                   data?.icon
@@ -153,8 +147,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
   grid: {
     flexDirection: 'row',
-    gap: 16,
     flexWrap: 'wrap',
+    rowGap: 16,
   },
   gridItem: {
     gap: 6,

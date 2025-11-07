@@ -2925,6 +2925,7 @@
     "Paste": "Paste",
     "Price": "Price",
     "Token": "Token",
+    "Dapp": "Dapp",
     "time": {
       "hour": "{{t}} hour",
       "hours": "{{t}} hours",

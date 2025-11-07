@@ -5,8 +5,8 @@ import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
-import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
-import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
+import RcIconSendCC from '@/assets2024/icons/home/icon-send-cc.svg';
+import RcIconSwapCC from '@/assets2024/icons/home/icon-swap-cc.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDappsCC.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -961,13 +961,7 @@ function MultiAddressHome(): JSX.Element {
           </View>
         </ScrollView>
 
-        <View
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom,
-          }}>
+        <View style={styles.globalSearchBar}>
           <GlobalSearchBar />
         </View>
       </View>
@@ -977,7 +971,7 @@ function MultiAddressHome(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   screenContainer: {
-    paddingTop: 64,
+    paddingTop: 0,
   },
   paddingContainer: {
     paddingHorizontal: 0,
@@ -1011,6 +1005,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
   },
   scrollContainer: {
+    paddingTop: 64,
     flexGrow: 1,
     minHeight: '100%',
   },
@@ -1063,6 +1058,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // width: 20,
     // height: 20,
     // lineHeight: 20,
+    position: 'relative',
+    right: -4,
+    paddingTop: 4,
+    alignSelf: 'flex-start',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   headerText: {
     color: colors2024['neutral-title-1'],
@@ -1177,12 +1180,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   gridItem: {
-    borderWidth: 2,
-    borderColor: isLight
-      ? colors2024['neutral-InvertHighlight']
-      : 'transparent',
     backgroundColor: isLight
-      ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
+      ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     width: '48%', // default
     minWidth: 0,
@@ -1429,6 +1428,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   searchBarPlaceholder: {
     height: 80,
+  },
+  globalSearchBar: {
+    position: 'absolute',
+    left: 8,
+    right: 8,
+    bottom: 22,
   },
 }));
 

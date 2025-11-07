@@ -257,89 +257,95 @@ export const SearchAssets: React.FC<Props> = ({
   );
 
   return (
-    <View style={styles.container}>
-      {Header}
-      <View
-        style={[
-          styles.bgContainer,
-          styles.stickyHeader,
-          inGlobalSearch && { paddingHorizontal: 0 },
-          stickyHeaderStyle,
-        ]}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}>
-          {isValidHexAddress(add0x(searchState)) && !inGlobalSearch ? (
+    <FlatList
+      keyExtractor={(_, index) => index.toString()}
+      data={filterTokens}
+      ListEmptyComponent={ListEmptyComponent}
+      renderItem={({ item }) => renderItem({ item })}
+      style={[
+        styles.container,
+        styles.list,
+        inGlobalSearch && { paddingHorizontal: 0, paddingTop: 0 },
+      ]}
+      ListHeaderComponent={
+        <>
+          {Header}
+          <View
+            style={[
+              styles.bgContainer,
+              styles.stickyHeader,
+              inGlobalSearch && { paddingHorizontal: 0 },
+              stickyHeaderStyle,
+            ]}>
             <View
               style={{
                 flexDirection: 'row',
-                gap: 6,
-                justifyContent: 'center',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}>
-              <Text style={styles.sectionHeader}>
-                {t('page.search.searchWeb.searching')}
-              </Text>
-              <Text style={styles.sectionHeaderBlue}>{`"${ellipsisAddress(
-                searchState,
-              )}"`}</Text>
+              {isValidHexAddress(add0x(searchState)) && !inGlobalSearch ? (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: 6,
+                    justifyContent: 'center',
+                  }}>
+                  <Text style={styles.sectionHeader}>
+                    {t('page.search.searchWeb.searching')}
+                  </Text>
+                  <Text style={styles.sectionHeaderBlue}>{`"${ellipsisAddress(
+                    searchState,
+                  )}"`}</Text>
+                </View>
+              ) : (
+                <Text style={styles.sectionHeader}>
+                  {inGlobalSearch ? t('global.Token') : t('page.swap.results')}
+                </Text>
+              )}
+              {chainInfo ? (
+                <View
+                  style={styles.chainInfoContainer}
+                  onStartShouldSetResponder={() => true}>
+                  <View style={styles.chainInfo}>
+                    <Image
+                      source={{
+                        uri: chainInfo.logo,
+                      }}
+                      style={styles.chainIcon}
+                    />
+                    <Text style={styles.chainName}>{chainInfo.name}</Text>
+                  </View>
+                  <TouchableWithoutFeedback
+                    disallowInterruption
+                    style={styles.close}
+                    onPress={() => {
+                      setChainEnum?.(undefined);
+                    }}>
+                    <RcIconClose width={12} height={12} />
+                  </TouchableWithoutFeedback>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.selectChain}
+                  onPress={() => {
+                    createChainModal();
+                    Keyboard.dismiss();
+                  }}>
+                  <Text style={styles.selectChainText}>
+                    {t('page.search.sectionHeader.AllChains')}
+                  </Text>
+                  <RcIconRight
+                    width={12}
+                    height={12}
+                    color={colors2024['neutral-foot']}
+                  />
+                </TouchableOpacity>
+              )}
             </View>
-          ) : (
-            <Text style={styles.sectionHeader}>
-              {inGlobalSearch ? t('global.Token') : t('page.swap.results')}
-            </Text>
-          )}
-          {chainInfo ? (
-            <View
-              style={styles.chainInfoContainer}
-              onStartShouldSetResponder={() => true}>
-              <View style={styles.chainInfo}>
-                <Image
-                  source={{
-                    uri: chainInfo.logo,
-                  }}
-                  style={styles.chainIcon}
-                />
-                <Text style={styles.chainName}>{chainInfo.name}</Text>
-              </View>
-              <TouchableWithoutFeedback
-                disallowInterruption
-                style={styles.close}
-                onPress={() => {
-                  setChainEnum?.(undefined);
-                }}>
-                <RcIconClose width={12} height={12} />
-              </TouchableWithoutFeedback>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.selectChain}
-              onPress={() => {
-                createChainModal();
-                Keyboard.dismiss();
-              }}>
-              <Text style={styles.selectChainText}>
-                {t('page.search.sectionHeader.AllChains')}
-              </Text>
-              <RcIconRight
-                width={12}
-                height={12}
-                color={colors2024['neutral-foot']}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-      <FlatList
-        keyExtractor={(_, index) => index.toString()}
-        data={filterTokens}
-        ListEmptyComponent={ListEmptyComponent}
-        renderItem={({ item }) => renderItem({ item })}
-        style={[styles.list, inGlobalSearch && { paddingHorizontal: 0 }]}
-      />
-    </View>
+          </View>
+        </>
+      }
+    />
   );
 };
 

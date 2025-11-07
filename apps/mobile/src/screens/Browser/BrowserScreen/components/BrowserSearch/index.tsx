@@ -59,11 +59,11 @@ export function BrowserSearch({
   const { t } = useTranslation();
   const { list } = useSearchDapps(searchText);
 
-  const { browserHistoryList } = useBrowserHistory();
+  const { browserHistorySectionList } = useBrowserHistory();
 
   const displayedBrowserHistoryList = useMemo(() => {
-    return browserHistoryList.slice(0, 10);
-  }, [browserHistoryList]);
+    return browserHistorySectionList.flatMap(e => e.data);
+  }, [browserHistorySectionList]);
 
   const isValidDomain = useMemo(() => {
     const pared = parse(searchText);
@@ -213,8 +213,6 @@ export function BrowserSearch({
               }}
             />
             <BrowserHot
-              isInBottomSheet
-              list={displayedBrowserHistoryList}
               onPress={dapp => {
                 handleOpenUrl(dapp.url || dapp.origin);
                 if (dapp.origin) {

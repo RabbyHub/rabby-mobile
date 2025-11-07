@@ -226,10 +226,10 @@ export function MultiAddressHomeHeader(
             colors={
               isLight
                 ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-                : ['rgba(37,38,40,1)', 'rgba(28,27,27,1)']
+                : ['rgba(36, 40, 37, 1)', 'rgba(44, 52, 48, 0.5)']
             }
             style={{
-              padding: 2,
+              padding: isLight ? 0 : 2,
               borderRadius: 21,
             }}>
             <Card
@@ -249,11 +249,11 @@ export function MultiAddressHomeHeader(
               <LinearGradient
                 colors={
                   isLight
-                    ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
-                    : ['rgba(0, 0, 0, 0.6)', 'rgba(25, 26, 27, 0.3)']
+                    ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
+                    : ['rgba(0, 0, 0, 0.40)', 'rgba(25, 26, 27, 0.10)']
                 }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+                start={{ x: 0.25, y: 0.5 }}
+                end={{ x: 0.75, y: 0.5 }}
                 style={StyleSheet.absoluteFill}
               />
 

@@ -52,6 +52,7 @@ export function DappFirstSearchResult({
         <View style={[styles.list, { flex: 0 }]}>
           {data?.[0] ? (
             <View>
+              <Text style={styles.firstTitle}>{t('global.Dapp')}</Text>
               <BrowserSiteCard
                 keyword={searchText}
                 data={data[0]}
@@ -185,90 +186,12 @@ export function BrowserSearchResult({
       // ListEmptyComponent={ListEmptyComponent}
       ListHeaderComponent={
         <>
-          {searchText ? (
-            <View style={styles.list}>
-              {data?.[0] ? (
-                <View>
-                  <BrowserSiteCard
-                    keyword={searchText}
-                    data={data[0]}
-                    onPress={handlePress}
-                    isShowBorder
-                    isShowFavorite
-                    isShowListBy
-                  />
-                </View>
-              ) : null}
-              <TouchableOpacity
-                style={styles.listItem}
-                hitSlop={10}
-                onPress={() => {
-                  onOpenURL?.(
-                    `https://www.google.com/search?q=${encodeURIComponent(
-                      searchText,
-                    )}`,
-                  );
-                }}>
-                <RcIconGoogle style={styles.listItemIcon} />
-                <View style={styles.listItemContent}>
-                  <Text
-                    style={styles.listItemText}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {t('page.browser.BrowserSearch.searchInGoogle', {
-                      searchText: searchText,
-                    })}
-                  </Text>
-                  <RcArrowRight3CC
-                    width={16}
-                    height={16}
-                    style={styles.listItemArrowIcon}
-                    color={colors2024['neutral-body']}
-                  />
-                </View>
-              </TouchableOpacity>
-              {isValidDomain ? (
-                <TouchableOpacity
-                  style={styles.listItem}
-                  hitSlop={10}
-                  onPress={() => {
-                    const url = /^https?:\/\//.test(searchText)
-                      ? searchText
-                      : `https://${searchText}`;
-                    onOpenURL?.(url);
-                    const origin = safeGetOrigin(url);
-                    if (origin) {
-                      matomoRequestEvent({
-                        category: 'Websites Usage',
-                        action: 'Website_Visit_Direct Open',
-                        label: origin,
-                      });
-                    }
-                  }}>
-                  <RcIconBallCC
-                    style={styles.listItemIcon}
-                    color={colors2024['neutral-secondary']}
-                  />
-                  <View style={styles.listItemContent}>
-                    <Text
-                      style={styles.listItemText}
-                      numberOfLines={1}
-                      ellipsizeMode="tail">
-                      {t('page.browser.BrowserSearch.openUrl', {
-                        searchText: searchText,
-                      })}
-                    </Text>
-                    <RcArrowRight3CC
-                      width={16}
-                      height={16}
-                      style={styles.listItemArrowIcon}
-                      color={colors2024['neutral-body']}
-                    />
-                  </View>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          ) : null}
+          <DappFirstSearchResult
+            data={data}
+            searchText={searchText}
+            onOpenURL={onOpenURL}
+            isValidDomain={isValidDomain}
+          />
           {data?.length > 1 ? (
             <View style={styles.header}>
               <Text style={styles.title}>
@@ -317,6 +240,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   dappListItem: {
     marginBottom: 12,
+  },
+  firstTitle: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontStyle: 'normal',
+    fontWeight: '800',
+    lineHeight: 22,
+    paddingBottom: 12,
   },
   list: {
     flex: 1,

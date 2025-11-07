@@ -17,13 +17,7 @@ import { atom, useAtom } from 'jotai';
 const hot3Atom = atom<DappInfo[]>([]);
 const useHot3DApp = () => useAtom(hot3Atom);
 
-export function BrowserHot({
-  onPress,
-}: {
-  onPress?(dapp: DappInfo): void;
-  isInBottomSheet?: boolean;
-  list?: DappInfo[];
-}) {
+export function BrowserHot({ onPress }: { onPress?(dapp: DappInfo): void }) {
   const { styles } = useTheme2024({
     getStyle,
   });
