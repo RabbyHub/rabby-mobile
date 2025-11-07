@@ -2,6 +2,7 @@ import { AssetAvatar } from '@/components';
 import { MarketData, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
+import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,7 +37,10 @@ export const PerpsMarketItem: React.FC<{
                 </View>
               )}
             </View>
-            <Text style={styles.price}> {`$${item.markPx}`}</Text>
+            <Text style={styles.price}>
+              {' '}
+              {`$${splitNumberByStep(item.markPx)}`}
+            </Text>
           </View>
           <View style={styles.row}>
             <View style={styles.infoContainer}>
