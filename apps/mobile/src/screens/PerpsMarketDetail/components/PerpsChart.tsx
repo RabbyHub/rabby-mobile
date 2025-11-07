@@ -238,6 +238,12 @@ export const PerpsChart: React.FC<{
     },
   );
 
+  useEffect(() => {
+    if (chartData?.candles?.length && chartIsReadyRef.current) {
+      chartWebViewRef.current?.setData(chartData);
+    }
+  }, [chartData]);
+
   const handleChartReady = useMemoizedFn(() => {
     setTimeout(() => {
       chartIsReadyRef.current = true;
