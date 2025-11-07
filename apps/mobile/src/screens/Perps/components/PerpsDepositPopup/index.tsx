@@ -170,50 +170,6 @@ export const PerpsDepositPopup: React.FC<{
     [chainInfo?.enum],
   );
 
-  const handleMax = React.useCallback(() => {
-    if (tokenInfo) {
-      if (tokenIsNativeToken && gasList) {
-        const checkGasIsEnough = (price: number) => {
-          return new BigNumber(tokenInfo?.raw_amount_hex_str || 0, 16).gte(
-            new BigNumber(gasLimit).times(price),
-          );
-        };
-        const normalPrice =
-          gasList?.find(e => e.level === 'normal')?.price || 0;
-        const isNormalEnough = checkGasIsEnough(normalPrice);
-        if (isNormalEnough) {
-          const val = tokenAmountBn(tokenInfo).minus(
-            new BigNumber(gasLimit)
-              .times(normalPrice)
-              .div(10 ** nativeTokenDecimals),
-          );
-          const valString = val
-            .times(tokenInfo?.price || 0)
-            .decimalPlaces(2, BigNumber.ROUND_DOWN)
-            .toFixed();
-          setUsdValue(valString);
-          setGasPrice(normalPrice);
-          return;
-        }
-      }
-      setGasPrice(0);
-      setUsdValue(
-        tokenAmountBn(tokenInfo)
-          ?.times(tokenInfo?.price || 0)
-          .decimalPlaces(2, BigNumber.ROUND_DOWN)
-          .toFixed(),
-      );
-    }
-  }, [
-    nativeTokenDecimals,
-    gasList,
-    tokenIsNativeToken,
-    gasLimit,
-    setUsdValue,
-    setGasPrice,
-    tokenInfo,
-  ]);
-
   const buildSendTx = useMemoizedFn((amount: number | string) => {
     const token = ARB_USDC_TOKEN_ITEM;
     const to = PERPS_SEND_ARB_USDC_ADDRESS;
@@ -253,6 +209,19 @@ export const PerpsDepositPopup: React.FC<{
     return params as Tx;
   });
 
+  const isDirectDeposit = useMemo(() => {
+    return (
+      selectedToken?._tokenId === ARB_USDC_TOKEN_ID &&
+      selectedToken?.chain === ARB_USDC_TOKEN_SERVER_CHAIN
+    );
+  }, [selectedToken]);
+
+  const depositMaxUsdValue = useMemo(() => {
+    return isDirectDeposit
+      ? tokenAmountBn(tokenInfo).toNumber()
+      : Number((tokenInfo?.amount || 0) * (tokenInfo?.price || 0));
+  }, [tokenInfo, isDirectDeposit]);
+
   const amountValidation = React.useMemo(() => {
     const amountValue = Number(usdValue);
     if (amountValue === 0) {
@@ -275,9 +244,7 @@ export const PerpsDepositPopup: React.FC<{
       };
     }
 
-    const tokenUsdAmount = (tokenInfo?.amount || 0) * (tokenInfo?.price || 0);
-
-    if (amountValue > tokenUsdAmount) {
+    if (amountValue > depositMaxUsdValue) {
       return {
         isValid: false,
         error: 'insufficient_balance',
@@ -285,7 +252,7 @@ export const PerpsDepositPopup: React.FC<{
       };
     }
     return { isValid: true, error: null };
-  }, [usdValue, t, tokenInfo]);
+  }, [usdValue, t, depositMaxUsdValue]);
 
   const isValidAmount = useMemo(
     () => amountValidation.isValid,
@@ -436,12 +403,55 @@ export const PerpsDepositPopup: React.FC<{
     }
   }, [isValidAmount, visible, setTxs, setBridgeQuote, setQuoteLoading]);
 
-  const isDirectDeposit = useMemo(() => {
-    return (
-      selectedToken?._tokenId === ARB_USDC_TOKEN_ID &&
-      selectedToken?.chain === ARB_USDC_TOKEN_SERVER_CHAIN
-    );
-  }, [selectedToken]);
+  const handleMax = React.useCallback(() => {
+    if (tokenInfo) {
+      if (tokenIsNativeToken && gasList) {
+        const checkGasIsEnough = (price: number) => {
+          return new BigNumber(tokenInfo?.raw_amount_hex_str || 0, 16).gte(
+            new BigNumber(gasLimit).times(price),
+          );
+        };
+        const normalPrice =
+          gasList?.find(e => e.level === 'normal')?.price || 0;
+        const isNormalEnough = checkGasIsEnough(normalPrice);
+        if (isNormalEnough) {
+          const val = tokenAmountBn(tokenInfo).minus(
+            new BigNumber(gasLimit)
+              .times(normalPrice)
+              .div(10 ** nativeTokenDecimals),
+          );
+          const valString = val
+            .times(tokenInfo?.price || 0)
+            .decimalPlaces(2, BigNumber.ROUND_DOWN)
+            .toFixed();
+          setUsdValue(valString);
+          setGasPrice(normalPrice);
+          return;
+        }
+      }
+      setGasPrice(0);
+      if (isDirectDeposit) {
+        // usdc can be view 1:1 in hyper account
+        setUsdValue(tokenAmountBn(tokenInfo).toString());
+      } else {
+        setUsdValue(
+          tokenAmountBn(tokenInfo)
+            ?.times(tokenInfo?.price || 0)
+            .decimalPlaces(2, BigNumber.ROUND_DOWN)
+            .toFixed(),
+        );
+      }
+    }
+  }, [
+    nativeTokenDecimals,
+    gasList,
+    tokenIsNativeToken,
+    gasLimit,
+    isDirectDeposit,
+    setUsdValue,
+    setGasPrice,
+    tokenInfo,
+  ]);
 
   const { value: isMissingRole } = useAsync(async () => {
     if (!account?.address || !visible) {
@@ -493,10 +503,6 @@ export const PerpsDepositPopup: React.FC<{
       setGasPrice(0);
     }
   }, [setUsdValue, visible]);
-
-  const depositMaxUsdValue = useMemo(() => {
-    return Number((tokenInfo?.amount || 0) * (tokenInfo?.price || 0));
-  }, [tokenInfo]);
 
   const quoteError = useMemo(() => {
     return !isDirectDeposit &&
