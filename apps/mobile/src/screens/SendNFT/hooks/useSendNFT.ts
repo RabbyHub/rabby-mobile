@@ -332,49 +332,31 @@ export function useSendNFTForm({
 
     const { to, amount } = formValues;
 
-    const params = await apiToken.transferNFT(
-      {
-        to,
-        amount: bizNumberUtils.coerceInteger(amount),
-        tokenId: nftToken?.inner_id,
-        chainServerId: nftToken?.chain,
-        contractId: nftToken?.contract_id,
-        abi: nftToken?.is_erc1155 ? 'ERC1155' : 'ERC721',
-        account: account,
-      },
-      {
-        $ctx: {
-          ga: {
-            category: 'Send',
-            source: 'sendNFT',
-          },
-        },
-        isBuild: true,
-      },
-    );
-
     if (
       ref === prepareCountRef.current &&
       account &&
       isAccountSupportMiniApproval(account?.type || '') &&
       !chainItem?.isTestnet
     ) {
-      const res = await apiProvider.sendRequest(
+      const res = await apiToken.transferNFT(
         {
-          data: {
-            method: 'eth_sendTransaction',
-            params: [params],
-            $ctx: {
-              ga: {
-                category: 'Send',
-                source: 'sendNFT',
-              },
-            },
-          },
-          session: INTERNAL_REQUEST_SESSION,
+          to,
+          amount: bizNumberUtils.coerceInteger(amount),
+          tokenId: nftToken?.inner_id,
+          chainServerId: nftToken?.chain,
+          contractId: nftToken?.contract_id,
+          abi: nftToken?.is_erc1155 ? 'ERC1155' : 'ERC721',
           account: account,
         },
-        true,
+        {
+          $ctx: {
+            ga: {
+              category: 'Send',
+              source: 'sendNFT',
+            },
+          },
+          isBuild: true,
+        },
       );
       const tx = res.params?.[0];
 
@@ -399,7 +381,7 @@ export function useSendNFTForm({
     async ({
       to,
       amount,
-      isForceSignTx,
+      isForceSignTx = false,
     }: FormSendNFT & { isForceSignTx?: boolean }) => {
       if (!nftToken) return;
       sendNFTEventsRef.current.emit(SendNFTEvents.ON_SEND);
@@ -420,30 +402,6 @@ export function useSendNFTForm({
         return;
       }
 
-      // const params = getNFTTransferParams({ to, amount, nftToken, account: currentAccount });
-      const params = await apiToken.transferNFT(
-        {
-          to,
-          amount: bizNumberUtils.coerceInteger(amount),
-          tokenId: nftToken.inner_id,
-          chainServerId: nftToken.chain,
-          contractId: nftToken.contract_id,
-          abi: nftToken.is_erc1155 ? 'ERC1155' : 'ERC721',
-          account: account,
-        },
-        {
-          $ctx: {
-            ga: {
-              category: 'Send',
-              source: 'sendNFT',
-            },
-          },
-          isBuild: true,
-        },
-      );
-      const directSubmit =
-        isAccountSupportMiniApproval(account?.type || '') &&
-        !chainItem?.isTestnet;
       try {
         if (
           !isForceSignTx &&
@@ -522,19 +480,28 @@ export function useSendNFTForm({
               );
             }
           }
-
-          return;
         } else {
           await apiToken
-            .transferNFT(params, {
-              $ctx: {
-                ga: {
-                  category: 'Send',
-                  source: 'sendNFT',
-                },
+            .transferNFT(
+              {
+                to,
+                amount: bizNumberUtils.coerceInteger(amount),
+                tokenId: nftToken.inner_id,
+                chainServerId: nftToken.chain,
+                contractId: nftToken.contract_id,
+                abi: nftToken.is_erc1155 ? 'ERC1155' : 'ERC721',
+                account: account,
               },
-              isBuild: false,
-            })
+              {
+                $ctx: {
+                  ga: {
+                    category: 'Send',
+                    source: 'sendNFT',
+                  },
+                },
+                isBuild: false,
+              },
+            )
             .then(resp => {
               const hash = resp as string;
               console.debug('hash', hash);

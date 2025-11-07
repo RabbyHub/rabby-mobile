@@ -25,6 +25,7 @@
     "check-nodeengines": "node -v | grep -E '^v(22|24)' > /dev/null || (echo \"Error: Node.js v22 or higher is required. Current version: $(node -v)\"; exit 1)",
     "restart": "yarn start --reset-cache",
     "start": "yarn check-nodeengines && yarn ensure-git-hooks && yarn build:deps && yarn build-inpage && cross-env NODE_OPTIONS=--max_old_space_size=8192 react-native start",
+    "start:turbo": "yarn check-nodeengines && yarn ensure-git-hooks && yarn build:deps && yarn build-inpage && cross-env NODE_OPTIONS=--max_old_space_size=16384 react-native start",
     "sync:data": "node ./scripts/sync.js",
     "syncrnversion": "./node_modules/.bin/react-native-version --never-amend --never-increment-build",
     "rnversion": "yarn syncrnversion && yarn android:buildversion",
