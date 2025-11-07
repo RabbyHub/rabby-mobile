@@ -1,7 +1,7 @@
 import { AssetAvatar } from '@/components';
 import { MarketData, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatUsdValue } from '@/utils/number';
+import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -146,7 +146,9 @@ export const PerpsPositionItem: React.FC<{
           {hasTakeProfit && (
             <Text style={styles.tpSlText}>
               {t('page.perps.PerpsAutoCloseModal.takeProfit')} :{' '}
-              <Text style={styles.tpSlPrice}>{tpPrice}</Text>
+              <Text style={styles.tpSlPrice}>
+                ${splitNumberByStep(tpPrice)}
+              </Text>
             </Text>
           )}
           {hasTakeProfit && hasStopLoss && (
@@ -155,7 +157,9 @@ export const PerpsPositionItem: React.FC<{
           {hasStopLoss && (
             <Text style={styles.tpSlText}>
               {t('page.perps.PerpsAutoCloseModal.stopLoss')} :{' '}
-              <Text style={styles.tpSlPrice}>{slPrice}</Text>
+              <Text style={styles.tpSlPrice}>
+                ${splitNumberByStep(slPrice)}
+              </Text>
             </Text>
           )}
         </View>

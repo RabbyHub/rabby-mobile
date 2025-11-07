@@ -102,7 +102,9 @@ export const PerpsOpenPositionPopup: React.FC<{
     displayedValue,
     onChangeText: setMargin,
   } = useUsdInput();
-  const [selectedLeverage, setLeverage] = React.useState<number | undefined>(5);
+  const [selectedLeverage, setLeverage] = React.useState<number | undefined>(
+    Math.min(leverageRang[1], 5),
+  );
   const leverage = selectedLeverage || 1;
   const [tpTriggerPx, setTpTriggerPx] = React.useState<string>('');
   const [slTriggerPx, setSlTriggerPx] = React.useState<string>('');

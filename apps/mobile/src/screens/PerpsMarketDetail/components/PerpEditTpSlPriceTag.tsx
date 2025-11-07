@@ -282,7 +282,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
           setModalVisible(true);
         }}>
         <Text style={[styles.tagText, disableEdit && styles.tagTextDisabled]}>
-          {initTpOrSlPrice ? `$${initTpOrSlPrice}` : '-'}
+          {initTpOrSlPrice ? `$${splitNumberByStep(initTpOrSlPrice)}` : '-'}
         </Text>
         {initTpOrSlPrice ? (
           <IconPerpDelete
