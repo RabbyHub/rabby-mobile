@@ -230,7 +230,6 @@ export const PerpsChart: React.FC<{
     {
       refreshDeps: [market.name, selectedInterval],
       onSuccess(data) {
-        console.log('chartData', data.candles.length, chartIsReadyRef.current);
         if (chartIsReadyRef.current) {
           setIsReady(true);
           chartWebViewRef.current?.setData(data);
@@ -239,23 +238,9 @@ export const PerpsChart: React.FC<{
     },
   );
 
-  useEffect(() => {
-    console.log(
-      'chartData useEffect',
-      chartData?.candles?.length,
-      chartIsReadyRef.current,
-    );
-    if (chartData?.candles?.length && chartIsReadyRef.current) {
-      chartWebViewRef.current?.setData(chartData);
-    }
-  }, [chartData]);
-
   const handleChartReady = useMemoizedFn(() => {
     chartIsReadyRef.current = true;
     setIsReady(true);
-    if (chartData) {
-      chartWebViewRef.current?.setData(chartData);
-    }
   });
 
   const subscribeCandle = useMemoizedFn(() => {
@@ -300,6 +285,13 @@ export const PerpsChart: React.FC<{
       }
     }
   }, [subscribeCandle, appState, market.name]);
+
+  // Sync chart data when both chart is ready and data is available
+  useEffect(() => {
+    if (isReady && chartData) {
+      chartWebViewRef.current?.setData(chartData);
+    }
+  }, [isReady, chartData]);
 
   useEffect(() => {
     if (isReady && lineTagInfo) {
