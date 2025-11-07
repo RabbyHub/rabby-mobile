@@ -112,7 +112,7 @@ export const PerpsClosePositionPopup: React.FC<{
       ref={modalRef}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg1',
+        linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       onDismiss={onCancel}
       snapPoints={[472]}>
@@ -245,7 +245,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       textAlign: 'center',
     },
     amountSection: {
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       borderRadius: 20,
@@ -318,7 +320,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'space-between',
     },
     pnlCard: {
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       borderRadius: 16,
       paddingHorizontal: 16,
       paddingVertical: 16,
@@ -331,10 +335,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     pnlLabel: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-foot'],
     },
     pnlValue: {
       fontFamily: 'SF Pro Rounded',

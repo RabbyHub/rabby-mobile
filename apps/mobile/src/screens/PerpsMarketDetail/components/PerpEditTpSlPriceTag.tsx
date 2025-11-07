@@ -66,6 +66,10 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     displayedValue: displayedAutoClosePrice,
   } = useSlTpUsdInput({ szDecimals });
 
+  const priceIsEmptyValue = useMemo(() => {
+    return !autoClosePrice || !Number(autoClosePrice);
+  }, [autoClosePrice]);
+
   const autoCloseInputRef = React.useRef<any>(null);
 
   const disableEdit = useMemo(() => {
@@ -215,7 +219,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     const pctValue = Number(pct) / 100;
     const costValue = margin;
     const pnlUsdValue = costValue * pctValue;
-    const priceDifference = pnlUsdValue / size;
+    const priceDifference = Number((pnlUsdValue / size).toFixed(pxDecimals));
 
     // make difference to mark price avoid error from hy validator
     const costPrice = markPrice;
@@ -411,7 +415,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                           : t('page.perpsDetail.PerpsAutoCloseModal.youLoss')}
                         :
                       </Text>
-                      {priceValidation.error || !autoClosePrice ? (
+                      {priceValidation.error || priceIsEmptyValue ? (
                         <Text style={styles.infoText}>-</Text>
                       ) : (
                         <Text
@@ -440,7 +444,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                             )}
                         :
                       </Text>
-                      {priceValidation.error || !autoClosePrice ? (
+                      {priceValidation.error || priceIsEmptyValue ? (
                         <Text style={styles.infoText}>-</Text>
                       ) : (
                         <Text
