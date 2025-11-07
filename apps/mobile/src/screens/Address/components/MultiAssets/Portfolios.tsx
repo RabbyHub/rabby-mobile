@@ -87,7 +87,7 @@ export const Portfolios = () => {
 
   const getAccountByAddress = useCallback(
     (address: string) => {
-      return accounts.find(account => isSameAddress(account.address, address));
+      return accounts.find(account => isSameAddress(account?.address, address));
     },
     [accounts],
   );
@@ -470,13 +470,13 @@ export const Portfolios = () => {
                 onTokenPress={token =>
                   handleOpenTokenDetail(
                     token,
-                    getAccountByAddress(data.address),
+                    getAccountByAddress(data?.address),
                   )
                 }
                 logoSize={46}
                 style={styles.renderItemWrapper}
                 chainLogoSize={18}
-                account={getAccountByAddress(data.address)}
+                account={getAccountByAddress(data?.address)}
                 getMenuActions={getTokenMenuActions}
               />
             </View>
@@ -490,7 +490,7 @@ export const Portfolios = () => {
               style={styles.fullDefi}
               account={
                 getAccountByAddress(
-                  data.address,
+                  data?.address,
                 ) as unknown as KeyringAccountWithAlias
               }
             />

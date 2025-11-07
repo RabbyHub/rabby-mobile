@@ -34,7 +34,7 @@ type SectionListItem = {
 };
 interface Props {
   data: AbstractProject;
-  account: KeyringAccountWithAlias;
+  account?: KeyringAccountWithAlias;
   showAccount?: boolean;
   style?: StyleProp<ViewStyle>;
 }
@@ -59,9 +59,12 @@ export const FullDefiRenderItem = ({
     // 优先使用内存defi列表中的实时数据，兜底用页面参数数据
     () => {
       // return _data;
+      if (!account) {
+        return _data;
+      }
       if (showAccount) {
         return (
-          assetsMap[account.address.toLowerCase()].portfolios?.find(
+          assetsMap[account?.address?.toLowerCase()].portfolios?.find(
             item => item.id === _data.id,
           ) || _data
         );
@@ -69,7 +72,7 @@ export const FullDefiRenderItem = ({
         return currentPortfolio.find(item => item.id === _data.id) || _data;
       }
     },
-    [_data, account.address, assetsMap, currentPortfolio, showAccount],
+    [_data, account, assetsMap, currentPortfolio, showAccount],
   );
   const { openTab } = useBrowser();
 
@@ -88,18 +91,21 @@ export const FullDefiRenderItem = ({
   }, [data?.site_url, openTab]);
 
   const sectionsMultiProject = useMemo(() => {
+    if (!account) {
+      return [];
+    }
     const sectionsList: SectionListItem[] = [
       {
         data: data?._portfolios || [],
         project: data,
         totalUsdValue: new BigNumber(data?.netWorth || 0),
-        type: account.type,
-        address: account.address,
-        aliasName: account.aliasName || ellipsisAddress(account.address),
+        type: account?.type,
+        address: account?.address,
+        aliasName: account?.aliasName || ellipsisAddress(account?.address),
       },
     ];
     return sectionsList;
-  }, [data, account.type, account.address, account.aliasName]);
+  }, [account, data]);
 
   const sumNetWorth = useMemo(() => {
     const addressMap = new Map<string, SectionListItem>();
@@ -122,6 +128,9 @@ export const FullDefiRenderItem = ({
   );
   const handleRefresh = useCallback(async () => {
     setTimeout(() => {
+      if (!account) {
+        return;
+      }
       if (showAccount) {
         loadSpecificDefi(account.address, _data?.id, _data?.chain || '');
       } else {
@@ -130,16 +139,16 @@ export const FullDefiRenderItem = ({
       }
     }, 200);
   }, [
+    account,
     showAccount,
     loadSpecificDefi,
-    account.address,
     _data?.id,
     _data?.chain,
     setRefreshHistoryId,
     updateSpecificProtocol,
   ]);
 
-  if (!data) {
+  if (!data || !account) {
     return null;
   }
 
@@ -188,7 +197,7 @@ export const FullDefiRenderItem = ({
                 />
               </Pressable>
             </View>
-            {showAccount && <AccountOverview account={account} />}
+            {showAccount && account && <AccountOverview account={account} />}
           </View>
         </View>
         <Text style={styles.projectHeaderNetWorth}>{sumNetWorth}</Text>
