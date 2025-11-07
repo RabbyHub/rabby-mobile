@@ -16,7 +16,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { AccountOverview } from '../AccountOverview';
-import { useProtocolConfig } from '../../utils/portocolConfig';
+import { useProtocolConfig } from '../../utils/protocolConfig';
 import LinearGradient from 'react-native-linear-gradient';
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 import { usePortfolios } from '../../hooks/usePortfolio';
@@ -203,7 +203,8 @@ export const FullDefiRenderItem = ({
             address={account.address}
             addressType={account.type}
             manageAction={
-              config?.[data.id]?.showManage && config[data.id]?.showManage(item)
+              config?.[data.id]?.showManage &&
+              config[data.id]?.showManage(item, account)
                 ? config[data.id]?.onManage
                 : undefined
             }
