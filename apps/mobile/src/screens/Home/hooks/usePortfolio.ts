@@ -29,19 +29,19 @@ export const tagProfiles = (
   const includeDefiAndTokensSet = new Set(
     includeDefiAndTokens.map(x => `${x.id}-${x.type}`),
   );
-  // const foldDefisSet = new Set(foldDefis);
-  // const unFoldDefisSet = new Set(unFoldDefis);
-  // const listLength = profiles.length || 0;
-  // const totalNetWorth = profiles.reduce(
-  //   (acc, curr) => acc + (Number(curr.netWorth) || 0),
-  //   0,
-  // );
-  // const threshold = Math.min((totalNetWorth || 0) / 1000, 1000);
-  // const thresholdIndex = profiles
-  //   ? profiles.findIndex(m => (Number(m.netWorth) || 0) < threshold)
-  //   : -1;
-  // const hasExpandSwitch =
-  // listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
+  const foldDefisSet = new Set(foldDefis);
+  const unFoldDefisSet = new Set(unFoldDefis);
+  const listLength = profiles.length || 0;
+  const totalNetWorth = profiles.reduce(
+    (acc, curr) => acc + (Number(curr.netWorth) || 0),
+    0,
+  );
+  const threshold = Math.min((totalNetWorth || 0) / 1000, 1000);
+  const thresholdIndex = profiles
+    ? profiles.findIndex(m => (Number(m.netWorth) || 0) < threshold)
+    : -1;
+  const hasExpandSwitch =
+    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
 
   return profiles
     .map(i => {
@@ -55,27 +55,27 @@ export const tagProfiles = (
         return false;
       })();
 
-      // const isManualFold = foldDefisSet.has(i.id);
+      const isManualFold = foldDefisSet.has(i.id);
 
-      // const isFold = (() => {
-      //   if (isManualFold) {
-      //     return true;
-      //   }
-      //   if (unFoldDefisSet.has(i.id)) {
-      //     return false;
-      //   }
-      //   if (isExcludeBalance) {
-      //     return true;
-      //   }
-      //   if (hasExpandSwitch && (i.netWorth || 0) < threshold) {
-      //     return true;
-      //   }
-      //   return false;
-      // })();
+      const isFold = (() => {
+        if (isManualFold) {
+          return true;
+        }
+        if (unFoldDefisSet.has(i.id)) {
+          return false;
+        }
+        if (isExcludeBalance) {
+          return true;
+        }
+        if (hasExpandSwitch && (i.netWorth || 0) < threshold) {
+          return true;
+        }
+        return false;
+      })();
 
       i._isExcludeBalance = isExcludeBalance;
-      i._isFold = false;
-      i._isManualFold = false;
+      i._isFold = isFold;
+      i._isManualFold = isManualFold;
 
       return i;
     })

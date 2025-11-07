@@ -59,17 +59,16 @@ export const useProtocolConfig = () => {
           return types?.includes('perpetuals');
         },
         onManage: async (account?: KeyringAccountWithAlias) => {
-          if (account) {
-            await login(account);
-          }
           return navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Perps,
-            params: {},
+            params: {
+              account,
+            },
           });
         },
       },
     };
-  }, [accounts, login, navigation, switchSceneCurrentAccount]);
+  }, [accounts, navigation, switchSceneCurrentAccount]);
   return {
     config,
   };

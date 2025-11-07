@@ -232,6 +232,7 @@ export function AddressItemInPanelForTokenDetail({
                             chainSize={10}
                             borderChain
                             rootStyle={styles.tokenDetailHeaderArea}
+                            disableRefresh
                             title={formatTokenAmount(tokenAmount || 0)}
                             // style={{ justifyContent: 'center' }}
                             titleStyle={styles.tokenSymbol}

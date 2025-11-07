@@ -136,18 +136,6 @@ export const combinedTokens = (
   const hasExpandSwitch =
     listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
 
-  const address2TotalValueMap = new Map<string, number>();
-  tokens.forEach(i => {
-    const addressTotalValue =
-      (address2TotalValueMap.get(i.address) || 0) + i.totalUsdValue.toNumber();
-    address2TotalValueMap.set(i.address, addressTotalValue);
-  });
-  const address2ThresholdMap = new Map<string, number>();
-  address2TotalValueMap.forEach((value, address) => {
-    const _threshold = Math.min((value || 0) / 1000, 1000);
-    address2ThresholdMap.set(address, _threshold);
-  });
-
   return tokens
     .sort((a, b) =>
       a.totalUsdValue.gt(b.totalUsdValue)
@@ -182,12 +170,8 @@ export const combinedTokens = (
           _usdValue: i.totalUsdValue?.toNumber(),
           _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
           _amountStr: formatAmount(i.totalAmount.toNumber()),
-          _isFold:
-            (i.totalUsdValue?.toNumber() || 0) <
-            (address2ThresholdMap.get(i.address) || 0),
-          _isMiniFold:
-            (i.totalUsdValue?.toNumber() || 0) <
-            (address2ThresholdMap.get(i.address) || 0),
+          _isFold: (i.totalUsdValue?.toNumber() || 0) < threshold,
+          _isMiniFold: (i.totalUsdValue?.toNumber() || 0) < threshold,
         };
       }
     });
@@ -224,17 +208,17 @@ export const combinedProtocols = (
     });
   });
 
-  // const listLength = portfolios.length || 0;
-  // const totalValue = portfolios.reduce((acc, curr) => {
-  //   return acc + (curr.totalUsdValue.toNumber() || 0);
-  // }, 0);
-  // const threshold = Math.min((totalValue || 0) / 1000, 1000);
-  // const thresholdIndex = portfolios
-  //   ? portfolios.findIndex(m => (m.totalUsdValue.toNumber() || 0) < threshold)
-  //   : -1;
+  const listLength = portfolios.length || 0;
+  const totalValue = portfolios.reduce((acc, curr) => {
+    return acc + (curr.totalUsdValue.toNumber() || 0);
+  }, 0);
+  const threshold = Math.min((totalValue || 0) / 1000, 1000);
+  const thresholdIndex = portfolios
+    ? portfolios.findIndex(m => (m.totalUsdValue.toNumber() || 0) < threshold)
+    : -1;
 
-  // const hasExpandSwitch =
-  //   listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
+  const hasExpandSwitch =
+    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
 
   return portfolios
     .sort((a, b) =>
@@ -248,12 +232,12 @@ export const combinedProtocols = (
       ...p,
       totalUsdValue: p.totalUsdValue.toNumber(),
       _netWorth: formatNetworth(p.totalUsdValue?.toNumber()),
-      _isFold: false,
-      _isMiniFold: false,
-      // _isFold: hasExpandSwitch ? p.totalUsdValue.toNumber() < threshold : false,
-      // _isMiniFold: hasExpandSwitch
-      //   ? p.totalUsdValue.toNumber() < threshold
-      //   : false,
+      // _isFold: false,
+      // _isMiniFold: false,
+      _isFold: hasExpandSwitch ? p.totalUsdValue.toNumber() < threshold : false,
+      _isMiniFold: hasExpandSwitch
+        ? p.totalUsdValue.toNumber() < threshold
+        : false,
     }));
 };
 

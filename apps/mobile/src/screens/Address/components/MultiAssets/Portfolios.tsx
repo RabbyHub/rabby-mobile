@@ -65,6 +65,7 @@ const FOOTER_HEIGHT = 58;
 const HEADER_PADDING_HEIGHT = 16;
 
 const MemoizedTokenRow = React.memo(TokenRow);
+const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
 const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionHeader);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -483,7 +484,7 @@ export const Portfolios = () => {
         case 'unfold_defi':
         case 'fold_defi':
           return (
-            <FullDefiRenderItem
+            <MemoizedFullDefiRenderItem
               data={data as unknown as AbstractProject}
               showAccount
               style={styles.fullDefi}

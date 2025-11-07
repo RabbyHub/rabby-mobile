@@ -28,6 +28,7 @@ interface Props {
   title?: string;
   titleStyle?: StyleProp<TextStyle>;
   rootStyle?: StyleProp<ViewStyle>;
+  disableRefresh?: boolean;
 }
 export const TokenDetailHeaderArea: React.FC<Props> = ({
   token,
@@ -38,6 +39,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   title,
   titleStyle,
   rootStyle,
+  disableRefresh = false,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssetsRefreshing();
@@ -60,7 +62,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             ellipsizeMode="tail">
             {title || ellipsisOverflowedText(getTokenSymbol(token), 15)}
           </Text>
-          {refreshing && <LoadingCircle />}
+          {!disableRefresh && refreshing && <LoadingCircle />}
         </View>
       </View>
     </View>

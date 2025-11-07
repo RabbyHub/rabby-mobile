@@ -50,13 +50,18 @@ import {
   ARB_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useRoute } from '@react-navigation/native';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
 
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useRabbyAppNavigation();
+
+  const { params } = useRoute<any>();
+
+  const { account: _account } = params;
 
   const {
     positionAndOpenOrders,
@@ -79,6 +84,13 @@ export const PerpsScreen = () => {
     judgeIsUserAgentIsExpired,
     fetchClearinghouseState,
   } = usePerpsState();
+
+  useEffect(() => {
+    if (_account) {
+      login(_account);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [closePositionVisible, setClosePositionVisible] = React.useState(false);
   const [closePosition, setClosePosition] = useState<
