@@ -198,7 +198,7 @@ export const AssetContainer: React.FC<Props> = ({
             style={[
               styles.bg,
               {
-                top: 0 - safeOffHeader - 78,
+                top: 0 - safeOffHeader - 74,
                 height: safeOffHeader + 110,
               },
             ]}
@@ -390,7 +390,8 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingLeft: 16,
     paddingRight: 16,
     position: 'relative',
-    height: 32,
+    height: 36,
+    paddingBottom: 4,
     overflow: 'hidden',
   },
   indicator: {

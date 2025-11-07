@@ -132,9 +132,6 @@ const TokenDetailContent = () => {
     return (
       <TokenDetailHeaderArea
         style={{ marginLeft: -3 }}
-        tokenSize={49}
-        chainSize={20}
-        borderChain
         key={effectiveAccount?.address}
         token={token}
       />

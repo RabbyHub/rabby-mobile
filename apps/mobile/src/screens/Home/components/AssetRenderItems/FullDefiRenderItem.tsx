@@ -165,25 +165,27 @@ export const FullDefiRenderItem = ({
             chainSize={18}
           />
           <View style={styles.tokenInfo}>
-            <Text
-              style={styles.tokenSymbol}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {/* {token?.name} */}
-              {ellipsisOverflowedText(
-                data?.name || sectionsMultiProject[0]?.project?.name,
-                20,
-              )}
-            </Text>
+            <View style={styles.tokenInfoHeader}>
+              <Text
+                style={styles.tokenSymbol}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {/* {token?.name} */}
+                {ellipsisOverflowedText(
+                  data?.name || sectionsMultiProject[0]?.project?.name,
+                  20,
+                )}
+              </Text>
+              <Pressable hitSlop={20} onPress={handleOpenSite}>
+                <JumpIconCC
+                  width={14}
+                  height={14}
+                  color={colors2024['neutral-secondary']}
+                />
+              </Pressable>
+            </View>
             {showAccount && <AccountOverview account={account} />}
           </View>
-          <Pressable hitSlop={20} onPress={handleOpenSite}>
-            <JumpIconCC
-              width={14}
-              height={14}
-              color={colors2024['neutral-secondary']}
-            />
-          </Pressable>
         </View>
         <Text style={styles.projectHeaderNetWorth}>{sumNetWorth}</Text>
         {isInnerProtocol && (
@@ -286,6 +288,11 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexDirection: 'column',
     justifyContent: 'center',
     gap: 2,
+  },
+  tokenInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   tokenSymbol: {
     flexShrink: 1,

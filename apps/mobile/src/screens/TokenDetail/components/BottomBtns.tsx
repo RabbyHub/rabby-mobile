@@ -182,6 +182,8 @@ export const TokenDetailBottomBtns = ({
 
       <BSheetModal
         ref={moreSheetModalRef}
+        backgroundStyle={styles.sheetModal}
+        handleStyle={styles.sheetModal}
         snapPoints={MORE_SHEET_MODAL_SNAPPOINTS(moreItems.length)}>
         <AutoLockView as="BottomSheetView" style={styles.list}>
           {moreItems.map(item => (
@@ -242,10 +244,7 @@ const getStyles = createGetStyles2024(ctx => ({
     opacity: 0.6,
   },
   item: {
-    height: 60,
-    paddingHorizontal: 16,
-    backgroundColor: ctx.colors2024['neutral-card-1'],
-    borderRadius: 4,
+    height: 40,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -296,9 +295,12 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-foot'],
   },
   list: {
-    gap: 12,
+    gap: 40,
     paddingTop: 16,
     paddingHorizontal: 20,
+  },
+  sheetModal: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   actionBadgeWrapper: {
     position: 'absolute',
