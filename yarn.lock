@@ -10822,9 +10822,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rneui/base@npm:^4.0.0-rc.8":
+"@rneui/base@npm:4.0.0-rc.8":
   version: 4.0.0-rc.8
-  resolution: "@rneui/base@npm:4.0.0-rc.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40rneui%2Fbase%2F-%2Fbase-4.0.0-rc.8.tgz"
+  resolution: "@rneui/base@npm:4.0.0-rc.8"
   dependencies:
     "@types/react-native-vector-icons": ^6.4.10
     color: ^3.2.1
@@ -10836,6 +10836,23 @@ __metadata:
     react-native-safe-area-context: ">= 3.0.0"
     react-native-vector-icons: ">7.0.0"
   checksum: 0a7d53a179482d6586a5442ef3dfc13132c575bed9c7bf97d9c708210db6e80c5cf4fb2f8649260c2410c357102cfab8a25a4379de5237429b954465546f28e5
+  languageName: node
+  linkType: hard
+
+"@rneui/base@patch:@rneui/base@npm%3A4.0.0-rc.8#./.yarn/patches/@rneui-base-npm-4.0.0-rc.8-23456f2e0d.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 4.0.0-rc.8
+  resolution: "@rneui/base@patch:@rneui/base@npm%3A4.0.0-rc.8#./.yarn/patches/@rneui-base-npm-4.0.0-rc.8-23456f2e0d.patch::version=4.0.0-rc.8&hash=cd9028&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@types/react-native-vector-icons": ^6.4.10
+    color: ^3.2.1
+    deepmerge: ^4.2.2
+    hoist-non-react-statics: ^3.3.2
+    react-native-ratings: ^8.1.0
+    react-native-size-matters: ^0.4.0
+  peerDependencies:
+    react-native-safe-area-context: ">= 3.0.0"
+    react-native-vector-icons: ">7.0.0"
+  checksum: 5ca73034c46c4c8da8265f337912533f4014962560c9fe79491784774987381b0afc835a0310a1ec5b5e09e481b0309c6c9fc6040f8027b93d01dce06358f1f5
   languageName: node
   linkType: hard
 
