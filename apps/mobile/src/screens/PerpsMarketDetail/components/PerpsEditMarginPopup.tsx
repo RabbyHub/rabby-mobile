@@ -386,6 +386,7 @@ export const PerpsEditMarginPopup: React.FC<{
                     : null,
                 ]}
                 placeholder="$0"
+                placeholderTextColor={colors2024['neutral-info']}
                 value={Number(margin) > 0 ? displayedValue : ''}
                 onChangeText={setMargin}
                 onFocus={handleInputFocus}

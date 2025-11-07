@@ -445,6 +445,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                     ? styles.inputError
                     : null,
                 ]}
+                placeholderTextColor={colors2024['neutral-info']}
                 placeholder="$0"
                 value={Number(margin) > 0 ? displayedValue : ''}
                 onChangeText={setMargin}
