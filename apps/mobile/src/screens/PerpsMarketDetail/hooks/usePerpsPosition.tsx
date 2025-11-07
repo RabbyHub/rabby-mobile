@@ -200,8 +200,6 @@ export const usePerpsPosition = ({
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
           fetchClearinghouseState();
-          // no need
-          // fetchUserHistoricalOrders();
           const { totalSz, avgPx } = filled;
           const msg = `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
           toast.success(

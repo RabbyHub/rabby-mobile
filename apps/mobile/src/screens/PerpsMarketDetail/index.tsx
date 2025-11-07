@@ -507,12 +507,16 @@ export const PerpsMarketDetailScreen = () => {
             setClosePositionVisible(false);
           }}
           handleClosePosition={async (closePercent: number) => {
-            const size = (positionData?.size * closePercent) / 100;
-            const sizeStr = size.toFixed(currentAssetCtx?.szDecimals || 0);
-            console.log(' close sizeStr', sizeStr);
+            let sizeStr = '0';
+            if (closePercent < 100) {
+              const size = (positionData?.size * closePercent) / 100;
+              sizeStr = size.toFixed(currentAssetCtx?.szDecimals || 0);
+            } else {
+              sizeStr = positionData?.size.toString() || '0';
+            }
             await handleClosePosition({
               coin,
-              size: sizeStr || '0',
+              size: sizeStr,
               direction: positionData?.direction as 'Long' | 'Short',
               price: (activeAssetCtx?.markPx as unknown as string) || '0',
             });

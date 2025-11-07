@@ -73,7 +73,7 @@ export const PerpsClosePositionPopup: React.FC<{
     const percentValue = (minSizeValue / Number(positionSize)) * 100;
 
     // add one percent to avoid rounding error
-    return Math.round(percentValue + 1);
+    return Math.min(100, Math.round(percentValue + 1));
   }, [markPrice, positionSize]);
 
   useEffect(() => {
