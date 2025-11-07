@@ -2571,6 +2571,7 @@
       }
     },
     "Lending": {
+      "isolated": "isolated",
       "apy": "APY",
       "gotIt": "Got it",
       "market": "Market",
@@ -2672,7 +2673,9 @@
         "availableToBorrow": "Available to borrow",
         "maxAmount": "This is the maximum amount you can borrow based on all your supplied collateral. Your total borrowing power is calculated by multiplying the market value of each collateral asset by its Max LTV, then summing the results.",
         "lqDesc": "When a liquidation occurs, liquidators repay up to 50% of the outstanding borrowed amount on behalf of the borrower. In return, they can buy the collateral at a discount and keep the difference (liquidation penalty) as a bonus.",
-        "availableToBorrowDesc": "You can borrow based on your supplied collateral and until the borrow cap is reached."
+        "availableToBorrowDesc": "You can borrow based on your supplied collateral and until the borrow cap is reached.",
+        "isolatedTitle": "Asset cannot be used as collateral",
+        "isolatedDesc": "This asset can only be used as collateral in isolation mode, where you cannot supply other asset collateral for borrowing. Assets used as collateral in isolation mode can only be borrowed to a specific debt ceiling."
       }
     }
   },

@@ -2,11 +2,11 @@ import React, { useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
-import { formatNum } from '@/utils/math';
 import { getHealthStatusColor } from '../utils';
 import LinearGradient from 'react-native-linear-gradient';
 import { HF_COLOR_GOOD_THRESHOLD } from '../utils/constant';
 import { useTranslation } from 'react-i18next';
+import { getHealthFactorText } from './HealthFactorText';
 
 interface HealthFactorBarProps {
   healthFactor: string;
@@ -22,7 +22,7 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
 
   const dotPosition = useMemo(() => {
     if (hfNumber > 10) {
-      return 95;
+      return 90;
     } else if (hfNumber > 3) {
       return 50 + ((hfNumber - 3) / 7) * 45;
     } else if (hfNumber > 1) {
@@ -57,7 +57,7 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
         <View style={styles.valueContainer}>
           <View>
             <Text style={[styles.hfValue, { color: hfColor.color }]}>
-              {formatNum(healthFactor)}
+              {getHealthFactorText(healthFactor)}
             </Text>
             <View
               style={[

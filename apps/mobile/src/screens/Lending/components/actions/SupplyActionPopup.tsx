@@ -8,7 +8,10 @@ import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
 import { CHAINS_ENUM } from '@debank/common';
 import SupplyActionOverView from './SupplyActionOverView';
-import { calculateHFAfterSupply } from '../../utils/hfUtils';
+import {
+  calculateHFAfterSupply,
+  effectUserAvailable,
+} from '../../utils/hfUtils';
 import { useLendingSummary } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
@@ -103,16 +106,34 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     if (!amount || amount === '0') {
       return undefined;
     }
-    return BigNumber(amount)
-      .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
-      .multipliedBy(reserve.reserve.formattedBaseLTVasCollateral)
-      .plus(BigNumber(userSummary?.availableBorrowsUSD || '0'))
-      .toString();
+    const targetPool = formattedPoolReservesAndIncentives.find(item => {
+      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+        ? isSameAddress(
+            item.underlyingAsset,
+            wrapperToken[reserve.chain].address,
+          )
+        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+    });
+    if (!targetPool) {
+      return undefined;
+    }
+    if (effectUserAvailable(userSummary, targetPool)) {
+      return BigNumber(amount)
+        .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
+        .multipliedBy(reserve.reserve.formattedBaseLTVasCollateral)
+        .plus(BigNumber(userSummary?.availableBorrowsUSD || '0'))
+        .toString();
+    } else {
+      return userSummary?.availableBorrowsUSD || '0';
+    }
   }, [
     amount,
+    formattedPoolReservesAndIncentives,
+    reserve.chain,
     reserve.reserve.formattedBaseLTVasCollateral,
     reserve.reserve.formattedPriceInMarketReferenceCurrency,
-    userSummary?.availableBorrowsUSD,
+    reserve.underlyingAsset,
+    userSummary,
   ]);
 
   // 检查approve额度

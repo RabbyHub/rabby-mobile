@@ -4,7 +4,7 @@ import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
-import { formatNetworth, formatNum } from '@/utils/math';
+import { formatNetworth } from '@/utils/math';
 import { formatPercent } from '../TokenDetail/util';
 import { estDaily } from './utils/format';
 import { getHealthStatusColor, isHFEmpty } from './utils';
@@ -23,6 +23,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import { getHealthFactorText } from './components/HealthFactorText';
 
 interface IProps {
   netWorth: string;
@@ -155,7 +156,7 @@ const SummaryCard = (props: IProps) => {
                       ).color,
                     },
                   ]}>
-                  {formatNum(props.healthFactor)}
+                  {getHealthFactorText(props.healthFactor)}
                 </Text>
                 {!!extraInfo && (
                   <View
