@@ -51,7 +51,6 @@ export const useQueryNft = (addr?: string, visible = true) => {
       if (!addr) {
         return;
       }
-      console.log('CUSTOM_LOGGER:=>: loadProcess nft');
       try {
         const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
         const tokenSetting = await preferenceService.getUserTokenSettings();
