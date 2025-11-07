@@ -173,6 +173,7 @@ export function MultiAddressHomeHeader(
 
   const previousLoading = usePrevious(loading);
   useEffect(() => {
+    if (data.isLoss) return;
     if (!loading && previousLoading) {
       gasketWebViewRef.current?.sendMessage?.({
         type: 'GASKETVIEW:TOGGLE_LOADING',
@@ -181,7 +182,7 @@ export function MultiAddressHomeHeader(
         },
       });
     }
-  }, [loading, previousLoading]);
+  }, [data.isLoss, loading, previousLoading]);
 
   return (
     <View style={style}>
@@ -272,11 +273,8 @@ export function MultiAddressHomeHeader(
         <RNLinearGradient
           colors={
             isLight
-              ? [
-                  colors2024['neutral-InvertHighlight'],
-                  colors2024['neutral-InvertHighlight'],
-                ]
-              : [colors2024['neutral-bg-2'], colors2024['neutral-bg-3']]
+              ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
+              : ['rgba(36, 40, 37, 1)', 'rgba(44, 52, 48, 0.5)']
           }
           style={[
             styles.curveBox,
