@@ -19,6 +19,8 @@ import { AccountOverview } from '../AccountOverview';
 import { useProtocolConfig } from '../../utils/portocolConfig';
 import LinearGradient from 'react-native-linear-gradient';
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
+import { usePortfolios } from '../../hooks/usePortfolio';
+import { useAssets } from '@/screens/Search/useAssets';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -35,7 +37,7 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 export const FullDefiRenderItem = ({
-  data,
+  data: _data,
   account,
   showAccount,
   style,
@@ -43,9 +45,30 @@ export const FullDefiRenderItem = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const isFromAppChain = useMemo(() => {
-    return isAppChain(data?.chain || '');
-  }, [data?.chain]);
+    return isAppChain(_data?.chain || '');
+  }, [_data?.chain]);
 
+  const { data: currentPortfolio, updateSpecificProtocol } = usePortfolios(
+    account?.address,
+    false,
+  );
+  const { loadSpecificDefi, assetsMap } = useAssets({ hideCombined: true });
+  const data = useMemo(
+    // 优先使用内存defi列表中的实时数据，兜底用页面参数数据
+    () => {
+      // return _data;
+      if (showAccount) {
+        return (
+          assetsMap[account.address.toLowerCase()].portfolios?.find(
+            item => item.id === _data.id,
+          ) || _data
+        );
+      } else {
+        return currentPortfolio.find(item => item.id === _data.id) || _data;
+      }
+    },
+    [_data, account.address, assetsMap, currentPortfolio, showAccount],
+  );
   const { openTab } = useBrowser();
 
   const handleOpenSite = useCallback(() => {
@@ -95,6 +118,22 @@ export const FullDefiRenderItem = ({
     () => config[data.id]?.icon || null,
     [data.id, config],
   );
+  const handleRefresh = useCallback(async () => {
+    setTimeout(() => {
+      if (showAccount) {
+        loadSpecificDefi(account.address, _data?.id, _data?.chain || '');
+      } else {
+        updateSpecificProtocol(_data?.id, _data?.chain || '');
+      }
+    }, 200);
+  }, [
+    showAccount,
+    loadSpecificDefi,
+    account.address,
+    _data?.id,
+    _data?.chain,
+    updateSpecificProtocol,
+  ]);
 
   if (!data) {
     return null;
@@ -138,7 +177,7 @@ export const FullDefiRenderItem = ({
             </Text>
             {showAccount && <AccountOverview account={account} />}
           </View>
-          <Pressable onPress={handleOpenSite}>
+          <Pressable hitSlop={20} onPress={handleOpenSite}>
             <JumpIconCC
               width={14}
               height={14}
@@ -160,6 +199,7 @@ export const FullDefiRenderItem = ({
             item={item}
             chain={data?.chain}
             protocolLogo={data?.logo}
+            onRefresh={handleRefresh}
             address={account.address}
             addressType={account.type}
             manageAction={config[data.id]?.onManage}

@@ -82,7 +82,7 @@ export const WrapperDappActionsMemoItem = ({
   addressType?: KEYRING_TYPE;
   onRefresh?: () => Promise<void>;
   session?: React.ComponentProps<typeof DappActions>['session'];
-  manageAction?: () => void;
+  manageAction?: (account?: KeyringAccountWithAlias) => void;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { colors2024 } = useTheme2024();
@@ -116,13 +116,8 @@ export const WrapperDappActionsMemoItem = ({
         style={styles.gradientBg}
       />
       <MemoItem currentAccount={currentAccount} item={item} />
-      {!!manageAction && (
-        <TouchableOpacity style={[styles.button]} onPress={manageAction}>
-          <Text style={styles.buttonText}>Manage</Text>
-        </TouchableOpacity>
-      )}
-      {!manageAction &&
-        !!item._originPortfolio.withdraw_actions?.length &&
+
+      {!!item._originPortfolio.withdraw_actions?.length &&
         !item?._originPortfolio?.proxy_detail?.proxy_contract_id && (
           <DappActions
             data={item._originPortfolio.withdraw_actions}
@@ -133,6 +128,13 @@ export const WrapperDappActionsMemoItem = ({
             session={session}
           />
         )}
+      {!!manageAction && (
+        <TouchableOpacity
+          style={[styles.button]}
+          onPress={() => manageAction(currentAccount)}>
+          <Text style={styles.buttonText}>Manage</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

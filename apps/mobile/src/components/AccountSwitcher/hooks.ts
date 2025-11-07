@@ -228,10 +228,13 @@ export function useTokenAmountForAddress(options?: {
 }) {
   const { accountAddress, token } = options || {};
 
-  const { data: amount, loading } = useRequest(
+  const { data, loading } = useRequest(
     () => {
       if (!accountAddress || !token) {
-        return Promise.resolve(0);
+        return Promise.resolve({
+          amount: 0,
+          success: false,
+        });
       }
       return TokenItemEntity.getAddressesAmount({
         address: accountAddress,
@@ -244,5 +247,5 @@ export function useTokenAmountForAddress(options?: {
     },
   );
 
-  return { tokenAmount: amount, loading };
+  return { tokenAmount: data?.amount, loading, enableFetch: data?.success };
 }

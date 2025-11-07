@@ -163,12 +163,10 @@ export function AddressItemInPanelForTokenDetail({
 
   const { account } = addressItemProps;
 
-  const { tokenAmount, loading: tokenAmountLoading } = useTokenAmountForAddress(
-    {
-      accountAddress: account?.address,
-      token,
-    },
-  );
+  const { tokenAmount, enableFetch } = useTokenAmountForAddress({
+    accountAddress: account?.address,
+    token,
+  });
   const onPressAddress = useCallback(() => {
     _onPressAddress?.(account);
   }, [account, _onPressAddress]);
@@ -225,21 +223,23 @@ export function AddressItemInPanelForTokenDetail({
                         />
                       )}
                     </View>
-                    <View style={styles.detailBottomArea}>
-                      {!!token && (
-                        <TokenDetailHeaderArea
-                          token={token}
-                          tokenSize={20}
-                          chainSize={10}
-                          borderChain
-                          rootStyle={styles.tokenDetailHeaderArea}
-                          title={formatTokenAmount(tokenAmount || 0)}
-                          // style={{ justifyContent: 'center' }}
-                          titleStyle={styles.tokenSymbol}
-                        />
-                      )}
-                      <Text style={styles.tokenUsdValue}>≈${usdValue}</Text>
-                    </View>
+                    {enableFetch && (
+                      <View style={styles.detailBottomArea}>
+                        {!!token && (
+                          <TokenDetailHeaderArea
+                            token={token}
+                            tokenSize={20}
+                            chainSize={10}
+                            borderChain
+                            rootStyle={styles.tokenDetailHeaderArea}
+                            title={formatTokenAmount(tokenAmount || 0)}
+                            // style={{ justifyContent: 'center' }}
+                            titleStyle={styles.tokenSymbol}
+                          />
+                        )}
+                        <Text style={styles.tokenUsdValue}>≈${usdValue}</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               );
@@ -283,6 +283,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       flexDirection: 'column',
       flexShrink: 1,
       width: '100%',
+      justifyContent: 'center',
       // ...makeDebugBorder('blue')
     },
     nameAndAdderss: {

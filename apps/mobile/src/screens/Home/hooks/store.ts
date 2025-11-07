@@ -18,6 +18,8 @@ import { tagTokenList } from '../utils/token';
 import { tagProfiles } from './usePortfolio';
 import { tagNfts } from './nft';
 import { tokenNonceAtom, deFiNonceAtom, nftNonceAtom } from './refresh';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 let top20TokensCache: CombineTokensItem[] = [];
 let top10PortfoliosCache: CombineDefiItem[] = [];
@@ -79,6 +81,7 @@ export const combinedTokens = (
   assetsMap: {
     [address: string]: IAssets;
   },
+  top10Addresses: string[],
   filter?: {
     chain?: string;
     tokenId?: string;
@@ -92,7 +95,10 @@ export const combinedTokens = (
   );
 
   Object.entries(assetsMap).forEach(([address, assets]) => {
-    if (!lowerAddresses.has(address.toLowerCase())) {
+    if (
+      !lowerAddresses.has(address.toLowerCase()) ||
+      !top10Addresses.some(i => isSameAddress(i, address))
+    ) {
       return;
     }
     lowerAddresses.delete(address.toLowerCase());
@@ -170,15 +176,21 @@ export const combinedTokens = (
     });
 };
 
-export const combinedProtocols = (assetsMap: {
-  [address: string]: IAssets;
-}): CombineDefiItem[] => {
+export const combinedProtocols = (
+  assetsMap: {
+    [address: string]: IAssets;
+  },
+  top10Addresses: string[],
+): CombineDefiItem[] => {
   const portfolios: OriginalCombineDefiItem[] = [];
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
   );
   Object.entries(assetsMap).forEach(([address, assets]) => {
-    if (!lowerAddresses.has(address.toLowerCase())) {
+    if (
+      !lowerAddresses.has(address.toLowerCase()) ||
+      !top10Addresses.some(i => isSameAddress(i, address))
+    ) {
       return;
     }
     lowerAddresses.delete(address.toLowerCase());
@@ -238,6 +250,7 @@ export const useAssetsMap = ({
   const [tokenNonce, setTokenNonce] = useAtom(tokenNonceAtom);
   const [defiNonce, setDefiNonce] = useAtom(deFiNonceAtom);
   const [nftNonce, setNftNonce] = useAtom(nftNonceAtom);
+  const { top10Addresses } = useAccountInfo();
 
   const updateTokens = useCallback(
     ({
@@ -375,9 +388,9 @@ export const useAssetsMap = ({
 
   const getTokenCombined = useCallback(
     (tokenId: string, chain: string) => {
-      return combinedTokens(assetsMap, { tokenId, chain });
+      return combinedTokens(assetsMap, top10Addresses, { tokenId, chain });
     },
-    [assetsMap],
+    [assetsMap, top10Addresses],
   );
 
   const memoTokens = useMemo(() => {
@@ -385,20 +398,20 @@ export const useAssetsMap = ({
       return top20TokensCache;
     }
 
-    const tokens = combinedTokens(assetsMap);
+    const tokens = combinedTokens(assetsMap, top10Addresses);
     top20TokensCache = tokens.filter(item => !item._isFold).slice(0, 20);
     return tokens;
-  }, [assetsMap, hideCombined]);
+  }, [assetsMap, hideCombined, top10Addresses]);
 
   const memoPortfolios = useMemo(() => {
     if (hideCombined) {
       return top10PortfoliosCache;
     }
 
-    const portfolios = combinedProtocols(assetsMap);
+    const portfolios = combinedProtocols(assetsMap, top10Addresses);
     top10PortfoliosCache = portfolios.slice(0, 10);
     return portfolios;
-  }, [assetsMap, hideCombined]);
+  }, [assetsMap, hideCombined, top10Addresses]);
 
   return {
     updateTokens,

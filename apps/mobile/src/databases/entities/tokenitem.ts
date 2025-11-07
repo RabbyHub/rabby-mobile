@@ -626,12 +626,18 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     address: string;
     chain: TokenItem['chain'];
     tokenId: TokenItem['id'];
-  }): Promise<number> {
+  }): Promise<{
+    amount: number;
+    success: boolean;
+  }> {
     try {
       await prepareAppDataSource();
 
       if (!address) {
-        return 0;
+        return {
+          amount: 0,
+          success: false,
+        };
       }
 
       const repo = this.getRepository();
@@ -645,10 +651,16 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         .andWhere('tokenitem.id = :tokenId', { tokenId })
         .getRawOne();
 
-      return parseFloat(result?.total_amount) || 0;
+      return {
+        amount: parseFloat(result?.total_amount) || 0,
+        success: !!result,
+      };
     } catch (error) {
       console.error('Failed to get addresses amount:', error);
-      throw error;
+      return {
+        amount: 0,
+        success: false,
+      };
     }
   }
 }

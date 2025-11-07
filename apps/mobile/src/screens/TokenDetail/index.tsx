@@ -36,6 +36,7 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { AccountSwitcher } from './components/InScreenSwitch';
 import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
+import { patchSingleToken } from '@/databases/sync/assets';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -105,6 +106,7 @@ const TokenDetailContent = () => {
           token.chain,
           token._tokenId,
         );
+        patchSingleToken(effectiveAccount?.address!, res);
         return ensureAbstractPortfolioToken({
           ...abstractTokenToTokenItem(token),
           amount: res?.amount,
