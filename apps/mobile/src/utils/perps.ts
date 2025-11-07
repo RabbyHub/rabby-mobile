@@ -120,7 +120,7 @@ export const calLiquidationPrice = (
   const liq_price =
     markPrice - (side * margin_available) / positionSize / (1 - MMR * side);
   // liq_price = price - side * margin_available / position_size / (1 - l * side)
-  return liq_price;
+  return Math.max(liq_price, 0);
 };
 
 // transfer_margin_required = max(initial_margin_required, 0.1 * total_position_value)
