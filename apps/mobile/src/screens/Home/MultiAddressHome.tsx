@@ -71,7 +71,7 @@ import {
   useSetTotalBalanceText,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,
@@ -512,7 +512,6 @@ function MultiAddressHome(): JSX.Element {
   ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
-  const { navigateToSendPolyScreen } = useSendRoutes();
   const handlePressWatchlist = useCallback(() => {
     navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
       screen: RootNames.Watchlist,
@@ -524,7 +523,12 @@ function MultiAddressHome(): JSX.Element {
     (key: MultiHomeFeatTitle) => {
       switch (key) {
         case MultiHomeFeatTitle.Send:
-          navigateToSendPolyScreen(false);
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTransaction, {
+              screen: RootNames.Send,
+              params: {},
+            }),
+          );
           break;
         case MultiHomeFeatTitle.Receive:
           navigation.dispatch(
@@ -608,12 +612,7 @@ function MultiAddressHome(): JSX.Element {
           break;
       }
     },
-    [
-      handlePressWatchlist,
-      navigateToSendPolyScreen,
-      navigation,
-      toggleUseAllAccountsOnScene,
-    ],
+    [handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
   );
 
   const { showTipsDollarDialog } = useTipsDollarDialog();

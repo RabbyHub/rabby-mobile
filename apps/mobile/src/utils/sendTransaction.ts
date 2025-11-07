@@ -41,7 +41,7 @@ import {
 } from '@rabby-wallet/keyring-utils';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { getCexInfo } from '@/hooks/useCexSupportList';
-import { isNonPublicProductionEnv, isSelfhostRegPkg } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { getDefaultStore } from 'jotai';
 import { mockBatchRevokeAtom } from '@/hooks/appSettings';
 import { Account } from '@/core/services/preference';
@@ -291,13 +291,13 @@ export const sendTransaction = async ({
       });
 
   const isGasNotEnough = !isGasLess && checkErrors.some(e => e.code === 3001);
-  const ETH_GAS_USD_LIMIT = isSelfhostRegPkg
+  const ETH_GAS_USD_LIMIT = isNonPublicProductionEnv
     ? MOCK_BATCH_REVOKE.DEBUG_ETH_GAS_USD_LIMIT
     : 20;
-  const OTHER_CHAIN_GAS_USD_LIMIT = isSelfhostRegPkg
+  const OTHER_CHAIN_GAS_USD_LIMIT = isNonPublicProductionEnv
     ? MOCK_BATCH_REVOKE.DEBUG_OTHER_CHAIN_GAS_USD_LIMIT
     : 5;
-  const DEBUG_SIMULATION_FAILED = isSelfhostRegPkg
+  const DEBUG_SIMULATION_FAILED = isNonPublicProductionEnv
     ? MOCK_BATCH_REVOKE.DEBUG_SIMULATION_FAILED
     : false;
 

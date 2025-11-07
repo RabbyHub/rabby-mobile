@@ -379,16 +379,22 @@ export const TransactionItem = ({
         break;
       case HistoryItemCateType.Revoke:
       case HistoryItemCateType.Approve:
+      case HistoryItemCateType.Cancel:
+      default:
         const appRequireData = data.maxGasTx.action
           ?.requiredData as ApproveTokenRequireData;
         const name = appRequireData?.protocol?.name;
         address =
           name || getAliasName(data.address) || ellipsisAddress(data.address);
         break;
-      case HistoryItemCateType.Cancel:
-      default:
-        address = getAliasName(data.address) || ellipsisAddress(data.address);
-        break;
+      // case HistoryItemCateType.Cancel:
+      // default:
+      //   const requiredData = data.maxGasTx.action?.requiredData;
+      //   address =
+      //     (requiredData as SendRequireData)?.protocol?.name ||
+      //     getAliasName(data.address) ||
+      //     ellipsisAddress(data.address);
+      //   break;
     }
 
     return (

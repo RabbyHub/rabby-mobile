@@ -3,9 +3,6 @@ import { Account } from '@/core/services/preference';
 import { t } from 'i18next';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from './number';
-import { useEffect } from 'react';
-import { isSelfhostRegPkg } from '@/constant/env';
-import { toast } from '@/components/Toast';
 
 export type RetryUpdateType = 'nonce' | 'gasPrice' | 'origin' | false;
 
@@ -222,7 +219,7 @@ export const useDebugToastErrorTxRetryInfo = ({
 }) => {
   // useEffect(() => {
   //   if (
-  //     isSelfhostRegPkg &&
+  //     isNonPublicProductionEnv &&
   //     description &&
   //     isFailedTx &&
   //     tx.chainId &&

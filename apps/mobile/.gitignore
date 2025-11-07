@@ -67,6 +67,7 @@ yarn-error.log
 /coverage
 
 .env.local
+.env.hashing
 .env.production
 
 tmp.iconset

@@ -26,6 +26,8 @@ import { toChecksumAddress } from 'web3-utils';
 import { GnosisTransactionConfirmations } from './GnosisTransactionConfirmations';
 import { GnosisTransactionExplain } from './GnosisTransactionExplain';
 import { ReplacePopup } from './ReplacePopup';
+import { naviPush } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 export type ConfirmationProps = {
   owner: string;
@@ -166,17 +168,19 @@ export const GnosisTransactionItem = ({
     setIsLoading(false);
   };
 
-  const { navigateToSendPolyScreen } = useSendRoutes();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const handleReplace = async (type: string) => {
     setIsShowReplacePopup(false);
     if (type === 'send') {
       await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-      navigateToSendPolyScreen(true, {
-        safeInfo: {
-          nonce: data.nonce,
-          chainId: Number(networkId),
+      naviPush(RootNames.StackTransaction, {
+        screen: RootNames.Send,
+        params: {
+          safeInfo: {
+            nonce: data.nonce,
+            chainId: Number(networkId),
+          },
         },
       });
     } else if (type === 'reject') {

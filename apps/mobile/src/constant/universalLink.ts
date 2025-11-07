@@ -1,5 +1,5 @@
 import { IS_ANDROID } from '@/core/native/utils';
-import { isSelfhostRegPkg } from './env';
+import { isNonPublicProductionEnv } from './';
 
 const RABBY_GO_ENVS = {
   debug: {
@@ -21,7 +21,7 @@ const RABBY_GO_ENVS = {
 
 const UL_CONFIG = __DEV__
   ? RABBY_GO_ENVS.debug
-  : isSelfhostRegPkg
+  : isNonPublicProductionEnv
   ? RABBY_GO_ENVS.regression
   : RABBY_GO_ENVS.release;
 
@@ -52,6 +52,6 @@ const MATCH_PREFIXES = {
 } as const;
 export const UL_MATCH_PREFIX = __DEV__
   ? MATCH_PREFIXES.debug
-  : isSelfhostRegPkg
+  : isNonPublicProductionEnv
   ? MATCH_PREFIXES.regression
   : MATCH_PREFIXES.release;

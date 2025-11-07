@@ -10,7 +10,7 @@ import { DefaultRPCRes } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import dayjs from 'dayjs';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 
 type RPCDefaultItem = DefaultRPCRes['rpcs'][number];
 
