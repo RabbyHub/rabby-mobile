@@ -595,6 +595,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
+      marginBottom: 4,
     },
     row: {
       display: 'flex',

@@ -307,7 +307,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['red-default'],
     },
     minimumWarningContainer: {
-      marginBottom: 12,
+      marginBottom: 16,
+      // marginTop: -4,
       height: 14,
     },
     pnlCardRow: {
