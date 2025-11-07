@@ -1,21 +1,28 @@
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useDappsBadge } from '@/hooks/browser/useBrowserBookmark';
+import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 
 export const DappsBadge = () => {
   const badges = useDappsBadge();
   const { styles } = useTheme2024({ getStyle });
+
+  console.log('badges', badges);
   if (!badges.length) {
     return null;
   }
   return (
     <View style={styles.badgeContainer}>
-      {badges.map(token => (
-        <Image
-          key={`${token.origin}`}
+      {badges.map(dapp => (
+        <DappIcon
+          origin={dapp.origin}
+          source={
+            dapp.icon || dapp.info?.logo_url
+              ? { uri: dapp.icon || dapp.info?.logo_url || '' }
+              : undefined
+          }
           style={styles.badgeImage}
-          source={{ uri: token?.info?.logo_url || token.icon }}
         />
       ))}
     </View>

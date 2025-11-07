@@ -126,10 +126,7 @@ export const SearchInner = ({
 
   const handleBlur = useMemoizedFn(async () => {
     Keyboard.dismiss();
-    // if (!searchText.trim() && !displayedBrowserHistoryList.length) {
     await waitKeyboardHide();
-    onClose?.();
-    // }
   });
 
   const handleOpenUrl = useMemoizedFn(async (url: string) => {
@@ -255,15 +252,9 @@ export const SearchInner = ({
           styles.footer,
           {
             position: 'absolute',
-            // right: 0,
-            // bottom: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            // marginTop: 'auto',
-            // paddingBottom: isVisible ? 12 : bottom || 12,
-            // marginBottom:
-            //   Platform.OS === 'android' ? androidOnlyBottomOffset : 20,
           },
         ]}>
         <TouchableOpacity onPress={handlePressHome}>
