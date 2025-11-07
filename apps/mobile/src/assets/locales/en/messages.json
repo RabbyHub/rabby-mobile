@@ -1840,6 +1840,8 @@
       "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance"
     },
     "tokenDetail": {
+      "headerBalanceText": "Balance",
+      "headerTokenValueText": "Token Value",
       "balance": "Balance",
       "Mybalance": "Token Balance",
       "Introduction": "Introduction",
@@ -1898,6 +1900,7 @@
       "excludeBalanceTips": "This asset is excluded from your total balance for accuracy. You can tap it to view details and include it if preferred.",
       "excludeBalanceTipsButton": "I Got It.",
       "guideToMarketData": "Market Data:",
+      "price": "Price",
       "tabs": {
         "marketData": "Market data",
         "tokenSecurity": "Token Security"

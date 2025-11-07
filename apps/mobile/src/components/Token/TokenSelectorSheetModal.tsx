@@ -829,6 +829,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           },
                           needUseCacheToken: true,
                           tokenSelectType: type,
+                          account: ownerAccount,
                         },
                       );
                     }}

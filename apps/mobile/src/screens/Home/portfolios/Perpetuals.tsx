@@ -11,16 +11,19 @@ import {
 import { AbstractPortfolio } from '../types';
 import { formatNetworth } from '@/utils/math';
 import { getTokenSymbol } from '@/utils/token';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 export default React.memo(
   ({
     name,
     data,
     style,
+    currentAccount,
   }: {
     name: string;
     data: AbstractPortfolio;
     style?: ViewStyle;
+    currentAccount?: KeyringAccountWithAlias;
   }) => {
     const portfolio = data._originPortfolio;
 
@@ -56,10 +59,11 @@ export default React.memo(
     ];
 
     return (
-      <Card style={style} shadow>
+      <Card style={style}>
         <PortfolioHeader data={data} name={name} showDescription />
         <Supplements data={supplements} />
         <TokenList
+          currentAccount={currentAccount}
           tokens={
             portfolio.detail.position_token
               ? [portfolio.detail.position_token]
@@ -68,6 +72,7 @@ export default React.memo(
           name="POSITION"
         />
         <TokenList
+          currentAccount={currentAccount}
           tokens={
             portfolio.detail.margin_token ? [portfolio.detail.margin_token] : []
           }

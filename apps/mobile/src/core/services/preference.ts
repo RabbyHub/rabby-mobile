@@ -1024,8 +1024,10 @@ export class PreferenceService {
       pinedQueue: this.store.pinedQueue || [],
       foldNfts: this.store.foldNfts || [],
       unfoldNfts: this.store.unFoldNfts || [],
-      foldDefis: this.store.foldDefis || [],
-      unFoldDefis: this.store.unFoldDefis || [],
+      foldDefis: [],
+      // foldDefis: this.store.foldDefis || [],
+      unFoldDefis: [],
+      // unFoldDefis: this.store.unFoldDefis || [],
     };
   };
 }

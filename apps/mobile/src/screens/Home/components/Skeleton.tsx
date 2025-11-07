@@ -3,11 +3,7 @@ import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  ASSETS_ITEM_HEIGHT_NEW,
-  DEFI_CARD_WIDTH,
-  DEFI_ITEM_HEIGHT,
-} from '@/constant/layout';
+import { ASSETS_ITEM_HEIGHT_NEW, DEFI_ITEM_HEIGHT } from '@/constant/layout';
 
 export const PositionLoader = ({
   space,
@@ -68,15 +64,18 @@ export const DefiItemLoader = memo(
     const { styles } = useTheme2024({ getStyle });
     return (
       <View style={[styles.defiLoaderGroup, style]}>
-        {Array.from({ length: 2 }).map((_, i) => (
-          <View key={i} style={styles.defiLoader}>
-            <Skeleton style={styles.defiLogo} width={40} height={40} />
-            <View style={styles.defiLoaderList}>
-              <Skeleton style={styles.loading} width={120} height={20} circle />
-              <Skeleton style={styles.loading} width={71} height={18} circle />
+        <View style={styles.defiLoader}>
+          <View style={styles.defiLoaderHeader}>
+            <View style={styles.defiLoaderHeaderLeft}>
+              <Skeleton style={styles.defiLogo} width={40} height={40} />
+              <Skeleton style={styles.loading} width={50} height={18} circle />
             </View>
+            <Skeleton style={styles.loading} width={50} height={20} circle />
           </View>
-        ))}
+          <View style={styles.defiLoaderList}>
+            <Skeleton style={styles.loading} height={120} />
+          </View>
+        </View>
       </View>
     );
   },
@@ -104,15 +103,26 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   loading: {
     backgroundColor: ctx.colors2024['neutral-bg-4'],
+    borderRadius: 12,
   },
   defiLoaderGroup: {
     height: DEFI_ITEM_HEIGHT,
     flexDirection: 'row',
-    gap: 12,
     paddingHorizontal: 16,
   },
+  defiLoaderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  defiLoaderHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   defiLoader: {
-    width: DEFI_CARD_WIDTH,
+    width: '100%',
     height: DEFI_ITEM_HEIGHT,
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']

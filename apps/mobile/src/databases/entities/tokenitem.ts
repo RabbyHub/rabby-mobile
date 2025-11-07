@@ -1,14 +1,6 @@
 import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  Entity,
-  Column,
-  In,
-  Brackets,
-  Not,
-  LessThan,
-  MoreThan,
-} from 'typeorm/browser';
+import { Entity, Column, In, Brackets, Not } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
@@ -624,6 +616,51 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     } catch (error) {
       console.error('Failed to get token list amount:', error);
       throw error;
+    }
+  }
+  static async getAddressesAmount({
+    address,
+    chain,
+    tokenId,
+  }: {
+    address: string;
+    chain: TokenItem['chain'];
+    tokenId: TokenItem['id'];
+  }): Promise<{
+    amount: number;
+    success: boolean;
+  }> {
+    try {
+      await prepareAppDataSource();
+
+      if (!address) {
+        return {
+          amount: 0,
+          success: false,
+        };
+      }
+
+      const repo = this.getRepository();
+      const result = await repo
+        .createQueryBuilder('tokenitem')
+        .select(
+          `SUM(${correctBadRealOnSql('tokenitem.amount')}) as total_amount`,
+        )
+        .where('tokenitem.owner_addr = :address', { address })
+        .andWhere('tokenitem.chain = :chain', { chain })
+        .andWhere('tokenitem.id = :tokenId', { tokenId })
+        .getRawOne();
+
+      return {
+        amount: parseFloat(result?.total_amount) || 0,
+        success: !!result,
+      };
+    } catch (error) {
+      console.error('Failed to get addresses amount:', error);
+      return {
+        amount: 0,
+        success: false,
+      };
     }
   }
 }

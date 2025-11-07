@@ -58,7 +58,7 @@ import { debounce, unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSortAddressList } from '../Address/useSortAddressList';
-import { BadgeText } from './components/HomeTopArea';
+import { BadgeText } from './components/BadgeText';
 import { useApprovalAlertCounts } from './hooks/approvals';
 
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
@@ -743,8 +743,8 @@ function MultiAddressHome(): JSX.Element {
       noHeader
       bgImageSource={
         combineData.isLoss
-          ? require('@/assets2024/icons/home/homeRed.png')
-          : require('@/assets2024/icons/home/homeGreen.png')
+          ? require('@/assets2024/singleHome/loss.png')
+          : require('@/assets2024/singleHome/up.png')
       }
       linearProp={{
         colors: isLight
