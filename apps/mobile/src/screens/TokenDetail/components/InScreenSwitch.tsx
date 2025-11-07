@@ -76,7 +76,7 @@ function AccountSwitcherComponent({
           style={[styles.addressCaretIcon]}
           width={20}
           height={20}
-          bgColor={colors2024['neutral-line']}
+          bgColor="transparent"
           lineColor={colors2024['neutral-foot']}
         />
       )}

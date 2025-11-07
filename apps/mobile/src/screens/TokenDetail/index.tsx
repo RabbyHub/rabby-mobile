@@ -35,7 +35,7 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { AccountSwitcher } from './components/InScreenSwitch';
-import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
+import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRightCC.svg';
 import { patchSingleToken } from '@/databases/sync/assets';
 
 const isAndroid = Platform.OS === 'android';
@@ -133,6 +133,9 @@ const TokenDetailContent = () => {
       <TokenDetailHeaderArea
         style={{ marginLeft: -3 }}
         key={effectiveAccount?.address}
+        tokenSize={33}
+        chainSize={14}
+        borderChain
         token={token}
       />
     );
@@ -231,9 +234,12 @@ const TokenDetailContent = () => {
                 },
               ]}
               onPress={handleOpenTokenMarketInfo}>
-              <Text style={styles.floatBalanceTitle}>
-                {t('page.tokenDetail.guideToMarketData')}
-              </Text>
+              <View style={styles.floatPriceContainer}>
+                <Text style={styles.floatBalanceTitle}>
+                  {t('page.tokenDetail.price')}:
+                </Text>
+                <Text style={styles.floatPrice}>${formatPrice(price)}</Text>
+              </View>
               <View style={styles.floatBalanceContainer}>
                 <Text
                   style={[
@@ -246,13 +252,12 @@ const TokenDetailContent = () => {
                         : colors2024['green-default'],
                     },
                   ]}>
-                  ${formatPrice(price)}(
                   {is24hNoChange ? '0.0%' : isLoss ? '-' : '+'}
-                  {percentChange})
+                  {percentChange}
                 </Text>
                 <RcIconRightArrowCC
-                  width={16}
-                  height={16}
+                  width={14}
+                  height={14}
                   color={
                     is24hNoChange
                       ? colors2024['neutral-body']
@@ -334,7 +339,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderWidth: 1,
       borderColor: colors2024['green-default'],
       backgroundColor: colors2024['green-light-4'],
-      padding: 8,
+      padding: 6,
       paddingHorizontal: 12,
       borderRadius: 16,
       borderBottomRightRadius: 2,
@@ -365,28 +370,33 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         },
       }),
     },
+    floatPriceContainer: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+    },
     floatBalanceTitle: {
-      color: colors2024['neutral-foot'],
-      fontSize: 12,
-      lineHeight: 16,
+      color: colors2024['neutral-title-1'],
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '500',
       fontFamily: 'SF Pro Rounded',
     },
     floatBalanceContainer: {
       flexDirection: 'row',
       alignItems: 'center',
+      gap: 4,
     },
     floatPrice: {
       color: colors2024['neutral-title-1'],
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
     },
     floatPriceChange: {
       color: colors2024['neutral-title-1'],
-      fontSize: 16,
-      lineHeight: 20,
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
     },

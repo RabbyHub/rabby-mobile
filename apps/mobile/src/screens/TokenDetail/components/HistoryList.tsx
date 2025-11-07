@@ -327,6 +327,7 @@ const getStyle = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
+    paddingLeft: 5,
     fontWeight: '900',
   },
   rightContent: {
