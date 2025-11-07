@@ -203,12 +203,17 @@ export const PerpsEditMarginPopup: React.FC<{
 
   // Handle input focus - scroll to bottom
   const handleInputFocus = useMemoizedFn(() => {
-    setTimeout(
-      () => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      },
-      IS_IOS ? 500 : 200,
-    );
+    if (IS_IOS) {
+      setTimeout(
+        () => scrollViewRef.current?.scrollToEnd({ animated: false }),
+        350,
+      );
+    } else {
+      setTimeout(
+        () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+        200,
+      );
+    }
   });
 
   const { height } = useWindowDimensions();
