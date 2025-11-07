@@ -23,6 +23,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { makeTokenManageSettingMap } from '@/core/_mocks/preferenceMigration';
 import RNHelpers from '@/core/native/RNHelpers';
+import { getScreenshotFeedbackExtra } from '@/components/Screenshot/utils';
 
 async function importWalletConnectAddress({
   address,
@@ -164,6 +165,16 @@ export default function DevUIWipModal({
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
           toggleUseShortConfig();
+        },
+      },
+      {
+        label: [`[Data] Test Feedback Extra`].filter(Boolean).join(' '),
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: async () => {
+          const extraInfo = await getScreenshotFeedbackExtra({
+            totalBalanceText: 'testValue',
+          });
+          console.debug('[debug] Feedback Extra Info:', extraInfo);
         },
       },
     ];

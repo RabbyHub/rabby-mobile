@@ -12,7 +12,6 @@ import {
   refAssetForLocalWebView,
   WEBVIEW_BASEURL,
 } from '@/core/storage/webviewAssets';
-import { Alert, Dimensions, Platform, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useDevServerSettings } from '@/core/utils/devServerSettings';

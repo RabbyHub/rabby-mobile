@@ -261,7 +261,6 @@ export function MultiAddressHomeHeader(
               marginHorizontal: 'auto',
               backgroundColor: 'transparent',
             }}
-            forceUseLocalResource={!isNonPublicProductionEnv}
             entryPath={'/pages/gasket-blurview.html'}
             webviewSize={{
               width: Dimensions.get('window').width - 15 * 2,
