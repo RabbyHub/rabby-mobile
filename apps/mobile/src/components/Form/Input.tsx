@@ -8,6 +8,8 @@ import {
   StyleProp,
   ViewStyle,
   TextStyle,
+  Platform,
+  Keyboard,
 } from 'react-native';
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
@@ -18,6 +20,9 @@ import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import TouchableView from '../Touchable/TouchableView';
 import { RcIconCloseCircleCC } from '@/assets/icons/common';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+import { Pressable } from 'react-native-gesture-handler';
+
+const isAndroid = Platform.OS === 'android';
 
 const RcIconClose = makeThemeIconFromCC(RcIconCloseCircleCC, 'neutral-foot');
 
@@ -91,6 +96,7 @@ export const FormInput = React.forwardRef<
   TextInput,
   RNViewProps & {
     as?: InputType;
+    disableNestedTouchEventOnAndroid?: boolean;
     containerStyle?: React.ComponentProps<typeof View>['style'];
     inputProps?: Omit<TextInputProps | BottomSheetTextInputProps, 'onChange'>;
     inputStyle?: React.ComponentProps<typeof TextInput>['style'];
@@ -106,7 +112,8 @@ export const FormInput = React.forwardRef<
 >(
   (
     {
-      as,
+      as: asProp,
+      disableNestedTouchEventOnAndroid = false,
       containerStyle,
       inputProps,
       inputStyle,
@@ -125,14 +132,14 @@ export const FormInput = React.forwardRef<
     const { styles } = useThemeStyles(getFormInputStyles);
 
     const JSXComponent = useMemo(() => {
-      switch (as) {
+      switch (asProp) {
         default:
         case 'TextInput':
           return TextInput;
         case 'BottomSheetTextInput':
           return BottomSheetTextInput;
       }
-    }, [as]);
+    }, [asProp]);
 
     const [isFocusing, setIsFocusing] = React.useState(false);
     const onFocus = useCallback<TextInputProps['onFocus'] & object>(
@@ -150,20 +157,22 @@ export const FormInput = React.forwardRef<
       [inputProps],
     );
 
+    const innerRef = React.useRef<TextInput>(null);
+    const inputRef = (ref as React.RefObject<TextInput>) || innerRef;
     const onPressClear = useCallback<
       React.ComponentProps<typeof TouchableView>['onPress'] & object
     >(
       evt => {
         if (clearable) {
           evt?.stopPropagation?.();
-          if (typeof ref !== 'function') {
-            ref?.current?.clear();
+          if (typeof inputRef !== 'function') {
+            inputRef?.current?.clear();
           }
 
           inputProps?.onChangeText?.('');
         }
       },
-      [ref, clearable, inputProps],
+      [inputRef, clearable, inputProps],
     );
 
     const formattedClearIcon = useMemo(() => {
@@ -207,10 +216,22 @@ export const FormInput = React.forwardRef<
 
     const hasCustomIcon = !!formattedClearIcon || !!formmatedCustomIcon;
 
+    const needPatchTouchEvent = isAndroid && disableNestedTouchEventOnAndroid;
+    const WrapperComp = needPatchTouchEvent ? Pressable : React.Fragment;
+
     return (
-      <>
+      <WrapperComp
+        onPress={() => {
+          if (!Keyboard.isVisible()) {
+            inputRef.current?.blur();
+          }
+          inputRef.current?.focus();
+        }}>
         <View
           {...viewProps}
+          {...(needPatchTouchEvent && {
+            pointerEvents: 'box-only',
+          })}
           style={StyleSheet.flatten([
             styles.inputContainer,
             hasCustomIcon && styles.inputContainerWithIcon,
@@ -226,7 +247,7 @@ export const FormInput = React.forwardRef<
             {...inputProps}
             onFocus={onFocus}
             onBlur={onBlur}
-            ref={ref as any}
+            ref={inputRef as any}
             style={StyleSheet.flatten([
               styles.input,
               inputStyle,
@@ -252,7 +273,7 @@ export const FormInput = React.forwardRef<
             </Text>
           </View>
         )}
-      </>
+      </WrapperComp>
     );
   },
 );
