@@ -34,6 +34,7 @@ import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { PerpsSlider } from './PerpsSlider';
 import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
 import { toast } from '@/components/Toast';
+import { IS_IOS } from '@/core/native/utils';
 
 export const PerpsEditMarginPopup: React.FC<{
   visible: boolean;
@@ -202,9 +203,12 @@ export const PerpsEditMarginPopup: React.FC<{
 
   // Handle input focus - scroll to bottom
   const handleInputFocus = useMemoizedFn(() => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 200);
+    setTimeout(
+      () => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      },
+      IS_IOS ? 500 : 200,
+    );
   });
 
   const { height } = useWindowDimensions();
