@@ -15,6 +15,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
   BottomSheetTextInput,
+  BottomSheetScrollViewMethods,
 } from '@gorhom/bottom-sheet';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
@@ -76,6 +77,7 @@ export const PerpsEditMarginPopup: React.FC<{
   handlePressRiskTag,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const scrollViewRef = useRef<BottomSheetScrollViewMethods>(null);
 
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
@@ -198,6 +200,13 @@ export const PerpsEditMarginPopup: React.FC<{
     );
   });
 
+  // Handle input focus - scroll to bottom
+  const handleInputFocus = useMemoizedFn(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  });
+
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
     return Math.min(height - 100, 610);
@@ -245,6 +254,7 @@ export const PerpsEditMarginPopup: React.FC<{
         keyboardBlurBehavior="restore">
         <AutoLockView style={[styles.container]}>
           <BottomSheetScrollView
+            ref={scrollViewRef}
             contentContainerStyle={styles.scrollViewContent}>
             <View>
               <Text style={styles.title}>
@@ -377,6 +387,7 @@ export const PerpsEditMarginPopup: React.FC<{
                 placeholder="$0"
                 value={Number(margin) > 0 ? displayedValue : ''}
                 onChangeText={setMargin}
+                onFocus={handleInputFocus}
               />
 
               {marginValidation.error ? (
@@ -412,6 +423,7 @@ export const PerpsEditMarginPopup: React.FC<{
               {/* Slider */}
               <PerpsSlider
                 key={action}
+                disabled={!canReduce && action === 'reduce'}
                 value={sliderPercentage}
                 onValueChange={handleSliderChange}
                 showPercentage={true}
@@ -935,7 +947,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
             shadowOffset: { width: 0, height: 10 },
             shadowOpacity: 0.02,
             shadowRadius: 11.9,
-            elevation: 6,
+            elevation: 3,
           }
         : null),
     },

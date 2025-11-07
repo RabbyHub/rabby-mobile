@@ -755,7 +755,7 @@ export const usePerpsState = () => {
     homeHistoryList,
     perpFee: perpsState.perpFee,
     userAccountHistory: perpsState.userAccountHistory,
-
+    localLoadingHistory: perpsState.localLoadingHistory,
     // Actions
     login,
     logout,

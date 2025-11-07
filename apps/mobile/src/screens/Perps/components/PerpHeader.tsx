@@ -42,13 +42,13 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
 }));
 
 export const PerpHeader: React.FC<{
-  userAccountHistory: AccountHistoryItem[];
-}> = ({ userAccountHistory }) => {
+  localLoadingHistory: AccountHistoryItem[];
+}> = ({ localLoadingHistory }) => {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
   const loadingNumber = useMemo(
-    () => userAccountHistory.filter(item => item.status === 'pending').length,
-    [userAccountHistory],
+    () => localLoadingHistory.filter(item => item.status === 'pending').length,
+    [localLoadingHistory],
   );
 
   const openHistory = useCallback(() => {

@@ -66,6 +66,7 @@ import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { calculateDistanceToLiquidation } from './components/PerpsPositionSection/utils';
 import { PerpsRiskLevelPopup } from './components/PerpsPositionSection/PerpsRiskLevelPopup';
+import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -79,6 +80,7 @@ export const PerpsScreen = () => {
     accountSummary,
     currentPerpsAccount,
     isLogin,
+    isInitialized,
     marketData,
     userFills,
     marketDataMap,
@@ -92,7 +94,7 @@ export const PerpsScreen = () => {
     fetchMarketData,
     perpFee,
 
-    userAccountHistory,
+    localLoadingHistory,
     judgeIsUserAgentIsExpired,
     fetchClearinghouseState,
   } = usePerpsState();
@@ -151,9 +153,9 @@ export const PerpsScreen = () => {
   const Header = useCallback(
     () =>
       isLogin ? (
-        <PerpHeader userAccountHistory={userAccountHistory} />
+        <PerpHeader localLoadingHistory={localLoadingHistory} />
       ) : undefined,
-    [isLogin, userAccountHistory],
+    [isLogin, localLoadingHistory],
   );
   const Title = useCallback(
     () => <PerpsHeaderTitle account={currentPerpsAccount} />,
@@ -401,53 +403,57 @@ export const PerpsScreen = () => {
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
         {!hasPermission ? <PerpsRegionAlert /> : null}
-        <View style={styles.screenContainer}>
-          <FlatList
-            ref={flatListRef}
-            data={listData}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            ListHeaderComponent={renderListHeader}
-            ItemSeparatorComponent={ItemSeparator}
-            style={styles.container}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            refreshControl={
-              <RefreshControl refreshing={false} onRefresh={onRefresh} />
-            }
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={10}
-            initialNumToRender={10}
-            windowSize={5}
-            onEndReachedThreshold={0.5}
-          />
+        {!isInitialized ? (
+          <PerpsSkeletonLoader />
+        ) : (
+          <View style={styles.screenContainer}>
+            <FlatList
+              ref={flatListRef}
+              data={listData}
+              renderItem={renderItem}
+              keyExtractor={keyExtractor}
+              ListHeaderComponent={renderListHeader}
+              ItemSeparatorComponent={ItemSeparator}
+              style={styles.container}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              refreshControl={
+                <RefreshControl refreshing={false} onRefresh={onRefresh} />
+              }
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={10}
+              initialNumToRender={10}
+              windowSize={5}
+              onEndReachedThreshold={0.5}
+            />
 
-          {/* Back to Top Button */}
-          {showBackToTop && (
-            <TouchableOpacity
-              style={styles.backToTopButton}
-              onPress={scrollToTop}>
-              <RcIconBackTopCC color={colors2024['neutral-body']} />
-            </TouchableOpacity>
-          )}
-          {hasPermission && isLogin && (
-            <View style={styles.footer}>
-              <Button
-                type="primary"
-                title={t('page.perps.searchPerpsPopup.openPosition')}
-                onPress={() => {
-                  setPopupState(prev => ({
-                    ...prev,
-                    isShowSearchListPopup: true,
-                    searchListOpenFrom: 'openPosition',
-                  }));
-                }}
-              />
-            </View>
-          )}
-        </View>
+            {/* Back to Top Button */}
+            {showBackToTop && (
+              <TouchableOpacity
+                style={styles.backToTopButton}
+                onPress={scrollToTop}>
+                <RcIconBackTopCC color={colors2024['neutral-body']} />
+              </TouchableOpacity>
+            )}
+            {hasPermission && isLogin && (
+              <View style={styles.footer}>
+                <Button
+                  type="primary"
+                  title={t('page.perps.searchPerpsPopup.openPosition')}
+                  onPress={() => {
+                    setPopupState(prev => ({
+                      ...prev,
+                      isShowSearchListPopup: true,
+                      searchListOpenFrom: 'openPosition',
+                    }));
+                  }}
+                />
+              </View>
+            )}
+          </View>
+        )}
       </NormalScreenContainer2024>
       <PerpsAccountSelectorPopup
         visible={popupState.isShowLoginPopup}

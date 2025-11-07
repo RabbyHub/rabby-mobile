@@ -16,13 +16,17 @@ const sliderHapticTriggerNumbers = [0, 50, 100];
 
 interface PerpsSliderProps {
   value: number;
+  key?: string;
   onValueChange: (value: number) => void;
   showPercentage?: boolean;
+  disabled?: boolean;
 }
 
 export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   value,
   onValueChange,
+  disabled = false,
+  key,
   showPercentage = true,
 }) => {
   const { styles, colors2024 } = useTheme2024({
@@ -94,6 +98,9 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
     <View style={styles.sliderContainer}>
       <View style={styles.sliderWrapper}>
         <Slider
+          key={key}
+          allowTouchTrack={!disabled}
+          disabled={disabled}
           value={value}
           onValueChange={handleValueChange}
           minimumValue={0}
@@ -104,6 +111,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
           maximumTrackTintColor={colors2024['neutral-line']}
           thumbStyle={styles.thumbStyle}
           thumbProps={thumbComponent}
+          thumbTouchSize={{ width: 14, height: 14 }}
         />
       </View>
       {showPercentage && (
@@ -124,6 +132,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sliderWrapper: {
     flex: 1,
+    justifyContent: 'center',
+    height: 14,
   },
   sliderTrack: {
     height: 4,
@@ -168,5 +178,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 24,
     backgroundColor: colors2024['brand-default'],
     borderRadius: 12,
+  },
+  thumbContainerStyle: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }));

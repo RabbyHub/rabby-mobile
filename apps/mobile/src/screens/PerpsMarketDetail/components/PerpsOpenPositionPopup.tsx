@@ -18,6 +18,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Platform,
+  Keyboard,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -610,6 +611,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                 !marginValidation.isValid || leverageRangeValidation.error
               }
               onPress={() => {
+                Keyboard.dismiss();
                 setIsReviewMode(true);
               }}
             />
