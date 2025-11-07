@@ -192,11 +192,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     }
 
     const receives = item.receives;
-    const sends = item.sends;
-    if (sends && sends.length) {
-      // has sends token is not filter
-      return false;
-    }
 
     if (!receives || !receives.length) {
       return true;
