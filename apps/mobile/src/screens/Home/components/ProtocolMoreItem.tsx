@@ -115,7 +115,9 @@ export const WrapperDappActionsMemoItem = ({
         end={{ x: 0, y: 1 }}
         style={styles.gradientBg}
       />
-      <MemoItem currentAccount={currentAccount} item={item} />
+      <View style={styles.portfolioContent}>
+        <MemoItem currentAccount={currentAccount} item={item} />
+      </View>
 
       {!!item._originPortfolio.withdraw_actions?.length &&
         !item?._originPortfolio?.proxy_detail?.proxy_contract_id && (
@@ -141,15 +143,17 @@ export const WrapperDappActionsMemoItem = ({
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   portfolioCard: {
-    marginTop: 12,
     width: '100%',
-    marginBottom: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingHorizontal: 4,
+    paddingBottom: 20,
     borderRadius: 12,
     // backgroundColor: ctx.colors2024['neutral-bg-5'],
     position: 'relative',
     overflow: 'hidden',
+  },
+  portfolioContent: {
+    paddingHorizontal: 8,
   },
   detail: {
     backgroundColor: 'transparent',

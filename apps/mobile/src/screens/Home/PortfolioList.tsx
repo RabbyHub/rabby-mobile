@@ -54,7 +54,7 @@ interface Props {
   updatePortfolio: (portfolios: DisplayedProject[]) => void;
 }
 const FOOTER_HEIGHT = 220;
-const SPACING_HEIGHT = 8;
+const SPACING_HEIGHT = 16;
 
 export const PortfolioList = ({
   onRefresh,

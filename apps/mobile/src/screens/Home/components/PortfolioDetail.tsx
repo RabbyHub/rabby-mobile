@@ -303,7 +303,7 @@ export const TokenList = ({
                 <AssetAvatar
                   logo={l._logo}
                   logoStyle={l.isToken ? undefined : styles.nftIcon}
-                  size={24}
+                  size={20}
                 />
                 <Text
                   style={[
@@ -321,7 +321,7 @@ export const TokenList = ({
                     color={
                       relateTokenId === l.id
                         ? colors2024['brand-default']
-                        : colors2024['neutral-secondary']
+                        : colors2024['neutral-body']
                     }
                   />
                 )}
@@ -398,7 +398,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    // paddingHorizontal: 8,
   },
   portfolioTypeDesc: {
     flexDirection: 'row',
@@ -407,16 +407,16 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   portfolioType: {
     borderRadius: 10,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     height: 20,
-    backgroundColor: 'rgba(112, 132, 255, 0.12)',
+    backgroundColor: colors2024['brand-light-1'],
   },
   portfolioTypeText: {
     fontSize: 12,
     fontWeight: '700',
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   portfolioDesc: {
     marginLeft: 8,
@@ -450,24 +450,23 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tokenRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    // paddingHorizontal: 8,
   },
   arrowStyle: {
     marginLeft: -4,
   },
   tokenRowToken: {
-    height: 40,
+    height: 32,
   },
   hightlightRow: {
     backgroundColor: 'rgba(112, 132, 255, 0.04)',
   },
   tokenRowHeader: {
-    marginBottom: 8,
-    marginTop: 18,
+    height: 26,
+    marginTop: 10,
   },
   tokenListHeader: {
     // paddingHorizontal: 2,
-    paddingLeft: 4,
     flexBasis: '35%',
     flexGrow: 1,
     fontSize: 14,
@@ -482,13 +481,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-body'],
   },
   tokenListColText: {
     fontSize: 14,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-body'],
   },
   tokenListSymbol: {
     flexDirection: 'row',
@@ -504,7 +503,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-body'],
     flexShrink: 1,
   },
   alignRight: {
@@ -522,7 +521,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
 
   // supplements
   supplements: {
-    marginTop: 20,
+    marginTop: 18,
     flexDirection: 'row',
     flexWrap: 'wrap',
   },

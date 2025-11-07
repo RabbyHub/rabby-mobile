@@ -302,10 +302,12 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     marginHorizontal: 16,
     borderRadius: 16,
     paddingHorizontal: 8,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: 0,
   },
   portfoliosContainer: {
     width: '100%',
+    marginTop: 12,
   },
   footer: {
     width: '100%',

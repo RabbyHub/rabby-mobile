@@ -60,7 +60,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
-const SPACING_HEIGHT = 8;
+const SPACING_HEIGHT = 16;
 const FOOTER_HEIGHT = 58;
 const HEADER_PADDING_HEIGHT = 16;
 

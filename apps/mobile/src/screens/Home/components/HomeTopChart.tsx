@@ -9,7 +9,7 @@ import {
   formatSmallCurrencyValue,
   formChartData,
 } from '@/hooks/useCurve';
-import {
+import Animated, {
   useAnimatedProps,
   useAnimatedStyle,
   useDerivedValue,
@@ -23,7 +23,9 @@ import {
   FOLD_ASSETS_HEADER_HEIGHT,
   UNFOLD_ASSETS_HEADER_HEIGHT,
 } from '@/constant/layout';
-import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
+import Svg, { Path } from 'react-native-svg';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -216,12 +218,17 @@ export const ChartHeader = ({
           ...styles.changePercent,
           display: loading ? 'none' : 'flex',
           color: colors2024['neutral-secondary'],
+          stroke: colors2024['neutral-secondary'],
         };
       }
+      const _color = isLoss
+        ? colors2024['red-default']
+        : colors2024['green-default'];
       return {
         ...styles.changePercent,
         display: loading ? 'none' : 'flex',
-        color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
+        color: _color,
+        stroke: _color,
       };
     }
 
@@ -230,21 +237,28 @@ export const ChartHeader = ({
         ...styles.changePercent,
         display: loading ? 'none' : 'flex',
         color: colors2024['neutral-secondary'],
+        stroke: colors2024['neutral-secondary'],
       };
     }
     if (data?.[currentIndex?.value]) {
+      const _color = data?.[currentIndex?.value]?.isLoss
+        ? colors2024['red-default']
+        : colors2024['green-default'];
       return {
         ...styles.changePercent,
         display: loading ? 'none' : 'flex',
-        color: data?.[currentIndex?.value]?.isLoss
-          ? colors2024['red-default']
-          : colors2024['green-default'],
+        color: _color,
+        stroke: _color,
       };
     }
+    const _color = isLoss
+      ? colors2024['red-default']
+      : colors2024['green-default'];
     return {
       ...styles.changePercent,
       display: loading ? 'none' : 'flex',
-      color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
+      color: _color,
+      stroke: _color,
     };
   }, [isLoss, data, currentIndex, colors2024, styles, loading, isInitialized]);
 
@@ -298,13 +312,22 @@ export const ChartHeader = ({
           animatedProps={percentChangeAnimatedProps}
         />
         <View>
-          <ArrowRightSVG
+          <Svg
             style={{
               transform: fold ? [{ rotate: '90deg' }] : [{ rotate: '270deg' }],
             }}
             width={16}
-            color={colors2024['neutral-secondary']}
-          />
+            height={16}
+            viewBox="0 0 24 24"
+            fill="none">
+            <AnimatedPath
+              d="M8.4 4.80005L15.6 12L8.4 19.2"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              animatedProps={lossStyleProps}
+            />
+          </Svg>
         </View>
       </Pressable>
     </View>

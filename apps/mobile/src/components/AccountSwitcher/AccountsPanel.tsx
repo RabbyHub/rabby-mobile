@@ -517,6 +517,16 @@ AccountSwitcherAopProps<{
                   isSelected={isSceneUsingAllAccounts}
                 />
               )}
+              {!!token && (
+                <View style={styles.tokenHeader}>
+                  <Text style={styles.headerBalanceText}>
+                    {t('page.tokenDetail.headerBalanceText')}{' '}
+                  </Text>
+                  <Text style={styles.headerTokenValueText}>
+                    {t('page.tokenDetail.headerTokenValueText')}
+                  </Text>
+                </View>
+              )}
               {myAddressesList.map((account, index) => {
                 const key = `account-${account.address}-${account.brandName}-${index}`;
                 const isCurrent =
@@ -694,6 +704,28 @@ const getPanelStyle = createGetStyles2024(ctx => {
       height: 6,
       width: 50,
       borderRadius: 104,
+    },
+    tokenHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 4,
+      paddingHorizontal: 10,
+      marginBottom: 8,
+    },
+    headerBalanceText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      color: ctx.colors2024['neutral-secondary'],
+      fontWeight: '400',
+    },
+    headerTokenValueText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      color: ctx.colors2024['neutral-secondary'],
+      fontWeight: '400',
     },
   };
 });
