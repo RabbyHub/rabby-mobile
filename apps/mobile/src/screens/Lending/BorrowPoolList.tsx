@@ -19,6 +19,7 @@ import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.s
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import { useTranslation } from 'react-i18next';
+import { formatNetworth } from '@/utils/math';
 
 const FOOT_HEIGHT = 100;
 const BorrowPoolList = () => {
@@ -199,7 +200,7 @@ const BorrowPoolList = () => {
           </Text>
           <View style={styles.right}>
             <Text style={styles.yourSupplied}>
-              {formatUsdValueKMB(Number(item.totalBorrowsUSD || '0'))}
+              {formatNetworth(Number(item.totalBorrowsUSD || '0'))}
             </Text>
           </View>
         </TouchableOpacity>

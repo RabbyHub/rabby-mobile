@@ -45,7 +45,10 @@ import { useRefreshHistoryId } from '../../hooks';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
-import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import {
+  MINI_SIGN_ERROR,
+  useSignatureStore,
+} from '@/components2024/MiniSignV2/state/SignatureManager';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -68,6 +71,8 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const { ctx } = useSignatureStore();
+
   const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
     account: currentAccount!,
     chainServerId: txs.length ? txs?.[0]?.chainId + '' : '',
@@ -409,6 +414,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               !txs.length ||
               isLoading ||
               !currentAccount ||
+              !!ctx?.disabledProcess ||
               (isRisky && !isChecked)
             }
             type="primary"

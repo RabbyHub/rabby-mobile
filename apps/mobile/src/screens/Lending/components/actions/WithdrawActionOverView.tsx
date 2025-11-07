@@ -3,11 +3,11 @@ import { Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
-import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { isHFEmpty } from '../../utils';
 import HealthFactorText from '../HealthFactorText';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
+import { formatNetworth } from '@/utils/math';
 
 const WithdrawActionOverView: React.FC<
   PopupDetailProps & {
@@ -23,7 +23,7 @@ const WithdrawActionOverView: React.FC<
   const { t } = useTranslation();
   const { healthFactor = '0' } = userSummary;
   const availableText = useMemo(() => {
-    return `$${formatAmountValueKMB(reserve.underlyingBalanceUSD || '0')}`;
+    return `${formatNetworth(Number(reserve.underlyingBalanceUSD || '0'))}`;
   }, [reserve.underlyingBalanceUSD]);
 
   return (
@@ -51,8 +51,8 @@ const WithdrawActionOverView: React.FC<
         <View style={[styles.item, styles.hfDescContainer]}>
           <Text style={styles.hfDesc}>
             {afterSupply
-              ? `${availableText} → $${formatAmountValueKMB(
-                  afterSupply.balanceUSD || '0',
+              ? `${availableText} → ${formatNetworth(
+                  Number(afterSupply.balanceUSD || '0'),
                 )}`
               : availableText}
           </Text>

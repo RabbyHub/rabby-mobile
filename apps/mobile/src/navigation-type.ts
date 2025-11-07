@@ -383,6 +383,7 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;
+    fromSource?: string;
   };
   [RootNames.Lending]?: {};
 };

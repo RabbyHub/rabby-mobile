@@ -17,7 +17,7 @@ export type SceneAccountInfo = {
 
 export type AccountSwitcherScene = keyof typeof AccountSwitcherInfos;
 
-type SceneAccounts = {
+export type SceneAccounts = {
   [K in AccountSwitcherScene]?: SceneAccountInfo;
 };
 

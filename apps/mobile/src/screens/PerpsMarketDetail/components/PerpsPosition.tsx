@@ -1,12 +1,18 @@
-import { RcIconInfoFill1CC, RcIconInfoFillCC } from '@/assets/icons/common';
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { AppSwitch } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
+import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
+import { PerpsRiskLevelPopup } from '@/screens/Perps/components/PerpsPositionSection/PerpsRiskLevelPopup';
+import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useState } from 'react';
+import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
+import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 
 export const PerpsPosition: React.FC<{
   positionData?: {
@@ -14,31 +20,60 @@ export const PerpsPosition: React.FC<{
     positionValue: number;
     size: number;
     marginUsed: number;
-    side: string;
     leverage: number;
     type: 'isolated' | 'cross';
     entryPrice: number;
     liquidationPrice: string;
     autoClose: boolean;
-    direction: string;
+    direction: 'Long' | 'Short';
     pnlPercent: number;
     fundingPayments: string;
   } | null;
   coin: string;
-  hasAutoClose?: boolean;
+  coinLogo: string;
+  leverageMax: number;
+  availableBalance: number;
   tpPrice?: string;
   slPrice?: string;
-  onAutoCloseChange?(v: boolean): void;
+  pxDecimals: number;
+  szDecimals: number;
+  markPrice: number;
+  handleSetAutoClose(params: {
+    coin: string;
+    tpTriggerPx: string;
+    slTriggerPx: string;
+    direction: 'Long' | 'Short';
+  }): Promise<void>;
+  handleCancelAutoClose(actionType: 'tp' | 'sl'): Promise<void>;
+  handleUpdateMargin(
+    coin: string,
+    action: 'add' | 'reduce',
+    margin: number,
+  ): Promise<void>;
 }> = ({
   positionData,
   coin,
-  hasAutoClose,
+  coinLogo,
+  leverageMax,
   tpPrice,
   slPrice,
-  onAutoCloseChange,
+  markPrice,
+  availableBalance,
+  pxDecimals,
+  szDecimals,
+  handleSetAutoClose,
+  handleCancelAutoClose,
+  handleUpdateMargin,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const [editMarginVisible, setEditMarginVisible] = useState(false);
+  const [showRiskPopup, setShowRiskPopup] = useState(false);
+
+  const distanceLiquidation = calculateDistanceToLiquidation(
+    positionData?.liquidationPrice,
+    markPrice,
+  );
 
   const { showTipsPopup } = useTipsPopup();
 
@@ -47,204 +82,298 @@ export const PerpsPosition: React.FC<{
   }
 
   return (
-    <View style={styles.section}>
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          {t('page.perpsDetail.PerpsPosition.title')}
-        </Text>
-      </View>
-      <View style={styles.list}>
-        <View style={styles.listItem}>
-          <View style={styles.listItemMain}>
-            <Text style={styles.label}>
-              {t('page.perpsDetail.PerpsPosition.pnl')}
-            </Text>
-          </View>
-          <View>
-            <Text
-              style={[
-                styles.value,
-                positionData && positionData.pnl >= 0
-                  ? styles.green
-                  : styles.red,
-              ]}>
-              {positionData && positionData.pnl >= 0 ? '+' : '-'}$
-              {Math.abs(positionData?.pnl || 0).toFixed(2)} (
-              {positionData && positionData.pnl >= 0 ? '+' : ''}
-              {positionData?.pnlPercent.toFixed(2)}%)
-            </Text>
-          </View>
+    <>
+      <View style={styles.section}>
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            {t('page.perpsDetail.PerpsPosition.title')}
+          </Text>
+          <DistanceToLiquidationTag
+            liquidationPrice={positionData?.liquidationPrice}
+            markPrice={markPrice}
+            onPress={() => setShowRiskPopup(true)}
+          />
         </View>
-        <View style={styles.listItem}>
-          <TouchableOpacity
-            onPress={() => {
-              showTipsPopup({
-                title: t('page.perpsDetail.PerpsPosition.size'),
-                desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
-              });
-            }}>
+        <View style={styles.list}>
+          <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.size')}
-              </Text>
-              <RcIconInfoFill1CC
-                width={15}
-                height={15}
-                color={colors2024['neutral-info']}
-              />
-            </View>
-          </TouchableOpacity>
-          <View>
-            <Text style={styles.value}>
-              $
-              {splitNumberByStep(
-                Number(positionData?.positionValue || 0).toFixed(2),
-              )}{' '}
-              = {positionData?.size} {coin}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.listItem}>
-          <View style={styles.listItemMain}>
-            <Text style={styles.label}>
-              {positionData?.type === 'cross'
-                ? t('page.perpsDetail.PerpsPosition.marginCross')
-                : t('page.perpsDetail.PerpsPosition.marginIsolated')}
-            </Text>
-          </View>
-          <View>
-            <Text style={styles.value}>
-              $
-              {splitNumberByStep(
-                Number(positionData?.marginUsed || 0).toFixed(2),
-              )}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.listItemContainer}>
-          <View style={styles.listItemRow}>
-            <View style={styles.listItemMain}>
-              <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.autoClose')}
+                {t('page.perpsDetail.PerpsPosition.pnl')}
               </Text>
             </View>
             <View>
-              <AppSwitch
-                value={hasAutoClose}
-                circleSize={20}
-                circleBorderWidth={2}
-                onValueChange={onAutoCloseChange}
-              />
+              <Text
+                style={[
+                  styles.value,
+                  positionData && positionData.pnl >= 0
+                    ? styles.green
+                    : styles.red,
+                ]}>
+                {positionData && positionData.pnl >= 0 ? '+' : '-'}$
+                {Math.abs(positionData?.pnl || 0).toFixed(2)} (
+                {positionData && positionData.pnl >= 0 ? '+' : ''}
+                {positionData?.pnlPercent.toFixed(2)}%)
+              </Text>
             </View>
           </View>
-          {hasAutoClose ? (
-            <View style={styles.listSub}>
-              {tpPrice ? (
-                <View style={styles.listSubItem}>
-                  <Text style={styles.listSubItemLabel}>
-                    {t('page.perpsDetail.PerpsPosition.tpPrice')}
-                  </Text>
-                  <Text style={styles.value}>${tpPrice || 0}</Text>
-                  {/* <RcArrowRight2CC
-                  width={16}
-                  height={16}
-                  color={colors2024['neutral-body']}
-                /> */}
-                </View>
-              ) : null}
-              {slPrice ? (
-                <View style={styles.listSubItem}>
-                  <Text style={styles.listSubItemLabel}>
-                    {t('page.perpsDetail.PerpsPosition.slPrice')}
-                  </Text>
-                  <Text style={styles.value}>${slPrice || 0}</Text>
-                  {/* <RcArrowRight2CC
-                  width={16}
-                  height={16}
-                  color={colors2024['neutral-body']}
-                /> */}
-                </View>
-              ) : null}
+          <View style={styles.listItem}>
+            <TouchableOpacity
+              onPress={() => {
+                showTipsPopup({
+                  title: t('page.perpsDetail.PerpsPosition.size'),
+                  desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
+                });
+              }}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsPosition.size')}
+                </Text>
+                <RcIconInfoCC
+                  width={18}
+                  height={18}
+                  color={colors2024['neutral-info']}
+                />
+              </View>
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.value}>
+                $
+                {splitNumberByStep(
+                  Number(positionData?.positionValue || 0).toFixed(2),
+                )}{' '}
+                = {positionData?.size} {coin}
+              </Text>
             </View>
-          ) : null}
-        </View>
-        <View style={styles.listItem}>
-          <View style={styles.listItemMain}>
-            <Text style={styles.label}>
-              {t('page.perpsDetail.PerpsPosition.direction')}
-            </Text>
           </View>
-          <View>
-            <Text style={styles.value}>
-              {positionData?.direction} {positionData?.leverage}x
-            </Text>
-          </View>
-        </View>
-        <View style={styles.listItem}>
-          <View style={styles.listItemMain}>
-            <Text style={styles.label}>
-              {t('page.perpsDetail.PerpsPosition.entryPrice')}
-            </Text>
-          </View>
-          <View>
-            <Text style={styles.value}>
-              ${splitNumberByStep(positionData?.entryPrice || 0)}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.listItem}>
-          <TouchableOpacity
-            onPress={() => {
-              showTipsPopup({
-                title: t('page.perpsDetail.PerpsPosition.liquidationPrice'),
-                desc: t('page.perpsDetail.PerpsPosition.liquidationPriceTips'),
-              });
-            }}>
+          <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.liquidationPrice')}
+                {positionData?.type === 'cross'
+                  ? t('page.perpsDetail.PerpsPosition.marginCross')
+                  : t('page.perpsDetail.PerpsPosition.marginIsolated')}
               </Text>
-              <RcIconInfoFill1CC
-                width={15}
-                height={15}
-                color={colors2024['neutral-info']}
-              />
             </View>
-          </TouchableOpacity>
-          <View>
-            <Text style={styles.value}>
-              ${splitNumberByStep(positionData?.liquidationPrice || 0)}
-            </Text>
+            <View>
+              {positionData?.type !== 'cross' ? (
+                <TouchableOpacity
+                  style={styles.tagContainer}
+                  onPress={() => setEditMarginVisible(true)}>
+                  <Text style={[styles.tagText]}>
+                    $
+                    {splitNumberByStep(
+                      Number(positionData?.marginUsed || 0).toFixed(2),
+                    )}
+                  </Text>
+                  <IconPerpEdit
+                    width={16}
+                    height={16}
+                    color={colors2024['brand-default']}
+                  />
+                </TouchableOpacity>
+              ) : (
+                <Text style={styles.value}>
+                  $
+                  {splitNumberByStep(
+                    Number(positionData?.marginUsed || 0).toFixed(2),
+                  )}
+                </Text>
+              )}
+            </View>
           </View>
-        </View>
-        <View style={styles.listItem}>
-          <TouchableOpacity
-            onPress={() => {
-              showTipsPopup({
-                title: t('page.perpsDetail.PerpsPosition.fundingPayments'),
-                desc: t('page.perpsDetail.PerpsPosition.fundingPaymentsTips'),
-              });
-            }}>
+          <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.fundingPayments')}
+                {positionData?.direction === 'Long'
+                  ? t(
+                      'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceAbove',
+                    )
+                  : t(
+                      'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceBelow',
+                    )}
               </Text>
-              <RcIconInfoFill1CC
-                width={15}
-                height={15}
-                color={colors2024['neutral-info']}
-              />
             </View>
-          </TouchableOpacity>
-          <View>
-            <Text style={styles.value}>
-              {Number(positionData?.fundingPayments || 0) > 0 ? '+' : '-'}$
-              {Math.abs(Number(positionData?.fundingPayments || 0))}
-            </Text>
+            <PerpEditTpSlPriceTag
+              coin={coin}
+              actionType="tp"
+              type="hasPosition"
+              entryPrice={positionData?.entryPrice}
+              markPrice={markPrice}
+              initTpOrSlPrice={tpPrice || ''}
+              direction={positionData?.direction as 'Long' | 'Short'}
+              size={positionData?.size}
+              margin={positionData?.marginUsed}
+              liqPrice={Number(positionData?.liquidationPrice || 0)}
+              pxDecimals={pxDecimals}
+              szDecimals={szDecimals}
+              handleCancelAutoClose={async () => {
+                await handleCancelAutoClose('tp');
+              }}
+              handleSetAutoClose={async (price: string) => {
+                await handleSetAutoClose({
+                  coin,
+                  tpTriggerPx: price,
+                  slTriggerPx: '',
+                  direction: positionData?.direction as 'Long' | 'Short',
+                });
+              }}
+            />
+          </View>
+          <View style={styles.listItem}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {positionData?.direction === 'Long'
+                  ? t(
+                      'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceBelow',
+                    )
+                  : t(
+                      'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceAbove',
+                    )}
+              </Text>
+            </View>
+            <PerpEditTpSlPriceTag
+              coin={coin}
+              actionType="sl"
+              type="hasPosition"
+              entryPrice={positionData?.entryPrice}
+              markPrice={markPrice}
+              initTpOrSlPrice={slPrice || ''}
+              direction={positionData?.direction as 'Long' | 'Short'}
+              size={positionData?.size}
+              margin={positionData?.marginUsed}
+              liqPrice={Number(positionData?.liquidationPrice || 0)}
+              pxDecimals={pxDecimals}
+              szDecimals={szDecimals}
+              handleCancelAutoClose={async () => {
+                await handleCancelAutoClose('sl');
+              }}
+              handleSetAutoClose={async (price: string) => {
+                await handleSetAutoClose({
+                  coin,
+                  tpTriggerPx: '',
+                  slTriggerPx: price,
+                  direction: positionData?.direction as 'Long' | 'Short',
+                });
+              }}
+            />
+          </View>
+          <View style={styles.listItem}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsPosition.direction')}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.value}>
+                {positionData?.direction} {positionData?.leverage}x
+              </Text>
+            </View>
+          </View>
+          <View style={styles.listItem}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsPosition.entryPrice')}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.value}>
+                ${splitNumberByStep(positionData?.entryPrice || 0)}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.listItem}>
+            <TouchableOpacity
+              onPress={() => {
+                showTipsPopup({
+                  title: t('page.perpsDetail.PerpsPosition.liquidationPrice'),
+                  desc: t(
+                    'page.perpsDetail.PerpsPosition.liquidationPriceTips',
+                  ),
+                });
+              }}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsPosition.liquidationPrice')}
+                </Text>
+                <RcIconInfoCC
+                  width={18}
+                  height={18}
+                  color={colors2024['neutral-info']}
+                />
+              </View>
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.value}>
+                ${splitNumberByStep(positionData?.liquidationPrice || 0)}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.listItem}>
+            <TouchableOpacity
+              onPress={() => {
+                showTipsPopup({
+                  title: t('page.perpsDetail.PerpsPosition.fundingPayments'),
+                  desc: t('page.perpsDetail.PerpsPosition.fundingPaymentsTips'),
+                });
+              }}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsPosition.fundingPayments')}
+                </Text>
+                <RcIconInfoCC
+                  width={18}
+                  height={18}
+                  color={colors2024['neutral-info']}
+                />
+              </View>
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.value}>
+                {Number(positionData?.fundingPayments || 0) >= 0 ? '+' : '-'}$
+                {Math.abs(Number(positionData?.fundingPayments || 0))}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
-    </View>
+
+      <PerpsRiskLevelPopup
+        visible={!!showRiskPopup}
+        onClose={() => {
+          setShowRiskPopup(false);
+        }}
+        distanceLiquidation={distanceLiquidation}
+        currentPrice={markPrice}
+        liquidationPrice={Number(positionData?.liquidationPrice)}
+      />
+      <PerpsEditMarginPopup
+        visible={editMarginVisible}
+        pnl={positionData?.pnl}
+        pnlPercent={positionData?.pnlPercent}
+        marginUsed={positionData?.marginUsed}
+        positionSize={positionData?.size}
+        direction={positionData?.direction as 'Long' | 'Short'}
+        coin={coin}
+        coinLogo={coinLogo}
+        markPrice={markPrice}
+        entryPrice={positionData?.entryPrice}
+        leverage={Number(positionData?.leverage || 1)}
+        leverageMax={leverageMax}
+        pxDecimals={pxDecimals}
+        szDecimals={szDecimals}
+        availableBalance={availableBalance}
+        liquidationPx={Number(positionData?.liquidationPrice || 0)}
+        handlePressRiskTag={() => {
+          setShowRiskPopup(true);
+        }}
+        onCancel={() => {
+          setEditMarginVisible(false);
+        }}
+        onConfirm={async (action: 'add' | 'reduce', margin: number) => {
+          await handleUpdateMargin(coin, action, margin);
+          setEditMarginVisible(false);
+        }}
+      />
+    </>
   );
 };
 
@@ -252,15 +381,34 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   section: {
     marginBottom: 24,
   },
+  tagContainer: {
+    borderRadius: 100,
+    backgroundColor: colors2024['brand-light-1'],
+    paddingVertical: 4,
+    paddingLeft: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingRight: 6,
+  },
+  tagText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
   header: {
     paddingHorizontal: 4,
     marginBottom: 12,
+    gap: 12,
+    flexDirection: 'row',
   },
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '700',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },
   list: {

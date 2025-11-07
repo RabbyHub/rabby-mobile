@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, ViewProps } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 
 const isAndroid = Platform.OS === 'android';
@@ -9,6 +9,8 @@ interface Props {
   blurAmount?: number;
   isLight?: boolean;
   borderRadius?: number;
+  viewTypeOnNoShadow?: 'fragment' | 'view';
+  viewProps?: ViewProps;
 }
 
 export const BlurShadowView = ({
@@ -16,12 +18,22 @@ export const BlurShadowView = ({
   isLight,
   blurAmount = 29,
   borderRadius = 20,
+  viewProps,
+  viewTypeOnNoShadow = viewProps ? 'view' : 'fragment',
 }: Props) => {
   if (!isLight || isAndroid) {
-    return children;
+    if (viewTypeOnNoShadow === 'fragment') return children;
+
+    return <View {...viewProps}>{children}</View>;
   }
+
   return (
-    <View style={isLight ? styles.lightContainer : styles.container}>
+    <View
+      {...viewProps}
+      style={[
+        isLight ? styles.lightContainer : styles.container,
+        viewProps?.style,
+      ]}>
       <BlurView
         style={StyleSheet.flatten([styles.blur, { borderRadius }])}
         blurAmount={blurAmount}

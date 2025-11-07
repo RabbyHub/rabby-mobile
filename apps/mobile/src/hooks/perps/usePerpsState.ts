@@ -19,7 +19,7 @@ import { usePerpsStore } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
 import { minBy } from 'lodash';
-import { usePerspPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
+import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { getAllMyAccount } from '@/core/apis/address';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
@@ -272,7 +272,7 @@ export const usePerpsInitial = () => {
 };
 
 export const usePerpsState = () => {
-  const [popupSate, setPopupState] = usePerspPopupState();
+  const [popupSate, setPopupState] = usePerpsPopupState();
   const { t } = useTranslation();
   const deleteAgentCbRef = useRef<(() => Promise<void>) | null>(null);
   const { checkBuilderFee } = usePerpsInitial();
@@ -754,7 +754,8 @@ export const usePerpsState = () => {
     hasPermission: perpsState.hasPermission,
     homeHistoryList,
     perpFee: perpsState.perpFee,
-
+    userAccountHistory: perpsState.userAccountHistory,
+    localLoadingHistory: perpsState.localLoadingHistory,
     // Actions
     login,
     logout,

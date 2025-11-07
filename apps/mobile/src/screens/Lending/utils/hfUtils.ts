@@ -26,6 +26,20 @@ interface CalculateHFAfterSwapRepayProps {
   >;
 }
 
+export const effectUserAvailable = (
+  user: FormatUserSummaryAndIncentivesResponse<
+    ReserveDataHumanized & FormatReserveUSDResponse
+  >,
+  poolReserve: ReserveDataHumanized & FormatReserveUSDResponse,
+) => {
+  return (
+    user &&
+    ((!user.isInIsolationMode && !poolReserve.isIsolated) ||
+      (user.isInIsolationMode &&
+        user.isolatedReserve?.underlyingAsset === poolReserve.underlyingAsset))
+  );
+};
+
 export const calculateHFAfterSupply = (
   user: FormatUserSummaryAndIncentivesResponse<
     ReserveDataHumanized & FormatReserveUSDResponse

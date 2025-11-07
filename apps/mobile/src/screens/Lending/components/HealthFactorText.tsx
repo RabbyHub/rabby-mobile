@@ -25,9 +25,16 @@ const HealthFactorText = ({
             : getHealthStatusColor(Number(healthFactor || '0')).color,
         },
       ]}>
-      {limitless ? ' ∞' : formatNum(healthFactor)}
+      {limitless ? ' ∞' : getHealthFactorText(healthFactor)}
     </Text>
   );
+};
+
+export const getHealthFactorText = (healthFactor: string) => {
+  if (Number(healthFactor) > 100) {
+    return '100+';
+  }
+  return formatNum(healthFactor);
 };
 
 export default HealthFactorText;
