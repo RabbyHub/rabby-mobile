@@ -35,21 +35,25 @@ export const topUpGasAccount = async ({
     throw new Error('please login first');
   }
 
-  const tx = await sendToken({
+  await sendToken({
     to,
     chainServerId,
     tokenId,
     rawAmount,
     account,
-  });
-  await afterTopUpGasAccount({
-    to,
-    chainServerId,
-    tokenId,
-    rawAmount,
-    amount,
-    tx,
-    account,
+    $ctx: {
+      ga: {
+        category: 'GasAccount',
+        action: 'deposit',
+        rechargeGasAccount: {
+          amount,
+          sig: sig!,
+          account_id: accountId!,
+          user_addr: account?.address,
+          chain_id: chainServerId,
+        },
+      },
+    },
   });
 };
 

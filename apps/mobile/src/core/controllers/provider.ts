@@ -444,6 +444,27 @@ class ProviderController extends BaseController {
     result: any;
     account: Account;
   }) => {
+    const rechargeGasAccountOnTx = (txHash = '') => {
+      if (
+        options?.data?.$ctx?.ga?.rechargeGasAccount &&
+        options?.approvalRes?.nonce
+      ) {
+        try {
+          openapi
+            .rechargeGasAccount({
+              ...options.data.$ctx.ga.rechargeGasAccount,
+              tx_id: txHash,
+              nonce: parseInt(options.approvalRes.nonce),
+            })
+            .catch(e => {
+              console.log('rechargeGasAccount e', e);
+            });
+        } catch (error) {
+          console.log('rechargeGasAccount error', error);
+        }
+      }
+    };
+
     assertProviderRequest(options as any);
     if (options.pushed) {
       return options.result;
@@ -598,6 +619,7 @@ class ProviderController extends BaseController {
         signedTransactionSuccess = true;
         statsData.signed = true;
         statsData.signedSuccess = true;
+        rechargeGasAccountOnTx();
         return;
       }
 
@@ -750,6 +772,7 @@ class ProviderController extends BaseController {
           statsData.signMethod = notificationService.statsData?.signMethod;
         }
         notificationService.setStatsData(statsData);
+        rechargeGasAccountOnTx(signedTx);
         return signedTx;
       }
 
@@ -946,10 +969,11 @@ class ProviderController extends BaseController {
           onTransactionCreated({ hash, reqId, pushType });
           notificationService.setStatsData(statsData);
         }
-
+        rechargeGasAccountOnTx(hash);
         return hash;
       } catch (e: any) {
         console.log('submit tx failed', e);
+        rechargeGasAccountOnTx();
         onTransactionSubmitFailed(e);
       }
     } catch (e) {
@@ -961,6 +985,7 @@ class ProviderController extends BaseController {
         statsData.signMethod = notificationService.statsData?.signMethod;
       }
       notificationService.setStatsData(statsData);
+      rechargeGasAccountOnTx();
       if ('details' in (e as any)) {
         throw new Error((e as any).details);
       } else {

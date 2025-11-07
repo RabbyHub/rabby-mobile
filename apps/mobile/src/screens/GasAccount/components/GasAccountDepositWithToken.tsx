@@ -15,7 +15,7 @@ import {
   topUpGasAccount,
 } from '@/core/apis/gasAccount';
 import { openapi } from '@/core/request';
-import { preferenceService } from '@/core/services';
+import { gasAccountService, preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -498,22 +498,23 @@ export const GasAccountDepositWithToken = ({
           if (tx) {
             resetGasStore();
             closeMiniSign();
-            const res = await openUI({
+            const { sig, accountId } = gasAccountService.getGasAccountSig();
+            const chainInfo = findChainByServerID(token.chain)!;
+
+            await openUI({
               txs: [tx],
               autoUseGasFree: true,
-            });
-            const hash = res?.[0];
-
-            await afterTopUpGasAccount({
-              to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
-              chainServerId: chainEnum.serverId,
-              tokenId: token.id,
-              amount: depositAmount,
-              rawAmount: new BigNumber(depositAmount)
-                .times(10 ** token.decimals)
-                .toFixed(0),
-              tx: hash,
-              account: depositAccount,
+              ga: {
+                category: 'GasAccount',
+                action: 'deposit',
+                rechargeGasAccount: {
+                  amount: depositAmount,
+                  sig: sig!,
+                  account_id: accountId!,
+                  user_addr: account?.address,
+                  chain_id: chainInfo.serverId,
+                },
+              },
             });
           }
           onClose?.();
