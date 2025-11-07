@@ -141,7 +141,6 @@ export const HomeTopArea = ({
   );
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { navigateToSendPolyScreen } = useSendRoutes();
 
   const bridgeItemAction = {
     key: 'Bridge',
@@ -190,7 +189,9 @@ export const HomeTopArea = ({
           return;
         }
         await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-        navigateToSendPolyScreen(true);
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.Send,
+        });
       },
     },
     {
