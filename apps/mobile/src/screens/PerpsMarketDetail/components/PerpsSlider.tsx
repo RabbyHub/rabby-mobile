@@ -111,7 +111,6 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
           maximumTrackTintColor={colors2024['neutral-line']}
           thumbStyle={styles.thumbStyle}
           thumbProps={thumbComponent}
-          thumbTouchSize={{ width: 14, height: 14 }}
         />
       </View>
       {showPercentage && (
@@ -132,8 +131,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sliderWrapper: {
     flex: 1,
-    justifyContent: 'center',
-    height: 14,
   },
   sliderTrack: {
     height: 4,
@@ -178,9 +175,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 24,
     backgroundColor: colors2024['brand-default'],
     borderRadius: 12,
-  },
-  thumbContainerStyle: {
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 }));
