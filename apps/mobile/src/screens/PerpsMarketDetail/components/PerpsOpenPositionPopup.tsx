@@ -1026,7 +1026,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
             shadowOffset: { width: 0, height: 10 },
             shadowOpacity: 0.02,
             shadowRadius: 11.9,
-            elevation: 6,
+            // elevation: 6,
           }
         : null),
     },
