@@ -39,7 +39,10 @@ import { useRefreshHistoryId } from '../../hooks';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
-import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import {
+  MINI_SIGN_ERROR,
+  useSignatureStore,
+} from '@/components2024/MiniSignV2/state/SignatureManager';
 
 export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -79,6 +82,8 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   }, [_amount, repayAmount.amount]);
 
   const { t } = useTranslation();
+
+  const { ctx } = useSignatureStore();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -526,7 +531,8 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
               amount === '0' ||
               !txsForMiniApproval?.length ||
               isLoading ||
-              !currentAccount
+              !currentAccount ||
+              !!ctx?.disabledProcess
             }
             type="primary"
             syncUnlockTime
