@@ -17,6 +17,7 @@ import { useSearchDapps } from '@/screens/Browser/BrowserScreen/hooks/useSearchD
 import { useShowSearchBottomSheet } from './SeachBottomSheet';
 import { useSearchTokens } from '../useSearch';
 import { SearchAssets } from './SearchAssets';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const SearchInner = ({
   searchText,
@@ -177,8 +178,6 @@ export const SearchInner = ({
               inGlobalSearch
               Header={
                 <DappFirstSearchResult
-                  // key={""}
-                  // isInBottomSheet
                   searchText={searchText}
                   data={list || []}
                   isValidDomain={!!isValidDomain}
@@ -186,10 +185,10 @@ export const SearchInner = ({
                     console.log('origin', origin);
                     handleOpenUrl(origin);
                   }}
-                  // showOtherResults={false}
+                  style={styles.headerMarginTop}
                 />
               }
-              stickyHeaderStyle={styles.stickyHeader}
+              stickyHeaderStyle={[styles.stickyHeader, styles.headerMarginTop]}
               onTokenSelect={onClose}
             />
           </>
@@ -204,6 +203,7 @@ export const SearchInner = ({
             searchState={searchText}
             inGlobalSearch
             onTokenSelect={onClose}
+            stickyHeaderStyle={[styles.stickyHeader, styles.headerMarginTop]}
           />
         );
       }
@@ -226,16 +226,16 @@ export const SearchInner = ({
     }
     return null;
   }, [
-    onClose,
-    debouncedSearchValue,
     searchText,
+    debouncedSearchValue,
     tokenLoading,
     dappLoading,
     list,
     resultTokens,
     isValidDomain,
-    styles.stickyHeader,
     handleOpenUrl,
+    styles,
+    onClose,
   ]);
 
   return (
@@ -246,7 +246,6 @@ export const SearchInner = ({
         isTransparent && { backgroundColor: 'transparent' },
       ]}>
       {Content}
-
       <View
         style={[
           styles.footer,
@@ -274,7 +273,11 @@ export const SearchInner = ({
           onSubmitEditing={handleSubmitEditing}
           enterKeyHint="done"
           autoFocus
-          placeholder={t('page.search.globalSearch.placeHolder')}
+          placeholder={
+            IS_ANDROID
+              ? t('page.search.globalSearch.placeHolder')
+              : t('page.search.globalSearch.iosPlaceHolder')
+          }
           alwaysShowCancel
           style={styles.searchBar}
         />
@@ -285,8 +288,6 @@ export const SearchInner = ({
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
-    // flex: 1,uni
-    paddingTop: 40,
     paddingHorizontal: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
@@ -341,6 +342,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   searchBar: {
     flex: 1,
+  },
+  headerMarginTop: {
+    marginTop: 30,
   },
   stickyHeader: {
     position: 'static',

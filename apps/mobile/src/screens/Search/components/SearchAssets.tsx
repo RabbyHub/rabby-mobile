@@ -298,7 +298,11 @@ export const SearchAssets: React.FC<Props> = ({
                   )}"`}</Text>
                 </View>
               ) : (
-                <Text style={styles.sectionHeader}>
+                <Text
+                  style={[
+                    styles.sectionHeader,
+                    inGlobalSearch && { color: colors2024['neutral-title-1'] },
+                  ]}>
                   {inGlobalSearch ? t('global.Token') : t('page.swap.results')}
                 </Text>
               )}

@@ -14,17 +14,20 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTranslation } from 'react-i18next';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn } from 'ahooks';
+import { ViewProps } from 'react-native';
 
 export function DappFirstSearchResult({
   data,
   searchText,
   onOpenURL,
   isValidDomain,
+  style,
 }: {
   data: DappInfo[];
   searchText: string;
   onOpenURL?(url: string): void;
   isValidDomain?: boolean;
+  style?: ViewProps['style'];
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
@@ -49,7 +52,7 @@ export function DappFirstSearchResult({
   return (
     <>
       {searchText ? (
-        <View style={[styles.list, { flex: 0 }]}>
+        <View style={[styles.list, { flex: 0 }, style]}>
           {data?.[0] ? (
             <View>
               <Text style={styles.firstTitle}>{t('global.Dapp')}</Text>

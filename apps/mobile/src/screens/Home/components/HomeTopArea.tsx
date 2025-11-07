@@ -580,6 +580,9 @@ const getStyles = createGetStyles2024(ctx => ({
     // ...makeDebugBorder(),
   },
   badgeBg: {
+    position: 'relative',
+    right: -4,
+    top: -4,
     backgroundColor: ctx.colors2024['red-default'],
     borderRadius: BADGE_SIZE,
     paddingVertical: 1,
@@ -604,10 +607,10 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   badgeText: {
     color: '#fff', // always white
-    fontSize: 12,
-    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   chevron: {
     marginLeft: 'auto',

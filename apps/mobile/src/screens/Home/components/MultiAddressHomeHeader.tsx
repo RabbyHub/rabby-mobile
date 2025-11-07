@@ -404,20 +404,6 @@ export function MultiAddressHomeHeader(
               </View>
             ) : null}
           </Card>
-          <Image
-            source={require('@/assets2024/icons/home/border-b-bg.png')}
-            style={[
-              {
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: -2,
-              },
-              { width: 361, height: 120 },
-            ]}
-            resizeMode="cover"
-          />
         </RNLinearGradient>
       </BlurShadowView>
       {/* gradient-border  */}

@@ -2038,7 +2038,8 @@
         "searchTips": "Search the web"
       },
       "globalSearch": {
-        "placeHolder": "Search Dapp/Token"
+        "placeHolder": "Search Dapp/Token",
+        "iosPlaceHolder": "Search Dapp/Website"
       },
       "hotTokenList": {
         "title": "Hot"
