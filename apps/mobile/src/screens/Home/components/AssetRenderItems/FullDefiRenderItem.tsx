@@ -21,6 +21,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 import { usePortfolios } from '../../hooks/usePortfolio';
 import { useAssets } from '@/screens/Search/useAssets';
+import { refreshHistoryIdAtom } from '../../SingleHomeRightArea';
+import { useSetAtom } from 'jotai';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -43,7 +45,7 @@ export const FullDefiRenderItem = ({
   style,
 }: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-
+  const setRefreshHistoryId = useSetAtom(refreshHistoryIdAtom);
   const isFromAppChain = useMemo(() => {
     return isAppChain(_data?.chain || '');
   }, [_data?.chain]);
@@ -123,6 +125,7 @@ export const FullDefiRenderItem = ({
       if (showAccount) {
         loadSpecificDefi(account.address, _data?.id, _data?.chain || '');
       } else {
+        setRefreshHistoryId(e => e + 1);
         updateSpecificProtocol(_data?.id, _data?.chain || '');
       }
     }, 200);
@@ -132,6 +135,7 @@ export const FullDefiRenderItem = ({
     account.address,
     _data?.id,
     _data?.chain,
+    setRefreshHistoryId,
     updateSpecificProtocol,
   ]);
 

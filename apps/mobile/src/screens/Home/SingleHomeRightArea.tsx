@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RcIconMore } from '@/assets/icons/home';
 import { useAddressDetailModal } from '../Address/useAddressDetailModal';
 import RcIconHistory from '@/assets2024/singleHome/history.svg';
@@ -16,6 +16,7 @@ import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { HomePendingBadge } from './components/HomePending';
 import { Account } from '@/core/services/preference';
+import { atom, useAtomValue } from 'jotai';
 
 const hitSlop = {
   top: 10,
@@ -37,6 +38,8 @@ interface HeaderRightHistoryProps {
   tokenItem?: AbstractPortfolioToken;
   account: Account;
 }
+
+export const refreshHistoryIdAtom = atom(0);
 
 export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   isInTokenDetail,
@@ -85,6 +88,14 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     timeRef.current && clearInterval(timeRef.current);
     timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
   }, [currentAccount, tokenItem]);
+
+  const refreshId = useAtomValue(refreshHistoryIdAtom);
+  useEffect(() => {
+    if (refreshId > 0) {
+      fetchHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshId]);
 
   useFocusEffect(
     useCallback(() => {
