@@ -180,26 +180,28 @@ export const BottomBtns = ({
     <>
       <View style={[styles.container]}>
         <View style={styles.group}>
-          <Pressable style={styles.action} onPress={handleSend}>
-            <RcIconSendCC width={22} height={22} style={styles.actionIcon} />
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[styles.actionText]}>
-              {t('page.home.services.send')}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.action, styles.blueAction]}
-            onPress={handleSwap}>
-            <RcIconSwapCC width={22} height={22} style={styles.actionIcon} />
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[styles.actionText]}>
-              {t('page.home.services.swap')}
-            </Text>
-          </Pressable>
+          <View style={styles.leftActions}>
+            <Pressable style={styles.action} onPress={handleSend}>
+              <RcIconSendCC width={22} height={22} style={styles.actionIcon} />
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.actionText]}>
+                {t('page.home.services.send')}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.action, styles.blueAction]}
+              onPress={handleSwap}>
+              <RcIconSwapCC width={22} height={22} style={styles.actionIcon} />
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.actionText]}>
+                {t('page.home.services.swap')}
+              </Text>
+            </Pressable>
+          </View>
           <Pressable style={[styles.moreAction]} onPress={handleMore}>
             <RcIconMoreCC
               width={22}
@@ -262,9 +264,15 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     gap: 10,
   },
+  leftActions: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 10,
+  },
   action: {
     gap: 4,
     height: 52,
+    flex: 1,
     paddingHorizontal: 37,
     backgroundColor: ctx.colors2024['green-default'],
     flexDirection: 'row',
