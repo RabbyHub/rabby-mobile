@@ -9,7 +9,6 @@ import { AccountSwitcherScene } from '@/components/AccountSwitcher/hooks';
 export default function FromAddressControl2024({
   style,
   disableSwitch,
-  forScene = 'MakeTransactionAbout',
 }: React.PropsWithChildren<
   RNViewProps & { disableSwitch?: boolean; forScene?: AccountSwitcherScene }
 >) {
@@ -22,7 +21,10 @@ export default function FromAddressControl2024({
       <View style={styles.titleContainer}>
         <Text style={styles.sectionTitle}>{t('page.sendToken.From')}</Text>
       </View>
-      <AccountSwitcher forScene={forScene} disableSwitch={disableSwitch} />
+      <AccountSwitcher
+        forScene={'MakeTransactionAbout'}
+        disableSwitch={disableSwitch}
+      />
     </View>
   );
 }

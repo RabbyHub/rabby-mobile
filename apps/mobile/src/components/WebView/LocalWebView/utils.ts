@@ -1,5 +1,4 @@
 import { SupportedLang } from '@/utils/i18n';
-import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { atom, useAtom } from 'jotai';
 import { useCallback } from 'react';
 import { Platform } from 'react-native';
@@ -144,8 +143,15 @@ export function sendMessageToWebview(webview: WebView | null, message: any) {
     typeof message === 'string'
       ? message
       : JSON.stringify(message).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-  // const jsCode = `window.dispatchEvent(new MessageEvent('message', { data: '${jsonStr}' }));true;`;
 
-  const jsCode = `window.onMessageFromReactNative(${jsonStr});true;`;
+  const jsCode = `
+var event = new CustomEvent('messageFromRN', {
+  detail: ${jsonStr},
+  bubbles: true, // Allow the event to bubble up the DOM
+  cancelable: true // Allow preventDefault() to be called
+})
+window.dispatchEvent(event);
+true;`;
+  // const jsCode = `window.onMessageFromReactNative(${jsonStr});true;`;
   webview.injectJavaScript(jsCode);
 }

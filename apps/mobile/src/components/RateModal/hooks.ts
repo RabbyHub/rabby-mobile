@@ -7,7 +7,7 @@ import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { APP_URLS, APP_VERSIONS, APPLICATION_ID } from '@/constant';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { Platform } from 'react-native';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { openExternalUrl } from '@/core/utils/linking';

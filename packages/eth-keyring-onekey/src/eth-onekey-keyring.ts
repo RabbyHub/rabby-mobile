@@ -229,7 +229,7 @@ class OneKeyKeyring extends EventEmitter {
             })
             .then(res => {
               if (res.success) {
-                this.hdk.publicKey = Buffer.from(res.payload.publicKey, 'hex');
+                this.hdk.publicKey = Buffer.from(res.payload.pub, 'hex');
                 this.hdk.chainCode = Buffer.from(
                   res.payload.node.chain_code,
                   'hex',
@@ -269,9 +269,7 @@ class OneKeyKeyring extends EventEmitter {
                 connectId: this._deviceConnectId,
               };
             } else {
-              throw new Error(
-                "The address you're trying to import is invalid",
-              );
+              throw new Error("The address you're trying to import is invalid");
             }
             this.page = 0;
           }

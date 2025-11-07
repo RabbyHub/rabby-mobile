@@ -17,7 +17,7 @@ export type SceneAccountInfo = {
 
 export type AccountSwitcherScene = keyof typeof AccountSwitcherInfos;
 
-type SceneAccounts = {
+export type SceneAccounts = {
   [K in AccountSwitcherScene]?: SceneAccountInfo;
 };
 
@@ -41,6 +41,7 @@ export const AccountSwitcherInfos = {
   Receive: makeSceneAccount(),
   GasAccount: makeSceneAccount(),
   Lending: makeSceneAccount(),
+  TokenDetail: makeSceneAccount(),
   Approvals: makeSceneAccount(),
 
   '@ActiveDappWebViewModal': makeSceneAccount(),

@@ -5,6 +5,27 @@ PODS:
   - AppAuth/Core (1.7.6)
   - AppAuth/ExternalUserAgent (1.7.6):
     - AppAuth/Core
+  - BleUtils (0.1.4):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - boost (1.84.0)
   - BVLinearGradient (2.8.3):
     - React-Core
@@ -1381,7 +1402,7 @@ PODS:
     - Yoga
   - react-native-ble-manager (11.6.0):
     - React-Core
-  - react-native-ble-plx (3.1.2):
+  - react-native-ble-plx (3.5.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2249,6 +2270,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - "BleUtils (from `../node_modules/@onekeyfe/react-native-ble-utils`)"
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
   - BVLinearGradient (from `../node_modules/react-native-linear-gradient`)
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
@@ -2393,6 +2415,8 @@ SPEC REPOS:
     - SocketRocket
 
 EXTERNAL SOURCES:
+  BleUtils:
+    :path: "../node_modules/@onekeyfe/react-native-ble-utils"
   boost:
     :podspec: "../node_modules/react-native/third-party-podspecs/boost.podspec"
   BVLinearGradient:
@@ -2625,6 +2649,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
+  BleUtils: ba76f6305bea7da6452a63d5bcd5927be7b77bf0
   boost: 1dca942403ed9342f98334bf4c3621f011aa7946
   BVLinearGradient: 880f91a7854faff2df62518f0281afb1c60d49a3
   DoubleConversion: f16ae600a246532c4020132d54af21d0ddb2a385
@@ -2684,7 +2709,7 @@ SPEC CHECKSUMS:
   react-native-aes: 2f9ce51c4bd1e9fb5c50f5c867df05bcac10884b
   react-native-animateable-text: c067d3fa630e07de1e6e1c13f6a35424f721f624
   react-native-ble-manager: 7e6373a746c5a815d0a65a11cc5f633c72c36c5b
-  react-native-ble-plx: 3b0939cabff6e2177b041b8750aa05281171fca0
+  react-native-ble-plx: 6103f13335298593f07cef59427a571cd7de9bcd
   react-native-blur: 5ef4187158230ec7b72eef37c2e54ca912db6282
   react-native-cloud-storage: 924ad281facb2f0574c6c3aa0388223025b8f227
   react-native-compat: 377a63769e0345a5123ab377a137257b7d967600

@@ -430,6 +430,7 @@ type OfSceneScreen =
   | typeof RootNames.MultiSwap
   | typeof RootNames.MultiBridge
   | typeof RootNames.MultiSend
+  | typeof RootNames.TokenDetail
   | typeof RootNames.Lending;
 const ScreenSceneAccountContext = React.createContext<
   | {
@@ -438,7 +439,8 @@ const ScreenSceneAccountContext = React.createContext<
       sceneScreenRenderId: '' | `${string}-${OfSceneScreen}`;
     }
   | {
-      forScene: AccountSwitcherScene & ('MakeTransactionAbout' | 'Lending');
+      forScene: AccountSwitcherScene &
+        ('MakeTransactionAbout' | 'Lending' | 'TokenDetail');
       ofScreen: OfSceneScreen;
       sceneScreenRenderId: '' | `${string}-${OfSceneScreen}`;
     }

@@ -19,13 +19,12 @@ import {
 } from 'react-native-reanimated';
 import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
-import { Skeleton } from '@rneui/base';
-import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useTranslation } from 'react-i18next';
 import { useTriggerUpdate } from '../hooks/triggerUpdate';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -46,28 +45,13 @@ function Chart({
   isDisConnect: boolean;
   handleScroll: (y: number) => void;
 }) {
-  const { styles, colors, isLight } = useTheme2024({ getStyle });
+  const { styles, colors } = useTheme2024({ getStyle });
   const { setTriggerUpdate } = useTriggerUpdate();
   const { t } = useTranslation();
 
-  const topBg = useMemo(() => {
-    if (data.isLoss) {
-      if (isLight) {
-        return require('@/assets2024/singleHome/home-loss-bg-2.png');
-      } else {
-        return require('@/assets2024/singleHome/home-loss-dark-bg-2.png');
-      }
-    } else {
-      if (isLight) {
-        return require('@/assets2024/singleHome/home-profit-bg-2.png');
-      } else {
-        return require('@/assets2024/singleHome/home-profit-dark-bg-2.png');
-      }
-    }
-  }, [data.isLoss, isLight]);
-
   const scrollY = useCurrentTabScrollY();
   const [isInitialized, setIsInitialized] = useState(false);
+  const { safeOffHeader } = useSafeSizes();
 
   useEffect(() => {
     // 延迟初始化动画，避免页面切换时的卡顿
@@ -106,16 +90,19 @@ function Chart({
         { height: HEADER_CHART_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0) },
       ]}>
       <ImageBackground
-        source={topBg}
+        source={
+          !data.isLoss
+            ? require('@/assets2024/singleHome/up.png')
+            : require('@/assets2024/singleHome/loss.png')
+        }
         resizeMode="cover"
-        // eslint-disable-next-line react-native/no-inline-styles
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: 150,
-        }}
+        style={[
+          styles.bg,
+          {
+            top: 0 - safeOffHeader + 20,
+            height: safeOffHeader + 150,
+          },
+        ]}
       />
 
       <GlobalWarning
@@ -405,4 +392,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 0,
   },
   relative: { position: 'relative' },
+  bg: {
+    position: 'absolute',
+    left: 0,
+    width: ScreenWidth,
+    height: 32,
+    zIndex: -100,
+  },
 }));

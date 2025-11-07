@@ -8,8 +8,8 @@ import { apiContact } from '@/core/apis';
 import { Account } from '@/core/services/preference';
 import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
+import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
-import { usePerspPopupState } from '../hooks/usePerpsPopupState';
 
 export const PerpsHeaderTitle: React.FC<{
   account?: Account | null;
@@ -17,7 +17,7 @@ export const PerpsHeaderTitle: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const [popupState, setPopupState] = usePerspPopupState();
+  const [popupState, setPopupState] = usePerpsPopupState();
 
   const alias = useMemo(() => {
     if (!account?.address) {

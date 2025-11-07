@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from 'react';
 import WebView, { WebViewProps } from 'react-native-webview';
 
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
@@ -6,7 +12,6 @@ import {
   refAssetForLocalWebView,
   WEBVIEW_BASEURL,
 } from '@/core/storage/webviewAssets';
-import { Dimensions, Platform, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useDevServerSettings } from '@/core/utils/devServerSettings';
@@ -56,7 +61,10 @@ function defaultOnShouldStartLoadWithRequest(
   return true;
 }
 
-export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
+export type LocalWebView = WebView & {
+  sendMessage?: (message: any) => void;
+};
+export const LocalWebView = React.forwardRef<LocalWebView, LocalWebViewProps>(
   (
     {
       entryPath,
@@ -77,7 +85,11 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
     const { devServerSettings } = useDevServerSettings();
 
     if (__DEV__ && !forceUseLocalResource && !devServerSettings.devServerHost) {
-      throw new Error('devServerHost is not set');
+      // throw new Error('devServerHost is not set');
+      const errorMsg =
+        'devServerHost is not set, will use local resource fallback';
+      console.warn(errorMsg);
+      forceUseLocalResource = true;
     }
 
     const { webviewSource } = useMemo(() => {
@@ -167,6 +179,28 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
       });
     }, [runtimeInfo]);
 
+    const [windowInfo, setWindowInfo] = useState<{
+      width: number;
+      height: number;
+    } | null>(null);
+    useImperativeHandle(ref, () => {
+      return Object.assign(
+        {
+          sendMessage: (message: any) => {
+            sendMessageToWebview(webviewRef.current, message);
+          },
+        },
+        webviewRef.current as WebView,
+      );
+    });
+    useEffect(() => {
+      if (!windowInfo) return;
+      sendMessageToWebview(webviewRef.current, {
+        type: 'GOT_WINDOW_INFO',
+        info: { ...windowInfo },
+      });
+    }, [windowInfo]);
+
     return (
       <WebView
         {...(IS_IOS
@@ -174,6 +208,10 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
           : getLocalWebViewDefaultProps().androidWebViewProps)}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
         {...webviewProps}
+        onLayout={event => {
+          const { width, height } = event.nativeEvent.layout;
+          setWindowInfo({ width, height });
+        }}
         style={[
           styles.webView,
           {
@@ -185,11 +223,6 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
         ]}
         ref={(instance: WebView) => {
           webviewRef.current = instance;
-          if (typeof ref === 'function') {
-            ref(instance);
-          } else if (ref) {
-            (ref as React.MutableRefObject<WebView | null>).current = instance;
-          }
         }}
         source={{
           ...webviewProps.source,
@@ -209,6 +242,15 @@ export const LocalWebView = React.forwardRef<WebView, LocalWebViewProps>(
                 type: 'GOT_RUNTIME_INFO',
                 info: runtimeInfo,
               });
+              break;
+            }
+            case 'GET_WINDOW_INFO': {
+              if (windowInfo) {
+                sendMessageToWebview(webviewRef.current, {
+                  type: 'GOT_WINDOW_INFO',
+                  info: windowInfo,
+                });
+              }
               break;
             }
             default: {

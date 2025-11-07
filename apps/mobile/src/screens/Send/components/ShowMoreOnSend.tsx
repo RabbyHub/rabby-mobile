@@ -1,30 +1,22 @@
-import { useEffect, useState } from 'react';
-import { SendShowMore } from '@/screens/Bridge/components/BridgeShowMore';
 import { useSendTokenInternalContext } from '../hooks/useSendToken';
 import { View } from 'react-native';
+import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 
 export const ShowMoreOnSend = ({ chainServeId }: { chainServeId: string }) => {
-  const [open, setOpen] = useState(false);
-
   const {
     computed: { canSubmit, canDirectSign },
   } = useSendTokenInternalContext();
 
-  useEffect(() => {
-    if (!canSubmit) {
-      setOpen(false);
-    }
-  }, [canSubmit]);
+  if (!canSubmit || !canDirectSign) return null;
 
-  return canSubmit ? (
-    <View style={{ marginHorizontal: -20 }}>
-      <SendShowMore
-        open={open}
-        setOpen={setOpen}
+  return (
+    <View style={[{ marginHorizontal: 0, marginTop: 12 }]}>
+      <DirectSignGasInfo
         supportDirectSign={canDirectSign}
         loading={false}
+        openShowMore={() => void 0}
         chainServeId={chainServeId}
       />
     </View>
-  ) : null;
+  );
 };

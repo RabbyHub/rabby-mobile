@@ -83,6 +83,8 @@ export const HistoryList = forwardRef(
       onPresssItem,
       isForMultipleAddress = true,
       isNeedFetchFromApi,
+      appendBottom,
+      moreLoadingLength = 1,
     }: {
       firstFetchDone?: boolean;
       historySuccessList?: string[];
@@ -96,6 +98,8 @@ export const HistoryList = forwardRef(
       loadMore?: () => void;
       onRefresh?: () => void;
       isNeedFetchFromApi?: boolean;
+      appendBottom?: number;
+      moreLoadingLength?: number;
     },
     ref,
   ) => {
@@ -233,7 +237,15 @@ export const HistoryList = forwardRef(
         onEndReachedThreshold={0.5}
         removeClippedSubviews={true}
         ListFooterComponent={
-          loadingMore ? <SkeletonCard /> : <View style={{ height: bottom }} />
+          loadingMore ? (
+            <>
+              {range(0, moreLoadingLength).map(i => {
+                return <SkeletonCard key={i} />;
+              })}
+            </>
+          ) : (
+            <View style={{ height: bottom + (appendBottom || 0) }} />
+          )
         }
         refreshControl={
           onRefresh && (

@@ -40,9 +40,13 @@ export const isWhitelistSpender = (address: string, chain: string) => {
       item.chain.toLowerCase() === chain.toLowerCase(),
   );
 };
-
+const cacheMap = new Map<string, boolean>();
 export const useIsContractBySymbol = () => {
   return async (address: string, serverId?: string) => {
+    const key = `${address}-${serverId}`;
+    if (cacheMap.has(key)) {
+      return cacheMap.get(key);
+    }
     try {
       // symbol call
       if (!serverId) {
@@ -68,7 +72,9 @@ export const useIsContractBySymbol = () => {
         ),
       );
 
-      return !!ret && ret !== '0x' && ret !== '0x0';
+      const result = !!ret && ret !== '0x' && ret !== '0x0';
+      cacheMap.set(key, result);
+      return result;
     } catch (e) {
       return false;
     }

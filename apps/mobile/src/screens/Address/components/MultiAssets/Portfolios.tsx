@@ -13,18 +13,16 @@ import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_LIST_HEADER,
   ASSETS_SECTION_HEADER,
-  DEFI_ITEM_HEIGHT,
   RootNames,
   SWITCH_HEADER_HEIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
-  DefiRow,
   TokenRow,
   TokenRowSectionHeader,
+  FullDefiRenderItem,
 } from '@/screens/Home/components/AssetRenderItems';
 import {
-  AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
   ActionItem,
@@ -38,7 +36,6 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
-import { chunk } from 'lodash';
 import { useAccountInfo } from './hooks';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
@@ -59,15 +56,16 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
-import { CombineDefiItem } from '@/screens/Home/hooks/store';
 import { useCurrency } from '@/hooks/useCurrency';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
 const HEADER_PADDING_HEIGHT = 16;
 
 const MemoizedTokenRow = React.memo(TokenRow);
-const MemoizedDefiRow = React.memo(DefiRow);
+const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
 const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionHeader);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -85,6 +83,14 @@ export const Portfolios = () => {
   const focusedTab = useFocusedTab();
   const hasBeenFocusedRef = useRef(false);
   const { currency } = useCurrency();
+  const { accounts } = useMyAccounts();
+
+  const getAccountByAddress = useCallback(
+    (address: string) => {
+      return accounts.find(account => isSameAddress(account?.address, address));
+    },
+    [accounts],
+  );
 
   const isFocused = useMemo(() => {
     const currentFocused = focusedTab === 'portfolios';
@@ -172,20 +178,19 @@ export const Portfolios = () => {
     const foldAndExcludeBalanceDefiList = portfolios.filter(
       i => i._isFold && (i._isExcludeBalance || i.netWorth === 0),
     );
-    const foldDefiList: ActionItem[] = chunk(
-      [...foldAndIncludeBalanceDefiList, ...foldAndExcludeBalanceDefiList],
-      2,
-    ).map(item => ({
+    const foldDefiList: ActionItem[] = [
+      ...foldAndIncludeBalanceDefiList,
+      ...foldAndExcludeBalanceDefiList,
+    ].map(item => ({
       type: 'fold_defi',
-      data: item as unknown as DisplayedProject[],
+      data: item as unknown as DisplayedProject,
     }));
-    const unFoldDefiList: ActionItem[] = chunk(
-      portfolios.filter(i => !i._isFold),
-      2,
-    ).map(item => ({
-      type: 'unfold_defi',
-      data: item as unknown as DisplayedProject[],
-    }));
+    const unFoldDefiList: ActionItem[] = portfolios
+      .filter(i => !i._isFold)
+      .map(item => ({
+        type: 'unfold_defi',
+        data: item as unknown as DisplayedProject,
+      }));
 
     return {
       foldDefiList,
@@ -317,7 +322,7 @@ export const Portfolios = () => {
   ]);
 
   const handleOpenTokenDetail = React.useCallback(
-    (token: AbstractPortfolioToken) => {
+    (token: AbstractPortfolioToken, account?: KeyringAccountWithAlias) => {
       if (isTabsSwiping.value) {
         return;
       }
@@ -325,6 +330,7 @@ export const Portfolios = () => {
         token: token,
         unHold: token._unHold,
         needUseCacheToken: true,
+        account,
       });
     },
     [],
@@ -335,17 +341,6 @@ export const Portfolios = () => {
     true,
     top10Balance.total,
     top10Balance.totalEvm,
-  );
-
-  const handleOpenDefiDetail = useCallback(
-    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      navigateDeprecated(RootNames.DeFiDetail, {
-        data,
-        portfolioList: itemList,
-        cache: true,
-      });
-    },
-    [],
   );
 
   const { tokenRefresh } = useTriggerTagAssets();
@@ -420,41 +415,6 @@ export const Portfolios = () => {
     [t, isLight, tokenRefresh],
   );
 
-  const getDefiOrNftMenuAction = useCallback(
-    (type: 'defi', data: DisplayedProject): MenuAction[] => {
-      const isFold = data._isFold;
-      return [
-        {
-          title: isFold
-            ? t('page.tokenDetail.action.unfold')
-            : t('page.tokenDetail.action.fold'),
-          icon: isFold
-            ? isLight
-              ? icons.unfoldLight
-              : icons.unfoldDark
-            : isLight
-            ? icons.foldLight
-            : icons.foldDark,
-          androidIconName: isFold
-            ? 'ic_rabby_menu_unfold'
-            : 'ic_rabby_menu_fold',
-          key: 'fold',
-          action() {
-            if (isFold) {
-              preferenceService.manualUnFoldDefi(data.id);
-              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-            } else {
-              preferenceService.manualFoldDefi(data.id);
-              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-            }
-            tokenRefresh();
-          },
-        },
-      ];
-    },
-    [isLight, t, tokenRefresh],
-  );
-
   const hasNotAssets = useMemo(() => {
     return (
       tokens.length === 0 && portfolios.length === 0 && !isLoading && isFocused
@@ -468,13 +428,6 @@ export const Portfolios = () => {
         params: {},
       }),
     );
-  }, [navigation]);
-
-  const handleOnBuy = useCallback(() => {
-    navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.MultiBuy,
-      params: {},
-    });
   }, [navigation]);
 
   const handleOnImport = useCallback(() => {
@@ -504,16 +457,6 @@ export const Portfolios = () => {
     setFoldHideList(pre => !pre);
   }, [foldHideList]);
 
-  const getDefiMenuActions = useCallback(
-    (data: CombineDefiItem): MenuAction[] => {
-      return getDefiOrNftMenuAction(
-        'defi',
-        data as unknown as DisplayedProject,
-      );
-    },
-    [getDefiOrNftMenuAction],
-  );
-
   const renderItem = useCallback(
     ({ item }) => {
       const { type, data } = item;
@@ -524,10 +467,16 @@ export const Portfolios = () => {
             <View style={styles.rowWrap}>
               <MemoizedTokenRow
                 data={data}
-                onTokenPress={handleOpenTokenDetail}
+                onTokenPress={token =>
+                  handleOpenTokenDetail(
+                    token,
+                    getAccountByAddress(data?.address),
+                  )
+                }
                 logoSize={46}
                 style={styles.renderItemWrapper}
                 chainLogoSize={18}
+                account={getAccountByAddress(data?.address)}
                 getMenuActions={getTokenMenuActions}
               />
             </View>
@@ -535,24 +484,16 @@ export const Portfolios = () => {
         case 'unfold_defi':
         case 'fold_defi':
           return (
-            <View style={styles.defiGroups}>
-              <MemoizedDefiRow
-                data={data[0]}
-                style={styles.renderDefiItemWrapper}
-                getMenuActions={getDefiMenuActions}
-                logoSize={40}
-                onPress={handleOpenDefiDetail}
-              />
-              {data[1] && (
-                <MemoizedDefiRow
-                  data={data[1]}
-                  style={styles.renderDefiItemWrapper}
-                  getMenuActions={getDefiMenuActions}
-                  logoSize={40}
-                  onPress={handleOpenDefiDetail}
-                />
-              )}
-            </View>
+            <MemoizedFullDefiRenderItem
+              data={data as unknown as AbstractProject}
+              showAccount
+              style={styles.fullDefi}
+              account={
+                getAccountByAddress(
+                  data?.address,
+                ) as unknown as KeyringAccountWithAlias
+              }
+            />
           );
         case 'scam_token':
           return (
@@ -616,16 +557,25 @@ export const Portfolios = () => {
     [
       foldDefi,
       foldHideList,
-      getDefiMenuActions,
+      getAccountByAddress,
       getTokenMenuActions,
       handleOnImport,
       handleOnReceive,
-      handleOpenDefiDetail,
       handleOpenScamToken,
       handleOpenTokenDetail,
       handleToggleDefiFold,
       handleToggleTokenFold,
-      styles,
+      styles.buttonHeader,
+      styles.defiLoading,
+      styles.emptyAssets,
+      styles.emptyTokenHolder,
+      styles.fullDefi,
+      styles.loadingItem,
+      styles.renderItemWrapper,
+      styles.rowWrap,
+      styles.sectionHeader,
+      styles.sectionTextHeader,
+      styles.tokenSectionHeader,
       t,
     ],
   );
@@ -810,21 +760,6 @@ const getStyles = createGetStyles2024(ctx => ({
   footer: {
     minHeight: 400,
   },
-  defiGroups: {
-    flexDirection: 'row',
-    height: DEFI_ITEM_HEIGHT,
-    gap: 12,
-    justifyContent: 'flex-start',
-  },
-  renderDefiItemWrapper: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-1']
-      : ctx.colors2024['neutral-bg-2'],
-    borderRadius: 16,
-    height: DEFI_ITEM_HEIGHT,
-    paddingLeft: 12,
-    paddingRight: 16,
-  },
   bg2: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
@@ -855,5 +790,9 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '500',
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
+  },
+  fullDefi: {
+    marginHorizontal: 0,
+    marginTop: 8,
   },
 }));

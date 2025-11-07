@@ -1,5 +1,5 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { toast } from '@/components/Toast';
@@ -26,8 +26,13 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { CustomTestnetItem } from './components/CustomTestnetItem';
-import { EditCustomTestnetPopup } from './components/EditTestnetPopup';
+import {
+  EditCustomTestnetPopup,
+  EditCustomTestnetPopupType,
+} from './components/EditTestnetPopup';
 import { Empty } from './components/Empty';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
 
 export function CustomTestnetScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -95,6 +100,16 @@ export function CustomTestnetScreen(): JSX.Element {
     close$.emit();
   });
 
+  const modalRef = React.useRef<EditCustomTestnetPopupType>(null);
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      modalRef.current?.doBack();
+      return !state.isShowModal;
+    }, [state]),
+  );
+
+  useFocusEffect(onHardwareBackHandler);
+
   return (
     <>
       <TouchableWithoutFeedback
@@ -148,6 +163,7 @@ export function CustomTestnetScreen(): JSX.Element {
         </NormalScreenContainer>
       </TouchableWithoutFeedback>
       <EditCustomTestnetPopup
+        ref={modalRef}
         visible={state.isShowModal}
         data={state.current}
         isEdit={state.isEdit}

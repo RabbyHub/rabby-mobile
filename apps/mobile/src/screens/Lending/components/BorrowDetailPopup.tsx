@@ -6,7 +6,6 @@ import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../type';
 import { formatPercent, formatUsdValueKMB } from '@/screens/TokenDetail/util';
-import { formatNum } from '@/utils/math';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import { getHealthStatusColor } from '../utils';
 import {
@@ -20,6 +19,8 @@ import BigNumber from 'bignumber.js';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTranslation } from 'react-i18next';
+import { getHealthFactorText } from './HealthFactorText';
+import { formatNetworth } from '@/utils/math';
 
 export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -229,7 +230,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
                   color: colors2024['neutral-title-1'],
                 },
               ]}>
-              {formatUsdValueKMB(reserve.variableBorrowsUSD || '0')}
+              {formatNetworth(Number(reserve.variableBorrowsUSD || '0'))}
             </Text>
           </View>
           {hasBorrowBalance && (
@@ -247,7 +248,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
                       ).color,
                     },
                   ]}>
-                  {formatNum(userSummary?.healthFactor)}
+                  {getHealthFactorText(userSummary?.healthFactor)}
                 </Text>
               </View>
               <View style={styles.userInfoItem}>

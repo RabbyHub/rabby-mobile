@@ -708,6 +708,7 @@ export const PERPS_BUILD_FEE_RECEIVE_ADDRESS =
   INIT_PERPS_BUILD_FEE_RECEIVE_ADDRESS.toLowerCase();
 
 export const PERPS_BUILD_FEE = 40; // '0.04%'
+export const PERPS_EXCHANGE_FEE_NUMBER = 0.0004;
 
 export const PERPS_REFERENCE_CODE = 'RABBYWALLET';
 
@@ -723,3 +724,11 @@ export const PERPS_BUILDER_INFO = {
   address: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
   fee: PERPS_BUILD_FEE,
 };
+
+export enum PERPS_POSITION_RISK_LEVEL {
+  SAFE = 'safe',
+  WARNING = 'warning',
+  DANGER = 'danger',
+}
+
+export const PERPS_MINI_USD_VALUE = 10; // $10

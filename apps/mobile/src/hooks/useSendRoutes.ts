@@ -41,7 +41,7 @@ export const useSendRoutes = () => {
     [hasNftParams],
   );
 
-  // navigate to send screen
+  /** @deprecated */
   const navigateToTargetScreen = useCallback(
     (mergedParams: { [key: string]: any }, isForSingleAddress: boolean) => {
       const targetScreen = getTargetScreen(mergedParams, isForSingleAddress);
@@ -62,6 +62,7 @@ export const useSendRoutes = () => {
     [params, isSingleAddress, navigateToTargetScreen],
   );
 
+  /** @deprecated */
   const navigateToSendPolyScreen = useCallback(
     async (isForSingleAddress: boolean, p?: { [key: string]: any }) => {
       matomoRequestEvent({
@@ -129,6 +130,7 @@ export const useSendRoutes = () => {
   );
 
   return {
+    /** @deprecated */
     navigateToSendPolyScreen,
     navigateToSendScreen,
     isSingleAddress,

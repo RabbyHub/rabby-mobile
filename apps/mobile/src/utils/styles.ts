@@ -9,7 +9,13 @@ import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native';
 type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
 
-type CreateStylesOptions = { isLight?: boolean };
+type CreateStylesOptions = {
+  isLight: boolean;
+  /**
+   * @description bottom safe area inset value
+   */
+  bottomSafeArea: number;
+};
 export const createGetStyles =
   <T extends NamedStyles<any>>(
     styles: (colors: AppColorsVariants, ctx?: CreateStylesOptions) => T,
@@ -31,6 +37,14 @@ type CreateStyles2024Options = {
    * @description same as colors
    */
   colors2024: AppColors2024Variants;
+  /**
+   * @description bottom safe area inset value
+   */
+  bottomSafeArea: number;
+  // /**
+  //  * @description bottom safe area inset value
+  //  */
+  // androidOnlyBottomSafeArea: number;
 };
 export const createGetStyles2024 =
   <T extends NamedStyles<any>>(styles: (ctx: CreateStyles2024Options) => T) =>

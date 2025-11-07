@@ -17,7 +17,7 @@ import {
 } from '@/assets/icons/settings';
 import { DevTestItem, GeneralTestItem } from './testDevUtils';
 import { AppSwitch, SwitchToggleType } from '@/components/customized/Switch';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { IS_IOS } from '@/core/native/utils';
 import { SwitchAllowScreenshot } from '../components/SwitchAllowScreenshot';
 import { useExpScreenCapture } from '@/hooks/appSettings';

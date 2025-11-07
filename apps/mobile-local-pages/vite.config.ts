@@ -65,6 +65,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'pages/index.html'),
         chartDemo: resolve(__dirname, 'pages/chart-demo.html'),
+        gasketBlurView: resolve(__dirname, 'pages/gasket-blurview.html'),
       },
     },
   },

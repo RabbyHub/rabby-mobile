@@ -57,7 +57,6 @@ import {
   ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
   getHistoryItemType,
-  judgeIsSmallUsdTx,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -756,6 +755,7 @@ const HistoryScreen = ({ isForMultipleAddress = true }) => {
       )}
       <ScreenSpecificStatusBar screenName={RootNames.History} />
       <History isTestnet={false} isForMultipleAddress={isForMultipleAddress} />
+      {/* TODO: it seems to be useless, drop it after confirming */}
       <BottomSheetModalTokenDetail
         __shouldSwitchSceneAccountBeforeRedirect__
         ref={tokenDetailModalRef}
@@ -881,7 +881,6 @@ const ForSingleAddress = () => {
 
   return <HistoryScreen isForMultipleAddress={false} />;
 };
-
 HistoryScreen.ForSingleAddress = ForSingleAddress;
 
 export default HistoryScreen;

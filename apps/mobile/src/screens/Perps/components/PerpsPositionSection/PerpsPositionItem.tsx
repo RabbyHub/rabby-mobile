@@ -1,30 +1,30 @@
-import { RcIconLong, RcIconShort } from '@/assets2024/icons/perps';
 import { AssetAvatar } from '@/components';
 import { MarketData, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
-import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
+import { DistanceToLiquidationTag } from './DistanceToLiquidationTag';
+import { useMemoizedFn } from 'ahooks';
+import { calculateDistanceToLiquidation } from './utils';
+import { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
+import { useTranslation } from 'react-i18next';
+
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
 export const PerpsPositionItem: React.FC<{
   item: PositionAndOpenOrder['position'];
   marketData: MarketData;
   onPress(): void;
-  onClosePosition: () => void;
-}> = ({ item, marketData, onPress, onClosePosition }) => {
+  openOrders: OpenOrder[];
+  onShowRiskPopup: (coin: string) => void;
+}> = ({ item, marketData, onPress, openOrders, onShowRiskPopup }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-
   const {
     coin,
-    szi,
     leverage,
-    positionValue,
     marginUsed,
     unrealizedPnl,
     returnOnEquity,
@@ -39,25 +39,70 @@ export const PerpsPositionItem: React.FC<{
   const absPnlUsd = Math.abs(Number(unrealizedPnl));
   const absPnlPct = Math.abs(Number(returnOnEquity));
   const leverageType = item.leverage.type || 'isolated';
-  const pnlText = `${sign}$${formatUsdValue(absPnlUsd)} (${formatPct(
+  const pnlText = `${sign}${formatUsdValue(absPnlUsd)} (${sign}${formatPct(
     absPnlPct,
   )})`;
   const logoUrl = marketData?.logoUrl || '';
   const leverageText = `${leverage.value}x`;
-  const markPrice = marketData?.markPx || '0';
+
+  const { tpPrice, slPrice } = useMemo(() => {
+    if (!openOrders || !openOrders.length) {
+      return {
+        tpPrice: undefined,
+        slPrice: undefined,
+      };
+    }
+
+    const tpItem = openOrders.find(
+      order =>
+        order.orderType === 'Take Profit Market' &&
+        order.isTrigger &&
+        order.reduceOnly,
+    );
+
+    const slItem = openOrders.find(
+      order =>
+        order.orderType === 'Stop Market' &&
+        order.isTrigger &&
+        order.reduceOnly,
+    );
+
+    return {
+      tpPrice: Number(tpItem?.triggerPx || 0),
+      slPrice: Number(slItem?.triggerPx || 0),
+    };
+  }, [openOrders]);
+
+  // Check if there's take profit or stop loss
+  const hasTakeProfit = !!tpPrice;
+  const hasStopLoss = !!slPrice;
+
+  const handleDistanceTagPress = useMemoizedFn(() => {
+    onShowRiskPopup(coin);
+  });
 
   return (
-    <View>
-      <View style={styles.card}>
-        <TouchableOpacity style={styles.topSection} onPress={onPress}>
-          <View style={styles.iconContainer}>
-            <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={24} />
+    <TouchableOpacity style={styles.card} onPress={onPress}>
+      <View style={styles.mainContent}>
+        {/* Left section: icon + coin info */}
+        <View style={styles.leftSection}>
+          <View style={styles.coinInfoRow}>
+            <AssetAvatar logo={logoUrl} size={28} />
+            <View style={styles.coinInfo}>
+              <View style={styles.coinNameRow}>
+                <Text style={styles.coinName}>{coin}</Text>
+                {leverageType === 'cross' && (
+                  <View style={styles.crossTag}>
+                    <Text style={styles.crossText}>Cross</Text>
+                  </View>
+                )}
+              </View>
+            </View>
           </View>
-          <View style={styles.coinInfo}>
-            <Text style={styles.coinName}>{coin} - USD</Text>
+          <View style={styles.tagRow}>
             <View
               style={[
-                styles.leverageRow,
+                styles.leverageTag,
                 {
                   backgroundColor:
                     side === 'Long'
@@ -73,159 +118,127 @@ export const PerpsPositionItem: React.FC<{
                 {side} {leverageText}
               </Text>
             </View>
-            <View style={styles.isolatedRow}>
-              <Text style={styles.isolatedText}>
-                {leverageType === 'cross'
-                  ? t('page.perpsDetail.PerpsPosition.cross')
-                  : t('page.perpsDetail.PerpsPosition.isolated')}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.rightArrow}>
-            <RcArrowRight2CC color={colors2024['neutral-foot']} />
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.dataSection}>
-          <View style={styles.dataColumnLeft}>
-            <Text style={styles.sectionTitle}>
-              {t('page.perpsDetail.PerpsPosition.pnl')}
-            </Text>
-            <Text
-              style={[
-                styles.pnlValue,
-                isUp ? styles.pnlPositive : styles.pnlNegative,
-              ]}>
-              {sign}
-              {formatUsdValue(absPnlUsd)} ({formatPct(absPnlPct)})
-            </Text>
-            <Text style={styles.sectionTitle}>
-              {t('page.perpsDetail.PerpsPosition.entryPrice')}
-            </Text>
-            <Text style={styles.dataValue}>
-              {splitNumberByStep(
-                Number(entryPx).toFixed(marketData?.pxDecimals || 2),
-              )}
-            </Text>
-          </View>
-
-          <View style={styles.dataColumn}>
-            <Text style={styles.sectionTitle}>
-              {t('page.perpsDetail.PerpsPosition.size')}
-            </Text>
-            <Text style={styles.dataValue}>
-              ${splitNumberByStep(Number(positionValue).toFixed(2))}
-            </Text>
-            <Text style={styles.sectionTitle}>
-              {t('page.perpsDetail.PerpsPosition.markPrice')}
-            </Text>
-            <Text style={styles.dataValue}>
-              {splitNumberByStep(
-                Number(markPrice).toFixed(marketData?.pxDecimals || 2),
-              )}
-            </Text>
-          </View>
-
-          <View style={styles.dataColumnRight}>
-            <Text style={styles.sectionTitle}>
-              {t('page.perpsDetail.PerpsPosition.justMargin')}
-            </Text>
-            <Text style={styles.dataValue}>
-              ${splitNumberByStep(Number(marginUsed).toFixed(2))}
-            </Text>
-            <Text style={styles.sectionTitle}>
-              {t('page.perpsDetail.PerpsPosition.liqPrice')}
-            </Text>
-            <Text style={styles.dataValue}>
-              {splitNumberByStep(
-                Number(liquidationPx).toFixed(marketData?.pxDecimals || 2),
-              )}
-            </Text>
+            <DistanceToLiquidationTag
+              liquidationPrice={liquidationPx}
+              markPrice={marketData?.markPx}
+              onPress={handleDistanceTagPress}
+            />
           </View>
         </View>
 
-        <View style={styles.closeButtonContainer}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={onClosePosition}
-            activeOpacity={0.7}>
-            <Text style={styles.closeButtonText}>
-              {t('page.perpsDetail.PerpsPosition.closePosition', {
-                direction: side,
-              })}
-            </Text>
-          </TouchableOpacity>
+        {/* Right section: price + PnL */}
+        <View style={styles.rightSection}>
+          <Text style={styles.priceText}>
+            {formatUsdValue(Number(marginUsed))}
+          </Text>
+          <Text
+            style={[
+              styles.pnlText,
+              isUp ? styles.pnlTextUp : styles.pnlTextDown,
+            ]}>
+            {pnlText}
+          </Text>
         </View>
       </View>
-    </View>
+
+      {(hasTakeProfit || hasStopLoss) && (
+        <View style={styles.tpSlSection}>
+          {hasTakeProfit && (
+            <Text style={styles.tpSlText}>
+              {t('page.perps.PerpsAutoCloseModal.takeProfit')} :{' '}
+              <Text style={styles.tpSlPrice}>
+                ${splitNumberByStep(tpPrice)}
+              </Text>
+            </Text>
+          )}
+          {hasTakeProfit && hasStopLoss && (
+            <Text style={styles.tpSlSeparator}> | </Text>
+          )}
+          {hasStopLoss && (
+            <Text style={styles.tpSlText}>
+              {t('page.perps.PerpsAutoCloseModal.stopLoss')} :{' '}
+              <Text style={styles.tpSlPrice}>
+                ${splitNumberByStep(slPrice)}
+              </Text>
+            </Text>
+          )}
+        </View>
+      )}
+    </TouchableOpacity>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
-    borderRadius: 12,
-    // paddingVertical: 16,
-    // paddingHorizontal: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    flexDirection: 'column',
-    // gap: 12,
+    borderRadius: 16,
+    // paddingHorizontal: 14,
+    paddingVertical: 14,
   },
-  topSection: {
-    borderBottomWidth: 0.5,
-    borderBottomColor: colors2024['neutral-line'],
+  mainContent: {
+    flexDirection: 'row',
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  leftSection: {
+    flexDirection: 'column',
+    gap: 4,
+    flex: 1,
+  },
+  coinInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    gap: 4,
-  },
-  iconContainer: {
-    position: 'relative',
-    flexShrink: 0,
-  },
-  directionIcon: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 16,
-    height: 16,
-  },
-  icon: {
-    width: 24,
-    height: 24,
-    borderRadius: 1000,
+    gap: 8,
   },
   coinInfo: {
     flex: 1,
-    gap: 4,
-    alignItems: 'center',
+    gap: 6,
+  },
+  coinNameRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   coinName: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
-  isolatedRow: {
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
+  crossText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
   },
-  leverageRow: {
+  crossTag: {
     borderRadius: 4,
     paddingHorizontal: 4,
-    paddingVertical: 2,
+    paddingVertical: 1,
+    backgroundColor: colors2024['neutral-bg-5'],
+  },
+  tagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  leverageTag: {
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 20,
   },
   leverageText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   longText: {
     color: colors2024['green-default'],
@@ -233,78 +246,89 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   shortText: {
     color: colors2024['red-default'],
   },
-  isolatedText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: colors2024['neutral-foot'],
-  },
-  dataSection: {
+  distanceTag: {
     flexDirection: 'row',
-    // gap: 12,
-    paddingHorizontal: 16,
-    paddingTop: 10,
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 100,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 0.8,
   },
-  dataColumn: {
-    flex: 2,
+  distanceDotContainer: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  dataColumnLeft: {
-    flex: 3,
+  distanceDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
   },
-  dataColumnRight: {
-    flex: 2,
+  pnlPctText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '600',
+  },
+  pnlPctUp: {
+    color: colors2024['green-default'],
+  },
+  pnlPctDown: {
+    color: colors2024['red-default'],
+  },
+  rightSection: {
     alignItems: 'flex-end',
+    gap: 4,
   },
-  sectionTitle: {
+  priceText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+  },
+  pnlText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+  pnlTextUp: {
+    color: colors2024['green-default'],
+  },
+  pnlTextDown: {
+    color: colors2024['red-default'],
+  },
+  tpSlSection: {
+    flexDirection: 'row',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 0.5,
+    paddingHorizontal: 14,
+    borderTopColor: colors2024['neutral-line'],
+  },
+  tpSlText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
-    marginBottom: 4,
   },
-  pnlValue: {
+  tpSlPrice: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  pnlPositive: {
-    color: colors2024['green-default'],
-  },
-  pnlNegative: {
-    color: colors2024['red-default'],
-  },
-  dataValue: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    marginBottom: 10,
-  },
-  closeButtonContainer: {
-    paddingHorizontal: 16,
-    marginVertical: 12,
-  },
-  closeButton: {
-    height: 52,
-    backgroundColor: colors2024['neutral-bg-5'],
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
     color: colors2024['neutral-title-1'],
   },
-  rightArrow: {
-    // width: 24,
-    // height: 24,
+  tpSlSeparator: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    marginHorizontal: 4,
+    color: colors2024['neutral-foot'],
   },
 }));
