@@ -57,7 +57,6 @@ import {
   ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
   getHistoryItemType,
-  judgeIsSmallUsdTx,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
