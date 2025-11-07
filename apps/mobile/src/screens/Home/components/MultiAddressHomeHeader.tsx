@@ -1,13 +1,15 @@
-import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { RootNames } from '@/constant/layout';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions } from '@react-navigation/native';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
-  Animated,
-  Easing,
+  Animated as RNAnimated,
+  Easing as RNEasing,
+  Dimensions,
   Image,
   Platform,
   StyleSheet,
@@ -16,6 +18,18 @@ import {
   View,
 } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { useTranslation } from 'react-i18next';
+import usePrevious from 'react-use/lib/usePrevious';
+
+import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { RootNames } from '@/constant/layout';
+import { useTheme2024 } from '@/hooks/theme';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { ThemeColors2024 } from '@/constant/theme';
@@ -24,7 +38,6 @@ import useAccountsBalance, {
 } from '@/hooks/useAccountsBalance';
 import { useUpgradeInfo } from '@/hooks/version';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { useTranslation } from 'react-i18next';
 
 import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
 import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
@@ -48,11 +61,14 @@ import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { Skeleton } from '@rneui/base';
 import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
-import LinearGradient from 'react-native-linear-gradient';
+import RNLinearGradient from 'react-native-linear-gradient';
 import { LoadingLinear } from '../../TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
+import { IS_IOS } from '@/core/native/utils';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 const HeaderHeight = 24;
 
@@ -70,7 +86,7 @@ export function MultiAddressHomeHeader(
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const spinValue = useRef(new Animated.Value(0)).current;
+  const spinValue = useRef(new RNAnimated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
   const { isDisConnect } = useGlobalStatus();
   const { currency, formatCurrentCurrency } = useCurrency();
@@ -139,13 +155,14 @@ export function MultiAddressHomeHeader(
     }${formatCurrentCurrency(Math.abs(data.rawChange))})`;
   }, [data.changePercent, data.isLoss, data.rawChange, formatCurrentCurrency]);
 
+  const gasketWebViewRef = useRef<LocalWebView>(null);
   useEffect(() => {
     if (loading) {
-      Animated.loop(
-        Animated.timing(spinValue, {
+      RNAnimated.loop(
+        RNAnimated.timing(spinValue, {
           toValue: 1,
           duration: 1600,
-          easing: Easing.linear,
+          easing: RNEasing.linear,
           useNativeDriver: true,
         }),
       ).start();
@@ -153,6 +170,18 @@ export function MultiAddressHomeHeader(
       spinValue.resetAnimation();
     }
   }, [loading, spinValue]);
+
+  const previousLoading = usePrevious(loading);
+  useEffect(() => {
+    if (!loading && previousLoading) {
+      gasketWebViewRef.current?.sendMessage?.({
+        type: 'GASKETVIEW:TOGGLE_LOADING',
+        info: {
+          loading: previousLoading,
+        },
+      });
+    }
+  }, [loading, previousLoading]);
 
   return (
     <View style={style}>
@@ -182,12 +211,12 @@ export function MultiAddressHomeHeader(
               />
             )}
           </TouchableOpacity>
-          <Animated.View
+          <RNAnimated.View
             style={{
               transform: [{ rotate: spin }],
             }}>
             {loading && <RcIconloading />}
-          </Animated.View>
+          </RNAnimated.View>
         </View>
 
         <View style={styles.rightArea}>
@@ -219,46 +248,71 @@ export function MultiAddressHomeHeader(
           onRefresh?.();
         }}
       />
-
-      <View style={styles.curveBox}>
-        <BlurShadowView isLight={isLight}>
-          <LinearGradient
-            colors={
-              isLight
-                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-                : ['rgba(36, 40, 37, 1)', 'rgba(44, 52, 48, 0.5)']
-            }
+      <BlurShadowView
+        isLight={isLight}
+        viewTypeOnNoShadow={'view'}
+        viewProps={{
+          style: [styles.curveBoxWrapper, { minHeight: 100 }],
+        }}>
+        <View pointerEvents="none" style={styles.localWebViewWrapper}>
+          <LocalWebView
+            ref={gasketWebViewRef}
             style={{
-              padding: isLight ? 0 : 2,
-              borderRadius: 21,
+              minWidth: Dimensions.get('window').width - 15 * 2,
+              minHeight: 100,
+              marginHorizontal: 'auto',
+              backgroundColor: 'transparent',
+            }}
+            entryPath={'/pages/gasket-blurview.html'}
+            webviewSize={{
+              width: Dimensions.get('window').width - 15 * 2,
+            }}
+          />
+        </View>
+        <RNLinearGradient
+          colors={
+            isLight
+              ? [
+                  colors2024['neutral-InvertHighlight'],
+                  colors2024['neutral-InvertHighlight'],
+                ]
+              : [colors2024['neutral-bg-2'], colors2024['neutral-bg-3']]
+          }
+          style={[
+            styles.curveBox,
+            loading && styles.curveBoxLoading,
+            {
+              position: 'relative',
+            },
+            {},
+          ]}>
+          <Card
+            style={[styles.curveCard, styles.shadowView]}
+            onPress={() => {
+              navigation.dispatch(
+                StackActions.push(RootNames.StackAddress, {
+                  screen: RootNames.AddressAssetsOverview,
+                  params: {},
+                }),
+              );
+              matomoRequestEvent({
+                category: 'Click_Header',
+                action: 'Click_Address',
+              });
             }}>
-            <Card
-              style={[styles.curveCard, styles.shadowView]}
-              onPress={() => {
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackAddress, {
-                    screen: RootNames.AddressAssetsOverview,
-                    params: {},
-                  }),
-                );
-                matomoRequestEvent({
-                  category: 'Click_Header',
-                  action: 'Click_Address',
-                });
-              }}>
-              <LinearGradient
-                colors={
-                  isLight
-                    ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-                    : ['rgba(0, 0, 0, 0.40)', 'rgba(25, 26, 27, 0.10)']
-                }
-                start={{ x: 0.25, y: 0.5 }}
-                end={{ x: 0.75, y: 0.5 }}
-                style={StyleSheet.absoluteFill}
-              />
-
-              <View style={styles.curveCardInner}>
-                <View style={styles.curveContainer}>
+            <RNLinearGradient
+              colors={
+                isLight
+                  ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
+                  : ['rgba(0, 0, 0, 0.40)', 'rgba(25, 26, 27, 0.10)']
+              }
+              start={{ x: 0.25, y: 0.5 }}
+              end={{ x: 0.75, y: 0.5 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.curveCardInner}>
+              <View style={styles.curveContainer}>
+                <View style={styles.curveInnerLine}>
                   {loadingNewCurve ? (
                     <Skeleton
                       width={181}
@@ -274,72 +328,74 @@ export function MultiAddressHomeHeader(
                         styles.netWorth,
                         hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
                       ]}>
-                      {/* {data.netWorth} */}
                       {formatSmallCurrencyValue(data.rawNetWorth, {
                         currency,
                       })}
                     </Text>
                   )}
-                  {loadingNewCurve ? (
-                    <Skeleton
-                      width={100}
-                      height={22}
-                      style={styles.skeleton}
-                      LinearGradientComponent={LoadingLinear}
+                  <View style={[styles.accountBg]}>
+                    <RcIconSmallWalletCC
+                      color={colors2024['neutral-title-1']}
                     />
-                  ) : (
-                    <View style={styles.changeSection}>
-                      {hideType === 'HIDE' ? (
-                        <Text style={styles.changePercent}>***</Text>
-                      ) : (
-                        <Text
-                          style={[
-                            styles.changePercent,
-                            hideType === 'HALF_HIDE'
-                              ? styles.balanceOpacity
-                              : null,
-                            {
-                              color: data.isLoss
-                                ? colors2024['red-default']
-                                : colors2024['green-default'],
-                            },
-                          ]}>
-                          {percentChange}
-                        </Text>
-                      )}
-                    </View>
-                  )}
+                    <Text style={styles.accountText}>
+                      {accountsLength >= 10 ? '10' : accountsLength}
+                    </Text>
+                    <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
+                  </View>
                 </View>
+                {loadingNewCurve ? (
+                  <Skeleton
+                    width={100}
+                    height={22}
+                    style={styles.skeleton}
+                    LinearGradientComponent={LoadingLinear}
+                  />
+                ) : (
+                  <View style={styles.changeSection}>
+                    {hideType === 'HIDE' ? (
+                      <Text style={styles.changePercent}>***</Text>
+                    ) : (
+                      <Text
+                        style={[
+                          styles.changePercent,
+                          hideType === 'HALF_HIDE'
+                            ? styles.balanceOpacity
+                            : null,
+                          {
+                            color: data.isLoss
+                              ? colors2024['red-default']
+                              : colors2024['green-default'],
+                          },
+                        ]}>
+                        {percentChange}
+                      </Text>
+                    )}
+                  </View>
+                )}
               </View>
-              <View style={[styles.accountBg]}>
-                <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
-                <Text style={styles.accountText}>
-                  {accountsLength >= 10 ? '10' : accountsLength}
-                </Text>
-                <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
+            </View>
+            {addressListData?.length ? (
+              <View
+                style={[
+                  styles.accountList,
+                  hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
+                ]}>
+                {addressListData?.map(item => {
+                  return (
+                    <HomeAddressItem
+                      hideType={hideType}
+                      account={item}
+                      key={`${item.type}-${item.address}`}
+                      isLoss={item.isLoss}
+                      changePercent={item.changePercent}
+                    />
+                  );
+                })}
               </View>
-              {addressListData?.length ? (
-                <View
-                  style={[
-                    styles.accountList,
-                    hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
-                  ]}>
-                  {addressListData?.map(item => {
-                    return (
-                      <HomeAddressItem
-                        hideType={hideType}
-                        account={item}
-                        key={`${item.type}-${item.address}`}
-                        isLoss={item.isLoss}
-                        changePercent={item.changePercent}
-                      />
-                    );
-                  })}
-                </View>
-              ) : null}
-              {hideType === 'HALF_HIDE' ? (
-                <View style={styles.accountCardMask}>
-                  {/* {Platform.OS === 'ios' ? (
+            ) : null}
+            {hideType === 'HALF_HIDE' ? (
+              <View style={styles.accountCardMask}>
+                {/* {Platform.OS === 'ios' ? (
                     <BlurView
                       style={styles.accountCardMaskBlur}
                       blurAmount={1.5}
@@ -347,30 +403,35 @@ export function MultiAddressHomeHeader(
                       reducedTransparencyFallbackColor="white"
                     />
                   ) : null} */}
-                </View>
-              ) : null}
-            </Card>
-
-            <Image
-              source={require('@/assets2024/icons/home/border-b-bg.png')}
-              style={[
-                {
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: -2,
-                },
-                { width: 361, height: 120 },
-              ]}
-              resizeMode="cover"
-            />
-          </LinearGradient>
-        </BlurShadowView>
-      </View>
+              </View>
+            ) : null}
+          </Card>
+          <Image
+            source={require('@/assets2024/icons/home/border-b-bg.png')}
+            style={[
+              {
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: -2,
+              },
+              { width: 361, height: 120 },
+            ]}
+            resizeMode="cover"
+          />
+        </RNLinearGradient>
+      </BlurShadowView>
+      {/* gradient-border  */}
+      {/* <ConicViewSample /> */}
     </View>
   );
 }
+
+const SIZES = {
+  cardLayoutPaddingHorizontal: 15 /* ITEM_LAYOUT_PADDING_HORIZONTAL */,
+  cardContentRadius: 20,
+};
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   screenContainer: {
@@ -479,9 +540,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 30,
-    position: 'absolute',
-    top: 28,
-    right: 20,
+    // position: 'absolute',
+    // top: 28,
+    // right: 20,
     // elevation: 500,
   },
   accountCardMask: {
@@ -518,11 +579,51 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  curveBox: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+  curveBoxWrapper: {
+    position: 'relative',
+    marginTop: 12,
+    paddingTop: 0,
+    backgroundColor: 'transparent',
+    // ...makeDebugBorder('red'),
+    paddingHorizontal: SIZES.cardLayoutPaddingHorizontal,
+    borderRadius: SIZES.cardContentRadius,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  localWebViewWrapper: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: IS_IOS ? 1 : -1,
+    marginHorizontal: isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
+    borderRadius: SIZES.cardContentRadius,
+    // ...makeDebugBorder('yellow'),
+  },
+  curveBoxWrapperLoading: {},
+  curveBox: {
+    ...makeDevOnlyStyle({
+      // opacity: 0,
+    }),
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingVertical: 0,
+    padding: 0,
+    borderWidth: IS_IOS ? 1 : 1,
+    borderColor: 'transparent',
+    borderRadius: 20,
+    // ...makeDebugBorder(),
+    width: '100%',
+    alignItems: 'center',
+  },
+  curveBoxLoading: {},
   curveCard: {
+    maxWidth: '100%',
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    // justifyContent: 'space-between',
+
     borderRadius: 20,
     paddingVertical: 24,
     paddingHorizontal: 0,
@@ -540,6 +641,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 20,
+    // ...makeDebugBorder(),
   },
   shadowView: {
     ...Platform.select({
@@ -563,7 +665,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   curveContainer: {
     gap: 6,
-    paddingRight: 80,
+    width: '100%',
+    // ...makeDebugBorder('green')
+  },
+  curveInnerLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    // ...makeDebugBorder('yellow')
   },
   arrow: {
     width: 26,
