@@ -1,6 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
+import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -9,6 +11,7 @@ import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Image,
   Text,
   TextInput,
   TouchableOpacity,
@@ -167,6 +170,17 @@ export const PerpSearchListPopup: React.FC<{
         <BottomSheetFlatList
           contentContainerStyle={styles.content}
           data={filteredList}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Image
+                source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+                style={styles.image}
+              />
+              <Text style={styles.imgTitle}>
+                {t('page.perps.searchPerpsPopup.empty')}
+              </Text>
+            </View>
+          }
           renderItem={({ item }) => {
             return (
               <PerpsMarketItem
@@ -214,6 +228,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-title-1'],
       marginBottom: 16,
       textAlign: 'center',
+    },
+    empty: {
+      height: '80%',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    imgTitle: {
+      color: colors2024['neutral-info'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '400',
+    },
+    image: {
+      marginTop: 120,
+      marginBottom: 16,
+      width: 163,
+      height: 126,
     },
     content: {
       display: 'flex',

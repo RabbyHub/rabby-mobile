@@ -2261,6 +2261,7 @@
         "searchPlaceholder": "Search Perps",
         "searchPosition": "Search Position",
         "openPosition": "Open Position",
+        "empty": "No results found",
         "searchPerps": "Search Perps"
       },
       "PerpsRiskPopup": {
