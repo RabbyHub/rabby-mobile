@@ -1,12 +1,3 @@
-import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { RootNames } from '@/constant/layout';
-import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
 import { StackActions } from '@react-navigation/native';
 import React, {
   useEffect,
@@ -26,6 +17,18 @@ import {
   View,
 } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { useTranslation } from 'react-i18next';
+import usePrevious from 'react-use/lib/usePrevious';
+
+import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { RootNames } from '@/constant/layout';
+import { useTheme2024 } from '@/hooks/theme';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { ThemeColors2024 } from '@/constant/theme';
@@ -34,7 +37,6 @@ import useAccountsBalance, {
 } from '@/hooks/useAccountsBalance';
 import { useUpgradeInfo } from '@/hooks/version';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { useTranslation } from 'react-i18next';
 
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
@@ -167,14 +169,17 @@ export function MultiAddressHomeHeader(
     }
   }, [loading, spinValue]);
 
+  const previousLoading = usePrevious(loading);
   useEffect(() => {
-    gasketWebViewRef.current?.sendMessage?.({
-      type: 'GASKETVIEW:TOGGLE_LOADING',
-      info: {
-        loading: loading,
-      },
-    });
-  }, [loading]);
+    if (!loading && previousLoading) {
+      gasketWebViewRef.current?.sendMessage?.({
+        type: 'GASKETVIEW:TOGGLE_LOADING',
+        info: {
+          loading: previousLoading,
+        },
+      });
+    }
+  }, [loading, previousLoading]);
 
   return (
     <View style={style}>
@@ -576,7 +581,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     left: 0,
     right: 0,
     zIndex: IS_IOS ? 1 : -1,
-    marginHorizontal: SIZES.cardLayoutPaddingHorizontal,
+    marginHorizontal: isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
     borderRadius: SIZES.cardContentRadius,
     // ...makeDebugBorder('yellow'),
   },

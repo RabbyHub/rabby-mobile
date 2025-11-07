@@ -8,9 +8,15 @@
 
   --rect-width: var(--app-rect-width, 330px);
   --rect-height: var(--app-rect-height, 240px);
+
+  --animation-color: var(--app-animation-color, rgba(88, 198, 105, 0.6));
 }
 html[data-os='ios'] {
   --animation-ms: var(--animation-ms-ios);
+}
+
+html[data-theme='dark'] {
+  --animation-color: rgba(88, 198, 105, 0.4);
 }
 
 html,
@@ -22,12 +28,18 @@ body {
   max-width: var(--rect-width);
 }
 
-body {
+body .gradient-border::before,
+body .gradient-border .glow,
+body .gradient-border .glow::after {
   opacity: 0;
+  animation-name: none;
   transition: opacity 0.3s ease-in-out;
 }
-body.loading {
+body.loading .gradient-border::before,
+body.loading .gradient-border .glow,
+body.loading .gradient-border .glow::after {
   opacity: 1;
+  animation-name: spin;
 }
 
 .gradient-wrapper {
@@ -68,8 +80,8 @@ body.loading {
   background-image: conic-gradient(
     from var(--angle) at 50% 50%,
     rgba(88, 198, 105, 0) 0deg,
-    rgba(88, 198, 105, 0.4) 90deg,
-    rgba(88, 198, 105, 0) 180deg,
+    rgba(88, 198, 105, 0) 90deg,
+    var(--animation-color) 180deg,
     rgba(88, 198, 105, 0) 270deg,
     rgba(88, 198, 105, 0) 360deg
   );
@@ -137,7 +149,7 @@ body.loading {
   background-image: conic-gradient(
     from var(--angle) at 50% 50%,
     transparent 0deg,
-    rgba(88, 198, 105, 0.4) 90deg,
+    var(--animation-color) 90deg,
     transparent 180deg
   );
   border: calc(var(--border-width) * 1) solid transparent;
