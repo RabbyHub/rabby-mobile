@@ -71,7 +71,7 @@ import {
   useSetTotalBalanceText,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,

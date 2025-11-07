@@ -5,7 +5,7 @@ import {
 } from '@/assets/icons/lock';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { useAuthenticationModal } from '@/components/AuthenticationModal/hooks';
-import { isSelfhostRegPkg } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { apisLock } from '@/core/apis';
 import { unlockTimeEvent, updateUnlockTime } from '@/core/apis/lock';
 import { useBiometrics } from '@/hooks/biometrics';
@@ -15,7 +15,7 @@ import { atom, useAtom } from 'jotai';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const DEFAULT_VERIFY_INTERVAL = isSelfhostRegPkg
+const DEFAULT_VERIFY_INTERVAL = isNonPublicProductionEnv
   ? 1000 * 60 * 1 // 1 minute
   : 1000 * 60 * 10; // 10 minutes
 

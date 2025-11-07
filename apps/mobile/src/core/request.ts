@@ -3,7 +3,7 @@ import { RabbyApiPlugin } from '@rabby-wallet/rabby-api/dist/plugins/intf';
 
 import { gS } from '@rabby-wallet/rabby-sign-bvm/es/sign-rabby';
 import { APP_VERSIONS, INITIAL_OPENAPI_URL } from '@/constant';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { openApiStore } from './services/openapiStore';
 
 const SIGN_HDS = [

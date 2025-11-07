@@ -1,4 +1,4 @@
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import axios from 'axios';
 import { Platform } from 'react-native';
 import { merge } from 'lodash';

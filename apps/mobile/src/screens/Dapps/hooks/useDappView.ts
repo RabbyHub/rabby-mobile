@@ -20,7 +20,7 @@ import {
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { useRefState } from '@/hooks/common/useRefState';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);

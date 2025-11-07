@@ -5,7 +5,7 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { SwitchToggleType } from '@/components';
 import { useScreenshotToReportEnabled } from '@/components/Screenshot/hooks';
 import useInterval from 'react-use/lib/useInterval';
-import { NEED_DEVSETTINGBLOCKS } from '@/constant/env';
+import { NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { useTheme2024 } from '@/hooks/theme';
 import { getTimeSpanByMs } from '@/utils/time';
 

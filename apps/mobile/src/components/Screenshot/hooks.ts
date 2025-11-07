@@ -19,7 +19,7 @@ import { useAtomCallback } from 'jotai/utils';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useRefState } from '@/hooks/common/useRefState';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
 import { pick } from 'lodash';
