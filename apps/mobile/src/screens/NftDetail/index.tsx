@@ -231,13 +231,25 @@ export const NFTDetailScreen = () => {
 
   const handleSend = useCallback(
     async (iToken: NFTItem, address: string, accountType: KEYRING_TYPE) => {
-      const fromAccount =
-        address && accountType
-          ? accounts.find(i => isSameAddress(address, i.address))
-          : undefined;
-      if (!fromAccount) {
-        return;
+      const foundRet = {
+        matched: null as null | (typeof accounts)[number],
+        onlyMatchedAddress: null as null | (typeof accounts)[number],
+      };
+
+      for (const acc of accounts) {
+        if (isSameAddress(acc.address, address)) {
+          foundRet.onlyMatchedAddress = acc;
+
+          if (acc.type === accountType) {
+            foundRet.matched = acc;
+            foundRet.onlyMatchedAddress = null;
+            break;
+          }
+        }
       }
+      const fromAccount = foundRet.matched || foundRet.onlyMatchedAddress;
+      if (!fromAccount) return;
+
       await switchSceneCurrentAccount('SendNFT', fromAccount);
       naviPush(RootNames.StackTransaction, {
         screen: RootNames.SendNFT,
@@ -321,6 +333,7 @@ export const NFTDetailScreen = () => {
           } as ItemBase,
         ];
   }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
+
   useEffect(() => {
     const id = setTimeout(() => {
       getCacheTop10Assets({

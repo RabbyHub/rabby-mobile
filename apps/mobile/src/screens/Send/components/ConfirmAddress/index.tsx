@@ -11,7 +11,7 @@ import AddressSource from '../AddressSourceCard';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useWhitelist } from '@/hooks/whitelist';
-import { useRisks } from './risk';
+import { useRisks } from '@/components/SendLike/risk';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import {
