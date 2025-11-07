@@ -31,6 +31,8 @@ export const openapi = new OpenApiService({
   store: isNonPublicProductionEnv
     ? openApiStore
     : {
+        apiKey: openApiStore.apiKey,
+        apiTime: openApiStore.apiTime,
         host: INITIAL_OPENAPI_URL,
       },
   plugin: SignApiPlugin,
@@ -44,6 +46,8 @@ export const testOpenapi = new OpenApiService({
     host: __DEV__
       ? 'https://app-api.testnet.rabby.io'
       : 'https://app-api.testnet.rabby.io',
+    apiKey: openApiStore.apiKey,
+    apiTime: openApiStore.apiTime,
   },
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',
