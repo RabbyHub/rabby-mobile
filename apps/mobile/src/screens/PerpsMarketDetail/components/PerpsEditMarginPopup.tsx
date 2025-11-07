@@ -203,9 +203,8 @@ export const PerpsEditMarginPopup: React.FC<{
   // Handle input focus - scroll to bottom
   const handleInputFocus = useMemoizedFn(() => {
     setTimeout(() => {
-      // Use scrollTo with a large Y value to ensure scrolling works even when content is short
-      scrollViewRef.current?.scrollTo({ y: 9999, animated: true });
-    }, 100);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 200);
   });
 
   const { height } = useWindowDimensions();
