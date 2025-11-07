@@ -95,10 +95,9 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   ]);
 
   return (
-    <View style={styles.sliderContainer}>
+    <View key={key} style={styles.sliderContainer}>
       <View style={styles.sliderWrapper}>
         <Slider
-          key={key}
           allowTouchTrack={!disabled}
           disabled={disabled}
           value={value}

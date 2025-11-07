@@ -2480,6 +2480,7 @@
         "amountToReduce": "Amount to reduce",
         "liqPrice": "Liq. Price:",
         "insufficientMargin": "Insufficient margin",
+        "insufficientMarginToReduce": "Insufficient margin to reduce position.",
         "perpsBalance": "Perps Balance",
         "available": "available"
       },

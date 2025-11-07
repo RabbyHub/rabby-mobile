@@ -447,7 +447,7 @@ export const PerpsEditMarginPopup: React.FC<{
             {!canReduce && action === 'reduce' ? (
               <Tip
                 content={t(
-                  'page.perpsDetail.PerpsEditMarginPopup.insufficientMargin',
+                  'page.perpsDetail.PerpsEditMarginPopup.insufficientMarginToReduce',
                 )}>
                 <Button
                   type="primary"

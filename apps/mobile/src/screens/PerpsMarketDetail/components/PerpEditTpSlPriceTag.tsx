@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -98,16 +97,6 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   // Handle price input change
   const handlePriceChange = useMemoizedFn((v: string) => {
     setAutoClosePrice(v);
-    // Auto update gain percentage
-    const value = v.startsWith('$') ? v.slice(1) : v;
-    if (value) {
-      const costPrice =
-        type === 'openPosition' ? markPrice : entryPrice || markPrice;
-      const priceDifference = Math.abs(Number(value) - costPrice);
-      const pnlUsdValue = priceDifference * size;
-      console.log('pnlUsdValue', pnlUsdValue);
-      console.log('margin', margin);
-    }
   });
 
   // 验证价格输入
@@ -123,9 +112,6 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
       resObj.isValid = false;
       return resObj;
     }
-
-    const costPrice =
-      type === 'openPosition' ? markPrice : entryPrice || markPrice;
 
     // 验证止盈价格
     if (actionType === 'tp') {
@@ -192,8 +178,6 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     liqPrice,
     pxDecimals,
     actionType,
-    type,
-    entryPrice,
   ]);
 
   const isValidPrice = priceValidation.isValid;
@@ -258,7 +242,9 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
       if (initTpOrSlPrice) {
         handlePriceChange(initTpOrSlPrice);
       } else {
-        handleInitGainPct();
+        if (type === 'openPosition') {
+          handleInitGainPct();
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -266,9 +252,12 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
 
   useEffect(() => {
     if (modalVisible) {
-      setTimeout(() => {
+      // Increase delay to wait for modal animation to complete
+      const timer = setTimeout(() => {
         autoCloseInputRef.current?.focus();
-      }, 100);
+      }, 300);
+
+      return () => clearTimeout(timer);
     }
   }, [modalVisible]);
 
@@ -321,7 +310,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
         }}>
         <KeyboardAvoidingView
           style={styles.keyboardAvoidView}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          enabled={Platform.OS === 'ios'}>
           <TouchableOpacity
             activeOpacity={1}
             style={styles.modalOverlay}
@@ -331,13 +321,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
               }
               setModalVisible(false);
             }}>
-            <TouchableOpacity
-              onPress={event => {
-                Keyboard.dismiss();
-                event.stopPropagation();
-              }}
-              activeOpacity={1}
-              style={styles.container}>
+            <View style={styles.container}>
               <View style={styles.inner}>
                 <TouchableOpacity
                   style={styles.closeButton}
@@ -427,7 +411,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                           : t('page.perpsDetail.PerpsAutoCloseModal.youLoss')}
                         :
                       </Text>
-                      {priceValidation.error ? (
+                      {priceValidation.error || !autoClosePrice ? (
                         <Text style={styles.infoText}>-</Text>
                       ) : (
                         <Text
@@ -456,7 +440,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                             )}
                         :
                       </Text>
-                      {priceValidation.error ? (
+                      {priceValidation.error || !autoClosePrice ? (
                         <Text style={styles.infoText}>-</Text>
                       ) : (
                         <Text
@@ -487,7 +471,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                   />
                 </View>
               </View>
-            </TouchableOpacity>
+            </View>
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </Modal>
