@@ -66,7 +66,6 @@ import { HomeAddressItem } from './HomeAddressItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { IS_IOS } from '@/core/native/utils';
-import { isNonPublicProductionEnv } from '@/constant/env';
 
 const HeaderHeight = 24;
 

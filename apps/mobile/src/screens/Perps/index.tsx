@@ -72,7 +72,7 @@ import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
 export const PerpsScreen = () => {
   const { t } = useTranslation();
 
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useRabbyAppNavigation();
 
