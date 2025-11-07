@@ -171,6 +171,7 @@ export function MultiAddressHomeHeader(
 
   const previousLoading = usePrevious(loading);
   useEffect(() => {
+    if (data.isLoss) return;
     if (!loading && previousLoading) {
       gasketWebViewRef.current?.sendMessage?.({
         type: 'GASKETVIEW:TOGGLE_LOADING',
@@ -179,7 +180,7 @@ export function MultiAddressHomeHeader(
         },
       });
     }
-  }, [loading, previousLoading]);
+  }, [data.isLoss, loading, previousLoading]);
 
   return (
     <View style={style}>
