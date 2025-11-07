@@ -202,7 +202,11 @@ export const FullDefiRenderItem = ({
             onRefresh={handleRefresh}
             address={account.address}
             addressType={account.type}
-            manageAction={config[data.id]?.onManage}
+            manageAction={
+              config?.[data.id]?.showManage && config[data.id]?.showManage(item)
+                ? config[data.id]?.onManage
+                : undefined
+            }
             key={`${item.id}-${account.address}-${data.netWorth}`}
             session={
               data?.site_url && data?.logo
