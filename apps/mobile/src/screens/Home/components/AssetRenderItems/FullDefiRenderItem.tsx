@@ -39,7 +39,7 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 export const FullDefiRenderItem = ({
-  data: _data,
+  data,
   account,
   showAccount,
   style,
@@ -47,33 +47,11 @@ export const FullDefiRenderItem = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const setRefreshHistoryId = useSetAtom(refreshHistoryIdAtom);
   const isFromAppChain = useMemo(() => {
-    return isAppChain(_data?.chain || '');
-  }, [_data?.chain]);
+    return isAppChain(data?.chain || '');
+  }, [data?.chain]);
 
-  const { data: currentPortfolio, updateSpecificProtocol } = usePortfolios(
-    account?.address,
-    false,
-  );
-  const { loadSpecificDefi, assetsMap } = useAssets({ hideCombined: true });
-  const data = useMemo(
-    // 优先使用内存defi列表中的实时数据，兜底用页面参数数据
-    () => {
-      // return _data;
-      if (!account) {
-        return _data;
-      }
-      if (showAccount) {
-        return (
-          assetsMap[account?.address?.toLowerCase()].portfolios?.find(
-            item => item.id === _data.id,
-          ) || _data
-        );
-      } else {
-        return currentPortfolio.find(item => item.id === _data.id) || _data;
-      }
-    },
-    [_data, account, assetsMap, currentPortfolio, showAccount],
-  );
+  const { updateSpecificProtocol } = usePortfolios(account?.address, false);
+  const { loadSpecificDefi } = useAssets({ hideCombined: true });
   const { openTab } = useBrowser();
 
   const handleOpenSite = useCallback(() => {
@@ -132,18 +110,18 @@ export const FullDefiRenderItem = ({
         return;
       }
       if (showAccount) {
-        loadSpecificDefi(account.address, _data?.id, _data?.chain || '');
+        loadSpecificDefi(account.address, data?.id, data?.chain || '');
       } else {
         setRefreshHistoryId(e => e + 1);
-        updateSpecificProtocol(_data?.id, _data?.chain || '');
+        updateSpecificProtocol(data?.id, data?.chain || '');
       }
     }, 200);
   }, [
     account,
     showAccount,
     loadSpecificDefi,
-    _data?.id,
-    _data?.chain,
+    data?.id,
+    data?.chain,
     setRefreshHistoryId,
     updateSpecificProtocol,
   ]);

@@ -144,6 +144,7 @@ export const ChainSelector = ({
         <View style={styles.chainIconsContainer}>
           {top3Chains.map((chainId, index) => (
             <View
+              key={chainId}
               style={StyleSheet.flatten([
                 styles.chainIconContainer,
                 { marginLeft: index === 0 ? 0 : -8 },

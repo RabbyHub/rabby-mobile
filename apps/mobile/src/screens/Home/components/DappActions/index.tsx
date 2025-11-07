@@ -34,14 +34,25 @@ interface ActionButtonProps {
   style?: StyleProp<ViewStyle>;
   text: string;
   onPress: () => void;
+  disabled?: boolean;
 }
 
-const ActionButton = ({ text, onPress, style }: ActionButtonProps) => {
+const ActionButton = ({
+  text,
+  onPress,
+  style,
+  disabled,
+}: ActionButtonProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const debounceOnPress = useMemo(() => debounce(onPress, 200), [onPress]);
   return (
-    <TouchableOpacity style={[styles.button, style]} onPress={debounceOnPress}>
-      <Text style={styles.buttonText}>{text}</Text>
+    <TouchableOpacity
+      style={[styles.button, style]}
+      disabled={disabled}
+      onPress={disabled ? undefined : debounceOnPress}>
+      <Text style={[styles.buttonText, disabled && styles.disabledText]}>
+        {text}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -62,7 +73,6 @@ export const DappActions = ({
   session?: typeof INTERNAL_REQUEST_SESSION;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-
   const withdrawAction = useMemo(
     () =>
       data?.find(
@@ -251,5 +261,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  disabledText: {
+    color: colors2024['neutral-secondary'],
   },
 }));
