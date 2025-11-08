@@ -319,8 +319,14 @@ const StackMain = () => {
           },
         })}
         getId={({ params }) => {
-          // 使用时间戳作为唯一ID，确保每次都是新页面
-          return params?.timestamp?.toString() || 'default';
+          const idStr = [
+            params.token.id,
+            params.isSwapToTokenDetail ? 'swapTo' : 'normal',
+            params.tokenSelectType,
+          ]
+            .filter(Boolean)
+            .join('-');
+          return idStr || undefined;
         }}
       />
       <RootStack.Screen
@@ -336,8 +342,14 @@ const StackMain = () => {
           },
         })}
         getId={({ params }) => {
-          // 使用时间戳作为唯一ID，确保每次都是新页面
-          return params?.timestamp?.toString() || 'default';
+          const idStr = [
+            params.token.id,
+            params.isSwapToTokenDetail ? 'swapTo' : 'normal',
+            params.tokenSelectType,
+          ]
+            .filter(Boolean)
+            .join('-');
+          return idStr || undefined;
         }}
       />
       <RootStack.Screen
