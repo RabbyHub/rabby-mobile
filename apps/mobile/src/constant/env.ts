@@ -42,5 +42,6 @@ export const appIsDev = __DEV__;
 
 export const SAFE_API_KEY =
   /* from .env* */ RABBY_MOBILE_SAFE_API_KEY_ ||
-  /* for developer */ process.env.MOBILE_SAFE_API_KEY ||
+  /* for developer */ process.env.RABBY_MOBILE_SAFE_API_KEY ||
+  process.env.MOBILE_SAFE_API_KEY ||
   '';
