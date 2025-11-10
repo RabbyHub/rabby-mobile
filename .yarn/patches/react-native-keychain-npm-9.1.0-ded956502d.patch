@@ -1,0 +1,13 @@
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
+index f01ff2400e159314d19d545885e255b5d6c628ac..765ca1157cecd1cd842c08a840003c7d313757e7 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
+@@ -202,7 +202,7 @@ class CipherStorageKeystoreRsaEcb(@NonNull reactContext: ReactApplicationContext
+ 
+     val keySize = if (isForTesting) ENCRYPTION_KEY_SIZE_WHEN_TESTING else ENCRYPTION_KEY_SIZE
+ 
+-    val validityDuration = 5
++    val validityDuration = 1
+     val keyGenParameterSpecBuilder =
+         KeyGenParameterSpec.Builder(alias, purposes)
+             .setBlockModes(BLOCK_MODE_ECB)
