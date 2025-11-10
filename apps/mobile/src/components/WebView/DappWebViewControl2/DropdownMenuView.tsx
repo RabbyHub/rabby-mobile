@@ -1,8 +1,8 @@
-import * as DropdownMenu from 'zeego/dropdown-menu';
+import * as DropdownMenu from 'zeego/src/dropdown-menu';
+import { MenuItemCommonProps } from 'zeego/src/menu';
 import type { DropdownMenuContentProps } from '@radix-ui/react-dropdown-menu';
 import { ImageSourcePropType, Pressable, Text } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
-import { MenuItemCommonProps } from 'zeego/lib/typescript/menu';
 
 export interface MenuAction {
   title: string;
@@ -12,7 +12,6 @@ export interface MenuAction {
   key: string;
   iosIconSource?: ImageSourcePropType;
   iosIcon?: MenuItemCommonProps['ios'];
-  androidIcon?: MenuItemCommonProps['androidIcon'];
   androidIconName?: string;
 }
 

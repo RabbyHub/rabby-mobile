@@ -26,6 +26,7 @@ import { useBiometrics } from './biometrics';
 import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
 import { browserStateAtom } from './browser/useBrowser';
 import { JSBridgeHarden } from '../../../../packages/rn-webview-bridge/src/browserScripts';
+import { apisSafe } from '@/core/apis/safe';
 
 const syncCustomTestChainList = () => {
   try {
@@ -128,6 +129,17 @@ export function useInitializeAppOnTop() {
       keyringService.off('unlock', onUnlock);
     };
   }, [fetchTop5TokensForAllAccountsOnce]);
+
+  React.useEffect(() => {
+    const onUnlock = () => {
+      apisSafe.syncAllGnosisNetworks();
+    };
+    keyringService.on('unlock', onUnlock);
+
+    return () => {
+      keyringService.off('unlock', onUnlock);
+    };
+  }, []);
 
   React.useEffect(() => {
     if (isAppUnlocked) {

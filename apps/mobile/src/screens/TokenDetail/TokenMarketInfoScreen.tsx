@@ -6,7 +6,7 @@ import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken, AbstractProject } from '@/screens/Home/types';
+import { AbstractProject } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -32,29 +32,24 @@ import { TokenChartRef, TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
-import { CombineTokensItem } from '../Home/hooks/store';
 import { formatTokenAmount } from '@/utils/number';
-import { useAssets } from '../Search/useAssets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
-import { ellipsisAddress } from '@/utils/address';
-import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
 import RcIconWarningCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useAtom, useSetAtom } from 'jotai';
 import { isFromBackAtom } from '../Swap/hooks/atom';
 import {
   fetchTokenPriceData,
-  useTokenBalance,
+  useSingleTokenBalance,
   useTokenMarketInfo,
 } from './hook';
 import { RightMore } from './components/RightMore';
 import HeaderBalanceCard from './components/HeaderBalanceCard';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 import CustomLabel from './components/CustomLabel';
@@ -127,17 +122,8 @@ export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
 
 export const TokenMarketInfoScreen = () => {
   const route =
-    useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
-  const {
-    fromPortfolio,
-    token: _token,
-    account,
-    needUseCacheToken,
-    unHold: _unHold,
-    isSingleAddress,
-    tokenSelectType,
-    rawPortfolios, // only isSingleAddress === true can use
-  } = route.params || {};
+    useRoute<GetRootScreenNavigationProps<'TokenMarketInfo'>['route']>();
+  const { token, account, tokenSelectType } = route.params || {};
 
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
@@ -145,141 +131,13 @@ export const TokenMarketInfoScreen = () => {
 
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
-  const { assetsMap, getCacheTop10Assets, getTokenCombined } = useAssets({
-    hideCombined: true,
-  });
+  const { list: accounts } = useAccountInfo();
 
-  const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
-    if (fromPortfolio || needUseCacheToken) {
-      const combinedToken = getTokenCombined(_token._tokenId, _token.chain);
-      return combinedToken?.[0] || _token;
-    }
-    return _token;
-  }, [getTokenCombined, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
-  const { top10Addresses, list: accounts } = useAccountInfo();
 
-  const finalAccount =
-    account || accounts[0] || preferenceService.getFallbackAccount();
-
-  const { data: tokenEntityList } = useRequest(
-    async () => {
-      if (!token || !token._tokenId || !top10Addresses.length) {
-        return [];
-      }
-
-      return await TokenItemEntity.batchMultiAddressTokensByIdAndChain(
-        isSingleAddress
-          ? [finalAccount!.address.toLowerCase()]
-          : top10Addresses.map(item => item.toLowerCase()),
-        token.chain,
-        token._tokenId,
-      );
-    },
-    {
-      refreshDeps: [
-        token.chain,
-        token._tokenId,
-        top10Addresses,
-        isSingleAddress,
-        finalAccount?.address,
-      ],
-    },
-  );
-
-  const relateDefiList = useMemo(() => {
-    const resList = [] as RelatedDeFiType[];
-    if (isSingleAddress && rawPortfolios && rawPortfolios.length) {
-      rawPortfolios?.forEach(portfolio => {
-        if (portfolio.chain !== token.chain) {
-          return;
-        }
-
-        let amount = 0;
-        const { _portfolios } = portfolio;
-        _portfolios?.forEach(portfolioItem => {
-          const { _tokenList } = portfolioItem;
-
-          const sameItem = _tokenList.find(
-            item => item._tokenId === token._tokenId,
-          );
-          if (sameItem) {
-            amount += sameItem.amount;
-          }
-        });
-
-        amount &&
-          resList.push({
-            ...portfolio,
-            amount,
-            address: finalAccount.address,
-          });
-      });
-      return resList;
-    }
-
-    Object.keys(assetsMap).map(address => {
-      if (isSingleAddress && !isSameAddress(address, finalAccount!.address)) {
-        return;
-      }
-
-      if (
-        !isSingleAddress &&
-        accounts.findIndex(item => isSameAddress(item.address, address)) < 0
-      ) {
-        // filter watch address not in myaccounts
-        return;
-      }
-
-      const { portfolios } = assetsMap[address];
-      portfolios?.map(portfolio => {
-        if (portfolio.chain !== token.chain) {
-          return;
-        }
-
-        let amount = 0;
-        const { _portfolios } = portfolio;
-        _portfolios?.map(portfolioItem => {
-          const { _tokenList } = portfolioItem;
-
-          const sameItem = _tokenList.find(
-            item => item._tokenId === token._tokenId,
-          );
-          if (sameItem) {
-            amount += sameItem.amount;
-          }
-        });
-
-        amount &&
-          resList.push({
-            ...portfolio,
-            amount,
-            address,
-          });
-      });
-    });
-    return resList;
-  }, [
-    token,
-    assetsMap,
-    isSingleAddress,
-    finalAccount,
-    accounts,
-    rawPortfolios,
-  ]);
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      getCacheTop10Assets({
-        disableNFT: true,
-        disableToken: true,
-      });
-    }, 200);
-    return () => {
-      clearTimeout(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const finalAccount = useMemo(() => {
+    return account || accounts[0] || preferenceService.getFallbackAccount();
+  }, [account, accounts]);
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
 
@@ -329,11 +187,9 @@ export const TokenMarketInfoScreen = () => {
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
 
   const refreshTag = useCallback(() => {
-    if (isSingleAddress) {
-      singleTokenRefresh();
-    }
+    singleTokenRefresh();
     tokenRefresh();
-  }, [isSingleAddress, singleTokenRefresh, tokenRefresh]);
+  }, [singleTokenRefresh, tokenRefresh]);
 
   const getHeaderTitle = useCallback(() => {
     return (
@@ -347,69 +203,17 @@ export const TokenMarketInfoScreen = () => {
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
-  const tokenFromAddress = useMemo(() => {
-    const res = [] as TokenFromAddressItem[];
-    if (isSingleAddress && token.amount) {
-      const dbToken = tokenEntityList?.find(item =>
-        isSameAddress(item.owner_addr, finalAccount!.address),
-      );
-      const amount = dbToken?.amount || token.amount;
-      res.push({
-        ...token,
-        amountStr: formatTokenAmount(amount),
-        amount,
-        address: finalAccount!.address,
-        type: finalAccount!.type,
-        aliasName:
-          finalAccount!.aliasName || ellipsisAddress(finalAccount!.address),
-      });
-      return res;
-    } else {
-      const { fromAddress } = token as CombineTokensItem;
-
-      const fromAddressList =
-        tokenEntityList?.map(item => ({
-          address: item.owner_addr,
-          amount: item.amount,
-        })) || fromAddress;
-
-      accounts.map(item => {
-        const idx = fromAddressList?.findIndex(i =>
-          isSameAddress(i.address, item.address),
-        );
-        if (idx > -1) {
-          res.push({
-            address: item.address,
-            amountStr: formatTokenAmount(fromAddressList[idx].amount),
-            amount: fromAddressList[idx].amount,
-            aliasName: item.aliasName || ellipsisAddress(item.address),
-            type: item.type,
-          });
-        }
-      });
-
-      return res.sort((a, b) =>
-        new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
-      );
-    }
-  }, [token, accounts, isSingleAddress, finalAccount, tokenEntityList]);
-
-  const unHold = useMemo(
-    () => _unHold || tokenFromAddress.length === 0,
-    [_unHold, tokenFromAddress],
-  );
-
   const getHeaderRight = useCallback(() => {
     return (
       <RightMore
         token={token}
         triggerUpdate={triggerUpdate}
-        isMultiAddress={!isSingleAddress}
+        isMultiAddress={false}
         refreshTags={refreshTag}
-        unHold={unHold}
+        unHold={false}
       />
     );
-  }, [token, triggerUpdate, isSingleAddress, refreshTag, unHold]);
+  }, [token, triggerUpdate, refreshTag]);
 
   useFocusEffect(
     useCallback(() => {
@@ -426,7 +230,7 @@ export const TokenMarketInfoScreen = () => {
       headerRight: getHeaderRight,
       headerTitleAlign: 'left',
     });
-  }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
+  }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
@@ -463,7 +267,7 @@ export const TokenMarketInfoScreen = () => {
       // 关闭弹窗隐藏
       setIsFromBack(false);
       navigation.push(RootNames.StackTransaction, {
-        screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
+        screen: account ? RootNames.Swap : RootNames.MultiSwap,
         params: {
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: token?._tokenId,
@@ -491,7 +295,7 @@ export const TokenMarketInfoScreen = () => {
       // 关闭弹窗隐藏
       setIsFromBack(false);
       navigation.push(RootNames.StackTransaction, {
-        screen: isSingleAddress ? RootNames.Bridge : RootNames.MultiBridge,
+        screen: account ? RootNames.Bridge : RootNames.MultiBridge,
         params: {
           toChainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           toTokenId: token?._tokenId,
@@ -501,18 +305,14 @@ export const TokenMarketInfoScreen = () => {
   );
 
   const { amountSum, usdValue, percentChange, isLoss, is24hNoChange } =
-    useTokenBalance({
-      token: tokenWithAmount || token,
-      amountList: tokenFromAddress,
-      isSingleAddress: !!isSingleAddress,
-      relateDefiList,
-      currentAddress: finalAccount?.address,
+    useSingleTokenBalance({
+      token,
     });
 
   const { t } = useTranslation();
 
   const handleOpenTokenDetail = useCallback(() => {
-    navigate(RootNames.TokenDetail, {
+    navigateDeprecated(RootNames.TokenDetail, {
       ...route.params,
     });
   }, [route.params]);
@@ -687,10 +487,6 @@ export const TokenMarketInfoScreen = () => {
     });
   }, [handleRefresh, handleRefreshChart, refreshAsync, refreshTokenEntity]);
 
-  if (isSingleAddress && !finalAccount) {
-    return null;
-  }
-
   return (
     <NormalScreenContainer2024
       type="bg1"
@@ -725,7 +521,7 @@ export const TokenMarketInfoScreen = () => {
               <RefreshControl refreshing={false} onRefresh={handleRefresh} />
             }
             style={styles.innerContainer}>
-            {!!amountSum && (
+            {!!account && (
               <HeaderBalanceCard
                 amount={formatTokenAmount(amountSum)}
                 usdValue={usdValue}
@@ -798,6 +594,7 @@ export const TokenMarketInfoScreen = () => {
               hideActivity={!tokenWithAmount?.support_market_data}
               tokenId={token._tokenId}
               chainId={token.chain}
+              symbol={token.symbol}
             />
             <View style={{ height: isAndroid ? 200 + safeOffBottom : 156 }} />
           </ScrollView>
@@ -811,6 +608,7 @@ export const TokenMarketInfoScreen = () => {
             {riskInfo.content}
             <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
             <IssuerAndListSite
+              account={finalAccount}
               tokenEntity={tokenEntity}
               entityLoading={entityLoading}
             />

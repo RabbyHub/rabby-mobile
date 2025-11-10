@@ -10,14 +10,20 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
+import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ITokenCheck, TokenSelectorProps } from './TokenSelectorSheetModal';
-import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
+import {
+  formatSpeicalAmount,
+  formatTokenAmount,
+  splitNumberByStep,
+} from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { useTranslation } from 'react-i18next';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import LinearGradient from 'react-native-linear-gradient';
+import { tokenAmountBn } from '@/screens/Swap/utils';
 
 function useLoadTokenList({
   onTokenChange,
@@ -66,6 +72,7 @@ interface TokenAmountInputProps {
   isEstimatingGas?: boolean;
   defaultAccount?: KeyringAccountWithAlias | null;
   disableItemCheck?: ITokenCheck;
+  inSufficient?: boolean;
 }
 
 /**
@@ -91,6 +98,7 @@ export const TokenAmountInput = React.forwardRef<
       placeholder,
       disableItemCheck,
       defaultAccount,
+      inSufficient,
     },
     ref,
   ) => {
@@ -113,8 +121,8 @@ export const TokenAmountInput = React.forwardRef<
       const num = Number(value);
 
       const valueText = num
-        ? `≈$${splitNumberByStep(((num || 0) * token.price || 0).toFixed(2))}`
-        : '≈$0';
+        ? `$${splitNumberByStep(((num || 0) * token.price || 0).toFixed(2))}`
+        : '$0';
 
       return {
         valueNum: num,
@@ -179,7 +187,7 @@ export const TokenAmountInput = React.forwardRef<
             </View>
           </SilentTouchableView>
           {/* max button */}
-          {!value &&
+          {/* {!value &&
             token.amount > 0 &&
             (isEstimatingGas ? null : (
               <TouchableOpacity
@@ -188,19 +196,43 @@ export const TokenAmountInput = React.forwardRef<
                 onPress={handleClickMaxButton}>
                 <Text style={styles.maxButtonText}>MAX</Text>
               </TouchableOpacity>
-            ))}
-          <View style={styles.placeholder} />
-          <TokenSelect
-            accountInScreen={defaultAccount}
-            chainId={''}
-            token={token}
-            disableItemCheck={disableItemCheck}
-            onTokenChange={handleCurrentTokenChange}
-            excludeTokens={excludeTokens}
-            type="send"
-            placeholder={placeholder}
-            supportChains={[]}
-          />
+            ))} */}
+          {/* <View style={styles.placeholder} /> */}
+          <View style={styles.rightToken}>
+            <TokenSelect
+              accountInScreen={defaultAccount}
+              chainId={''}
+              token={token}
+              disableItemCheck={disableItemCheck}
+              onTokenChange={handleCurrentTokenChange}
+              excludeTokens={excludeTokens}
+              type="send"
+              placeholder={placeholder}
+              supportChains={[]}
+            />
+            <View style={styles.balanceWrapper}>
+              <RcIconWalletCC
+                width={16}
+                height={16}
+                color={
+                  inSufficient
+                    ? colors2024['red-default']
+                    : colors2024['neutral-foot']
+                }
+              />
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[
+                  styles.balanceText,
+                  inSufficient && styles.insufficientInput,
+                ]}>
+                {token
+                  ? formatTokenAmount(tokenAmountBn(token).toString(10)) || '0'
+                  : 0}
+              </Text>
+            </View>
+          </View>
         </View>
       </>
     );
@@ -219,6 +251,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       paddingRight: 20,
     },
+    balanceWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+    },
+    balanceText: {
+      fontSize: 13,
+      color: '#6A7587',
+      maxWidth: 220,
+    },
+    insufficientInput: {
+      color: colors2024['red-default'],
+    },
 
     placeholder: {
       height: 28,
@@ -227,7 +273,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       marginHorizontal: 12,
     },
 
-    rightToken: {},
+    rightToken: {
+      flexDirection: 'column',
+      alignItems: 'flex-end',
+      gap: 12,
+    },
     rightInner: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -264,7 +314,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       position: 'relative',
       fontFamily: 'SF Pro Rounded',
       color: colors2024['neutral-title-1'],
-      marginLeft: 7,
+      // marginLeft: 7,
       flex: 1,
       paddingTop: 0,
       paddingBottom: 0,

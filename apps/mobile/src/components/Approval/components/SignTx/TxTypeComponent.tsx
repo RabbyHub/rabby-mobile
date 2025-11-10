@@ -26,6 +26,7 @@ export const TxTypeComponent = ({
   originLogo,
   account,
   multiAction,
+  inDappAction,
 }: {
   actionRequireData: ActionRequireData;
   actionData: ParsedActionData;
@@ -40,6 +41,7 @@ export const TxTypeComponent = ({
   originLogo?: string;
   account: Account;
   multiAction?: MultiActionProps;
+  inDappAction?: boolean;
 }) => {
   if (!isReady) {
     return <Loading />;
@@ -65,6 +67,7 @@ export const TxTypeComponent = ({
         origin={origin}
         originLogo={originLogo}
         multiAction={multiAction}
+        inDappAction={inDappAction}
       />
     );
   }

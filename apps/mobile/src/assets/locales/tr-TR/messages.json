@@ -48,7 +48,11 @@
         "Revoke": "İptal edilen {{token}} Onayı",
         "Approve": "Onaylandı",
         "Contract": "Sözleşmeyi Dağıt",
-        "Cancel": "Bekleyen İşlemi İptal Et"
+        "Cancel": "Bekleyen İşlemi İptal Et",
+        "LendingBorrow": "Ödünç Al",
+        "LendingRepay": "Geri Ödeme",
+        "LendingSupply": "Arz",
+        "LendingWithdraw": "Çekilme"
       },
       "detail": {
         "Succeeded": "Başarılı",
@@ -648,7 +652,13 @@
       "sectionTo": {
         "addrValidator__empty": "Lütfen adresi girin",
         "addrValidator__invalid": "Bu adres geçersizdir.",
-        "searchInputPlaceholder": "Bir adres girin veya tarayın"
+        "searchInputPlaceholder": "Bir adres girin veya tarayın",
+        "positiveTips": {
+          "sentRecently": "Son zamanlarda gönderildi",
+          "yourOwnAddress": "Kendi adresiniz",
+          "whitelistedAddress": "Beyaz listeye alınmış adres"
+        },
+        "selectPlaceholder": "Adres Seçin"
       },
       "balanceWarn": {
         "gasFeeReservation": "Gaz ücreti rezervasyonu gereklidir"
@@ -671,10 +681,16 @@
       "ContractAddress": "Sözleşme Adresi",
       "whitelistAlert__notWhitelisted": "Adres beyaz listeye alınmamıştır. Geçici olarak transfer izni vermeyi kabul ediyorum.",
       "whitelistAlert__disabled": "Beyaz liste devre dışı. İstediğiniz herhangi bir adrese transfer yapabilirsiniz.",
-      "noSupprotTokenForDex": "Bu token bu borsa tarafından desteklenmeyebilir. Kaybı önlemek için işlem yapmadan önce kontrol edin.",
-      "noSupprotTokenForSafe": "Gönderdiğiniz tokenların olduğu Safe adresi bu zincirde dağıtılmamıştır. Devam etmeden önce kontrol edin, kaybı önlemek için.",
-      "noSupportTokenForChain": "Alıcı adresi farklı bir zincirde bir kontrat adresidir. İşleme devam etmeden önce kontrol edin, kayıpları önlemek için.",
-      "addressDetail": "Adres Detayı"
+      "addressDetail": "Adres Detayı",
+      "newAmount": "Miktar",
+      "noSupportTokenReason": {
+        "forSafeSimple": "Bu Safe adresi bu zincir üzerinde dağıtılmamıştır.",
+        "forChainSimple": "Alıcı adresi farklı bir zincirdeki bir kontrat adresidir.",
+        "forDexSimple": "Bu token bu borsa tarafından desteklenmeyebilir.",
+        "forSafe": "Gönderdiğiniz token'ların güvenli adresi bu zincirde dağıtılmamıştır. Kaybı önlemek için ilerlemeden önce kontrol edin.",
+        "forDex": "Bu token bu borsa tarafından desteklenmeyebilir. Kaybı önlemek için devam etmeden önce kontrol edin.",
+        "forChain": "Alıcı adresi farklı bir zincirdeki bir sözleşme adresidir. Devam etmeden önce kaybı önlemek için kontrol edin."
+      }
     },
     "sendPoly": {
       "modals": {
@@ -704,7 +720,7 @@
       "risks": {
         "scamAddress": "Alıcı adresi Rabby tarafından dolandırıcılık adresi olarak işaretlendi.",
         "contractAddress": "Alıcı adresi bir sözleşme adresidir, bu potansiyel olarak fon kaybına neden olabilir.",
-        "dexNoDeposite": "Alıcı adresi bir CEX'ten gelen bir non-deposit adresidir. Lütfen depozit adresinizin doğru olduğundan emin olun.",
+        "cexNoDeposite": "Alıcı adresi bir CEX'ten gelen bir non-deposit adresidir. Lütfen depozit adresinizin doğru olduğundan emin olun.",
         "noSend": "Bu adrese son 180 gündür fon göndermediniz. Devam etmek istediğinizi lütfen onaylayın."
       },
       "brandNameTail": "Adres",
@@ -986,9 +1002,10 @@
         "queue": "Kuyruk",
         "websites": "Web Siteleri",
         "copyTrading": "Copy Trading",
-        "watchlist": "Göz Atma Listesi",
+        "watchlist": "Token İzleme Listesi",
         "perps": "Perps",
-        "perpsMarketList": "Daha Fazla Perps"
+        "perpsMarketList": "Daha Fazla Perps",
+        "lending": "Kredi verme"
       }
     },
     "dashboard": {
@@ -1097,7 +1114,6 @@
           "entry": "Rabby'e aktarmak güvenli mi?",
           "description": "Verileriniz güvenli bir şekilde şifrelendi ve cihazınızda yerel olarak depolandı. Rabby, özel bilgilerinize erişemez ve bu bilgiler asla üçüncü şahıslarla paylaşılmaz."
         },
-        "safe": "Güvenli",
         "seedPhrase": "Seed Kelimesini İçe Aktar",
         "privateKey": "Özel Anahtarı İçe Aktar",
         "hardWare": "Donanım Cüzdanlarını Bağlayın",
@@ -1323,7 +1339,18 @@
       },
       "Quick": "Hızlı",
       "createNewSeedPhrase": "Yeni Seed Phrase Oluştur",
-      "createNewAddress": "Yeni Cüzdan Oluştur"
+      "createNewAddress": "Yeni Cüzdan Oluştur",
+      "whatIsPrivateKey": {
+        "title4": "Güvenlik",
+        "ButtonGotIt": "Anladım.",
+        "description2": "Eğer özel anahtarınızı kaybedersez, cüzdanınızı geri yükleyemezsiniz.",
+        "title2": "Yedekleme",
+        "title": "Özel anahtar nedir",
+        "description4": "Özel anahtarınız cihazınızda yerel olarak saklanır ve şifrenizle şifrelenir. Ona yalnızca siz erişebilirsiniz. Rabby özel anahtarınıza erişemez veya onu geri alamaz.",
+        "description3": "Asla özel anahtarınızı paylaşmayın—ona erişimi olan herkes fonlarınızı kontrol edebilir.",
+        "description1": "Özel anahtar, cüzdanınıza erişmek ve kontrol etmek için kullanılan harf ve rakamlar dizisidir. Cüzdanınızı herhangi bir cihazda kurtarmak için bunu kullanabilirsiniz.",
+        "title3": "Asla Paylaşma"
+      }
     },
     "unlock": {
       "btn": {
@@ -1600,7 +1627,9 @@
       "top-100": "En İyi 100",
       "initialPointsClaimEnded": "Başlangıç Noktaları talebi sona erdi",
       "code-set-successfully": "Referral kodu başarıyla ayarlandı.",
-      "firstRoundEnded": "🎉 Rabby Points'ın ilk turu sona erdi"
+      "firstRoundEnded": "🎉 Rabby Points'ın ilk turu sona erdi",
+      "xPoints": "{{point}} Puan",
+      "alreadyClaimedXPoints": "Zaten talep edildi: {{point}}"
     },
     "customTestnet": {
       "CustomTestnetForm": {
@@ -1821,16 +1850,6 @@
         "marketData": "Piyasa verileri",
         "tokenSecurity": "Token Güvenliği"
       },
-      "interval": {
-        "1D": "1G",
-        "30M": "30M",
-        "1W": "1W",
-        "4H": "4H",
-        "15M": "15M",
-        "1H": "1H",
-        "1M": "1M",
-        "5M": "5M"
-      },
       "marketInfo": {
         "txns24h": "24 saat Txns",
         "volume24h": "24h İşlem Hacmi",
@@ -1860,13 +1879,35 @@
             "all": "Hepsi",
             "qnt": "Qnt",
             "price": "Fiyat",
-            "value": "Değer"
+            "value": "Değer",
+            "transactionCount": "İşlem Sayısı"
           }
         },
         "activity": "Etkinlik",
         "empty": "Veri Yok",
         "details": "Ayrıntılar",
-        "summary": "Özet Verisi"
+        "summary": "Özet Verisi",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "Likidite Detayı",
+            "top5": "En iyi 5 havuz"
+          },
+          "actions": {
+            "all": "Tüm",
+            "remove": "Kaldır",
+            "add": "Ekle"
+          },
+          "headers": {
+            "time": "Zaman",
+            "amount": "Miktar",
+            "value": "Değer"
+          },
+          "value": "Değer",
+          "pair": "Çift",
+          "amount": "Miktar",
+          "dex": "Dex"
+        },
+        "pools": "Havuzlar"
       }
     },
     "approvalsAddressList": {
@@ -2071,16 +2112,23 @@
         "refresh": "Yenile",
         "contentModeMobile": "Mobil Sitei Talep Et",
         "disconnect": "Bağlantıyı kesmek",
-        "contentModeDesktop": "Masaüstü Siteyi İsteği"
+        "contentModeDesktop": "Masaüstü Siteyi İsteği",
+        "clearCache": "Önbelleği temizle"
       },
       "HyperliquidInvitePopup": {
         "btn": "Şimdi Katıl",
         "title": "Hyperliquid Referans Programı",
-        "desc": "Şimdi Rabby’nin kodunu kullanarak Hyperliquid ücretlerinizde <1>4% indirim</1> kazanın."
+        "desc": "Şimdi Rabby’nin kodunu kullanarak Hyperliquid ücretlerinizde <1>4% indirim</1> kazanın.",
+        "asterTitle": "Aster Referans Programı",
+        "asterDesc": "Şimdi Rabby’nin kodunu kullanarak Aster ücretlerinizde <1> %4 indirim </1> almak için katılın."
       },
       "WebviewError": {
         "error": "Hata:",
-        "failedToLoad": "Sayfa yüklenemedi"
+        "failedToLoad": "Sayfa yüklenemedi",
+        "alertText": "Denemek için <1/><2>Tarayıcıda aç</2><3/> bunun bir web sitesi sorunu olup olmadığını kontrol et."
+      },
+      "toast": {
+        "clearCacheSuccess": "Önbellek temizlendi"
       }
     },
     "browserManage": {
@@ -2219,7 +2267,8 @@
         "step1Desc": "Sonsuz vadeli işlemlerle, yalnızca varlık ticareti yapmıyorsunuz. Gelecekte ne olacağını düşündüğünüzü ticaretini yapıyorsunuz.",
         "step3Desc": "Fiyata düşmesini beklediğinizde, kısa pozisyon açarsınız. Fiyat düşerse, kazanırsınız. Fiyat yükselirse, kaybedersiniz.",
         "step4Desc": "Kaldıraç, yatırdığınızdan daha fazla işlem yapmanızı sağlar. Bu, hem kazançlarınızı hem de zararlarınızı artırabilir.",
-        "step5Desc": "Her pozisyonun bir likidasyon fiyatı vardır. Eğer piyasa fiyatı bu seviyeye ulaşırsa, pozisyonunuz kapatılacaktır. Daha yüksek kaldıraç kullanmak, likide olma riskini artırır."
+        "step5Desc": "Her pozisyonun bir likidasyon fiyatı vardır. Eğer piyasa fiyatı bu seviyeye ulaşırsa, pozisyonunuz kapatılacaktır. Daha yüksek kaldıraç kullanmak, likide olma riskini artırır.",
+        "step3Title": "Kısa"
       },
       "PerpsDepositPopup": {
         "amount": "Miktar",
@@ -2435,6 +2484,126 @@
         "entryPrice": "Giriş Fiyatı:",
         "slPrice": "Zarar Durdurma Fiyatı"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Yerleşik Sayfa"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "addNewWhitelistAddr": "Yeni Beyaz Liste Adresi Ekle",
+        "sendTo": "Gönderilecek",
+        "sendFrom": "Gönderilecek",
+        "viewSentTx": "Gönderildi",
+        "selectFromHistory": "Geçmişten Seçin"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "Adres adını belirtin"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "needSupply": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
+        "canBorrow": "Teminat olarak sağladığınız teminatınıza göre, borç limitine kadar borç alabilirsiniz."
+      },
+      "list": {
+        "headers": {
+          "token": "Jeton",
+          "mySupplies": "Benim malzemelerim",
+          "myBorrows": "Benim borçlarım",
+          "apy": "APY"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "title": "Faiz Kazanın, İstediğiniz Zaman Borç Alın",
+          "description": "AAVE tarafından desteklenmektedir. Güvenli ve sıfır ücret."
+        },
+        "risky": "Riskli",
+        "more": "Daha Fazla",
+        "healthy": "Sağlıklı",
+        "lq": "1'in altına düşerse, tasfiye tetiklenebilir."
+      },
+      "repayDetail": {
+        "actions": "Geri Ödeme",
+        "approveAndRepay": "Onayla ve Geri Öde"
+      },
+      "supplyDetail": {
+        "actions": "Arz",
+        "availableToBorrow": "Ödünç alınabilir",
+        "supplyAPY": "Arz APY",
+        "approveAndSupply": "Onayla ve Tedarik Et"
+      },
+      "withdrawDetail": {
+        "remainingSupply": "Kalan arzı",
+        "actions": "Çekim"
+      },
+      "borrowDetail": {
+        "actions": "Ödünç Al",
+        "approveAndBorrow": "Onayla ve Borç Al",
+        "almostReachedError": "Maksimum borç alma miktarı, protokol borç limiti neredeyse ulaşıldığı için sınırlıdır.",
+        "almostReachedWarning": "Protokol borç limiti bu varlık için %100'dür. Daha fazla borç alma available değildir."
+      },
+      "popup": {
+        "available": "mevcut",
+        "amount": "Miktar",
+        "title": "İşlem Genel Görünümü",
+        "remainingDebt": "Kalan borç",
+        "liquidationAt": "< 1.0'da Tasfiye"
+      },
+      "borrowOverview": {
+        "borrowCap": "Kredi Limiti",
+        "myBorrow": "Benim Krediğim",
+        "availableToBorrow": "Kullanılabilir borç alma",
+        "title": "Kredi Detayları",
+        "totalBorrowed": "Toplam Borçlu",
+        "liquidityPenalty": "Tasfiye Cezası"
+      },
+      "supplyOverview": {
+        "walletBalance": "Cüzdan Bakiyesi",
+        "mySupply": "Benim Arzım",
+        "title": "Tedarik Detayları",
+        "availableToSupply": "Temin Edilir",
+        "totalSupplied": "Toplam Sağlanan",
+        "reachCap": "Bu varlık, arz sınırına ulaşmıştır. Bu piyasadan tedarik edilecek hiçbir şey yoktur.",
+        "almostCap": "Bu varlık neredeyse borç sınırına ulaşmış durumda. Bu piyasadan borç alınabilecek yalnızca {{available}} mevcut."
+      },
+      "risk": {
+        "checkbox": "Uyarıyı anlıyorum ve devam etmek istiyorum.",
+        "warning": "Bu miktarı borç almak, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir.",
+        "withdrawWarning": "Bu miktarın çekilmesi, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir."
+      },
+      "lqDescription": {
+        "desc": "Tasfiye değeri",
+        "risky": "Risky",
+        "below1desc": "Pozisyonunuz likidasyon riski altındadır.",
+        "over3title": "Sağlık faktörü > 3.0:",
+        "over3desc": "Pozisyonlarınız güvende.",
+        "warningText": "Sağlık Faktörünüz çok düşük. Tasfiye edilmemek için:\n1. Kredinizin bir kısmını veya tamamını geri ödeyin\n2. Daha fazla teminat ekleyin",
+        "liquidation": "Tasfiye: Eğer Sağlık Faktörünüz 1.0'ın altına düşerse, teminatınızın bir kısmı borcu geri ödemek için otomatik olarak satılabilir. Bir tasfiye cezası uygulanacaktır, bu da teminatınızın kısmi bir kaybına yol açacaktır.",
+        "below1title": "Sağlık Faktörü ≤ 1.0:",
+        "introText": "Sağlık Faktörünüz, borçlanma pozisyonunuzun ne kadar güvenli olduğunu gösterir. Eğer çok düşük bir seviyeye düşerse, teminatınız tasfiye edilebilir."
+      },
+      "modalDesc": {
+        "availableToBorrow": "Borç almak için mevcut",
+        "availableToBorrowDesc": "Teminatınız üzerinden borç alabilirsiniz ve borç limiti ulaşana kadar.",
+        "maxAmount": "Bu, temin edilen tüm teminatlarınıza dayanarak borç alabileceğiniz maksimum miktardır. Toplam borç alma gücünüz, her teminat varlığının piyasa değerinin Max LTV ile çarpılması ve ardından sonuçların toplanmasıyla hesaplanır.",
+        "lqDesc": "Bir tasfiye gerçekleştiğinde, tasfiye edenler borçlunun adına mevcut borç miktarının %50'sine kadar geri ödeme yapar. Karşılığında, teminatı indirimli fiyatla satın alabilir ve farkı (tasfiye cezası) bonus olarak alabilirler."
+      },
+      "supplied": "Sağlanan",
+      "gotIt": "Tamamdır",
+      "netWorth": "Net worth",
+      "submitted": "gönderildi",
+      "selectChain": "Zinciri Seçin",
+      "market": "Pazar",
+      "estDailyEarning": "Günlük Tahmini Kazanç",
+      "apy": "APY",
+      "borrowed": "Ödünç Alınan",
+      "hf": "Sağlık faktörü",
+      "hfTitle": "Sağlık Faktörü",
+      "enterAmount": "Miktarı Girin"
     }
   },
   "component": {
@@ -2446,7 +2615,13 @@
         "login": "GasAccount'a giriş yapın",
         "desc": "Tüm Zincirlerde Gas Ücretlerini Ödeyin",
         "title": "USDC / USDT Yatırın",
-        "loginAndClaim": "Giriş Yap ve {{amount}} Talep Et"
+        "loginAndClaim": "Giriş Yap ve {{amount}} Talep Et",
+        "loginTips1": "Gaz ücretlerini ödeyin için",
+        "loginTips3": "gazınız bittiğinde",
+        "loginTips2": "herhangi bir adres herhangi bir zincirde",
+        "learnAbout": "GasAccount hakkında daha fazla bilgi edinin",
+        "depositDesc": "tüm zincirlerde gazınız bittiğinde",
+        "depositTitle": "USDC/USDT Yatırı, Gas Ücretlerini Öde"
       },
       "loginConfirmModal": {
         "desc": "Oturum açtığınızda, bunu yalnızca bu adrese yatırabilirsiniz.",
@@ -2481,6 +2656,16 @@
         "gotIt": "Ben Aldım",
         "noWithdrawableBalanceTitle": "{{amount}} Çekilemez",
         "noWithdrawableBalanceDescription": "{{amount}} gaz bakiyeniz geri alınamaz:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
+      "about": {
+        "title1": "GasAccount nedir",
+        "title3": "GasAccount'ın ek ücretleri var mı?",
+        "title4": "GasAccount güvenli mi?",
+        "desc3": "Rabby Wallet ek ücret talep etmez. Sadece işleminiz için gaz ücreti ve bu gazı GasAccount’tan adresinize göndermek için küçük bir gaz ücreti ödemeniz gerekir.",
+        "title2": "Gas Account'ı nasıl kullanırım",
+        "desc2": "Fonları GasAccount'unuza ekleyin ve bunu herhangi bir işlem için kullanın. İmza atarken, gaz ücretini yerel token'lar veya GasAccount ile ödemeyi seçin, herhangi bir zaman geçiş yapabilirsiniz.",
+        "desc4": "GasAccount, herhangi bir sözleşme onayı veya iznine ihtiyaç duymadan çalışır. Rabby’nin GasAccount adresine para yatırırsınız ve ihtiyaç duyduğunuzda Rabby gazı adresinize gönderir. Tasarımı gereği tamamen güvenlidir.",
+        "desc1": "GasAccount, gaz ücretlerini ödemenin yeni bir yoludur. Her zincirde yerel tokenler kullanmak yerine, tüm zincirlerdeki tüm adresleriniz için gazı karşılamak amacıyla tek bir hesap kullanabilirsiniz. Basit, isteğe bağlı ve asla gaz bitmez."
       }
     },
     "accountSwitcher": {
@@ -2539,6 +2724,11 @@
       },
       "favoriteFilter": {
         "all": "Tüm"
+      },
+      "riskDetected": {
+        "proceedBtn": "Devam et",
+        "simpleExplanation": "Desteklenmiyor",
+        "title": "Risk Tespit Edildi"
       }
     },
     "ModalPreviewNFTItem": {
@@ -2643,6 +2833,21 @@
     },
     "GlobalTipsPopup": {
       "btn": "Anladım"
+    },
+    "Prediction": {
+      "price": "Fiyat",
+      "amount": "Miktar",
+      "side": "Taraf",
+      "usdValue": "USD Değeri"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "desc": "Güvenilir adresi Beyaz Listeye ekle",
+        "addBtn": "Şimdi ekle"
+      },
+      "recentAccounts": "Son zamanlarda",
+      "importedAccounts": "İçe Aktarılan Cüzdanlar",
+      "whitelistAccounts": "Beyaz Liste"
     }
   },
   "native": {

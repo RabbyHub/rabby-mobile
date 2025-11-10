@@ -41,7 +41,7 @@ import {
 } from '@rabby-wallet/keyring-utils';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { getCexInfo } from '@/hooks/useCexSupportList';
-import { isNonPublicProductionEnv, isSelfhostRegPkg } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { getDefaultStore } from 'jotai';
 import { mockBatchRevokeAtom } from '@/hooks/appSettings';
 import { Account } from '@/core/services/preference';
@@ -291,13 +291,13 @@ export const sendTransaction = async ({
       });
 
   const isGasNotEnough = !isGasLess && checkErrors.some(e => e.code === 3001);
-  const ETH_GAS_USD_LIMIT = isSelfhostRegPkg
+  const ETH_GAS_USD_LIMIT = isNonPublicProductionEnv
     ? MOCK_BATCH_REVOKE.DEBUG_ETH_GAS_USD_LIMIT
     : 20;
-  const OTHER_CHAIN_GAS_USD_LIMIT = isSelfhostRegPkg
+  const OTHER_CHAIN_GAS_USD_LIMIT = isNonPublicProductionEnv
     ? MOCK_BATCH_REVOKE.DEBUG_OTHER_CHAIN_GAS_USD_LIMIT
     : 5;
-  const DEBUG_SIMULATION_FAILED = isSelfhostRegPkg
+  const DEBUG_SIMULATION_FAILED = isNonPublicProductionEnv
     ? MOCK_BATCH_REVOKE.DEBUG_SIMULATION_FAILED
     : false;
 
@@ -588,4 +588,238 @@ export const sendTransaction = async ({
       },
     };
   }
+};
+
+export const sendTransactionByMiniSignV2 = async ({
+  tx,
+  chainServerId,
+  onProgress,
+  lowGasDeadline,
+  isGasLess,
+  isGasAccount,
+  pushType = 'default',
+  ga,
+  sig,
+  session,
+  account: _account,
+  preExecResult,
+}: {
+  tx: Tx;
+  chainServerId: string;
+  onProgress?: (status: ProgressStatus) => void;
+  lowGasDeadline?: number;
+  isGasLess?: boolean;
+  isGasAccount?: boolean;
+  pushType?: TxPushType;
+  ga?: Record<string, any>;
+  sig?: string;
+  session?: Parameters<typeof apiProvider.ethSendTransaction>[0]['session'];
+  account: Account;
+  preExecResult: ExplainTxResponse;
+}) => {
+  onProgress?.('building');
+
+  const chain = findChain({
+    serverId: chainServerId,
+  })!;
+  const support1559 = chain.eip['1559'];
+
+  const currentAccount = _account;
+
+  const signingTxId = await transactionHistoryService.addSigningTx(tx);
+
+  stats.report('createTransaction', {
+    type: currentAccount.brandName,
+    category: KEYRING_CATEGORY_MAP[currentAccount.type],
+    chainId: chain.serverId,
+    createdBy: ga ? 'rabby' : 'dapp',
+    source: ga?.source || '',
+    trigger: ga?.trigger || '',
+    networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
+    swapUseSlider: ga?.swapUseSlider ?? '',
+  });
+
+  const transaction: Tx = {
+    from: tx.from,
+    to: tx.to,
+    data: tx.data,
+    nonce: tx.nonce,
+    value: tx.value,
+    chainId: tx.chainId,
+    gas: tx.gas,
+  };
+
+  const maxPriorityFee = +(tx.maxPriorityFeePerGas || '');
+  const maxFeePerGas = tx.maxFeePerGas || tx.gasPrice;
+
+  if (support1559) {
+    transaction.maxFeePerGas = maxFeePerGas;
+    transaction.maxPriorityFeePerGas =
+      maxPriorityFee <= 0
+        ? tx.maxFeePerGas
+        : intToHex(Math.round(maxPriorityFee));
+  } else {
+    (transaction as Tx).gasPrice = maxFeePerGas;
+  }
+
+  // fetch action data
+  const actionData = await openapi.parseTx({
+    chainId: chain.serverId,
+    tx: {
+      ...tx,
+      gas: '0x0',
+      nonce: tx.nonce || '0x1',
+      value: tx.value || '0x0',
+      to: tx.to || '',
+    },
+    origin: INTERNAL_REQUEST_SESSION.origin || '',
+    addr: currentAccount.address,
+  });
+  const parsed = parseAction({
+    type: 'transaction',
+    data: actionData.action,
+    balanceChange: preExecResult.balance_change,
+    tx: {
+      ...tx,
+      gas: '0x0',
+      nonce: tx.nonce || '0x1',
+      value: tx.value || '0x0',
+    },
+    preExecVersion: preExecResult.pre_exec_version,
+    gasUsed: preExecResult.gas.gas_used,
+    sender: tx.from,
+  });
+  const cexInfo = getCexInfo(parsed.send?.to || '');
+  const requiredData = await fetchActionRequiredData({
+    type: 'transaction',
+    actionData: parsed,
+    contractCall: actionData.contract_call,
+    chainId: chain.serverId,
+    sender: currentAccount.address,
+    cex: cexInfo,
+    walletProvider: {
+      hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
+      hasAddress: keyringService.hasAddress.bind(keyringService),
+      getWhitelist: async () => whitelistService.getWhitelist(),
+      isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+      getPendingTxsByNonce: async (...args) =>
+        transactionHistoryService.getPendingTxsByNonce(...args),
+      findChain,
+      ALIAS_ADDRESS,
+    },
+    tx: {
+      ...tx,
+      gas: '0x0',
+      nonce: tx.nonce || '0x1',
+      value: tx.value || '0x0',
+    },
+    apiProvider: openapi,
+  });
+
+  await transactionHistoryService.updateSigningTx(signingTxId, {
+    rawTx: {
+      nonce: tx.nonce,
+    },
+    explain: {
+      ...preExecResult,
+      calcSuccess: true,
+    },
+    action: {
+      actionData: parsed,
+      requiredData,
+    },
+  });
+
+  onProgress?.('builded');
+
+  const handleSendAfter = async () => {
+    const statsData = await notificationService.getStatsData();
+
+    if (statsData?.signed) {
+      const sData: any = {
+        type: statsData?.type,
+        chainId: statsData?.chainId,
+        category: statsData?.category,
+        success: statsData?.signedSuccess,
+        preExecSuccess: statsData?.preExecSuccess,
+        createdBy: statsData?.createdBy,
+        source: statsData?.source,
+        trigger: statsData?.trigger,
+        networkType: statsData?.networkType,
+      };
+      if (statsData.signMethod) {
+        sData.signMethod = statsData.signMethod;
+      }
+      stats.report('signedTransaction', sData);
+    }
+    if (statsData?.submit) {
+      stats.report('submitTransaction', {
+        type: statsData?.type,
+        chainId: statsData?.chainId,
+        category: statsData?.category,
+        success: statsData?.submitSuccess,
+        preExecSuccess: statsData?.preExecSuccess,
+        createdBy: statsData?.createdBy,
+        source: statsData?.source,
+        trigger: statsData?.trigger,
+        networkType: statsData?.networkType || '',
+      });
+    }
+  };
+
+  stats.report('signTransaction', {
+    type: currentAccount.brandName,
+    category: KEYRING_CATEGORY_MAP[currentAccount.type],
+    chainId: chain.serverId,
+    createdBy: ga ? 'rabby' : 'dapp',
+    source: ga?.source || '',
+    trigger: ga?.trigger || '',
+    networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
+  });
+
+  // submit tx
+  let hash = '';
+  const account = currentAccount;
+  try {
+    hash = await apiProvider.ethSendTransaction({
+      data: {
+        $ctx: {
+          ga,
+        },
+        params: [
+          {
+            ...transaction,
+            isSpeedUp: (tx as any)?.isSpeedUp,
+            isCancel: (tx as any)?.isCancel,
+          },
+        ],
+      },
+      session: INTERNAL_REQUEST_SESSION,
+      approvalRes: {
+        ...transaction,
+        signingTxId,
+        lowGasDeadline,
+        isGasLess,
+        isGasAccount,
+        pushType,
+        sig,
+      },
+      pushed: false,
+      result: undefined,
+      account: account,
+    });
+    await handleSendAfter();
+  } catch (e) {
+    await handleSendAfter();
+    const err = new Error((e as any).message);
+    err.name = FailedCode.SubmitTxFailed;
+    eventBus.emit(EVENTS.COMMON_HARDWARE.REJECTED, err.message);
+    throw err;
+  }
+
+  onProgress?.('signed');
+
+  return {
+    txHash: hash,
+  };
 };

@@ -19,12 +19,15 @@ import { useSheetModals } from '@/hooks/useSheetModal';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
 
 export function AccountSwitcherModal({
   forScene,
+  token,
   panelLinearGradientProps,
 }: AccountSwitcherAopProps<{
   inScreen?: boolean;
+  token?: AbstractPortfolioToken;
   panelLinearGradientProps?: React.ComponentProps<
     typeof AccountsPanelInModal
   >['linearContainerProps'];
@@ -83,6 +86,7 @@ export function AccountSwitcherModal({
               linearContainerProps={panelLinearGradientProps}
               forScene={forScene}
               scrollToBottom={scrollToBottom}
+              token={token}
             />
           </View>
         </AutoLockView>

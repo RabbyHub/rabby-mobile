@@ -39,10 +39,8 @@ import {
   BUILD_CHANNEL,
   BUILD_GIT_INFO,
   IS_HERMES_ENABLED,
-  isNonPublicProductionEnv,
-  isSelfhostRegPkg,
-  NEED_DEVSETTINGBLOCKS,
 } from '@/constant/env';
+import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import {
   makeThemeOptions,
@@ -52,7 +50,7 @@ import {
 } from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { type SettingConfBlock, Block } from './Block';
-import { useSheetWebViewTester } from './sheetModals/hooks';
+// import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 import type { SwitchToggleType } from '@/components';
@@ -141,9 +139,9 @@ import DevScreenRecordingModal, {
   useDevScreenRecordingModalVisiable,
 } from './sheetModals/DevScreenRecording';
 import {
-  DevModalReactotron,
-  useReactotronModalVisible,
-} from './Modals/DevModalReactotron';
+  DevModalDevServer,
+  useDevServerModalVisible,
+} from './Modals/DevModalDevServer';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   useScreenshotToReportEnabled,
@@ -165,6 +163,7 @@ function AlertBuildInfo() {
     Alert.alert(
       'Build Info',
       [
+        `Build Channel: ${BUILD_CHANNEL}`,
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
         `Hermes Enabled: ${IS_HERMES_ENABLED}`,
@@ -188,6 +187,7 @@ function AlertBuildInfo() {
     Alert.alert(
       'Build Info',
       [
+        `Build Channel: ${BUILD_CHANNEL}`,
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Revision: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
         `Hermes Enabled: ${IS_HERMES_ENABLED}`,
@@ -491,27 +491,27 @@ function SettingsBlocks() {
               );
             },
           },
-          {
-            label: t('page.setting.clearBrowserData'),
-            icon: RcClearPending,
-            onPress: () => {
-              Alert.alert(
-                t('page.settingModal.clearBrowserData.title'),
-                t('page.settingModal.clearBrowserData.desc'),
-                [
-                  { text: t('common.dialog.button.cancel'), onPress: () => {} },
-                  {
-                    text: t('page.settingModal.clearBrowserData.button'),
-                    style: 'destructive',
-                    onPress: async () => {
-                      clearBrowserData();
-                      toast.success('Cleared');
-                    },
-                  },
-                ],
-              );
-            },
-          },
+          // {
+          //   label: t('page.setting.clearBrowserData'),
+          //   icon: RcClearPending,
+          //   onPress: () => {
+          //     Alert.alert(
+          //       t('page.settingModal.clearBrowserData.title'),
+          //       t('page.settingModal.clearBrowserData.desc'),
+          //       [
+          //         { text: t('common.dialog.button.cancel'), onPress: () => {} },
+          //         {
+          //           text: t('page.settingModal.clearBrowserData.button'),
+          //           style: 'destructive',
+          //           onPress: async () => {
+          //             clearBrowserData();
+          //             toast.success('Cleared');
+          //           },
+          //         },
+          //       ],
+          //     );
+          //   },
+          // },
         ],
       },
     };
@@ -578,7 +578,7 @@ function DevSettingsBlocks() {
     }, [fetchBiometrics]),
   );
 
-  const { openMetaMaskTestDapp } = useSheetWebViewTester();
+  // const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
@@ -598,12 +598,12 @@ function DevSettingsBlocks() {
     useDevScreenRecordingModalVisiable();
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
-  const { setReactotronModalVisible } = useReactotronModalVisible();
+  const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
-      ...(isSelfhostRegPkg && {
+      ...(isNonPublicProductionEnv && {
         testkits: {
           label: 'Test Kits (Not present on production package)',
           items: [
@@ -725,12 +725,19 @@ function DevSettingsBlocks() {
           icon: RcEarth,
           items: [
             {
-              label: 'WebView Test',
-              icon: RcEarth,
-              onPress: () => {
-                openMetaMaskTestDapp();
+              label: 'LAN Server Settings',
+              icon: RcCode,
+              onPress: async () => {
+                setDevServerSettingsModalVisible(true);
               },
             },
+            // {
+            //   label: 'WebView Test',
+            //   icon: RcEarth,
+            //   onPress: () => {
+            //     openMetaMaskTestDapp();
+            //   },
+            // },
             {
               label: 'Markdown Webview Test',
               icon: RcEarth,
@@ -824,13 +831,6 @@ function DevSettingsBlocks() {
                 });
               },
             },
-            {
-              label: 'Reactotron Settings',
-              icon: RcCode,
-              onPress: async () => {
-                setReactotronModalVisible(true);
-              },
-            },
             // {
             //   label: 'Test Biometrics',
             //   icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
@@ -884,7 +884,7 @@ function DevSettingsBlocks() {
       <DevUIPlaygroundModal />
       <DevDataPlayground />
       <DevScreenRecordingModal />
-      {__DEV__ && <DevModalReactotron />}
+      <DevModalDevServer />
       <OpenApiPopup
         visible={isShowOpenApiPopup}
         onClose={() => {

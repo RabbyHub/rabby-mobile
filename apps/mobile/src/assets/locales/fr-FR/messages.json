@@ -61,7 +61,11 @@
         "Revoke": "Approbation de {{token}} révoquée",
         "ReceivedGas": "Reçu Gas",
         "DepositedGas": "Gaz déposé",
-        "WithdrawnGas": "Gas retiré"
+        "WithdrawnGas": "Gas retiré",
+        "LendingWithdraw": "Retirer",
+        "LendingSupply": "Offre",
+        "LendingBorrow": "Emprunter",
+        "LendingRepay": "Rembourser"
       },
       "detail": {
         "Status": "Statut",
@@ -765,7 +769,13 @@
       "sectionTo": {
         "addrValidator__invalid": "Cette adresse est invalide",
         "searchInputPlaceholder": "Entrez une adresse ou scannez",
-        "addrValidator__empty": "Veuillez saisir l'adresse"
+        "addrValidator__empty": "Veuillez saisir l'adresse",
+        "positiveTips": {
+          "sentRecently": "Envoyé récemment",
+          "yourOwnAddress": "Votre propre adresse",
+          "whitelistedAddress": "Adresse sur liste blanche"
+        },
+        "selectPlaceholder": "Sélectionner l'adresse"
       },
       "ContractAddress": "Adresse du contrat",
       "allowTransferModal": {
@@ -781,11 +791,17 @@
         "cancel": "Annuler",
         "confirm": "Continuer"
       },
-      "noSupprotTokenForDex": "Ce token peut ne pas être pris en charge par cet échange. Vérifiez avant de procéder pour éviter toute perte.",
       "From": "De",
-      "noSupprotTokenForSafe": "L'adresse Safe à laquelle vous envoyez des jetons n'est pas déployée sur cette chaîne. Vérifiez avant de continuer pour éviter toute perte.",
-      "noSupportTokenForChain": "L'adresse du destinataire est une adresse de contrat sur une autre chaîne. Vérifiez avant de continuer pour éviter toute perte.",
-      "addressDetail": "Détails de l'adresse"
+      "addressDetail": "Détails de l'adresse",
+      "newAmount": "Montant",
+      "noSupportTokenReason": {
+        "forDex": "Ce jeton peut ne pas être pris en charge par cet échange. Vérifiez avant de continuer pour éviter toute perte.",
+        "forDexSimple": "Ce token peut ne pas être supporté par cet échange",
+        "forSafeSimple": "Cette adresse Safe n'est pas déployée sur cette chaîne.",
+        "forChain": "L'adresse du destinataire est une adresse de contrat sur une chaîne différente. Vérifiez avant de continuer pour éviter toute perte.",
+        "forChainSimple": "L'adresse du destinataire est une adresse de contrat sur une chaîne différente.",
+        "forSafe": "L'adresse Safe à laquelle vous envoyez des tokens n'est pas déployée sur cette chaîne. Vérifiez avant de continuer pour éviter toute perte."
+      }
     },
     "gasTopUp": {
       "Value": "Valeur",
@@ -890,9 +906,10 @@
         "send": "Envoyer",
         "search": "Rechercher Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Liste de surveillance",
+        "watchlist": "Liste de surveillance des tokens",
         "perps": "Perps",
-        "perpsMarketList": "Plus de Perps"
+        "perpsMarketList": "Plus de Perps",
+        "lending": "Prêt"
       }
     },
     "bridge": {
@@ -1039,7 +1056,6 @@
         "privateKey": "Importer une clé privée",
         "seedPhrase": "Importer la phrase secrète",
         "hardWare": "Connecter des portefeuilles matériels",
-        "safe": "Sûr",
         "tips": {
           "gotIt": "J'ai compris.",
           "entry": "Est-il sûr d'importer dans Rabby",
@@ -1449,7 +1465,18 @@
         "backupRestoreImported": "Importé",
         "googleDriveBackup": "Sauvegarde sur Google Drive"
       },
-      "createNewAddress": "Créer un nouveau Wallet"
+      "createNewAddress": "Créer un nouveau Wallet",
+      "whatIsPrivateKey": {
+        "title4": "Sécurité",
+        "title3": "Ne jamais le partager",
+        "title2": "Sauvegarde",
+        "ButtonGotIt": "Je l'ai.",
+        "description3": "Ne partagez jamais votre clé privée : quiconque y a accès peut contrôler vos fonds.",
+        "description2": "Si vous perdez votre clé privée, vous ne pourrez pas restaurer votre wallet.",
+        "description1": "Une clé privée est une chaîne de lettres et de chiffres utilisée pour accéder et contrôler votre wallet. Vous pouvez l'utiliser pour récupérer votre wallet sur n'importe quel appareil.",
+        "description4": "Votre clé privée est stockée localement sur votre appareil et cryptée avec votre mot de passe. Uniquement vous pouvez y accéder. Rabby ne peut pas récupérer ou accéder à votre clé privée.",
+        "title": "Qu'est-ce qu'une clé privée"
+      }
     },
     "importSafe": {
       "error": {
@@ -1750,16 +1777,6 @@
         "tokenSecurity": "Sécurité des tokens",
         "marketData": "Données de marché"
       },
-      "interval": {
-        "1M": "1M",
-        "5M": "5M",
-        "1W": "1W",
-        "1H": "1H",
-        "30M": "30M",
-        "4H": "4H",
-        "15M": "15M",
-        "1D": "1D"
-      },
       "marketInfo": {
         "holders": "Détenteurs",
         "totalSupply": "Offre Totale",
@@ -1789,13 +1806,35 @@
             "min": "min",
             "price": "Prix",
             "qnt": "Qnt",
-            "value": "Valeur"
+            "value": "Valeur",
+            "transactionCount": "Nombre de Transactions"
           }
         },
         "empty": "Pas de données",
         "activity": "Activité",
         "summary": "Résumé des données",
-        "details": "Détails"
+        "details": "Détails",
+        "pool": {
+          "tab": {
+            "top5": "Top 5 pools",
+            "liquidityDetail": "Détails de la liquidité"
+          },
+          "actions": {
+            "all": "Tout",
+            "add": "Ajouter",
+            "remove": "Supprimer"
+          },
+          "headers": {
+            "amount": "Montant",
+            "value": "Valeur",
+            "time": "Temps"
+          },
+          "amount": "Montant",
+          "dex": "Dex",
+          "pair": "Couple",
+          "value": "Valeur"
+        },
+        "pools": "Pools"
       }
     },
     "rabbyPoints": {
@@ -1840,7 +1879,9 @@
           "verify-address": "Vérifier l'adresse"
         }
       },
-      "code-set-successfully": "Le code de recommandation a été défini avec succès"
+      "code-set-successfully": "Le code de recommandation a été défini avec succès",
+      "xPoints": "{{point}} Points",
+      "alreadyClaimedXPoints": "Déjà réclamé : {{point}}"
     },
     "customTestnet": {
       "add": "Ajouter un réseau personnalisé",
@@ -1987,7 +2028,7 @@
       "risks": {
         "scamAddress": "L'adresse du destinataire est une adresse frauduleuse signalée par Rabby",
         "contractAddress": "L'adresse du destinataire est une adresse de contrat, ce qui peut potentiellement entraîner une perte de fonds",
-        "dexNoDeposite": "L'adresse du destinataire est une adresse non-dépôt d'un CEX. Veuillez vous assurer que votre adresse de dépôt est correcte.",
+        "cexNoDeposite": "L'adresse du destinataire est une adresse non-dépôt d'un CEX. Veuillez vous assurer que votre adresse de dépôt est correcte.",
         "noSend": "Vous n'avez pas envoyé de fonds à cette adresse au cours des 180 derniers jours. Veuillez confirmer si vous souhaitez continuer."
       },
       "brandNameTail": "Adresse",
@@ -2081,16 +2122,23 @@
         "contentModeDesktop": "Demander le site de bureau",
         "contentModeMobile": "Demander le site mobile",
         "disconnect": "Déconnexion",
-        "refresh": "Rafraîchir"
+        "refresh": "Rafraîchir",
+        "clearCache": "Vider le cache"
       },
       "HyperliquidInvitePopup": {
         "title": "Programme de parrainage Hyperliquid",
         "btn": "Rejoignez maintenant",
-        "desc": "Rejoignez maintenant en utilisant le code de Rabby pour obtenir une <1>remise de 4%</1> sur vos frais Hyperliquid."
+        "desc": "Rejoignez maintenant en utilisant le code de Rabby pour obtenir une <1>remise de 4%</1> sur vos frais Hyperliquid.",
+        "asterTitle": "Programme de parrainage Aster",
+        "asterDesc": "Rejoignez maintenant en utilisant le code de Rabby pour obtenir une <1>remise de 4%</1> sur vos frais Aster."
       },
       "WebviewError": {
         "error": "Erreur :",
-        "failedToLoad": "Échec du chargement de la page"
+        "failedToLoad": "Échec du chargement de la page",
+        "alertText": "Essayez<1/><2>Ouvrir dans le navigateur</2><3/>pour vérifier si c'est un problème de site web"
+      },
+      "toast": {
+        "clearCacheSuccess": "Cache vidé"
       }
     },
     "browserManage": {
@@ -2446,6 +2494,126 @@
         "setTpPrice": "Définir le prix de prise de profit",
         "setSlPrice": "Définir le prix de stop-loss"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "Page intégrée"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "viewSentTx": "Envoyé",
+        "sendTo": "Envoyer vers",
+        "addNewWhitelistAddr": "Ajouter une nouvelle adresse de liste blanche",
+        "sendFrom": "Envoyer depuis",
+        "selectFromHistory": "Sélectionner dans l'historique"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "Nommez l'adresse"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "needSupply": "Pour emprunter, vous devez fournir des actifs en tant que garantie.",
+        "canBorrow": "Vous pouvez emprunter en fonction de votre garantie fournie, jusqu'à la limite d'emprunt."
+      },
+      "list": {
+        "headers": {
+          "token": "Jeton",
+          "apy": "APY",
+          "mySupplies": "Mes fournitures",
+          "myBorrows": "Mes emprunts"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "title": "Gagnez des intérêts, empruntez à tout moment",
+          "description": "Alimenté par AAVE. Sécurisé et sans frais."
+        },
+        "more": "Plus",
+        "healthy": "Sain",
+        "risky": "Risqué",
+        "lq": "Si cela descend en dessous de 1, la liquidation pourrait être déclenchée."
+      },
+      "repayDetail": {
+        "actions": "Rembourser",
+        "approveAndRepay": "Approuver et Rembourser"
+      },
+      "supplyDetail": {
+        "actions": "Fournir",
+        "availableToBorrow": "Disponible à emprunter",
+        "approveAndSupply": "Approuver et fournir",
+        "supplyAPY": "Offre APY"
+      },
+      "withdrawDetail": {
+        "actions": "Retirer",
+        "remainingSupply": "Approvisionnement restant"
+      },
+      "borrowDetail": {
+        "actions": "Emprunter",
+        "approveAndBorrow": "Approuver et Emprunter",
+        "almostReachedError": "Le montant maximum disponible pour emprunter est limité car le plafond d'emprunt du protocole est presque atteint.",
+        "almostReachedWarning": "Le cap d'emprunt du protocole est de 100 % pour cet actif. Emprunts supplémentaires non disponibles."
+      },
+      "popup": {
+        "available": "disponible",
+        "amount": "Montant",
+        "remainingDebt": "Dette restante",
+        "liquidationAt": "Liquidation à < 1.0",
+        "title": "Aperçu de la transaction"
+      },
+      "borrowOverview": {
+        "myBorrow": "Mon Emprunt",
+        "totalBorrowed": "Total Emprunté",
+        "availableToBorrow": "Disponible à emprunter",
+        "title": "Détails de l'emprunt",
+        "borrowCap": "Plafond d'emprunt",
+        "liquidityPenalty": "Pénalité de liquidation"
+      },
+      "supplyOverview": {
+        "totalSupplied": "Total fourni",
+        "availableToSupply": "Disponible à l'approvisionnement",
+        "mySupply": "Mon Approvisionnement",
+        "reachCap": "Cet actif a atteint son plafond d'offre. Rien n'est disponible à l'approvisionnement sur ce marché.",
+        "walletBalance": "Solde du portefeuille",
+        "title": "Détails de l'approvisionnement",
+        "almostCap": "Cet actif a presque atteint sa limite d'emprunt. Il ne reste que {{available}} disponible à emprunter sur ce marché."
+      },
+      "risk": {
+        "checkbox": "Je comprends l'alerte et je veux continuer.",
+        "warning": "Emprunter ce montant réduira votre facteur de santé à un niveau risqué pour la liquidation.",
+        "withdrawWarning": "Le retrait de ce montant fera baisser votre facteur de santé à un niveau risqué pour la liquidation."
+      },
+      "lqDescription": {
+        "desc": "Valeur de liquidation",
+        "below1desc": "Votre position est à risque de liquidation.",
+        "over3desc": "Vos positions sont en sécurité",
+        "below1title": "Facteur de santé ≤ 1.0 :",
+        "risky": "Risqué",
+        "over3title": "Facteur de santé > 3.0 :",
+        "liquidation": "Liquidation : Si votre facteur de santé tombe en dessous de 1.0, une partie de votre collatéral peut être automatiquement vendue pour rembourser la dette. Une pénalité de liquidation s'appliquera, entraînant une perte partielle de votre collatéral.",
+        "introText": "Votre facteur de santé montre à quel point votre position d'emprunt est sécurisée. S'il descend trop bas, votre collatéral pourrait être liquidé.",
+        "warningText": "Votre facteur de santé est trop bas. Pour éviter la liquidation :\n1. Remboursez une partie ou la totalité de votre prêt\n2. Ajoutez plus de garantie"
+      },
+      "modalDesc": {
+        "availableToBorrow": "Disponible à emprunter",
+        "maxAmount": "Ceci est le montant maximum que vous pouvez emprunter en fonction de tous vos actifs fournis en garantie. Votre pouvoir d'emprunt total est calculé en multipliant la valeur marchande de chaque actif de garantie par son LTV maximal, puis en additionnant les résultats.",
+        "availableToBorrowDesc": "Vous pouvez emprunter en fonction de votre garantie fournie et jusqu'à ce que le plafond d'emprunt soit atteint.",
+        "lqDesc": "Lorsqu'une liquidation se produit, les liquidateurs remboursent jusqu'à 50 % du montant emprunté restant au nom de l'emprunteur. En retour, ils peuvent acheter le collatéral à un prix réduit et conserver la différence (pénalité de liquidation) comme bonus."
+      },
+      "market": "Marché",
+      "supplied": "Fournie",
+      "estDailyEarning": "Est. Gains Quotidiens",
+      "selectChain": "Sélectionner la chaîne",
+      "gotIt": "Compris",
+      "submitted": "soumis",
+      "netWorth": "Valeur nette",
+      "borrowed": "Emprunté",
+      "enterAmount": "Saisir le montant",
+      "hfTitle": "Facteur de santé",
+      "apy": "APY",
+      "hf": "Facteur de santé"
     }
   },
   "native": {
@@ -2503,6 +2671,11 @@
       },
       "favoriteFilter": {
         "all": "Tout"
+      },
+      "riskDetected": {
+        "simpleExplanation": "Non pris en charge",
+        "proceedBtn": "Procéder",
+        "title": "Risque détecté"
       }
     },
     "AccountSelectDrawer": {
@@ -2558,7 +2731,13 @@
         "login": "Se connecter à GasAccount",
         "desc": "Payer les frais de Gas sur toutes les chaînes",
         "title": "Dépôt USDC / USDT",
-        "loginAndClaim": "Connectez-vous et réclamez {{amount}}"
+        "loginAndClaim": "Connectez-vous et réclamez {{amount}}",
+        "loginTips1": "Payer des frais de gaz pour",
+        "loginTips2": "n'importe quelle adresse sur n'importe quelle chaîne",
+        "loginTips3": "lorsque vous êtes à court de Gas",
+        "learnAbout": "En savoir plus sur GasAccount",
+        "depositDesc": "sur toutes les chaînes lorsque vous êtes à court de Gas",
+        "depositTitle": "Déposer USDC/USDT Payer les frais de gaz"
       },
       "loginConfirmModal": {
         "desc": "Une fois connecté, vous ne pouvez le déposer qu'à cette adresse.",
@@ -2591,6 +2770,16 @@
         "gotIt": "Je l'ai!",
         "giftTips": "Récompense de Gas pour les utilisateurs actifs",
         "noWithdrawableBalanceDescription": "{{amount}} de votre solde de gaz est non retiré :\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
+      "about": {
+        "title1": "Qu'est-ce que GasAccount ?",
+        "title3": "GasAccount a-t-il des frais supplémentaires ?",
+        "title4": "Est-ce que GasAccount est sûr ?",
+        "title2": "Comment utiliser Gas Account",
+        "desc3": "Rabby Wallet ne facture aucun frais supplémentaire. Vous ne payez que le gas pour votre transaction et une petite quantité de gas pour envoyer ce gas de GasAccount à votre adresse.",
+        "desc2": "Ajoutez des fonds à votre GasAccount et utilisez-le pour toute transaction. Lors de la signature, choisissez de payer le gas avec des tokens natifs ou GasAccount, changez à tout moment.",
+        "desc4": "GasAccount ne nécessite aucune approbation de contrat ni autorisation. Vous déposez à l'adresse GasAccount de Rabby, et Rabby envoie du gaz à votre adresse lorsque cela est nécessaire. Entièrement sécurisé par conception.",
+        "desc1": "GasAccount est une nouvelle façon de payer les frais de gas. Au lieu d'utiliser des tokens natifs sur chaque chaîne, vous pouvez utiliser un compte pour couvrir les frais de gas pour toutes vos adresses sur toutes les chaînes. Simple, optionnel et jamais à court de gas."
       }
     },
     "Contact": {
@@ -2689,6 +2878,21 @@
     },
     "GlobalTipsPopup": {
       "btn": "Je l'ai compris"
+    },
+    "Prediction": {
+      "amount": "Montant",
+      "usdValue": "Valeur USD",
+      "price": "Prix",
+      "side": "Côté"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "addBtn": "Ajoutez maintenant",
+        "desc": "Ajouter une adresse de confiance à la liste blanche"
+      },
+      "importedAccounts": "Portefeuilles importés",
+      "whitelistAccounts": "Liste blanche",
+      "recentAccounts": "Récent"
     }
   },
   "global": {

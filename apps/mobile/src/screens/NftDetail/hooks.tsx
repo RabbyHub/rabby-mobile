@@ -11,7 +11,7 @@ import {
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { Account } from '@/core/services/preference';
 
 // const popups = {
@@ -85,21 +85,21 @@ export function useNFTDetailSheetModalOnHistory({
                 onPressSend={() => {
                   clear();
 
-                  navigate(RootNames.StackTransaction, {
+                  navigateDeprecated(RootNames.StackTransaction, {
                     screen: RootNames.SendNFT,
                     params: {
                       collectionName,
-                      nftItem: nftToken as any,
+                      nftItem: nftToken,
                       fromAccount: account,
                     },
                   });
                 }}
-                token={nftToken as any}
+                token={nftToken}
                 collectionName={collectionName}
               />
             ),
         },
-        token: nftToken as any,
+        token: nftToken,
         collectionName,
       });
     },

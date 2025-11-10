@@ -5,7 +5,7 @@ import { getErc721Approved, revokeNFTApprove } from '@/core/apis/approvals';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
-import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { useMiniSigner } from '@/hooks/useSigner';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
@@ -24,7 +24,13 @@ interface Props {
 export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { sendMiniTransactions } = useMiniApproval();
+  const {
+    openUI,
+    resetGasStore,
+    close: closeMiniSign,
+  } = useMiniSigner({
+    account,
+  });
   const { navigation } = useSafeSetNavigationOptions();
 
   const { data: isApproved } = useRequest(async () => {
@@ -54,9 +60,10 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
         true,
       );
       const tx = data.params[0] as Tx;
-      const res = await sendMiniTransactions({
+      closeMiniSign();
+      resetGasStore();
+      const res = await openUI({
         txs: [tx],
-        account,
       });
     } catch (e) {
       console.error(e);

@@ -7,7 +7,7 @@ import { keyBy } from 'lodash';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -52,7 +52,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
 
   const gotoTokenDetail = useCallback(() => {
     Keyboard.dismiss();
-    navigate(
+    navigateDeprecated(
       needToTokenMarketInfo ? RootNames.TokenMarketInfo : RootNames.TokenDetail,
       {
         token: {
@@ -114,10 +114,6 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       })
       .filter(v => v);
   }, [menuActionDict]);
-
-  if (IS_ANDROID) {
-    return <>{children}</>;
-  }
 
   return (
     <ContextMenuView

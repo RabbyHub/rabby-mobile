@@ -23,6 +23,8 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
+import { useDevServerModalVisible } from '../Modals/DevModalDevServer';
+import { toast } from '@/components2024/Toast';
 
 const devUIPlaygroundModalVisibleAtom = atom(false);
 export function useDevUIPlaygroundModalVisible() {
@@ -65,6 +67,9 @@ export default function DevUIPlaygroundModal({
   const navigation = useRabbyAppNavigation();
 
   const { accounts } = useAccounts();
+
+  const { haventSetDevServer, setDevServerSettingsModalVisible } =
+    useDevServerModalVisible();
 
   const Items = (() => {
     const list: DevTestItem[] = [
@@ -147,6 +152,22 @@ export default function DevUIPlaygroundModal({
           navigation.dispatch(
             StackActions.push(RootNames.StackTestkits, {
               screen: RootNames.DevUIDapps,
+            }),
+          );
+        },
+      },
+      {
+        label: 'Built-in WebView Pages',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          if (__DEV__ && haventSetDevServer) {
+            toast.show('Please set up the dev server first.');
+            setDevServerSettingsModalVisible(true);
+            return;
+          }
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIBuiltInPages,
             }),
           );
         },

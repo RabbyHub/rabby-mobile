@@ -15,6 +15,7 @@ import {
   Animated,
   Pressable,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
@@ -23,25 +24,25 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BridgeSlippage } from './BridgeSlippage';
 import { tokenPriceImpact } from '../hooks/token';
 import { AppSwitch, AssetAvatar, Tip } from '@/components';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatGasHeaderUsdValue, formatTokenAmount } from '@/utils/number';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
-import { useAtom } from 'jotai';
-import ShowMoreGasSelectModal from './ShowMoreGasModal';
+import ShowMoreGasSelectModal, { useGetGasInfoByUI } from './ShowMoreGasModal';
 import { getGasLevelI18nKey } from '@/utils/trans';
-import {
-  gasRelativeComponentAtom,
-  miniApprovalGasAtom,
-  useMiniDirectSignGasFeeTooHigh,
-} from '@/hooks/useMiniApprovalDirectSign';
-// import { RcIconInfoCC } from '@/assets/icons/common';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import { IS_ANDROID } from '@/core/native/utils';
 import { findChainByServerID } from '@/utils/chain';
 import { noop } from 'lodash';
 import { WarningText } from './WarningText';
+import { signatureStore, useSignatureStore } from '@/components2024/MiniSignV2';
+import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
+import { GasLessActivityToSign } from '@/components/Approval/components/FooterBar/GasLessComponents/GasLessActivityToSign';
+import { GasLessNotEnough } from '@/components/Approval/components/FooterBar/GasLessComponents/GasLessNotEnough';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { GasAccountTips } from '@/components/Approval/components/FooterBar/GasLessComponents/GasAccountTips';
 
 const RABBY_FEE = '0.25%';
 
@@ -316,19 +317,20 @@ export const DirectSignGasInfo = ({
   loading,
   noQuote,
   chainServeId,
+  style,
+  gasFeeListItemStyle,
+  gasFeeListItemInnerStyle,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
   openShowMore: (v: boolean) => void;
   noQuote?: boolean;
   chainServeId: string;
-}) => {
+  gasFeeListItemStyle?: RNViewProps['style'];
+  gasFeeListItemInnerStyle?: RNViewProps['style'];
+} & RNViewProps) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [gasTipsComponent, setGasTipsComponent] = useAtom(
-    gasRelativeComponentAtom,
-  );
-  const [miniApprovalGas, setMiniApprovalGas] = useAtom(miniApprovalGasAtom);
   const [gasModalVisible, setGasModalVisible] = useState(false);
   const ref = useRef<View>(null);
   const [gasModalXY, setGasModalXY] = useState({
@@ -343,20 +345,6 @@ export const DirectSignGasInfo = ({
     [chainServeId],
   );
 
-  const showGasContent =
-    !!miniApprovalGas &&
-    !miniApprovalGas.loading &&
-    !!miniApprovalGas.gasCostUsdStr &&
-    !loading &&
-    !noQuote;
-
-  useEffect(() => {
-    if (loading) {
-      setMiniApprovalGas(() => undefined);
-      setGasTipsComponent(null);
-    }
-  }, [loading, setGasTipsComponent, setMiniApprovalGas]);
-
   const calcGasAccountUsd = useCallback((n: number | string) => {
     const v = Number(n);
     if (!Number.isNaN(v) && v < 0.0001) {
@@ -365,39 +353,197 @@ export const DirectSignGasInfo = ({
     return formatGasHeaderUsdValue(n || '0');
   }, []);
 
-  const gasAccountCost = miniApprovalGas?.gasAccountCost;
+  const { accountId } = useGasAccountSign();
 
-  const [isGasAccountHovering, setIsGasAccountHovering] = useState(false);
+  const { ctx, config, status } = useSignatureStore();
+
+  const gasInfoByUI = useGetGasInfoByUI();
+
+  const { gasCostUsdStr, gasAccountCost } = gasInfoByUI || {};
 
   const gasCostUsd =
-    miniApprovalGas?.gasMethod === 'gasAccount'
+    ctx?.gasMethod === 'gasAccount'
       ? calcGasAccountUsd(
           (gasAccountCost?.estimate_tx_cost || 0) +
-            (gasAccountCost?.gas_cost || 0),
+            Number(gasAccountCost?.gas_cost || 0),
         )
-      : miniApprovalGas?.gasCostUsdStr;
+      : gasCostUsdStr;
+
+  const showGasContent = !!ctx?.txsCalc?.length && !loading && !noQuote;
+
+  const isReady = (ctx?.txsCalc?.length || 0) > 0;
+  const isGasNotEnough = !!ctx?.isGasNotEnough;
+  const canUseGasLess = !!ctx?.gasless?.is_gasless;
+  const noCustomRPC = !!ctx?.noCustomRPC;
+
+  let gasLessConfig =
+    canUseGasLess && ctx?.gasless?.promotion
+      ? ctx?.gasless?.promotion?.config
+      : undefined;
+  if (
+    gasLessConfig &&
+    ctx?.gasless?.promotion?.id === '0ca5aaa5f0c9217e6f45fe1d109c24fb'
+  ) {
+    gasLessConfig = { ...gasLessConfig, dark_color: '', theme_color: '' };
+  }
+
+  const canGotoUseGasAccount =
+    // isSupportedAddr &&
+    noCustomRPC &&
+    !!ctx?.gasAccount?.balance_is_enough &&
+    !ctx?.gasAccount.chain_not_support &&
+    !!ctx?.gasAccount.is_gas_account;
+
+  const showGasLess = isReady && (isGasNotEnough || !!gasLessConfig);
+
+  const showGasLessToSign =
+    showGasLess && !canGotoUseGasAccount && canUseGasLess;
+
+  const useGasLess =
+    (isGasNotEnough || !!gasLessConfig) && !!canUseGasLess && !!ctx?.useGasless;
+
+  const payGasByGasAccount = ctx?.gasMethod === 'gasAccount';
+
+  const canDepositUseGasAccount =
+    // isSupportedAddr &&
+    noCustomRPC &&
+    !!ctx?.gasAccount &&
+    !ctx?.gasAccount?.balance_is_enough &&
+    !ctx?.gasAccount.chain_not_support;
+
+  const gasAccountCanPay =
+    ctx?.gasMethod === 'gasAccount' &&
+    // isSupportedAddr &&
+    noCustomRPC &&
+    !!ctx?.gasAccount?.balance_is_enough &&
+    !ctx?.gasAccount.chain_not_support &&
+    !!ctx?.gasAccount.is_gas_account &&
+    !(ctx?.gasAccount as any).err_msg;
+
+  const isSigning = status === 'signing';
+
+  const disabledProcess = isSigning
+    ? false
+    : payGasByGasAccount
+    ? !gasAccountCanPay
+    : useGasLess
+    ? false
+    : !ctx?.txsCalc?.length ||
+      !!ctx.checkErrors?.some(e => e.level === 'forbidden');
+
+  const handleToggleGasless = value => {
+    signatureStore.toggleGasless(value);
+  };
+
+  const handleChangeGasMethod = useCallback(
+    async (method: 'native' | 'gasAccount') => {
+      try {
+        signatureStore.setGasMethod(method);
+      } catch (error) {
+        console.error('Gas method change error:', error);
+      }
+    },
+    [],
+  );
+
+  const handleGasChange = useCallback(async gas => {
+    try {
+      await signatureStore.updateGasLevel(gas);
+    } catch (error) {
+      console.error('Gas change error:', error);
+    }
+  }, []);
+
+  const handleCancel = () => {
+    signatureStore.close();
+  };
+
+  const [isGasAccountHovering, setIsGasAccountHovering] = useState(false);
 
   useEffect(() => {
     if (loading || !showGasContent || noQuote) {
       setIsGasAccountHovering(false);
+      setGasModalVisible(false);
     }
   }, [loading, noQuote, showGasContent]);
 
-  const miniSignGasFeeTooHigh = useMiniDirectSignGasFeeTooHigh();
-
-  const showGasFeeTooHightTips = miniSignGasFeeTooHigh && !loading && !noQuote;
+  const showGasFeeTooHighTips = ctx?.gasFeeTooHigh && !loading && !noQuote;
 
   if (!supportDirectSign) {
     return null;
   }
 
+  const gasTipsComponent = () => (
+    <>
+      {showGasLessToSign ? (
+        <GasLessActivityToSign
+          gasLessEnable={useGasLess}
+          handleFreeGas={() => {
+            handleToggleGasless?.(true);
+          }}
+          gasLessConfig={gasLessConfig}
+        />
+      ) : null}
+
+      {showGasLess && !payGasByGasAccount && !canUseGasLess ? (
+        <GasLessNotEnough
+          inShowMore
+          canGotoUseGasAccount={canGotoUseGasAccount}
+          canDepositUseGasAccount={canDepositUseGasAccount}
+          onChangeGasAccount={() => handleChangeGasMethod('gasAccount')}
+          gasAccountAddress={accountId || config?.account.address || ''}
+          gasAccountCost={ctx?.gasAccount as any}
+          onDeposit={() => {
+            // onDeposit?.();
+            handleGasChange(ctx?.selectedGas);
+
+            handleChangeGasMethod('gasAccount');
+          }}
+          onGotoGasAccount={() => {
+            handleCancel?.();
+            navigate(RootNames.StackTransaction, {
+              screen: RootNames.GasAccount,
+              params: {},
+            });
+          }}
+        />
+      ) : null}
+
+      {payGasByGasAccount && !gasAccountCanPay ? (
+        <GasAccountTips
+          inShowMore
+          gasAccountAddress={accountId || config?.account.address || ''}
+          gasAccountCost={ctx?.gasAccount as any}
+          isGasAccountLogin={false}
+          isWalletConnect={false}
+          noCustomRPC={noCustomRPC}
+          onDeposit={() => {
+            // onDeposit?.();
+            handleGasChange(ctx?.selectedGas);
+
+            handleChangeGasMethod('gasAccount');
+          }}
+          onGotoGasAccount={() => {
+            handleCancel?.();
+            navigate(RootNames.StackTransaction, {
+              screen: RootNames.GasAccount,
+              params: {},
+            });
+          }}
+        />
+      ) : null}
+    </>
+  );
+
   return (
-    <View>
+    <View style={style}>
       <ListItem
         name={<>{'Gas Fee'}</>}
+        style={gasFeeListItemStyle}
+        innerStyle={gasFeeListItemInnerStyle}
         LeftIcon={
           <>
-            {miniApprovalGas?.gasMethod === 'gasAccount' &&
+            {ctx?.gasMethod === 'gasAccount' &&
               !loading &&
               showGasContent &&
               !noQuote && (
@@ -499,8 +645,8 @@ export const DirectSignGasInfo = ({
                     backgroundColor: colors2024['brand-light-1'],
                     overflow: 'hidden',
                   }}>
-                  {miniApprovalGas?.selectedGas?.level
-                    ? t(getGasLevelI18nKey(miniApprovalGas.selectedGas.level))
+                  {ctx?.selectedGas?.level
+                    ? t(getGasLevelI18nKey(ctx.selectedGas.level))
                     : t(getGasLevelI18nKey('normal'))}
                 </Text>
 
@@ -514,10 +660,10 @@ export const DirectSignGasInfo = ({
                       fontWeight: '700',
                       lineHeight: 18,
                     },
-                    showGasFeeTooHightTips && {
+                    showGasFeeTooHighTips && {
                       color: colors2024['orange-default'],
                     },
-                    miniApprovalGas.disabledProcess && {
+                    disabledProcess && {
                       color: colors2024['red-default'],
                     },
                   ]}>
@@ -532,9 +678,9 @@ export const DirectSignGasInfo = ({
                   <RcIconBluePolygon
                     style={styles.arrowIcon}
                     color={
-                      miniApprovalGas.disabledProcess
+                      disabledProcess
                         ? colors2024['red-default']
-                        : showGasFeeTooHightTips
+                        : showGasFeeTooHighTips
                         ? colors2024['orange-default']
                         : colors2024['brand-default']
                     }
@@ -567,41 +713,14 @@ export const DirectSignGasInfo = ({
           />
         )}
       </ListItem>
-      {showGasFeeTooHightTips ? (
+      {showGasFeeTooHighTips ? (
         <WarningText style={{ marginTop: 10 }}>
           {t('page.bridge.gasFeeTooHight')}
         </WarningText>
       ) : null}
-      {showGasContent && gasTipsComponent ? (
-        <View style={{ marginTop: 6 }}>{gasTipsComponent}</View>
+      {showGasContent ? (
+        <View style={{ marginTop: 6 }}>{gasTipsComponent()}</View>
       ) : null}
-    </View>
-  );
-};
-
-export const SendShowMore = ({
-  supportDirectSign,
-  loading,
-  chainServeId,
-}: {
-  open: boolean;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  supportDirectSign: boolean;
-  loading: boolean;
-  chainServeId: string;
-}) => {
-  const { styles } = useTheme2024({ getStyle });
-  if (!supportDirectSign) {
-    return null;
-  }
-  return (
-    <View style={StyleSheet.flatten([styles.container])}>
-      <DirectSignGasInfo
-        supportDirectSign={supportDirectSign}
-        loading={loading}
-        openShowMore={noop}
-        chainServeId={chainServeId}
-      />
     </View>
   );
 };
@@ -609,11 +728,13 @@ export const SendShowMore = ({
 function ListItem({
   name,
   style,
+  innerStyle,
   children,
   LeftIcon,
 }: {
   name: React.ReactNode;
-  style?: object;
+  style?: RNViewProps['style'];
+  innerStyle?: RNViewProps['style'];
   children: React.ReactNode;
   LeftIcon?: React.ReactNode;
 }) {
@@ -621,10 +742,13 @@ function ListItem({
   return (
     <View style={[styles.listItemContainer, style]}>
       <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-        }}>
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+          },
+          innerStyle,
+        ]}>
         <Text style={styles.listItemText}>{name}</Text>
         {LeftIcon}
       </View>

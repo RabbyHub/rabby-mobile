@@ -6,7 +6,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Card } from '@/components2024/Card';
-import { BadgeText } from '@/screens/Home/components/HomeTopArea';
+import { BadgeText } from '@/screens/Home/components/BadgeText';
 import { useTranslation } from 'react-i18next';
 import { AddressItemShadowView } from './AddressItemShadowView';
 import { ArrowCircleCC } from '@/assets2024/icons/address';

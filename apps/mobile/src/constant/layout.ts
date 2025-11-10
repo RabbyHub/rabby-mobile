@@ -29,7 +29,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 export const DEFI_CARD_WIDTH = (SCREEN_WIDTH - 12) / 2;
 export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 74;
-export const DEFI_ITEM_HEIGHT = 120;
+export const DEFI_ITEM_HEIGHT = 200;
 export const ASSETS_SECTION_HEADER = 36;
 export const TOKEN_EMPTY_ROW_HIGHT = 326;
 export const ASSETS_EMPTY_ROW_HIGHT = 186;
@@ -44,6 +44,9 @@ export const SWITCH_HEADER_GAP = 16;
 export const ADDRESS_ENTRY_HEIGHT = 78;
 export const ADDRESS_ENTRY_GAP = 12;
 export const TOGGLE_SPLIT_HEIGHT = 24;
+
+export const FOLD_ASSETS_HEADER_HEIGHT = 46 + 32;
+export const UNFOLD_ASSETS_HEADER_HEIGHT = 161 + 20;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {
@@ -94,6 +97,7 @@ export const RootNames = {
   FavoriteDapps: 'FavoriteDapps',
   Search: 'Search',
   Watchlist: 'Watchlist',
+  Lending: 'Lending',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
@@ -116,21 +120,14 @@ export const RootNames = {
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
   DevUIDapps: 'DevUIDapps',
   DevDataSQLite: 'DevDataSQLite',
+  DevUIBuiltInPages: 'DevUIBuiltInPages',
   DevUIPermissions: 'DevUIPermissions',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',
-  SendTo: 'SendTo',
   SendHistory: 'SendHistory',
-  SendInput: 'SendInput',
-  WhitelistInput: 'WhitelistInput',
-  SelectImportAddress: 'SelectImportAddress',
-  ImportAddress2Whitelist: 'ImportAddress2Whitelist',
-  SelectTypeAddress: 'SelectTypeAddress',
-  TypeAddress2Whitelist: 'TypeAddress2Whitelist',
-  ConfirmAddress: 'ConfirmAddress',
-  WhitelistConfirm: 'WhitelistConfirm',
+  /** @deprecated */
   MultiSend: 'MultiSend',
   SendNFT: 'SendNFT',
   MultiSendNFT: 'MultiSendNFT',
@@ -145,6 +142,7 @@ export const RootNames = {
   HistoryDetail: 'HistoryDetail',
   HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',
+  LendingHistory: 'LendingHistory',
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',

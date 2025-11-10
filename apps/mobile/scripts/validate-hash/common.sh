@@ -85,7 +85,19 @@ setup_environment() {
   # --- 覆盖代码中用到的环境变量 ---
   export RABBY_MOBILE_CODE="RABBY_MOBILE_CODE_DEV"
 
-  local env_file=".env"
+  rm -f .env.hashing && cp .env .env.hashing;
+  local apiKey="";
+  [ ! -z $MOBILE_SAFE_API_KEY ] && apiKey=$MOBILE_SAFE_API_KEY;
+  [ ! -z $RABBY_MOBILE_SAFE_API_KEY ] && apiKey=$RABBY_MOBILE_SAFE_API_KEY;
+
+  if [ ! -z $apiKey ]; then
+    # write it to .env file
+    sed -i '' -e '/^RABBY_MOBILE_SAFE_API_KEY=/d' .env.hashing
+    # will used by react-native-dotenv, notice, the exports below is useless for this variable on iOS, because xcode build phase use /bin/sh but all build env does not use it.
+    echo "RABBY_MOBILE_SAFE_API_KEY=$apiKey" >> .env.hashing
+  fi
+
+  local env_file=".env.hashing"
   if [ -f "$env_file" ]; then
     echo "ℹ️ 从 $env_file 加载环境变量..."
     while IFS='=' read -r key value || [ -n "$key" ]; do

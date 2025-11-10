@@ -1,0 +1,90 @@
+diff --git a/android/src/main/java/com/reactnativemenu/MenuView.kt b/android/src/main/java/com/reactnativemenu/MenuView.kt
+index 17ed7c6491b60e87fe829fb3f8841424617b4cfb..a2f48374c6e7ca039709793bd8531626e75a964c 100644
+--- a/android/src/main/java/com/reactnativemenu/MenuView.kt
++++ b/android/src/main/java/com/reactnativemenu/MenuView.kt
+@@ -22,13 +22,14 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
+   private val mPopupMenu: PopupMenu = PopupMenu(context, this)
+   private var mIsMenuDisplayed = false
+   private var mIsOnLongPress = false
++  private var mIsSuppressNativeLongPress = false
+   private var mGestureDetector: GestureDetector
+   private var mHitSlopRect: Rect? = null
+ 
+   init {
+     mGestureDetector = GestureDetector(mContext, object : GestureDetector.SimpleOnGestureListener() {
+       override fun onLongPress(e: MotionEvent) {
+-        if (!mIsOnLongPress) {
++        if (mIsSuppressNativeLongPress || !mIsOnLongPress) {
+           return
+         }
+         prepareMenu()
+@@ -90,6 +91,10 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
+     mIsAnchoredToRight = isAnchoredToRight
+   }
+ 
++  fun setSuppressNativeLongPress(disabled: Boolean) {
++    mIsSuppressNativeLongPress = disabled
++  }
++
+   fun setIsOpenOnLongPress(isLongPress: Boolean) {
+     mIsOnLongPress = isLongPress
+   }
+diff --git a/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt b/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
+index 4731e1a1528a2de495cc2ae3156c813b64ec6832..88b2f85423565413dac5a542b1cfc57108bd0a36 100644
+--- a/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
++++ b/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
+@@ -30,6 +30,11 @@ abstract class MenuViewManagerBase : ReactClippingViewManager<MenuView>() {
+     view.setIsAnchoredToRight(isAnchoredToRight)
+   }
+ 
++  @ReactProp(name = "suppressNativeLongPress", defaultBoolean = false)
++  fun setSuppressNativeLongPress(view: MenuView, disabled: Boolean) {
++    view.setSuppressNativeLongPress(disabled)
++  }
++
+   @ReactProp(name = "shouldOpenOnLongPress", defaultBoolean = false)
+   fun setIsOnLongPress(view: MenuView, isOnLongPress: Boolean) {
+     view.setIsOpenOnLongPress(isOnLongPress)
+diff --git a/src/UIMenuView.android.tsx b/src/UIMenuView.android.tsx
+index 967e37571a5cc1d1ca0dafa4495d31f42bb323de..eb52ea195a8056271c18e26eb7212b96051c63c1 100644
+--- a/src/UIMenuView.android.tsx
++++ b/src/UIMenuView.android.tsx
+@@ -12,7 +12,7 @@ const NativeMenuComponent = requireNativeComponent(
+ ) as HostComponent<NativeMenuComponentProps>;
+ 
+ const MenuComponent = forwardRef<MenuComponentRef, NativeMenuComponentProps>(
+-	(props, ref) => {
++	({ androidSuppressNativeLongPress = false, ...props }, ref) => {
+ 		const nativeRef = useRef(null);
+ 
+ 		useImperativeHandle(
+@@ -31,7 +31,7 @@ const MenuComponent = forwardRef<MenuComponentRef, NativeMenuComponentProps>(
+ 			[],
+ 		);
+ 
+-		return <NativeMenuComponent {...props} ref={nativeRef} />;
++		return <NativeMenuComponent suppressNativeLongPress={androidSuppressNativeLongPress} {...props} ref={nativeRef} />;
+ 	},
+ );
+ 
+diff --git a/src/types.ts b/src/types.ts
+index 9c323d9c510e7359c83d4d6633affde673570632..bf6b15c7e8280fbce0a61d6040af6cc31130e15f 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -169,7 +169,9 @@ type MenuComponentPropsBase = {
+ };
+ 
+ export type MenuComponentProps =
+-	React.PropsWithChildren<MenuComponentPropsBase>;
++	React.PropsWithChildren<MenuComponentPropsBase> & {
++		androidSuppressNativeLongPress?: boolean;
++	};
+ 
+ export type MenuComponentRef = {
+ 	show: () => void;
+@@ -195,4 +197,5 @@ export type NativeMenuComponentProps = {
+ 	hitSlop?: MenuComponentProps["hitSlop"];
+ 	testID?: string;
+ 	ref?: React.ForwardedRef<MenuComponentRef>;
++	androidSuppressNativeLongPress?: boolean;
+ };

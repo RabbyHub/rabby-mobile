@@ -4,7 +4,7 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { HistoryItemEntity } from './entities/historyItem';
 import { LocalHistoryItemEntity } from './entities/localhistoryItem';
-import { PortocolItemEntity } from './entities/portocolItem';
+import { ProtocolItemEntity } from './entities/portocolItem';
 import { SQLite } from '@/core/databases/exports';
 import { getMigrations } from './migrations';
 import { APP_DB_PREFIX, getRabbyAppDbName } from './constant';
@@ -52,7 +52,7 @@ const dbOptions: DataSourceOptions = {
     LocalHistoryItemEntity,
     SwapItemEntity,
     BalanceEntity,
-    PortocolItemEntity,
+    ProtocolItemEntity,
     BuyItemEntity,
     CexEntity,
     CopyTradingBuyItemEntity,

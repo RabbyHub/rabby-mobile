@@ -12,9 +12,14 @@ import { intToHex } from '@ethereumjs/util';
 import { EventEmitter } from 'events';
 
 import { preferenceService } from '@/core/services';
-import { findChain, findChainByServerID } from '@/utils/chain';
+import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { GasLevel, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  AddrDescResponse,
+  GasLevel,
+  NFTItem,
+  Tx,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 import { openapi } from '@/core/request';
 import { TFunction } from 'i18next';
@@ -25,7 +30,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { Account, ChainGas } from '@/core/services/preference';
-import { apiContact, apiToken } from '@/core/apis';
+import { apiContact, apiProvider, apiToken } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
 import { getKRCategoryByType } from '@/utils/transaction';
@@ -34,11 +39,20 @@ import { toast } from '@/components/Toast';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { StackActions } from '@react-navigation/native';
+import { StackActions, useIsFocused } from '@react-navigation/native';
 import {
   isAccountSupportDirectSign,
   isAccountSupportMiniApproval,
 } from '@/utils/account';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { useRecentSendToHistoryFor } from '@/screens/Send/hooks/useRecentSend';
+import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
+import { useMiniSigner } from '@/hooks/useSigner';
+import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { useMemoizedFn } from 'ahooks';
+import { abiCoder } from '@/core/apis/sendRequest';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -69,6 +83,10 @@ export type SendScreenState = {
 
   addressToAddAsContacts: string | null;
   addressToEditAlias: string | null;
+
+  buildTxsCount: number;
+
+  toAddrDesc: null | AddrDescResponse['desc'];
 };
 const DFLT_SEND_STATE: SendScreenState = {
   inited: false,
@@ -92,6 +110,10 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   addressToAddAsContacts: null,
   addressToEditAlias: null,
+
+  buildTxsCount: 0,
+
+  toAddrDesc: null,
 };
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 export function useSendNFTScreenState() {
@@ -153,11 +175,13 @@ const DF_SEND_TOKEN_FORM: FormSendNFT = {
   amount: 1,
 };
 export function useSendNFTForm({
+  toAddress,
   nftToken,
-  account: currentAccount,
+  account,
 }: {
+  toAddress?: string;
   nftToken?: NFTItem;
-  account?: Account;
+  account: Account;
 }) {
   const { t } = useTranslation();
 
@@ -169,6 +193,7 @@ export function useSendNFTForm({
   // const [formValues, setFormValues] = useAtom(sendTokenScreenFormAtom);
   const [formValues, setFormValues] = React.useState<FormSendNFT>({
     ...DF_SEND_TOKEN_FORM,
+    to: toAddress || '',
   });
 
   const { validationSchema } = useMemo(() => {
@@ -178,61 +203,19 @@ export function useSendNFTForm({
   }, [t]);
 
   const chainItem = findChain({ serverId: nftToken?.chain });
+
+  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+    account: account,
+    chainServerId: chainItem?.serverId,
+    autoResetGasStoreOnChainChange: true,
+  });
+
   const navigation = useRabbyAppNavigation();
 
-  const handleSubmit = useCallback(
-    async ({ to, amount }: FormSendNFT) => {
-      if (!nftToken) return;
-      sendNFTEventsRef.current.emit(SendNFTEvents.ON_SEND);
-
-      putScreenState({ isSubmitLoading: true });
-
-      try {
-        matomoRequestEvent({
-          category: 'Send',
-          action: 'createTx',
-          label: [
-            chainItem?.name,
-            getKRCategoryByType(currentAccount?.type),
-            currentAccount?.brandName,
-            'nft',
-          ].join('|'),
-        });
-        if (!currentAccount) {
-          return;
-        }
-
-        await apiToken.transferNFT(
-          {
-            to,
-            amount: bizNumberUtils.coerceInteger(amount),
-            tokenId: nftToken.inner_id,
-            chainServerId: nftToken.chain,
-            contractId: nftToken.contract_id,
-            abi: nftToken.is_erc1155 ? 'ERC1155' : 'ERC721',
-            account: currentAccount,
-          },
-          {
-            ga: {
-              category: 'Send',
-              source: 'sendNFT',
-            },
-          },
-        );
-
-        navigation.dispatch(
-          StackActions.replace(RootNames.StackRoot, {
-            screen: RootNames.Home,
-          }),
-        );
-      } catch (e: any) {
-        toast.info(e.message);
-      } finally {
-        putScreenState({ isSubmitLoading: false });
-      }
-    },
-    [currentAccount, putScreenState, chainItem?.name, nftToken, navigation],
-  );
+  const [ignoreMiniSignGasFee, setIgnoreMiniSignGasFee] = useState(false);
+  const handleIgnoreGasFeeChange = useCallback((b: boolean) => {
+    setIgnoreMiniSignGasFee(b);
+  }, []);
 
   /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
   const formik = useFormik({
@@ -344,17 +327,288 @@ export function useSendNFTForm({
     [formik, setFormValues, handleFormValuesChange],
   );
 
+  const prepareDirectSubmitMiniTx = useMemoizedFn(async (ref: number) => {
+    if (!nftToken || !account) return;
+
+    const { to, amount } = formValues;
+
+    if (
+      ref === prepareCountRef.current &&
+      account &&
+      isAccountSupportMiniApproval(account?.type || '') &&
+      !chainItem?.isTestnet
+    ) {
+      const res = await apiToken.transferNFT(
+        {
+          to,
+          amount: bizNumberUtils.coerceInteger(amount),
+          tokenId: nftToken?.inner_id,
+          chainServerId: nftToken?.chain,
+          contractId: nftToken?.contract_id,
+          abi: nftToken?.is_erc1155 ? 'ERC1155' : 'ERC721',
+          account: account,
+        },
+        {
+          $ctx: {
+            ga: {
+              category: 'Send',
+              source: 'sendNFT',
+            },
+          },
+          isBuild: true,
+        },
+      );
+      const tx = res.params?.[0];
+
+      if (ref === prepareCountRef.current) {
+        if (tx) {
+          prefetchMiniSigner({
+            txs: [tx],
+            ga: {
+              category: 'Send',
+              source: 'sendNFT',
+            },
+            checkGasFeeTooHigh: true,
+            synGasHeaderInfo: true,
+          });
+          return tx as Tx;
+        }
+      }
+    }
+  });
+
+  const handleSubmit = useCallback(
+    async ({
+      to,
+      amount,
+      isForceSignTx = false,
+    }: FormSendNFT & { isForceSignTx?: boolean }) => {
+      if (!nftToken) return;
+      sendNFTEventsRef.current.emit(SendNFTEvents.ON_SEND);
+
+      putScreenState({ isSubmitLoading: true });
+
+      matomoRequestEvent({
+        category: 'Send',
+        action: 'createTx',
+        label: [
+          chainItem?.name,
+          getKRCategoryByType(account?.type),
+          account?.brandName,
+          'nft',
+        ].join('|'),
+      });
+      if (!account) {
+        return;
+      }
+
+      try {
+        if (
+          !isForceSignTx &&
+          isAccountSupportMiniApproval(account?.type || '') &&
+          !chainItem?.isTestnet
+        ) {
+          if (!prepareRef.current) {
+            prepareCountRef.current++;
+            putScreenState({ buildTxsCount: prepareCountRef.current });
+            prepareRef.current = prepareDirectSubmitMiniTx(
+              prepareCountRef.current,
+            );
+          }
+          const tx = await prepareRef.current;
+          if (tx) {
+            try {
+              const res = await openDirect({
+                txs: [tx],
+                checkGasFeeTooHigh: true,
+                ignoreGasFeeTooHigh: ignoreMiniSignGasFee || false,
+                ga: {
+                  category: 'Send',
+                  source: 'sendToken',
+                  toAddress,
+                  trigger: 'sendToken',
+                },
+              });
+
+              // currentAccount.type !== KEYRING_CLASS.GNOSIS &&
+              // transactionHistoryService.addSendTxHistory({
+              //   token: currentToken,
+              //   amount: Number(amount),
+              //   to,
+              //   from: currentAccount?.address!,
+              //   chainId: chain.id,
+              //   hash: last(res) || '',
+              //   address: currentAccount?.address!,
+              //   status: 'pending',
+              //   createdAt: Date.now(),
+              // });
+
+              handleFieldChange('amount', '');
+            } catch (error: any) {
+              console.log('sendToken mini sign error', error);
+              if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+              } else if (
+                [
+                  MINI_SIGN_ERROR.GAS_FEE_TOO_HIGH,
+                  MINI_SIGN_ERROR.CANT_PROCESS,
+                ].includes(error)
+              ) {
+                if (error === MINI_SIGN_ERROR.CANT_PROCESS) {
+                  prepareCountRef.current++;
+                  putScreenState({ buildTxsCount: prepareCountRef.current });
+                  prefetchMiniSigner({ txs: [] });
+                  prepareRef.current = prepareDirectSubmitMiniTx(
+                    prepareCountRef.current,
+                  );
+                }
+
+                return;
+              } else {
+                handleSubmit({
+                  to,
+                  amount,
+                  isForceSignTx: true,
+                });
+                return;
+              }
+
+              prepareCountRef.current++;
+              putScreenState({ buildTxsCount: prepareCountRef.current });
+              prefetchMiniSigner({ txs: [] });
+              prepareRef.current = prepareDirectSubmitMiniTx(
+                prepareCountRef.current,
+              );
+            }
+          }
+        } else {
+          await apiToken
+            .transferNFT(
+              {
+                to,
+                amount: bizNumberUtils.coerceInteger(amount),
+                tokenId: nftToken.inner_id,
+                chainServerId: nftToken.chain,
+                contractId: nftToken.contract_id,
+                abi: nftToken.is_erc1155 ? 'ERC1155' : 'ERC721',
+                account: account,
+              },
+              {
+                $ctx: {
+                  ga: {
+                    category: 'Send',
+                    source: 'sendNFT',
+                  },
+                },
+                isBuild: false,
+              },
+            )
+            .then(resp => {
+              const hash = resp as string;
+              console.debug('hash', hash);
+              // currentAccount.type !== KEYRING_CLASS.GNOSIS &&
+              //   transactionHistoryService.addSendTxHistory({
+              //     token: currentToken,
+              //     amount: Number(amount),
+              //     to,
+              //     from: currentAccount?.address!,
+              //     chainId: chain.id,
+              //     hash,
+              //     address: currentAccount?.address!,
+              //     status: 'pending',
+              //     createdAt: Date.now(),
+              //   });
+
+              handleFieldChange('amount', '');
+            })
+            .catch(err => {
+              console.error(err);
+              // toast.info(err.message);
+            });
+        }
+
+        navigation.dispatch(
+          StackActions.replace(RootNames.StackRoot, {
+            screen: RootNames.Home,
+          }),
+        );
+      } catch (e: any) {
+        toast.info(e.message);
+      } finally {
+        putScreenState({ isSubmitLoading: false });
+      }
+    },
+    [
+      chainItem?.isTestnet,
+      handleFieldChange,
+      ignoreMiniSignGasFee,
+      openDirect,
+      prefetchMiniSigner,
+      prepareDirectSubmitMiniTx,
+      toAddress,
+      account,
+      putScreenState,
+      chainItem?.name,
+      nftToken,
+      navigation,
+    ],
+  );
+
+  const handleGasLevelChanged = useCallback(
+    async (gl?: GasLevel | null) => {
+      // let gasLevel = gl
+      //   ? gl
+      //   : await loadGasListAndResolve().then(
+      //     result => result.normalGasLevel || result.instantGasLevel,
+      //   );
+      // if (gasLevel) {
+      //   putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
+      //   handleMaxInfoChanged({ gasLevel });
+      // } else {
+      //   putScreenState({ reserveGasOpen: false });
+      // }
+    },
+    [
+      /* putScreenState */
+    ],
+  );
+
   const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
+  const { list: cexList } = useCexSupportList();
 
   const { whitelist, enable: whitelistEnabled } = useWhitelist();
+  const { recentHistory: recentSendToHistory, reFetch } =
+    useRecentSendToHistoryFor(formValues.to);
+
+  useEffect(() => {
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
+      txDetail => {
+        reFetch();
+        setTimeout(() => {
+          reFetch();
+        }, 5000);
+      };
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+    };
+  }, [reFetch]);
+
+  const toAddressIsRecentlySend = recentSendToHistory.length > 0;
+
   const computed = useMemo(() => {
     const toAddressInWhitelist = !!whitelist.find(item =>
       addressUtils.isSameAddress(item, formValues.to),
     );
     return {
       toAddressIsValid: !!formValues.to && isValidAddress(formValues.to),
+      toAddressIsRecentlySend,
       toAddressInWhitelist,
       toAddressInContactBook: isAddrOnContactBook(formValues.to),
+
+      toAddrCex: cexList.find(
+        item => item.id === screenState.toAddrDesc?.cex?.id,
+      ),
 
       canSubmit:
         isValidAddress(formValues.to) &&
@@ -363,17 +617,19 @@ export function useSendNFTForm({
         !screenState.isLoading,
 
       canDirectSign:
-        isAccountSupportMiniApproval(currentAccount?.type || '') &&
-        isAccountSupportDirectSign(currentAccount?.type) &&
+        isAccountSupportMiniApproval(account?.type || '') &&
+        isAccountSupportDirectSign(account?.type) &&
         !chainItem?.isTestnet,
     };
   }, [
     whitelist,
     isAddrOnContactBook,
     formValues.to,
+    toAddressIsRecentlySend,
     screenState,
     formValues.amount,
-    currentAccount?.type,
+    cexList,
+    account?.type,
     chainItem?.isTestnet,
   ]);
 
@@ -381,6 +637,55 @@ export function useSendNFTForm({
     setFormValues({ ...DF_SEND_TOKEN_FORM });
     formik.resetForm();
   }, [setFormValues, formik]);
+
+  const prepareRef = useRef<Promise<Tx | void>>();
+  const prepareCountRef = useRef(0);
+
+  const isFocused = useIsFocused();
+  const stableAmountValue = useDebounceValue(formValues.amount, 300);
+
+  useEffect(() => {
+    if (
+      isAccountSupportMiniApproval(account?.type || '') &&
+      !chainItem?.isTestnet
+    ) {
+      prefetchMiniSigner({
+        txs: [],
+      });
+    }
+  }, [
+    prefetchMiniSigner,
+    chainItem?.id,
+    formValues.to,
+    account?.type,
+    chainItem?.isTestnet,
+    toAddress,
+  ]);
+
+  useEffect(() => {
+    if (
+      isFocused &&
+      isAccountSupportMiniApproval(account?.type || '') &&
+      !chainItem?.isTestnet &&
+      computed.canSubmit &&
+      formValues.to &&
+      stableAmountValue
+    ) {
+      prepareCountRef.current += 1;
+      putScreenState({ buildTxsCount: prepareCountRef.current });
+      prepareRef.current = prepareDirectSubmitMiniTx(prepareCountRef.current);
+    }
+  }, [
+    putScreenState,
+    isFocused,
+    chainItem?.id,
+    chainItem?.isTestnet,
+    computed.canSubmit,
+    formValues.to,
+    stableAmountValue,
+    account?.type,
+    prepareDirectSubmitMiniTx,
+  ]);
 
   return {
     chainItem,
@@ -390,6 +695,8 @@ export function useSendNFTForm({
     formValues,
     resetFormValues,
     handleFieldChange,
+    handleGasLevelChanged,
+    handleIgnoreGasFeeChange,
     patchFormValues,
     handleFormValuesChange,
 
@@ -420,6 +727,8 @@ type InternalContext = {
     toAddressInWhitelist: boolean;
     toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
+
+    toAddressIsRecentlySend: boolean;
   };
 
   formik: ReturnType<typeof useFormik<FormSendNFT>>;
@@ -433,6 +742,8 @@ type InternalContext = {
       f: T,
       value: FormSendNFT[T],
     ) => void;
+    handleGasLevelChanged: (gl?: GasLevel | null) => Promise<void> | void;
+    handleIgnoreGasFeeChange: (b: boolean) => void;
   };
 };
 const SendNFTInternalContext = React.createContext<InternalContext>({
@@ -447,6 +758,8 @@ const SendNFTInternalContext = React.createContext<InternalContext>({
     toAddressInWhitelist: false,
     toAddressIsValid: false,
     toAddressInContactBook: false,
+
+    toAddressIsRecentlySend: false,
   },
 
   formik: null as any,
@@ -457,6 +770,8 @@ const SendNFTInternalContext = React.createContext<InternalContext>({
   },
   callbacks: {
     handleFieldChange: () => {},
+    handleGasLevelChanged: () => {},
+    handleIgnoreGasFeeChange: () => {},
   },
 });
 

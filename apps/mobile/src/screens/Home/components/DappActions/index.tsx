@@ -17,14 +17,12 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useDappAction } from './hook';
 import { sendRequest } from '@/core/apis/provider';
 import { toast } from '@/components2024/Toast';
-import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { DappActionHeader } from './DappActionHeader';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { debounce } from 'lodash';
+import { useMiniSigner } from '@/hooks/useSigner';
 
 export const enum ActionType {
   Withdraw = 'withdraw',
@@ -36,14 +34,25 @@ interface ActionButtonProps {
   style?: StyleProp<ViewStyle>;
   text: string;
   onPress: () => void;
+  disabled?: boolean;
 }
 
-const ActionButton = ({ text, onPress, style }: ActionButtonProps) => {
+const ActionButton = ({
+  text,
+  onPress,
+  style,
+  disabled,
+}: ActionButtonProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const debounceOnPress = useMemo(() => debounce(onPress, 200), [onPress]);
   return (
-    <TouchableOpacity style={[styles.button, style]} onPress={debounceOnPress}>
-      <Text style={styles.buttonText}>{text}</Text>
+    <TouchableOpacity
+      style={[styles.button, style]}
+      disabled={disabled}
+      onPress={disabled ? undefined : debounceOnPress}>
+      <Text style={[styles.buttonText, disabled && styles.disabledText]}>
+        {text}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -52,34 +61,18 @@ export const DappActions = ({
   data,
   chain,
   protocolLogo,
-  address,
-  addressType,
+  currentAccount,
   onRefresh,
+  session = INTERNAL_REQUEST_SESSION,
 }: {
   data?: WithdrawAction[];
   chain?: string;
   protocolLogo?: string;
-  address?: string;
-  addressType?: KEYRING_TYPE;
+  currentAccount?: KeyringAccountWithAlias;
   onRefresh?: () => Promise<void>;
+  session?: typeof INTERNAL_REQUEST_SESSION;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
-
-  const currentAccount = useMemo(
-    () =>
-      accounts.find(
-        item =>
-          address &&
-          isSameAddress(item.address, address) &&
-          item.type === addressType,
-      ),
-    [accounts, address, addressType],
-  );
-
   const withdrawAction = useMemo(
     () =>
       data?.find(
@@ -107,17 +100,21 @@ export const DappActions = ({
     chain,
     currentAccount,
   );
+
   const {
-    sendMiniTransactions,
-    setMiniSignExtraProps,
-    resetMiniSignExtraProps,
-  } = useMiniApproval();
+    openUI,
+    close: closeMiniSigner,
+    updateConfig,
+    resetGasStore,
+  } = useMiniSigner({
+    account: currentAccount!,
+  });
 
   const setDisableSignBtn = useCallback(
     (v: boolean) => {
-      setMiniSignExtraProps(pre => ({ ...pre, disableSignBtn: v }));
+      updateConfig({ disableSignBtn: v });
     },
-    [setMiniSignExtraProps],
+    [updateConfig],
   );
   const onPreExecChange = useCallback(
     (r: ExplainTxResponse) => {
@@ -147,29 +144,33 @@ export const DappActions = ({
     async (action: () => Promise<Tx[]>, title?: string) => {
       const txs = await action();
       if (canDirectSign) {
-        resetMiniSignExtraProps();
-        setMiniSignExtraProps(pre => ({
-          ...pre,
-          title: (
-            <DappActionHeader
-              logo={protocolLogo}
-              chain={chain}
-              title={title}
-              showQueueDesc={isQueueWithdraw}
-            />
-          ),
-          showSimulateChange: true,
-          autoThrowPreExecError: false,
-          onPreExecChange,
-        }));
         try {
-          await sendMiniTransactions({
+          closeMiniSigner();
+          resetGasStore();
+          await openUI({
             txs: txs,
-            account: currentAccount!,
-            waitTime: 0,
+            title: (
+              <DappActionHeader
+                logo={protocolLogo}
+                chain={chain}
+                title={title}
+                showQueueDesc={isQueueWithdraw}
+              />
+            ),
+            enableSecurityEngine: true,
+            showSimulateChange: true,
+            onPreExecChange,
+            disableSignBtn: false,
+            ga: {
+              category: 'DappActions',
+              action: title,
+            },
+            showCheck: true,
+            session,
           });
           setTimeout(() => {
             onRefresh?.();
+            closeMiniSigner();
           }, 500);
         } catch (error) {
           console.error('error occur', error);
@@ -202,14 +203,15 @@ export const DappActions = ({
     [
       canDirectSign,
       chain,
+      closeMiniSigner,
       currentAccount,
       isQueueWithdraw,
       onPreExecChange,
       onRefresh,
+      openUI,
       protocolLogo,
-      resetMiniSignExtraProps,
-      sendMiniTransactions,
-      setMiniSignExtraProps,
+      resetGasStore,
+      session,
     ],
   );
   if (!showWithdraw && !showClaim) {
@@ -242,22 +244,25 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     gap: 12,
-    paddingHorizontal: 16,
     marginTop: 12,
   },
   button: {
     flex: 1,
     height: 52,
     borderRadius: 12,
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: colors2024['neutral-bg-5'],
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
-    color: colors2024['brand-default'],
+    color: colors2024['neutral-title-1'],
     fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  disabledText: {
+    color: colors2024['neutral-secondary'],
   },
 }));

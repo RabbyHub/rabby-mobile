@@ -206,7 +206,11 @@
         "Revoke": "撤銷 {{token}} 授權",
         "ReceivedGas": "Received Gas",
         "DepositedGas": "已儲存的 Gas",
-        "WithdrawnGas": "Withdrawn Gas"
+        "WithdrawnGas": "Withdrawn Gas",
+        "LendingWithdraw": "提現",
+        "LendingSupply": "供應",
+        "LendingBorrow": "借款",
+        "LendingRepay": "還款"
       },
       "detail": {
         "Unknown": "未知",
@@ -333,7 +337,13 @@
       "sectionTo": {
         "addrValidator__empty": "請輸入地址",
         "searchInputPlaceholder": "輸入地址或掃描",
-        "addrValidator__invalid": "此地址無效"
+        "addrValidator__invalid": "此地址無效",
+        "positiveTips": {
+          "yourOwnAddress": "您自己的地址",
+          "whitelistedAddress": "白名單地址",
+          "sentRecently": "最近發送"
+        },
+        "selectPlaceholder": "選擇地址"
       },
       "whitelistAlert__notWhitelisted_tip": "該地址未列入白名單。",
       "whitelistAlert__notWhitelisted": "地址未列入白名單。我同意授予臨時轉賬權限。",
@@ -351,11 +361,17 @@
         "confirm": "繼續",
         "cancel": "取消"
       },
-      "noSupprotTokenForDex": "該代幣可能不受此交易所支持。在繼續之前請檢查以避免損失。",
       "From": "從",
-      "noSupprotTokenForSafe": "您要发送令牌的 Safe 地址未在此链上部署。请在继续操作之前检查，以避免损失。",
-      "noSupportTokenForChain": "收件人地址是不同链上的合约地址。在继续之前请检查，以避免损失。",
-      "addressDetail": "地址詳情"
+      "addressDetail": "地址詳情",
+      "newAmount": "金額",
+      "noSupportTokenReason": {
+        "forDexSimple": "此代幣可能不被此交易所支持。",
+        "forSafeSimple": "此 Safe 地址未在此链上部署",
+        "forChainSimple": "收件地址是在不同链上的合约地址",
+        "forChain": "收件地址是不同链上的合约地址。在继续之前请检查，以避免损失。",
+        "forSafe": "您要发送代币的 Safe 地址尚未在此链上部署。在继续之前请检查，以避免损失。",
+        "forDex": "此代幣可能不受此交易所支持。請在繼續之前檢查以避免損失。"
+      }
     },
     "sendTokenComponents": {
       "GasReserved": "預留 <1>0</1> {{ tokenName }} 用於 gas 費用"
@@ -900,9 +916,10 @@
         "gasAccount": "GasAccount",
         "search": "搜尋 Token",
         "copyTrading": "複製交易",
-        "watchlist": "觀察清單",
+        "watchlist": "代幣觀察列表",
         "perpsMarketList": "更多 Perps",
-        "perps": "永续合约"
+        "perps": "永续合约",
+        "lending": "借貸"
       }
     },
     "dashboard": {
@@ -1218,7 +1235,6 @@
         "selectAddMethod": "選擇添加方法"
       },
       "importAddress": {
-        "safe": "安全",
         "seedPhrase": "匯入助記詞",
         "privateKey": "導入私人密鑰",
         "hardWare": "連接硬體錢包",
@@ -1551,7 +1567,18 @@
           }
         }
       },
-      "createNewAddress": "建立新的 Wallet"
+      "createNewAddress": "建立新的 Wallet",
+      "whatIsPrivateKey": {
+        "title": "什麼是 private key",
+        "ButtonGotIt": "我懂了。",
+        "title3": "永遠不要分享它",
+        "title4": "安全",
+        "description3": "切勿分享您的私钥——任何能够访问它的人都可以控制您的资金。",
+        "title2": "備份",
+        "description2": "如果您丟失了您的私鑰，您將無法恢復您的錢包。",
+        "description4": "您的私钥会本地存储在您的设备上，并使用您的密码进行加密。只有您可以访问它。Rabby 无法检索或访问您的私钥。",
+        "description1": "私鑰是一串字母和數字，用於訪問和控制您的錢包。您可以使用它在任何設備上恢復您的錢包。"
+      }
     },
     "importSafe": {
       "title": "添加 Safe 地址",
@@ -1634,7 +1661,9 @@
           "please-sign-this-text-message-to-verify-that-you-are-the-owner-of-this-address": "請簽署此文本消息以驗證您是此地址的擁有者"
         },
         "max-15-characters-use-numbers-and-letters-only": "最多 15 個字符，僅使用數字和字母。"
-      }
+      },
+      "xPoints": "{{point}} 點",
+      "alreadyClaimedXPoints": "已領取：{{point}}"
     },
     "search": {
       "header": {
@@ -1857,16 +1886,6 @@
         "tokenSecurity": "代幣安全",
         "marketData": "市場數據"
       },
-      "interval": {
-        "5M": "5M",
-        "1W": "1W",
-        "30M": "30M",
-        "1D": "1天",
-        "1M": "1M",
-        "4H": "4H",
-        "15M": "15M",
-        "1H": "1H"
-      },
       "marketInfo": {
         "holders": "持有者",
         "marketCap": "市值",
@@ -1896,13 +1915,35 @@
             "buy": "購買",
             "qnt": "Qnt",
             "price": "價格",
-            "value": "值"
+            "value": "值",
+            "transactionCount": "交易次數"
           }
         },
         "details": "詳情",
         "empty": "無資料",
         "activity": "活動",
-        "summary": "摘要資料"
+        "summary": "摘要資料",
+        "pool": {
+          "tab": {
+            "liquidityDetail": "流動性明細",
+            "top5": "前 5 個 POOL"
+          },
+          "actions": {
+            "remove": "移除",
+            "add": "新增",
+            "all": "所有"
+          },
+          "headers": {
+            "value": "價值",
+            "time": "時間",
+            "amount": "數量"
+          },
+          "dex": "Dex",
+          "amount": "金額",
+          "pair": "配對",
+          "value": "價值"
+        },
+        "pools": "池子"
       }
     },
     "customTestnet": {
@@ -2126,7 +2167,7 @@
         "noSend": "您在過去 180 天內沒有向此地址發送資金。請確認您是否希望繼續。",
         "scamAddress": "接收者地址是一個被 Rabby 標記為詐騙地址的地址",
         "contractAddress": "收款地址是合約地址，可能導致資金損失",
-        "dexNoDeposite": "接收地址是一個來自 CEX 的非存款地址。請確保您的存款地址正確。"
+        "cexNoDeposite": "接收地址是一個來自 CEX 的非存款地址。請確保您的存款地址正確。"
       },
       "dexNameTail": "存款地址",
       "brandNameTail": "地址",
@@ -2219,16 +2260,23 @@
         "contentModeDesktop": "請求桌面網站",
         "refresh": "刷新",
         "disconnect": "斷開連接",
-        "favorite": "最愛"
+        "favorite": "最愛",
+        "clearCache": "清除快取"
       },
       "HyperliquidInvitePopup": {
         "btn": "立即加入",
         "title": "Hyperliquid 介紹計劃",
-        "desc": "現在使用 Rabby 的代碼加入，獲得 <1>4% 折扣</1> 於你的 Hyperliquid 費用。"
+        "desc": "現在使用 Rabby 的代碼加入，獲得 <1>4% 折扣</1> 於你的 Hyperliquid 費用。",
+        "asterTitle": "Aster 推介計劃",
+        "asterDesc": "立即使用 Rabby 的代码加入，以获得您的 Aster 手续费 <1>4% 折扣</1>。"
       },
       "WebviewError": {
         "error": "錯誤：",
-        "failedToLoad": "無法加載頁面"
+        "failedToLoad": "無法加載頁面",
+        "alertText": "嘗試<1/><2>在瀏覽器中打開</2><3/>以檢查是否是網站問題"
+      },
+      "toast": {
+        "clearCacheSuccess": "快取已清除"
       }
     },
     "browserManage": {
@@ -2584,6 +2632,126 @@
         "entryPrice": "進場價格：",
         "slPrice": "止損價格"
       }
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "內建頁面"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "viewSentTx": "已發送",
+        "sendTo": "發送到",
+        "addNewWhitelistAddr": "添加新的白名单地址",
+        "selectFromHistory": "從歷史中選擇",
+        "sendFrom": "發送自"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "命名地址"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "needSupply": "要借款，您需要提供资产作为担保。",
+        "canBorrow": "您可以根据您提供的抵押品借款，最高可达借款上限。"
+      },
+      "list": {
+        "headers": {
+          "token": "代幣",
+          "myBorrows": "我的借款",
+          "apy": "APY",
+          "mySupplies": "我的供应"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "description": "由 AAVE 提供支持。安全且零费用。",
+          "title": "賺取利息，隨時借款"
+        },
+        "healthy": "健康",
+        "more": "更多",
+        "lq": "如果低於 1，可能會觸發清算。",
+        "risky": "危險"
+      },
+      "repayDetail": {
+        "actions": "還款",
+        "approveAndRepay": "批准和偿还"
+      },
+      "supplyDetail": {
+        "availableToBorrow": "可借用",
+        "approveAndSupply": "批准並供應",
+        "supplyAPY": "供應 APY",
+        "actions": "供應"
+      },
+      "withdrawDetail": {
+        "remainingSupply": "剩餘供應量",
+        "actions": "提取"
+      },
+      "borrowDetail": {
+        "approveAndBorrow": "批准和借款",
+        "actions": "借入",
+        "almostReachedError": "可借贷的最大金额受到限制，因为协议借贷上限即将达到。",
+        "almostReachedWarning": "該資產的協議借貸上限為 100%。進一步借貸不可用。"
+      },
+      "popup": {
+        "amount": "金額",
+        "available": "可用",
+        "liquidationAt": "清算在 < 1.0",
+        "title": "交易概覽",
+        "remainingDebt": "剩餘債務"
+      },
+      "borrowOverview": {
+        "title": "借款詳情",
+        "myBorrow": "我的借款",
+        "borrowCap": "貸款上限",
+        "totalBorrowed": "總借款額",
+        "availableToBorrow": "可借款",
+        "liquidityPenalty": "清算罰金"
+      },
+      "supplyOverview": {
+        "title": "供應細節",
+        "availableToSupply": "可供提供",
+        "walletBalance": "錢包餘額",
+        "totalSupplied": "總供應量",
+        "mySupply": "我的 Supply",
+        "almostCap": "此資產已接近其借貸上限。此市場僅可借出 {{available}}。",
+        "reachCap": "此資產已達供應上限。此市場中沒有可供應的資產。"
+      },
+      "risk": {
+        "checkbox": "我了解警告並想繼續。",
+        "withdrawWarning": "提取该金额将使您的健康因子下降到风险清算的水平。",
+        "warning": "借用此金额将使您的健康因子降低到风险水平，可能面临清算。"
+      },
+      "lqDescription": {
+        "risky": "風險高",
+        "over3title": "健康因子 > 3.0:",
+        "desc": "清算價值",
+        "below1desc": "您的倉位面臨被平倉的風險。",
+        "below1title": "健康因子 ≤ 1.0：",
+        "over3desc": "您的資產是安全的",
+        "warningText": "您的健康因子太低。为避免清算：\n1. 偿还部分或全部贷款\n2. 添加更多抵押品",
+        "introText": "您的健康因子顯示您的借貸狀況有多安全。如果它下降得太低，您的擔保品可能會被清算。",
+        "liquidation": "清算：如果您的健康因子降至 1.0 以下，您的部分抵押品可能会被自动出售以偿还债务。将会适用清算罚款，导致您部分抵押品的损失。"
+      },
+      "modalDesc": {
+        "availableToBorrow": "可借用",
+        "maxAmount": "這是您根據所有提供的抵押品可以借用的最大金額。您的總借款能力是通過將每個抵押資產的市場價值與其最大貸款價值比（Max LTV）相乘，然後將結果相加來計算的。",
+        "availableToBorrowDesc": "您可以根据您提供的抵押品进行借款，直到达到借款上限。",
+        "lqDesc": "當清算發生時，清算人會代表借款人償還最多 50% 的未償還借款金額。作為回報，他們可以以折扣價格購買抵押品，並將差額（清算罰金）作為獎勵保留。"
+      },
+      "supplied": "供應",
+      "apy": "APY",
+      "borrowed": "借入",
+      "gotIt": "收到",
+      "submitted": "已提交",
+      "selectChain": "選擇鏈",
+      "estDailyEarning": "估計每日收益",
+      "market": "市場",
+      "netWorth": "淨資產",
+      "enterAmount": "輸入金額",
+      "hf": "健康因子",
+      "hfTitle": "健康因子"
     }
   },
   "component": {
@@ -2696,7 +2864,13 @@
         "login": "登入 GasAccount",
         "title": "存款 USDC / USDT",
         "desc": "支付所有鏈上的Gas費用",
-        "loginAndClaim": "登錄並領取 {{amount}}"
+        "loginAndClaim": "登錄並領取 {{amount}}",
+        "loginTips3": "當你沒有 Gas 時",
+        "loginTips1": "支付 gas 費用給",
+        "loginTips2": "任何鏈上的任何地址",
+        "depositTitle": "存入 USDC/USDT 支付 Gas 费用",
+        "learnAbout": "了解更多關於 GasAccount",
+        "depositDesc": "在所有链上，当您没有 Gas 时"
       },
       "deposit": "充值",
       "withdrawConfirmModal": {
@@ -2718,6 +2892,16 @@
         "gotIt": "我搞定了",
         "giftTips": "活躍用戶的 Gas 獎勵",
         "noWithdrawableBalanceDescription": "{{amount}} 的 gas 余额不可提取：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
+      "about": {
+        "title1": "GasAccount是什麼",
+        "title2": "如何使用 Gas Account",
+        "title3": "GasAccount 是否有額外費用",
+        "title4": "GasAccount 安全嗎",
+        "desc3": "Rabby Wallet 不收取額外費用。您僅需支付交易的 gas 及從 GasAccount 將該 gas 發送到您的地址所需的少量 gas。",
+        "desc4": "GasAccount 不需要任何合約批准或權限。您將存款到 Rabby 的 GasAccount 地址，當需要時，Rabby 將把燃料發送到您的地址。設計上完全安全。",
+        "desc1": "GasAccount 是支付燃料費的新方式。您可以使用一個帳戶來為所有鏈上的所有地址支付燃料費，無需在每條鏈上使用原生代幣。簡單、可選，且永不缺乏燃料。",
+        "desc2": "將資金添加到您的 GasAccount，並將其用於任何交易。簽名時，選擇使用原生代幣或 GasAccount 支付燃料費，隨時切換。"
       }
     },
     "TokenSelector": {
@@ -2735,6 +2919,11 @@
       },
       "favoriteFilter": {
         "all": "所有"
+      },
+      "riskDetected": {
+        "proceedBtn": "繼續",
+        "title": "風險檢測到",
+        "simpleExplanation": "不支援"
       }
     },
     "externalSwapBrideDappPopup": {
@@ -2792,6 +2981,21 @@
     },
     "GlobalTipsPopup": {
       "btn": "我明白了"
+    },
+    "Prediction": {
+      "side": "側邊",
+      "amount": "金額",
+      "price": "價格",
+      "usdValue": "USD 價值"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "desc": "將信任的地址添加到白名單",
+        "addBtn": "立即添加"
+      },
+      "recentAccounts": "最近",
+      "whitelistAccounts": "白名單",
+      "importedAccounts": "導入的錢包"
     }
   },
   "common": {

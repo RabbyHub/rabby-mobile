@@ -9,7 +9,10 @@ import { Entity, Column, Brackets } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
-import { HistoryItemCateType } from '@/screens/Transaction/components/type';
+import {
+  CUSTOM_HISTORY_TITLE_TYPE,
+  HistoryItemCateType,
+} from '@/screens/Transaction/components/type';
 import {
   fetchHistoryTokenItem,
   isNFTTokenId,
@@ -20,6 +23,7 @@ import {
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
+import { CustomTxItem } from '@/core/services/transactionHistory';
 
 export type ProjectItemType = {
   chain: string;
@@ -170,6 +174,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   @Column('text', { default: HistoryItemCateType.UnKnown })
   history_type: HistoryItemCateType = HistoryItemCateType.UnKnown;
 
+  @Column('text', { default: '' })
+  history_custom_type?: CUSTOM_HISTORY_TITLE_TYPE | undefined = undefined;
+
   makeDbId(): string {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.txHash]
       .filter(Boolean)
@@ -185,6 +192,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     }
 
     const receives = item.receives;
+
     if (!receives || !receives.length) {
       return true;
     }
@@ -208,7 +216,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
         pinedQueue.find(
           p => p.chainId === item.chain && p.tokenId === i.token_id,
         );
-      const price = isCore ? i?.price || 0 : 0; // is not core token price to 0
+      const price = isCore ? i?.price || token?.price || 0 : 0; // is not core token price to 0
       const usd = i.amount * price;
       allUsd += usd;
     }
@@ -285,6 +293,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     tokenDict: Record<string, TokenItem>,
     projectDict: Record<string, ProjectItemType>,
     pinedQueue: IManageToken[],
+    customTxItem?: CustomTxItem,
   ) {
     e.owner_addr = owner_addr;
     e.other_addr = input.other_addr ?? '';
@@ -326,6 +335,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.is_small_tx = this.judgeIsSmallUsdTx(e, pinedQueue);
     e.makeDbId();
     e.history_type = this.getHistoryItemType(e);
+    if (customTxItem) {
+      e.history_custom_type = customTxItem.actionType;
+    }
   }
 
   static async getAllHistoryItem(owner_addr?: string) {
@@ -465,11 +477,17 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       lastTimeAt?: number; // page cursor
       maxTimeAt?: number;
       filterScamAndSmallTx?: boolean;
+      filterLendingHistory?: boolean;
     } = {},
   ) {
     await prepareAppDataSource();
     const currentTime = new Date().getTime();
-    const { pageSize = 50, lastTimeAt, maxTimeAt } = options;
+    const {
+      pageSize = 50,
+      lastTimeAt,
+      maxTimeAt,
+      filterLendingHistory,
+    } = options;
 
     const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
     console.log('getHistoryItemsPaginated exec', { pageSize, lastTimeAt });
@@ -495,6 +513,20 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
         {
           oneHourAgo,
           is_small_tx: false,
+        },
+      );
+    }
+
+    if (filterLendingHistory) {
+      queryBuilder = queryBuilder.andWhere(
+        'historyitem.history_custom_type IN (:...history_custom_types)',
+        {
+          history_custom_types: [
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY,
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW,
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW,
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY,
+          ],
         },
       );
     }

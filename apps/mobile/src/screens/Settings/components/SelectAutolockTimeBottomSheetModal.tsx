@@ -8,10 +8,10 @@ import {
 import { Text, View, StyleSheet } from 'react-native';
 
 import { AppBottomSheetModal } from '@/components';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { createGetStyles } from '@/utils/styles';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { TIME_SETTINGS } from '@/constant/autoLock';
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
@@ -20,24 +20,31 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { useAutoLockTimeMs } from '@/hooks/appSettings';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { FontWeightEnum } from '@/core/utils/fonts';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'green-default');
 
 const SIZES = {
-  ITEM_HEIGHT: 60,
+  ITEM_HEIGHT: 72,
   ITEM_GAP: 12,
   titleMt: 6,
   titleHeight: 24,
   titleMb: 16,
   HANDLE_HEIGHT: 8,
-  containerPb: 42,
+  containerPb: 0,
+  listBottomSpace: 48,
   get FULL_HEIGHT() {
     return (
       SIZES.HANDLE_HEIGHT +
       (SIZES.titleMt + SIZES.titleHeight + SIZES.titleMb) +
-      (SIZES.ITEM_HEIGHT + SIZES.ITEM_GAP) * (TIME_SETTINGS.length - 1) +
+      (SIZES.ITEM_HEIGHT + SIZES.ITEM_GAP) *
+        Math.min(5, TIME_SETTINGS.length - 1) +
       SIZES.ITEM_HEIGHT +
-      SIZES.containerPb
+      SIZES.containerPb +
+      SIZES.listBottomSpace +
+      (IS_ANDROID ? 30 : 0) /* compensation distance */
     );
   },
 };
@@ -52,12 +59,10 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
   const sheetModalRef = useRef<BottomSheetModal>(null);
   const { safeSizes } = useSafeAndroidBottomSizes({
     sheetHeight: SIZES.FULL_HEIGHT,
-    containerPaddingBottom: SIZES.containerPb,
   });
   const { t } = useTranslation();
 
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const { autoLockMs, onAutoLockTimeMsChange } = useAutoLockTimeMs();
 
@@ -76,27 +81,31 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
   );
   return (
     <AppBottomSheetModal
-      backgroundStyle={styles.sheet}
       index={0}
       ref={sheetModalRef}
-      handleStyle={styles.handleStyle}
-      snapPoints={[safeSizes.sheetHeight]}
+      {...makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+      })}
+      snapPoints={[SIZES.FULL_HEIGHT]}
       onChange={index => {
         if (index <= 0) {
           onCancel?.();
         }
-      }}>
+      }}
+      enableContentPanningGesture
+      enablePanDownToClose>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         // scrollEnabled={false}
         style={[
           styles.container,
           {
-            paddingBottom: safeSizes.containerPaddingBottom,
+            paddingBottom: 0,
           },
         ]}>
         <Text style={styles.title}>{t('page.setting.autoLockTime')}</Text>
-        <View style={styles.mainContainer}>
+        <BottomSheetScrollView style={styles.mainContainer}>
           {TIME_SETTINGS.map((item, idx) => {
             const labelText = item.getLabel();
             const itemKey = `timesetting-${labelText}-${item.milliseconds}`;
@@ -118,23 +127,14 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
               </TouchableView>
             );
           })}
-        </View>
+          {!!TIME_SETTINGS.length && <View style={styles.bottomSpacer} />}
+        </BottomSheetScrollView>
       </AutoLockView>
     </AppBottomSheetModal>
   );
 });
 
-const getStyles = createGetStyles((colors, ctx) => ({
-  sheet: {
-    // backgroundColor: colors['neutral-bg-1'],
-    backgroundColor: colors['neutral-bg-2'],
-    // height: SIZES.FULL_HEIGHT,
-  },
-  handleStyle: {
-    height: SIZES.HANDLE_HEIGHT,
-    backgroundColor: colors['neutral-bg-2'],
-    // ...makeDebugBorder(),
-  },
+const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
     paddingVertical: 0,
@@ -148,9 +148,11 @@ const getStyles = createGetStyles((colors, ctx) => ({
     // ...makeDebugBorder('yellow'),
   },
   title: {
+    fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '500',
-    color: colors['neutral-title-1'],
+    fontWeight: FontWeightEnum.heavy,
+    lineHeight: 24,
+    color: ctx.colors2024['neutral-title-1'],
     textAlign: 'center',
 
     marginTop: SIZES.titleMt,
@@ -167,13 +169,13 @@ const getStyles = createGetStyles((colors, ctx) => ({
   settingItem: {
     width: '100%',
     height: SIZES.ITEM_HEIGHT,
-    paddingTop: 18,
-    paddingBottom: 18,
-    paddingHorizontal: 20,
-    backgroundColor: !ctx?.isLight
-      ? colors['neutral-card1']
-      : colors['neutral-bg1'],
-    borderRadius: 8,
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 24,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+    borderRadius: 16,
 
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -182,18 +184,22 @@ const getStyles = createGetStyles((colors, ctx) => ({
   notFirstOne: {
     marginTop: SIZES.ITEM_GAP,
   },
+  bottomSpacer: {
+    height: SIZES.listBottomSpace,
+  },
   settingItemLabel: {
-    // color: var(--r-neutral-title1, #192945);
-    color: colors['neutral-title-1'],
+    color: ctx.colors2024['neutral-title-1'],
     fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
     fontStyle: 'normal',
-    fontWeight: '500',
+    fontWeight: FontWeightEnum.bold,
   },
 
   border: {
     height: 0,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors['neutral-bg1'],
+    borderTopColor: ctx.colors2024['neutral-bg-1'],
     position: 'absolute',
     top: 0,
     left: 0,

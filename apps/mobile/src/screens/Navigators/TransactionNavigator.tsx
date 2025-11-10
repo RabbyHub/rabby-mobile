@@ -25,13 +25,8 @@ import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 import { BuyScreen } from '../Buy';
-import SendPolyScreen from '../Send/SubScreens/SelectPolyScreen';
-import SendInputScreen from '../Send/SubScreens/SendInput';
-import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
-import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
 import { CopyTradingScreen } from '../CopyTrading';
 import { GnosisQueueScreen } from '../GnosisQueue';
-import WhitelistInputScreen from '../WhiteList/InputScreen';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
 import CopyTradingTokenDetail from '../CopyTrading/component/CopyTradingTokenDetail';
@@ -39,6 +34,9 @@ import { PerpsScreen } from '../Perps';
 import { PerpsMarketListScreen } from '../PerpsMarketList';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
+import LendingHistory from '../Lending/components/LendingHistory';
+import AAVEScreen from '../Lending';
+
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
@@ -59,66 +57,6 @@ export default function TransactionNavigator() {
         headerShadowVisible: false,
         headerShown: true,
       })}>
-      <TransactionStack.Screen
-        name={RootNames.SendTo}
-        component={SendPolyScreen}
-        options={mergeScreenOptions({
-          title: 'Send to',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-
-      <TransactionStack.Screen
-        name={RootNames.SendInput}
-        component={SendInputScreen}
-        options={mergeScreenOptions({
-          title: 'Send to',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.WhitelistInput}
-        component={WhitelistInputScreen}
-        options={mergeScreenOptions({
-          title: 'Add New Whitelist Address',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.SelectImportAddress}
-        component={SelectMyAddressScreen}
-        options={mergeScreenOptions({
-          title: 'Select Imported Wallet',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.SelectTypeAddress}
-        component={SelectWatchScreenScreen}
-        options={mergeScreenOptions({
-          title: '',
-        })}
-      />
       <TransactionStack.Screen
         name={RootNames.Send}
         component={SendScreen}
@@ -183,6 +121,26 @@ export default function TransactionNavigator() {
                 titleText={ctx.children}
               />
             );
+          },
+          headerStyle: {
+            backgroundColor: makeTxPageBackgroundColors({
+              isLight,
+              colors2024,
+            }),
+          },
+        }}
+      />
+      <TransactionStack.Screen
+        name={RootNames.LendingHistory}
+        component={LendingHistory}
+        options={{
+          title: 'Lending History',
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
           },
           headerStyle: {
             backgroundColor: makeTxPageBackgroundColors({
@@ -412,22 +370,6 @@ export default function TransactionNavigator() {
       />
 
       <TransactionStack.Screen
-        name={RootNames.PerpsMarketList}
-        component={PerpsMarketListScreen}
-        options={mergeScreenOptions({
-          title: t('page.home.services.perpsMarketList'),
-          // ...headerPresets.withBgCard1_2024,
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            color: colors['neutral-title-1'],
-          },
-        })}
-      />
-
-      <TransactionStack.Screen
         name={RootNames.PerpsMarketDetail}
         component={PerpsMarketDetailScreen}
         options={mergeScreenOptions({
@@ -504,6 +446,34 @@ export default function TransactionNavigator() {
                 titleText={ctx.children}
               />
             );
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.Lending}
+        component={AAVEScreen}
+        options={mergeScreenOptions({
+          title: t('page.home.services.lending'),
+          ...headerPresets.withBgCard1_2024,
+          headerTitle: ctx => {
+            return (
+              <ScreenHeaderAccountSwitcher
+                forScene="Lending"
+                titleText={ctx.children}
+              />
+            );
+          },
+          headerTintColor: colors['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
           },
         })}
       />

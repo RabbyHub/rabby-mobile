@@ -239,13 +239,8 @@ export const PerpsChart: React.FC<{
   );
 
   const handleChartReady = useMemoizedFn(() => {
-    setTimeout(() => {
-      chartIsReadyRef.current = true;
-      setIsReady(true);
-      if (chartData) {
-        chartWebViewRef.current?.setData(chartData);
-      }
-    }, 0);
+    chartIsReadyRef.current = true;
+    setIsReady(true);
   });
 
   const subscribeCandle = useMemoizedFn(() => {
@@ -275,6 +270,9 @@ export const PerpsChart: React.FC<{
   // Subscribe to real-time candle updates
   useEffect(() => {
     if (appState === 'active') {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
       const unsubscribe = subscribeCandle();
       unsubscribeRef.current = unsubscribe;
       return () => {
@@ -286,13 +284,33 @@ export const PerpsChart: React.FC<{
         unsubscribeRef.current = () => {};
       }
     }
-  }, [subscribeCandle, appState]);
+  }, [subscribeCandle, appState, market.name]);
+
+  // Sync chart data when both chart is ready and data is available
+  useEffect(() => {
+    if (isReady && chartData) {
+      chartWebViewRef.current?.setData(chartData);
+    }
+  }, [isReady, chartData]);
 
   useEffect(() => {
     if (isReady && lineTagInfo) {
       chartWebViewRef.current?.updateTPSLPriceLines(lineTagInfo);
     }
   }, [isReady, lineTagInfo]);
+
+  // // Reset chart when market changes
+  // useEffect(() => {
+  //   // Reset chart state
+  //   setIsReady(false);
+  //   chartIsReadyRef.current = false;
+
+  //   // Unsubscribe from previous market
+  //   if (unsubscribeRef.current) {
+  //     unsubscribeRef.current();
+  //     unsubscribeRef.current = () => {};
+  //   }
+  // }, [market.name]);
 
   return (
     <View style={styles.chart}>

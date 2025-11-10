@@ -18,8 +18,8 @@ import {
   downloadLatestApk,
   getUpgradeInfo,
 } from '@/utils/version';
-import { BUILD_CHANNEL, isNonPublicProductionEnv } from '@/constant/env';
-import { APP_URLS } from '@/constant';
+import { BUILD_CHANNEL } from '@/constant/env';
+import { APP_URLS, isNonPublicProductionEnv } from '@/constant';
 import { toast } from '@/components/Toast';
 import { useUnmountedRef } from './common/useMount';
 

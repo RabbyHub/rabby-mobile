@@ -41,7 +41,10 @@ export const getTokenHistoryPrice = async (
   );
 };
 
-export const formatUsdValueKMB = (value: string | number): string => {
+export const formatUsdValueKMB = (
+  value: string | number,
+  decimals = 2,
+): string => {
   const bnValue = new BigNumber(value);
 
   if (bnValue.lt(0)) {
@@ -52,11 +55,11 @@ export const formatUsdValueKMB = (value: string | number): string => {
   let formattedValue: string;
 
   if (numValue >= 1e9) {
-    formattedValue = `${(numValue / 1e9).toFixed(2)}B`;
+    formattedValue = `${(numValue / 1e9).toFixed(decimals)}B`;
   } else if (numValue >= 1e6) {
-    formattedValue = `${(numValue / 1e6).toFixed(2)}M`;
+    formattedValue = `${(numValue / 1e6).toFixed(decimals)}M`;
   } else if (numValue >= 1e3) {
-    formattedValue = `${(numValue / 1e3).toFixed(2)}K`;
+    formattedValue = `${(numValue / 1e3).toFixed(decimals)}K`;
   } else {
     formattedValue = numValue.toFixed(2);
   }

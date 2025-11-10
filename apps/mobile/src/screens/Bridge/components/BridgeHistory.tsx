@@ -13,8 +13,8 @@ import { ModalLayouts } from '@/constant/layout';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { BridgeHistoryItem } from '@/components2024/HistoryItem/BridgeHistoryItem';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
-import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
+import IconEmpty from '@/assets2024/images/lending/empty.png';
+import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -79,7 +79,7 @@ const HistoryList = ({ recentShowTime }: { recentShowTime: number }) => {
       !loading && (!txList || !txList?.list?.length) ? (
         <View style={styles.emptyView}>
           <Image
-            source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+            source={isLight ? IconEmpty : IconEmptyDark}
             width={160}
             height={120}
             style={{

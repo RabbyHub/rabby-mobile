@@ -14,12 +14,12 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { apisPerps } from './../../core/apis/perps';
-import { useSendMiniSignTypedData } from './../useMiniSignTypedDataApproval';
+import { miniSignTypedData } from '../useMiniSignTypedData';
 import { usePerpsStore } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
 import { minBy } from 'lodash';
-import { usePerspPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
+import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { getAllMyAccount } from '@/core/apis/address';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
@@ -102,6 +102,8 @@ export const usePerpsInitial = () => {
         PERPS_BUILD_FEE_RECEIVE_ADDRESS,
       );
       if (!res) {
+        logout(address);
+        apisPerps.createPerpsAgentWallet(address);
         console.error('Failed to set builder fee');
         Sentry.captureException(
           new Error(
@@ -270,7 +272,7 @@ export const usePerpsInitial = () => {
 };
 
 export const usePerpsState = () => {
-  const [popupSate, setPopupState] = usePerspPopupState();
+  const [popupSate, setPopupState] = usePerpsPopupState();
   const { t } = useTranslation();
   const deleteAgentCbRef = useRef<(() => Promise<void>) | null>(null);
   const { checkBuilderFee } = usePerpsInitial();
@@ -308,8 +310,6 @@ export const usePerpsState = () => {
   } = usePerpsStore();
   const { isInitialized, currentPerpsAccount, isLogin, positionAndOpenOrders } =
     perpsState;
-
-  const sendMiniSignTypedData = useSendMiniSignTypedData();
 
   const handleDeleteAgent = useMemoizedFn(async () => {
     if (deleteAgentCbRef.current) {
@@ -446,7 +446,7 @@ export const usePerpsState = () => {
       if (useMiniApprovalSign) {
         // await MiniTypedDataApproval in home page
         try {
-          const result = await sendMiniSignTypedData({
+          const result = await miniSignTypedData({
             txs: signActions.map(item => {
               return {
                 data: item.action,
@@ -460,7 +460,7 @@ export const usePerpsState = () => {
             signActions[idx].signature = item.txHash;
           });
         } catch (error) {
-          throw error || 'Canceled';
+          throw 'Canceled';
         }
       } else {
         for (const actionObj of signActions) {
@@ -652,17 +652,21 @@ export const usePerpsState = () => {
             { version: 'V4' },
           );
         } else if (useMiniApprovalSign) {
-          const result = await sendMiniSignTypedData({
-            txs: [
-              {
-                data: action,
-                from: currentPerpsAccount.address,
-                version: 'V4',
-              },
-            ],
-            account: currentPerpsAccount,
-          });
-          signature = result[0].txHash;
+          try {
+            const result = await miniSignTypedData({
+              txs: [
+                {
+                  data: action,
+                  from: currentPerpsAccount.address,
+                  version: 'V4',
+                },
+              ],
+              account: currentPerpsAccount,
+            });
+            signature = result[0].txHash;
+          } catch (error) {
+            throw 'Withdraw failed';
+          }
         } else {
           signature = await sendRequest({
             data: {
@@ -750,7 +754,8 @@ export const usePerpsState = () => {
     hasPermission: perpsState.hasPermission,
     homeHistoryList,
     perpFee: perpsState.perpFee,
-
+    userAccountHistory: perpsState.userAccountHistory,
+    localLoadingHistory: perpsState.localLoadingHistory,
     // Actions
     login,
     logout,

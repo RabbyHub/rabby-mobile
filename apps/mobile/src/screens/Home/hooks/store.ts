@@ -17,7 +17,9 @@ import { usePinTokens } from '@/screens/Search/usePinTokens';
 import { tagTokenList } from '../utils/token';
 import { tagProfiles } from './usePortfolio';
 import { tagNfts } from './nft';
-import { tokenNounceAtom, deFiNounceAtom, nftNounceAtom } from './refresh';
+import { tokenNonceAtom, deFiNonceAtom, nftNonceAtom } from './refresh';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 let top20TokensCache: CombineTokensItem[] = [];
 let top10PortfoliosCache: CombineDefiItem[] = [];
@@ -30,10 +32,7 @@ type DisplayedProjectWithoutMethods = Omit<
 type OriginalCombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
   totalUsdValue: BigNumber;
-  fromAddress: Array<{
-    address: string;
-    amount: number;
-  }>;
+  address: string;
 };
 export type CombineTokensItem = Omit<
   OriginalCombineTokensItem,
@@ -46,9 +45,7 @@ export type CombineTokensItem = Omit<
 type OriginalCombineDefiItem = DisplayedProjectWithoutMethods & {
   totalUsdValue: BigNumber;
   filterTokenDesc?: string;
-  fromAddress: Array<{
-    address: string;
-  }>;
+  address: string;
 };
 export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'> & {
   totalUsdValue: number;
@@ -84,6 +81,7 @@ export const combinedTokens = (
   assetsMap: {
     [address: string]: IAssets;
   },
+  top10Addresses: string[],
   filter?: {
     chain?: string;
     tokenId?: string;
@@ -91,13 +89,16 @@ export const combinedTokens = (
 ): CombineTokensItem[] => {
   const { unfoldTokens = [] } =
     preferenceService.getUserTokenSettingsSync() || {};
-  const tokenMap: Record<string, OriginalCombineTokensItem> = {};
+  const tokens: OriginalCombineTokensItem[] = [];
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()),
   );
 
   Object.entries(assetsMap).forEach(([address, assets]) => {
-    if (!lowerAddresses.has(address.toLowerCase())) {
+    if (
+      !lowerAddresses.has(address.toLowerCase()) ||
+      !top10Addresses.some(i => isSameAddress(i, address))
+    ) {
       return;
     }
     lowerAddresses.delete(address.toLowerCase());
@@ -112,36 +113,16 @@ export const combinedTokens = (
           }
         }
       }
-      const key = `${token._tokenId}-${token.chain}`;
-      if (!tokenMap[key]) {
-        tokenMap[key] = {
-          ...token,
-          totalAmount: new BigNumber(token.amount || 0),
-          totalUsdValue: new BigNumber(token._usdValue || 0),
-          fromAddress: [
-            {
-              address,
-              amount: token.amount,
-            },
-          ],
-        };
-      } else {
-        const existingToken = tokenMap[key];
-        existingToken.totalAmount = existingToken.totalAmount.plus(
-          token.amount || 0,
-        );
-        existingToken.totalUsdValue = existingToken.totalUsdValue?.plus(
-          token._usdValue || 0,
-        );
-        existingToken.fromAddress.push({
-          address,
-          amount: token.amount,
-        });
-      }
+      tokens.push({
+        ...token,
+        totalAmount: new BigNumber(token.amount || 0),
+        totalUsdValue: new BigNumber(token._usdValue || 0),
+        address,
+      });
     });
   });
 
-  const coreTokens = Object.values(tokenMap).filter(i => i.is_core);
+  const coreTokens = tokens.filter(i => i.is_core);
   const listLength = coreTokens.length || 0;
   const totalValue = coreTokens.reduce(
     (acc, curr) => acc + (curr.totalUsdValue.toNumber() || 0),
@@ -154,7 +135,8 @@ export const combinedTokens = (
 
   const hasExpandSwitch =
     listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
-  return Object.values(tokenMap)
+
+  return tokens
     .sort((a, b) =>
       a.totalUsdValue.gt(b.totalUsdValue)
         ? -1
@@ -195,15 +177,21 @@ export const combinedTokens = (
     });
 };
 
-export const combinedProtocols = (assetsMap: {
-  [address: string]: IAssets;
-}): CombineDefiItem[] => {
-  const defiMap: Record<string, OriginalCombineDefiItem> = {};
+export const combinedProtocols = (
+  assetsMap: {
+    [address: string]: IAssets;
+  },
+  top10Addresses: string[],
+): CombineDefiItem[] => {
+  const portfolios: OriginalCombineDefiItem[] = [];
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
   );
   Object.entries(assetsMap).forEach(([address, assets]) => {
-    if (!lowerAddresses.has(address.toLowerCase())) {
+    if (
+      !lowerAddresses.has(address.toLowerCase()) ||
+      !top10Addresses.some(i => isSameAddress(i, address))
+    ) {
       return;
     }
     lowerAddresses.delete(address.toLowerCase());
@@ -212,30 +200,14 @@ export const combinedProtocols = (assetsMap: {
       if (!key) {
         return;
       }
-
-      if (!defiMap[key]) {
-        defiMap[key] = {
-          ...defi,
-          totalUsdValue: getDisplayedPortfolioUsdValue(defi._portfolios),
-          fromAddress: [
-            {
-              address,
-            },
-          ],
-        };
-      } else {
-        const existingDefi = defiMap[key];
-        existingDefi.totalUsdValue = existingDefi.totalUsdValue?.plus(
-          getDisplayedPortfolioUsdValue(defi._portfolios),
-        );
-        existingDefi.fromAddress.push({
-          address,
-        });
-      }
+      portfolios.push({
+        ...defi,
+        address,
+        totalUsdValue: getDisplayedPortfolioUsdValue(defi._portfolios),
+      });
     });
   });
 
-  const portfolios = Object.values(defiMap);
   const listLength = portfolios.length || 0;
   const totalValue = portfolios.reduce((acc, curr) => {
     return acc + (curr.totalUsdValue.toNumber() || 0);
@@ -248,7 +220,7 @@ export const combinedProtocols = (assetsMap: {
   const hasExpandSwitch =
     listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
 
-  return Object.values(defiMap)
+  return portfolios
     .sort((a, b) =>
       a.totalUsdValue.gt(b.totalUsdValue)
         ? -1
@@ -260,65 +232,12 @@ export const combinedProtocols = (assetsMap: {
       ...p,
       totalUsdValue: p.totalUsdValue.toNumber(),
       _netWorth: formatNetworth(p.totalUsdValue?.toNumber()),
+      // _isFold: false,
+      // _isMiniFold: false,
       _isFold: hasExpandSwitch ? p.totalUsdValue.toNumber() < threshold : false,
       _isMiniFold: hasExpandSwitch
         ? p.totalUsdValue.toNumber() < threshold
         : false,
-    }));
-};
-
-export const combinedNFTs = (assetsMap: {
-  [address: string]: IAssets;
-}): CombineNFTItem[] => {
-  const nftMap: Record<string, OriginalCombineNFTItem> = {};
-  const lowerAddresses = new Set(
-    Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
-  );
-  Object.entries(assetsMap).forEach(([address, assets]) => {
-    if (!lowerAddresses.has(address.toLowerCase())) {
-      return;
-    }
-    lowerAddresses.delete(address.toLowerCase());
-    assets.nfts?.forEach(nft => {
-      const key = `${nft.chain}-${nft.id}-${nft.name || ''}`;
-      if (!key) {
-        return;
-      }
-
-      if (!nftMap[key]) {
-        nftMap[key] = {
-          ...nft,
-          totalAmount: new BigNumber(nft.amount || 0),
-          fromAddress: [
-            {
-              address,
-            },
-          ],
-        };
-      } else {
-        const existingNFT = nftMap[key];
-        existingNFT.totalAmount = existingNFT.totalAmount?.plus(
-          nft.amount || 0,
-        );
-        existingNFT.fromAddress.push({
-          address,
-        });
-      }
-    });
-  });
-
-  return Object.values(nftMap)
-    .sort((a, b) =>
-      a.totalAmount.gt(b.totalAmount)
-        ? -1
-        : a.totalAmount.lt(b.totalAmount)
-        ? 1
-        : 0,
-    )
-    .map(nft => ({
-      ...nft,
-      totalAmount: nft.totalAmount.toNumber(),
-      amount: nft.totalAmount?.toNumber() || 0,
     }));
 };
 
@@ -331,9 +250,10 @@ export const useAssetsMap = ({
 }) => {
   const [assetsMap, setAssetsMap] = useAtom(assetAtom);
   const { handleFetchTokens } = usePinTokens();
-  const [tokenNounce, setTokenNounce] = useAtom(tokenNounceAtom);
-  const [defiNounce, setDefiNounce] = useAtom(deFiNounceAtom);
-  const [nftNounce, setNftNounce] = useAtom(nftNounceAtom);
+  const [tokenNonce, setTokenNonce] = useAtom(tokenNonceAtom);
+  const [defiNonce, setDefiNonce] = useAtom(deFiNonceAtom);
+  const [nftNonce, setNftNonce] = useAtom(nftNonceAtom);
+  const { top10Addresses } = useAccountInfo();
 
   const updateTokens = useCallback(
     ({
@@ -449,31 +369,31 @@ export const useAssetsMap = ({
   }, [setAssetsMap]);
 
   useEffect(() => {
-    if (tokenNounce > 0) {
+    if (tokenNonce > 0) {
       refreshTagToken();
-      setTokenNounce(0);
+      setTokenNonce(0);
     }
-  }, [refreshTagToken, setTokenNounce, tokenNounce]);
+  }, [refreshTagToken, setTokenNonce, tokenNonce]);
 
   useEffect(() => {
-    if (defiNounce > 0) {
+    if (defiNonce > 0) {
       refreshTagPortfolio();
-      setDefiNounce(0);
+      setDefiNonce(0);
     }
-  }, [refreshTagPortfolio, defiNounce, setDefiNounce]);
+  }, [refreshTagPortfolio, defiNonce, setDefiNonce]);
 
   useEffect(() => {
-    if (nftNounce > 0) {
+    if (nftNonce > 0) {
       refreshTagNft();
-      setNftNounce(0);
+      setNftNonce(0);
     }
-  }, [refreshTagNft, nftNounce, setNftNounce]);
+  }, [refreshTagNft, nftNonce, setNftNonce]);
 
   const getTokenCombined = useCallback(
     (tokenId: string, chain: string) => {
-      return combinedTokens(assetsMap, { tokenId, chain });
+      return combinedTokens(assetsMap, top10Addresses, { tokenId, chain });
     },
-    [assetsMap],
+    [assetsMap, top10Addresses],
   );
 
   const memoTokens = useMemo(() => {
@@ -481,20 +401,20 @@ export const useAssetsMap = ({
       return top20TokensCache;
     }
 
-    const tokens = combinedTokens(assetsMap);
+    const tokens = combinedTokens(assetsMap, top10Addresses);
     top20TokensCache = tokens.filter(item => !item._isFold).slice(0, 20);
     return tokens;
-  }, [assetsMap, hideCombined]);
+  }, [assetsMap, hideCombined, top10Addresses]);
 
   const memoPortfolios = useMemo(() => {
     if (hideCombined) {
       return top10PortfoliosCache;
     }
 
-    const portfolios = combinedProtocols(assetsMap);
+    const portfolios = combinedProtocols(assetsMap, top10Addresses);
     top10PortfoliosCache = portfolios.slice(0, 10);
     return portfolios;
-  }, [assetsMap, hideCombined]);
+  }, [assetsMap, hideCombined, top10Addresses]);
 
   return {
     updateTokens,

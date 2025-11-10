@@ -66,9 +66,9 @@ export default function HomeHeaderArea({
                 <WalletIcon
                   type={currentAccount?.brandName as KEYRING_TYPE}
                   address={currentAccount?.address}
-                  width={28}
-                  height={28}
-                  borderRadius={7}
+                  width={22}
+                  height={22}
+                  borderRadius={6}
                 />
               </TouchableOpacity>
             </View>
@@ -124,14 +124,14 @@ const getStyles = createGetStyles2024(ctx => ({
     flexShrink: 1,
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     flexWrap: 'nowrap',
   },
   copy: {
-    width: 17,
-    height: 17,
+    width: 18,
+    height: 18,
   },
   walletIcon: {
     width: 28,

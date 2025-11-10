@@ -108,7 +108,8 @@ export const BottomSheetBrowser = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowBrowser ? 0 : -1}
-      enableContentPanningGesture={browserState.isShowSearch}
+      // enableContentPanningGesture={browserState.isShowSearch}
+      enableContentPanningGesture={false}
       enablePanDownToClose
       enableHandlePanningGesture
       name="urlWebviewContainerRef"
@@ -116,7 +117,8 @@ export const BottomSheetBrowser = () => {
       snapPoints={snapPoints}
       enableDismissOnClose={false}
       keyboardBehavior="extend"
-      android_keyboardInputMode="adjustResize"
+      // android_keyboardInputMode="adjustResize"
+      backdropProps={{ pressBehavior: 'none' }}
       // enableBlurKeyboardOnGesture
       // handleStyle={styles.hidden}
       handleComponent={BrowserHandler}
@@ -235,7 +237,7 @@ export const BrowserManagePopup = () => {
       }}
       ref={modalRef}
       keyboardBehavior="extend"
-      android_keyboardInputMode="adjustResize"
+      // android_keyboardInputMode="adjustResize"
       snapPoints={snapPoints}
       // enableDismissOnClose={false}
       onChange={index => {

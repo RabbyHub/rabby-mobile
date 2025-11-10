@@ -57,14 +57,16 @@ import {
   ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
   getHistoryItemType,
-  judgeIsSmallUsdTx,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import { HistoryItemCateType } from './components/type';
+import {
+  CUSTOM_HISTORY_TITLE_TYPE,
+  HistoryItemCateType,
+} from './components/type';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
@@ -102,6 +104,7 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   account?: KeyringAccountWithAlias;
   isShowSuccess?: boolean;
   historyType: HistoryItemCateType;
+  historyCustomType?: CUSTOM_HISTORY_TITLE_TYPE;
 }
 
 interface IFetchHistory {
@@ -752,6 +755,7 @@ const HistoryScreen = ({ isForMultipleAddress = true }) => {
       )}
       <ScreenSpecificStatusBar screenName={RootNames.History} />
       <History isTestnet={false} isForMultipleAddress={isForMultipleAddress} />
+      {/* TODO: it seems to be useless, drop it after confirming */}
       <BottomSheetModalTokenDetail
         __shouldSwitchSceneAccountBeforeRedirect__
         ref={tokenDetailModalRef}
@@ -877,7 +881,6 @@ const ForSingleAddress = () => {
 
   return <HistoryScreen isForMultipleAddress={false} />;
 };
-
 HistoryScreen.ForSingleAddress = ForSingleAddress;
 
 export default HistoryScreen;

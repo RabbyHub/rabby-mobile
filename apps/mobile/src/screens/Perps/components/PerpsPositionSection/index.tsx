@@ -7,27 +7,61 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sortBy } from 'lodash';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { PerpsPositionItem } from './PerpsPositionItem';
 import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
+import { useMemoizedFn } from 'ahooks';
+import { PerpsRiskLevelPopup } from './PerpsRiskLevelPopup';
+import { calculateDistanceToLiquidation } from './utils';
+import { sleep } from '@/utils/async';
 
 export const PerpsPositionSection: React.FC<{
   positionAndOpenOrders?: PositionAndOpenOrder[];
   marketDataMap: MarketDataMap;
-  onClosePosition: (position: AssetPosition['position']) => void;
-}> = ({ positionAndOpenOrders, marketDataMap, onClosePosition }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  handleShowRiskPopup: (coin: string) => void;
+  handleCloseRiskPopup: () => void;
+  onClosePosition: (position: AssetPosition['position']) => Promise<void>;
+}> = ({
+  positionAndOpenOrders,
+  marketDataMap,
+  handleShowRiskPopup,
+  handleCloseRiskPopup,
+  onClosePosition,
+}) => {
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
-
   const list = useMemo(() => {
     return sortBy(
       positionAndOpenOrders || [],
       item => -item.position.marginUsed,
     );
   }, [positionAndOpenOrders]);
+
+  const handleCloseAll = useMemoizedFn(() => {
+    Alert.alert(
+      t('page.perps.closeAllConfirmTitle'),
+      t('page.perps.closeAllConfirmMessage'),
+      [
+        {
+          text: t('global.cancel'),
+          style: 'default',
+        },
+        {
+          text: t('global.confirm'),
+          style: 'default',
+          onPress: async () => {
+            for (const item of list) {
+              await onClosePosition(item.position);
+              await sleep(10);
+            }
+          },
+        },
+      ],
+    );
+  });
 
   if (!positionAndOpenOrders?.length) {
     return null;
@@ -36,6 +70,14 @@ export const PerpsPositionSection: React.FC<{
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{t('page.perps.positions')}</Text>
+        <TouchableOpacity
+          onPress={() => {
+            handleCloseAll();
+          }}>
+          <Text style={styles.sectionActionText}>
+            {t('page.perps.closeAll')}
+          </Text>
+        </TouchableOpacity>
       </View>
       <View style={styles.content}>
         {list.map((item, index) => {
@@ -43,7 +85,7 @@ export const PerpsPositionSection: React.FC<{
             <PerpsPositionItem
               key={index}
               item={item.position}
-              onClosePosition={() => onClosePosition(item.position)}
+              openOrders={item.openOrders}
               marketData={marketDataMap[item.position.coin]}
               onPress={() => {
                 navigation.push(RootNames.StackTransaction, {
@@ -53,6 +95,7 @@ export const PerpsPositionSection: React.FC<{
                   },
                 });
               }}
+              onShowRiskPopup={handleShowRiskPopup}
             />
           );
         })}
@@ -76,7 +119,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '700',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },
   sectionAction: {
@@ -101,6 +144,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   content: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 12,
+    gap: 8,
   },
 }));

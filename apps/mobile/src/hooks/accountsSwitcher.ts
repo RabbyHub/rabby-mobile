@@ -429,7 +429,9 @@ function getDefaultSceneAccountInfo() {
 type OfSceneScreen =
   | typeof RootNames.MultiSwap
   | typeof RootNames.MultiBridge
-  | typeof RootNames.MultiSend;
+  | typeof RootNames.MultiSend
+  | typeof RootNames.TokenDetail
+  | typeof RootNames.Lending;
 const ScreenSceneAccountContext = React.createContext<
   | {
       forScene: null;
@@ -437,7 +439,8 @@ const ScreenSceneAccountContext = React.createContext<
       sceneScreenRenderId: '' | `${string}-${OfSceneScreen}`;
     }
   | {
-      forScene: AccountSwitcherScene & 'MakeTransactionAbout';
+      forScene: AccountSwitcherScene &
+        ('MakeTransactionAbout' | 'Lending' | 'TokenDetail');
       ofScreen: OfSceneScreen;
       sceneScreenRenderId: '' | `${string}-${OfSceneScreen}`;
     }

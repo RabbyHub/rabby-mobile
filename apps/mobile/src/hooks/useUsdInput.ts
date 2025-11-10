@@ -5,7 +5,11 @@ export const useUsdInput = () => {
   const [input, setInput] = useState('');
 
   const onChangeText = useMemoizedFn((v: string) => {
-    const value = v.startsWith('$') ? v.slice(1) : v;
+    // Replace comma with dot for decimal point
+    const normalizedValue = v.replace(/,/g, '.');
+    const value = normalizedValue.startsWith('$')
+      ? normalizedValue.slice(1)
+      : normalizedValue;
 
     if (/^\d*\.?\d*$/.test(value) || value === '') {
       setInput(value);
@@ -54,7 +58,11 @@ export const useSlTpUsdInput = ({ szDecimals }: { szDecimals: number }) => {
   );
 
   const onChangeText = useMemoizedFn((v: string) => {
-    const value = v.startsWith('$') ? v.slice(1) : v;
+    // Replace comma with dot for decimal point
+    const normalizedValue = v.replace(/,/g, '.');
+    const value = normalizedValue.startsWith('$')
+      ? normalizedValue.slice(1)
+      : normalizedValue;
 
     if (
       (/^\d*\.?\d*$/.test(value) || value === '') &&

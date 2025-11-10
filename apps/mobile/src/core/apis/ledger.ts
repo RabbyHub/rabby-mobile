@@ -61,6 +61,7 @@ export async function cleanUp() {
 
 export async function isConnected(
   address: string,
+  skipBLEOpen = false,
 ): Promise<[boolean, string?]> {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
   const detail = keyring.getAccountInfo(address);
@@ -71,7 +72,9 @@ export async function isConnected(
 
   keyring.setDeviceId(detail.deviceId);
   try {
-    await TransportBLE.open(detail.deviceId, 1000);
+    if (!skipBLEOpen) {
+      await TransportBLE.open(detail.deviceId, 1000);
+    }
     return [true, detail.deviceId];
   } catch (e) {
     TransportBLE.disconnectDevice(detail.deviceId);

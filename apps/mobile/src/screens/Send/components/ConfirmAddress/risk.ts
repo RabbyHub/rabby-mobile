@@ -4,7 +4,7 @@ import {
   AddrDescResponse,
   ProjectItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -29,18 +29,20 @@ export const enum RiskType {
   CONTRACT_ADDRESS = 3,
   CEX_NO_DEPOSIT = 4,
 }
+type RiskItem = { type: RiskType; value: string };
 export const useRisks = (
   address: string,
-  disableBalance?: boolean,
-  cex?: ProjectItem,
+  options?: {
+    cex?: ProjectItem | null;
+    onLoadFinished?: (ctx: { risks: Array<RiskItem> }) => void;
+  },
 ) => {
-  const [risks, setRisks] = useState<Array<{ type: RiskType; value: string }>>(
-    [],
-  );
+  const { cex, onLoadFinished } = options || {};
+  const [risks, setRisks] = useState<Array<RiskItem>>([]);
   const { t } = useTranslation();
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!address);
   const riskGetRef = useRef(false);
 
   const [addressDesc, setAddressDesc] = useState<
@@ -51,117 +53,105 @@ export const useRisks = (
     return !loading && !risks.some(r => r.type === RiskType.NEVER_SEND);
   }, [loading, risks]);
 
-  useEffect(() => {
-    if (riskGetRef.current) {
-      return;
-    }
+  const fetchRisks = useCallback(async () => {
+    if (!address) return;
+    if (riskGetRef.current) return;
     riskGetRef.current = true;
-    (async () => {
-      setLoading(true);
-      const currRisks: Array<{ type: RiskType; value: string }> = [];
-      let hasSended = false;
-      let hasError = false;
-      try {
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('timeout')), 3000);
-        });
+    setLoading(true);
 
-        const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
+    const currRisks: Array<RiskItem> = [];
+    let hasSended = false;
+    let hasError = false;
 
-        const checkTransferPromise = new Promise<void>(resolve => {
-          sortedAccounts.slice(0, 10).forEach(acc => {
-            if (isSameAddress(acc.address, address)) {
-              return;
-            }
-            queue.add(async () => {
-              try {
-                if (hasSended || hasError) {
-                  return;
-                }
-                const res = await openapi.hasTransferAllChain(
-                  acc.address,
-                  address,
-                );
-                if (res?.has_transfer) {
-                  hasSended = true;
-                }
-              } catch (error) {
-                console.error('has_transfer fetch error', error);
-                hasError = true;
-              }
-            });
-          });
-          waitQueueFinished(queue).then(() => resolve());
-        });
+    try {
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('timeout')), 3000);
+      });
 
-        addressDescPromise.then(addressRes => {
-          if (!addressRes) {
+      const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
+
+      const checkTransferPromise = new Promise<void>(resolve => {
+        sortedAccounts.slice(0, 10).forEach(acc => {
+          if (isSameAddress(acc.address, address)) {
             return;
           }
-          if (cex) {
-            if (!addressRes?.cex) {
-              addressRes.cex = {
-                id: cex.id,
-                name: cex.name,
-                logo_url: cex.logo_url,
-                is_deposit: true,
-              };
-            } else {
-              addressRes.cex.is_deposit = true;
-              addressRes.cex.name = cex.name;
-              addressRes.cex.logo_url = cex.logo_url;
-              addressRes.cex.id = cex.id;
+          queue.add(async () => {
+            try {
+              if (hasSended || hasError) {
+                return;
+              }
+              const res = await openapi.hasTransferAllChain(
+                acc.address,
+                address,
+              );
+
+              if (res?.has_transfer) {
+                hasSended = true;
+              }
+            } catch (error) {
+              console.error('has_transfer fetch error', error);
+              hasError = true;
             }
-          }
-          if (addressRes) {
-            setAddressDesc(addressRes);
-          }
-          if (addressRes?.is_danger || addressRes?.is_scam) {
-            currRisks.push({
-              type: RiskType.SCAM_ADDRESS,
-              value: t('page.confirmAddress.risks.scamAddress'),
-            });
-          }
-          if (addressRes?.cex?.id && !addressRes.cex.is_deposit) {
-            currRisks.push({
-              type: RiskType.CEX_NO_DEPOSIT,
-              value: t('page.confirmAddress.risks.dexNoDeposite'),
-            });
-          }
-          const isContract = Object.keys(addressRes?.contract || {}).length > 0;
-          const isSafeAddress = Object.keys(addressRes?.contract || {}).some(
-            key => {
-              const contract = addressRes?.contract?.[key];
-              return !!contract?.multisig;
-            },
-          );
-          if (isContract && !isSafeAddress) {
-            currRisks.push({
-              type: RiskType.CONTRACT_ADDRESS,
-              value: t('page.confirmAddress.risks.contractAddress'),
-            });
-          }
+          });
         });
+        waitQueueFinished(queue).then(() => resolve());
+      });
 
-        await Promise.race([
-          Promise.all([addressDescPromise, checkTransferPromise]),
-          timeoutPromise,
-        ]);
-
-        if (!hasSended) {
-          setRisks([
-            ...currRisks,
-            {
-              type: RiskType.NEVER_SEND,
-              value: t('page.confirmAddress.risks.noSend'),
-            },
-          ]);
-        } else {
-          setRisks(currRisks);
+      addressDescPromise.then(addressRes => {
+        if (!addressRes) {
+          return;
         }
-      } catch (error) {
-        console.error('check transfer timeout or error', error);
-        queue.clear();
+        if (cex) {
+          if (!addressRes?.cex) {
+            addressRes.cex = {
+              id: cex.id,
+              name: cex.name,
+              logo_url: cex.logo_url,
+              is_deposit: true,
+            };
+          } else {
+            addressRes.cex.is_deposit = true;
+            addressRes.cex.name = cex.name;
+            addressRes.cex.logo_url = cex.logo_url;
+            addressRes.cex.id = cex.id;
+          }
+        }
+        if (addressRes) {
+          setAddressDesc(addressRes);
+        }
+        if (addressRes?.is_danger || addressRes?.is_scam) {
+          currRisks.push({
+            type: RiskType.SCAM_ADDRESS,
+            value: t('page.confirmAddress.risks.scamAddress'),
+          });
+        }
+        if (addressRes?.cex?.id && !addressRes.cex.is_deposit) {
+          currRisks.push({
+            type: RiskType.CEX_NO_DEPOSIT,
+            value: t('page.confirmAddress.risks.cexNoDeposite'),
+          });
+        }
+        const isContract = Object.keys(addressRes?.contract || {}).length > 0;
+        const isSafeAddress = Object.keys(addressRes?.contract || {}).some(
+          key => {
+            const contract = addressRes?.contract?.[key];
+            return !!contract?.multisig;
+          },
+        );
+        if (isContract && !isSafeAddress) {
+          currRisks.push({
+            type: RiskType.CONTRACT_ADDRESS,
+            value: t('page.confirmAddress.risks.contractAddress'),
+          });
+        }
+      });
+
+      await Promise.race([
+        Promise.all([addressDescPromise, checkTransferPromise]),
+        timeoutPromise,
+      ]);
+
+      if (!hasSended) {
         setRisks([
           ...currRisks,
           {
@@ -169,14 +159,37 @@ export const useRisks = (
             value: t('page.confirmAddress.risks.noSend'),
           },
         ]);
+      } else {
+        setRisks(currRisks);
       }
+      onLoadFinished?.({ risks: [...currRisks] });
+    } catch (error) {
+      console.error('check transfer timeout or error', error);
+      queue.clear();
+      const risks = [
+        ...currRisks,
+        {
+          type: RiskType.NEVER_SEND,
+          value: t('page.confirmAddress.risks.noSend'),
+        },
+      ];
+      setRisks(risks);
+      onLoadFinished?.({ risks });
+    } finally {
+      riskGetRef.current = false;
       setLoading(false);
-    })();
-  }, [address, cex, disableBalance, sortedAccounts, t]);
+    }
+  }, [address, cex, sortedAccounts, t, onLoadFinished]);
+
+  useEffect(() => {
+    fetchRisks();
+  }, [fetchRisks]);
+
   return {
     risks,
     addressDesc,
     hasSend,
     loading,
+    fetchRisks,
   };
 };
