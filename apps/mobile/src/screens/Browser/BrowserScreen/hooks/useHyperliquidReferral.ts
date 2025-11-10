@@ -1,4 +1,4 @@
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { PERPS_ASTER_INVITE_URL, PERPS_INVITE_URL } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import { preferenceService } from '@/core/services';

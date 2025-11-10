@@ -3,6 +3,7 @@ import { getVersion, getBuildNumber } from 'react-native-device-info';
 import { stringUtils } from '@rabby-wallet/base-utils';
 
 import { CHAINS_ENUM } from './chains';
+import { BUILD_CHANNEL } from './env';
 
 export const INITIAL_OPENAPI_URL = 'https://app-api.rabby.io';
 
@@ -98,6 +99,11 @@ export const PROD_APPLICATION_ID:
     : __DEV__
     ? ('com.debank.rabby-mobile-debug' as const)
     : ('com.debank.rabby-mobile' as const);
+
+const isSelfhostRegPkg =
+  BUILD_CHANNEL === 'selfhost-reg' && APPLICATION_ID !== PROD_APPLICATION_ID;
+export const isNonPublicProductionEnv = isSelfhostRegPkg || __DEV__;
+export const NEED_DEVSETTINGBLOCKS = isSelfhostRegPkg || __DEV__;
 
 const FirebaseWebClientIds = {
   'com.debank.rabbymobile.debug':

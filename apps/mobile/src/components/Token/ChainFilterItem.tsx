@@ -24,11 +24,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
 
     chainFilterChainName: {
-      color: colors2024['neutral-body'],
+      color: colors2024['neutral-foot'],
       fontSize: 14,
+      lineHeight: 18,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
-      marginHorizontal: 6,
+      marginHorizontal: 4,
     },
 
     chainFilterItemClose: {

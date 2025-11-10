@@ -26,7 +26,7 @@ export default React.memo(
     const { t } = useTranslation();
 
     return (
-      <Card style={style} shadow>
+      <Card style={style}>
         <PortfolioHeader data={data} name={name} showDescription />
         <View style={styles.poolContainer}>
           <Text style={styles.nameText}>{portfolio.detail.name}</Text>

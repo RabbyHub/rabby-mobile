@@ -1840,6 +1840,8 @@
       "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance"
     },
     "tokenDetail": {
+      "headerBalanceText": "Balance",
+      "headerTokenValueText": "Token Value",
       "balance": "Balance",
       "Mybalance": "Token Balance",
       "Introduction": "Introduction",
@@ -1898,6 +1900,7 @@
       "excludeBalanceTips": "This asset is excluded from your total balance for accuracy. You can tap it to view details and include it if preferred.",
       "excludeBalanceTipsButton": "I Got It.",
       "guideToMarketData": "Market Data:",
+      "price": "Price",
       "tabs": {
         "marketData": "Market data",
         "tokenSecurity": "Token Security"
@@ -2264,6 +2267,26 @@
     },
     "perps": {
       "title": "Perps",
+      "searchPerpsPopup": {
+        "searchPlaceholder": "Search Perps",
+        "searchPosition": "Search Position",
+        "openPosition": "Open Position",
+        "empty": "No results found",
+        "searchPerps": "Search Perps"
+      },
+      "PerpsRiskPopup": {
+        "title": "Risk Level",
+        "subtitle": "Real-time liquidation distance (%)",
+        "distanceLabel": "Liquidation Distance",
+        "currentPrice": "Current Price",
+        "liquidationPrice": "Liquidation Price",
+        "liqIntro": "Liquidation Distance (%) shows how far the current price is from your liquidation price. A larger distance indicates a safer position, while a smaller distance means higher liquidation risk.",
+        "level": {
+          "safe": "Safe",
+          "warning": "Warning",
+          "danger": "Danger"
+        }
+      },
       "PerpsCard": {
         "title": "Trade Perps",
         "loginDesc": "Log in with your address and deposit funds to start trading perps",
@@ -2340,17 +2363,21 @@
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
       "PerpsAutoCloseModal": {
+        "noPosition": "You must input margin first.",
         "takeProfitTipsLong": "Take profit price must be higher than current price",
         "stopLossTipsLong": "Stop loss price must be lower than current price",
         "takeProfitTipsShort": "Take profit price must be lower than current price",
         "stopLossTipsLongLiquidation": "Price is lower than the liquidation price ({{price}})",
         "stopLossTipsShort": "Stop loss price must be higher than current price",
+
         "stopLossTipsShortLiquidation": "Price is higher than the liquidation price ({{price}})",
         "takeProfit": "Take profit",
         "loss": "Loss",
         "profit": "Profit",
         "stopLoss": "Stop loss "
       },
+      "closeAllConfirmTitle": "Confirm Close All Positions",
+      "closeAllConfirmMessage": "All your open positions will be closed at market price.",
       "PerpsDepositTokenModal": {
         "goSwapDesc": "Only USDC on Arbitrum is supported for direct deposit. Please swap your current token to USDC before depositing.",
         "goBridgeDesc": "Only USDC on Arbitrum is supported for direct deposit. Please bridge your current token to USDC on Arbitrum before depositing.",
@@ -2358,6 +2385,7 @@
         "bridgeBtn": "Bridge",
         "directTag": "Direct Deposit"
       },
+      "closeAll": "Close All",
       "explorePerps": "Explore Perps",
       "more": "More",
       "history": {
@@ -2443,13 +2471,29 @@
         "desc": "Trading perpetual contracts involves significant risks, including the possibility of losing your investment and collateral rapidly due to high leverage and market volatility. Such trading may not be suitable for all users. Prices may be affected by funding rates and liquidity, and you could be automatically liquidated without prior notice. Market data is provided by Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "Close {{coin}} {{direction}} Position",
-        "positionSize": "Position Size",
-        "pnl": "PNL",
-        "closeBtn": "Close {{direction}}",
-        "fee": "Fee:",
+        "title": "Close Position",
+        "amount": "Amount",
+        "total": "Total",
+        "receive": "Receive:",
+        "minimumWarning": "Minimum amount is {{percent}}%",
+        "closedPnl": "Closed PNL:",
+        "confirm": "Confirm",
+        "fee": "Fee",
         "rabbyFeeTips": "Rabby fee: 0.04%",
         "providerFeeTips": "Hyperliquid fee: {{fee}}"
+      },
+      "PerpsEditMarginPopup": {
+        "title": "Adjust margin",
+        "currentPrice": "Current Price",
+        "addMargin": "Add Margin",
+        "reduceMargin": "Reduce Margin",
+        "amountToAdd": "Amount to add",
+        "amountToReduce": "Amount to reduce",
+        "liqPrice": "Liq. Price:",
+        "insufficientMargin": "Insufficient margin",
+        "insufficientMarginToReduce": "Insufficient margin to reduce position.",
+        "perpsBalance": "Perps Balance",
+        "available": "available"
       },
       "PerpsOpenPositionPopup": {
         "margin": "Margin",
@@ -2462,6 +2506,11 @@
         "size": "Size",
         "autoClose": "Auto Close",
         "tpPrice": "Take-Profit Price",
+        "takeProfitWhenPriceAbove": "Take Profit When Price Above",
+        "takeProfitWhenPriceBelow": "Take Profit When Price Below",
+        "stopLossWhenPriceBelow": "Stop Loss When Price Below",
+        "stopLossWhenPriceAbove": "Stop Loss When Price Above",
+        "stopLossWhen": "Stop Loss When",
         "slPrice": "Stop-Loss Price",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
@@ -2478,6 +2527,9 @@
         "tpPrice": "Take-Profit Price",
         "fee": "Fee",
         "btn": "Open {{direction}} Position",
+        "free": "Free",
+        "rabbyFee": "Rabby fee",
+        "providerFee": "Hyperliquid fee",
         "rabbyFeeTips": "Rabby fee: 0%",
         "providerFeeTips": "Hyperliquid fee: {{fee}}",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
@@ -2491,6 +2543,17 @@
         "noPermission": "Opening positions is not supported in your region"
       },
       "PerpsAutoCloseModal": {
+        "takeProfitExpectedPNL": "Take profit expected PNL",
+        "stopLossExpectedPNL": "Stop loss expected PNL",
+        "priceReaches": "Price Reaches",
+        "priceAbove": "Price above",
+        "priceBelow": "Price below",
+        "youGain": "You Gain",
+        "youLoss": "You Loss",
+        "currentPrice": "Current {{price}}",
+        "EntryAndCurrentPrice": "Entry {{entryPrice}}  Current {{price}}",
+        "takeProfitWhen": "Take Profit When",
+        "stopLossWhen": "Stop Loss When",
         "slPrice": "Stop Loss Price",
         "tpPrice": "Take Profit Price",
         "price": "Price:",
@@ -2518,6 +2581,7 @@
       }
     },
     "Lending": {
+      "isolated": "isolated",
       "apy": "APY",
       "gotIt": "Got it",
       "market": "Market",
@@ -2619,7 +2683,9 @@
         "availableToBorrow": "Available to borrow",
         "maxAmount": "This is the maximum amount you can borrow based on all your supplied collateral. Your total borrowing power is calculated by multiplying the market value of each collateral asset by its Max LTV, then summing the results.",
         "lqDesc": "When a liquidation occurs, liquidators repay up to 50% of the outstanding borrowed amount on behalf of the borrower. In return, they can buy the collateral at a discount and keep the difference (liquidation penalty) as a bonus.",
-        "availableToBorrowDesc": "You can borrow based on your supplied collateral and until the borrow cap is reached."
+        "availableToBorrowDesc": "You can borrow based on your supplied collateral and until the borrow cap is reached.",
+        "isolatedTitle": "Asset cannot be used as collateral",
+        "isolatedDesc": "This asset can only be used as collateral in isolation mode, where you cannot supply other asset collateral for borrowing. Assets used as collateral in isolation mode can only be borrowed to a specific debt ceiling."
       }
     }
   },

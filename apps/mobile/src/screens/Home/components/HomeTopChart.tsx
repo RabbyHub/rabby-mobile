@@ -2,14 +2,14 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useState } from 'react';
-import { Dimensions, View } from 'react-native';
+import { Dimensions, Pressable, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   CurvePoint,
   formatSmallCurrencyValue,
   formChartData,
 } from '@/hooks/useCurve';
-import {
+import Animated, {
   useAnimatedProps,
   useAnimatedStyle,
   useDerivedValue,
@@ -19,6 +19,14 @@ import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/Cu
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useCurrency } from '@/hooks/useCurrency';
+import {
+  FOLD_ASSETS_HEADER_HEIGHT,
+  UNFOLD_ASSETS_HEADER_HEIGHT,
+} from '@/constant/layout';
+import Svg, { Path } from 'react-native-svg';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+
 const ScreenWidth = Dimensions.get('screen').width;
 
 function Chart({
@@ -27,12 +35,16 @@ function Chart({
   loading,
   isNoAssets,
   pathColor,
+  fold,
+  setFold,
 }: {
   isOffline: boolean;
   data: ReturnType<typeof formChartData>;
   loading: boolean;
   isNoAssets: boolean;
   pathColor: string;
+  fold: boolean;
+  setFold: (fold: boolean) => void;
 }) {
   const { styles, colors } = useTheme2024({ getStyle });
   const [isInitialized, setIsInitialized] = useState(false);
@@ -49,11 +61,21 @@ function Chart({
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          height: fold
+            ? FOLD_ASSETS_HEADER_HEIGHT
+            : UNFOLD_ASSETS_HEADER_HEIGHT,
+        },
+      ]}>
       <View style={styles.chartContainer}>
         <LineChart.Provider data={data.list}>
           {isInitialized ? (
             <ChartHeader
+              fold={fold}
+              setFold={setFold}
               rawNetWorth={data.rawNetWorth}
               changePercent={data.changePercent}
               isLoss={data.isLoss}
@@ -61,7 +83,7 @@ function Chart({
               loading={loading}
             />
           ) : null}
-          {isOffline || isNoAssets ? null : !loading ? (
+          {fold ? null : isOffline || isNoAssets ? null : !loading ? (
             isInitialized ? (
               <LineChart
                 height={104}
@@ -100,6 +122,8 @@ interface IHeaderProps {
   isLoss: boolean;
   loading: boolean;
   data: CurvePoint[];
+  fold: boolean;
+  setFold: (fold: boolean) => void;
 }
 export const ChartHeader = ({
   rawNetWorth,
@@ -107,6 +131,8 @@ export const ChartHeader = ({
   isLoss,
   loading,
   data: _data,
+  fold,
+  setFold,
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
@@ -192,12 +218,17 @@ export const ChartHeader = ({
           ...styles.changePercent,
           display: loading ? 'none' : 'flex',
           color: colors2024['neutral-secondary'],
+          stroke: colors2024['neutral-secondary'],
         };
       }
+      const _color = isLoss
+        ? colors2024['red-default']
+        : colors2024['green-default'];
       return {
         ...styles.changePercent,
         display: loading ? 'none' : 'flex',
-        color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
+        color: _color,
+        stroke: _color,
       };
     }
 
@@ -206,21 +237,28 @@ export const ChartHeader = ({
         ...styles.changePercent,
         display: loading ? 'none' : 'flex',
         color: colors2024['neutral-secondary'],
+        stroke: colors2024['neutral-secondary'],
       };
     }
     if (data?.[currentIndex?.value]) {
+      const _color = data?.[currentIndex?.value]?.isLoss
+        ? colors2024['red-default']
+        : colors2024['green-default'];
       return {
         ...styles.changePercent,
         display: loading ? 'none' : 'flex',
-        color: data?.[currentIndex?.value]?.isLoss
-          ? colors2024['red-default']
-          : colors2024['green-default'],
+        color: _color,
+        stroke: _color,
       };
     }
+    const _color = isLoss
+      ? colors2024['red-default']
+      : colors2024['green-default'];
     return {
       ...styles.changePercent,
       display: loading ? 'none' : 'flex',
-      color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
+      color: _color,
+      stroke: _color,
     };
   }, [isLoss, data, currentIndex, colors2024, styles, loading, isInitialized]);
 
@@ -254,18 +292,44 @@ export const ChartHeader = ({
   }
   return (
     <View style={styles.charHeader}>
-      <AnimateableText
-        style={styles.netWorth}
-        animatedProps={netWorthAnimatedProps}
-      />
-      <AnimateableText
-        style={lossStyleProps}
-        animatedProps={percentChangeAnimatedProps}
-      />
-      <AnimateableText
-        style={styles.changeTime}
-        animatedProps={dateTimeAnimatedProps}
-      />
+      <View style={styles.leftContainer}>
+        <AnimateableText
+          style={styles.netWorth}
+          animatedProps={netWorthAnimatedProps}
+        />
+        {fold ? null : (
+          <AnimateableText
+            style={styles.changeTime}
+            animatedProps={dateTimeAnimatedProps}
+          />
+        )}
+      </View>
+      <Pressable
+        onPress={() => setFold(!fold)}
+        style={styles.percentChangeContainer}>
+        <AnimateableText
+          style={lossStyleProps}
+          animatedProps={percentChangeAnimatedProps}
+        />
+        <View>
+          <Svg
+            style={{
+              transform: fold ? [{ rotate: '90deg' }] : [{ rotate: '270deg' }],
+            }}
+            width={16}
+            height={16}
+            viewBox="0 0 24 24"
+            fill="none">
+            <AnimatedPath
+              d="M8.4 4.80005L15.6 12L8.4 19.2"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              animatedProps={lossStyleProps}
+            />
+          </Svg>
+        </View>
+      </Pressable>
     </View>
   );
 };
@@ -287,14 +351,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   charHeader: {
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     flexDirection: 'row',
     paddingLeft: 8,
     width: ScreenWidth - 32,
   },
+  leftContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  percentChangeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
   netWorth: {
     fontSize: 42,
-    lineHeight: 42,
+    lineHeight: 48,
     // textAlign: 'center',
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
@@ -324,15 +398,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   changeTime: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    marginLeft: 4,
   },
   container: {
-    height: 159,
     width: ScreenWidth,
     overflow: 'hidden',
   },

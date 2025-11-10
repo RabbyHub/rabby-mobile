@@ -9,6 +9,8 @@ import {
   ViewStyle,
   TextStyle,
   TouchableOpacity,
+  Platform,
+  Keyboard,
 } from 'react-native';
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
@@ -23,6 +25,7 @@ import {
 } from '@/assets/icons/common';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import TouchableView from '@/components/Touchable/TouchableView';
+import { Pressable } from 'react-native-gesture-handler';
 
 const RcIconClose = makeThemeIconFromCC(RcIconCloseCircleCC, 'neutral-foot');
 
@@ -118,6 +121,8 @@ const getFormInputStyles = createGetStyles2024(ctx => {
   };
 });
 
+const isAndroid = Platform.OS === 'android';
+
 type InputType = 'TextInput' | 'BottomSheetTextInput';
 type RenderCtx = {
   wrapperStyle: StyleProp<ViewStyle>;
@@ -127,6 +132,7 @@ const NextInputComponent = React.forwardRef<
   TextInput,
   RNViewProps & {
     as?: InputType;
+    disableNestedTouchEventOnAndroid?: boolean;
     containerStyle?: React.ComponentProps<typeof View>['style'];
     fieldName?: string;
     fieldNameStyle?: React.ComponentProps<typeof Text>['style'];
@@ -163,7 +169,8 @@ const NextInputComponent = React.forwardRef<
 >(
   (
     {
-      as,
+      as: asProp,
+      disableNestedTouchEventOnAndroid = false,
       fieldName,
       containerStyle,
       inputProps,
@@ -186,14 +193,14 @@ const NextInputComponent = React.forwardRef<
     const { styles } = useTheme2024({ getStyle: getFormInputStyles });
 
     const JSXComponent = useMemo(() => {
-      switch (as) {
+      switch (asProp) {
         default:
         case 'TextInput':
           return TextInput;
         case 'BottomSheetTextInput':
           return BottomSheetTextInput;
       }
-    }, [as]);
+    }, [asProp]);
 
     const [isFocusing, setIsFocusing] = React.useState(false);
     const onFocus = useCallback<TextInputProps['onFocus'] & object>(
@@ -211,20 +218,22 @@ const NextInputComponent = React.forwardRef<
       [inputProps],
     );
 
+    const innerRef = React.useRef<TextInput>(null);
+    const inputRef = (ref as React.RefObject<TextInput>) || innerRef;
     const onPressClear = useCallback<
       React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
     >(
       evt => {
         if (clearable) {
           evt?.stopPropagation?.();
-          if (typeof ref !== 'function') {
-            ref?.current?.clear();
+          if (typeof inputRef !== 'function') {
+            inputRef?.current?.clear();
           }
 
           inputProps?.onChangeText?.('');
         }
       },
-      [ref, clearable, inputProps],
+      [inputRef, clearable, inputProps],
     );
 
     const formattedClearIcon = useMemo(() => {
@@ -278,8 +287,17 @@ const NextInputComponent = React.forwardRef<
 
     const hasCustomIcon = !!formattedClearIcon || !!formmatedCustomIcon;
 
+    const needPatchTouchEvent = isAndroid && disableNestedTouchEventOnAndroid;
+    const WrapperComp = needPatchTouchEvent ? Pressable : React.Fragment;
+
     return (
-      <>
+      <WrapperComp
+        onPress={() => {
+          if (!Keyboard.isVisible()) {
+            inputRef.current?.blur();
+          }
+          inputRef.current?.focus();
+        }}>
         <View
           {...viewProps}
           style={StyleSheet.flatten([
@@ -304,7 +322,7 @@ const NextInputComponent = React.forwardRef<
             {...inputProps}
             onFocus={onFocus}
             onBlur={onBlur}
-            ref={ref as any}
+            ref={inputRef as any}
             style={StyleSheet.flatten([
               styles.input,
               inputStyle,
@@ -333,7 +351,7 @@ const NextInputComponent = React.forwardRef<
             {tipIcon}
           </View>
         )}
-      </>
+      </WrapperComp>
     );
   },
 );
@@ -382,7 +400,6 @@ const PasswordInput = React.forwardRef<
       )) as React.FC<RenderCtx>)
     );
   }, [props.customIcon, props.iconColor, passwordVisible, colors2024]);
-  // const inputRef = React.useRef<TextInput>(null);
 
   return (
     <NextInput
@@ -396,7 +413,7 @@ const PasswordInput = React.forwardRef<
         //   keyboardType: passwordVisible ? 'visible-password' : 'default',
         // },
       }}
-      // ref={inputRef}
+      ref={ref as any}
       customIcon={customIconProp}
     />
   );

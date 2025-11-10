@@ -10,7 +10,14 @@ export const LendingHF: React.FC<{}> = () => {
   useLendingData(true);
   const { iUserSummary } = useLendingSummary();
 
-  return iUserSummary?.healthFactor && Number(iUserSummary.healthFactor) > 0 ? (
+  if (
+    !iUserSummary?.healthFactor ||
+    Number(iUserSummary.healthFactor) <= 0 ||
+    Number(iUserSummary.healthFactor) >= 3
+  ) {
+    return null;
+  }
+  return (
     <Text
       style={[
         styles.text,
@@ -21,7 +28,7 @@ export const LendingHF: React.FC<{}> = () => {
       ]}>
       {formatNum(iUserSummary.healthFactor)}
     </Text>
-  ) : null;
+  );
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({

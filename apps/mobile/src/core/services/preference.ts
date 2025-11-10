@@ -14,7 +14,7 @@ import { BroadcastEvent } from '@/constant/event';
 import KeyringService from '@rabby-wallet/service-keyring';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { appServiceEvents } from './_utils';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
@@ -1024,8 +1024,10 @@ export class PreferenceService {
       pinedQueue: this.store.pinedQueue || [],
       foldNfts: this.store.foldNfts || [],
       unfoldNfts: this.store.unFoldNfts || [],
-      foldDefis: this.store.foldDefis || [],
-      unFoldDefis: this.store.unFoldDefis || [],
+      foldDefis: [],
+      // foldDefis: this.store.foldDefis || [],
+      unFoldDefis: [],
+      // unFoldDefis: this.store.unFoldDefis || [],
     };
   };
 }

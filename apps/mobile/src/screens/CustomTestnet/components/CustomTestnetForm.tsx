@@ -1,6 +1,6 @@
 import { FormInput } from '@/components/Form/Input';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { isNumber } from 'lodash';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,8 +12,13 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useCustomTestnetForm } from '../hooks/useCustomTestnetForm';
+import { createGetStyles2024 } from '@/utils/styles';
+import {
+  Gesture,
+  GestureDetector,
+  Pressable,
+} from 'react-native-gesture-handler';
 
 const FormItem = ({
   disabled,
@@ -21,17 +26,16 @@ const FormItem = ({
   style,
   name,
   label,
-  autoFocus,
+  __IN_BOTTOM_SHEET__ = true,
 }: {
   disabled?: boolean;
   formik: ReturnType<typeof useCustomTestnetForm>;
   style?: StyleProp<ViewStyle>;
   name: string;
   label?: string;
-  autoFocus?: boolean;
+  __IN_BOTTOM_SHEET__?: boolean;
 }) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getFormItemStyles });
   const formInputRef = useRef<TextInput>(null);
   const val = formik.values[name];
   const value = isNumber(val) ? val.toString() : val;
@@ -40,17 +44,14 @@ const FormItem = ({
     <View style={[styles.formItem, style]}>
       <Text style={styles.formLabel}>{label}</Text>
       <FormInput
+        as={__IN_BOTTOM_SHEET__ ? 'BottomSheetTextInput' : 'TextInput'}
+        disableNestedTouchEventOnAndroid={__IN_BOTTOM_SHEET__}
         style={disabled ? { borderWidth: 0 } : null}
         inputStyle={[styles.input, disabled ? styles.inputDisabled : null]}
-        // className="mt-[8]"
-        // containerStyle={styles.inputContainer}
         ref={formInputRef}
-        // disableFocusingStyle
-        // inputStyle={styles.input}
         hasError={!!formik.errors[name]}
         inputProps={{
-          // ...inputProps,
-          autoFocus,
+          autoFocus: false,
           numberOfLines: 1,
           multiline: false,
           value: value,
@@ -76,65 +77,8 @@ const FormItem = ({
   );
 };
 
-export const CustomTestnetForm = ({
-  // form,
-  isEdit,
-  disabled,
-  idDisabled,
-  onFieldsChange,
-  formik,
-}: {
-  // form: FormInstance<TestnetChainBase>;
-  isEdit?: boolean;
-  disabled?: boolean;
-  idDisabled?: boolean;
-  onFieldsChange?(changedFields: any, allFields: any): void;
-  formik: ReturnType<typeof useCustomTestnetForm>;
-}) => {
-  const { t } = useTranslation();
-
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
-
-  return (
-    <View>
-      <FormItem
-        name="id"
-        label={t('page.customTestnet.CustomTestnetForm.id')}
-        formik={formik}
-        disabled={disabled || isEdit || idDisabled}
-      />
-      <FormItem
-        label={t('page.customTestnet.CustomTestnetForm.name')}
-        name="name"
-        formik={formik}
-        disabled={disabled}
-      />
-      <FormItem
-        label={t('page.customTestnet.CustomTestnetForm.rpcUrl')}
-        name="rpcUrl"
-        formik={formik}
-        disabled={disabled}
-      />
-      <FormItem
-        label={t('page.customTestnet.CustomTestnetForm.nativeTokenSymbol')}
-        name="nativeTokenSymbol"
-        formik={formik}
-        disabled={disabled}
-      />
-      <FormItem
-        label={t('page.customTestnet.CustomTestnetForm.blockExplorerUrl')}
-        name="scanLink"
-        formik={formik}
-        disabled={disabled}
-      />
-    </View>
-  );
-};
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    container: {},
+const getFormItemStyles = createGetStyles2024(({ colors }) => {
+  return {
     input: {
       height: 52,
       borderRadius: 6,
@@ -166,4 +110,71 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 16,
       color: colors['red-default'],
     },
-  });
+  };
+});
+
+export const CustomTestnetForm = ({
+  isEdit,
+  disabled,
+  idDisabled,
+  formik,
+  __IN_BOTTOM_SHEET__ = false,
+}: {
+  isEdit?: boolean;
+  disabled?: boolean;
+  idDisabled?: boolean;
+  formik: ReturnType<typeof useCustomTestnetForm>;
+  __IN_BOTTOM_SHEET__?: boolean;
+}) => {
+  const { t } = useTranslation();
+
+  // const {colors, styles} = useTheme2024({ getStyle: getStyles });
+
+  return (
+    <>
+      <FormItem
+        name="id"
+        label={t('page.customTestnet.CustomTestnetForm.id')}
+        formik={formik}
+        disabled={disabled || isEdit || idDisabled}
+        __IN_BOTTOM_SHEET__={__IN_BOTTOM_SHEET__}
+      />
+      <FormItem
+        label={t('page.customTestnet.CustomTestnetForm.name')}
+        name="name"
+        formik={formik}
+        disabled={disabled}
+        __IN_BOTTOM_SHEET__={__IN_BOTTOM_SHEET__}
+      />
+      <FormItem
+        label={t('page.customTestnet.CustomTestnetForm.rpcUrl')}
+        name="rpcUrl"
+        formik={formik}
+        disabled={disabled}
+        __IN_BOTTOM_SHEET__={__IN_BOTTOM_SHEET__}
+      />
+      <FormItem
+        label={t('page.customTestnet.CustomTestnetForm.nativeTokenSymbol')}
+        name="nativeTokenSymbol"
+        formik={formik}
+        disabled={disabled}
+        __IN_BOTTOM_SHEET__={__IN_BOTTOM_SHEET__}
+      />
+      <FormItem
+        label={t('page.customTestnet.CustomTestnetForm.blockExplorerUrl')}
+        name="scanLink"
+        formik={formik}
+        disabled={disabled}
+        __IN_BOTTOM_SHEET__={__IN_BOTTOM_SHEET__}
+      />
+    </>
+  );
+};
+
+const getStyles = createGetStyles2024(({ colors }) => {
+  return {
+    container: {
+      height: '100%',
+    },
+  };
+});

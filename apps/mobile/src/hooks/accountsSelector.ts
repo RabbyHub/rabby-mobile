@@ -5,7 +5,11 @@ import { atom, useAtom } from 'jotai';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
-export type AccountSwitcherScene = 'Receive' | 'GasAccount' | 'Lending';
+export type AccountSwitcherScene =
+  | 'Receive'
+  | 'GasAccount'
+  | 'Lending'
+  | 'TokenDetail';
 
 type AccountToSelect = Account & {
   isPinned?: boolean;

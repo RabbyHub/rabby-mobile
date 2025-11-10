@@ -60,6 +60,7 @@ export interface Props {
   isMiniSignTx?: boolean;
   directSubmit?: boolean;
   miniSignType?: 'tx' | 'typedData';
+  loading?: boolean;
 }
 
 export const ActionsContainer: React.FC<

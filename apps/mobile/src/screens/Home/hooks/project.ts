@@ -127,13 +127,13 @@ export const useQueryProjects = (userAddr: string | undefined) => {
     };
   }, [tokens, portfolios, nftList]);
 
-  useEffect(() => {
-    if (userAddr) {
-      refreshPositions();
-      return;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userAddr]);
+  // useEffect(() => {
+  //   if (userAddr) {
+  //     refreshPositions();
+  //     return;
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [userAddr]);
 
   return {
     refreshPositions,

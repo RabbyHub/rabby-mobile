@@ -61,7 +61,7 @@ import { debounce, unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSortAddressList } from '../Address/useSortAddressList';
-import { BadgeText } from './components/HomeTopArea';
+import { BadgeText } from './components/BadgeText';
 import { useApprovalAlertCounts } from './hooks/approvals';
 
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
@@ -74,7 +74,7 @@ import {
   useSetTotalBalanceText,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,
@@ -570,7 +570,6 @@ function MultiAddressHome(): JSX.Element {
   ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
-  const { navigateToSendPolyScreen } = useSendRoutes();
   const handlePressWatchlist = useCallback(() => {
     navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
       screen: RootNames.Watchlist,
@@ -595,7 +594,12 @@ function MultiAddressHome(): JSX.Element {
     (key: MultiHomeFeatTitle) => {
       switch (key) {
         case MultiHomeFeatTitle.Send:
-          navigateToSendPolyScreen(false);
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTransaction, {
+              screen: RootNames.Send,
+              params: {},
+            }),
+          );
           break;
         case MultiHomeFeatTitle.Receive:
           navigation.dispatch(
@@ -684,13 +688,7 @@ function MultiAddressHome(): JSX.Element {
           break;
       }
     },
-    [
-      openDapps,
-      handlePressWatchlist,
-      navigateToSendPolyScreen,
-      navigation,
-      toggleUseAllAccountsOnScene,
-    ],
+    [openDapps, handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
   );
 
   const { showTipsDollarDialog } = useTipsDollarDialog();
@@ -832,8 +830,8 @@ function MultiAddressHome(): JSX.Element {
       noHeader
       bgImageSource={
         combineData.isLoss
-          ? require('@/assets2024/icons/home/homeRed.png')
-          : require('@/assets2024/icons/home/homeGreen.png')
+          ? require('@/assets2024/singleHome/loss.png')
+          : require('@/assets2024/singleHome/up.png')
       }
       linearProp={{
         colors: isLight

@@ -8,7 +8,10 @@ import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
 import { CHAINS_ENUM } from '@debank/common';
 import SupplyActionOverView from './SupplyActionOverView';
-import { calculateHFAfterSupply } from '../../utils/hfUtils';
+import {
+  calculateHFAfterSupply,
+  effectUserAvailable,
+} from '../../utils/hfUtils';
 import { useLendingSummary } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
@@ -41,7 +44,10 @@ import wrapperToken from '../../config/wrapperToken';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
-import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import {
+  MINI_SIGN_ERROR,
+  useSignatureStore,
+} from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SUPPLY_UI_SAFE_MARGIN } from '../../utils/constant';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
@@ -61,6 +67,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   });
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
   const { t } = useTranslation();
+  const { ctx } = useSignatureStore();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
@@ -103,16 +110,34 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     if (!amount || amount === '0') {
       return undefined;
     }
-    return BigNumber(amount)
-      .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
-      .multipliedBy(reserve.reserve.formattedBaseLTVasCollateral)
-      .plus(BigNumber(userSummary?.availableBorrowsUSD || '0'))
-      .toString();
+    const targetPool = formattedPoolReservesAndIncentives.find(item => {
+      return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+        ? isSameAddress(
+            item.underlyingAsset,
+            wrapperToken[reserve.chain].address,
+          )
+        : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+    });
+    if (!targetPool) {
+      return undefined;
+    }
+    if (effectUserAvailable(userSummary, targetPool)) {
+      return BigNumber(amount)
+        .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
+        .multipliedBy(reserve.reserve.formattedBaseLTVasCollateral)
+        .plus(BigNumber(userSummary?.availableBorrowsUSD || '0'))
+        .toString();
+    } else {
+      return userSummary?.availableBorrowsUSD || '0';
+    }
   }, [
     amount,
+    formattedPoolReservesAndIncentives,
+    reserve.chain,
     reserve.reserve.formattedBaseLTVasCollateral,
     reserve.reserve.formattedPriceInMarketReferenceCurrency,
-    userSummary?.availableBorrowsUSD,
+    reserve.underlyingAsset,
+    userSummary,
   ]);
 
   // 检查approve额度
@@ -518,7 +543,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
               amount === '0' ||
               !supplyTx ||
               isLoading ||
-              !currentAccount
+              !currentAccount ||
+              !!ctx?.disabledProcess
             }
             type="primary"
             syncUnlockTime

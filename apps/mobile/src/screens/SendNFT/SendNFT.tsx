@@ -24,9 +24,15 @@ import { findChain } from '@/utils/chain';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useTranslation } from 'react-i18next';
 import { createGetStyles2024 } from '@/utils/styles';
+import { ShowMoreOnSendNFT } from './components/ShowMoreOnSendNFT';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 export default function SendNFT() {
   const { styles } = useTheme2024({ getStyle: getStyles });
+
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const navigation = useRabbyAppNavigation();
   const route =
@@ -43,7 +49,11 @@ export default function SendNFT() {
   const toAddress = navParams?.toAddress || '';
   const addressBrandName = navParams?.addressBrandName;
   const addrDesc = navParams?.addrDesc;
-  const account = fromAccount || undefined;
+  const account = fromAccount || currentAccount;
+
+  if (!account) {
+    throw new Error('Account is required to send NFT');
+  }
 
   const {
     sendNFTScreenState: screenState,
@@ -56,6 +66,8 @@ export default function SendNFT() {
     formik,
     formValues,
     handleFieldChange,
+    handleGasLevelChanged,
+    handleIgnoreGasFeeChange,
 
     whitelistEnabled,
     computed: {
@@ -141,6 +153,8 @@ export default function SendNFT() {
 
         callbacks: {
           handleFieldChange,
+          handleGasLevelChanged,
+          handleIgnoreGasFeeChange,
         },
       }}>
       <NormalScreenContainer overwriteStyle={styles.container}>
@@ -163,8 +177,9 @@ export default function SendNFT() {
               nftItem={nftItem}
               chainItem={chainItem}
             />
+            <ShowMoreOnSendNFT chainServeId={chainItem?.serverId || ''} />
           </KeyboardAwareScrollView>
-          <BottomArea />
+          <BottomArea account={account} />
         </View>
       </NormalScreenContainer>
     </SendNFTInternalContextProvider>
@@ -190,8 +205,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     padding: 20,
     paddingTop: 16,
+    paddingBottom: 220,
   },
-
   bottomDockArea: {
     bottom: 0,
     width: '100%',

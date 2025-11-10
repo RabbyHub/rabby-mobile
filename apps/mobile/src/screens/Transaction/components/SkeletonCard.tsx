@@ -62,6 +62,7 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 14,
       paddingBottom: 16,
       flexDirection: 'column',
+      marginBottom: 12,
     },
     skeleton: {
       backgroundColor: 'rgba(190,190,190,0.2)',

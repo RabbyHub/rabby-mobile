@@ -5,6 +5,7 @@ import { DisplayedProject } from './project';
 const getSingleTokenTags = (type: string, item: AbstractPortfolioToken) => {
   return [
     `type: ${type}`,
+    `addr: ${'address' in item ? item.address : ''}`,
     `chain: ${item.chain}`,
     `symbol: ${item.symbol}`,
     `tokenId: ${item._tokenId}`,
@@ -24,6 +25,7 @@ const getSingleDefiTags = (type: string, item: DisplayedProject) => {
   return [
     `type: ${type}`,
     `id: ${item.id}`,
+    `addr: ${'address' in item ? item.address : ''}`,
     `chain: ${item.chain}`,
     `price_24h_change: ${item.netWorthChange}`,
     `price: ${item.netWorth}`,
@@ -73,10 +75,8 @@ export const getItemId = (item: ActionItem) => {
     return getSingleTokenTags(item.type, item.data).join('/');
   }
   if (item.type === 'unfold_defi' || item.type === 'fold_defi') {
-    const defis = item.data as DisplayedProject[];
-    return defis
-      .map(defi => getSingleDefiTags(item.type, defi).join('/'))
-      .join('/');
+    const defi = item.data as DisplayedProject;
+    return getSingleDefiTags(item.type, defi).join('/');
   }
   if (item.type === 'unfold_nft' || item.type === 'fold_nft') {
     if ('nft_list' in item.data) {

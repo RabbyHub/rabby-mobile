@@ -15,7 +15,7 @@ import { RcCode } from '@/assets/icons/settings';
 import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 import { useMakeMockDataForRateGuideExposure } from '@/components/RateModal/hooks';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { useMockClearOfflineChainTips } from '@/screens/Home/components/OfflineChainNotify';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,

@@ -1,17 +1,20 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import RcIconCorrectCC from './icons/correct-cc.svg';
 import { Account } from '@/core/services/preference';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
-import { useTopTokensForAddress } from './hooks';
+import { useTokenAmountForAddress, useTopTokensForAddress } from './hooks';
 import { AssetAvatar } from '../AssetAvatar';
 import { trigger } from 'react-native-haptic-feedback';
 import { useTranslation } from 'react-i18next';
 import { AccountSwitcherContextMenu } from './ContextMenu';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { TokenDetailHeaderArea } from '@/screens/TokenDetail/components/HeaderArea';
+import { formatPrice, formatTokenAmount } from '@/utils/number';
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
   radiusValue: 20,
@@ -37,6 +40,7 @@ export function AddressItemInPanel({
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
   onPressAddress?: (account: Account) => void;
+  token?: AbstractPortfolioToken;
   isHideToken?: boolean;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
@@ -138,6 +142,116 @@ export function AddressItemInPanel({
   );
 }
 
+export function AddressItemInPanelForTokenDetail({
+  style,
+  addressItemProps,
+  isCurrent,
+  token,
+  onPressAddress: _onPressAddress,
+}: {
+  addressItemProps: AddressItemProps & { account: Account };
+  isCurrent?: boolean;
+  token?: AbstractPortfolioToken;
+  onPressAddress?: (account: Account) => void;
+  isHideToken?: boolean;
+} & RNViewProps) {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getAddressItemInPanelStyle,
+  });
+
+  const [isPressing, setIsPressing] = React.useState(false);
+
+  const { account } = addressItemProps;
+
+  const { tokenAmount, enableFetch } = useTokenAmountForAddress({
+    accountAddress: account?.address,
+    token,
+  });
+  const onPressAddress = useCallback(() => {
+    _onPressAddress?.(account);
+  }, [account, _onPressAddress]);
+
+  const usdValue = useMemo(() => {
+    const _usdValue = (token?.price || 0) * (tokenAmount || 0);
+    return formatPrice(_usdValue || 0, 8, true);
+  }, [token?.price, tokenAmount]);
+
+  return (
+    <AddressItemShadowView
+      // disableShadow
+      style={[
+        styles.addressItemView,
+        style,
+        isCurrent || isPressing ? styles.active : null,
+      ]}>
+      <AccountSwitcherContextMenu account={account}>
+        <TouchableOpacity
+          style={StyleSheet.flatten([
+            styles.addressItemContainer,
+            isCurrent && styles.addressItemContainerCurrent,
+            isPressing && styles.containerPressing,
+          ])}
+          activeOpacity={1}
+          delayLongPress={200} // long press delay
+          onLongPress={() => {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+          }}
+          onPressIn={() => setIsPressing(true)}
+          onPressOut={() => setIsPressing(false)}
+          onPress={onPressAddress}>
+          <AddressItem {...addressItemProps}>
+            {({ WalletIcon, WalletName }) => {
+              return (
+                <View style={styles.addressItemInner}>
+                  <WalletIcon
+                    borderRadius={14}
+                    width={46}
+                    height={46}
+                    style={styles.walletIcon}
+                  />
+                  <View style={styles.centerInfo}>
+                    <View style={styles.nameAndAdderss}>
+                      <WalletName style={styles.addressAliasName} />
+                      {isCurrent && (
+                        <RcIconCorrectCC
+                          color={colors2024['green-default']}
+                          width={16}
+                          height={16}
+                        />
+                      )}
+                    </View>
+                    {enableFetch && (
+                      <View style={styles.detailBottomArea}>
+                        {!!token && (
+                          <TokenDetailHeaderArea
+                            token={token}
+                            tokenSize={20}
+                            chainSize={10}
+                            borderChain
+                            rootStyle={styles.tokenDetailHeaderArea}
+                            disableRefresh
+                            title={formatTokenAmount(tokenAmount || 0)}
+                            // style={{ justifyContent: 'center' }}
+                            titleStyle={styles.tokenSymbol}
+                          />
+                        )}
+                        <Text style={styles.tokenUsdValue}>≈${usdValue}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              );
+            }}
+          </AddressItem>
+        </TouchableOpacity>
+      </AccountSwitcherContextMenu>
+    </AddressItemShadowView>
+  );
+}
+
 const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
   return {
     addressItemView: {
@@ -170,12 +284,14 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       flexDirection: 'column',
       flexShrink: 1,
       width: '100%',
+      justifyContent: 'center',
       // ...makeDebugBorder('blue')
     },
     nameAndAdderss: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      gap: 4,
       // ...makeDebugBorder('yellow'),
     },
     addressAliasName: {
@@ -193,6 +309,26 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       width: '100%',
       marginTop: 6,
+    },
+    tokenDetailHeaderArea: {
+      width: 'auto',
+      flex: 1,
+    },
+    detailBottomArea: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      // width: '100%',
+      flex: 1,
+      marginTop: 4,
+    },
+    tokenSymbol: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      fontStyle: 'normal',
+      color: ctx.colors2024['neutral-title-1'],
     },
     divider: {
       height: 12,
@@ -252,6 +388,22 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       height: '100%',
       // ...makeDebugBorder(),
+    },
+    tokenAmount: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 20,
+      color: ctx.colors2024['neutral-title-1'],
+    },
+    tokenUsdValue: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontStyle: 'normal',
+      fontWeight: '500',
+      lineHeight: 20,
+      color: ctx.colors2024['neutral-foot'],
     },
   };
 });

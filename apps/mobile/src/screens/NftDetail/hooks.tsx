@@ -89,17 +89,17 @@ export function useNFTDetailSheetModalOnHistory({
                     screen: RootNames.SendNFT,
                     params: {
                       collectionName,
-                      nftItem: nftToken as any,
+                      nftItem: nftToken,
                       fromAccount: account,
                     },
                   });
                 }}
-                token={nftToken as any}
+                token={nftToken}
                 collectionName={collectionName}
               />
             ),
         },
-        token: nftToken as any,
+        token: nftToken,
         collectionName,
       });
     },

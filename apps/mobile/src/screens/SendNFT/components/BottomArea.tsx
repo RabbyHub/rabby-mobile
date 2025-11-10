@@ -17,10 +17,12 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useAtom } from 'jotai';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useSignatureStore } from '@/components2024/MiniSignV2';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import { Account } from '@/core/services/preference';
 
 const isAndroid = Platform.OS === 'android';
 
-export default function BottomArea() {
+export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -36,6 +38,7 @@ export default function BottomArea() {
       toAddressInContactBook,
     },
     fns: { putScreenState, fetchContactAccounts },
+    callbacks: { handleIgnoreGasFeeChange },
   } = useSendNFTInternalContext();
 
   const { isSubmitLoading, addressToAddAsContacts } = screenState;
@@ -50,6 +53,7 @@ export default function BottomArea() {
   const isDirectSigning = status === 'signing';
 
   const canDirectSign = !ctx?.disabledProcess;
+  const showRiskTipsForMiniSign = !!ctx?.gasFeeTooHigh;
 
   return (
     <View
@@ -58,13 +62,24 @@ export default function BottomArea() {
         isAndroid && { paddingBottom: 20 + safeOffBottom },
       ]}>
       {canShowDirectSign ? (
-        <AuthButton
+        <DirectSignBtn
+          // refresh  risk check
+          key={screenState?.buildTxsCount + ''}
+          showTextOnLoading
+          loadingType="circle"
           authTitle={t('page.whitelist.confirmPassword')}
           title={t('global.confirm')}
-          onFinished={handleSubmit}
+          onFinished={p => {
+            handleIgnoreGasFeeChange(p?.ignoreGasFee || false);
+            handleSubmit();
+          }}
           disabled={!canSubmit || !canDirectSign || isDirectSigning}
+          loading={isSubmitLoading}
           type={'primary'}
           syncUnlockTime
+          account={account}
+          showHardWalletProcess
+          showRiskTips={showRiskTipsForMiniSign && canSubmit}
         />
       ) : (
         <Button
