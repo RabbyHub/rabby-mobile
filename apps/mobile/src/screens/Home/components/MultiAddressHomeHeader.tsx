@@ -272,7 +272,7 @@ export function MultiAddressHomeHeader(
           colors={
             isLight
               ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-              : ['rgba(36, 40, 37, 1)', 'rgba(44, 52, 48, 0.5)']
+              : ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']
           }
           style={[
             styles.curveBox,
@@ -280,6 +280,7 @@ export function MultiAddressHomeHeader(
             {
               position: 'relative',
             },
+            !isLight && { borderWidth: 0 },
             {},
           ]}>
           <Card
@@ -300,11 +301,18 @@ export function MultiAddressHomeHeader(
               colors={
                 isLight
                   ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-                  : ['rgba(0, 0, 0, 0.40)', 'rgba(25, 26, 27, 0.10)']
+                  : ['rgba(0, 0, 0, 0.40)', 'rgba(0, 0, 0, 0.10)']
               }
-              start={{ x: 0.25, y: 0.5 }}
-              end={{ x: 0.75, y: 0.5 }}
-              style={StyleSheet.absoluteFill}
+              start={isLight ? { x: 0.25, y: 0.5 } : { x: 0.02, y: 1.04 }}
+              end={isLight ? { x: 0.75, y: 0.5 } : { x: 1, y: 0.1 }}
+              style={[
+                StyleSheet.absoluteFill,
+                !isLight && {
+                  borderWidth: 2,
+                  borderRadius: styles.curveBox['borderRadius'] || 20,
+                  borderColor: 'rgba(37, 38, 40, 1)',
+                },
+              ]}
             />
             <View style={styles.curveCardInner}>
               <View style={styles.curveContainer}>

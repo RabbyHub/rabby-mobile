@@ -28,7 +28,6 @@ import {
   Dimensions,
   Easing,
   Platform,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -86,7 +85,6 @@ import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { colord } from 'colord';
@@ -110,10 +108,8 @@ import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { GradientOutlineContainer } from '@/components2024/GradientOutlineContainer';
 import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
-import { useDappsBadge } from '@/hooks/browser/useBrowserBookmark';
 import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { RcNextSearchCC } from '@/assets/icons/common';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 
 function MultiAddressHome(): JSX.Element {
@@ -946,7 +942,9 @@ function MultiAddressHome(): JSX.Element {
                             color={el.color || colors2024['brand-default-icon']}
                           />
                         </View>
-                        {generateCustomBadgeIcon(el)}
+                        <View style={styles.rightBadgeWrapper}>
+                          {generateCustomBadgeIcon(el)}
+                        </View>
                       </View>
                       <Text style={styles.gridText}>{el.title}</Text>
                     </TouchableOpacity>
@@ -1051,6 +1049,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  rightBadgeWrapper: {
+    position: 'relative',
+    right: -4,
+    alignSelf: 'flex-start',
   },
   badgeStyle: {},
   headerText: {

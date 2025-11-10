@@ -35,7 +35,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 4,
-    alignSelf: 'flex-start',
   },
   badgeImage: {
     width: 16,

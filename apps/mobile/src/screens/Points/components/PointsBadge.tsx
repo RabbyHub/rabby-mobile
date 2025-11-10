@@ -17,10 +17,6 @@ export const PointsBadge: React.FC<{}> = () => {
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   text: {
-    position: 'relative',
-    right: -4,
-    paddingTop: 4,
-    alignSelf: 'flex-start',
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
