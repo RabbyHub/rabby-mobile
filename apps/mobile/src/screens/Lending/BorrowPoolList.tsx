@@ -164,21 +164,21 @@ const BorrowPoolList = () => {
   ]);
 
   return (
-    <Tabs.FlatList
+    <Tabs.FlashList
       data={loading ? [] : sortReserves}
       style={styles.container}
       ListHeaderComponent={ListHeaderComponent}
       showsVerticalScrollIndicator={false}
       ListHeaderComponentStyle={styles.headerContainer}
+      keyExtractor={item => `${item.reserve.underlyingAsset}-${item.reserve}`}
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
       ListEmptyComponent={<PoolListLoading />}
       ListFooterComponent={<View style={{ height: FOOT_HEIGHT }} />}
-      renderItem={({ item, index }) => (
+      renderItem={({ item }) => (
         <TouchableOpacity
           style={styles.item}
-          key={index}
           onPress={() => handlePressItem(item)}>
           <View style={styles.left}>
             <TokenIcon

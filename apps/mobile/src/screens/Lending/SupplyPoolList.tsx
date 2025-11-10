@@ -121,7 +121,7 @@ const SupplyPoolList = () => {
     t,
   ]);
   return (
-    <Tabs.FlatList
+    <Tabs.FlashList
       data={loading ? [] : sortReserves}
       style={styles.container}
       showsVerticalScrollIndicator={false}
@@ -129,15 +129,14 @@ const SupplyPoolList = () => {
         <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
       ListHeaderComponentStyle={styles.headerContainer}
-      keyExtractor={item => item.reserve.underlyingAsset}
+      keyExtractor={item => `${item.reserve.underlyingAsset}-${item.reserve}`}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={<PoolListLoading />}
       ListFooterComponent={<View style={{ height: FOOT_HEIGHT }} />}
-      renderItem={({ item, index }) => {
+      renderItem={({ item }) => {
         return (
           <TouchableOpacity
             style={styles.item}
-            key={index}
             onPress={() => handlePressItem(item)}>
             <View style={styles.left}>
               <TokenIcon
