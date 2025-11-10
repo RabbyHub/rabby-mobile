@@ -8,7 +8,6 @@ export const DappsBadge = () => {
   const badges = useDappsBadge();
   const { styles } = useTheme2024({ getStyle });
 
-  console.log('badges', badges);
   if (!badges.length) {
     return null;
   }
@@ -16,6 +15,7 @@ export const DappsBadge = () => {
     <View style={styles.badgeContainer}>
       {badges.map(dapp => (
         <DappIcon
+          key={dapp.origin}
           origin={dapp.origin}
           source={
             dapp.icon || dapp.info?.logo_url
