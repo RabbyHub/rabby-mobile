@@ -1,26 +1,241 @@
-diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
-index 6b6e626161945d21d2cf1392a5d16d41d1675b57..aec25ae774a0084e39c69959bb365482f6d13dbe 100644
---- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
-+++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
-@@ -158,7 +158,7 @@ class CipherStorageKeystoreAesGcm(
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.kt
+index adc9c007c602481c5a202639294a34975e97f39b..6cde4f5d8f1bc7bab0312fcb2647142430d7df8e 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.kt
+@@ -136,7 +136,7 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+ 
+   /** Get encryption algorithm specification builder instance. */
+   @Throws(GeneralSecurityException::class)
+-  protected abstract fun getKeyGenSpecBuilder(alias: String): KeyGenParameterSpec.Builder
++  protected abstract fun getKeyGenSpecBuilder(alias: String, requireAuthentication: Boolean): KeyGenParameterSpec.Builder
+ 
+ 
+   /** Get information about provided key. */
+@@ -178,13 +178,14 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+   protected fun extractGeneratedKey(
+     safeAlias: String,
+     level: SecurityLevel,
+-    retries: AtomicInteger
++    retries: AtomicInteger,
++    requireAuthentication: Boolean
+   ): Key {
+     var key: Key?
+     do {
+       val keyStore = getKeyStoreAndLoad()
+       // Check if the key exists
+-      if (!keyStore.containsAlias(safeAlias)) {
++      if (!keyStore.containsAlias(safeAlias) || keyStore.getCertificate(safeAlias) == null) {
+         // Key does not exist, generate a new one
+         generateKeyAndStoreUnderAlias(safeAlias, level)
+       } else {
+@@ -203,7 +204,7 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+           // Key is not compatible, delete it
+           keyStore.deleteEntry(safeAlias)
+           // Generate a new compatible key
+-          generateKeyAndStoreUnderAlias(safeAlias, level)
++          generateKeyAndStoreUnderAlias(safeAlias, level, requireAuthentication)
+           key = null // Set key to null to retry the loop
+           continue
+         }
+@@ -373,7 +374,7 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+ 
+   /** Get the most secured keystore */
+   @Throws(GeneralSecurityException::class)
+-  fun generateKeyAndStoreUnderAlias(alias: String, requiredLevel: SecurityLevel) {
++  fun generateKeyAndStoreUnderAlias(alias: String, requiredLevel: SecurityLevel, requireAuthentication: Boolean = false) {
+     // Firstly, try to generate the key as safe as possible (strongbox).
+     // see https://developer.android.com/training/articles/keystore#HardwareSecurityModule
+ 
+@@ -382,7 +383,7 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+ 
+     if (supportsSecureHardware) {
+       try {
+-        secretKey = tryGenerateStrongBoxSecurityKey(alias)
++        secretKey = tryGenerateStrongBoxSecurityKey(alias, requireAuthentication)
+       } catch (ex: GeneralSecurityException) {
+         Log.w(LOG_TAG, "StrongBox security storage is not available.", ex)
+       } catch (ex: ProviderException) {
+@@ -394,7 +395,7 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+     // (it still might be generated in hardware, but not in StrongBox)
+     if (secretKey == null || !supportsSecureHardware) {
+       try {
+-        secretKey = tryGenerateRegularSecurityKey(alias)
++        secretKey = tryGenerateRegularSecurityKey(alias, requireAuthentication)
+       } catch (fail: GeneralSecurityException) {
+         Log.e(LOG_TAG, "Regular security storage is not available.", fail)
+         throw fail
+@@ -434,14 +435,14 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+ 
+ 
+   @Throws(GeneralSecurityException::class)
+-  protected fun tryGenerateRegularSecurityKey(alias: String): Key {
+-    val specification = getKeyGenSpecBuilder(alias).build()
++  protected fun tryGenerateRegularSecurityKey(alias: String, requireAuthentication: Boolean): Key {
++    val specification = getKeyGenSpecBuilder(alias, requireAuthentication).build()
+     return generateKey(specification)
+   }
+ 
+ 
+   @Throws(GeneralSecurityException::class)
+-  protected fun tryGenerateStrongBoxSecurityKey(alias: String): Key {
++  protected fun tryGenerateStrongBoxSecurityKey(alias: String, requireAuthentication: Boolean): Key {
+     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+       throw KeyStoreAccessException(
+         "Strong box security keystore is not supported for old API${Build.VERSION.SDK_INT}."
+@@ -449,7 +450,7 @@ abstract class CipherStorageBase(protected val applicationContext: Context) : Ci
+     }
+ 
+     val specification =
+-      getKeyGenSpecBuilder(alias).setIsStrongBoxBacked(true).build()
++      getKeyGenSpecBuilder(alias, requireAuthentication).setIsStrongBoxBacked(true).build()
+     return generateKey(specification)
+   }
+ 
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.kt
+index 98c399fd872b4cf9fa556487863348b840226a96..e52f196804d67929c73e7223bae58a89ce920b23 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.kt
+@@ -86,10 +86,12 @@ class CipherStorageKeystoreAesCbc(reactContext: ReactApplicationContext) :
+         throwIfInsufficientLevel(level)
+ 
+         val safeAlias = getDefaultAliasIfEmpty(alias, getDefaultAliasServiceName())
++        // val requireAuthentication = accessControl != null && accessControl.contains(DEVICE_PASSCODE)
++        val requireAuthentication = false
+         val retries = AtomicInteger(1)
+ 
+         try {
+-            val key = extractGeneratedKey(safeAlias, level, retries)
++            val key = extractGeneratedKey(safeAlias, level, retries, requireAuthentication)
+ 
+             val result = CipherStorage.EncryptionResult(
+                 encryptString(key, username), encryptString(key, password), this
+@@ -122,7 +124,7 @@ class CipherStorageKeystoreAesCbc(reactContext: ReactApplicationContext) :
+         val retries = AtomicInteger(1)
+ 
+         try {
+-            val key = extractGeneratedKey(safeAlias, level, retries)
++            val key = extractGeneratedKey(safeAlias, level, retries, false)
+ 
+             val results = CipherStorage.DecryptionResult(
+                 decryptBytes(key, username), decryptBytes(key, password), getSecurityLevel(key)
+@@ -143,7 +145,8 @@ class CipherStorageKeystoreAesCbc(reactContext: ReactApplicationContext) :
+ 
+     @Throws(GeneralSecurityException::class)
+     override fun getKeyGenSpecBuilder(
+-        alias: String
++        alias: String,
++        requireAuthentication: Boolean
      ): KeyGenParameterSpec.Builder {
          val purposes = KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_ENCRYPT
-
+ 
+@@ -151,6 +154,8 @@ class CipherStorageKeystoreAesCbc(reactContext: ReactApplicationContext) :
+             .setBlockModes(BLOCK_MODE_CBC)
+             .setEncryptionPaddings(PADDING_PKCS7)
+             .setRandomizedEncryptionRequired(true)
++            .setUserAuthenticationRequired(requireAuthentication)
++            .setUserAuthenticationValidityDurationSeconds(1)
+             .setKeySize(ENCRYPTION_KEY_SIZE)
+     }
+ 
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
+index 6b6e626161945d21d2cf1392a5d16d41d1675b57..c4fac15ccfd4ef546bd6d2249b7205a0eae7a1f0 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesGcm.kt
+@@ -89,7 +89,7 @@ class CipherStorageKeystoreAesGcm(
+         var key: Key? = null
+ 
+         try {
+-            key = extractGeneratedKey(safeAlias, level, retries)
++            key = extractGeneratedKey(safeAlias, level, retries, requiresAuth)
+ 
+             val result = CipherStorage.EncryptionResult(
+                 encryptString(key, username), encryptString(key, password), this
+@@ -127,7 +127,7 @@ class CipherStorageKeystoreAesGcm(
+         var key: Key? = null
+ 
+         try {
+-            key = extractGeneratedKey(safeAlias, level, retries)
++            key = extractGeneratedKey(safeAlias, level, retries, requiresAuth)
+             val results = CipherStorage.DecryptionResult(
+                 decryptBytes(key, username), decryptBytes(key, password)
+             )
+@@ -155,10 +155,11 @@ class CipherStorageKeystoreAesGcm(
+     @Throws(GeneralSecurityException::class)
+     override fun getKeyGenSpecBuilder(
+         alias: String,
++        requireAuthentication: Boolean
+     ): KeyGenParameterSpec.Builder {
+         val purposes = KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_ENCRYPT
+ 
 -        val validityDuration = 5
 +        val validityDuration = 1
          val keyGenParameterSpecBuilder =
              KeyGenParameterSpec.Builder(alias, purposes).setBlockModes(BLOCK_MODE_GCM)
                  .setEncryptionPaddings(PADDING_NONE).setRandomizedEncryptionRequired(true)
 diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
-index fc8ebf18c60c1efb5f2b44ec7d8e0762c519213c..440b442a2afaf9a44b31b16f2db37c28a3452ccd 100644
+index fc8ebf18c60c1efb5f2b44ec7d8e0762c519213c..658d35801a9da4c9167c59cfd3d1832c604e6741 100644
 --- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
 +++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
-@@ -182,7 +182,7 @@ class CipherStorageKeystoreRsaEcb(reactContext: ReactApplicationContext) :
-
+@@ -62,7 +62,7 @@ class CipherStorageKeystoreRsaEcb(reactContext: ReactApplicationContext) :
+         val safeAlias = getDefaultAliasIfEmpty(alias, getDefaultAliasServiceName())
+         val retries = AtomicInteger(1)
+         try {
+-            extractGeneratedKey(safeAlias, level, retries)
++            extractGeneratedKey(safeAlias, level, retries, false)
+             val result = innerEncryptedCredentials(safeAlias, password, username)
+             handler.onEncrypt(result, null)
+         } catch (e: Exception) {
+@@ -106,18 +106,7 @@ class CipherStorageKeystoreRsaEcb(reactContext: ReactApplicationContext) :
+         var key: Key? = null
+ 
+         try {
+-            // key is always NOT NULL otherwise GeneralSecurityException raised
+-            key = extractGeneratedKey(safeAlias, level, retries)
+-
+-            val results =
+-                CipherStorage.DecryptionResult(
+-                    decryptBytes(key, username),
+-                    decryptBytes(key, password)
+-                )
+-
+-            handler.onDecrypt(results, null)
+-        } catch (ex: UserNotAuthenticatedException) {
+-            Log.d(LOG_TAG, "Unlock of keystore is needed. Error: ${ex.message}", ex)
++            key = extractGeneratedKey(safeAlias, level, retries, false)
+ 
+             // expected that KEY instance is extracted and we caught exception on decryptBytes operation
+             val context =
+@@ -156,6 +145,10 @@ class CipherStorageKeystoreRsaEcb(reactContext: ReactApplicationContext) :
+         username: String,
+     ): CipherStorage.EncryptionResult {
+         val keyStore = getKeyStoreAndLoad()
++        // if (!keyStore.containsAlias(alias)/*  || keyStore.getCertificate(alias) == null */) {
++        //     // Key does not exist, generate a new one
++        //     generateKeyAndStoreUnderAlias(alias, level, false)
++        // }
+ 
+         // Retrieve the certificate after ensuring the key is compatible
+         val certificate = keyStore.getCertificate(alias)
+@@ -176,19 +169,20 @@ class CipherStorageKeystoreRsaEcb(reactContext: ReactApplicationContext) :
+     @Throws(GeneralSecurityException::class)
+     override fun getKeyGenSpecBuilder(
+         alias: String,
++        requireAuthentication: Boolean
+     ): KeyGenParameterSpec.Builder {
+ 
+         val purposes = KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_ENCRYPT
+ 
          val keySize = ENCRYPTION_KEY_SIZE
-
+ 
 -        val validityDuration = 5
 +        val validityDuration = 1
          val keyGenParameterSpecBuilder =
              KeyGenParameterSpec.Builder(alias, purposes)
                  .setBlockModes(BLOCK_MODE_ECB)
+                 .setEncryptionPaddings(PADDING_PKCS1)
+                 .setRandomizedEncryptionRequired(true)
+-                .setUserAuthenticationRequired(true)
++                .setUserAuthenticationRequired(requireAuthentication)
+                 .setKeySize(keySize)
+ 
+         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
