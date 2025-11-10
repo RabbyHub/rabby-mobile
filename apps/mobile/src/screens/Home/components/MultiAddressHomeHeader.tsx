@@ -168,9 +168,7 @@ export function MultiAddressHomeHeader(
       spinValue.resetAnimation();
     }
   }, [loading, spinValue]);
-  const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(
-    !IS_IOS,
-  );
+  const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
   const previousLoading = usePrevious(loading);
   useEffect(() => {
