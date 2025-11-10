@@ -407,17 +407,19 @@ const MiniSignTxV2 = ({
                 {showSimulateChange ? (
                   <>
                     {txsResult?.[txsResult?.length - 1]?.preExecResult ? (
-                      <BalanceChange
-                        version={
-                          txsResult?.[txsResult?.length - 1].preExecResult
-                            .pre_exec_version
-                        }
-                        data={
-                          txsResult?.[txsResult?.length - 1].preExecResult
-                            .balance_change
-                        }
-                        style={styles.balanceChangeContainer}
-                      />
+                      <ScrollView style={styles.balanceChangeScrollContainer}>
+                        <BalanceChange
+                          version={
+                            txsResult?.[txsResult?.length - 1].preExecResult
+                              .pre_exec_version
+                          }
+                          data={
+                            txsResult?.[txsResult?.length - 1].preExecResult
+                              .balance_change
+                          }
+                          style={styles.balanceChangeContainer}
+                        />
+                      </ScrollView>
                     ) : (
                       <BalanceChangeLoading />
                     )}
@@ -561,7 +563,8 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 16,
     gap: 16,
   },
-  balanceChangeContainer: {
+  balanceChangeScrollContainer: {
+    maxHeight: Dimensions.get('screen').height * 0.45,
     backgroundColor: colors2024['neutral-bg-2'],
     marginTop: 0,
     marginBottom: 16,
@@ -569,6 +572,12 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingTop: 12,
     paddingBottom: 0,
     borderRadius: 8,
+  },
+  balanceChangeContainer: {
+    backgroundColor: colors2024['neutral-bg-2'],
+    margin: 0,
+    padding: 0,
+    borderRadius: 0,
   },
 }));
 
