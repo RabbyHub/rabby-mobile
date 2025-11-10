@@ -225,7 +225,7 @@ export const tagTokenList = (
     (acc, curr) => acc + (curr._usdValue || 0),
     0,
   );
-  const threshold = Math.min((totalValue || 0) / 1000, 1000);
+  const threshold = Math.min((totalValue || 0) / 100, 1000);
   const thresholdIndex = coreTokens
     ? coreTokens.findIndex(m => (m._usdValue || 0) < threshold)
     : -1;
