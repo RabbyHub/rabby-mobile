@@ -239,7 +239,7 @@ index 5d7817ff38d00edce5930b3e7976e785705794bc..29ef1391bc52394e665cbe822d803cb6
  
    /**
 diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java
-index 5c82167c354de8b6a30e676b06a8594040fbc62f..b0111a657847756f4dfb71dd1a831cb01f787068 100644
+index 5c82167c354de8b6a30e676b06a8594040fbc62f..1f2f514fc322e614d42caba70bc3465d3a859dc3 100644
 --- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java
 +++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageBase.java
 @@ -165,12 +165,12 @@ abstract public class CipherStorageBase implements CipherStorage {
@@ -263,7 +263,7 @@ index 5c82167c354de8b6a30e676b06a8594040fbc62f..b0111a657847756f4dfb71dd1a831cb0
                                      @NonNull final SecurityLevel level,
 -                                    @NonNull final AtomicInteger retries)
 +                                    @NonNull final AtomicInteger retries,
-+									Boolean requireAuthentication)
++									                  Boolean requireAuthentication)
      throws GeneralSecurityException {
      Key key;
  
@@ -282,7 +282,7 @@ index 5c82167c354de8b6a30e676b06a8594040fbc62f..b0111a657847756f4dfb71dd1a831cb0
    public void generateKeyAndStoreUnderAlias(@NonNull final String alias,
 -                                            @NonNull final SecurityLevel requiredLevel)
 +                                            @NonNull final SecurityLevel requiredLevel,
-+											Boolean requireAuthentication)
++											                      Boolean requireAuthentication)
      throws GeneralSecurityException {
  
      // Firstly, try to generate the key as safe as possible (strongbox).
@@ -393,7 +393,7 @@ index 0dfc55a80b2de898511d35b3776ac953defd8767..ef5b2143f0c3f7b76f2e384a2793b821
      throw new CryptoFailedException("Not designed for a call");
    }
 diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java
-index 7dbcc8b8645e9394a38575e3a2cea5b77225ee70..43bcb741db3d974df7cb45e084ad7505ed00c086 100644
+index 7dbcc8b8645e9394a38575e3a2cea5b77225ee70..0c67a5c9bd2a0218f67d0459bb5935dc553de4aa 100644
 --- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java
 +++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreAesCbc.java
 @@ -49,6 +49,8 @@ public class CipherStorageKeystoreAesCbc extends CipherStorageBase {
@@ -411,7 +411,7 @@ index 7dbcc8b8645e9394a38575e3a2cea5b77225ee70..43bcb741db3d974df7cb45e084ad7505
                                    @NonNull final String password,
 -                                  @NonNull final SecurityLevel level)
 +                                  @NonNull final SecurityLevel level,
-+								  String accessControl)
++								                  String accessControl)
      throws CryptoFailedException {
  
      throwIfInsufficientLevel(level);
@@ -466,7 +466,7 @@ index 7dbcc8b8645e9394a38575e3a2cea5b77225ee70..43bcb741db3d974df7cb45e084ad7505
    }
  
 diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
-index b191bdcc386fba4898a248dd81d870118423a888..7ab2be99b1601c0643bb892a4b2c968e7c4a9b2c 100644
+index b191bdcc386fba4898a248dd81d870118423a888..f6545191a210f139d3ead960d455a5d6219be115 100644
 --- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
 +++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
 @@ -61,7 +61,8 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
@@ -498,16 +498,28 @@ index b191bdcc386fba4898a248dd81d870118423a888..7ab2be99b1601c0643bb892a4b2c968e
  
        // expected that KEY instance is extracted and we caught exception on decryptBytes operation
        @SuppressWarnings("ConstantConditions") final DecryptionContext context =
-@@ -196,7 +187,7 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
+@@ -196,13 +187,18 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
  
      // on first access create a key for storage
      if (!store.containsAlias(alias)) {
 -      generateKeyAndStoreUnderAlias(alias, level);
 +      generateKeyAndStoreUnderAlias(alias, level, false);
++    } else if (store.getCertificate(alias) == null) {
++      generateKeyAndStoreUnderAlias(alias, level, false);
      }
  
-     final KeyFactory kf = KeyFactory.getInstance(ALGORITHM_RSA);
-@@ -215,15 +206,15 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
+-    final KeyFactory kf = KeyFactory.getInstance(ALGORITHM_RSA);
+     final Certificate certificate = store.getCertificate(alias);
++    if (certificate == null) {
++      throw new GeneralSecurityException("Certificate is null for alias " + alias);
++    }
+     final PublicKey publicKey = certificate.getPublicKey();
+     final X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKey.getEncoded());
++    final KeyFactory kf = KeyFactory.getInstance(ALGORITHM_RSA);
+     final PublicKey key = kf.generatePublic(keySpec);
+ 
+     return new EncryptionResult(
+@@ -215,15 +211,15 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
    @NonNull
    @Override
    @SuppressLint("NewApi")
@@ -526,7 +538,7 @@ index b191bdcc386fba4898a248dd81d870118423a888..7ab2be99b1601c0643bb892a4b2c968e
      throws GeneralSecurityException {
      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
        throw new KeyStoreAccessException("Unsupported API" + Build.VERSION.SDK_INT + " version detected.");
-@@ -238,7 +229,7 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
+@@ -238,7 +234,7 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
        .setEncryptionPaddings(PADDING_PKCS1)
        .setRandomizedEncryptionRequired(true)
        .setUserAuthenticationRequired(true)
