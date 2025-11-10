@@ -466,7 +466,7 @@ index 7dbcc8b8645e9394a38575e3a2cea5b77225ee70..43bcb741db3d974df7cb45e084ad7505
    }
  
 diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
-index b191bdcc386fba4898a248dd81d870118423a888..fab4060ccad0eb1576fef0367ff7c1a43fdb55e0 100644
+index b191bdcc386fba4898a248dd81d870118423a888..7ab2be99b1601c0643bb892a4b2c968e7c4a9b2c 100644
 --- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
 +++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.java
 @@ -61,7 +61,8 @@ public class CipherStorageKeystoreRsaEcb extends CipherStorageBase {
@@ -531,7 +531,7 @@ index b191bdcc386fba4898a248dd81d870118423a888..fab4060ccad0eb1576fef0367ff7c1a4
        .setRandomizedEncryptionRequired(true)
        .setUserAuthenticationRequired(true)
 -      .setUserAuthenticationValidityDurationSeconds(5)
-+      .setUserAuthenticationValidityDurationSeconds(60)
++      .setUserAuthenticationValidityDurationSeconds(1)
        .setKeySize(keySize);
    }
  

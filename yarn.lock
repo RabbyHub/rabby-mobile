@@ -34825,8 +34825,8 @@ __metadata:
 
 "react-native-keychain@patch:react-native-keychain@npm%3A8.0.0#./.yarn/patches/react-native-keychain-npm-8.0.0-22c1f5c020.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 8.0.0
-  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A8.0.0#./.yarn/patches/react-native-keychain-npm-8.0.0-22c1f5c020.patch::version=8.0.0&hash=5fe6b6&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  checksum: 5e52b8abdb1b41726af832623985492d370acb1c0eb68b413cae10d199c0bdb9cae3cfe49cadc1a25bc506a8f0c7d24dbd635ca53b4749e5bf70ba9bcc700105
+  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A8.0.0#./.yarn/patches/react-native-keychain-npm-8.0.0-22c1f5c020.patch::version=8.0.0&hash=76e0d7&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  checksum: a7b5994835408d4c5b0f73cb37530be63158cefed222272b592a079a83b9510c463b8903927dd9faa05b783b9b3e8d7c2124a1a07608b1f2c3e2295f9f2152f9
   languageName: node
   linkType: hard
 
