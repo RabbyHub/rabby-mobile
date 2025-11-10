@@ -206,51 +206,6 @@ export const JS_IFRAME_POST_MESSAGE_TO_PROVIDER = (
 })()`;
  */
 
-function JSBHarden() {
-  (function () {
-    if (window.ReactNativeWebView == null) {
-      return;
-    }
-    const parse = JSON.parse;
-    const realPost = window.ReactNativeWebView.postMessage.bind(
-      window.ReactNativeWebView,
-    );
-
-    function myPostMessage(msg: string) {
-      try {
-        const json = parse(msg);
-        if (
-          json &&
-          json.name != null &&
-          !(
-            location.origin === json.origin ||
-            location.origin === json.origin + '/'
-          )
-        ) {
-          console.warn(
-            'Origin mismatch in postMessage: expected ' +
-              location.origin +
-              ', got ' +
-              json.origin,
-          );
-          return;
-        }
-      } catch {}
-      return realPost(msg);
-    }
-
-    window.ReactNativeWebView = new Proxy(window.ReactNativeWebView || {}, {
-      get: function (target, prop) {
-        if (prop === 'postMessage') {
-          return myPostMessage;
-        }
-        const f = Reflect.get(target, prop);
-        return typeof f === 'function' ? f.bind(target) : f;
-      },
-    });
-  })();
-}
-
 export const JSBridgeHarden = `(function () {
         function safeStartsWith(str, search) {
             if (typeof str !== 'string' || typeof search !== 'string') {
