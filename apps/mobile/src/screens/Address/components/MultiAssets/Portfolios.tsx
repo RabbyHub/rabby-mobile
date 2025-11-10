@@ -581,9 +581,7 @@ export const Portfolios = () => {
   }, []);
   const ListRenderFooter = useCallback(() => {
     return hasMorePortfolios ? (
-      <MemoizedDefiItemLoader
-        style={[styles.defiLoading, styles.loadingMore]}
-      />
+      <MemoizedItemLoader style={[styles.defiLoading, styles.loadingMore]} />
     ) : (
       <View style={{ height: FOOTER_HEIGHT }} />
     );
