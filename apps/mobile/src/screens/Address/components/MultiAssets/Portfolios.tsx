@@ -581,11 +581,11 @@ export const Portfolios = () => {
   }, []);
   const ListRenderFooter = useCallback(() => {
     return hasMorePortfolios ? (
-      <MemoizedItemLoader style={[styles.defiLoading, styles.loadingMore]} />
+      <MemoizedItemLoader style={[styles.loadingMore]} />
     ) : (
       <View style={{ height: FOOTER_HEIGHT }} />
     );
-  }, [hasMorePortfolios, styles.defiLoading, styles.loadingMore]);
+  }, [hasMorePortfolios, styles.loadingMore]);
 
   const onRefresh = useCallback(async () => {
     try {
