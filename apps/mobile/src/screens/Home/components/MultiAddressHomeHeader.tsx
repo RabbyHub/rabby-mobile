@@ -168,6 +168,9 @@ export function MultiAddressHomeHeader(
       spinValue.resetAnimation();
     }
   }, [loading, spinValue]);
+  const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(
+    !IS_IOS,
+  );
 
   const previousLoading = usePrevious(loading);
   useEffect(() => {
@@ -253,7 +256,12 @@ export function MultiAddressHomeHeader(
         viewProps={{
           style: [styles.curveBoxWrapper, { minHeight: 100 }],
         }}>
-        <View pointerEvents="none" style={styles.localWebViewWrapper}>
+        <View
+          pointerEvents="none"
+          style={[
+            styles.localWebViewWrapper,
+            couldRenderLocalWebView ? styles.localWebViewWrapperShow : {},
+          ]}>
           <LocalWebView
             ref={gasketWebViewRef}
             style={{
@@ -282,7 +290,10 @@ export function MultiAddressHomeHeader(
             },
             !isLight && { borderWidth: 0 },
             {},
-          ]}>
+          ]}
+          onLayout={() => {
+            setCouldRenderLocalWebView(true);
+          }}>
           <Card
             style={[styles.curveCard, styles.shadowView]}
             onPress={() => {
@@ -589,7 +600,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     zIndex: IS_IOS ? 1 : -1,
     marginHorizontal: isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
     borderRadius: SIZES.cardContentRadius,
+    display: 'none',
     // ...makeDebugBorder('yellow'),
+  },
+  localWebViewWrapperShow: {
+    display: 'flex',
   },
   curveBoxWrapperLoading: {},
   curveBox: {
