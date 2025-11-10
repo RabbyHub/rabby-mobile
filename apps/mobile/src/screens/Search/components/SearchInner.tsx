@@ -1,10 +1,16 @@
 import { useTheme2024 } from '@/hooks/theme';
-import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  Pressable,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ReactIconHome } from '@/assets2024/icons/browser';
 import { useDebounce, useMemoizedFn } from 'ahooks';
 import { NextSearchBar } from '@/components2024/SearchBar';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGetStyles2024 } from '@/utils/styles';
 import { parse } from 'tldts';
@@ -136,7 +142,7 @@ export const SearchInner = ({
 
   const Content = useMemo(() => {
     if (!searchText) {
-      return null;
+      return <Pressable onPress={handleClose} style={{ flex: 1 }} />;
     }
     if (debouncedSearchValue !== searchText || tokenLoading || dappLoading) {
       return (
@@ -230,11 +236,13 @@ export const SearchInner = ({
     debouncedSearchValue,
     tokenLoading,
     dappLoading,
+    handleClose,
     list,
     resultTokens,
     isValidDomain,
     handleOpenUrl,
-    styles,
+    styles.headerMarginTop,
+    styles.stickyHeader,
     onClose,
   ]);
 
