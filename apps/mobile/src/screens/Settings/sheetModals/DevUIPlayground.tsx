@@ -25,6 +25,7 @@ import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
 import { useDevServerModalVisible } from '../Modals/DevModalDevServer';
 import { toast } from '@/components2024/Toast';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 const devUIPlaygroundModalVisibleAtom = atom(false);
 export function useDevUIPlaygroundModalVisible() {
@@ -99,6 +100,17 @@ export default function DevUIPlaygroundModal({
           //     screen: RootNames.NewUserGetStarted2024,
           //   }),
           // );
+        },
+      },
+      {
+        label: 'Animated View & Text',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIAnimatedTextAndView,
+            }),
+          );
         },
       },
       {
@@ -189,7 +201,8 @@ export default function DevUIPlaygroundModal({
   })();
 
   const { safeSizes } = useSafeAndroidBottomSizes({
-    sheetHeight: getFullHeight(Items.length),
+    // sheetHeight: getFullHeight(Items.length),
+    sheetHeight: getFullHeight(5),
     containerPaddingBottom: SIZES.containerPb,
   });
 
@@ -203,7 +216,7 @@ export default function DevUIPlaygroundModal({
       onDismiss={handleCancel}
       enableContentPanningGesture={false}>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {
@@ -211,7 +224,7 @@ export default function DevUIPlaygroundModal({
           },
         ]}>
         <Text style={styles.title}>Component Playground</Text>
-        <View style={styles.mainContainer}>
+        <BottomSheetScrollView contentContainerStyle={styles.mainContainer}>
           {Items.map((item, idx) => {
             const itemKey = `testitem-${item.label}`;
 
@@ -232,7 +245,7 @@ export default function DevUIPlaygroundModal({
               </GeneralTestItem>
             );
           })}
-        </View>
+        </BottomSheetScrollView>
       </AutoLockView>
     </AppBottomSheetModal>
   );
