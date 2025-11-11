@@ -47,6 +47,7 @@ check_env_file() {
   local env_apiKey=""
   local sysenv_krPwd=$RABBY_MOBILE_KR_PWD
   local env_krPwd=""
+  local env_buildchannel=""
 
   if [ -f "$env_file" ]; then
     while IFS='=' read -r key value || [ -n "$key" ]; do
@@ -57,6 +58,8 @@ check_env_file() {
         env_apiKey="$value_cleaned"
       elif [ "$key_cleaned" == "RABBY_MOBILE_KR_PWD" ]; then
         env_krPwd="$value_cleaned"
+      elif [ "$key_cleaned" == "RABBY_MOBILE_BUILD_CHANNEL" ]; then
+        env_buildchannel="$value_cleaned"
       fi
     done < <(grep -v '^[[:space:]]*#' "$env_file" | grep -v '^[[:space:]]*$')
 
@@ -66,6 +69,11 @@ check_env_file() {
     elif [ -z "$env_krPwd" ]; then
       echo "[RabbyMobileBuild] no RABBY_MOBILE_KR_PWD in env file $env_file, abort bundle"
       exit 1
+    elif [ "$CONFIGURATION" == "Release" ] && [ "$env_buildchannel" != "appstore" ]; then
+      echo "[RabbyMobileBuild] RABBY_MOBILE_BUILD_CHANNEL from env file $env_file is invalid, abort bundle"
+      exit 1
+    else
+      echo "[RabbyMobileBuild] found env file $env_file, use its vars"
     fi
   else
     if [ -z "$sysenv_apiKey" ]; then
@@ -78,6 +86,9 @@ check_env_file() {
     fi
     echo "RABBY_MOBILE_SAFE_API_KEY=$sysenv_apiKey" >> $env_file
     echo "RABBY_MOBILE_KR_PWD=$sysenv_krPwd" >> $env_file
+    if [ "$CONFIGURATION" == "Release" ]; then
+      echo "RABBY_MOBILE_BUILD_CHANNEL=appstore" >> $env_file
+    fi
     echo "[RabbyMobileBuild] no env file $env_file found, have written to it"
   fi
 }
