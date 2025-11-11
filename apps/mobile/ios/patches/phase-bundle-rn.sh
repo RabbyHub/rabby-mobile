@@ -39,6 +39,10 @@ check_env_file() {
     env_file="$project_dir/.env.local"
   fi
 
+  if [ -z $RABBY_MOBILE_SAFE_API_KEY ] && [ ! -z $MOBILE_SAFE_API_KEY ]; then
+    export RABBY_MOBILE_SAFE_API_KEY=$MOBILE_SAFE_API_KEY
+  fi
+
   local sysenv_apiKey=$RABBY_MOBILE_SAFE_API_KEY
   local env_apiKey=""
   local sysenv_krPwd=$RABBY_MOBILE_KR_PWD
