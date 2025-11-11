@@ -137,6 +137,7 @@ jobs:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
+          RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.RABBY_MOBILE_SAFE_API_KEY || secrets.MOBILE_SAFE_API_KEY }}
           RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
           RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
           RABBY_MOBILE_ANDROID_STORE_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_STORE_PASSWORD }}
@@ -167,7 +168,6 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
-          MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
 
       # - name: Upload artifact
       #   uses: actions/upload-artifact@v3
