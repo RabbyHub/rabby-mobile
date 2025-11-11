@@ -1,6 +1,11 @@
 import { EncryptorAdapter } from '@rabby-wallet/service-keyring';
 import { Platform } from 'react-native';
-import RNKeychain, { UserCredentials, SetOptions } from 'react-native-keychain';
+import RNKeychain, {
+  BaseOptions,
+  SetOptions,
+  GetOptions,
+  UserCredentials,
+} from 'react-native-keychain';
 import { MMKV } from 'react-native-mmkv';
 
 import { appEncryptor } from '../services';
@@ -108,15 +113,23 @@ async function waitInstance() {
 
 /* ===================== Biometrics:start ===================== */
 const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
-const DEFAULT_OPTIONS: SetOptions = {
+const DEFAULT_OPTIONS: BaseOptions = {
   service: 'com.debank',
+};
+const DEFAULT_SET_OPTIONS: SetOptions = {
+  ...DEFAULT_OPTIONS,
+  // authenticationType: RNKeychain.AUTHENTICATION_TYPE.BIOMETRICS,
+  // accessControl: RNKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
+  // rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
+};
+const DEFAULT_GET_OPTIONS: GetOptions = {
+  ...DEFAULT_OPTIONS,
   authenticationPrompt: {
     title: i18n.t('native.authentication.auth_prompt_title'),
     // subtitle: '',
     description: i18n.t('native.authentication.auth_prompt_desc'),
     cancel: i18n.t('native.authentication.auth_prompt_cancel'),
   },
-  // authenticationType: RNKeychain.AUTHENTICATION_TYPE.BIOMETRICS,
   // accessControl: RNKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
   // rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
 };
@@ -142,7 +155,7 @@ export function parseKeychainError(error: any | Error) {
 const GENERIC_USER = 'rabbymobile-user';
 export async function resetGenericPassword() {
   const result = await RNKeychain.resetGenericPassword({
-    service: DEFAULT_OPTIONS.service,
+    service: DEFAULT_SET_OPTIONS.service,
   });
 
   if (result) {
@@ -200,7 +213,7 @@ export async function requestGenericPassword<
   try {
     instance.isAuthenticating = true;
     const keychainObject: DefaultRet = await RNKeychain.getGenericPassword({
-      ...DEFAULT_OPTIONS,
+      ...DEFAULT_GET_OPTIONS,
     });
 
     if (!keychainObject) {
@@ -278,7 +291,7 @@ export async function setGenericPassword(
   const instance = await waitInstance();
   const encryptedPassword = await instance.encryptPassword(password);
   await RNKeychain.setGenericPassword(GENERIC_USER, encryptedPassword, {
-    ...DEFAULT_OPTIONS,
+    ...DEFAULT_SET_OPTIONS,
     ...authOptions,
   });
 

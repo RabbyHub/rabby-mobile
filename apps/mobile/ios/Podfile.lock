@@ -2015,7 +2015,7 @@ PODS:
     - React-Core
   - RNInAppBrowser (3.7.0):
     - React-Core
-  - RNKeychain (10.0.0):
+  - RNKeychain (9.1.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2770,7 +2770,7 @@ SPEC CHECKSUMS:
   RNGoogleSignin: ee2938633d996756819e3212c8e0f7f696b380d0
   RNIap: 2fba6c91f79fb7c71fcc44465f606061653caf01
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
-  RNKeychain: e7d26746385bcea63095bf73209cf1615f6ac254
+  RNKeychain: 213a2ce6466955649e42ebea39a099beed544a30
   RNLocalize: 298e85ce16540a11de40c1a588ead39fc5e9a072
   RNNotifee: 8e2d3df3f0e9ce8f5d1fe4c967431138190b6175
   RNPermissions: bcec7922552447820c9d0d9bcc9e6619f4e73b94
