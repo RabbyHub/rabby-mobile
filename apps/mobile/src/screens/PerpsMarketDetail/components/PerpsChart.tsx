@@ -36,6 +36,7 @@ import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 
 import { useAppState } from '@react-native-community/hooks';
+import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
 export interface ChartHoverData {
   time?: string;
   open?: number;
@@ -315,9 +316,10 @@ export const PerpsChart: React.FC<{
   return (
     <View style={styles.chart}>
       <View style={styles.header}>
-        <Text style={styles.priceText}>
-          ${splitNumberByStep(markPrice || 0)}
-        </Text>
+        <TickerTexts textStyle={styles.priceText} duration={750}>
+          <TickItem rotateItems={['$']}>{'$'}</TickItem>
+          {splitNumberByStep(markPrice || 0)}
+        </TickerTexts>
         <Text
           style={[
             styles.changeText,
