@@ -160,9 +160,7 @@ export function MultiAddressHomeHeader(
       spinValue.resetAnimation();
     }
   }, [loading, spinValue]);
-  const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(
-    !IS_IOS,
-  );
+  const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
   const percentChange = useMemo(() => {
     return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
@@ -300,7 +298,11 @@ export function MultiAddressHomeHeader(
             {},
           ]}
           onLayout={() => {
-            setCouldRenderLocalWebView(true);
+            if (IS_IOS) {
+              setTimeout(() => setCouldRenderLocalWebView(true), 250);
+            } else {
+              setCouldRenderLocalWebView(true);
+            }
           }}>
           <Card
             style={[styles.curveCard, styles.shadowView]}
