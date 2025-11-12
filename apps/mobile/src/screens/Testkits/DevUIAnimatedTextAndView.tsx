@@ -53,10 +53,12 @@ function makeNewState(currencies = [...CURRENCIES]) {
 
 function SampleRow({
   animated = false,
+  duration = 750,
   refreshTime = 500,
   currencies,
 }: {
   animated?: boolean;
+  duration?: number;
   refreshTime?: number;
   currencies: string[];
 }) {
@@ -87,7 +89,7 @@ function SampleRow({
   });
 
   return (
-    <TickerTexts textStyle={styles.text}>
+    <TickerTexts textStyle={styles.text} duration={duration}>
       <TickItem rotateItems={CURRENCIES}>{state.currency}</TickItem>
       {state.value.toLocaleString()}
     </TickerTexts>
@@ -100,7 +102,8 @@ function DevUIAnimatedTextAndView(): JSX.Element {
     isLight: true,
   });
   const [animated, setAnimated] = useState(true);
-  const [refreshTime, setRefreshTime] = useState(500);
+  const [refreshTime, setRefreshTime] = useState(2000);
+  const [duration, setDuration] = useState(750);
 
   return (
     <NormalScreenContainer style={styles.screen}>
@@ -130,6 +133,49 @@ function DevUIAnimatedTextAndView(): JSX.Element {
                   value={refreshTime}
                   onValueChange={setRefreshTime}
                   minimumValue={500}
+                  maximumValue={5000}
+                  step={10}
+                  style={styles.slider}
+                  // trackStyle={styles.sliderTrack}
+                  minimumTrackTintColor={colors2024['brand-default']}
+                  maximumTrackTintColor={colors2024['neutral-line']}
+                  thumbStyle={styles.thumbStyle}
+                  thumbProps={() => {
+                    return {
+                      children: (
+                        <View>
+                          <View
+                            style={[
+                              styles.outerThumb,
+                              styles.outerThumbRelative,
+                            ]}>
+                            <View style={styles.innerThumb} />
+                          </View>
+                        </View>
+                      ),
+                    };
+                  }}
+                />
+              </View>
+            </View>
+          </View>
+          <View
+            style={{
+              marginBottom: 20,
+              paddingRight: 20,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <Text style={{ marginRight: 12 }}>
+              Duration: {duration.toString().padStart(4, '0')} ms
+            </Text>
+            <View style={styles.sliderContainer}>
+              <View style={styles.sliderWrapper}>
+                <Slider
+                  value={duration}
+                  onValueChange={setDuration}
+                  minimumValue={500}
                   maximumValue={2000}
                   step={10}
                   style={styles.slider}
@@ -147,9 +193,6 @@ function DevUIAnimatedTextAndView(): JSX.Element {
                               styles.outerThumbRelative,
                             ]}>
                             <View style={styles.innerThumb} />
-                            {/* <Animated.View style={sliderStyle}>
-                                    <BubbleWithText slide={value || 0} />
-                                  </Animated.View> */}
                           </View>
                         </View>
                       ),
@@ -159,6 +202,7 @@ function DevUIAnimatedTextAndView(): JSX.Element {
               </View>
             </View>
           </View>
+
           <Button
             style={{ marginBottom: 20 }}
             onPress={() => setAnimated(prev => !prev)}
@@ -189,8 +233,9 @@ function DevUIAnimatedTextAndView(): JSX.Element {
                     ]}>
                     <SampleRow
                       currencies={numSample.currencies}
-                      refreshTime={refreshTime}
                       animated={animated}
+                      refreshTime={refreshTime}
+                      duration={duration}
                     />
                   </View>
                 </View>
@@ -295,8 +340,10 @@ const getStyles = createGetStyles2024(ctx => {
       justifyContent: 'center',
     },
     text: {
-      fontSize: 34,
-      fontFamily: FontNames.sf_pro_rounded_bold,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 40,
+      lineHeight: 48,
+      fontWeight: '900',
       color: ctx.colors2024['neutral-title-1'],
     },
     numSamples: {

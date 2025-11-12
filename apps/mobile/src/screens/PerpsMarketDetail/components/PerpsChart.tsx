@@ -316,7 +316,7 @@ export const PerpsChart: React.FC<{
   return (
     <View style={styles.chart}>
       <View style={styles.header}>
-        <TickerTexts textStyle={styles.priceText}>
+        <TickerTexts textStyle={styles.priceText} duration={750}>
           <TickItem rotateItems={['$']}>{'$'}</TickItem>
           {splitNumberByStep(markPrice || 0)}
         </TickerTexts>

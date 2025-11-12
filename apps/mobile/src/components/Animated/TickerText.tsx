@@ -22,6 +22,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import usePrevious from 'react-use/lib/usePrevious';
 
 const styles = StyleSheet.create({
   row: {
@@ -57,14 +58,19 @@ const getPosition = ({
   height: number;
 }) => {
   const index = items.findIndex(p => p === text);
-  return index * height * -1;
+  return {
+    index,
+    position: index * height * -1,
+  };
 };
 
 type MeasureMap = Record<string, { width: number; height: number }>;
 
 interface TickProps {
   children: string;
-  duration?: number;
+  duration?:
+    | number
+    | ((ctx: { itemIndex: number; prevItemIndex: number }) => number);
   textStyle?: TextStyle;
   textProps?: TextProps;
   rotateItems: string[];
@@ -73,7 +79,7 @@ interface TickProps {
 
 export const TickItem = ({
   children,
-  duration = 250,
+  duration: propDuration = 500,
   textStyle,
   textProps,
   measureMap,
@@ -83,11 +89,12 @@ export const TickItem = ({
     return measureMap?.[children] || { height: 0, width: 0 };
   }, [children, measureMap]);
 
-  const position = getPosition({
+  const { position, index: itemIndex } = getPosition({
     text: children,
     height: measurement.height,
     items: rotateItems,
   });
+  const prevItemIndex = usePrevious(itemIndex) || 0;
 
   const widthAnim = useSharedValue(measurement.width);
   const stylePos = useSharedValue(position);
@@ -99,10 +106,19 @@ export const TickItem = ({
     transform: [{ translateY: stylePos.value }],
   }));
 
+  const duration = useMemo(() => {
+    if (typeof propDuration === 'function') {
+      return propDuration({ itemIndex, prevItemIndex });
+    }
+
+    return propDuration;
+  }, [propDuration, itemIndex, prevItemIndex]);
+
   useEffect(() => {
+    const curve = Easing.bezier(0.42, 0, 0.58, 1);
     stylePos.value = withTiming(position, {
       duration: duration,
-      easing: Easing.linear,
+      easing: curve,
     });
     widthAnim.value = withTiming(measurement.width, {
       duration: 25,
@@ -125,7 +141,7 @@ export const TickItem = ({
 };
 
 interface Props {
-  duration?: number;
+  duration?: TickProps['duration'];
   containerStyle?: ViewStyle;
   textStyle?: TextStyle;
   textProps?: TextProps;
