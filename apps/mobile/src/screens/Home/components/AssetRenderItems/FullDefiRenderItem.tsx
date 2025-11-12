@@ -23,6 +23,9 @@ import { usePortfolios } from '../../hooks/usePortfolio';
 import { useAssets } from '@/screens/Search/useAssets';
 import { refreshHistoryIdAtom } from '../../SingleHomeRightArea';
 import { useSetAtom } from 'jotai';
+import { dappService } from '@/core/services';
+import { CHAINS_ENUM } from '@debank/common';
+import { findChain } from '@/utils/chain';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -58,6 +61,15 @@ export const FullDefiRenderItem = ({
     if (data?.site_url) {
       openTab(data?.site_url);
       const origin = safeGetOrigin(data?.site_url);
+      if (!isFromAppChain) {
+        const chain = findChain({ serverId: data.chain });
+        dappService.patchDapps({
+          [origin]: {
+            currentAccount: account,
+            chainId: chain?.enum || CHAINS_ENUM.ETH,
+          },
+        });
+      }
       if (origin) {
         matomoRequestEvent({
           category: 'Websites Usage',
@@ -66,7 +78,7 @@ export const FullDefiRenderItem = ({
         });
       }
     }
-  }, [data?.site_url, openTab]);
+  }, [account, data.chain, data?.site_url, isFromAppChain, openTab]);
 
   const sectionsMultiProject = useMemo(() => {
     if (!account) {
