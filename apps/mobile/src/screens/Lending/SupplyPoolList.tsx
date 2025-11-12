@@ -121,7 +121,7 @@ const SupplyPoolList = () => {
     t,
   ]);
   return (
-    <Tabs.FlashList
+    <Tabs.FlatList
       data={loading ? [] : sortReserves}
       style={styles.container}
       showsVerticalScrollIndicator={false}
