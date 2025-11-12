@@ -61,15 +61,13 @@ export const FullDefiRenderItem = ({
     if (data?.site_url) {
       openTab(data?.site_url);
       const origin = safeGetOrigin(data?.site_url);
-      if (!isFromAppChain) {
-        const chain = findChain({ serverId: data.chain });
-        dappService.patchDapps({
-          [origin]: {
-            currentAccount: account,
-            chainId: chain?.enum || CHAINS_ENUM.ETH,
-          },
-        });
-      }
+      const chain = findChain({ serverId: data.chain });
+      dappService.patchDapps({
+        [origin]: {
+          currentAccount: account,
+          chainId: isFromAppChain ? undefined : chain?.enum || CHAINS_ENUM.ETH,
+        },
+      });
       if (origin) {
         matomoRequestEvent({
           category: 'Websites Usage',
