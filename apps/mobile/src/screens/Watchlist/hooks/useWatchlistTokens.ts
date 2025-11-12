@@ -106,8 +106,6 @@ export const useWatchListTokenBadge = () => {
     [data],
   );
 
-  console.log('data', data);
-
   useEffect(() => {
     handleFetchTokens();
   }, [handleFetchTokens]);

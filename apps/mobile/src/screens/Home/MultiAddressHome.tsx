@@ -112,7 +112,7 @@ import { PointsBadge } from '../Points/components/PointsBadge';
 import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
-import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
+import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -840,7 +840,7 @@ function MultiAddressHome(): JSX.Element {
         end: { x: 0.5, y: 0.26 },
       }}
       overwriteStyle={styles.screenContainer}>
-      {/* {__DEV__ && <HomeGuidanceMultipleTabs />} */}
+      <ScreenSpecificStatusBar screenName={RootNames.Home} />
       <View style={styles.paddingContainer}>
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -1150,7 +1150,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   primaryActionsContainer: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   primaryActionButton: {
     flex: 1,
