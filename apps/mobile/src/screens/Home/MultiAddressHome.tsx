@@ -757,7 +757,7 @@ function MultiAddressHome(): JSX.Element {
         end: { x: 0.5, y: 0.26 },
       }}
       overwriteStyle={styles.screenContainer}>
-      {__DEV__ && <HomeGuidanceMultipleTabs />}
+      {/* {__DEV__ && <HomeGuidanceMultipleTabs />} */}
       <View style={styles.paddingContainer}>
         <ScrollView
           showsVerticalScrollIndicator={false}

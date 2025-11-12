@@ -79,10 +79,6 @@ export function useMeasureLayoutForHomeGuidanceMultipleTabs<
     }
   }, [setLayout]);
 
-  // useLayoutEffect(() => {
-  //   doMeasure();
-  // }, [doMeasure]);
-
   return {
     doMeasure,
     HomeGuidanceMultipleTabsTargetViewRef: viewRef,

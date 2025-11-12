@@ -187,13 +187,7 @@ export function MultiAddressHomeHeader(
 
   return (
     <View style={style}>
-      <View
-        style={[
-          styles.headerBox,
-          {
-            // ...makeDebugBorder('red')
-          },
-        ]}>
+      <View style={styles.headerBox}>
         <View style={styles.leftBox}>
           <Text style={styles.balanceTextBox}>
             {t('page.nextComponent.multiAddressHome.totalBalance')}
