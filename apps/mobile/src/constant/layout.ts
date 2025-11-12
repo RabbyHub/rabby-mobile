@@ -224,6 +224,8 @@ export const RootNames = {
 
 export type AppRootName = keyof typeof RootNames;
 
+type NonStackAppRootName = Exclude<AppRootName, `Stack${string}`>;
+
 export type ScreenStatusBarConf = {
   barStyle?: 'light-content' | 'dark-content';
   iosStatusBarStyle?: NativeStackNavigationOptions['statusBarStyle'];
@@ -249,9 +251,7 @@ function makeScreenSpecConfig() {
     '@default': ScreenStatusBarConf;
     '@bg1default': ScreenStatusBarConf;
     '@openeddapp': ScreenStatusBarConf;
-  } & {
-    [P in AppRootName]?: ScreenStatusBarConf;
-  };
+  } & Record<NonStackAppRootName, ScreenStatusBarConf>;
 
   const [dark, light] = [true, false].map(isDarkTheme => {
     const adaptiveStatusBarStyle = isDarkTheme
@@ -326,7 +326,7 @@ function makeScreenSpecConfig() {
       androidStatusBarBg: colors['blue-default'],
     };
 
-    const themeSpecs = <ThemeType>{
+    const themeSpecs: ThemeType = {
       '@default': bg1Default2024Conf,
       '@bg1default': { ...bg1DefaultConf },
       '@openeddapp': {
@@ -334,64 +334,152 @@ function makeScreenSpecConfig() {
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
         androidStatusBarBg: colors['neutral-bg-1'],
       },
-      GetStarted: blueLightConf,
-      GetStartedScreen2024: bg1DefaultConf,
-      NewUserGetStarted2024: bg1DefaultConf,
 
-      Home: transparentDefault2024Conf,
+      // StackGetStarted
+      GetStartedScreen2024: bg1DefaultConf,
+      CreateSelectMethod: bg1Default2024Conf,
+      // StackRoot
+      // StackHomeNonTab
+
+      NotFound: bg1Default2024Conf,
+      Unlock: bg1DefaultConf,
+
+      // StackBottom
+      Home: bg1Default2024Conf,
+      Points: bg1Default2024Conf,
+
+      // StackDapps
+      Dapps: bg1Default2024Conf,
+      FavoriteDapps: bg1Default2024Conf,
+      Search: bg1Default2024Conf,
+      Watchlist: bg1Default2024Conf,
+      Lending: bg1Default2024Conf,
+
+      // StackSettings
+      Settings: historyPageConf,
+      SetPassword: blueLightConf,
+      CustomTestnet: bg1Default2024Conf,
+      CustomRPC: bg1Default2024Conf,
+      SetBiometricsAuthentication: bg1DefaultConf,
+      /** @deprecated */
+      GetStarted: blueLightConf,
+      /* warning: dev only ------ start */
+      ProviderControllerTester: bg1Default2024Conf,
+      /* warning: dev only ------ end */
+
+      /* warning: testkits only ------ start */
+      // StackTestkits
+      NewUserGetStarted2024: bg1DefaultConf,
+      DevUIFontShowCase: bg1Default2024Conf,
+      DevUIAnimatedTextAndView: bg1Default2024Conf,
+      DevUIFormShowCase: bg1Default2024Conf,
+      DevUIAccountShowCase: bg1Default2024Conf,
+      DevUIScreenContainerShowCase: bg1Default2024Conf,
+      DevUIDapps: bg1Default2024Conf,
+      DevDataSQLite: bg1Default2024Conf,
+      DevUIBuiltInPages: bg1Default2024Conf,
+      DevUIPermissions: bg1Default2024Conf,
+      /* warning: testkits only ------ start */
+
+      // StackTransaction
+      Send: bg1Default2024Conf,
+      SendHistory: bg1Default2024Conf,
+      /** @deprecated */
+      MultiSend: bg1Default2024Conf,
+      SendNFT: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      MultiSendNFT: bg1Default2024Conf,
+      Receive: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      Swap: bg1Default2024Conf,
+      MultiSwap: bg1Default2024Conf,
+      GnosisTransactionQueue: card2DefaultConf,
+      Approvals: bg1Default2024Conf,
+      BatchRevoke: transparentDefault2024Conf,
+      History: historyPageConf,
+      CopyTradingTokenDetail: bg1Default2024Conf,
+      HistoryDetail: historyPageConf,
+      HistoryLocalDetail: historyPageConf,
+      MultiAddressHistory: historyPageConf,
+      LendingHistory: bg1Default2024Conf,
+      Bridge: bg1Default2024Conf,
+      MultiBridge: bg1Default2024Conf,
+      GasAccount: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      /** @deprecated */
+      Buy: bg1Default2024Conf,
+      /** @deprecated */
+      MultiBuy: bg1Default2024Conf,
+      /**
+       * @deprecated
+       */
+      CopyTrading: bg1Default2024Conf,
+      Perps: bg1Default2024Conf,
+      PerpsMarketList: bg1Default2024Conf,
+      PerpsMarketDetail: bg1Default2024Conf,
+      PerpsHistory: bg1Default2024Conf,
+      AccountTransaction: bg1Default2024Conf,
+      /* @deprecated */
+      MyBundle: bg1Default2024Conf,
+
+      // StackAddress
+      AddressList: bg1Default2024Conf,
+      AddressAssetsOverview: bg1Default2024Conf,
+      ApprovalAddressList: bg1Default2024Conf,
+      ImportNewAddress: bg1Default2024Conf,
+      ImportHardwareAddress: bg1Default2024Conf,
+      ImportSuccess: blueLightConf,
+      ImportSuccess2024: bg1Default2024Conf,
+      ImportMethods: bg1Default2024Conf,
+      ImportWatchAddress: blueLightConf,
+      ImportWatchAddress2024: bg1Default2024Conf,
+      ImportSafeAddress: blueLightConf,
+      ImportSafeAddress2024: bg1Default2024Conf,
+      AddressDetail: bg1Default2024Conf,
+      NftDetail: bg1Default2024Conf,
+      DeFiDetail: bg1Default2024Conf,
+      CreateNewAddress: bg1Default2024Conf,
+      CreateSelectOnCurrentSeed: bg1Default2024Conf,
+      SetPassword2024: bg1Default2024Conf,
+      CreateChooseBackup: bg1Default2024Conf,
+
+      ImportLedger: bg1Default2024Conf,
+      ImportMoreAddress: bg1Default2024Conf,
+      ImportPrivateKey: bg1Default2024Conf,
+      ImportPrivateKey2024: bg1Default2024Conf,
+      /** @deprecated */
+      ImportMnemonic: bg1Default2024Conf,
+      ImportMnemonic2024: bg1Default2024Conf,
+      CreateMnemonic: bg1Default2024Conf,
+      PreCreateMnemonic: bg1Default2024Conf,
+      AddMnemonic: bg1Default2024Conf,
+      CreateMnemonicBackup: bg1Default2024Conf,
+      CreateMnemonicVerify: bg1Default2024Conf,
+      Scanner: transparentDefault2024Conf,
+      BackupPrivateKey: bg1Default2024Conf,
+      BackupMnemonic: bg1Default2024Conf,
+      RestoreFromCloud: bg1Default2024Conf,
+      WatchAddressList: bg1Default2024Conf,
+      SafeAddressList: bg1Default2024Conf,
+
+      SingleAddressStack: bg1Default2024Conf,
+      SingleAddressHome: transparentDefault2024Conf,
+
       DappWebViewStubOnHome: {
         barStyle: adaptiveStatusBarStyle,
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
         androidStatusBarBg: colors['neutral-bg-1'],
       },
-      MultiAddressHome: bg1Default2024Conf,
-      // MultiAddressHome: bg1Default2024Conf,
-      Unlock: bg1DefaultConf,
-      History: historyPageConf,
-      MultiAddressHistory: historyPageConf,
-      HistoryDetail: historyPageConf,
-      HistoryLocalDetail: historyPageConf,
-
-      Dapps: bg1Default2024Conf,
-      SendNFT: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      // SearchDapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-
-      // History: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-
-      // ImportNewAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      // AddressList: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      ImportWatchAddress: blueLightConf,
-      ImportSafeAddress: blueLightConf,
-      ImportSuccess: blueLightConf,
-      // ImportSuccess2024: blueLightConf,
-      // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      Settings: historyPageConf,
-      SingleAddressHome: transparentDefault2024Conf,
       TokenDetail: transparentDefault2024Conf,
-      Receive: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      GasAccount: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      Send: bg1Default2024Conf,
-      MultiSend: bg1Default2024Conf,
-      Swap: bg1Default2024Conf,
-      MultiSwap: bg1Default2024Conf,
-      Bridge: bg1Default2024Conf,
-      MultiBridge: bg1Default2024Conf,
-      // Receive: blueLightConf,
-      AddressList: bg1Default2024Conf,
-      SafeAddressList: bg1Default2024Conf,
-      WatchAddressList: bg1Default2024Conf,
-      ApprovalAddressList: bg1Default2024Conf,
+      TokenMarketInfo: bg1Default2024Conf,
+      ReceiveAddressList: bg1Default2024Conf,
 
-      GnosisTransactionQueue: card2DefaultConf,
+      SyncExtensionPassword: bg1Default2024Conf,
+      SyncExtensionImported: bg1Default2024Conf,
+      SyncExtensionAccountSuccess: bg1Default2024Conf,
 
-      Approvals: bg1Default2024Conf,
+      // StackMain
 
-      SetPassword: blueLightConf,
-      SetPassword2024: bg1Default2024Conf,
-      SetBiometricsAuthentication: bg1DefaultConf,
-      Scanner: transparentDefault2024Conf,
-      BatchRevoke: transparentDefault2024Conf,
-      // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      // StackBrowser
+      BrowserScreen: bg1Default2024Conf,
+      BrowserManageScreen: bg1Default2024Conf,
     };
 
     // return __DEV__ ? Object.freeze(themeSpecs) : themeSpecs;
