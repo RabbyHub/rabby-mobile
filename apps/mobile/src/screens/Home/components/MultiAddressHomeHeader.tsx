@@ -67,6 +67,7 @@ import { HomeAddressItem } from './HomeAddressItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { IS_IOS } from '@/core/native/utils';
+import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 
 const HeaderHeight = 24;
 
@@ -84,7 +85,6 @@ export function MultiAddressHomeHeader(
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const spinValue = useRef(new RNAnimated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
   const { isDisConnect } = useGlobalStatus();
   const { currency, formatCurrentCurrency } = useCurrency();
@@ -142,18 +142,11 @@ export function MultiAddressHomeHeader(
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
 
+  const spinValue = useRef(new RNAnimated.Value(0)).current;
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
-
-  const percentChange = useMemo(() => {
-    return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
-      data.isLoss ? '-' : '+'
-    }${formatCurrentCurrency(Math.abs(data.rawChange))})`;
-  }, [data.changePercent, data.isLoss, data.rawChange, formatCurrentCurrency]);
-
-  const gasketWebViewRef = useRef<LocalWebView>(null);
   useEffect(() => {
     if (loading) {
       RNAnimated.loop(
@@ -170,6 +163,14 @@ export function MultiAddressHomeHeader(
   }, [loading, spinValue]);
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
+  const percentChange = useMemo(() => {
+    return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
+      data.isLoss ? '-' : '+'
+    }${formatCurrentCurrency(Math.abs(data.rawChange))})`;
+  }, [data.changePercent, data.isLoss, data.rawChange, formatCurrentCurrency]);
+
+  const gasketWebViewRef = useRef<LocalWebView>(null);
+
   const previousLoading = usePrevious(loading);
   useEffect(() => {
     if (data.isLoss) return;
@@ -182,6 +183,9 @@ export function MultiAddressHomeHeader(
       });
     }
   }, [data.isLoss, loading, previousLoading]);
+
+  const { HomeGuidanceMultipleTabsTargetViewRef, doMeasure } =
+    useMeasureLayoutForHomeGuidanceMultipleTabs();
 
   return (
     <View style={style}>
@@ -253,6 +257,9 @@ export function MultiAddressHomeHeader(
         viewTypeOnNoShadow={'view'}
         viewProps={{
           style: [styles.curveBoxWrapper, { minHeight: 100 }],
+          onLayout: () => {
+            doMeasure();
+          },
         }}>
         <View
           pointerEvents="none"

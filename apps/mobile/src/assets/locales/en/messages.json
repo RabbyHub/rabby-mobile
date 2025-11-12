@@ -1186,6 +1186,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "Take a screenshot anytime to quickly report a bug"
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "Swipe right to view all assets"
       }
     },
     "newAddress": {
@@ -2369,7 +2372,6 @@
         "takeProfitTipsShort": "Take profit price must be lower than current price",
         "stopLossTipsLongLiquidation": "Price is lower than the liquidation price ({{price}})",
         "stopLossTipsShort": "Stop loss price must be higher than current price",
-
         "stopLossTipsShortLiquidation": "Price is higher than the liquidation price ({{price}})",
         "takeProfit": "Take profit",
         "loss": "Loss",

@@ -14,7 +14,7 @@ import { RootNames } from '@/constant/layout';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
@@ -27,6 +27,7 @@ import {
   Animated,
   Dimensions,
   Easing,
+  LayoutRectangle,
   Platform,
   RefreshControl,
   ScrollView,
@@ -111,6 +112,7 @@ import { PointsBadge } from '../Points/components/PointsBadge';
 import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
+import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -838,6 +840,7 @@ function MultiAddressHome(): JSX.Element {
         end: { x: 0.5, y: 0.26 },
       }}
       overwriteStyle={styles.screenContainer}>
+      {/* {__DEV__ && <HomeGuidanceMultipleTabs />} */}
       <View style={styles.paddingContainer}>
         <ScrollView
           showsVerticalScrollIndicator={false}
