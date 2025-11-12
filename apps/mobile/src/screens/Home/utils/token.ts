@@ -205,7 +205,7 @@ export function tagTokenItem<
   return {
     ...i,
     _isPined: isPin,
-    _isFold: isPin ? false : isFold,
+    _isFold: isFold,
     _isManualFold: isManualFold,
     _isMiniFold: isMiniFold,
     _isExcludeBalance: isExcludeBalance,
@@ -237,7 +237,6 @@ export const tagTokenList = (
   }
   return tagedTokens.map(i => {
     if (
-      i._isPined ||
       i._isMiniFold ||
       i._isFold ||
       !i.is_core ||

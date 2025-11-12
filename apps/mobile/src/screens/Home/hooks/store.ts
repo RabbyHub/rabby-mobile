@@ -147,7 +147,6 @@ export const combinedTokens = (
     .map(i => {
       if (
         !hasExpandSwitch ||
-        i._isPined ||
         !i.is_core ||
         i._isManualFold ||
         unfoldTokens.some(
