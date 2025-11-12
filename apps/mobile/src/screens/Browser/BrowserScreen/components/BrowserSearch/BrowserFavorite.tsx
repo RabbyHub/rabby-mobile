@@ -49,6 +49,10 @@ export function BrowserFavorite({
     }
   };
 
+  if (!bookmarkList.length) {
+    return null;
+  }
+
   return (
     <View>
       <View style={styles.header}>
