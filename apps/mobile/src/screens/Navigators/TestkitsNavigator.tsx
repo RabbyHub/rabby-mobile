@@ -17,6 +17,12 @@ const GetStartedScreen2024 = registerAppScreen<
   loader: () => import('@/screens/GetStarted/NewUserGetStarted2024'),
   name: TESTKITS_PRELOAD_SCREENS.NewUserGetStarted2024,
 });
+const DevUIAnimatedTextAndView = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIAnimatedTextAndView').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIAnimatedTextAndView'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIAnimatedTextAndView,
+});
 const DevUIFontShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIFontShowCase').default
 >({
@@ -98,6 +104,10 @@ export function TestkitsNavigator() {
         // options={{
         //   navigationBarHidden: true,
         // }}
+      />
+      <Stack.Screen
+        name={RootNames.DevUIAnimatedTextAndView}
+        component={DevUIAnimatedTextAndView}
       />
       <Stack.Screen
         name={RootNames.DevUIFontShowCase}

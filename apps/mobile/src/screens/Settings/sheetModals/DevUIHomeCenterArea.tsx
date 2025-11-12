@@ -21,6 +21,7 @@ import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
+import { useGuidanceShown } from '@/components2024/Animations/hooks';
 
 const MAKE_DEFAULT_MOCK_DATA = () => ({
   forceShowFundWallet: false,
@@ -93,6 +94,7 @@ export default function DevUIHomeCenterAreaModal({
   const { mockData, setMockData } = useMakeMockDataForHomeCenterArea();
   const { clearOfflineChainTips } = useMockClearOfflineChainTips();
   const { mockResetViewedHomeTip } = useViewedHomeTip();
+  const { toggleViewedGuidance } = useGuidanceShown();
 
   const Items = (() => {
     const list: DevTestItem[] = [
@@ -139,6 +141,15 @@ export default function DevUIHomeCenterAreaModal({
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
           mockExposureRateGuide();
+        },
+      },
+      {
+        label: [`[Data] Reset Home Multiple Tabs Guide`]
+          .filter(Boolean)
+          .join(' '),
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          toggleViewedGuidance('multiTabs20251111Viewed', false);
         },
       },
       ...(!FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT
