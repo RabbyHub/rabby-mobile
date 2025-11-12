@@ -67,26 +67,29 @@ const BorrowPoolList = () => {
       });
   }, [displayPoolReserves, reserves?.reservesData]);
 
-  const handlePressItem = item => {
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.BORROW_DETAIL,
-      reserve: item,
-      userSummary: iUserSummary,
-      onClose: () => {
-        removeGlobalBottomSheetModal2024(modalId);
-      },
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-        enableDismissOnClose: true,
-        handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
+  const handlePressItem = useCallback(
+    item => {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.BORROW_DETAIL,
+        reserve: item,
+        userSummary: iUserSummary,
+        onClose: () => {
+          removeGlobalBottomSheetModal2024(modalId);
         },
-      },
-    });
-  };
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          handleStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+        },
+      });
+    },
+    [colors2024, iUserSummary, isLight],
+  );
 
   const availableCard = useMemo(() => {
     if (loading || !iUserSummary?.totalLiquidityUSD) {
@@ -162,6 +165,50 @@ const BorrowPoolList = () => {
     styles.loading,
     t,
   ]);
+  const keyExtractor = useCallback(item => {
+    return `${item.reserve.underlyingAsset}-${item.reserve.symbol}`;
+  }, []);
+  const renderItem = useCallback(
+    ({ item }) => (
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => handlePressItem(item)}>
+        <View style={styles.left}>
+          <TokenIcon
+            size={46}
+            chainSize={0}
+            tokenSymbol={item.reserve.symbol}
+          />
+          <View style={styles.symbolContainer}>
+            <Text style={styles.symbol} numberOfLines={1} ellipsizeMode="tail">
+              {item.reserve.symbol}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.apy}>
+          {formatPercent(Number(item.reserve.variableBorrowAPY || '0'))}
+        </Text>
+        <View style={styles.right}>
+          <Text style={styles.yourSupplied}>
+            {formatNetworth(Number(item.totalBorrowsUSD || '0'))}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    ),
+    [
+      handlePressItem,
+      styles.apy,
+      styles.item,
+      styles.left,
+      styles.right,
+      styles.symbol,
+      styles.symbolContainer,
+      styles.yourSupplied,
+    ],
+  );
+  const renderFooterComponent = useCallback(() => {
+    return <View style={{ height: FOOT_HEIGHT }} />;
+  }, []);
 
   return (
     <Tabs.FlatList
@@ -170,41 +217,17 @@ const BorrowPoolList = () => {
       ListHeaderComponent={ListHeaderComponent}
       showsVerticalScrollIndicator={false}
       ListHeaderComponentStyle={styles.headerContainer}
-      keyExtractor={item => `${item.reserve.underlyingAsset}-${item.reserve}`}
+      initialNumToRender={8}
+      maxToRenderPerBatch={8}
+      windowSize={8}
+      removeClippedSubviews
+      keyExtractor={keyExtractor}
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
       ListEmptyComponent={<PoolListLoading />}
-      ListFooterComponent={<View style={{ height: FOOT_HEIGHT }} />}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          style={styles.item}
-          onPress={() => handlePressItem(item)}>
-          <View style={styles.left}>
-            <TokenIcon
-              size={46}
-              chainSize={0}
-              tokenSymbol={item.reserve.symbol}
-            />
-            <View style={styles.symbolContainer}>
-              <Text
-                style={styles.symbol}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {item.reserve.symbol}
-              </Text>
-            </View>
-          </View>
-          <Text style={styles.apy}>
-            {formatPercent(Number(item.reserve.variableBorrowAPY || '0'))}
-          </Text>
-          <View style={styles.right}>
-            <Text style={styles.yourSupplied}>
-              {formatNetworth(Number(item.totalBorrowsUSD || '0'))}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      )}
+      ListFooterComponent={renderFooterComponent}
+      renderItem={renderItem}
     />
   );
 };
