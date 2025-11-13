@@ -192,24 +192,28 @@ export const BrowserHandler = () => {
       !browserState.isShowManage ? (
         <View style={styles.handleComponent}>
           <View style={styles.handleComponentContainer}>
-            <TouchableOpacity
-              onPress={() => {
-                handleAction('favorite');
-              }}
-              hitSlop={5}>
-              <View style={{ paddingLeft: 12 }}>
-                <RcIconFavoriteCC
-                  color={
-                    activeTabState.isBookmark
-                      ? colors2024['orange-default']
-                      : colors2024['neutral-line']
-                  }
-                  width={24}
-                  height={24}
-                />
-              </View>
-            </TouchableOpacity>
-            <View style={styles.divider} />
+            {activeTabState.isDapp ? (
+              <>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleAction('favorite');
+                  }}
+                  hitSlop={5}>
+                  <View style={{ paddingLeft: 12 }}>
+                    <RcIconFavoriteCC
+                      color={
+                        activeTabState.isBookmark
+                          ? colors2024['orange-default']
+                          : colors2024['neutral-line']
+                      }
+                      width={24}
+                      height={24}
+                    />
+                  </View>
+                </TouchableOpacity>
+                <View style={styles.divider} />
+              </>
+            ) : null}
 
             {activeTabState.url ? (
               <DropdownMenuView menuConfig={menuConfigs}>
