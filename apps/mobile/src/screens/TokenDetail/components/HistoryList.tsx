@@ -441,6 +441,7 @@ const getStyle = createGetStyles2024(ctx => ({
     fontWeight: '700',
   },
   emptyStyle: {
+    marginTop: 100,
     height: 150,
   },
   skeletonContainer: {
