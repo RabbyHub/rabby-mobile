@@ -105,19 +105,19 @@ export const PerpsEditMarginPopup: React.FC<{
       action === 'add'
         ? Number(marginUsed) + Number(marginNormalized)
         : Number(marginUsed) - Number(marginNormalized);
+    const nationalValue = Number(positionSize) * Number(markPrice);
     return calLiquidationPrice(
       markPrice,
       newMargin,
       direction,
       Number(positionSize),
-      leverage,
+      nationalValue,
       leverageMax,
     ).toFixed(pxDecimals);
   }, [
     marginUsed,
     markPrice,
     action,
-    leverage,
     leverageMax,
     margin,
     direction,

@@ -143,7 +143,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       Number(margin),
       direction,
       Number(tradeSize),
-      leverage,
+      tradeAmount,
       maxLeverage,
     ).toFixed(pxDecimals);
   }, [
@@ -154,6 +154,7 @@ export const PerpsOpenPositionPopup: React.FC<{
     direction,
     tradeSize,
     pxDecimals,
+    tradeAmount,
   ]);
 
   const bothFee = React.useMemo(() => {
