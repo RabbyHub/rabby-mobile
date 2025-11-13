@@ -13,7 +13,7 @@ import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
@@ -26,6 +26,7 @@ import {
   Animated,
   Dimensions,
   Easing,
+  LayoutRectangle,
   Platform,
   RefreshControl,
   ScrollView,
@@ -104,6 +105,7 @@ import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 import { LendingHF } from './components/LendingHF';
 import { useLendingData } from '../Lending/hooks';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
+import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -755,6 +757,7 @@ function MultiAddressHome(): JSX.Element {
         end: { x: 0.5, y: 0.26 },
       }}
       overwriteStyle={styles.screenContainer}>
+      {/* {__DEV__ && <HomeGuidanceMultipleTabs />} */}
       <View style={styles.paddingContainer}>
         <ScrollView
           showsVerticalScrollIndicator={false}

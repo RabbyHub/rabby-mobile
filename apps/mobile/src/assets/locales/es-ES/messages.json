@@ -1291,6 +1291,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "Toma una captura de pantalla en cualquier momento para informar rápidamente de un error."
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "Desliza a la derecha para ver todos los activos"
       }
     },
     "bridge": {
@@ -2057,7 +2060,10 @@
           "amount": "Cantidad"
         },
         "pools": "Pools"
-      }
+      },
+      "headerTokenValueText": "Valor del Token",
+      "price": "Precio",
+      "headerBalanceText": "Saldo"
     },
     "setting": {
       "feedback": "Comentarios",
@@ -2593,7 +2599,8 @@
         "stopLossTipsLong": "El precio de stop loss debe ser inferior al precio actual.",
         "stopLossTipsShort": "El precio de stop loss debe ser superior al precio actual.",
         "profit": "Beneficio",
-        "stopLossTipsShortLiquidation": "El precio es más alto que el precio de liquidación ({{price}})"
+        "stopLossTipsShortLiquidation": "El precio es más alto que el precio de liquidación ({{price}})",
+        "noPosition": "Debes introducir primero el margen."
       },
       "PerpsDepositTokenModal": {
         "bridgeBtn": "Puente",
@@ -2649,7 +2656,30 @@
       "leverageRangeMinError": "El apalancamiento mínimo es de {{min}}x",
       "deleteAgentModal": "Ha alcanzado el número máximo de agentes. ¿Desea eliminar un agente existente para crear uno nuevo?",
       "leverageRangeMaxError": "El apalancamiento máximo es {{max}}x",
-      "positions": "Posiciones"
+      "positions": "Posiciones",
+      "searchPerpsPopup": {
+        "searchPlaceholder": "Buscar Perps",
+        "empty": "No se encontraron resultados",
+        "openPosition": "Abrir posición",
+        "searchPosition": "Buscar Posición",
+        "searchPerps": "Buscar Perps"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "danger": "Peligro",
+          "warning": "Advertencia",
+          "safe": "Seguro"
+        },
+        "distanceLabel": "Distancia de Liquidación",
+        "currentPrice": "Precio Actual",
+        "title": "Nivel de Riesgo",
+        "liquidationPrice": "Precio de Liquidación",
+        "liqIntro": "La distancia de liquidación (%) muestra cuán lejos está el precio actual de tu precio de liquidación. Una distancia mayor indica una posición más segura, mientras que una distancia menor significa un mayor riesgo de liquidación.",
+        "subtitle": "Distancia de liquidación en tiempo real (%)"
+      },
+      "closeAllConfirmTitle": "Confirmar Cerrar Todas las Posiciones",
+      "closeAll": "Cerrar todo",
+      "closeAllConfirmMessage": "Todas tus posiciones abiertas se cerrarán al precio de mercado."
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2695,7 +2725,13 @@
         "closeBtn": "Cerrar {{direction}}",
         "providerFeeTips": "Tarifa de Hyperliquid: {{fee}}",
         "positionSize": "Tamaño de posición",
-        "rabbyFeeTips": "Tarifa de Rabby: 0,04%"
+        "rabbyFeeTips": "Tarifa de Rabby: 0,04%",
+        "closedPnl": "PNL cerrado:",
+        "receive": "Recibir:",
+        "total": "Total",
+        "confirm": "Confirmar",
+        "amount": "Cantidad",
+        "minimumWarning": "La cantidad mínima es del {{percent}}%"
       },
       "PerpsOpenPositionPopup": {
         "maximumOrderSize": "El tamaño máximo del pedido es {{amount}}",
@@ -2709,7 +2745,12 @@
         "minimumOrderSize": "El tamaño mínimo de la orden es $10.",
         "size": "Tamaño",
         "available": "disponible",
-        "tpPrice": "Precio de Toma de Beneficios"
+        "tpPrice": "Precio de Toma de Beneficios",
+        "stopLossWhen": "Detener Pérdidas Cuando",
+        "takeProfitWhenPriceBelow": "Toma de Beneficios Cuando el Precio Está por Debajo",
+        "takeProfitWhenPriceAbove": "Toma de Ganancias Cuando el Precio esté por Encima",
+        "stopLossWhenPriceBelow": "Detener Pérdidas Cuando el Precio Sea Inferior a",
+        "stopLossWhenPriceAbove": "Stop Loss Cuando el Precio Está Por Encima"
       },
       "PerpsOpenPositionCheckPopup": {
         "perps": "Perpetuos",
@@ -2728,7 +2769,10 @@
         "margin": "Margen (Aislada)",
         "size": "Tamaño",
         "liquidationPriceTips": "El precio al que tu posición se cierra automáticamente por el intercambio para prevenir mayores pérdidas cuando tu margen cae por debajo del nivel de margen de mantenimiento.",
-        "rabbyFeeTips": "Tarifa de Rabby: 0%"
+        "rabbyFeeTips": "Tarifa de Rabby: 0%",
+        "free": "Libre",
+        "rabbyFee": "Tarifa de Rabby",
+        "providerFee": "Tarifa de Hyperliquid"
       },
       "action": {
         "closePosition": "Cerrar posición {{direction}}",
@@ -2742,7 +2786,31 @@
         "entryPrice": "Precio de Entrada:",
         "price": "Precio:",
         "tpPrice": "Precio de Toma de Ganancias",
-        "setSlPrice": "Establecer Precio de Stop-Loss"
+        "setSlPrice": "Establecer Precio de Stop-Loss",
+        "youGain": "Ganas",
+        "takeProfitWhen": "Toma de beneficios cuando",
+        "youLoss": "Usted Perdió",
+        "priceBelow": "Precio por debajo",
+        "currentPrice": "Precio actual {{price}}",
+        "stopLossExpectedPNL": "Stop loss PNL esperado",
+        "stopLossWhen": "Detener Pérdidas Cuando",
+        "takeProfitExpectedPNL": "Tomar ganancias PNL esperada",
+        "EntryAndCurrentPrice": "Entrada {{entryPrice}}  Actual {{price}}",
+        "priceAbove": "Precio por encima",
+        "priceReaches": "El precio alcanza"
+      },
+      "PerpsEditMarginPopup": {
+        "currentPrice": "Precio Actual",
+        "title": "Ajustar margen",
+        "insufficientMargin": "Margen insuficiente",
+        "addMargin": "Agregar Margen",
+        "amountToReduce": "Cantidad a reducir",
+        "perpsBalance": "Saldo de Perps",
+        "insufficientMarginToReduce": "Margen insuficiente para reducir la posición.",
+        "amountToAdd": "Cantidad a agregar",
+        "reduceMargin": "Reducir Margen",
+        "available": "disponible",
+        "liqPrice": "Precio de Liq.:"
       }
     },
     "devUIBuiltInPages": {
@@ -2850,7 +2918,9 @@
         "availableToBorrow": "Disponible para pedir prestado",
         "maxAmount": "Esta es la cantidad máxima que puedes pedir prestada basada en toda tu garantía proporcionada. Tu poder de préstamo total se calcula multiplicando el valor de mercado de cada activo de garantía por su LTV máximo y luego sumando los resultados.",
         "availableToBorrowDesc": "Puedes pedir prestado en función de tu garantía proporcionada y hasta que se alcance el límite de préstamo.",
-        "lqDesc": "Cuando ocurre una liquidación, los liquidadores reembolsan hasta el 50% del monto pendiente prestado en nombre del prestatario. A cambio, pueden comprar la garantía a un precio con descuento y quedarse con la diferencia (penalización por liquidación) como bonificación."
+        "lqDesc": "Cuando ocurre una liquidación, los liquidadores reembolsan hasta el 50% del monto pendiente prestado en nombre del prestatario. A cambio, pueden comprar la garantía a un precio con descuento y quedarse con la diferencia (penalización por liquidación) como bonificación.",
+        "isolatedTitle": "El activo no puede ser utilizado como colateral",
+        "isolatedDesc": "Este activo solo se puede utilizar como colateral en modo de aislamiento, donde no puedes proporcionar colateral de otros activos para préstamos. Los activos utilizados como colateral en modo de aislamiento solo se pueden pedir prestados hasta un límite de deuda específico."
       },
       "gotIt": "Entendido",
       "market": "Mercado",
@@ -2863,7 +2933,8 @@
       "hfTitle": "Factor de Salud",
       "netWorth": "Valor neto",
       "hf": "Factor de salud",
-      "enterAmount": "Introducir cantidad"
+      "enterAmount": "Introducir cantidad",
+      "isolated": "aislado"
     }
   },
   "global": {

@@ -13,37 +13,54 @@ interface Props {
   viewProps?: ViewProps;
 }
 
-export const BlurShadowView = ({
-  children,
-  isLight,
-  blurAmount = 29,
-  borderRadius = 20,
-  viewProps,
-  viewTypeOnNoShadow = viewProps ? 'view' : 'fragment',
-}: Props) => {
-  if (!isLight || isAndroid) {
-    if (viewTypeOnNoShadow === 'fragment') return children;
+export const BlurShadowView = React.forwardRef<View, Props>(
+  (
+    {
+      children,
+      isLight,
+      blurAmount = 29,
+      borderRadius = 20,
+      viewProps,
+      viewTypeOnNoShadow = viewProps ? 'view' : 'fragment',
+    },
+    ref,
+  ) => {
+    if (!isLight || isAndroid) {
+      if (viewTypeOnNoShadow === 'fragment') {
+        if (ref && __DEV__) {
+          console.warn(
+            '[BlurShadowView] ref is ignored when viewTypeOnNoShadow is "fragment"',
+          );
+        }
+        return children;
+      }
 
-    return <View {...viewProps}>{children}</View>;
-  }
+      return (
+        <View ref={ref} {...viewProps}>
+          {children}
+        </View>
+      );
+    }
 
-  return (
-    <View
-      {...viewProps}
-      style={[
-        isLight ? styles.lightContainer : styles.container,
-        viewProps?.style,
-      ]}>
-      <BlurView
-        style={StyleSheet.flatten([styles.blur, { borderRadius }])}
-        blurAmount={blurAmount}
-        blurType="light"
-        reducedTransparencyFallbackColor="white">
-        {children}
-      </BlurView>
-    </View>
-  );
-};
+    return (
+      <View
+        ref={ref}
+        {...viewProps}
+        style={[
+          isLight ? styles.lightContainer : styles.container,
+          viewProps?.style,
+        ]}>
+        <BlurView
+          style={StyleSheet.flatten([styles.blur, { borderRadius }])}
+          blurAmount={blurAmount}
+          blurType="light"
+          reducedTransparencyFallbackColor="white">
+          {children}
+        </BlurView>
+      </View>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   container: {
