@@ -7,6 +7,7 @@ import { useInfiniteScroll, useMemoizedFn, useMount } from 'ahooks';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import {
+  ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
   getHistoryItemType,
 } from '@/screens/Transaction/components/utils';
@@ -22,6 +23,8 @@ import { debounce, last, orderBy } from 'lodash';
 import { toast } from '@/components2024/Toast';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Empty } from '@/screens/Transaction/components/Empty';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
 
 interface IFetchHistory {
   last: number;
@@ -63,59 +66,83 @@ export const TokenDetailHistoryList = ({
   const fetchData = async (
     address: string,
     startTime = 0,
-    chain_id?: string,
-    token_id?: string,
+    chain_id: string,
+    token_id: string,
+    isMyAddress?: boolean,
   ): Promise<IFetchHistory> => {
     if (!address) {
       throw new Error('no account');
     }
 
     try {
-      const res = await openapi.listTxHisotry({
-        id: address,
-        start_time: startTime,
-        page_count: PAGE_COUNT,
-        chain_id,
-        token_id,
-      });
+      if (isMyAddress) {
+        const historyList =
+          await HistoryItemEntity.getTokenHistoryItemSortedByTime(
+            address,
+            startTime,
+            token_id,
+            chain_id,
+            PAGE_COUNT,
+          );
+        const list = historyList.map(item => {
+          return {
+            ...ensureHistoryListItemFromDb(item),
+            // hidden small and scam no need this prop
+            isSmallUsdTx: false,
+            isShowSuccess: false,
+          } as HistoryDisplayItem;
+        });
+        return {
+          last: last(historyList)?.time_at || 0,
+          list,
+        };
+      } else {
+        const res = await openapi.listTxHisotry({
+          id: address,
+          start_time: startTime,
+          page_count: PAGE_COUNT,
+          chain_id,
+          token_id,
+        });
 
-      const { project_dict, history_list: list } = res;
-      const token_dict = (res as TxHistoryResult).token_dict;
-      const token_uuid_dict = (res as unknown as TxAllHistoryResult)
-        .token_uuid_dict;
-      const tokenDict = token_dict || token_uuid_dict;
+        const { project_dict, history_list: list } = res;
+        const token_dict = (res as TxHistoryResult).token_dict;
+        const token_uuid_dict = (res as unknown as TxAllHistoryResult)
+          .token_uuid_dict;
+        const tokenDict = token_dict || token_uuid_dict;
 
-      const displayList = list
-        .map(item => ({
-          ...item,
-          address,
-          key: `${address}_${item.chain}_${item.id}`,
-          project_item: project_dict[item.project_id || ''] || null,
-          token_approve: item.token_approve
-            ? {
-                ...item.token_approve,
-                token: fetchHistoryTokenItem(
-                  item.token_approve?.token_id || '',
-                  item.chain,
-                  tokenDict,
-                ),
-              }
-            : null,
-          receives: item.receives.map(e => ({
-            ...e,
-            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-          })),
-          sends: item.sends.map(e => ({
-            ...e,
-            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-          })),
-          historyType: getHistoryItemType(item),
-        }))
-        .sort((v1, v2) => v2.time_at - v1.time_at);
-      return {
-        last: last(displayList)?.time_at || 0,
-        list: displayList,
-      };
+        const displayList = list
+          .map(item => ({
+            ...item,
+            address,
+            key: `${address}_${item.chain}_${item.id}`,
+            project_item: project_dict[item.project_id || ''] || null,
+            token_approve: item.token_approve
+              ? {
+                  ...item.token_approve,
+                  token: fetchHistoryTokenItem(
+                    item.token_approve?.token_id || '',
+                    item.chain,
+                    tokenDict,
+                  ),
+                }
+              : null,
+            receives: item.receives.map(e => ({
+              ...e,
+              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+            })),
+            sends: item.sends.map(e => ({
+              ...e,
+              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+            })),
+            historyType: getHistoryItemType(item),
+          }))
+          .sort((v1, v2) => v2.time_at - v1.time_at);
+        return {
+          last: last(displayList)?.time_at || 0,
+          list: displayList,
+        };
+      }
     } catch (e) {
       toast.error(`${address} fetch failed, ${e}`);
       return {
@@ -141,11 +168,17 @@ export const TokenDetailHistoryList = ({
         hasMore: false,
       };
     }
+
+    const isMyAddress =
+      finalAccount.type !== KEYRING_CLASS.WATCH &&
+      finalAccount.type !== KEYRING_CLASS.GNOSIS;
+
     const result = await fetchData(
       addr,
       lastMap.current[addr] || 0,
       tokenItem.chain,
       tokenItem._tokenId,
+      isMyAddress,
     );
     if (result.list.length < PAGE_COUNT) {
       hasMoreMap.current[addr] = false;
