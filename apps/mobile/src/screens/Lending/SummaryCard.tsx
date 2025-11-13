@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
@@ -20,6 +20,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { getHealthFactorText } from './components/HealthFactorText';
+import { atom, useAtom } from 'jotai';
 
 interface IProps {
   netWorth: string;
@@ -28,13 +29,13 @@ interface IProps {
   netApy: number;
   healthFactor: string;
 }
-
+const isEstDailySwitchAtom = atom(true);
 const SummaryCard = (props: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { skipHealthFactorWarning, setSkipHealthFactorWarning } =
     useLendingService();
-  const [isEstDailySwitch, setIsEstDailySwitch] = useState(true);
+  const [isEstDailySwitch, setIsEstDailySwitch] = useAtom(isEstDailySwitchAtom);
   const handleShowHFDescription = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.HF_DESCRIPTION,
@@ -98,7 +99,11 @@ const SummaryCard = (props: IProps) => {
         <View style={styles.estAndHealthContainer}>
           <Pressable
             hitSlop={20}
-            onPress={() => setIsEstDailySwitch(pre => !pre)}
+            onPress={e => {
+              console.log('CUSTOM_LOGGER:=>: onPress');
+              e.stopPropagation();
+              setIsEstDailySwitch(pre => !pre);
+            }}
             style={styles.estDailyContainer}>
             <View style={styles.estDailyHeader}>
               <Text style={styles.sectionHeader}>
