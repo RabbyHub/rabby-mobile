@@ -72,7 +72,9 @@ export function useUniversalLinkOnTop() {
     payload => {
       switch (payload.type) {
         case 'open-dapp':
-          openTab(payload.dappUrl);
+          openTab(payload.dappUrl, {
+            isNewTab: true,
+          });
           break;
       }
     },
