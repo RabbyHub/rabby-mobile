@@ -453,6 +453,7 @@ export const Portfolios = () => {
               data={data as unknown as AbstractProject}
               showAccount
               style={styles.fullDefi}
+              disableAction={isLoading}
               account={
                 getAccountByAddress(
                   data?.address,
@@ -520,6 +521,7 @@ export const Portfolios = () => {
       }
     },
     [
+      isLoading,
       foldDefi,
       foldHideList,
       getAccountByAddress,
@@ -617,6 +619,9 @@ export const Portfolios = () => {
       renderItem={renderItem}
       ItemSeparatorComponent={ListRenderSeparator}
       initialNumToRender={15}
+      windowSize={15}
+      maxToRenderPerBatch={15}
+      removeClippedSubviews
       ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}

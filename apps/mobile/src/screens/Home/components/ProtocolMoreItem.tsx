@@ -74,6 +74,7 @@ export const WrapperDappActionsMemoItem = ({
   onRefresh,
   session,
   manageAction,
+  disableAction,
 }: {
   item: AbstractPortfolio;
   chain?: string;
@@ -83,6 +84,7 @@ export const WrapperDappActionsMemoItem = ({
   onRefresh?: () => Promise<void>;
   session?: React.ComponentProps<typeof DappActions>['session'];
   manageAction?: (account?: KeyringAccountWithAlias) => void;
+  disableAction?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { colors2024 } = useTheme2024();
@@ -128,6 +130,7 @@ export const WrapperDappActionsMemoItem = ({
             currentAccount={currentAccount}
             onRefresh={onRefresh}
             session={session}
+            disableAction={disableAction}
           />
         )}
       {!!manageAction && (

@@ -4,8 +4,9 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  memo,
 } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { createGetStyles2024 } from '@/utils/styles';
@@ -20,7 +21,7 @@ import { FullDefiRenderItem } from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
 import { DisplayedProject } from './utils/project';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
-import { DefiItemLoader, ItemLoader } from './components/Skeleton';
+import { DefiItemLoader } from './components/Skeleton';
 import {
   Tabs,
   useCurrentTabScrollY,
@@ -43,6 +44,7 @@ export const icons = {
   unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
+const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 
 interface Props {
   onRefresh?: () => void;
@@ -83,6 +85,7 @@ export const PortfolioList = ({
     // hasValue: hasPortfolios,
     updateData: updatePortfolio,
     isLoading: loadingPortfolio,
+    refreshing,
   } = usePortfolios(currentAccount?.address?.toLowerCase(), false);
 
   useEffect(() => {
@@ -152,24 +155,19 @@ export const PortfolioList = ({
   }, [isFocused]);
 
   const renderItem = useCallback(
-    (_type, _data: ActionItem) => {
+    props => {
+      const { item: _data } = props;
       const { type, data } = _data;
       switch (type) {
         case 'unfold_defi':
           return (
-            <FullDefiRenderItem
+            <MemoFullDefiRenderItem
               data={data as unknown as AbstractProject}
               showAccount={false}
+              disableAction={refreshing}
               account={currentAccount}
             />
           );
-        case 'defi_header':
-          return (
-            <Text style={styles.symbol}>
-              {t('page.singleHome.sectionHeader.Defi')}
-            </Text>
-          );
-        case 'empty-assets':
         case 'empty-defi':
           return (
             <EmptyAssets
@@ -178,19 +176,13 @@ export const PortfolioList = ({
               type={type}
             />
           );
-        case 'loading-skeleton':
-          return (
-            <View style={styles.rowWrap}>
-              <ItemLoader style={styles.removeLeft} />
-            </View>
-          );
         case 'loading-defi-skeleton':
           return <DefiItemLoader />;
         default:
           return null;
       }
     },
-    [currentAccount, styles, t],
+    [currentAccount, refreshing, styles.emptyAssets],
   );
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -228,7 +220,7 @@ export const PortfolioList = ({
       <Tabs.FlatList
         data={dataList}
         keyExtractor={getItemId}
-        renderItem={({ item }) => renderItem(item.type, item)}
+        renderItem={renderItem}
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
@@ -237,6 +229,9 @@ export const PortfolioList = ({
         style={[styles.bgContainer, styles.list]}
         onEndReached={loadMorePortfolios}
         onEndReachedThreshold={0.5}
+        windowSize={4}
+        maxToRenderPerBatch={4}
+        removeClippedSubviews
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}

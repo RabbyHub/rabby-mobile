@@ -37,12 +37,14 @@ interface Props {
   account?: KeyringAccountWithAlias;
   showAccount?: boolean;
   style?: StyleProp<ViewStyle>;
+  disableAction?: boolean;
 }
 export const FullDefiRenderItem = ({
   data,
   account,
   showAccount,
   style,
+  disableAction,
 }: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const setRefreshHistoryId = useSetAtom(refreshHistoryIdAtom);
@@ -195,6 +197,7 @@ export const FullDefiRenderItem = ({
             onRefresh={handleRefresh}
             address={account.address}
             addressType={account.type}
+            disableAction={disableAction}
             manageAction={
               config?.[data.id]?.showManage &&
               config[data.id]?.showManage(item, account)
