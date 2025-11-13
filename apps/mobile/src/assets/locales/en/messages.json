@@ -2045,7 +2045,7 @@
       },
       "globalSearch": {
         "placeHolder": "Search Dapp/Token",
-        "iosPlaceHolder": "Search Dapp/Website"
+        "iosPlaceHolder": "Search Website/Token"
       },
       "hotTokenList": {
         "title": "Hot"

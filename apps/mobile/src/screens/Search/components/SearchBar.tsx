@@ -14,6 +14,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useShowSearchBottomSheet } from './SeachBottomSheet';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -212,7 +213,9 @@ export const GlobalSearchBar = () => {
               color={colors2024['neutral-secondary']}
             />
             <Text style={styles.text}>
-              {t('page.search.globalSearch.placeHolder')}
+              {IS_ANDROID
+                ? t('page.search.globalSearch.placeHolder')
+                : t('page.search.globalSearch.iosPlaceHolder')}
             </Text>
           </View>
         </LinearGradient>
