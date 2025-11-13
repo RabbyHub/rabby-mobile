@@ -66,6 +66,7 @@ export default function SendNFT() {
     formValues,
     handleFieldChange,
     handleGasLevelChanged,
+    scrollviewRef,
     handleIgnoreGasFeeChange,
 
     whitelistEnabled,
@@ -160,7 +161,9 @@ export default function SendNFT() {
       <NormalScreenContainer2024 type="bg1">
         <AccountSwitcherModal forScene="SendNFT" inScreen />
         <View style={styles.sendNFTScreen}>
-          <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
+          <KeyboardAwareScrollView
+            ref={scrollviewRef}
+            contentContainerStyle={styles.mainContent}>
             {/* From */}
             <FromAddressControl2024 disableSwitch={true} />
 
@@ -202,17 +205,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   mainContent: {
     paddingHorizontal: 20,
-    paddingBottom: 260,
-  },
-  bottomDockArea: {
-    bottom: 0,
-    width: '100%',
-    padding: 20,
-    backgroundColor: colors2024['neutral-bg1'],
-    borderTopWidth: 0.5,
-    borderTopStyle: 'solid',
-    borderTopColor: colors2024['neutral-line'],
-    position: 'absolute',
+    paddingBottom: 248,
   },
 
   buttonContainer: {

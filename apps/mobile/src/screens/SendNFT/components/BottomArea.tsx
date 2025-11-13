@@ -13,7 +13,6 @@ import { apiBalance } from '@/core/apis';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { useAtom } from 'jotai';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSignatureStore } from '@/components2024/MiniSignV2';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
@@ -21,8 +20,6 @@ import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
-
-const isAndroid = Platform.OS === 'android';
 
 export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
@@ -48,10 +45,6 @@ export default function BottomArea({ account }: { account: Account | null }) {
 
   const [isAllowTransferModalVisible, setIsAllowTransferModalVisible] =
     React.useState(false);
-
-  const { safeSizes } = useSafeAndroidBottomSizes({
-    containerPb: SIZES.containerPb,
-  });
 
   const { status, ctx } = useSignatureStore();
 
@@ -129,8 +122,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     !canSubmit || (!!mostImportantRisks.length && !agreeRequiredChecked);
 
   return (
-    <View
-      style={[styles.bottomDockArea, { paddingBottom: safeSizes.containerPb }]}>
+    <View style={[styles.bottomDockArea]}>
       <BottomRiskTip
         loadingRisks={loadingRisks}
         mostImportantRisks={mostImportantRisks}
@@ -213,22 +205,22 @@ export default function BottomArea({ account }: { account: Account | null }) {
   );
 }
 
-const SIZES = {
+export const bottomAreaSizes = {
   containerPt: 16,
-  containerPb: 0,
+  containerPb: 48,
   height: 220,
-  bottom: 48,
+  bottom: 0,
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => {
+const getStyles = createGetStyles2024(({ colors2024, bottomSafeArea }) => {
   return {
     bottomDockArea: {
-      bottom: SIZES.bottom,
+      bottom: bottomAreaSizes.bottom,
       width: '100%',
       paddingHorizontal: 24,
       position: 'absolute',
-      paddingTop: SIZES.containerPt,
-      paddingBottom: SIZES.containerPb,
+      paddingTop: bottomAreaSizes.containerPt,
+      paddingBottom: bottomAreaSizes.containerPb + bottomSafeArea,
       backgroundColor: colors2024['neutral-bg-1'],
       // ...makeDebugBorder(),
     },

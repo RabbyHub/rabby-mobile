@@ -54,6 +54,7 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { useMemoizedFn } from 'ahooks';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -206,7 +207,6 @@ export function useSendNFTForm({
   const { sendNFTScreenState: screenState, putScreenState } =
     useSendNFTScreenState();
 
-  // const [formValues, setFormValues] = useAtom(sendTokenScreenFormAtom);
   const [formValues, setFormValues] = React.useState<FormSendNFT>({
     ...DF_SEND_TOKEN_FORM,
     to: toAddress || '',
@@ -220,11 +220,27 @@ export function useSendNFTForm({
 
   const chainItem = findChain({ serverId: nftToken?.chain });
 
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const { openDirect, prefetch } = useMiniSigner({
     account: currentAccount,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
   });
+
+  const scrollviewRef = useRef<KeyboardAwareScrollView>(null);
+  const prefetchMiniSigner = useCallback<typeof prefetch>(
+    async ctx => {
+      try {
+        await prefetch(ctx);
+      } catch (e) {
+        console.error('prefetchMiniSigner error', e);
+      } finally {
+        setTimeout(() => {
+          scrollviewRef.current?.scrollToEnd(true);
+        }, 250);
+      }
+    },
+    [prefetch],
+  );
 
   const navigation = useRabbyAppNavigation();
 
@@ -714,6 +730,7 @@ export function useSendNFTForm({
     resetFormValues,
     handleFieldChange,
     handleGasLevelChanged,
+    scrollviewRef,
     handleIgnoreGasFeeChange,
     patchFormValues,
     handleFormValuesChange,
