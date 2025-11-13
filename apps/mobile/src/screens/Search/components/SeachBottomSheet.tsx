@@ -13,9 +13,11 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { BackHandler, useWindowDimensions, View } from 'react-native';
+import { BackHandler, Keyboard, useWindowDimensions, View } from 'react-native';
 import { SearchInner } from './SearchInner';
 import { atom, useAtom } from 'jotai';
+import { useCurrentRouteName } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
 
 const showSearchBottomAtom = atom(false);
 
@@ -69,6 +71,15 @@ export const GlobalSearchBottomSheet = () => {
     );
     return () => subscription.remove();
   }, [handleBackPress]);
+
+  const { currentRouteName } = useCurrentRouteName();
+
+  useEffect(() => {
+    if (currentRouteName === RootNames.Unlock) {
+      Keyboard.dismiss();
+      setShowSearchBottomSheet(false);
+    }
+  }, [currentRouteName, setShowSearchBottomSheet]);
 
   return (
     <AppBottomSheetModal
