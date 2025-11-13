@@ -22,8 +22,8 @@ import {
 import { useSearchDapps } from '@/screens/Browser/BrowserScreen/hooks/useSearchDapps';
 import { useShowSearchBottomSheet } from './SeachBottomSheet';
 import { useSearchTokens } from '../useSearch';
-import { SearchAssets } from './SearchAssets';
 import { IS_ANDROID } from '@/core/native/utils';
+import { SearchAssetsOnHome } from './SearchAssetsOnHome';
 
 export const SearchInner = ({
   searchText,
@@ -146,11 +146,10 @@ export const SearchInner = ({
     }
     if (debouncedSearchValue !== searchText || tokenLoading || dappLoading) {
       return (
-        <SearchAssets
+        <SearchAssetsOnHome
           resultTokens={[]}
           loading={true}
           searchState={searchText}
-          inGlobalSearch
           stickyHeaderStyle={{
             width: 0,
             height: 0,
@@ -162,26 +161,28 @@ export const SearchInner = ({
     if (!tokenLoading && !dappLoading) {
       if (!list.length && !resultTokens.length) {
         return (
-          <BrowserSearchResult
-            key={searchText}
-            isInBottomSheet
-            searchText={searchText}
-            data={list || []}
-            isValidDomain={!!isValidDomain}
-            onOpenURL={origin => {
-              handleOpenUrl(origin);
-            }}
-          />
+          <>
+            <View style={{ height: 40 }} />
+            <BrowserSearchResult
+              key={searchText}
+              isInBottomSheet
+              searchText={searchText}
+              data={list || []}
+              isValidDomain={!!isValidDomain}
+              onOpenURL={origin => {
+                handleOpenUrl(origin);
+              }}
+            />
+          </>
         );
       }
       if (list.length && resultTokens.length) {
         return (
           <>
-            <SearchAssets
+            <SearchAssetsOnHome
               resultTokens={resultTokens}
               loading={tokenLoading}
               searchState={searchText}
-              inGlobalSearch
               Header={
                 <DappFirstSearchResult
                   searchText={searchText}
@@ -203,11 +204,10 @@ export const SearchInner = ({
 
       if (!list.length && resultTokens.length) {
         return (
-          <SearchAssets
+          <SearchAssetsOnHome
             resultTokens={resultTokens}
             loading={tokenLoading}
             searchState={searchText}
-            inGlobalSearch
             onTokenSelect={onClose}
             stickyHeaderStyle={[styles.stickyHeader, styles.headerMarginTop]}
           />
