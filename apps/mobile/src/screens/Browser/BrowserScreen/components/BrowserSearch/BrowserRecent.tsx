@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, Text, useWindowDimensions, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import { RcIconDynamicArrowDownCC } from '@/assets/icons/dapp';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
@@ -7,14 +7,12 @@ import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetFlatList, TouchableOpacity } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import dayjs from 'dayjs';
 
 export function BrowserRecent({
   onPress,
-  isInBottomSheet,
   list,
 }: {
   onPress?(dapp: DappInfo): void;
@@ -26,10 +24,6 @@ export function BrowserRecent({
   });
 
   const { t } = useTranslation();
-
-  // const { width } = useWindowDimensions();
-
-  // const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
 
   if (!list?.length) {
     return (
@@ -78,7 +72,7 @@ export function BrowserRecent({
                 onPress?.(data);
               }}
               key={data.url || data.origin}
-              style={[styles.gridItem, { width: '25%' }]}>
+              style={styles.gridItem}>
               <DappIcon
                 source={
                   data?.icon
@@ -149,11 +143,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     flexWrap: 'wrap',
     rowGap: 16,
+    width: '100%',
   },
   gridItem: {
     gap: 6,
     justifyContent: 'center',
     alignItems: 'center',
+    width: '25%',
   },
   dappIcon: {
     height: 56,
