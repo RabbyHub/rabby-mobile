@@ -131,10 +131,10 @@ const TokenDetailContent = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        style={{ marginLeft: -3 }}
+        style={{ marginLeft: -10 }}
         key={effectiveAccount?.address}
         tokenSize={33}
-        chainSize={14}
+        chainSize={15}
         borderChain
         token={token}
       />

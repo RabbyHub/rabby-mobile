@@ -292,7 +292,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   date: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
     paddingLeft: 8,
     marginTop: 12,
     marginBottom: 8,
