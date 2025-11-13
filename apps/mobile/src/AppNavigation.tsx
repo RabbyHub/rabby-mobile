@@ -99,11 +99,13 @@ const HomeHiddenTabStack = createBottomTabNavigator<any>();
 
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
 
-const RootOptions = { animation: 'none' } as const;
-const RootStackOptions = {
-  animation: 'slide_from_right',
-  headerShown: false,
-} as const;
+const RootAnimOptions: React.ComponentProps<
+  typeof RootStack.Navigator
+>['screenOptions'] &
+  object = {
+  animation: IS_IOS ? 'slide_from_right' : 'none',
+  animationDuration: 200,
+};
 
 const REST_COUNTS = {
   CANT_EXIT: 10,
@@ -201,7 +203,8 @@ const StackMain = () => {
   return (
     <RootStack.Navigator
       screenOptions={{
-        ...RootStackOptions,
+        ...RootAnimOptions,
+        headerShown: false,
         navigationBarColor: 'transparent',
       }}
       initialRouteName={RootNames.StackGetStarted}>
@@ -212,12 +215,12 @@ const StackMain = () => {
       <RootStack.Screen
         name={RootNames.StackRoot}
         component={HomeScreenNavigator}
-        options={RootOptions}
+        options={RootAnimOptions}
       />
       <RootStack.Screen
         name={RootNames.StackHomeNonTab}
         component={HomeNonTabNavigator}
-        options={RootOptions}
+        options={RootAnimOptions}
       />
       <RootStack.Screen
         name={RootNames.SingleAddressStack}
@@ -494,6 +497,7 @@ export default function AppNavigation({
           <HomeHiddenTabStack.Navigator
             screenOptions={
               /* mergeScreenOptions */ {
+                animation: 'none',
                 // gestureEnabled: false,
                 headerTitleAlign: 'center',
                 headerStyle: {
@@ -517,16 +521,6 @@ export default function AppNavigation({
                 headerShown: false,
               }}
             />
-
-            {/* <HomeHiddenTabStack.Screen
-            name={RootNames.StackBrowser}
-            component={BrowserNavigator}
-            options={{
-              title: '',
-              headerShadowVisible: false,
-              headerShown: false,
-            }}
-          /> */}
           </HomeHiddenTabStack.Navigator>
           <BiometricsStubModal />
           <ApprovalTokenDetailSheetModalStub />
