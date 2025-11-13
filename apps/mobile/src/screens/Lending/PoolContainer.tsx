@@ -126,7 +126,7 @@ const PoolContainer = () => {
             )}
           </Animated.View>
           <Animated.View
-            pointerEvents="none"
+            // pointerEvents="none"
             style={[styles.overlayAbsolute, overlayStyle]}>
             {isEmpty ? (
               <EmptySummaryCard />

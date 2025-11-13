@@ -1,11 +1,16 @@
-import React, { useCallback, useMemo } from 'react';
-import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  Pressable,
+  RefreshControl,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValueKMB } from '../Home/utils/price';
-import { formatPercent } from '../TokenDetail/util';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -17,10 +22,11 @@ import { CHAINS_ENUM } from '@debank/common';
 import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
 import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
+import IconSwitchCC from '@/assets2024/icons/lending/switch-cc.svg';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { formatNetworth } from '@/utils/math';
+import { formatApy, formatListNetWorth } from './utils/format';
 
 const FOOT_HEIGHT = 100;
 const SupplyPoolList = () => {
@@ -29,6 +35,7 @@ const SupplyPoolList = () => {
     useLendingSummary();
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
+  const [toggleBalanceOrTVl, setToggleBalanceOrTVl] = useState(true); // default balance
 
   const sortReserves = useMemo(() => {
     return displayPoolReserves
@@ -103,9 +110,21 @@ const SupplyPoolList = () => {
       <Skeleton style={styles.loading} width={124} height={20} circle />
     ) : (
       <View style={styles.listHeader}>
-        <Text style={styles.headerToken}>
-          {t('page.Lending.list.headers.token')}
-        </Text>
+        <Pressable
+          style={styles.headerTokenContainer}
+          hitSlop={20}
+          onPress={() => setToggleBalanceOrTVl(pre => !pre)}>
+          <Text style={styles.headerToken}>
+            {toggleBalanceOrTVl
+              ? t('page.Lending.list.headers.token_balance')
+              : t('page.Lending.list.headers.token_tvl')}
+          </Text>
+          <IconSwitchCC
+            width={14}
+            height={14}
+            color={colors2024['neutral-secondary']}
+          />
+        </Pressable>
         <Text style={styles.headerApy}>
           {t('page.Lending.list.headers.apy')}
         </Text>
@@ -115,13 +134,16 @@ const SupplyPoolList = () => {
       </View>
     );
   }, [
+    colors2024,
     loading,
     styles.headerApy,
     styles.headerMySupplies,
     styles.headerToken,
+    styles.headerTokenContainer,
     styles.listHeader,
     styles.loading,
     t,
+    toggleBalanceOrTVl,
   ]);
   const keyExtractor = useCallback(item => {
     return `${item.reserve.underlyingAsset}-${item.reserve.symbol}`;
@@ -146,32 +168,35 @@ const SupplyPoolList = () => {
                 ellipsizeMode="tail">
                 {item.reserve.symbol}
               </Text>
-              <Text style={styles.tvl}>
-                {t('page.Lending.list.item.tvl')}:{' '}
-                {formatUsdValueKMB(
-                  Number(item.reserve.totalLiquidityUSD || '0'),
-                )}
-              </Text>
+              {toggleBalanceOrTVl ? (
+                <View style={styles.yourBalanceContainer}>
+                  <WalletFillCC
+                    width={16}
+                    height={16}
+                    style={styles.walletIcon}
+                    color={colors2024['secondary-foot']}
+                  />
+                  <Text style={styles.yourBalance}>
+                    {formatUsdValueKMB(item.walletBalanceUSD || '0')}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.tvl}>
+                  {t('page.Lending.list.item.tvl')}:{' '}
+                  {formatUsdValueKMB(
+                    Number(item.reserve.totalLiquidityUSD || '0'),
+                  )}
+                </Text>
+              )}
             </View>
           </View>
           <Text style={styles.apy}>
-            {formatPercent(Number(item.reserve.supplyAPY || '0'))}
+            {formatApy(Number(item.reserve.supplyAPY || '0'))}
           </Text>
           <View style={styles.right}>
             <Text style={styles.yourSupplied}>
-              {formatNetworth(Number(item.underlyingBalanceUSD || '0'))}
+              {formatListNetWorth(Number(item.underlyingBalanceUSD || '0'))}
             </Text>
-            <View style={styles.yourBalanceContainer}>
-              <WalletFillCC
-                width={16}
-                height={16}
-                style={styles.walletIcon}
-                color={colors2024['secondary-foot']}
-              />
-              <Text style={styles.yourBalance}>
-                {formatUsdValueKMB(item.walletBalanceUSD || '0')}
-              </Text>
-            </View>
           </View>
         </TouchableOpacity>
       );
@@ -191,6 +216,7 @@ const SupplyPoolList = () => {
       styles.yourBalanceContainer,
       styles.yourSupplied,
       t,
+      toggleBalanceOrTVl,
     ],
   );
 
@@ -301,7 +327,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    justifyContent: 'flex-end',
   },
   walletIcon: {
     width: 16,
@@ -337,7 +362,13 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
+  },
+  headerTokenContainer: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 4,
   },
   headerApy: {
     fontSize: 14,

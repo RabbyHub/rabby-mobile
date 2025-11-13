@@ -2585,6 +2585,7 @@
       "supplied": "Supplied",
       "borrowed": "Borrowed",
       "estDailyEarning": "Est.Daily Earning",
+      "estNetApy": "Est. net APY",
       "selectChain": "Select Chain",
       "hf": "Health factor",
       "hfTitle": "Health Factor",
@@ -2596,6 +2597,8 @@
       "list": {
         "headers": {
           "token": "Token",
+          "token_balance": "Token/Balance",
+          "token_tvl": "Token/TVL",
           "apy": "APY",
           "myBorrows": "My borrows",
           "mySupplies": "My supplies"
