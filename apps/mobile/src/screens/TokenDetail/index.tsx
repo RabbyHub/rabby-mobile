@@ -37,6 +37,7 @@ import {
 import { AccountSwitcher } from './components/InScreenSwitch';
 import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRightCC.svg';
 import { patchSingleToken } from '@/databases/sync/assets';
+import { BG_FULL_HEIGHT } from '../Home/hooks/useBgSize';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -64,7 +65,6 @@ const TokenDetailContent = () => {
   const { t } = useTranslation();
 
   const setIsFromBack = useSetAtom(isFromBackAtom);
-  const { safeOffHeader } = useSafeSizes();
   const { safeOffBottom } = useSafeSizes();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -207,7 +207,7 @@ const TokenDetailContent = () => {
           top: 0,
           left: 0,
           width: '100%',
-          height: safeOffHeader + 120,
+          height: BG_FULL_HEIGHT,
         }}
       />
 
