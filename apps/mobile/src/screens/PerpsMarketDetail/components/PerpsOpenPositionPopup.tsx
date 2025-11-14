@@ -472,6 +472,7 @@ export const PerpsOpenPositionPopup: React.FC<{
 
               {/* Slider */}
               <PerpsSlider
+                disabled={availableBalance < 0.1}
                 value={sliderPercentage}
                 onValueChange={handleSliderChange}
                 showPercentage={true}
