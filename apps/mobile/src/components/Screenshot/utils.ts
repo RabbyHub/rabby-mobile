@@ -13,6 +13,7 @@ import {
   SceneAccounts,
 } from '@/hooks/sceneAccountInfoAtom';
 import { appJsonStore } from '@/core/storage/mmkv';
+import { apisPerps } from '@/core/apis';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -37,6 +38,7 @@ export function getSceneAddresses() {
 
   return {
     ...values,
+    Perps: apisPerps.getPerpsCurrentAccount(),
   };
 }
 
