@@ -330,6 +330,7 @@ export const PerpsScreen = () => {
     return {
       distanceLiquidation,
       currentPrice: markPrice,
+      pxDecimals: marketDataItem?.pxDecimals || 2,
       liquidationPrice,
     };
   }, [selectedCoin, positionAndOpenOrders, marketDataMap]);
@@ -659,6 +660,7 @@ export const PerpsScreen = () => {
       {riskPopupData && (
         <PerpsRiskLevelPopup
           visible={!!riskPopupData}
+          pxDecimals={riskPopupData?.pxDecimals || 2}
           onClose={handleCloseRiskPopup}
           distanceLiquidation={riskPopupData.distanceLiquidation}
           currentPrice={riskPopupData.currentPrice}

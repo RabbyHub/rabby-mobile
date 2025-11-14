@@ -13,8 +13,6 @@ import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { PerpsPositionItem } from './PerpsPositionItem';
 import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn } from 'ahooks';
-import { PerpsRiskLevelPopup } from './PerpsRiskLevelPopup';
-import { calculateDistanceToLiquidation } from './utils';
 import { sleep } from '@/utils/async';
 
 export const PerpsPositionSection: React.FC<{
