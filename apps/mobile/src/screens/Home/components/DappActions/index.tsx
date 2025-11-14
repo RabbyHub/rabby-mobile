@@ -65,6 +65,7 @@ export const DappActions = ({
   onRefresh,
   session = INTERNAL_REQUEST_SESSION,
   style,
+  disableAction,
 }: {
   data?: WithdrawAction[];
   chain?: string;
@@ -73,6 +74,7 @@ export const DappActions = ({
   onRefresh?: () => Promise<void>;
   session?: typeof INTERNAL_REQUEST_SESSION;
   style?: StyleProp<ViewStyle>;
+  disableAction?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const withdrawAction = useMemo(
@@ -224,7 +226,11 @@ export const DappActions = ({
       {showWithdraw && (
         <ActionButton
           text="Withdraw"
+          disabled={disableAction}
           onPress={() => {
+            if (disableAction) {
+              return;
+            }
             handleSubmit(actionWithdraw, 'Withdraw');
           }}
         />
@@ -232,7 +238,11 @@ export const DappActions = ({
       {showClaim && (
         <ActionButton
           text="Claim"
+          disabled={disableAction}
           onPress={() => {
+            if (disableAction) {
+              return;
+            }
             handleSubmit(actionClaim, 'Claim');
           }}
         />

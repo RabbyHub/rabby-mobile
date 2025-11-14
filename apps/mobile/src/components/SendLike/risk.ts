@@ -193,3 +193,17 @@ export const useRisks = (
     fetchRisks,
   };
 };
+
+const riskTypePriority = {
+  [RiskType.CEX_NO_DEPOSIT]: 1,
+  [RiskType.NEVER_SEND]: 11,
+  [RiskType.CONTRACT_ADDRESS]: 111,
+  [RiskType.SCAM_ADDRESS]: 1111,
+};
+
+export function sortRisksDesc(a: { type: RiskType }, b: { type: RiskType }) {
+  return (
+    riskTypePriority[b.type as keyof typeof riskTypePriority] -
+    riskTypePriority[a.type as keyof typeof riskTypePriority]
+  );
+}

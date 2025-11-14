@@ -1,7 +1,6 @@
 import { Dimensions, View } from 'react-native';
 
 import { useSendNFTInternalContext } from '../hooks/useSendNFT';
-import { makeDebugBorder } from '@/utils/styles';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 
 export const ShowMoreOnSendNFT = ({

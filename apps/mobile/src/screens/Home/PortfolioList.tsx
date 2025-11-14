@@ -4,8 +4,9 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  memo,
 } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { createGetStyles2024 } from '@/utils/styles';
@@ -16,12 +17,11 @@ import {
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { TokenRowSectionHeader } from './components/AssetRenderItems';
 import { FullDefiRenderItem } from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
 import { DisplayedProject } from './utils/project';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
-import { DefiItemLoader, ItemLoader } from './components/Skeleton';
+import { DefiItemLoader } from './components/Skeleton';
 import {
   Tabs,
   useCurrentTabScrollY,
@@ -32,8 +32,7 @@ import { runOnJS } from 'react-native-reanimated';
 import { Account } from '@/core/services/preference';
 import { getItemId } from './utils/listRenderId';
 import { usePortfolios } from './hooks/usePortfolio';
-import { getAllDefiCount } from './utils/converAssets';
-import { useCurrency } from '@/hooks/useCurrency';
+import useLoadMoreData from '../Address/components/MultiAssets/hooks/useLoadMoreData';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -45,6 +44,7 @@ export const icons = {
   unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
+const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 
 interface Props {
   onRefresh?: () => void;
@@ -63,11 +63,10 @@ export const PortfolioList = ({
   account: currentAccount,
   updatePortfolio: updatePortfolioCallback,
 }: Props) => {
-  const { styles, isLight } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: getStyles,
   });
   const { t } = useTranslation();
-  const [foldDefi, setFoldDefi] = useState(true);
   const focusedTab = useFocusedTab();
   const hasBeenFocusedRef = useRef(false);
 
@@ -86,6 +85,7 @@ export const PortfolioList = ({
     // hasValue: hasPortfolios,
     updateData: updatePortfolio,
     isLoading: loadingPortfolio,
+    refreshing,
   } = usePortfolios(currentAccount?.address?.toLowerCase(), false);
 
   useEffect(() => {
@@ -95,9 +95,7 @@ export const PortfolioList = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_rawPortfolios?.length, loadingPortfolio, updatePortfolioCallback]);
 
-  const { currency } = useCurrency();
-
-  const portfolios = useMemo(
+  const _portfolios = useMemo(
     () =>
       _rawPortfolios.filter(item =>
         chain && item?.chain ? item.chain === chain : true,
@@ -105,26 +103,17 @@ export const PortfolioList = ({
     [_rawPortfolios, chain],
   );
 
+  const {
+    data: portfolios,
+    loadMore: loadMorePortfolios,
+    hasMore: hasMorePortfolios,
+  } = useLoadMoreData(_portfolios);
+
   const dataList = useMemo(() => {
-    const foldAndIncludeBalanceDefiList = portfolios.filter(
-      i => i._isFold && !i._isExcludeBalance && i.netWorth > 0,
-    );
-    const foldAndExcludeBalanceDefiList = portfolios.filter(
-      i => i._isFold && (i._isExcludeBalance || i.netWorth === 0),
-    );
-    const foldDefiList: ActionItem[] = [
-      ...foldAndIncludeBalanceDefiList,
-      ...foldAndExcludeBalanceDefiList,
-    ].map(item => ({
-      type: 'fold_defi',
-      data: item,
+    const unFoldDefiList: ActionItem[] = portfolios.map(item => ({
+      type: 'unfold_defi',
+      data: item as unknown as DisplayedProject,
     }));
-    const unFoldDefiList: ActionItem[] = portfolios
-      .filter(i => !i._isFold)
-      .map(item => ({
-        type: 'unfold_defi',
-        data: item as unknown as DisplayedProject,
-      }));
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -132,15 +121,6 @@ export const PortfolioList = ({
       {
         show: true,
         data: unFoldDefiList,
-      },
-      {
-        show: !!foldDefiList.length,
-        data: [
-          {
-            type: 'toggle_defi_fold',
-          },
-          ...(foldDefi ? [] : foldDefiList),
-        ],
       },
       {
         show: !!loadingPortfolio && !portfolios.length,
@@ -165,56 +145,29 @@ export const PortfolioList = ({
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [foldDefi, loadingPortfolio, portfolios, t]);
+  }, [loadingPortfolio, portfolios, t]);
 
   useEffect(() => {
     if (isFocused) {
       updatePortfolio();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused]);
-
-  const foldDefiAmount = useMemo(() => {
-    return getAllDefiCount(
-      portfolios.filter(i => i._isFold),
-      currency.usd_rate,
-      currency.symbol,
-    );
-  }, [currency.symbol, currency.usd_rate, portfolios]);
+  }, [isFocused, currentAccount?.address]);
 
   const renderItem = useCallback(
-    (_type, _data: ActionItem) => {
+    props => {
+      const { item: _data } = props;
       const { type, data } = _data;
       switch (type) {
         case 'unfold_defi':
-        case 'fold_defi':
           return (
-            <FullDefiRenderItem
+            <MemoFullDefiRenderItem
               data={data as unknown as AbstractProject}
               showAccount={false}
+              disableAction={refreshing}
               account={currentAccount}
             />
           );
-        case 'defi_header':
-          return (
-            <Text style={styles.symbol}>
-              {t('page.singleHome.sectionHeader.Defi')}
-            </Text>
-          );
-        case 'toggle_defi_fold':
-          return (
-            <TokenRowSectionHeader
-              str={foldDefiAmount}
-              fold={foldDefi}
-              style={styles.sectionHeader}
-              buttonStyle={StyleSheet.flatten([
-                styles.buttonHeader,
-                !isLight && styles.bg2,
-              ])}
-              onPressFold={() => setFoldDefi(pre => !pre)}
-            />
-          );
-        case 'empty-assets':
         case 'empty-defi':
           return (
             <EmptyAssets
@@ -223,27 +176,25 @@ export const PortfolioList = ({
               type={type}
             />
           );
-        case 'loading-skeleton':
-          return (
-            <View style={styles.rowWrap}>
-              <ItemLoader style={styles.removeLeft} />
-            </View>
-          );
         case 'loading-defi-skeleton':
           return <DefiItemLoader />;
         default:
           return null;
       }
     },
-    [currentAccount, foldDefi, foldDefiAmount, isLight, styles, t],
+    [currentAccount, refreshing, styles.emptyAssets],
   );
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
   }, []);
 
   const ListRenderFooter = useCallback(() => {
-    return <View style={{ height: FOOTER_HEIGHT }} />;
-  }, []);
+    return hasMorePortfolios ? (
+      <DefiItemLoader style={styles.defiLoading} />
+    ) : (
+      <View style={{ height: FOOTER_HEIGHT }} />
+    );
+  }, [hasMorePortfolios, styles.defiLoading]);
 
   const scrollY = useCurrentTabScrollY();
   const handleScroll = useCallback(
@@ -269,13 +220,18 @@ export const PortfolioList = ({
       <Tabs.FlatList
         data={dataList}
         keyExtractor={getItemId}
-        renderItem={({ item }) => renderItem(item.type, item)}
+        renderItem={renderItem}
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={showScrollIndicator}
         showsHorizontalScrollIndicator={false}
         style={[styles.bgContainer, styles.list]}
+        onEndReached={loadMorePortfolios}
+        onEndReachedThreshold={0.5}
+        windowSize={4}
+        maxToRenderPerBatch={4}
+        removeClippedSubviews
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}
@@ -357,5 +313,8 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: 'transparent',
     height: '100%',
     marginTop: -100,
+  },
+  defiLoading: {
+    marginTop: 16,
   },
 }));

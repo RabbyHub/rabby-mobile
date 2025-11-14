@@ -869,7 +869,7 @@ export class PreferenceService {
     );
     if (!exist) {
       this.store.pinedQueue = [token, ...pinedQueue];
-      this.manualUnFoldToken(token);
+      // this.manualUnFoldToken(token);
       matomoRequestEvent({
         category: 'Watchlist Usage',
         action: 'Watchlist_StarToken',
@@ -902,7 +902,7 @@ export class PreferenceService {
         item =>
           item.chainId !== token.chainId || item.tokenId !== token.tokenId,
       );
-      this.removePinedToken(token);
+      // this.removePinedToken(token);
     }
   };
   manualUnFoldToken = (token: IManageToken) => {

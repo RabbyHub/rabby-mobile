@@ -119,6 +119,21 @@ export function useSetupWebview({
 
         const data = fromData as WebViewDataPayload;
         if (data.name) {
+          const msgOrigin = (data as any).origin;
+          const bridgeOrigin = currentBridgeRef.current?.origin;
+          // if the bridge origin is null, just ignore the message
+          if (bridgeOrigin == null) {
+            return;
+          }
+
+          const msgHost = new URL(msgOrigin).host;
+          const bridgeHost = new URL(bridgeOrigin).host;
+          if (msgHost !== bridgeHost) {
+            console.warn(
+              `[onMessage] host mismatch: msgHost=${msgHost},bridgeHost=${bridgeHost}`,
+            );
+            return;
+          }
           currentBridgeRef.current?.onMessage(data);
           return;
         } else if (data.type.startsWith(RABBY_DECLARED_PREFIX)) {

@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useRoute } from '@react-navigation/native';
@@ -22,7 +22,6 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import BottomArea from './components/BottomArea';
 import { findChain } from '@/utils/chain';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { useTranslation } from 'react-i18next';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ShowMoreOnSendNFT } from './components/ShowMoreOnSendNFT';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -67,12 +66,14 @@ export default function SendNFT() {
     formValues,
     handleFieldChange,
     handleGasLevelChanged,
+    scrollviewRef,
     handleIgnoreGasFeeChange,
 
     whitelistEnabled,
     computed: {
       toAddressInContactBook,
       toAddressIsValid,
+      toAddrCex,
       toAddressIsRecentlySend,
       toAddressInWhitelist,
       canSubmit,
@@ -81,11 +82,10 @@ export default function SendNFT() {
   } = useSendNFTForm({
     toAddress: navParams?.toAddress,
     nftToken: nftItem,
-    account,
+    currentAccount: account,
   });
 
   const { fetchContactAccounts } = useContactAccounts();
-  const { t } = useTranslation();
 
   // Initialize formValues.to with toAddress from navParams
   React.useEffect(() => {
@@ -139,6 +139,7 @@ export default function SendNFT() {
           toAddressInWhitelist,
           whitelistEnabled,
           toAddressIsValid,
+          toAddrCex,
           toAddressInContactBook,
           chainItem,
           currentNFT: nftItem,
@@ -157,12 +158,14 @@ export default function SendNFT() {
           handleIgnoreGasFeeChange,
         },
       }}>
-      <NormalScreenContainer overwriteStyle={styles.container}>
+      <NormalScreenContainer2024 type="bg1">
         <AccountSwitcherModal forScene="SendNFT" inScreen />
         <View style={styles.sendNFTScreen}>
-          <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
+          <KeyboardAwareScrollView
+            ref={scrollviewRef}
+            contentContainerStyle={styles.mainContent}>
             {/* From */}
-            <FromAddressControl2024 disableSwitch={true} forScene="SendNFT" />
+            <FromAddressControl2024 disableSwitch={true} />
 
             {/* To */}
             <ToAddressControl2024
@@ -181,7 +184,7 @@ export default function SendNFT() {
           </KeyboardAwareScrollView>
           <BottomArea account={account} />
         </View>
-      </NormalScreenContainer>
+      </NormalScreenContainer2024>
     </SendNFTInternalContextProvider>
   );
 }
@@ -201,21 +204,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
   },
   mainContent: {
-    width: '100%',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 16,
-    paddingBottom: 220,
-  },
-  bottomDockArea: {
-    bottom: 0,
-    width: '100%',
-    padding: 20,
-    backgroundColor: colors2024['neutral-bg1'],
-    borderTopWidth: 0.5,
-    borderTopStyle: 'solid',
-    borderTopColor: colors2024['neutral-line'],
-    position: 'absolute',
+    paddingHorizontal: 20,
+    paddingBottom: 248,
   },
 
   buttonContainer: {

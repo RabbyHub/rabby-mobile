@@ -339,7 +339,8 @@ function SendScreen({
       }
     }
     const hideLoading = isShowLoadingRef.current
-      ? toastLoading('Loading Token...')
+      ? // ? toastLoading('Loading Token...')
+        noop
       : noop;
     try {
       if (navParams?.toAddress) {
@@ -389,7 +390,7 @@ function SendScreen({
         sleep(5000),
       ]);
     } finally {
-      hideLoading();
+      // hideLoading();
       isShowLoadingRef.current = true;
     }
   };
@@ -534,10 +535,7 @@ function SendScreen({
         type="bg1"
         // overwriteStyle={styles.screenContainer}
       >
-        {/* TODO: clean it */}
-        {(isForMultipleAddress || !isForMultipleAddress) && (
-          <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
-        )}
+        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         <TouchableWithoutFeedback
           onPress={() => {
             sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
@@ -635,46 +633,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     balance: {
       marginTop: 24,
     },
-    sectionTitle: {
-      color: colors2024['neutral-title-1'],
-      fontSize: 17,
-      fontWeight: '700',
-      fontFamily: 'SF Pro Rounded',
-      marginBottom: 8,
-    },
     buttonContainer: {
       width: '100%',
       height: 52,
     },
     button: {
       backgroundColor: colors2024['blue-default'],
-    },
-    overlay: {
-      backgroundColor: 'rgba(0,0,0,0.8)',
-      height: '100%',
-      justifyContent: 'center',
-    },
-    modalContent: {
-      borderRadius: 20,
-      backgroundColor: colors2024['neutral-bg-1'],
-      boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-      marginHorizontal: 20,
-      paddingHorizontal: 20,
-      paddingVertical: 30,
-    },
-    btns: {
-      padding: 0,
-      marginTop: 30,
-    },
-    alertModalText: {
-      fontSize: 18,
-      lineHeight: 22,
-      fontWeight: '700',
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'center',
-      color: colors2024['neutral-title-1'],
     },
   }),
 );

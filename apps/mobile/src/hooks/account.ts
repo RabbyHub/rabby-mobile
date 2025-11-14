@@ -37,6 +37,7 @@ import { BalanceEntity } from '@/databases/entities/balance';
 import { useHistoryTokenDict } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { balanceAtom } from './useAccountsBalance';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -208,6 +209,10 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
       if (nextPinned) {
         addresses.unshift(newItem);
         preferenceService.updatePinAddresses(addresses);
+        matomoRequestEvent({
+          category: 'Pin Address',
+          action: 'PinAddress_Finish',
+        });
       } else {
         const toggleIdx = addresses.findIndex(
           addr =>

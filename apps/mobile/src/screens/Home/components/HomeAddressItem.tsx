@@ -24,6 +24,7 @@ import { BALANCE_HIDE_TYPE } from '../hooks/useHideBalance';
 import { BlurShadowView } from '@/components2024/BluerShadow';
 import BigNumber from 'bignumber.js';
 import { splitNumberByStep } from '@/utils/number';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export const HomeAddressItem: React.FC<{
   account: KeyringAccountWithAlias;
@@ -66,6 +67,10 @@ export const HomeAddressItem: React.FC<{
           trigger('impactLight', {
             enableVibrateFallback: true,
             ignoreAndroidSystemSettings: false,
+          });
+          matomoRequestEvent({
+            category: 'Pin Address',
+            action: 'PinAddress_ClickView',
           });
           navigation.push(RootNames.SingleAddressStack, {
             screen: RootNames.SingleAddressHome,

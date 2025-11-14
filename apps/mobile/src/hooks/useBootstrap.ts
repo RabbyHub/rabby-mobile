@@ -14,6 +14,7 @@ import {
   BROWSER_SCRIPT_BASE,
   JS_GET_WINDOW_INFO_AFTER_LOAD,
   SPA_urlChangeListener,
+  JSBridgeHarden,
 } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { loadSecurityChain, useGlobal } from './global';
@@ -180,6 +181,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
   const fullScript = React.useMemo(() => {
     return [
       // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
+      JSBridgeHarden,
       entryScripts.inPageWeb3,
       BROWSER_SCRIPT_BASE,
       __DEV__ ? JS_GET_WINDOW_INFO_AFTER_LOAD : '',

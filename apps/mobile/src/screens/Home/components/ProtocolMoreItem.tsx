@@ -75,6 +75,7 @@ export const WrapperDappActionsMemoItem = ({
   onRefresh,
   session,
   manageAction,
+  disableAction,
 }: {
   item: AbstractPortfolio;
   chain?: string;
@@ -87,6 +88,7 @@ export const WrapperDappActionsMemoItem = ({
     account?: KeyringAccountWithAlias,
     item?: AbstractPortfolio,
   ) => void;
+  disableAction?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { colors2024 } = useTheme2024();
@@ -142,6 +144,7 @@ export const WrapperDappActionsMemoItem = ({
             onRefresh={onRefresh}
             session={session}
             style={!!manageAction && styles.longMarginTop}
+            disableAction={disableAction}
           />
         )}
     </View>

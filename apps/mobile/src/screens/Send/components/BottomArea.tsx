@@ -22,28 +22,12 @@ import { useTranslation } from 'react-i18next';
 
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
-import { RiskType, useRisks } from './ConfirmAddress/risk';
-import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
-import { Skeleton } from '@rneui/themed';
-import { CheckBoxRect } from '@/components2024/CheckBox';
+import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { useSignatureStore } from '@/components2024/MiniSignV2';
+import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
 
 const isAndroid = Platform.OS === 'android';
-
-const riskTypePriority = {
-  [RiskType.CEX_NO_DEPOSIT]: 1,
-  [RiskType.NEVER_SEND]: 11,
-  [RiskType.CONTRACT_ADDRESS]: 111,
-  [RiskType.SCAM_ADDRESS]: 1111,
-};
-
-function sortRisksDesc(a: { type: RiskType }, b: { type: RiskType }) {
-  return (
-    riskTypePriority[b.type as keyof typeof riskTypePriority] -
-    riskTypePriority[a.type as keyof typeof riskTypePriority]
-  );
-}
 
 export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
@@ -79,6 +63,9 @@ export default function BottomArea({ account }: { account: Account | null }) {
   const { status, ctx } = useSignatureStore();
 
   const isDirectSigning = status === 'signing';
+
+  const canDirectSign = !ctx?.disabledProcess;
+  const showRiskTipsForMiniSign = !!ctx?.gasFeeTooHigh;
 
   const {
     loading: loadingRisks,
@@ -174,59 +161,30 @@ export default function BottomArea({ account }: { account: Account | null }) {
   const disableSubmitDueToBasic =
     !canSubmit || (!!mostImportantRisks.length && !agreeRequiredChecked);
 
-  const canDirectSign = !ctx?.disabledProcess;
-  const showRiskTipsForMiniSign = !!ctx?.gasFeeTooHigh;
-
   return (
     <View
       style={[styles.bottomDockArea, { paddingBottom: safeSizes.containerPb }]}>
-      <View style={styles.riskTipsArea}>
-        <View style={[styles.riskList]}>
-          {loadingRisks ? (
-            <></>
-          ) : (
-            // <View style={styles.tipItem}>
-            //   <Skeleton circle width={20} height={20} />
-            //   <Skeleton style={styles.loadingRisks} height={40} />
-            // </View>
-            mostImportantRisks.map(risk => (
-              <View key={risk.value} style={styles.tipItem}>
-                <RcIconWarningCircleCC
-                  width={20}
-                  height={20}
-                  color={colors2024['red-default']}
-                />
-                <Text style={styles.tipText}>{risk.value}</Text>
-              </View>
-            ))
-          )}
-        </View>
-        {!loadingRisks && mostImportantRisks?.length ? (
-          <TouchableOpacity
-            style={styles.checkbox}
-            onPress={() => {
-              putScreenState(prev => {
-                return {
-                  ...prev,
-                  agreeRequiredChecks: {
-                    ...prev.agreeRequiredChecks,
-                    ...(hasRiskForToAddress && {
-                      forToAddress: !agreeRequiredChecked,
-                    }),
-                    ...(hasRiskForToken && {
-                      forToken: !agreeRequiredChecked,
-                    }),
-                  },
-                };
-              });
-            }}>
-            <CheckBoxRect size={16} checked={agreeRequiredChecked} />
-            <Text style={styles.checkboxText}>
-              {t('page.confirmAddress.checkbox')}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
+      <BottomRiskTip
+        loadingRisks={loadingRisks}
+        mostImportantRisks={mostImportantRisks}
+        agreeRequiredChecked={agreeRequiredChecked}
+        onToggleAgreeRequiredChecked={() => {
+          putScreenState(prev => {
+            return {
+              ...prev,
+              agreeRequiredChecks: {
+                ...prev.agreeRequiredChecks,
+                ...(hasRiskForToAddress && {
+                  forToAddress: !agreeRequiredChecked,
+                }),
+                ...(hasRiskForToken && {
+                  forToken: !agreeRequiredChecked,
+                }),
+              },
+            };
+          });
+        }}
+      />
       {canShowDirectSign ? (
         <DirectSignBtn
           // refresh  risk check
@@ -311,61 +269,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       //   backgroundColor: 'blue',
       // }),
       // height: SIZES.height,
-    },
-
-    riskTipsArea: {
-      // ...makeDebugBorder(),
-      marginBottom: 12,
-    },
-
-    riskList: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 12,
-      // backgroundColor: colors2024['red-light-1'],
-      overflow: 'hidden',
-    },
-    tipItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      backgroundColor: colors2024['red-light-1'],
-      paddingHorizontal: 12,
-      paddingVertical: 16,
-      borderRadius: 12,
-    },
-    tipIcon: {
-      width: 14,
-      justifyContent: 'center',
-      height: 20,
-    },
-    tipText: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      flex: 1,
-      fontFamily: 'SF Pro Rounded',
-      color: colors2024['red-default'],
-    },
-    loadingRisks: {
-      backgroundColor: colors2024['red-light-1'],
-      borderRadius: 8,
-      flex: 1,
-    },
-    checkbox: {
-      display: 'flex',
-      flexDirection: 'row',
-      gap: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 12,
-    },
-    checkboxText: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '400',
-      fontFamily: 'SF Pro Rounded',
-      color: colors2024['neutral-foot'],
     },
   };
 });

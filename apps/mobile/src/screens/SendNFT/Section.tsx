@@ -51,7 +51,6 @@ export function NFTSection({
   const { t } = useTranslation();
 
   const {
-    screenState,
     formValues,
     callbacks: { handleFieldChange },
   } = useSendNFTInternalContext();
@@ -145,7 +144,6 @@ const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {
   return {
     nftSection: {
       width: '100%',
-      marginBottom: 24,
       gap: 12,
     },
     titleSection: {
