@@ -64,6 +64,7 @@ export const DappActions = ({
   currentAccount,
   onRefresh,
   session = INTERNAL_REQUEST_SESSION,
+  style,
 }: {
   data?: WithdrawAction[];
   chain?: string;
@@ -71,6 +72,7 @@ export const DappActions = ({
   currentAccount?: KeyringAccountWithAlias;
   onRefresh?: () => Promise<void>;
   session?: typeof INTERNAL_REQUEST_SESSION;
+  style?: StyleProp<ViewStyle>;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const withdrawAction = useMemo(
@@ -218,7 +220,7 @@ export const DappActions = ({
     return null;
   }
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {showWithdraw && (
         <ActionButton
           text="Withdraw"

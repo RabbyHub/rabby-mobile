@@ -11,6 +11,7 @@ import { DappActions } from './DappActions';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useTranslation } from 'react-i18next';
 
 // 已支持的模板
 const TemplateDict = {
@@ -89,6 +90,7 @@ export const WrapperDappActionsMemoItem = ({
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { colors2024 } = useTheme2024();
+  const { t } = useTranslation();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -121,7 +123,15 @@ export const WrapperDappActionsMemoItem = ({
       <View style={styles.portfolioContent}>
         <MemoItem currentAccount={currentAccount} item={item} />
       </View>
-
+      {!!manageAction && (
+        <TouchableOpacity
+          style={[styles.button]}
+          onPress={() => manageAction(currentAccount, item)}>
+          <Text style={styles.buttonText}>
+            {t('component.portfolios.manage')}
+          </Text>
+        </TouchableOpacity>
+      )}
       {!!item._originPortfolio.withdraw_actions?.length &&
         !item?._originPortfolio?.proxy_detail?.proxy_contract_id && (
           <DappActions
@@ -131,15 +141,9 @@ export const WrapperDappActionsMemoItem = ({
             currentAccount={currentAccount}
             onRefresh={onRefresh}
             session={session}
+            style={!!manageAction && styles.longMarginTop}
           />
         )}
-      {!!manageAction && (
-        <TouchableOpacity
-          style={[styles.button]}
-          onPress={() => manageAction(currentAccount, item)}>
-          <Text style={styles.buttonText}>Manage</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 };
@@ -169,12 +173,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     bottom: 0,
   },
   button: {
-    marginTop: 12,
+    marginTop: 0,
     flex: 1,
-    height: 52,
+    height: 42,
     borderRadius: 12,
-    borderColor: colors2024['brand-default'],
-    borderWidth: 1,
+    backgroundColor: colors2024['brand-light-1'],
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -185,5 +188,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  longMarginTop: {
+    marginTop: 20,
   },
 }));
