@@ -247,6 +247,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 12,
     marginTop: 12,
+    marginLeft: 8,
+    marginRight: 8,
   },
   button: {
     flex: 1,

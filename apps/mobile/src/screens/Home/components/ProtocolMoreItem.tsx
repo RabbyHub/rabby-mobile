@@ -174,6 +174,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   button: {
     marginTop: 0,
+    marginLeft: 8,
+    marginRight: 8,
     flex: 1,
     height: 42,
     borderRadius: 12,

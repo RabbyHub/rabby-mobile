@@ -59,6 +59,13 @@ export const useProtocolConfig = () => {
           const types = item._originPortfolio.detail_types.map(t =>
             t.toLowerCase(),
           );
+          // 判断是不是存储池子
+          const isWithdrawPosition =
+            `perp_withdrawable_usdc_hyperliquid_${account?.address?.toLowerCase()}` ===
+            item?._originPortfolio?.position_index?.toLowerCase();
+          if (isWithdrawPosition) {
+            return true;
+          }
           return types?.includes('perpetuals');
         },
         onManage: async (
