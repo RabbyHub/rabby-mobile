@@ -18,6 +18,7 @@ import {
   AddrDescResponse,
   GasLevel,
   NFTItem,
+  ProjectItem,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
@@ -53,6 +54,7 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { useMemoizedFn } from 'ahooks';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -86,6 +88,10 @@ export type SendScreenState = {
 
   buildTxsCount: number;
 
+  agreeRequiredChecks: {
+    forToAddress: boolean;
+  };
+
   toAddrDesc: null | AddrDescResponse['desc'];
 };
 const DFLT_SEND_STATE: SendScreenState = {
@@ -113,6 +119,10 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   buildTxsCount: 0,
 
+  agreeRequiredChecks: {
+    forToAddress: false,
+  },
+
   toAddrDesc: null,
 };
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
@@ -121,12 +131,19 @@ export function useSendNFTScreenState() {
     sendTokenScreenStateAtom,
   );
 
-  const putScreenState = useCallback(
-    (patch: Partial<SendScreenState>) => {
-      setSendNFTScreenState(prev => ({
-        ...prev,
-        ...patch,
-      }));
+  const putScreenState = useCallback<InternalContext['fns']['putScreenState']>(
+    patchOrUpdateFunc => {
+      setSendNFTScreenState(prev => {
+        const patch =
+          typeof patchOrUpdateFunc === 'function'
+            ? patchOrUpdateFunc(prev)
+            : patchOrUpdateFunc;
+
+        return {
+          ...prev,
+          ...patch,
+        };
+      });
     },
     [setSendNFTScreenState],
   );
@@ -177,11 +194,11 @@ const DF_SEND_TOKEN_FORM: FormSendNFT = {
 export function useSendNFTForm({
   toAddress,
   nftToken,
-  account,
+  currentAccount,
 }: {
   toAddress?: string;
   nftToken?: NFTItem;
-  account: Account;
+  currentAccount: Account;
 }) {
   const { t } = useTranslation();
 
@@ -190,7 +207,6 @@ export function useSendNFTForm({
   const { sendNFTScreenState: screenState, putScreenState } =
     useSendNFTScreenState();
 
-  // const [formValues, setFormValues] = useAtom(sendTokenScreenFormAtom);
   const [formValues, setFormValues] = React.useState<FormSendNFT>({
     ...DF_SEND_TOKEN_FORM,
     to: toAddress || '',
@@ -204,11 +220,27 @@ export function useSendNFTForm({
 
   const chainItem = findChain({ serverId: nftToken?.chain });
 
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
-    account: account,
+  const { openDirect, prefetch } = useMiniSigner({
+    account: currentAccount,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
   });
+
+  const scrollviewRef = useRef<KeyboardAwareScrollView>(null);
+  const prefetchMiniSigner = useCallback<typeof prefetch>(
+    async ctx => {
+      try {
+        await prefetch(ctx);
+      } catch (e) {
+        console.error('prefetchMiniSigner error', e);
+      } finally {
+        setTimeout(() => {
+          scrollviewRef.current?.scrollToEnd(true);
+        }, 250);
+      }
+    },
+    [prefetch],
+  );
 
   const navigation = useRabbyAppNavigation();
 
@@ -328,14 +360,14 @@ export function useSendNFTForm({
   );
 
   const prepareDirectSubmitMiniTx = useMemoizedFn(async (ref: number) => {
-    if (!nftToken || !account) return;
+    if (!nftToken || !currentAccount) return;
 
     const { to, amount } = formValues;
 
     if (
       ref === prepareCountRef.current &&
-      account &&
-      isAccountSupportMiniApproval(account?.type || '') &&
+      currentAccount &&
+      isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
     ) {
       const res = await apiToken.transferNFT(
@@ -346,7 +378,7 @@ export function useSendNFTForm({
           chainServerId: nftToken?.chain,
           contractId: nftToken?.contract_id,
           abi: nftToken?.is_erc1155 ? 'ERC1155' : 'ERC721',
-          account: account,
+          account: currentAccount,
         },
         {
           $ctx: {
@@ -393,19 +425,19 @@ export function useSendNFTForm({
         action: 'createTx',
         label: [
           chainItem?.name,
-          getKRCategoryByType(account?.type),
-          account?.brandName,
+          getKRCategoryByType(currentAccount?.type),
+          currentAccount?.brandName,
           'nft',
         ].join('|'),
       });
-      if (!account) {
+      if (!currentAccount) {
         return;
       }
 
       try {
         if (
           !isForceSignTx &&
-          isAccountSupportMiniApproval(account?.type || '') &&
+          isAccountSupportMiniApproval(currentAccount?.type || '') &&
           !chainItem?.isTestnet
         ) {
           if (!prepareRef.current) {
@@ -490,7 +522,7 @@ export function useSendNFTForm({
                 chainServerId: nftToken.chain,
                 contractId: nftToken.contract_id,
                 abi: nftToken.is_erc1155 ? 'ERC1155' : 'ERC721',
-                account: account,
+                account: currentAccount,
               },
               {
                 $ctx: {
@@ -545,7 +577,7 @@ export function useSendNFTForm({
       prefetchMiniSigner,
       prepareDirectSubmitMiniTx,
       toAddress,
-      account,
+      currentAccount,
       putScreenState,
       chainItem?.name,
       nftToken,
@@ -604,6 +636,9 @@ export function useSendNFTForm({
       toAddressIsValid: !!formValues.to && isValidAddress(formValues.to),
       toAddressIsRecentlySend,
       toAddressInWhitelist,
+      toAddressIsCex:
+        !!screenState.toAddrDesc?.cex?.id &&
+        !!screenState.toAddrDesc?.cex?.is_deposit,
       toAddressInContactBook: isAddrOnContactBook(formValues.to),
 
       toAddrCex: cexList.find(
@@ -617,8 +652,7 @@ export function useSendNFTForm({
         !screenState.isLoading,
 
       canDirectSign:
-        isAccountSupportMiniApproval(account?.type || '') &&
-        isAccountSupportDirectSign(account?.type) &&
+        isAccountSupportMiniApproval(currentAccount?.type || '') &&
         !chainItem?.isTestnet,
     };
   }, [
@@ -629,7 +663,7 @@ export function useSendNFTForm({
     screenState,
     formValues.amount,
     cexList,
-    account?.type,
+    currentAccount?.type,
     chainItem?.isTestnet,
   ]);
 
@@ -646,7 +680,7 @@ export function useSendNFTForm({
 
   useEffect(() => {
     if (
-      isAccountSupportMiniApproval(account?.type || '') &&
+      isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
     ) {
       prefetchMiniSigner({
@@ -657,7 +691,7 @@ export function useSendNFTForm({
     prefetchMiniSigner,
     chainItem?.id,
     formValues.to,
-    account?.type,
+    currentAccount?.type,
     chainItem?.isTestnet,
     toAddress,
   ]);
@@ -665,7 +699,7 @@ export function useSendNFTForm({
   useEffect(() => {
     if (
       isFocused &&
-      isAccountSupportMiniApproval(account?.type || '') &&
+      isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet &&
       computed.canSubmit &&
       formValues.to &&
@@ -683,7 +717,7 @@ export function useSendNFTForm({
     computed.canSubmit,
     formValues.to,
     stableAmountValue,
-    account?.type,
+    currentAccount?.type,
     prepareDirectSubmitMiniTx,
   ]);
 
@@ -696,6 +730,7 @@ export function useSendNFTForm({
     resetFormValues,
     handleFieldChange,
     handleGasLevelChanged,
+    scrollviewRef,
     handleIgnoreGasFeeChange,
     patchFormValues,
     handleFormValuesChange,
@@ -727,6 +762,7 @@ type InternalContext = {
     toAddressInWhitelist: boolean;
     toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
+    toAddrCex: null | undefined | ProjectItem;
 
     toAddressIsRecentlySend: boolean;
   };
@@ -734,7 +770,11 @@ type InternalContext = {
   formik: ReturnType<typeof useFormik<FormSendNFT>>;
   events: EventEmitter;
   fns: {
-    putScreenState: (patch: Partial<SendScreenState>) => void;
+    putScreenState: (
+      patch:
+        | Partial<SendScreenState>
+        | ((prev: SendScreenState) => Partial<SendScreenState>),
+    ) => void;
     fetchContactAccounts: () => void;
   };
   callbacks: {
@@ -758,6 +798,7 @@ const SendNFTInternalContext = React.createContext<InternalContext>({
     toAddressInWhitelist: false,
     toAddressIsValid: false,
     toAddressInContactBook: false,
+    toAddrCex: null,
 
     toAddressIsRecentlySend: false,
   },
