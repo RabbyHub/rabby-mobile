@@ -14,6 +14,7 @@ import {
   BROWSER_SCRIPT_BASE,
   JS_GET_WINDOW_INFO_AFTER_LOAD,
   SPA_urlChangeListener,
+  JSBridgeHarden,
 } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { loadSecurityChain, useGlobal } from './global';
@@ -26,7 +27,6 @@ import { useBiometrics } from './biometrics';
 import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
 import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
-import { JSBridgeHarden } from '../../../../packages/rn-webview-bridge/src/browserScripts';
 
 const syncCustomTestChainList = () => {
   try {
