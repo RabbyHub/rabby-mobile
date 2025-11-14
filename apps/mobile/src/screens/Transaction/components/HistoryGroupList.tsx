@@ -293,7 +293,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 4,
   },
   marginBottom: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   date: {
     fontFamily: 'SF Pro Rounded',
