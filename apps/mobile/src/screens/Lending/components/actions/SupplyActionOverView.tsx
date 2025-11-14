@@ -3,7 +3,6 @@ import { Pressable, Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
-import { formatPercent } from '@/screens/TokenDetail/util';
 import { isHFEmpty } from '../../utils';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import HealthFactorText from '../HealthFactorText';
@@ -15,6 +14,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTranslation } from 'react-i18next';
 import { formatNetworth } from '@/utils/math';
 import IsolatedTag from '../IsolatedTag';
+import { formatApy } from '../../utils/format';
 
 const SupplyActionOverView: React.FC<
   PopupDetailProps & {
@@ -27,7 +27,7 @@ const SupplyActionOverView: React.FC<
   const { t } = useTranslation();
 
   const apyText = useMemo(() => {
-    return formatPercent(Number(reserve?.reserve?.supplyAPY || '0'));
+    return formatApy(Number(reserve?.reserve?.supplyAPY || '0'));
   }, [reserve?.reserve?.supplyAPY]);
 
   const availableText = useMemo(() => {

@@ -5,16 +5,12 @@ import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import { formatNetworth } from '@/utils/math';
-import { formatPercent } from '../TokenDetail/util';
-import { estDaily } from './utils/format';
+import { estDaily, formatApy } from './utils/format';
 import { getHealthStatusColor, isHFEmpty } from './utils';
 import IconCloseCC from '@/assets2024/icons/common/close-bold-cc.svg';
-import RcIconWarningCircleCC from '@/assets2024/icons/lending/more.svg';
+import IconSwitchCC from '@/assets2024/icons/lending/switch-cc.svg';
 import AAVEIcon from '@/assets2024/icons/lending/aave.svg';
-import {
-  HF_COLOR_BAD_THRESHOLD,
-  HF_COLOR_GOOD_THRESHOLD,
-} from './utils/constant';
+import { HF_COLOR_GOOD_THRESHOLD } from './utils/constant';
 import { useLendingService } from './hooks/useLendingService';
 import {
   createGlobalBottomSheetModal2024,
@@ -24,6 +20,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { getHealthFactorText } from './components/HealthFactorText';
+import { atom, useAtom } from 'jotai';
 
 interface IProps {
   netWorth: string;
@@ -32,12 +29,13 @@ interface IProps {
   netApy: number;
   healthFactor: string;
 }
-
+const isEstDailySwitchAtom = atom(true);
 const SummaryCard = (props: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { skipHealthFactorWarning, setSkipHealthFactorWarning } =
     useLendingService();
+  const [isEstDailySwitch, setIsEstDailySwitch] = useAtom(isEstDailySwitchAtom);
   const handleShowHFDescription = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.HF_DESCRIPTION,
@@ -53,29 +51,14 @@ const SummaryCard = (props: IProps) => {
     });
   };
   const extraInfo = useMemo(() => {
-    if (!props?.healthFactor || isHFEmpty(Number(props.healthFactor || '0'))) {
-      return null;
+    if (
+      !props?.healthFactor ||
+      isHFEmpty(Number(props.healthFactor || '0')) ||
+      skipHealthFactorWarning
+    ) {
+      return false;
     }
-    const healthFactor = Number(props.healthFactor || '0');
-    if (healthFactor < HF_COLOR_BAD_THRESHOLD) {
-      return {
-        showWarning: true,
-        showClose: false,
-      };
-    }
-    if (healthFactor < HF_COLOR_GOOD_THRESHOLD) {
-      return {
-        showWarning: true,
-        showClose: false,
-      };
-    }
-    if (skipHealthFactorWarning) {
-      return null;
-    }
-    return {
-      showWarning: false,
-      showClose: true,
-    };
+    return true;
   }, [props.healthFactor, skipHealthFactorWarning]);
 
   return (
@@ -114,36 +97,63 @@ const SummaryCard = (props: IProps) => {
           </View>
         </View>
         <View style={styles.estAndHealthContainer}>
-          <View style={styles.estDailyContainer}>
-            <Text style={styles.sectionHeader}>
-              {t('page.Lending.estDailyEarning')}
-            </Text>
-            <View style={styles.sectionContent}>
-              <Text style={styles.estDailyValue}>
-                {estDaily(props.netWorth, props.netApy)}
+          <Pressable
+            hitSlop={20}
+            onPress={e => {
+              console.log('CUSTOM_LOGGER:=>: onPress');
+              e.stopPropagation();
+              setIsEstDailySwitch(pre => !pre);
+            }}
+            style={styles.estDailyContainer}>
+            <View style={styles.estDailyHeader}>
+              <Text style={styles.sectionHeader}>
+                {isEstDailySwitch
+                  ? t('page.Lending.estDailyEarning')
+                  : t('page.Lending.estNetApy')}
               </Text>
-              <Text style={styles.netApy}>
-                ({props.netApy > 0 ? '+' : ''}
-                {formatPercent(Number(props.netApy || '0'))})
+              <View>
+                <IconSwitchCC
+                  width={14}
+                  height={14}
+                  color={ThemeColors2024.dark['neutral-foot']}
+                />
+              </View>
+            </View>
+            <View style={styles.sectionContent}>
+              <Text
+                style={[
+                  styles.estDailyValue,
+                  {
+                    color:
+                      props.netApy > 0
+                        ? colors2024['green-default']
+                        : colors2024['red-default'],
+                  },
+                ]}>
+                {isEstDailySwitch
+                  ? estDaily(props.netWorth, props.netApy)
+                  : `${props.netApy > 0 ? '+' : ''}${formatApy(
+                      Number(props.netApy || '0'),
+                    )}`}
               </Text>
             </View>
-          </View>
-          <View
+          </Pressable>
+          <Pressable
+            hitSlop={20}
+            onPress={handleShowHFDescription}
             style={[
               styles.healthFactorContainer,
               isHFEmpty(Number(props.healthFactor || '0')) && styles.hidden,
             ]}>
             <View style={styles.healthFactorHeader}>
               <Text style={styles.sectionHeader}>{t('page.Lending.hf')}</Text>
-              {Number(props.healthFactor || '0') >= HF_COLOR_GOOD_THRESHOLD && (
-                <Pressable hitSlop={20} onPress={handleShowHFDescription}>
-                  <WarningFillCC
-                    width={12}
-                    height={12}
-                    color={ThemeColors2024.dark['neutral-secondary']}
-                  />
-                </Pressable>
-              )}
+              <View>
+                <WarningFillCC
+                  width={12}
+                  height={12}
+                  color={ThemeColors2024.dark['neutral-secondary']}
+                />
+              </View>
             </View>
             <View style={styles.sectionContent}>
               <View style={styles.healthFactorValueContainer}>
@@ -188,19 +198,12 @@ const SummaryCard = (props: IProps) => {
                   : t('page.Lending.summary.healthy')}
               </Text>
             </View>
-          </View>
+          </Pressable>
         </View>
       </View>
       {!!extraInfo && (
         <View style={[styles.extraContainer]}>
           <View style={styles.extraLeft}>
-            {extraInfo.showWarning && (
-              <RcIconWarningCircleCC
-                width={14}
-                height={14}
-                color={ThemeColors2024.dark['neutral-body']}
-              />
-            )}
             <Text style={styles.extraLeftText}>
               {t('page.Lending.summary.lq')}
             </Text>
@@ -210,17 +213,15 @@ const SummaryCard = (props: IProps) => {
               </Text>
             </TouchableOpacity>
           </View>
-          {extraInfo.showClose && (
-            <TouchableOpacity
-              style={styles.extraClose}
-              onPress={() => setSkipHealthFactorWarning(true)}>
-              <IconCloseCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-title-1']}
-              />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={styles.extraClose}
+            onPress={() => setSkipHealthFactorWarning(true)}>
+            <IconCloseCC
+              width={14}
+              height={14}
+              color={colors2024['neutral-title-1']}
+            />
+          </TouchableOpacity>
         </View>
       )}
     </LinearGradient>
@@ -258,7 +259,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: 'rgba(50, 60, 89, 1)',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     paddingHorizontal: 12,
@@ -322,6 +323,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   estDailyContainer: {
     flex: 1,
+    gap: 2,
+  },
+  estDailyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 2,
   },
   sectionHeader: {
