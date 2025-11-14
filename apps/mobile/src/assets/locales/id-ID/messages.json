@@ -1137,6 +1137,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "Ambil tangkapan layar kapan saja untuk cepat melaporkan bug"
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "Geser ke kanan untuk melihat semua aset"
       }
     },
     "newAddress": {
@@ -1908,7 +1911,10 @@
           "value": "Nilai"
         },
         "pools": "Kolam"
-      }
+      },
+      "headerBalanceText": "Saldo",
+      "price": "Harga",
+      "headerTokenValueText": "Nilai Token"
     },
     "approvalsAddressList": {
       "title": "Persetujuan"
@@ -2333,7 +2339,8 @@
         "takeProfitTipsShort": "Harga ambil untung harus lebih rendah dari harga saat ini.",
         "stopLossTipsShortLiquidation": "Harga lebih tinggi dari harga likuidasi ({{price}})",
         "profit": "Keuntungan",
-        "takeProfit": "Ambil untung"
+        "takeProfit": "Ambil untung",
+        "noPosition": "Anda harus memasukkan margin terlebih dahulu."
       },
       "PerpsDepositTokenModal": {
         "bridgeBtn": "Jembatan",
@@ -2389,7 +2396,30 @@
       "leverageRangeMinError": "Leverage minimum adalah {{min}}x",
       "positions": "Kedudukan",
       "deleteAgentModal": "Anda telah mencapai jumlah maksimum agen. Apakah Anda ingin menghapus agen yang ada untuk membuat yang baru?",
-      "more": "Lebih banyak"
+      "more": "Lebih banyak",
+      "searchPerpsPopup": {
+        "searchPlaceholder": "Cari Perps",
+        "searchPerps": "Cari Perps",
+        "searchPosition": "Cari Posisi",
+        "empty": "Tidak ada hasil yang ditemukan",
+        "openPosition": "Buka Posisi"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "danger": "Bahaya",
+          "safe": "Aman",
+          "warning": "Peringatan"
+        },
+        "title": "Tingkat Risiko",
+        "liquidationPrice": "Harga Likuidasi",
+        "currentPrice": "Harga Saat Ini",
+        "subtitle": "Jarak likuidasi waktu nyata (%)",
+        "distanceLabel": "Jarak Likuidasi",
+        "liqIntro": "Jarak Likuidasi (%) menunjukkan seberapa jauh harga saat ini dari harga likuidasi Anda. Jarak yang lebih besar menunjukkan posisi yang lebih aman, sementara jarak yang lebih kecil berarti risiko likuidasi yang lebih tinggi."
+      },
+      "closeAllConfirmTitle": "Konfirmasi Tutup Semua Posisi",
+      "closeAllConfirmMessage": "Semua posisi terbuka Anda akan ditutup pada harga pasar.",
+      "closeAll": "Tutup Semua"
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2435,7 +2465,13 @@
         "rabbyFeeTips": "Biaya Rabby: 0,04%",
         "pnl": "PNL",
         "title": "Tutup Posisi {{coin}} {{direction}}",
-        "closeBtn": "Tutup {{direction}}"
+        "closeBtn": "Tutup {{direction}}",
+        "amount": "Jumlah",
+        "total": "Total",
+        "closedPnl": "Closed PNL:",
+        "receive": "Terima:",
+        "confirm": "Konfirmasi",
+        "minimumWarning": "Jumlah minimum adalah {{percent}}%"
       },
       "PerpsOpenPositionPopup": {
         "minimumOrderSize": "Ukuran pesanan minimum adalah $10",
@@ -2449,7 +2485,12 @@
         "autoClose": "Tutup Otomatis",
         "size": "Ukuran",
         "sizeTips": "Total nilai atau kuantitas perdagangan Anda, ditentukan oleh margin dan leverage.",
-        "leverage": "Leverage"
+        "leverage": "Leverage",
+        "stopLossWhen": "Henti Kerugian Ketika",
+        "takeProfitWhenPriceAbove": "Ambil Keuntungan Saat Harga Di Atas",
+        "stopLossWhenPriceAbove": "Stop Loss Ketika Harga di Atas",
+        "stopLossWhenPriceBelow": "Stop Loss Ketika Harga Di Bawah",
+        "takeProfitWhenPriceBelow": "Ambil Untung Ketika Harga Dibawah"
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "Arah",
@@ -2468,7 +2509,10 @@
         "providerFeeTips": "Biaya Hyperliquid: {{fee}}",
         "rabbyFeeTips": "Biaya Rabby: 0%",
         "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
-        "liquidationPriceTips": "Harga di mana posisi Anda secara otomatis ditutup oleh bursa untuk mencegah kerugian lebih lanjut ketika margin Anda jatuh di bawah tingkat margin pemeliharaan."
+        "liquidationPriceTips": "Harga di mana posisi Anda secara otomatis ditutup oleh bursa untuk mencegah kerugian lebih lanjut ketika margin Anda jatuh di bawah tingkat margin pemeliharaan.",
+        "rabbyFee": "Biaya Rabby",
+        "providerFee": "Biaya Hyperliquid",
+        "free": "Gratis"
       },
       "action": {
         "closePosition": "Tutup Posisi {{direction}}",
@@ -2482,7 +2526,31 @@
         "setSlPrice": "Atur Harga Stop-Loss",
         "entryPrice": "Harga Masuk:",
         "tpPrice": "Harga Ambil Untung",
-        "setTpPrice": "Atur Harga Ambil Keuntungan"
+        "setTpPrice": "Atur Harga Ambil Keuntungan",
+        "youLoss": "Anda Rugi",
+        "priceBelow": "Harga di bawah",
+        "priceAbove": "Harga di atas",
+        "stopLossWhen": "Stop Loss Ketika",
+        "priceReaches": "Harga Mencapai",
+        "stopLossExpectedPNL": "Stop loss yang diharapkan PNL",
+        "youGain": "Anda Mendapatkan",
+        "takeProfitWhen": "Ambil Keuntungan Ketika",
+        "currentPrice": "Saat ini {{price}}",
+        "takeProfitExpectedPNL": "Ambil keuntungan PNL yang diharapkan",
+        "EntryAndCurrentPrice": "Masuk {{entryPrice}}  Saat Ini {{price}}"
+      },
+      "PerpsEditMarginPopup": {
+        "title": "Sesuaikan margin",
+        "currentPrice": "Harga Saat Ini",
+        "addMargin": "Tambahkan Margin",
+        "available": "tersedia",
+        "insufficientMargin": "Margin tidak mencukupi",
+        "liqPrice": "Harga Likuidasi:",
+        "perpsBalance": "Saldo Perps",
+        "amountToAdd": "Jumlah untuk ditambahkan",
+        "insufficientMarginToReduce": "Margin tidak mencukupi untuk mengurangi posisi.",
+        "reduceMargin": "Kurangi Margin",
+        "amountToReduce": "Jumlah untuk mengurangi"
       }
     },
     "devUIBuiltInPages": {
@@ -2590,7 +2658,9 @@
         "availableToBorrow": "Tersedia untuk dipinjam",
         "availableToBorrowDesc": "Anda dapat meminjam berdasarkan jaminan yang Anda berikan dan hingga batas pinjaman tercapai.",
         "lqDesc": "Ketika likuidasi terjadi, likuidator membayar hingga 50% dari jumlah pinjaman yang terutang atas nama peminjam. Sebagai imbalannya, mereka dapat membeli jaminan dengan harga diskon dan menyimpan selisihnya (penalty likuidasi) sebagai bonus.",
-        "maxAmount": "Ini adalah jumlah maksimum yang dapat Anda pinjam berdasarkan semua jaminan yang Anda berikan. Total daya pinjam Anda dihitung dengan mengalikan nilai pasar dari masing-masing aset jaminan dengan Max LTV-nya, kemudian menjumlahkan hasilnya."
+        "maxAmount": "Ini adalah jumlah maksimum yang dapat Anda pinjam berdasarkan semua jaminan yang Anda berikan. Total daya pinjam Anda dihitung dengan mengalikan nilai pasar dari masing-masing aset jaminan dengan Max LTV-nya, kemudian menjumlahkan hasilnya.",
+        "isolatedTitle": "Aset tidak dapat digunakan sebagai jaminan",
+        "isolatedDesc": "Aset ini hanya dapat digunakan sebagai jaminan dalam mode isolasi, di mana Anda tidak dapat menyediakan jaminan aset lain untuk meminjam. Aset yang digunakan sebagai jaminan dalam mode isolasi hanya dapat dipinjam hingga batas utang tertentu."
       },
       "estDailyEarning": "Est.Penghasilan Harian",
       "gotIt": "Mengerti",
@@ -2603,7 +2673,8 @@
       "borrowed": "Dipinjam",
       "hfTitle": "Health Factor",
       "hf": "Faktor kesehatan",
-      "enterAmount": "Masukkan Jumlah"
+      "enterAmount": "Masukkan Jumlah",
+      "isolated": "terisolasi"
     }
   },
   "component": {

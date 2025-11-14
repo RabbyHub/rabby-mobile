@@ -27,6 +27,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     display: 'flex',
     flexDirection: 'column',
+    overflow: 'hidden',
   },
   amount: {
     fontSize: 36,

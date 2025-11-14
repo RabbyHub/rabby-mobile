@@ -1073,6 +1073,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "언제든지 스크린샷을 찍어 버그를 빠르게 신고하세요."
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "모든 자산을 보려면 오른쪽으로 스와이프하십시오."
       }
     },
     "switchChain": {
@@ -1905,7 +1908,10 @@
           "dex": "Dex"
         },
         "pools": "풀"
-      }
+      },
+      "price": "가격",
+      "headerTokenValueText": "토큰 가치",
+      "headerBalanceText": "잔액"
     },
     "setting": {
       "screenTitle": "설정",
@@ -2334,7 +2340,8 @@
         "takeProfit": "익스펙트 수익",
         "stopLossTipsLong": "손절매 가격은 현재 가격보다 낮아야 합니다.",
         "stopLossTipsShortLiquidation": "가격이 청산 가격({{price}})보다 높습니다.",
-        "stopLossTipsLongLiquidation": "가격이 청산 가격 ({{price}}) 보다 낮습니다."
+        "stopLossTipsLongLiquidation": "가격이 청산 가격 ({{price}}) 보다 낮습니다.",
+        "noPosition": "먼저 마진을 입력해야 합니다."
       },
       "PerpsDepositTokenModal": {
         "directTag": "직접 입금",
@@ -2390,7 +2397,30 @@
       "regionNotSupport": "귀하의 지역에서는 포지션을 열 수 없습니다.",
       "leverageRangeMaxError": "최대 레버리지는 {{max}}배입니다",
       "leverageRangeMinError": "최소 레버리지는 {{min}}x입니다.",
-      "deleteAgentModal": "최대 에이전트 수에 도달했습니다. 새 에이전트를 생성하기 위해 기존 에이전트를 삭제하시겠습니까?"
+      "deleteAgentModal": "최대 에이전트 수에 도달했습니다. 새 에이전트를 생성하기 위해 기존 에이전트를 삭제하시겠습니까?",
+      "searchPerpsPopup": {
+        "searchPlaceholder": "Perps 검색",
+        "searchPerps": "Perps 검색",
+        "empty": "결과가 없습니다.",
+        "searchPosition": "포지션 검색",
+        "openPosition": "포지션 열기"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "safe": "안전",
+          "warning": "경고",
+          "danger": "위험"
+        },
+        "liquidationPrice": "청산 가격",
+        "distanceLabel": "청산 거리",
+        "currentPrice": "현재 가격",
+        "title": "위험 수준",
+        "subtitle": "실시간 청산 거리 (%)",
+        "liqIntro": "청산 거리 (%)는 현재 가격이 청산 가격에서 얼마나 떨어져 있는지를 보여줍니다. 거리가 클수록 안전한 포지션을 나타내며, 거리가 작을수록 청산 위험이 더 높음을 의미합니다."
+      },
+      "closeAll": "모두 닫기",
+      "closeAllConfirmMessage": "모든 열린 포지션은 시장 가격으로 종료됩니다.",
+      "closeAllConfirmTitle": "모든 포지션 닫기 확인"
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2436,7 +2466,13 @@
         "pnl": "PNL",
         "fee": "수수료:",
         "rabbyFeeTips": "Rabby 수수료: 0.04%",
-        "providerFeeTips": "하이퍼리퀴드 수수료: {{fee}}"
+        "providerFeeTips": "하이퍼리퀴드 수수료: {{fee}}",
+        "receive": "받기:",
+        "closedPnl": "닫힌 PNL:",
+        "amount": "금액",
+        "confirm": "확인",
+        "minimumWarning": "최소 금액은 {{percent}}%입니다.",
+        "total": "총계"
       },
       "PerpsOpenPositionPopup": {
         "minimumOrderSize": "최소 주문 크기는 $10입니다.",
@@ -2450,7 +2486,12 @@
         "autoClose": "자동 닫기",
         "sizeTips": "당신의 거래의 총 가치 또는 수량으로, 마진 및 레버리지에 의해 설정됩니다.",
         "insufficientBalance": "잔액 부족",
-        "tpPrice": "이익 실현 가격"
+        "tpPrice": "이익 실현 가격",
+        "takeProfitWhenPriceAbove": "가격이 위에 있을 때 이익 실현",
+        "stopLossWhenPriceAbove": "가격이 위에 있을 때 손절매",
+        "stopLossWhenPriceBelow": "가격이 아래로 내려갈 때 손실 제한",
+        "stopLossWhen": "손절매 시",
+        "takeProfitWhenPriceBelow": "가격이 아래일 때 이익 실현"
       },
       "PerpsOpenPositionCheckPopup": {
         "initialMargin": "초기 증거금",
@@ -2469,7 +2510,10 @@
         "margin": "마진(격리)",
         "providerFeeTips": "하이퍼리퀴드 수수료: {{fee}}",
         "sizeTips": "거래의 총 가치 또는 수량으로, 마진 및 레버리지에 의해 설정됩니다.",
-        "liquidationPriceTips": "관계 유지 마진 수준 이하로 마진이 떨어졌을 때, 추가 손실을 방지하기 위해 거래소에서 귀하의 포지션이 자동으로 청산되는 가격입니다."
+        "liquidationPriceTips": "관계 유지 마진 수준 이하로 마진이 떨어졌을 때, 추가 손실을 방지하기 위해 거래소에서 귀하의 포지션이 자동으로 청산되는 가격입니다.",
+        "free": "무료",
+        "rabbyFee": "Rabby 수수료",
+        "providerFee": "하이퍼리퀴드 수수료"
       },
       "action": {
         "long": "롱",
@@ -2483,7 +2527,31 @@
         "tpPrice": "이익 실현 가격",
         "setSlPrice": "손절가 설정",
         "setTpPrice": "이익 실현 가격 설정",
-        "slPrice": "손절가"
+        "slPrice": "손절가",
+        "currentPrice": "현재 {{price}}",
+        "priceBelow": "가격 아래",
+        "priceReaches": "가격 도달",
+        "takeProfitExpectedPNL": "이익 실현 예상 PNL",
+        "EntryAndCurrentPrice": "진입 {{entryPrice}} 현재 {{price}}",
+        "priceAbove": "가격 상승",
+        "youGain": "당신의 수익",
+        "stopLossExpectedPNL": "손실 방지 예상 PNL",
+        "youLoss": "당신의 손실",
+        "stopLossWhen": "손절매 시",
+        "takeProfitWhen": "이익 실현 시"
+      },
+      "PerpsEditMarginPopup": {
+        "title": "마진 조정",
+        "currentPrice": "현재 가격",
+        "perpsBalance": "Perps 잔액",
+        "addMargin": "마진 추가",
+        "amountToAdd": "추가할 금액",
+        "insufficientMargin": "불충분한 마진",
+        "reduceMargin": "마진 축소",
+        "amountToReduce": "줄이려는 금액",
+        "insufficientMarginToReduce": "포지션을 줄이기에 충분한 마진이 없습니다.",
+        "available": "사용 가능",
+        "liqPrice": "청산 가격:"
       }
     },
     "devUIBuiltInPages": {
@@ -2591,7 +2659,9 @@
         "availableToBorrow": "대출 가능",
         "maxAmount": "이것은 제공한 모든 담보를 기반으로 당신이 빌릴 수 있는 최대 금액입니다. 당신의 총 차입 가능 금액은 각 담보 자산의 시장 가치에 해당 자산의 Max LTV를 곱한 다음 결과를 합산하여 계산됩니다.",
         "availableToBorrowDesc": "담보로 제공한 자산을 기반으로 대출할 수 있으며, 대출 한도에 도달할 때까지 가능합니다.",
-        "lqDesc": "청산이 발생하면 청산자는 차용자를 대신하여 미결제 차입 금액의 최대 50%를 상환합니다. 그 대가로 그들은 담보를 할인된 가격에 구매할 수 있으며, 차액(청산 벌금)을 보너스로 유지할 수 있습니다."
+        "lqDesc": "청산이 발생하면 청산자는 차용자를 대신하여 미결제 차입 금액의 최대 50%를 상환합니다. 그 대가로 그들은 담보를 할인된 가격에 구매할 수 있으며, 차액(청산 벌금)을 보너스로 유지할 수 있습니다.",
+        "isolatedDesc": "이 자산은 고립 모드에서만 담보로 사용될 수 있으며, 여기서 다른 자산 담보를 공급하여 대출할 수 없습니다. 고립 모드에서 담보로 사용되는 자산은 특정 부채 한도 내에서만 대출할 수 있습니다.",
+        "isolatedTitle": "자산을 담보로 사용할 수 없습니다."
       },
       "apy": "APY",
       "borrowed": "빌려진",
@@ -2604,7 +2674,8 @@
       "estDailyEarning": "예상 일일 수익",
       "hf": "건강 지수",
       "hfTitle": "건강 지수",
-      "enterAmount": "금액 입력"
+      "enterAmount": "금액 입력",
+      "isolated": "격리된"
     }
   },
   "global": {

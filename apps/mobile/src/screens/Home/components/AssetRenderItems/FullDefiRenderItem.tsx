@@ -23,6 +23,9 @@ import { usePortfolios } from '../../hooks/usePortfolio';
 import { useAssets } from '@/screens/Search/useAssets';
 import { refreshHistoryIdAtom } from '../../SingleHomeRightArea';
 import { useSetAtom } from 'jotai';
+import { dappService } from '@/core/services';
+import { CHAINS_ENUM } from '@debank/common';
+import { findChain } from '@/utils/chain';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -37,12 +40,14 @@ interface Props {
   account?: KeyringAccountWithAlias;
   showAccount?: boolean;
   style?: StyleProp<ViewStyle>;
+  disableAction?: boolean;
 }
 export const FullDefiRenderItem = ({
   data,
   account,
   showAccount,
   style,
+  disableAction,
 }: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const setRefreshHistoryId = useSetAtom(refreshHistoryIdAtom);
@@ -58,6 +63,13 @@ export const FullDefiRenderItem = ({
     if (data?.site_url) {
       openTab(data?.site_url);
       const origin = safeGetOrigin(data?.site_url);
+      const chain = findChain({ serverId: data.chain });
+      dappService.patchDapps({
+        [origin]: {
+          currentAccount: account,
+          chainId: isFromAppChain ? undefined : chain?.enum || CHAINS_ENUM.ETH,
+        },
+      });
       if (origin) {
         matomoRequestEvent({
           category: 'Websites Usage',
@@ -66,7 +78,7 @@ export const FullDefiRenderItem = ({
         });
       }
     }
-  }, [data?.site_url, openTab]);
+  }, [account, data.chain, data?.site_url, isFromAppChain, openTab]);
 
   const sectionsMultiProject = useMemo(() => {
     if (!account) {
@@ -195,6 +207,7 @@ export const FullDefiRenderItem = ({
             onRefresh={handleRefresh}
             address={account.address}
             addressType={account.type}
+            disableAction={disableAction}
             manageAction={
               config?.[data.id]?.showManage &&
               config[data.id]?.showManage(item, account)

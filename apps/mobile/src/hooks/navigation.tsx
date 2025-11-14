@@ -104,7 +104,8 @@ export const useStackScreenConfig = () => {
   const mergeScreenOptions = useCallback(
     (...optsList: Partial<ScreenOptions>[]) => {
       const screenOptions: ScreenOptions = {
-        animation: 'slide_from_right',
+        animation: IS_IOS ? 'slide_from_right' : 'none',
+        animationDuration: 200,
         ...headerPresets.onlyTitle,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
@@ -145,7 +146,8 @@ export const useStackScreenConfig = () => {
   const mergeScreenOptions2024 = useCallback(
     (optsList: Partial<ScreenOptions>[], options?: any) => {
       const screenOptions: ScreenOptions = {
-        animation: 'slide_from_right',
+        animation: IS_IOS ? 'slide_from_right' : 'none',
+        animationDuration: 200,
         ...headerPresets.onlyTitle,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),

@@ -1317,6 +1317,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "ถ่าย screenshot ได้ตลอดเวลาเพื่อรายงานข้อบกพร่องอย่างรวดเร็ว"
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "เลื่อนขวาเพื่อดูสินทรัพย์ทั้งหมด"
       }
     },
     "switchChain": {
@@ -2149,7 +2152,10 @@
           "amount": "จำนวน"
         },
         "pools": "พูล"
-      }
+      },
+      "price": "ราคา",
+      "headerBalanceText": "ยอดเงิน",
+      "headerTokenValueText": "ค่าโทเค็น"
     },
     "setting": {
       "aboutUs": "เกี่ยวกับเรา",
@@ -2578,7 +2584,8 @@
         "stopLossTipsShort": "ราคาหยุดขาดทุนต้องสูงกว่าราคาปัจจุบัน",
         "profit": "กำไร",
         "takeProfitTipsShort": "ราคาทำกำไรต้องต่ำกว่าราคาปัจจุบัน",
-        "stopLossTipsShortLiquidation": "ราคาอยู่สูงกว่าราคาลLiquidation ({{price}})"
+        "stopLossTipsShortLiquidation": "ราคาอยู่สูงกว่าราคาลLiquidation ({{price}})",
+        "noPosition": "คุณต้องป้อนมาร์จิ้นก่อน"
       },
       "PerpsDepositTokenModal": {
         "directTag": "ฝากตรง",
@@ -2634,7 +2641,30 @@
       "regionNotSupport": "การเปิดตำแหน่งไม่ได้รับการสนับสนุนในภูมิภาคของคุณ",
       "deleteAgentSuccess": "ลบตัวแทนเรียบร้อยแล้ว",
       "leverageRangeMaxError": "เลเวอเรจสูงสุดคือ {{max}}x",
-      "deleteAgentModal": "คุณได้ถึงจำนวนตัวแทนสูงสุดแล้ว คุณต้องลบตัวแทนที่มีอยู่เพื่อสร้างตัวแทนใหม่หรือไม่?"
+      "deleteAgentModal": "คุณได้ถึงจำนวนตัวแทนสูงสุดแล้ว คุณต้องลบตัวแทนที่มีอยู่เพื่อสร้างตัวแทนใหม่หรือไม่?",
+      "searchPerpsPopup": {
+        "searchPlaceholder": "ค้นหา Perps",
+        "searchPosition": "ค้นหาโพสิชั่น",
+        "openPosition": "เปิดตำแหน่ง",
+        "empty": "ไม่พบผลลัพธ์",
+        "searchPerps": "ค้นหา Perps"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "safe": "ปลอดภัย",
+          "warning": "คำเตือน",
+          "danger": "อันตราย"
+        },
+        "liquidationPrice": "ราคา Liquidation",
+        "title": "ระดับความเสี่ยง",
+        "currentPrice": "ราคาปัจจุบัน",
+        "distanceLabel": "ระยะทางการชำระบัญชี",
+        "subtitle": "ระยะห่างจากการถูกล้างออกแบบเรียลไทม์ (%)",
+        "liqIntro": "Liquidation Distance (%) แสดงให้เห็นว่าราคาปัจจุบันห่างจากราคาการปรับไข่ของคุณเท่าไหร่ ระยะทางที่มากขึ้นแสดงถึงตำแหน่งที่ปลอดภัยกว่า ในขณะที่ระยะทางที่น้อยกว่าหมายถึงความเสี่ยงในการปรับไข่ที่สูงขึ้น"
+      },
+      "closeAllConfirmTitle": "ยืนยันการปิดสถานะทั้งหมด",
+      "closeAll": "ปิดทั้งหมด",
+      "closeAllConfirmMessage": "ตำแหน่งที่เปิดของคุณทั้งหมดจะถูกปิดที่ราคาตลาด"
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2680,7 +2710,13 @@
         "fee": "ค่าธรรมเนียม:",
         "rabbyFeeTips": "ค่าธรรมเนียม Rabby: 0.04%",
         "positionSize": "ขนาดตำแหน่ง",
-        "pnl": "PNL"
+        "pnl": "PNL",
+        "total": "ทั้งหมด",
+        "amount": "จำนวน",
+        "confirm": "ยืนยัน",
+        "minimumWarning": "จำนวนขั้นต่ำคือ {{percent}}%",
+        "receive": "รับ:",
+        "closedPnl": "Closed PNL:"
       },
       "PerpsOpenPositionPopup": {
         "size": "ขนาด",
@@ -2694,7 +2730,12 @@
         "insufficientBalance": "ยอดคงเหลือน้อยเกินไป",
         "maximumOrderSize": "ขนาดคำสั่งสูงสุดคือ {{amount}}",
         "sizeTips": "มูลค่าหรือปริมาณรวมของการซื้อขายของคุณ ตั้งโดยมาร์จินและเลเวอเรจ",
-        "invalidNumber": "กรุณาใส่หมายเลขที่ถูกต้อง"
+        "invalidNumber": "กรุณาใส่หมายเลขที่ถูกต้อง",
+        "stopLossWhen": "หยุดขาดทุนเมื่อ",
+        "stopLossWhenPriceBelow": "หยุดขาดทุนเมื่อราคาต่ำกว่า",
+        "takeProfitWhenPriceBelow": "ทำกำไรเมื่อราคาต่ำกว่า",
+        "stopLossWhenPriceAbove": "หยุดขาดทุนเมื่อราคาสูงกว่า",
+        "takeProfitWhenPriceAbove": "ทำกำไรเมื่อราคาสูงกว่า"
       },
       "PerpsOpenPositionCheckPopup": {
         "fee": "ค่าธรรมเนียม",
@@ -2713,7 +2754,10 @@
         "rabbyFeeTips": "ค่าธรรมเนียม Rabby: 0%",
         "margin": "มาร์จิ้น (แยก)",
         "providerFeeTips": "ค่าใช้จ่ายของ Hyperliquid: {{fee}}",
-        "perps": "Perps"
+        "perps": "Perps",
+        "free": "ฟรี",
+        "rabbyFee": "ค่าธรรมเนียม Rabby",
+        "providerFee": "ค่าธรรมเนียม Hyperliquid"
       },
       "action": {
         "short": "ขายทำกำไร",
@@ -2727,7 +2771,31 @@
         "setTpPrice": "ตั้งราคา Take-Profit",
         "entryPrice": "ราค entrada:",
         "tpPrice": "ราคาทำกำไร",
-        "slPrice": "ราคาหยุดขาดทุน"
+        "slPrice": "ราคาหยุดขาดทุน",
+        "youGain": "คุณได้รับ",
+        "takeProfitExpectedPNL": "คาดหวังกำไรจาก PNL",
+        "priceReaches": "ราคาถึง",
+        "priceAbove": "ราคาเกิน",
+        "youLoss": "คุณขาดทุน",
+        "priceBelow": "ราคาอยู่ต่ำกว่า",
+        "currentPrice": "ปัจจุบัน {{price}}",
+        "stopLossExpectedPNL": "คาดการณ์ PNL ที่หยุดการขาดทุน",
+        "EntryAndCurrentPrice": "เข้า {{entryPrice}} ปัจจุบัน {{price}}",
+        "takeProfitWhen": "ทำกำไรเมื่อ",
+        "stopLossWhen": "หยุดการขาดทุนเมื่อ"
+      },
+      "PerpsEditMarginPopup": {
+        "currentPrice": "ราคาในปัจจุบัน",
+        "title": "ปรับมาร์จิ้น",
+        "reduceMargin": "ลดมาร์จิ้น",
+        "available": "มีอยู่",
+        "perpsBalance": "ยอดคงเหลือ Perps",
+        "amountToReduce": "จำนวนที่ลดลง",
+        "amountToAdd": "จำนวนที่จะเพิ่ม",
+        "addMargin": "เพิ่มมาร์จิ้น",
+        "insufficientMargin": "ขอบเขตไม่เพียงพอ",
+        "insufficientMarginToReduce": "มาร์จินไม่เพียงพอที่จะลดตำแหน่ง.",
+        "liqPrice": "Liq. Price:"
       }
     },
     "devUIBuiltInPages": {
@@ -2835,7 +2903,9 @@
         "availableToBorrow": "สามารถยืมได้",
         "maxAmount": "นี่คือจำนวนสูงสุดที่คุณสามารถกู้ได้ตามหลักประกันที่คุณ提供ทั้งหมด พลังการกู้ยืมรวมของคุณคำนวณโดยการคูณมูลค่าตลาดของแต่ละสินทรัพย์หลักประกันด้วย Max LTV ของมัน จากนั้นรวมผลลัพธ์ทั้งหมดเข้าด้วยกัน",
         "availableToBorrowDesc": "คุณสามารถกู้ยืมตามที่คุณได้เสนอไว้เป็นหลักประกันและจนกว่าจะถึงขีดจำกัดการกู้ยืม",
-        "lqDesc": "เมื่อเกิดการชำระบัญชี ผู้ชำระบัญชีจะชำระคืนสูงสุดถึง 50% ของจำนวนเงินที่กู้ยืมค้างชำระในนามของผู้กู้ โดยแลกเปลี่ยน ผู้ชำระบัญชีสามารถซื้อตัวเงินประกันในราคาลดและเก็บส่วนต่าง (ค่าปรับในการชำระบัญชี) เป็นโบนัสได้"
+        "lqDesc": "เมื่อเกิดการชำระบัญชี ผู้ชำระบัญชีจะชำระคืนสูงสุดถึง 50% ของจำนวนเงินที่กู้ยืมค้างชำระในนามของผู้กู้ โดยแลกเปลี่ยน ผู้ชำระบัญชีสามารถซื้อตัวเงินประกันในราคาลดและเก็บส่วนต่าง (ค่าปรับในการชำระบัญชี) เป็นโบนัสได้",
+        "isolatedTitle": "สินทรัพย์ไม่สามารถใช้เป็นหลักประกันได้",
+        "isolatedDesc": "สินทรัพย์นี้สามารถใช้เป็นหลักประกันในโหมดการแยกเท่านั้น ซึ่งคุณไม่สามารถจัดเตรียมหลักประกันสินทรัพย์อื่นสำหรับการกู้ยืมได้ สินทรัพย์ที่ใช้เป็นหลักประกันในโหมดการแยกสามารถกู้ยืมได้เพียงถึงเพดานหนี้ที่กำหนดเท่านั้น"
       },
       "gotIt": "ได้เลย",
       "market": "ตลาด",
@@ -2848,7 +2918,8 @@
       "netWorth": "มูลค่าทรัพย์สินสุทธิ",
       "hfTitle": "Health Factor",
       "enterAmount": "ป้อนจำนวน",
-      "hf": "ปัจจัยสุขภาพ"
+      "hf": "ปัจจัยสุขภาพ",
+      "isolated": "แยกออก"
     }
   },
   "native": {
