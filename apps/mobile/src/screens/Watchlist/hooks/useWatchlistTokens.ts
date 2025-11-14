@@ -3,7 +3,7 @@ import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { preferenceService } from '@/core/services';
 import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
   const chunks: IManageToken[][] = [];
@@ -96,4 +96,19 @@ export const useWatchlistTokens = () => {
     hasData,
     loading,
   };
+};
+
+export const useWatchListTokenBadge = () => {
+  const { handleFetchTokens, data } = useWatchlistTokens();
+
+  const last3Token = useMemo(
+    () => (data.length >= 3 ? data.slice(0, 3) : data),
+    [data],
+  );
+
+  useEffect(() => {
+    handleFetchTokens();
+  }, [handleFetchTokens]);
+
+  return last3Token;
 };

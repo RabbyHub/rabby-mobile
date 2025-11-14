@@ -15,7 +15,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetScrollView,
+  TouchableWithoutFeedback,
+} from '@gorhom/bottom-sheet';
 import { useAppState } from '@react-native-community/hooks';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +31,9 @@ import {
   AndroidSoftInputModes,
   KeyboardController,
 } from 'react-native-keyboard-controller';
+import { BrowserHot } from './BrowserHot';
+import { BrowserFavorite } from './BrowserFavorite';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function BrowserSearch({
   onClose,
@@ -47,16 +53,17 @@ export function BrowserSearch({
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
-  const { androidOnlyBottomOffset } = useSafeSizes();
+  // const { androidOnlyBottomOffset } = useSafeSizes();
+  const { bottom } = useSafeAreaInsets();
 
   const { t } = useTranslation();
   const { list } = useSearchDapps(searchText);
 
-  const { browserHistoryList } = useBrowserHistory();
+  const { browserHistorySectionList } = useBrowserHistory();
 
   const displayedBrowserHistoryList = useMemo(() => {
-    return browserHistoryList.slice(0, 10);
-  }, [browserHistoryList]);
+    return browserHistorySectionList.flatMap(e => e.data);
+  }, [browserHistorySectionList]);
 
   const isValidDomain = useMemo(() => {
     const pared = parse(searchText);
@@ -190,20 +197,49 @@ export function BrowserSearch({
             </TouchableWithoutFeedback>
           </View>
         ) : (
-          <BrowserRecent
-            isInBottomSheet
-            list={displayedBrowserHistoryList}
-            onPress={dapp => {
-              handleOpenUrl(dapp.url || dapp.origin);
-              if (dapp.origin) {
-                matomoRequestEvent({
-                  category: 'Websites Usage',
-                  action: 'Website_Visit_Recent List',
-                  label: dapp.origin,
-                });
-              }
-            }}
-          />
+          <BottomSheetScrollView
+            contentContainerStyle={{ gap: 24, paddingHorizontal: 20 }}>
+            <BrowserFavorite
+              isInBottomSheet
+              onPress={dapp => {
+                handleOpenUrl(dapp.url || dapp.origin);
+                if (dapp.origin) {
+                  matomoRequestEvent({
+                    category: 'Websites Usage',
+                    action: 'Website_Visit_Favorite List',
+                    label: dapp.origin,
+                  });
+                }
+              }}
+            />
+            <BrowserHot
+              onPress={dapp => {
+                handleOpenUrl(dapp.url || dapp.origin);
+                if (dapp.origin) {
+                  matomoRequestEvent({
+                    category: 'Websites Usage',
+                    action: 'Website_Visit_Hot List',
+                    label: dapp.origin,
+                  });
+                }
+              }}
+            />
+            <BrowserRecent
+              isInBottomSheet
+              list={displayedBrowserHistoryList}
+              onPress={dapp => {
+                handleOpenUrl(dapp.url || dapp.origin);
+                if (dapp.origin) {
+                  matomoRequestEvent({
+                    category: 'Websites Usage',
+                    action: 'Website_Visit_Recent List',
+                    label: dapp.origin,
+                  });
+                }
+              }}
+            />
+            <View style={{ height: 100 }} />
+          </BottomSheetScrollView>
         )
       ) : (
         <BrowserSearchResult
@@ -222,7 +258,11 @@ export function BrowserSearch({
         style={[
           styles.footer,
           {
-            marginBottom: androidOnlyBottomOffset,
+            position: 'absolute',
+            right: 0,
+            bottom: 0,
+            marginTop: 'auto',
+            paddingBottom: bottom || 12,
             // marginBottom:
             //   Platform.OS === 'android' ? androidOnlyBottomOffset : 20,
           },

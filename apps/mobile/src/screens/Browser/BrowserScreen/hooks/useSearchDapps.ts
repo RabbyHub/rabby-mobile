@@ -19,7 +19,7 @@ export const useSearchDapps = (searchText: string) => {
     wait: 350,
   });
 
-  const { data, loadMore } = useInfiniteScroll<{
+  const { data, loadMore, loading } = useInfiniteScroll<{
     list: BasicDappInfo[];
     page?: {
       limit: number;
@@ -106,5 +106,6 @@ export const useSearchDapps = (searchText: string) => {
     loadMore,
     currentURL: url,
     returnKeyType,
+    loading,
   };
 };

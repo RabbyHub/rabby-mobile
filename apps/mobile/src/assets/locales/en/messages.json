@@ -2043,6 +2043,10 @@
         "searching": "Results for",
         "searchTips": "Search the web"
       },
+      "globalSearch": {
+        "placeHolder": "Search Dapp/Token",
+        "iosPlaceHolder": "Search Website/Token"
+      },
       "hotTokenList": {
         "title": "Hot"
       }
@@ -2174,9 +2178,12 @@
         "disconnect": "Disconnect"
       },
       "BrowserSearch": {
+        "favorite": "Favorite",
+        "hot": "Hot",
         "recent": "Recent",
         "searchInGoogle": "Search \"{{searchText}}\" in Google",
         "openUrl": "Open \"{{searchText}}\"",
+        "otherResults": "Other Results",
         "results": "Results",
         "placeholder": "Search Websites",
         "recentEmpty": "Starting Exploring Website"
@@ -2989,6 +2996,8 @@
     "cancel": "Cancel",
     "Paste": "Paste",
     "Price": "Price",
+    "Token": "Token",
+    "Dapp": "Dapp",
     "time": {
       "hour": "{{t}} hour",
       "hours": "{{t}} hours",

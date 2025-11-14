@@ -93,6 +93,7 @@ import { TokenMarketInfoScreen } from './screens/TokenDetail/TokenMarketInfoScre
 import { ModalsSubmitFeedbackByScreenshotStub } from './components/Screenshot/ScreenshotModal';
 import { GlobalTipsPopup } from './components2024/GlobalTipsPopup';
 import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
+import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottomSheet';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -537,6 +538,7 @@ export default function AppNavigation({
           </HomeHiddenTabStack.Navigator>
           <BiometricsStubModal />
           <ApprovalTokenDetailSheetModalStub />
+          <GlobalSearchBottomSheet />
           <BottomSheetBrowser />
           <BrowserManagePopup />
         </NavigationContainer>

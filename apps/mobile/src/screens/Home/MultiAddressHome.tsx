@@ -5,12 +5,13 @@ import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
-import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
-import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
+import RcIconSendCC from '@/assets2024/icons/home/icon-send-cc.svg';
+import RcIconSwapCC from '@/assets2024/icons/home/icon-swap-cc.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
+import RcIconDapps from '@/assets2024/icons/home/IconDappsCC.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
@@ -34,6 +35,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ViewStyle,
 } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -84,7 +86,6 @@ import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { colord } from 'colord';
@@ -105,7 +106,13 @@ import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 import { LendingHF } from './components/LendingHF';
 import { useLendingData } from '../Lending/hooks';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
-import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
+import { GradientOutlineContainer } from '@/components2024/GradientOutlineContainer';
+import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
+import { PointsBadge } from '../Points/components/PointsBadge';
+import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { GlobalSearchBar } from '../Search/components/SearchBar';
+import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -131,7 +138,13 @@ function MultiAddressHome(): JSX.Element {
   const hasClaimedGift = gasAccountService.getHasClaimedGift();
   const { width } = Dimensions.get('window');
   const itemWidth =
-    (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
+    (width -
+      ITEM_LAYOUT_PADDING_HORIZONTAL * 2 -
+      8 * 2 -
+      1.5 * 2 -
+      ITEM_GRID_GAP -
+      2) /
+    2;
   // use useMemo to directly calculate isEligible so that it can respond to related state changes
   const isEligible = useMemo(() => {
     return (
@@ -152,16 +165,16 @@ function MultiAddressHome(): JSX.Element {
   const MENU_ARR = useMemo(
     () =>
       [
-        {
-          key: MultiHomeFeatTitle.Swap,
-          title: t('page.home.services.swap'),
-          icon: RcIconSwapCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Send,
-          title: t('page.home.services.send'),
-          icon: RcIconSendCC,
-        },
+        // {
+        //   key: MultiHomeFeatTitle.Swap,
+        //   title: t('page.home.services.swap'),
+        //   icon: RcIconSwapCC,
+        // },
+        // {
+        //   key: MultiHomeFeatTitle.Send,
+        //   title: t('page.home.services.send'),
+        //   icon: RcIconSendCC,
+        // },
         {
           key: MultiHomeFeatTitle.Receive,
           title: t('page.home.services.receive'),
@@ -207,6 +220,13 @@ function MultiAddressHome(): JSX.Element {
           badge: alertInfo.total,
         },
         {
+          key: MultiHomeFeatTitle.Dapps,
+          title: IS_IOS
+            ? t('page.home.services.websites')
+            : t('page.home.services.dapps'),
+          icon: RcIconDapps,
+        },
+        {
           key: MultiHomeFeatTitle.GasAccount,
           title: t('page.home.services.gasAccount'),
           icon: RcIconGasAccountCC,
@@ -214,13 +234,6 @@ function MultiAddressHome(): JSX.Element {
         },
         // __DEV__ && {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
-        //   icon: RcIconDapps,
-        // },
-        // {
-        //   key: MultiHomeFeatTitle.Dapps,
-        //   title: IS_IOS
-        //     ? t('page.home.services.websites')
-        //     : t('page.home.services.dapps'),
         //   icon: RcIconDapps,
         // },
         {
@@ -249,6 +262,47 @@ function MultiAddressHome(): JSX.Element {
       alertInfo.total,
       isEligible,
     ],
+  );
+
+  const swapButtonShadow = useMemo<ViewStyle>(() => {
+    return (Platform.select({
+      ios: {
+        shadowColor: 'rgba(112, 132, 255, 1)',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 3,
+      },
+      default: {},
+    }) || {}) as ViewStyle;
+  }, []);
+
+  const PRIMARY_ACTIONS = useMemo(
+    () =>
+      [
+        {
+          key: MultiHomeFeatTitle.Send,
+          title: t('page.home.services.send'),
+          icon: RcIconSendCC,
+          backgroundColor: colors2024['green-default'],
+        },
+        {
+          key: MultiHomeFeatTitle.Swap,
+          title: t('page.home.services.swap'),
+          icon: RcIconSwapCC,
+          backgroundColor: colors2024['brand-default-icon'],
+          extraStyle: swapButtonShadow,
+        },
+      ] as Array<{
+        key: MultiHomeFeatTitle;
+        title: string;
+        icon: React.FC<import('react-native-svg').SvgProps>;
+        backgroundColor: string;
+        extraStyle?: ViewStyle;
+      }>,
+    [colors2024, swapButtonShadow, t],
   );
 
   useEffect(() => {
@@ -521,6 +575,19 @@ function MultiAddressHome(): JSX.Element {
     });
   }, [navigation]);
 
+  const { setPartialBrowserState, forceShowBrowser } = useBrowser();
+
+  const openDapps = useMemoizedFn(() => {
+    setPartialBrowserState({
+      isShowBrowser: true,
+      isShowSearch: true,
+      searchText: '',
+      searchTabId: '',
+      trigger: 'home',
+    });
+    forceShowBrowser();
+  });
+
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
       switch (key) {
@@ -610,11 +677,16 @@ function MultiAddressHome(): JSX.Element {
             params: {},
           });
           break;
+
+        case MultiHomeFeatTitle.Dapps: {
+          openDapps();
+          break;
+        }
         default:
           break;
       }
     },
-    [handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
+    [openDapps, handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
   );
 
   const { showTipsDollarDialog } = useTipsDollarDialog();
@@ -627,6 +699,9 @@ function MultiAddressHome(): JSX.Element {
       isSuccess?: boolean;
       showGiftIcon?: boolean;
     }) => {
+      if (el.key === MultiHomeFeatTitle.Watchlist) {
+        return <WatchListBadge />;
+      }
       if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
         return (
           <TouchableOpacity onPress={showTipsDollarDialog}>
@@ -650,6 +725,14 @@ function MultiAddressHome(): JSX.Element {
 
       if (el.key === MultiHomeFeatTitle.Lending) {
         return <LendingHF />;
+      }
+
+      if (el.key === MultiHomeFeatTitle.Points) {
+        return <PointsBadge />;
+      }
+
+      if (el.key === MultiHomeFeatTitle.Dapps) {
+        return <DappsBadge />;
       }
 
       return (
@@ -757,7 +840,7 @@ function MultiAddressHome(): JSX.Element {
         end: { x: 0.5, y: 0.26 },
       }}
       overwriteStyle={styles.screenContainer}>
-      {/* {__DEV__ && <HomeGuidanceMultipleTabs />} */}
+      <ScreenSpecificStatusBar screenName={RootNames.Home} />
       <View style={styles.paddingContainer}>
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -807,36 +890,79 @@ function MultiAddressHome(): JSX.Element {
           </View>
 
           <View style={[{ marginTop: 0 }, styles.grid]}>
-            {MENU_ARR.map((el, index) => {
-              return (
-                <TouchableOpacity
-                  style={StyleSheet.flatten([
-                    styles.gridItem,
-                    { width: itemWidth },
-                  ])}
-                  key={index}
-                  onPress={() => {
-                    handleClickMenu(el.key);
-                    matomoRequestEvent({
-                      category: 'Click_Services',
-                      action: `Click_${el.key}`,
-                    });
-                  }}>
-                  <View style={styles.iconWrapper}>
-                    <el.icon
-                      width={28}
-                      height={28}
-                      color={el.color || colors2024['brand-default-icon']}
-                    />
-                    {generateCustomBadgeIcon(el)}
-                  </View>
-                  <Text style={styles.gridText}>{el.title}</Text>
-                </TouchableOpacity>
-              );
-            })}
+            <GradientOutlineContainer contentStyle={styles.gridGradientOutline}>
+              <View style={styles.primaryActionsContainer}>
+                {PRIMARY_ACTIONS.map(action => {
+                  const ActionIcon = action.icon;
+                  return (
+                    <TouchableOpacity
+                      key={action.key}
+                      style={[
+                        styles.primaryActionButton,
+                        { backgroundColor: action.backgroundColor },
+                        action.extraStyle,
+                      ]}
+                      onPress={() => {
+                        handleClickMenu(action.key);
+                        matomoRequestEvent({
+                          category: 'Click_Services',
+                          action: `Click_${action.key}`,
+                        });
+                      }}>
+                      <ActionIcon
+                        width={22}
+                        height={22}
+                        color={colors2024['neutral-InvertHighlight']}
+                      />
+                      <Text style={styles.primaryActionText}>
+                        {action.title}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <View style={styles.gridItemsWrap}>
+                {MENU_ARR.map((el, index) => {
+                  return (
+                    <TouchableOpacity
+                      style={StyleSheet.flatten([
+                        styles.gridItem,
+                        { width: itemWidth },
+                      ])}
+                      key={index}
+                      onPress={() => {
+                        handleClickMenu(el.key);
+                        matomoRequestEvent({
+                          category: 'Click_Services',
+                          action: `Click_${el.key}`,
+                        });
+                      }}>
+                      <View style={styles.badgeWrapper}>
+                        <View style={styles.iconWrapper}>
+                          <el.icon
+                            width={22}
+                            height={22}
+                            color={el.color || colors2024['brand-default-icon']}
+                          />
+                        </View>
+                        <View style={styles.rightBadgeWrapper}>
+                          {generateCustomBadgeIcon(el)}
+                        </View>
+                      </View>
+                      <Text style={styles.gridText}>{el.title}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </GradientOutlineContainer>
+            <BrowserSearchEntry alwaysShowSearch={false} />
+            <View style={styles.searchBarPlaceholder} />
           </View>
-          <BrowserSearchEntry />
         </ScrollView>
+
+        <View style={styles.globalSearchBar}>
+          <GlobalSearchBar />
+        </View>
       </View>
     </NormalScreenContainer2024>
   );
@@ -844,7 +970,7 @@ function MultiAddressHome(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   screenContainer: {
-    paddingTop: 64,
+    paddingTop: 0,
   },
   paddingContainer: {
     paddingHorizontal: 0,
@@ -878,6 +1004,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
   },
   scrollContainer: {
+    paddingTop: 64,
     flexGrow: 1,
     minHeight: '100%',
   },
@@ -911,18 +1038,27 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
   },
-  iconWrapper: {
+  badgeWrapper: {
     display: 'flex',
     flexDirection: 'row',
     width: '100%',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  badgeStyle: {
-    // width: 20,
-    // height: 20,
-    // lineHeight: 20,
+  iconWrapper: {
+    height: 36,
+    width: 36,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+  rightBadgeWrapper: {
+    position: 'relative',
+    right: -4,
+    alignSelf: 'flex-start',
+  },
+  badgeStyle: {},
   headerText: {
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
@@ -983,30 +1119,68 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 0,
   },
   grid: {
+    // flexDirection: 'row',
+    // flexWrap: 'wrap',
+    // borderRadius: 8,
+    // gap: ITEM_GRID_GAP,
+    // justifyContent: 'space-between',
+    // alignItems: 'flex-start',
+    width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    // paddingHorizontal: 8,
+    // paddingVertical: 12,
+    // paddingTop: 16,re
+  },
+  gridGradientOutline: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 8,
+    paddingTop: 16,
+    paddingBottom: 12,
+    width: '100%',
+    gap: 16,
+  },
+  gridItemsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     borderRadius: 8,
-    gap: ITEM_GRID_GAP,
+    rowGap: ITEM_GRID_GAP + 2,
+    columnGap: ITEM_GRID_GAP,
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     width: '100%',
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
   },
+  primaryActionsContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  primaryActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderRadius: 10,
+    height: 52,
+    paddingHorizontal: 16,
+  },
+  primaryActionText: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+  },
+
   gridItem: {
-    borderWidth: 2,
-    borderColor: isLight
-      ? colors2024['neutral-InvertHighlight']
-      : 'transparent',
     backgroundColor: isLight
-      ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
+      ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     width: '48%', // default
     minWidth: 0,
     borderRadius: 16,
     flexShrink: 0,
-    padding: 18,
-    paddingLeft: 20,
-    paddingBottom: 16,
+    padding: 16,
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'center',
@@ -1244,6 +1418,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: -16,
+  },
+  searchBarPlaceholder: {
+    height: 80,
+  },
+  globalSearchBar: {
+    position: 'absolute',
+    left: 8,
+    right: 8,
+    bottom: 22,
   },
 }));
 
