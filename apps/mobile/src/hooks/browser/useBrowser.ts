@@ -238,8 +238,10 @@ export function useBrowser() {
       url: string,
       options?: {
         isDapp?: boolean;
+        isNewTab?: boolean;
       },
     ) => {
+      const { isNewTab = false } = options || {};
       if (!url?.trim() || !/^https?:\/\//.test(url)) {
         // switchToTab(emptyTab.id);
         return;
@@ -256,9 +258,11 @@ export function useBrowser() {
         newTab.url,
       );
 
-      const sameOriginTab = displayedTabs.find(
-        item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
-      );
+      const sameOriginTab = isNewTab
+        ? undefined
+        : displayedTabs.find(
+            item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
+          );
 
       if (sameOriginTab && !isGoogle(targetOrigin)) {
         switchToTab(sameOriginTab.id);
