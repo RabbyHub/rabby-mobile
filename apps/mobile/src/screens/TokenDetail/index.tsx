@@ -280,7 +280,7 @@ const TokenDetailContent = () => {
       setReachTop(status);
       Animated.timing(fadeAnim, {
         toValue: status ? 1 : 0,
-        duration: 100,
+        duration: 10,
         useNativeDriver: true,
       }).start();
     },
