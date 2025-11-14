@@ -152,7 +152,7 @@ export const PortfolioList = ({
       updatePortfolio();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused]);
+  }, [isFocused, currentAccount?.address]);
 
   const renderItem = useCallback(
     props => {
