@@ -149,6 +149,7 @@ const TokenDetailContent = () => {
         chainSize={15}
         borderChain
         token={token}
+        showCopyIcon
       />
     );
   }, [effectiveAccount?.address, token]);
