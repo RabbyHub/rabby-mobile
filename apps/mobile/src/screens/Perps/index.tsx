@@ -106,8 +106,8 @@ export const PerpsScreen = () => {
 
   useEffect(() => {
     if (_account) {
-      login(_account).finally(() => {
-        if (fromName) {
+      login(_account).then(loginSuccess => {
+        if (loginSuccess && fromName) {
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.PerpsMarketDetail,
             params: {
