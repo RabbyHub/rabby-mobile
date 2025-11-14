@@ -25,7 +25,7 @@ export function BrowserHot({ onPress }: { onPress?(dapp: DappInfo): void }) {
   const { bookmarkList } = useBrowserBookmark();
 
   const { value: hotDAppList } = useAsync(
-    () => openapi.getHotDapps({ limit: 3, order_by: 'hot_count' } as any),
+    () => openapi.getHotDapps({ limit: 3, order_by: 'hot_count' }),
     [],
   );
   const [hot3, setHot3] = useHot3DApp();
