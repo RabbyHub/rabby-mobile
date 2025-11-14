@@ -236,10 +236,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  $
-                  {splitNumberByStep(
-                    Number(estimatedLiquidationPrice).toFixed(2),
-                  )}
+                  ${splitNumberByStep(Number(estimatedLiquidationPrice))}
                 </Text>
               </View>
             </View>
