@@ -339,7 +339,8 @@ function SendScreen({
       }
     }
     const hideLoading = isShowLoadingRef.current
-      ? toastLoading('Loading Token...')
+      ? // ? toastLoading('Loading Token...')
+        noop
       : noop;
     try {
       if (navParams?.toAddress) {
@@ -389,7 +390,7 @@ function SendScreen({
         sleep(5000),
       ]);
     } finally {
-      hideLoading();
+      // hideLoading();
       isShowLoadingRef.current = true;
     }
   };

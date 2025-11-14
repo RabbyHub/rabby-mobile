@@ -95,7 +95,7 @@ export default function HomeHeaderArea({
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     width: '100%',
-    marginLeft: 8,
+    marginLeft: -10,
   },
   innerBox: {
     width: '100%',
@@ -108,7 +108,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   accountBox: {
     flexDirection: 'row',
@@ -116,7 +116,6 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'transparent', // 奇怪的问题，不加这个就会只展示content的内容
-    paddingRight: 4,
     paddingBottom: 4,
     overflow: 'visible',
   },

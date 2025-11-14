@@ -205,7 +205,7 @@ export function tagTokenItem<
   return {
     ...i,
     _isPined: isPin,
-    _isFold: isPin ? false : isFold,
+    _isFold: isFold,
     _isManualFold: isManualFold,
     _isMiniFold: isMiniFold,
     _isExcludeBalance: isExcludeBalance,
@@ -225,7 +225,7 @@ export const tagTokenList = (
     (acc, curr) => acc + (curr._usdValue || 0),
     0,
   );
-  const threshold = Math.min((totalValue || 0) / 1000, 1000);
+  const threshold = Math.min((totalValue || 0) / 100, 1000);
   const thresholdIndex = coreTokens
     ? coreTokens.findIndex(m => (m._usdValue || 0) < threshold)
     : -1;
@@ -237,7 +237,6 @@ export const tagTokenList = (
   }
   return tagedTokens.map(i => {
     if (
-      i._isPined ||
       i._isMiniFold ||
       i._isFold ||
       !i.is_core ||

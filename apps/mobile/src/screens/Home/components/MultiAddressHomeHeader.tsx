@@ -297,7 +297,11 @@ export function MultiAddressHomeHeader(
             {},
           ]}
           onLayout={() => {
-            setCouldRenderLocalWebView(true);
+            if (IS_IOS) {
+              setTimeout(() => setCouldRenderLocalWebView(true), 250);
+            } else {
+              setCouldRenderLocalWebView(true);
+            }
           }}>
           <Card
             style={[styles.curveCard, styles.shadowView]}

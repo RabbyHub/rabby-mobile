@@ -111,7 +111,7 @@ export const TokenList = ({
       updateData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused]);
+  }, [isFocused, currentAccount?.address]);
   const { currency } = useCurrency();
 
   const tokens = useMemo(() => {

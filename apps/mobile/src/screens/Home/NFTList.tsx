@@ -112,7 +112,7 @@ export const NFTList = ({
       reloadNftList?.();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused]);
+  }, [isFocused, currentAccount?.address]);
 
   const nftList = useMemo(() => {
     return _rawNftList.filter(item =>

@@ -828,8 +828,8 @@ function MultiAddressHome(): JSX.Element {
       noHeader
       bgImageSource={
         combineData.isLoss
-          ? require('@/assets2024/singleHome/loss.png')
-          : require('@/assets2024/singleHome/up.png')
+          ? require('@/assets2024/singleHome/loss-home.png')
+          : require('@/assets2024/singleHome/up-home.png')
       }
       linearProp={{
         colors: isLight
