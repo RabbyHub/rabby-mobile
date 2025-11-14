@@ -66,7 +66,9 @@ module.exports = {
           BUILD_GIT_HASH_TIME: buildGitInfo.BUILD_GIT_HASH_TIME,
           BUILD_GIT_COMMITOR: buildGitInfo.BUILD_GIT_COMMITOR,
         }),
-        'process.env.MOBILE_SAFE_API_KEY': process.env.MOBILE_SAFE_API_KEY,
+        'process.env.RABBY_MOBILE_SAFE_API_KEY':
+          process.env.RABBY_MOBILE_SAFE_API_KEY ||
+          process.env.MOBILE_SAFE_API_KEY,
       },
     ],
     [

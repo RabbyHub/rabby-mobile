@@ -14,7 +14,10 @@ import {
 } from '@/core/storage/webviewAssets';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useDevServerSettings } from '@/core/utils/devServerSettings';
+import {
+  GetDevUriFn,
+  useDevServerHostAvailable,
+} from '@/core/utils/devServerSettings';
 import {
   FALLBACK_HTML,
   formatDevURI,
@@ -69,7 +72,7 @@ export const LocalWebView = React.forwardRef<LocalWebView, LocalWebViewProps>(
     {
       entryPath,
       webviewSize,
-      forceUseLocalResource = !__DEV__,
+      forceUseLocalResource: prop_forceUseLocalResource = !__DEV__,
       disableHttpRequest = !__DEV__,
       i18nTexts = {},
       ...webviewProps
@@ -82,15 +85,43 @@ export const LocalWebView = React.forwardRef<LocalWebView, LocalWebViewProps>(
     const { width: webviewWidth = '100%', height: webviewHeight = 300 } =
       webviewSize || {};
 
-    const { devServerSettings } = useDevServerSettings();
+    const { devServerMobileLocalPagesAvailable, devServerHost, devUri } =
+      useDevServerHostAvailable({
+        autoDetectHost: true,
+        devUri: useCallback<GetDevUriFn>(
+          ctx => {
+            return formatDevURI({
+              host: ctx.devServerHost,
+              port: 5173,
+              protocol: 'http:',
+              path: entryPath,
+            });
+          },
+          [entryPath],
+        ),
+      });
 
-    if (__DEV__ && !forceUseLocalResource && !devServerSettings.devServerHost) {
-      // throw new Error('devServerHost is not set');
-      const errorMsg =
-        'devServerHost is not set, will use local resource fallback';
-      console.warn(errorMsg);
-      forceUseLocalResource = true;
-    }
+    const { forceUseLocalResource } = useMemo(() => {
+      if (__DEV__ && !prop_forceUseLocalResource) {
+        if (!devServerHost) {
+          // throw new Error('devServerHost is not set');
+          const errorMsg =
+            'devServerHost is not set, will use local resource fallback';
+          console.warn(errorMsg);
+          return { forceUseLocalResource: true };
+        } else if (!devServerMobileLocalPagesAvailable) {
+          const errorMsg = `Dev server host ${devServerHost} is not reachable, will use local resource fallback`;
+          console.warn(errorMsg);
+          return { forceUseLocalResource: true };
+        }
+      }
+
+      return { forceUseLocalResource: prop_forceUseLocalResource };
+    }, [
+      prop_forceUseLocalResource,
+      devServerHost,
+      devServerMobileLocalPagesAvailable,
+    ]);
 
     const { webviewSource } = useMemo(() => {
       const localUri = IS_ANDROID
@@ -100,13 +131,6 @@ export const LocalWebView = React.forwardRef<LocalWebView, LocalWebViewProps>(
         : refAssetForLocalWebView(
             stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
           ).rawPath;
-
-      const devUri = formatDevURI({
-        host: devServerSettings.devServerHost!,
-        port: 5173,
-        protocol: 'http:',
-        path: entryPath,
-      });
 
       return {
         localUri,
@@ -130,7 +154,7 @@ export const LocalWebView = React.forwardRef<LocalWebView, LocalWebViewProps>(
                 baseUrl: WEBVIEW_BASEURL,
               },
       };
-    }, [entryPath, devServerSettings, forceUseLocalResource]);
+    }, [entryPath, devUri, forceUseLocalResource]);
 
     const { onShouldStartLoadWithRequest: _onShouldStartLoadWithRequest } =
       webviewProps;
