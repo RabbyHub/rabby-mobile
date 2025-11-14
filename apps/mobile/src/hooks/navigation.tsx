@@ -31,9 +31,7 @@ import {
 } from './native/security';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import RNTimeChanged from '@/core/native/RNTimeChanged';
-import { checkMultipleFailed } from '@/core/utils/unlockRateLimit';
+import { IS_IOS } from '@/core/native/utils';
 import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomSheetModal/security';
 import { useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
