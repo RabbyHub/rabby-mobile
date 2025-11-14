@@ -28,7 +28,10 @@ export const useProtocolConfig = () => {
         ) => {
           return item.name?.toLowerCase() === 'lending';
         },
-        onManage: async (account?: KeyringAccountWithAlias) => {
+        onManage: async (
+          account?: KeyringAccountWithAlias,
+          _item?: AbstractPortfolio,
+        ) => {
           if (account) {
             await switchSceneCurrentAccount('Lending', account);
           }
@@ -58,11 +61,16 @@ export const useProtocolConfig = () => {
           );
           return types?.includes('perpetuals');
         },
-        onManage: async (account?: KeyringAccountWithAlias) => {
+        onManage: async (
+          account?: KeyringAccountWithAlias,
+          item?: AbstractPortfolio,
+        ) => {
           return navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Perps,
             params: {
               account,
+              fromName:
+                item?._originPortfolio?.detail?.position_token?.name || '',
             },
           });
         },

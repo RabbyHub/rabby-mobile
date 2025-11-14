@@ -82,7 +82,10 @@ export const WrapperDappActionsMemoItem = ({
   addressType?: KEYRING_TYPE;
   onRefresh?: () => Promise<void>;
   session?: React.ComponentProps<typeof DappActions>['session'];
-  manageAction?: (account?: KeyringAccountWithAlias) => void;
+  manageAction?: (
+    account?: KeyringAccountWithAlias,
+    item?: AbstractPortfolio,
+  ) => void;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { colors2024 } = useTheme2024();
@@ -133,7 +136,7 @@ export const WrapperDappActionsMemoItem = ({
       {!!manageAction && (
         <TouchableOpacity
           style={[styles.button]}
-          onPress={() => manageAction(currentAccount)}>
+          onPress={() => manageAction(currentAccount, item)}>
           <Text style={styles.buttonText}>Manage</Text>
         </TouchableOpacity>
       )}
