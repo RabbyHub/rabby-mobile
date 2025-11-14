@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSafeState } from '@/hooks/useSafeState';
 import { portfolio2Display } from '../utils/portfolio';
@@ -118,6 +118,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     ];
   }, [_data.address, _data.data, _setData, userAddr]);
   const [isLoading, setLoading] = useSafeState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [hasValue, setHasValue] = useSafeState(false);
   const [singleDeFiNonce, setSingleDeFiNonce] = useAtom(singleDeFiNonceAtom);
 
@@ -146,6 +147,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
         return;
       }
       setHasValue(false);
+      setRefreshing(true);
       if (!force) {
         const cachePortocols = await ProtocolItemEntity.batchQueryPortocols(
           userAddr,
@@ -187,6 +189,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       } catch (error) {
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     },
     [setData, setHasValue, setLoading, userAddr],
@@ -317,6 +320,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     data: data || [],
     hasValue,
     isLoading,
+    refreshing,
     updateData: loadProcess,
     updateSpecificProtocol,
   };

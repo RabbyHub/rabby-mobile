@@ -7,7 +7,7 @@ import {
   formatSmallCurrencyValue,
 } from '@/hooks/useCurve';
 import { memo, useEffect, useMemo, useCallback, useState } from 'react';
-import { Dimensions, ImageBackground, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ALERT_HEIGHT, HEADER_CHART_HEIGHT } from '@/constant/layout';
 import {
@@ -24,7 +24,7 @@ import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useTranslation } from 'react-i18next';
 import { useTriggerUpdate } from '../hooks/triggerUpdate';
 import { useCurrency } from '@/hooks/useCurrency';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { EndBg } from '../../BgComponents';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -51,7 +51,6 @@ function Chart({
 
   const scrollY = useCurrentTabScrollY();
   const [isInitialized, setIsInitialized] = useState(false);
-  const { safeOffHeader } = useSafeSizes();
 
   useEffect(() => {
     // 延迟初始化动画，避免页面切换时的卡顿
@@ -89,21 +88,7 @@ function Chart({
         styles.container,
         { height: HEADER_CHART_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0) },
       ]}>
-      <ImageBackground
-        source={
-          !data.isLoss
-            ? require('@/assets2024/singleHome/up.png')
-            : require('@/assets2024/singleHome/loss.png')
-        }
-        resizeMode="cover"
-        style={[
-          styles.bg,
-          {
-            top: 0 - safeOffHeader + 20,
-            height: safeOffHeader + 150,
-          },
-        ]}
-      />
+      <EndBg isDecrease={data.isLoss} />
 
       <GlobalWarning
         hasError={isDisConnect}

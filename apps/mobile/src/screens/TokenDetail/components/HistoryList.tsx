@@ -1,5 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -25,6 +30,8 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
 
 interface IFetchHistory {
   last: number;
@@ -37,10 +44,12 @@ export const TokenDetailHistoryList = ({
   finalAccount,
   token,
   onRefresh,
+  onReachTopStatusChange,
 }: {
   finalAccount: KeyringAccountWithAlias | null;
   token: AbstractPortfolioToken;
   onRefresh?: () => void;
+  onReachTopStatusChange?: (status: boolean) => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -62,6 +71,24 @@ export const TokenDetailHistoryList = ({
   );
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
+  const scrollY = useCurrentTabScrollY();
+  const handleScroll = useCallback(
+    (currentScrollY: number) => {
+      if (currentScrollY <= 0) {
+        onReachTopStatusChange?.(true);
+      } else {
+        onReachTopStatusChange?.(false);
+      }
+    },
+    [onReachTopStatusChange],
+  );
+
+  useAnimatedReaction(
+    () => scrollY.value,
+    currentScrollY => {
+      runOnJS(handleScroll)(currentScrollY);
+    },
+  );
 
   const fetchData = async (
     address: string,
@@ -271,12 +298,7 @@ export const TokenDetailHistoryList = ({
   }, [fetchApiData]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.historyHeader}>
-        <Text style={styles.relateTitle}>
-          {t('page.tokenDetail.Transaction')}
-        </Text>
-      </View>
+    <>
       {!loading && !displayList.length && noMore && (
         <Empty
           style={styles.emptyStyle}
@@ -289,6 +311,7 @@ export const TokenDetailHistoryList = ({
         list={displayList}
         loading={false}
         isNeedFetchFromApi={!isMyAddress}
+        tabList
         firstFetchDone={false}
         loadingMore={loadingMore}
         refreshLoading={loading}
@@ -304,7 +327,7 @@ export const TokenDetailHistoryList = ({
         }}
         onRefresh={refresh}
       />
-    </View>
+    </>
   );
 };
 
@@ -374,6 +397,7 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   historyHeader: {
     paddingHorizontal: 15,
+    marginBottom: -8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -453,6 +477,7 @@ const getStyle = createGetStyles2024(ctx => ({
     fontWeight: '700',
   },
   emptyStyle: {
+    marginTop: 100,
     height: 150,
   },
   skeletonContainer: {

@@ -64,6 +64,7 @@ export const DappActions = ({
   currentAccount,
   onRefresh,
   session = INTERNAL_REQUEST_SESSION,
+  disableAction,
 }: {
   data?: WithdrawAction[];
   chain?: string;
@@ -71,6 +72,7 @@ export const DappActions = ({
   currentAccount?: KeyringAccountWithAlias;
   onRefresh?: () => Promise<void>;
   session?: typeof INTERNAL_REQUEST_SESSION;
+  disableAction?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const withdrawAction = useMemo(
@@ -222,7 +224,11 @@ export const DappActions = ({
       {showWithdraw && (
         <ActionButton
           text="Withdraw"
+          disabled={disableAction}
           onPress={() => {
+            if (disableAction) {
+              return;
+            }
             handleSubmit(actionWithdraw, 'Withdraw');
           }}
         />
@@ -230,7 +236,11 @@ export const DappActions = ({
       {showClaim && (
         <ActionButton
           text="Claim"
+          disabled={disableAction}
           onPress={() => {
+            if (disableAction) {
+              return;
+            }
             handleSubmit(actionClaim, 'Claim');
           }}
         />

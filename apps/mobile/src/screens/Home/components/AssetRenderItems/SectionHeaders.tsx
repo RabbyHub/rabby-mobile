@@ -256,7 +256,7 @@ const getStyle = createGetStyles2024(ctx => ({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 8,
+    borderRadius: 20,
   },
   chainIcon: {
     display: 'flex',

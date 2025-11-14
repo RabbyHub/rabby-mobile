@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Dimensions, ImageBackground, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
@@ -29,8 +29,8 @@ import { DynamicCustomMaterialTabBar } from './components/Tabs/CustomTabBar';
 import CustomLabel from './components/Tabs/CustomLabel';
 import { ChainSelector } from './components/AssetRenderItems/SectionHeaders';
 import { useChainInfo } from './useChainInfo';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import useCachedValue from '@/hooks/common/useCachedValue';
+import { EndBg } from './components/BgComponents';
 
 const ScreenWidth = Dimensions.get('window').width;
 export const icons = {
@@ -49,6 +49,7 @@ interface Props {
   onUpdateIsDecrease?: (isDecrease: boolean) => void;
   onReachTopStatusChange?: (status: boolean) => void;
   account: Account;
+  reachTop: boolean;
 }
 const FOOTER_HEIGHT = 56;
 
@@ -56,6 +57,7 @@ export const AssetContainer: React.FC<Props> = ({
   onRefresh,
   onUpdateIsDecrease,
   onReachTopStatusChange,
+  reachTop,
   account: currentAccount,
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -137,7 +139,7 @@ export const AssetContainer: React.FC<Props> = ({
   );
 
   const isDecrease = useCachedValue(curveData, 'isLoss');
-
+  const [fold, setFold] = useState(true);
   const handleRefresh = useCallback(
     async (ignoreLoading?: boolean) => {
       onRefresh?.();
@@ -155,17 +157,22 @@ export const AssetContainer: React.FC<Props> = ({
           isLoadingCurve={isLoadingCurve || (balanceLoading && !evmBalance)}
           isDisConnect={isDisConnect}
           onRefresh={() => handleRefresh(true)}
+          fold={fold}
+          reachTop={reachTop}
+          setFold={setFold}
         />
       </View>
     );
   }, [
-    evmBalance,
-    balanceLoading,
-    curveData,
-    handleRefresh,
-    isDisConnect,
-    isLoadingCurve,
     onUpdateIsDecrease,
+    curveData,
+    isLoadingCurve,
+    balanceLoading,
+    evmBalance,
+    isDisConnect,
+    fold,
+    reachTop,
+    handleRefresh,
   ]);
 
   const hasNotAssets = useMemo(() => {
@@ -175,8 +182,6 @@ export const AssetContainer: React.FC<Props> = ({
   const errorNotAssets = useMemo(() => {
     return isDisConnect && hasNotAssets && hasNoCurveData;
   }, [hasNoCurveData, hasNotAssets, isDisConnect]);
-
-  const { safeOffHeader } = useSafeSizes();
 
   const renderTabBar = React.useCallback(
     (_props: any) => (
@@ -188,21 +193,7 @@ export const AssetContainer: React.FC<Props> = ({
         containerStyle={styles.tabsBarContainer}
         indicatorStyle={styles.indicator}
         bgComponent={
-          <ImageBackground
-            source={
-              !isDecrease
-                ? require('@/assets2024/singleHome/up.png')
-                : require('@/assets2024/singleHome/loss.png')
-            }
-            resizeMode="cover"
-            style={[
-              styles.bg,
-              {
-                top: 0 - safeOffHeader - 74,
-                height: safeOffHeader + 110,
-              },
-            ]}
-          />
+          reachTop ? null : <EndBg fold={fold} isDecrease={!!isDecrease} />
         }
         externalContent={
           <ChainSelector
@@ -217,11 +208,11 @@ export const AssetContainer: React.FC<Props> = ({
     ),
     [
       chainsInfo.chainAssets,
+      fold,
       handleOnChainClick,
       isDecrease,
-      safeOffHeader,
+      reachTop,
       selectChainItem?.chain,
-      styles.bg,
       styles.indicator,
       styles.tabBar,
       styles.tabsBarContainer,
