@@ -91,7 +91,7 @@ type QueryConditions = {
 export type TokenSelectInst = {
   openTokenModal: (conds?: Partial<QueryConditions>) => void;
 };
-const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
+const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
   (
     {
       token,
@@ -106,6 +106,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       supportChains,
       searchPlaceholder,
       disableItemCheck,
+      style,
     },
     ref,
   ) => {
@@ -527,9 +528,10 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           onLongPress={handleLongPressToken}
           ref={tokenPressRef}>
           <View
-            style={
-              type === 'bridgeFrom' ? styles.bridgeWrapper : styles.wrapper
-            }>
+            style={[
+              type === 'bridgeFrom' ? styles.bridgeWrapper : styles.wrapper,
+              style,
+            ]}>
             {token ? (
               <>
                 <View style={styles.token}>
