@@ -48,7 +48,6 @@ interface ItemProps {
   receives: HistoryDisplayItem['receives'];
   sends: HistoryDisplayItem['sends'];
   isForMultipleAddress?: boolean;
-  isFromTokenDetail?: boolean;
   account: Account;
 }
 
@@ -133,7 +132,6 @@ export const HistoryTokenList = ({
   receives,
   approve,
   isForMultipleAddress,
-  isFromTokenDetail,
   account: currentAccount,
 }: ItemProps) => {
   const { t } = useTranslation();
