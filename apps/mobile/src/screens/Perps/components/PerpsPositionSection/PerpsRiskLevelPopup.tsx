@@ -23,6 +23,7 @@ interface PerpsRiskLevelPopupProps {
   visible: boolean;
   onClose: () => void;
   distanceLiquidation: number;
+  pxDecimals: number;
   currentPrice: number;
   liquidationPrice: number;
 }
@@ -55,6 +56,7 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
   distanceLiquidation,
   currentPrice,
   liquidationPrice,
+  pxDecimals,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { styles, colors2024, isLight } = useTheme2024({
@@ -155,7 +157,7 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
                 {t('page.perps.PerpsRiskPopup.currentPrice')}
               </Text>
               <Text style={styles.priceValue}>
-                ${splitNumberByStep(currentPrice.toFixed(2))}
+                ${splitNumberByStep(currentPrice.toFixed(pxDecimals))}
               </Text>
             </View>
             <View style={styles.priceItem}>
@@ -163,7 +165,7 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
                 {t('page.perps.PerpsRiskPopup.liquidationPrice')}
               </Text>
               <Text style={styles.priceValue}>
-                ${splitNumberByStep(liquidationPrice.toFixed(2))}
+                ${splitNumberByStep(liquidationPrice.toFixed(pxDecimals))}
               </Text>
             </View>
           </View>

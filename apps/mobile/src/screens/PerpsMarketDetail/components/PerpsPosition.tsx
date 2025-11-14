@@ -338,6 +338,7 @@ export const PerpsPosition: React.FC<{
 
       <PerpsRiskLevelPopup
         visible={!!showRiskPopup}
+        pxDecimals={pxDecimals}
         onClose={() => {
           setShowRiskPopup(false);
         }}
