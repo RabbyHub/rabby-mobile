@@ -157,7 +157,7 @@ export function BalanceSection({
       <View style={styles.titleSection}>
         <Text style={styles.sectionTitle}>{t('page.sendToken.newAmount')}</Text>
 
-        <View style={styles.sliderContainer}>
+        {/* <View style={styles.sliderContainer}>
           <Slider
             key={`${currentToken?.id}-${currentToken?.chain}`}
             allowTouchTrack={!sliderDisable}
@@ -188,7 +188,37 @@ export function BalanceSection({
             }}
           />
           <Text style={styles.sliderValue}>{slider}%</Text>
-        </View>
+        </View> */}
+        <TouchableOpacity
+          style={styles.balanceArea}
+          onPress={screenState.isLoading ? noop : handleClickMaxButton}>
+          {screenState.isLoading ? (
+            <Skeleton style={{ width: 100, height: 16 }} />
+          ) : (
+            <>
+              {!screenState.showGasReserved &&
+              (screenState.balanceError || screenState.balanceWarn) ? (
+                <Text style={[styles.issueText]}>
+                  {screenState.balanceError ? (
+                    <>
+                      {screenState.balanceError}: {currentTokenBalance}
+                    </>
+                  ) : screenState.balanceWarn ? (
+                    <>{screenState.balanceWarn}</>
+                  ) : null}
+                </Text>
+              ) : (
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.balanceText}>
+                  {t('page.sendToken.sectionBalance.title')}:{' '}
+                  {currentTokenBalance}
+                </Text>
+              )}
+            </>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View>
@@ -262,11 +292,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     balanceArea: {
       flexDirection: 'row',
       alignItems: 'center',
-    },
-
-    titleRight: {
-      flexDirection: 'row',
-      // alignItems: 'center',
     },
 
     issueBlock: {

@@ -5,7 +5,6 @@ import {
   FontWeightEnum,
   getFontWeightType,
 } from '@/core/utils/fonts';
-import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native';
 type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
 
@@ -123,7 +122,7 @@ export function makeProdBorder(color = 'blue'): ViewStyle {
   };
 }
 
-function mutateStyles<T extends NamedStyles<any>>(input: T): T {
+export function mutateStyles<T extends NamedStyles<any>>(input: T): T {
   try {
     input = JSON.parse(JSON.stringify(input));
     // if (IS_IOS) return input;
@@ -147,27 +146,43 @@ function mutateStyles<T extends NamedStyles<any>>(input: T): T {
       const fwTypeResult = getFontWeightType(fontWeight);
 
       // like sf pro rounded
-      if (lcFontFamily && /sf(.?)pro(.?)rounded/i.test(lcFontFamily)) {
+      if (lcFontFamily && /^sf(.?)pro(.?)rounded$/i.test(lcFontFamily)) {
         switch (fwTypeResult.supertype) {
           case FontWeightEnum.heavy: {
-            tInput.fontFamily = FontNames.sf_pro_rounded_heavy;
-            delete tInput.fontWeight;
+            if (IS_IOS) {
+              tInput.fontFamily = 'SF Pro Rounded';
+            } else {
+              tInput.fontFamily = FontNames.sf_pro_rounded_heavy;
+              delete tInput.fontWeight;
+            }
             break;
           }
           case FontWeightEnum.bold: {
-            tInput.fontFamily = FontNames.sf_pro_rounded_bold;
-            delete tInput.fontWeight;
+            if (IS_IOS) {
+              tInput.fontFamily = 'SF Pro Rounded';
+            } else {
+              tInput.fontFamily = FontNames.sf_pro_rounded_bold;
+              delete tInput.fontWeight;
+            }
             break;
           }
           case FontWeightEnum.medium: {
-            tInput.fontFamily = FontNames.sf_pro_rounded_medium;
-            delete tInput.fontWeight;
+            if (IS_IOS) {
+              tInput.fontFamily = 'SF Pro Rounded';
+            } else {
+              tInput.fontFamily = FontNames.sf_pro_rounded_medium;
+              delete tInput.fontWeight;
+            }
             break;
           }
           case FontWeightEnum.normal:
           default: {
-            tInput.fontFamily = FontNames.sf_pro_rounded_regular;
-            delete tInput.fontWeight;
+            if (IS_IOS) {
+              tInput.fontFamily = 'SF Pro Rounded';
+            } else {
+              tInput.fontFamily = FontNames.sf_pro_rounded_regular;
+              delete tInput.fontWeight;
+            }
             break;
           }
         }
