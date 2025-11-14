@@ -259,6 +259,12 @@ const TokenDetailContent = () => {
             </Pressable>
           )}
         </View>
+
+        <View style={[styles.historyHeader]}>
+          <Text style={styles.relateTitle}>
+            {t('page.tokenDetail.Transaction')}
+          </Text>
+        </View>
       </View>
     );
   }, [
@@ -286,23 +292,6 @@ const TokenDetailContent = () => {
     },
     [fadeAnim, setReachTop],
   );
-
-  const renderTabBar = useCallback(() => {
-    return (
-      <View
-        style={[styles.historyHeader, !reachTop && styles.historyHeaderTop]}>
-        <Text style={styles.relateTitle}>
-          {t('page.tokenDetail.Transaction')}
-        </Text>
-      </View>
-    );
-  }, [
-    reachTop,
-    styles.historyHeader,
-    styles.historyHeaderTop,
-    styles.relateTitle,
-    t,
-  ]);
 
   if (!effectiveAccount?.address) {
     return null;
@@ -337,9 +326,9 @@ const TokenDetailContent = () => {
         />
       </Animated.View>
       <Tabs.Container
-        renderTabBar={renderTabBar}
-        tabBarHeight={130}
-        headerHeight={130}
+        renderTabBar={() => null}
+        tabBarHeight={0}
+        headerHeight={120}
         renderHeader={renderHeader}
         headerContainerStyle={styles.headerContainer}
         containerStyle={styles.container}
@@ -400,6 +389,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     headerContainer: {
       backgroundColor: 'transparent',
+      shadowColor: 'transparent',
+      shadowOpacity: 0,
+      elevation: 0,
     },
     container: {
       overflow: 'hidden',
@@ -407,7 +399,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     balanceOverviewContainer: {
       paddingLeft: 23,
       paddingRight: 16,
-      marginBottom: 24,
     },
     bottomContainer: {
       width: '100%',
@@ -423,6 +414,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      overflow: 'hidden',
     },
     floatingBarContent: {
       flexDirection: 'column',
@@ -496,12 +488,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       lineHeight: 22,
-      paddingLeft: 5,
       fontWeight: '900',
     },
     historyHeader: {
-      paddingHorizontal: 15,
       flexDirection: 'row',
+      marginTop: 26,
       justifyContent: 'space-between',
       alignItems: 'center',
     },
