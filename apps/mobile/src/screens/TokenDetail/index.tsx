@@ -143,7 +143,7 @@ const TokenDetailContent = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        style={{ marginLeft: -10 }}
+        style={{ marginLeft: isAndroid ? 0 : -10 }}
         key={effectiveAccount?.address}
         tokenSize={33}
         chainSize={15}
@@ -343,7 +343,6 @@ const TokenDetailContent = () => {
         </Tabs.Tab>
       </Tabs.Container>
 
-      <View style={{ height: isAndroid ? 220 + safeOffBottom : 56 }} />
       <View style={styles.bottomContainer}>
         <TokenDetailBottomBtns
           token={token}
