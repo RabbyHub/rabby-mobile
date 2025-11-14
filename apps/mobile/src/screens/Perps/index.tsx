@@ -78,7 +78,7 @@ export const PerpsScreen = () => {
 
   const { params } = useRoute<any>();
 
-  const { account: _account } = params;
+  const { account: _account, fromName } = params;
 
   const {
     positionAndOpenOrders,
@@ -106,7 +106,16 @@ export const PerpsScreen = () => {
 
   useEffect(() => {
     if (_account) {
-      login(_account);
+      login(_account).then(loginSuccess => {
+        if (loginSuccess && fromName) {
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.PerpsMarketDetail,
+            params: {
+              market: fromName,
+            },
+          });
+        }
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

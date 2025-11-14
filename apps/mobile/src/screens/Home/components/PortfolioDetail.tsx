@@ -7,6 +7,7 @@ import {
   TouchableWithoutFeedback,
   Animated,
   Easing,
+  StyleProp,
 } from 'react-native';
 import { colord } from 'colord';
 import LinearGradient from 'react-native-linear-gradient';
@@ -107,6 +108,7 @@ export const TokenList = ({
   nfts,
   currentAccount,
   fraction,
+  headerStyle,
 }: {
   name: string;
   tokens?: PortfolioItemToken[];
@@ -118,6 +120,7 @@ export const TokenList = ({
     shareToken: PortfolioItemToken;
   };
   currentAccount?: KeyringAccountWithAlias;
+  headerStyle?: StyleProp<ViewStyle>;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenNavigationProps<'DeFiDetail'>['route']>();
@@ -272,7 +275,7 @@ export const TokenList = ({
 
   return list.length ? (
     <View style={StyleSheet.flatten([styles.tokenList, style])}>
-      <View style={[styles.tokenRow, styles.tokenRowHeader]}>
+      <View style={[styles.tokenRow, styles.tokenRowHeader, headerStyle]}>
         {headers.map((h, i) => {
           const isLast = i === headers.length - 1;
 
@@ -360,9 +363,10 @@ type SupplementType = {
 
 type SupplementsProps = {
   data?: Array<SupplementType | undefined | false>;
+  style?: StyleProp<ViewStyle>;
 };
 
-export const Supplements = ({ data }: SupplementsProps) => {
+export const Supplements = ({ data, style }: SupplementsProps) => {
   const { styles, colors2024, colors } = useTheme2024({ getStyle: getStyles });
 
   const list = useMemo(
@@ -382,7 +386,7 @@ export const Supplements = ({ data }: SupplementsProps) => {
       colors={linearColors}
       useAngle
       angle={90}
-      style={styles.supplements}>
+      style={[styles.supplements, style]}>
       {list.map(s => (
         <View style={styles.supplementField} key={s.label}>
           <Text style={styles.fieldLabel}>{s.label}</Text>

@@ -374,6 +374,7 @@ export type TransactionNavigatorParamList = {
 
   [RootNames.Perps]?: {
     account?: KeyringAccountWithAlias;
+    fromName?: string;
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {

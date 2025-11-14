@@ -2951,6 +2951,9 @@
       "amount": "Amount",
       "price": "Price",
       "usdValue": "USD Value"
+    },
+    "portfolios": {
+      "manage": "Manage"
     }
   },
   "native": {

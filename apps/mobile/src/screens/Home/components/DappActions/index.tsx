@@ -64,6 +64,7 @@ export const DappActions = ({
   currentAccount,
   onRefresh,
   session = INTERNAL_REQUEST_SESSION,
+  style,
   disableAction,
 }: {
   data?: WithdrawAction[];
@@ -72,6 +73,7 @@ export const DappActions = ({
   currentAccount?: KeyringAccountWithAlias;
   onRefresh?: () => Promise<void>;
   session?: typeof INTERNAL_REQUEST_SESSION;
+  style?: StyleProp<ViewStyle>;
   disableAction?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -220,7 +222,7 @@ export const DappActions = ({
     return null;
   }
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {showWithdraw && (
         <ActionButton
           text="Withdraw"
@@ -255,6 +257,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 12,
     marginTop: 12,
+    marginLeft: 8,
+    marginRight: 8,
   },
   button: {
     flex: 1,
