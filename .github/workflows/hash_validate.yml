@@ -49,7 +49,7 @@ jobs:
           GENERATED_HASH=$(./scripts/validate-hash/run.sh android | tee /dev/stderr | grep 'Android Hash:' | awk '{print $NF}')
           echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
         env:
-          MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
+          RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.RABBY_MOBILE_SAFE_API_KEY || secrets.MOBILE_SAFE_API_KEY }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -97,7 +97,7 @@ jobs:
           GENERATED_HASH=$(./scripts/validate-hash/run.sh ios | tee /dev/stderr | grep 'iOS Hash:' | awk '{print $NF}')
           echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
         env:
-          MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
+          RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.RABBY_MOBILE_SAFE_API_KEY || secrets.MOBILE_SAFE_API_KEY }}
 
       - uses: actions/upload-artifact@v4
         with:

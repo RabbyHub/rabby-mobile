@@ -115,6 +115,7 @@ export const RootNames = {
   StackTestkits: 'StackTestkits',
   NewUserGetStarted2024: 'NewUserGetStarted2024',
   DevUIFontShowCase: 'DevUIFontShowCase',
+  DevUIAnimatedTextAndView: 'DevUIAnimatedTextAndView',
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',

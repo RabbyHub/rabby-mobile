@@ -1172,6 +1172,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "随时截屏以快速报告错误"
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "向右滑动以查看所有资产"
       }
     },
     "signText": {
@@ -1975,7 +1978,10 @@
           "value": "价值"
         },
         "pools": "池塘"
-      }
+      },
+      "headerBalanceText": "余额",
+      "price": "价格",
+      "headerTokenValueText": "代币价值"
     },
     "customRpc": {
       "add": "修改 RPC URL",
@@ -2436,7 +2442,8 @@
         "stopLossTipsLong": "止损价格必须低于当前价格",
         "stopLossTipsShortLiquidation": "价格高于清算价格 ({{price}})",
         "profit": "利润",
-        "stopLossTipsLongLiquidation": "价格低于清算价格 ({{price}})"
+        "stopLossTipsLongLiquidation": "价格低于清算价格 ({{price}})",
+        "noPosition": "您必须先输入保证金。"
       },
       "PerpsDepositTokenModal": {
         "swapBtn": "兑换",
@@ -2492,7 +2499,30 @@
       "leverageRangeMinError": "最低杠杆为 {{min}}x",
       "regionNotSupport": "在您的地区不支持开仓。",
       "leverageRangeMaxError": "最大杠杆为 {{max}}x",
-      "deleteAgentModal": "您已达到代理的最大数量。您想删除一个现有的代理以创建新的代理吗？"
+      "deleteAgentModal": "您已达到代理的最大数量。您想删除一个现有的代理以创建新的代理吗？",
+      "searchPerpsPopup": {
+        "searchPosition": "搜索头寸",
+        "empty": "未找到结果",
+        "searchPerps": "搜索永续合约",
+        "openPosition": "开启仓位",
+        "searchPlaceholder": "搜索永续合约"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "warning": "警告",
+          "safe": "安全",
+          "danger": "危险"
+        },
+        "title": "风险等级",
+        "liquidationPrice": "清算价格",
+        "currentPrice": "当前价格",
+        "distanceLabel": "平仓距离",
+        "subtitle": "实时 liquidation 距离 (%)",
+        "liqIntro": "清算距离 (%) 表示当前价格与您的清算价格之间的距离。距离越大，说明仓位越安全；距离越小，则表示清算风险越高。"
+      },
+      "closeAll": "关闭全部",
+      "closeAllConfirmMessage": "您所有的未平仓头寸将以市场价格平仓。",
+      "closeAllConfirmTitle": "确认平掉所有仓位"
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2538,7 +2568,13 @@
         "positionSize": "持仓大小",
         "rabbyFeeTips": "Rabby 费用：0.04%",
         "fee": "费用：",
-        "closeBtn": "关闭 {{direction}}"
+        "closeBtn": "关闭 {{direction}}",
+        "closedPnl": "已平仓PNL:",
+        "amount": "金额",
+        "confirm": "确认",
+        "receive": "接收：",
+        "minimumWarning": "最低金额为 {{percent}}%",
+        "total": "总计"
       },
       "PerpsOpenPositionPopup": {
         "leverage": "杠杆",
@@ -2552,7 +2588,12 @@
         "slPrice": "止损价",
         "available": "可用的",
         "sizeTips": "您交易的总价值或数量，由保证金和杠杆设置。",
-        "autoClose": "自动平仓"
+        "autoClose": "自动平仓",
+        "takeProfitWhenPriceAbove": "当价格高于时止盈",
+        "takeProfitWhenPriceBelow": "当价格低于时止盈",
+        "stopLossWhen": "止损于",
+        "stopLossWhenPriceAbove": "止损价格超过时",
+        "stopLossWhenPriceBelow": "当价格低于时止损"
       },
       "PerpsOpenPositionCheckPopup": {
         "price": "价格",
@@ -2571,7 +2612,10 @@
         "rabbyFeeTips": "Rabby 费用：0%",
         "sizeTips": "您交易的总价值或数量，由保证金和杠杆设定。",
         "liquidationPriceTips": "当您的保证金低于维持保证金水平时，交易所会自动以此价格平仓以防止进一步亏损。",
-        "margin": "保证金（孤立）"
+        "margin": "保证金（孤立）",
+        "free": "免费",
+        "rabbyFee": "Rabby费用",
+        "providerFee": "Hyperliquid手续费"
       },
       "action": {
         "long": "做多",
@@ -2585,7 +2629,31 @@
         "price": "价格：",
         "entryPrice": "入场价格：",
         "setTpPrice": "设置止盈价格",
-        "setSlPrice": "设置止损价格"
+        "setSlPrice": "设置止损价格",
+        "takeProfitExpectedPNL": "获取利润预期 PNL",
+        "stopLossWhen": "止损条件",
+        "priceAbove": "价格高于",
+        "priceReaches": "价格达到",
+        "youLoss": "你亏损",
+        "stopLossExpectedPNL": "止损预期盈亏",
+        "priceBelow": "价格低于",
+        "youGain": "你获得",
+        "currentPrice": "当前 {{price}}",
+        "EntryAndCurrentPrice": "入场 {{entryPrice}}  当前 {{price}}",
+        "takeProfitWhen": "达到盈利时"
+      },
+      "PerpsEditMarginPopup": {
+        "currentPrice": "当前价格",
+        "title": "调整保证金",
+        "available": "可用",
+        "amountToAdd": "添加的金额",
+        "insufficientMargin": "保证金不足",
+        "liqPrice": "Liq. Price: 清算价格",
+        "amountToReduce": "减少的金额",
+        "insufficientMarginToReduce": "保证金不足，无法减仓。",
+        "reduceMargin": "减少保证金",
+        "perpsBalance": "永续合约余额",
+        "addMargin": "添加保证金"
       }
     },
     "selectAccountSheetModal": {
@@ -2690,7 +2758,9 @@
         "availableToBorrow": "可借用",
         "availableToBorrowDesc": "您可以根据提供的抵押品进行借款，直到达到借款上限。",
         "maxAmount": "这是您可以借入的最大金额，基于您提供的所有抵押品。您的总借款能力是通过将每个抵押资产的市场价值乘以其最大贷款价值比（Max LTV），然后将结果相加来计算的。",
-        "lqDesc": "当发生清算时，清算人会代表借款人偿还高达 50% 的未偿还借款金额。作为回报，他们可以以折扣购买抵押品，并将差额（清算罚金）作为奖励保留。"
+        "lqDesc": "当发生清算时，清算人会代表借款人偿还高达 50% 的未偿还借款金额。作为回报，他们可以以折扣购买抵押品，并将差额（清算罚金）作为奖励保留。",
+        "isolatedTitle": "资产不能用作抵押品",
+        "isolatedDesc": "该资产只能在独立模式下用作抵押品，在这种模式下，您无法提供其他资产作为借款抵押品。在独立模式下用作抵押品的资产只能借用到特定的债务上限。"
       },
       "apy": "APY",
       "submitted": "提交成功",
@@ -2703,7 +2773,8 @@
       "borrowed": "借用",
       "hfTitle": "健康因子",
       "selectChain": "选择链",
-      "supplied": "提供"
+      "supplied": "提供",
+      "isolated": "孤立的"
     }
   },
   "component": {
