@@ -1424,16 +1424,6 @@ export function useSendTokenForm({
     [putScreenState, handleMaxInfoChanged, loadGasListAndResolve],
   );
 
-  const handleClickMaxButton = useCallback(async () => {
-    putScreenState(prev => ({ ...prev, clickedMax: true }));
-
-    if (couldReserveGas) {
-      putScreenState({ reserveGasOpen: true });
-    } else {
-      handleMaxInfoChanged();
-    }
-  }, [couldReserveGas, putScreenState, handleMaxInfoChanged]);
-
   const handleSlider100 = useCallback(async () => {
     if (currentToken && couldReserveGas) {
       if (screenState.gasList) {
@@ -1458,6 +1448,17 @@ export function useSendTokenForm({
     handleMaxInfoChanged,
     screenState,
   ]);
+
+  const handleClickMaxButton = useCallback(async () => {
+    putScreenState(prev => ({ ...prev, clickedMax: true }));
+
+    handleSlider100();
+    // if (couldReserveGas) {
+    //   putScreenState({ reserveGasOpen: true });
+    // } else {
+    //   handleMaxInfoChanged();
+    // }
+  }, [putScreenState, handleSlider100]);
 
   const {
     onChangeSlider,

@@ -11,7 +11,7 @@ import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { ITokenCheck, TokenSelectorProps } from './TokenSelectorSheetModal';
 import {
   formatSpeicalAmount,
@@ -142,75 +142,77 @@ export const TokenAmountInput = React.forwardRef<
     }, [colors2024]);
 
     return (
-      <>
-        <View style={[styles.container, style]}>
-          <SilentTouchableView
-            viewStyle={[
-              styles.leftInputContainer,
-              inlinePrize && !!valueText && styles.containerHasInlinePrize,
-            ]}
-            onPress={evt => {
-              evt.stopPropagation();
-              tokenInputRef.current?.focus();
-            }}>
-            {!value && token.amount > 0 && isEstimatingGas ? (
-              <CustomSkeleton
-                animation="wave"
-                LinearGradientComponent={Linear}
-                style={styles.skeleton}
-              />
-            ) : (
-              <NumericInput
-                style={[
-                  inlinePrize && !!valueText && styles.inputHasInlinePrize,
-                  styles.input,
-                ]}
-                value={value}
-                onChangeText={(value: string) => {
-                  onChange?.(formatSpeicalAmount(value));
-                }}
-                ref={tokenInputRef}
-                placeholder="0"
-                placeholderTextColor={colors2024['neutral-info']}
-                inputMode="decimal"
-                keyboardType="numeric"
-                numberOfLines={1}
-              />
-            )}
-            <View style={styles.inlinePrizeContainer}>
-              <Text
-                style={styles.inlinePrizeText}
-                ellipsizeMode="tail"
-                numberOfLines={1}>
-                {valueText}
-              </Text>
-            </View>
-          </SilentTouchableView>
-          {/* max button */}
-          {/* {!value &&
-            token.amount > 0 &&
-            (isEstimatingGas ? null : (
+      <View style={[styles.container, style]}>
+        <SilentTouchableView
+          viewStyle={[
+            styles.leftInputContainer,
+            inlinePrize && !!valueText && styles.containerHasInlinePrize,
+          ]}
+          onPress={evt => {
+            evt.stopPropagation();
+            tokenInputRef.current?.focus();
+          }}>
+          {!value && token.amount > 0 && isEstimatingGas ? (
+            <CustomSkeleton
+              animation="wave"
+              LinearGradientComponent={Linear}
+              style={styles.skeleton}
+            />
+          ) : (
+            <NumericInput
+              style={[
+                inlinePrize && !!valueText && styles.inputHasInlinePrize,
+                styles.input,
+              ]}
+              value={value}
+              onChangeText={(value: string) => {
+                onChange?.(formatSpeicalAmount(value));
+              }}
+              ref={tokenInputRef}
+              placeholder="0"
+              placeholderTextColor={colors2024['neutral-info']}
+              inputMode="decimal"
+              keyboardType="numeric"
+              numberOfLines={1}
+            />
+          )}
+          <View style={styles.inlinePrizeContainer}>
+            <Text
+              style={styles.inlinePrizeText}
+              ellipsizeMode="tail"
+              numberOfLines={1}>
+              {valueText}
+            </Text>
+          </View>
+        </SilentTouchableView>
+        {/* max button */}
+        {!value &&
+          token.amount > 0 &&
+          (isEstimatingGas ? null : (
+            <>
               <TouchableOpacity
                 disabled={isEstimatingGas}
                 style={styles.maxButtonWrapper}
                 onPress={handleClickMaxButton}>
                 <Text style={styles.maxButtonText}>MAX</Text>
               </TouchableOpacity>
-            ))} */}
-          {/* <View style={styles.placeholder} /> */}
-          <View style={styles.rightToken}>
-            <TokenSelect
-              accountInScreen={defaultAccount}
-              chainId={''}
-              token={token}
-              disableItemCheck={disableItemCheck}
-              onTokenChange={handleCurrentTokenChange}
-              excludeTokens={excludeTokens}
-              type="send"
-              placeholder={placeholder}
-              supportChains={[]}
-            />
-            <View style={styles.balanceWrapper}>
+            </>
+          ))}
+        {<View style={styles.placeholder} />}
+        <View style={styles.rightToken}>
+          <TokenSelect
+            accountInScreen={defaultAccount}
+            chainId={''}
+            token={token}
+            disableItemCheck={disableItemCheck}
+            onTokenChange={handleCurrentTokenChange}
+            excludeTokens={excludeTokens}
+            type="send"
+            placeholder={placeholder}
+            supportChains={[]}
+            style={{ borderRadius: 100 }}
+          />
+          {/* <View style={styles.balanceWrapper}>
               <RcIconWalletCC
                 width={16}
                 height={16}
@@ -231,10 +233,9 @@ export const TokenAmountInput = React.forwardRef<
                   ? formatTokenAmount(tokenAmountBn(token).toString(10)) || '0'
                   : 0}
               </Text>
-            </View>
-          </View>
+            </View> */}
         </View>
-      </>
+      </View>
     );
   },
 );
@@ -339,12 +340,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       padding: 4,
       backgroundColor: colors2024['brand-light-1'],
       borderRadius: 8,
+      // ...makeDebugBorder(),
     },
     maxButtonText: {
       color: colors2024['brand-default'],
       fontSize: 14,
       fontWeight: '700',
-      lineHeight: 18,
+      lineHeight: 16,
       fontFamily: 'SF Pro Rounded',
     },
     maxButtonLoading: { width: 30, height: '100%', marginLeft: 2 },
