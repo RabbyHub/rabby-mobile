@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { ImageBackground, Animated } from 'react-native';
+import { Animated } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressListScreenContainer } from './components/AddressListScreenContainer';
 import { MultiAssets } from './components/MultiAssets';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useHeaderHeight } from '@react-navigation/elements';
+import { TopBg } from './components/BgComponents';
 
 export function AddressAssetsOverview(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
-  const { safeTop, safeOffHeader } = useSafeSizes();
-  const headerHeight = useHeaderHeight();
+  const { safeTop } = useSafeSizes();
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const [isDecrease, setIsDecrease] = useState(false);
 
@@ -32,31 +31,7 @@ export function AddressAssetsOverview(): JSX.Element {
           paddingTop: Math.max(safeTop, 80),
         },
       ]}>
-      <Animated.View
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '100%',
-          height: Math.max(headerHeight, 80),
-          opacity: fadeAnim,
-        }}>
-        <ImageBackground
-          source={
-            !isDecrease
-              ? require('@/assets2024/singleHome/up.png')
-              : require('@/assets2024/singleHome/loss.png')
-          }
-          resizeMode="cover"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: safeOffHeader + 150,
-          }}
-        />
-      </Animated.View>
+      <TopBg fadeAnim={fadeAnim} isDecrease={isDecrease} />
       <MultiAssets
         onUpdateIsDecrease={setIsDecrease}
         onReachTopStatusChange={handleReachTopStatusChange}
