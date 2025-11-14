@@ -115,7 +115,9 @@
       }
     },
     "gotIt": "Verstanden",
-    "check": "Überprüfen"
+    "check": "Überprüfen",
+    "Token": "Token",
+    "Dapp": "Dapp"
   },
   "component": {
     "accountSwitcher": {
@@ -359,6 +361,9 @@
       "whitelistAccounts": "Whitelist",
       "recentAccounts": "Neueste",
       "importedAccounts": "Importierte Wallets"
+    },
+    "portfolios": {
+      "manage": "Verwalten"
     }
   },
   "page": {
@@ -2076,6 +2081,10 @@
       },
       "hotTokenList": {
         "title": "Heiß"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "Website/Token suchen",
+        "placeHolder": "Suche Dapp/Token"
       }
     },
     "tokenDetail": {
@@ -2443,7 +2452,10 @@
         "searchInGoogle": "Suche \"{{searchText}}\" in Google",
         "results": "Ergebnisse",
         "openUrl": "Öffnen \"{{searchText}}\"",
-        "recentEmpty": "Starten Sie die Erkundung der Website"
+        "recentEmpty": "Starten Sie die Erkundung der Website",
+        "hot": "Hot",
+        "otherResults": "Andere Ergebnisse",
+        "favorite": "Favorit"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Websites öffnen"
@@ -2913,7 +2925,9 @@
           "token": "Token",
           "mySupplies": "Meine Vorräte",
           "myBorrows": "Mein Darlehen",
-          "apy": "APY"
+          "apy": "APY",
+          "token_tvl": "Token/TVL",
+          "token_balance": "Token/Guthaben"
         },
         "item": {
           "tvl": "TVL"
@@ -3009,7 +3023,8 @@
       "hf": "Gesundheitsfaktor",
       "hfTitle": "Gesundheitsfaktor",
       "enterAmount": "Betrag eingeben",
-      "isolated": "isoliert"
+      "isolated": "isoliert",
+      "estNetApy": "Est. netto APY"
     }
   },
   "constant": {

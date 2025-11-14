@@ -284,6 +284,9 @@
       "importedAccounts": "Carteras Importadas",
       "whitelistAccounts": "Lista blanca",
       "recentAccounts": "Reciente"
+    },
+    "portfolios": {
+      "manage": "Gestionar"
     }
   },
   "page": {
@@ -1880,6 +1883,10 @@
       },
       "hotTokenList": {
         "title": "Caliente"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "Buscar sitio web/token",
+        "placeHolder": "Buscar Dapp/Token"
       }
     },
     "singleHome": {
@@ -2368,7 +2375,10 @@
         "placeholder": "Buscar sitios web",
         "openUrl": "Abre \"{{searchText}}\"",
         "searchInGoogle": "Buscar \"{{searchText}}\" en Google",
-        "recentEmpty": "Comenzando a explorar el sitio web"
+        "recentEmpty": "Comenzando a explorar el sitio web",
+        "favorite": "Favorito",
+        "hot": "Caliente",
+        "otherResults": "Otros Resultados"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Abrir sitios web"
@@ -2838,7 +2848,9 @@
           "myBorrows": "Mis préstamos",
           "token": "Token",
           "mySupplies": "Mis suministros",
-          "apy": "APY"
+          "apy": "APY",
+          "token_tvl": "Token/TVL",
+          "token_balance": "Token/Saldo"
         },
         "item": {
           "tvl": "TVL"
@@ -2934,7 +2946,8 @@
       "netWorth": "Valor neto",
       "hf": "Factor de salud",
       "enterAmount": "Introducir cantidad",
-      "isolated": "aislado"
+      "isolated": "aislado",
+      "estNetApy": "Est. net APY"
     }
   },
   "global": {
@@ -3010,7 +3023,9 @@
       }
     },
     "check": "Verificar",
-    "gotIt": "Entendido"
+    "gotIt": "Entendido",
+    "Token": "Token",
+    "Dapp": "Dapp"
   },
   "bluetooth": {
     "powered_off_alert": {

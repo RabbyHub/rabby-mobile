@@ -1974,6 +1974,10 @@
       },
       "hotTokenList": {
         "title": "Panas"
+      },
+      "globalSearch": {
+        "placeHolder": "Cari Dapp/Token",
+        "iosPlaceHolder": "Cari Website/Token"
       }
     },
     "setting": {
@@ -2108,7 +2112,10 @@
         "results": "Hasil",
         "searchInGoogle": "Cari \"{{searchText}}\" di Google",
         "placeholder": "Cari Situs Web",
-        "recentEmpty": "Mulai Menjelajahi Situs Web"
+        "recentEmpty": "Mulai Menjelajahi Situs Web",
+        "favorite": "Favorit",
+        "hot": "Hangat",
+        "otherResults": "Hasil Lainnya"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Buka Situs Web"
@@ -2578,7 +2585,9 @@
           "apy": "APY",
           "mySupplies": "Persediaan saya",
           "token": "Token",
-          "myBorrows": "Peminjaman saya"
+          "myBorrows": "Peminjaman saya",
+          "token_balance": "Token/Balance",
+          "token_tvl": "Token/TVL"
         },
         "item": {
           "tvl": "TVL"
@@ -2674,7 +2683,8 @@
       "hfTitle": "Health Factor",
       "hf": "Faktor kesehatan",
       "enterAmount": "Masukkan Jumlah",
-      "isolated": "terisolasi"
+      "isolated": "terisolasi",
+      "estNetApy": "Est. net APY"
     }
   },
   "component": {
@@ -2919,6 +2929,9 @@
       "whitelistAccounts": "Daftar Putih",
       "recentAccounts": "Terbaru",
       "importedAccounts": "Dompet Terimpor   \n"
+    },
+    "portfolios": {
+      "manage": "Kelola"
     }
   },
   "native": {
@@ -3009,7 +3022,9 @@
       }
     },
     "gotIt": "Dapatkan",
-    "check": "Periksa"
+    "check": "Periksa",
+    "Token": "Token",
+    "Dapp": "Dapp"
   },
   "background": {
     "error": {

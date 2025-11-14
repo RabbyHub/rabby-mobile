@@ -1974,6 +1974,10 @@
       },
       "hotTokenList": {
         "title": "Sıcak"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "Websites/Token Araştırın",
+        "placeHolder": "Dapp/Tokene Araştırın"
       }
     },
     "setting": {
@@ -2108,7 +2112,10 @@
         "recent": "Son Zamanlarda",
         "placeholder": "Web Siteleri Ara",
         "searchInGoogle": "Google'da \"{{searchText}}\" arayın",
-        "recentEmpty": "Başlayın Keşfetmeye Web Sitesi"
+        "recentEmpty": "Başlayın Keşfetmeye Web Sitesi",
+        "favorite": "Favori",
+        "hot": "Sıcak",
+        "otherResults": "Diğer Sonuçlar"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Web Sitelerini Aç"
@@ -2578,7 +2585,9 @@
           "token": "Jeton",
           "mySupplies": "Benim malzemelerim",
           "myBorrows": "Benim borçlarım",
-          "apy": "APY"
+          "apy": "APY",
+          "token_tvl": "Token/TVL",
+          "token_balance": "Token/Bakiye"
         },
         "item": {
           "tvl": "TVL"
@@ -2674,7 +2683,8 @@
       "hf": "Sağlık faktörü",
       "hfTitle": "Sağlık Faktörü",
       "enterAmount": "Miktarı Girin",
-      "isolated": "izole edilmiş"
+      "isolated": "izole edilmiş",
+      "estNetApy": "Tahmini net APY"
     }
   },
   "component": {
@@ -2919,6 +2929,9 @@
       "recentAccounts": "Son zamanlarda",
       "importedAccounts": "İçe Aktarılan Cüzdanlar",
       "whitelistAccounts": "Beyaz Liste"
+    },
+    "portfolios": {
+      "manage": "Yönetmek"
     }
   },
   "native": {
@@ -3009,7 +3022,9 @@
       }
     },
     "gotIt": "Tamamdır",
-    "check": "Kontrol Et"
+    "check": "Kontrol Et",
+    "Dapp": "Dapp",
+    "Token": "Jeton"
   },
   "background": {
     "error": {

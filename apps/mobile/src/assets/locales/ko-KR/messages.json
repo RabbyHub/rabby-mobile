@@ -1535,6 +1535,10 @@
       },
       "hotTokenList": {
         "title": "핫"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "웹사이트/토큰 검색",
+        "placeHolder": "Dapp/토큰 검색"
       }
     },
     "receiveAddressList": {
@@ -2109,7 +2113,10 @@
         "openUrl": "\"{{searchText}}\" 열기",
         "searchInGoogle": "Google에서 \"{{searchText}}\" 검색하기",
         "placeholder": "웹사이트 검색",
-        "recentEmpty": "웹사이트 탐색 시작"
+        "recentEmpty": "웹사이트 탐색 시작",
+        "otherResults": "기타 결과",
+        "hot": "핫",
+        "favorite": "즐겨찾기"
       },
       "BrowserSearchEntry": {
         "openWebsites": "웹사이트 열기"
@@ -2579,7 +2586,9 @@
           "mySupplies": "내 자산",
           "myBorrows": "내 차입금",
           "token": "토큰",
-          "apy": "APY"
+          "apy": "APY",
+          "token_tvl": "토큰/TVL",
+          "token_balance": "토큰/잔액"
         },
         "item": {
           "tvl": "TVL"
@@ -2675,7 +2684,8 @@
       "hf": "건강 지수",
       "hfTitle": "건강 지수",
       "enterAmount": "금액 입력",
-      "isolated": "격리된"
+      "isolated": "격리된",
+      "estNetApy": "추정 순 APY"
     }
   },
   "global": {
@@ -2751,7 +2761,9 @@
       }
     },
     "gotIt": "알겠습니다",
-    "check": "확인"
+    "check": "확인",
+    "Dapp": "Dapp",
+    "Token": "토큰"
   },
   "native": {
     "biometrics": {
@@ -3010,6 +3022,9 @@
       "recentAccounts": "최근",
       "importedAccounts": "가져온 지갑",
       "whitelistAccounts": "화이트리스트"
+    },
+    "portfolios": {
+      "manage": "관리하다"
     }
   },
   "constant": {

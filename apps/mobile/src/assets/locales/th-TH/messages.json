@@ -269,6 +269,9 @@
       "recentAccounts": "ล่าสุด",
       "importedAccounts": "กระเป๋าเงินที่นำเข้า",
       "whitelistAccounts": "รายชื่อผู้ได้รับอนุญาต"
+    },
+    "portfolios": {
+      "manage": "จัดการ"
     }
   },
   "page": {
@@ -1847,6 +1850,10 @@
       },
       "hotTokenList": {
         "title": "ร้อน"
+      },
+      "globalSearch": {
+        "placeHolder": "ค้นหา Dapp/Token",
+        "iosPlaceHolder": "ค้นหาเว็บไซต์/โทเค็น"
       }
     },
     "receiveAddressList": {
@@ -2353,7 +2360,10 @@
         "placeholder": "ค้นหาเว็บไซต์",
         "searchInGoogle": "ค้นหา \"{{searchText}}\" ใน Google",
         "openUrl": "เปิด \"{{searchText}}\"",
-        "recentEmpty": "เริ่มสำรวจเว็บไซต์"
+        "recentEmpty": "เริ่มสำรวจเว็บไซต์",
+        "otherResults": "ผลลัพธ์อื่น ๆ",
+        "favorite": "รายการโปรด",
+        "hot": "ร้อน"
       },
       "BrowserSearchEntry": {
         "openWebsites": "เปิดเว็บไซต์"
@@ -2823,7 +2833,9 @@
           "myBorrows": "การยืมของฉัน",
           "apy": "APY",
           "mySupplies": "วัสดุของฉัน",
-          "token": "โทเค็น"
+          "token": "โทเค็น",
+          "token_balance": "Token/Balance",
+          "token_tvl": "โทเค็น/TVL"
         },
         "item": {
           "tvl": "TVL"
@@ -2919,7 +2931,8 @@
       "hfTitle": "Health Factor",
       "enterAmount": "ป้อนจำนวน",
       "hf": "ปัจจัยสุขภาพ",
-      "isolated": "แยกออก"
+      "isolated": "แยกออก",
+      "estNetApy": "Est. net APY"
     }
   },
   "native": {
@@ -3010,7 +3023,9 @@
       }
     },
     "gotIt": "เข้าใจแล้ว",
-    "check": "ตรวจสอบ"
+    "check": "ตรวจสอบ",
+    "Dapp": "Dapp",
+    "Token": "โทเค็น"
   },
   "background": {
     "transactionWatcher": {

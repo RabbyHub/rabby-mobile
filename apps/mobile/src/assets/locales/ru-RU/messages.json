@@ -115,7 +115,9 @@
       }
     },
     "gotIt": "Понял",
-    "check": "Проверить"
+    "check": "Проверить",
+    "Dapp": "Dapp",
+    "Token": "Токен"
   },
   "page": {
     "getStart": {
@@ -1768,6 +1770,10 @@
       },
       "hotTokenList": {
         "title": "Горячий"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "Поиск сайта/токена",
+        "placeHolder": "Поиск Dapp/Token"
       }
     },
     "setting": {
@@ -2199,7 +2205,10 @@
         "placeholder": "Поиск веб-сайтов",
         "openUrl": "Открыть \"{{searchText}}\"",
         "results": "Результаты",
-        "recentEmpty": "Начать исследовать сайт"
+        "recentEmpty": "Начать исследовать сайт",
+        "hot": "Горячий",
+        "favorite": "Избранное",
+        "otherResults": "Другие результаты"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Открыть веб-сайты"
@@ -2669,7 +2678,9 @@
           "apy": "АПИ",
           "myBorrows": "Мои заимствования",
           "mySupplies": "Мои запасы",
-          "token": "Токен"
+          "token": "Токен",
+          "token_balance": "Токен/Баланс",
+          "token_tvl": "Токен/TVL"
         },
         "item": {
           "tvl": "TVL"
@@ -2765,7 +2776,8 @@
       "enterAmount": "Введите сумму",
       "hf": "Фактор здоровья",
       "hfTitle": "Фактор здоровья",
-      "isolated": "изолированный"
+      "isolated": "изолированный",
+      "estNetApy": "Ожидаемая чистая APY"
     }
   },
   "component": {
@@ -3010,6 +3022,9 @@
       "recentAccounts": "Недавний",
       "whitelistAccounts": "Белый список",
       "importedAccounts": "Импортированные кошельки"
+    },
+    "portfolios": {
+      "manage": "Управлять"
     }
   },
   "constant": {

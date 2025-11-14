@@ -124,7 +124,9 @@
       }
     },
     "check": "檢查",
-    "gotIt": "了解了"
+    "gotIt": "了解了",
+    "Token": "代幣",
+    "Dapp": "Dapp"
   },
   "background": {
     "transactionWatcher": {
@@ -1695,6 +1697,10 @@
       },
       "hotTokenList": {
         "title": "熱"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "搜尋網站/代幣",
+        "placeHolder": "搜尋 Dapp/Token"
       }
     },
     "customRpc": {
@@ -2256,7 +2262,10 @@
         "recent": "最近",
         "openUrl": "打開 \"{{searchText}}\"",
         "searchInGoogle": "在 Google 中搜尋 \"{{searchText}}\"",
-        "recentEmpty": "開始探索網站"
+        "recentEmpty": "開始探索網站",
+        "otherResults": "其他結果",
+        "hot": "熱",
+        "favorite": "最愛"
       },
       "BrowserSearchEntry": {
         "openWebsites": "打開網站"
@@ -2726,7 +2735,9 @@
           "token": "代幣",
           "myBorrows": "我的借款",
           "apy": "APY",
-          "mySupplies": "我的供应"
+          "mySupplies": "我的供应",
+          "token_tvl": "Token/TVL",
+          "token_balance": "代幣/餘額"
         },
         "item": {
           "tvl": "TVL"
@@ -2822,7 +2833,8 @@
       "enterAmount": "輸入金額",
       "hf": "健康因子",
       "hfTitle": "健康因子",
-      "isolated": "孤立"
+      "isolated": "孤立",
+      "estNetApy": "預估淨年利率"
     }
   },
   "component": {
@@ -3067,6 +3079,9 @@
       "recentAccounts": "最近",
       "whitelistAccounts": "白名單",
       "importedAccounts": "導入的錢包"
+    },
+    "portfolios": {
+      "manage": "管理"
     }
   },
   "common": {

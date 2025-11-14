@@ -1938,6 +1938,10 @@
       },
       "hotTokenList": {
         "title": "ホット"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "ウェブサイト/トークンを検索",
+        "placeHolder": "Dapp/トークンを検索"
       }
     },
     "createPassword": {
@@ -2161,7 +2165,10 @@
         "openUrl": "オープン \"{{searchText}}\"",
         "recent": "最近",
         "results": "結果",
-        "recentEmpty": "ウェブサイトを探索し始める"
+        "recentEmpty": "ウェブサイトを探索し始める",
+        "otherResults": "その他の結果",
+        "favorite": "お気に入り",
+        "hot": "ホット"
       },
       "BrowserSearchEntry": {
         "openWebsites": "ウェブサイトを開く"
@@ -2631,7 +2638,9 @@
           "apy": "APY",
           "token": "トークン",
           "myBorrows": "私の借入",
-          "mySupplies": "私のサプライ"
+          "mySupplies": "私のサプライ",
+          "token_tvl": "トークン/TVL",
+          "token_balance": "トークン/残高"
         },
         "item": {
           "tvl": "TVL"
@@ -2727,7 +2736,8 @@
       "enterAmount": "金額を入力してください",
       "hfTitle": "ヘルスファクター",
       "hf": "ヘルスファクター",
-      "isolated": "隔離"
+      "isolated": "隔離",
+      "estNetApy": "推定ネットAPY"
     }
   },
   "global": {
@@ -2803,7 +2813,9 @@
       }
     },
     "check": "チェック",
-    "gotIt": "わかった"
+    "gotIt": "わかった",
+    "Dapp": "Dapp",
+    "Token": "トークン"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -3067,6 +3079,9 @@
       "recentAccounts": "最近",
       "whitelistAccounts": "ホワイトリスト",
       "importedAccounts": "インポートされたウォレット"
+    },
+    "portfolios": {
+      "manage": "管理"
     }
   },
   "common": {

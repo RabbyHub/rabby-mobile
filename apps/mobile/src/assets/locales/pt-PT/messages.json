@@ -284,6 +284,9 @@
       "whitelistAccounts": "Lista Branca",
       "recentAccounts": "Recente",
       "importedAccounts": "Carteiras Importadas"
+    },
+    "portfolios": {
+      "manage": "Gerir"
     }
   },
   "global": {
@@ -359,7 +362,9 @@
       }
     },
     "gotIt": "Entendi",
-    "check": "Verifique"
+    "check": "Verifique",
+    "Dapp": "Dapp",
+    "Token": "Token"
   },
   "page": {
     "getStart": {
@@ -1979,6 +1984,10 @@
       },
       "hotTokenList": {
         "title": "Quente"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "Pesquisar Website/Token",
+        "placeHolder": "Pesquisar Dapp/Token"
       }
     },
     "tokenDetail": {
@@ -2443,7 +2452,10 @@
         "searchInGoogle": "Pesquisar \"{{searchText}}\" no Google",
         "openUrl": "Abrir \"{{searchText}}\"",
         "recent": "Recente",
-        "recentEmpty": "Começando a Explorar o Website"
+        "recentEmpty": "Começando a Explorar o Website",
+        "hot": "Quente",
+        "favorite": "Favorito",
+        "otherResults": "Outras Resultados"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Abrir Websites"
@@ -2913,7 +2925,9 @@
           "token": "Token",
           "myBorrows": "Meus empréstimos",
           "apy": "APY",
-          "mySupplies": "Meus suprimentos"
+          "mySupplies": "Meus suprimentos",
+          "token_balance": "Token/Saldo",
+          "token_tvl": "Token/TVL"
         },
         "item": {
           "tvl": "TVL"
@@ -3009,7 +3023,8 @@
       "hfTitle": "Fator de Saúde",
       "enterAmount": "Introduza o montante",
       "hf": "Fator de saúde",
-      "isolated": "isolado"
+      "isolated": "isolado",
+      "estNetApy": "Est. rendimento líquido APY"
     }
   },
   "constant": {

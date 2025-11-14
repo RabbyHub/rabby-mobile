@@ -115,7 +115,9 @@
       }
     },
     "check": "检查",
-    "gotIt": "明白了"
+    "gotIt": "明白了",
+    "Dapp": "Dapp",
+    "Token": "代币"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -1851,6 +1853,10 @@
       },
       "hotTokenList": {
         "title": "热"
+      },
+      "globalSearch": {
+        "placeHolder": "搜索 Dapp/Token",
+        "iosPlaceHolder": "搜索网站/Token"
       }
     },
     "receiveAddressList": {
@@ -2208,7 +2214,10 @@
         "placeholder": "搜索网站",
         "recent": "最近",
         "searchInGoogle": "在 Google 中搜索 \"{{searchText}}\"",
-        "recentEmpty": "开始探索网站"
+        "recentEmpty": "开始探索网站",
+        "favorite": "收藏夹",
+        "hot": "热",
+        "otherResults": "其他结果"
       },
       "BrowserSearchEntry": {
         "openWebsites": "打开网站"
@@ -2678,7 +2687,9 @@
           "token": "代币",
           "myBorrows": "我的借款",
           "mySupplies": "我的供应",
-          "apy": "年化收益率"
+          "apy": "年化收益率",
+          "token_tvl": "Token/TVL",
+          "token_balance": "代币/余额"
         },
         "item": {
           "tvl": "TVL"
@@ -2774,7 +2785,8 @@
       "hfTitle": "健康因子",
       "selectChain": "选择链",
       "supplied": "提供",
-      "isolated": "孤立的"
+      "isolated": "孤立的",
+      "estNetApy": "估计净年化收益率"
     }
   },
   "component": {
@@ -3019,6 +3031,9 @@
       "importedAccounts": "导入的钱包",
       "whitelistAccounts": "白名单",
       "recentAccounts": "最近"
+    },
+    "portfolios": {
+      "manage": "管理"
     }
   },
   "bluetooth": {

@@ -115,7 +115,9 @@
       }
     },
     "check": "Kiểm tra",
-    "gotIt": "Đã hiểu"
+    "gotIt": "Đã hiểu",
+    "Token": "Token",
+    "Dapp": "Dapp"
   },
   "page": {
     "transactions": {
@@ -1603,6 +1605,10 @@
       },
       "hotTokenList": {
         "title": "Nóng"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "Tìm kiếm Website/Token",
+        "placeHolder": "Tìm kiếm Dapp/Token"
       }
     },
     "sign": {
@@ -2199,7 +2205,10 @@
         "openUrl": "Mở \"{{searchText}}\"",
         "placeholder": "Tìm kiếm Website",
         "searchInGoogle": "Tìm \"{{searchText}}\" trên Google",
-        "recentEmpty": "Bắt đầu Khám Phá Website"
+        "recentEmpty": "Bắt đầu Khám Phá Website",
+        "otherResults": "Kết quả khác",
+        "hot": "Nóng",
+        "favorite": "Yêu thích"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Mở Trang Web"
@@ -2669,7 +2678,9 @@
           "token": "Token",
           "apy": "APY",
           "mySupplies": "Cung cấp của tôi",
-          "myBorrows": "Các khoản vay của tôi"
+          "myBorrows": "Các khoản vay của tôi",
+          "token_tvl": "Token/TVL",
+          "token_balance": "Token/Số dư"
         },
         "item": {
           "tvl": "TVL"
@@ -2765,7 +2776,8 @@
       "hf": "Hệ số sức khỏe",
       "enterAmount": "Nhập số tiền",
       "hfTitle": "Yếu tố sức khỏe",
-      "isolated": "tách biệt"
+      "isolated": "tách biệt",
+      "estNetApy": "Ước tính APY ròng"
     }
   },
   "component": {
@@ -3010,6 +3022,9 @@
       "importedAccounts": "Ví Wallet Nhập khẩu",
       "recentAccounts": "Gần đây",
       "whitelistAccounts": "Danh sách trắng"
+    },
+    "portfolios": {
+      "manage": "Quản lý"
     }
   },
   "constant": {

@@ -1608,6 +1608,10 @@
       },
       "hotTokenList": {
         "title": "Chaud"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "Rechercher un site Web/Token",
+        "placeHolder": "Rechercher Dapp/Token"
       }
     },
     "gasAccount": {
@@ -2118,7 +2122,10 @@
         "placeholder": "Rechercher des sites Web",
         "searchInGoogle": "Rechercher \"{{searchText}}\" sur Google",
         "recent": "Récent",
-        "recentEmpty": "Commencer à explorer le site Web"
+        "recentEmpty": "Commencer à explorer le site Web",
+        "hot": "Chaud",
+        "favorite": "Préféré",
+        "otherResults": "Autres résultats"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Ouvrir des sites Web"
@@ -2588,7 +2595,9 @@
           "token": "Jeton",
           "apy": "APY",
           "mySupplies": "Mes fournitures",
-          "myBorrows": "Mes emprunts"
+          "myBorrows": "Mes emprunts",
+          "token_balance": "Jeton/Équilibre",
+          "token_tvl": "Token/TVL"
         },
         "item": {
           "tvl": "TVL"
@@ -2684,7 +2693,8 @@
       "hfTitle": "Facteur de santé",
       "apy": "APY",
       "hf": "Facteur de santé",
-      "isolated": "isolé"
+      "isolated": "isolé",
+      "estNetApy": "Est. net APY"
     }
   },
   "native": {
@@ -2964,6 +2974,9 @@
       "importedAccounts": "Portefeuilles importés",
       "whitelistAccounts": "Liste blanche",
       "recentAccounts": "Récent"
+    },
+    "portfolios": {
+      "manage": "Gérer"
     }
   },
   "global": {
@@ -3039,7 +3052,9 @@
       }
     },
     "gotIt": "Compris",
-    "check": "Vérifier"
+    "check": "Vérifier",
+    "Token": "Jeton",
+    "Dapp": "Dapp"
   },
   "background": {
     "transactionWatcher": {
