@@ -152,6 +152,13 @@ export const TokenDetailHistoryList = ({
     }
   };
 
+  const isMyAddress = useMemo(() => {
+    return (
+      finalAccount?.type !== KEYRING_CLASS.WATCH &&
+      finalAccount?.type !== KEYRING_CLASS.GNOSIS
+    );
+  }, [finalAccount]);
+
   const batchFetchData = useMemoizedFn(async () => {
     const list: HistoryDisplayItem[] = [];
     const account = finalAccount;
@@ -168,10 +175,6 @@ export const TokenDetailHistoryList = ({
         hasMore: false,
       };
     }
-
-    const isMyAddress =
-      finalAccount.type !== KEYRING_CLASS.WATCH &&
-      finalAccount.type !== KEYRING_CLASS.GNOSIS;
 
     const result = await fetchData(
       addr,
@@ -285,7 +288,7 @@ export const TokenDetailHistoryList = ({
         historySuccessList={historySuccessList}
         list={displayList}
         loading={false}
-        isNeedFetchFromApi
+        isNeedFetchFromApi={!isMyAddress}
         firstFetchDone={false}
         loadingMore={loadingMore}
         refreshLoading={loading}
