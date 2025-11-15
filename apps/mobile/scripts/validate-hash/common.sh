@@ -85,19 +85,36 @@ setup_environment() {
   # --- 覆盖代码中用到的环境变量 ---
   export RABBY_MOBILE_CODE="RABBY_MOBILE_CODE_DEV"
 
+  # write APP_ENV to .xcode.env.local
+  echo "export APP_ENV=$APP_ENV" > ios/.xcode.env.local
+
   rm -f .env.hashing && cp .env .env.hashing;
   local apiKey="";
-  [ ! -z $MOBILE_SAFE_API_KEY ] && apiKey=$MOBILE_SAFE_API_KEY;
-  [ ! -z $RABBY_MOBILE_SAFE_API_KEY ] && apiKey=$RABBY_MOBILE_SAFE_API_KEY;
-
-  if [ ! -z $apiKey ]; then
-    # write it to .env file
-    sed -i '' -e '/^RABBY_MOBILE_SAFE_API_KEY=/d' .env.hashing
-    # will used by react-native-dotenv, notice, the exports below is useless for this variable on iOS, because xcode build phase use /bin/sh but all build env does not use it.
-    echo "RABBY_MOBILE_SAFE_API_KEY=$apiKey" >> .env.hashing
+  if [ -z $RABBY_MOBILE_SAFE_API_KEY ] && [ ! -z $MOBILE_SAFE_API_KEY ]; then
+    export RABBY_MOBILE_SAFE_API_KEY=$MOBILE_SAFE_API_KEY
   fi
 
   local env_file=".env.hashing"
+  local sensitive_vars=(
+    "RABBY_MOBILE_SAFE_API_KEY" $RABBY_MOBILE_SAFE_API_KEY
+    "RABBY_MOBILE_KR_PWD" $RABBY_MOBILE_KR_PWD
+    "RABBY_MOBILE_BUILD_CHANNEL" "appstore"
+  )
+
+  for ((i=0; i<${#sensitive_vars[@]}; i+=2)); do
+    var_name="${sensitive_vars[i]}"
+    var_value="${sensitive_vars[i+1]}"
+    if [ -z "$var_value" ]; then
+      echo "⚠️ 警告: 环境变量 $var_name 未设置，使用占位符代替"
+      var_value="pesudo_for_hashing"
+    fi
+    echo "$var_name=$var_value" >> .env.hashing
+
+    sed -i '' -e "/^$var_name=/d" "$env_file"
+    echo "$var_name=${var_value:-pesudo_for_hashing}" >> "$env_file"
+  done
+
+  # the exports below is useless for this variable on iOS, because xcode build phase use /bin/sh but all build env does not use it.
   if [ -f "$env_file" ]; then
     echo "ℹ️ 从 $env_file 加载环境变量..."
     while IFS='=' read -r key value || [ -n "$key" ]; do

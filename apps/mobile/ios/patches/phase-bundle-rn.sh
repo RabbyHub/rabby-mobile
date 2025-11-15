@@ -37,16 +37,21 @@ check_env_file() {
   env_file="$project_dir/.env.production"
   if [ "$CONFIGURATION" != "Release" ]; then
     env_file="$project_dir/.env.local"
+  elif [ "$APP_ENV" == "hashing" ]; then
+    echo "[RabbyMobileBuild] in hashing mode"
+    env_file="$project_dir/.env.hashing"
   fi
+
+  echo "[RabbyMobileBuild] checking env file: $env_file"
 
   if [ -z $RABBY_MOBILE_SAFE_API_KEY ] && [ ! -z $MOBILE_SAFE_API_KEY ]; then
     export RABBY_MOBILE_SAFE_API_KEY=$MOBILE_SAFE_API_KEY
   fi
 
   local sysenv_apiKey=$RABBY_MOBILE_SAFE_API_KEY
-  local env_apiKey=""
+  local apiKey_fromEnvFile=""
   local sysenv_krPwd=$RABBY_MOBILE_KR_PWD
-  local env_krPwd=""
+  local krPwd_fromEnvFile=""
   local env_buildchannel=""
 
   if [ -f "$env_file" ]; then
@@ -55,18 +60,18 @@ check_env_file() {
       if [ -z "$key_cleaned" ]; then continue; fi
       value_cleaned=$(echo "$value" | sed 's/#.*//' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
       if [ "$key_cleaned" == "RABBY_MOBILE_SAFE_API_KEY" ]; then
-        env_apiKey="$value_cleaned"
+        apiKey_fromEnvFile="$value_cleaned"
       elif [ "$key_cleaned" == "RABBY_MOBILE_KR_PWD" ]; then
-        env_krPwd="$value_cleaned"
+        krPwd_fromEnvFile="$value_cleaned"
       elif [ "$key_cleaned" == "RABBY_MOBILE_BUILD_CHANNEL" ]; then
         env_buildchannel="$value_cleaned"
       fi
     done < <(grep -v '^[[:space:]]*#' "$env_file" | grep -v '^[[:space:]]*$')
 
-    if [ -z "$env_apiKey" ]; then
+    if [ -z "$apiKey_fromEnvFile" ]; then
       echo "[RabbyMobileBuild] no RABBY_MOBILE_SAFE_API_KEY in env file $env_file, abort bundle"
       exit 1
-    elif [ -z "$env_krPwd" ]; then
+    elif [ -z "$krPwd_fromEnvFile" ]; then
       echo "[RabbyMobileBuild] no RABBY_MOBILE_KR_PWD in env file $env_file, abort bundle"
       exit 1
     elif [ "$CONFIGURATION" == "Release" ] && [ "$env_buildchannel" != "appstore" ]; then
@@ -99,6 +104,6 @@ check_env_file;
 [ ! -z $DO_POD_INSTALL ] && bundle install && bundle exec pod install;
 echo "[RabbyMobileBuild] customize build environment vars finished."
 
-/bin/sh -c "$WITH_ENVIRONMENT \"$BUNDLE_REACT_NATIVE\""
+/bin/bash -c "$WITH_ENVIRONMENT \"$BUNDLE_REACT_NATIVE\""
 
 echo "[RabbyMobileBuild] finish bundle with sentry build."
