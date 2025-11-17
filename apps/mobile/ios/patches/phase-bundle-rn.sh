@@ -34,12 +34,14 @@ fi
 echo "[RabbyMobileBuild] buildchannel is $buildchannel"
 
 check_env_file() {
-  env_file="$project_dir/.env.production"
-  if [ "$CONFIGURATION" != "Release" ]; then
-    env_file="$project_dir/.env.local"
-  elif [ "$APP_ENV" == "hashing" ]; then
+  env_file="$project_dir/.env"
+  if [ "$APP_ENV" == "hashing" ]; then
     echo "[RabbyMobileBuild] in hashing mode"
     env_file="$project_dir/.env.hashing"
+  elif [ "$CONFIGURATION" == "Release" ]; then
+    env_file="$project_dir/.env.production"
+  elif [ -f "$project_dir/.env.local" ]; then
+    env_file="$project_dir/.env.local"
   fi
 
   echo "[RabbyMobileBuild] checking env file: $env_file"
