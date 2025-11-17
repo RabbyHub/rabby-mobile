@@ -267,7 +267,8 @@ export function MultiAddressHomeHeader(
             styles.localWebViewWrapper,
             couldRenderLocalWebView ? styles.localWebViewWrapperShow : {},
           ]}>
-          <LocalWebView
+          {/* TODO: REVERT THIS */}
+          {/* <LocalWebView
             ref={gasketWebViewRef}
             style={{
               minWidth: Dimensions.get('window').width - 15 * 2,
@@ -279,7 +280,7 @@ export function MultiAddressHomeHeader(
             webviewSize={{
               width: Dimensions.get('window').width - 15 * 2,
             }}
-          />
+          /> */}
         </View>
         <RNLinearGradient
           colors={
