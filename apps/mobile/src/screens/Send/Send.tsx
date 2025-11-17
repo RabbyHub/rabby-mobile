@@ -121,8 +121,7 @@ function SendScreen({
 
   useEffect(() => {
     clearLocalPendingTxData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearLocalPendingTxData]);
 
   const route =
     useRoute<
