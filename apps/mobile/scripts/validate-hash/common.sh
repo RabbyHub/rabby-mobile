@@ -96,8 +96,8 @@ setup_environment() {
 
   local env_file=".env.hashing"
   local sensitive_vars=(
-    "RABBY_MOBILE_SAFE_API_KEY" $RABBY_MOBILE_SAFE_API_KEY
-    "RABBY_MOBILE_KR_PWD" $RABBY_MOBILE_KR_PWD
+    "RABBY_MOBILE_SAFE_API_KEY" "$RABBY_MOBILE_SAFE_API_KEY"
+    "RABBY_MOBILE_KR_PWD" "$RABBY_MOBILE_KR_PWD"
     "RABBY_MOBILE_BUILD_CHANNEL" "appstore"
   )
 
@@ -105,8 +105,10 @@ setup_environment() {
     var_name="${sensitive_vars[i]}"
     var_value="${sensitive_vars[i+1]}"
     if [ -z "$var_value" ]; then
-      echo "⚠️ 警告: 环境变量 $var_name 未设置，使用占位符代替"
+      echo "⚠️ warning: environment variable $var_name is not set, using placeholder instead"
       var_value="pesudo_for_hashing"
+    else
+      echo "ℹ️ detected value of $var_name"
     fi
     echo "$var_name=$var_value" >> .env.hashing
 
@@ -116,7 +118,7 @@ setup_environment() {
 
   # the exports below is useless for this variable on iOS, because xcode build phase use /bin/sh but all build env does not use it.
   if [ -f "$env_file" ]; then
-    echo "ℹ️ 从 $env_file 加载环境变量..."
+    echo "ℹ️ Loading environment variables from $env_file..."
     while IFS='=' read -r key value || [ -n "$key" ]; do
       key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1')
       if [ -z "$key_cleaned" ]; then continue; fi
@@ -124,9 +126,9 @@ setup_environment() {
       value_to_export="${value_cleaned:-pesudo_for_hashing}"
       export "$key_cleaned=$value_to_export"
     done < <(grep -v '^[[:space:]]*#' "$env_file" | grep -v '^[[:space:]]*$')
-    echo "✅ 环境变量加载完毕"
+    echo "✅ Loaded environment variables."
   else
-    echo "⚠️ 未找到环境变量文件 $env_file"
+    echo "⚠️ Environment variable file $env_file not found."
   fi
 }
 
