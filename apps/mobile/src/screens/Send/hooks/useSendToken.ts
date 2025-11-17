@@ -82,6 +82,7 @@ import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { IExtractFromPromise } from '@/utils/type';
 import { useWhiteListAddress } from './useWhiteListAddress';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { coerceNumber } from '@/utils/coerce';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -658,7 +659,7 @@ export function useSendTokenForm({
       }
 
       if (currentValues.amount !== screenState.cacheAmount) {
-        if (screenState.showGasReserved && Number(resultAmount) > 0) {
+        if (screenState.showGasReserved && coerceNumber(resultAmount, 0) > 0) {
           putScreenState({ showGasReserved: false });
         } /*  else if (isNativeToken && !screenState.isGnosisSafe) {
           const gasCostTokenAmount = calcGasCost({ chainEnum, gasPriceMap });
@@ -692,6 +693,8 @@ export function useSendTokenForm({
       } else {
         putScreenState({ balanceError: null });
       }
+      if (coerceNumber(resultAmount) === 0) resultAmount = '';
+
       const nextFormValues = {
         ...currentValues,
         to: currentValues.to,
