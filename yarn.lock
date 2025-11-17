@@ -34588,7 +34588,7 @@ __metadata:
     react-native-ios-context-menu: 1.15.3
     react-native-keyboard-aware-scroll-view: ^0.9.5
     react-native-keyboard-controller: 1.18.5
-    react-native-keychain: 9.1.0
+    react-native-keychain: 8.2.0
     react-native-linear-gradient: ^2.8.3
     react-native-localize: 3.3.0
     react-native-mmkv: ^2.12.2
@@ -35416,17 +35416,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-keychain@npm:9.1.0":
-  version: 9.1.0
-  resolution: "react-native-keychain@npm:9.1.0"
-  checksum: 67d841a84d99c050af2837810d685125757df98be489c33ada13c3cb55aec474a4b723c84d8a18d657359b8d387e01a14311b05e7801810244b45205565c108f
+"react-native-keychain@npm:8.2.0":
+  version: 8.2.0
+  resolution: "react-native-keychain@npm:8.2.0"
+  checksum: 4c4d5331013b8ab17c21120a2388e1e82aa30586738c0a34ed9dcffb6ce12454125ddb690951cad5563c9290b060eb68ccffa9477650cc3a5ddc347696b5d4ef
   languageName: node
   linkType: hard
 
-"react-native-keychain@patch:react-native-keychain@npm%3A9.1.0#./.yarn/patches/react-native-keychain-npm-9.1.0-ded956502d.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 9.1.0
-  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A9.1.0#./.yarn/patches/react-native-keychain-npm-9.1.0-ded956502d.patch::version=9.1.0&hash=992090&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  checksum: 90196909a210fa49d76932d3c94e89f115b1c5d8ac4f8b3527642d5598ced30b59ee2a58546f34c70aafb4e39fc70c5d0666b871f4018a88d7875c53a65528bc
+"react-native-keychain@patch:react-native-keychain@npm%3A8.2.0#./.yarn/patches/react-native-keychain-npm-8.2.0-ff8c16b501.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 8.2.0
+  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A8.2.0#./.yarn/patches/react-native-keychain-npm-8.2.0-ff8c16b501.patch::version=8.2.0&hash=ca78db&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  checksum: 830165ff0d203d3d8a553e93b267d683c0feec2d27086c7e98d1eada71c8e2f68a50e1fda778d9c16186064d48763a3bef8dd8fcd65f106b8faa869c19587ec9
   languageName: node
   linkType: hard
 
