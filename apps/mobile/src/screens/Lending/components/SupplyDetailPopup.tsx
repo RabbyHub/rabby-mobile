@@ -6,10 +6,7 @@ import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../type';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
-import {
-  formatAmountValueKMB,
-  formatPercent,
-} from '@/screens/TokenDetail/util';
+import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import TokenIcon from './TokenIcon';
 import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
@@ -20,13 +17,16 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { RESERVE_USAGE_WARNING_THRESHOLD } from '../utils/constant';
+import {
+  RESERVE_USAGE_WARNING_THRESHOLD,
+  SUPPLY_UI_SAFE_MARGIN,
+} from '../utils/constant';
 import WarningFillCC from '@/assets2024/icons/lending/warning-cc.svg';
 import { Tip } from '@/components/Tip';
-import { formatTokenAmount } from '@debank/common';
 import { useTranslation } from 'react-i18next';
 import { formatNetworth } from '@/utils/math';
 import IsolatedTag from './IsolatedTag';
+import { formatApy } from '../utils/format';
 
 export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -92,6 +92,27 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
     reserve.reserve.totalLiquidity,
     reserve.reserve.totalLiquidityUSD,
     t,
+  ]);
+
+  const supplyAvailable = useMemo(() => {
+    const myAmount = BigNumber(reserve.walletBalance || '0');
+    const poolAmount = BigNumber(reserve.reserve.supplyCap)
+      .minus(BigNumber(reserve.reserve.totalLiquidity))
+      .multipliedBy(SUPPLY_UI_SAFE_MARGIN);
+    const miniAmount = myAmount.gte(poolAmount) ? poolAmount : myAmount;
+    const usdValue = miniAmount
+      .multipliedBy(
+        BigNumber(
+          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+        ),
+      )
+      .toString();
+    return usdValue;
+  }, [
+    reserve.walletBalance,
+    reserve.reserve.supplyCap,
+    reserve.reserve.totalLiquidity,
+    reserve.reserve.formattedPriceInMarketReferenceCurrency,
   ]);
 
   const handlePressSupply = () => {
@@ -163,7 +184,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
                 {t('page.Lending.apy')}
               </Text>
               <Text style={styles.poolInfoItemValue}>
-                {formatPercent(Number(reserve.reserve.supplyAPY || '0'))}
+                {formatApy(Number(reserve.reserve.supplyAPY || '0'))}
               </Text>
             </View>
           </View>
@@ -197,8 +218,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
               {t('page.Lending.supplyOverview.walletBalance')}
             </Text>
             <Text style={styles.userInfoItemValue}>
-              {formatTokenAmount(reserve.walletBalance || '0')}{' '}
-              {reserve.reserve.symbol}
+              ${formatAmountValueKMB(reserve.walletBalanceUSD || '0')}{' '}
             </Text>
           </View>
           <View style={styles.userInfoItem}>
@@ -207,7 +227,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
             </Text>
             <View style={styles.userInfoItemValueContainer}>
               <Text style={styles.userInfoItemValue}>
-                ${formatAmountValueKMB(reserve.walletBalanceUSD || '0')}
+                ${formatAmountValueKMB(supplyAvailable || '0')}
               </Text>
               {errorMessage ? (
                 <Tip content={errorMessage}>

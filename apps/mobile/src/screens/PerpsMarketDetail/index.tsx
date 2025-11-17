@@ -84,6 +84,11 @@ export const PerpsMarketDetailScreen = () => {
   const [selectedToken, setSelectedToken] = useSelectedToken();
   const [showDepositTokenPopup, setShowDepositTokenPopup] = useState(false);
   const [showSearchListPopup, setShowSearchListPopup] = useState(false);
+  const coinNameRef = useRef(coin);
+  useEffect(() => {
+    coinNameRef.current = coin;
+  }, [coin]);
+
   const market = useMemo(() => {
     return marketDataMap[coin.toUpperCase()];
   }, [marketDataMap, coin]);
@@ -217,6 +222,9 @@ export const PerpsMarketDetailScreen = () => {
   const subscribeActiveAssetCtx = useMemoizedFn(() => {
     const sdk = apisPerps.getPerpsSDK();
     const { unsubscribe } = sdk.ws.subscribeToActiveAssetCtx(coin, data => {
+      if (coinNameRef.current?.toUpperCase() !== data.coin.toUpperCase()) {
+        return;
+      }
       setActiveAssetCtx(data.ctx);
     });
 
@@ -338,6 +346,7 @@ export const PerpsMarketDetailScreen = () => {
           contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <PerpsChart
+              coinNameRef={coinNameRef}
               market={market}
               markPrice={markPrice}
               activeAssetCtx={activeAssetCtx}
@@ -528,6 +537,7 @@ export const PerpsMarketDetailScreen = () => {
         openFromSource="searchPerps"
         visible={showSearchListPopup}
         onSelect={item => {
+          coinNameRef.current = item;
           setCoin(item);
         }}
         onCancel={() => {

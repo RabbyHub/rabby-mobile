@@ -1137,6 +1137,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "Herhangi bir zamanda bir hatayı hızlı bir şekilde bildirmek için ekran görüntüsü alın."
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "Sağ kaydırarak tüm varlıkları görüntüleyin."
       }
     },
     "newAddress": {
@@ -1908,7 +1911,10 @@
           "dex": "Dex"
         },
         "pools": "Havuzlar"
-      }
+      },
+      "price": "Fiyat",
+      "headerTokenValueText": "Token Değeri",
+      "headerBalanceText": "Bakiyeniz"
     },
     "approvalsAddressList": {
       "title": "Onaylar"
@@ -1968,6 +1974,10 @@
       },
       "hotTokenList": {
         "title": "Sıcak"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "Websites/Token Araştırın",
+        "placeHolder": "Dapp/Tokene Araştırın"
       }
     },
     "setting": {
@@ -2102,7 +2112,10 @@
         "recent": "Son Zamanlarda",
         "placeholder": "Web Siteleri Ara",
         "searchInGoogle": "Google'da \"{{searchText}}\" arayın",
-        "recentEmpty": "Başlayın Keşfetmeye Web Sitesi"
+        "recentEmpty": "Başlayın Keşfetmeye Web Sitesi",
+        "favorite": "Favori",
+        "hot": "Sıcak",
+        "otherResults": "Diğer Sonuçlar"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Web Sitelerini Aç"
@@ -2333,7 +2346,8 @@
         "stopLoss": "Stop loss",
         "stopLossTipsLongLiquidation": "Fiyat likidasyon fiyatından ({{price}}) daha düşük.",
         "stopLossTipsShort": "Stop loss fiyatı mevcut fiyatın üstünde olmalıdır.",
-        "loss": "Kayıp"
+        "loss": "Kayıp",
+        "noPosition": "Öncelikle marj girmelisiniz."
       },
       "PerpsDepositTokenModal": {
         "swapBtn": "Değiştir",
@@ -2389,7 +2403,30 @@
       "leverageRangeMaxError": "Maksimum kaldıraç {{max}}x'dir.",
       "deleteAgentSuccess": "Ajan başarıyla silindi",
       "leverageRangeMinError": "Minimum kaldıraç {{min}}x'dir.",
-      "regionNotSupport": "Pozisyon açma işlemine bulunduğunuz bölgede desteklenmiyor."
+      "regionNotSupport": "Pozisyon açma işlemine bulunduğunuz bölgede desteklenmiyor.",
+      "searchPerpsPopup": {
+        "searchPosition": "Pozisyon Ara",
+        "empty": "Sonuç bulunamadı",
+        "openPosition": "Açık Pozisyon",
+        "searchPerps": "Perps Araştırın",
+        "searchPlaceholder": "Perps Araştırması"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "safe": "Güvenli",
+          "danger": "Tehlike",
+          "warning": "Uyarı"
+        },
+        "title": "Risk Seviyesi",
+        "currentPrice": "Mevcut Fiyat",
+        "liquidationPrice": "Tasfiye Fiyatı",
+        "distanceLabel": "Tasfiye Mesafesi",
+        "subtitle": "Gerçek zamanlı likidasyon mesafesi (%)",
+        "liqIntro": "Tasfiye Mesafesi (%) mevcut fiyatın tasfiye fiyatınızdan ne kadar uzakta olduğunu gösterir. Daha büyük bir mesafe, daha güvenli bir pozisyon anlamına gelirken, daha küçük bir mesafe daha yüksek tasfiye riski demektir."
+      },
+      "closeAll": "Tümünü Kapat",
+      "closeAllConfirmMessage": "Tüm açık pozisyonlarınız piyasa fiyatından kapatılacaktır.",
+      "closeAllConfirmTitle": "Tüm Pozisyonları Kapatmayı Onayla"
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2435,7 +2472,13 @@
         "providerFeeTips": "Hyperliquid ücreti: {{fee}}",
         "rabbyFeeTips": "Rabby ücreti: 0.04%",
         "fee": "Ücret:",
-        "closeBtn": "Kapat {{direction}}"
+        "closeBtn": "Kapat {{direction}}",
+        "amount": "Miktar",
+        "confirm": "Onayla",
+        "minimumWarning": "Minimum miktar {{percent}}% olacaktır.",
+        "closedPnl": "Kapalı PNL:",
+        "total": "Toplam",
+        "receive": "Alım:"
       },
       "PerpsOpenPositionPopup": {
         "maximumOrderSize": "Maksimum emir büyüklüğü {{amount}}'dir.",
@@ -2449,7 +2492,12 @@
         "leverage": "Kaldıraç",
         "minimumOrderSize": "Minimum emir miktarı 10 $'dır.",
         "invalidNumber": "Lütfen geçerli bir sayı girin",
-        "insufficientBalance": "Yetersiz bakiye"
+        "insufficientBalance": "Yetersiz bakiye",
+        "stopLossWhen": "Stop Loss Ne Zaman",
+        "takeProfitWhenPriceBelow": "Fiyata Düşünce Kar Al",
+        "stopLossWhenPriceAbove": "Fiyat Üstünde Stop Loss",
+        "stopLossWhenPriceBelow": "Fiyat Altında Stop Loss",
+        "takeProfitWhenPriceAbove": "Kar Al, Fiyat Yukarıda Olduğunda"
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "Yön",
@@ -2468,7 +2516,10 @@
         "margin": "Marj (İzole)",
         "rabbyFeeTips": "Rabby ücreti: %0",
         "providerFeeTips": "Hyperliquid ücreti: {{fee}}",
-        "liquidationPriceTips": "Pozisyonunuzun, marjınız bakım marjı seviyesinin altına düştüğünde daha fazla kaybı önlemek için borsa tarafından otomatik olarak kapatıldığı fiyat."
+        "liquidationPriceTips": "Pozisyonunuzun, marjınız bakım marjı seviyesinin altına düştüğünde daha fazla kaybı önlemek için borsa tarafından otomatik olarak kapatıldığı fiyat.",
+        "free": "Ücretsiz",
+        "providerFee": "Hyperliquid ücreti",
+        "rabbyFee": "Rabby ücreti"
       },
       "action": {
         "long": "Uzun",
@@ -2482,7 +2533,31 @@
         "setTpPrice": "Kar Al-Karı Fiyatını Belirle",
         "price": "Fiyat:",
         "entryPrice": "Giriş Fiyatı:",
-        "slPrice": "Zarar Durdurma Fiyatı"
+        "slPrice": "Zarar Durdurma Fiyatı",
+        "youLoss": "Kaybettin",
+        "currentPrice": "Mevcut {{price}}",
+        "youGain": "Kazanırsınız",
+        "priceReaches": "Fiyat Ulaşıyor",
+        "priceAbove": "Fiyatın üstünde",
+        "takeProfitWhen": "Kar Al Xoksa Ne Zaman",
+        "stopLossExpectedPNL": "Zarar durdurma beklenen PNL",
+        "takeProfitExpectedPNL": "Kar al, beklenen PNL",
+        "stopLossWhen": "Zarar Durdurulduğunda",
+        "priceBelow": "Fiyat altında",
+        "EntryAndCurrentPrice": "Giriş {{entryPrice}}  Mevcut {{price}}"
+      },
+      "PerpsEditMarginPopup": {
+        "title": "Marjini ayarla",
+        "currentPrice": "Mevcut Fiyat",
+        "perpsBalance": "Perps Bakiyesi",
+        "amountToReduce": "Azaltılacak Miktar",
+        "available": "mevcut",
+        "insufficientMarginToReduce": "Pozisyonu azaltmak için yetersiz marj.",
+        "liqPrice": "Lik. Fiyat:",
+        "insufficientMargin": "Yetersiz teminat",
+        "addMargin": "Marj ekle",
+        "amountToAdd": "Ekleyeceğiniz Tutar",
+        "reduceMargin": "Marjini Azaltın"
       }
     },
     "devUIBuiltInPages": {
@@ -2510,7 +2585,9 @@
           "token": "Jeton",
           "mySupplies": "Benim malzemelerim",
           "myBorrows": "Benim borçlarım",
-          "apy": "APY"
+          "apy": "APY",
+          "token_tvl": "Token/TVL",
+          "token_balance": "Token/Bakiye"
         },
         "item": {
           "tvl": "TVL"
@@ -2590,7 +2667,9 @@
         "availableToBorrow": "Borç almak için mevcut",
         "availableToBorrowDesc": "Teminatınız üzerinden borç alabilirsiniz ve borç limiti ulaşana kadar.",
         "maxAmount": "Bu, temin edilen tüm teminatlarınıza dayanarak borç alabileceğiniz maksimum miktardır. Toplam borç alma gücünüz, her teminat varlığının piyasa değerinin Max LTV ile çarpılması ve ardından sonuçların toplanmasıyla hesaplanır.",
-        "lqDesc": "Bir tasfiye gerçekleştiğinde, tasfiye edenler borçlunun adına mevcut borç miktarının %50'sine kadar geri ödeme yapar. Karşılığında, teminatı indirimli fiyatla satın alabilir ve farkı (tasfiye cezası) bonus olarak alabilirler."
+        "lqDesc": "Bir tasfiye gerçekleştiğinde, tasfiye edenler borçlunun adına mevcut borç miktarının %50'sine kadar geri ödeme yapar. Karşılığında, teminatı indirimli fiyatla satın alabilir ve farkı (tasfiye cezası) bonus olarak alabilirler.",
+        "isolatedTitle": "Varlık teminat olarak kullanılamaz.",
+        "isolatedDesc": "Bu varlık yalnızca izolasyon modunda teminat olarak kullanılabilir; burada borç almak için başka varlık teminatı sağlayamazsınız. İzolasyon modunda teminat olarak kullanılan varlıklar yalnızca belirli bir borç tavanına kadar borç alınabilir."
       },
       "supplied": "Sağlanan",
       "gotIt": "Tamamdır",
@@ -2603,7 +2682,9 @@
       "borrowed": "Ödünç Alınan",
       "hf": "Sağlık faktörü",
       "hfTitle": "Sağlık Faktörü",
-      "enterAmount": "Miktarı Girin"
+      "enterAmount": "Miktarı Girin",
+      "isolated": "izole edilmiş",
+      "estNetApy": "Tahmini net APY"
     }
   },
   "component": {
@@ -2848,6 +2929,9 @@
       "recentAccounts": "Son zamanlarda",
       "importedAccounts": "İçe Aktarılan Cüzdanlar",
       "whitelistAccounts": "Beyaz Liste"
+    },
+    "portfolios": {
+      "manage": "Yönetmek"
     }
   },
   "native": {
@@ -2938,7 +3022,9 @@
       }
     },
     "gotIt": "Tamamdır",
-    "check": "Kontrol Et"
+    "check": "Kontrol Et",
+    "Dapp": "Dapp",
+    "Token": "Jeton"
   },
   "background": {
     "error": {

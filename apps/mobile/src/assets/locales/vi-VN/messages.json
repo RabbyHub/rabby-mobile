@@ -115,7 +115,9 @@
       }
     },
     "check": "Kiểm tra",
-    "gotIt": "Đã hiểu"
+    "gotIt": "Đã hiểu",
+    "Token": "Token",
+    "Dapp": "Dapp"
   },
   "page": {
     "transactions": {
@@ -1142,6 +1144,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "Chụp màn hình bất cứ lúc nào để nhanh chóng báo cáo lỗi"
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "Kéo sang phải để xem tất cả tài sản"
       }
     },
     "signText": {
@@ -1600,6 +1605,10 @@
       },
       "hotTokenList": {
         "title": "Nóng"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "Tìm kiếm Website/Token",
+        "placeHolder": "Tìm kiếm Dapp/Token"
       }
     },
     "sign": {
@@ -1866,7 +1875,10 @@
           "dex": "Dex"
         },
         "pools": "Pools"
-      }
+      },
+      "price": "Giá",
+      "headerTokenValueText": "Giá trị Token",
+      "headerBalanceText": "Số dư"
     },
     "backupPrivateKey": {
       "clickToShow": "Nhấn để hiển thị private key",
@@ -2193,7 +2205,10 @@
         "openUrl": "Mở \"{{searchText}}\"",
         "placeholder": "Tìm kiếm Website",
         "searchInGoogle": "Tìm \"{{searchText}}\" trên Google",
-        "recentEmpty": "Bắt đầu Khám Phá Website"
+        "recentEmpty": "Bắt đầu Khám Phá Website",
+        "otherResults": "Kết quả khác",
+        "hot": "Nóng",
+        "favorite": "Yêu thích"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Mở Trang Web"
@@ -2424,7 +2439,8 @@
         "stopLossTipsLong": "Giá dừng lỗ phải thấp hơn giá hiện tại.",
         "stopLossTipsShortLiquidation": "Giá cao hơn mức thanh lý ({{price}})",
         "takeProfit": "Chốt lợi nhuận",
-        "takeProfitTipsShort": "Giá chốt lời phải thấp hơn giá hiện tại."
+        "takeProfitTipsShort": "Giá chốt lời phải thấp hơn giá hiện tại.",
+        "noPosition": "Bạn phải nhập ký quỹ trước."
       },
       "PerpsDepositTokenModal": {
         "bridgeBtn": "Cầu",
@@ -2480,7 +2496,30 @@
       "regionNotSupport": "Việc mở các vị trí không được hỗ trợ ở khu vực của bạn.",
       "leverageRangeMinError": "Tỉ lệ đòn bẩy tối thiểu là {{min}}x",
       "deleteAgentModal": "Bạn đã đạt đến số lượng đại lý tối đa. Bạn có muốn xóa một đại lý hiện có để tạo một đại lý mới không?",
-      "leverageRangeMaxError": "Tỷ lệ đòn bẩy tối đa là {{max}}x"
+      "leverageRangeMaxError": "Tỷ lệ đòn bẩy tối đa là {{max}}x",
+      "searchPerpsPopup": {
+        "searchPosition": "Tìm Vị Trí",
+        "openPosition": "Mở Vị Trí",
+        "empty": "Không tìm thấy kết quả nào",
+        "searchPlaceholder": "Tìm kiếm Perps",
+        "searchPerps": "Tìm kiếm Perps"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "safe": "An toàn",
+          "danger": "Nguy hiểm",
+          "warning": "Cảnh báo"
+        },
+        "distanceLabel": "Khoảng cách thanh lý",
+        "liquidationPrice": "Giá thanh lý",
+        "title": "Mức độ rủi ro",
+        "currentPrice": "Giá hiện tại",
+        "subtitle": "Khoảng cách thanh lý theo thời gian thực (%)",
+        "liqIntro": "Khoảng cách thanh lý (%) cho thấy giá hiện tại cách giá thanh lý của bạn bao xa. Khoảng cách lớn hơn chỉ ra một vị trí an toàn hơn, trong khi khoảng cách nhỏ hơn có nghĩa là rủi ro thanh lý cao hơn."
+      },
+      "closeAll": "Đóng tất cả",
+      "closeAllConfirmTitle": "Xác nhận Đóng Tất cả Vị thế",
+      "closeAllConfirmMessage": "Tất cả các vị trí mở của bạn sẽ được đóng ở giá thị trường."
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2526,7 +2565,13 @@
         "pnl": "PNL",
         "providerFeeTips": "Phí Hyperliquid: {{fee}}",
         "positionSize": "Kích thước vị thế",
-        "rabbyFeeTips": "Phí Rabby: 0.04%"
+        "rabbyFeeTips": "Phí Rabby: 0.04%",
+        "receive": "Nhận:",
+        "total": "Tổng số",
+        "closedPnl": "Lợi nhuận và lỗ đã đóng:",
+        "amount": "Số lượng",
+        "confirm": "Xác nhận",
+        "minimumWarning": "Số tiền tối thiểu là {{percent}}%"
       },
       "PerpsOpenPositionPopup": {
         "leverage": "Đòn bẩy",
@@ -2540,7 +2585,12 @@
         "margin": "Ký quỹ",
         "available": "có sẵn",
         "sizeTips": "Giá trị hoặc số lượng tổng của giao dịch của bạn, được xác định bởi margin và leverage.",
-        "invalidNumber": "Vui lòng nhập một số hợp lệ"
+        "invalidNumber": "Vui lòng nhập một số hợp lệ",
+        "takeProfitWhenPriceBelow": "Chốt lời khi giá dưới",
+        "stopLossWhen": "Cắt lỗ khi",
+        "stopLossWhenPriceAbove": "Dừng Lỗ Khi Giá Trên",
+        "takeProfitWhenPriceAbove": "Chốt Lợi Nhuận Khi Giá Trên",
+        "stopLossWhenPriceBelow": "Dừng lỗ khi giá dưới"
       },
       "PerpsOpenPositionCheckPopup": {
         "fee": "Phí",
@@ -2559,7 +2609,10 @@
         "margin": "Đòn bẩy (Cô lập)",
         "estLqPrice": "Giá thanh lý ước tính",
         "sizeTips": "Giá trị hoặc số lượng tổng cộng của giao dịch của bạn, được thiết lập bởi ký quỹ và đòn bẩy.",
-        "liquidationPriceTips": "Giá mà vị thế của bạn bị sàn giao dịch tự động đóng để ngăn chặn tổn thất thêm khi ký quỹ của bạn giảm xuống dưới mức ký quỹ duy trì."
+        "liquidationPriceTips": "Giá mà vị thế của bạn bị sàn giao dịch tự động đóng để ngăn chặn tổn thất thêm khi ký quỹ của bạn giảm xuống dưới mức ký quỹ duy trì.",
+        "free": "Miễn phí",
+        "rabbyFee": "Phí Rabby",
+        "providerFee": "Phí Hyperliquid"
       },
       "action": {
         "short": "Ngắn",
@@ -2573,7 +2626,31 @@
         "tpPrice": "Giá chốt lời",
         "entryPrice": "Giá Vào Lệnh:",
         "slPrice": "Giá Dừng Lỗ",
-        "setSlPrice": "Đặt giá dừng lỗ"
+        "setSlPrice": "Đặt giá dừng lỗ",
+        "takeProfitWhen": "Chốt lời khi",
+        "priceBelow": "Giá dưới",
+        "youLoss": "Bạn đã thua",
+        "stopLossWhen": "Dừng lỗ khi",
+        "priceAbove": "Giá vượt trên",
+        "priceReaches": "Giá đạt đến",
+        "youGain": "Bạn Được Hưởng",
+        "currentPrice": "Giá hiện tại {{price}}",
+        "stopLossExpectedPNL": "Dừng lỗ lãi dự kiến",
+        "takeProfitExpectedPNL": "Lợi nhuận kỳ vọng khi chốt lời",
+        "EntryAndCurrentPrice": "Giá vào {{entryPrice}}  Giá hiện tại {{price}}"
+      },
+      "PerpsEditMarginPopup": {
+        "title": "Điều chỉnh biên độ",
+        "currentPrice": "Giá hiện tại",
+        "addMargin": "Thêm Margin",
+        "insufficientMargin": "Không đủ ký quỹ",
+        "reduceMargin": "Giảm biên độ ký quỹ",
+        "available": "có sẵn",
+        "amountToAdd": "Số tiền cần thêm",
+        "liqPrice": "Giá thanh lý:",
+        "perpsBalance": "Số Dư Perps",
+        "amountToReduce": "Số lượng để giảm bớt",
+        "insufficientMarginToReduce": "Không đủ ký quỹ để giảm vị thế."
       }
     },
     "devUIBuiltInPages": {
@@ -2601,7 +2678,9 @@
           "token": "Token",
           "apy": "APY",
           "mySupplies": "Cung cấp của tôi",
-          "myBorrows": "Các khoản vay của tôi"
+          "myBorrows": "Các khoản vay của tôi",
+          "token_tvl": "Token/TVL",
+          "token_balance": "Token/Số dư"
         },
         "item": {
           "tvl": "TVL"
@@ -2681,7 +2760,9 @@
         "availableToBorrow": "Có sẵn để vay",
         "maxAmount": "Đây là số tiền tối đa bạn có thể vay dựa trên tất cả tài sản thế chấp mà bạn cung cấp. Tổng sức vay của bạn được tính bằng cách nhân giá trị thị trường của mỗi tài sản thế chấp với Max LTV của nó, sau đó cộng tổng lại.",
         "availableToBorrowDesc": "Bạn có thể vay dựa trên tài sản thế chấp mà bạn cung cấp và cho đến khi đạt trần vay.",
-        "lqDesc": "Khi một vụ thanh lý xảy ra, những người thanh lý sẽ trả lại tối đa 50% số tiền đã vay còn lại thay mặt cho người vay. Đổi lại, họ có thể mua tài sản thế chấp với giá giảm và giữ phần chênh lệch (phạt thanh lý) như một phần thưởng."
+        "lqDesc": "Khi một vụ thanh lý xảy ra, những người thanh lý sẽ trả lại tối đa 50% số tiền đã vay còn lại thay mặt cho người vay. Đổi lại, họ có thể mua tài sản thế chấp với giá giảm và giữ phần chênh lệch (phạt thanh lý) như một phần thưởng.",
+        "isolatedTitle": "Tài sản không thể được sử dụng làm tài sản thế chấp.",
+        "isolatedDesc": "Tài sản này chỉ có thể được sử dụng làm tài sản thế chấp trong chế độ cách ly, nơi bạn không thể cung cấp tài sản khác làm tài sản thế chấp để vay. Tài sản được sử dụng làm tài sản thế chấp trong chế độ cách ly chỉ có thể được vay đến một giới hạn nợ cụ thể."
       },
       "submitted": "đã gửi",
       "supplied": "Cung cấp",
@@ -2694,7 +2775,9 @@
       "gotIt": "Hiểu rồi",
       "hf": "Hệ số sức khỏe",
       "enterAmount": "Nhập số tiền",
-      "hfTitle": "Yếu tố sức khỏe"
+      "hfTitle": "Yếu tố sức khỏe",
+      "isolated": "tách biệt",
+      "estNetApy": "Ước tính APY ròng"
     }
   },
   "component": {
@@ -2939,6 +3022,9 @@
       "importedAccounts": "Ví Wallet Nhập khẩu",
       "recentAccounts": "Gần đây",
       "whitelistAccounts": "Danh sách trắng"
+    },
+    "portfolios": {
+      "manage": "Quản lý"
     }
   },
   "constant": {

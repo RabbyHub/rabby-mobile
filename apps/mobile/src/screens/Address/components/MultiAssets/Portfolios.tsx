@@ -28,10 +28,7 @@ import {
   ActionItem,
   CombineToken,
 } from '@/screens/Home/types';
-import {
-  getAllDefiCount,
-  getTotalFoldToken,
-} from '@/screens/Home/utils/converAssets';
+import { getTotalFoldToken } from '@/screens/Home/utils/converAssets';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
@@ -59,6 +56,7 @@ import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import useLoadMoreData from './hooks/useLoadMoreData';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
@@ -171,32 +169,11 @@ export const Portfolios = () => {
     };
   }, [tokens]);
 
-  const defiLists = useMemo(() => {
-    const foldAndIncludeBalanceDefiList = portfolios.filter(
-      i => i._isFold && !i._isExcludeBalance && i.netWorth > 0,
-    );
-    const foldAndExcludeBalanceDefiList = portfolios.filter(
-      i => i._isFold && (i._isExcludeBalance || i.netWorth === 0),
-    );
-    const foldDefiList: ActionItem[] = [
-      ...foldAndIncludeBalanceDefiList,
-      ...foldAndExcludeBalanceDefiList,
-    ].map(item => ({
-      type: 'fold_defi',
-      data: item as unknown as DisplayedProject,
-    }));
-    const unFoldDefiList: ActionItem[] = portfolios
-      .filter(i => !i._isFold)
-      .map(item => ({
-        type: 'unfold_defi',
-        data: item as unknown as DisplayedProject,
-      }));
-
-    return {
-      foldDefiList,
-      unFoldDefiList,
-    };
-  }, [portfolios]);
+  const {
+    data: portfoliosData,
+    loadMore: loadMorePortfolios,
+    hasMore: hasMorePortfolios,
+  } = useLoadMoreData(portfolios);
 
   const portfolioListData = useMemo(() => {
     const foldTokenList = [
@@ -262,22 +239,12 @@ export const Portfolios = () => {
       },
       {
         show: true,
-        data: [{ type: 'defi_header' }, ...defiLists.unFoldDefiList],
-      },
-      {
-        show: !!defiLists.foldDefiList.length,
         data: [
-          {
-            type: 'toggle_defi_fold',
-            data: getAllDefiCount(
-              portfolios.filter(
-                i => i._isFold,
-              ) as unknown as DisplayedProject[],
-              currency.usd_rate,
-              currency.symbol,
-            ),
-          },
-          ...(foldDefi ? [] : defiLists.foldDefiList),
+          { type: 'defi_header' },
+          ...portfoliosData.map(item => ({
+            type: 'unfold_defi' as const,
+            data: item as unknown as DisplayedProject,
+          })),
         ],
       },
       {
@@ -315,10 +282,8 @@ export const Portfolios = () => {
     foldScam,
     isLoading,
     t,
-    defiLists.unFoldDefiList,
-    defiLists.foldDefiList,
-    portfolios,
-    foldDefi,
+    portfoliosData,
+    portfolios.length,
   ]);
 
   const handleOpenTokenDetail = React.useCallback(
@@ -488,6 +453,7 @@ export const Portfolios = () => {
               data={data as unknown as AbstractProject}
               showAccount
               style={styles.fullDefi}
+              disableAction={isLoading}
               account={
                 getAccountByAddress(
                   data?.address,
@@ -555,6 +521,7 @@ export const Portfolios = () => {
       }
     },
     [
+      isLoading,
       foldDefi,
       foldHideList,
       getAccountByAddress,
@@ -615,8 +582,12 @@ export const Portfolios = () => {
     return <View style={{ height: SPACING_HEIGHT }} />;
   }, []);
   const ListRenderFooter = useCallback(() => {
-    return <View style={{ height: FOOTER_HEIGHT }} />;
-  }, []);
+    return hasMorePortfolios ? (
+      <MemoizedItemLoader style={[styles.loadingMore]} />
+    ) : (
+      <View style={{ height: FOOTER_HEIGHT }} />
+    );
+  }, [hasMorePortfolios, styles.loadingMore]);
 
   const onRefresh = useCallback(async () => {
     try {
@@ -648,12 +619,17 @@ export const Portfolios = () => {
       renderItem={renderItem}
       ItemSeparatorComponent={ListRenderSeparator}
       initialNumToRender={15}
+      windowSize={15}
+      maxToRenderPerBatch={15}
+      removeClippedSubviews
       ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
       style={styles.container}
       contentContainerStyle={styles.list}
+      onEndReached={loadMorePortfolios}
+      onEndReachedThreshold={0.5}
       refreshControl={
         <RefreshControl
           style={styles.bgContainer}
@@ -750,6 +726,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   defiLoading: {
     paddingHorizontal: 0,
+  },
+  loadingMore: {
+    marginTop: 16,
   },
   rowWrap: {
     height: ASSETS_ITEM_HEIGHT_NEW,

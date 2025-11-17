@@ -38,8 +38,9 @@ import useAccountsBalance, {
 import { useUpgradeInfo } from '@/hooks/version';
 import { matomoRequestEvent } from '@/utils/analytics';
 
-import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
-import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
+import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
+import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
+
 import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
 import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
@@ -283,11 +284,8 @@ export function MultiAddressHomeHeader(
         <RNLinearGradient
           colors={
             isLight
-              ? [
-                  colors2024['neutral-InvertHighlight'],
-                  colors2024['neutral-InvertHighlight'],
-                ]
-              : [colors2024['neutral-bg-2'], colors2024['neutral-bg-3']]
+              ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
+              : ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']
           }
           style={[
             styles.curveBox,
@@ -295,6 +293,7 @@ export function MultiAddressHomeHeader(
             {
               position: 'relative',
             },
+            !isLight && { borderWidth: 0 },
             {},
           ]}
           onLayout={() => {
@@ -321,12 +320,19 @@ export function MultiAddressHomeHeader(
             <RNLinearGradient
               colors={
                 isLight
-                  ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
-                  : ['rgba(0, 0, 0, 0.6)', 'rgba(25, 26, 27, 0.3)']
+                  ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
+                  : ['rgba(0, 0, 0, 0.40)', 'rgba(0, 0, 0, 0.10)']
               }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFill}
+              start={isLight ? { x: 0.25, y: 0.5 } : { x: 0.02, y: 1.04 }}
+              end={isLight ? { x: 0.75, y: 0.5 } : { x: 1, y: 0.1 }}
+              style={[
+                StyleSheet.absoluteFill,
+                !isLight && {
+                  borderWidth: 2,
+                  borderRadius: styles.curveBox['borderRadius'] || 20,
+                  borderColor: 'rgba(37, 38, 40, 1)',
+                },
+              ]}
             />
             <View style={styles.curveCardInner}>
               <View style={styles.curveContainer}>
@@ -352,11 +358,13 @@ export function MultiAddressHomeHeader(
                     </Text>
                   )}
                   <View style={[styles.accountBg]}>
-                    <RcIconSmallWallet />
+                    <RcIconSmallWalletCC
+                      color={colors2024['neutral-title-1']}
+                    />
                     <Text style={styles.accountText}>
                       {accountsLength >= 10 ? '10' : accountsLength}
                     </Text>
-                    <RcIconSmallArrow />
+                    <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
                   </View>
                 </View>
                 {loadingNewCurve ? (
@@ -533,9 +541,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 8,
     paddingLeft: 11,
     borderRadius: 10,
-    backgroundColor: isLight
-      ? ThemeColors2024.dark['neutral-bg-1']
-      : colors2024['brand-default'],
+    backgroundColor: colors2024['neutral-line'],
     shadowColor: colors2024['brand-light-1'],
     shadowOffset: { width: 0, height: 9.411 },
     shadowOpacity: 0.1,
@@ -572,9 +578,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'left',
-    color: colors2024['neutral-InvertHighlight'],
+    color: colors2024['neutral-title-1'],
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
+    paddingLeft: 6,
   },
   pinBox: {
     flexDirection: 'row',

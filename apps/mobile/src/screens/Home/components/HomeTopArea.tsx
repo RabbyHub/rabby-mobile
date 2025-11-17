@@ -2,12 +2,12 @@ import useCachedValue from '@/hooks/common/useCachedValue';
 import { useTheme2024 } from '@/hooks/theme';
 import { formChartData } from '@/hooks/useCurve';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, View } from 'react-native';
+import { View } from 'react-native';
 import { HomeTopChart } from './HomeTopChart';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { CenterBg } from './BgComponents';
 
 export const HomeTopArea = ({
   onUpdateIsDecrease,
@@ -15,18 +15,22 @@ export const HomeTopArea = ({
   isLoadingCurve,
   isDisConnect,
   onRefresh,
+  fold,
+  setFold,
+  reachTop,
 }: {
   onUpdateIsDecrease?: (status: boolean) => void;
   curveData?: ReturnType<typeof formChartData>;
   isLoadingCurve: boolean;
   isDisConnect: boolean;
   onRefresh: () => void;
+  fold: boolean;
+  setFold: (fold: boolean) => void;
+  reachTop: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const isDecrease = useCachedValue(curveData, 'isLoss');
-  const [fold, setFold] = useState(true);
-  const { safeOffHeader } = useSafeSizes();
 
   const pathColor = useMemo(
     () =>
@@ -44,24 +48,7 @@ export const HomeTopArea = ({
 
   return (
     <View style={[styles.container]}>
-      <View style={styles.relativeWrapper}>
-        <ImageBackground
-          source={
-            !isDecrease
-              ? require('@/assets2024/singleHome/up.png')
-              : require('@/assets2024/singleHome/loss.png')
-          }
-          resizeMode="cover"
-          style={[
-            styles.bg,
-            {
-              top: 0 - safeOffHeader,
-              height: safeOffHeader + 110,
-            },
-          ]}
-        />
-      </View>
-
+      {reachTop ? null : <CenterBg fold={fold} isDecrease={!!isDecrease} />}
       <GlobalWarning
         hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}

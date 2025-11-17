@@ -31,9 +31,7 @@ import {
 } from './native/security';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import RNTimeChanged from '@/core/native/RNTimeChanged';
-import { checkMultipleFailed } from '@/core/utils/unlockRateLimit';
+import { IS_IOS } from '@/core/native/utils';
 import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomSheetModal/security';
 import { useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
@@ -104,7 +102,8 @@ export const useStackScreenConfig = () => {
   const mergeScreenOptions = useCallback(
     (...optsList: Partial<ScreenOptions>[]) => {
       const screenOptions: ScreenOptions = {
-        animation: 'slide_from_right',
+        animation: IS_IOS ? 'slide_from_right' : 'none',
+        animationDuration: 200,
         ...headerPresets.onlyTitle,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
@@ -145,7 +144,8 @@ export const useStackScreenConfig = () => {
   const mergeScreenOptions2024 = useCallback(
     (optsList: Partial<ScreenOptions>[], options?: any) => {
       const screenOptions: ScreenOptions = {
-        animation: 'slide_from_right',
+        animation: IS_IOS ? 'slide_from_right' : 'none',
+        animationDuration: 200,
         ...headerPresets.onlyTitle,
         headerTitleStyle: {
           ...(headerPresets.onlyTitle.headerTitleStyle as object),
@@ -495,48 +495,4 @@ export function useAppPreventScreenshotOnScreen({
     isBeingCaptured,
     shouldPreventScreenCapturing,
   ]);
-}
-
-if (__DEV__) {
-  type OnTimeChangedCtx = Parameters<
-    Parameters<typeof RNTimeChanged.subscribeTimeChanged>[0]
-  >[0];
-  /** @deprecated */
-  const handleTimeChanged = debounce(async (ctx: OnTimeChangedCtx) => {
-    if (await canLockWallet()) {
-      checkMultipleFailed({ forceRecountdownIfInFreezing: true });
-      Alert.alert(
-        'Time changed',
-        `Time settings changed, you can lock wallet first if the change is not made by you.`,
-        [
-          {
-            text: 'Cancel',
-            onPress: () => {},
-            style: 'cancel',
-          },
-          {
-            text: 'Lock',
-            onPress: async () => {
-              await requestLockWalletAndBackToUnlockScreen();
-            },
-          },
-        ],
-      );
-    } else {
-      // Alert.alert(
-      //   'Warning',
-      //   `Time settings changed, will quit app for security.`,
-      //   [
-      //     {
-      //       text: 'OK',
-      //       onPress: () => {
-      //         RNTimeChanged.exitAppForSecurity();
-      //       },
-      //     },
-      //   ],
-      // );
-    }
-  }, 1000);
-
-  RNTimeChanged.subscribeTimeChanged(handleTimeChanged);
 }

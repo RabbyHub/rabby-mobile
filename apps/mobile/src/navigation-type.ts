@@ -91,7 +91,6 @@ export type RootStackParamsList = {
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
-    timestamp?: number; // 添加时间戳确保每次都是新页面
   };
   [RootNames.TokenMarketInfo]: {
     token:
@@ -105,7 +104,6 @@ export type RootStackParamsList = {
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
-    timestamp?: number; // 添加时间戳确保每次都是新页面
   };
 };
 
@@ -376,6 +374,7 @@ export type TransactionNavigatorParamList = {
 
   [RootNames.Perps]?: {
     account?: KeyringAccountWithAlias;
+    fromName?: string;
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {

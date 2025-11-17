@@ -4,7 +4,7 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatPercent, formatUsdValueKMB } from '../TokenDetail/util';
+import { formatUsdValueKMB } from '../TokenDetail/util';
 import { useLendingData, useLendingSummary } from './hooks';
 import {
   createGlobalBottomSheetModal2024,
@@ -19,7 +19,8 @@ import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.s
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import { useTranslation } from 'react-i18next';
-import { formatNetworth } from '@/utils/math';
+import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
+import { formatApy, formatListNetWorth } from './utils/format';
 
 const FOOT_HEIGHT = 100;
 const BorrowPoolList = () => {
@@ -67,26 +68,29 @@ const BorrowPoolList = () => {
       });
   }, [displayPoolReserves, reserves?.reservesData]);
 
-  const handlePressItem = item => {
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.BORROW_DETAIL,
-      reserve: item,
-      userSummary: iUserSummary,
-      onClose: () => {
-        removeGlobalBottomSheetModal2024(modalId);
-      },
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-        enableDismissOnClose: true,
-        handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
+  const handlePressItem = useCallback(
+    item => {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.BORROW_DETAIL,
+        reserve: item,
+        userSummary: iUserSummary,
+        onClose: () => {
+          removeGlobalBottomSheetModal2024(modalId);
         },
-      },
-    });
-  };
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          handleStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+        },
+      });
+    },
+    [colors2024, iUserSummary, isLight],
+  );
 
   const availableCard = useMemo(() => {
     if (loading || !iUserSummary?.totalLiquidityUSD) {
@@ -141,7 +145,7 @@ const BorrowPoolList = () => {
         {availableCard}
         <View style={styles.listHeader}>
           <Text style={styles.headerToken}>
-            {t('page.Lending.list.headers.token')}
+            {t('page.Lending.list.headers.token_balance')}
           </Text>
           <Text style={styles.headerApy}>
             {t('page.Lending.list.headers.apy')}
@@ -162,6 +166,52 @@ const BorrowPoolList = () => {
     styles.loading,
     t,
   ]);
+  const keyExtractor = useCallback(item => {
+    return `${item.reserve.underlyingAsset}-${item.reserve.symbol}`;
+  }, []);
+  const renderItem = useCallback(
+    ({ item }) => (
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => handlePressItem(item)}>
+        <View style={styles.left}>
+          <TokenIcon
+            size={46}
+            chainSize={0}
+            tokenSymbol={item.reserve.symbol}
+          />
+          <View style={styles.symbolContainer}>
+            <Text style={styles.symbol} numberOfLines={1} ellipsizeMode="tail">
+              {item.reserve.symbol}
+            </Text>
+            <View style={styles.yourBalanceContainer}>
+              <WalletFillCC
+                width={16}
+                height={16}
+                style={styles.walletIcon}
+                color={colors2024['secondary-foot']}
+              />
+              <Text style={styles.yourBalance}>
+                {formatUsdValueKMB(item.walletBalanceUSD || '0')}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <Text style={styles.apy}>
+          {formatApy(Number(item.reserve.variableBorrowAPY || '0'))}
+        </Text>
+        <View style={styles.right}>
+          <Text style={styles.yourSupplied}>
+            {formatListNetWorth(Number(item.totalBorrowsUSD || '0'))}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    ),
+    [colors2024, handlePressItem, styles],
+  );
+  const renderFooterComponent = useCallback(() => {
+    return <View style={{ height: FOOT_HEIGHT }} />;
+  }, []);
 
   return (
     <Tabs.FlatList
@@ -170,41 +220,17 @@ const BorrowPoolList = () => {
       ListHeaderComponent={ListHeaderComponent}
       showsVerticalScrollIndicator={false}
       ListHeaderComponentStyle={styles.headerContainer}
+      initialNumToRender={8}
+      maxToRenderPerBatch={8}
+      windowSize={8}
+      removeClippedSubviews
+      keyExtractor={keyExtractor}
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
       ListEmptyComponent={<PoolListLoading />}
-      ListFooterComponent={<View style={{ height: FOOT_HEIGHT }} />}
-      renderItem={({ item, index }) => (
-        <TouchableOpacity
-          style={styles.item}
-          key={index}
-          onPress={() => handlePressItem(item)}>
-          <View style={styles.left}>
-            <TokenIcon
-              size={46}
-              chainSize={0}
-              tokenSymbol={item.reserve.symbol}
-            />
-            <View style={styles.symbolContainer}>
-              <Text
-                style={styles.symbol}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {item.reserve.symbol}
-              </Text>
-            </View>
-          </View>
-          <Text style={styles.apy}>
-            {formatPercent(Number(item.reserve.variableBorrowAPY || '0'))}
-          </Text>
-          <View style={styles.right}>
-            <Text style={styles.yourSupplied}>
-              {formatNetworth(Number(item.totalBorrowsUSD || '0'))}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      )}
+      ListFooterComponent={renderFooterComponent}
+      renderItem={renderItem}
     />
   );
 };
@@ -247,7 +273,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
-    color: colors2024['green-default'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   right: {
@@ -352,5 +378,24 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '400',
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
+  },
+  yourBalanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  walletIcon: {
+    width: 16,
+    height: 16,
+    color: colors2024['neutral-secondary'],
+    marginTop: -2,
+  },
+  yourBalance: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'right',
   },
 }));

@@ -1,5 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -7,6 +12,7 @@ import { useInfiniteScroll, useMemoizedFn, useMount } from 'ahooks';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import {
+  ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
   getHistoryItemType,
 } from '@/screens/Transaction/components/utils';
@@ -22,6 +28,10 @@ import { debounce, last, orderBy } from 'lodash';
 import { toast } from '@/components2024/Toast';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Empty } from '@/screens/Transaction/components/Empty';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
 
 interface IFetchHistory {
   last: number;
@@ -34,10 +44,12 @@ export const TokenDetailHistoryList = ({
   finalAccount,
   token,
   onRefresh,
+  onReachTopStatusChange,
 }: {
   finalAccount: KeyringAccountWithAlias | null;
   token: AbstractPortfolioToken;
   onRefresh?: () => void;
+  onReachTopStatusChange?: (status: boolean) => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -59,63 +71,105 @@ export const TokenDetailHistoryList = ({
   );
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
+  const scrollY = useCurrentTabScrollY();
+  const handleScroll = useCallback(
+    (currentScrollY: number) => {
+      if (currentScrollY <= 0) {
+        onReachTopStatusChange?.(true);
+      } else {
+        onReachTopStatusChange?.(false);
+      }
+    },
+    [onReachTopStatusChange],
+  );
+
+  useAnimatedReaction(
+    () => scrollY.value,
+    currentScrollY => {
+      runOnJS(handleScroll)(currentScrollY);
+    },
+  );
 
   const fetchData = async (
     address: string,
     startTime = 0,
-    chain_id?: string,
-    token_id?: string,
+    chain_id: string,
+    token_id: string,
+    isMyAddress?: boolean,
   ): Promise<IFetchHistory> => {
     if (!address) {
       throw new Error('no account');
     }
 
     try {
-      const res = await openapi.listTxHisotry({
-        id: address,
-        start_time: startTime,
-        page_count: PAGE_COUNT,
-        chain_id,
-        token_id,
-      });
+      if (isMyAddress) {
+        const historyList =
+          await HistoryItemEntity.getTokenHistoryItemSortedByTime(
+            address,
+            startTime,
+            token_id,
+            chain_id,
+            PAGE_COUNT,
+          );
+        const list = historyList.map(item => {
+          return {
+            ...ensureHistoryListItemFromDb(item),
+            // hidden small and scam no need this prop
+            isSmallUsdTx: false,
+            isShowSuccess: false,
+          } as HistoryDisplayItem;
+        });
+        return {
+          last: last(historyList)?.time_at || 0,
+          list,
+        };
+      } else {
+        const res = await openapi.listTxHisotry({
+          id: address,
+          start_time: startTime,
+          page_count: PAGE_COUNT,
+          chain_id,
+          token_id,
+        });
 
-      const { project_dict, history_list: list } = res;
-      const token_dict = (res as TxHistoryResult).token_dict;
-      const token_uuid_dict = (res as unknown as TxAllHistoryResult)
-        .token_uuid_dict;
-      const tokenDict = token_dict || token_uuid_dict;
+        const { project_dict, history_list: list } = res;
+        const token_dict = (res as TxHistoryResult).token_dict;
+        const token_uuid_dict = (res as unknown as TxAllHistoryResult)
+          .token_uuid_dict;
+        const tokenDict = token_dict || token_uuid_dict;
 
-      const displayList = list
-        .map(item => ({
-          ...item,
-          address,
-          key: `${address}_${item.chain}_${item.id}`,
-          project_item: project_dict[item.project_id || ''] || null,
-          token_approve: item.token_approve
-            ? {
-                ...item.token_approve,
-                token: fetchHistoryTokenItem(
-                  item.token_approve?.token_id || '',
-                  item.chain,
-                  tokenDict,
-                ),
-              }
-            : null,
-          receives: item.receives.map(e => ({
-            ...e,
-            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-          })),
-          sends: item.sends.map(e => ({
-            ...e,
-            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
-          })),
-          historyType: getHistoryItemType(item),
-        }))
-        .sort((v1, v2) => v2.time_at - v1.time_at);
-      return {
-        last: last(displayList)?.time_at || 0,
-        list: displayList,
-      };
+        const displayList = list
+          .map(item => ({
+            ...item,
+            address,
+            key: `${address}_${item.chain}_${item.id}`,
+            project_item: project_dict[item.project_id || ''] || null,
+            token_approve: item.token_approve
+              ? {
+                  ...item.token_approve,
+                  token: fetchHistoryTokenItem(
+                    item.token_approve?.token_id || '',
+                    item.chain,
+                    tokenDict,
+                  ),
+                }
+              : null,
+            receives: item.receives.map(e => ({
+              ...e,
+              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+            })),
+            sends: item.sends.map(e => ({
+              ...e,
+              token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+            })),
+            historyType: getHistoryItemType(item),
+          }))
+          .sort((v1, v2) => v2.time_at - v1.time_at);
+        return {
+          last: last(displayList)?.time_at || 0,
+          list: displayList,
+        };
+      }
     } catch (e) {
       toast.error(`${address} fetch failed, ${e}`);
       return {
@@ -124,6 +178,13 @@ export const TokenDetailHistoryList = ({
       };
     }
   };
+
+  const isMyAddress = useMemo(() => {
+    return (
+      finalAccount?.type !== KEYRING_CLASS.WATCH &&
+      finalAccount?.type !== KEYRING_CLASS.GNOSIS
+    );
+  }, [finalAccount]);
 
   const batchFetchData = useMemoizedFn(async () => {
     const list: HistoryDisplayItem[] = [];
@@ -141,11 +202,13 @@ export const TokenDetailHistoryList = ({
         hasMore: false,
       };
     }
+
     const result = await fetchData(
       addr,
       lastMap.current[addr] || 0,
       tokenItem.chain,
       tokenItem._tokenId,
+      isMyAddress,
     );
     if (result.list.length < PAGE_COUNT) {
       hasMoreMap.current[addr] = false;
@@ -235,12 +298,7 @@ export const TokenDetailHistoryList = ({
   }, [fetchApiData]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.historyHeader}>
-        <Text style={styles.relateTitle}>
-          {t('page.tokenDetail.Transaction')}
-        </Text>
-      </View>
+    <>
       {!loading && !displayList.length && noMore && (
         <Empty
           style={styles.emptyStyle}
@@ -252,7 +310,8 @@ export const TokenDetailHistoryList = ({
         historySuccessList={historySuccessList}
         list={displayList}
         loading={false}
-        isNeedFetchFromApi
+        isNeedFetchFromApi={!isMyAddress}
+        tabList
         firstFetchDone={false}
         loadingMore={loadingMore}
         refreshLoading={loading}
@@ -268,7 +327,7 @@ export const TokenDetailHistoryList = ({
         }}
         onRefresh={refresh}
       />
-    </View>
+    </>
   );
 };
 
@@ -338,6 +397,7 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   historyHeader: {
     paddingHorizontal: 15,
+    marginBottom: -8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -417,6 +477,7 @@ const getStyle = createGetStyles2024(ctx => ({
     fontWeight: '700',
   },
   emptyStyle: {
+    marginTop: 100,
     height: 150,
   },
   skeletonContainer: {

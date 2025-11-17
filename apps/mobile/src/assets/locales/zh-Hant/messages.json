@@ -124,7 +124,9 @@
       }
     },
     "check": "檢查",
-    "gotIt": "了解了"
+    "gotIt": "了解了",
+    "Token": "代幣",
+    "Dapp": "Dapp"
   },
   "background": {
     "transactionWatcher": {
@@ -1264,6 +1266,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "隨時截圖以快速報告錯誤"
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "向右滑动以查看所有資產"
       }
     },
     "ethSign": {
@@ -1692,6 +1697,10 @@
       },
       "hotTokenList": {
         "title": "熱"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "搜尋網站/代幣",
+        "placeHolder": "搜尋 Dapp/Token"
       }
     },
     "customRpc": {
@@ -1944,7 +1953,10 @@
           "value": "價值"
         },
         "pools": "池子"
-      }
+      },
+      "price": "價格",
+      "headerBalanceText": "餘額",
+      "headerTokenValueText": "代幣價值"
     },
     "customTestnet": {
       "add": "添加自定義網絡",
@@ -2250,7 +2262,10 @@
         "recent": "最近",
         "openUrl": "打開 \"{{searchText}}\"",
         "searchInGoogle": "在 Google 中搜尋 \"{{searchText}}\"",
-        "recentEmpty": "開始探索網站"
+        "recentEmpty": "開始探索網站",
+        "otherResults": "其他結果",
+        "hot": "熱",
+        "favorite": "最愛"
       },
       "BrowserSearchEntry": {
         "openWebsites": "打開網站"
@@ -2481,7 +2496,8 @@
         "stopLossTipsShort": "止損價必須高於當前價格",
         "stopLossTipsLong": "止損價格必須低於當前價格",
         "stopLossTipsLongLiquidation": "價格低於清算價（{{price}}）",
-        "stopLoss": "止損"
+        "stopLoss": "止損",
+        "noPosition": "您必須先輸入保證金。"
       },
       "PerpsDepositTokenModal": {
         "directTag": "直接存款",
@@ -2537,7 +2553,30 @@
       "leverageRangeMinError": "最低杠杆是 {{min}} 倍",
       "regionNotSupport": "在您的地区不支持开仓。",
       "deleteAgentSuccess": "代理已成功刪除",
-      "deleteAgentModal": "您已达到代理的最大数量。您是否要删除现有代理以创建新代理？"
+      "deleteAgentModal": "您已达到代理的最大数量。您是否要删除现有代理以创建新代理？",
+      "searchPerpsPopup": {
+        "empty": "未找到结果",
+        "searchPosition": "搜索持仓",
+        "searchPerps": "搜尋永續合約",
+        "searchPlaceholder": "搜尋永續合約",
+        "openPosition": "開倉"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "warning": "警告",
+          "danger": "危險",
+          "safe": "安全"
+        },
+        "liquidationPrice": "清算價格",
+        "subtitle": "實時清算距離 (%)",
+        "distanceLabel": "清算距離",
+        "currentPrice": "當前價格",
+        "title": "風險級別",
+        "liqIntro": "清算距離 (%) 顯示當前價格距離您的清算價格有多遠。距離越大表示風險較低，而距離越小則意味著清算風險較高。"
+      },
+      "closeAll": "關閉全部",
+      "closeAllConfirmTitle": "確認關閉所有持倉",
+      "closeAllConfirmMessage": "所有您的未平仓头寸将以市场价格平仓。"
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2583,7 +2622,13 @@
         "providerFeeTips": "Hyperliquid 費用：{{fee}}",
         "positionSize": "倉位大小",
         "pnl": "盈虧",
-        "rabbyFeeTips": "Rabby 手续费：0.04%"
+        "rabbyFeeTips": "Rabby 手续费：0.04%",
+        "amount": "金額",
+        "confirm": "確認",
+        "receive": "接收：",
+        "closedPnl": "已平仓盈亏：",
+        "minimumWarning": "最小金额为 {{percent}}%",
+        "total": "總計"
       },
       "PerpsOpenPositionPopup": {
         "leverage": "杠杆",
@@ -2597,7 +2642,12 @@
         "invalidNumber": "請輸入有效的數字",
         "sizeTips": "您交易的总价值或数量，由保证金和杠杆决定。",
         "insufficientBalance": "餘額不足",
-        "maximumOrderSize": "最大订单大小为 {{amount}}"
+        "maximumOrderSize": "最大订单大小为 {{amount}}",
+        "takeProfitWhenPriceBelow": "當價格低於時獲利了結",
+        "stopLossWhen": "止損於",
+        "stopLossWhenPriceAbove": "當價格高於時止損",
+        "stopLossWhenPriceBelow": "當價格低於時止損",
+        "takeProfitWhenPriceAbove": "當價格高於時獲利了結"
       },
       "PerpsOpenPositionCheckPopup": {
         "size": "大小",
@@ -2616,7 +2666,10 @@
         "providerFeeTips": "Hyperliquid 手續費：{{fee}}",
         "rabbyFeeTips": "Rabby 费用：0%",
         "sizeTips": "交易的總價值或數量，由保證金和槓桿設置。",
-        "liquidationPriceTips": "當您的保證金降至維持保證金水平以下時，交易所自動關閉您的持倉以防止進一步損失的價格。"
+        "liquidationPriceTips": "當您的保證金降至維持保證金水平以下時，交易所自動關閉您的持倉以防止進一步損失的價格。",
+        "free": "免費",
+        "providerFee": "Hyperliquid 手續費",
+        "rabbyFee": "Rabby 費用"
       },
       "action": {
         "long": "做多",
@@ -2630,7 +2683,31 @@
         "setSlPrice": "設置止損價格",
         "price": "價格：",
         "entryPrice": "進場價格：",
-        "slPrice": "止損價格"
+        "slPrice": "止損價格",
+        "priceReaches": "價格達到",
+        "takeProfitExpectedPNL": "獲利預期 PNL",
+        "youGain": "你获得的",
+        "priceAbove": "價格高於",
+        "youLoss": "你亏损了",
+        "currentPrice": "當前 {{price}}",
+        "priceBelow": "價格低於",
+        "stopLossExpectedPNL": "止损预期盈亏",
+        "EntryAndCurrentPrice": "進場 {{entryPrice}}  當前 {{price}}",
+        "stopLossWhen": "停損條件",
+        "takeProfitWhen": "達成利潤時"
+      },
+      "PerpsEditMarginPopup": {
+        "currentPrice": "當前價格",
+        "title": "調整保證金",
+        "amountToAdd": "新增金額",
+        "insufficientMargin": "餘額不足",
+        "perpsBalance": "永续合约余额",
+        "available": "可用",
+        "liqPrice": "Liq. 價格：",
+        "reduceMargin": "減少保證金",
+        "amountToReduce": "減少的數量",
+        "insufficientMarginToReduce": "減少持倉的保證金不足。",
+        "addMargin": "添加保证金"
       }
     },
     "devUIBuiltInPages": {
@@ -2658,7 +2735,9 @@
           "token": "代幣",
           "myBorrows": "我的借款",
           "apy": "APY",
-          "mySupplies": "我的供应"
+          "mySupplies": "我的供应",
+          "token_tvl": "Token/TVL",
+          "token_balance": "代幣/餘額"
         },
         "item": {
           "tvl": "TVL"
@@ -2738,7 +2817,9 @@
         "availableToBorrow": "可借用",
         "maxAmount": "這是您根據所有提供的抵押品可以借用的最大金額。您的總借款能力是通過將每個抵押資產的市場價值與其最大貸款價值比（Max LTV）相乘，然後將結果相加來計算的。",
         "availableToBorrowDesc": "您可以根据您提供的抵押品进行借款，直到达到借款上限。",
-        "lqDesc": "當清算發生時，清算人會代表借款人償還最多 50% 的未償還借款金額。作為回報，他們可以以折扣價格購買抵押品，並將差額（清算罰金）作為獎勵保留。"
+        "lqDesc": "當清算發生時，清算人會代表借款人償還最多 50% 的未償還借款金額。作為回報，他們可以以折扣價格購買抵押品，並將差額（清算罰金）作為獎勵保留。",
+        "isolatedTitle": "資產無法用作擔保品",
+        "isolatedDesc": "此資產僅能在獨立模式下用作抵押，此時您無法提供其他資產抵押來進行借款。在獨立模式下用作抵押的資產僅能借出特定的債務上限。"
       },
       "supplied": "供應",
       "apy": "APY",
@@ -2751,7 +2832,9 @@
       "netWorth": "淨資產",
       "enterAmount": "輸入金額",
       "hf": "健康因子",
-      "hfTitle": "健康因子"
+      "hfTitle": "健康因子",
+      "isolated": "孤立",
+      "estNetApy": "預估淨年利率"
     }
   },
   "component": {
@@ -2996,6 +3079,9 @@
       "recentAccounts": "最近",
       "whitelistAccounts": "白名單",
       "importedAccounts": "導入的錢包"
+    },
+    "portfolios": {
+      "manage": "管理"
     }
   },
   "common": {

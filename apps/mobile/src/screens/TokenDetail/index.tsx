@@ -11,7 +11,15 @@ import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, Platform, Pressable, Text, View } from 'react-native';
+import {
+  Animated,
+  Dimensions,
+  ImageBackground,
+  Platform,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
@@ -37,8 +45,11 @@ import {
 import { AccountSwitcher } from './components/InScreenSwitch';
 import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRightCC.svg';
 import { patchSingleToken } from '@/databases/sync/assets';
+import { BG_FULL_HEIGHT } from '../Home/hooks/useBgSize';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 const isAndroid = Platform.OS === 'android';
+const ScreenWidth = Dimensions.get('window').width;
 
 export type TokenFromAddressItem = {
   address: string;
@@ -57,6 +68,8 @@ const TokenDetailContent = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
   const { token, account, tokenSelectType } = route.params || {};
+  const fadeAnim = React.useRef(new Animated.Value(1)).current;
+  const [reachTop, setReachTop] = React.useState(false);
 
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -64,7 +77,6 @@ const TokenDetailContent = () => {
   const { t } = useTranslation();
 
   const setIsFromBack = useSetAtom(isFromBackAtom);
-  const { safeOffHeader } = useSafeSizes();
   const { safeOffBottom } = useSafeSizes();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -131,12 +143,13 @@ const TokenDetailContent = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        style={{ marginLeft: -3 }}
+        style={{ marginLeft: isAndroid ? 0 : -10 }}
         key={effectiveAccount?.address}
         tokenSize={33}
-        chainSize={14}
+        chainSize={15}
         borderChain
         token={token}
+        showCopyIcon
       />
     );
   }, [effectiveAccount?.address, token]);
@@ -186,31 +199,8 @@ const TokenDetailContent = () => {
   const onRefresh = useCallback(async () => {
     refreshBaseTokenInfo();
   }, [refreshBaseTokenInfo]);
-
-  if (!effectiveAccount?.address) {
-    return null;
-  }
-
-  return (
-    <NormalScreenContainer2024
-      type="bg1"
-      overwriteStyle={styles.rootScreenContainer}>
-      <ImageBackground
-        source={
-          !isLoss
-            ? require('@/assets2024/singleHome/up.png')
-            : require('@/assets2024/singleHome/loss.png')
-        }
-        resizeMode="cover"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: safeOffHeader + 120,
-        }}
-      />
-
+  const renderHeader = useCallback(() => {
+    return (
       <View style={styles.balanceOverviewContainer}>
         <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
         <View style={styles.balanceOverviewContent}>
@@ -270,13 +260,90 @@ const TokenDetailContent = () => {
             </Pressable>
           )}
         </View>
+
+        <View style={[styles.historyHeader]}>
+          <Text style={styles.relateTitle}>
+            {t('page.tokenDetail.Transaction')}
+          </Text>
+        </View>
       </View>
-      <TokenDetailHistoryList
-        onRefresh={onRefresh}
-        finalAccount={effectiveAccount}
-        token={token}
-      />
-      <View style={{ height: isAndroid ? 220 + safeOffBottom : 56 }} />
+    );
+  }, [
+    amountSum,
+    baseTokenInfo,
+    colors2024,
+    handleOpenTokenMarketInfo,
+    is24hNoChange,
+    isLoss,
+    percentChange,
+    price,
+    styles,
+    t,
+    usdValue,
+  ]);
+
+  const handleReachTopStatusChange = React.useCallback(
+    (status: boolean) => {
+      setReachTop(status);
+      Animated.timing(fadeAnim, {
+        toValue: status ? 1 : 0,
+        duration: 10,
+        useNativeDriver: true,
+      }).start();
+    },
+    [fadeAnim, setReachTop],
+  );
+
+  if (!effectiveAccount?.address) {
+    return null;
+  }
+
+  return (
+    <NormalScreenContainer2024
+      type="bg1"
+      overwriteStyle={styles.rootScreenContainer}>
+      <Animated.View
+        style={[
+          styles.topWrapper,
+          {
+            height: BG_FULL_HEIGHT,
+            opacity: fadeAnim,
+          },
+        ]}>
+        <ImageBackground
+          source={
+            !isLoss
+              ? require('@/assets2024/singleHome/up.png')
+              : require('@/assets2024/singleHome/loss.png')
+          }
+          resizeMode="cover"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: BG_FULL_HEIGHT,
+          }}
+        />
+      </Animated.View>
+      <Tabs.Container
+        renderTabBar={() => null}
+        tabBarHeight={0}
+        headerHeight={120}
+        renderHeader={renderHeader}
+        headerContainerStyle={styles.headerContainer}
+        containerStyle={styles.container}
+        pagerProps={{ scrollEnabled: !isAndroid }}>
+        <Tabs.Tab label="History" name="history">
+          <TokenDetailHistoryList
+            onRefresh={onRefresh}
+            onReachTopStatusChange={handleReachTopStatusChange}
+            finalAccount={effectiveAccount}
+            token={token}
+          />
+        </Tabs.Tab>
+      </Tabs.Container>
+
       <View style={styles.bottomContainer}>
         <TokenDetailBottomBtns
           token={token}
@@ -313,10 +380,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         : colors2024['neutral-bg-1'],
       paddingBottom: 20,
     },
+    topWrapper: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: ScreenWidth,
+      overflow: 'hidden',
+    },
+    headerContainer: {
+      backgroundColor: 'transparent',
+      shadowColor: 'transparent',
+      shadowOpacity: 0,
+      elevation: 0,
+    },
+    container: {
+      overflow: 'hidden',
+    },
     balanceOverviewContainer: {
       paddingLeft: 23,
       paddingRight: 16,
-      marginBottom: 24,
     },
     bottomContainer: {
       width: '100%',
@@ -332,6 +414,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      overflow: 'hidden',
     },
     floatingBarContent: {
       flexDirection: 'column',
@@ -399,6 +482,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 18,
       fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
+    },
+    relateTitle: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '900',
+    },
+    historyHeader: {
+      flexDirection: 'row',
+      marginTop: 26,
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    historyHeaderTop: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
     },
   };
 });

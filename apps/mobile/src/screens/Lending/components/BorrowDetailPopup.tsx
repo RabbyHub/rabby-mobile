@@ -5,7 +5,10 @@ import { View, Text, Pressable } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../type';
-import { formatPercent, formatUsdValueKMB } from '@/screens/TokenDetail/util';
+import {
+  formatAmountValueKMB,
+  formatUsdValueKMB,
+} from '@/screens/TokenDetail/util';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import { getHealthStatusColor } from '../utils';
 import {
@@ -21,6 +24,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTranslation } from 'react-i18next';
 import { getHealthFactorText } from './HealthFactorText';
 import { formatNetworth } from '@/utils/math';
+import { formatApy } from '../utils/format';
 
 export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -194,9 +198,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
                 {t('page.Lending.apy')}
               </Text>
               <Text style={styles.poolInfoItemValue}>
-                {formatPercent(
-                  Number(reserve.reserve.variableBorrowAPY || '0'),
-                )}
+                {formatApy(Number(reserve.reserve.variableBorrowAPY || '0'))}
               </Text>
             </View>
             <View style={styles.poolInfoItem}>
@@ -252,6 +254,14 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
                 </Text>
               </View>
               <View style={styles.userInfoItem}>
+                <Text style={styles.userInfoItemTitle}>
+                  {t('page.Lending.supplyOverview.walletBalance')}
+                </Text>
+                <Text style={styles.userInfoItemValue}>
+                  ${formatAmountValueKMB(reserve.walletBalanceUSD || '0')}{' '}
+                </Text>
+              </View>
+              <View style={styles.userInfoItem}>
                 <View style={styles.leftTitleContainer}>
                   <Text style={styles.userInfoItemTitle}>
                     {t('page.Lending.borrowOverview.liquidityPenalty')}
@@ -265,7 +275,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
                   </Pressable>
                 </View>
                 <Text style={styles.userInfoItemValue}>
-                  {formatPercent(
+                  {formatApy(
                     Number(
                       reserve.reserve.formattedReserveLiquidationBonus || '0',
                     ),

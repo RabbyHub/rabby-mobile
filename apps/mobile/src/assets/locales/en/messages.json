@@ -2043,6 +2043,10 @@
         "searching": "Results for",
         "searchTips": "Search the web"
       },
+      "globalSearch": {
+        "placeHolder": "Search Dapp/Token",
+        "iosPlaceHolder": "Search Website/Token"
+      },
       "hotTokenList": {
         "title": "Hot"
       }
@@ -2174,9 +2178,12 @@
         "disconnect": "Disconnect"
       },
       "BrowserSearch": {
+        "favorite": "Favorite",
+        "hot": "Hot",
         "recent": "Recent",
         "searchInGoogle": "Search \"{{searchText}}\" in Google",
         "openUrl": "Open \"{{searchText}}\"",
+        "otherResults": "Other Results",
         "results": "Results",
         "placeholder": "Search Websites",
         "recentEmpty": "Starting Exploring Website"
@@ -2585,6 +2592,7 @@
       "supplied": "Supplied",
       "borrowed": "Borrowed",
       "estDailyEarning": "Est.Daily Earning",
+      "estNetApy": "Est. net APY",
       "selectChain": "Select Chain",
       "hf": "Health factor",
       "hfTitle": "Health Factor",
@@ -2596,6 +2604,8 @@
       "list": {
         "headers": {
           "token": "Token",
+          "token_balance": "Token/Balance",
+          "token_tvl": "Token/TVL",
           "apy": "APY",
           "myBorrows": "My borrows",
           "mySupplies": "My supplies"
@@ -2941,6 +2951,9 @@
       "amount": "Amount",
       "price": "Price",
       "usdValue": "USD Value"
+    },
+    "portfolios": {
+      "manage": "Manage"
     }
   },
   "native": {
@@ -2986,6 +2999,8 @@
     "cancel": "Cancel",
     "Paste": "Paste",
     "Price": "Price",
+    "Token": "Token",
+    "Dapp": "Dapp",
     "time": {
       "hour": "{{t}} hour",
       "hours": "{{t}} hours",

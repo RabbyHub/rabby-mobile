@@ -106,8 +106,8 @@ export const NextSearchBar = React.forwardRef<NextSearchBarMethods, Props>(
               <RcNextSearchCC
                 style={styles.searchIcon}
                 color={colors2024['neutral-secondary']}
-                width={16}
-                height={16}
+                width={20}
+                height={20}
               />
             )}
           </TouchableWithoutFeedback>

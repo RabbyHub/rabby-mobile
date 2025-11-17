@@ -102,6 +102,7 @@ const parseCandles = (data: CandleSnapshot): CandleBar[] => {
 
 export const PerpsChart: React.FC<{
   market: MarketData;
+  coinNameRef: React.RefObject<string>;
   markPrice: number;
   currentAssetCtx?: MarketData;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
@@ -111,7 +112,14 @@ export const PerpsChart: React.FC<{
     liquidationPrice: number;
     entryPrice: number;
   };
-}> = ({ market, markPrice, currentAssetCtx, activeAssetCtx, lineTagInfo }) => {
+}> = ({
+  market,
+  coinNameRef,
+  markPrice,
+  currentAssetCtx,
+  activeAssetCtx,
+  lineTagInfo,
+}) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
@@ -255,6 +263,10 @@ export const PerpsChart: React.FC<{
       snapshot => {
         // Check if component is still mounted before updating
         // if (!isMountedRef.current || !seriesRef.current) return;
+
+        if (coinNameRef.current?.toUpperCase() !== snapshot.s.toUpperCase()) {
+          return;
+        }
 
         const candles = parseCandles([snapshot]);
         if (candles.length > 0) {

@@ -1018,6 +1018,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "いつでもスクリーンショットを撮って、素早くバグを報告してください。"
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "すべての資産を見るには右にスワイプしてください"
       }
     },
     "switchChain": {
@@ -1824,7 +1827,10 @@
           "dex": "Dex"
         },
         "pools": "プール"
-      }
+      },
+      "price": "価格",
+      "headerTokenValueText": "トークンの価値",
+      "headerBalanceText": "残高"
     },
     "customTestnet": {
       "add": "カスタムネットワークを追加",
@@ -1932,6 +1938,10 @@
       },
       "hotTokenList": {
         "title": "ホット"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "ウェブサイト/トークンを検索",
+        "placeHolder": "Dapp/トークンを検索"
       }
     },
     "createPassword": {
@@ -2155,7 +2165,10 @@
         "openUrl": "オープン \"{{searchText}}\"",
         "recent": "最近",
         "results": "結果",
-        "recentEmpty": "ウェブサイトを探索し始める"
+        "recentEmpty": "ウェブサイトを探索し始める",
+        "otherResults": "その他の結果",
+        "favorite": "お気に入り",
+        "hot": "ホット"
       },
       "BrowserSearchEntry": {
         "openWebsites": "ウェブサイトを開く"
@@ -2386,7 +2399,8 @@
         "takeProfitTipsShort": "利益確定価格は現在の価格よりも低くなければなりません。",
         "stopLossTipsShort": "ストップロス価格は現在の価格よりも高くなければなりません",
         "stopLossTipsLong": "損切り価格は現在の価格よりも低く設定する必要があります。",
-        "stopLossTipsShortLiquidation": "価格は清算価格 ({{price}}) よりも高いです。"
+        "stopLossTipsShortLiquidation": "価格は清算価格 ({{price}}) よりも高いです。",
+        "noPosition": "最初にマージンを入力する必要があります。"
       },
       "PerpsDepositTokenModal": {
         "swapBtn": "スワップ",
@@ -2442,7 +2456,30 @@
       "regionNotSupport": "あなたの地域ではポジションのオープンはサポートされていません",
       "leverageRangeMaxError": "最大レバレッジは {{max}}x です",
       "deleteAgentSuccess": "エージェントが正常に削除されました。",
-      "deleteAgentModal": "最大エージェント数に達しました。新しいエージェントを作成するために、既存のエージェントを削除しますか？"
+      "deleteAgentModal": "最大エージェント数に達しました。新しいエージェントを作成するために、既存のエージェントを削除しますか？",
+      "searchPerpsPopup": {
+        "searchPlaceholder": "永続契約を検索",
+        "empty": "結果が見つかりませんでした",
+        "searchPosition": "ポジションを検索",
+        "searchPerps": "永続契約を検索",
+        "openPosition": "ポジションをオープンする"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "warning": "警告",
+          "safe": "安全",
+          "danger": "危険"
+        },
+        "currentPrice": "現在の価格",
+        "title": "リスクレベル",
+        "liquidationPrice": "清算価格",
+        "subtitle": "リアルタイム清算距離 (%)",
+        "distanceLabel": "清算距離",
+        "liqIntro": "清算距離 (%) は、現在の価格が清算価格からどれだけ離れているかを示します。距離が大きいほど安全なポジションを示し、距離が小さいほど清算リスクが高いことを意味します。"
+      },
+      "closeAllConfirmTitle": "すべてのポジションをクローズすることを確認する",
+      "closeAll": "すべて閉じる",
+      "closeAllConfirmMessage": "すべてのオープンポジションは、市場価格でクローズされます。"
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2488,7 +2525,13 @@
         "positionSize": "ポジションサイズ",
         "fee": "手数料：",
         "rabbyFeeTips": "Rabby手数料: 0.04%",
-        "providerFeeTips": "Hyperliquid 手数料: {{fee}}"
+        "providerFeeTips": "Hyperliquid 手数料: {{fee}}",
+        "amount": "金額",
+        "confirm": "確認",
+        "total": "合計",
+        "closedPnl": "クローズドPNL:",
+        "minimumWarning": "最小額は {{percent}}% です",
+        "receive": "受け取る："
       },
       "PerpsOpenPositionPopup": {
         "minimumOrderSize": "最小注文サイズは$10です。",
@@ -2502,7 +2545,12 @@
         "leverage": "レバレッジ",
         "maximumOrderSize": "最大注文サイズは {{amount}} です",
         "sizeTips": "取引の総価値または数量は、マージンとレバレッジによって設定されます。",
-        "invalidNumber": "有効な数字を入力してください"
+        "invalidNumber": "有効な数字を入力してください",
+        "stopLossWhenPriceBelow": "価格が下回ったときのストップロス",
+        "takeProfitWhenPriceBelow": "価格が下回ったときに利益を確定する",
+        "stopLossWhen": "ストップロスが発生した時",
+        "stopLossWhenPriceAbove": "価格が上回った場合、損失を止める",
+        "takeProfitWhenPriceAbove": "価格が上昇したときに利益を確定する"
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "方向",
@@ -2521,7 +2569,10 @@
         "margin": "マージン（アイソレーテッド）",
         "providerFeeTips": "Hyperliquid手数料: {{fee}}",
         "sizeTips": "あなたの取引の総価値または数量は、マージンとレバレッジによって設定されます。",
-        "liquidationPriceTips": "マージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によってあなたのポジションが自動的にクローズされる価格です。"
+        "liquidationPriceTips": "マージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によってあなたのポジションが自動的にクローズされる価格です。",
+        "free": "無料",
+        "rabbyFee": "Rabby手数料",
+        "providerFee": "ハイパーリキッド手数料"
       },
       "action": {
         "short": "ショート",
@@ -2535,7 +2586,31 @@
         "slPrice": "ストップロス価格",
         "setSlPrice": "ストップロス価格を設定する",
         "entryPrice": "エントリー価格：",
-        "setTpPrice": "テイクプロフィット価格を設定する"
+        "setTpPrice": "テイクプロフィット価格を設定する",
+        "priceAbove": "価格以上",
+        "currentPrice": "現在の {{price}}",
+        "youGain": "あなたの利益",
+        "priceReaches": "価格到達",
+        "takeProfitExpectedPNL": "利益確定予定PNL",
+        "priceBelow": "価格が下回る",
+        "youLoss": "あなたは損失しました",
+        "EntryAndCurrentPrice": "エントリー {{entryPrice}} 現在 {{price}}",
+        "stopLossExpectedPNL": "ストップロス予想PNL",
+        "stopLossWhen": "損切り時",
+        "takeProfitWhen": "利益確定時"
+      },
+      "PerpsEditMarginPopup": {
+        "currentPrice": "現在の価格",
+        "title": "マージンを調整する",
+        "insufficientMargin": "マージン不足",
+        "addMargin": "マージンを追加",
+        "amountToReduce": "減少する金額",
+        "liqPrice": "Liq. 価格:",
+        "reduceMargin": "マージンを減らす",
+        "amountToAdd": "追加する金額",
+        "available": "利用可能",
+        "perpsBalance": "永続契約残高",
+        "insufficientMarginToReduce": "ポジションを減少させるための証拠金が不足しています。"
       }
     },
     "devUIBuiltInPages": {
@@ -2563,7 +2638,9 @@
           "apy": "APY",
           "token": "トークン",
           "myBorrows": "私の借入",
-          "mySupplies": "私のサプライ"
+          "mySupplies": "私のサプライ",
+          "token_tvl": "トークン/TVL",
+          "token_balance": "トークン/残高"
         },
         "item": {
           "tvl": "TVL"
@@ -2643,7 +2720,9 @@
         "availableToBorrow": "借りられるアイテム",
         "maxAmount": "これは、提供した担保に基づいて借りられる最大金額です。借入れの総力は、各担保資産の市場価値にその最大LTVを掛けて計算し、その結果を合計することによって算出されます。",
         "availableToBorrowDesc": "提供した担保に基づいて借り入れができ、借入上限に達するまで借りることができます。",
-        "lqDesc": "清算が発生した場合、清算業者は借り手のために未払いの借入額の最大50%を返済します。その見返りとして、彼らは担保を割引価格で購入し、その差額（清算ペナルティ）をボーナスとして保持できます。"
+        "lqDesc": "清算が発生した場合、清算業者は借り手のために未払いの借入額の最大50%を返済します。その見返りとして、彼らは担保を割引価格で購入し、その差額（清算ペナルティ）をボーナスとして保持できます。",
+        "isolatedTitle": "資産は担保として使用できません。",
+        "isolatedDesc": "この資産は、他の資産の担保を借入に供給できないアイソレーションモードでのみ担保として使用できます。アイソレーションモードで担保として使用される資産は、特定の借入限度額にのみ借り入れることができます。"
       },
       "apy": "APY",
       "supplied": "供給された",
@@ -2656,7 +2735,9 @@
       "borrowed": "借入",
       "enterAmount": "金額を入力してください",
       "hfTitle": "ヘルスファクター",
-      "hf": "ヘルスファクター"
+      "hf": "ヘルスファクター",
+      "isolated": "隔離",
+      "estNetApy": "推定ネットAPY"
     }
   },
   "global": {
@@ -2732,7 +2813,9 @@
       }
     },
     "check": "チェック",
-    "gotIt": "わかった"
+    "gotIt": "わかった",
+    "Dapp": "Dapp",
+    "Token": "トークン"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -2996,6 +3079,9 @@
       "recentAccounts": "最近",
       "whitelistAccounts": "ホワイトリスト",
       "importedAccounts": "インポートされたウォレット"
+    },
+    "portfolios": {
+      "manage": "管理"
     }
   },
   "common": {

@@ -1,20 +1,18 @@
-import React, { useMemo } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import { RcIconDynamicArrowDownCC } from '@/assets/icons/dapp';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import { DappInfo } from '@/core/services/dappService';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
-import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
+import { DappIcon } from '@/screens/Dapps/components/DappIcon';
+import dayjs from 'dayjs';
 
 export function BrowserRecent({
   onPress,
-  isInBottomSheet,
   list,
 }: {
   onPress?(dapp: DappInfo): void;
@@ -27,29 +25,14 @@ export function BrowserRecent({
 
   const { t } = useTranslation();
 
-  const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
-
-  return (
-    <Component
-      data={list}
-      style={styles.list}
-      keyExtractor={item => item.url || item.origin}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-      ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-      renderItem={({ item }) => (
-        <BrowserSiteCard data={item} onPress={onPress} />
-      )}
-      ListHeaderComponent={
-        list?.length ? (
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              {t('page.browser.BrowserSearch.recent')}
-            </Text>
-          </View>
-        ) : null
-      }
-      ListEmptyComponent={
+  if (!list?.length) {
+    return (
+      <View>
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            {t('page.browser.BrowserSearch.recent')}
+          </Text>
+        </View>
         <View style={styles.empty}>
           <View style={styles.emptyContent}>
             {isLight ? (
@@ -63,8 +46,51 @@ export function BrowserRecent({
           </View>
           <RcIconDynamicArrowDownCC color={colors2024['neutral-line']} />
         </View>
-      }
-    />
+      </View>
+    );
+  }
+  //
+  return (
+    <View>
+      <View style={styles.header}>
+        <Text style={styles.title}>
+          {t('page.browser.BrowserSearch.recent')}
+        </Text>
+      </View>
+      <View style={styles.grid}>
+        {list
+          ?.filter(item =>
+            dayjs
+              .unix(item.infoUpdateAt || (item as any)?.createdAt)
+              .add(3, 'day')
+              .isAfter(dayjs()),
+          )
+          .slice(0, 8)
+          .map(data => (
+            <TouchableOpacity
+              onPress={() => {
+                onPress?.(data);
+              }}
+              key={data.url || data.origin}
+              style={styles.gridItem}>
+              <DappIcon
+                source={
+                  data?.icon
+                    ? {
+                        uri: data.icon,
+                      }
+                    : undefined
+                }
+                origin={data.origin}
+                style={styles.dappIcon}
+              />
+              <Text style={styles.dappName} numberOfLines={1}>
+                {data.info?.name || data?.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+      </View>
+    </View>
   );
 }
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -80,11 +106,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 12,
   },
   title: {
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 18,
     lineHeight: 20,
-    fontWeight: '500',
+    fontWeight: '800',
   },
 
   empty: {
@@ -111,5 +137,32 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-info'],
     textAlign: 'center',
+  },
+
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: 16,
+    width: '100%',
+  },
+  gridItem: {
+    gap: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '25%',
+  },
+  dappIcon: {
+    height: 56,
+    width: 56,
+    borderRadius: 6,
+  },
+  dappName: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 20,
   },
 }));

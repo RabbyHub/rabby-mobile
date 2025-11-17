@@ -568,7 +568,8 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   }
 
   static async getTokenHistoryItemSortedByTime(
-    owner_addrs: string[],
+    owner_addr: string,
+    start_time: number,
     tokenId: string,
     chain: string,
     count?: number,
@@ -580,11 +581,11 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
     console.log('getTokenHistoryItemSortedByTime exec');
 
-    const queryBuilder = repo
+    let queryBuilder = repo
       .createQueryBuilder('historyitem')
-      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .where('historyitem.owner_addr = :owner_addr', { owner_addr })
       .andWhere('historyitem.chain = :chain', { chain })
-      // .andWhere('historyitem.time_at >= :ninetyDaysAgo', { ninetyDaysAgo })
+      .andWhere('historyitem.time_at >= :ninetyDaysAgo', { ninetyDaysAgo })
       .andWhere(
         new Brackets(qb => {
           qb.where('historyitem.token_approve_id = :tokenId')
@@ -607,6 +608,13 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       )
       .orderBy('historyitem.time_at', 'DESC')
       .take(count || 10000); // limit
+
+    if (start_time) {
+      queryBuilder = queryBuilder.andWhere(
+        'historyitem.time_at < :start_time',
+        { start_time },
+      );
+    }
 
     const res = await queryBuilder.getMany();
     console.log(

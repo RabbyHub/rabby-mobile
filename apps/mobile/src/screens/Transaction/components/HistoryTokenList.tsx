@@ -19,7 +19,7 @@ import { formatTokenAmount } from '@/utils/number';
 import { HistoryItemIcon } from './HistoryItemIcon';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
-import { naviPush } from '@/utils/navigation';
+import { navigateDeprecated, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
@@ -34,6 +34,7 @@ import { HistoryItemCateType } from './type';
 import { Account } from '@/core/services/preference';
 import { isArray } from 'lodash';
 import { Dimensions } from 'react-native';
+import { GetRootScreenRouteProp } from '@/navigation-type';
 const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
 interface ItemProps {
@@ -150,11 +151,7 @@ export const HistoryTokenList = ({
           account: currentAccount,
         });
       } else {
-        // if (address) {
-        //   setTokenDetailAddress(address);
-        // }
-        // openTokenDetailPopup(token as TokenItem);
-        naviPush(RootNames.TokenDetail, {
+        navigateDeprecated(RootNames.TokenDetail, {
           token: ensureAbstractPortfolioToken(singeToken as TokenItem),
           needUseCacheToken: true,
           isSingleAddress: !isForMultipleAddress,

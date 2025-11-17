@@ -115,7 +115,9 @@
       }
     },
     "gotIt": "Verstanden",
-    "check": "Überprüfen"
+    "check": "Überprüfen",
+    "Token": "Token",
+    "Dapp": "Dapp"
   },
   "component": {
     "accountSwitcher": {
@@ -359,6 +361,9 @@
       "whitelistAccounts": "Whitelist",
       "recentAccounts": "Neueste",
       "importedAccounts": "Importierte Wallets"
+    },
+    "portfolios": {
+      "manage": "Verwalten"
     }
   },
   "page": {
@@ -1356,6 +1361,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "Machen Sie jederzeit einen Screenshot, um schnell einen Fehler zu melden."
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "Wischen Sie nach rechts, um alle Vermögenswerte anzuzeigen."
       }
     },
     "switchChain": {
@@ -2073,6 +2081,10 @@
       },
       "hotTokenList": {
         "title": "Heiß"
+      },
+      "globalSearch": {
+        "iosPlaceHolder": "Website/Token suchen",
+        "placeHolder": "Suche Dapp/Token"
       }
     },
     "tokenDetail": {
@@ -2196,7 +2208,10 @@
           "value": "Wert"
         },
         "pools": "Pools"
-      }
+      },
+      "price": "Preis",
+      "headerTokenValueText": "Token-Wert",
+      "headerBalanceText": "Guthaben"
     },
     "setting": {
       "currentVersion": "Aktuelle Version",
@@ -2437,7 +2452,10 @@
         "searchInGoogle": "Suche \"{{searchText}}\" in Google",
         "results": "Ergebnisse",
         "openUrl": "Öffnen \"{{searchText}}\"",
-        "recentEmpty": "Starten Sie die Erkundung der Website"
+        "recentEmpty": "Starten Sie die Erkundung der Website",
+        "hot": "Hot",
+        "otherResults": "Andere Ergebnisse",
+        "favorite": "Favorit"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Websites öffnen"
@@ -2668,7 +2686,8 @@
         "stopLossTipsLongLiquidation": "Der Preis liegt unter dem Liquidationspreis ({{price}})",
         "stopLoss": "Stop-Loss",
         "stopLossTipsShort": "Der Stop-Loss-Preis muss höher sein als der aktuelle Preis.",
-        "takeProfitTipsLong": "Der Take-Profit-Preis muss höher als der aktuelle Preis sein."
+        "takeProfitTipsLong": "Der Take-Profit-Preis muss höher als der aktuelle Preis sein.",
+        "noPosition": "Sie müssen zuerst die Margin eingeben."
       },
       "PerpsDepositTokenModal": {
         "swapBtn": "Tausch",
@@ -2724,7 +2743,30 @@
       "deleteAgentSuccess": "Agent erfolgreich gelöscht",
       "deleteAgentModal": "Sie haben die maximale Anzahl von Agenten erreicht. Möchten Sie einen vorhandenen Agenten löschen, um einen neuen zu erstellen?",
       "leverageRangeMinError": "Der minimale Hebel beträgt {{min}}x",
-      "leverageRangeMaxError": "Die maximale Hebelwirkung beträgt {{max}}x"
+      "leverageRangeMaxError": "Die maximale Hebelwirkung beträgt {{max}}x",
+      "searchPerpsPopup": {
+        "openPosition": "Offene Position",
+        "searchPosition": "Position suchen",
+        "searchPlaceholder": "Suche Perps",
+        "empty": "Keine Ergebnisse gefunden",
+        "searchPerps": "Suche Perps"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "safe": "Sicher",
+          "warning": "Warnung",
+          "danger": "Gefahr"
+        },
+        "distanceLabel": "Liquidationsabstand",
+        "liquidationPrice": "Liquidationspreis",
+        "subtitle": "Echtzeit Liquidationsdistanz (%)",
+        "currentPrice": "Aktueller Preis",
+        "title": "Risikoniveau",
+        "liqIntro": "Liquidation Distance (%) zeigt, wie weit der aktuelle Preis von Ihrem Liquidationspreis entfernt ist. Eine größere Entfernung bedeutet eine sicherere Position, während eine kleinere Entfernung ein höheres Liquidationsrisiko bedeutet."
+      },
+      "closeAllConfirmTitle": "Alle Positionen schließen bestätigen",
+      "closeAll": "Alle schließen",
+      "closeAllConfirmMessage": "Alle Ihre offenen Positionen werden zum Marktpreis geschlossen."
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2770,7 +2812,13 @@
         "fee": "Gebühr:",
         "rabbyFeeTips": "Rabby Gebühr: 0,04%",
         "closeBtn": "Schließe {{direction}}",
-        "providerFeeTips": "Hyperliquid-Gebühr: {{fee}}"
+        "providerFeeTips": "Hyperliquid-Gebühr: {{fee}}",
+        "total": "Gesamt",
+        "receive": "Erhalten:",
+        "minimumWarning": "Der Mindestbetrag beträgt {{percent}}%.",
+        "closedPnl": "Geschlossener PNL:",
+        "amount": "Betrag",
+        "confirm": "Bestätigen"
       },
       "PerpsOpenPositionPopup": {
         "insufficientBalance": "Unzureichendes Guthaben",
@@ -2784,7 +2832,12 @@
         "minimumOrderSize": "Die Mindestsordergröße beträgt 10 $.",
         "autoClose": "Automatisches Schließen",
         "slPrice": "Stop-Loss-Preis",
-        "margin": "Marge"
+        "margin": "Marge",
+        "stopLossWhen": "Stop-Loss, wenn",
+        "stopLossWhenPriceAbove": "Stop-Loss, wenn der Preis überliegt",
+        "takeProfitWhenPriceAbove": "Nehmen Sie Gewinn, wenn der Preis über",
+        "stopLossWhenPriceBelow": "Stop-Loss, wenn der Preis unter",
+        "takeProfitWhenPriceBelow": "Take Profit Wenn Preis Unter"
       },
       "PerpsOpenPositionCheckPopup": {
         "perps": "Perps",
@@ -2803,7 +2856,10 @@
         "sizeTips": "Der Gesamtwert oder die Gesamtmenge Ihres Handels, festgelegt durch Margin und Hebel.",
         "margin": "Margin (Isoliert)",
         "liquidationPriceTips": "Der Preis, zu dem Ihre Position automatisch von der Börse geschlossen wird, um weitere Verluste zu verhindern, wenn Ihr Margin unter das Wartungsmargin-Niveau fällt.",
-        "direction": "Richtung"
+        "direction": "Richtung",
+        "rabbyFee": "Rabby Gebühr",
+        "providerFee": "Hyperliquid-Gebühr",
+        "free": "Kostenlos"
       },
       "action": {
         "short": "Short",
@@ -2817,7 +2873,31 @@
         "setTpPrice": "Take-Profit-Preis festlegen",
         "tpPrice": "Take Profit Preis",
         "entryPrice": "Einstiegspreis:",
-        "slPrice": "Stop-Loss-Preis"
+        "slPrice": "Stop-Loss-Preis",
+        "priceReaches": "Preis Erreicht",
+        "stopLossExpectedPNL": "Stop-Loss erwarteter PNL",
+        "youLoss": "Du verlierst",
+        "priceBelow": "Preis darunter",
+        "takeProfitExpectedPNL": "Nehmen Sie den erwarteten PNL Gewinn mit",
+        "EntryAndCurrentPrice": "Eintritt {{entryPrice}} Aktuell {{price}}",
+        "currentPrice": "Aktueller {{price}}",
+        "youGain": "Sie Gewinne",
+        "priceAbove": "Preis über",
+        "takeProfitWhen": "Take Profit When",
+        "stopLossWhen": "Stop Loss Wenn"
+      },
+      "PerpsEditMarginPopup": {
+        "title": "Margin anpassen",
+        "currentPrice": "Aktueller Preis",
+        "liqPrice": "Liq. Preis:",
+        "addMargin": "Margin hinzufügen",
+        "insufficientMarginToReduce": "Unzureichende Marge, um die Position zu reduzieren.",
+        "amountToAdd": "Betrag hinzufügen",
+        "insufficientMargin": "Unzureichende Margin",
+        "reduceMargin": "Margin reduzieren",
+        "amountToReduce": "Betrag zur Reduzierung",
+        "available": "verfügbar",
+        "perpsBalance": "Perps-Bilanz"
       }
     },
     "devUIBuiltInPages": {
@@ -2845,7 +2925,9 @@
           "token": "Token",
           "mySupplies": "Meine Vorräte",
           "myBorrows": "Mein Darlehen",
-          "apy": "APY"
+          "apy": "APY",
+          "token_tvl": "Token/TVL",
+          "token_balance": "Token/Guthaben"
         },
         "item": {
           "tvl": "TVL"
@@ -2925,7 +3007,9 @@
         "maxAmount": "Dies ist der maximale Betrag, den Sie basierend auf allen von Ihnen bereitgestellten Sicherheiten ausleihen können. Ihre gesamte Kreditaufnahmefähigkeit wird berechnet, indem der Marktwert jedes Sicherheitenvermögenswerts mit seinem maximalen LTV multipliziert und die Ergebnisse dann summiert werden.",
         "availableToBorrow": "Verfügbar zum Ausleihen",
         "availableToBorrowDesc": "Sie können basierend auf Ihrer hinterlegten Sicherheiten leihen, bis die Kreditobergrenze erreicht ist.",
-        "lqDesc": "Wenn eine Liquidation erfolgt, zahlen Liquidatoren bis zu 50% des ausstehenden geliehenen Betrags im Namen des Kreditnehmers zurück. Im Gegenzug können sie die Sicherheiten zu einem reduzierten Preis kaufen und die Differenz (Liquidationsstrafe) als Bonus behalten."
+        "lqDesc": "Wenn eine Liquidation erfolgt, zahlen Liquidatoren bis zu 50% des ausstehenden geliehenen Betrags im Namen des Kreditnehmers zurück. Im Gegenzug können sie die Sicherheiten zu einem reduzierten Preis kaufen und die Differenz (Liquidationsstrafe) als Bonus behalten.",
+        "isolatedTitle": "Das Asset kann nicht als Sicherheit verwendet werden.",
+        "isolatedDesc": "Dieses Asset kann nur im Isolationsmodus als Sicherheiten verwendet werden, in dem Sie keine anderen Asset-Sicherheiten für das Ausleihen bereitstellen können. Assets, die im Isolationsmodus als Sicherheiten verwendet werden, können nur bis zu einer bestimmten Schuldenobergrenze ausgeliehen werden."
       },
       "supplied": "Geliefert",
       "netWorth": "Vermögen",
@@ -2938,7 +3022,9 @@
       "submitted": "eingereicht",
       "hf": "Gesundheitsfaktor",
       "hfTitle": "Gesundheitsfaktor",
-      "enterAmount": "Betrag eingeben"
+      "enterAmount": "Betrag eingeben",
+      "isolated": "isoliert",
+      "estNetApy": "Est. netto APY"
     }
   },
   "constant": {
