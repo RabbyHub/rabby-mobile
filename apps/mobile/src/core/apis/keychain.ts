@@ -1,6 +1,6 @@
 import { EncryptorAdapter } from '@rabby-wallet/service-keyring';
 import { Platform } from 'react-native';
-import RNKeychain from 'react-native-keychain';
+import RNKeychain, { STORAGE_TYPE } from 'react-native-keychain';
 import { MMKV } from 'react-native-mmkv';
 
 import { appEncryptor } from '../services';
@@ -119,7 +119,10 @@ const DEFAULT_OPTIONS: RNKeychain.Options = {
   },
   authenticationType: RNKeychain.AUTHENTICATION_TYPE.BIOMETRICS,
   // accessControl: RNKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
-  // rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
+  ...(isAndroid && {
+    storage: STORAGE_TYPE.RSA,
+    rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
+  }),
 };
 
 const MsgCanceledByUsers = ['code: 10', 'code: 13', `msg: ${CANCELSTR}`];
