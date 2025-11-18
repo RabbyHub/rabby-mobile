@@ -113,6 +113,8 @@ import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { Tabs } from 'react-native-collapsible-tab-view';
+import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -822,6 +824,11 @@ function MultiAddressHome(): JSX.Element {
     viewedHomeTip,
   ]);
 
+  const [tabIndex, setTabIndex] = useState(0);
+  const handleIndexChange = useCallback((_index: number) => {
+    setTabIndex(_index);
+  }, []);
+
   return (
     <NormalScreenContainer2024
       type="linear"
@@ -841,128 +848,145 @@ function MultiAddressHome(): JSX.Element {
       }}
       overwriteStyle={styles.screenContainer}>
       <ScreenSpecificStatusBar screenName={RootNames.Home} />
-      <View style={styles.paddingContainer}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={styles.scroll}
-          contentContainerStyle={[
-            styles.scrollContainer,
-            {
-              // paddingBottom: bottom + 82,
-              paddingBottom:
-                Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
-            },
-          ]}
-          refreshControl={
-            <RefreshControl refreshing={false} onRefresh={onRefresh} />
-          }>
-          <MultiAddressHomeHeader
-            data={combineData}
-            loading={loading}
-            loadingNewCurve={loadingNewCurve}
-            onRefresh={onRefresh}
-            balanceAccounts={balanceAccounts}
-          />
-          <View
-            style={[
-              noBetweenContent
-                ? styles.contentBetweenHeaderAndMatrixEmpty
-                : styles.contentBetweenHeaderAndMatrix,
-              onlyOneContent
-                ? styles.contentBetweenHeaderAndMatrixOnlyOne
-                : null,
-            ]}>
-            <OfflineChainNotify data={offlineChainData} />
-
-            {displayFundWallet && <FoundYourWalletGuide />}
-
-            {shouldShowRateGuideOnHome && (
+      <View style={[styles.paddingContainer]}>
+        <TabsMultiAssets
+          onRefresh={onRefresh}
+          data={combineData}
+          loading={loading}
+          onIndexChange={handleIndexChange}
+          overViewContent={
+            <Tabs.ScrollView
+              tvParallaxProperties={undefined}
+              showsVerticalScrollIndicator={false}
+              style={styles.scroll}
+              contentContainerStyle={[
+                styles.scrollContainer,
+                {
+                  // paddingBottom: bottom + 82,
+                  paddingBottom:
+                    Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
+                },
+              ]}
+              refreshControl={
+                <RefreshControl refreshing={false} onRefresh={onRefresh} />
+              }>
+              <MultiAddressHomeHeader
+                data={combineData}
+                loading={loading}
+                loadingNewCurve={loadingNewCurve}
+                onRefresh={onRefresh}
+                balanceAccounts={balanceAccounts}
+              />
               <View
-                style={{ paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL }}>
-                <RateModalTriggerOnHome
-                  totalBalanceText={combineData.netWorth}
-                />
-                <RateModal totalBalanceText={combineData.netWorth} />
-              </View>
-            )}
+                style={[
+                  noBetweenContent
+                    ? styles.contentBetweenHeaderAndMatrixEmpty
+                    : styles.contentBetweenHeaderAndMatrix,
+                  onlyOneContent
+                    ? styles.contentBetweenHeaderAndMatrixOnlyOne
+                    : null,
+                ]}>
+                <OfflineChainNotify data={offlineChainData} />
 
-            <TipFeedbackByScreenshot />
-          </View>
+                {displayFundWallet && <FoundYourWalletGuide />}
 
-          <View style={[{ marginTop: 0 }, styles.grid]}>
-            <GradientOutlineContainer contentStyle={styles.gridGradientOutline}>
-              <View style={styles.primaryActionsContainer}>
-                {PRIMARY_ACTIONS.map(action => {
-                  const ActionIcon = action.icon;
-                  return (
-                    <TouchableOpacity
-                      key={action.key}
-                      style={[
-                        styles.primaryActionButton,
-                        { backgroundColor: action.backgroundColor },
-                        action.extraStyle,
-                      ]}
-                      onPress={() => {
-                        handleClickMenu(action.key);
-                        matomoRequestEvent({
-                          category: 'Click_Services',
-                          action: `Click_${action.key}`,
-                        });
-                      }}>
-                      <ActionIcon
-                        width={22}
-                        height={22}
-                        color={colors2024['neutral-InvertHighlight']}
-                      />
-                      <Text style={styles.primaryActionText}>
-                        {action.title}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                {shouldShowRateGuideOnHome && (
+                  <View
+                    style={{
+                      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+                    }}>
+                    <RateModalTriggerOnHome
+                      totalBalanceText={combineData.netWorth}
+                    />
+                    <RateModal totalBalanceText={combineData.netWorth} />
+                  </View>
+                )}
+
+                <TipFeedbackByScreenshot />
               </View>
-              <View style={styles.gridItemsWrap}>
-                {MENU_ARR.map((el, index) => {
-                  return (
-                    <TouchableOpacity
-                      style={StyleSheet.flatten([
-                        styles.gridItem,
-                        { width: itemWidth },
-                      ])}
-                      key={index}
-                      onPress={() => {
-                        handleClickMenu(el.key);
-                        matomoRequestEvent({
-                          category: 'Click_Services',
-                          action: `Click_${el.key}`,
-                        });
-                      }}>
-                      <View style={styles.badgeWrapper}>
-                        <View style={styles.iconWrapper}>
-                          <el.icon
+
+              <View style={[{ marginTop: 0 }, styles.grid]}>
+                <GradientOutlineContainer
+                  contentStyle={styles.gridGradientOutline}>
+                  <View style={styles.primaryActionsContainer}>
+                    {PRIMARY_ACTIONS.map(action => {
+                      const ActionIcon = action.icon;
+                      return (
+                        <TouchableOpacity
+                          key={action.key}
+                          style={[
+                            styles.primaryActionButton,
+                            { backgroundColor: action.backgroundColor },
+                            action.extraStyle,
+                          ]}
+                          onPress={() => {
+                            handleClickMenu(action.key);
+                            matomoRequestEvent({
+                              category: 'Click_Services',
+                              action: `Click_${action.key}`,
+                            });
+                          }}>
+                          <ActionIcon
                             width={22}
                             height={22}
-                            color={el.color || colors2024['brand-default-icon']}
+                            color={colors2024['neutral-InvertHighlight']}
                           />
-                        </View>
-                        <View style={styles.rightBadgeWrapper}>
-                          {generateCustomBadgeIcon(el)}
-                        </View>
-                      </View>
-                      <Text style={styles.gridText}>{el.title}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                          <Text style={styles.primaryActionText}>
+                            {action.title}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                  <View style={styles.gridItemsWrap}>
+                    {MENU_ARR.map((el, index) => {
+                      return (
+                        <TouchableOpacity
+                          style={StyleSheet.flatten([
+                            styles.gridItem,
+                            { width: itemWidth },
+                          ])}
+                          key={index}
+                          onPress={() => {
+                            handleClickMenu(el.key);
+                            matomoRequestEvent({
+                              category: 'Click_Services',
+                              action: `Click_${el.key}`,
+                            });
+                          }}>
+                          <View style={styles.badgeWrapper}>
+                            <View style={styles.iconWrapper}>
+                              <el.icon
+                                width={22}
+                                height={22}
+                                color={
+                                  el.color || colors2024['brand-default-icon']
+                                }
+                              />
+                            </View>
+                            <View style={styles.rightBadgeWrapper}>
+                              {generateCustomBadgeIcon(el)}
+                            </View>
+                          </View>
+                          <Text style={styles.gridText}>{el.title}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </GradientOutlineContainer>
+                <BrowserSearchEntry alwaysShowSearch={false} />
+                <View style={styles.searchBarPlaceholder} />
               </View>
-            </GradientOutlineContainer>
-            <BrowserSearchEntry alwaysShowSearch={false} />
-            <View style={styles.searchBarPlaceholder} />
-          </View>
-        </ScrollView>
+            </Tabs.ScrollView>
+          }
+        />
 
-        <View style={styles.globalSearchBar}>
-          <GlobalSearchBar />
-        </View>
+        {/* show search bar when Overview tab */}
+        {tabIndex === 0 && (
+          <View style={styles.globalSearchBar}>
+            <GlobalSearchBar />
+          </View>
+        )}
       </View>
     </NormalScreenContainer2024>
   );
@@ -976,6 +1000,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 0,
     flex: 1,
     flexGrow: 1,
+  },
+  container: {
+    borderWidth: 1,
+    borderColor: 'red',
+    flexGrow: 1,
+    minHeight: '100%',
+  },
+  headerContainer: {
+    backgroundColor: 'transparent',
+    paddingTop: 64,
   },
   bgImage: {
     position: 'absolute',
@@ -1002,9 +1036,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   scroll: {
     flex: 1,
+    marginTop: -46,
   },
   scrollContainer: {
-    paddingTop: 64,
+    // paddingTop: 88,
     flexGrow: 1,
     minHeight: '100%',
   },

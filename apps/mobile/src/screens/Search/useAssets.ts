@@ -52,6 +52,7 @@ export const useAssets = ({
     tokens,
     portfolios,
     assetsMap,
+    nfts,
     setAssetsMap,
     updateNFTs,
     updatePortfolios,
@@ -559,6 +560,7 @@ export const useAssets = ({
   return {
     tokens,
     portfolios,
+    nfts,
     assetsMap,
     isLoading,
     getTokenCombined,

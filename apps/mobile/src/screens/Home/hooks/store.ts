@@ -23,6 +23,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 
 let top20TokensCache: CombineTokensItem[] = [];
 let top10PortfoliosCache: CombineDefiItem[] = [];
+let top10NftsCache: CombineNFTItem[] = [];
 
 type DisplayedProjectWithoutMethods = Omit<
   DisplayedProject,
@@ -47,19 +48,12 @@ type OriginalCombineDefiItem = DisplayedProjectWithoutMethods & {
   filterTokenDesc?: string;
   address: string;
 };
-export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'> & {
-  totalUsdValue: number;
-};
+export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'>;
 
 type OriginalCombineNFTItem = NFTItem & {
-  totalAmount: BigNumber;
-  fromAddress: Array<{
-    address: string;
-  }>;
+  address: string;
 };
-export type CombineNFTItem = Omit<OriginalCombineNFTItem, 'totalAmount'> & {
-  totalAmount: number;
-};
+export type CombineNFTItem = OriginalCombineNFTItem;
 
 type ICombineItem = {
   type: string;
@@ -222,6 +216,39 @@ export const combinedProtocols = (
       _isFold: false,
       _isMiniFold: false,
     }));
+};
+
+export const combinedNfts = (
+  assetsMap: {
+    [address: string]: IAssets;
+  },
+  top10Addresses: string[],
+): CombineNFTItem[] => {
+  const nfts: OriginalCombineNFTItem[] = [];
+  const lowerAddresses = new Set(
+    Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
+  );
+  Object.entries(assetsMap).forEach(([address, assets]) => {
+    if (
+      !lowerAddresses.has(address.toLowerCase()) ||
+      !top10Addresses.some(i => isSameAddress(i, address))
+    ) {
+      return;
+    }
+    lowerAddresses.delete(address.toLowerCase());
+    assets.nfts?.forEach(nft => {
+      const key = nft.id;
+      if (!key) {
+        return;
+      }
+      nfts.push({
+        ...nft,
+        address,
+      });
+    });
+  });
+
+  return nfts;
 };
 
 export const assetAtom = atom<{ [address: string]: IAssets }>({});
@@ -399,12 +426,22 @@ export const useAssetsMap = ({
     return portfolios;
   }, [assetsMap, hideCombined, top10Addresses]);
 
+  const memoNfts = useMemo(() => {
+    if (hideCombined) {
+      return top10NftsCache;
+    }
+    const nfts = combinedNfts(assetsMap, top10Addresses);
+    top10NftsCache = nfts?.slice(0, 30) || [];
+    return nfts;
+  }, [assetsMap, hideCombined, top10Addresses]);
+
   return {
     updateTokens,
     updatePortfolios,
     updateNFTs,
     tokens: memoTokens,
     portfolios: memoPortfolios,
+    nfts: memoNfts,
     assetsMap,
     getTokenCombined,
     setAssetsMap,

@@ -1,64 +1,32 @@
 import { StackActions } from '@react-navigation/native';
-import React, {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import {
-  Animated as RNAnimated,
-  Easing as RNEasing,
-  Dimensions,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 
-import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
-import { ThemeColors2024 } from '@/constant/theme';
 import useAccountsBalance, {
   balanceAccountType,
 } from '@/hooks/useAccountsBalance';
-import { useUpgradeInfo } from '@/hooks/version';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
 import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
 
-import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
-import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
-import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
-import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
 import { BlurShadowView } from '@/components2024/BluerShadow';
 import { Card } from '@/components2024/Card';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
-import {
-  HOME_REFRESH_INTERVAL,
-  ITEM_LAYOUT_PADDING_HORIZONTAL,
-} from '@/constant/home';
+import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { usePinnedAccountList } from '@/hooks/account';
 import { useCurrency } from '@/hooks/useCurrency';
-import { formatSmallCurrencyValue, getChangeData } from '@/hooks/useCurve';
+import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { Skeleton } from '@rneui/base';
-import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
 import { LoadingLinear } from '../../TokenDetail/components/TokenPriceChart/LoadingLinear';
@@ -68,8 +36,6 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { IS_IOS } from '@/core/native/utils';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-
-const HeaderHeight = 24;
 
 export function MultiAddressHomeHeader(
   props: {
@@ -85,21 +51,11 @@ export function MultiAddressHomeHeader(
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { remoteVersion } = useUpgradeInfo();
   const { isDisConnect } = useGlobalStatus();
   const { currency, formatCurrentCurrency } = useCurrency();
 
   const pinnedAccountList = usePinnedAccountList();
-  const [hideType, setHideType] = useHideBalance();
-  const handleHideTypeChange = useMemoizedFn(() => {
-    if (hideType === 'HALF_HIDE') {
-      setHideType('HIDE');
-    } else if (hideType === 'HIDE') {
-      setHideType('SHOW');
-    } else {
-      setHideType('HALF_HIDE');
-    }
-  });
+  const [hideType] = useHideBalance();
 
   const { multi24hBalance } = useMulti24hBalance(
     pinnedAccountList.map(item => item.address),
@@ -141,26 +97,6 @@ export function MultiAddressHomeHeader(
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
-
-  const spinValue = useRef(new RNAnimated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-  useEffect(() => {
-    if (loading) {
-      RNAnimated.loop(
-        RNAnimated.timing(spinValue, {
-          toValue: 1,
-          duration: 1600,
-          easing: RNEasing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
-      spinValue.resetAnimation();
-    }
-  }, [loading, spinValue]);
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
   const percentChange = useMemo(() => {
@@ -184,66 +120,10 @@ export function MultiAddressHomeHeader(
     }
   }, [data.isLoss, loading, previousLoading]);
 
-  const { HomeGuidanceMultipleTabsTargetViewRef, doMeasure } =
-    useMeasureLayoutForHomeGuidanceMultipleTabs();
+  const { doMeasure } = useMeasureLayoutForHomeGuidanceMultipleTabs();
 
   return (
     <View style={style}>
-      <View style={styles.headerBox}>
-        <View style={styles.leftBox}>
-          <Text style={styles.balanceTextBox}>
-            {t('page.nextComponent.multiAddressHome.totalBalance')}
-          </Text>
-          <TouchableOpacity onPress={handleHideTypeChange}>
-            {hideType === 'HALF_HIDE' ? (
-              <RcIconEyeHalfCloseCC
-                color={colors2024['neutral-title-1']}
-                width={20}
-                height={20}
-              />
-            ) : hideType === 'HIDE' ? (
-              <RcIconEyeCloseCC
-                color={colors2024['neutral-title-1']}
-                width={20}
-                height={20}
-              />
-            ) : (
-              <RcIconEyeCC
-                color={colors2024['neutral-title-1']}
-                width={20}
-                height={20}
-              />
-            )}
-          </TouchableOpacity>
-          <RNAnimated.View
-            style={{
-              transform: [{ rotate: spin }],
-            }}>
-            {loading && <RcIconloading />}
-          </RNAnimated.View>
-        </View>
-
-        <View style={styles.rightArea}>
-          <FeedbackEntryOnHeader style={styles.feedbackEntry} />
-          <TouchableWithoutFeedback
-            style={styles.settingEntry}
-            onPress={() => {
-              navigation.navigateDeprecated(RootNames.StackSettings, {
-                screen: RootNames.Settings,
-                params: {},
-              });
-
-              matomoRequestEvent({
-                category: 'Click_Header',
-                action: 'Click_Setting',
-              });
-            }}>
-            <RcIconSetting color={colors2024['neutral-foot']} />
-            {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
-          </TouchableWithoutFeedback>
-        </View>
-      </View>
-
       <GlobalWarning
         hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
@@ -460,74 +340,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
     height: '100%',
   },
-  redDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors2024['red-default'],
-    position: 'absolute',
-    top: 0,
-    right: 13,
-  },
 
-  headerBox: {
-    height: HeaderHeight,
-    // paddingLeft: 8,
-    // paddingRight: 38,
-    paddingTop: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-    position: 'relative',
-    // flex: 1,
-    // backgroundColor: colors2024['neutral-title-1'],
-  },
-  leftBox: {
-    height: HeaderHeight,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 4,
-  },
-  balanceTextBox: {
-    // marginRight: 12,
-    color: colors2024['neutral-title-1'],
-    fontWeight: '900',
-    fontSize: 20,
-    lineHeight: 24,
-    textAlign: 'left',
-    fontFamily: 'SF Pro Rounded',
-  },
-  balanceBox: {
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-    marginTop: 30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  rightArea: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // position: 'relative',
-    // ...makeDebugBorder(),
-  },
-  feedbackEntry: {
-    height: '100%',
-    paddingRight: 6,
-    // ...makeDebugBorder(),
-  },
-  settingEntry: {
-    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
-    flexDirection: 'row',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingLeft: 6,
-    paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    position: 'relative',
-  },
   usdText: {
     fontSize: 36,
     fontWeight: '900',
