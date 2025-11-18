@@ -149,19 +149,17 @@ export const MultiAssets = ({
     ],
   );
 
-  const renderHeader = useCallback(() => {
-    return (
-      <MultiChart
-        isOffline={false}
-        data={combineData}
-        loading={isLoadingCurve}
-        pathColor={pathColor}
-        isNoAssets={false}
-        isDisConnect={isDisConnect}
-        handleScroll={handleScroll}
-      />
-    );
-  }, [combineData, handleScroll, isDisConnect, isLoadingCurve, pathColor]);
+  // const renderHeader = useCallback(() => {
+  //   return (
+  //     <MultiChart
+  //       isOffline={false}
+  //       data={combineData}
+  //       loading={isLoadingCurve}
+  //       pathColor={pathColor}
+  //       isNoAssets={false}
+  //     />
+  //   );
+  // }, [combineData, isLoadingCurve, pathColor]);
 
   const listLength = useMemo(() => {
     return list.length > 10 ? 10 : list.length;
@@ -190,7 +188,7 @@ export const MultiAssets = ({
       headerHeight={HEADER_CHART_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0)}
       renderTabBar={renderTabBar}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
-      renderHeader={renderHeader}
+      // renderHeader={renderHeader}
       pagerProps={{
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';

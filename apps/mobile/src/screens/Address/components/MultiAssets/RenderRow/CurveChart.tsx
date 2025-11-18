@@ -6,27 +6,30 @@ import {
   CurvePoint,
   formatSmallCurrencyValue,
 } from '@/hooks/useCurve';
-import { memo, useEffect, useMemo, useCallback, useState } from 'react';
-import { Dimensions, View } from 'react-native';
+import { memo, useEffect, useMemo, useState } from 'react';
+import { Dimensions, Pressable, Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import { ALERT_HEIGHT, HEADER_CHART_HEIGHT } from '@/constant/layout';
-import {
-  runOnJS,
+import Animated, {
   useAnimatedProps,
-  useAnimatedReaction,
   useAnimatedStyle,
   useDerivedValue,
 } from 'react-native-reanimated';
 import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
-import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
-import { useTranslation } from 'react-i18next';
 import { useTriggerUpdate } from '../hooks/triggerUpdate';
 import { useCurrency } from '@/hooks/useCurrency';
-import { EndBg } from '../../BgComponents';
+import { BALANCE_HIDE_TYPE } from '@/screens/Home/hooks/useHideBalance';
+import { Skeleton } from '@rneui/base';
+import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
+import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
+import { atom, useAtom, useAtomValue } from 'jotai';
+import Svg, { Path } from 'react-native-svg';
 
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 const ScreenWidth = Dimensions.get('screen').width;
+
+export const foldMultiChartAtom = atom<boolean>(true);
 
 function Chart({
   data,
@@ -34,22 +37,23 @@ function Chart({
   loading,
   isNoAssets,
   pathColor,
-  handleScroll,
-  isDisConnect,
+  hideType,
+  loadingNewCurve,
+  accountsLength,
 }: {
   isOffline: boolean;
   data: ReturnType<typeof formChartData>;
   loading: boolean;
+  loadingNewCurve: boolean;
   isNoAssets: boolean;
   pathColor: string;
-  isDisConnect: boolean;
-  handleScroll: (y: number) => void;
+  hideType: BALANCE_HIDE_TYPE;
+  accountsLength?: number;
 }) {
   const { styles, colors } = useTheme2024({ getStyle });
   const { setTriggerUpdate } = useTriggerUpdate();
-  const { t } = useTranslation();
+  const isFoldMultiChart = useAtomValue(foldMultiChartAtom);
 
-  const scrollY = useCurrentTabScrollY();
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -65,54 +69,26 @@ function Chart({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleScrollCallback = useCallback(
-    (currentScrollY: number) => {
-      if (isInitialized) {
-        handleScroll(currentScrollY);
-      }
-    },
-    [handleScroll, isInitialized],
-  );
-
-  useAnimatedReaction(
-    () => scrollY.value,
-    currentScrollY => {
-      // 只有在初始化后才处理滚动事件
-      runOnJS(handleScrollCallback)(currentScrollY);
-    },
-  );
-
   return (
-    <View
-      style={[
-        styles.container,
-        { height: HEADER_CHART_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0) },
-      ]}>
-      <EndBg isDecrease={data.isLoss} />
-
-      <GlobalWarning
-        hasError={isDisConnect}
-        description={t('component.globalWarning.networkError.globalDesc')}
-        style={styles.globalWarning}
-        onRefresh={() => {
-          setTriggerUpdate(true);
-        }}
-      />
-
+    <View style={[styles.container]}>
       <View style={styles.chartContainer}>
         <LineChart.Provider data={data.list}>
           <ChartHeader
+            loading={loadingNewCurve}
             rawNetWorth={data.rawNetWorth}
             rawChange={data.rawChange}
             changePercent={data.changePercent}
             isLoss={data.isLoss}
             data={data.list}
+            hideType={hideType}
+            accountsLength={accountsLength}
           />
-          {isOffline || isNoAssets ? null : !loading ? (
+          {isFoldMultiChart ? null : isOffline ||
+            isNoAssets ? null : !loading ? (
             isInitialized ? (
               <LineChart
                 height={114}
-                width={ScreenWidth - 32}
+                width={ScreenWidth - 72}
                 shape={d3Shape.curveCatmullRom}
                 style={styles.relative}>
                 <LineChart.Path
@@ -147,19 +123,25 @@ interface IHeaderProps {
   changePercent: string;
   isLoss: boolean;
   data: CurvePoint[];
+  hideType: BALANCE_HIDE_TYPE;
+  loading: boolean;
+  accountsLength?: number;
 }
 export const ChartHeader = ({
   rawNetWorth,
   rawChange,
   changePercent,
   isLoss,
+  hideType,
   data: _data,
+  loading,
+  accountsLength,
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const [isInitialized, setIsInitialized] = useState(false);
   const { currency, formatCurrentCurrency } = useCurrency();
-
+  const [isFoldMultiChart, setIsFoldMultiChart] = useAtom(foldMultiChartAtom);
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(rawNetWorth, { currency });
   }, [rawNetWorth, currency]);
@@ -236,6 +218,13 @@ export const ChartHeader = ({
   }, [data, currentIndex, netWorth, isInitialized]);
 
   const lossStyleProps = useAnimatedStyle(() => {
+    if (hideType === 'HIDE') {
+      return {
+        ...styles.changePercent,
+        display: 'flex',
+        color: colors2024['neutral-body'],
+      };
+    }
     // 如果还没初始化，使用默认样式
     if (!isInitialized) {
       return {
@@ -259,42 +248,124 @@ export const ChartHeader = ({
       display: 'flex',
       color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
     };
-  }, [isLoss, data, currentIndex, colors2024, styles, isInitialized]);
+  }, [isLoss, data, currentIndex, colors2024, styles, isInitialized, hideType]);
 
   const netWorthAnimatedProps = useAnimatedProps(() => {
     return {
-      text: formatNetWorth.value,
+      text: hideType === 'HIDE' ? '******' : formatNetWorth.value,
     };
-  }, [formatNetWorth.value]);
+  }, [formatNetWorth.value, hideType]);
 
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
-      text: percentChange.value,
+      text: hideType === 'HIDE' ? '***' : percentChange.value,
     };
-  }, [percentChange.value]);
+  }, [percentChange.value, hideType]);
 
   const dateTimeAnimatedProps = useAnimatedProps(() => {
     return {
-      text: dateTime.value,
+      text: hideType === 'HIDE' ? '' : dateTime.value,
     };
-  }, [dateTime.value]);
+  }, [dateTime.value, hideType]);
+
+  const arrowStrokeProps = useAnimatedProps(() => {
+    let strokeColor: string;
+    if (hideType === 'HIDE') {
+      strokeColor = colors2024['neutral-body'];
+    } else if (!isInitialized) {
+      strokeColor = isLoss
+        ? colors2024['red-default']
+        : colors2024['green-default'];
+    } else if (data?.[currentIndex?.value]) {
+      strokeColor = data?.[currentIndex.value]?.isLoss
+        ? colors2024['red-default']
+        : colors2024['green-default'];
+    } else {
+      strokeColor = isLoss
+        ? colors2024['red-default']
+        : colors2024['green-default'];
+    }
+    return {
+      stroke: strokeColor,
+    };
+  }, [isLoss, data, currentIndex, colors2024, isInitialized, hideType]);
 
   return (
     <View style={styles.charHeader}>
-      <AnimateableText
-        style={styles.netWorth}
-        animatedProps={netWorthAnimatedProps}
-      />
-      <View style={styles.changeSection}>
-        <AnimateableText
-          style={lossStyleProps}
-          animatedProps={percentChangeAnimatedProps}
-        />
-        <AnimateableText
-          style={styles.changeTime}
-          animatedProps={dateTimeAnimatedProps}
-        />
+      <View style={styles.netWorthContainer}>
+        {loading ? (
+          <Skeleton
+            width={181}
+            height={44}
+            style={styles.skeletonNetWorth}
+            LinearGradientComponent={LoadingLinear}
+          />
+        ) : (
+          <AnimateableText
+            style={[
+              styles.netWorth,
+              hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+            ]}
+            animatedProps={netWorthAnimatedProps}
+          />
+        )}
+        <View style={[styles.accountBg]}>
+          <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
+          <Text style={styles.accountText}>
+            {accountsLength && accountsLength >= 10 ? '10' : accountsLength}
+          </Text>
+          <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
+        </View>
       </View>
+      {loading ? (
+        <Skeleton
+          width={100}
+          height={22}
+          style={styles.skeletonNetWorth}
+          LinearGradientComponent={LoadingLinear}
+        />
+      ) : (
+        <View
+          style={[
+            styles.changeSection,
+            hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+          ]}>
+          <AnimateableText
+            style={lossStyleProps}
+            animatedProps={percentChangeAnimatedProps}
+          />
+          <AnimateableText
+            style={styles.changeTime}
+            animatedProps={dateTimeAnimatedProps}
+          />
+          <Pressable
+            hitSlop={50}
+            onPress={e => {
+              e.stopPropagation();
+              setIsFoldMultiChart(pre => !pre);
+            }}
+            style={styles.percentChangeContainer}>
+            <Svg
+              style={{
+                transform: isFoldMultiChart
+                  ? [{ rotate: '90deg' }]
+                  : [{ rotate: '270deg' }],
+              }}
+              width={16}
+              height={16}
+              viewBox="0 0 24 24"
+              fill="none">
+              <AnimatedPath
+                d="M8.4 4.80005L15.6 12L8.4 19.2"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                animatedProps={arrowStrokeProps}
+              />
+            </Svg>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 };
@@ -312,16 +383,22 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
   },
+  skeletonNetWorth: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
   charHeader: {
-    alignContent: 'center',
-    justifyContent: 'center',
+    alignContent: 'flex-start',
+    justifyContent: 'flex-start',
     flexDirection: 'column',
-    width: ScreenWidth - 32,
+    width: ScreenWidth - 72,
+    gap: 6,
   },
   netWorth: {
     fontSize: 42,
-    lineHeight: 42,
-    textAlign: 'center',
+    lineHeight: 46,
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -331,7 +408,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 2,
     marginTop: 4,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   changeValue: {
     fontSize: 16,
@@ -356,17 +433,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 4,
   },
   container: {
-    height: HEADER_CHART_HEIGHT,
-    width: ScreenWidth,
-    paddingTop: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    // height: HEADER_CHART_HEIGHT,
+    paddingHorizontal: 20,
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-0']
+    //   : colors2024['neutral-bg-1'],
     overflow: 'hidden',
   },
-  chartContainer: {
-    paddingLeft: 16,
-  },
+  chartContainer: {},
   globalWarning: {
     marginHorizontal: 16,
     marginBottom: 13,
@@ -383,5 +457,46 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: ScreenWidth,
     height: 32,
     zIndex: -100,
+  },
+  balanceOpacity: {
+    opacity: 0.2,
+  },
+  netWorthContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  accountBg: {
+    minWidth: 74,
+    padding: 8,
+    paddingLeft: 11,
+    borderRadius: 10,
+    backgroundColor: colors2024['neutral-line'],
+    shadowColor: colors2024['brand-light-1'],
+    shadowOffset: { width: 0, height: 9.411 },
+    shadowOpacity: 0.1,
+    shadowRadius: 22.587,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 30,
+    // position: 'absolute',
+    // top: 28,
+    // right: 20,
+    // elevation: 500,
+  },
+  accountText: {
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'left',
+    color: colors2024['neutral-title-1'],
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    paddingLeft: 6,
+  },
+  percentChangeContainer: {
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    // justifyContent: 'flex-end',
   },
 }));

@@ -1,6 +1,6 @@
 import { StackActions } from '@react-navigation/native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -14,28 +14,25 @@ import useAccountsBalance, {
 } from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
-import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
-import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
-
 import { BlurShadowView } from '@/components2024/BluerShadow';
 import { Card } from '@/components2024/Card';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { usePinnedAccountList } from '@/hooks/account';
 import { useCurrency } from '@/hooks/useCurrency';
-import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
-import { Skeleton } from '@rneui/base';
 import { sortBy } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
-import { LoadingLinear } from '../../TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { IS_IOS } from '@/core/native/utils';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
+import { MultiChart } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
+import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 
 export function MultiAddressHomeHeader(
   props: {
@@ -52,7 +49,6 @@ export function MultiAddressHomeHeader(
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { isDisConnect } = useGlobalStatus();
-  const { currency, formatCurrentCurrency } = useCurrency();
 
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
@@ -99,17 +95,56 @@ export function MultiAddressHomeHeader(
   });
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
-  const percentChange = useMemo(() => {
-    return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
-      data.isLoss ? '-' : '+'
-    }${formatCurrentCurrency(Math.abs(data.rawChange))})`;
-  }, [data.changePercent, data.isLoss, data.rawChange, formatCurrentCurrency]);
-
   const gasketWebViewRef = useRef<LocalWebView>(null);
+
+  const { top10Addresses } = useAccountInfo();
+  const { getTotalBalance } = useAccountsBalance({
+    cacheTime: 10 * 60 * 1000,
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
+
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
+
+  const { combineData: combineCurveData, isLoadingNew: isLoadingCurve } =
+    useMultiCurve(
+      top10Addresses,
+      false,
+      top10Balance.total,
+      top10Balance.totalEvm,
+    );
+
+  const { combineData: combine24hBalanceData } = useMulti24hBalance(
+    top10Addresses,
+    false,
+    top10Balance.total,
+    top10Balance.totalEvm,
+  );
+  const combineData = useMemo(() => {
+    return {
+      ...combineCurveData,
+      rawNetWorth: combine24hBalanceData.rawNetWorth,
+      rawChange: combine24hBalanceData.rawChange,
+      change: combine24hBalanceData.change,
+      changePercent: combine24hBalanceData.changePercent,
+      isLoss: combine24hBalanceData.isLoss,
+    };
+  }, [combineCurveData, combine24hBalanceData]);
+
+  const pathColor = useMemo(
+    () =>
+      !combineData.isLoss
+        ? colors2024['green-default']
+        : colors2024['red-default'],
+    [colors2024, combineData.isLoss],
+  );
 
   const previousLoading = usePrevious(loading);
   useEffect(() => {
-    if (data.isLoss) return;
+    if (data.isLoss) {
+      return;
+    }
     if (!loading && previousLoading) {
       gasketWebViewRef.current?.sendMessage?.({
         type: 'GASKETVIEW:TOGGLE_LOADING',
@@ -215,70 +250,16 @@ export function MultiAddressHomeHeader(
                 },
               ]}
             />
-            <View style={styles.curveCardInner}>
-              <View style={styles.curveContainer}>
-                <View style={styles.curveInnerLine}>
-                  {loadingNewCurve ? (
-                    <Skeleton
-                      width={181}
-                      height={44}
-                      style={styles.skeleton}
-                      LinearGradientComponent={LoadingLinear}
-                    />
-                  ) : hideType === 'HIDE' ? (
-                    <Text style={styles.netWorth}>******</Text>
-                  ) : (
-                    <Text
-                      style={[
-                        styles.netWorth,
-                        hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-                      ]}>
-                      {formatSmallCurrencyValue(data.rawNetWorth, {
-                        currency,
-                      })}
-                    </Text>
-                  )}
-                  <View style={[styles.accountBg]}>
-                    <RcIconSmallWalletCC
-                      color={colors2024['neutral-title-1']}
-                    />
-                    <Text style={styles.accountText}>
-                      {accountsLength >= 10 ? '10' : accountsLength}
-                    </Text>
-                    <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
-                  </View>
-                </View>
-                {loadingNewCurve ? (
-                  <Skeleton
-                    width={100}
-                    height={22}
-                    style={styles.skeleton}
-                    LinearGradientComponent={LoadingLinear}
-                  />
-                ) : (
-                  <View style={styles.changeSection}>
-                    {hideType === 'HIDE' ? (
-                      <Text style={styles.changePercent}>***</Text>
-                    ) : (
-                      <Text
-                        style={[
-                          styles.changePercent,
-                          hideType === 'HALF_HIDE'
-                            ? styles.balanceOpacity
-                            : null,
-                          {
-                            color: data.isLoss
-                              ? colors2024['red-default']
-                              : colors2024['green-default'],
-                          },
-                        ]}>
-                        {percentChange}
-                      </Text>
-                    )}
-                  </View>
-                )}
-              </View>
-            </View>
+            <MultiChart
+              isOffline={false}
+              data={combineData}
+              loading={isLoadingCurve}
+              loadingNewCurve={loadingNewCurve}
+              pathColor={pathColor}
+              hideType={hideType}
+              accountsLength={accountsLength}
+              isNoAssets={false}
+            />
             {addressListData?.length ? (
               <View
                 style={[
