@@ -5,8 +5,8 @@ import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
-import RcIconSendCC from '@/assets2024/icons/home/icon-send-cc.svg';
-import RcIconSwapCC from '@/assets2024/icons/home/icon-swap-cc.svg';
+import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
+import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDappsCC.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -27,15 +27,12 @@ import {
   Animated,
   Dimensions,
   Easing,
-  LayoutRectangle,
   Platform,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ViewStyle,
 } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -140,13 +137,7 @@ function MultiAddressHome(): JSX.Element {
   const hasClaimedGift = gasAccountService.getHasClaimedGift();
   const { width } = Dimensions.get('window');
   const itemWidth =
-    (width -
-      ITEM_LAYOUT_PADDING_HORIZONTAL * 2 -
-      8 * 2 -
-      1.5 * 2 -
-      ITEM_GRID_GAP -
-      2) /
-    2;
+    (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
   // use useMemo to directly calculate isEligible so that it can respond to related state changes
   const isEligible = useMemo(() => {
     return (
@@ -167,16 +158,16 @@ function MultiAddressHome(): JSX.Element {
   const MENU_ARR = useMemo(
     () =>
       [
-        // {
-        //   key: MultiHomeFeatTitle.Swap,
-        //   title: t('page.home.services.swap'),
-        //   icon: RcIconSwapCC,
-        // },
-        // {
-        //   key: MultiHomeFeatTitle.Send,
-        //   title: t('page.home.services.send'),
-        //   icon: RcIconSendCC,
-        // },
+        {
+          key: MultiHomeFeatTitle.Swap,
+          title: t('page.home.services.swap'),
+          icon: RcIconSwapCC,
+        },
+        {
+          key: MultiHomeFeatTitle.Send,
+          title: t('page.home.services.send'),
+          icon: RcIconSendCC,
+        },
         {
           key: MultiHomeFeatTitle.Receive,
           title: t('page.home.services.receive'),
@@ -264,47 +255,6 @@ function MultiAddressHome(): JSX.Element {
       alertInfo.total,
       isEligible,
     ],
-  );
-
-  const swapButtonShadow = useMemo<ViewStyle>(() => {
-    return (Platform.select({
-      ios: {
-        shadowColor: 'rgba(112, 132, 255, 1)',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 3,
-      },
-      default: {},
-    }) || {}) as ViewStyle;
-  }, []);
-
-  const PRIMARY_ACTIONS = useMemo(
-    () =>
-      [
-        {
-          key: MultiHomeFeatTitle.Send,
-          title: t('page.home.services.send'),
-          icon: RcIconSendCC,
-          backgroundColor: colors2024['green-default'],
-        },
-        {
-          key: MultiHomeFeatTitle.Swap,
-          title: t('page.home.services.swap'),
-          icon: RcIconSwapCC,
-          backgroundColor: colors2024['brand-default-icon'],
-          extraStyle: swapButtonShadow,
-        },
-      ] as Array<{
-        key: MultiHomeFeatTitle;
-        title: string;
-        icon: React.FC<import('react-native-svg').SvgProps>;
-        backgroundColor: string;
-        extraStyle?: ViewStyle;
-      }>,
-    [colors2024, swapButtonShadow, t],
   );
 
   useEffect(() => {
@@ -907,74 +857,41 @@ function MultiAddressHome(): JSX.Element {
               </View>
 
               <View style={[{ marginTop: 0 }, styles.grid]}>
-                <GradientOutlineContainer
-                  contentStyle={styles.gridGradientOutline}>
-                  <View style={styles.primaryActionsContainer}>
-                    {PRIMARY_ACTIONS.map(action => {
-                      const ActionIcon = action.icon;
-                      return (
-                        <TouchableOpacity
-                          key={action.key}
-                          style={[
-                            styles.primaryActionButton,
-                            { backgroundColor: action.backgroundColor },
-                            action.extraStyle,
-                          ]}
-                          onPress={() => {
-                            handleClickMenu(action.key);
-                            matomoRequestEvent({
-                              category: 'Click_Services',
-                              action: `Click_${action.key}`,
-                            });
-                          }}>
-                          <ActionIcon
-                            width={22}
-                            height={22}
-                            color={colors2024['neutral-InvertHighlight']}
-                          />
-                          <Text style={styles.primaryActionText}>
-                            {action.title}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                  <View style={styles.gridItemsWrap}>
-                    {MENU_ARR.map((el, index) => {
-                      return (
-                        <TouchableOpacity
-                          style={StyleSheet.flatten([
-                            styles.gridItem,
-                            { width: itemWidth },
-                          ])}
-                          key={index}
-                          onPress={() => {
-                            handleClickMenu(el.key);
-                            matomoRequestEvent({
-                              category: 'Click_Services',
-                              action: `Click_${el.key}`,
-                            });
-                          }}>
-                          <View style={styles.badgeWrapper}>
-                            <View style={styles.iconWrapper}>
-                              <el.icon
-                                width={22}
-                                height={22}
-                                color={
-                                  el.color || colors2024['brand-default-icon']
-                                }
-                              />
-                            </View>
-                            <View style={styles.rightBadgeWrapper}>
-                              {generateCustomBadgeIcon(el)}
-                            </View>
+                <View style={styles.gridItemsWrap}>
+                  {MENU_ARR.map((el, index) => {
+                    return (
+                      <TouchableOpacity
+                        style={StyleSheet.flatten([
+                          styles.gridItem,
+                          { width: itemWidth },
+                        ])}
+                        key={index}
+                        onPress={() => {
+                          handleClickMenu(el.key);
+                          matomoRequestEvent({
+                            category: 'Click_Services',
+                            action: `Click_${el.key}`,
+                          });
+                        }}>
+                        <View style={styles.badgeWrapper}>
+                          <View style={styles.iconWrapper}>
+                            <el.icon
+                              width={28}
+                              height={28}
+                              color={
+                                el.color || colors2024['brand-default-icon']
+                              }
+                            />
                           </View>
-                          <Text style={styles.gridText}>{el.title}</Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </GradientOutlineContainer>
+                          <View style={styles.rightBadgeWrapper}>
+                            {generateCustomBadgeIcon(el)}
+                          </View>
+                        </View>
+                        <Text style={styles.gridText}>{el.title}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
                 <BrowserSearchEntry alwaysShowSearch={false} />
                 <View style={styles.searchBarPlaceholder} />
               </View>
@@ -1082,12 +999,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   iconWrapper: {
-    height: 36,
-    width: 36,
-    backgroundColor: colors2024['brand-light-1'],
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    // height: 36,
+    // width: 36,
+    // backgroundColor: colors2024['brand-light-1'],
+    // borderRadius: 12,
+    // justifyContent: 'center',
+    // alignItems: 'center',
   },
   rightBadgeWrapper: {
     position: 'relative',
