@@ -24,8 +24,12 @@ import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
   onAddAddressPress?: () => void;
+  onDone?: () => void;
 }
-export const AddressList = ({ onAddAddressPress }: AddressListProps) => {
+export const AddressList = ({
+  onAddAddressPress,
+  onDone,
+}: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
@@ -93,14 +97,15 @@ export const AddressList = ({ onAddAddressPress }: AddressListProps) => {
     ({ item }) => {
       return (
         <View style={styles.itemGap}>
-          <AddressEntry data={item} />
+          <AddressEntry data={item} onSelect={onDone} />
         </View>
       );
     },
-    [styles.itemGap],
+    [onDone, styles.itemGap],
   );
 
   const handleMoreWalletsPress = useCallback(() => {
+    onDone?.();
     if (modalRef.current) {
       removeGlobalBottomSheetModal2024(modalRef.current);
     }
@@ -111,7 +116,7 @@ export const AddressList = ({ onAddAddressPress }: AddressListProps) => {
         modalRef.current = undefined;
       },
     });
-  }, []);
+  }, [onDone]);
 
   const notMatterAvatarList = useMemo(() => {
     return notMatterAccounts.slice(0, 3);
@@ -255,12 +260,15 @@ export const AddressList = ({ onAddAddressPress }: AddressListProps) => {
   );
 };
 
-export const AddressListModal = ({ onAddAddressPress }: AddressListProps) => {
+export const AddressListModal = ({
+  onAddAddressPress,
+  onDone,
+}: AddressListProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Wallets</Text>
-      <AddressList onAddAddressPress={onAddAddressPress} />
+      <AddressList onAddAddressPress={onAddAddressPress} onDone={onDone} />
     </View>
   );
 };

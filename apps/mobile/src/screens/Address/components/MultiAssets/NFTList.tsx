@@ -11,6 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
+  RootNames,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -50,6 +51,12 @@ import {
   ListRenderFooter,
   ListRenderSeparator,
 } from './RenderRow/Common';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { navigateDeprecated } from '@/utils/navigation';
 
 interface Props {
   chain?: string;
@@ -62,7 +69,7 @@ export const NFTList = ({
   updateNft,
 }: Props) => {
   const { t } = useTranslation();
-  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const hasBeenFocusedRef = useRef(false);
   const [foldNft, setFoldNft] = useState(true);
@@ -242,6 +249,44 @@ export const NFTList = ({
     [isLight, nftRefresh, t],
   );
 
+  const handlePressNft = useCallback(
+    (item: NftItemWithCollection) => {
+      const currentAccount = getAccountByAddress(item.address);
+      if ('nft_list' in item && item.nft_list.length) {
+        const id = createGlobalBottomSheetModal2024({
+          name: MODAL_NAMES.COLLECTION_NFTS,
+          data: item,
+          bottomSheetModalProps: {
+            // enableContentPanningGesture: true,
+            enablePanDownToClose: true,
+            handleStyle: {
+              backgroundColor: colors2024['neutral-bg-2'],
+            },
+          },
+          titleText: `${item.name}(${item.nft_list.length})`,
+          onPressItem: (v: DisplayNftItem) => {
+            navigateDeprecated(RootNames.NftDetail, {
+              token: v,
+              isSingleAddress: true,
+              account: currentAccount as any,
+            });
+            removeGlobalBottomSheetModal2024(id);
+          },
+          onClose: () => {
+            removeGlobalBottomSheetModal2024(id);
+          },
+        });
+      } else {
+        navigateDeprecated(RootNames.NftDetail, {
+          token: item as DisplayNftItem,
+          isSingleAddress: true,
+          account: currentAccount as any,
+        });
+      }
+    },
+    [colors2024, getAccountByAddress],
+  );
+
   const renderItem = useCallback(
     ({ item }) => {
       const { type, data } = item;
@@ -259,7 +304,7 @@ export const NFTList = ({
                 logoSize={46}
                 chainLogoSize={18}
                 item={data}
-                onPress={() => {}}
+                onPress={() => handlePressNft(data)}
               />
             </View>
           );
@@ -290,7 +335,14 @@ export const NFTList = ({
           return null;
       }
     },
-    [foldNft, foldNftList.length, getNftMenuAction, isLight, styles],
+    [
+      foldNft,
+      foldNftList.length,
+      getNftMenuAction,
+      handlePressNft,
+      isLight,
+      styles,
+    ],
   );
 
   const initRef = useRef(false);

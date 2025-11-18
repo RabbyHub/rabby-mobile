@@ -22,7 +22,7 @@ import useLoadMoreData from './hooks/useLoadMoreData';
 import { TabName } from './TabsMultiAssets';
 import {
   ListHeaderComponent,
-  ListRenderFooter,
+  ListRenderFooter as ListRenderFooterComponent,
   ListRenderSeparator,
 } from './RenderRow/Common';
 
@@ -221,7 +221,7 @@ export const ProtocolList = ({
     return hasMorePortfolios ? (
       <MemoizedItemLoader style={[styles.loadingMore]} />
     ) : (
-      <ListRenderFooter />
+      <ListRenderFooterComponent />
     );
   }, [hasMorePortfolios, styles.loadingMore]);
 
