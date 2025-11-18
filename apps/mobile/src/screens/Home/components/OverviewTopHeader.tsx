@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   Animated as RNAnimated,
   Easing as RNEasing,
@@ -29,6 +29,9 @@ import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { useMemoizedFn } from 'ahooks';
 import { useHideBalance } from '../hooks/useHideBalance';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
+import { AddressListScreenButton } from '@/screens/Address/AddressListScreenButton';
+import { formatSmallCurrencyValue } from '@/hooks/useCurve';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const HeaderHeight = 24;
 
@@ -36,9 +39,10 @@ export function TabsTopHeader(
   props: {
     data: ReturnType<typeof useMulti24hBalance>['combineData'];
     loading: boolean;
+    showNetWorth?: boolean;
   } & RNViewProps,
 ): JSX.Element {
-  const { loading, data } = props;
+  const { loading, data, showNetWorth = false } = props;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -54,6 +58,14 @@ export function TabsTopHeader(
       setHideType('HALF_HIDE');
     }
   });
+  const { currency } = useCurrency();
+
+  const netWorth = useMemo(() => {
+    return formatSmallCurrencyValue(data.rawNetWorth, { currency });
+  }, [data.rawNetWorth, currency]);
+  const changePercent = useMemo(() => {
+    return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
+  }, [data.changePercent, data.isLoss]);
 
   const spinValue = useRef(new RNAnimated.Value(0)).current;
   const spin = spinValue.interpolate({
@@ -94,41 +106,60 @@ export function TabsTopHeader(
 
   return (
     <View style={styles.headerBox}>
-      <View style={styles.leftBox}>
-        <Text style={styles.balanceTextBox}>
-          {t('page.nextComponent.multiAddressHome.totalBalance')}
-        </Text>
-        <TouchableOpacity onPress={handleHideTypeChange}>
-          {hideType === 'HALF_HIDE' ? (
-            <RcIconEyeHalfCloseCC
-              color={colors2024['neutral-title-1']}
-              width={20}
-              height={20}
-            />
-          ) : hideType === 'HIDE' ? (
-            <RcIconEyeCloseCC
-              color={colors2024['neutral-title-1']}
-              width={20}
-              height={20}
-            />
-          ) : (
-            <RcIconEyeCC
-              color={colors2024['neutral-title-1']}
-              width={20}
-              height={20}
-            />
-          )}
-        </TouchableOpacity>
-        <RNAnimated.View
-          style={{
-            transform: [{ rotate: spin }],
-          }}>
-          {loading && <RcIconloading />}
-        </RNAnimated.View>
-      </View>
+      {showNetWorth ? (
+        <View style={styles.leftBox}>
+          <Text style={styles.balanceTextBox}>{netWorth}</Text>
+          <Text
+            style={[
+              styles.changePercentText,
+              {
+                color: data.isLoss
+                  ? colors2024['red-default']
+                  : colors2024['green-default'],
+              },
+            ]}>
+            {changePercent}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.leftBox}>
+          <Text style={styles.balanceTextBox}>
+            {t('page.nextComponent.multiAddressHome.totalBalance')}
+          </Text>
+          <TouchableOpacity onPress={handleHideTypeChange}>
+            {hideType === 'HALF_HIDE' ? (
+              <RcIconEyeHalfCloseCC
+                color={colors2024['neutral-title-1']}
+                width={20}
+                height={20}
+              />
+            ) : hideType === 'HIDE' ? (
+              <RcIconEyeCloseCC
+                color={colors2024['neutral-title-1']}
+                width={20}
+                height={20}
+              />
+            ) : (
+              <RcIconEyeCC
+                color={colors2024['neutral-title-1']}
+                width={20}
+                height={20}
+              />
+            )}
+          </TouchableOpacity>
+          <RNAnimated.View
+            style={{
+              transform: [{ rotate: spin }],
+            }}>
+            {loading && <RcIconloading />}
+          </RNAnimated.View>
+        </View>
+      )}
 
       <View style={styles.rightArea}>
         <FeedbackEntryOnHeader style={styles.feedbackEntry} />
+
+        <AddressListScreenButton type="address" />
         <TouchableWithoutFeedback
           style={styles.settingEntry}
           onPress={() => {
@@ -142,7 +173,11 @@ export function TabsTopHeader(
               action: 'Click_Setting',
             });
           }}>
-          <RcIconSetting color={colors2024['neutral-foot']} />
+          <RcIconSetting
+            width={20}
+            height={20}
+            color={colors2024['neutral-title-1']}
+          />
           {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
@@ -188,6 +223,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 20,
     lineHeight: 24,
     textAlign: 'left',
+    fontFamily: 'SF Pro Rounded',
+  },
+  changePercentText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
   },
   rightArea: {

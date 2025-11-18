@@ -60,6 +60,7 @@ import { WithdrawActionPopup } from '@/screens/Lending/components/actions/Withdr
 import { BorrowActionPopup } from '@/screens/Lending/components/actions/BorrowActionPopup';
 import { RepayActionPopup } from '@/screens/Lending/components/actions/RepayActionPopup';
 import { HFDescription } from '@/screens/Lending/components/HFDescription';
+import { AddressListModal } from '@/screens/Address/components/MultiAssets/AddressList';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -193,6 +194,11 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: NotMatterAddressDialog,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.ADDRESS_LiST]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: AddressListModal,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: {

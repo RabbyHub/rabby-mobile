@@ -853,6 +853,7 @@ function MultiAddressHome(): JSX.Element {
           onRefresh={onRefresh}
           data={combineData}
           loading={loading}
+          tabIndex={tabIndex}
           onIndexChange={handleIndexChange}
           overViewContent={
             <Tabs.ScrollView

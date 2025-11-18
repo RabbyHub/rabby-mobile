@@ -83,7 +83,7 @@ export const AddressListScreenButton: React.FC<Props> = ({
       style={styles.headerRight}
       hitSlop={hitSlop}
       onPress={onPress}>
-      <WalletSVG width={24} height={24} color={colors2024['neutral-body']} />
+      <WalletSVG width={22} height={22} color={colors2024['neutral-title-1']} />
     </TouchableOpacity>
   );
 };

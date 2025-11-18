@@ -9,11 +9,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressList } from './AddressList';
 import { Portfolios } from './Portfolios';
-import { MultiChart } from './RenderRow/CurveChart';
 import { loadingMultiCurveAtom, useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from './hooks';
-import { Tabs, MaterialTabItem } from 'react-native-collapsible-tab-view';
-import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterialTabBar';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
 import { isTabsSwiping } from './hooks';
@@ -77,13 +75,6 @@ export const MultiAssets = ({
     onUpdateIsDecrease(combineData.isLoss);
   }, [combineData.isLoss, onUpdateIsDecrease]);
 
-  const renderTabItem = React.useCallback(
-    (props: any) => (
-      <MaterialTabItem {...props} pressOpacity={1} inactiveOpacity={1} />
-    ),
-    [],
-  );
-
   const getHeaderTitle = useCallback(
     () => (
       <HeaderTitle
@@ -93,29 +84,6 @@ export const MultiAssets = ({
       />
     ),
     [combineData.changePercent, combineData.isLoss, combineData.netWorth],
-  );
-
-  const renderTabBar = React.useCallback(
-    (props: any) => (
-      <CustomMaterialTabBar
-        {...props}
-        tabStyle={styles.tabBar}
-        indicatorStyle={styles.indicator}
-        TabItemComponent={renderTabItem}
-        activeColor={colors2024['neutral-title-1']}
-        inactiveColor={colors2024['neutral-secondary']}
-        labelStyle={styles.label}
-      />
-    ),
-    [colors2024, renderTabItem, styles.indicator, styles.label, styles.tabBar],
-  );
-
-  const pathColor = useMemo(
-    () =>
-      !combineData.isLoss
-        ? colors2024['green-default']
-        : colors2024['red-default'],
-    [colors2024, combineData.isLoss],
   );
 
   const { refreshing, getCacheTop10Assets } = useAssets({ hideCombined: true });
@@ -149,18 +117,6 @@ export const MultiAssets = ({
     ],
   );
 
-  // const renderHeader = useCallback(() => {
-  //   return (
-  //     <MultiChart
-  //       isOffline={false}
-  //       data={combineData}
-  //       loading={isLoadingCurve}
-  //       pathColor={pathColor}
-  //       isNoAssets={false}
-  //     />
-  //   );
-  // }, [combineData, isLoadingCurve, pathColor]);
-
   const listLength = useMemo(() => {
     return list.length > 10 ? 10 : list.length;
   }, [list.length]);
@@ -186,9 +142,7 @@ export const MultiAssets = ({
       containerStyle={styles.container}
       minHeaderHeight={0}
       headerHeight={HEADER_CHART_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0)}
-      renderTabBar={renderTabBar}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
-      // renderHeader={renderHeader}
       pagerProps={{
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';

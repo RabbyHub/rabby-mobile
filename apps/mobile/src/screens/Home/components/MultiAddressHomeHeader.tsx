@@ -1,11 +1,14 @@
-import { StackActions } from '@react-navigation/native';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { Dimensions, Platform, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 
@@ -19,7 +22,6 @@ import { Card } from '@/components2024/Card';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { usePinnedAccountList } from '@/hooks/account';
-import { useCurrency } from '@/hooks/useCurrency';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { sortBy } from 'lodash';
@@ -33,6 +35,15 @@ import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/An
 import { MultiChart } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useSetPasswordFirst } from '@/hooks/useLock';
+import { AppRootName, RootNames } from '@/constant/layout';
+import { StackActions, useNavigation } from '@react-navigation/native';
+import { CurrentAddressProps } from '@/screens/Address/components/AddressListScreenContainer';
 
 export function MultiAddressHomeHeader(
   props: {
@@ -45,7 +56,6 @@ export function MultiAddressHomeHeader(
 ): JSX.Element {
   const { loading, data, loadingNewCurve, style, onRefresh, balanceAccounts } =
     props;
-  const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { isDisConnect } = useGlobalStatus();
@@ -155,6 +165,58 @@ export function MultiAddressHomeHeader(
     }
   }, [data.isLoss, loading, previousLoading]);
 
+  const navigation = useNavigation<CurrentAddressProps['navigation']>();
+
+  const modalRef =
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
+
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+
+  const gotoAddAddress = useCallback(() => {
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+      shouldRedirectToSetPasswordBefore2024,
+      navigateTo: (screen: AppRootName, params?: object) => {
+        navigation.dispatch(
+          StackActions.push(RootNames.StackAddress, {
+            screen,
+            params,
+          }),
+        );
+      },
+    });
+  }, [shouldRedirectToSetPasswordBefore2024, navigation]);
+
+  const handleWalletsListPress = useCallback(() => {
+    if (modalRef.current) {
+      removeGlobalBottomSheetModal2024(modalRef.current);
+    }
+    matomoRequestEvent({
+      category: 'Click_Header',
+      action: 'Click_Address',
+    });
+    modalRef.current = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.ADDRESS_LiST,
+      onAddAddressPress: gotoAddAddress,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        rootViewType: 'View',
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      },
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(modalRef.current);
+        modalRef.current = undefined;
+      },
+    });
+  }, [colors2024, gotoAddAddress, isLight]);
+
   const { doMeasure } = useMeasureLayoutForHomeGuidanceMultipleTabs();
 
   return (
@@ -182,8 +244,7 @@ export function MultiAddressHomeHeader(
             styles.localWebViewWrapper,
             couldRenderLocalWebView ? styles.localWebViewWrapperShow : {},
           ]}>
-          {/* TODO: REVERT THIS */}
-          {/* <LocalWebView
+          <LocalWebView
             ref={gasketWebViewRef}
             style={{
               minWidth: Dimensions.get('window').width - 15 * 2,
@@ -195,7 +256,7 @@ export function MultiAddressHomeHeader(
             webviewSize={{
               width: Dimensions.get('window').width - 15 * 2,
             }}
-          /> */}
+          />
         </View>
         <RNLinearGradient
           colors={
@@ -222,16 +283,7 @@ export function MultiAddressHomeHeader(
           <Card
             style={[styles.curveCard, styles.shadowView]}
             onPress={() => {
-              navigation.dispatch(
-                StackActions.push(RootNames.StackAddress, {
-                  screen: RootNames.AddressAssetsOverview,
-                  params: {},
-                }),
-              );
-              matomoRequestEvent({
-                category: 'Click_Header',
-                action: 'Click_Address',
-              });
+              handleWalletsListPress();
             }}>
             <RNLinearGradient
               colors={
@@ -245,7 +297,7 @@ export function MultiAddressHomeHeader(
                 StyleSheet.absoluteFill,
                 !isLight && {
                   borderWidth: 2,
-                  borderRadius: styles.curveBox['borderRadius'] || 20,
+                  borderRadius: styles.curveBox.borderRadius || 20,
                   borderColor: 'rgba(37, 38, 40, 1)',
                 },
               ]}

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Dimensions, Platform, View } from 'react-native';
+import { Dimensions } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
@@ -20,12 +20,7 @@ import { TokenList } from './TokenList';
 import { ProtocolList } from './ProtocolList';
 import { NFTList } from './NFTList';
 import { useChainInfo } from '@/screens/Home/useChainInfo';
-import {
-  MaterialTabBar,
-  MaterialTabItem,
-  TabBarProps,
-  Tabs,
-} from 'react-native-collapsible-tab-view';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
@@ -44,14 +39,13 @@ export const icons = {
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
 
-const isAndroid = Platform.OS === 'android';
-
 interface Props {
   onRefresh(): void;
   onIndexChange(index: number): void;
   overViewContent: React.ReactNode;
   data: ReturnType<typeof useMulti24hBalance>['combineData'];
   loading: boolean;
+  tabIndex: number;
 }
 const FOOTER_HEIGHT = 56;
 
@@ -61,6 +55,7 @@ export const TabsMultiAssets: React.FC<Props> = ({
   data,
   loading,
   overViewContent,
+  tabIndex,
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -155,6 +150,15 @@ export const TabsMultiAssets: React.FC<Props> = ({
   const errorNotAssets = useMemo(() => {
     return isDisConnect;
   }, [isDisConnect]);
+  const renderHeader = useCallback(() => {
+    return (
+      <TabsTopHeader
+        data={data}
+        loading={loading}
+        showNetWorth={tabIndex !== 0}
+      />
+    );
+  }, [data, loading, tabIndex]);
 
   if (errorNotAssets) {
     return (
@@ -170,7 +174,7 @@ export const TabsMultiAssets: React.FC<Props> = ({
   return (
     <Tabs.Container
       onIndexChange={onIndexChange}
-      renderHeader={() => <TabsTopHeader data={data} loading={loading} />}
+      renderHeader={renderHeader}
       renderTabBar={renderTabBar}
       headerHeight={0}
       minHeaderHeight={0}
