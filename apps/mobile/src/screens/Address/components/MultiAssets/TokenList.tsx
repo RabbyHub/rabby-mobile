@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -36,18 +38,17 @@ import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { isTabsSwiping } from './hooks';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { TabName } from './TabsMultiAssets';
-
-const SPACING_HEIGHT = 8;
-const FOOTER_HEIGHT = 58;
-const HEADER_PADDING_HEIGHT = 16;
+import {
+  ListHeaderComponent,
+  ListRenderFooter,
+  ListRenderSeparator,
+} from './RenderRow/Common';
 
 const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -65,6 +66,11 @@ export const TokenList = ({
   updateToken,
 }: Props) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+
+  const [foldHideList, setFoldHideList] = useState(true);
+  const [foldScam, setFoldScam] = useState(true);
+
   const { top10Addresses } = useAccountInfo();
   const { triggerUpdate, getTotalBalance } = useAccountsBalance({
     cacheTime: 10 * 60 * 1000,
@@ -92,10 +98,10 @@ export const TokenList = ({
 
   const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
     useTriggerUpdate();
+  const { tokenRefresh } = useTriggerTagAssets();
 
   const {
     tokens: _rawTokens,
-    getCacheTop10Assets,
     checkIsExpireAndUpdate,
     isLoading,
   } = useAssets({ hideCombined: !isFocused });
@@ -113,13 +119,6 @@ export const TokenList = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_rawTokens?.length, isLoading, updateToken]);
-
-  const { navigation } = useSafeSetNavigationOptions();
-
-  const { t } = useTranslation();
-
-  const [foldHideList, setFoldHideList] = useState(true);
-  const [foldScam, setFoldScam] = useState(true);
 
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
@@ -254,6 +253,10 @@ export const TokenList = ({
     t,
   ]);
 
+  const hasNotAssets = useMemo(() => {
+    return tokens.length === 0 && !isLoading && isFocused;
+  }, [tokens.length, isLoading, isFocused]);
+
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken, account?: KeyringAccountWithAlias) => {
       if (isTabsSwiping.value) {
@@ -268,8 +271,6 @@ export const TokenList = ({
     },
     [],
   );
-
-  const { tokenRefresh } = useTriggerTagAssets();
 
   const getTokenMenuActions = useCallback(
     (data: AbstractPortfolioToken): MenuAction[] => {
@@ -340,10 +341,6 @@ export const TokenList = ({
     },
     [t, isLight, tokenRefresh],
   );
-
-  const hasNotAssets = useMemo(() => {
-    return tokens.length === 0 && !isLoading && isFocused;
-  }, [tokens.length, isLoading, isFocused]);
 
   const handleOpenScamToken = useCallback(() => {
     setFoldScam(false);
@@ -424,10 +421,10 @@ export const TokenList = ({
     ],
   );
 
-  const inited = useRef(false);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    inited.current = false;
+    initRef.current = false;
   }, [top10Addresses.length]);
 
   useEffect(() => {
@@ -435,15 +432,10 @@ export const TokenList = ({
       if (!isFocused) {
         return;
       }
-      if (inited.current) {
+      if (initRef.current) {
         return;
       }
-      inited.current = true;
-      getCacheTop10Assets({
-        disableDefi: true,
-        disableNFT: true,
-        realTimeAddresses: top10Addresses,
-      });
+      initRef.current = true;
       checkIsExpireAndUpdate(false, {
         disableDefi: true,
         disableNFT: true,
@@ -457,20 +449,13 @@ export const TokenList = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, !top10Balance, top10Addresses.length]);
 
-  const ListRenderSeparator = useCallback(() => {
-    return <View style={{ height: SPACING_HEIGHT }} />;
-  }, []);
-  const ListRenderFooter = useCallback(() => {
-    return <View style={{ height: FOOTER_HEIGHT }} />;
-  }, []);
-
   const onRefresh = useCallback(async () => {
     try {
       await Promise.all([
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableNFT: true, disableDefi: true }),
-        onRefreshProps?.(),
       ]);
+      onRefreshProps?.();
     } catch (error) {
       console.error('Refresh failed:', error);
     }
@@ -483,13 +468,9 @@ export const TokenList = ({
     }
   }, [onRefresh, setTriggerRefresh, triggerRefresh]);
 
-  const keyExtractor = useCallback((item: ActionItem) => {
-    return getItemId(item);
-  }, []);
-
   return (
     <Tabs.FlatList
-      keyExtractor={keyExtractor}
+      keyExtractor={getItemId}
       data={
         hasNotAssets
           ? [
@@ -503,12 +484,12 @@ export const TokenList = ({
           : portfolioListData
       }
       renderItem={renderItem}
-      ItemSeparatorComponent={ListRenderSeparator}
       initialNumToRender={15}
       windowSize={15}
       maxToRenderPerBatch={15}
       removeClippedSubviews
-      ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
+      ItemSeparatorComponent={ListRenderSeparator}
+      ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
@@ -517,9 +498,7 @@ export const TokenList = ({
       refreshControl={
         <RefreshControl
           style={styles.bgContainer}
-          onRefresh={() => {
-            onRefresh();
-          }}
+          onRefresh={onRefresh}
           refreshing={false}
         />
       }

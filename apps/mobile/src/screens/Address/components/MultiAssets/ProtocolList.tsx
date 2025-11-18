@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 
-import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { FullDefiRenderItem } from '@/screens/Home/components/AssetRenderItems';
 import { AbstractProject, ActionItem } from '@/screens/Home/types';
@@ -16,25 +14,22 @@ import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { DisplayedProject } from '@/screens/Home/utils/project';
 import { RefreshControl } from 'react-native-gesture-handler';
-import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions } from '@react-navigation/native';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import useLoadMoreData from './hooks/useLoadMoreData';
 import { TabName } from './TabsMultiAssets';
-
-const SPACING_HEIGHT = 8;
-const FOOTER_HEIGHT = 158;
-const HEADER_PADDING_HEIGHT = 16;
+import {
+  ListHeaderComponent,
+  ListRenderFooter,
+  ListRenderSeparator,
+} from './RenderRow/Common';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
 const MemoizedItemLoader = React.memo(ItemLoader);
 const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
-const MemoizedEmptyTokenRow = React.memo(EmptyTokenRow);
 
 interface Props {
   chain?: string;
@@ -46,15 +41,21 @@ export const ProtocolList = ({
   onRefresh: onRefreshProps,
   updatePortfolio,
 }: Props) => {
+  const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
+
+  const hasBeenFocusedRef = useRef(false);
+
   const { top10Addresses } = useAccountInfo();
   const { triggerUpdate, getTotalBalance } = useAccountsBalance({
     cacheTime: 10 * 60 * 1000,
     accountsNoUnique: true,
   });
-  const hasBeenFocusedRef = useRef(false);
   const { accounts } = useMyAccounts();
   const focusedTab = useFocusedTab();
+  const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
+    useTriggerUpdate();
+
   const getAccountByAddress = useCallback(
     (address: string) => {
       return accounts.find(account => isSameAddress(account?.address, address));
@@ -70,15 +71,12 @@ export const ProtocolList = ({
     return hasBeenFocusedRef.current;
   }, [focusedTab]);
 
-  const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
-    useTriggerUpdate();
-
   const {
     portfolios: _rawPortfolios,
-    getCacheTop10Assets,
     checkIsExpireAndUpdate,
     isLoading,
   } = useAssets({ hideCombined: !isFocused });
+
   useEffect(() => {
     if (_rawPortfolios && !isLoading) {
       updatePortfolio?.(_rawPortfolios);
@@ -96,10 +94,6 @@ export const ProtocolList = ({
   );
 
   console.log('CUSTOM_LOGGER:=>: portfolios', portfolios.length, isFocused);
-
-  const { navigation } = useSafeSetNavigationOptions();
-
-  const { t } = useTranslation();
 
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
@@ -154,33 +148,11 @@ export const ProtocolList = ({
     return portfolios.length === 0 && !isLoading && isFocused;
   }, [portfolios.length, isLoading, isFocused]);
 
-  const handleOnReceive = useCallback(() => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.ReceiveAddressList,
-        params: {},
-      }),
-    );
-  }, [navigation]);
-
-  const handleOnImport = useCallback(() => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.ImportMethods,
-        params: {
-          isNotNewUserProc: true,
-          isFromEmptyAddress: true,
-        },
-      }),
-    );
-  }, [navigation]);
-
   const renderItem = useCallback(
     ({ item }) => {
       const { type, data } = item;
       switch (type) {
         case 'unfold_defi':
-        case 'fold_defi':
           return (
             <MemoizedFullDefiRenderItem
               data={data as unknown as AbstractProject}
@@ -194,7 +166,6 @@ export const ProtocolList = ({
               }
             />
           );
-        case 'empty-assets':
         case 'empty-defi':
           return (
             <MemoizedEmptyAssets
@@ -205,14 +176,6 @@ export const ProtocolList = ({
           );
         case 'loading-defi-skeleton':
           return <MemoizedDefiItemLoader style={styles.defiLoading} />;
-        case 'empty-token':
-          return (
-            <MemoizedEmptyTokenRow
-              style={styles.emptyTokenHolder}
-              onReceive={handleOnReceive}
-              onImport={handleOnImport}
-            />
-          );
         default:
           return null;
       }
@@ -220,19 +183,16 @@ export const ProtocolList = ({
     [
       isLoading,
       getAccountByAddress,
-      handleOnImport,
-      handleOnReceive,
       styles.defiLoading,
       styles.emptyAssets,
-      styles.emptyTokenHolder,
       styles.fullDefi,
     ],
   );
 
-  const inited = useRef(false);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    inited.current = false;
+    initRef.current = false;
   }, [top10Addresses.length]);
 
   useEffect(() => {
@@ -240,15 +200,10 @@ export const ProtocolList = ({
       if (!isFocused) {
         return;
       }
-      if (inited.current) {
+      if (initRef.current) {
         return;
       }
-      inited.current = true;
-      getCacheTop10Assets({
-        disableNFT: true,
-        disableToken: true,
-        realTimeAddresses: top10Addresses,
-      });
+      initRef.current = true;
       checkIsExpireAndUpdate(false, {
         disableNFT: true,
         disableToken: true,
@@ -262,14 +217,11 @@ export const ProtocolList = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, !top10Balance, top10Addresses.length]);
 
-  const ListRenderSeparator = useCallback(() => {
-    return <View style={{ height: SPACING_HEIGHT }} />;
-  }, []);
   const ListRenderFooter = useCallback(() => {
     return hasMorePortfolios ? (
       <MemoizedItemLoader style={[styles.loadingMore]} />
     ) : (
-      <View style={{ height: FOOTER_HEIGHT }} />
+      <ListRenderFooter />
     );
   }, [hasMorePortfolios, styles.loadingMore]);
 
@@ -278,8 +230,8 @@ export const ProtocolList = ({
       await Promise.all([
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableToken: true, disableNFT: true }),
-        onRefreshProps?.(),
       ]);
+      onRefreshProps?.();
     } catch (error) {
       console.error('Refresh failed:', error);
     }
@@ -292,13 +244,9 @@ export const ProtocolList = ({
     }
   }, [onRefresh, setTriggerRefresh, triggerRefresh]);
 
-  const keyExtractor = useCallback((item: ActionItem) => {
-    return getItemId(item);
-  }, []);
-
   return (
     <Tabs.FlatList
-      keyExtractor={keyExtractor}
+      keyExtractor={getItemId}
       data={
         hasNotAssets
           ? [
@@ -312,12 +260,12 @@ export const ProtocolList = ({
           : portfolioListData
       }
       renderItem={renderItem}
-      ItemSeparatorComponent={ListRenderSeparator}
       initialNumToRender={15}
       windowSize={15}
       maxToRenderPerBatch={15}
       removeClippedSubviews
-      ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
+      ItemSeparatorComponent={ListRenderSeparator}
+      ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
@@ -328,9 +276,7 @@ export const ProtocolList = ({
       refreshControl={
         <RefreshControl
           style={styles.bgContainer}
-          onRefresh={() => {
-            onRefresh();
-          }}
+          onRefresh={onRefresh}
           refreshing={false}
         />
       }

@@ -86,7 +86,7 @@ export const MultiAssets = ({
     [combineData.changePercent, combineData.isLoss, combineData.netWorth],
   );
 
-  const { refreshing, getCacheTop10Assets } = useAssets({ hideCombined: true });
+  const { refreshing } = useAssets({ hideCombined: true });
   const isLoadingMultiCurve = useAtomValue(loadingMultiCurveAtom);
   const renderCircleLoading = useCallback(() => {
     return refreshing || isLoadingMultiCurve ? <LoadingCircle /> : '';
@@ -117,26 +117,6 @@ export const MultiAssets = ({
     ],
   );
 
-  const listLength = useMemo(() => {
-    return list.length > 10 ? 10 : list.length;
-  }, [list.length]);
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      getCacheTop10Assets({
-        disableNFT: true,
-        realTimeAddresses: top10Addresses,
-        core: true,
-        maxTokenLength: 500,
-        maxDefiLength: 80,
-      });
-    }, 0);
-    return () => {
-      id && clearTimeout(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <Tabs.Container
       containerStyle={styles.container}
@@ -149,11 +129,7 @@ export const MultiAssets = ({
         },
       }}
       headerContainerStyle={styles.tabBarWrap}>
-      <Tabs.Tab
-        label={`${t('page.multiAddressAssets.tabs.wallet', {
-          count: listLength,
-        })} ${listLength ? `(${listLength})` : ''}`}
-        name="address">
+      <Tabs.Tab label={''} name="address">
         <AddressList />
       </Tabs.Tab>
       <Tabs.Tab

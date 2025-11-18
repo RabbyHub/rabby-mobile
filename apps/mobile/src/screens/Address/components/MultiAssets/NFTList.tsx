@@ -6,13 +6,11 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   ASSETS_ITEM_HEIGHT_NEW,
-  ASSETS_LIST_HEADER,
   ASSETS_SECTION_HEADER,
-  SWITCH_HEADER_HEIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -36,7 +34,6 @@ import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { RefreshControl } from 'react-native-gesture-handler';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -48,10 +45,11 @@ import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { useMyAccounts } from '@/hooks/account';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 import { TabName } from './TabsMultiAssets';
-
-const SPACING_HEIGHT = 8;
-const FOOTER_HEIGHT = 158;
-const HEADER_PADDING_HEIGHT = 16;
+import {
+  ListHeaderComponent,
+  ListRenderFooter,
+  ListRenderSeparator,
+} from './RenderRow/Common';
 
 interface Props {
   chain?: string;
@@ -63,14 +61,18 @@ export const NFTList = ({
   onRefresh: onRefreshProps,
   updateNft,
 }: Props) => {
+  const { t } = useTranslation();
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
+
+  const hasBeenFocusedRef = useRef(false);
+  const [foldNft, setFoldNft] = useState(true);
+
   const { top10Addresses } = useAccountInfo();
   const { triggerUpdate, getTotalBalance } = useAccountsBalance({
     cacheTime: 10 * 60 * 1000,
     accountsNoUnique: true,
   });
   const focusedTab = useFocusedTab();
-  const hasBeenFocusedRef = useRef(false);
   const { accounts } = useMyAccounts();
 
   const getAccountByAddress = useCallback(
@@ -93,12 +95,10 @@ export const NFTList = ({
 
   const {
     nfts: _rawNftList,
-    getCacheTop10Assets,
     checkIsExpireAndUpdate,
     isLoading,
   } = useAssets({ hideCombined: !isFocused });
   console.log('CUSTOM_LOGGER:=>: nfts', _rawNftList.length, isFocused);
-  const { navigation } = useSafeSetNavigationOptions();
 
   useEffect(() => {
     if (_rawNftList && !isLoading) {
@@ -106,9 +106,6 @@ export const NFTList = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_rawNftList?.length, isLoading, updateNft]);
-  const { t } = useTranslation();
-
-  const [foldNft, setFoldNft] = useState(true);
 
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
@@ -279,7 +276,6 @@ export const NFTList = ({
               onPressFold={() => setFoldNft(pre => !pre)}
             />
           );
-        case 'empty-assets':
         case 'empty-nft':
           return (
             <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
@@ -297,10 +293,10 @@ export const NFTList = ({
     [foldNft, foldNftList.length, getNftMenuAction, isLight, styles],
   );
 
-  const inited = useRef(false);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    inited.current = false;
+    initRef.current = false;
   }, [top10Addresses.length]);
 
   useEffect(() => {
@@ -308,15 +304,10 @@ export const NFTList = ({
       if (!isFocused) {
         return;
       }
-      if (inited.current) {
+      if (initRef.current) {
         return;
       }
-      inited.current = true;
-      getCacheTop10Assets({
-        disableToken: true,
-        disableDefi: true,
-        realTimeAddresses: top10Addresses,
-      });
+      initRef.current = true;
       checkIsExpireAndUpdate(false, {
         disableToken: true,
         disableDefi: true,
@@ -329,13 +320,6 @@ export const NFTList = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, !top10Balance, top10Addresses.length]);
-
-  const ListRenderSeparator = useCallback(() => {
-    return <View style={{ height: SPACING_HEIGHT }} />;
-  }, []);
-  const ListRenderFooter = useCallback(() => {
-    return <View style={{ height: FOOTER_HEIGHT }} />;
-  }, []);
 
   const onRefresh = useCallback(async () => {
     try {
@@ -356,13 +340,9 @@ export const NFTList = ({
     }
   }, [onRefresh, setTriggerRefresh, triggerRefresh]);
 
-  const keyExtractor = useCallback((item: ActionItem) => {
-    return getItemId(item);
-  }, []);
-
   return (
     <Tabs.FlatList
-      keyExtractor={keyExtractor}
+      keyExtractor={getItemId}
       data={
         hasNotAssets
           ? [
@@ -376,12 +356,12 @@ export const NFTList = ({
           : dataList
       }
       renderItem={renderItem}
-      ItemSeparatorComponent={ListRenderSeparator}
       initialNumToRender={15}
       windowSize={15}
       maxToRenderPerBatch={15}
       removeClippedSubviews
-      ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
+      ItemSeparatorComponent={ListRenderSeparator}
+      ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
@@ -390,9 +370,7 @@ export const NFTList = ({
       refreshControl={
         <RefreshControl
           style={styles.bgContainer}
-          onRefresh={() => {
-            onRefresh();
-          }}
+          onRefresh={onRefresh}
           refreshing={false}
         />
       }

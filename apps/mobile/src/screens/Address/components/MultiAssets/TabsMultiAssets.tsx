@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -19,6 +19,8 @@ import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
+import { useAssets } from '@/screens/Search/useAssets';
+import { useAccountInfo } from './hooks';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -67,6 +69,8 @@ export const TabsMultiAssets: React.FC<Props> = ({
 
   const { chainsInfo, updateToken, updatePortfolio, updateNft } =
     useChainInfo();
+  const { top10Addresses } = useAccountInfo();
+  const { getCacheTop10Assets } = useAssets({ hideCombined: true });
 
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
@@ -153,6 +157,21 @@ export const TabsMultiAssets: React.FC<Props> = ({
       />
     );
   }, [data, loading, tabIndex]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      getCacheTop10Assets({
+        realTimeAddresses: top10Addresses,
+        core: true,
+        maxTokenLength: 500,
+        maxDefiLength: 40,
+      });
+    }, 0);
+    return () => {
+      id && clearTimeout(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Tabs.Container
