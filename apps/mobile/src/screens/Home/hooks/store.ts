@@ -5,6 +5,7 @@ import { atom, useAtom } from 'jotai';
 import { formatNetworth } from '@/utils/math';
 import {
   AbstractPortfolioToken,
+  AbstractProject,
   ActionHeaderItem,
   DisplayNftItem,
 } from '../types';
@@ -25,11 +26,6 @@ let top20TokensCache: CombineTokensItem[] = [];
 let top10PortfoliosCache: CombineDefiItem[] = [];
 let top10NftsCache: CombineNFTItem[] = [];
 
-type DisplayedProjectWithoutMethods = Omit<
-  DisplayedProject,
-  'setPortfolios' | 'patchHistory' | 'afterHistoryPatched' | 'patchPrice'
->;
-
 type OriginalCombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
   totalUsdValue: BigNumber;
@@ -43,7 +39,7 @@ export type CombineTokensItem = Omit<
   totalUsdValue: number;
 };
 
-type OriginalCombineDefiItem = DisplayedProjectWithoutMethods & {
+type OriginalCombineDefiItem = AbstractProject & {
   totalUsdValue: BigNumber;
   filterTokenDesc?: string;
   address: string;

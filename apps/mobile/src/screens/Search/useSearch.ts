@@ -7,7 +7,7 @@ import {
 } from '../Home/hooks/store';
 import { DisplayedPortfolio } from '../Home/utils/project';
 import { formatAmount } from '@/utils/math';
-import { AbstractPortfolioToken } from '../Home/types';
+import { AbstractPortfolio, AbstractPortfolioToken } from '../Home/types';
 import { openapi } from '@/core/request';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks/index';
@@ -44,7 +44,7 @@ export const filterTokens = (
   });
 };
 const findTokenWithHighestAmount = (
-  portfolios: DisplayedPortfolio[],
+  portfolios: AbstractPortfolio[],
   filterText: string,
 ) => {
   const symbolTotals = new Map();

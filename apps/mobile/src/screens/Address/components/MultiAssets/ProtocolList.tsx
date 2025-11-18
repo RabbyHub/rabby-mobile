@@ -39,7 +39,7 @@ const MemoizedEmptyTokenRow = React.memo(EmptyTokenRow);
 interface Props {
   chain?: string;
   onRefresh?: () => void;
-  updatePortfolio?: (portfolios: DisplayedProject[]) => void;
+  updatePortfolio?: (portfolios: AbstractProject[]) => void;
 }
 export const ProtocolList = ({
   chain,
@@ -83,6 +83,7 @@ export const ProtocolList = ({
     if (_rawPortfolios && !isLoading) {
       updatePortfolio?.(_rawPortfolios);
     }
+    // TODO: FIXIT
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_rawPortfolios?.length, isLoading, updatePortfolio]);
 
