@@ -3,13 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 
-import {
-  ASSETS_ITEM_HEIGHT_NEW,
-  ASSETS_LIST_HEADER,
-  ASSETS_SECTION_HEADER,
-  RootNames,
-  SWITCH_HEADER_HEIGHT,
-} from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { FullDefiRenderItem } from '@/screens/Home/components/AssetRenderItems';
 import { AbstractProject, ActionItem } from '@/screens/Home/types';
@@ -30,6 +24,7 @@ import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import useLoadMoreData from './hooks/useLoadMoreData';
+import { TabName } from './TabsMultiAssets';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 158;
@@ -68,7 +63,7 @@ export const ProtocolList = ({
   );
 
   const isFocused = useMemo(() => {
-    const currentFocused = focusedTab === 'defi';
+    const currentFocused = focusedTab === TabName.defi;
     if (currentFocused) {
       hasBeenFocusedRef.current = true;
     }
@@ -282,11 +277,12 @@ export const ProtocolList = ({
       await Promise.all([
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableToken: true, disableNFT: true }),
+        onRefreshProps?.(),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate]);
+  }, [checkIsExpireAndUpdate, triggerUpdate, onRefreshProps]);
 
   useEffect(() => {
     if (triggerRefresh) {
@@ -341,77 +337,18 @@ export const ProtocolList = ({
   );
 };
 
-const getStyles = createGetStyles2024(ctx => ({
+const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
   },
   list: {
     paddingHorizontal: 16,
   },
-  stickyHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: SWITCH_HEADER_HEIGHT,
-    overflow: 'hidden',
-    backgroundColor: ctx.colors2024['neutral-bg-0'],
-    zIndex: 1,
-  },
   bgContainer: {
     paddingHorizontal: 16,
   },
-  emptyHolder: {
-    marginTop: 65,
-  },
-  emptyImg: {
-    width: 160,
-    height: 117,
-  },
-  emptyText: {
-    marginTop: 21,
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-info'],
-  },
-  sectionHeader: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 22,
-    height: ASSETS_SECTION_HEADER,
-    color: ctx.colors2024['neutral-secondary'],
-    paddingLeft: 0,
-    paddingRight: 0,
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-  },
-  sectionTextHeader: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 22,
-    color: ctx.colors2024['neutral-secondary'],
-    paddingLeft: 0,
-    paddingRight: 0,
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-
-    height: ASSETS_LIST_HEADER,
-  },
-  tokenSectionHeader: {
-    paddingLeft: 0,
-    paddingRight: 0,
-  },
   emptyAssets: {
     marginHorizontal: 0,
-  },
-  loadingItem: {
-    height: ASSETS_ITEM_HEIGHT_NEW,
   },
   emptyTokenHolder: {
     paddingHorizontal: 0,
@@ -421,46 +358,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   loadingMore: {
     marginTop: 16,
-  },
-  rowWrap: {
-    height: ASSETS_ITEM_HEIGHT_NEW,
-  },
-  renderItemWrapper: {
-    height: ASSETS_ITEM_HEIGHT_NEW,
-  },
-  footer: {
-    minHeight: 400,
-  },
-  bg2: {
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-  },
-  buttonHeader: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-1']
-      : ctx.colors2024['neutral-bg-2'],
-  },
-  footerGap: {
-    height: 70,
-  },
-  footerCard: {
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-    marginBottom: 22,
-    padding: 16,
-    borderRadius: 20,
-  },
-  footerMain: {
-    height: 46,
-    justifyContent: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  footerCardText: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 20,
-    fontFamily: 'SF Pro Rounded',
   },
   fullDefi: {
     marginHorizontal: 0,

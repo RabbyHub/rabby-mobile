@@ -9,13 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 
-import {
-  ASSETS_ITEM_HEIGHT_NEW,
-  ASSETS_LIST_HEADER,
-  ASSETS_SECTION_HEADER,
-  RootNames,
-  SWITCH_HEADER_HEIGHT,
-} from '@/constant/layout';
+import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   TokenRow,
@@ -42,15 +36,14 @@ import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { isTabsSwiping } from './hooks';
-import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions } from '@react-navigation/native';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
+import { TabName } from './TabsMultiAssets';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
@@ -60,7 +53,6 @@ const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
 const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionHeader);
 const MemoizedItemLoader = React.memo(ItemLoader);
-const MemoizedEmptyTokenRow = React.memo(EmptyTokenRow);
 
 interface Props {
   chain?: string;
@@ -91,7 +83,7 @@ export const TokenList = ({
   );
 
   const isFocused = useMemo(() => {
-    const currentFocused = focusedTab === 'token';
+    const currentFocused = focusedTab === TabName.token;
     if (currentFocused) {
       hasBeenFocusedRef.current = true;
     }
@@ -227,7 +219,7 @@ export const TokenList = ({
       },
       {
         show: !!isLoading && !tokens.length,
-        data: Array.from({ length: 5 }, (_, index) => ({
+        data: Array.from({ length: 10 }, (_, index) => ({
           type: 'loading-skeleton',
           data: index.toString(),
         })),
@@ -236,7 +228,7 @@ export const TokenList = ({
         show: !isLoading && !tokens.length,
         data: [
           {
-            type: 'empty-assets',
+            type: 'empty-token',
             data: t('page.singleHome.sectionHeader.NoData', {
               name: t('page.singleHome.sectionHeader.Token'),
             }),
@@ -352,27 +344,6 @@ export const TokenList = ({
   const hasNotAssets = useMemo(() => {
     return tokens.length === 0 && !isLoading && isFocused;
   }, [tokens.length, isLoading, isFocused]);
-
-  const handleOnReceive = useCallback(() => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.ReceiveAddressList,
-        params: {},
-      }),
-    );
-  }, [navigation]);
-
-  const handleOnImport = useCallback(() => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.ImportMethods,
-        params: {
-          isNotNewUserProc: true,
-          isFromEmptyAddress: true,
-        },
-      }),
-    );
-  }, [navigation]);
 
   const handleOpenScamToken = useCallback(() => {
     setFoldScam(false);
@@ -498,11 +469,12 @@ export const TokenList = ({
       await Promise.all([
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableNFT: true, disableDefi: true }),
+        onRefreshProps?.(),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate]);
+  }, [checkIsExpireAndUpdate, triggerUpdate, onRefreshProps]);
 
   useEffect(() => {
     if (triggerRefresh) {
@@ -555,73 +527,15 @@ export const TokenList = ({
   );
 };
 
-const getStyles = createGetStyles2024(ctx => ({
+const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
   },
   list: {
-    // backgroundColor: ctx.isLight
-    //   ? ctx.colors2024['neutral-bg-0']
-    //   : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-  },
-  stickyHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: SWITCH_HEADER_HEIGHT,
-    overflow: 'hidden',
-    backgroundColor: ctx.colors2024['neutral-bg-0'],
-    zIndex: 1,
   },
   bgContainer: {
-    // backgroundColor: ctx.isLight
-    //   ? ctx.colors2024['neutral-bg-0']
-    //   : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-  },
-  emptyHolder: {
-    marginTop: 65,
-  },
-  emptyImg: {
-    width: 160,
-    height: 117,
-  },
-  emptyText: {
-    marginTop: 21,
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-info'],
-  },
-  sectionHeader: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 22,
-    height: ASSETS_SECTION_HEADER,
-    color: ctx.colors2024['neutral-secondary'],
-    paddingLeft: 0,
-    paddingRight: 0,
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-  },
-  sectionTextHeader: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 22,
-    color: ctx.colors2024['neutral-secondary'],
-    paddingLeft: 0,
-    paddingRight: 0,
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-
-    height: ASSETS_LIST_HEADER,
   },
   tokenSectionHeader: {
     paddingLeft: 0,
@@ -633,57 +547,10 @@ const getStyles = createGetStyles2024(ctx => ({
   loadingItem: {
     height: ASSETS_ITEM_HEIGHT_NEW,
   },
-  emptyTokenHolder: {
-    paddingHorizontal: 0,
-  },
-  defiLoading: {
-    paddingHorizontal: 0,
-  },
-  loadingMore: {
-    marginTop: 16,
-  },
   rowWrap: {
     height: ASSETS_ITEM_HEIGHT_NEW,
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,
-  },
-  footer: {
-    minHeight: 400,
-  },
-  bg2: {
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-  },
-  buttonHeader: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-1']
-      : ctx.colors2024['neutral-bg-2'],
-  },
-  footerGap: {
-    height: 70,
-  },
-  footerCard: {
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-    marginBottom: 22,
-    padding: 16,
-    borderRadius: 20,
-  },
-  footerMain: {
-    height: 46,
-    justifyContent: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  footerCardText: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 20,
-    fontFamily: 'SF Pro Rounded',
-  },
-  fullDefi: {
-    marginHorizontal: 0,
-    marginTop: 8,
   },
 }));

@@ -47,6 +47,7 @@ import {
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { useMyAccounts } from '@/hooks/account';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
+import { TabName } from './TabsMultiAssets';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 158;
@@ -80,7 +81,7 @@ export const NFTList = ({
   );
 
   const isFocused = useMemo(() => {
-    const currentFocused = focusedTab === 'nft';
+    const currentFocused = focusedTab === TabName.nft;
     if (currentFocused) {
       hasBeenFocusedRef.current = true;
     }
@@ -342,10 +343,11 @@ export const NFTList = ({
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableToken: true, disableDefi: true }),
       ]);
+      onRefreshProps?.();
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate]);
+  }, [checkIsExpireAndUpdate, onRefreshProps, triggerUpdate]);
 
   useEffect(() => {
     if (triggerRefresh) {
@@ -405,33 +407,8 @@ const getStyles = createGetStyles2024(ctx => ({
   list: {
     paddingHorizontal: 16,
   },
-  stickyHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: SWITCH_HEADER_HEIGHT,
-    overflow: 'hidden',
-    backgroundColor: ctx.colors2024['neutral-bg-0'],
-    zIndex: 1,
-  },
   bgContainer: {
     paddingHorizontal: 16,
-  },
-  emptyHolder: {
-    marginTop: 65,
-  },
-  emptyImg: {
-    width: 160,
-    height: 117,
-  },
-  emptyText: {
-    marginTop: 21,
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-info'],
   },
   sectionHeader: {
     fontFamily: 'SF Pro Rounded',
@@ -446,47 +423,14 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
   },
-  sectionTextHeader: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 22,
-    color: ctx.colors2024['neutral-secondary'],
-    paddingLeft: 0,
-    paddingRight: 0,
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-
-    height: ASSETS_LIST_HEADER,
-  },
-  tokenSectionHeader: {
-    paddingLeft: 0,
-    paddingRight: 0,
-  },
   emptyAssets: {
     marginHorizontal: 0,
-  },
-  loadingItem: {
-    height: ASSETS_ITEM_HEIGHT_NEW,
-  },
-  emptyTokenHolder: {
-    paddingHorizontal: 0,
-  },
-  defiLoading: {
-    paddingHorizontal: 0,
-  },
-  loadingMore: {
-    marginTop: 16,
   },
   rowWrap: {
     // paddingHorizontal: 16,
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,
-  },
-  footer: {
-    minHeight: 400,
   },
   bg2: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
@@ -498,40 +442,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   footerGap: {
     height: 70,
-  },
-  footerCard: {
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-    marginBottom: 22,
-    padding: 16,
-    borderRadius: 20,
-  },
-  footerMain: {
-    height: 46,
-    justifyContent: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  footerCardText: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 20,
-    fontFamily: 'SF Pro Rounded',
-  },
-  fullDefi: {
-    marginHorizontal: 0,
-    marginTop: 8,
-  },
-  symbol: {
-    fontSize: 16,
-    height: ASSETS_SECTION_HEADER,
-    lineHeight: ASSETS_SECTION_HEADER,
-    paddingLeft: 9 + 16,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-secondary'],
-    backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
   removeLeft: {
     marginLeft: 0,

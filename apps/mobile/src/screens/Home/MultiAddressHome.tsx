@@ -54,7 +54,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useAppState } from '@react-native-community/hooks';
 import { useMemoizedFn } from 'ahooks';
-import { debounce, unionBy } from 'lodash';
+import { debounce } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSortAddressList } from '../Address/useSortAddressList';
@@ -103,7 +103,6 @@ import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 import { LendingHF } from './components/LendingHF';
 import { useLendingData } from '../Lending/hooks';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
-import { GradientOutlineContainer } from '@/components2024/GradientOutlineContainer';
 import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
 import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
@@ -320,9 +319,6 @@ function MultiAddressHome(): JSX.Element {
       .map(account => account.address);
   }, [sortedAccounts]);
 
-  const unionAccounts = useMemo(() => {
-    return unionBy(sortedAccounts, account => account.address.toLowerCase());
-  }, [sortedAccounts]);
   const [hasOpenCopyTrading, setHasOpenCopyTrading] = useState(true);
 
   // 初始化gift资格检查
