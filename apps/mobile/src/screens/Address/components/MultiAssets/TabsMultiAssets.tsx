@@ -21,6 +21,9 @@ import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import { useAssets } from '@/screens/Search/useAssets';
 import { useAccountInfo } from './hooks';
+import { useFocusEffect } from '@react-navigation/native';
+import { foldMultiChartAtom } from './RenderRow/CurveChart';
+import { useSetAtom } from 'jotai';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -71,6 +74,7 @@ export const TabsMultiAssets: React.FC<Props> = ({
     useChainInfo();
   const { top10Addresses } = useAccountInfo();
   const { getCacheTop10Assets } = useAssets({ hideCombined: true });
+  const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
 
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
@@ -158,6 +162,12 @@ export const TabsMultiAssets: React.FC<Props> = ({
     );
   }, [data, loading, tabIndex]);
 
+  useFocusEffect(
+    useCallback(() => {
+      setIsFoldMultiChart(true);
+    }, [setIsFoldMultiChart]),
+  );
+
   useEffect(() => {
     const id = setTimeout(() => {
       getCacheTop10Assets({
@@ -179,9 +189,8 @@ export const TabsMultiAssets: React.FC<Props> = ({
       onIndexChange={onIndexChange}
       renderHeader={renderHeader}
       renderTabBar={renderTabBar}
-      headerHeight={0}
-      minHeaderHeight={0}
-      tabBarHeight={0}
+      headerHeight={24}
+      tabBarHeight={80}
       containerStyle={styles.container}
       headerContainerStyle={styles.headerContainer}>
       <Tabs.Tab name={TabName.overview} label={() => null}>

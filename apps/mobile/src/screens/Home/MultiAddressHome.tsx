@@ -111,6 +111,8 @@ import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
+import { useSetAtom } from 'jotai';
+import { foldMultiChartAtom } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -770,10 +772,15 @@ function MultiAddressHome(): JSX.Element {
     viewedHomeTip,
   ]);
 
+  const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
   const [tabIndex, setTabIndex] = useState(0);
-  const handleIndexChange = useCallback((_index: number) => {
-    setTabIndex(_index);
-  }, []);
+  const handleIndexChange = useCallback(
+    (_index: number) => {
+      setIsFoldMultiChart(true);
+      setTabIndex(_index);
+    },
+    [setIsFoldMultiChart],
+  );
 
   return (
     <NormalScreenContainer2024
