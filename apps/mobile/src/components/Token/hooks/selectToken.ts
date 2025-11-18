@@ -37,11 +37,11 @@ export function updateAddressIndexedTokens(
   rjStore.set(addressIndexedTokensAtom, prev => {
     const nextVal = arg instanceof Function ? arg(prev) : arg;
 
-    Object.entries(nextVal).forEach(([addr, tokens]) => {
-      if (tokens.length >= IN_MEMORY_TOKENS_LIMIT) {
-        nextVal[addr] = tokens.slice(0, IN_MEMORY_TOKENS_LIMIT);
-      }
-    });
+    // Object.entries(nextVal).forEach(([addr, tokens]) => {
+    //   if (tokens.length >= IN_MEMORY_TOKENS_LIMIT) {
+    //     nextVal[addr] = tokens.slice(0, IN_MEMORY_TOKENS_LIMIT);
+    //   }
+    // });
     return nextVal;
   });
 }

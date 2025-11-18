@@ -1,6 +1,7 @@
 import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
 import { sortAccountList } from '@/utils/sortAccountList';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { preferenceService } from '@/core/services';
 
 export const useSortAddressList = (accounts: KeyringAccountWithAlias[]) => {
   const { pinAddresses: highlightedAddresses } = usePinAddresses({
@@ -15,3 +16,11 @@ export const useSortAddressList = (accounts: KeyringAccountWithAlias[]) => {
 
   return list;
 };
+
+export function getSortedAddressList(accounts: KeyringAccountWithAlias[]) {
+  const highlightedAddresses = preferenceService.getPinAddresses();
+
+  return sortAccountList(accounts, {
+    highlightedAddresses,
+  });
+}
