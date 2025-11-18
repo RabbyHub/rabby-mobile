@@ -17,6 +17,9 @@ import { setup, withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Safe from '@rabby-wallet/gnosis-sdk';
+import { Provider as JotaiProvider } from 'jotai';
+
 import { RootNames } from './constant/layout';
 import { ThemeColors } from './constant/theme';
 import { keyringService } from './core/services';
@@ -39,11 +42,11 @@ import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
 import { useUserDidTakeScreenshot } from './components/Screenshot/hooks';
-import Safe from '@rabby-wallet/gnosis-sdk';
 import { SAFE_API_KEY } from './constant/env';
 Safe.apiKey = SAFE_API_KEY;
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
+import { rjStore } from './hooks/globalstore/_setup';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -96,11 +99,13 @@ function MainScreen({ rabbitCode }: AppProps) {
 
   return (
     <AppProvider value={{ securityChain: securityChainOnTop }}>
-      <BottomSheetModalProvider>
-        <ScreenSceneAccountProvider>
-          {couldRender && <AppNavigation colorScheme={binaryTheme} />}
-        </ScreenSceneAccountProvider>
-      </BottomSheetModalProvider>
+      <JotaiProvider store={rjStore}>
+        <BottomSheetModalProvider>
+          <ScreenSceneAccountProvider>
+            {couldRender && <AppNavigation colorScheme={binaryTheme} />}
+          </ScreenSceneAccountProvider>
+        </BottomSheetModalProvider>
+      </JotaiProvider>
     </AppProvider>
   );
 }

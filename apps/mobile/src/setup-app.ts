@@ -10,6 +10,7 @@ import './core/services';
 import './core/utils/fonts';
 import './core/utils/devServerSettings';
 import './core/config/online';
+import './hooks/globalstore/_setup';
 
 setJSExceptionHandler((error, isFatal) => {
   console.debug('setJSExceptionHandler:: error');

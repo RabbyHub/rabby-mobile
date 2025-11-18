@@ -113,6 +113,10 @@ import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import {
+  useCurrentAccountTokens,
+  useSelectTokensThreadSafe,
+} from '@/components/Token/hooks/selectToken';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -821,6 +825,15 @@ function MultiAddressHome(): JSX.Element {
     displayFundWallet,
     viewedHomeTip,
   ]);
+
+  const { accountToSelectToken } = useCurrentAccountTokens();
+  const { fetchTokens } = useSelectTokensThreadSafe();
+  useEffect(() => {
+    fetchTokens({
+      currentAddress: accountToSelectToken?.address,
+      sceneType: 'send',
+    });
+  }, [fetchTokens, accountToSelectToken?.address]);
 
   return (
     <NormalScreenContainer2024
