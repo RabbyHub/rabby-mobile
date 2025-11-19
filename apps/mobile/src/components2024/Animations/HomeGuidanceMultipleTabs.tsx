@@ -18,10 +18,13 @@ import {
 import { atom, useAtom } from 'jotai';
 
 // import LottieView from 'lottie-react-native';
-// import AnimSwipeRightToViewAllAssets from './animations/swipe-right-to-view-all-assets.json';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { IS_IOS } from '@/core/native/utils';
 
 import RcIconMultiTabGestureCC from './icons/MultiTabGesture-cc.svg';
@@ -33,7 +36,6 @@ import {
   Pressable,
 } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
-import { atomByMMKV } from '@/core/storage/mmkv';
 import usePrevious from 'react-use/lib/usePrevious';
 import Animated, {
   Easing,
@@ -46,7 +48,16 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useGuidanceShown } from './hooks';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
-import { coerceInteger } from '@/utils/number';
+import { getLottieAnimationDurationInMS } from '@/utils/time';
+
+// import AnimSwipeRightToViewAllAssets from './animations/swipe-right-to-view-all-assets.json';
+// const MS_PLAY_ONCE = getLottieAnimationDurationInMS(
+//   AnimSwipeRightToViewAllAssets,
+//   {
+//     frameCountFallback: 70,
+//     frameRateFallback: 25,
+//   },
+// );
 
 type AbsLayout = {
   width: number;
@@ -145,11 +156,6 @@ function useGuidanceMultipleTabsVisible() {
   };
 }
 
-// const MS_PLAY_ONCE =
-//   (coerceInteger(AnimSwipeRightToViewAllAssets['op'], 70) /
-//     coerceInteger(AnimSwipeRightToViewAllAssets['fr'], 25)) *
-//   1000;
-
 export type HomeGuidanceMultipleTabs = {
   play(): void;
 };
@@ -226,6 +232,14 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
     [toggleGestureAnimation],
   );
 
+  const isomorphicCloseAnim = useCallback(() => {
+    console.debug('Pan gesture ended - perform hide guidance');
+    // if (__DEV__) return;
+
+    toggleGuidanceVisible(false);
+    toggleViewedGuidance('multiTabs20251111Viewed', true);
+  }, [toggleGuidanceVisible, toggleViewedGuidance]);
+
   const { tabbarWrapperLayout, rightBarLayout } =
     useMeasuredLayoutForHomeGuidanceMultipleTabs();
   const previousTabbarWrapperLayout = usePrevious(tabbarWrapperLayout);
@@ -239,6 +253,9 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
         toggleGuidanceVisible(true);
         toggleGestureAnimation(true, {
           delay: 500,
+          onFinished: () => {
+            isomorphicCloseAnim();
+          },
         });
       }, 400);
 
@@ -252,6 +269,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
     pageY,
     toggleGuidanceVisible,
     toggleGestureAnimation,
+    isomorphicCloseAnim,
   ]);
 
   const beforeContentNode = useMemo(() => {
@@ -278,21 +296,20 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   }, []);
 
   const previousVisible = usePrevious(guidanceVisible);
+  const debouncedVisible = useDebounceValue(guidanceVisible, 500);
   useEffect(() => {
     if (!previousVisible && guidanceVisible) {
-      opacityValue.value = withTiming(1, { duration: 300 });
+      opacityValue.value = withTiming(1, {
+        duration: 300,
+        easing: Easing.inOut(Easing.quad),
+      });
     } else if (!guidanceVisible) {
-      opacityValue.value = withTiming(0, { duration: 300 });
+      opacityValue.value = withTiming(0, {
+        duration: 300,
+        easing: Easing.inOut(Easing.quad),
+      });
     }
   }, [previousVisible, guidanceVisible, opacityValue]);
-
-  const onSwipeEnd = useCallback(() => {
-    console.debug('Pan gesture ended - perform hide guidance');
-    // if (__DEV__) return;
-
-    toggleGuidanceVisible(false);
-    toggleViewedGuidance('multiTabs20251111Viewed', true);
-  }, [toggleGuidanceVisible, toggleViewedGuidance]);
 
   const panActivated = useSharedValue(false);
   const panRightToLeftGesture = useMemo(() => {
@@ -310,15 +327,15 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
       })
       .onEnd(evt => {
         if (panActivated.value) {
-          runOnJS(onSwipeEnd)();
+          runOnJS(isomorphicCloseAnim)();
         }
         panActivated.value = false;
       })
       .withTestId('panRightToLeftGesture');
-  }, [panActivated, onSwipeEnd]);
+  }, [panActivated, isomorphicCloseAnim]);
 
   if (!tabbarWrapperLayout) return null;
-  if (!previousVisible && !guidanceVisible) return null;
+  if (!previousVisible && !debouncedVisible) return null;
 
   return (
     <GestureDetector gesture={panRightToLeftGesture}>
@@ -341,14 +358,24 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
             {/* <LottieView
               // ref={animationRef}
               source={AnimSwipeRightToViewAllAssets}
-              style={StyleSheet.flatten([styles.animationLottie])}
+              style={StyleSheet.flatten([
+                styles.animationLottie,
+                {
+                  width: 208,
+                  height: 451,
+                  ...makeDebugBorder(),
+                  ...makeDevOnlyStyle({
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  }),
+                },
+              ])}
               loop={false}
               duration={MS_PLAY_ONCE}
               autoPlay
-              {...__DEV__ && {
+              {...(__DEV__ && {
                 loop: true,
                 autoPlay: true,
-              }}
+              })}
             /> */}
             <RNAnimated.View
               style={[
