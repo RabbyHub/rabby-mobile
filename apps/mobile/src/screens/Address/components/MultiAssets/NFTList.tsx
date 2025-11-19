@@ -251,7 +251,10 @@ export const NFTList = ({
 
   const handlePressNft = useCallback(
     (item: NftItemWithCollection) => {
-      const currentAccount = getAccountByAddress(item.address);
+      if (!item.address) {
+        return;
+      }
+      const currentAccount = getAccountByAddress(item.address || '');
       if ('nft_list' in item && item.nft_list.length) {
         const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.COLLECTION_NFTS,

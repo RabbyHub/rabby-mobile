@@ -7,7 +7,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayedProject } from './utils/project';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { CombineNFTItem } from './hooks/store';
+import { NftItemWithCollection } from './hooks/nft';
 // curve
 export type ChartLine = {
   value: number;
@@ -107,7 +107,7 @@ export type CombineCollection = CollectionList & {
 
 export type CombineNft = {
   type: 'unfold_nft' | 'fold_nft';
-  data: CombineNFTItem | CombineCollection;
+  data: NftItemWithCollection;
 };
 
 export type ActionHeaderItem = {

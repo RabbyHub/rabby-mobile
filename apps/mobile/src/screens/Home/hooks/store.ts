@@ -47,7 +47,7 @@ type OriginalCombineDefiItem = AbstractProject & {
 export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'>;
 
 type OriginalCombineNFTItem = NFTItem & {
-  address: string;
+  address?: string;
 };
 export type CombineNFTItem = OriginalCombineNFTItem;
 

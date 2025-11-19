@@ -140,7 +140,7 @@ export const useQueryNft = (addr?: string, visible = true) => {
 };
 
 type CombineCollectionList = CollectionList & {
-  address: string;
+  address?: string;
 };
 export type NftItemWithCollection = CombineNFTItem | CombineCollectionList;
 export const collectionNftList = (nftList: CombineNFTItem[]) => {
@@ -153,7 +153,7 @@ export const collectionNftList = (nftList: CombineNFTItem[]) => {
     const collection = collectionList.find(
       (_item): _item is CombineCollectionList =>
         'nft_list' in _item &&
-        isSameAddress(_item.address, item.address) &&
+        isSameAddress(_item.address || '', item.address || '') &&
         _item.chain === item.chain &&
         _item.id === item.collection?.id &&
         !!_item.nft_list.length,
