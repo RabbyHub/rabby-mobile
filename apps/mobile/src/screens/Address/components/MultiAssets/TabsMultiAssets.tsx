@@ -11,10 +11,12 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { TokenList } from './TokenList';
 import { ProtocolList } from './ProtocolList';
-import { NFTList } from './NFTList';
 import { useChainInfo } from '@/screens/Home/useChainInfo';
 import { Tabs } from 'react-native-collapsible-tab-view';
-import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
+import {
+  HeaderHeight,
+  TabsTopHeader,
+} from '@/screens/Home/components/OverviewTopHeader';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
@@ -22,7 +24,7 @@ import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/Sectio
 import { useAssets } from '@/screens/Search/useAssets';
 import { isTabsSwiping, useAccountInfo } from './hooks';
 import { foldMultiChartAtom } from './RenderRow/CurveChart';
-import { useSetAtom } from 'jotai';
+import { atom, useSetAtom } from 'jotai';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -34,7 +36,7 @@ export const icons = {
   unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
-
+export const reachTopStatusAtom = atom<boolean>(false);
 interface Props {
   onIndexChange(index: number): void;
   overViewContent: React.ReactNode;
@@ -67,8 +69,7 @@ export const TabsMultiAssets: React.FC<Props> = ({
     ChainListItem | undefined
   >();
 
-  const { chainsInfo, updateToken, updatePortfolio, updateNft } =
-    useChainInfo();
+  const { chainsInfo, updateToken, updatePortfolio } = useChainInfo();
   const { top10Addresses } = useAccountInfo();
   const { getCacheTop10Assets } = useAssets({ hideCombined: false });
   const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
@@ -180,7 +181,8 @@ export const TabsMultiAssets: React.FC<Props> = ({
       onIndexChange={onIndexChange}
       renderHeader={renderHeader}
       renderTabBar={renderTabBar}
-      headerHeight={24}
+      headerHeight={HeaderHeight}
+      minHeaderHeight={HeaderHeight}
       tabBarHeight={80}
       containerStyle={styles.container}
       pagerProps={{
@@ -208,7 +210,7 @@ export const TabsMultiAssets: React.FC<Props> = ({
       <Tabs.Tab
         key={TabName.defi}
         name={TabName.defi}
-        label={renderLabel('Defi')}>
+        label={renderLabel('DeFi')}>
         <ProtocolList
           chain={selectChainItem?.chain}
           updatePortfolio={updatePortfolio}

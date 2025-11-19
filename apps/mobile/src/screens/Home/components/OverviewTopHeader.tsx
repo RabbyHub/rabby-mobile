@@ -10,7 +10,7 @@ import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
+import RcIconLoading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -34,8 +34,10 @@ import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
+import { reachTopStatusAtom } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { useAtomValue } from 'jotai';
 
-const HeaderHeight = 24;
+export const HeaderHeight = 24;
 
 export function TabsTopHeader(
   props: {
@@ -49,6 +51,7 @@ export function TabsTopHeader(
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { remoteVersion } = useUpgradeInfo();
+  const reachTop = useAtomValue(reachTopStatusAtom);
 
   const [hideType, setHideType] = useHideBalance();
   const handleHideTypeChange = useMemoizedFn(() => {
@@ -109,7 +112,7 @@ export function TabsTopHeader(
   }, [data.isLoss, loading, previousLoading]);
 
   return (
-    <View style={styles.headerBox}>
+    <View style={[styles.headerBox, !reachTop && styles.headerBgBox]}>
       {showNetWorth ? (
         <View style={styles.leftBox}>
           <Text style={styles.balanceTextBox}>{netWorth}</Text>
@@ -156,7 +159,7 @@ export function TabsTopHeader(
             style={{
               transform: [{ rotate: spin }],
             }}>
-            {loading && <RcIconloading />}
+            {loading && <RcIconLoading />}
           </RNAnimated.View>
         </View>
       )}
@@ -213,6 +216,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     // flex: 1,
     // backgroundColor: colors2024['neutral-title-1'],
+  },
+  headerBgBox: {
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   leftBox: {
     height: HeaderHeight,

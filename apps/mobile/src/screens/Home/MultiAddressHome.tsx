@@ -113,8 +113,12 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
-import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
+import {
+  reachTopStatusAtom,
+  TabsMultiAssets,
+} from '../Address/components/MultiAssets/TabsMultiAssets';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
+import { useAtomValue } from 'jotai';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -781,15 +785,18 @@ function MultiAddressHome(): JSX.Element {
   const handleIndexChange = useCallback((_index: number) => {
     setTabIndex(_index);
   }, []);
+  const reachTop = useAtomValue(reachTopStatusAtom);
 
   return (
     <NormalScreenContainer2024
       type="linear"
       noHeader
       bgImageSource={
-        combineData.isLoss
-          ? require('@/assets2024/singleHome/loss-home.png')
-          : require('@/assets2024/singleHome/up-home.png')
+        reachTop
+          ? combineData.isLoss
+            ? require('@/assets2024/singleHome/loss-home.png')
+            : require('@/assets2024/singleHome/up-home.png')
+          : undefined
       }
       linearProp={{
         colors: isLight
@@ -1383,6 +1390,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     left: 8,
     right: 8,
     bottom: 22,
+  },
+  topWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
   },
 }));
 
