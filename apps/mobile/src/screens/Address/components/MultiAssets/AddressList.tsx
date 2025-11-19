@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { Text, View, TouchableOpacity, FlatList } from 'react-native';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
@@ -9,32 +9,29 @@ import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useBalanceUpdate } from './hooks/balance';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
+import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
+import AutoLockView from '@/components/AutoLockView';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
   onAddAddressPress?: () => void;
   onDone?: () => void;
+  onMoreAddressListPress?: () => void;
 }
 export const AddressList = ({
   onAddAddressPress,
   onDone,
+  onMoreAddressListPress,
 }: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const modalRef =
-    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
   const {
     top10Addresses,
     notMatterAccounts,
@@ -105,18 +102,8 @@ export const AddressList = ({
   );
 
   const handleMoreWalletsPress = useCallback(() => {
-    onDone?.();
-    if (modalRef.current) {
-      removeGlobalBottomSheetModal2024(modalRef.current);
-    }
-    modalRef.current = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(modalRef.current);
-        modalRef.current = undefined;
-      },
-    });
-  }, [onDone]);
+    onMoreAddressListPress?.();
+  }, [onMoreAddressListPress]);
 
   const notMatterAvatarList = useMemo(() => {
     return notMatterAccounts.slice(0, 3);
@@ -265,11 +252,24 @@ export const AddressListModal = ({
   onDone,
 }: AddressListProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const [moreAddressList, setMoreAddressList] = useState(false);
+  if (moreAddressList) {
+    return (
+      <NotMatterAddressDialog
+        onDone={onDone}
+        onBack={() => setMoreAddressList(false)}
+      />
+    );
+  }
   return (
-    <View style={styles.container}>
+    <AutoLockView as="View" style={styles.container}>
       <Text style={styles.title}>Wallets</Text>
-      <AddressList onAddAddressPress={onAddAddressPress} onDone={onDone} />
-    </View>
+      <AddressList
+        onAddAddressPress={onAddAddressPress}
+        onDone={onDone}
+        onMoreAddressListPress={() => setMoreAddressList(true)}
+      />
+    </AutoLockView>
   );
 };
 
