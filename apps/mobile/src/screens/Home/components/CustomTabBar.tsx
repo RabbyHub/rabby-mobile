@@ -1,4 +1,4 @@
-import { Dimensions, View } from 'react-native';
+import { Dimensions, View, ViewProps } from 'react-native';
 import {
   MaterialTabBar,
   MaterialTabItem,
@@ -14,6 +14,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import {
+  HOME_TABBAR_SIZES,
+  useMeasureLayoutForHomeGuidanceMultipleTabs,
+} from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -26,14 +30,16 @@ type IndicatorProps = {
   itemsLayout: ItemLayout[];
   style?: AnimatedStyle;
   fadeIn?: boolean;
+  onRightBarLayout?: ViewProps['onLayout'];
 };
 
-const Indicator: React.FC<IndicatorProps> = ({
+const Indicator = ({
   indexDecimal,
   itemsLayout,
   style,
   fadeIn = false,
-}) => {
+  onRightBarLayout,
+}: IndicatorProps) => {
   const { styles } = useTheme2024({ getStyle: indicatorStyles });
   const opacity = useSharedValue(fadeIn ? 0 : 1);
 
@@ -80,7 +86,7 @@ const Indicator: React.FC<IndicatorProps> = ({
     <>
       <Animated.View style={[stylez, styles.indicator, style]} />
       <View style={styles.leftBackground} />
-      <View style={styles.rightBackground} />
+      <View style={styles.rightBackground} onLayout={onRightBarLayout} />
     </>
   );
 };
@@ -114,7 +120,20 @@ const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
 }));
 
-export const HomeCustomMaterialTabBar = (_props: any) => {
+type MaterialTabBarProps = React.ComponentProps<typeof MaterialTabBar>;
+export const HomeCustomMaterialTabBar = (_props: {
+  materialTabBarProps: Omit<
+    MaterialTabBarProps,
+    | 'scrollEnabled'
+    | 'tabStyle'
+    | 'TabItemComponent'
+    | 'style'
+    | 'indicatorStyle'
+    | 'contentContainerStyle'
+  >;
+  indexDecimal?: Animated.SharedValue<number>;
+  externalContent?: React.ReactNode;
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const props = _props.materialTabBarProps;
@@ -126,14 +145,23 @@ export const HomeCustomMaterialTabBar = (_props: any) => {
       height: 42,
     };
   }, [indexDecimal]);
-  const renderTabItem = useCallback(
-    (_p: any) => (
-      <MaterialTabItem {..._p} pressOpacity={1} inactiveOpacity={1} />
-    ),
-    [],
-  );
+  const renderTabItem = useCallback<
+    MaterialTabBarProps['TabItemComponent'] & object
+  >(_p => <MaterialTabItem {..._p} pressOpacity={1} inactiveOpacity={1} />, []);
+
+  const {
+    measureTabBarWrapper,
+    homeGuidanceMultipleTabsTargetViewRef,
+    updateRightBarLayout,
+  } = useMeasureLayoutForHomeGuidanceMultipleTabs();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      ref={homeGuidanceMultipleTabsTargetViewRef}
+      onLayout={() => {
+        measureTabBarWrapper();
+      }}>
       <Indicator
         indexDecimal={props.indexDecimal}
         itemsLayout={[
@@ -155,6 +183,9 @@ export const HomeCustomMaterialTabBar = (_props: any) => {
           },
         ]}
         fadeIn
+        onRightBarLayout={event => {
+          updateRightBarLayout(event.nativeEvent.layout);
+        }}
       />
       <Animated.View style={[styles.portfolioContainer, stylez]}>
         <MaterialTabBar
@@ -200,7 +231,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   portfolioContainer: {
     marginTop: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: HOME_TABBAR_SIZES.portfolioContainerPx,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',

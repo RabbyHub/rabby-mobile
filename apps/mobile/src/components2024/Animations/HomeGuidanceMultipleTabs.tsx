@@ -13,8 +13,12 @@ import {
   Animated as RNAnimated,
   Easing as RNEasing,
   TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
 import { atom, useAtom } from 'jotai';
+
+// import LottieView from 'lottie-react-native';
+// import AnimSwipeRightToViewAllAssets from './animations/swipe-right-to-view-all-assets.json';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
@@ -42,6 +46,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useGuidanceShown } from './hooks';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { coerceInteger } from '@/utils/number';
 
 type AbsLayout = {
   width: number;
@@ -52,18 +57,20 @@ type AbsLayout = {
 const guidanceAtom = atom<{
   visible: boolean;
   layout: AbsLayout | null;
+  rightBarLayout: LayoutRectangle | null;
 }>({
   visible: false,
   layout: null,
+  rightBarLayout: null,
 });
 
 export function useMeasureLayoutForHomeGuidanceMultipleTabs<
   T extends View = View,
 >() {
   const viewRef = React.useRef<T>(null);
-  const [, setLayout] = useAtom(guidanceAtom);
+  const [, setGuidance] = useAtom(guidanceAtom);
 
-  const doMeasure = React.useCallback(() => {
+  const measureTabBarWrapper = React.useCallback(() => {
     if (viewRef.current) {
       viewRef.current.measure((x, y, width, height, pageX, pageY) => {
         // // leave here for debug
@@ -71,17 +78,28 @@ export function useMeasureLayoutForHomeGuidanceMultipleTabs<
         //   pageX,
         //   pageY,
         // });
-        setLayout(prev => ({
+        setGuidance(prev => ({
           ...prev,
           layout: { x, y, width, height, pageX, pageY },
         }));
       });
     }
-  }, [setLayout]);
+  }, [setGuidance]);
+
+  const updateRightBarLayout = React.useCallback(
+    (layout: LayoutRectangle) => {
+      setGuidance(prev => ({
+        ...prev,
+        rightBarLayout: layout,
+      }));
+    },
+    [setGuidance],
+  );
 
   return {
-    doMeasure,
-    HomeGuidanceMultipleTabsTargetViewRef: viewRef,
+    measureTabBarWrapper,
+    homeGuidanceMultipleTabsTargetViewRef: viewRef,
+    updateRightBarLayout,
   };
 }
 
@@ -90,8 +108,9 @@ function useMeasuredLayoutForHomeGuidanceMultipleTabs() {
   const { top } = useSafeAreaInsets();
 
   return {
-    measuredLayout: guidance.layout,
-    compuatedMeasuredLayout: !guidance.layout
+    tabbarWrapperLayout: guidance.layout,
+    rightBarLayout: guidance.rightBarLayout,
+    computedMeasuredLayout: !guidance.layout
       ? {
           pageX: 0,
           pageY: top,
@@ -126,6 +145,11 @@ function useGuidanceMultipleTabsVisible() {
   };
 }
 
+// const MS_PLAY_ONCE =
+//   (coerceInteger(AnimSwipeRightToViewAllAssets['op'], 70) /
+//     coerceInteger(AnimSwipeRightToViewAllAssets['fr'], 25)) *
+//   1000;
+
 export type HomeGuidanceMultipleTabs = {
   play(): void;
 };
@@ -134,7 +158,10 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   {
     beforeContentNode?:
       | React.ReactNode
-      | ((ctx: { absLayout: AbsLayout }) => React.ReactNode);
+      | ((ctx: {
+          absLayout: AbsLayout;
+          rightBarLayout: LayoutRectangle;
+        }) => React.ReactNode);
   }
 >(({ beforeContentNode: prop_beforeContentNode }, ref) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -143,23 +170,34 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   const { guidanceVisible, toggleGuidanceVisible, toggleViewedGuidance } =
     useGuidanceMultipleTabsVisible();
 
-  const gestureRotateValue = useRef(new RNAnimated.Value(0)).current;
-  const gestureRotateProp = gestureRotateValue.interpolate({
+  const gestureAnimValue = useRef(new RNAnimated.Value(0)).current;
+  const gestureRotateProp = gestureAnimValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['30deg', '0deg'],
+  });
+  const gestureTranslateXProp = gestureAnimValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [20, 0],
   });
 
   const toggleGestureAnimation = useCallback(
     (
       play: boolean,
       options?: {
+        __resetValueFirst__?: boolean;
         delay?: number;
         onFinished?: () => void;
       },
     ) => {
-      const { delay = 0, onFinished } = options || {};
+      const {
+        __resetValueFirst__ = false,
+        delay = 0,
+        onFinished,
+      } = options || {};
       if (play) {
-        RNAnimated.timing(gestureRotateValue, {
+        if (__resetValueFirst__) gestureAnimValue.setValue(0);
+
+        RNAnimated.timing(gestureAnimValue, {
           toValue: 1,
           duration: 500,
           easing: RNEasing.linear,
@@ -168,14 +206,14 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
         }).start(event => {
           if (event.finished) {
             onFinished?.();
-            // gestureRotateValue.setValue(0);
+            // gestureAnimValue.setValue(0);
           }
         });
       } else {
-        gestureRotateValue.resetAnimation();
+        gestureAnimValue.resetAnimation();
       }
     },
-    [gestureRotateValue],
+    [gestureAnimValue],
   );
 
   useImperativeHandle(
@@ -188,11 +226,15 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
     [toggleGestureAnimation],
   );
 
-  const { measuredLayout } = useMeasuredLayoutForHomeGuidanceMultipleTabs();
-  const previousLayout = usePrevious(measuredLayout);
-  const pageY = useDebounceValue(measuredLayout ? measuredLayout.pageY : 0, 50);
+  const { tabbarWrapperLayout, rightBarLayout } =
+    useMeasuredLayoutForHomeGuidanceMultipleTabs();
+  const previousTabbarWrapperLayout = usePrevious(tabbarWrapperLayout);
+  const pageY = useDebounceValue(
+    tabbarWrapperLayout ? tabbarWrapperLayout.pageY : 0,
+    50,
+  );
   useLayoutEffect(() => {
-    if ((!previousLayout && measuredLayout) || pageY > 10) {
+    if ((!previousTabbarWrapperLayout && tabbarWrapperLayout) || pageY > 10) {
       const timer = setTimeout(() => {
         toggleGuidanceVisible(true);
         toggleGestureAnimation(true, {
@@ -205,20 +247,28 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
       };
     }
   }, [
-    previousLayout,
-    measuredLayout,
+    previousTabbarWrapperLayout,
+    tabbarWrapperLayout,
     pageY,
     toggleGuidanceVisible,
     toggleGestureAnimation,
   ]);
 
   const beforeContentNode = useMemo(() => {
-    if (!measuredLayout) return null;
+    if (!tabbarWrapperLayout) return null;
+    if (!rightBarLayout) return null;
     if (typeof prop_beforeContentNode === 'function') {
-      return prop_beforeContentNode({ absLayout: measuredLayout });
+      return prop_beforeContentNode({
+        absLayout: tabbarWrapperLayout,
+        rightBarLayout,
+      });
     }
-    return prop_beforeContentNode || <DefaultBeforeNode />;
-  }, [prop_beforeContentNode, measuredLayout]);
+    return (
+      prop_beforeContentNode || (
+        <DefaultBeforeNode rightBarLayout={rightBarLayout} />
+      )
+    );
+  }, [prop_beforeContentNode, tabbarWrapperLayout, rightBarLayout]);
 
   const opacityValue = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => {
@@ -237,7 +287,9 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   }, [previousVisible, guidanceVisible, opacityValue]);
 
   const onSwipeEnd = useCallback(() => {
-    // console.debug('Pan gesture ended - perform hide guidance');
+    console.debug('Pan gesture ended - perform hide guidance');
+    // if (__DEV__) return;
+
     toggleGuidanceVisible(false);
     toggleViewedGuidance('multiTabs20251111Viewed', true);
   }, [toggleGuidanceVisible, toggleViewedGuidance]);
@@ -265,7 +317,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
       .withTestId('panRightToLeftGesture');
   }, [panActivated, onSwipeEnd]);
 
-  if (!measuredLayout) return null;
+  if (!tabbarWrapperLayout) return null;
   if (!previousVisible && !guidanceVisible) return null;
 
   return (
@@ -285,16 +337,34 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
           ]}>
           {beforeContentNode || null}
 
-          <View
-            style={{
-              marginTop: 24,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <RcIconMultiTabArrow
-              color={colors2024['neutral-InvertHighlight']}
-              style={{ marginBottom: 4 }}
-            />
+          <View style={styles.gestureAnimContainer}>
+            {/* <LottieView
+              // ref={animationRef}
+              source={AnimSwipeRightToViewAllAssets}
+              style={StyleSheet.flatten([styles.animationLottie])}
+              loop={false}
+              duration={MS_PLAY_ONCE}
+              autoPlay
+              {...__DEV__ && {
+                loop: true,
+                autoPlay: true,
+              }}
+            /> */}
+            <RNAnimated.View
+              style={[
+                {
+                  marginBottom: 4,
+                  transform: [
+                    {
+                      translateX: gestureTranslateXProp,
+                    },
+                  ],
+                },
+              ]}>
+              <RcIconMultiTabArrow
+                color={colors2024['neutral-InvertHighlight']}
+              />
+            </RNAnimated.View>
             <RNAnimated.View
               style={{
                 transform: [{ rotate: gestureRotateProp }],
@@ -305,6 +375,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
                 onPress={evt => {
                   evt.stopPropagation();
                   toggleGestureAnimation(true, {
+                    __resetValueFirst__: true,
                     delay: 0,
                   });
                 }}>
@@ -314,7 +385,6 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
               </TouchableOpacity>
             </RNAnimated.View>
             <Text style={styles.swipeText}>
-              {/* Swipe right to view all assets */}
               {t(
                 'page.nextComponent.homeGuidanceMultipleTabs.swipeToViewAllAssets',
               )}
@@ -355,6 +425,11 @@ const getStyle = createGetStyles2024(
         alignItems: 'center',
         // ...makeDebugBorder(),
       },
+      gestureAnimContainer: {
+        marginTop: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
       swipeText: {
         color: colors2024['neutral-InvertHighlight'],
         fontFamily: 'SF Pro Rounded',
@@ -365,30 +440,65 @@ const getStyle = createGetStyles2024(
 
         marginTop: 16,
       },
+      animationLottie: {
+        width: '100%',
+        height: '100%',
+        flex: 1,
+      },
     };
   },
 );
 
-function DefaultBeforeNode() {
+function DefaultBeforeNode({
+  rightBarLayout,
+}: {
+  rightBarLayout: LayoutRectangle;
+}) {
   const { styles } = useTheme2024({ getStyle: gestDefaultBeforeNodeStyle });
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Dev only: Render Node Here</Text>
+      {/* <Text style={styles.text}>Dev only: Render Node Here</Text> */}
+      <View style={styles.containerInner}>
+        <View
+          style={[
+            styles.rightBarHighlight,
+            {
+              height: rightBarLayout.height,
+              width: rightBarLayout.width,
+              borderRadius: 12,
+            },
+          ]}
+        />
+      </View>
     </View>
   );
 }
 
+export const HOME_TABBAR_SIZES = {
+  portfolioContainerPx: 16,
+};
+
 const gestDefaultBeforeNodeStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    height: 54,
+    height: 6,
     width: '100%',
-    // backgroundColor: colors2024['neutral-bg-2'],
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors2024['neutral-info'],
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: HOME_TABBAR_SIZES.portfolioContainerPx,
+    // ...makeDebugBorder(),
+  },
+  containerInner: {
+    position: 'relative',
+    height: '100%',
+    width: '100%',
+    // ...makeDebugBorder(),
+  },
+  rightBarHighlight: {
+    position: 'absolute',
+    right: 0,
+    backgroundColor: colors2024['neutral-line'],
   },
   text: {
     color: colors2024['neutral-InvertHighlight'],

@@ -179,8 +179,6 @@ export function MultiAddressHomeHeader(
     });
   }, [colors2024, gotoAddAddress, isLight, setIsFoldMultiChart]);
 
-  const { doMeasure } = useMeasureLayoutForHomeGuidanceMultipleTabs();
-
   return (
     <View style={style}>
       <GlobalWarning
@@ -193,12 +191,9 @@ export function MultiAddressHomeHeader(
       />
       <BlurShadowView
         isLight={isLight}
-        viewTypeOnNoShadow={'view'}
+        viewTypeOnNoShadow="view"
         viewProps={{
           style: [styles.curveBoxWrapper, { minHeight: 100 }],
-          onLayout: () => {
-            doMeasure();
-          },
         }}>
         <View
           pointerEvents="none"
@@ -304,8 +299,6 @@ export function MultiAddressHomeHeader(
           </Card>
         </RNLinearGradient>
       </BlurShadowView>
-      {/* gradient-border  */}
-      {/* <ConicViewSample /> */}
     </View>
   );
 }

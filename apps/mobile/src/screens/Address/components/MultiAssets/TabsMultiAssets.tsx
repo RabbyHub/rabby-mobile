@@ -119,7 +119,11 @@ export const TabsMultiAssets: React.FC<Props> = ({
   );
 
   const renderTabBar = React.useCallback(
-    (_props: any) => (
+    (
+      _props: React.ComponentProps<
+        typeof HomeCustomMaterialTabBar
+      >['materialTabBarProps'],
+    ) => (
       <HomeCustomMaterialTabBar
         materialTabBarProps={{
           ..._props,

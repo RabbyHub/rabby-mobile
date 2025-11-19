@@ -34,6 +34,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSetAtom } from 'jotai';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
@@ -114,8 +115,8 @@ import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
-import { useSetAtom } from 'jotai';
 import { foldMultiChartAtom } from '../Address/components/MultiAssets/RenderRow/CurveChart';
+import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -806,6 +807,7 @@ function MultiAddressHome(): JSX.Element {
         end: { x: 0.5, y: 0.26 },
       }}
       overwriteStyle={styles.screenContainer}>
+      <HomeGuidanceMultipleTabs />
       <ScreenSpecificStatusBar screenName={RootNames.Home} />
       <View style={[styles.paddingContainer]}>
         <TabsMultiAssets
