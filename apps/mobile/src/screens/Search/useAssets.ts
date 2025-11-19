@@ -145,15 +145,15 @@ export const useAssets = ({
 
   const loadNFT = useMemoizedFn(async (address: string, force?: boolean) => {
     try {
-      const nfts = await syncNFTs(address, force, !force);
-      if (!nfts.length) {
+      const _nfts = await syncNFTs(address, force, !force);
+      if (!_nfts.length) {
         return;
       }
       const tokenSetting = await preferenceService.getUserTokenSettings();
 
       updateNFTs({
         address,
-        newNFTs: tagNfts(nfts, tokenSetting),
+        newNFTs: tagNfts(_nfts, tokenSetting),
       });
     } catch (e) {
       console.error('ServiceErrorType.NFT', e);

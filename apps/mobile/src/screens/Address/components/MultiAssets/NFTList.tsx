@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -26,9 +20,7 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
-import { useAccountInfo } from './hooks';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 import { icons } from '@/screens/Home/AssetContainer';
 import { preferenceService } from '@/core/services';
@@ -37,14 +29,12 @@ import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   collectionNftList,
   NftItemWithCollection,
 } from '@/screens/Home/hooks/nft';
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
-import { useMyAccounts } from '@/hooks/account';
-import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { TabName } from './TabsMultiAssets';
 import {
   ListHeaderComponent,
@@ -57,6 +47,11 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { navigateDeprecated } from '@/utils/navigation';
+import {
+  useCheckIsExpireAndUpdate,
+  useFindAccountByAddress,
+  useIsFocusedCurrentTab,
+} from './hooks/share';
 
 interface Props {
   chain?: string;
@@ -71,34 +66,17 @@ export const NFTList = ({
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
-  const hasBeenFocusedRef = useRef(false);
   const [foldNft, setFoldNft] = useState(true);
-
-  const { top10Addresses } = useAccountInfo();
-  const { triggerUpdate, getTotalBalance } = useAccountsBalance({
-    cacheTime: 10 * 60 * 1000,
-    accountsNoUnique: true,
-  });
-  const focusedTab = useFocusedTab();
-  const { accounts } = useMyAccounts();
-
-  const getAccountByAddress = useCallback(
-    (address: string) => {
-      return accounts.find(account => isSameAddress(account?.address, address));
-    },
-    [accounts],
-  );
-
-  const isFocused = useMemo(() => {
-    const currentFocused = focusedTab === TabName.nft;
-    if (currentFocused) {
-      hasBeenFocusedRef.current = true;
-    }
-    return hasBeenFocusedRef.current;
-  }, [focusedTab]);
 
   const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
     useTriggerUpdate();
+  const getAccountByAddress = useFindAccountByAddress();
+  const isFocused = useIsFocusedCurrentTab(TabName.nft);
+  const { triggerUpdate } = useCheckIsExpireAndUpdate({
+    isFocused,
+    disableToken: true,
+    disableDefi: true,
+  });
 
   const {
     nfts: _rawNftList,
@@ -114,9 +92,6 @@ export const NFTList = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_rawNftList?.length, isLoading, updateNft]);
 
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
   const nftList = useMemo(() => {
     return _rawNftList?.filter(item =>
       chain && item?.chain ? item.chain === chain : true,
@@ -347,34 +322,6 @@ export const NFTList = ({
       styles,
     ],
   );
-
-  const initRef = useRef(false);
-
-  useEffect(() => {
-    initRef.current = false;
-  }, [top10Addresses.length]);
-
-  useEffect(() => {
-    const cacheTop10AssetsId = setTimeout(() => {
-      if (!isFocused) {
-        return;
-      }
-      if (initRef.current) {
-        return;
-      }
-      initRef.current = true;
-      checkIsExpireAndUpdate(false, {
-        disableToken: true,
-        disableDefi: true,
-        realTimeAddresses: top10Addresses,
-        ignoreLoading: !top10Balance,
-      });
-    }, 50);
-    return () => {
-      cacheTop10AssetsId && clearTimeout(cacheTop10AssetsId);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, !top10Balance, top10Addresses.length]);
 
   const onRefresh = useCallback(async () => {
     try {

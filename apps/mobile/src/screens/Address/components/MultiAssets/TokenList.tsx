@@ -1,15 +1,7 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
-
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -27,8 +19,6 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
-import { useAccountInfo } from './hooks';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 import { icons } from '@/screens/Home/AssetContainer';
 import { preferenceService } from '@/core/services';
@@ -41,7 +31,7 @@ import { isTabsSwiping } from './hooks';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { useCurrency } from '@/hooks/useCurrency';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { TabName } from './TabsMultiAssets';
 import {
@@ -49,6 +39,11 @@ import {
   ListRenderFooter,
   ListRenderSeparator,
 } from './RenderRow/Common';
+import {
+  useCheckIsExpireAndUpdate,
+  useFindAccountByAddress,
+  useIsFocusedCurrentTab,
+} from './hooks/share';
 
 const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -60,6 +55,7 @@ interface Props {
   onRefresh?: () => void;
   updateToken: (tokens: AbstractPortfolioToken[]) => void;
 }
+
 export const TokenList = ({
   chain,
   onRefresh: onRefreshProps,
@@ -71,34 +67,20 @@ export const TokenList = ({
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
 
-  const { top10Addresses } = useAccountInfo();
-  const { triggerUpdate, getTotalBalance } = useAccountsBalance({
-    cacheTime: 10 * 60 * 1000,
-    accountsNoUnique: true,
-  });
-  const hasBeenFocusedRef = useRef(false);
   const { currency } = useCurrency();
-  const { accounts } = useMyAccounts();
-  const focusedTab = useFocusedTab();
 
-  const getAccountByAddress = useCallback(
-    (address: string) => {
-      return accounts.find(account => isSameAddress(account?.address, address));
-    },
-    [accounts],
-  );
-
-  const isFocused = useMemo(() => {
-    const currentFocused = focusedTab === TabName.token;
-    if (currentFocused) {
-      hasBeenFocusedRef.current = true;
-    }
-    return hasBeenFocusedRef.current;
-  }, [focusedTab]);
+  const getAccountByAddress = useFindAccountByAddress();
+  const isFocused = useIsFocusedCurrentTab(TabName.token);
 
   const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
     useTriggerUpdate();
   const { tokenRefresh } = useTriggerTagAssets();
+
+  const { triggerUpdate } = useCheckIsExpireAndUpdate({
+    isFocused,
+    disableDefi: true,
+    disableNFT: true,
+  });
 
   const {
     tokens: _rawTokens,
@@ -119,10 +101,6 @@ export const TokenList = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_rawTokens?.length, isLoading, updateToken]);
-
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
 
   const tokenLists = useMemo(() => {
     const unFoldList: ActionItem[] = tokens
@@ -257,7 +235,7 @@ export const TokenList = ({
     return tokens.length === 0 && !isLoading && isFocused;
   }, [tokens.length, isLoading, isFocused]);
 
-  const handleOpenTokenDetail = React.useCallback(
+  const handleOpenTokenDetail = useCallback(
     (token: AbstractPortfolioToken, account?: KeyringAccountWithAlias) => {
       if (isTabsSwiping.value) {
         return;
@@ -420,34 +398,6 @@ export const TokenList = ({
       styles.tokenSectionHeader,
     ],
   );
-
-  const initRef = useRef(false);
-
-  useEffect(() => {
-    initRef.current = false;
-  }, [top10Addresses.length]);
-
-  useEffect(() => {
-    const cacheTop10AssetsId = setTimeout(() => {
-      if (!isFocused) {
-        return;
-      }
-      if (initRef.current) {
-        return;
-      }
-      initRef.current = true;
-      checkIsExpireAndUpdate(false, {
-        disableDefi: true,
-        disableNFT: true,
-        realTimeAddresses: top10Addresses,
-        ignoreLoading: !top10Balance,
-      });
-    }, 50);
-    return () => {
-      cacheTop10AssetsId && clearTimeout(cacheTop10AssetsId);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, !top10Balance, top10Addresses.length]);
 
   const onRefresh = useCallback(async () => {
     try {

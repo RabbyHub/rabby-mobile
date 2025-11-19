@@ -1,127 +1,25 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ALERT_HEIGHT,
-  HEADER_CHART_HEIGHT,
-  SWITCH_HEADER_HEIGHT,
-} from '@/constant/layout';
+import { HEADER_CHART_HEIGHT, SWITCH_HEADER_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressList } from './AddressList';
 import { Portfolios } from './Portfolios';
-import { loadingMultiCurveAtom, useMultiCurve } from '@/hooks/useMultiCurve';
-import { useAccountInfo } from './hooks';
 import { Tabs } from 'react-native-collapsible-tab-view';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { HeaderTitle } from './HeaderTitle';
 import { isTabsSwiping } from './hooks';
-import { useGlobalStatus } from '@/hooks/useGlobalStatus';
-import { useAssets } from '@/screens/Search/useAssets';
-import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import { useAtomValue } from 'jotai';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { useMulti24hBalance } from '@/hooks/use24hBalance';
 
-export const MultiAssets = ({
-  onUpdateIsDecrease,
-  onReachTopStatusChange,
-}: {
+export const MultiAssets = ({}: {
   onUpdateIsDecrease: (isDecrease: boolean) => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-
-  const { top10Addresses, list } = useAccountInfo();
-
-  const { getTotalBalance } = useAccountsBalance({
-    cacheTime: 10 * 60 * 1000,
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
-
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
-
-  const { combineData: combineCurveData, isLoadingNew: isLoadingCurve } =
-    useMultiCurve(
-      top10Addresses,
-      false,
-      top10Balance.total,
-      top10Balance.totalEvm,
-    );
-
-  const { combineData: combine24hBalanceData } = useMulti24hBalance(
-    top10Addresses,
-    false,
-    top10Balance.total,
-    top10Balance.totalEvm,
-  );
-  const combineData = useMemo(() => {
-    return {
-      ...combineCurveData,
-      rawNetWorth: combine24hBalanceData.rawNetWorth,
-      rawChange: combine24hBalanceData.rawChange,
-      change: combine24hBalanceData.change,
-      changePercent: combine24hBalanceData.changePercent,
-      isLoss: combine24hBalanceData.isLoss,
-    };
-  }, [combineCurveData, combine24hBalanceData]);
-
-  const { isDisConnect } = useGlobalStatus();
-
-  useEffect(() => {
-    onUpdateIsDecrease(combineData.isLoss);
-  }, [combineData.isLoss, onUpdateIsDecrease]);
-
-  const getHeaderTitle = useCallback(
-    () => (
-      <HeaderTitle
-        netWorth={combineData.netWorth}
-        changePercent={combineData.changePercent}
-        isLoss={combineData.isLoss}
-      />
-    ),
-    [combineData.changePercent, combineData.isLoss, combineData.netWorth],
-  );
-
-  const { refreshing } = useAssets({ hideCombined: true });
-  const isLoadingMultiCurve = useAtomValue(loadingMultiCurveAtom);
-  const renderCircleLoading = useCallback(() => {
-    return refreshing || isLoadingMultiCurve ? <LoadingCircle /> : '';
-  }, [isLoadingMultiCurve, refreshing]);
-
-  const handleScroll = useCallback(
-    (y: number) => {
-      // 10 is buffer
-      const isHideHeader = y > HEADER_CHART_HEIGHT - 10;
-      if (isHideHeader) {
-        setNavigationOptions({
-          headerTitle: getHeaderTitle,
-          headerTitleAlign: 'left',
-        });
-      } else {
-        setNavigationOptions({
-          headerTitle: renderCircleLoading,
-          headerTitleAlign: 'left',
-        });
-      }
-      onReachTopStatusChange?.(!isHideHeader);
-    },
-    [
-      getHeaderTitle,
-      onReachTopStatusChange,
-      renderCircleLoading,
-      setNavigationOptions,
-    ],
-  );
 
   return (
     <Tabs.Container
       containerStyle={styles.container}
       minHeaderHeight={0}
-      headerHeight={HEADER_CHART_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0)}
+      headerHeight={HEADER_CHART_HEIGHT}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
       pagerProps={{
         onPageScrollStateChanged: event => {
