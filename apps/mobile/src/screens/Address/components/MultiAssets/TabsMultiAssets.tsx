@@ -163,10 +163,10 @@ export const TabsMultiAssets: React.FC<Props> = ({
     const id = setTimeout(() => {
       getCacheTop10Assets({
         realTimeAddresses: top10Addresses,
+        disableNFT: true,
         core: true,
         maxTokenLength: 500,
         maxDefiLength: 40,
-        maxNFTLength: 100,
       });
     }, 0);
     return () => {
@@ -214,9 +214,9 @@ export const TabsMultiAssets: React.FC<Props> = ({
           updatePortfolio={updatePortfolio}
         />
       </Tabs.Tab>
-      <Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
+      {/*<Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
         <NFTList chain={selectChainItem?.chain} updateNft={updateNft} />
-      </Tabs.Tab>
+      </Tabs.Tab>*/}
     </Tabs.Container>
   );
 };
