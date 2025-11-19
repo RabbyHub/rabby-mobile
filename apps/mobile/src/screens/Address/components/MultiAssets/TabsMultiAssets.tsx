@@ -173,7 +173,7 @@ export const TabsMultiAssets: React.FC<Props> = ({
         core: true,
         maxTokenLength: 500,
         maxDefiLength: 40,
-        maxNFTLength: 30,
+        maxNFTLength: 100,
       });
     }, 0);
     return () => {
@@ -196,20 +196,29 @@ export const TabsMultiAssets: React.FC<Props> = ({
         },
       }}
       headerContainerStyle={styles.headerContainer}>
-      <Tabs.Tab name={TabName.overview} label={() => null}>
+      <Tabs.Tab
+        key={TabName.overview}
+        name={TabName.overview}
+        label={() => null}>
         {overViewContent}
       </Tabs.Tab>
 
-      <Tabs.Tab name={TabName.token} label={renderLabel('Token')}>
+      <Tabs.Tab
+        key={TabName.token}
+        name={TabName.token}
+        label={renderLabel('Token')}>
         <TokenList chain={selectChainItem?.chain} updateToken={updateToken} />
       </Tabs.Tab>
-      <Tabs.Tab name={TabName.defi} label={renderLabel('Defi')}>
+      <Tabs.Tab
+        key={TabName.defi}
+        name={TabName.defi}
+        label={renderLabel('Defi')}>
         <ProtocolList
           chain={selectChainItem?.chain}
           updatePortfolio={updatePortfolio}
         />
       </Tabs.Tab>
-      <Tabs.Tab name={TabName.nft} label={renderLabel('NFT')}>
+      <Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
         <NFTList chain={selectChainItem?.chain} updateNft={updateNft} />
       </Tabs.Tab>
     </Tabs.Container>

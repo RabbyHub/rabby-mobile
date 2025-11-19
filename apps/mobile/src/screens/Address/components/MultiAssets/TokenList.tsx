@@ -64,12 +64,13 @@ export const TokenList = ({ chain, updateToken }: Props) => {
   const { currency } = useCurrency();
 
   const getAccountByAddress = useFindAccountByAddress();
-  const isFocused = useIsFocusedCurrentTab(TabName.token);
+  const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
   const { tokenRefresh } = useTriggerTagAssets();
 
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
     isFocused,
+    isFocusing,
     disableDefi: true,
     disableNFT: true,
   });
@@ -78,14 +79,13 @@ export const TokenList = ({ chain, updateToken }: Props) => {
     tokens: _rawTokens,
     checkIsExpireAndUpdate,
     isLoading,
-  } = useAssets({ hideCombined: !isFocused });
+  } = useAssets({ hideCombined: !isFocusing });
 
   const tokens = useMemo(() => {
     return _rawTokens?.filter(item =>
       chain && item?.chain ? item.chain === chain : true,
     );
   }, [_rawTokens, chain]);
-  console.log('CUSTOM_LOGGER:=>: tokens', tokens.length, isFocused);
 
   useEffect(() => {
     if (_rawTokens && !isLoading) {
@@ -418,10 +418,9 @@ export const TokenList = ({ chain, updateToken }: Props) => {
           : portfolioListData
       }
       renderItem={renderItem}
-      initialNumToRender={15}
-      windowSize={15}
-      maxToRenderPerBatch={15}
-      removeClippedSubviews
+      initialNumToRender={25}
+      windowSize={25}
+      maxToRenderPerBatch={25}
       ItemSeparatorComponent={ListRenderSeparator}
       ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={ListRenderFooter}

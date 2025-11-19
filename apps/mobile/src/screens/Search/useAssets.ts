@@ -64,6 +64,7 @@ export const useAssets = ({
     if (!address) {
       return;
     }
+    console.log('CUSTOM_LOGGER:=>: loadToken', address.slice(-4), force);
     try {
       const walletProject = new DisplayedProject({
         id: 'Wallet',
@@ -117,6 +118,7 @@ export const useAssets = ({
     if (!address) {
       return;
     }
+    console.log('CUSTOM_LOGGER:=>: loadDefi', address.slice(-4), force);
     try {
       let projectDict: Record<string, DisplayedProject> | null = {};
       const protocols = await syncProtocols(address, force, !force);
@@ -144,6 +146,10 @@ export const useAssets = ({
   });
 
   const loadNFT = useMemoizedFn(async (address: string, force?: boolean) => {
+    if (!address) {
+      return;
+    }
+    console.log('CUSTOM_LOGGER:=>: loadNFT', address.slice(-4), force);
     try {
       const _nfts = await syncNFTs(address, force, !force);
       if (!_nfts.length) {
@@ -239,8 +245,8 @@ export const useAssets = ({
         setLoading(false);
         return;
       }
-      const assestGroup = _.groupBy(cachedTokens, 'owner_addr');
-      const formatAssetMap = _.mapValues(assestGroup, group => {
+      const assetGroup = _.groupBy(cachedTokens, 'owner_addr');
+      const formatAssetMap = _.mapValues(assetGroup, group => {
         const walletProject = new DisplayedProject({
           id: 'Wallet',
           name: 'Wallet',
@@ -301,15 +307,15 @@ export const useAssets = ({
       if (!addresses.length) {
         return;
       }
-      const cachedPortcols = await ProtocolItemEntity.batchMultAddressPortocols(
+      const cachedDeFis = await ProtocolItemEntity.batchMultAddressPortocols(
         addresses,
         options?.maxLength,
       );
-      if (!cachedPortcols) {
+      if (!cachedDeFis.length) {
         return;
       }
 
-      const protocolGroup = _.groupBy(cachedPortcols, 'owner_addr');
+      const protocolGroup = _.groupBy(cachedDeFis, 'owner_addr');
       const formatProtocolMap = _.mapValues(protocolGroup, group => {
         let projectDict: Record<string, DisplayedProject> | null = {};
         group.forEach(project => {

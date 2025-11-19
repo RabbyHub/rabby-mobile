@@ -27,7 +27,6 @@ import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { RefreshControl } from 'react-native-gesture-handler';
-import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import {
   collectionNftList,
@@ -65,9 +64,10 @@ export const NFTList = ({ chain, updateNft }: Props) => {
   const [foldNft, setFoldNft] = useState(true);
 
   const getAccountByAddress = useFindAccountByAddress();
-  const isFocused = useIsFocusedCurrentTab(TabName.nft);
+  const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
     isFocused,
+    isFocusing,
     disableToken: true,
     disableDefi: true,
   });
@@ -76,8 +76,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     nfts: _rawNftList,
     checkIsExpireAndUpdate,
     isLoading,
-  } = useAssets({ hideCombined: !isFocused });
-  console.log('CUSTOM_LOGGER:=>: nfts', _rawNftList.length, isFocused);
+  } = useAssets({ hideCombined: !isFocusing });
 
   useEffect(() => {
     if (_rawNftList && !isLoading) {

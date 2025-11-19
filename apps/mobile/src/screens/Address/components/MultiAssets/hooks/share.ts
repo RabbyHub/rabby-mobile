@@ -21,7 +21,12 @@ export const useIsFocusedCurrentTab = (tabName: TabName) => {
     }
     return hasBeenFocusedRef.current;
   }, [focusedTab, tabName]);
-  return isFocused;
+
+  const isFocusing = useMemo(() => {
+    return focusedTab === tabName;
+  }, [focusedTab, tabName]);
+
+  return { isFocused, isFocusing };
 };
 
 export const useFindAccountByAddress = () => {
@@ -38,11 +43,13 @@ export const useFindAccountByAddress = () => {
 
 export const useCheckIsExpireAndUpdate = ({
   isFocused,
+  isFocusing,
   disableToken,
   disableDefi,
   disableNFT,
 }: {
   isFocused: boolean;
+  isFocusing: boolean;
   disableToken?: boolean;
   disableDefi?: boolean;
   disableNFT?: boolean;
@@ -89,7 +96,7 @@ export const useCheckIsExpireAndUpdate = ({
   }, [isFocused, !top10Balance, top10Addresses.length]);
 
   useEffect(() => {
-    if (triggerRefresh && isFocused) {
+    if (triggerRefresh && isFocusing) {
       checkIsExpireAndUpdate(true, {
         disableToken,
         disableDefi,
@@ -102,7 +109,7 @@ export const useCheckIsExpireAndUpdate = ({
     disableDefi,
     disableNFT,
     disableToken,
-    isFocused,
+    isFocusing,
     setTriggerRefresh,
     triggerRefresh,
   ]);

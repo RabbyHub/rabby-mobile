@@ -7,7 +7,6 @@ import { FullDefiRenderItem } from '@/screens/Home/components/AssetRenderItems';
 import { AbstractProject, ActionItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
-import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import { DisplayedProject } from '@/screens/Home/utils/project';
@@ -29,7 +28,6 @@ import {
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
-const MemoizedItemLoader = React.memo(ItemLoader);
 const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
 
 interface Props {
@@ -40,10 +38,11 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const isFocused = useIsFocusedCurrentTab(TabName.defi);
+  const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
   const getAccountByAddress = useFindAccountByAddress();
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
     isFocused,
+    isFocusing,
     disableToken: true,
     disableNFT: true,
   });
@@ -52,7 +51,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     portfolios: _rawPortfolios,
     checkIsExpireAndUpdate,
     isLoading,
-  } = useAssets({ hideCombined: !isFocused });
+  } = useAssets({ hideCombined: !isFocusing });
 
   useEffect(() => {
     if (_rawPortfolios && !isLoading) {
@@ -69,8 +68,6 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       ),
     [_rawPortfolios, chain],
   );
-
-  console.log('CUSTOM_LOGGER:=>: portfolios', portfolios.length, isFocused);
 
   const {
     data: portfoliosData,
@@ -164,7 +161,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
 
   const ListRenderFooter = useCallback(() => {
     return hasMorePortfolios ? (
-      <MemoizedItemLoader style={[styles.loadingMore]} />
+      <MemoizedDefiItemLoader style={[styles.loadingMore]} />
     ) : (
       <ListRenderFooterComponent />
     );
@@ -197,9 +194,9 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
           : portfolioListData
       }
       renderItem={renderItem}
-      initialNumToRender={15}
-      windowSize={15}
-      maxToRenderPerBatch={15}
+      initialNumToRender={5}
+      windowSize={5}
+      maxToRenderPerBatch={5}
       removeClippedSubviews
       ItemSeparatorComponent={ListRenderSeparator}
       ListHeaderComponent={ListHeaderComponent}
