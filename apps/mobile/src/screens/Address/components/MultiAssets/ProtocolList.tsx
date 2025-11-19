@@ -197,7 +197,6 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       initialNumToRender={5}
       windowSize={5}
       maxToRenderPerBatch={5}
-      removeClippedSubviews
       ItemSeparatorComponent={ListRenderSeparator}
       ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={ListRenderFooter}
@@ -238,6 +237,7 @@ const getStyles = createGetStyles2024(() => ({
     paddingHorizontal: 0,
   },
   loadingMore: {
+    paddingHorizontal: 0,
     marginTop: 16,
   },
   fullDefi: {

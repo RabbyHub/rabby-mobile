@@ -21,7 +21,6 @@ import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import { useAssets } from '@/screens/Search/useAssets';
 import { isTabsSwiping, useAccountInfo } from './hooks';
-import { useFocusEffect } from '@react-navigation/native';
 import { foldMultiChartAtom } from './RenderRow/CurveChart';
 import { useSetAtom } from 'jotai';
 
@@ -71,7 +70,7 @@ export const TabsMultiAssets: React.FC<Props> = ({
   const { chainsInfo, updateToken, updatePortfolio, updateNft } =
     useChainInfo();
   const { top10Addresses } = useAccountInfo();
-  const { getCacheTop10Assets } = useAssets({ hideCombined: true });
+  const { getCacheTop10Assets } = useAssets({ hideCombined: false });
   const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
 
   const handleOnChainClick = useCallback(
@@ -160,12 +159,6 @@ export const TabsMultiAssets: React.FC<Props> = ({
     );
   }, [data, loading, tabIndex]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setIsFoldMultiChart(true);
-    }, [setIsFoldMultiChart]),
-  );
-
   useEffect(() => {
     const id = setTimeout(() => {
       getCacheTop10Assets({
@@ -191,6 +184,9 @@ export const TabsMultiAssets: React.FC<Props> = ({
       tabBarHeight={80}
       containerStyle={styles.container}
       pagerProps={{
+        onTouchEnd: () => {
+          setIsFoldMultiChart(true);
+        },
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
         },

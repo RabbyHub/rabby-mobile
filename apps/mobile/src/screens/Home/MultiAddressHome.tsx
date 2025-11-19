@@ -34,7 +34,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSetAtom } from 'jotai';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
@@ -115,7 +114,6 @@ import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
-import { foldMultiChartAtom } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 
 function MultiAddressHome(): JSX.Element {
@@ -779,15 +777,10 @@ function MultiAddressHome(): JSX.Element {
     viewedHomeTip,
   ]);
 
-  const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
   const [tabIndex, setTabIndex] = useState(0);
-  const handleIndexChange = useCallback(
-    (_index: number) => {
-      setIsFoldMultiChart(true);
-      setTabIndex(_index);
-    },
-    [setIsFoldMultiChart],
-  );
+  const handleIndexChange = useCallback((_index: number) => {
+    setTabIndex(_index);
+  }, []);
 
   return (
     <NormalScreenContainer2024

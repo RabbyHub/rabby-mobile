@@ -318,8 +318,13 @@ export const ChartHeader = ({
           />
           <Pressable
             hitSlop={50}
+            onTouchEnd={e => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
             onPress={e => {
               e.stopPropagation();
+              e.preventDefault();
               toggleFoldMultiChart();
             }}
             style={styles.percentChangeContainer}>
