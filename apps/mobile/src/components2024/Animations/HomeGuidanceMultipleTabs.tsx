@@ -288,74 +288,76 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
     );
   }, [prop_beforeContentNode, tabbarWrapperLayout, rightBarLayout]);
 
-  const opacityValue = useSharedValue(1);
+  const wrapperOpacity = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      opacity: opacityValue.value,
+      opacity: wrapperOpacity.value,
     };
   }, []);
 
   const previousVisible = usePrevious(guidanceVisible);
-  const debouncedVisible = useDebounceValue(guidanceVisible, 500);
+  const debouncedVisible = useDebounceValue(guidanceVisible, 300);
   useEffect(() => {
     if (!previousVisible && guidanceVisible) {
-      opacityValue.value = withTiming(1, {
+      wrapperOpacity.value = withTiming(1, {
         duration: 300,
         easing: Easing.inOut(Easing.quad),
       });
     } else if (!guidanceVisible) {
-      opacityValue.value = withTiming(0, {
+      wrapperOpacity.value = withTiming(0, {
         duration: 300,
         easing: Easing.inOut(Easing.quad),
       });
     }
-  }, [previousVisible, guidanceVisible, opacityValue]);
+  }, [previousVisible, guidanceVisible, wrapperOpacity]);
 
-  const panActivated = useSharedValue(false);
-  const panRightToLeftGesture = useMemo(() => {
-    return Gesture.Pan()
-      .onStart(() => {
-        panActivated.value = false;
-      })
-      .onUpdate(evt => {
-        if (
-          Math.abs(evt.translationX) > 50 ||
-          Math.abs(evt.translationY) > 50
-        ) {
-          panActivated.value = true;
-        }
-      })
-      .onEnd(evt => {
-        if (panActivated.value) {
-          runOnJS(isomorphicCloseAnim)();
-        }
-        panActivated.value = false;
-      })
-      .withTestId('panRightToLeftGesture');
-  }, [panActivated, isomorphicCloseAnim]);
+  // const panActivated = useSharedValue(false);
+  // const panRightToLeftGesture = useMemo(() => {
+  //   return Gesture.Pan()
+  //     .onStart(() => {
+  //       panActivated.value = false;
+  //     })
+  //     .onUpdate(evt => {
+  //       if (
+  //         Math.abs(evt.translationX) > 50 ||
+  //         Math.abs(evt.translationY) > 50
+  //       ) {
+  //         panActivated.value = true;
+  //       }
+  //     })
+  //     .onEnd(evt => {
+  //       if (panActivated.value) {
+  //         runOnJS(isomorphicCloseAnim)();
+  //       }
+  //       panActivated.value = false;
+  //     })
+  //     .withTestId('panRightToLeftGesture');
+  // }, [panActivated, isomorphicCloseAnim]);
 
   if (!tabbarWrapperLayout) return null;
-  if (!previousVisible && !debouncedVisible) return null;
+  if (!debouncedVisible) return null;
 
   return (
-    <GestureDetector gesture={panRightToLeftGesture}>
-      <Animated.View
-        style={[styles.container, styles.containerMask, animatedStyle]}
-        entering={FadeIn.duration(300).easing(Easing.inOut(Easing.quad))}
-        exiting={FadeOut.delay(300)
-          .duration(300)
-          .easing(Easing.inOut(Easing.quad))}>
-        <View
-          style={[
-            styles.content,
-            {
-              top: pageY,
-            },
-          ]}>
-          {beforeContentNode || null}
+    // <GestureDetector gesture={panRightToLeftGesture} />
+    <Animated.View
+      pointerEvents={__DEV__ ? 'auto' : 'none'}
+      style={[
+        styles.container,
+        styles.containerMask,
+        animatedStyle,
+        !debouncedVisible && { zIndex: -1 },
+      ]}>
+      <View
+        style={[
+          styles.content,
+          {
+            top: pageY,
+          },
+        ]}>
+        {beforeContentNode || null}
 
-          <View style={styles.gestureAnimContainer}>
-            {/* <LottieView
+        <View style={styles.gestureAnimContainer}>
+          {/* <LottieView
               // ref={animationRef}
               source={AnimSwipeRightToViewAllAssets}
               style={StyleSheet.flatten([
@@ -377,49 +379,48 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
                 autoPlay: true,
               })}
             /> */}
-            <RNAnimated.View
-              style={[
-                {
-                  marginBottom: 4,
-                  transform: [
-                    {
-                      translateX: gestureTranslateXProp,
-                    },
-                  ],
-                },
-              ]}>
-              <RcIconMultiTabArrow
+          <RNAnimated.View
+            style={[
+              {
+                marginBottom: 4,
+                transform: [
+                  {
+                    translateX: gestureTranslateXProp,
+                  },
+                ],
+              },
+            ]}>
+            <RcIconMultiTabArrow
+              color={colors2024['neutral-InvertHighlight']}
+            />
+          </RNAnimated.View>
+          <RNAnimated.View
+            style={{
+              transform: [{ rotate: gestureRotateProp }],
+            }}>
+            <TouchableOpacity
+              disabled={!__DEV__}
+              activeOpacity={1}
+              onPress={evt => {
+                evt.stopPropagation();
+                toggleGestureAnimation(true, {
+                  __resetValueFirst__: true,
+                  delay: 0,
+                });
+              }}>
+              <RcIconMultiTabGestureCC
                 color={colors2024['neutral-InvertHighlight']}
               />
-            </RNAnimated.View>
-            <RNAnimated.View
-              style={{
-                transform: [{ rotate: gestureRotateProp }],
-              }}>
-              <TouchableOpacity
-                disabled={!__DEV__}
-                activeOpacity={1}
-                onPress={evt => {
-                  evt.stopPropagation();
-                  toggleGestureAnimation(true, {
-                    __resetValueFirst__: true,
-                    delay: 0,
-                  });
-                }}>
-                <RcIconMultiTabGestureCC
-                  color={colors2024['neutral-InvertHighlight']}
-                />
-              </TouchableOpacity>
-            </RNAnimated.View>
-            <Text style={styles.swipeText}>
-              {t(
-                'page.nextComponent.homeGuidanceMultipleTabs.swipeToViewAllAssets',
-              )}
-            </Text>
-          </View>
+            </TouchableOpacity>
+          </RNAnimated.View>
+          <Text style={styles.swipeText}>
+            {t(
+              'page.nextComponent.homeGuidanceMultipleTabs.swipeToViewAllAssets',
+            )}
+          </Text>
         </View>
-      </Animated.View>
-    </GestureDetector>
+      </View>
+    </Animated.View>
   );
 });
 
@@ -481,7 +482,7 @@ function DefaultBeforeNode({
 }: {
   rightBarLayout: LayoutRectangle;
 }) {
-  const { styles } = useTheme2024({ getStyle: gestDefaultBeforeNodeStyle });
+  const { styles } = useTheme2024({ getStyle: getDefaultBeforeNodeStyle });
 
   return (
     <View style={styles.container}>
@@ -506,7 +507,7 @@ export const HOME_TABBAR_SIZES = {
   portfolioContainerPx: 16,
 };
 
-const gestDefaultBeforeNodeStyle = createGetStyles2024(({ colors2024 }) => ({
+const getDefaultBeforeNodeStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     height: 6,
     width: '100%',
