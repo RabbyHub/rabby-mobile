@@ -233,7 +233,6 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   );
 
   const isomorphicCloseAnim = useCallback(() => {
-    console.debug('Pan gesture ended - perform hide guidance');
     // if (__DEV__) return;
 
     toggleGuidanceVisible(false);
@@ -298,13 +297,13 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   const previousVisible = usePrevious(guidanceVisible);
   const debouncedVisible = useDebounceValue(guidanceVisible, 300);
   useEffect(() => {
-    if (!previousVisible && guidanceVisible) {
-      wrapperOpacity.value = withTiming(1, {
+    if (!guidanceVisible) {
+      wrapperOpacity.value = withTiming(0, {
         duration: 300,
         easing: Easing.inOut(Easing.quad),
       });
-    } else if (!guidanceVisible) {
-      wrapperOpacity.value = withTiming(0, {
+    } else if (!previousVisible && guidanceVisible) {
+      wrapperOpacity.value = withTiming(1, {
         duration: 300,
         easing: Easing.inOut(Easing.quad),
       });
@@ -327,6 +326,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   //     })
   //     .onEnd(evt => {
   //       if (panActivated.value) {
+  //         console.debug('Pan gesture ended - perform hide guidance');
   //         runOnJS(isomorphicCloseAnim)();
   //       }
   //       panActivated.value = false;

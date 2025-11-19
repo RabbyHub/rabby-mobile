@@ -807,7 +807,6 @@ function MultiAddressHome(): JSX.Element {
         end: { x: 0.5, y: 0.26 },
       }}
       overwriteStyle={styles.screenContainer}>
-      <HomeGuidanceMultipleTabs />
       <ScreenSpecificStatusBar screenName={RootNames.Home} />
       <View style={[styles.paddingContainer]}>
         <TabsMultiAssets
@@ -916,6 +915,7 @@ function MultiAddressHome(): JSX.Element {
           </View>
         )}
       </View>
+      <HomeGuidanceMultipleTabs />
     </NormalScreenContainer2024>
   );
 }
