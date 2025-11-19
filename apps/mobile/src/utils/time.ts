@@ -193,14 +193,17 @@ export function formatIntlTimestamp(timestamp: number): string {
 export function getLottieAnimationDurationInMS(
   animationData: any,
   options: {
-    frameCountFallback: number;
-    frameRateFallback: number;
+    frameCountFallback?: number;
+    frameRateFallback?: number;
   },
 ): number {
   const frameCount =
-    coerceInteger(animationData['op'], 0) -
+    coerceInteger(animationData['op'] || options.frameCountFallback, 0) -
     coerceInteger(animationData['ip'], 0);
-  const frameRate = coerceInteger(animationData['fr'], 30); // Default to 30 if not specified
+  const frameRate = coerceInteger(
+    animationData['fr'] || options.frameRateFallback,
+    30,
+  ); // Default to 30 if not specified
 
   if (frameRate === 0) {
     return 0;

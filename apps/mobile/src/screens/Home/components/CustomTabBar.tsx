@@ -5,7 +5,7 @@ import {
   useFocusedTab,
 } from 'react-native-collapsible-tab-view';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useLayoutEffect } from 'react';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -36,7 +36,9 @@ type IndicatorProps = {
   itemsLayout: ItemLayout[];
   style?: AnimatedStyle;
   fadeIn?: boolean;
-  onRightBarLayout?: ViewProps['onLayout'];
+  secondaryIndicatorViewRef?: React.RefObject<View>;
+  // handleMeasureSecondaryIndicator?: ViewProps['onLayout'];
+  handleMeasureSecondaryIndicator?: () => void;
 };
 
 const Indicator = ({
@@ -44,7 +46,8 @@ const Indicator = ({
   itemsLayout,
   style,
   fadeIn = false,
-  onRightBarLayout,
+  secondaryIndicatorViewRef,
+  handleMeasureSecondaryIndicator,
 }: IndicatorProps) => {
   const { styles } = useTheme2024({ getStyle: indicatorStyles });
   const opacity = useSharedValue(fadeIn ? 0 : 1);
@@ -89,12 +92,16 @@ const Indicator = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fadeIn]);
 
+  useLayoutEffect(() => {
+    handleMeasureSecondaryIndicator?.();
+  }, [handleMeasureSecondaryIndicator]);
+
   return (
     <View
       style={[styles.indicatorContainer, !reachTop && styles.indicatorBgBox]}>
       <Animated.View style={[stylez, styles.indicator, style]} />
       <View style={styles.leftBackground} />
-      <View style={styles.rightBackground} onLayout={onRightBarLayout} />
+      <View ref={secondaryIndicatorViewRef} style={styles.rightBackground} />
     </View>
   );
 };
@@ -168,9 +175,10 @@ export const HomeCustomMaterialTabBar = (_props: {
   >(_p => <MaterialTabItem {..._p} pressOpacity={1} inactiveOpacity={1} />, []);
 
   const {
-    measureTabBarWrapper,
-    homeGuidanceMultipleTabsTargetViewRef,
-    updateRightBarLayout,
+    // measureTabBarWrapper,
+    // homeGuidanceMultipleTabsTargetViewRef,
+    secondaryIndicatorViewRef,
+    measureSecondaryIndicator,
   } = useMeasureLayoutForHomeGuidanceMultipleTabs();
   const focusedTab = useFocusedTab();
   const reachTop = useAtomValue(reachTopStatusAtom);
@@ -178,10 +186,11 @@ export const HomeCustomMaterialTabBar = (_props: {
   return (
     <View
       style={styles.container}
-      ref={homeGuidanceMultipleTabsTargetViewRef}
-      onLayout={() => {
-        measureTabBarWrapper();
-      }}>
+      // ref={homeGuidanceMultipleTabsTargetViewRef}
+      // onLayout={() => {
+      //   measureTabBarWrapper();
+      // }}
+    >
       <Indicator
         indexDecimal={props.indexDecimal}
         itemsLayout={[
@@ -203,8 +212,9 @@ export const HomeCustomMaterialTabBar = (_props: {
           },
         ]}
         fadeIn
-        onRightBarLayout={event => {
-          updateRightBarLayout(event.nativeEvent.layout);
+        secondaryIndicatorViewRef={secondaryIndicatorViewRef}
+        handleMeasureSecondaryIndicator={() => {
+          measureSecondaryIndicator();
         }}
       />
       <Animated.View

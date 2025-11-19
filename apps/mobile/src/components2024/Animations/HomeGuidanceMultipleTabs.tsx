@@ -49,6 +49,7 @@ import Animated, {
 import { useGuidanceShown } from './hooks';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { getLottieAnimationDurationInMS } from '@/utils/time';
+import { isEqual } from 'lodash';
 
 // import AnimSwipeRightToViewAllAssets from './animations/swipe-right-to-view-all-assets.json';
 // const MS_PLAY_ONCE = getLottieAnimationDurationInMS(
@@ -67,12 +68,12 @@ type AbsLayout = {
 };
 const guidanceAtom = atom<{
   visible: boolean;
-  layout: AbsLayout | null;
-  rightBarLayout: LayoutRectangle | null;
+  tabbarAbsLayout: AbsLayout | null;
+  secondaryIndicatorAbsLayout: AbsLayout | null;
 }>({
   visible: false,
-  layout: null,
-  rightBarLayout: null,
+  tabbarAbsLayout: null,
+  secondaryIndicatorAbsLayout: null,
 });
 
 export function useMeasureLayoutForHomeGuidanceMultipleTabs<
@@ -97,40 +98,51 @@ export function useMeasureLayoutForHomeGuidanceMultipleTabs<
     }
   }, [setGuidance]);
 
-  const updateRightBarLayout = React.useCallback(
-    (layout: LayoutRectangle) => {
-      setGuidance(prev => ({
-        ...prev,
-        rightBarLayout: layout,
-      }));
-    },
-    [setGuidance],
-  );
+  const secondaryIndicatorViewRef = React.useRef<View>(null);
+  const measureSecondaryIndicator = useCallback(() => {
+    if (secondaryIndicatorViewRef.current) {
+      secondaryIndicatorViewRef.current.measure(
+        (x, y, width, height, pageX, pageY) => {
+          setGuidance(prev => {
+            const newLayout = { x, y, width, height, pageX, pageY };
+
+            if (isEqual(prev.secondaryIndicatorAbsLayout, newLayout)) {
+              return prev;
+            }
+
+            return {
+              ...prev,
+              secondaryIndicatorAbsLayout: {
+                x,
+                y,
+                width,
+                height,
+                pageX,
+                pageY,
+              },
+            };
+          });
+        },
+      );
+    }
+  }, [setGuidance]);
 
   return {
     measureTabBarWrapper,
     homeGuidanceMultipleTabsTargetViewRef: viewRef,
-    updateRightBarLayout,
+    secondaryIndicatorViewRef,
+    measureSecondaryIndicator,
   };
 }
 
 function useMeasuredLayoutForHomeGuidanceMultipleTabs() {
   const [guidance] = useAtom(guidanceAtom);
-  const { top } = useSafeAreaInsets();
+  // const { top } = useSafeAreaInsets();
 
   return {
-    tabbarWrapperLayout: guidance.layout,
-    rightBarLayout: guidance.rightBarLayout,
-    computedMeasuredLayout: !guidance.layout
-      ? {
-          pageX: 0,
-          pageY: top,
-          width: 0,
-          height: 0,
-        }
-      : {
-          ...guidance.layout,
-        },
+    /** @deprecated */
+    tabbarWrapperLayout: guidance.tabbarAbsLayout,
+    secondaryIndicatorAbsLayout: guidance.secondaryIndicatorAbsLayout,
   };
 }
 
@@ -165,8 +177,8 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
     beforeContentNode?:
       | React.ReactNode
       | ((ctx: {
-          absLayout: AbsLayout;
-          rightBarLayout: LayoutRectangle;
+          // absLayout: AbsLayout;
+          secondaryIndicatorAbsLayout: AbsLayout;
         }) => React.ReactNode);
   }
 >(({ beforeContentNode: prop_beforeContentNode }, ref) => {
@@ -183,7 +195,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   });
   const gestureTranslateXProp = gestureAnimValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [20, 0],
+    outputRange: [30, 0],
   });
 
   const toggleGestureAnimation = useCallback(
@@ -203,12 +215,16 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
       if (play) {
         if (__resetValueFirst__) gestureAnimValue.setValue(0);
 
-        RNAnimated.timing(gestureAnimValue, {
+        const anim = RNAnimated.timing(gestureAnimValue, {
           toValue: 1,
           duration: 500,
           easing: RNEasing.linear,
           useNativeDriver: true,
           delay,
+        });
+        RNAnimated.loop(RNAnimated.sequence([anim, RNAnimated.delay(300)]), {
+          iterations: 2,
+          resetBeforeIteration: true,
         }).start(event => {
           if (event.finished) {
             onFinished?.();
@@ -233,38 +249,45 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   );
 
   const isomorphicCloseAnim = useCallback(() => {
+    // leave here for debug
     // if (__DEV__) return;
+    // leave here for debug
+    // if (!__DEV__) toggleViewedGuidance('multiTabs20251111Viewed', true);
 
     toggleGuidanceVisible(false);
     toggleViewedGuidance('multiTabs20251111Viewed', true);
   }, [toggleGuidanceVisible, toggleViewedGuidance]);
 
-  const { tabbarWrapperLayout, rightBarLayout } =
+  const { secondaryIndicatorAbsLayout } =
     useMeasuredLayoutForHomeGuidanceMultipleTabs();
-  const previousTabbarWrapperLayout = usePrevious(tabbarWrapperLayout);
+
+  const previousIndicatorWrapperLayout = usePrevious(
+    secondaryIndicatorAbsLayout,
+  );
   const pageY = useDebounceValue(
-    tabbarWrapperLayout ? tabbarWrapperLayout.pageY : 0,
+    secondaryIndicatorAbsLayout ? secondaryIndicatorAbsLayout.pageY : 0,
     50,
   );
   useLayoutEffect(() => {
-    if ((!previousTabbarWrapperLayout && tabbarWrapperLayout) || pageY > 10) {
-      const timer = setTimeout(() => {
-        toggleGuidanceVisible(true);
-        toggleGestureAnimation(true, {
-          delay: 500,
-          onFinished: () => {
-            isomorphicCloseAnim();
-          },
-        });
-      }, 400);
+    if (
+      (!previousIndicatorWrapperLayout && secondaryIndicatorAbsLayout) ||
+      pageY > 10
+    ) {
+      toggleGuidanceVisible(true);
+      toggleGestureAnimation(true, {
+        delay: 400,
+        onFinished: () => {
+          isomorphicCloseAnim();
+        },
+      });
 
-      return () => {
-        clearTimeout(timer);
-      };
+      // return () => {
+      //   clearTimeout(timer);
+      // };
     }
   }, [
-    previousTabbarWrapperLayout,
-    tabbarWrapperLayout,
+    previousIndicatorWrapperLayout,
+    secondaryIndicatorAbsLayout,
     pageY,
     toggleGuidanceVisible,
     toggleGestureAnimation,
@@ -272,20 +295,21 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   ]);
 
   const beforeContentNode = useMemo(() => {
-    if (!tabbarWrapperLayout) return null;
-    if (!rightBarLayout) return null;
+    if (!secondaryIndicatorAbsLayout) return null;
+
     if (typeof prop_beforeContentNode === 'function') {
       return prop_beforeContentNode({
-        absLayout: tabbarWrapperLayout,
-        rightBarLayout,
+        secondaryIndicatorAbsLayout,
       });
     }
     return (
       prop_beforeContentNode || (
-        <DefaultBeforeNode rightBarLayout={rightBarLayout} />
+        <DefaultBeforeNode
+          secondaryIndicatorAbsLayout={secondaryIndicatorAbsLayout}
+        />
       )
     );
-  }, [prop_beforeContentNode, tabbarWrapperLayout, rightBarLayout]);
+  }, [prop_beforeContentNode, secondaryIndicatorAbsLayout]);
 
   const wrapperOpacity = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => {
@@ -295,16 +319,16 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   }, []);
 
   const previousVisible = usePrevious(guidanceVisible);
-  const debouncedVisible = useDebounceValue(guidanceVisible, 300);
+  const debouncedVisible = useDebounceValue(guidanceVisible, 100);
   useEffect(() => {
     if (!guidanceVisible) {
       wrapperOpacity.value = withTiming(0, {
-        duration: 300,
+        duration: 250,
         easing: Easing.inOut(Easing.quad),
       });
     } else if (!previousVisible && guidanceVisible) {
       wrapperOpacity.value = withTiming(1, {
-        duration: 300,
+        duration: 250,
         easing: Easing.inOut(Easing.quad),
       });
     }
@@ -334,13 +358,15 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   //     .withTestId('panRightToLeftGesture');
   // }, [panActivated, isomorphicCloseAnim]);
 
-  if (!tabbarWrapperLayout) return null;
-  if (!debouncedVisible) return null;
+  if (!secondaryIndicatorAbsLayout) return null;
+  // if (!debouncedVisible) return null;
 
   return (
     // <GestureDetector gesture={panRightToLeftGesture} />
     <Animated.View
       pointerEvents={__DEV__ ? 'auto' : 'none'}
+      entering={FadeIn.duration(250)}
+      exiting={FadeOut.duration(250)}
       style={[
         styles.container,
         styles.containerMask,
@@ -434,6 +460,7 @@ const getStyle = createGetStyles2024(
         right: 0,
         bottom: 0,
         zIndex: IS_IOS ? -1 : 1,
+        // ...makeDebugBorder(),
       },
       absEle: {
         position: 'absolute',
@@ -478,9 +505,9 @@ const getStyle = createGetStyles2024(
 );
 
 function DefaultBeforeNode({
-  rightBarLayout,
+  secondaryIndicatorAbsLayout,
 }: {
-  rightBarLayout: LayoutRectangle;
+  secondaryIndicatorAbsLayout: AbsLayout;
 }) {
   const { styles } = useTheme2024({ getStyle: getDefaultBeforeNodeStyle });
 
@@ -492,8 +519,8 @@ function DefaultBeforeNode({
           style={[
             styles.rightBarHighlight,
             {
-              height: rightBarLayout.height,
-              width: rightBarLayout.width,
+              height: secondaryIndicatorAbsLayout.height,
+              width: secondaryIndicatorAbsLayout.width,
               borderRadius: 12,
             },
           ]}
@@ -521,7 +548,7 @@ const getDefaultBeforeNodeStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     height: '100%',
     width: '100%',
-    // ...makeDebugBorder(),
+    // ...makeDebugBorder('yellow'),
   },
   rightBarHighlight: {
     position: 'absolute',
