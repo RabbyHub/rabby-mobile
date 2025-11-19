@@ -12,7 +12,6 @@ import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAss
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import { DisplayedProject } from '@/screens/Home/utils/project';
 import { RefreshControl } from 'react-native-gesture-handler';
-import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useLoadMoreData from './hooks/useLoadMoreData';
@@ -35,19 +34,12 @@ const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
 
 interface Props {
   chain?: string;
-  onRefresh?: () => void;
   updatePortfolio?: (portfolios: AbstractProject[]) => void;
 }
-export const ProtocolList = ({
-  chain,
-  onRefresh: onRefreshProps,
-  updatePortfolio,
-}: Props) => {
+export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
-    useTriggerUpdate();
   const isFocused = useIsFocusedCurrentTab(TabName.defi);
   const getAccountByAddress = useFindAccountByAddress();
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
@@ -184,18 +176,10 @@ export const ProtocolList = ({
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableToken: true, disableNFT: true }),
       ]);
-      onRefreshProps?.();
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate, onRefreshProps]);
-
-  useEffect(() => {
-    if (triggerRefresh) {
-      onRefresh();
-      setTriggerRefresh(false);
-    }
-  }, [onRefresh, setTriggerRefresh, triggerRefresh]);
+  }, [checkIsExpireAndUpdate, triggerUpdate]);
 
   return (
     <Tabs.FlatList

@@ -20,7 +20,7 @@ import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import { useAssets } from '@/screens/Search/useAssets';
-import { useAccountInfo } from './hooks';
+import { isTabsSwiping, useAccountInfo } from './hooks';
 import { useFocusEffect } from '@react-navigation/native';
 import { foldMultiChartAtom } from './RenderRow/CurveChart';
 import { useSetAtom } from 'jotai';
@@ -37,7 +37,6 @@ export const icons = {
 };
 
 interface Props {
-  onRefresh(): void;
   onIndexChange(index: number): void;
   overViewContent: React.ReactNode;
   data: ReturnType<typeof useMulti24hBalance>['combineData'];
@@ -53,7 +52,6 @@ export const enum TabName {
 }
 
 export const TabsMultiAssets: React.FC<Props> = ({
-  onRefresh,
   onIndexChange,
   data,
   loading,
@@ -119,10 +117,6 @@ export const TabsMultiAssets: React.FC<Props> = ({
     },
     [chainsInfo.chainAssets, colors2024, isLight, selectChainItem, t],
   );
-
-  const handleRefresh = useCallback(async () => {
-    onRefresh?.();
-  }, [onRefresh]);
 
   const renderTabBar = React.useCallback(
     (_props: any) => (
@@ -192,31 +186,27 @@ export const TabsMultiAssets: React.FC<Props> = ({
       headerHeight={24}
       tabBarHeight={80}
       containerStyle={styles.container}
+      pagerProps={{
+        onPageScrollStateChanged: event => {
+          isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
+        },
+      }}
       headerContainerStyle={styles.headerContainer}>
       <Tabs.Tab name={TabName.overview} label={() => null}>
         {overViewContent}
       </Tabs.Tab>
 
       <Tabs.Tab name={TabName.token} label={renderLabel('Token')}>
-        <TokenList
-          chain={selectChainItem?.chain}
-          onRefresh={handleRefresh}
-          updateToken={updateToken}
-        />
+        <TokenList chain={selectChainItem?.chain} updateToken={updateToken} />
       </Tabs.Tab>
       <Tabs.Tab name={TabName.defi} label={renderLabel('Defi')}>
         <ProtocolList
           chain={selectChainItem?.chain}
-          onRefresh={handleRefresh}
           updatePortfolio={updatePortfolio}
         />
       </Tabs.Tab>
       <Tabs.Tab name={TabName.nft} label={renderLabel('NFT')}>
-        <NFTList
-          chain={selectChainItem?.chain}
-          onRefresh={handleRefresh}
-          updateNft={updateNft}
-        />
+        <NFTList chain={selectChainItem?.chain} updateNft={updateNft} />
       </Tabs.Tab>
     </Tabs.Container>
   );

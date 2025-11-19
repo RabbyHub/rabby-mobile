@@ -87,7 +87,10 @@ import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { colord } from 'colord';
 import dayjs from 'dayjs';
-import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
+import {
+  isTabsSwiping,
+  useAccountInfo,
+} from '../Address/components/MultiAssets/hooks';
 import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 import { useTipsDollarDialog } from '../CopyTrading/component/hooks';
 import { useInitDetectDBAssets } from '../Search/useAssets';
@@ -540,6 +543,9 @@ function MultiAddressHome(): JSX.Element {
 
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
+      if (isTabsSwiping.value) {
+        return;
+      }
       switch (key) {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(
@@ -803,7 +809,6 @@ function MultiAddressHome(): JSX.Element {
       <ScreenSpecificStatusBar screenName={RootNames.Home} />
       <View style={[styles.paddingContainer]}>
         <TabsMultiAssets
-          onRefresh={onRefresh}
           data={combineData}
           loading={loading}
           tabIndex={tabIndex}

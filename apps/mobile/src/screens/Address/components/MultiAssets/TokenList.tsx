@@ -28,7 +28,6 @@ import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { isTabsSwiping } from './hooks';
-import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -52,15 +51,10 @@ const MemoizedItemLoader = React.memo(ItemLoader);
 
 interface Props {
   chain?: string;
-  onRefresh?: () => void;
   updateToken: (tokens: AbstractPortfolioToken[]) => void;
 }
 
-export const TokenList = ({
-  chain,
-  onRefresh: onRefreshProps,
-  updateToken,
-}: Props) => {
+export const TokenList = ({ chain, updateToken }: Props) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
@@ -72,8 +66,6 @@ export const TokenList = ({
   const getAccountByAddress = useFindAccountByAddress();
   const isFocused = useIsFocusedCurrentTab(TabName.token);
 
-  const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
-    useTriggerUpdate();
   const { tokenRefresh } = useTriggerTagAssets();
 
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
@@ -405,18 +397,10 @@ export const TokenList = ({
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableNFT: true, disableDefi: true }),
       ]);
-      onRefreshProps?.();
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate, onRefreshProps]);
-
-  useEffect(() => {
-    if (triggerRefresh) {
-      onRefresh();
-      setTriggerRefresh(false);
-    }
-  }, [onRefresh, setTriggerRefresh, triggerRefresh]);
+  }, [checkIsExpireAndUpdate, triggerUpdate]);
 
   return (
     <Tabs.FlatList

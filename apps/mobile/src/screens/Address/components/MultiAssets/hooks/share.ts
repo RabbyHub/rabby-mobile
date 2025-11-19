@@ -8,6 +8,7 @@ import { useAccountInfo } from '../hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { TabName } from '../TabsMultiAssets';
 import { useMyAccounts } from '@/hooks/account';
+import { useTriggerUpdate } from './triggerUpdate';
 
 export const useIsFocusedCurrentTab = (tabName: TabName) => {
   const hasBeenFocusedRef = useRef(false);
@@ -52,6 +53,8 @@ export const useCheckIsExpireAndUpdate = ({
     cacheTime: 10 * 60 * 1000,
     accountsNoUnique: true,
   });
+  const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
+    useTriggerUpdate();
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
@@ -84,6 +87,26 @@ export const useCheckIsExpireAndUpdate = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, !top10Balance, top10Addresses.length]);
+
+  useEffect(() => {
+    if (triggerRefresh && isFocused) {
+      checkIsExpireAndUpdate(true, {
+        disableToken,
+        disableDefi,
+        disableNFT,
+      });
+      setTriggerRefresh(false);
+    }
+  }, [
+    checkIsExpireAndUpdate,
+    disableDefi,
+    disableNFT,
+    disableToken,
+    isFocused,
+    setTriggerRefresh,
+    triggerRefresh,
+  ]);
+
   return {
     triggerUpdate,
   };

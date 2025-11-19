@@ -52,24 +52,18 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
+import { isTabsSwiping } from './hooks';
 
 interface Props {
   chain?: string;
-  onRefresh?: () => void;
   updateNft: (nfts: DisplayNftItem[]) => void;
 }
-export const NFTList = ({
-  chain,
-  onRefresh: onRefreshProps,
-  updateNft,
-}: Props) => {
+export const NFTList = ({ chain, updateNft }: Props) => {
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const [foldNft, setFoldNft] = useState(true);
 
-  const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
-    useTriggerUpdate();
   const getAccountByAddress = useFindAccountByAddress();
   const isFocused = useIsFocusedCurrentTab(TabName.nft);
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
@@ -229,6 +223,9 @@ export const NFTList = ({
       if (!item.address) {
         return;
       }
+      if (isTabsSwiping.value) {
+        return;
+      }
       const currentAccount = getAccountByAddress(item.address || '');
       if ('nft_list' in item && item.nft_list.length) {
         const id = createGlobalBottomSheetModal2024({
@@ -329,18 +326,10 @@ export const NFTList = ({
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableToken: true, disableDefi: true }),
       ]);
-      onRefreshProps?.();
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, onRefreshProps, triggerUpdate]);
-
-  useEffect(() => {
-    if (triggerRefresh) {
-      onRefresh();
-      setTriggerRefresh(false);
-    }
-  }, [onRefresh, setTriggerRefresh, triggerRefresh]);
+  }, [checkIsExpireAndUpdate, triggerUpdate]);
 
   return (
     <Tabs.FlatList

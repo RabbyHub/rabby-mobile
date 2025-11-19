@@ -156,7 +156,6 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
-  [RootNames.AddressAssetsOverview]?: {};
   [RootNames.ReceiveAddressList]?: {
     tokenSymbol?: string;
     chainEnum?: CHAINS_ENUM;
