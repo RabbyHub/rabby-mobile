@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {
   useCallback,
   useEffect,
@@ -36,8 +37,6 @@ import {
   foldMultiChartAtom,
   MultiChart,
 } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
-import { useMultiCurve } from '@/hooks/useMultiCurve';
-import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -110,49 +109,6 @@ export function MultiAddressHomeHeader(
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
-
-  const { top10Addresses } = useAccountInfo();
-  const { getTotalBalance } = useAccountsBalance({
-    cacheTime: 10 * 60 * 1000,
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
-
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
-
-  const { combineData: combineCurveData, isLoadingNew: isLoadingCurve } =
-    useMultiCurve(
-      top10Addresses,
-      false,
-      top10Balance.total,
-      top10Balance.totalEvm,
-    );
-
-  const { combineData: combine24hBalanceData } = useMulti24hBalance(
-    top10Addresses,
-    false,
-    top10Balance.total,
-    top10Balance.totalEvm,
-  );
-  const combineData = useMemo(() => {
-    return {
-      ...combineCurveData,
-      rawNetWorth: combine24hBalanceData.rawNetWorth,
-      rawChange: combine24hBalanceData.rawChange,
-      change: combine24hBalanceData.change,
-      changePercent: combine24hBalanceData.changePercent,
-      isLoss: combine24hBalanceData.isLoss,
-    };
-  }, [combineCurveData, combine24hBalanceData]);
-
-  const pathColor = useMemo(
-    () =>
-      !combineData.isLoss
-        ? colors2024['green-default']
-        : colors2024['red-default'],
-    [colors2024, combineData.isLoss],
-  );
 
   const previousLoading = usePrevious(loading);
   useEffect(() => {
@@ -309,14 +265,10 @@ export function MultiAddressHomeHeader(
               ]}
             />
             <MultiChart
-              isOffline={false}
-              data={combineData}
-              loading={isLoadingCurve}
+              data={data}
               loadingNewCurve={loadingNewCurve}
-              pathColor={pathColor}
               hideType={hideType}
               accountsLength={accountsLength}
-              isNoAssets={false}
             />
             {addressListData?.length ? (
               <View

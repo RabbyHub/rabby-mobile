@@ -1,12 +1,8 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  formChartData,
-  CurvePoint,
-  formatSmallCurrencyValue,
-} from '@/hooks/useCurve';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
+import { memo, useCallback, useMemo } from 'react';
 import { Dimensions, Pressable, Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import Animated, {
@@ -16,15 +12,18 @@ import Animated, {
 } from 'react-native-reanimated';
 import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
-import { useTriggerUpdate } from '../hooks/triggerUpdate';
 import { useCurrency } from '@/hooks/useCurrency';
 import { BALANCE_HIDE_TYPE } from '@/screens/Home/hooks/useHideBalance';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
 import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom } from 'jotai';
 import Svg, { Path } from 'react-native-svg';
+import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { useAccountInfo } from '../hooks';
+import useAccountsBalance from '@/hooks/useAccountsBalance';
+import { useMulti24hBalance } from '@/hooks/use24hBalance';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const ScreenWidth = Dimensions.get('screen').width;
@@ -33,80 +32,97 @@ export const foldMultiChartAtom = atom<boolean>(true);
 
 function Chart({
   data,
-  isOffline,
-  loading,
-  isNoAssets,
-  pathColor,
   hideType,
   loadingNewCurve,
   accountsLength,
 }: {
-  isOffline: boolean;
-  data: ReturnType<typeof formChartData>;
-  loading: boolean;
+  data: ReturnType<typeof useMulti24hBalance>['combineData'];
   loadingNewCurve: boolean;
-  isNoAssets: boolean;
-  pathColor: string;
   hideType: BALANCE_HIDE_TYPE;
   accountsLength?: number;
 }) {
-  const { styles, colors } = useTheme2024({ getStyle });
-  const { setTriggerUpdate } = useTriggerUpdate();
-  const isFoldMultiChart = useAtomValue(foldMultiChartAtom);
+  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
+  const [isFoldMultiChart, setIsFoldMultiChart] = useAtom(foldMultiChartAtom);
 
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { top10Addresses } = useAccountInfo();
+  const { getTotalBalance } = useAccountsBalance({
+    cacheTime: 10 * 60 * 1000,
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
 
-  useEffect(() => {
-    // 延迟初始化动画，避免页面切换时的卡顿
-    const timer = setTimeout(() => {
-      setIsInitialized(true);
-    }, 150);
-
-    return () => {
-      clearTimeout(timer);
-      setTriggerUpdate?.(false);
+  const {
+    combineData: combineCurveData,
+    isLoadingNew: isLoadingCurve,
+    refresh: refreshCurve,
+  } = useMultiCurve(
+    top10Addresses,
+    true,
+    top10Balance.total,
+    top10Balance.totalEvm,
+  );
+  const combineData = useMemo(() => {
+    return {
+      ...combineCurveData,
+      rawNetWorth: data.rawNetWorth,
+      rawChange: data.rawChange,
+      change: data.change,
+      changePercent: data.changePercent,
+      isLoss: data.isLoss,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [combineCurveData, data]);
+
+  const pathColor = useMemo(
+    () =>
+      !combineData.isLoss
+        ? colors2024['green-default']
+        : colors2024['red-default'],
+    [colors2024, combineData.isLoss],
+  );
+  const toggleFoldMultiChart = useCallback(() => {
+    if (isFoldMultiChart) {
+      refreshCurve();
+    }
+    setIsFoldMultiChart(!isFoldMultiChart);
+  }, [setIsFoldMultiChart, isFoldMultiChart, refreshCurve]);
 
   return (
     <View style={[styles.container]}>
       <View style={styles.chartContainer}>
-        <LineChart.Provider data={data.list}>
+        <LineChart.Provider data={combineCurveData.list}>
           <ChartHeader
             loading={loadingNewCurve}
             rawNetWorth={data.rawNetWorth}
             rawChange={data.rawChange}
             changePercent={data.changePercent}
             isLoss={data.isLoss}
-            data={data.list}
+            data={combineCurveData.list}
             hideType={hideType}
             accountsLength={accountsLength}
+            toggleFoldMultiChart={toggleFoldMultiChart}
+            isFoldMultiChart={isFoldMultiChart}
           />
-          {isFoldMultiChart ? null : isOffline ||
-            isNoAssets ? null : !loading ? (
-            isInitialized ? (
-              <LineChart
-                height={114}
-                width={ScreenWidth - 72}
-                shape={d3Shape.curveCatmullRom}
-                style={styles.relative}>
-                <LineChart.Path
-                  showInactivePath={false}
-                  color={pathColor}
-                  width={2}>
-                  <LineChart.Gradient color={pathColor} />
-                </LineChart.Path>
-                <LineChart.CursorLine color={colors['neutral-line']} />
-                <LineChart.CursorCrosshair
-                  color={pathColor}
-                  outerSize={12}
-                  size={8}
-                />
-              </LineChart>
-            ) : (
-              <CurveLoader style={styles.loading} />
-            )
+          {isFoldMultiChart ? null : !isLoadingCurve ? (
+            <LineChart
+              height={114}
+              width={ScreenWidth - 72}
+              shape={d3Shape.curveCatmullRom}
+              style={styles.relative}>
+              <LineChart.Path
+                showInactivePath={false}
+                color={pathColor}
+                width={2}>
+                <LineChart.Gradient color={pathColor} />
+              </LineChart.Path>
+              <LineChart.CursorLine color={colors['neutral-line']} />
+              <LineChart.CursorCrosshair
+                color={pathColor}
+                outerSize={12}
+                size={8}
+              />
+            </LineChart>
           ) : (
             <CurveLoader style={styles.loading} />
           )}
@@ -126,6 +142,8 @@ interface IHeaderProps {
   hideType: BALANCE_HIDE_TYPE;
   loading: boolean;
   accountsLength?: number;
+  toggleFoldMultiChart: () => void;
+  isFoldMultiChart: boolean;
 }
 export const ChartHeader = ({
   rawNetWorth,
@@ -136,12 +154,12 @@ export const ChartHeader = ({
   data: _data,
   loading,
   accountsLength,
+  toggleFoldMultiChart,
+  isFoldMultiChart,
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
-  const [isInitialized, setIsInitialized] = useState(false);
   const { currency, formatCurrentCurrency } = useCurrency();
-  const [isFoldMultiChart, setIsFoldMultiChart] = useAtom(foldMultiChartAtom);
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(rawNetWorth, { currency });
   }, [rawNetWorth, currency]);
@@ -161,24 +179,7 @@ export const ChartHeader = ({
     );
   }, [_data, currency, formatCurrentCurrency]);
 
-  useEffect(() => {
-    // 延迟初始化动画计算
-    const timer = setTimeout(() => {
-      setIsInitialized(true);
-    }, 150);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, []);
   const percentChange = useDerivedValue(() => {
-    // 如果还没初始化，返回默认值避免计算
-    if (!isInitialized) {
-      return `${isLoss ? '-' : '+'}${changePercent}(${
-        isLoss ? '-' : '+'
-      }${change})`;
-    }
-
     const isActiveIndexData =
       data?.[currentIndex?.value]?.changePercent !== undefined;
     const formatChangeValue = isActiveIndexData
@@ -193,29 +194,19 @@ export const ChartHeader = ({
     return `${formatLoss ? '-' : '+'}${formatChangePercent}(${
       formatLoss ? '-' : '+'
     }${formatChangeValue})`;
-  }, [data, currentIndex.value, change, changePercent, isLoss, isInitialized]);
+  }, [data, currentIndex.value, change, changePercent, isLoss]);
 
   const dateTime = useDerivedValue(() => {
-    // 如果还没初始化，返回默认值
-    if (!isInitialized) {
-      return '24h';
-    }
-
     return (
       (data?.[currentIndex?.value]?.netWorth
         ? data?.[currentIndex?.value]?.clockTimeString
         : '24h') || '24h'
     );
-  }, [data, currentIndex, netWorth, isInitialized]);
+  }, [data, currentIndex, netWorth]);
 
   const formatNetWorth = useDerivedValue(() => {
-    // 如果还没初始化，返回默认值
-    if (!isInitialized) {
-      return netWorth;
-    }
-
     return data?.[currentIndex?.value]?.netWorth || netWorth;
-  }, [data, currentIndex, netWorth, isInitialized]);
+  }, [data, currentIndex, netWorth]);
 
   const lossStyleProps = useAnimatedStyle(() => {
     if (hideType === 'HIDE') {
@@ -225,15 +216,6 @@ export const ChartHeader = ({
         color: colors2024['neutral-body'],
       };
     }
-    // 如果还没初始化，使用默认样式
-    if (!isInitialized) {
-      return {
-        ...styles.changePercent,
-        display: 'flex',
-        color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
-      };
-    }
-
     if (data?.[currentIndex?.value]) {
       return {
         ...styles.changePercent,
@@ -248,7 +230,7 @@ export const ChartHeader = ({
       display: 'flex',
       color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
     };
-  }, [isLoss, data, currentIndex, colors2024, styles, isInitialized, hideType]);
+  }, [isLoss, data, currentIndex, colors2024, styles, hideType]);
 
   const netWorthAnimatedProps = useAnimatedProps(() => {
     return {
@@ -272,10 +254,6 @@ export const ChartHeader = ({
     let strokeColor: string;
     if (hideType === 'HIDE') {
       strokeColor = colors2024['neutral-body'];
-    } else if (!isInitialized) {
-      strokeColor = isLoss
-        ? colors2024['red-default']
-        : colors2024['green-default'];
     } else if (data?.[currentIndex?.value]) {
       strokeColor = data?.[currentIndex.value]?.isLoss
         ? colors2024['red-default']
@@ -288,7 +266,7 @@ export const ChartHeader = ({
     return {
       stroke: strokeColor,
     };
-  }, [isLoss, data, currentIndex, colors2024, isInitialized, hideType]);
+  }, [isLoss, data, currentIndex, colors2024, hideType]);
 
   return (
     <View style={styles.charHeader}>
@@ -342,7 +320,7 @@ export const ChartHeader = ({
             hitSlop={50}
             onPress={e => {
               e.stopPropagation();
-              setIsFoldMultiChart(pre => !pre);
+              toggleFoldMultiChart();
             }}
             style={styles.percentChangeContainer}>
             <Svg
@@ -446,8 +424,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 13,
   },
   loading: {
-    width: ScreenWidth - 32,
-    paddingTop: 20,
+    width: ScreenWidth - 72,
+    height: 114,
     paddingHorizontal: 0,
   },
   relative: { position: 'relative' },
