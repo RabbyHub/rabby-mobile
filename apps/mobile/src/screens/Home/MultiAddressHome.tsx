@@ -323,6 +323,7 @@ function MultiAddressHome(): JSX.Element {
   const {
     balanceAccounts,
     balanceCacheAccounts,
+    loadBalanceFromApiStage,
     triggerUpdate,
     getTotalBalance,
   } = useAccountsBalance({
@@ -368,9 +369,9 @@ function MultiAddressHome(): JSX.Element {
       .map(account => account.address);
   }, [sortedAccounts]);
 
-  const unionAccounts = useMemo(() => {
-    return unionBy(sortedAccounts, account => account.address.toLowerCase());
-  }, [sortedAccounts]);
+  // const unionAccounts = useMemo(() => {
+  //   return unionBy(sortedAccounts, account => account.address.toLowerCase());
+  // }, [sortedAccounts]);
   const [hasOpenCopyTrading, setHasOpenCopyTrading] = useState(true);
 
   // 初始化gift资格检查
@@ -858,6 +859,7 @@ function MultiAddressHome(): JSX.Element {
           }>
           <MultiAddressHomeHeader
             data={combineData}
+            loadBalanceFromApiStage={loadBalanceFromApiStage}
             loading={loading}
             loadingNewCurve={loadingNewCurve}
             onRefresh={onRefresh}

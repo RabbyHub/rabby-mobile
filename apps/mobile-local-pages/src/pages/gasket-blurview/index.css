@@ -4,19 +4,15 @@
   --border-width: var(--app-border-width, 2px);
   --radius: var(--app-border-radius, 21px);
   --animation-ms: var(--app-animation-ms, 2500);
-  --animation-ms-ios: var(--app-animation-ms-ios, 2000);
 
   --rect-width: var(--app-rect-width, 330px);
   --rect-height: var(--app-rect-height, 240px);
-
-  --animation-color: var(--app-animation-color, rgba(88, 198, 105, 0.6));
-}
-html[data-os='ios'] {
-  --animation-ms: var(--animation-ms-ios);
+  --animation-color-rgb: var(--app-animation-color-rgb, 88, 198, 105);
+  --animation-color: rgba(var(--animation-color-rgb), 0.6);
 }
 
 html[data-theme='dark'] {
-  --animation-color: rgba(88, 198, 105, 0.4);
+  --animation-color: rgba(var(--animation-color-rgb), 0.4);
 }
 
 html,
@@ -79,11 +75,11 @@ body.loading .gradient-border .glow::after {
   /* Gradient */
   background-image: conic-gradient(
     from var(--angle) at 50% 50%,
-    rgba(88, 198, 105, 0) 0deg,
-    rgba(88, 198, 105, 0) 90deg,
+    rgba(var(--animation-color-rgb), 0) 0deg,
+    rgba(var(--animation-color-rgb), 0) 90deg,
     var(--animation-color) 180deg,
-    rgba(88, 198, 105, 0) 270deg,
-    rgba(88, 198, 105, 0) 360deg
+    rgba(var(--animation-color-rgb), 0) 270deg,
+    rgba(var(--animation-color-rgb), 0) 360deg
   );
   background-origin: border-box;
   /* Use the difference boolean of content-box and border-box to calculate a border mask */
@@ -122,11 +118,11 @@ body.loading .gradient-border .glow::after {
   border-radius: inherit;
   background-image: conic-gradient(
     from var(--angle) at 50% 50%,
-    rgba(88, 198, 105, 0) 0deg,
+    rgba(var(--animation-color-rgb), 0) 0deg,
     transparent 90deg,
     transparent 180deg,
     transparent 270deg,
-    rgba(88, 198, 105, 0) 360deg
+    rgba(var(--animation-color-rgb), 0) 360deg
   );
   background-origin: border-box;
   -webkit-mask: linear-gradient(black, black), linear-gradient(black, black);
