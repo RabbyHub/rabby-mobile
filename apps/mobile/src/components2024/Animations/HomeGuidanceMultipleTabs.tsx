@@ -359,7 +359,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   // }, [panActivated, isomorphicCloseAnim]);
 
   if (!secondaryIndicatorAbsLayout) return null;
-  // if (!debouncedVisible) return null;
+  if (IS_IOS && !debouncedVisible) return null;
 
   return (
     // <GestureDetector gesture={panRightToLeftGesture} />
