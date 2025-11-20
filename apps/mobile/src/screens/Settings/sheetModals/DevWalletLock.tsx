@@ -6,7 +6,6 @@ import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
@@ -20,9 +19,8 @@ import { useManagePasswordOnSettings } from '@/screens/ManagePassword/hooks';
 import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';
 import { LastUnlockTimeLabel } from '../components/LockAbout';
 import { APP_FEATURE_SWITCH } from '@/constant';
-import { apisKeychain, apisLock } from '@/core/apis';
-import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { keyringService } from '@/core/services/shared';
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 
 const walletLockTestItemModalVisibleAtom = atom(false);
 export function useWalletLockTestItemModalVisible() {
@@ -34,6 +32,8 @@ export function useWalletLockTestItemModalVisible() {
     setWalletTestItemModalVisible,
   };
 }
+
+const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'neutral-body');
 
 export default function WalletLockTestItemModal({
   onCancel,
@@ -105,7 +105,7 @@ export default function WalletLockTestItemModal({
       },
       {
         label: 'Check unencryptedKeyringData',
-        icon: <RcIconCheckmarkCC style={styles.labelIcon} />,
+        icon: <RcIconCheckmark style={styles.labelIcon} />,
         onPress: async () => {
           const keyringData =
             await keyringService.DEV_GET_UNENCRYPTED_KEYRING_DATA();
