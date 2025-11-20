@@ -283,7 +283,7 @@ export function BrowserSearch({
           onBlur={handleBlur}
           onSubmitEditing={handleSubmitEditing}
           enterKeyHint="done"
-          autoFocus
+          // autoFocus
           placeholder={t('page.browser.BrowserSearch.placeholder')}
           alwaysShowCancel
           style={styles.searchBar}
