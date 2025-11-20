@@ -13,12 +13,15 @@ import { RightArea } from './SingleHomeRightArea';
 import { BottomBtns } from './components/BottomBtns';
 import { TopBg } from './components/BgComponents';
 import { useBgSize } from './hooks/useBgSize';
+import { atom, useSetAtom } from 'jotai';
 
+export const foldChartAtom = atom(true);
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [isDecrease, setIsDecrease] = React.useState<boolean>(false);
   const [reachTop, setReachTop] = useState(false);
+  const setFoldChart = useSetAtom(foldChartAtom);
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const { topHeight } = useBgSize();
   const route =
@@ -67,6 +70,9 @@ function HomeScreen(): JSX.Element {
     renderHeaderTitle,
     setNavigationOptions,
   ]);
+  const handleTouchEnd = () => {
+    setFoldChart(true);
+  };
 
   return (
     <NormalScreenContainer2024
@@ -79,7 +85,7 @@ function HomeScreen(): JSX.Element {
         },
       ]}>
       <TopBg fadeAnim={fadeAnim} isDecrease={isDecrease} />
-      <View style={styles.safeView}>
+      <View style={styles.safeView} onTouchStart={handleTouchEnd}>
         <AssetContainer
           onRefresh={triggerUpdate}
           onUpdateIsDecrease={handleUpdateIsDecrease}
@@ -88,7 +94,7 @@ function HomeScreen(): JSX.Element {
           reachTop={reachTop}
         />
       </View>
-      <View style={styles.bottomContainer}>
+      <View style={styles.bottomContainer} onTouchStart={handleTouchEnd}>
         <BottomBtns currentAccount={currentAccount} />
       </View>
     </NormalScreenContainer2024>
