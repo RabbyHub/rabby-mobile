@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -32,7 +32,7 @@ import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
-import { reachTopStatusAtom, TabName } from './TabsMultiAssets';
+import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
 import {
   ListHeaderComponent,
   ListRenderFooter,
@@ -43,8 +43,6 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
-import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
-import { useSetAtom } from 'jotai';
 
 const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -62,7 +60,6 @@ export const TokenList = ({ chain, updateToken }: Props) => {
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
-  const setReachTop = useSetAtom(reachTopStatusAtom);
 
   const { currency } = useCurrency();
 
@@ -405,25 +402,6 @@ export const TokenList = ({ chain, updateToken }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
-  const scrollY = useCurrentTabScrollY();
-  const handleScroll = useCallback(
-    (currentScrollY: number) => {
-      if (currentScrollY <= 0) {
-        setReachTop(true);
-      } else {
-        setReachTop(false);
-      }
-    },
-    [setReachTop],
-  );
-
-  useAnimatedReaction(
-    () => scrollY.value,
-    currentScrollY => {
-      runOnJS(handleScroll)(currentScrollY);
-    },
-  );
-
   return (
     <Tabs.FlatList
       keyExtractor={getItemId}
@@ -464,8 +442,10 @@ export const TokenList = ({ chain, updateToken }: Props) => {
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
+    marginTop: TAB_HEADER_FULL_HEIGHT,
   },
   list: {
+    marginTop: -TAB_HEADER_FULL_HEIGHT,
     paddingHorizontal: 16,
   },
   bgContainer: {

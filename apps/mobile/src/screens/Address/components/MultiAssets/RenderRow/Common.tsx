@@ -2,7 +2,7 @@ import { View } from 'react-native';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 158;
-const HEADER_PADDING_HEIGHT = 16;
+const HEADER_PADDING_HEIGHT = 2;
 
 export const ListRenderSeparator = () => {
   return <View style={{ height: SPACING_HEIGHT }} />;

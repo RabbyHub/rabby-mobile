@@ -23,8 +23,7 @@ import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import { useAssets } from '@/screens/Search/useAssets';
 import { isTabsSwiping, useAccountInfo } from './hooks';
-import { foldMultiChartAtom } from './RenderRow/CurveChart';
-import { atom, useSetAtom } from 'jotai';
+import { NFTList } from './NFTList';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -36,7 +35,9 @@ export const icons = {
   unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
-export const reachTopStatusAtom = atom<boolean>(false);
+export const TAB_HEADER_FULL_HEIGHT = 94;
+export const TAB_HEADER_MIN_HEIGHT = 44;
+
 interface Props {
   onIndexChange(index: number): void;
   overViewContent: React.ReactNode;
@@ -69,10 +70,10 @@ export const TabsMultiAssets: React.FC<Props> = ({
     ChainListItem | undefined
   >();
 
-  const { chainsInfo, updateToken, updatePortfolio } = useChainInfo();
+  const { chainsInfo, updateToken, updatePortfolio, updateNft } =
+    useChainInfo();
   const { top10Addresses } = useAccountInfo();
   const { getCacheTop10Assets } = useAssets({ hideCombined: false });
-  const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
 
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
@@ -164,10 +165,10 @@ export const TabsMultiAssets: React.FC<Props> = ({
     const id = setTimeout(() => {
       getCacheTop10Assets({
         realTimeAddresses: top10Addresses,
-        disableNFT: true,
         core: true,
         maxTokenLength: 500,
-        maxDefiLength: 40,
+        maxDefiLength: 20,
+        maxNFTLength: 50,
       });
     }, 0);
     return () => {
@@ -183,16 +184,13 @@ export const TabsMultiAssets: React.FC<Props> = ({
       renderTabBar={renderTabBar}
       headerHeight={HeaderHeight}
       minHeaderHeight={HeaderHeight}
-      tabBarHeight={80}
-      containerStyle={styles.container}
+      tabBarHeight={74}
       pagerProps={{
-        onTouchEnd: () => {
-          setIsFoldMultiChart(true);
-        },
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
         },
       }}
+      containerStyle={styles.container}
       headerContainerStyle={styles.headerContainer}>
       <Tabs.Tab
         key={TabName.overview}
@@ -216,9 +214,9 @@ export const TabsMultiAssets: React.FC<Props> = ({
           updatePortfolio={updatePortfolio}
         />
       </Tabs.Tab>
-      {/*<Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
+      <Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
         <NFTList chain={selectChainItem?.chain} updateNft={updateNft} />
-      </Tabs.Tab>*/}
+      </Tabs.Tab>
     </Tabs.Container>
   );
 };
@@ -233,8 +231,5 @@ const getStyles = createGetStyles2024(() => ({
     shadowColor: 'transparent',
     shadowOpacity: 0,
     elevation: 0,
-  },
-  hidden: {
-    display: 'none',
   },
 }));

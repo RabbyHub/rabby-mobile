@@ -34,7 +34,7 @@ import {
 } from '@/screens/Home/hooks/nft';
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { Tabs } from 'react-native-collapsible-tab-view';
-import { TabName } from './TabsMultiAssets';
+import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
 import {
   ListHeaderComponent,
   ListRenderFooter,
@@ -370,9 +370,11 @@ export const NFTList = ({ chain, updateNft }: Props) => {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
+    marginTop: TAB_HEADER_FULL_HEIGHT,
   },
   list: {
     paddingHorizontal: 16,
+    marginTop: -TAB_HEADER_FULL_HEIGHT,
   },
   bgContainer: {
     paddingHorizontal: 16,

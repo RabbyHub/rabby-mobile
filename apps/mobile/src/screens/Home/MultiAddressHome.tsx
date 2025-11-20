@@ -114,11 +114,12 @@ import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import {
-  reachTopStatusAtom,
+  TAB_HEADER_MIN_HEIGHT,
   TabsMultiAssets,
 } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { useAtomValue } from 'jotai';
+import { useSetAtom } from 'jotai';
+import { foldMultiChartAtom } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -785,18 +786,16 @@ function MultiAddressHome(): JSX.Element {
   const handleIndexChange = useCallback((_index: number) => {
     setTabIndex(_index);
   }, []);
-  const reachTop = useAtomValue(reachTopStatusAtom);
+  const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
 
   return (
     <NormalScreenContainer2024
       type="linear"
       noHeader
       bgImageSource={
-        reachTop
-          ? combineData.isLoss
-            ? require('@/assets2024/singleHome/loss-home.png')
-            : require('@/assets2024/singleHome/up-home.png')
-          : undefined
+        combineData.isLoss
+          ? require('@/assets2024/singleHome/loss-home.png')
+          : require('@/assets2024/singleHome/up-home.png')
       }
       linearProp={{
         colors: isLight
@@ -808,7 +807,11 @@ function MultiAddressHome(): JSX.Element {
       }}
       overwriteStyle={styles.screenContainer}>
       <ScreenSpecificStatusBar screenName={RootNames.Home} />
-      <View style={[styles.paddingContainer]}>
+      <View
+        style={[styles.paddingContainer]}
+        onTouchStart={() => {
+          setIsFoldMultiChart(true);
+        }}>
         <TabsMultiAssets
           data={combineData}
           loading={loading}
@@ -865,7 +868,7 @@ function MultiAddressHome(): JSX.Element {
                 <TipFeedbackByScreenshot />
               </View>
 
-              <View style={[{ marginTop: 0 }, styles.grid]}>
+              <View style={styles.grid}>
                 <View style={styles.gridItemsWrap}>
                   {MENU_ARR.map((el, index) => {
                     return (
@@ -964,12 +967,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   scroll: {
     flex: 1,
-    marginTop: -46,
+    marginTop: TAB_HEADER_MIN_HEIGHT,
   },
   scrollContainer: {
     // paddingTop: 88,
     flexGrow: 1,
     minHeight: '100%',
+    marginTop: -54 - TAB_HEADER_MIN_HEIGHT,
   },
   menuHeader: {
     height: 30,
@@ -1082,6 +1086,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 0,
   },
   grid: {
+    marginTop: 0,
     // flexDirection: 'row',
     // flexWrap: 'wrap',
     // borderRadius: 8,

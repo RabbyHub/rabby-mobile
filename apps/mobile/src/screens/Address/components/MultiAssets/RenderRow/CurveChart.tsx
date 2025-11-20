@@ -24,6 +24,7 @@ import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from '../hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
+import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const ScreenWidth = Dimensions.get('screen').width;
@@ -89,7 +90,11 @@ function Chart({
   }, [setIsFoldMultiChart, isFoldMultiChart, refreshCurve]);
 
   return (
-    <View style={[styles.container]}>
+    <View
+      style={[styles.container]}
+      onTouchStart={e => {
+        e.stopPropagation();
+      }}>
       <View style={styles.chartContainer}>
         <LineChart.Provider data={combineCurveData.list}>
           <ChartHeader
@@ -251,20 +256,8 @@ export const ChartHeader = ({
   }, [dateTime.value, hideType]);
 
   const arrowStrokeProps = useAnimatedProps(() => {
-    let strokeColor: string;
-    if (hideType === 'HIDE') {
-      strokeColor = colors2024['neutral-body'];
-    } else if (data?.[currentIndex?.value]) {
-      strokeColor = data?.[currentIndex.value]?.isLoss
-        ? colors2024['red-default']
-        : colors2024['green-default'];
-    } else {
-      strokeColor = isLoss
-        ? colors2024['red-default']
-        : colors2024['green-default'];
-    }
     return {
-      stroke: strokeColor,
+      stroke: colors2024['neutral-secondary'],
     };
   }, [isLoss, data, currentIndex, colors2024, hideType]);
 
@@ -288,11 +281,13 @@ export const ChartHeader = ({
           />
         )}
         <View style={[styles.accountBg]}>
-          <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
+          <RcIconSmallWalletCC
+            color={ThemeColors2024.dark['neutral-title-1']}
+          />
           <Text style={styles.accountText}>
             {accountsLength && accountsLength >= 10 ? '10' : accountsLength}
           </Text>
-          <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
+          <RcIconSmallArrowCC color={ThemeColors2024.dark['neutral-title-1']} />
         </View>
       </View>
       {loading ? (
@@ -318,13 +313,8 @@ export const ChartHeader = ({
           />
           <Pressable
             hitSlop={50}
-            onTouchEnd={e => {
-              e.stopPropagation();
-              e.preventDefault();
-            }}
             onPress={e => {
               e.stopPropagation();
-              e.preventDefault();
               toggleFoldMultiChart();
             }}
             style={styles.percentChangeContainer}>
@@ -389,7 +379,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   changeSection: {
     flexDirection: 'row',
     gap: 2,
-    marginTop: 4,
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
@@ -454,7 +443,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 8,
     paddingLeft: 11,
     borderRadius: 10,
-    backgroundColor: colors2024['neutral-line'],
+    backgroundColor: isLight ? '#000000' : colors2024['brand-default'],
     shadowColor: colors2024['brand-light-1'],
     shadowOffset: { width: 0, height: 9.411 },
     shadowOpacity: 0.1,
@@ -472,7 +461,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'left',
-    color: colors2024['neutral-title-1'],
+    color: ThemeColors2024.dark['neutral-title-1'],
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
     paddingLeft: 6,

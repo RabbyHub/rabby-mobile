@@ -34,8 +34,6 @@ import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import { reachTopStatusAtom } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
-import { useAtomValue } from 'jotai';
 
 export const HeaderHeight = 24;
 
@@ -51,7 +49,6 @@ export function TabsTopHeader(
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { remoteVersion } = useUpgradeInfo();
-  const reachTop = useAtomValue(reachTopStatusAtom);
 
   const [hideType, setHideType] = useHideBalance();
   const handleHideTypeChange = useMemoizedFn(() => {
@@ -112,7 +109,7 @@ export function TabsTopHeader(
   }, [data.isLoss, loading, previousLoading]);
 
   return (
-    <View style={[styles.headerBox, !reachTop && styles.headerBgBox]}>
+    <View style={styles.headerBox}>
       {showNetWorth ? (
         <View style={styles.leftBox}>
           <Text style={styles.balanceTextBox}>{netWorth}</Text>
@@ -217,9 +214,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // flex: 1,
     // backgroundColor: colors2024['neutral-title-1'],
   },
-  headerBgBox: {
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
   leftBox: {
     height: HeaderHeight,
     flexDirection: 'row',
@@ -261,7 +255,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 6,
+    paddingLeft: 12,
     paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
     position: 'relative',
   },

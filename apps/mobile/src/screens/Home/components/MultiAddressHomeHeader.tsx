@@ -230,7 +230,11 @@ export function MultiAddressHomeHeader(
             }
           }}>
           <Card
-            style={[styles.curveCard, styles.shadowView]}
+            style={[
+              styles.curveCard,
+              styles.shadowView,
+              !addressListData.length && styles.noAddressCard,
+            ]}
             onPress={() => {
               handleWalletsListPress();
             }}>
@@ -296,7 +300,7 @@ export function MultiAddressHomeHeader(
 }
 
 const SIZES = {
-  cardLayoutPaddingHorizontal: 15 /* ITEM_LAYOUT_PADDING_HORIZONTAL */,
+  cardLayoutPaddingHorizontal: 12 /* ITEM_LAYOUT_PADDING_HORIZONTAL */,
   cardContentRadius: 20,
 };
 
@@ -429,7 +433,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     // justifyContent: 'space-between',
 
     borderRadius: 20,
-    paddingVertical: 24,
+    paddingTop: 20,
+    paddingBottom: 12,
     paddingHorizontal: 0,
     borderWidth: 0,
     borderColor: isLight
@@ -438,6 +443,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: 'transparent',
 
     position: 'relative',
+  },
+  noAddressCard: {
+    paddingBottom: 20,
   },
   curveCardInner: {
     flexDirection: 'row',
@@ -523,8 +531,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     gap: 8,
     width: '100%',
-    marginTop: 28,
-    paddingHorizontal: 14,
+    marginTop: 20,
+    paddingHorizontal: 8,
   },
 
   balanceOpacity: {

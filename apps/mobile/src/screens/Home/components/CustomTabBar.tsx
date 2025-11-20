@@ -1,8 +1,7 @@
-import { Dimensions, View, ViewProps } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import {
   MaterialTabBar,
   MaterialTabItem,
-  useFocusedTab,
 } from 'react-native-collapsible-tab-view';
 
 import React, { useCallback, useLayoutEffect } from 'react';
@@ -19,11 +18,6 @@ import {
   HOME_TABBAR_SIZES,
   useMeasureLayoutForHomeGuidanceMultipleTabs,
 } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import {
-  reachTopStatusAtom,
-  TabName,
-} from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
-import { useAtomValue } from 'jotai';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -51,7 +45,6 @@ const Indicator = ({
 }: IndicatorProps) => {
   const { styles } = useTheme2024({ getStyle: indicatorStyles });
   const opacity = useSharedValue(fadeIn ? 0 : 1);
-  const reachTop = useAtomValue(reachTopStatusAtom);
 
   const stylez = useAnimatedStyle(() => {
     const firstItemX = itemsLayout[0]?.x ?? 0;
@@ -97,8 +90,7 @@ const Indicator = ({
   }, [handleMeasureSecondaryIndicator]);
 
   return (
-    <View
-      style={[styles.indicatorContainer, !reachTop && styles.indicatorBgBox]}>
+    <View style={styles.indicatorContainer}>
       <Animated.View style={[stylez, styles.indicator, style]} />
       <View style={styles.leftBackground} />
       <View ref={secondaryIndicatorViewRef} style={styles.rightBackground} />
@@ -106,26 +98,28 @@ const Indicator = ({
   );
 };
 
+const indicatorMarginTop = 14;
+const indicatorHeight = 6;
 const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   indicator: {
     height: 6,
     backgroundColor: isLight ? 'rgba(0, 0, 0, 1)' : colors2024['brand-default'],
     position: 'absolute',
     borderRadius: 12,
-    top: 26,
+    top: indicatorMarginTop,
     zIndex: 99,
   },
   indicatorContainer: {
     position: 'relative',
-    paddingTop: 26,
-    height: 26 + 6,
+    paddingTop: indicatorMarginTop,
+    height: indicatorMarginTop + indicatorHeight,
   },
   indicatorBgBox: {
     backgroundColor: colors2024['neutral-bg-1'],
   },
   leftBackground: {
     position: 'absolute',
-    top: 26,
+    top: indicatorMarginTop,
     left: 20,
     width: (screenWidth - 52) / 2,
     height: 6,
@@ -136,7 +130,7 @@ const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   rightBackground: {
     position: 'absolute',
     right: 20,
-    top: 26,
+    top: indicatorMarginTop,
     width: (screenWidth - 52) / 2,
     height: 6,
     borderRadius: 12,
@@ -180,8 +174,6 @@ export const HomeCustomMaterialTabBar = (_props: {
     secondaryIndicatorViewRef,
     measureSecondaryIndicator,
   } = useMeasureLayoutForHomeGuidanceMultipleTabs();
-  const focusedTab = useFocusedTab();
-  const reachTop = useAtomValue(reachTopStatusAtom);
 
   return (
     <View
@@ -217,14 +209,7 @@ export const HomeCustomMaterialTabBar = (_props: {
           measureSecondaryIndicator();
         }}
       />
-      <Animated.View
-        style={[
-          styles.portfolioContainer,
-          stylez,
-          !reachTop &&
-            focusedTab !== TabName.overview &&
-            styles.portfolioContainerBgBox,
-        ]}>
+      <Animated.View style={[styles.portfolioContainer, stylez]}>
         <MaterialTabBar
           {...props}
           scrollEnabled={false}
@@ -243,10 +228,6 @@ export const HomeCustomMaterialTabBar = (_props: {
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
-    color: colors2024['red-default'],
-  },
-  containerBgBox: {
-    backgroundColor: colors2024['neutral-bg-1'],
   },
   hideInnerIndicator: {
     height: 0,
@@ -267,7 +248,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   portfolioContainer: {
     paddingHorizontal: HOME_TABBAR_SIZES.portfolioContainerPx,
-    paddingTop: 12,
+    paddingTop: 2,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',

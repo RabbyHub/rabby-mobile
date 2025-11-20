@@ -14,7 +14,7 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useLoadMoreData from './hooks/useLoadMoreData';
-import { TabName } from './TabsMultiAssets';
+import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
 import {
   ListHeaderComponent,
   ListRenderFooter as ListRenderFooterComponent,
@@ -220,9 +220,11 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
+    marginTop: TAB_HEADER_FULL_HEIGHT,
   },
   list: {
     paddingHorizontal: 16,
+    marginTop: -TAB_HEADER_FULL_HEIGHT,
   },
   bgContainer: {
     paddingHorizontal: 16,
