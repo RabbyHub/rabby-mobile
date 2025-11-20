@@ -302,7 +302,7 @@
         "ReceivedGas": "ได้รับ Gas",
         "LendingBorrow": "ยืม",
         "LendingWithdraw": "ถอนเงิน",
-        "LendingSupply": "อุปทาน",
+        "LendingSupply": "ปล่อยกู้",
         "LendingRepay": "ชำระคืน"
       },
       "detail": {
@@ -2832,7 +2832,7 @@
         "headers": {
           "myBorrows": "การยืมของฉัน",
           "apy": "APY",
-          "mySupplies": "วัสดุของฉัน",
+          "mySupplies": "ปล่อยกู้ของฉัน",
           "token": "โทเค็น",
           "token_balance": "Token/Balance",
           "token_tvl": "โทเค็น/TVL"
@@ -2857,7 +2857,7 @@
       },
       "supplyDetail": {
         "supplyAPY": "อัตราดอกเบี้ย APY",
-        "actions": "อุปทาน",
+        "actions": "ปล่อยกู้",
         "approveAndSupply": "อนุมัติและจัดหา",
         "availableToBorrow": "สามารถยืมได้"
       },
@@ -2921,6 +2921,7 @@
       },
       "gotIt": "ได้เลย",
       "market": "ตลาด",
+      "marketSlot": "ตลาด {{market}}",
       "submitted": "ส่งแล้ว",
       "selectChain": "เลือกเครือข่าย",
       "borrowed": "ยืม",

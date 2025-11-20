@@ -2587,6 +2587,7 @@
       "apy": "APY",
       "gotIt": "Got it",
       "market": "Market",
+      "marketSlot": "{{market}} Market",
       "submitted": "submitted",
       "netWorth": "Net worth",
       "supplied": "Supplied",
