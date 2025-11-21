@@ -98,8 +98,7 @@ function Chart({
       <View
         style={[
           styles.chartContainer,
-          (hideType === 'HALF_HIDE' || hideType === 'HIDE') &&
-            styles.balanceOpacity,
+          hideType === 'HALF_HIDE' && styles.balanceOpacity,
         ]}>
         <LineChart.Provider data={combineCurveData.list}>
           <ChartHeader
@@ -119,7 +118,11 @@ function Chart({
               height={114}
               width={ScreenWidth - 72}
               shape={d3Shape.curveCatmullRom}
-              style={styles.relative}>
+              style={[
+                styles.relative,
+                (hideType === 'HIDE' || hideType === 'HALF_HIDE') &&
+                  styles.balanceOpacity,
+              ]}>
               <LineChart.Path
                 showInactivePath={false}
                 color={pathColor}
@@ -190,6 +193,9 @@ export const ChartHeader = ({
   }, [_data, currency, formatCurrentCurrency]);
 
   const percentChange = useDerivedValue(() => {
+    if (hideType === 'HIDE') {
+      return '***';
+    }
     const isActiveIndexData =
       data?.[currentIndex?.value]?.changePercent !== undefined;
     const formatChangeValue = isActiveIndexData
@@ -204,7 +210,7 @@ export const ChartHeader = ({
     return `${formatLoss ? '-' : '+'}${formatChangePercent}(${
       formatLoss ? '-' : '+'
     }${formatChangeValue})`;
-  }, [data, currentIndex.value, change, changePercent, isLoss]);
+  }, [data, currentIndex.value, change, changePercent, isLoss, hideType]);
 
   const dateTime = useDerivedValue(() => {
     return (
@@ -215,10 +221,12 @@ export const ChartHeader = ({
   }, [data, currentIndex, netWorth]);
 
   const formatNetWorth = useDerivedValue(() => {
-    return isFoldMultiChart
+    return hideType === 'HIDE'
+      ? '******'
+      : isFoldMultiChart
       ? netWorth
       : data?.[currentIndex?.value]?.netWorth || netWorth;
-  }, [data, currentIndex, netWorth, isFoldMultiChart]);
+  }, [data, currentIndex, netWorth, isFoldMultiChart, hideType]);
 
   const lossStyleProps = useAnimatedStyle(() => {
     if (hideType === 'HIDE') {
@@ -248,13 +256,13 @@ export const ChartHeader = ({
     return {
       text: formatNetWorth.value,
     };
-  }, [formatNetWorth.value]);
+  });
 
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
       text: percentChange.value,
     };
-  }, [percentChange.value]);
+  });
 
   const dateTimeAnimatedProps = useAnimatedProps(() => {
     return {
@@ -310,7 +318,11 @@ export const ChartHeader = ({
           LinearGradientComponent={LoadingLinear}
         />
       ) : (
-        <View
+        <Pressable
+          onPress={e => {
+            e.stopPropagation();
+            toggleFoldMultiChart();
+          }}
           style={[
             styles.changeSection,
             hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
@@ -329,13 +341,7 @@ export const ChartHeader = ({
               />
             </>
           )}
-          <Pressable
-            hitSlop={50}
-            onPress={e => {
-              e.stopPropagation();
-              toggleFoldMultiChart();
-            }}
-            style={styles.percentChangeContainer}>
+          <View style={styles.percentChangeContainer}>
             <Svg
               style={{
                 transform: isFoldMultiChart
@@ -354,8 +360,8 @@ export const ChartHeader = ({
                 animatedProps={arrowStrokeProps}
               />
             </Svg>
-          </Pressable>
-        </View>
+          </View>
+        </Pressable>
       )}
     </View>
   );
