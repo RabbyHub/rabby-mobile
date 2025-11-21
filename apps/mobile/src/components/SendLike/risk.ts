@@ -64,7 +64,6 @@ export const useRisks = (options: {
   }, [fromAddress, top10Addresses]);
 
   const fetchRisks = useCallback(async () => {
-    console.debug('[feat] caredAddresses for risk check:', caredAddresses);
     if (!caredAddresses.length || !toAddress) return;
     if (riskGetRef.current) return;
     riskGetRef.current = true;
@@ -155,8 +154,6 @@ export const useRisks = (options: {
         Promise.all([addressDescPromise, checkTransferPromise]),
         timeoutPromise,
       ]);
-
-      console.debug('[feat] addressSent', addressSent);
 
       if (!addressSent) {
         setRisks([
