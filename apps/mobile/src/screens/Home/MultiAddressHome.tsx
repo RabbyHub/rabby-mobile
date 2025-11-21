@@ -960,7 +960,16 @@ function MultiAddressHome(): JSX.Element {
           </View>
         </ScrollView>
 
-        <View style={styles.globalSearchBar}>
+        <View
+          style={[
+            styles.globalSearchBar,
+            {
+              bottom: Platform.select({
+                ios: 22,
+                android: Math.max(22, bottom),
+              }),
+            },
+          ]}>
           <GlobalSearchBar />
         </View>
       </View>
