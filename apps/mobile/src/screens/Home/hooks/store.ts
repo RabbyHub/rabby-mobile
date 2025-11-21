@@ -1,4 +1,3 @@
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { atom, useAtom } from 'jotai';
 
@@ -6,7 +5,6 @@ import { formatNetworth } from '@/utils/math';
 import {
   AbstractPortfolioToken,
   AbstractProject,
-  ActionHeaderItem,
   DisplayNftItem,
 } from '../types';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
@@ -46,20 +44,10 @@ type OriginalCombineDefiItem = AbstractProject & {
 };
 export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'>;
 
-type OriginalCombineNFTItem = NFTItem & {
+type OriginalCombineNFTItem = DisplayNftItem & {
   address?: string;
 };
 export type CombineNFTItem = OriginalCombineNFTItem;
-
-type ICombineItem = {
-  type: string;
-  data?:
-    | ActionHeaderItem
-    | OriginalCombineTokensItem
-    | OriginalCombineDefiItem
-    | AbstractPortfolioToken
-    | OriginalCombineNFTItem;
-};
 
 export interface IAssets {
   portfolios?: DisplayedProject[];
@@ -307,7 +295,7 @@ export const useAssetsMap = ({
     [setAssetsMap],
   );
   const updateNFTs = useCallback(
-    ({ address, newNFTs }: { address: string; newNFTs: NFTItem[] }) => {
+    ({ address, newNFTs }: { address: string; newNFTs: DisplayNftItem[] }) => {
       const lowerAddress = address.toLowerCase();
       setAssetsMap(pre => {
         const currentAssets = pre[lowerAddress] || {};
@@ -427,7 +415,7 @@ export const useAssetsMap = ({
       return top10NftsCache;
     }
     const nfts = combinedNfts(assetsMap, top10Addresses);
-    top10NftsCache = nfts?.filter(item => item.is_core).slice(0, 50) || [];
+    top10NftsCache = nfts?.filter(item => !item._isFold).slice(0, 50) || [];
     return nfts;
   }, [assetsMap, hideCombined, top10Addresses]);
 

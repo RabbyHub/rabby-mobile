@@ -454,6 +454,7 @@ const getStyles = createGetStyles2024(() => ({
   tokenSectionHeader: {
     paddingLeft: 0,
     paddingRight: 0,
+    backgroundColor: 'transparent',
   },
   emptyAssets: {
     marginHorizontal: 0,

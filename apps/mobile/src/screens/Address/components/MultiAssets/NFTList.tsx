@@ -93,7 +93,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
 
   const foldNftList: ActionItem[] = useMemo(
     () =>
-      collectionNftList(nftList.filter(i => !i.is_core)).map(item => ({
+      collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
         type: 'fold_nft',
         data: item,
       })),
@@ -101,7 +101,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
   );
   const unFoldNftList: ActionItem[] = useMemo(
     () =>
-      collectionNftList(nftList.filter(i => i.is_core)).map(item => ({
+      collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
         type: 'unfold_nft',
         data: item,
       })),
@@ -230,6 +230,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
         const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.COLLECTION_NFTS,
           data: item,
+          account: currentAccount,
           bottomSheetModalProps: {
             // enableContentPanningGesture: true,
             enablePanDownToClose: true,
@@ -275,9 +276,10 @@ export const NFTList = ({ chain, updateNft }: Props) => {
                   !isLight && styles.bg2,
                 ])}
                 menuActions={getNftMenuAction(data)}
-                logoSize={46}
-                chainLogoSize={18}
+                logoSize={40}
+                chainLogoSize={16}
                 item={data}
+                account={getAccountByAddress(data.address)}
                 onPress={() => handlePressNft(data)}
               />
             </View>
@@ -312,6 +314,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     [
       foldNft,
       foldNftList.length,
+      getAccountByAddress,
       getNftMenuAction,
       handlePressNft,
       isLight,
@@ -388,9 +391,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-secondary'],
     paddingLeft: 0,
     paddingRight: 0,
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
+    backgroundColor: 'transparent',
   },
   emptyAssets: {
     marginHorizontal: 0,
