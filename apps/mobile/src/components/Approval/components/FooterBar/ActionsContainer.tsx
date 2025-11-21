@@ -63,6 +63,10 @@ export interface Props {
   loading?: boolean;
 }
 
+export interface PropsWithAuthSession extends Props {
+  USE_LAST_UNLOCKED_AUTH?: boolean;
+}
+
 export const ActionsContainer: React.FC<
   Pick<Props, 'onCancel' | 'children' | 'isMiniSignTx'>
 > = ({ children, onCancel, isMiniSignTx }) => {

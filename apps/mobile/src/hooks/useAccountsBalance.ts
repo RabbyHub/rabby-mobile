@@ -30,6 +30,7 @@ export const balanceAtom = atom<balanceAccountType[]>([]);
 const balanceCacheAtom = atom<balanceAccountType[]>([]);
 const lengthAtom = atom<number>(0);
 
+export type LoadBalanceStage = 'idle' | 'loading' | 'finished';
 export default function useAccountsBalance(opts?: {
   cacheTime?: number;
   accountsNoUnique?: boolean;
@@ -39,7 +40,10 @@ export default function useAccountsBalance(opts?: {
   const [balanceCacheAccounts, setBalanceCacheAccounts] =
     useAtom(balanceCacheAtom);
   const [accountsLength, setAccountsLength] = useAtom(lengthAtom);
-  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [{ balanceLoading, loadBalanceFromApiStage }, setLoading] = useState({
+    balanceLoading: false,
+    loadBalanceFromApiStage: 'idle' as LoadBalanceStage,
+  });
   const lastTimeStamps = useRef<number>(0);
 
   const isNeedFetchData = useMemoizedFn(() => {
@@ -58,7 +62,7 @@ export default function useAccountsBalance(opts?: {
           console.log('fetchTotalBalance  loading return');
           return;
         }
-        setBalanceLoading(true);
+        setLoading(prev => ({ ...prev, balanceLoading: true }));
         // batch update
         const cacheBalancesArr = [] as balanceAccountType[];
 
@@ -96,6 +100,7 @@ export default function useAccountsBalance(opts?: {
         setBalanceAccounts(cacheBalancesArr);
 
         if (fetchType === 'from_api') {
+          setLoading(prev => ({ ...prev, loadBalanceFromApiStage: 'loading' }));
           const queueBalanceArr = [] as balanceAccountType[];
           // get from server api by queue
           const queue = new PQueue({
@@ -138,11 +143,19 @@ export default function useAccountsBalance(opts?: {
           }
           await waitQueueFinished(queue);
           setBalanceAccounts(queueBalanceArr);
+          setLoading(prev => ({
+            ...prev,
+            loadBalanceFromApiStage: 'finished',
+          }));
         }
       } catch (e) {
         console.error('fetchTotalBalance  error', e);
       } finally {
-        setBalanceLoading(false);
+        setLoading(prev => ({
+          ...prev,
+          balanceLoading: false,
+          loadBalanceFromApiStage: 'idle',
+        }));
       }
     },
   );
@@ -163,10 +176,10 @@ export default function useAccountsBalance(opts?: {
   });
 
   const getTotalBalance = useCallback(
-    (addres: string[]) => {
+    (addresses: string[]) => {
       let total = 0;
       let totalEvm = 0;
-      addres.forEach(address => {
+      addresses.forEach(address => {
         const account = balanceAccounts.find(item =>
           isSameAddress(item.address, address.toLowerCase()),
         );
@@ -184,6 +197,7 @@ export default function useAccountsBalance(opts?: {
     accountsLength, // maybe has some same address with other type
     triggerUpdate,
     balanceLoading,
+    loadBalanceFromApiStage,
     getTotalBalance,
   };
 }

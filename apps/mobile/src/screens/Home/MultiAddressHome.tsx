@@ -113,6 +113,7 @@ import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -323,6 +324,7 @@ function MultiAddressHome(): JSX.Element {
   const {
     balanceAccounts,
     balanceCacheAccounts,
+    loadBalanceFromApiStage,
     triggerUpdate,
     getTotalBalance,
   } = useAccountsBalance({
@@ -368,9 +370,9 @@ function MultiAddressHome(): JSX.Element {
       .map(account => account.address);
   }, [sortedAccounts]);
 
-  const unionAccounts = useMemo(() => {
-    return unionBy(sortedAccounts, account => account.address.toLowerCase());
-  }, [sortedAccounts]);
+  // const unionAccounts = useMemo(() => {
+  //   return unionBy(sortedAccounts, account => account.address.toLowerCase());
+  // }, [sortedAccounts]);
   const [hasOpenCopyTrading, setHasOpenCopyTrading] = useState(true);
 
   // 初始化gift资格检查
@@ -734,6 +736,9 @@ function MultiAddressHome(): JSX.Element {
       if (el.key === MultiHomeFeatTitle.Dapps) {
         return <DappsBadge />;
       }
+      if (el.key === MultiHomeFeatTitle.GasAccount) {
+        return <GasAccountBadge />;
+      }
 
       return (
         <>
@@ -858,6 +863,7 @@ function MultiAddressHome(): JSX.Element {
           }>
           <MultiAddressHomeHeader
             data={combineData}
+            loadBalanceFromApiStage={loadBalanceFromApiStage}
             loading={loading}
             loadingNewCurve={loadingNewCurve}
             onRefresh={onRefresh}
@@ -960,7 +966,16 @@ function MultiAddressHome(): JSX.Element {
           </View>
         </ScrollView>
 
-        <View style={styles.globalSearchBar}>
+        <View
+          style={[
+            styles.globalSearchBar,
+            {
+              bottom: Platform.select({
+                ios: 22,
+                android: Math.max(22, bottom),
+              }),
+            },
+          ]}>
           <GlobalSearchBar />
         </View>
       </View>

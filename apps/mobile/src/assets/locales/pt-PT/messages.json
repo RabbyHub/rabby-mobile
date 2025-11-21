@@ -111,9 +111,9 @@
     },
     "ReserveGasPopup": {
       "doNotReserve": "Não reserve Gas",
-      "fast": "Rápido",
-      "instant": "Instantâneo",
-      "normal": "Normal",
+      "fast": "",
+      "instant": "",
+      "normal": "",
       "title": "Reservar Gas"
     },
     "AuthenticationModals": {
@@ -948,9 +948,9 @@
         "level": {
           "$unknown": "Desconhecido",
           "custom": "Personalizado",
-          "normal": "Rápido",
-          "slow": "Normal",
-          "fast": "Instantâneo"
+          "normal": "",
+          "slow": "",
+          "fast": ""
         },
         "popupDesc": "O custo de gas será reservado a partir do montante da transferência com base no preço de gas que definir."
       },
@@ -1067,7 +1067,7 @@
         "websites": "Websites",
         "search": "Pesquisar Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Lista de Observação de Tokens",
+        "watchlist": "Lista de Observação",
         "perpsMarketList": "Mais Perps",
         "perps": "Perps",
         "lending": "Empréstimo"
@@ -2366,7 +2366,6 @@
     },
     "confirmAddress": {
       "risks": {
-        "noSend": "Não enviou fundos para este endereço nos últimos 180 dias. Por favor, confirme se deseja continuar.",
         "contractAddress": "O endereço do destinatário é um endereço de contrato, o que pode potencialmente causar perda de fundos",
         "scamAddress": "O endereço do destinatário é um endereço de fraude sinalizado por Rabby",
         "cexNoDeposite": "O endereço do destinatário é um endereço não-de-depósito de uma CEX. Por favor, assegure-se de que o seu endereço de depósito está correto."
@@ -2409,7 +2408,7 @@
       "scanTips2": "Digitalize o código e comece a sincronizar",
       "newUserVerify": "Também servirá como a palavra-passe padrão para o seu Rabby Mobile",
       "noNewAddr": "Nenhum novo endereço encontrado para importar",
-      "scanTips1": "Clique em “Rabby Mobile” na extensão Rabby",
+      "scanTips1": "Clique em “Mobile Sync” na extensão Rabby",
       "syncingTips": "Mantenha a câmara imóvel até que a digitalização esteja concluída",
       "imported": "Os endereços já presentes no Rabby Mobile não serão importados novamente. As notas e listas brancas dos endereços serão sincronizadas automaticamente.",
       "importedSuccessfully": "Importado com sucesso!",

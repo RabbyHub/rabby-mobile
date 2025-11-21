@@ -64,6 +64,7 @@ window.addEventListener('messageFromRN', function (event) {
       setRuntimeInfo(message.info);
       break;
     }
+    case 'GASKETVIEW:TOGGLE_LOADING':
     case 'GOT_WINDOW_INFO': {
       break;
     }

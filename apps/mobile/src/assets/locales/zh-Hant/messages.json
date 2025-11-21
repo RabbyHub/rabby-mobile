@@ -320,10 +320,10 @@
         "popupDesc": "Gas 費用將根據您設置的價格從轉帳金額中預留。",
         "confirm": "確認",
         "level": {
-          "slow": "普通",
+          "slow": "",
           "$unknown": "未知",
-          "fast": "即時",
-          "normal": "快速",
+          "fast": "",
+          "normal": "",
           "custom": "自訂"
         }
       },
@@ -2176,7 +2176,6 @@
     },
     "confirmAddress": {
       "risks": {
-        "noSend": "您在過去 180 天內沒有向此地址發送資金。請確認您是否希望繼續。",
         "scamAddress": "接收者地址是一個被 Rabby 標記為詐騙地址的地址",
         "contractAddress": "收款地址是合約地址，可能導致資金損失",
         "cexNoDeposite": "接收地址是一個來自 CEX 的非存款地址。請確保您的存款地址正確。"
@@ -2224,7 +2223,7 @@
       "imported": "Rabby Mobile 中已存在的地址將不會再次匯入。地址備註和白名單將自動同步。",
       "noNewAddr": "未找到可匯入的新地址",
       "importedTips": "如果應用程式已經存在重複地址，則不會導入。地址備註和白名單也將同步。",
-      "scanTips1": "點擊 Rabby Extension 上的 “Rabby Mobile”",
+      "scanTips1": "點擊 Rabby Extension 上的 “Mobile Sync”",
       "verifyTips": "您的數據已離線加密。請輸入您的 Rabby 擴展密碼以解密和驗證。"
     },
     "safeMessageQueue": {
@@ -2879,9 +2878,9 @@
       }
     },
     "ReserveGasPopup": {
-      "normal": "正常",
-      "fast": "快速",
-      "instant": "即時",
+      "normal": "",
+      "fast": "",
+      "instant": "",
       "doNotReserve": "不預留Gas",
       "title": "預留 Gas"
     },

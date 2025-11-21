@@ -34,6 +34,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     computed: {
       canSubmit,
       canDirectSign: canShowDirectSign,
+      toAddressPositiveTips,
       toAddressInContactBook,
       toAddrCex,
     },
@@ -54,7 +55,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
 
   const {
     loading: loadingRisks,
-    risks: _risks,
+    risks: risks,
     fetchRisks,
   } = useRisks(formValues.to, {
     // balance: !!screenState.toAddrAccountInfo?.account?.balance,
@@ -72,10 +73,6 @@ export default function BottomArea({ account }: { account: Account | null }) {
       [putScreenState],
     ),
   });
-
-  const risks = useMemo(() => {
-    return _risks.filter(item => item.type !== RiskType.NEVER_SEND);
-  }, [_risks]);
 
   useEffect(() => {
     const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
@@ -98,9 +95,11 @@ export default function BottomArea({ account }: { account: Account | null }) {
       mostImportantRisks: [] as { value: string }[],
     };
     if (risks.length) {
-      const sorted = [...risks]
-        .filter(item => item.type !== RiskType.NEVER_SEND)
-        .sort(sortRisksDesc);
+      const sorted = (
+        !toAddressPositiveTips?.hasPositiveTips
+          ? [...risks]
+          : [...risks].filter(item => item.type !== RiskType.NEVER_SEND)
+      ).sort(sortRisksDesc);
 
       ret.risksForToAddress = sorted
         .slice(0, 1)
@@ -113,7 +112,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
       mostImportantRisks: ret.mostImportantRisks,
       hasRiskForToAddress: !!ret.risksForToAddress.length,
     };
-  }, [risks]);
+  }, [risks, toAddressPositiveTips?.hasPositiveTips]);
 
   const agreeRequiredChecked =
     hasRiskForToAddress && screenState.agreeRequiredChecks.forToAddress;

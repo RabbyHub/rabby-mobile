@@ -15,9 +15,10 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
 import { refreshingAtom } from './hooks/project';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { loadingCurveAtom } from '@/hooks/useCurve';
+import { foldChartAtom } from './Home';
 
 export default function HomeHeaderArea({
   account: currentAccount,
@@ -27,6 +28,7 @@ export default function HomeHeaderArea({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const refreshing = useAtomValue(refreshingAtom);
   const isLoadingCurve = useAtomValue(loadingCurveAtom);
+  const setFoldChart = useSetAtom(foldChartAtom);
 
   const name = useMemo(
     () => currentAccount?.aliasName || currentAccount?.brandName,
@@ -38,6 +40,7 @@ export default function HomeHeaderArea({
   >(
     evt => {
       evt.stopPropagation();
+      setFoldChart(true);
       if (!currentAccount?.address) {
         return;
       }
@@ -48,7 +51,7 @@ export default function HomeHeaderArea({
       Clipboard.setString(currentAccount.address);
       toastCopyAddressSuccess(currentAccount.address);
     },
-    [currentAccount?.address],
+    [currentAccount.address, setFoldChart],
   );
 
   const nav = useNavigation();

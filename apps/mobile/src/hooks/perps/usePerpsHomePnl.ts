@@ -13,15 +13,30 @@ export const usePerpsHomePnl = () => {
     if (account?.address) {
       const res = await sdk.info.getClearingHouseState(account.address);
       if (res.assetPositions.length === 0 || !res?.assetPositions) {
-        setHomePositionPnl({ pnl: 0, show: false });
+        setHomePositionPnl({
+          pnl: 0,
+          show: true,
+          type: 'accountValue',
+          accountValue: Number(res.marginSummary.accountValue),
+        });
       } else {
         const pnl = res.assetPositions.reduce((acc, asset) => {
           return acc + Number(asset.position.unrealizedPnl);
         }, 0);
-        setHomePositionPnl({ pnl, show: true });
+        setHomePositionPnl({
+          pnl,
+          show: true,
+          type: 'pnl',
+          accountValue: Number(res.marginSummary.accountValue),
+        });
       }
     } else {
-      setHomePositionPnl({ pnl: 0, show: false });
+      setHomePositionPnl({
+        pnl: 0,
+        show: false,
+        type: 'accountValue',
+        accountValue: 0,
+      });
     }
   });
 
