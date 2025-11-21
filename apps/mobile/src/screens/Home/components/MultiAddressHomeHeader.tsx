@@ -298,7 +298,7 @@ export function MultiAddressHomeHeader(
           ]}
           onLayout={() => {
             if (IS_IOS) {
-              setTimeout(() => setCouldRenderLocalWebView(true), 250);
+              setTimeout(() => setCouldRenderLocalWebView(true), 500);
             } else {
               setCouldRenderLocalWebView(true);
             }

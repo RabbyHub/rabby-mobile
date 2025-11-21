@@ -26,7 +26,7 @@ function runTryCatch<T extends (...args: any[]) => any>(
   }
 }
 
-export function getSceneAddresses() {
+export async function getSceneAddresses() {
   const accounts = appJsonStore.getItem('@SceneAccounts', {}) as SceneAccounts;
 
   const values = Object.entries(accounts).reduce((acc, [key, value]) => {
@@ -38,7 +38,7 @@ export function getSceneAddresses() {
 
   return {
     ...values,
-    Perps: apisPerps.getPerpsCurrentAccount(),
+    Perps: await apisPerps.getPerpsCurrentAccount(),
   };
 }
 
@@ -102,7 +102,7 @@ export async function getScreenshotFeedbackExtra({
     myUncallableAddressCount,
     myFirstAddress: myFirstCallableAddress,
     myCurrentAddress,
-    mySceneAddresses: runTryCatch(() => getSceneAddresses()),
+    mySceneAddresses: await runTryCatch(async () => await getSceneAddresses()),
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
     systemVersion: runTryCatch(() => DeviceInfo.getSystemVersion()),

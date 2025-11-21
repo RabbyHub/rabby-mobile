@@ -720,8 +720,7 @@
       "risks": {
         "scamAddress": "Alıcı adresi Rabby tarafından dolandırıcılık adresi olarak işaretlendi.",
         "contractAddress": "Alıcı adresi bir sözleşme adresidir, bu potansiyel olarak fon kaybına neden olabilir.",
-        "cexNoDeposite": "Alıcı adresi bir CEX'ten gelen bir non-deposit adresidir. Lütfen depozit adresinizin doğru olduğundan emin olun.",
-        "noSend": "Bu adrese son 180 gündür fon göndermediniz. Devam etmek istediğinizi lütfen onaylayın."
+        "cexNoDeposite": "Alıcı adresi bir CEX'ten gelen bir non-deposit adresidir. Lütfen depozit adresinizin doğru olduğundan emin olun."
       },
       "brandNameTail": "Adres",
       "sendTo": "Bu Adrese Gönder",
@@ -2065,7 +2064,7 @@
       "alert": "EIP-7702 henüz desteklenmiyor."
     },
     "syncExtension": {
-      "scanTips1": "Rabby Uzantısı'nda \"Rabby Mobile\"a tıklayın",
+      "scanTips1": "Rabby Uzantısı'nda \"Mobile Sync\"a tıklayın",
       "verifyWithPassword": "Rabby Uzantı Şifrenizle Doğrulayın",
       "syncingTips": "Tarayıcı tamamlanana kadar kamerayı sabit tutun.",
       "importedSuccessfully": "Başarıyla İçe Aktarıldı!",

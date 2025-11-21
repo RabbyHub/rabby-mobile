@@ -2367,7 +2367,6 @@
     "confirmAddress": {
       "risks": {
         "scamAddress": "Die Empfängeradresse ist eine von Rabby markierte Betrugsadresse.",
-        "noSend": "Sie haben in den letzten 180 Tagen keine Gelder an diese Adresse gesendet. Bitte bestätigen Sie, ob Sie fortfahren möchten.",
         "contractAddress": "Die Empfängeradresse ist eine Vertragsadresse, was möglicherweise zu einem Verlust von Geldern führen kann",
         "cexNoDeposite": "Die Empfängeradresse ist eine Nicht-Einzahlungsadresse von einer CEX. Bitte stellen Sie sicher, dass Ihre Einzahlungsadresse korrekt ist."
       },
@@ -2407,7 +2406,7 @@
     "syncExtension": {
       "syncingProgress": "Scannen ({{ percent }})",
       "importedSuccessfully": "Erfolgreich importiert!",
-      "scanTips1": "Klicken Sie auf „Rabby Mobile“ in der Rabby-Erweiterung",
+      "scanTips1": "Klicken Sie auf „Mobile Sync“ in der Rabby-Erweiterung",
       "imported": "Adressen, die bereits in Rabby Mobile vorhanden sind, werden nicht erneut importiert. Adressnotizen und Whitelists werden automatisch synchronisiert.",
       "verifyTips": "Ihre Daten werden offline verschlüsselt. Geben Sie Ihr Rabby Extension-Passwort ein, um zu entschlüsseln und zu verifizieren.",
       "importedTips": "Wenn im APP bereits eine doppelte Adresse vorhanden ist, wird sie nicht importiert. Adressnotizen und Whitelists werden ebenfalls synchronisiert.",

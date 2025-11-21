@@ -723,10 +723,10 @@
       "sendTo": "Send to this Address",
       "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time",
       "risks": {
-        "noSend": "No transfers to this address in 180 days",
         "cexNoDeposite": "You're sending to a non-deposit exchange address",
         "contractAddress": "You're sending to a contract – funds may be lost",
-        "scamAddress": "You're sending to a scam address"
+        "scamAddress": "You're sending to a scam address",
+        "noSend": "You haven’t sent to this address in 180 days"
       },
       "checkbox": "I understand the risks and want to continue"
     },
@@ -2142,7 +2142,7 @@
       "imported": "Addresses already in Rabby Mobile won’t be imported again. Address notes and whitelists will sync automatically.",
       "importedTips": "If the APP already has a duplicate address, it will not be imported.Address notes and whitelists will sync as well.",
       "importedSuccessfully": "Imported Successfully!",
-      "scanTips1": "Click “Rabby Mobile” on Rabby Extension",
+      "scanTips1": "Click “Mobile Sync” on Rabby Extension",
       "scanTips2": "Scan the code and start syncing",
       "syncingProgress": "Scanning ({{ percent }})",
       "syncingTips": "Keep the camera steady until the scan is complete",

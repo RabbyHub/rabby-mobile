@@ -719,7 +719,6 @@
     "confirmAddress": {
       "risks": {
         "scamAddress": "Alamat penerima adalah alamat penipuan yang ditandai oleh Rabby.",
-        "noSend": "Anda belum mengirimkan dana ke alamat ini dalam 180 hari terakhir. Silakan konfirmasi apakah Anda ingin melanjutkan.",
         "cexNoDeposite": "Alamat penerima adalah alamat non-setoran dari CEX. Harap pastikan alamat setoran Anda benar.",
         "contractAddress": "Alamat penerima adalah alamat kontrak, yang berpotensi menyebabkan kehilangan dana."
       },
@@ -2067,7 +2066,7 @@
     "syncExtension": {
       "verifyWithPassword": "Verifikasi dengan Kata Sandi Ekstensi Rabby Anda",
       "importedSuccessfully": "Diimpor dengan Sukses!",
-      "scanTips1": "Klik “Rabby Mobile” di Ekstensi Rabby",
+      "scanTips1": "Klik “Mobile Sync” di Ekstensi Rabby",
       "scanTips2": "Pindai kode dan mulai menyinkronkan",
       "newUserVerify": "Ia juga akan berfungsi sebagai kata sandi default untuk Rabby Mobile",
       "syncingProgress": "Pindai ({{ percent }})",

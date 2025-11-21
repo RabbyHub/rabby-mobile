@@ -121,8 +121,7 @@ function SendScreen({
 
   useEffect(() => {
     clearLocalPendingTxData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearLocalPendingTxData]);
 
   const route =
     useRoute<
@@ -237,17 +236,17 @@ function SendScreen({
 
     whitelistEnabled,
     computed: {
+      toAccount,
       toAddressInContactBook,
-      toAddressIsValid,
-      toAddressIsRecentlySend,
-      toAddressInWhitelist,
       toAddressIsCex,
+      toAddressPositiveTips,
       canSubmit,
       canDirectSign,
       toAddrCex,
     },
   } = useSendTokenForm({
     toAddress: navParams?.toAddress,
+    toAddressBrandName: navParams?.addressBrandName,
     isForMultipleAddress: isForMultipleAddress,
     disableItemCheck,
     currentAccount: currentAccount!,
@@ -498,12 +497,11 @@ function SendScreen({
         formValues,
         computed: {
           canSubmit,
-          toAddressIsRecentlySend,
-          toAddressInWhitelist,
+          toAccount,
           toAddressIsCex,
           whitelistEnabled,
-          toAddressIsValid,
           toAddressInContactBook,
+          toAddressPositiveTips,
           canDirectSign,
           toAddrCex,
 
@@ -554,7 +552,7 @@ function SendScreen({
                     marginBottom: 0,
                   }}
                   addrDesc={screenState.toAddrDesc}
-                  brandName={navParams?.addressBrandName}
+                  // brandName={navParams?.addressBrandName}
                 />
                 {/* balance info */}
                 <BalanceSection

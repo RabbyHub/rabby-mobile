@@ -2079,7 +2079,6 @@
     },
     "confirmAddress": {
       "risks": {
-        "noSend": "過去180日間、このアドレスに資金を送っていません。続行するかどうかを確認してください。",
         "scamAddress": "受信者のアドレスは、Rabby によってフラグが立てられた詐欺アドレスです。",
         "contractAddress": "受取人のアドレスはコントラクトアドレスであり、資金損失の可能性があります。",
         "cexNoDeposite": "受取人アドレスはCEXからの非預金アドレスです。預金アドレスが正しいことを確認してください。"
@@ -2121,7 +2120,7 @@
       "noNewAddr": "新しいアドレスは見つかりませんでしたインポートするために",
       "syncingTips": "スキャンが完了するまでカメラを安定させてください",
       "verifyWithPassword": "Rabby Extension Passwordで確認してください",
-      "scanTips1": "Rabby Extensionで「Rabby Mobile」をクリック",
+      "scanTips1": "Rabby Extensionで「Mobile Sync」をクリック",
       "scanTips2": "コードをスキャンして同期を開始してください。",
       "newUserVerify": "それはまた、あなたのRabby Mobileのデフォルトパスワードとして機能します。",
       "imported": "Rabby Mobile に既にあるアドレスは再度インポートされません。アドレスノートとホワイトリストは自動的に同期されます。",
