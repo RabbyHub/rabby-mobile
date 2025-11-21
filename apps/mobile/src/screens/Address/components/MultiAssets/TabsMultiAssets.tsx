@@ -168,7 +168,7 @@ export const TabsMultiAssets: React.FC<Props> = ({
         core: true,
         maxTokenLength: 500,
         maxDefiLength: 20,
-        maxNFTLength: 500,
+        maxNFTLength: 200,
       });
     }, 0);
     return () => {
