@@ -95,7 +95,12 @@ function Chart({
       onTouchStart={e => {
         e.stopPropagation();
       }}>
-      <View style={styles.chartContainer}>
+      <View
+        style={[
+          styles.chartContainer,
+          (hideType === 'HALF_HIDE' || hideType === 'HIDE') &&
+            styles.balanceOpacity,
+        ]}>
         <LineChart.Provider data={combineCurveData.list}>
           <ChartHeader
             loading={loadingNewCurve}
@@ -260,6 +265,9 @@ export const ChartHeader = ({
       stroke: colors2024['neutral-secondary'],
     };
   }, [isLoss, data, currentIndex, colors2024, hideType]);
+  const isHidden = useMemo(() => {
+    return hideType === 'HIDE';
+  }, [hideType]);
 
   return (
     <View style={styles.charHeader}>
@@ -271,6 +279,8 @@ export const ChartHeader = ({
             style={styles.skeletonNetWorth}
             LinearGradientComponent={LoadingLinear}
           />
+        ) : isHidden ? (
+          <Text style={styles.netWorth}>******</Text>
         ) : (
           <AnimateableText
             style={[
@@ -303,14 +313,20 @@ export const ChartHeader = ({
             styles.changeSection,
             hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
           ]}>
-          <AnimateableText
-            style={lossStyleProps}
-            animatedProps={percentChangeAnimatedProps}
-          />
-          <AnimateableText
-            style={styles.changeTime}
-            animatedProps={dateTimeAnimatedProps}
-          />
+          {isHidden ? (
+            <Text>***</Text>
+          ) : (
+            <>
+              <AnimateableText
+                style={lossStyleProps}
+                animatedProps={percentChangeAnimatedProps}
+              />
+              <AnimateableText
+                style={styles.changeTime}
+                animatedProps={dateTimeAnimatedProps}
+              />
+            </>
+          )}
           <Pressable
             hitSlop={50}
             onPress={e => {
