@@ -723,10 +723,10 @@
       "sendTo": "Send to this Address",
       "tipForWhiteList": "Add to your whitelist for fast transfers, no confirmation needed next time",
       "risks": {
-        "noSend": "No transfers to this address in 180 days",
         "cexNoDeposite": "You're sending to a non-deposit exchange address",
         "contractAddress": "You're sending to a contract – funds may be lost",
-        "scamAddress": "You're sending to a scam address"
+        "scamAddress": "You're sending to a scam address",
+        "noSend": "You haven’t sent to this address in 180 days"
       },
       "checkbox": "I understand the risks and want to continue"
     },

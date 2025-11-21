@@ -2366,7 +2366,6 @@
     },
     "confirmAddress": {
       "risks": {
-        "noSend": "Não enviou fundos para este endereço nos últimos 180 dias. Por favor, confirme se deseja continuar.",
         "contractAddress": "O endereço do destinatário é um endereço de contrato, o que pode potencialmente causar perda de fundos",
         "scamAddress": "O endereço do destinatário é um endereço de fraude sinalizado por Rabby",
         "cexNoDeposite": "O endereço do destinatário é um endereço não-de-depósito de uma CEX. Por favor, assegure-se de que o seu endereço de depósito está correto."

@@ -720,8 +720,7 @@
       "risks": {
         "scamAddress": "Alıcı adresi Rabby tarafından dolandırıcılık adresi olarak işaretlendi.",
         "contractAddress": "Alıcı adresi bir sözleşme adresidir, bu potansiyel olarak fon kaybına neden olabilir.",
-        "cexNoDeposite": "Alıcı adresi bir CEX'ten gelen bir non-deposit adresidir. Lütfen depozit adresinizin doğru olduğundan emin olun.",
-        "noSend": "Bu adrese son 180 gündür fon göndermediniz. Devam etmek istediğinizi lütfen onaylayın."
+        "cexNoDeposite": "Alıcı adresi bir CEX'ten gelen bir non-deposit adresidir. Lütfen depozit adresinizin doğru olduğundan emin olun."
       },
       "brandNameTail": "Adres",
       "sendTo": "Bu Adrese Gönder",

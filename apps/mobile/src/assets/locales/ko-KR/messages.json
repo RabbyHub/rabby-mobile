@@ -2029,8 +2029,7 @@
       "risks": {
         "scamAddress": "수신자 주소는 Rabby에 의해 신고된 사기 주소입니다.",
         "contractAddress": "수신자 주소가 계약 주소이므로 자금 손실이 발생할 수 있습니다.",
-        "cexNoDeposite": "수취인 주소는 CEX의 비입금 주소입니다. 입금 주소가 올바른지 확인하십시오.",
-        "noSend": "귀하는 지난 180일 동안 이 주소로 자금을 보낸 적이 없습니다. 계속 진행하시겠습니까?"
+        "cexNoDeposite": "수취인 주소는 CEX의 비입금 주소입니다. 입금 주소가 올바른지 확인하십시오."
       },
       "dexNameTail": "입금 주소",
       "brandNameTail": "주소",

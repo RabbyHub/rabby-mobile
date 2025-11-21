@@ -2038,8 +2038,7 @@
       "risks": {
         "scamAddress": "L'adresse du destinataire est une adresse frauduleuse signalée par Rabby",
         "contractAddress": "L'adresse du destinataire est une adresse de contrat, ce qui peut potentiellement entraîner une perte de fonds",
-        "cexNoDeposite": "L'adresse du destinataire est une adresse non-dépôt d'un CEX. Veuillez vous assurer que votre adresse de dépôt est correcte.",
-        "noSend": "Vous n'avez pas envoyé de fonds à cette adresse au cours des 180 derniers jours. Veuillez confirmer si vous souhaitez continuer."
+        "cexNoDeposite": "L'adresse du destinataire est une adresse non-dépôt d'un CEX. Veuillez vous assurer que votre adresse de dépôt est correcte."
       },
       "brandNameTail": "Adresse",
       "dexNameTail": "Adresse de dépôt",
