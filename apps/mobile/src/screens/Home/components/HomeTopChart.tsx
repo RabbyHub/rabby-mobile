@@ -62,6 +62,9 @@ function Chart({
 
   return (
     <View
+      onTouchStart={e => {
+        e.stopPropagation();
+      }}
       style={[
         styles.container,
         {
@@ -305,6 +308,7 @@ export const ChartHeader = ({
         )}
       </View>
       <Pressable
+        hitSlop={20}
         onPress={() => setFold(!fold)}
         style={styles.percentChangeContainer}>
         <AnimateableText
