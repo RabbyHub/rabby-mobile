@@ -396,7 +396,7 @@ export const useAssetsMap = ({
     }
 
     const tokens = combinedTokens(assetsMap, top10Addresses);
-    top20TokensCache = tokens.filter(item => !item._isFold).slice(0, 30);
+    top20TokensCache = tokens.filter(item => !item._isFold).slice(0, 20);
     return tokens;
   }, [assetsMap, hideCombined, top10Addresses]);
 
@@ -406,7 +406,7 @@ export const useAssetsMap = ({
     }
 
     const portfolios = combinedProtocols(assetsMap, top10Addresses);
-    top10PortfoliosCache = portfolios.slice(0, 10);
+    top10PortfoliosCache = portfolios.slice(0, 4);
     return portfolios;
   }, [assetsMap, hideCombined, top10Addresses]);
 
@@ -415,7 +415,7 @@ export const useAssetsMap = ({
       return top10NftsCache;
     }
     const nfts = combinedNfts(assetsMap, top10Addresses);
-    top10NftsCache = nfts?.filter(item => !item._isFold).slice(0, 30) || [];
+    top10NftsCache = nfts?.filter(item => !item._isFold).slice(0, 20) || [];
     return nfts;
   }, [assetsMap, hideCombined, top10Addresses]);
 
