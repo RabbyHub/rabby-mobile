@@ -352,6 +352,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
       initialNumToRender={15}
       windowSize={15}
       maxToRenderPerBatch={15}
+      removeClippedSubviews
       ItemSeparatorComponent={ListRenderSeparator}
       ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={ListRenderFooter}

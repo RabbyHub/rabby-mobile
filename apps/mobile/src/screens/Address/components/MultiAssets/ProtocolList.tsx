@@ -197,6 +197,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       initialNumToRender={5}
       windowSize={5}
       maxToRenderPerBatch={5}
+      removeClippedSubviews
       ItemSeparatorComponent={ListRenderSeparator}
       ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={ListRenderFooter}

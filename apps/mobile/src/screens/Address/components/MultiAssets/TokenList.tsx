@@ -420,6 +420,7 @@ export const TokenList = ({ chain, updateToken }: Props) => {
       renderItem={renderItem}
       initialNumToRender={25}
       windowSize={25}
+      removeClippedSubviews
       maxToRenderPerBatch={25}
       ItemSeparatorComponent={ListRenderSeparator}
       ListHeaderComponent={ListHeaderComponent}
