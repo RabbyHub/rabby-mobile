@@ -35,8 +35,6 @@ export function BackgroundSecureBlurView() {
   const { currentRouteName } = useCurrentRouteName();
   const { isOnBackground } = useIsOnBackground();
 
-  console.debug('[feat] isOnBackground', isOnBackground);
-
   if (!isOnBackground || IS_ANDROID) return null;
   if (
     currentRouteName &&
@@ -44,9 +42,9 @@ export function BackgroundSecureBlurView() {
   )
     return null;
 
-  if (IS_IOS) {
-    return <View style={[styles.container, styles.iosView]} />;
-  }
+  // if (IS_IOS) {
+  //   return <View style={[styles.container, styles.iosView]} />;
+  // }
 
   return (
     <BlurView
