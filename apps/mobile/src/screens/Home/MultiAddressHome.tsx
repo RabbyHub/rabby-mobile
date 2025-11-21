@@ -1141,8 +1141,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   gridItem: {
+    borderWidth: 2,
+    borderColor: isLight
+      ? colors2024['neutral-InvertHighlight']
+      : 'transparent',
     backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
+      ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
       : colors2024['neutral-bg-2'],
     width: '48%', // default
     minWidth: 0,
