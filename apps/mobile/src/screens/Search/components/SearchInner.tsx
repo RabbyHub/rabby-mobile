@@ -254,17 +254,7 @@ export const SearchInner = ({
         isTransparent && { backgroundColor: 'transparent' },
       ]}>
       {Content}
-      <View
-        style={[
-          styles.footer,
-          {
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            paddingBottom: Math.max(bottom, 12),
-          },
-        ]}>
+      <View style={styles.footer}>
         <TouchableOpacity onPress={handlePressHome}>
           <ReactIconHome
             width={44}
@@ -295,67 +285,77 @@ export const SearchInner = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: {
-    paddingHorizontal: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-  },
-  list: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 24,
-    paddingTop: 16,
-    paddingHorizontal: 20,
-  },
-  listItem: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  listItemContent: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  listItemIcon: {
-    width: 20,
-    height: 20,
-  },
-  listItemArrowIcon: {
-    width: 16,
-    height: 16,
-  },
-  listItemText: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-  },
-  footer: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    // marginBottom: 30,
-    // box-shadow: 0px -6px 40px 0px rgba(55, 56, 63, 0.12);
-    // backdrop-filter: blur(14.5px);
-  },
-  searchBar: {
-    flex: 1,
-  },
-  headerMarginTop: {
-    marginTop: 30,
-  },
-  stickyHeader: {
-    position: 'static',
-  },
-}));
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, bottomSafeArea }) => ({
+    container: {
+      paddingHorizontal: 16,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+    },
+    list: {
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 24,
+      paddingTop: 16,
+      paddingHorizontal: 20,
+    },
+    listItem: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    listItemContent: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    listItemIcon: {
+      width: 20,
+      height: 20,
+    },
+    listItemArrowIcon: {
+      width: 16,
+      height: 16,
+    },
+    listItemText: {
+      color: colors2024['neutral-body'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+    },
+    footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingBottom: Platform.select({
+        ios: 12,
+        android: Math.max(bottomSafeArea, 12),
+      }),
+      // marginBottom: 30,
+      // box-shadow: 0px -6px 40px 0px rgba(55, 56, 63, 0.12);
+      // backdrop-filter: blur(14.5px);
+    },
+    searchBar: {
+      flex: 1,
+    },
+    headerMarginTop: {
+      marginTop: 30,
+    },
+    stickyHeader: {
+      position: 'static',
+    },
+  }),
+);
