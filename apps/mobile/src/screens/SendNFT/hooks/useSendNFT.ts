@@ -794,6 +794,7 @@ type InternalContext = {
   screenState: SendScreenState;
   formValues: FormSendNFT;
   computed: {
+    fromAddress: string;
     chainItem: Chain | null;
     currentNFT: NFTItem | null;
     whitelistEnabled: boolean;
@@ -831,6 +832,7 @@ const SendNFTInternalContext = React.createContext<InternalContext>({
   screenState: { ...DFLT_SEND_STATE },
   formValues: { ...DF_SEND_TOKEN_FORM },
   computed: {
+    fromAddress: '',
     chainItem: null,
     currentNFT: null,
     whitelistEnabled: false,

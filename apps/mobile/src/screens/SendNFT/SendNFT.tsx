@@ -135,6 +135,7 @@ export default function SendNFT() {
         screenState,
         formValues,
         computed: {
+          fromAddress: account.address,
           canSubmit,
           toAccount,
           toAddressPositiveTips,

@@ -10,6 +10,7 @@ import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 
 const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 
@@ -30,19 +31,16 @@ export const enum RiskType {
   CEX_NO_DEPOSIT = 4,
 }
 type RiskItem = { type: RiskType; value: string };
-export const useRisks = (
-  address: string,
-  options?: {
-    cex?: ProjectItem | null;
-    onLoadFinished?: (ctx: { risks: Array<RiskItem> }) => void;
-  },
-) => {
-  const { cex, onLoadFinished } = options || {};
+export const useRisks = (options: {
+  toAddress: string;
+  fromAddress?: string;
+  cex?: ProjectItem | null;
+  onLoadFinished?: (ctx: { risks: Array<RiskItem> }) => void;
+}) => {
+  const { fromAddress, toAddress, cex, onLoadFinished } = options;
   const [risks, setRisks] = useState<Array<RiskItem>>([]);
   const { t } = useTranslation();
-  const { accounts } = useMyAccounts();
-  const sortedAccounts = useSortAddressList(accounts);
-  const [loading, setLoading] = useState(!!address);
+  const [loading, setLoading] = useState(!!toAddress);
   const riskGetRef = useRef(false);
 
   const [addressDesc, setAddressDesc] = useState<
@@ -53,14 +51,26 @@ export const useRisks = (
     return !loading && !risks.some(r => r.type === RiskType.NEVER_SEND);
   }, [loading, risks]);
 
+  const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
+
+  const top10Addresses = useCreationWithShallowCompare(() => {
+    return sortedAccounts.slice(0, __DEV__ ? 1 : 10).map(acc => acc.address);
+  }, [sortedAccounts]);
+  const caredAddresses = useMemo(() => {
+    if (fromAddress) return [fromAddress];
+
+    return top10Addresses;
+  }, [fromAddress, top10Addresses]);
+
   const fetchRisks = useCallback(async () => {
-    if (!address) return;
+    if (!caredAddresses.length || !toAddress) return;
     if (riskGetRef.current) return;
     riskGetRef.current = true;
     setLoading(true);
 
     const currRisks: Array<RiskItem> = [];
-    let hasSent = false;
+    let addressSent = '';
     let hasError = false;
 
     try {
@@ -68,25 +78,19 @@ export const useRisks = (
         setTimeout(() => reject(new Error('timeout')), 3000);
       });
 
-      const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
+      const addressDescPromise = getAddrDescWithCexLocalCacheSync(toAddress);
 
       const checkTransferPromise = new Promise<void>(resolve => {
-        sortedAccounts.slice(0, 10).forEach(acc => {
-          if (isSameAddress(acc.address, address)) {
-            return;
-          }
+        caredAddresses.forEach(addr => {
+          if (isSameAddress(addr, toAddress)) return;
+
           queue.add(async () => {
             try {
-              if (hasSent || hasError) {
-                return;
-              }
-              const res = await openapi.hasTransferAllChain(
-                acc.address,
-                address,
-              );
+              if (addressSent || hasError) return;
+              const res = await openapi.hasTransferAllChain(addr, toAddress);
 
               if (res?.has_transfer) {
-                hasSent = true;
+                addressSent = addr;
               }
             } catch (error) {
               console.error('has_transfer fetch error', error);
@@ -151,7 +155,7 @@ export const useRisks = (
         timeoutPromise,
       ]);
 
-      if (!hasSent) {
+      if (!addressSent) {
         setRisks([
           ...currRisks,
           {
@@ -179,7 +183,7 @@ export const useRisks = (
       riskGetRef.current = false;
       setLoading(false);
     }
-  }, [address, cex, sortedAccounts, t, onLoadFinished]);
+  }, [caredAddresses, toAddress, cex, t, onLoadFinished]);
 
   useEffect(() => {
     fetchRisks();

@@ -496,6 +496,7 @@ function SendScreen({
         screenState,
         formValues,
         computed: {
+          fromAddress: currentAccount?.address || '',
           canSubmit,
           toAccount,
           toAddressIsCex,

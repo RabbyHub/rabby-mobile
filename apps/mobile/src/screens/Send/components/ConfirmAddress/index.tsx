@@ -56,7 +56,10 @@ const ConfirmAddress = ({
   const shouldPasswordValidation = useMemo(() => {
     return disableWhiteSwitch || inWhiteList;
   }, [disableWhiteSwitch, inWhiteList]);
-  const { loading, risks, addressDesc } = useRisks(account.address, { cex });
+  const { loading, risks, addressDesc } = useRisks({
+    toAddress: account.address,
+    cex,
+  });
   const [isChecked, setIsChecked] = useState(false);
   const { accounts } = useAccounts({
     disableAutoFetch: true,
