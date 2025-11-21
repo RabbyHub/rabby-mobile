@@ -793,11 +793,11 @@
         "popupDesc": "ガスコストは、設定したガス価格に基づいて送金額から差し引かれます。",
         "confirm": "確認",
         "level": {
-          "normal": "",
-          "fast": "",
+          "normal": "ノーマル",
+          "fast": "速い",
           "custom": "カスタム",
           "$unknown": "不明",
-          "slow": ""
+          "slow": "遅い"
         }
       },
       "noSupportBtns": {
@@ -2081,7 +2081,8 @@
       "risks": {
         "scamAddress": "受信者のアドレスは、Rabby によってフラグが立てられた詐欺アドレスです。",
         "contractAddress": "受取人のアドレスはコントラクトアドレスであり、資金損失の可能性があります。",
-        "cexNoDeposite": "受取人アドレスはCEXからの非預金アドレスです。預金アドレスが正しいことを確認してください。"
+        "cexNoDeposite": "受取人アドレスはCEXからの非預金アドレスです。預金アドレスが正しいことを確認してください。",
+        "noSend": "このアドレスには180日間送信されていません。"
       },
       "brandNameTail": "アドレス",
       "dexNameTail": "入金アドレス",
@@ -2736,7 +2737,8 @@
       "hfTitle": "ヘルスファクター",
       "hf": "ヘルスファクター",
       "isolated": "隔離",
-      "estNetApy": "推定ネットAPY"
+      "estNetApy": "推定ネットAPY",
+      "marketSlot": "{{market}} マーケット"
     }
   },
   "global": {
@@ -3003,10 +3005,10 @@
     },
     "ReserveGasPopup": {
       "title": "Gasを予約する",
-      "fast": "",
-      "instant": "",
+      "fast": "通常",
+      "instant": "速い",
       "doNotReserve": "ガスを予約しない",
-      "normal": ""
+      "normal": "遅い"
     },
     "externalSwapBrideDappPopup": {
       "bridgeOnDapp": "Dapp上のブリッジ",

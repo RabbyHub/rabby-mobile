@@ -1891,6 +1891,7 @@ type InternalContext = {
   screenState: SendScreenState;
   formValues: FormSendToken;
   computed: {
+    fromAddress: string;
     chainItem: Chain | null;
     currentToken: TokenItem | null;
     currentTokenBalance: string;
@@ -1940,6 +1941,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   screenState: { ...DFLT_SEND_STATE },
   formValues: { ...DF_SEND_TOKEN_FORM },
   computed: {
+    fromAddress: '',
     chainItem: null,
     currentToken: null,
     currentTokenBalance: '',

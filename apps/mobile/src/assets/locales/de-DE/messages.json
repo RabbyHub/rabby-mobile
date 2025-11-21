@@ -219,11 +219,11 @@
       "erc721Tips": "Pro Sendung kann jeweils nur ein NFT des ERC 721 gesendet werden."
     },
     "ReserveGasPopup": {
-      "fast": "",
+      "fast": "Normal",
       "title": "Gas reservieren",
-      "instant": "",
+      "instant": "Schnell",
       "doNotReserve": "Reserviere kein Gas",
-      "normal": ""
+      "normal": "Langsam"
     },
     "NoLongerSupports": {
       "button": "Verstanden",
@@ -951,11 +951,11 @@
         "confirm": "Bestätigen",
         "popupDesc": "Die Gaskosten werden basierend auf dem von Ihnen festgelegten Gaspreis vom Überweisungsbetrag reserviert.",
         "level": {
-          "slow": "",
+          "slow": "Langsam",
           "custom": "Benutzerdefiniert",
-          "normal": "",
+          "normal": "Normal",
           "$unknown": "Unbekannt",
-          "fast": ""
+          "fast": "Schnell"
         }
       },
       "balanceError": {
@@ -2368,7 +2368,8 @@
       "risks": {
         "scamAddress": "Die Empfängeradresse ist eine von Rabby markierte Betrugsadresse.",
         "contractAddress": "Die Empfängeradresse ist eine Vertragsadresse, was möglicherweise zu einem Verlust von Geldern führen kann",
-        "cexNoDeposite": "Die Empfängeradresse ist eine Nicht-Einzahlungsadresse von einer CEX. Bitte stellen Sie sicher, dass Ihre Einzahlungsadresse korrekt ist."
+        "cexNoDeposite": "Die Empfängeradresse ist eine Nicht-Einzahlungsadresse von einer CEX. Bitte stellen Sie sicher, dass Ihre Einzahlungsadresse korrekt ist.",
+        "noSend": "Sie haben an diese Adresse seit 180 Tagen nichts gesendet."
       },
       "addToWhitelist": "Zur Whitelist hinzufügen",
       "brandNameTail": "Adresse",
@@ -3023,7 +3024,8 @@
       "hfTitle": "Gesundheitsfaktor",
       "enterAmount": "Betrag eingeben",
       "isolated": "isoliert",
-      "estNetApy": "Est. netto APY"
+      "estNetApy": "Est. netto APY",
+      "marketSlot": "{{market}} Markt"
     }
   },
   "constant": {

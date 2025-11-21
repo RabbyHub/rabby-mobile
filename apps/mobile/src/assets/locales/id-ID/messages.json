@@ -634,10 +634,10 @@
       },
       "GasSelector": {
         "level": {
-          "fast": "",
+          "fast": "Cepat",
           "$unknown": "Tidak dikenali",
-          "slow": "",
-          "normal": "",
+          "slow": "Lambat",
+          "normal": "Normal",
           "custom": "Kustom"
         },
         "popupDesc": "Biaya gas akan diambil dari jumlah transfer berdasarkan harga gas yang Anda atur.",
@@ -720,7 +720,8 @@
       "risks": {
         "scamAddress": "Alamat penerima adalah alamat penipuan yang ditandai oleh Rabby.",
         "cexNoDeposite": "Alamat penerima adalah alamat non-setoran dari CEX. Harap pastikan alamat setoran Anda benar.",
-        "contractAddress": "Alamat penerima adalah alamat kontrak, yang berpotensi menyebabkan kehilangan dana."
+        "contractAddress": "Alamat penerima adalah alamat kontrak, yang berpotensi menyebabkan kehilangan dana.",
+        "noSend": "Anda belum mengirim ke alamat ini dalam 180 hari"
       },
       "sendTo": "Kirim ke Alamat Ini",
       "brandNameTail": "Alamat",
@@ -2683,7 +2684,8 @@
       "hf": "Faktor kesehatan",
       "enterAmount": "Masukkan Jumlah",
       "isolated": "terisolasi",
-      "estNetApy": "Est. net APY"
+      "estNetApy": "Est. net APY",
+      "marketSlot": "{{market}} Pasar"
     }
   },
   "component": {
@@ -2848,10 +2850,10 @@
     },
     "ReserveGasPopup": {
       "doNotReserve": "Jangan cadangkan Gas",
-      "normal": "",
+      "normal": "Lambat",
       "title": "Cadangkan Gas",
-      "fast": "",
-      "instant": ""
+      "fast": "Normal",
+      "instant": "Cepat"
     },
     "NoLongerSupports": {
       "title": "Alamat dompet mobile tidak lagi didukung",

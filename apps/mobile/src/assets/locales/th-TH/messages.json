@@ -91,10 +91,10 @@
       "screenHeaderSubTitle_one": "1 กระเป๋าเงิน"
     },
     "ReserveGasPopup": {
-      "fast": "",
+      "fast": "ปกติ",
       "title": "สำรอง Gas",
-      "instant": "",
-      "normal": "",
+      "instant": "เร็ว",
+      "normal": "ช้า",
       "doNotReserve": "อย่าสำรอง Gas"
     },
     "signPermissionCheckModal": {
@@ -482,10 +482,10 @@
       "GasSelector": {
         "confirm": "ยืนยัน",
         "level": {
-          "fast": "",
+          "fast": "รวดเร็ว",
           "$unknown": "Unknown",
-          "slow": "",
-          "normal": "",
+          "slow": "ช้า",
+          "normal": "ปกติ",
           "custom": "ปรับแต่ง"
         },
         "popupDesc": "ค่าธรรมเนียม gas จะถูกหักออกจากจำนวนการโอนตามราคาค่า gas ที่คุณตั้งไว้"
@@ -2276,7 +2276,8 @@
       "risks": {
         "scamAddress": "ที่อยู่ผู้รับเป็นที่อยู่หลอกลวงที่ถูก Rabby ทำเครื่องหมาย",
         "cexNoDeposite": "ที่อยู่ผู้รับเป็นที่อยู่นอกเหนือจาก CEX กรุณาตรวจสอบให้แน่ใจว่าที่อยู่ฝากเงินของคุณถูกต้อง",
-        "contractAddress": "ที่อยู่ของผู้รับเป็นที่อยู่ของสัญญาซึ่งอาจทำให้สูญเสียเงินได้"
+        "contractAddress": "ที่อยู่ของผู้รับเป็นที่อยู่ของสัญญาซึ่งอาจทำให้สูญเสียเงินได้",
+        "noSend": "คุณยังไม่ได้ส่งไปยังที่อยู่นี้ใน 180 วัน"
       },
       "brandNameTail": "ที่อยู่",
       "dexNameTail": "ที่อยู่ Deposit",
