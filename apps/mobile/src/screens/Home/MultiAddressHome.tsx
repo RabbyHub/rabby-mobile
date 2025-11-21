@@ -918,7 +918,7 @@ function MultiAddressHome(): JSX.Element {
           </View>
         )}
       </View>
-      {isNonPublicProductionEnv && <HomeGuidanceMultipleTabs />}
+      {__DEV__ && <HomeGuidanceMultipleTabs />}
     </NormalScreenContainer2024>
   );
 }

@@ -5,7 +5,7 @@ import {
   useFocusedTab,
 } from 'react-native-collapsible-tab-view';
 
-import React, { useCallback, useLayoutEffect } from 'react';
+import React, { useCallback, useLayoutEffect, useRef } from 'react';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -87,15 +87,25 @@ const Indicator = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fadeIn]);
 
-  useLayoutEffect(() => {
-    handleMeasureSecondaryIndicator?.();
-  }, [handleMeasureSecondaryIndicator]);
+  // const measureRef = useRef(handleMeasureSecondaryIndicator);
+  // useLayoutEffect(() => {
+  //   measureRef.current = handleMeasureSecondaryIndicator;
+  // }, [handleMeasureSecondaryIndicator]);
+  // useLayoutEffect(() => {
+  //   measureRef.current?.();
+  // }, [measureRef.current]);
 
   return (
     <View style={styles.indicatorContainer}>
       <Animated.View style={[stylez, styles.indicator, style]} />
       <View style={styles.leftBackground} />
-      <View ref={secondaryIndicatorViewRef} style={styles.rightBackground} />
+      <View
+        ref={secondaryIndicatorViewRef}
+        style={styles.rightBackground}
+        onLayout={() => {
+          handleMeasureSecondaryIndicator?.();
+        }}
+      />
     </View>
   );
 };
@@ -178,6 +188,10 @@ export const HomeCustomMaterialTabBar = (_props: {
   } = useMeasureLayoutForHomeGuidanceMultipleTabs();
   const focusedTab = useFocusedTab();
 
+  const handleMeasureSecondaryIndicator = useCallback(() => {
+    measureSecondaryIndicator();
+  }, [measureSecondaryIndicator]);
+
   return (
     <View
       style={styles.container}
@@ -208,9 +222,7 @@ export const HomeCustomMaterialTabBar = (_props: {
         ]}
         fadeIn
         secondaryIndicatorViewRef={secondaryIndicatorViewRef}
-        handleMeasureSecondaryIndicator={() => {
-          measureSecondaryIndicator();
-        }}
+        handleMeasureSecondaryIndicator={handleMeasureSecondaryIndicator}
       />
       <Animated.View
         pointerEvents={focusedTab === TabName.overview ? 'none' : 'auto'}
