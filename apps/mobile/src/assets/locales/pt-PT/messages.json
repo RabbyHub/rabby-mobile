@@ -111,9 +111,9 @@
     },
     "ReserveGasPopup": {
       "doNotReserve": "Não reserve Gas",
-      "fast": "Rápido",
-      "instant": "Instantâneo",
-      "normal": "Normal",
+      "fast": "",
+      "instant": "",
+      "normal": "",
       "title": "Reservar Gas"
     },
     "AuthenticationModals": {
@@ -948,9 +948,9 @@
         "level": {
           "$unknown": "Desconhecido",
           "custom": "Personalizado",
-          "normal": "Rápido",
-          "slow": "Normal",
-          "fast": "Instantâneo"
+          "normal": "",
+          "slow": "",
+          "fast": ""
         },
         "popupDesc": "O custo de gas será reservado a partir do montante da transferência com base no preço de gas que definir."
       },

@@ -219,11 +219,11 @@
       "erc721Tips": "Pro Sendung kann jeweils nur ein NFT des ERC 721 gesendet werden."
     },
     "ReserveGasPopup": {
-      "fast": "Schnell",
+      "fast": "",
       "title": "Gas reservieren",
-      "instant": "Sofort",
+      "instant": "",
       "doNotReserve": "Reserviere kein Gas",
-      "normal": "Normal"
+      "normal": ""
     },
     "NoLongerSupports": {
       "button": "Verstanden",
@@ -951,11 +951,11 @@
         "confirm": "Bestätigen",
         "popupDesc": "Die Gaskosten werden basierend auf dem von Ihnen festgelegten Gaspreis vom Überweisungsbetrag reserviert.",
         "level": {
-          "slow": "Normal",
+          "slow": "",
           "custom": "Benutzerdefiniert",
-          "normal": "Schnell",
+          "normal": "",
           "$unknown": "Unbekannt",
-          "fast": "Sofort"
+          "fast": ""
         }
       },
       "balanceError": {

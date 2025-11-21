@@ -793,11 +793,11 @@
         "popupDesc": "ガスコストは、設定したガス価格に基づいて送金額から差し引かれます。",
         "confirm": "確認",
         "level": {
-          "normal": "速い",
-          "fast": "即時",
+          "normal": "",
+          "fast": "",
           "custom": "カスタム",
           "$unknown": "不明",
-          "slow": "ノーマル"
+          "slow": ""
         }
       },
       "noSupportBtns": {
@@ -3004,10 +3004,10 @@
     },
     "ReserveGasPopup": {
       "title": "Gasを予約する",
-      "fast": "速い",
-      "instant": "インスタント",
+      "fast": "",
+      "instant": "",
       "doNotReserve": "ガスを予約しない",
-      "normal": "ノーマル"
+      "normal": ""
     },
     "externalSwapBrideDappPopup": {
       "bridgeOnDapp": "Dapp上のブリッジ",

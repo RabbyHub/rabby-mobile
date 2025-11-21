@@ -766,10 +766,10 @@
         "popupDesc": "Стоимость газа будет зарезервирована из суммы перевода на основе установленной вами цены на газ",
         "level": {
           "$unknown": "Неизвестный",
-          "normal": "Быстро",
+          "normal": "",
           "custom": "Пользовательский",
-          "slow": "Обычный",
-          "fast": "Мгновенный"
+          "slow": "",
+          "fast": ""
         }
       },
       "noSupportBtns": {
@@ -2815,10 +2815,10 @@
     },
     "ReserveGasPopup": {
       "title": "Резервный Gas",
-      "fast": "Быстро",
-      "instant": "Мгновенный",
+      "fast": "",
+      "instant": "",
       "doNotReserve": "Не резервировать Gas",
-      "normal": "Нормально"
+      "normal": ""
     },
     "Contact": {
       "EditWhitelist": {

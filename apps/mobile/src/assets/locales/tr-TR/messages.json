@@ -635,10 +635,10 @@
       "GasSelector": {
         "level": {
           "$unknown": "Bilinmiyor",
-          "slow": "Normal",
+          "slow": "",
           "custom": "Özel",
-          "fast": "Anında",
-          "normal": "Hızlı"
+          "fast": "",
+          "normal": ""
         },
         "confirm": "Onayla",
         "popupDesc": "Gaz ücreti, belirlediğiniz gaz fiyatına göre transfer tutarından ayrılacaktır."
@@ -2848,11 +2848,11 @@
       }
     },
     "ReserveGasPopup": {
-      "instant": "Anında",
+      "instant": "",
       "doNotReserve": "Gas'i ayırmayın",
-      "normal": "Normal",
+      "normal": "",
       "title": "Gaz Ayırma",
-      "fast": "Hızlı"
+      "fast": ""
     },
     "NoLongerSupports": {
       "button": "Tamam",
