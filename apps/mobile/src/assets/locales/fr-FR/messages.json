@@ -755,10 +755,10 @@
         "confirm": "Confirmer",
         "level": {
           "custom": "Personnalisé",
-          "slow": "",
-          "fast": "",
+          "slow": "Lent",
+          "fast": "Rapide",
           "$unknown": "Inconnu",
-          "normal": ""
+          "normal": "Normal"
         },
         "popupDesc": "Les frais de gas seront réservés à partir du montant du transfert en fonction du prix du gas que vous avez fixé."
       },
@@ -2038,7 +2038,8 @@
       "risks": {
         "scamAddress": "L'adresse du destinataire est une adresse frauduleuse signalée par Rabby",
         "contractAddress": "L'adresse du destinataire est une adresse de contrat, ce qui peut potentiellement entraîner une perte de fonds",
-        "cexNoDeposite": "L'adresse du destinataire est une adresse non-dépôt d'un CEX. Veuillez vous assurer que votre adresse de dépôt est correcte."
+        "cexNoDeposite": "L'adresse du destinataire est une adresse non-dépôt d'un CEX. Veuillez vous assurer que votre adresse de dépôt est correcte.",
+        "noSend": "Vous n'avez pas envoyé à cette adresse depuis 180 jours."
       },
       "brandNameTail": "Adresse",
       "dexNameTail": "Adresse de dépôt",
@@ -2693,7 +2694,8 @@
       "apy": "APY",
       "hf": "Facteur de santé",
       "isolated": "isolé",
-      "estNetApy": "Est. net APY"
+      "estNetApy": "Est. net APY",
+      "marketSlot": "{{market}} Marché"
     }
   },
   "native": {
@@ -2787,10 +2789,10 @@
       }
     },
     "ReserveGasPopup": {
-      "fast": "",
-      "instant": "",
+      "fast": "Normal",
+      "instant": "Rapide",
       "title": "Réserver Gas",
-      "normal": "",
+      "normal": "Lent",
       "doNotReserve": "Ne pas réserver de Gas"
     },
     "ModalPreviewNFTItem": {
