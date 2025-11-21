@@ -262,6 +262,7 @@ export const SearchInner = ({
             left: 0,
             right: 0,
             bottom: 0,
+            paddingBottom: Math.max(bottom, 12),
           },
         ]}>
         <TouchableOpacity onPress={handlePressHome}>
