@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { Text, View, TouchableOpacity, FlatList } from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
@@ -17,6 +17,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
 import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
@@ -226,7 +227,7 @@ export const AddressList = ({
   }, [fetchAccounts, refresh24hBalance, triggerUpdate]);
 
   return (
-    <FlatList
+    <BottomSheetFlatList
       keyExtractor={item => `${item.address}-${item.brandName}`}
       data={addressListData}
       renderItem={renderItem}
