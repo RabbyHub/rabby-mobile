@@ -215,8 +215,10 @@ export const ChartHeader = ({
   }, [data, currentIndex, netWorth]);
 
   const formatNetWorth = useDerivedValue(() => {
-    return data?.[currentIndex?.value]?.netWorth || netWorth;
-  }, [data, currentIndex, netWorth]);
+    return isFoldMultiChart
+      ? netWorth
+      : data?.[currentIndex?.value]?.netWorth || netWorth;
+  }, [data, currentIndex, netWorth, isFoldMultiChart]);
 
   const lossStyleProps = useAnimatedStyle(() => {
     if (hideType === 'HIDE') {
@@ -244,15 +246,15 @@ export const ChartHeader = ({
 
   const netWorthAnimatedProps = useAnimatedProps(() => {
     return {
-      text: hideType === 'HIDE' ? '******' : formatNetWorth.value,
+      text: formatNetWorth.value,
     };
-  }, [formatNetWorth.value, hideType]);
+  }, [formatNetWorth.value]);
 
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
-      text: hideType === 'HIDE' ? '***' : percentChange.value,
+      text: percentChange.value,
     };
-  }, [percentChange.value, hideType]);
+  }, [percentChange.value]);
 
   const dateTimeAnimatedProps = useAnimatedProps(() => {
     return {
