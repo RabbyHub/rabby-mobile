@@ -111,9 +111,9 @@
     },
     "ReserveGasPopup": {
       "doNotReserve": "Não reserve Gas",
-      "fast": "",
-      "instant": "",
-      "normal": "",
+      "fast": "Normal",
+      "instant": "Rápido",
+      "normal": "Lento",
       "title": "Reservar Gas"
     },
     "AuthenticationModals": {
@@ -948,9 +948,9 @@
         "level": {
           "$unknown": "Desconhecido",
           "custom": "Personalizado",
-          "normal": "",
-          "slow": "",
-          "fast": ""
+          "normal": "Normal",
+          "slow": "Lento",
+          "fast": "Rápido"
         },
         "popupDesc": "O custo de gas será reservado a partir do montante da transferência com base no preço de gas que definir."
       },
@@ -2368,7 +2368,8 @@
       "risks": {
         "contractAddress": "O endereço do destinatário é um endereço de contrato, o que pode potencialmente causar perda de fundos",
         "scamAddress": "O endereço do destinatário é um endereço de fraude sinalizado por Rabby",
-        "cexNoDeposite": "O endereço do destinatário é um endereço não-de-depósito de uma CEX. Por favor, assegure-se de que o seu endereço de depósito está correto."
+        "cexNoDeposite": "O endereço do destinatário é um endereço não-de-depósito de uma CEX. Por favor, assegure-se de que o seu endereço de depósito está correto.",
+        "noSend": "Não enviou para este endereço nos últimos 180 dias."
       },
       "brandNameTail": "Endereço",
       "dexNameTail": "Endereço de Depósito",
@@ -3023,7 +3024,8 @@
       "enterAmount": "Introduza o montante",
       "hf": "Fator de saúde",
       "isolated": "isolado",
-      "estNetApy": "Est. rendimento líquido APY"
+      "estNetApy": "Est. rendimento líquido APY",
+      "marketSlot": "{{market}} Mercado"
     }
   },
   "constant": {

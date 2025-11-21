@@ -768,11 +768,11 @@
       "GasSelector": {
         "confirm": "Xác nhận",
         "level": {
-          "normal": "",
+          "normal": "Bình thường",
           "custom": "Tùy chỉnh",
           "$unknown": "Không rõ",
-          "slow": "",
-          "fast": ""
+          "slow": "Chậm",
+          "fast": "Nhanh"
         },
         "popupDesc": "Chi phí gas sẽ được giữ lại từ số tiền chuyển dựa trên giá gas bạn đặt."
       },
@@ -2121,7 +2121,8 @@
       "risks": {
         "cexNoDeposite": "Địa chỉ người nhận là một địa chỉ không phải là địa chỉ nạp tiền từ một CEX. Vui lòng đảm bảo địa chỉ nạp tiền của bạn là chính xác.",
         "contractAddress": "Địa chỉ người nhận là một địa chỉ hợp đồng, có thể gây mất tiền",
-        "scamAddress": "Địa chỉ người nhận là địa chỉ lừa đảo được Rabby đánh dấu"
+        "scamAddress": "Địa chỉ người nhận là địa chỉ lừa đảo được Rabby đánh dấu",
+        "noSend": "Bạn đã không gửi đến địa chỉ này trong 180 ngày."
       },
       "brandNameTail": "Địa chỉ",
       "addToWhitelist": "Thêm vào danh sách trắng",
@@ -2776,16 +2777,17 @@
       "enterAmount": "Nhập số tiền",
       "hfTitle": "Yếu tố sức khỏe",
       "isolated": "tách biệt",
-      "estNetApy": "Ước tính APY ròng"
+      "estNetApy": "Ước tính APY ròng",
+      "marketSlot": "{{market}} Thị Trường"
     }
   },
   "component": {
     "ReserveGasPopup": {
       "title": "Reserve Gas",
       "doNotReserve": "Đừng dành Gas",
-      "fast": "",
-      "normal": "",
-      "instant": ""
+      "fast": "Bình thường",
+      "normal": "Chậm",
+      "instant": "Nhanh"
     },
     "signPermissionCheckModal": {
       "title": "Bạn chỉ cho phép Dapp này ký trên testnets.",
