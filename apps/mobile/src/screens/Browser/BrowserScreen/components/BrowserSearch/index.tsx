@@ -74,9 +74,6 @@ export function BrowserSearch({
     );
   }, [searchText]);
 
-  const isTransparent =
-    trigger === 'home' && !displayedBrowserHistoryList.length && !searchText;
-
   const isOpenURLRef = useRef(false);
 
   const handleClose = useMemoizedFn(async () => {
@@ -174,73 +171,51 @@ export function BrowserSearch({
   }, []);
 
   return (
-    <View
-      style={[
-        styles.container,
-
-        style,
-
-        isTransparent
-          ? {
-              backgroundColor: 'transparent',
-            }
-          : null,
-      ]}>
+    <View style={[styles.container, style]}>
       {!searchText?.trim() ? (
-        trigger === 'home' && !displayedBrowserHistoryList.length ? (
-          <View style={{ flex: 1 }}>
-            <TouchableWithoutFeedback
-              onPress={() => {
-                Keyboard.dismiss();
-              }}>
-              <View style={{ height: '100%' }} />
-            </TouchableWithoutFeedback>
-          </View>
-        ) : (
-          <BottomSheetScrollView
-            contentContainerStyle={{ gap: 24, paddingHorizontal: 20 }}>
-            <BrowserFavorite
-              isInBottomSheet
-              onPress={dapp => {
-                handleOpenUrl(dapp.url || dapp.origin);
-                if (dapp.origin) {
-                  matomoRequestEvent({
-                    category: 'Websites Usage',
-                    action: 'Website_Visit_Favorite List',
-                    label: dapp.origin,
-                  });
-                }
-              }}
-            />
-            <BrowserHot
-              onPress={dapp => {
-                handleOpenUrl(dapp.url || dapp.origin);
-                if (dapp.origin) {
-                  matomoRequestEvent({
-                    category: 'Websites Usage',
-                    action: 'Website_Visit_Hot List',
-                    label: dapp.origin,
-                  });
-                }
-              }}
-            />
-            <BrowserRecent
-              isInBottomSheet
-              list={displayedBrowserHistoryList}
-              onPress={dapp => {
-                handleOpenUrl(dapp.url || dapp.origin);
-                if (dapp.origin) {
-                  matomoRequestEvent({
-                    category: 'Websites Usage',
-                    action: 'Website_Visit_Recent List',
-                    label: dapp.origin,
-                  });
-                }
-              }}
-            />
-            <View style={{ height: 100 }} />
-          </BottomSheetScrollView>
-        )
+        <BottomSheetScrollView
+          contentContainerStyle={{ gap: 24, paddingHorizontal: 20 }}>
+          <BrowserFavorite
+            isInBottomSheet
+            onPress={dapp => {
+              handleOpenUrl(dapp.url || dapp.origin);
+              if (dapp.origin) {
+                matomoRequestEvent({
+                  category: 'Websites Usage',
+                  action: 'Website_Visit_Favorite List',
+                  label: dapp.origin,
+                });
+              }
+            }}
+          />
+          <BrowserHot
+            onPress={dapp => {
+              handleOpenUrl(dapp.url || dapp.origin);
+              if (dapp.origin) {
+                matomoRequestEvent({
+                  category: 'Websites Usage',
+                  action: 'Website_Visit_Hot List',
+                  label: dapp.origin,
+                });
+              }
+            }}
+          />
+          <BrowserRecent
+            isInBottomSheet
+            list={displayedBrowserHistoryList}
+            onPress={dapp => {
+              handleOpenUrl(dapp.url || dapp.origin);
+              if (dapp.origin) {
+                matomoRequestEvent({
+                  category: 'Websites Usage',
+                  action: 'Website_Visit_Recent List',
+                  label: dapp.origin,
+                });
+              }
+            }}
+          />
+          <View style={{ height: 100 }} />
+        </BottomSheetScrollView>
       ) : (
         <BrowserSearchResult
           key={key}
@@ -283,7 +258,7 @@ export function BrowserSearch({
           onBlur={handleBlur}
           onSubmitEditing={handleSubmitEditing}
           enterKeyHint="done"
-          autoFocus
+          // autoFocus
           placeholder={t('page.browser.BrowserSearch.placeholder')}
           alwaysShowCancel
           style={styles.searchBar}
