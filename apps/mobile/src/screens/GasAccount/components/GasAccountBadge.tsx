@@ -16,8 +16,8 @@ export const GasAccountBadge: React.FC<{}> = () => {
     }, [runFetchGasAccountInfo]),
   );
 
-  if (!value?.account) {
-    return <Text style={styles.text}>{formatUsdValue(0)}</Text>;
+  if (!value?.account || !value?.account?.balance) {
+    return null;
   }
 
   return (
