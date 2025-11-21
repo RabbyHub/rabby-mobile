@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
   TouchableWithoutFeedback,
+  StyleSheet,
 } from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { NextInput } from '@/components2024/Form/Input';
@@ -25,7 +26,17 @@ import { Button } from '@/components2024/Button';
 import { AddressEditorBadge } from '../AddressEditorBadge';
 import { touchedFeedback } from '@/utils/touch';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { useAccounts } from '@/hooks/account';
+import {
+  useSortAddressList,
+  useSortedAccounts,
+} from '@/screens/Address/useSortAddressList';
+import AccountCard from '@/components/Address/components/AccountCard';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { ellipsisAddress } from '@/utils/address';
+import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
+import { SearchedAddressItemInSheetModal } from '../AddressItem/SearchedItem';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -74,6 +85,13 @@ const ScreenPanelEnterAddress = ({
     name: string;
   }>(null);
 
+  const isValidAddr = useMemo(() => {
+    return isValidHexAddress(input as `0x${string}`);
+  }, [input]);
+  const hasError = !!input && !isValidAddr && !ensResult?.addr;
+  const disableConfirm = !input || hasError;
+
+  const { sortedAccounts, fetchSortedAccounts } = useSortedAccounts();
   const { findAccountWithoutBalance } = useWhiteListAddress();
 
   const { t } = useTranslation();
@@ -87,6 +105,25 @@ const ScreenPanelEnterAddress = ({
       foundAccountInfo: info,
     };
   }, [findAccountWithoutBalance, input]);
+
+  const filteredAccounts = useMemo(() => {
+    const lowerFilterText = input?.toLowerCase() || '';
+    // const flattenedAccounts = flatten(sortedAccounts);
+    if (!lowerFilterText) return sortedAccounts;
+
+    return sortedAccounts.filter(account => {
+      const address = account.address.toLowerCase();
+      const brandName = account.brandName?.toLowerCase() || '';
+      const aliasName = account.aliasName?.toLowerCase() || '';
+      return (
+        address.includes(lowerFilterText) ||
+        brandName.includes(lowerFilterText) ||
+        aliasName.includes(lowerFilterText)
+      );
+    });
+  }, [sortedAccounts, input]);
+
+  const showSearchError = hasError && !filteredAccounts.length;
 
   const handleDone = useCallback(async () => {
     if (!input) {
@@ -190,7 +227,7 @@ const ScreenPanelEnterAddress = ({
               style={styles.textContainer}
               inputStyle={styles.textArea}
               tipText={''}
-              hasError={!!error}
+              hasError={showSearchError}
               fieldErrorTextStyle={styles.error}
               containerStyle={Object.assign(
                 {
@@ -251,17 +288,11 @@ const ScreenPanelEnterAddress = ({
             />
           </View>
           <View style={styles.afterInput}>
-            {!error && !ensResult && foundAccountInfo?.account && (
-              <AddressEditorBadge
-                style={styles.addressEditor}
-                account={foundAccountInfo?.account}
-              />
-            )}
-            {!error && ensResult && input === ensResult.addr && (
+            {!showSearchError && ensResult && input === ensResult.addr && (
               <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
             )}
 
-            {!error && ensResult && input !== ensResult.addr && (
+            {!showSearchError && ensResult && input !== ensResult.addr && (
               <TouchableOpacity
                 style={styles.ensResultBox}
                 onPress={() => {
@@ -272,8 +303,32 @@ const ScreenPanelEnterAddress = ({
                 <Text style={styles.ensResult}>{ensResult.addr}</Text>
               </TouchableOpacity>
             )}
-            {error && (
+            {showSearchError && error && (
               <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
+            )}
+            {!showSearchError && filteredAccounts.length ? (
+              <View style={styles.accountsList}>
+                {filteredAccounts.map(account => {
+                  const key = `acc-${account.address}-${account.brandName}`;
+                  return (
+                    <SearchedAddressItemInSheetModal
+                      key={key}
+                      account={account}
+                      onPress={() => {
+                        setInput(account.address);
+                      }}
+                    />
+                  );
+                })}
+              </View>
+            ) : (
+              !ensResult &&
+              !!foundAccountInfo?.account && (
+                <AddressEditorBadge
+                  style={styles.addressEditor}
+                  account={foundAccountInfo?.account}
+                />
+              )
             )}
           </View>
         </BottomSheetScrollView>
@@ -291,7 +346,7 @@ const ScreenPanelEnterAddress = ({
               title: t('global.Confirm'),
               onPress: handleDone,
               loading: loading,
-              disabled: !input || !!error,
+              disabled: disableConfirm,
             }}
           />
         </View>
@@ -306,6 +361,7 @@ const SIZES = {
   bottomContentH: 56,
   bottomContentBottom: IS_IOS ? 48 : 0,
   containerPb: 20,
+  itemH: 78,
 };
 const getStyles = createGetStyles2024(ctx => ({
   container: {
@@ -400,4 +456,12 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'flex-start',
     flex: 1,
   },
+
+  /* address :start */
+  accountsList: {
+    width: '100%',
+    flexDirection: 'column',
+    gap: 16,
+  },
+  /* address item: end */
 }));
