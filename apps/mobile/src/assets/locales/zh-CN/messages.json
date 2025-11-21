@@ -2174,7 +2174,7 @@
       "syncingTips": "请保持相机稳定，直至扫描完成",
       "newUserVerify": "它也将作为您 Rabby Mobile 的默认密码。",
       "verifyWithPassword": "使用您的 Rabby Extension 密码进行验证",
-      "scanTips1": "在 Rabby 插件上点击“Rabby Mobile”",
+      "scanTips1": "在 Rabby 插件上点击“Mobile Sync”",
       "importedTips": "如果应用程序中已经存在重复地址，则不会导入。地址备注和白名单也将同步。",
       "verifyTips": "您的数据已离线加密。请输入您的 Rabby 插件密码进行解密和验证。"
     },

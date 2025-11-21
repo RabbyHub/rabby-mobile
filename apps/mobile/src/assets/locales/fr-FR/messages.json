@@ -2081,7 +2081,7 @@
       "importedSuccessfully": "Importé avec succès !",
       "verifyWithPassword": "Vérifiez avec votre mot de passe Rabby Extension",
       "newUserVerify": "Il servira également de mot de passe par défaut pour votre Rabby Mobile",
-      "scanTips1": "Cliquez sur \"Rabby Mobile\" sur l'extension Rabby",
+      "scanTips1": "Cliquez sur \"Mobile Sync\" sur l'extension Rabby",
       "verifyTips": "Vos données sont chiffrées hors ligne. Entrez votre mot de passe de l'extension Rabby pour déchiffrer et vérifier.",
       "imported": "Les adresses déjà présentes dans Rabby Mobile ne seront pas importées à nouveau. Les notes d'adresse et les listes blanches se synchroniseront automatiquement.",
       "importedTips": "Si l'application a déjà une adresse en double, elle ne sera pas importée. Les notes d'adresse et les listes blanches se synchroniseront également."

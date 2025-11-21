@@ -2406,7 +2406,7 @@
     "syncExtension": {
       "syncingProgress": "Scannen ({{ percent }})",
       "importedSuccessfully": "Erfolgreich importiert!",
-      "scanTips1": "Klicken Sie auf „Rabby Mobile“ in der Rabby-Erweiterung",
+      "scanTips1": "Klicken Sie auf „Mobile Sync“ in der Rabby-Erweiterung",
       "imported": "Adressen, die bereits in Rabby Mobile vorhanden sind, werden nicht erneut importiert. Adressnotizen und Whitelists werden automatisch synchronisiert.",
       "verifyTips": "Ihre Daten werden offline verschlüsselt. Geben Sie Ihr Rabby Extension-Passwort ein, um zu entschlüsseln und zu verifizieren.",
       "importedTips": "Wenn im APP bereits eine doppelte Adresse vorhanden ist, wird sie nicht importiert. Adressnotizen und Whitelists werden ebenfalls synchronisiert.",

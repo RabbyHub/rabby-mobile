@@ -2162,7 +2162,7 @@
       "importedSuccessfully": "Импортировано успешно!",
       "syncingProgress": "Сканирование ({{ percent }})",
       "noNewAddr": "Не найдено новых адресов для импорта",
-      "scanTips1": "Нажмите «Rabby Mobile» в расширении Rabby",
+      "scanTips1": "Нажмите «Mobile Sync» в расширении Rabby",
       "syncingTips": "Держите камеру неподвижно до завершения сканирования",
       "scanTips2": "Отсканируйте код и начните синхронизацию",
       "verifyWithPassword": "Проверьте с помощью вашего Rabby Extension Password",

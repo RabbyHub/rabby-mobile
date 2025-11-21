@@ -2334,7 +2334,7 @@
       "noNewAddr": "No se encontraron nuevas direcciones para importar",
       "scanTips2": "Escanea el código y comienza a sincronizar",
       "newUserVerify": "También servirá como la contraseña predeterminada para tu Rabby Mobile",
-      "scanTips1": "Haz clic en “Rabby Mobile” en Rabby Extension",
+      "scanTips1": "Haz clic en “Mobile Sync” en Rabby Extension",
       "imported": "Las direcciones que ya están en Rabby Mobile no se importarán de nuevo. Las notas de dirección y las listas blancas se sincronizarán automáticamente.",
       "importedTips": "Si la APP ya tiene una dirección duplicada, no se importará. Las notas de dirección y las listas blancas también se sincronizarán.",
       "verifyTips": "Tus datos están cifrados sin conexión. Introduce tu contraseña de la extensión Rabby para descifrar y verificar."

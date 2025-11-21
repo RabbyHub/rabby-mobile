@@ -2064,7 +2064,7 @@
       "alert": "EIP-7702 henüz desteklenmiyor."
     },
     "syncExtension": {
-      "scanTips1": "Rabby Uzantısı'nda \"Rabby Mobile\"a tıklayın",
+      "scanTips1": "Rabby Uzantısı'nda \"Mobile Sync\"a tıklayın",
       "verifyWithPassword": "Rabby Uzantı Şifrenizle Doğrulayın",
       "syncingTips": "Tarayıcı tamamlanana kadar kamerayı sabit tutun.",
       "importedSuccessfully": "Başarıyla İçe Aktarıldı!",

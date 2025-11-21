@@ -2223,7 +2223,7 @@
       "imported": "Rabby Mobile 中已存在的地址將不會再次匯入。地址備註和白名單將自動同步。",
       "noNewAddr": "未找到可匯入的新地址",
       "importedTips": "如果應用程式已經存在重複地址，則不會導入。地址備註和白名單也將同步。",
-      "scanTips1": "點擊 Rabby Extension 上的 “Rabby Mobile”",
+      "scanTips1": "點擊 Rabby Extension 上的 “Mobile Sync”",
       "verifyTips": "您的數據已離線加密。請輸入您的 Rabby 擴展密碼以解密和驗證。"
     },
     "safeMessageQueue": {

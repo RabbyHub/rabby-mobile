@@ -2066,7 +2066,7 @@
     "syncExtension": {
       "verifyWithPassword": "Verifikasi dengan Kata Sandi Ekstensi Rabby Anda",
       "importedSuccessfully": "Diimpor dengan Sukses!",
-      "scanTips1": "Klik “Rabby Mobile” di Ekstensi Rabby",
+      "scanTips1": "Klik “Mobile Sync” di Ekstensi Rabby",
       "scanTips2": "Pindai kode dan mulai menyinkronkan",
       "newUserVerify": "Ia juga akan berfungsi sebagai kata sandi default untuk Rabby Mobile",
       "syncingProgress": "Pindai ({{ percent }})",

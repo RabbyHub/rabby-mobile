@@ -2316,7 +2316,7 @@
       "importedSuccessfully": "นำเข้าเรียบร้อยแล้ว!",
       "newUserVerify": "มันยังใช้เป็นรหัสผ่านเริ่มต้นสำหรับ Rabby Mobile ของคุณ",
       "syncingProgress": "กำลังสแกน ({{ percent }})",
-      "scanTips1": "คลิก “Rabby Mobile” บน Rabby Extension",
+      "scanTips1": "คลิก “Mobile Sync” บน Rabby Extension",
       "verifyWithPassword": "ยืนยันด้วยรหัสผ่าน Rabby Extension ของคุณ",
       "noNewAddr": "ไม่พบที่อยู่ใหม่สำหรับนำเข้า",
       "scanTips2": "สแกนโค้ดและเริ่มการซิงค์",
