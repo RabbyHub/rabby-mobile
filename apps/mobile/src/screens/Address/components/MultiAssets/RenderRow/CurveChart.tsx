@@ -287,6 +287,7 @@ export const ChartHeader = ({
           style={[
             styles.netWorth,
             loading && styles.hidden,
+            // 用hide原因是：AnimateableText持续订阅netWorthAnimatedProps的变化，会出现订阅不到值或值不更新的问题
             hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
           ]}
           animatedProps={netWorthAnimatedProps}
