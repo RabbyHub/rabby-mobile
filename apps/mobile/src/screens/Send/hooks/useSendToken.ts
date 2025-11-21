@@ -698,7 +698,13 @@ export function useSendTokenForm({
       } else {
         putScreenState({ balanceError: null });
       }
-      if (coerceNumber(resultAmount) === 0) resultAmount = '';
+
+      if (
+        changedValues?.amount === undefined &&
+        coerceNumber(resultAmount) === 0
+      ) {
+        resultAmount = '';
+      }
 
       const nextFormValues = {
         ...currentValues,
