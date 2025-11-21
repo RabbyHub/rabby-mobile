@@ -31,20 +31,16 @@ export const enum RiskType {
   CEX_NO_DEPOSIT = 4,
 }
 type RiskItem = { type: RiskType; value: string };
-export const useRisks = (
-  address: string,
-  options?: {
-    caredFromAddress?: string;
-    cex?: ProjectItem | null;
-    onLoadFinished?: (ctx: { risks: Array<RiskItem> }) => void;
-  },
-) => {
-  const { caredFromAddress, cex, onLoadFinished } = options || {};
+export const useRisks = (options: {
+  toAddress: string;
+  fromAddress?: string;
+  cex?: ProjectItem | null;
+  onLoadFinished?: (ctx: { risks: Array<RiskItem> }) => void;
+}) => {
+  const { fromAddress, toAddress, cex, onLoadFinished } = options;
   const [risks, setRisks] = useState<Array<RiskItem>>([]);
   const { t } = useTranslation();
-  const { accounts } = useMyAccounts();
-  const sortedAccounts = useSortAddressList(accounts);
-  const [loading, setLoading] = useState(!!address);
+  const [loading, setLoading] = useState(!!toAddress);
   const riskGetRef = useRef(false);
 
   const [addressDesc, setAddressDesc] = useState<
@@ -55,21 +51,21 @@ export const useRisks = (
     return !loading && !risks.some(r => r.type === RiskType.NEVER_SEND);
   }, [loading, risks]);
 
+  const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
+
   const top10Addresses = useCreationWithShallowCompare(() => {
     return sortedAccounts.slice(0, __DEV__ ? 1 : 10).map(acc => acc.address);
   }, [sortedAccounts]);
-  const topAddresses = useMemo(() => {
-    if (
-      caredFromAddress &&
-      !top10Addresses.some(addr => isSameAddress(addr, caredFromAddress))
-    ) {
-      return [caredFromAddress, ...top10Addresses];
-    }
+  const caredAddresses = useMemo(() => {
+    if (fromAddress) return [fromAddress];
 
     return top10Addresses;
-  }, [caredFromAddress, top10Addresses]);
+  }, [fromAddress, top10Addresses]);
+
   const fetchRisks = useCallback(async () => {
-    if (!address) return;
+    console.debug('[feat] caredAddresses for risk check:', caredAddresses);
+    if (!caredAddresses.length || !toAddress) return;
     if (riskGetRef.current) return;
     riskGetRef.current = true;
     setLoading(true);
@@ -83,16 +79,16 @@ export const useRisks = (
         setTimeout(() => reject(new Error('timeout')), 3000);
       });
 
-      const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
+      const addressDescPromise = getAddrDescWithCexLocalCacheSync(toAddress);
 
       const checkTransferPromise = new Promise<void>(resolve => {
-        topAddresses.forEach(addr => {
-          if (isSameAddress(addr, address)) return;
+        caredAddresses.forEach(addr => {
+          if (isSameAddress(addr, toAddress)) return;
 
           queue.add(async () => {
             try {
               if (addressSent || hasError) return;
-              const res = await openapi.hasTransferAllChain(addr, address);
+              const res = await openapi.hasTransferAllChain(addr, toAddress);
 
               if (res?.has_transfer) {
                 addressSent = addr;
@@ -160,6 +156,8 @@ export const useRisks = (
         timeoutPromise,
       ]);
 
+      console.debug('[feat] addressSent', addressSent);
+
       if (!addressSent) {
         setRisks([
           ...currRisks,
@@ -188,7 +186,7 @@ export const useRisks = (
       riskGetRef.current = false;
       setLoading(false);
     }
-  }, [address, cex, topAddresses, t, onLoadFinished]);
+  }, [caredAddresses, toAddress, cex, t, onLoadFinished]);
 
   useEffect(() => {
     fetchRisks();
