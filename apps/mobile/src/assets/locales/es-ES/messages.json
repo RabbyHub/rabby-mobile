@@ -50,11 +50,11 @@
       }
     },
     "ReserveGasPopup": {
-      "normal": "Normal",
+      "normal": "",
       "doNotReserve": "No reserves Gas",
       "title": "Reserva Gas",
-      "instant": "Instantáneo",
-      "fast": "Rápido"
+      "instant": "",
+      "fast": ""
     },
     "signPermissionCheckModal": {
       "reconnect": "Reconectar Dapp",
@@ -1025,10 +1025,10 @@
       "whitelistAlert__notWhitelisted": "La dirección no está en la lista blanca. Estoy de acuerdo en otorgar permiso temporal para transferir.",
       "GasSelector": {
         "level": {
-          "fast": "Instantáneo",
-          "slow": "Normal",
+          "fast": "",
+          "slow": "",
           "custom": "Personalizado",
-          "normal": "Rápido",
+          "normal": "",
           "$unknown": "Desconocido"
         },
         "popupDesc": "El costo de gas se reservará del monto de la transferencia según el precio de gas que establezcas",

@@ -320,10 +320,10 @@
         "popupDesc": "Gas 費用將根據您設置的價格從轉帳金額中預留。",
         "confirm": "確認",
         "level": {
-          "slow": "普通",
+          "slow": "",
           "$unknown": "未知",
-          "fast": "即時",
-          "normal": "快速",
+          "fast": "",
+          "normal": "",
           "custom": "自訂"
         }
       },
@@ -2879,9 +2879,9 @@
       }
     },
     "ReserveGasPopup": {
-      "normal": "正常",
-      "fast": "快速",
-      "instant": "即時",
+      "normal": "",
+      "fast": "",
+      "instant": "",
       "doNotReserve": "不預留Gas",
       "title": "預留 Gas"
     },

@@ -91,10 +91,10 @@
       "screenHeaderSubTitle_one": "1 กระเป๋าเงิน"
     },
     "ReserveGasPopup": {
-      "fast": "รวดเร็ว",
+      "fast": "",
       "title": "สำรอง Gas",
-      "instant": "ทันที",
-      "normal": "ปกติ",
+      "instant": "",
+      "normal": "",
       "doNotReserve": "อย่าสำรอง Gas"
     },
     "signPermissionCheckModal": {
@@ -482,10 +482,10 @@
       "GasSelector": {
         "confirm": "ยืนยัน",
         "level": {
-          "fast": "ทันที",
+          "fast": "",
           "$unknown": "Unknown",
-          "slow": "ปกติ",
-          "normal": "รวดเร็ว",
+          "slow": "",
+          "normal": "",
           "custom": "ปรับแต่ง"
         },
         "popupDesc": "ค่าธรรมเนียม gas จะถูกหักออกจากจำนวนการโอนตามราคาค่า gas ที่คุณตั้งไว้"

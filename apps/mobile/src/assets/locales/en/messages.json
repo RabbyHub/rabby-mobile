@@ -643,9 +643,9 @@
         "level": {
           "$unknown": "Unknown",
           "custom": "Custom",
-          "fast": "Instant",
-          "normal": "Fast",
-          "slow": "Normal"
+          "fast": "Fast",
+          "normal": "Normal",
+          "slow": "Slow"
         }
       },
       "modalConfirmAddToContacts": {
@@ -2868,9 +2868,9 @@
     },
     "ReserveGasPopup": {
       "title": "Reserve Gas",
-      "instant": "Instant",
-      "fast": "Fast",
-      "normal": "Normal",
+      "instant": "Fast",
+      "fast": "Normal",
+      "normal": "Slow",
       "doNotReserve": "Don't reserve Gas"
     },
     "NoLongerSupports": {

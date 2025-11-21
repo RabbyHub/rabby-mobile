@@ -634,10 +634,10 @@
       },
       "GasSelector": {
         "level": {
-          "fast": "Instan",
+          "fast": "",
           "$unknown": "Tidak dikenali",
-          "slow": "Normal",
-          "normal": "Cepat",
+          "slow": "",
+          "normal": "",
           "custom": "Kustom"
         },
         "popupDesc": "Biaya gas akan diambil dari jumlah transfer berdasarkan harga gas yang Anda atur.",
@@ -2849,10 +2849,10 @@
     },
     "ReserveGasPopup": {
       "doNotReserve": "Jangan cadangkan Gas",
-      "normal": "Normal",
+      "normal": "",
       "title": "Cadangkan Gas",
-      "fast": "Cepat",
-      "instant": "Instan"
+      "fast": "",
+      "instant": ""
     },
     "NoLongerSupports": {
       "title": "Alamat dompet mobile tidak lagi didukung",
