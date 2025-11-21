@@ -36,7 +36,9 @@ type DuplexDefs = {
       type: 'GASKETVIEW:TOGGLE_LOADING';
       info: {
         loading: boolean;
+        isPositive: boolean;
       };
+      animationDurationMs: number;
     };
     post: never;
   };

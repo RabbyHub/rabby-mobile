@@ -60,7 +60,7 @@ export const useRisks = (
     setLoading(true);
 
     const currRisks: Array<RiskItem> = [];
-    let hasSended = false;
+    let hasSent = false;
     let hasError = false;
 
     try {
@@ -77,7 +77,7 @@ export const useRisks = (
           }
           queue.add(async () => {
             try {
-              if (hasSended || hasError) {
+              if (hasSent || hasError) {
                 return;
               }
               const res = await openapi.hasTransferAllChain(
@@ -86,7 +86,7 @@ export const useRisks = (
               );
 
               if (res?.has_transfer) {
-                hasSended = true;
+                hasSent = true;
               }
             } catch (error) {
               console.error('has_transfer fetch error', error);
@@ -151,7 +151,7 @@ export const useRisks = (
         timeoutPromise,
       ]);
 
-      if (!hasSended) {
+      if (!hasSent) {
         setRisks([
           ...currRisks,
           {

@@ -768,11 +768,11 @@
       "GasSelector": {
         "confirm": "Xác nhận",
         "level": {
-          "normal": "Nhanh chóng",
+          "normal": "",
           "custom": "Tùy chỉnh",
           "$unknown": "Không rõ",
-          "slow": "Bình thường",
-          "fast": "Tức thì"
+          "slow": "",
+          "fast": ""
         },
         "popupDesc": "Chi phí gas sẽ được giữ lại từ số tiền chuyển dựa trên giá gas bạn đặt."
       },
@@ -2121,7 +2121,6 @@
       "risks": {
         "cexNoDeposite": "Địa chỉ người nhận là một địa chỉ không phải là địa chỉ nạp tiền từ một CEX. Vui lòng đảm bảo địa chỉ nạp tiền của bạn là chính xác.",
         "contractAddress": "Địa chỉ người nhận là một địa chỉ hợp đồng, có thể gây mất tiền",
-        "noSend": "Bạn chưa gửi tiền đến địa chỉ này trong vòng 180 ngày qua. Vui lòng xác nhận nếu bạn muốn tiếp tục.",
         "scamAddress": "Địa chỉ người nhận là địa chỉ lừa đảo được Rabby đánh dấu"
       },
       "brandNameTail": "Địa chỉ",
@@ -2166,7 +2165,7 @@
       "newUserVerify": "Nó cũng sẽ là mật khẩu mặc định cho Rabby Mobile của bạn",
       "imported": "Các địa chỉ đã có trong Rabby Mobile sẽ không được nhập lại. Ghi chú địa chỉ và danh sách trắng sẽ được đồng bộ hóa tự động.",
       "scanTips2": "Quét mã và bắt đầu đồng bộ hóa",
-      "scanTips1": "Nhấp vào \"Rabby Mobile\" trên Rabby Extension",
+      "scanTips1": "Nhấp vào \"Mobile Sync\" trên Rabby Extension",
       "syncingTips": "Giữ máy ảnh ổn định cho đến khi quét xong",
       "importedTips": "Nếu trong ứng dụng đã có địa chỉ trùng lặp, nó sẽ không được nhập. Ghi chú địa chỉ và danh sách trắng cũng sẽ được đồng bộ hóa."
     },
@@ -2784,9 +2783,9 @@
     "ReserveGasPopup": {
       "title": "Reserve Gas",
       "doNotReserve": "Đừng dành Gas",
-      "fast": "Nhanh chóng",
-      "normal": "Bình thường",
-      "instant": "Tức thì"
+      "fast": "",
+      "normal": "",
+      "instant": ""
     },
     "signPermissionCheckModal": {
       "title": "Bạn chỉ cho phép Dapp này ký trên testnets.",

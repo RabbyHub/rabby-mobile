@@ -80,6 +80,8 @@ export interface PerpsState {
   homePositionPnl: {
     pnl: number;
     show: boolean;
+    type: 'pnl' | 'accountValue';
+    accountValue: number;
   };
 }
 
@@ -108,7 +110,9 @@ const initialState: PerpsState = {
   pollingTimer: null,
   homePositionPnl: {
     pnl: 0,
+    accountValue: 0,
     show: false,
+    type: 'pnl',
   },
   fillsOrderTpOrSl: {},
 };
@@ -130,7 +134,12 @@ export const usePerpsStore = () => {
   );
 
   const setHomePositionPnl = useMemoizedFn(
-    (payload: { pnl: number; show: boolean }) => {
+    (payload: {
+      pnl: number;
+      show: boolean;
+      type: 'pnl' | 'accountValue';
+      accountValue: number;
+    }) => {
       setState(prev => ({ ...prev, homePositionPnl: payload }));
     },
   );
@@ -198,7 +207,9 @@ export const usePerpsStore = () => {
             pnl: payload.assetPositions.reduce((acc, asset) => {
               return acc + Number(asset.position.unrealizedPnl);
             }, 0),
-            show: payload.assetPositions.length > 0,
+            show: Number(payload.marginSummary.accountValue) > 0,
+            type: payload.assetPositions.length > 0 ? 'pnl' : 'accountValue',
+            accountValue: Number(payload.marginSummary.accountValue),
           },
         };
       });
@@ -293,7 +304,12 @@ export const usePerpsStore = () => {
           pnl: clearinghouseState.assetPositions.reduce((acc, order) => {
             return acc + Number(order.position.unrealizedPnl);
           }, 0),
-          show: clearinghouseState.assetPositions.length > 0,
+          show: Number(clearinghouseState.marginSummary.accountValue) > 0,
+          type:
+            clearinghouseState.assetPositions.length > 0
+              ? 'pnl'
+              : 'accountValue',
+          accountValue: Number(clearinghouseState.marginSummary.accountValue),
         },
       }));
     },
@@ -351,6 +367,8 @@ export const usePerpsStore = () => {
       homePositionPnl: {
         pnl: 0,
         show: false,
+        type: 'accountValue',
+        accountValue: 0,
       },
     }));
   });

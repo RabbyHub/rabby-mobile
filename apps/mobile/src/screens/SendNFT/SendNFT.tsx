@@ -46,7 +46,6 @@ export default function SendNFT() {
   const fromAccount = navParams?.fromAccount;
 
   const toAddress = navParams?.toAddress || '';
-  const addressBrandName = navParams?.addressBrandName;
   const addrDesc = navParams?.addrDesc;
   const account = fromAccount || currentAccount;
 
@@ -71,16 +70,18 @@ export default function SendNFT() {
 
     whitelistEnabled,
     computed: {
+      toAccount,
+      toAddressPositiveTips,
       toAddressInContactBook,
-      toAddressIsValid,
       toAddrCex,
-      toAddressIsRecentlySend,
-      toAddressInWhitelist,
+      // toAddressIsRecentlySend,
+      // toAddressInWhitelist,
       canSubmit,
       canDirectSign,
     },
   } = useSendNFTForm({
     toAddress: navParams?.toAddress,
+    toAddressBrandName: navParams?.addressBrandName,
     nftToken: nftItem,
     currentAccount: account,
   });
@@ -135,10 +136,11 @@ export default function SendNFT() {
         formValues,
         computed: {
           canSubmit,
-          toAddressIsRecentlySend,
-          toAddressInWhitelist,
+          toAccount,
+          toAddressPositiveTips,
+          // toAddressIsRecentlySend,
+          // toAddressInWhitelist,
           whitelistEnabled,
-          toAddressIsValid,
           toAddrCex,
           toAddressInContactBook,
           chainItem,
@@ -168,11 +170,7 @@ export default function SendNFT() {
             <FromAddressControl2024 disableSwitch={true} />
 
             {/* To */}
-            <ToAddressControl2024
-              // address={toAddress}
-              brandName={addressBrandName}
-              addrDesc={addrDesc}
-            />
+            <ToAddressControl2024 addrDesc={addrDesc} />
 
             {/* nft amount info */}
             <NFTSection

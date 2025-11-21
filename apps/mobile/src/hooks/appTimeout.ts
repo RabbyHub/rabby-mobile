@@ -32,7 +32,7 @@ unlockTimeAtom.onMount = setter => {
   });
 };
 
-export function useLastUnlockTime() {
+export function useLastUnlockedAuth() {
   const [time, setTime] = useAtom(unlockTimeAtom);
 
   // const fetchLastUnlockTime = useCallback(() => {

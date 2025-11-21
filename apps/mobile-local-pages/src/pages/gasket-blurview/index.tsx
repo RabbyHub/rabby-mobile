@@ -23,18 +23,24 @@ window.addEventListener('messageFromRN', function (event) {
     }
     case 'GASKETVIEW:TOGGLE_LOADING': {
       if (message.info.loading) {
+        const rootElement = document.documentElement;
+        const durationMs = parseInt(
+          `${message.animationDurationMs || ''}` || '2500',
+        );
+
+        rootElement.style.setProperty('--app-animation-ms', `${durationMs}`);
+        rootElement.style.setProperty(
+          '--app-animation-color-rgb',
+          message.info.isPositive ? '88, 198, 105' : '227, 73, 53',
+        );
+
         document.body.classList.add('loading');
         if (clearRef.current) clearTimeout(clearRef.current);
 
-        const ms = parseInt(
-          getComputedStyle(document.documentElement).getPropertyValue(
-            '--animation-ms',
-          ) || '4000',
-        );
         clearRef.current = setTimeout(() => {
           clearRef.current = 0;
           document.body.classList.remove('loading');
-        }, ms);
+        }, durationMs);
       } else {
         // if there is a pending clear timeout, dont clear immediately
         if (!clearRef.current) {
