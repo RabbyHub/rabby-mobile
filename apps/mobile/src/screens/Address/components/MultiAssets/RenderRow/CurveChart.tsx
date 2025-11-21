@@ -100,7 +100,8 @@ function Chart({
           styles.chartContainer,
           hideType === 'HALF_HIDE' && styles.balanceOpacity,
         ]}>
-        <LineChart.Provider data={combineCurveData.list}>
+        <LineChart.Provider
+          data={isFoldMultiChart ? [] : combineCurveData.list}>
           <ChartHeader
             loading={loadingNewCurve}
             rawNetWorth={data.rawNetWorth}
@@ -282,24 +283,22 @@ export const ChartHeader = ({
   return (
     <View style={styles.charHeader}>
       <View style={styles.netWorthContainer}>
-        {loading ? (
-          <Skeleton
-            width={181}
-            height={44}
-            style={styles.skeletonNetWorth}
-            LinearGradientComponent={LoadingLinear}
-          />
-        ) : isHidden ? (
-          <Text style={styles.netWorth}>******</Text>
-        ) : (
-          <AnimateableText
-            style={[
-              styles.netWorth,
-              hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-            ]}
-            animatedProps={netWorthAnimatedProps}
-          />
-        )}
+        <AnimateableText
+          style={[
+            styles.netWorth,
+            loading && styles.hidden,
+            hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+          ]}
+          animatedProps={netWorthAnimatedProps}
+        />
+
+        <Skeleton
+          width={181}
+          height={44}
+          style={[styles.skeletonNetWorth, !loading && styles.hidden]}
+          LinearGradientComponent={LoadingLinear}
+        />
+
         <View style={[styles.accountBg]}>
           <RcIconSmallWalletCC
             color={ThemeColors2024.dark['neutral-title-1']}
@@ -461,6 +460,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  hidden: {
+    display: 'none',
   },
   accountBg: {
     minWidth: 74,
