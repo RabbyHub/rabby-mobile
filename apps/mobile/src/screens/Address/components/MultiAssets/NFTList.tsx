@@ -333,6 +333,9 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
+  if (!isFocusing) {
+    return null;
+  }
   return (
     <Tabs.FlatList
       keyExtractor={getItemId}

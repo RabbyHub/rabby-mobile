@@ -178,6 +178,9 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
+  if (!isFocusing) {
+    return null;
+  }
   return (
     <Tabs.FlatList
       keyExtractor={getItemId}

@@ -418,10 +418,10 @@ export const TokenList = ({ chain, updateToken }: Props) => {
           : portfolioListData
       }
       renderItem={renderItem}
-      initialNumToRender={25}
-      windowSize={25}
+      initialNumToRender={15}
+      windowSize={15}
       removeClippedSubviews
-      maxToRenderPerBatch={25}
+      maxToRenderPerBatch={15}
       ItemSeparatorComponent={ListRenderSeparator}
       ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={ListRenderFooter}
