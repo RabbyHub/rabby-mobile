@@ -39,6 +39,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     formValues,
     screenState,
     computed: {
+      fromAddress,
       canSubmit,
       canDirectSign: canShowDirectSign,
       toAddressPositiveTips,
@@ -74,6 +75,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     fetchRisks,
   } = useRisks(formValues.to, {
     // balance: !!screenState.toAddrAccountInfo?.account?.balance,
+    caredFromAddress: fromAddress,
     cex: toAddrCex,
     onLoadFinished: useCallback(
       ctx => {

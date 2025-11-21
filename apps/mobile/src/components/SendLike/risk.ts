@@ -10,6 +10,7 @@ import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 
 const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 
@@ -33,11 +34,12 @@ type RiskItem = { type: RiskType; value: string };
 export const useRisks = (
   address: string,
   options?: {
+    caredFromAddress?: string;
     cex?: ProjectItem | null;
     onLoadFinished?: (ctx: { risks: Array<RiskItem> }) => void;
   },
 ) => {
-  const { cex, onLoadFinished } = options || {};
+  const { caredFromAddress, cex, onLoadFinished } = options || {};
   const [risks, setRisks] = useState<Array<RiskItem>>([]);
   const { t } = useTranslation();
   const { accounts } = useMyAccounts();
@@ -53,6 +55,19 @@ export const useRisks = (
     return !loading && !risks.some(r => r.type === RiskType.NEVER_SEND);
   }, [loading, risks]);
 
+  const top10Addresses = useCreationWithShallowCompare(() => {
+    return sortedAccounts.slice(0, __DEV__ ? 1 : 10).map(acc => acc.address);
+  }, [sortedAccounts]);
+  const topAddresses = useMemo(() => {
+    if (
+      caredFromAddress &&
+      !top10Addresses.some(addr => isSameAddress(addr, caredFromAddress))
+    ) {
+      return [caredFromAddress, ...top10Addresses];
+    }
+
+    return top10Addresses;
+  }, [caredFromAddress, top10Addresses]);
   const fetchRisks = useCallback(async () => {
     if (!address) return;
     if (riskGetRef.current) return;
@@ -60,7 +75,7 @@ export const useRisks = (
     setLoading(true);
 
     const currRisks: Array<RiskItem> = [];
-    let hasSent = false;
+    let addressSent = '';
     let hasError = false;
 
     try {
@@ -71,22 +86,16 @@ export const useRisks = (
       const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
 
       const checkTransferPromise = new Promise<void>(resolve => {
-        sortedAccounts.slice(0, 10).forEach(acc => {
-          if (isSameAddress(acc.address, address)) {
-            return;
-          }
+        topAddresses.forEach(addr => {
+          if (isSameAddress(addr, address)) return;
+
           queue.add(async () => {
             try {
-              if (hasSent || hasError) {
-                return;
-              }
-              const res = await openapi.hasTransferAllChain(
-                acc.address,
-                address,
-              );
+              if (addressSent || hasError) return;
+              const res = await openapi.hasTransferAllChain(addr, address);
 
               if (res?.has_transfer) {
-                hasSent = true;
+                addressSent = addr;
               }
             } catch (error) {
               console.error('has_transfer fetch error', error);
@@ -151,7 +160,7 @@ export const useRisks = (
         timeoutPromise,
       ]);
 
-      if (!hasSent) {
+      if (!addressSent) {
         setRisks([
           ...currRisks,
           {
@@ -179,7 +188,7 @@ export const useRisks = (
       riskGetRef.current = false;
       setLoading(false);
     }
-  }, [address, cex, sortedAccounts, t, onLoadFinished]);
+  }, [address, cex, topAddresses, t, onLoadFinished]);
 
   useEffect(() => {
     fetchRisks();
