@@ -41,6 +41,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     computed: {
       canSubmit,
       canDirectSign: canShowDirectSign,
+      toAddressPositiveTips,
       toAddressInContactBook,
       toAddrCex,
     },
@@ -111,7 +112,11 @@ export default function BottomArea({ account }: { account: Account | null }) {
         mostImportantRisks: [] as { value: string }[],
       };
       if (risks.length) {
-        const sorted = [...risks].sort(sortRisksDesc);
+        const sorted = (
+          !toAddressPositiveTips?.hasPositiveTips
+            ? [...risks]
+            : [...risks].filter(item => item.type !== RiskType.NEVER_SEND)
+        ).sort(sortRisksDesc);
 
         ret.risksForToAddress = sorted
           .slice(0, 1)
@@ -146,7 +151,12 @@ export default function BottomArea({ account }: { account: Account | null }) {
         hasRiskForToAddress: !!ret.risksForToAddress.length,
         hasRiskForToken: !!ret.risksForToken.length,
       };
-    }, [currentToken, risks, disableItemCheck]);
+    }, [
+      currentToken,
+      risks,
+      toAddressPositiveTips?.hasPositiveTips,
+      disableItemCheck,
+    ]);
 
   const agreeRequiredChecked =
     (hasRiskForToAddress && screenState.agreeRequiredChecks.forToAddress) ||
