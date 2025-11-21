@@ -64,7 +64,6 @@ export const useAssets = ({
     if (!address) {
       return;
     }
-    console.log('CUSTOM_LOGGER:=>: loadToken', address.slice(-4), force);
     try {
       const walletProject = new DisplayedProject({
         id: 'Wallet',
@@ -118,7 +117,6 @@ export const useAssets = ({
     if (!address) {
       return;
     }
-    console.log('CUSTOM_LOGGER:=>: loadDefi', address.slice(-4), force);
     try {
       let projectDict: Record<string, DisplayedProject> | null = {};
       const protocols = await syncProtocols(address, force, !force);
@@ -149,7 +147,6 @@ export const useAssets = ({
     if (!address) {
       return;
     }
-    console.log('CUSTOM_LOGGER:=>: loadNFT', address.slice(-4), force);
     try {
       const _nfts = await syncNFTs(address, force, !force);
       if (!_nfts.length) {
