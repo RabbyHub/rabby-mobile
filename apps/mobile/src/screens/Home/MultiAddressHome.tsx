@@ -113,6 +113,7 @@ import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -733,6 +734,9 @@ function MultiAddressHome(): JSX.Element {
 
       if (el.key === MultiHomeFeatTitle.Dapps) {
         return <DappsBadge />;
+      }
+      if (el.key === MultiHomeFeatTitle.GasAccount) {
+        return <GasAccountBadge />;
       }
 
       return (
