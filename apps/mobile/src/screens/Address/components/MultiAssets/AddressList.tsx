@@ -252,6 +252,7 @@ export const AddressListModal = ({
   onDone,
 }: AddressListProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   const [moreAddressList, setMoreAddressList] = useState(false);
   if (moreAddressList) {
     return (
@@ -263,7 +264,7 @@ export const AddressListModal = ({
   }
   return (
     <AutoLockView as="View" style={styles.container}>
-      <Text style={styles.title}>Wallets</Text>
+      <Text style={styles.title}>{t('component.multiAddressModal.title')}</Text>
       <AddressList
         onAddAddressPress={onAddAddressPress}
         onDone={onDone}

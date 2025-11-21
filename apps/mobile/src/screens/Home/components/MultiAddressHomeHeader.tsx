@@ -127,6 +127,11 @@ export function MultiAddressHomeHeader(
 
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
   const gotoAddAddress = useCallback(() => {
+    if (modalRef.current) {
+      removeGlobalBottomSheetModal2024(modalRef.current);
+      modalRef.current = undefined;
+    }
+
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
       onDone: () => {
@@ -300,7 +305,7 @@ export function MultiAddressHomeHeader(
 }
 
 const SIZES = {
-  cardLayoutPaddingHorizontal: 12 /* ITEM_LAYOUT_PADDING_HORIZONTAL */,
+  cardLayoutPaddingHorizontal: 16 /* ITEM_LAYOUT_PADDING_HORIZONTAL */,
   cardContentRadius: 20,
 };
 

@@ -2,6 +2,7 @@ import { Dimensions, View } from 'react-native';
 import {
   MaterialTabBar,
   MaterialTabItem,
+  useFocusedTab,
 } from 'react-native-collapsible-tab-view';
 
 import React, { useCallback, useLayoutEffect } from 'react';
@@ -18,6 +19,7 @@ import {
   HOME_TABBAR_SIZES,
   useMeasureLayoutForHomeGuidanceMultipleTabs,
 } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
+import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -174,6 +176,7 @@ export const HomeCustomMaterialTabBar = (_props: {
     secondaryIndicatorViewRef,
     measureSecondaryIndicator,
   } = useMeasureLayoutForHomeGuidanceMultipleTabs();
+  const focusedTab = useFocusedTab();
 
   return (
     <View
@@ -209,7 +212,9 @@ export const HomeCustomMaterialTabBar = (_props: {
           measureSecondaryIndicator();
         }}
       />
-      <Animated.View style={[styles.portfolioContainer, stylez]}>
+      <Animated.View
+        pointerEvents={focusedTab === TabName.overview ? 'none' : 'auto'}
+        style={[styles.portfolioContainer, stylez]}>
         <MaterialTabBar
           {...props}
           scrollEnabled={false}
