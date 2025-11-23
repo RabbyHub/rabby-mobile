@@ -14,7 +14,7 @@ import { useCallback, useLayoutEffect, useState } from 'react';
 
 const isSameAddress = addressUtils.isSameAddress;
 
-export const useWhiteListAddress = () => {
+export const useFindAddressByWhitelist = () => {
   const {
     whitelist,
     enable: enabled,
@@ -23,54 +23,6 @@ export const useWhiteListAddress = () => {
     disableAutoFetch: false,
   });
   const { accounts } = useAccounts({ disableAutoFetch: true });
-  const { list } = useCreationWithDeepCompare(() => {
-    const ret = {
-      list: [] as KeyringAccountWithAlias[],
-    };
-
-    const groupAccounts = groupBy(accounts, item => item.address.toLowerCase());
-    const uniqueAccounts = Object.values(groupAccounts).map(item =>
-      findAccountByPriority(item),
-    );
-    const importAddress: KeyringAccountWithAlias[] = uniqueAccounts
-      .filter(acc => isAddrOnWhitelist(acc.address))
-      .map(acc => ({
-        address: acc.address,
-        aliasName:
-          contactService.getAliasByAddress(acc.address)?.alias ||
-          acc.aliasName ||
-          ellipsisAddress(acc.address),
-        balance: acc.balance || 0,
-        type: acc.brandName as KeyringTypeName,
-        brandName: acc.brandName,
-      }));
-    const importPlainAddress = [
-      ...new Set(importAddress.map(item => item.address)),
-    ];
-    const unimportAddress: KeyringAccountWithAlias[] = whitelist
-      .filter(
-        item => !importPlainAddress.some(plain => isSameAddress(plain, item)),
-      )
-      .map(address => ({
-        address,
-        aliasName:
-          contactService.getAliasByAddress(address)?.alias ||
-          ellipsisAddress(address),
-        balance: 0,
-        type: KEYRING_CLASS.WATCH,
-        brandName: KEYRING_CLASS.WATCH,
-      }));
-
-    ret.list = [...unimportAddress, ...importAddress].sort(
-      (a, b) => (b.balance || 0) - (a.balance || 0),
-    );
-
-    return ret;
-  }, [accounts, whitelist]);
-
-  const myAccounts = useCreationWithDeepCompare(() => {
-    return filterMyAccounts(accounts);
-  }, [accounts]);
 
   const findAccount = useCallback(
     async (
@@ -164,12 +116,74 @@ export const useWhiteListAddress = () => {
     },
     [accounts, whitelist],
   );
+
   return {
-    list,
+    accounts,
     enabled,
-    myAccounts,
     whitelist,
+    isAddrOnWhitelist,
     findAccount,
     findAccountWithoutBalance,
   };
 };
+
+export function useWhitelistVariedAccounts() {
+  const { accounts, whitelist, isAddrOnWhitelist, findAccountWithoutBalance } =
+    useFindAddressByWhitelist();
+
+  const myAccounts = useCreationWithDeepCompare(() => {
+    return filterMyAccounts(accounts);
+  }, [accounts]);
+
+  const { list } = useCreationWithDeepCompare(() => {
+    const ret = {
+      list: [] as KeyringAccountWithAlias[],
+    };
+
+    const groupAccounts = groupBy(accounts, item => item.address.toLowerCase());
+    const uniqueAccounts = Object.values(groupAccounts).map(item =>
+      findAccountByPriority(item),
+    );
+    const importAddress: KeyringAccountWithAlias[] = uniqueAccounts
+      .filter(acc => isAddrOnWhitelist(acc.address))
+      .map(acc => ({
+        address: acc.address,
+        aliasName:
+          contactService.getAliasByAddress(acc.address)?.alias ||
+          acc.aliasName ||
+          ellipsisAddress(acc.address),
+        balance: acc.balance || 0,
+        type: acc.brandName as KeyringTypeName,
+        brandName: acc.brandName,
+      }));
+    const importPlainAddress = [
+      ...new Set(importAddress.map(item => item.address)),
+    ];
+    const unimportAddress: KeyringAccountWithAlias[] = whitelist
+      .filter(
+        item => !importPlainAddress.some(plain => isSameAddress(plain, item)),
+      )
+      .map(address => ({
+        address,
+        aliasName:
+          contactService.getAliasByAddress(address)?.alias ||
+          ellipsisAddress(address),
+        balance: 0,
+        type: KEYRING_CLASS.WATCH,
+        brandName: KEYRING_CLASS.WATCH,
+      }));
+
+    ret.list = [...unimportAddress, ...importAddress].sort(
+      (a, b) => (b.balance || 0) - (a.balance || 0),
+    );
+
+    return ret;
+  }, [accounts, whitelist]);
+
+  return {
+    list,
+    whitelist,
+    myAccounts,
+    findAccountWithoutBalance,
+  };
+}

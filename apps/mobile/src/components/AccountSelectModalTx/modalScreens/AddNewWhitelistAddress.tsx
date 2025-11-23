@@ -32,7 +32,7 @@ import {
   EVENT_NAMES,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
-import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import TouchableView from '@/components/Touchable/TouchableView';
@@ -89,7 +89,7 @@ export const ScreenAddNewWhitelistAddress = ({
 
   const { list } = useCexSupportList();
 
-  const { findAccountWithoutBalance } = useWhiteListAddress();
+  const { findAccountWithoutBalance } = useFindAddressByWhitelist();
 
   const { t } = useTranslation();
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });

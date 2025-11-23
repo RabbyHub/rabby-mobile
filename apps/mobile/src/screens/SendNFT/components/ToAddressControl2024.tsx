@@ -12,7 +12,7 @@ import {
 import { StackActions } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
-import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import { SheetModalSelectAccountSend } from '@/components/AccountSelectModalTx/SelectAccountSheetModal';
 
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
@@ -420,7 +420,7 @@ export default function ToAddressControl2024({
 >) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist } = useWhitelist();
-  const { findAccountWithoutBalance } = useWhiteListAddress();
+  const { findAccountWithoutBalance } = useFindAddressByWhitelist();
   const {
     formValues,
     computed: { toAddressPositiveTips, toAccount },

@@ -35,6 +35,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { IS_ANDROID } from '@/core/native/utils';
+import { touchedFeedback } from '@/utils/touch';
 
 const SIZES = {
   itemH: 78,
@@ -45,7 +46,7 @@ interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
   addrDesc?: AddrDescResponse['desc'];
-  // inWhiteList?: boolean;
+  inWhiteList: boolean;
   // isMyImported?: boolean;
   enableMenu?: boolean;
   hideBalance?: boolean;
@@ -54,7 +55,7 @@ interface IProps {
 export const SearchedAddressItemInSheetModal = ({
   account,
   style,
-  // inWhiteList,
+  inWhiteList,
   // isMyImported,
   enableMenu = false,
   hideBalance = true,
@@ -63,9 +64,9 @@ export const SearchedAddressItemInSheetModal = ({
   const [cexInfo, setCexInfo] = useState<Cex | undefined>();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [isPressing, setIsPressing] = React.useState(false);
-  const { removeWhitelist } = useWhitelist({
-    disableAutoFetch: true,
-  });
+  // const { removeWhitelist } = useWhitelist({
+  //   disableAutoFetch: true,
+  // });
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
   const showCexInfo = useMemo(() => {
@@ -155,12 +156,13 @@ export const SearchedAddressItemInSheetModal = ({
         !enableMenu && isPressing && styles.rootPressing,
       ]}>
       <TouchableOpacity
-        activeOpacity={1}
+        // activeOpacity={1}
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([styles.root])}
         delayLongPress={IS_ANDROID ? 350 : 200} // long press delay
         onPress={() => {
+          touchedFeedback();
           onPress?.();
           // /* if (inWhiteList || isMyImported) {
           //   onPress?.();
@@ -182,13 +184,9 @@ export const SearchedAddressItemInSheetModal = ({
           // }
         }}
         onLongPress={() => {
-          if (enableMenu) {
-            return;
-          }
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
+          if (enableMenu) return;
+
+          touchedFeedback();
         }}>
         <Card
           style={StyleSheet.flatten([
@@ -214,7 +212,7 @@ export const SearchedAddressItemInSheetModal = ({
                       height={46}
                     />
                   )}
-                  {/* {inWhiteList && (
+                  {inWhiteList && (
                     <RcIconLockCC
                       style={styles.lockIcon}
                       color={colors2024['green-default']}
@@ -222,7 +220,7 @@ export const SearchedAddressItemInSheetModal = ({
                       width={22}
                       height={22}
                     />
-                  )} */}
+                  )}
                 </View>
                 <View style={styles.itemInfo}>
                   <View
@@ -288,7 +286,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     // backgroundColor: colors2024['neutral-bg-1'],
   },
   rootPressing: {
-    borderColor: colors2024['brand-light-2'],
+    // borderColor: colors2024['brand-light-2'],
   },
   shadowView: {
     borderRadius: 20,

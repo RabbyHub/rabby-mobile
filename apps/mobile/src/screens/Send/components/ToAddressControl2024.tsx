@@ -12,7 +12,7 @@ import {
 import { StackActions } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
-import { useWhiteListAddress } from '../hooks/useWhiteListAddress';
+import { useFindAddressByWhitelist } from '../hooks/useWhiteListAddress';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { contactService } from '@/core/services';
 import { SheetModalSelectAccountSend } from '@/components/AccountSelectModalTx/SelectAccountSheetModal';

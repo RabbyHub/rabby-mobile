@@ -32,7 +32,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BottomSheetFlatList, TouchableHighlight } from '@gorhom/bottom-sheet';
-import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import { useWhitelistVariedAccounts } from '@/screens/Send/hooks/useWhiteListAddress';
 import {
   RecentHistoryItem,
   useRecentSend,
@@ -193,7 +193,7 @@ export function AccountsPanelInSheetModal({
     whitelist,
     myAccounts,
     findAccountWithoutBalance,
-  } = useWhiteListAddress();
+  } = useWhitelistVariedAccounts();
 
   useEffect(() => {
     if (parentVisible) {
