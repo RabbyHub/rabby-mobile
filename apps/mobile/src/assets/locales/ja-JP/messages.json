@@ -793,11 +793,11 @@
         "popupDesc": "ガスコストは、設定したガス価格に基づいて送金額から差し引かれます。",
         "confirm": "確認",
         "level": {
-          "normal": "速い",
-          "fast": "即時",
+          "normal": "ノーマル",
+          "fast": "速い",
           "custom": "カスタム",
           "$unknown": "不明",
-          "slow": "ノーマル"
+          "slow": "遅い"
         }
       },
       "noSupportBtns": {
@@ -2079,10 +2079,10 @@
     },
     "confirmAddress": {
       "risks": {
-        "noSend": "過去180日間、このアドレスに資金を送っていません。続行するかどうかを確認してください。",
         "scamAddress": "受信者のアドレスは、Rabby によってフラグが立てられた詐欺アドレスです。",
         "contractAddress": "受取人のアドレスはコントラクトアドレスであり、資金損失の可能性があります。",
-        "cexNoDeposite": "受取人アドレスはCEXからの非預金アドレスです。預金アドレスが正しいことを確認してください。"
+        "cexNoDeposite": "受取人アドレスはCEXからの非預金アドレスです。預金アドレスが正しいことを確認してください。",
+        "noSend": "このアドレスには180日間送信されていません。"
       },
       "brandNameTail": "アドレス",
       "dexNameTail": "入金アドレス",
@@ -2121,7 +2121,7 @@
       "noNewAddr": "新しいアドレスは見つかりませんでしたインポートするために",
       "syncingTips": "スキャンが完了するまでカメラを安定させてください",
       "verifyWithPassword": "Rabby Extension Passwordで確認してください",
-      "scanTips1": "Rabby Extensionで「Rabby Mobile」をクリック",
+      "scanTips1": "Rabby Extensionで「Mobile Sync」をクリック",
       "scanTips2": "コードをスキャンして同期を開始してください。",
       "newUserVerify": "それはまた、あなたのRabby Mobileのデフォルトパスワードとして機能します。",
       "imported": "Rabby Mobile に既にあるアドレスは再度インポートされません。アドレスノートとホワイトリストは自動的に同期されます。",
@@ -2737,7 +2737,8 @@
       "hfTitle": "ヘルスファクター",
       "hf": "ヘルスファクター",
       "isolated": "隔離",
-      "estNetApy": "推定ネットAPY"
+      "estNetApy": "推定ネットAPY",
+      "marketSlot": "{{market}} マーケット"
     }
   },
   "global": {
@@ -3004,10 +3005,10 @@
     },
     "ReserveGasPopup": {
       "title": "Gasを予約する",
-      "fast": "速い",
-      "instant": "インスタント",
+      "fast": "通常",
+      "instant": "速い",
       "doNotReserve": "ガスを予約しない",
-      "normal": "ノーマル"
+      "normal": "遅い"
     },
     "externalSwapBrideDappPopup": {
       "bridgeOnDapp": "Dapp上のブリッジ",

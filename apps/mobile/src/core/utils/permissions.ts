@@ -21,8 +21,8 @@ export class PerAndroid {
     PermissionsAndroid.PERMISSIONS.CAMERA,
     PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
     PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-    PermissionsAndroid.PERMISSIONS.BLUETOOTH,
-    PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADMIN,
+    // PermissionsAndroid.PERMISSIONS.BLUETOOTH,
+    // PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADMIN,
     PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     DeviceUtils.isAndroid() &&
       !DeviceUtils.isGteAndroid(14) &&
@@ -82,7 +82,7 @@ export class PerAndroid {
           buttonPositive: i18next.t('global.ok'),
         };
       case PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT:
-      case PermissionsAndroid.PERMISSIONS.BLUETOOTH:
+        // case PermissionsAndroid.PERMISSIONS.BLUETOOTH:
         return {
           title: i18next.t('global.permissionRequest.bluetoothConnect.title'),
           message: i18next.t(
@@ -94,16 +94,16 @@ export class PerAndroid {
           buttonNegative: i18next.t('global.cancel'),
           buttonPositive: i18next.t('global.ok'),
         };
-      case PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADMIN:
-        return {
-          title: i18next.t('global.permissionRequest.bluetoothAdmin.title'),
-          message: i18next.t('global.permissionRequest.bluetoothAdmin.message'),
-          buttonNeutral: i18next.t(
-            'global.permissionRequest.common.askMeLater',
-          ),
-          buttonNegative: i18next.t('global.cancel'),
-          buttonPositive: i18next.t('global.ok'),
-        };
+      // case PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADMIN:
+      //   return {
+      //     title: i18next.t('global.permissionRequest.bluetoothAdmin.title'),
+      //     message: i18next.t('global.permissionRequest.bluetoothAdmin.message'),
+      //     buttonNeutral: i18next.t(
+      //       'global.permissionRequest.common.askMeLater',
+      //     ),
+      //     buttonNegative: i18next.t('global.cancel'),
+      //     buttonPositive: i18next.t('global.ok'),
+      //   };
       case PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION:
         return {
           title: i18next.t('global.permissionRequest.location.title'),

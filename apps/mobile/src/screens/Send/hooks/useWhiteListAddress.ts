@@ -15,7 +15,11 @@ import { useCallback, useLayoutEffect, useState } from 'react';
 const isSameAddress = addressUtils.isSameAddress;
 
 export const useWhiteListAddress = () => {
-  const { whitelist, isAddrOnWhitelist } = useWhitelist({
+  const {
+    whitelist,
+    enable: enabled,
+    isAddrOnWhitelist,
+  } = useWhitelist({
     disableAutoFetch: false,
   });
   const { accounts } = useAccounts({ disableAutoFetch: true });
@@ -162,6 +166,7 @@ export const useWhiteListAddress = () => {
   );
   return {
     list,
+    enabled,
     myAccounts,
     whitelist,
     findAccount,

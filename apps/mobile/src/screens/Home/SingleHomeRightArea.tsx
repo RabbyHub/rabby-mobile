@@ -16,7 +16,8 @@ import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { HomePendingBadge } from './components/HomePending';
 import { Account } from '@/core/services/preference';
-import { atom, useAtomValue } from 'jotai';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { foldChartAtom } from './Home';
 
 const hitSlop = {
   top: 10,
@@ -56,6 +57,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     fail: number;
   }>();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const setFoldChart = useSetAtom(foldChartAtom);
 
   const fetchHistory = useCallback(() => {
     if (!currentAccount) {
@@ -104,6 +106,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   );
 
   const openHistory = useCallback(async () => {
+    setFoldChart(true);
     await switchSceneCurrentAccount('History', currentAccount);
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
@@ -119,12 +122,13 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
       }),
     );
   }, [
-    navigation,
+    setFoldChart,
     switchSceneCurrentAccount,
-    tokenItem,
     currentAccount,
-    isInTokenDetail,
+    navigation,
     isMultiAddress,
+    isInTokenDetail,
+    tokenItem,
   ]);
 
   return (
@@ -171,9 +175,11 @@ export const RightArea: React.FC<{
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
   const { t } = useTranslation();
+  const setFoldChart = useSetAtom(foldChartAtom);
 
   const onPress = () => {
     if (currentAccount) {
+      setFoldChart(true);
       showAddressDetail({
         account: currentAccount,
         onDelete: () => {

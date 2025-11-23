@@ -5,8 +5,8 @@ import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
-import RcIconSendCC from '@/assets2024/icons/home/icon-send-cc.svg';
-import RcIconSwapCC from '@/assets2024/icons/home/icon-swap-cc.svg';
+import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
+import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDappsCC.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -106,13 +106,13 @@ import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 import { LendingHF } from './components/LendingHF';
 import { useLendingData } from '../Lending/hooks';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
-import { GradientOutlineContainer } from '@/components2024/GradientOutlineContainer';
 import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
 import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -138,13 +138,7 @@ function MultiAddressHome(): JSX.Element {
   const hasClaimedGift = gasAccountService.getHasClaimedGift();
   const { width } = Dimensions.get('window');
   const itemWidth =
-    (width -
-      ITEM_LAYOUT_PADDING_HORIZONTAL * 2 -
-      8 * 2 -
-      1.5 * 2 -
-      ITEM_GRID_GAP -
-      2) /
-    2;
+    (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
   // use useMemo to directly calculate isEligible so that it can respond to related state changes
   const isEligible = useMemo(() => {
     return (
@@ -165,16 +159,16 @@ function MultiAddressHome(): JSX.Element {
   const MENU_ARR = useMemo(
     () =>
       [
-        // {
-        //   key: MultiHomeFeatTitle.Swap,
-        //   title: t('page.home.services.swap'),
-        //   icon: RcIconSwapCC,
-        // },
-        // {
-        //   key: MultiHomeFeatTitle.Send,
-        //   title: t('page.home.services.send'),
-        //   icon: RcIconSendCC,
-        // },
+        {
+          key: MultiHomeFeatTitle.Swap,
+          title: t('page.home.services.swap'),
+          icon: RcIconSwapCC,
+        },
+        {
+          key: MultiHomeFeatTitle.Send,
+          title: t('page.home.services.send'),
+          icon: RcIconSendCC,
+        },
         {
           key: MultiHomeFeatTitle.Receive,
           title: t('page.home.services.receive'),
@@ -264,47 +258,6 @@ function MultiAddressHome(): JSX.Element {
     ],
   );
 
-  const swapButtonShadow = useMemo<ViewStyle>(() => {
-    return (Platform.select({
-      ios: {
-        shadowColor: 'rgba(112, 132, 255, 1)',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 3,
-      },
-      default: {},
-    }) || {}) as ViewStyle;
-  }, []);
-
-  const PRIMARY_ACTIONS = useMemo(
-    () =>
-      [
-        {
-          key: MultiHomeFeatTitle.Send,
-          title: t('page.home.services.send'),
-          icon: RcIconSendCC,
-          backgroundColor: colors2024['green-default'],
-        },
-        {
-          key: MultiHomeFeatTitle.Swap,
-          title: t('page.home.services.swap'),
-          icon: RcIconSwapCC,
-          backgroundColor: colors2024['brand-default-icon'],
-          extraStyle: swapButtonShadow,
-        },
-      ] as Array<{
-        key: MultiHomeFeatTitle;
-        title: string;
-        icon: React.FC<import('react-native-svg').SvgProps>;
-        backgroundColor: string;
-        extraStyle?: ViewStyle;
-      }>,
-    [colors2024, swapButtonShadow, t],
-  );
-
   useEffect(() => {
     if (pendingTxCount) {
       Animated.loop(
@@ -323,6 +276,7 @@ function MultiAddressHome(): JSX.Element {
   const {
     balanceAccounts,
     balanceCacheAccounts,
+    loadBalanceFromApiStage,
     triggerUpdate,
     getTotalBalance,
   } = useAccountsBalance({
@@ -368,9 +322,6 @@ function MultiAddressHome(): JSX.Element {
       .map(account => account.address);
   }, [sortedAccounts]);
 
-  const unionAccounts = useMemo(() => {
-    return unionBy(sortedAccounts, account => account.address.toLowerCase());
-  }, [sortedAccounts]);
   const [hasOpenCopyTrading, setHasOpenCopyTrading] = useState(true);
 
   // 初始化gift资格检查
@@ -734,6 +685,9 @@ function MultiAddressHome(): JSX.Element {
       if (el.key === MultiHomeFeatTitle.Dapps) {
         return <DappsBadge />;
       }
+      if (el.key === MultiHomeFeatTitle.GasAccount) {
+        return <GasAccountBadge />;
+      }
 
       return (
         <>
@@ -858,6 +812,7 @@ function MultiAddressHome(): JSX.Element {
           }>
           <MultiAddressHomeHeader
             data={combineData}
+            loadBalanceFromApiStage={loadBalanceFromApiStage}
             loading={loading}
             loadingNewCurve={loadingNewCurve}
             onRefresh={onRefresh}
@@ -890,77 +845,54 @@ function MultiAddressHome(): JSX.Element {
           </View>
 
           <View style={[{ marginTop: 0 }, styles.grid]}>
-            <GradientOutlineContainer contentStyle={styles.gridGradientOutline}>
-              <View style={styles.primaryActionsContainer}>
-                {PRIMARY_ACTIONS.map(action => {
-                  const ActionIcon = action.icon;
-                  return (
-                    <TouchableOpacity
-                      key={action.key}
-                      style={[
-                        styles.primaryActionButton,
-                        { backgroundColor: action.backgroundColor },
-                        action.extraStyle,
-                      ]}
-                      onPress={() => {
-                        handleClickMenu(action.key);
-                        matomoRequestEvent({
-                          category: 'Click_Services',
-                          action: `Click_${action.key}`,
-                        });
-                      }}>
-                      <ActionIcon
-                        width={22}
-                        height={22}
-                        color={colors2024['neutral-InvertHighlight']}
-                      />
-                      <Text style={styles.primaryActionText}>
-                        {action.title}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              <View style={styles.gridItemsWrap}>
-                {MENU_ARR.map((el, index) => {
-                  return (
-                    <TouchableOpacity
-                      style={StyleSheet.flatten([
-                        styles.gridItem,
-                        { width: itemWidth },
-                      ])}
-                      key={index}
-                      onPress={() => {
-                        handleClickMenu(el.key);
-                        matomoRequestEvent({
-                          category: 'Click_Services',
-                          action: `Click_${el.key}`,
-                        });
-                      }}>
-                      <View style={styles.badgeWrapper}>
-                        <View style={styles.iconWrapper}>
-                          <el.icon
-                            width={22}
-                            height={22}
-                            color={el.color || colors2024['brand-default-icon']}
-                          />
-                        </View>
-                        <View style={styles.rightBadgeWrapper}>
-                          {generateCustomBadgeIcon(el)}
-                        </View>
+            <View style={styles.gridItemsWrap}>
+              {MENU_ARR.map((el, index) => {
+                return (
+                  <TouchableOpacity
+                    style={StyleSheet.flatten([
+                      styles.gridItem,
+                      { width: itemWidth },
+                    ])}
+                    key={index}
+                    onPress={() => {
+                      handleClickMenu(el.key);
+                      matomoRequestEvent({
+                        category: 'Click_Services',
+                        action: `Click_${el.key}`,
+                      });
+                    }}>
+                    <View style={styles.badgeWrapper}>
+                      <View style={styles.iconWrapper}>
+                        <el.icon
+                          width={28}
+                          height={28}
+                          color={el.color || colors2024['brand-default-icon']}
+                        />
                       </View>
-                      <Text style={styles.gridText}>{el.title}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </GradientOutlineContainer>
+                      <View style={styles.rightBadgeWrapper}>
+                        {generateCustomBadgeIcon(el)}
+                      </View>
+                    </View>
+                    <Text style={styles.gridText}>{el.title}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
             <BrowserSearchEntry alwaysShowSearch={false} />
             <View style={styles.searchBarPlaceholder} />
           </View>
         </ScrollView>
 
-        <View style={styles.globalSearchBar}>
+        <View
+          style={[
+            styles.globalSearchBar,
+            {
+              bottom: Platform.select({
+                ios: 22,
+                android: Math.max(22, bottom),
+              }),
+            },
+          ]}>
           <GlobalSearchBar />
         </View>
       </View>
@@ -1046,12 +978,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   iconWrapper: {
-    height: 36,
-    width: 36,
-    backgroundColor: colors2024['brand-light-1'],
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    //height: 36,
+    //width: 36,
+    //backgroundColor: colors2024['brand-light-1'],
+    //borderRadius: 12,
+    //justifyContent: 'center',
+    //alignItems: 'center',
   },
   rightBadgeWrapper: {
     position: 'relative',
@@ -1173,8 +1105,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   gridItem: {
+    borderWidth: 2,
+    borderColor: isLight
+      ? colors2024['neutral-InvertHighlight']
+      : 'transparent',
     backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
+      ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
       : colors2024['neutral-bg-2'],
     width: '48%', // default
     minWidth: 0,
@@ -1184,7 +1120,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'center',
-    height: 96,
+    height: 92,
     gap: 8,
     position: 'relative',
   },

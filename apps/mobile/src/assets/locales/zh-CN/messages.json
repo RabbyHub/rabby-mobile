@@ -663,9 +663,9 @@
         "confirm": "确认",
         "level": {
           "custom": "自定义",
-          "slow": "普通",
-          "normal": "快速",
-          "fast": "即时",
+          "slow": "慢",
+          "normal": "正常",
+          "fast": "快速",
           "$unknown": "未知"
         },
         "popupDesc": "Gas费用将根据您设置的价格从转账金额中预留。"
@@ -2130,8 +2130,8 @@
       "risks": {
         "scamAddress": "接收地址是一个被 Rabby 标记的诈骗地址。",
         "contractAddress": "收款地址是一个合约地址，可能导致资金损失",
-        "noSend": "过去180天内您未曾向此地址发送资金。请确认是否继续。",
-        "cexNoDeposite": "接收地址是来自 CEX 的非充值地址。请确保您的充值地址正确。"
+        "cexNoDeposite": "接收地址是来自 CEX 的非充值地址。请确保您的充值地址正确。",
+        "noSend": "您在过去180天内没有向这个地址发送过交易。"
       },
       "brandNameTail": "地址",
       "dexNameTail": "充值地址",
@@ -2175,7 +2175,7 @@
       "syncingTips": "请保持相机稳定，直至扫描完成",
       "newUserVerify": "它也将作为您 Rabby Mobile 的默认密码。",
       "verifyWithPassword": "使用您的 Rabby Extension 密码进行验证",
-      "scanTips1": "在 Rabby 插件上点击“Rabby Mobile”",
+      "scanTips1": "在 Rabby 插件上点击“Mobile Sync”",
       "importedTips": "如果应用程序中已经存在重复地址，则不会导入。地址备注和白名单也将同步。",
       "verifyTips": "您的数据已离线加密。请输入您的 Rabby 插件密码进行解密和验证。"
     },
@@ -2786,7 +2786,8 @@
       "selectChain": "选择链",
       "supplied": "提供",
       "isolated": "孤立的",
-      "estNetApy": "估计净年化收益率"
+      "estNetApy": "估计净年化收益率",
+      "marketSlot": "{{market}} 市场"
     }
   },
   "component": {
@@ -2956,10 +2957,10 @@
     },
     "ReserveGasPopup": {
       "title": "预留 Gas",
-      "instant": "即时",
+      "instant": "快速",
       "doNotReserve": "不预留Gas",
-      "fast": "快速",
-      "normal": "正常"
+      "fast": "正常",
+      "normal": "慢"
     },
     "externalSwapBrideDappPopup": {
       "thirdPartyDappToProceed": "请使用第三方 Dapp 继续操作",

@@ -44,6 +44,7 @@ import { StackActions, useIsFocused } from '@react-navigation/native';
 import {
   isAccountSupportDirectSign,
   isAccountSupportMiniApproval,
+  makeAccountObject,
 } from '@/utils/account';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useRecentSendToHistoryFor } from '@/screens/Send/hooks/useRecentSend';
@@ -55,6 +56,7 @@ import { useMemoizedFn } from 'ahooks';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -193,10 +195,12 @@ const DF_SEND_TOKEN_FORM: FormSendNFT = {
 };
 export function useSendNFTForm({
   toAddress,
+  toAddressBrandName,
   nftToken,
   currentAccount,
 }: {
   toAddress?: string;
+  toAddressBrandName?: string;
   nftToken?: NFTItem;
   currentAccount: Account;
 }) {
@@ -607,7 +611,11 @@ export function useSendNFTForm({
   const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
   const { list: cexList } = useCexSupportList();
 
-  const { whitelist, enable: whitelistEnabled } = useWhitelist();
+  const {
+    whitelist,
+    enabled: whitelistEnabled,
+    findAccountWithoutBalance,
+  } = useWhiteListAddress();
   const { recentHistory: recentSendToHistory, reFetch } =
     useRecentSendToHistoryFor(formValues.to);
 
@@ -626,16 +634,37 @@ export function useSendNFTForm({
     };
   }, [reFetch]);
 
+  const foundToAccountInfo = useMemo(() => {
+    return findAccountWithoutBalance(formValues.to, {
+      brandName: toAddressBrandName,
+    });
+  }, [formValues.to, toAddressBrandName, findAccountWithoutBalance]);
   const toAddressIsRecentlySend = recentSendToHistory.length > 0;
-
+  const toAccount = useMemo(() => {
+    return (
+      foundToAccountInfo?.account ||
+      makeAccountObject({
+        address: formValues.to,
+        brandName: toAddressBrandName,
+      })
+    );
+  }, [foundToAccountInfo?.account, formValues.to, toAddressBrandName]);
   const computed = useMemo(() => {
     const toAddressInWhitelist = !!whitelist.find(item =>
       addressUtils.isSameAddress(item, formValues.to),
     );
+    const toAddressPositiveTips = {
+      hasPositiveTips:
+        toAddressIsRecentlySend ||
+        toAddressInWhitelist ||
+        !!foundToAccountInfo?.isMyImported,
+      inWhitelist: toAddressInWhitelist,
+      isRecentlySend: toAddressIsRecentlySend,
+      isMyImported: foundToAccountInfo?.isMyImported,
+    };
     return {
-      toAddressIsValid: !!formValues.to && isValidAddress(formValues.to),
-      toAddressIsRecentlySend,
-      toAddressInWhitelist,
+      toAccount,
+      toAddressPositiveTips,
       toAddressIsCex:
         !!screenState.toAddrDesc?.cex?.id &&
         !!screenState.toAddrDesc?.cex?.is_deposit,
@@ -659,6 +688,8 @@ export function useSendNFTForm({
     whitelist,
     isAddrOnContactBook,
     formValues.to,
+    toAccount,
+    foundToAccountInfo?.isMyImported,
     toAddressIsRecentlySend,
     screenState,
     formValues.amount,
@@ -750,21 +781,32 @@ export function useSendNFTFormik() {
   return formik;
 }
 
+type FoundAccountResult = Awaited<
+  ReturnType<ReturnType<typeof useWhiteListAddress>['findAccount']>
+>;
+type ToAddressPositiveTips = {
+  hasPositiveTips: boolean;
+  inWhitelist: boolean;
+  isRecentlySend: boolean;
+  isMyImported?: boolean;
+};
 type InternalContext = {
   screenState: SendScreenState;
   formValues: FormSendNFT;
   computed: {
+    fromAddress: string;
     chainItem: Chain | null;
     currentNFT: NFTItem | null;
     whitelistEnabled: boolean;
     canSubmit: boolean;
     canDirectSign: boolean;
-    toAddressInWhitelist: boolean;
-    toAddressIsValid: boolean;
-    toAddressInContactBook: boolean;
-    toAddrCex: null | undefined | ProjectItem;
+    // toAddressInWhitelist: boolean;
+    // toAddressIsRecentlySend: boolean;
 
-    toAddressIsRecentlySend: boolean;
+    toAccount: FoundAccountResult['account'] | null;
+    toAddressInContactBook: boolean;
+    toAddressPositiveTips: ToAddressPositiveTips | null;
+    toAddrCex: null | undefined | ProjectItem;
   };
 
   formik: ReturnType<typeof useFormik<FormSendNFT>>;
@@ -790,17 +832,16 @@ const SendNFTInternalContext = React.createContext<InternalContext>({
   screenState: { ...DFLT_SEND_STATE },
   formValues: { ...DF_SEND_TOKEN_FORM },
   computed: {
+    fromAddress: '',
     chainItem: null,
     currentNFT: null,
     whitelistEnabled: false,
     canSubmit: false,
     canDirectSign: false,
-    toAddressInWhitelist: false,
-    toAddressIsValid: false,
+    toAccount: null,
+    toAddressPositiveTips: null,
     toAddressInContactBook: false,
     toAddrCex: null,
-
-    toAddressIsRecentlySend: false,
   },
 
   formik: null as any,

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Props } from './ActionsContainer';
+import { PropsWithAuthSession } from './ActionsContainer';
 import { SubmitActions } from './SubmitActions';
 
-export const PrivateKeyActions: React.FC<Props> = props => {
+export const PrivateKeyActions: React.FC<PropsWithAuthSession> = props => {
   const { disabledProcess } = props;
 
   const handleSubmit = React.useCallback(() => {

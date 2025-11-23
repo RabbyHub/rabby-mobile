@@ -1,16 +1,27 @@
 diff --git a/android/build.gradle b/android/build.gradle
-index 45e323e8fe045f2d9c74c912a446cfc81ce35b6b..983cae1b63a52826fa51e4a48398f46abeb28117 100644
+index 45e323e8fe045f2d9c74c912a446cfc81ce35b6b..463c0e1c95f10540eac9a290a21a33bf355e0358 100644
 --- a/android/build.gradle
 +++ b/android/build.gradle
-@@ -112,7 +112,7 @@ android {
+@@ -112,7 +112,9 @@ android {
      externalNativeBuild {
        cmake {
          cppFlags "-O2 -frtti -fexceptions -Wall -Wno-unused-variable -fstack-protector-all -DANDROID"
 -        arguments "-DANDROID_STL=c++_shared"
-+        arguments "-DANDROID_STL=c++_shared", "-DNODE_MODULES_DIR=${nodeModules}", "-DRABBY_QUICK_CRYPTO_BUILD_TYPE=${resolveBuildType()}"
++        arguments "-DANDROID_STL=c++_shared",
++                  "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON", // don't need patch this after upgrade to 0.7.17
++                  "-DNODE_MODULES_DIR=${nodeModules}", "-DRABBY_QUICK_CRYPTO_BUILD_TYPE=${resolveBuildType()}"
          abiFilters (*reactNativeArchitectures())
        }
      }
+@@ -175,7 +177,7 @@ dependencies {
+   implementation "com.facebook.react:react-android:+"
+ 
+   // Add a dependency on OpenSSL
+-  implementation 'io.github.ronickg:openssl:3.3.2'
++  implementation 'io.github.ronickg:openssl:3.3.2-1' // don't need patch this after upgrade to 0.7.17
+ }
+ 
+ // Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".
 diff --git a/lib/module/index.js b/lib/module/index.js
 index f52cc589a4aef892833ecb2c43a547927c435a3d..8f5e1575519fcbbfed7e35ecc3bdfa1a2743c84b 100644
 --- a/lib/module/index.js

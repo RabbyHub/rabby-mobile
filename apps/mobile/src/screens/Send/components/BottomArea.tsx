@@ -39,8 +39,10 @@ export default function BottomArea({ account }: { account: Account | null }) {
     formValues,
     screenState,
     computed: {
+      fromAddress,
       canSubmit,
       canDirectSign: canShowDirectSign,
+      toAddressPositiveTips,
       toAddressInContactBook,
       toAddrCex,
     },
@@ -69,10 +71,12 @@ export default function BottomArea({ account }: { account: Account | null }) {
 
   const {
     loading: loadingRisks,
-    risks: _risks,
+    risks,
     fetchRisks,
-  } = useRisks(formValues.to, {
+  } = useRisks({
     // balance: !!screenState.toAddrAccountInfo?.account?.balance,
+    fromAddress: fromAddress,
+    toAddress: formValues.to,
     cex: toAddrCex,
     onLoadFinished: useCallback(
       ctx => {
@@ -87,10 +91,6 @@ export default function BottomArea({ account }: { account: Account | null }) {
       [putScreenState],
     ),
   });
-
-  const risks = useMemo(() => {
-    return _risks.filter(item => item.type !== RiskType.NEVER_SEND);
-  }, [_risks]);
 
   useEffect(() => {
     const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
@@ -115,9 +115,11 @@ export default function BottomArea({ account }: { account: Account | null }) {
         mostImportantRisks: [] as { value: string }[],
       };
       if (risks.length) {
-        const sorted = [...risks]
-          .filter(item => item.type !== RiskType.NEVER_SEND)
-          .sort(sortRisksDesc);
+        const sorted = (
+          !toAddressPositiveTips?.hasPositiveTips
+            ? [...risks]
+            : [...risks].filter(item => item.type !== RiskType.NEVER_SEND)
+        ).sort(sortRisksDesc);
 
         ret.risksForToAddress = sorted
           .slice(0, 1)
@@ -152,7 +154,12 @@ export default function BottomArea({ account }: { account: Account | null }) {
         hasRiskForToAddress: !!ret.risksForToAddress.length,
         hasRiskForToken: !!ret.risksForToken.length,
       };
-    }, [currentToken, risks, disableItemCheck]);
+    }, [
+      currentToken,
+      risks,
+      toAddressPositiveTips?.hasPositiveTips,
+      disableItemCheck,
+    ]);
 
   const agreeRequiredChecked =
     (hasRiskForToAddress && screenState.agreeRequiredChecks.forToAddress) ||
