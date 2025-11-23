@@ -2631,9 +2631,9 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
   BleUtils: ba76f6305bea7da6452a63d5bcd5927be7b77bf0
-  boost: 1dca942403ed9342f98334bf4c3621f011aa7946
+  boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   BVLinearGradient: 880f91a7854faff2df62518f0281afb1c60d49a3
-  DoubleConversion: f16ae600a246532c4020132d54af21d0ddb2a385
+  DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: 06eeec4fe712a76acc9376682e4808b05ce978b6
   FBLazyVector: 23d8c5470c648a635893dc0956c6dbaead54b656
   Firebase: 10c8cb12fb7ad2ae0c09ffc86cd9c1ab392a0031
@@ -2641,8 +2641,8 @@ SPEC CHECKSUMS:
   FirebaseCore: 28045c1560a2600d284b9c45a904fe322dc890b6
   FirebaseCoreInternal: df84dd300b561c27d5571684f389bf60b0a5c934
   FirebaseInstallations: 913cf60d0400ebd5d6b63a28b290372ab44590dd
-  fmt: 01b82d4ca6470831d1cc0852a1af644be019e8f6
-  glog: 08b301085f15bcbb6ff8632a8ebaf239aae04e6a
+  fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
+  glog: eb93e2f488219332457c3c4eafd2738ddc7e80b8
   GoogleAppMeasurement: bb3c564c3efb933136af0e94899e0a46167466a8
   GoogleSignIn: d4281ab6cf21542b1cfaff85c191f230b399d2db
   GoogleUtilities: ea963c370a38a8069cc5f7ba4ca849a60b6d7d15
