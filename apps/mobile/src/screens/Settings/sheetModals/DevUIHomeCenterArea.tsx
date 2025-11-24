@@ -40,7 +40,7 @@ export function useMockDataForHomeCenterArea() {
   };
 }
 
-function useMakeMockDataForHomeCenterArea() {
+export function useMakeMockDataForHomeCenterArea() {
   const { mockData } = useMockDataForHomeCenterArea();
   const setMockData = useSetAtom(homeCenterAreaMockData);
 
@@ -61,6 +61,7 @@ export function useUIDevHomeCenterAreaModalVisiable() {
   };
 }
 
+/** @deprecated */
 export default function DevUIHomeCenterAreaModal({
   onCancel,
 }: RNViewProps & {
@@ -107,12 +108,16 @@ export default function DevUIHomeCenterAreaModal({
           return (
             <AppSwitch2024
               value={mockData.forceShowOffchainNotify}
-              onValueChange={value =>
+              onValueChange={value => {
                 setMockData(prev => ({
                   ...prev,
                   forceShowOffchainNotify: value,
-                }))
-              }
+                }));
+
+                if (value) {
+                  clearOfflineChainTips();
+                }
+              }}
             />
           );
         },
@@ -128,9 +133,6 @@ export default function DevUIHomeCenterAreaModal({
               value={mockData.forceShowFundWallet}
               onValueChange={value => {
                 setMockData(prev => ({ ...prev, forceShowFundWallet: value }));
-                if (value) {
-                  clearOfflineChainTips();
-                }
               }}
             />
           );

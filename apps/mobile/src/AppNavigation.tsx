@@ -434,9 +434,6 @@ export default function AppNavigation({
   }, [setNavigationReady, isAppUnlocked, onRouteChange]);
 
   const { hasActiveDapp: isShowingDappCard } = useOpenedActiveDappState();
-  const [statusBarStyle, setStatusBarStyle] = React.useState<'dark' | 'light'>(
-    'dark',
-  );
 
   const onStateChange = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onStateChange'] & object
@@ -452,7 +449,6 @@ export default function AppNavigation({
           currentRouteName,
           previousRouteName,
         });
-        // setStatusBarStyle
         const appColorScheme = Appearance.getColorScheme();
         const isDarkTheme = appColorScheme === 'dark';
         if (currentRouteName) {
@@ -461,9 +457,6 @@ export default function AppNavigation({
             isDarkTheme,
             isShowingDappCard,
           });
-          setStatusBarStyle(
-            screenSpec.barStyle === 'dark-content' ? 'dark' : 'light',
-          );
         }
 
         analytics.logScreenView({

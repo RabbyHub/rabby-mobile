@@ -1,13 +1,13 @@
 import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
-import { Switch, SwitchProps } from 'react-native-switch';
+import { RabbySwitch, SwitchProps } from '@/components/Switch/Switch';
 
-export const AppSwitch2024 = React.forwardRef<Switch, SwitchProps>(
+export const AppSwitch2024 = React.forwardRef<RabbySwitch, SwitchProps>(
   (props, ref) => {
     const { colors2024 } = useTheme2024();
 
     return (
-      <Switch
+      <RabbySwitch
         circleSize={22}
         renderActiveText={false}
         renderInActiveText={false}

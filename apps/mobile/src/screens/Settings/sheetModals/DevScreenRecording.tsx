@@ -38,6 +38,7 @@ export function useDevScreenRecordingModalVisiable() {
   };
 }
 
+/** @deprecated */
 export default function DevScreenRecordingModal({
   onCancel,
 }: RNViewProps & {

@@ -67,7 +67,10 @@ const rateGuideLastExposureAtom = atomByMMKV(
 );
 
 export function useMakeMockDataForRateGuideExposure() {
-  const [, setRateGuideLastExposure] = useAtom(rateGuideLastExposureAtom);
+  const [
+    { [VERSIONED_KEY]: lastExposureTimestamp, txCount },
+    setRateGuideLastExposure,
+  ] = useAtom(rateGuideLastExposureAtom);
   const mockExposureRateGuide = useCallback(() => {
     setRateGuideLastExposure({
       ...getDefaultRateGuideLastExposure({
@@ -81,7 +84,12 @@ export function useMakeMockDataForRateGuideExposure() {
     });
   }, [setRateGuideLastExposure]);
 
+  const shouldShowRateGuideOnHome = useMemo(() => {
+    return txCount >= TX_COUNT_LIMIT && !!userCouldRated(lastExposureTimestamp);
+  }, [txCount, lastExposureTimestamp]);
+
   return {
+    shouldShowRateGuideOnHome,
     mockExposureRateGuide,
   };
 }

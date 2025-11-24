@@ -53,8 +53,6 @@ import { type SettingConfBlock, Block } from './Block';
 // import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
-import type { SwitchToggleType } from '@/components';
-import { SwitchAllowScreenshot } from './components/SwitchAllowScreenshot';
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 
 import { toast } from '@/components/Toast';
@@ -76,13 +74,9 @@ import {
 
 import { useBiometrics, useBiometricsComputed } from '@/hooks/biometrics';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
-import {
-  AutoLockCountDownLabel,
-  AutoLockSettingLabel,
-} from './components/LockAbout';
+import { AutoLockSettingLabel } from './components/LockAbout';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
-import { SwitchShowFloatingAutoLockCountdown } from './components/SwitchFloatingView';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
@@ -95,9 +89,6 @@ import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
 } from './sheetModals/DevForceLocalVersionSelector';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
-import CloudDriveTestItemModal, {
-  useCloudDriveTestItemModalVisible,
-} from './sheetModals/DevCloudDrive';
 import WalletLockTestItemModal, {
   useWalletLockTestItemModalVisible,
 } from './sheetModals/DevWalletLock';
@@ -107,9 +98,6 @@ import DevUIPlaygroundModal, {
 import DevDataPlayground, {
   useDevDataPlaygroundModalVisible,
 } from './sheetModals/DevDataPlayground';
-import DevUIWipModal, {
-  useUIDevWipModalVisiable,
-} from './sheetModals/DevUIWip';
 import CurrentLanguageSelectorModal, {
   useCurrentLanguageModalVisible,
 } from './sheetModals/LanguageSelector';
@@ -132,12 +120,6 @@ import MockBatchRevokeModal, {
 import { preferenceService } from '@/core/services';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 import { useMultiPress } from '@/hooks/tap';
-import DevUIHomeCenterAreaModal, {
-  useUIDevHomeCenterAreaModalVisiable,
-} from './sheetModals/DevUIHomeCenterArea';
-import DevScreenRecordingModal, {
-  useDevScreenRecordingModalVisiable,
-} from './sheetModals/DevScreenRecording';
 import {
   DevModalDevServer,
   useDevServerModalVisible,
@@ -578,24 +560,15 @@ function DevSettingsBlocks() {
     }, [fetchBiometrics]),
   );
 
-  // const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
-
-  const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
   const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
     useLocalVersionSelectorModalVisible();
 
-  const { setCloudDriveTestItemModalVisible } =
-    useCloudDriveTestItemModalVisible();
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
-  const { setDevUIHomeCenterAreaModalVisible } =
-    useUIDevHomeCenterAreaModalVisiable();
-  const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
-  const { setDevScreenRecordingModalVisible } =
-    useDevScreenRecordingModalVisiable();
+
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
@@ -650,26 +623,37 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: '[Cloud] Test Memonics Backup',
-              icon: RcGoogleDrive,
-              onPress: async () => {
-                setCloudDriveTestItemModalVisible(true);
-              },
-            },
-            {
-              label: '[UI] Mock Home Center Areas',
+              label: 'Regression Switches',
               icon: RcCode,
               onPress: () => {
-                setDevUIHomeCenterAreaModalVisible(true);
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTestkits, {
+                    screen: RootNames.DevSwitches,
+                  }),
+                );
               },
             },
-            {
-              label: '[UI] Wip Helpers',
-              icon: RcCode,
-              onPress: () => {
-                setDevUIWipModalVisible(true);
-              },
-            },
+            // {
+            //   label: '[Cloud] Test Memonics Backup',
+            //   icon: RcGoogleDrive,
+            //   onPress: async () => {
+            //     setCloudDriveTestItemModalVisible(true);
+            //   },
+            // },
+            // {
+            //   label: '[UI] Mock Home Center Areas',
+            //   icon: RcCode,
+            //   onPress: () => {
+            //     setDevUIHomeCenterAreaModalVisible(true);
+            //   },
+            // },
+            // {
+            //   label: '[UI] Wip Helpers',
+            //   icon: RcCode,
+            //   onPress: () => {
+            //     setDevUIWipModalVisible(true);
+            //   },
+            // },
             {
               label: 'UI Playground',
               icon: RcCode,
@@ -684,31 +668,31 @@ function DevSettingsBlocks() {
                 setDataPlaygroundModalVisible(true);
               },
             },
-            {
-              label: 'Screen Recording',
-              icon: isIOS ? RcScreenRecord : RcScreenshot,
-              onPress: () => {
-                setDevScreenRecordingModalVisible(true);
-              },
-            },
-            {
-              label: (
-                <Text>
-                  <AutoLockCountDownLabel />
-                </Text>
-              ),
-              icon: RcAutoLockTime,
-              onPress: () => {
-                switchShowFloatingAutoLockCountdownRef.current?.toggle();
-              },
-              rightNode: (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <SwitchShowFloatingAutoLockCountdown
-                    ref={switchShowFloatingAutoLockCountdownRef}
-                  />
-                </View>
-              ),
-            },
+            // {
+            //   label: 'Screen Recording',
+            //   icon: isIOS ? RcScreenRecord : RcScreenshot,
+            //   onPress: () => {
+            //     setDevScreenRecordingModalVisible(true);
+            //   },
+            // },
+            // {
+            //   label: (
+            //     <Text>
+            //       <AutoLockCountDownLabel />
+            //     </Text>
+            //   ),
+            //   icon: RcAutoLockTime,
+            //   onPress: () => {
+            //     switchShowFloatingAutoLockCountdownRef.current?.toggle();
+            //   },
+            //   rightNode: (
+            //     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            //       <SwitchShowFloatingAutoLockCountdown
+            //         ref={switchShowFloatingAutoLockCountdownRef}
+            //       />
+            //     </View>
+            //   ),
+            // },
             {
               label: 'Mock Batch Revoke',
               icon: RcCode,
@@ -877,13 +861,13 @@ function DevSettingsBlocks() {
 
       <DevForceLocalVersionSelector />
 
-      <CloudDriveTestItemModal />
       <WalletLockTestItemModal />
-      <DevUIWipModal />
-      <DevUIHomeCenterAreaModal />
       <DevUIPlaygroundModal />
       <DevDataPlayground />
-      <DevScreenRecordingModal />
+      {/* <CloudDriveTestItemModal /> */}
+      {/* <DevUIWipModal /> */}
+      {/* <DevUIHomeCenterAreaModal /> */}
+      {/* <DevScreenRecordingModal /> */}
       <DevModalDevServer />
       <OpenApiPopup
         visible={isShowOpenApiPopup}

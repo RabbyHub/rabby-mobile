@@ -34,6 +34,7 @@ export function useCloudDriveTestItemModalVisible() {
   };
 }
 
+/** @deprecated */
 export default function CloudDriveTestItemModal({
   onCancel,
 }: RNViewProps & {

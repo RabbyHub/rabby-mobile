@@ -63,6 +63,7 @@ export function useUIDevWipModalVisiable() {
   };
 }
 
+/** @deprecated */
 export default function DevUIWipModal({
   onCancel,
 }: RNViewProps & {
