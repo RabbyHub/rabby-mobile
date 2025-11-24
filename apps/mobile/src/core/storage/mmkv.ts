@@ -82,7 +82,7 @@ function makeAppStorage(options?: MMKVConfiguration) {
     mmkv.clearAll();
   }
 
-  const storage: StorageAdapater = {
+  const storage /* : StorageAdapater */ = {
     getItem,
     setItem,
     removeItem,
@@ -121,7 +121,7 @@ function makeAppStorage(options?: MMKVConfiguration) {
 }
 
 const {
-  storage: appStorage,
+  storage: _appStorage,
   methods: appMethods,
   mmkv: appMMKV,
 } = makeAppStorage({
@@ -133,8 +133,12 @@ const { storage: keyringStorage } = makeAppStorage({
   encryptionKey: 'keyring',
 });
 
+const { storage: warmableStorage } = makeAppStorage({
+  id: MMKV_FILE_NAMES.WARMABLE_CACHE,
+});
+
 export function normalizeKeyringState() {
-  const legacyData = appStorage.getItem('keyringState');
+  const legacyData = _appStorage.getItem('keyringState');
   const result = {
     legacyData,
     keyringData: keyringStorage.getItem('keyringState') || legacyData,
@@ -149,16 +153,21 @@ export function normalizeKeyringState() {
   keyringStorage.setItem('keyringState', result.legacyData);
   result.keyringData = result.legacyData;
 
-  appStorage.removeItem('keyringState');
+  _appStorage.removeItem('keyringState');
   appMMKV.trim();
 
   return result;
 }
 
-export { appStorage, keyringStorage };
+export const appStorage = _appStorage as StorageAdapater;
+
+export {
+  // _appStorage,
+  keyringStorage,
+};
 
 export const IS_BOOTED_USER =
-  !!appStorage.getItem('keyringState') ||
+  !!_appStorage.getItem('keyringState') ||
   !!keyringStorage.getItem('keyringState');
 
 export const enum MMKVStorageStrategy {
@@ -177,7 +186,7 @@ type StringStorageOption =
 /**
  * persist item as json, read it as its original type
  *
- * @baddesign In the past, `makeJsonStore` use storage consist with appStorage,
+ * @baddesign In the past, `makeJsonStore` use storage consist with _appStorage,
  * which also persist value as json, and treat it as json on parsing. This duplicates
  * the logic of `makeJsonStore`, and is not a good design, that is, one value would
  * be JSON.stringify twice and JSON.parse twice. This is a bad behavior.
@@ -206,7 +215,7 @@ function makeJsonStore<T = any>(options?: { storage?: StringStorageOption }) {
  * @deprecated
  */
 export const duplicatelyStringifiedAppJsonStore = makeJsonStore<any>({
-  storage: appStorage as SyncStringStorage,
+  storage: _appStorage as SyncStringStorage,
 });
 
 export const appJsonStore = makeJsonStore<any>({
@@ -240,15 +249,16 @@ const GET_STRING_STORAGE_FOR_JSON_STORE = (strategy: MMKVStorageStrategy) => {
   }
 };
 
+type AtomByMMKVOptions<T> = {
+  storage?: StringStorageOption;
+  setupSubscribe?(ctx: {
+    jsonStore: SyncStorage<T>;
+  }): /* subscribe */ SyncStorage<T>['subscribe'] & Function;
+};
 export const atomByMMKV = <T = any>(
   key: string,
   initialValue: T,
-  options?: {
-    storage?: StringStorageOption;
-    setupSubscribe?(ctx: {
-      jsonStore: SyncStorage<T>;
-    }): /* subscribe */ SyncStorage<T>['subscribe'] & Function;
-  },
+  options?: AtomByMMKVOptions<T>,
 ) => {
   const { storage } = options || {};
   const jsonStore = makeJsonStore<T>({ storage });
@@ -258,6 +268,17 @@ export const atomByMMKV = <T = any>(
   }
 
   return atomWithStorage<T>(key, initialValue, jsonStore);
+};
+
+export const atomByStoreCache = <T = any>(
+  key: string,
+  initialValue: T,
+  options?: Omit<AtomByMMKVOptions<T>, 'storage'>,
+) => {
+  return atomByMMKV<T>(key, initialValue, {
+    ...options,
+    storage: warmableStorage,
+  });
 };
 
 export function removeLegacyMMKVStorageByKey(key: `@${string}`) {
