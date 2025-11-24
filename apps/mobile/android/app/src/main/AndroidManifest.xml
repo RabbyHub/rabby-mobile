@@ -11,6 +11,10 @@
     android:allowBackup="false"
     android:pageSizeCompat="enabled"
     android:theme="@style/AppTheme">
+    <!-- if set targetSdkVersion >= 36 (android 16) on build.gradle, you can uncomment lines below, disable predictive animation to avoid gesture issue before react-navigation support it -->
+    <!-- tools:replace="android:enableOnBackInvokedCallback"
+    android:enableOnBackInvokedCallback="false"> -->
+
     <!--
     android:windowSoftInputMode="adjustPan":https://github.com/APSL/react-native-keyboard-aware-scroll-view?tab=readme-ov-file#android-support -->
     <!-- <activity
