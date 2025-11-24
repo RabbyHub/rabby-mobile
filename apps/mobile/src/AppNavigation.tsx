@@ -328,34 +328,6 @@ export default function AppNavigation({
           <DuplicateAddressModal />
           <AliasNameEditModal />
           <QrCodeModal />
-          {/* <HomeHiddenTabStack.Navigator
-            screenOptions={
-              {
-                animation: 'none',
-                // gestureEnabled: false,
-                headerTitleAlign: 'center',
-                headerStyle: {
-                  backgroundColor: 'transparent',
-                },
-                // headerShadowVisible: true,
-                headerTintColor: colors['neutral-title-1'],
-                headerTitleStyle: {
-                  color: colors['neutral-title-1'],
-                  fontWeight: '500',
-                  fontSize: DEFAULT_NAVBAR_FONT_SIZE,
-                },
-                // headerTransparent: true,
-              }
-            }
-            tabBar={() => null}>
-            <HomeHiddenTabStack.Screen
-              name={RootNames.StackMain}
-              component={StackMain}
-              options={{
-                headerShown: false,
-              }}
-            />
-          </HomeHiddenTabStack.Navigator> */}
           <RootStack.Navigator
             screenOptions={{
               ...RootAnimOptions,

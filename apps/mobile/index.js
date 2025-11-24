@@ -19,7 +19,7 @@ import {
 } from 'react-native-reanimated';
 
 enableScreens();
-enableFreeze();
+// enableFreeze();
 // must be called synchoronously immediately
 AppRegistry.registerComponent(appName, () => App);
 

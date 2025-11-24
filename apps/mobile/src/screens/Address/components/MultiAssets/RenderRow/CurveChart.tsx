@@ -6,7 +6,14 @@ import {
   CurvePoint,
   formatSmallCurrencyValue,
 } from '@/hooks/useCurve';
-import { memo, useEffect, useMemo, useCallback, useState } from 'react';
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useCallback,
+  useState,
+  useLayoutEffect,
+} from 'react';
 import { Dimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ALERT_HEIGHT, HEADER_CHART_HEIGHT } from '@/constant/layout';
@@ -82,6 +89,12 @@ function Chart({
     },
   );
 
+  useLayoutEffect(() => {
+    return () => {
+      console.debug('[feat] MultiAssets Chart unmount');
+    };
+  }, []);
+
   return (
     <View
       style={[
@@ -148,7 +161,7 @@ interface IHeaderProps {
   isLoss: boolean;
   data: CurvePoint[];
 }
-export const ChartHeader = ({
+const ChartHeader = ({
   rawNetWorth,
   rawChange,
   changePercent,
