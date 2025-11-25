@@ -477,6 +477,8 @@ export const PerpsMarketDetailScreen = () => {
         }}
       />
       <PerpsOpenPositionPopup
+        activeAssetCtx={activeAssetCtx}
+        currentAssetCtx={currentAssetCtx}
         marketDataItem={marketDataMap[coin.toUpperCase()]}
         visible={openPositionVisible}
         direction={positionDirection}

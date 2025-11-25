@@ -2502,6 +2502,7 @@
       },
       "PerpsOpenPositionPopup": {
         "margin": "Margin",
+        "upTo": "Up to",
         "invalidNumber": "Please input a valid number",
         "insufficientBalance": "Insufficient balance",
         "maximumOrderSize": "The maximum order size is {{amount}}",
