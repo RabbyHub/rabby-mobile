@@ -98,7 +98,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
         res.history_list.length,
       );
       if (res.history_list.length) {
-        runOnJS(syncRemoteSwapHistory)(address, res.history_list);
+        syncRemoteSwapHistory(address, res.history_list);
         if (isAddUpdate && lastItemTime > latestTime) {
           console.debug('getSwapTradeListV2 sync data need to loop:', address);
           syncSwapHistory(address, lastItemTime, latestTime);
@@ -167,7 +167,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               res.history_list.length,
             );
             // if (res.history_list.length) {
-            runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
+            syncRemoteHistory(address, res, setHistoryLoading);
             // }
             console.debug(
               'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: No more history',
@@ -187,7 +187,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               'add length:',
               res.history_list.length,
             );
-            runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
+            syncRemoteHistory(address, res, setHistoryLoading);
             synHistoryInRealTimeApi(address, latestTime, lastItemTime);
           }
         }
@@ -261,7 +261,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               res.history_list.length,
             );
             if (res.history_list.length) {
-              runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
+              syncRemoteHistory(address, res, setHistoryLoading);
             }
             console.debug(
               '🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history',
@@ -281,7 +281,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               'add length:',
               res.history_list.length,
             );
-            runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
+            syncRemoteHistory(address, res, setHistoryLoading);
             syncUserAllHistory(
               address,
               lastItemTime,
