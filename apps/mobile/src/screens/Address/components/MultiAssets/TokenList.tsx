@@ -82,7 +82,7 @@ export const TokenList = ({ chain, updateToken }: Props) => {
   } = useAssets({ hideCombined: !isFocusing });
 
   const tokens = useMemo(() => {
-    return isFocusing
+    return !isFocusing
       ? []
       : _rawTokens?.filter(item =>
           chain && item?.chain ? item.chain === chain : true,
