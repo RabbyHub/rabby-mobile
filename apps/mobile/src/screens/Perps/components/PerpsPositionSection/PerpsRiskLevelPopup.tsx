@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import RcImgSafe from '@/assets2024/icons/perps/ImgSafe.svg';
+import RcImgTipsLightCC from '@/assets2024/icons/perps/ImgTipsLightCC.svg';
 import RcImgWarning from '@/assets2024/icons/perps/ImgWarning.svg';
 import RcImgDanger from '@/assets2024/icons/perps/ImgDanger.svg';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -115,41 +116,16 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
       enableDynamicSizing>
       <BottomSheetView>
         <AutoLockView style={styles.container}>
-          <Text style={styles.title}>
-            {t('page.perps.PerpsRiskPopup.title')}
-          </Text>
-          <Text style={styles.subtitle}>
-            {t('page.perps.PerpsRiskPopup.subtitle')}
-          </Text>
-
-          <RiskGauge riskLevel={riskLevel} riskConfig={riskConfig} />
-
-          <View
-            style={[
-              styles.distanceCard,
-              { backgroundColor: riskConfig.backgroundColor },
-            ]}>
-            <TouchableOpacity
-              style={styles.distanceLabelContainer}
-              onPress={() => {
-                showTipsPopup({
-                  title: t('page.perps.PerpsRiskPopup.distanceLabel'),
-                  desc: t('page.perps.PerpsRiskPopup.liqIntro'),
-                });
-              }}>
-              <Text style={[styles.distanceLabel, { color: riskConfig.color }]}>
-                {t('page.perps.PerpsRiskPopup.distanceLabel')}
-              </Text>
-              <RcIconInfoCC
-                width={18}
-                height={18}
-                color={riskConfig.infoColor}
-              />
-            </TouchableOpacity>
-            <Text style={[styles.distanceValue, { color: riskConfig.color }]}>
-              {formatPct(distanceLiquidation)}
-            </Text>
+          <View style={styles.imgContainer}>
+            <RcImgTipsLightCC
+              width={35}
+              height={35}
+              color={colors2024['neutral-info']}
+            />
           </View>
+          <Text style={styles.title}>
+            {t('page.perps.PerpsRiskPopup.distanceLabel')}
+          </Text>
 
           <View style={styles.priceList}>
             <View style={styles.priceItem}>
@@ -168,6 +144,21 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
                 ${splitNumberByStep(liquidationPrice.toFixed(pxDecimals))}
               </Text>
             </View>
+            <View style={styles.priceItem}>
+              <View style={styles.distanceCard}>
+                <Text style={styles.desc}>
+                  <Trans
+                    t={t}
+                    i18nKey={t('page.perps.PerpsRiskPopup.liqDistanceTips', {
+                      distance: formatPct(distanceLiquidation),
+                    })}
+                    components={{
+                      1: <Text style={styles.strong} />,
+                    }}
+                  />
+                </Text>
+              </View>
+            </View>
           </View>
         </AutoLockView>
         <View style={styles.footer}>
@@ -183,6 +174,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 20,
     // paddingBottom: 56,
   },
+  imgContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
@@ -190,7 +185,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   subtitle: {
     fontFamily: 'SF Pro Rounded',
@@ -208,6 +203,21 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'relative',
     height: 145,
   },
+  desc: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    textAlign: 'center',
+  },
+  strong: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
+    color: colors2024['neutral-body'],
+  },
   riskLabel: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 28,
@@ -218,13 +228,13 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     textAlign: 'center',
   },
   distanceCard: {
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 6,
+    marginTop: -12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    flex: 1,
+    backgroundColor: colors2024['neutral-bg-5'],
   },
   distanceLabelContainer: {
     flexDirection: 'row',
@@ -249,7 +259,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    marginBottom: 24,
   },
   priceItem: {
     flexDirection: 'row',
@@ -274,8 +283,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   footer: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 20,
     paddingBottom: 48,
-    backgroundColor: colors2024['neutral-bg-1'],
+    // backgroundColor: colors2024['neutral-bg-1'],
   },
 }));

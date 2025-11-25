@@ -3,7 +3,7 @@ import { RcIconLong } from '@/assets2024/icons/perps';
 import TradingViewCandleChart, {
   TradingViewChartRef,
 } from '@/components2024/TradingViewCandleChart';
-import { CANDLE_MENU_KEY } from '@/constant/perps';
+import { CANDLE_MENU_KEY, CANDLE_MENU_KEY_V2 } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
@@ -55,22 +55,20 @@ const containerStyle: React.CSSProperties = {
   position: 'relative',
 };
 
-const getInterval = (candleMenuKey: CANDLE_MENU_KEY) => {
+const getInterval = (candleMenuKey: CANDLE_MENU_KEY_V2) => {
   switch (candleMenuKey) {
-    case CANDLE_MENU_KEY.ONE_HOUR:
-      return CandlePeriod.ONE_MINUTE;
-    case CANDLE_MENU_KEY.ONE_DAY:
+    case CANDLE_MENU_KEY_V2.FIVE_MINUTES:
+      return CandlePeriod.FIVE_MINUTES;
+    case CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES:
+      return CandlePeriod.FIFTEEN_MINUTES;
+    case CANDLE_MENU_KEY_V2.ONE_HOUR:
       return CandlePeriod.ONE_HOUR;
-    case CANDLE_MENU_KEY.ONE_WEEK:
-      return CandlePeriod.FOUR_HOURS;
-    case CANDLE_MENU_KEY.ONE_MONTH:
-      return CandlePeriod.TWELVE_HOURS;
-    case CANDLE_MENU_KEY.YTD:
+    case CANDLE_MENU_KEY_V2.ONE_DAY:
       return CandlePeriod.ONE_DAY;
-    case CANDLE_MENU_KEY.ALL:
-      return CandlePeriod.ONE_DAY;
+    case CANDLE_MENU_KEY_V2.ONE_WEEK:
+      return CandlePeriod.ONE_WEEK;
     default:
-      return CandlePeriod.ONE_DAY;
+      return CandlePeriod.FIVE_MINUTES;
   }
 };
 
@@ -127,34 +125,34 @@ export const PerpsChart: React.FC<{
   const [isReady, setIsReady] = useState(false);
   const appState = useAppState();
   const [selectedInterval, setSelectedInterval] =
-    React.useState<CANDLE_MENU_KEY>(CANDLE_MENU_KEY.ONE_DAY);
+    React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   const unsubscribeRef = useRef<() => void>(() => {});
 
   const CANDLE_MENU_ITEM = useMemo(
     () => [
       {
+        label: '5M',
+        key: CANDLE_MENU_KEY_V2.FIVE_MINUTES,
+      },
+      {
+        label: '15M',
+        key: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
+      },
+      {
         label: '1H',
-        key: CANDLE_MENU_KEY.ONE_HOUR,
+        key: CANDLE_MENU_KEY_V2.ONE_HOUR,
+      },
+      {
+        label: '4H',
+        key: CANDLE_MENU_KEY_V2.FOUR_HOURS,
       },
       {
         label: '1D',
-        key: CANDLE_MENU_KEY.ONE_DAY,
+        key: CANDLE_MENU_KEY_V2.ONE_DAY,
       },
       {
         label: '1W',
-        key: CANDLE_MENU_KEY.ONE_WEEK,
-      },
-      {
-        label: '1M',
-        key: CANDLE_MENU_KEY.ONE_MONTH,
-      },
-      {
-        label: 'YTD',
-        key: CANDLE_MENU_KEY.YTD,
-      },
-      {
-        label: 'ALL',
-        key: CANDLE_MENU_KEY.ALL,
+        key: CANDLE_MENU_KEY_V2.ONE_WEEK,
       },
     ],
     [],
@@ -193,23 +191,23 @@ export const PerpsChart: React.FC<{
       const interval = getInterval(selectedInterval);
 
       switch (selectedInterval) {
-        case CANDLE_MENU_KEY.ONE_HOUR:
-          start = end - 1 * 60 * 60 * 1000;
+        case CANDLE_MENU_KEY_V2.FIVE_MINUTES:
+          start = end - 1 * 24 * 60 * 60 * 1000; // 1 day
           break;
-        case CANDLE_MENU_KEY.ONE_DAY:
-          start = end - 1 * 24 * 60 * 60 * 1000;
+        case CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES:
+          start = end - 7 * 24 * 60 * 60 * 1000; // 1 week
           break;
-        case CANDLE_MENU_KEY.ONE_WEEK:
-          start = end - 1 * 7 * 24 * 60 * 60 * 1000;
+        case CANDLE_MENU_KEY_V2.ONE_HOUR:
+          start = end - 1 * 30 * 24 * 60 * 60 * 1000; // 1 month
           break;
-        case CANDLE_MENU_KEY.ONE_MONTH:
-          start = end - 1 * 30 * 24 * 60 * 60 * 1000;
+        case CANDLE_MENU_KEY_V2.FOUR_HOURS:
+          start = end - 4 * 30 * 24 * 60 * 60 * 1000; // 4 months
           break;
-        case CANDLE_MENU_KEY.YTD:
-          start = new Date(new Date().getFullYear(), 0, 1).getTime();
+        case CANDLE_MENU_KEY_V2.ONE_DAY:
+          start = end - 12 * 30 * 24 * 60 * 60 * 1000; // 1 years;
           end = Date.now();
           break;
-        case CANDLE_MENU_KEY.ALL:
+        case CANDLE_MENU_KEY_V2.ONE_WEEK:
           start = 0;
           end = Date.now();
           break;
@@ -232,7 +230,7 @@ export const PerpsChart: React.FC<{
       return {
         coin: market.name,
         interval: interval,
-        fitContent: true,
+        fitContent: false,
         candles: candles as any,
       };
     },

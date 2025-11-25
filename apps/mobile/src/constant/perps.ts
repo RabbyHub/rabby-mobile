@@ -39,6 +39,15 @@ export enum CANDLE_MENU_KEY {
   ALL = 'ALL',
 }
 
+export enum CANDLE_MENU_KEY_V2 {
+  FIVE_MINUTES = '5M',
+  FIFTEEN_MINUTES = '15M',
+  ONE_HOUR = '1H',
+  FOUR_HOURS = '4H',
+  ONE_DAY = '1D',
+  ONE_WEEK = '1W',
+}
+
 export const DEFAULT_TOP_ASSET = [
   {
     id: 1,
