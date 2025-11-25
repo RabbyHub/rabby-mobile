@@ -27,7 +27,7 @@ export const batchQueryNFTsWithLocalCache = async (
           } as unknown as Collection,
         };
       });
-      runOnJS(syncRemoteNFTs)(id, [...nftsWithCollection]);
+      syncRemoteNFTs(id, [...nftsWithCollection]);
       return nftsWithCollection;
     } else {
       return onlySync ? [] : NFTItemEntity.batchQueryNFTs(id);

@@ -4,6 +4,7 @@ import { ClassOf } from '@rabby-wallet/base-utils';
 
 import { type EntityAddressAssetBase } from '../entities/base';
 import { appOrmEvents, SyncTaskOptions } from './_event';
+import { runSqliteSyncWorklet } from '@/core/databases/perf';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -173,13 +174,19 @@ export async function batchSaveWithPQueueAndTransaction<
           //       throw error
           //     });
           // });
-          await repo.manager.upsert(
-            entityCls,
-            // @ts-expect-error
-            batch,
-            // bar
-            { conflictPaths: ['_db_id'] },
-          );
+          // await repo.manager.upsert(
+          //   entityCls,
+          //   // @ts-expect-error
+          //   batch,
+          //   // bar
+          //   { conflictPaths: ['_db_id'] },
+          // );
+          await runSqliteSyncWorklet(
+            async (entityCls: any, batch: any, options: any) => {
+              'worklet';
+              return await repo.manager.upsert(entityCls, batch, options);
+            },
+          )(entityCls, batch, { conflictPaths: ['_db_id'] });
           printLog &&
             console.debug(
               `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
