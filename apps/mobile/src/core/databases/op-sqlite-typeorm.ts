@@ -50,18 +50,20 @@ export const opSqliteTypeORMDriver = {
       });
 
       const connection = {
-        executeSql: async (
+        executeSql: async <T extends any>(
           sql: string,
           params: any[] | undefined,
-          ok: (res: QueryResult) => void,
-          fail: (msg: string) => void,
-        ) => {
+          ok?: (res: QueryResult) => void,
+          fail?: (msg: string) => void,
+        ): Promise<T> => {
           try {
             const response = await database.execute(sql, params);
             enhanceQueryResult(response);
-            ok(response);
+            ok?.(response);
+            return response as T;
           } catch (e) {
-            fail(`[op-sqlite]: Error executing SQL: ${e as string}`);
+            fail?.(`[op-sqlite]: Error executing SQL: ${e as string}`);
+            throw e;
           }
         },
         transaction: (
@@ -101,6 +103,7 @@ export const opSqliteTypeORMDriver = {
       return connection;
     } catch (e) {
       fail?.(`[op-sqlite]: Error opening database: ${e as string}`);
+      throw e;
     }
   },
 };
