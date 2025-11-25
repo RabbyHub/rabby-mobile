@@ -34,6 +34,9 @@ export function abortAllSyncTasks() {
   });
 }
 
+export type BeforeEmitFn = (
+  payload: Parameters<typeof appOrmEvents.emit>[1],
+) => void;
 /**
  * @warning the `data` list would be mutated internally for performance consideration
  */
@@ -50,8 +53,8 @@ export async function batchSaveWithPQueueAndTransaction<
     printLog?: boolean;
     // signal?: AbortSignal;
     waitTaskDoneReturn?: boolean;
+    beforeEmit?: BeforeEmitFn;
   },
-  setHistoryLoading?: any,
 ) {
   const {
     batchSize = 50,
@@ -63,6 +66,7 @@ export async function batchSaveWithPQueueAndTransaction<
     noNeedAbort = false,
     // signal = syncAbortControllers[taskFor],
     waitTaskDoneReturn = false,
+    beforeEmit,
   } = options;
 
   const taskKey = makeTaskKey(taskFor, owner_addr);
@@ -150,19 +154,13 @@ export async function batchSaveWithPQueueAndTransaction<
         const makeEmit = (success: boolean) => {
           if (currentSignal.aborted) return;
 
-          // leave here for debug
-          if (__DEV__ && eventPayload.taskFor === 'all-history') {
-            setTimeout(() => {
-              setHistoryLoading?.(prev => ({
-                ...prev,
-                [eventPayload.owner_addr]: false,
-              }));
-            }, 2000);
-            printLog &&
-              console.debug(
-                `[debug] will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,
-              );
-          }
+          // // leave here for debug
+          // if (__DEV__) {
+          //   console.debug(
+          //     `[debug] will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,
+          //   );
+          // }
+          beforeEmit?.({ ...eventPayload, success });
           appOrmEvents.emit('onRemoteDataUpserted', {
             ...eventPayload,
             success,
