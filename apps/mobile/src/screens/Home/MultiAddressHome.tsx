@@ -126,6 +126,7 @@ import { useSetAtom } from 'jotai';
 import { foldMultiChartAtom } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { RECOMMENDED_DEFAULT_QUERY_LIMIT } from '@/databases/entities/_helpers';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -408,7 +409,7 @@ function MultiAddressHome(): JSX.Element {
       transactionHistoryService.getClearSuccessAndFailListTsObj();
     const list = await HistoryItemEntity.getAllHistoryItemSortedByTime(
       top10Addresses,
-      200,
+      RECOMMENDED_DEFAULT_QUERY_LIMIT,
       true,
       timestamp / 1000,
     );
