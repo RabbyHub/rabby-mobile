@@ -89,12 +89,6 @@ function Chart({
     },
   );
 
-  useLayoutEffect(() => {
-    return () => {
-      console.debug('[feat] MultiAssets Chart unmount');
-    };
-  }, []);
-
   return (
     <View
       style={[

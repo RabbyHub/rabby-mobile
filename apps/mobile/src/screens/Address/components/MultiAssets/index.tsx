@@ -48,20 +48,19 @@ export const MultiAssets = ({
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
 
-  const isFocused = useIsFocused();
+  const isNavFocused = useIsFocused();
   const { combineData: combineCurveData, isLoadingNew: isLoadingCurve } =
     useMultiCurve(top10Addresses, {
-      isNavigationFocused: isFocused,
+      isNavigationFocused: isNavFocused,
       disableAutoFetch: false,
       totalBalance: top10Balance.total,
       totalEvmBalance: top10Balance.totalEvm,
     });
-  // console.debug('[feat] combineCurveData', combineCurveData);
 
   const { combineData: combine24hBalanceData } = useMulti24hBalance(
     top10Addresses,
     {
-      isNavigationFocused: isFocused,
+      isNavigationFocused: isNavFocused,
       disableAutoFetch: false,
       totalBalance: top10Balance.total,
       totalEvmBalance: top10Balance.totalEvm,
@@ -162,20 +161,21 @@ export const MultiAssets = ({
       <MultiChart
         isOffline={false}
         data={combineData}
-        loading={isLoadingCurve}
+        loading={isLoadingCurve || !isNavFocused}
         pathColor={pathColor}
         isNoAssets={false}
         isDisConnect={isDisConnect}
         handleScroll={handleScroll}
       />
     );
-  }, [combineData, handleScroll, isDisConnect, isLoadingCurve, pathColor]);
-
-  useLayoutEffect(() => {
-    return () => {
-      console.debug('[feat] MultiAssets unmount');
-    };
-  }, []);
+  }, [
+    combineData,
+    handleScroll,
+    isDisConnect,
+    isLoadingCurve,
+    isNavFocused,
+    pathColor,
+  ]);
 
   const listLength = useMemo(() => {
     return list.length > 10 ? 10 : list.length;
