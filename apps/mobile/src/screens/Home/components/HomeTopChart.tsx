@@ -128,7 +128,7 @@ interface IHeaderProps {
   fold: boolean;
   setFold: (fold: boolean) => void;
 }
-export const ChartHeader = ({
+const ChartHeader = ({
   rawNetWorth,
   changePercent,
   isLoss,

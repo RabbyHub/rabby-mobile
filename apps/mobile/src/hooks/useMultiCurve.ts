@@ -10,6 +10,7 @@ import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
 import { CurveDayType } from '@/utils/curveDayType';
+import { useCreationWithShallowCompare } from './common/useMemozied';
 
 const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
 
@@ -86,10 +87,19 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
 export const loadingMultiCurveAtom = atom(true);
 export const useMultiCurve = (
   addresses: string[],
-  disableAutoFetch?: boolean,
-  totalBalance?: number,
-  totalEvmBalance?: number,
+  options?: {
+    isNavigationFocused?: boolean;
+    disableAutoFetch?: boolean;
+    totalBalance?: number;
+    totalEvmBalance?: number;
+  },
 ) => {
+  const {
+    isNavigationFocused = false,
+    disableAutoFetch,
+    totalBalance,
+    totalEvmBalance,
+  } = options || {};
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
   const loadingMapRef = useRef<Record<string, boolean>>({});
@@ -211,14 +221,21 @@ export const useMultiCurve = (
     [addresses, fetch],
   );
 
+  const stableAddresses = useCreationWithShallowCompare(
+    () => addresses,
+    [addresses],
+  );
+
   const combineData = useMemo(() => {
-    const list = addresses
-      .map(address => {
-        const data = multiTimeStamp[address.toLowerCase()];
-        return data?.data || [];
-      })
-      .filter(data => data.length > 0);
-    const isAllGet = list.length === addresses.length;
+    const list = !isNavigationFocused
+      ? []
+      : stableAddresses
+          .map(address => {
+            const data = multiTimeStamp[address.toLowerCase()];
+            return data?.data || [];
+          })
+          .filter(data => data.length > 0);
+    const isAllGet = list.length === stableAddresses.length;
     return formChartData(
       combineMulitCurve(list),
       isAllGet ? totalEvmBalance || 0 : 0,
@@ -226,8 +243,13 @@ export const useMultiCurve = (
       CurveDayType.DAY,
       isAllGet ? totalBalance : 0,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addresses.length, multiTimeStamp, totalBalance, totalEvmBalance]);
+  }, [
+    isNavigationFocused,
+    stableAddresses,
+    multiTimeStamp,
+    totalBalance,
+    totalEvmBalance,
+  ]);
 
   useEffect(() => {
     if (disableAutoFetch || queue.size > 0) {
