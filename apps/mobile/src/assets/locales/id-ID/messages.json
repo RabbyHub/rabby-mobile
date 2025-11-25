@@ -634,10 +634,10 @@
       },
       "GasSelector": {
         "level": {
-          "fast": "Instan",
+          "fast": "Cepat",
           "$unknown": "Tidak dikenali",
-          "slow": "Normal",
-          "normal": "Cepat",
+          "slow": "Lambat",
+          "normal": "Normal",
           "custom": "Kustom"
         },
         "popupDesc": "Biaya gas akan diambil dari jumlah transfer berdasarkan harga gas yang Anda atur.",
@@ -719,9 +719,9 @@
     "confirmAddress": {
       "risks": {
         "scamAddress": "Alamat penerima adalah alamat penipuan yang ditandai oleh Rabby.",
-        "noSend": "Anda belum mengirimkan dana ke alamat ini dalam 180 hari terakhir. Silakan konfirmasi apakah Anda ingin melanjutkan.",
         "cexNoDeposite": "Alamat penerima adalah alamat non-setoran dari CEX. Harap pastikan alamat setoran Anda benar.",
-        "contractAddress": "Alamat penerima adalah alamat kontrak, yang berpotensi menyebabkan kehilangan dana."
+        "contractAddress": "Alamat penerima adalah alamat kontrak, yang berpotensi menyebabkan kehilangan dana.",
+        "noSend": "Anda belum mengirim ke alamat ini dalam 180 hari"
       },
       "sendTo": "Kirim ke Alamat Ini",
       "brandNameTail": "Alamat",
@@ -2067,7 +2067,7 @@
     "syncExtension": {
       "verifyWithPassword": "Verifikasi dengan Kata Sandi Ekstensi Rabby Anda",
       "importedSuccessfully": "Diimpor dengan Sukses!",
-      "scanTips1": "Klik “Rabby Mobile” di Ekstensi Rabby",
+      "scanTips1": "Klik “Mobile Sync” di Ekstensi Rabby",
       "scanTips2": "Pindai kode dan mulai menyinkronkan",
       "newUserVerify": "Ia juga akan berfungsi sebagai kata sandi default untuk Rabby Mobile",
       "syncingProgress": "Pindai ({{ percent }})",
@@ -2684,7 +2684,8 @@
       "hf": "Faktor kesehatan",
       "enterAmount": "Masukkan Jumlah",
       "isolated": "terisolasi",
-      "estNetApy": "Est. net APY"
+      "estNetApy": "Est. net APY",
+      "marketSlot": "{{market}} Pasar"
     }
   },
   "component": {
@@ -2849,10 +2850,10 @@
     },
     "ReserveGasPopup": {
       "doNotReserve": "Jangan cadangkan Gas",
-      "normal": "Normal",
+      "normal": "Lambat",
       "title": "Cadangkan Gas",
-      "fast": "Cepat",
-      "instant": "Instan"
+      "fast": "Normal",
+      "instant": "Cepat"
     },
     "NoLongerSupports": {
       "title": "Alamat dompet mobile tidak lagi didukung",

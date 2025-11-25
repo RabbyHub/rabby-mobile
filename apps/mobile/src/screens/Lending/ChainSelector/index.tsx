@@ -118,7 +118,7 @@ export function ChainSelector({
             isShowRPCStatus={true}
           />
           <Text style={[styles.chainName]}>
-            {chainItem?.name} {t('page.Lending.market')}
+            {t('page.Lending.marketSlot', { market: chainItem?.name })}
           </Text>
         </View>
 

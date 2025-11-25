@@ -34,6 +34,7 @@ import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { ThemeColors2024 } from '@/constant/theme';
 import useAccountsBalance, {
   balanceAccountType,
+  LoadBalanceStage,
 } from '@/hooks/useAccountsBalance';
 import { useUpgradeInfo } from '@/hooks/version';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -74,14 +75,22 @@ const HeaderHeight = 24;
 export function MultiAddressHomeHeader(
   props: {
     data: ReturnType<typeof useMulti24hBalance>['combineData'];
+    loadBalanceFromApiStage: LoadBalanceStage;
     loading: boolean;
     loadingNewCurve: boolean;
     onRefresh?: () => void;
     balanceAccounts?: balanceAccountType[];
   } & RNViewProps,
 ): JSX.Element {
-  const { loading, data, loadingNewCurve, style, onRefresh, balanceAccounts } =
-    props;
+  const {
+    loading,
+    loadBalanceFromApiStage,
+    data,
+    loadingNewCurve,
+    style,
+    onRefresh,
+    balanceAccounts,
+  } = props;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -171,18 +180,38 @@ export function MultiAddressHomeHeader(
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
-  const previousLoading = usePrevious(loading);
+  const previousLoading = usePrevious(loadBalanceFromApiStage);
+  const [isAnimRunning, setIsAnimRunning] = useState(false);
+  const animTimerRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    if (data.isLoss) return;
-    if (!loading && previousLoading) {
+    if (!__DEV__ && data.isLoss) return;
+
+    const durationMs = IS_IOS ? 2000 : 2500;
+
+    if (
+      data.rawChange &&
+      loadBalanceFromApiStage !== 'loading' &&
+      previousLoading === 'loading'
+    ) {
+      setIsAnimRunning(true);
       gasketWebViewRef.current?.sendMessage?.({
         type: 'GASKETVIEW:TOGGLE_LOADING',
         info: {
           loading: previousLoading,
+          isPositive: !data.isLoss,
         },
+        animationDurationMs: durationMs,
       });
     }
-  }, [data.isLoss, loading, previousLoading]);
+
+    if (animTimerRef.current) {
+      clearTimeout(animTimerRef.current);
+    }
+    animTimerRef.current = setTimeout(
+      () => setIsAnimRunning(false),
+      durationMs,
+    );
+  }, [data.isLoss, data.rawChange, loadBalanceFromApiStage, previousLoading]);
 
   const { HomeGuidanceMultipleTabsTargetViewRef, doMeasure } =
     useMeasureLayoutForHomeGuidanceMultipleTabs();
@@ -276,6 +305,7 @@ export function MultiAddressHomeHeader(
               backgroundColor: 'transparent',
             }}
             entryPath={'/pages/gasket-blurview.html'}
+            // forceUseLocalResource
             webviewSize={{
               width: Dimensions.get('window').width - 15 * 2,
             }}
@@ -298,7 +328,7 @@ export function MultiAddressHomeHeader(
           ]}
           onLayout={() => {
             if (IS_IOS) {
-              setTimeout(() => setCouldRenderLocalWebView(true), 250);
+              setTimeout(() => setCouldRenderLocalWebView(true), 500);
             } else {
               setCouldRenderLocalWebView(true);
             }
@@ -327,11 +357,8 @@ export function MultiAddressHomeHeader(
               end={isLight ? { x: 0.75, y: 0.5 } : { x: 1, y: 0.1 }}
               style={[
                 StyleSheet.absoluteFill,
-                !isLight && {
-                  borderWidth: 2,
-                  borderRadius: styles.curveBox['borderRadius'] || 20,
-                  borderColor: 'rgba(37, 38, 40, 1)',
-                },
+                styles.curveCardGradientBg,
+                isAnimRunning && styles.curveCardGradientBgWithAnim,
               ]}
             />
             <View style={styles.curveCardInner}>
@@ -443,307 +470,325 @@ const SIZES = {
   cardContentRadius: 20,
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  screenContainer: {
-    paddingTop: 64,
-  },
-  paddingContainer: {
-    paddingHorizontal: 0,
-    flex: 1,
-    flexGrow: 1,
-  },
-  bgImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-  },
-  redDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors2024['red-default'],
-    position: 'absolute',
-    top: 0,
-    right: 13,
-  },
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+  const curveBoxBorderWidth = 1;
+  const curveCardBorderWidth = !isLight ? 2 : 1;
 
-  headerBox: {
-    height: HeaderHeight,
-    // paddingLeft: 8,
-    // paddingRight: 38,
-    paddingTop: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-    position: 'relative',
-    // flex: 1,
-    // backgroundColor: colors2024['neutral-title-1'],
-  },
-  leftBox: {
-    height: HeaderHeight,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 4,
-  },
-  balanceTextBox: {
-    // marginRight: 12,
-    color: colors2024['neutral-title-1'],
-    fontWeight: '900',
-    fontSize: 20,
-    lineHeight: 24,
-    textAlign: 'left',
-    fontFamily: 'SF Pro Rounded',
-  },
-  balanceBox: {
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-    marginTop: 30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  rightArea: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // position: 'relative',
-    // ...makeDebugBorder(),
-  },
-  feedbackEntry: {
-    height: '100%',
-    paddingRight: 6,
-    // ...makeDebugBorder(),
-  },
-  settingEntry: {
-    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
-    flexDirection: 'row',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingLeft: 6,
-    paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    position: 'relative',
-  },
-  usdText: {
-    fontSize: 36,
-    fontWeight: '900',
-    textAlign: 'left',
-    color: colors2024['neutral-title-1'],
-    lineHeight: 42,
-    fontFamily: 'SF Pro Rounded',
-  },
+  return {
+    screenContainer: {
+      paddingTop: 64,
+    },
+    paddingContainer: {
+      paddingHorizontal: 0,
+      flex: 1,
+      flexGrow: 1,
+    },
+    bgImage: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+    },
+    redDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors2024['red-default'],
+      position: 'absolute',
+      top: 0,
+      right: 13,
+    },
 
-  accountBg: {
-    minWidth: 74,
-    padding: 8,
-    paddingLeft: 11,
-    borderRadius: 10,
-    backgroundColor: colors2024['neutral-line'],
-    shadowColor: colors2024['brand-light-1'],
-    shadowOffset: { width: 0, height: 9.411 },
-    shadowOpacity: 0.1,
-    shadowRadius: 22.587,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 30,
-    // position: 'absolute',
-    // top: 28,
-    // right: 20,
-    // elevation: 500,
-  },
-  accountCardMask: {
-    position: 'absolute',
-    left: 1,
-    right: 1,
-    bottom: 1,
-    top: 1,
-    zIndex: 10,
-    pointerEvents: 'none',
-    backgroundColor: isLight
-      ? 'rgba(255, 255, 255, 0.1)'
-      : 'rgba(0, 0, 0, 0.02)',
-  },
-  accountCardMaskBlur: {
-    height: '100%',
-    borderRadius: 20,
-  },
-  button: {
-    height: 38,
-  },
-  accountText: {
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'left',
-    color: colors2024['neutral-title-1'],
-    lineHeight: 20,
-    fontFamily: 'SF Pro Rounded',
-    paddingLeft: 6,
-  },
-  pinBox: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  curveBoxWrapper: {
-    position: 'relative',
-    marginTop: 12,
-    paddingTop: 0,
-    backgroundColor: 'transparent',
-    // ...makeDebugBorder('red'),
-    paddingHorizontal: SIZES.cardLayoutPaddingHorizontal,
-    borderRadius: SIZES.cardContentRadius,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  localWebViewWrapper: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: IS_IOS ? 1 : -1,
-    marginHorizontal: isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
-    borderRadius: SIZES.cardContentRadius,
-    display: 'none',
-    // ...makeDebugBorder('yellow'),
-  },
-  localWebViewWrapperShow: {
-    display: 'flex',
-  },
-  curveBoxWrapperLoading: {},
-  curveBox: {
-    ...makeDevOnlyStyle({
-      // opacity: 0,
-    }),
-    paddingHorizontal: 0,
-    paddingTop: 0,
-    paddingVertical: 0,
-    padding: 0,
-    borderWidth: IS_IOS ? 1 : 1,
-    borderColor: 'transparent',
-    borderRadius: 20,
-    // ...makeDebugBorder(),
-    width: '100%',
-    alignItems: 'center',
-  },
-  curveBoxLoading: {},
-  curveCard: {
-    maxWidth: '100%',
-    // flexDirection: 'row',
-    // alignItems: 'center',
-    // justifyContent: 'space-between',
+    headerBox: {
+      height: HeaderHeight,
+      // paddingLeft: 8,
+      // paddingRight: 38,
+      paddingTop: 8,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
+      position: 'relative',
+      // flex: 1,
+      // backgroundColor: colors2024['neutral-title-1'],
+    },
+    leftBox: {
+      height: HeaderHeight,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 4,
+    },
+    balanceTextBox: {
+      // marginRight: 12,
+      color: colors2024['neutral-title-1'],
+      fontWeight: '900',
+      fontSize: 20,
+      lineHeight: 24,
+      textAlign: 'left',
+      fontFamily: 'SF Pro Rounded',
+    },
+    balanceBox: {
+      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
+      marginTop: 30,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    rightArea: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      // position: 'relative',
+      // ...makeDebugBorder(),
+    },
+    feedbackEntry: {
+      height: '100%',
+      paddingRight: 6,
+      // ...makeDebugBorder(),
+    },
+    settingEntry: {
+      marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
+      flexDirection: 'row',
+      height: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingLeft: 6,
+      paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
+      position: 'relative',
+    },
+    usdText: {
+      fontSize: 36,
+      fontWeight: '900',
+      textAlign: 'left',
+      color: colors2024['neutral-title-1'],
+      lineHeight: 42,
+      fontFamily: 'SF Pro Rounded',
+    },
 
-    borderRadius: 20,
-    paddingVertical: 24,
-    paddingHorizontal: 0,
-    borderWidth: 0,
-    borderColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-line'],
-    backgroundColor: 'transparent',
+    accountBg: {
+      minWidth: 74,
+      padding: 8,
+      paddingLeft: 11,
+      borderRadius: 10,
+      backgroundColor: colors2024['neutral-line'],
+      shadowColor: colors2024['brand-light-1'],
+      shadowOffset: { width: 0, height: 9.411 },
+      shadowOpacity: 0.1,
+      shadowRadius: 22.587,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 30,
+      // position: 'absolute',
+      // top: 28,
+      // right: 20,
+      // elevation: 500,
+    },
+    accountCardMask: {
+      position: 'absolute',
+      left: 1,
+      right: 1,
+      bottom: 1,
+      top: 1,
+      zIndex: 10,
+      pointerEvents: 'none',
+      backgroundColor: isLight
+        ? 'rgba(255, 255, 255, 0.1)'
+        : 'rgba(0, 0, 0, 0.02)',
+    },
+    accountCardMaskBlur: {
+      height: '100%',
+      borderRadius: 20,
+    },
+    button: {
+      height: 38,
+    },
+    accountText: {
+      fontSize: 16,
+      fontWeight: '700',
+      textAlign: 'left',
+      color: colors2024['neutral-title-1'],
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      paddingLeft: 6,
+    },
+    pinBox: {
+      flexDirection: 'row',
+      gap: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    curveBoxWrapper: {
+      position: 'relative',
+      marginTop: 12,
+      paddingTop: 0,
+      backgroundColor: 'transparent',
+      // ...makeDebugBorder('red'),
+      paddingHorizontal: SIZES.cardLayoutPaddingHorizontal,
+      borderRadius: SIZES.cardContentRadius,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    localWebViewWrapper: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: IS_IOS ? 1 : -1,
+      marginHorizontal:
+        isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
+      borderRadius: SIZES.cardContentRadius,
+      display: 'none',
+      // ...makeDebugBorder('yellow'),
+    },
+    localWebViewWrapperShow: {
+      display: 'flex',
+    },
+    curveBoxWrapperLoading: {},
+    curveBox: {
+      // ...makeDevOnlyStyle({
+      //   opacity: 0,
+      // }),
+      paddingHorizontal: 0,
+      paddingTop: 0,
+      paddingVertical: 0,
+      padding: 0,
+      borderWidth: curveBoxBorderWidth,
+      borderColor: 'transparent',
+      borderRadius: 20,
+      // ...makeDebugBorder(),
+      width: '100%',
+      alignItems: 'center',
+    },
+    curveBoxLoading: {},
+    curveCard: {
+      maxWidth: '100%',
+      // flexDirection: 'row',
+      // alignItems: 'center',
+      // justifyContent: 'space-between',
 
-    position: 'relative',
-  },
-  curveCardInner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 20,
-    // ...makeDebugBorder(),
-  },
-  shadowView: {
-    ...Platform.select({
-      ios: {
-        shadowColor: colors2024['neutral-black'],
-        shadowOffset: {
-          width: 0,
-          height: 4,
+      borderRadius: 20,
+      paddingVertical: 24,
+      paddingHorizontal: 0,
+      borderWidth: 0,
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-line'],
+      backgroundColor: 'transparent',
+
+      position: 'relative',
+    },
+    curveCardGradientBg: {
+      ...(!isLight && {
+        borderWidth: 2,
+        borderColor: 'rgba(37, 38, 40, 1)',
+        borderRadius: 20,
+      }),
+    },
+    curveCardGradientBgWithAnim: {
+      ...(!isLight && {
+        borderColor: 'rgba(37, 38, 40, 0.1)',
+      }),
+    },
+    curveCardInner: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+      paddingHorizontal: 20,
+      // ...makeDebugBorder(),
+    },
+    shadowView: {
+      ...Platform.select({
+        ios: {
+          shadowColor: colors2024['neutral-black'],
+          shadowOffset: {
+            width: 0,
+            height: 4,
+          },
+          shadowOpacity: 0.03,
+          shadowRadius: 10,
+          elevation: 8,
         },
-        shadowOpacity: 0.03,
-        shadowRadius: 10,
-        elevation: 8,
-      },
-    }),
-  },
-  skeleton: {
-    borderRadius: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-  },
-  curveContainer: {
-    gap: 6,
-    width: '100%',
-    // ...makeDebugBorder('green')
-  },
-  curveInnerLine: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    // ...makeDebugBorder('yellow')
-  },
-  arrow: {
-    width: 26,
-    height: 26,
-    borderRadius: 30,
-  },
-  changePercent: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '500',
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  netWorth: {
-    fontSize: 42,
-    lineHeight: 46,
-    fontWeight: '900',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  changeSection: {
-    flexDirection: 'row',
-    gap: 2,
-    marginTop: 4,
-    alignItems: 'center',
-  },
-  changeTime: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    marginLeft: 4,
-  },
-  globalWarning: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    // marginBottom: -16,
-  },
+      }),
+    },
+    skeleton: {
+      borderRadius: 8,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+    },
+    curveContainer: {
+      gap: 6,
+      width: '100%',
+      // ...makeDebugBorder('green')
+    },
+    curveInnerLine: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+      // ...makeDebugBorder('yellow')
+    },
+    arrow: {
+      width: 26,
+      height: 26,
+      borderRadius: 30,
+    },
+    changePercent: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      color: colors2024['neutral-body'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    netWorth: {
+      fontSize: 42,
+      lineHeight: 46,
+      fontWeight: '900',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    changeSection: {
+      flexDirection: 'row',
+      gap: 2,
+      marginTop: 4,
+      alignItems: 'center',
+    },
+    changeTime: {
+      fontSize: 16,
+      fontWeight: '400',
+      lineHeight: 20,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      marginLeft: 4,
+    },
+    globalWarning: {
+      marginHorizontal: 16,
+      marginTop: 16,
+      // marginBottom: -16,
+    },
 
-  accountList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-    width: '100%',
-    marginTop: 28,
-    paddingHorizontal: 14,
-  },
+    accountList: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+      width: '100%',
+      marginTop: 28,
+      paddingHorizontal: 14,
+    },
 
-  balanceOpacity: {
-    opacity: 0.2,
-  },
-  addressOpacity: {
-    opacity: 0.3,
-  },
-  hidden: {
-    display: 'none',
-  },
-}));
+    balanceOpacity: {
+      opacity: 0.2,
+    },
+    addressOpacity: {
+      opacity: 0.3,
+    },
+    hidden: {
+      display: 'none',
+    },
+  };
+});

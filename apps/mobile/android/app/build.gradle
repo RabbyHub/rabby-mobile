@@ -94,9 +94,14 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100153
-        versionName "0.6.45"
+        versionCode 100156
+        versionName "0.6.46"
         missingDimensionStrategy "store", "play"
+        externalNativeBuild {
+          cmake {
+            arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+          }
+        }
     }
     splits {
         abi {
@@ -181,6 +186,7 @@ android {
     }
     // packagingOptions {
     //   jniLibs {
+    //     useLegacyPackaging true
     //     pickFirsts += [
     //       'lib/**/libssl.so',
     //       'lib/**/libcrypto.so'
@@ -214,6 +220,6 @@ dependencies {
     implementation project(':react-native-splash-screen')
     // implementation project(':isudaji_react-native-install-apk')
 
-    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.10'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.29'
     implementation 'com.android.billingclient:billing:7.0.0'
 }

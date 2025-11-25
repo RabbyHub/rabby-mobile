@@ -63,7 +63,10 @@ import {
 } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
-import { isAccountSupportMiniApproval } from '@/utils/account';
+import {
+  isAccountSupportMiniApproval,
+  makeAccountObject,
+} from '@/utils/account';
 import { usePollSendPendingCount } from './useSendPendingCount';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { useMemoizedFn } from 'ahooks';
@@ -394,11 +397,13 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
  */
 export function useSendTokenForm({
   toAddress,
+  toAddressBrandName,
   isForMultipleAddress = false,
   disableItemCheck,
   currentAccount,
 }: {
   toAddress?: string;
+  toAddressBrandName?: string;
   isForMultipleAddress: boolean;
   disableItemCheck?: ITokenCheck;
   currentAccount: Account;
@@ -693,7 +698,13 @@ export function useSendTokenForm({
       } else {
         putScreenState({ balanceError: null });
       }
-      if (coerceNumber(resultAmount) === 0) resultAmount = '';
+
+      if (
+        changedValues?.amount === undefined &&
+        coerceNumber(resultAmount) === 0
+      ) {
+        resultAmount = '';
+      }
 
       const nextFormValues = {
         ...currentValues,
@@ -1667,7 +1678,11 @@ export function useSendTokenForm({
   const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
   const { list: cexList } = useCexSupportList();
 
-  const { whitelist, enable: whitelistEnabled } = useWhitelist();
+  const {
+    whitelist,
+    enabled: whitelistEnabled,
+    findAccountWithoutBalance,
+  } = useWhiteListAddress();
   const { recentHistory: recentSendToHistory, reFetch } =
     useRecentSendToHistoryFor(formValues.to);
 
@@ -1686,20 +1701,41 @@ export function useSendTokenForm({
     };
   }, [reFetch]);
 
+  const foundToAccountInfo = useMemo(() => {
+    return findAccountWithoutBalance(formValues.to, {
+      brandName: toAddressBrandName,
+    });
+  }, [formValues.to, toAddressBrandName, findAccountWithoutBalance]);
   const toAddressIsRecentlySend = recentSendToHistory.length > 0;
-
+  const toAccount = useMemo(() => {
+    return (
+      foundToAccountInfo?.account ||
+      makeAccountObject({
+        address: formValues.to,
+        brandName: toAddressBrandName,
+      })
+    );
+  }, [foundToAccountInfo?.account, formValues.to, toAddressBrandName]);
   const computed = useMemo(() => {
     const toAddressInWhitelist = !!whitelist.find(item =>
       addressUtils.isSameAddress(item, formValues.to),
     );
+    const toAddressPositiveTips = {
+      hasPositiveTips:
+        toAddressIsRecentlySend ||
+        toAddressInWhitelist ||
+        !!foundToAccountInfo?.isMyImported,
+      inWhitelist: toAddressInWhitelist,
+      isRecentlySend: toAddressIsRecentlySend,
+      isMyImported: foundToAccountInfo?.isMyImported,
+    };
     return {
-      toAddressIsValid: !!formValues.to && isValidAddress(formValues.to),
-      toAddressIsRecentlySend,
-      toAddressInWhitelist,
+      toAccount,
       toAddressIsCex:
         !!screenState.toAddrDesc?.cex?.id &&
         !!screenState.toAddrDesc?.cex?.is_deposit,
       toAddressInContactBook: isAddrOnContactBook(formValues.to),
+      toAddressPositiveTips: toAddressPositiveTips,
 
       toAddrCex: cexList.find(
         item => item.id === screenState.toAddrDesc?.cex?.id,
@@ -1718,7 +1754,9 @@ export function useSendTokenForm({
   }, [
     whitelist,
     formValues.to,
+    toAccount,
     toAddressIsRecentlySend,
+    foundToAccountInfo?.isMyImported,
     formValues.amount,
     cexList,
     isAddrOnContactBook,
@@ -1849,22 +1887,27 @@ export function useSendTokenFormik() {
 type FoundAccountResult = IExtractFromPromise<
   ReturnType<ReturnType<typeof useWhiteListAddress>['findAccount']>
 >;
-
+type ToAddressPositiveTips = {
+  hasPositiveTips: boolean;
+  inWhitelist: boolean;
+  isRecentlySend: boolean;
+  isMyImported?: boolean;
+};
 type InternalContext = {
   screenState: SendScreenState;
   formValues: FormSendToken;
   computed: {
+    fromAddress: string;
     chainItem: Chain | null;
     currentToken: TokenItem | null;
     currentTokenBalance: string;
     whitelistEnabled: boolean;
     canSubmit: boolean;
     canDirectSign: boolean;
-    toAddressIsRecentlySend: boolean;
-    toAddressInWhitelist: boolean;
+    toAccount: FoundAccountResult['account'] | null;
     toAddressIsCex: boolean;
-    toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
+    toAddressPositiveTips: ToAddressPositiveTips | null;
     toAddrCex: null | undefined | ProjectItem;
   };
 
@@ -1904,16 +1947,16 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   screenState: { ...DFLT_SEND_STATE },
   formValues: { ...DF_SEND_TOKEN_FORM },
   computed: {
+    fromAddress: '',
     chainItem: null,
     currentToken: null,
     currentTokenBalance: '',
     whitelistEnabled: false,
     canSubmit: false,
-    toAddressIsRecentlySend: false,
-    toAddressInWhitelist: false,
+    toAccount: null,
     toAddressIsCex: false,
-    toAddressIsValid: false,
     toAddressInContactBook: false,
+    toAddressPositiveTips: null,
     canDirectSign: false,
 
     toAddrCex: null,

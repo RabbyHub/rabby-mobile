@@ -31,6 +31,8 @@ import { ChainSelector } from './components/AssetRenderItems/SectionHeaders';
 import { useChainInfo } from './useChainInfo';
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { EndBg } from './components/BgComponents';
+import { useAtom } from 'jotai';
+import { foldChartAtom } from './Home';
 
 const ScreenWidth = Dimensions.get('window').width;
 export const icons = {
@@ -139,7 +141,7 @@ export const AssetContainer: React.FC<Props> = ({
   );
 
   const isDecrease = useCachedValue(curveData, 'isLoss');
-  const [fold, setFold] = useState(true);
+  const [fold, setFold] = useAtom(foldChartAtom);
   const handleRefresh = useCallback(
     async (ignoreLoading?: boolean) => {
       onRefresh?.();
@@ -172,6 +174,7 @@ export const AssetContainer: React.FC<Props> = ({
     isDisConnect,
     fold,
     reachTop,
+    setFold,
     handleRefresh,
   ]);
 

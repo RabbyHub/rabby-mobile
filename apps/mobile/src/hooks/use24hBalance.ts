@@ -8,6 +8,7 @@ import { formatSmallUsdValue } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
 import { formatUsdValue } from '@/utils/number';
+import { useCreationWithShallowCompare } from './common/useMemozied';
 
 const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
 
@@ -113,12 +114,16 @@ export const useMulti24hBalance = (
     [addresses, fetch],
   );
 
+  const stableAddresses = useCreationWithShallowCompare(
+    () => addresses,
+    [addresses],
+  );
   const combineData = useMemo(() => {
-    const list = addresses.map(address => {
+    const list = stableAddresses.map(address => {
       const data = multi24hBalance[address.toLowerCase()];
       return data?.data;
     });
-    const isAllGet = list.length === addresses.length;
+    const isAllGet = list.length === stableAddresses.length;
     const total24hBalance = list.reduce((res, item) => {
       return res + (item?.total_usd_value || 0);
     }, 0);
@@ -138,8 +143,7 @@ export const useMulti24hBalance = (
       isLoss: assetsChange < 0,
       isEmptyAssets: total24hBalance === 0 && totalEvmBalance === 0,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addresses.length, multi24hBalance, totalBalance, totalEvmBalance]);
+  }, [stableAddresses, multi24hBalance, totalBalance, totalEvmBalance]);
 
   useEffect(() => {
     if (disableAutoFetch || queue.size > 0) {

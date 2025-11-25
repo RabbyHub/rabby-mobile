@@ -635,10 +635,10 @@
       "GasSelector": {
         "level": {
           "$unknown": "Bilinmiyor",
-          "slow": "Normal",
+          "slow": "Yavaş",
           "custom": "Özel",
-          "fast": "Anında",
-          "normal": "Hızlı"
+          "fast": "Hızlı",
+          "normal": "Normal"
         },
         "confirm": "Onayla",
         "popupDesc": "Gaz ücreti, belirlediğiniz gaz fiyatına göre transfer tutarından ayrılacaktır."
@@ -721,7 +721,7 @@
         "scamAddress": "Alıcı adresi Rabby tarafından dolandırıcılık adresi olarak işaretlendi.",
         "contractAddress": "Alıcı adresi bir sözleşme adresidir, bu potansiyel olarak fon kaybına neden olabilir.",
         "cexNoDeposite": "Alıcı adresi bir CEX'ten gelen bir non-deposit adresidir. Lütfen depozit adresinizin doğru olduğundan emin olun.",
-        "noSend": "Bu adrese son 180 gündür fon göndermediniz. Devam etmek istediğinizi lütfen onaylayın."
+        "noSend": "Bu adrese 180 gündür gönderim yapmadınız."
       },
       "brandNameTail": "Adres",
       "sendTo": "Bu Adrese Gönder",
@@ -2065,7 +2065,7 @@
       "alert": "EIP-7702 henüz desteklenmiyor."
     },
     "syncExtension": {
-      "scanTips1": "Rabby Uzantısı'nda \"Rabby Mobile\"a tıklayın",
+      "scanTips1": "Rabby Uzantısı'nda \"Mobile Sync\"a tıklayın",
       "verifyWithPassword": "Rabby Uzantı Şifrenizle Doğrulayın",
       "syncingTips": "Tarayıcı tamamlanana kadar kamerayı sabit tutun.",
       "importedSuccessfully": "Başarıyla İçe Aktarıldı!",
@@ -2684,7 +2684,8 @@
       "hfTitle": "Sağlık Faktörü",
       "enterAmount": "Miktarı Girin",
       "isolated": "izole edilmiş",
-      "estNetApy": "Tahmini net APY"
+      "estNetApy": "Tahmini net APY",
+      "marketSlot": "{{market}} Pazar"
     }
   },
   "component": {
@@ -2848,11 +2849,11 @@
       }
     },
     "ReserveGasPopup": {
-      "instant": "Anında",
+      "instant": "Hızlı",
       "doNotReserve": "Gas'i ayırmayın",
-      "normal": "Normal",
+      "normal": "Yavaş",
       "title": "Gaz Ayırma",
-      "fast": "Hızlı"
+      "fast": "Normal"
     },
     "NoLongerSupports": {
       "button": "Tamam",

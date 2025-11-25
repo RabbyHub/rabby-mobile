@@ -37,15 +37,24 @@ const RcIconFingerprint = makeThemeIconFromCC(
 
 const RcIconPassword = makeThemeIconFromCC(RcIconPasswordCC, 'neutral-body');
 
-export const useSubmitAction = () => {
+export const useSubmitAction = ({
+  useLastUnlockedAuth = true,
+}: {
+  /**
+   * @description whether to use last unlock time to skip verification
+   * @default true
+   */
+  useLastUnlockedAuth?: boolean;
+} = {}) => {
   const { t } = useTranslation();
   const { computed: bioComputed } = useBiometrics();
   const { isUseCustomPwd } = usePasswordStatus();
 
   const [unlockTime, setUnlockTime] = useAtom(unlockTimeAtom);
 
-  const isLastUnlockTimeValid =
-    Date.now() - unlockTime < DEFAULT_VERIFY_INTERVAL;
+  const isInAuthSession = Date.now() - unlockTime < DEFAULT_VERIFY_INTERVAL;
+  const isLastUnlockTimeValid = !!useLastUnlockedAuth && isInAuthSession;
+
   const disabledVerify =
     isLastUnlockTimeValid ||
     (!isUseCustomPwd && !bioComputed.isBiometricsEnabled);

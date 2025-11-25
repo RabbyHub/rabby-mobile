@@ -91,10 +91,10 @@
       "screenHeaderSubTitle_one": "1 กระเป๋าเงิน"
     },
     "ReserveGasPopup": {
-      "fast": "รวดเร็ว",
+      "fast": "ปกติ",
       "title": "สำรอง Gas",
-      "instant": "ทันที",
-      "normal": "ปกติ",
+      "instant": "เร็ว",
+      "normal": "ช้า",
       "doNotReserve": "อย่าสำรอง Gas"
     },
     "signPermissionCheckModal": {
@@ -302,7 +302,7 @@
         "ReceivedGas": "ได้รับ Gas",
         "LendingBorrow": "ยืม",
         "LendingWithdraw": "ถอนเงิน",
-        "LendingSupply": "อุปทาน",
+        "LendingSupply": "ปล่อยกู้",
         "LendingRepay": "ชำระคืน"
       },
       "detail": {
@@ -482,10 +482,10 @@
       "GasSelector": {
         "confirm": "ยืนยัน",
         "level": {
-          "fast": "ทันที",
+          "fast": "รวดเร็ว",
           "$unknown": "Unknown",
-          "slow": "ปกติ",
-          "normal": "รวดเร็ว",
+          "slow": "ช้า",
+          "normal": "ปกติ",
           "custom": "ปรับแต่ง"
         },
         "popupDesc": "ค่าธรรมเนียม gas จะถูกหักออกจากจำนวนการโอนตามราคาค่า gas ที่คุณตั้งไว้"
@@ -2277,7 +2277,7 @@
         "scamAddress": "ที่อยู่ผู้รับเป็นที่อยู่หลอกลวงที่ถูก Rabby ทำเครื่องหมาย",
         "cexNoDeposite": "ที่อยู่ผู้รับเป็นที่อยู่นอกเหนือจาก CEX กรุณาตรวจสอบให้แน่ใจว่าที่อยู่ฝากเงินของคุณถูกต้อง",
         "contractAddress": "ที่อยู่ของผู้รับเป็นที่อยู่ของสัญญาซึ่งอาจทำให้สูญเสียเงินได้",
-        "noSend": "คุณไม่ได้ส่งเงินไปยังที่อยู่นี้ในช่วง 180 วันที่ผ่านมา กรุณายืนยันหากคุณต้องการดำเนินการต่อ"
+        "noSend": "คุณยังไม่ได้ส่งไปยังที่อยู่นี้ใน 180 วัน"
       },
       "brandNameTail": "ที่อยู่",
       "dexNameTail": "ที่อยู่ Deposit",
@@ -2317,7 +2317,7 @@
       "importedSuccessfully": "นำเข้าเรียบร้อยแล้ว!",
       "newUserVerify": "มันยังใช้เป็นรหัสผ่านเริ่มต้นสำหรับ Rabby Mobile ของคุณ",
       "syncingProgress": "กำลังสแกน ({{ percent }})",
-      "scanTips1": "คลิก “Rabby Mobile” บน Rabby Extension",
+      "scanTips1": "คลิก “Mobile Sync” บน Rabby Extension",
       "verifyWithPassword": "ยืนยันด้วยรหัสผ่าน Rabby Extension ของคุณ",
       "noNewAddr": "ไม่พบที่อยู่ใหม่สำหรับนำเข้า",
       "scanTips2": "สแกนโค้ดและเริ่มการซิงค์",
@@ -2832,7 +2832,7 @@
         "headers": {
           "myBorrows": "การยืมของฉัน",
           "apy": "APY",
-          "mySupplies": "วัสดุของฉัน",
+          "mySupplies": "ปล่อยกู้ของฉัน",
           "token": "โทเค็น",
           "token_balance": "Token/Balance",
           "token_tvl": "โทเค็น/TVL"
@@ -2857,7 +2857,7 @@
       },
       "supplyDetail": {
         "supplyAPY": "อัตราดอกเบี้ย APY",
-        "actions": "อุปทาน",
+        "actions": "ปล่อยกู้",
         "approveAndSupply": "อนุมัติและจัดหา",
         "availableToBorrow": "สามารถยืมได้"
       },
@@ -2921,6 +2921,7 @@
       },
       "gotIt": "ได้เลย",
       "market": "ตลาด",
+      "marketSlot": "ตลาด {{market}}",
       "submitted": "ส่งแล้ว",
       "selectChain": "เลือกเครือข่าย",
       "borrowed": "ยืม",
