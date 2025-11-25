@@ -63,10 +63,12 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
 
   const portfolios = useMemo(
     () =>
-      _rawPortfolios.filter(item =>
-        chain && item?.chain ? item.chain === chain : true,
-      ),
-    [_rawPortfolios, chain],
+      !isFocusing
+        ? []
+        : _rawPortfolios.filter(item =>
+            chain && item?.chain ? item.chain === chain : true,
+          ),
+    [_rawPortfolios, chain, isFocusing],
   );
 
   const {
@@ -82,14 +84,12 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     }> = [
       {
         show: true,
-        data: !isFocusing
-          ? []
-          : [
-              ...portfoliosData.map(item => ({
-                type: 'unfold_defi' as const,
-                data: item as unknown as DisplayedProject,
-              })),
-            ],
+        data: [
+          ...portfoliosData.map(item => ({
+            type: 'unfold_defi' as const,
+            data: item as unknown as DisplayedProject,
+          })),
+        ],
       },
       {
         show: !!isLoading && !portfolios.length,
@@ -114,7 +114,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [isFocusing, isLoading, t, portfoliosData, portfolios.length]);
+  }, [isLoading, t, portfoliosData, portfolios.length]);
 
   const hasNotAssets = useMemo(() => {
     return portfolios.length === 0 && !isLoading && isFocused;

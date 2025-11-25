@@ -121,13 +121,11 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     }> = [
       {
         show: true,
-        data: !isFocusing ? [] : [...unFoldNftList],
+        data: [...unFoldNftList],
       },
       {
         show: !!foldNftList.length,
-        data: !isFocusing
-          ? []
-          : [{ type: 'toggle_nft_fold' }, ...(foldNft ? [] : foldNftList)],
+        data: [{ type: 'toggle_nft_fold' }, ...(foldNft ? [] : foldNftList)],
       },
       {
         show: !!isLoading && !nftList.length,
@@ -152,15 +150,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [
-    isFocusing,
-    foldNft,
-    foldNftList,
-    isLoading,
-    nftList.length,
-    t,
-    unFoldNftList,
-  ]);
+  }, [foldNft, foldNftList, isLoading, nftList.length, t, unFoldNftList]);
 
   const hasNotAssets = useMemo(() => {
     return nftList.length === 0 && !isLoading && isFocused;
