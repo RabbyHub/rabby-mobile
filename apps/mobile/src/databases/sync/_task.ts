@@ -155,25 +155,28 @@ export async function batchSaveWithPQueueAndTransaction<
         };
 
         try {
-          // await repo.manager.transaction(async transactionalEntityManager => {
-          //   await Promise.all(batch.map(async item => {
-          //     // const modal = await transactionalEntityManager.findOne(entityCls, { where: { _db_id: item._db_id } });
-          //     // if (!modal) {
-          //     //   await transactionalEntityManager.save(item);
-          //     //   // printLog && console.debug(`${loggerPrefix} inserted ${item._db_id}`);
-          //     // } else {
-          //     //   await transactionalEntityManager.update(entityCls, { _db_id: item._db_id }, item);
-          //     //   // printLog && console.debug(`${loggerPrefix} updated ${item._db_id}`);
-          //     // }
-          //   }))
-          //     .then(() => {
-          //       printLog && console.debug(`${loggerPrefix}Batch ${roundPercent} upsertion successfully.`);
-          //     })
-          //     .catch(error => {
-          //       printLog && console.error(`${loggerPrefix}Batch ${roundPercent} upsertion failed.`);
-          //       throw error
-          //     });
-          // });
+          await repo.manager.transaction(async transactionalEntityManager => {
+            await transactionalEntityManager
+              .upsert(
+                entityCls,
+                // @ts-expect-error
+                batch,
+                { conflictPaths: ['_db_id'] },
+              )
+              .then(() => {
+                printLog &&
+                  console.debug(
+                    `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
+                  );
+              })
+              .catch(error => {
+                printLog &&
+                  console.error(
+                    `${loggerPrefix}Batch ${roundPercent} upsertion failed.`,
+                  );
+                throw error;
+              });
+          });
           // await repo.manager.upsert(
           //   entityCls,
           //   // @ts-expect-error
@@ -181,12 +184,12 @@ export async function batchSaveWithPQueueAndTransaction<
           //   // bar
           //   { conflictPaths: ['_db_id'] },
           // );
-          await runSqliteSyncWorklet(
-            async (entityCls: any, batch: any, options: any) => {
-              'worklet';
-              return await repo.manager.upsert(entityCls, batch, options);
-            },
-          )(entityCls, batch, { conflictPaths: ['_db_id'] });
+          // await runSqliteSyncWorklet(
+          //   async (entityCls: any, batch: any, options: any) => {
+          //     'worklet';
+          //     return await repo.manager.upsert(entityCls, batch, options);
+          //   },
+          // )(entityCls, batch, { conflictPaths: ['_db_id'] });
           printLog &&
             console.debug(
               `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
