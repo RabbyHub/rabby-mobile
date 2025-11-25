@@ -2595,6 +2595,8 @@
       "estDailyEarning": "Est.Daily Earning",
       "estNetApy": "Est. net APY",
       "selectChain": "Select Chain",
+      "selectMarket": "Select Market",
+      "searchMarket": "Search Market",
       "hf": "Health factor",
       "hfTitle": "Health Factor",
       "enterAmount": "Enter Amount",

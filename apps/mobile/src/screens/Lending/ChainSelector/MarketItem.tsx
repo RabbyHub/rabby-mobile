@@ -6,27 +6,27 @@ import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { RPCStatusBadge } from '@/components/Chain/RPCStatusBadge';
 import { useFindChain } from '@/hooks/useFindChain';
-import { CHAINS_ENUM } from '@debank/common';
+import { CustomMarket, getMarketLogo, MarketDataType } from '../config/market';
 
-interface ChainItem {
+interface MarketItem {
   chain: string;
 }
-export default function ChainItem({
+export default function MarketItem({
   data,
   value,
   style,
   onPress,
 }: RNViewProps & {
-  data: ChainItem;
-  value?: CHAINS_ENUM;
-  onPress?(value: CHAINS_ENUM): void;
+  data: MarketDataType;
+  value?: CustomMarket;
+  onPress?(value: CustomMarket): void;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const isDark = useGetBinaryMode() === 'dark';
   const chainItem = useFindChain({
-    enum: data.chain as CHAINS_ENUM,
+    id: data.chainId,
   });
-  const isSelected = value && value === data?.chain;
+  const isSelected = value && value === data?.market;
   return (
     <TouchableView
       style={[
@@ -40,7 +40,7 @@ export default function ChainItem({
         style,
       ]}
       onPress={() => {
-        onPress?.(data?.chain as CHAINS_ENUM);
+        onPress?.(data?.market);
       }}>
       <RPCStatusBadge
         size={styles.logo.width}
@@ -49,7 +49,7 @@ export default function ChainItem({
         badgeSize={9}>
         <Image
           source={{
-            uri: chainItem?.logo,
+            uri: getMarketLogo(data?.market)?.uri || chainItem?.logo,
           }}
           style={styles.logo}
         />
@@ -57,7 +57,7 @@ export default function ChainItem({
 
       <View style={styles.contentContainer}>
         <View style={styles.leftBasic}>
-          <Text style={styles.nameText}>{chainItem?.name}</Text>
+          <Text style={styles.nameText}>{data?.marketTitle}</Text>
         </View>
         <View style={styles.rightArea}>
           {isSelected ? <RcIconChecked /> : null}

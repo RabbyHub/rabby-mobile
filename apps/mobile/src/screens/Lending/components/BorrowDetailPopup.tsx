@@ -17,7 +17,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import TokenIcon from './TokenIcon';
-import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -25,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { getHealthFactorText } from './HealthFactorText';
 import { formatNetworth } from '@/utils/math';
 import { formatApy } from '../utils/format';
+import { useSelectedMarket } from '../hooks';
 
 export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -32,7 +32,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   onClose,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { lastSelectedChain } = useLendingService();
+  const { chainEnum } = useSelectedMarket();
   const { t } = useTranslation();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -178,7 +178,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
           <View style={styles.tokenInfos}>
             <TokenIcon
               size={30}
-              chain={lastSelectedChain}
+              chain={chainEnum}
               chainSize={14}
               tokenSymbol={reserve.reserve.symbol}
             />

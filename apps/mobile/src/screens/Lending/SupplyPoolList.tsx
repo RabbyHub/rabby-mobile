@@ -16,17 +16,17 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useLendingData, useLendingSummary } from './hooks';
+import { useLendingData, useLendingSummary, useSelectedMarket } from './hooks';
 import TokenIcon from './components/TokenIcon';
-import { CHAINS_ENUM } from '@debank/common';
 import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
 import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import IconSwitchCC from '@/assets2024/icons/lending/switch-cc.svg';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import BigNumber from 'bignumber.js';
+//import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { formatApy, formatListNetWorth } from './utils/format';
+import { CHAINS_ENUM } from '@debank/common';
 
 const FOOT_HEIGHT = 100;
 const SupplyPoolList = () => {
@@ -36,6 +36,7 @@ const SupplyPoolList = () => {
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
   const [toggleBalanceOrTVl, setToggleBalanceOrTVl] = useState(true); // default balance
+  const { chainEnum } = useSelectedMarket();
 
   const sortReserves = useMemo(() => {
     return displayPoolReserves
@@ -43,16 +44,16 @@ const SupplyPoolList = () => {
         if (item.underlyingBalance && item.underlyingBalance !== '0') {
           return true;
         }
-        if (
-          BigNumber(item.reserve.totalLiquidity).gte(item.reserve.supplyCap)
-        ) {
-          return false;
-        }
+        //if (
+        //  BigNumber(item.reserve.totalLiquidity).gte(item.reserve.supplyCap)
+        //) {
+        //  return false;
+        //}
         const reserve = reserves?.reservesData?.find(x =>
           isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
         );
         if (
-          reserve?.usageAsCollateralEnabled === false ||
+          //reserve?.usageAsCollateralEnabled === false ||
           reserve?.isActive === false ||
           reserve?.isFrozen ||
           reserve?.isPaused
@@ -159,7 +160,7 @@ const SupplyPoolList = () => {
             <TokenIcon
               tokenSymbol={item.reserve.symbol}
               chainSize={0}
-              chain={CHAINS_ENUM.ETH}
+              chain={chainEnum || CHAINS_ENUM.ETH}
             />
             <View style={styles.symbolContainer}>
               <Text
@@ -201,23 +202,7 @@ const SupplyPoolList = () => {
         </TouchableOpacity>
       );
     },
-    [
-      colors2024,
-      handlePressItem,
-      styles.apy,
-      styles.item,
-      styles.left,
-      styles.right,
-      styles.symbol,
-      styles.symbolContainer,
-      styles.tvl,
-      styles.walletIcon,
-      styles.yourBalance,
-      styles.yourBalanceContainer,
-      styles.yourSupplied,
-      t,
-      toggleBalanceOrTVl,
-    ],
+    [chainEnum, colors2024, handlePressItem, styles, t, toggleBalanceOrTVl],
   );
 
   const renderFooterComponent = useCallback(() => {

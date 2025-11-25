@@ -6,15 +6,17 @@ import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
-import { CHAINS_ENUM } from '@debank/common';
-import { useLendingSummary } from '../../hooks';
+import {
+  useLendingSummary,
+  usePoolDataProviderContract,
+  useSelectedMarket,
+} from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { buildRepayTx } from '../../poolService';
+import { buildRepayTx, optimizedPath } from '../../poolService';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { findChain } from '@/utils/chain';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
@@ -23,7 +25,6 @@ import RepayActionOverView from './RepayActionOverView';
 import { parseUnits } from 'viem';
 import { calculateHFAfterRepay } from '../../utils/hfUtils';
 import { getERC20Allowance } from '@/core/apis/provider';
-import { CustomMarket, marketsData } from '../../config/market';
 import { approveToken } from '@/core/apis/approvals';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -43,6 +44,7 @@ import {
   MINI_SIGN_ERROR,
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { CHAINS_ENUM } from '@debank/common';
 
 export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -89,6 +91,9 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     forScene: 'Lending',
   });
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
+    useSelectedMarket();
+  const { pools } = usePoolDataProviderContract();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
@@ -117,9 +122,10 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       setNeedApprove(false);
       return;
     }
-
+    if (!selectedMarketData) {
+      return;
+    }
     try {
-      const chainInfo = findChain({ serverId: 'eth' });
       if (!chainInfo) {
         return;
       }
@@ -136,7 +142,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       const allowance = await getERC20Allowance(
         chainInfo.serverId,
         reserve.underlyingAsset,
-        marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+        selectedMarketData.addresses.LENDING_POOL,
         currentAccount.address,
         currentAccount,
       );
@@ -155,9 +161,11 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     }
   }, [
     amount,
+    currentAccount,
+    selectedMarketData,
+    chainInfo,
     reserve.underlyingAsset,
     reserve.reserve.decimals,
-    currentAccount,
   ]);
 
   const buildTransactions = useCallback(async () => {
@@ -166,10 +174,11 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       setApproveTxs(null);
       return;
     }
-
+    if (!selectedMarketData || !pools) {
+      return;
+    }
     try {
       setIsLoading(true);
-      const chainInfo = findChain({ serverId: 'eth' });
       if (!chainInfo) {
         return;
       }
@@ -188,7 +197,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         allowance = await getERC20Allowance(
           chainInfo.serverId,
           reserve.underlyingAsset,
-          marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          selectedMarketData.addresses.LENDING_POOL,
           currentAccount.address,
           currentAccount,
         );
@@ -211,7 +220,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         // 检查是否需要两步approve（针对以太坊上的USDT）
         let shouldTwoStepApprove = false;
         if (
-          chainInfo?.enum === CHAINS_ENUM.ETH &&
+          isMainnet &&
           isSameAddress(reserve.underlyingAsset, ETH_USDT_CONTRACT) &&
           Number(allowance) !== 0 &&
           !new BigNumber(allowance || '0').gte(requiredAmount)
@@ -224,8 +233,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           const zeroApproveResult = await approveToken({
             chainServerId: chainInfo.serverId,
             id: reserve.underlyingAsset,
-            spender:
-              marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+            spender: selectedMarketData.addresses.LENDING_POOL,
             amount: 0,
             account: currentAccount,
             isBuild: true,
@@ -245,8 +253,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         const approveResult = await approveToken({
           chainServerId: chainInfo.serverId,
           id: reserve.underlyingAsset,
-          spender:
-            marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          spender: selectedMarketData.addresses.LENDING_POOL,
           amount: requiredAmount,
           account: currentAccount,
           isBuild: true,
@@ -267,12 +274,14 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
       const repayResult = await buildRepayTx({
+        poolBundle: pools.poolBundle,
         amount:
           _amount === '-1'
             ? '-1'
             : parseUnits(amount, targetPool.decimals).toString(),
         address: currentAccount.address,
         reserve: reserve.underlyingAsset,
+        useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
       });
       delete repayResult.gasLimit;
 
@@ -288,10 +297,14 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   }, [
     _amount,
     amount,
+    chainInfo,
     currentAccount,
     formattedPoolReservesAndIncentives,
+    isMainnet,
+    pools,
     reserve.reserve.decimals,
     reserve.underlyingAsset,
+    selectedMarketData,
   ]);
 
   const txsForMiniApproval: Tx[] = useMemo(() => {
@@ -487,7 +500,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
         )}
         style={styles.amountInput}
-        chain={CHAINS_ENUM.ETH}
+        chain={chainEnum || CHAINS_ENUM.ETH}
       />
       <BottomSheetScrollView
         style={styles.bottomSheetScrollView}
@@ -507,7 +520,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
               supportDirectSign={true}
               loading={isLoading}
               openShowMore={noop}
-              chainServeId="eth"
+              chainServeId={chainInfo?.serverId || ''}
             />
           </View>
         )}
