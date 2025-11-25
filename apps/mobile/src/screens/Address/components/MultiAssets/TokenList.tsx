@@ -95,44 +95,50 @@ export const TokenList = ({ chain, updateToken }: Props) => {
   }, [_rawTokens?.length, isLoading, updateToken]);
 
   const tokenLists = useMemo(() => {
-    const unFoldList: ActionItem[] = tokens
-      .filter(i => !i._isFold)
-      .map(item => ({
-        type: 'unfold_token',
-        data: item,
-      }));
+    const unFoldList: ActionItem[] = !isFocusing
+      ? []
+      : tokens
+          .filter(i => !i._isFold)
+          .map(item => ({
+            type: 'unfold_token',
+            data: item,
+          }));
 
-    const foldAndIncludeBalanceTokenList: ActionItem[] = tokens
-      .filter(
-        i =>
-          !isScamHidenToken(i) &&
-          i._isFold &&
-          !i._isExcludeBalance &&
-          i._realUsdValue > 0,
-      )
-      .map(item => ({
-        type: 'fold_token',
-        data: item,
-      }));
+    const foldAndIncludeBalanceTokenList: ActionItem[] = !isFocusing
+      ? []
+      : tokens
+          .filter(
+            i =>
+              !isScamHidenToken(i) &&
+              i._isFold &&
+              !i._isExcludeBalance &&
+              i._realUsdValue > 0,
+          )
+          .map(item => ({
+            type: 'fold_token',
+            data: item,
+          }));
 
-    const foldAndExcludeBalanceTokenList: ActionItem[] = tokens
-      .filter(
-        i =>
-          !isScamHidenToken(i) &&
-          i._isFold &&
-          (i._isExcludeBalance || i._realUsdValue === 0),
-      )
-      .map(item => ({
-        type: 'fold_token',
-        data: item,
-      }));
+    const foldAndExcludeBalanceTokenList: ActionItem[] = !isFocusing
+      ? []
+      : tokens
+          .filter(
+            i =>
+              !isScamHidenToken(i) &&
+              i._isFold &&
+              (i._isExcludeBalance || i._realUsdValue === 0),
+          )
+          .map(item => ({
+            type: 'fold_token',
+            data: item,
+          }));
 
-    const scamTokens: ActionItem[] = tokens
-      .filter(isScamHidenToken)
-      .map(item => ({
-        type: 'fold_token',
-        data: item,
-      }));
+    const scamTokens: ActionItem[] = !isFocusing
+      ? []
+      : tokens.filter(isScamHidenToken).map(item => ({
+          type: 'fold_token',
+          data: item,
+        }));
 
     return {
       unFoldList,
@@ -140,7 +146,7 @@ export const TokenList = ({ chain, updateToken }: Props) => {
       foldAndExcludeBalanceTokenList,
       scamTokens,
     };
-  }, [tokens]);
+  }, [isFocusing, tokens]);
 
   const portfolioListData = useMemo(() => {
     const foldTokenList = [
@@ -402,9 +408,9 @@ export const TokenList = ({ chain, updateToken }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
-  if (!isFocusing) {
-    return null;
-  }
+  // if (!isFocusing) {
+  //   return null;
+  // }
 
   return (
     <Tabs.FlatList

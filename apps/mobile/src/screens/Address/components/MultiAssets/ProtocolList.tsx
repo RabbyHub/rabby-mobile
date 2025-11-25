@@ -82,12 +82,14 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     }> = [
       {
         show: true,
-        data: [
-          ...portfoliosData.map(item => ({
-            type: 'unfold_defi' as const,
-            data: item as unknown as DisplayedProject,
-          })),
-        ],
+        data: !isFocusing
+          ? []
+          : [
+              ...portfoliosData.map(item => ({
+                type: 'unfold_defi' as const,
+                data: item as unknown as DisplayedProject,
+              })),
+            ],
       },
       {
         show: !!isLoading && !portfolios.length,
@@ -112,7 +114,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [isLoading, t, portfoliosData, portfolios.length]);
+  }, [isFocusing, isLoading, t, portfoliosData, portfolios.length]);
 
   const hasNotAssets = useMemo(() => {
     return portfolios.length === 0 && !isLoading && isFocused;
@@ -178,9 +180,9 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
-  if (!isFocusing) {
-    return null;
-  }
+  // if (!isFocusing) {
+  //   return null;
+  // }
   return (
     <Tabs.FlatList
       keyExtractor={getItemId}

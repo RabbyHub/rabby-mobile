@@ -86,26 +86,32 @@ export const NFTList = ({ chain, updateNft }: Props) => {
   }, [_rawNftList?.length, isLoading, updateNft]);
 
   const nftList = useMemo(() => {
-    return _rawNftList?.filter(item =>
-      chain && item?.chain ? item.chain === chain : true,
-    );
-  }, [_rawNftList, chain]);
+    return !isFocusing
+      ? []
+      : _rawNftList?.filter(item =>
+          chain && item?.chain ? item.chain === chain : true,
+        );
+  }, [_rawNftList, chain, isFocusing]);
 
   const foldNftList: ActionItem[] = useMemo(
     () =>
-      collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
-        type: 'fold_nft',
-        data: item,
-      })),
-    [nftList],
+      !isFocusing
+        ? []
+        : collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
+            type: 'fold_nft',
+            data: item,
+          })),
+    [nftList, isFocusing],
   );
   const unFoldNftList: ActionItem[] = useMemo(
     () =>
-      collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
-        type: 'unfold_nft',
-        data: item,
-      })),
-    [nftList],
+      !isFocusing
+        ? []
+        : collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
+            type: 'unfold_nft',
+            data: item,
+          })),
+    [nftList, isFocusing],
   );
 
   const dataList = useMemo(() => {
@@ -115,11 +121,13 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     }> = [
       {
         show: true,
-        data: [...unFoldNftList],
+        data: !isFocusing ? [] : [...unFoldNftList],
       },
       {
         show: !!foldNftList.length,
-        data: [{ type: 'toggle_nft_fold' }, ...(foldNft ? [] : foldNftList)],
+        data: !isFocusing
+          ? []
+          : [{ type: 'toggle_nft_fold' }, ...(foldNft ? [] : foldNftList)],
       },
       {
         show: !!isLoading && !nftList.length,
@@ -144,7 +152,15 @@ export const NFTList = ({ chain, updateNft }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [foldNft, foldNftList, isLoading, nftList.length, t, unFoldNftList]);
+  }, [
+    isFocusing,
+    foldNft,
+    foldNftList,
+    isLoading,
+    nftList.length,
+    t,
+    unFoldNftList,
+  ]);
 
   const hasNotAssets = useMemo(() => {
     return nftList.length === 0 && !isLoading && isFocused;
@@ -333,9 +349,9 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
-  if (!isFocusing) {
-    return null;
-  }
+  // if (!isFocusing) {
+  //   return null;
+  // }
   return (
     <Tabs.FlatList
       keyExtractor={getItemId}
