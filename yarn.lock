@@ -8566,6 +8566,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@op-engineering/op-sqlite@npm:^15.1.1":
+  version: 15.1.1
+  resolution: "@op-engineering/op-sqlite@npm:15.1.1"
+  dependencies:
+    react-native-safe-area-context: ^5.6.2
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 93f0e42f0ac4e36958aa345374f581b05294244f7f9bdd675f47e57f9f03a192958953e32cbd524ce9f6def553cea3760a821eb604544e63de4f52d706fc491c
+  languageName: node
+  linkType: hard
+
 "@peculiar/asn1-schema@npm:^2.3.13":
   version: 2.3.15
   resolution: "@peculiar/asn1-schema@npm:2.3.15"
@@ -34471,6 +34483,7 @@ __metadata:
     "@notifee/react-native": ^7.8.0
     "@onekeyfe/hd-ble-sdk": 1.1.13
     "@onekeyfe/react-native-ble-utils": 0.1.4
+    "@op-engineering/op-sqlite": ^15.1.1
     "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-hd-keyring": 4.3.1
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
@@ -35656,6 +35669,16 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 7d7f9a8278048650fd207d436798bd062d6f78d771cb0665b92aef69dba870251339e6812e1d669fd1958345288bd0f9ac98fbfe353c13958d18b58dc946c341
+  languageName: node
+  linkType: hard
+
+"react-native-safe-area-context@npm:^5.6.2":
+  version: 5.6.2
+  resolution: "react-native-safe-area-context@npm:5.6.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 7b15cdd07df4f3650cf443fb322ee2d51b3ab45c652789cbea4cb48a8e6fd2b66e2be01e9f63e614ceaf28d9d228af681ca8857b2ed8dabe48f23964076d40c3
   languageName: node
   linkType: hard
 
