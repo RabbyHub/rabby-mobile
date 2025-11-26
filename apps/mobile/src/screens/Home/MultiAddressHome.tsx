@@ -337,8 +337,6 @@ function MultiAddressHome(): JSX.Element {
   useInitDetectDBAssets();
   useSetTotalBalanceText(combineData.netWorth);
 
-  const [hasOpenCopyTrading, setHasOpenCopyTrading] = useState(true);
-
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
 
   const { mockData } = useMockDataForHomeCenterArea();
@@ -452,12 +450,6 @@ function MultiAddressHome(): JSX.Element {
     }, [detectHasAccounts, fetchHistory]),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      const value = preferenceService.getHasOpenCopyTrading();
-      setHasOpenCopyTrading(value ?? true);
-    }, []),
-  );
   useFocusEffect(
     useCallback(() => {
       if (appState === 'active') {
@@ -651,13 +643,13 @@ function MultiAddressHome(): JSX.Element {
       if (el.key === MultiHomeFeatTitle.Watchlist) {
         return <WatchListBadge />;
       }
-      if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
-        return (
-          <RNTouchableOpacity onPress={showTipsDollarDialog}>
-            <IconDollar width={24} height={24} />
-          </RNTouchableOpacity>
-        );
-      }
+      // if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
+      //   return (
+      //     <RNTouchableOpacity onPress={showTipsDollarDialog}>
+      //       <IconDollar width={24} height={24} />
+      //     </RNTouchableOpacity>
+      //   );
+      // }
 
       if (el.key === MultiHomeFeatTitle.Perps) {
         return <PerpsPnl />;
@@ -699,12 +691,7 @@ function MultiAddressHome(): JSX.Element {
         </>
       );
     },
-    [
-      hasOpenCopyTrading,
-      pendingTxCount,
-      showTipsDollarDialog,
-      styles.badgeStyle,
-    ],
+    [pendingTxCount, styles.badgeStyle],
   );
 
   const { bottom } = useSafeAreaInsets();

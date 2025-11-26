@@ -12,7 +12,7 @@ export enum MultiHomeFeatTitle {
   Buy = 'Buy',
   Search = 'Search',
   Watchlist = 'Watchlist',
-  CopyTrading = 'Copy Trading',
+  // CopyTrading = 'Copy Trading',
   Perps = 'Perps',
   Lending = 'Lending',
   /** @deprecated */
