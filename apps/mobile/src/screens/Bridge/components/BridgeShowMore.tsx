@@ -21,7 +21,7 @@ import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { BridgeSlippage } from './BridgeSlippage';
+import { BridgeSlippage, useSlippageTooLowOrTooHigh } from './BridgeSlippage';
 import { tokenPriceImpact } from '../hooks/token';
 import { AppSwitch, AssetAvatar, Tip } from '@/components';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
@@ -43,6 +43,7 @@ import { GasLessNotEnough } from '@/components/Approval/components/FooterBar/Gas
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { GasAccountTips } from '@/components/Approval/components/FooterBar/GasLessComponents/GasAccountTips';
+import { useMemoizedFn } from 'ahooks';
 
 const RABBY_FEE = '0.25%';
 
@@ -75,6 +76,8 @@ const BridgeShowMore = ({
   openFeePopup,
   supportDirectSign,
   autoSuggestSlippage,
+  duration,
+  sourceAlwaysShow,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -96,6 +99,7 @@ const BridgeShowMore = ({
   setIsCustomSlippage: (boolean: boolean) => void;
   type: 'swap' | 'bridge';
   openFeePopup: () => void;
+  duration?: number;
   /**
    * for swap props
    */
@@ -107,6 +111,7 @@ const BridgeShowMore = ({
   recommendValue?: number;
   supportDirectSign: boolean;
   autoSuggestSlippage?: string;
+  sourceAlwaysShow?: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -138,9 +143,85 @@ const BridgeShowMore = ({
     [data?.showLoss, quoteLoading],
   );
 
+  const showSlippageWarning = useSlippageTooLowOrTooHigh({
+    type: type,
+    value: slippage,
+  });
+
+  const durationColor = useMemo(() => {
+    const mins = Math.ceil((duration || 0) / 60);
+    if (mins > 10) {
+      return colors2024['red-default'];
+    }
+    if (mins > 3) {
+      return colors2024['orange-default'];
+    }
+    return colors2024['brand-default'];
+  }, [colors2024, duration]);
+
+  const sourceContentRender = useMemoizedFn(() => (
+    <ListItem
+      name={
+        type === 'bridge'
+          ? t('page.bridge.showMore.source')
+          : t('page.swap.source')
+      }
+      style={styles.listItem}>
+      {quoteLoading ? (
+        <CustomSkeleton
+          style={{
+            width: 131,
+            height: 24,
+            borderRadius: 100,
+          }}
+        />
+      ) : (
+        <TouchableOpacity
+          onPress={openQuotesList}
+          style={styles.quoteContainer}>
+          {isBestQuote && (
+            <View style={styles.bestView}>
+              <Text style={styles.bestText}>{t('page.swap.best')}</Text>
+            </View>
+          )}
+          {sourceLogo && (
+            <Image
+              source={
+                typeof sourceLogo === 'string'
+                  ? { uri: sourceLogo }
+                  : sourceLogo
+              }
+              style={styles.sourceLogo}
+            />
+          )}
+          {sourceName && <Text style={styles.sourceName}>{sourceName}</Text>}
+          {duration ? (
+            <Text style={[styles.sourceName, { color: durationColor }]}>
+              {' · '}
+              {t('page.bridge.duration', {
+                duration: Math.ceil(duration / 60),
+              })}
+            </Text>
+          ) : null}
+          {sourceName || sourceLogo ? (
+            <RcIconBluePolygon
+              style={styles.arrowIcon}
+              color={colors2024['brand-default']}
+            />
+          ) : null}
+          {!sourceLogo && !sourceName ? (
+            <Text style={styles.noQuotePlaceholder}>-</Text>
+          ) : null}
+        </TouchableOpacity>
+      )}
+    </ListItem>
+  ));
+
   return (
     <View style={StyleSheet.flatten([styles.container])}>
-      <View style={{ marginBottom: 24, gap: 12 }}>
+      <View style={{ gap: 12 }}>
+        {sourceAlwaysShow && sourceContentRender()}
+
         {showLossInfo && (
           <View style={[styles.lossInfo, { marginBottom: 0 }]}>
             <View style={styles.flexRow}>
@@ -201,20 +282,22 @@ const BridgeShowMore = ({
           />
         ) : null}
 
-        <BridgeSlippage
-          autoSuggestSlippage={autoSuggestSlippage}
-          value={slippage}
-          displaySlippage={displaySlippage}
-          onChange={onSlippageChange}
-          autoSlippage={autoSlippage}
-          isCustomSlippage={isCustomSlippage}
-          setAutoSlippage={setAutoSlippage}
-          setIsCustomSlippage={setIsCustomSlippage}
-          type={type}
-          isWrapToken={isWrapToken}
-          recommendValue={recommendValue}
-          loading={quoteLoading}
-        />
+        {showSlippageWarning ? (
+          <BridgeSlippage
+            autoSuggestSlippage={autoSuggestSlippage}
+            value={slippage}
+            displaySlippage={displaySlippage}
+            onChange={onSlippageChange}
+            autoSlippage={autoSlippage}
+            isCustomSlippage={isCustomSlippage}
+            setAutoSlippage={setAutoSlippage}
+            setIsCustomSlippage={setIsCustomSlippage}
+            type={type}
+            isWrapToken={isWrapToken}
+            recommendValue={recommendValue}
+            loading={quoteLoading}
+          />
+        ) : null}
       </View>
 
       <View style={styles.header}>
@@ -236,55 +319,22 @@ const BridgeShowMore = ({
       </View>
 
       <View style={[styles.body, !open && { height: 0 }]}>
-        <ListItem
-          name={
-            type === 'bridge'
-              ? t('page.bridge.showMore.source')
-              : t('page.swap.source')
-          }
-          style={styles.listItem}>
-          {quoteLoading ? (
-            <CustomSkeleton
-              style={{
-                width: 131,
-                height: 24,
-                borderRadius: 100,
-              }}
-            />
-          ) : (
-            <TouchableOpacity
-              onPress={openQuotesList}
-              style={styles.quoteContainer}>
-              {isBestQuote && (
-                <View style={styles.bestView}>
-                  <Text style={styles.bestText}>{t('page.swap.best')}</Text>
-                </View>
-              )}
-              {sourceLogo && (
-                <Image
-                  source={
-                    typeof sourceLogo === 'string'
-                      ? { uri: sourceLogo }
-                      : sourceLogo
-                  }
-                  style={styles.sourceLogo}
-                />
-              )}
-              {sourceName && (
-                <Text style={styles.sourceName}>{sourceName}</Text>
-              )}
-              {sourceName || sourceLogo ? (
-                <RcIconBluePolygon
-                  style={styles.arrowIcon}
-                  color={colors2024['brand-default']}
-                />
-              ) : null}
-              {!sourceLogo && !sourceName ? (
-                <Text style={styles.noQuotePlaceholder}>-</Text>
-              ) : null}
-            </TouchableOpacity>
-          )}
-        </ListItem>
+        {!sourceAlwaysShow && sourceContentRender()}
+
+        <BridgeSlippage
+          autoSuggestSlippage={autoSuggestSlippage}
+          value={slippage}
+          displaySlippage={displaySlippage}
+          onChange={onSlippageChange}
+          autoSlippage={autoSlippage}
+          isCustomSlippage={isCustomSlippage}
+          setAutoSlippage={setAutoSlippage}
+          setIsCustomSlippage={setIsCustomSlippage}
+          type={type}
+          isWrapToken={isWrapToken}
+          recommendValue={recommendValue}
+          loading={quoteLoading}
+        />
 
         <ListItem name={t('page.swap.rabbyFee.title')}>
           <Pressable onPress={openFeePopup}>
@@ -297,7 +347,7 @@ const BridgeShowMore = ({
         </ListItem>
 
         {showMEVGuardedSwitch && (
-          <ListItem style={{ marginTop: 12 }} name={t('page.swap.preferMEV')}>
+          <ListItem name={t('page.swap.preferMEV')}>
             <AppSwitch
               value={originPreferMEVGuarded}
               onValueChange={switchPreferMEV}
@@ -840,7 +890,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     lineHeight: 20,
     color: colors2024['neutral-secondary'],
   },
-  body: { overflow: 'hidden' },
+  body: { overflow: 'hidden', gap: 12 },
   lossInfo: { marginBottom: 12, fontSize: 12, color: '#5B5B5B' },
   flexRow: { flexDirection: 'row', justifyContent: 'space-between' },
   lossAmount: {
@@ -878,7 +928,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     // borderRadius: 8,
     // overflow: 'hidden',
   },
-  listItem: { marginBottom: 12 },
+  listItem: {},
   listItemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',

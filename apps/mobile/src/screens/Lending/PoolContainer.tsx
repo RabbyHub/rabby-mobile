@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import EmptySummaryCard from './EmptySummaryCard';
 import SummaryCard from './SummaryCard';
 import { useLendingSummary } from './hooks';
-import { CHAINS_ENUM } from '@debank/common';
 import { ChainSelector } from './ChainSelector';
 import Animated, {
   Easing,
@@ -61,7 +60,6 @@ const PoolContainer = () => {
     ),
     [colors2024, t, styles.label],
   );
-  const [chainEnum, setChainEnum] = useState<CHAINS_ENUM>(CHAINS_ENUM.ETH);
 
   const { apyInfo, iUserSummary, loading } = useLendingSummary();
 
@@ -110,7 +108,7 @@ const PoolContainer = () => {
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
-        <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
+        <ChainSelector />
         <View style={styles.fadeWrapper}>
           <Animated.View style={primaryStyle}>
             {primaryIsEmpty ? (
@@ -145,7 +143,6 @@ const PoolContainer = () => {
     );
   }, [
     apyInfo?.netAPY,
-    chainEnum,
     iUserSummary?.healthFactor,
     iUserSummary?.netWorthUSD,
     iUserSummary?.totalBorrowsUSD,

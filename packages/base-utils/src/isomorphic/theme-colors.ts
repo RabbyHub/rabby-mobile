@@ -107,7 +107,7 @@ export const themeColorsNext2024 = {
 
     'green-default': 'rgba(88, 198, 105, 1)',
     'green-default-light': 'rgba(117, 212, 101, 0.70)',
-    'green-light-1': 'rgba(88, 198, 105, 0.8)',
+    'green-light-1': 'rgba(88, 198, 105, 0.14)',
     'green-light-2': 'rgba(88, 198, 105, 0.4)',
     'green-disable': 'rgba(88, 198, 105, 0.27)',
     'green-light-4': 'rgba(88, 198, 105, 0.14)',
@@ -157,14 +157,14 @@ export const themeColorsNext2024 = {
     'red-light-4': 'rgba(255, 115, 107, 0.85)',
 
     'orange-default': 'rgba(255, 159, 10, 1)',
-    'orange-light-1': 'rgba(255, 170, 39, 0.1)',
+    'orange-light-1': 'rgba(255, 159, 10, 0.1)',
     'orange-light-2': 'rgba(255, 159, 10, 0.44)',
     'orange-disable': 'rgba(255, 159, 10, 0.24)',
     'orange-light-4': 'rgba(255, 159, 10, 0.14)',
 
     'green-default': 'rgba(88, 198, 105, 1)',
     'green-default-light': 'rgba(117, 212, 101, 0.70)',
-    'green-light-1': 'rgba(88, 198, 105, 0.8)',
+    'green-light-1': 'rgba(88, 198, 105, 0.14)',
     'green-light-2': 'rgba(88, 198, 105, 0.4)',
     'green-disable': 'rgba(88, 198, 105, 0.27)',
     'green-light-4': 'rgba(88, 198, 105, 0.14)',
@@ -203,4 +203,3 @@ export type AppColorsVariants = (typeof ThemeColors)['light'];
 
 export const ThemeColors2024 = themeColorsNext2024;
 export type AppColors2024Variants = (typeof ThemeColors2024)['light'];
-
