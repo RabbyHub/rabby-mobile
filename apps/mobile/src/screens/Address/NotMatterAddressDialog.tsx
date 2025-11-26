@@ -1,15 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, SectionList, Text } from 'react-native';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import React, { useEffect, useMemo } from 'react';
+import { View, Text, Pressable } from 'react-native';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItemEntry } from './components/AddressItem';
-import { KeyringTypeName, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useSortAddressList } from './useSortAddressList';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
-import { Card } from '@/components2024/Card';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAccountInfo } from './components/MultiAssets/hooks';
 import { useTranslation } from 'react-i18next';
@@ -19,10 +14,11 @@ import { TouchableOpacity } from 'react-native';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { IS_IOS } from '@/core/native/utils';
-
+import ArrowLeftSVG from '@/components/AccountSelectModalTx/icons/nav-left-cc.svg';
 export const NotMatterAddressDialog: React.FC<{
-  onDone: () => void;
-}> = ({ onDone }) => {
+  onDone?: () => void;
+  onBack?: () => void;
+}> = ({ onDone, onBack }) => {
   const { notTop10Addresses, gnosisAccounts, watchAccounts, fetchAccounts } =
     useAccountInfo();
   const { bottom } = useSafeAreaInsets();
@@ -130,7 +126,7 @@ export const NotMatterAddressDialog: React.FC<{
     </View>
   );
 
-  const renderItem = ({ item, index }) => (
+  const renderItem = ({ item }) => (
     <View style={styles.itemGap}>
       <AddressItemEntry
         handleGoDetail={onDone}
@@ -144,6 +140,13 @@ export const NotMatterAddressDialog: React.FC<{
   return (
     <AutoLockView as="View" style={styles.container}>
       <View style={styles.listHeader}>
+        <Pressable onPress={onBack} style={styles.backButton}>
+          <ArrowLeftSVG
+            width={24}
+            height={24}
+            color={colors2024['neutral-title-1']}
+          />
+        </Pressable>
         <View style={styles.titleContainer}>
           <Text style={styles.listTitle}>
             {t('page.addressDetail.notMatterAddressDialog.title')}
@@ -169,10 +172,17 @@ export const NotMatterAddressDialog: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   container: {
     flex: 1,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+  },
+  backButton: {
+    position: 'absolute',
+    left: 20,
+    top: 0,
   },
   listContainer: {
     flex: 1,
@@ -186,6 +196,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 12,
   },
   listHeader: {
+    position: 'relative',
     marginBottom: 12,
     alignItems: 'center',
     justifyContent: 'center',

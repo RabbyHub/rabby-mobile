@@ -32,26 +32,45 @@ import { useCallback, useMemo } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { syncRemoteTokensAmount } from '@/databases/sync/assets';
+import { fetchAllAccounts } from '@/core/apis/account';
+import { sortAccountList } from '@/utils/sortAccountList';
 
 export const loadingAtom = atom(true);
 export const isFirstFetchAtom = atom(true);
 export const shortCacheAtom = atom(true);
+
+async function getTop10AccountsWithBalance() {
+  const accounts = await fetchAllAccounts();
+
+  const highlightedAddresses = preferenceService.getPinAddresses();
+
+  const sortedAccounts = sortAccountList(accounts, {
+    highlightedAddresses,
+  });
+
+  const top10Accounts = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
+
+  return {
+    sortedAccounts,
+    top10Accounts,
+  };
+}
+
 export const useAssets = ({
   hideCombined = false,
 }: {
   hideCombined?: boolean;
 } = {}) => {
   const [isLoading, setLoading] = useAtom(loadingAtom);
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const sortedAccounts = useSortAddressList(accounts);
+
   const [isFirstFetch, setIsFirstFetch] = useAtom(isFirstFetchAtom);
   const [shortCache, setShortCache] = useAtom(shortCacheAtom);
   const {
+    top10Addresses,
     tokens,
     portfolios,
     assetsMap,
+    nfts,
     setAssetsMap,
     updateNFTs,
     updatePortfolios,
@@ -143,16 +162,19 @@ export const useAssets = ({
   });
 
   const loadNFT = useMemoizedFn(async (address: string, force?: boolean) => {
+    if (!address) {
+      return;
+    }
     try {
-      const nfts = await syncNFTs(address, force, !force);
-      if (!nfts.length) {
+      const _nfts = await syncNFTs(address, force, !force);
+      if (!_nfts.length) {
         return;
       }
       const tokenSetting = await preferenceService.getUserTokenSettings();
 
       updateNFTs({
         address,
-        newNFTs: tagNfts(nfts, tokenSetting),
+        newNFTs: tagNfts(_nfts, tokenSetting),
       });
     } catch (e) {
       console.error('ServiceErrorType.NFT', e);
@@ -238,8 +260,8 @@ export const useAssets = ({
         setLoading(false);
         return;
       }
-      const assestGroup = _.groupBy(cachedTokens, 'owner_addr');
-      const formatAssetMap = _.mapValues(assestGroup, group => {
+      const assetGroup = _.groupBy(cachedTokens, 'owner_addr');
+      const formatAssetMap = _.mapValues(assetGroup, group => {
         const walletProject = new DisplayedProject({
           id: 'Wallet',
           name: 'Wallet',
@@ -300,15 +322,15 @@ export const useAssets = ({
       if (!addresses.length) {
         return;
       }
-      const cachedPortcols = await ProtocolItemEntity.batchMultAddressPortocols(
+      const cachedDeFis = await ProtocolItemEntity.batchMultAddressPortocols(
         addresses,
         options?.maxLength,
       );
-      if (!cachedPortcols) {
+      if (!cachedDeFis.length) {
         return;
       }
 
-      const protocolGroup = _.groupBy(cachedPortcols, 'owner_addr');
+      const protocolGroup = _.groupBy(cachedDeFis, 'owner_addr');
       const formatProtocolMap = _.mapValues(protocolGroup, group => {
         let projectDict: Record<string, DisplayedProject> | null = {};
         group.forEach(project => {
@@ -401,11 +423,8 @@ export const useAssets = ({
         ignoreLoading?: boolean;
       },
     ) => {
-      const top10Account = sortedAccounts
-        .slice(0, 10)
-        .filter(acc => acc.balance);
       const addresses = options?.realTimeAddresses || [
-        ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
+        ...new Set(top10Addresses),
       ];
       removeUnNeedAssets(addresses);
       const { disableToken, disableDefi, disableNFT } = options || {};
@@ -446,11 +465,8 @@ export const useAssets = ({
       maxNFTLength?: number;
     }) => {
       const { disableToken, disableDefi, disableNFT } = options || {};
-      const top10Account = sortedAccounts
-        .slice(0, 10)
-        .filter(acc => acc.balance);
       const addresses = options?.realTimeAddresses || [
-        ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
+        ...new Set(top10Addresses),
       ];
       removeUnNeedAssets(addresses);
       const isCurrentShortCacheFetch = !!(
@@ -559,6 +575,7 @@ export const useAssets = ({
   return {
     tokens,
     portfolios,
+    nfts,
     assetsMap,
     isLoading,
     getTokenCombined,

@@ -55,6 +55,7 @@ export function HomeScreenNavigator() {
           component={MultiAddressHome}
           options={{
             headerShown: false,
+            freezeOnBlur: true,
           }}
         />
 

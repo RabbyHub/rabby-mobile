@@ -6,7 +6,6 @@ import {
   CORE_KEYRING_TYPES,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
-import * as Sentry from '@sentry/react-native';
 
 import {
   contactService,
@@ -38,12 +37,9 @@ import { useHistoryTokenDict } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { balanceAtom } from './useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { fetchAllAccounts, KeyringAccountWithAlias } from '@/core/apis/account';
 
-export type KeyringAccountWithAlias = KeyringAccount & {
-  aliasName?: string;
-  balance?: number;
-  evmBalance?: number;
-};
+export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
 const accountsAtom = atom<KeyringAccountWithAlias[]>([]);
 
@@ -61,48 +57,6 @@ pinAddressesAtom.onMount = setAtom => {
   const addresses = preferenceService.getPinAddresses();
   setAtom(addresses);
 };
-
-/**
- * @description if new fetched accounts are same from the existing ones, return the existing ones
- * to keep same ref to avoid later re-renders on React Hooks
- */
-const existedAccountsRef = { current: [] as KeyringAccountWithAlias[] };
-async function fetchAllAccounts() {
-  let nextAccounts: KeyringAccountWithAlias[] = [];
-  try {
-    nextAccounts = await keyringService
-      .getAllVisibleAccountsArray()
-      .then(list => {
-        return list.map(account => {
-          const balance = preferenceService.getAddressBalance(account.address);
-          return {
-            ...account,
-            aliasName: '',
-            evmBalance: balance?.evm_usd_value || 0,
-            balance: balance?.total_usd_value || 0,
-          };
-        });
-      });
-
-    await Promise.allSettled(
-      nextAccounts.map(async (account, idx) => {
-        const aliasName = contactService.getAliasByAddress(account.address);
-        nextAccounts[idx] = {
-          ...account,
-          aliasName: aliasName?.alias || '',
-        };
-      }),
-    );
-  } catch (err) {
-    Sentry.captureException(err);
-  } finally {
-    if (!isEqual(existedAccountsRef.current, nextAccounts)) {
-      existedAccountsRef.current = nextAccounts;
-    }
-
-    return existedAccountsRef.current;
-  }
-}
 
 const fetchingAccountsAtom = atom(false);
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {

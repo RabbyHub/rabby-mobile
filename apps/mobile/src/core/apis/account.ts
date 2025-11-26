@@ -1,13 +1,17 @@
 import {
   DisplayKeyring,
   DisplayedKeyring,
+  KeyringAccount,
   KeyringIntf,
 } from '@rabby-wallet/keyring-utils';
 import { contactService, keyringService, preferenceService } from '../services';
 import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
+import * as Sentry from '@sentry/react-native';
+
 import { getAddressCacheBalance } from './balance';
 import { requestKeyring } from './keyring';
+import { isEqual } from 'lodash';
 
 function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
   if (keyring instanceof DisplayKeyring) {
@@ -89,4 +93,52 @@ export async function getAllAccountsToDisplay() {
   );
 
   return result;
+}
+
+export type KeyringAccountWithAlias = KeyringAccount & {
+  aliasName?: string;
+  balance?: number;
+  evmBalance?: number;
+};
+
+/**
+ * @description if new fetched accounts are same from the existing ones, return the existing ones
+ * to keep same ref to avoid later re-renders on React Hooks
+ */
+const existedAccountsRef = { current: [] as KeyringAccountWithAlias[] };
+export async function fetchAllAccounts() {
+  let nextAccounts: KeyringAccountWithAlias[] = [];
+  try {
+    nextAccounts = await keyringService
+      .getAllVisibleAccountsArray()
+      .then(list => {
+        return list.map(account => {
+          const balance = preferenceService.getAddressBalance(account.address);
+          return {
+            ...account,
+            aliasName: '',
+            evmBalance: balance?.evm_usd_value || 0,
+            balance: balance?.total_usd_value || 0,
+          };
+        });
+      });
+
+    await Promise.allSettled(
+      nextAccounts.map(async (account, idx) => {
+        const aliasName = contactService.getAliasByAddress(account.address);
+        nextAccounts[idx] = {
+          ...account,
+          aliasName: aliasName?.alias || '',
+        };
+      }),
+    );
+  } catch (err) {
+    Sentry.captureException(err);
+  } finally {
+    if (!isEqual(existedAccountsRef.current, nextAccounts)) {
+      existedAccountsRef.current = nextAccounts;
+    }
+
+    return existedAccountsRef.current;
+  }
 }

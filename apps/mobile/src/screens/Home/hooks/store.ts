@@ -1,11 +1,10 @@
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { atom, useAtom } from 'jotai';
 
 import { formatNetworth } from '@/utils/math';
 import {
   AbstractPortfolioToken,
-  ActionHeaderItem,
+  AbstractProject,
   DisplayNftItem,
 } from '../types';
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
@@ -23,11 +22,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 
 let top20TokensCache: CombineTokensItem[] = [];
 let top10PortfoliosCache: CombineDefiItem[] = [];
-
-type DisplayedProjectWithoutMethods = Omit<
-  DisplayedProject,
-  'setPortfolios' | 'patchHistory' | 'afterHistoryPatched' | 'patchPrice'
->;
+let top10NftsCache: CombineNFTItem[] = [];
 
 type OriginalCombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
@@ -42,34 +37,17 @@ export type CombineTokensItem = Omit<
   totalUsdValue: number;
 };
 
-type OriginalCombineDefiItem = DisplayedProjectWithoutMethods & {
+type OriginalCombineDefiItem = AbstractProject & {
   totalUsdValue: BigNumber;
   filterTokenDesc?: string;
   address: string;
 };
-export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'> & {
-  totalUsdValue: number;
-};
+export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'>;
 
-type OriginalCombineNFTItem = NFTItem & {
-  totalAmount: BigNumber;
-  fromAddress: Array<{
-    address: string;
-  }>;
+type OriginalCombineNFTItem = DisplayNftItem & {
+  address?: string;
 };
-export type CombineNFTItem = Omit<OriginalCombineNFTItem, 'totalAmount'> & {
-  totalAmount: number;
-};
-
-type ICombineItem = {
-  type: string;
-  data?:
-    | ActionHeaderItem
-    | OriginalCombineTokensItem
-    | OriginalCombineDefiItem
-    | AbstractPortfolioToken
-    | OriginalCombineNFTItem;
-};
+export type CombineNFTItem = OriginalCombineNFTItem;
 
 export interface IAssets {
   portfolios?: DisplayedProject[];
@@ -224,6 +202,39 @@ export const combinedProtocols = (
     }));
 };
 
+export const combinedNfts = (
+  assetsMap: {
+    [address: string]: IAssets;
+  },
+  top10Addresses: string[],
+): CombineNFTItem[] => {
+  const nfts: OriginalCombineNFTItem[] = [];
+  const lowerAddresses = new Set(
+    Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
+  );
+  Object.entries(assetsMap).forEach(([address, assets]) => {
+    if (
+      !lowerAddresses.has(address.toLowerCase()) ||
+      !top10Addresses.some(i => isSameAddress(i, address))
+    ) {
+      return;
+    }
+    lowerAddresses.delete(address.toLowerCase());
+    assets.nfts?.forEach(nft => {
+      const key = nft.id;
+      if (!key) {
+        return;
+      }
+      nfts.push({
+        ...nft,
+        address,
+      });
+    });
+  });
+
+  return nfts;
+};
+
 export const assetAtom = atom<{ [address: string]: IAssets }>({});
 
 export const useAssetsMap = ({
@@ -284,7 +295,7 @@ export const useAssetsMap = ({
     [setAssetsMap],
   );
   const updateNFTs = useCallback(
-    ({ address, newNFTs }: { address: string; newNFTs: NFTItem[] }) => {
+    ({ address, newNFTs }: { address: string; newNFTs: DisplayNftItem[] }) => {
       const lowerAddress = address.toLowerCase();
       setAssetsMap(pre => {
         const currentAssets = pre[lowerAddress] || {};
@@ -395,16 +406,27 @@ export const useAssetsMap = ({
     }
 
     const portfolios = combinedProtocols(assetsMap, top10Addresses);
-    top10PortfoliosCache = portfolios.slice(0, 10);
+    top10PortfoliosCache = portfolios.slice(0, 4);
     return portfolios;
   }, [assetsMap, hideCombined, top10Addresses]);
 
+  const memoNfts = useMemo(() => {
+    if (hideCombined) {
+      return top10NftsCache;
+    }
+    const nfts = combinedNfts(assetsMap, top10Addresses);
+    top10NftsCache = nfts?.filter(item => !item._isFold).slice(0, 20) || [];
+    return nfts;
+  }, [assetsMap, hideCombined, top10Addresses]);
+
   return {
+    top10Addresses,
     updateTokens,
     updatePortfolios,
     updateNFTs,
     tokens: memoTokens,
     portfolios: memoPortfolios,
+    nfts: memoNfts,
     assetsMap,
     getTokenCombined,
     setAssetsMap,

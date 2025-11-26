@@ -52,11 +52,13 @@ export const useLocalTokens = (userAddr: string | undefined) => {
 
 export const useTokens = (
   userAddr: string | undefined,
-  visible = true,
-  updateNonce = 0,
-  chainServerId?: string,
-  _force?: boolean,
+  options?: {
+    visible: boolean;
+    chainServerId?: string;
+    force?: boolean;
+  },
 ) => {
+  const { visible = true, chainServerId, force: _force } = options || {};
   const abortProcess = useRef<AbortController>();
   const [isLoading, setLoading] = useSafeState(true);
   const [mainnetTokens, setMainnetTokens] = useSafeState<
@@ -67,52 +69,12 @@ export const useTokens = (
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);
 
-  useEffect(() => {
-    if (updateNonce !== 0) {
-      loadProcess(_force);
-    }
-    return () => {
-      abortProcess.current?.abort();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updateNonce]);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    if (userAddr) {
-      timer = setTimeout(() => {
-        if (
-          visible &&
-          (!isSameAddress(userAddr, userAddrRef.current) ||
-            chainServerId !== chainIdRef.current)
-        ) {
-          abortProcess.current?.abort();
-          userAddrRef.current = userAddr;
-          chainIdRef.current = chainServerId;
-          loadProcess(_force);
-        }
-      });
-    }
-
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userAddr, visible, chainServerId]);
-
   const loadProcess = useCallback(
     async (force?: boolean) => {
       if (!userAddr) {
         return;
       }
       try {
-        const currentAbort = new AbortController();
-        abortProcess.current = currentAbort;
-
         let _data = produce(walletProject, draft => {
           draft.netWorth = 0;
           draft._netWorth = '$0';
@@ -129,6 +91,7 @@ export const useTokens = (
         const cachedTokens = force
           ? []
           : await TokenItemEntity.batchQueryTokens(userAddr);
+
         const tokenSettings =
           (await preferenceService.getUserTokenSettings()) || {};
         if (
@@ -171,8 +134,7 @@ export const useTokens = (
         });
 
         _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
-
-        setMainnetTokens([...filterDisplayToken(_tokens)]);
+        setMainnetTokens(filterDisplayToken(_tokens));
       } catch (error) {
       } finally {
         setLoading(false);
@@ -180,6 +142,31 @@ export const useTokens = (
     },
     [setLoading, setMainnetTokens, userAddr],
   );
+
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (userAddr) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        if (
+          visible &&
+          (!isSameAddress(userAddr, userAddrRef.current) ||
+            chainServerId !== chainIdRef.current)
+        ) {
+          abortProcess.current?.abort();
+          userAddrRef.current = userAddr;
+          chainIdRef.current = chainServerId;
+          loadProcess(_force);
+        }
+      });
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [userAddr, visible, chainServerId, loadProcess, _force]);
 
   const batchLocalData = useCallback(async () => {
     if (!userAddr) {
@@ -242,10 +229,12 @@ export const useTokens = (
           ctx.syncDetails.batchSize * ctx.syncDetails.round +
           ctx.syncDetails.count;
 
+        console.debug('[feat] I am here', ctx);
         if (
           currentUpdateCount >= ctx.syncDetails.total ||
           currentUpdateCount > (mainnetTokens?.length || 0)
         ) {
+          console.debug('[feat] I am here 2222', ctx);
           debounceUpdateTokens();
         }
       },
