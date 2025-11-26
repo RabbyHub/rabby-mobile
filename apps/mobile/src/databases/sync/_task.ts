@@ -92,30 +92,27 @@ export async function batchSaveWithPQueueAndTransaction<
   }));
 
   const repo = entityCls.getRepository();
-  const totalRound = Math.ceil(data.length / batchSize);
-
-  let waitAllTasksCreated = Promise.resolve();
   const totalLen = data.length;
+  const totalRound = Math.ceil(data.length / batchSize);
+  let waitAllTasksCreated = Promise.resolve();
 
-  // for (let dataIdx = 0; dataIdx < totalLen; dataIdx += batchSize) {
-  let batch: T[] = [];
-  while (data.length > 0) {
-    const dataIdx = totalLen - data.length;
-    //
-    // const batch = data.slice(dataIdx, dataIdx + batchSize);
+  const cursors = {
+    dataIdx: 0,
+  };
+  // for (let cursors.dataIdx = 0; cursors.dataIdx < totalLen; cursors.dataIdx += batchSize) {
+  // const curBatch = data.slice(cursors.dataIdx, cursors.dataIdx + batchSize);
+  while (cursors.dataIdx < totalLen && data.length) {
     // splice from data
-    batch = data.splice(0, batchSize);
+    const curBatch = data.splice(0, batchSize);
+    const curIndex = cursors.dataIdx;
 
     if (currentSignal.aborted) {
       printLog && console.warn(`${loggerPrefix}Batch upsertion was aborted.`);
       break;
     }
 
-    // groups.push(batch);
-
     waitAllTasksCreated = waitAllTasksCreated.then(async () => {
       await sleep(delayBetweenTasks);
-
       if (currentSignal.aborted) {
         printLog &&
           console.warn(
@@ -125,12 +122,8 @@ export async function batchSaveWithPQueueAndTransaction<
         return;
       }
 
-      // const gIndex = groupTotal - groups.length;
-      // const batch = groups.shift();
-      // if (!batch) return;
-
       thisTickUpsertQueue.add(async () => {
-        const round = Math.floor(dataIdx / batchSize);
+        const round = Math.floor(curIndex / batchSize);
         const roundText = `${round + 1}`;
         const roundPercent = `${roundText} / ${totalRound}`;
         printLog &&
@@ -144,7 +137,7 @@ export async function batchSaveWithPQueueAndTransaction<
           taskFor: taskFor || '@unknown',
           syncDetails: {
             // items: batch,
-            count: batch.length,
+            count: curBatch.length,
             total: totalLen,
             round: round,
             batchSize,
@@ -202,17 +195,17 @@ export async function batchSaveWithPQueueAndTransaction<
           await repo.manager.upsert(
             entityCls,
             // @ts-expect-error
-            batch,
+            curBatch,
             // bar
             { conflictPaths: ['_db_id'] },
           );
           // await runSqliteSyncWorklet(
-          //   async (entityCls: any, batch: any, options: any) => {
+          //   async (entityCls: any, curBatch: any, options: any) => {
           //     'worklet';
-          //     console.debug('_task::runSqliteSyncWorklet upsert::', entityCls, batch);
-          //     return repo.manager.upsert(entityCls, batch, options);
+          //     console.debug('_task::runSqliteSyncWorklet upsert::', entityCls, curBatch);
+          //     return repo.manager.upsert(entityCls, curBatch, options);
           //   },
-          // )(entityCls, JSON.parse(JSON.stringify(batch)), { conflictPaths: ['_db_id'] });
+          // )(entityCls, JSON.parse(JSON.stringify(curBatch)), { conflictPaths: ['_db_id'] });
           printLog &&
             console.debug(
               `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
@@ -220,9 +213,9 @@ export async function batchSaveWithPQueueAndTransaction<
 
           // const repo = entityCls.getRepository();
           // await repo.manager.transaction(async entityManager => {
-          //   console.debug('_task::transaction::upsert::', entityCls, batch);
+          //   console.debug('_task::transaction::upsert::', entityCls, curBatch);
           //   const tRepo = entityManager.getRepository(entityCls);
-          //   // await Promise.all(batch.map(item => {
+          //   // await Promise.all(curBatch.map(item => {
           //   //   return tRepo.upsert(
           //   //     // @ts-expect-error
           //   //     item,
@@ -231,7 +224,7 @@ export async function batchSaveWithPQueueAndTransaction<
           //   // }))
           //   await tRepo.upsert(
           //       // @ts-expect-error
-          //       batch,
+          //       curBatch,
           //       { conflictPaths: ['_db_id'] },
           //     )
           //     .then(() => {
@@ -263,6 +256,7 @@ export async function batchSaveWithPQueueAndTransaction<
         }
       });
     });
+    cursors.dataIdx += batchSize;
   }
 
   if (currentSignal) {
@@ -278,7 +272,7 @@ export async function batchSaveWithPQueueAndTransaction<
       if (!currentSignal.aborted) {
         printLog &&
           console.debug(
-            `${loggerPrefix}Started to upsert ${data.length} records with total ${totalRound} batches(size: ${batchSize}, concurrency: ${concurrency})`,
+            `${loggerPrefix}Started to upsert ${totalLen} records with total ${totalRound} batches(size: ${batchSize}, concurrency: ${concurrency})`,
           );
       }
     } catch (error) {

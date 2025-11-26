@@ -1,4 +1,5 @@
 import { atom, useSetAtom } from 'jotai';
+import { useCallback } from 'react';
 
 export const singleTokenNonceAtom = atom<number>(0);
 export const singleDeFiNonceAtom = atom<number>(0);
@@ -14,24 +15,25 @@ export const useTriggerTagAssets = () => {
   const tokenNonceUpdate = useSetAtom(tokenNonceAtom);
   const deFiNonceUpdate = useSetAtom(deFiNonceAtom);
   const nftNonceUpdate = useSetAtom(nftNonceAtom);
+
   return {
-    singleTokenRefresh: () => {
+    singleTokenRefresh: useCallback(() => {
       singleTokenNonceUpdate(prev => prev + 1);
-    },
-    singleDeFiRefresh: () => {
+    }, [singleTokenNonceUpdate]),
+    singleDeFiRefresh: useCallback(() => {
       singleDeFiNonceUpdate(prev => prev + 1);
-    },
-    singleNFTRefresh: () => {
+    }, [singleDeFiNonceUpdate]),
+    singleNFTRefresh: useCallback(() => {
       singleNFTNonceUpdate(prev => prev + 1);
-    },
-    tokenRefresh: () => {
+    }, [singleNFTNonceUpdate]),
+    tokenRefresh: useCallback(() => {
       tokenNonceUpdate(prev => prev + 1);
-    },
-    deFiRefresh: () => {
+    }, [tokenNonceUpdate]),
+    deFiRefresh: useCallback(() => {
       deFiNonceUpdate(prev => prev + 1);
-    },
-    nftRefresh: () => {
+    }, [deFiNonceUpdate]),
+    nftRefresh: useCallback(() => {
       nftNonceUpdate(prev => prev + 1);
-    },
+    }, [nftNonceUpdate]),
   };
 };
