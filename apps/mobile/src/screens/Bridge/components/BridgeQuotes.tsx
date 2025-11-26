@@ -15,7 +15,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { AppBottomSheetModal } from '@/components';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { RcIconSwapChecked, RcIconSwapUnchecked } from '@/assets/icons/swap';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { Radio } from '@/components/Radio';
@@ -30,7 +30,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   bottomBg: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-0'],
   },
   refreshBox: {
     flexDirection: 'row',
@@ -50,31 +50,32 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 20,
+    paddingTop: 16,
     paddingHorizontal: 20,
-    marginBottom: 12,
     alignSelf: 'stretch',
-    gap: 3,
   },
 
   headerText: {
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '700',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+    textAlign: 'center',
   },
   refreshText: {
-    fontSize: 16,
-    fontWeight: '700',
     color: colors2024['neutral-title-1'],
-    marginLeft: 8,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
   },
   refreshContent: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
     color: colors2024['brand-default'],
   },
   radioContainer: {
@@ -120,6 +121,7 @@ interface QuotesProps {
   payAmount: string;
   setSelectedBridgeQuote: (quote?: SelectedBridgeQuote) => void;
   sortIncludeGasFee: boolean;
+  currentSelectedQuote?: SelectedBridgeQuote;
 }
 
 export const Quotes = ({
@@ -171,6 +173,7 @@ export const Quotes = ({
             payToken={other.payToken}
             receiveToken={other.receiveToken}
             setSelectedBridgeQuote={other.setSelectedBridgeQuote}
+            currentSelectedQuote={other.currentSelectedQuote}
             payAmount={other.payAmount}
             inSufficient={inSufficient}
           />
@@ -251,26 +254,30 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
   return (
     <AppBottomSheetModal
       ref={bottomRef}
-      snapPoints={['90%']}
+      snapPoints={['78%']}
       onDismiss={onClose}
       enableDismissOnClose
       {...makeBottomSheetProps({
-        linearGradientType: 'linear',
+        linearGradientType: 'bg0',
         colors: colors2024,
-      })}
-      // enableContentPanningGesture={false}
-      handleStyle={styles.bottomBg}
-      backgroundStyle={styles.bottomBg}>
-      <LinearGradient
-        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
-        locations={[0.0745, 0.2242]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{ flex: 1 }}>
+      })}>
+      <BottomSheetView style={{ flex: 1 }}>
+        <Text style={styles.headerText}>
+          {t('page.bridge.the-following-bridge-route-are-found')}
+        </Text>
         <View style={styles.headerContainer}>
-          <Text style={styles.headerText}>
-            {t('page.bridge.the-following-bridge-route-are-found')}
-          </Text>
+          <View>
+            <Radio
+              checked={!!sortIncludeGasFee}
+              onPress={() => setSortIncludeGasFee(e => !e)}
+              title={t('page.swap.sort-with-gas')}
+              checkedIcon={<RcIconSwapChecked width={24} height={24} />}
+              uncheckedIcon={<RcIconSwapUnchecked width={24} height={24} />}
+              textStyle={styles.refreshText}
+              right={true}
+              containerStyle={styles.radioContainer}
+            />
+          </View>
           <TouchableOpacity onPress={refreshQuote} style={styles.refreshBox}>
             <Animated.View
               style={{
@@ -291,30 +298,7 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
           />
           <View style={{ height: 120 }} />
         </BottomSheetScrollView>
-        {/* <View style={styles.floatBottom}> */}
-        <LinearGradient
-          colors={
-            isLight
-              ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
-              : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
-          }
-          locations={[0.6393, 1]}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 0, y: 0 }}
-          style={styles.floatBottom}>
-          <Radio
-            checked={!!sortIncludeGasFee}
-            onPress={() => setSortIncludeGasFee(e => !e)}
-            title={t('page.swap.sort-with-gas')}
-            checkedIcon={<RcIconSwapChecked width={24} height={24} />}
-            uncheckedIcon={<RcIconSwapUnchecked width={24} height={24} />}
-            textStyle={styles.refreshText}
-            right={true}
-            containerStyle={styles.radioContainer}
-          />
-        </LinearGradient>
-        {/* </View> */}
-      </LinearGradient>
+      </BottomSheetView>
     </AppBottomSheetModal>
   );
 };
