@@ -32,9 +32,13 @@ import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { findChainByID } from '@/utils/chain';
 import { getProvider } from './provider';
 
-export const marketAtom = atomByMMKV('@lendingMarket', '', {
-  storage: MMKVStorageStrategy.compatString,
-});
+export const marketAtom = atomByMMKV(
+  '@lendingMarket',
+  CustomMarket.proto_mainnet_v3,
+  {
+    storage: MMKVStorageStrategy.compatString,
+  },
+);
 
 export const useSelectedMarket = () => {
   const [market, setMarket] = useAtom(marketAtom);
