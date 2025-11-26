@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ALERT_HEIGHT,
@@ -23,6 +23,8 @@ import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useAtomValue } from 'jotai';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
+import { useIsFocused } from '@react-navigation/native';
+import { View } from 'react-native';
 
 export const MultiAssets = ({
   onUpdateIsDecrease,
@@ -46,19 +48,23 @@ export const MultiAssets = ({
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
 
+  const isNavFocused = useIsFocused();
   const { combineData: combineCurveData, isLoadingNew: isLoadingCurve } =
-    useMultiCurve(
-      top10Addresses,
-      false,
-      top10Balance.total,
-      top10Balance.totalEvm,
-    );
+    useMultiCurve(top10Addresses, {
+      isNavigationFocused: isNavFocused,
+      disableAutoFetch: false,
+      totalBalance: top10Balance.total,
+      totalEvmBalance: top10Balance.totalEvm,
+    });
 
   const { combineData: combine24hBalanceData } = useMulti24hBalance(
     top10Addresses,
-    false,
-    top10Balance.total,
-    top10Balance.totalEvm,
+    {
+      isNavigationFocused: isNavFocused,
+      disableAutoFetch: false,
+      totalBalance: top10Balance.total,
+      totalEvmBalance: top10Balance.totalEvm,
+    },
   );
   const combineData = useMemo(() => {
     return {
@@ -150,18 +156,26 @@ export const MultiAssets = ({
   );
 
   const renderHeader = useCallback(() => {
+    // return null;
     return (
       <MultiChart
         isOffline={false}
         data={combineData}
-        loading={isLoadingCurve}
+        loading={isLoadingCurve || !isNavFocused}
         pathColor={pathColor}
         isNoAssets={false}
         isDisConnect={isDisConnect}
         handleScroll={handleScroll}
       />
     );
-  }, [combineData, handleScroll, isDisConnect, isLoadingCurve, pathColor]);
+  }, [
+    combineData,
+    handleScroll,
+    isDisConnect,
+    isLoadingCurve,
+    isNavFocused,
+    pathColor,
+  ]);
 
   const listLength = useMemo(() => {
     return list.length > 10 ? 10 : list.length;
@@ -202,6 +216,7 @@ export const MultiAssets = ({
           count: listLength,
         })} ${listLength ? `(${listLength})` : ''}`}
         name="address">
+        {/* <View /> */}
         <AddressList />
       </Tabs.Tab>
       <Tabs.Tab

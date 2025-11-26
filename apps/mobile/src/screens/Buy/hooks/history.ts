@@ -90,7 +90,7 @@ const syncBuyHistory = async (addr: string, data: BuyHistoryList) => {
     i => pendingIdList.includes(i.id) || i.create_at > latestTime,
   );
   if (added?.length) {
-    runOnJS(syncRemoteBuyHistory)(addr, added);
+    syncRemoteBuyHistory(addr, added);
   }
 };
 

@@ -26,7 +26,7 @@ type RemoteDataUpsertedCtx<
   taskFor: SyncTaskOptions['taskFor'] | '@unknown';
   owner_addr: string;
   syncDetails: {
-    items: T[];
+    // items: T[];
     count: number;
     total: number;
     round: number;
@@ -42,6 +42,7 @@ const { EventEmitter: AppORMEvents } = makeJsEEClass<{
 }>();
 
 export const appOrmEvents = new AppORMEvents();
+appOrmEvents.setMaxListeners(50);
 
 export function useAppOrmSyncEvents<
   T extends SyncTaskOptions['taskFor'],

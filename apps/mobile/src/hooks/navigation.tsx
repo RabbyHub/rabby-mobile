@@ -291,12 +291,12 @@ export function resetNavigationTo(
         index: 0,
         routes: [{ name: RootNames.Unlock, params: {} }],
       });
-      if (
-        getLatestNavigationName() === RootNames.BrowserScreen ||
-        getLatestNavigationName() === RootNames.BrowserManageScreen
-      ) {
-        navigation.dispatch(TabActions.jumpTo(RootNames.StackMain));
-      }
+      // if (
+      //   getLatestNavigationName() === RootNames.BrowserScreen ||
+      //   getLatestNavigationName() === RootNames.BrowserManageScreen
+      // ) {
+      //   navigation.dispatch(TabActions.jumpTo(RootNames.StackMain));
+      // }
 
       break;
     }

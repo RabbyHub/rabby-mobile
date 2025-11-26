@@ -50,7 +50,7 @@ import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { isTabsSwiping } from './hooks';
 import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { StackActions } from '@react-navigation/native';
+import { StackActions, useIsFocused } from '@react-navigation/native';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -301,12 +301,13 @@ export const Portfolios = () => {
     [],
   );
 
-  const { refresh: refreshCurve } = useMultiCurve(
-    top10Addresses,
-    true,
-    top10Balance.total,
-    top10Balance.totalEvm,
-  );
+  const isNavFocused = useIsFocused();
+  const { refresh: refreshCurve } = useMultiCurve(top10Addresses, {
+    isNavigationFocused: isNavFocused,
+    disableAutoFetch: true,
+    totalBalance: top10Balance.total,
+    totalEvmBalance: top10Balance.totalEvm,
+  });
 
   const { tokenRefresh } = useTriggerTagAssets();
 

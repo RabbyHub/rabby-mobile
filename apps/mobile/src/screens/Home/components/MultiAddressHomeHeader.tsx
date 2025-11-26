@@ -1,4 +1,4 @@
-import { StackActions } from '@react-navigation/native';
+import { StackActions, useIsFocused } from '@react-navigation/native';
 import React, {
   useEffect,
   useLayoutEffect,
@@ -110,9 +110,13 @@ export function MultiAddressHomeHeader(
     }
   });
 
+  const isNavFocused = useIsFocused();
   const { multi24hBalance } = useMulti24hBalance(
     pinnedAccountList.map(item => item.address),
-    true,
+    {
+      isNavigationFocused: isNavFocused,
+      disableAutoFetch: true,
+    },
   );
 
   const addressListData = useMemo(() => {

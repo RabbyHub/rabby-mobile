@@ -177,7 +177,11 @@ const TokenSelectorInner = ({
     return sortedList || [];
   }, [query, sortedList]);
 
-  const { tokens, updateData } = useTokens(address, false, 0, undefined, true);
+  const { tokens, updateData } = useTokens(address, {
+    visible: false,
+    chainServerId: undefined,
+    force: true,
+  });
 
   useEffect(() => {
     updateData();

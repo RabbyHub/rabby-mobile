@@ -8566,6 +8566,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@op-engineering/op-sqlite@npm:^15.1.1":
+  version: 15.1.1
+  resolution: "@op-engineering/op-sqlite@npm:15.1.1"
+  dependencies:
+    react-native-safe-area-context: ^5.6.2
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 93f0e42f0ac4e36958aa345374f581b05294244f7f9bdd675f47e57f9f03a192958953e32cbd524ce9f6def553cea3760a821eb604544e63de4f52d706fc491c
+  languageName: node
+  linkType: hard
+
 "@peculiar/asn1-schema@npm:^2.3.13":
   version: 2.3.15
   resolution: "@peculiar/asn1-schema@npm:2.3.15"
@@ -34471,6 +34483,7 @@ __metadata:
     "@notifee/react-native": ^7.8.0
     "@onekeyfe/hd-ble-sdk": 1.1.13
     "@onekeyfe/react-native-ble-utils": 0.1.4
+    "@op-engineering/op-sqlite": ^15.1.1
     "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-hd-keyring": 4.3.1
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
@@ -34636,6 +34649,7 @@ __metadata:
     react-test-renderer: 18.3.1
     react-use: 17.4.2
     reactotron-react-native: ^5.0.4
+    reactotron-react-native-mmkv: ^0.2.9
     readable-stream: 4.7.0
     reflect-metadata: 0.1.13
     rimraf: ^3.0.2
@@ -35659,6 +35673,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-safe-area-context@npm:^5.6.2":
+  version: 5.6.2
+  resolution: "react-native-safe-area-context@npm:5.6.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 7b15cdd07df4f3650cf443fb322ee2d51b3ab45c652789cbea4cb48a8e6fd2b66e2be01e9f63e614ceaf28d9d228af681ca8857b2ed8dabe48f23964076d40c3
+  languageName: node
+  linkType: hard
+
 "react-native-screens@npm:4.9.2":
   version: 4.9.2
   resolution: "react-native-screens@npm:4.9.2"
@@ -36225,6 +36249,16 @@ __metadata:
   version: 0.1.1
   resolution: "reactotron-core-contract@npm:0.1.1"
   checksum: 69985e4b5bbb72d12a0bdffa3a7e46f5aadf293e9adab70a53f080652906c22a26fb9e1a928af667b46c627cfea81ed58dbdf5644162b025d18d70beb0c7d430
+  languageName: node
+  linkType: hard
+
+"reactotron-react-native-mmkv@npm:^0.2.9":
+  version: 0.2.9
+  resolution: "reactotron-react-native-mmkv@npm:0.2.9"
+  peerDependencies:
+    react-native-mmkv: "*"
+    reactotron-core-client: "*"
+  checksum: 323b27bbb2ab306608a54bb582850f78e3f60ab73711686b7ed6e22725816e2d57fc78b91b96972ba02c2d23e6a805727f277c1a8998c27dcec15342e62c9141
   languageName: node
   linkType: hard
 

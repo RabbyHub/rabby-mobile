@@ -26,10 +26,19 @@ export const waitQueueFinished = (q: PQueue) => {
 export const loadingMultiCurveAtom = atom(true);
 export const useMulti24hBalance = (
   addresses: string[],
-  disableAutoFetch?: boolean,
-  totalBalance?: number,
-  totalEvmBalance?: number,
+  options?: {
+    isNavigationFocused?: boolean;
+    disableAutoFetch?: boolean;
+    totalBalance?: number;
+    totalEvmBalance?: number;
+  },
 ) => {
+  const {
+    isNavigationFocused = true,
+    disableAutoFetch,
+    totalBalance,
+    totalEvmBalance,
+  } = options || {};
   const [multi24hBalance, setMulti24hBalance] = useAtom(multi24hBalanceAtom);
   const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
   const loadingMapRef = useRef<Record<string, boolean>>({});
@@ -119,10 +128,12 @@ export const useMulti24hBalance = (
     [addresses],
   );
   const combineData = useMemo(() => {
-    const list = stableAddresses.map(address => {
-      const data = multi24hBalance[address.toLowerCase()];
-      return data?.data;
-    });
+    const list = !isNavigationFocused
+      ? []
+      : stableAddresses.map(address => {
+          const data = multi24hBalance[address.toLowerCase()];
+          return data?.data;
+        });
     const isAllGet = list.length === stableAddresses.length;
     const total24hBalance = list.reduce((res, item) => {
       return res + (item?.total_usd_value || 0);
@@ -143,7 +154,13 @@ export const useMulti24hBalance = (
       isLoss: assetsChange < 0,
       isEmptyAssets: total24hBalance === 0 && totalEvmBalance === 0,
     };
-  }, [stableAddresses, multi24hBalance, totalBalance, totalEvmBalance]);
+  }, [
+    isNavigationFocused,
+    stableAddresses,
+    multi24hBalance,
+    totalBalance,
+    totalEvmBalance,
+  ]);
 
   useEffect(() => {
     if (disableAutoFetch || queue.size > 0) {
