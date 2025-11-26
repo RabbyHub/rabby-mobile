@@ -2,6 +2,7 @@ import 'react-native-gesture-handler';
 import React from 'react';
 
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createStackNavigator } from '@react-navigation/stack';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
 import {
@@ -37,8 +38,7 @@ import { PerpsHistoryScreen } from '../PerpsHistory';
 import LendingHistory from '../Lending/components/LendingHistory';
 import AAVEScreen from '../Lending';
 
-const TransactionStack =
-  createNativeStackNavigator<TransactionNavigatorParamList>();
+const TransactionStack = createStackNavigator<TransactionNavigatorParamList>();
 
 export default function TransactionNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();

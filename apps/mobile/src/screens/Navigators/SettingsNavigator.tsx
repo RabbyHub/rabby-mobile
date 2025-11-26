@@ -2,6 +2,8 @@ import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createStackNavigator } from '@react-navigation/stack';
+
 import { CustomTestnetScreen } from '../CustomTestnet';
 import { CustomRPCScreen } from '../CustomRPC';
 import { registerAppScreen } from '@/perfs/apis';
@@ -23,7 +25,7 @@ const ProviderControllerTester = registerAppScreen<
 });
 import { I18nRouteScreenTitle } from '@/components2024/i18n/RouteScreen';
 
-const SettingsStack = createNativeStackNavigator();
+const SettingsStack = createStackNavigator();
 
 export function SettingNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();

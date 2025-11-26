@@ -3,6 +3,8 @@ import React from 'react';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createStackNavigator } from '@react-navigation/stack';
+
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressListScreen } from '@/screens/Address/AddressListScreen';
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
@@ -51,7 +53,7 @@ import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPassw
 import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
 import PointsScreen from '../Points';
 
-const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
+const AddressStack = createStackNavigator<AddressNavigatorParamList>();
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRight: {
@@ -206,7 +208,7 @@ export function AddressNavigator() {
         options={{
           title: t('screens.addressStackTitle.ImportSuccess'),
           headerTintColor: colors2024['neutral-bg-1'],
-          statusBarBackgroundColor: colors2024['neutral-bg-1'],
+          // statusBarBackgroundColor: colors2024['neutral-bg-1'],
         }}
       />
       <AddressStack.Screen

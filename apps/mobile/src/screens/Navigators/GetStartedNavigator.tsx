@@ -3,10 +3,12 @@ import { RootNames } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createStackNavigator } from '@react-navigation/stack';
+
 import GetStartedScreen from '../GetStarted/GetStarted';
 import GetStartedScreen2024 from '../GetStarted/NewUserGetStarted2024';
 
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 
 export function GetStartedNavigator() {
   // const { mergeScreenOptions } = useStackScreenConfig();

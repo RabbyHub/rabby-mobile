@@ -10660,6 +10660,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-navigation/elements@npm:^2.8.3":
+  version: 2.8.3
+  resolution: "@react-navigation/elements@npm:2.8.3"
+  dependencies:
+    color: ^4.2.3
+    use-latest-callback: ^0.2.4
+    use-sync-external-store: ^1.5.0
+  peerDependencies:
+    "@react-native-masked-view/masked-view": ">= 0.2.0"
+    "@react-navigation/native": ^7.1.21
+    react: ">= 18.2.0"
+    react-native: "*"
+    react-native-safe-area-context: ">= 4.0.0"
+  peerDependenciesMeta:
+    "@react-native-masked-view/masked-view":
+      optional: true
+  checksum: 23d4651f17bf2872c57f7c7d8ad50b84abaee711073b9ff623735294ef5ab5d04fd7f4fcd5f57040a5420a9f754185d862e44c95ad40ef74abc59536c128829d
+  languageName: node
+  linkType: hard
+
 "@react-navigation/native-stack@npm:7.3.26":
   version: 7.3.26
   resolution: "@react-navigation/native-stack@npm:7.3.26"
@@ -10698,6 +10718,24 @@ __metadata:
   dependencies:
     nanoid: ^3.3.11
   checksum: 49f04894f7e8b8e2c16abb96bbc1a9775a02341bb00fb9c0d9ce97f8d82613c27570921f2b854f8fd1639c29309df05345aa734124d48bdbcb5a934055b8af12
+  languageName: node
+  linkType: hard
+
+"@react-navigation/stack@npm:^7.6.7":
+  version: 7.6.7
+  resolution: "@react-navigation/stack@npm:7.6.7"
+  dependencies:
+    "@react-navigation/elements": ^2.8.3
+    color: ^4.2.3
+    use-latest-callback: ^0.2.4
+  peerDependencies:
+    "@react-navigation/native": ^7.1.21
+    react: ">= 18.2.0"
+    react-native: "*"
+    react-native-gesture-handler: ">= 2.0.0"
+    react-native-safe-area-context: ">= 4.0.0"
+    react-native-screens: ">= 4.0.0"
+  checksum: 4e37917cc14efc17315b3d77e06907e9c3f0c22a7616d9cf7d34f0152572fa77f5ba86688e3dd1186a8f9fd658229ba1a317b1dbdfc836afd8739ec4bef23aa1
   languageName: node
   linkType: hard
 
@@ -34522,6 +34560,7 @@ __metadata:
     "@react-navigation/bottom-tabs": 7.4.7
     "@react-navigation/native": 7.1.17
     "@react-navigation/native-stack": 7.3.26
+    "@react-navigation/stack": ^7.6.7
     "@rematch/core": ^2.2.0
     "@rneui/base": ^4.0.0-rc.8
     "@rneui/themed": ^4.0.0-rc.8
@@ -34627,7 +34666,7 @@ __metadata:
     react-native-qrcode-svg: ^6.2.0
     react-native-quick-crypto: 0.7.13
     react-native-randombytes: ^3.6.1
-    react-native-reanimated: 3.17.1
+    react-native-reanimated: 3.18.2
     react-native-root-toast: ^3.5.1
     react-native-safe-area-context: 5.4.0
     react-native-screens: 4.9.2
@@ -35402,13 +35441,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-is-edge-to-edge@npm:1.1.6":
-  version: 1.1.6
-  resolution: "react-native-is-edge-to-edge@npm:1.1.6"
+"react-native-is-edge-to-edge@npm:1.1.7":
+  version: 1.1.7
+  resolution: "react-native-is-edge-to-edge@npm:1.1.7"
   peerDependencies:
-    react: ">=18.2.0"
-    react-native: ">=0.73.0"
-  checksum: 4e07c1e34c01c8d50fd7c1d0460db06f6f0515197405230386a8ffb950cb724b10743af032310d1384df0a90059bfb8992ba2d93344ce86315315f0493feccc2
+    react: "*"
+    react-native: "*"
+  checksum: 4cdf2b2fb5b131f2015c26d2cb7688b4a0c5f3c8474b1bf0ddfa9eabb0263df440c87262ae8f812a6ecab0d5310df0373bddad4b51f53dabb2ffee01e9ef0f44
   languageName: node
   linkType: hard
 
@@ -35603,9 +35642,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-reanimated@npm:3.17.1":
-  version: 3.17.1
-  resolution: "react-native-reanimated@npm:3.17.1"
+"react-native-reanimated@npm:3.18.2":
+  version: 3.18.2
+  resolution: "react-native-reanimated@npm:3.18.2"
   dependencies:
     "@babel/plugin-transform-arrow-functions": ^7.0.0-0
     "@babel/plugin-transform-class-properties": ^7.0.0-0
@@ -35618,12 +35657,12 @@ __metadata:
     "@babel/preset-typescript": ^7.16.7
     convert-source-map: ^2.0.0
     invariant: ^2.2.4
-    react-native-is-edge-to-edge: 1.1.6
+    react-native-is-edge-to-edge: 1.1.7
   peerDependencies:
     "@babel/core": ^7.0.0-0
     react: "*"
     react-native: "*"
-  checksum: fd05040a3fc6a8f4efb387657c0cd6c314e5e6b50f859e127d6891d8f81c65b020ddcf78615aa0074b4e134e450d38c40db916c544e1e2efa26c50c82815607d
+  checksum: d8fe940ee735a663feba30e90ea75b719f60fa69f79448beed76f63137f5a775b1c93c0f747f85dca2732ef3a747e37acace7c92fc73c19aab0daf02dbccb910
   languageName: node
   linkType: hard
 

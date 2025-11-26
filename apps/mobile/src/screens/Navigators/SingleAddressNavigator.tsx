@@ -1,10 +1,13 @@
 import 'react-native-gesture-handler';
 import React from 'react';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createStackNavigator } from '@react-navigation/stack';
+
 import { RootNames } from '@/constant/layout';
 import SingleAddressHome from '../Home/Home';
 import { useStackScreenConfig } from '@/hooks/navigation';
-const SingleAddressStack = createNativeStackNavigator();
+
+const SingleAddressStack = createStackNavigator();
 
 export function SingleAddressNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();

@@ -36,6 +36,7 @@ import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomShe
 import { useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -78,8 +79,14 @@ const hitSlop = {
   right: 10,
 };
 
-type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
+type NativeScreenOptions = Omit<
+  NativeStackNavigationOptions,
+  'headerTitleStyle'
+> & {
   headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
+};
+type ScreenOptions = Omit<StackNavigationOptions, 'headerTitleStyle'> & {
+  headerTitleStyle: StackNavigationOptions['headerTitleStyle'] & object;
 };
 export const useStackScreenConfig = () => {
   const { colors, colors2024 } = useTheme2024();
@@ -102,6 +109,7 @@ export const useStackScreenConfig = () => {
   const mergeScreenOptions = useCallback(
     (...optsList: Partial<ScreenOptions>[]) => {
       const screenOptions: ScreenOptions = {
+        // @ts-expect-error
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
         ...headerPresets.onlyTitle,
@@ -133,7 +141,7 @@ export const useStackScreenConfig = () => {
       ) as ScreenOptions;
 
       result.headerTitleStyle =
-        cleanSpecialSoloWeightFont(result.headerTitleStyle) ||
+        cleanSpecialSoloWeightFont(result.headerTitleStyle as any) ||
         result.headerTitleStyle;
 
       return result;
@@ -144,6 +152,7 @@ export const useStackScreenConfig = () => {
   const mergeScreenOptions2024 = useCallback(
     (optsList: Partial<ScreenOptions>[], options?: any) => {
       const screenOptions: ScreenOptions = {
+        // @ts-expect-error
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
         ...headerPresets.onlyTitle,
@@ -176,7 +185,7 @@ export const useStackScreenConfig = () => {
       ) as ScreenOptions;
 
       result.headerTitleStyle =
-        cleanSpecialSoloWeightFont(result.headerTitleStyle) ||
+        cleanSpecialSoloWeightFont(result.headerTitleStyle as any) ||
         result.headerTitleStyle;
 
       return result;

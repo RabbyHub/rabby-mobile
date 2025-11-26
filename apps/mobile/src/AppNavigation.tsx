@@ -1,4 +1,6 @@
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createStackNavigator } from '@react-navigation/stack';
+
 import {
   DarkTheme,
   DefaultTheme,
@@ -94,11 +96,11 @@ import { GlobalTipsPopup } from './components2024/GlobalTipsPopup';
 import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
 import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottomSheet';
 
-const RootStack = createNativeStackNavigator<RootStackParamsList>();
+const RootStack = createStackNavigator<RootStackParamsList>();
 // import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 // const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
 
-const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
+const AccountStack = createStackNavigator<AccountNavigatorParamList>();
 
 const RootAnimOptions: React.ComponentProps<
   typeof RootStack.Navigator
@@ -106,7 +108,7 @@ const RootAnimOptions: React.ComponentProps<
   object = {
   // animation: IS_IOS ? 'slide_from_right' : 'none',
   animation: 'none',
-  animationDuration: 200,
+  // animationDuration: 200,
 };
 
 const REST_COUNTS = {
@@ -332,7 +334,7 @@ export default function AppNavigation({
             screenOptions={{
               ...RootAnimOptions,
               headerShown: false,
-              navigationBarColor: 'transparent',
+              // navigationBarColor: 'transparent',
               freezeOnBlur: true,
             }}
             initialRouteName={RootNames.StackGetStarted}>
@@ -365,7 +367,7 @@ export default function AppNavigation({
                 // animationTypeForReplace: 'push',
                 animation: 'fade_from_bottom',
                 headerTitle: '',
-                headerBackVisible: false,
+                // headerBackVisible: false,
                 headerShadowVisible: false,
                 // headerShown: true,
                 headerTransparent: true,
