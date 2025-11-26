@@ -320,14 +320,12 @@ function MultiAddressHome(): JSX.Element {
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
 
-  const isNavFocused = useIsFocused();
   const {
     combineData,
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
   } = useMulti24hBalance(top10Addresses, {
-    isNavigationFocused: isNavFocused,
     disableAutoFetch: true,
     totalBalance: top10Balance.total,
     totalEvmBalance: top10Balance.totalEvm,

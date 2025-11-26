@@ -110,11 +110,9 @@ export function MultiAddressHomeHeader(
     }
   });
 
-  const isNavFocused = useIsFocused();
   const { multi24hBalance } = useMulti24hBalance(
     pinnedAccountList.map(item => item.address),
     {
-      isNavigationFocused: isNavFocused,
       disableAutoFetch: true,
     },
   );

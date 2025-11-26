@@ -60,7 +60,6 @@ export const MultiAssets = ({
   const { combineData: combine24hBalanceData } = useMulti24hBalance(
     top10Addresses,
     {
-      isNavigationFocused: isNavFocused,
       disableAutoFetch: false,
       totalBalance: top10Balance.total,
       totalEvmBalance: top10Balance.totalEvm,
