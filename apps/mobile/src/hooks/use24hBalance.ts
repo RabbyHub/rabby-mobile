@@ -34,7 +34,7 @@ export const useMulti24hBalance = (
   },
 ) => {
   const {
-    isNavigationFocused = false,
+    isNavigationFocused = true,
     disableAutoFetch,
     totalBalance,
     totalEvmBalance,

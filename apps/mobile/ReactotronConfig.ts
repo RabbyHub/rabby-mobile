@@ -1,11 +1,15 @@
-/// <reference path="src/types/global.d.ts" />
-
 import { NativeModules } from 'react-native';
 import Reactotron, { ReactotronReactNative } from 'reactotron-react-native';
 import { DEV_SERVER_HOSTNAME as DEV_SERVER_HOSTNAME_ } from '@env';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getDevServerHost } from '@/core/utils/devServerSettings';
 import mmkvPlugin from 'reactotron-react-native-mmkv';
+
+declare global {
+  var _tron:
+    | undefined
+    | import('reactotron-react-native').ReactotronReactNative;
+}
 
 const instanceRef = { current: null as null | ReactotronReactNative };
 export function setupReactotronConnection() {

@@ -8,6 +8,7 @@ import {
   AbstractLogger,
   LogLevel,
   LogMessage,
+  LogMessageType,
 } from 'typeorm/browser';
 import { getOnlineConfig } from '@/core/config/online';
 import { type ReactotronReactNative } from 'reactotron-react-native';
@@ -97,7 +98,16 @@ export class RabbyOrmDevConsoleLogger
   implements Logger
 {
   constructor(options?: LoggerOptions) {
-    super(options);
+    super(['error', 'query', 'schema', 'migration']);
+  }
+
+  protected isLogEnabledFor(type?: LogLevel | LogMessageType): boolean {
+    switch (type) {
+      case 'query':
+        return this._hasTron || super.isLogEnabledFor(type);
+      default:
+        return super.isLogEnabledFor(type);
+    }
   }
 
   get _hasTron() {
