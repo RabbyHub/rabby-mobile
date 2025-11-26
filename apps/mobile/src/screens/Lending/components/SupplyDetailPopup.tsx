@@ -8,7 +8,6 @@ import { PopupDetailProps } from '../type';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import TokenIcon from './TokenIcon';
-import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
 import {
   createGlobalBottomSheetModal2024,
@@ -27,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { formatNetworth } from '@/utils/math';
 import IsolatedTag from './IsolatedTag';
 import { formatApy } from '../utils/format';
+import { useSelectedMarket } from '../hooks';
 
 export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -34,7 +34,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   onClose,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { lastSelectedChain } = useLendingService();
+  const { chainEnum } = useSelectedMarket();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
@@ -162,7 +162,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
           <View style={styles.tokenInfos}>
             <TokenIcon
               size={30}
-              chain={lastSelectedChain}
+              chain={chainEnum}
               chainSize={14}
               tokenSymbol={reserve.reserve.symbol}
             />

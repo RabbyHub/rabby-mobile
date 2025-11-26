@@ -100,7 +100,6 @@ const SummaryCard = (props: IProps) => {
           <Pressable
             hitSlop={20}
             onPress={e => {
-              console.log('CUSTOM_LOGGER:=>: onPress');
               e.stopPropagation();
               setIsEstDailySwitch(pre => !pre);
             }}

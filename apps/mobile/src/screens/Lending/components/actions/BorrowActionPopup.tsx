@@ -6,15 +6,17 @@ import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
-import { CHAINS_ENUM } from '@debank/common';
-import { useLendingSummary } from '../../hooks';
+import {
+  useLendingSummary,
+  usePoolDataProviderContract,
+  useSelectedMarket,
+} from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { buildBorrowTx } from '../../poolService';
+import { buildBorrowTx, optimizedPath } from '../../poolService';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { findChain } from '@/utils/chain';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -49,6 +51,7 @@ import {
   MINI_SIGN_ERROR,
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { CHAINS_ENUM } from '@debank/common';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -67,6 +70,8 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   });
   const [isChecked, setIsChecked] = useState(false);
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
+  const { pools } = usePoolDataProviderContract();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
@@ -113,10 +118,12 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       setTxs([]);
       return;
     }
+    if (!pools) {
+      return;
+    }
 
     try {
       setIsLoading(true);
-      const chainInfo = findChain({ serverId: 'eth' });
       if (!chainInfo) {
         return;
       }
@@ -129,10 +136,12 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
       const borrowTx = await buildBorrowTx({
+        poolBundle: pools.poolBundle,
         amount: parseUnits(amount, targetPool.decimals).toString(),
         address: currentAccount.address,
         reserve: reserve.underlyingAsset,
         debtTokenAddress: targetPool?.variableDebtTokenAddress || '',
+        useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
       });
       delete borrowTx.gasLimit;
 
@@ -149,9 +158,12 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     }
   }, [
     amount,
+    chainInfo,
     currentAccount,
     formattedPoolReservesAndIncentives,
+    pools,
     reserve.underlyingAsset,
+    selectedMarketData?.chainId,
   ]);
 
   const handleBorrow = useCallback(
@@ -347,7 +359,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
         )}
         style={styles.amountInput}
-        chain={CHAINS_ENUM.ETH}
+        chain={chainEnum || CHAINS_ENUM.ETH}
       />
       <BottomSheetScrollView
         style={styles.bottomSheetScrollView}
@@ -364,7 +376,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               supportDirectSign={true}
               loading={isLoading}
               openShowMore={noop}
-              chainServeId="eth"
+              chainServeId={chainInfo?.serverId || ''}
             />
           </View>
         )}

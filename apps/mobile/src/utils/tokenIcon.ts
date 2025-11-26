@@ -49,7 +49,7 @@ const TOKEN_ICON_MAP_PNG: Record<string, string> = {
     'https://static.debank.com/image/eth_token/logo_url/0xbe9895146f7af43049ca1c1ae358b0541ea49704/1f287272a7d8439af0f6b281ebf0143e.png',
   XAUT: 'https://static.debank.com/image/eth_token/logo_url/0x68749665ff8d2d112fa859aa293f07a622782f38/a100487c27e4e6e5557ef770230c7f8b.png',
   JAAA: 'https://static.debank.com/image/eth_token/logo_url/0x5a0f93d040de44e78f251b03c43be9cf317dcf64/6e8dbde004a07f7ac158c5c11de6e2dd.png',
-  USTB: 'https://static.debank.com/image/eth_token/logo_url/0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e/e8a4d40c295db75998a4dc97b935ad85.png',
+  USTB: 'https://static-assets.rabby.io/files/e4bd95bd-49b3-43f3-a6ee-08d70f568edc.png',
   CRVUSD:
     'https://static.debank.com/image/eth_token/logo_url/0xf939e0a03fb07f59a73314e73794be0e57ac1b4e/0eb208f018ae08f504b2c201172b8eea.png',
   KNC: 'https://static.debank.com/image/eth_token/logo_url/0xdefa4e8a7bcba345f687a2f1456f5edd9ce97202/1d25e188deb06e642ea6f4f4f8eb0a0c.png',
@@ -75,6 +75,13 @@ const TOKEN_ICON_MAP_PNG: Record<string, string> = {
   TETH: 'https://static-assets.rabby.io/files/a1f3f0a4-a006-4849-82b7-b4ae9a2b3caf.png',
   EZETH:
     'https://static-assets.rabby.io/files/75e716a2-aafe-4938-80a2-a4513431ddc1.png',
+  STS: 'https://static-assets.rabby.io/files/6bc31d76-804d-4336-8db8-e090f23008cf.png',
+  S: 'https://static-assets.rabby.io/files/b82096fc-bc8b-498d-a67e-5388b6f3c5b8.png',
+  WS: 'https://static-assets.rabby.io/files/b82096fc-bc8b-498d-a67e-5388b6f3c5b8.png',
+  USDBC:
+    'https://static-assets.rabby.io/files/c39dd104-fd43-4a2c-9936-a557d3d73350.png',
+  WRSETH:
+    'https://static-assets.rabby.io/files/38e4a233-fc5e-48fb-b476-5925da82ad48.png',
   'PT-EUSDE-29MAY2025': DEFAULT_TOKEN_ICON,
   'PT-SUSDE-31JUL2025': DEFAULT_TOKEN_ICON,
   'PT-USDE-31JUL2025': DEFAULT_TOKEN_ICON,
@@ -83,13 +90,113 @@ const TOKEN_ICON_MAP_PNG: Record<string, string> = {
   'PT-USDE-25SEP2025': DEFAULT_TOKEN_ICON,
   'PT-SUSDE-27NOV2025': DEFAULT_TOKEN_ICON,
   'PT-USDE-27NOV2025': DEFAULT_TOKEN_ICON,
+  'USD₮0':
+    'https://static-assets.rabby.io/files/5f83f08d-5790-4b74-96b8-5dcc09610fa4.png',
+  USDT0:
+    'https://static-assets.rabby.io/files/5f83f08d-5790-4b74-96b8-5dcc09610fa4.png',
+  ARB: 'https://static-assets.rabby.io/files/049db229-35e7-4e9e-8612-f8ed048f8459.png',
+  WBNB: 'https://static-assets.rabby.io/files/b276260b-a977-457e-979a-def28dc2a930.png',
+  AVAX: 'https://static-assets.rabby.io/files/4aa19a1f-bd5f-4212-abd1-e59fbf9bc510.png',
+  WAVAX:
+    'https://static-assets.rabby.io/files/40eca7ff-0fb0-42a0-9054-661e2f90af7a.png',
+  AUSD: 'https://static-assets.rabby.io/files/c7a1b7e0-20ec-4644-9b42-477411a3f85b.png',
+  BTC: 'https://static-assets.rabby.io/files/68c40b30-5a14-447f-8085-753b344ba405.png',
+  BTCB: 'https://static-assets.rabby.io/files/68c40b30-5a14-447f-8085-753b344ba405.png',
+  OP: 'https://static-assets.rabby.io/files/74896c15-b767-46e9-825d-832c3445a312.png',
+  VBILL:
+    'https://static-assets.rabby.io/files/24ed25cc-d329-460d-87b0-b431e337656a.png',
+  JTRSY:
+    'https://static-assets.rabby.io/files/4ec65031-c6a0-4372-899c-7ba1d36211a5.png',
+  USYC: 'https://static-assets.rabby.io/files/4e87a45b-b07a-4bbe-acc6-33821032f72a.png',
+  XAUT0:
+    'https://static-assets.rabby.io/files/d2d6b3fa-3f6c-4d8c-842e-c8c435bbfad7.png',
+  SAVAX:
+    'https://static-assets.rabby.io/files/b661d4e9-365b-4a35-b85c-c00eed048b12.png',
+  SYRUPUSDT:
+    'https://static-assets.rabby.io/files/21a2d068-400e-4e58-a7f1-0495511e85cd.png',
+  PTUSDE:
+    'https://static-assets.rabby.io/files/d71269b4-9e4e-42e1-84ed-f1ba23fcb732.png',
+  PTSUSDE:
+    'https://static-assets.rabby.io/files/2d03b296-daab-4e6c-93ed-4605ba7dc603.png',
+  PTEUSDE:
+    'https://static-assets.rabby.io/files/5a495b43-b19d-4885-95f9-b387fddab86e.png',
+  WPOL: 'https://static-assets.rabby.io/files/ba9bd2eb-9b58-4f0f-b695-5ad15da5c4e5.png',
+  MATICX:
+    'https://static-assets.rabby.io/files/b8fd04a6-83a7-4758-b52c-99becb93e7d3.png',
+  WXDAI:
+    'https://static-assets.rabby.io/files/7ebd98d6-581d-4b16-aede-c951ae47a6b8.png',
+  GNO: 'https://static-assets.rabby.io/files/44c9e6f8-3dfa-4c72-88e6-f123228cd89d.png',
+  EURE: 'https://static-assets.rabby.io/files/1b6fda16-3ae6-4c19-916b-b3aa0eea126f.png',
+  FDUSD:
+    'https://static-assets.rabby.io/files/7dc2e801-5a7e-417d-945c-ad7bb164fcb7.png',
+  CELO: 'https://static-assets.rabby.io/files/2c523482-ea14-4180-9e90-d3c6324a8f11.png',
+  CUSD: 'https://static-assets.rabby.io/files/b9d5a8d3-740b-4338-b0b8-ef4b164050a6.png',
+  CEUR: 'https://static-assets.rabby.io/files/e427d696-7095-46a0-9c36-d276fcd6b33c.png',
+  FRAX: 'https://static-assets.rabby.io/files/74b23562-f37e-4a18-93b7-9b3fb176184a.png',
+  SUSD: 'https://static-assets.rabby.io/files/f9e485f8-edb7-4375-96f9-a8491f2fb51d.png',
+  XPL: 'https://static-assets.rabby.io/files/dc6638bd-f688-4757-91df-9e27c6102ed0.png',
+  WXPL: 'https://static-assets.rabby.io/files/cf7a3f2b-1ebb-4fd1-b883-5cf72d093f24.png',
+  POL: 'https://static-assets.rabby.io/files/3cb5bbdd-ec74-408b-a95f-0a7b0c9973ca.png',
+  EURS: 'https://static-assets.rabby.io/files/d0465c41-ad12-465f-bbe3-5a7f42314645.png',
+  GHST: 'https://static-assets.rabby.io/files/8e685254-6b89-4bec-9b3c-9db19f521f3c.png',
+  KBTC: 'https://static-assets.rabby.io/files/0f30587f-7b31-4098-a679-73fa22b78709.png',
+  USDG: 'https://static-assets.rabby.io/files/9615e9e1-231f-4063-b1dd-84a755f7a1f5.png',
+  XDAI: 'https://static-assets.rabby.io/files/b82f75fe-514a-4926-9ab5-5c668f520aea.png',
+  CAKE: 'https://static-assets.rabby.io/files/71490946-25b2-4307-8e6a-5c7fbef518c7.png',
+  BNB: 'https://static-assets.rabby.io/files/02b6bbb1-65f4-444e-9439-033639720469.png',
+  SCR: 'https://static-assets.rabby.io/files/b69ed5d4-b667-4b69-b7d0-5bf08c8c3bae.png',
+  ZK: 'https://static-assets.rabby.io/files/b71635b6-dafb-41a0-b81c-448ed5a3acf0.png',
+  METIS:
+    'https://static-assets.rabby.io/files/caf96810-0b51-4304-9a44-72ab9c13028a.png',
+};
+
+/**
+ * Maps onchain symbols to different symbols.
+ * This is useful when you want to explode symbols via _ to render multiple symbols or when the symbol has a bridge prefix or suffix.
+ */
+export const SYMBOL_MAP: { [key: string]: string } = {
+  BPTBALWETH: 'BPT_BAL_WETH',
+  BPTWBTCWETH: 'BPT_WBTC_WETH',
+  UNIAAVEWETH: 'UNI_AAVE_WETH',
+  UNIBATWETH: 'UNI_BAT_WETH',
+  UNICRVWETH: 'UNI_CRV_WETH',
+  UNIDAIUSDC: 'UNI_DAI_USDC',
+  UNIDAIWETH: 'UNI_DAI_WETH',
+  UNILINKWETH: 'UNI_LINK_WETH',
+  UNIMKRWETH: 'UNI_MKR_WETH',
+  UNIRENWETH: 'UNI_REN_WETH',
+  UNISNXWETH: 'UNI_SNX_WETH',
+  UNIUNIWETH: 'UNI_UNI_WETH',
+  UNIUSDCWETH: 'UNI_USDC_WETH',
+  UNIWBTCUSDC: 'UNI_WBTC_USDC',
+  UNIWBTCWETH: 'UNI_WBTC_WETH',
+  UNIYFIWETH: 'UNI_YFI_WETH',
+  fUSDT: 'USDT',
+  // avalanche
+  'DAI.e': 'DAI',
+  'LINK.e': 'LINK',
+  'WBTC.e': 'WBTC',
+  'WETH.e': 'WETH',
+  'AAVE.e': 'AAVE',
+  'USDT.e': 'USDT',
+  'USDC.e': 'USDC',
+  'BTC.b': 'BTC',
+  // polygon
+  miMATIC: 'MAI',
+  // metis
+  'm.USDC': 'USDC',
+  'm.USDT': 'USDT',
+  'm.DAI': 'DAI',
+  // celo
+  'USD₮': 'USDT',
 };
 
 export const getTokenIcon = (symbol: string): string => {
   if (!symbol) {
     return DEFAULT_TOKEN_ICON;
   }
-  const lowerMatch = TOKEN_ICON_MAP_PNG[symbol.toUpperCase()];
+  const matchSymbol = SYMBOL_MAP[symbol] || symbol;
+  const lowerMatch = TOKEN_ICON_MAP_PNG[matchSymbol.toUpperCase()];
   if (lowerMatch) {
     return lowerMatch;
   }
