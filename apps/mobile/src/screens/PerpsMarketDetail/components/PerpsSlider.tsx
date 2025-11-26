@@ -18,6 +18,7 @@ interface PerpsSliderProps {
   value: number;
   key?: string;
   onValueChange: (value: number) => void;
+  step?: number;
   maxValue?: number;
   showPercentage?: boolean;
   disabled?: boolean;
@@ -29,6 +30,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   onValueChange,
   disabled = false,
   maxValue,
+  step,
   key,
   showPercentage = true,
   minValue,
@@ -108,7 +110,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
           onValueChange={handleValueChange}
           minimumValue={minValue || 0}
           maximumValue={maxValue || 100}
-          step={1}
+          step={step}
           trackStyle={styles.sliderTrack}
           minimumTrackTintColor={colors2024['brand-default']}
           maximumTrackTintColor={colors2024['neutral-line']}

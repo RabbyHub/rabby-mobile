@@ -84,6 +84,7 @@ export const PerpsScreen = () => {
     positionAndOpenOrders,
     accountSummary,
     currentPerpsAccount,
+    currentOnlyShowPerpsAccount,
     isLogin,
     isInitialized,
     marketData,
@@ -177,14 +178,22 @@ export const PerpsScreen = () => {
 
   const Header = useCallback(
     () =>
-      isLogin ? (
-        <PerpHeader localLoadingHistory={localLoadingHistory} />
+      isLogin || currentOnlyShowPerpsAccount ? (
+        <PerpHeader
+          localLoadingHistory={localLoadingHistory}
+          currentOnlyShowPerpsAccount={currentOnlyShowPerpsAccount}
+          isLogin={isLogin}
+        />
       ) : undefined,
-    [isLogin, localLoadingHistory],
+    [isLogin, localLoadingHistory, currentOnlyShowPerpsAccount],
   );
   const Title = useCallback(
-    () => <PerpsHeaderTitle account={currentPerpsAccount} />,
-    [currentPerpsAccount],
+    () => (
+      <PerpsHeaderTitle
+        account={currentPerpsAccount || currentOnlyShowPerpsAccount}
+      />
+    ),
+    [currentPerpsAccount, currentOnlyShowPerpsAccount],
   );
 
   useEffect(() => {
@@ -350,6 +359,7 @@ export const PerpsScreen = () => {
       <>
         <PerpsAccountCard
           isLogin={isLogin}
+          currentOnlyShowPerpsAccount={currentOnlyShowPerpsAccount}
           accountSummary={accountSummary}
           positionAndOpenOrders={positionAndOpenOrders}
         />
@@ -358,6 +368,8 @@ export const PerpsScreen = () => {
           handleCloseRiskPopup={handleCloseRiskPopup}
           positionAndOpenOrders={positionAndOpenOrders}
           marketDataMap={marketDataMap}
+          currentOnlyShowPerpsAccount={currentOnlyShowPerpsAccount}
+          isLogin={isLogin}
           onClosePosition={async position => {
             const marketDataItem = marketDataMap[position.coin];
             await handleClosePosition({
@@ -372,6 +384,7 @@ export const PerpsScreen = () => {
     );
   }, [
     isLogin,
+    currentOnlyShowPerpsAccount,
     accountSummary,
     positionAndOpenOrders,
     marketDataMap,
@@ -385,7 +398,12 @@ export const PerpsScreen = () => {
     ({ item }: { item: any }) => {
       // First item is the sticky market section header
       if (item._isStickyHeader) {
-        return <PerpsMarketSectionHeader />;
+        return (
+          <PerpsMarketSectionHeader
+            currentOnlyShowPerpsAccount={currentOnlyShowPerpsAccount}
+            isLogin={isLogin}
+          />
+        );
       }
 
       // Rest are market items
@@ -394,6 +412,14 @@ export const PerpsScreen = () => {
           item={item}
           hasPosition={positionCoinSet.has(item.name)}
           onPress={() => {
+            if (currentOnlyShowPerpsAccount && !isLogin) {
+              setPopupState(prev => ({
+                ...prev,
+                isShowLoginPopup: true,
+              }));
+              return;
+            }
+
             scrollToTop();
             naviPush(RootNames.StackTransaction, {
               screen: RootNames.PerpsMarketDetail,
@@ -406,7 +432,13 @@ export const PerpsScreen = () => {
         />
       );
     },
-    [positionCoinSet, scrollToTop],
+    [
+      positionCoinSet,
+      scrollToTop,
+      currentOnlyShowPerpsAccount,
+      isLogin,
+      setPopupState,
+    ],
   );
 
   const keyExtractor = useCallback(
@@ -463,12 +495,20 @@ export const PerpsScreen = () => {
                 <RcIconBackTopCC color={colors2024['neutral-body']} />
               </TouchableOpacity>
             )}
-            {hasPermission && isLogin && (
+            {hasPermission && (
               <View style={styles.footer}>
                 <Button
                   type="primary"
                   title={t('page.perps.searchPerpsPopup.openPosition')}
                   onPress={() => {
+                    if (currentOnlyShowPerpsAccount && !isLogin) {
+                      setPopupState(prev => ({
+                        ...prev,
+                        isShowLoginPopup: true,
+                      }));
+                      return;
+                    }
+
                     setPopupState(prev => ({
                       ...prev,
                       isShowSearchListPopup: true,

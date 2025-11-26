@@ -18,10 +18,11 @@ import { miniSignTypedData } from '../useMiniSignTypedData';
 import { usePerpsStore } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
-import { minBy } from 'lodash';
+import { minBy, uniqBy } from 'lodash';
 import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { getAllMyAccount } from '@/core/apis/address';
+import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
 interface SignAction {
@@ -31,6 +32,7 @@ interface SignAction {
 }
 
 export const usePerpsInitial = () => {
+  const { myAddresses } = useAccountSelectorList({});
   const {
     state: perpsState,
     setApproveSignatures,
@@ -44,6 +46,7 @@ export const usePerpsInitial = () => {
     setMarketData,
     setPositionAndOpenOrders,
     setAccountSummary,
+    setCurrentOnlyShowPerpsAccount,
     // setCurrentPerpsAccount,
     setInitialized,
     // setApproveSignatures,
@@ -172,6 +175,62 @@ export const usePerpsInitial = () => {
           apisPerps.setPerpsCurrentAccount(null);
           fetchPerpPermission('');
           await fetchMarketData();
+
+          try {
+            const lastUsedAccount = await apisPerps.getPerpsLastUsedAccount();
+            const selectedItem =
+              lastUsedAccount &&
+              myAddresses.find(
+                item =>
+                  item.address === lastUsedAccount.address &&
+                  item.type === lastUsedAccount.type,
+              );
+            if (lastUsedAccount && selectedItem) {
+              setCurrentOnlyShowPerpsAccount(selectedItem);
+              fetchPositionAndOpenOrders(selectedItem.address);
+            } else {
+              if (myAddresses.length > 0) {
+                const list = myAddresses.slice(0, 10);
+                const sdk = apisPerps.getPerpsSDK();
+
+                const res = await Promise.all(
+                  list.map(async item => {
+                    try {
+                      const info = await sdk.info.getClearingHouseState(
+                        item.address,
+                      );
+                      return { item, info };
+                    } catch {
+                      return { item, info: null };
+                    }
+                  }),
+                );
+
+                const sorted = res.sort((a, b) => {
+                  const valA = Number(a.info?.marginSummary.accountValue || 0);
+                  const valB = Number(b.info?.marginSummary.accountValue || 0);
+                  return valB - valA;
+                });
+
+                const best = sorted[0];
+                if (
+                  best &&
+                  Number(best.info?.marginSummary.accountValue || 0) > 0
+                ) {
+                  setCurrentOnlyShowPerpsAccount(best.item);
+                  fetchPositionAndOpenOrders(best.item.address);
+                } else {
+                  // Fallback to first account if no clearinghouse value
+                  // Ideally we sort by balance here but we don't have balance info readily available in this context
+                  setCurrentOnlyShowPerpsAccount(myAddresses[0]);
+                  fetchPositionAndOpenOrders(myAddresses[0].address);
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Error selecting only show account', e);
+          }
+
           setInitialized(true);
         };
 
@@ -232,6 +291,9 @@ export const usePerpsInitial = () => {
     checkIsNeedAutoLoginOut,
     setInitialized,
     fetchPerpPermission,
+    myAddresses,
+    setCurrentOnlyShowPerpsAccount,
+    fetchPositionAndOpenOrders,
   ]);
 
   const logout = useMemoizedFn((address: string) => {
@@ -289,6 +351,7 @@ export const usePerpsState = () => {
     setMarketData,
     setPositionAndOpenOrders,
     setAccountSummary,
+    setCurrentOnlyShowPerpsAccount,
     // setCurrentPerpsAccount,
     setInitialized,
     // setApproveSignatures,
@@ -751,6 +814,7 @@ export const usePerpsState = () => {
     isLogin: perpsState.isLogin,
     isInitialized: perpsState.isInitialized,
     userFills: perpsState.userFills,
+    currentOnlyShowPerpsAccount: perpsState.currentOnlyShowPerpsAccount,
     hasPermission: perpsState.hasPermission,
     homeHistoryList,
     perpFee: perpsState.perpFee,

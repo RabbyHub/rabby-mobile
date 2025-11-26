@@ -9,6 +9,7 @@ export const PerpsFooter: React.FC<{
   onLongPress?(): void;
   onShortPress?(): void;
   onClosePress?(): void;
+  onAddPress?(): void;
   hasPermission?: boolean;
   isLogin?: boolean;
   hasPosition?: boolean;
@@ -17,6 +18,7 @@ export const PerpsFooter: React.FC<{
   onLongPress,
   onShortPress,
   onClosePress,
+  onAddPress,
   hasPermission,
   hasPosition,
   direction,
@@ -27,13 +29,35 @@ export const PerpsFooter: React.FC<{
   if (hasPosition) {
     return (
       <View style={styles.footer}>
-        <Button
-          type="primary"
-          title={t('page.perpsDetail.action.closePosition', {
-            direction,
-          })}
-          onPress={onClosePress}
-        />
+        {hasPermission ? (
+          <View style={styles.btnGroup}>
+            <View style={styles.btnContainer}>
+              <Button
+                type="ghost"
+                buttonStyle={{
+                  backgroundColor: colors2024['brand-light-1'],
+                }}
+                title={t('page.perpsDetail.action.add', {
+                  direction,
+                })}
+                onPress={onAddPress}
+              />
+            </View>
+            <View style={styles.btnContainer}>
+              <Button
+                type="primary"
+                title={t('page.perpsDetail.action.close')}
+                onPress={onClosePress}
+              />
+            </View>
+          </View>
+        ) : (
+          <Button
+            type="primary"
+            title={t('page.perpsDetail.action.close')}
+            onPress={onClosePress}
+          />
+        )}
       </View>
     );
   }

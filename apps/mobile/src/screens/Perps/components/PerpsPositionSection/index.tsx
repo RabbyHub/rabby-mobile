@@ -14,15 +14,21 @@ import { PerpsPositionItem } from './PerpsPositionItem';
 import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn } from 'ahooks';
 import { sleep } from '@/utils/async';
+import { Account } from '@/core/services/preference';
+import { usePerpsPopupState } from '../../hooks/usePerpsPopupState';
 
 export const PerpsPositionSection: React.FC<{
   positionAndOpenOrders?: PositionAndOpenOrder[];
+  currentOnlyShowPerpsAccount: Account | null;
+  isLogin: boolean;
   marketDataMap: MarketDataMap;
   handleShowRiskPopup: (coin: string) => void;
   handleCloseRiskPopup: () => void;
   onClosePosition: (position: AssetPosition['position']) => Promise<void>;
 }> = ({
   positionAndOpenOrders,
+  currentOnlyShowPerpsAccount,
+  isLogin,
   marketDataMap,
   handleShowRiskPopup,
   handleCloseRiskPopup,
@@ -30,6 +36,7 @@ export const PerpsPositionSection: React.FC<{
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const [popupState, setPopupState] = usePerpsPopupState();
   const navigation = useRabbyAppNavigation();
   const list = useMemo(() => {
     return sortBy(
@@ -39,6 +46,13 @@ export const PerpsPositionSection: React.FC<{
   }, [positionAndOpenOrders]);
 
   const handleCloseAll = useMemoizedFn(() => {
+    if (currentOnlyShowPerpsAccount && !isLogin) {
+      setPopupState(prev => ({
+        ...prev,
+        isShowLoginPopup: true,
+      }));
+      return;
+    }
     Alert.alert(
       t('page.perps.closeAllConfirmTitle'),
       t('page.perps.closeAllConfirmMessage'),
@@ -86,6 +100,14 @@ export const PerpsPositionSection: React.FC<{
               openOrders={item.openOrders}
               marketData={marketDataMap[item.position.coin]}
               onPress={() => {
+                if (currentOnlyShowPerpsAccount && !isLogin) {
+                  setPopupState(prev => ({
+                    ...prev,
+                    isShowLoginPopup: true,
+                  }));
+                  return;
+                }
+
                 navigation.push(RootNames.StackTransaction, {
                   screen: RootNames.PerpsMarketDetail,
                   params: {

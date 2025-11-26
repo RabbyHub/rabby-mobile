@@ -51,6 +51,7 @@ import { openapi } from '@/core/request';
 import { PerpsDepositTokenModal } from '../Perps/components/PerpsDepositPopup/PerpsDepositTokenModal';
 import Toast from 'react-native-root-toast';
 import { PerpSearchListPopup } from '../Perps/components/PerpSearchListPopup';
+import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -77,8 +78,9 @@ export const PerpsMarketDetailScreen = () => {
     marketDataMap,
     perpFee,
     marketData,
-    hasPermission,
+    // hasPermission,
   } = state;
+  const hasPermission = true;
   const [isShowModal, setIsShowModal] = useState(false);
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
@@ -101,6 +103,7 @@ export const PerpsMarketDetailScreen = () => {
     'Long' | 'Short'
   >('Long');
   const [closePositionVisible, setClosePositionVisible] = React.useState(false);
+  const [addPositionVisible, setAddPositionVisible] = React.useState(false);
 
   // 查找当前币种的仓位信息
   const currentPosition = useMemo(() => {
@@ -363,6 +366,8 @@ export const PerpsMarketDetailScreen = () => {
             ) : null}
           </View>
           <PerpsPosition
+            activeAssetCtx={activeAssetCtx}
+            currentAssetCtx={currentAssetCtx}
             positionData={positionData}
             coin={coin}
             coinLogo={currentAssetCtx?.logoUrl}
@@ -398,6 +403,9 @@ export const PerpsMarketDetailScreen = () => {
             hasPermission={hasPermission}
             hasPosition={hasPosition}
             direction={positionData?.direction}
+            onAddPress={() => {
+              setAddPositionVisible(true);
+            }}
             onLongPress={() => {
               setPositionDirection('Long');
               setOpenPositionVisible(true);
@@ -530,6 +538,38 @@ export const PerpsMarketDetailScreen = () => {
               size: sizeStr,
               direction: positionData?.direction as 'Long' | 'Short',
               price: (activeAssetCtx?.markPx as unknown as string) || '0',
+            });
+          }}
+        />
+      ) : null}
+
+      {positionData ? (
+        <PerpsAddPositionPopup
+          visible={addPositionVisible}
+          coinLogo={currentAssetCtx?.logoUrl}
+          activeAssetCtx={activeAssetCtx}
+          currentAssetCtx={currentAssetCtx}
+          availableBalance={Number(accountSummary?.withdrawable || 0)}
+          coin={coin}
+          marginUsed={positionData?.marginUsed || 0}
+          markPrice={markPrice}
+          direction={positionData?.direction as 'Long' | 'Short'}
+          positionSize={positionData?.size.toString() || '0'}
+          szDecimals={currentAssetCtx?.szDecimals || 0}
+          pxDecimals={currentAssetCtx?.pxDecimals || 2}
+          leverage={positionData?.leverage || 1}
+          leverageRang={[1, currentAssetCtx?.maxLeverage || 5]}
+          onCancel={() => setAddPositionVisible(false)}
+          onConfirm={() => {
+            setAddPositionVisible(false);
+          }}
+          handleAddPosition={async (tradeSize: string) => {
+            await handleOpenPosition({
+              coin,
+              size: tradeSize,
+              leverage: positionData?.leverage || 1,
+              direction: positionData?.direction as 'Long' | 'Short',
+              midPx: activeAssetCtx?.markPx || '0',
             });
           }}
         />

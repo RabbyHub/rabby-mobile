@@ -23,6 +23,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   View,
+  TextInput,
 } from 'react-native';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
 
@@ -109,11 +110,12 @@ export const PerpsOpenPositionPopup: React.FC<{
     onChangeText: setMargin,
   } = useUsdInput();
   const [selectedLeverage, setLeverage] = React.useState<number | undefined>(
-    Math.min(leverageRang[1], 5),
+    Math.round(leverageRang[1] / 2),
   );
   const leverage = selectedLeverage || 1;
   const [tpTriggerPx, setTpTriggerPx] = React.useState<string>('');
   const [slTriggerPx, setSlTriggerPx] = React.useState<string>('');
+  const leverageInputRef = useRef<TextInput>(null);
 
   // Calculate slider percentage
   const sliderPercentage = React.useMemo(() => {
@@ -265,16 +267,19 @@ export const PerpsOpenPositionPopup: React.FC<{
   const resetInitValue = useMemoizedFn(() => {
     setTpTriggerPx('');
     setSlTriggerPx('');
-    setLeverage(Math.min(leverageRang[1], 5));
   });
 
   React.useEffect(() => {
-    if (!visible) {
-      setMargin('');
+    if (visible) {
+      availableBalance > 2
+        ? setMargin(Math.round(availableBalance / 2).toString())
+        : setMargin('');
+      setLeverage(Math.round(leverageRang[1] / 2));
       resetInitValue();
       setIsReviewMode(false);
     }
-  }, [visible, leverageRang, setMargin, resetInitValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   useEffect(() => {
     setSelectedDirection(_direction);
@@ -461,6 +466,7 @@ export const PerpsOpenPositionPopup: React.FC<{
               {/* Slider */}
               <PerpsSlider
                 disabled={availableBalance < 0.1}
+                step={1}
                 value={sliderPercentage}
                 onValueChange={handleSliderChange}
                 showPercentage={false}
@@ -478,29 +484,39 @@ export const PerpsOpenPositionPopup: React.FC<{
                   </Text>
                   <Text style={styles.marginTitle}>{leverageRang[1]}x</Text>
                 </View>
-                <View style={styles.leverageInputWrapper}>
-                  <BottomSheetTextInput
-                    keyboardType="numeric"
-                    style={[
-                      styles.input,
-                      leverageRangeValidation.error ? styles.inputError : null,
-                    ]}
-                    placeholderTextColor={colors2024['neutral-info']}
-                    placeholder="0"
-                    value={
-                      selectedLeverage == null ? '' : String(selectedLeverage)
-                    }
-                    onChangeText={handleLeverageChange}
-                  />
-                  <Text
-                    style={[
-                      styles.leverageSuffixText,
-                      leverageRangeValidation.error ? styles.inputError : null,
-                      selectedLeverage == null ? styles.textInfo : null,
-                    ]}>
-                    x
-                  </Text>
-                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    leverageInputRef.current?.focus();
+                  }}>
+                  <View style={styles.leverageInputWrapper}>
+                    <BottomSheetTextInput
+                      ref={leverageInputRef as any}
+                      keyboardType="numeric"
+                      style={[
+                        styles.input,
+                        leverageRangeValidation.error
+                          ? styles.inputError
+                          : null,
+                      ]}
+                      placeholderTextColor={colors2024['neutral-info']}
+                      placeholder="0"
+                      value={
+                        selectedLeverage == null ? '' : String(selectedLeverage)
+                      }
+                      onChangeText={handleLeverageChange}
+                    />
+                    <Text
+                      style={[
+                        styles.leverageSuffixText,
+                        leverageRangeValidation.error
+                          ? styles.inputError
+                          : null,
+                        selectedLeverage == null ? styles.textInfo : null,
+                      ]}>
+                      x
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </View>
 
               <View style={styles.errorMsgContainer}>
@@ -515,6 +531,7 @@ export const PerpsOpenPositionPopup: React.FC<{
               <PerpsSlider
                 value={selectedLeverage ?? 1}
                 onValueChange={setLeverage}
+                step={1}
                 maxValue={leverageRang[1]}
                 showPercentage={false}
                 minValue={leverageRang[0]}
@@ -734,6 +751,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     errorMsgContainer: {
       height: 18,
+      marginBottom: -12,
     },
     errorMsg: {
       fontFamily: 'SF Pro Rounded',
@@ -1023,10 +1041,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     marginItem: {
       justifyContent: 'space-between',
       alignItems: 'center',
+      marginBottom: -6,
       flexDirection: 'row',
     },
     marginSection: {
-      paddingVertical: 20,
+      paddingVertical: 16,
       paddingHorizontal: 16,
       backgroundColor: colors2024['neutral-bg-2'],
       borderRadius: 20,
@@ -1040,7 +1059,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 20,
       lineHeight: 24,
       fontWeight: '800',
-      marginBottom: 4,
+      // marginBottom: 4,
       color: colors2024['brand-default'],
       fontFamily: 'SF Pro Rounded',
     },

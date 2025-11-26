@@ -13,6 +13,8 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 import { formatUsdValue } from '@/utils/number';
+import { MarketData } from '@/hooks/perps/usePerpsStore';
+import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 
 export const PerpsPosition: React.FC<{
   positionData?: {
@@ -38,6 +40,8 @@ export const PerpsPosition: React.FC<{
   pxDecimals: number;
   szDecimals: number;
   markPrice: number;
+  activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
+  currentAssetCtx: MarketData | null;
   handleSetAutoClose(params: {
     coin: string;
     tpTriggerPx: string;
@@ -61,6 +65,8 @@ export const PerpsPosition: React.FC<{
   availableBalance,
   pxDecimals,
   szDecimals,
+  activeAssetCtx,
+  currentAssetCtx,
   handleSetAutoClose,
   handleCancelAutoClose,
   handleUpdateMargin,
@@ -378,7 +384,10 @@ export const PerpsPosition: React.FC<{
                     Number(positionData?.fundingPayments || 0) > 0
                       ? t('page.perpsDetail.PerpsPosition.fundingGains')
                       : t('page.perpsDetail.PerpsPosition.fundingPayments'),
-                  desc: t('page.perpsDetail.PerpsPosition.fundingPaymentsTips'),
+                  desc:
+                    Number(positionData?.fundingPayments || 0) > 0
+                      ? t('page.perpsDetail.PerpsPosition.fundingGainsTips')
+                      : t('page.perpsDetail.PerpsPosition.fundingPaymentsTips'),
                 });
               }}>
               <View style={styles.listItemMain}>
@@ -416,6 +425,8 @@ export const PerpsPosition: React.FC<{
       />
       <PerpsEditMarginPopup
         visible={editMarginVisible}
+        activeAssetCtx={activeAssetCtx}
+        currentAssetCtx={currentAssetCtx}
         pnl={positionData?.pnl}
         pnlPercent={positionData?.pnlPercent}
         marginUsed={positionData?.marginUsed}
