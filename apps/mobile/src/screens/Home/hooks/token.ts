@@ -229,12 +229,10 @@ export const useTokens = (
           ctx.syncDetails.batchSize * ctx.syncDetails.round +
           ctx.syncDetails.count;
 
-        console.debug('[feat] I am here', ctx);
         if (
           currentUpdateCount >= ctx.syncDetails.total ||
           currentUpdateCount > (mainnetTokens?.length || 0)
         ) {
-          console.debug('[feat] I am here 2222', ctx);
           debounceUpdateTokens();
         }
       },
