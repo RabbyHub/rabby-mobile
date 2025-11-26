@@ -14,12 +14,19 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
+import { Account } from '@/core/services/preference';
 
 export const PerpsAccountCard: React.FC<{
   isLogin: boolean;
+  currentOnlyShowPerpsAccount: Account | null;
   accountSummary?: AccountSummary | null;
   positionAndOpenOrders?: PositionAndOpenOrder[] | null;
-}> = ({ isLogin, accountSummary, positionAndOpenOrders }) => {
+}> = ({
+  isLogin,
+  currentOnlyShowPerpsAccount,
+  accountSummary,
+  positionAndOpenOrders,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [popupState, setPopupState] = usePerpsPopupState();
@@ -37,7 +44,7 @@ export const PerpsAccountCard: React.FC<{
     [accountSummary?.withdrawable],
   );
 
-  if (isLogin) {
+  if (isLogin || currentOnlyShowPerpsAccount) {
     return (
       <LinearGradient
         colors={['#0F2F3A', '#041920']}
@@ -72,6 +79,13 @@ export const PerpsAccountCard: React.FC<{
               <Button
                 type="ghost"
                 onPress={() => {
+                  if (currentOnlyShowPerpsAccount && !isLogin) {
+                    setPopupState(prev => ({
+                      ...prev,
+                      isShowLoginPopup: true,
+                    }));
+                    return;
+                  }
                   setPopupState(prev => ({
                     ...prev,
                     isShowWithdrawPopup: true,
@@ -87,6 +101,13 @@ export const PerpsAccountCard: React.FC<{
               <Button
                 type="primary"
                 onPress={() => {
+                  if (currentOnlyShowPerpsAccount && !isLogin) {
+                    setPopupState(prev => ({
+                      ...prev,
+                      isShowLoginPopup: true,
+                    }));
+                    return;
+                  }
                   setPopupState(prev => ({
                     ...prev,
                     isShowDepositTokenPopup: true,

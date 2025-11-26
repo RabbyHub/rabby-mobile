@@ -3,8 +3,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import RcIconArrowRightCC from '@/assets2024/icons/perps/IconArrowRightCC.svg';
-import { PERPS_POSITION_RISK_LEVEL } from '@/constant/perps';
-import { getRiskLevel } from './utils';
+import RcIconTipsLightCC from '@/assets2024/icons/perps/IconTipsLightCC.svg';
 import { calculateDistanceToLiquidation } from './utils';
 
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
@@ -25,65 +24,30 @@ export const DistanceToLiquidationTag: React.FC<
     markPrice,
   );
 
-  const riskLevel = useMemo(() => {
-    return getRiskLevel(distanceLiquidation);
-  }, [distanceLiquidation]);
-
-  const riskColorMap = useMemo(() => {
-    const colorMap = {
-      [PERPS_POSITION_RISK_LEVEL.DANGER]: {
-        borderColor: colors2024['red-light-2'],
-        backgroundColor: colors2024['red-light-1'],
-        dotBgColor: colors2024['red-light-2'],
-        textColor: colors2024['red-default'],
-      },
-      [PERPS_POSITION_RISK_LEVEL.WARNING]: {
-        borderColor: colors2024['orange-light-2'],
-        backgroundColor: colors2024['orange-light-1'],
-        dotBgColor: colors2024['orange-light-2'],
-        textColor: colors2024['orange-default'],
-      },
-      [PERPS_POSITION_RISK_LEVEL.SAFE]: {
-        borderColor: colors2024['green-disable'],
-        backgroundColor: colors2024['green-light-4'],
-        dotBgColor: colors2024['green-disable'],
-        textColor: colors2024['green-default'],
-      },
-    };
-    return colorMap[riskLevel];
-  }, [colors2024, riskLevel]);
-
   return (
     <TouchableOpacity
       style={[
         styles.distanceTag,
         {
-          backgroundColor: riskColorMap.backgroundColor,
-          borderColor: riskColorMap.borderColor,
+          borderColor: colors2024['neutral-line'],
         },
       ]}
       onPress={onPress}
       activeOpacity={0.7}>
-      <View
-        style={[
-          styles.distanceDotContainer,
-          {
-            backgroundColor: riskColorMap.dotBgColor,
-          },
-        ]}>
-        <View
-          style={[
-            styles.distanceDot,
-            {
-              backgroundColor: riskColorMap.textColor,
-            },
-          ]}
-        />
-      </View>
-      <Text style={[styles.distanceText, { color: riskColorMap.textColor }]}>
+      <RcIconTipsLightCC
+        width={16}
+        height={16}
+        color={colors2024['neutral-info']}
+      />
+      <Text
+        style={[styles.distanceText, { color: colors2024['neutral-foot'] }]}>
         {formatPct(distanceLiquidation)}
       </Text>
-      <RcIconArrowRightCC width={8} height={8} color={riskColorMap.textColor} />
+      <RcIconArrowRightCC
+        width={8}
+        height={8}
+        color={colors2024['neutral-foot']}
+      />
     </TouchableOpacity>
   );
 };

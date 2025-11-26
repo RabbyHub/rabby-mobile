@@ -82,7 +82,7 @@ export const PerpsInfo: React.FC<{
             }}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsInfo.funding')}
+                {t('page.perpsDetail.PerpsInfo.fundingRate')}
               </Text>
               <RcIconInfoCC
                 width={18}
