@@ -336,7 +336,6 @@ function MultiAddressHome(): JSX.Element {
     loading,
     isLoadingNew: loadingNewCurve,
   } = useMulti24hBalance(top10Addresses, {
-    isNavigationFocused: isNavFocused,
     disableAutoFetch: true,
     totalBalance: top10Balance.total,
     totalEvmBalance: top10Balance.totalEvm,

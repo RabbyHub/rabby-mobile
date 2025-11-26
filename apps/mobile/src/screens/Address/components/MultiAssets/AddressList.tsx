@@ -55,7 +55,6 @@ export const AddressList = ({
   const { multi24hBalance, refresh: refresh24hBalance } = useMulti24hBalance(
     top10Addresses,
     {
-      isNavigationFocused: getReadyNavigationInstance()?.isFocused() ?? false,
       disableAutoFetch: true,
       totalBalance: top10Balance.total,
       totalEvmBalance: top10Balance.totalEvm,
