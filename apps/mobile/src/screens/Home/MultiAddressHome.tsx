@@ -37,7 +37,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  TouchableOpacity as RNTouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
@@ -118,6 +118,7 @@ import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { Pressable, TouchableOpacity } from 'react-native-gesture-handler';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -652,9 +653,9 @@ function MultiAddressHome(): JSX.Element {
       }
       if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
         return (
-          <TouchableOpacity onPress={showTipsDollarDialog}>
+          <RNTouchableOpacity onPress={showTipsDollarDialog}>
             <IconDollar width={24} height={24} />
-          </TouchableOpacity>
+          </RNTouchableOpacity>
         );
       }
 
@@ -852,7 +853,9 @@ function MultiAddressHome(): JSX.Element {
                     ])}
                     key={index}
                     onPress={() => {
-                      handleClickMenu(el.key);
+                      requestAnimationFrame(() => {
+                        handleClickMenu(el.key);
+                      });
                       matomoRequestEvent({
                         category: 'Click_Services',
                         action: `Click_${el.key}`,
