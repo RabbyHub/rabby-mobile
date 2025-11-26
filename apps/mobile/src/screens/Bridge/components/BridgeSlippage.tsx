@@ -52,6 +52,27 @@ const SlippageItem = (props: TouchableOpacityProps & { active?: boolean }) => {
   );
 };
 
+export const useSlippageTooLowOrTooHigh = (params: {
+  type: 'swap' | 'bridge';
+  value?: string;
+}) => {
+  const { type, value } = params;
+  const [minimumSlippage, maximumSlippage] = useMemo(() => {
+    if (type === 'swap') {
+      return [0.1, 10];
+    }
+    return [0.2, 3];
+  }, [type]);
+
+  const [isLow, isHigh] = useMemo(() => {
+    return [
+      value?.trim() !== '' && Number(value || 0) < minimumSlippage,
+      value?.trim() !== '' && Number(value || 0) > maximumSlippage,
+    ];
+  }, [maximumSlippage, minimumSlippage, value]);
+  return isLow || isHigh;
+};
+
 export const BridgeSlippage = (props: SlippageProps) => {
   const { t } = useTranslation();
 
