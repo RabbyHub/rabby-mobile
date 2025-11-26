@@ -47,18 +47,18 @@ export const navigate: NativeStackScreenProps<RootStackParamsList>['navigation']
  *
  * https://reactnavigation.org/docs/upgrading-from-6.x/#the-navigate-method-no-longer-goes-back-use-popto-instead
  */
-export const navigateDeprecated: NativeStackScreenProps<RootStackParamsList>['navigation']['navigateDeprecated'] =
+export const navigateDeprecated: NativeStackScreenProps<RootStackParamsList>['navigation']['navigate'] =
   ((...arg: any) => {
     if (navigationRef.isReady()) {
       // Perform navigation if the react navigation is ready to handle actions
-      navigationRef.navigateDeprecated(...arg);
+      navigationRef.navigate(...arg);
     } else {
       __DEV__ &&
         console.warn('[navigateDeprecated] navigationRef is not ready');
       // You can decide what to do if react navigation is not ready
       // You can ignore this, or add these actions to a queue you can call later
     }
-  }) as typeof navigationRef.navigateDeprecated;
+  }) as typeof navigationRef.navigate;
 
 // @ts-expect-error
 export const naviPush: NativeStackScreenProps<RootStackParamsList>['navigation']['push'] =
