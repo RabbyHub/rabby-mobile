@@ -258,9 +258,19 @@ function HistoryDetailScreen(): JSX.Element {
     disableAutoFetch: true,
   });
 
-  const formatType = useMemo(() => {
+  const formatType: HistoryItemCateType = useMemo(() => {
+    if (data.historyType === HistoryItemCateType.Swap) {
+      if (
+        data.receives?.[0]?.token?.is_core &&
+        data.sends?.[0]?.token?.is_core
+      ) {
+        return HistoryItemCateType.Swap;
+      } else {
+        return HistoryItemCateType.UnKnown;
+      }
+    }
     return data.historyType;
-  }, [data]);
+  }, [data.historyType, data.receives, data.sends]);
 
   const { formatToken, isNft } = useMemo(() => {
     const cate = formatType;
