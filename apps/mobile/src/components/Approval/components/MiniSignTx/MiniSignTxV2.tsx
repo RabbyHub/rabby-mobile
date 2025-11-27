@@ -194,7 +194,6 @@ const MiniSignTxV2 = ({
   };
 
   const handleCancel = () => {
-    console.log('miniv2 close');
     signatureStore.close();
   };
 
