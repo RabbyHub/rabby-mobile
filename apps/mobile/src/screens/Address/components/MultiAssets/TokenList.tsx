@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -43,6 +43,7 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
+import { useAssetsComputation } from '@/screens/Home/hooks/store';
 
 const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -54,7 +55,7 @@ interface Props {
   updateToken: (tokens: AbstractPortfolioToken[]) => void;
 }
 
-export const TokenList = ({ chain, updateToken }: Props) => {
+export const TokenList = React.memo(({ chain, updateToken }: Props) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
@@ -75,19 +76,17 @@ export const TokenList = ({ chain, updateToken }: Props) => {
     disableNFT: true,
   });
 
-  const {
-    tokens: _rawTokens,
-    checkIsExpireAndUpdate,
-    isLoading,
-  } = useAssets({ hideCombined: !isFocusing });
+  const { checkIsExpireAndUpdate, isLoading } = useAssets();
+
+  const { tokens: _rawTokens } = useAssetsComputation({
+    hideCombined: !isFocusing,
+  });
 
   const tokens = useMemo(() => {
-    return !isFocusing
-      ? []
-      : _rawTokens?.filter(item =>
-          chain && item?.chain ? item.chain === chain : true,
-        );
-  }, [isFocusing, _rawTokens, chain]);
+    return _rawTokens?.filter(item =>
+      chain && item?.chain ? item.chain === chain : true,
+    );
+  }, [_rawTokens, chain]);
 
   useEffect(() => {
     if (_rawTokens && !isLoading) {
@@ -404,10 +403,6 @@ export const TokenList = ({ chain, updateToken }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
-  // if (!isFocusing) {
-  //   return null;
-  // }
-
   return (
     <Tabs.FlatList
       keyExtractor={getItemId}
@@ -444,7 +439,7 @@ export const TokenList = ({ chain, updateToken }: Props) => {
       }
     />
   );
-};
+});
 
 const getStyles = createGetStyles2024(() => ({
   container: {

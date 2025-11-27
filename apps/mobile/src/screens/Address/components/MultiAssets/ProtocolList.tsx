@@ -25,6 +25,7 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
+import { useAssetsComputation } from '@/screens/Home/hooks/store';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -34,7 +35,7 @@ interface Props {
   chain?: string;
   updatePortfolio?: (portfolios: AbstractProject[]) => void;
 }
-export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
+export const ProtocolList = React.memo(({ chain, updatePortfolio }: Props) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -47,11 +48,11 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     disableNFT: true,
   });
 
-  const {
-    portfolios: _rawPortfolios,
-    checkIsExpireAndUpdate,
-    isLoading,
-  } = useAssets({ hideCombined: !isFocusing });
+  const { checkIsExpireAndUpdate, isLoading } = useAssets();
+
+  const { portfolios: _rawPortfolios } = useAssetsComputation({
+    hideCombined: !isFocusing,
+  });
 
   useEffect(() => {
     if (_rawPortfolios && !isLoading) {
@@ -63,12 +64,10 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
 
   const portfolios = useMemo(
     () =>
-      !isFocusing
-        ? []
-        : _rawPortfolios.filter(item =>
-            chain && item?.chain ? item.chain === chain : true,
-          ),
-    [_rawPortfolios, chain, isFocusing],
+      _rawPortfolios.filter(item =>
+        chain && item?.chain ? item.chain === chain : true,
+      ),
+    [_rawPortfolios, chain],
   );
 
   const {
@@ -180,9 +179,6 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
-  // if (!isFocusing) {
-  //   return null;
-  // }
   return (
     <Tabs.FlatList
       keyExtractor={getItemId}
@@ -221,7 +217,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       }
     />
   );
-};
+});
 
 const getStyles = createGetStyles2024(() => ({
   container: {
