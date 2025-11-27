@@ -2636,7 +2636,8 @@
       "enterAmount": "Enter Amount",
       "availableCard": {
         "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
-        "needSupply": "To borrow, you need to supply assets as collateral."
+        "needSupply": "To borrow, you need to supply assets as collateral.",
+        "isolated": "Borrowing power and assets are limited due to Isolation mode."
       },
       "list": {
         "headers": {
@@ -2669,11 +2670,27 @@
         "actions": "Supply",
         "approveAndSupply": "Approve and Supply",
         "availableToBorrow": "Available to borrow",
-        "supplyAPY": "Supply APY"
+        "supplyAPY": "Supply APY",
+        "supplyBalance": "Supply Balance",
+        "collateralization": "Collateralization",
+        "enabled": "Enabled",
+        "unavailable": "Unavailable",
+        "isolatedTips": "Your existing lending/borrowing assets are not supported."
       },
       "withdrawDetail": {
         "actions": "Withdraw",
         "remainingSupply": "Remaining supply"
+      },
+      "toggleCollateralDetail": {
+        "actions": "Toggle {{asset}} Collateral",
+        "enable": "Enable {{asset}} as Collateral",
+        "disable": "Disable {{asset}} as Collateral"
+      },
+      "toggleCollateralModal": {
+        "openTitle": "Review Enabling",
+        "closeTitle": "Review Disabling",
+        "openDesc": "Enabling this asset as collateral increases your borrowing power and Health Factor. However, it can get liquidated if your health factor drops below 1.",
+        "closeDesc": "Disabling this asset as collateral affects your borrowing power and Health Factor."
       },
       "borrowDetail": {
         "actions": "Borrow",
@@ -2702,12 +2719,14 @@
         "mySupply": "My Supply",
         "walletBalance": "Wallet Balance",
         "availableToSupply": "Available to Supply",
+        "useAsCollateral": "Use as collateral",
         "reachCap": "This asset has reached its supply cap. Nothing is available to be supplied from this market.",
         "almostCap": "This asset has almost reached its borrow cap. There is only {{available}} available to be borrowed from this market."
       },
       "risk": {
         "warning": "Borrowing this amount will lower your Health Factor to a risky level for liquidation.",
         "withdrawWarning": "Withdrawing this amount will lower your Health Factor to a risky level for liquidation.",
+        "toggleCollateralWarning": "Disabling this asset as collateral will lower your Health Factor to a risky level for liquidation.",
         "checkbox": "I understand the alert and want to continue."
       },
       "lqDescription": {
@@ -2727,7 +2746,8 @@
         "lqDesc": "When a liquidation occurs, liquidators repay up to 50% of the outstanding borrowed amount on behalf of the borrower. In return, they can buy the collateral at a discount and keep the difference (liquidation penalty) as a bonus.",
         "availableToBorrowDesc": "You can borrow based on your supplied collateral and until the borrow cap is reached.",
         "isolatedTitle": "Asset cannot be used as collateral",
-        "isolatedDesc": "This asset can only be used as collateral in isolation mode, where you cannot supply other asset collateral for borrowing. Assets used as collateral in isolation mode can only be borrowed to a specific debt ceiling."
+        "isolatedDesc": "This asset can only be used as collateral in isolation mode, where you cannot supply other asset collateral for borrowing. Assets used as collateral in isolation mode can only be borrowed to a specific debt ceiling.",
+        "isolatedSupplyDesc": "Collateral usage is limited because of isolation mode."
       }
     }
   },

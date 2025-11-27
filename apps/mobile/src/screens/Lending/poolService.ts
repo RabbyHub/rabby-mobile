@@ -112,3 +112,24 @@ export const buildRepayTx = async ({
     useOptimizedPath: !!useOptimizedPath,
   });
 };
+
+export const collateralSwitchTx = async ({
+  pool,
+  address,
+  reserve,
+  usageAsCollateral,
+  useOptimizedPath,
+}: {
+  pool: Pool;
+  address: string;
+  reserve: string;
+  usageAsCollateral: boolean;
+  useOptimizedPath?: boolean;
+}) => {
+  return pool.setUsageAsCollateral({
+    user: address,
+    reserve,
+    usageAsCollateral,
+    useOptimizedPath: !!useOptimizedPath,
+  });
+};
