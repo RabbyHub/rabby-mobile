@@ -323,17 +323,17 @@ export default function ToggleCollateralModal({
         style={styles.overlay}
         onTouchEnd={() => setIsShowToggleCollateralModal(false)}>
         <View style={[styles.container]} onTouchEnd={e => e.stopPropagation()}>
+          <View style={styles.closeButton}>
+            <TouchableOpacity
+              onPress={() => setIsShowToggleCollateralModal(false)}>
+              <IconCloseCC
+                width={20}
+                height={20}
+                color={colors2024['neutral-foot']}
+              />
+            </TouchableOpacity>
+          </View>
           <View style={styles.header}>
-            <View style={styles.closeButton}>
-              <TouchableOpacity
-                onPress={() => setIsShowToggleCollateralModal(false)}>
-                <IconCloseCC
-                  width={20}
-                  height={20}
-                  color={colors2024['neutral-foot']}
-                />
-              </TouchableOpacity>
-            </View>
             <Text style={styles.title}>
               {currentToggleReserve?.usageAsCollateralEnabledOnUser
                 ? t('page.Lending.toggleCollateralModal.closeTitle')
@@ -405,6 +405,7 @@ export default function ToggleCollateralModal({
                 wrapperStyle={styles.directSignBtn}
                 authTitle={btnTitle}
                 title={btnTitle}
+                titleStyle={styles.directSignBtnTitle}
                 onFinished={() => handleToggleCollateral()}
                 disabled={
                   !txs.length ||
@@ -458,15 +459,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     marginHorizontal: 20,
     backgroundColor: colors2024['neutral-bg-0'],
-    paddingVertical: 20,
-    paddingBottom: 32,
+    paddingTop: 37,
     borderRadius: 16,
     flexDirection: 'column',
     alignItems: 'center',
   },
   title: {
     fontSize: 20,
-    lineHeight: 26,
+    lineHeight: 24,
     color: colors2024['neutral-title-1'],
     fontWeight: '900',
     textAlign: 'center',
@@ -479,6 +479,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     width: '100%',
+    position: 'absolute',
+    top: 20,
+    right: 20,
   },
   bodyContainer: {
     width: '100%',
@@ -495,8 +498,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   btnContainer: {
     marginTop: 16,
     marginBottom: 32,
-    flex: 1,
-    height: 50,
+    //flex: 1,
+    //height: 50,
     width: '100%',
     paddingHorizontal: 16,
   },
@@ -506,6 +509,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
     backgroundColor: colors2024['orange-light-1'],
     padding: 12,
+    paddingHorizontal: 16,
     borderRadius: 6,
     marginTop: 16,
     width: '100%',
@@ -517,6 +521,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     flex: 1,
     color: colors2024['orange-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  directSignBtnTitle: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
   directSignBtn: {
@@ -547,7 +557,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
     marginTop: 12,
   },
   checkboxText: {

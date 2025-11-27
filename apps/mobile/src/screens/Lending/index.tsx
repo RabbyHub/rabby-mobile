@@ -11,11 +11,7 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import PoolContainer from './PoolContainer';
-import {
-  useLendingData,
-  useLendingSummary,
-  usePoolDataProviderContract,
-} from './hooks';
+import { useLendingData, useLendingSummary } from './hooks';
 import { LendingHeader } from './components/Header';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import ToggleCollateralModal from './modals/ToggleCollateralModal';
@@ -25,16 +21,15 @@ function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { fetchData } = useLendingData();
-  const { selectedMarketData } = usePoolDataProviderContract();
   const { iUserSummary } = useLendingSummary();
 
   useEffect(() => {
-    if (!selectedMarketData?.market) {
-      return;
-    }
-    fetchData(true);
+    const id = setTimeout(() => {
+      fetchData(true);
+    }, 200);
+    return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMarketData?.market]);
+  }, []);
 
   const Header = React.useCallback(
     () => (

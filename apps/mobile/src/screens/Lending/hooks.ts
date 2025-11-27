@@ -40,27 +40,32 @@ export const marketAtom = atomByMMKV(
   },
 );
 
+const getMarketInfo = (market?: CustomMarket) => {
+  const marketData: MarketDataType | undefined =
+    !!market && marketsData[market as CustomMarket]
+      ? marketsData[market as CustomMarket]
+      : undefined;
+  const chainEnum = marketData?.chainId
+    ? findChainByID(marketData?.chainId)?.enum
+    : undefined;
+  const chainInfo = marketData?.chainId
+    ? findChainByID(marketData?.chainId)
+    : undefined;
+  const isMainnet = chainEnum === CHAINS_ENUM.ETH;
+  return {
+    marketData,
+    chainEnum,
+    chainInfo,
+    isMainnet,
+  };
+};
+
 export const useSelectedMarket = () => {
   const [market, setMarket] = useAtom(marketAtom);
-  const marketData: MarketDataType | undefined = useMemo(
-    () =>
-      !!market && marketsData[market as CustomMarket]
-        ? marketsData[market as CustomMarket]
-        : undefined,
+  const { marketData, chainEnum, chainInfo, isMainnet } = useMemo(
+    () => getMarketInfo(market),
     [market],
   );
-  const chainEnum = useMemo(() => {
-    return marketData?.chainId
-      ? findChainByID(marketData?.chainId)?.enum
-      : undefined;
-  }, [marketData?.chainId]);
-  const chainInfo = useMemo(() => {
-    return marketData?.chainId ? findChainByID(marketData?.chainId) : undefined;
-  }, [marketData?.chainId]);
-
-  const isMainnet = useMemo(() => {
-    return chainEnum === CHAINS_ENUM.ETH;
-  }, [chainEnum]);
   return {
     marketKey: market,
     selectedMarketData: marketData,
@@ -82,67 +87,80 @@ const poolsMap = new Map<
   }
 >();
 
+const getCachePools = (marketKey?: CustomMarket) => {
+  const { marketData: selectedMarketData, chainInfo } =
+    getMarketInfo(marketKey);
+  if (!marketKey || !selectedMarketData) {
+    return undefined;
+  }
+  const existingPools = poolsMap.get(marketKey as CustomMarket);
+  if (existingPools) {
+    return existingPools;
+  }
+  const provider = getProvider(chainInfo?.network || '');
+  const newPools = {
+    provider,
+    uiPoolDataProvider: new UiPoolDataProvider({
+      uiPoolDataProviderAddress:
+        selectedMarketData.addresses.UI_POOL_DATA_PROVIDER,
+      provider,
+      chainId: selectedMarketData.chainId,
+    }),
+    walletBalanceProvider: new WalletBalanceProvider({
+      walletBalanceProviderAddress:
+        selectedMarketData.addresses.WALLET_BALANCE_PROVIDER,
+      provider,
+    }),
+    pool: new Pool(provider, {
+      POOL: selectedMarketData.addresses.LENDING_POOL,
+      REPAY_WITH_COLLATERAL_ADAPTER:
+        selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
+      SWAP_COLLATERAL_ADAPTER:
+        selectedMarketData.addresses.SWAP_COLLATERAL_ADAPTER,
+      WETH_GATEWAY: selectedMarketData.addresses.WETH_GATEWAY,
+      L2_ENCODER: selectedMarketData.addresses.L2_ENCODER,
+    }),
+    poolBundle: new PoolBundle(provider, {
+      POOL: selectedMarketData.addresses.LENDING_POOL,
+      WETH_GATEWAY: selectedMarketData.addresses.WETH_GATEWAY,
+      L2_ENCODER: selectedMarketData.addresses.L2_ENCODER,
+    }),
+  };
+  poolsMap.set(marketKey as CustomMarket, newPools);
+  return newPools;
+};
 export const usePoolDataProviderContract = () => {
-  const { selectedMarketData, marketKey, chainEnum, chainInfo } =
-    useSelectedMarket();
+  const { selectedMarketData, marketKey, chainEnum } = useSelectedMarket();
   const pools = useMemo(() => {
     if (!marketKey || !selectedMarketData) {
       return undefined;
     }
-    const existingPools = poolsMap.get(marketKey as CustomMarket);
-    if (existingPools) {
-      return existingPools;
-    }
-    const provider = getProvider(chainInfo?.network || '');
-    const newPools = {
-      provider,
-      uiPoolDataProvider: new UiPoolDataProvider({
-        uiPoolDataProviderAddress:
-          selectedMarketData.addresses.UI_POOL_DATA_PROVIDER,
-        provider,
-        chainId: selectedMarketData.chainId,
-      }),
-      walletBalanceProvider: new WalletBalanceProvider({
-        walletBalanceProviderAddress:
-          selectedMarketData.addresses.WALLET_BALANCE_PROVIDER,
-        provider,
-      }),
-      pool: new Pool(provider, {
-        POOL: selectedMarketData.addresses.LENDING_POOL,
-        REPAY_WITH_COLLATERAL_ADAPTER:
-          selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
-        SWAP_COLLATERAL_ADAPTER:
-          selectedMarketData.addresses.SWAP_COLLATERAL_ADAPTER,
-        WETH_GATEWAY: selectedMarketData.addresses.WETH_GATEWAY,
-        L2_ENCODER: selectedMarketData.addresses.L2_ENCODER,
-      }),
-      poolBundle: new PoolBundle(provider, {
-        POOL: selectedMarketData.addresses.LENDING_POOL,
-        WETH_GATEWAY: selectedMarketData.addresses.WETH_GATEWAY,
-        L2_ENCODER: selectedMarketData.addresses.L2_ENCODER,
-      }),
-    };
-    poolsMap.set(marketKey as CustomMarket, newPools);
-    return newPools;
-  }, [chainInfo?.network, marketKey, selectedMarketData]);
+    return getCachePools(marketKey);
+  }, [marketKey, selectedMarketData]);
 
   const fetchContractData = useCallback(
-    async (address: string) => {
-      if (!selectedMarketData || !pools) {
+    async (address: string, market?: CustomMarket) => {
+      const realTimePools = market ? getCachePools(market) : pools;
+      if (!selectedMarketData || !realTimePools) {
         return {};
       }
+      console.log(
+        'CUSTOM_LOGGER:=>: fetchContractData',
+        address.slice(-4),
+        market,
+      );
       try {
         const [reserves, userReserves, walletBalances] = await Promise.all([
-          pools.uiPoolDataProvider.getReservesHumanized({
+          realTimePools.uiPoolDataProvider.getReservesHumanized({
             lendingPoolAddressProvider:
               selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
           }),
-          pools.uiPoolDataProvider.getUserReservesHumanized({
+          realTimePools.uiPoolDataProvider.getUserReservesHumanized({
             lendingPoolAddressProvider:
               selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
             user: address,
           }),
-          pools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
+          realTimePools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
             address,
             selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
           ),
@@ -426,7 +444,7 @@ const useLendingData = (init: boolean = false) => {
   const { fetchContractData } = usePoolDataProviderContract();
 
   const fetchData = useCallback(
-    async (ignoreLoading: boolean = false) => {
+    async (ignoreLoading: boolean = false, market?: CustomMarket) => {
       const requestAddress = currentAccount?.address;
       if (!requestAddress || loading) {
         return;
@@ -434,7 +452,7 @@ const useLendingData = (init: boolean = false) => {
       if (!ignoreLoading) {
         setLoading(true);
       }
-      fetchContractData(requestAddress)
+      fetchContractData(requestAddress, market)
         .then(data => {
           setReserves(data?.reserves);
           setUserReserves(data?.userReserves);
