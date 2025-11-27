@@ -6,13 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { usePerpsPopupState } from '../../hooks/usePerpsPopupState';
-import { Account } from '@/core/services/preference';
 
 // Export header component separately for use in main FlatList
-export const PerpsMarketSectionHeader: React.FC<{
-  currentOnlyShowPerpsAccount: Account | null;
-  isLogin: boolean;
-}> = ({ currentOnlyShowPerpsAccount, isLogin }) => {
+export const PerpsMarketSectionHeader: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -24,14 +20,6 @@ export const PerpsMarketSectionHeader: React.FC<{
       <TouchableOpacity
         style={styles.sectionAction}
         onPress={() => {
-          if (currentOnlyShowPerpsAccount && !isLogin) {
-            setPopupState(prev => ({
-              ...prev,
-              isShowLoginPopup: true,
-            }));
-            return;
-          }
-
           setPopupState(prev => ({
             ...prev,
             isShowSearchListPopup: true,

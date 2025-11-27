@@ -5,13 +5,27 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
-import { formatPerpsUsdValue, splitNumberByStep } from '@/utils/number';
+import {
+  formatPerpsUsdValue,
+  formatUsdValue,
+  splitNumberByStep,
+} from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetView,
+  BottomSheetTextInput,
+  BottomSheetScrollView,
+} from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View, Platform } from 'react-native';
+import {
+  Text,
+  TouchableOpacity,
+  View,
+  Platform,
+  useWindowDimensions,
+} from 'react-native';
 import { PerpsSlider } from './PerpsSlider';
 import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import BigNumber from 'bignumber.js';
@@ -20,6 +34,8 @@ import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useUsdInput } from '@/hooks/useUsdInput';
+import { AssetAvatar } from '@/components';
+import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -35,7 +51,11 @@ export const PerpsAddPositionPopup: React.FC<{
   szDecimals: number;
   pxDecimals: number;
   marginUsed: number;
+  liquidationPx: number;
+  handlePressRiskTag: () => void;
   leverage: number;
+  pnl: number;
+  pnlPercent: number;
   markPrice: number;
   leverageRang: [number, number]; // [min, max]
   onCancel: () => void;
@@ -52,9 +72,13 @@ export const PerpsAddPositionPopup: React.FC<{
   direction,
   positionSize,
   marginUsed,
+  liquidationPx,
+  handlePressRiskTag,
   leverageRang,
   markPrice,
   szDecimals,
+  pnl,
+  pnlPercent,
   pxDecimals,
   onCancel,
   onConfirm,
@@ -118,6 +142,10 @@ export const PerpsAddPositionPopup: React.FC<{
     }
     return Number(tradeAmount / markPrice).toFixed(szDecimals);
   }, [markPrice, tradeAmount, szDecimals]);
+
+  const totalSize = React.useMemo(() => {
+    return (Number(tradeSize) + Number(positionSize)).toFixed(szDecimals);
+  }, [tradeSize, positionSize, szDecimals]);
 
   // 验证 margin 输入
   const marginValidation = React.useMemo(() => {
@@ -211,6 +239,11 @@ export const PerpsAddPositionPopup: React.FC<{
     marginUsed,
   ]);
 
+  const { height } = useWindowDimensions();
+  const maxHeight = useMemo(() => {
+    return Math.min(height - 100, 650);
+  }, [height]);
+
   useEffect(() => {
     if (visible) {
       modalRef.current?.present();
@@ -227,9 +260,11 @@ export const PerpsAddPositionPopup: React.FC<{
         linearGradientType: 'bg1',
       })}
       onDismiss={onCancel}
-      snapPoints={[490]}>
-      <BottomSheetView>
-        <AutoLockView style={[styles.container]}>
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      snapPoints={[maxHeight]}>
+      <AutoLockView style={[styles.container]}>
+        <BottomSheetScrollView contentContainerStyle={styles.scrollViewContent}>
           <View>
             <Text style={styles.title}>
               {direction === 'Long'
@@ -245,6 +280,55 @@ export const PerpsAddPositionPopup: React.FC<{
             activeAssetCtx={activeAssetCtx}
             currentAssetCtx={currentAssetCtx}
           />
+
+          {/* Coin Info */}
+          <View style={styles.card}>
+            <View style={styles.leftSection}>
+              <View style={styles.coinInfoRow}>
+                <AssetAvatar logo={coinLogo} size={28} />
+                <Text style={styles.coinName}>{coin}</Text>
+              </View>
+              <View style={styles.tagRow}>
+                <View
+                  style={[
+                    styles.leverageTag,
+                    {
+                      backgroundColor:
+                        direction === 'Long'
+                          ? colors2024['green-light-4']
+                          : colors2024['red-light-1'],
+                    },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.leverageText,
+                      direction === 'Long' ? styles.longText : styles.shortText,
+                    ]}>
+                    {direction} {`${leverage}x`}
+                  </Text>
+                </View>
+                <DistanceToLiquidationTag
+                  liquidationPrice={liquidationPx}
+                  markPrice={markPrice}
+                  onPress={handlePressRiskTag}
+                />
+              </View>
+            </View>
+            <View style={styles.rightSection}>
+              <Text style={styles.priceText}>
+                {formatUsdValue(Number(marginUsed))}
+              </Text>
+              <Text
+                style={[
+                  styles.pnlText,
+                  pnl >= 0 ? styles.pnlTextUp : styles.pnlTextDown,
+                ]}>
+                {pnl >= 0 ? '+' : '-'}${Math.abs(pnl || 0).toFixed(2)} (
+                {pnl >= 0 ? '+' : ''}
+                {pnlPercent.toFixed(2)}%)
+              </Text>
+            </View>
+          </View>
 
           <View style={styles.amountSection}>
             <View style={styles.amountHeader}>
@@ -292,6 +376,22 @@ export const PerpsAddPositionPopup: React.FC<{
 
           <View style={styles.listCard}>
             <View style={styles.sizeCard}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsAddPositionPopup.addSize')}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.value}>
+                  {formatPerpsUsdValue(
+                    Number(tradeSize) * markPrice,
+                    BigNumber.ROUND_DOWN,
+                  )}{' '}
+                  = {tradeSize} {coin}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.sizeCard}>
               <TouchableOpacity
                 onPress={() => {
                   showTipsPopup({
@@ -301,7 +401,7 @@ export const PerpsAddPositionPopup: React.FC<{
                 }}>
                 <View style={styles.listItemMain}>
                   <Text style={styles.label}>
-                    {t('page.perpsDetail.PerpsAddPositionPopup.addSize')}
+                    {t('page.perpsDetail.PerpsAddPositionPopup.totalSize')}
                   </Text>
                   <RcIconInfoCC
                     width={18}
@@ -313,10 +413,10 @@ export const PerpsAddPositionPopup: React.FC<{
               <View>
                 <Text style={styles.value}>
                   {formatPerpsUsdValue(
-                    Number(tradeSize) * markPrice,
+                    Number(totalSize) * markPrice,
                     BigNumber.ROUND_DOWN,
                   )}{' '}
-                  = {tradeSize} {coin}
+                  = {totalSize} {coin}
                 </Text>
               </View>
             </View>
@@ -350,7 +450,8 @@ export const PerpsAddPositionPopup: React.FC<{
               </View>
             </View>
           </View>
-
+        </BottomSheetScrollView>
+        <View style={styles.footer}>
           <Button
             type="primary"
             title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
@@ -358,18 +459,25 @@ export const PerpsAddPositionPopup: React.FC<{
             disabled={!marginValidation.isValid}
             onPress={addPosition}
           />
-        </AutoLockView>
-      </BottomSheetView>
+        </View>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
+    footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      paddingTop: 16,
+      paddingHorizontal: 16,
+      paddingBottom: 48,
+    },
+    scrollViewContent: {
+      paddingHorizontal: 20,
+    },
     container: {
       height: '100%',
-      paddingBottom: 56,
-      paddingHorizontal: 20,
     },
     title: {
       fontFamily: 'SF Pro Rounded',
@@ -380,13 +488,86 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       // marginBottom: 20,
       textAlign: 'center',
     },
+    tagRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    coinNameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    leverageTag: {
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      height: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    leverageText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+    },
+    longText: {
+      color: colors2024['green-default'],
+    },
+    shortText: {
+      color: colors2024['red-default'],
+    },
+    card: {
+      marginTop: 12,
+      borderRadius: 16,
+      paddingVertical: 14,
+      paddingHorizontal: 12,
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 4,
+      gap: 8,
+      ...(isLight
+        ? {
+            // shadow: 0 10px 11.9px 0 rgba(0, 0, 0, 0.02)
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.02,
+            shadowRadius: 11.9,
+            // elevation: 3,
+          }
+        : null),
+    },
+    leftSection: {
+      flexDirection: 'column',
+      gap: 4,
+      flex: 1,
+    },
+    coinInfoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    coinName: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
     amountSection: {
       backgroundColor: colors2024['neutral-bg-2'],
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       borderRadius: 20,
       paddingVertical: 16,
-      paddingBottom: 20,
+      paddingBottom: 6,
       paddingHorizontal: 20,
       marginTop: 12,
       marginBottom: 12,
@@ -460,7 +641,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['red-default'],
     },
     minimumWarningContainer: {
-      marginBottom: 16,
+      marginBottom: -4,
       // marginTop: -4,
       height: 14,
     },
@@ -468,6 +649,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
+      paddingVertical: 16,
       justifyContent: 'space-between',
     },
     value: {
@@ -497,13 +679,36 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       borderColor: colors2024['neutral-line'],
       borderRadius: 16,
       paddingHorizontal: 16,
-      paddingVertical: 16,
+      // paddingVertical: 16,
       flexDirection: 'column',
-      gap: 12,
+      // gap: 12,
       width: '100%',
       alignContent: 'center',
       alignItems: 'center',
-      marginBottom: 30,
+      marginBottom: 10,
+    },
+    rightSection: {
+      alignItems: 'flex-end',
+      gap: 4,
+    },
+    priceText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+    },
+    pnlText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+    },
+    pnlTextUp: {
+      color: colors2024['green-default'],
+    },
+    pnlTextDown: {
+      color: colors2024['red-default'],
     },
     pnlLabel: {
       fontFamily: 'SF Pro Rounded',

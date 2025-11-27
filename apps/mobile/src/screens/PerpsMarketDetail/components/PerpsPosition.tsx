@@ -17,6 +17,8 @@ import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 
 export const PerpsPosition: React.FC<{
+  showRiskPopup: boolean;
+  setShowRiskPopup: (show: boolean) => void;
   positionData?: {
     pnl: number;
     positionValue: number;
@@ -55,6 +57,8 @@ export const PerpsPosition: React.FC<{
     margin: number,
   ): Promise<void>;
 }> = ({
+  showRiskPopup,
+  setShowRiskPopup,
   positionData,
   coin,
   coinLogo,
@@ -74,7 +78,6 @@ export const PerpsPosition: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [editMarginVisible, setEditMarginVisible] = useState(false);
-  const [showRiskPopup, setShowRiskPopup] = useState(false);
 
   const distanceLiquidation = calculateDistanceToLiquidation(
     positionData?.liquidationPrice,

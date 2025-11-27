@@ -164,6 +164,59 @@ export const usePerpsInitial = () => {
     },
   );
 
+  // tmp no use
+  const handleSelectOnlyShowAccount = useMemoizedFn(async () => {
+    try {
+      const lastUsedAccount = await apisPerps.getPerpsLastUsedAccount();
+      const selectedItem =
+        lastUsedAccount &&
+        myAddresses.find(
+          item =>
+            item.address === lastUsedAccount.address &&
+            item.type === lastUsedAccount.type,
+        );
+      if (lastUsedAccount && selectedItem) {
+        setCurrentOnlyShowPerpsAccount(selectedItem);
+        fetchPositionAndOpenOrders(selectedItem.address);
+      } else {
+        if (myAddresses.length > 0) {
+          const list = myAddresses.slice(0, 10);
+          const sdk = apisPerps.getPerpsSDK();
+
+          const res = await Promise.all(
+            list.map(async item => {
+              try {
+                const info = await sdk.info.getClearingHouseState(item.address);
+                return { item, info };
+              } catch {
+                return { item, info: null };
+              }
+            }),
+          );
+
+          const sorted = res.sort((a, b) => {
+            const valA = Number(a.info?.marginSummary.accountValue || 0);
+            const valB = Number(b.info?.marginSummary.accountValue || 0);
+            return valB - valA;
+          });
+
+          const best = sorted[0];
+          if (best && Number(best.info?.marginSummary.accountValue || 0) > 0) {
+            setCurrentOnlyShowPerpsAccount(best.item);
+            fetchPositionAndOpenOrders(best.item.address);
+          } else {
+            // Fallback to first account if no clearinghouse value
+            // Ideally we sort by balance here but we don't have balance info readily available in this context
+            setCurrentOnlyShowPerpsAccount(myAddresses[0]);
+            fetchPositionAndOpenOrders(myAddresses[0].address);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error selecting only show account', e);
+    }
+  });
+
   useEffect(() => {
     if (isInitialized) {
       return;
@@ -175,62 +228,6 @@ export const usePerpsInitial = () => {
           apisPerps.setPerpsCurrentAccount(null);
           fetchPerpPermission('');
           await fetchMarketData();
-
-          try {
-            const lastUsedAccount = await apisPerps.getPerpsLastUsedAccount();
-            const selectedItem =
-              lastUsedAccount &&
-              myAddresses.find(
-                item =>
-                  item.address === lastUsedAccount.address &&
-                  item.type === lastUsedAccount.type,
-              );
-            if (lastUsedAccount && selectedItem) {
-              setCurrentOnlyShowPerpsAccount(selectedItem);
-              fetchPositionAndOpenOrders(selectedItem.address);
-            } else {
-              if (myAddresses.length > 0) {
-                const list = myAddresses.slice(0, 10);
-                const sdk = apisPerps.getPerpsSDK();
-
-                const res = await Promise.all(
-                  list.map(async item => {
-                    try {
-                      const info = await sdk.info.getClearingHouseState(
-                        item.address,
-                      );
-                      return { item, info };
-                    } catch {
-                      return { item, info: null };
-                    }
-                  }),
-                );
-
-                const sorted = res.sort((a, b) => {
-                  const valA = Number(a.info?.marginSummary.accountValue || 0);
-                  const valB = Number(b.info?.marginSummary.accountValue || 0);
-                  return valB - valA;
-                });
-
-                const best = sorted[0];
-                if (
-                  best &&
-                  Number(best.info?.marginSummary.accountValue || 0) > 0
-                ) {
-                  setCurrentOnlyShowPerpsAccount(best.item);
-                  fetchPositionAndOpenOrders(best.item.address);
-                } else {
-                  // Fallback to first account if no clearinghouse value
-                  // Ideally we sort by balance here but we don't have balance info readily available in this context
-                  setCurrentOnlyShowPerpsAccount(myAddresses[0]);
-                  fetchPositionAndOpenOrders(myAddresses[0].address);
-                }
-              }
-            }
-          } catch (e) {
-            console.error('Error selecting only show account', e);
-          }
-
           setInitialized(true);
         };
 
