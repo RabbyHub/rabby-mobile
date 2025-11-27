@@ -299,7 +299,6 @@ export const SupplyDetailPopup: React.FC<OpenDetailProps> = ({
               <View style={styles.userInfoItemValueContainer}>
                 <CollateralSwitch
                   reserve={reserve}
-                  isolated={userSummary.isInIsolationMode}
                   canBeEnabledAsCollateral={canBeEnabledAsCollateral}
                   onValueChange={() => {
                     openCollateralChange(reserve);
