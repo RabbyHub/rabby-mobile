@@ -44,6 +44,7 @@ import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { GasAccountTips } from '@/components/Approval/components/FooterBar/GasLessComponents/GasAccountTips';
 import { useMemoizedFn } from 'ahooks';
+import IconBestQuoteTag from '@/assets2024/icons/bridge/IconBestQuoteTag.svg';
 
 const RABBY_FEE = '0.25%';
 
@@ -159,6 +160,46 @@ const BridgeShowMore = ({
     return colors2024['brand-default'];
   }, [colors2024, duration]);
 
+  const QuoteContent = useMemo(
+    () => (
+      <>
+        {sourceLogo && (
+          <Image
+            source={
+              typeof sourceLogo === 'string' ? { uri: sourceLogo } : sourceLogo
+            }
+            style={styles.sourceLogo}
+          />
+        )}
+        {sourceName && <Text style={styles.sourceName}>{sourceName}</Text>}
+      </>
+    ),
+    [sourceLogo, sourceName, styles.sourceLogo, styles.sourceName],
+  );
+
+  const BestQuoteContent = useMemo(
+    () => (
+      <View style={styles.bestQuoteWrapper}>
+        <View>
+          <IconBestQuoteTag />
+          <View style={styles.bestTagWrapper}>
+            <Text style={styles.bestText}>{t('page.swap.best')}</Text>
+          </View>
+        </View>
+
+        <View style={styles.bestRightWrapper}>{QuoteContent}</View>
+      </View>
+    ),
+    [
+      QuoteContent,
+      styles.bestQuoteWrapper,
+      styles.bestRightWrapper,
+      styles.bestTagWrapper,
+      styles.bestText,
+      t,
+    ],
+  );
+
   const sourceContentRender = useMemoizedFn(() => (
     <ListItem
       name={
@@ -179,22 +220,7 @@ const BridgeShowMore = ({
         <TouchableOpacity
           onPress={openQuotesList}
           style={styles.quoteContainer}>
-          {isBestQuote && (
-            <View style={styles.bestView}>
-              <Text style={styles.bestText}>{t('page.swap.best')}</Text>
-            </View>
-          )}
-          {sourceLogo && (
-            <Image
-              source={
-                typeof sourceLogo === 'string'
-                  ? { uri: sourceLogo }
-                  : sourceLogo
-              }
-              style={styles.sourceLogo}
-            />
-          )}
-          {sourceName && <Text style={styles.sourceName}>{sourceName}</Text>}
+          {isBestQuote ? BestQuoteContent : QuoteContent}
           {duration ? (
             <Text style={[styles.sourceName, { color: durationColor }]}>
               {' · '}
@@ -1035,21 +1061,6 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-body'],
   },
-  bestView: {
-    backgroundColor: colors2024['green-light-4'],
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginRight: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  bestText: {
-    color: colors2024['green-default'],
-    fontWeight: '700',
-    fontSize: 12,
-    fontFamily: 'SF Pro Rounded',
-  },
   noQuotePlaceholder: {
     color: colors2024['neutral-foot'],
     fontSize: 12,
@@ -1066,6 +1077,37 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   gasAccountTipsBox: {
     paddingHorizontal: 12,
     paddingVertical: 8,
+  },
+
+  bestQuoteWrapper: {
+    borderColor: colors2024['brand-default'],
+    borderWidth: 0.5,
+    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bestTagWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 7,
+    height: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bestText: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  bestRightWrapper: {
+    flexDirection: 'row',
+    gap: 4,
+    paddingRight: 6,
+    paddingLeft: 2,
+    alignItems: 'center',
   },
 }));
 
