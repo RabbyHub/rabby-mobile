@@ -178,7 +178,7 @@ const MiniSignTxV2 = ({
     },
   );
 
-  if (!ctx || !config?.account || !ctx?.txs?.length || !currentAccount) {
+  if (!ctx || !config?.account || !ctx?.txs?.length) {
     return null;
   }
 
