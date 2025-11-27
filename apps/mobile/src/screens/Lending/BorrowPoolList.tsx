@@ -30,6 +30,10 @@ const BorrowPoolList = () => {
     useLendingSummary();
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
+  const isInIsolationMode = useMemo(() => {
+    return iUserSummary?.isInIsolationMode;
+  }, [iUserSummary?.isInIsolationMode]);
+
   const sortReserves = useMemo(() => {
     return displayPoolReserves
       ?.filter(item => {
@@ -97,28 +101,47 @@ const BorrowPoolList = () => {
       return null;
     }
     return (
-      <View style={styles.availableCard}>
+      <View
+        style={[
+          styles.availableCard,
+          isInIsolationMode && styles.availableCardIsolated,
+        ]}>
         <View style={styles.availableCardHeader}>
-          {iUserSummary?.availableBorrowsUSD &&
-          iUserSummary?.availableBorrowsUSD !== '0' ? null : (
+          {(iUserSummary?.availableBorrowsUSD &&
+            iUserSummary?.availableBorrowsUSD === '0') ||
+          isInIsolationMode ? (
             <RcIconWarningCircleCC
               width={14}
               height={14}
-              color={colors2024['neutral-info']}
+              color={
+                isInIsolationMode
+                  ? colors2024['orange-default']
+                  : colors2024['neutral-info']
+              }
             />
-          )}
-          <Text style={styles.availableCardTitle}>
+          ) : null}
+          <Text
+            style={[
+              styles.availableCardTitle,
+              isInIsolationMode && styles.orangeText,
+            ]}>
             {t('page.Lending.modalDesc.availableToBorrow')}:{' '}
-            <Text style={styles.usdValue}>
+            <Text
+              style={[styles.usdValue, isInIsolationMode && styles.orangeText]}>
               {formatUsdValueKMB(
                 Number(iUserSummary?.availableBorrowsUSD || '0'),
               )}
             </Text>
           </Text>
         </View>
-        <Text style={styles.availableCardValue}>
-          {iUserSummary?.availableBorrowsUSD &&
-          iUserSummary?.availableBorrowsUSD !== '0'
+        <Text
+          style={[
+            styles.availableCardValue,
+            isInIsolationMode && styles.orangeText,
+          ]}>
+          {iUserSummary?.availableBorrowsUSD && isInIsolationMode
+            ? t('page.Lending.availableCard.isolated')
+            : iUserSummary?.availableBorrowsUSD !== '0'
             ? t('page.Lending.availableCard.canBorrow')
             : t('page.Lending.availableCard.needSupply')}
         </Text>
@@ -128,11 +151,14 @@ const BorrowPoolList = () => {
     colors2024,
     iUserSummary?.availableBorrowsUSD,
     iUserSummary?.totalLiquidityUSD,
+    isInIsolationMode,
     loading,
     styles.availableCard,
     styles.availableCardHeader,
+    styles.availableCardIsolated,
     styles.availableCardTitle,
     styles.availableCardValue,
+    styles.orangeText,
     styles.usdValue,
     t,
   ]);
@@ -353,6 +379,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 8,
     gap: 2,
   },
+  availableCardIsolated: {
+    backgroundColor: colors2024['orange-light-1'],
+  },
   availableCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -364,6 +393,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+  },
+  orangeText: {
+    color: colors2024['orange-default'],
   },
   usdValue: {
     fontSize: 17,

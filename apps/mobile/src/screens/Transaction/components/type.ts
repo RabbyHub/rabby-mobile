@@ -23,4 +23,5 @@ export enum CUSTOM_HISTORY_TITLE_TYPE {
   LENDING_REPAY = 'LENDING_REPAY', // repay loan
   LENDING_BORROW = 'LENDING_BORROW', // borrow from lending
   LENDING_SUPPLY = 'LENDING_SUPPLY', // supply to lending
+  LENDING_TOGGLE_COLLATERAL = 'LENDING_TOGGLE_COLLATERAL', // toggle collateral
 }

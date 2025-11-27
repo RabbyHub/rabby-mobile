@@ -11,9 +11,14 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import PoolContainer from './PoolContainer';
-import { useLendingData, usePoolDataProviderContract } from './hooks';
+import {
+  useLendingData,
+  useLendingSummary,
+  usePoolDataProviderContract,
+} from './hooks';
 import { LendingHeader } from './components/Header';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import ToggleCollateralModal from './modals/ToggleCollateralModal';
 const isAndroid = Platform.OS === 'android';
 
 function DashBoardScreen(): JSX.Element {
@@ -21,6 +26,7 @@ function DashBoardScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { fetchData } = useLendingData();
   const { selectedMarketData } = usePoolDataProviderContract();
+  const { iUserSummary } = useLendingSummary();
 
   useEffect(() => {
     if (!selectedMarketData?.market) {
@@ -56,6 +62,7 @@ function DashBoardScreen(): JSX.Element {
       <AccountSwitcherModal forScene="Lending" inScreen />
       <View style={styles.container}>
         <PoolContainer />
+        {iUserSummary && <ToggleCollateralModal userSummary={iUserSummary} />}
       </View>
     </NormalScreenContainer2024>
   );

@@ -27,6 +27,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useTranslation } from 'react-i18next';
 import { formatApy, formatListNetWorth } from './utils/format';
 import { CHAINS_ENUM } from '@debank/common';
+import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 
 const FOOT_HEIGHT = 100;
 const SupplyPoolList = () => {
@@ -106,36 +107,73 @@ const SupplyPoolList = () => {
     [colors2024, iUserSummary, isLight],
   );
 
-  const ListHeaderComponent = useCallback(() => {
-    return loading ? (
-      <Skeleton style={styles.loading} width={124} height={20} circle />
-    ) : (
-      <View style={styles.listHeader}>
-        <Pressable
-          style={styles.headerTokenContainer}
-          hitSlop={20}
-          onPress={() => setToggleBalanceOrTVl(pre => !pre)}>
-          <Text style={styles.headerToken}>
-            {toggleBalanceOrTVl
-              ? t('page.Lending.list.headers.token_balance')
-              : t('page.Lending.list.headers.token_tvl')}
-          </Text>
-          <IconSwitchCC
+  const isInIsolationMode = useMemo(() => {
+    return iUserSummary?.isInIsolationMode;
+  }, [iUserSummary?.isInIsolationMode]);
+
+  const isolatedCard = useMemo(() => {
+    if (loading || !isInIsolationMode) {
+      return null;
+    }
+    return (
+      <View style={[styles.availableCard]}>
+        <View style={styles.availableCardHeader}>
+          <RcIconWarningCircleCC
             width={14}
             height={14}
-            color={colors2024['neutral-secondary']}
+            color={colors2024['orange-default']}
           />
-        </Pressable>
-        <Text style={styles.headerApy}>
-          {t('page.Lending.list.headers.apy')}
-        </Text>
-        <Text style={styles.headerMySupplies}>
-          {t('page.Lending.list.headers.mySupplies')}
-        </Text>
+
+          <Text style={[styles.availableCardTitle]}>
+            {t('page.Lending.modalDesc.isolatedSupplyDesc')}
+          </Text>
+        </View>
       </View>
     );
   }, [
     colors2024,
+    isInIsolationMode,
+    loading,
+    styles.availableCard,
+    styles.availableCardHeader,
+    styles.availableCardTitle,
+    t,
+  ]);
+
+  const ListHeaderComponent = useCallback(() => {
+    return loading ? (
+      <Skeleton style={styles.loading} width={124} height={20} circle />
+    ) : (
+      <>
+        {isolatedCard}
+        <View style={styles.listHeader}>
+          <Pressable
+            style={styles.headerTokenContainer}
+            hitSlop={20}
+            onPress={() => setToggleBalanceOrTVl(pre => !pre)}>
+            <Text style={styles.headerToken}>
+              {toggleBalanceOrTVl
+                ? t('page.Lending.list.headers.token_balance')
+                : t('page.Lending.list.headers.token_tvl')}
+            </Text>
+            <IconSwitchCC
+              width={14}
+              height={14}
+              color={colors2024['neutral-secondary']}
+            />
+          </Pressable>
+          <Text style={styles.headerApy}>
+            {t('page.Lending.list.headers.apy')}
+          </Text>
+          <Text style={styles.headerMySupplies}>
+            {t('page.Lending.list.headers.mySupplies')}
+          </Text>
+        </View>
+      </>
+    );
+  }, [
+    colors2024,
+    isolatedCard,
     loading,
     styles.headerApy,
     styles.headerMySupplies,
@@ -374,5 +412,25 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
+  },
+  availableCard: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors2024['orange-light-1'],
+    borderRadius: 6,
+    marginTop: 8,
+    gap: 2,
+  },
+  availableCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  availableCardTitle: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    color: colors2024['orange-default'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));

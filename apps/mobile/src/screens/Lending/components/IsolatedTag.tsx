@@ -11,7 +11,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
-const IsolatedTag = () => {
+const IsolatedTag = ({ disablePress }: { disablePress?: boolean }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const handleShow = () => {
@@ -54,7 +54,9 @@ const IsolatedTag = () => {
   };
 
   return (
-    <Pressable style={styles.container} onPress={handleShow}>
+    <Pressable
+      style={styles.container}
+      onPress={disablePress ? undefined : handleShow}>
       <Text style={styles.text}>{t('page.Lending.isolated')}</Text>
       <RcInfoFillCC
         width={14}

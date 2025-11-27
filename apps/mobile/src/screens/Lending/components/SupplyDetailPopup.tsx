@@ -26,10 +26,14 @@ import { useTranslation } from 'react-i18next';
 import { formatNetworth } from '@/utils/math';
 import IsolatedTag from './IsolatedTag';
 import { formatApy } from '../utils/format';
-import { useSelectedMarket } from '../hooks';
+import { useLendingSummary, useSelectedMarket } from '../hooks';
+import { CollateralSwitch } from './CollateralSwitch';
+import { getSupplyCapData } from '../utils/supply';
+import { useToggleCollateralModal } from '../modals/ToggleCollateralModal';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
-  reserve,
+  reserve: _reserve,
   userSummary,
   onClose,
 }) => {
@@ -38,7 +42,23 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+  const { userReserves } = useLendingSummary();
   const { t } = useTranslation();
+
+  const reserve = useMemo(() => {
+    const realTimeReserve = userReserves?.userReserves?.find(item =>
+      isSameAddress(item.underlyingAsset, _reserve?.underlyingAsset || ''),
+    );
+    if (realTimeReserve && _reserve) {
+      return {
+        ..._reserve,
+        usageAsCollateralEnabledOnUser:
+          realTimeReserve.usageAsCollateralEnabledOnUser,
+      };
+    }
+    return _reserve;
+  }, [_reserve, userReserves?.userReserves]);
+
   const hasSupplyBalance = useMemo(() => {
     return reserve?.underlyingBalance && reserve.underlyingBalance !== '0';
   }, [reserve.underlyingBalance]);
@@ -153,6 +173,20 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
       },
     });
   };
+  const { openCollateralChange } = useToggleCollateralModal();
+
+  const canBeEnabledAsCollateral = useMemo(() => {
+    const { supplyCapReached } = getSupplyCapData(reserve);
+    return userSummary
+      ? !supplyCapReached &&
+          reserve.reserve.reserveLiquidationThreshold !== '0' &&
+          ((!reserve.reserve.isIsolated && !userSummary.isInIsolationMode) ||
+            userSummary.isolatedReserve?.underlyingAsset ===
+              reserve.underlyingAsset ||
+            (reserve.reserve.isIsolated &&
+              userSummary.totalCollateralMarketReferenceCurrency === '0'))
+      : false;
+  }, [reserve, userSummary]);
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
@@ -167,7 +201,6 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
               tokenSymbol={reserve.reserve.symbol}
             />
             <Text style={styles.symbol}>{reserve.reserve.symbol}</Text>
-            {reserve?.reserve?.isIsolated && <IsolatedTag />}
           </View>
           <View style={styles.poolInfoItems}>
             <View style={styles.poolInfoItem}>
@@ -240,6 +273,26 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
               ) : null}
             </View>
           </View>
+          {Number(reserve.underlyingBalance || '0') > 0 && (
+            <View style={styles.userInfoItem}>
+              <View style={styles.collateralContainer}>
+                <Text style={styles.userInfoItemTitle}>
+                  {t('page.Lending.supplyOverview.useAsCollateral')}
+                </Text>
+                {reserve?.reserve?.isIsolated && <IsolatedTag />}
+              </View>
+              <View style={styles.userInfoItemValueContainer}>
+                <CollateralSwitch
+                  reserve={reserve}
+                  isolated={userSummary.isInIsolationMode}
+                  canBeEnabledAsCollateral={canBeEnabledAsCollateral}
+                  onValueChange={() => {
+                    openCollateralChange(reserve);
+                  }}
+                />
+              </View>
+            </View>
+          )}
         </View>
       </View>
       <View style={styles.buttonContainer}>
@@ -374,6 +427,11 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  collateralContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   userInfoItemTitle: {
     fontSize: 14,

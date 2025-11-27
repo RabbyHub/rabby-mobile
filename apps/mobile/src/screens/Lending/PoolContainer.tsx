@@ -20,6 +20,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import IsolatedTag from './components/IsolatedTag';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -176,9 +177,22 @@ const PoolContainer = () => {
           },
         ]}
         initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
+        externalContent={
+          iUserSummary?.isInIsolationMode ? (
+            <View style={styles.isolatedTagContainer}>
+              <IsolatedTag disablePress />
+            </View>
+          ) : null
+        }
       />
     ),
-    [styles.indicator, styles.tabBar, styles.tabsBarContainer],
+    [
+      iUserSummary?.isInIsolationMode,
+      styles.indicator,
+      styles.tabBar,
+      styles.tabsBarContainer,
+      styles.isolatedTagContainer,
+    ],
   );
   return (
     <Tabs.Container
@@ -325,6 +339,11 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     position: 'relative',
     height: 30,
     overflow: 'hidden',
+    flexDirection: 'row',
+  },
+  isolatedTagContainer: {
+    flex: 0,
+    marginLeft: 'auto',
   },
   indicator: {
     backgroundColor: colors2024['neutral-body'],
