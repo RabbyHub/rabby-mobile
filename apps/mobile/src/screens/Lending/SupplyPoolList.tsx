@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { formatApy, formatListNetWorth } from './utils/format';
 import { CHAINS_ENUM } from '@debank/common';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
+import { DisplayPoolReserveInfo } from './type';
 
 const FOOT_HEIGHT = 100;
 const SupplyPoolList = () => {
@@ -84,11 +85,11 @@ const SupplyPoolList = () => {
   }, [displayPoolReserves, reserves?.reservesData]);
 
   const handlePressItem = useCallback(
-    item => {
+    (item: DisplayPoolReserveInfo) => {
+      console.log('CUSTOM_LOGGER:=>: item', item.underlyingAsset);
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.SUPPLY_DETAIL,
-        reserve: item,
-        userSummary: iUserSummary,
+        underlyingAsset: item.underlyingAsset,
         onClose: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
@@ -104,7 +105,7 @@ const SupplyPoolList = () => {
         },
       });
     },
-    [colors2024, iUserSummary, isLight],
+    [colors2024, isLight],
   );
 
   const isInIsolationMode = useMemo(() => {

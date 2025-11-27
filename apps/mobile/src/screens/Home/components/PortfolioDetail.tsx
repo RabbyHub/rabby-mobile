@@ -6,14 +6,13 @@ import {
   ViewStyle,
   TouchableWithoutFeedback,
   Animated,
-  Easing,
   StyleProp,
+  TouchableOpacity,
 } from 'react-native';
 import { colord } from 'colord';
 import LinearGradient from 'react-native-linear-gradient';
 import groupBy from 'lodash/groupBy';
 import { RcIconInfoCC, RcIconRightCC } from '@/assets/icons/common';
-import { toast, toastWithIcon } from '@/components2024/Toast';
 import { AssetAvatar, Tip } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatNetworth } from '@/utils/math';
@@ -23,16 +22,15 @@ import {
   PortfolioItemNft,
   NftCollection,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { AbstractPortfolio, AbstractPortfolioToken } from '../types';
+import { AbstractPortfolio } from '../types';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { navigate, naviPush } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { useAssets } from '@/screens/Search/useAssets';
 import { useRoute } from '@react-navigation/native';
-import { ensureAbstractPortfolioToken } from '../utils/token';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { KeyringAccountWithAlias } from '@/hooks/account';
+import { useTranslation } from 'react-i18next';
 
 export const PortfolioHeader = ({
   data,
@@ -109,6 +107,7 @@ export const TokenList = ({
   currentAccount,
   fraction,
   headerStyle,
+  onClickToken,
 }: {
   name: string;
   tokens?: PortfolioItemToken[];
@@ -121,10 +120,12 @@ export const TokenList = ({
   };
   currentAccount?: KeyringAccountWithAlias;
   headerStyle?: StyleProp<ViewStyle>;
+  onClickToken?: (tokenAddress: string) => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenNavigationProps<'DeFiDetail'>['route']>();
   const { relateTokenId, isSingleAddress, account } = route.params || {};
+  const { t } = useTranslation();
 
   const [highlightAnim] = useState(new Animated.Value(0));
 
@@ -291,65 +292,82 @@ export const TokenList = ({
           );
         })}
       </View>
-      {list.map(l => {
+      {list.map((l, index) => {
+        const isLast = index === list.length - 1;
         return (
-          <Animated.View
-            style={[
-              styles.tokenRow,
-              styles.tokenRowToken,
-              relateTokenId === l.id && { backgroundColor },
-            ]}
-            key={l.id}>
-            <TouchableWithoutFeedback
-              onPress={() => l.isToken && l.chain && handleOpenTokenDetail(l)}>
-              <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
-                <AssetAvatar
-                  logo={l._logo}
-                  logoStyle={l.isToken ? undefined : styles.nftIcon}
-                  size={20}
-                />
-                <Text
-                  style={[
-                    styles.tokenListSymbolText,
-                    relateTokenId === l.id && styles.tokenTextHightlight,
-                  ]}
-                  numberOfLines={1}>
-                  {l._symbol}
-                </Text>
-                {l.isToken && l.chain && (
-                  <RcIconRightCC
-                    style={styles.arrowStyle}
-                    width={14}
-                    height={14}
-                    color={
-                      relateTokenId === l.id
-                        ? colors2024['brand-default']
-                        : colors2024['neutral-body']
-                    }
+          <View key={l.id} style={isLast ? undefined : styles.itemSeparator}>
+            <Animated.View
+              style={[
+                styles.tokenRow,
+                styles.tokenRowToken,
+                relateTokenId === l.id && { backgroundColor },
+              ]}
+              key={l.id}>
+              <TouchableWithoutFeedback
+                onPress={() =>
+                  l.isToken && l.chain && handleOpenTokenDetail(l)
+                }>
+                <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
+                  <AssetAvatar
+                    logo={l._logo}
+                    logoStyle={l.isToken ? undefined : styles.nftIcon}
+                    size={20}
                   />
-                )}
+                  <Text
+                    style={[
+                      styles.tokenListSymbolText,
+                      relateTokenId === l.id && styles.tokenTextHightlight,
+                    ]}
+                    numberOfLines={1}>
+                    {l._symbol}
+                  </Text>
+                  {l.isToken && l.chain && (
+                    <RcIconRightCC
+                      style={styles.arrowStyle}
+                      width={14}
+                      height={14}
+                      color={
+                        relateTokenId === l.id
+                          ? colors2024['brand-default']
+                          : colors2024['neutral-body']
+                      }
+                    />
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
+              <Text style={styles.tokenListCol}>{formatAmount(l.amount)}</Text>
+              <View
+                style={StyleSheet.flatten([
+                  styles.tokenListCol,
+                  styles.flexCenter,
+                  styles.flexRight,
+                  styles.alignRight,
+                ])}>
+                <Text style={styles.tokenListColText}>{l._netWorthStr}</Text>
+                {l.tip ? (
+                  <Tip content={l.tip}>
+                    <RcIconInfoCC
+                      width={12}
+                      height={12}
+                      style={styles.nftIconInfo}
+                    />
+                  </Tip>
+                ) : null}
               </View>
-            </TouchableWithoutFeedback>
-            <Text style={styles.tokenListCol}>{formatAmount(l.amount)}</Text>
-            <View
-              style={StyleSheet.flatten([
-                styles.tokenListCol,
-                styles.flexCenter,
-                styles.flexRight,
-                styles.alignRight,
-              ])}>
-              <Text style={styles.tokenListColText}>{l._netWorthStr}</Text>
-              {l.tip ? (
-                <Tip content={l.tip}>
-                  <RcIconInfoCC
-                    width={12}
-                    height={12}
-                    style={styles.nftIconInfo}
-                  />
-                </Tip>
-              ) : null}
-            </View>
-          </Animated.View>
+            </Animated.View>
+            {onClickToken ? (
+              <TouchableOpacity
+                style={[styles.button]}
+                onPress={() => {
+                  console.log('CUSTOM_LOGGER:=>: onPress', l);
+                  onClickToken?.(l.id);
+                }}>
+                <Text style={styles.buttonText}>
+                  {t('component.portfolios.manage')}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         );
       })}
     </View>
@@ -554,6 +572,26 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   nftIconInfo: {
     marginLeft: 4,
+  },
+  itemSeparator: {
+    marginBottom: 12,
+  },
+  button: {
+    marginTop: 0,
+    flex: 1,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: colors2024['brand-light-1'],
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: colors2024['brand-default'],
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
 }));
 

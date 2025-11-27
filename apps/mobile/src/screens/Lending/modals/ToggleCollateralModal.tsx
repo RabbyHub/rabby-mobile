@@ -190,6 +190,20 @@ export default function ToggleCollateralModal({
     buildTx();
   }, [buildTx]);
 
+  const btnTitle = useMemo(() => {
+    return currentToggleReserve?.usageAsCollateralEnabledOnUser
+      ? t('page.Lending.toggleCollateralDetail.disable', {
+          asset: currentToggleReserve?.reserve.symbol,
+        })
+      : t('page.Lending.toggleCollateralDetail.enable', {
+          asset: currentToggleReserve?.reserve.symbol,
+        });
+  }, [
+    currentToggleReserve?.usageAsCollateralEnabledOnUser,
+    t,
+    currentToggleReserve?.reserve.symbol,
+  ]);
+
   const handleToggleCollateral = useCallback(
     async (forceFullSign?: boolean) => {
       if (!currentAccount || !txs.length) {
@@ -255,11 +269,7 @@ export default function ToggleCollateralModal({
           );
         }
         refresh();
-        toast.success(
-          `${t('page.Lending.toggleCollateralDetail.actions')} ${t(
-            'page.Lending.submitted',
-          )}`,
-        );
+        toast.success(`${btnTitle} ${t('page.Lending.submitted')}`);
         setIsShowToggleCollateralModal(false);
       } catch (error) {
       } finally {
@@ -271,6 +281,7 @@ export default function ToggleCollateralModal({
       txs,
       canShowDirectSubmit,
       refresh,
+      btnTitle,
       t,
       setIsShowToggleCollateralModal,
       openDirect,
@@ -296,19 +307,6 @@ export default function ToggleCollateralModal({
     isShowToggleCollateralModal,
     prefetchMiniSigner,
     txs,
-  ]);
-  const btnTitle = useMemo(() => {
-    return currentToggleReserve?.usageAsCollateralEnabledOnUser
-      ? t('page.Lending.toggleCollateralDetail.disable', {
-          asset: currentToggleReserve?.reserve.symbol,
-        })
-      : t('page.Lending.toggleCollateralDetail.enable', {
-          asset: currentToggleReserve?.reserve.symbol,
-        });
-  }, [
-    currentToggleReserve?.usageAsCollateralEnabledOnUser,
-    t,
-    currentToggleReserve?.reserve.symbol,
   ]);
 
   return (

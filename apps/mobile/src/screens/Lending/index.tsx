@@ -15,6 +15,7 @@ import { useLendingData, useLendingSummary, useSelectedMarket } from './hooks';
 import { LendingHeader } from './components/Header';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import ToggleCollateralModal from './modals/ToggleCollateralModal';
+import { useInitOpenDetail } from './hooks/useInitOpenDetail';
 const isAndroid = Platform.OS === 'android';
 
 function DashBoardScreen(): JSX.Element {
@@ -26,13 +27,19 @@ function DashBoardScreen(): JSX.Element {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+  useInitOpenDetail();
 
   useEffect(() => {
     if (!marketKey) {
       return;
     }
     console.log('CUSTOM_LOGGER:=>: marketKey', marketKey);
-    fetchData();
+    const timeout = setTimeout(() => {
+      fetchData();
+    }, 200);
+    return () => {
+      clearTimeout(timeout);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [marketKey, currentAccount?.address]);
 

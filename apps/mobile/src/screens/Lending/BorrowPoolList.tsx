@@ -76,8 +76,7 @@ const BorrowPoolList = () => {
     item => {
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.BORROW_DETAIL,
-        reserve: item,
-        userSummary: iUserSummary,
+        underlyingAsset: item.reserve.underlyingAsset,
         onClose: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
@@ -93,7 +92,7 @@ const BorrowPoolList = () => {
         },
       });
     },
-    [colors2024, iUserSummary, isLight],
+    [colors2024, isLight],
   );
 
   const availableCard = useMemo(() => {

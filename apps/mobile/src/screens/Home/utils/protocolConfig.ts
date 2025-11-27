@@ -1,6 +1,6 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
-import { useCallback, useMemo } from 'react';
+import { FC, useCallback, useMemo } from 'react';
 import AAVE3_ICON from '@/assets/icons/protocols/aave-icon-bg.svg';
 import HYPERLIQUID_ICON from '@/assets/icons/protocols/hyper-icon-bg.svg';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
@@ -11,6 +11,7 @@ import {
 import { AbstractPortfolio } from '../types';
 import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { CustomMarket } from '@/screens/Lending/config/market';
+import { SvgProps } from 'react-native-svg';
 
 const keyToMarketKey: Record<string, CustomMarket> = {
   aave3: CustomMarket.proto_mainnet_v3,
@@ -30,35 +31,65 @@ const keyToMarketKey: Record<string, CustomMarket> = {
   xdai_aave3: CustomMarket.proto_gnosis_v3,
 };
 
+export type TonTokenManageAction = (
+  account?: KeyringAccountWithAlias,
+  tokenAddress?: string,
+  direction?: 'supply' | 'borrow',
+) => void;
+
+export type TonManageAction = (
+  account?: KeyringAccountWithAlias,
+  item?: AbstractPortfolio,
+) => Promise<void>;
+
+interface ProtocolConfigItemType {
+  icon: FC<SvgProps>;
+  bgColor1: string;
+  bgColor2: string;
+  showManage?: (
+    item: AbstractPortfolio,
+    account?: KeyringAccountWithAlias,
+  ) => boolean;
+  onManage?: TonManageAction;
+  showTokenManage?: (
+    item: AbstractPortfolio,
+    account?: KeyringAccountWithAlias,
+  ) => boolean;
+  onTokenManage?: TonTokenManageAction;
+}
+
 export const useProtocolConfig = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useMyAccounts();
   const { setMarketKey } = useSelectedMarket();
   const generateAAVEConfig = useCallback(
-    (key: string) => {
+    (key: string): ProtocolConfigItemType => {
       return {
         icon: AAVE3_ICON,
         bgColor1: 'rgba(147, 145, 247, 0.2)',
         bgColor2: 'rgba(147, 145, 247, 0)',
-        showManage: (
-          item: AbstractPortfolio,
-          _account?: KeyringAccountWithAlias,
-        ) => {
+        showTokenManage: (item, _account) => {
           return item.name?.toLowerCase() === 'lending';
         },
-        onManage: async (
-          account?: KeyringAccountWithAlias,
-          _item?: AbstractPortfolio,
-        ) => {
+        onTokenManage: async (account, tokenAddress, direction) => {
+          console.log(
+            'CUSTOM_LOGGER:=>: onTokenManage',
+            account?.address,
+            tokenAddress,
+            direction,
+          );
           const marketKey = keyToMarketKey[key];
-          if (account) {
+          if (account && marketKey) {
             await switchSceneCurrentAccount('Lending', account);
             setMarketKey(marketKey);
           }
           return navigation.navigate(RootNames.StackTransaction, {
             screen: RootNames.Lending,
-            params: {},
+            params: {
+              tokenAddress,
+              direction,
+            },
           });
         },
       };
@@ -71,7 +102,8 @@ export const useProtocolConfig = () => {
       return acc;
     }, {});
   }, [generateAAVEConfig]);
-  const config = useMemo(() => {
+
+  const config = useMemo((): Record<string, ProtocolConfigItemType> => {
     return {
       ...aave3Config,
       hyperliquid: {
