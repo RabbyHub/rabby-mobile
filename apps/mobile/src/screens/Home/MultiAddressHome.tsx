@@ -127,7 +127,7 @@ import { foldMultiChartAtom } from '../Address/components/MultiAssets/RenderRow/
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { RECOMMENDED_DEFAULT_QUERY_LIMIT } from '@/databases/entities/_helpers';
-import { Pressable, TouchableOpacity } from 'react-native-gesture-handler';
+import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -329,7 +329,6 @@ function MultiAddressHome(): JSX.Element {
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
 
-  const isNavFocused = useIsFocused();
   const {
     combineData,
     refresh: refreshCurve,
@@ -618,7 +617,7 @@ function MultiAddressHome(): JSX.Element {
           });
           break;
         case MultiHomeFeatTitle.Lending:
-          navigation.navigate(RootNames.StackTransaction, {
+          navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Lending,
             params: {},
           });
@@ -863,7 +862,7 @@ function MultiAddressHome(): JSX.Element {
                 <View style={styles.gridItemsWrap}>
                   {MENU_ARR.map((el, index) => {
                     return (
-                      <TouchableOpacity
+                      <RNGHTouchableOpacity
                         style={StyleSheet.flatten([
                           styles.gridItem,
                           { width: itemWidth },
@@ -893,7 +892,7 @@ function MultiAddressHome(): JSX.Element {
                           </View>
                         </View>
                         <Text style={styles.gridText}>{el.title}</Text>
-                      </TouchableOpacity>
+                      </RNGHTouchableOpacity>
                     );
                   })}
                 </View>
