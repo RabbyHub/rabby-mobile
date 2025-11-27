@@ -11,7 +11,7 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import PoolContainer from './PoolContainer';
-import { useLendingData, useLendingSummary } from './hooks';
+import { useLendingData, useLendingSummary, useSelectedMarket } from './hooks';
 import { LendingHeader } from './components/Header';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import ToggleCollateralModal from './modals/ToggleCollateralModal';
@@ -22,14 +22,19 @@ function DashBoardScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { fetchData } = useLendingData();
   const { iUserSummary } = useLendingSummary();
+  const { marketKey } = useSelectedMarket();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
 
   useEffect(() => {
-    const id = setTimeout(() => {
-      fetchData(true);
-    }, 200);
-    return () => clearTimeout(id);
+    if (!marketKey) {
+      return;
+    }
+    console.log('CUSTOM_LOGGER:=>: marketKey', marketKey);
+    fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [marketKey, currentAccount?.address]);
 
   const Header = React.useCallback(
     () => (

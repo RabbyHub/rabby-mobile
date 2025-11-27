@@ -18,7 +18,7 @@ import {
 import { ethers } from 'ethers';
 import dayjs from 'dayjs';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
 import { CustomMarket, MarketDataType, marketsData } from './config/market';
@@ -139,28 +139,23 @@ export const usePoolDataProviderContract = () => {
   }, [marketKey, selectedMarketData]);
 
   const fetchContractData = useCallback(
-    async (address: string, market?: CustomMarket) => {
-      const realTimePools = market ? getCachePools(market) : pools;
-      if (!selectedMarketData || !realTimePools) {
+    async (address: string) => {
+      if (!selectedMarketData || !pools) {
         return {};
       }
-      console.log(
-        'CUSTOM_LOGGER:=>: fetchContractData',
-        address.slice(-4),
-        market,
-      );
+      console.log('CUSTOM_LOGGER:=>: fetchContractData', address.slice(-4));
       try {
         const [reserves, userReserves, walletBalances] = await Promise.all([
-          realTimePools.uiPoolDataProvider.getReservesHumanized({
+          pools.uiPoolDataProvider.getReservesHumanized({
             lendingPoolAddressProvider:
               selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
           }),
-          realTimePools.uiPoolDataProvider.getUserReservesHumanized({
+          pools.uiPoolDataProvider.getUserReservesHumanized({
             lendingPoolAddressProvider:
               selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
             user: address,
           }),
-          realTimePools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
+          pools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
             address,
             selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
           ),
@@ -432,7 +427,15 @@ const useRefreshHistoryId = () => {
   return { refreshHistoryId, refresh };
 };
 
-const useLendingData = (init: boolean = false) => {
+const preQueryParams: {
+  address?: string;
+  marketKey?: CustomMarket;
+} = {
+  address: undefined,
+  marketKey: undefined,
+};
+
+const useLendingData = () => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
@@ -440,19 +443,27 @@ const useLendingData = (init: boolean = false) => {
   const [userReserves, setUserReserves] = useAtom(userReservesAtom);
   const [walletBalances, setWalletBalances] = useAtom(walletBalancesAtom);
   const [loading, setLoading] = useAtom(loadingAtom);
-  const [currentAddress, setCurrentAddress] = useAtom(addressAtom);
+  const { marketKey } = useSelectedMarket();
+  const [, setCurrentAddress] = useAtom(addressAtom);
   const { fetchContractData } = usePoolDataProviderContract();
 
   const fetchData = useCallback(
-    async (ignoreLoading: boolean = false, market?: CustomMarket) => {
+    async (ignoreLoading: boolean = false) => {
       const requestAddress = currentAccount?.address;
-      if (!requestAddress || loading) {
+      if (!requestAddress) {
         return;
       }
-      if (!ignoreLoading) {
+      // 用户强制忽略loading、前后params一样
+      const isSameParams =
+        preQueryParams.address === requestAddress &&
+        preQueryParams.marketKey === marketKey;
+      const isForceIgnoreLoading = ignoreLoading || isSameParams;
+      preQueryParams.address = requestAddress;
+      preQueryParams.marketKey = marketKey;
+      if (!isForceIgnoreLoading) {
         setLoading(true);
       }
-      fetchContractData(requestAddress, market)
+      fetchContractData(requestAddress)
         .then(data => {
           setReserves(data?.reserves);
           setUserReserves(data?.userReserves);
@@ -467,7 +478,7 @@ const useLendingData = (init: boolean = false) => {
     [
       currentAccount?.address,
       fetchContractData,
-      loading,
+      marketKey,
       setCurrentAddress,
       setLoading,
       setReserves,
@@ -476,36 +487,12 @@ const useLendingData = (init: boolean = false) => {
     ],
   );
 
-  useEffect(() => {
-    if (!currentAccount?.address || !init) {
-      return;
-    }
-    if (
-      currentAddress &&
-      isSameAddress(currentAddress, currentAccount?.address) &&
-      reserves
-    ) {
-      return;
-    }
-    if (loading) {
-      return;
-    }
-
-    fetchData();
-  }, [
-    currentAccount?.address,
-    reserves,
-    currentAddress,
-    loading,
-    fetchData,
-    init,
-  ]);
-
   return {
     reserves,
     userReserves,
     walletBalances,
     loading,
+    setLoading,
     fetchData,
   };
 };
