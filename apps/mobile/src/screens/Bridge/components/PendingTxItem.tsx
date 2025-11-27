@@ -33,6 +33,8 @@ import RcIconBridgeStep2Light from '@/assets2024/icons/bridge/IconBridgeStep2Lig
 import RcIconBridgeStep2Dark from '@/assets2024/icons/bridge/IconBridgeStep2Dark.svg';
 import RcIconBridgeStepArrowCC from '@/assets2024/icons/bridge/IconBridgeStepArrowCC.svg';
 
+import RcIconBridgeRightArrowCC from '@/assets2024/icons/bridge/IconRightArrowCC.svg';
+
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { AssetAvatar } from '@/components';
@@ -48,6 +50,7 @@ import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 
 type StepStatusType = 'loading' | 'success' | 'failed' | 'queued' | 'dash';
 
@@ -100,7 +103,7 @@ const getPendingStatusStyles = createGetStyles2024(({ colors2024 }) => ({
   detailContainer: {
     width: '100%',
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 2,
     flex: 1,
   },
   titleWrapper: {
@@ -112,7 +115,7 @@ const getPendingStatusStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '700',
+    fontWeight: '900',
   },
   card: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -194,17 +197,17 @@ const getPendingStatusStyles = createGetStyles2024(({ colors2024 }) => ({
   tokenAmount: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
     marginLeft: 8,
   },
   tokenUsd: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   failureBanner: {
     flexDirection: 'row',
@@ -277,7 +280,6 @@ const getPendingStatusStyles = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-bg-1'],
   },
   btn: {
-    marginHorizontal: 20,
     marginTop: 'auto',
   },
 }));
@@ -400,7 +402,7 @@ const StepStatusIndicator = ({
   step1Status: StepStatusType;
   step2Status: StepStatusType;
 }) => {
-  const { styles: indicatorStyles } = useTheme2024({
+  const { styles: indicatorStyles, colors2024 } = useTheme2024({
     getStyle: getStepIndicatorStyles,
   });
 
@@ -409,6 +411,7 @@ const StepStatusIndicator = ({
       <StepStatusIcon step={1} status={step1Status} />
       <Text style={indicatorStyles.indicatorArrow}>→</Text>
       <StepStatusIcon step={2} status={step2Status} />
+      <RcIconBridgeRightArrowCC color={colors2024['neutral-secondary']} />
     </View>
   );
 };
@@ -952,10 +955,7 @@ const PendingStatusDetail = ({
             {ReceiveBottomArea}
           </View>
         </View>
-        <RcIconBridgeStepArrowCC
-          // color={'pink'}
-          style={pendingStyles.stepArrow}
-        />
+        <RcIconBridgeStepArrowCC style={pendingStyles.stepArrow} />
       </View>
 
       <Button
@@ -964,7 +964,7 @@ const PendingStatusDetail = ({
         containerStyle={[
           pendingStyles.btn,
           {
-            marginBottom: Math.max(30, bottom),
+            marginBottom: Math.max(48, bottom),
           },
         ]}
       />
@@ -1202,7 +1202,7 @@ export const BridgePendingTxItem = ({
     sheetRef.current?.dismiss();
   }, []);
 
-  const points = [Math.min(675, height * 0.8)];
+  const points = [Math.min(652, height * 0.8)];
 
   // const handleOpenHistory = useCallback(() => {
   //   closeDetail();
@@ -1278,7 +1278,13 @@ export const BridgePendingTxItem = ({
         />
       </TouchableOpacity>
 
-      <AppBottomSheetModal ref={sheetRef} snapPoints={[652]}>
+      <AppBottomSheetModal
+        ref={sheetRef}
+        snapPoints={[652]}
+        {...makeBottomSheetProps({
+          colors: colors2024,
+          linearGradientType: 'bg1',
+        })}>
         <BottomSheetScrollView contentContainerStyle={styles.sheetContent}>
           {data ? (
             <>
@@ -1303,9 +1309,9 @@ const getItemStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+    paddingRight: 0,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: colors2024['neutral-card-1'],
     marginHorizontal: 16,
   },
   tokenRow: {

@@ -258,8 +258,8 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
       onDismiss={onClose}
       enableDismissOnClose
       {...makeBottomSheetProps({
-        linearGradientType: 'bg0',
         colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
       })}>
       <BottomSheetView style={{ flex: 1 }}>
         <Text style={styles.headerText}>
