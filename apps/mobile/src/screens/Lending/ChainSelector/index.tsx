@@ -72,7 +72,7 @@ export function ChainSelector({
   const { t } = useTranslation();
   const { selectedMarketData, setMarketKey, chainEnum } = useSelectedMarket();
   const modalRef = React.useRef<MODAL_ID>();
-  const { fetchData } = useLendingData();
+  const { setLoading } = useLendingData();
 
   const removeChainModal = React.useCallback(() => {
     if (modalRef.current) {
@@ -99,9 +99,9 @@ export function ChainSelector({
         },
       },
       onChange: market => {
+        setLoading(true);
         removeChainModal();
         setMarketKey?.(market);
-        fetchData(false, market);
       },
     });
   }, [
@@ -110,8 +110,8 @@ export function ChainSelector({
     t,
     isLight,
     colors2024,
+    setLoading,
     setMarketKey,
-    fetchData,
   ]);
 
   return (

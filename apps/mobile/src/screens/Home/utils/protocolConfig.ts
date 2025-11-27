@@ -1,6 +1,6 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import AAVE3_ICON from '@/assets/icons/protocols/aave-icon-bg.svg';
 import HYPERLIQUID_ICON from '@/assets/icons/protocols/hyper-icon-bg.svg';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
@@ -9,20 +9,41 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { AbstractPortfolio } from '../types';
+import { useSelectedMarket } from '@/screens/Lending/hooks';
+import { CustomMarket } from '@/screens/Lending/config/market';
+
+const keyToMarketKey: Record<string, CustomMarket> = {
+  aave3: CustomMarket.proto_mainnet_v3,
+  op_aave3: CustomMarket.proto_optimism_v3,
+  avax_aave3: CustomMarket.proto_avalanche_v3,
+  matic_aave3: CustomMarket.proto_polygon_v3,
+  arb_aave3: CustomMarket.proto_arbitrum_v3,
+  base_aave3: CustomMarket.proto_base_v3,
+  bsc_aave3: CustomMarket.proto_bnb_v3,
+  scrl_aave3: CustomMarket.proto_scroll_v3,
+  plasma_aave3: CustomMarket.proto_plasma_v3,
+  ink_aave3: CustomMarket.proto_ink_v3,
+  era_aave3: CustomMarket.proto_zksync_v3,
+  linea_aave3: CustomMarket.proto_linea_v3,
+  sonic_aave3: CustomMarket.proto_sonic_v3,
+  celo_aave3: CustomMarket.proto_celo_v3,
+  xdai_aave3: CustomMarket.proto_gnosis_v3,
+};
 
 export const useProtocolConfig = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useMyAccounts();
-  const config = useMemo(() => {
-    return {
-      aave3: {
+  const { setMarketKey } = useSelectedMarket();
+  const generateAAVEConfig = useCallback(
+    (key: string) => {
+      return {
         icon: AAVE3_ICON,
         bgColor1: 'rgba(147, 145, 247, 0.2)',
         bgColor2: 'rgba(147, 145, 247, 0)',
         showManage: (
           item: AbstractPortfolio,
-          account?: KeyringAccountWithAlias,
+          _account?: KeyringAccountWithAlias,
         ) => {
           return item.name?.toLowerCase() === 'lending';
         },
@@ -30,15 +51,29 @@ export const useProtocolConfig = () => {
           account?: KeyringAccountWithAlias,
           _item?: AbstractPortfolio,
         ) => {
+          const marketKey = keyToMarketKey[key];
           if (account) {
             await switchSceneCurrentAccount('Lending', account);
+            setMarketKey(marketKey);
           }
           return navigation.navigate(RootNames.StackTransaction, {
             screen: RootNames.Lending,
             params: {},
           });
         },
-      },
+      };
+    },
+    [navigation, setMarketKey, switchSceneCurrentAccount],
+  );
+  const aave3Config = useMemo(() => {
+    return Object.entries(keyToMarketKey).reduce((acc, [key]) => {
+      acc[key] = generateAAVEConfig(key);
+      return acc;
+    }, {});
+  }, [generateAAVEConfig]);
+  const config = useMemo(() => {
+    return {
+      ...aave3Config,
       hyperliquid: {
         icon: HYPERLIQUID_ICON,
         bgColor1: 'rgba(187, 235, 221, 0.2)',
@@ -81,7 +116,7 @@ export const useProtocolConfig = () => {
         },
       },
     };
-  }, [accounts, navigation, switchSceneCurrentAccount]);
+  }, [aave3Config, accounts, navigation]);
   return {
     config,
   };
