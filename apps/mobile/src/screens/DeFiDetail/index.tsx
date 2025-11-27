@@ -275,7 +275,7 @@ export const DeFiDetailScreen = () => {
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
   const { getCacheTop10Assets, refreshing, assetsMap, loadSpecificDefi } =
-    useAssets();
+    useAssets({ hideCombined: true });
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });

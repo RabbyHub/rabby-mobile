@@ -1,7 +1,4 @@
-import {
-  useAssetsActions,
-  useAssetsComputation,
-} from '@/screens/Home/hooks/store';
+import { useAssetsMap } from '@/screens/Home/hooks/store';
 import { produce } from '@/core/utils/produce';
 import { DisplayedProject } from '../Home/utils/project';
 import { AbstractPortfolioToken } from '../Home/types';
@@ -59,20 +56,27 @@ async function getTop10AccountsWithBalance() {
   };
 }
 
-export const useAssets = () => {
+export const useAssets = ({
+  hideCombined = false,
+}: {
+  hideCombined?: boolean;
+} = {}) => {
   const [isLoading, setLoading] = useAtom(loadingAtom);
 
   const [isFirstFetch, setIsFirstFetch] = useAtom(isFirstFetchAtom);
   const [shortCache, setShortCache] = useAtom(shortCacheAtom);
   const {
     top10Addresses,
+    tokens,
+    portfolios,
     assetsMap,
+    nfts,
     setAssetsMap,
     updateNFTs,
     updatePortfolios,
     updateTokens,
     getTokenCombined,
-  } = useAssetsActions();
+  } = useAssetsMap({ hideCombined });
 
   const loadToken = useMemoizedFn(async (address: string, force?: boolean) => {
     if (!address) {
@@ -569,9 +573,13 @@ export const useAssets = () => {
   );
 
   return {
+    tokens,
+    portfolios,
+    nfts,
     assetsMap,
     isLoading,
     getTokenCombined,
+    hasAssets: !!tokens?.length || !!portfolios?.length,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     batchLoadCacheTokens,
@@ -598,7 +606,7 @@ export const useInitDetectDBAssets = () => {
     batchLoadCacheTokens,
     batchLoadCacheDefi,
     batchLoadCacheNFT,
-  } = useAssets();
+  } = useAssets({ hideCombined: true });
   const { userTokenSettings } = useUserTokenSettings();
 
   const debounceReloadTokenList = useMemo(

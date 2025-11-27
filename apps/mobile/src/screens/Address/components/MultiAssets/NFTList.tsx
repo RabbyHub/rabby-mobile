@@ -52,13 +52,12 @@ import {
   useIsFocusedCurrentTab,
 } from './hooks/share';
 import { isTabsSwiping } from './hooks';
-import { useAssetsComputation } from '@/screens/Home/hooks/store';
 
 interface Props {
   chain?: string;
   updateNft: (nfts: DisplayNftItem[]) => void;
 }
-export const NFTList = React.memo(({ chain, updateNft }: Props) => {
+export const NFTList = ({ chain, updateNft }: Props) => {
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -73,11 +72,11 @@ export const NFTList = React.memo(({ chain, updateNft }: Props) => {
     disableDefi: true,
   });
 
-  const { checkIsExpireAndUpdate, isLoading } = useAssets();
-
-  const { nfts: _rawNftList } = useAssetsComputation({
-    hideCombined: !isFocusing,
-  });
+  const {
+    nfts: _rawNftList,
+    checkIsExpireAndUpdate,
+    isLoading,
+  } = useAssets({ hideCombined: !isFocusing });
 
   useEffect(() => {
     if (_rawNftList && !isLoading) {
@@ -87,26 +86,32 @@ export const NFTList = React.memo(({ chain, updateNft }: Props) => {
   }, [_rawNftList?.length, isLoading, updateNft]);
 
   const nftList = useMemo(() => {
-    return _rawNftList?.filter(item =>
-      chain && item?.chain ? item.chain === chain : true,
-    );
-  }, [_rawNftList, chain]);
+    return !isFocusing
+      ? []
+      : _rawNftList?.filter(item =>
+          chain && item?.chain ? item.chain === chain : true,
+        );
+  }, [_rawNftList, chain, isFocusing]);
 
   const foldNftList: ActionItem[] = useMemo(
     () =>
-      collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
-        type: 'fold_nft',
-        data: item,
-      })),
-    [nftList],
+      !isFocusing
+        ? []
+        : collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
+            type: 'fold_nft',
+            data: item,
+          })),
+    [nftList, isFocusing],
   );
   const unFoldNftList: ActionItem[] = useMemo(
     () =>
-      collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
-        type: 'unfold_nft',
-        data: item,
-      })),
-    [nftList],
+      !isFocusing
+        ? []
+        : collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
+            type: 'unfold_nft',
+            data: item,
+          })),
+    [nftList, isFocusing],
   );
 
   const dataList = useMemo(() => {
@@ -334,6 +339,9 @@ export const NFTList = React.memo(({ chain, updateNft }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
+  // if (!isFocusing) {
+  //   return null;
+  // }
   return (
     <Tabs.FlatList
       keyExtractor={getItemId}
@@ -370,7 +378,7 @@ export const NFTList = React.memo(({ chain, updateNft }: Props) => {
       }
     />
   );
-});
+};
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {

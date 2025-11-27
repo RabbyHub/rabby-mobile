@@ -56,7 +56,7 @@ export const FullDefiRenderItem = ({
   }, [data?.chain]);
 
   const { updateSpecificProtocol } = usePortfolios(account?.address, false);
-  const { loadSpecificDefi } = useAssets();
+  const { loadSpecificDefi } = useAssets({ hideCombined: true });
   const { openTab } = useBrowser();
 
   const handleOpenSite = useCallback(() => {

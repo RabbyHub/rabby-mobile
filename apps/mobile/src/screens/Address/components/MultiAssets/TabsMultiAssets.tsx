@@ -73,7 +73,7 @@ export const TabsMultiAssets: React.FC<Props> = ({
   const { chainsInfo, updateToken, updatePortfolio, updateNft } =
     useChainInfo();
   const { top10Addresses } = useAccountInfo();
-  const { getCacheTop10Assets } = useAssets();
+  const { getCacheTop10Assets } = useAssets({ hideCombined: false });
 
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
@@ -177,11 +177,8 @@ export const TabsMultiAssets: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // const containerRef = useRef<React.ElementRef<typeof Tabs.Container>>(null);
-
   return (
     <Tabs.Container
-      // ref={containerRef}
       onIndexChange={onIndexChange}
       renderHeader={renderHeader}
       renderTabBar={renderTabBar}

@@ -810,7 +810,7 @@ function MultiAddressHome(): JSX.Element {
             <Tabs.ScrollView
               tvParallaxProperties={undefined}
               showsVerticalScrollIndicator={false}
-              style={[styles.scroll, { flex: undefined }]}
+              style={styles.scroll}
               contentContainerStyle={[
                 styles.scrollContainer,
                 {
@@ -959,7 +959,7 @@ const getStyle = createGetStyles2024(
       overflow: 'hidden',
     },
     scroll: {
-      // flex: 1,
+      flex: 1,
       marginTop: TAB_HEADER_MIN_HEIGHT,
     },
     scrollContainer: {

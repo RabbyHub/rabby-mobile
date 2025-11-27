@@ -66,7 +66,7 @@ export const useCheckIsExpireAndUpdate = ({
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
 
-  const { checkIsExpireAndUpdate } = useAssets();
+  const { checkIsExpireAndUpdate } = useAssets({ hideCombined: true });
 
   useEffect(() => {
     initRef.current = false;

@@ -44,7 +44,6 @@ import { SAFE_API_KEY } from './constant/env';
 Safe.apiKey = SAFE_API_KEY;
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
-import { useAssetsActionsOnTop } from './screens/Home/hooks/store';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -79,7 +78,6 @@ function MainScreen({ rabbitCode }: AppProps) {
   useIncreaseTxCountOnAppTop({ isTop: true });
   useIntervalSyncDDefaultRPCs();
   useUserDidTakeScreenshot({ isTop: true });
-  useAssetsActionsOnTop();
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
