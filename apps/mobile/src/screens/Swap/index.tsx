@@ -62,7 +62,7 @@ import { SwapTokenItem } from './components/Token';
 import { Divider } from '@rneui/themed';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useStaleSyncValue } from '@/hooks/common/delayLikeValue';
 import { useSwapRecentToTokens } from './hooks/recent';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import {
@@ -731,7 +731,7 @@ const Swap = ({
     ],
   );
 
-  const noQuote = useDebounceValue(noQuoteOrigin, 10);
+  const noQuote = useStaleSyncValue(noQuoteOrigin, 10);
 
   const lowCreditToken = useMemo(() => {
     if (!navState) {

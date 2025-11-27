@@ -22,7 +22,7 @@ import { Account } from '@/core/services/preference';
 import { formatUsdValue } from '@/utils/number';
 import { formatAmount } from '@/utils/math';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { wrapAbortableFn } from '@/databases/sync/utils';
 import { stableSortByAddress } from '@/utils/account';
 
@@ -75,7 +75,7 @@ export const useSelectTokens = ({
   );
 
   const [userTokenSettings, setUserTokenSettings] = useState({});
-  const currentAccount = useDebounceValue(_currentAccount, 100);
+  const currentAccount = useDebouncedValue(_currentAccount, 100);
 
   const { top10Addresses, fetchAccounts } = useAccountInfo();
 
