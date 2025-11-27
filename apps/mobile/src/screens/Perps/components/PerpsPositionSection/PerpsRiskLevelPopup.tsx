@@ -27,29 +27,8 @@ interface PerpsRiskLevelPopupProps {
   pxDecimals: number;
   currentPrice: number;
   liquidationPrice: number;
+  direction: 'Long' | 'Short';
 }
-
-// Risk Gauge Component
-const RiskGauge: React.FC<{
-  riskLevel: PERPS_POSITION_RISK_LEVEL;
-  riskConfig: {
-    label: string;
-    color: string;
-    ImageComponent: React.FC<any>;
-  };
-}> = ({ riskConfig }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
-  const { ImageComponent } = riskConfig;
-
-  return (
-    <View style={styles.gaugeContainer}>
-      <ImageComponent width={240} height={140} />
-      <Text style={[styles.riskLabel, { color: riskConfig.color }]}>
-        {riskConfig.label}
-      </Text>
-    </View>
-  );
-};
 
 export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
   visible,
@@ -58,44 +37,13 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
   currentPrice,
   liquidationPrice,
   pxDecimals,
+  direction,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyles,
   });
   const { t } = useTranslation();
-  const { showTipsPopup } = useTipsPopup();
-
-  const riskLevel = useMemo(() => {
-    return getRiskLevel(distanceLiquidation);
-  }, [distanceLiquidation]);
-
-  const riskConfig = useMemo(() => {
-    const configs = {
-      [PERPS_POSITION_RISK_LEVEL.SAFE]: {
-        label: t('page.perps.PerpsRiskPopup.level.safe'),
-        color: colors2024['green-default'],
-        backgroundColor: colors2024['green-light-4'],
-        infoColor: colors2024['green-disable'],
-        ImageComponent: RcImgSafe,
-      },
-      [PERPS_POSITION_RISK_LEVEL.WARNING]: {
-        label: t('page.perps.PerpsRiskPopup.level.warning'),
-        color: colors2024['orange-default'],
-        backgroundColor: colors2024['orange-light-4'],
-        infoColor: colors2024['orange-disable'],
-        ImageComponent: RcImgWarning,
-      },
-      [PERPS_POSITION_RISK_LEVEL.DANGER]: {
-        label: t('page.perps.PerpsRiskPopup.level.danger'),
-        color: colors2024['red-default'],
-        backgroundColor: colors2024['red-light-1'],
-        infoColor: colors2024['red-disable'],
-        ImageComponent: RcImgDanger,
-      },
-    };
-    return configs[riskLevel];
-  }, [riskLevel, colors2024, t]);
 
   useEffect(() => {
     if (visible) {
@@ -149,9 +97,13 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
                 <Text style={styles.desc}>
                   <Trans
                     t={t}
-                    i18nKey={t('page.perps.PerpsRiskPopup.liqDistanceTips', {
-                      distance: formatPct(distanceLiquidation),
-                    })}
+                    i18nKey={
+                      direction === 'Long'
+                        ? t('page.perps.PerpsRiskPopup.liqDistanceTipsLong')
+                        : t('page.perps.PerpsRiskPopup.liqDistanceTipsShort', {
+                            distance: formatPct(distanceLiquidation),
+                          })
+                    }
                     components={{
                       1: <Text style={styles.strong} />,
                     }}
@@ -213,8 +165,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   strong: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 17,
+    lineHeight: 22,
     fontWeight: '800',
     color: colors2024['neutral-body'],
   },
@@ -229,10 +181,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   distanceCard: {
     borderRadius: 6,
-    marginTop: -12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 10,
     flex: 1,
     backgroundColor: colors2024['neutral-bg-5'],
   },
@@ -256,6 +206,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   priceList: {
     borderRadius: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+    gap: 12,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -264,7 +217,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
     paddingHorizontal: 16,
   },
   priceLabel: {

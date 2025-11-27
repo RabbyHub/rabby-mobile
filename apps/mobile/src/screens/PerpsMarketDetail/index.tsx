@@ -39,6 +39,7 @@ import * as Sentry from '@sentry/react-native';
 import {
   ARB_USDC_TOKEN_ID,
   ARB_USDC_TOKEN_SERVER_CHAIN,
+  CANDLE_MENU_KEY_V2,
   PERPS_MAX_NTL_VALUE,
 } from '@/constant/perps';
 import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
@@ -85,6 +86,8 @@ export const PerpsMarketDetailScreen = () => {
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
   const [showRiskPopup, setShowRiskPopup] = useState(false);
+  const [selectedInterval, setSelectedInterval] =
+    React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   const [showDepositTokenPopup, setShowDepositTokenPopup] = useState(false);
   const [showSearchListPopup, setShowSearchListPopup] = useState(false);
   const coinNameRef = useRef(coin);
@@ -350,6 +353,8 @@ export const PerpsMarketDetailScreen = () => {
           contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <PerpsChart
+              selectedInterval={selectedInterval}
+              setSelectedInterval={setSelectedInterval}
               coinNameRef={coinNameRef}
               market={market}
               markPrice={markPrice}
@@ -589,7 +594,26 @@ export const PerpsMarketDetailScreen = () => {
         visible={showSearchListPopup}
         onSelect={item => {
           coinNameRef.current = item;
+          const positionItem = positionAndOpenOrders?.find(
+            asset => asset.position.coin.toLowerCase() === coin?.toLowerCase(),
+          );
+          const tpItem = positionItem?.openOrders?.find(
+            order =>
+              order.orderType === 'Take Profit Market' &&
+              order.isTrigger &&
+              order.reduceOnly,
+          );
+          const slItem = positionItem?.openOrders?.find(
+            order =>
+              order.orderType === 'Stop Market' &&
+              order.isTrigger &&
+              order.reduceOnly,
+          );
           setCoin(item);
+          setCurrentTpOrSl({
+            tpPrice: tpItem?.triggerPx ?? undefined,
+            slPrice: slItem?.triggerPx ?? undefined,
+          });
         }}
         onCancel={() => {
           setShowSearchListPopup(false);

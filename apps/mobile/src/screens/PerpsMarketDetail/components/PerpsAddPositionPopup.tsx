@@ -241,7 +241,7 @@ export const PerpsAddPositionPopup: React.FC<{
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
-    return Math.min(height - 100, 650);
+    return Math.min(height - 100, 656);
   }, [height]);
 
   useEffect(() => {
@@ -485,7 +485,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 24,
       fontWeight: '900',
       color: colors2024['neutral-title-1'],
-      // marginBottom: 20,
+      marginBottom: 6,
       textAlign: 'center',
     },
     tagRow: {

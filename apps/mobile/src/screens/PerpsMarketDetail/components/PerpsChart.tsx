@@ -103,6 +103,8 @@ export const PerpsChart: React.FC<{
   coinNameRef: React.RefObject<string>;
   markPrice: number;
   currentAssetCtx?: MarketData;
+  selectedInterval: CANDLE_MENU_KEY_V2;
+  setSelectedInterval: (interval: CANDLE_MENU_KEY_V2) => void;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
   lineTagInfo?: {
     tpPrice: number;
@@ -117,6 +119,8 @@ export const PerpsChart: React.FC<{
   currentAssetCtx,
   activeAssetCtx,
   lineTagInfo,
+  selectedInterval,
+  setSelectedInterval,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -124,8 +128,8 @@ export const PerpsChart: React.FC<{
   const chartIsReadyRef = useRef(false);
   const [isReady, setIsReady] = useState(false);
   const appState = useAppState();
-  const [selectedInterval, setSelectedInterval] =
-    React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
+  // const [selectedInterval, setSelectedInterval] =
+  //   React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   const unsubscribeRef = useRef<() => void>(() => {});
 
   const CANDLE_MENU_ITEM = useMemo(
@@ -401,6 +405,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   content: {
     paddingHorizontal: 16,
+    paddingRight: 4,
     position: 'relative',
   },
   menu: {

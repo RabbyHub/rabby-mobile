@@ -2280,7 +2280,8 @@
       "PerpsRiskPopup": {
         "title": "Risk Level",
         "subtitle": "Real-time liquidation distance (%)",
-        "liqDistanceTips": "Up <1>{{distance}}</1> triggers liquidation.",
+        "liqDistanceTipsShort": "Going up <1>{{distance}}</1> will trigger liquidation.",
+        "liqDistanceTipsLong": "Going down <1>{{distance}}</1> will trigger liquidation.",
         "distanceLabel": "Liquidation Distance",
         "currentPrice": "Current Price",
         "liquidationPrice": "Liquidation Price",
@@ -2468,7 +2469,7 @@
         "24Vol": "24h Volume",
         "openInterest": "Open Interest",
         "funding": "Funding",
-        "fundingRate": "4h Funding Rate",
+        "fundingRate": "Funding Rate",
         "openInterestTips": "The total outstanding position of all users on this contract.",
         "fundingTips": "This is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token. lf positive, long pays short. lf negative, short pays long."
       },

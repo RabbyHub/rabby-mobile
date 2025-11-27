@@ -339,6 +339,10 @@ export const PerpsScreen = () => {
     );
     return {
       distanceLiquidation,
+      direction:
+        Number(selectedPosition.position.szi || 0) > 0
+          ? 'Long'
+          : ('Short' as 'Long' | 'Short'),
       currentPrice: markPrice,
       pxDecimals: marketDataItem?.pxDecimals || 2,
       liquidationPrice,
@@ -669,6 +673,7 @@ export const PerpsScreen = () => {
       {/* Shared Risk Level Popup */}
       {riskPopupData && (
         <PerpsRiskLevelPopup
+          direction={riskPopupData.direction}
           visible={!!riskPopupData}
           pxDecimals={riskPopupData?.pxDecimals || 2}
           onClose={handleCloseRiskPopup}
