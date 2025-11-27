@@ -196,7 +196,7 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   container: {
     flexDirection: 'column',
     justifyContent: 'center',
@@ -225,7 +225,9 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderColor: colors2024['brand-default'],
   },
   normal: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     borderWidth: 1,
     borderColor: 'transparent',
   },

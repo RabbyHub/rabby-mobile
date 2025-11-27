@@ -874,6 +874,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+    marginTop: 12,
     paddingHorizontal: 12,
     justifyContent: 'center',
   },
