@@ -118,7 +118,7 @@ import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
-import { Pressable, TouchableOpacity } from 'react-native-gesture-handler';
+import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -605,7 +605,7 @@ function MultiAddressHome(): JSX.Element {
           });
           break;
         case MultiHomeFeatTitle.Lending:
-          navigation.navigate(RootNames.StackTransaction, {
+          navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Lending,
             params: {},
           });
@@ -831,7 +831,7 @@ function MultiAddressHome(): JSX.Element {
             <View style={styles.gridItemsWrap}>
               {MENU_ARR.map((el, index) => {
                 return (
-                  <TouchableOpacity
+                  <RNGHTouchableOpacity
                     style={StyleSheet.flatten([
                       styles.gridItem,
                       { width: itemWidth },
@@ -859,7 +859,7 @@ function MultiAddressHome(): JSX.Element {
                       </View>
                     </View>
                     <Text style={styles.gridText}>{el.title}</Text>
-                  </TouchableOpacity>
+                  </RNGHTouchableOpacity>
                 );
               })}
             </View>
