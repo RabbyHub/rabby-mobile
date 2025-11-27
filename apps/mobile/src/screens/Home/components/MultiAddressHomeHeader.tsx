@@ -70,11 +70,9 @@ export function MultiAddressHomeHeader(
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
 
-  const isNavFocused = useIsFocused();
   const { multi24hBalance } = useMulti24hBalance(
     pinnedAccountList.map(item => item.address),
     {
-      isNavigationFocused: isNavFocused,
       disableAutoFetch: true,
     },
   );
