@@ -21,7 +21,11 @@ import {
   useMeasureLayoutForHomeGuidanceMultipleTabs,
 } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
-import { useMemoizedFn } from 'ahooks';
+import { PatchedTabItem } from '@/components/patches/react-native-collapsible-tab-view/TabItem';
+import {
+  PatchedMaterialTabBar,
+  PatchedMaterialTabBarProps,
+} from '@/components/patches/react-native-collapsible-tab-view/TabBar';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -179,13 +183,22 @@ export const HomeCustomMaterialTabBar = ({
   const stylez = useAnimatedStyle(() => {
     return {
       opacity: indexDecimal.value <= 0.5 ? 0 : 1,
-      height: 54,
     };
-  }, [indexDecimal]);
+  });
 
   const renderTabItem = useCallback<
-    MaterialTabBarProps['TabItemComponent'] & object
-  >(_p => <MaterialTabItem {..._p} pressOpacity={1} inactiveOpacity={1} />, []);
+    PatchedMaterialTabBarProps['TabItemComponent'] & object
+  >(
+    _p => (
+      <PatchedTabItem
+        {..._p}
+        // onSwitchTo={name => _p.onSwitchTo?.(name)}
+        pressOpacity={__DEV__ ? 0.5 : 1}
+        inactiveOpacity={1}
+      />
+    ),
+    [],
+  );
 
   const {
     // measureTabBarWrapper,
@@ -234,7 +247,7 @@ export const HomeCustomMaterialTabBar = ({
       <Animated.View
         pointerEvents={focusedTab === TabName.overview ? 'none' : 'auto'}
         style={[styles.portfolioContainer, stylez]}>
-        <MaterialTabBar
+        <PatchedMaterialTabBar
           {...props}
           scrollEnabled={false}
           tabStyle={styles.innerTabBar}
@@ -249,6 +262,7 @@ export const HomeCustomMaterialTabBar = ({
   );
 };
 
+export const TABITEM_H = 54;
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
@@ -277,6 +291,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    height: TABITEM_H,
   },
   portfolioContainerBgBox: {
     backgroundColor: colors2024['neutral-bg-1'],

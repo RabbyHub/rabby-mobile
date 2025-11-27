@@ -57,7 +57,7 @@ export const opSqliteTypeORMDriver = {
           fail?: (msg: string) => void,
         ): Promise<T> => {
           try {
-            const response = await database.execute(sql, params);
+            const response = await database.executeWithHostObjects(sql, params);
             enhanceQueryResult(response);
             ok?.(response);
             return response as T;

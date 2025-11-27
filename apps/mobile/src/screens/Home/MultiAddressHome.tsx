@@ -122,14 +122,21 @@ import {
   TabsMultiAssets,
 } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { useSetAtom } from 'jotai';
+import { atom, useAtom, useSetAtom } from 'jotai';
 import { foldMultiChartAtom } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { RECOMMENDED_DEFAULT_QUERY_LIMIT } from '@/databases/entities/_helpers';
 import { RNGHTouchableOpacity } from '@/components/customized/reexports';
+import { TABITEM_H } from './components/CustomTabBar';
+import { useRefState } from '@/hooks/common/useRefState';
+import { RefLikeObject } from '@/utils/type';
 
-function MultiAddressHome(): JSX.Element {
+function couldDoRefresh() {
+  return tabIndexRef.current === 0;
+}
+
+const OverViewComponent = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
@@ -188,13 +195,22 @@ function MultiAddressHome(): JSX.Element {
     );
   }, []);
 
+  const isHomeFocused = useIsFocused();
+
+  // const couldDoRefresh = useCallback(() => {
+  //   return isHomeFocused && tabIndexRef.current === 0;
+  // }, [isHomeFocused/* , tabIndexRef */]);
   // 初始化gift资格检查
   useFocusEffect(
     React.useCallback(() => {
+      if (!couldDoRefresh()) return;
       if (top50PrivateKeyAccounts.length > 0) {
         checkAddressesEligibility(top50PrivateKeyAccounts, true);
       }
-    }, [top50PrivateKeyAccounts, checkAddressesEligibility]),
+    }, [
+      top50PrivateKeyAccounts,
+      checkAddressesEligibility /* , couldDoRefresh */,
+    ]),
   );
 
   const MENU_ARR = useMemo(
@@ -439,9 +455,10 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
+      if (!couldDoRefresh()) return;
       pendingTxCount;
       getSuccessAndFailList();
-    }, [getSuccessAndFailList, pendingTxCount]),
+    }, [getSuccessAndFailList, pendingTxCount /* , couldDoRefresh */]),
   );
 
   useFocusEffect(
@@ -451,18 +468,20 @@ function MultiAddressHome(): JSX.Element {
         if (redirectAction) {
           redirectAction();
         } else {
+          if (!couldDoRefresh()) return;
           fetchHistory();
         }
       })();
-    }, [detectHasAccounts, fetchHistory]),
+    }, [detectHasAccounts, fetchHistory /* , couldDoRefresh */]),
   );
 
   useFocusEffect(
     useCallback(() => {
+      if (!couldDoRefresh()) return;
       if (appState === 'active') {
         refreshCurve();
       }
-    }, [appState, refreshCurve]),
+    }, [appState, refreshCurve /* , couldDoRefresh */]),
   );
 
   const thorttleGetSuccessAndFailList = useMemo(
@@ -485,15 +504,23 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
+      if (!couldDoRefresh()) return;
       if (appState === 'active') {
         triggerUpdate();
         triggerUpdateAlert();
         syncTop10History();
       }
-    }, [appState, triggerUpdate, triggerUpdateAlert, syncTop10History]),
+    }, [
+      appState,
+      triggerUpdate,
+      triggerUpdateAlert,
+      syncTop10History,
+      /* couldDoRefresh, */
+    ]),
   );
 
   const onRefresh = useCallback(() => {
+    if (!couldDoRefresh()) return;
     Promise.all([
       triggerUpdate(true), // force update balance from server api
       refreshCurve(true),
@@ -506,6 +533,7 @@ function MultiAddressHome(): JSX.Element {
       currencyService.syncCurrencyList(true);
     });
   }, [
+    /* couldDoRefresh, */
     triggerUpdate,
     refreshCurve,
     checkAddressesEligibility,
@@ -538,6 +566,7 @@ function MultiAddressHome(): JSX.Element {
 
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
+      if (!isHomeAtFirstTab()) return;
       if (isTabsSwiping.value) {
         return;
       }
@@ -640,7 +669,6 @@ function MultiAddressHome(): JSX.Element {
     [openDapps, handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
   );
 
-  const { showTipsDollarDialog } = useTipsDollarDialog();
   const generateCustomBadgeIcon = useCallback(
     (el: {
       key: MultiHomeFeatTitle;
@@ -653,13 +681,6 @@ function MultiAddressHome(): JSX.Element {
       if (el.key === MultiHomeFeatTitle.Watchlist) {
         return <WatchListBadge />;
       }
-      // if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
-      //   return (
-      //     <RNTouchableOpacity onPress={showTipsDollarDialog}>
-      //       <IconDollar width={24} height={24} />
-      //     </RNTouchableOpacity>
-      //   );
-      // }
 
       if (el.key === MultiHomeFeatTitle.Perps) {
         return <PerpsPnl />;
@@ -706,6 +727,224 @@ function MultiAddressHome(): JSX.Element {
 
   const { bottom } = useSafeAreaInsets();
 
+  const { shouldShowRateGuideOnHome } = useExposureRateGuide();
+  const offlineChainData = useOfflineChain();
+  const { viewedHomeTip } = useViewedHomeTip();
+
+  const { noBetweenContent, onlyOneContent } = useMemo(() => {
+    const visibleEls = [
+      displayFundWallet,
+      shouldShowRateGuideOnHome,
+      offlineChainData.displayWillClosedChain &&
+        offlineChainData.offlineChainInfo,
+      !viewedHomeTip,
+    ];
+    const hasBetweenContent = visibleEls.some(Boolean);
+    return {
+      noBetweenContent: !hasBetweenContent,
+      onlyOneContent: visibleEls.filter(Boolean).length === 1,
+    };
+  }, [
+    shouldShowRateGuideOnHome,
+    offlineChainData,
+    displayFundWallet,
+    viewedHomeTip,
+  ]);
+
+  return (
+    <Tabs.ScrollView
+      tvParallaxProperties={undefined}
+      showsVerticalScrollIndicator={false}
+      style={[styles.scroll, { flex: undefined }]}
+      contentContainerStyle={[
+        styles.scrollContainer,
+        {
+          // paddingBottom: bottom + 82,
+          paddingBottom: Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
+        },
+      ]}
+      refreshControl={
+        <RefreshControl refreshing={false} onRefresh={onRefresh} />
+      }>
+      <MultiAddressHomeHeader
+        data={combineData}
+        loading={loading}
+        loadBalanceFromApiStage={loadBalanceFromApiStage}
+        loadingNewCurve={loadingNewCurve}
+        onRefresh={onRefresh}
+        balanceAccounts={balanceAccounts}
+      />
+      <View
+        style={[
+          noBetweenContent
+            ? styles.contentBetweenHeaderAndMatrixEmpty
+            : styles.contentBetweenHeaderAndMatrix,
+          onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
+        ]}>
+        <OfflineChainNotify data={offlineChainData} />
+
+        {displayFundWallet && <FoundYourWalletGuide />}
+
+        {shouldShowRateGuideOnHome && (
+          <View
+            style={{
+              paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+            }}>
+            <RateModalTriggerOnHome totalBalanceText={combineData.netWorth} />
+            <RateModal totalBalanceText={combineData.netWorth} />
+          </View>
+        )}
+
+        <TipFeedbackByScreenshot />
+      </View>
+
+      <View style={styles.grid}>
+        <View style={styles.gridItemsWrap}>
+          {MENU_ARR.map((el, index) => {
+            return (
+              <RNGHTouchableOpacity
+                style={StyleSheet.flatten([
+                  styles.gridItem,
+                  { width: itemWidth },
+                ])}
+                key={index}
+                onPress={() => {
+                  requestAnimationFrame(() => {
+                    handleClickMenu(el.key);
+                  });
+                  matomoRequestEvent({
+                    category: 'Click_Services',
+                    action: `Click_${el.key}`,
+                  });
+                }}>
+                <View style={styles.badgeWrapper}>
+                  <View style={styles.iconWrapper}>
+                    <el.icon
+                      width={28}
+                      height={28}
+                      color={el.color || colors2024['brand-default-icon']}
+                    />
+                  </View>
+                  <View style={styles.rightBadgeWrapper}>
+                    {generateCustomBadgeIcon(el)}
+                  </View>
+                </View>
+                <Text style={styles.gridText}>{el.title}</Text>
+              </RNGHTouchableOpacity>
+            );
+          })}
+        </View>
+        <BrowserSearchEntry alwaysShowSearch={false} />
+        <View style={styles.searchBarPlaceholder} />
+      </View>
+    </Tabs.ScrollView>
+  );
+};
+
+const homeTabsIndexAtom = atom(0);
+const tabIndexRef: RefLikeObject<number> = { current: 0 };
+export function isHomeAtFirstTab() {
+  return tabIndexRef.current === 0;
+}
+function MultiAddressHome(): JSX.Element {
+  const { navigation } = useSafeSetNavigationOptions();
+  const { t } = useTranslation();
+  const { styles, colors2024, isLight } = useTheme2024({
+    getStyle,
+  });
+  const appThemeConfig = useAppThemeConfig();
+  const [pendingTxCount, setPendingTxCount] = useState(0);
+  const { top10Addresses } = useAccountInfo();
+
+  const timeRef = useRef<null | NodeJS.Timer>(null);
+  const spinValue = useRef(new Animated.Value(0)).current;
+
+  const [tabIndex, setTabIndex] = useAtom(homeTabsIndexAtom);
+  const handleIndexChange = useCallback(
+    (_index: number) => {
+      tabIndexRef.current = _index;
+      setTabIndex(_index);
+    },
+    [setTabIndex],
+  );
+
+  useEffect(() => {
+    if (pendingTxCount) {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1600,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ).start();
+    } else {
+      spinValue.resetAnimation();
+    }
+  }, [pendingTxCount, spinValue]);
+
+  const { balanceCacheAccounts, getTotalBalance } = useAccountsBalance({
+    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
+
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
+
+  const { combineData, loading } = useMulti24hBalance(top10Addresses, {
+    disableAutoFetch: true,
+    totalBalance: top10Balance.total,
+    totalEvmBalance: top10Balance.totalEvm,
+  });
+  useCexSupportList();
+  useFetchCexInfo();
+  useInitDetectDBAssets();
+  useSetTotalBalanceText(combineData.netWorth);
+
+  const fetchHistory = useCallback(() => {
+    const addresses = balanceCacheAccounts.map(i => i.address);
+    if (!addresses.length) {
+      return;
+    }
+    const { pendingsLength } =
+      transactionHistoryService.getPendingsAddresses(addresses);
+    setPendingTxCount(pendingsLength);
+    timeRef.current && clearInterval(timeRef.current);
+    timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
+  }, [balanceCacheAccounts, setPendingTxCount]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      deleteLongTimeCurveCache();
+      deleteLongTime24hBalanceCache();
+    }, 0);
+  }, []);
+
+  const detectHasAccounts = useMemoizedFn(async () => {
+    const result = { redirectAction: null as Function | null };
+    const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+
+    if (!hasAccountsInKeyring) {
+      result.redirectAction = () => {
+        resetNavigationTo(navigation, 'GetStarted2024');
+      };
+    }
+
+    return result;
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const { redirectAction } = await detectHasAccounts();
+        if (redirectAction) {
+          redirectAction();
+        }
+      })();
+    }, [detectHasAccounts]),
+  );
+
   useEffect(() => {
     matomoRequestEvent({
       category: 'ThemeMode',
@@ -747,34 +986,6 @@ function MultiAddressHome(): JSX.Element {
     }
   }, []);
 
-  const { shouldShowRateGuideOnHome } = useExposureRateGuide();
-  const offlineChainData = useOfflineChain();
-  const { viewedHomeTip } = useViewedHomeTip();
-
-  const { noBetweenContent, onlyOneContent } = useMemo(() => {
-    const visibleEls = [
-      displayFundWallet,
-      shouldShowRateGuideOnHome,
-      offlineChainData.displayWillClosedChain &&
-        offlineChainData.offlineChainInfo,
-      !viewedHomeTip,
-    ];
-    const hasBetweenContent = visibleEls.some(Boolean);
-    return {
-      noBetweenContent: !hasBetweenContent,
-      onlyOneContent: visibleEls.filter(Boolean).length === 1,
-    };
-  }, [
-    shouldShowRateGuideOnHome,
-    offlineChainData,
-    displayFundWallet,
-    viewedHomeTip,
-  ]);
-
-  const [tabIndex, setTabIndex] = useState(0);
-  const handleIndexChange = useCallback((_index: number) => {
-    setTabIndex(_index);
-  }, []);
   const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
 
   return (
@@ -804,103 +1015,8 @@ function MultiAddressHome(): JSX.Element {
         <TabsMultiAssets
           data={combineData}
           loading={loading}
-          tabIndex={tabIndex}
           onIndexChange={handleIndexChange}
-          overViewContent={
-            <Tabs.ScrollView
-              tvParallaxProperties={undefined}
-              showsVerticalScrollIndicator={false}
-              style={[styles.scroll, { flex: undefined }]}
-              contentContainerStyle={[
-                styles.scrollContainer,
-                {
-                  // paddingBottom: bottom + 82,
-                  paddingBottom:
-                    Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
-                },
-              ]}
-              refreshControl={
-                <RefreshControl refreshing={false} onRefresh={onRefresh} />
-              }>
-              <MultiAddressHomeHeader
-                data={combineData}
-                loading={loading}
-                loadBalanceFromApiStage={loadBalanceFromApiStage}
-                loadingNewCurve={loadingNewCurve}
-                onRefresh={onRefresh}
-                balanceAccounts={balanceAccounts}
-              />
-              <View
-                style={[
-                  noBetweenContent
-                    ? styles.contentBetweenHeaderAndMatrixEmpty
-                    : styles.contentBetweenHeaderAndMatrix,
-                  onlyOneContent
-                    ? styles.contentBetweenHeaderAndMatrixOnlyOne
-                    : null,
-                ]}>
-                <OfflineChainNotify data={offlineChainData} />
-
-                {displayFundWallet && <FoundYourWalletGuide />}
-
-                {shouldShowRateGuideOnHome && (
-                  <View
-                    style={{
-                      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-                    }}>
-                    <RateModalTriggerOnHome
-                      totalBalanceText={combineData.netWorth}
-                    />
-                    <RateModal totalBalanceText={combineData.netWorth} />
-                  </View>
-                )}
-
-                <TipFeedbackByScreenshot />
-              </View>
-
-              <View style={styles.grid}>
-                <View style={styles.gridItemsWrap}>
-                  {MENU_ARR.map((el, index) => {
-                    return (
-                      <RNGHTouchableOpacity
-                        style={StyleSheet.flatten([
-                          styles.gridItem,
-                          { width: itemWidth },
-                        ])}
-                        key={index}
-                        onPress={() => {
-                          requestAnimationFrame(() => {
-                            handleClickMenu(el.key);
-                          });
-                          matomoRequestEvent({
-                            category: 'Click_Services',
-                            action: `Click_${el.key}`,
-                          });
-                        }}>
-                        <View style={styles.badgeWrapper}>
-                          <View style={styles.iconWrapper}>
-                            <el.icon
-                              width={28}
-                              height={28}
-                              color={
-                                el.color || colors2024['brand-default-icon']
-                              }
-                            />
-                          </View>
-                          <View style={styles.rightBadgeWrapper}>
-                            {generateCustomBadgeIcon(el)}
-                          </View>
-                        </View>
-                        <Text style={styles.gridText}>{el.title}</Text>
-                      </RNGHTouchableOpacity>
-                    );
-                  })}
-                </View>
-                <BrowserSearchEntry alwaysShowSearch={false} />
-                <View style={styles.searchBarPlaceholder} />
-              </View>
-            </Tabs.ScrollView>
-          }
+          OverViewComponent={OverViewComponent}
         />
 
         {/* show search bar when Overview tab */}
@@ -966,7 +1082,7 @@ const getStyle = createGetStyles2024(
       // paddingTop: 88,
       flexGrow: 1,
       minHeight: '100%',
-      marginTop: -54 - TAB_HEADER_MIN_HEIGHT,
+      marginTop: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
     },
     menuHeader: {
       height: 30,

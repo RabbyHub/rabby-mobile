@@ -76,7 +76,7 @@ export const NFTList = React.memo(({ chain, updateNft }: Props) => {
   const { checkIsExpireAndUpdate, isLoading } = useAssets();
 
   const { nfts: _rawNftList } = useAssetsComputation({
-    hideCombined: !isFocusing,
+    hideCombined: false,
   });
 
   useEffect(() => {

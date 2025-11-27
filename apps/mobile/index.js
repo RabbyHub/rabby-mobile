@@ -18,8 +18,8 @@ import {
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
 
-enableScreens();
-// enableFreeze();
+enableScreens(true);
+enableFreeze(true);
 // must be called synchoronously immediately
 AppRegistry.registerComponent(appName, () => App);
 

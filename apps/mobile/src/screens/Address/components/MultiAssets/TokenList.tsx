@@ -79,7 +79,7 @@ export const TokenList = React.memo(({ chain, updateToken }: Props) => {
   const { checkIsExpireAndUpdate, isLoading } = useAssets();
 
   const { tokens: _rawTokens } = useAssetsComputation({
-    hideCombined: !isFocusing,
+    hideCombined: false,
   });
 
   const tokens = useMemo(() => {

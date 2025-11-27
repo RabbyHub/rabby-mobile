@@ -5,6 +5,7 @@ import { ClassOf } from '@rabby-wallet/base-utils';
 import { type EntityAddressAssetBase } from '../entities/base';
 import { appOrmEvents, SyncTaskOptions } from './_event';
 import { runSqliteSyncWorklet } from '@/core/databases/perf';
+import { InteractionManager } from 'react-native';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -57,8 +58,8 @@ export async function batchSaveWithPQueueAndTransaction<
   },
 ) {
   const {
-    batchSize = 50,
-    concurrency = 2,
+    // batchSize = 50,
+    // concurrency = 2,
     delayBetweenTasks = 1 * 1e3,
     owner_addr,
     taskFor,
@@ -68,6 +69,9 @@ export async function batchSaveWithPQueueAndTransaction<
     waitTaskDoneReturn = false,
     beforeEmit,
   } = options;
+
+  const batchSize = 1000;
+  const concurrency = 1;
 
   const taskKey = makeTaskKey(taskFor, owner_addr);
   const curAbortController = new AbortController();
@@ -88,7 +92,8 @@ export async function batchSaveWithPQueueAndTransaction<
   }
 
   const thisTickUpsertQueue = (keyVaryUpsertQueue[taskKey] = new PQueue({
-    concurrency: 20,
+    concurrency: concurrency,
+    autoStart: false,
   }));
 
   const repo = entityCls.getRepository();
@@ -112,7 +117,7 @@ export async function batchSaveWithPQueueAndTransaction<
     }
 
     waitAllTasksCreated = waitAllTasksCreated.then(async () => {
-      await sleep(delayBetweenTasks);
+      // await sleep(delayBetweenTasks);
       if (currentSignal.aborted) {
         printLog &&
           console.warn(
@@ -160,100 +165,77 @@ export async function batchSaveWithPQueueAndTransaction<
           });
         };
 
-        try {
-          // await runSqliteSyncWorklet(
-          //   async (entityCls: any, batch: any) => {
-          //     'worklet';
-          //     console.debug('_task::runSqliteSyncWorklet::prepare transaction upsert:: [0]');
-          //     const repo = entityCls.getRepository();
-          //     console.debug('_task::runSqliteSyncWorklet::prepare transaction upsert::', entityCls, batch);
-          //     await repo.manager.transaction(async entityManager => {
-          //       console.debug('_task::runSqliteSyncWorklet::transaction::upsert::', entityCls, batch);
-          //       const tRepo = entityManager.getRepository(entityCls);
-          //       await tRepo
-          //         .upsert(
-          //           batch,
-          //           { conflictPaths: ['_db_id'] },
-          //         )
-          //         .then(() => {
-          //           printLog &&
-          //             console.debug(
-          //               `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
-          //             );
-          //         })
-          //         .catch(error => {
-          //           printLog &&
-          //             console.error(
-          //               `${loggerPrefix}Batch ${roundPercent} upsertion failed.`,
-          //             );
-          //           throw error;
-          //         });
-          //     });
-          //   },
-          // )(entityCls, JSON.parse(JSON.stringify(batch)));
-
-          await repo.manager.upsert(
-            entityCls,
-            // @ts-expect-error
-            curBatch,
-            // bar
-            { conflictPaths: ['_db_id'] },
-          );
-          // await runSqliteSyncWorklet(
-          //   async (entityCls: any, curBatch: any, options: any) => {
-          //     'worklet';
-          //     console.debug('_task::runSqliteSyncWorklet upsert::', entityCls, curBatch);
-          //     return repo.manager.upsert(entityCls, curBatch, options);
-          //   },
-          // )(entityCls, JSON.parse(JSON.stringify(curBatch)), { conflictPaths: ['_db_id'] });
-          printLog &&
-            console.debug(
-              `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
+        await InteractionManager.runAfterInteractions(async () => {
+          if (currentSignal.aborted) {
+            printLog &&
+              console.debug(
+                `${loggerPrefix}Batch upsertion was aborted before DB op.`,
+              );
+            return;
+          }
+          try {
+            // await runSqliteSyncWorklet(
+            //   async (entityCls: any, curBatch: any, options: any) => {
+            //     'worklet';
+            //     console.debug('_task::runSqliteSyncWorklet upsert::', entityCls, curBatch);
+            //     return repo.manager.upsert(entityCls, curBatch, options);
+            //   },
+            // )(entityCls, JSON.parse(JSON.stringify(curBatch)), { conflictPaths: ['_db_id'] });
+            await repo.manager.upsert(
+              entityCls,
+              // @ts-expect-error
+              curBatch,
+              // bar
+              { conflictPaths: ['_db_id'] },
             );
+            printLog &&
+              console.debug(
+                `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
+              );
+            makeEmit(true);
+            // const repo = entityCls.getRepository();
+            // await repo.manager.transaction(async entityManager => {
+            //   console.debug('_task::transaction::upsert::', entityCls, curBatch);
+            //   const tRepo = entityManager.getRepository(entityCls);
+            //   await Promise.all(curBatch.map(item => {
+            //     return tRepo.upsert(
+            //       // @ts-expect-error
+            //       item,
+            //       { conflictPaths: ['_db_id'] },
+            //     )
+            //   }))
+            //   // await tRepo.upsert(
+            //   //     // @ts-expect-error
+            //   //     curBatch,
+            //   //     { conflictPaths: ['_db_id'] },
+            //   //   )
+            //     .then(() => {
+            //       printLog &&
+            //         console.debug(
+            //           `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
+            //         );
+            //     })
+            //     .catch(error => {
+            //       printLog &&
+            //         console.error(
+            //           `${loggerPrefix}Batch ${roundPercent} upsertion failed.`,
+            //         );
+            //       throw error;
+            //     });
+            // });
+          } catch (error) {
+            makeEmit(false);
+            printLog &&
+              console.error(
+                `${loggerPrefix}Error inserting batch ${roundText}:`,
+                error,
+              );
 
-          // const repo = entityCls.getRepository();
-          // await repo.manager.transaction(async entityManager => {
-          //   console.debug('_task::transaction::upsert::', entityCls, curBatch);
-          //   const tRepo = entityManager.getRepository(entityCls);
-          //   // await Promise.all(curBatch.map(item => {
-          //   //   return tRepo.upsert(
-          //   //     // @ts-expect-error
-          //   //     item,
-          //   //     { conflictPaths: ['_db_id'] },
-          //   //   )
-          //   // }))
-          //   await tRepo.upsert(
-          //       // @ts-expect-error
-          //       curBatch,
-          //       { conflictPaths: ['_db_id'] },
-          //     )
-          //     .then(() => {
-          //       printLog &&
-          //         console.debug(
-          //           `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
-          //         );
-          //     })
-          //     .catch(error => {
-          //       printLog &&
-          //         console.error(
-          //           `${loggerPrefix}Batch ${roundPercent} upsertion failed.`,
-          //         );
-          //       throw error;
-          //     });
-          // });
-          makeEmit(true);
-        } catch (error) {
-          makeEmit(false);
-          printLog &&
-            console.error(
-              `${loggerPrefix}Error inserting batch ${roundText}:`,
-              error,
-            );
-
-          console.error(`upsert ${taskKey}`, error);
-          // Re-throw the error to rollback the transaction
-          throw error;
-        }
+            console.error(`upsert ${taskKey}`, error);
+            // Re-throw the error to rollback the transaction
+            throw error;
+          }
+        });
       });
     });
     cursors.dataIdx += batchSize;
@@ -272,7 +254,7 @@ export async function batchSaveWithPQueueAndTransaction<
       if (!currentSignal.aborted) {
         printLog &&
           console.debug(
-            `${loggerPrefix}Started to upsert ${totalLen} records with total ${totalRound} batches(size: ${batchSize}, concurrency: ${concurrency})`,
+            `${loggerPrefix}Finish making upsert ${totalLen} records with total ${totalRound} batches(size: ${batchSize}, concurrency: ${concurrency})`,
           );
       }
     } catch (error) {
@@ -283,9 +265,9 @@ export async function batchSaveWithPQueueAndTransaction<
     }
   } else {
     await waitAllTasksCreated;
-    printLog &&
-      console.debug(`${loggerPrefix}All batches have been processed.`);
+    printLog && console.debug(`${loggerPrefix}All batches have been made.`);
   }
+  thisTickUpsertQueue.start();
 
   if (waitTaskDoneReturn) {
     await thisTickUpsertQueue.onIdle();

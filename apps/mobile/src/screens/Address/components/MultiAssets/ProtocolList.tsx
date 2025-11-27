@@ -51,7 +51,7 @@ export const ProtocolList = React.memo(({ chain, updatePortfolio }: Props) => {
   const { checkIsExpireAndUpdate, isLoading } = useAssets();
 
   const { portfolios: _rawPortfolios } = useAssetsComputation({
-    hideCombined: !isFocusing,
+    hideCombined: false,
   });
 
   useEffect(() => {
