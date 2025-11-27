@@ -15,8 +15,6 @@ import { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
-import { Account } from '@/core/services/preference';
 
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   container: {
@@ -45,11 +43,8 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
 
 export const PerpHeader: React.FC<{
   localLoadingHistory: AccountHistoryItem[];
-  currentOnlyShowPerpsAccount: Account | null;
-  isLogin: boolean;
-}> = ({ localLoadingHistory, currentOnlyShowPerpsAccount, isLogin }) => {
+}> = ({ localLoadingHistory }) => {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
-  const [popupState, setPopupState] = usePerpsPopupState();
   const navigation = useRabbyAppNavigation();
   const loadingNumber = useMemo(
     () => localLoadingHistory.filter(item => item.status === 'pending').length,
@@ -57,18 +52,10 @@ export const PerpHeader: React.FC<{
   );
 
   const openHistory = useCallback(() => {
-    if (currentOnlyShowPerpsAccount && !isLogin) {
-      setPopupState(prev => ({
-        ...prev,
-        isShowLoginPopup: true,
-      }));
-      return;
-    }
-
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.PerpsHistory,
     });
-  }, [navigation, currentOnlyShowPerpsAccount, isLogin, setPopupState]);
+  }, [navigation]);
 
   return (
     <>

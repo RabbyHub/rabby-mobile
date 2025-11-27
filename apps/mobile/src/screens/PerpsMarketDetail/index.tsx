@@ -78,12 +78,13 @@ export const PerpsMarketDetailScreen = () => {
     marketDataMap,
     perpFee,
     marketData,
-    // hasPermission,
+    hasPermission,
   } = state;
-  const hasPermission = true;
+  // const hasPermission = true;
   const [isShowModal, setIsShowModal] = useState(false);
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
+  const [showRiskPopup, setShowRiskPopup] = useState(false);
   const [showDepositTokenPopup, setShowDepositTokenPopup] = useState(false);
   const [showSearchListPopup, setShowSearchListPopup] = useState(false);
   const coinNameRef = useRef(coin);
@@ -366,6 +367,8 @@ export const PerpsMarketDetailScreen = () => {
             ) : null}
           </View>
           <PerpsPosition
+            showRiskPopup={showRiskPopup}
+            setShowRiskPopup={setShowRiskPopup}
             activeAssetCtx={activeAssetCtx}
             currentAssetCtx={currentAssetCtx}
             positionData={positionData}
@@ -546,6 +549,12 @@ export const PerpsMarketDetailScreen = () => {
       {positionData ? (
         <PerpsAddPositionPopup
           visible={addPositionVisible}
+          pnl={Number(positionData?.pnl || 0)}
+          pnlPercent={Number(positionData?.pnlPercent || 0)}
+          liquidationPx={Number(positionData?.liquidationPrice || 0)}
+          handlePressRiskTag={() => {
+            setShowRiskPopup(true);
+          }}
           coinLogo={currentAssetCtx?.logoUrl}
           activeAssetCtx={activeAssetCtx}
           currentAssetCtx={currentAssetCtx}
