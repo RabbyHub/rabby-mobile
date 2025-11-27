@@ -264,7 +264,7 @@ export const NFTDetailScreen = () => {
     [accounts, switchSceneCurrentAccount],
   );
 
-  const { assetsMap, getCacheTop10Assets } = useAssets({ hideCombined: true });
+  const { assetsMap, getCacheTop10Assets } = useAssets();
 
   type ItemBase = {
     data: NFTItem;

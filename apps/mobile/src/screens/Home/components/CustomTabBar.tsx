@@ -2,6 +2,7 @@ import { Dimensions, View } from 'react-native';
 import {
   MaterialTabBar,
   MaterialTabItem,
+  MaterialTabItemProps,
   useFocusedTab,
 } from 'react-native-collapsible-tab-view';
 
@@ -20,6 +21,7 @@ import {
   useMeasureLayoutForHomeGuidanceMultipleTabs,
 } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { useMemoizedFn } from 'ahooks';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -152,7 +154,10 @@ const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
 }));
 
 type MaterialTabBarProps = React.ComponentProps<typeof MaterialTabBar>;
-export const HomeCustomMaterialTabBar = (_props: {
+export const HomeCustomMaterialTabBar = ({
+  // onSwitchToTab: prop_onSwitchToTab,
+  ..._props
+}: {
   materialTabBarProps: Omit<
     MaterialTabBarProps,
     | 'scrollEnabled'
@@ -164,6 +169,7 @@ export const HomeCustomMaterialTabBar = (_props: {
   >;
   indexDecimal?: Animated.SharedValue<number>;
   externalContent?: React.ReactNode;
+  // onSwitchToTab: (tabItemProps: MaterialTabItemProps<string>) => void;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -176,6 +182,7 @@ export const HomeCustomMaterialTabBar = (_props: {
       height: 54,
     };
   }, [indexDecimal]);
+
   const renderTabItem = useCallback<
     MaterialTabBarProps['TabItemComponent'] & object
   >(_p => <MaterialTabItem {..._p} pressOpacity={1} inactiveOpacity={1} />, []);

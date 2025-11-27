@@ -11,7 +11,10 @@ import { useChainBalances } from '@/hooks/account';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { useAssets } from '@/screens/Search/useAssets';
-import { CombineTokensItem } from '@/screens/Home/hooks/store';
+import {
+  CombineTokensItem,
+  useAssetsComputation,
+} from '@/screens/Home/hooks/store';
 import { Account } from '@/core/services/preference';
 
 export default function MixedFlatChainList({
@@ -38,7 +41,8 @@ export default function MixedFlatChainList({
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   account?: Account | null;
 }) {
-  const { tokens: cacheAssets, getCacheTop10Assets } = useAssets();
+  const { getCacheTop10Assets } = useAssets();
+  const { tokens: cacheAssets } = useAssetsComputation();
   const { styles } = useTheme2024({ getStyle });
   const { tokenList } = useLocalTokens(currentAccount?.address);
   const { matteredChainBalances, matteredChainBalancesAll } =

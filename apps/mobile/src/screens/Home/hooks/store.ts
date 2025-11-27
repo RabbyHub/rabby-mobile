@@ -237,16 +237,53 @@ export const combinedNfts = (
 
 export const assetAtom = atom<{ [address: string]: IAssets }>({});
 
-export const useAssetsMap = ({
-  hideCombined = false,
-}: {
-  hideCombined?: boolean;
-}) => {
+export function useAssetsComputation(options?: { hideCombined?: boolean }) {
+  const { hideCombined } = options || {};
+  const [assetsMap] = useAtom(assetAtom);
+
+  // TODO: improve it by global function get, or improve computation of `top10Addresses` in useAccountInfo(such as top10AddressesAtom)
+  const { top10Addresses } = useAccountInfo();
+
+  const memoTokens = useMemo(() => {
+    if (hideCombined) {
+      return top20TokensCache;
+    }
+
+    const tokens = combinedTokens(assetsMap, top10Addresses);
+    top20TokensCache = tokens.filter(item => !item._isFold).slice(0, 20);
+    return tokens;
+  }, [assetsMap, hideCombined, top10Addresses]);
+
+  const memoPortfolios = useMemo(() => {
+    if (hideCombined) {
+      return top10PortfoliosCache;
+    }
+
+    const portfolios = combinedProtocols(assetsMap, top10Addresses);
+    top10PortfoliosCache = portfolios.slice(0, 4);
+    return portfolios;
+  }, [assetsMap, hideCombined, top10Addresses]);
+
+  const memoNfts = useMemo(() => {
+    if (hideCombined) {
+      return top10NftsCache;
+    }
+    const nfts = combinedNfts(assetsMap, top10Addresses);
+    top10NftsCache = nfts?.filter(item => !item._isFold).slice(0, 20) || [];
+    return nfts;
+  }, [assetsMap, hideCombined, top10Addresses]);
+
+  return {
+    // TODO: improve by vary memo* Data on different hooks
+    tokens: memoTokens,
+    portfolios: memoPortfolios,
+    nfts: memoNfts,
+    // hasAssets: !!memoTokens?.length || !!memoPortfolios?.length,
+  };
+}
+
+export const useAssetsActions = () => {
   const [assetsMap, setAssetsMap] = useAtom(assetAtom);
-  const { handleFetchTokens } = usePinTokens();
-  const [tokenNonce, setTokenNonce] = useAtom(tokenNonceAtom);
-  const [defiNonce, setDefiNonce] = useAtom(deFiNonceAtom);
-  const [nftNonce, setNftNonce] = useAtom(nftNonceAtom);
   const { top10Addresses } = useAccountInfo();
 
   const updateTokens = useCallback(
@@ -311,6 +348,35 @@ export const useAssetsMap = ({
     [setAssetsMap],
   );
 
+  const getTokenCombined = useCallback(
+    (tokenId: string, chain: string) => {
+      return combinedTokens(assetsMap, top10Addresses, { tokenId, chain });
+    },
+    [assetsMap, top10Addresses],
+  );
+
+  return {
+    top10Addresses,
+    updateTokens,
+    updatePortfolios,
+    updateNFTs,
+    assetsMap,
+    getTokenCombined,
+    setAssetsMap,
+  };
+};
+
+/**
+ * @description only call this hook once on top level of App
+ */
+export function useAssetsActionsOnTop() {
+  const [tokenNonce, setTokenNonce] = useAtom(tokenNonceAtom);
+  const [defiNonce, setDefiNonce] = useAtom(deFiNonceAtom);
+  const [nftNonce, setNftNonce] = useAtom(nftNonceAtom);
+
+  const { handleFetchTokens } = usePinTokens();
+  const [, setAssetsMap] = useAtom(assetAtom);
+
   const refreshTagToken = useCallback(async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
@@ -327,6 +393,7 @@ export const useAssetsMap = ({
       return updatedAssetsMap;
     });
   }, [handleFetchTokens, setAssetsMap]);
+
   const refreshTagPortfolio = useCallback(async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
@@ -346,6 +413,7 @@ export const useAssetsMap = ({
       return updatedAssetsMap;
     });
   }, [setAssetsMap]);
+
   const refreshTagNft = useCallback(async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
@@ -382,56 +450,7 @@ export const useAssetsMap = ({
       setNftNonce(0);
     }
   }, [refreshTagNft, nftNonce, setNftNonce]);
-
-  const getTokenCombined = useCallback(
-    (tokenId: string, chain: string) => {
-      return combinedTokens(assetsMap, top10Addresses, { tokenId, chain });
-    },
-    [assetsMap, top10Addresses],
-  );
-
-  const memoTokens = useMemo(() => {
-    if (hideCombined) {
-      return top20TokensCache;
-    }
-
-    const tokens = combinedTokens(assetsMap, top10Addresses);
-    top20TokensCache = tokens.filter(item => !item._isFold).slice(0, 20);
-    return tokens;
-  }, [assetsMap, hideCombined, top10Addresses]);
-
-  const memoPortfolios = useMemo(() => {
-    if (hideCombined) {
-      return top10PortfoliosCache;
-    }
-
-    const portfolios = combinedProtocols(assetsMap, top10Addresses);
-    top10PortfoliosCache = portfolios.slice(0, 4);
-    return portfolios;
-  }, [assetsMap, hideCombined, top10Addresses]);
-
-  const memoNfts = useMemo(() => {
-    if (hideCombined) {
-      return top10NftsCache;
-    }
-    const nfts = combinedNfts(assetsMap, top10Addresses);
-    top10NftsCache = nfts?.filter(item => !item._isFold).slice(0, 20) || [];
-    return nfts;
-  }, [assetsMap, hideCombined, top10Addresses]);
-
-  return {
-    top10Addresses,
-    updateTokens,
-    updatePortfolios,
-    updateNFTs,
-    tokens: memoTokens,
-    portfolios: memoPortfolios,
-    nfts: memoNfts,
-    assetsMap,
-    getTokenCombined,
-    setAssetsMap,
-  };
-};
+}
 
 export const useMainnetTokens = (address?: string) => {
   const [assetsMap, setAssetsMap] = useAtom(assetAtom);

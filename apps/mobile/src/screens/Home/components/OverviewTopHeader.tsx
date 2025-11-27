@@ -62,7 +62,7 @@ export function TabsTopHeader(
   });
   const { currency } = useCurrency();
 
-  const { refreshing } = useAssets({ hideCombined: true });
+  const { refreshing } = useAssets();
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(data.rawNetWorth, { currency });
