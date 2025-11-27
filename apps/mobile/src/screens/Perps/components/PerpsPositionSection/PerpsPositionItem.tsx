@@ -322,7 +322,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-secondary'],
   },
   tpSlSeparator: {
     fontFamily: 'SF Pro Rounded',

@@ -142,9 +142,7 @@ export const PerpsPosition: React.FC<{
                     : styles.red,
                 ]}>
                 {positionData && positionData.pnl >= 0 ? '+' : '-'}$
-                {Math.abs(positionData?.pnl || 0).toFixed(2)} (
-                {positionData && positionData.pnl >= 0 ? '+' : ''}
-                {positionData?.pnlPercent.toFixed(2)}%)
+                {Math.abs(positionData?.pnl || 0).toFixed(2)}
               </Text>
             </View>
           </View>
@@ -408,8 +406,12 @@ export const PerpsPosition: React.FC<{
             </TouchableOpacity>
             <View>
               <Text style={styles.value}>
-                {Number(positionData?.fundingPayments || 0) > 0 ? '+' : '-'}$
-                {Math.abs(Number(positionData?.fundingPayments || 0))}
+                {Number(positionData?.fundingPayments || 0) === 0
+                  ? ''
+                  : Number(positionData?.fundingPayments || 0) > 0
+                  ? '+'
+                  : '-'}
+                ${Math.abs(Number(positionData?.fundingPayments || 0))}
               </Text>
             </View>
           </View>
@@ -418,6 +420,7 @@ export const PerpsPosition: React.FC<{
 
       <PerpsRiskLevelPopup
         visible={!!showRiskPopup}
+        direction={positionData?.direction}
         pxDecimals={pxDecimals}
         onClose={() => {
           setShowRiskPopup(false);

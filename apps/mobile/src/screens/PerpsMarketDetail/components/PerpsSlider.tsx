@@ -23,6 +23,7 @@ interface PerpsSliderProps {
   showPercentage?: boolean;
   disabled?: boolean;
   minValue?: number;
+  hightLightTriggerValue?: number[];
 }
 
 export const PerpsSlider: React.FC<PerpsSliderProps> = ({
@@ -34,6 +35,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   key,
   showPercentage = true,
   minValue,
+  hightLightTriggerValue,
 }) => {
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -46,10 +48,9 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   const handleValueChange = useCallback(
     (v: number) => {
       // Trigger haptic feedback when reaching specific values
-      if (
-        v !== previousValue.current &&
-        sliderHapticTriggerNumbers.includes(v)
-      ) {
+      const triggerValues =
+        hightLightTriggerValue || sliderHapticTriggerNumbers;
+      if (v !== previousValue.current && triggerValues.includes(v)) {
         trigger('impactLight', {
           enableVibrateFallback: true,
           ignoreAndroidSystemSettings: false,
@@ -58,7 +59,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
       previousValue.current = v;
       onValueChange(v);
     },
-    [onValueChange],
+    [onValueChange, hightLightTriggerValue],
   );
 
   const sliderStyle = useAnimatedStyle(

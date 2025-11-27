@@ -110,7 +110,7 @@ export const PerpsOpenPositionPopup: React.FC<{
     onChangeText: setMargin,
   } = useUsdInput();
   const [selectedLeverage, setLeverage] = React.useState<number | undefined>(
-    Math.round(leverageRang[1] / 2),
+    leverageRang[1],
   );
   const leverage = selectedLeverage || 1;
   const [tpTriggerPx, setTpTriggerPx] = React.useState<string>('');
@@ -274,7 +274,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       availableBalance > 2
         ? setMargin(Math.round(availableBalance / 2).toString())
         : setMargin('');
-      setLeverage(Math.round(leverageRang[1] / 2));
+      setLeverage(leverageRang[1]);
       resetInitValue();
       setIsReviewMode(false);
     }
@@ -532,6 +532,18 @@ export const PerpsOpenPositionPopup: React.FC<{
                 value={selectedLeverage ?? 1}
                 onValueChange={setLeverage}
                 step={1}
+                hightLightTriggerValue={[
+                  leverageRang[0],
+                  leverageRang[1],
+                  5,
+                  10,
+                  15,
+                  20,
+                  25,
+                  30,
+                  35,
+                  40,
+                ]}
                 maxValue={leverageRang[1]}
                 showPercentage={false}
                 minValue={leverageRang[0]}
