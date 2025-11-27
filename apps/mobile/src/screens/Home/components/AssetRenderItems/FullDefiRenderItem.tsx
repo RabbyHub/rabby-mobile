@@ -210,9 +210,12 @@ export const FullDefiRenderItem = ({
             disableAction={disableAction}
             manageAction={
               config?.[data.id]?.showManage &&
-              config[data.id]?.showManage(item, account)
+              config[data.id]?.showManage?.(item, account)
                 ? config[data.id]?.onManage
                 : undefined
+            }
+            onClickToken={(addr, direction) =>
+              config?.[data.id]?.onTokenManage?.(account, addr, direction)
             }
             key={`${item.id}-${account.address}-${data.netWorth}`}
             session={

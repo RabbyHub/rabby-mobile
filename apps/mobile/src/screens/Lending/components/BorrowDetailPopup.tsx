@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
-import { PopupDetailProps } from '../type';
+import { OpenDetailProps } from '../type';
 import {
   formatAmountValueKMB,
   formatUsdValueKMB,
@@ -25,10 +25,14 @@ import { getHealthFactorText } from './HealthFactorText';
 import { formatNetworth } from '@/utils/math';
 import { formatApy } from '../utils/format';
 import { useSelectedMarket } from '../hooks';
+import { useLendingSummary } from '../hooks';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { isValidAddress } from '@ethereumjs/util';
+import { nativeToWrapper } from '../config/nativeToWrapper';
+import DetailLoadingSkeleton from './DetailLoadingSkeleton';
 
-export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
-  reserve,
-  userSummary,
+export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
+  underlyingAsset,
   onClose,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -37,6 +41,31 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+  const {
+    displayPoolReserves,
+    iUserSummary: userSummary,
+    loading,
+    wrapperPoolReserve,
+  } = useLendingSummary();
+  const reserve = useMemo(() => {
+    const validAddress = isValidAddress(underlyingAsset);
+    const nativeWrapperReserveAddress = wrapperPoolReserve?.underlyingAsset;
+    const defaultAddress = nativeToWrapper[underlyingAsset];
+    const realTimeReserve = displayPoolReserves?.find(item =>
+      isSameAddress(
+        item.underlyingAsset,
+        validAddress
+          ? underlyingAsset
+          : nativeWrapperReserveAddress || defaultAddress,
+      ),
+    );
+    return realTimeReserve;
+  }, [
+    displayPoolReserves,
+    underlyingAsset,
+    wrapperPoolReserve?.underlyingAsset,
+  ]);
+
   const handleShowLqBonusPopup = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DESCRIPTION,
@@ -115,10 +144,16 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   };
 
   const hasBorrowBalance = useMemo(() => {
+    if (!reserve) {
+      return false;
+    }
     return reserve?.variableBorrows && reserve.variableBorrows !== '0';
-  }, [reserve.variableBorrows]);
+  }, [reserve]);
 
   const disableBorrowButton = useMemo(() => {
+    if (!reserve) {
+      return false;
+    }
     if (BigNumber(reserve.reserve.totalDebt).gte(reserve.reserve.borrowCap)) {
       return true;
     }
@@ -126,11 +161,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       !userSummary?.availableBorrowsUSD ||
       userSummary?.availableBorrowsUSD === '0'
     );
-  }, [
-    reserve.reserve.borrowCap,
-    reserve.reserve.totalDebt,
-    userSummary?.availableBorrowsUSD,
-  ]);
+  }, [reserve, userSummary?.availableBorrowsUSD]);
 
   const handlePressBorrow = () => {
     onClose?.();
@@ -170,6 +201,9 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       },
     });
   };
+  if (loading || !reserve || !userSummary) {
+    return <DetailLoadingSkeleton />;
+  }
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
       <Text style={styles.title}>{t('page.Lending.borrowOverview.title')}</Text>

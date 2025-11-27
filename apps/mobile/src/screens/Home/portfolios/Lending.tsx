@@ -17,11 +17,16 @@ export default React.memo(
     data,
     style,
     currentAccount,
+    onClickToken,
   }: {
     name: string;
     data: AbstractPortfolio;
     style?: ViewStyle;
     currentAccount?: KeyringAccountWithAlias;
+    onClickToken?: (
+      tokenAddress: string,
+      direction: 'supply' | 'borrow',
+    ) => void;
   }) => {
     const portfolio = data._originPortfolio;
 
@@ -40,11 +45,17 @@ export default React.memo(
         <TokenList
           currentAccount={currentAccount}
           tokens={portfolio.detail?.supply_token_list}
+          onClickToken={
+            onClickToken ? addr => onClickToken?.(addr, 'supply') : undefined
+          }
           name="supplied"
         />
         <TokenList
           currentAccount={currentAccount}
           tokens={portfolio.detail?.borrow_token_list}
+          onClickToken={
+            onClickToken ? addr => onClickToken?.(addr, 'borrow') : undefined
+          }
           name="borrowed"
         />
         <TokenList
