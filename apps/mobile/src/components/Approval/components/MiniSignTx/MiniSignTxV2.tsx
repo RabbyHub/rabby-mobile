@@ -178,7 +178,7 @@ const MiniSignTxV2 = ({
     },
   );
 
-  if (!ctx || !config?.account || !ctx?.txs?.length || !currentAccount) {
+  if (!ctx || !config?.account || !ctx?.txs?.length) {
     return null;
   }
 
@@ -194,6 +194,7 @@ const MiniSignTxV2 = ({
   };
 
   const handleCancel = () => {
+    console.log('miniv2 close');
     signatureStore.close();
   };
 

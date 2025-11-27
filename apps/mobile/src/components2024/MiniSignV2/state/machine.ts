@@ -25,8 +25,8 @@ export const signatureReducer = (
       if (state.fingerprint !== action.fingerprint) return state;
       return {
         ...state,
-        status: 'ready',
-        ctx: { ...state.ctx, ...action.ctx },
+        status: state.status === 'ui-open' ? state.status : 'ready',
+        ctx: { ...state.ctx, ...action.ctx, open: !!state?.ctx?.open },
         error: undefined,
       };
 
@@ -51,7 +51,7 @@ export const signatureReducer = (
       if (state.fingerprint !== action.fingerprint) return state;
       return {
         ...state,
-        status: 'ui-open',
+        // status: 'ui-open',
         ctx: action.ctx,
         error: undefined,
       };
