@@ -29,6 +29,7 @@ import { formatApy, formatListNetWorth } from './utils/format';
 import { CHAINS_ENUM } from '@debank/common';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { DisplayPoolReserveInfo } from './type';
+import { displayGhoForMintableMarket } from './utils/supply';
 
 const FOOT_HEIGHT = 100;
 const SupplyPoolList = () => {
@@ -38,7 +39,7 @@ const SupplyPoolList = () => {
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
   const [toggleBalanceOrTVl, setToggleBalanceOrTVl] = useState(true); // default balance
-  const { chainEnum } = useSelectedMarket();
+  const { chainEnum, marketKey } = useSelectedMarket();
 
   const sortReserves = useMemo(() => {
     return displayPoolReserves
@@ -46,23 +47,19 @@ const SupplyPoolList = () => {
         if (item.underlyingBalance && item.underlyingBalance !== '0') {
           return true;
         }
-        //if (
-        //  BigNumber(item.reserve.totalLiquidity).gte(item.reserve.supplyCap)
-        //) {
-        //  return false;
-        //}
         const reserve = reserves?.reservesData?.find(x =>
           isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
         );
-        if (
-          //reserve?.usageAsCollateralEnabled === false ||
-          reserve?.isActive === false ||
-          reserve?.isFrozen ||
-          reserve?.isPaused
-        ) {
+        if (!reserve) {
           return false;
         }
-        return true;
+        return (
+          !(reserve?.isFrozen || reserve.isPaused) &&
+          !displayGhoForMintableMarket({
+            symbol: reserve.symbol,
+            currentMarket: marketKey,
+          })
+        );
       })
       .sort((a, b) => {
         if (
@@ -82,7 +79,7 @@ const SupplyPoolList = () => {
         }
         return Number(b.underlyingBalanceUSD) - Number(a.underlyingBalanceUSD);
       });
-  }, [displayPoolReserves, reserves?.reservesData]);
+  }, [displayPoolReserves, marketKey, reserves?.reservesData]);
 
   const handlePressItem = useCallback(
     (item: DisplayPoolReserveInfo) => {

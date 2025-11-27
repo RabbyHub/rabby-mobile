@@ -36,7 +36,7 @@ function DashBoardScreen(): JSX.Element {
     console.log('CUSTOM_LOGGER:=>: marketKey', marketKey);
     const timeout = setTimeout(() => {
       fetchData();
-    }, 200);
+    }, 500);
     return () => {
       clearTimeout(timeout);
     };

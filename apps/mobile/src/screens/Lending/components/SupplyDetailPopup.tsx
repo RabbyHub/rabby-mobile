@@ -214,6 +214,8 @@ export const SupplyDetailPopup: React.FC<OpenDetailProps> = ({
               tokenSymbol={reserve.reserve.symbol}
             />
             <Text style={styles.symbol}>{reserve.reserve.symbol}</Text>
+            {!Number(reserve.underlyingBalance || '0') &&
+              reserve?.reserve?.isIsolated && <IsolatedTag />}
           </View>
           <View style={styles.poolInfoItems}>
             <View style={styles.poolInfoItem}>

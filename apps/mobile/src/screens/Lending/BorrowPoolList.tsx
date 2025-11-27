@@ -21,6 +21,7 @@ import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import { useTranslation } from 'react-i18next';
 import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import { formatApy, formatListNetWorth } from './utils/format';
+import { assetCanBeBorrowedByUser } from './utils/borrow';
 
 const FOOT_HEIGHT = 100;
 const BorrowPoolList = () => {
@@ -49,15 +50,14 @@ const BorrowPoolList = () => {
         const reserve = reserves?.reservesData?.find(x =>
           isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
         );
-        if (
-          reserve?.borrowingEnabled === false ||
-          reserve?.isActive === false ||
-          reserve?.isFrozen ||
-          reserve?.isPaused
-        ) {
+        if (!reserve || !iUserSummary) {
           return false;
         }
-        return true;
+        return assetCanBeBorrowedByUser(
+          reserve,
+          iUserSummary,
+          item.reserve.eModes,
+        );
       })
       .sort((a, b) => {
         if (
@@ -70,7 +70,7 @@ const BorrowPoolList = () => {
         }
         return Number(b.totalBorrowsUSD) - Number(a.totalBorrowsUSD);
       });
-  }, [displayPoolReserves, reserves?.reservesData]);
+  }, [displayPoolReserves, iUserSummary, reserves?.reservesData]);
 
   const handlePressItem = useCallback(
     item => {
