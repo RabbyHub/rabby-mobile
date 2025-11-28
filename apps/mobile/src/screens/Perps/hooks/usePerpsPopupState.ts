@@ -4,7 +4,6 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 const visibleAtom = atom({
   isShowGuidePopup: false,
   isShowLoginPopup: false,
-  isShowLogoutPopup: false,
   isShowDepositPopup: false,
   isShowDepositTokenPopup: false,
   isShowWithdrawPopup: false,

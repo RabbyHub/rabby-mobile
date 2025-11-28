@@ -64,6 +64,8 @@ export interface PerpsState {
   positionAndOpenOrders: PositionAndOpenOrder[];
   accountSummary: AccountSummary | null;
   currentPerpsAccount: Account | null;
+  accountNeedApproveAgent: boolean; // 账户是否需要重新approve agent
+  accountNeedApproveBuilderFee: boolean; // 账户是否需要重新approve builder fee
   marketData: MarketData[];
   marketDataMap: MarketDataMap;
   hasPermission: boolean;
@@ -74,8 +76,6 @@ export interface PerpsState {
   userFills: WsFill[];
   userAccountHistory: AccountHistoryItem[];
   localLoadingHistory: AccountHistoryItem[];
-  wsSubscriptions: (() => void)[];
-  pollingTimer: NodeJS.Timeout | null;
   fillsOrderTpOrSl: Record<string, 'tp' | 'sl'>;
   homePositionPnl: {
     pnl: number;
@@ -98,6 +98,8 @@ const initialState: PerpsState = {
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
+  accountNeedApproveAgent: false,
+  accountNeedApproveBuilderFee: false,
   marketData: [],
   userAccountHistory: [],
   localLoadingHistory: [],
@@ -106,8 +108,6 @@ const initialState: PerpsState = {
   isInitialized: false,
   userFills: [],
   approveSignatures: [],
-  wsSubscriptions: [],
-  pollingTimer: null,
   homePositionPnl: {
     pnl: 0,
     accountValue: 0,
@@ -350,12 +350,22 @@ export const usePerpsStore = () => {
     setState(prev => ({ ...prev, approveSignatures: payload }));
   });
 
-  const resetState = useMemoizedFn(() => {
+  const setAccountNeedApproveAgent = useMemoizedFn((payload: boolean) => {
+    setState(prev => ({ ...prev, accountNeedApproveAgent: payload }));
+  });
+
+  const setAccountNeedApproveBuilderFee = useMemoizedFn((payload: boolean) => {
+    setState(prev => ({ ...prev, accountNeedApproveBuilderFee: payload }));
+  });
+
+  const resetAccountState = useMemoizedFn(() => {
     setState(prev => ({
       ...prev,
       accountSummary: null,
       positionAndOpenOrders: [],
       currentPerpsAccount: null,
+      accountNeedApproveAgent: false,
+      accountNeedApproveBuilderFee: false,
       isLogin: false,
       userAccountHistory: [],
       localLoadingHistory: [],
@@ -622,7 +632,7 @@ export const usePerpsStore = () => {
 
   const logout = useMemoizedFn(() => {
     unsubscribeAll();
-    resetState();
+    resetAccountState();
     fetchPerpPermission('');
   });
 
@@ -663,6 +673,8 @@ export const usePerpsStore = () => {
     setState,
 
     // Reducers
+    setAccountNeedApproveAgent,
+    setAccountNeedApproveBuilderFee,
     setFillsOrderTpOrSl,
     setHomePositionPnl,
     setHasPermission,
@@ -680,7 +692,7 @@ export const usePerpsStore = () => {
     setCurrentPerpsAccount,
     setInitialized,
     setApproveSignatures,
-    resetState,
+    resetAccountState,
 
     // Effects
     saveApproveSignatures,

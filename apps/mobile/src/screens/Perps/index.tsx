@@ -39,7 +39,6 @@ import {
 } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
-import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsMarketSectionHeader } from './components/PerpsMarketSection';
 import { PerpsMarketItem } from './components/PerpsMarketSection/PerpsMarketItem';
@@ -89,7 +88,6 @@ export const PerpsScreen = () => {
     marketData,
     userFills,
     marketDataMap,
-    logout,
     login,
     handleWithdraw,
     homeHistoryList,
@@ -149,26 +147,11 @@ export const PerpsScreen = () => {
   }, [positionAndOpenOrders]);
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
-    if (currentPerpsAccount?.address) {
-      logout(currentPerpsAccount?.address || '');
-    }
     await login(v);
     setPopupState(prev => ({
       ...prev,
       isShowLoginPopup: false,
     }));
-  });
-
-  const handleLogout = useMemoizedFn(() => {
-    try {
-      logout(currentPerpsAccount?.address || '');
-      setPopupState(prev => ({
-        ...prev,
-        isShowLogoutPopup: false,
-      }));
-    } catch (e) {
-      console.error(e);
-    }
   });
 
   const { handleDeposit } = usePerpsDeposit({
@@ -492,17 +475,6 @@ export const PerpsScreen = () => {
         value={currentPerpsAccount}
         onChange={handleLogin}
         title={t('page.perps.selectAccountTitle')}
-      />
-      <PerpsAccountLogoutPopup
-        visible={popupState.isShowLogoutPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowLogoutPopup: false,
-          }));
-        }}
-        onLogout={handleLogout}
-        account={currentPerpsAccount}
       />
       <PerpsAgentsLimitModal
         visible={popupState.isShowDeleteAgentPopup}

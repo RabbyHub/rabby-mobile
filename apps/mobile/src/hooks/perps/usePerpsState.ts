@@ -34,6 +34,8 @@ export const usePerpsInitial = () => {
   const {
     state: perpsState,
     setApproveSignatures,
+    setAccountNeedApproveBuilderFee,
+    setAccountNeedApproveAgent,
     setLocalLoadingHistory,
     setUserAccountHistory,
     setUserFills,
@@ -47,7 +49,7 @@ export const usePerpsInitial = () => {
     // setCurrentPerpsAccount,
     setInitialized,
     // setApproveSignatures,
-    resetState,
+    resetAccountState,
 
     // Effects
     saveApproveSignatures,
@@ -102,8 +104,7 @@ export const usePerpsInitial = () => {
         PERPS_BUILD_FEE_RECEIVE_ADDRESS,
       );
       if (!res) {
-        logout(address);
-        apisPerps.createPerpsAgentWallet(address);
+        setAccountNeedApproveBuilderFee(true);
         console.error('Failed to set builder fee');
         Sentry.captureException(
           new Error(
@@ -131,13 +132,7 @@ export const usePerpsInitial = () => {
           console.warn(
             'masterAddress isExpired, no restore approve signature, logout',
           );
-          logout(masterAddress);
-          // Sentry.captureException(
-          //   new Error(
-          //     'masterAddress isExpired, no restore approve signature, logout' +
-          //       masterAddress,
-          //   ),
-          // );
+          setAccountNeedApproveAgent(true);
         }
       } else {
         const expiredAt = item?.validUntil;
@@ -145,15 +140,7 @@ export const usePerpsInitial = () => {
         const isExpired = expiredAt ? expiredAt < oneDayAfter : true;
         if (isExpired) {
           console.warn('masterAddress isExpired, update agent, auto login out');
-          // need to update agent for send new approve agent api avoid error
-          apisPerps.createPerpsAgentWallet(masterAddress);
-          logout(masterAddress);
-          // Sentry.captureException(
-          //   new Error(
-          //     'masterAddress isExpired, update agent, auto login out' +
-          //       masterAddress,
-          //   ),
-          // );
+          setAccountNeedApproveAgent(true);
         } else {
           checkBuilderFee(masterAddress);
         }
@@ -234,12 +221,6 @@ export const usePerpsInitial = () => {
     fetchPerpPermission,
   ]);
 
-  const logout = useMemoizedFn((address: string) => {
-    _logout();
-    apisPerps.setPerpsCurrentAccount(null);
-    apisPerps.setSendApproveAfterDeposit(address, []);
-  });
-
   const perpsPositionInfo = useMemo(() => {
     if (
       !isLogin ||
@@ -292,8 +273,8 @@ export const usePerpsState = () => {
     // setCurrentPerpsAccount,
     setInitialized,
     // setApproveSignatures,
-    resetState,
-
+    resetAccountState,
+    setAccountNeedApproveAgent,
     // Effects
     saveApproveSignatures,
     fetchPositionAndOpenOrders,
@@ -425,9 +406,8 @@ export const usePerpsState = () => {
       );
       const agentAddress = agentWalletPreference?.agentAddress;
       if (agentAddress && errorMessage.includes(agentAddress)) {
-        console.warn('handle action agent is expired, logout');
-        toast.error('Agent is expired, please login again');
-        logout(masterAddress);
+        console.warn('handle action agent is expired');
+        setAccountNeedApproveAgent(true);
         return true;
       }
     },
@@ -607,14 +587,6 @@ export const usePerpsState = () => {
     }
   });
 
-  const logout = useMemoizedFn((address: string) => {
-    _logout();
-    // apisPerps.destroyPerpsSDK();
-    apisPerps.setPerpsCurrentAccount(null);
-    apisPerps.setSendApproveAfterDeposit(address, []);
-    deleteAgentCbRef.current = null;
-  });
-
   const setCurrentPerpsAccount = useMemoizedFn((account: Account | null) => {
     setCurrentPerpsAccount(account);
   });
@@ -758,7 +730,6 @@ export const usePerpsState = () => {
     localLoadingHistory: perpsState.localLoadingHistory,
     // Actions
     login,
-    logout,
     setCurrentPerpsAccount,
     handleWithdraw,
     refreshData: refreshData,
