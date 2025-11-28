@@ -47,7 +47,15 @@ import {
 const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
 const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionHeader);
+
 const MemoizedItemLoader = React.memo(ItemLoader);
+export const MemoizedTokenItemLoader = React.memo((props: RNViewProps) => {
+  return (
+    <View {...props} style={[{ paddingHorizontal: 16 }, props.style]}>
+      <MemoizedItemLoader />
+    </View>
+  );
+});
 
 interface Props {
   chain?: string;
@@ -79,15 +87,13 @@ export const TokenList = ({ chain, updateToken }: Props) => {
     tokens: _rawTokens,
     checkIsExpireAndUpdate,
     isLoading,
-  } = useAssets({ hideCombined: !isFocusing });
+  } = useAssets({ hideCombined: false });
 
   const tokens = useMemo(() => {
-    return !isFocusing
-      ? []
-      : _rawTokens?.filter(item =>
-          chain && item?.chain ? item.chain === chain : true,
-        );
-  }, [isFocusing, _rawTokens, chain]);
+    return _rawTokens?.filter(item =>
+      chain && item?.chain ? item.chain === chain : true,
+    );
+  }, [_rawTokens, chain]);
 
   useEffect(() => {
     if (_rawTokens && !isLoading) {

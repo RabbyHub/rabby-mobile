@@ -93,6 +93,7 @@ import { GlobalTipsPopup } from './components2024/GlobalTipsPopup';
 import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
 import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottomSheet';
 import { RefLikeObject } from './utils/type';
+import { isHomeAtFirstTab } from './screens/Home/MultiAddressHome';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 // import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -120,36 +121,26 @@ const backRestCountRef = {
   resetTimer: null as any,
 };
 
-function useGetSetBackRestCount() {
-  const getBackRestCount = useCallback(() => {
-    return backRestCountRef.current;
-  }, []);
+const getBackRestCount = () => {
+  return backRestCountRef.current;
+};
 
-  const setBackRestCount = useCallback((value: number) => {
-    backRestCountRef.current = value;
-  }, []);
+const setBackRestCount = (value: number) => {
+  backRestCountRef.current = value;
+};
 
-  const setBackStage = useCallback(
-    (stage: (typeof REST_COUNTS)[keyof typeof REST_COUNTS]) => {
-      backRestCountRef.current = stage;
-      if (stage !== REST_COUNTS.CANT_EXIT) {
-        backRestCountRef.resetTimer = setTimeout(() => {
-          setBackRestCount(REST_COUNTS.CANT_EXIT);
-        }, 2500);
-      }
-    },
-    [setBackRestCount],
-  );
-
-  return {
-    getBackRestCount,
-    setBackStage,
-  };
-}
+const setBackStage = (
+  stage: (typeof REST_COUNTS)[keyof typeof REST_COUNTS],
+) => {
+  backRestCountRef.current = stage;
+  if (stage !== REST_COUNTS.CANT_EXIT) {
+    backRestCountRef.resetTimer = setTimeout(() => {
+      setBackRestCount(REST_COUNTS.CANT_EXIT);
+    }, 2500);
+  }
+};
 
 function useDetermineExitAppOnPressBack() {
-  const { getBackRestCount, setBackStage } = useGetSetBackRestCount();
-
   React.useEffect(() => {
     /**
      * in fact, BackHandler.addEventListener('hardwareBackPress', backAction) is not working on iOS,
@@ -158,6 +149,8 @@ function useDetermineExitAppOnPressBack() {
     if (IS_IOS) return;
 
     const backAction = () => {
+      if (isHomeAtFirstTab()) return false;
+
       const restCount = getBackRestCount();
       const navigationInst = navigationRef.current;
       if (navigationInst && !navigationInst?.canGoBack()) {
@@ -196,7 +189,7 @@ function useDetermineExitAppOnPressBack() {
     );
 
     return () => backHandler.remove();
-  }, [getBackRestCount, setBackStage]);
+  }, []);
 }
 
 const onRouteChange = (

@@ -28,7 +28,8 @@ import {
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
-const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
+
+export const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
 
 interface Props {
   chain?: string;
@@ -51,7 +52,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     portfolios: _rawPortfolios,
     checkIsExpireAndUpdate,
     isLoading,
-  } = useAssets({ hideCombined: !isFocusing });
+  } = useAssets({ hideCombined: false });
 
   useEffect(() => {
     if (_rawPortfolios && !isLoading) {
@@ -63,12 +64,10 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
 
   const portfolios = useMemo(
     () =>
-      !isFocusing
-        ? []
-        : _rawPortfolios.filter(item =>
-            chain && item?.chain ? item.chain === chain : true,
-          ),
-    [_rawPortfolios, chain, isFocusing],
+      _rawPortfolios.filter(item =>
+        chain && item?.chain ? item.chain === chain : true,
+      ),
+    [_rawPortfolios, chain],
   );
 
   const {

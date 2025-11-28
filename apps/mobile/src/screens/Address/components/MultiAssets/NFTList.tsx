@@ -53,6 +53,15 @@ import {
 } from './hooks/share';
 import { isTabsSwiping } from './hooks';
 
+export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  return (
+    <View {...props} style={[{ paddingHorizontal: 16 }, props.style]}>
+      <ItemLoader style={styles.removeLeft} />
+    </View>
+  );
+});
+
 interface Props {
   chain?: string;
   updateNft: (nfts: DisplayNftItem[]) => void;
@@ -76,7 +85,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     nfts: _rawNftList,
     checkIsExpireAndUpdate,
     isLoading,
-  } = useAssets({ hideCombined: !isFocusing });
+  } = useAssets({ hideCombined: false });
 
   useEffect(() => {
     if (_rawNftList && !isLoading) {
@@ -86,32 +95,26 @@ export const NFTList = ({ chain, updateNft }: Props) => {
   }, [_rawNftList?.length, isLoading, updateNft]);
 
   const nftList = useMemo(() => {
-    return !isFocusing
-      ? []
-      : _rawNftList?.filter(item =>
-          chain && item?.chain ? item.chain === chain : true,
-        );
-  }, [_rawNftList, chain, isFocusing]);
+    return _rawNftList?.filter(item =>
+      chain && item?.chain ? item.chain === chain : true,
+    );
+  }, [_rawNftList, chain]);
 
   const foldNftList: ActionItem[] = useMemo(
     () =>
-      !isFocusing
-        ? []
-        : collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
-            type: 'fold_nft',
-            data: item,
-          })),
-    [nftList, isFocusing],
+      collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
+        type: 'fold_nft',
+        data: item,
+      })),
+    [nftList],
   );
   const unFoldNftList: ActionItem[] = useMemo(
     () =>
-      !isFocusing
-        ? []
-        : collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
-            type: 'unfold_nft',
-            data: item,
-          })),
-    [nftList, isFocusing],
+      collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
+        type: 'unfold_nft',
+        data: item,
+      })),
+    [nftList],
   );
 
   const dataList = useMemo(() => {
@@ -308,11 +311,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
             <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
           );
         case 'loading-skeleton':
-          return (
-            <View style={styles.rowWrap}>
-              <ItemLoader style={styles.removeLeft} />
-            </View>
-          );
+          return <MemoizedNFTItemLoader />;
         default:
           return null;
       }

@@ -12,9 +12,9 @@ export const useTriggerTagAssets = () => {
   const singleTokenNonceUpdate = useSetAtom(singleTokenNonceAtom);
   const singleDeFiNonceUpdate = useSetAtom(singleDeFiNonceAtom);
   const singleNFTNonceUpdate = useSetAtom(singleNFTNonceAtom);
-  const tokenNonceUpdate = useSetAtom(tokenNonceAtom);
-  const deFiNonceUpdate = useSetAtom(deFiNonceAtom);
-  const nftNonceUpdate = useSetAtom(nftNonceAtom);
+  const setTokenNonce = useSetAtom(tokenNonceAtom);
+  const setDeFiNonce = useSetAtom(deFiNonceAtom);
+  const setNftNonce = useSetAtom(nftNonceAtom);
 
   return {
     singleTokenRefresh: useCallback(() => {
@@ -27,13 +27,13 @@ export const useTriggerTagAssets = () => {
       singleNFTNonceUpdate(prev => prev + 1);
     }, [singleNFTNonceUpdate]),
     tokenRefresh: useCallback(() => {
-      tokenNonceUpdate(prev => prev + 1);
-    }, [tokenNonceUpdate]),
+      setTokenNonce(prev => prev + 1);
+    }, [setTokenNonce]),
     deFiRefresh: useCallback(() => {
-      deFiNonceUpdate(prev => prev + 1);
-    }, [deFiNonceUpdate]),
+      setDeFiNonce(prev => prev + 1);
+    }, [setDeFiNonce]),
     nftRefresh: useCallback(() => {
-      nftNonceUpdate(prev => prev + 1);
-    }, [nftNonceUpdate]),
+      setNftNonce(prev => prev + 1);
+    }, [setNftNonce]),
   };
 };

@@ -9,8 +9,8 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
-import { TokenList } from './TokenList';
-import { ProtocolList } from './ProtocolList';
+import { MemoizedTokenItemLoader, TokenList } from './TokenList';
+import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
 import { useChainInfo } from '@/screens/Home/useChainInfo';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import {
@@ -23,7 +23,8 @@ import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import { useAssets } from '@/screens/Search/useAssets';
 import { isTabsSwiping, useAccountInfo } from './hooks';
-import { NFTList } from './NFTList';
+import { MemoizedNFTItemLoader, NFTList } from './NFTList';
+import { Freeze } from 'react-freeze';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -39,11 +40,12 @@ export const TAB_HEADER_FULL_HEIGHT = 94;
 export const TAB_HEADER_MIN_HEIGHT = 44;
 
 interface Props {
+  tabIndex: number;
   onIndexChange(index: number): void;
-  overViewContent: React.ReactNode;
+  // overViewContent: React.ReactNode;
+  OverViewComponent: React.FC;
   data: ReturnType<typeof useMulti24hBalance>['combineData'];
   loading: boolean;
-  tabIndex: number;
 }
 
 export const enum TabName {
@@ -54,11 +56,12 @@ export const enum TabName {
 }
 
 export const TabsMultiAssets: React.FC<Props> = ({
+  tabIndex,
   onIndexChange,
   data,
   loading,
-  overViewContent,
-  tabIndex,
+  // overViewContent,
+  OverViewComponent,
 }) => {
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -151,15 +154,20 @@ export const TabsMultiAssets: React.FC<Props> = ({
     [],
   );
 
-  const renderHeader = useCallback(() => {
-    return (
-      <TabsTopHeader
-        data={data}
-        loading={loading}
-        showNetWorth={tabIndex !== 0}
-      />
-    );
-  }, [data, loading, tabIndex]);
+  const renderHeader = useCallback<
+    React.ComponentProps<typeof Tabs.Container>['renderHeader'] & object
+  >(
+    props => {
+      return (
+        <TabsTopHeader
+          data={data}
+          loading={loading}
+          showNetWorth={props.index.value !== 0}
+        />
+      );
+    },
+    [data, loading],
+  );
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -185,7 +193,8 @@ export const TabsMultiAssets: React.FC<Props> = ({
       headerHeight={HeaderHeight}
       minHeaderHeight={HeaderHeight}
       tabBarHeight={74}
-      lazy
+      lazy={false}
+      cancelLazyFadeIn
       pagerProps={{
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
@@ -197,26 +206,53 @@ export const TabsMultiAssets: React.FC<Props> = ({
         key={TabName.overview}
         name={TabName.overview}
         label={() => null}>
-        {overViewContent}
+        <OverViewComponent />
       </Tabs.Tab>
 
       <Tabs.Tab
         key={TabName.token}
         name={TabName.token}
         label={renderLabel('Token')}>
-        <TokenList chain={selectChainItem?.chain} updateToken={updateToken} />
+        {/* <View /> */}
+        <Freeze
+          freeze={tabIndex !== 1}
+          placeholder={
+            <MemoizedTokenItemLoader
+              style={{ marginTop: TAB_HEADER_FULL_HEIGHT }}
+            />
+          }>
+          <TokenList chain={selectChainItem?.chain} updateToken={updateToken} />
+        </Freeze>
       </Tabs.Tab>
       <Tabs.Tab
         key={TabName.defi}
         name={TabName.defi}
         label={renderLabel('DeFi')}>
-        <ProtocolList
-          chain={selectChainItem?.chain}
-          updatePortfolio={updatePortfolio}
-        />
+        {/* <View /> */}
+        <Freeze
+          freeze={tabIndex !== 2}
+          placeholder={
+            <MemoizedDefiItemLoader
+              style={{ marginTop: TAB_HEADER_FULL_HEIGHT + 16 }}
+            />
+          }>
+          <ProtocolList
+            chain={selectChainItem?.chain}
+            updatePortfolio={updatePortfolio}
+          />
+        </Freeze>
       </Tabs.Tab>
       <Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
-        <NFTList chain={selectChainItem?.chain} updateNft={updateNft} />
+        {/* <View /> */}
+        <Freeze
+          freeze={tabIndex !== 3}
+          placeholder={
+            <MemoizedNFTItemLoader
+              style={{ marginTop: TAB_HEADER_FULL_HEIGHT }}
+            />
+          }>
+          <NFTList chain={selectChainItem?.chain} updateNft={updateNft} />
+        </Freeze>
       </Tabs.Tab>
     </Tabs.Container>
   );
