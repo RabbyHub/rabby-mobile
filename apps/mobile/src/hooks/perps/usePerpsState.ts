@@ -17,8 +17,8 @@ import { apisPerps } from './../../core/apis/perps';
 import { miniSignTypedData } from '../useMiniSignTypedData';
 import { usePerpsStore } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
-import { toast } from '@/components2024/Toast';
 import { minBy, uniqBy } from 'lodash';
+import { showToast } from './showToast';
 import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { getAllMyAccount } from '@/core/apis/address';
@@ -375,9 +375,9 @@ export const usePerpsState = () => {
     if (deleteAgentCbRef.current) {
       try {
         await deleteAgentCbRef.current();
-        toast.success(t('page.perps.deleteAgentSuccess'));
+        showToast(t('page.perps.deleteAgentSuccess'), 'success');
       } catch (error) {
-        toast.error((error as any).message || 'Delete agent failed');
+        showToast((error as any).message || 'Delete agent failed', 'error');
       }
       deleteAgentCbRef.current = null;
     }
@@ -486,7 +486,7 @@ export const usePerpsState = () => {
       const agentAddress = agentWalletPreference?.agentAddress;
       if (agentAddress && errorMessage.includes(agentAddress)) {
         console.warn('handle action agent is expired, logout');
-        toast.error('Agent is expired, please login again');
+        showToast('Agent is expired, please login again', 'error');
         logout(masterAddress);
         return true;
       }
@@ -663,7 +663,7 @@ export const usePerpsState = () => {
       return true;
     } catch (error: any) {
       console.error('Failed to login Perps account:', error);
-      toast.error(error.message || 'Login failed');
+      showToast(error.message || 'Login failed', 'error');
     }
   });
 
@@ -758,7 +758,7 @@ export const usePerpsState = () => {
         return true;
       } catch (error: any) {
         console.error('Failed to withdraw:', error);
-        toast.error(error.message || 'Withdraw failed');
+        showToast(error.message || 'Withdraw failed', 'error');
         return false;
       }
     },

@@ -45,6 +45,7 @@ import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
+import { showToast } from '@/hooks/perps/showToast';
 
 export const PerpsEditMarginPopup: React.FC<{
   visible: boolean;
@@ -143,28 +144,30 @@ export const PerpsEditMarginPopup: React.FC<{
 
   const minMargin = useMemo(() => {
     const requiredMargin = calTransferMarginRequired(
-      entryPrice,
       markPrice,
-      Number(positionSize),
+      positionSize,
       leverage,
     );
-    return Number(Math.min(requiredMargin, marginUsed).toFixed(2));
-  }, [entryPrice, markPrice, positionSize, leverage, marginUsed]);
+    return new BigNumber(Math.min(requiredMargin + 0.1, marginUsed))
+      .decimalPlaces(2, BigNumber.ROUND_UP)
+      .toNumber();
+  }, [markPrice, positionSize, leverage, marginUsed]);
 
   const maxMargin = useMemo(() => {
-    return Number((availableBalance + marginUsed).toFixed(2));
+    const noHaveBalance = availableBalance < 0.01;
+    const max = noHaveBalance ? marginUsed : availableBalance + marginUsed;
+    return new BigNumber(max).decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber();
   }, [availableBalance, marginUsed]);
 
   const availableToReduce = useMemo(() => {
     // transfer_margin_required = max(initial_margin_required, 0.1 * total_position_value)
     const transferMarginRequired = calTransferMarginRequired(
-      entryPrice,
       markPrice,
       positionSize,
       leverage,
     );
     return Math.max(marginUsed - transferMarginRequired, 0);
-  }, [entryPrice, markPrice, positionSize, leverage, marginUsed]);
+  }, [markPrice, positionSize, leverage, marginUsed]);
 
   // 验证 margin 输入
   const marginValidation = React.useMemo(() => {

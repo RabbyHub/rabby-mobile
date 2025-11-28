@@ -200,7 +200,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       };
     }
 
-    if (usdValue < PERPS_MINI_USD_VALUE || sizeValue < PERPS_MINI_USD_VALUE) {
+    if (sizeValue < PERPS_MINI_USD_VALUE) {
       // 最小订单限制 $10
       return {
         isValid: false,
