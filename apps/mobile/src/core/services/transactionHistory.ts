@@ -901,7 +901,8 @@ export class TransactionHistoryService {
         if (
           target?.customActionInfo?.customAction ===
             CUSTOM_HISTORY_ACTION.LENDING &&
-          id
+          id &&
+          success
         ) {
           this.setLendingSuccessHistoryList(address, id);
         }
