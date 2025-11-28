@@ -82,9 +82,7 @@ function LendingHistory(): JSX.Element {
     });
   const isSceneUsingAllAccounts = false;
   const [firstFetchDone, setFirstFetchDone] = useState(false);
-  const [historySuccessList, setHistorySuccessList] = useState<string[]>(
-    transactionHistoryService.getSucceedList(),
-  );
+  const [historySuccessList, setHistorySuccessList] = useState<string[]>([]);
 
   const mergeDataWithDeduplication = useMemoizedFn(
     (

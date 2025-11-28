@@ -92,6 +92,7 @@ import { ModalsSubmitFeedbackByScreenshotStub } from './components/Screenshot/Sc
 import { GlobalTipsPopup } from './components2024/GlobalTipsPopup';
 import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
 import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottomSheet';
+import { ToggleCollateralModal } from './screens/Lending/modals/ToggleCollateralModal';
 import { RefLikeObject } from './utils/type';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
@@ -480,6 +481,7 @@ export default function AppNavigation({
         </NavigationContainer>
       </NavigationIndependentTree>
       <ModalsSubmitFeedbackByScreenshotStub />
+      <ToggleCollateralModal />
 
       {/** @warning put all business stub components before this modal */}
       <GlobalSecurityTipStubModal />

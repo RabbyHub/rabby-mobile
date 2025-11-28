@@ -50,7 +50,9 @@
         "LendingRepay": "상환",
         "LendingWithdraw": "출금",
         "LendingSupply": "공급",
-        "LendingBorrow": "빌리기"
+        "LendingBorrow": "빌리기",
+        "LendingOffCollateral": "담보로 사용 중지",
+        "LendingOnCollateral": "담보로 사용 활성화"
       },
       "detail": {
         "ApproveToken": "토큰 승인",
@@ -2579,7 +2581,8 @@
     "Lending": {
       "availableCard": {
         "needSupply": "빌리려면 자산을 담보로 제공해야 합니다.",
-        "canBorrow": "담보를 제공한 만큼 최대 차입 한도까지 빌릴 수 있습니다."
+        "canBorrow": "담보를 제공한 만큼 최대 차입 한도까지 빌릴 수 있습니다.",
+        "isolated": "대규모 모드로 인해 빌리기 힘이 제한되고 자산이 한정됩니다."
       },
       "list": {
         "headers": {
@@ -2612,7 +2615,12 @@
         "actions": "공급",
         "availableToBorrow": "대출 가능",
         "supplyAPY": "공급 APY",
-        "approveAndSupply": "승인 및 공급"
+        "approveAndSupply": "승인 및 공급",
+        "supplyBalance": "공급 잔액",
+        "unavailable": "사용 불가",
+        "collateralization": "담보화",
+        "enabled": "활성화됨",
+        "isolatedTips": "귀하의 기존 대출/차입 자산은 지원되지 않습니다."
       },
       "withdrawDetail": {
         "actions": "출금",
@@ -2646,12 +2654,14 @@
         "totalSupplied": "총 공급량",
         "reachCap": "이 자산은 공급 한도에 도달했습니다. 이 시장에서 공급할 수 있는 것이 없습니다.",
         "almostCap": "이 자산은 거의 대출 한도에 도달했습니다. 이 시장에서 빌릴 수 있는 것은 {{available}}뿐입니다.",
-        "availableToSupply": "사용 가능 공급"
+        "availableToSupply": "사용 가능 공급",
+        "useAsCollateral": "담보로 사용하십시오"
       },
       "risk": {
         "checkbox": "알림을 이해하고 계속 진행하겠습니다.",
         "warning": "이 금액을 빌리면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다.",
-        "withdrawWarning": "이 금액을 인출하면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다."
+        "withdrawWarning": "이 금액을 인출하면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다.",
+        "toggleCollateralWarning": "이 자산을 담보로 사용 중지하면 귀하의 건강 지수가 청산을 위한 위험한 수준으로 낮아집니다."
       },
       "lqDescription": {
         "below1title": "건강 지수 ≤ 1.0:",
@@ -2670,7 +2680,9 @@
         "availableToBorrowDesc": "담보로 제공한 자산을 기반으로 대출할 수 있으며, 대출 한도에 도달할 때까지 가능합니다.",
         "lqDesc": "청산이 발생하면 청산자는 차용자를 대신하여 미결제 차입 금액의 최대 50%를 상환합니다. 그 대가로 그들은 담보를 할인된 가격에 구매할 수 있으며, 차액(청산 벌금)을 보너스로 유지할 수 있습니다.",
         "isolatedDesc": "이 자산은 고립 모드에서만 담보로 사용될 수 있으며, 여기서 다른 자산 담보를 공급하여 대출할 수 없습니다. 고립 모드에서 담보로 사용되는 자산은 특정 부채 한도 내에서만 대출할 수 있습니다.",
-        "isolatedTitle": "자산을 담보로 사용할 수 없습니다."
+        "isolatedTitle": "자산을 담보로 사용할 수 없습니다.",
+        "isolatedSupplyDesc": "담보 사용은 격리 모드 때문에 제한됩니다.",
+        "globalIsolatedDesc": "고립 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전 세계 부채 한도가 고립된 자산의 대출 능력을 제한합니다. 다른 자산을 대출하기 전에 UNI를 담보로 사용하지 않도록 설정하여 고립 모드를 종료하십시오."
       },
       "apy": "APY",
       "borrowed": "빌려진",
@@ -2686,7 +2698,26 @@
       "enterAmount": "금액 입력",
       "isolated": "격리된",
       "estNetApy": "추정 순 APY",
-      "marketSlot": "{{market}} 마켓"
+      "marketSlot": "{{market}} 마켓",
+      "toggleCollateralDetail": {
+        "actions": "토글 {{asset}} 담보",
+        "enable": "{{asset}}를 담보로 활성화",
+        "error": "AAVE 서비스에 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        "disable": "담보로 {{asset}} 비활성화"
+      },
+      "toggleCollateralModal": {
+        "closeTitle": "리뷰 비활성화",
+        "exitIsolationModeTitle": "격리 모드 종료",
+        "openTitle": "검토 활성화",
+        "enableIsolationModeTitle": "격리 모드 활성화",
+        "exitIsolationModeDesc": "격리 모드에서 종료되며, 이제 다른 토큰을 담보로 사용할 수 있습니다.",
+        "closeDesc": "이 자산을 담보로 사용하지 않으면 귀하의 대출 능력과 건강 지수에 영향을 미칩니다.",
+        "riskToLiquidationText": "이 통화의 담보 모드로 사용으로 전환할 수 없습니다. 이는 담보 호출을 유발할 수 있기 때문입니다.",
+        "openDesc": "이 자산을 담보로 설정하면 대출 능력과 건강 지수가 증가합니다. 그러나 건강 지수가 1 이하로 떨어지면 강제 청산될 수 있습니다.",
+        "enableIsolationModeDesc": "당신은 격리 모드에 들어가고 있습니다. 격리 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전역 채무 한도가 격리된 자산의 차입 능력을 제한합니다. 다른 자산을 차입하기 전에 CRV를 담보로 비활성화하여 격리 모드를 종료하십시오."
+      },
+      "searchMarket": "시장 검색",
+      "selectMarket": "시장 선택"
     }
   },
   "global": {

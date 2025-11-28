@@ -318,7 +318,9 @@
         "LendingBorrow": "Pedir prestado",
         "LendingRepay": "Reembolsar",
         "LendingSupply": "Suministro",
-        "LendingWithdraw": "Retirar"
+        "LendingWithdraw": "Retirar",
+        "LendingOffCollateral": "Desactivar el uso como colateral",
+        "LendingOnCollateral": "Activar uso como colateral"
       },
       "detail": {
         "Cancel": "Cancelar",
@@ -2841,7 +2843,8 @@
     "Lending": {
       "availableCard": {
         "needSupply": "Para pedir prestado, necesitas aportar activos como garantía.",
-        "canBorrow": "Puedes pedir prestado basado en tu colateral proporcionado, hasta el límite de préstamo."
+        "canBorrow": "Puedes pedir prestado basado en tu colateral proporcionado, hasta el límite de préstamo.",
+        "isolated": "El poder de préstamo y los activos están limitados debido al modo de Aislamiento."
       },
       "list": {
         "headers": {
@@ -2874,7 +2877,12 @@
         "actions": "Suministro",
         "supplyAPY": "Suministrar APY",
         "approveAndSupply": "Aprobar y Suministrar",
-        "availableToBorrow": "Disponible para pedir prestado"
+        "availableToBorrow": "Disponible para pedir prestado",
+        "enabled": "Habilitado",
+        "supplyBalance": "Suministro de saldo",
+        "collateralization": "Colateralización",
+        "isolatedTips": "Los activos de préstamo/endeudamiento existentes no son compatibles.",
+        "unavailable": "No disponible"
       },
       "withdrawDetail": {
         "actions": "Retirar",
@@ -2908,12 +2916,14 @@
         "totalSupplied": "Total Suministrado",
         "mySupply": "Mi Suministro",
         "almostCap": "Este activo ha alcanzado casi su límite de préstamo. Solo hay {{available}} disponible para ser prestado de este mercado.",
-        "reachCap": "Este activo ha alcanzado su límite de suministro. No hay nada disponible para ser suministrado desde este mercado."
+        "reachCap": "Este activo ha alcanzado su límite de suministro. No hay nada disponible para ser suministrado desde este mercado.",
+        "useAsCollateral": "Usar como colateral"
       },
       "risk": {
         "checkbox": "Entiendo la alerta y quiero continuar.",
         "warning": "Tomar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
-        "withdrawWarning": "Retirar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación."
+        "withdrawWarning": "Retirar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
+        "toggleCollateralWarning": "Deshabilitar este activo como colateral reducirá tu Factor de Salud a un nivel arriesgado para la liquidación."
       },
       "lqDescription": {
         "over3desc": "Tus posiciones están seguras",
@@ -2932,7 +2942,9 @@
         "availableToBorrowDesc": "Puedes pedir prestado en función de tu garantía proporcionada y hasta que se alcance el límite de préstamo.",
         "lqDesc": "Cuando ocurre una liquidación, los liquidadores reembolsan hasta el 50% del monto pendiente prestado en nombre del prestatario. A cambio, pueden comprar la garantía a un precio con descuento y quedarse con la diferencia (penalización por liquidación) como bonificación.",
         "isolatedTitle": "El activo no puede ser utilizado como colateral",
-        "isolatedDesc": "Este activo solo se puede utilizar como colateral en modo de aislamiento, donde no puedes proporcionar colateral de otros activos para préstamos. Los activos utilizados como colateral en modo de aislamiento solo se pueden pedir prestados hasta un límite de deuda específico."
+        "isolatedDesc": "Este activo solo se puede utilizar como colateral en modo de aislamiento, donde no puedes proporcionar colateral de otros activos para préstamos. Los activos utilizados como colateral en modo de aislamiento solo se pueden pedir prestados hasta un límite de deuda específico.",
+        "isolatedSupplyDesc": "El uso de colateral está limitado debido al modo de aislamiento.",
+        "globalIsolatedDesc": "En el modo de Aislamiento, no puedes aportar otros activos como colateral. Un límite de deuda global restringe el poder de endeudamiento del activo aislado. Para salir del modo de aislamiento, desactiva UNI como colateral antes de pedir prestado otro activo."
       },
       "gotIt": "Entendido",
       "market": "Mercado",
@@ -2948,7 +2960,26 @@
       "enterAmount": "Introducir cantidad",
       "isolated": "aislado",
       "estNetApy": "Est. net APY",
-      "marketSlot": "{{market}} Mercado"
+      "marketSlot": "{{market}} Mercado",
+      "toggleCollateralDetail": {
+        "actions": "Alternar {{asset}} Colateral",
+        "enable": "Habilitar {{asset}} como Colateral",
+        "disable": "Deshabilitar {{asset}} como Colateral",
+        "error": "Hay un error con el servicio de AAVE. Por favor, inténtalo de nuevo más tarde."
+      },
+      "toggleCollateralModal": {
+        "exitIsolationModeTitle": "Salir del Modo de Aislamiento",
+        "closeTitle": "Revisar la desactivación",
+        "riskToLiquidationText": "No puedes cambiar el uso a modo de colateral para esta moneda, porque provocará una llamada de colateral.",
+        "exitIsolationModeDesc": "Saldrás del modo de Aislamiento y otros tokens ahora pueden ser utilizados como colateral.",
+        "closeDesc": "Deshabilitar este activo como colateral afecta tu poder de endeudamiento y Factor de Salud.",
+        "enableIsolationModeDesc": "Estás entrando en modo Aislado. En modo Aislado, no puedes proporcionar otros activos como garantía. Un límite de deuda global restringe el poder de endeudamiento del activo aislado. Para salir del modo Aislado, desactiva CRV como garantía antes de pedir prestado otro activo.",
+        "openDesc": "Activar este activo como colateral aumenta tu poder de endeudamiento y el Factor de Salud. Sin embargo, puede ser liquidado si tu factor de salud cae por debajo de 1.",
+        "enableIsolationModeTitle": "Habilitar Modo de Aislamiento",
+        "openTitle": "Revisar la habilitación"
+      },
+      "selectMarket": "Seleccionar Mercado",
+      "searchMarket": "Buscar Mercado"
     }
   },
   "global": {

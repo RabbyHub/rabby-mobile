@@ -1,14 +1,13 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
-import { PopupDetailProps } from '../type';
+import { OpenDetailProps } from '../type';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import TokenIcon from './TokenIcon';
-import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
 import {
   createGlobalBottomSheetModal2024,
@@ -27,36 +26,73 @@ import { useTranslation } from 'react-i18next';
 import { formatNetworth } from '@/utils/math';
 import IsolatedTag from './IsolatedTag';
 import { formatApy } from '../utils/format';
+import { useLendingSummary, useSelectedMarket } from '../hooks';
+import { CollateralSwitch } from './CollateralSwitch';
+import { getSupplyCapData } from '../utils/supply';
+import { useToggleCollateralModal } from '../modals/ToggleCollateralModal';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { isValidAddress } from '@ethereumjs/util';
+import { nativeToWrapper } from '../config/nativeToWrapper';
+import DetailLoadingSkeleton from './DetailLoadingSkeleton';
 
-export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
-  reserve,
-  userSummary,
+export const SupplyDetailPopup: React.FC<OpenDetailProps> = ({
+  underlyingAsset,
   onClose,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { lastSelectedChain } = useLendingService();
+  const { chainEnum } = useSelectedMarket();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+  const {
+    displayPoolReserves,
+    iUserSummary: userSummary,
+    loading,
+    wrapperPoolReserve,
+  } = useLendingSummary();
   const { t } = useTranslation();
+
+  const reserve = useMemo(() => {
+    const validAddress = isValidAddress(underlyingAsset);
+    const nativeWrapperReserveAddress = wrapperPoolReserve?.underlyingAsset;
+    const defaultAddress = nativeToWrapper[underlyingAsset];
+    const realTimeReserve = displayPoolReserves?.find(item =>
+      isSameAddress(
+        item.underlyingAsset,
+        validAddress
+          ? underlyingAsset
+          : nativeWrapperReserveAddress || defaultAddress,
+      ),
+    );
+    return realTimeReserve;
+  }, [
+    displayPoolReserves,
+    underlyingAsset,
+    wrapperPoolReserve?.underlyingAsset,
+  ]);
+
   const hasSupplyBalance = useMemo(() => {
-    return reserve?.underlyingBalance && reserve.underlyingBalance !== '0';
-  }, [reserve.underlyingBalance]);
+    return reserve?.underlyingBalance && reserve?.underlyingBalance !== '0';
+  }, [reserve?.underlyingBalance]);
 
   const disableSupplyButton = useMemo(() => {
+    if (!reserve) {
+      return false;
+    }
     if (
-      BigNumber(reserve.reserve.totalLiquidity).gte(reserve.reserve.supplyCap)
+      BigNumber(reserve?.reserve?.totalLiquidity || '0').gte(
+        reserve?.reserve?.supplyCap || '0',
+      )
     ) {
       return true;
     }
     return !reserve?.walletBalance || reserve.walletBalance === '0';
-  }, [
-    reserve.reserve.supplyCap,
-    reserve.reserve.totalLiquidity,
-    reserve.walletBalance,
-  ]);
+  }, [reserve]);
 
   const errorMessage = useMemo(() => {
+    if (!reserve) {
+      return undefined;
+    }
     if (
       reserve.reserve.totalLiquidity &&
       reserve.reserve.totalLiquidity !== '0' &&
@@ -86,17 +122,14 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
       });
     }
     return undefined;
-  }, [
-    reserve.reserve.supplyCap,
-    reserve.reserve.supplyCapUSD,
-    reserve.reserve.totalLiquidity,
-    reserve.reserve.totalLiquidityUSD,
-    t,
-  ]);
+  }, [reserve, t]);
 
   const supplyAvailable = useMemo(() => {
-    const myAmount = BigNumber(reserve.walletBalance || '0');
-    const poolAmount = BigNumber(reserve.reserve.supplyCap)
+    if (!reserve) {
+      return '0';
+    }
+    const myAmount = BigNumber(reserve?.walletBalance || '0');
+    const poolAmount = BigNumber(reserve?.reserve?.supplyCap || '0')
       .minus(BigNumber(reserve.reserve.totalLiquidity))
       .multipliedBy(SUPPLY_UI_SAFE_MARGIN);
     const miniAmount = myAmount.gte(poolAmount) ? poolAmount : myAmount;
@@ -108,12 +141,7 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
       )
       .toString();
     return usdValue;
-  }, [
-    reserve.walletBalance,
-    reserve.reserve.supplyCap,
-    reserve.reserve.totalLiquidity,
-    reserve.reserve.formattedPriceInMarketReferenceCurrency,
-  ]);
+  }, [reserve]);
 
   const handlePressSupply = () => {
     onClose?.();
@@ -153,7 +181,33 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
       },
     });
   };
+  const { openCollateralChange } = useToggleCollateralModal();
 
+  const canBeEnabledAsCollateral = useMemo(() => {
+    if (!reserve) {
+      return false;
+    }
+    const { supplyCapReached } = getSupplyCapData(reserve);
+    return userSummary
+      ? !supplyCapReached &&
+          reserve.reserve.reserveLiquidationThreshold !== '0' &&
+          ((!reserve.reserve.isIsolated && !userSummary.isInIsolationMode) ||
+            userSummary.isolatedReserve?.underlyingAsset ===
+              reserve.underlyingAsset ||
+            (reserve.reserve.isIsolated &&
+              userSummary.totalCollateralMarketReferenceCurrency === '0'))
+      : false;
+  }, [reserve, userSummary]);
+
+  useEffect(() => {
+    if (!loading && !reserve) {
+      onClose?.();
+    }
+  }, [loading, onClose, reserve]);
+
+  if (loading || !reserve || !userSummary) {
+    return <DetailLoadingSkeleton />;
+  }
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
       <Text style={styles.title}>{t('page.Lending.supplyOverview.title')}</Text>
@@ -162,12 +216,13 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
           <View style={styles.tokenInfos}>
             <TokenIcon
               size={30}
-              chain={lastSelectedChain}
+              chain={chainEnum}
               chainSize={14}
               tokenSymbol={reserve.reserve.symbol}
             />
             <Text style={styles.symbol}>{reserve.reserve.symbol}</Text>
-            {reserve?.reserve?.isIsolated && <IsolatedTag />}
+            {!Number(reserve.underlyingBalance || '0') &&
+              reserve?.reserve?.isIsolated && <IsolatedTag />}
           </View>
           <View style={styles.poolInfoItems}>
             <View style={styles.poolInfoItem}>
@@ -240,6 +295,26 @@ export const SupplyDetailPopup: React.FC<PopupDetailProps> = ({
               ) : null}
             </View>
           </View>
+          {Number(reserve.underlyingBalance || '0') > 0 && (
+            <View style={styles.userInfoItem}>
+              <View style={styles.collateralContainer}>
+                <Text style={styles.userInfoItemTitle}>
+                  {t('page.Lending.supplyOverview.useAsCollateral')}
+                </Text>
+                {reserve?.reserve?.isIsolated && <IsolatedTag />}
+              </View>
+              <View style={styles.userInfoItemValueContainer}>
+                <CollateralSwitch
+                  reserve={reserve}
+                  canBeEnabledAsCollateral={canBeEnabledAsCollateral}
+                  onValueChange={() => {
+                    onClose?.();
+                    openCollateralChange(reserve);
+                  }}
+                />
+              </View>
+            </View>
+          )}
         </View>
       </View>
       <View style={styles.buttonContainer}>
@@ -374,6 +449,11 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  collateralContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   userInfoItemTitle: {
     fontSize: 14,

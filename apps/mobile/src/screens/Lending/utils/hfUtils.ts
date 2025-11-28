@@ -7,6 +7,7 @@ import {
   valueToBigNumber,
 } from '@aave/math-utils';
 import { BigNumber } from 'bignumber.js';
+import { DisplayPoolReserveInfo } from '../type';
 
 interface CalculateHFAfterWithdrawProps {
   user: FormatUserSummaryAndIncentivesResponse<
@@ -168,4 +169,27 @@ export const calculateHFAfterRepay = ({
   });
 
   return hfAfterRepay.isLessThan(0) && !hfAfterRepay.eq(-1) ? 0 : hfAfterRepay;
+};
+
+export const calculateHFAfterToggleCollateral = (
+  user: FormatUserSummaryAndIncentivesResponse<
+    ReserveDataHumanized & FormatReserveUSDResponse
+  >,
+  userReserve: DisplayPoolReserveInfo,
+) => {
+  const usageAsCollateralModeAfterSwitch =
+    !userReserve.usageAsCollateralEnabledOnUser;
+  const currenttotalCollateralMarketReferenceCurrency = valueToBigNumber(
+    user.totalCollateralMarketReferenceCurrency,
+  );
+  const totalCollateralAfterSwitchETH =
+    currenttotalCollateralMarketReferenceCurrency[
+      usageAsCollateralModeAfterSwitch ? 'plus' : 'minus'
+    ](userReserve.underlyingBalanceMarketReferenceCurrency);
+  return calculateHealthFactorFromBalancesBigUnits({
+    collateralBalanceMarketReferenceCurrency: totalCollateralAfterSwitchETH,
+    borrowBalanceMarketReferenceCurrency:
+      user.totalBorrowsMarketReferenceCurrency,
+    currentLiquidationThreshold: user.currentLiquidationThreshold,
+  });
 };
