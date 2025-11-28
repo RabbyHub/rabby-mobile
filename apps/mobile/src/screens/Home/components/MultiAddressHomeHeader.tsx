@@ -1,4 +1,3 @@
-import { useIsFocused } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
@@ -107,6 +106,17 @@ export function MultiAddressHomeHeader(
       item => -(item.balance || 0),
     ).slice(0, 3);
   }, [pinnedAccountList, multi24hBalance, balanceAccounts]);
+
+  useEffect(() => {
+    if (!addressListData?.length) {
+      return;
+    }
+    matomoRequestEvent({
+      category: 'Pin Address',
+      action: 'PinAddress_Active',
+      label: `PinAddress_${addressListData?.length}`,
+    });
+  }, [addressListData?.length]);
 
   const { accountsLength } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes

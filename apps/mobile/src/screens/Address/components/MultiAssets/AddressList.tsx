@@ -10,7 +10,6 @@ import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getReadyNavigationInstance } from '@/utils/navigation';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
