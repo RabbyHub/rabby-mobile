@@ -189,6 +189,7 @@ export const TabsMultiAssets: React.FC<Props> = ({
       minHeaderHeight={HeaderHeight}
       tabBarHeight={74}
       lazy
+      cancelLazyFadeIn
       pagerProps={{
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
