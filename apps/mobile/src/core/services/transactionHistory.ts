@@ -535,14 +535,21 @@ export class TransactionHistoryService {
     status: BridgeTxHistoryItem['status'],
     bridgeTx?: BridgeHistory,
   ) {
-    this.store.bridgeTxHistory.forEach(item => {
+    let changed = false;
+    this.store.bridgeTxHistory.forEach((item, index) => {
       if (item.fromChainId === chainId && item.hash === from_tx_id) {
-        item.status = status;
-        item.completedAt = Date.now();
-        item.actualToToken = bridgeTx?.to_actual_token;
-        item.actualToAmount = bridgeTx?.actual?.receive_token_amount;
+        changed = true;
+        this.store.bridgeTxHistory[index].status = status;
+        this.store.bridgeTxHistory[index].completedAt = Date.now();
+        this.store.bridgeTxHistory[index].actualToToken =
+          bridgeTx?.to_actual_token;
+        this.store.bridgeTxHistory[index].actualToAmount =
+          bridgeTx?.actual?.receive_token_amount;
       }
     });
+    if (changed) {
+      this.store.bridgeTxHistory = this.store.bridgeTxHistory;
+    }
   }
 
   getIsNeedFetchTxHistory(address: string) {

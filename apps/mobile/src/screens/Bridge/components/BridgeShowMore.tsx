@@ -171,17 +171,33 @@ const BridgeShowMore = ({
             style={styles.sourceLogo}
           />
         )}
-        {sourceName && <Text style={styles.sourceName}>{sourceName}</Text>}
+        {sourceName && (
+          <Text
+            style={
+              isBestQuote
+                ? [
+                    styles.sourceName,
+                    {
+                      fontSize: 12,
+                      fontWeight: 900,
+                      lineHeight: 16,
+                    },
+                  ]
+                : styles.sourceName
+            }>
+            {sourceName}
+          </Text>
+        )}
       </>
     ),
-    [sourceLogo, sourceName, styles.sourceLogo, styles.sourceName],
+    [isBestQuote, sourceLogo, sourceName, styles.sourceLogo, styles.sourceName],
   );
 
   const BestQuoteContent = useMemo(
     () => (
       <View style={[styles.bestQuoteWrapper, { height: 24 }]}>
         <View>
-          <IconBestQuoteTag height={24} style={{ left: -0.5 }} />
+          <IconBestQuoteTag height={24} style={styles.bestQuoteTag} />
           <View style={styles.bestTagWrapper}>
             <Text style={styles.bestText}>{t('page.swap.best')}</Text>
           </View>
@@ -190,14 +206,7 @@ const BridgeShowMore = ({
         <View style={styles.bestRightWrapper}>{QuoteContent}</View>
       </View>
     ),
-    [
-      QuoteContent,
-      styles.bestQuoteWrapper,
-      styles.bestRightWrapper,
-      styles.bestTagWrapper,
-      styles.bestText,
-      t,
-    ],
+    [QuoteContent, styles, t],
   );
 
   const sourceContentRender = useMemoizedFn(() => (
@@ -1083,15 +1092,18 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
 
   bestQuoteWrapper: {
     borderColor: colors2024['brand-default'],
-    borderWidth: 0.5,
+    borderWidth: StyleSheet.hairlineWidth * 2,
     borderRadius: 4,
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
   },
+  bestQuoteTag: {
+    left: -StyleSheet.hairlineWidth * 2,
+  },
   bestTagWrapper: {
     position: 'absolute',
-    top: 0.5,
+    top: StyleSheet.hairlineWidth * 2,
     left: 7,
     height: '100%',
     flexDirection: 'row',
