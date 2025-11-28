@@ -1,4 +1,4 @@
-/* eslint-disable react-native/no-inline-styles */
+import { useIsFocused } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
@@ -72,7 +72,9 @@ export function MultiAddressHomeHeader(
 
   const { multi24hBalance } = useMulti24hBalance(
     pinnedAccountList.map(item => item.address),
-    true,
+    {
+      disableAutoFetch: true,
+    },
   );
 
   const addressListData = useMemo(() => {

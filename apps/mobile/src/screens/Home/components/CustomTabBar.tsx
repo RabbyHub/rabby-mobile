@@ -173,12 +173,22 @@ export const HomeCustomMaterialTabBar = (_props: {
   const stylez = useAnimatedStyle(() => {
     return {
       opacity: indexDecimal.value <= 0.5 ? 0 : 1,
-      height: 54,
     };
-  }, [indexDecimal]);
+  });
+
   const renderTabItem = useCallback<
     MaterialTabBarProps['TabItemComponent'] & object
-  >(_p => <MaterialTabItem {..._p} pressOpacity={1} inactiveOpacity={1} />, []);
+  >(
+    _p => (
+      <MaterialTabItem
+        {..._p}
+        // onSwitchTo={name => _p.onSwitchTo?.(name)}
+        pressOpacity={__DEV__ ? 0.5 : 1}
+        inactiveOpacity={1}
+      />
+    ),
+    [],
+  );
 
   const {
     // measureTabBarWrapper,
@@ -242,6 +252,7 @@ export const HomeCustomMaterialTabBar = (_props: {
   );
 };
 
+export const TABITEM_H = 54;
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
@@ -270,6 +281,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    height: TABITEM_H,
   },
   portfolioContainerBgBox: {
     backgroundColor: colors2024['neutral-bg-1'],

@@ -25,6 +25,7 @@ import { useAccountInfo } from '../hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
+import { useIsFocused } from '@react-navigation/native';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const ScreenWidth = Dimensions.get('screen').width;
@@ -54,16 +55,17 @@ function Chart({
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
 
+  const isNavFocused = useIsFocused();
   const {
     combineData: combineCurveData,
     isLoadingNew: isLoadingCurve,
     refresh: refreshCurve,
-  } = useMultiCurve(
-    top10Addresses,
-    true,
-    top10Balance.total,
-    top10Balance.totalEvm,
-  );
+  } = useMultiCurve(top10Addresses, {
+    isNavigationFocused: isNavFocused,
+    disableAutoFetch: true,
+    totalBalance: top10Balance.total,
+    totalEvmBalance: top10Balance.totalEvm,
+  });
   const combineData = useMemo(() => {
     return {
       ...combineCurveData,
@@ -159,7 +161,7 @@ interface IHeaderProps {
   toggleFoldMultiChart: () => void;
   isFoldMultiChart: boolean;
 }
-export const ChartHeader = ({
+const ChartHeader = ({
   rawNetWorth,
   rawChange,
   changePercent,

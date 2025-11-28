@@ -1,4 +1,5 @@
 import { atom, useSetAtom } from 'jotai';
+import { useCallback } from 'react';
 
 export const singleTokenNonceAtom = atom<number>(0);
 export const singleDeFiNonceAtom = atom<number>(0);
@@ -11,27 +12,28 @@ export const useTriggerTagAssets = () => {
   const singleTokenNonceUpdate = useSetAtom(singleTokenNonceAtom);
   const singleDeFiNonceUpdate = useSetAtom(singleDeFiNonceAtom);
   const singleNFTNonceUpdate = useSetAtom(singleNFTNonceAtom);
-  const tokenNonceUpdate = useSetAtom(tokenNonceAtom);
-  const deFiNonceUpdate = useSetAtom(deFiNonceAtom);
-  const nftNonceUpdate = useSetAtom(nftNonceAtom);
+  const setTokenNonce = useSetAtom(tokenNonceAtom);
+  const setDeFiNonce = useSetAtom(deFiNonceAtom);
+  const setNftNonce = useSetAtom(nftNonceAtom);
+
   return {
-    singleTokenRefresh: () => {
+    singleTokenRefresh: useCallback(() => {
       singleTokenNonceUpdate(prev => prev + 1);
-    },
-    singleDeFiRefresh: () => {
+    }, [singleTokenNonceUpdate]),
+    singleDeFiRefresh: useCallback(() => {
       singleDeFiNonceUpdate(prev => prev + 1);
-    },
-    singleNFTRefresh: () => {
+    }, [singleDeFiNonceUpdate]),
+    singleNFTRefresh: useCallback(() => {
       singleNFTNonceUpdate(prev => prev + 1);
-    },
-    tokenRefresh: () => {
-      tokenNonceUpdate(prev => prev + 1);
-    },
-    deFiRefresh: () => {
-      deFiNonceUpdate(prev => prev + 1);
-    },
-    nftRefresh: () => {
-      nftNonceUpdate(prev => prev + 1);
-    },
+    }, [singleNFTNonceUpdate]),
+    tokenRefresh: useCallback(() => {
+      setTokenNonce(prev => prev + 1);
+    }, [setTokenNonce]),
+    deFiRefresh: useCallback(() => {
+      setDeFiNonce(prev => prev + 1);
+    }, [setDeFiNonce]),
+    nftRefresh: useCallback(() => {
+      setNftNonce(prev => prev + 1);
+    }, [setNftNonce]),
   };
 };

@@ -420,6 +420,7 @@ export const useAssetsMap = ({
   }, [assetsMap, hideCombined, top10Addresses]);
 
   return {
+    top10Addresses,
     updateTokens,
     updatePortfolios,
     updateNFTs,

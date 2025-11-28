@@ -47,7 +47,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useGuidanceShown } from './hooks';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { getLottieAnimationDurationInMS } from '@/utils/time';
 import { isEqual } from 'lodash';
 
@@ -264,7 +264,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   const previousIndicatorWrapperLayout = usePrevious(
     secondaryIndicatorAbsLayout,
   );
-  const pageY = useDebounceValue(
+  const pageY = useDebouncedValue(
     secondaryIndicatorAbsLayout ? secondaryIndicatorAbsLayout.pageY : 0,
     50,
   );
@@ -319,7 +319,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   }, []);
 
   const previousVisible = usePrevious(guidanceVisible);
-  const debouncedVisible = useDebounceValue(guidanceVisible, 100);
+  const debouncedVisible = useDebouncedValue(guidanceVisible, 100);
   useEffect(() => {
     if (!guidanceVisible) {
       wrapperOpacity.value = withTiming(0, {

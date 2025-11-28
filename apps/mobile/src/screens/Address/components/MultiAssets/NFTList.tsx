@@ -53,6 +53,15 @@ import {
 } from './hooks/share';
 import { isTabsSwiping } from './hooks';
 
+export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  return (
+    <View {...props} style={[{ paddingHorizontal: 16 }, props.style]}>
+      <ItemLoader style={styles.removeLeft} />
+    </View>
+  );
+});
+
 interface Props {
   chain?: string;
   updateNft: (nfts: DisplayNftItem[]) => void;
@@ -76,7 +85,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     nfts: _rawNftList,
     checkIsExpireAndUpdate,
     isLoading,
-  } = useAssets({ hideCombined: !isFocusing });
+  } = useAssets({ hideCombined: false });
 
   useEffect(() => {
     if (_rawNftList && !isLoading) {
@@ -302,11 +311,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
             <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
           );
         case 'loading-skeleton':
-          return (
-            <View style={styles.rowWrap}>
-              <ItemLoader style={styles.removeLeft} />
-            </View>
-          );
+          return <MemoizedNFTItemLoader />;
         default:
           return null;
       }
@@ -333,9 +338,9 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
-  if (!isFocusing) {
-    return null;
-  }
+  // if (!isFocusing) {
+  //   return null;
+  // }
   return (
     <Tabs.FlatList
       keyExtractor={getItemId}

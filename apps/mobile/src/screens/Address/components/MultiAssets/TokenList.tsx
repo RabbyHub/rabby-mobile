@@ -47,7 +47,15 @@ import {
 const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
 const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionHeader);
+
 const MemoizedItemLoader = React.memo(ItemLoader);
+export const MemoizedTokenItemLoader = React.memo((props: RNViewProps) => {
+  return (
+    <View {...props} style={[{ paddingHorizontal: 16 }, props.style]}>
+      <MemoizedItemLoader />
+    </View>
+  );
+});
 
 interface Props {
   chain?: string;
@@ -79,7 +87,7 @@ export const TokenList = ({ chain, updateToken }: Props) => {
     tokens: _rawTokens,
     checkIsExpireAndUpdate,
     isLoading,
-  } = useAssets({ hideCombined: !isFocusing });
+  } = useAssets({ hideCombined: false });
 
   const tokens = useMemo(() => {
     return _rawTokens?.filter(item =>
@@ -402,9 +410,9 @@ export const TokenList = ({ chain, updateToken }: Props) => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate]);
 
-  if (!isFocusing) {
-    return null;
-  }
+  // if (!isFocusing) {
+  //   return null;
+  // }
 
   return (
     <Tabs.FlatList

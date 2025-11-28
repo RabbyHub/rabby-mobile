@@ -13,7 +13,9 @@ export const useQueryProjects = (userAddr: string | undefined) => {
     tokens,
     updateData: updateTokens,
     isLoading: isTokenLoading,
-  } = useTokens(userAddr, false, 0, undefined);
+  } = useTokens(userAddr, {
+    visible: false,
+  });
 
   const {
     data: portfolios,

@@ -1,6 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import { Text, View, TouchableOpacity } from 'react-native';
 import { useCallback, useMemo, useState } from 'react';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,6 +10,7 @@ import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
+import { getReadyNavigationInstance } from '@/utils/navigation';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -17,7 +20,6 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
 import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
@@ -52,9 +54,11 @@ export const AddressList = ({
 
   const { multi24hBalance, refresh: refresh24hBalance } = useMulti24hBalance(
     top10Addresses,
-    true,
-    top10Balance.total,
-    top10Balance.totalEvm,
+    {
+      disableAutoFetch: true,
+      totalBalance: top10Balance.total,
+      totalEvmBalance: top10Balance.totalEvm,
+    },
   );
 
   useBalanceUpdate(triggerUpdate);
@@ -226,6 +230,7 @@ export const AddressList = ({
     }
   }, [fetchAccounts, refresh24hBalance, triggerUpdate]);
 
+  // return null;
   return (
     <BottomSheetFlatList
       keyExtractor={item => `${item.address}-${item.brandName}`}
