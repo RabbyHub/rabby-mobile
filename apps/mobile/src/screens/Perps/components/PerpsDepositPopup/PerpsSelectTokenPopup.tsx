@@ -41,13 +41,10 @@ export const PerpsSelectTokenPopup: React.FC<{
     getStyle: getStyle,
   });
 
-  const { tokens: _tokens, updateData } = useTokens(
-    account?.address,
-    false,
-    0,
-    undefined,
-    true,
-  );
+  const { tokens: _tokens, updateData } = useTokens(account?.address, {
+    visible: false,
+    force: true,
+  });
 
   const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(
     async () => {

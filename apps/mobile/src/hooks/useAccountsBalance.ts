@@ -3,10 +3,10 @@ import { atom, useAtom } from 'jotai';
 import { apiBalance } from '@/core/apis';
 import { keyringService, preferenceService } from '@/core/services';
 import { KEYRING_CLASS, KeyringTypeName } from '@rabby-wallet/keyring-utils';
-import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { unionBy } from 'lodash';
+import { useAtomCallback } from 'jotai/utils';
 
 export interface balanceAccountType {
   address: string;
@@ -30,6 +30,11 @@ export const balanceAtom = atom<balanceAccountType[]>([]);
 const balanceCacheAtom = atom<balanceAccountType[]>([]);
 const lengthAtom = atom<number>(0);
 
+const loadAccountsBalanceAtom = atom({
+  balanceLoading: false,
+  loadBalanceFromApiStage: 'idle' as LoadBalanceStage,
+});
+
 export type LoadBalanceStage = 'idle' | 'loading' | 'finished';
 export default function useAccountsBalance(opts?: {
   cacheTime?: number;
@@ -40,13 +45,15 @@ export default function useAccountsBalance(opts?: {
   const [balanceCacheAccounts, setBalanceCacheAccounts] =
     useAtom(balanceCacheAtom);
   const [accountsLength, setAccountsLength] = useAtom(lengthAtom);
-  const [{ balanceLoading, loadBalanceFromApiStage }, setLoading] = useState({
-    balanceLoading: false,
-    loadBalanceFromApiStage: 'idle' as LoadBalanceStage,
-  });
+  const [{ balanceLoading, loadBalanceFromApiStage }, setLoading] = useAtom(
+    loadAccountsBalanceAtom,
+  );
+  const getBalanceLoading = useAtomCallback(
+    useCallback(get => get(loadAccountsBalanceAtom).balanceLoading, []),
+  );
   const lastTimeStamps = useRef<number>(0);
 
-  const isNeedFetchData = useMemoizedFn(() => {
+  const isNeedFetchData = useCallback(() => {
     const currentTime = Date.now();
     const diff = currentTime - lastTimeStamps.current;
     if (diff > cacheTime) {
@@ -54,12 +61,13 @@ export default function useAccountsBalance(opts?: {
       return true;
     }
     return false;
-  });
-  const fetchTotalBalance = useMemoizedFn(
+  }, [cacheTime]);
+
+  const fetchTotalBalance = useCallback(
     async (fetchType: 'from_cache' | 'from_api') => {
       try {
-        if (balanceLoading) {
-          console.log('fetchTotalBalance  loading return');
+        if (getBalanceLoading()) {
+          console.log('fetchTotalBalance loading return');
           return;
         }
         setLoading(prev => ({ ...prev, balanceLoading: true }));
@@ -158,22 +166,33 @@ export default function useAccountsBalance(opts?: {
         }));
       }
     },
+    [
+      getBalanceLoading,
+      accountsNoUnique,
+      setLoading,
+      setAccountsLength,
+      setBalanceCacheAccounts,
+      setBalanceAccounts,
+    ],
   );
 
-  const triggerUpdate = useMemoizedFn((forceFromApi?: boolean) => {
-    // if (isNeedFetchData() || forceFromApi) {
-    //   fetchTotalBalance();
-    // }
-    const isForceFetchFromApi = isNeedFetchData() || forceFromApi;
-    console.log(
-      'triggerUpdate  fetchTotalBalance',
-      isForceFetchFromApi ? 'from_api' : 'from_cache',
-    );
-    if (forceFromApi) {
-      lastTimeStamps.current = Date.now();
-    }
-    fetchTotalBalance(isForceFetchFromApi ? 'from_api' : 'from_cache');
-  });
+  const triggerUpdate = useCallback(
+    async (forceFromApi?: boolean) => {
+      // if (isNeedFetchData() || forceFromApi) {
+      //   fetchTotalBalance();
+      // }
+      const isForceFetchFromApi = isNeedFetchData() || forceFromApi;
+      console.log(
+        'triggerUpdate fetchTotalBalance',
+        isForceFetchFromApi ? 'from_api' : 'from_cache',
+      );
+      if (forceFromApi) {
+        lastTimeStamps.current = Date.now();
+      }
+      fetchTotalBalance(isForceFetchFromApi ? 'from_api' : 'from_cache');
+    },
+    [fetchTotalBalance, isNeedFetchData],
+  );
 
   const getTotalBalance = useCallback(
     (addresses: string[]) => {

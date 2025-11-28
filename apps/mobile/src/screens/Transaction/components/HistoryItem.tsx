@@ -63,8 +63,18 @@ export const HistoryItem = React.memo(
     const { styles, isLight } = useTheme2024({ getStyle });
 
     const formatType: HistoryItemCateType = useMemo(() => {
+      if (data.historyType === HistoryItemCateType.Swap) {
+        if (
+          data.receives?.[0]?.token?.is_core &&
+          data.sends?.[0]?.token?.is_core
+        ) {
+          return HistoryItemCateType.Swap;
+        } else {
+          return HistoryItemCateType.UnKnown;
+        }
+      }
       return data.historyType;
-    }, [data.historyType]);
+    }, [data.historyType, data.receives, data.sends]);
 
     const tokenApproveData = useMemo(() => {
       const res: TokenChangeDataItem[] = [];

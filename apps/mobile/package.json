@@ -43,7 +43,6 @@
     "@safe-global/types-kit": "1.0.4",
     "react-native-ble-plx": "3.5.0",
     "@ledgerhq/react-native-hw-transport-ble/react-native-ble-plx": "3.5.0",
-    "@ledgerhq/react-native-hw-transport-ble": "patch:@ledgerhq/react-native-hw-transport-ble@npm:6.35.3#./patches/@ledgerhq-react-native-hw-transport-ble-npm-6.35.3-android-subscription.patch",
     "@onekeyfe/hd-transport-react-native": "patch:@onekeyfe/hd-transport-react-native@npm:1.1.13#./patches/@onekeyfe+hd-transport-react-native+1.1.13-android-subscription.patch"
   },
   "dependencies": {
@@ -58,7 +57,7 @@
     "@ethereumjs/tx": "5.1.0",
     "@ethereumjs/util": "^9.0.1",
     "@gorhom/bottom-sheet": "5.0.6",
-    "@ledgerhq/react-native-hw-transport-ble": "6.35.3",
+    "@ledgerhq/react-native-hw-transport-ble": "6.35.6",
     "@metamask/abi-utils": "3.0.0",
     "@metamask/browser-passworder": "6.0.0",
     "@metamask/eth-sig-util": "5.1.0",
@@ -66,6 +65,7 @@
     "@notifee/react-native": "^7.8.0",
     "@onekeyfe/hd-ble-sdk": "1.1.13",
     "@onekeyfe/react-native-ble-utils": "0.1.4",
+    "@op-engineering/op-sqlite": "^15.1.1",
     "@rabby-wallet/biz-utils": "workspace:^",
     "@rabby-wallet/eth-hd-keyring": "4.3.1",
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^",
@@ -81,7 +81,7 @@
     "@rabby-wallet/rabby-api": "0.9.48",
     "@rabby-wallet/rabby-security-engine": "2.0.11",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
-    "@rabby-wallet/rabby-swap": "0.0.67",
+    "@rabby-wallet/rabby-swap": "0.0.68",
     "@rabby-wallet/react-native-sqlite-storage": "7.0.0-alpha.2",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
@@ -177,7 +177,7 @@
     "react-native-qrcode-svg": "^6.2.0",
     "react-native-quick-crypto": "0.7.13",
     "react-native-randombytes": "^3.6.1",
-    "react-native-reanimated": "3.17.1",
+    "react-native-reanimated": "3.18.2",
     "react-native-root-toast": "^3.5.1",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "4.9.2",
@@ -252,6 +252,7 @@
     "react-native-version": "^4.0.0",
     "react-test-renderer": "18.3.1",
     "reactotron-react-native": "^5.0.4",
+    "reactotron-react-native-mmkv": "^0.2.9",
     "reflect-metadata": "0.1.13",
     "rimraf": "^3.0.2",
     "styled-components": "^6.1.1",
@@ -266,5 +267,9 @@
   },
   "installConfig": {
     "hoistingLimits": "workspaces"
+  },
+  "op-sqlite": {
+    "performanceMode": true,
+    "sqliteFlags": "-DSQLITE_ENABLE_MATH_FUNCTIONS"
   }
 }

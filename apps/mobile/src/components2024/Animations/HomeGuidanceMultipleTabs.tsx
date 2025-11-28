@@ -41,7 +41,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useGuidanceShown } from './hooks';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 type AbsLayout = {
   width: number;
@@ -190,7 +190,10 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
 
   const { measuredLayout } = useMeasuredLayoutForHomeGuidanceMultipleTabs();
   const previousLayout = usePrevious(measuredLayout);
-  const pageY = useDebounceValue(measuredLayout ? measuredLayout.pageY : 0, 50);
+  const pageY = useDebouncedValue(
+    measuredLayout ? measuredLayout.pageY : 0,
+    50,
+  );
   useLayoutEffect(() => {
     if ((!previousLayout && measuredLayout) || pageY > 10) {
       const timer = setTimeout(() => {

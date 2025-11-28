@@ -7,8 +7,11 @@ import {
   LoggerOptions,
   AbstractLogger,
   LogLevel,
+  LogMessage,
+  LogMessageType,
 } from 'typeorm/browser';
 import { getOnlineConfig } from '@/core/config/online';
+import { type ReactotronReactNative } from 'reactotron-react-native';
 
 // slice query string, [0...500] + [-500...end]
 function formatQueryString(query: string, len = 500): string {
@@ -63,20 +66,121 @@ function makeLogMessages({
   ];
 }
 
+function tronLog(
+  reactotron: ReactotronReactNative,
+  {
+    value,
+    preview,
+  }: {
+    value: string | number | boolean | object;
+    preview: string;
+  },
+) {
+  reactotron.display({
+    name: 'Database',
+    value,
+    preview,
+    important: true,
+  });
+}
+
+const EmojiLevelMap: {
+  [key in LogLevel]?: string;
+} = {
+  log: '📝',
+  info: 'ℹ️',
+  warn: '⚠️',
+  error: '❌',
+};
+
 export class RabbyOrmDevConsoleLogger
   extends AdvancedConsoleLogger
   implements Logger
 {
   constructor(options?: LoggerOptions) {
-    super(options);
+    super(['error', 'query', 'schema', 'migration']);
+  }
+
+  protected isLogEnabledFor(type?: LogLevel | LogMessageType): boolean {
+    switch (type) {
+      case 'query':
+        return this._hasTron || super.isLogEnabledFor(type);
+      default:
+        return super.isLogEnabledFor(type);
+    }
+  }
+
+  get _hasTron() {
+    return !!globalThis._tron;
   }
 
   stringifyParams(parameters: any) {
     try {
+      if (this._hasTron) {
+        return JSON.stringify(parameters, null, 2);
+      }
       return formatQueryString(JSON.stringify(parameters, null, 2), 300);
     } catch (error) {
       // most probably circular objects in parameters
       return parameters;
+    }
+  }
+
+  protected writeLog(
+    level: LogLevel,
+    logMessage: LogMessage | LogMessage[],
+    queryRunner?: QueryRunner,
+  ): void {
+    if (!globalThis._tron) {
+      return super.writeLog(level, logMessage, queryRunner);
+    }
+
+    const superFn = super.writeLog.bind(this);
+
+    switch (level) {
+      default:
+      case 'log':
+      case 'info':
+      case 'warn':
+      case 'error':
+        const logMessages = Array.isArray(logMessage)
+          ? logMessage
+          : [logMessage];
+        for (const msg of logMessages) {
+          let preview = `${msg.message}`;
+          if (msg.parameters && queryRunner) {
+            // replace all ? with in preview with parameters values, just same what typeorm do
+            const [sql] =
+              queryRunner.connection.driver.escapeQueryWithParameters(
+                preview,
+                msg.parameters,
+                {},
+              );
+            preview += `${sql}`;
+          }
+          const emoji = EmojiLevelMap[level] || '';
+          if (emoji) preview = `${emoji} ${preview}`;
+
+          if (msg.additionalInfo?.time) {
+            preview =
+              `(time: ${msg.additionalInfo.time}ms)` +
+              formatQueryString(preview);
+          }
+
+          const reactotron = globalThis._tron;
+          if (!reactotron) {
+            return superFn(level, msg, queryRunner);
+          }
+          tronLog(reactotron, {
+            value: {
+              parameters: msg.parameters,
+              query: msg.message,
+              additionalInfo: msg.additionalInfo,
+            },
+            preview,
+          });
+        }
+        break;
     }
   }
 

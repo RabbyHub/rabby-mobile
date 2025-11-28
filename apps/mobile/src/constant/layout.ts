@@ -216,6 +216,7 @@ export const RootNames = {
   SyncExtensionImported: 'SyncExtensionImported',
   SyncExtensionAccountSuccess: 'SyncExtensionAccountSuccess',
 
+  /** @deprecated */
   StackMain: 'StackMain',
 
   StackBrowser: 'StackBrowser',

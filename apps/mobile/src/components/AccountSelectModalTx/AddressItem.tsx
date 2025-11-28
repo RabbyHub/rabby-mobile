@@ -74,10 +74,6 @@ export function AddressItemInSheetModal({
     proponPressAddress?.(account);
   }, [account, proponPressAddress]);
 
-  // const { tokenList: tokens } = useTopTokensForAddress({
-  //   accountAddress: account?.address,
-  // });
-
   const handleCopyAddress = () => {
     triggerLight();
     if (!account?.address) {
