@@ -264,7 +264,7 @@ export const NFTDetailScreen = () => {
     [accounts, switchSceneCurrentAccount],
   );
 
-  const { assetsMap, getCacheTop10Assets } = useAssets({ hideCombined: true });
+  const { nftsMap, getCacheTop10Assets } = useAssets({ hideCombined: true });
 
   type ItemBase = {
     data: NFTItem;
@@ -290,8 +290,8 @@ export const NFTDetailScreen = () => {
 
     const tempList: ItemBase[] = [];
 
-    Object.keys(assetsMap).map((address, index) => {
-      const { nfts } = assetsMap[address];
+    Object.keys(nftsMap).map((address, index) => {
+      const nfts = nftsMap[address];
 
       nfts?.map(item => {
         if (
@@ -332,7 +332,7 @@ export const NFTDetailScreen = () => {
             index: 0,
           } as ItemBase,
         ];
-  }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
+  }, [nftsMap, token, accounts, finalAccount, isSingleAddress]);
 
   useEffect(() => {
     const id = setTimeout(() => {
