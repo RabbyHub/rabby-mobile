@@ -25,6 +25,7 @@ import { useAssets } from '@/screens/Search/useAssets';
 import { isTabsSwiping, useAccountInfo } from './hooks';
 import { MemoizedNFTItemLoader, NFTList } from './NFTList';
 import { Freeze } from 'react-freeze';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -185,10 +186,26 @@ export const TabsMultiAssets: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleTabChange = useCallback(
+    ({ prevIndex, index }: { prevIndex: number; index: number }) => {
+      // 在前两个tab之间切换
+      const isSwapBetweenOverviewAndOtherTabs =
+        (prevIndex === 0 && index === 1) || (prevIndex === 1 && index === 0);
+      if (isSwapBetweenOverviewAndOtherTabs) {
+        matomoRequestEvent({
+          category: 'HomeTab',
+          action: 'HomeTab_Switch',
+        });
+      }
+    },
+    [],
+  );
+
   return (
     <Tabs.Container
       onIndexChange={onIndexChange}
       renderHeader={renderHeader}
+      onTabChange={handleTabChange}
       renderTabBar={renderTabBar}
       headerHeight={HeaderHeight}
       minHeaderHeight={HeaderHeight}
