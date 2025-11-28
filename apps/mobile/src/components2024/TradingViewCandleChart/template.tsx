@@ -276,7 +276,7 @@ export const createTradingViewChartTemplate = (
                 horzLines: { color: window.colors.border },
               },
               timeScale: {
-                barSpacing: 8,
+                barSpacing: 10,
                 timeVisible: true,
                 secondsVisible: false,
                 borderColor: 'transparent',
