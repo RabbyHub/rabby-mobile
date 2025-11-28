@@ -181,7 +181,7 @@ const BridgeShowMore = ({
     () => (
       <View style={[styles.bestQuoteWrapper, { height: 24 }]}>
         <View>
-          <IconBestQuoteTag height={24} />
+          <IconBestQuoteTag height={24} style={{ left: -0.5 }} />
           <View style={styles.bestTagWrapper}>
             <Text style={styles.bestText}>{t('page.swap.best')}</Text>
           </View>
