@@ -83,7 +83,6 @@ const SupplyPoolList = () => {
 
   const handlePressItem = useCallback(
     (item: DisplayPoolReserveInfo) => {
-      console.log('CUSTOM_LOGGER:=>: item', item.underlyingAsset);
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.SUPPLY_DETAIL,
         underlyingAsset: item.underlyingAsset,

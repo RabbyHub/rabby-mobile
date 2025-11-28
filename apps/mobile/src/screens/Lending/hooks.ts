@@ -145,7 +145,6 @@ export const usePoolDataProviderContract = () => {
       if (!selectedMarketData || !pools) {
         return {};
       }
-      console.log('CUSTOM_LOGGER:=>: fetchContractData', address.slice(-4));
       try {
         const [reserves, userReserves, walletBalances] = await Promise.all([
           pools.uiPoolDataProvider.getReservesHumanized({

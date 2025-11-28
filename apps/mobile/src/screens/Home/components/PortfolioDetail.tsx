@@ -359,7 +359,6 @@ export const TokenList = ({
               <TouchableOpacity
                 style={[styles.button]}
                 onPress={() => {
-                  console.log('CUSTOM_LOGGER:=>: onPress', l);
                   onClickToken?.(l.id);
                 }}>
                 <Text style={styles.buttonText}>
