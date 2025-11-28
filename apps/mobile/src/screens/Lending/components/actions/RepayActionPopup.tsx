@@ -45,6 +45,7 @@ import {
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { CHAINS_ENUM } from '@debank/common';
+import { REPAY_AMOUNT_MULTIPLIER } from '../../utils/constant';
 
 export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -213,6 +214,12 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
 
       // 如果需要approve，构建approve交易
       if (actualNeedApprove) {
+        const approveAmount = new BigNumber(amount)
+          .multipliedBy(_amount === '-1' ? REPAY_AMOUNT_MULTIPLIER : 1)
+          .multipliedBy(10 ** reserve.reserve.decimals)
+          .toFixed(0)
+          .toString();
+
         const requiredAmount = new BigNumber(amount)
           .multipliedBy(10 ** reserve.reserve.decimals)
           .toString();
@@ -254,7 +261,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           chainServerId: chainInfo.serverId,
           id: reserve.underlyingAsset,
           spender: selectedMarketData.addresses.LENDING_POOL,
-          amount: requiredAmount,
+          amount: approveAmount,
           account: currentAccount,
           isBuild: true,
         });
