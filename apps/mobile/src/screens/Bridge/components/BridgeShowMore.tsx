@@ -179,9 +179,9 @@ const BridgeShowMore = ({
 
   const BestQuoteContent = useMemo(
     () => (
-      <View style={styles.bestQuoteWrapper}>
+      <View style={[styles.bestQuoteWrapper, { height: 24 }]}>
         <View>
-          <IconBestQuoteTag />
+          <IconBestQuoteTag height={24} />
           <View style={styles.bestTagWrapper}>
             <Text style={styles.bestText}>{t('page.swap.best')}</Text>
           </View>
@@ -967,6 +967,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontSize: 16,
     fontWeight: '700',
     color: colors2024['brand-default'],
+    lineHeight: 18,
   },
   fee: {
     color: colors2024['brand-default'],
@@ -1086,14 +1087,16 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     borderRadius: 4,
     flexDirection: 'row',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   bestTagWrapper: {
     position: 'absolute',
-    top: 0,
+    top: 0.5,
     left: 7,
     height: '100%',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   bestText: {
     color: colors2024['neutral-InvertHighlight'],

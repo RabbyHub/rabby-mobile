@@ -267,7 +267,9 @@ const getPendingStatusStyles = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 1,
   },
   swapText: {
-    color: colors2024['blue-default'],
+    position: 'relative',
+    top: 2,
+    color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
@@ -778,7 +780,11 @@ const PendingStatusDetail = ({
         return (
           <View style={pendingStyles.bottomArea}>
             <View style={pendingStyles.bottomLeft}>
-              <Text style={pendingStyles.bottomText}>
+              <Text
+                style={[
+                  pendingStyles.bottomText,
+                  { color: colors2024['orange-default'] },
+                ]}>
                 {t('page.bridge.pendingItem.longTimeNoReceive')}
               </Text>
             </View>
@@ -1192,8 +1198,6 @@ export const BridgePendingTxItem = ({
     return { step1Status: first, step2Status: second };
   }, [status]);
 
-  const { height } = useSafeAreaFrame();
-
   const openDetail = useCallback(() => {
     sheetRef.current?.present();
   }, []);
@@ -1201,14 +1205,6 @@ export const BridgePendingTxItem = ({
   const closeDetail = useCallback(() => {
     sheetRef.current?.dismiss();
   }, []);
-
-  const points = [Math.min(652, height * 0.8)];
-
-  // const handleOpenHistory = useCallback(() => {
-  //   closeDetail();
-  //   clearLocalPendingTxData?.();
-  //   openHistory?.();
-  // }, [clearLocalPendingTxData, closeDetail, openHistory]);
 
   if (!data) {
     return null;
@@ -1343,20 +1339,5 @@ const getItemStyles = createGetStyles2024(({ colors2024 }) => ({
   sheetContent: {
     // paddingBottom: 16,
     flex: 1,
-  },
-  historyBtn: {
-    marginTop: 8,
-    marginHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: colors2024['neutral-bg-2'],
-    alignItems: 'center',
-  },
-  historyBtnText: {
-    color: colors2024['blue-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 15,
-    lineHeight: 18,
-    fontWeight: '700',
   },
 }));
