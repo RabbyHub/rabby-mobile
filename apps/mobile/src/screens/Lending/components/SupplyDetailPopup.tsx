@@ -301,6 +301,7 @@ export const SupplyDetailPopup: React.FC<OpenDetailProps> = ({
                   reserve={reserve}
                   canBeEnabledAsCollateral={canBeEnabledAsCollateral}
                   onValueChange={() => {
+                    onClose?.();
                     openCollateralChange(reserve);
                   }}
                 />

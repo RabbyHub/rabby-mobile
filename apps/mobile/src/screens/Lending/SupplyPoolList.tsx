@@ -188,6 +188,7 @@ const SupplyPoolList = () => {
 
   const renderItem = useCallback(
     ({ item }) => {
+      const isZeroSupplied = item.underlyingBalance === '0';
       return (
         <TouchableOpacity
           style={styles.item}
@@ -231,9 +232,13 @@ const SupplyPoolList = () => {
             {formatApy(Number(item.reserve.supplyAPY || '0'))}
           </Text>
           <View style={styles.right}>
-            <Text style={styles.yourSupplied}>
-              {formatListNetWorth(Number(item.underlyingBalanceUSD || '0'))}
-            </Text>
+            {isZeroSupplied ? (
+              <Text style={[styles.yourSupplied, styles.zeroSupplied]}>$0</Text>
+            ) : (
+              <Text style={styles.yourSupplied}>
+                {formatListNetWorth(Number(item.underlyingBalanceUSD || '0'))}
+              </Text>
+            )}
           </View>
         </TouchableOpacity>
       );
@@ -343,6 +348,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
+  },
+  zeroSupplied: {
+    color: colors2024['neutral-info'],
   },
   yourBalanceContainer: {
     flexDirection: 'row',

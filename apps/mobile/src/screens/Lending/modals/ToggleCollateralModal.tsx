@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { atom, useAtom } from 'jotai';
 import { DisplayPoolReserveInfo, UserSummary } from '../type';
@@ -42,6 +42,8 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import IconCloseCC from '@/assets2024/icons/common/close-cc.svg';
+import { useCurrentRouteName } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
 
 export const toggleCollateralModalAtom = atom(false);
 export const currentToggleReserveAtom = atom<DisplayPoolReserveInfo | null>(
@@ -62,14 +64,14 @@ export const useToggleCollateralModal = () => {
     openCollateralChange,
   };
 };
-export default function ToggleCollateralModal({
+
+function ToggleCollateralContent({
   userSummary,
 }: {
   userSummary: UserSummary;
 }) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-
   const [isShowToggleCollateralModal, setIsShowToggleCollateralModal] = useAtom(
     toggleCollateralModalAtom,
   );
@@ -219,6 +221,21 @@ export default function ToggleCollateralModal({
     t,
   ]);
 
+  const cardColors = useMemo(() => {
+    const isIsolated = currentToggleReserve?.reserve.isIsolated;
+    return {
+      bgColor: isIsolated
+        ? colors2024['neutral-bg-5']
+        : colors2024['orange-light-1'],
+      textColor: isIsolated
+        ? colors2024['neutral-foot']
+        : colors2024['orange-default'],
+      iconColor: isIsolated
+        ? colors2024['neutral-secondary']
+        : colors2024['orange-default'],
+    };
+  }, [colors2024, currentToggleReserve?.reserve.isIsolated]);
+
   const desc = useMemo(() => {
     if (currentToggleReserve?.reserve.isIsolated) {
       return currentToggleReserve?.usageAsCollateralEnabledOnUser
@@ -347,14 +364,11 @@ export default function ToggleCollateralModal({
     txs,
   ]);
 
+  if (!isShowToggleCollateralModal) {
+    return null;
+  }
   return (
-    <Modal
-      transparent
-      animationType="fade"
-      onRequestClose={() => setIsShowToggleCollateralModal(false)}
-      onDismiss={() => setIsShowToggleCollateralModal(false)}
-      visible={isShowToggleCollateralModal}
-      style={styles.modal}>
+    <View style={styles.modal}>
       <View
         style={styles.overlay}
         onTouchEnd={() => setIsShowToggleCollateralModal(false)}>
@@ -371,13 +385,27 @@ export default function ToggleCollateralModal({
           </View>
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
-            <View style={styles.errorMessageContainer}>
+            <View
+              style={[
+                styles.errorMessageContainer,
+                {
+                  backgroundColor: cardColors.bgColor,
+                },
+              ]}>
               <RcIconWarningCircleCC
                 width={15}
                 height={15}
-                color={colors2024['orange-default']}
+                color={cardColors.iconColor}
               />
-              <Text style={styles.errorMessage}>{desc}</Text>
+              <Text
+                style={[
+                  styles.errorMessage,
+                  {
+                    color: cardColors.textColor,
+                  },
+                ]}>
+                {desc}
+              </Text>
             </View>
           </View>
           <View style={styles.bodyContainer}>
@@ -422,6 +450,11 @@ export default function ToggleCollateralModal({
                 </Text>
               </TouchableOpacity>
             </>
+          )}
+          {isRiskToLiquidation && (
+            <Text style={styles.riskToLiquidationText}>
+              {t('page.Lending.toggleCollateralModal.riskToLiquidationText')}
+            </Text>
           )}
           <View style={styles.btnContainer}>
             {canShowDirectSubmit ? (
@@ -468,12 +501,34 @@ export default function ToggleCollateralModal({
           </View>
         </View>
       </View>
-    </Modal>
+    </View>
   );
 }
 
+export const ToggleCollateralModal = () => {
+  const { iUserSummary } = useLendingSummary();
+  const { currentRouteName } = useCurrentRouteName();
+  const isLendingRoute = currentRouteName === RootNames.Lending;
+  if (!iUserSummary || !isLendingRoute) {
+    return null;
+  }
+  return <ToggleCollateralContent userSummary={iUserSummary} />;
+};
+
+const ScreenWidth = Dimensions.get('screen').width;
+const ScreenHeight = Dimensions.get('screen').height;
+
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
-  modal: { maxWidth: 353 },
+  modal: {
+    width: ScreenWidth,
+    height: ScreenHeight,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 999,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -534,7 +589,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
 
   errorMessageContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 4,
     backgroundColor: colors2024['orange-light-1'],
     padding: 12,
     paddingHorizontal: 16,
@@ -601,5 +656,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   gasPreContainer: {
     paddingHorizontal: 8,
     marginTop: 8,
+  },
+  riskToLiquidationText: {
+    marginTop: 8,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));

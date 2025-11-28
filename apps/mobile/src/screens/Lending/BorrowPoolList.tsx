@@ -195,43 +195,53 @@ const BorrowPoolList = () => {
     return `${item.reserve.underlyingAsset}-${item.reserve.symbol}`;
   }, []);
   const renderItem = useCallback(
-    ({ item }) => (
-      <TouchableOpacity
-        style={styles.item}
-        onPress={() => handlePressItem(item)}>
-        <View style={styles.left}>
-          <TokenIcon
-            size={46}
-            chainSize={0}
-            tokenSymbol={item.reserve.symbol}
-          />
-          <View style={styles.symbolContainer}>
-            <Text style={styles.symbol} numberOfLines={1} ellipsizeMode="tail">
-              {item.reserve.symbol}
-            </Text>
-            <View style={styles.yourBalanceContainer}>
-              <WalletFillCC
-                width={16}
-                height={16}
-                style={styles.walletIcon}
-                color={colors2024['secondary-foot']}
-              />
-              <Text style={styles.yourBalance}>
-                {formatUsdValueKMB(item.walletBalanceUSD || '0')}
+    ({ item }) => {
+      const isZeroBorrowed = item.totalBorrowsUSD === '0';
+      return (
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => handlePressItem(item)}>
+          <View style={styles.left}>
+            <TokenIcon
+              size={46}
+              chainSize={0}
+              tokenSymbol={item.reserve.symbol}
+            />
+            <View style={styles.symbolContainer}>
+              <Text
+                style={styles.symbol}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {item.reserve.symbol}
               </Text>
+              <View style={styles.yourBalanceContainer}>
+                <WalletFillCC
+                  width={16}
+                  height={16}
+                  style={styles.walletIcon}
+                  color={colors2024['secondary-foot']}
+                />
+                <Text style={styles.yourBalance}>
+                  {formatUsdValueKMB(item.walletBalanceUSD || '0')}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
-        <Text style={styles.apy}>
-          {formatApy(Number(item.reserve.variableBorrowAPY || '0'))}
-        </Text>
-        <View style={styles.right}>
-          <Text style={styles.yourSupplied}>
-            {formatListNetWorth(Number(item.totalBorrowsUSD || '0'))}
+          <Text style={styles.apy}>
+            {formatApy(Number(item.reserve.variableBorrowAPY || '0'))}
           </Text>
-        </View>
-      </TouchableOpacity>
-    ),
+          <View style={styles.right}>
+            {isZeroBorrowed ? (
+              <Text style={[styles.yourSupplied, styles.zeroBorrowed]}>$0</Text>
+            ) : (
+              <Text style={styles.yourSupplied}>
+                {formatListNetWorth(Number(item.totalBorrowsUSD || '0'))}
+              </Text>
+            )}
+          </View>
+        </TouchableOpacity>
+      );
+    },
     [colors2024, handlePressItem, styles],
   );
   const renderFooterComponent = useCallback(() => {
@@ -327,6 +337,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
+  },
+  zeroBorrowed: {
+    color: colors2024['neutral-info'],
   },
   listHeader: {
     paddingVertical: 2,

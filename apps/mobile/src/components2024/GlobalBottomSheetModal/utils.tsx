@@ -291,7 +291,7 @@ export const MODAL_CONFIGS: Record<
     Component: BorrowDetailPopup,
   },
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: {
-    snapPoints: [666],
+    snapPoints: [686],
     Component: SupplyActionPopup,
   },
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: {

@@ -94,6 +94,7 @@ import { ModalsSubmitFeedbackByScreenshotStub } from './components/Screenshot/Sc
 import { GlobalTipsPopup } from './components2024/GlobalTipsPopup';
 import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
 import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottomSheet';
+import { ToggleCollateralModal } from './screens/Lending/modals/ToggleCollateralModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -494,6 +495,7 @@ export default function AppNavigation({
       <AppStatusBar __isTop__ />
       <GlobalBottomSheetModal />
       <GlobalBottomSheetModal2024 />
+      <ToggleCollateralModal />
       {/* <GlobalAccountSwitcherStub /> */}
       <NavigationIndependentTree>
         <NavigationContainer
