@@ -1,24 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 
-/**
- * @deprecated incorrect implementation, use `useDebouncedValue` or `useDebouncedValue` instead as your need
- */
-export function useStaleSyncValue<T>(value: T, delay = 1000) {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (debouncedValue === value) return;
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [debouncedValue, value, delay]);
-  return debouncedValue;
-}
-
 export function useDebouncedValue<T>(value: T, delay: number = 1000): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
