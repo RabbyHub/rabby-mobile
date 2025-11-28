@@ -180,7 +180,7 @@ const PoolContainer = () => {
         externalContent={
           iUserSummary?.isInIsolationMode ? (
             <View style={styles.isolatedTagContainer}>
-              <IsolatedTag disablePress />
+              <IsolatedTag isGlobal />
             </View>
           ) : null
         }

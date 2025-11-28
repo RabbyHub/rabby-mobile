@@ -2721,6 +2721,7 @@
         "availableToBorrowDesc": "You can borrow based on your supplied collateral and until the borrow cap is reached.",
         "isolatedTitle": "Asset cannot be used as collateral",
         "isolatedDesc": "This asset can only be used as collateral in isolation mode, where you cannot supply other asset collateral for borrowing. Assets used as collateral in isolation mode can only be borrowed to a specific debt ceiling.",
+        "globalIsolatedDesc": "In Isolation mode, you cannot supply other assets as collateral. A global debt ceiling limits the borrowing power of the isolated asset. To exit isolation mode disable UNI as collateral before borrowing another asset. ",
         "isolatedSupplyDesc": "Collateral usage is limited because of isolation mode."
       }
     }

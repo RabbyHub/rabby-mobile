@@ -483,10 +483,11 @@ const useLendingData = () => {
                 setWalletBalances(nextWalletBalances);
               }
               setCurrentAddress(requestAddress);
+              setLoading(false);
             });
           });
         })
-        .finally(() => {
+        .catch(() => {
           setLoading(false);
         });
     },

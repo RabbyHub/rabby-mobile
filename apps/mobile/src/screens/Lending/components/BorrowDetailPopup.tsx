@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
@@ -201,6 +201,11 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
       },
     });
   };
+  useEffect(() => {
+    if (!loading && !reserve) {
+      onClose?.();
+    }
+  }, [loading, onClose, reserve]);
   if (loading || !reserve || !userSummary) {
     return <DetailLoadingSkeleton />;
   }
