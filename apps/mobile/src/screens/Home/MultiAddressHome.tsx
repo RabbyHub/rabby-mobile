@@ -401,41 +401,39 @@ function MultiAddressHome(): JSX.Element {
   }, []);
 
   const getSuccessAndFailList = useCallback(async () => {
-    const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
-    const clearSuccessAndFailListTsObj =
-      transactionHistoryService.getClearSuccessAndFailListTsObj();
-    const list = await HistoryItemEntity.getAllHistoryItemSortedByTime(
-      top10Addresses,
-      RECOMMENDED_DEFAULT_QUERY_LIMIT,
-      true,
-      timestamp / 1000,
-    );
-    list.forEach(i => {
-      const status = i.status ?? 1;
-      const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
-      if (i.tx_from_address === i.owner_addr) {
-        return;
-      }
-      const addressTs =
-        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? Date.now();
-      if (addressTs && addressTs / 1000 > i.time_at) {
-        return;
-      }
-      if (status === 1) {
-        transactionHistoryService.setSucceedList(id);
-      } else {
-        transactionHistoryService.setFailedList(id);
-      }
-    });
-
-    const count = transactionHistoryService.getFailedCount();
-    const success = transactionHistoryService.getSucceedCount();
-
-    setHistoryCount({
-      success: success,
-      fail: count,
-    });
-  }, [top10Addresses]);
+    // const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
+    // const clearSuccessAndFailListTsObj =
+    //   transactionHistoryService.getClearSuccessAndFailListTsObj();
+    // const list = await HistoryItemEntity.getAllHistoryItemSortedByTime(
+    //   top10Addresses,
+    //   RECOMMENDED_DEFAULT_QUERY_LIMIT,
+    //   true,
+    //   timestamp / 1000,
+    // );
+    // list.forEach(i => {
+    //   const status = i.status ?? 1;
+    //   const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
+    //   if (i.tx_from_address === i.owner_addr) {
+    //     return;
+    //   }
+    //   const addressTs =
+    //     clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? Date.now();
+    //   if (addressTs && addressTs / 1000 > i.time_at) {
+    //     return;
+    //   }
+    //   if (status === 1) {
+    //     transactionHistoryService.setSucceedList(id);
+    //   } else {
+    //     transactionHistoryService.setFailedList(id);
+    //   }
+    // });
+    // const count = transactionHistoryService.getFailedCount();
+    // const success = transactionHistoryService.getSucceedCount();
+    // setHistoryCount({
+    //   success: success,
+    //   fail: count,
+    // });
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
