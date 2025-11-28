@@ -101,10 +101,18 @@ export const TransactionItem = ({
 
     if (
       data.maxGasTx.action?.actionData.wrapToken ||
-      data.maxGasTx.action?.actionData.unWrapToken ||
-      data.maxGasTx.action?.actionData.swap
+      data.maxGasTx.action?.actionData.unWrapToken
     ) {
       return HistoryItemCateType.Swap;
+    }
+
+    if (data.maxGasTx.action?.actionData.swap) {
+      if (
+        data.maxGasTx.action?.actionData.swap?.payToken?.is_core &&
+        data.maxGasTx.action?.actionData.swap?.receiveToken?.is_core
+      ) {
+        return HistoryItemCateType.Swap;
+      }
     }
 
     if (
