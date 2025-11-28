@@ -126,7 +126,7 @@ export const PerpsOpenPositionPopup: React.FC<{
     return Math.min((marginValue / availableBalance) * 100, 100);
   }, [margin, availableBalance]);
 
-  // 计算交易金额
+  // 计算交易金额, 不是真实的交易金额，估算
   const tradeAmount = React.useMemo(() => {
     const marginValue = Number(margin) || 0;
     return marginValue * leverage;
@@ -151,7 +151,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       Number(margin),
       direction,
       Number(tradeSize),
-      tradeAmount,
+      Number(tradeSize) * markPrice,
       maxLeverage,
     ).toFixed(pxDecimals);
   }, [
@@ -162,7 +162,6 @@ export const PerpsOpenPositionPopup: React.FC<{
     direction,
     tradeSize,
     pxDecimals,
-    tradeAmount,
   ]);
 
   const bothFee = React.useMemo(() => {
@@ -700,7 +699,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           margin,
           direction,
           leverage,
-          tradeAmount,
+          tradeAmount: Number(tradeSize) * markPrice,
           tradeSize,
           markPrice,
           providerFee,
