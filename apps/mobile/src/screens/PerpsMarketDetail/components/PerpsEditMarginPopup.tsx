@@ -1,8 +1,9 @@
-/* eslint-disable react-native/no-inline-styles */
 import { AssetAvatar, Tip } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
+import RcIconTipsLightCC from '@/assets2024/icons/perps/IconTipsLightCC.svg';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -10,7 +11,12 @@ import {
   formatUsdValue,
   splitNumberByStep,
 } from '@/utils/number';
-import { calLiquidationPrice, calTransferMarginRequired } from '@/utils/perps';
+import {
+  calLiquidationPrice,
+  calTransferMarginRequired,
+  formatPerpsPct,
+  MAX_SIGNIFICANT_FIGURES,
+} from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
@@ -35,6 +41,11 @@ import { PerpsSlider } from './PerpsSlider';
 import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
 import { toast } from '@/components/Toast';
 import { IS_IOS } from '@/core/native/utils';
+import { AssetPriceInfo } from './PerpsPriceInfo';
+import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
+import { MarketData } from '@/hooks/perps/usePerpsStore';
+import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
+import { showToast } from '@/hooks/perps/showToast';
 
 export const PerpsEditMarginPopup: React.FC<{
   visible: boolean;
@@ -53,6 +64,8 @@ export const PerpsEditMarginPopup: React.FC<{
   marginUsed: number;
   pnlPercent: number;
   pnl: number;
+  activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
+  currentAssetCtx: MarketData | null;
   handlePressRiskTag: () => void;
   onCancel: () => void;
   onConfirm: (action: 'add' | 'reduce', margin: number) => Promise<void>;
@@ -73,6 +86,8 @@ export const PerpsEditMarginPopup: React.FC<{
   liquidationPx,
   positionSize,
   marginUsed,
+  activeAssetCtx,
+  currentAssetCtx,
   pnlPercent,
   pnl,
   handlePressRiskTag,
@@ -85,9 +100,6 @@ export const PerpsEditMarginPopup: React.FC<{
   });
 
   const { t } = useTranslation();
-  const [action, setAction] = React.useState<'add' | 'reduce'>(
-    'add' as 'add' | 'reduce',
-  );
 
   const {
     value: margin,
@@ -95,16 +107,22 @@ export const PerpsEditMarginPopup: React.FC<{
     onChangeText: setMargin,
   } = useUsdInput();
 
+  const marginNormalized = useMemo(() => {
+    const newMargin = margin.startsWith('$') ? margin.slice(1) : margin;
+    return Number(newMargin);
+  }, [margin]);
+
+  const noChangeMargin = useMemo(() => {
+    return marginNormalized.toFixed(2) === marginUsed.toFixed(2);
+  }, [marginNormalized, marginUsed]);
+
   // 计算预估清算价格
   const estimatedLiquidationPrice = React.useMemo(() => {
-    if (!margin || margin === '0') {
+    if (!margin || margin === '0' || noChangeMargin) {
       return '';
     }
     const marginNormalized = margin.startsWith('$') ? margin.slice(1) : margin;
-    const newMargin =
-      action === 'add'
-        ? Number(marginUsed) + Number(marginNormalized)
-        : Number(marginUsed) - Number(marginNormalized);
+    const newMargin = Number(marginNormalized);
     const nationalValue = Number(positionSize) * Number(markPrice);
     return calLiquidationPrice(
       markPrice,
@@ -115,42 +133,46 @@ export const PerpsEditMarginPopup: React.FC<{
       leverageMax,
     ).toFixed(pxDecimals);
   }, [
-    marginUsed,
     markPrice,
-    action,
     leverageMax,
     margin,
     direction,
     positionSize,
     pxDecimals,
+    noChangeMargin,
   ]);
+
+  const minMargin = useMemo(() => {
+    const requiredMargin = calTransferMarginRequired(
+      markPrice,
+      positionSize,
+      leverage,
+    );
+    return new BigNumber(Math.min(requiredMargin + 0.1, marginUsed))
+      .decimalPlaces(2, BigNumber.ROUND_UP)
+      .toNumber();
+  }, [markPrice, positionSize, leverage, marginUsed]);
+
+  const maxMargin = useMemo(() => {
+    const noHaveBalance = availableBalance < 0.01;
+    const max = noHaveBalance ? marginUsed : availableBalance + marginUsed;
+    return new BigNumber(max).decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber();
+  }, [availableBalance, marginUsed]);
 
   const availableToReduce = useMemo(() => {
     // transfer_margin_required = max(initial_margin_required, 0.1 * total_position_value)
     const transferMarginRequired = calTransferMarginRequired(
-      entryPrice,
       markPrice,
       positionSize,
       leverage,
     );
     return Math.max(marginUsed - transferMarginRequired, 0);
-  }, [entryPrice, markPrice, positionSize, leverage, marginUsed]);
-
-  // Calculate slider percentage
-  const sliderPercentage = React.useMemo(() => {
-    const marginValue = Number(margin) || 0;
-    const available = action === 'add' ? availableBalance : availableToReduce;
-    if (marginValue === 0 || available === 0) {
-      return 0;
-    }
-    return Math.min((marginValue / available) * 100, 100);
-  }, [margin, availableBalance, action, availableToReduce]);
+  }, [markPrice, positionSize, leverage, marginUsed]);
 
   // 验证 margin 输入
   const marginValidation = React.useMemo(() => {
     const marginValue = Number(margin) || 0;
 
-    const available = action === 'add' ? availableBalance : availableToReduce;
     if (marginValue === 0) {
       return { isValid: false, error: null };
     }
@@ -165,27 +187,34 @@ export const PerpsEditMarginPopup: React.FC<{
       };
     }
 
-    if (marginValue > available) {
+    if (marginValue < minMargin) {
       return {
         isValid: false,
-        error: 'insufficient_balance',
-        errorMessage: t(
-          'page.perpsDetail.PerpsOpenPositionPopup.insufficientBalance',
-        ),
+        error: 'invalid_margin',
+        errorMessage: t('page.perpsDetail.PerpsOpenPositionPopup.minMargin', {
+          amount: `$${minMargin}`,
+        }),
+      };
+    }
+
+    if (marginValue > maxMargin) {
+      return {
+        isValid: false,
+        error: 'invalid_margin',
+        errorMessage: t('page.perpsDetail.PerpsOpenPositionPopup.maxMargin', {
+          amount: `$${maxMargin}`,
+        }),
       };
     }
 
     return { isValid: true, error: null };
-  }, [margin, availableBalance, t, action, availableToReduce]);
+  }, [margin, t, minMargin, maxMargin]);
 
   React.useEffect(() => {
-    if (!visible) {
-      setMargin('');
+    if (visible) {
+      setMargin(marginUsed.toFixed(2));
     }
-  }, [visible, setMargin]);
-
-  useEffect(() => {
-    setAction('add');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const canReduce = useMemo(() => {
@@ -194,11 +223,7 @@ export const PerpsEditMarginPopup: React.FC<{
 
   // Handle slider change
   const handleSliderChange = useMemoizedFn((value: number) => {
-    const available = action === 'add' ? availableBalance : availableToReduce;
-    const newMargin = (available * value) / 100;
-    setMargin(
-      new BigNumber(newMargin).decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed(),
-    );
+    setMargin(value.toFixed(2));
   });
 
   // Handle input focus - scroll to bottom
@@ -235,7 +260,9 @@ export const PerpsEditMarginPopup: React.FC<{
     loading,
   } = useRequest(
     async () => {
-      await onConfirm(action, Number(margin));
+      const action = Number(margin) > marginUsed ? 'add' : 'reduce';
+      const marginDiff = Math.abs(Number(margin) - marginUsed);
+      await onConfirm(action, marginDiff);
     },
     {
       manual: true,
@@ -270,11 +297,15 @@ export const PerpsEditMarginPopup: React.FC<{
                 {t('page.perpsDetail.PerpsEditMarginPopup.title')}
               </Text>
             </View>
-            <Text style={styles.currentPriceTitle}>
-              {t('page.perpsDetail.PerpsEditMarginPopup.currentPrice')}:
-              {` $${splitNumberByStep(Number(markPrice))}`}
-            </Text>
-            <View style={styles.directionToggle}>
+            <View>
+              <AssetPriceInfo
+                coin={coin}
+                logoUrl={coinLogo!}
+                activeAssetCtx={activeAssetCtx}
+                currentAssetCtx={currentAssetCtx}
+              />
+            </View>
+            {/* <View style={styles.directionToggle}>
               <TouchableOpacity
                 style={[
                   styles.directionButton,
@@ -323,7 +354,7 @@ export const PerpsEditMarginPopup: React.FC<{
                   {t('page.perpsDetail.PerpsEditMarginPopup.reduceMargin')}
                 </Text>
               </TouchableOpacity>
-            </View>
+            </View> */}
 
             {/* Coin Info */}
             <View style={styles.card}>
@@ -353,11 +384,11 @@ export const PerpsEditMarginPopup: React.FC<{
                       {direction} {`${leverage}x`}
                     </Text>
                   </View>
-                  <DistanceToLiquidationTag
+                  {/* <DistanceToLiquidationTag
                     liquidationPrice={liquidationPx}
                     markPrice={markPrice}
                     onPress={handlePressRiskTag}
-                  />
+                  /> */}
                 </View>
               </View>
               <View style={styles.rightSection}>
@@ -379,27 +410,52 @@ export const PerpsEditMarginPopup: React.FC<{
             {/* Margin Section */}
             <View style={styles.marginSection}>
               <Text style={styles.marginLabel}>
-                {action === 'add'
-                  ? t('page.perpsDetail.PerpsEditMarginPopup.amountToAdd')
-                  : t('page.perpsDetail.PerpsEditMarginPopup.amountToReduce')}
+                {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
               </Text>
 
-              {/* Input Field */}
-              <BottomSheetTextInput
-                keyboardType="numeric"
-                style={[
-                  styles.input,
-                  !marginValidation.isValid && Number(margin) > 0
-                    ? styles.inputError
-                    : null,
-                ]}
-                placeholder="$0"
-                placeholderTextColor={colors2024['neutral-info']}
-                value={Number(margin) > 0 ? displayedValue : ''}
-                onChangeText={setMargin}
-                onFocus={handleInputFocus}
-              />
+              <View style={styles.marginInputWrapper}>
+                <TouchableOpacity
+                  onPress={() => setMargin(minMargin.toString())}
+                  style={styles.marginBtn}>
+                  <Text style={styles.marginBtnText}>Min</Text>
+                </TouchableOpacity>
+                <BottomSheetTextInput
+                  keyboardType="numeric"
+                  style={[
+                    styles.input,
+                    !marginValidation.isValid && Number(margin) > 0
+                      ? styles.inputError
+                      : null,
+                  ]}
+                  placeholder={`$${marginUsed.toFixed(2)}`}
+                  placeholderTextColor={colors2024['neutral-info']}
+                  value={Number(margin) > 0 ? displayedValue : ''}
+                  onChangeText={setMargin}
+                  onFocus={handleInputFocus}
+                />
+                <TouchableOpacity
+                  onPress={() => setMargin(maxMargin.toString())}
+                  style={styles.marginBtn}>
+                  <Text style={styles.marginBtnText}>MAX</Text>
+                </TouchableOpacity>
+              </View>
 
+              <View style={styles.marginAvailableWrapper}>
+                <Text style={styles.marginAvailable}>
+                  {formatPerpsUsdValue(Number(minMargin), BigNumber.ROUND_DOWN)}
+                </Text>
+                <View style={styles.errorMsgContainer}>
+                  {marginValidation.error ? (
+                    <Text style={styles.errorMsg}>
+                      {marginValidation.errorMessage}
+                    </Text>
+                  ) : null}
+                </View>
+                <Text style={styles.marginAvailable}>
+                  {formatPerpsUsdValue(maxMargin, BigNumber.ROUND_DOWN)}
+                </Text>
+              </View>
+              {/*
               {marginValidation.error ? (
                 <View style={styles.marginAvailableWrapper}>
                   <Text style={styles.errorMsg}>
@@ -428,60 +484,83 @@ export const PerpsEditMarginPopup: React.FC<{
                     </Text>
                   )}
                 </View>
-              )}
-
-              {/* Slider */}
+              )} */}
               <PerpsSlider
-                key={action}
-                disabled={!canReduce && action === 'reduce'}
-                value={sliderPercentage}
+                disabled={maxMargin <= minMargin}
+                maxValue={maxMargin}
+                step={0.1}
+                minValue={Number(minMargin)}
+                value={marginNormalized}
                 onValueChange={handleSliderChange}
-                showPercentage={true}
+                showPercentage={false}
               />
             </View>
-            <View style={styles.liqPriceRow}>
-              <Text style={styles.liqPrice}>
-                {t('page.perpsDetail.PerpsEditMarginPopup.liqPrice')}
-              </Text>
-              <Text style={styles.liqPriceAmount}>
-                {`$${splitNumberByStep(Number(liquidationPx))}`}
-              </Text>
-              {margin && estimatedLiquidationPrice && (
-                <Text style={styles.liqPriceAmount}>
-                  {`→ $${splitNumberByStep(Number(estimatedLiquidationPrice))}`}
+            <View style={styles.priceContainer}>
+              <View style={styles.liqPriceRow}>
+                <Text style={styles.liqPrice}>
+                  {t('page.perpsDetail.PerpsEditMarginPopup.liqPrice')}
                 </Text>
-              )}
+                <View style={styles.rowItem}>
+                  <Text style={styles.liqPriceAmount}>
+                    {`$${splitNumberByStep(Number(liquidationPx))}`}
+                  </Text>
+                  {margin && estimatedLiquidationPrice && (
+                    <Text style={styles.liqPriceAmount}>
+                      {`→ $${splitNumberByStep(
+                        Number(estimatedLiquidationPrice),
+                      )}`}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.liqPriceRow}>
+                <TouchableOpacity
+                  style={styles.rowItem}
+                  onPress={() => {
+                    handlePressRiskTag?.();
+                  }}>
+                  <Text style={styles.liqPrice}>
+                    {t('page.perpsDetail.PerpsEditMarginPopup.liqDistance')}
+                  </Text>
+                  <RcIconInfoCC
+                    width={15}
+                    height={15}
+                    color={colors2024['neutral-info']}
+                  />
+                </TouchableOpacity>
+                <View style={styles.rowItem}>
+                  <RcIconTipsLightCC
+                    width={20}
+                    height={20}
+                    color={colors2024['neutral-info']}
+                  />
+                  <Text style={styles.liqPriceAmount}>
+                    {formatPerpsPct(
+                      calculateDistanceToLiquidation(liquidationPx, markPrice),
+                    )}
+                  </Text>
+                  {margin && estimatedLiquidationPrice && (
+                    <Text style={styles.liqPriceAmount}>
+                      {`→ ${formatPerpsPct(
+                        calculateDistanceToLiquidation(
+                          estimatedLiquidationPrice,
+                          markPrice,
+                        ),
+                      )}`}
+                    </Text>
+                  )}
+                </View>
+              </View>
             </View>
           </BottomSheetScrollView>
           <View style={styles.footer}>
-            {!canReduce && action === 'reduce' ? (
-              <Tip
-                content={t(
-                  'page.perpsDetail.PerpsEditMarginPopup.insufficientMarginToReduce',
-                )}>
-                <Button
-                  type="primary"
-                  title={t(
-                    'page.perpsDetail.PerpsEditMarginPopup.reduceMargin',
-                  )}
-                  loading={loading}
-                  disabled={true}
-                  onPress={handleConfirm}
-                />
-              </Tip>
-            ) : (
-              <Button
-                type="primary"
-                title={
-                  action === 'add'
-                    ? t('page.perpsDetail.PerpsEditMarginPopup.addMargin')
-                    : t('page.perpsDetail.PerpsEditMarginPopup.reduceMargin')
-                }
-                loading={loading}
-                disabled={!marginValidation.isValid}
-                onPress={handleConfirm}
-              />
-            )}
+            <Button
+              type="primary"
+              title={t('global.confirm')}
+              loading={loading}
+              disabled={!marginValidation.isValid || noChangeMargin}
+              onPress={handleConfirm}
+            />
           </View>
         </AutoLockView>
       </AppBottomSheetModal>
@@ -531,13 +610,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
     },
     errorMsgContainer: {
-      minHeight: 18,
+      flex: 1,
+      alignItems: 'center',
     },
     errorMsg: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: '500',
       color: colors2024['red-default'],
+    },
+    marginInputWrapper: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginBottom: -6,
     },
     input: {
       // fontFamily: 'SF Pro Rounded',
@@ -600,12 +687,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
     },
+    priceContainer: {
+      paddingHorizontal: 16,
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      borderRadius: 16,
+      marginBottom: 8,
+    },
     liqPriceRow: {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      marginBottom: 4,
+      paddingVertical: 16,
+      justifyContent: 'space-between',
+    },
+    rowItem: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
     },
     row: {
       display: 'flex',
@@ -840,26 +941,38 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingVertical: 16,
       paddingHorizontal: 16,
       backgroundColor: colors2024['neutral-bg-2'],
-      borderRadius: 16,
-      paddingBottom: 16,
-      marginBottom: 16,
+      borderRadius: 20,
+      paddingBottom: 6,
+      marginBottom: 12,
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
+      // alignItems: 'center',
+    },
+    marginBtn: {
+      padding: 4,
+      backgroundColor: colors2024['brand-light-1'],
+      borderRadius: 8,
+    },
+    marginBtnText: {
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      color: colors2024['brand-default'],
+      fontFamily: 'SF Pro Rounded',
     },
     marginLabel: {
-      fontSize: 17,
-      lineHeight: 22,
-      fontWeight: '700',
-      marginBottom: 4,
-      color: colors2024['neutral-title-1'],
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '800',
+      // marginBottom: 4,
+      color: colors2024['brand-default'],
       fontFamily: 'SF Pro Rounded',
-      textAlign: 'center',
     },
     marginAvailableWrapper: {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
+      marginBottom: -12,
       gap: 4,
     },
     marginAvailable: {
@@ -937,6 +1050,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['red-default'],
     },
     card: {
+      marginTop: 16,
       borderRadius: 16,
       paddingVertical: 14,
       paddingHorizontal: 12,

@@ -2280,6 +2280,8 @@
       "PerpsRiskPopup": {
         "title": "Risk Level",
         "subtitle": "Real-time liquidation distance (%)",
+        "liqDistanceTipsShort": "Going up <1>{{distance}}</1> will trigger liquidation.",
+        "liqDistanceTipsLong": "Going down <1>{{distance}}</1> will trigger liquidation.",
         "distanceLabel": "Liquidation Distance",
         "currentPrice": "Current Price",
         "liquidationPrice": "Liquidation Price",
@@ -2449,6 +2451,7 @@
         "marginIsolated": "Margin (isolated)",
         "marginCross": "Margin (Cross)",
         "fundingPayments": "Funding Payments",
+        "fundingGains": "Funding Gains",
         "liquidationPrice": "Liquidation Price",
         "entryPrice": "Entry Price",
         "direction": "Direction",
@@ -2458,6 +2461,7 @@
         "liqPrice": "Liq.Price",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "fundingPaymentsTips": "This is the net funding payments since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
+        "fundingGainsTips": "This is the net funding gains since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
       "PerpsInfo": {
@@ -2465,6 +2469,7 @@
         "24Vol": "24h Volume",
         "openInterest": "Open Interest",
         "funding": "Funding",
+        "fundingRate": "Funding Rate",
         "openInterestTips": "The total outstanding position of all users on this contract.",
         "fundingTips": "This is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token. lf positive, long pays short. lf negative, short pays long."
       },
@@ -2492,15 +2497,25 @@
         "amountToAdd": "Amount to add",
         "amountToReduce": "Amount to reduce",
         "liqPrice": "Liq. Price:",
+        "liqDistance": "Liq.Distance",
         "insufficientMargin": "Insufficient margin",
         "insufficientMarginToReduce": "Insufficient margin to reduce position.",
         "perpsBalance": "Perps Balance",
         "available": "available"
       },
+      "PerpsAddPositionPopup": {
+        "addToLong": "Add to Long",
+        "totalSize": "Total Size",
+        "addSize": "Add Size",
+        "addToShort": "Add to Short"
+      },
       "PerpsOpenPositionPopup": {
         "margin": "Margin",
+        "upTo": "Up to",
         "invalidNumber": "Please input a valid number",
         "insufficientBalance": "Insufficient balance",
+        "minMargin": "Minimum margin is {{amount}}",
+        "maxMargin": "Maximum margin is {{amount}}",
         "maximumOrderSize": "The maximum order size is {{amount}}",
         "minimumOrderSize": "The minimum order size is $10",
         "available": "available",
@@ -2540,6 +2555,8 @@
       },
       "action": {
         "closePosition": "Close {{direction}} Position",
+        "close": "Close",
+        "add": "Add",
         "long": "Long",
         "short": "Short",
         "noPermission": "Opening positions is not supported in your region"

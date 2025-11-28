@@ -11,6 +11,7 @@ import { usePerpsPopupState } from '../../hooks/usePerpsPopupState';
 export const PerpsMarketSectionHeader: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+
   const [_popupState, setPopupState] = usePerpsPopupState();
 
   return (
