@@ -159,22 +159,26 @@ function ToggleCollateralContent({
     if (!targetPool) {
       return;
     }
-    const collateralSwitchResult = await collateralSwitchTx({
-      pool: pools.pool,
-      address: currentAccount.address,
-      reserve: targetPool.underlyingAsset,
-      usageAsCollateral: !targetPool.usageAsCollateralEnabledOnUser,
-      useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
-    });
-    const _txs = await Promise.all(collateralSwitchResult.map(i => i.tx()));
-    const formatTxs = _txs.map(item => {
-      delete item.gasLimit;
-      return {
-        ...item,
-        chainId: chainInfo.id,
-      };
-    });
-    setTxs(formatTxs as unknown as Tx[]);
+    try {
+      const collateralSwitchResult = await collateralSwitchTx({
+        pool: pools.pool,
+        address: currentAccount.address,
+        reserve: targetPool.underlyingAsset,
+        usageAsCollateral: !targetPool.usageAsCollateralEnabledOnUser,
+        useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
+      });
+      const _txs = await Promise.all(collateralSwitchResult.map(i => i.tx()));
+      const formatTxs = _txs.map(item => {
+        delete item.gasLimit;
+        return {
+          ...item,
+          chainId: chainInfo.id,
+        };
+      });
+      setTxs(formatTxs as unknown as Tx[]);
+    } catch (error) {
+      toast.error('There was some error');
+    }
   }, [
     chainInfo,
     currentAccount,
@@ -416,7 +420,7 @@ function ToggleCollateralContent({
                 userSummary={userSummary}
               />
             )}
-            {canShowDirectSubmit && !isRiskToLiquidation && (
+            {!!txs.length && canShowDirectSubmit && !isRiskToLiquidation && (
               <View style={styles.gasPreContainer}>
                 <DirectSignGasInfo
                   supportDirectSign={true}

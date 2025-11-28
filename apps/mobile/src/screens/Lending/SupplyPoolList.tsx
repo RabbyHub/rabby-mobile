@@ -30,6 +30,8 @@ import { CHAINS_ENUM } from '@debank/common';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { DisplayPoolReserveInfo } from './type';
 import { displayGhoForMintableMarket } from './utils/supply';
+import { API_ETH_MOCK_ADDRESS } from './utils/constant';
+import wrapperToken from './config/wrapperToken';
 
 const FOOT_HEIGHT = 100;
 const SupplyPoolList = () => {
@@ -47,8 +49,12 @@ const SupplyPoolList = () => {
         if (item.underlyingBalance && item.underlyingBalance !== '0') {
           return true;
         }
+        const realUnderlyingAsset =
+          isSameAddress(item.underlyingAsset, API_ETH_MOCK_ADDRESS) && chainEnum
+            ? wrapperToken?.[chainEnum]?.address
+            : item.reserve.underlyingAsset;
         const reserve = reserves?.reservesData?.find(x =>
-          isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
+          isSameAddress(x.underlyingAsset, realUnderlyingAsset),
         );
         if (!reserve) {
           return false;
@@ -79,7 +85,7 @@ const SupplyPoolList = () => {
         }
         return Number(b.underlyingBalanceUSD) - Number(a.underlyingBalanceUSD);
       });
-  }, [displayPoolReserves, marketKey, reserves?.reservesData]);
+  }, [chainEnum, displayPoolReserves, marketKey, reserves?.reservesData]);
 
   const handlePressItem = useCallback(
     (item: DisplayPoolReserveInfo) => {

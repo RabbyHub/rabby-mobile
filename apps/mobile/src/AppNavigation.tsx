@@ -280,7 +280,6 @@ export default function AppNavigation({
       <AppStatusBar __isTop__ />
       <GlobalBottomSheetModal />
       <GlobalBottomSheetModal2024 />
-      <ToggleCollateralModal />
       {/* <GlobalAccountSwitcherStub /> */}
       <NavigationIndependentTree>
         <NavigationContainer
@@ -482,6 +481,7 @@ export default function AppNavigation({
         </NavigationContainer>
       </NavigationIndependentTree>
       <ModalsSubmitFeedbackByScreenshotStub />
+      <ToggleCollateralModal />
 
       {/** @warning put all business stub components before this modal */}
       <GlobalSecurityTipStubModal />
