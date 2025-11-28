@@ -18,7 +18,9 @@ import {
 import { ethers } from 'ethers';
 import dayjs from 'dayjs';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { useCallback, useMemo } from 'react';
+import { startTransition, useCallback, useMemo } from 'react';
+import isEqual from 'fast-deep-equal';
+import { InteractionManager } from 'react-native';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
 import { CustomMarket, MarketDataType, marketsData } from './config/market';
@@ -189,10 +191,10 @@ const userReservesAtom = atom<
     }
   | undefined
 >(undefined);
-const walletBalancesAtom = atom<UserWalletBalancesResponse>({
-  0: [],
-  1: [],
-});
+const EMPTY_WALLET_BALANCES: UserWalletBalancesResponse = { 0: [], 1: [] };
+const walletBalancesAtom = atom<UserWalletBalancesResponse>(
+  EMPTY_WALLET_BALANCES,
+);
 const addressAtom = atom<string | undefined>(undefined);
 const loadingAtom = atom<boolean>(false);
 const refreshHistoryIdAtom = atom<number>(0);
@@ -465,11 +467,24 @@ const useLendingData = () => {
       }
       fetchContractData(requestAddress)
         .then(data => {
-          setReserves(data?.reserves);
-          setUserReserves(data?.userReserves);
-          setWalletBalances(data?.walletBalances || { 0: [], 1: [] });
-          setCurrentAddress(requestAddress);
-          setLoading(false);
+          InteractionManager.runAfterInteractions(() => {
+            startTransition(() => {
+              const nextReserves = data?.reserves;
+              const nextUserReserves = data?.userReserves;
+              const nextWalletBalances =
+                data?.walletBalances || EMPTY_WALLET_BALANCES;
+              if (!isEqual(nextReserves, reserves)) {
+                setReserves(nextReserves);
+              }
+              if (!isEqual(nextUserReserves, userReserves)) {
+                setUserReserves(nextUserReserves);
+              }
+              if (!isEqual(nextWalletBalances, walletBalances)) {
+                setWalletBalances(nextWalletBalances);
+              }
+              setCurrentAddress(requestAddress);
+            });
+          });
         })
         .finally(() => {
           setLoading(false);
@@ -479,11 +494,14 @@ const useLendingData = () => {
       currentAccount?.address,
       fetchContractData,
       marketKey,
+      reserves,
       setCurrentAddress,
       setLoading,
       setReserves,
       setUserReserves,
       setWalletBalances,
+      userReserves,
+      walletBalances,
     ],
   );
 

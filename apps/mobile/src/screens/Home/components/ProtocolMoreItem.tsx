@@ -12,6 +12,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useTranslation } from 'react-i18next';
+import { TonManageAction } from '../utils/protocolConfig';
 
 // 已支持的模板
 const TemplateDict = {
@@ -40,9 +41,14 @@ export const MemoItem = memo(
   ({
     currentAccount,
     item,
+    onClickToken,
   }: {
     currentAccount?: KeyringAccountWithAlias;
     item: AbstractPortfolio;
+    onClickToken?: (
+      tokenAddress: string,
+      direction: 'supply' | 'borrow',
+    ) => void;
   }) => {
     const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -60,6 +66,7 @@ export const MemoItem = memo(
         data={item}
         style={styles.detail}
         currentAccount={currentAccount}
+        onClickToken={onClickToken}
       />
     );
   },
@@ -75,6 +82,7 @@ export const WrapperDappActionsMemoItem = ({
   onRefresh,
   session,
   manageAction,
+  onClickToken,
   disableAction,
 }: {
   item: AbstractPortfolio;
@@ -84,10 +92,8 @@ export const WrapperDappActionsMemoItem = ({
   addressType?: KEYRING_TYPE;
   onRefresh?: () => Promise<void>;
   session?: React.ComponentProps<typeof DappActions>['session'];
-  manageAction?: (
-    account?: KeyringAccountWithAlias,
-    item?: AbstractPortfolio,
-  ) => void;
+  manageAction?: TonManageAction;
+  onClickToken?: (tokenAddress: string, direction: 'supply' | 'borrow') => void;
   disableAction?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -123,7 +129,11 @@ export const WrapperDappActionsMemoItem = ({
         style={styles.gradientBg}
       />
       <View style={styles.portfolioContent}>
-        <MemoItem currentAccount={currentAccount} item={item} />
+        <MemoItem
+          currentAccount={currentAccount}
+          item={item}
+          onClickToken={onClickToken}
+        />
       </View>
       {!!manageAction && (
         <TouchableOpacity

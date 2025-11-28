@@ -26,3 +26,7 @@ export type PopupDetailProps = {
   userSummary: UserSummary;
   onClose?: () => void;
 };
+export type OpenDetailProps = {
+  underlyingAsset: string;
+  onClose?: () => void;
+};

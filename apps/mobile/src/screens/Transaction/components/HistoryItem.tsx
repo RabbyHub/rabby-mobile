@@ -96,6 +96,10 @@ export const HistoryItem = React.memo(
             return t('page.transactions.itemTitle.LendingBorrow');
           case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY:
             return t('page.transactions.itemTitle.LendingRepay');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL:
+            return t('page.transactions.itemTitle.LendingOnCollateral');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL:
+            return t('page.transactions.itemTitle.LendingOffCollateral');
         }
       }
 

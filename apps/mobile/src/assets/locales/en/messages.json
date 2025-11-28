@@ -50,6 +50,8 @@
         "LendingWithdraw": "Withdraw",
         "LendingBorrow": "Borrow",
         "LendingRepay": "Repay",
+        "LendingOnCollateral": "Turn on use as collateral",
+        "LendingOffCollateral": "Turn off use as collateral",
         "ReceivedGas": "Received Gas",
         "WithdrawnGas": "Withdrawn Gas",
         "DepositedGas": "Deposited Gas",
@@ -2650,13 +2652,18 @@
       "toggleCollateralDetail": {
         "actions": "Toggle {{asset}} Collateral",
         "enable": "Enable {{asset}} as Collateral",
-        "disable": "Disable {{asset}} as Collateral"
+        "disable": "Disable {{asset}} as Collateral",
+        "error": "There is some error with the AAVE service. Please try again later."
       },
       "toggleCollateralModal": {
         "openTitle": "Review Enabling",
         "closeTitle": "Review Disabling",
+        "enableIsolationModeTitle": "Enable Isolation Mode",
+        "exitIsolationModeTitle": "Exit Isolation Mode",
         "openDesc": "Enabling this asset as collateral increases your borrowing power and Health Factor. However, it can get liquidated if your health factor drops below 1.",
-        "closeDesc": "Disabling this asset as collateral affects your borrowing power and Health Factor."
+        "closeDesc": "Disabling this asset as collateral affects your borrowing power and Health Factor.",
+        "enableIsolationModeDesc": "You are entering Isolation mode. In Isolation mode, you cannot supply other assets as collateral. A global debt ceiling limits the borrowing power of the isolated asset. To exit isolation mode disable CRV as collateral before borrowing another asset.",
+        "exitIsolationModeDesc": "You will exit Isolation mode and other tokens can now be used as collateral."
       },
       "borrowDetail": {
         "actions": "Borrow",

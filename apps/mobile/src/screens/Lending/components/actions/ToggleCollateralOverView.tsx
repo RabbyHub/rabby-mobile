@@ -8,7 +8,7 @@ import HealthFactorText from '../HealthFactorText';
 import { useTranslation } from 'react-i18next';
 import TokenIcon from '../TokenIcon';
 import { useSelectedMarket } from '../../hooks';
-import { formatNetworth } from '@/utils/math';
+import { formatTokenAmount } from '@/utils/number';
 
 const ToggleCollateralOverView: React.FC<
   PopupDetailProps & {
@@ -36,8 +36,8 @@ const ToggleCollateralOverView: React.FC<
               tokenSymbol={reserve.reserve.symbol}
             />
             <Text style={styles.symbol}>
-              {`${formatNetworth(
-                Number(reserve.underlyingBalanceUSD || '0'),
+              {`${formatTokenAmount(
+                Number(reserve.underlyingBalance || '0'),
               )} ${reserve.reserve.symbol}`}
             </Text>
           </View>

@@ -190,6 +190,50 @@ export default function ToggleCollateralModal({
     buildTx();
   }, [buildTx]);
 
+  const btnTitle = useMemo(() => {
+    return currentToggleReserve?.usageAsCollateralEnabledOnUser
+      ? t('page.Lending.toggleCollateralDetail.disable', {
+          asset: currentToggleReserve?.reserve.symbol,
+        })
+      : t('page.Lending.toggleCollateralDetail.enable', {
+          asset: currentToggleReserve?.reserve.symbol,
+        });
+  }, [
+    currentToggleReserve?.usageAsCollateralEnabledOnUser,
+    t,
+    currentToggleReserve?.reserve.symbol,
+  ]);
+
+  const title = useMemo(() => {
+    if (currentToggleReserve?.reserve.isIsolated) {
+      return currentToggleReserve?.usageAsCollateralEnabledOnUser
+        ? t('page.Lending.toggleCollateralModal.exitIsolationModeTitle')
+        : t('page.Lending.toggleCollateralModal.enableIsolationModeTitle');
+    }
+    return currentToggleReserve?.usageAsCollateralEnabledOnUser
+      ? t('page.Lending.toggleCollateralModal.closeTitle')
+      : t('page.Lending.toggleCollateralModal.openTitle');
+  }, [
+    currentToggleReserve?.reserve.isIsolated,
+    currentToggleReserve?.usageAsCollateralEnabledOnUser,
+    t,
+  ]);
+
+  const desc = useMemo(() => {
+    if (currentToggleReserve?.reserve.isIsolated) {
+      return currentToggleReserve?.usageAsCollateralEnabledOnUser
+        ? t('page.Lending.toggleCollateralModal.exitIsolationModeDesc')
+        : t('page.Lending.toggleCollateralModal.enableIsolationModeDesc');
+    }
+    return currentToggleReserve?.usageAsCollateralEnabledOnUser
+      ? t('page.Lending.toggleCollateralModal.closeDesc')
+      : t('page.Lending.toggleCollateralModal.openDesc');
+  }, [
+    currentToggleReserve?.reserve.isIsolated,
+    currentToggleReserve?.usageAsCollateralEnabledOnUser,
+    t,
+  ]);
+
   const handleToggleCollateral = useCallback(
     async (forceFullSign?: boolean) => {
       if (!currentAccount || !txs.length) {
@@ -210,7 +254,9 @@ export default function ToggleCollateralModal({
               ga: {
                 customAction: CUSTOM_HISTORY_ACTION.LENDING,
                 customActionTitleType:
-                  CUSTOM_HISTORY_TITLE_TYPE.LENDING_TOGGLE_COLLATERAL,
+                  currentToggleReserve?.usageAsCollateralEnabledOnUser
+                    ? CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL
+                    : CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL,
               },
             });
           } catch (error) {
@@ -218,10 +264,9 @@ export default function ToggleCollateralModal({
               setIsShowToggleCollateralModal(false);
               return;
             }
-            if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
-              setIsShowToggleCollateralModal(true);
-              return;
-            }
+            toast.error(t('page.Lending.toggleCollateralDetail.error'));
+            setIsShowToggleCollateralModal(true);
+            return;
           }
         } else {
           setIsShowToggleCollateralModal(false);
@@ -234,7 +279,9 @@ export default function ToggleCollateralModal({
                   ga: {
                     customAction: CUSTOM_HISTORY_ACTION.LENDING,
                     customActionTitleType:
-                      CUSTOM_HISTORY_TITLE_TYPE.LENDING_TOGGLE_COLLATERAL,
+                      currentToggleReserve?.usageAsCollateralEnabledOnUser
+                        ? CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL
+                        : CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL,
                   },
                 },
               },
@@ -251,15 +298,15 @@ export default function ToggleCollateralModal({
             currentAccount.address,
             txs[0].chainId,
             txId,
-            { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_TOGGLE_COLLATERAL },
+            {
+              actionType: currentToggleReserve?.usageAsCollateralEnabledOnUser
+                ? CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL
+                : CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL,
+            },
           );
         }
         refresh();
-        toast.success(
-          `${t('page.Lending.toggleCollateralDetail.actions')} ${t(
-            'page.Lending.submitted',
-          )}`,
-        );
+        toast.success(`${btnTitle} ${t('page.Lending.submitted')}`);
         setIsShowToggleCollateralModal(false);
       } catch (error) {
       } finally {
@@ -271,9 +318,11 @@ export default function ToggleCollateralModal({
       txs,
       canShowDirectSubmit,
       refresh,
+      btnTitle,
       t,
       setIsShowToggleCollateralModal,
       openDirect,
+      currentToggleReserve?.usageAsCollateralEnabledOnUser,
     ],
   );
 
@@ -296,19 +345,6 @@ export default function ToggleCollateralModal({
     isShowToggleCollateralModal,
     prefetchMiniSigner,
     txs,
-  ]);
-  const btnTitle = useMemo(() => {
-    return currentToggleReserve?.usageAsCollateralEnabledOnUser
-      ? t('page.Lending.toggleCollateralDetail.disable', {
-          asset: currentToggleReserve?.reserve.symbol,
-        })
-      : t('page.Lending.toggleCollateralDetail.enable', {
-          asset: currentToggleReserve?.reserve.symbol,
-        });
-  }, [
-    currentToggleReserve?.usageAsCollateralEnabledOnUser,
-    t,
-    currentToggleReserve?.reserve.symbol,
   ]);
 
   return (
@@ -334,22 +370,14 @@ export default function ToggleCollateralModal({
             </TouchableOpacity>
           </View>
           <View style={styles.header}>
-            <Text style={styles.title}>
-              {currentToggleReserve?.usageAsCollateralEnabledOnUser
-                ? t('page.Lending.toggleCollateralModal.closeTitle')
-                : t('page.Lending.toggleCollateralModal.openTitle')}
-            </Text>
+            <Text style={styles.title}>{title}</Text>
             <View style={styles.errorMessageContainer}>
               <RcIconWarningCircleCC
                 width={15}
                 height={15}
                 color={colors2024['orange-default']}
               />
-              <Text style={styles.errorMessage}>
-                {currentToggleReserve?.usageAsCollateralEnabledOnUser
-                  ? t('page.Lending.toggleCollateralModal.closeDesc')
-                  : t('page.Lending.toggleCollateralModal.openDesc')}
-              </Text>
+              <Text style={styles.errorMessage}>{desc}</Text>
             </View>
           </View>
           <View style={styles.bodyContainer}>
