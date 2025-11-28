@@ -220,8 +220,9 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     borderWidth: 1,
   },
   active: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderWidth: 1,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     borderColor: colors2024['brand-default'],
   },
   normal: {
