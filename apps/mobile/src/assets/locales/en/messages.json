@@ -50,6 +50,8 @@
         "LendingWithdraw": "Withdraw",
         "LendingBorrow": "Borrow",
         "LendingRepay": "Repay",
+        "LendingOnCollateral": "Turn on use as collateral",
+        "LendingOffCollateral": "Turn off use as collateral",
         "ReceivedGas": "Received Gas",
         "WithdrawnGas": "Withdrawn Gas",
         "DepositedGas": "Deposited Gas",

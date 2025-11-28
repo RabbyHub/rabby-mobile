@@ -254,7 +254,9 @@ export default function ToggleCollateralModal({
               ga: {
                 customAction: CUSTOM_HISTORY_ACTION.LENDING,
                 customActionTitleType:
-                  CUSTOM_HISTORY_TITLE_TYPE.LENDING_TOGGLE_COLLATERAL,
+                  currentToggleReserve?.usageAsCollateralEnabledOnUser
+                    ? CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL
+                    : CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL,
               },
             });
           } catch (error) {
@@ -277,7 +279,9 @@ export default function ToggleCollateralModal({
                   ga: {
                     customAction: CUSTOM_HISTORY_ACTION.LENDING,
                     customActionTitleType:
-                      CUSTOM_HISTORY_TITLE_TYPE.LENDING_TOGGLE_COLLATERAL,
+                      currentToggleReserve?.usageAsCollateralEnabledOnUser
+                        ? CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL
+                        : CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL,
                   },
                 },
               },
@@ -294,7 +298,11 @@ export default function ToggleCollateralModal({
             currentAccount.address,
             txs[0].chainId,
             txId,
-            { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_TOGGLE_COLLATERAL },
+            {
+              actionType: currentToggleReserve?.usageAsCollateralEnabledOnUser
+                ? CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL
+                : CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL,
+            },
           );
         }
         refresh();
@@ -314,6 +322,7 @@ export default function ToggleCollateralModal({
       t,
       setIsShowToggleCollateralModal,
       openDirect,
+      currentToggleReserve?.usageAsCollateralEnabledOnUser,
     ],
   );
 
