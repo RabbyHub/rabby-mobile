@@ -9288,15 +9288,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/react-native-sqlite-storage@npm:7.0.0-alpha.2":
-  version: 7.0.0-alpha.2
-  resolution: "@rabby-wallet/react-native-sqlite-storage@npm:7.0.0-alpha.2"
-  peerDependencies:
-    react-native: ">=0.14.0"
-  checksum: 3d784d473d85a95def31dae73cbd4d6545d413b0ea2c16d6b34713901ca01b93e700ea23add0a99b8547d1f07369abb4ada6754beb142dd8d8dd2df412ea1f6a
-  languageName: node
-  linkType: hard
-
 "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider"
@@ -14024,13 +14015,6 @@ __metadata:
   dependencies:
     "@types/react": "*"
   checksum: 2b69293a04609641be4963f5a9127aba3b7576cc15e3234fe6c341a940cbf3979e80bf848a43d93a24fb2ab09ad8faed54ac38c22037b159a0eea852e4dfa6eb
-  languageName: node
-  linkType: hard
-
-"@types/react-native-sqlite-storage@npm:^6.0.5":
-  version: 6.0.5
-  resolution: "@types/react-native-sqlite-storage@npm:6.0.5"
-  checksum: 192d4c3e2d93ea59f59387b8eb8d0aca3da32acca441aa5f84b2f4d919fc52aaa088ab5eb319ceec8471e58107d7463c56c733bfe5ff58915ac03b45313b6450
   languageName: node
   linkType: hard
 
@@ -34500,7 +34484,6 @@ __metadata:
     "@rabby-wallet/rabby-security-engine": 2.0.11
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.68
-    "@rabby-wallet/react-native-sqlite-storage": 7.0.0-alpha.2
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-clipboard/clipboard": ^1.13.0
@@ -34537,7 +34520,6 @@ __metadata:
     "@types/qrcode": ^1.5.5
     "@types/react": ^18.0.24
     "@types/react-is": ^18.2.4
-    "@types/react-native-sqlite-storage": ^6.0.5
     "@types/react-native-version-check": ^3.4.8
     "@types/react-test-renderer": ^18.0.0
     "@types/through2": ^2.0.41
