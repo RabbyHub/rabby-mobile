@@ -49,6 +49,7 @@ import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
 import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
+import { showToast } from '@/hooks/perps/showToast';
 import { toast } from '@/components2024/Toast';
 import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { PerpsSelectTokenPopup } from './components/PerpsDepositPopup/PerpsSelectTokenPopup';
@@ -84,6 +85,7 @@ export const PerpsScreen = () => {
     positionAndOpenOrders,
     accountSummary,
     currentPerpsAccount,
+    currentOnlyShowPerpsAccount,
     isLogin,
     isInitialized,
     marketData,
@@ -217,27 +219,10 @@ export const PerpsScreen = () => {
           fetchClearinghouseState();
           const { totalSz, avgPx } = filled;
           const msg = `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
-          toast.success(
-            Platform.OS === 'android'
-              ? ({ textStyle }) => (
-                  <Text
-                    style={[
-                      textStyle,
-                      {
-                        maxWidth: Dimensions.get('window').width - 100,
-                      },
-                    ]}>
-                    {msg}
-                  </Text>
-                )
-              : msg,
-            {
-              position: Toast.positions.CENTER,
-            },
-          );
+          showToast(msg, 'success');
         } else {
           const msg = res?.response?.data?.statuses[0]?.error;
-          toast.error(msg || 'close position error');
+          showToast(msg || 'close position error', 'error');
           Sentry.captureException(
             new Error(
               'PERPS close position noFills' +
@@ -255,7 +240,7 @@ export const PerpsScreen = () => {
           return null;
         }
         console.error('close position error', e);
-        toast.error(e?.message || 'close position error');
+        showToast(e?.message || 'close position error', 'error');
         Sentry.captureException(
           new Error(
             'PERPS close position error' +
@@ -338,6 +323,10 @@ export const PerpsScreen = () => {
     );
     return {
       distanceLiquidation,
+      direction:
+        Number(selectedPosition.position.szi || 0) > 0
+          ? 'Long'
+          : ('Short' as 'Long' | 'Short'),
       currentPrice: markPrice,
       pxDecimals: marketDataItem?.pxDecimals || 2,
       liquidationPrice,
@@ -668,6 +657,7 @@ export const PerpsScreen = () => {
       {/* Shared Risk Level Popup */}
       {riskPopupData && (
         <PerpsRiskLevelPopup
+          direction={riskPopupData.direction}
           visible={!!riskPopupData}
           pxDecimals={riskPopupData?.pxDecimals || 2}
           onClose={handleCloseRiskPopup}

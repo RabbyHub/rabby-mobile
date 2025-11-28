@@ -215,7 +215,6 @@ export const useAssets = ({
 
         const tokenSetting = await preferenceService.getUserTokenSettings();
 
-        // 获取当前地址的 portfolios 数据
         const currentPortfolios = portfoliosMap[address] || [];
 
         if (!targetProtocol || !targetProtocol.portfolio_item_list?.length) {
@@ -243,7 +242,6 @@ export const useAssets = ({
           updatedPortfolios.push(protocolDisplayData);
         }
 
-        // 重新排序
         const sortedPortfolios = updatedPortfolios.sort(
           (a, b) => (b.netWorth || 0) - (a.netWorth || 0),
         );
@@ -316,7 +314,6 @@ export const useAssets = ({
         return filterDisplayToken(_tokens);
       });
 
-      // 为每个地址更新 tokens
       Object.keys(formatAssetMap).forEach(address => {
         updateTokens({
           address,
@@ -364,7 +361,6 @@ export const useAssets = ({
         return tagProfiles(realtimeData, setting);
       });
 
-      // 为每个地址更新 portfolios
       Object.keys(formatProtocolMap).forEach(address => {
         updatePortfolios({
           address,
@@ -400,7 +396,6 @@ export const useAssets = ({
         tagNfts(group, setting),
       );
 
-      // 为每个地址更新 nfts
       Object.keys(formatNFTMap).forEach(address => {
         updateNFTs({
           address,
@@ -512,7 +507,6 @@ export const useAssets = ({
         options?.maxNFTLength
       );
 
-      // 检查是否有缓存数据
       const hasTokensCache =
         Object.keys(getAssetsMapDirectly('tokens')).length > 0;
       const hasPortfoliosCache =
@@ -530,7 +524,6 @@ export const useAssets = ({
         hasRequiredCache = false;
       }
 
-      // 有完整的所需类型缓存，不查了
       if (hasRequiredCache && !shortCache) {
         return;
       }
@@ -685,7 +678,6 @@ export const useInitDetectDBAssets = () => {
           ctx.syncDetails.batchSize * ctx.syncDetails.round +
           ctx.syncDetails.count;
 
-        // 获取当前资产数量
         let currentAssetCount = 0;
         if (taskFor === 'token') {
           currentAssetCount = tokensMap[ctx.owner_addr]?.length || 0;

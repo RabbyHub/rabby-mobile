@@ -142,7 +142,9 @@
         "LendingSupply": "Cung cấp",
         "LendingWithdraw": "Rút tiền",
         "LendingBorrow": "Vay mượn",
-        "LendingRepay": "Trả nợ"
+        "LendingRepay": "Trả nợ",
+        "LendingOffCollateral": "Tắt sử dụng làm tài sản thế chấp",
+        "LendingOnCollateral": "Bật sử dụng làm tài sản thế chấp"
       },
       "detail": {
         "From": "Từ",
@@ -2671,7 +2673,8 @@
     "Lending": {
       "availableCard": {
         "needSupply": "Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp.",
-        "canBorrow": "Bạn có thể vay dựa trên tài sản thế chấp mà bạn cung cấp, lên đến giới hạn vay."
+        "canBorrow": "Bạn có thể vay dựa trên tài sản thế chấp mà bạn cung cấp, lên đến giới hạn vay.",
+        "isolated": "Quyền vay và tài sản bị giới hạn do chế độ Isolation."
       },
       "list": {
         "headers": {
@@ -2704,7 +2707,12 @@
         "actions": "Cung cấp",
         "approveAndSupply": "Chấp thuận và Cung cấp",
         "availableToBorrow": "Có sẵn để vay",
-        "supplyAPY": "Cung cấp APY"
+        "supplyAPY": "Cung cấp APY",
+        "enabled": "Đã kích hoạt",
+        "collateralization": "Đảm bảo tài sản",
+        "isolatedTips": "Tài sản cho vay/vay mượn hiện tại của bạn không được hỗ trợ.",
+        "supplyBalance": "Cung cấp số dư",
+        "unavailable": "Không khả dụng"
       },
       "withdrawDetail": {
         "actions": "Rút tiền",
@@ -2738,12 +2746,14 @@
         "walletBalance": "Số dư Ví",
         "mySupply": "Cung cấp của tôi",
         "almostCap": "Tài sản này gần như đã đạt giới hạn vay của nó. Chỉ còn {{available}} có sẵn để vay từ thị trường này.",
-        "reachCap": "Tài sản này đã đạt đến giới hạn cung cấp của nó. Không có gì có sẵn để cung cấp từ thị trường này."
+        "reachCap": "Tài sản này đã đạt đến giới hạn cung cấp của nó. Không có gì có sẵn để cung cấp từ thị trường này.",
+        "useAsCollateral": "Sử dụng làm tài sản thế chấp"
       },
       "risk": {
         "checkbox": "Tôi hiểu thông báo và muốn tiếp tục.",
         "withdrawWarning": "Rút số tiền này sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý.",
-        "warning": "Vay số tiền này sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý."
+        "warning": "Vay số tiền này sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý.",
+        "toggleCollateralWarning": "Vô hiệu hóa tài sản này làm tài sản thế chấp sẽ khiến hệ số an toàn của bạn giảm xuống mức rủi ro cho việc thanh lý."
       },
       "lqDescription": {
         "desc": "Giá trị thanh lý",
@@ -2762,7 +2772,9 @@
         "availableToBorrowDesc": "Bạn có thể vay dựa trên tài sản thế chấp mà bạn cung cấp và cho đến khi đạt trần vay.",
         "lqDesc": "Khi một vụ thanh lý xảy ra, những người thanh lý sẽ trả lại tối đa 50% số tiền đã vay còn lại thay mặt cho người vay. Đổi lại, họ có thể mua tài sản thế chấp với giá giảm và giữ phần chênh lệch (phạt thanh lý) như một phần thưởng.",
         "isolatedTitle": "Tài sản không thể được sử dụng làm tài sản thế chấp.",
-        "isolatedDesc": "Tài sản này chỉ có thể được sử dụng làm tài sản thế chấp trong chế độ cách ly, nơi bạn không thể cung cấp tài sản khác làm tài sản thế chấp để vay. Tài sản được sử dụng làm tài sản thế chấp trong chế độ cách ly chỉ có thể được vay đến một giới hạn nợ cụ thể."
+        "isolatedDesc": "Tài sản này chỉ có thể được sử dụng làm tài sản thế chấp trong chế độ cách ly, nơi bạn không thể cung cấp tài sản khác làm tài sản thế chấp để vay. Tài sản được sử dụng làm tài sản thế chấp trong chế độ cách ly chỉ có thể được vay đến một giới hạn nợ cụ thể.",
+        "isolatedSupplyDesc": "Việt ngữ: Việc sử dụng tài sản thế chấp bị giới hạn do chế độ cách ly.",
+        "globalIsolatedDesc": "Trong chế độ Isolate, bạn không thể cung cấp các tài sản khác làm tài sản thế chấp. Một hạn mức nợ toàn cầu giới hạn khả năng vay của tài sản bị cô lập. Để thoát khỏi chế độ Isolate, hãy tắt UNI làm tài sản thế chấp trước khi vay tài sản khác."
       },
       "submitted": "đã gửi",
       "supplied": "Cung cấp",
@@ -2778,7 +2790,26 @@
       "hfTitle": "Yếu tố sức khỏe",
       "isolated": "tách biệt",
       "estNetApy": "Ước tính APY ròng",
-      "marketSlot": "{{market}} Thị Trường"
+      "marketSlot": "{{market}} Thị Trường",
+      "toggleCollateralDetail": {
+        "enable": "Bật {{asset}} làm Tài sản đảm bảo",
+        "disable": "Vô hiệu hóa {{asset}} làm tài sản thế chấp",
+        "actions": "Chuyển đổi tài sản {{asset}} làm tài sản thế chấp",
+        "error": "Có lỗi với dịch vụ AAVE. Vui lòng thử lại sau."
+      },
+      "toggleCollateralModal": {
+        "enableIsolationModeTitle": "Bật Chế độ Tách biệt",
+        "closeTitle": "Xem lại việc vô hiệu hóa",
+        "exitIsolationModeTitle": "Thoát Chế Độ Isolate",
+        "exitIsolationModeDesc": "Bạn sẽ thoát khỏi chế độ Isolate và các token khác hiện có thể được sử dụng làm tài sản thế chấp.",
+        "closeDesc": "Việc vô hiệu hóa tài sản này làm tài sản thế chấp sẽ ảnh hưởng đến khả năng vay mượn và hệ số sức khỏe của bạn.",
+        "openTitle": "Xem xét kích hoạt",
+        "openDesc": "Bật tài sản này làm tài sản thế chấp sẽ tăng cường khả năng vay mượn và Hệ số Sức khỏe của bạn. Tuy nhiên, nó có thể bị thanh lý nếu hệ số sức khỏe của bạn giảm thấp hơn 1.",
+        "enableIsolationModeDesc": "Bạn đang vào chế độ Isolate. Trong chế độ Isolate, bạn không thể cung cấp tài sản khác làm tài sản thế chấp. Một giới hạn nợ toàn cầu hạn chế khả năng vay mượn của tài sản bị cô lập. Để thoát khỏi chế độ Isolate, hãy tắt CRV làm tài sản thế chấp trước khi vay mượn tài sản khác.",
+        "riskToLiquidationText": "Bạn không thể chuyển sang chế độ sử dụng làm tài sản thế chấp cho loại tiền tệ này, vì nó sẽ gây ra cuộc gọi tài sản thế chấp."
+      },
+      "searchMarket": "Tìm kiếm Thị trường",
+      "selectMarket": "Chọn Thị Trường"
     }
   },
   "component": {

@@ -445,6 +445,7 @@ export class SignatureSteps {
           ...(await apisTransactionHistory.getPendingTxs({
             recommendNonce: baseRecommendNonce,
             address: account.address,
+            chainId: buildTx.chainId,
           })),
           ...tempTxs.slice(0, index),
         ],

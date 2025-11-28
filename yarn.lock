@@ -7507,7 +7507,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/devices@npm:8.4.4, @ledgerhq/devices@npm:^8.4.4":
+"@ledgerhq/devices@npm:8.7.0":
+  version: 8.7.0
+  resolution: "@ledgerhq/devices@npm:8.7.0"
+  dependencies:
+    "@ledgerhq/errors": ^6.27.0
+    "@ledgerhq/logs": ^6.13.0
+    rxjs: ^7.8.1
+    semver: ^7.3.5
+  checksum: 780277445030bfa2124462df89b80e8b07a9111d4db9f59efe34f4363cb3fc76179a4735ee29a1dbef89edb683a84cc61e8801f6c1aa025726973456e2dbae26
+  languageName: node
+  linkType: hard
+
+"@ledgerhq/devices@npm:^8.4.4":
   version: 8.4.4
   resolution: "@ledgerhq/devices@npm:8.4.4"
   dependencies:
@@ -7516,18 +7528,6 @@ __metadata:
     rxjs: ^7.8.1
     semver: ^7.3.5
   checksum: 370fb38d484665c92165580e285cc792e7af0bf114a5d1e855aec602c6e39592090d0de7a43addeb4c13622f734ddd4f25be82f07507e14550753ce5473eea66
-  languageName: node
-  linkType: hard
-
-"@ledgerhq/devices@npm:8.5.1":
-  version: 8.5.1
-  resolution: "@ledgerhq/devices@npm:8.5.1"
-  dependencies:
-    "@ledgerhq/errors": ^6.25.0
-    "@ledgerhq/logs": ^6.13.0
-    rxjs: ^7.8.1
-    semver: ^7.3.5
-  checksum: ce066b5f4bf7ebab0e40bf5e96a87d61137d3d497548f6061ed81975a91a19873cf5056d924ce5454b6c4a967df000834ae8358cc2b4c6b8f8aa6470cb8d3a5c
   languageName: node
   linkType: hard
 
@@ -7553,10 +7553,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/errors@npm:^6.25.0":
-  version: 6.25.0
-  resolution: "@ledgerhq/errors@npm:6.25.0"
-  checksum: 066e4b97b6becda9b86b616829b5e025d60d658172179e5d7a9e7662e2f2c5ea70733d9930fee9031d18728da2996b632485f98258629267bb561526ab4e0367
+"@ledgerhq/errors@npm:^6.27.0":
+  version: 6.27.0
+  resolution: "@ledgerhq/errors@npm:6.27.0"
+  checksum: 7b65e20fbe37471de4e86a98cf9c4cb9591771d21c6b4c4e49783a388e1481006830dab677c8d90641bfdda79ff68db898f3cc9bac1bd01bed31ca9bd37c66fe
   languageName: node
   linkType: hard
 
@@ -7631,6 +7631,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ledgerhq/hw-transport@npm:6.31.13":
+  version: 6.31.13
+  resolution: "@ledgerhq/hw-transport@npm:6.31.13"
+  dependencies:
+    "@ledgerhq/devices": 8.7.0
+    "@ledgerhq/errors": ^6.27.0
+    "@ledgerhq/logs": ^6.13.0
+    events: ^3.3.0
+  checksum: eb9100b7cfc34153eb325a69240bc68b804508f6a54d1209686c28d4fda23737d1dce56ec184b613f5882ed9305139dce6f765e40292266d372f2196464baa59
+  languageName: node
+  linkType: hard
+
 "@ledgerhq/hw-transport@npm:6.31.4":
   version: 6.31.4
   resolution: "@ledgerhq/hw-transport@npm:6.31.4"
@@ -7640,18 +7652,6 @@ __metadata:
     "@ledgerhq/logs": ^6.12.0
     events: ^3.3.0
   checksum: bb5204513f2df3dbb646265954d1539bf6117cc08e73a4d1761ec10cb5f8255fe2b30112debc2433608de7260ee8878340c9f67690f5f62447a1466daa241ea7
-  languageName: node
-  linkType: hard
-
-"@ledgerhq/hw-transport@npm:^6.31.10":
-  version: 6.31.10
-  resolution: "@ledgerhq/hw-transport@npm:6.31.10"
-  dependencies:
-    "@ledgerhq/devices": 8.5.1
-    "@ledgerhq/errors": ^6.25.0
-    "@ledgerhq/logs": ^6.13.0
-    events: ^3.3.0
-  checksum: 947a664e7d1c59ccf060fd4d5378191cf3da92afca8e1d626f26fa99ae43c186b1c8e78d513cc6ab0d3e4b250879d4d97fe5b08e199b2a9cea031e0ac65a8272
   languageName: node
   linkType: hard
 
@@ -7691,18 +7691,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/react-native-hw-transport-ble@npm:6.35.3":
-  version: 6.35.3
-  resolution: "@ledgerhq/react-native-hw-transport-ble@npm:6.35.3"
+"@ledgerhq/react-native-hw-transport-ble@npm:6.35.6":
+  version: 6.35.6
+  resolution: "@ledgerhq/react-native-hw-transport-ble@npm:6.35.6"
   dependencies:
-    "@ledgerhq/devices": 8.5.1
-    "@ledgerhq/errors": ^6.25.0
-    "@ledgerhq/hw-transport": ^6.31.10
+    "@ledgerhq/devices": 8.7.0
+    "@ledgerhq/errors": ^6.27.0
+    "@ledgerhq/hw-transport": 6.31.13
     "@ledgerhq/logs": ^6.13.0
-    react-native-ble-plx: 3.5.0
+    react-native-ble-plx: 3.4.0
     rxjs: ^7.8.1
     uuid: ^9.0.1
-  checksum: b66f98b936e8fda09ba0590479efbc7564cfb148816ff45d5e994d6a411118f4fcc55dce71768c97520b3a0226e09112c7f120dd98fa15967fcc5078e5810197
+  checksum: 4b96bd72dc8fdf0c2fd3040263c06263b18812ad2efe03c84ddd06568e14d4d4c39884c299ef561164ac2928edbb195cd5c338de0f5ae3532d19daf4bcd112e1
   languageName: node
   linkType: hard
 
@@ -8826,7 +8826,7 @@ __metadata:
   resolution: "@rabby-wallet/eth-keyring-ledger@workspace:packages/eth-keyring-ledger"
   dependencies:
     "@ethereumjs/tx": 5
-    "@ledgerhq/devices": 8.4.4
+    "@ledgerhq/devices": 8.7.0
     "@ledgerhq/hw-app-eth": 6.45.0
     "@ledgerhq/hw-transport": 6.31.4
     "@ledgerhq/types-cryptoassets": 7.21.0
@@ -9301,7 +9301,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider"
   dependencies:
-    "@ledgerhq/devices": 8.4.4
+    "@ledgerhq/devices": 8.7.0
     "@rollup/plugin-image": ^2.1.1
     "@rollup/plugin-typescript": ^8.3.2
     "@types/chrome": ^0.0.186
@@ -34474,7 +34474,7 @@ __metadata:
     "@ethereumjs/tx": 5.1.0
     "@ethereumjs/util": ^9.0.1
     "@gorhom/bottom-sheet": 5.0.6
-    "@ledgerhq/react-native-hw-transport-ble": 6.35.3
+    "@ledgerhq/react-native-hw-transport-ble": 6.35.6
     "@metamask/abi-utils": 3.0.0
     "@metamask/browser-passworder": 6.0.0
     "@metamask/eth-sig-util": 5.1.0

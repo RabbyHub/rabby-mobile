@@ -358,9 +358,13 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     } = options || {};
     topCount = Math.max(0, topCount || 0);
 
-    const owner_addr_list = Array.isArray(owner_addrs)
-      ? owner_addrs
-      : [owner_addrs];
+    const owner_addr_list = [
+      ...new Set(
+        (Array.isArray(owner_addrs) ? owner_addrs : [owner_addrs]).map(addr =>
+          addr.toLowerCase(),
+        ),
+      ),
+    ];
     const repo = this.getRepository();
     const queryBuilder = repo
       .createQueryBuilder('tokenitem')

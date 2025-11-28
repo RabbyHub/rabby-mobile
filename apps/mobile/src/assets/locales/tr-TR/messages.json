@@ -52,7 +52,9 @@
         "LendingBorrow": "Ödünç Al",
         "LendingRepay": "Geri Ödeme",
         "LendingSupply": "Arz",
-        "LendingWithdraw": "Çekilme"
+        "LendingWithdraw": "Çekilme",
+        "LendingOffCollateral": "Teminat olarak kullanmayı kapat",
+        "LendingOnCollateral": "Teminat olarak kullanmayı açın"
       },
       "detail": {
         "Succeeded": "Başarılı",
@@ -2578,7 +2580,8 @@
     "Lending": {
       "availableCard": {
         "needSupply": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
-        "canBorrow": "Teminat olarak sağladığınız teminatınıza göre, borç limitine kadar borç alabilirsiniz."
+        "canBorrow": "Teminat olarak sağladığınız teminatınıza göre, borç limitine kadar borç alabilirsiniz.",
+        "isolated": "İzolasyon modu nedeniyle borçlanma gücü ve varlıklar sınırlıdır."
       },
       "list": {
         "headers": {
@@ -2611,7 +2614,12 @@
         "actions": "Arz",
         "availableToBorrow": "Ödünç alınabilir",
         "supplyAPY": "Arz APY",
-        "approveAndSupply": "Onayla ve Tedarik Et"
+        "approveAndSupply": "Onayla ve Tedarik Et",
+        "supplyBalance": "Arz Dengesi",
+        "collateralization": "Teminatlandırma",
+        "enabled": "Etkinleştirildi",
+        "unavailable": "Kullanılamıyor",
+        "isolatedTips": "Mevcut kredi verme/kredi alma varlıklarınız desteklenmiyor."
       },
       "withdrawDetail": {
         "remainingSupply": "Kalan arzı",
@@ -2645,12 +2653,14 @@
         "availableToSupply": "Temin Edilir",
         "totalSupplied": "Toplam Sağlanan",
         "reachCap": "Bu varlık, arz sınırına ulaşmıştır. Bu piyasadan tedarik edilecek hiçbir şey yoktur.",
-        "almostCap": "Bu varlık neredeyse borç sınırına ulaşmış durumda. Bu piyasadan borç alınabilecek yalnızca {{available}} mevcut."
+        "almostCap": "Bu varlık neredeyse borç sınırına ulaşmış durumda. Bu piyasadan borç alınabilecek yalnızca {{available}} mevcut.",
+        "useAsCollateral": "Teminat olarak kullanın"
       },
       "risk": {
         "checkbox": "Uyarıyı anlıyorum ve devam etmek istiyorum.",
         "warning": "Bu miktarı borç almak, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir.",
-        "withdrawWarning": "Bu miktarın çekilmesi, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir."
+        "withdrawWarning": "Bu miktarın çekilmesi, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir.",
+        "toggleCollateralWarning": "Bu varlığı teminat olarak devre dışı bırakmak, Sağlık Faktörünüzü likidasyon için riskli bir seviyeye düşürecektir."
       },
       "lqDescription": {
         "desc": "Tasfiye değeri",
@@ -2669,7 +2679,9 @@
         "maxAmount": "Bu, temin edilen tüm teminatlarınıza dayanarak borç alabileceğiniz maksimum miktardır. Toplam borç alma gücünüz, her teminat varlığının piyasa değerinin Max LTV ile çarpılması ve ardından sonuçların toplanmasıyla hesaplanır.",
         "lqDesc": "Bir tasfiye gerçekleştiğinde, tasfiye edenler borçlunun adına mevcut borç miktarının %50'sine kadar geri ödeme yapar. Karşılığında, teminatı indirimli fiyatla satın alabilir ve farkı (tasfiye cezası) bonus olarak alabilirler.",
         "isolatedTitle": "Varlık teminat olarak kullanılamaz.",
-        "isolatedDesc": "Bu varlık yalnızca izolasyon modunda teminat olarak kullanılabilir; burada borç almak için başka varlık teminatı sağlayamazsınız. İzolasyon modunda teminat olarak kullanılan varlıklar yalnızca belirli bir borç tavanına kadar borç alınabilir."
+        "isolatedDesc": "Bu varlık yalnızca izolasyon modunda teminat olarak kullanılabilir; burada borç almak için başka varlık teminatı sağlayamazsınız. İzolasyon modunda teminat olarak kullanılan varlıklar yalnızca belirli bir borç tavanına kadar borç alınabilir.",
+        "isolatedSupplyDesc": "Teminat kullanımı izolasyon modu nedeniyle sınırlıdır.",
+        "globalIsolatedDesc": "İzolasyon modunda, diğer varlıkları teminat olarak veremezsiniz. Küresel borç tavanı, izole edilmiş varlığın borçlanma gücünü sınırlar. İzolasyon modundan çıkmak için, başka bir varlık borçlanmadan önce UNI'yi teminat olarak devre dışı bırakın."
       },
       "supplied": "Sağlanan",
       "gotIt": "Tamamdır",
@@ -2685,7 +2697,26 @@
       "enterAmount": "Miktarı Girin",
       "isolated": "izole edilmiş",
       "estNetApy": "Tahmini net APY",
-      "marketSlot": "{{market}} Pazar"
+      "marketSlot": "{{market}} Pazar",
+      "toggleCollateralDetail": {
+        "actions": "{{asset}} Teminatını Değiştir",
+        "enable": "{{asset}}'i Teminat Olarak Etkinleştir",
+        "disable": "{{asset}}'i Teminat Olarak Devre Dışı Bırak",
+        "error": "AAVE hizmetinde bir hata var. Lütfen daha sonra tekrar deneyin."
+      },
+      "toggleCollateralModal": {
+        "enableIsolationModeTitle": "İzole Modu Etkinleştir",
+        "openTitle": "Gözden Geçirme Etkinleştirme",
+        "closeTitle": "Gözden Geçirme Devre Dışı Bırakma",
+        "exitIsolationModeDesc": "İzolasyon modundan çıkacaksınız ve diğer token'lar şimdi teminat olarak kullanılabilir.",
+        "exitIsolationModeTitle": "İzolasyon Modundan Çıkış",
+        "closeDesc": "Bu varlığın teminat olarak devre dışı bırakılması, borçlanma gücünüzü ve Sağlık Faktörünü etkiler.",
+        "riskToLiquidationText": "Bu para birimi için teminat modu olarak kullanımını değiştiremezsiniz, çünkü bu teminat çağrısına neden olacaktır.",
+        "enableIsolationModeDesc": "İzolasyon moduna giriyorsunuz. İzolasyon modundayken, diğer varlıkları teminat olarak sağlayamazsınız. Küresel bir borç tavanı, izole edilmiş varlığın borçlanma gücünü sınırlar. Başka bir varlık borçlanmadan önce teminat olarak CRV'yi devre dışı bırakarak izolasyon modundan çıkın.",
+        "openDesc": "Bu varlığı teminat olarak etkinleştirmek, borçlanma gücünüzü ve Sağlık Faktörünü artırır. Ancak, sağlık faktörünüz 1'in altına düşerse tasfiye edilebilir."
+      },
+      "selectMarket": "Pazar Seçin",
+      "searchMarket": "Pazar Ara"
     }
   },
   "component": {

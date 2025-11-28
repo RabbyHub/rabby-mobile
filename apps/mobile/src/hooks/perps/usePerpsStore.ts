@@ -64,6 +64,7 @@ export interface PerpsState {
   positionAndOpenOrders: PositionAndOpenOrder[];
   accountSummary: AccountSummary | null;
   currentPerpsAccount: Account | null;
+  currentOnlyShowPerpsAccount: Account | null;
   marketData: MarketData[];
   marketDataMap: MarketDataMap;
   hasPermission: boolean;
@@ -98,6 +99,7 @@ const initialState: PerpsState = {
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
+  currentOnlyShowPerpsAccount: null,
   marketData: [],
   userAccountHistory: [],
   localLoadingHistory: [],
@@ -346,6 +348,12 @@ export const usePerpsStore = () => {
     setState(prev => ({ ...prev, isInitialized: payload }));
   });
 
+  const setCurrentOnlyShowPerpsAccount = useMemoizedFn(
+    (payload: Account | null) => {
+      setState(prev => ({ ...prev, currentOnlyShowPerpsAccount: payload }));
+    },
+  );
+
   const setApproveSignatures = useMemoizedFn((payload: ApproveSignatures) => {
     setState(prev => ({ ...prev, approveSignatures: payload }));
   });
@@ -387,12 +395,12 @@ export const usePerpsStore = () => {
     },
   );
 
-  const fetchPositionAndOpenOrders = useMemoizedFn(async () => {
+  const fetchPositionAndOpenOrders = useMemoizedFn(async (address?: string) => {
     const sdk = apisPerps.getPerpsSDK();
     try {
       const [clearinghouseState, openOrders] = await Promise.all([
-        sdk.info.getClearingHouseState(),
-        sdk.info.getFrontendOpenOrders(),
+        sdk.info.getClearingHouseState(address),
+        sdk.info.getFrontendOpenOrders(address),
       ]);
 
       setPositionAndOpenOrders(clearinghouseState, openOrders);
@@ -698,5 +706,6 @@ export const usePerpsStore = () => {
     unsubscribeAll,
     logout,
     initEventBus,
+    setCurrentOnlyShowPerpsAccount,
   };
 };
