@@ -452,7 +452,7 @@ export const PerpsScreen = () => {
                 <RcIconBackTopCC color={colors2024['neutral-body']} />
               </TouchableOpacity>
             )}
-            {hasPermission && (
+            {hasPermission && isLogin && (
               <View style={styles.footer}>
                 <Button
                   type="primary"
