@@ -35,7 +35,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
-import { findChainByEnum } from '@/utils/chain';
+import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
 import { tokenPriceImpact, useBridge } from '../hooks/token';
 import { Button } from '@/components2024/Button';
@@ -359,8 +359,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         });
         const addBridgeTxHistoryObj = {
           address: currentAccount?.address!,
-          fromChainId: findChainByEnum(fromToken?.chain || '')?.id || 0,
-          toChainId: findChainByEnum(toToken?.chain || '')?.id || 0,
+          fromChainId: findChainByServerID(fromToken?.chain || '')?.id || 0,
+          toChainId: findChainByServerID(toToken?.chain || '')?.id || 0,
           fromToken: fromToken!,
           toToken: toToken!,
           slippage: new BigNumber(slippage).div(100).toNumber(),
@@ -369,6 +369,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
           dexId: selectedBridgeQuote?.aggregator.id!,
           createdAt: Date.now(),
           status: 'pending' as BridgeTxHistoryItem['status'],
+          estimatedDuration: selectedBridgeQuote.duration,
         };
         await bridgeToken(
           {
@@ -689,8 +690,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         if (txHash) {
           transactionHistoryService.addBridgeTxHistory({
             address: currentAccount?.address!,
-            fromChainId: findChainByEnum(fromToken?.chain || '')?.id || 0,
-            toChainId: findChainByEnum(toToken?.chain || '')?.id || 0,
+            fromChainId: findChainByServerID(fromToken?.chain || '')?.id || 0,
+            toChainId: findChainByServerID(toToken?.chain || '')?.id || 0,
             fromToken: fromToken!,
             toToken: toToken!,
             slippage: new BigNumber(slippageState).div(100).toNumber(),
@@ -700,6 +701,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
             status: 'pending',
             hash: txHash,
             createdAt: Date.now(),
+            estimatedDuration: selectedBridgeQuote?.duration || 0,
           });
         }
 
@@ -921,6 +923,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         <View>
           {selectedBridgeQuote && !quoteLoading && inSufficientCanGetQuote && (
             <BridgeShowMore
+              sourceAlwaysShow
+              duration={selectedBridgeQuote?.duration}
               supportDirectSign={canShowDirectSubmit}
               openFeePopup={openFeePopup}
               open={showMoreOpen}
@@ -989,15 +993,11 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         </View>
         {Boolean(
           !(selectedBridgeQuote && inSufficientCanGetQuote) &&
-            !recommendFromToken &&
-            localPendingTxData,
-        ) && (
-          <BridgePendingTxItem
-            openHistory={openHistory}
-            data={localPendingTxData!}
-            clearLocalPendingTxData={clearLocalPendingTxData}
-          />
-        )}
+            !recommendFromToken,
+        ) &&
+          currentAccount?.address && (
+            <BridgePendingTxItem userAddress={currentAccount?.address} />
+          )}
       </KeyboardAwareScrollView>
 
       <View
@@ -1074,6 +1074,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
           receiveToken={toToken}
           inSufficient={inSufficient}
           setSelectedBridgeQuote={setSelectedBridgeQuote}
+          currentSelectedQuote={selectedBridgeQuote}
         />
       ) : null}
 
