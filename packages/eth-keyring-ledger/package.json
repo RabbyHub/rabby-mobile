@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@ethereumjs/tx": "5",
-    "@ledgerhq/devices": "8.4.4",
+    "@ledgerhq/devices": "8.7.0",
     "@ledgerhq/types-cryptoassets": "7.21.0",
     "@ledgerhq/types-devices": "6.25.3",
     "@metamask/auto-changelog": "^3.4.3",
