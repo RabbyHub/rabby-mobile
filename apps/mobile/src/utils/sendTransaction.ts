@@ -218,6 +218,7 @@ export const sendTransaction = async ({
       pending_tx_list: await apisTransactionHistory.getPendingTxs({
         recommendNonce,
         address,
+        chainId: tx.chainId,
       }),
     }));
 
