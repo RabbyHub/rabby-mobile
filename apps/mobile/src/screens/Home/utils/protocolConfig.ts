@@ -73,12 +73,6 @@ export const useProtocolConfig = () => {
           return item.name?.toLowerCase() === 'lending';
         },
         onTokenManage: async (account, tokenAddress, direction) => {
-          console.log(
-            'CUSTOM_LOGGER:=>: onTokenManage',
-            account?.address,
-            tokenAddress,
-            direction,
-          );
           const marketKey = keyToMarketKey[key];
           if (account && marketKey) {
             await switchSceneCurrentAccount('Lending', account);
