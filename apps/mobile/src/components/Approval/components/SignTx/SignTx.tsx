@@ -579,6 +579,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         pending_tx_list: await apisTransactionHistory.getPendingTxs({
           recommendNonce,
           address,
+          chainId: tx.chainId,
         }),
         delegate_call: isGnosisAccount ? !!params?.data?.[0]?.operation : false,
       })
