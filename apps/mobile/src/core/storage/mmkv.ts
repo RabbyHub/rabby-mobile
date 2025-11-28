@@ -155,6 +155,9 @@ export function normalizeKeyringState() {
   return result;
 }
 
+export const appMMKVForDebug = __DEV__
+  ? appMMKV
+  : (null as any as typeof appMMKV);
 export { appStorage, keyringStorage };
 
 export const IS_BOOTED_USER =

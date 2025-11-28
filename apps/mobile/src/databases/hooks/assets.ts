@@ -131,7 +131,7 @@ export const syncProtocols = async (
     address,
   );
   protocols.push(...appChainProtocols);
-  runOnJS(syncRemotePortocols)(address, [...protocols]);
+  syncRemotePortocols(address, [...protocols]);
   return protocols;
 };
 
@@ -163,11 +163,11 @@ export const syncSpecificProtocol = async (
     !projects[0] ||
     !projects[0].portfolio_item_list?.length
   ) {
-    runOnJS(syncRemotePortocol)(address, null, { deleteId: protocolId });
+    syncRemotePortocol(address, null, { deleteId: protocolId });
     return [];
   }
 
-  runOnJS(syncRemotePortocol)(address, projects[0]);
+  syncRemotePortocol(address, projects[0]);
   return projects;
 };
 

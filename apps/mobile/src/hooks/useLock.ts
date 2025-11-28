@@ -15,6 +15,7 @@ import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
+import { useAtomCallback } from 'jotai/utils';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -38,12 +39,17 @@ appLockAtom.onMount = setAppLock => {
 export function useAppUnlocked() {
   const [{ appUnlocked, pwdStatus }, setAppLock] = useAtom(appLockAtom);
 
+  const getIsAppUnlocked = useAtomCallback(
+    useCallback(get => get(appLockAtom).appUnlocked, []),
+  );
+
   // const hasSetupCustomPassword = useMemo(() => {
   //   return pwdStatus === PasswordStatus.Custom;
   // }, [pwdStatus]);
 
   return {
     isAppUnlocked: appUnlocked,
+    getIsAppUnlocked,
     // hasSetupCustomPassword,
     setAppLock,
   };

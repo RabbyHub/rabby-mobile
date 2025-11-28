@@ -1,4 +1,4 @@
-import { StackActions } from '@react-navigation/native';
+import { StackActions, useIsFocused } from '@react-navigation/native';
 import React, {
   useEffect,
   useLayoutEffect,
@@ -60,7 +60,7 @@ import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { Skeleton } from '@rneui/base';
 import { useMemoizedFn } from 'ahooks';
-import { sortBy } from 'lodash';
+import { debounce, sortBy, throttle } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
 import { LoadingLinear } from '../../TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useHideBalance } from '../hooks/useHideBalance';
@@ -69,9 +69,11 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { IS_IOS } from '@/core/native/utils';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 const HeaderHeight = 24;
 
+const BALANCE_ABOUT_TEXT_DEBOUNCE_TIME = 200;
 export function MultiAddressHomeHeader(
   props: {
     data: ReturnType<typeof useMulti24hBalance>['combineData'];
@@ -112,7 +114,9 @@ export function MultiAddressHomeHeader(
 
   const { multi24hBalance } = useMulti24hBalance(
     pinnedAccountList.map(item => item.address),
-    true,
+    {
+      disableAutoFetch: true,
+    },
   );
 
   const addressListData = useMemo(() => {
@@ -183,11 +187,27 @@ export function MultiAddressHomeHeader(
   }, [loading, spinValue]);
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
-  const percentChange = useMemo(() => {
-    return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
-      data.isLoss ? '-' : '+'
-    }${formatCurrentCurrency(Math.abs(data.rawChange))})`;
-  }, [data.changePercent, data.isLoss, data.rawChange, formatCurrentCurrency]);
+  const totalBalanceText = useDebouncedValue(
+    useMemo(() => {
+      return formatSmallCurrencyValue(data.rawNetWorth, {
+        currency,
+      });
+    }, [data.rawNetWorth, currency]),
+    BALANCE_ABOUT_TEXT_DEBOUNCE_TIME,
+  );
+  const percentChange = useDebouncedValue(
+    useMemo(() => {
+      return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
+        data.isLoss ? '-' : '+'
+      }${formatCurrentCurrency(Math.abs(data.rawChange))})`;
+    }, [
+      data.changePercent,
+      data.isLoss,
+      data.rawChange,
+      formatCurrentCurrency,
+    ]),
+    BALANCE_ABOUT_TEXT_DEBOUNCE_TIME,
+  );
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -390,9 +410,7 @@ export function MultiAddressHomeHeader(
                         styles.netWorth,
                         hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
                       ]}>
-                      {formatSmallCurrencyValue(data.rawNetWorth, {
-                        currency,
-                      })}
+                      {totalBalanceText}
                     </Text>
                   )}
                   <View style={[styles.accountBg]}>

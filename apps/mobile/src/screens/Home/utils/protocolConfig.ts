@@ -8,13 +8,11 @@ import {
   isSameAccount,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { AbstractPortfolio } from '../types';
 
 export const useProtocolConfig = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { login } = usePerpsState();
   const { accounts } = useMyAccounts();
   const config = useMemo(() => {
     return {

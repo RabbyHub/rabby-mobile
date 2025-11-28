@@ -66,6 +66,7 @@
     "@notifee/react-native": "^7.8.0",
     "@onekeyfe/hd-ble-sdk": "1.1.13",
     "@onekeyfe/react-native-ble-utils": "0.1.4",
+    "@op-engineering/op-sqlite": "^15.1.1",
     "@rabby-wallet/biz-utils": "workspace:^",
     "@rabby-wallet/eth-hd-keyring": "4.3.1",
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^",
@@ -177,7 +178,7 @@
     "react-native-qrcode-svg": "^6.2.0",
     "react-native-quick-crypto": "0.7.13",
     "react-native-randombytes": "^3.6.1",
-    "react-native-reanimated": "3.17.1",
+    "react-native-reanimated": "3.18.2",
     "react-native-root-toast": "^3.5.1",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "4.9.2",
@@ -252,6 +253,7 @@
     "react-native-version": "^4.0.0",
     "react-test-renderer": "18.3.1",
     "reactotron-react-native": "^5.0.4",
+    "reactotron-react-native-mmkv": "^0.2.9",
     "reflect-metadata": "0.1.13",
     "rimraf": "^3.0.2",
     "styled-components": "^6.1.1",
@@ -266,5 +268,9 @@
   },
   "installConfig": {
     "hoistingLimits": "workspaces"
+  },
+  "op-sqlite": {
+    "performanceMode": true,
+    "sqliteFlags": "-DSQLITE_ENABLE_MATH_FUNCTIONS"
   }
 }

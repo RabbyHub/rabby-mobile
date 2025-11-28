@@ -42,7 +42,7 @@ import {
   TokenItemMaybeWithOwner,
 } from '@/databases/hooks/token';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
 import { isWatchOrSafeAccount } from '@/utils/account';
@@ -121,7 +121,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       useState<FavoriteFilterType>('all');
 
     const [_, setLongPressToken] = useLongPressTokenAtom();
-    const queryConds = useDebounceValue(_queryConds, 250);
+    const queryConds = useDebouncedValue(_queryConds, 250);
     const currentAccount = queryConds.account;
 
     const {

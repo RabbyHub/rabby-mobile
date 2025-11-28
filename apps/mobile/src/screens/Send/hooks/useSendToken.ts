@@ -84,7 +84,7 @@ import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { IExtractFromPromise } from '@/utils/type';
 import { useWhiteListAddress } from './useWhiteListAddress';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { coerceNumber } from '@/utils/coerce';
 
 function makeDefaultToken(): TokenItemWithEntity & {
@@ -1785,7 +1785,7 @@ export function useSendTokenForm({
 
   const isFocused = useIsFocused();
 
-  const stableAmountValue = useDebounceValue(formValues.amount, 300);
+  const stableAmountValue = useDebouncedValue(formValues.amount, 300);
   useEffect(() => {
     if (
       isAccountSupportMiniApproval(currentAccount?.type || '') &&

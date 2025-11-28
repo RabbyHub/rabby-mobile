@@ -32,23 +32,41 @@ import { useCallback, useMemo } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { syncRemoteTokensAmount } from '@/databases/sync/assets';
+import { fetchAllAccounts } from '@/core/apis/account';
+import { sortAccountList } from '@/utils/sortAccountList';
 
 export const loadingAtom = atom(true);
 export const isFirstFetchAtom = atom(true);
 export const shortCacheAtom = atom(true);
+
+async function getTop10AccountsWithBalance() {
+  const accounts = await fetchAllAccounts();
+
+  const highlightedAddresses = preferenceService.getPinAddresses();
+
+  const sortedAccounts = sortAccountList(accounts, {
+    highlightedAddresses,
+  });
+
+  const top10Accounts = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
+
+  return {
+    sortedAccounts,
+    top10Accounts,
+  };
+}
+
 export const useAssets = ({
   hideCombined = false,
 }: {
   hideCombined?: boolean;
 } = {}) => {
   const [isLoading, setLoading] = useAtom(loadingAtom);
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const sortedAccounts = useSortAddressList(accounts);
+
   const [isFirstFetch, setIsFirstFetch] = useAtom(isFirstFetchAtom);
   const [shortCache, setShortCache] = useAtom(shortCacheAtom);
   const {
+    top10Addresses,
     tokens,
     portfolios,
     assetsMap,
@@ -401,11 +419,8 @@ export const useAssets = ({
         ignoreLoading?: boolean;
       },
     ) => {
-      const top10Account = sortedAccounts
-        .slice(0, 10)
-        .filter(acc => acc.balance);
       const addresses = options?.realTimeAddresses || [
-        ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
+        ...new Set(top10Addresses),
       ];
       removeUnNeedAssets(addresses);
       const { disableToken, disableDefi, disableNFT } = options || {};
@@ -446,11 +461,8 @@ export const useAssets = ({
       maxNFTLength?: number;
     }) => {
       const { disableToken, disableDefi, disableNFT } = options || {};
-      const top10Account = sortedAccounts
-        .slice(0, 10)
-        .filter(acc => acc.balance);
       const addresses = options?.realTimeAddresses || [
-        ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
+        ...new Set(top10Addresses),
       ];
       removeUnNeedAssets(addresses);
       const isCurrentShortCacheFetch = !!(
