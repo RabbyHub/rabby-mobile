@@ -356,20 +356,22 @@ const BridgeShowMore = ({
       <View style={[styles.body, !open && { height: 0 }]}>
         {!sourceAlwaysShow && sourceContentRender()}
 
-        <BridgeSlippage
-          autoSuggestSlippage={autoSuggestSlippage}
-          value={slippage}
-          displaySlippage={displaySlippage}
-          onChange={onSlippageChange}
-          autoSlippage={autoSlippage}
-          isCustomSlippage={isCustomSlippage}
-          setAutoSlippage={setAutoSlippage}
-          setIsCustomSlippage={setIsCustomSlippage}
-          type={type}
-          isWrapToken={isWrapToken}
-          recommendValue={recommendValue}
-          loading={quoteLoading}
-        />
+        {!showSlippageWarning && (
+          <BridgeSlippage
+            autoSuggestSlippage={autoSuggestSlippage}
+            value={slippage}
+            displaySlippage={displaySlippage}
+            onChange={onSlippageChange}
+            autoSlippage={autoSlippage}
+            isCustomSlippage={isCustomSlippage}
+            setAutoSlippage={setAutoSlippage}
+            setIsCustomSlippage={setIsCustomSlippage}
+            type={type}
+            isWrapToken={isWrapToken}
+            recommendValue={recommendValue}
+            loading={quoteLoading}
+          />
+        )}
 
         <ListItem name={t('page.swap.rabbyFee.title')}>
           <Pressable onPress={openFeePopup}>
