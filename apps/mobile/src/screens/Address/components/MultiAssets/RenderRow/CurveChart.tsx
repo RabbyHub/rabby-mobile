@@ -91,6 +91,8 @@ function Chart({
     setIsFoldMultiChart(!isFoldMultiChart);
   }, [setIsFoldMultiChart, isFoldMultiChart, refreshCurve]);
 
+  const chartsData = isFoldMultiChart ? [] : combineCurveData.list;
+
   return (
     <View
       style={[styles.container]}
@@ -102,8 +104,7 @@ function Chart({
           styles.chartContainer,
           hideType === 'HALF_HIDE' && styles.balanceOpacity,
         ]}>
-        <LineChart.Provider
-          data={isFoldMultiChart ? [] : combineCurveData.list}>
+        <LineChart.Provider data={chartsData}>
           <ChartHeader
             loading={loadingNewCurve}
             rawNetWorth={data.rawNetWorth}
@@ -116,7 +117,7 @@ function Chart({
             toggleFoldMultiChart={toggleFoldMultiChart}
             isFoldMultiChart={isFoldMultiChart}
           />
-          {isFoldMultiChart ? null : !isLoadingCurve ? (
+          {isFoldMultiChart || !chartsData.length ? null : !isLoadingCurve ? (
             <LineChart
               height={114}
               width={ScreenWidth - 72}
