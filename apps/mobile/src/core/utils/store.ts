@@ -92,3 +92,13 @@ export function makeAvoidParallelAsyncFunc<
 
   return wrappedFunc;
 }
+
+/**
+ * @description nothing, just run it, mark it `iife` with this method
+ */
+export function runIIFEFunc<T extends (...args: any[]) => any>(
+  func: T,
+  ...inputArags: any[]
+) {
+  return func(...inputArags);
+}

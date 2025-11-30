@@ -95,6 +95,7 @@ import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottom
 import { ToggleCollateralModal } from './screens/Lending/modals/ToggleCollateralModal';
 import { RefLikeObject } from './utils/type';
 import { isHomeAtFirstTab } from './screens/Home/MultiAddressHome';
+import { useRendererDetect } from './components/Perf/PerfDetector';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 // import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -255,6 +256,8 @@ export default function AppNavigation() {
   }, [setNavigationReady, getIsAppUnlocked]);
 
   useDetermineExitAppOnPressBack();
+
+  useRendererDetect({ name: 'AppNavigation' });
 
   console.debug(
     'routeNameRef.current, colorScheme',

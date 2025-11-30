@@ -16,7 +16,6 @@ export const usePerpsPosition = ({
 }) => {
   const {
     fetchPositionOpenOrders,
-    logout: _logout,
     fetchClearinghouseState,
     fetchUserHistoricalOrders,
   } = usePerpsStore();
@@ -29,12 +28,6 @@ export const usePerpsPosition = ({
 
     judgeIsUserAgentIsExpired,
   } = usePerpsState();
-
-  const logout = useMemoizedFn((address: string) => {
-    _logout();
-    apisPerps.setPerpsCurrentAccount(null);
-    apisPerps.setSendApproveAfterDeposit(address, []);
-  });
 
   const formatTriggerPx = (px?: string) => {
     // avoid '.15' input error from hy validator

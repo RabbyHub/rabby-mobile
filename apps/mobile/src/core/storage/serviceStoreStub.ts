@@ -6,7 +6,10 @@ import { setCurrentAccount } from '@/hooks/account';
 import { setTabs } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import {
+  usePerpsEffectOnTop,
+  usePerpsStore,
+} from '@/hooks/perps/usePerpsStore';
 // import { chainListAtom } from '@/hooks/useChainList';
 // import { currencyServiceAtom } from '@/hooks/useCurrency';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
@@ -36,7 +39,8 @@ export function useSetupServiceStub() {
   const { getBookmarkList } = useBrowserBookmark();
   const { getBrowserHistoryList } = useBrowserHistory();
   // const [, setTabs] = useAtom(tabsAtom);
-  const { initEventBus } = usePerpsStore();
+  // const { initEventBus } = usePerpsStore();
+  usePerpsEffectOnTop();
 
   // useEffect(() => {
   //   const disposes: Function[] = [];
@@ -108,7 +112,7 @@ export function useSetupServiceStub() {
     );
   });
 
-  useMount(() => {
-    initEventBus();
-  });
+  // useMount(() => {
+  //   initEventBus();
+  // });
 }

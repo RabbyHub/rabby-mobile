@@ -280,7 +280,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
     Promise.allSettled([
       getTriedUnlock(),
       loadSecurityChain({ rabbitCode }),
-      // fetchBiometrics(),
+      fetchBiometrics(),
     ])
       .then(async ([_unlockResult, _securityChain]) => {
         console.debug('useBootstrapApp::sucess', _unlockResult);
@@ -299,11 +299,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           );
         }, 1e3);
       });
-  }, [
-    // setBootstrap,
-    // fetchBiometrics,
-    rabbitCode,
-  ]);
+  }, [fetchBiometrics, rabbitCode]);
 
   return {
     couldRender,

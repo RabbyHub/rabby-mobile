@@ -44,7 +44,10 @@ Safe.apiKey = SAFE_API_KEY;
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
 import usePrevious from 'react-use/lib/usePrevious';
-import { RerenderDetector } from './components/Perf/PerfDetector';
+import {
+  RerenderDetector,
+  useRendererDetect,
+} from './components/Perf/PerfDetector';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -81,9 +84,6 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useIntervalSyncDDefaultRPCs();
   useUserDidTakeScreenshot({ isTop: true });
 
-  const caredValue = rabbitCode;
-  // const previousValue = usePrevious(caredValue);
-
   useEffect(() => {
     (async () => {
       if (isAppUnlocked) {
@@ -97,12 +97,7 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
     })();
   }, [isAppUnlocked]);
 
-  console.debug(
-    '[perf] MainScreen render:: caredValue: %s, previousValue: %s, caredValue === previousValue: %s',
-    caredValue,
-    // previousValue,
-    // caredValue === previousValue,
-  );
+  useRendererDetect({ name: 'MainScreen' });
 
   return (
     <AppProvider value={{ securityChain: securityChainOnTop }}>
