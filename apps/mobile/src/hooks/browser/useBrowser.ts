@@ -18,7 +18,7 @@ import { v4 as uuid } from 'uuid';
 // import { dappsAtom } from '../useDapps';
 import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
 import { Platform } from 'react-native';
-import { getDappsValue, useDappsValue } from '../useDapps';
+import { useDappsValue } from '../useDapps';
 import { zCreate } from '@/core/utils/reexports';
 import { useMemo } from 'react';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
@@ -189,7 +189,6 @@ function useDisplayedTabs() {
 // const homeDisplayedTabsAtom = atom(get => {
 //   const store = get(tabsAtom);
 //   // const dapps = get(dappsAtom);
-//   const dapps = getDappsValue();
 
 //   return sortBy(
 //     store.tabs.filter(item => {
@@ -206,7 +205,6 @@ function useDisplayedTabs() {
 export function useHomeDisplayedTabs() {
   // const [store] = useAtom(tabsAtom);
   const tabs = tabsStore(s => s.tabs);
-  // const dapps = getDappsValue();
   const { dapps } = useDappsValue();
 
   const homeDisplayedTabs = useMemo(
