@@ -33,10 +33,58 @@ import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { syncRemoteTokensAmount } from '@/databases/sync/assets';
 import { fetchAllAccounts } from '@/core/apis/account';
 import { sortAccountList } from '@/utils/sortAccountList';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
 
-export const loadingAtom = atom(true);
-export const isFirstFetchAtom = atom(true);
-export const shortCacheAtom = atom(true);
+// export const loadingAtom = atom(true);
+// export const isFirstFetchAtom = atom(true);
+// export const shortCacheAtom = atom(true);
+
+type AssetsState = {
+  loading: boolean;
+  isFirstFetch: boolean;
+  shortCache: boolean;
+};
+
+const assetsStateStore = zCreate<AssetsState>(() => ({
+  loading: true,
+  isFirstFetch: true,
+  shortCache: true,
+}));
+
+function setLoading(valOrFunc: UpdaterOrPartials<AssetsState['loading']>) {
+  assetsStateStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.loading, valOrFunc, {
+      strict: false,
+    });
+
+    return { ...prev, loading: newVal };
+  });
+}
+function setIsFirstFetch(
+  valOrFunc: UpdaterOrPartials<AssetsState['isFirstFetch']>,
+) {
+  assetsStateStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.isFirstFetch, valOrFunc, {
+      strict: false,
+    });
+
+    return { ...prev, isFirstFetch: newVal };
+  });
+}
+
+function setShortCache(
+  valOrFunc: UpdaterOrPartials<AssetsState['shortCache']>,
+) {
+  assetsStateStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.shortCache, valOrFunc, {
+      strict: false,
+    });
+
+    return { ...prev, shortCache: newVal };
+  });
+}
 
 async function getTop10AccountsWithBalance() {
   const accounts = await fetchAllAccounts();
@@ -60,10 +108,14 @@ export const useAssets = ({
 }: {
   hideCombined?: boolean;
 } = {}) => {
-  const [isLoading, setLoading] = useAtom(loadingAtom);
+  const { isLoading, isFirstFetch, shortCache } = assetsStateStore(
+    useShallow(s => ({
+      isLoading: s.loading,
+      isFirstFetch: s.isFirstFetch,
+      shortCache: s.shortCache,
+    })),
+  );
 
-  const [isFirstFetch, setIsFirstFetch] = useAtom(isFirstFetchAtom);
-  const [shortCache, setShortCache] = useAtom(shortCacheAtom);
   const {
     top10Addresses,
     updateNFTs,
@@ -77,7 +129,7 @@ export const useAssets = ({
     // setPortfoliosMap,
     nftsMap,
     // setNftsMap,
-  } = useAssetsMap({ hideCombined });
+  } = useAssetsMap();
 
   const { tokens, portfolios, nfts } = useAssetsComputation({
     // tokensMap,
@@ -323,7 +375,7 @@ export const useAssets = ({
 
       setLoading(false);
     },
-    [setLoading, updateTokens],
+    [updateTokens],
   );
 
   const batchLoadCacheDefi = useCallback(
@@ -475,15 +527,7 @@ export const useAssets = ({
         setIsFirstFetch(false);
       }
     },
-    [
-      top10Addresses,
-      removeUnNeedAssets,
-      setLoading,
-      setIsFirstFetch,
-      loadToken,
-      loadDefi,
-      loadNFT,
-    ],
+    [top10Addresses, removeUnNeedAssets, loadToken, loadDefi, loadNFT],
   );
   const getCacheTop10Assets = useCallback(
     async (options?: {
@@ -563,7 +607,6 @@ export const useAssets = ({
       getAssetsMapDirectly,
       removeUnNeedAssets,
       shortCache,
-      setShortCache,
       batchLoadCacheTokens,
       batchLoadCacheDefi,
       batchLoadCacheNFT,
@@ -634,8 +677,11 @@ export const useAssets = ({
 };
 
 export const useAssetsRefreshing = () => {
-  const isLoading = useAtomValue(loadingAtom);
-  const isFirstFetch = useAtomValue(isFirstFetchAtom);
+  // const isLoading = useAtomValue(loadingAtom);
+  // const isFirstFetch = useAtomValue(isFirstFetchAtom);
+  const { isLoading, isFirstFetch } = assetsStateStore(
+    useShallow(s => ({ isLoading: s.loading, isFirstFetch: s.isFirstFetch })),
+  );
   return {
     refreshing: !!isLoading && !isFirstFetch,
   };

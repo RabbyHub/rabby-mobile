@@ -8,7 +8,7 @@ import {
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Appearance, BackHandler, ColorSchemeName } from 'react-native';
 import * as Sentry from '@sentry/react-native';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useAppTheme, useTheme2024, useThemeColors } from '@/hooks/theme';
 
 import { navigationRef, replace } from '@/utils/navigation';
 import {
@@ -119,7 +119,7 @@ const REST_COUNTS = {
 
 const backRestCountRef = {
   current: REST_COUNTS.CANT_EXIT,
-  resetTimer: null as any,
+  resetTimer: null as ReturnType<typeof setTimeout> | null,
 };
 
 const getBackRestCount = () => {
@@ -227,12 +227,10 @@ const onStateChange: React.ComponentProps<
 };
 
 const routeNameRef: RefLikeObject<string | undefined | null> = { current: '' };
-export default function AppNavigation({
-  colorScheme,
-}: {
-  colorScheme: ColorSchemeName;
-}) {
+export default function AppNavigation() {
   const { mergeScreenOptions } = useStackScreenConfig();
+  const { binaryTheme: colorScheme } = useAppTheme({ isAppTop: true });
+
   const colors = useThemeColors();
 
   const { getIsAppUnlocked } = useAppUnlocked();
@@ -258,12 +256,19 @@ export default function AppNavigation({
 
   useDetermineExitAppOnPressBack();
 
-  const previousRoute = usePrevious(routeNameRef.current);
-  const isSlideFromGetStarted =
-    [undefined, RootNames.GetStarted, RootNames.GetStartedScreen2024].includes(
-      previousRoute as any,
-    ) && routeNameRef.current === RootNames.Unlock;
-  // console.debug('previousRoute: %s, routeNameRef.current: %s, isSlideFromGetStarted: %s', previousRoute, routeNameRef.current, isSlideFromGetStarted);
+  console.debug(
+    'routeNameRef.current, colorScheme',
+    routeNameRef.current,
+    colorScheme,
+  );
+
+  // const previousRoute = usePrevious(routeNameRef.current);
+  // console.debug('previousRoute: %s, routeNameRef.current: %s', previousRoute, routeNameRef.current);
+  // const isSlideFromGetStarted =
+  //   [undefined, RootNames.GetStarted, RootNames.GetStartedScreen2024].includes(
+  //     previousRoute as any,
+  //   ) && routeNameRef.current === RootNames.Unlock;
+  // console.debug('isSlideFromGetStarted: %s', isSlideFromGetStarted);
 
   const linking = useMemo(() => getLinkingConfig(), []);
 
@@ -292,7 +297,7 @@ export default function AppNavigation({
               ...RootAnimOptions,
               headerShown: false,
               navigationBarColor: 'transparent',
-              freezeOnBlur: true,
+              freezeOnBlur: false,
             }}
             initialRouteName={RootNames.StackGetStarted}>
             <RootStack.Screen
@@ -371,9 +376,11 @@ export default function AppNavigation({
               component={DappsNavigator}
             />
             <RootStack.Group
-              screenOptions={{
-                freezeOnBlur: true,
-              }}>
+              screenOptions={
+                {
+                  // freezeOnBlur: true,
+                }
+              }>
               <RootStack.Screen
                 name={RootNames.NftDetail}
                 component={NFTDetailScreen}

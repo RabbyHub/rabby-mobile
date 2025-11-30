@@ -8,6 +8,8 @@ import { apisAccount } from '@/core/apis';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { useRequest } from 'ahooks';
 import { isEqual } from 'lodash';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { zCreate } from '@/core/utils/reexports';
 
 type AccountSwitcherState = {
   /**
@@ -119,27 +121,43 @@ function getTop5Tokens(tokens: TokenItem[]): TokenItem[] {
     );
 }
 
-const addressTop5TokensAtom = atom<{
-  [addr: string]: TokenItem[];
-}>({});
+// const addressTop5TokensAtom = atom<{
+//   [addr: string]: TokenItem[];
+// }>({});
+type AccountSwitchState = {
+  top5Tokens: { [addr: string]: TokenItem[] };
+};
+const accountSwitchStore = zCreate<AccountSwitchState>(() => {
+  return {
+    top5Tokens: {},
+  };
+});
+
+const setAddressTop5Tokens = (
+  valOrFunc: UpdaterOrPartials<AccountSwitchState['top5Tokens']>,
+) => {
+  accountSwitchStore.setState(prev => ({
+    ...prev,
+    top5Tokens: resolveValFromUpdater(prev.top5Tokens, valOrFunc).newVal,
+  }));
+};
+
 function useTopTokensByAccount() {
-  const [addressTop5Tokens, setAddressTop5Tokens] = useAtom(
-    addressTop5TokensAtom,
-  );
-  const setTokensByAddr = useCallback(
-    (addr: string, tokens: TokenItem[]) => {
-      setAddressTop5Tokens(prev => {
-        if (isEqual(prev[addr], tokens)) {
-          return prev;
-        }
-        return {
-          ...prev,
-          [addr]: tokens,
-        };
-      });
-    },
-    [setAddressTop5Tokens],
-  );
+  // const [addressTop5Tokens, setAddressTop5Tokens] = useAtom(
+  //   addressTop5TokensAtom,
+  // );
+  const addressTop5Tokens = accountSwitchStore(s => s.top5Tokens);
+  const setTokensByAddr = useCallback((addr: string, tokens: TokenItem[]) => {
+    setAddressTop5Tokens(prev => {
+      if (isEqual(prev[addr], tokens)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        [addr]: tokens,
+      };
+    });
+  }, []);
 
   const fetchTokensByAddresses = useCallback(
     (addrs: string[], count = 5) => {

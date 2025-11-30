@@ -176,6 +176,7 @@ const ChartHeader = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const { currency, formatCurrentCurrency } = useCurrency();
+
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(rawNetWorth, { currency });
   }, [rawNetWorth, currency]);

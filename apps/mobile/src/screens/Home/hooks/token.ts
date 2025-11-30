@@ -16,7 +16,7 @@ import {
 import { produce } from '@/core/utils/produce';
 import { syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { singleTokenNonceAtom } from './refresh';
+import { useSingleTokenRefresh } from './refresh';
 import { debounce } from 'lodash';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 
@@ -65,7 +65,7 @@ export const useTokens = (
     AbstractPortfolioToken[]
   >([]);
 
-  const [singleTokenNonce, setSingleTokenNonce] = useAtom(singleTokenNonceAtom);
+  // const [singleTokenNonce, setSingleTokenNonce] = useAtom(singleTokenNonceAtom);
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);
 
@@ -246,12 +246,15 @@ export const useTokens = (
     setMainnetTokens(pre => tagTokenList(pre || [], tokenSettings));
   }, [setMainnetTokens]);
 
-  useEffect(() => {
-    if (singleTokenNonce > 0) {
-      refreshTagToken();
-      setSingleTokenNonce(0);
-    }
-  }, [refreshTagToken, setSingleTokenNonce, singleTokenNonce]);
+  useSingleTokenRefresh({
+    onRefresh: refreshTagToken,
+  });
+  // useEffect(() => {
+  //   if (singleTokenNonce > 0) {
+  //     refreshTagToken();
+  //     setSingleTokenNonce(0);
+  //   }
+  // }, [refreshTagToken, setSingleTokenNonce, singleTokenNonce]);
 
   return {
     isLoading,

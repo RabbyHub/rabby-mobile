@@ -20,6 +20,8 @@ import { formatMarkData } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { maxBy } from 'lodash';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 // 保持原有的接口定义
 export interface PositionAndOpenOrder extends AssetPosition {
@@ -119,15 +121,39 @@ const initialState: PerpsState = {
   fillsOrderTpOrSl: {},
 };
 
-const perpsAtom = atom(initialState);
+// const perpsAtom = atom(initialState);
+const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
+function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
+  perpsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, { strict: true });
+    return newVal;
+  });
+}
 
-const wsSubscriptionsAtom = atom<(() => void)[]>([]);
+// const wsSubscriptionsAtom = atom<(() => void)[]>([]);
+type WsState = {
+  wsSubscriptions: (() => void)[];
+};
+const wsStore = zCreate<WsState>(() => ({ wsSubscriptions: [] }));
+function setWsSubscriptions(
+  valOrFunc: UpdaterOrPartials<WsState['wsSubscriptions']>,
+) {
+  wsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.wsSubscriptions, valOrFunc, {
+      strict: false,
+    });
+    return { wsSubscriptions: newVal };
+  });
+}
 
 export const usePerpsStore = () => {
-  const [state, setState] = useAtom(perpsAtom);
+  const state = perpsStore(s => s);
+  const setState = setPerpsState;
+  // const [state, setState] = useAtom(perpsAtom);
   const appState = useAppState();
 
-  const [wsSubscriptions, setWsSubscriptions] = useAtom(wsSubscriptionsAtom);
+  const wsSubscriptions = wsStore(s => s.wsSubscriptions);
+  // const [wsSubscriptions, setWsSubscriptions] = useAtom(wsSubscriptionsAtom);
 
   const setFillsOrderTpOrSl = useMemoizedFn(
     (payload: Record<string, 'tp' | 'sl'>) => {

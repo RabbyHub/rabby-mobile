@@ -15,87 +15,235 @@ import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { last, omit, sortBy } from 'lodash';
 import { v4 as uuid } from 'uuid';
-import { dappsAtom } from '../useDapps';
+// import { dappsAtom } from '../useDapps';
 import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
 import { Platform } from 'react-native';
+import { getDappsValue, useDappsValue } from '../useDapps';
+import { zCreate } from '@/core/utils/reexports';
+import { useMemo } from 'react';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-export const tabsAtom = atom<{
+type TabsState = {
   tabs: Tab[];
   activeTabId: string;
-}>({
+};
+// export const tabsAtom = atom<{
+//   tabs: Tab[];
+//   activeTabId: string;
+// }>({
+//   tabs: [],
+//   activeTabId: '',
+// });
+const tabsStore = zCreate<TabsState>(() => ({
   tabs: [],
   activeTabId: '',
-});
+}));
 
-export const visibleAtom = atom(false);
-const managePopupAtom = atom(false);
-export const browserStateAtom = atom({
+function setTabsStore(valOrFunc: UpdaterOrPartials<TabsState>) {
+  tabsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
+export function resetTabsStore() {
+  tabsStore.setState({
+    tabs: [],
+    activeTabId: '',
+  });
+}
+
+export function setTabs(val: UpdaterOrPartials<TabsState['tabs']>) {
+  tabsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.tabs, val, { strict: false });
+
+    return {
+      ...prev,
+      tabs: newVal,
+    };
+  });
+}
+
+// export const visibleAtom = atom(false);
+// const managePopupAtom = atom(false);
+const browserExtraStore = zCreate<{
+  visible: boolean;
+  isShowManagePopup: boolean;
+}>(() => ({
+  visible: false,
+  isShowManagePopup: false,
+}));
+
+function setVisible(val: boolean) {
+  browserExtraStore.setState(prev => ({
+    ...prev,
+    visible: val,
+  }));
+}
+
+function setIsShowManagePopup(val: boolean) {
+  browserExtraStore.setState(prev => ({
+    ...prev,
+    isShowManagePopup: val,
+  }));
+}
+
+// export const browserStateAtom = atom({
+//   isShowBrowser: false,
+//   isShowSearch: false,
+//   isShowManage: false,
+//   searchText: '',
+//   searchTabId: '',
+//   trigger: '',
+// });
+type BrowserStateType = {
+  isShowBrowser: boolean;
+  isShowSearch: boolean;
+  isShowManage: boolean;
+  searchText: string;
+  searchTabId: string;
+  trigger: string;
+};
+
+const browserStateStore = zCreate<BrowserStateType>(() => ({
   isShowBrowser: false,
   isShowSearch: false,
   isShowManage: false,
   searchText: '',
   searchTabId: '',
   trigger: '',
-});
+}));
 
-const browserActiveTabStateAtom = atom<{
+export function setBrowserState(
+  valOrFunc: UpdaterOrPartials<BrowserStateType>,
+) {
+  browserStateStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
+  });
+}
+
+type BrowserActiveTabStateType = {
   url: string;
   contentMode?: ContentMode;
   isConnected?: boolean;
   isBookmark?: boolean;
   isDapp?: boolean;
-}>({
+};
+
+const browserActiveTabStateStore = zCreate<BrowserActiveTabStateType>(() => ({
   url: '',
   contentMode: undefined,
-});
+}));
+// const browserActiveTabStateAtom = atom<{
+//   url: string;
+//   contentMode?: ContentMode;
+//   isConnected?: boolean;
+//   isBookmark?: boolean;
+//   isDapp?: boolean;
+// }>({
+//   url: '',
+//   contentMode: undefined,
+// });
+function setBrowserActiveTabState(
+  valOrFunc: UpdaterOrPartials<BrowserActiveTabStateType>,
+) {
+  browserActiveTabStateStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
+  });
+}
 
 const MAX_ACTIVE_TABS_COUNT = Platform.OS === 'android' ? 4 : 4;
 
-const displayedTabsAtom = atom(get => {
-  const store = get(tabsAtom);
+// const displayedTabsAtom = atom(get => {
+//   // const store = get(tabsAtom);
+//   const tabs = tabsStore(s => s.tabs);
 
-  return store.tabs.filter(item => {
-    return item.isDapp;
-  });
+//   return tabs.filter(item => {
+//     return item.isDapp;
+//   });
+//   // return sortBy(
+//   //   store.tabs.filter(item => {
+//   //     return item.isDapp;
+//   //   }),
+//   //   tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
+//   // );
+// });
+function useDisplayedTabs() {
+  // const [store] = useAtom(tabsAtom);
+  const tabs = tabsStore(s => s.tabs);
+  const displayedTabs = useMemo(
+    () =>
+      tabs.filter(item => {
+        return item.isDapp;
+      }),
+    [tabs],
+  );
 
-  // return sortBy(
-  //   store.tabs.filter(item => {
-  //     return item.isDapp;
-  //   }),
-  //   tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
-  // );
-});
+  return { displayedTabs };
+}
 
-const homeDisplayedTabsAtom = atom(get => {
-  const store = get(tabsAtom);
-  const dapps = get(dappsAtom);
+// const homeDisplayedTabsAtom = atom(get => {
+//   const store = get(tabsAtom);
+//   // const dapps = get(dappsAtom);
+//   const dapps = getDappsValue();
 
-  return sortBy(
-    store.tabs.filter(item => {
-      return dapps[safeGetOrigin(item.url || item.initialUrl)]?.isDapp;
-    }),
-    tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
-  ).slice(0, 4);
-});
+//   return sortBy(
+//     store.tabs.filter(item => {
+//       return dapps[safeGetOrigin(item.url || item.initialUrl)]?.isDapp;
+//     }),
+//     tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
+//   ).slice(0, 4);
+// });
+// export const useHomeDisplayedTabs = () => {
+//   const [tabs] = useAtom(homeDisplayedTabsAtom);
+//   return tabs;
+// };
 
-export const useHomeDisplayedTabs = () => {
-  const [tabs] = useAtom(homeDisplayedTabsAtom);
-  return tabs;
-};
+export function useHomeDisplayedTabs() {
+  // const [store] = useAtom(tabsAtom);
+  const tabs = tabsStore(s => s.tabs);
+  // const dapps = getDappsValue();
+  const { dapps } = useDappsValue();
+
+  const homeDisplayedTabs = useMemo(
+    () =>
+      sortBy(
+        tabs.filter(item => {
+          return dapps[safeGetOrigin(item.url || item.initialUrl)]?.isDapp;
+        }),
+        tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
+      ).slice(0, 4),
+    [tabs, dapps],
+  );
+
+  return { homeDisplayedTabs };
+}
 
 export const useBrowserActiveTabState = () => {
-  return useAtom(browserActiveTabStateAtom);
+  // return useAtom(browserActiveTabStateAtom);
+  return [
+    browserActiveTabStateStore(s => s),
+    setBrowserActiveTabState,
+  ] as const;
 };
 
 export function useBrowser() {
-  const [store, setStore] = useAtom(tabsAtom);
-  const [visible, setVisible] = useAtom(visibleAtom);
-  const [isShowManagePopup, setIsShowManagePopup] = useAtom(managePopupAtom);
-  const [browserState, setBrowserState] = useAtom(browserStateAtom);
-  const [displayedTabs] = useAtom(displayedTabsAtom);
+  // const [store, setStore] = useAtom(tabsAtom);
+  const store = tabsStore(s => s);
+  // const [visible, setVisible] = useAtom(visibleAtom);
+  const visible = browserExtraStore(s => s.visible);
+  // const [isShowManagePopup, setIsShowManagePopup] = useAtom(managePopupAtom);
+  const isShowManagePopup = browserExtraStore(s => s.isShowManagePopup);
+  // const [browserState, setBrowserState] = useAtom(browserStateAtom);
+  // const [displayedTabs] = useAtom(displayedTabsAtom);
+  const { displayedTabs } = useDisplayedTabs();
 
   const setPartialBrowserState = useMemoizedFn(
-    (payload: Partial<typeof browserState>) => {
+    (payload: Partial<BrowserStateType>) => {
       return setBrowserState(prev => ({
         ...prev,
         ...payload,
@@ -106,7 +254,7 @@ export function useBrowser() {
   // const route = useRoute();
 
   const getBrowserTabs = useMemoizedFn(() => {
-    setStore(browserService.getBrowserTabs());
+    setTabsStore(browserService.getBrowserTabs());
   });
 
   const updateBrowserTabs = useMemoizedFn((payload: Partial<typeof store>) => {
@@ -174,7 +322,7 @@ export function useBrowser() {
 
   const terminateTabs = useMemoizedFn(() => {
     setTimeout(() => {
-      setStore(prev => {
+      setTabsStore(prev => {
         const tabs = sortBy(
           prev.tabs.filter(tab => tab.isDapp),
           tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
@@ -214,7 +362,7 @@ export function useBrowser() {
         !payload?.url || !/^https?:\/\//.test(payload.url)
           ? omit(payload, 'url')
           : payload;
-      setStore(prev => {
+      setTabsStore(prev => {
         const res = {
           ...prev,
           tabs: prev.tabs.map(item => {
@@ -306,7 +454,7 @@ export function useBrowser() {
   });
 
   const onHideBrowser = useMemoizedFn(() => {
-    setStore(pre => {
+    setTabsStore(pre => {
       const tabs = pre.tabs.filter(tab => tab.isDapp);
       const activeTabId = tabs.find(tab => tab.id === pre.activeTabId)
         ? pre.activeTabId
@@ -335,7 +483,7 @@ export function useBrowser() {
     isShowManagePopup,
     setIsShowManagePopup,
     showBrowser,
-    browserState,
+    browserState: browserStateStore(s => s),
     setBrowserState,
     setPartialBrowserState,
     onHideBrowser,

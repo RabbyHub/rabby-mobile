@@ -3,6 +3,14 @@ import { makeEEClass } from '@/core/apis/event';
 
 import { type Purchase } from 'react-native-iap';
 
+export type AssetsRefresthState = {
+  singleTokenNonce: number;
+  singleDeFiNonce: number;
+  singleNFTNonce: number;
+  tokenNonce: number;
+  deFiNonce: number;
+  nftNonce: number;
+};
 export type EventBusListeners = {
   [EVENTS.TX_COMPLETED]: (txDetail: {
     address: string;
@@ -17,6 +25,7 @@ export type EventBusListeners = {
     request: any;
   }) => void;
   [EVENT_ACTIVE_WINDOW]: (id?: string | null) => void;
+  EVENT_REFRESH_ASSET: (type: keyof AssetsRefresthState) => void;
 };
 type Listeners = {
   [P: string]: (data: any) => void;

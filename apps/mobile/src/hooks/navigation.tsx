@@ -37,6 +37,8 @@ import { useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { EVENT_ROUTE_CHANGE, eventBus } from '@/utils/events';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -47,15 +49,41 @@ type NavigationInstance =
 //   onDark: ThemeColors.dark['neutral-body'],
 // });
 
-const currentRouteNameAtom = atom<AppRootName | string | undefined>(undefined);
-currentRouteNameAtom.onMount = setAtom => {
-  eventBus.addListener(EVENT_ROUTE_CHANGE, ({ currentRouteName }) => {
-    setAtom(currentRouteName as AppRootName | string | undefined);
-  });
+// const currentRouteNameAtom = atom<AppRootName | string | undefined>(undefined);
+// currentRouteNameAtom.onMount = setAtom => {
+//   eventBus.addListener(EVENT_ROUTE_CHANGE, ({ currentRouteName }) => {
+//     setAtom(currentRouteName as AppRootName | string | undefined);
+//   });
+// };
+
+type NavigationRouteStore = {
+  currentRouteName: AppRootName | string | undefined;
 };
+const navigationRouteStore = zCreate<NavigationRouteStore>(() => ({
+  currentRouteName: undefined,
+}));
+function setCurrentRouteName(
+  valOrFunc: UpdaterOrPartials<NavigationRouteStore['currentRouteName']>,
+) {
+  navigationRouteStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.currentRouteName,
+      valOrFunc,
+    );
+
+    if (changed) return { ...prev, currentRouteName: newVal };
+
+    return prev;
+  });
+}
+eventBus.addListener(EVENT_ROUTE_CHANGE, ({ currentRouteName }) => {
+  setCurrentRouteName(currentRouteName as AppRootName | string | undefined);
+});
+
 export function useCurrentRouteName() {
   return {
-    currentRouteName: useAtomValue(currentRouteNameAtom),
+    // currentRouteName: useAtomValue(currentRouteNameAtom),
+    currentRouteName: navigationRouteStore(s => s.currentRouteName),
   };
 }
 
@@ -65,15 +93,23 @@ export function useCurrentRouteName() {
 //   };
 // }
 
-const navigationReadyAtom = atom<boolean>(false);
+// const navigationReadyAtom = atom<boolean>(false);
+type NavigationStore = {
+  ready: boolean;
+};
+const navigationStore = zCreate<NavigationStore>(() => ({
+  ready: false,
+}));
 export function useNavigationReady() {
-  const appNavigationReady = useAtomValue(navigationReadyAtom);
+  // const appNavigationReady = useAtomValue(navigationReadyAtom);
+  const appNavigationReady = navigationStore(s => s.ready);
 
   return { appNavigationReady };
 }
+function setNavigationReady(ready: boolean) {
+  navigationStore.setState({ ready });
+}
 export function useSetNavigationReady() {
-  const setNavigationReady = useSetAtom(navigationReadyAtom);
-
   return { setNavigationReady };
 }
 
@@ -452,7 +488,8 @@ function getAtSensitveScreenInfo(routeName: string | undefined) {
 }
 
 export function useAtSensitiveScene() {
-  const currentRouteName = useAtomValue(currentRouteNameAtom);
+  // const currentRouteName = useAtomValue(currentRouteNameAtom);
+  const currentRouteName = navigationRouteStore(s => s.currentRouteName);
   const { anySensitiveModalOpened } = useSensitiveGlobalModalsOpened();
 
   return useMemo(() => {

@@ -45,30 +45,28 @@ export const columnConverter = {
  */
 export const badRealTransformer: ValueTransformer = {
   to: (decimals?: number | string) => {
-    if (!decimals) {
-      return 0;
-    }
+    if (!decimals) return 0;
     if (typeof decimals === 'string') {
-      decimals = parseInt(decimals);
+      const maybeValidInt = parseInt(decimals);
+      if (Number.isNaN(maybeValidInt)) return decimals;
+
+      decimals = maybeValidInt;
     }
 
-    if (Number.isNaN(decimals)) {
-      return 0;
-    }
+    if (Number.isNaN(decimals)) return 0;
 
     return decimals * DECIMALS_INT_RATIO;
   },
   from: (int?: number | string) => {
-    if (!int) {
-      return 0;
-    }
+    if (!int) return 0;
     if (typeof int === 'string') {
-      int = parseInt(int);
+      const maybeValidInt = parseInt(int);
+      if (Number.isNaN(maybeValidInt)) return int;
+
+      int = maybeValidInt;
     }
 
-    if (Number.isNaN(int)) {
-      return 0;
-    }
+    if (Number.isNaN(int)) return 0;
 
     return int / DECIMALS_INT_RATIO;
   },

@@ -1,5 +1,13 @@
-import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import {
+  appStorage,
+  appStorageForZustand,
+  atomByMMKV,
+  MMKVStorageStrategy,
+} from '@/core/storage/mmkv';
+import { zCreate, zPersist, zCreateJSONStorage } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { cloneDeep } from 'lodash';
 
 export type SceneAccountInfo = {
   currentAccount: KeyringAccount | null;
@@ -47,8 +55,40 @@ export const AccountSwitcherInfos = {
   '@ActiveDappWebViewModal': makeSceneAccount(),
 };
 // TODO: maybe we should trim all siginingAccount on bootstrap?
-export const sceneAccountInfoAtom = atomByMMKV<SceneAccounts>(
-  '@SceneAccounts',
-  AccountSwitcherInfos,
-  { storage: MMKVStorageStrategy.compatJson },
+// export const sceneAccountInfoAtom = atomByMMKV<SceneAccounts>(
+//   '@SceneAccounts',
+//   AccountSwitcherInfos,
+//   { storage: MMKVStorageStrategy.compatJson },
+// );
+
+export const sceneAccountInfoStore = zCreate(
+  zPersist<SceneAccounts>(
+    (set, get) => ({
+      ...AccountSwitcherInfos,
+    }),
+    {
+      name: '@SceneAccounts',
+      storage: zCreateJSONStorage(() => appStorageForZustand),
+    },
+  ),
 );
+
+export function getSceneAccountInfo() {
+  return sceneAccountInfoStore.getState();
+}
+
+export function zSetSceneAccountInfo(
+  valOrFunc: UpdaterOrPartials<SceneAccounts>,
+) {
+  sceneAccountInfoStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+export function zResetSceneAccountInfo() {
+  zSetSceneAccountInfo(cloneDeep(AccountSwitcherInfos));
+}

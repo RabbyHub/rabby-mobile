@@ -43,6 +43,7 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
+import { useOnTokenRefresh } from '@/screens/Home/hooks/store';
 
 const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -75,6 +76,7 @@ export const TokenList = ({ chain, updateToken }: Props) => {
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
   const { tokenRefresh } = useTriggerTagAssets();
+  useOnTokenRefresh();
 
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
     isFocused,
@@ -404,11 +406,12 @@ export const TokenList = ({ chain, updateToken }: Props) => {
       await Promise.all([
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableNFT: true, disableDefi: true }),
+        tokenRefresh(),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate]);
+  }, [checkIsExpireAndUpdate, triggerUpdate, tokenRefresh]);
 
   // if (!isFocusing) {
   //   return null;
