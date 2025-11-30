@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.46",
+  "version": "0.6.47",
   "private": true,
   "repository": {
     "type": "git",
@@ -82,7 +82,6 @@
     "@rabby-wallet/rabby-security-engine": "2.0.11",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
     "@rabby-wallet/rabby-swap": "0.0.68",
-    "@rabby-wallet/react-native-sqlite-storage": "7.0.0-alpha.2",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
     "@react-native-clipboard/clipboard": "^1.13.0",
@@ -229,7 +228,6 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18.0.24",
     "@types/react-is": "^18.2.4",
-    "@types/react-native-sqlite-storage": "^6.0.5",
     "@types/react-native-version-check": "^3.4.8",
     "@types/react-test-renderer": "^18.0.0",
     "@types/uuid": "^9.0.7",
