@@ -26,6 +26,7 @@ import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { useIsFocused } from '@react-navigation/native';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const ScreenWidth = Dimensions.get('screen').width;
@@ -165,7 +166,7 @@ interface IHeaderProps {
 const ChartHeader = ({
   rawNetWorth,
   rawChange,
-  changePercent,
+  changePercent: _changePercent,
   isLoss,
   hideType,
   data: _data,
@@ -177,13 +178,16 @@ const ChartHeader = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const { currency, formatCurrentCurrency } = useCurrency();
+  const debouncedRawNetWorth = useDebouncedValue(rawNetWorth, 300);
+  const debouncedRawChange = useDebouncedValue(rawChange, 300);
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValue(rawNetWorth, { currency });
-  }, [rawNetWorth, currency]);
+    return formatSmallCurrencyValue(debouncedRawNetWorth, { currency });
+  }, [debouncedRawNetWorth, currency]);
   const change = useMemo(() => {
-    return formatCurrentCurrency(Math.abs(rawChange));
-  }, [formatCurrentCurrency, rawChange]);
+    return formatCurrentCurrency(Math.abs(debouncedRawChange));
+  }, [formatCurrentCurrency, debouncedRawChange]);
+  const changePercent = useDebouncedValue(_changePercent, 300);
 
   const data = useMemo(() => {
     return (

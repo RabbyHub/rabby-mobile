@@ -72,7 +72,7 @@ function getDefaultViewTypePropsPreset(
     rootViewType: 'View',
     enablePanDownToClose: true,
     enableContentPanningGesture: true,
-    ...input,
+    ...(input || {}),
     rootViewStyle: StyleSheet.flatten([
       {
         height: '100%',
