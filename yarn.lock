@@ -35679,19 +35679,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-screens@patch:react-native-screens@npm%3A4.9.2#./.yarn/patches/react-native-screens-npm-4.9.2-7a9f519a07.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 4.9.2
-  resolution: "react-native-screens@patch:react-native-screens@npm%3A4.9.2#./.yarn/patches/react-native-screens-npm-4.9.2-7a9f519a07.patch::version=4.9.2&hash=0311e8&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    react-freeze: ^1.0.0
-    warn-once: ^0.1.0
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: e20345fa07bd883ba8618ff1f1767602cb364e7f047a87d1e947263f5107ddc22aeea4637b032e6b9e80412ba0285cdfe8f4000882d43b4fb29962ba16cd2abe
-  languageName: node
-  linkType: hard
-
 "react-native-send-intent@npm:^1.3.0":
   version: 1.3.0
   resolution: "react-native-send-intent@npm:1.3.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-send-intent%2F-%2Freact-native-send-intent-1.3.0.tgz"
