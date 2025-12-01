@@ -15,7 +15,7 @@ import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { apisPerps } from './../../core/apis/perps';
 import { miniSignTypedData } from '../useMiniSignTypedData';
-import { usePerpsStore } from './usePerpsStore';
+import { apisPerpsStore, usePerpsStore } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import { minBy, uniqBy } from 'lodash';
 import { showToast } from './showToast';
@@ -36,35 +36,16 @@ export const usePerpsInitial = () => {
   const {
     state: perpsState,
     setApproveSignatures,
-    setLocalLoadingHistory,
-    setUserAccountHistory,
-    setUserFills,
-    addUserFills,
-    updatePositionsWithClearinghouse,
-    updateUserAccountHistory,
-    setPerpFee,
-    setMarketData,
-    setPositionAndOpenOrders,
-    setAccountSummary,
     setCurrentOnlyShowPerpsAccount,
     // setCurrentPerpsAccount,
     setInitialized,
     // setApproveSignatures,
-    resetState,
 
     // Effects
-    saveApproveSignatures,
     fetchPositionAndOpenOrders,
     loginPerpsAccount,
-    fetchClearinghouseState,
-    fetchUserNonFundingLedgerUpdates,
     fetchPerpPermission,
-    refreshData,
     fetchMarketData,
-    fetchPerpFee,
-    subscribeToUserData,
-    unsubscribeAll,
-    logout: _logout,
   } = usePerpsStore();
 
   const {
@@ -294,7 +275,7 @@ export const usePerpsInitial = () => {
   ]);
 
   const logout = useMemoizedFn((address: string) => {
-    _logout();
+    apisPerpsStore.logout();
     apisPerps.setPerpsCurrentAccount(null);
     apisPerps.setSendApproveAfterDeposit(address, []);
   });
@@ -364,9 +345,7 @@ export const usePerpsState = () => {
     refreshData,
     fetchMarketData,
     fetchPerpFee,
-    subscribeToUserData,
     unsubscribeAll,
-    logout: _logout,
   } = usePerpsStore();
   const { isInitialized, currentPerpsAccount, isLogin, positionAndOpenOrders } =
     perpsState;
@@ -668,7 +647,7 @@ export const usePerpsState = () => {
   });
 
   const logout = useMemoizedFn((address: string) => {
-    _logout();
+    apisPerpsStore.logout();
     // apisPerps.destroyPerpsSDK();
     apisPerps.setPerpsCurrentAccount(null);
     apisPerps.setSendApproveAfterDeposit(address, []);
