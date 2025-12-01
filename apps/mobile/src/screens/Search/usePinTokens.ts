@@ -41,7 +41,7 @@ const pinTokensStore = zCreate<PinTokensState>(() => ({
   pinTokens: [],
 }));
 
-async function handleFetchTokens() {
+export async function handleFetchTokens() {
   return getPinTokens().then(tokens => {
     pinTokensStore.setState({
       pinTokens: tokens,

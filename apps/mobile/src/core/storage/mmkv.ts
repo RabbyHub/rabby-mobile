@@ -32,6 +32,37 @@ function checkIfDuplicatedStringifiedJsonString(input: any) {
   );
 }
 
+export function getJsonValueStringCompat(
+  mmkv: MMKV,
+  key: string,
+  options?: MMKVConfiguration,
+): string | null {
+  const raw = mmkv.getString(key);
+  if (!raw) return null;
+  let finalString: string | null = raw;
+
+  try {
+    if (checkIfDuplicatedStringifiedJsonObjectString(raw)) {
+      finalString = stringUtils.safeParseJSON(raw, {
+        defaultValue: raw,
+      });
+    } else if (checkIfDuplicatedStringifiedJsonString(raw)) {
+      finalString = stringUtils.safeParseJSON(raw, {
+        defaultValue: raw,
+      });
+    }
+  } catch (e) {
+    if (__DEV__) {
+      console.warn(
+        `[getJsonValueStringCompat::${options?.id}] Failed to parse item with key "${key}":`,
+        e,
+      );
+    }
+  }
+
+  return finalString ?? null;
+}
+
 function makeAppStorage(options?: MMKVConfiguration) {
   const mmkv = new MMKV(options);
 
@@ -41,33 +72,6 @@ function makeAppStorage(options?: MMKVConfiguration) {
     return !value
       ? null
       : stringUtils.safeParseJSON(value, { defaultValue: null });
-  }
-
-  function getJsonValueStringCompat(key: string): string | null {
-    const raw = mmkv.getString(key);
-    if (!raw) return null;
-    let finalString: string | null = raw;
-
-    try {
-      if (checkIfDuplicatedStringifiedJsonObjectString(raw)) {
-        finalString = stringUtils.safeParseJSON(raw, {
-          defaultValue: raw,
-        });
-      } else if (checkIfDuplicatedStringifiedJsonString(raw)) {
-        finalString = stringUtils.safeParseJSON(raw, {
-          defaultValue: raw,
-        });
-      }
-    } catch (e) {
-      if (__DEV__) {
-        console.warn(
-          `[getJsonValueStringCompat::${options?.id}] Failed to parse item with key "${key}":`,
-          e,
-        );
-      }
-    }
-
-    return finalString ?? null;
   }
 
   function setItem<T>(key: string, value: T): void {
@@ -103,7 +107,8 @@ function makeAppStorage(options?: MMKVConfiguration) {
   const methods = {
     getItem,
     setItem,
-    getJsonValueStringCompat,
+    getJsonValueStringCompat: (key: string) =>
+      getJsonValueStringCompat(mmkv, key, options),
     removeItem,
     setRawString,
     getRawString,

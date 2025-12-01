@@ -502,9 +502,9 @@ const OverViewComponent = () => {
       if (appState === 'active') {
         triggerUpdate();
         triggerUpdateAlert();
-        // syncTop10History();
+        syncTop10History();
       }
-    }, [appState, triggerUpdate, triggerUpdateAlert /* , syncTop10History */]),
+    }, [appState, triggerUpdate, triggerUpdateAlert, syncTop10History]),
   );
 
   const onRefresh = useCallback(() => {
@@ -516,8 +516,8 @@ const OverViewComponent = () => {
     ]).finally(() => {
       // update at background
       forceUpdate();
-      // fetchLendingData();
-      // syncTop10History(true);
+      fetchLendingData();
+      syncTop10History(true);
       currencyService.syncCurrencyList(true);
     });
   }, [
@@ -526,8 +526,8 @@ const OverViewComponent = () => {
     checkAddressesEligibility,
     top50PrivateKeyAccounts,
     forceUpdate,
-    // fetchLendingData,
-    // syncTop10History,
+    fetchLendingData,
+    syncTop10History,
   ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();

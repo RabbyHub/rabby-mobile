@@ -292,7 +292,7 @@ type GetAssetsFunc = <T extends 'tokens' | 'portfolios' | 'nfts'>(
   : T extends 'portfolios'
   ? { [address: string]: DisplayedProject[] }
   : { [address: string]: DisplayNftItem[] };
-const getAssetsMapDirectly = (type => {
+export const getAssetsMapDirectly = (type => {
   switch (type) {
     case 'tokens': {
       const tokensMap = assetsMapStore.getState().tokensMap;
@@ -313,62 +313,60 @@ const getAssetsMapDirectly = (type => {
   }
 }) as GetAssetsFunc;
 
-export const useAssetsMap = () => {
-  // const [tokensMap, setTokensMap] = useAtom(tokensAtom);
-  const tokensMap = assetsMapStore(s => s.tokensMap);
-  // const [portfoliosMap, setPortfoliosMap] = useAtom(portfoliosAtom);
-  const portfoliosMap = assetsMapStore(s => s.portfoliosMap);
-  // const [nftsMap, setNftsMap] = useAtom(nftsAtom);
-  const nftsMap = assetsMapStore(s => s.nftsMap);
-
-  const { handleFetchTokens } = usePinTokens();
-
-  const { top10Addresses } = useAccountInfo();
-
-  const updateTokens = useCallback(
-    ({
-      address,
-      newTokens,
-    }: {
-      address: string;
-      newTokens: AbstractPortfolioToken[];
-    }) => {
+export function updateAssetListByAddress(
+  address: string,
+  payload:
+    | {
+        type: 'tokens';
+        data: AbstractPortfolioToken[];
+      }
+    | {
+        type: 'portfolios';
+        data: DisplayedProject[];
+      }
+    | {
+        type: 'nfts';
+        data: DisplayNftItem[];
+      },
+) {
+  switch (payload.type) {
+    default: {
+      console.warn('Invalid asset type for updateAssetListByAddress');
+      return;
+    }
+    case 'tokens': {
       const lowerAddress = address.toLowerCase();
       setTokensMap(pre => ({
         ...pre,
-        [lowerAddress]: newTokens,
+        [lowerAddress]: payload.data,
       }));
-    },
-    [],
-  );
-
-  const updatePortfolios = useCallback(
-    ({
-      address,
-      newPortfolios,
-    }: {
-      address: string;
-      newPortfolios: DisplayedProject[];
-    }) => {
+      break;
+    }
+    case 'portfolios': {
       const lowerAddress = address.toLowerCase();
       setPortfoliosMap(pre => ({
         ...pre,
-        [lowerAddress]: newPortfolios,
+        [lowerAddress]: payload.data,
       }));
-    },
-    [],
-  );
-
-  const updateNFTs = useCallback(
-    ({ address, newNFTs }: { address: string; newNFTs: DisplayNftItem[] }) => {
+      break;
+    }
+    case 'nfts': {
       const lowerAddress = address.toLowerCase();
       setNftsMap(pre => ({
         ...pre,
-        [lowerAddress]: newNFTs,
+        [lowerAddress]: payload.data,
       }));
-    },
-    [],
-  );
+      break;
+    }
+  }
+}
+
+export const useAssetsMap = () => {
+  const tokensMap = assetsMapStore(s => s.tokensMap);
+  const portfoliosMap = assetsMapStore(s => s.portfoliosMap);
+  const nftsMap = assetsMapStore(s => s.nftsMap);
+
+  const { top10Addresses } = useAccountInfo();
 
   const getTokenCombined = useCallback(
     (tokenId: string, chain: string) => {
@@ -405,9 +403,6 @@ export const useAssetsMap = () => {
 
   return {
     top10Addresses,
-    updateTokens,
-    updatePortfolios,
-    updateNFTs,
     getTokenCombined,
     // Export individual maps and setters for direct access in useAssets
     tokensMap,

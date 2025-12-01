@@ -1,4 +1,9 @@
-import { useAssetsMap, useAssetsComputation } from '@/screens/Home/hooks/store';
+import {
+  useAssetsMap,
+  useAssetsComputation,
+  updateAssetListByAddress,
+  getAssetsMapDirectly,
+} from '@/screens/Home/hooks/store';
 import { produce } from '@/core/utils/produce';
 import { DisplayedProject } from '../Home/utils/project';
 import { AbstractPortfolioToken } from '../Home/types';
@@ -118,11 +123,7 @@ export const useAssets = ({
 
   const {
     top10Addresses,
-    updateNFTs,
-    updatePortfolios,
-    updateTokens,
     getTokenCombined,
-    getAssetsMapDirectly,
     tokensMap,
     // setTokensMap,
     portfoliosMap,
@@ -139,117 +140,108 @@ export const useAssets = ({
     hideCombined,
   });
 
-  const loadToken = useCallback(
-    async (address: string, force?: boolean) => {
-      if (!address) {
+  const loadToken = useCallback(async (address: string, force?: boolean) => {
+    if (!address) {
+      return;
+    }
+    try {
+      const walletProject = new DisplayedProject({
+        id: 'Wallet',
+        name: 'Wallet',
+      });
+
+      let _data = produce(walletProject, draft => {
+        draft.netWorth = 0;
+        draft._netWorth = '$0';
+        draft._netWorthChange = '-';
+        draft.netWorthChange = 0;
+        draft._netWorthChangePercent = '';
+        draft._portfolioDict = {};
+        draft._portfolios = [];
+        draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
+      });
+
+      let _tokens: AbstractPortfolioToken[] = [];
+
+      const tokenRes = await syncTokens(address, force, !force);
+      if (!tokenRes.length) {
         return;
       }
-      try {
-        const walletProject = new DisplayedProject({
-          id: 'Wallet',
-          name: 'Wallet',
-        });
+      const tokenSettings =
+        (await preferenceService.getUserTokenSettings()) || {};
 
-        let _data = produce(walletProject, draft => {
-          draft.netWorth = 0;
-          draft._netWorth = '$0';
-          draft._netWorthChange = '-';
-          draft.netWorthChange = 0;
-          draft._netWorthChangePercent = '';
-          draft._portfolioDict = {};
-          draft._portfolios = [];
-          draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
-        });
-
-        let _tokens: AbstractPortfolioToken[] = [];
-
-        const tokenRes = await syncTokens(address, force, !force);
-        if (!tokenRes.length) {
-          return;
+      const tokensDict: Record<string, TokenItem[]> = {};
+      tokenRes.forEach(token => {
+        if (!tokensDict[token.chain]) {
+          tokensDict[token.chain] = [];
         }
-        const tokenSettings =
-          (await preferenceService.getUserTokenSettings()) || {};
+        tokensDict[token.chain].push(token);
+      });
 
-        const tokensDict: Record<string, TokenItem[]> = {};
-        tokenRes.forEach(token => {
-          if (!tokensDict[token.chain]) {
-            tokensDict[token.chain] = [];
-          }
-          tokensDict[token.chain].push(token);
-        });
+      _data = produce(_data, draft => {
+        setWalletTokens(draft, tokensDict);
+      });
 
-        _data = produce(_data, draft => {
-          setWalletTokens(draft, tokensDict);
-        });
+      _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
-        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+      updateAssetListByAddress(address, {
+        type: 'tokens',
+        data: filterDisplayToken(_tokens),
+      });
+    } catch (error) {
+      console.error('ServiceErrorType.Tokens', error);
+    }
+  }, []);
 
-        updateTokens({
-          address,
-          newTokens: filterDisplayToken(_tokens),
-        });
-      } catch (error) {
-        console.error('ServiceErrorType.Tokens', error);
-      }
-    },
-    [updateTokens],
-  );
-
-  const loadDefi = useCallback(
-    async (address: string, force?: boolean) => {
-      if (!address) {
+  const loadDefi = useCallback(async (address: string, force?: boolean) => {
+    if (!address) {
+      return;
+    }
+    try {
+      let projectDict: Record<string, DisplayedProject> | null = {};
+      const protocols = await syncProtocols(address, force, !force);
+      if (!protocols.length) {
         return;
       }
-      try {
-        let projectDict: Record<string, DisplayedProject> | null = {};
-        const protocols = await syncProtocols(address, force, !force);
-        if (!protocols.length) {
-          return;
+      protocols.forEach(project => {
+        if (projectDict) {
+          projectDict = produce(projectDict, draft => {
+            project && portfolio2Display(project, draft);
+          });
         }
-        protocols.forEach(project => {
-          if (projectDict) {
-            projectDict = produce(projectDict, draft => {
-              project && portfolio2Display(project, draft);
-            });
-          }
-        });
-        const realtimeData = Object.values(projectDict)?.sort(
-          (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-        );
-        const tokenSetting = await preferenceService.getUserTokenSettings();
-        updatePortfolios({
-          address,
-          newPortfolios: tagProfiles(realtimeData, tokenSetting),
-        });
-      } catch (error) {
-        console.error('ServiceErrorType.Defi', error);
-      }
-    },
-    [updatePortfolios],
-  );
+      });
+      const realtimeData = Object.values(projectDict)?.sort(
+        (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
+      );
+      const tokenSetting = await preferenceService.getUserTokenSettings();
+      updateAssetListByAddress(address, {
+        type: 'portfolios',
+        data: tagProfiles(realtimeData, tokenSetting),
+      });
+    } catch (error) {
+      console.error('ServiceErrorType.Defi', error);
+    }
+  }, []);
 
-  const loadNFT = useCallback(
-    async (address: string, force?: boolean) => {
-      if (!address) {
+  const loadNFT = useCallback(async (address: string, force?: boolean) => {
+    if (!address) {
+      return;
+    }
+    try {
+      const _nfts = await syncNFTs(address, force, !force);
+      if (!_nfts.length) {
         return;
       }
-      try {
-        const _nfts = await syncNFTs(address, force, !force);
-        if (!_nfts.length) {
-          return;
-        }
-        const tokenSetting = await preferenceService.getUserTokenSettings();
+      const tokenSetting = await preferenceService.getUserTokenSettings();
 
-        updateNFTs({
-          address,
-          newNFTs: tagNfts(_nfts, tokenSetting),
-        });
-      } catch (e) {
-        console.error('ServiceErrorType.NFT', e);
-      }
-    },
-    [updateNFTs],
-  );
+      updateAssetListByAddress(address, {
+        type: 'nfts',
+        data: tagNfts(_nfts, tokenSetting),
+      });
+    } catch (e) {
+      console.error('ServiceErrorType.NFT', e);
+    }
+  }, []);
 
   const loadSpecificDefi = useCallback(
     async (_address: string, protocolId: string, chain: string) => {
@@ -267,14 +259,13 @@ export const useAssets = ({
 
         const tokenSetting = await preferenceService.getUserTokenSettings();
 
-        const currentPortfolios = portfoliosMap[address] || [];
+        const currentPortfolios =
+          getAssetsMapDirectly('portfolios')[address] || [];
 
         if (!targetProtocol || !targetProtocol.portfolio_item_list?.length) {
-          updatePortfolios({
-            address,
-            newPortfolios: currentPortfolios.filter(
-              item => item.id !== protocolId,
-            ),
+          updateAssetListByAddress(address, {
+            type: 'portfolios',
+            data: currentPortfolios.filter(item => item.id !== protocolId),
           });
           return;
         }
@@ -298,15 +289,15 @@ export const useAssets = ({
           (a, b) => (b.netWorth || 0) - (a.netWorth || 0),
         );
 
-        updatePortfolios({
-          address,
-          newPortfolios: tagProfiles(sortedPortfolios, tokenSetting),
+        updateAssetListByAddress(address, {
+          type: 'portfolios',
+          data: tagProfiles(sortedPortfolios, tokenSetting),
         });
       } catch (error) {
         console.error('ServiceErrorType.SpecificDefi', error);
       }
     },
-    [portfoliosMap, updatePortfolios],
+    [],
   );
 
   const batchLoadCacheTokens = useCallback(
@@ -367,15 +358,15 @@ export const useAssets = ({
       });
 
       Object.keys(formatAssetMap).forEach(address => {
-        updateTokens({
-          address,
-          newTokens: formatAssetMap[address],
+        updateAssetListByAddress(address, {
+          type: 'tokens',
+          data: formatAssetMap[address],
         });
       });
 
       setLoading(false);
     },
-    [updateTokens],
+    [],
   );
 
   const batchLoadCacheDefi = useCallback(
@@ -414,13 +405,13 @@ export const useAssets = ({
       });
 
       Object.keys(formatProtocolMap).forEach(address => {
-        updatePortfolios({
-          address,
-          newPortfolios: formatProtocolMap[address],
+        updateAssetListByAddress(address, {
+          type: 'portfolios',
+          data: formatProtocolMap[address],
         });
       });
     },
-    [updatePortfolios],
+    [],
   );
   const batchLoadCacheNFT = useCallback(
     async (
@@ -449,43 +440,29 @@ export const useAssets = ({
       );
 
       Object.keys(formatNFTMap).forEach(address => {
-        updateNFTs({
-          address,
-          newNFTs: formatNFTMap[address],
+        updateAssetListByAddress(address, {
+          type: 'nfts',
+          data: formatNFTMap[address],
         });
       });
     },
-    [updateNFTs],
+    [],
   );
-  const removeUnNeedAssets = useCallback(
-    (addresses: string[]) => {
-      const allAddresses = new Set([
-        ...Object.keys(getAssetsMapDirectly('tokens')),
-        ...Object.keys(getAssetsMapDirectly('portfolios')),
-        ...Object.keys(getAssetsMapDirectly('nfts')),
-      ]);
+  const removeUnNeedAssets = useCallback((addresses: string[]) => {
+    const allAddresses = new Set([
+      ...Object.keys(getAssetsMapDirectly('tokens')),
+      ...Object.keys(getAssetsMapDirectly('portfolios')),
+      ...Object.keys(getAssetsMapDirectly('nfts')),
+    ]);
 
-      allAddresses.forEach(address => {
-        if (!addresses.find(i => isSameAddress(i, address))) {
-          updateTokens({
-            address,
-            newTokens: [],
-          });
-
-          updatePortfolios({
-            address,
-            newPortfolios: [],
-          });
-
-          updateNFTs({
-            address,
-            newNFTs: [],
-          });
-        }
-      });
-    },
-    [getAssetsMapDirectly, updateTokens, updatePortfolios, updateNFTs],
-  );
+    allAddresses.forEach(address => {
+      if (!addresses.find(i => isSameAddress(i, address))) {
+        updateAssetListByAddress(address, { type: 'tokens', data: [] });
+        updateAssetListByAddress(address, { type: 'portfolios', data: [] });
+        updateAssetListByAddress(address, { type: 'nfts', data: [] });
+      }
+    });
+  }, []);
 
   const checkIsExpireAndUpdate = useCallback(
     async (
@@ -604,7 +581,6 @@ export const useAssets = ({
     },
     [
       top10Addresses,
-      getAssetsMapDirectly,
       removeUnNeedAssets,
       shortCache,
       batchLoadCacheTokens,
@@ -642,13 +618,13 @@ export const useAssets = ({
           return t;
         });
 
-        updateTokens({
-          address: lowerAddress,
-          newTokens: updatedTokens,
+        updateAssetListByAddress(lowerAddress, {
+          type: 'tokens',
+          data: updatedTokens,
         });
       });
     },
-    [tokensMap, updateTokens],
+    [tokensMap],
   );
 
   return {
@@ -693,11 +669,7 @@ export const useInitDetectDBAssets = () => {
     batchLoadCacheTokens,
     batchLoadCacheDefi,
     batchLoadCacheNFT,
-    tokensMap,
-    portfoliosMap,
-    nftsMap,
   } = useAssets({ hideCombined: true });
-  const { userTokenSettings } = useUserTokenSettings();
 
   const debounceReloadTokenList = useMemo(
     () => debounce(batchLoadCacheTokens, 2000),
@@ -726,24 +698,36 @@ export const useInitDetectDBAssets = () => {
 
         let currentAssetCount = 0;
         if (taskFor === 'token') {
-          currentAssetCount = tokensMap[ctx.owner_addr]?.length || 0;
+          currentAssetCount =
+            getAssetsMapDirectly('tokens')[ctx.owner_addr]?.length || 0;
         } else if (taskFor === 'protocols') {
-          currentAssetCount = portfoliosMap[ctx.owner_addr]?.length || 0;
+          currentAssetCount =
+            getAssetsMapDirectly('portfolios')[ctx.owner_addr]?.length || 0;
         } else if (taskFor === 'nfts') {
-          currentAssetCount = nftsMap[ctx.owner_addr]?.length || 0;
+          currentAssetCount =
+            getAssetsMapDirectly('nfts')[ctx.owner_addr]?.length || 0;
         }
 
         if (taskFor === 'token') {
           if (currentUpdateCount > currentAssetCount) {
-            debounceReloadTokenList([ctx.owner_addr], userTokenSettings);
+            debounceReloadTokenList(
+              [ctx.owner_addr],
+              preferenceService.getUserTokenSettings(),
+            );
           }
         } else if (taskFor === 'protocols') {
           if (currentUpdateCount > currentAssetCount) {
-            debounceReloadDefiList([ctx.owner_addr], userTokenSettings);
+            debounceReloadDefiList(
+              [ctx.owner_addr],
+              preferenceService.getUserTokenSettings(),
+            );
           }
         } else if (taskFor === 'nfts') {
           if (currentUpdateCount > currentAssetCount) {
-            debounceReloadNftList([ctx.owner_addr], userTokenSettings);
+            debounceReloadNftList(
+              [ctx.owner_addr],
+              preferenceService.getUserTokenSettings(),
+            );
           }
         }
       },
@@ -752,10 +736,6 @@ export const useInitDetectDBAssets = () => {
         debounceReloadDefiList,
         debounceReloadNftList,
         debounceReloadTokenList,
-        userTokenSettings,
-        tokensMap,
-        portfoliosMap,
-        nftsMap,
       ],
     ),
   });

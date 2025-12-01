@@ -116,18 +116,3 @@ export function useSingleNftRefresh({ onRefresh }: { onRefresh: () => void }) {
     }, []),
   };
 }
-
-export function useCombineAssetRefreshNonces() {
-  const { tokenRefreshNonce, deFiRefreshNonce, nftRefreshNonce } =
-    assetsRefreshStateStore(s => ({
-      tokenRefreshNonce: s.tokenNonce,
-      deFiRefreshNonce: s.deFiNonce,
-      nftRefreshNonce: s.nftNonce,
-    }));
-
-  return {
-    tokenRefreshNonce,
-    deFiRefreshNonce,
-    nftRefreshNonce,
-  };
-}
