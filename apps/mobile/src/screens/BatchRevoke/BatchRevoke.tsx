@@ -83,7 +83,7 @@ export const BatchRevokeScreen = () => {
             onPress: () => task.continue(),
             buttonStyle: {
               borderRadius: 16,
-              backgroundColor: colors2024['green-light-4'],
+              backgroundColor: colors2024['green-light-1'],
             },
             titleStyle: {
               color: colors2024['green-default'],
