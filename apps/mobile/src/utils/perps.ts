@@ -1,6 +1,11 @@
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
-import { Meta, AssetCtx, MarginTable } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  Meta,
+  AssetCtx,
+  MarginTable,
+  ClearinghouseState,
+} from '@rabby-wallet/hyperliquid-sdk';
 
 export const formatMarkData = (
   marketData: [Meta, AssetCtx[]],
@@ -231,4 +236,17 @@ export const formatTpOrSlPrice = (
     return `${integerPart}.${composedDecimal}`;
   }
   return `${integerPart}`;
+};
+
+export const formatPositionPnl = (clearinghouseState: ClearinghouseState) => {
+  return {
+    pnl: clearinghouseState.assetPositions.reduce((acc, asset) => {
+      return acc + Number(asset.position.unrealizedPnl);
+    }, 0),
+    show: Number(clearinghouseState.marginSummary.accountValue) > 0,
+    type: (clearinghouseState.assetPositions.length > 0
+      ? 'pnl'
+      : 'accountValue') as 'pnl' | 'accountValue',
+    accountValue: Number(clearinghouseState.marginSummary.accountValue),
+  };
 };

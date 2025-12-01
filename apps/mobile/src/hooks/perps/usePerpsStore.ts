@@ -16,7 +16,7 @@ import { Account } from '@/core/services/preference';
 import { ApproveSignatures } from '@/core/services/perpsService';
 import { DEFAULT_TOP_ASSET } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
-import { formatMarkData } from '@/utils/perps';
+import { formatMarkData, formatPositionPnl } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { maxBy } from 'lodash';
@@ -93,7 +93,7 @@ const buildMarketDataMap = (list: MarketData[]): MarketDataMap => {
   }, {} as MarketDataMap);
 };
 
-const initialState: PerpsState = {
+export const initialState: PerpsState = {
   positionAndOpenOrders: [],
   accountSummary: null,
   hasPermission: true,
@@ -205,14 +205,7 @@ export const usePerpsStore = () => {
             withdrawable: payload.withdrawable,
           },
           positionAndOpenOrders,
-          homePositionPnl: {
-            pnl: payload.assetPositions.reduce((acc, asset) => {
-              return acc + Number(asset.position.unrealizedPnl);
-            }, 0),
-            show: Number(payload.marginSummary.accountValue) > 0,
-            type: payload.assetPositions.length > 0 ? 'pnl' : 'accountValue',
-            accountValue: Number(payload.marginSummary.accountValue),
-          },
+          homePositionPnl: formatPositionPnl(payload),
         };
       });
     },
@@ -302,17 +295,7 @@ export const usePerpsStore = () => {
             ),
           }),
         ),
-        homePositionPnl: {
-          pnl: clearinghouseState.assetPositions.reduce((acc, order) => {
-            return acc + Number(order.position.unrealizedPnl);
-          }, 0),
-          show: Number(clearinghouseState.marginSummary.accountValue) > 0,
-          type:
-            clearinghouseState.assetPositions.length > 0
-              ? 'pnl'
-              : 'accountValue',
-          accountValue: Number(clearinghouseState.marginSummary.accountValue),
-        },
+        homePositionPnl: formatPositionPnl(clearinghouseState),
       }));
     },
   );
