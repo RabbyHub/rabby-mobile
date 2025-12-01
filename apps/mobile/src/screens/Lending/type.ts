@@ -18,10 +18,15 @@ export type DisplayPoolReserveInfo = ComputedUserReserve & {
   tokenLogo?: string;
 };
 
+export type UserSummary = FormatUserSummaryAndIncentivesResponse<
+  ReserveDataHumanized & FormatReserveUSDResponse
+>;
 export type PopupDetailProps = {
   reserve: DisplayPoolReserveInfo;
-  userSummary: FormatUserSummaryAndIncentivesResponse<
-    ReserveDataHumanized & FormatReserveUSDResponse
-  >;
+  userSummary: UserSummary;
+  onClose?: () => void;
+};
+export type OpenDetailProps = {
+  underlyingAsset: string;
   onClose?: () => void;
 };

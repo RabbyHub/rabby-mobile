@@ -1,30 +1,22 @@
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-  forwardRef,
-  useImperativeHandle,
-  useEffect,
-} from 'react';
-import { Keyboard, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useState, useEffect } from 'react';
+import { TouchableOpacity, View } from 'react-native';
 // import { RcIconSwapHistory } from '@/assets/icons/swap';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import PendingTx from '@/screens/Bridge/components/PendingTx';
 import { RootNames } from '@/constant/layout';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { useFocusEffect } from '@react-navigation/native';
 import { naviPush } from '@/utils/navigation';
 import { eventBus, EVENTS } from '@/utils/events';
-import { useInterval, useMemoizedFn } from 'ahooks';
+import { useInterval } from 'ahooks';
 import { transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { CUSTOM_HISTORY_ACTION } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../hooks';
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
     gap: 20,
@@ -55,8 +47,7 @@ interface LendingHeaderProps {
   onPendingClear?: () => void;
 }
 export const LendingHeader = ({ onPendingClear }: LendingHeaderProps) => {
-  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
-  const { navigation } = useSafeSetNavigationOptions();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [pendingCount, setPendingCount] = useState(0);
   const { refreshHistoryId } = useRefreshHistoryId();

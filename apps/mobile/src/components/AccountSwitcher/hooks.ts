@@ -1,5 +1,5 @@
 import { atom, useAtom } from 'jotai';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { type AccountSwitcherScene } from '@/hooks/sceneAccountInfoAtom';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -7,6 +7,9 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { apisAccount } from '@/core/apis';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { useRequest } from 'ahooks';
+import { isEqual } from 'lodash';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { zCreate } from '@/core/utils/reexports';
 
 type AccountSwitcherState = {
   /**
@@ -118,23 +121,43 @@ function getTop5Tokens(tokens: TokenItem[]): TokenItem[] {
     );
 }
 
-const addressTop5TokensAtom = atom<{
-  [addr: string]: TokenItem[];
-}>({});
-const addressTop5TokensRequestingRefs = {};
+// const addressTop5TokensAtom = atom<{
+//   [addr: string]: TokenItem[];
+// }>({});
+type AccountSwitchState = {
+  top5Tokens: { [addr: string]: TokenItem[] };
+};
+const accountSwitchStore = zCreate<AccountSwitchState>(() => {
+  return {
+    top5Tokens: {},
+  };
+});
+
+const setAddressTop5Tokens = (
+  valOrFunc: UpdaterOrPartials<AccountSwitchState['top5Tokens']>,
+) => {
+  accountSwitchStore.setState(prev => ({
+    ...prev,
+    top5Tokens: resolveValFromUpdater(prev.top5Tokens, valOrFunc).newVal,
+  }));
+};
+
 function useTopTokensByAccount() {
-  const [addressTop5Tokens, setAddressTop5Tokens] = useAtom(
-    addressTop5TokensAtom,
-  );
-  const setTokensByAddr = useCallback(
-    (addr: string, tokens: TokenItem[]) => {
-      setAddressTop5Tokens(prev => ({
+  // const [addressTop5Tokens, setAddressTop5Tokens] = useAtom(
+  //   addressTop5TokensAtom,
+  // );
+  const addressTop5Tokens = accountSwitchStore(s => s.top5Tokens);
+  const setTokensByAddr = useCallback((addr: string, tokens: TokenItem[]) => {
+    setAddressTop5Tokens(prev => {
+      if (isEqual(prev[addr], tokens)) {
+        return prev;
+      }
+      return {
         ...prev,
         [addr]: tokens,
-      }));
-    },
-    [setAddressTop5Tokens],
-  );
+      };
+    });
+  }, []);
 
   const fetchTokensByAddresses = useCallback(
     (addrs: string[], count = 5) => {
@@ -195,19 +218,22 @@ export function useTopTokensForAddress(options?: {
   const { count = 5, accountAddress } = options || {};
   const { addressTop5Tokens, fetchTokensByAddresses } = useTopTokensByAccount();
 
+  const lowerAddr = useMemo(
+    () => accountAddress?.toLowerCase(),
+    [accountAddress],
+  );
   useEffect(() => {
-    if (!accountAddress) return;
+    if (!lowerAddr) return;
 
-    fetchTokensByAddresses([accountAddress], count);
-  }, [accountAddress, fetchTokensByAddresses, count]);
+    fetchTokensByAddresses([lowerAddr], count);
+  }, [lowerAddr, fetchTokensByAddresses, count]);
 
   const tokenList = useMemo(() => {
-    return accountAddress
-      ? addressTop5Tokens[accountAddress]?.slice(0, count)
-      : null;
-  }, [addressTop5Tokens, accountAddress, count]);
+    return lowerAddr ? addressTop5Tokens[lowerAddr]?.slice(0, count) : null;
+  }, [addressTop5Tokens, lowerAddr, count]);
 
   return {
+    addressTop5Tokens,
     tokenList,
   };
 }

@@ -127,7 +127,10 @@ import { foldMultiChartAtom } from '../Address/components/MultiAssets/RenderRow/
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { RECOMMENDED_DEFAULT_QUERY_LIMIT } from '@/databases/entities/_helpers';
-import { RNGHTouchableOpacity } from '@/components/customized/reexports';
+import {
+  RNGHPressable,
+  RNGHTouchableOpacity,
+} from '@/components/customized/reexports';
 import { TABITEM_H } from './components/CustomTabBar';
 import { RefLikeObject } from '@/utils/type';
 
@@ -149,7 +152,7 @@ const OverViewComponent = () => {
   }>();
   const { top10Addresses } = useAccountInfo();
 
-  const timeRef = useRef<null | NodeJS.Timer>(null);
+  const timeRef = useRef<null | ReturnType<typeof setTimeout>>(null);
   const appState = useAppState();
 
   const { width } = Dimensions.get('window');
@@ -499,9 +502,9 @@ const OverViewComponent = () => {
       if (appState === 'active') {
         triggerUpdate();
         triggerUpdateAlert();
-        syncTop10History();
+        // syncTop10History();
       }
-    }, [appState, triggerUpdate, triggerUpdateAlert, syncTop10History]),
+    }, [appState, triggerUpdate, triggerUpdateAlert /* , syncTop10History */]),
   );
 
   const onRefresh = useCallback(() => {
@@ -513,8 +516,8 @@ const OverViewComponent = () => {
     ]).finally(() => {
       // update at background
       forceUpdate();
-      fetchLendingData();
-      syncTop10History(true);
+      // fetchLendingData();
+      // syncTop10History(true);
       currencyService.syncCurrencyList(true);
     });
   }, [
@@ -523,8 +526,8 @@ const OverViewComponent = () => {
     checkAddressesEligibility,
     top50PrivateKeyAccounts,
     forceUpdate,
-    fetchLendingData,
-    syncTop10History,
+    // fetchLendingData,
+    // syncTop10History,
   ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
@@ -839,7 +842,7 @@ function MultiAddressHome(): JSX.Element {
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const { top10Addresses } = useAccountInfo();
 
-  const timeRef = useRef<null | NodeJS.Timer>(null);
+  const timeRef = useRef<null | ReturnType<typeof setTimeout>>(null);
   const spinValue = useRef(new Animated.Value(0)).current;
 
   const [tabIndex, setTabIndex] = useState(0);

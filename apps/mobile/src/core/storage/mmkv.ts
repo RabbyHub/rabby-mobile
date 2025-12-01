@@ -180,12 +180,14 @@ type StringStorageOption =
 /**
  * persist item as json, read it as its original type
  *
- * @baddesign In the past, `makeJsonStore` use storage consist with appStorage,
+ * @baddesign In the past, `makeJotaiJsonStore` use storage consist with appStorage,
  * which also persist value as json, and treat it as json on parsing. This duplicates
- * the logic of `makeJsonStore`, and is not a good design, that is, one value would
+ * the logic of `makeJotaiJsonStore`, and is not a good design, that is, one value would
  * be JSON.stringify twice and JSON.parse twice. This is a bad behavior.
  */
-function makeJsonStore<T = any>(options?: { storage?: StringStorageOption }) {
+function makeJotaiJsonStore<T = any>(options?: {
+  storage?: StringStorageOption;
+}) {
   const { storage } = options || {};
 
   const jsonStore =
@@ -208,11 +210,11 @@ function makeJsonStore<T = any>(options?: { storage?: StringStorageOption }) {
 /**
  * @deprecated
  */
-export const duplicatelyStringifiedAppJsonStore = makeJsonStore<any>({
+export const duplicatelyStringifiedAppJsonStore = makeJotaiJsonStore<any>({
   storage: appStorage as SyncStringStorage,
 });
 
-export const appJsonStore = makeJsonStore<any>({
+export const appJsonStore = makeJotaiJsonStore<any>({
   storage: undefined,
 });
 
@@ -243,6 +245,10 @@ const GET_STRING_STORAGE_FOR_JSON_STORE = (strategy: MMKVStorageStrategy) => {
   }
 };
 
+export const appStorageForZustand = GET_STRING_STORAGE_FOR_JSON_STORE(
+  MMKVStorageStrategy.compatJson,
+);
+
 export const atomByMMKV = <T = any>(
   key: string,
   initialValue: T,
@@ -254,7 +260,7 @@ export const atomByMMKV = <T = any>(
   },
 ) => {
   const { storage } = options || {};
-  const jsonStore = makeJsonStore<T>({ storage });
+  const jsonStore = makeJotaiJsonStore<T>({ storage });
 
   if (typeof options?.setupSubscribe === 'function') {
     jsonStore.subscribe = options?.setupSubscribe({ jsonStore });

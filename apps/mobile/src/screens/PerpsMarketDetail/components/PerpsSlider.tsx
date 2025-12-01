@@ -18,16 +18,24 @@ interface PerpsSliderProps {
   value: number;
   key?: string;
   onValueChange: (value: number) => void;
+  step?: number;
+  maxValue?: number;
   showPercentage?: boolean;
   disabled?: boolean;
+  minValue?: number;
+  hightLightTriggerValue?: number[];
 }
 
 export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   value,
   onValueChange,
   disabled = false,
+  maxValue,
+  step,
   key,
   showPercentage = true,
+  minValue,
+  hightLightTriggerValue,
 }) => {
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -40,10 +48,9 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   const handleValueChange = useCallback(
     (v: number) => {
       // Trigger haptic feedback when reaching specific values
-      if (
-        v !== previousValue.current &&
-        sliderHapticTriggerNumbers.includes(v)
-      ) {
+      const triggerValues =
+        hightLightTriggerValue || sliderHapticTriggerNumbers;
+      if (v !== previousValue.current && triggerValues.includes(v)) {
         trigger('impactLight', {
           enableVibrateFallback: true,
           ignoreAndroidSystemSettings: false,
@@ -52,7 +59,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
       previousValue.current = v;
       onValueChange(v);
     },
-    [onValueChange],
+    [onValueChange, hightLightTriggerValue],
   );
 
   const sliderStyle = useAnimatedStyle(
@@ -102,9 +109,9 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
           disabled={disabled}
           value={value}
           onValueChange={handleValueChange}
-          minimumValue={0}
-          maximumValue={100}
-          step={1}
+          minimumValue={minValue || 0}
+          maximumValue={maxValue || 100}
+          step={step}
           trackStyle={styles.sliderTrack}
           minimumTrackTintColor={colors2024['brand-default']}
           maximumTrackTintColor={colors2024['neutral-line']}

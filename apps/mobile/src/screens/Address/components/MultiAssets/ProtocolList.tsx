@@ -25,6 +25,8 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
+import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
+import { useOnDeFiRefresh } from '@/screens/Home/hooks/store';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -40,6 +42,9 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
+  const { deFiRefresh } = useTriggerTagAssets();
+  useOnDeFiRefresh();
+
   const getAccountByAddress = useFindAccountByAddress();
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
     isFocused,
@@ -173,11 +178,12 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       await Promise.all([
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableToken: true, disableNFT: true }),
+        deFiRefresh(),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate]);
+  }, [checkIsExpireAndUpdate, triggerUpdate, deFiRefresh]);
 
   // if (!isFocusing) {
   //   return null;

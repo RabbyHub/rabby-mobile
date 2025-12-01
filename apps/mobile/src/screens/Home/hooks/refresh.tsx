@@ -1,39 +1,133 @@
-import { atom, useSetAtom } from 'jotai';
-import { useCallback } from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  AssetsRefresthState,
+  eventBus,
+  EventBusListeners,
+} from '@/utils/events';
+import { useCallback, useEffect } from 'react';
 
-export const singleTokenNonceAtom = atom<number>(0);
-export const singleDeFiNonceAtom = atom<number>(0);
-export const singleNFTNonceAtom = atom<number>(0);
-export const tokenNonceAtom = atom<number>(0);
-export const deFiNonceAtom = atom<number>(0);
-export const nftNonceAtom = atom<number>(0);
+const assetsRefreshStateStore = zCreate<AssetsRefresthState>(() => ({
+  singleTokenNonce: 0,
+  singleDeFiNonce: 0,
+  singleNFTNonce: 0,
+  tokenNonce: 0,
+  deFiNonce: 0,
+  nftNonce: 0,
+}));
+
+// function setAssetsRefreshStateStore(
+//   valOrFunc: UpdaterOrPartials<AssetsRefresthState>,
+// ) {
+//   assetsRefreshStateStore.setState(prev => {
+//     const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc);
+
+//     if (changed) return newVal;
+
+//     return prev;
+//   });
+// }
 
 export const useTriggerTagAssets = () => {
-  const singleTokenNonceUpdate = useSetAtom(singleTokenNonceAtom);
-  const singleDeFiNonceUpdate = useSetAtom(singleDeFiNonceAtom);
-  const singleNFTNonceUpdate = useSetAtom(singleNFTNonceAtom);
-  const setTokenNonce = useSetAtom(tokenNonceAtom);
-  const setDeFiNonce = useSetAtom(deFiNonceAtom);
-  const setNftNonce = useSetAtom(nftNonceAtom);
-
   return {
     singleTokenRefresh: useCallback(() => {
-      singleTokenNonceUpdate(prev => prev + 1);
-    }, [singleTokenNonceUpdate]),
+      eventBus.emit('EVENT_REFRESH_ASSET', 'singleTokenNonce');
+    }, []),
     singleDeFiRefresh: useCallback(() => {
-      singleDeFiNonceUpdate(prev => prev + 1);
-    }, [singleDeFiNonceUpdate]),
+      eventBus.emit('EVENT_REFRESH_ASSET', 'singleDeFiNonce');
+    }, []),
     singleNFTRefresh: useCallback(() => {
-      singleNFTNonceUpdate(prev => prev + 1);
-    }, [singleNFTNonceUpdate]),
+      eventBus.emit('EVENT_REFRESH_ASSET', 'singleNFTNonce');
+    }, []),
     tokenRefresh: useCallback(() => {
-      setTokenNonce(prev => prev + 1);
-    }, [setTokenNonce]),
+      eventBus.emit('EVENT_REFRESH_ASSET', 'tokenNonce');
+    }, []),
     deFiRefresh: useCallback(() => {
-      setDeFiNonce(prev => prev + 1);
-    }, [setDeFiNonce]),
+      eventBus.emit('EVENT_REFRESH_ASSET', 'deFiNonce');
+    }, []),
     nftRefresh: useCallback(() => {
-      setNftNonce(prev => prev + 1);
-    }, [setNftNonce]),
+      eventBus.emit('EVENT_REFRESH_ASSET', 'nftNonce');
+    }, []),
   };
 };
+
+export function useSingleTokenRefresh({
+  onRefresh,
+}: {
+  onRefresh: () => void;
+}) {
+  useEffect(() => {
+    const onRequestRefreshAssets: EventBusListeners['EVENT_REFRESH_ASSET'] =
+      type => {
+        if (type !== 'singleTokenNonce') return;
+        onRefresh();
+      };
+    eventBus.on('EVENT_REFRESH_ASSET', onRequestRefreshAssets);
+
+    return () => {
+      eventBus.off('EVENT_REFRESH_ASSET', onRequestRefreshAssets);
+    };
+  }, [onRefresh]);
+
+  return {
+    triggerRefreshSingleToken: useCallback(() => {
+      eventBus.emit('EVENT_REFRESH_ASSET', 'singleTokenNonce');
+    }, []),
+  };
+}
+
+export function useSingleDeFiRefresh({ onRefresh }: { onRefresh: () => void }) {
+  useEffect(() => {
+    const onRequestRefreshAssets: EventBusListeners['EVENT_REFRESH_ASSET'] =
+      type => {
+        if (type !== 'singleDeFiNonce') return;
+        onRefresh();
+      };
+    eventBus.on('EVENT_REFRESH_ASSET', onRequestRefreshAssets);
+
+    return () => {
+      eventBus.off('EVENT_REFRESH_ASSET', onRequestRefreshAssets);
+    };
+  }, [onRefresh]);
+
+  return {
+    triggerRefreshSingleDeFi: useCallback(() => {
+      eventBus.emit('EVENT_REFRESH_ASSET', 'singleDeFiNonce');
+    }, []),
+  };
+}
+
+export function useSingleNftRefresh({ onRefresh }: { onRefresh: () => void }) {
+  useEffect(() => {
+    const onRequestRefreshAssets: EventBusListeners['EVENT_REFRESH_ASSET'] =
+      type => {
+        if (type !== 'singleNFTNonce') return;
+        onRefresh();
+      };
+    eventBus.on('EVENT_REFRESH_ASSET', onRequestRefreshAssets);
+
+    return () => {
+      eventBus.off('EVENT_REFRESH_ASSET', onRequestRefreshAssets);
+    };
+  }, [onRefresh]);
+
+  return {
+    triggerRefreshSingleNft: useCallback(() => {
+      eventBus.emit('EVENT_REFRESH_ASSET', 'singleNFTNonce');
+    }, []),
+  };
+}
+
+export function useCombineAssetRefreshNonces() {
+  const { tokenRefreshNonce, deFiRefreshNonce, nftRefreshNonce } =
+    assetsRefreshStateStore(s => ({
+      tokenRefreshNonce: s.tokenNonce,
+      deFiRefreshNonce: s.deFiNonce,
+      nftRefreshNonce: s.nftNonce,
+    }));
+
+  return {
+    tokenRefreshNonce,
+    deFiRefreshNonce,
+    nftRefreshNonce,
+  };
+}

@@ -52,6 +52,7 @@ import {
   useIsFocusedCurrentTab,
 } from './hooks/share';
 import { isTabsSwiping } from './hooks';
+import { useOnNftRefresh } from '@/screens/Home/hooks/store';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -74,6 +75,9 @@ export const NFTList = ({ chain, updateNft }: Props) => {
 
   const getAccountByAddress = useFindAccountByAddress();
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.nft);
+
+  const { nftRefresh } = useTriggerTagAssets();
+  useOnNftRefresh();
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
     isFocused,
     isFocusing,
@@ -158,8 +162,6 @@ export const NFTList = ({ chain, updateNft }: Props) => {
   const hasNotAssets = useMemo(() => {
     return nftList.length === 0 && !isLoading && isFocused;
   }, [nftList.length, isLoading, isFocused]);
-
-  const { nftRefresh } = useTriggerTagAssets();
 
   const getNftMenuAction = useCallback(
     (data: NftItemWithCollection): MenuAction[] => {
@@ -332,11 +334,12 @@ export const NFTList = ({ chain, updateNft }: Props) => {
       await Promise.all([
         triggerUpdate(true),
         checkIsExpireAndUpdate(true, { disableToken: true, disableDefi: true }),
+        nftRefresh(),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate]);
+  }, [checkIsExpireAndUpdate, triggerUpdate, nftRefresh]);
 
   // if (!isFocusing) {
   //   return null;

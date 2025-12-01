@@ -30,3 +30,6 @@ export const referralCode = '1608';
 
 // withdraw：最大可提取金额的健康因子阈值
 export const MAX_CLICK_WITHDRAW_HF_THRESHOLD = 1.05;
+
+// max时为了偿还利息额外给的阈值
+export const REPAY_AMOUNT_MULTIPLIER = 1.0025;

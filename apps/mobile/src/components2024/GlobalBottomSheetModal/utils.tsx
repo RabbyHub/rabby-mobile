@@ -289,7 +289,7 @@ export const MODAL_CONFIGS: Record<
     Component: BatchRevokeErrorReason,
   },
   [MODAL_NAMES.SUPPLY_DETAIL]: {
-    snapPoints: [510],
+    snapPoints: [606],
     Component: SupplyDetailPopup,
   },
   [MODAL_NAMES.BORROW_DETAIL]: {
@@ -297,7 +297,7 @@ export const MODAL_CONFIGS: Record<
     Component: BorrowDetailPopup,
   },
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: {
-    snapPoints: [666],
+    snapPoints: [686],
     Component: SupplyActionPopup,
   },
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: {

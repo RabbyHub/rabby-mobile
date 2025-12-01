@@ -108,7 +108,9 @@
         "LendingBorrow": "借りる",
         "LendingWithdraw": "出金",
         "LendingSupply": "供給",
-        "LendingRepay": "返済"
+        "LendingRepay": "返済",
+        "LendingOnCollateral": "担保として使用をオンにする",
+        "LendingOffCollateral": "担保としての使用をオフにする"
       },
       "detail": {
         "SpeedUp": "速度アップ",
@@ -2631,7 +2633,8 @@
     "Lending": {
       "availableCard": {
         "needSupply": "借りるには、資産を担保として提供する必要があります。",
-        "canBorrow": "提供した担保に基づいて、借入上限まで借りることができます。"
+        "canBorrow": "提供した担保に基づいて、借入上限まで借りることができます。",
+        "isolated": "アイソレーションモードにより、借入可能額と資産は制限されています。"
       },
       "list": {
         "headers": {
@@ -2664,7 +2667,12 @@
         "approveAndSupply": "承認と供給",
         "actions": "供給",
         "availableToBorrow": "借りることができます",
-        "supplyAPY": "供給APY"
+        "supplyAPY": "供給APY",
+        "unavailable": "利用できません",
+        "isolatedTips": "あなたの既存の貸付/借入資産はサポートされていません。",
+        "enabled": "有効化済み",
+        "supplyBalance": "供給残高",
+        "collateralization": "担保化"
       },
       "withdrawDetail": {
         "actions": "出金",
@@ -2698,12 +2706,14 @@
         "mySupply": "私の供給",
         "availableToSupply": "提供可能",
         "reachCap": "この資産は供給上限に達しました。この市場から供給されるものはありません。",
-        "almostCap": "この資産は借入限度額にほぼ達しています。この市場から借りられるのは{{available}}のみです。"
+        "almostCap": "この資産は借入限度額にほぼ達しています。この市場から借りられるのは{{available}}のみです。",
+        "useAsCollateral": "担保として使用する"
       },
       "risk": {
         "checkbox": "アラートを理解し、続行したいと思います。",
         "withdrawWarning": "この金額を引き出すと、あなたのヘルスファクターが清算のリスクがあるレベルに下がります。",
-        "warning": "この金額を借りると、あなたのヘルスファクターが清算のリスクレベルまで下がります。"
+        "warning": "この金額を借りると、あなたのヘルスファクターが清算のリスクレベルまで下がります。",
+        "toggleCollateralWarning": "この資産を担保として無効にすると、清算のリスクがあるレベルまでヘルスファクターが低下します。"
       },
       "lqDescription": {
         "desc": "清算価値",
@@ -2722,7 +2732,9 @@
         "availableToBorrowDesc": "提供した担保に基づいて借り入れができ、借入上限に達するまで借りることができます。",
         "lqDesc": "清算が発生した場合、清算業者は借り手のために未払いの借入額の最大50%を返済します。その見返りとして、彼らは担保を割引価格で購入し、その差額（清算ペナルティ）をボーナスとして保持できます。",
         "isolatedTitle": "資産は担保として使用できません。",
-        "isolatedDesc": "この資産は、他の資産の担保を借入に供給できないアイソレーションモードでのみ担保として使用できます。アイソレーションモードで担保として使用される資産は、特定の借入限度額にのみ借り入れることができます。"
+        "isolatedDesc": "この資産は、他の資産の担保を借入に供給できないアイソレーションモードでのみ担保として使用できます。アイソレーションモードで担保として使用される資産は、特定の借入限度額にのみ借り入れることができます。",
+        "isolatedSupplyDesc": "担保使用受到限制，因为处于隔离模式。",
+        "globalIsolatedDesc": "隔離モードでは、他の資産を担保として提供することはできません。グローバルな債務上限は、孤立した資産の借入能力を制限します。隔離モードから退出するには、別の資産を借りる前にUNIを担保として無効にしてください。"
       },
       "apy": "APY",
       "supplied": "供給された",
@@ -2738,7 +2750,26 @@
       "hf": "ヘルスファクター",
       "isolated": "隔離",
       "estNetApy": "推定ネットAPY",
-      "marketSlot": "{{market}} マーケット"
+      "marketSlot": "{{market}} マーケット",
+      "toggleCollateralDetail": {
+        "disable": "{{asset}}を担保として無効化",
+        "enable": "{{asset}}を担保として有効にする",
+        "actions": "{{asset}} 担保の切り替え",
+        "error": "AAVEサービスにエラーがあります。後で再試行してください。"
+      },
+      "toggleCollateralModal": {
+        "openTitle": "レビューの有効化",
+        "closeTitle": "レビューの無効化",
+        "enableIsolationModeTitle": "アイソレーションモードを有効にする",
+        "exitIsolationModeDesc": "アイソレーションモードが終了し、他のトークンを担保として使用できるようになります。",
+        "closeDesc": "この資産を担保として無効にすると、あなたの借入能力とヘルスファクターに影響を与えます。",
+        "riskToLiquidationText": "この通貨の担保モードとしての使用を切り替えることはできません。なぜなら、それが担保コールを引き起こすからです。",
+        "exitIsolationModeTitle": "アイソレーションモードを終了する",
+        "openDesc": "この資産を担保として有効にすることで、借入能力とヘルスファクターが増加します。ただし、ヘルスファクターが1未満になると、清算される可能性があります。",
+        "enableIsolationModeDesc": "アイソレーションモードに入っています。アイソレーションモードでは、他の資産を担保として提供することはできません。グローバルデットシーリングが隔離された資産の借入能力を制限します。アイソレーションモードから退出するには、他の資産を借りる前にCRVを担保として無効にしてください。"
+      },
+      "searchMarket": "市場を検索",
+      "selectMarket": "マーケットを選択"
     }
   },
   "global": {

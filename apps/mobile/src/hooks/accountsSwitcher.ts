@@ -12,7 +12,10 @@ import {
   AccountSwitcherScene,
   makeSceneAccount,
   SceneAccountInfo,
-  sceneAccountInfoAtom,
+  sceneAccountInfoStore,
+  // sceneAccountInfoAtom,
+  zResetSceneAccountInfo,
+  zSetSceneAccountInfo,
 } from './sceneAccountInfoAtom';
 
 export type PropsForAccountSwitchScreen<T extends void | object = void> = {
@@ -48,14 +51,14 @@ export const AccountSwitcherContext = React.createContext<SceneAccountInfo>(
 );
 
 export function useResetSceneAccountInfo() {
-  const [, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
+  // const [, zSetSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
 
-  const resetSceneAccountInfo = useCallback(() => {
-    setSceneAccountInfo(cloneDeep(AccountSwitcherInfos));
-  }, [setSceneAccountInfo]);
+  // const resetSceneAccountInfo = useCallback(() => {
+  //   zSetSceneAccountInfo(cloneDeep(AccountSwitcherInfos));
+  // }, []);
 
   return {
-    resetSceneAccountInfo,
+    resetSceneAccountInfo: zResetSceneAccountInfo,
   };
 }
 
@@ -84,8 +87,8 @@ export function usePreFetchBeforeEnterScene() {
 }
 
 export function useSwitchSceneCurrentAccount() {
-  const [sceneAccountInfo, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
-
+  // const [sceneAccountInfo, zSetSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
+  const sceneAccountInfo = sceneAccountInfoStore(s => s);
   /**
    * @description switch current account in scene, enable it if account is not null, or
    * inactivate it if account is null
@@ -109,7 +112,7 @@ export function useSwitchSceneCurrentAccount() {
         };
 
         const doReturn = async <T extends typeof prev>(val: T) => {
-          setSceneAccountInfo(val);
+          zSetSceneAccountInfo(val);
         };
 
         if (!maybeReEntrant && prev[scene]?.useAllAccounts) {
@@ -151,7 +154,7 @@ export function useSwitchSceneCurrentAccount() {
         return prev;
       }
     },
-    [sceneAccountInfo, setSceneAccountInfo],
+    [sceneAccountInfo],
   );
 
   /**
@@ -166,7 +169,7 @@ export function useSwitchSceneCurrentAccount() {
         const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
 
         const doReturn = <T extends typeof prev>(val: T) => {
-          setSceneAccountInfo(val);
+          zSetSceneAccountInfo(val);
           return val;
         };
 
@@ -202,12 +205,12 @@ export function useSwitchSceneCurrentAccount() {
         return prev;
       }
     },
-    [sceneAccountInfo, setSceneAccountInfo],
+    [sceneAccountInfo],
   );
 
   const toggleUseAllAccountsOnScene = useCallback(
     (scene: AccountSwitcherScene, useAll: boolean) => {
-      setSceneAccountInfo(prev => {
+      zSetSceneAccountInfo(prev => {
         const nextVal = ScenesSupportAllAccounts.includes(scene)
           ? useAll
           : false;
@@ -221,7 +224,7 @@ export function useSwitchSceneCurrentAccount() {
         };
       });
     },
-    [setSceneAccountInfo],
+    [],
   );
 
   return {
@@ -334,7 +337,8 @@ export function useSceneAccountInfo(options: {
   const { accounts } = useAccounts({ disableAutoFetch: true });
 
   const { forScene } = options || {};
-  const [sceneAccounts] = useAtom(sceneAccountInfoAtom);
+  // const [sceneAccounts] = useAtom(sceneAccountInfoAtom);
+  const sceneAccounts = sceneAccountInfoStore(s => s);
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -449,12 +453,13 @@ const ScreenSceneAccountContext = React.createContext<
 type ProviderProps = React.ComponentProps<
   typeof ScreenSceneAccountContext.Provider
 >;
+const defaultSceneAccount = getDefaultSceneAccountInfo();
 export const ScreenSceneAccountProvider: React.FC<
   Omit<ProviderProps, 'value'> & Partial<Pick<ProviderProps, 'value'>>
 > = props => {
   const { children, value } = props;
   return React.createElement(ScreenSceneAccountContext.Provider, {
-    value: value || getDefaultSceneAccountInfo(),
+    value: value || defaultSceneAccount,
     children,
   });
 };
