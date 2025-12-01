@@ -18,7 +18,6 @@ import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
 import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
-import { atom, useAtom } from 'jotai';
 import Svg, { Path } from 'react-native-svg';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from '../hooks';
@@ -27,11 +26,18 @@ import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { useIsFocused } from '@react-navigation/native';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { create } from 'zustand';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const ScreenWidth = Dimensions.get('screen').width;
 
-export const foldMultiChartAtom = atom<boolean>(true);
+export const useFoldMultiChartStore = create<{
+  isFoldMultiChart: boolean;
+  setIsFoldMultiChart: (v: boolean) => void;
+}>(set => ({
+  isFoldMultiChart: true,
+  setIsFoldMultiChart: v => set({ isFoldMultiChart: v }),
+}));
 
 function Chart({
   data,
@@ -45,7 +51,7 @@ function Chart({
   accountsLength?: number;
 }) {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
-  const [isFoldMultiChart, setIsFoldMultiChart] = useAtom(foldMultiChartAtom);
+  const { isFoldMultiChart, setIsFoldMultiChart } = useFoldMultiChartStore();
 
   const { top10Addresses } = useAccountInfo();
   const { getTotalBalance } = useAccountsBalance({
