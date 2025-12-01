@@ -32,7 +32,10 @@ import { HomeAddressItem } from './HomeAddressItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { IS_IOS } from '@/core/native/utils';
-import { MultiChart } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
+import {
+  foldMultiChartAtom,
+  MultiChart,
+} from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -42,6 +45,7 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '@/screens/Address/components/AddressListScreenContainer';
+import { useSetAtom } from 'jotai';
 
 export function MultiAddressHomeHeader(
   props: {
@@ -68,6 +72,7 @@ export function MultiAddressHomeHeader(
 
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
+  const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
 
   const { multi24hBalance } = useMulti24hBalance(
     pinnedAccountList.map(item => item.address),
@@ -189,6 +194,7 @@ export function MultiAddressHomeHeader(
   }, [shouldRedirectToSetPasswordBefore2024, navigation]);
 
   const handleWalletsListPress = useCallback(() => {
+    setIsFoldMultiChart(true);
     if (modalRef.current) {
       removeGlobalBottomSheetModal2024(modalRef.current);
     }
@@ -213,7 +219,7 @@ export function MultiAddressHomeHeader(
         modalRef.current = undefined;
       },
     });
-  }, [colors2024, gotoAddAddress, isLight]);
+  }, [colors2024, gotoAddAddress, isLight, setIsFoldMultiChart]);
 
   return (
     <View style={style}>
