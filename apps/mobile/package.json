@@ -207,7 +207,7 @@
     "web3-utils": "1.7.0",
     "yup": "^1.3.3",
     "zeego": "1.10.0",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
