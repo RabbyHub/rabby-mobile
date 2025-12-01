@@ -7,24 +7,28 @@ import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 
 export const LedgerProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
-  const { status, onClickConnect } = useLedgerStatus(account.address);
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { status, onClickConnect } = useLedgerStatus(account.address, {
+    onDismiss: () => {
+      setIsSubmitting?.(false);
+    },
+  });
 
-  const handleSubmit = React.useCallback(() => {
+  const handleSubmit = React.useCallback(async () => {
     if (status !== 'CONNECTED') {
       if (isSubmitting) {
         return;
       }
       setIsSubmitting(true);
 
-      onClickConnect(() => {
-        props.onSubmit();
+      onClickConnect(async () => {
+        await props.onSubmit();
         setIsSubmitting(false);
       });
       return;
     }
-    props.onSubmit();
+    await props.onSubmit();
     setIsSubmitting(false);
   }, [status, props, isSubmitting, onClickConnect]);
 

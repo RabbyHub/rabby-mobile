@@ -8,7 +8,7 @@ import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGrad
 import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddress';
 import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
 import { ButtonProps } from '../Button';
-import { PopupDetailProps } from '@/screens/Lending/type';
+import { OpenDetailProps, PopupDetailProps } from '@/screens/Lending/type';
 
 export enum MODAL_NAMES {
   // 'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
@@ -114,8 +114,8 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.DESCRIPTION]: React.ComponentProps<
     typeof import('../Descriptions').Descriptions
   >;
-  [MODAL_NAMES.SUPPLY_DETAIL]: PopupDetailProps;
-  [MODAL_NAMES.BORROW_DETAIL]: PopupDetailProps;
+  [MODAL_NAMES.SUPPLY_DETAIL]: OpenDetailProps;
+  [MODAL_NAMES.BORROW_DETAIL]: OpenDetailProps;
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: PopupDetailProps;
   [MODAL_NAMES.BORROW_ACTION_DETAIL]: PopupDetailProps;
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: PopupDetailProps;

@@ -7507,7 +7507,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/devices@npm:8.4.4, @ledgerhq/devices@npm:^8.4.4":
+"@ledgerhq/devices@npm:8.7.0":
+  version: 8.7.0
+  resolution: "@ledgerhq/devices@npm:8.7.0"
+  dependencies:
+    "@ledgerhq/errors": ^6.27.0
+    "@ledgerhq/logs": ^6.13.0
+    rxjs: ^7.8.1
+    semver: ^7.3.5
+  checksum: 780277445030bfa2124462df89b80e8b07a9111d4db9f59efe34f4363cb3fc76179a4735ee29a1dbef89edb683a84cc61e8801f6c1aa025726973456e2dbae26
+  languageName: node
+  linkType: hard
+
+"@ledgerhq/devices@npm:^8.4.4":
   version: 8.4.4
   resolution: "@ledgerhq/devices@npm:8.4.4"
   dependencies:
@@ -7516,18 +7528,6 @@ __metadata:
     rxjs: ^7.8.1
     semver: ^7.3.5
   checksum: 370fb38d484665c92165580e285cc792e7af0bf114a5d1e855aec602c6e39592090d0de7a43addeb4c13622f734ddd4f25be82f07507e14550753ce5473eea66
-  languageName: node
-  linkType: hard
-
-"@ledgerhq/devices@npm:8.5.1":
-  version: 8.5.1
-  resolution: "@ledgerhq/devices@npm:8.5.1"
-  dependencies:
-    "@ledgerhq/errors": ^6.25.0
-    "@ledgerhq/logs": ^6.13.0
-    rxjs: ^7.8.1
-    semver: ^7.3.5
-  checksum: ce066b5f4bf7ebab0e40bf5e96a87d61137d3d497548f6061ed81975a91a19873cf5056d924ce5454b6c4a967df000834ae8358cc2b4c6b8f8aa6470cb8d3a5c
   languageName: node
   linkType: hard
 
@@ -7553,10 +7553,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/errors@npm:^6.25.0":
-  version: 6.25.0
-  resolution: "@ledgerhq/errors@npm:6.25.0"
-  checksum: 066e4b97b6becda9b86b616829b5e025d60d658172179e5d7a9e7662e2f2c5ea70733d9930fee9031d18728da2996b632485f98258629267bb561526ab4e0367
+"@ledgerhq/errors@npm:^6.27.0":
+  version: 6.27.0
+  resolution: "@ledgerhq/errors@npm:6.27.0"
+  checksum: 7b65e20fbe37471de4e86a98cf9c4cb9591771d21c6b4c4e49783a388e1481006830dab677c8d90641bfdda79ff68db898f3cc9bac1bd01bed31ca9bd37c66fe
   languageName: node
   linkType: hard
 
@@ -7631,6 +7631,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ledgerhq/hw-transport@npm:6.31.13":
+  version: 6.31.13
+  resolution: "@ledgerhq/hw-transport@npm:6.31.13"
+  dependencies:
+    "@ledgerhq/devices": 8.7.0
+    "@ledgerhq/errors": ^6.27.0
+    "@ledgerhq/logs": ^6.13.0
+    events: ^3.3.0
+  checksum: eb9100b7cfc34153eb325a69240bc68b804508f6a54d1209686c28d4fda23737d1dce56ec184b613f5882ed9305139dce6f765e40292266d372f2196464baa59
+  languageName: node
+  linkType: hard
+
 "@ledgerhq/hw-transport@npm:6.31.4":
   version: 6.31.4
   resolution: "@ledgerhq/hw-transport@npm:6.31.4"
@@ -7640,18 +7652,6 @@ __metadata:
     "@ledgerhq/logs": ^6.12.0
     events: ^3.3.0
   checksum: bb5204513f2df3dbb646265954d1539bf6117cc08e73a4d1761ec10cb5f8255fe2b30112debc2433608de7260ee8878340c9f67690f5f62447a1466daa241ea7
-  languageName: node
-  linkType: hard
-
-"@ledgerhq/hw-transport@npm:^6.31.10":
-  version: 6.31.10
-  resolution: "@ledgerhq/hw-transport@npm:6.31.10"
-  dependencies:
-    "@ledgerhq/devices": 8.5.1
-    "@ledgerhq/errors": ^6.25.0
-    "@ledgerhq/logs": ^6.13.0
-    events: ^3.3.0
-  checksum: 947a664e7d1c59ccf060fd4d5378191cf3da92afca8e1d626f26fa99ae43c186b1c8e78d513cc6ab0d3e4b250879d4d97fe5b08e199b2a9cea031e0ac65a8272
   languageName: node
   linkType: hard
 
@@ -7691,18 +7691,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/react-native-hw-transport-ble@npm:6.35.3":
-  version: 6.35.3
-  resolution: "@ledgerhq/react-native-hw-transport-ble@npm:6.35.3"
+"@ledgerhq/react-native-hw-transport-ble@npm:6.35.6":
+  version: 6.35.6
+  resolution: "@ledgerhq/react-native-hw-transport-ble@npm:6.35.6"
   dependencies:
-    "@ledgerhq/devices": 8.5.1
-    "@ledgerhq/errors": ^6.25.0
-    "@ledgerhq/hw-transport": ^6.31.10
+    "@ledgerhq/devices": 8.7.0
+    "@ledgerhq/errors": ^6.27.0
+    "@ledgerhq/hw-transport": 6.31.13
     "@ledgerhq/logs": ^6.13.0
-    react-native-ble-plx: 3.5.0
+    react-native-ble-plx: 3.4.0
     rxjs: ^7.8.1
     uuid: ^9.0.1
-  checksum: b66f98b936e8fda09ba0590479efbc7564cfb148816ff45d5e994d6a411118f4fcc55dce71768c97520b3a0226e09112c7f120dd98fa15967fcc5078e5810197
+  checksum: 4b96bd72dc8fdf0c2fd3040263c06263b18812ad2efe03c84ddd06568e14d4d4c39884c299ef561164ac2928edbb195cd5c338de0f5ae3532d19daf4bcd112e1
   languageName: node
   linkType: hard
 
@@ -8566,6 +8566,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@op-engineering/op-sqlite@npm:^15.1.1":
+  version: 15.1.1
+  resolution: "@op-engineering/op-sqlite@npm:15.1.1"
+  dependencies:
+    react-native-safe-area-context: ^5.6.2
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 93f0e42f0ac4e36958aa345374f581b05294244f7f9bdd675f47e57f9f03a192958953e32cbd524ce9f6def553cea3760a821eb604544e63de4f52d706fc491c
+  languageName: node
+  linkType: hard
+
 "@peculiar/asn1-schema@npm:^2.3.13":
   version: 2.3.15
   resolution: "@peculiar/asn1-schema@npm:2.3.15"
@@ -8814,7 +8826,7 @@ __metadata:
   resolution: "@rabby-wallet/eth-keyring-ledger@workspace:packages/eth-keyring-ledger"
   dependencies:
     "@ethereumjs/tx": 5
-    "@ledgerhq/devices": 8.4.4
+    "@ledgerhq/devices": 8.7.0
     "@ledgerhq/hw-app-eth": 6.45.0
     "@ledgerhq/hw-transport": 6.31.4
     "@ledgerhq/types-cryptoassets": 7.21.0
@@ -9261,9 +9273,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.67":
-  version: 0.0.67
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.67"
+"@rabby-wallet/rabby-swap@npm:0.0.68":
+  version: 0.0.68
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.68"
   dependencies:
     "@ethersproject/abi": ^5.7.0
     axios: ^0.27.2
@@ -9272,16 +9284,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: efedf2319207bfe5eca4b9d5a8e0e96e0f860db560c64d5ca74b346ba84ed0a058c79c43902cbfa069ed7e8480da23970169218a94fed18cc29e1411a8987567
-  languageName: node
-  linkType: hard
-
-"@rabby-wallet/react-native-sqlite-storage@npm:7.0.0-alpha.2":
-  version: 7.0.0-alpha.2
-  resolution: "@rabby-wallet/react-native-sqlite-storage@npm:7.0.0-alpha.2"
-  peerDependencies:
-    react-native: ">=0.14.0"
-  checksum: 3d784d473d85a95def31dae73cbd4d6545d413b0ea2c16d6b34713901ca01b93e700ea23add0a99b8547d1f07369abb4ada6754beb142dd8d8dd2df412ea1f6a
+  checksum: 1c39fdc44f0722e6131dee641638547e070b6a50a025459700657ed922f1608f79fca5bd508e6e8c2f18498f0ca07d5b6f069db323caa6f828b19bf676ccb223
   languageName: node
   linkType: hard
 
@@ -9289,7 +9292,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider"
   dependencies:
-    "@ledgerhq/devices": 8.4.4
+    "@ledgerhq/devices": 8.7.0
     "@rollup/plugin-image": ^2.1.1
     "@rollup/plugin-typescript": ^8.3.2
     "@types/chrome": ^0.0.186
@@ -14012,13 +14015,6 @@ __metadata:
   dependencies:
     "@types/react": "*"
   checksum: 2b69293a04609641be4963f5a9127aba3b7576cc15e3234fe6c341a940cbf3979e80bf848a43d93a24fb2ab09ad8faed54ac38c22037b159a0eea852e4dfa6eb
-  languageName: node
-  linkType: hard
-
-"@types/react-native-sqlite-storage@npm:^6.0.5":
-  version: 6.0.5
-  resolution: "@types/react-native-sqlite-storage@npm:6.0.5"
-  checksum: 192d4c3e2d93ea59f59387b8eb8d0aca3da32acca441aa5f84b2f4d919fc52aaa088ab5eb319ceec8471e58107d7463c56c733bfe5ff58915ac03b45313b6450
   languageName: node
   linkType: hard
 
@@ -34462,7 +34458,7 @@ __metadata:
     "@ethereumjs/tx": 5.1.0
     "@ethereumjs/util": ^9.0.1
     "@gorhom/bottom-sheet": 5.0.6
-    "@ledgerhq/react-native-hw-transport-ble": 6.35.3
+    "@ledgerhq/react-native-hw-transport-ble": 6.35.6
     "@metamask/abi-utils": 3.0.0
     "@metamask/browser-passworder": 6.0.0
     "@metamask/eth-sig-util": 5.1.0
@@ -34471,6 +34467,7 @@ __metadata:
     "@notifee/react-native": ^7.8.0
     "@onekeyfe/hd-ble-sdk": 1.1.13
     "@onekeyfe/react-native-ble-utils": 0.1.4
+    "@op-engineering/op-sqlite": ^15.1.1
     "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-hd-keyring": 4.3.1
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
@@ -34486,8 +34483,7 @@ __metadata:
     "@rabby-wallet/rabby-api": 0.9.48
     "@rabby-wallet/rabby-security-engine": 2.0.11
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
-    "@rabby-wallet/rabby-swap": 0.0.67
-    "@rabby-wallet/react-native-sqlite-storage": 7.0.0-alpha.2
+    "@rabby-wallet/rabby-swap": 0.0.68
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-clipboard/clipboard": ^1.13.0
@@ -34524,7 +34520,6 @@ __metadata:
     "@types/qrcode": ^1.5.5
     "@types/react": ^18.0.24
     "@types/react-is": ^18.2.4
-    "@types/react-native-sqlite-storage": ^6.0.5
     "@types/react-native-version-check": ^3.4.8
     "@types/react-test-renderer": ^18.0.0
     "@types/through2": ^2.0.41
@@ -34614,7 +34609,7 @@ __metadata:
     react-native-qrcode-svg: ^6.2.0
     react-native-quick-crypto: 0.7.13
     react-native-randombytes: ^3.6.1
-    react-native-reanimated: 3.17.1
+    react-native-reanimated: 3.18.2
     react-native-root-toast: ^3.5.1
     react-native-safe-area-context: 5.4.0
     react-native-screens: 4.9.2
@@ -34636,6 +34631,7 @@ __metadata:
     react-test-renderer: 18.3.1
     react-use: 17.4.2
     reactotron-react-native: ^5.0.4
+    reactotron-react-native-mmkv: ^0.2.9
     readable-stream: 4.7.0
     reflect-metadata: 0.1.13
     rimraf: ^3.0.2
@@ -35388,13 +35384,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-is-edge-to-edge@npm:1.1.6":
-  version: 1.1.6
-  resolution: "react-native-is-edge-to-edge@npm:1.1.6"
+"react-native-is-edge-to-edge@npm:1.1.7":
+  version: 1.1.7
+  resolution: "react-native-is-edge-to-edge@npm:1.1.7"
   peerDependencies:
-    react: ">=18.2.0"
-    react-native: ">=0.73.0"
-  checksum: 4e07c1e34c01c8d50fd7c1d0460db06f6f0515197405230386a8ffb950cb724b10743af032310d1384df0a90059bfb8992ba2d93344ce86315315f0493feccc2
+    react: "*"
+    react-native: "*"
+  checksum: 4cdf2b2fb5b131f2015c26d2cb7688b4a0c5f3c8474b1bf0ddfa9eabb0263df440c87262ae8f812a6ecab0d5310df0373bddad4b51f53dabb2ffee01e9ef0f44
   languageName: node
   linkType: hard
 
@@ -35589,9 +35585,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-reanimated@npm:3.17.1":
-  version: 3.17.1
-  resolution: "react-native-reanimated@npm:3.17.1"
+"react-native-reanimated@npm:3.18.2":
+  version: 3.18.2
+  resolution: "react-native-reanimated@npm:3.18.2"
   dependencies:
     "@babel/plugin-transform-arrow-functions": ^7.0.0-0
     "@babel/plugin-transform-class-properties": ^7.0.0-0
@@ -35604,12 +35600,12 @@ __metadata:
     "@babel/preset-typescript": ^7.16.7
     convert-source-map: ^2.0.0
     invariant: ^2.2.4
-    react-native-is-edge-to-edge: 1.1.6
+    react-native-is-edge-to-edge: 1.1.7
   peerDependencies:
     "@babel/core": ^7.0.0-0
     react: "*"
     react-native: "*"
-  checksum: fd05040a3fc6a8f4efb387657c0cd6c314e5e6b50f859e127d6891d8f81c65b020ddcf78615aa0074b4e134e450d38c40db916c544e1e2efa26c50c82815607d
+  checksum: d8fe940ee735a663feba30e90ea75b719f60fa69f79448beed76f63137f5a775b1c93c0f747f85dca2732ef3a747e37acace7c92fc73c19aab0daf02dbccb910
   languageName: node
   linkType: hard
 
@@ -35656,6 +35652,16 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 7d7f9a8278048650fd207d436798bd062d6f78d771cb0665b92aef69dba870251339e6812e1d669fd1958345288bd0f9ac98fbfe353c13958d18b58dc946c341
+  languageName: node
+  linkType: hard
+
+"react-native-safe-area-context@npm:^5.6.2":
+  version: 5.6.2
+  resolution: "react-native-safe-area-context@npm:5.6.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 7b15cdd07df4f3650cf443fb322ee2d51b3ab45c652789cbea4cb48a8e6fd2b66e2be01e9f63e614ceaf28d9d228af681ca8857b2ed8dabe48f23964076d40c3
   languageName: node
   linkType: hard
 
@@ -36225,6 +36231,16 @@ __metadata:
   version: 0.1.1
   resolution: "reactotron-core-contract@npm:0.1.1"
   checksum: 69985e4b5bbb72d12a0bdffa3a7e46f5aadf293e9adab70a53f080652906c22a26fb9e1a928af667b46c627cfea81ed58dbdf5644162b025d18d70beb0c7d430
+  languageName: node
+  linkType: hard
+
+"reactotron-react-native-mmkv@npm:^0.2.9":
+  version: 0.2.9
+  resolution: "reactotron-react-native-mmkv@npm:0.2.9"
+  peerDependencies:
+    react-native-mmkv: "*"
+    reactotron-core-client: "*"
+  checksum: 323b27bbb2ab306608a54bb582850f78e3f60ab73711686b7ed6e22725816e2d57fc78b91b96972ba02c2d23e6a805727f277c1a8998c27dcec15342e62c9141
   languageName: node
   linkType: hard
 

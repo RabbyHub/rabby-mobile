@@ -8,7 +8,7 @@ if (__DEV__) {
   import('./ReactotronConfig');
 }
 
-import { enableScreens } from 'react-native-screens';
+import { enableFreeze, enableScreens } from 'react-native-screens';
 import { AppRegistry } from 'react-native';
 import App from './src/App';
 import '@/utils/i18n';
@@ -19,6 +19,7 @@ import {
 } from 'react-native-reanimated';
 
 enableScreens();
+// enableFreeze();
 // must be called synchoronously immediately
 AppRegistry.registerComponent(appName, () => App);
 

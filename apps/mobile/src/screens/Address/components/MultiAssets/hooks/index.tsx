@@ -1,10 +1,8 @@
-import { useAccounts } from '@/hooks/account';
-import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import React, { useMemo } from 'react';
 
 export const isTabsSwiping = {
   value: false,
@@ -15,60 +13,48 @@ export const useAccountInfo = () => {
     disableAutoFetch: true,
   });
 
-  const filterAccounts = React.useMemo(
-    () => [...filterMyAccounts(accounts)],
+  const filterAccounts = useCreationWithShallowCompare(
+    () => filterMyAccounts(accounts),
     [accounts],
   );
 
   const list = useSortAddressList(filterAccounts);
-  const hasWatchAddress = React.useMemo(() => {
-    return accounts.some(account => account.type === KEYRING_CLASS.WATCH);
-  }, [accounts]);
-  const hasSafeAddress = React.useMemo(() => {
-    return accounts.some(account => account.type === KEYRING_CLASS.GNOSIS);
-  }, [accounts]);
-  const {
-    addresses: top10AddressesOrig,
-    totalBalance: top10Balance,
-    totalEvmBalance: top10EvmBalance,
-    notTop10Addresses,
-  } = useMemo(() => {
-    const top10Account = list.slice(0, 10);
+  const { addresses: top10Addresses, notTop10Addresses } =
+    useCreationWithShallowCompare(() => {
+      const addresses = [
+        ...new Set(list.slice(0, 10).map(i => i.address.toLowerCase())),
+      ];
+      return {
+        addresses,
+        notTop10Addresses: list.slice(10),
+      };
+    }, [list]);
 
-    const addresses = [
-      ...new Set(list.slice(0, 10).map(i => i.address.toLowerCase())),
-    ];
-    let totalBalance = 0;
-    let totalEvmBalance = 0;
-    addresses.forEach(address => {
-      const account = top10Account.find(acc =>
-        isSameAddress(acc.address, address),
-      );
-      totalBalance += account?.balance || 0;
-      totalEvmBalance += account?.evmBalance || 0;
-    });
-    return {
-      addresses,
-      totalBalance,
-      notTop10Addresses: list.slice(10),
-      totalEvmBalance,
-    };
-  }, [list]);
+  const { hasWatchAddress, hasSafeAddress, gnosisAccounts, watchAccounts } =
+    useCreationWithShallowCompare(() => {
+      const ret = {
+        hasWatchAddress: false,
+        hasSafeAddress: false,
+        gnosisAccounts: [] as KeyringAccountWithAlias[],
+        watchAccounts: [] as KeyringAccountWithAlias[],
+      };
 
-  const gnosisAccounts = useMemo(() => {
-    return accounts.filter(account => account.type === KEYRING_CLASS.GNOSIS);
-  }, [accounts]);
-  const watchAccounts = useMemo(() => {
-    return accounts.filter(account => account.type === KEYRING_CLASS.WATCH);
-  }, [accounts]);
+      accounts.forEach(account => {
+        if (account.type === KEYRING_CLASS.WATCH) {
+          ret.hasWatchAddress = true;
+          ret.watchAccounts.push(account);
+        } else if (account.type === KEYRING_CLASS.GNOSIS) {
+          ret.hasSafeAddress = true;
+          ret.gnosisAccounts.push(account);
+        }
+      });
 
-  const notMatterAccounts = useMemo(() => {
+      return ret;
+    }, [accounts]);
+
+  const notMatterAccounts = useCreationWithShallowCompare(() => {
     return [...notTop10Addresses, ...gnosisAccounts, ...watchAccounts];
   }, [notTop10Addresses, gnosisAccounts, watchAccounts]);
-
-  const top10Addresses = useCreationWithDeepCompare(() => {
-    return top10AddressesOrig;
-  }, [top10AddressesOrig]);
 
   return {
     top10Addresses,
@@ -76,8 +62,6 @@ export const useAccountInfo = () => {
     gnosisAccounts,
     watchAccounts,
     notTop10Addresses,
-    top10Balance,
-    top10EvmBalance,
     list,
     hasWatchAddress,
     hasSafeAddress,

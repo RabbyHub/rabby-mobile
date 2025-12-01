@@ -86,7 +86,9 @@ export const TokenList = ({
     tokens: _rawTokens,
     isLoading: loadingToken,
     updateData,
-  } = useTokens(currentAccount?.address?.toLowerCase(), false, 0, undefined);
+  } = useTokens(currentAccount?.address?.toLowerCase(), {
+    visible: false,
+  });
 
   useEffect(() => {
     if (_rawTokens && !loadingToken) {
@@ -96,22 +98,18 @@ export const TokenList = ({
   }, [_rawTokens?.length, loadingToken, updateToken]);
 
   const focusedTab = useFocusedTab();
-  const hasBeenFocusedRef = useRef(false);
 
   const isFocused = useMemo(() => {
     const currentFocused = focusedTab === 'tokens';
-    if (currentFocused) {
-      hasBeenFocusedRef.current = true;
-    }
-    return hasBeenFocusedRef.current;
+
+    return currentFocused;
   }, [focusedTab]);
 
   useEffect(() => {
     if (isFocused) {
       updateData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, currentAccount?.address]);
+  }, [isFocused, updateData]);
   const { currency } = useCurrency();
 
   const tokens = useMemo(() => {
@@ -345,7 +343,7 @@ export const TokenList = ({
   }, [navigation]);
 
   const renderItem = useCallback(
-    (_type, _data) => {
+    (_type: ActionItem['type'], _data: ActionItem) => {
       const { type, data } = _data;
       switch (type) {
         case 'unfold_token':
@@ -408,7 +406,11 @@ export const TokenList = ({
           );
         case 'empty-assets':
           return (
-            <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
+            <EmptyAssets
+              style={styles.emptyAssets}
+              desc={data ?? undefined}
+              type={type}
+            />
           );
         case 'loading-skeleton':
           return (

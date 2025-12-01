@@ -39,6 +39,7 @@ import * as Sentry from '@sentry/react-native';
 import {
   ARB_USDC_TOKEN_ID,
   ARB_USDC_TOKEN_SERVER_CHAIN,
+  CANDLE_MENU_KEY_V2,
   PERPS_MAX_NTL_VALUE,
 } from '@/constant/perps';
 import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
@@ -51,6 +52,7 @@ import { openapi } from '@/core/request';
 import { PerpsDepositTokenModal } from '../Perps/components/PerpsDepositPopup/PerpsDepositTokenModal';
 import Toast from 'react-native-root-toast';
 import { PerpSearchListPopup } from '../Perps/components/PerpSearchListPopup';
+import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -79,9 +81,13 @@ export const PerpsMarketDetailScreen = () => {
     marketData,
     hasPermission,
   } = state;
+  // const hasPermission = true;
   const [isShowModal, setIsShowModal] = useState(false);
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
+  const [showRiskPopup, setShowRiskPopup] = useState(false);
+  const [selectedInterval, setSelectedInterval] =
+    React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   const [showDepositTokenPopup, setShowDepositTokenPopup] = useState(false);
   const [showSearchListPopup, setShowSearchListPopup] = useState(false);
   const coinNameRef = useRef(coin);
@@ -101,6 +107,7 @@ export const PerpsMarketDetailScreen = () => {
     'Long' | 'Short'
   >('Long');
   const [closePositionVisible, setClosePositionVisible] = React.useState(false);
+  const [addPositionVisible, setAddPositionVisible] = React.useState(false);
 
   // 查找当前币种的仓位信息
   const currentPosition = useMemo(() => {
@@ -346,6 +353,8 @@ export const PerpsMarketDetailScreen = () => {
           contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <PerpsChart
+              selectedInterval={selectedInterval}
+              setSelectedInterval={setSelectedInterval}
               coinNameRef={coinNameRef}
               market={market}
               markPrice={markPrice}
@@ -363,6 +372,10 @@ export const PerpsMarketDetailScreen = () => {
             ) : null}
           </View>
           <PerpsPosition
+            showRiskPopup={showRiskPopup}
+            setShowRiskPopup={setShowRiskPopup}
+            activeAssetCtx={activeAssetCtx}
+            currentAssetCtx={currentAssetCtx}
             positionData={positionData}
             coin={coin}
             coinLogo={currentAssetCtx?.logoUrl}
@@ -398,6 +411,9 @@ export const PerpsMarketDetailScreen = () => {
             hasPermission={hasPermission}
             hasPosition={hasPosition}
             direction={positionData?.direction}
+            onAddPress={() => {
+              setAddPositionVisible(true);
+            }}
             onLongPress={() => {
               setPositionDirection('Long');
               setOpenPositionVisible(true);
@@ -477,6 +493,8 @@ export const PerpsMarketDetailScreen = () => {
         }}
       />
       <PerpsOpenPositionPopup
+        activeAssetCtx={activeAssetCtx}
+        currentAssetCtx={currentAssetCtx}
         marketDataItem={marketDataMap[coin.toUpperCase()]}
         visible={openPositionVisible}
         direction={positionDirection}
@@ -533,12 +551,69 @@ export const PerpsMarketDetailScreen = () => {
         />
       ) : null}
 
+      {positionData ? (
+        <PerpsAddPositionPopup
+          visible={addPositionVisible}
+          pnl={Number(positionData?.pnl || 0)}
+          pnlPercent={Number(positionData?.pnlPercent || 0)}
+          liquidationPx={Number(positionData?.liquidationPrice || 0)}
+          handlePressRiskTag={() => {
+            setShowRiskPopup(true);
+          }}
+          coinLogo={currentAssetCtx?.logoUrl}
+          activeAssetCtx={activeAssetCtx}
+          currentAssetCtx={currentAssetCtx}
+          availableBalance={Number(accountSummary?.withdrawable || 0)}
+          coin={coin}
+          marginUsed={positionData?.marginUsed || 0}
+          markPrice={markPrice}
+          direction={positionData?.direction as 'Long' | 'Short'}
+          positionSize={positionData?.size.toString() || '0'}
+          szDecimals={currentAssetCtx?.szDecimals || 0}
+          pxDecimals={currentAssetCtx?.pxDecimals || 2}
+          leverage={positionData?.leverage || 1}
+          leverageRang={[1, currentAssetCtx?.maxLeverage || 5]}
+          onCancel={() => setAddPositionVisible(false)}
+          onConfirm={() => {
+            setAddPositionVisible(false);
+          }}
+          handleAddPosition={async (tradeSize: string) => {
+            await handleOpenPosition({
+              coin,
+              size: tradeSize,
+              leverage: positionData?.leverage || 1,
+              direction: positionData?.direction as 'Long' | 'Short',
+              midPx: activeAssetCtx?.markPx || '0',
+            });
+          }}
+        />
+      ) : null}
+
       <PerpSearchListPopup
         openFromSource="searchPerps"
         visible={showSearchListPopup}
         onSelect={item => {
           coinNameRef.current = item;
+          const positionItem = positionAndOpenOrders?.find(
+            asset => asset.position.coin.toLowerCase() === coin?.toLowerCase(),
+          );
+          const tpItem = positionItem?.openOrders?.find(
+            order =>
+              order.orderType === 'Take Profit Market' &&
+              order.isTrigger &&
+              order.reduceOnly,
+          );
+          const slItem = positionItem?.openOrders?.find(
+            order =>
+              order.orderType === 'Stop Market' &&
+              order.isTrigger &&
+              order.reduceOnly,
+          );
           setCoin(item);
+          setCurrentTpOrSl({
+            tpPrice: tpItem?.triggerPx ?? undefined,
+            slPrice: slItem?.triggerPx ?? undefined,
+          });
         }}
         onCancel={() => {
           setShowSearchListPopup(false);

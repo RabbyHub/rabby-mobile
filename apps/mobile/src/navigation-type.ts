@@ -384,7 +384,10 @@ export type TransactionNavigatorParamList = {
     market: string;
     fromSource?: string;
   };
-  [RootNames.Lending]?: {};
+  [RootNames.Lending]?: {
+    tokenAddress?: string;
+    direction?: 'supply' | 'borrow';
+  };
 };
 
 export type SettingNavigatorParamList = {

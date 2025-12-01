@@ -1,37 +1,26 @@
 import { ChainId } from '@aave/contract-helpers';
 import {
-  AaveV2Avalanche,
-  AaveV2Ethereum,
-  AaveV2Fuji,
-  AaveV2Polygon,
   AaveV3Arbitrum,
-  AaveV3ArbitrumSepolia,
   AaveV3Avalanche,
   AaveV3Base,
-  AaveV3BaseSepolia,
   AaveV3BNB,
   AaveV3Celo,
   AaveV3Ethereum,
-  AaveV3EthereumEtherFi,
   AaveV3EthereumLido,
   AaveV3Gnosis,
+  AaveV3InkWhitelabel,
   AaveV3Linea,
   AaveV3Metis,
   AaveV3Optimism,
-  AaveV3OptimismSepolia,
   AaveV3Plasma,
   AaveV3Polygon,
   AaveV3Scroll,
-  AaveV3ScrollSepolia,
-  AaveV3Sepolia,
   AaveV3Soneium,
   AaveV3Sonic,
   AaveV3ZkSync,
 } from '@bgd-labs/aave-address-book';
 import { ReactNode } from 'react';
 
-// Enable for premissioned market
-// import { PermissionView } from 'src/components/transactions/FlowCommons/PermissionView';
 export type MarketDataType = {
   v3?: boolean;
   marketTitle: string;
@@ -49,6 +38,7 @@ export type MarketDataType = {
     debtSwitch?: boolean;
     withdrawAndSwitch?: boolean;
     switch?: boolean;
+    limit?: boolean;
   };
   permitDisabled?: boolean; // intended to be used for testnets
   isFork?: boolean;
@@ -75,14 +65,7 @@ export type MarketDataType = {
   };
 };
 export enum CustomMarket {
-  // v3 test networks, all v3.0.1
-  proto_arbitrum_sepolia_v3 = 'proto_arbitrum_sepolia_v3',
-  proto_fuji_v3 = 'proto_fuji_v3',
-  proto_optimism_sepolia_v3 = 'proto_optimism_sepolia_v3',
-  proto_scroll_sepolia_v3 = 'proto_scroll_sepolia_v3',
-  proto_sepolia_v3 = 'proto_sepolia_v3',
-  proto_base_sepolia_v3 = 'proto_base_sepolia_v3',
-  // v3 mainnets
+  // v3 mainnets, only v3
   proto_mainnet_v3 = 'proto_mainnet_v3',
   proto_optimism_v3 = 'proto_optimism_v3',
   proto_avalanche_v3 = 'proto_avalanche_v3',
@@ -95,22 +78,13 @@ export enum CustomMarket {
   proto_scroll_v3 = 'proto_scroll_v3',
   proto_lido_v3 = 'proto_lido_v3',
   proto_zksync_v3 = 'proto_zksync_v3',
-  proto_etherfi_v3 = 'proto_etherfi_v3',
   proto_linea_v3 = 'proto_linea_v3',
   proto_sonic_v3 = 'proto_sonic_v3',
   proto_celo_v3 = 'proto_celo_v3',
   proto_soneium_v3 = 'proto_soneium_v3',
   proto_horizon_v3 = 'proto_horizon_v3',
-  proto_sepolia_horizon_v3 = 'proto_sepolia_horizon_v3',
-  proto_aptos_v3 = 'proto_aptos_v3',
   proto_plasma_v3 = 'proto_plasma_v3',
-  // v2
-  proto_mainnet = 'proto_mainnet',
-  proto_avalanche = 'proto_avalanche',
-  proto_fuji = 'proto_fuji',
-  proto_polygon = 'proto_polygon',
-  // external
-  // permissioned_market = 'permissioned_market',
+  proto_ink_v3 = 'proto_ink_v3',
 }
 
 export const marketsData: {
@@ -130,6 +104,7 @@ export const marketsData: {
       withdrawAndSwitch: true,
       debtSwitch: true,
       switch: true,
+      limit: true,
     },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
@@ -178,153 +153,7 @@ export const marketsData: {
       DEBT_SWITCH_ADAPTER: AaveV3EthereumLido.DEBT_SWAP_ADAPTER,
     },
   },
-  [CustomMarket.proto_mainnet]: {
-    marketTitle: 'Ethereum',
-    market: CustomMarket.proto_mainnet,
-    chainId: ChainId.mainnet,
-    enabledFeatures: {
-      governance: true,
-      staking: true,
-      liquiditySwap: true,
-      collateralRepay: false,
-      incentives: true,
-      debtSwitch: true,
-      switch: true,
-    },
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER: AaveV2Ethereum.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: AaveV2Ethereum.POOL,
-      WETH_GATEWAY: AaveV2Ethereum.WETH_GATEWAY,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        AaveV2Ethereum.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER: AaveV2Ethereum.SWAP_COLLATERAL_ADAPTER,
-      WALLET_BALANCE_PROVIDER: AaveV2Ethereum.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: AaveV2Ethereum.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER: AaveV2Ethereum.UI_INCENTIVE_DATA_PROVIDER,
-      COLLECTOR: AaveV2Ethereum.COLLECTOR,
-      V3_MIGRATOR: AaveV2Ethereum.MIGRATION_HELPER,
-      DEBT_SWITCH_ADAPTER: AaveV2Ethereum.DEBT_SWAP_ADAPTER,
-    },
-  },
-  // [CustomMarket.permissioned_market]: {
-  //   marketTitle: 'Ethereum Permissioned Market example',
-  //   chainId: ChainId.mainnet,
-  //   enabledFeatures: {
-  //     // liquiditySwap: true,
-  //     // collateralRepay: false,
-  //     // incentives: true,
-  //     permissions: true,
-  //   },
-  //   permissionComponent: <PermissionView />,
-  //   addresses: {
-  //     LENDING_POOL_ADDRESS_PROVIDER: markets..POOL_ADDRESSES_PROVIDER,
-  //     LENDING_POOL: markets..POOL,
-  //     WETH_GATEWAY: markets..WETH_GATEWAY,
-  //     // REPAY_WITH_COLLATERAL_ADAPTER: markets..REPAY_WITH_COLLATERAL_ADAPTER,
-  //     // SWAP_COLLATERAL_ADAPTER: markets..SWAP_COLLATERAL_ADAPTER,
-  //     WALLET_BALANCE_PROVIDER: markets..WALLET_BALANCE_PROVIDER,
-  //     UI_POOL_DATA_PROVIDER: markets..UI_POOL_DATA_PROVIDER,
-  //     // UI_INCENTIVE_DATA_PROVIDER: markets..UI_INCENTIVE_DATA_PROVIDER,
-  //     PERMISSION_MANAGER: '<address here>',
-  //   },
-  // },
-
-  [CustomMarket.proto_polygon]: {
-    marketTitle: 'Polygon',
-    market: CustomMarket.proto_polygon,
-    chainId: ChainId.polygon,
-    enabledFeatures: {
-      liquiditySwap: true,
-      incentives: true,
-      collateralRepay: false,
-      debtSwitch: true,
-    },
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER: AaveV2Polygon.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: AaveV2Polygon.POOL,
-      WETH_GATEWAY: AaveV2Polygon.WETH_GATEWAY,
-      SWAP_COLLATERAL_ADAPTER: AaveV2Polygon.SWAP_COLLATERAL_ADAPTER,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        AaveV2Polygon.REPAY_WITH_COLLATERAL_ADAPTER,
-      WALLET_BALANCE_PROVIDER: AaveV2Polygon.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: AaveV2Polygon.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER: AaveV2Polygon.UI_INCENTIVE_DATA_PROVIDER,
-      COLLECTOR: AaveV2Polygon.COLLECTOR,
-      V3_MIGRATOR: AaveV2Polygon.MIGRATION_HELPER,
-      DEBT_SWITCH_ADAPTER: AaveV2Polygon.DEBT_SWAP_ADAPTER,
-    },
-  },
-  [CustomMarket.proto_avalanche]: {
-    marketTitle: 'Avalanche',
-    market: CustomMarket.proto_avalanche,
-    chainId: ChainId.avalanche,
-    enabledFeatures: {
-      liquiditySwap: true,
-      incentives: true,
-      collateralRepay: false,
-      debtSwitch: true,
-      switch: true,
-    },
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER: AaveV2Avalanche.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: AaveV2Avalanche.POOL,
-      WETH_GATEWAY: AaveV2Avalanche.WETH_GATEWAY,
-      SWAP_COLLATERAL_ADAPTER: AaveV2Avalanche.SWAP_COLLATERAL_ADAPTER,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        AaveV2Avalanche.REPAY_WITH_COLLATERAL_ADAPTER,
-      WALLET_BALANCE_PROVIDER: AaveV2Avalanche.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: AaveV2Avalanche.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER: AaveV2Avalanche.UI_INCENTIVE_DATA_PROVIDER,
-      COLLECTOR: AaveV2Avalanche.COLLECTOR,
-      V3_MIGRATOR: AaveV2Avalanche.MIGRATION_HELPER,
-      DEBT_SWITCH_ADAPTER: AaveV2Avalanche.DEBT_SWAP_ADAPTER,
-    },
-  },
   // v3
-  [CustomMarket.proto_sepolia_v3]: {
-    marketTitle: 'Ethereum Sepolia',
-    market: CustomMarket.proto_sepolia_v3,
-    v3: true,
-    chainId: ChainId.sepolia,
-    enabledFeatures: {
-      switch: true,
-      faucet: true,
-    },
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER: AaveV3Sepolia.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: AaveV3Sepolia.POOL,
-      WETH_GATEWAY: AaveV3Sepolia.WETH_GATEWAY,
-      FAUCET: AaveV3Sepolia.FAUCET,
-      WALLET_BALANCE_PROVIDER: AaveV3Sepolia.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: AaveV3Sepolia.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER: AaveV3Sepolia.UI_INCENTIVE_DATA_PROVIDER,
-      GHO_TOKEN_ADDRESS: '0xc4bF5CbDaBE595361438F8c6a187bDc330539c60',
-    },
-  },
-
-  [CustomMarket.proto_sepolia_horizon_v3]: {
-    marketTitle: 'Ethereum Sepolia Horizon',
-    market: CustomMarket.proto_sepolia_horizon_v3,
-    v3: true,
-    chainId: ChainId.sepolia,
-    enabledFeatures: {
-      switch: true,
-      faucet: true,
-    },
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER:
-        '0x8b1421Ca909B1b9d073ff321b5116b45f8BF4767',
-      LENDING_POOL: '0x553aA902Df9C6770c43Ef047cDD13431Ecdf09fF',
-      WETH_GATEWAY: '0xf43dfB8d231C404F60Bb6B35dfb1cdC321355A88',
-      FAUCET: AaveV3Sepolia.FAUCET,
-      WALLET_BALANCE_PROVIDER: '0x74218334de704596330a5Ab966FA1f3714f19da2',
-      UI_POOL_DATA_PROVIDER: '0x731129013c8aaFc18581D1Cf4f5378D9dEFc478E',
-      UI_INCENTIVE_DATA_PROVIDER: '0x70a20423393414B63968413B6b2d74d409E0CD50',
-
-      GHO_TOKEN_ADDRESS: '0xc4bF5CbDaBE595361438F8c6a187bDc330539c60',
-      // GHO_UI_DATA_PROVIDER: '0x69B9843A16a6E9933125EBD97659BA3CCbE2Ef8A', // TODO: Do we need?
-    },
-  },
   [CustomMarket.proto_base_v3]: {
     marketTitle: 'Base',
     market: CustomMarket.proto_base_v3,
@@ -354,26 +183,6 @@ export const marketsData: {
       GHO_TOKEN_ADDRESS: '0x6bb7a212910682dcfdbd5bcbb3e28fb4e8da10ee',
     },
   },
-  [CustomMarket.proto_arbitrum_sepolia_v3]: {
-    marketTitle: 'Arbitrum Sepolia',
-    market: CustomMarket.proto_arbitrum_sepolia_v3,
-    v3: true,
-    permitDisabled: true,
-    chainId: ChainId.arbitrum_sepolia,
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER:
-        AaveV3ArbitrumSepolia.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: AaveV3ArbitrumSepolia.POOL,
-      WETH_GATEWAY: AaveV3ArbitrumSepolia.WETH_GATEWAY,
-      // FAUCET: AaveV3ArbitrumSepolia.FAUCET,
-      WALLET_BALANCE_PROVIDER: AaveV3ArbitrumSepolia.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: AaveV3ArbitrumSepolia.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER:
-        AaveV3ArbitrumSepolia.UI_INCENTIVE_DATA_PROVIDER,
-      L2_ENCODER: AaveV3ArbitrumSepolia.L2_ENCODER,
-      GHO_TOKEN_ADDRESS: '0xb13Cfa6f8B2Eed2C37fB00fF0c1A59807C585810',
-    },
-  },
   [CustomMarket.proto_arbitrum_v3]: {
     marketTitle: 'Arbitrum',
     market: CustomMarket.proto_arbitrum_v3,
@@ -386,6 +195,7 @@ export const marketsData: {
       debtSwitch: true,
       withdrawAndSwitch: true,
       switch: true,
+      limit: true,
     },
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3Arbitrum.POOL_ADDRESSES_PROVIDER,
@@ -402,23 +212,6 @@ export const marketsData: {
       DEBT_SWITCH_ADAPTER: AaveV3Arbitrum.DEBT_SWAP_ADAPTER,
       WITHDRAW_SWITCH_ADAPTER: AaveV3Arbitrum.WITHDRAW_SWAP_ADAPTER,
       GHO_TOKEN_ADDRESS: AaveV3Arbitrum.ASSETS.GHO.UNDERLYING,
-    },
-  },
-  [CustomMarket.proto_base_sepolia_v3]: {
-    marketTitle: 'Base Sepolia',
-    market: CustomMarket.proto_base_sepolia_v3,
-    v3: true,
-    permitDisabled: true,
-    chainId: ChainId.base_sepolia,
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER:
-        '0xE4C23309117Aa30342BFaae6c95c6478e0A4Ad00', // AaveV3BaseSepolia.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: '0x8bAB6d1b75f19e9eD9fCe8b9BD338844fF79aE27', // AaveV3BaseSepolia.POOL,
-      WETH_GATEWAY: '0x0568130e794429D2eEBC4dafE18f25Ff1a1ed8b6', // AaveV3BaseSepolia.WETH_GATEWAY,
-      WALLET_BALANCE_PROVIDER: '0x2c4D1F4EC7F4FfA09a5E1C9e74fD3A10f21Bd811', // AaveV3BaseSepolia.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: '0x6a9D64f93DB660EaCB2b6E9424792c630CdA87d8', // AaveV3BaseSepolia.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER: '0xDB1412acf288D5bE057f8e90fd7b1BF4f84bB3B1', // AaveV3BaseSepolia.UI_INCENTIVE_DATA_PROVIDER,
-      L2_ENCODER: AaveV3BaseSepolia.L2_ENCODER,
     },
   },
   [CustomMarket.proto_avalanche_v3]: {
@@ -464,67 +257,6 @@ export const marketsData: {
       UI_POOL_DATA_PROVIDER: AaveV3Linea.UI_POOL_DATA_PROVIDER,
       UI_INCENTIVE_DATA_PROVIDER: AaveV3Linea.UI_INCENTIVE_DATA_PROVIDER,
       COLLECTOR: AaveV3Linea.COLLECTOR,
-    },
-  },
-  [CustomMarket.proto_fuji_v3]: {
-    marketTitle: 'Avalanche Fuji',
-    market: CustomMarket.proto_fuji_v3,
-    v3: true,
-    chainId: ChainId.fuji,
-    enabledFeatures: {
-      faucet: true,
-      incentives: true,
-    },
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER:
-        '0xfb87056c0587923f15EB0aABc7d0572450Cc8003', // AaveV3Fuji.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: '0xccEa5C65f6d4F465B71501418b88FBe4e7071283', // AaveV3Fuji.POOL,
-      WETH_GATEWAY: '0x8A007E495449ffeda4C2d65f14eE31f8Bcb022CF', // AaveV3Fuji.WETH_GATEWAY,
-      FAUCET: '0xBCcD21ae43139bEF545e72e20E78f039A3Ac1b96', // AaveV3Fuji.FAUCET,
-      WALLET_BALANCE_PROVIDER: '0xfFE3778c51e93EBf68f5d0a83c794E7f623024dd', // AaveV3Fuji.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: '0x279c790Afcd547e2f20d896c5DDEe3846b9790B5', // AaveV3Fuji.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER: '0x1EFf285a4E34217495b5531151bffa222A94A4F9', // AaveV3Fuji.UI_INCENTIVE_DATA_PROVIDER,
-    },
-  },
-  [CustomMarket.proto_optimism_sepolia_v3]: {
-    marketTitle: 'Optimism Sepolia',
-    market: CustomMarket.proto_optimism_sepolia_v3,
-    v3: true,
-    permitDisabled: true,
-    chainId: ChainId.optimism_sepolia,
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER:
-        AaveV3OptimismSepolia.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: AaveV3OptimismSepolia.POOL,
-      WETH_GATEWAY: AaveV3OptimismSepolia.WETH_GATEWAY,
-      // FAUCET: AaveV3OptimismSepolia.FAUCET,
-      WALLET_BALANCE_PROVIDER: AaveV3OptimismSepolia.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: AaveV3OptimismSepolia.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER:
-        AaveV3OptimismSepolia.UI_INCENTIVE_DATA_PROVIDER,
-      L2_ENCODER: AaveV3OptimismSepolia.L2_ENCODER,
-    },
-  },
-  [CustomMarket.proto_scroll_sepolia_v3]: {
-    marketTitle: 'Scroll Sepolia',
-    market: CustomMarket.proto_scroll_sepolia_v3,
-    v3: true,
-    chainId: ChainId.scroll_sepolia,
-    enabledFeatures: {
-      faucet: true,
-      incentives: true,
-    },
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER:
-        AaveV3ScrollSepolia.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: AaveV3ScrollSepolia.POOL,
-      WETH_GATEWAY: AaveV3ScrollSepolia.WETH_GATEWAY,
-      FAUCET: AaveV3ScrollSepolia.FAUCET,
-      WALLET_BALANCE_PROVIDER: AaveV3ScrollSepolia.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: AaveV3ScrollSepolia.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER:
-        AaveV3ScrollSepolia.UI_INCENTIVE_DATA_PROVIDER,
-      L2_ENCODER: AaveV3ScrollSepolia.L2_ENCODER,
     },
   },
   [CustomMarket.proto_sonic_v3]: {
@@ -588,6 +320,7 @@ export const marketsData: {
     chainId: ChainId.mainnet,
     v3: true,
     logo: '/icons/markets/horizon.svg',
+    // subgraphUrl: `https://gateway-arbitrum.network.thegraph.com/api/${apiKey}/subgraphs/id/5vxMbXRhG1oQr55MWC5j6qg78waWujx1wjeuEWDA6j3`,
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER:
         '0x5D39E06b825C1F2B80bf2756a73e28eFAA128ba0',
@@ -648,22 +381,22 @@ export const marketsData: {
     },
   },
 
-  [CustomMarket.proto_fuji]: {
-    marketTitle: 'Avalanche Fuji',
-    market: CustomMarket.proto_fuji,
-    chainId: ChainId.fuji,
-    enabledFeatures: {
-      faucet: true,
-      incentives: true,
-    },
+  [CustomMarket.proto_ink_v3]: {
+    marketTitle: 'Ink',
+    market: CustomMarket.proto_ink_v3,
+    chainId: 57073 as ChainId,
+    v3: true,
+    logo: '/icons/networks/ink.svg',
     addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER: AaveV2Fuji.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: AaveV2Fuji.POOL,
-      WETH_GATEWAY: AaveV2Fuji.WETH_GATEWAY,
-      FAUCET: AaveV2Fuji.FAUCET,
-      WALLET_BALANCE_PROVIDER: AaveV2Fuji.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: AaveV2Fuji.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER: AaveV2Fuji.UI_INCENTIVE_DATA_PROVIDER,
+      LENDING_POOL_ADDRESS_PROVIDER:
+        AaveV3InkWhitelabel.POOL_ADDRESSES_PROVIDER,
+      LENDING_POOL: AaveV3InkWhitelabel.POOL,
+      WETH_GATEWAY: AaveV3InkWhitelabel.WETH_GATEWAY,
+      WALLET_BALANCE_PROVIDER: AaveV3InkWhitelabel.WALLET_BALANCE_PROVIDER,
+      UI_POOL_DATA_PROVIDER: '0xc851e6147dcE6A469CC33BE3121b6B2D4CaD2763', // custom as doesnt work utils
+      UI_INCENTIVE_DATA_PROVIDER:
+        AaveV3InkWhitelabel.UI_INCENTIVE_DATA_PROVIDER,
+      // COLLECTOR: AaveV3InkWhitelabel.COLLECTOR,
     },
   },
 
@@ -750,22 +483,6 @@ export const marketsData: {
       COLLECTOR: AaveV3ZkSync.COLLECTOR,
     },
   },
-  [CustomMarket.proto_aptos_v3]: {
-    marketTitle: 'Aptos',
-    market: CustomMarket.proto_aptos_v3,
-    v3: true,
-    chainId: ChainId.mainnet, // Using mainnet since Aptos is external
-    logo: '/icons/markets/aptos.svg',
-    externalUrl: 'https://aptos.aave.com',
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER: '',
-      LENDING_POOL: '',
-      WALLET_BALANCE_PROVIDER: '',
-      UI_POOL_DATA_PROVIDER: '',
-      UI_INCENTIVE_DATA_PROVIDER: '',
-    },
-  },
-
   [CustomMarket.proto_celo_v3]: {
     marketTitle: 'Celo',
     market: CustomMarket.proto_celo_v3,
@@ -795,39 +512,6 @@ export const marketsData: {
       COLLECTOR: AaveV3Soneium.COLLECTOR,
     },
   },
-  [CustomMarket.proto_etherfi_v3]: {
-    marketTitle: 'EtherFi',
-    market: CustomMarket.proto_etherfi_v3,
-    chainId: ChainId.mainnet,
-    v3: true,
-    logo: '/icons/markets/etherfi.svg',
-    enabledFeatures: {
-      governance: true,
-      staking: true,
-      liquiditySwap: true,
-      collateralRepay: true,
-      incentives: true,
-      withdrawAndSwitch: true,
-      debtSwitch: true,
-      switch: false,
-    },
-    addresses: {
-      LENDING_POOL_ADDRESS_PROVIDER:
-        AaveV3EthereumEtherFi.POOL_ADDRESSES_PROVIDER,
-      LENDING_POOL: AaveV3EthereumEtherFi.POOL,
-      WETH_GATEWAY: AaveV3EthereumEtherFi.WETH_GATEWAY,
-      REPAY_WITH_COLLATERAL_ADAPTER:
-        AaveV3EthereumEtherFi.REPAY_WITH_COLLATERAL_ADAPTER,
-      SWAP_COLLATERAL_ADAPTER: AaveV3EthereumEtherFi.SWAP_COLLATERAL_ADAPTER,
-      WALLET_BALANCE_PROVIDER: AaveV3EthereumEtherFi.WALLET_BALANCE_PROVIDER,
-      UI_POOL_DATA_PROVIDER: AaveV3EthereumEtherFi.UI_POOL_DATA_PROVIDER,
-      UI_INCENTIVE_DATA_PROVIDER:
-        AaveV3EthereumEtherFi.UI_INCENTIVE_DATA_PROVIDER,
-      COLLECTOR: AaveV3EthereumEtherFi.COLLECTOR,
-      WITHDRAW_SWITCH_ADAPTER: AaveV3EthereumEtherFi.WITHDRAW_SWAP_ADAPTER,
-      DEBT_SWITCH_ADAPTER: AaveV3EthereumEtherFi.DEBT_SWAP_ADAPTER,
-    },
-  },
   [CustomMarket.proto_metis_v3]: {
     marketTitle: 'Metis',
     market: CustomMarket.proto_metis_v3,
@@ -850,4 +534,18 @@ export const marketsData: {
 
 export const findByChainId = (chainId: ChainId) => {
   return Object.values(marketsData).find(market => market.chainId === chainId);
+};
+
+export const getMarketLogo = (market: CustomMarket) => {
+  if (market === CustomMarket.proto_lido_v3) {
+    return {
+      uri: 'https://static-assets.rabby.io/files/a6dc7573-a15d-4cce-9993-ee9e07204f51.png',
+    };
+  }
+  if (market === CustomMarket.proto_horizon_v3) {
+    return {
+      uri: 'https://static-assets.rabby.io/files/f9ab51bf-30c5-4b26-9ba5-6d730369a945.png',
+    };
+  }
+  return undefined;
 };

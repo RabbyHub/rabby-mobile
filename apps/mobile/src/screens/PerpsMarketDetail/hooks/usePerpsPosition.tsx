@@ -1,4 +1,3 @@
-import { toast } from '@/components2024/Toast';
 import { apisPerps } from '@/core/apis';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
@@ -8,7 +7,7 @@ import { Dimensions, Platform, Text } from 'react-native';
 import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { sleep } from '@/utils/async';
 import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
-import Toast from 'react-native-root-toast';
+import { showToast } from '@/hooks/perps/showToast';
 
 export const usePerpsPosition = ({
   setCurrentTpOrSl,
@@ -59,16 +58,12 @@ export const usePerpsPosition = ({
             item => (item as unknown as string) === 'success',
           )
         ) {
-          toast.success(actionText + ' canceled successfully', {
-            position: Toast.positions.CENTER,
-          });
+          showToast(actionText + ' canceled successfully', 'success');
           setTimeout(() => {
             fetchPositionOpenOrders();
           }, 1000);
         } else {
-          toast.error(actionText + ' cancel error', {
-            position: Toast.positions.CENTER,
-          });
+          showToast(actionText + ' cancel error', 'error');
           Sentry.captureException(
             new Error(
               actionText + ' cancel error' + 'res: ' + JSON.stringify(res),
@@ -76,9 +71,7 @@ export const usePerpsPosition = ({
           );
         }
       } catch (error) {
-        toast.error(actionText + ' cancel error', {
-          position: Toast.positions.CENTER,
-        });
+        showToast(actionText + ' cancel error', 'error');
         Sentry.captureException(
           new Error(
             actionText + ' cancel error' + 'error: ' + JSON.stringify(error),
@@ -100,23 +93,20 @@ export const usePerpsPosition = ({
           value: marginNormalized,
         });
         if (res?.status === 'ok') {
-          toast.success(actionText + ' successfully', {
-            position: Toast.positions.CENTER,
-          });
+          showToast(actionText + ' successfully', 'success');
           fetchClearinghouseState();
         } else {
-          toast.error(res?.response?.data?.error || actionText + ' error', {
-            position: Toast.positions.CENTER,
-          });
+          showToast(
+            res?.response?.data?.error || actionText + ' error',
+            'error',
+          );
           Sentry.captureException(
             new Error(actionText + ' error' + 'res: ' + JSON.stringify(res)),
           );
         }
       } catch (error: any) {
         console.error(actionText + ' error', error);
-        toast.error(error?.message || actionText + ' error', {
-          position: Toast.positions.CENTER,
-        });
+        showToast(error?.message || actionText + ' error', 'error');
         Sentry.captureException(
           new Error(actionText + ' error' + 'error: ' + JSON.stringify(error)),
         );
@@ -151,9 +141,7 @@ export const usePerpsPosition = ({
         formattedSlTriggerPx &&
           (nextCurrentTpOrSl.slPrice = formattedSlTriggerPx);
         setCurrentTpOrSl(nextCurrentTpOrSl);
-        toast.success(autoCloseText + ' set successfully', {
-          position: Toast.positions.CENTER,
-        });
+        showToast(autoCloseText + ' set successfully', 'success');
         setTimeout(() => {
           fetchPositionOpenOrders();
         }, 1000);
@@ -162,9 +150,7 @@ export const usePerpsPosition = ({
         if (isExpired) {
           return;
         }
-        toast.error(error?.message || autoCloseText + ' set error', {
-          position: Toast.positions.CENTER,
-        });
+        showToast(error?.message || autoCloseText + ' set error', 'error');
         Sentry.captureException(
           new Error(
             autoCloseText +
@@ -202,24 +188,7 @@ export const usePerpsPosition = ({
           fetchClearinghouseState();
           const { totalSz, avgPx } = filled;
           const msg = `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
-          toast.success(
-            Platform.OS === 'android'
-              ? ({ textStyle }) => (
-                  <Text
-                    style={[
-                      textStyle,
-                      {
-                        maxWidth: Dimensions.get('window').width - 100,
-                      },
-                    ]}>
-                    {msg}
-                  </Text>
-                )
-              : msg,
-            {
-              position: Toast.positions.CENTER,
-            },
-          );
+          showToast(msg, 'success');
           setCurrentTpOrSl({
             tpPrice: undefined,
             slPrice: undefined,
@@ -231,9 +200,7 @@ export const usePerpsPosition = ({
           };
         } else {
           const msg = res?.response?.data?.statuses[0]?.error;
-          toast.error(msg || 'close position error', {
-            position: Toast.positions.CENTER,
-          });
+          showToast(msg || 'close position error', 'error');
           Sentry.captureException(
             new Error(
               'PERPS close position noFills ' +
@@ -251,9 +218,7 @@ export const usePerpsPosition = ({
           return null;
         }
         console.error('close position error', e);
-        toast.error(e?.message || 'close position error', {
-          position: Toast.positions.CENTER,
-        });
+        showToast(e?.message || 'close position error', 'error');
         Sentry.captureException(
           new Error(
             'PERPS close position error' +
@@ -332,24 +297,7 @@ export const usePerpsPosition = ({
 
           const { totalSz, avgPx } = filled;
           const msg = `Opened ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
-          toast.success(
-            Platform.OS === 'android'
-              ? ({ textStyle }) => (
-                  <Text
-                    style={[
-                      textStyle,
-                      {
-                        maxWidth: Dimensions.get('window').width - 100,
-                      },
-                    ]}>
-                    {msg}
-                  </Text>
-                )
-              : msg,
-            {
-              position: Toast.positions.CENTER,
-            },
-          );
+          showToast(msg, 'success');
           setCurrentTpOrSl({
             tpPrice: formattedTpTriggerPx,
             slPrice: formattedSlTriggerPx,
@@ -361,9 +309,7 @@ export const usePerpsPosition = ({
           };
         } else {
           const msg = res?.response?.data?.statuses[0]?.error;
-          toast.error(msg || 'open position error', {
-            position: Toast.positions.CENTER,
-          });
+          showToast(msg || 'open position error', 'error');
           Sentry.captureException(
             new Error(
               'PERPS open position noFills' +
@@ -380,9 +326,7 @@ export const usePerpsPosition = ({
           return;
         }
         console.error(error);
-        toast.error(error?.message || 'open position error', {
-          position: Toast.positions.CENTER,
-        });
+        showToast(error?.message || 'open position error', 'error');
         Sentry.captureException(
           new Error(
             'PERPS open position error' +

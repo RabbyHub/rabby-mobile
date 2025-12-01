@@ -89,8 +89,6 @@ module.exports = {
           '@': './src',
           'styled-components/native': 'styled-components/native',
           'styled-components': 'styled-components/native',
-          'react-native-sqlite-storage':
-            '@rabby-wallet/react-native-sqlite-storage',
         },
       },
     ],

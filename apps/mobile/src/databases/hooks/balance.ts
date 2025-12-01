@@ -66,7 +66,7 @@ export const batchBalanceWithLocalCache = async (
       );
       formatBalance.total_usd_value += appChainUsdValue;
     }
-    runOnJS(syncBalance)(address, isCore, formatBalance);
+    syncBalance(address, isCore, formatBalance);
     return formatBalance;
   } else {
     return onlySync

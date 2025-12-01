@@ -125,13 +125,12 @@ export const calLiquidationPrice = (
 
 // transfer_margin_required = max(initial_margin_required, 0.1 * total_position_value)
 export const calTransferMarginRequired = (
-  entryPrice: number,
   markPrice: number,
   positionSize: number,
   leverage: number,
 ) => {
   const nationalValue = Number(positionSize) * Number(markPrice);
-  const initialNationalValue = Number(positionSize) * Number(entryPrice);
+  const initialNationalValue = Number(positionSize) * Number(markPrice);
   const initialMarginRequired = initialNationalValue * (1 / leverage);
   const transferMarginRequired = Math.max(
     initialMarginRequired,

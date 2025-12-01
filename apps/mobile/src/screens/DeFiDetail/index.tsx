@@ -274,7 +274,7 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
-  const { getCacheTop10Assets, refreshing, assetsMap, loadSpecificDefi } =
+  const { getCacheTop10Assets, refreshing, portfoliosMap, loadSpecificDefi } =
     useAssets({ hideCombined: true });
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -307,8 +307,8 @@ export const DeFiDetailScreen = () => {
       totalUsdValue: SectionListItem['totalUsdValue'];
       address: SectionListItem['address'];
     }[] = [];
-    Object.keys(assetsMap).forEach(address => {
-      const { portfolios } = assetsMap[address];
+    Object.keys(portfoliosMap).forEach(address => {
+      const portfolios = portfoliosMap[address];
 
       portfolios?.map(portfolio => {
         if (portfolio.id === data?.id && portfolio.chain === data?.chain) {
@@ -340,7 +340,7 @@ export const DeFiDetailScreen = () => {
   }, [
     isSingleAddress,
     data,
-    assetsMap,
+    portfoliosMap,
     accounts,
     currentPortfolio,
     portfolioList,
