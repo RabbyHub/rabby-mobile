@@ -73,10 +73,9 @@ export const useCheckIsExpireAndUpdate = ({
   }, [top10Addresses.length]);
 
   useEffect(() => {
+    if (!isFocused) return;
+
     const cacheTop10AssetsId = setTimeout(() => {
-      if (!isFocused) {
-        return;
-      }
       if (initRef.current) {
         return;
       }
@@ -89,11 +88,19 @@ export const useCheckIsExpireAndUpdate = ({
         ignoreLoading: !top10Balance,
       });
     }, 50);
+
     return () => {
       cacheTop10AssetsId && clearTimeout(cacheTop10AssetsId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, !top10Balance, top10Addresses.length]);
+  }, [
+    isFocused,
+    top10Balance,
+    disableToken,
+    disableDefi,
+    disableNFT,
+    checkIsExpireAndUpdate,
+    top10Addresses,
+  ]);
 
   useEffect(() => {
     if (triggerRefresh && isFocusing) {
