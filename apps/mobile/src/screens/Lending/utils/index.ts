@@ -22,7 +22,7 @@ export const getHealthStatusColor = (healthFactor: number) => {
   }
   return {
     color: ThemeColors2024.light['green-default'],
-    backgroundColor: ThemeColors2024.light['green-light-4'],
+    backgroundColor: ThemeColors2024.light['green-light-1'],
   };
 };
 

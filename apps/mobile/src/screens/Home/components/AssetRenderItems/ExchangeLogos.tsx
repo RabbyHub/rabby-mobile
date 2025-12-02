@@ -45,7 +45,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   line: {
     width: 1,
     height: 12,
-    backgroundColor: colors2024['blue-light-2'],
+    backgroundColor: colors2024['blue-light-disable'],
   },
   moreCex: {
     color: colors2024['neutral-secondary'],

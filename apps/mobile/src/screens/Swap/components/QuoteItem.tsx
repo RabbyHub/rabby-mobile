@@ -152,7 +152,7 @@ export const DexQuoteItem = (
               {
                 backgroundColor: !isBestQuote
                   ? colors2024['red-light-1']
-                  : colors2024['green-light-4'],
+                  : colors2024['green-light-1'],
               },
             ]}>
             <Text

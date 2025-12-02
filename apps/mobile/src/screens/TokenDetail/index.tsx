@@ -215,12 +215,12 @@ const TokenDetailContent = () => {
                     ? colors2024['neutral-secondary']
                     : isLoss
                     ? colors2024['red-disable']
-                    : colors2024['green-disable'],
+                    : colors2024['green-light-2'],
                   backgroundColor: is24hNoChange
                     ? colors2024['neutral-bg-1']
                     : isLoss
                     ? colors2024['red-light-1']
-                    : colors2024['green-light-4'],
+                    : colors2024['green-light-1'],
                 },
               ]}
               onPress={handleOpenTokenMarketInfo}>
@@ -421,7 +421,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 4,
       borderWidth: 1,
       borderColor: colors2024['green-default'],
-      backgroundColor: colors2024['green-light-4'],
+      backgroundColor: colors2024['green-light-1'],
       padding: 6,
       paddingHorizontal: 12,
       borderRadius: 16,

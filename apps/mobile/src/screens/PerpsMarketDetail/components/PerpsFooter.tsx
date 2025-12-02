@@ -69,7 +69,7 @@ export const PerpsFooter: React.FC<{
             <Button
               type="primary"
               buttonStyle={{
-                backgroundColor: colors2024['green-light-4'],
+                backgroundColor: colors2024['green-light-1'],
               }}
               titleStyle={{
                 color: colors2024['green-default'],

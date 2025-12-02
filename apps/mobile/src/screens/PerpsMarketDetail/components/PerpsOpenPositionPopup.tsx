@@ -377,7 +377,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                   styles.directionButton,
                   styles.directionButtonLeft,
                   direction === 'Long' && {
-                    backgroundColor: colors2024['green-light-4'],
+                    backgroundColor: colors2024['green-light-1'],
                     borderRadius: 8,
                   },
                 ]}
