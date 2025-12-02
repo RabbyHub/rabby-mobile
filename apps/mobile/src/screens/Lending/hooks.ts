@@ -19,7 +19,7 @@ import { ethers } from 'ethers';
 import dayjs from 'dayjs';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { startTransition, useCallback, useMemo } from 'react';
-import isEqual from 'fast-deep-equal';
+import { unstable_batchedUpdates } from 'react-native';
 import { InteractionManager } from 'react-native';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
@@ -472,17 +472,13 @@ const useLendingData = () => {
               const nextUserReserves = data?.userReserves;
               const nextWalletBalances =
                 data?.walletBalances || EMPTY_WALLET_BALANCES;
-              if (!isEqual(nextReserves, reserves)) {
+              unstable_batchedUpdates(() => {
                 setReserves(nextReserves);
-              }
-              if (!isEqual(nextUserReserves, userReserves)) {
                 setUserReserves(nextUserReserves);
-              }
-              if (!isEqual(nextWalletBalances, walletBalances)) {
                 setWalletBalances(nextWalletBalances);
-              }
-              setCurrentAddress(requestAddress);
-              setLoading(false);
+                setCurrentAddress(requestAddress);
+                setLoading(false);
+              });
             });
           });
         })
@@ -494,14 +490,11 @@ const useLendingData = () => {
       currentAccount?.address,
       fetchContractData,
       marketKey,
-      reserves,
       setCurrentAddress,
       setLoading,
       setReserves,
       setUserReserves,
       setWalletBalances,
-      userReserves,
-      walletBalances,
     ],
   );
 
