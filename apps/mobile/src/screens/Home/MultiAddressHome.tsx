@@ -119,6 +119,7 @@ import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { RNGHTouchableOpacity } from '@/components/customized/reexports';
+import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -151,6 +152,7 @@ function MultiAddressHome(): JSX.Element {
 
   const { accounts } = useMyAccounts({ disableAutoFetch: true });
   const sortedAccounts = useSortAddressList(accounts);
+  useSubscribePosition(sortedAccounts);
   // 获取top50的私钥助记词账户
   const top50PrivateKeyAccounts = useCreationWithShallowCompare(() => {
     console.debug('top50PrivateKeyAccounts', sortedAccounts);

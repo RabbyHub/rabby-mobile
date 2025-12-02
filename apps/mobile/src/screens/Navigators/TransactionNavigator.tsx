@@ -31,7 +31,6 @@ import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
 import CopyTradingTokenDetail from '../CopyTrading/component/CopyTradingTokenDetail';
 import { PerpsScreen } from '../Perps';
-import { PerpsMarketListScreen } from '../PerpsMarketList';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
 import LendingHistory from '../Lending/components/LendingHistory';

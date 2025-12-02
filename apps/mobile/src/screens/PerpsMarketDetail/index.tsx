@@ -53,6 +53,8 @@ import { PerpsDepositTokenModal } from '../Perps/components/PerpsDepositPopup/Pe
 import Toast from 'react-native-root-toast';
 import { PerpSearchListPopup } from '../Perps/components/PerpSearchListPopup';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
+import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import { showToast } from '@/hooks/perps/showToast';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -69,19 +71,24 @@ export const PerpsMarketDetailScreen = () => {
       >
     >();
 
-  const { market: marketName, fromSource } = route.params;
+  const { market: marketName, fromSource, showOpenPosition } = route.params;
   const [coin, setCoin] = useState(marketName);
 
-  const { state } = usePerpsStore();
   const {
     positionAndOpenOrders,
     accountSummary,
     marketDataMap,
     perpFee,
     marketData,
-    hasPermission,
-  } = state;
-  // const hasPermission = true;
+    // hasPermission,
+    currentPerpsAccount,
+    isLogin,
+    userFills,
+    accountNeedApproveAgent,
+    accountNeedApproveBuilderFee,
+    handleActionApproveStatus,
+  } = usePerpsState();
+  const hasPermission = true;
   const [isShowModal, setIsShowModal] = useState(false);
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
@@ -182,12 +189,7 @@ export const PerpsMarketDetailScreen = () => {
     handleSetAutoClose,
     handleCancelOrder,
     handleUpdateMargin,
-    currentPerpsAccount,
-    isLogin,
-    userFills,
-  } = usePerpsPosition({
-    setCurrentTpOrSl,
-  });
+  } = usePerpsPosition();
 
   const { handleDeposit } = usePerpsDeposit({
     currentPerpsAccount,
@@ -218,9 +220,34 @@ export const PerpsMarketDetailScreen = () => {
     return !!currentPosition;
   }, [currentPosition]);
 
+  const needDepositFirst = useMemo(() => {
+    return (
+      Number(accountSummary?.accountValue || 0) === 0 &&
+      Number(accountSummary?.withdrawable || 0) === 0
+    );
+  }, [accountSummary]);
+
+  const accountNeedApprove = useMemo(() => {
+    return accountNeedApproveAgent || accountNeedApproveBuilderFee;
+  }, [accountNeedApproveAgent, accountNeedApproveBuilderFee]);
+
   const canOpenPosition = useMemo(() => {
-    return hasPermission && isLogin && !hasPosition;
-  }, [hasPermission, isLogin, hasPosition]);
+    return (
+      hasPermission &&
+      isLogin &&
+      !hasPosition &&
+      !needDepositFirst &&
+      !accountNeedApprove &&
+      showOpenPosition
+    );
+  }, [
+    hasPermission,
+    isLogin,
+    hasPosition,
+    needDepositFirst,
+    showOpenPosition,
+    accountNeedApprove,
+  ]);
 
   const [openPositionVisible, setOpenPositionVisible] = React.useState(
     fromSource === 'openPosition' && canOpenPosition,
@@ -322,6 +349,7 @@ export const PerpsMarketDetailScreen = () => {
   const HeaderTitle = useCallback(() => {
     return (
       <PerpsHeaderTitle
+        account={currentPerpsAccount}
         popupIsOpen={showSearchListPopup}
         market={market}
         onSelectCoin={() => {
@@ -329,7 +357,12 @@ export const PerpsMarketDetailScreen = () => {
         }}
       />
     );
-  }, [market, setShowSearchListPopup, showSearchListPopup]);
+  }, [
+    market,
+    setShowSearchListPopup,
+    showSearchListPopup,
+    currentPerpsAccount,
+  ]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -392,7 +425,9 @@ export const PerpsMarketDetailScreen = () => {
             }
             pxDecimals={currentAssetCtx?.pxDecimals || 2}
             szDecimals={currentAssetCtx?.szDecimals || 0}
+            handleActionApproveStatus={handleActionApproveStatus}
             handleSetAutoClose={handleSetAutoClose}
+            setCurrentTpOrSl={setCurrentTpOrSl}
             availableBalance={availableBalance}
             leverageMax={currentAssetCtx?.maxLeverage || 5}
             handleCancelAutoClose={handleCancelAutoClose}
@@ -411,18 +446,32 @@ export const PerpsMarketDetailScreen = () => {
             hasPermission={hasPermission}
             hasPosition={hasPosition}
             direction={positionData?.direction}
-            onAddPress={() => {
+            onAddPress={async () => {
+              await handleActionApproveStatus();
               setAddPositionVisible(true);
             }}
-            onLongPress={() => {
+            onLongPress={async () => {
+              if (needDepositFirst) {
+                showToast(t('page.perpsDetail.needDepositFirst'), 'error');
+                return;
+              }
+
+              await handleActionApproveStatus();
               setPositionDirection('Long');
               setOpenPositionVisible(true);
             }}
-            onShortPress={() => {
+            onShortPress={async () => {
+              if (needDepositFirst) {
+                showToast(t('page.perpsDetail.needDepositFirst'), 'error');
+                return;
+              }
+
+              await handleActionApproveStatus();
               setPositionDirection('Short');
               setOpenPositionVisible(true);
             }}
-            onClosePress={() => {
+            onClosePress={async () => {
+              await handleActionApproveStatus();
               setClosePositionVisible(true);
             }}
           />
@@ -510,6 +559,7 @@ export const PerpsMarketDetailScreen = () => {
         markPrice={markPrice}
         availableBalance={Number(accountSummary?.withdrawable || 0)}
         onCancel={() => setOpenPositionVisible(false)}
+        setCurrentTpOrSl={setCurrentTpOrSl}
         handleOpenPosition={handleOpenPosition}
         onConfirm={() => {
           setOpenPositionVisible(false);
@@ -546,6 +596,10 @@ export const PerpsMarketDetailScreen = () => {
               size: sizeStr,
               direction: positionData?.direction as 'Long' | 'Short',
               price: (activeAssetCtx?.markPx as unknown as string) || '0',
+            });
+            setCurrentTpOrSl({
+              tpPrice: undefined,
+              slPrice: undefined,
             });
           }}
         />

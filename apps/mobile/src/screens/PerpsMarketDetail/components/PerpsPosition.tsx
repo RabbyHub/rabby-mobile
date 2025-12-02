@@ -19,6 +19,8 @@ import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 export const PerpsPosition: React.FC<{
   showRiskPopup: boolean;
   setShowRiskPopup: (show: boolean) => void;
+  handleActionApproveStatus: () => Promise<void>;
+  setCurrentTpOrSl: (params: { tpPrice?: string; slPrice?: string }) => void;
   positionData?: {
     pnl: number;
     positionValue: number;
@@ -59,6 +61,8 @@ export const PerpsPosition: React.FC<{
 }> = ({
   showRiskPopup,
   setShowRiskPopup,
+  handleActionApproveStatus,
+  setCurrentTpOrSl,
   positionData,
   coin,
   coinLogo,
@@ -187,7 +191,10 @@ export const PerpsPosition: React.FC<{
               {positionData?.type !== 'cross' ? (
                 <TouchableOpacity
                   style={styles.tagContainer}
-                  onPress={() => setEditMarginVisible(true)}>
+                  onPress={async () => {
+                    await handleActionApproveStatus();
+                    setEditMarginVisible(true);
+                  }}>
                   <Text style={[styles.tagText]}>
                     $
                     {splitNumberByStep(
@@ -225,6 +232,7 @@ export const PerpsPosition: React.FC<{
               </View>
               <View style={styles.tagWrapper}>
                 <PerpEditTpSlPriceTag
+                  handleActionApproveStatus={handleActionApproveStatus}
                   coin={coin}
                   actionType="tp"
                   type="hasPosition"
@@ -246,6 +254,9 @@ export const PerpsPosition: React.FC<{
                       tpTriggerPx: price,
                       slTriggerPx: '',
                       direction: positionData?.direction as 'Long' | 'Short',
+                    });
+                    setCurrentTpOrSl({
+                      tpPrice: Number(price).toString(),
                     });
                   }}
                 />
@@ -290,6 +301,7 @@ export const PerpsPosition: React.FC<{
                 <PerpEditTpSlPriceTag
                   coin={coin}
                   actionType="sl"
+                  handleActionApproveStatus={handleActionApproveStatus}
                   type="hasPosition"
                   entryPrice={positionData?.entryPrice}
                   markPrice={markPrice}
@@ -309,6 +321,9 @@ export const PerpsPosition: React.FC<{
                       tpTriggerPx: '',
                       slTriggerPx: price,
                       direction: positionData?.direction as 'Long' | 'Short',
+                    });
+                    setCurrentTpOrSl({
+                      slPrice: Number(price).toString(),
                     });
                   }}
                 />

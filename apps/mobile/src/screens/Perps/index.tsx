@@ -69,6 +69,7 @@ import { naviPush } from '@/utils/navigation';
 import { calculateDistanceToLiquidation } from './components/PerpsPositionSection/utils';
 import { PerpsRiskLevelPopup } from './components/PerpsPositionSection/PerpsRiskLevelPopup';
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
+import { usePerpsPosition } from '../PerpsMarketDetail/hooks/usePerpsPosition';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -85,7 +86,7 @@ export const PerpsScreen = () => {
     positionAndOpenOrders,
     accountSummary,
     currentPerpsAccount,
-    currentOnlyShowPerpsAccount,
+    defaultPerpsAccount,
     isLogin,
     isInitialized,
     marketData,
@@ -102,14 +103,20 @@ export const PerpsScreen = () => {
     perpFee,
 
     localLoadingHistory,
-    judgeIsUserAgentIsExpired,
-    fetchClearinghouseState,
+
+    handleActionApproveStatus,
+    loginWithNoHardwareSign,
+    setInitialized,
   } = usePerpsState();
+  const { handleClosePosition } = usePerpsPosition();
 
   useEffect(() => {
     if (_account) {
-      login(_account).then(loginSuccess => {
-        if (loginSuccess && fromName) {
+      if (
+        currentPerpsAccount?.address === _account.address &&
+        currentPerpsAccount?.type === _account.type
+      ) {
+        if (fromName) {
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.PerpsMarketDetail,
             params: {
@@ -117,15 +124,23 @@ export const PerpsScreen = () => {
             },
           });
         }
-      });
+      } else {
+        loginWithNoHardwareSign(_account).then(loginSuccess => {
+          if (loginSuccess && fromName) {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.PerpsMarketDetail,
+              params: {
+                market: fromName,
+              },
+            });
+          }
+          setInitialized(true);
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [closePositionVisible, setClosePositionVisible] = React.useState(false);
-  const [closePosition, setClosePosition] = useState<
-    AssetPosition['position'] | null
-  >(null);
   const [selectedToken, setSelectedToken] = useSelectedToken();
   const [popupState, setPopupState] = usePerpsPopupState();
   const [isShowModal, setIsShowModal] = useState(false);
@@ -195,65 +210,6 @@ export const PerpsScreen = () => {
       headerRight: Header,
     });
   }, [currentPerpsAccount, navigation, Header, Title]);
-
-  const handleClosePosition = useMemoizedFn(
-    async (params: {
-      coin: string;
-      size: string;
-      direction: 'Long' | 'Short';
-      price: string;
-    }) => {
-      try {
-        const sdk = apisPerps.getPerpsSDK();
-        const { coin, direction, price, size } = params;
-        const res = await sdk.exchange?.marketOrderClose({
-          coin,
-          isBuy: direction === 'Short',
-          size,
-          midPx: price,
-          builder: PERPS_BUILDER_INFO,
-        });
-
-        const filled = res?.response?.data?.statuses[0]?.filled;
-        if (filled) {
-          fetchClearinghouseState();
-          const { totalSz, avgPx } = filled;
-          const msg = `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
-          showToast(msg, 'success');
-        } else {
-          const msg = res?.response?.data?.statuses[0]?.error;
-          showToast(msg || 'close position error', 'error');
-          Sentry.captureException(
-            new Error(
-              'PERPS close position noFills' +
-                'params: ' +
-                JSON.stringify(params) +
-                'res: ' +
-                JSON.stringify(res),
-            ),
-          );
-          return null;
-        }
-      } catch (e: any) {
-        const isExpired = await judgeIsUserAgentIsExpired(e?.message || '');
-        if (isExpired) {
-          return null;
-        }
-        console.error('close position error', e);
-        showToast(e?.message || 'close position error', 'error');
-        Sentry.captureException(
-          new Error(
-            'PERPS close position error' +
-              'params: ' +
-              JSON.stringify(params) +
-              'error: ' +
-              JSON.stringify(e),
-          ),
-        );
-        return null;
-      }
-    },
-  );
 
   useEffect(() => {
     apisPerps.getHasDoneNewUserProcess().then(hasDoneNewUserProcess => {
@@ -346,6 +302,7 @@ export const PerpsScreen = () => {
           handleShowRiskPopup={handleShowRiskPopup}
           handleCloseRiskPopup={handleCloseRiskPopup}
           positionAndOpenOrders={positionAndOpenOrders}
+          handleActionApproveStatus={handleActionApproveStatus}
           marketDataMap={marketDataMap}
           onClosePosition={async position => {
             const marketDataItem = marketDataMap[position.coin];
@@ -367,6 +324,7 @@ export const PerpsScreen = () => {
     handleClosePosition,
     handleShowRiskPopup,
     handleCloseRiskPopup,
+    handleActionApproveStatus,
   ]);
 
   // Render item - either sticky header or market item
@@ -389,6 +347,7 @@ export const PerpsScreen = () => {
               params: {
                 market: item.name,
                 fromSource: 'openPosition',
+                showOpenPosition: true,
               },
             });
           }}
@@ -642,6 +601,7 @@ export const PerpsScreen = () => {
             params: {
               market: name,
               fromSource: 'openPosition',
+              showOpenPosition: true,
             },
           });
         }}

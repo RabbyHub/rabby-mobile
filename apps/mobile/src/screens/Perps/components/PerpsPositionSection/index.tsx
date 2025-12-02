@@ -28,12 +28,14 @@ export const PerpsPositionSection: React.FC<{
   marketDataMap: MarketDataMap;
   handleShowRiskPopup: (coin: string) => void;
   handleCloseRiskPopup: () => void;
+  handleActionApproveStatus: () => Promise<void>;
   onClosePosition: (position: AssetPosition['position']) => Promise<void>;
 }> = ({
   positionAndOpenOrders,
   marketDataMap,
   handleShowRiskPopup,
   handleCloseRiskPopup,
+  handleActionApproveStatus,
   onClosePosition,
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -46,7 +48,8 @@ export const PerpsPositionSection: React.FC<{
     );
   }, [positionAndOpenOrders]);
 
-  const handleCloseAll = useMemoizedFn(() => {
+  const handleCloseAll = useMemoizedFn(async () => {
+    await handleActionApproveStatus();
     Alert.alert(
       t('page.perps.closeAllConfirmTitle'),
       t('page.perps.closeAllConfirmMessage'),
