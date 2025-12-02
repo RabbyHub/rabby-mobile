@@ -1,3 +1,4 @@
+import { SQLiteDriverType } from '@/core/databases/exports';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import BigNumber from 'bignumber.js';
@@ -44,30 +45,28 @@ export const columnConverter = {
  */
 export const badRealTransformer: ValueTransformer = {
   to: (decimals?: number | string) => {
-    if (!decimals) {
-      return 0;
-    }
+    if (!decimals) return 0;
     if (typeof decimals === 'string') {
-      decimals = parseInt(decimals);
+      const maybeValidInt = parseInt(decimals);
+      if (Number.isNaN(maybeValidInt)) return decimals;
+
+      decimals = maybeValidInt;
     }
 
-    if (Number.isNaN(decimals)) {
-      return 0;
-    }
+    if (Number.isNaN(decimals)) return 0;
 
     return decimals * DECIMALS_INT_RATIO;
   },
   from: (int?: number | string) => {
-    if (!int) {
-      return 0;
-    }
+    if (!int) return 0;
     if (typeof int === 'string') {
-      int = parseInt(int);
+      const maybeValidInt = parseInt(int);
+      if (Number.isNaN(maybeValidInt)) return int;
+
+      int = maybeValidInt;
     }
 
-    if (Number.isNaN(int)) {
-      return 0;
-    }
+    if (Number.isNaN(int)) return 0;
 
     return int / DECIMALS_INT_RATIO;
   },
@@ -95,3 +94,6 @@ export const bigNumberTransformer: ValueTransformer = {
     BigNumber.isBigNumber(val) ? val.toString() : new BigNumber(val).toString(),
   from: (val: any) => new BigNumber(val),
 };
+
+export const RECOMMENDED_DEFAULT_QUERY_LIMIT =
+  SQLiteDriverType === 'RNSQLiteStorage' ? 200 : 500;

@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import React, { memo } from 'react';
 import { View, Text, StyleProp, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';

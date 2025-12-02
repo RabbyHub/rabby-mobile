@@ -9,17 +9,21 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useFindChain } from '@/hooks/useFindChain';
 import { Item } from './NFTItem';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { AccountOverview } from '@/screens/Home/components/AccountOverview';
 
 interface Props {
   data: CollectionList;
   titleText?: string;
   onPressItem: (item: NFTItem) => void;
+  account?: KeyringAccountWithAlias;
 }
 
 export const CollectionNFTs: React.FC<Props> = ({
   data,
   titleText,
   onPressItem,
+  account,
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -35,11 +39,16 @@ export const CollectionNFTs: React.FC<Props> = ({
       }}>
       <BottomSheetHandlableView>
         <View style={{ ...styles.titleView, ...styles.titleViewWithText }}>
-          {titleText && (
-            <View style={styles.titleTextWrapper}>
-              <Text style={styles.titleText}>{titleText}</Text>
-            </View>
-          )}
+          <View style={styles.titleTextWrapper}>
+            {!!titleText && <Text style={styles.titleText}>{titleText}</Text>}
+            {account ? (
+              <AccountOverview
+                account={account}
+                logoSize={18}
+                textStyle={styles.accountOverviewText}
+              />
+            ) : null}
+          </View>
         </View>
       </BottomSheetHandlableView>
 
@@ -83,13 +92,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     lineHeight: 24,
   },
+  accountOverviewText: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
   titleTextWrapper: {
     flex: 1,
+    alignItems: 'center',
+    gap: 4,
   },
 
   chainListWrapper: {

@@ -2,14 +2,18 @@ import React from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { StyleProp, Text, TextStyle, View } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 export const AccountOverview = ({
   account,
+  logoSize = 14,
+  textStyle,
 }: {
   account: KeyringAccountWithAlias;
+  logoSize?: number;
+  textStyle?: StyleProp<TextStyle>;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
@@ -18,12 +22,21 @@ export const AccountOverview = ({
         <WalletIcon
           type={account.type as KEYRING_TYPE}
           address={account.address}
-          width={styles.walletIcon.width}
-          height={styles.walletIcon.height}
-          style={styles.walletIcon}
+          style={[
+            styles.walletIcon,
+            {
+              width: logoSize,
+              height: logoSize,
+            },
+          ]}
+          width={logoSize}
+          height={logoSize}
         />
       </View>
-      <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
+      <Text
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        style={[styles.titleText, textStyle]}>
         {account.aliasName}
       </Text>
     </View>

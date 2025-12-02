@@ -4,6 +4,7 @@ import { preferenceService } from '@/core/services';
 import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';
 import { useCallback } from 'react';
+import { zCreate } from '@/core/utils/reexports';
 
 const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
   const chunks: IManageToken[][] = [];
@@ -30,13 +31,31 @@ const getPinTokens = async () => {
   return newTokenDetails;
 };
 
-export const pinTokensAtom = atom<TokenItem[]>([]);
+// export const pinTokensAtom = atom<TokenItem[]>([]);
+
+type PinTokensState = {
+  pinTokens: TokenItem[];
+};
+
+const pinTokensStore = zCreate<PinTokensState>(() => ({
+  pinTokens: [],
+}));
+
+export async function handleFetchTokens() {
+  return getPinTokens().then(tokens => {
+    pinTokensStore.setState({
+      pinTokens: tokens,
+    });
+    return tokens;
+  });
+}
 
 export const usePinTokens = () => {
-  const [data, setData] = useAtom(pinTokensAtom);
-  const handleFetchTokens = useCallback(() => {
-    return getPinTokens().then(setData);
-  }, [setData]);
+  // const [data, setData] = useAtom(pinTokensAtom);
+  const data = pinTokensStore(s => s.pinTokens);
+  // const handleFetchTokens = useCallback(() => {
+  //   return getPinTokens().then(setData);
+  // }, [setData]);
 
   return {
     data,

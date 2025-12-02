@@ -1,4 +1,4 @@
-import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
+import { ComplexProtocol, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { chunk } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { runOnJS } from 'react-native-reanimated';

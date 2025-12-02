@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useShallow } from 'zustand/react/shallow';
 
 import { keyringService } from '@/core/services';
 import { apisLock } from '@/core/apis';
@@ -16,6 +17,9 @@ import { APP_FEATURE_SWITCH } from '@/constant';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { useAtomCallback } from 'jotai/utils';
+import { isEqual } from 'lodash';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -25,30 +29,62 @@ const isIOS = Platform.OS === 'ios';
 //   nativeUnblockScreen,
 // } from '@/core/native/ReactNativeSecurity';
 
-const appLockAtom = atom({
-  appUnlocked: false,
-  pwdStatus: PasswordStatus.Unknown,
-});
-appLockAtom.onMount = setAppLock => {
-  setAppLock(prev => ({
-    ...prev,
-    appUnlocked: keyringService.isUnlocked(),
-  }));
+// const appLockAtom = atom({
+//   appUnlocked: false,
+//   pwdStatus: PasswordStatus.Unknown,
+// });
+// appLockAtom.onMount = setAppLock => {
+//   setAppLock(prev => ({
+//     ...prev,
+//     appUnlocked: keyringService.isUnlocked(),
+//   }));
+// };
+
+type AppLockState = {
+  appUnlocked: boolean;
+  pwdStatus: PasswordStatus;
 };
+const zAppLockStore = zCreate<AppLockState>((set, get) => {
+  return {
+    appUnlocked: false,
+    pwdStatus: PasswordStatus.Unknown,
+  };
+});
 
+function setAppLock(valOrFunc: UpdaterOrPartials<AppLockState>) {
+  zAppLockStore.setState(prev => resolveValFromUpdater(prev, valOrFunc).newVal);
+}
+// iife
+setAppLock({ appUnlocked: keyringService.isUnlocked() });
+
+function getIsAppUnlocked() {
+  const state = zAppLockStore.getState();
+  return state.appUnlocked;
+}
+
+export function useSetAppLock() {
+  return { setAppLock };
+}
 export function useAppUnlocked() {
-  const [{ appUnlocked, pwdStatus }, setAppLock] = useAtom(appLockAtom);
+  // const [{ appUnlocked }, _setAppLock] = useAtom(appLockAtom);
+  // const getIsAppUnlocked = useAtomCallback(
+  //   useCallback(get => get(appLockAtom).appUnlocked, []),
+  // );
+  // const setAppLock = useCallback<typeof _setAppLock>((valOrFunc) => {
+  //   _setAppLock(prev => {
+  //     const nextVal = valOrFunc instanceof Function ? valOrFunc(prev) : valOrFunc;
+  //     if (isEqual(prev, nextVal)) return prev;
 
-  const getIsAppUnlocked = useAtomCallback(
-    useCallback(get => get(appLockAtom).appUnlocked, []),
-  );
+  //     return nextVal;
+  //   })
+  // }, [_setAppLock]);
 
   // const hasSetupCustomPassword = useMemo(() => {
   //   return pwdStatus === PasswordStatus.Custom;
   // }, [pwdStatus]);
 
   return {
-    isAppUnlocked: appUnlocked,
+    isAppUnlocked: zAppLockStore(state => state.appUnlocked),
     getIsAppUnlocked,
     // hasSetupCustomPassword,
     setAppLock,
@@ -56,7 +92,8 @@ export function useAppUnlocked() {
 }
 
 export function usePasswordStatus() {
-  const { pwdStatus } = useAtomValue(appLockAtom);
+  // const { pwdStatus } = useAtomValue(appLockAtom);
+  const pwdStatus = zAppLockStore(state => state.pwdStatus);
 
   return {
     pwdStatus,
@@ -65,38 +102,37 @@ export function usePasswordStatus() {
   };
 }
 
-// const tryAutoUnlockPromiseRef = {
-//   current: (async () =>
-//     apisLock.tryAutoUnlockRabbyMobileWithUpdateUnlockTime())(),
-// };
+export const getTriedUnlock = async () => {
+  return apisLock
+    .tryAutoUnlockRabbyMobileWithUpdateUnlockTime()
+    .then(async result => {
+      setAppLock({
+        appUnlocked: keyringService.isUnlocked(),
+        pwdStatus: result.lockInfo.pwdStatus,
+      });
+      return result;
+    });
+};
 
 /**
  * @description only use this hooks on the top level of your app
  */
 export function useTryUnlockAppWithBuiltinOnTop() {
-  const { setAppLock } = useAppUnlocked();
-
-  const getTriedUnlock = React.useCallback(async () => {
-    return apisLock
-      .tryAutoUnlockRabbyMobileWithUpdateUnlockTime()
-      .then(async result => {
-        setAppLock({
-          appUnlocked: keyringService.isUnlocked(),
-          pwdStatus: result.lockInfo.pwdStatus,
-        });
-        return result;
-      });
-  }, [setAppLock]);
-
   return { getTriedUnlock };
 }
 
 export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
-  const [appLock, setAppLock] = useAtom(appLockAtom);
-  const isLoadingRef = React.useRef(false);
+  // const [appLock, setAppLock] = useAtom(appLockAtom);
+  const appLock = zAppLockStore(
+    useShallow(state => ({
+      appUnlocked: state.appUnlocked,
+      pwdStatus: state.pwdStatus,
+    })),
+  );
 
   const { autoFetch } = options || {};
 
+  const isLoadingRef = React.useRef(false);
   const fetchLockInfo = useCallback(async () => {
     if (isLoadingRef.current) return;
     isLoadingRef.current = true;
@@ -115,7 +151,7 @@ export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
     } finally {
       isLoadingRef.current = false;
     }
-  }, [setAppLock]);
+  }, []);
 
   React.useEffect(() => {
     if (autoFetch) {
@@ -150,15 +186,30 @@ function tryGetAppStatus() {
   }
 }
 
-const appStateAtom = atom<{
+// const appStateAtom = atom<{
+//   current: AppStateStatus;
+//   androidPaused: boolean;
+//   // iosStatus: AppStateStatus;
+// }>({
+//   current: tryGetAppStatus(),
+//   androidPaused: false,
+//   // iosStatus: FALLBACK_STATE,
+// });
+type AppStateState = {
   current: AppStateStatus;
   androidPaused: boolean;
-  // iosStatus: AppStateStatus;
-}>({
-  current: tryGetAppStatus(),
-  androidPaused: false,
-  // iosStatus: FALLBACK_STATE,
+};
+
+const appStateStore = zCreate<AppStateState>((set, get) => {
+  return {
+    current: tryGetAppStatus(),
+    androidPaused: false,
+  };
 });
+
+function setAppStatus(valOrFunc: UpdaterOrPartials<AppStateState>) {
+  appStateStore.setState(prev => resolveValFromUpdater(prev, valOrFunc).newVal);
+}
 
 function isInactive(appStatus: AppStateStatus) {
   return [
@@ -169,7 +220,8 @@ function isInactive(appStatus: AppStateStatus) {
 }
 
 export function useIsOnBackground() {
-  const appState = useAtomValue(appStateAtom);
+  // const appState = useAtomValue(appStateAtom);
+  const appState = appStateStore(state => state);
 
   const isOnBackground = useMemo(() => {
     if (isIOS) {
@@ -188,7 +240,7 @@ export function useIsOnBackground() {
  * @description call this hooks on the top level of your app to handle background state
  */
 export function useSecureOnBackground() {
-  const setAppStatus = useSetAtom(appStateAtom);
+  // const setAppStatus = useSetAtom(appStateAtom);
 
   React.useEffect(() => {
     if (isAndroid) {
@@ -228,7 +280,7 @@ export function useSecureOnBackground() {
         subChange.remove();
       };
     }
-  }, [setAppStatus]);
+  }, []);
 }
 
 type SwitchToggleType =

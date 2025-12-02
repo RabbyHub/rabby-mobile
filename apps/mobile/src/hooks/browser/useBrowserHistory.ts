@@ -7,7 +7,7 @@ import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
-import { dappsAtom } from '../useDapps';
+import { useDappsValue } from '../useDapps';
 import { useBrowserBookmark } from './useBrowserBookmark';
 import {
   safeGetOrigin,
@@ -17,24 +17,51 @@ import { groupBy, sortBy, unionBy, uniqBy } from 'lodash';
 import dayjs from 'dayjs';
 import { formatTimestamp } from '@/utils/time';
 import { useTranslation } from 'react-i18next';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-export const browserHistoryAtom = atom<EntityState<BrowserHistoryItem, string>>(
-  {
+// export const browserHistoryAtom = atom<EntityState<BrowserHistoryItem, string>>(
+//   {
+//     ids: [],
+//     entities: {},
+//   },
+// );
+type BrowserHistoryState = EntityState<BrowserHistoryItem, string>;
+const browserHistoryStore = zCreate<BrowserHistoryState>(() => ({
+  ids: [],
+  entities: {},
+}));
+
+function setBrowserHistoryStore(
+  valOrFunc: UpdaterOrPartials<BrowserHistoryState>,
+) {
+  browserHistoryStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
+export function resetBrowserHistoryStore() {
+  setBrowserHistoryStore({
     ids: [],
     entities: {},
-  },
-);
+  });
+}
 
 export function useBrowserHistory() {
-  const [store, setStore] = useAtom(browserHistoryAtom);
-  const [dapps] = useAtom(dappsAtom);
+  // const [store, setStore] = useAtom(browserHistoryAtom);
+  const { ids, entities } = browserHistoryStore(s => s);
+  // const [dapps] = useAtom(dappsAtom);
+  const { dapps } = useDappsValue();
   const { bookmarkStore } = useBrowserBookmark();
   const { t } = useTranslation();
 
   const getBrowserHistoryList = useMemoizedFn(() => {
     const entities = browserService.history.selectors.selectEntities();
     const ids = browserService.history.selectors.selectIds();
-    setStore({
+    setBrowserHistoryStore({
       ids,
       entities,
     });
@@ -44,7 +71,7 @@ export function useBrowserHistory() {
     if (!item || !/^https?:\/\//.test(item.url)) {
       return;
     }
-    const historyId = store.ids.find(
+    const historyId = ids.find(
       id => safeGetOrigin(id) === safeGetOrigin(item.url),
     );
     try {
@@ -73,8 +100,8 @@ export function useBrowserHistory() {
       const list: DappInfo[] = [];
       const dict: Record<number, DappInfo[]> = {};
 
-      store.ids.forEach(key => {
-        const item = store.entities[key];
+      ids.forEach(key => {
+        const item = entities[key];
         if (!item || !/^https?:\/\//.test(item.url)) {
           return;
         }
@@ -124,7 +151,7 @@ export function useBrowserHistory() {
           item => -item.timestamp,
         ),
       };
-    }, [bookmarkStore.entities, dapps, store.entities, store.ids, t]);
+    }, [bookmarkStore.entities, dapps, entities, ids, t]);
 
   return {
     browserHistoryList,

@@ -9,7 +9,11 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
-import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import {
+  appStorageForZustand,
+  atomByMMKV,
+  MMKVStorageStrategy,
+} from '@/core/storage/mmkv';
 
 import { useEffect } from 'react';
 import {
@@ -22,38 +26,75 @@ import { BUILD_CHANNEL } from '@/constant/env';
 import { APP_URLS, isNonPublicProductionEnv } from '@/constant';
 import { toast } from '@/components/Toast';
 import { useUnmountedRef } from './common/useMount';
+import { zCreate, zCreateJSONStorage, zPersist } from '@/core/utils/reexports';
 
 const appLocalVersion = getVersion();
-const RemoteVersionAtom = atomByMMKV<MergedRemoteVersion>(
-  '@RemoteVersionMMKV',
-  {
-    version: appLocalVersion,
-    downloadUrl: APP_URLS.DOWNLOAD_PAGE,
-    externalUrlToOpen: '',
-    storeUrl: null,
-    source: BUILD_CHANNEL,
-    couldUpgrade: false,
-    changelog: '',
-  },
-  { storage: MMKVStorageStrategy.compatJson },
-);
+// const remoteVersionAtom = atomByMMKV<MergedRemoteVersion>(
+//   '@RemoteVersionMMKV',
+//   {
+//     version: appLocalVersion,
+//     downloadUrl: APP_URLS.DOWNLOAD_PAGE,
+//     externalUrlToOpen: '',
+//     storeUrl: null,
+//     source: BUILD_CHANNEL,
+//     couldUpgrade: false,
+//     changelog: '',
+//   },
+//   { storage: MMKVStorageStrategy.compatJson },
+// );
+// const localVersionAtom = atom<string>(appLocalVersion);
 
-const localVersionAtom = atom<string>(appLocalVersion);
+const remoteVersionStore = zCreate(
+  zPersist<MergedRemoteVersion>(
+    () => ({
+      version: appLocalVersion,
+      downloadUrl: APP_URLS.DOWNLOAD_PAGE,
+      externalUrlToOpen: '',
+      storeUrl: null,
+      source: BUILD_CHANNEL,
+      couldUpgrade: false,
+      changelog: '',
+    }),
+    {
+      name: '@RemoteVersionMMKV',
+      storage: zCreateJSONStorage(() => appStorageForZustand),
+    },
+  ),
+);
+function setRemoteVersion(val: MergedRemoteVersion) {
+  remoteVersionStore.setState(val);
+}
+const localVersionStore = zCreate<string>(() => appLocalVersion);
+function setLocalVersion(val: string) {
+  localVersionStore.setState(val);
+}
+
+const loadRemoteVersion = async () => {
+  return getUpgradeInfo().then(result => {
+    setRemoteVersion(result.finalRemoteInfo);
+    setLocalVersion(result.localVersion);
+
+    return result;
+  });
+};
 
 export function useUpgradeInfo(options?: { isTop?: boolean }) {
   const { isTop = false } = options || {};
 
-  const [remoteVersion, setRemoteVersion] = useAtom(RemoteVersionAtom);
-  const [localVersion, setLocalVersion] = useAtom(localVersionAtom);
+  const remoteVersion = remoteVersionStore(s => s);
+  const localVersion = localVersionStore(s => s);
 
-  const loadRemoteVersion = useCallback(async () => {
-    return getUpgradeInfo().then(result => {
-      setRemoteVersion(result.finalRemoteInfo);
-      setLocalVersion(result.localVersion);
+  // const [remoteVersion, setRemoteVersion] = useAtom(remoteVersionAtom);
+  // const [localVersion, setLocalVersion] = useAtom(localVersionAtom);
 
-      return result;
-    });
-  }, [setLocalVersion, setRemoteVersion]);
+  // const loadRemoteVersion = useCallback(async () => {
+  //   return getUpgradeInfo().then(result => {
+  //     setRemoteVersion(result.finalRemoteInfo);
+  //     setLocalVersion(result.localVersion);
+
+  //     return result;
+  //   });
+  // }, []);
 
   const openedModalIdRef = useRef<string>('');
   const triggerCheckVersion = useCallback(
@@ -91,12 +132,12 @@ export function useUpgradeInfo(options?: { isTop?: boolean }) {
           });
         });
     },
-    [setRemoteVersion],
+    [],
   );
 
   useEffect(() => {
     if (isTop) loadRemoteVersion();
-  }, [isTop, loadRemoteVersion]);
+  }, [isTop]);
 
   return {
     localVersion,
@@ -109,7 +150,8 @@ export function useUpgradeInfo(options?: { isTop?: boolean }) {
  * @warning make sure this hook only used on non-production environment
  */
 export function useForceLocalVersionForNonProduction() {
-  const [localVersion, setLocalVersion] = useAtom(localVersionAtom);
+  // const [localVersion, setLocalVersion] = useAtom(localVersionAtom);
+  const localVersion = localVersionStore(s => s);
   const { triggerCheckVersion } = useUpgradeInfo();
 
   const forceLocalVersion = useCallback(
@@ -119,7 +161,7 @@ export function useForceLocalVersionForNonProduction() {
       setLocalVersion(version);
       triggerCheckVersion({ forceLocalVersion: version });
     },
-    [setLocalVersion, triggerCheckVersion],
+    [triggerCheckVersion],
   );
 
   return {

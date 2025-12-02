@@ -1,6 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import { Text, View, TouchableOpacity } from 'react-native';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,36 +10,30 @@ import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
-import { CurrentAddressProps } from '../AddressListScreenContainer';
-import {
-  StackActions,
-  useIsFocused,
-  useNavigation,
-} from '@react-navigation/native';
-import { AppRootName, RootNames } from '@/constant/layout';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useSetPasswordFirst } from '@/hooks/useLock';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useBalanceUpdate } from './hooks/balance';
-import { Tabs } from 'react-native-collapsible-tab-view';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
+import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
+import AutoLockView from '@/components/AutoLockView';
 
 const SPACING_HEIGHT = 8;
-export const AddressList = () => {
+interface AddressListProps {
+  onAddAddressPress?: () => void;
+  onDone?: () => void;
+  onMoreAddressListPress?: () => void;
+}
+export const AddressList = ({
+  onAddAddressPress,
+  onDone,
+  onMoreAddressListPress,
+}: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
-  const modalRef =
-    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
   const {
     top10Addresses,
     notMatterAccounts,
@@ -102,45 +98,16 @@ export const AddressList = () => {
     ({ item }) => {
       return (
         <View style={styles.itemGap}>
-          <AddressEntry data={item} />
+          <AddressEntry data={item} onSelect={onDone} />
         </View>
       );
     },
-    [styles.itemGap],
+    [onDone, styles.itemGap],
   );
 
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
-
-  const gotoAddAddress = useCallback(() => {
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-      shouldRedirectToSetPasswordBefore2024,
-      navigateTo: (screen: AppRootName, params?: object) => {
-        navigation.dispatch(
-          StackActions.push(RootNames.StackAddress, {
-            screen,
-            params,
-          }),
-        );
-      },
-    });
-  }, [shouldRedirectToSetPasswordBefore2024, navigation]);
-
   const handleMoreWalletsPress = useCallback(() => {
-    if (modalRef.current) {
-      removeGlobalBottomSheetModal2024(modalRef.current);
-    }
-    modalRef.current = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(modalRef.current);
-        modalRef.current = undefined;
-      },
-    });
-  }, []);
+    onMoreAddressListPress?.();
+  }, [onMoreAddressListPress]);
 
   const notMatterAvatarList = useMemo(() => {
     return notMatterAccounts.slice(0, 3);
@@ -224,7 +191,7 @@ export const AddressList = () => {
             </TouchableOpacity>
           </View>
         )}
-        <Card style={styles.footerCard} onPress={gotoAddAddress}>
+        <Card style={styles.footerCard} onPress={onAddAddressPress}>
           <View style={styles.footerMain}>
             <WalletSVG
               width={20}
@@ -243,7 +210,7 @@ export const AddressList = () => {
       notMatterAccounts,
       notMatterAvatarList,
       colors2024,
-      gotoAddAddress,
+      onAddAddressPress,
       styles,
       t,
       handleMoreWalletsPress,
@@ -264,7 +231,7 @@ export const AddressList = () => {
 
   // return null;
   return (
-    <Tabs.FlatList
+    <BottomSheetFlatList
       keyExtractor={item => `${item.address}-${item.brandName}`}
       data={addressListData}
       renderItem={renderItem}
@@ -272,6 +239,7 @@ export const AddressList = () => {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.list}
       ListFooterComponent={renderFooter}
+      style={styles.listContainer}
       ListHeaderComponent={<View style={{ height: SPACING_HEIGHT }} />}
       refreshControl={
         <RefreshControl
@@ -284,7 +252,48 @@ export const AddressList = () => {
   );
 };
 
+export const AddressListModal = ({
+  onAddAddressPress,
+  onDone,
+}: AddressListProps) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+  const [moreAddressList, setMoreAddressList] = useState(false);
+  if (moreAddressList) {
+    return (
+      <NotMatterAddressDialog
+        onDone={onDone}
+        onBack={() => setMoreAddressList(false)}
+      />
+    );
+  }
+  return (
+    <AutoLockView as="View" style={styles.container}>
+      <Text style={styles.title}>{t('component.multiAddressModal.title')}</Text>
+      <AddressList
+        onAddAddressPress={onAddAddressPress}
+        onDone={onDone}
+        onMoreAddressListPress={() => setMoreAddressList(true)}
+      />
+    </AutoLockView>
+  );
+};
+
 const getStyles = createGetStyles2024(ctx => ({
+  container: {
+    flex: 1,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 24,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-title-1'],
+  },
   footerGap: {
     height: 70,
   },
@@ -311,6 +320,10 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   itemGap: {
     marginTop: SPACING_HEIGHT,
+  },
+  listContainer: {
+    flex: 1,
+    marginTop: 8,
   },
   list: {
     backgroundColor: ctx.isLight

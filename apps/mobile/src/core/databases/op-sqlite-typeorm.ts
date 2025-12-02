@@ -36,11 +36,14 @@ export const opSqliteTypeORMDriver = {
       // console.debug([opSqliteTypeORMDriver] 'options', options);
       // const name = options.name;
       // console.debug([opSqliteTypeORMDriver] 'IOS_LIBRARY_PATH, ANDROID_DATABASE_PATH', IOS_LIBRARY_PATH, ANDROID_DATABASE_PATH);
-      const location = stringUtils.ensureSuffix(
-        getRabbyAppDbDir() ||
-          (isIOS ? IOS_LIBRARY_PATH : ANDROID_DATABASE_PATH),
-        '/',
-      );
+      const location =
+        options.location === ':memory:'
+          ? options.location
+          : stringUtils.ensureSuffix(
+              getRabbyAppDbDir() ||
+                (isIOS ? IOS_LIBRARY_PATH : ANDROID_DATABASE_PATH),
+              '/',
+            );
       console.debug('[opSqliteTypeORMDriver] location', location);
 
       const database = open({
@@ -57,7 +60,8 @@ export const opSqliteTypeORMDriver = {
           fail?: (msg: string) => void,
         ): Promise<T> => {
           try {
-            const response = await database.execute(sql, params);
+            const response = await database.executeWithHostObjects(sql, params);
+            // const response = await database.execute(sql, params);
             enhanceQueryResult(response);
             ok?.(response);
             return response as T;

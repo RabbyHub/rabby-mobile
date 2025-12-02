@@ -105,16 +105,16 @@ export const useMultiCurve = (
   const loadingMapRef = useRef<Record<string, boolean>>({});
 
   const fetch = useCallback(
-    async (addres: string[], force = false) => {
+    async (_addresses: string[], force = false) => {
       try {
-        if (!addres.length) {
+        if (!_addresses.length) {
           setLoading(false);
           return;
         }
         setLoading(!!force);
-        const nextCheckAddress = new Set([...addres]);
+        const nextCheckAddress = new Set([..._addresses]);
         !force &&
-          addres.forEach(_addr => {
+          _addresses.forEach(_addr => {
             const addr = _addr.toLowerCase();
             setMultiTimeStamp(prev => ({
               ...prev,

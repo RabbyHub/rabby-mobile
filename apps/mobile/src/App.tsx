@@ -12,7 +12,7 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { withExpoSnack } from 'nativewind';
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useCallback, useEffect } from 'react';
 import { setup, withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
@@ -24,7 +24,6 @@ import { useSetupServiceStub } from './core/storage/serviceStoreStub';
 import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
 import { useSecureOnBackground } from './hooks/useLock';
 import { replace } from './utils/navigation';
-import JotaiNexus from './components/JotaiNexus';
 import { useUpgradeInfo } from './hooks/version';
 import { AppProvider } from './hooks/global';
 import { useGlobalAppPreventScreenrecordOnDev } from './hooks/appSettings';
@@ -44,6 +43,11 @@ import { SAFE_API_KEY } from './constant/env';
 Safe.apiKey = SAFE_API_KEY;
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
+import usePrevious from 'react-use/lib/usePrevious';
+import {
+  RerenderDetector,
+  useRendererDetect,
+} from './components/Perf/PerfDetector';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -58,10 +62,11 @@ const rneuiTheme = createTheme({
 
 type AppProps = { rabbitCode: string };
 
-function MainScreen({ rabbitCode }: AppProps) {
+const MemoziedAppNav = React.memo(AppNavigation);
+
+const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   const { isAppUnlocked } = useInitializeAppOnTop();
   const { couldRender, securityChainOnTop } = useBootstrapApp({ rabbitCode });
-  const { binaryTheme } = useAppTheme({ isAppTop: true });
 
   useSetupServiceStub();
   useUpgradeInfo({ isTop: true });
@@ -79,31 +84,34 @@ function MainScreen({ rabbitCode }: AppProps) {
   useIntervalSyncDDefaultRPCs();
   useUserDidTakeScreenshot({ isTop: true });
 
-  const initAccounts = useMemoizedFn(async () => {
-    const accounts = await keyringService.getAllVisibleAccountsArray();
-    if (!accounts?.length) {
-      replace(RootNames.StackGetStarted, {
-        screen: RootNames.GetStartedScreen2024,
-      });
-    }
-  });
-
   useEffect(() => {
-    if (isAppUnlocked) {
-      initAccounts();
-    }
-  }, [isAppUnlocked, initAccounts]);
+    (async () => {
+      if (isAppUnlocked) {
+        const accounts = await keyringService.getAllVisibleAccountsArray();
+        if (!accounts?.length) {
+          replace(RootNames.StackGetStarted, {
+            screen: RootNames.GetStartedScreen2024,
+          });
+        }
+      }
+    })();
+  }, [isAppUnlocked]);
+
+  useRendererDetect({ name: 'MainScreen' });
 
   return (
     <AppProvider value={{ securityChain: securityChainOnTop }}>
+      <RerenderDetector name="AppProvider" />
       <BottomSheetModalProvider>
         <ScreenSceneAccountProvider>
-          {couldRender && <AppNavigation colorScheme={binaryTheme} />}
+          {couldRender && <MemoziedAppNav />}
         </ScreenSceneAccountProvider>
       </BottomSheetModalProvider>
     </AppProvider>
   );
-}
+});
+
+const MemoziedMainScreen = React.memo(MainScreen);
 
 function App({ rabbitCode }: AppProps): JSX.Element {
   return (
@@ -115,12 +123,10 @@ function App({ rabbitCode }: AppProps): JSX.Element {
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
                 {/* read from native bundle on production */}
-                <MainScreen
+                <MemoziedMainScreen
                   rabbitCode={__DEV__ ? 'RABBY_MOBILE_CODE_DEV' : rabbitCode}
                 />
               </GestureHandlerRootView>
-              {/* <MainScreen /> */}
-              <JotaiNexus />
             </Suspense>
           </SafeAreaProvider>
         </RootSiblingParent>

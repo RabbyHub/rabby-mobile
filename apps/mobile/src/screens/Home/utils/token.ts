@@ -12,58 +12,70 @@ import { AbstractPortfolioToken } from '../types';
 import { ITokenSetting } from '@/core/services/preference';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 
-export const queryTokensCache = async (user_id: string, isTestnet = false) => {
-  return requestOpenApiWithChainId(
-    ({ openapi }) => openapi.getCachedTokenList(user_id),
-    {
-      isTestnet,
-    },
-  );
-};
-
-export const batchQueryTokens = async (
-  user_id: string,
-  chainId?: string,
-  isTestnet: boolean = !chainId ? false : checkIsTestnet(chainId),
-) => {
-  if (!chainId && !isTestnet) {
-    const usedChains = await openapi.usedChainList(user_id);
-    const chainIdList = usedChains.map(item => item.id);
-    const res = await Promise.allSettled(
-      chainIdList.map(serverId =>
-        pQueue.add(async () => {
-          const chainTokensRes = await requestOpenApiWithChainId(
-            ({ openapi }) => openapi.listToken(user_id, serverId, true),
-            {
-              isTestnet,
-            },
-          );
-          return chainTokensRes;
-        }),
-      ),
+export const queryTokensCache = makeSWRKeyAsyncFunc(
+  (user_id: string, isTestnet: boolean = false) => {
+    return requestOpenApiWithChainId(
+      ({ openapi }) => openapi.getCachedTokenList(user_id),
+      {
+        isTestnet,
+      },
     );
+  },
+  ctx => [`${ctx.args[0]}-${ctx.args[1]}`],
+);
 
-    // 检查是否所有链都明确失败了
-    const allFailed = res.every(result => result.status === 'rejected');
-    if (allFailed && chainIdList.length > 0) {
-      throw new Error('All chains failed, service may unavailable');
+const batchQueryTokens = makeSWRKeyAsyncFunc(
+  async (
+    user_id: string,
+    chainId?: string,
+    isTestnet: boolean = !chainId ? false : checkIsTestnet(chainId),
+  ) => {
+    if (!chainId && !isTestnet) {
+      const usedChains = await openapi.usedChainList(user_id);
+      const chainIdList = usedChains.map(item => item.id);
+      const res = await Promise.allSettled(
+        chainIdList.map(serverId =>
+          pQueue.add(async () => {
+            const chainTokensRes = await requestOpenApiWithChainId(
+              ({ openapi }) => openapi.listToken(user_id, serverId, true),
+              {
+                isTestnet,
+              },
+            );
+            return chainTokensRes;
+          }),
+        ),
+      );
+
+      // 检查是否所有链都明确失败了
+      const allFailed = res.every(result => result.status === 'rejected');
+      if (allFailed && chainIdList.length > 0) {
+        throw new Error('All chains failed, service may unavailable');
+      }
+
+      // 提取成功的结果，失败的结果返回空数组
+      const successfulResults = res.map(result =>
+        result.status === 'fulfilled' ? result.value : [],
+      );
+
+      return flatten(successfulResults as TokenItem[][]);
     }
-
-    // 提取成功的结果，失败的结果返回空数组
-    const successfulResults = res.map(result =>
-      result.status === 'fulfilled' ? result.value : [],
+    return requestOpenApiWithChainId(
+      ({ openapi }) => openapi.listToken(user_id, chainId, true),
+      {
+        isTestnet,
+      },
     );
-
-    return flatten(successfulResults as TokenItem[][]);
-  }
-  return requestOpenApiWithChainId(
-    ({ openapi }) => openapi.listToken(user_id, chainId, true),
-    {
-      isTestnet,
-    },
-  );
-};
+  },
+  ctx => {
+    const [user_id, chainId, isTestnet] = ctx.args;
+    return chainId
+      ? `${user_id}-${chainId}-${isTestnet}`
+      : `${user_id}-all-${isTestnet}`;
+  },
+);
 
 export const batchQueryTokensWithLocalCache = async (
   params: {

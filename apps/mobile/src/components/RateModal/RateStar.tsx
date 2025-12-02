@@ -9,6 +9,7 @@ import { coerceInteger } from '@/utils/number';
 import AnimationStar from './animations/star.json';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { getLottieAnimationDurationInMS } from '@/utils/time';
 
 const STAR_SIZE = 34;
 
@@ -26,9 +27,10 @@ export type PressableStarType = {
 };
 
 const StarJson = AnimationStar as any;
-const MS_PLAY_ONCE =
-  (coerceInteger(StarJson['op'], 60) / coerceInteger(StarJson['fr'], 100)) *
-  1000;
+const MS_PLAY_ONCE = getLottieAnimationDurationInMS(StarJson, {
+  frameCountFallback: 60,
+  frameRateFallback: 100,
+});
 
 function PressableStar({
   isFilled,

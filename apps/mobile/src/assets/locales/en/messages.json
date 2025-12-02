@@ -3022,6 +3022,9 @@
     },
     "portfolios": {
       "manage": "Manage"
+    },
+    "multiAddressModal": {
+      "title": "Wallets"
     }
   },
   "native": {

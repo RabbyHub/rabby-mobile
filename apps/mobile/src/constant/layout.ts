@@ -166,7 +166,6 @@ export const RootNames = {
 
   StackAddress: 'StackAddress',
   AddressList: 'AddressList',
-  AddressAssetsOverview: 'AddressAssetsOverview',
   ApprovalAddressList: 'ApprovalAddressList',
   ImportNewAddress: 'ImportNewAddress',
   ImportHardwareAddress: 'ImportHardwareAddress',
@@ -412,7 +411,6 @@ function makeScreenSpecConfig() {
 
       // StackAddress
       [RootNames.AddressList]: bg1Default2024Conf,
-      [RootNames.AddressAssetsOverview]: bg1Default2024Conf,
       [RootNames.ApprovalAddressList]: bg1Default2024Conf,
       [RootNames.ImportNewAddress]: bg1Default2024Conf,
       [RootNames.ImportHardwareAddress]: bg1Default2024Conf,
