@@ -267,27 +267,19 @@ export const PerpsMarketDetailScreen = () => {
     };
   });
 
-  const appState = useAppState();
   const unsubscribeActiveAssetRef = useRef<() => void>(() => {});
 
   // Subscribe to real-time candle updates
   useEffect(() => {
-    if (appState === 'active') {
-      if (unsubscribeActiveAssetRef.current) {
-        unsubscribeActiveAssetRef.current();
-      }
-      const unsubscribe = subscribeActiveAssetCtx();
-      unsubscribeActiveAssetRef.current = unsubscribe;
-      return () => {
-        unsubscribe?.();
-      };
-    } else {
-      if (unsubscribeActiveAssetRef.current) {
-        unsubscribeActiveAssetRef.current();
-        unsubscribeActiveAssetRef.current = () => {};
-      }
+    if (unsubscribeActiveAssetRef.current) {
+      unsubscribeActiveAssetRef.current();
     }
-  }, [subscribeActiveAssetCtx, appState, coin]);
+    const unsubscribe = subscribeActiveAssetCtx();
+    unsubscribeActiveAssetRef.current = unsubscribe;
+    return () => {
+      unsubscribe?.();
+    };
+  }, [subscribeActiveAssetCtx, coin]);
 
   // Available balance for trading
   const availableBalance = Number(accountSummary?.withdrawable || 0);

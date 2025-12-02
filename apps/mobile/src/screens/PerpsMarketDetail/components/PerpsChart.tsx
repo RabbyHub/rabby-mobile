@@ -35,7 +35,6 @@ import { splitNumberByStep } from '@/utils/number';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 
-import { useAppState } from '@react-native-community/hooks';
 import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
 export interface ChartHoverData {
   time?: string;
@@ -127,7 +126,6 @@ export const PerpsChart: React.FC<{
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
   const chartIsReadyRef = useRef(false);
   const [isReady, setIsReady] = useState(false);
-  const appState = useAppState();
   // const [selectedInterval, setSelectedInterval] =
   //   React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   const unsubscribeRef = useRef<() => void>(() => {});
@@ -284,22 +282,15 @@ export const PerpsChart: React.FC<{
 
   // Subscribe to real-time candle updates
   useEffect(() => {
-    if (appState === 'active') {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-      }
-      const unsubscribe = subscribeCandle();
-      unsubscribeRef.current = unsubscribe;
-      return () => {
-        unsubscribe?.();
-      };
-    } else {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = () => {};
-      }
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
     }
-  }, [subscribeCandle, appState, market.name]);
+    const unsubscribe = subscribeCandle();
+    unsubscribeRef.current = unsubscribe;
+    return () => {
+      unsubscribe?.();
+    };
+  }, [subscribeCandle, market.name]);
 
   // Sync chart data when both chart is ready and data is available
   useEffect(() => {
