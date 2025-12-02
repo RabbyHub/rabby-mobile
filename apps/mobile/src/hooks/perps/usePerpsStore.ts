@@ -214,6 +214,22 @@ const setDefaultPerpsAccount = (payload: Account) => {
   setPerpsState(prev => ({ ...prev, defaultPerpsAccount: payload }));
 };
 
+export const switchPerpsAccount = (payload: Account) => {
+  const clearinghouseState =
+    perpsStore.getState().clearinghouseStateMap[payload.address];
+  const pnl = clearinghouseState
+    ? formatPositionPnl(clearinghouseState)
+    : initialState.homePositionPnl;
+  setPerpsState(prev => ({
+    ...prev,
+    defaultPerpsAccount: payload,
+    currentPerpsAccount: payload,
+    isLogin: !!payload,
+    isInitialized: false,
+    homePositionPnl: pnl,
+  }));
+};
+
 const setMarketData = (payload: MarketData[] | []) => {
   const list = payload || [];
   setPerpsState(prev => ({

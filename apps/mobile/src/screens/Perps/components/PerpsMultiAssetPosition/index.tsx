@@ -23,6 +23,7 @@ import { useMemoizedFn } from 'ahooks';
 import { PerpsRiskLevelPopup } from '../PerpsPositionSection/PerpsRiskLevelPopup';
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { switchPerpsAccount } from '@/hooks/perps/usePerpsStore';
 
 const calculateMarkPrice = (item: AssetPositionWithAccount) => {
   const entryPxDecimals =
@@ -68,20 +69,19 @@ const AssetPositionItem = ({
   }, [item, onShowRiskPopup]);
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
   const handlePress = useCallback(() => {
+    switchPerpsAccount(item.account);
     navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.Perps,
+      screen: RootNames.PerpsMarketDetail,
       params: {
-        account: item.account,
-        fromName: coin,
+        // account: item.account,
+        market: coin,
       },
     });
   }, [item, coin, navigation]);
   const handleHyperliquidPress = useCallback(() => {
+    switchPerpsAccount(item.account);
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.Perps,
-      params: {
-        account: item.account,
-      },
     });
   }, [item, navigation]);
 

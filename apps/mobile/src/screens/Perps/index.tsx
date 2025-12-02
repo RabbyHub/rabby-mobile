@@ -78,10 +78,6 @@ export const PerpsScreen = () => {
 
   const navigation = useRabbyAppNavigation();
 
-  const { params } = useRoute<any>();
-
-  const { account: _account, fromName } = params;
-
   const {
     positionAndOpenOrders,
     accountSummary,
@@ -110,36 +106,37 @@ export const PerpsScreen = () => {
   } = usePerpsState();
   const { handleClosePosition } = usePerpsPosition();
 
-  useEffect(() => {
-    if (_account) {
-      if (
-        currentPerpsAccount?.address === _account.address &&
-        currentPerpsAccount?.type === _account.type
-      ) {
-        if (fromName) {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.PerpsMarketDetail,
-            params: {
-              market: fromName,
-            },
-          });
-        }
-      } else {
-        loginWithNoHardwareSign(_account).then(loginSuccess => {
-          if (loginSuccess && fromName) {
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.PerpsMarketDetail,
-              params: {
-                market: fromName,
-              },
-            });
-          }
-          setInitialized(true);
-        });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // use switchPerpsAccount global function to switch
+  // useEffect(() => {
+  //   if (_account) {
+  //     if (
+  //       currentPerpsAccount?.address === _account.address &&
+  //       currentPerpsAccount?.type === _account.type
+  //     ) {
+  //       if (fromName) {
+  //         navigation.push(RootNames.StackTransaction, {
+  //           screen: RootNames.PerpsMarketDetail,
+  //           params: {
+  //             market: fromName,
+  //           },
+  //         });
+  //       }
+  //     } else {
+  //       loginWithNoHardwareSign(_account).then(loginSuccess => {
+  //         if (loginSuccess && fromName) {
+  //           navigation.push(RootNames.StackTransaction, {
+  //             screen: RootNames.PerpsMarketDetail,
+  //             params: {
+  //               market: fromName,
+  //             },
+  //           });
+  //         }
+  //         setInitialized(true);
+  //       });
+  //     }
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   const [selectedToken, setSelectedToken] = useSelectedToken();
   const [popupState, setPopupState] = usePerpsPopupState();

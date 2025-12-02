@@ -46,7 +46,10 @@ import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
 import { trigger } from 'react-native-haptic-feedback';
 import { useAppState } from '@react-native-community/hooks';
 import { PerpsSelectTokenPopup } from '../Perps/components/PerpsDepositPopup/PerpsSelectTokenPopup';
-import { useSelectedToken } from '../Perps/hooks/usePerpsPopupState';
+import {
+  usePerpsPopupState,
+  useSelectedToken,
+} from '../Perps/hooks/usePerpsPopupState';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { openapi } from '@/core/request';
 import { PerpsDepositTokenModal } from '../Perps/components/PerpsDepositPopup/PerpsDepositTokenModal';
@@ -55,11 +58,13 @@ import { PerpSearchListPopup } from '../Perps/components/PerpSearchListPopup';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { showToast } from '@/hooks/perps/showToast';
+import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const [popupState, setPopupState] = usePerpsPopupState();
 
   const navigation = useRabbyAppNavigation();
 
@@ -87,6 +92,8 @@ export const PerpsMarketDetailScreen = () => {
     accountNeedApproveAgent,
     accountNeedApproveBuilderFee,
     handleActionApproveStatus,
+
+    handleDeleteAgent,
   } = usePerpsState();
   const hasPermission = true;
   const [isShowModal, setIsShowModal] = useState(false);
@@ -519,6 +526,22 @@ export const PerpsMarketDetailScreen = () => {
           } else {
             setIsShowModal(true);
           }
+        }}
+      />
+      <PerpsAgentsLimitModal
+        visible={popupState.isShowDeleteAgentPopup}
+        onCancel={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowDeleteAgentPopup: false,
+          }));
+        }}
+        onConfirm={() => {
+          handleDeleteAgent();
+          setPopupState(prev => ({
+            ...prev,
+            isShowDeleteAgentPopup: false,
+          }));
         }}
       />
       <PerpsDepositTokenModal

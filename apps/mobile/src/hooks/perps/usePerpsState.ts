@@ -842,6 +842,8 @@ export const usePerpsState = () => {
     perpFee: perpsState.perpFee,
     userAccountHistory: perpsState.userAccountHistory,
     localLoadingHistory: perpsState.localLoadingHistory,
+    accountNeedApproveAgent: perpsState.accountNeedApproveAgent,
+    accountNeedApproveBuilderFee: perpsState.accountNeedApproveBuilderFee,
     // Actions
     login,
     logout,
