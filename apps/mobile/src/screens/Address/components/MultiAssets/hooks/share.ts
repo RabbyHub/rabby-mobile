@@ -84,6 +84,7 @@ export const useCheckIsExpireAndUpdate = ({
         disableToken,
         disableDefi,
         disableNFT,
+        updateReturn: true,
         realTimeAddresses: top10Addresses,
         ignoreLoading: !top10Balance,
       });

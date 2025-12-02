@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -21,8 +21,7 @@ import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
-import { useAssets } from '@/screens/Search/useAssets';
-import { isTabsSwiping, useAccountInfo } from './hooks';
+import { isTabsSwiping } from './hooks';
 import { MemoizedNFTItemLoader, NFTList } from './NFTList';
 import { Freeze } from 'react-freeze';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -76,8 +75,6 @@ export const TabsMultiAssets: React.FC<Props> = ({
 
   const { chainsInfo, updateToken, updatePortfolio, updateNft } =
     useChainInfo();
-  const { top10Addresses } = useAccountInfo();
-  const { getCacheTop10Assets } = useAssets({ hideCombined: false });
 
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
@@ -169,22 +166,6 @@ export const TabsMultiAssets: React.FC<Props> = ({
     },
     [data, loading],
   );
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      getCacheTop10Assets({
-        realTimeAddresses: top10Addresses,
-        core: true,
-        maxTokenLength: 500,
-        maxDefiLength: 20,
-        maxNFTLength: 200,
-      });
-    }, 0);
-    return () => {
-      id && clearTimeout(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleTabChange = useCallback(
     ({ prevIndex, index }: { prevIndex: number; index: number }) => {

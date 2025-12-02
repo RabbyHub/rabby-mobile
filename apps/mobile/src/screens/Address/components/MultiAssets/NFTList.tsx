@@ -313,7 +313,7 @@ export const NFTList = ({ chain, updateNft }: Props) => {
             <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
           );
         case 'loading-skeleton':
-          return <MemoizedNFTItemLoader />;
+          return <MemoizedNFTItemLoader style={styles.loadingItem} />;
         default:
           return null;
       }
@@ -427,5 +427,8 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   removeLeft: {
     marginLeft: 0,
+  },
+  loadingItem: {
+    paddingHorizontal: 0,
   },
 }));

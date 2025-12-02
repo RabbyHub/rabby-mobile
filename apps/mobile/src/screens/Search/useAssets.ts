@@ -17,8 +17,6 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { filterDisplayToken } from '../Home/hooks/token';
 import { portfolio2Display } from '../Home/utils/portfolio';
 import { tagProfiles } from '../Home/hooks/usePortfolio';
-import { useMyAccounts } from '@/hooks/account';
-import { useSortAddressList } from '../Address/useSortAddressList';
 import { tagNfts } from '../Home/hooks/nft';
 import {
   syncNFTs,
@@ -31,10 +29,8 @@ import _, { debounce } from 'lodash';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useMemo } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { syncRemoteTokensAmount } from '@/databases/sync/assets';
 import { fetchAllAccounts } from '@/core/apis/account';
 import { sortAccountList } from '@/utils/sortAccountList';
@@ -140,108 +136,129 @@ export const useAssets = ({
     hideCombined,
   });
 
-  const loadToken = useCallback(async (address: string, force?: boolean) => {
-    if (!address) {
-      return;
-    }
-    try {
-      const walletProject = new DisplayedProject({
-        id: 'Wallet',
-        name: 'Wallet',
-      });
-
-      let _data = produce(walletProject, draft => {
-        draft.netWorth = 0;
-        draft._netWorth = '$0';
-        draft._netWorthChange = '-';
-        draft.netWorthChange = 0;
-        draft._netWorthChangePercent = '';
-        draft._portfolioDict = {};
-        draft._portfolios = [];
-        draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
-      });
-
-      let _tokens: AbstractPortfolioToken[] = [];
-
-      const tokenRes = await syncTokens(address, force, !force);
-      if (!tokenRes.length) {
+  const loadToken = useCallback(
+    async (address: string, force?: boolean, updateReturn?: boolean) => {
+      if (!address) {
         return;
       }
-      const tokenSettings =
-        (await preferenceService.getUserTokenSettings()) || {};
+      try {
+        const walletProject = new DisplayedProject({
+          id: 'Wallet',
+          name: 'Wallet',
+        });
 
-      const tokensDict: Record<string, TokenItem[]> = {};
-      tokenRes.forEach(token => {
-        if (!tokensDict[token.chain]) {
-          tokensDict[token.chain] = [];
+        let _data = produce(walletProject, draft => {
+          draft.netWorth = 0;
+          draft._netWorth = '$0';
+          draft._netWorthChange = '-';
+          draft.netWorthChange = 0;
+          draft._netWorthChangePercent = '';
+          draft._portfolioDict = {};
+          draft._portfolios = [];
+          draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
+        });
+
+        let _tokens: AbstractPortfolioToken[] = [];
+
+        const tokenRes = await syncTokens(
+          address,
+          force,
+          updateReturn ? false : !force,
+        );
+        if (!tokenRes.length) {
+          return;
         }
-        tokensDict[token.chain].push(token);
-      });
+        const tokenSettings =
+          (await preferenceService.getUserTokenSettings()) || {};
 
-      _data = produce(_data, draft => {
-        setWalletTokens(draft, tokensDict);
-      });
+        const tokensDict: Record<string, TokenItem[]> = {};
+        tokenRes.forEach(token => {
+          if (!tokensDict[token.chain]) {
+            tokensDict[token.chain] = [];
+          }
+          tokensDict[token.chain].push(token);
+        });
 
-      _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+        _data = produce(_data, draft => {
+          setWalletTokens(draft, tokensDict);
+        });
 
-      updateAssetListByAddress(address, {
-        type: 'tokens',
-        data: filterDisplayToken(_tokens),
-      });
-    } catch (error) {
-      console.error('ServiceErrorType.Tokens', error);
-    }
-  }, []);
+        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
-  const loadDefi = useCallback(async (address: string, force?: boolean) => {
-    if (!address) {
-      return;
-    }
-    try {
-      let projectDict: Record<string, DisplayedProject> | null = {};
-      const protocols = await syncProtocols(address, force, !force);
-      if (!protocols.length) {
+        updateAssetListByAddress(address, {
+          type: 'tokens',
+          data: filterDisplayToken(_tokens),
+        });
+      } catch (error) {
+        console.error('ServiceErrorType.Tokens', error);
+      }
+    },
+    [],
+  );
+
+  const loadDefi = useCallback(
+    async (address: string, force?: boolean, updateReturn?: boolean) => {
+      if (!address) {
         return;
       }
-      protocols.forEach(project => {
-        if (projectDict) {
-          projectDict = produce(projectDict, draft => {
-            project && portfolio2Display(project, draft);
-          });
+      try {
+        let projectDict: Record<string, DisplayedProject> | null = {};
+        const protocols = await syncProtocols(
+          address,
+          force,
+          updateReturn ? false : !force,
+        );
+        if (!protocols.length) {
+          return;
         }
-      });
-      const realtimeData = Object.values(projectDict)?.sort(
-        (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-      );
-      const tokenSetting = await preferenceService.getUserTokenSettings();
-      updateAssetListByAddress(address, {
-        type: 'portfolios',
-        data: tagProfiles(realtimeData, tokenSetting),
-      });
-    } catch (error) {
-      console.error('ServiceErrorType.Defi', error);
-    }
-  }, []);
+        protocols.forEach(project => {
+          if (projectDict) {
+            projectDict = produce(projectDict, draft => {
+              project && portfolio2Display(project, draft);
+            });
+          }
+        });
+        const realtimeData = Object.values(projectDict)?.sort(
+          (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
+        );
+        const tokenSetting = await preferenceService.getUserTokenSettings();
+        updateAssetListByAddress(address, {
+          type: 'portfolios',
+          data: tagProfiles(realtimeData, tokenSetting),
+        });
+      } catch (error) {
+        console.error('ServiceErrorType.Defi', error);
+      }
+    },
+    [],
+  );
 
-  const loadNFT = useCallback(async (address: string, force?: boolean) => {
-    if (!address) {
-      return;
-    }
-    try {
-      const _nfts = await syncNFTs(address, force, !force);
-      if (!_nfts.length) {
+  const loadNFT = useCallback(
+    async (address: string, force?: boolean, updateReturn?: boolean) => {
+      if (!address) {
         return;
       }
-      const tokenSetting = await preferenceService.getUserTokenSettings();
+      try {
+        const _nfts = await syncNFTs(
+          address,
+          force,
+          updateReturn ? false : !force,
+        );
+        if (!_nfts.length) {
+          return;
+        }
+        const tokenSetting = await preferenceService.getUserTokenSettings();
 
-      updateAssetListByAddress(address, {
-        type: 'nfts',
-        data: tagNfts(_nfts, tokenSetting),
-      });
-    } catch (e) {
-      console.error('ServiceErrorType.NFT', e);
-    }
-  }, []);
+        updateAssetListByAddress(address, {
+          type: 'nfts',
+          data: tagNfts(_nfts, tokenSetting),
+        });
+      } catch (e) {
+        console.error('ServiceErrorType.NFT', e);
+      }
+    },
+    [],
+  );
 
   const loadSpecificDefi = useCallback(
     async (_address: string, protocolId: string, chain: string) => {
@@ -473,6 +490,7 @@ export const useAssets = ({
         disableNFT?: boolean;
         realTimeAddresses?: string[];
         ignoreLoading?: boolean;
+        updateReturn?: boolean;
       },
     ) => {
       const addresses = options?.realTimeAddresses || [
@@ -487,9 +505,9 @@ export const useAssets = ({
         for (const address of addresses) {
           try {
             await Promise.all([
-              !disableToken && loadToken(address, force),
-              !disableDefi && loadDefi(address, force),
-              !disableNFT && loadNFT(address, force),
+              !disableToken && loadToken(address, force, options?.updateReturn),
+              !disableDefi && loadDefi(address, force, options?.updateReturn),
+              !disableNFT && loadNFT(address, force, options?.updateReturn),
             ]);
           } catch (error) {
             console.error(
