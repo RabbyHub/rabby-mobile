@@ -164,6 +164,7 @@ export const useAssets = ({
           address,
           force,
           updateReturn ? false : !force,
+          true,
         );
         if (!tokenRes.length) {
           return;

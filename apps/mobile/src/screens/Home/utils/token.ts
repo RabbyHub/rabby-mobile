@@ -13,6 +13,7 @@ import { ITokenSetting } from '@/core/services/preference';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
+import { BalanceEntity } from '@/databases/entities/balance';
 
 export const queryTokensCache = makeSWRKeyAsyncFunc(
   (user_id: string, isTestnet: boolean = false) => {
@@ -31,10 +32,25 @@ const batchQueryTokens = makeSWRKeyAsyncFunc(
     user_id: string,
     chainId?: string,
     isTestnet: boolean = !chainId ? false : checkIsTestnet(chainId),
+    isV2 = false,
   ) => {
     if (!chainId && !isTestnet) {
-      const usedChains = await openapi.usedChainList(user_id);
-      const chainIdList = usedChains.map(item => item.id);
+      let chainIdList: string[] = [];
+      if (isV2) {
+        let usedChains = await BalanceEntity.queryChainList(user_id);
+        chainIdList = usedChains
+          .filter(item => item.usd_value > 0.5)
+          .map(item => item.id);
+        if (usedChains.length <= 0) {
+          // 兜底，预防还没写过本地数据的情况发生
+          // TODO: 移除
+          const chains = await openapi.usedChainList(user_id);
+          chainIdList = chains.map(item => item.id);
+        }
+      } else {
+        const usedChains = await openapi.usedChainList(user_id);
+        chainIdList = usedChains.map(item => item.id);
+      }
       const res = await Promise.allSettled(
         chainIdList.map(serverId =>
           pQueue.add(async () => {
@@ -85,6 +101,7 @@ export const batchQueryTokensWithLocalCache = async (
   },
   force?: boolean,
   onlySync?: boolean,
+  isV2 = false,
 ) => {
   const {
     user_id,
@@ -94,14 +111,14 @@ export const batchQueryTokensWithLocalCache = async (
   if (!chainId && !isTestnet) {
     const isExpired = await TokenItemEntity.isExpired(user_id);
     if (force || isExpired) {
-      const tokens = await batchQueryTokens(user_id, chainId, isTestnet);
+      const tokens = await batchQueryTokens(user_id, chainId, isTestnet, isV2);
       syncRemoteTokens(user_id, [...tokens]);
       return tokens;
     } else {
       return onlySync ? [] : TokenItemEntity.batchQueryTokens(user_id);
     }
   }
-  return batchQueryTokens(user_id, chainId, isTestnet);
+  return batchQueryTokens(user_id, chainId, isTestnet, isV2);
 };
 
 export const batchQueryHistoryTokens = async (
