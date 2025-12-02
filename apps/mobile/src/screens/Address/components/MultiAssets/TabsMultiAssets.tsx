@@ -25,6 +25,7 @@ import { isTabsSwiping } from './hooks';
 import { MemoizedNFTItemLoader, NFTList } from './NFTList';
 import { Freeze } from 'react-freeze';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),

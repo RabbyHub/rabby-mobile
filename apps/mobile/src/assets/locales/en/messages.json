@@ -2297,6 +2297,9 @@
         "empty": "No results found",
         "searchPerps": "Search Perps"
       },
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid Position"
+      },
       "PerpsRiskPopup": {
         "title": "Risk Level",
         "subtitle": "Real-time liquidation distance (%)",

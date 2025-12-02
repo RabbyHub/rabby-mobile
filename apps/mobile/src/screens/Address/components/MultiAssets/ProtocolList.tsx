@@ -27,6 +27,7 @@ import {
 } from './hooks/share';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { useOnDeFiRefresh } from '@/screens/Home/hooks/store';
+import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -209,7 +210,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       maxToRenderPerBatch={5}
       removeClippedSubviews
       ItemSeparatorComponent={ListRenderSeparator}
-      ListHeaderComponent={ListHeaderComponent}
+      ListHeaderComponent={<PerpsMultiAssetPosition />}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}

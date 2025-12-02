@@ -19,7 +19,7 @@ import { apisPerps } from '@/core/apis';
 import { formatMarkData, formatPositionPnl } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
-import { maxBy } from 'lodash';
+import { maxBy, unionBy } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
 import {
   resolveValFromUpdater,
@@ -840,8 +840,11 @@ export function usePerpsEffectOnTop() {
 
 export const useSubscribePosition = (sortedAccounts: Account[]) => {
   const { top10Accounts } = useMemo(() => {
+    const unionAddresses = unionBy(sortedAccounts, account =>
+      account.address.toLowerCase(),
+    );
     return {
-      top10Accounts: sortedAccounts.slice(0, 10),
+      top10Accounts: unionAddresses.slice(0, 10),
     };
   }, [sortedAccounts]);
   const isMounted = useRef(false);

@@ -33,6 +33,7 @@ import { Account } from '@/core/services/preference';
 import { getItemId } from './utils/listRenderId';
 import { usePortfolios } from './hooks/usePortfolio';
 import useLoadMoreData from '../Address/components/MultiAssets/hooks/useLoadMoreData';
+import { PerpsSingleAssetPosition } from '../Perps/components/PerpsMultiAssetPosition';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -224,6 +225,9 @@ export const PortfolioList = ({
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
+        ListHeaderComponent={
+          <PerpsSingleAssetPosition account={currentAccount} />
+        }
         showsVerticalScrollIndicator={showScrollIndicator}
         showsHorizontalScrollIndicator={false}
         style={[styles.bgContainer, styles.list]}
