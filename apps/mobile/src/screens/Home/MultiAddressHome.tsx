@@ -122,8 +122,7 @@ import {
   TabsMultiAssets,
 } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { atom, useAtom, useSetAtom } from 'jotai';
-import { foldMultiChartAtom } from '../Address/components/MultiAssets/RenderRow/CurveChart';
+import { useFoldMultiChartStore } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { RECOMMENDED_DEFAULT_QUERY_LIMIT } from '@/databases/entities/_helpers';
@@ -969,7 +968,9 @@ function MultiAddressHome(): JSX.Element {
     }
   }, []);
 
-  const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
+  const setIsFoldMultiChart = useFoldMultiChartStore(
+    s => s.setIsFoldMultiChart,
+  );
 
   return (
     <NormalScreenContainer2024

@@ -33,7 +33,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { IS_IOS } from '@/core/native/utils';
 import {
-  foldMultiChartAtom,
+  useFoldMultiChartStore,
   MultiChart,
 } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
 import {
@@ -45,7 +45,6 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '@/screens/Address/components/AddressListScreenContainer';
-import { useSetAtom } from 'jotai';
 
 export function MultiAddressHomeHeader(
   props: {
@@ -72,7 +71,9 @@ export function MultiAddressHomeHeader(
 
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
-  const setIsFoldMultiChart = useSetAtom(foldMultiChartAtom);
+  const setIsFoldMultiChart = useFoldMultiChartStore(
+    s => s.setIsFoldMultiChart,
+  );
 
   const { multi24hBalance } = useMulti24hBalance(
     pinnedAccountList.map(item => item.address),
