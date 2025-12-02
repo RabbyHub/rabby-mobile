@@ -28,6 +28,7 @@ import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
 import BigNumber from 'bignumber.js';
 import { toast as toast2024 } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import miscService from '@/core/services/misc';
 
 const MiniSignTxV2 = ({
   showCheckSecurity,
@@ -177,6 +178,10 @@ const MiniSignTxV2 = ({
       });
     },
   );
+
+  useEffect(() => {
+    miscService.setCurrentGasLevel(ctx?.selectedGas?.level);
+  }, [ctx?.selectedGas?.level]);
 
   if (!ctx || !config?.account || !ctx?.txs?.length || !currentAccount) {
     return null;
