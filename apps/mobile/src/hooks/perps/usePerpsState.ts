@@ -376,10 +376,12 @@ export const usePerpsState = () => {
         if (checkResult.needDelete) {
           // 需要删除agent，且重新approve agent和builder fee
           setAccountNeedApproveAgent(true);
+          setAccountNeedApproveBuilderFee(true);
           return;
         }
 
         if (checkResult.isExpired) {
+          setAccountNeedApproveAgent(true);
           const { agentAddress: newAgentAddress, vault } =
             await apisPerps.createPerpsAgentWallet(account.address);
           sdk.initOrUpdateAgent(vault, newAgentAddress, PERPS_AGENT_NAME);
@@ -391,6 +393,7 @@ export const usePerpsState = () => {
         }
 
         if (!maxFee) {
+          setAccountNeedApproveBuilderFee(true);
           const buildAction = sdk.exchange?.prepareApproveBuilderFee({
             builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
           });
@@ -417,6 +420,8 @@ export const usePerpsState = () => {
             actionObj.signature = signature;
           }
           await handleDirectApprove(signActions);
+          setAccountNeedApproveAgent(false);
+          setAccountNeedApproveBuilderFee(false);
         } else {
           signActions.forEach(item => {
             if (item.type === 'approveAgent') {
