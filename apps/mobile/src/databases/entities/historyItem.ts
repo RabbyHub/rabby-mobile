@@ -470,6 +470,45 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
+  static async getUnreadHistoryCount(owner_addrs: string[], maxTimeAt: number) {
+    await prepareAppDataSource();
+    const currentTime = new Date().getTime();
+    console.log('getUnreadHistoryCount exec');
+    const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
+    const repo = this.getRepository();
+    const queryBuilder = repo
+      .createQueryBuilder('historyitem')
+      .select(['owner_addr', 'txHash'])
+      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .andWhere('historyitem.time_at > :maxTimeAt', {
+        maxTimeAt,
+      })
+      .andWhere(
+        'LOWER(historyitem.tx_from_address) != LOWER(historyitem.owner_addr)',
+      )
+      .andWhere('historyitem.is_scam = :is_scam', {
+        is_scam: false,
+      })
+      .andWhere(
+        '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
+        {
+          oneHourAgo,
+          is_small_tx: false,
+        },
+      )
+      .orderBy('historyitem.time_at', 'DESC')
+      .take(10);
+    const res = await queryBuilder.getRawMany();
+
+    console.log(
+      'getUnreadHistoryCount exec time:',
+      new Date().getTime() - currentTime,
+      'count:',
+      res.length,
+    );
+    return res;
+  }
+
   static async getHistoryItemsPaginated(
     owner_addrs: string[],
     options: {

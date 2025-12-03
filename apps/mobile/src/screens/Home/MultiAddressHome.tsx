@@ -412,26 +412,15 @@ const OverViewComponent = () => {
   }, []);
 
   const getSuccessAndFailList = useCallback(async () => {
+    if (!top10Addresses.length) return;
     const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
-    const clearSuccessAndFailListTsObj =
-      transactionHistoryService.getClearSuccessAndFailListTsObj();
-    const list = await HistoryItemEntity.getAllHistoryItemSortedByTime(
+    const list = await HistoryItemEntity.getUnreadHistoryCount(
       top10Addresses,
-      RECOMMENDED_DEFAULT_QUERY_LIMIT,
-      true,
       timestamp / 1000,
     );
     list.forEach(i => {
       const status = i.status ?? 1;
       const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
-      if (i.tx_from_address === i.owner_addr) {
-        return;
-      }
-      const addressTs =
-        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? Date.now();
-      if (addressTs && addressTs / 1000 > i.time_at) {
-        return;
-      }
       if (status === 1) {
         transactionHistoryService.setSucceedList(id);
       } else {
