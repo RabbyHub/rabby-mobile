@@ -162,9 +162,9 @@ export const PerpsScreen = () => {
   }, [positionAndOpenOrders]);
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
-    if (currentPerpsAccount?.address) {
-      logout(currentPerpsAccount?.address || '');
-    }
+    // if (currentPerpsAccount?.address) {
+    //   logout(currentPerpsAccount?.address || '');
+    // }
     await login(v);
     setPopupState(prev => ({
       ...prev,

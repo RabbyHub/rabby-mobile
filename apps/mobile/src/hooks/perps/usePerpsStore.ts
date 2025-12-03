@@ -734,7 +734,7 @@ export const usePerpsStore = () => {
   });
 
   const refreshData = useMemoizedFn(async () => {
-    // await fetchPositionAndOpenOrders(); websocket fetch position and open orders
+    await fetchPositionAndOpenOrders();
     // await is login is too low
     fetchUserNonFundingLedgerUpdates();
     fetchUserHistoricalOrders();

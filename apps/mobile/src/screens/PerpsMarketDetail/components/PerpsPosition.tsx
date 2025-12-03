@@ -51,7 +51,7 @@ export const PerpsPosition: React.FC<{
     tpTriggerPx: string;
     slTriggerPx: string;
     direction: 'Long' | 'Short';
-  }): Promise<void>;
+  }): Promise<boolean>;
   handleCancelAutoClose(actionType: 'tp' | 'sl'): Promise<void>;
   handleUpdateMargin(
     coin: string,
@@ -249,15 +249,16 @@ export const PerpsPosition: React.FC<{
                     await handleCancelAutoClose('tp');
                   }}
                   handleSetAutoClose={async (price: string) => {
-                    await handleSetAutoClose({
+                    const res = await handleSetAutoClose({
                       coin,
                       tpTriggerPx: price,
                       slTriggerPx: '',
                       direction: positionData?.direction as 'Long' | 'Short',
                     });
-                    setCurrentTpOrSl({
-                      tpPrice: Number(price).toString(),
-                    });
+                    res &&
+                      setCurrentTpOrSl({
+                        tpPrice: Number(price).toString(),
+                      });
                   }}
                 />
               </View>
@@ -316,15 +317,16 @@ export const PerpsPosition: React.FC<{
                     await handleCancelAutoClose('sl');
                   }}
                   handleSetAutoClose={async (price: string) => {
-                    await handleSetAutoClose({
+                    const res = await handleSetAutoClose({
                       coin,
                       tpTriggerPx: '',
                       slTriggerPx: price,
                       direction: positionData?.direction as 'Long' | 'Short',
                     });
-                    setCurrentTpOrSl({
-                      slPrice: Number(price).toString(),
-                    });
+                    res &&
+                      setCurrentTpOrSl({
+                        slPrice: Number(price).toString(),
+                      });
                   }}
                 />
               </View>

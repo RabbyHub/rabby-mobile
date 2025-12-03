@@ -43,9 +43,11 @@ interface AssetPositionWithAccount {
 const AssetPositionItem = ({
   item,
   onShowRiskPopup,
+  isSingleAddress,
 }: {
   item: AssetPositionWithAccount;
   onShowRiskPopup: (item: AssetPositionWithAccount) => void;
+  isSingleAddress?: boolean;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -101,18 +103,20 @@ const AssetPositionItem = ({
                   </View>
                 )}
               </View>
-              <View style={styles.coinNameRow}>
-                <WalletIcon
-                  width={14}
-                  height={14}
-                  type={item.account.brandName}
-                  address={item.account.address}
-                />
-                <Text style={styles.address}>
-                  {item.account.aliasName ||
-                    ellipsisAddress(item.account.address)}
-                </Text>
-              </View>
+              {!isSingleAddress && (
+                <View style={styles.coinNameRow}>
+                  <WalletIcon
+                    width={14}
+                    height={14}
+                    type={item.account.brandName}
+                    address={item.account.address}
+                  />
+                  <Text style={styles.address}>
+                    {item.account.aliasName ||
+                      ellipsisAddress(item.account.address)}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
           <View style={styles.tagRow}>
@@ -255,6 +259,7 @@ export const PerpsSingleAssetPosition: React.FC<{
           return (
             <AssetPositionItem
               key={`${item.account.address}-${item.assetPositions.position.coin}`}
+              isSingleAddress={true}
               item={item}
               onShowRiskPopup={() => handleShowRiskPopup(item)}
             />
