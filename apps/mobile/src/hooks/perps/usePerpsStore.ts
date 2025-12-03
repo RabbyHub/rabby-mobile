@@ -895,33 +895,28 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
       isMounted.current = true;
       const sdk = apisPerps.getPerpsSDK();
       const top10Addresses = top10Accounts.map(item => item.address);
-      const { unsubscribe } = sdk.ws.subscribeToClearinghouseState(
-        top10Addresses,
-        data => {
-          if (!currentHasFetchAddresses.current.includes(data.user)) {
-            currentHasFetchAddresses.current.push(data.user);
-            if (
-              currentHasFetchAddresses.current.length === top10Addresses.length
-            ) {
-              setIsFetchAllDone(true);
-              handleSelectDefaultAccount(top10Accounts);
-            }
-          }
-          const clearinghouseState = data.clearinghouseState;
+      sdk.ws.subscribeToClearinghouseState(top10Addresses, data => {
+        console.log('subscribeToClearinghouseState', data);
+        if (!currentHasFetchAddresses.current.includes(data.user)) {
+          currentHasFetchAddresses.current.push(data.user);
           if (
-            +clearinghouseState?.withdrawable > 0 ||
-            +clearinghouseState?.marginSummary.accountValue > 0
+            currentHasFetchAddresses.current.length === top10Addresses.length
           ) {
-            setClearinghouseStateMap({
-              address: data.user,
-              data: clearinghouseState,
-            });
+            setIsFetchAllDone(true);
+            handleSelectDefaultAccount(top10Accounts);
           }
-        },
-      );
-      return () => {
-        unsubscribe();
-      };
+        }
+        const clearinghouseState = data.clearinghouseState;
+        if (
+          +clearinghouseState?.withdrawable > 0 ||
+          +clearinghouseState?.marginSummary.accountValue > 0
+        ) {
+          setClearinghouseStateMap({
+            address: data.user,
+            data: clearinghouseState,
+          });
+        }
+      });
     }
   }, [top10Accounts]);
 };

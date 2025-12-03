@@ -376,7 +376,6 @@ export const usePerpsState = () => {
         if (checkResult.needDelete) {
           // 需要删除agent，且重新approve agent和builder fee
           setAccountNeedApproveAgent(true);
-          setAccountNeedApproveBuilderFee(true);
           return;
         }
 
@@ -475,7 +474,6 @@ export const usePerpsState = () => {
         return;
       }
 
-      console.log('signActions', signActions);
       await executeSignatures(signActions, currentPerpsAccount);
 
       await handleDirectApprove(signActions);
@@ -483,6 +481,8 @@ export const usePerpsState = () => {
       setAccountNeedApproveBuilderFee(false);
     } catch (error) {
       console.error('Failed to handle action approve status:', error);
+      // todo fixme maybe no need show toast in prod
+      showToast(String(error), 'error');
       Sentry.captureException(
         new Error(
           `Failed to handle action approve status, address: ${currentPerpsAccount?.address} , account type: ${currentPerpsAccount?.type} , error: ${error}`,

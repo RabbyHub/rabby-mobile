@@ -122,7 +122,7 @@ const AssetPositionItem = ({
                 {
                   backgroundColor:
                     side === 'Long'
-                      ? colors2024['green-light-4']
+                      ? colors2024['green-light-1']
                       : colors2024['red-light-1'],
                 },
               ]}>
@@ -202,7 +202,6 @@ export const PerpsSingleAssetPosition: React.FC<{
           '',
       });
     });
-
     return resList.sort((a, b) => {
       return (
         Number(b.assetPositions.position.marginUsed) -
