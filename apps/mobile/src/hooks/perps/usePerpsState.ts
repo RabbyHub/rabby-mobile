@@ -556,7 +556,7 @@ export const usePerpsState = () => {
         //   await noLoginAction();
         //   return false;
         // }
-        const initAccount = perpsState.defaultPerpsAccount;
+        const initAccount = perpsState.currentPerpsAccount;
         if (!initAccount) {
           return false;
         }
@@ -585,7 +585,7 @@ export const usePerpsState = () => {
 
     initIsLogin();
   }, [
-    perpsState.defaultPerpsAccount,
+    perpsState.currentPerpsAccount,
     isInitialized,
     loginPerpsAccount,
     fetchMarketData,
@@ -836,7 +836,6 @@ export const usePerpsState = () => {
     isLogin: perpsState.isLogin,
     isInitialized: perpsState.isInitialized,
     userFills: perpsState.userFills,
-    defaultPerpsAccount: perpsState.defaultPerpsAccount,
     hasPermission: perpsState.hasPermission,
     homeHistoryList,
     perpFee: perpsState.perpFee,
