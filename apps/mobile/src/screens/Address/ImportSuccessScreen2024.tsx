@@ -50,6 +50,8 @@ import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { syncTokens, syncProtocols } from '@/databases/hooks/assets';
+import { EVENTS } from '@/utils/events';
+import { eventBus } from '@/utils/events';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -193,6 +195,7 @@ export const ImportSuccessScreen2024 = () => {
         syncTokens(address);
         syncProtocols(address);
       });
+      eventBus.emit('PERPS_ADD_ADDRESSES', syncAddresses);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);

@@ -82,7 +82,6 @@ export const PerpsScreen = () => {
     positionAndOpenOrders,
     accountSummary,
     currentPerpsAccount,
-    defaultPerpsAccount,
     isLogin,
     isInitialized,
     marketData,

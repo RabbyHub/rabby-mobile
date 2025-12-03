@@ -72,7 +72,6 @@ export interface PerpsState {
   positionAndOpenOrders: PositionAndOpenOrder[];
   accountSummary: AccountSummary | null;
   currentPerpsAccount: Account | null;
-  defaultPerpsAccount: Account | null;
   clearinghouseStateMap: Record<string, ClearinghouseState | null>;
   isFetchAllDone: boolean; // init clearinghouseStateMap has done
   accountNeedApproveAgent: boolean; // 账户是否需要重新approve agent
@@ -112,7 +111,6 @@ export const initialState: PerpsState = {
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
-  defaultPerpsAccount: null,
   clearinghouseStateMap: {},
   accountNeedApproveAgent: false,
   accountNeedApproveBuilderFee: false,
@@ -210,8 +208,12 @@ const setClearinghouseStateMap = (payload: {
   }
 };
 
-const setDefaultPerpsAccount = (payload: Account) => {
-  setPerpsState(prev => ({ ...prev, defaultPerpsAccount: payload }));
+const setCurrentPerpsAccount = (payload: Account) => {
+  setPerpsState(prev => ({
+    ...prev,
+    currentPerpsAccount: payload,
+    isLogin: !!payload,
+  }));
 };
 
 export const switchPerpsAccount = (payload: Account) => {
@@ -222,7 +224,6 @@ export const switchPerpsAccount = (payload: Account) => {
     : initialState.homePositionPnl;
   setPerpsState(prev => ({
     ...prev,
-    defaultPerpsAccount: payload,
     currentPerpsAccount: payload,
     isLogin: !!payload,
     isInitialized: false,
@@ -283,7 +284,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
         ));
     const perpsState = perpsStore.getState();
     if (recentlyAccount && selectedItem) {
-      setDefaultPerpsAccount(selectedItem);
+      setCurrentPerpsAccount(selectedItem);
       const clearinghouseState =
         perpsState.clearinghouseStateMap[selectedItem.address];
       const pnl = clearinghouseState
@@ -306,13 +307,13 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
           best &&
           Number(best.clearinghouseState?.marginSummary.accountValue || 0) > 0
         ) {
-          setDefaultPerpsAccount(best.account);
+          setCurrentPerpsAccount(best.account);
           const pnl = best.clearinghouseState
             ? formatPositionPnl(best.clearinghouseState)
             : initialState.homePositionPnl;
           setHomePositionPnl(pnl);
         } else {
-          setDefaultPerpsAccount(accounts[0]);
+          setCurrentPerpsAccount(accounts[0]);
           const clearinghouseState =
             perpsState.clearinghouseStateMap[accounts[0].address];
           const pnl = clearinghouseState
@@ -323,7 +324,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
       }
     }
   } catch (e) {
-    setDefaultPerpsAccount(accounts[0]);
+    setCurrentPerpsAccount(accounts[0]);
     console.error('Error selecting only show account', e);
   }
 };
@@ -583,14 +584,6 @@ export const usePerpsStore = () => {
     setPerpsState(prev => ({ ...prev, accountSummary: payload }));
   });
 
-  const setCurrentPerpsAccount = useMemoizedFn((payload: Account | null) => {
-    setPerpsState(prev => ({
-      ...prev,
-      currentPerpsAccount: payload,
-      isLogin: !!payload,
-    }));
-  });
-
   const setInitialized = useMemoizedFn((payload: boolean) => {
     setPerpsState(prev => ({ ...prev, isInitialized: payload }));
   });
@@ -806,10 +799,6 @@ export const usePerpsStore = () => {
   };
 };
 
-runIIFEFunc(() => {
-  eventBus.on(EVENTS.PERPS.LOG_OUT, apisPerpsStore.logout);
-});
-
 runIIFEFunc(fetchMarketData);
 
 export function usePerpsEffectOnTop() {
@@ -867,23 +856,19 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
   const currentHasFetchAddresses = useRef<string[]>([]);
 
   useEffect(() => {
-    if (isMounted.current) {
-      return;
-    }
-    if (top10Accounts && top10Accounts.length > 0) {
-      isMounted.current = true;
+    eventBus.on(EVENTS.PERPS.LOG_OUT, () => {
+      handleSelectDefaultAccount(top10Accounts);
+    });
+
+    return () => {
+      eventBus.removeAllListeners(EVENTS.PERPS.LOG_OUT);
+    };
+  }, [top10Accounts]);
+
+  useEffect(() => {
+    eventBus.on('PERPS_ADD_ADDRESSES', (addresses: string[]) => {
       const sdk = apisPerps.getPerpsSDK();
-      const top10Addresses = top10Accounts.map(item => item.address);
-      sdk.ws.subscribeToClearinghouseState(top10Addresses, data => {
-        if (!currentHasFetchAddresses.current.includes(data.user)) {
-          currentHasFetchAddresses.current.push(data.user);
-          if (
-            currentHasFetchAddresses.current.length === top10Addresses.length
-          ) {
-            setIsFetchAllDone(true);
-            handleSelectDefaultAccount(top10Accounts);
-          }
-        }
+      sdk.ws.subscribeToClearinghouseState(addresses, data => {
         const clearinghouseState = data.clearinghouseState;
         if (
           +clearinghouseState?.withdrawable > 0 ||
@@ -895,6 +880,48 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
           });
         }
       });
+    });
+
+    return () => {
+      eventBus.removeAllListeners('PERPS_ADD_ADDRESSES');
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isMounted.current) {
+      return;
+    }
+    if (top10Accounts && top10Accounts.length > 0) {
+      isMounted.current = true;
+      const sdk = apisPerps.getPerpsSDK();
+      const top10Addresses = top10Accounts.map(item => item.address);
+      const { unsubscribe } = sdk.ws.subscribeToClearinghouseState(
+        top10Addresses,
+        data => {
+          if (!currentHasFetchAddresses.current.includes(data.user)) {
+            currentHasFetchAddresses.current.push(data.user);
+            if (
+              currentHasFetchAddresses.current.length === top10Addresses.length
+            ) {
+              setIsFetchAllDone(true);
+              handleSelectDefaultAccount(top10Accounts);
+            }
+          }
+          const clearinghouseState = data.clearinghouseState;
+          if (
+            +clearinghouseState?.withdrawable > 0 ||
+            +clearinghouseState?.marginSummary.accountValue > 0
+          ) {
+            setClearinghouseStateMap({
+              address: data.user,
+              data: clearinghouseState,
+            });
+          }
+        },
+      );
+      return () => {
+        unsubscribe();
+      };
     }
   }, [top10Accounts]);
 };
