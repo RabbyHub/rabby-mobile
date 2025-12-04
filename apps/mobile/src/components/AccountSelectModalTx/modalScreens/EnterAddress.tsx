@@ -264,7 +264,9 @@ const ScreenPanelEnterAddress = ({
       }}>
       <View
         style={[styles.container, { paddingBottom: safeSizes.containerPb }]}>
-        <BottomSheetScrollView contentContainerStyle={styles.topContent}>
+        <BottomSheetScrollView
+          contentContainerStyle={styles.topContent}
+          keyboardShouldPersistTaps="handled">
           <View style={styles.inputAreaContainer}>
             <NextInput.TextArea
               as="TextInput"
