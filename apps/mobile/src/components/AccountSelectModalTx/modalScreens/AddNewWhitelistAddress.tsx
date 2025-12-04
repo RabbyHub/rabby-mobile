@@ -302,7 +302,7 @@ export const ScreenAddNewWhitelistAddress = ({
             inputProps={{
               autoFocus: true,
               ...(__DEV__ && { autoFocus: false }),
-              placeholder: t('page.sendPoly.enterAddress'),
+              placeholder: t('page.sendPoly.enterOrSearchAddress'),
               placeholderTextColor: colors2024['neutral-secondary'],
               value: input,
               blurOnSubmit: true,
