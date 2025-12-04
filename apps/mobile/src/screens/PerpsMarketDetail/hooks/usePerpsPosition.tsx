@@ -65,9 +65,6 @@ export const usePerpsPosition = () => {
           )
         ) {
           showToast(actionText + ' canceled successfully', 'success');
-          setTimeout(() => {
-            fetchPositionOpenOrders();
-          }, 1000);
         } else {
           showToast(actionText + ' cancel error', 'error');
           Sentry.captureException(
@@ -76,7 +73,11 @@ export const usePerpsPosition = () => {
             ),
           );
         }
-      } catch (error) {
+      } catch (error: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
+        if (isExpired) {
+          return false;
+        }
         showToast(actionText + ' cancel error', 'error');
         Sentry.captureException(
           new Error(
@@ -111,6 +112,10 @@ export const usePerpsPosition = () => {
           );
         }
       } catch (error: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
+        if (isExpired) {
+          return false;
+        }
         console.error(actionText + ' error', error);
         showToast(error?.message || actionText + ' error', 'error');
         Sentry.captureException(

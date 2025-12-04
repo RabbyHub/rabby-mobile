@@ -569,7 +569,7 @@ export const usePerpsState = () => {
       const agentAddress = agentWalletPreference?.agentAddress;
       if (agentAddress && errorMessage.includes(agentAddress)) {
         console.warn('handle action agent is expired, logout');
-        showToast('Agent is expired, please try again', 'error');
+        showToast('Agent is expired, try it again', 'error');
         setAccountNeedApproveAgent(true);
         return true;
       }
