@@ -100,7 +100,6 @@ export const PerpsScreen = () => {
     localLoadingHistory,
 
     handleActionApproveStatus,
-    loginWithNoHardwareSign,
     setInitialized,
   } = usePerpsState();
   const { handleClosePosition } = usePerpsPosition();

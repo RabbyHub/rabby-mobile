@@ -215,8 +215,6 @@ const setCurrentPerpsAccount = (payload: Account) => {
     ...prev,
     currentPerpsAccount: payload,
     isLogin: !!payload,
-    accountNeedApproveAgent: false,
-    accountNeedApproveBuilderFee: false,
   }));
   perpsService.setCurrentAccount(payload);
 };
@@ -233,8 +231,6 @@ export const switchPerpsAccount = (payload: Account) => {
     isLogin: !!payload,
     isInitialized: false,
     homePositionPnl: pnl,
-    accountNeedApproveAgent: false,
-    accountNeedApproveBuilderFee: false,
   }));
   perpsService.setCurrentAccount(payload);
 };

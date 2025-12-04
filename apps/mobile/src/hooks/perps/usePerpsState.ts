@@ -275,51 +275,6 @@ export const usePerpsState = () => {
     }
   });
 
-  const checkIsNeedAutoLoginOut = useMemoizedFn(
-    async (masterAddress: string, agentAddress: string) => {
-      const sdk = apisPerps.getPerpsSDK();
-      const extraAgents = await sdk.info.extraAgents(masterAddress);
-      const item = extraAgents.find(agent =>
-        isSameAddress(agent.address, agentAddress),
-      );
-      if (!item) {
-        const res = await restoreApproveSignatures({
-          address: masterAddress,
-        });
-        if (!res) {
-          console.warn(
-            'masterAddress isExpired, no restore approve signature, logout',
-          );
-          setAccountNeedApproveAgent(true);
-          // Sentry.captureException(
-          //   new Error(
-          //     'masterAddress isExpired, no restore approve signature, logout' +
-          //       masterAddress,
-          //   ),
-          // );
-        }
-      } else {
-        const expiredAt = item?.validUntil;
-        const oneDayAfter = Date.now() + 24 * 60 * 60 * 1000;
-        const isExpired = expiredAt ? expiredAt < oneDayAfter : true;
-        if (isExpired) {
-          console.warn('masterAddress isExpired, update agent, auto login out');
-          // need to update agent for send new approve agent api avoid error
-          apisPerps.createPerpsAgentWallet(masterAddress);
-          setAccountNeedApproveAgent(true);
-          // Sentry.captureException(
-          //   new Error(
-          //     'masterAddress isExpired, update agent, auto login out' +
-          //       masterAddress,
-          //   ),
-          // );
-        } else {
-          checkBuilderFee(masterAddress);
-        }
-      }
-    },
-  );
-
   const handleSafeSetReference = useCallback(async () => {
     try {
       const sdk = apisPerps.getPerpsSDK();
@@ -524,24 +479,6 @@ export const usePerpsState = () => {
     setAccountNeedApproveBuilderFee,
   ]);
 
-  const loginWithNoHardwareSign = useCallback(
-    async (account: Account) => {
-      if (!account) {
-        throw new Error('no account');
-      }
-      const { vault, agentAddress } =
-        await apisPerps.getOrCreatePerpsAgentWallet(account.address);
-      const sdk = apisPerps.getPerpsSDK();
-      // 开始恢复登录态
-      sdk.initAccount(account.address, vault, agentAddress, PERPS_AGENT_NAME);
-      await loginPerpsAccount(account);
-      ensureLoginApproveSign(account, agentAddress);
-      setInitialized(true);
-      return true;
-    },
-    [loginPerpsAccount, ensureLoginApproveSign, setInitialized],
-  );
-
   useEffect(() => {
     if (isInitialized) {
       return;
@@ -697,6 +634,8 @@ export const usePerpsState = () => {
       );
       if (needDelete) {
         // 先不登录，防止hl服务状态不同步
+        setAccountNeedApproveAgent(true);
+        setAccountNeedApproveBuilderFee(true);
         return false;
       }
 
@@ -710,6 +649,8 @@ export const usePerpsState = () => {
           );
           // 未到过期时间无需签名直接登录即可
           await loginPerpsAccount(account);
+          setAccountNeedApproveAgent(false);
+          setAccountNeedApproveBuilderFee(false);
           checkBuilderFee(account.address);
         } else {
           // 过期或者没sendApprove过，需要创建新的agent，同时签名
@@ -890,6 +831,5 @@ export const usePerpsState = () => {
 
     judgeIsUserAgentIsExpired,
     handleActionApproveStatus,
-    loginWithNoHardwareSign,
   };
 };
