@@ -423,6 +423,7 @@ const updateMarketData = (payload: AssetCtx[]) => {
 
 const subscribeToUserData = (address: string) => {
   const sdk = apisPerps.getPerpsSDK();
+  sdk.initAccount(address);
 
   unsubscribeAll();
   const { unsubscribe: unsubscribeWebData2 } = sdk.ws.subscribeToWebData2(
@@ -442,10 +443,6 @@ const subscribeToUserData = (address: string) => {
   const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
     data => {
       // Only process data when app is active
-      if (AppState.currentState !== 'active') {
-        return;
-      }
-
       console.log('User fills update:', data.fills.length);
       const { fills, isSnapshot, user } = data;
       if (!isSameAddress(user, address)) {
