@@ -25,12 +25,9 @@ import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { switchPerpsAccount } from '@/hooks/perps/usePerpsStore';
 
-const calculateMarkPrice = (item: AssetPositionWithAccount) => {
-  const entryPxDecimals =
-    item.assetPositions.position.entryPx?.split('.')[1]?.length || 2;
-  const px =
-    Number(item.assetPositions.position.positionValue) /
-    Math.abs(Number(item.assetPositions.position.szi));
+const calculateMarkPrice = (position: AssetPosition['position']) => {
+  const entryPxDecimals = position.entryPx?.split('.')[1]?.length || 2;
+  const px = Number(position.positionValue) / Math.abs(Number(position.szi));
   return px.toFixed(entryPxDecimals);
 };
 
@@ -64,7 +61,7 @@ const AssetPositionItem = ({
     Number(item.assetPositions.position.unrealizedPnl),
   );
   const calculateMarkPx = useMemo(() => {
-    return calculateMarkPrice(item);
+    return calculateMarkPrice(item.assetPositions.position);
   }, [item]);
   const handleDistanceTagPress = useCallback(() => {
     onShowRiskPopup(item);
@@ -183,16 +180,19 @@ export const PerpsSingleAssetPosition: React.FC<{
       marketDataMap: s.marketDataMap,
     })),
   );
-  const [selectedPosition, setSelectedPosition] =
-    useState<AssetPositionWithAccount | null>(null);
+  const [selectedPositionKey, setSelectedPositionKey] = useState<{
+    address: string;
+    coin: string;
+  } | null>(null);
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
+  const clearinghouseState = clearinghouseStateMap[account?.address || ''];
 
   const dataList = useMemo(() => {
     const resList: AssetPositionWithAccount[] = [];
     if (!account) {
       return resList;
     }
-    const clearinghouseState = clearinghouseStateMap[account.address];
+
     if (!clearinghouseState) {
       return resList;
     }
@@ -212,45 +212,57 @@ export const PerpsSingleAssetPosition: React.FC<{
         Number(a.assetPositions.position.marginUsed)
       );
     });
-  }, [clearinghouseStateMap, marketDataMap, account]);
+  }, [clearinghouseState, marketDataMap, account]);
 
   const riskPopupData = useMemo(() => {
-    if (!selectedPosition) {
+    if (!selectedPositionKey) {
       return null;
     }
 
-    const markPrice = Number(calculateMarkPrice(selectedPosition));
+    const { address, coin } = selectedPositionKey;
+    const freshAssetPosition = clearinghouseState?.assetPositions.find(
+      p => p.position.coin === coin,
+    );
+
+    if (!freshAssetPosition) {
+      return null;
+    }
+
+    const markPrice = Number(calculateMarkPrice(freshAssetPosition.position));
     const liquidationPrice = Number(
-      selectedPosition.assetPositions.position.liquidationPx || 0,
+      freshAssetPosition.position.liquidationPx || 0,
     );
 
     const distanceLiquidation = calculateDistanceToLiquidation(
-      selectedPosition.assetPositions.position.liquidationPx,
+      freshAssetPosition.position.liquidationPx,
       markPrice,
     );
     return {
       distanceLiquidation,
       direction:
-        Number(selectedPosition.assetPositions.position.szi || 0) > 0
+        Number(freshAssetPosition.position.szi || 0) > 0
           ? 'Long'
           : ('Short' as 'Long' | 'Short'),
       currentPrice: markPrice,
       pxDecimals:
-        selectedPosition.assetPositions.position.entryPx?.split('.')[1]
-          ?.length || 2,
+        freshAssetPosition.position.entryPx?.split('.')[1]?.length || 2,
       liquidationPrice,
     };
-  }, [selectedPosition]);
+  }, [selectedPositionKey, clearinghouseState]);
+
   const handleShowRiskPopup = useCallback(
     (item: AssetPositionWithAccount) => {
-      setSelectedPosition(item);
+      setSelectedPositionKey({
+        address: item.account.address,
+        coin: item.assetPositions.position.coin,
+      });
     },
-    [setSelectedPosition],
+    [setSelectedPositionKey],
   );
 
   const handleCloseRiskPopup = useCallback(() => {
-    setSelectedPosition(null);
-  }, [setSelectedPosition]);
+    setSelectedPositionKey(null);
+  }, [setSelectedPositionKey]);
 
   return (
     <>
@@ -289,8 +301,10 @@ export const PerpsMultiAssetPosition: React.FC = () => {
       marketDataMap: s.marketDataMap,
     })),
   );
-  const [selectedPosition, setSelectedPosition] =
-    useState<AssetPositionWithAccount | null>(null);
+  const [selectedPositionKey, setSelectedPositionKey] = useState<{
+    address: string;
+    coin: string;
+  } | null>(null);
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
 
   const dataList = useMemo(() => {
@@ -326,42 +340,55 @@ export const PerpsMultiAssetPosition: React.FC = () => {
   }, [clearinghouseStateMap, getAccountByAddress, marketDataMap]);
 
   const riskPopupData = useMemo(() => {
-    if (!selectedPosition) {
+    if (!selectedPositionKey) {
       return null;
     }
 
-    const markPrice = Number(calculateMarkPrice(selectedPosition));
+    const { address, coin } = selectedPositionKey;
+    const clearinghouseState = clearinghouseStateMap[address];
+    const freshAssetPosition = clearinghouseState?.assetPositions.find(
+      p => p.position.coin === coin,
+    );
+
+    if (!freshAssetPosition) {
+      return null;
+    }
+
+    const markPrice = Number(calculateMarkPrice(freshAssetPosition.position));
     const liquidationPrice = Number(
-      selectedPosition.assetPositions.position.liquidationPx || 0,
+      freshAssetPosition.position.liquidationPx || 0,
     );
 
     const distanceLiquidation = calculateDistanceToLiquidation(
-      selectedPosition.assetPositions.position.liquidationPx,
+      freshAssetPosition.position.liquidationPx,
       markPrice,
     );
     return {
       distanceLiquidation,
       direction:
-        Number(selectedPosition.assetPositions.position.szi || 0) > 0
+        Number(freshAssetPosition.position.szi || 0) > 0
           ? 'Long'
           : ('Short' as 'Long' | 'Short'),
       currentPrice: markPrice,
       pxDecimals:
-        selectedPosition.assetPositions.position.entryPx?.split('.')[1]
-          ?.length || 2,
+        freshAssetPosition.position.entryPx?.split('.')[1]?.length || 2,
       liquidationPrice,
     };
-  }, [selectedPosition]);
+  }, [selectedPositionKey, clearinghouseStateMap]);
+
   const handleShowRiskPopup = useCallback(
     (item: AssetPositionWithAccount) => {
-      setSelectedPosition(item);
+      setSelectedPositionKey({
+        address: item.account.address,
+        coin: item.assetPositions.position.coin,
+      });
     },
-    [setSelectedPosition],
+    [setSelectedPositionKey],
   );
 
   const handleCloseRiskPopup = useCallback(() => {
-    setSelectedPosition(null);
-  }, [setSelectedPosition]);
+    setSelectedPositionKey(null);
+  }, [setSelectedPositionKey]);
 
   return (
     <>
