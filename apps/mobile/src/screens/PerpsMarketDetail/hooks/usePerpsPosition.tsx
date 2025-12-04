@@ -76,7 +76,7 @@ export const usePerpsPosition = () => {
       } catch (error: any) {
         const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
         if (isExpired) {
-          return false;
+          return;
         }
         showToast(actionText + ' cancel error', 'error');
         Sentry.captureException(
@@ -114,7 +114,7 @@ export const usePerpsPosition = () => {
       } catch (error: any) {
         const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
         if (isExpired) {
-          return false;
+          return;
         }
         console.error(actionText + ' error', error);
         showToast(error?.message || actionText + ' error', 'error');

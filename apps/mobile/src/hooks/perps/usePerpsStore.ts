@@ -171,6 +171,10 @@ function setWsSubscriptions(
   });
 }
 
+const setInitialized = (payload: boolean) => {
+  setPerpsState(prev => ({ ...prev, isInitialized: payload }));
+};
+
 const setHasPermission = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, hasPermission: payload }));
 };
@@ -219,7 +223,7 @@ const setCurrentPerpsAccount = (payload: Account) => {
   perpsService.setCurrentAccount(payload);
 };
 
-export const switchPerpsAccount = (payload: Account) => {
+export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
   const clearinghouseState =
     perpsStore.getState().clearinghouseStateMap[payload.address.toLowerCase()];
   const pnl = clearinghouseState
@@ -272,7 +276,9 @@ const fetchMarketData = async (canUseCache = true) => {
 };
 
 const handleSelectDefaultAccount = async (accounts: Account[]) => {
+  setInitialized(false);
   try {
+    const sdk = apisPerps.getPerpsSDK();
     const currentAccount = await apisPerps.getPerpsCurrentAccount();
     const lastUsedAccount = await apisPerps.getPerpsLastUsedAccount();
     const recentlyAccount = currentAccount || lastUsedAccount;
@@ -294,6 +300,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
         ? formatPositionPnl(clearinghouseState)
         : initialState.homePositionPnl;
       setHomePositionPnl(pnl);
+      sdk.initAccount(selectedItem.address);
       subscribeToUserData(selectedItem.address);
     } else {
       if (accounts.length > 0) {
@@ -317,6 +324,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
             ? formatPositionPnl(best.clearinghouseState)
             : initialState.homePositionPnl;
           setHomePositionPnl(pnl);
+          sdk.initAccount(best.account.address);
           subscribeToUserData(best.account.address);
         } else {
           setCurrentPerpsAccount(accounts[0]);
@@ -326,6 +334,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
             ? formatPositionPnl(clearinghouseState)
             : initialState.homePositionPnl;
           setHomePositionPnl(pnl);
+          sdk.initAccount(accounts[0].address);
           subscribeToUserData(accounts[0].address);
         }
       }
@@ -423,7 +432,6 @@ const updateMarketData = (payload: AssetCtx[]) => {
 
 const subscribeToUserData = (address: string) => {
   const sdk = apisPerps.getPerpsSDK();
-  sdk.initAccount(address);
 
   unsubscribeAll();
   const { unsubscribe: unsubscribeWebData2 } = sdk.ws.subscribeToWebData2(
@@ -587,10 +595,6 @@ export const usePerpsStore = () => {
 
   const setAccountSummary = useMemoizedFn((payload: AccountSummary | null) => {
     setPerpsState(prev => ({ ...prev, accountSummary: payload }));
-  });
-
-  const setInitialized = useMemoizedFn((payload: boolean) => {
-    setPerpsState(prev => ({ ...prev, isInitialized: payload }));
   });
 
   const setApproveSignatures = useMemoizedFn((payload: ApproveSignatures) => {
