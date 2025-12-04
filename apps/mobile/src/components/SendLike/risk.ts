@@ -24,6 +24,8 @@ const waitQueueFinished = (q: PQueue) => {
   });
 };
 
+const addressSentCache: Record<string, string[]> = {};
+
 export const enum RiskType {
   NEVER_SEND = 1,
   SCAM_ADDRESS = 2,
@@ -38,7 +40,9 @@ export const useRisks = (options: {
   onLoadFinished?: (ctx: { risks: Array<RiskItem> }) => void;
 }) => {
   const { fromAddress, toAddress, cex, onLoadFinished } = options;
-  const [risks, setRisks] = useState<Array<RiskItem>>([]);
+  const [risksByAddr, setRisksByAddr] = useState<{
+    [toAddr: string]: Array<RiskItem>;
+  }>({});
   const { t } = useTranslation();
   const [loading, setLoading] = useState(!!toAddress);
   const riskGetRef = useRef(false);
@@ -46,10 +50,6 @@ export const useRisks = (options: {
   const [addressDesc, setAddressDesc] = useState<
     AddrDescResponse['desc'] | undefined
   >();
-
-  const hasSend = useMemo(() => {
-    return !loading && !risks.some(r => r.type === RiskType.NEVER_SEND);
-  }, [loading, risks]);
 
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
@@ -91,6 +91,10 @@ export const useRisks = (options: {
 
               if (res?.has_transfer) {
                 addressSent = addr;
+                addressSentCache[toAddress] = [
+                  ...(addressSentCache[toAddress] || []),
+                  addr,
+                ];
               }
             } catch (error) {
               console.error('has_transfer fetch error', error);
@@ -155,17 +159,18 @@ export const useRisks = (options: {
         timeoutPromise,
       ]);
 
-      if (!addressSent) {
-        setRisks([
-          ...currRisks,
-          {
-            type: RiskType.NEVER_SEND,
-            value: t('page.confirmAddress.risks.noSend'),
-          },
-        ]);
-      } else {
-        setRisks(currRisks);
-      }
+      setRisksByAddr(prev => ({
+        ...prev,
+        [toAddress]: addressSent
+          ? currRisks
+          : [
+              ...currRisks,
+              {
+                type: RiskType.NEVER_SEND,
+                value: t('page.confirmAddress.risks.noSend'),
+              },
+            ],
+      }));
       onLoadFinished?.({ risks: [...currRisks] });
     } catch (error) {
       console.error('check transfer timeout or error', error);
@@ -177,7 +182,10 @@ export const useRisks = (options: {
           value: t('page.confirmAddress.risks.noSend'),
         },
       ];
-      setRisks(risks);
+      setRisksByAddr(prev => ({
+        ...prev,
+        [toAddress]: risks,
+      }));
       onLoadFinished?.({ risks });
     } finally {
       riskGetRef.current = false;
@@ -190,9 +198,8 @@ export const useRisks = (options: {
   }, [fetchRisks]);
 
   return {
-    risks,
+    risks: risksByAddr[toAddress] || [],
     addressDesc,
-    hasSend,
     loading,
     fetchRisks,
   };
