@@ -16,23 +16,25 @@ const currencyServiceStore = zCreate<CurrencyServiceStore>(() => {
 });
 currencyService.setBeforeSetKV((k, v) => {
   currencyServiceStore.setState(prev => {
+    if (prev[k] === v) return prev;
+
     prev = { ...prev, [k]: v };
     return prev;
   });
 });
 
 export function setCurrencyStore(
-  valOrFunc: UpdaterOrPartials<CurrencyServiceStore>,
+  valOrFunc: UpdaterOrPartials<CurrencyServiceStore['data']>,
 ) {
   return currencyServiceStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+    const { newVal } = resolveValFromUpdater(prev.data, valOrFunc, {
       strict: false,
     });
 
     // sync to service store
-    currencyService.setStore(newVal.data);
+    currencyService.setStore(newVal);
 
-    return newVal;
+    return { ...prev, data: newVal };
   });
 }
 
