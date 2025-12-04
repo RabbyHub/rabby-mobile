@@ -63,8 +63,18 @@ export const HistoryItem = React.memo(
     const { styles, isLight } = useTheme2024({ getStyle });
 
     const formatType: HistoryItemCateType = useMemo(() => {
+      if (data.historyType === HistoryItemCateType.Swap) {
+        if (
+          data.receives?.[0]?.token?.is_core &&
+          data.sends?.[0]?.token?.is_core
+        ) {
+          return HistoryItemCateType.Swap;
+        } else {
+          return HistoryItemCateType.UnKnown;
+        }
+      }
       return data.historyType;
-    }, [data.historyType]);
+    }, [data.historyType, data.receives, data.sends]);
 
     const tokenApproveData = useMemo(() => {
       const res: TokenChangeDataItem[] = [];
@@ -96,6 +106,10 @@ export const HistoryItem = React.memo(
             return t('page.transactions.itemTitle.LendingBorrow');
           case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY:
             return t('page.transactions.itemTitle.LendingRepay');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL:
+            return t('page.transactions.itemTitle.LendingOnCollateral');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL:
+            return t('page.transactions.itemTitle.LendingOffCollateral');
         }
       }
 

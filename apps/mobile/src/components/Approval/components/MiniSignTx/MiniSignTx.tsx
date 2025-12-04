@@ -895,6 +895,7 @@ export const MiniSignTx = ({
               ...(await apisTransactionHistory.getPendingTxs({
                 recommendNonce,
                 address: currentAccount?.address,
+                chainId: tx.chainId,
               })),
               ...tempTxs.slice(0, index),
             ],

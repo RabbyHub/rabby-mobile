@@ -8,11 +8,43 @@ import { DEVICE } from '@onekeyfe/hd-core';
 import { atom, useAtom } from 'jotai';
 import type { SearchDevice } from '@onekeyfe/hd-core';
 import React from 'react';
+import { zCreate } from '../utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '../utils/store';
 
-export const oneKeyDevices = atom<SearchDevice[]>([]);
+// export const oneKeyDevices = atom<SearchDevice[]>([]);
+
+type OnekeyDevicesState = {
+  devices: SearchDevice[];
+};
+
+const onekeyDevicesStore = zCreate<OnekeyDevicesState>(() => ({
+  devices: [],
+}));
+function setDevices(
+  valOrFunc: UpdaterOrPartials<OnekeyDevicesState['devices']>,
+) {
+  onekeyDevicesStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.devices, valOrFunc, {
+      strict: false,
+    });
+
+    return {
+      ...prev,
+      devices: newVal,
+    };
+  });
+}
+export function useOneKeyDevices() {
+  const devices = onekeyDevicesStore(s => s.devices);
+
+  return {
+    devices,
+    setOneKeyDevices: setDevices,
+  };
+}
 
 export const useGlobalInitOneKey = () => {
-  const [, setDevices] = useAtom(oneKeyDevices);
+  // const [, setDevices] = useAtom(oneKeyDevices);
 
   React.useEffect(() => {
     HardwareBleSdk.on(DEVICE.CONNECT, payload => {
@@ -29,7 +61,7 @@ export const useGlobalInitOneKey = () => {
         prev.filter(d => d.connectId !== payload?.device?.connectId),
       );
     });
-  }, [setDevices]);
+  }, []);
 };
 
 export async function initOneKeyKeyring() {

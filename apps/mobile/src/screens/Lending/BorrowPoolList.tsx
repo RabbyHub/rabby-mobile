@@ -21,6 +21,7 @@ import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import { useTranslation } from 'react-i18next';
 import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import { formatApy, formatListNetWorth } from './utils/format';
+import { assetCanBeBorrowedByUser } from './utils/borrow';
 
 const FOOT_HEIGHT = 100;
 const BorrowPoolList = () => {
@@ -30,6 +31,10 @@ const BorrowPoolList = () => {
     useLendingSummary();
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
+  const isInIsolationMode = useMemo(() => {
+    return iUserSummary?.isInIsolationMode;
+  }, [iUserSummary?.isInIsolationMode]);
+
   const sortReserves = useMemo(() => {
     return displayPoolReserves
       ?.filter(item => {
@@ -45,15 +50,14 @@ const BorrowPoolList = () => {
         const reserve = reserves?.reservesData?.find(x =>
           isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
         );
-        if (
-          reserve?.borrowingEnabled === false ||
-          reserve?.isActive === false ||
-          reserve?.isFrozen ||
-          reserve?.isPaused
-        ) {
+        if (!reserve || !iUserSummary) {
           return false;
         }
-        return true;
+        return assetCanBeBorrowedByUser(
+          reserve,
+          iUserSummary,
+          item.reserve.eModes,
+        );
       })
       .sort((a, b) => {
         if (
@@ -66,14 +70,13 @@ const BorrowPoolList = () => {
         }
         return Number(b.totalBorrowsUSD) - Number(a.totalBorrowsUSD);
       });
-  }, [displayPoolReserves, reserves?.reservesData]);
+  }, [displayPoolReserves, iUserSummary, reserves?.reservesData]);
 
   const handlePressItem = useCallback(
     item => {
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.BORROW_DETAIL,
-        reserve: item,
-        userSummary: iUserSummary,
+        underlyingAsset: item.reserve.underlyingAsset,
         onClose: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
@@ -89,7 +92,7 @@ const BorrowPoolList = () => {
         },
       });
     },
-    [colors2024, iUserSummary, isLight],
+    [colors2024, isLight],
   );
 
   const availableCard = useMemo(() => {
@@ -97,28 +100,47 @@ const BorrowPoolList = () => {
       return null;
     }
     return (
-      <View style={styles.availableCard}>
+      <View
+        style={[
+          styles.availableCard,
+          isInIsolationMode && styles.availableCardIsolated,
+        ]}>
         <View style={styles.availableCardHeader}>
-          {iUserSummary?.availableBorrowsUSD &&
-          iUserSummary?.availableBorrowsUSD !== '0' ? null : (
+          {(iUserSummary?.availableBorrowsUSD &&
+            iUserSummary?.availableBorrowsUSD === '0') ||
+          isInIsolationMode ? (
             <RcIconWarningCircleCC
               width={14}
               height={14}
-              color={colors2024['neutral-info']}
+              color={
+                isInIsolationMode
+                  ? colors2024['orange-default']
+                  : colors2024['neutral-info']
+              }
             />
-          )}
-          <Text style={styles.availableCardTitle}>
+          ) : null}
+          <Text
+            style={[
+              styles.availableCardTitle,
+              isInIsolationMode && styles.orangeText,
+            ]}>
             {t('page.Lending.modalDesc.availableToBorrow')}:{' '}
-            <Text style={styles.usdValue}>
+            <Text
+              style={[styles.usdValue, isInIsolationMode && styles.orangeText]}>
               {formatUsdValueKMB(
                 Number(iUserSummary?.availableBorrowsUSD || '0'),
               )}
             </Text>
           </Text>
         </View>
-        <Text style={styles.availableCardValue}>
-          {iUserSummary?.availableBorrowsUSD &&
-          iUserSummary?.availableBorrowsUSD !== '0'
+        <Text
+          style={[
+            styles.availableCardValue,
+            isInIsolationMode && styles.orangeText,
+          ]}>
+          {iUserSummary?.availableBorrowsUSD && isInIsolationMode
+            ? t('page.Lending.availableCard.isolated')
+            : iUserSummary?.availableBorrowsUSD !== '0'
             ? t('page.Lending.availableCard.canBorrow')
             : t('page.Lending.availableCard.needSupply')}
         </Text>
@@ -128,11 +150,14 @@ const BorrowPoolList = () => {
     colors2024,
     iUserSummary?.availableBorrowsUSD,
     iUserSummary?.totalLiquidityUSD,
+    isInIsolationMode,
     loading,
     styles.availableCard,
     styles.availableCardHeader,
+    styles.availableCardIsolated,
     styles.availableCardTitle,
     styles.availableCardValue,
+    styles.orangeText,
     styles.usdValue,
     t,
   ]);
@@ -170,43 +195,53 @@ const BorrowPoolList = () => {
     return `${item.reserve.underlyingAsset}-${item.reserve.symbol}`;
   }, []);
   const renderItem = useCallback(
-    ({ item }) => (
-      <TouchableOpacity
-        style={styles.item}
-        onPress={() => handlePressItem(item)}>
-        <View style={styles.left}>
-          <TokenIcon
-            size={46}
-            chainSize={0}
-            tokenSymbol={item.reserve.symbol}
-          />
-          <View style={styles.symbolContainer}>
-            <Text style={styles.symbol} numberOfLines={1} ellipsizeMode="tail">
-              {item.reserve.symbol}
-            </Text>
-            <View style={styles.yourBalanceContainer}>
-              <WalletFillCC
-                width={16}
-                height={16}
-                style={styles.walletIcon}
-                color={colors2024['secondary-foot']}
-              />
-              <Text style={styles.yourBalance}>
-                {formatUsdValueKMB(item.walletBalanceUSD || '0')}
+    ({ item }) => {
+      const isZeroBorrowed = item.totalBorrowsUSD === '0';
+      return (
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => handlePressItem(item)}>
+          <View style={styles.left}>
+            <TokenIcon
+              size={46}
+              chainSize={0}
+              tokenSymbol={item.reserve.symbol}
+            />
+            <View style={styles.symbolContainer}>
+              <Text
+                style={styles.symbol}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {item.reserve.symbol}
               </Text>
+              <View style={styles.yourBalanceContainer}>
+                <WalletFillCC
+                  width={16}
+                  height={16}
+                  style={styles.walletIcon}
+                  color={colors2024['secondary-foot']}
+                />
+                <Text style={styles.yourBalance}>
+                  {formatUsdValueKMB(item.walletBalanceUSD || '0')}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
-        <Text style={styles.apy}>
-          {formatApy(Number(item.reserve.variableBorrowAPY || '0'))}
-        </Text>
-        <View style={styles.right}>
-          <Text style={styles.yourSupplied}>
-            {formatListNetWorth(Number(item.totalBorrowsUSD || '0'))}
+          <Text style={styles.apy}>
+            {formatApy(Number(item.reserve.variableBorrowAPY || '0'))}
           </Text>
-        </View>
-      </TouchableOpacity>
-    ),
+          <View style={styles.right}>
+            {isZeroBorrowed ? (
+              <Text style={[styles.yourSupplied, styles.zeroBorrowed]}>$0</Text>
+            ) : (
+              <Text style={styles.yourSupplied}>
+                {formatListNetWorth(Number(item.totalBorrowsUSD || '0'))}
+              </Text>
+            )}
+          </View>
+        </TouchableOpacity>
+      );
+    },
     [colors2024, handlePressItem, styles],
   );
   const renderFooterComponent = useCallback(() => {
@@ -303,6 +338,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
   },
+  zeroBorrowed: {
+    color: colors2024['neutral-info'],
+  },
   listHeader: {
     paddingVertical: 2,
     paddingHorizontal: 8,
@@ -353,6 +391,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 8,
     gap: 2,
   },
+  availableCardIsolated: {
+    backgroundColor: colors2024['orange-light-1'],
+  },
   availableCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -364,6 +405,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+  },
+  orangeText: {
+    color: colors2024['orange-default'],
   },
   usdValue: {
     fontSize: 17,

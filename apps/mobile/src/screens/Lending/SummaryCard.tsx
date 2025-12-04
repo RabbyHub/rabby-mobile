@@ -100,7 +100,6 @@ const SummaryCard = (props: IProps) => {
           <Pressable
             hitSlop={20}
             onPress={e => {
-              console.log('CUSTOM_LOGGER:=>: onPress');
               e.stopPropagation();
               setIsEstDailySwitch(pre => !pre);
             }}
@@ -379,7 +378,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   healthFactorStatus: {
     color: colors2024['green-default'],
-    backgroundColor: colors2024['green-light-4'],
+    backgroundColor: colors2024['green-light-1'],
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,

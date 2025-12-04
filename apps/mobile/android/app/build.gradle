@@ -94,8 +94,8 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100156
-        versionName "0.6.46"
+        versionCode 100158
+        versionName "0.6.47"
         missingDimensionStrategy "store", "play"
         externalNativeBuild {
           cmake {
@@ -186,10 +186,10 @@ android {
     }
     // packagingOptions {
     //   jniLibs {
-    //     useLegacyPackaging true
+    //     // useLegacyPackaging true
     //     pickFirsts += [
-    //       'lib/**/libssl.so',
-    //       'lib/**/libcrypto.so'
+    //       'lib/**/libjsi.so'
+    //       'lib/**/libreactnative.so'
     //     ]
     //   }
     // }
@@ -199,6 +199,12 @@ androidComponents {
   onVariants(selector().withBuildType("debug")) {
     // packaging.jniLibs.pickFirsts.add('lib/**/libssl.so')
     packaging.jniLibs.pickFirsts.add('lib/**/libcrypto.so')
+  }
+
+  // for allVariants
+  onVariants(selector().all()) {
+    packaging.jniLibs.pickFirsts.add('lib/**/libjsi.so')
+    packaging.jniLibs.pickFirsts.add('lib/**/libreactnative.so')
   }
 }
 

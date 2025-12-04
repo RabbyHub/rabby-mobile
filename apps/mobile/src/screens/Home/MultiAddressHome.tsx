@@ -15,7 +15,11 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
+import {
+  StackActions,
+  useFocusEffect,
+  useIsFocused,
+} from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
@@ -33,7 +37,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  TouchableOpacity as RNTouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
@@ -113,6 +117,8 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
+import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -128,25 +134,12 @@ function MultiAddressHome(): JSX.Element {
   }>();
   const { top10Addresses } = useAccountInfo();
 
-  // add gift eligibility check hook
-  const { checkAddressesEligibility, getCurrentEligibleAddress } =
-    useGasAccountEligibility();
-  const currentEligibleAddress = getCurrentEligibleAddress();
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
-  const gasAccountSig = gasAccountService.getGasAccountSig();
-  const hasClaimedGift = gasAccountService.getHasClaimedGift();
+
   const { width } = Dimensions.get('window');
   const itemWidth =
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
-  // use useMemo to directly calculate isEligible so that it can respond to related state changes
-  const isEligible = useMemo(() => {
-    return (
-      currentEligibleAddress !== undefined &&
-      !gasAccountSig?.sig &&
-      !hasClaimedGift
-    );
-  }, [currentEligibleAddress, gasAccountSig, hasClaimedGift]);
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const {
@@ -155,6 +148,45 @@ function MultiAddressHome(): JSX.Element {
     triggerUpdate: triggerUpdateAlert,
   } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
   const { fetchData: fetchLendingData } = useLendingData();
+
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
+  const sortedAccounts = useSortAddressList(accounts);
+  // 获取top50的私钥助记词账户
+  const top50PrivateKeyAccounts = useCreationWithShallowCompare(() => {
+    console.debug('top50PrivateKeyAccounts', sortedAccounts);
+    return sortedAccounts
+      .filter(
+        account =>
+          account.type == KEYRING_TYPE.SimpleKeyring ||
+          account.type == KEYRING_TYPE.HdKeyring,
+      )
+      .slice(0, 50)
+      .map(account => account.address);
+  }, [sortedAccounts]);
+
+  // add gift eligibility check hook
+  const { checkAddressesEligibility } = useGasAccountEligibility();
+  // use useMemo to directly calculate isEligible so that it can respond to related state changes
+  const isEligible = useMemo(() => {
+    const gasAccountSig = gasAccountService.getGasAccountSig();
+    const hasClaimedGift = gasAccountService.getHasClaimedGift();
+    const currentEligibleAddress =
+      gasAccountService.getCurrentEligibleAddress();
+    return (
+      currentEligibleAddress !== undefined &&
+      !gasAccountSig?.sig &&
+      !hasClaimedGift
+    );
+  }, []);
+
+  // 初始化gift资格检查
+  useFocusEffect(
+    React.useCallback(() => {
+      if (top50PrivateKeyAccounts.length > 0) {
+        checkAddressesEligibility(top50PrivateKeyAccounts, true);
+      }
+    }, [top50PrivateKeyAccounts, checkAddressesEligibility]),
+  );
 
   const MENU_ARR = useMemo(
     () =>
@@ -293,45 +325,15 @@ function MultiAddressHome(): JSX.Element {
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
-  } = useMulti24hBalance(
-    top10Addresses,
-    true,
-    top10Balance.total,
-    top10Balance.totalEvm,
-  );
+  } = useMulti24hBalance(top10Addresses, {
+    disableAutoFetch: true,
+    totalBalance: top10Balance.total,
+    totalEvmBalance: top10Balance.totalEvm,
+  });
   useCexSupportList();
   useFetchCexInfo();
   useInitDetectDBAssets();
   useSetTotalBalanceText(combineData.netWorth);
-
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const sortedAccounts = useSortAddressList(accounts);
-
-  // 获取top50的私钥助记词账户
-  const top50PrivateKeyAccounts = useMemo(() => {
-    console.debug('top50PrivateKeyAccounts', sortedAccounts);
-    return sortedAccounts
-      .filter(
-        account =>
-          account.type == KEYRING_TYPE.SimpleKeyring ||
-          account.type == KEYRING_TYPE.HdKeyring,
-      )
-      .slice(0, 50)
-      .map(account => account.address);
-  }, [sortedAccounts]);
-
-  const [hasOpenCopyTrading, setHasOpenCopyTrading] = useState(true);
-
-  // 初始化gift资格检查
-  useFocusEffect(
-    React.useCallback(() => {
-      if (top50PrivateKeyAccounts.length > 0) {
-        checkAddressesEligibility(top50PrivateKeyAccounts, true);
-      }
-    }, [top50PrivateKeyAccounts, checkAddressesEligibility]),
-  );
 
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
 
@@ -424,8 +426,14 @@ function MultiAddressHome(): JSX.Element {
       success: success,
       fail: count,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [top10Addresses]);
+
+  useFocusEffect(
+    useCallback(() => {
+      pendingTxCount;
+      getSuccessAndFailList();
+    }, [getSuccessAndFailList, pendingTxCount]),
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -440,19 +448,6 @@ function MultiAddressHome(): JSX.Element {
     }, [detectHasAccounts, fetchHistory]),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      getSuccessAndFailList();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [getSuccessAndFailList, pendingTxCount]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      const value = preferenceService.getHasOpenCopyTrading();
-      setHasOpenCopyTrading(value ?? true);
-    }, [setHasOpenCopyTrading]),
-  );
   useFocusEffect(
     useCallback(() => {
       if (appState === 'active') {
@@ -486,14 +481,7 @@ function MultiAddressHome(): JSX.Element {
         triggerUpdateAlert();
         syncTop10History();
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-      triggerUpdate,
-      triggerUpdateAlert,
-      appState,
-      getSuccessAndFailList,
-      checkAddressesEligibility,
-    ]),
+    }, [appState, triggerUpdate, triggerUpdateAlert, syncTop10History]),
   );
 
   const onRefresh = useCallback(() => {
@@ -617,7 +605,7 @@ function MultiAddressHome(): JSX.Element {
           });
           break;
         case MultiHomeFeatTitle.Lending:
-          navigation.navigate(RootNames.StackTransaction, {
+          navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Lending,
             params: {},
           });
@@ -653,13 +641,13 @@ function MultiAddressHome(): JSX.Element {
       if (el.key === MultiHomeFeatTitle.Watchlist) {
         return <WatchListBadge />;
       }
-      if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
-        return (
-          <TouchableOpacity onPress={showTipsDollarDialog}>
-            <IconDollar width={24} height={24} />
-          </TouchableOpacity>
-        );
-      }
+      // if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
+      //   return (
+      //     <RNTouchableOpacity onPress={showTipsDollarDialog}>
+      //       <IconDollar width={24} height={24} />
+      //     </RNTouchableOpacity>
+      //   );
+      // }
 
       if (el.key === MultiHomeFeatTitle.Perps) {
         return <PerpsPnl />;
@@ -701,12 +689,7 @@ function MultiAddressHome(): JSX.Element {
         </>
       );
     },
-    [
-      hasOpenCopyTrading,
-      pendingTxCount,
-      showTipsDollarDialog,
-      styles.badgeStyle,
-    ],
+    [pendingTxCount, styles.badgeStyle],
   );
 
   const { bottom } = useSafeAreaInsets();
@@ -848,14 +831,16 @@ function MultiAddressHome(): JSX.Element {
             <View style={styles.gridItemsWrap}>
               {MENU_ARR.map((el, index) => {
                 return (
-                  <TouchableOpacity
+                  <RNGHTouchableOpacity
                     style={StyleSheet.flatten([
                       styles.gridItem,
                       { width: itemWidth },
                     ])}
                     key={index}
                     onPress={() => {
-                      handleClickMenu(el.key);
+                      requestAnimationFrame(() => {
+                        handleClickMenu(el.key);
+                      });
                       matomoRequestEvent({
                         category: 'Click_Services',
                         action: `Click_${el.key}`,
@@ -874,7 +859,7 @@ function MultiAddressHome(): JSX.Element {
                       </View>
                     </View>
                     <Text style={styles.gridText}>{el.title}</Text>
-                  </TouchableOpacity>
+                  </RNGHTouchableOpacity>
                 );
               })}
             </View>

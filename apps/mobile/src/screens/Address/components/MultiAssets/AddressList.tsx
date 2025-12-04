@@ -9,7 +9,11 @@ import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CurrentAddressProps } from '../AddressListScreenContainer';
-import { StackActions, useNavigation } from '@react-navigation/native';
+import {
+  StackActions,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/native';
 import { AppRootName, RootNames } from '@/constant/layout';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import {
@@ -53,9 +57,11 @@ export const AddressList = () => {
 
   const { multi24hBalance, refresh: refresh24hBalance } = useMulti24hBalance(
     top10Addresses,
-    true,
-    top10Balance.total,
-    top10Balance.totalEvm,
+    {
+      disableAutoFetch: true,
+      totalBalance: top10Balance.total,
+      totalEvmBalance: top10Balance.totalEvm,
+    },
   );
 
   useBalanceUpdate(triggerUpdate);
@@ -256,6 +262,7 @@ export const AddressList = () => {
     }
   }, [fetchAccounts, refresh24hBalance, triggerUpdate]);
 
+  // return null;
   return (
     <Tabs.FlatList
       keyExtractor={item => `${item.address}-${item.brandName}`}

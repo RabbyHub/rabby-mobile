@@ -34,7 +34,7 @@ const dbOptions: DataSourceOptions = {
   location: 'default',
   // "query" | "schema" | "error" | "warn" | "info" | "log" | "migration"
   logging: __DEV__
-    ? ['error', /* 'query', 'schema',*/ 'migration']
+    ? ['error', 'query', 'schema', 'migration']
     : ['error', 'migration'],
   // logger: isNonPublicProductionEnv ? 'file' : 'advanced-console',
   // logger: __DEV__ ? 'advanced-console' : 'simple-console',

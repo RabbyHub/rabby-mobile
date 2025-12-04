@@ -343,7 +343,7 @@ export function AccountsPanelInSheetModal({
                         justifyContent: 'center',
                         alignItems: 'center',
                       }}
-                      color={colors2024['green-light-2']}
+                      color={colors2024['green-light-disable']}
                     />
                     <RcIconLockCC
                       style={{
@@ -707,7 +707,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       height: 46,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: colors2024['green-light-4'],
+      backgroundColor: colors2024['green-light-1'],
       borderRadius: 12,
     },
     addWhitelistHintText: {

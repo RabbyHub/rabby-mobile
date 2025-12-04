@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
+import { Account } from '@/core/services/preference';
 
 export const PerpsAccountCard: React.FC<{
   isLogin: boolean;

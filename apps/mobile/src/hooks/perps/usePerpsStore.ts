@@ -1,5 +1,5 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMemoizedFn } from 'ahooks';
 import {
   AssetCtx,
@@ -20,6 +20,14 @@ import { formatMarkData } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { maxBy } from 'lodash';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { AppState } from 'react-native';
+import { useShallow } from 'zustand/react/shallow';
 
 // 保持原有的接口定义
 export interface PositionAndOpenOrder extends AssetPosition {
@@ -64,6 +72,7 @@ export interface PerpsState {
   positionAndOpenOrders: PositionAndOpenOrder[];
   accountSummary: AccountSummary | null;
   currentPerpsAccount: Account | null;
+  currentOnlyShowPerpsAccount: Account | null;
   marketData: MarketData[];
   marketDataMap: MarketDataMap;
   hasPermission: boolean;
@@ -98,6 +107,7 @@ const initialState: PerpsState = {
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
+  currentOnlyShowPerpsAccount: null,
   marketData: [],
   userAccountHistory: [],
   localLoadingHistory: [],
@@ -117,19 +127,193 @@ const initialState: PerpsState = {
   fillsOrderTpOrSl: {},
 };
 
-const perpsAtom = atom(initialState);
+// const perpsAtom = atom(initialState);
+const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
+function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
+  perpsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, { strict: true });
+    return newVal;
+  });
+}
 
-const wsSubscriptionsAtom = atom<(() => void)[]>([]);
+function unsubscribeAll() {
+  setPerpsState(prev => {
+    prev.wsSubscriptions.forEach(unsubscribe => {
+      unsubscribe();
+    });
+
+    prev.wsSubscriptions = [];
+
+    return prev;
+  });
+}
+
+// const wsSubscriptionsAtom = atom<(() => void)[]>([]);
+type WsState = {
+  wsSubscriptions: (() => void)[];
+};
+const wsStore = zCreate<WsState>(() => ({ wsSubscriptions: [] }));
+function setWsSubscriptions(
+  valOrFunc: UpdaterOrPartials<WsState['wsSubscriptions']>,
+) {
+  wsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.wsSubscriptions, valOrFunc, {
+      strict: false,
+    });
+    return { wsSubscriptions: newVal };
+  });
+}
+
+const setHasPermission = (payload: boolean) => {
+  setPerpsState(prev => ({ ...prev, hasPermission: payload }));
+};
+
+const fetchPerpPermission = async (address: string) => {
+  const { has_permission } = await openapi.getPerpPermission({ id: address });
+
+  setHasPermission(has_permission);
+  // setHasPermission(true);
+};
+
+const resetState = () => {
+  setPerpsState(prev => ({
+    ...prev,
+    accountSummary: null,
+    positionAndOpenOrders: [],
+    currentPerpsAccount: null,
+    isLogin: false,
+    userAccountHistory: [],
+    localLoadingHistory: [],
+    userFills: [],
+    perpFee: 0.00045,
+    approveSignatures: [],
+    fillsOrderTpOrSl: {},
+    hasPermission: true,
+    homePositionPnl: {
+      pnl: 0,
+      show: false,
+      type: 'accountValue',
+      accountValue: 0,
+    },
+  }));
+};
+
+const addUserFills = (payload: {
+  fills: WsFill[];
+  isSnapshot?: boolean;
+  user: string;
+}) => {
+  const { fills, isSnapshot } = payload;
+  setPerpsState(prev => ({
+    ...prev,
+    userFills: isSnapshot
+      ? fills.slice(0, 2000)
+      : [...fills, ...prev.userFills],
+  }));
+};
+
+const setPositionAndOpenOrders = (
+  clearinghouseState: ClearinghouseState,
+  openOrders: OpenOrder[],
+) => {
+  setPerpsState(prev => ({
+    ...prev,
+    accountSummary: {
+      ...clearinghouseState.marginSummary,
+      withdrawable: clearinghouseState.withdrawable,
+    },
+    positionAndOpenOrders: clearinghouseState.assetPositions.map(position => ({
+      ...position,
+      openOrders: openOrders.filter(
+        order => order.coin === position.position.coin,
+      ),
+    })),
+    homePositionPnl: {
+      pnl: clearinghouseState.assetPositions.reduce((acc, order) => {
+        return acc + Number(order.position.unrealizedPnl);
+      }, 0),
+      show: Number(clearinghouseState.marginSummary.accountValue) > 0,
+      type:
+        clearinghouseState.assetPositions.length > 0 ? 'pnl' : 'accountValue',
+      accountValue: Number(clearinghouseState.marginSummary.accountValue),
+    },
+  }));
+};
+
+const updateMarketData = (payload: AssetCtx[]) => {
+  setPerpsState(prev => {
+    const list = payload || [];
+    const newMarketData = prev.marketData.map(item => {
+      return {
+        ...item,
+        ...list[item.index],
+      };
+    });
+    return {
+      ...prev,
+      marketData: newMarketData,
+      marketDataMap: buildMarketDataMap(newMarketData),
+    };
+  });
+};
+
+const subscribeToUserData = (address: string) => {
+  const sdk = apisPerps.getPerpsSDK();
+
+  const { unsubscribe: unsubscribeWebData2 } = sdk.ws.subscribeToWebData2(
+    data => {
+      const { clearinghouseState, assetCtxs, openOrders, serverTime, user } =
+        data;
+      if (!isSameAddress(user, address)) {
+        return;
+      }
+
+      setPositionAndOpenOrders(clearinghouseState, openOrders);
+
+      updateMarketData(assetCtxs);
+    },
+  );
+
+  const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
+    data => {
+      // Only process data when app is active
+      if (AppState.currentState !== 'active') {
+        return;
+      }
+
+      console.log('User fills update:', data.fills.length);
+      const { fills, isSnapshot, user } = data;
+      if (!isSameAddress(user, address)) {
+        return;
+      }
+
+      addUserFills({
+        fills,
+        isSnapshot: isSnapshot || false,
+        user,
+      });
+    },
+  );
+
+  setWsSubscriptions(prev => {
+    return [...prev, unsubscribeWebData2, unsubscribeFills];
+  });
+};
+
+export const apisPerpsStore = {
+  logout: () => {
+    unsubscribeAll();
+    resetState();
+    fetchPerpPermission('');
+  },
+};
 
 export const usePerpsStore = () => {
-  const [state, setState] = useAtom(perpsAtom);
-  const appState = useAppState();
-
-  const [wsSubscriptions, setWsSubscriptions] = useAtom(wsSubscriptionsAtom);
+  const state = perpsStore(s => s);
 
   const setFillsOrderTpOrSl = useMemoizedFn(
     (payload: Record<string, 'tp' | 'sl'>) => {
-      setState(prev => ({ ...prev, fillsOrderTpOrSl: payload }));
+      setPerpsState(prev => ({ ...prev, fillsOrderTpOrSl: payload }));
     },
   );
 
@@ -140,18 +324,14 @@ export const usePerpsStore = () => {
       type: 'pnl' | 'accountValue';
       accountValue: number;
     }) => {
-      setState(prev => ({ ...prev, homePositionPnl: payload }));
+      setPerpsState(prev => ({ ...prev, homePositionPnl: payload }));
     },
   );
-
-  const setHasPermission = useMemoizedFn((payload: boolean) => {
-    setState(prev => ({ ...prev, hasPermission: payload }));
-  });
 
   // Reducers 转换为 setState 操作
   const setLocalLoadingHistory = useMemoizedFn(
     (payload: AccountHistoryItem[], isReset: boolean = false) => {
-      setState(prev => ({
+      setPerpsState(prev => ({
         ...prev,
         localLoadingHistory: isReset
           ? payload
@@ -162,29 +342,17 @@ export const usePerpsStore = () => {
 
   const setUserAccountHistory = useMemoizedFn(
     (payload: AccountHistoryItem[]) => {
-      setState(prev => ({ ...prev, userAccountHistory: payload }));
+      setPerpsState(prev => ({ ...prev, userAccountHistory: payload }));
     },
   );
 
   const setUserFills = useMemoizedFn((payload: WsFill[]) => {
-    setState(prev => ({ ...prev, userFills: payload }));
+    setPerpsState(prev => ({ ...prev, userFills: payload }));
   });
-
-  const addUserFills = useMemoizedFn(
-    (payload: { fills: WsFill[]; isSnapshot?: boolean; user: string }) => {
-      const { fills, isSnapshot } = payload;
-      setState(prev => ({
-        ...prev,
-        userFills: isSnapshot
-          ? fills.slice(0, 2000)
-          : [...fills, ...prev.userFills],
-      }));
-    },
-  );
 
   const updatePositionsWithClearinghouse = useMemoizedFn(
     (payload: ClearinghouseState) => {
-      setState(prev => {
+      setPerpsState(prev => {
         const openOrders = prev.positionAndOpenOrders.flatMap(
           order => order.openOrders,
         );
@@ -234,7 +402,7 @@ export const usePerpsStore = () => {
       const maxTimeItemDeposit = maxBy(depositList, 'time');
       const maxTimeItemWithdraw = maxBy(withdrawList, 'time');
       const maxTimeItemReceive = maxBy(receiveList, 'time');
-      setState(prev => {
+      setPerpsState(prev => {
         // 使用当前userAccountHistory过滤 localLoadingHistory
         const filteredLocalHistory = state.localLoadingHistory.filter(item => {
           if (item.type === 'deposit') {
@@ -255,68 +423,20 @@ export const usePerpsStore = () => {
   );
 
   const setPerpFee = useMemoizedFn((payload: number) => {
-    setState(prev => ({ ...prev, perpFee: payload }));
+    setPerpsState(prev => ({ ...prev, perpFee: payload }));
   });
 
   const setMarketData = useMemoizedFn((payload: MarketData[] | []) => {
     const list = payload || [];
-    setState(prev => ({
+    setPerpsState(prev => ({
       ...prev,
       marketData: list,
       marketDataMap: buildMarketDataMap(list as MarketData[]),
     }));
   });
 
-  const updateMarketData = useMemoizedFn((payload: AssetCtx[]) => {
-    setState(prev => {
-      const list = payload || [];
-      const newMarketData = prev.marketData.map(item => {
-        return {
-          ...item,
-          ...list[item.index],
-        };
-      });
-      return {
-        ...prev,
-        marketData: newMarketData,
-        marketDataMap: buildMarketDataMap(newMarketData),
-      };
-    });
-  });
-
-  const setPositionAndOpenOrders = useMemoizedFn(
-    (clearinghouseState: ClearinghouseState, openOrders: OpenOrder[]) => {
-      setState(prev => ({
-        ...prev,
-        accountSummary: {
-          ...clearinghouseState.marginSummary,
-          withdrawable: clearinghouseState.withdrawable,
-        },
-        positionAndOpenOrders: clearinghouseState.assetPositions.map(
-          position => ({
-            ...position,
-            openOrders: openOrders.filter(
-              order => order.coin === position.position.coin,
-            ),
-          }),
-        ),
-        homePositionPnl: {
-          pnl: clearinghouseState.assetPositions.reduce((acc, order) => {
-            return acc + Number(order.position.unrealizedPnl);
-          }, 0),
-          show: Number(clearinghouseState.marginSummary.accountValue) > 0,
-          type:
-            clearinghouseState.assetPositions.length > 0
-              ? 'pnl'
-              : 'accountValue',
-          accountValue: Number(clearinghouseState.marginSummary.accountValue),
-        },
-      }));
-    },
-  );
-
   const updateOpenOrders = useMemoizedFn((payload: OpenOrder[]) => {
-    setState(prev => {
+    setPerpsState(prev => {
       const positionAndOpenOrders = prev.positionAndOpenOrders.map(order => {
         return {
           ...order,
@@ -331,11 +451,11 @@ export const usePerpsStore = () => {
   });
 
   const setAccountSummary = useMemoizedFn((payload: AccountSummary | null) => {
-    setState(prev => ({ ...prev, accountSummary: payload }));
+    setPerpsState(prev => ({ ...prev, accountSummary: payload }));
   });
 
   const setCurrentPerpsAccount = useMemoizedFn((payload: Account | null) => {
-    setState(prev => ({
+    setPerpsState(prev => ({
       ...prev,
       currentPerpsAccount: payload,
       isLogin: !!payload,
@@ -343,34 +463,20 @@ export const usePerpsStore = () => {
   });
 
   const setInitialized = useMemoizedFn((payload: boolean) => {
-    setState(prev => ({ ...prev, isInitialized: payload }));
+    setPerpsState(prev => ({ ...prev, isInitialized: payload }));
   });
+
+  const setCurrentOnlyShowPerpsAccount = useMemoizedFn(
+    (payload: Account | null) => {
+      setPerpsState(prev => ({
+        ...prev,
+        currentOnlyShowPerpsAccount: payload,
+      }));
+    },
+  );
 
   const setApproveSignatures = useMemoizedFn((payload: ApproveSignatures) => {
-    setState(prev => ({ ...prev, approveSignatures: payload }));
-  });
-
-  const resetState = useMemoizedFn(() => {
-    setState(prev => ({
-      ...prev,
-      accountSummary: null,
-      positionAndOpenOrders: [],
-      currentPerpsAccount: null,
-      isLogin: false,
-      userAccountHistory: [],
-      localLoadingHistory: [],
-      userFills: [],
-      perpFee: 0.00045,
-      approveSignatures: [],
-      fillsOrderTpOrSl: {},
-      hasPermission: true,
-      homePositionPnl: {
-        pnl: 0,
-        show: false,
-        type: 'accountValue',
-        accountValue: 0,
-      },
-    }));
+    setPerpsState(prev => ({ ...prev, approveSignatures: payload }));
   });
 
   // Effects 转换为异步函数
@@ -387,12 +493,12 @@ export const usePerpsStore = () => {
     },
   );
 
-  const fetchPositionAndOpenOrders = useMemoizedFn(async () => {
+  const fetchPositionAndOpenOrders = useMemoizedFn(async (address?: string) => {
     const sdk = apisPerps.getPerpsSDK();
     try {
       const [clearinghouseState, openOrders] = await Promise.all([
-        sdk.info.getClearingHouseState(),
-        sdk.info.getFrontendOpenOrders(),
+        sdk.info.getClearingHouseState(address),
+        sdk.info.getFrontendOpenOrders(address),
       ]);
 
       setPositionAndOpenOrders(clearinghouseState, openOrders);
@@ -403,13 +509,6 @@ export const usePerpsStore = () => {
     } catch (error: any) {
       console.error('Failed to fetch clearinghouse state:', error);
     }
-  });
-
-  const fetchPerpPermission = useMemoizedFn(async (address: string) => {
-    const { has_permission } = await openapi.getPerpPermission({ id: address });
-
-    setHasPermission(has_permission);
-    // setHasPermission(true);
   });
 
   const loginPerpsAccount = useMemoizedFn(async (account: Account) => {
@@ -570,97 +669,10 @@ export const usePerpsStore = () => {
     }
   });
 
-  const subscribeToUserData = useMemoizedFn((address: string) => {
-    const sdk = apisPerps.getPerpsSDK();
-
-    const { unsubscribe: unsubscribeWebData2 } = sdk.ws.subscribeToWebData2(
-      data => {
-        const { clearinghouseState, assetCtxs, openOrders, serverTime, user } =
-          data;
-        if (!isSameAddress(user, address)) {
-          return;
-        }
-
-        setPositionAndOpenOrders(clearinghouseState, openOrders);
-
-        updateMarketData(assetCtxs);
-      },
-    );
-
-    const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
-      data => {
-        // Only process data when app is active
-        if (appState !== 'active') {
-          return;
-        }
-
-        console.log('User fills update:', data.fills.length);
-        const { fills, isSnapshot, user } = data;
-        if (!isSameAddress(user, address)) {
-          return;
-        }
-
-        addUserFills({
-          fills,
-          isSnapshot: isSnapshot || false,
-          user,
-        });
-      },
-    );
-
-    setWsSubscriptions(prev => {
-      return [...prev, unsubscribeWebData2, unsubscribeFills];
-    });
-  });
-
-  const unsubscribeAll = useMemoizedFn(() => {
-    wsSubscriptions.forEach(unsubscribe => {
-      unsubscribe();
-    });
-    setWsSubscriptions([]);
-  });
-
-  const logout = useMemoizedFn(() => {
-    unsubscribeAll();
-    resetState();
-    fetchPerpPermission('');
-  });
-
-  const initEventBus = useMemoizedFn(() => {
-    eventBus.on(EVENTS.PERPS.LOG_OUT, logout);
-  });
-
-  const prevAppStateRef = useRef(appState);
-
-  useEffect(() => {
-    if (prevAppStateRef.current !== appState) {
-      if (appState !== 'active') {
-        unsubscribeAll();
-        const sdk = apisPerps.getPerpsSDK();
-        sdk.ws.disconnect();
-      } else if (
-        appState === 'active' &&
-        state.isLogin &&
-        state.currentPerpsAccount &&
-        wsSubscriptions.length === 0
-      ) {
-        subscribeToUserData(state.currentPerpsAccount.address);
-      }
-      prevAppStateRef.current = appState;
-    }
-  }, [
-    appState,
-    unsubscribeAll,
-    subscribeToUserData,
-    state.isLogin,
-    state.currentPerpsAccount,
-    wsSubscriptions.length,
-  ]);
-
   return {
     // State
     state,
-    setState,
+    setState: setPerpsState,
 
     // Reducers
     setFillsOrderTpOrSl,
@@ -694,9 +706,41 @@ export const usePerpsStore = () => {
     refreshData,
     fetchMarketData,
     fetchPerpFee,
-    subscribeToUserData,
     unsubscribeAll,
-    logout,
-    initEventBus,
+    setCurrentOnlyShowPerpsAccount,
   };
 };
+
+runIIFEFunc(() => {
+  eventBus.on(EVENTS.PERPS.LOG_OUT, apisPerpsStore.logout);
+});
+
+export function usePerpsEffectOnTop() {
+  const { isLogin, currentPerpsAccount, wsSubscriptionsLen } = perpsStore(
+    useShallow(s => ({
+      isLogin: s.isLogin,
+      currentPerpsAccount: s.currentPerpsAccount,
+      wsSubscriptionsLen: s.wsSubscriptions.length,
+    })),
+  );
+  const appState = useAppState();
+  const prevAppStateRef = useRef(appState);
+
+  useEffect(() => {
+    if (prevAppStateRef.current !== appState) {
+      if (appState !== 'active') {
+        unsubscribeAll();
+        const sdk = apisPerps.getPerpsSDK();
+        sdk.ws.disconnect();
+      } else if (
+        appState === 'active' &&
+        isLogin &&
+        currentPerpsAccount &&
+        wsSubscriptionsLen === 0
+      ) {
+        subscribeToUserData(currentPerpsAccount.address);
+      }
+      prevAppStateRef.current = appState;
+    }
+  }, [appState, isLogin, currentPerpsAccount, wsSubscriptionsLen]);
+}

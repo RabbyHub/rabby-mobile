@@ -212,7 +212,9 @@
         "LendingWithdraw": "提現",
         "LendingSupply": "供應",
         "LendingBorrow": "借款",
-        "LendingRepay": "還款"
+        "LendingRepay": "還款",
+        "LendingOffCollateral": "關閉使用作為抵押",
+        "LendingOnCollateral": "開啟作為抵押品使用"
       },
       "detail": {
         "Unknown": "未知",
@@ -2728,7 +2730,8 @@
     "Lending": {
       "availableCard": {
         "needSupply": "要借款，您需要提供资产作为担保。",
-        "canBorrow": "您可以根据您提供的抵押品借款，最高可达借款上限。"
+        "canBorrow": "您可以根据您提供的抵押品借款，最高可达借款上限。",
+        "isolated": "由於隔離模式，借貸能力和資產受到限制。"
       },
       "list": {
         "headers": {
@@ -2761,7 +2764,12 @@
         "availableToBorrow": "可借用",
         "approveAndSupply": "批准並供應",
         "supplyAPY": "供應 APY",
-        "actions": "供應"
+        "actions": "供應",
+        "unavailable": "不提供",
+        "supplyBalance": "供應餘額",
+        "isolatedTips": "您现有的借贷资产不被支持。",
+        "collateralization": "抵押化",
+        "enabled": "已啟用"
       },
       "withdrawDetail": {
         "remainingSupply": "剩餘供應量",
@@ -2795,12 +2803,14 @@
         "totalSupplied": "總供應量",
         "mySupply": "我的 Supply",
         "almostCap": "此資產已接近其借貸上限。此市場僅可借出 {{available}}。",
-        "reachCap": "此資產已達供應上限。此市場中沒有可供應的資產。"
+        "reachCap": "此資產已達供應上限。此市場中沒有可供應的資產。",
+        "useAsCollateral": "用作抵押"
       },
       "risk": {
         "checkbox": "我了解警告並想繼續。",
         "withdrawWarning": "提取该金额将使您的健康因子下降到风险清算的水平。",
-        "warning": "借用此金额将使您的健康因子降低到风险水平，可能面临清算。"
+        "warning": "借用此金额将使您的健康因子降低到风险水平，可能面临清算。",
+        "toggleCollateralWarning": "禁用该资产作为抵押将会将您的健康因子降低到一个风险水平，可能面临清算。"
       },
       "lqDescription": {
         "risky": "風險高",
@@ -2819,7 +2829,9 @@
         "availableToBorrowDesc": "您可以根据您提供的抵押品进行借款，直到达到借款上限。",
         "lqDesc": "當清算發生時，清算人會代表借款人償還最多 50% 的未償還借款金額。作為回報，他們可以以折扣價格購買抵押品，並將差額（清算罰金）作為獎勵保留。",
         "isolatedTitle": "資產無法用作擔保品",
-        "isolatedDesc": "此資產僅能在獨立模式下用作抵押，此時您無法提供其他資產抵押來進行借款。在獨立模式下用作抵押的資產僅能借出特定的債務上限。"
+        "isolatedDesc": "此資產僅能在獨立模式下用作抵押，此時您無法提供其他資產抵押來進行借款。在獨立模式下用作抵押的資產僅能借出特定的債務上限。",
+        "isolatedSupplyDesc": "抵押品的使用受到隔离模式的限制。",
+        "globalIsolatedDesc": "在隔离模式下，您无法将其他资产作为抵押品。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借入其他资产之前禁用UNI作为抵押品。"
       },
       "supplied": "供應",
       "apy": "APY",
@@ -2835,7 +2847,25 @@
       "hfTitle": "健康因子",
       "isolated": "孤立",
       "estNetApy": "預估淨年利率",
-      "marketSlot": "{{market}} 市場"
+      "marketSlot": "{{market}} 市場",
+      "toggleCollateralDetail": {
+        "disable": "禁用 {{asset}} 作为抵押品",
+        "enable": "啟用 {{asset}} 作為抵押品",
+        "error": "AAVE 服務出現一些錯誤。請稍後再試。"
+      },
+      "toggleCollateralModal": {
+        "exitIsolationModeTitle": "退出隔离模式",
+        "enableIsolationModeTitle": "啟用隔離模式",
+        "closeTitle": "檢查禁用",
+        "openTitle": "審核啟用",
+        "riskToLiquidationText": "您无法将此货币的使用模式切换为抵押模式，因为这将导致抵押品催缴。",
+        "exitIsolationModeDesc": "您将退出隔离模式，其他代币现在可以用作抵押。",
+        "closeDesc": "禁用此资产作为抵押会影响您的借款能力和健康因子。",
+        "enableIsolationModeDesc": "您正在进入隔离模式。在隔离模式下，您无法使用其他资产作为抵押品。全局债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借用其他资产之前禁用 CRV 作为抵押品。",
+        "openDesc": "啟用這個資產作為抵押品將增加你的借貸能力和健康因子。然而，如果你的健康因子降到 1 之下，它可能會被清算。"
+      },
+      "searchMarket": "搜尋市場",
+      "selectMarket": "選擇市場"
     }
   },
   "component": {

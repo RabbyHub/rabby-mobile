@@ -3,6 +3,13 @@ import Reactotron, { ReactotronReactNative } from 'reactotron-react-native';
 import { DEV_SERVER_HOSTNAME as DEV_SERVER_HOSTNAME_ } from '@env';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getDevServerHost } from '@/core/utils/devServerSettings';
+import mmkvPlugin from 'reactotron-react-native-mmkv';
+
+declare global {
+  var _tron:
+    | undefined
+    | import('reactotron-react-native').ReactotronReactNative;
+}
 
 const instanceRef = { current: null as null | ReactotronReactNative };
 export function setupReactotronConnection() {
@@ -48,7 +55,11 @@ export function setupReactotronConnection() {
   }
 
   if (finalScriptHostname) {
-    instanceRef.current = Reactotron
+    instanceRef.current = Reactotron.use(
+      mmkvPlugin<ReactotronReactNative>({
+        storage: require('@/core/storage/mmkv').appMMKVForDebug,
+      }),
+    )
       // controls connection & communication settings
       .configure({
         name: 'Rabby Mobile',
@@ -59,6 +70,9 @@ export function setupReactotronConnection() {
         asyncStorage: false, // there are more options to the async storage.
       })
       .connect(); // let's connect!
+
+    globalThis._tron = instanceRef.current;
+    console.debug('globalThis._tron set', globalThis._tron);
   }
 
   return instanceRef.current;

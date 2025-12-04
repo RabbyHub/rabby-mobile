@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import EmptySummaryCard from './EmptySummaryCard';
 import SummaryCard from './SummaryCard';
 import { useLendingSummary } from './hooks';
-import { CHAINS_ENUM } from '@debank/common';
 import { ChainSelector } from './ChainSelector';
 import Animated, {
   Easing,
@@ -21,6 +20,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import IsolatedTag from './components/IsolatedTag';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -61,7 +61,6 @@ const PoolContainer = () => {
     ),
     [colors2024, t, styles.label],
   );
-  const [chainEnum, setChainEnum] = useState<CHAINS_ENUM>(CHAINS_ENUM.ETH);
 
   const { apyInfo, iUserSummary, loading } = useLendingSummary();
 
@@ -110,7 +109,7 @@ const PoolContainer = () => {
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
-        <ChainSelector chainEnum={chainEnum} onChange={setChainEnum} />
+        <ChainSelector />
         <View style={styles.fadeWrapper}>
           <Animated.View style={primaryStyle}>
             {primaryIsEmpty ? (
@@ -145,7 +144,6 @@ const PoolContainer = () => {
     );
   }, [
     apyInfo?.netAPY,
-    chainEnum,
     iUserSummary?.healthFactor,
     iUserSummary?.netWorthUSD,
     iUserSummary?.totalBorrowsUSD,
@@ -179,9 +177,22 @@ const PoolContainer = () => {
           },
         ]}
         initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
+        externalContent={
+          iUserSummary?.isInIsolationMode ? (
+            <View style={styles.isolatedTagContainer}>
+              <IsolatedTag isGlobal />
+            </View>
+          ) : null
+        }
       />
     ),
-    [styles.indicator, styles.tabBar, styles.tabsBarContainer],
+    [
+      iUserSummary?.isInIsolationMode,
+      styles.indicator,
+      styles.tabBar,
+      styles.tabsBarContainer,
+      styles.isolatedTagContainer,
+    ],
   );
   return (
     <Tabs.Container
@@ -328,6 +339,11 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     position: 'relative',
     height: 30,
     overflow: 'hidden',
+    flexDirection: 'row',
+  },
+  isolatedTagContainer: {
+    flex: 0,
+    marginLeft: 'auto',
   },
   indicator: {
     backgroundColor: colors2024['neutral-body'],

@@ -36,6 +36,7 @@ import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomShe
 import { useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
+import { EVENT_ROUTE_CHANGE, eventBus } from '@/utils/events';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -47,17 +48,22 @@ type NavigationInstance =
 // });
 
 const currentRouteNameAtom = atom<AppRootName | string | undefined>(undefined);
+currentRouteNameAtom.onMount = setAtom => {
+  eventBus.addListener(EVENT_ROUTE_CHANGE, ({ currentRouteName }) => {
+    setAtom(currentRouteName as AppRootName | string | undefined);
+  });
+};
 export function useCurrentRouteName() {
   return {
     currentRouteName: useAtomValue(currentRouteNameAtom),
   };
 }
 
-export function useSetCurrentRouteName() {
-  return {
-    setCurrentRouteName: useSetAtom(currentRouteNameAtom),
-  };
-}
+// export function useSetCurrentRouteName() {
+//   return {
+//     setCurrentRouteName: useSetAtom(currentRouteNameAtom),
+//   };
+// }
 
 const navigationReadyAtom = atom<boolean>(false);
 export function useNavigationReady() {
@@ -291,12 +297,12 @@ export function resetNavigationTo(
         index: 0,
         routes: [{ name: RootNames.Unlock, params: {} }],
       });
-      if (
-        getLatestNavigationName() === RootNames.BrowserScreen ||
-        getLatestNavigationName() === RootNames.BrowserManageScreen
-      ) {
-        navigation.dispatch(TabActions.jumpTo(RootNames.StackMain));
-      }
+      // if (
+      //   getLatestNavigationName() === RootNames.BrowserScreen ||
+      //   getLatestNavigationName() === RootNames.BrowserManageScreen
+      // ) {
+      //   navigation.dispatch(TabActions.jumpTo(RootNames.StackMain));
+      // }
 
       break;
     }

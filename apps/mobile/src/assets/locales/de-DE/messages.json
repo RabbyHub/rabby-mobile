@@ -389,7 +389,9 @@
         "LendingRepay": "Zurückzahlen",
         "LendingWithdraw": "Abheben",
         "LendingBorrow": "Ausleihen",
-        "LendingSupply": "Angebot"
+        "LendingSupply": "Angebot",
+        "LendingOnCollateral": "Aktivieren Sie die Verwendung als Sicherheiten",
+        "LendingOffCollateral": "Verwende nicht als Sicherheiten ausschalten"
       },
       "detail": {
         "InteractionResults": "Interaktionsergebnisse",
@@ -2918,7 +2920,8 @@
     "Lending": {
       "availableCard": {
         "canBorrow": "Sie können basierend auf Ihrem bereitgestellten Sicherheiten bis zur Kreditobergrenze leihen.",
-        "needSupply": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen."
+        "needSupply": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen.",
+        "isolated": "Die Kredit- und Vermögenswerte sind aufgrund des Isolationsmodus begrenzt."
       },
       "list": {
         "headers": {
@@ -2951,7 +2954,12 @@
         "supplyAPY": "Liefer-APY",
         "approveAndSupply": "Genehmigen und Bereitstellen",
         "actions": "Lieferung",
-        "availableToBorrow": "Verfügbar zum Ausleihen"
+        "availableToBorrow": "Verfügbar zum Ausleihen",
+        "collateralization": "Besicherung",
+        "enabled": "Aktiviert",
+        "supplyBalance": "Versorgungsbilanz",
+        "unavailable": "Nicht verfügbar",
+        "isolatedTips": "Ihre bestehenden Kredit-/Leihvermögen werden nicht unterstützt."
       },
       "withdrawDetail": {
         "remainingSupply": "Verbleibender Vorrat",
@@ -2985,12 +2993,14 @@
         "mySupply": "Mein Angebot",
         "title": "Bereitstellungsdetails",
         "reachCap": "Dieses Asset hat sein Angebotshöchstlimit erreicht. Nichts kann aus diesem Markt bereitgestellt werden.",
-        "almostCap": "Dieses Asset hat fast seine Leihobergrenze erreicht. Es sind nur {{available}} verfügbar, um von diesem Markt geliehen zu werden."
+        "almostCap": "Dieses Asset hat fast seine Leihobergrenze erreicht. Es sind nur {{available}} verfügbar, um von diesem Markt geliehen zu werden.",
+        "useAsCollateral": "Als Sicherheiten verwenden"
       },
       "risk": {
         "checkbox": "Ich verstehe die Warnung und möchte fortfahren.",
         "withdrawWarning": "Die Abhebung dieses Betrags wird Ihren Gesundheitsfaktor auf ein riskantes Niveau für eine Liquidation senken.",
-        "warning": "Das Leihen dieses Betrags wird Ihren Health Factor auf ein riskantes Niveau für die Liquidation senken."
+        "warning": "Das Leihen dieses Betrags wird Ihren Health Factor auf ein riskantes Niveau für die Liquidation senken.",
+        "toggleCollateralWarning": "Das Deaktivieren dieses Assets als Sicherheit wird Ihren Gesundheitsfaktor auf ein riskantes Niveau für die Liquidation senken."
       },
       "lqDescription": {
         "over3title": "Gesundheitsfaktor > 3.0:",
@@ -3009,7 +3019,9 @@
         "availableToBorrowDesc": "Sie können basierend auf Ihrer hinterlegten Sicherheiten leihen, bis die Kreditobergrenze erreicht ist.",
         "lqDesc": "Wenn eine Liquidation erfolgt, zahlen Liquidatoren bis zu 50% des ausstehenden geliehenen Betrags im Namen des Kreditnehmers zurück. Im Gegenzug können sie die Sicherheiten zu einem reduzierten Preis kaufen und die Differenz (Liquidationsstrafe) als Bonus behalten.",
         "isolatedTitle": "Das Asset kann nicht als Sicherheit verwendet werden.",
-        "isolatedDesc": "Dieses Asset kann nur im Isolationsmodus als Sicherheiten verwendet werden, in dem Sie keine anderen Asset-Sicherheiten für das Ausleihen bereitstellen können. Assets, die im Isolationsmodus als Sicherheiten verwendet werden, können nur bis zu einer bestimmten Schuldenobergrenze ausgeliehen werden."
+        "isolatedDesc": "Dieses Asset kann nur im Isolationsmodus als Sicherheiten verwendet werden, in dem Sie keine anderen Asset-Sicherheiten für das Ausleihen bereitstellen können. Assets, die im Isolationsmodus als Sicherheiten verwendet werden, können nur bis zu einer bestimmten Schuldenobergrenze ausgeliehen werden.",
+        "isolatedSupplyDesc": "Die Verwendung von Collateral ist aufgrund des Isolationsmodus eingeschränkt.",
+        "globalIsolatedDesc": "Im Isolation-Modus können Sie keine anderen Vermögenswerte als Sicherheiten bereitstellen. Eine globale Schuldenobergrenze begrenzt die Kreditaufnahmefähigkeit des isolierten Vermögenswerts. Um den Isolation-Modus zu verlassen, deaktivieren Sie UNI als Sicherheiten, bevor Sie einen anderen Vermögenswert ausleihen."
       },
       "supplied": "Geliefert",
       "netWorth": "Vermögen",
@@ -3025,7 +3037,26 @@
       "enterAmount": "Betrag eingeben",
       "isolated": "isoliert",
       "estNetApy": "Est. netto APY",
-      "marketSlot": "{{market}} Markt"
+      "marketSlot": "{{market}} Markt",
+      "toggleCollateralDetail": {
+        "disable": "Deaktiviere {{asset}} als Sicherheit",
+        "enable": "Aktivieren Sie {{asset}} als Sicherheiten",
+        "error": "Es gibt einen Fehler mit dem AAVE-Service. Bitte versuche es später erneut.",
+        "actions": "Umschalten {{asset}} Sicherheiten"
+      },
+      "toggleCollateralModal": {
+        "enableIsolationModeTitle": "Isolation-Modus aktivieren",
+        "exitIsolationModeTitle": "Verlassen Sie den Isolationsmodus",
+        "closeDesc": "Das Deaktivieren dieses Vermögenswerts als Sicherheiten wirkt sich auf Ihre Kreditaufnahmefähigkeit und den Gesundheitsfaktor aus.",
+        "riskToLiquidationText": "Sie können den Verwendungsmodus für diese Währung nicht auf Sicherheitenmodus umschalten, da dies einen Sicherheitenaufruf verursachen würde.",
+        "openTitle": "Überprüfung aktivieren",
+        "openDesc": "Das Aktivieren dieses Vermögens als Sicherheiten erhöht Ihre Kreditaufnahmefähigkeit und den Gesundheitsfaktor. Allerdings kann es liquidiert werden, wenn Ihr Gesundheitsfaktor unter 1 fällt.",
+        "closeTitle": "Überprüfung der Deaktivierung",
+        "exitIsolationModeDesc": "Sie werden den Isolationsmodus verlassen und andere Token können jetzt als Sicherheiten verwendet werden.",
+        "enableIsolationModeDesc": "Sie betreten den Isolationsmodus. Im Isolationsmodus können Sie andere Vermögenswerte nicht als Sicherheiten bereitstellen. Eine globale Verschuldungsgrenze begrenzt die Kreditaufnahmefähigkeit des isolierten Vermögenswerts. Um den Isolationsmodus zu verlassen, deaktivieren Sie CRV als Sicherheiten, bevor Sie einen anderen Vermögenswert leihen."
+      },
+      "searchMarket": "Markt durchsuchen",
+      "selectMarket": "Markt auswählen"
     }
   },
   "constant": {

@@ -101,10 +101,18 @@ export const TransactionItem = ({
 
     if (
       data.maxGasTx.action?.actionData.wrapToken ||
-      data.maxGasTx.action?.actionData.unWrapToken ||
-      data.maxGasTx.action?.actionData.swap
+      data.maxGasTx.action?.actionData.unWrapToken
     ) {
       return HistoryItemCateType.Swap;
+    }
+
+    if (data.maxGasTx.action?.actionData.swap) {
+      if (
+        data.maxGasTx.action?.actionData.swap?.payToken?.is_core &&
+        data.maxGasTx.action?.actionData.swap?.receiveToken?.is_core
+      ) {
+        return HistoryItemCateType.Swap;
+      }
     }
 
     if (
@@ -291,6 +299,10 @@ export const TransactionItem = ({
           return t('page.transactions.itemTitle.LendingBorrow');
         case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY:
           return t('page.transactions.itemTitle.LendingRepay');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL:
+          return t('page.transactions.itemTitle.LendingOnCollateral');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL:
+          return t('page.transactions.itemTitle.LendingOffCollateral');
       }
     }
 

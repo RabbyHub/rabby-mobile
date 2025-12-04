@@ -1,4 +1,4 @@
-import { useAssetsMap } from '@/screens/Home/hooks/store';
+import { useAssetsMap, useAssetsComputation } from '@/screens/Home/hooks/store';
 import { produce } from '@/core/utils/produce';
 import { DisplayedProject } from '../Home/utils/project';
 import { AbstractPortfolioToken } from '../Home/types';
@@ -27,139 +27,179 @@ import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { useMemoizedFn } from 'ahooks';
 import { useCallback, useMemo } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { syncRemoteTokensAmount } from '@/databases/sync/assets';
+import { fetchAllAccounts } from '@/core/apis/account';
+import { sortAccountList } from '@/utils/sortAccountList';
 
 export const loadingAtom = atom(true);
 export const isFirstFetchAtom = atom(true);
 export const shortCacheAtom = atom(true);
+
+async function getTop10AccountsWithBalance() {
+  const accounts = await fetchAllAccounts();
+
+  const highlightedAddresses = preferenceService.getPinAddresses();
+
+  const sortedAccounts = sortAccountList(accounts, {
+    highlightedAddresses,
+  });
+
+  const top10Accounts = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
+
+  return {
+    sortedAccounts,
+    top10Accounts,
+  };
+}
+
 export const useAssets = ({
   hideCombined = false,
 }: {
   hideCombined?: boolean;
 } = {}) => {
   const [isLoading, setLoading] = useAtom(loadingAtom);
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const sortedAccounts = useSortAddressList(accounts);
+
   const [isFirstFetch, setIsFirstFetch] = useAtom(isFirstFetchAtom);
   const [shortCache, setShortCache] = useAtom(shortCacheAtom);
   const {
-    tokens,
-    portfolios,
-    assetsMap,
-    setAssetsMap,
+    top10Addresses,
     updateNFTs,
     updatePortfolios,
     updateTokens,
     getTokenCombined,
+    getAssetsMapDirectly,
+    tokensMap,
+    // setTokensMap,
+    portfoliosMap,
+    // setPortfoliosMap,
+    nftsMap,
+    // setNftsMap,
   } = useAssetsMap({ hideCombined });
 
-  const loadToken = useMemoizedFn(async (address: string, force?: boolean) => {
-    if (!address) {
-      return;
-    }
-    try {
-      const walletProject = new DisplayedProject({
-        id: 'Wallet',
-        name: 'Wallet',
-      });
+  const { tokens, portfolios } = useAssetsComputation({
+    // tokensMap,
+    // portfoliosMap,
+    // nftsMap,
+    top10Addresses,
+    hideCombined,
+  });
 
-      let _data = produce(walletProject, draft => {
-        draft.netWorth = 0;
-        draft._netWorth = '$0';
-        draft._netWorthChange = '-';
-        draft.netWorthChange = 0;
-        draft._netWorthChangePercent = '';
-        draft._portfolioDict = {};
-        draft._portfolios = [];
-        draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
-      });
-
-      let _tokens: AbstractPortfolioToken[] = [];
-
-      const tokenRes = await syncTokens(address, force, !force);
-      if (!tokenRes.length) {
+  const loadToken = useCallback(
+    async (address: string, force?: boolean) => {
+      if (!address) {
         return;
       }
-      const tokenSettings =
-        (await preferenceService.getUserTokenSettings()) || {};
+      try {
+        const walletProject = new DisplayedProject({
+          id: 'Wallet',
+          name: 'Wallet',
+        });
 
-      const tokensDict: Record<string, TokenItem[]> = {};
-      tokenRes.forEach(token => {
-        if (!tokensDict[token.chain]) {
-          tokensDict[token.chain] = [];
+        let _data = produce(walletProject, draft => {
+          draft.netWorth = 0;
+          draft._netWorth = '$0';
+          draft._netWorthChange = '-';
+          draft.netWorthChange = 0;
+          draft._netWorthChangePercent = '';
+          draft._portfolioDict = {};
+          draft._portfolios = [];
+          draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
+        });
+
+        let _tokens: AbstractPortfolioToken[] = [];
+
+        const tokenRes = await syncTokens(address, force, !force);
+        if (!tokenRes.length) {
+          return;
         }
-        tokensDict[token.chain].push(token);
-      });
+        const tokenSettings =
+          (await preferenceService.getUserTokenSettings()) || {};
 
-      _data = produce(_data, draft => {
-        setWalletTokens(draft, tokensDict);
-      });
+        const tokensDict: Record<string, TokenItem[]> = {};
+        tokenRes.forEach(token => {
+          if (!tokensDict[token.chain]) {
+            tokensDict[token.chain] = [];
+          }
+          tokensDict[token.chain].push(token);
+        });
 
-      _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+        _data = produce(_data, draft => {
+          setWalletTokens(draft, tokensDict);
+        });
 
-      updateTokens({
-        address,
-        newTokens: filterDisplayToken(_tokens),
-      });
-    } catch (error) {
-      console.error('ServiceErrorType.Tokens', error);
-    }
-  });
+        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
-  const loadDefi = useMemoizedFn(async (address: string, force?: boolean) => {
-    if (!address) {
-      return;
-    }
-    try {
-      let projectDict: Record<string, DisplayedProject> | null = {};
-      const protocols = await syncProtocols(address, force, !force);
-      if (!protocols.length) {
+        updateTokens({
+          address,
+          newTokens: filterDisplayToken(_tokens),
+        });
+      } catch (error) {
+        console.error('ServiceErrorType.Tokens', error);
+      }
+    },
+    [updateTokens],
+  );
+
+  const loadDefi = useCallback(
+    async (address: string, force?: boolean) => {
+      if (!address) {
         return;
       }
-      protocols.forEach(project => {
-        if (projectDict) {
-          projectDict = produce(projectDict, draft => {
-            project && portfolio2Display(project, draft);
-          });
+      try {
+        let projectDict: Record<string, DisplayedProject> | null = {};
+        const protocols = await syncProtocols(address, force, !force);
+        if (!protocols.length) {
+          return;
         }
-      });
-      const realtimeData = Object.values(projectDict)?.sort(
-        (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-      );
-      const tokenSetting = await preferenceService.getUserTokenSettings();
-      updatePortfolios({
-        address,
-        newPortfolios: tagProfiles(realtimeData, tokenSetting),
-      });
-    } catch (error) {
-      console.error('ServiceErrorType.Defi', error);
-    }
-  });
+        protocols.forEach(project => {
+          if (projectDict) {
+            projectDict = produce(projectDict, draft => {
+              project && portfolio2Display(project, draft);
+            });
+          }
+        });
+        const realtimeData = Object.values(projectDict)?.sort(
+          (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
+        );
+        const tokenSetting = await preferenceService.getUserTokenSettings();
+        updatePortfolios({
+          address,
+          newPortfolios: tagProfiles(realtimeData, tokenSetting),
+        });
+      } catch (error) {
+        console.error('ServiceErrorType.Defi', error);
+      }
+    },
+    [updatePortfolios],
+  );
 
-  const loadNFT = useMemoizedFn(async (address: string, force?: boolean) => {
-    try {
-      const nfts = await syncNFTs(address, force, !force);
-      if (!nfts.length) {
+  const loadNFT = useCallback(
+    async (address: string, force?: boolean) => {
+      if (!address) {
         return;
       }
-      const tokenSetting = await preferenceService.getUserTokenSettings();
+      try {
+        const _nfts = await syncNFTs(address, force, !force);
+        if (!_nfts.length) {
+          return;
+        }
+        const tokenSetting = await preferenceService.getUserTokenSettings();
 
-      updateNFTs({
-        address,
-        newNFTs: tagNfts(nfts, tokenSetting),
-      });
-    } catch (e) {
-      console.error('ServiceErrorType.NFT', e);
-    }
-  });
+        updateNFTs({
+          address,
+          newNFTs: tagNfts(_nfts, tokenSetting),
+        });
+      } catch (e) {
+        console.error('ServiceErrorType.NFT', e);
+      }
+    },
+    [updateNFTs],
+  );
 
-  const loadSpecificDefi = useMemoizedFn(
+  const loadSpecificDefi = useCallback(
     async (_address: string, protocolId: string, chain: string) => {
       if (!_address || !protocolId || !chain) {
         return;
@@ -175,8 +215,8 @@ export const useAssets = ({
 
         const tokenSetting = await preferenceService.getUserTokenSettings();
 
-        const currentAssets = assetsMap[address.toLowerCase()] || {};
-        const currentPortfolios = [...(currentAssets.portfolios || [])];
+        const currentPortfolios = portfoliosMap[address] || [];
+
         if (!targetProtocol || !targetProtocol.portfolio_item_list?.length) {
           updatePortfolios({
             address,
@@ -195,14 +235,14 @@ export const useAssets = ({
           targetProtocol.portfolio_item_list,
         );
 
+        let updatedPortfolios = [...currentPortfolios];
         if (protocolIndex > -1) {
-          currentPortfolios[protocolIndex] = protocolDisplayData;
+          updatedPortfolios[protocolIndex] = protocolDisplayData;
         } else {
-          currentPortfolios.push(protocolDisplayData);
+          updatedPortfolios.push(protocolDisplayData);
         }
 
-        // 重新排序
-        const sortedPortfolios = currentPortfolios.sort(
+        const sortedPortfolios = updatedPortfolios.sort(
           (a, b) => (b.netWorth || 0) - (a.netWorth || 0),
         );
 
@@ -214,9 +254,10 @@ export const useAssets = ({
         console.error('ServiceErrorType.SpecificDefi', error);
       }
     },
+    [portfoliosMap, updatePortfolios],
   );
 
-  const batchLoadCacheTokens = useMemoizedFn(
+  const batchLoadCacheTokens = useCallback(
     async (
       addresses: string[],
       setting: any,
@@ -272,24 +313,20 @@ export const useAssets = ({
         );
         return filterDisplayToken(_tokens);
       });
-      setAssetsMap(_pre => {
-        const curr = { ...(_pre || {}) };
-        Object.keys(formatAssetMap).forEach(address => {
-          if (curr[address]) {
-            curr[address].tokens = formatAssetMap[address];
-          } else {
-            curr[address] = {
-              tokens: formatAssetMap[address],
-            };
-          }
+
+      Object.keys(formatAssetMap).forEach(address => {
+        updateTokens({
+          address,
+          newTokens: formatAssetMap[address],
         });
-        return curr;
       });
+
       setLoading(false);
     },
+    [setLoading, updateTokens],
   );
 
-  const batchLoadCacheDefi = useMemoizedFn(
+  const batchLoadCacheDefi = useCallback(
     async (
       addresses: string[],
       setting: any,
@@ -323,22 +360,17 @@ export const useAssets = ({
         );
         return tagProfiles(realtimeData, setting);
       });
-      setAssetsMap(_pre => {
-        const curr = { ...(_pre || {}) };
-        Object.keys(formatProtocolMap).forEach(address => {
-          if (curr[address]) {
-            curr[address].portfolios = formatProtocolMap[address];
-          } else {
-            curr[address] = {
-              portfolios: formatProtocolMap[address],
-            };
-          }
+
+      Object.keys(formatProtocolMap).forEach(address => {
+        updatePortfolios({
+          address,
+          newPortfolios: formatProtocolMap[address],
         });
-        return curr;
       });
     },
+    [updatePortfolios],
   );
-  const batchLoadCacheNFT = useMemoizedFn(
+  const batchLoadCacheNFT = useCallback(
     async (
       addresses: string[],
       setting: any,
@@ -363,34 +395,47 @@ export const useAssets = ({
       const formatNFTMap = _.mapValues(nftGroup, group =>
         tagNfts(group, setting),
       );
-      setAssetsMap(_pre => {
-        const curr = { ...(_pre || {}) };
-        Object.keys(formatNFTMap).forEach(address => {
-          if (curr[address]) {
-            curr[address].nfts = formatNFTMap[address];
-          } else {
-            curr[address] = {
-              nfts: formatNFTMap[address],
-            };
-          }
+
+      Object.keys(formatNFTMap).forEach(address => {
+        updateNFTs({
+          address,
+          newNFTs: formatNFTMap[address],
         });
-        return curr;
       });
     },
+    [updateNFTs],
   );
-  const removeUnNeedAssets = useMemoizedFn((addresses: string[]) => {
-    setAssetsMap(pre => {
-      const curr = { ...pre };
-      Object.keys(pre).forEach(address => {
+  const removeUnNeedAssets = useCallback(
+    (addresses: string[]) => {
+      const allAddresses = new Set([
+        ...Object.keys(getAssetsMapDirectly('tokens')),
+        ...Object.keys(getAssetsMapDirectly('portfolios')),
+        ...Object.keys(getAssetsMapDirectly('nfts')),
+      ]);
+
+      allAddresses.forEach(address => {
         if (!addresses.find(i => isSameAddress(i, address))) {
-          delete curr[address];
+          updateTokens({
+            address,
+            newTokens: [],
+          });
+
+          updatePortfolios({
+            address,
+            newPortfolios: [],
+          });
+
+          updateNFTs({
+            address,
+            newNFTs: [],
+          });
         }
       });
-      return curr;
-    });
-  });
+    },
+    [getAssetsMapDirectly, updateTokens, updatePortfolios, updateNFTs],
+  );
 
-  const checkIsExpireAndUpdate = useMemoizedFn(
+  const checkIsExpireAndUpdate = useCallback(
     async (
       force?: boolean,
       options?: {
@@ -401,11 +446,8 @@ export const useAssets = ({
         ignoreLoading?: boolean;
       },
     ) => {
-      const top10Account = sortedAccounts
-        .slice(0, 10)
-        .filter(acc => acc.balance);
       const addresses = options?.realTimeAddresses || [
-        ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
+        ...new Set(top10Addresses),
       ];
       removeUnNeedAssets(addresses);
       const { disableToken, disableDefi, disableNFT } = options || {};
@@ -433,8 +475,17 @@ export const useAssets = ({
         setIsFirstFetch(false);
       }
     },
+    [
+      top10Addresses,
+      removeUnNeedAssets,
+      setLoading,
+      setIsFirstFetch,
+      loadToken,
+      loadDefi,
+      loadNFT,
+    ],
   );
-  const getCacheTop10Assets = useMemoizedFn(
+  const getCacheTop10Assets = useCallback(
     async (options?: {
       disableToken?: boolean;
       disableDefi?: boolean;
@@ -446,11 +497,8 @@ export const useAssets = ({
       maxNFTLength?: number;
     }) => {
       const { disableToken, disableDefi, disableNFT } = options || {};
-      const top10Account = sortedAccounts
-        .slice(0, 10)
-        .filter(acc => acc.balance);
       const addresses = options?.realTimeAddresses || [
-        ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
+        ...new Set(top10Addresses),
       ];
       removeUnNeedAssets(addresses);
       const isCurrentShortCacheFetch = !!(
@@ -459,25 +507,23 @@ export const useAssets = ({
         options?.maxNFTLength
       );
 
-      // 基于 disable 的类型逐个地址检查对应缓存是否齐全
-      const hasRequiredCache = addresses.every(address => {
-        const entry = assetsMap[address];
-        if (!entry) {
-          return false;
-        }
-        if (!disableToken && !(entry.tokens && entry.tokens.length)) {
-          return false;
-        }
-        if (!disableDefi && !(entry.portfolios && entry.portfolios.length)) {
-          return false;
-        }
-        if (!disableNFT && !(entry.nfts && entry.nfts.length)) {
-          return false;
-        }
-        return true;
-      });
+      const hasTokensCache =
+        Object.keys(getAssetsMapDirectly('tokens')).length > 0;
+      const hasPortfoliosCache =
+        Object.keys(getAssetsMapDirectly('portfolios')).length > 0;
+      const hasNftsCache = Object.keys(getAssetsMapDirectly('nfts')).length > 0;
 
-      // 有完整的所需类型缓存，不查了
+      let hasRequiredCache = true;
+      if (!disableToken && !hasTokensCache) {
+        hasRequiredCache = false;
+      }
+      if (!disableDefi && !hasPortfoliosCache) {
+        hasRequiredCache = false;
+      }
+      if (!disableNFT && !hasNftsCache) {
+        hasRequiredCache = false;
+      }
+
       if (hasRequiredCache && !shortCache) {
         return;
       }
@@ -512,9 +558,19 @@ export const useAssets = ({
         ]);
       }, 0);
     },
+    [
+      top10Addresses,
+      getAssetsMapDirectly,
+      removeUnNeedAssets,
+      shortCache,
+      setShortCache,
+      batchLoadCacheTokens,
+      batchLoadCacheDefi,
+      batchLoadCacheNFT,
+    ],
   );
 
-  const updateTokensAmount = useMemoizedFn(
+  const updateTokensAmount = useCallback(
     (
       updateTokenList: {
         address: string;
@@ -522,44 +578,39 @@ export const useAssets = ({
       }[],
     ) => {
       syncRemoteTokensAmount(updateTokenList);
-      setAssetsMap(prev => {
-        const next = { ...prev };
-        updateTokenList.forEach(({ address, token }) => {
-          const lowerAddress = address?.toLowerCase?.() || address;
-          const currentAssets = next[lowerAddress] || {};
-          const preTokens = currentAssets.tokens || [];
 
-          const updatedTokens = preTokens.map(t => {
-            const sameChain =
-              (t.chain || '').toLowerCase() ===
-              (token.chain || '').toLowerCase();
-            const sameTokenId =
-              (t as any)._tokenId === token.id || (t as any).id === token.id;
-            if (sameChain && sameTokenId) {
-              return {
-                ...t,
-                price: token.price,
-                price_24h_change: token.price_24h_change,
-                amount: token.amount,
-              };
-            }
-            return t;
-          });
+      updateTokenList.forEach(({ address, token }) => {
+        const lowerAddress = address?.toLowerCase?.() || address;
+        const preTokens = tokensMap[lowerAddress] || [];
 
-          next[lowerAddress] = {
-            ...currentAssets,
-            tokens: updatedTokens,
-          };
+        const updatedTokens = preTokens.map(t => {
+          const sameChain =
+            (t.chain || '').toLowerCase() === (token.chain || '').toLowerCase();
+          const sameTokenId =
+            (t as any)._tokenId === token.id || (t as any).id === token.id;
+          if (sameChain && sameTokenId) {
+            return {
+              ...t,
+              price: token.price,
+              price_24h_change: token.price_24h_change,
+              amount: token.amount,
+            };
+          }
+          return t;
         });
-        return next;
+
+        updateTokens({
+          address: lowerAddress,
+          newTokens: updatedTokens,
+        });
       });
     },
+    [tokensMap, updateTokens],
   );
 
   return {
     tokens,
     portfolios,
-    assetsMap,
     isLoading,
     getTokenCombined,
     hasAssets: !!tokens?.length || !!portfolios?.length,
@@ -571,6 +622,13 @@ export const useAssets = ({
     refreshing: !!isLoading && !isFirstFetch,
     loadSpecificDefi,
     updateTokensAmount,
+    // Export individual maps and setters for direct access
+    tokensMap,
+    // setTokensMap,
+    portfoliosMap,
+    // setPortfoliosMap,
+    nftsMap,
+    // setNftsMap,
   };
 };
 
@@ -584,11 +642,13 @@ export const useAssetsRefreshing = () => {
 
 export const useInitDetectDBAssets = () => {
   const {
-    assetsMap,
     isLoading,
     batchLoadCacheTokens,
     batchLoadCacheDefi,
     batchLoadCacheNFT,
+    tokensMap,
+    portfoliosMap,
+    nftsMap,
   } = useAssets({ hideCombined: true });
   const { userTokenSettings } = useUserTokenSettings();
 
@@ -617,35 +677,38 @@ export const useInitDetectDBAssets = () => {
           ctx.syncDetails.batchSize * ctx.syncDetails.round +
           ctx.syncDetails.count;
 
+        let currentAssetCount = 0;
         if (taskFor === 'token') {
-          if (
-            currentUpdateCount >
-            (assetsMap[ctx.owner_addr]?.tokens?.length || 0)
-          ) {
+          currentAssetCount = tokensMap[ctx.owner_addr]?.length || 0;
+        } else if (taskFor === 'protocols') {
+          currentAssetCount = portfoliosMap[ctx.owner_addr]?.length || 0;
+        } else if (taskFor === 'nfts') {
+          currentAssetCount = nftsMap[ctx.owner_addr]?.length || 0;
+        }
+
+        if (taskFor === 'token') {
+          if (currentUpdateCount > currentAssetCount) {
             debounceReloadTokenList([ctx.owner_addr], userTokenSettings);
           }
         } else if (taskFor === 'protocols') {
-          if (
-            currentUpdateCount >
-            (assetsMap[ctx.owner_addr]?.portfolios?.length || 0)
-          ) {
+          if (currentUpdateCount > currentAssetCount) {
             debounceReloadDefiList([ctx.owner_addr], userTokenSettings);
           }
         } else if (taskFor === 'nfts') {
-          if (
-            currentUpdateCount > (assetsMap[ctx.owner_addr]?.nfts?.length || 0)
-          ) {
+          if (currentUpdateCount > currentAssetCount) {
             debounceReloadNftList([ctx.owner_addr], userTokenSettings);
           }
         }
       },
       [
-        assetsMap,
         isLoading,
         debounceReloadDefiList,
         debounceReloadNftList,
         debounceReloadTokenList,
         userTokenSettings,
+        tokensMap,
+        portfoliosMap,
+        nftsMap,
       ],
     ),
   });
