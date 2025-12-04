@@ -23,6 +23,7 @@ import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { getAllMyAccount } from '@/core/apis/address';
 import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
+import { sleep } from '@/utils/async';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
 interface SignAction {
@@ -56,7 +57,6 @@ export const usePerpsState = () => {
     resetAccountState,
 
     // Effects
-    saveApproveSignatures,
     fetchPositionAndOpenOrders,
     loginPerpsAccount,
     fetchClearinghouseState,
@@ -376,12 +376,11 @@ export const usePerpsState = () => {
         if (checkResult.needDelete) {
           // 需要删除agent，且重新approve agent和builder fee
           setAccountNeedApproveAgent(true);
-          setAccountNeedApproveBuilderFee(true);
+          !maxFee && setAccountNeedApproveBuilderFee(true);
           return;
         }
 
         if (checkResult.isExpired) {
-          setAccountNeedApproveAgent(true);
           const { agentAddress: newAgentAddress, vault } =
             await apisPerps.createPerpsAgentWallet(account.address);
           sdk.initOrUpdateAgent(vault, newAgentAddress, PERPS_AGENT_NAME);
@@ -393,7 +392,6 @@ export const usePerpsState = () => {
         }
 
         if (!maxFee) {
-          setAccountNeedApproveBuilderFee(true);
           const buildAction = sdk.exchange?.prepareApproveBuilderFee({
             builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
           });
@@ -402,6 +400,12 @@ export const usePerpsState = () => {
             type: 'approveBuilderFee',
             signature: '',
           });
+        }
+
+        if (signActions.length === 0) {
+          setAccountNeedApproveAgent(false);
+          setAccountNeedApproveBuilderFee(false);
+          return;
         }
 
         if (
@@ -432,6 +436,7 @@ export const usePerpsState = () => {
           });
         }
       } catch (e) {
+        showToast(String(e), 'error');
         setAccountNeedApproveAgent(true);
         setAccountNeedApproveBuilderFee(true);
         Sentry.captureException(
@@ -449,8 +454,15 @@ export const usePerpsState = () => {
     ],
   );
 
+  const isHandlingApproveStatus = useRef(false);
+
   const handleActionApproveStatus = useCallback(async () => {
     try {
+      if (isHandlingApproveStatus.current) {
+        return;
+      }
+      isHandlingApproveStatus.current = true;
+
       if (!currentPerpsAccount) {
         throw new Error('No currentPerpsAccount');
       }
@@ -466,6 +478,7 @@ export const usePerpsState = () => {
       }
 
       if (accountNeedApproveBuilderFee) {
+        await sleep(10);
         signActions.push({
           action: sdk.exchange?.prepareApproveBuilderFee({
             builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
@@ -479,12 +492,15 @@ export const usePerpsState = () => {
         return;
       }
 
+      console.log('handleActionApproveStatus signActions', signActions);
       await executeSignatures(signActions, currentPerpsAccount);
 
       await handleDirectApprove(signActions);
       setAccountNeedApproveAgent(false);
       setAccountNeedApproveBuilderFee(false);
+      isHandlingApproveStatus.current = false;
     } catch (error) {
+      isHandlingApproveStatus.current = false;
       console.error('Failed to handle action approve status:', error);
       // todo fixme maybe no need show toast in prod
       showToast(String(error), 'error');
@@ -576,7 +592,7 @@ export const usePerpsState = () => {
           PERPS_AGENT_NAME,
         );
         await loginPerpsAccount(initAccount);
-        // await fetchMarketData();
+        fetchMarketData();
 
         // checkIsNeedAutoLoginOut(initAccount.address, agentAddress);
         ensureLoginApproveSign(initAccount, agentAddress);
@@ -620,6 +636,19 @@ export const usePerpsState = () => {
     },
   );
 
+  const handleSetLaterApproveStatus = useCallback(
+    (signActions: SignAction[]) => {
+      signActions.forEach(action => {
+        if (action.type === 'approveAgent') {
+          setAccountNeedApproveAgent(true);
+        } else if (action.type === 'approveBuilderFee') {
+          setAccountNeedApproveBuilderFee(true);
+        }
+      });
+    },
+    [setAccountNeedApproveAgent, setAccountNeedApproveBuilderFee],
+  );
+
   const handleLoginWithSignApprove = useMemoizedFn(async (account: Account) => {
     const { agentAddress, vault } = await apisPerps.createPerpsAgentWallet(
       account.address,
@@ -630,27 +659,22 @@ export const usePerpsState = () => {
     const signActions = await prepareSignActions();
     console.log('signActions', signActions);
 
-    await executeSignatures(signActions, account);
+    if (
+      account.type === KEYRING_CLASS.PRIVATE_KEY ||
+      account.type === KEYRING_CLASS.MNEMONIC
+    ) {
+      await executeSignatures(signActions, account);
 
-    const { role } = await sdk.info.getUserRole();
-    const isNeedDepositBeforeApprove = role === 'missing';
+      const { role } = await sdk.info.getUserRole();
+      const isNeedDepositBeforeApprove = role === 'missing';
 
-    if (isNeedDepositBeforeApprove) {
-      // 新地址，需要先deposit后才能 send approve
-      const approveSignatures = signActions.map(action => {
-        return {
-          action: action.action,
-          nonce: action.action?.nonce || 0,
-          signature: action.signature,
-          type: action.type,
-        };
-      });
-      saveApproveSignatures({
-        approveSignatures,
-        address: account.address,
-      });
+      if (isNeedDepositBeforeApprove) {
+        handleSetLaterApproveStatus(signActions);
+      } else {
+        await handleDirectApprove(signActions);
+      }
     } else {
-      await handleDirectApprove(signActions);
+      handleSetLaterApproveStatus(signActions);
     }
 
     await loginPerpsAccount(account);
@@ -808,28 +832,28 @@ export const usePerpsState = () => {
     perpsState.localLoadingHistory,
   ]);
 
-  useEffect(() => {
-    if (
-      perpsState.accountSummary?.withdrawable &&
-      Number(perpsState.accountSummary.withdrawable) > 0 &&
-      currentPerpsAccount?.address &&
-      perpsState.approveSignatures.length > 0
-    ) {
-      const directSendApprove = async () => {
-        const data = perpsState.approveSignatures;
-        setApproveSignatures([]);
-        await handleDirectApprove(data);
-        apisPerps.setSendApproveAfterDeposit(currentPerpsAccount.address, []);
-      };
-      directSendApprove();
-    }
-  }, [
-    currentPerpsAccount?.address,
-    handleDirectApprove,
-    perpsState.accountSummary?.withdrawable,
-    perpsState.approveSignatures,
-    setApproveSignatures,
-  ]);
+  // useEffect(() => {
+  //   if (
+  //     perpsState.accountSummary?.withdrawable &&
+  //     Number(perpsState.accountSummary.withdrawable) > 0 &&
+  //     currentPerpsAccount?.address &&
+  //     perpsState.approveSignatures.length > 0
+  //   ) {
+  //     const directSendApprove = async () => {
+  //       const data = perpsState.approveSignatures;
+  //       setApproveSignatures([]);
+  //       await handleDirectApprove(data);
+  //       apisPerps.setSendApproveAfterDeposit(currentPerpsAccount.address, []);
+  //     };
+  //     directSendApprove();
+  //   }
+  // }, [
+  //   currentPerpsAccount?.address,
+  //   handleDirectApprove,
+  //   perpsState.accountSummary?.withdrawable,
+  //   perpsState.approveSignatures,
+  //   setApproveSignatures,
+  // ]);
 
   return {
     // State

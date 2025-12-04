@@ -15,7 +15,7 @@ import { AssetAvatar } from '@/components';
 import { formatUsdValue } from '@/utils/number';
 import { DistanceToLiquidationTag } from '../PerpsPositionSection/DistanceToLiquidationTag';
 import { useTranslation } from 'react-i18next';
-import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
+import RcArrowRight2CC from '@/assets2024/icons/perps/IconAssetArrowCC.svg';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';
 import { calculateDistanceToLiquidation } from '../PerpsPositionSection/utils';
@@ -53,7 +53,7 @@ const AssetPositionItem = ({
   const coin = item.assetPositions.position.coin.toUpperCase();
   const leverageType = item.assetPositions.position.leverage.type || 'isolated';
   const side = Number(item.assetPositions.position.szi) > 0 ? 'Long' : 'Short';
-  const leverageText = item.assetPositions.position.leverage.value;
+  const leverageText = `${item.assetPositions.position.leverage.value}x`;
   const liquidationPx = item.assetPositions.position.liquidationPx;
   const marginUsed = item.assetPositions.position.marginUsed;
   const isUp = Number(item.assetPositions.position.unrealizedPnl) >= 0;
@@ -185,7 +185,8 @@ export const PerpsSingleAssetPosition: React.FC<{
     coin: string;
   } | null>(null);
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
-  const clearinghouseState = clearinghouseStateMap[account?.address || ''];
+  const clearinghouseState =
+    clearinghouseStateMap[account?.address.toLowerCase() || ''];
 
   const dataList = useMemo(() => {
     const resList: AssetPositionWithAccount[] = [];
@@ -586,6 +587,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     marginLeft: 6,
+    marginRight: 2,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },
