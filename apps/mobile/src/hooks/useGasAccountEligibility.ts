@@ -1,40 +1,47 @@
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useState, useRef, useMemo } from 'react';
 import { gasAccountService } from '@/core/services/shared';
 import { ClaimedGiftAddress } from '@/core/services/gasAccount';
 import { useGasAccountMethods } from '@/screens/GasAccount/hooks';
 import { useAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+
+const gasAccountState = zCreate(() => ({
+  gasAccountSig: gasAccountService.getGasAccountSig(),
+  hasClaimedGift: gasAccountService.getHasClaimedGift(),
+  currentEligibleAddress: gasAccountService.getCurrentEligibleAddress(),
+}));
+
+function reFetchStatus() {
+  gasAccountState.setState(prev => {
+    // const { newVal } = resolveValFromUpdater(valOrFunc, prev);
+
+    return {
+      ...prev,
+      gasAccountSig: gasAccountService.getGasAccountSig(),
+      hasClaimedGift: gasAccountService.getHasClaimedGift(),
+      currentEligibleAddress: gasAccountService.getCurrentEligibleAddress(),
+    };
+  });
+}
 
 export const useGasAccountEligibility = () => {
   const { login } = useGasAccountMethods();
   const { accounts } = useAccounts({ disableAutoFetch: true });
-  const [_eligibilityData, setEligibilityData] = useState<ClaimedGiftAddress[]>(
-    [],
-  );
-  const [_loading, setLoading] = useState(false);
-  const [_error, setError] = useState<string | null>(null);
-  const [_cacheStatus, setCacheStatus] = useState(
-    gasAccountService.getCacheStatus(),
-  );
+  const [, setEligibilityData] = useState<ClaimedGiftAddress[]>([]);
+  const [, setLoading] = useState(false);
+  const [, setError] = useState<string | null>(null);
 
-  // 使用ref来跟踪缓存状态，避免不必要的状态更新
-  const cacheStatusRef = useRef(gasAccountService.getCacheStatus());
+  const state = gasAccountState(s => s);
 
-  // 智能更新缓存状态 - 只在真正需要时更新
-  const updateCacheStatusIfNeeded = useCallback(() => {
-    const currentStatus = gasAccountService.getCacheStatus();
-
-    // 只在缓存状态发生实质性变化时更新
-    const shouldUpdate =
-      currentStatus.isValid !== cacheStatusRef.current.isValid ||
-      currentStatus.cachedAddresses.length !==
-        cacheStatusRef.current.cachedAddresses.length;
-
-    if (shouldUpdate) {
-      cacheStatusRef.current = currentStatus;
-      setCacheStatus(currentStatus);
-    }
-  }, []);
+  const isEligible = useMemo(() => {
+    return (
+      state.currentEligibleAddress !== undefined &&
+      !state.gasAccountSig?.sig &&
+      !state.hasClaimedGift
+    );
+  }, [state]);
 
   // 批量检查地址资格
   const checkAddressesEligibility = useCallback(
@@ -59,8 +66,6 @@ export const useGasAccountEligibility = () => {
         );
         setEligibilityData(result);
 
-        // 每次调用接口后检查并更新缓存状态
-        updateCacheStatusIfNeeded();
         return result;
       } catch (err) {
         const errorMessage =
@@ -69,9 +74,10 @@ export const useGasAccountEligibility = () => {
         throw err;
       } finally {
         setLoading(false);
+        reFetchStatus();
       }
     },
-    [updateCacheStatusIfNeeded],
+    [],
   );
 
   // 领取礼包
@@ -129,12 +135,15 @@ export const useGasAccountEligibility = () => {
       } catch (err) {
         console.error('Failed to claim gift:', err);
         throw err;
+      } finally {
+        reFetchStatus();
       }
     },
     [login, accounts],
   );
 
   return {
+    isEligible,
     checkAddressesEligibility,
     claimGift,
   };

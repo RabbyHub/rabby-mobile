@@ -144,7 +144,6 @@ const OverViewComponent = () => {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
-  const appThemeConfig = useAppThemeConfig();
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const [historyCount, setHistoryCount] = useState<{
     success: number;
@@ -184,19 +183,8 @@ const OverViewComponent = () => {
   }, [sortedAccounts]);
 
   // add gift eligibility check hook
-  const { checkAddressesEligibility } = useGasAccountEligibility();
+  const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
   // use useMemo to directly calculate isEligible so that it can respond to related state changes
-  const isEligible = useMemo(() => {
-    const gasAccountSig = gasAccountService.getGasAccountSig();
-    const hasClaimedGift = gasAccountService.getHasClaimedGift();
-    const currentEligibleAddress =
-      gasAccountService.getCurrentEligibleAddress();
-    return (
-      currentEligibleAddress !== undefined &&
-      !gasAccountSig?.sig &&
-      !hasClaimedGift
-    );
-  }, []);
 
   // 初始化gift资格检查
   useFocusEffect(
