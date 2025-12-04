@@ -1,11 +1,17 @@
+import { preferenceService } from '@/core/services';
 import {
+  appJsonStore,
   appStorage,
   appStorageForZustand,
   atomByMMKV,
   MMKVStorageStrategy,
 } from '@/core/storage/mmkv';
 import { zCreate, zPersist, zCreateJSONStorage } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 import { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { cloneDeep } from 'lodash';
 
@@ -61,13 +67,39 @@ export const AccountSwitcherInfos = {
 //   { storage: MMKVStorageStrategy.compatJson },
 // );
 
+// test migrate data
+runIIFEFunc(() => {
+  if (__DEV__) {
+    appJsonStore.removeItem('@SceneAccounts202512');
+    appJsonStore.setItem('@SceneAccounts', {
+      ...AccountSwitcherInfos,
+      MakeTransactionAbout: {
+        ...AccountSwitcherInfos.MakeTransactionAbout,
+        currentAccount: preferenceService.getFallbackAccount(),
+      },
+      Lending: {
+        ...AccountSwitcherInfos.Lending,
+        currentAccount: {
+          address: '0x9378867a1dff6e18e9a0e20b84a38d163996533f',
+          brandName: 'Ledger Hardware',
+          type: 'Ledger Hardware',
+        },
+        useAllAccounts: false,
+      },
+    });
+  }
+});
+const oldData = appJsonStore.getItem('@SceneAccounts', AccountSwitcherInfos);
+
 export const sceneAccountInfoStore = zCreate(
   zPersist<SceneAccounts>(
     (set, get) => ({
       ...AccountSwitcherInfos,
+      // use old state
+      ...(!(oldData.state && 'version' in oldData) && oldData),
     }),
     {
-      name: '@SceneAccounts',
+      name: '@SceneAccounts202512',
       storage: zCreateJSONStorage(() => appStorageForZustand),
     },
   ),

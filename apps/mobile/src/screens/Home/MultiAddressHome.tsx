@@ -1002,7 +1002,7 @@ function MultiAddressHome(): JSX.Element {
           </View>
         )}
       </View>
-      {__DEV__ && <HomeGuidanceMultipleTabs />}
+      <HomeGuidanceMultipleTabs />
     </NormalScreenContainer2024>
   );
 }

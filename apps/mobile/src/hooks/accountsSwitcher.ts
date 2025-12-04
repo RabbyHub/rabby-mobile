@@ -8,12 +8,10 @@ import { RootNames } from '@/constant/layout';
 import { Platform } from 'react-native';
 import { sortAccountList } from '@/utils/sortAccountList';
 import {
-  AccountSwitcherInfos,
   AccountSwitcherScene,
   makeSceneAccount,
   SceneAccountInfo,
   sceneAccountInfoStore,
-  // sceneAccountInfoAtom,
   zResetSceneAccountInfo,
   zSetSceneAccountInfo,
 } from './sceneAccountInfoAtom';

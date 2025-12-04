@@ -14,10 +14,11 @@ import {
   Easing as RNEasing,
   TouchableOpacity,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { atom, useAtom } from 'jotai';
 
-// import LottieView from 'lottie-react-native';
+import LottieView from 'lottie-react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -51,14 +52,17 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { getLottieAnimationDurationInMS } from '@/utils/time';
 import { isEqual } from 'lodash';
 
-// import AnimSwipeRightToViewAllAssets from './animations/swipe-right-to-view-all-assets.json';
-// const MS_PLAY_ONCE = getLottieAnimationDurationInMS(
-//   AnimSwipeRightToViewAllAssets,
-//   {
-//     frameCountFallback: 70,
-//     frameRateFallback: 25,
-//   },
-// );
+import AnimSwipeRightToViewAllAssets from './animations/swipe-right-to-view-all-assets.json';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials } from '@/core/utils/store';
+const MS_PLAY_ONCE = getLottieAnimationDurationInMS(
+  AnimSwipeRightToViewAllAssets,
+  {
+    frameCountFallback: 70,
+    frameRateFallback: 25,
+  },
+);
+const ANIM_W_H_RATIO = 800 / 600;
 
 type AbsLayout = {
   width: number;
@@ -66,21 +70,42 @@ type AbsLayout = {
   pageX: number;
   pageY: number;
 };
-const guidanceAtom = atom<{
+type GuidanceState = {
   visible: boolean;
   tabbarAbsLayout: AbsLayout | null;
   secondaryIndicatorAbsLayout: AbsLayout | null;
-}>({
+};
+// const guidanceAtom = atom<{
+//   visible: boolean;
+//   tabbarAbsLayout: AbsLayout | null;
+//   secondaryIndicatorAbsLayout: AbsLayout | null;
+// }>({
+//   visible: false,
+//   tabbarAbsLayout: null,
+//   secondaryIndicatorAbsLayout: null,
+// });
+
+const guidanceStore = zCreate<GuidanceState>(() => ({
   visible: false,
   tabbarAbsLayout: null,
   secondaryIndicatorAbsLayout: null,
-});
+}));
+function setGuidanceStore(valOrFunc: UpdaterOrPartials<GuidanceState>) {
+  guidanceStore.setState(prev => {
+    const updateVal =
+      typeof valOrFunc === 'function' ? valOrFunc(prev) : valOrFunc;
+    return {
+      ...prev,
+      ...updateVal,
+    };
+  });
+}
 
 export function useMeasureLayoutForHomeGuidanceMultipleTabs<
   T extends View = View,
 >() {
   const viewRef = React.useRef<T>(null);
-  const [, setGuidance] = useAtom(guidanceAtom);
+  // const [, setGuidance] = useAtom(guidanceAtom);
 
   const measureTabBarWrapper = React.useCallback(() => {
     if (viewRef.current) {
@@ -90,20 +115,20 @@ export function useMeasureLayoutForHomeGuidanceMultipleTabs<
         //   pageX,
         //   pageY,
         // });
-        setGuidance(prev => ({
+        setGuidanceStore(prev => ({
           ...prev,
           layout: { x, y, width, height, pageX, pageY },
         }));
       });
     }
-  }, [setGuidance]);
+  }, []);
 
   const secondaryIndicatorViewRef = React.useRef<View>(null);
   const measureSecondaryIndicator = useCallback(() => {
     if (secondaryIndicatorViewRef.current) {
       secondaryIndicatorViewRef.current.measure(
         (x, y, width, height, pageX, pageY) => {
-          setGuidance(prev => {
+          setGuidanceStore(prev => {
             const newLayout = { x, y, width, height, pageX, pageY };
 
             if (isEqual(prev.secondaryIndicatorAbsLayout, newLayout)) {
@@ -125,7 +150,7 @@ export function useMeasureLayoutForHomeGuidanceMultipleTabs<
         },
       );
     }
-  }, [setGuidance]);
+  }, []);
 
   return {
     measureTabBarWrapper,
@@ -136,33 +161,36 @@ export function useMeasureLayoutForHomeGuidanceMultipleTabs<
 }
 
 function useMeasuredLayoutForHomeGuidanceMultipleTabs() {
-  const [guidance] = useAtom(guidanceAtom);
+  // const [guidance] = useAtom(guidanceAtom);
   // const { top } = useSafeAreaInsets();
+
+  const tabbarAbsLayout = guidanceStore(state => state.tabbarAbsLayout);
+  const secondaryIndicatorAbsLayout = guidanceStore(
+    state => state.secondaryIndicatorAbsLayout,
+  );
 
   return {
     /** @deprecated */
-    tabbarWrapperLayout: guidance.tabbarAbsLayout,
-    secondaryIndicatorAbsLayout: guidance.secondaryIndicatorAbsLayout,
+    tabbarWrapperLayout: tabbarAbsLayout,
+    secondaryIndicatorAbsLayout: secondaryIndicatorAbsLayout,
   };
 }
 
 function useGuidanceMultipleTabsVisible() {
-  const [{ visible }, setGuidance] = useAtom(guidanceAtom);
+  // const [{ visible }, setGuidance] = useAtom(guidanceAtom);
+  const visible = guidanceStore(state => state.visible);
 
-  const toggleGuidanceVisible = useCallback(
-    (visible: boolean) => {
-      setGuidance(prev => ({
-        ...prev,
-        visible,
-      }));
-    },
-    [setGuidance],
-  );
+  const toggleGuidanceVisible = useCallback((visible: boolean) => {
+    setGuidanceStore(prev => ({
+      ...prev,
+      visible,
+    }));
+  }, []);
 
-  const { multiTabs20251111Viewed, toggleViewedGuidance } = useGuidanceShown();
+  const { multiTabs20251205Viewed, toggleViewedGuidance } = useGuidanceShown();
 
   return {
-    guidanceVisible: !multiTabs20251111Viewed && visible,
+    guidanceVisible: !multiTabs20251205Viewed && visible,
     toggleGuidanceVisible,
     toggleViewedGuidance,
   };
@@ -185,8 +213,11 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const { guidanceVisible, toggleGuidanceVisible, toggleViewedGuidance } =
-    useGuidanceMultipleTabsVisible();
+  const {
+    guidanceVisible: guidanceVisible,
+    toggleGuidanceVisible,
+    toggleViewedGuidance,
+  } = useGuidanceMultipleTabsVisible();
 
   const gestureAnimValue = useRef(new RNAnimated.Value(0)).current;
   const gestureRotateProp = gestureAnimValue.interpolate({
@@ -198,7 +229,9 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
     outputRange: [30, 0],
   });
 
-  const toggleGestureAnimation = useCallback(
+  const animationRef = useRef<LottieView>(null);
+
+  const toggleRNGestureAnimation = useCallback(
     (
       play: boolean,
       options?: {
@@ -238,24 +271,32 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
     [gestureAnimValue],
   );
 
+  const toggleLottieAnimation = useCallback((play: boolean) => {
+    if (play) {
+      animationRef.current?.play();
+    } else {
+      animationRef.current?.reset();
+    }
+  }, []);
+
   useImperativeHandle(
     ref,
     () => ({
       play: () => {
-        toggleGestureAnimation(true);
+        toggleRNGestureAnimation(true);
       },
     }),
-    [toggleGestureAnimation],
+    [toggleRNGestureAnimation],
   );
 
-  const isomorphicCloseAnim = useCallback(() => {
+  const isomorphicOnCloseAnim = useCallback(() => {
     // leave here for debug
     // if (__DEV__) return;
-    // leave here for debug
-    // if (!__DEV__) toggleViewedGuidance('multiTabs20251111Viewed', true);
 
     toggleGuidanceVisible(false);
-    toggleViewedGuidance('multiTabs20251111Viewed', true);
+    toggleViewedGuidance('multiTabs20251205Viewed', true);
+    // leave here for debug
+    // !__DEV__ && toggleViewedGuidance('multiTabs20251205Viewed', true);
   }, [toggleGuidanceVisible, toggleViewedGuidance]);
 
   const { secondaryIndicatorAbsLayout } =
@@ -268,30 +309,39 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
     secondaryIndicatorAbsLayout ? secondaryIndicatorAbsLayout.pageY : 0,
     50,
   );
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useLayoutEffect(() => {
     if (
       (!previousIndicatorWrapperLayout && secondaryIndicatorAbsLayout) ||
-      pageY > 10
+      pageY > 50
     ) {
       toggleGuidanceVisible(true);
-      toggleGestureAnimation(true, {
-        delay: 400,
-        onFinished: () => {
-          isomorphicCloseAnim();
-        },
-      });
+      // toggleRNGestureAnimation(true, {
+      //   delay: 400,
+      //   onFinished: () => {
+      //     isomorphicOnCloseAnim();
+      //   },
+      // });
+      animTimerRef.current && clearTimeout(animTimerRef.current);
+      animTimerRef.current = setTimeout(() => {
+        toggleLottieAnimation(true);
+        animTimerRef.current = setTimeout(() => {
+          toggleLottieAnimation(false);
+          isomorphicOnCloseAnim();
+        }, MS_PLAY_ONCE * 2 - 150);
+      }, 300);
 
-      // return () => {
-      //   clearTimeout(timer);
-      // };
+      return () => {
+        animTimerRef.current && clearTimeout(animTimerRef.current);
+      };
     }
   }, [
     previousIndicatorWrapperLayout,
     secondaryIndicatorAbsLayout,
     pageY,
     toggleGuidanceVisible,
-    toggleGestureAnimation,
-    isomorphicCloseAnim,
+    toggleLottieAnimation,
+    isomorphicOnCloseAnim,
   ]);
 
   const beforeContentNode = useMemo(() => {
@@ -351,12 +401,12 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   //     .onEnd(evt => {
   //       if (panActivated.value) {
   //         console.debug('Pan gesture ended - perform hide guidance');
-  //         runOnJS(isomorphicCloseAnim)();
+  //         runOnJS(isomorphicOnCloseAnim)();
   //       }
   //       panActivated.value = false;
   //     })
   //     .withTestId('panRightToLeftGesture');
-  // }, [panActivated, isomorphicCloseAnim]);
+  // }, [panActivated, isomorphicOnCloseAnim]);
 
   if (!secondaryIndicatorAbsLayout) return null;
   if (IS_IOS && !debouncedVisible) return null;
@@ -383,29 +433,29 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
         {beforeContentNode || null}
 
         <View style={styles.gestureAnimContainer}>
-          {/* <LottieView
-              // ref={animationRef}
-              source={AnimSwipeRightToViewAllAssets}
-              style={StyleSheet.flatten([
-                styles.animationLottie,
-                {
-                  width: 208,
-                  height: 451,
-                  ...makeDebugBorder(),
-                  ...makeDevOnlyStyle({
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                  }),
-                },
-              ])}
-              loop={false}
-              duration={MS_PLAY_ONCE}
-              autoPlay
-              {...(__DEV__ && {
-                loop: true,
-                autoPlay: true,
-              })}
-            /> */}
-          <RNAnimated.View
+          <LottieView
+            ref={animationRef}
+            source={AnimSwipeRightToViewAllAssets}
+            style={StyleSheet.flatten([
+              styles.animationLottie,
+              {
+                width: Dimensions.get('window').width - 16 * 2,
+                height:
+                  (Dimensions.get('window').width - 16 * 2) / ANIM_W_H_RATIO,
+                ...makeDevOnlyStyle({
+                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                }),
+              },
+            ])}
+            loop={false}
+            duration={MS_PLAY_ONCE}
+            autoPlay
+            // {...(__DEV__ && {
+            //   loop: true,
+            //   autoPlay: true,
+            // })}
+          />
+          {/* <RNAnimated.View
             style={[
               {
                 marginBottom: 4,
@@ -429,7 +479,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
               activeOpacity={1}
               onPress={evt => {
                 evt.stopPropagation();
-                toggleGestureAnimation(true, {
+                toggleRNGestureAnimation(true, {
                   __resetValueFirst__: true,
                   delay: 0,
                 });
@@ -443,7 +493,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
             {t(
               'page.nextComponent.homeGuidanceMultipleTabs.swipeToViewAllAssets',
             )}
-          </Text>
+          </Text> */}
         </View>
       </View>
     </Animated.View>
