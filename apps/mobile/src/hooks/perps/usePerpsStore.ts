@@ -28,6 +28,7 @@ import {
 } from '@/core/utils/store';
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
+import { perpsService } from '@/core/services';
 
 // 保持原有的接口定义
 export interface PositionAndOpenOrder extends AssetPosition {
@@ -215,6 +216,7 @@ const setCurrentPerpsAccount = (payload: Account) => {
     currentPerpsAccount: payload,
     isLogin: !!payload,
   }));
+  perpsService.setCurrentAccount(payload);
 };
 
 export const switchPerpsAccount = (payload: Account) => {
@@ -230,6 +232,7 @@ export const switchPerpsAccount = (payload: Account) => {
     isInitialized: false,
     homePositionPnl: pnl,
   }));
+  perpsService.setCurrentAccount(payload);
 };
 
 const setMarketData = (payload: MarketData[] | []) => {
@@ -274,15 +277,14 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
     const lastUsedAccount = await apisPerps.getPerpsLastUsedAccount();
     const recentlyAccount = currentAccount || lastUsedAccount;
     const selectedItem =
-      recentlyAccount &&
-      (accounts.find(
+      accounts.find(
         item =>
-          isSameAddress(item.address, recentlyAccount.address) &&
-          item.type === recentlyAccount.type,
+          isSameAddress(item.address, recentlyAccount?.address || '') &&
+          item.type === recentlyAccount?.type,
       ) ||
-        accounts.find(item =>
-          isSameAddress(item.address, recentlyAccount.address),
-        ));
+      accounts.find(item =>
+        isSameAddress(item.address, recentlyAccount?.address || ''),
+      );
     const perpsState = perpsStore.getState();
     if (recentlyAccount && selectedItem) {
       setCurrentPerpsAccount(selectedItem);
@@ -858,10 +860,16 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
   const hasSelectedDefaultAccount = useRef(false);
 
   useEffect(() => {
-    eventBus.on(EVENTS.PERPS.LOG_OUT, () => {
-      handleSelectDefaultAccount(top10Accounts);
+    eventBus.on(EVENTS.PERPS.LOG_OUT, (account: Account | null) => {
+      const remainAccounts = top10Accounts.filter(
+        item =>
+          !(
+            isSameAddress(item.address, account?.address || '') &&
+            item.type === account?.type
+          ),
+      );
+      handleSelectDefaultAccount(remainAccounts);
     });
-
     return () => {
       eventBus.removeAllListeners(EVENTS.PERPS.LOG_OUT);
     };

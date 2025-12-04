@@ -436,7 +436,7 @@ export const usePerpsState = () => {
           });
         }
       } catch (e) {
-        showToast(String(e), 'error');
+        // showToast(String(e), 'error');
         setAccountNeedApproveAgent(true);
         setAccountNeedApproveBuilderFee(true);
         Sentry.captureException(
@@ -489,13 +489,16 @@ export const usePerpsState = () => {
       }
 
       if (signActions.length === 0) {
+        isHandlingApproveStatus.current = false;
         return;
       }
 
       console.log('handleActionApproveStatus signActions', signActions);
       await executeSignatures(signActions, currentPerpsAccount);
 
-      await handleDirectApprove(signActions);
+      try {
+        await handleDirectApprove(signActions);
+      } catch (error) {}
       setAccountNeedApproveAgent(false);
       setAccountNeedApproveBuilderFee(false);
       isHandlingApproveStatus.current = false;
