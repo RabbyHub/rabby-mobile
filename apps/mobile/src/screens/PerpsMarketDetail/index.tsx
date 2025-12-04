@@ -192,6 +192,15 @@ export const PerpsMarketDetailScreen = () => {
     },
   );
 
+  useEffect(() => {
+    if (currentPosition) {
+      _setCurrentTpOrSl({
+        tpPrice: tpPrice,
+        slPrice: slPrice,
+      });
+    }
+  }, [currentPosition, tpPrice, slPrice]);
+
   const {
     handleOpenPosition,
     handleClosePosition,
@@ -439,6 +448,7 @@ export const PerpsMarketDetailScreen = () => {
             />
           )}
           <PerpsInfo market={market} activeAssetCtx={activeAssetCtx} />
+
           <PerpsHistorySection
             coin={coin}
             marketDataMap={marketDataMap}
