@@ -999,7 +999,7 @@ export const BridgePendingTxItem = ({
       Date.now() - historyData.createdAt > ONE_DAY_MS
     ) {
       transactionHistoryService.completeBridgeTxHistory(
-        historyData.hash,
+        historyData?.hash,
         historyData.fromChainId!,
         'failed',
       );
@@ -1010,6 +1010,7 @@ export const BridgePendingTxItem = ({
 
     setData(historyData);
     if (
+      historyData &&
       historyData.hash &&
       (historyData.status === 'pending' || historyData.status === 'fromSuccess')
     ) {
