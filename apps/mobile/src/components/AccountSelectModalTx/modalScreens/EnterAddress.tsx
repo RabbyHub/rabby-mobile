@@ -242,16 +242,17 @@ const ScreenPanelEnterAddress = ({
     );
   }, [input]);
 
-  const showAccountList = !!input;
-
   useEffect(() => {
     if (newValue) {
       setInput(newValue);
     }
   }, [newValue, setInput]);
 
+  const showAccountList = !!input;
   const showConfirmButton =
     searchedAccountCount === 1 || !!foundAccountInfo?.account || isValidAddr;
+  const displayWatchOnlyDivider =
+    !!mainAccounts.length && !!watchAccounts.length;
 
   return (
     <TouchableWithoutFeedback
@@ -368,7 +369,7 @@ const ScreenPanelEnterAddress = ({
                   );
                 })}
 
-                {!!watchAccounts.length && (
+                {displayWatchOnlyDivider && (
                   <View style={[styles.accountsDividerWrapper]}>
                     {/* <View style={styles.accountsDivider} /> */}
                     <View style={styles.accountsDividerPart} />

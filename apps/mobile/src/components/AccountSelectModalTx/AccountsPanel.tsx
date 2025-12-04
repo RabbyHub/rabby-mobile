@@ -262,7 +262,7 @@ export function AccountsPanelInSheetModal({
           }}>
           <View style={styles.placeHolderWrapper}>
             <Text style={styles.placeHolder}>
-              {t('page.sendPoly.enterAddress')}
+              {t('page.sendPoly.enterOrSearchAddress')}
             </Text>
           </View>
           <TouchableOpacity
