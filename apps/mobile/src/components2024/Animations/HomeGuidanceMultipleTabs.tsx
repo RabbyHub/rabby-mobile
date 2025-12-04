@@ -57,10 +57,7 @@ import { zCreate } from '@/core/utils/reexports';
 import { UpdaterOrPartials } from '@/core/utils/store';
 const MS_PLAY_ONCE = getLottieAnimationDurationInMS(
   AnimSwipeRightToViewAllAssets,
-  {
-    frameCountFallback: 70,
-    frameRateFallback: 25,
-  },
+  {},
 );
 const ANIM_W_H_RATIO = 800 / 600;
 
@@ -213,11 +210,8 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const {
-    guidanceVisible: guidanceVisible,
-    toggleGuidanceVisible,
-    toggleViewedGuidance,
-  } = useGuidanceMultipleTabsVisible();
+  const { guidanceVisible, toggleGuidanceVisible, toggleViewedGuidance } =
+    useGuidanceMultipleTabsVisible();
 
   const gestureAnimValue = useRef(new RNAnimated.Value(0)).current;
   const gestureRotateProp = gestureAnimValue.interpolate({
@@ -292,11 +286,10 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   const isomorphicOnCloseAnim = useCallback(() => {
     // leave here for debug
     // if (__DEV__) return;
-
     toggleGuidanceVisible(false);
-    toggleViewedGuidance('multiTabs20251205Viewed', true);
+    // toggleViewedGuidance('multiTabs20251205Viewed', true);
     // leave here for debug
-    // !__DEV__ && toggleViewedGuidance('multiTabs20251205Viewed', true);
+    !__DEV__ && toggleViewedGuidance('multiTabs20251205Viewed', true);
   }, [toggleGuidanceVisible, toggleViewedGuidance]);
 
   const { secondaryIndicatorAbsLayout } =
@@ -325,10 +318,10 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
       animTimerRef.current && clearTimeout(animTimerRef.current);
       animTimerRef.current = setTimeout(() => {
         toggleLottieAnimation(true);
-        animTimerRef.current = setTimeout(() => {
-          toggleLottieAnimation(false);
+
+        setTimeout(() => {
           isomorphicOnCloseAnim();
-        }, MS_PLAY_ONCE * 2 - 150);
+        }, Math.floor((MS_PLAY_ONCE * 50) / 70));
       }, 300);
 
       return () => {
@@ -447,9 +440,12 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
                 }),
               },
             ])}
+            onAnimationFinish={() => {
+              isomorphicOnCloseAnim();
+            }}
             loop={false}
             duration={MS_PLAY_ONCE}
-            autoPlay
+            autoPlay={false}
             // {...(__DEV__ && {
             //   loop: true,
             //   autoPlay: true,
