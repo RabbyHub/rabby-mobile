@@ -11,10 +11,20 @@ declare class BizEventEmitter<
     listener: Listeners[T],
   ): this;
 
+  off<T extends keyof Listeners & string>(
+    eventType: T,
+    listener: Listeners[T],
+  ): this;
+
   emit<T extends keyof Listeners & string>(
     eventType: T,
     ...args: Parameters<Listeners[T]>
   ): boolean;
+
+  subscribe<T extends keyof Listeners & string>(
+    type: T,
+    listener: Listeners[T],
+  ): { remove: () => void };
 }
 
 export function makeJsEEClass<
@@ -22,7 +32,22 @@ export function makeJsEEClass<
     [key: string]: Listener;
   },
 >() {
-  return { EventEmitter: EventEmitter as typeof BizEventEmitter<Listeners> };
+  class EE extends EventEmitter {
+    subscribe<T extends keyof Listeners & string>(
+      type: T,
+      listener: Listeners[T],
+    ) {
+      super.addListener(type, listener);
+
+      const unsub = () => {
+        super.removeListener(type, listener);
+      };
+
+      return { remove: unsub };
+    }
+  }
+
+  return { EventEmitter: EE as typeof BizEventEmitter<Listeners> };
 }
 
 const { EventEmitter: AppServiceEvents } = makeJsEEClass<{

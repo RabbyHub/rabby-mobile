@@ -1,5 +1,4 @@
 import { Platform } from 'react-native';
-import RNFS from 'react-native-fs';
 import {
   ANDROID_DATABASE_PATH,
   IOS_LIBRARY_PATH,
@@ -10,6 +9,7 @@ import {
 
 import { getRabbyAppDbDir } from '@/databases/constant';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { OPSQLiteEvents } from './events';
 
 const enhanceQueryResult = (result: QueryResult): void => {
   // @ts-expect-error
@@ -17,6 +17,11 @@ const enhanceQueryResult = (result: QueryResult): void => {
 };
 
 const isIOS = Platform.OS === 'ios';
+
+const opSqliteDBRef = { current: null as null | ReturnType<typeof open> };
+export function getOpSqliteDBInstance() {
+  return opSqliteDBRef.current;
+}
 
 export const opSqliteTypeORMDriver = {
   openDatabase: async (
@@ -51,6 +56,15 @@ export const opSqliteTypeORMDriver = {
         name: options.name,
         encryptionKey: options.encryptionKey || '',
       });
+
+      if (!opSqliteDBRef.current) {
+        opSqliteDBRef.current = database;
+        OPSQLiteEvents.emit('__OP_SQLITE_LOADED__', { database });
+      } else {
+        console.warn(
+          '[opSqliteTypeORMDriver] Warning: database instance already exists, notice developer',
+        );
+      }
 
       const connection = {
         executeSql: async <T extends any>(

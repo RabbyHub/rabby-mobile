@@ -1,6 +1,7 @@
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { type MMKV } from 'react-native-mmkv';
 import type { ReactotronCore } from 'reactotron-core-client';
+import { log2Reactotron } from './_utils';
 
 export interface MmkvPluginConfig {
   /**
@@ -17,6 +18,17 @@ export interface MmkvPluginConfig {
 
 interface Listener {
   remove: () => void;
+}
+
+// slice query string, [0...500] + [-500...end]
+function formatValueString(query: string, len = 500): string {
+  if (query.length <= len) {
+    return query;
+  }
+
+  const half = Math.floor(len / 2);
+
+  return `${query.slice(0, half)}...${query.slice(-half)}`;
 }
 
 /**
@@ -40,20 +52,6 @@ export default function mmkvPlugin<
   let listener: Listener | undefined;
 
   return (reactotron: Client) => {
-    const log = ({
-      value,
-      preview,
-    }: {
-      value: string | number | boolean | object;
-      preview: string;
-    }) => {
-      reactotron.display({
-        name: 'MMKV',
-        value,
-        preview,
-        important: true,
-      });
-    };
     return {
       onConnect() {
         listener = config.storage.addOnValueChangedListener(key => {
@@ -65,9 +63,10 @@ export default function mmkvPlugin<
             defaultValue: rawValue,
           });
 
-          log({
+          log2Reactotron(reactotron, {
+            name: `MMKV: ${key}`,
             value: { key, value },
-            preview: `Set "${key}" to ${rawValue}`,
+            preview: `Set "${key}" to ${formatValueString(rawValue || '', 30)}`,
           });
         });
       },

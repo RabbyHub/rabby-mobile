@@ -46,6 +46,7 @@ import {
 } from '@/core/utils/store';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { useBalanceAccounts } from './useAccountsBalance';
+import { sortAccountList } from '@/utils/sortAccountList';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
@@ -131,6 +132,23 @@ const doFetchAccounts = makeAvoidParallelAsyncFunc(async () => {
 
   return nextAccounts;
 });
+
+export async function getSortedAddressList(options?: {
+  includeOthers?: boolean;
+}) {
+  const { includeOthers = false } = options || {};
+  const allAccounts = await doFetchAccounts();
+  const allMyAccounts = filterMyAccounts(allAccounts);
+  const pinAddresses = preferenceService.getPinAddresses();
+
+  return {
+    allAccounts,
+    allMyAccounts,
+    sortedAccounts: includeOthers
+      ? sortAccountList(allAccounts, { highlightedAddresses: pinAddresses })
+      : sortAccountList(allMyAccounts, { highlightedAddresses: pinAddresses }),
+  };
+}
 
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   // const [accounts, setAccounts] = useAtom(accountsAtom);

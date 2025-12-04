@@ -1,12 +1,12 @@
 import { FieldNilable } from "@rabby-wallet/base-utils";
-import type { StorageAdapaterOptions, StorageItemTpl } from "./storageAdapter";
+import type { Primitive, StorageAdapaterOptions, StorageItemTpl } from "./storageAdapter";
 import createPersistStore from "./createPersistStore";
 
 /**
  * @deprecated 直接在 service 里用 createPersistStore 即可，不要继承 baseStore
  */
 export class StoreServiceBase<
-  StoreType extends Record<string, StorageItemTpl> = Record<string, StorageItemTpl>,
+  StoreType extends StorageItemTpl = StorageItemTpl,
   StoreName extends string = string
 > {
   private _storeName: StoreName;
