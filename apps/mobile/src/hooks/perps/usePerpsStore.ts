@@ -294,6 +294,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
         ? formatPositionPnl(clearinghouseState)
         : initialState.homePositionPnl;
       setHomePositionPnl(pnl);
+      subscribeToUserData(selectedItem.address);
     } else {
       if (accounts.length > 0) {
         const res = accounts.map(item => {
@@ -316,6 +317,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
             ? formatPositionPnl(best.clearinghouseState)
             : initialState.homePositionPnl;
           setHomePositionPnl(pnl);
+          subscribeToUserData(best.account.address);
         } else {
           setCurrentPerpsAccount(accounts[0]);
           const clearinghouseState =
@@ -324,11 +326,13 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
             ? formatPositionPnl(clearinghouseState)
             : initialState.homePositionPnl;
           setHomePositionPnl(pnl);
+          subscribeToUserData(accounts[0].address);
         }
       }
     }
   } catch (e) {
     setCurrentPerpsAccount(accounts[0]);
+    setHomePositionPnl(initialState.homePositionPnl);
     console.error('Error selecting only show account', e);
   }
 };
