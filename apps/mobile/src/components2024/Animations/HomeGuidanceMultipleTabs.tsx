@@ -407,14 +407,14 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   return (
     // <GestureDetector gesture={panRightToLeftGesture} />
     <Animated.View
-      pointerEvents={__DEV__ ? 'auto' : 'none'}
+      pointerEvents={'none'}
       entering={FadeIn.duration(250)}
       exiting={FadeOut.duration(250)}
       style={[
         styles.container,
         styles.containerMask,
         animatedStyle,
-        !debouncedVisible && { zIndex: -1 },
+        // !debouncedVisible && { zIndex: -1 },
       ]}>
       <View
         style={[
@@ -505,7 +505,7 @@ const getStyle = createGetStyles2024(
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: IS_IOS ? -1 : 1,
+        zIndex: IS_IOS ? 1 : 1,
         // ...makeDebugBorder(),
       },
       absEle: {
