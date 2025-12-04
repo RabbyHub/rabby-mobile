@@ -87,7 +87,7 @@ export const PerpsMarketDetailScreen = () => {
     marketDataMap,
     perpFee,
     marketData,
-    // hasPermission,
+    hasPermission,
     currentPerpsAccount,
     isLogin,
     userFills,
@@ -97,7 +97,7 @@ export const PerpsMarketDetailScreen = () => {
 
     handleDeleteAgent,
   } = usePerpsState();
-  const hasPermission = true;
+  // const hasPermission = true;
   const [isShowModal, setIsShowModal] = useState(false);
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
