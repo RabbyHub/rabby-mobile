@@ -28,19 +28,14 @@ export const SignApiPlugin: RabbyApiPlugin = {
 };
 
 export const openapi = new OpenApiService({
-  store: isNonPublicProductionEnv
-    ? openApiStore
-    : {
-        apiKey: openApiStore.apiKey,
-        apiTime: openApiStore.apiTime,
-        host: INITIAL_OPENAPI_URL,
-      },
+  store: openApiStore,
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',
   clientVersion: APP_VERSIONS.fromJs,
 });
 openapi.initSync();
 
+// TODO: REMOVE ME
 export const testOpenapi = new OpenApiService({
   store: {
     host: __DEV__
