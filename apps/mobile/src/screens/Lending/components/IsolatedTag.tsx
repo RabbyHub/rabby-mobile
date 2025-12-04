@@ -11,13 +11,19 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
-const IsolatedTag = () => {
+const IsolatedTag = ({
+  disablePress,
+  isGlobal,
+}: {
+  disablePress?: boolean;
+  isGlobal?: boolean;
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const handleShow = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DESCRIPTION,
-      title: t('page.Lending.modalDesc.isolatedTitle'),
+      title: isGlobal ? undefined : t('page.Lending.modalDesc.isolatedTitle'),
       titleStyle: {
         marginTop: 12,
         fontWeight: '900',
@@ -30,7 +36,9 @@ const IsolatedTag = () => {
       },
       sections: [
         {
-          description: t('page.Lending.modalDesc.isolatedDesc'),
+          description: isGlobal
+            ? t('page.Lending.modalDesc.globalIsolatedDesc')
+            : t('page.Lending.modalDesc.isolatedDesc'),
         },
       ],
       bottomSheetModalProps: {
@@ -54,7 +62,9 @@ const IsolatedTag = () => {
   };
 
   return (
-    <Pressable style={styles.container} onPress={handleShow}>
+    <Pressable
+      style={styles.container}
+      onPress={disablePress ? undefined : handleShow}>
       <Text style={styles.text}>{t('page.Lending.isolated')}</Text>
       <RcInfoFillCC
         width={14}

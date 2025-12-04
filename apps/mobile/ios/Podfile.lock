@@ -1607,8 +1607,6 @@ PODS:
     - React-Core
   - react-native-splash-screen (3.3.0):
     - React-Core
-  - react-native-sqlite-storage (7.0.0-alpha.2):
-    - React-Core
   - react-native-version-check (3.4.7):
     - React-Core
   - react-native-video (6.12.0):
@@ -2068,7 +2066,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNReanimated (3.17.1):
+  - RNReanimated (3.18.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2090,10 +2088,10 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated (= 3.17.1)
-    - RNReanimated/worklets (= 3.17.1)
+    - RNReanimated/reanimated (= 3.18.2)
+    - RNReanimated/worklets (= 3.18.2)
     - Yoga
-  - RNReanimated/reanimated (3.17.1):
+  - RNReanimated/reanimated (3.18.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2115,9 +2113,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated/apple (= 3.17.1)
+    - RNReanimated/reanimated/apple (= 3.18.2)
     - Yoga
-  - RNReanimated/reanimated/apple (3.17.1):
+  - RNReanimated/reanimated/apple (3.18.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2140,7 +2138,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNReanimated/worklets (3.17.1):
+  - RNReanimated/worklets (3.18.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2162,9 +2160,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/worklets/apple (= 3.17.1)
+    - RNReanimated/worklets/apple (= 3.18.2)
     - Yoga
-  - RNReanimated/worklets/apple (3.17.1):
+  - RNReanimated/worklets/apple (3.18.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2331,7 +2329,6 @@ DEPENDENCIES:
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-splash-screen (from `../node_modules/react-native-splash-screen`)
-  - "react-native-sqlite-storage (from `../node_modules/@rabby-wallet/react-native-sqlite-storage`)"
   - react-native-version-check (from `../node_modules/react-native-version-check`)
   - react-native-video (from `../node_modules/react-native-video`)
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
@@ -2533,8 +2530,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-splash-screen:
     :path: "../node_modules/react-native-splash-screen"
-  react-native-sqlite-storage:
-    :path: "../node_modules/@rabby-wallet/react-native-sqlite-storage"
   react-native-version-check:
     :path: "../node_modules/react-native-version-check"
   react-native-video:
@@ -2729,7 +2724,6 @@ SPEC CHECKSUMS:
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: 8870dc3e45c8d241336cd8ee3fa3fc76f3a040ac
   react-native-splash-screen: 4312f786b13a81b5169ef346d76d33bc0c6dc457
-  react-native-sqlite-storage: b28c18917750fee1358c91a4235699f59089d5b3
   react-native-version-check: 6cd36aad4e30b8e3216747e3b4ddeb09e0647af8
   react-native-video: 7d8b8150548f5e5e8f336c2b0d83386b70ca5f07
   react-native-view-shot: f5507655f122e6b104888a11130f267a427f0d57
@@ -2781,7 +2775,7 @@ SPEC CHECKSUMS:
   RNNotifee: 8e2d3df3f0e9ce8f5d1fe4c967431138190b6175
   RNPermissions: bcec7922552447820c9d0d9bcc9e6619f4e73b94
   RNReactNativeHapticFeedback: def3d525e9608fa524a3296e7d44715f4d8bec39
-  RNReanimated: e4c117586acac8073866544d672818e0dc1ea9ec
+  RNReanimated: ed6e07552c0d332e6668efc39c431260c501cfd2
   RNScreens: 3a008e352a94331707f1a7c7425388a927134ad9
   RNSentry: b8087f9cabb6b7fdca535e87dc21b7d36a6a6fea
   RNSVG: 4cbae6c6f0ef2b0aa277c5fce8447d3e4cd97cd0

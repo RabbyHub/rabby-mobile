@@ -122,7 +122,7 @@ import {
 } from '@/components/Token/hooks/selectToken';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
-import { Pressable, TouchableOpacity } from 'react-native-gesture-handler';
+import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -331,7 +331,6 @@ function MultiAddressHome(): JSX.Element {
     loading,
     isLoadingNew: loadingNewCurve,
   } = useMulti24hBalance(top10Addresses, {
-    isNavigationFocused: isNavFocused,
     disableAutoFetch: true,
     totalBalance: top10Balance.total,
     totalEvmBalance: top10Balance.totalEvm,
@@ -340,8 +339,6 @@ function MultiAddressHome(): JSX.Element {
   useFetchCexInfo();
   useInitDetectDBAssets();
   useSetTotalBalanceText(combineData.netWorth);
-
-  const [hasOpenCopyTrading, setHasOpenCopyTrading] = useState(true);
 
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
 
@@ -456,12 +453,6 @@ function MultiAddressHome(): JSX.Element {
     }, [detectHasAccounts, fetchHistory]),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      const value = preferenceService.getHasOpenCopyTrading();
-      setHasOpenCopyTrading(value ?? true);
-    }, []),
-  );
   useFocusEffect(
     useCallback(() => {
       if (appState === 'active') {
@@ -619,7 +610,7 @@ function MultiAddressHome(): JSX.Element {
           });
           break;
         case MultiHomeFeatTitle.Lending:
-          navigation.navigate(RootNames.StackTransaction, {
+          navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Lending,
             params: {},
           });
@@ -642,7 +633,6 @@ function MultiAddressHome(): JSX.Element {
     [openDapps, handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
   );
 
-  const { showTipsDollarDialog } = useTipsDollarDialog();
   const generateCustomBadgeIcon = useCallback(
     (el: {
       key: MultiHomeFeatTitle;
@@ -655,13 +645,13 @@ function MultiAddressHome(): JSX.Element {
       if (el.key === MultiHomeFeatTitle.Watchlist) {
         return <WatchListBadge />;
       }
-      if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
-        return (
-          <RNTouchableOpacity onPress={showTipsDollarDialog}>
-            <IconDollar width={24} height={24} />
-          </RNTouchableOpacity>
-        );
-      }
+      // if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
+      //   return (
+      //     <RNTouchableOpacity onPress={showTipsDollarDialog}>
+      //       <IconDollar width={24} height={24} />
+      //     </RNTouchableOpacity>
+      //   );
+      // }
 
       if (el.key === MultiHomeFeatTitle.Perps) {
         return <PerpsPnl />;
@@ -703,12 +693,7 @@ function MultiAddressHome(): JSX.Element {
         </>
       );
     },
-    [
-      hasOpenCopyTrading,
-      pendingTxCount,
-      showTipsDollarDialog,
-      styles.badgeStyle,
-    ],
+    [pendingTxCount, styles.badgeStyle],
   );
 
   const { bottom } = useSafeAreaInsets();
@@ -859,7 +844,7 @@ function MultiAddressHome(): JSX.Element {
             <View style={styles.gridItemsWrap}>
               {MENU_ARR.map((el, index) => {
                 return (
-                  <TouchableOpacity
+                  <RNGHTouchableOpacity
                     style={StyleSheet.flatten([
                       styles.gridItem,
                       { width: itemWidth },
@@ -887,7 +872,7 @@ function MultiAddressHome(): JSX.Element {
                       </View>
                     </View>
                     <Text style={styles.gridText}>{el.title}</Text>
-                  </TouchableOpacity>
+                  </RNGHTouchableOpacity>
                 );
               })}
             </View>

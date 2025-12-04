@@ -96,9 +96,7 @@ export const HistoryItemTokenArea = ({
     case LEN_ENUM.TWO:
       const receives = tokenChangeData.filter(item => item.type === 'receive');
       const sends = tokenChangeData.filter(item => item.type === 'send');
-      const isSwap =
-        receives.filter(item => !isNFTTokenId(item.token_id)).length === 1 &&
-        sends.filter(item => !isNFTTokenId(item.token_id)).length === 1;
+      const isSwap = type === HistoryItemCateType.Swap;
       return !isSwap ? (
         <View style={[styles.imageBox]}>
           <View style={[styles.oneTokenBox]}>

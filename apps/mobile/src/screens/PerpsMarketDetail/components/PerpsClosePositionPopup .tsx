@@ -112,10 +112,10 @@ export const PerpsClosePositionPopup: React.FC<{
       ref={modalRef}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: isLight ? 'bg0' : 'bg1',
+        linearGradientType: 'bg1',
       })}
       onDismiss={onCancel}
-      snapPoints={[472]}>
+      snapPoints={[490]}>
       <BottomSheetView>
         <AutoLockView style={[styles.container]}>
           <View>
@@ -154,6 +154,7 @@ export const PerpsClosePositionPopup: React.FC<{
               )}
             </View>
             <PerpsSlider
+              step={1}
               value={closePercent}
               onValueChange={setClosePercent}
               showPercentage={false}
@@ -245,9 +246,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       textAlign: 'center',
     },
     amountSection: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
+      backgroundColor: colors2024['neutral-bg-2'],
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
       borderRadius: 20,
@@ -320,9 +319,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'space-between',
     },
     pnlCard: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
       borderRadius: 16,
       paddingHorizontal: 16,
       paddingVertical: 16,

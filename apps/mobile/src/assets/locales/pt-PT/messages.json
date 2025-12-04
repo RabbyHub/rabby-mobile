@@ -395,7 +395,9 @@
         "LendingSupply": "Fornecer",
         "LendingWithdraw": "Retirar",
         "LendingBorrow": "Emprestar",
-        "LendingRepay": "Reembolsar"
+        "LendingRepay": "Reembolsar",
+        "LendingOnCollateral": "Ativar uso como colateral",
+        "LendingOffCollateral": "Desligar uso como colateral"
       },
       "detail": {
         "SpeedUp": "Acelerar",
@@ -2918,7 +2920,8 @@
     "Lending": {
       "availableCard": {
         "needSupply": "Para pedir emprestado, precisa fornecer ativos como colateral.",
-        "canBorrow": "Você pode tomar emprestado com base na sua garantia fornecida, até o limite de empréstimo."
+        "canBorrow": "Você pode tomar emprestado com base na sua garantia fornecida, até o limite de empréstimo.",
+        "isolated": "O poder de empréstimo e os ativos estão limitados devido ao modo de Isolamento."
       },
       "list": {
         "headers": {
@@ -2951,7 +2954,12 @@
         "availableToBorrow": "Disponível para emprestar",
         "actions": "Fornecimento",
         "approveAndSupply": "Aprovar e Fornecer",
-        "supplyAPY": "Fornecer APY"
+        "supplyAPY": "Fornecer APY",
+        "collateralization": "Colateralização",
+        "supplyBalance": "Fornecer Balanço",
+        "enabled": "Ativado",
+        "isolatedTips": "Os seus ativos de empréstimo/ empréstimo existentes não são suportados.",
+        "unavailable": "Indisponível"
       },
       "withdrawDetail": {
         "actions": "Retirar",
@@ -2985,12 +2993,14 @@
         "mySupply": "Meu Fornecimento",
         "almostCap": "Este ativo quase atingiu o seu limite de empréstimo. Há apenas {{available}} disponível para ser emprestado a partir deste mercado.",
         "reachCap": "Este ativo atingiu o seu limite de fornecimento. Não há nada disponível para ser fornecido a partir deste mercado.",
-        "availableToSupply": "Disponível para Fornecer"
+        "availableToSupply": "Disponível para Fornecer",
+        "useAsCollateral": "Usar como colateral"
       },
       "risk": {
         "checkbox": "Eu entendo o alerta e quero continuar.",
         "warning": "Emprestar esta quantia irá reduzir o seu Fator de Saúde para um nível arriscado para liquidação.",
-        "withdrawWarning": "Retirar este montante irá baixar o seu Fator de Saúde para um nível arriscado de liquidação."
+        "withdrawWarning": "Retirar este montante irá baixar o seu Fator de Saúde para um nível arriscado de liquidação.",
+        "toggleCollateralWarning": "Desativar este ativo como colateral diminuirá o seu Fator de Saúde para um nível arriscado de liquidação."
       },
       "lqDescription": {
         "over3title": "Fator de saúde > 3.0:",
@@ -3009,7 +3019,9 @@
         "availableToBorrowDesc": "Você pode pegar emprestado com base na sua garantia fornecida e até que o limite de empréstimo seja alcançado.",
         "lqDesc": "Quando ocorre uma liquidação, os liquidatários reembolsam até 50% do montante emprestado em aberto em nome do devedor. Em troca, podem comprar o colateral a um desconto e manter a diferença (penalização de liquidação) como um bónus.",
         "isolatedTitle": "O ativo não pode ser utilizado como colateral.",
-        "isolatedDesc": "Este ativo pode ser utilizado apenas como garantia no modo de isolamento, onde não é possível fornecer outras garantias de ativos para empréstimos. Os ativos utilizados como garantia no modo de isolamento podem ser emprestados apenas até um limite de endividamento específico."
+        "isolatedDesc": "Este ativo pode ser utilizado apenas como garantia no modo de isolamento, onde não é possível fornecer outras garantias de ativos para empréstimos. Os ativos utilizados como garantia no modo de isolamento podem ser emprestados apenas até um limite de endividamento específico.",
+        "isolatedSupplyDesc": "O uso de colaterais é limitado devido ao modo de isolamento.",
+        "globalIsolatedDesc": "No modo de Isolamento, não pode fornecer outros ativos como colateral. Um limite global de dívida limita o poder de empréstimo do ativo isolado. Para sair do modo de isolamento, desative o UNI como colateral antes de emprestar outro ativo."
       },
       "supplied": "Fornecido",
       "gotIt": "Entendi",
@@ -3025,7 +3037,26 @@
       "hf": "Fator de saúde",
       "isolated": "isolado",
       "estNetApy": "Est. rendimento líquido APY",
-      "marketSlot": "{{market}} Mercado"
+      "marketSlot": "{{market}} Mercado",
+      "toggleCollateralDetail": {
+        "disable": "Desativar {{asset}} como Colateral",
+        "error": "Há um erro com o serviço AAVE. Por favor, tente novamente mais tarde.",
+        "enable": "Ativar {{asset}} como Colateral",
+        "actions": "Alternar {{asset}} Colateral"
+      },
+      "toggleCollateralModal": {
+        "openTitle": "Revisar Ativação",
+        "closeTitle": "Revisar Desativação",
+        "exitIsolationModeTitle": "Sair do Modo de Isolamento",
+        "enableIsolationModeTitle": "Ativar o Modo de Isolamento",
+        "closeDesc": "Desativar este ativo como colateral afeta o seu poder de empréstimo e o Fator de Saúde.",
+        "exitIsolationModeDesc": "Você sairá do modo de Isolamento e outros tokens agora podem ser usados como colateral.",
+        "riskToLiquidationText": "Não pode mudar o uso para o modo de colateral para esta moeda, porque irá causar uma chamada de colateral.",
+        "openDesc": "Ativar este ativo como colateral aumenta seu poder de empréstimo e o Fator de Saúde. No entanto, ele pode ser liquidado se seu fator de saúde cair abaixo de 1.",
+        "enableIsolationModeDesc": "Está a entrar no modo de Isolamento. No modo de Isolamento, não pode fornecer outros ativos como colateral. Um teto global de dívida limita o poder de empréstimo do ativo isolado. Para sair do modo de isolamento, desative o CRV como colateral antes de emprestar outro ativo."
+      },
+      "searchMarket": "Pesquisar Mercado",
+      "selectMarket": "Selecionar Mercado"
     }
   },
   "constant": {

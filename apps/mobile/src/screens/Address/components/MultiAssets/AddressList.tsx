@@ -55,11 +55,9 @@ export const AddressList = () => {
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
 
-  const isNavFocused = useIsFocused();
   const { multi24hBalance, refresh: refresh24hBalance } = useMulti24hBalance(
     top10Addresses,
     {
-      isNavigationFocused: isNavFocused,
       disableAutoFetch: true,
       totalBalance: top10Balance.total,
       totalEvmBalance: top10Balance.totalEvm,

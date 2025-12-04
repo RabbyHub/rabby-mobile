@@ -990,8 +990,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
                               {
                                 backgroundColor:
                                   token.trade_volume_level === 'low'
-                                    ? colors2024['orange-light-4']
-                                    : colors2024['green-light-4'],
+                                    ? colors2024['orange-light-1']
+                                    : colors2024['green-light-1'],
                               },
                             ]}>
                             <Text
@@ -1489,7 +1489,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tardeLevel: {
       borderRadius: 900,
       color: colors2024['green-default'],
-      backgroundColor: colors2024['green-light-4'],
+      backgroundColor: colors2024['green-light-1'],
       paddingHorizontal: 6,
       paddingVertical: 1,
       marginTop: 5,

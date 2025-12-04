@@ -50,6 +50,8 @@
         "LendingWithdraw": "Withdraw",
         "LendingBorrow": "Borrow",
         "LendingRepay": "Repay",
+        "LendingOnCollateral": "Turn on use as collateral",
+        "LendingOffCollateral": "Turn off use as collateral",
         "ReceivedGas": "Received Gas",
         "WithdrawnGas": "Withdrawn Gas",
         "DepositedGas": "Deposited Gas",
@@ -969,7 +971,25 @@
       "duration": "{{duration}} min",
       "best": "Best",
       "no-route-found": "No route found",
-      "bridged": "Bridged"
+      "bridged": "Bridged",
+      "gasXUsd": "Gas: {{gasUsd}}",
+      "pendingItem": {
+        "pending": "Pending",
+        "completed": "Completed",
+        "failed": "Failed",
+        "queued": "Queued",
+        "bridgeStatus": "Bridge Status",
+        "sendingFrom": "Sending from {{chain}}",
+        "swap": "Swap",
+        "beReturnFailed": "Bridge failed. Your assets have been returned.",
+        "receivedDifferentTokenNeedSwap": "You received a different token. You can swap it to the token you selected.",
+        "receivedDifferentTokenFromSource": "Bridge failed. A different token was returned on the source chain.",
+        "BridgeStatusUnavailable": "Bridge status unavailable. Please check your transaction history to confirm the funds arrived.",
+        "fromFailed": "Transaction didn’t go through. Try again.",
+        "longTimeNoReceive": "Network is busy. This may take longer than usual. Please wait patiently.",
+        "receivingTo": "Receiving on {{chain}}",
+        "estimatedTime": "Estimated time"
+      }
     },
     "manageAddress": {
       "delete-checklist-1": "I understand that if I delete this wallet, the corresponding private key and seed phrase will be deleted, and Rabby will NOT be able to recover them.",
@@ -2280,6 +2300,8 @@
       "PerpsRiskPopup": {
         "title": "Risk Level",
         "subtitle": "Real-time liquidation distance (%)",
+        "liqDistanceTipsShort": "Going up <1>{{distance}}</1> will trigger liquidation.",
+        "liqDistanceTipsLong": "Going down <1>{{distance}}</1> will trigger liquidation.",
         "distanceLabel": "Liquidation Distance",
         "currentPrice": "Current Price",
         "liquidationPrice": "Liquidation Price",
@@ -2449,6 +2471,7 @@
         "marginIsolated": "Margin (isolated)",
         "marginCross": "Margin (Cross)",
         "fundingPayments": "Funding Payments",
+        "fundingGains": "Funding Gains",
         "liquidationPrice": "Liquidation Price",
         "entryPrice": "Entry Price",
         "direction": "Direction",
@@ -2458,6 +2481,7 @@
         "liqPrice": "Liq.Price",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "fundingPaymentsTips": "This is the net funding payments since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
+        "fundingGainsTips": "This is the net funding gains since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
       "PerpsInfo": {
@@ -2465,6 +2489,7 @@
         "24Vol": "24h Volume",
         "openInterest": "Open Interest",
         "funding": "Funding",
+        "fundingRate": "Funding Rate",
         "openInterestTips": "The total outstanding position of all users on this contract.",
         "fundingTips": "This is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token. lf positive, long pays short. lf negative, short pays long."
       },
@@ -2492,15 +2517,25 @@
         "amountToAdd": "Amount to add",
         "amountToReduce": "Amount to reduce",
         "liqPrice": "Liq. Price:",
+        "liqDistance": "Liq.Distance",
         "insufficientMargin": "Insufficient margin",
         "insufficientMarginToReduce": "Insufficient margin to reduce position.",
         "perpsBalance": "Perps Balance",
         "available": "available"
       },
+      "PerpsAddPositionPopup": {
+        "addToLong": "Add to Long",
+        "totalSize": "Total Size",
+        "addSize": "Add Size",
+        "addToShort": "Add to Short"
+      },
       "PerpsOpenPositionPopup": {
         "margin": "Margin",
+        "upTo": "Up to",
         "invalidNumber": "Please input a valid number",
         "insufficientBalance": "Insufficient balance",
+        "minMargin": "Minimum margin is {{amount}}",
+        "maxMargin": "Maximum margin is {{amount}}",
         "maximumOrderSize": "The maximum order size is {{amount}}",
         "minimumOrderSize": "The minimum order size is $10",
         "available": "available",
@@ -2540,6 +2575,8 @@
       },
       "action": {
         "closePosition": "Close {{direction}} Position",
+        "close": "Close",
+        "add": "Add",
         "long": "Long",
         "short": "Short",
         "noPermission": "Opening positions is not supported in your region"
@@ -2595,12 +2632,15 @@
       "estDailyEarning": "Est.Daily Earning",
       "estNetApy": "Est. net APY",
       "selectChain": "Select Chain",
+      "selectMarket": "Select Market",
+      "searchMarket": "Search Market",
       "hf": "Health factor",
       "hfTitle": "Health Factor",
       "enterAmount": "Enter Amount",
       "availableCard": {
         "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
-        "needSupply": "To borrow, you need to supply assets as collateral."
+        "needSupply": "To borrow, you need to supply assets as collateral.",
+        "isolated": "Borrowing power and assets are limited due to Isolation mode."
       },
       "list": {
         "headers": {
@@ -2633,11 +2673,33 @@
         "actions": "Supply",
         "approveAndSupply": "Approve and Supply",
         "availableToBorrow": "Available to borrow",
-        "supplyAPY": "Supply APY"
+        "supplyAPY": "Supply APY",
+        "supplyBalance": "Supply Balance",
+        "collateralization": "Collateralization",
+        "enabled": "Enabled",
+        "unavailable": "Unavailable",
+        "isolatedTips": "Your existing lending/borrowing assets are not supported."
       },
       "withdrawDetail": {
         "actions": "Withdraw",
         "remainingSupply": "Remaining supply"
+      },
+      "toggleCollateralDetail": {
+        "actions": "Toggle {{asset}} Collateral",
+        "enable": "Enable {{asset}} as Collateral",
+        "disable": "Disable {{asset}} as Collateral",
+        "error": "There is some error with the AAVE service. Please try again later."
+      },
+      "toggleCollateralModal": {
+        "openTitle": "Review Enabling",
+        "closeTitle": "Review Disabling",
+        "enableIsolationModeTitle": "Enable Isolation Mode",
+        "exitIsolationModeTitle": "Exit Isolation Mode",
+        "openDesc": "Enabling this asset as collateral increases your borrowing power and Health Factor. However, it can get liquidated if your health factor drops below 1.",
+        "closeDesc": "Disabling this asset as collateral affects your borrowing power and Health Factor.",
+        "enableIsolationModeDesc": "You are entering Isolation mode. In Isolation mode, you cannot supply other assets as collateral. A global debt ceiling limits the borrowing power of the isolated asset. To exit isolation mode disable CRV as collateral before borrowing another asset.",
+        "exitIsolationModeDesc": "You will exit Isolation mode and other tokens can now be used as collateral.",
+        "riskToLiquidationText": "You can not switch usage as collateral mode for this currency, because it will cause collateral call"
       },
       "borrowDetail": {
         "actions": "Borrow",
@@ -2666,12 +2728,14 @@
         "mySupply": "My Supply",
         "walletBalance": "Wallet Balance",
         "availableToSupply": "Available to Supply",
+        "useAsCollateral": "Use as collateral",
         "reachCap": "This asset has reached its supply cap. Nothing is available to be supplied from this market.",
         "almostCap": "This asset has almost reached its borrow cap. There is only {{available}} available to be borrowed from this market."
       },
       "risk": {
         "warning": "Borrowing this amount will lower your Health Factor to a risky level for liquidation.",
         "withdrawWarning": "Withdrawing this amount will lower your Health Factor to a risky level for liquidation.",
+        "toggleCollateralWarning": "Disabling this asset as collateral will lower your Health Factor to a risky level for liquidation.",
         "checkbox": "I understand the alert and want to continue."
       },
       "lqDescription": {
@@ -2691,7 +2755,9 @@
         "lqDesc": "When a liquidation occurs, liquidators repay up to 50% of the outstanding borrowed amount on behalf of the borrower. In return, they can buy the collateral at a discount and keep the difference (liquidation penalty) as a bonus.",
         "availableToBorrowDesc": "You can borrow based on your supplied collateral and until the borrow cap is reached.",
         "isolatedTitle": "Asset cannot be used as collateral",
-        "isolatedDesc": "This asset can only be used as collateral in isolation mode, where you cannot supply other asset collateral for borrowing. Assets used as collateral in isolation mode can only be borrowed to a specific debt ceiling."
+        "isolatedDesc": "This asset can only be used as collateral in isolation mode, where you cannot supply other asset collateral for borrowing. Assets used as collateral in isolation mode can only be borrowed to a specific debt ceiling.",
+        "globalIsolatedDesc": "In Isolation mode, you cannot supply other assets as collateral. A global debt ceiling limits the borrowing power of the isolated asset. To exit isolation mode disable UNI as collateral before borrowing another asset. ",
+        "isolatedSupplyDesc": "Collateral usage is limited because of isolation mode."
       }
     }
   },
@@ -3002,6 +3068,7 @@
     "Price": "Price",
     "Token": "Token",
     "Dapp": "Dapp",
+    "GotIt": "Got it",
     "time": {
       "hour": "{{t}} hour",
       "hours": "{{t}} hours",

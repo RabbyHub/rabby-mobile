@@ -11,8 +11,6 @@ import { calculateDistanceToLiquidation } from './utils';
 import { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import { useTranslation } from 'react-i18next';
 
-const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
-
 export const PerpsPositionItem: React.FC<{
   item: PositionAndOpenOrder['position'];
   marketData: MarketData;
@@ -39,9 +37,7 @@ export const PerpsPositionItem: React.FC<{
   const absPnlUsd = Math.abs(Number(unrealizedPnl));
   const absPnlPct = Math.abs(Number(returnOnEquity));
   const leverageType = item.leverage.type || 'isolated';
-  const pnlText = `${sign}${formatUsdValue(absPnlUsd)} (${sign}${formatPct(
-    absPnlPct,
-  )})`;
+  const pnlText = `${sign}${formatUsdValue(absPnlUsd)}`;
   const logoUrl = marketData?.logoUrl || '';
   const leverageText = `${leverage.value}x`;
 
@@ -106,7 +102,7 @@ export const PerpsPositionItem: React.FC<{
                 {
                   backgroundColor:
                     side === 'Long'
-                      ? colors2024['green-light-4']
+                      ? colors2024['green-light-1']
                       : colors2024['red-light-1'],
                 },
               ]}>
@@ -322,7 +318,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-secondary'],
   },
   tpSlSeparator: {
     fontFamily: 'SF Pro Rounded',

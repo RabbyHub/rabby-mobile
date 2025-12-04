@@ -3,6 +3,7 @@ import { useLendingData, useLendingSummary } from '@/screens/Lending/hooks';
 import { getHealthStatusColor } from '@/screens/Lending/utils';
 import { formatNetworth, formatNum } from '@/utils/math';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useEffect } from 'react';
 import { Text } from 'react-native';
 
 const NetWorthBadge: React.FC<{ netWorth: string }> = ({ netWorth }) => {
@@ -17,8 +18,20 @@ const NetWorthBadge: React.FC<{ netWorth: string }> = ({ netWorth }) => {
 
 export const LendingHF: React.FC<{}> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  useLendingData(true);
+  const { fetchData } = useLendingData();
   const { iUserSummary } = useLendingSummary();
+
+  useEffect(() => {
+    if (iUserSummary) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 200);
+    return () => {
+      timer && clearTimeout(timer);
+    };
+  }, [fetchData, iUserSummary]);
 
   if (
     !iUserSummary?.healthFactor ||

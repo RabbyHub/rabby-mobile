@@ -65,7 +65,9 @@
         "LendingWithdraw": "Retirer",
         "LendingSupply": "Offre",
         "LendingBorrow": "Emprunter",
-        "LendingRepay": "Rembourser"
+        "LendingRepay": "Rembourser",
+        "LendingOffCollateral": "Désactiver l'utilisation comme garantie",
+        "LendingOnCollateral": "Activer l'utilisation en tant que garantie"
       },
       "detail": {
         "Status": "Statut",
@@ -2588,7 +2590,8 @@
     "Lending": {
       "availableCard": {
         "needSupply": "Pour emprunter, vous devez fournir des actifs en tant que garantie.",
-        "canBorrow": "Vous pouvez emprunter en fonction de votre garantie fournie, jusqu'à la limite d'emprunt."
+        "canBorrow": "Vous pouvez emprunter en fonction de votre garantie fournie, jusqu'à la limite d'emprunt.",
+        "isolated": "Le pouvoir d'emprunt et les actifs sont limités en raison du mode d'isolement."
       },
       "list": {
         "headers": {
@@ -2621,7 +2624,12 @@
         "actions": "Fournir",
         "availableToBorrow": "Disponible à emprunter",
         "approveAndSupply": "Approuver et fournir",
-        "supplyAPY": "Offre APY"
+        "supplyAPY": "Offre APY",
+        "supplyBalance": "Fournir le solde",
+        "collateralization": "Suralisation",
+        "enabled": "Activé",
+        "isolatedTips": "Vos actifs de prêt/emprunt existants ne sont pas pris en charge.",
+        "unavailable": "Indisponible"
       },
       "withdrawDetail": {
         "actions": "Retirer",
@@ -2655,12 +2663,14 @@
         "reachCap": "Cet actif a atteint son plafond d'offre. Rien n'est disponible à l'approvisionnement sur ce marché.",
         "walletBalance": "Solde du portefeuille",
         "title": "Détails de l'approvisionnement",
-        "almostCap": "Cet actif a presque atteint sa limite d'emprunt. Il ne reste que {{available}} disponible à emprunter sur ce marché."
+        "almostCap": "Cet actif a presque atteint sa limite d'emprunt. Il ne reste que {{available}} disponible à emprunter sur ce marché.",
+        "useAsCollateral": "Utiliser comme garantie"
       },
       "risk": {
         "checkbox": "Je comprends l'alerte et je veux continuer.",
         "warning": "Emprunter ce montant réduira votre facteur de santé à un niveau risqué pour la liquidation.",
-        "withdrawWarning": "Le retrait de ce montant fera baisser votre facteur de santé à un niveau risqué pour la liquidation."
+        "withdrawWarning": "Le retrait de ce montant fera baisser votre facteur de santé à un niveau risqué pour la liquidation.",
+        "toggleCollateralWarning": "Désactiver cet actif en tant que garantie fera baisser votre facteur de santé à un niveau risqué pour la liquidation."
       },
       "lqDescription": {
         "desc": "Valeur de liquidation",
@@ -2679,7 +2689,9 @@
         "availableToBorrowDesc": "Vous pouvez emprunter en fonction de votre garantie fournie et jusqu'à ce que le plafond d'emprunt soit atteint.",
         "lqDesc": "Lorsqu'une liquidation se produit, les liquidateurs remboursent jusqu'à 50 % du montant emprunté restant au nom de l'emprunteur. En retour, ils peuvent acheter le collatéral à un prix réduit et conserver la différence (pénalité de liquidation) comme bonus.",
         "isolatedTitle": "L'actif ne peut pas être utilisé comme garantie.",
-        "isolatedDesc": "Cet actif ne peut être utilisé qu'en tant que garantie en mode d'isolement, où vous ne pouvez pas fournir d'autres actifs en garantie pour emprunter. Les actifs utilisés comme garantie en mode d'isolement ne peuvent être empruntés qu'à un plafond d'endettement spécifique."
+        "isolatedDesc": "Cet actif ne peut être utilisé qu'en tant que garantie en mode d'isolement, où vous ne pouvez pas fournir d'autres actifs en garantie pour emprunter. Les actifs utilisés comme garantie en mode d'isolement ne peuvent être empruntés qu'à un plafond d'endettement spécifique.",
+        "isolatedSupplyDesc": "L'utilisation des garanties est limitée en raison du mode d'isolation.",
+        "globalIsolatedDesc": "En mode d'isolement, vous ne pouvez pas fournir d'autres actifs comme garantie. Un plafond d'endettement global limite le pouvoir d'emprunt de l'actif isolé. Pour sortir du mode d'isolement, désactivez UNI en tant que garantie avant d'emprunter un autre actif."
       },
       "market": "Marché",
       "supplied": "Fournie",
@@ -2695,7 +2707,26 @@
       "hf": "Facteur de santé",
       "isolated": "isolé",
       "estNetApy": "Est. net APY",
-      "marketSlot": "{{market}} Marché"
+      "marketSlot": "{{market}} Marché",
+      "toggleCollateralDetail": {
+        "disable": "Désactiver {{asset}} en tant que garantie",
+        "error": "Il y a une erreur avec le service AAVE. Veuillez réessayer plus tard.",
+        "enable": "Activer {{asset}} comme garantie",
+        "actions": "Activer/Désactiver le Collatéral {{asset}}"
+      },
+      "toggleCollateralModal": {
+        "exitIsolationModeTitle": "Quitter le mode d'isolation",
+        "closeTitle": "Revoir la désactivation",
+        "exitIsolationModeDesc": "Vous quitterez le mode Isolation et d'autres tokens peuvent maintenant être utilisés comme collatéral.",
+        "closeDesc": "Désactiver cet actif en tant que garantie affecte votre pouvoir d'emprunt et votre facteur de santé.",
+        "riskToLiquidationText": "Vous ne pouvez pas passer en mode d'utilisation en tant que garantie pour cette monnaie, car cela entraînera un appel de garantie.",
+        "openDesc": "Activer cet actif comme garantie augmente votre pouvoir d'emprunt et votre facteur de santé. Cependant, il peut être liquidé si votre facteur de santé tombe en dessous de 1.",
+        "enableIsolationModeTitle": "Activer le mode d'isolement",
+        "openTitle": "Examen de l'activation",
+        "enableIsolationModeDesc": "Vous entrez en mode Isolation. En mode Isolation, vous ne pouvez pas fournir d'autres actifs en tant que collatéral. Un plafond d'endettement global limite le pouvoir d'emprunt de l'actif isolé. Pour sortir du mode isolation, désactivez CRV en tant que collatéral avant d'emprunter un autre actif."
+      },
+      "selectMarket": "Sélectionner le marché",
+      "searchMarket": "Rechercher sur le marché"
     }
   },
   "native": {

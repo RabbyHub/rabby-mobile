@@ -721,7 +721,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 16,
   },
   hover: {
-    backgroundColor: colors2024['blue-light-1'],
+    backgroundColor: colors2024['blue-light-4'],
   },
   connectContent: {
     borderRadius: 16,

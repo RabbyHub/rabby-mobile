@@ -194,7 +194,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: colors2024['green-default'],
-    backgroundColor: colors2024['green-light-4'],
+    backgroundColor: colors2024['green-light-1'],
     padding: 16,
     paddingTop: 24,
     overflow: 'hidden',
@@ -220,7 +220,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 6,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
-    backgroundColor: colors2024['green-light-4'],
+    backgroundColor: colors2024['green-light-1'],
   },
   bestQuoteText: {
     color: colors2024['green-default'],

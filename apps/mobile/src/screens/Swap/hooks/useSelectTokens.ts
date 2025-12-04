@@ -22,7 +22,9 @@ import { Account } from '@/core/services/preference';
 import { formatUsdValue } from '@/utils/number';
 import { formatAmount } from '@/utils/math';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { wrapAbortableFn } from '@/databases/sync/utils';
+import { stableSortByAddress } from '@/utils/account';
 
 import {
   getAddressIndexedTokens,
@@ -43,7 +45,7 @@ export const useSelectTokens = ({
   chain_server_id?: string;
   type?: TokenSelectType;
 }) => {
-  const currentAccount = useDebounceValue(_currentAccount, 100);
+  const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
   const { top10Addresses } = useAccountInfo();
 
