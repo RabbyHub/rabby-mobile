@@ -15,7 +15,11 @@ import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { apisPerps } from './../../core/apis/perps';
 import { miniSignTypedData } from '../useMiniSignTypedData';
-import { apisPerpsStore, usePerpsStore } from './usePerpsStore';
+import {
+  apisPerpsStore,
+  getClearinghouseStateByMap,
+  usePerpsStore,
+} from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import { minBy, uniqBy } from 'lodash';
 import { showToast } from './showToast';
@@ -605,8 +609,14 @@ export const usePerpsState = () => {
     ) {
       await executeSignatures(signActions, account);
 
-      const { role } = await sdk.info.getUserRole();
-      const isNeedDepositBeforeApprove = role === 'missing';
+      let isNeedDepositBeforeApprove = true;
+      const info = getClearinghouseStateByMap(account.address);
+      if ((Number(info?.marginSummary.accountValue) || 0) > 0) {
+        isNeedDepositBeforeApprove = false;
+      } else {
+        const { role } = await sdk.info.getUserRole();
+        isNeedDepositBeforeApprove = role === 'missing';
+      }
 
       if (isNeedDepositBeforeApprove) {
         handleSetLaterApproveStatus(signActions);

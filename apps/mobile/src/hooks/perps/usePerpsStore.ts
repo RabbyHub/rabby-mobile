@@ -214,6 +214,10 @@ const setClearinghouseStateMap = (payload: {
   }
 };
 
+export const getClearinghouseStateByMap = (address: string) => {
+  return perpsStore.getState().clearinghouseStateMap[address.toLowerCase()];
+};
+
 const setCurrentPerpsAccount = (payload: Account) => {
   setPerpsState(prev => ({
     ...prev,

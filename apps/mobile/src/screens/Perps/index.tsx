@@ -48,7 +48,6 @@ import { sortBy } from 'lodash';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
-import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
 import { toast } from '@/components2024/Toast';
 import { PERPS_BUILDER_INFO } from '@/constant/perps';
