@@ -19,7 +19,11 @@ import { Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
 import { IS_IOS } from '@/core/native/utils';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 
 type BiometricsInfoState = {
@@ -42,11 +46,11 @@ export function setBiometrics(
   );
 }
 // iife
-(() => {
+runIIFEFunc(() => {
   apisKeychain.getSupportedBiometryType().then(supportedType => {
     setBiometrics(prev => ({ ...prev, supportedBiometryType: supportedType }));
   });
-})();
+});
 // biometricsInfoAtom.onMount = setter => {
 //   apisKeychain.getSupportedBiometryType().then(supportedType => {
 //     setter(prev => ({ ...prev, supportedBiometryType: supportedType }));

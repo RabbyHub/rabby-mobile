@@ -953,7 +953,25 @@
       "no-route-found": "Aucun itinéraire trouvé",
       "the-following-bridge-route-are-found": "Taux suivants trouvés",
       "bridged": "Ponté",
-      "gasFeeTooHight": "Les frais de Gas sont plus élevés que la normale. Confirmez uniquement si vous souhaitez continuer."
+      "gasFeeTooHight": "Les frais de Gas sont plus élevés que la normale. Confirmez uniquement si vous souhaitez continuer.",
+      "pendingItem": {
+        "swap": "Échanger",
+        "receivingTo": "Recevoir sur {{chain}}",
+        "bridgeStatus": "Statut du Bridge",
+        "queued": "En attente",
+        "fromFailed": "La transaction n'est pas passée. Réessayez.",
+        "longTimeNoReceive": "Le réseau est occupé. Cela peut prendre plus de temps que d'habitude. Veuillez patienter.",
+        "failed": "Échoué",
+        "estimatedTime": "Temps estimé",
+        "BridgeStatusUnavailable": "État du pont indisponible. Veuillez vérifier votre historique de transactions pour confirmer que les fonds sont arrivés.",
+        "completed": "Terminé",
+        "sendingFrom": "Envoi depuis {{chain}}",
+        "pending": "En attente",
+        "receivedDifferentTokenNeedSwap": "Vous avez reçu un jeton différent. Vous pouvez l'échanger contre le jeton que vous avez sélectionné.",
+        "receivedDifferentTokenFromSource": "La passerelle a échoué. Un jeton différent a été renvoyé sur la chaîne source.",
+        "beReturnFailed": "Le pont a échoué. Vos actifs ont été retournés."
+      },
+      "gasXUsd": "Gas : {{gasUsd}}"
     },
     "dashboard": {
       "hd": {
@@ -2034,7 +2052,9 @@
       "sentTimeHeader": "Envoyé",
       "sendToWatchAddress": "Envoyer vers des portefeuilles en lecture seule",
       "sendToSafeAddress": "Envoyer vers des portefeuilles sécurisés",
-      "sendToImportedAddress": "Envoyez vers mes portefeuilles importés"
+      "sendToImportedAddress": "Envoyez vers mes portefeuilles importés",
+      "enterOrSearchAddress": "Entrer ou rechercher une adresse",
+      "dividerWatchOnlyWallets": "Adresses en mode surveillance uniquement"
     },
     "confirmAddress": {
       "risks": {
@@ -2434,11 +2454,16 @@
         "currentPrice": "Prix Actuel",
         "distanceLabel": "Distance de liquidation",
         "subtitle": "Distance de liquidation en temps réel (%)",
-        "liqIntro": "La Distance de Liquidation (%) indique à quelle distance se trouve le prix actuel de votre prix de liquidation. Une distance plus grande indique une position plus sûre, tandis qu'une distance plus petite signifie un risque de liquidation plus élevé."
+        "liqIntro": "La Distance de Liquidation (%) indique à quelle distance se trouve le prix actuel de votre prix de liquidation. Une distance plus grande indique une position plus sûre, tandis qu'une distance plus petite signifie un risque de liquidation plus élevé.",
+        "liqDistanceTipsLong": "Descendre <1>{{distance}}</1> déclenchera la liquidation.",
+        "liqDistanceTipsShort": "Monter de <1>{{distance}}</1> déclenchera la liquidation."
       },
       "closeAll": "Fermer tout",
       "closeAllConfirmTitle": "Confirmer la fermeture de toutes les positions",
-      "closeAllConfirmMessage": "Toutes vos positions ouvertes seront clôturées au prix du marché."
+      "closeAllConfirmMessage": "Toutes vos positions ouvertes seront clôturées au prix du marché.",
+      "assetPage": {
+        "hyperliquidPosition": "Position Hyperliquid"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2463,7 +2488,9 @@
         "fundingPaymentsTips": "Ceci est le paiement net de financement depuis l'ouverture de la position. Le financement est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp proche du prix réel du jeton.",
         "slPrice": "Prix de Stop-Loss",
         "entryPrice": "Prix d'entrée",
-        "marginCross": "Marge (Croisée)"
+        "marginCross": "Marge (Croisée)",
+        "fundingGains": "Gains de financement",
+        "fundingGainsTips": "Il s'agit des gains nets de financement depuis l'ouverture de la position. Le financement est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp proche du prix actuel du token."
       },
       "PerpsInfo": {
         "openInterest": "Intérêt Ouvert",
@@ -2471,14 +2498,15 @@
         "24Vol": "Volume sur 24h",
         "title": "Infos",
         "openInterestTips": "La position totale en cours de tous les utilisateurs sur ce contrat.",
-        "fundingTips": "Ceci est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp près du prix réel du token. S'il est positif, le long paie le short. S'il est négatif, le short paie le long."
+        "fundingTips": "Ceci est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp près du prix réel du token. S'il est positif, le long paie le short. S'il est négatif, le short paie le long.",
+        "fundingRate": "Taux de financement"
       },
       "PerpsIntro": {
         "title": "Qu'est-ce que les Perps ?",
         "desc": "Le trading de contrats perpétuels implique des risques significatifs, y compris la possibilité de perdre rapidement votre investissement et votre collatéral en raison d'un effet de levier élevé et de la volatilité du marché. Ce type de trading peut ne pas convenir à tous les utilisateurs. Les prix peuvent être affectés par les taux de financement et la liquidité, et vous pourriez être automatiquement liquidé sans préavis. Les données de marché sont fournies par Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "",
+        "title": "Fermer la position",
         "pnl": "PNL",
         "providerFeeTips": "Frais Hyperliquid : {{fee}}",
         "positionSize": "Taille de position",
@@ -2509,7 +2537,10 @@
         "takeProfitWhenPriceAbove": "Prenez vos bénéfices lorsque le prix est supérieur à",
         "takeProfitWhenPriceBelow": "Prendre Profit Lorsque le Prix Est Inférieur",
         "stopLossWhenPriceAbove": "Arrêter les pertes quand le prix est au-dessus",
-        "stopLossWhen": "Arrêt de perte lorsque"
+        "stopLossWhen": "Arrêt de perte lorsque",
+        "upTo": "Jusqu'à",
+        "minMargin": "La marge minimale est de {{amount}}",
+        "maxMargin": "La marge maximale est {{amount}}"
       },
       "PerpsOpenPositionCheckPopup": {
         "price": "Prix",
@@ -2537,7 +2568,9 @@
         "short": "Vendre à découvert",
         "long": "Long",
         "closePosition": "Fermer la position {{direction}}",
-        "noPermission": "L'ouverture de positions n'est pas prise en charge dans votre région."
+        "noPermission": "L'ouverture de positions n'est pas prise en charge dans votre région.",
+        "close": "Fermer",
+        "add": "Ajouter"
       },
       "PerpsAutoCloseModal": {
         "price": "Prix :",
@@ -2569,8 +2602,16 @@
         "liqPrice": "Prix de liquidation :",
         "insufficientMargin": "Marge insuffisante",
         "insufficientMarginToReduce": "Marge insuffisante pour réduire la position.",
-        "amountToAdd": "Montant à ajouter"
-      }
+        "amountToAdd": "Montant à ajouter",
+        "liqDistance": "Liq.Distance"
+      },
+      "PerpsAddPositionPopup": {
+        "totalSize": "Taille Totale",
+        "addToLong": "Ajouter à Long",
+        "addSize": "Ajouter la taille",
+        "addToShort": "Ajouter à Short"
+      },
+      "needDepositFirst": "Vous devez d'abord déposer des fonds."
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Page intégrée"
@@ -3009,6 +3050,9 @@
     },
     "portfolios": {
       "manage": "Gérer"
+    },
+    "multiAddressModal": {
+      "title": "Portefeuilles"
     }
   },
   "global": {
@@ -3086,7 +3130,8 @@
     "gotIt": "Compris",
     "check": "Vérifier",
     "Token": "Jeton",
-    "Dapp": "Dapp"
+    "Dapp": "Dapp",
+    "GotIt": "Compris"
   },
   "background": {
     "transactionWatcher": {

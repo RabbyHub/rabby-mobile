@@ -68,27 +68,27 @@ export const AccountSwitcherInfos = {
 // );
 
 // test migrate data
-runIIFEFunc(() => {
-  if (__DEV__) {
-    appJsonStore.removeItem('@SceneAccounts202512');
-    appJsonStore.setItem('@SceneAccounts', {
-      ...AccountSwitcherInfos,
-      MakeTransactionAbout: {
-        ...AccountSwitcherInfos.MakeTransactionAbout,
-        currentAccount: preferenceService.getFallbackAccount(),
-      },
-      Lending: {
-        ...AccountSwitcherInfos.Lending,
-        currentAccount: {
-          address: '0x9378867a1dff6e18e9a0e20b84a38d163996533f',
-          brandName: 'Ledger Hardware',
-          type: 'Ledger Hardware',
-        },
-        useAllAccounts: false,
-      },
-    });
-  }
-});
+// runIIFEFunc(() => {
+//   if (__DEV__) {
+//     appJsonStore.removeItem('@SceneAccounts202512');
+//     appJsonStore.setItem('@SceneAccounts', {
+//       ...AccountSwitcherInfos,
+//       MakeTransactionAbout: {
+//         ...AccountSwitcherInfos.MakeTransactionAbout,
+//         currentAccount: preferenceService.getFallbackAccount(),
+//       },
+//       Lending: {
+//         ...AccountSwitcherInfos.Lending,
+//         currentAccount: {
+//           address: '0x9378867a1dff6e18e9a0e20b84a38d163996533f',
+//           brandName: 'Ledger Hardware',
+//           type: 'Ledger Hardware',
+//         },
+//         useAllAccounts: false,
+//       },
+//     });
+//   }
+// });
 const oldData = appJsonStore.getItem('@SceneAccounts', AccountSwitcherInfos);
 
 export const sceneAccountInfoStore = zCreate(

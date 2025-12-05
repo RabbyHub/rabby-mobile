@@ -1069,7 +1069,25 @@
       "best": "最高",
       "Select": "選択",
       "bridged": "ブリッジ済み",
-      "gasFeeTooHight": "ガス料金は通常より高いです。続行したい場合のみ確認してください。"
+      "gasFeeTooHight": "ガス料金は通常より高いです。続行したい場合のみ確認してください。",
+      "pendingItem": {
+        "swap": "スワップ",
+        "estimatedTime": "推定時間",
+        "queued": "キューに入れました",
+        "receivingTo": "{{chain}} での受信",
+        "sendingFrom": "{{chain}}から送信中",
+        "failed": "失敗しました",
+        "BridgeStatusUnavailable": "ブリッジのステータスが利用できません。資金が到着したことを確認するには、トランザクション履歴を確認してください。",
+        "fromFailed": "取引が行われませんでした。再試行してください。",
+        "receivedDifferentTokenFromSource": "ブリッジに失敗しました。ソースチェーンで異なるトークンが返されました。",
+        "receivedDifferentTokenNeedSwap": "異なるトークンを受け取りました。選択したトークンにスワップできます。",
+        "beReturnFailed": "ブリッジに失敗しました。あなたの資産は返還されました。",
+        "pending": "保留中",
+        "longTimeNoReceive": "ネットワークが混雑しています。通常より時間がかかる場合があります。しばらくお待ちください。",
+        "completed": "完了しました",
+        "bridgeStatus": "ブリッジのステータス"
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "dashboard": {
       "hd": {
@@ -2077,7 +2095,9 @@
       "sentTimeHeader": "送信しました",
       "sendToImportedAddress": "インポートしたウォレットに送信",
       "sendToWatchAddress": "Watch-Onlyウォレットに送信",
-      "sendToSafeAddress": "Safe Walletsに送信"
+      "sendToSafeAddress": "Safe Walletsに送信",
+      "enterOrSearchAddress": "アドレスを入力または検索してください",
+      "dividerWatchOnlyWallets": "監視専用アドレス"
     },
     "confirmAddress": {
       "risks": {
@@ -2477,11 +2497,16 @@
         "liquidationPrice": "清算価格",
         "subtitle": "リアルタイム清算距離 (%)",
         "distanceLabel": "清算距離",
-        "liqIntro": "清算距離 (%) は、現在の価格が清算価格からどれだけ離れているかを示します。距離が大きいほど安全なポジションを示し、距離が小さいほど清算リスクが高いことを意味します。"
+        "liqIntro": "清算距離 (%) は、現在の価格が清算価格からどれだけ離れているかを示します。距離が大きいほど安全なポジションを示し、距離が小さいほど清算リスクが高いことを意味します。",
+        "liqDistanceTipsShort": "上昇すると <1>{{distance}}</1> がリキデーションを引き起こします。",
+        "liqDistanceTipsLong": "<1>{{distance}}</1>まで下がると、清算が発生します。"
       },
       "closeAllConfirmTitle": "すべてのポジションをクローズすることを確認する",
       "closeAll": "すべて閉じる",
-      "closeAllConfirmMessage": "すべてのオープンポジションは、市場価格でクローズされます。"
+      "closeAllConfirmMessage": "すべてのオープンポジションは、市場価格でクローズされます。",
+      "assetPage": {
+        "hyperliquidPosition": "ハイパーリキッドポジション"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2506,7 +2531,9 @@
         "sizeTips": "あなたの取引の総価値または数量で、マージンとレバレッジによって設定されます。",
         "entryPrice": "エントリープライス",
         "fundingPaymentsTips": "これはポジションがオープンされて以来のネットファンディングペイメントです。ファンディングは、トレーダーが永続契約の価格をトークンの実際の価格に近づけるために支払うか受け取る毎時の手数料です。",
-        "liquidationPriceTips": "あなたのマージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によって自動的にポジションが閉じられる価格。"
+        "liquidationPriceTips": "あなたのマージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によって自動的にポジションが閉じられる価格。",
+        "fundingGains": "資金利益",
+        "fundingGainsTips": "これはポジションがオープンされて以来のネットファンディング利益です。ファンディングは、トレーダーがパーペチュアル契約の価格をトークンの実際の価格に近づけるために支払ったり受け取ったりする毎時の手数料です。"
       },
       "PerpsInfo": {
         "funding": "資金調達",
@@ -2514,14 +2541,15 @@
         "24Vol": "24時間取引量",
         "openInterest": "オープンインタレスト",
         "openInterestTips": "この契約における全ユーザーの合計未決済ポジション。",
-        "fundingTips": "これは、トレーダーが永続契約の価格をトークンの実際の価格に近づけるために支払うか受け取る毎時料金です。正の場合、ロングはショートに支払います。負の場合、ショートはロングに支払います。"
+        "fundingTips": "これは、トレーダーが永続契約の価格をトークンの実際の価格に近づけるために支払うか受け取る毎時料金です。正の場合、ロングはショートに支払います。負の場合、ショートはロングに支払います。",
+        "fundingRate": "資金調達率"
       },
       "PerpsIntro": {
         "title": "Perps とは何ですか？",
         "desc": "永続契約の取引は、レバレッジの高さや市場のボラティリティにより、投資や担保を迅速に失う可能性を含む重要なリスクを伴います。このような取引はすべてのユーザーに適しているわけではありません。価格は資金調達レートや流動性の影響を受ける可能性があり、事前通知なしに自動的にロスカットされることがあります。市場データはHyperliquidによって提供されています。"
       },
       "PerpsClosePositionPopup": {
-        "title": "",
+        "title": "ポジションを閉じる",
         "pnl": "PNL",
         "closeBtn": "{{direction}}をクローズ",
         "positionSize": "ポジションサイズ",
@@ -2552,7 +2580,10 @@
         "takeProfitWhenPriceBelow": "価格が下回ったときに利益を確定する",
         "stopLossWhen": "ストップロスが発生した時",
         "stopLossWhenPriceAbove": "価格が上回った場合、損失を止める",
-        "takeProfitWhenPriceAbove": "価格が上昇したときに利益を確定する"
+        "takeProfitWhenPriceAbove": "価格が上昇したときに利益を確定する",
+        "upTo": "最大で",
+        "minMargin": "最小マージンは{{amount}}です。",
+        "maxMargin": "最大マージンは{{amount}}です。"
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "方向",
@@ -2580,7 +2611,9 @@
         "short": "ショート",
         "long": "ロング",
         "noPermission": "あなたの地域ではポジションをオープンすることはサポートされていません。",
-        "closePosition": "{{direction}} ポジションをクローズ"
+        "closePosition": "{{direction}} ポジションをクローズ",
+        "add": "追加",
+        "close": "閉じる"
       },
       "PerpsAutoCloseModal": {
         "price": "価格:",
@@ -2612,8 +2645,16 @@
         "amountToAdd": "追加する金額",
         "available": "利用可能",
         "perpsBalance": "永続契約残高",
-        "insufficientMarginToReduce": "ポジションを減少させるための証拠金が不足しています。"
-      }
+        "insufficientMarginToReduce": "ポジションを減少させるための証拠金が不足しています。",
+        "liqDistance": "Liq.Distance"
+      },
+      "PerpsAddPositionPopup": {
+        "addSize": "サイズを追加",
+        "addToLong": "ロングに追加",
+        "totalSize": "合計サイズ",
+        "addToShort": "ショートに追加"
+      },
+      "needDepositFirst": "最初に資金を入金する必要があります。"
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "ビルトインページ"
@@ -2847,7 +2888,8 @@
     "check": "チェック",
     "gotIt": "わかった",
     "Dapp": "Dapp",
-    "Token": "トークン"
+    "Token": "トークン",
+    "GotIt": "わかった"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -3114,6 +3156,9 @@
     },
     "portfolios": {
       "manage": "管理"
+    },
+    "multiAddressModal": {
+      "title": "ウォレット"
     }
   },
   "common": {

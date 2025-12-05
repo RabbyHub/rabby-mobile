@@ -716,7 +716,9 @@
       "sentTimeHeader": "Gönderildi",
       "sendToWatchAddress": "Gözetim-Modu Cüzdanlarına Gönder",
       "sendToSafeAddress": "Güvenli Cüzdanlara Gönder",
-      "sendToImportedAddress": "İçe Aktarılan Cüzdanlarıma Gönder"
+      "sendToImportedAddress": "İçe Aktarılan Cüzdanlarıma Gönder",
+      "dividerWatchOnlyWallets": "Sadece izleme adresleri",
+      "enterOrSearchAddress": "Adres Girin veya Ara"
     },
     "confirmAddress": {
       "risks": {
@@ -972,7 +974,24 @@
       "bridgeTo": "Köprüye Doğru",
       "no-route-found": "Yol bulunamadı",
       "need-to-approve-token-before-bridge": "Token'u köprülemeden önce onaylamanız gerekiyor.",
-      "gasFeeTooHight": "Gaz ücreti normalden daha yüksektir. Devam etmek istiyorsanız yalnızca onaylayın."
+      "gasFeeTooHight": "Gaz ücreti normalden daha yüksektir. Devam etmek istiyorsanız yalnızca onaylayın.",
+      "pendingItem": {
+        "sendingFrom": "{{chain}}'den Gönderiliyor",
+        "queued": "Kuyrukta",
+        "pending": "Beklemede",
+        "estimatedTime": "Tahmini süre",
+        "failed": "Başarısız",
+        "fromFailed": "İşlem geçmedi. Tekrar deneyin.",
+        "completed": "Tamamlandı",
+        "bridgeStatus": "Köprü Durumu",
+        "swap": "Değiştir",
+        "receivedDifferentTokenNeedSwap": "Farklı bir token aldınız. Bunu seçtiğiniz token ile takas edebilirsiniz.",
+        "beReturnFailed": "Köprü başarısız oldu. Varlıklarınız geri iade edildi.",
+        "receivedDifferentTokenFromSource": "Köprü başarısız oldu. Kaynak zincirinde farklı bir token döndürüldü.",
+        "BridgeStatusUnavailable": "Köprü durumu kullanılamıyor. Lütfen fonların ulaştığını doğrulamak için işlem geçmişinizi kontrol edin.",
+        "longTimeNoReceive": "Ağ yoğun. Bu daha uzun sürebilir. Lütfen sabırsızlanmayın.",
+        "receivingTo": "{{chain}} üzerinde alma"
+      }
     },
     "manageAddress": {
       "watch-address": "Adres İzle",
@@ -2424,11 +2443,16 @@
         "liquidationPrice": "Tasfiye Fiyatı",
         "distanceLabel": "Tasfiye Mesafesi",
         "subtitle": "Gerçek zamanlı likidasyon mesafesi (%)",
-        "liqIntro": "Tasfiye Mesafesi (%) mevcut fiyatın tasfiye fiyatınızdan ne kadar uzakta olduğunu gösterir. Daha büyük bir mesafe, daha güvenli bir pozisyon anlamına gelirken, daha küçük bir mesafe daha yüksek tasfiye riski demektir."
+        "liqIntro": "Tasfiye Mesafesi (%) mevcut fiyatın tasfiye fiyatınızdan ne kadar uzakta olduğunu gösterir. Daha büyük bir mesafe, daha güvenli bir pozisyon anlamına gelirken, daha küçük bir mesafe daha yüksek tasfiye riski demektir.",
+        "liqDistanceTipsShort": "Yukarı <1>{{distance}}</1> çıkmak tasfiye tetikleyecektir.",
+        "liqDistanceTipsLong": "Aşağıya <1>{{distance}}</1> inmek tasfiyeyi tetikleyecektir."
       },
       "closeAll": "Tümünü Kapat",
       "closeAllConfirmMessage": "Tüm açık pozisyonlarınız piyasa fiyatından kapatılacaktır.",
-      "closeAllConfirmTitle": "Tüm Pozisyonları Kapatmayı Onayla"
+      "closeAllConfirmTitle": "Tüm Pozisyonları Kapatmayı Onayla",
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid Pozisyon"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2453,7 +2477,9 @@
         "sizeTips": "Marj ve kaldıraçla belirlenen ticaretinizin toplam değeri veya miktarı.",
         "liquidationPriceTips": "Pozisyonunuzun marjınız bakım marjı seviyesinin altına düştüğünde daha fazla kayıpları önlemek için borsa tarafından otomatik olarak kapatıldığı fiyat.",
         "autoClose": "Otomatik Kapat",
-        "fundingPaymentsTips": "Bu, pozisyonun açıldığı günden bu yana net finansman ödemeleridir. Finansman, tüccarların, perp sözleşmesinin fiyatını jetonun gerçek fiyatına yakın tutmak için ödediği veya aldığı saatlik bir ücrettir."
+        "fundingPaymentsTips": "Bu, pozisyonun açıldığı günden bu yana net finansman ödemeleridir. Finansman, tüccarların, perp sözleşmesinin fiyatını jetonun gerçek fiyatına yakın tutmak için ödediği veya aldığı saatlik bir ücrettir.",
+        "fundingGains": "Finansman Kazançları",
+        "fundingGainsTips": "Bu, pozisyon açıldığından bu yana net finansman kazançlarıdır. Finansman, tüccarların, perpe sözleşmesinin fiyatını token'ın gerçek fiyatına yakın tutmak için ödediği veya aldığı saatlik bir ücrettir."
       },
       "PerpsInfo": {
         "24Vol": "24s Hacim",
@@ -2461,14 +2487,15 @@
         "openInterest": "Açık Faiz",
         "funding": "Finansman",
         "openInterestTips": "Bu sözleşmedeki tüm kullanıcıların toplam açık pozisyonu.",
-        "fundingTips": "Bu, türev sözleşmenin fiyatını token'ın gerçek fiyatına yakın tutmak için yatırımcıların ödediği veya aldığı saatlik bir ücrettir. Eğer pozitifse, long short'a ödeme yapar. Eğer negatifse, short long'a ödeme yapar."
+        "fundingTips": "Bu, türev sözleşmenin fiyatını token'ın gerçek fiyatına yakın tutmak için yatırımcıların ödediği veya aldığı saatlik bir ücrettir. Eğer pozitifse, long short'a ödeme yapar. Eğer negatifse, short long'a ödeme yapar.",
+        "fundingRate": "Fonlama Oranı"
       },
       "PerpsIntro": {
         "title": "Perps nedir?",
         "desc": "Sürekli sözleşmelerle ticaret yapmanın önemli riskleri vardır; özellikle yüksek kaldıraç ve piyasa volatilitesi nedeniyle yatırımınızın ve teminatınızın hızla kaybolma olasılığı bulunmaktadır. Bu tür ticaret her kullanıcı için uygun olmayabilir. Fiyatlar, finansman oranları ve likiditeden etkilenebilir ve önceden bildirim yapılmadan otomatik olarak tasfiye edilebilirsiniz. Piyasa verileri Hyperliquid tarafından sağlanmaktadır."
       },
       "PerpsClosePositionPopup": {
-        "title": "",
+        "title": "Pozisyonu Kapat",
         "pnl": "PNL",
         "positionSize": "Pozisyon Boyutu",
         "providerFeeTips": "Hyperliquid ücreti: {{fee}}",
@@ -2499,7 +2526,10 @@
         "takeProfitWhenPriceBelow": "Fiyata Düşünce Kar Al",
         "stopLossWhenPriceAbove": "Fiyat Üstünde Stop Loss",
         "stopLossWhenPriceBelow": "Fiyat Altında Stop Loss",
-        "takeProfitWhenPriceAbove": "Kar Al, Fiyat Yukarıda Olduğunda"
+        "takeProfitWhenPriceAbove": "Kar Al, Fiyat Yukarıda Olduğunda",
+        "upTo": "En fazla",
+        "maxMargin": "Maksimum marj {{amount}}'dır.",
+        "minMargin": "Minimum margin {{amount}}'dir."
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "Yön",
@@ -2527,7 +2557,9 @@
         "long": "Uzun",
         "short": "Kısa",
         "closePosition": "Kapat {{direction}} Pozisyonu",
-        "noPermission": "Açık pozisyon açma işlemi bölgenizde desteklenmemektedir."
+        "noPermission": "Açık pozisyon açma işlemi bölgenizde desteklenmemektedir.",
+        "add": "Ekle",
+        "close": "Kapat"
       },
       "PerpsAutoCloseModal": {
         "tpPrice": "Kar Alım Fiyatı",
@@ -2559,8 +2591,16 @@
         "insufficientMargin": "Yetersiz teminat",
         "addMargin": "Marj ekle",
         "amountToAdd": "Ekleyeceğiniz Tutar",
-        "reduceMargin": "Marjini Azaltın"
-      }
+        "reduceMargin": "Marjini Azaltın",
+        "liqDistance": "Liq.Uzaklık"
+      },
+      "PerpsAddPositionPopup": {
+        "addSize": "Boyut Ekle",
+        "totalSize": "Toplam Boyut",
+        "addToLong": "Uzunluğa Ekle",
+        "addToShort": "Kısaya Ekle"
+      },
+      "needDepositFirst": "Öncelikle fonları yatırmanız gerekiyor."
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Yerleşik Sayfa"
@@ -2964,6 +3004,9 @@
     },
     "portfolios": {
       "manage": "Yönetmek"
+    },
+    "multiAddressModal": {
+      "title": "Cüzdanlar"
     }
   },
   "native": {
@@ -3056,7 +3099,8 @@
     "gotIt": "Tamamdır",
     "check": "Kontrol Et",
     "Dapp": "Dapp",
-    "Token": "Jeton"
+    "Token": "Jeton",
+    "GotIt": "Anladım"
   },
   "background": {
     "error": {

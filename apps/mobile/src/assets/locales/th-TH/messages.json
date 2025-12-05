@@ -272,6 +272,9 @@
     },
     "portfolios": {
       "manage": "จัดการ"
+    },
+    "multiAddressModal": {
+      "title": "กระเป๋าเงิน"
     }
   },
   "page": {
@@ -1113,7 +1116,25 @@
       "est-payment": "ประมาณการจ่าย:",
       "no-quote-found": "ไม่มีการเสนอราคา กรุณาลองคู่โทเค็นอื่น",
       "bridged": "Bridged",
-      "gasFeeTooHight": "ค่าแก๊สสูงกว่าปกติ โปรดยืนยันหากคุณต้องการดำเนินการต่อ"
+      "gasFeeTooHight": "ค่าแก๊สสูงกว่าปกติ โปรดยืนยันหากคุณต้องการดำเนินการต่อ",
+      "pendingItem": {
+        "swap": "สลับ",
+        "failed": "ล้มเหลว",
+        "pending": "รอดำเนินการ",
+        "estimatedTime": "เวลาประมาณการณ์",
+        "bridgeStatus": "สถานะสะพาน",
+        "receivingTo": "การรับบน {{chain}}",
+        "receivedDifferentTokenNeedSwap": "คุณได้รับโทเค็นที่แตกต่างกัน คุณสามารถแลกเปลี่ยนเป็นโทเค็นที่คุณเลือกได้。",
+        "fromFailed": "การทำธุรกรรมไม่สำเร็จ โปรดลองอีกครั้ง。",
+        "receivedDifferentTokenFromSource": "การส่งผ่านล้มเหลว มีโทเค็นที่แตกต่างกันถูกส่งกลับในเชนต้นทาง",
+        "completed": "เสร็จสิ้น",
+        "beReturnFailed": "การเชื่อมต่อล้มเหลว สินทรัพย์ของคุณได้ถูกส่งกลับแล้ว",
+        "BridgeStatusUnavailable": "สถานะสะพานไม่พร้อมใช้งาน กรุณาตรวจสอบประวัติธุรกรรมของคุณเพื่อยืนยันว่าทุนได้มาถึงแล้ว",
+        "longTimeNoReceive": "เครือข่ายกำลังยุ่ง นี่อาจใช้เวลานานกว่าปกติ โปรดรอสักครู่",
+        "sendingFrom": "ส่งจาก {{chain}}",
+        "queued": "รอต่อคิว"
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "dashboard": {
       "home": {
@@ -2272,7 +2293,9 @@
       "sentTimeHeader": "ส่งแล้ว",
       "sendToSafeAddress": "ส่งไปยัง Safe Wallets",
       "sendToImportedAddress": "ส่งไปยังกระเป๋าเงินที่ฉันนำเข้า",
-      "sendToWatchAddress": "ส่งไปยังกระเป๋าเงิน Watch-Only"
+      "sendToWatchAddress": "ส่งไปยังกระเป๋าเงิน Watch-Only",
+      "dividerWatchOnlyWallets": "ที่อยู่แบบดูเท่านั้น",
+      "enterOrSearchAddress": "กรอกหรือค้นหา ที่อยู่"
     },
     "confirmAddress": {
       "risks": {
@@ -2672,11 +2695,16 @@
         "currentPrice": "ราคาปัจจุบัน",
         "distanceLabel": "ระยะทางการชำระบัญชี",
         "subtitle": "ระยะห่างจากการถูกล้างออกแบบเรียลไทม์ (%)",
-        "liqIntro": "Liquidation Distance (%) แสดงให้เห็นว่าราคาปัจจุบันห่างจากราคาการปรับไข่ของคุณเท่าไหร่ ระยะทางที่มากขึ้นแสดงถึงตำแหน่งที่ปลอดภัยกว่า ในขณะที่ระยะทางที่น้อยกว่าหมายถึงความเสี่ยงในการปรับไข่ที่สูงขึ้น"
+        "liqIntro": "Liquidation Distance (%) แสดงให้เห็นว่าราคาปัจจุบันห่างจากราคาการปรับไข่ของคุณเท่าไหร่ ระยะทางที่มากขึ้นแสดงถึงตำแหน่งที่ปลอดภัยกว่า ในขณะที่ระยะทางที่น้อยกว่าหมายถึงความเสี่ยงในการปรับไข่ที่สูงขึ้น",
+        "liqDistanceTipsShort": "การขึ้นไป <1>{{distance}}</1> จะทำให้เกิดการบังคับขาย",
+        "liqDistanceTipsLong": "ถ้าราคาลงไป <1>{{distance}}</1> จะทำให้เกิดการชำระบัญชี"
       },
       "closeAllConfirmTitle": "ยืนยันการปิดสถานะทั้งหมด",
       "closeAll": "ปิดทั้งหมด",
-      "closeAllConfirmMessage": "ตำแหน่งที่เปิดของคุณทั้งหมดจะถูกปิดที่ราคาตลาด"
+      "closeAllConfirmMessage": "ตำแหน่งที่เปิดของคุณทั้งหมดจะถูกปิดที่ราคาตลาด",
+      "assetPage": {
+        "hyperliquidPosition": "ตำแหน่ง Hyperliquid"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2701,7 +2729,9 @@
         "tpPrice": "ราคา Take-Profit",
         "fundingPayments": "การชำระเงินเงินทุน",
         "isolated": "แยกออก",
-        "direction": "ทิศทาง"
+        "direction": "ทิศทาง",
+        "fundingGains": "การเพิ่มทุน",
+        "fundingGainsTips": "นี่คือกำไรจากการระดมทุนสุทธิ ตั้งแต่เปิดสถานะ ค่าธรรมเนียมการระดมทุนเป็นค่าธรรมเนียมรายชั่วโมงที่ผู้ค้าใช้จ่ายหรือรับ เพื่อให้ราคาในสัญญา perp ใกล้เคียงกับราคาที่แท้จริงของโทเค็น"
       },
       "PerpsInfo": {
         "title": "ข้อมูล",
@@ -2709,14 +2739,15 @@
         "openInterestTips": "ยอดตำแหน่งคงค้างทั้งหมดของผู้ใช้ทุกคนในสัญญานี้。",
         "funding": "การระดมทุน",
         "24Vol": "24h ปริมาณ",
-        "fundingTips": "นี่คือค่าธรรมเนียมรายชั่วโมงที่ผู้ค้าใช้จ่ายหรือได้รับเพื่อรักษาราคาของสัญญา perp ให้ใกล้เคียงกับราคาจริงของโทเค็น หากเป็นบวก long จะจ่ายให้กับ short หากเป็นลบ short จะจ่ายให้กับ long"
+        "fundingTips": "นี่คือค่าธรรมเนียมรายชั่วโมงที่ผู้ค้าใช้จ่ายหรือได้รับเพื่อรักษาราคาของสัญญา perp ให้ใกล้เคียงกับราคาจริงของโทเค็น หากเป็นบวก long จะจ่ายให้กับ short หากเป็นลบ short จะจ่ายให้กับ long",
+        "fundingRate": "อัตราFunding"
       },
       "PerpsIntro": {
         "title": "Perps คืออะไร?",
         "desc": "การซื้อขายสัญญา perpetual มีความเสี่ยงที่สำคัญ รวมถึงความเป็นไปได้ที่จะสูญเสียการลงทุนและหลักประกันของคุณอย่างรวดเร็วเนื่องจากเลเวอเรจสูงและความผันผวนของตลาด การซื้อขายดังกล่าวอาจไม่เหมาะสมกับผู้ใช้ทุกคน ราคาอาจได้รับผลกระทบจากอัตราการระดมทุนและสภาพคล่อง และคุณอาจถูกบังคับขายโดยอัตโนมัติโดยไม่ต้องแจ้งล่วงหน้า ข้อมูลตลาดให้บริการโดย Hyperliquid"
       },
       "PerpsClosePositionPopup": {
-        "title": "",
+        "title": "ปิดตำแหน่ง",
         "closeBtn": "ปิด {{direction}}",
         "providerFeeTips": "Hyperliquid ค่าธรรมเนียม: {{fee}}",
         "fee": "ค่าธรรมเนียม:",
@@ -2747,7 +2778,10 @@
         "stopLossWhenPriceBelow": "หยุดขาดทุนเมื่อราคาต่ำกว่า",
         "takeProfitWhenPriceBelow": "ทำกำไรเมื่อราคาต่ำกว่า",
         "stopLossWhenPriceAbove": "หยุดขาดทุนเมื่อราคาสูงกว่า",
-        "takeProfitWhenPriceAbove": "ทำกำไรเมื่อราคาสูงกว่า"
+        "takeProfitWhenPriceAbove": "ทำกำไรเมื่อราคาสูงกว่า",
+        "upTo": "สูงสุดถึง",
+        "minMargin": "มาร์จิ้นขั้นต่ำคือ {{amount}}",
+        "maxMargin": "最大保证金为 {{amount}}"
       },
       "PerpsOpenPositionCheckPopup": {
         "fee": "ค่าธรรมเนียม",
@@ -2775,7 +2809,9 @@
         "short": "ขายทำกำไร",
         "closePosition": "ปิดตำแหน่ง {{direction}}",
         "long": "ทำให้ยาว",
-        "noPermission": "การเปิดตำแหน่งไม่สามารถทำได้ในภูมิภาคของคุณ"
+        "noPermission": "การเปิดตำแหน่งไม่สามารถทำได้ในภูมิภาคของคุณ",
+        "close": "ปิด",
+        "add": "เพิ่ม"
       },
       "PerpsAutoCloseModal": {
         "setSlPrice": "ตั้งราคา Stop-Loss",
@@ -2807,8 +2843,16 @@
         "addMargin": "เพิ่มมาร์จิ้น",
         "insufficientMargin": "ขอบเขตไม่เพียงพอ",
         "insufficientMarginToReduce": "มาร์จินไม่เพียงพอที่จะลดตำแหน่ง.",
-        "liqPrice": "Liq. Price:"
-      }
+        "liqPrice": "Liq. Price:",
+        "liqDistance": "Liq.ระยะทาง"
+      },
+      "PerpsAddPositionPopup": {
+        "totalSize": "ขนาดรวม",
+        "addToLong": "เพิ่มไปยัง Long",
+        "addSize": "เพิ่มขนาด",
+        "addToShort": "เพิ่มลงใน Short"
+      },
+      "needDepositFirst": "คุณต้องฝากเงินก่อน"
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Build-In Page"
@@ -3057,7 +3101,8 @@
     "gotIt": "เข้าใจแล้ว",
     "check": "ตรวจสอบ",
     "Dapp": "Dapp",
-    "Token": "โทเค็น"
+    "Token": "โทเค็น",
+    "GotIt": "เข้าใจแล้ว"
   },
   "background": {
     "transactionWatcher": {
