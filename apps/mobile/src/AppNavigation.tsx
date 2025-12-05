@@ -17,6 +17,7 @@ import {
   RootNames,
 } from './constant/layout';
 import {
+  apisHomeTabIndex,
   useSetNavigationReady,
   useStackScreenConfig,
 } from './hooks/navigation';
@@ -94,7 +95,6 @@ import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/
 import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottomSheet';
 import { ToggleCollateralModal } from './screens/Lending/modals/ToggleCollateralModal';
 import { RefLikeObject } from './utils/type';
-import { isHomeAtFirstTab } from './screens/Home/MultiAddressHome';
 import { useRendererDetect } from './components/Perf/PerfDetector';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
@@ -151,7 +151,7 @@ function useDetermineExitAppOnPressBack() {
     if (IS_IOS) return;
 
     const backAction = () => {
-      if (isHomeAtFirstTab()) return false;
+      if (apisHomeTabIndex.isHomeAtFirstTab()) return false;
 
       const restCount = getBackRestCount();
       const navigationInst = navigationRef.current;
@@ -263,15 +263,8 @@ export default function AppNavigation() {
     'routeNameRef.current, colorScheme',
     routeNameRef.current,
     colorScheme,
+    navigationRef.current,
   );
-
-  // const previousRoute = usePrevious(routeNameRef.current);
-  // console.debug('previousRoute: %s, routeNameRef.current: %s', previousRoute, routeNameRef.current);
-  // const isSlideFromGetStarted =
-  //   [undefined, RootNames.GetStarted, RootNames.GetStartedScreen2024].includes(
-  //     previousRoute as any,
-  //   ) && routeNameRef.current === RootNames.Unlock;
-  // console.debug('isSlideFromGetStarted: %s', isSlideFromGetStarted);
 
   const linking = useMemo(() => getLinkingConfig(), []);
 

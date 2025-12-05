@@ -52,6 +52,7 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { syncTokens, syncProtocols } from '@/databases/hooks/assets';
 import { EVENTS } from '@/utils/events';
 import { eventBus } from '@/utils/events';
+import { apisHomeTabIndex } from '@/hooks/navigation';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -119,6 +120,7 @@ export const ImportSuccessScreen2024 = () => {
         },
       ],
     });
+    apisHomeTabIndex.setTabIndex(0);
   }, [navigation, saveFirstAddressAlias]);
 
   const isFocus = useIsFocused();
