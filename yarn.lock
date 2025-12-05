@@ -9227,20 +9227,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.49-alpha.0":
-  version: 0.9.49-alpha.0
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.49-alpha.0"
+"@rabby-wallet/rabby-api@npm:0.9.48":
+  version: 0.9.48
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.48"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
-    axios: 1.12.2
-    axios-rate-limit: 1.4.0
+    axios: ^0.27.2
+    axios-rate-limit: ^1.3.0
     eth-rpc-errors: ^4.0.3
     lodash: ^4.17.21
     qss: ^2.0.3
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 5ed45be576622729b0ed48f3382ed919d3955227a78af694d623ce99835979b907bd4e05ce473243f49068597db7d9f5d6b85a7c8b0c2c4446e980a78c77e3e1
+  checksum: 7172e82c74eb19893bc639c29bab4cb86d2d981fb4b692e399a722298cbe59ef097231289a370b385297e3cfc34e3716dc5d04452ff7a2e4d11a678e1e3f23a4
   languageName: node
   linkType: hard
 
@@ -16611,17 +16611,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios-rate-limit@npm:1.4.0":
-  version: 1.4.0
-  resolution: "axios-rate-limit@npm:1.4.0"
-  dependencies:
-    axios: ">=0.18.0"
-  peerDependencies:
-    axios: "*"
-  checksum: e8fb057b0974748de56eea8a8d87a78a6de29af998964720325207f25b581e189f5001e057a225c89a70ded6edef09868f5b2af85de01e4495671237784201b7
-  languageName: node
-  linkType: hard
-
 "axios-rate-limit@npm:^1.3.0":
   version: 1.3.0
   resolution: "axios-rate-limit@npm:1.3.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Faxios-rate-limit%2F-%2Faxios-rate-limit-1.3.0.tgz"
@@ -16659,17 +16648,6 @@ __metadata:
     form-data: ^4.0.0
     proxy-from-env: ^1.1.0
   checksum: 882d4fe0ec694a07c7f5c1f68205eb6dc5a62aecdb632cc7a4a3d0985188ce3030e0b277e1a8260ac3f194d314ae342117660a151fabffdc5081ca0b5a8b47fe
-  languageName: node
-  linkType: hard
-
-"axios@npm:>=0.18.0":
-  version: 1.13.2
-  resolution: "axios@npm:1.13.2"
-  dependencies:
-    follow-redirects: ^1.15.6
-    form-data: ^4.0.4
-    proxy-from-env: ^1.1.0
-  checksum: 057d0204d5930e2969f0bccb9f0752745b1524a36994667833195e7e1a82f245d660752ba8517b2dbea17e9e4ed0479f10b80c5fe45edd0b5a0df645c0060386
   languageName: node
   linkType: hard
 
@@ -34502,7 +34480,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.14
-    "@rabby-wallet/rabby-api": 0.9.49-alpha.0
+    "@rabby-wallet/rabby-api": 0.9.48
     "@rabby-wallet/rabby-security-engine": 2.0.11
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.68
