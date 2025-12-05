@@ -111,6 +111,7 @@ export interface BridgeTxHistoryItem {
   toAmount: number;
   dexId: string;
   status: 'pending' | 'fromSuccess' | 'fromFailed' | 'allSuccess' | 'failed';
+  acceleratedHash?: string;
   hash: string;
   estimatedDuration: number; // ms from server
   createdAt: number;
@@ -471,6 +472,7 @@ export class TransactionHistoryService {
     txs: TransactionHistoryItem[],
     chainId: number,
     status: SwapTxHistoryItem['status'],
+    completedTx: TransactionHistoryItem,
   ) {
     const arr = [
       this.store.swapTxHistory,
@@ -501,10 +503,13 @@ export class TransactionHistoryService {
       );
       if (index > -1) {
         if ('fromChainId' in history[index]) {
+          const completedHash = completedTx.hash;
           // bridge tx
           history[index].status =
             status === 'success' ? 'fromSuccess' : 'fromFailed';
           (history[index] as BridgeTxHistoryItem).fromTxCompleteTs = Date.now();
+          (history[index] as BridgeTxHistoryItem).acceleratedHash =
+            completedHash || history[index].hash;
         } else {
           history[index].status = status;
           history[index].completedAt = Date.now();
@@ -1034,6 +1039,7 @@ export class TransactionHistoryService {
         txs,
         chainId,
         completed.status === 1 ? 'success' : 'failed',
+        completedTx,
       );
       eventBus.emit(EVENTS.RELOAD_TX, {
         addressList: [address],
