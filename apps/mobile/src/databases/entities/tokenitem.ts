@@ -8,6 +8,10 @@ import {
   Not,
   MoreThan,
   Raw,
+  ObjectLiteral,
+  SelectQueryBuilder,
+  LessThan,
+  NotBrackets,
 } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
@@ -18,8 +22,10 @@ import {
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
+import { CACHE_TABLES, getFullTableName, TEMP_TABLES } from '../constant';
+import { ITokenSetting } from '@/core/services/preference';
 
-@Entity('cache_tokenitem')
+@Entity(CACHE_TABLES.tokenitem)
 export class TokenItemEntity extends EntityAddressAssetBase {
   // content_type
   @Column('text', { default: '' })
@@ -125,15 +131,24 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   })
   cex_ids: string = '[]';
 
-  makeDbId(): string {
-    return (this._db_id = `${[
-      this.owner_addr,
-      this.id,
-      this.chain,
-      this.inner_id || '',
+  static encodeDbId(tokenLike: {
+    owner_addr: string;
+    id: string;
+    chain: string;
+    inner_id?: string;
+  }) {
+    return `${[
+      tokenLike.owner_addr,
+      tokenLike.id,
+      tokenLike.chain,
+      tokenLike.inner_id || '',
     ]
       .filter(Boolean)
-      .join('-')}`);
+      .join('-')}`;
+  }
+
+  makeDbId(): string {
+    return (this._db_id = TokenItemEntity.encodeDbId(this));
   }
 
   static fillEntity(
@@ -271,6 +286,413 @@ export class TokenItemEntity extends EntityAddressAssetBase {
           cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
         }))
     );
+  }
+
+  static async getStaticsInfo(options?: {
+    addresses?: string[];
+    purpose?: 'multi_addresses_tokens';
+
+    pinedQueue?: ITokenSetting['pinedQueue'];
+    foldTokens?: ITokenSetting['foldTokens'];
+    unfoldTokens?: ITokenSetting['unfoldTokens'];
+    includeDefiAndTokens?: ITokenSetting['includeDefiAndTokens'];
+    excludeDefiAndTokens?: ITokenSetting['excludeDefiAndTokens'];
+  }) {
+    const { addresses = [], purpose = 'multi_addresses_tokens' } =
+      options || {};
+
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+
+    const commonWhere = {
+      is_scam: false,
+      is_suspicious: false,
+      ...(addresses.length && {
+        owner_addr: In(addresses),
+      }),
+    };
+
+    switch (purpose) {
+      case 'multi_addresses_tokens': {
+        let sqlRet: any, sqlBuilder: SelectQueryBuilder<TokenItemEntity>;
+        const ret = {
+          total_core_usd_value: 0,
+
+          threshold: 1000,
+          core_token_count: 0,
+          threshold_db_id: null as null | string,
+          addresses: options?.addresses || [],
+
+          pinedQueue: options?.pinedQueue,
+          foldTokens: options?.foldTokens,
+          unfoldTokens: options?.unfoldTokens,
+          includeDefiAndTokens: options?.includeDefiAndTokens,
+          excludeDefiAndTokens: options?.excludeDefiAndTokens,
+          hasExpandSwitch: false,
+        };
+
+        sqlBuilder = repo
+          .createQueryBuilder('tokenitem')
+          .select([
+            'COUNT(*) as core_token_count',
+            `SUM(${correctBadRealOnSql(
+              'tokenitem.price',
+            )} * ${correctBadRealOnSql(
+              'tokenitem.amount',
+            )}) as total_core_usd_value`,
+          ])
+          .where({ is_core: true, ...commonWhere });
+
+        // if (options?.unfoldTokens?.length) {
+        //   sqlBuilder.andWhere(new Brackets(qb => {
+        //     options.unfoldTokens?.forEach((setting) => {
+        //       qb.orWhere('(tokenitem.chain = :chain AND tokenitem.id = :id)', { chain: setting.chainId, id: setting.tokenId });
+        //     })
+        //   }));
+        // }
+
+        sqlRet = await sqlBuilder.getRawOne();
+
+        ret.core_token_count = sqlRet?.core_token_count || 0;
+        ret.total_core_usd_value = sqlRet?.total_core_usd_value || 0;
+        ret.threshold = Math.min(ret.total_core_usd_value / 100, 1000);
+
+        sqlBuilder = repo
+          .createQueryBuilder('tokenitem')
+          .select([
+            '_db_id',
+            `(${correctBadRealOnSql('tokenitem.price')} * ${correctBadRealOnSql(
+              'tokenitem.amount',
+            )}) AS tokenitem_token_usd_value`,
+            'is_core',
+            ...(!__DEV__ ? [] : ['tokenitem']),
+          ])
+          .where({
+            is_core: true,
+            ...commonWhere /* tokenitem_token_usd_value: LessThan(ret.threshold) */,
+          })
+          .andWhere('(tokenitem_token_usd_value < :threshold)', {
+            threshold: ret.threshold,
+          })
+          .orderBy('tokenitem_token_usd_value', 'DESC')
+          .limit(5);
+
+        sqlRet = await sqlBuilder.getMany();
+
+        ret.threshold_db_id = sqlRet[0]?._db_id || null;
+
+        ret.hasExpandSwitch =
+          ret.core_token_count >= 15 &&
+          !!ret.threshold_db_id &&
+          sqlRet.length >= 5;
+
+        return ret;
+      }
+    }
+  }
+
+  static async getTokenLightRows(
+    input:
+      | {
+          type: 'all' | 'is_core';
+          addresses: string[];
+        }
+      | {
+          type: 'multi_addresses_tokens';
+          purpose:
+            | 'temp_table'
+            | '$fold_token_rows'
+            | 'unfold_token_rows'
+            | 'fold_and_include_balance'
+            | 'fold_and_exclude_balance'
+            | 'scam';
+          addresses: string[];
+          static_info: Awaited<
+            ReturnType<typeof TokenItemEntity.getStaticsInfo>
+          >;
+        },
+  ) {
+    type TaggedRow = Pick<
+      TokenItemEntity,
+      '_db_id' | 'id' | 'chain' | 'owner_addr'
+    >;
+    const ret = {
+      temp_table: [] as any[],
+      all_rows: [] as TaggedRow[],
+      core_rows: [] as TaggedRow[],
+      $fold_token_rows: [] as TaggedRow[],
+      unfold_token_rows: [] as TaggedRow[],
+      fold_and_include_balance: [] as TaggedRow[],
+      fold_and_exclude_balance: [] as TaggedRow[],
+      scam: [] as TaggedRow[],
+    };
+
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+
+    switch (input.type) {
+      default:
+      case 'all': {
+        ret.all_rows = await repo
+          .createQueryBuilder('tokenitem')
+          .select([
+            '_db_id',
+            'id',
+            'chain',
+            // 'tokenitem'
+          ])
+          .getRawMany();
+        return ret;
+      }
+      case 'is_core':
+        ret.core_rows = await repo
+          .createQueryBuilder('tokenitem')
+          .select([
+            '_db_id',
+            'id',
+            'chain',
+            ...(!__DEV__ ? [] : ['tokenitem']),
+            `(${correctBadRealOnSql('tokenitem.price')} * ${correctBadRealOnSql(
+              'tokenitem.amount',
+            )}) AS tokenitem_token_usd_value`,
+          ])
+          .where({ is_core: true })
+          .getRawMany();
+        return ret;
+      case 'multi_addresses_tokens':
+        const { static_info, addresses } = input;
+
+        const commonWhere = {
+          ...(addresses.length && {
+            owner_addr: In(addresses),
+          }),
+        };
+
+        const commonSelect = [
+          'tokenitem._db_id AS _db_id',
+          'tokenitem.id AS id',
+          'tokenitem.chain AS chain',
+          'tokenitem.owner_addr AS owner_addr',
+        ];
+
+        let sqlRet: any, sqlBuilder: SelectQueryBuilder<TokenItemEntity>;
+        switch (input.purpose) {
+          case 'temp_table': {
+            ret.temp_table = await repo.manager.query(
+              `SELECT * FROM ${
+                TEMP_TABLES.tokenitem_tag
+              } WHERE owner_addr IN (${addresses
+                .map(x => `'${x}'`)
+                .join(',')})`,
+            );
+            break;
+          }
+          case '$fold_token_rows':
+            {
+              sqlBuilder = repo
+                .createQueryBuilder('tokenitem')
+                .select([
+                  ...commonSelect,
+                  `(${correctBadRealOnSql(
+                    'tokenitem.price',
+                  )} * ${correctBadRealOnSql(
+                    'tokenitem.amount',
+                  )}) AS tokenitem_token_usd_value`,
+                  // ...!__DEV__ ? [] : ['tokenitem']
+                ])
+                .where({ ...commonWhere })
+                .orderBy(`tokenitem_token_usd_value`, 'DESC');
+
+              sqlBuilder
+                .leftJoin(
+                  `${TEMP_TABLES.tokenitem_tag}`,
+                  'tag',
+                  'tag._db_id = tokenitem._db_id',
+                )
+                .where(
+                  /* sql */ `((tag.is_natural_unfold != 1 AND tag.is_manual_unfold != 1) OR tag.is_manual_fold = 1)`,
+                );
+
+              ret.$fold_token_rows = await sqlBuilder.getRawMany();
+            }
+            break;
+          case 'unfold_token_rows':
+            {
+              sqlBuilder = repo
+                .createQueryBuilder('tokenitem')
+                .select([
+                  ...commonSelect,
+                  `(${correctBadRealOnSql(
+                    'tokenitem.price',
+                  )} * ${correctBadRealOnSql(
+                    'tokenitem.amount',
+                  )}) AS tokenitem_token_usd_value`,
+                  // ...!__DEV__ ? [] : ['tokenitem']
+                ])
+                .where({ ...commonWhere })
+                .orderBy(`tokenitem_token_usd_value`, 'DESC');
+
+              sqlBuilder
+                // join temp table to exclude those manual include for balance
+                .leftJoin(
+                  `${TEMP_TABLES.tokenitem_tag}`,
+                  'tag',
+                  'tag._db_id = tokenitem._db_id',
+                )
+                // filter by joined tab information
+                /**
+                 * js logic:
+                 *  filter(x =>
+                      && ((!x.is_natural_unfold && !x.is_manual_unfold) || x.is_manual_fold)
+                    )
+                  */
+                .where(
+                  /* sql */ `((tag.is_natural_unfold = 1 OR tag.is_manual_unfold = 1) AND tag.is_manual_fold != 1)`,
+                );
+
+              ret.unfold_token_rows = await sqlBuilder.getRawMany();
+            }
+            break;
+
+          case 'fold_and_include_balance':
+            {
+              sqlBuilder = repo
+                .createQueryBuilder('tokenitem')
+                .select([
+                  ...commonSelect,
+                  `(${correctBadRealOnSql(
+                    'tokenitem.price',
+                  )} * ${correctBadRealOnSql(
+                    'tokenitem.amount',
+                  )}) AS tokenitem_token_usd_value`,
+                  // ...!__DEV__ ? [] : [ 'tokenitem' ]
+                ])
+                .where({ ...commonWhere })
+                .orderBy(`tokenitem_token_usd_value`, 'DESC');
+
+              sqlBuilder
+                // join temp table to exclude those manual include for balance
+                .leftJoin(
+                  `${TEMP_TABLES.tokenitem_tag}`,
+                  'tag',
+                  'tag._db_id = tokenitem._db_id',
+                )
+                // filter by joined tab information
+                .andWhere(
+                  new Brackets(qb => {
+                    /**
+                 * js logic:
+                 *  filter(x =>
+                      x.token_usd_value
+                      && ((!x.is_natural_unfold && !x.is_manual_unfold) || x.is_manual_fold)
+                      && ((x.is_natural_included_for_balance || x.is_manual_included_for_balance) && !x.is_manual_excluded_for_balance)
+                    )
+                 */
+                    qb
+                      .where(`tag.is_low_value != 1`)
+                      .andWhere(
+                        /* sql */ `((tag.is_natural_unfold != 1 AND tag.is_manual_unfold != 1) OR tag.is_manual_fold = 1)`,
+                      ).andWhere(/* sql */ `(
+                    ((tag.is_natural_included_for_balance = 1 OR tag.is_manual_included_for_balance = 1) AND tag.is_manual_excluded_for_balance != 1)
+                    AND tag.token_usd_value != 0
+                  )`);
+                  }),
+                );
+
+              ret.fold_and_include_balance = await sqlBuilder.getRawMany();
+            }
+            break;
+          case 'fold_and_exclude_balance':
+            {
+              sqlBuilder = repo
+                .createQueryBuilder('tokenitem')
+                .select([
+                  ...commonSelect,
+                  `(${correctBadRealOnSql(
+                    'tokenitem.price',
+                  )} * ${correctBadRealOnSql(
+                    'tokenitem.amount',
+                  )}) AS tokenitem_token_usd_value`,
+                  // ...!__DEV__ ? [] : ['tokenitem']
+                ])
+                .where({ ...commonWhere })
+                .orderBy(`tokenitem_token_usd_value`, 'DESC');
+
+              sqlBuilder
+                // join temp table to exclude those manual include for balance
+                .leftJoin(
+                  `${TEMP_TABLES.tokenitem_tag}`,
+                  'tag',
+                  'tag._db_id = tokenitem._db_id',
+                )
+                // filter by joined tab information
+                .andWhere(
+                  new Brackets(qb => {
+                    /**
+                 * js logic:
+                 *  filter(x =>
+                      x.token_usd_value
+                      && ((!x.is_natural_unfold && !x.is_manual_unfold) || x.is_manual_fold)
+                      && ((!x.is_natural_included_for_balance && !x.is_manual_included_for_balance) || x.is_manual_excluded_for_balance)
+                    )
+                 */
+                    qb
+                      .where(`tag.is_low_value != 1`)
+                      .andWhere(
+                        /* sql */ `((tag.is_natural_unfold != 1 AND tag.is_manual_unfold != 1) OR tag.is_manual_fold = 1)`,
+                      ).andWhere(/* sql */ `(
+                    ((tag.is_natural_included_for_balance != 1 AND tag.is_manual_included_for_balance != 1) OR tag.is_manual_excluded_for_balance = 1)
+                    OR tag.token_usd_value = 0
+                  )`);
+                  }),
+                );
+
+              ret.fold_and_exclude_balance = await sqlBuilder.getRawMany();
+            }
+            break;
+          case 'scam':
+            {
+              sqlBuilder = repo
+                .createQueryBuilder('tokenitem')
+                .select([
+                  ...commonSelect,
+                  `(${correctBadRealOnSql(
+                    'tokenitem.price',
+                  )} * ${correctBadRealOnSql(
+                    'tokenitem.amount',
+                  )}) AS tokenitem_token_usd_value`,
+                  // ...!__DEV__ ? [] : ['tokenitem']
+                ])
+                .where({ ...commonWhere })
+                .orderBy(`tokenitem_token_usd_value`, 'DESC');
+
+              // if (static_info.hasExpandSwitch) {
+              //   sqlBuilder.andWhere(`tokenitem_token_usd_value < :threshold`, { threshold: static_info.threshold })
+              // }
+
+              sqlBuilder
+                // join temp table to exclude those manual include for balance
+                .leftJoin(
+                  `${TEMP_TABLES.tokenitem_tag}`,
+                  'tag',
+                  'tag._db_id = tokenitem._db_id',
+                )
+                // filter by joined tab information
+                .andWhere(
+                  new Brackets(qb => {
+                    qb.where(`tag.is_low_value = 1`);
+                  }),
+                );
+
+              ret.scam = await sqlBuilder.getRawMany();
+            }
+            break;
+        }
+
+        return ret;
+    }
   }
 
   /**

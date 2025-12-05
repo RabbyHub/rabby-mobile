@@ -23,6 +23,9 @@ import { useAtomCallback } from 'jotai/utils';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { eventBus, EventBusListeners } from '@/utils/events';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { ITokenSetting } from '@/core/services/preference';
+import { OPSQLiteEvents } from '@/core/databases/op-sqlite/events';
 
 let top20TokensCache: CombineTokensItem[] = [];
 let top10PortfoliosCache: CombineDefiItem[] = [];
@@ -57,6 +60,49 @@ export interface IAssets {
   portfolios?: DisplayedProject[];
   tokens?: AbstractPortfolioToken[];
   nfts?: DisplayNftItem[];
+}
+
+export function combineToken(
+  token: AbstractPortfolioToken,
+  owner_addr: string,
+  options: {
+    hasExpandSwitch: boolean;
+    threshold: number;
+    unfoldTokens?: ITokenSetting['unfoldTokens'];
+  },
+): CombineTokensItem {
+  const totalUsdValue = new BigNumber(token._usdValue || 0);
+  const totalAmount = new BigNumber(token.amount || 0);
+
+  const { hasExpandSwitch, threshold, unfoldTokens = [] } = options;
+
+  const base = {
+    ...token,
+    totalAmount: totalAmount.toNumber(),
+    totalUsdValue: totalUsdValue.toNumber(),
+    address: owner_addr,
+    _usdValue: totalUsdValue.toNumber(),
+    _usdValueStr: formatNetworth(totalUsdValue.toNumber()),
+    _amountStr: formatAmount(totalAmount.toNumber()),
+  };
+
+  if (
+    !hasExpandSwitch ||
+    !token.is_core ||
+    token._isManualFold ||
+    unfoldTokens.some(
+      x => x.chainId === token.chain && x.tokenId === token._tokenId,
+    )
+  )
+    return base;
+
+  return {
+    ...base,
+    ...{
+      _isFold: (totalUsdValue.toNumber() || 0) < threshold,
+      _isMiniFold: (totalUsdValue.toNumber() || 0) < threshold,
+    },
+  };
 }
 
 export const combinedTokens = (
@@ -242,24 +288,57 @@ export const combinedNfts = (
 // export const nftsAtom = atom<{ [address: string]: DisplayNftItem[] }>({});
 type AssetsMapState = {
   tokensMap: { [address: string]: AbstractPortfolioToken[] };
+  /**
+   * @description only ref tokens by db_id, but the token item maybe not in list
+   */
+  tokensByDbId: { [dbId: string]: AbstractPortfolioToken };
   portfoliosMap: { [address: string]: DisplayedProject[] };
   nftsMap: { [address: string]: DisplayNftItem[] };
 };
 export const assetsMapStore = zCreate<AssetsMapState>(() => ({
   tokensMap: {},
+  tokensByDbId: {},
   portfoliosMap: {},
   nftsMap: {},
 }));
 
 function setTokensMap(
   valOrFunc: UpdaterOrPartials<AssetsMapState['tokensMap']>,
+  addr?: string,
 ) {
   assetsMapStore.setState(prev => {
     const { newVal } = resolveValFromUpdater(prev.tokensMap, valOrFunc, {
       strict: false,
     });
 
+    const newDict = { ...prev.tokensByDbId };
+    const addrsList = addr ? [addr] : Object.keys(newVal);
+    addrsList.forEach(addr => {
+      let db_id = '';
+      newVal[addr].forEach(token => {
+        db_id = TokenItemEntity.encodeDbId({
+          chain: token.chain,
+          id: token._tokenId,
+          owner_addr: addr,
+        });
+        newDict[db_id] = token;
+      });
+    });
+    prev.tokensByDbId = newDict;
+
     return { ...prev, tokensMap: newVal };
+  });
+}
+
+function setTokensByDbId(
+  valOrFunc: UpdaterOrPartials<AssetsMapState['tokensByDbId']>,
+) {
+  assetsMapStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.tokensByDbId, valOrFunc, {
+      strict: false,
+    });
+
+    return { ...prev, tokensByDbId: newVal };
   });
 }
 
@@ -285,26 +364,31 @@ function setNftsMap(valOrFunc: UpdaterOrPartials<AssetsMapState['nftsMap']>) {
   });
 }
 
-type GetAssetsFunc = <T extends 'tokens' | 'portfolios' | 'nfts'>(
+type GetAssetsFunc = <
+  T extends 'tokensByDbId' | 'tokens' | 'portfolios' | 'nfts',
+>(
   type: T,
 ) => T extends 'tokens'
   ? { [address: string]: AbstractPortfolioToken[] }
+  : T extends 'tokensByDbId'
+  ? { [dbId: string]: AbstractPortfolioToken }
   : T extends 'portfolios'
   ? { [address: string]: DisplayedProject[] }
   : { [address: string]: DisplayNftItem[] };
 export const getAssetsMapDirectly = (type => {
+  const store = assetsMapStore.getState();
   switch (type) {
     case 'tokens': {
-      const tokensMap = assetsMapStore.getState().tokensMap;
-      return tokensMap;
+      return store.tokensMap;
+    }
+    case 'tokensByDbId': {
+      return store.tokensByDbId;
     }
     case 'portfolios': {
-      const portfoliosMap = assetsMapStore.getState().portfoliosMap;
-      return portfoliosMap;
+      return store.portfoliosMap;
     }
     case 'nfts': {
-      const nftsMap = assetsMapStore.getState().nftsMap;
-      return nftsMap;
+      return store.nftsMap;
     }
     default: {
       console.warn('Invalid asset type requested');
@@ -363,6 +447,7 @@ export function updateAssetListByAddress(
 
 export const useAssetsMap = () => {
   const tokensMap = assetsMapStore(s => s.tokensMap);
+  const tokensByDbId = assetsMapStore(s => s.tokensByDbId);
   const portfoliosMap = assetsMapStore(s => s.portfoliosMap);
   const nftsMap = assetsMapStore(s => s.nftsMap);
 
@@ -406,6 +491,7 @@ export const useAssetsMap = () => {
     getTokenCombined,
     // Export individual maps and setters for direct access in useAssets
     tokensMap,
+    tokensByDbId,
     // setTokensMap,
     portfoliosMap,
     // setPortfoliosMap,
@@ -421,6 +507,10 @@ export function useOnTokenRefresh() {
   const refreshTagToken = useCallback(async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
+
+    // for turbo version
+    OPSQLiteEvents.emit('TRIGGER_TOKEN_STATICS_REFRESH');
+
     handleFetchTokens();
     setTokensMap(prevTokensMap => {
       const updatedTokensMap: { [address: string]: AbstractPortfolioToken[] } =
@@ -581,10 +671,13 @@ export const useMainnetTokens = (address?: string) => {
         return;
       }
       const lowerAddress = address.toLowerCase();
-      setTokensMap(pre => ({
-        ...pre,
-        [lowerAddress]: newTokens,
-      }));
+      setTokensMap(
+        pre => ({
+          ...pre,
+          [lowerAddress]: newTokens,
+        }),
+        lowerAddress,
+      );
     },
     [address],
   );

@@ -17,14 +17,14 @@ export const tagNfts = (
   nfts: NFTItem[],
   tokenSetting: ITokenSetting,
 ): DisplayNftItem[] => {
-  const { foldNfts, unfoldNfts } = tokenSetting;
+  const { foldNfts, unFoldNfts } = tokenSetting;
 
   return nfts.map(i => {
     const isFold = (() => {
       if (foldNfts?.some(nft => nft.chain === i.chain && nft.id === i.id)) {
         return true;
       }
-      if (unfoldNfts?.some(nft => nft.chain === i.chain && nft.id === i.id)) {
+      if (unFoldNfts?.some(nft => nft.chain === i.chain && nft.id === i.id)) {
         return false;
       }
       if (!i.is_core) {

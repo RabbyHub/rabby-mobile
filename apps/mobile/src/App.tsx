@@ -43,7 +43,6 @@ import { SAFE_API_KEY } from './constant/env';
 Safe.apiKey = SAFE_API_KEY;
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
-import usePrevious from 'react-use/lib/usePrevious';
 import {
   RerenderDetector,
   useRendererDetect,

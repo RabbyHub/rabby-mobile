@@ -23,6 +23,7 @@ import {
   RabbyOrmDeployedConsoleLogger,
   RnSqlExecutionTimes,
 } from './logger';
+import { IMUserAssetsSettingsEntity } from './entities/imUserAssetsSettings';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -56,6 +57,9 @@ const dbOptions: DataSourceOptions = {
     BuyItemEntity,
     CexEntity,
     CopyTradingBuyItemEntity,
+
+    // /* in memory helpers */
+    // IMUserAssetsSettingsEntity
   ],
   maxQueryExecutionTime: 10 * 1e3,
   rnMaxQueryExecutionTime: RnSqlExecutionTimes.config,

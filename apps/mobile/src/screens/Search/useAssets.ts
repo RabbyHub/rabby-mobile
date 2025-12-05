@@ -87,22 +87,21 @@ function setShortCache(
   });
 }
 
-async function getTop10AccountsWithBalance() {
-  const accounts = await fetchAllAccounts();
+const removeUnNeedAssets = (addresses: string[]) => {
+  const allAddresses = new Set([
+    ...Object.keys(getAssetsMapDirectly('tokens')),
+    ...Object.keys(getAssetsMapDirectly('portfolios')),
+    ...Object.keys(getAssetsMapDirectly('nfts')),
+  ]);
 
-  const highlightedAddresses = preferenceService.getPinAddresses();
-
-  const sortedAccounts = sortAccountList(accounts, {
-    highlightedAddresses,
+  allAddresses.forEach(address => {
+    if (!addresses.find(i => isSameAddress(i, address))) {
+      updateAssetListByAddress(address, { type: 'tokens', data: [] });
+      updateAssetListByAddress(address, { type: 'portfolios', data: [] });
+      updateAssetListByAddress(address, { type: 'nfts', data: [] });
+    }
   });
-
-  const top10Accounts = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
-
-  return {
-    sortedAccounts,
-    top10Accounts,
-  };
-}
+};
 
 export const useAssets = ({
   hideCombined = false,
@@ -119,8 +118,8 @@ export const useAssets = ({
 
   const {
     top10Addresses,
-    getTokenCombined,
     tokensMap,
+    tokensByDbId,
     // setTokensMap,
     portfoliosMap,
     // setPortfoliosMap,
@@ -160,12 +159,11 @@ export const useAssets = ({
 
         let _tokens: AbstractPortfolioToken[] = [];
 
-        const tokenRes = await syncTokens(
-          address,
-          force,
-          updateReturn ? false : !force,
-          true,
-        );
+        const tokenRes = await syncTokens(address, {
+          force: force,
+          onlySync: updateReturn ? false : !force,
+          isV2: true,
+        });
         if (!tokenRes.length) {
           return;
         }
@@ -466,21 +464,6 @@ export const useAssets = ({
     },
     [],
   );
-  const removeUnNeedAssets = useCallback((addresses: string[]) => {
-    const allAddresses = new Set([
-      ...Object.keys(getAssetsMapDirectly('tokens')),
-      ...Object.keys(getAssetsMapDirectly('portfolios')),
-      ...Object.keys(getAssetsMapDirectly('nfts')),
-    ]);
-
-    allAddresses.forEach(address => {
-      if (!addresses.find(i => isSameAddress(i, address))) {
-        updateAssetListByAddress(address, { type: 'tokens', data: [] });
-        updateAssetListByAddress(address, { type: 'portfolios', data: [] });
-        updateAssetListByAddress(address, { type: 'nfts', data: [] });
-      }
-    });
-  }, []);
 
   const checkIsExpireAndUpdate = useCallback(
     async (
@@ -523,7 +506,7 @@ export const useAssets = ({
         setIsFirstFetch(false);
       }
     },
-    [top10Addresses, removeUnNeedAssets, loadToken, loadDefi, loadNFT],
+    [top10Addresses, loadToken, loadDefi, loadNFT],
   );
   const getCacheTop10Assets = useCallback(
     async (options?: {
@@ -600,7 +583,6 @@ export const useAssets = ({
     },
     [
       top10Addresses,
-      removeUnNeedAssets,
       shortCache,
       batchLoadCacheTokens,
       batchLoadCacheDefi,
@@ -619,7 +601,7 @@ export const useAssets = ({
 
       updateTokenList.forEach(({ address, token }) => {
         const lowerAddress = address?.toLowerCase?.() || address;
-        const preTokens = tokensMap[lowerAddress] || [];
+        const preTokens = getAssetsMapDirectly('tokens')[lowerAddress] || [];
 
         const updatedTokens = preTokens.map(t => {
           const sameChain =
@@ -643,7 +625,7 @@ export const useAssets = ({
         });
       });
     },
-    [tokensMap],
+    [],
   );
 
   return {
@@ -651,7 +633,6 @@ export const useAssets = ({
     portfolios,
     nfts,
     isLoading,
-    getTokenCombined,
     hasAssets: !!tokens?.length || !!portfolios?.length,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
@@ -663,11 +644,237 @@ export const useAssets = ({
     updateTokensAmount,
     // Export individual maps and setters for direct access
     tokensMap,
+    tokensByDbId,
     // setTokensMap,
     portfoliosMap,
     // setPortfoliosMap,
     nftsMap,
     // setNftsMap,
+  };
+};
+
+export const useAssetsToken = () => {
+  const { isLoading, isFirstFetch, shortCache } = assetsStateStore(
+    useShallow(s => ({
+      isLoading: s.loading,
+      isFirstFetch: s.isFirstFetch,
+      shortCache: s.shortCache,
+    })),
+  );
+
+  const { top10Addresses, tokensByDbId } = useAssetsMap();
+
+  const loadToken = useCallback(
+    async (address: string, force?: boolean, updateReturn?: boolean) => {
+      if (!address) {
+        return;
+      }
+      try {
+        const walletProject = new DisplayedProject({
+          id: 'Wallet',
+          name: 'Wallet',
+        });
+
+        let _data = produce(walletProject, draft => {
+          draft.netWorth = 0;
+          draft._netWorth = '$0';
+          draft._netWorthChange = '-';
+          draft.netWorthChange = 0;
+          draft._netWorthChangePercent = '';
+          draft._portfolioDict = {};
+          draft._portfolios = [];
+          draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
+        });
+
+        let _tokens: AbstractPortfolioToken[] = [];
+
+        const tokenRes = await syncTokens(address, {
+          force: force,
+          onlySync: updateReturn ? false : !force,
+          isV2: true,
+        });
+        if (!tokenRes.length) {
+          return;
+        }
+        const tokenSettings =
+          (await preferenceService.getUserTokenSettings()) || {};
+
+        const tokensDict: Record<string, TokenItem[]> = {};
+        tokenRes.forEach(token => {
+          if (!tokensDict[token.chain]) {
+            tokensDict[token.chain] = [];
+          }
+          tokensDict[token.chain].push(token);
+        });
+
+        _data = produce(_data, draft => {
+          setWalletTokens(draft, tokensDict);
+        });
+
+        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+
+        updateAssetListByAddress(address, {
+          type: 'tokens',
+          data: filterDisplayToken(_tokens),
+        });
+      } catch (error) {
+        console.error('ServiceErrorType.Tokens', error);
+      }
+    },
+    [],
+  );
+
+  const batchLoadCacheTokens = useCallback(
+    async (
+      addresses: string[],
+      setting: any,
+      options?: {
+        core?: boolean;
+        maxLength?: number;
+      },
+    ) => {
+      if (!addresses.length) {
+        return;
+      }
+      setLoading(true);
+      const cachedTokens = await TokenItemEntity.batchMultiAddressTokens(
+        addresses,
+        options?.core,
+        options?.maxLength,
+      );
+      if (!cachedTokens.length) {
+        setLoading(false);
+        return;
+      }
+      const assetGroup = _.groupBy(cachedTokens, 'owner_addr');
+      const formatAssetMap = _.mapValues(assetGroup, group => {
+        const walletProject = new DisplayedProject({
+          id: 'Wallet',
+          name: 'Wallet',
+        });
+
+        let _data = produce(walletProject, draft => {
+          draft.netWorth = 0;
+          draft._netWorth = '$0';
+          draft._netWorthChange = '-';
+          draft.netWorthChange = 0;
+          draft._netWorthChangePercent = '';
+          draft._portfolioDict = {};
+          draft._portfolios = [];
+          draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
+        });
+
+        const chainTokens = group.reduce((m, n) => {
+          m[n.chain] = m[n.chain] || [];
+          m[n.chain].push(n);
+
+          return m;
+        }, {} as Record<string, TokenItem[]>);
+        _data = produce(_data, draft => {
+          setWalletTokens(draft, chainTokens);
+        });
+
+        const _tokens: AbstractPortfolioToken[] = tagTokenList(
+          sortWalletTokens(_data),
+          setting,
+        );
+        return filterDisplayToken(_tokens);
+      });
+
+      Object.keys(formatAssetMap).forEach(address => {
+        updateAssetListByAddress(address, {
+          type: 'tokens',
+          data: formatAssetMap[address],
+        });
+      });
+
+      setLoading(false);
+    },
+    [],
+  );
+
+  const checkIsExpireAndUpdate = useCallback(
+    async (
+      force?: boolean,
+      options?: {
+        realTimeAddresses?: string[];
+        ignoreLoading?: boolean;
+        updateReturn?: boolean;
+      },
+    ) => {
+      const addresses = options?.realTimeAddresses || [
+        ...new Set(top10Addresses),
+      ];
+      removeUnNeedAssets(addresses);
+      if (!options?.ignoreLoading) {
+        setLoading(true);
+      }
+      try {
+        for (const address of addresses) {
+          try {
+            await loadToken(address, force, options?.updateReturn);
+          } catch (error) {
+            console.error(
+              `Error fetching data for ${address.slice(-4)}:`,
+              error,
+            );
+          }
+        }
+        await new Promise(resolve => setTimeout(resolve, 0));
+      } finally {
+        setLoading(false);
+        setIsFirstFetch(false);
+      }
+    },
+    [top10Addresses, loadToken],
+  );
+  const getCacheTop10Assets = useCallback(
+    async (options?: {
+      disableToken?: boolean;
+      realTimeAddresses?: string[];
+      core?: boolean;
+      maxTokenLength?: number;
+    }) => {
+      const { disableToken } = options || {};
+      const addresses = options?.realTimeAddresses || [
+        ...new Set(top10Addresses),
+      ];
+      removeUnNeedAssets(addresses);
+      const isCurrentShortCacheFetch = !!options?.maxTokenLength;
+
+      const hasTokensCache =
+        Object.keys(getAssetsMapDirectly('tokens')).length > 0;
+
+      let hasRequiredCache = true;
+      if (!disableToken && !hasTokensCache) {
+        hasRequiredCache = false;
+      }
+
+      if (hasRequiredCache && !shortCache) {
+        return;
+      }
+      if (shortCache && isCurrentShortCacheFetch && hasRequiredCache) {
+        return;
+      }
+      setShortCache(!!options?.maxTokenLength);
+
+      const tokenSetting = await preferenceService.getUserTokenSettings();
+      !disableToken &&
+        (await batchLoadCacheTokens(addresses, tokenSetting, {
+          core: options?.core,
+          maxLength: options?.maxTokenLength,
+        }));
+    },
+    [top10Addresses, shortCache, batchLoadCacheTokens],
+  );
+
+  return {
+    isLoading,
+    getCacheTop10Assets,
+    checkIsExpireAndUpdate,
+    batchLoadCacheTokens,
+    refreshing: !!isLoading && !isFirstFetch,
+    tokensByDbId,
   };
 };
 

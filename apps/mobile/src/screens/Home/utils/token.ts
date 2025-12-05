@@ -15,7 +15,7 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { BalanceEntity } from '@/databases/entities/balance';
 
-export const queryTokensCache = makeSWRKeyAsyncFunc(
+export const queryTokensCacheFromApi = makeSWRKeyAsyncFunc(
   (user_id: string, isTestnet: boolean = false) => {
     return requestOpenApiWithChainId(
       ({ openapi }) => openapi.getCachedTokenList(user_id),
@@ -27,7 +27,7 @@ export const queryTokensCache = makeSWRKeyAsyncFunc(
   ctx => [`${ctx.args[0]}-${ctx.args[1]}`],
 );
 
-const batchQueryTokens = makeSWRKeyAsyncFunc(
+const batchQueryTokensFromApi = makeSWRKeyAsyncFunc(
   async (
     user_id: string,
     chainId?: string,
@@ -99,26 +99,37 @@ export const batchQueryTokensWithLocalCache = async (
     chainId?: string;
     isTestnet?: boolean;
   },
-  force?: boolean,
-  onlySync?: boolean,
-  isV2 = false,
+  options?: {
+    force?: boolean;
+    /** @deprecated maybe it should rename to `returnEmptyListOnUseLocalCache` */
+    onlySync?: boolean;
+    isV2?: boolean;
+  },
 ) => {
   const {
     user_id,
     chainId,
     isTestnet = !chainId ? false : checkIsTestnet(chainId),
   } = params;
+  const { force = false, onlySync = false } = options || {};
+
   if (!chainId && !isTestnet) {
     const isExpired = await TokenItemEntity.isExpired(user_id);
+
     if (force || isExpired) {
-      const tokens = await batchQueryTokens(user_id, chainId, isTestnet, isV2);
+      const tokens = await batchQueryTokensFromApi(
+        user_id,
+        chainId,
+        isTestnet,
+        options?.isV2,
+      );
       syncRemoteTokens(user_id, [...tokens]);
       return tokens;
     } else {
       return onlySync ? [] : TokenItemEntity.batchQueryTokens(user_id);
     }
   }
-  return batchQueryTokens(user_id, chainId, isTestnet, isV2);
+  return batchQueryTokensFromApi(user_id, chainId, isTestnet, options?.isV2);
 };
 
 export const batchQueryHistoryTokens = async (

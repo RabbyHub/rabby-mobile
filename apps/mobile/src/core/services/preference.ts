@@ -8,6 +8,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS_ENUM } from '@/constant/chains';
 import createPersistStore, {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { BroadcastEvent } from '@/constant/event';
@@ -83,7 +84,7 @@ export type ITokenSetting = {
   includeDefiAndTokens?: IDefiOrToken[];
   excludeDefiAndTokens?: IDefiOrToken[];
   foldNfts?: IManageNft[];
-  unfoldNfts?: IManageNft[];
+  unFoldNfts?: IManageNft[];
   foldDefis?: string[];
   unFoldDefis?: string[];
 };
@@ -202,9 +203,11 @@ export type SetCurrentAccountOptions = {
   needSyncToSession?: boolean;
 };
 
-export class PreferenceService {
+export class PreferenceService extends StoreServiceBase<
+  PreferenceStore,
+  APP_STORE_NAMES.preference
+> {
   [x: string]: any;
-  store!: PreferenceStore;
   keyringService: KeyringService;
   sessionService: import('./session').SessionService;
   // globalSerivceEvents: typeof import('../apis/serviceEvent').globalSerivceEvents;
@@ -218,60 +221,56 @@ export class PreferenceService {
     },
   ) {
     const defaultLang = 'en';
-    this.keyringService = options.keyringService;
-    this.sessionService = options.sessionService;
-    this.store = createPersistStore<PreferenceStore>(
+    super(
+      APP_STORE_NAMES.preference,
       {
-        name: APP_STORE_NAMES.preference,
-        template: {
-          currentAccount: undefined,
-          balanceMap: {},
-          testnetBalanceMap: {},
-          locale: defaultLang,
-          lastTimeSendToken: {},
-          pinAddresses: [],
-          foldDefis: [],
-          unFoldDefis: [],
-          foldNfts: [],
-          unFoldNfts: [],
-          gasCache: {},
-          currentVersion: '0',
-          pinnedChain: [],
-          tokenApprovalChain: {},
-          nftApprovalChain: {},
-          sendLogTime: 0,
-          sendEnableTime: 0,
-          customizedToken: [],
-          blockedToken: [],
-          collectionStarred: [],
-          reportActionTsSet: {} as Record<REPORT_TIMEOUT_ACTION_KEY, number>,
-          currentReportActionStats: REPORT_TIMEOUT_ACTION_KEY.NONE,
-          hiddenBalance: false,
-          isShowTestnet: false,
-          autoLockTime: DEFAULT_AUTO_LOCK_MINUTES,
-          // themeMode: DARK_MODE_TYPE.light,
-          addressSortStore: {
-            ...defaultAddressSortStore,
-          },
-          isInvited: false,
-          lastUsedAccount: undefined,
-          tempCurrentAccount: undefined,
-          tokenManageSettingMap: {},
-          safeSelfHostConfirm: {},
-          addressAvatarMap: {},
-          hasOpenCopyTrading: false,
-          watchlistSkip: false,
-          balanceHideType: BALANCE_HIDE_TYPE.SHOW,
-          currency: 'USD',
-          hasShowAsterReferralMap: {},
-          hasShowAsterPopup: false,
-          hyperliquidInvite: {
-            lastTime: 0,
-          },
+        currentAccount: undefined,
+        balanceMap: {},
+        testnetBalanceMap: {},
+        locale: defaultLang,
+        lastTimeSendToken: {},
+        pinAddresses: [],
+        foldDefis: [],
+        unFoldDefis: [],
+        foldNfts: [],
+        unFoldNfts: [],
+        gasCache: {},
+        currentVersion: '0',
+        pinnedChain: [],
+        tokenApprovalChain: {},
+        nftApprovalChain: {},
+        sendLogTime: 0,
+        sendEnableTime: 0,
+        customizedToken: [],
+        blockedToken: [],
+        collectionStarred: [],
+        reportActionTsSet: {} as Record<REPORT_TIMEOUT_ACTION_KEY, number>,
+        currentReportActionStats: REPORT_TIMEOUT_ACTION_KEY.NONE,
+        hiddenBalance: false,
+        isShowTestnet: false,
+        autoLockTime: DEFAULT_AUTO_LOCK_MINUTES,
+        // themeMode: DARK_MODE_TYPE.light,
+        addressSortStore: {
+          ...defaultAddressSortStore,
+        },
+        isInvited: false,
+        lastUsedAccount: undefined,
+        tempCurrentAccount: undefined,
+        tokenManageSettingMap: {},
+        safeSelfHostConfirm: {},
+        addressAvatarMap: {},
+        hasOpenCopyTrading: false,
+        watchlistSkip: false,
+        balanceHideType: BALANCE_HIDE_TYPE.SHOW,
+        currency: 'USD',
+        hasShowAsterReferralMap: {},
+        hasShowAsterPopup: false,
+        hyperliquidInvite: {
+          lastTime: 0,
         },
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
         beforePersist(obj) {
           if (!obj) {
             const msg = `[preferenceService] preference set as nil value (${obj}), it's unexpected`;
@@ -281,6 +280,10 @@ export class PreferenceService {
         },
       },
     );
+
+    this.keyringService = options.keyringService;
+    this.sessionService = options.sessionService;
+
     // reset current account if app not closed properly
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;
@@ -1015,7 +1018,7 @@ export class PreferenceService {
     return this.getUserTokenSettingsSync();
   };
 
-  getUserTokenSettingsSync = () => {
+  getUserTokenSettingsSync = (): ITokenSetting => {
     return {
       foldTokens: this.store.foldTokens || [],
       unfoldTokens: this.store.unfoldTokens || [],
@@ -1023,7 +1026,7 @@ export class PreferenceService {
       excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
       pinedQueue: this.store.pinedQueue || [],
       foldNfts: this.store.foldNfts || [],
-      unfoldNfts: this.store.unFoldNfts || [],
+      unFoldNfts: this.store.unFoldNfts || [],
       foldDefis: [],
       // foldDefis: this.store.foldDefis || [],
       unFoldDefis: [],

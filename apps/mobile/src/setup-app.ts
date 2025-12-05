@@ -4,7 +4,8 @@ import {
   setNativeExceptionHandler,
 } from 'react-native-exception-handler';
 import { initSentry } from './core/sentry';
-import './perfs/bundle-splitter-analysis.ts';
+import './perfs/bundle-splitter-analysis';
+import './perfs/global-dev-helpers';
 import './databases/orm';
 import './core/services';
 import './core/utils/fonts';

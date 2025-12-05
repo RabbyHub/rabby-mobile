@@ -650,7 +650,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
         const isPined =
           $originMaybeToken.isPined ||
-          userTokenSettings.pinedQueue.some(
+          (userTokenSettings.pinedQueue || []).some(
             pinned =>
               pinned.chainId === $originMaybeToken?.chain &&
               pinned.tokenId === $originMaybeToken?.id,

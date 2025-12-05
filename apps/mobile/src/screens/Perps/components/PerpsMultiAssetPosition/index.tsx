@@ -193,7 +193,6 @@ export const PerpsSingleAssetPosition: React.FC<{
     if (!account) {
       return resList;
     }
-
     if (!clearinghouseState) {
       return resList;
     }

@@ -36,7 +36,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
 
   const isPined = useMemo(
     () =>
-      userTokenSettings.pinedQueue.some(
+      (userTokenSettings.pinedQueue || []).some(
         pinned => pinned.chainId === token.chain && pinned.tokenId === token.id,
       ),
     [token.chain, token.id, userTokenSettings.pinedQueue],

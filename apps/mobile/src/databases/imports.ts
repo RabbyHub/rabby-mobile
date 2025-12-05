@@ -1,5 +1,6 @@
 import RNHelpers from '@/core/native/RNHelpers';
 import { DataSource, DataSourceOptions } from 'typeorm/browser';
+import { FULL_INMEMORY_PREFIX } from './constant';
 // import * as Sentry from '@sentry/react-native';
 
 const appDataSourceInitRef = {
@@ -42,6 +43,32 @@ export async function initializeAppDataSource(
         try {
           // don't drop database, if schema was changed, we need migrate rather than drop
           await as.synchronize(false);
+
+          // clear all table started with $INMEMORY_PREFIX
+          Promise.allSettled([
+            as.entityMetadatas.map(async entityMetadata => {
+              console.debug(
+                '[initializeAppDataSource] entityMetadata.tableName',
+                entityMetadata.tableName,
+              );
+              try {
+                if (entityMetadata.tableName.startsWith(FULL_INMEMORY_PREFIX)) {
+                  const repo = appDataSource.getRepository(
+                    entityMetadata.target,
+                  );
+                  console.debug(
+                    `[initializeAppDataSource] cleared in_memory helper table ${entityMetadata.tableName}`,
+                  );
+
+                  return repo.clear();
+                }
+              } catch (error) {
+                console.debug(
+                  `[initializeAppDataSource] error occured on dropping table ${entityMetadata.tableName}`,
+                );
+              }
+            }),
+          ]);
         } catch (error) {
           console.error('[initializeAppDataSource] error', error);
           throw error;

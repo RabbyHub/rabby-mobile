@@ -9,26 +9,14 @@ import {
 
 // @see ../../../node_modules/typeorm/browser/driver/react-native/ReactNativeDriver.js
 // see all types supported by driver from it
-export class EntityBaseWithoutId extends BaseEntity {
+export class ViewBaseWithoutId extends BaseEntity {
   @CreateDateColumn({ type: 'integer' }) _local_created_at: number = Date.now();
   @UpdateDateColumn({ type: 'integer' }) _local_updated_at: number = Date.now();
 }
 
 type OwnerAddress = string;
 
-export abstract class EntityInMemoryBase extends EntityBaseWithoutId {
+export abstract class ViewBase extends ViewBaseWithoutId {
   @PrimaryColumn({ type: 'text' })
   _db_id: `${OwnerAddress}${string}` = '';
-
-  abstract makeDbId(): string;
-}
-
-export abstract class EntityAddressAssetBase extends EntityBaseWithoutId {
-  @PrimaryColumn({ type: 'text' })
-  _db_id: `${OwnerAddress}${string}` = '0x-';
-
-  abstract makeDbId(): string;
-
-  @Column('text')
-  owner_addr: string = '0x';
 }

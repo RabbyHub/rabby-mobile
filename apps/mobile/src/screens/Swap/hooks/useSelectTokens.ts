@@ -192,7 +192,10 @@ export const useSelectTokens = ({
           ],
           fn: async signal => {
             // if token exist and not expired, don't sync to store
-            const tokenRes = await syncTokens(address, force, tokensExisted);
+            const tokenRes = await syncTokens(address, {
+              force,
+              onlySync: tokensExisted,
+            });
             if (!tokenRes.length) return;
 
             updateTokens({

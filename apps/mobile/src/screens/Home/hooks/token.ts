@@ -8,7 +8,7 @@ import { preferenceService } from '@/core/services';
 import { atom, useAtom } from 'jotai';
 import { DisplayedProject } from '../utils/project';
 import {
-  queryTokensCache,
+  queryTokensCacheFromApi,
   setWalletTokens,
   sortWalletTokens,
   tagTokenList,
@@ -101,7 +101,7 @@ export const useTokens = (
         ) {
           const snapshot = cachedTokens.length
             ? cachedTokens
-            : await queryTokensCache(userAddr);
+            : await queryTokensCacheFromApi(userAddr);
           if (snapshot?.length) {
             const chainTokens = snapshot.reduce((m, n) => {
               m[n.chain] = m[n.chain] || [];
@@ -119,7 +119,7 @@ export const useTokens = (
           }
         }
 
-        const tokenRes = await syncTokens(userAddr, force);
+        const tokenRes = await syncTokens(userAddr, { force });
 
         const tokensDict: Record<string, TokenItem[]> = {};
         tokenRes.forEach(token => {
