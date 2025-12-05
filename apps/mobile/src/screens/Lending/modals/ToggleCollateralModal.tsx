@@ -285,6 +285,10 @@ function ToggleCollateralContent({
               setIsShowToggleCollateralModal(false);
               return;
             }
+            if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
+              handleToggleCollateral(true);
+              return;
+            }
             toast.error(t('page.Lending.toggleCollateralDetail.error'));
             setIsShowToggleCollateralModal(true);
             return;

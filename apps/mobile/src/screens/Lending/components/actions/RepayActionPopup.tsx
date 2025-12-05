@@ -55,6 +55,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [_amount, setAmount] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMiniSigning, setIsMiniSigning] = useState(false);
   const [needApprove, setNeedApprove] = useState(false);
   const [repayTx, setRepayTx] = useState<any>(null);
   const { refresh } = useRefreshHistoryId();
@@ -352,6 +353,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         }
         let results: string[] = [];
         if (canShowDirectSubmit && !forceFullSign) {
+          setIsMiniSigning(true);
           try {
             results = await openDirect({
               txs: txsForMiniApproval,
@@ -364,13 +366,14 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
             if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
               setAmount(undefined);
               onClose?.();
-              return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
               handleRepay(true);
-              return;
             }
+            setIsMiniSigning(false);
+            return;
           }
+          setIsMiniSigning(false);
         } else {
           for (const tx of txsForMiniApproval) {
             const result = await apiProvider.sendRequest({
@@ -521,16 +524,19 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           afterHF={afterHF}
         />
 
-        {!!amount && amount !== '0' && canShowDirectSubmit && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
-              loading={isLoading}
-              openShowMore={noop}
-              chainServeId={chainInfo?.serverId || ''}
-            />
-          </View>
-        )}
+        {!!amount &&
+          amount !== '0' &&
+          canShowDirectSubmit &&
+          !isMiniSigning && (
+            <View style={styles.gasPreContainer}>
+              <DirectSignGasInfo
+                supportDirectSign={true}
+                loading={isLoading}
+                openShowMore={noop}
+                chainServeId={chainInfo?.serverId || ''}
+              />
+            </View>
+          )}
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>
