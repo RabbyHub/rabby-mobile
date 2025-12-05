@@ -287,6 +287,9 @@
     },
     "portfolios": {
       "manage": "Gerir"
+    },
+    "multiAddressModal": {
+      "title": "Carteiras"
     }
   },
   "global": {
@@ -364,7 +367,8 @@
     "gotIt": "Entendi",
     "check": "Verifique",
     "Dapp": "Dapp",
-    "Token": "Token"
+    "Token": "Token",
+    "GotIt": "Entendi"
   },
   "page": {
     "getStart": {
@@ -1129,7 +1133,25 @@
       "gas-x-price": "Preço do Gas: {{price}} Gwei.",
       "duration": "{{duration}} min",
       "bridged": "Ponte",
-      "gasFeeTooHight": "A taxa de Gas é superior ao normal. Confirme apenas se desejar prosseguir."
+      "gasFeeTooHight": "A taxa de Gas é superior ao normal. Confirme apenas se desejar prosseguir.",
+      "pendingItem": {
+        "swap": "Trocar",
+        "completed": "Concluído",
+        "bridgeStatus": "Estado da Ponte",
+        "pending": "Pendentes",
+        "failed": "Falhou",
+        "beReturnFailed": "A ponte falhou. Os seus ativos foram devolvidos.",
+        "receivedDifferentTokenFromSource": "A ponte falhou. Um token diferente foi retornado na cadeia de origem.",
+        "fromFailed": "A transação não foi concluída. Tente novamente.",
+        "estimatedTime": "Tempo estimado",
+        "sendingFrom": "A enviar de {{chain}}",
+        "receivingTo": "Recebendo em {{chain}}",
+        "receivedDifferentTokenNeedSwap": "Você recebeu um token diferente. Você pode trocá-lo pelo token que selecionou.",
+        "longTimeNoReceive": "A rede está ocupada. Isso pode levar mais tempo do que o habitual. Por favor, aguarde pacientemente.",
+        "queued": "Em fila",
+        "BridgeStatusUnavailable": "Estado da bridge indisponível. Por favor, verifique o seu histórico de transações para confirmar que os fundos chegaram."
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "dashboard": {
       "home": {
@@ -2364,7 +2386,9 @@
       "sentTimeHeader": "Enviado",
       "sendToImportedAddress": "Enviar para as Minhas Carteiras Importadas",
       "sendToSafeAddress": "Enviar para Carteiras Seguras",
-      "sendToWatchAddress": "Enviar para carteiras somente de visualização"
+      "sendToWatchAddress": "Enviar para carteiras somente de visualização",
+      "dividerWatchOnlyWallets": "Endereços apenas para visualização",
+      "enterOrSearchAddress": "Introduza ou Pesquise Endereço"
     },
     "confirmAddress": {
       "risks": {
@@ -2764,11 +2788,16 @@
         "liquidationPrice": "Preço de Liquidação",
         "title": "Nível de Risco",
         "liqIntro": "A Distância de Liquidação (%) mostra quão longe o preço atual está do seu preço de liquidação. Uma distância maior indica uma posição mais segura, enquanto uma distância menor significa um risco de liquidação mais alto.",
-        "distanceLabel": "Distância de Liquidação"
+        "distanceLabel": "Distância de Liquidação",
+        "liqDistanceTipsShort": "Subir <1>{{distance}}</1> irá ativar a liquidação.",
+        "liqDistanceTipsLong": "Descer <1>{{distance}}</1> acionará a liquidação."
       },
       "closeAll": "Fechar Tudo",
       "closeAllConfirmMessage": "Todas as suas posições abertas serão fechadas ao preço de mercado.",
-      "closeAllConfirmTitle": "Confirmar Fechar Todas as Posições"
+      "closeAllConfirmTitle": "Confirmar Fechar Todas as Posições",
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid Position"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2793,7 +2822,9 @@
         "size": "Tamanho",
         "tpPrice": "Preço de Take-Profit",
         "marginCross": "Margem (Cross)",
-        "isolated": "Isolado"
+        "isolated": "Isolado",
+        "fundingGainsTips": "Este é o ganho líquido de financiamento desde que a posição foi aberta. O financiamento é uma taxa horária que os comerciantes pagam ou recebem para manter o preço do contrato perp próximo ao preço real do token.",
+        "fundingGains": "Financiamento de Ganhos"
       },
       "PerpsInfo": {
         "funding": "Financiamento",
@@ -2801,14 +2832,15 @@
         "title": "Info",
         "openInterestTips": "A posição total em aberto de todos os utilizadores neste contrato.",
         "fundingTips": "Esta é uma taxa horária que os traders pagam ou recebem para manter o preço do contrato perp próximo ao preço real do token. Se positivo, long paga short. Se negativo, short paga long.",
-        "openInterest": "Interesse em Aberto"
+        "openInterest": "Interesse em Aberto",
+        "fundingRate": "Taxa de Financiamento"
       },
       "PerpsIntro": {
         "title": "O que são Perps?",
         "desc": "Negociar contratos perpétuos envolve riscos significativos, incluindo a possibilidade de perder rapidamente seu investimento e colateral devido à alta alavancagem e volatilidade do mercado. Esse tipo de negociação pode não ser adequado para todos os usuários. Os preços podem ser afetados por taxas de financiamento e liquidez, e você pode ser automaticamente liquidado sem aviso prévio. Os dados do mercado são fornecidos pela Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "",
+        "title": "Fechar Posição",
         "positionSize": "Tamanho da Posição",
         "fee": "Taxa:",
         "pnl": "PNL",
@@ -2839,7 +2871,10 @@
         "stopLossWhen": "Parar Perda Quando",
         "takeProfitWhenPriceAbove": "Levar Lucro Quando o Preço Estiver Acima",
         "stopLossWhenPriceBelow": "Stop Loss Quando o Preço Estiver Abaixo",
-        "takeProfitWhenPriceBelow": "Levar Lucro Quando o Preço Estiver Abaixo"
+        "takeProfitWhenPriceBelow": "Levar Lucro Quando o Preço Estiver Abaixo",
+        "maxMargin": "Margem máxima é {{amount}}",
+        "upTo": "Até",
+        "minMargin": "A margem mínima é {{amount}}"
       },
       "PerpsOpenPositionCheckPopup": {
         "initialMargin": "Margem Inicial",
@@ -2867,7 +2902,9 @@
         "long": "Long: Comprar",
         "closePosition": "Fechar Posição {{direction}}",
         "noPermission": "A abertura de posições não é suportada na sua região.",
-        "short": "Vender"
+        "short": "Vender",
+        "add": "Adicionar",
+        "close": "Fechar"
       },
       "PerpsAutoCloseModal": {
         "setTpPrice": "Definir Preço de Lucro",
@@ -2899,8 +2936,16 @@
         "reduceMargin": "Reduzir Margem",
         "addMargin": "Adicionar Margem",
         "liqPrice": "Preço de Liquidação:",
-        "amountToAdd": "Montante a adicionar"
-      }
+        "amountToAdd": "Montante a adicionar",
+        "liqDistance": "Liq.Distância"
+      },
+      "PerpsAddPositionPopup": {
+        "addToLong": "Adicionar a Longo",
+        "addSize": "Adicionar Tamanho",
+        "totalSize": "Tamanho Total",
+        "addToShort": "Adicionar ao Short"
+      },
+      "needDepositFirst": "Você precisa depositar fundos primeiro."
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Página Integrada"

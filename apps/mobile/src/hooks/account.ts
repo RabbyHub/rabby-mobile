@@ -27,7 +27,6 @@ import { coerceFloat } from '@/utils/number';
 import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import * as apiBalance from '@/core/apis/balance';
 import { useAtomicRequest } from './common/useAtomicAction';
-import { appServiceEvents } from '@/core/services/_utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
@@ -35,13 +34,13 @@ import { isEqual, unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
 import { useHistoryTokenDict } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
-// import { balanceAtom } from './useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { fetchAllAccounts, KeyringAccountWithAlias } from '@/core/apis/account';
 import { zCreate } from '@/core/utils/reexports';
 import {
   makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
+  runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
@@ -50,22 +49,7 @@ import { sortAccountList } from '@/utils/sortAccountList';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
-// const accountsAtom = atom<KeyringAccountWithAlias[]>([]);
-// accountsAtom.onMount = setAtom => {
-//   fetchAllAccounts().then(accounts => {
-//     setAtom(accounts || []);
-//   });
-// };
-
-// export const currentAccountAtom = atom<null | KeyringAccountWithAlias>(null);
-
 const fetchingAccountsAtom = atom(false);
-
-// const pinAddressesAtom = atom<IPinAddress[]>([]);
-// pinAddressesAtom.onMount = setAtom => {
-//   const addresses = preferenceService.getPinAddresses();
-//   setAtom(addresses);
-// };
 
 type Store = {
   accounts: KeyringAccountWithAlias[];
@@ -78,9 +62,17 @@ const zAccountStore = zCreate<Store>((set, get) => {
     accounts: [],
     // fetchingAccounts: false,
 
-    pinnedAddresses: [],
+    pinnedAddresses: preferenceService.getPinAddresses(),
     currentAccount: null,
   };
+});
+
+runIIFEFunc(() => {
+  keyringService.once('unlock', () => {
+    fetchAllAccounts().then(accounts => {
+      setAccounts(accounts);
+    });
+  });
 });
 
 function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
