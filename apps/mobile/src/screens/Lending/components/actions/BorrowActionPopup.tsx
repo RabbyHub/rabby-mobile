@@ -62,7 +62,6 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const { refresh } = useRefreshHistoryId();
   const [isLoading, setIsLoading] = useState(false);
-  const [isMiniSigning, setIsMiniSigning] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
   const { t } = useTranslation();
 
@@ -181,7 +180,6 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         }
         let results: string[] = [];
         if (canShowDirectSubmit && !forceFullSign) {
-          setIsMiniSigning(true);
           try {
             results = await openDirect({
               txs,
@@ -198,10 +196,8 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
               handleBorrow(true);
             }
-            setIsMiniSigning(false);
             return;
           }
-          setIsMiniSigning(false);
         } else {
           for (const tx of txs) {
             const result = await apiProvider.sendRequest({
@@ -373,19 +369,16 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           afterHF={afterHF}
         />
 
-        {canShowDirectSubmit &&
-          !isMiniSigning &&
-          !!amount &&
-          amount !== '0' && (
-            <View style={styles.gasPreContainer}>
-              <DirectSignGasInfo
-                supportDirectSign={true}
-                loading={isLoading}
-                openShowMore={noop}
-                chainServeId={chainInfo?.serverId || ''}
-              />
-            </View>
-          )}
+        {canShowDirectSubmit && !!amount && amount !== '0' && (
+          <View style={styles.gasPreContainer}>
+            <DirectSignGasInfo
+              supportDirectSign={true}
+              loading={false}
+              openShowMore={noop}
+              chainServeId={chainInfo?.serverId || ''}
+            />
+          </View>
+        )}
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>

@@ -61,7 +61,6 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [needApprove, setNeedApprove] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isMiniSigning, setIsMiniSigning] = useState(false);
   const [supplyTx, setSupplyTx] = useState<any>(null);
   const [approveTxs, setApproveTxs] = useState<any>();
   const { refresh } = useRefreshHistoryId();
@@ -394,7 +393,6 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         }
         let results: string[] = [];
         if (canShowDirectSubmit && !forceFullSign) {
-          setIsMiniSigning(true);
           try {
             results = await openDirect({
               txs: txsForMiniApproval,
@@ -411,10 +409,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
               handleSupply(true);
             }
-            setIsMiniSigning(false);
             return;
           }
-          setIsMiniSigning(false);
         } else {
           for (const tx of txsForMiniApproval) {
             const result = await apiProvider.sendRequest({
@@ -531,19 +527,16 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           afterAvailable={afterAvailable}
         />
 
-        {!!amount &&
-          amount !== '0' &&
-          canShowDirectSubmit &&
-          !isMiniSigning && (
-            <View style={styles.gasPreContainer}>
-              <DirectSignGasInfo
-                supportDirectSign={true}
-                loading={isLoading}
-                openShowMore={noop}
-                chainServeId={chainInfo?.serverId || ''}
-              />
-            </View>
-          )}
+        {!!amount && amount !== '0' && canShowDirectSubmit && (
+          <View style={styles.gasPreContainer}>
+            <DirectSignGasInfo
+              supportDirectSign={true}
+              loading={false}
+              openShowMore={noop}
+              chainServeId={chainInfo?.serverId || ''}
+            />
+          </View>
+        )}
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>
