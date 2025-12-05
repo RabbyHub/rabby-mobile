@@ -359,16 +359,6 @@ export const SignTestnetTx = ({
     //   ),
     // );
     setCurrentAccountType(currentAccount.type);
-    stats.report('createTransaction', {
-      type: currentAccount.brandName,
-      category: KEYRING_CATEGORY_MAP[currentAccount.type],
-      chainId: chain?.serverId || '',
-      createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-      source: params?.$ctx?.ga?.source || '',
-      trigger: params?.$ctx?.ga?.trigger || '',
-      networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
-      swapUseSlider: params?.$ctx?.ga.swapUseSlider ?? '',
-    });
 
     matomoRequestEvent({
       category: 'Transaction',
@@ -434,6 +424,18 @@ export const SignTestnetTx = ({
       // no cache, use the fast level in gasMarket
       gas = gasList.find(item => item.level === 'normal')!;
     }
+    stats.report('createTransaction', {
+      type: currentAccount.brandName,
+      category: KEYRING_CATEGORY_MAP[currentAccount.type],
+      chainId: chain?.serverId || '',
+      createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+      source: params?.$ctx?.ga?.source || '',
+      trigger: params?.$ctx?.ga?.trigger || '',
+      networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
+      swapUseSlider: params?.$ctx?.ga.swapUseSlider ?? '',
+      gasLevel: gas.level || 'normal',
+    });
+
     setSelectedGas(gas);
     setTx({
       ...tx,

@@ -72,6 +72,7 @@ import {
   setRetryTxRecommendNonce,
 } from '@/utils/errorTxRetry';
 import { t } from 'i18next';
+import miscService from '@/core/services/misc';
 
 async function recomputeExplainForCalcItems(params: {
   chainId: number;
@@ -703,6 +704,8 @@ export class SignatureSteps {
         };
       }
   > {
+    miscService.setCurrentGasLevel(params?.selectedGas?.level);
+
     const {
       chainServerId,
       txsCalc,
