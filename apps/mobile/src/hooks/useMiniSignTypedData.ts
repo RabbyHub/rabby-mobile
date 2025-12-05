@@ -394,6 +394,7 @@ const executeSignTypedData = async ({
     const message =
       error instanceof Error ? error.message : String(error ?? 'Unknown error');
     store.rejectPending(message);
+    store.reset();
     return null;
   }
 
