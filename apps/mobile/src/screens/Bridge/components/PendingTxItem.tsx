@@ -544,7 +544,9 @@ const PendingStatusDetail = ({
   const toChain = findChain({ serverId: data.toToken?.chain || '' });
 
   const payUsdValue = useMemo(() => {
-    if (!data.fromToken?.price || !data.fromAmount) return '0';
+    if (!data.fromToken?.price || !data.fromAmount) {
+      return '0';
+    }
     return new BigNumber(data.fromAmount)
       .multipliedBy(data.fromToken.price)
       .toString();
@@ -557,13 +559,13 @@ const PendingStatusDetail = ({
       refreshEstTime >= 0
     ) {
       const elapsed = Date.now() - data.fromTxCompleteTs;
-      const estimatedDurationMs = data.estimatedDuration * 1000;
+      const estimatedDurationMs = Math.max(
+        data.estimatedDuration * 1000,
+        ONE_MINUTE_MS,
+      );
       const remainingDuration = estimatedDurationMs - elapsed;
-      if (elapsed > estimatedDurationMs * 2 && elapsed > 2 * ONE_MINUTE_MS) {
-        return -1;
-      }
       if (remainingDuration <= 0) {
-        return null;
+        return -1;
       }
       return Math.max(Math.round(remainingDuration / 60000), 1);
     }
@@ -999,7 +1001,7 @@ export const BridgePendingTxItem = ({
       Date.now() - historyData.createdAt > ONE_DAY_MS
     ) {
       transactionHistoryService.completeBridgeTxHistory(
-        historyData.hash,
+        historyData?.hash,
         historyData.fromChainId!,
         'failed',
       );
@@ -1010,6 +1012,7 @@ export const BridgePendingTxItem = ({
 
     setData(historyData);
     if (
+      historyData &&
       historyData.hash &&
       (historyData.status === 'pending' || historyData.status === 'fromSuccess')
     ) {
@@ -1021,8 +1024,9 @@ export const BridgePendingTxItem = ({
       });
       const bridgeHistoryList = res.history_list;
       if (bridgeHistoryList && bridgeHistoryList?.length > 0) {
+        const hash = historyData.acceleratedHash || historyData.hash;
         const findTx = bridgeHistoryList.find(
-          item => item.from_tx?.tx_id === historyData.hash,
+          item => item.from_tx?.tx_id === hash,
         );
         if (!findTx) {
           const currentTime = Date.now();
@@ -1096,7 +1100,7 @@ export const BridgePendingTxItem = ({
         return;
       }
 
-      const recentlyTxHash = data?.hash;
+      const recentlyTxHash = data?.acceleratedHash || data?.hash;
       const findTx = bridgeHistoryList.find(
         item => item.from_tx?.tx_id === recentlyTxHash,
       );
