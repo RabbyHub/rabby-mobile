@@ -83,7 +83,7 @@ import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { IExtractFromPromise } from '@/utils/type';
-import { useWhiteListAddress } from './useWhiteListAddress';
+import { useFindAddressByWhitelist } from './useWhiteListAddress';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { coerceNumber } from '@/utils/coerce';
 
@@ -1682,7 +1682,7 @@ export function useSendTokenForm({
     whitelist,
     enabled: whitelistEnabled,
     findAccountWithoutBalance,
-  } = useWhiteListAddress();
+  } = useFindAddressByWhitelist();
   const { recentHistory: recentSendToHistory, reFetch } =
     useRecentSendToHistoryFor(formValues.to);
 
@@ -1885,7 +1885,7 @@ export function useSendTokenFormik() {
 }
 
 type FoundAccountResult = IExtractFromPromise<
-  ReturnType<ReturnType<typeof useWhiteListAddress>['findAccount']>
+  ReturnType<ReturnType<typeof useFindAddressByWhitelist>['findAccount']>
 >;
 type ToAddressPositiveTips = {
   hasPositiveTips: boolean;

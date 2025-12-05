@@ -56,7 +56,7 @@ import { useMemoizedFn } from 'ahooks';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -615,7 +615,7 @@ export function useSendNFTForm({
     whitelist,
     enabled: whitelistEnabled,
     findAccountWithoutBalance,
-  } = useWhiteListAddress();
+  } = useFindAddressByWhitelist();
   const { recentHistory: recentSendToHistory, reFetch } =
     useRecentSendToHistoryFor(formValues.to);
 
@@ -782,7 +782,7 @@ export function useSendNFTFormik() {
 }
 
 type FoundAccountResult = Awaited<
-  ReturnType<ReturnType<typeof useWhiteListAddress>['findAccount']>
+  ReturnType<ReturnType<typeof useFindAddressByWhitelist>['findAccount']>
 >;
 type ToAddressPositiveTips = {
   hasPositiveTips: boolean;

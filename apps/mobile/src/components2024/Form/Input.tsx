@@ -292,12 +292,14 @@ const NextInputComponent = React.forwardRef<
 
     return (
       <WrapperComp
-        onPress={() => {
-          if (!Keyboard.isVisible()) {
-            inputRef.current?.blur();
-          }
-          inputRef.current?.focus();
-        }}>
+        {...(WrapperComp !== React.Fragment && {
+          onPress: () => {
+            if (!Keyboard.isVisible()) {
+              inputRef.current?.blur();
+            }
+            inputRef.current?.focus();
+          },
+        })}>
         <View
           {...viewProps}
           style={StyleSheet.flatten([

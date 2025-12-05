@@ -696,6 +696,7 @@
     "sendPoly": {
       "enterAddress": "Enter Address",
       "innerEnterAddress": "Enter Address / ENS",
+      "enterOrSearchAddress": "Enter or Search Address",
       "whitelistTitle": "Whitelist",
       "sendToImportedAddress": "Send to My Imported Wallets",
       "sendToWatchAddress": "Send to Watch-Only Wallets",
@@ -715,7 +716,8 @@
         "importedAddress": "Imported Wallet",
         "recentAddress": "Recent Sent Addresses"
       },
-      "sentTimeHeader": "Sent"
+      "sentTimeHeader": "Sent",
+      "dividerWatchOnlyWallets": "Watch-only addresses"
     },
     "confirmAddress": {
       "addToWhitelist": "Add to whitelist",
