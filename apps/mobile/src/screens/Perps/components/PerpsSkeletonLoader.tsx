@@ -2,7 +2,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
 const linearStyle = StyleSheet.create({
@@ -23,6 +24,45 @@ const Linear = () => {
         'rgba(190,190,190,.2)',
       ]}
     />
+  );
+};
+
+export const PerpsPositionSkeletonLoader: React.FC = () => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.positionSection}>
+      <View style={styles.header}>
+        <Text style={styles.title}>
+          {t('page.perpsDetail.PerpsPosition.title')}
+        </Text>
+      </View>
+      <View style={styles.list}>
+        {new Array(6).fill(0).map((_, index) => (
+          <View key={index} style={styles.marketItem}>
+            <View style={styles.marketItemLeft}>
+              <Skeleton
+                animation="wave"
+                width={100}
+                height={20}
+                LinearGradientComponent={Linear}
+                style={styles.skeleton}
+              />
+            </View>
+            <View style={styles.marketItemRight}>
+              <Skeleton
+                animation="wave"
+                width={80}
+                height={20}
+                LinearGradientComponent={Linear}
+                style={styles.skeleton}
+              />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
   );
 };
 
@@ -186,7 +226,7 @@ export const PerpsSkeletonLoader: React.FC = () => {
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     paddingHorizontal: 16,
@@ -256,5 +296,24 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   marketPrice: {
     marginBottom: 6,
+  },
+  header: {
+    paddingHorizontal: 4,
+    marginBottom: 12,
+    gap: 12,
+    flexDirection: 'row',
+  },
+  title: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+  },
+  list: {
+    borderRadius: 16,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
 }));

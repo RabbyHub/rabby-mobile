@@ -48,7 +48,6 @@ import { sortBy } from 'lodash';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
-import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
 import { toast } from '@/components2024/Toast';
 import { PERPS_BUILDER_INFO } from '@/constant/perps';
@@ -100,7 +99,6 @@ export const PerpsScreen = () => {
     localLoadingHistory,
 
     handleActionApproveStatus,
-    loginWithNoHardwareSign,
     setInitialized,
   } = usePerpsState();
   const { handleClosePosition } = usePerpsPosition();
@@ -162,9 +160,9 @@ export const PerpsScreen = () => {
   }, [positionAndOpenOrders]);
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
-    if (currentPerpsAccount?.address) {
-      logout(currentPerpsAccount?.address || '');
-    }
+    // if (currentPerpsAccount?.address) {
+    //   logout(currentPerpsAccount?.address || '');
+    // }
     await login(v);
     setPopupState(prev => ({
       ...prev,

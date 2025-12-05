@@ -208,7 +208,15 @@ export const TokenRow = memo(
               )}
             </Text>
             {showAccount ? (
-              amountContent
+              <Text
+                style={StyleSheet.compose(styles.percent, {
+                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
+                    ? styles.exclude
+                    : {}),
+                  color: percentColor,
+                })}>
+                {formatPercentage(Number(data.price_24h_change) || 0)}
+              </Text>
             ) : data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
               <TouchableOpacity
                 hitSlop={hitSlop}
