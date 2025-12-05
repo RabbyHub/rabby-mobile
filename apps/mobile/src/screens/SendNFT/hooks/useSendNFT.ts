@@ -38,7 +38,7 @@ import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { toast } from '@/components/Toast';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { StackActions, useIsFocused } from '@react-navigation/native';
 import {
@@ -562,11 +562,7 @@ export function useSendNFTForm({
             });
         }
 
-        navigation.dispatch(
-          StackActions.replace(RootNames.StackRoot, {
-            screen: RootNames.Home,
-          }),
-        );
+        resetNavigationTo(navigation, 'Home');
       } catch (e: any) {
         toast.info(e.message);
       } finally {

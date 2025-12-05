@@ -52,7 +52,7 @@ import {
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { resetNavigationTo } from '@/hooks/navigation';
+import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
@@ -135,7 +135,7 @@ import { TABITEM_H } from './components/CustomTabBar';
 import { RefLikeObject } from '@/utils/type';
 
 function couldDoRefresh() {
-  return tabIndexRef.current === 0;
+  return apisHomeTabIndex.isHomeAtFirstTab();
 }
 
 const OverViewComponent = () => {
@@ -531,7 +531,7 @@ const OverViewComponent = () => {
 
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
-      if (!isHomeAtFirstTab()) return;
+      if (!apisHomeTabIndex.isHomeAtFirstTab()) return;
       if (isTabsSwiping.value) {
         return;
       }
@@ -806,10 +806,6 @@ const OverViewComponent = () => {
   );
 };
 
-const tabIndexRef: RefLikeObject<number> = { current: 0 };
-export function isHomeAtFirstTab() {
-  return tabIndexRef.current === 0;
-}
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
@@ -825,7 +821,7 @@ function MultiAddressHome(): JSX.Element {
 
   const [tabIndex, setTabIndex] = useState(0);
   const handleIndexChange = useCallback((_index: number) => {
-    tabIndexRef.current = _index;
+    apisHomeTabIndex.setTabIndex(_index);
     setTabIndex(_index);
   }, []);
 
@@ -950,6 +946,10 @@ function MultiAddressHome(): JSX.Element {
   const setIsFoldMultiChart = useFoldMultiChartStore(
     s => s.setIsFoldMultiChart,
   );
+
+  useEffect(() => {
+    apisHomeTabIndex.setTabIndex(0);
+  }, []);
 
   return (
     <NormalScreenContainer2024

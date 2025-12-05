@@ -4,7 +4,7 @@ import { ScrollView, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
 import { AddressItemInner2024 } from '../Address/components/AddressItemInner2024';
 import AnimationImportSuccess from '@/assets2024/animations/animation-import-success.json';
 import Lottie from 'lottie-react-native';
@@ -78,6 +78,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
         },
       ],
     });
+    apisHomeTabIndex.setTabIndex(0);
 
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_DONE,

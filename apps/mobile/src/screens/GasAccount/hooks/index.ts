@@ -24,6 +24,7 @@ import {
   useSetGasAccount,
 } from './atom';
 import { useRequest } from 'ahooks';
+import { apisHomeTabIndex } from '@/hooks/navigation';
 
 export const useGasAccountInfo = () => {
   const { sig, accountId } = useGasAccountSign();
@@ -99,6 +100,7 @@ export const useGasAccountGoBack = () => {
           },
         ],
       });
+      apisHomeTabIndex.setTabIndex(0);
     }
   }, [navigation]);
 };
