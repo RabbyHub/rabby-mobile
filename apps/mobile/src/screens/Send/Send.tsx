@@ -83,7 +83,10 @@ import { PendingTxItem } from '../Swap/components/PendingTxItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
-import { useCexSupportList } from '@/hooks/useCexSupportList';
+import {
+  globalSupportCexList,
+  useCexSupportList,
+} from '@/hooks/useCexSupportList';
 import { isValidHexAddress } from '@metamask/utils';
 import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 
@@ -162,7 +165,8 @@ function SendScreen({
         };
       }
       const toCexId = screenState.toAddrDesc?.cex?.id;
-      if (toCexId) {
+      const isSupportCEX = globalSupportCexList.find(cex => cex.id === toCexId);
+      if (toCexId && isSupportCEX) {
         const cex_ids =
           token.cex_ids || token.identity?.cex_list.map(item => item.id);
         const noSupportToken = cex_ids?.every?.(
