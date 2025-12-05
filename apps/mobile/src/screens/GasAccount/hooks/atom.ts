@@ -60,7 +60,7 @@ const syncDeleteGasAccount = async (
       isSameAddress(perpsAccount?.address || '', address) &&
       perpsAccount?.type === type
     ) {
-      eventBus.emit(EVENTS.PERPS.LOG_OUT, null);
+      eventBus.emit(EVENTS.PERPS.LOG_OUT, perpsAccount);
       perpsService.setCurrentAccount(null);
     }
   }

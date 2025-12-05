@@ -2468,7 +2468,7 @@
         "desc": "Sürekli sözleşmelerle ticaret yapmanın önemli riskleri vardır; özellikle yüksek kaldıraç ve piyasa volatilitesi nedeniyle yatırımınızın ve teminatınızın hızla kaybolma olasılığı bulunmaktadır. Bu tür ticaret her kullanıcı için uygun olmayabilir. Fiyatlar, finansman oranları ve likiditeden etkilenebilir ve önceden bildirim yapılmadan otomatik olarak tasfiye edilebilirsiniz. Piyasa verileri Hyperliquid tarafından sağlanmaktadır."
       },
       "PerpsClosePositionPopup": {
-        "title": "Kapat {{coin}} {{direction}} Pozisyonu",
+        "title": "",
         "pnl": "PNL",
         "positionSize": "Pozisyon Boyutu",
         "providerFeeTips": "Hyperliquid ücreti: {{fee}}",

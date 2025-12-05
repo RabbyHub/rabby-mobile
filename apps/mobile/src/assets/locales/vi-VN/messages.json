@@ -2561,7 +2561,7 @@
         "desc": "Giao dịch hợp đồng vĩnh viễn liên quan đến những rủi ro đáng kể, bao gồm khả năng mất khoản đầu tư và tài sản thế chấp của bạn một cách nhanh chóng do đòn bẩy cao và biến động thị trường. Giao dịch như vậy có thể không phù hợp với tất cả người dùng. Giá có thể bị ảnh hưởng bởi tỷ lệ tài trợ và tính thanh khoản, và bạn có thể bị thanh lý tự động mà không có thông báo trước. Dữ liệu thị trường được cung cấp bởi Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "Đóng vị thế {{coin}} {{direction}}",
+        "title": "",
         "fee": "Phí:",
         "closeBtn": "Đóng {{direction}}",
         "pnl": "PNL",

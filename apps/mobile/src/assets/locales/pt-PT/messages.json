@@ -2808,7 +2808,7 @@
         "desc": "Negociar contratos perpétuos envolve riscos significativos, incluindo a possibilidade de perder rapidamente seu investimento e colateral devido à alta alavancagem e volatilidade do mercado. Esse tipo de negociação pode não ser adequado para todos os usuários. Os preços podem ser afetados por taxas de financiamento e liquidez, e você pode ser automaticamente liquidado sem aviso prévio. Os dados do mercado são fornecidos pela Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "Fechar posição {{direction}} de {{coin}}",
+        "title": "",
         "positionSize": "Tamanho da Posição",
         "fee": "Taxa:",
         "pnl": "PNL",

@@ -2478,7 +2478,7 @@
         "desc": "Le trading de contrats perpétuels implique des risques significatifs, y compris la possibilité de perdre rapidement votre investissement et votre collatéral en raison d'un effet de levier élevé et de la volatilité du marché. Ce type de trading peut ne pas convenir à tous les utilisateurs. Les prix peuvent être affectés par les taux de financement et la liquidité, et vous pourriez être automatiquement liquidé sans préavis. Les données de marché sont fournies par Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "Fermer la position {{direction}} {{coin}}",
+        "title": "",
         "pnl": "PNL",
         "providerFeeTips": "Frais Hyperliquid : {{fee}}",
         "positionSize": "Taille de position",

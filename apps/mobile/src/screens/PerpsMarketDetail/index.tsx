@@ -59,6 +59,7 @@ import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
+import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -80,12 +81,13 @@ export const PerpsMarketDetailScreen = () => {
   const [coin, setCoin] = useState(marketName);
 
   const {
+    isInitialized,
     positionAndOpenOrders,
     accountSummary,
     marketDataMap,
     perpFee,
     marketData,
-    // hasPermission,
+    hasPermission,
     currentPerpsAccount,
     isLogin,
     userFills,
@@ -95,7 +97,7 @@ export const PerpsMarketDetailScreen = () => {
 
     handleDeleteAgent,
   } = usePerpsState();
-  const hasPermission = true;
+  // const hasPermission = true;
   const [isShowModal, setIsShowModal] = useState(false);
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
@@ -189,6 +191,15 @@ export const PerpsMarketDetailScreen = () => {
       }));
     },
   );
+
+  useEffect(() => {
+    if (currentPosition) {
+      _setCurrentTpOrSl({
+        tpPrice: tpPrice,
+        slPrice: slPrice,
+      });
+    }
+  }, [currentPosition, tpPrice, slPrice]);
 
   const {
     handleOpenPosition,
@@ -394,7 +405,7 @@ export const PerpsMarketDetailScreen = () => {
               currentAssetCtx={currentAssetCtx}
               lineTagInfo={lineTagInfo}
             />
-            {isLogin && !hasPosition ? (
+            {isLogin && isInitialized && !hasPosition ? (
               <PerpsDepositCard
                 availableBalance={availableBalance}
                 onDepositPress={() => {
@@ -403,36 +414,41 @@ export const PerpsMarketDetailScreen = () => {
               />
             ) : null}
           </View>
-          <PerpsPosition
-            showRiskPopup={showRiskPopup}
-            setShowRiskPopup={setShowRiskPopup}
-            activeAssetCtx={activeAssetCtx}
-            currentAssetCtx={currentAssetCtx}
-            positionData={positionData}
-            coin={coin}
-            coinLogo={currentAssetCtx?.logoUrl}
-            markPrice={markPrice}
-            slPrice={
-              currentTpOrSl.slPrice
-                ? Number(currentTpOrSl.slPrice).toString()
-                : undefined
-            }
-            tpPrice={
-              currentTpOrSl.tpPrice
-                ? Number(currentTpOrSl.tpPrice).toString()
-                : undefined
-            }
-            pxDecimals={currentAssetCtx?.pxDecimals || 2}
-            szDecimals={currentAssetCtx?.szDecimals || 0}
-            handleActionApproveStatus={handleActionApproveStatus}
-            handleSetAutoClose={handleSetAutoClose}
-            setCurrentTpOrSl={setCurrentTpOrSl}
-            availableBalance={availableBalance}
-            leverageMax={currentAssetCtx?.maxLeverage || 5}
-            handleCancelAutoClose={handleCancelAutoClose}
-            handleUpdateMargin={handleUpdateMargin}
-          />
+          {!isInitialized ? (
+            <PerpsPositionSkeletonLoader />
+          ) : (
+            <PerpsPosition
+              showRiskPopup={showRiskPopup}
+              setShowRiskPopup={setShowRiskPopup}
+              activeAssetCtx={activeAssetCtx}
+              currentAssetCtx={currentAssetCtx}
+              positionData={positionData}
+              coin={coin}
+              coinLogo={currentAssetCtx?.logoUrl}
+              markPrice={markPrice}
+              slPrice={
+                currentTpOrSl.slPrice
+                  ? Number(currentTpOrSl.slPrice).toString()
+                  : undefined
+              }
+              tpPrice={
+                currentTpOrSl.tpPrice
+                  ? Number(currentTpOrSl.tpPrice).toString()
+                  : undefined
+              }
+              pxDecimals={currentAssetCtx?.pxDecimals || 2}
+              szDecimals={currentAssetCtx?.szDecimals || 0}
+              handleActionApproveStatus={handleActionApproveStatus}
+              handleSetAutoClose={handleSetAutoClose}
+              setCurrentTpOrSl={setCurrentTpOrSl}
+              availableBalance={availableBalance}
+              leverageMax={currentAssetCtx?.maxLeverage || 5}
+              handleCancelAutoClose={handleCancelAutoClose}
+              handleUpdateMargin={handleUpdateMargin}
+            />
+          )}
           <PerpsInfo market={market} activeAssetCtx={activeAssetCtx} />
+
           <PerpsHistorySection
             coin={coin}
             marketDataMap={marketDataMap}
