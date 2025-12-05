@@ -39,6 +39,7 @@ import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { EVENT_ROUTE_CHANGE, eventBus } from '@/utils/events';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { RefLikeObject } from '@/utils/type';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -308,6 +309,19 @@ export function useRabbyAppNavigation<
   return useNavigation<K>();
 }
 
+const tabIndexRef: RefLikeObject<number> = { current: 0 };
+export const apisHomeTabIndex = {
+  get tabIndex() {
+    return tabIndexRef.current;
+  },
+  isHomeAtFirstTab() {
+    return tabIndexRef.current === 0;
+  },
+  setTabIndex(val: number) {
+    tabIndexRef.current = val;
+  },
+};
+
 export function resetNavigationTo(
   navigation: NavigationInstance,
   type: 'Home' | 'Unlock' | 'GetStarted2024' = 'Home',
@@ -326,6 +340,7 @@ export function resetNavigationTo(
           },
         ],
       });
+      apisHomeTabIndex.setTabIndex(0);
       break;
     }
     case 'Unlock': {
