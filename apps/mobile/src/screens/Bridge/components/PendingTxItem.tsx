@@ -544,7 +544,9 @@ const PendingStatusDetail = ({
   const toChain = findChain({ serverId: data.toToken?.chain || '' });
 
   const payUsdValue = useMemo(() => {
-    if (!data.fromToken?.price || !data.fromAmount) return '0';
+    if (!data.fromToken?.price || !data.fromAmount) {
+      return '0';
+    }
     return new BigNumber(data.fromAmount)
       .multipliedBy(data.fromToken.price)
       .toString();
@@ -557,13 +559,13 @@ const PendingStatusDetail = ({
       refreshEstTime >= 0
     ) {
       const elapsed = Date.now() - data.fromTxCompleteTs;
-      const estimatedDurationMs = data.estimatedDuration * 1000;
+      const estimatedDurationMs = Math.max(
+        data.estimatedDuration * 1000,
+        ONE_MINUTE_MS,
+      );
       const remainingDuration = estimatedDurationMs - elapsed;
-      if (elapsed > estimatedDurationMs * 2 && elapsed > 2 * ONE_MINUTE_MS) {
-        return -1;
-      }
       if (remainingDuration <= 0) {
-        return null;
+        return -1;
       }
       return Math.max(Math.round(remainingDuration / 60000), 1);
     }
