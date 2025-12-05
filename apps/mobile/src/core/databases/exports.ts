@@ -1,4 +1,4 @@
-import { opSqliteTypeORMDriver } from './op-sqlite-typeorm';
+import { opSqliteTypeORMDriver } from './op-sqlite/typeorm';
 
 export const SQLiteDriverType = 'op-sqlite' as 'RNSQLiteStorage' | 'op-sqlite';
 export const SQLite = opSqliteTypeORMDriver;

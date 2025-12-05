@@ -57,7 +57,7 @@ export const HomeAddressItem: React.FC<{
       account={account}
       preViewBorderRadius={16}
       key={`${account.type}-${account.address}`}
-      actions={['copy', 'pin', 'edit', 'delete']}>
+      actions={['copy', 'pin', 'edit']}>
       <TouchableOpacity
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}

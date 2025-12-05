@@ -2573,7 +2573,7 @@
         "desc": "交易永续合约涉及重大风险，包括由于高杠杆和市场波动而快速失去您的投资和抵押品的可能性。此类交易可能不适合所有用户。价格可能会受到资金利率和流动性的影响，您可能会在没有事先通知的情况下自动被平仓。市场数据由 Hyperliquid 提供。"
       },
       "PerpsClosePositionPopup": {
-        "title": "平仓 {{coin}} {{direction}} 头寸",
+        "title": "",
         "pnl": "PNL",
         "providerFeeTips": "Hyperliquid 费用：{{fee}}",
         "positionSize": "持仓大小",

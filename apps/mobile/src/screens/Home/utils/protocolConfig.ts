@@ -12,6 +12,7 @@ import { AbstractPortfolio } from '../types';
 import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { CustomMarket } from '@/screens/Lending/config/market';
 import { SvgProps } from 'react-native-svg';
+import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 
 const keyToMarketKey: Record<string, CustomMarket> = {
   aave3: CustomMarket.proto_mainnet_v3,
@@ -131,14 +132,27 @@ export const useProtocolConfig = () => {
           account?: KeyringAccountWithAlias,
           item?: AbstractPortfolio,
         ) => {
-          return navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Perps,
-            params: {
-              account,
-              fromName:
-                item?._originPortfolio?.detail?.position_token?.name || '',
-            },
-          });
+          if (!account) {
+            return;
+          }
+
+          const isNavigateDetail =
+            !!item?._originPortfolio?.detail?.position_token?.name;
+
+          switchPerpsAccountBeforeNavigate(account);
+          if (isNavigateDetail) {
+            return navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.PerpsMarketDetail,
+              params: {
+                market:
+                  item?._originPortfolio?.detail?.position_token?.name || '',
+              },
+            });
+          } else {
+            return navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Perps,
+            });
+          }
         },
       },
     };

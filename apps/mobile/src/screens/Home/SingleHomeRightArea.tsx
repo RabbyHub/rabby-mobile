@@ -49,7 +49,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   account: currentAccount,
 }) => {
   const [pendingTxCount, setPendingTxCount] = useState(0);
-  const timeRef = useRef<null | NodeJS.Timer>(null);
+  const timeRef = useRef<null | ReturnType<typeof setInterval>>(null);
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
   const [historyCount, setHistoryCount] = useState<{

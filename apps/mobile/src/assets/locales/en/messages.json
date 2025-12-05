@@ -2299,6 +2299,9 @@
         "empty": "No results found",
         "searchPerps": "Search Perps"
       },
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid Position"
+      },
       "PerpsRiskPopup": {
         "title": "Risk Level",
         "subtitle": "Real-time liquidation distance (%)",
@@ -2486,6 +2489,7 @@
         "fundingGainsTips": "This is the net funding gains since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
+      "needDepositFirst": "You need to deposit funds first.",
       "PerpsInfo": {
         "title": "Info",
         "24Vol": "24h Volume",
@@ -3023,6 +3027,9 @@
     },
     "portfolios": {
       "manage": "Manage"
+    },
+    "multiAddressModal": {
+      "title": "Wallets"
     }
   },
   "native": {

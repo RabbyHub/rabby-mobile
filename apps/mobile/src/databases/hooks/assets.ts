@@ -1,4 +1,4 @@
-import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
+import { ComplexProtocol, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { chunk } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { runOnJS } from 'react-native-reanimated';
@@ -74,6 +74,7 @@ export const syncTokens = async (
   address: string,
   force?: boolean,
   onlySync?: boolean,
+  isV2 = false, // v2 的区别在于更新实时数据时不会更新 usd value <= 0.5 的链，达到减少大概率不必要请求的目的
 ) => {
   if (!address) {
     return [];
@@ -85,6 +86,7 @@ export const syncTokens = async (
     },
     force,
     onlySync,
+    isV2,
   );
   return (
     tokenRes?.map(i => ({

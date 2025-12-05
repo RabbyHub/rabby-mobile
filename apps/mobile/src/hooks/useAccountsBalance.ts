@@ -7,6 +7,8 @@ import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { unionBy } from 'lodash';
 import { useAtomCallback } from 'jotai/utils';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 export interface balanceAccountType {
   address: string;
@@ -26,14 +28,77 @@ const waitQueueFinished = (q: PQueue) => {
   });
 };
 
-export const balanceAtom = atom<balanceAccountType[]>([]);
-const balanceCacheAtom = atom<balanceAccountType[]>([]);
-const lengthAtom = atom<number>(0);
+// export const balanceAtom = atom<balanceAccountType[]>([]);
+// const balanceCacheAtom = atom<balanceAccountType[]>([]);
+// const lengthAtom = atom<number>(0);
 
-const loadAccountsBalanceAtom = atom({
+// const loadAccountsBalanceAtom = atom({
+//   balanceLoading: false,
+//   loadBalanceFromApiStage: 'idle' as LoadBalanceStage,
+// });
+type BalanceState = {
+  balance: balanceAccountType[];
+  balanceCache: balanceAccountType[];
+  length: number;
+};
+const balanceStore = zCreate<BalanceState>(() => ({
+  balance: [],
+  balanceCache: [],
+  length: 0,
+}));
+
+export function useBalanceAccounts() {
+  return {
+    balanceAccounts: balanceStore(s => s.balance),
+  };
+}
+
+function setBalanceAccounts(
+  valOrFunc: UpdaterOrPartials<balanceAccountType[]>,
+) {
+  balanceStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.balance, valOrFunc);
+
+    return { ...prev, balance: newVal };
+  });
+}
+
+function setBalanceCacheAccounts(
+  valOrFunc: UpdaterOrPartials<balanceAccountType[]>,
+) {
+  balanceStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.balanceCache, valOrFunc);
+
+    return { ...prev, balanceCache: newVal };
+  });
+}
+
+function setAccountsLength(valOrFunc: UpdaterOrPartials<number>) {
+  balanceStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.length, valOrFunc);
+
+    return { ...prev, length: newVal };
+  });
+}
+
+type BalanceLoadingState = {
+  balanceLoading: boolean;
+  loadBalanceFromApiStage: LoadBalanceStage;
+};
+const balanceLoadingStore = zCreate<BalanceLoadingState>(() => ({
   balanceLoading: false,
-  loadBalanceFromApiStage: 'idle' as LoadBalanceStage,
-});
+  loadBalanceFromApiStage: 'idle',
+}));
+function setLoading(valOrFunc: UpdaterOrPartials<BalanceLoadingState>) {
+  balanceLoadingStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+
+    return { ...prev, ...newVal };
+  });
+}
+function getBalanceLoading() {
+  return balanceLoadingStore.getState().balanceLoading;
+}
 
 export type LoadBalanceStage = 'idle' | 'loading' | 'finished';
 export default function useAccountsBalance(opts?: {
@@ -41,16 +106,21 @@ export default function useAccountsBalance(opts?: {
   accountsNoUnique?: boolean;
 }) {
   const { cacheTime = 10 * 60 * 1000, accountsNoUnique = true } = opts || {};
-  const [balanceAccounts, setBalanceAccounts] = useAtom(balanceAtom);
-  const [balanceCacheAccounts, setBalanceCacheAccounts] =
-    useAtom(balanceCacheAtom);
-  const [accountsLength, setAccountsLength] = useAtom(lengthAtom);
-  const [{ balanceLoading, loadBalanceFromApiStage }, setLoading] = useAtom(
-    loadAccountsBalanceAtom,
+  // const [balanceAccounts, setBalanceAccounts] = useAtom(balanceAtom);
+  const balanceAccounts = balanceStore(s => s.balance);
+  // const [balanceCacheAccounts, setBalanceCacheAccounts] = useAtom(balanceCacheAtom);
+  const balanceCacheAccounts = balanceStore(s => s.balanceCache);
+
+  // const [accountsLength, setAccountsLength] = useAtom(lengthAtom);
+  const accountsLength = balanceStore(s => s.length);
+  // const [{ balanceLoading, loadBalanceFromApiStage }, setLoading] = useAtom(loadAccountsBalanceAtom);
+  const balanceLoading = balanceLoadingStore(s => s.balanceLoading);
+  const loadBalanceFromApiStage = balanceLoadingStore(
+    s => s.loadBalanceFromApiStage,
   );
-  const getBalanceLoading = useAtomCallback(
-    useCallback(get => get(loadAccountsBalanceAtom).balanceLoading, []),
-  );
+  // const getBalanceLoading = useAtomCallback(
+  //   useCallback(get => get(loadAccountsBalanceAtom).balanceLoading, []),
+  // );
   const lastTimeStamps = useRef<number>(0);
 
   const isNeedFetchData = useCallback(() => {
@@ -167,12 +237,12 @@ export default function useAccountsBalance(opts?: {
       }
     },
     [
-      getBalanceLoading,
+      // getBalanceLoading,
       accountsNoUnique,
-      setLoading,
-      setAccountsLength,
-      setBalanceCacheAccounts,
-      setBalanceAccounts,
+      // setLoading,
+      // setAccountsLength,
+      // setBalanceCacheAccounts,
+      // setBalanceAccounts,
     ],
   );
 

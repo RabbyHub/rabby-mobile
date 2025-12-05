@@ -217,6 +217,10 @@ dependencies {
     implementation("com.facebook.react:react-android")
     implementation 'com.google.mlkit:barcode-scanning:17.2.0'
 
+    // implementation 'com.squareup.okhttp3:logging-interceptor:5.1.0'
+    // implementation 'com.squareup.okhttp3:okhttp:5.1.0'
+    // implementation 'com.squareup.okhttp3:okhttp-urlconnection:5.1.0'
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {

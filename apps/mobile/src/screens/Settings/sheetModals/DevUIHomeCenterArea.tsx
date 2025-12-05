@@ -149,7 +149,7 @@ export default function DevUIHomeCenterAreaModal({
           .join(' '),
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
-          toggleViewedGuidance('multiTabs20251111Viewed', false);
+          toggleViewedGuidance('multiTabs20251205Viewed', false);
         },
       },
       ...(!FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT

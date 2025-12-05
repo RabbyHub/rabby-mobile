@@ -31,15 +31,12 @@ import {
   Animated,
   Dimensions,
   Easing,
-  LayoutRectangle,
   Platform,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity as RNTouchableOpacity,
   View,
-  ViewStyle,
 } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -61,7 +58,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useAppState } from '@react-native-community/hooks';
 import { useMemoizedFn } from 'ahooks';
-import { debounce, unionBy } from 'lodash';
+import { debounce } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSortAddressList } from '../Address/useSortAddressList';
@@ -94,7 +91,10 @@ import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { colord } from 'colord';
 import dayjs from 'dayjs';
-import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
+import {
+  isTabsSwiping,
+  useAccountInfo,
+} from '../Address/components/MultiAssets/hooks';
 import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 import { useTipsDollarDialog } from '../CopyTrading/component/hooks';
 import { useInitDetectDBAssets } from '../Search/useAssets';
@@ -116,17 +116,34 @@ import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { Tabs } from 'react-native-collapsible-tab-view';
+import {
+  TAB_HEADER_MIN_HEIGHT,
+  TabsMultiAssets,
+} from '../Address/components/MultiAssets/TabsMultiAssets';
+import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
+import { useFoldMultiChartStore } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
-import { RNGHTouchableOpacity } from '@/components/customized/reexports';
+import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
+import { RECOMMENDED_DEFAULT_QUERY_LIMIT } from '@/databases/entities/_helpers';
+import {
+  RNGHPressable,
+  RNGHTouchableOpacity,
+} from '@/components/customized/reexports';
+import { TABITEM_H } from './components/CustomTabBar';
+import { RefLikeObject } from '@/utils/type';
 
-function MultiAddressHome(): JSX.Element {
+function couldDoRefresh() {
+  return tabIndexRef.current === 0;
+}
+
+const OverViewComponent = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
-  const appThemeConfig = useAppThemeConfig();
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const [historyCount, setHistoryCount] = useState<{
     success: number;
@@ -134,7 +151,7 @@ function MultiAddressHome(): JSX.Element {
   }>();
   const { top10Addresses } = useAccountInfo();
 
-  const timeRef = useRef<null | NodeJS.Timer>(null);
+  const timeRef = useRef<null | ReturnType<typeof setTimeout>>(null);
   const appState = useAppState();
 
   const { width } = Dimensions.get('window');
@@ -151,6 +168,7 @@ function MultiAddressHome(): JSX.Element {
 
   const { accounts } = useMyAccounts({ disableAutoFetch: true });
   const sortedAccounts = useSortAddressList(accounts);
+  useSubscribePosition(sortedAccounts);
   // 获取top50的私钥助记词账户
   const top50PrivateKeyAccounts = useCreationWithShallowCompare(() => {
     console.debug('top50PrivateKeyAccounts', sortedAccounts);
@@ -165,23 +183,13 @@ function MultiAddressHome(): JSX.Element {
   }, [sortedAccounts]);
 
   // add gift eligibility check hook
-  const { checkAddressesEligibility } = useGasAccountEligibility();
+  const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
   // use useMemo to directly calculate isEligible so that it can respond to related state changes
-  const isEligible = useMemo(() => {
-    const gasAccountSig = gasAccountService.getGasAccountSig();
-    const hasClaimedGift = gasAccountService.getHasClaimedGift();
-    const currentEligibleAddress =
-      gasAccountService.getCurrentEligibleAddress();
-    return (
-      currentEligibleAddress !== undefined &&
-      !gasAccountSig?.sig &&
-      !hasClaimedGift
-    );
-  }, []);
 
   // 初始化gift资格检查
   useFocusEffect(
     React.useCallback(() => {
+      if (!couldDoRefresh()) return;
       if (top50PrivateKeyAccounts.length > 0) {
         checkAddressesEligibility(top50PrivateKeyAccounts, true);
       }
@@ -392,26 +400,15 @@ function MultiAddressHome(): JSX.Element {
   }, []);
 
   const getSuccessAndFailList = useCallback(async () => {
+    if (!top10Addresses.length) return;
     const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
-    const clearSuccessAndFailListTsObj =
-      transactionHistoryService.getClearSuccessAndFailListTsObj();
-    const list = await HistoryItemEntity.getAllHistoryItemSortedByTime(
+    const list = await HistoryItemEntity.getUnreadHistoryCount(
       top10Addresses,
-      200,
-      true,
       timestamp / 1000,
     );
     list.forEach(i => {
       const status = i.status ?? 1;
       const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
-      if (i.tx_from_address === i.owner_addr) {
-        return;
-      }
-      const addressTs =
-        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? Date.now();
-      if (addressTs && addressTs / 1000 > i.time_at) {
-        return;
-      }
       if (status === 1) {
         transactionHistoryService.setSucceedList(id);
       } else {
@@ -430,6 +427,7 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
+      if (!couldDoRefresh()) return;
       pendingTxCount;
       getSuccessAndFailList();
     }, [getSuccessAndFailList, pendingTxCount]),
@@ -442,6 +440,7 @@ function MultiAddressHome(): JSX.Element {
         if (redirectAction) {
           redirectAction();
         } else {
+          if (!couldDoRefresh()) return;
           fetchHistory();
         }
       })();
@@ -450,6 +449,7 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
+      if (!couldDoRefresh()) return;
       if (appState === 'active') {
         refreshCurve();
       }
@@ -476,6 +476,7 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
+      if (!couldDoRefresh()) return;
       if (appState === 'active') {
         triggerUpdate();
         triggerUpdateAlert();
@@ -485,6 +486,7 @@ function MultiAddressHome(): JSX.Element {
   );
 
   const onRefresh = useCallback(() => {
+    if (!couldDoRefresh()) return;
     Promise.all([
       triggerUpdate(true), // force update balance from server api
       refreshCurve(true),
@@ -529,6 +531,10 @@ function MultiAddressHome(): JSX.Element {
 
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
+      if (!isHomeAtFirstTab()) return;
+      if (isTabsSwiping.value) {
+        return;
+      }
       switch (key) {
         case MultiHomeFeatTitle.Send:
           navigation.dispatch(
@@ -628,7 +634,6 @@ function MultiAddressHome(): JSX.Element {
     [openDapps, handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
   );
 
-  const { showTipsDollarDialog } = useTipsDollarDialog();
   const generateCustomBadgeIcon = useCallback(
     (el: {
       key: MultiHomeFeatTitle;
@@ -641,13 +646,6 @@ function MultiAddressHome(): JSX.Element {
       if (el.key === MultiHomeFeatTitle.Watchlist) {
         return <WatchListBadge />;
       }
-      // if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
-      //   return (
-      //     <RNTouchableOpacity onPress={showTipsDollarDialog}>
-      //       <IconDollar width={24} height={24} />
-      //     </RNTouchableOpacity>
-      //   );
-      // }
 
       if (el.key === MultiHomeFeatTitle.Perps) {
         return <PerpsPnl />;
@@ -694,6 +692,220 @@ function MultiAddressHome(): JSX.Element {
 
   const { bottom } = useSafeAreaInsets();
 
+  const { shouldShowRateGuideOnHome } = useExposureRateGuide();
+  const offlineChainData = useOfflineChain();
+  const { viewedHomeTip } = useViewedHomeTip();
+
+  const { noBetweenContent, onlyOneContent } = useMemo(() => {
+    const visibleEls = [
+      displayFundWallet,
+      shouldShowRateGuideOnHome,
+      offlineChainData.displayWillClosedChain &&
+        offlineChainData.offlineChainInfo,
+      !viewedHomeTip,
+    ];
+    const hasBetweenContent = visibleEls.some(Boolean);
+    return {
+      noBetweenContent: !hasBetweenContent,
+      onlyOneContent: visibleEls.filter(Boolean).length === 1,
+    };
+  }, [
+    shouldShowRateGuideOnHome,
+    offlineChainData,
+    displayFundWallet,
+    viewedHomeTip,
+  ]);
+
+  return (
+    <Tabs.ScrollView
+      tvParallaxProperties={undefined}
+      showsVerticalScrollIndicator={false}
+      style={[styles.scroll, { flex: undefined }]}
+      contentContainerStyle={[
+        styles.scrollContainer,
+        {
+          // paddingBottom: bottom + 82,
+          paddingBottom: Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
+        },
+      ]}
+      refreshControl={
+        <RefreshControl refreshing={false} onRefresh={onRefresh} />
+      }>
+      <MultiAddressHomeHeader
+        data={combineData}
+        loading={loading}
+        loadBalanceFromApiStage={loadBalanceFromApiStage}
+        loadingNewCurve={loadingNewCurve}
+        onRefresh={onRefresh}
+        balanceAccounts={balanceAccounts}
+      />
+      <View
+        style={[
+          noBetweenContent
+            ? styles.contentBetweenHeaderAndMatrixEmpty
+            : styles.contentBetweenHeaderAndMatrix,
+          onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
+        ]}>
+        <OfflineChainNotify data={offlineChainData} />
+
+        {displayFundWallet && <FoundYourWalletGuide />}
+
+        {shouldShowRateGuideOnHome && (
+          <View
+            style={{
+              paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+            }}>
+            <RateModalTriggerOnHome totalBalanceText={combineData.netWorth} />
+            <RateModal totalBalanceText={combineData.netWorth} />
+          </View>
+        )}
+
+        <TipFeedbackByScreenshot />
+      </View>
+
+      <View style={styles.grid}>
+        <View style={styles.gridItemsWrap}>
+          {MENU_ARR.map((el, index) => {
+            return (
+              <RNGHTouchableOpacity
+                style={StyleSheet.flatten([
+                  styles.gridItem,
+                  { width: itemWidth },
+                ])}
+                key={index}
+                onPress={() => {
+                  requestAnimationFrame(() => {
+                    handleClickMenu(el.key);
+                  });
+                  matomoRequestEvent({
+                    category: 'Click_Services',
+                    action: `Click_${el.key}`,
+                  });
+                }}>
+                <View style={styles.badgeWrapper}>
+                  <View style={styles.iconWrapper}>
+                    <el.icon
+                      width={28}
+                      height={28}
+                      color={el.color || colors2024['brand-default-icon']}
+                    />
+                  </View>
+                  <View style={styles.rightBadgeWrapper}>
+                    {generateCustomBadgeIcon(el)}
+                  </View>
+                </View>
+                <Text style={styles.gridText}>{el.title}</Text>
+              </RNGHTouchableOpacity>
+            );
+          })}
+        </View>
+        <BrowserSearchEntry alwaysShowSearch={false} />
+        <View style={styles.searchBarPlaceholder} />
+      </View>
+    </Tabs.ScrollView>
+  );
+};
+
+const tabIndexRef: RefLikeObject<number> = { current: 0 };
+export function isHomeAtFirstTab() {
+  return tabIndexRef.current === 0;
+}
+function MultiAddressHome(): JSX.Element {
+  const { navigation } = useSafeSetNavigationOptions();
+  const { t } = useTranslation();
+  const { styles, colors2024, isLight } = useTheme2024({
+    getStyle,
+  });
+  const appThemeConfig = useAppThemeConfig();
+  const [pendingTxCount, setPendingTxCount] = useState(0);
+  const { top10Addresses } = useAccountInfo();
+
+  const timeRef = useRef<null | ReturnType<typeof setTimeout>>(null);
+  const spinValue = useRef(new Animated.Value(0)).current;
+
+  const [tabIndex, setTabIndex] = useState(0);
+  const handleIndexChange = useCallback((_index: number) => {
+    tabIndexRef.current = _index;
+    setTabIndex(_index);
+  }, []);
+
+  useEffect(() => {
+    if (pendingTxCount) {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1600,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ).start();
+    } else {
+      spinValue.resetAnimation();
+    }
+  }, [pendingTxCount, spinValue]);
+
+  const { balanceCacheAccounts, getTotalBalance } = useAccountsBalance({
+    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
+
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
+
+  const { combineData, loading } = useMulti24hBalance(top10Addresses, {
+    disableAutoFetch: true,
+    totalBalance: top10Balance.total,
+    totalEvmBalance: top10Balance.totalEvm,
+  });
+  useCexSupportList();
+  useFetchCexInfo();
+  useInitDetectDBAssets();
+  useSetTotalBalanceText(combineData.netWorth);
+
+  const fetchHistory = useCallback(() => {
+    const addresses = balanceCacheAccounts.map(i => i.address);
+    if (!addresses.length) {
+      return;
+    }
+    const { pendingsLength } =
+      transactionHistoryService.getPendingsAddresses(addresses);
+    setPendingTxCount(pendingsLength);
+    timeRef.current && clearInterval(timeRef.current);
+    timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
+  }, [balanceCacheAccounts, setPendingTxCount]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      deleteLongTimeCurveCache();
+      deleteLongTime24hBalanceCache();
+    }, 0);
+  }, []);
+
+  const detectHasAccounts = useMemoizedFn(async () => {
+    const result = { redirectAction: null as Function | null };
+    const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+
+    if (!hasAccountsInKeyring) {
+      result.redirectAction = () => {
+        resetNavigationTo(navigation, 'GetStarted2024');
+      };
+    }
+
+    return result;
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const { redirectAction } = await detectHasAccounts();
+        if (redirectAction) {
+          redirectAction();
+        }
+      })();
+    }, [detectHasAccounts]),
+  );
+
   useEffect(() => {
     matomoRequestEvent({
       category: 'ThemeMode',
@@ -735,29 +947,9 @@ function MultiAddressHome(): JSX.Element {
     }
   }, []);
 
-  const { shouldShowRateGuideOnHome } = useExposureRateGuide();
-  const offlineChainData = useOfflineChain();
-  const { viewedHomeTip } = useViewedHomeTip();
-
-  const { noBetweenContent, onlyOneContent } = useMemo(() => {
-    const visibleEls = [
-      displayFundWallet,
-      shouldShowRateGuideOnHome,
-      offlineChainData.displayWillClosedChain &&
-        offlineChainData.offlineChainInfo,
-      !viewedHomeTip,
-    ];
-    const hasBetweenContent = visibleEls.some(Boolean);
-    return {
-      noBetweenContent: !hasBetweenContent,
-      onlyOneContent: visibleEls.filter(Boolean).length === 1,
-    };
-  }, [
-    shouldShowRateGuideOnHome,
-    offlineChainData,
-    displayFundWallet,
-    viewedHomeTip,
-  ]);
+  const setIsFoldMultiChart = useFoldMultiChartStore(
+    s => s.setIsFoldMultiChart,
+  );
 
   return (
     <NormalScreenContainer2024
@@ -778,577 +970,519 @@ function MultiAddressHome(): JSX.Element {
       }}
       overwriteStyle={styles.screenContainer}>
       <ScreenSpecificStatusBar screenName={RootNames.Home} />
-      <View style={styles.paddingContainer}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={styles.scroll}
-          contentContainerStyle={[
-            styles.scrollContainer,
-            {
-              // paddingBottom: bottom + 82,
-              paddingBottom:
-                Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
-            },
-          ]}
-          refreshControl={
-            <RefreshControl refreshing={false} onRefresh={onRefresh} />
-          }>
-          <MultiAddressHomeHeader
-            data={combineData}
-            loadBalanceFromApiStage={loadBalanceFromApiStage}
-            loading={loading}
-            loadingNewCurve={loadingNewCurve}
-            onRefresh={onRefresh}
-            balanceAccounts={balanceAccounts}
-          />
-          <View
-            style={[
-              noBetweenContent
-                ? styles.contentBetweenHeaderAndMatrixEmpty
-                : styles.contentBetweenHeaderAndMatrix,
-              onlyOneContent
-                ? styles.contentBetweenHeaderAndMatrixOnlyOne
-                : null,
-            ]}>
-            <OfflineChainNotify data={offlineChainData} />
+      <View
+        style={[styles.paddingContainer]}
+        onTouchStart={() => {
+          setIsFoldMultiChart(true);
+        }}>
+        <TabsMultiAssets
+          data={combineData}
+          loading={loading}
+          tabIndex={tabIndex}
+          onIndexChange={handleIndexChange}
+          OverViewComponent={OverViewComponent}
+        />
 
-            {displayFundWallet && <FoundYourWalletGuide />}
-
-            {shouldShowRateGuideOnHome && (
-              <View
-                style={{ paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL }}>
-                <RateModalTriggerOnHome
-                  totalBalanceText={combineData.netWorth}
-                />
-                <RateModal totalBalanceText={combineData.netWorth} />
-              </View>
-            )}
-
-            <TipFeedbackByScreenshot />
+        {/* show search bar when Overview tab */}
+        {tabIndex === 0 && (
+          <View style={styles.globalSearchBar}>
+            <GlobalSearchBar />
           </View>
-
-          <View style={[{ marginTop: 0 }, styles.grid]}>
-            <View style={styles.gridItemsWrap}>
-              {MENU_ARR.map((el, index) => {
-                return (
-                  <RNGHTouchableOpacity
-                    style={StyleSheet.flatten([
-                      styles.gridItem,
-                      { width: itemWidth },
-                    ])}
-                    key={index}
-                    onPress={() => {
-                      requestAnimationFrame(() => {
-                        handleClickMenu(el.key);
-                      });
-                      matomoRequestEvent({
-                        category: 'Click_Services',
-                        action: `Click_${el.key}`,
-                      });
-                    }}>
-                    <View style={styles.badgeWrapper}>
-                      <View style={styles.iconWrapper}>
-                        <el.icon
-                          width={28}
-                          height={28}
-                          color={el.color || colors2024['brand-default-icon']}
-                        />
-                      </View>
-                      <View style={styles.rightBadgeWrapper}>
-                        {generateCustomBadgeIcon(el)}
-                      </View>
-                    </View>
-                    <Text style={styles.gridText}>{el.title}</Text>
-                  </RNGHTouchableOpacity>
-                );
-              })}
-            </View>
-            <BrowserSearchEntry alwaysShowSearch={false} />
-            <View style={styles.searchBarPlaceholder} />
-          </View>
-        </ScrollView>
-
-        <View
-          style={[
-            styles.globalSearchBar,
-            {
-              bottom: Platform.select({
-                ios: 22,
-                android: Math.max(22, bottom),
-              }),
-            },
-          ]}>
-          <GlobalSearchBar />
-        </View>
+        )}
       </View>
+      <HomeGuidanceMultipleTabs />
     </NormalScreenContainer2024>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  screenContainer: {
-    paddingTop: 0,
-  },
-  paddingContainer: {
-    paddingHorizontal: 0,
-    flex: 1,
-    flexGrow: 1,
-  },
-  bgImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-  },
-  redDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors2024['red-default'],
-    position: 'absolute',
-    top: 0,
-    right: 13,
-  },
-  rootScreenContainer: {
-    // ...makeDebugBorder(),
-    // paddingHorizontal: 20,
-    flex: 1,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContainer: {
-    paddingTop: 64,
-    flexGrow: 1,
-    minHeight: '100%',
-  },
-  menuHeader: {
-    height: 30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-    marginHorizontal: 4,
-    margin: 12,
-    marginBottom: 16,
-    marginTop: 0,
-  },
-  pinHeader: {
-    marginTop: -8,
-  },
-  pinGridText: {
-    color: colors2024['neutral-body'],
-    fontWeight: '500',
-    fontSize: 16,
-    lineHeight: 20,
-    textAlign: 'left',
-    fontFamily: 'SF Pro Rounded',
-  },
-  gridText: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '500',
-    fontSize: 16,
-    lineHeight: 20,
-    textAlign: 'left',
-    fontFamily: 'SF Pro Rounded',
-  },
-  badgeWrapper: {
-    display: 'flex',
-    flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  iconWrapper: {
-    //height: 36,
-    //width: 36,
-    //backgroundColor: colors2024['brand-light-1'],
-    //borderRadius: 12,
-    //justifyContent: 'center',
-    //alignItems: 'center',
-  },
-  rightBadgeWrapper: {
-    position: 'relative',
-    right: -4,
-    alignSelf: 'flex-start',
-  },
-  badgeStyle: {},
-  headerText: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '700',
-    fontSize: 17,
-    lineHeight: 22,
-    textAlign: 'left',
-    fontFamily: 'SF Pro Rounded',
-  },
-  pinGrid: {
-    flexDirection: 'row',
-    flexWrap: 'nowrap',
-    borderRadius: 8,
-    gap: 10,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    width: '100%',
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    marginTop: 20,
-  },
-  emptyItem: {
-    backgroundColor: 'transparent',
-  },
-  pinGridItem: {
-    backgroundColor: colord(
-      isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
-    )
-      .alpha(0.6)
-      .toRgbString(),
-    borderRadius: 10,
-    flexShrink: 0,
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    height: 42,
-    gap: 10,
-    position: 'relative',
-    borderColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderWidth: 1,
-  },
-  contentBetweenHeaderAndMatrix: {
-    marginTop: 12,
-    marginBottom: 12,
-    gap: 12,
-    // ...makeDebugBorder(),
-  },
-  contentBetweenHeaderAndMatrixEmpty: {
-    marginBottom: 12,
-  },
-  contentBetweenHeaderAndMatrixOnlyOne: {
-    paddingTop: 0,
-  },
-  menuContainer: {
-    marginTop: 0,
-  },
-  grid: {
-    // flexDirection: 'row',
-    // flexWrap: 'wrap',
-    // borderRadius: 8,
-    // gap: ITEM_GRID_GAP,
-    // justifyContent: 'space-between',
-    // alignItems: 'flex-start',
-    width: '100%',
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    // paddingHorizontal: 8,
-    // paddingVertical: 12,
-    // paddingTop: 16,re
-  },
-  gridGradientOutline: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 8,
-    paddingTop: 16,
-    paddingBottom: 12,
-    width: '100%',
-    gap: 16,
-  },
-  gridItemsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    borderRadius: 8,
-    rowGap: ITEM_GRID_GAP + 2,
-    columnGap: ITEM_GRID_GAP,
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    width: '100%',
-  },
-  primaryActionsContainer: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  primaryActionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    borderRadius: 10,
-    height: 52,
-    paddingHorizontal: 16,
-  },
-  primaryActionText: {
-    color: colors2024['neutral-InvertHighlight'],
-    fontWeight: '700',
-    fontSize: 18,
-    lineHeight: 22,
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-  },
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, bottomSafeArea }) => ({
+    screenContainer: {
+      paddingTop: 0,
+    },
+    paddingContainer: {
+      paddingHorizontal: 0,
+      flex: 1,
+      flexGrow: 1,
+    },
+    container: {
+      borderWidth: 1,
+      borderColor: 'red',
+      flexGrow: 1,
+      minHeight: '100%',
+    },
+    headerContainer: {
+      backgroundColor: 'transparent',
+      paddingTop: 64,
+    },
+    bgImage: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+    },
+    redDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors2024['red-default'],
+      position: 'absolute',
+      top: 0,
+      right: 13,
+    },
+    rootScreenContainer: {
+      // ...makeDebugBorder(),
+      // paddingHorizontal: 20,
+      flex: 1,
+      position: 'relative',
+      overflow: 'hidden',
+    },
+    scroll: {
+      flex: 1,
+      marginTop: TAB_HEADER_MIN_HEIGHT,
+    },
+    scrollContainer: {
+      // paddingTop: 88,
+      flexGrow: 1,
+      minHeight: '100%',
+      marginTop: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
+    },
+    menuHeader: {
+      height: 30,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
+      marginHorizontal: 4,
+      margin: 12,
+      marginBottom: 16,
+      marginTop: 0,
+    },
+    pinHeader: {
+      marginTop: -8,
+    },
+    pinGridText: {
+      color: colors2024['neutral-body'],
+      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 20,
+      textAlign: 'left',
+      fontFamily: 'SF Pro Rounded',
+    },
+    gridText: {
+      color: colors2024['neutral-title-1'],
+      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 20,
+      textAlign: 'left',
+      fontFamily: 'SF Pro Rounded',
+    },
+    badgeWrapper: {
+      display: 'flex',
+      flexDirection: 'row',
+      width: '100%',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    iconWrapper: {
+      // height: 36,
+      // width: 36,
+      // backgroundColor: colors2024['brand-light-1'],
+      // borderRadius: 12,
+      // justifyContent: 'center',
+      // alignItems: 'center',
+    },
+    rightBadgeWrapper: {
+      position: 'relative',
+      right: -4,
+      alignSelf: 'flex-start',
+    },
+    badgeStyle: {},
+    headerText: {
+      color: colors2024['neutral-title-1'],
+      fontWeight: '700',
+      fontSize: 17,
+      lineHeight: 22,
+      textAlign: 'left',
+      fontFamily: 'SF Pro Rounded',
+    },
+    pinGrid: {
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      borderRadius: 8,
+      gap: 10,
+      justifyContent: 'flex-start',
+      alignItems: 'flex-start',
+      width: '100%',
+      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+      marginTop: 20,
+    },
+    emptyItem: {
+      backgroundColor: 'transparent',
+    },
+    pinGridItem: {
+      backgroundColor: colord(
+        isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+      )
+        .alpha(0.6)
+        .toRgbString(),
+      borderRadius: 10,
+      flexShrink: 0,
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 10,
+      height: 42,
+      gap: 10,
+      position: 'relative',
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      borderWidth: 1,
+    },
+    contentBetweenHeaderAndMatrix: {
+      marginTop: 12,
+      marginBottom: 12,
+      gap: 12,
+      // ...makeDebugBorder(),
+    },
+    contentBetweenHeaderAndMatrixEmpty: {
+      marginBottom: 12,
+    },
+    contentBetweenHeaderAndMatrixOnlyOne: {
+      paddingTop: 0,
+    },
+    menuContainer: {
+      marginTop: 0,
+    },
+    grid: {
+      marginTop: 0,
+      // flexDirection: 'row',
+      // flexWrap: 'wrap',
+      // borderRadius: 8,
+      // gap: ITEM_GRID_GAP,
+      // justifyContent: 'space-between',
+      // alignItems: 'flex-start',
+      width: '100%',
+      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+      // paddingHorizontal: 8,
+      // paddingVertical: 12,
+      // paddingTop: 16,re
+    },
+    gridGradientOutline: {
+      backgroundColor: 'transparent',
+      paddingHorizontal: 8,
+      paddingTop: 16,
+      paddingBottom: 12,
+      width: '100%',
+      gap: 16,
+    },
+    gridItemsWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      borderRadius: 8,
+      rowGap: ITEM_GRID_GAP + 2,
+      columnGap: ITEM_GRID_GAP,
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      width: '100%',
+    },
+    primaryActionsContainer: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    primaryActionButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+      borderRadius: 10,
+      height: 52,
+      paddingHorizontal: 16,
+    },
+    primaryActionText: {
+      color: colors2024['neutral-InvertHighlight'],
+      fontWeight: '700',
+      fontSize: 18,
+      lineHeight: 22,
+      textAlign: 'center',
+      fontFamily: 'SF Pro Rounded',
+    },
 
-  gridItem: {
-    borderWidth: 2,
-    borderColor: isLight
-      ? colors2024['neutral-InvertHighlight']
-      : 'transparent',
-    backgroundColor: isLight
-      ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
-      : colors2024['neutral-bg-2'],
-    width: '48%', // default
-    minWidth: 0,
-    borderRadius: 16,
-    flexShrink: 0,
-    padding: 16,
-    display: 'flex',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    height: 92,
-    gap: 8,
-    position: 'relative',
-  },
-  pendingContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pendingBlur: {
-    paddingLeft: 20,
-    paddingRight: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    gap: 0,
-    width: 'auto',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: colors2024['neutral-bg-1'],
-    backgroundColor: colord(
-      isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
-    )
-      .alpha(IS_ANDROID ? 1 : 0.89)
-      .toRgbString(),
-  },
-  pendingText: {
-    marginLeft: 2,
-    color: colors2024['orange-default'],
-    fontWeight: '700',
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: 'SF Pro Rounded',
-  },
-  floatBottom: {
-    // position: 'absolute',
-    // bottom: 0,
-    // left: 0,
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: Dimensions.get('window').width,
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    gridItem: {
+      borderWidth: 2,
+      borderColor: isLight
+        ? colors2024['neutral-InvertHighlight']
+        : 'transparent',
+      backgroundColor: isLight
+        ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
+        : colors2024['neutral-bg-2'],
+      width: '48%', // default
+      minWidth: 0,
+      borderRadius: 16,
+      flexShrink: 0,
+      padding: 16,
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      height: 96,
+      gap: 8,
+      position: 'relative',
+    },
+    pendingContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    pendingBlur: {
+      paddingLeft: 20,
+      paddingRight: 18,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      gap: 0,
+      width: 'auto',
+      borderRadius: 20,
+      borderWidth: 1,
+      borderStyle: 'solid',
+      borderColor: colors2024['neutral-bg-1'],
+      backgroundColor: colord(
+        isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+      )
+        .alpha(IS_ANDROID ? 1 : 0.89)
+        .toRgbString(),
+    },
+    pendingText: {
+      marginLeft: 2,
+      color: colors2024['orange-default'],
+      fontWeight: '700',
+      fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+    },
+    floatBottom: {
+      // position: 'absolute',
+      // bottom: 0,
+      // left: 0,
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: Dimensions.get('window').width,
+      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
 
-    // height: 128,
-  },
-  search: {
-    width: '100%',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    height: 60,
-    borderRadius: 100,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-    paddingHorizontal: 28,
-    gap: 8,
-  },
-  searchText: {
-    fontSize: 22,
-    lineHeight: 28,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-  },
+      // height: 128,
+    },
+    search: {
+      width: '100%',
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      height: 60,
+      borderRadius: 100,
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: 20,
+      paddingHorizontal: 28,
+      gap: 8,
+    },
+    searchText: {
+      fontSize: 22,
+      lineHeight: 28,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+    },
 
-  noAssetsContainer: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    paddingHorizontal: 16,
-    paddingBottom: 50,
-    borderRadius: 50,
-    overflow: 'hidden',
-  },
-  bgLeft: { position: 'absolute', top: 0, left: 0 },
-  bgRight: { position: 'absolute', top: 35, right: 0 },
-  bgb1: {
-    position: 'absolute',
-    top: 52,
-    left: 16,
-    transform: [{ scale: 0.5 }],
-  },
-  bgb2: {
-    position: 'absolute',
-    top: 76,
-    right: 34,
-    transform: [{ scale: 0.5 }],
-  },
-  noAssetsTitle: {
-    color: colors2024['neutral-title-1'],
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 28,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 36,
-    marginVertical: 42,
-  },
+    noAssetsContainer: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      paddingHorizontal: 16,
+      paddingBottom: 50,
+      borderRadius: 50,
+      overflow: 'hidden',
+    },
+    bgLeft: { position: 'absolute', top: 0, left: 0 },
+    bgRight: { position: 'absolute', top: 35, right: 0 },
+    bgb1: {
+      position: 'absolute',
+      top: 52,
+      left: 16,
+      transform: [{ scale: 0.5 }],
+    },
+    bgb2: {
+      position: 'absolute',
+      top: 76,
+      right: 34,
+      transform: [{ scale: 0.5 }],
+    },
+    noAssetsTitle: {
+      color: colors2024['neutral-title-1'],
+      textAlign: 'center',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 28,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 36,
+      marginVertical: 42,
+    },
 
-  noAssetsItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 26,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-  },
-  noAssetsIconWrapper: {
-    width: 28,
-    height: 28,
-    backgroundColor: colors2024['brand-light-1'],
-    borderRadius: 9.8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buyIcon: {
-    alignSelf: 'flex-start',
-  },
-  noAssetsRight: {
-    gap: 4,
-    flexWrap: 'wrap',
-    flex: 1,
-  },
-  noAssetsItemName: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 22,
-  },
-  noAssetsItemDesc: {
-    maxWidth: '100%',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '400',
-    lineHeight: 20,
-  },
-  hidden: {
-    display: 'none',
-  },
-  curveBox: {
-    paddingHorizontal: 15,
-    paddingTop: 12,
-  },
-  curveCard: {
-    borderRadius: 20,
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    borderWidth: 0,
-    borderColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-line'],
-    backgroundColor: 'transparent',
-  },
-  curveCardInner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-  },
-  shadowView: {
-    ...Platform.select({
-      ios: {
-        shadowColor: colors2024['neutral-black'],
-        shadowOffset: {
-          width: 0,
-          height: 4,
+    noAssetsItem: {
+      paddingHorizontal: 16,
+      paddingVertical: 26,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+    },
+    noAssetsIconWrapper: {
+      width: 28,
+      height: 28,
+      backgroundColor: colors2024['brand-light-1'],
+      borderRadius: 9.8,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    buyIcon: {
+      alignSelf: 'flex-start',
+    },
+    noAssetsRight: {
+      gap: 4,
+      flexWrap: 'wrap',
+      flex: 1,
+    },
+    noAssetsItemName: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 18,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 22,
+    },
+    noAssetsItemDesc: {
+      maxWidth: '100%',
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontStyle: 'normal',
+      fontWeight: '400',
+      lineHeight: 20,
+    },
+    hidden: {
+      display: 'none',
+    },
+    curveBox: {
+      paddingHorizontal: 15,
+      paddingTop: 12,
+    },
+    curveCard: {
+      borderRadius: 20,
+      paddingVertical: 24,
+      paddingHorizontal: 20,
+      borderWidth: 0,
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-line'],
+      backgroundColor: 'transparent',
+    },
+    curveCardInner: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+    },
+    shadowView: {
+      ...Platform.select({
+        ios: {
+          shadowColor: colors2024['neutral-black'],
+          shadowOffset: {
+            width: 0,
+            height: 4,
+          },
+          shadowOpacity: 0.03,
+          shadowRadius: 10,
+          elevation: 8,
         },
-        shadowOpacity: 0.03,
-        shadowRadius: 10,
-        elevation: 8,
-      },
-    }),
-  },
-  skeleton: {
-    borderRadius: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-  },
-  curveContainer: {
-    gap: 6,
-  },
-  arrow: {
-    width: 42,
-    height: 42,
-    borderRadius: 30,
-  },
-  changePercent: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '500',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  netWorth: {
-    fontSize: 42,
-    lineHeight: 46,
-    fontWeight: '900',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  changeSection: {
-    flexDirection: 'row',
-    gap: 2,
-    marginTop: 4,
-    alignItems: 'center',
-  },
-  changeTime: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    marginLeft: 4,
-  },
-  globalWarning: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: -16,
-  },
-  searchBarPlaceholder: {
-    height: 80,
-  },
-  globalSearchBar: {
-    position: 'absolute',
-    left: 8,
-    right: 8,
-    bottom: 22,
-  },
-}));
+      }),
+    },
+    skeleton: {
+      borderRadius: 8,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+    },
+    curveContainer: {
+      gap: 6,
+    },
+    arrow: {
+      width: 42,
+      height: 42,
+      borderRadius: 30,
+    },
+    changePercent: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    netWorth: {
+      fontSize: 42,
+      lineHeight: 46,
+      fontWeight: '900',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    changeSection: {
+      flexDirection: 'row',
+      gap: 2,
+      marginTop: 4,
+      alignItems: 'center',
+    },
+    changeTime: {
+      fontSize: 16,
+      fontWeight: '400',
+      lineHeight: 20,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      marginLeft: 4,
+    },
+    globalWarning: {
+      marginHorizontal: 16,
+      marginTop: 16,
+      marginBottom: -16,
+    },
+    searchBarPlaceholder: {
+      height: 80,
+    },
+    globalSearchBar: {
+      position: 'absolute',
+      left: 8,
+      right: 8,
+      bottom: Platform.select({
+        ios: 22,
+        android: Math.max(22, bottomSafeArea),
+      }),
+    },
+    topWrapper: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+    },
+  }),
+);
 
 export default MultiAddressHome;

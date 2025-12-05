@@ -5,12 +5,13 @@ import { preferenceService } from '@/core/services';
 import { useSafeState } from 'ahooks';
 import { NFTItem, CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { syncNFTs } from '@/databases/hooks/assets';
-import { singleNFTNonceAtom } from './refresh';
+import { useSingleNftRefresh } from './refresh';
 import { useAtom } from 'jotai';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { CombineNFTItem } from './store';
 
 export const tagNfts = (
   nfts: NFTItem[],
@@ -45,7 +46,7 @@ export const tagNfts = (
 export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(true);
   const [list, setList] = useSafeState<DisplayNftItem[]>([]);
-  const [singleNFTNonce, setSingleNFTNonce] = useAtom(singleNFTNonceAtom);
+  // const [singleNFTNonce, setSingleNFTNonce] = useAtom(singleNFTNonceAtom);
   const fetchData = useCallback(
     async (force?: boolean) => {
       if (!addr) {
@@ -117,12 +118,15 @@ export const useQueryNft = (addr?: string, visible = true) => {
     ),
   });
 
-  useEffect(() => {
-    if (singleNFTNonce > 0) {
-      refreshTagNft();
-      setSingleNFTNonce(0);
-    }
-  }, [refreshTagNft, setSingleNFTNonce, singleNFTNonce]);
+  useSingleNftRefresh({
+    onRefresh: refreshTagNft,
+  });
+  // useEffect(() => {
+  //   if (singleNFTNonce > 0) {
+  //     refreshTagNft();
+  //     setSingleNFTNonce(0);
+  //   }
+  // }, [refreshTagNft, setSingleNFTNonce, singleNFTNonce]);
 
   useEffect(() => {
     if (addr && visible) {
@@ -138,8 +142,11 @@ export const useQueryNft = (addr?: string, visible = true) => {
   };
 };
 
-export type NftItemWithCollection = NFTItem | CollectionList;
-export const collectionNftList = (nftList: NFTItem[]) => {
+type CombineCollectionList = CollectionList & {
+  address?: string;
+};
+export type NftItemWithCollection = CombineNFTItem | CombineCollectionList;
+export const collectionNftList = (nftList: CombineNFTItem[]) => {
   const collectionList: NftItemWithCollection[] = [];
   nftList.forEach(item => {
     if (!item.collection_id || !item.collection) {
@@ -147,19 +154,21 @@ export const collectionNftList = (nftList: NFTItem[]) => {
       return;
     }
     const collection = collectionList.find(
-      (citem): citem is CollectionList =>
-        'nft_list' in citem &&
-        citem.chain === item.chain &&
-        citem.id === item.collection?.id &&
-        !!citem.nft_list.length,
+      (_item): _item is CombineCollectionList =>
+        'nft_list' in _item &&
+        isSameAddress(_item.address || '', item.address || '') &&
+        _item.chain === item.chain &&
+        _item.id === item.collection?.id &&
+        !!_item.nft_list.length,
     );
     if (collection) {
       collection.nft_list.push({ ...item, collection: null });
     } else {
       collectionList.push({
         ...item.collection,
+        address: item.address,
         nft_list: [{ ...item, collection: null }],
-      } as unknown as CollectionList);
+      } as unknown as CombineCollectionList);
     }
   });
   return collectionList;

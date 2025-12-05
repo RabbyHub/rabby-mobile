@@ -35,54 +35,132 @@ import { isEqual, unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
 import { useHistoryTokenDict } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
-import { balanceAtom } from './useAccountsBalance';
+// import { balanceAtom } from './useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { fetchAllAccounts, KeyringAccountWithAlias } from '@/core/apis/account';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  makeAvoidParallelAsyncFunc,
+  resolveValFromUpdater,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
+import { useBalanceAccounts } from './useAccountsBalance';
+import { sortAccountList } from '@/utils/sortAccountList';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
-const accountsAtom = atom<KeyringAccountWithAlias[]>([]);
+// const accountsAtom = atom<KeyringAccountWithAlias[]>([]);
+// accountsAtom.onMount = setAtom => {
+//   fetchAllAccounts().then(accounts => {
+//     setAtom(accounts || []);
+//   });
+// };
 
-accountsAtom.onMount = setAtom => {
-  fetchAllAccounts().then(accounts => {
-    setAtom(accounts || []);
-  });
-};
-
-export const currentAccountAtom = atom<null | KeyringAccountWithAlias>(null);
-
-const pinAddressesAtom = atom<IPinAddress[]>([]);
-
-pinAddressesAtom.onMount = setAtom => {
-  const addresses = preferenceService.getPinAddresses();
-  setAtom(addresses);
-};
+// export const currentAccountAtom = atom<null | KeyringAccountWithAlias>(null);
 
 const fetchingAccountsAtom = atom(false);
+
+// const pinAddressesAtom = atom<IPinAddress[]>([]);
+// pinAddressesAtom.onMount = setAtom => {
+//   const addresses = preferenceService.getPinAddresses();
+//   setAtom(addresses);
+// };
+
+type Store = {
+  accounts: KeyringAccountWithAlias[];
+  // fetchingAccounts: boolean;
+  pinnedAddresses: IPinAddress[];
+  currentAccount: KeyringAccountWithAlias | null;
+};
+const zAccountStore = zCreate<Store>((set, get) => {
+  return {
+    accounts: [],
+    // fetchingAccounts: false,
+
+    pinnedAddresses: [],
+    currentAccount: null,
+  };
+});
+
+function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
+  zAccountStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev.accounts, valOrFunc);
+
+    if (changed) return { ...prev, accounts: newVal };
+
+    return prev;
+  });
+}
+
+export function setCurrentAccount(
+  valOrFunc: UpdaterOrPartials<Store['currentAccount']>,
+) {
+  zAccountStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.currentAccount,
+      valOrFunc,
+    );
+
+    if (changed) return { ...prev, currentAccount: newVal };
+
+    return prev;
+  });
+}
+eventBus.on(EVENT_SWITCH_ACCOUNT, v => {
+  setCurrentAccount(v);
+});
+
+function setPinAddresses(
+  valOrFunc: UpdaterOrPartials<Store['pinnedAddresses']>,
+) {
+  zAccountStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.pinnedAddresses,
+      valOrFunc,
+    );
+
+    if (changed) return { ...prev, pinnedAddresses: newVal };
+
+    return prev;
+  });
+}
+
+const doFetchAccounts = makeAvoidParallelAsyncFunc(async () => {
+  const nextAccounts = await fetchAllAccounts();
+  setAccounts(nextAccounts);
+
+  return nextAccounts;
+});
+
+export async function getSortedAddressList(options?: {
+  includeOthers?: boolean;
+}) {
+  const { includeOthers = false } = options || {};
+  const allAccounts = await doFetchAccounts();
+  const allMyAccounts = filterMyAccounts(allAccounts);
+  const pinAddresses = preferenceService.getPinAddresses();
+
+  return {
+    allAccounts,
+    allMyAccounts,
+    sortedAccounts: includeOthers
+      ? sortAccountList(allAccounts, { highlightedAddresses: pinAddresses })
+      : sortAccountList(allMyAccounts, { highlightedAddresses: pinAddresses }),
+  };
+}
+
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const [accounts, setAccounts] = useAtom(accountsAtom);
+  // const [accounts, setAccounts] = useAtom(accountsAtom);
+  const accounts = zAccountStore(s => s.accounts);
 
   const { disableAutoFetch = false } = opts || {};
 
-  const doFetchAccounts = useCallback(async () => {
-    const nextAccounts = await fetchAllAccounts();
-    setAccounts(prev => {
-      if (isEqual(prev, nextAccounts)) return prev;
-
-      return nextAccounts;
-    });
-  }, [setAccounts]);
-
-  const { fetchAction: fetchAccounts } = useAtomicRequest({
-    isRequestingAtom: fetchingAccountsAtom,
-    doRequest: doFetchAccounts,
-  });
-
   useEffect(() => {
     if (!disableAutoFetch) {
-      fetchAccounts();
+      doFetchAccounts();
     }
-  }, [disableAutoFetch, fetchAccounts]);
+  }, [disableAutoFetch]);
 
   const stableAccounts = useCreationWithShallowCompare(() => {
     return accounts;
@@ -90,19 +168,20 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
 
   return {
     accounts: stableAccounts,
-    fetchAccounts,
+    fetchAccounts: doFetchAccounts,
   };
 }
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const [allAccounts, setAccounts] = useAtom(accountsAtom);
+  // const [allAccounts, setAccounts] = useAtom(accountsAtom);
+  const allAccounts = zAccountStore(s => s.accounts);
 
   const { disableAutoFetch = false } = opts || {};
 
   const doFetchAccounts = useCallback(async () => {
     const nextAccounts = await fetchAllAccounts();
     setAccounts(nextAccounts);
-  }, [setAccounts]);
+  }, []);
 
   const { fetchAction: fetchAccounts } = useAtomicRequest({
     isRequestingAtom: fetchingAccountsAtom,
@@ -125,7 +204,8 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
 
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
-  const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
+  // const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
+  const pinAddresses = zAccountStore(s => s.pinnedAddresses);
 
   /**
    * @deprecated
@@ -133,7 +213,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const getPinAddresses = useCallback(() => {
     const addresses = preferenceService.getPinAddresses();
     setPinAddresses(addresses);
-  }, [setPinAddresses]);
+  }, []);
 
   const getPinAddressesAsync = useCallback(async () => {
     return getPinAddresses();
@@ -180,7 +260,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
       }
       setPinAddresses(addresses);
     },
-    [setPinAddresses],
+    [],
   );
 
   useEffect(() => {
@@ -197,9 +277,12 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 };
 
 export const usePinnedAccountList = () => {
-  const [pinAddresses] = useAtom(pinAddressesAtom);
-  const [accounts] = useAtom(accountsAtom);
-  const [balanceAccounts] = useAtom(balanceAtom);
+  // const [pinAddresses] = useAtom(pinAddressesAtom);
+  // const [accounts] = useAtom(accountsAtom);
+  const pinAddresses = zAccountStore(s => s.pinnedAddresses);
+  const accounts = zAccountStore(s => s.accounts);
+  // const [balanceAccounts] = useAtom(balanceAtom);
+  const { balanceAccounts } = useBalanceAccounts();
 
   const pinnedAccountList = useMemo(() => {
     const res: KeyringAccountWithAlias[] = [];

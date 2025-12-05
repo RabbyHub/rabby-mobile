@@ -2808,7 +2808,7 @@
         "desc": "Der Handel mit perpetual contracts birgt erhebliche Risiken, einschließlich der Möglichkeit, Ihr Investment und Ihre Sicherheiten aufgrund von hohem Leverage und Marktvolatilität schnell zu verlieren. Ein solcher Handel ist möglicherweise nicht für alle Benutzer geeignet. Die Preise können von Funding Rates und Liquidität beeinflusst werden, und Sie könnten ohne vorherige Ankündigung automatisch liquidiert werden. Marktdaten werden von Hyperliquid bereitgestellt."
       },
       "PerpsClosePositionPopup": {
-        "title": "Schließe {{coin}} {{direction}} Position",
+        "title": "",
         "positionSize": "Positionsgröße",
         "pnl": "PNL",
         "fee": "Gebühr:",

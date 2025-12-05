@@ -2731,7 +2731,7 @@
         "desc": "El comercio de contratos perpetuos implica riesgos significativos, incluyendo la posibilidad de perder rápidamente su inversión y colateral debido a un alto apalancamiento y la volatilidad del mercado. Este tipo de comercio puede no ser adecuado para todos los usuarios. Los precios pueden verse afectados por las tasas de financiación y la liquidez, y podría ser liquidado automáticamente sin previo aviso. Los datos del mercado son proporcionados por Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "Cerrar posición {{direction}} de {{coin}}",
+        "title": "",
         "fee": "Tarifa:",
         "pnl": "PNL",
         "closeBtn": "Cerrar {{direction}}",

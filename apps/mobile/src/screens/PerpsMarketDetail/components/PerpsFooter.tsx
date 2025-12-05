@@ -1,9 +1,10 @@
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
+import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 
 export const PerpsFooter: React.FC<{
   onLongPress?(): void;
@@ -11,7 +12,6 @@ export const PerpsFooter: React.FC<{
   onClosePress?(): void;
   onAddPress?(): void;
   hasPermission?: boolean;
-  isLogin?: boolean;
   hasPosition?: boolean;
   direction?: string;
 }> = ({

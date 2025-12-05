@@ -32,6 +32,37 @@ function checkIfDuplicatedStringifiedJsonString(input: any) {
   );
 }
 
+export function getJsonValueStringCompat(
+  mmkv: MMKV,
+  key: string,
+  options?: MMKVConfiguration,
+): string | null {
+  const raw = mmkv.getString(key);
+  if (!raw) return null;
+  let finalString: string | null = raw;
+
+  try {
+    if (checkIfDuplicatedStringifiedJsonObjectString(raw)) {
+      finalString = stringUtils.safeParseJSON(raw, {
+        defaultValue: raw,
+      });
+    } else if (checkIfDuplicatedStringifiedJsonString(raw)) {
+      finalString = stringUtils.safeParseJSON(raw, {
+        defaultValue: raw,
+      });
+    }
+  } catch (e) {
+    if (__DEV__) {
+      console.warn(
+        `[getJsonValueStringCompat::${options?.id}] Failed to parse item with key "${key}":`,
+        e,
+      );
+    }
+  }
+
+  return finalString ?? null;
+}
+
 function makeAppStorage(options?: MMKVConfiguration) {
   const mmkv = new MMKV(options);
 
@@ -41,33 +72,6 @@ function makeAppStorage(options?: MMKVConfiguration) {
     return !value
       ? null
       : stringUtils.safeParseJSON(value, { defaultValue: null });
-  }
-
-  function getJsonValueStringCompat(key: string): string | null {
-    const raw = mmkv.getString(key);
-    if (!raw) return null;
-    let finalString: string | null = raw;
-
-    try {
-      if (checkIfDuplicatedStringifiedJsonObjectString(raw)) {
-        finalString = stringUtils.safeParseJSON(raw, {
-          defaultValue: raw,
-        });
-      } else if (checkIfDuplicatedStringifiedJsonString(raw)) {
-        finalString = stringUtils.safeParseJSON(raw, {
-          defaultValue: raw,
-        });
-      }
-    } catch (e) {
-      if (__DEV__) {
-        console.warn(
-          `[getJsonValueStringCompat::${options?.id}] Failed to parse item with key "${key}":`,
-          e,
-        );
-      }
-    }
-
-    return finalString ?? null;
   }
 
   function setItem<T>(key: string, value: T): void {
@@ -103,7 +107,8 @@ function makeAppStorage(options?: MMKVConfiguration) {
   const methods = {
     getItem,
     setItem,
-    getJsonValueStringCompat,
+    getJsonValueStringCompat: (key: string) =>
+      getJsonValueStringCompat(mmkv, key, options),
     removeItem,
     setRawString,
     getRawString,
@@ -180,12 +185,14 @@ type StringStorageOption =
 /**
  * persist item as json, read it as its original type
  *
- * @baddesign In the past, `makeJsonStore` use storage consist with appStorage,
+ * @baddesign In the past, `makeJotaiJsonStore` use storage consist with appStorage,
  * which also persist value as json, and treat it as json on parsing. This duplicates
- * the logic of `makeJsonStore`, and is not a good design, that is, one value would
+ * the logic of `makeJotaiJsonStore`, and is not a good design, that is, one value would
  * be JSON.stringify twice and JSON.parse twice. This is a bad behavior.
  */
-function makeJsonStore<T = any>(options?: { storage?: StringStorageOption }) {
+function makeJotaiJsonStore<T = any>(options?: {
+  storage?: StringStorageOption;
+}) {
   const { storage } = options || {};
 
   const jsonStore =
@@ -208,11 +215,11 @@ function makeJsonStore<T = any>(options?: { storage?: StringStorageOption }) {
 /**
  * @deprecated
  */
-export const duplicatelyStringifiedAppJsonStore = makeJsonStore<any>({
+export const duplicatelyStringifiedAppJsonStore = makeJotaiJsonStore<any>({
   storage: appStorage as SyncStringStorage,
 });
 
-export const appJsonStore = makeJsonStore<any>({
+export const appJsonStore = makeJotaiJsonStore<any>({
   storage: undefined,
 });
 
@@ -243,6 +250,10 @@ const GET_STRING_STORAGE_FOR_JSON_STORE = (strategy: MMKVStorageStrategy) => {
   }
 };
 
+export const appStorageForZustand = GET_STRING_STORAGE_FOR_JSON_STORE(
+  MMKVStorageStrategy.compatJson,
+);
+
 export const atomByMMKV = <T = any>(
   key: string,
   initialValue: T,
@@ -254,7 +265,7 @@ export const atomByMMKV = <T = any>(
   },
 ) => {
   const { storage } = options || {};
-  const jsonStore = makeJsonStore<T>({ storage });
+  const jsonStore = makeJotaiJsonStore<T>({ storage });
 
   if (typeof options?.setupSubscribe === 'function') {
     jsonStore.subscribe = options?.setupSubscribe({ jsonStore });

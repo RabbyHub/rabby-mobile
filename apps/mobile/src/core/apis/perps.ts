@@ -77,6 +77,21 @@ class ApisPerps {
   getPerpsAgentWallet = async (masterWallet: string) => {
     return perpsService.getAgentWallet(masterWallet);
   };
+  getOrCreatePerpsAgentWallet = async (masterWallet: string) => {
+    const res = await perpsService.getAgentWallet(masterWallet);
+    if (!res) {
+      const resp = await this.createPerpsAgentWallet(masterWallet);
+      return {
+        vault: resp.vault,
+        agentAddress: resp.agentAddress,
+      };
+    } else {
+      return {
+        vault: res.vault,
+        agentAddress: res.preference.agentAddress,
+      };
+    }
+  };
 }
 
 export const apisPerps = new ApisPerps();

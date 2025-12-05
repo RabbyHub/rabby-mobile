@@ -129,7 +129,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           try {
             const { has_new_tx } = await openapi.hasNewTxFrom({
               address,
-              startTime: latest_time,
+              startTime: Math.floor(latest_time),
             });
             hasNewTx = has_new_tx;
           } catch (e) {

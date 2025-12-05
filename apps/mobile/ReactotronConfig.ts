@@ -3,7 +3,8 @@ import Reactotron, { ReactotronReactNative } from 'reactotron-react-native';
 import { DEV_SERVER_HOSTNAME as DEV_SERVER_HOSTNAME_ } from '@env';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getDevServerHost } from '@/core/utils/devServerSettings';
-import mmkvPlugin from 'reactotron-react-native-mmkv';
+import mmkvPlugin from '@/core/utils/reactotron-plugins/react-native-mmkv';
+import opSQLitePlugin from '@/core/utils/reactotron-plugins/op-sqlite';
 
 declare global {
   var _tron:
@@ -60,6 +61,7 @@ export function setupReactotronConnection() {
         storage: require('@/core/storage/mmkv').appMMKVForDebug,
       }),
     )
+      .use(opSQLitePlugin<ReactotronReactNative>())
       // controls connection & communication settings
       .configure({
         name: 'Rabby Mobile',

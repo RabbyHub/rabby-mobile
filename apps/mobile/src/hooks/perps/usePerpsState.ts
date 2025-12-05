@@ -15,7 +15,11 @@ import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { apisPerps } from './../../core/apis/perps';
 import { miniSignTypedData } from '../useMiniSignTypedData';
-import { apisPerpsStore, usePerpsStore } from './usePerpsStore';
+import {
+  apisPerpsStore,
+  getClearinghouseStateByMap,
+  usePerpsStore,
+} from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
 import { minBy, uniqBy } from 'lodash';
 import { showToast } from './showToast';
@@ -23,6 +27,7 @@ import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
 import { getAllMyAccount } from '@/core/apis/address';
 import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
+import { sleep } from '@/utils/async';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
 interface SignAction {
@@ -31,291 +36,10 @@ interface SignAction {
   signature: string;
 }
 
-export const usePerpsInitial = () => {
-  const { myAddresses } = useAccountSelectorList({});
-  const {
-    state: perpsState,
-    setApproveSignatures,
-    setCurrentOnlyShowPerpsAccount,
-    // setCurrentPerpsAccount,
-    setInitialized,
-    // setApproveSignatures,
-
-    // Effects
-    fetchPositionAndOpenOrders,
-    loginPerpsAccount,
-    fetchPerpPermission,
-    fetchMarketData,
-  } = usePerpsStore();
-
-  const {
-    isInitialized,
-    currentPerpsAccount,
-    isLogin,
-    accountSummary,
-    positionAndOpenOrders,
-  } = perpsState;
-
-  // return bool if can use approveSignatures
-  const restoreApproveSignatures = useMemoizedFn(
-    async (payload: { address: string }) => {
-      const approveSignatures = await apisPerps.getSendApproveAfterDeposit(
-        payload.address,
-      );
-
-      if (approveSignatures?.length) {
-        const item = approveSignatures[0];
-        const expiredTime = item.nonce + 1000 * 60 * 60 * 24;
-        const now = Date.now();
-        if (expiredTime > now) {
-          setApproveSignatures(approveSignatures);
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    },
-  );
-
-  const checkBuilderFee = useMemoizedFn(async address => {
-    try {
-      const sdk = apisPerps.getPerpsSDK();
-      const res = await sdk.info.getMaxBuilderFee(
-        PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-      );
-      if (!res) {
-        logout(address);
-        apisPerps.createPerpsAgentWallet(address);
-        console.error('Failed to set builder fee');
-        Sentry.captureException(
-          new Error(
-            `PERPS set builder fee error, no max builder fee, address: ${address}`,
-          ),
-        );
-      }
-    } catch (error) {
-      console.error('Failed to set builder fee:', error);
-    }
-  });
-
-  const checkIsNeedAutoLoginOut = useMemoizedFn(
-    async (masterAddress: string, agentAddress: string) => {
-      const sdk = apisPerps.getPerpsSDK();
-      const extraAgents = await sdk.info.extraAgents(masterAddress);
-      const item = extraAgents.find(agent =>
-        isSameAddress(agent.address, agentAddress),
-      );
-      if (!item) {
-        const res = await restoreApproveSignatures({
-          address: masterAddress,
-        });
-        if (!res) {
-          console.warn(
-            'masterAddress isExpired, no restore approve signature, logout',
-          );
-          logout(masterAddress);
-          // Sentry.captureException(
-          //   new Error(
-          //     'masterAddress isExpired, no restore approve signature, logout' +
-          //       masterAddress,
-          //   ),
-          // );
-        }
-      } else {
-        const expiredAt = item?.validUntil;
-        const oneDayAfter = Date.now() + 24 * 60 * 60 * 1000;
-        const isExpired = expiredAt ? expiredAt < oneDayAfter : true;
-        if (isExpired) {
-          console.warn('masterAddress isExpired, update agent, auto login out');
-          // need to update agent for send new approve agent api avoid error
-          apisPerps.createPerpsAgentWallet(masterAddress);
-          logout(masterAddress);
-          // Sentry.captureException(
-          //   new Error(
-          //     'masterAddress isExpired, update agent, auto login out' +
-          //       masterAddress,
-          //   ),
-          // );
-        } else {
-          checkBuilderFee(masterAddress);
-        }
-      }
-    },
-  );
-
-  // tmp no use
-  const handleSelectOnlyShowAccount = useMemoizedFn(async () => {
-    try {
-      const lastUsedAccount = await apisPerps.getPerpsLastUsedAccount();
-      const selectedItem =
-        lastUsedAccount &&
-        myAddresses.find(
-          item =>
-            item.address === lastUsedAccount.address &&
-            item.type === lastUsedAccount.type,
-        );
-      if (lastUsedAccount && selectedItem) {
-        setCurrentOnlyShowPerpsAccount(selectedItem);
-        fetchPositionAndOpenOrders(selectedItem.address);
-      } else {
-        if (myAddresses.length > 0) {
-          const list = myAddresses.slice(0, 10);
-          const sdk = apisPerps.getPerpsSDK();
-
-          const res = await Promise.all(
-            list.map(async item => {
-              try {
-                const info = await sdk.info.getClearingHouseState(item.address);
-                return { item, info };
-              } catch {
-                return { item, info: null };
-              }
-            }),
-          );
-
-          const sorted = res.sort((a, b) => {
-            const valA = Number(a.info?.marginSummary.accountValue || 0);
-            const valB = Number(b.info?.marginSummary.accountValue || 0);
-            return valB - valA;
-          });
-
-          const best = sorted[0];
-          if (best && Number(best.info?.marginSummary.accountValue || 0) > 0) {
-            setCurrentOnlyShowPerpsAccount(best.item);
-            fetchPositionAndOpenOrders(best.item.address);
-          } else {
-            // Fallback to first account if no clearinghouse value
-            // Ideally we sort by balance here but we don't have balance info readily available in this context
-            setCurrentOnlyShowPerpsAccount(myAddresses[0]);
-            fetchPositionAndOpenOrders(myAddresses[0].address);
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Error selecting only show account', e);
-    }
-  });
-
-  useEffect(() => {
-    if (isInitialized) {
-      return;
-    }
-
-    const initIsLogin = async () => {
-      try {
-        const noLoginAction = async () => {
-          apisPerps.setPerpsCurrentAccount(null);
-          fetchPerpPermission('');
-          await fetchMarketData();
-          setInitialized(true);
-        };
-
-        const currentAccount = await apisPerps.getPerpsCurrentAccount();
-        if (!currentAccount || !currentAccount.address) {
-          // 如果没有登录状态，则只获取市场数据即可
-          await noLoginAction();
-          return false;
-        }
-        const accountsList = await getAllMyAccount();
-        const targetTypeAccount = accountsList.find(
-          acc =>
-            isSameAddress(acc.address, currentAccount.address) &&
-            acc.type === currentAccount.type,
-        );
-
-        if (!targetTypeAccount) {
-          // 地址列表没找到
-          await noLoginAction();
-          return false;
-        }
-
-        const res = await apisPerps.getPerpsAgentWallet(currentAccount.address);
-        if (!res) {
-          // 没有找到store对应的 agent wallet
-          await noLoginAction();
-          return false;
-        }
-
-        const sdk = apisPerps.getPerpsSDK();
-        // 开始恢复登录态
-        sdk.initAccount(
-          currentAccount.address,
-          res.vault,
-          res.preference.agentAddress,
-          PERPS_AGENT_NAME,
-        );
-        await loginPerpsAccount(targetTypeAccount);
-        await fetchMarketData();
-
-        checkIsNeedAutoLoginOut(
-          currentAccount.address,
-          res.preference.agentAddress,
-        );
-
-        setInitialized(true);
-        return true;
-      } catch (error) {
-        console.error('Failed to init Perps state:', error);
-      }
-    };
-
-    initIsLogin();
-  }, [
-    isInitialized,
-    loginPerpsAccount,
-    fetchMarketData,
-    checkIsNeedAutoLoginOut,
-    setInitialized,
-    fetchPerpPermission,
-    myAddresses,
-    setCurrentOnlyShowPerpsAccount,
-    fetchPositionAndOpenOrders,
-  ]);
-
-  const logout = useMemoizedFn((address: string) => {
-    apisPerpsStore.logout();
-    apisPerps.setPerpsCurrentAccount(null);
-    apisPerps.setSendApproveAfterDeposit(address, []);
-  });
-
-  const perpsPositionInfo = useMemo(() => {
-    if (
-      !isLogin ||
-      !positionAndOpenOrders ||
-      positionAndOpenOrders.length === 0
-    ) {
-      return {
-        pnl: 0,
-        show: false,
-      };
-    }
-
-    const pnl = positionAndOpenOrders.reduce((acc, order) => {
-      return acc + Number(order.position.unrealizedPnl);
-    }, 0);
-
-    return {
-      pnl,
-      show: true,
-    };
-  }, [isLogin, positionAndOpenOrders]);
-
-  return {
-    accountSummary,
-    positionAndOpenOrders,
-    isLogin,
-    checkBuilderFee,
-    perpsPositionInfo,
-  };
-};
-
 export const usePerpsState = () => {
   const [popupSate, setPopupState] = usePerpsPopupState();
   const { t } = useTranslation();
   const deleteAgentCbRef = useRef<(() => Promise<void>) | null>(null);
-  const { checkBuilderFee } = usePerpsInitial();
   const {
     state: perpsState,
     setApproveSignatures,
@@ -329,14 +53,14 @@ export const usePerpsState = () => {
     setMarketData,
     setPositionAndOpenOrders,
     setAccountSummary,
-    setCurrentOnlyShowPerpsAccount,
+    setAccountNeedApproveAgent,
+    setAccountNeedApproveBuilderFee,
     // setCurrentPerpsAccount,
     setInitialized,
     // setApproveSignatures,
-    resetState,
+    resetAccountState,
 
     // Effects
-    saveApproveSignatures,
     fetchPositionAndOpenOrders,
     loginPerpsAccount,
     fetchClearinghouseState,
@@ -347,8 +71,12 @@ export const usePerpsState = () => {
     fetchPerpFee,
     unsubscribeAll,
   } = usePerpsStore();
-  const { isInitialized, currentPerpsAccount, isLogin, positionAndOpenOrders } =
-    perpsState;
+  const {
+    isInitialized,
+    currentPerpsAccount,
+    accountNeedApproveAgent,
+    accountNeedApproveBuilderFee,
+  } = perpsState;
 
   const handleDeleteAgent = useMemoizedFn(async () => {
     if (deleteAgentCbRef.current) {
@@ -361,6 +89,62 @@ export const usePerpsState = () => {
       deleteAgentCbRef.current = null;
     }
   });
+
+  const executeSignatures = useMemoizedFn(
+    async (signActions: SignAction[], account: Account): Promise<void> => {
+      const isLocalWallet =
+        account.type === KEYRING_CLASS.PRIVATE_KEY ||
+        account.type === KEYRING_CLASS.MNEMONIC;
+
+      const useMiniApprovalSign =
+        account.type === KEYRING_CLASS.HARDWARE.ONEKEY ||
+        account.type === KEYRING_CLASS.HARDWARE.LEDGER;
+
+      if (useMiniApprovalSign) {
+        // await MiniTypedDataApproval in home page
+        try {
+          const result = await miniSignTypedData({
+            txs: signActions.map(item => {
+              return {
+                data: item.action,
+                from: account.address,
+                version: 'V4',
+              };
+            }),
+            account,
+          });
+          result.forEach((item, idx) => {
+            signActions[idx].signature = item.txHash;
+          });
+        } catch (error) {
+          throw 'Canceled';
+        }
+      } else {
+        for (const actionObj of signActions) {
+          let signature = '';
+
+          if (isLocalWallet) {
+            signature = await apisKeyring.signTypedData(
+              account.type,
+              account.address,
+              actionObj.action,
+              { version: 'V4' },
+            );
+          } else {
+            signature = await sendRequest({
+              data: {
+                method: 'eth_signTypedDataV4',
+                params: [account.address, JSON.stringify(actionObj.action)],
+              },
+              session: INTERNAL_REQUEST_SESSION,
+              account: account,
+            });
+          }
+          actionObj.signature = signature;
+        }
+      }
+    },
+  );
 
   const checkExtraAgent = useMemoizedFn(
     async (account: Account, agentAddress: string) => {
@@ -452,81 +236,48 @@ export const usePerpsState = () => {
     return signActions;
   });
 
-  const judgeIsUserAgentIsExpired = useMemoizedFn(
-    async (errorMessage: string) => {
-      const masterAddress = currentPerpsAccount?.address;
-      if (!masterAddress) {
-        return false;
-      }
-
-      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
-        masterAddress,
+  // return bool if can use approveSignatures
+  const restoreApproveSignatures = useMemoizedFn(
+    async (payload: { address: string }) => {
+      const approveSignatures = await apisPerps.getSendApproveAfterDeposit(
+        payload.address,
       );
-      const agentAddress = agentWalletPreference?.agentAddress;
-      if (agentAddress && errorMessage.includes(agentAddress)) {
-        console.warn('handle action agent is expired, logout');
-        showToast('Agent is expired, please login again', 'error');
-        logout(masterAddress);
-        return true;
-      }
-    },
-  );
 
-  const executeSignatures = useMemoizedFn(
-    async (signActions: SignAction[], account: Account): Promise<void> => {
-      const isLocalWallet =
-        account.type === KEYRING_CLASS.PRIVATE_KEY ||
-        account.type === KEYRING_CLASS.MNEMONIC;
-
-      const useMiniApprovalSign =
-        account.type === KEYRING_CLASS.HARDWARE.ONEKEY ||
-        account.type === KEYRING_CLASS.HARDWARE.LEDGER;
-
-      if (useMiniApprovalSign) {
-        // await MiniTypedDataApproval in home page
-        try {
-          const result = await miniSignTypedData({
-            txs: signActions.map(item => {
-              return {
-                data: item.action,
-                from: account.address,
-                version: 'V4',
-              };
-            }),
-            account,
-          });
-          result.forEach((item, idx) => {
-            signActions[idx].signature = item.txHash;
-          });
-        } catch (error) {
-          throw 'Canceled';
+      if (approveSignatures?.length) {
+        const item = approveSignatures[0];
+        const expiredTime = item.nonce + 1000 * 60 * 60 * 24;
+        const now = Date.now();
+        if (expiredTime > now) {
+          setApproveSignatures(approveSignatures);
+          return true;
+        } else {
+          return false;
         }
       } else {
-        for (const actionObj of signActions) {
-          let signature = '';
-
-          if (isLocalWallet) {
-            signature = await apisKeyring.signTypedData(
-              account.type,
-              account.address,
-              actionObj.action,
-              { version: 'V4' },
-            );
-          } else {
-            signature = await sendRequest({
-              data: {
-                method: 'eth_signTypedDataV4',
-                params: [account.address, JSON.stringify(actionObj.action)],
-              },
-              session: INTERNAL_REQUEST_SESSION,
-              account: account,
-            });
-          }
-          actionObj.signature = signature;
-        }
+        return false;
       }
     },
   );
+
+  const checkBuilderFee = useMemoizedFn(async address => {
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      const res = await sdk.info.getMaxBuilderFee(
+        PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+      );
+      if (!res) {
+        setAccountNeedApproveBuilderFee(true);
+        console.error('Failed to set builder fee');
+        Sentry.captureException(
+          new Error(
+            `PERPS set builder fee error, no max builder fee, address: ${address}`,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error('Failed to set builder fee:', error);
+    }
+  });
 
   const handleSafeSetReference = useCallback(async () => {
     try {
@@ -570,6 +321,278 @@ export const usePerpsState = () => {
     [handleSafeSetReference],
   );
 
+  const ensureLoginApproveSign = useCallback(
+    async (account: Account, agentAddress: string) => {
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+
+        const signActions: SignAction[] = [];
+
+        const [checkResult, maxFee] = await Promise.all([
+          checkExtraAgent(account, agentAddress),
+          sdk.info.getMaxBuilderFee(PERPS_BUILD_FEE_RECEIVE_ADDRESS),
+        ]);
+        if (checkResult.needDelete) {
+          // 需要删除agent，且重新approve agent和builder fee
+          setAccountNeedApproveAgent(true);
+          !maxFee && setAccountNeedApproveBuilderFee(true);
+          return;
+        }
+
+        if (checkResult.isExpired) {
+          const { agentAddress: newAgentAddress, vault } =
+            await apisPerps.createPerpsAgentWallet(account.address);
+          sdk.initOrUpdateAgent(vault, newAgentAddress, PERPS_AGENT_NAME);
+          signActions.push({
+            action: sdk.exchange?.prepareApproveAgent(),
+            type: 'approveAgent',
+            signature: '',
+          });
+        }
+
+        if (!maxFee) {
+          const buildAction = sdk.exchange?.prepareApproveBuilderFee({
+            builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+          });
+          signActions.push({
+            action: buildAction,
+            type: 'approveBuilderFee',
+            signature: '',
+          });
+        }
+
+        if (signActions.length === 0) {
+          setAccountNeedApproveAgent(false);
+          setAccountNeedApproveBuilderFee(false);
+          return;
+        }
+
+        if (
+          account.type === KEYRING_CLASS.PRIVATE_KEY ||
+          account.type === KEYRING_CLASS.MNEMONIC
+        ) {
+          for (const actionObj of signActions) {
+            let signature = '';
+
+            signature = await apisKeyring.signTypedData(
+              account.type,
+              account.address,
+              actionObj.action,
+              { version: 'V4' },
+            );
+            actionObj.signature = signature;
+          }
+          await handleDirectApprove(signActions);
+          setAccountNeedApproveAgent(false);
+          setAccountNeedApproveBuilderFee(false);
+        } else {
+          signActions.forEach(item => {
+            if (item.type === 'approveAgent') {
+              setAccountNeedApproveAgent(true);
+            } else if (item.type === 'approveBuilderFee') {
+              setAccountNeedApproveBuilderFee(true);
+            }
+          });
+        }
+      } catch (e) {
+        // showToast(String(e), 'error');
+        setAccountNeedApproveAgent(true);
+        setAccountNeedApproveBuilderFee(true);
+        Sentry.captureException(
+          new Error(
+            `ensure login approve sign failed, address: ${account.address} , account type: ${account.type} , agentAddress: ${agentAddress} , error: ${e}`,
+          ),
+        );
+      }
+    },
+    [
+      handleDirectApprove,
+      setAccountNeedApproveAgent,
+      setAccountNeedApproveBuilderFee,
+      checkExtraAgent,
+    ],
+  );
+
+  const isHandlingApproveStatus = useRef(false);
+
+  const handleActionApproveStatus = useCallback(async () => {
+    try {
+      if (isHandlingApproveStatus.current) {
+        return;
+      }
+      isHandlingApproveStatus.current = true;
+
+      if (!currentPerpsAccount) {
+        throw new Error('No currentPerpsAccount');
+      }
+
+      const signActions: SignAction[] = [];
+      const sdk = apisPerps.getPerpsSDK();
+      if (accountNeedApproveAgent) {
+        signActions.push({
+          action: sdk.exchange?.prepareApproveAgent(),
+          type: 'approveAgent',
+          signature: '',
+        });
+      }
+
+      if (accountNeedApproveBuilderFee) {
+        await sleep(10);
+        signActions.push({
+          action: sdk.exchange?.prepareApproveBuilderFee({
+            builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+          }),
+          type: 'approveBuilderFee',
+          signature: '',
+        });
+      }
+
+      if (signActions.length === 0) {
+        isHandlingApproveStatus.current = false;
+        return;
+      }
+
+      console.log('handleActionApproveStatus signActions', signActions);
+      await executeSignatures(signActions, currentPerpsAccount);
+
+      // try {
+      await handleDirectApprove(signActions);
+      // } catch (error) {}
+      setAccountNeedApproveAgent(false);
+      setAccountNeedApproveBuilderFee(false);
+      isHandlingApproveStatus.current = false;
+    } catch (error) {
+      isHandlingApproveStatus.current = false;
+      console.error('Failed to handle action approve status:', error);
+      // todo fixme maybe no need show toast in prod
+      showToast(String(error), 'error');
+      Sentry.captureException(
+        new Error(
+          `Failed to handle action approve status, address: ${currentPerpsAccount?.address} , account type: ${currentPerpsAccount?.type} , error: ${error}`,
+        ),
+      );
+      throw error;
+    }
+  }, [
+    accountNeedApproveAgent,
+    accountNeedApproveBuilderFee,
+    currentPerpsAccount,
+    executeSignatures,
+    handleDirectApprove,
+    setAccountNeedApproveAgent,
+    setAccountNeedApproveBuilderFee,
+  ]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      return;
+    }
+
+    const initIsLogin = async () => {
+      try {
+        // const noLoginAction = async () => {
+        //   apisPerps.setPerpsCurrentAccount(null);
+        //   fetchPerpPermission('');
+        //   await fetchMarketData();
+        //   setInitialized(true);
+        // };
+
+        // if (!currentAccount || !currentAccount.address) {
+        //   // 如果没有登录状态，则只获取市场数据即可
+        //   await noLoginAction();
+        //   return false;
+        // }
+        // const accountsList = await getAllMyAccount();
+        // const targetTypeAccount = accountsList.find(
+        //   acc =>
+        //     isSameAddress(acc.address, currentAccount.address) &&
+        //     acc.type === currentAccount.type,
+        // );
+
+        // if (!targetTypeAccount) {
+        //   // 地址列表没找到
+        //   await noLoginAction();
+        //   return false;
+        // }
+
+        // const res = await apisPerps.getPerpsAgentWallet(currentAccount.address);
+        // if (!res) {
+        //   // 没有找到store对应的 agent wallet
+        //   await noLoginAction();
+        //   return false;
+        // }
+        const initAccount = perpsState.currentPerpsAccount;
+        if (!initAccount) {
+          return false;
+        }
+        const { vault, agentAddress } =
+          await apisPerps.getOrCreatePerpsAgentWallet(initAccount.address);
+        const sdk = apisPerps.getPerpsSDK();
+        // 开始恢复登录态
+        sdk.initAccount(
+          initAccount.address,
+          vault,
+          agentAddress,
+          PERPS_AGENT_NAME,
+        );
+        await loginPerpsAccount(initAccount);
+        fetchMarketData();
+
+        // checkIsNeedAutoLoginOut(initAccount.address, agentAddress);
+        ensureLoginApproveSign(initAccount, agentAddress);
+
+        setInitialized(true);
+        return true;
+      } catch (error) {
+        console.error('Failed to init Perps state:', error);
+      }
+    };
+
+    initIsLogin();
+  }, [
+    perpsState.currentPerpsAccount,
+    isInitialized,
+    loginPerpsAccount,
+    fetchMarketData,
+    ensureLoginApproveSign,
+    setInitialized,
+    fetchPerpPermission,
+    fetchPositionAndOpenOrders,
+  ]);
+
+  const judgeIsUserAgentIsExpired = useMemoizedFn(
+    async (errorMessage: string) => {
+      const masterAddress = currentPerpsAccount?.address;
+      if (!masterAddress) {
+        return false;
+      }
+
+      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
+        masterAddress,
+      );
+      const agentAddress = agentWalletPreference?.agentAddress;
+      if (agentAddress && errorMessage.includes(agentAddress)) {
+        console.warn('handle action agent is expired, logout');
+        showToast('Agent is expired, try it again', 'error');
+        setAccountNeedApproveAgent(true);
+        return true;
+      }
+    },
+  );
+
+  const handleSetLaterApproveStatus = useCallback(
+    (signActions: SignAction[]) => {
+      signActions.forEach(action => {
+        if (action.type === 'approveAgent') {
+          setAccountNeedApproveAgent(true);
+        } else if (action.type === 'approveBuilderFee') {
+          setAccountNeedApproveBuilderFee(true);
+        }
+      });
+    },
+    [setAccountNeedApproveAgent, setAccountNeedApproveBuilderFee],
+  );
+
   const handleLoginWithSignApprove = useMemoizedFn(async (account: Account) => {
     const { agentAddress, vault } = await apisPerps.createPerpsAgentWallet(
       account.address,
@@ -578,28 +601,32 @@ export const usePerpsState = () => {
     sdk.initAccount(account.address, vault, agentAddress, PERPS_AGENT_NAME);
 
     const signActions = await prepareSignActions();
+    console.log('signActions', signActions);
 
-    await executeSignatures(signActions, account);
+    if (
+      account.type === KEYRING_CLASS.PRIVATE_KEY ||
+      account.type === KEYRING_CLASS.MNEMONIC
+    ) {
+      await executeSignatures(signActions, account);
 
-    const { role } = await sdk.info.getUserRole();
-    const isNeedDepositBeforeApprove = role === 'missing';
+      let isNeedDepositBeforeApprove = true;
+      const info = getClearinghouseStateByMap(account.address);
+      if ((Number(info?.marginSummary.accountValue) || 0) > 0) {
+        isNeedDepositBeforeApprove = false;
+      } else {
+        const { role } = await sdk.info.getUserRole();
+        isNeedDepositBeforeApprove = role === 'missing';
+      }
 
-    if (isNeedDepositBeforeApprove) {
-      // 新地址，需要先deposit后才能 send approve
-      const approveSignatures = signActions.map(action => {
-        return {
-          action: action.action,
-          nonce: action.action?.nonce || 0,
-          signature: action.signature,
-          type: action.type,
-        };
-      });
-      saveApproveSignatures({
-        approveSignatures,
-        address: account.address,
-      });
+      if (isNeedDepositBeforeApprove) {
+        handleSetLaterApproveStatus(signActions);
+      } else {
+        await handleDirectApprove(signActions);
+        setAccountNeedApproveAgent(false);
+        setAccountNeedApproveBuilderFee(false);
+      }
     } else {
-      await handleDirectApprove(signActions);
+      handleSetLaterApproveStatus(signActions);
     }
 
     await loginPerpsAccount(account);
@@ -617,6 +644,8 @@ export const usePerpsState = () => {
       );
       if (needDelete) {
         // 先不登录，防止hl服务状态不同步
+        setAccountNeedApproveAgent(true);
+        setAccountNeedApproveBuilderFee(true);
         return false;
       }
 
@@ -630,6 +659,8 @@ export const usePerpsState = () => {
           );
           // 未到过期时间无需签名直接登录即可
           await loginPerpsAccount(account);
+          setAccountNeedApproveAgent(false);
+          setAccountNeedApproveBuilderFee(false);
           checkBuilderFee(account.address);
         } else {
           // 过期或者没sendApprove过，需要创建新的agent，同时签名
@@ -757,28 +788,28 @@ export const usePerpsState = () => {
     perpsState.localLoadingHistory,
   ]);
 
-  useEffect(() => {
-    if (
-      perpsState.accountSummary?.withdrawable &&
-      Number(perpsState.accountSummary.withdrawable) > 0 &&
-      currentPerpsAccount?.address &&
-      perpsState.approveSignatures.length > 0
-    ) {
-      const directSendApprove = async () => {
-        const data = perpsState.approveSignatures;
-        setApproveSignatures([]);
-        await handleDirectApprove(data);
-        apisPerps.setSendApproveAfterDeposit(currentPerpsAccount.address, []);
-      };
-      directSendApprove();
-    }
-  }, [
-    currentPerpsAccount?.address,
-    handleDirectApprove,
-    perpsState.accountSummary?.withdrawable,
-    perpsState.approveSignatures,
-    setApproveSignatures,
-  ]);
+  // useEffect(() => {
+  //   if (
+  //     perpsState.accountSummary?.withdrawable &&
+  //     Number(perpsState.accountSummary.withdrawable) > 0 &&
+  //     currentPerpsAccount?.address &&
+  //     perpsState.approveSignatures.length > 0
+  //   ) {
+  //     const directSendApprove = async () => {
+  //       const data = perpsState.approveSignatures;
+  //       setApproveSignatures([]);
+  //       await handleDirectApprove(data);
+  //       apisPerps.setSendApproveAfterDeposit(currentPerpsAccount.address, []);
+  //     };
+  //     directSendApprove();
+  //   }
+  // }, [
+  //   currentPerpsAccount?.address,
+  //   handleDirectApprove,
+  //   perpsState.accountSummary?.withdrawable,
+  //   perpsState.approveSignatures,
+  //   setApproveSignatures,
+  // ]);
 
   return {
     // State
@@ -790,16 +821,18 @@ export const usePerpsState = () => {
     isLogin: perpsState.isLogin,
     isInitialized: perpsState.isInitialized,
     userFills: perpsState.userFills,
-    currentOnlyShowPerpsAccount: perpsState.currentOnlyShowPerpsAccount,
     hasPermission: perpsState.hasPermission,
     homeHistoryList,
     perpFee: perpsState.perpFee,
     userAccountHistory: perpsState.userAccountHistory,
     localLoadingHistory: perpsState.localLoadingHistory,
+    accountNeedApproveAgent: perpsState.accountNeedApproveAgent,
+    accountNeedApproveBuilderFee: perpsState.accountNeedApproveBuilderFee,
     // Actions
     login,
     logout,
     setCurrentPerpsAccount,
+    setInitialized,
     handleWithdraw,
     refreshData: refreshData,
     handleDeleteAgent,
@@ -807,5 +840,6 @@ export const usePerpsState = () => {
     fetchClearinghouseState,
 
     judgeIsUserAgentIsExpired,
+    handleActionApproveStatus,
   };
 };

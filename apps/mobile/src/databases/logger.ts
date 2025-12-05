@@ -79,7 +79,7 @@ function tronLog(
   reactotron.display({
     name: 'Database',
     value,
-    preview,
+    preview: formatQueryString(preview, 150),
     important: true,
   });
 }

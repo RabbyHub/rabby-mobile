@@ -1,6 +1,6 @@
 import { apisPerps } from '@/core/apis';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { perpsStore, usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
 import { Dimensions, Platform, Text } from 'react-native';
@@ -8,28 +8,45 @@ import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { sleep } from '@/utils/async';
 import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
+import { useShallow } from 'zustand/react/shallow';
 
-export const usePerpsPosition = ({
-  setCurrentTpOrSl,
-}: {
-  setCurrentTpOrSl: (params: { tpPrice?: string; slPrice?: string }) => void;
-}) => {
-  const { fetchPositionOpenOrders, fetchClearinghouseState } = usePerpsStore();
+export const usePerpsPosition = () => {
   const {
-    refreshData,
-    userFills,
-    currentPerpsAccount,
-    isLogin,
-    hasPermission,
-
-    judgeIsUserAgentIsExpired,
-  } = usePerpsState();
+    fetchPositionOpenOrders,
+    fetchClearinghouseState,
+    setAccountNeedApproveAgent,
+  } = usePerpsStore();
+  const { currentPerpsAccount } = perpsStore(
+    useShallow(s => ({
+      currentPerpsAccount: s.currentPerpsAccount,
+    })),
+  );
 
   const formatTriggerPx = (px?: string) => {
     // avoid '.15' input error from hy validator
     // '.15' -> '0.15'
     return px ? Number(px).toString() : undefined;
   };
+
+  const judgeIsUserAgentIsExpired = useMemoizedFn(
+    async (errorMessage: string) => {
+      const masterAddress = currentPerpsAccount?.address;
+      if (!masterAddress) {
+        return false;
+      }
+
+      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
+        masterAddress,
+      );
+      const agentAddress = agentWalletPreference?.agentAddress;
+      if (agentAddress && errorMessage.includes(agentAddress)) {
+        console.warn('handle action agent is expired, logout');
+        showToast('Agent is expired, please try again', 'error');
+        setAccountNeedApproveAgent(true);
+        return true;
+      }
+    },
+  );
 
   const handleCancelOrder = useMemoizedFn(
     async (oid: number, coin: string, actionType: 'tp' | 'sl') => {
@@ -48,9 +65,6 @@ export const usePerpsPosition = ({
           )
         ) {
           showToast(actionText + ' canceled successfully', 'success');
-          setTimeout(() => {
-            fetchPositionOpenOrders();
-          }, 1000);
         } else {
           showToast(actionText + ' cancel error', 'error');
           Sentry.captureException(
@@ -59,7 +73,11 @@ export const usePerpsPosition = ({
             ),
           );
         }
-      } catch (error) {
+      } catch (error: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
+        if (isExpired) {
+          return;
+        }
         showToast(actionText + ' cancel error', 'error');
         Sentry.captureException(
           new Error(
@@ -94,6 +112,10 @@ export const usePerpsPosition = ({
           );
         }
       } catch (error: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
+        if (isExpired) {
+          return;
+        }
         console.error(actionText + ' error', error);
         showToast(error?.message || actionText + ' error', 'error');
         Sentry.captureException(
@@ -129,15 +151,15 @@ export const usePerpsPosition = ({
           (nextCurrentTpOrSl.tpPrice = formattedTpTriggerPx);
         formattedSlTriggerPx &&
           (nextCurrentTpOrSl.slPrice = formattedSlTriggerPx);
-        setCurrentTpOrSl(nextCurrentTpOrSl);
         showToast(autoCloseText + ' set successfully', 'success');
         setTimeout(() => {
           fetchPositionOpenOrders();
         }, 1000);
+        return true;
       } catch (error: any) {
         const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
         if (isExpired) {
-          return;
+          return false;
         }
         showToast(error?.message || autoCloseText + ' set error', 'error');
         Sentry.captureException(
@@ -150,6 +172,7 @@ export const usePerpsPosition = ({
               JSON.stringify(error),
           ),
         );
+        return false;
       }
     },
   );
@@ -178,10 +201,6 @@ export const usePerpsPosition = ({
           const { totalSz, avgPx } = filled;
           const msg = `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
           showToast(msg, 'success');
-          setCurrentTpOrSl({
-            tpPrice: undefined,
-            slPrice: undefined,
-          });
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
             avgPx: string;
@@ -287,10 +306,6 @@ export const usePerpsPosition = ({
           const { totalSz, avgPx } = filled;
           const msg = `Opened ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
           showToast(msg, 'success');
-          setCurrentTpOrSl({
-            tpPrice: formattedTpTriggerPx,
-            slPrice: formattedSlTriggerPx,
-          });
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
             avgPx: string;
@@ -335,9 +350,5 @@ export const usePerpsPosition = ({
     handleSetAutoClose,
     handleUpdateMargin,
     handleCancelOrder,
-    userFills,
-    isLogin,
-    currentPerpsAccount,
-    hasPermission,
   };
 };

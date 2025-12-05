@@ -192,7 +192,7 @@ export const BrowserSearchEntry: React.FC<{ alwaysShowSearch?: boolean }> = ({
     switchToTab,
   } = useBrowser();
 
-  const tabs = useHomeDisplayedTabs();
+  const { homeDisplayedTabs: tabs } = useHomeDisplayedTabs();
   const [, setActiveTab] = useAtom(activeTabAtom);
 
   const { t } = useTranslation();

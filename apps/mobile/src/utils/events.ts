@@ -2,7 +2,16 @@ import { SIGN_HELPER_EVENTS } from '@rabby-wallet/service-keyring';
 import { makeEEClass } from '@/core/apis/event';
 
 import { type Purchase } from 'react-native-iap';
+import { DB } from '@op-engineering/op-sqlite';
 
+export type AssetsRefresthState = {
+  singleTokenNonce: number;
+  singleDeFiNonce: number;
+  singleNFTNonce: number;
+  tokenNonce: number;
+  deFiNonce: number;
+  nftNonce: number;
+};
 export type EventBusListeners = {
   [EVENTS.TX_COMPLETED]: (txDetail: {
     address: string;
@@ -17,6 +26,8 @@ export type EventBusListeners = {
     request: any;
   }) => void;
   [EVENT_ACTIVE_WINDOW]: (id?: string | null) => void;
+  EVENT_REFRESH_ASSET: (type: keyof AssetsRefresthState) => void;
+  __OP_SQLITE_LOADED__: (ctx: { database: DB }) => void;
 };
 type Listeners = {
   [P: string]: (data: any) => void;

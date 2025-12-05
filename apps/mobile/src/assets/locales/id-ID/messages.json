@@ -2473,7 +2473,7 @@
         "positionSize": "Ukuran Posisi",
         "rabbyFeeTips": "Biaya Rabby: 0,04%",
         "pnl": "PNL",
-        "title": "Tutup Posisi {{coin}} {{direction}}",
+        "title": "",
         "closeBtn": "Tutup {{direction}}",
         "amount": "Jumlah",
         "total": "Total",

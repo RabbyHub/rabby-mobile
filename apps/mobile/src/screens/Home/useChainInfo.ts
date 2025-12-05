@@ -1,8 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import BigNumber from 'bignumber.js';
 import { isAppChain } from '@/screens/Home/utils/appchain';
-import { AbstractPortfolioToken, DisplayNftItem } from './types';
-import { DisplayedProject } from './utils/project';
+import {
+  AbstractPortfolioToken,
+  AbstractProject,
+  DisplayNftItem,
+} from './types';
 
 interface BaseInfo {
   token: Record<string, BigNumber>;
@@ -34,7 +37,7 @@ export const useChainInfo = () => {
     }));
   }, []);
 
-  const updatePortfolio = useCallback((_portfolios: DisplayedProject[]) => {
+  const updatePortfolio = useCallback((_portfolios: AbstractProject[]) => {
     const chainAssets: Record<string, BigNumber> = {};
     _portfolios?.forEach(portfolio => {
       const chainId = portfolio.chain;

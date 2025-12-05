@@ -1,6 +1,14 @@
 import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column, In, Brackets, Not } from 'typeorm/browser';
+import {
+  Entity,
+  Column,
+  In,
+  Brackets,
+  Not,
+  MoreThan,
+  Raw,
+} from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
@@ -191,13 +199,18 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   static async batchQueryTokens(owner_addr: string) {
     await prepareAppDataSource();
 
-    return (await this.getRepository().findBy({ owner_addr }))
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
+    queryBuilder
+      .where({
+        owner_addr,
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 });
+
+    return (await queryBuilder.getMany()).map(i => ({
+      ...i,
+      cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+    }));
   }
 
   static async batchMultiAddressTokensByIdAndChain(
@@ -241,15 +254,23 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       queryBuilder.take(maxLength);
     }
 
-    const tokens = await queryBuilder.getMany();
+    const tokens = await queryBuilder
+      .where({
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+        // amount: Raw(alias => `${alias} > 0`),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 })
+      .getMany();
 
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    return (
+      tokens
+        // .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+        // .filter(i => i.amount > 0)
+        .map(i => ({
+          ...i,
+          cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+        }))
+    );
   }
 
   /**
@@ -282,7 +303,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     const repo = this.getRepository();
     const queryBuilder = repo.createQueryBuilder('tokenitem');
 
-    queryBuilder.where({ id: Not(EMPTY_TOKEN_ITEM_ID) });
+    queryBuilder
+      .where({
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+        // amount: Raw(alias => `${alias} > 0`),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 });
 
     if (addresses) {
       queryBuilder.andWhere({ owner_addr: In(addresses) });
@@ -328,13 +354,15 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .orderBy('tokenitem_token_usd_value', 'DESC');
 
     const tokens = await queryBuilder.getMany();
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    return (
+      tokens
+        // .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+        // .filter(i => i.amount > 0)
+        .map(i => ({
+          ...i,
+          cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+        }))
+    );
   }
 
   static async queryTokensByOwner(
@@ -372,7 +400,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         owner_addr: In(owner_addr_list),
         is_core: true,
         id: Not(EMPTY_TOKEN_ITEM_ID),
+        // amount: Raw(alias => `${alias} > 0`),
       })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 })
       .select([
         // TODO: which need customized sqlite drivers
         // `"tokenitem"."raw_amount" / pow(10, tokenitem.decimals) AS tokenitme_token_amount`,
@@ -435,13 +465,15 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       queryBuilder.take(topCount);
     }
     const tokens = await queryBuilder.getMany();
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    return (
+      tokens
+        // .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+        // .filter(i => i.amount > 0)
+        .map(i => ({
+          ...i,
+          cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+        }))
+    );
   }
 
   static async isExpired(owner_addr: string) {

@@ -19,6 +19,8 @@ import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 export const PerpsPosition: React.FC<{
   showRiskPopup: boolean;
   setShowRiskPopup: (show: boolean) => void;
+  handleActionApproveStatus: () => Promise<void>;
+  setCurrentTpOrSl: (params: { tpPrice?: string; slPrice?: string }) => void;
   positionData?: {
     pnl: number;
     positionValue: number;
@@ -49,7 +51,7 @@ export const PerpsPosition: React.FC<{
     tpTriggerPx: string;
     slTriggerPx: string;
     direction: 'Long' | 'Short';
-  }): Promise<void>;
+  }): Promise<boolean>;
   handleCancelAutoClose(actionType: 'tp' | 'sl'): Promise<void>;
   handleUpdateMargin(
     coin: string,
@@ -59,6 +61,8 @@ export const PerpsPosition: React.FC<{
 }> = ({
   showRiskPopup,
   setShowRiskPopup,
+  handleActionApproveStatus,
+  setCurrentTpOrSl,
   positionData,
   coin,
   coinLogo,
@@ -187,7 +191,10 @@ export const PerpsPosition: React.FC<{
               {positionData?.type !== 'cross' ? (
                 <TouchableOpacity
                   style={styles.tagContainer}
-                  onPress={() => setEditMarginVisible(true)}>
+                  onPress={async () => {
+                    await handleActionApproveStatus();
+                    setEditMarginVisible(true);
+                  }}>
                   <Text style={[styles.tagText]}>
                     $
                     {splitNumberByStep(
@@ -225,6 +232,7 @@ export const PerpsPosition: React.FC<{
               </View>
               <View style={styles.tagWrapper}>
                 <PerpEditTpSlPriceTag
+                  handleActionApproveStatus={handleActionApproveStatus}
                   coin={coin}
                   actionType="tp"
                   type="hasPosition"
@@ -241,12 +249,16 @@ export const PerpsPosition: React.FC<{
                     await handleCancelAutoClose('tp');
                   }}
                   handleSetAutoClose={async (price: string) => {
-                    await handleSetAutoClose({
+                    const res = await handleSetAutoClose({
                       coin,
                       tpTriggerPx: price,
                       slTriggerPx: '',
                       direction: positionData?.direction as 'Long' | 'Short',
                     });
+                    res &&
+                      setCurrentTpOrSl({
+                        tpPrice: Number(price).toString(),
+                      });
                   }}
                 />
               </View>
@@ -290,6 +302,7 @@ export const PerpsPosition: React.FC<{
                 <PerpEditTpSlPriceTag
                   coin={coin}
                   actionType="sl"
+                  handleActionApproveStatus={handleActionApproveStatus}
                   type="hasPosition"
                   entryPrice={positionData?.entryPrice}
                   markPrice={markPrice}
@@ -304,12 +317,16 @@ export const PerpsPosition: React.FC<{
                     await handleCancelAutoClose('sl');
                   }}
                   handleSetAutoClose={async (price: string) => {
-                    await handleSetAutoClose({
+                    const res = await handleSetAutoClose({
                       coin,
                       tpTriggerPx: '',
                       slTriggerPx: price,
                       direction: positionData?.direction as 'Long' | 'Short',
                     });
+                    res &&
+                      setCurrentTpOrSl({
+                        slPrice: Number(price).toString(),
+                      });
                   }}
                 />
               </View>

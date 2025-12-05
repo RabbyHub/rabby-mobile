@@ -1,5 +1,5 @@
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMemoizedFn } from 'ahooks';
 import {
   AssetCtx,
@@ -16,10 +16,10 @@ import { Account } from '@/core/services/preference';
 import { ApproveSignatures } from '@/core/services/perpsService';
 import { DEFAULT_TOP_ASSET } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
-import { formatMarkData } from '@/utils/perps';
+import { formatMarkData, formatPositionPnl } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
-import { maxBy } from 'lodash';
+import { maxBy, unionBy } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
 import {
   resolveValFromUpdater,
@@ -28,6 +28,7 @@ import {
 } from '@/core/utils/store';
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
+import { perpsService } from '@/core/services';
 
 // 保持原有的接口定义
 export interface PositionAndOpenOrder extends AssetPosition {
@@ -72,7 +73,10 @@ export interface PerpsState {
   positionAndOpenOrders: PositionAndOpenOrder[];
   accountSummary: AccountSummary | null;
   currentPerpsAccount: Account | null;
-  currentOnlyShowPerpsAccount: Account | null;
+  clearinghouseStateMap: Record<string, ClearinghouseState | null>;
+  isFetchAllDone: boolean; // init clearinghouseStateMap has done
+  accountNeedApproveAgent: boolean; // 账户是否需要重新approve agent
+  accountNeedApproveBuilderFee: boolean; // 账户是否需要重新approve builder fee
   marketData: MarketData[];
   marketDataMap: MarketDataMap;
   hasPermission: boolean;
@@ -101,13 +105,16 @@ const buildMarketDataMap = (list: MarketData[]): MarketDataMap => {
   }, {} as MarketDataMap);
 };
 
-const initialState: PerpsState = {
+export const initialState: PerpsState = {
   positionAndOpenOrders: [],
   accountSummary: null,
+  isFetchAllDone: false,
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
-  currentOnlyShowPerpsAccount: null,
+  clearinghouseStateMap: {},
+  accountNeedApproveAgent: false,
+  accountNeedApproveBuilderFee: false,
   marketData: [],
   userAccountHistory: [],
   localLoadingHistory: [],
@@ -128,7 +135,7 @@ const initialState: PerpsState = {
 };
 
 // const perpsAtom = atom(initialState);
-const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
+export const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
 function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
   perpsStore.setState(prev => {
     const { newVal } = resolveValFromUpdater(prev, valOrFunc, { strict: true });
@@ -139,30 +146,34 @@ function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
 function unsubscribeAll() {
   setPerpsState(prev => {
     prev.wsSubscriptions.forEach(unsubscribe => {
-      unsubscribe();
+      try {
+        unsubscribe();
+      } catch (e) {
+        console.error('unsubscribe error', e);
+      }
     });
 
-    prev.wsSubscriptions = [];
-
-    return prev;
+    return {
+      ...prev,
+      wsSubscriptions: [],
+    };
   });
 }
 
-// const wsSubscriptionsAtom = atom<(() => void)[]>([]);
-type WsState = {
-  wsSubscriptions: (() => void)[];
-};
-const wsStore = zCreate<WsState>(() => ({ wsSubscriptions: [] }));
 function setWsSubscriptions(
-  valOrFunc: UpdaterOrPartials<WsState['wsSubscriptions']>,
+  valOrFunc: UpdaterOrPartials<PerpsState['wsSubscriptions']>,
 ) {
-  wsStore.setState(prev => {
+  setPerpsState(prev => {
     const { newVal } = resolveValFromUpdater(prev.wsSubscriptions, valOrFunc, {
       strict: false,
     });
-    return { wsSubscriptions: newVal };
+    return { ...prev, wsSubscriptions: newVal };
   });
 }
+
+const setInitialized = (payload: boolean) => {
+  setPerpsState(prev => ({ ...prev, isInitialized: payload }));
+};
 
 const setHasPermission = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, hasPermission: payload }));
@@ -175,7 +186,179 @@ const fetchPerpPermission = async (address: string) => {
   // setHasPermission(true);
 };
 
-const resetState = () => {
+const setIsFetchAllDone = (payload: boolean) => {
+  setPerpsState(prev => ({ ...prev, isFetchAllDone: payload }));
+};
+
+const setHomePositionPnl = (payload: {
+  pnl: number;
+  show: boolean;
+  type: 'pnl' | 'accountValue';
+  accountValue: number;
+}) => {
+  setPerpsState(prev => ({ ...prev, homePositionPnl: payload }));
+};
+
+const setClearinghouseStateMap = (payload: {
+  address: string;
+  data: ClearinghouseState;
+}) => {
+  const address = payload.address.toLowerCase();
+  const { data } = payload;
+  const prevState = perpsStore.getState().clearinghouseStateMap[address];
+  if (!prevState || data.time > prevState.time) {
+    perpsStore.setState(prev => ({
+      ...prev,
+      clearinghouseStateMap: { ...prev.clearinghouseStateMap, [address]: data },
+    }));
+  }
+};
+
+export const getClearinghouseStateByMap = (address: string) => {
+  return perpsStore.getState().clearinghouseStateMap[address.toLowerCase()];
+};
+
+const setCurrentPerpsAccount = (payload: Account) => {
+  setPerpsState(prev => ({
+    ...prev,
+    currentPerpsAccount: payload,
+    isLogin: !!payload,
+  }));
+  perpsService.setCurrentAccount(payload);
+};
+
+export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
+  const clearinghouseState =
+    perpsStore.getState().clearinghouseStateMap[payload.address.toLowerCase()];
+  const pnl = clearinghouseState
+    ? formatPositionPnl(clearinghouseState)
+    : initialState.homePositionPnl;
+  setPerpsState(prev => ({
+    ...prev,
+    currentPerpsAccount: payload,
+    isLogin: !!payload,
+    isInitialized: false,
+    homePositionPnl: pnl,
+  }));
+  perpsService.setCurrentAccount(payload);
+};
+
+const setMarketData = (payload: MarketData[] | []) => {
+  const list = payload || [];
+  setPerpsState(prev => ({
+    ...prev,
+    marketData: list,
+    marketDataMap: buildMarketDataMap(list as MarketData[]),
+  }));
+};
+
+const fetchMarketData = async (canUseCache = true) => {
+  const sdk = apisPerps.getPerpsSDK();
+  try {
+    const fetchTopTokenList = async () => {
+      try {
+        const topAssets = await openapi.getPerpTopTokenList();
+        if (topAssets.length > 0) {
+          return topAssets;
+        } else {
+          return DEFAULT_TOP_ASSET;
+        }
+      } catch (error) {
+        console.error('Failed to fetch top assets:', error);
+        return DEFAULT_TOP_ASSET;
+      }
+    };
+
+    const [topAssets, marketData] = await Promise.all([
+      fetchTopTokenList(),
+      sdk.info.metaAndAssetCtxs(canUseCache),
+    ]);
+    setMarketData(formatMarkData(marketData, topAssets));
+  } catch (error) {
+    console.error('Failed to fetch market data:', error);
+  }
+};
+
+const handleSelectDefaultAccount = async (accounts: Account[]) => {
+  setInitialized(false);
+  try {
+    const sdk = apisPerps.getPerpsSDK();
+    const currentAccount = await apisPerps.getPerpsCurrentAccount();
+    const lastUsedAccount = await apisPerps.getPerpsLastUsedAccount();
+    const recentlyAccount = currentAccount || lastUsedAccount;
+    const selectedItem =
+      accounts.find(
+        item =>
+          isSameAddress(item.address, recentlyAccount?.address || '') &&
+          item.type === recentlyAccount?.type,
+      ) ||
+      accounts.find(item =>
+        isSameAddress(item.address, recentlyAccount?.address || ''),
+      );
+    const perpsState = perpsStore.getState();
+    if (recentlyAccount && selectedItem) {
+      setCurrentPerpsAccount(selectedItem);
+      const clearinghouseState =
+        perpsState.clearinghouseStateMap[selectedItem.address.toLowerCase()];
+      const pnl = clearinghouseState
+        ? formatPositionPnl(clearinghouseState)
+        : initialState.homePositionPnl;
+      setHomePositionPnl(pnl);
+      sdk.initAccount(selectedItem.address);
+      subscribeToUserData(selectedItem.address);
+    } else {
+      if (accounts.length > 0) {
+        const res = accounts.map(item => {
+          const info =
+            perpsState.clearinghouseStateMap[item.address.toLowerCase()];
+          return { account: item, clearinghouseState: info };
+        });
+        const best = res.sort((a, b) => {
+          return (
+            Number(b.clearinghouseState?.marginSummary.accountValue || 0) -
+            Number(a.clearinghouseState?.marginSummary.accountValue || 0)
+          );
+        })[0];
+        if (
+          best &&
+          Number(best.clearinghouseState?.marginSummary.accountValue || 0) > 0
+        ) {
+          setCurrentPerpsAccount(best.account);
+          const pnl = best.clearinghouseState
+            ? formatPositionPnl(best.clearinghouseState)
+            : initialState.homePositionPnl;
+          setHomePositionPnl(pnl);
+          sdk.initAccount(best.account.address);
+          subscribeToUserData(best.account.address);
+        } else {
+          setCurrentPerpsAccount(accounts[0]);
+          const clearinghouseState =
+            perpsState.clearinghouseStateMap[accounts[0].address.toLowerCase()];
+          const pnl = clearinghouseState
+            ? formatPositionPnl(clearinghouseState)
+            : initialState.homePositionPnl;
+          setHomePositionPnl(pnl);
+          sdk.initAccount(accounts[0].address);
+          subscribeToUserData(accounts[0].address);
+        }
+      }
+    }
+  } catch (e) {
+    setCurrentPerpsAccount(accounts[0]);
+    setHomePositionPnl(initialState.homePositionPnl);
+    console.error('Error selecting only show account', e);
+  }
+};
+
+const setAccountNeedApproveAgent = (payload: boolean) => {
+  setPerpsState(prev => ({ ...prev, accountNeedApproveAgent: payload }));
+};
+
+const setAccountNeedApproveBuilderFee = (payload: boolean) => {
+  setPerpsState(prev => ({ ...prev, accountNeedApproveBuilderFee: payload }));
+};
+
+const resetAccountState = () => {
   setPerpsState(prev => ({
     ...prev,
     accountSummary: null,
@@ -195,6 +378,8 @@ const resetState = () => {
       type: 'accountValue',
       accountValue: 0,
     },
+    accountNeedApproveAgent: false,
+    accountNeedApproveBuilderFee: false,
   }));
 };
 
@@ -228,15 +413,7 @@ const setPositionAndOpenOrders = (
         order => order.coin === position.position.coin,
       ),
     })),
-    homePositionPnl: {
-      pnl: clearinghouseState.assetPositions.reduce((acc, order) => {
-        return acc + Number(order.position.unrealizedPnl);
-      }, 0),
-      show: Number(clearinghouseState.marginSummary.accountValue) > 0,
-      type:
-        clearinghouseState.assetPositions.length > 0 ? 'pnl' : 'accountValue',
-      accountValue: Number(clearinghouseState.marginSummary.accountValue),
-    },
+    homePositionPnl: formatPositionPnl(clearinghouseState),
   }));
 };
 
@@ -260,6 +437,7 @@ const updateMarketData = (payload: AssetCtx[]) => {
 const subscribeToUserData = (address: string) => {
   const sdk = apisPerps.getPerpsSDK();
 
+  unsubscribeAll();
   const { unsubscribe: unsubscribeWebData2 } = sdk.ws.subscribeToWebData2(
     data => {
       const { clearinghouseState, assetCtxs, openOrders, serverTime, user } =
@@ -277,10 +455,6 @@ const subscribeToUserData = (address: string) => {
   const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
     data => {
       // Only process data when app is active
-      if (AppState.currentState !== 'active') {
-        return;
-      }
-
       console.log('User fills update:', data.fills.length);
       const { fills, isSnapshot, user } = data;
       if (!isSameAddress(user, address)) {
@@ -303,7 +477,7 @@ const subscribeToUserData = (address: string) => {
 export const apisPerpsStore = {
   logout: () => {
     unsubscribeAll();
-    resetState();
+    resetAccountState();
     fetchPerpPermission('');
   },
 };
@@ -314,17 +488,6 @@ export const usePerpsStore = () => {
   const setFillsOrderTpOrSl = useMemoizedFn(
     (payload: Record<string, 'tp' | 'sl'>) => {
       setPerpsState(prev => ({ ...prev, fillsOrderTpOrSl: payload }));
-    },
-  );
-
-  const setHomePositionPnl = useMemoizedFn(
-    (payload: {
-      pnl: number;
-      show: boolean;
-      type: 'pnl' | 'accountValue';
-      accountValue: number;
-    }) => {
-      setPerpsState(prev => ({ ...prev, homePositionPnl: payload }));
     },
   );
 
@@ -371,14 +534,7 @@ export const usePerpsStore = () => {
             withdrawable: payload.withdrawable,
           },
           positionAndOpenOrders,
-          homePositionPnl: {
-            pnl: payload.assetPositions.reduce((acc, asset) => {
-              return acc + Number(asset.position.unrealizedPnl);
-            }, 0),
-            show: Number(payload.marginSummary.accountValue) > 0,
-            type: payload.assetPositions.length > 0 ? 'pnl' : 'accountValue',
-            accountValue: Number(payload.marginSummary.accountValue),
-          },
+          homePositionPnl: formatPositionPnl(payload),
         };
       });
     },
@@ -426,15 +582,6 @@ export const usePerpsStore = () => {
     setPerpsState(prev => ({ ...prev, perpFee: payload }));
   });
 
-  const setMarketData = useMemoizedFn((payload: MarketData[] | []) => {
-    const list = payload || [];
-    setPerpsState(prev => ({
-      ...prev,
-      marketData: list,
-      marketDataMap: buildMarketDataMap(list as MarketData[]),
-    }));
-  });
-
   const updateOpenOrders = useMemoizedFn((payload: OpenOrder[]) => {
     setPerpsState(prev => {
       const positionAndOpenOrders = prev.positionAndOpenOrders.map(order => {
@@ -454,44 +601,23 @@ export const usePerpsStore = () => {
     setPerpsState(prev => ({ ...prev, accountSummary: payload }));
   });
 
-  const setCurrentPerpsAccount = useMemoizedFn((payload: Account | null) => {
-    setPerpsState(prev => ({
-      ...prev,
-      currentPerpsAccount: payload,
-      isLogin: !!payload,
-    }));
-  });
-
-  const setInitialized = useMemoizedFn((payload: boolean) => {
-    setPerpsState(prev => ({ ...prev, isInitialized: payload }));
-  });
-
-  const setCurrentOnlyShowPerpsAccount = useMemoizedFn(
-    (payload: Account | null) => {
-      setPerpsState(prev => ({
-        ...prev,
-        currentOnlyShowPerpsAccount: payload,
-      }));
-    },
-  );
-
   const setApproveSignatures = useMemoizedFn((payload: ApproveSignatures) => {
     setPerpsState(prev => ({ ...prev, approveSignatures: payload }));
   });
 
   // Effects 转换为异步函数
-  const saveApproveSignatures = useMemoizedFn(
-    async (payload: {
-      approveSignatures: ApproveSignatures;
-      address: string;
-    }) => {
-      setApproveSignatures(payload.approveSignatures);
-      apisPerps.setSendApproveAfterDeposit(
-        payload.address,
-        payload.approveSignatures,
-      );
-    },
-  );
+  // const saveApproveSignatures = useMemoizedFn(
+  //   async (payload: {
+  //     approveSignatures: ApproveSignatures;
+  //     address: string;
+  //   }) => {
+  //     setApproveSignatures(payload.approveSignatures);
+  //     apisPerps.setSendApproveAfterDeposit(
+  //       payload.address,
+  //       payload.approveSignatures,
+  //     );
+  //   },
+  // );
 
   const fetchPositionAndOpenOrders = useMemoizedFn(async (address?: string) => {
     const sdk = apisPerps.getPerpsSDK();
@@ -627,33 +753,6 @@ export const usePerpsStore = () => {
     fetchUserHistoricalOrders();
   });
 
-  const fetchMarketData = useMemoizedFn(async (canUseCache = true) => {
-    const sdk = apisPerps.getPerpsSDK();
-    try {
-      const fetchTopTokenList = async () => {
-        try {
-          const topAssets = await openapi.getPerpTopTokenList();
-          if (topAssets.length > 0) {
-            return topAssets;
-          } else {
-            return DEFAULT_TOP_ASSET;
-          }
-        } catch (error) {
-          console.error('Failed to fetch top assets:', error);
-          return DEFAULT_TOP_ASSET;
-        }
-      };
-
-      const [topAssets, marketData] = await Promise.all([
-        fetchTopTokenList(),
-        sdk.info.metaAndAssetCtxs(canUseCache),
-      ]);
-      setMarketData(formatMarkData(marketData, topAssets));
-    } catch (error) {
-      console.error('Failed to fetch market data:', error);
-    }
-  });
-
   const fetchPerpFee = useMemoizedFn(async () => {
     const sdk = apisPerps.getPerpsSDK();
     try {
@@ -679,6 +778,7 @@ export const usePerpsStore = () => {
     setHomePositionPnl,
     setHasPermission,
     setLocalLoadingHistory,
+    setClearinghouseStateMap,
     setUserAccountHistory,
     setUserFills,
     addUserFills,
@@ -690,12 +790,13 @@ export const usePerpsStore = () => {
     updateOpenOrders,
     setAccountSummary,
     setCurrentPerpsAccount,
+    setAccountNeedApproveAgent,
+    setAccountNeedApproveBuilderFee,
     setInitialized,
     setApproveSignatures,
-    resetState,
+    resetAccountState,
 
     // Effects
-    saveApproveSignatures,
     fetchPositionAndOpenOrders,
     fetchPerpPermission,
     loginPerpsAccount,
@@ -707,40 +808,144 @@ export const usePerpsStore = () => {
     fetchMarketData,
     fetchPerpFee,
     unsubscribeAll,
-    setCurrentOnlyShowPerpsAccount,
   };
 };
 
-runIIFEFunc(() => {
-  eventBus.on(EVENTS.PERPS.LOG_OUT, apisPerpsStore.logout);
-});
+runIIFEFunc(fetchMarketData);
 
 export function usePerpsEffectOnTop() {
-  const { isLogin, currentPerpsAccount, wsSubscriptionsLen } = perpsStore(
-    useShallow(s => ({
-      isLogin: s.isLogin,
-      currentPerpsAccount: s.currentPerpsAccount,
-      wsSubscriptionsLen: s.wsSubscriptions.length,
-    })),
-  );
-  const appState = useAppState();
-  const prevAppStateRef = useRef(appState);
+  // const { isLogin, currentPerpsAccount, wsSubscriptionsLen } = perpsStore(
+  //   useShallow(s => ({
+  //     isLogin: s.isLogin,
+  //     currentPerpsAccount: s.currentPerpsAccount,
+  //     wsSubscriptionsLen: s.wsSubscriptions.length,
+  //   })),
+  // );
+  // const appState = useAppState();
+  // const prevAppStateRef = useRef(appState);
+
+  // useEffect(() => {
+  //   if (prevAppStateRef.current !== appState) {
+  //     if (appState !== 'active') {
+  //       unsubscribeAll();
+  //       // const sdk = apisPerps.getPerpsSDK();
+  //       // sdk.ws.disconnect();
+  //     } else if (
+  //       appState === 'active' &&
+  //       isLogin &&
+  //       currentPerpsAccount &&
+  //       wsSubscriptionsLen === 0
+  //     ) {
+  //       subscribeToUserData(currentPerpsAccount.address);
+  //     }
+  //     prevAppStateRef.current = appState;
+  //   }
+  // }, [appState, isLogin, currentPerpsAccount, wsSubscriptionsLen]);
 
   useEffect(() => {
-    if (prevAppStateRef.current !== appState) {
-      if (appState !== 'active') {
-        unsubscribeAll();
-        const sdk = apisPerps.getPerpsSDK();
-        sdk.ws.disconnect();
-      } else if (
-        appState === 'active' &&
-        isLogin &&
-        currentPerpsAccount &&
-        wsSubscriptionsLen === 0
-      ) {
-        subscribeToUserData(currentPerpsAccount.address);
-      }
-      prevAppStateRef.current = appState;
-    }
-  }, [appState, isLogin, currentPerpsAccount, wsSubscriptionsLen]);
+    const sdk = apisPerps.getPerpsSDK();
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      // Pass the state string ('active', 'background', 'inactive') directly
+      sdk.ws.handleAppStateChange(nextAppState);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 }
+
+export const useSubscribePosition = (sortedAccounts: Account[]) => {
+  const { top10Accounts } = useMemo(() => {
+    const unionAddresses = unionBy(sortedAccounts, account =>
+      account.address.toLowerCase(),
+    );
+    return {
+      top10Accounts: unionAddresses.slice(0, 10),
+    };
+  }, [sortedAccounts]);
+  const isMounted = useRef(false);
+  const currentHasFetchAddresses = useRef<string[]>([]);
+  const hasSelectedDefaultAccount = useRef(false);
+
+  useEffect(() => {
+    eventBus.on(EVENTS.PERPS.LOG_OUT, (account: Account | null) => {
+      const remainAccounts = top10Accounts.filter(
+        item =>
+          !(
+            isSameAddress(item.address, account?.address || '') &&
+            item.type === account?.type
+          ),
+      );
+      handleSelectDefaultAccount(remainAccounts);
+    });
+    return () => {
+      eventBus.removeAllListeners(EVENTS.PERPS.LOG_OUT);
+    };
+  }, [top10Accounts]);
+
+  useEffect(() => {
+    eventBus.on('PERPS_ADD_ADDRESSES', (addresses: string[]) => {
+      const sdk = apisPerps.getPerpsSDK();
+      sdk.ws.subscribeToClearinghouseState(addresses, data => {
+        const clearinghouseState = data.clearinghouseState;
+        if (
+          +clearinghouseState?.withdrawable > 0 ||
+          +clearinghouseState?.marginSummary.accountValue > 0
+        ) {
+          setClearinghouseStateMap({
+            address: data.user,
+            data: clearinghouseState,
+          });
+        }
+      });
+    });
+
+    return () => {
+      eventBus.removeAllListeners('PERPS_ADD_ADDRESSES');
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isMounted.current) {
+      return;
+    }
+    if (top10Accounts && top10Accounts.length > 0) {
+      isMounted.current = true;
+      const sdk = apisPerps.getPerpsSDK();
+      // maybe websocket is bad, no fetch data
+      let timeout = setTimeout(() => {
+        if (!hasSelectedDefaultAccount.current) {
+          hasSelectedDefaultAccount.current = true;
+          handleSelectDefaultAccount(top10Accounts);
+        }
+      }, 5 * 1000);
+      const top10Addresses = top10Accounts.map(item => item.address);
+      sdk.ws.subscribeToClearinghouseState(top10Addresses, data => {
+        if (!currentHasFetchAddresses.current.includes(data.user)) {
+          currentHasFetchAddresses.current.push(data.user);
+          if (
+            currentHasFetchAddresses.current.length === top10Addresses.length
+          ) {
+            setIsFetchAllDone(true);
+            clearTimeout(timeout);
+            if (!hasSelectedDefaultAccount.current) {
+              hasSelectedDefaultAccount.current = true;
+              handleSelectDefaultAccount(top10Accounts);
+            }
+          }
+        }
+        const clearinghouseState = data.clearinghouseState;
+        if (
+          +clearinghouseState?.withdrawable > 0 ||
+          +clearinghouseState?.marginSummary.accountValue > 0
+        ) {
+          setClearinghouseStateMap({
+            address: data.user,
+            data: clearinghouseState,
+          });
+        }
+      });
+    }
+  }, [top10Accounts]);
+};
