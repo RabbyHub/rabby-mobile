@@ -117,7 +117,8 @@
     "check": "Kiểm tra",
     "gotIt": "Đã hiểu",
     "Token": "Token",
-    "Dapp": "Dapp"
+    "Dapp": "Dapp",
+    "GotIt": "Hiểu rồi"
   },
   "page": {
     "transactions": {
@@ -1000,7 +1001,25 @@
       "via-bridge": "thông qua {{bridge}}",
       "duration": "{{duration}} phút",
       "bridged": "Đã cầu nối",
-      "gasFeeTooHight": "Phí Gas cao hơn bình thường. Chỉ xác nhận nếu bạn muốn tiếp tục."
+      "gasFeeTooHight": "Phí Gas cao hơn bình thường. Chỉ xác nhận nếu bạn muốn tiếp tục.",
+      "pendingItem": {
+        "swap": "Hoán đổi",
+        "receivingTo": "Nhận trên {{chain}}",
+        "sendingFrom": "Gửi từ {{chain}}",
+        "estimatedTime": "Thời gian ước tính",
+        "receivedDifferentTokenFromSource": "Bridge không thành công. Một token khác đã được trả về trên chuỗi nguồn.",
+        "beReturnFailed": "Cầu nối thất bại. Tài sản của bạn đã được trả lại.",
+        "receivedDifferentTokenNeedSwap": "Bạn đã nhận được một token khác. Bạn có thể hoán đổi nó sang token mà bạn đã chọn.",
+        "fromFailed": "Giao dịch không thành công. Vui lòng thử lại.",
+        "bridgeStatus": "Trạng Thái Cầu Nối",
+        "failed": "Thất bại",
+        "pending": "Đang chờ xử lý",
+        "queued": "Đang xếp hàng",
+        "completed": "Hoàn tất",
+        "longTimeNoReceive": "Mạng đang bận. Điều này có thể mất nhiều thời gian hơn bình thường. Vui lòng chờ đợi kiên nhẫn.",
+        "BridgeStatusUnavailable": "Trạng thái Bridge không khả dụng. Vui lòng kiểm tra lịch sử giao dịch của bạn để xác nhận rằng các khoản tiền đã đến."
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "manageAddress": {
       "enterThePassphrase": "Nhập Passphrase",
@@ -2117,7 +2136,9 @@
       "sentTimeHeader": "Đã gửi",
       "sendToSafeAddress": "Gửi đến Ví An toàn",
       "sendToImportedAddress": "Gửi đến Ví Nhập Khẩu Của Tôi",
-      "sendToWatchAddress": "Gửi đến ví chỉ xem"
+      "sendToWatchAddress": "Gửi đến ví chỉ xem",
+      "dividerWatchOnlyWallets": "Chỉ xem địa chỉ",
+      "enterOrSearchAddress": "Nhập hoặc Tìm kiếm Địa chỉ"
     },
     "confirmAddress": {
       "risks": {
@@ -2517,11 +2538,16 @@
         "title": "Mức độ rủi ro",
         "currentPrice": "Giá hiện tại",
         "subtitle": "Khoảng cách thanh lý theo thời gian thực (%)",
-        "liqIntro": "Khoảng cách thanh lý (%) cho thấy giá hiện tại cách giá thanh lý của bạn bao xa. Khoảng cách lớn hơn chỉ ra một vị trí an toàn hơn, trong khi khoảng cách nhỏ hơn có nghĩa là rủi ro thanh lý cao hơn."
+        "liqIntro": "Khoảng cách thanh lý (%) cho thấy giá hiện tại cách giá thanh lý của bạn bao xa. Khoảng cách lớn hơn chỉ ra một vị trí an toàn hơn, trong khi khoảng cách nhỏ hơn có nghĩa là rủi ro thanh lý cao hơn.",
+        "liqDistanceTipsShort": "Đi lên <1>{{distance}}</1> sẽ kích hoạt thanh lý.",
+        "liqDistanceTipsLong": "Đi xuống <1>{{distance}}</1> sẽ kích hoạt thanh lý."
       },
       "closeAll": "Đóng tất cả",
       "closeAllConfirmTitle": "Xác nhận Đóng Tất cả Vị thế",
-      "closeAllConfirmMessage": "Tất cả các vị trí mở của bạn sẽ được đóng ở giá thị trường."
+      "closeAllConfirmMessage": "Tất cả các vị trí mở của bạn sẽ được đóng ở giá thị trường.",
+      "assetPage": {
+        "hyperliquidPosition": "Vị trí Hyperliquid"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2546,7 +2572,9 @@
         "autoClose": "Tự động Đóng",
         "sizeTips": "Giá trị hoặc số lượng tổng của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy.",
         "liquidationPriceTips": "Giá mà vị thế của bạn bị tự động đóng bởi sàn giao dịch để ngăn chặn tổn thất thêm khi ký quỹ của bạn giảm xuống dưới mức ký quỹ duy trì.",
-        "fundingPaymentsTips": "Đây là khoản thanh toán vốn ròng kể từ khi vị thế được mở. Funding là một khoản phí theo giờ mà các trader phải trả hoặc nhận để giữ cho giá của hợp đồng perp gần với giá thực tế của token."
+        "fundingPaymentsTips": "Đây là khoản thanh toán vốn ròng kể từ khi vị thế được mở. Funding là một khoản phí theo giờ mà các trader phải trả hoặc nhận để giữ cho giá của hợp đồng perp gần với giá thực tế của token.",
+        "fundingGains": "Lợi nhuận Tài trợ",
+        "fundingGainsTips": "Đây là lợi nhuận từ việc tài trợ ròng kể từ khi vị thế được mở. Funding là một khoản phí hàng giờ mà các trader trả hoặc nhận để giữ giá của hợp đồng perp gần với giá thực tế của token."
       },
       "PerpsInfo": {
         "title": "Thông tin",
@@ -2554,14 +2582,15 @@
         "openInterestTips": "Tổng vị thế đang mở của tất cả người dùng trên hợp đồng này.",
         "funding": "Quỹ",
         "fundingTips": "Đây là một khoản phí theo giờ mà các trader phải trả hoặc nhận để giữ cho giá của hợp đồng perp gần với giá thực tế của token. Nếu dương, long trả cho short. Nếu âm, short trả cho long.",
-        "24Vol": "24h Khối lượng"
+        "24Vol": "24h Khối lượng",
+        "fundingRate": "Tỷ lệ cấp vốn"
       },
       "PerpsIntro": {
         "title": "Perps là gì?",
         "desc": "Giao dịch hợp đồng vĩnh viễn liên quan đến những rủi ro đáng kể, bao gồm khả năng mất khoản đầu tư và tài sản thế chấp của bạn một cách nhanh chóng do đòn bẩy cao và biến động thị trường. Giao dịch như vậy có thể không phù hợp với tất cả người dùng. Giá có thể bị ảnh hưởng bởi tỷ lệ tài trợ và tính thanh khoản, và bạn có thể bị thanh lý tự động mà không có thông báo trước. Dữ liệu thị trường được cung cấp bởi Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "",
+        "title": "Đóng Vị trí",
         "fee": "Phí:",
         "closeBtn": "Đóng {{direction}}",
         "pnl": "PNL",
@@ -2592,7 +2621,10 @@
         "stopLossWhen": "Cắt lỗ khi",
         "stopLossWhenPriceAbove": "Dừng Lỗ Khi Giá Trên",
         "takeProfitWhenPriceAbove": "Chốt Lợi Nhuận Khi Giá Trên",
-        "stopLossWhenPriceBelow": "Dừng lỗ khi giá dưới"
+        "stopLossWhenPriceBelow": "Dừng lỗ khi giá dưới",
+        "minMargin": "Biên độ tối thiểu là {{amount}}",
+        "maxMargin": "Lợi nhuận tối đa là {{amount}}",
+        "upTo": "Lên đến"
       },
       "PerpsOpenPositionCheckPopup": {
         "fee": "Phí",
@@ -2620,7 +2652,9 @@
         "short": "Ngắn",
         "noPermission": "Việc mở vị thế không được hỗ trợ trong khu vực của bạn.",
         "long": "Mở vị thế dài",
-        "closePosition": "Đóng vị trí {{direction}}"
+        "closePosition": "Đóng vị trí {{direction}}",
+        "close": "Đóng",
+        "add": "Thêm"
       },
       "PerpsAutoCloseModal": {
         "price": "Giá:",
@@ -2652,8 +2686,16 @@
         "liqPrice": "Giá thanh lý:",
         "perpsBalance": "Số Dư Perps",
         "amountToReduce": "Số lượng để giảm bớt",
-        "insufficientMarginToReduce": "Không đủ ký quỹ để giảm vị thế."
-      }
+        "insufficientMarginToReduce": "Không đủ ký quỹ để giảm vị thế.",
+        "liqDistance": "Liq.Distance"
+      },
+      "PerpsAddPositionPopup": {
+        "addSize": "Thêm Kích Thước",
+        "addToLong": "Thêm vào Long",
+        "totalSize": "Kích thước tổng cộng",
+        "addToShort": "Thêm vào Short"
+      },
+      "needDepositFirst": "Bạn cần phải nạp tiền trước."
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Trang xây dựng sẵn"
@@ -3057,6 +3099,9 @@
     },
     "portfolios": {
       "manage": "Quản lý"
+    },
+    "multiAddressModal": {
+      "title": "Ví "
     }
   },
   "constant": {

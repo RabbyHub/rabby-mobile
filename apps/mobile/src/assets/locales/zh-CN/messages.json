@@ -117,7 +117,8 @@
     "check": "检查",
     "gotIt": "明白了",
     "Dapp": "Dapp",
-    "Token": "代币"
+    "Token": "代币",
+    "GotIt": "明白了"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -891,7 +892,25 @@
       "loss-tips": "您正在损失 {{usd}}。请尝试不同的金额。",
       "title": "Bridge",
       "bridged": "跨链已完成",
-      "gasFeeTooHight": "Gas费用高于正常情况。仅在您希望继续时确认。"
+      "gasFeeTooHight": "Gas费用高于正常情况。仅在您希望继续时确认。",
+      "pendingItem": {
+        "pending": "待处理",
+        "swap": "交换",
+        "estimatedTime": "预计时间",
+        "bridgeStatus": "桥接状态",
+        "BridgeStatusUnavailable": "桥接状态不可用。请检查您的交易历史以确认资金是否到账。",
+        "failed": "失败",
+        "receivedDifferentTokenFromSource": "桥接失败。源链上返回了不同的代币。",
+        "fromFailed": "交易未通过。请再试一次。",
+        "receivedDifferentTokenNeedSwap": "您收到了不同的代币。您可以将其兑换为您选择的代币。",
+        "queued": "排队中",
+        "longTimeNoReceive": "网络繁忙。这可能会比平时花费更长的时间。请耐心等待。",
+        "beReturnFailed": "桥接失败。您的资产已被退回。",
+        "sendingFrom": "从 {{chain}} 发送",
+        "completed": "已完成",
+        "receivingTo": "在 {{chain}} 上接收"
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "approvals": {
       "tab-switch": {
@@ -2126,7 +2145,9 @@
       "sentTimeHeader": "发送",
       "sendToWatchAddress": "发送到只读钱包",
       "sendToSafeAddress": "发送到安全钱包",
-      "sendToImportedAddress": "发送到我的导入钱包"
+      "sendToImportedAddress": "发送到我的导入钱包",
+      "dividerWatchOnlyWallets": "仅观察地址",
+      "enterOrSearchAddress": "输入或搜索地址"
     },
     "confirmAddress": {
       "risks": {
@@ -2529,11 +2550,16 @@
         "currentPrice": "当前价格",
         "distanceLabel": "平仓距离",
         "subtitle": "实时 liquidation 距离 (%)",
-        "liqIntro": "清算距离 (%) 表示当前价格与您的清算价格之间的距离。距离越大，说明仓位越安全；距离越小，则表示清算风险越高。"
+        "liqIntro": "清算距离 (%) 表示当前价格与您的清算价格之间的距离。距离越大，说明仓位越安全；距离越小，则表示清算风险越高。",
+        "liqDistanceTipsLong": "下跌 <1>{{distance}}</1> 将触发清算。",
+        "liqDistanceTipsShort": "上涨 <1>{{distance}}</1> 将触发清算。"
       },
       "closeAll": "关闭全部",
       "closeAllConfirmMessage": "您所有的未平仓头寸将以市场价格平仓。",
-      "closeAllConfirmTitle": "确认平掉所有仓位"
+      "closeAllConfirmTitle": "确认平掉所有仓位",
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid 头寸"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2558,7 +2584,9 @@
         "margin": "保证金（隔离）",
         "sizeTips": "您交易的总价值或数量，由保证金和杠杆设置。",
         "liquidationPriceTips": "当您的保证金低于维持保证金水平时，交易所自动关闭您的仓位以防止进一步亏损的价格。",
-        "fundingPaymentsTips": "这是自开仓以来的净资金支付。资金费用是交易者支付或收取的每小时费用，以保持永续合约的价格接近代币的实际价格。"
+        "fundingPaymentsTips": "这是自开仓以来的净资金支付。资金费用是交易者支付或收取的每小时费用，以保持永续合约的价格接近代币的实际价格。",
+        "fundingGains": "资金收益",
+        "fundingGainsTips": "这是自头寸开启以来的净资金收益。资金是交易者每小时支付或接收的费用，用于保持永久合约的价格接近代币的实际价格。"
       },
       "PerpsInfo": {
         "title": "信息",
@@ -2566,14 +2594,15 @@
         "openInterest": "未平仓合约",
         "24Vol": "24小时交易量",
         "openInterestTips": "该合约上所有用户的总未平仓头寸。",
-        "fundingTips": "这是交易者支付或收到的每小时费用，用于保持永续合约的价格接近代币的实际价格。如果是正值，多头支付空头。如果是负值，空头支付多头。"
+        "fundingTips": "这是交易者支付或收到的每小时费用，用于保持永续合约的价格接近代币的实际价格。如果是正值，多头支付空头。如果是负值，空头支付多头。",
+        "fundingRate": "资金利率"
       },
       "PerpsIntro": {
         "title": "什么是 Perps？",
         "desc": "交易永续合约涉及重大风险，包括由于高杠杆和市场波动而快速失去您的投资和抵押品的可能性。此类交易可能不适合所有用户。价格可能会受到资金利率和流动性的影响，您可能会在没有事先通知的情况下自动被平仓。市场数据由 Hyperliquid 提供。"
       },
       "PerpsClosePositionPopup": {
-        "title": "",
+        "title": "平仓",
         "pnl": "PNL",
         "providerFeeTips": "Hyperliquid 费用：{{fee}}",
         "positionSize": "持仓大小",
@@ -2604,7 +2633,10 @@
         "takeProfitWhenPriceBelow": "当价格低于时止盈",
         "stopLossWhen": "止损于",
         "stopLossWhenPriceAbove": "止损价格超过时",
-        "stopLossWhenPriceBelow": "当价格低于时止损"
+        "stopLossWhenPriceBelow": "当价格低于时止损",
+        "minMargin": "最低保证金为 {{amount}}",
+        "maxMargin": "最大保证金为 {{amount}}",
+        "upTo": "高达"
       },
       "PerpsOpenPositionCheckPopup": {
         "price": "价格",
@@ -2632,7 +2664,9 @@
         "long": "做多",
         "short": "做空",
         "noPermission": "在您的地区不支持开仓。",
-        "closePosition": "关闭 {{direction}} 头寸"
+        "closePosition": "关闭 {{direction}} 头寸",
+        "add": "添加",
+        "close": "关闭"
       },
       "PerpsAutoCloseModal": {
         "slPrice": "止损价",
@@ -2664,8 +2698,16 @@
         "insufficientMarginToReduce": "保证金不足，无法减仓。",
         "reduceMargin": "减少保证金",
         "perpsBalance": "永续合约余额",
-        "addMargin": "添加保证金"
-      }
+        "addMargin": "添加保证金",
+        "liqDistance": "Liq.Distance"
+      },
+      "PerpsAddPositionPopup": {
+        "addSize": "添加大小",
+        "totalSize": "总大小",
+        "addToShort": "添加到短期",
+        "addToLong": "添加到 Long"
+      },
+      "needDepositFirst": "您需要先存入资金。"
     },
     "selectAccountSheetModal": {
       "title": {
@@ -2814,7 +2856,8 @@
         "openTitle": "审核启用",
         "openDesc": "将此资产启用为抵押品可以增加您的借款能力和健康因子。不过，如果您的健康因子降到 1 以下，可能会被清算。",
         "closeDesc": "禁用此资产作为抵押物会影响您的借贷能力和健康因子。",
-        "enableIsolationModeDesc": "您正在进入隔离模式。在隔离模式下，您无法将其他资产作为抵押。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借用其他资产之前禁用 CRV 作为抵押。"
+        "enableIsolationModeDesc": "您正在进入隔离模式。在隔离模式下，您无法将其他资产作为抵押。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借用其他资产之前禁用 CRV 作为抵押。",
+        "exitIsolationModeDesc": "您将退出隔离模式，其他代币现在可以用作抵押品。"
       },
       "searchMarket": "搜索市场",
       "selectMarket": "选择市场"
@@ -3065,6 +3108,9 @@
     },
     "portfolios": {
       "manage": "管理"
+    },
+    "multiAddressModal": {
+      "title": "钱包"
     }
   },
   "bluetooth": {

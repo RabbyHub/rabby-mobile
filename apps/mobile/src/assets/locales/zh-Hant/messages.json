@@ -126,7 +126,8 @@
     "check": "檢查",
     "gotIt": "了解了",
     "Token": "代幣",
-    "Dapp": "Dapp"
+    "Dapp": "Dapp",
+    "GotIt": "明白了"
   },
   "background": {
     "transactionWatcher": {
@@ -1016,7 +1017,24 @@
       "no-quote-found": "未找到報價。請嘗試其他代幣對。",
       "To": "至",
       "bridged": "橋接",
-      "gasFeeTooHight": "Gas 費用高於正常水平。只有在您希望繼續時才可確認。"
+      "gasFeeTooHight": "Gas 費用高於正常水平。只有在您希望繼續時才可確認。",
+      "pendingItem": {
+        "failed": "失敗",
+        "completed": "已完成",
+        "receivingTo": "在 {{chain}} 上接收",
+        "sendingFrom": "從 {{chain}} 發送",
+        "estimatedTime": "預估時間",
+        "queued": "排队中",
+        "bridgeStatus": "橋接狀態",
+        "receivedDifferentTokenNeedSwap": "您收到了一個不同的代幣。您可以將其交換為您選擇的代幣。",
+        "pending": "待處理",
+        "BridgeStatusUnavailable": "橋接狀態不可用。請檢查您的交易歷史以確認資金是否已到達。",
+        "swap": "交換",
+        "longTimeNoReceive": "網絡繁忙。這可能比平常需要更長的時間。請耐心等待。",
+        "beReturnFailed": "橋接失敗。您的資產已被退回。",
+        "receivedDifferentTokenFromSource": "橋接失敗。源鏈上返回了不同的代幣。"
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "signFooterBar": {
       "importedByLedger": "透過 Ledger 匯入",
@@ -2174,7 +2192,9 @@
       "sentTimeHeader": "已發送",
       "sendToSafeAddress": "發送至 Safe Wallets",
       "sendToImportedAddress": "發送到我的匯入錢包",
-      "sendToWatchAddress": "發送至只讀錢包"
+      "sendToWatchAddress": "發送至只讀錢包",
+      "dividerWatchOnlyWallets": "只有查看的地址",
+      "enterOrSearchAddress": "輸入或搜尋地址"
     },
     "confirmAddress": {
       "risks": {
@@ -2574,11 +2594,16 @@
         "distanceLabel": "清算距離",
         "currentPrice": "當前價格",
         "title": "風險級別",
-        "liqIntro": "清算距離 (%) 顯示當前價格距離您的清算價格有多遠。距離越大表示風險較低，而距離越小則意味著清算風險較高。"
+        "liqIntro": "清算距離 (%) 顯示當前價格距離您的清算價格有多遠。距離越大表示風險較低，而距離越小則意味著清算風險較高。",
+        "liqDistanceTipsLong": "下跌 <1>{{distance}}</1> 會觸發清算。",
+        "liqDistanceTipsShort": "上升 <1>{{distance}}</1> 將觸發清算。"
       },
       "closeAll": "關閉全部",
       "closeAllConfirmTitle": "確認關閉所有持倉",
-      "closeAllConfirmMessage": "所有您的未平仓头寸将以市场价格平仓。"
+      "closeAllConfirmMessage": "所有您的未平仓头寸将以市场价格平仓。",
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid 位置"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2603,7 +2628,9 @@
         "liquidationPriceTips": "當您的保證金低於維持保證金水平時，交易所自動平倉以防止進一步損失的價格。",
         "fundingPaymentsTips": "自该头寸开仓以来，这是净资金支付。资金是交易者每小时支付或收到的费用，以保持永续合约的价格接近代币的实际价格。",
         "marginCross": "保證金（交叉）",
-        "sizeTips": "您交易的总价值或数量，由保证金和杠杆设定。"
+        "sizeTips": "您交易的总价值或数量，由保证金和杠杆设定。",
+        "fundingGains": "資金收益",
+        "fundingGainsTips": "這是自開倉以來的淨資金收益。資金是一種每小時收取或支付的費用，交易者支付或收到這筆費用以保持期貨合約的價格接近代幣的實際價格。"
       },
       "PerpsInfo": {
         "funding": "資金負擔",
@@ -2611,14 +2638,15 @@
         "title": "資訊",
         "openInterestTips": "該合約上所有用戶的未平倉總頭寸。",
         "24Vol": "24小時交易量",
-        "fundingTips": "這是一個小時費用，交易者支付或接收該費用以保持永續合約價格接近代幣的實際價格。如果為正，做多的支付給做空的。如果為負，做空的支付給做多的。"
+        "fundingTips": "這是一個小時費用，交易者支付或接收該費用以保持永續合約價格接近代幣的實際價格。如果為正，做多的支付給做空的。如果為負，做空的支付給做多的。",
+        "fundingRate": "資金費率"
       },
       "PerpsIntro": {
         "desc": "交易永續合約涉及重大風險，包括因高槓桿和市場波動而迅速損失您的投資和抵押品的可能性。此類交易可能不適合所有用戶。價格可能受到資金利率和流動性的影響，您可能會在未通知的情況下被自動強制平倉。市場數據由 Hyperliquid 提供。",
         "title": "什麼是 Perps？"
       },
       "PerpsClosePositionPopup": {
-        "title": "",
+        "title": "關閉倉位",
         "fee": "費用：",
         "closeBtn": "關閉 {{direction}}",
         "providerFeeTips": "Hyperliquid 費用：{{fee}}",
@@ -2649,7 +2677,10 @@
         "stopLossWhen": "止損於",
         "stopLossWhenPriceAbove": "當價格高於時止損",
         "stopLossWhenPriceBelow": "當價格低於時止損",
-        "takeProfitWhenPriceAbove": "當價格高於時獲利了結"
+        "takeProfitWhenPriceAbove": "當價格高於時獲利了結",
+        "minMargin": "最低保证金为 {{amount}}",
+        "maxMargin": "最高保证金为 {{amount}}",
+        "upTo": "高達"
       },
       "PerpsOpenPositionCheckPopup": {
         "size": "大小",
@@ -2677,7 +2708,9 @@
         "long": "做多",
         "noPermission": "在您的地区不支持开仓。",
         "short": "做空",
-        "closePosition": "關閉 {{direction}} 头寸"
+        "closePosition": "關閉 {{direction}} 头寸",
+        "add": "新增",
+        "close": "關閉"
       },
       "PerpsAutoCloseModal": {
         "tpPrice": "獲利價格",
@@ -2709,8 +2742,16 @@
         "reduceMargin": "減少保證金",
         "amountToReduce": "減少的數量",
         "insufficientMarginToReduce": "減少持倉的保證金不足。",
-        "addMargin": "添加保证金"
-      }
+        "addMargin": "添加保证金",
+        "liqDistance": "Liq.距離"
+      },
+      "PerpsAddPositionPopup": {
+        "addToLong": "添加至 Long",
+        "addToShort": "新增至短列表",
+        "totalSize": "總大小",
+        "addSize": "添加大小"
+      },
+      "needDepositFirst": "您需要先存入資金。"
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "內建頁面"
@@ -2851,7 +2892,8 @@
       "toggleCollateralDetail": {
         "disable": "禁用 {{asset}} 作为抵押品",
         "enable": "啟用 {{asset}} 作為抵押品",
-        "error": "AAVE 服務出現一些錯誤。請稍後再試。"
+        "error": "AAVE 服務出現一些錯誤。請稍後再試。",
+        "actions": "切換 {{asset}} 擔保品"
       },
       "toggleCollateralModal": {
         "exitIsolationModeTitle": "退出隔离模式",
@@ -3113,6 +3155,9 @@
     },
     "portfolios": {
       "manage": "管理"
+    },
+    "multiAddressModal": {
+      "title": "錢包"
     }
   },
   "common": {
