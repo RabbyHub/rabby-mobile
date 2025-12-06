@@ -38,10 +38,6 @@ import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 
-// export const loadingAtom = atom(true);
-// export const isFirstFetchAtom = atom(true);
-// export const shortCacheAtom = atom(true);
-
 type AssetsState = {
   loading: boolean;
   isFirstFetch: boolean;

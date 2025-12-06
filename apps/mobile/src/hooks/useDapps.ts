@@ -18,18 +18,6 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-// export const dappServiceAtom = atom<FieldNilable<typeof dappService.store>>(
-//   dappService.store,
-// );
-
-// export const dappsAtom = atom(
-//   get => get(dappServiceAtom).dapps || {},
-//   (get, set, newVal: (typeof dappService.store)['dapps']) => {
-//     const prev = get(dappServiceAtom);
-//     set(dappServiceAtom, { ...prev, dapps: newVal });
-//   },
-// );
-
 const dappServiceStore = zCreate<DappStore>(() => {
   return {
     ...dappService.store,

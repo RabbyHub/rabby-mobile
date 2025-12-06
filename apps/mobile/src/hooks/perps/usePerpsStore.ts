@@ -134,7 +134,6 @@ export const initialState: PerpsState = {
   fillsOrderTpOrSl: {},
 };
 
-// const perpsAtom = atom(initialState);
 export const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
 function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
   perpsStore.setState(prev => {

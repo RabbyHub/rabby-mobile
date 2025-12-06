@@ -66,8 +66,6 @@ export function setTabs(val: UpdaterOrPartials<TabsState['tabs']>) {
   });
 }
 
-// export const visibleAtom = atom(false);
-// const managePopupAtom = atom(false);
 const browserExtraStore = zCreate<{
   visible: boolean;
   isShowManagePopup: boolean;
@@ -90,14 +88,6 @@ function setIsShowManagePopup(val: boolean) {
   }));
 }
 
-// export const browserStateAtom = atom({
-//   isShowBrowser: false,
-//   isShowSearch: false,
-//   isShowManage: false,
-//   searchText: '',
-//   searchTabId: '',
-//   trigger: '',
-// });
 type BrowserStateType = {
   isShowBrowser: boolean;
   isShowSearch: boolean;
@@ -158,22 +148,7 @@ function setBrowserActiveTabState(
 
 const MAX_ACTIVE_TABS_COUNT = Platform.OS === 'android' ? 4 : 4;
 
-// const displayedTabsAtom = atom(get => {
-//   // const store = get(tabsAtom);
-//   const tabs = tabsStore(s => s.tabs);
-
-//   return tabs.filter(item => {
-//     return item.isDapp;
-//   });
-//   // return sortBy(
-//   //   store.tabs.filter(item => {
-//   //     return item.isDapp;
-//   //   }),
-//   //   tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
-//   // );
-// });
 function useDisplayedTabs() {
-  // const [store] = useAtom(tabsAtom);
   const tabs = tabsStore(s => s.tabs);
   const displayedTabs = useMemo(
     () =>
@@ -185,22 +160,6 @@ function useDisplayedTabs() {
 
   return { displayedTabs };
 }
-
-// const homeDisplayedTabsAtom = atom(get => {
-//   const store = get(tabsAtom);
-//   // const dapps = get(dappsAtom);
-
-//   return sortBy(
-//     store.tabs.filter(item => {
-//       return dapps[safeGetOrigin(item.url || item.initialUrl)]?.isDapp;
-//     }),
-//     tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
-//   ).slice(0, 4);
-// });
-// export const useHomeDisplayedTabs = () => {
-//   const [tabs] = useAtom(homeDisplayedTabsAtom);
-//   return tabs;
-// };
 
 export function useHomeDisplayedTabs() {
   // const [store] = useAtom(tabsAtom);

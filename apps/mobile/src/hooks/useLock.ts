@@ -16,29 +16,11 @@ import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import { useAtomCallback } from 'jotai/utils';
-import { isEqual } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
-
-// import {
-//   nativeBlockScreen,
-//   nativeUnblockScreen,
-// } from '@/core/native/ReactNativeSecurity';
-
-// const appLockAtom = atom({
-//   appUnlocked: false,
-//   pwdStatus: PasswordStatus.Unknown,
-// });
-// appLockAtom.onMount = setAppLock => {
-//   setAppLock(prev => ({
-//     ...prev,
-//     appUnlocked: keyringService.isUnlocked(),
-//   }));
-// };
 
 type AppLockState = {
   appUnlocked: boolean;

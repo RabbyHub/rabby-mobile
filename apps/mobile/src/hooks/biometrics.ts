@@ -30,10 +30,6 @@ type BiometricsInfoState = {
   authEnabled: boolean;
   supportedBiometryType: BIOMETRY_TYPE | null;
 };
-// const biometricsInfoAtom = atom({
-//   authEnabled: isAuthenticatedByBiometrics(),
-//   supportedBiometryType: null as BIOMETRY_TYPE | null,
-// });
 const biometricsInfoStore = zCreate<BiometricsInfoState>(() => ({
   authEnabled: isAuthenticatedByBiometrics(),
   supportedBiometryType: null,

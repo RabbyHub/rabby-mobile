@@ -51,15 +51,6 @@ const ThemeModeStore = atomByMMKV('@AppTheme', 'light' as AppThemeScheme, {
   storage: MMKVStorageStrategy.compatString,
 });
 
-// const ThemeModeStore = atom(
-//   get => get(ThemeStoreBase),
-//   (get, set, valOrFunc) => {
-//     const nextValue =
-//       typeof valOrFunc === 'function' ? valOrFunc(get(ThemeStoreBase)) : valOrFunc;
-//     set(ThemeStoreBase, nextValue);
-//   },
-// );
-
 export function useGetBinaryMode() {
   const appTheme = useAtomValue(ThemeModeStore);
   const colorScheme = useColorScheme();
