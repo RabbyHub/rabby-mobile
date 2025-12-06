@@ -35850,6 +35850,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-vision-camera@patch:react-native-vision-camera@npm%3A4.7.2#./.yarn/patches/react-native-vision-camera-npm-4.7.2-5538eb538b.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 4.7.2
+  resolution: "react-native-vision-camera@patch:react-native-vision-camera@npm%3A4.7.2#./.yarn/patches/react-native-vision-camera-npm-4.7.2-5538eb538b.patch::version=4.7.2&hash=2ceacc&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  peerDependencies:
+    "@shopify/react-native-skia": "*"
+    react: "*"
+    react-native: "*"
+    react-native-reanimated: "*"
+    react-native-worklets-core: "*"
+  peerDependenciesMeta:
+    "@shopify/react-native-skia":
+      optional: true
+    react-native-reanimated:
+      optional: true
+    react-native-worklets-core:
+      optional: true
+  checksum: 7f9b4240fec7ffc69078136ae3c0fada2197e260dc9c05cab188739f36144c03365ee9c7ec595977c597786e130175fa1716758f189232dc799d399f1ef82869
+  languageName: node
+  linkType: hard
+
 "react-native-wagmi-charts@npm:^2.3.2":
   version: 2.3.2
   resolution: "react-native-wagmi-charts@npm:2.3.2"
