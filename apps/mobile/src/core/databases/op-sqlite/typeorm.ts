@@ -19,7 +19,7 @@ const enhanceQueryResult = (result: QueryResult): void => {
 const isIOS = Platform.OS === 'ios';
 
 const opSqliteDBRef = { current: null as null | ReturnType<typeof open> };
-export function getOpSqliteDBInstance() {
+export function getLatestOpSqliteDBInstance() {
   return opSqliteDBRef.current;
 }
 
@@ -57,10 +57,9 @@ export const opSqliteTypeORMDriver = {
         encryptionKey: options.encryptionKey || '',
       });
 
-      if (!opSqliteDBRef.current) {
-        opSqliteDBRef.current = database;
-        OPSQLiteEvents.emit('__OP_SQLITE_LOADED__', { database });
-      } else {
+      opSqliteDBRef.current = database;
+      OPSQLiteEvents.emit('__OP_SQLITE_LOADED__', { database });
+      if (opSqliteDBRef.current) {
         console.warn(
           '[opSqliteTypeORMDriver] Warning: database instance already exists, notice developer',
         );

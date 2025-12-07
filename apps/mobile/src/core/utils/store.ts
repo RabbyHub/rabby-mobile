@@ -49,3 +49,13 @@ export function runIIFEFunc<T extends (...args: any[]) => any>(
 ) {
   return func(...inputArags);
 }
+
+export function runDevIIFEFunc<T extends (...args: any[]) => any>(
+  func: T,
+  ...inputArags: any[]
+) {
+  if (__DEV__) {
+    return func(...inputArags);
+  }
+  return undefined;
+}

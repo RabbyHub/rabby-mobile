@@ -12,6 +12,7 @@ import {
 } from 'typeorm/browser';
 import { getOnlineConfig } from '@/core/config/online';
 import { type ReactotronReactNative } from 'reactotron-react-native';
+import { tryGetReadyTron } from '@/core/utils/reactotron-plugins/_utils';
 
 // slice query string, [0...500] + [-500...end]
 function formatQueryString(query: string, len = 500): string {
@@ -111,7 +112,7 @@ export class RabbyOrmDevConsoleLogger
   }
 
   get _hasTron() {
-    return !!globalThis._tron;
+    return !!tryGetReadyTron();
   }
 
   stringifyParams(parameters: any) {
@@ -131,7 +132,7 @@ export class RabbyOrmDevConsoleLogger
     logMessage: LogMessage | LogMessage[],
     queryRunner?: QueryRunner,
   ): void {
-    if (!globalThis._tron) {
+    if (!this._hasTron) {
       return super.writeLog(level, logMessage, queryRunner);
     }
 
@@ -167,7 +168,7 @@ export class RabbyOrmDevConsoleLogger
               formatQueryString(preview);
           }
 
-          const reactotron = globalThis._tron;
+          const reactotron = tryGetReadyTron();
           if (!reactotron) {
             return superFn(level, msg, queryRunner);
           }
