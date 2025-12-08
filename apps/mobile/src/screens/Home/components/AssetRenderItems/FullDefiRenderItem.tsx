@@ -214,8 +214,12 @@ export const FullDefiRenderItem = ({
                 ? config[data.id]?.onManage
                 : undefined
             }
-            onClickToken={(addr, direction) =>
-              config?.[data.id]?.onTokenManage?.(account, addr, direction)
+            onClickToken={
+              config?.[data.id]?.showTokenManage &&
+              config[data.id]?.showTokenManage?.(item)
+                ? (addr, direction) =>
+                    config[data.id]?.onTokenManage?.(account, addr, direction)
+                : undefined
             }
             key={`${item.id}-${account.address}-${data.netWorth}`}
             session={
