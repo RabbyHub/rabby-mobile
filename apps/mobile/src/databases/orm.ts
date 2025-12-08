@@ -23,6 +23,7 @@ import {
   RabbyOrmDeployedConsoleLogger,
   RnSqlExecutionTimes,
 } from './logger';
+import { reactotronEvents } from '@/core/utils/reactotron-plugins/_utils';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',

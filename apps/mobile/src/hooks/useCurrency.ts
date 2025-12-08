@@ -38,27 +38,7 @@ export function setCurrencyStore(
   });
 }
 
-// export const currencyAtom = atom(
-//   get => get(currencyServiceAtom).data || {},
-//   (
-//     get,
-//     set,
-//     newVal:
-//       | (typeof currencyService.store)['data']
-//       | ((
-//           v: (typeof currencyService.store)['data'],
-//         ) => (typeof currencyService.store)['data']),
-//   ) => {
-//     const prev = get(currencyServiceAtom);
-//     const nextVal = typeof newVal === 'function' ? newVal(prev.data) : newVal;
-//     const res = { ...prev, data: nextVal };
-//     currencyService.setStore(nextVal);
-//     set(currencyServiceAtom, res);
-//   },
-// );
-
 export function useCurrency() {
-  // const [currencyStore, setCurrencyStore] = useAtom(currencyAtom);
   const currencyStore = currencyServiceStore(s => s.data);
 
   const currency = useMemo(() => {

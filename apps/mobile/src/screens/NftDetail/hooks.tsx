@@ -14,16 +14,6 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { navigateDeprecated } from '@/utils/navigation';
 import { Account } from '@/core/services/preference';
 
-// const popups = {
-//   nftDetailPopupOnHistory: {
-//     atom: atom({
-//       nft: null as NFTItem/*  | TransferingNFTItem */ | null,
-//       isMyOwn: false,
-//     }),
-//     ref: React.createRef<BottomSheetModalMethods>(),
-//   },
-// };
-
 /**
  * @deprecated
  */

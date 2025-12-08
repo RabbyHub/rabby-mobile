@@ -28,14 +28,6 @@ const waitQueueFinished = (q: PQueue) => {
   });
 };
 
-// export const balanceAtom = atom<balanceAccountType[]>([]);
-// const balanceCacheAtom = atom<balanceAccountType[]>([]);
-// const lengthAtom = atom<number>(0);
-
-// const loadAccountsBalanceAtom = atom({
-//   balanceLoading: false,
-//   loadBalanceFromApiStage: 'idle' as LoadBalanceStage,
-// });
 type BalanceState = {
   balance: balanceAccountType[];
   balanceCache: balanceAccountType[];

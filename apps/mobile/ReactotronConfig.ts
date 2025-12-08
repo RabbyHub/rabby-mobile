@@ -1,19 +1,15 @@
 import { NativeModules } from 'react-native';
 import Reactotron, { ReactotronReactNative } from 'reactotron-react-native';
 import { DEV_SERVER_HOSTNAME as DEV_SERVER_HOSTNAME_ } from '@env';
-import { isNonPublicProductionEnv } from '@/constant';
+import { APP_VERSIONS, isNonPublicProductionEnv } from '@/constant';
 import { getDevServerHost } from '@/core/utils/devServerSettings';
 import mmkvPlugin from '@/core/utils/reactotron-plugins/react-native-mmkv';
 import opSQLitePlugin from '@/core/utils/reactotron-plugins/op-sqlite';
+import '@/core/utils/reactotron-plugins/_setup';
+import { reactotronEvents } from '@/core/utils/reactotron-plugins/_utils';
+import { setupCustomCommands } from '@/core/utils/reactotron-plugins/_setup';
 
-declare global {
-  var _tron:
-    | undefined
-    | import('reactotron-react-native').ReactotronReactNative;
-}
-
-const instanceRef = { current: null as null | ReactotronReactNative };
-export function setupReactotronConnection() {
+export async function setupReactotronConnection() {
   let persistedHostname = '';
   let scriptHostname = '';
   try {
@@ -50,13 +46,10 @@ export function setupReactotronConnection() {
   const finalScriptHostname =
     DEV_SERVER_HOSTNAME_ || persistedHostname || scriptHostname;
 
-  if (instanceRef.current) {
-    instanceRef.current.close();
-    instanceRef.current = null;
-  }
-
+  let client: null | ReactotronReactNative = null;
   if (finalScriptHostname) {
-    instanceRef.current = Reactotron.use(
+    Reactotron.clear();
+    client = Reactotron.use(
       mmkvPlugin<ReactotronReactNative>({
         storage: require('@/core/storage/mmkv').appMMKVForDebug,
       }),
@@ -64,6 +57,7 @@ export function setupReactotronConnection() {
       .use(opSQLitePlugin<ReactotronReactNative>())
       // controls connection & communication settings
       .configure({
+        getClientId: async () => `RabbyMobile${APP_VERSIONS.fromJs}`,
         name: 'Rabby Mobile',
         host: finalScriptHostname,
       })
@@ -73,11 +67,12 @@ export function setupReactotronConnection() {
       })
       .connect(); // let's connect!
 
-    globalThis._tron = instanceRef.current;
-    console.debug('globalThis._tron set', globalThis._tron);
+    setupCustomCommands(client);
+
+    reactotronEvents.emit('__REACTOTRON_LOADED__', { client });
   }
 
-  return instanceRef.current;
+  return client;
 }
 
 if (__DEV__) {

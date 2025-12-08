@@ -58,7 +58,6 @@ function setBootstrap(valOrFunc: UpdaterOrPartials<BootStrapState>) {
     prev => resolveValFromUpdater(prev, valOrFunc).newVal,
   );
 }
-// const bootstrapAtom = atom({ couldRender: false });
 
 const DEBUG_IN_PAGE_SCRIPTS = {
   LOAD_BEFORE: __DEV__
@@ -172,10 +171,6 @@ export function useInitializeAppOnTop() {
   return { isAppUnlocked };
 }
 
-// const loadEntryScriptsAtom = atom({
-//   inPageWeb3: '',
-//   vConsole: '',
-// });
 type LoadEntryScriptsState = {
   inPageWeb3: string;
   vConsole: string;
