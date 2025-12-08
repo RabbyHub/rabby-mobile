@@ -37,6 +37,7 @@ import { sortAccountList } from '@/utils/sortAccountList';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
+import { makeChainServerIdSet } from '@/utils/chain';
 
 type AssetsState = {
   loading: boolean;
@@ -143,7 +144,7 @@ export const useAssets = ({
           name: 'Wallet',
         });
 
-        let _data = produce(walletProject, draft => {
+        const wP = produce(walletProject, draft => {
           draft.netWorth = 0;
           draft._netWorth = '$0';
           draft._netWorthChange = '-';
@@ -153,8 +154,6 @@ export const useAssets = ({
           draft._portfolios = [];
           draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
         });
-
-        let _tokens: AbstractPortfolioToken[] = [];
 
         const tokenRes = await syncTokens(
           address,
@@ -176,15 +175,17 @@ export const useAssets = ({
           tokensDict[token.chain].push(token);
         });
 
-        _data = produce(_data, draft => {
-          setWalletTokens(draft, tokensDict);
-        });
+        setWalletTokens(wP, tokensDict);
 
-        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+        const sortedTokens = sortWalletTokens(wP);
+
+        const filteredTokens = tagTokenList(sortedTokens, tokenSettings, {
+          filterChainServerIds: makeChainServerIdSet(),
+        });
 
         updateAssetListByAddress(address, {
           type: 'tokens',
-          data: filterDisplayToken(_tokens),
+          data: filteredTokens,
         });
       } catch (error) {
         console.error('ServiceErrorType.Tokens', error);
@@ -367,6 +368,7 @@ export const useAssets = ({
         const _tokens: AbstractPortfolioToken[] = tagTokenList(
           sortWalletTokens(_data),
           setting,
+          { filterChainServerIds: true },
         );
         return filterDisplayToken(_tokens);
       });

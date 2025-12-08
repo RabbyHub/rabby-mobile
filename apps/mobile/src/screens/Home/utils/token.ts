@@ -4,7 +4,10 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayedProject, DisplayedToken, pQueue } from './project';
-import { isTestnet as checkIsTestnet } from '@/utils/chain';
+import {
+  isTestnet as checkIsTestnet,
+  makeChainServerIdSet,
+} from '@/utils/chain';
 import { flatten } from 'lodash';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { openapi } from '@/core/request';
@@ -271,10 +274,14 @@ export function tagTokenItemV2<
   };
 }
 
-export const tagTokenList = (
-  tokens: AbstractPortfolioToken[],
+export const tagTokenList = <T extends AbstractPortfolioToken>(
+  tokens: T[],
   tokenSetting: ITokenSetting,
+  options?: {
+    filterChainServerIds?: true | Set<string>;
+  },
 ) => {
+  const { filterChainServerIds } = options || {};
   const taggedTokens: ReturnType<typeof tagTokenItemV2>[] = [];
   const statics = {
     coreTokens: [] as ReturnType<typeof tagTokenItemV2>[],
@@ -285,8 +292,14 @@ export const tagTokenList = (
   };
 
   const tokenSettingV2 = makeTokenSettingSets(tokenSetting);
+  const chainServerIds =
+    filterChainServerIds === true
+      ? makeChainServerIdSet()
+      : filterChainServerIds;
 
   tokens.forEach(i => {
+    if (chainServerIds && !chainServerIds.has(i.chain)) return;
+
     const tagged = tagTokenItemV2(i, tokenSettingV2);
     taggedTokens.push(tagged);
     if (tagged.is_core) {

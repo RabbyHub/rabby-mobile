@@ -432,7 +432,9 @@ export function useOnTokenRefresh() {
       const updatedTokensMap: { [address: string]: AbstractPortfolioToken[] } =
         {};
       Object.entries(prevTokensMap).forEach(([address, tokens]) => {
-        updatedTokensMap[address] = tagTokenList(tokens || [], tokenSettings);
+        updatedTokensMap[address] = tagTokenList(tokens || [], tokenSettings, {
+          filterChainServerIds: true,
+        });
       });
 
       return updatedTokensMap;

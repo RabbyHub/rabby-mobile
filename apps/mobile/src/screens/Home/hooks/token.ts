@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { AbstractPortfolioToken } from '../types';
 import { useSafeState } from '@/hooks/useSafeState';
-import { findChain } from '@/utils/chain';
+import { findChain, makeChainServerIdSet } from '@/utils/chain';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { preferenceService } from '@/core/services';
@@ -27,10 +27,9 @@ const walletProject = new DisplayedProject({
 
 const { isSameAddress } = addressUtils;
 export const filterDisplayToken = (tokens: AbstractPortfolioToken[]) => {
+  const allChainServerIds = makeChainServerIdSet();
   return tokens.filter(token => {
-    return findChain({
-      serverId: token.chain,
-    });
+    return allChainServerIds.has(token.chain);
   });
 };
 
@@ -113,7 +112,9 @@ export const useTokens = (
               setWalletTokens(draft, chainTokens);
             });
 
-            _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+            _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings, {
+              filterChainServerIds: true,
+            });
             setMainnetTokens(filterDisplayToken(_tokens));
             setLoading(false);
           }
@@ -133,7 +134,9 @@ export const useTokens = (
           setWalletTokens(draft, tokensDict);
         });
 
-        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings, {
+          filterChainServerIds: true,
+        });
         setMainnetTokens(filterDisplayToken(_tokens));
       } catch (error) {
       } finally {
@@ -199,7 +202,9 @@ export const useTokens = (
         _data = produce(_data, draft => {
           setWalletTokens(draft, chainTokens);
         });
-        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings, {
+          filterChainServerIds: true,
+        });
 
         setMainnetTokens(filterDisplayToken(_tokens));
       }
@@ -243,7 +248,9 @@ export const useTokens = (
   const refreshTagToken = useCallback(async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
-    setMainnetTokens(pre => tagTokenList(pre || [], tokenSettings));
+    setMainnetTokens(pre =>
+      tagTokenList(pre || [], tokenSettings, { filterChainServerIds: true }),
+    );
   }, [setMainnetTokens]);
 
   useSingleTokenRefresh({
