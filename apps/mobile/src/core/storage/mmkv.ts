@@ -13,6 +13,8 @@ import {
 import { MMKV_FILE_NAMES, walkThroughMMKVFiles } from '../utils/appFS';
 import RNHelpers from '../native/RNHelpers';
 import { IS_IOS } from '../native/utils';
+import { runDevIIFEFunc } from '../utils/store';
+import { reactotronEvents } from '../utils/reactotron-plugins/_utils';
 
 function checkIfDuplicatedStringifiedJsonObjectString(input: any) {
   return (
@@ -133,7 +135,7 @@ const {
   id: MMKV_FILE_NAMES.DEFAULT,
 });
 
-const { storage: keyringStorage } = makeAppStorage({
+const { storage: keyringStorage, mmkv: keyringMMKV } = makeAppStorage({
   id: MMKV_FILE_NAMES.KEYRING,
   encryptionKey: 'keyring',
 });
@@ -326,3 +328,35 @@ export function removeLegacyMMKVStorageByKey(key: `@${string}`) {
     },
   );
 })();
+
+runDevIIFEFunc(() => {
+  reactotronEvents.subscribe('CM_LOG_MMKV_STORE', ({ storeName }) => {
+    switch (storeName) {
+      default:
+      case 'a':
+      case 'app':
+      case 'appStore': {
+        const allKeys = appMMKVForDebug.getAllKeys();
+        console.debug('Reactotron MMKV Store keys', allKeys);
+        const dump: Record<string, any> = {};
+        allKeys.forEach(key => {
+          dump[key] = appJsonStore.getItem(key, null);
+        });
+        console.debug('Reactotron MMKV Store: appStore', dump);
+        break;
+      }
+      case 'k':
+      case 'keyring':
+      case 'keyringStore': {
+        const allKeys = keyringMMKV.getAllKeys();
+        console.debug('Reactotron Keyring MMKV Store keys', allKeys);
+        const dump: Record<string, any> = {};
+        allKeys.forEach(key => {
+          dump[key] = keyringStorage.getItem(key);
+        });
+        console.debug('Reactotron MMKV Store: keyringStore', dump);
+        break;
+      }
+    }
+  });
+});
