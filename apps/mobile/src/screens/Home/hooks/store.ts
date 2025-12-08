@@ -19,8 +19,7 @@ import { tagNfts } from './nft';
 // import { tokenNonceAtom, deFiNonceAtom, nftNonceAtom } from './refresh';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useAtomCallback } from 'jotai/utils';
-import { zCreate } from '@/core/utils/reexports';
+import { zCreate, zMutative } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { eventBus, EventBusListeners } from '@/utils/events';
 
@@ -245,11 +244,18 @@ type AssetsMapState = {
   portfoliosMap: { [address: string]: DisplayedProject[] };
   nftsMap: { [address: string]: DisplayNftItem[] };
 };
-export const assetsMapStore = zCreate<AssetsMapState>(() => ({
-  tokensMap: {},
-  portfoliosMap: {},
-  nftsMap: {},
-}));
+export const assetsMapStore = zCreate(
+  zMutative<AssetsMapState>(
+    () => ({
+      tokensMap: {},
+      portfoliosMap: {},
+      nftsMap: {},
+    }),
+    {
+      strict: __DEV__,
+    },
+  ),
+);
 
 function setTokensMap(
   valOrFunc: UpdaterOrPartials<AssetsMapState['tokensMap']>,
