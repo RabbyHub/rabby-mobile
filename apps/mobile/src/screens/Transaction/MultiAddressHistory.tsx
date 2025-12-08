@@ -100,7 +100,7 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   address: string;
   project_item: ProjectItemType;
   key: string;
-  isSmallUsdTx?: boolean;
+  isSmallUsdTx?: boolean; // is will be filtered small tx
   account?: KeyringAccountWithAlias;
   isShowSuccess?: boolean;
   historyType: HistoryItemCateType;
@@ -208,11 +208,14 @@ function History({
         filterScamAndSmallTx: isFilter,
       });
 
+      const oneHourAgo = Math.floor(new Date().getTime() / 1000) - 60 * 60;
       const list = historyList.map(item => {
         return {
           ...ensureHistoryListItemFromDb(item),
           // hidden small and scam no need this prop
-          isSmallUsdTx: isFilter ? false : item.is_small_tx,
+          isSmallUsdTx: isFilter
+            ? false
+            : item.is_small_tx && item.time_at <= oneHourAgo,
           isShowSuccess: historySuccessList.includes(
             `${item.owner_addr.toLowerCase()}-${item.txHash}`,
           ),
