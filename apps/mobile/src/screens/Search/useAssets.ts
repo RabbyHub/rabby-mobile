@@ -365,12 +365,12 @@ export const useAssets = ({
           setWalletTokens(draft, chainTokens);
         });
 
-        const _tokens: AbstractPortfolioToken[] = tagTokenList(
+        const sortedTokens: AbstractPortfolioToken[] = tagTokenList(
           sortWalletTokens(_data),
           setting,
           { filterChainServerIds: true },
         );
-        return filterDisplayToken(_tokens);
+        return sortedTokens;
       });
 
       Object.keys(formatAssetMap).forEach(address => {

@@ -85,8 +85,6 @@ export const useTokens = (
           draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
         });
 
-        let _tokens: AbstractPortfolioToken[] = [];
-
         const cachedTokens = force
           ? []
           : await TokenItemEntity.batchQueryTokens(userAddr);
@@ -112,10 +110,14 @@ export const useTokens = (
               setWalletTokens(draft, chainTokens);
             });
 
-            _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings, {
-              filterChainServerIds: true,
-            });
-            setMainnetTokens(filterDisplayToken(_tokens));
+            const sortedTokens = tagTokenList(
+              sortWalletTokens(_data),
+              tokenSettings,
+              {
+                filterChainServerIds: true,
+              },
+            );
+            setMainnetTokens(sortedTokens);
             setLoading(false);
           }
         }
@@ -134,10 +136,14 @@ export const useTokens = (
           setWalletTokens(draft, tokensDict);
         });
 
-        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings, {
-          filterChainServerIds: true,
-        });
-        setMainnetTokens(filterDisplayToken(_tokens));
+        const sortedTokens = tagTokenList(
+          sortWalletTokens(_data),
+          tokenSettings,
+          {
+            filterChainServerIds: true,
+          },
+        );
+        setMainnetTokens(sortedTokens);
       } catch (error) {
       } finally {
         setLoading(false);
@@ -188,7 +194,6 @@ export const useTokens = (
         draft._portfolios = [];
         draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
       });
-      let _tokens: AbstractPortfolioToken[] = [];
 
       const cachedTokens = await TokenItemEntity.batchQueryTokens(userAddr);
       const tokenSettings =
@@ -202,11 +207,15 @@ export const useTokens = (
         _data = produce(_data, draft => {
           setWalletTokens(draft, chainTokens);
         });
-        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings, {
-          filterChainServerIds: true,
-        });
+        const sortedTokens = tagTokenList(
+          sortWalletTokens(_data),
+          tokenSettings,
+          {
+            filterChainServerIds: true,
+          },
+        );
 
-        setMainnetTokens(filterDisplayToken(_tokens));
+        setMainnetTokens(sortedTokens);
       }
     } catch (error) {
       console.error('token batchLocalData error', error);
