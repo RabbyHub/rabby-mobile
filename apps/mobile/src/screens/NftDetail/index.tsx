@@ -27,7 +27,7 @@ import { useMyAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { useAssets } from '../Search/useAssets';
+import { useLoadAssets } from '../Search/useAssets';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
 import { DropDownMenuView } from '@/components2024/DropDownMenu';
@@ -264,7 +264,7 @@ export const NFTDetailScreen = () => {
     [accounts, switchSceneCurrentAccount],
   );
 
-  const { nftsMap, getCacheTop10Assets } = useAssets({ hideCombined: true });
+  const { nftsMap, getCacheTop10Assets } = useLoadAssets();
 
   type ItemBase = {
     data: NFTItem;

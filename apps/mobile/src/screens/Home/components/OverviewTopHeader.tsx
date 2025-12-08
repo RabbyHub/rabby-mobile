@@ -32,7 +32,7 @@ import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { AddressListScreenButton } from '@/screens/Address/AddressListScreenButton';
 import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
-import { useAssets } from '@/screens/Search/useAssets';
+import { useLoadAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 
 export const HeaderHeight = 24;
@@ -62,7 +62,7 @@ export function TabsTopHeader(
   });
   const { currency } = useCurrency();
 
-  const { refreshing } = useAssets({ hideCombined: true });
+  const { refreshing } = useLoadAssets();
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(data.rawNetWorth, { currency });

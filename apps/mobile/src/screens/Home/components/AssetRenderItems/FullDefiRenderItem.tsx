@@ -20,7 +20,7 @@ import { useProtocolConfig } from '../../utils/protocolConfig';
 import LinearGradient from 'react-native-linear-gradient';
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 import { usePortfolios } from '../../hooks/usePortfolio';
-import { useAssets } from '@/screens/Search/useAssets';
+import { useLoadAssets } from '@/screens/Search/useAssets';
 import { refreshHistoryIdAtom } from '../../SingleHomeRightArea';
 import { useSetAtom } from 'jotai';
 import { dappService } from '@/core/services';
@@ -56,7 +56,7 @@ export const FullDefiRenderItem = ({
   }, [data?.chain]);
 
   const { updateSpecificProtocol } = usePortfolios(account?.address, false);
-  const { loadSpecificDefi } = useAssets({ hideCombined: true });
+  const { loadSpecificDefi } = useLoadAssets();
   const { openTab } = useBrowser();
 
   const handleOpenSite = useCallback(() => {

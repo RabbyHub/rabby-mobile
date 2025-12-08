@@ -19,7 +19,7 @@ export const NotMatterAddressDialog: React.FC<{
   onDone?: () => void;
   onBack?: () => void;
 }> = ({ onDone, onBack }) => {
-  const { notTop10Addresses, gnosisAccounts, watchAccounts, fetchAccounts } =
+  const { notTop10Accounts, gnosisAccounts, watchAccounts, fetchAccounts } =
     useAccountInfo();
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -62,14 +62,14 @@ export const NotMatterAddressDialog: React.FC<{
     const result: Array<{
       title: string;
       data: KeyringAccountWithAlias[];
-      type: 'notTop10Addresses' | 'gnosisAccounts' | 'watchAccounts';
+      type: 'notTop10Accounts' | 'gnosisAccounts' | 'watchAccounts';
     }> = [];
 
-    if (notTop10Addresses.length > 0) {
+    if (notTop10Accounts.length > 0) {
       result.push({
         title: t('page.addressDetail.notMatterAddressDialog.notTop10Address'),
-        data: notTop10Addresses,
-        type: 'notTop10Addresses',
+        data: notTop10Accounts,
+        type: 'notTop10Accounts',
       });
     }
 
@@ -90,12 +90,12 @@ export const NotMatterAddressDialog: React.FC<{
     }
 
     return result;
-  }, [notTop10Addresses, gnosisAccounts, watchAccounts, t]);
+  }, [notTop10Accounts, gnosisAccounts, watchAccounts, t]);
 
   const renderSectionHeader = ({ section }) => (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionHeaderText}>{section.title}</Text>
-      {section.type === 'notTop10Addresses' && (
+      {section.type === 'notTop10Accounts' && (
         <TouchableOpacity
           onPress={() => {
             const modalId = createGlobalBottomSheetModal2024({

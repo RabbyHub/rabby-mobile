@@ -1,17 +1,24 @@
 import {
   DisplayKeyring,
   DisplayedKeyring,
+  KEYRING_CLASS,
   KeyringAccount,
   KeyringIntf,
 } from '@rabby-wallet/keyring-utils';
-import { contactService, keyringService, preferenceService } from '../services';
-import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import * as Sentry from '@sentry/react-native';
+import { addressUtils } from '@rabby-wallet/base-utils';
+
+import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
+import { contactService, keyringService, preferenceService } from '../services';
 
 import { getAddressCacheBalance } from './balance';
 import { requestKeyring } from './keyring';
 import { isEqual } from 'lodash';
+import { type IPinAddress, type Account } from '../services/preference';
+import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
+
+import BigNumber from 'bignumber.js';
 
 function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
   if (keyring instanceof DisplayKeyring) {
@@ -141,4 +148,121 @@ export async function fetchAllAccounts() {
 
     return existedAccountsRef.current;
   }
+}
+
+export const sortAccountsByBalance = <
+  T extends { address: string; balance?: number }[],
+>(
+  accounts: T,
+) => {
+  return accounts.sort((a, b) => {
+    return new BigNumber(b?.balance || 0)
+      .minus(new BigNumber(a?.balance || 0))
+      .toNumber();
+  });
+};
+
+export const filterMyAccounts = <
+  T extends KeyringAccount | KeyringAccountWithAlias,
+>(
+  accounts: T[],
+) => {
+  return accounts.filter(
+    a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
+  );
+};
+
+export function sortAccountList(
+  accounts: Account[],
+  {
+    highlightedAddresses = [],
+  }: {
+    highlightedAddresses: IPinAddress[];
+  },
+) {
+  const restAccounts = [...accounts];
+  let highlightedAccounts: typeof accounts = [];
+
+  highlightedAddresses.forEach(highlighted => {
+    const idx = restAccounts.findIndex(
+      account =>
+        addressUtils.isSameAddress(account.address, highlighted.address) &&
+        account.brandName === highlighted.brandName,
+    );
+    if (idx > -1) {
+      highlightedAccounts.push(restAccounts[idx]);
+      restAccounts.splice(idx, 1);
+    }
+  });
+  highlightedAccounts = sortAccountsByBalance(highlightedAccounts);
+
+  const normalAccounts = highlightedAccounts
+    .concat(sortAccountsByBalance(restAccounts))
+    .filter(e => !!e);
+
+  return normalAccounts;
+}
+
+const fetchAllAccountsAvoidParallel =
+  makeAvoidParallelAsyncFunc(fetchAllAccounts);
+
+export async function getSortedAddressList(options?: {
+  includeOthers?: boolean;
+}) {
+  const { includeOthers = false } = options || {};
+  const allAccounts = await fetchAllAccountsAvoidParallel();
+  const allMyAccounts = filterMyAccounts(allAccounts);
+  const pinAddresses = preferenceService.getPinAddresses();
+
+  return {
+    allAccounts,
+    allMyAccounts,
+    sortedAccounts: includeOthers
+      ? sortAccountList(allAccounts, { highlightedAddresses: pinAddresses })
+      : sortAccountList(allMyAccounts, { highlightedAddresses: pinAddresses }),
+  };
+}
+
+export const getTop10MyAddresses = makeAvoidParallelAsyncFunc(async () => {
+  const { allMyAccounts } = await getSortedAddressList();
+
+  return filterOutTop10Accounts(allMyAccounts).top10Addresses;
+});
+
+export function filterOutTop10Accounts<
+  T extends { address: string; balance?: number },
+>(sortedAccounts: T[], { needRest = false } = {}) {
+  const ret = {
+    top10Addresses: [] as string[],
+    /**
+     * @description notice, top10 accounts may contains more than 10 items, because of same address with different brandName
+     */
+    top10Accounts: [] as T[],
+    restAddresses: [] as string[],
+    restAccounts: [] as T[],
+  };
+
+  const top10Records = new Set();
+
+  for (const item of sortedAccounts) {
+    const lowerAddress = item.address.toLowerCase();
+    if (!top10Records.has(lowerAddress)) {
+      if (top10Records.size < 10) {
+        !top10Records.has(lowerAddress) &&
+          ret.top10Addresses.push(lowerAddress);
+        ret.top10Accounts.push(item);
+      }
+
+      top10Records.add(lowerAddress);
+      continue;
+    }
+
+    if (!needRest && top10Records.size >= 10) {
+      break;
+    }
+    ret.restAddresses.push(lowerAddress);
+    ret.restAccounts.push(item);
+  }
+
+  return { ...ret, top10Records };
 }

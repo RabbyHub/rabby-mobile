@@ -1,3 +1,4 @@
+import { filterOutTop10Accounts } from '@/core/apis/account';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
@@ -13,22 +14,28 @@ export const useAccountInfo = () => {
     disableAutoFetch: true,
   });
 
-  const filterAccounts = useCreationWithShallowCompare(
+  const myAccounts = useCreationWithShallowCompare(
     () => filterMyAccounts(accounts),
     [accounts],
   );
 
-  const list = useSortAddressList(filterAccounts);
-  const { addresses: top10Addresses, notTop10Addresses } =
+  const sortedList = useSortAddressList(myAccounts);
+  const { top10Addresses, notTop10Accounts, top10Records } =
     useCreationWithShallowCompare(() => {
-      const addresses = [
-        ...new Set(list.slice(0, 10).map(i => i.address.toLowerCase())),
-      ];
+      const {
+        // top10Accounts,
+        top10Addresses,
+        restAccounts: notTop10Accounts,
+        top10Records,
+      } = filterOutTop10Accounts(sortedList, { needRest: true });
+
       return {
-        addresses,
-        notTop10Addresses: list.slice(10),
+        // top10Accounts,
+        top10Addresses,
+        top10Records,
+        notTop10Accounts,
       };
-    }, [list]);
+    }, [sortedList]);
 
   const { hasWatchAddress, hasSafeAddress, gnosisAccounts, watchAccounts } =
     useCreationWithShallowCompare(() => {
@@ -53,16 +60,17 @@ export const useAccountInfo = () => {
     }, [accounts]);
 
   const notMatterAccounts = useCreationWithShallowCompare(() => {
-    return [...notTop10Addresses, ...gnosisAccounts, ...watchAccounts];
-  }, [notTop10Addresses, gnosisAccounts, watchAccounts]);
+    return [...notTop10Accounts, ...gnosisAccounts, ...watchAccounts];
+  }, [notTop10Accounts, gnosisAccounts, watchAccounts]);
 
   return {
     top10Addresses,
+    top10Records,
     notMatterAccounts,
     gnosisAccounts,
     watchAccounts,
-    notTop10Addresses,
-    list,
+    notTop10Accounts,
+    list: sortedList,
     hasWatchAddress,
     hasSafeAddress,
     fetchAccounts,

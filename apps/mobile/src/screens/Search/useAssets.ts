@@ -1,6 +1,5 @@
 import {
   useAssetsMap,
-  useAssetsComputation,
   updateAssetListByAddress,
   getAssetsMapDirectly,
 } from '@/screens/Home/hooks/store';
@@ -32,7 +31,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useCallback, useMemo } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { syncRemoteTokensAmount } from '@/databases/sync/assets';
-import { fetchAllAccounts } from '@/core/apis/account';
+import { fetchAllAccounts, getTop10MyAddresses } from '@/core/apis/account';
 import { sortAccountList } from '@/utils/sortAccountList';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
@@ -84,28 +83,7 @@ function setShortCache(
   });
 }
 
-async function getTop10AccountsWithBalance() {
-  const accounts = await fetchAllAccounts();
-
-  const highlightedAddresses = preferenceService.getPinAddresses();
-
-  const sortedAccounts = sortAccountList(accounts, {
-    highlightedAddresses,
-  });
-
-  const top10Accounts = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
-
-  return {
-    sortedAccounts,
-    top10Accounts,
-  };
-}
-
-export const useAssets = ({
-  hideCombined = false,
-}: {
-  hideCombined?: boolean;
-} = {}) => {
+export const useLoadAssets = () => {
   const { isLoading, isFirstFetch, shortCache } = assetsStateStore(
     useShallow(s => ({
       isLoading: s.loading,
@@ -114,24 +92,7 @@ export const useAssets = ({
     })),
   );
 
-  const {
-    top10Addresses,
-    getTokenCombined,
-    tokensMap,
-    // setTokensMap,
-    portfoliosMap,
-    // setPortfoliosMap,
-    nftsMap,
-    // setNftsMap,
-  } = useAssetsMap();
-
-  const { tokens, portfolios, nfts } = useAssetsComputation({
-    // tokensMap,
-    // portfoliosMap,
-    // nftsMap,
-    top10Addresses,
-    hideCombined,
-  });
+  const { tokensMap, portfoliosMap, nftsMap } = useAssetsMap();
 
   const loadToken = useCallback(
     async (address: string, force?: boolean, updateReturn?: boolean) => {
@@ -492,9 +453,8 @@ export const useAssets = ({
         updateReturn?: boolean;
       },
     ) => {
-      const addresses = options?.realTimeAddresses || [
-        ...new Set(top10Addresses),
-      ];
+      const addresses =
+        options?.realTimeAddresses || (await getTop10MyAddresses());
       removeUnNeedAssets(addresses);
       const { disableToken, disableDefi, disableNFT } = options || {};
       if (!options?.ignoreLoading) {
@@ -521,7 +481,7 @@ export const useAssets = ({
         setIsFirstFetch(false);
       }
     },
-    [top10Addresses, removeUnNeedAssets, loadToken, loadDefi, loadNFT],
+    [removeUnNeedAssets, loadToken, loadDefi, loadNFT],
   );
   const getCacheTop10Assets = useCallback(
     async (options?: {
@@ -535,9 +495,8 @@ export const useAssets = ({
       maxNFTLength?: number;
     }) => {
       const { disableToken, disableDefi, disableNFT } = options || {};
-      const addresses = options?.realTimeAddresses || [
-        ...new Set(top10Addresses),
-      ];
+      const addresses =
+        options?.realTimeAddresses || (await getTop10MyAddresses());
       removeUnNeedAssets(addresses);
       const isCurrentShortCacheFetch = !!(
         options?.maxTokenLength ||
@@ -597,7 +556,6 @@ export const useAssets = ({
       }, 0);
     },
     [
-      top10Addresses,
       removeUnNeedAssets,
       shortCache,
       batchLoadCacheTokens,
@@ -645,12 +603,7 @@ export const useAssets = ({
   );
 
   return {
-    tokens,
-    portfolios,
-    nfts,
     isLoading,
-    getTokenCombined,
-    hasAssets: !!tokens?.length || !!portfolios?.length,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     batchLoadCacheTokens,
@@ -659,13 +612,9 @@ export const useAssets = ({
     refreshing: !!isLoading && !isFirstFetch,
     loadSpecificDefi,
     updateTokensAmount,
-    // Export individual maps and setters for direct access
     tokensMap,
-    // setTokensMap,
     portfoliosMap,
-    // setPortfoliosMap,
     nftsMap,
-    // setNftsMap,
   };
 };
 
@@ -686,7 +635,7 @@ export const useInitDetectDBAssets = () => {
     batchLoadCacheTokens,
     batchLoadCacheDefi,
     batchLoadCacheNFT,
-  } = useAssets({ hideCombined: true });
+  } = useLoadAssets();
 
   const debounceReloadTokenList = useMemo(
     () => debounce(batchLoadCacheTokens, 2000),

@@ -3,7 +3,7 @@ import { useFocusedTab } from 'react-native-collapsible-tab-view';
 
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
-import { useAssets } from '@/screens/Search/useAssets';
+import { useLoadAssets } from '@/screens/Search/useAssets';
 import { useAccountInfo } from '../hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { TabName } from '../TabsMultiAssets';
@@ -66,7 +66,7 @@ export const useCheckIsExpireAndUpdate = ({
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
 
-  const { checkIsExpireAndUpdate } = useAssets({ hideCombined: true });
+  const { checkIsExpireAndUpdate } = useLoadAssets();
 
   useEffect(() => {
     initRef.current = false;
