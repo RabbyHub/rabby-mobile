@@ -122,7 +122,10 @@ export const NFTList = ({
 
   const foldNftList: ActionItem[] = useMemo(
     () =>
-      collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
+      collectionNftList(
+        nftList.filter(i => i._isFold),
+        true,
+      ).map(item => ({
         type: 'fold_nft',
         data: item,
       })),
@@ -130,7 +133,10 @@ export const NFTList = ({
   );
   const unFoldNftList: ActionItem[] = useMemo(
     () =>
-      collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
+      collectionNftList(
+        nftList.filter(i => !i._isFold),
+        true,
+      ).map(item => ({
         type: 'unfold_nft',
         data: item,
       })),
