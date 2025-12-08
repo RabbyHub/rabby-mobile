@@ -62,6 +62,7 @@ import { RepayActionPopup } from '@/screens/Lending/components/actions/RepayActi
 import { HFDescription } from '@/screens/Lending/components/HFDescription';
 import { AddressListModal } from '@/screens/Address/components/MultiAssets/AddressList';
 import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
+import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -325,5 +326,10 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.SELECT_LENDING_CHAIN]: {
     snapPoints: ['80%'],
     Component: SelectLendingChain,
+  },
+  [MODAL_NAMES.MANAGE_EMODE_FULL]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: ManageEmodeFullModal,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
 };

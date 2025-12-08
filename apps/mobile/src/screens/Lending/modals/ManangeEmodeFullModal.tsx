@@ -1,50 +1,39 @@
+import React, { useCallback, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback } from 'react';
 import { Text } from 'react-native';
-import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
+import { Button } from '@/components2024/Button';
 import { useMode } from '../hooks/useMode';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import ManageEmodeOverView from '../components/overviews/ManageEmodeOverView';
 
-export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
-  const { emodeEnabled } = useMode();
+const ManageEmodeFullModal = () => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { emodeEnabled, emodeCategoryId } = useMode();
 
   const handlePressManageEMode = useCallback(() => {
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.MANAGE_EMODE_FULL,
-      bottomSheetModalProps: {
-        rootViewType: 'BottomSheetScrollView',
-        enableContentPanningGesture: true,
-      },
-      onCancel: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-    });
-    onClose?.();
-  }, [onClose]);
-
+    console.log('CUSTOM_LOGGER:=>: handlePressManageEMode');
+  }, []);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(
+    emodeCategoryId || 0,
+  );
   return (
     <AutoLockView as="View" style={styles.container}>
-      <Text style={styles.title}>Efficiency mode (E-Mode)</Text>
+      <Text style={styles.title}>Manage E-Mode</Text>
       <Text style={styles.description}>
-        E-Mode increases your LTV for a selected category of assets.{' '}
+        Enabling E-Mode allows you to maximize your borrowing power. However,
+        borrowing is restricted to assets within the selected category.
       </Text>
-      <Button
-        containerStyle={styles.button}
-        buttonStyle={[emodeEnabled && styles.disabledButton]}
-        titleStyle={[emodeEnabled && styles.disabledTitle]}
-        title="Manage E-Mode"
-        onPress={handlePressManageEMode}
+      <ManageEmodeOverView
+        selectedCategoryId={selectedCategoryId}
+        onSelectCategory={setSelectedCategoryId}
       />
     </AutoLockView>
   );
 };
+
+export default ManageEmodeFullModal;
+
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     paddingHorizontal: 25,
@@ -68,7 +57,6 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     marginTop: 8,
-    paddingHorizontal: 20,
     textAlign: 'center',
   },
   button: {

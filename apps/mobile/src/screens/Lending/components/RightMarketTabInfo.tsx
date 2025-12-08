@@ -159,15 +159,6 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     gap: 4,
     borderWidth: 1,
   },
-  enabledEmodeLabel: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    maxWidth: 100,
-    //color: colors2024['neutral-foot'],
-    color: 'transparent',
-    backgroundColor: 'red',
-  },
   border: {
     padding: 1,
     borderRadius: 6,
