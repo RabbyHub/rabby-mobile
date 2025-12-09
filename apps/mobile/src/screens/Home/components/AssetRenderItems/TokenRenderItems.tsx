@@ -238,11 +238,6 @@ export const TokenRow = memo(
               </Text>
             ) : null}
           </View>
-          {data._isPined && (
-            <View style={[styles.favoriteBadge]}>
-              <RcIconFavorite color={colors2024['orange-default']} />
-            </View>
-          )}
         </TouchableOpacity>
       );
     }, [
@@ -255,7 +250,6 @@ export const TokenRow = memo(
       data._isExcludeBalance,
       data._usdValue,
       data.price_24h_change,
-      data._isPined,
       styles,
       style,
       onPressToken,

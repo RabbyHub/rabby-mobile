@@ -191,4 +191,35 @@ export const preferenceServiceMigration =
         }
       },
     },
+    '2025-12-09T00:01:00Z': {
+      shouldMigration: ctx => ctx.semverModule.gte(ctx.appVersion, '0.6.48'),
+      migrate: ctx => {
+        const srv = ctx.service;
+        const pinedQueue = srv.store.pinedQueue || [];
+        const unfoldTokens = srv.store.unfoldTokens || [];
+
+        if (!pinedQueue.length || !unfoldTokens.length) {
+          return;
+        }
+
+        const pinedSet = new Set(
+          pinedQueue.map(token => makeManageTokenKey(token)),
+        );
+        console.log('pinedSet', pinedSet);
+        const filteredUnfoldTokens = unfoldTokens.filter(
+          token => !pinedSet.has(makeManageTokenKey(token)),
+        );
+        console.log('filteredUnfoldTokens', filteredUnfoldTokens);
+        if (filteredUnfoldTokens.length === unfoldTokens.length) {
+          return;
+        }
+
+        srv.store.unfoldTokens = filteredUnfoldTokens;
+
+        console.debug(
+          `${ctx.loggerPrefix} filtered unfoldTokens from pinedQueue`,
+          srv.store.unfoldTokens,
+        );
+      },
+    },
   });
