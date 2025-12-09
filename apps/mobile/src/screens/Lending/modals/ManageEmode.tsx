@@ -24,7 +24,7 @@ export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
         rootViewType: 'BottomSheetScrollView',
         enableContentPanningGesture: true,
       },
-      onCancel: () => {
+      onClose: () => {
         removeGlobalBottomSheetModal2024(id);
       },
     });

@@ -4,6 +4,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useTranslation } from 'react-i18next';
+import { Tip } from '@/components/Tip';
 
 export default function CategoryItem({
   title,
@@ -22,6 +23,7 @@ export default function CategoryItem({
   const isDark = useGetBinaryMode() === 'dark';
   return (
     <TouchableView
+      disabled={!available}
       style={[
         styles.container,
         {
@@ -33,7 +35,9 @@ export default function CategoryItem({
         style,
       ]}
       onPress={() => {
-        onPress?.();
+        if (available) {
+          onPress?.();
+        }
       }}>
       <View style={styles.contentContainer}>
         <View style={styles.leftBasic}>
@@ -41,11 +45,15 @@ export default function CategoryItem({
             {title}
           </Text>
         </View>
-        <View style={styles.rightArea}>
-          <Text style={styles.unavailableTag}>
-            {available ? '' : t('page.Lending.manageEmode.unavailable')}
-          </Text>
-        </View>
+        {!available ? (
+          <Tip content={t('page.Lending.manageEmode.unavailableTips')}>
+            <View style={styles.rightArea}>
+              <Text style={styles.unavailableTag}>
+                {t('page.Lending.manageEmode.unavailable')}
+              </Text>
+            </View>
+          </Tip>
+        ) : null}
       </View>
     </TouchableView>
   );

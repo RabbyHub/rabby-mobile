@@ -30,7 +30,7 @@ import { apiProvider } from '@/core/apis';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { transactionHistoryService } from '@/core/services';
 
-const ManageEmodeFullModal = () => {
+const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { emodeEnabled, emodeCategoryId } = useMode();
@@ -52,6 +52,10 @@ const ManageEmodeFullModal = () => {
     return emodeEnabled;
   }, [emodeEnabled]);
 
+  const hasChangeCategory = useMemo(() => {
+    return selectedCategoryId !== emodeCategoryId;
+  }, [selectedCategoryId, emodeCategoryId]);
+
   const [isLoading, setIsLoading] = useState(false);
   const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
     account: currentAccount!,
@@ -67,7 +71,7 @@ const ManageEmodeFullModal = () => {
   );
 
   const buildTx = useCallback(async () => {
-    if (!currentAccount || !pools || !chainInfo) {
+    if (!currentAccount || !pools || !chainInfo || !hasChangeCategory) {
       setManageEmodeTx(null);
       return;
     }
@@ -89,20 +93,33 @@ const ManageEmodeFullModal = () => {
     } catch (error) {
       toast.error('There was some error');
     }
-  }, [chainInfo, currentAccount, pools, selectedCategoryId, wantDisableEmode]);
+  }, [
+    chainInfo,
+    currentAccount,
+    pools,
+    selectedCategoryId,
+    wantDisableEmode,
+    hasChangeCategory,
+  ]);
 
   useEffect(() => {
     buildTx();
   }, [buildTx]);
 
   useEffect(() => {
-    if (currentAccount && canShowDirectSubmit) {
+    if (currentAccount && canShowDirectSubmit && hasChangeCategory) {
       prefetchMiniSigner({
         txs: manageEmodeTx?.length ? manageEmodeTx : [],
         synGasHeaderInfo: true,
       });
     }
-  }, [canShowDirectSubmit, currentAccount, prefetchMiniSigner, manageEmodeTx]);
+  }, [
+    canShowDirectSubmit,
+    currentAccount,
+    prefetchMiniSigner,
+    manageEmodeTx,
+    hasChangeCategory,
+  ]);
 
   const handlePressManageEMode = useCallback(
     async (forceFullSign?: boolean) => {
@@ -114,7 +131,6 @@ const ManageEmodeFullModal = () => {
         setIsLoading(true);
         if (!manageEmodeTx?.length) {
           toast.info('please retry');
-          throw new Error('no txs');
         }
         let results: string[] = [];
         if (canShowDirectSubmit && !forceFullSign) {
@@ -130,6 +146,11 @@ const ManageEmodeFullModal = () => {
             });
           } catch (error) {
             if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+              onClose?.();
+              return;
+            }
+            if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
+              handlePressManageEMode(true);
               return;
             }
             toast.error(t('page.Lending.toggleCollateralDetail.error'));
@@ -178,6 +199,7 @@ const ManageEmodeFullModal = () => {
               : t('page.Lending.manageEmode.actions.enable')
           } ${t('page.Lending.submitted')}`,
         );
+        onClose?.();
       } catch (error) {
       } finally {
         setIsLoading(false);
@@ -188,9 +210,10 @@ const ManageEmodeFullModal = () => {
       manageEmodeTx,
       canShowDirectSubmit,
       refresh,
-      t,
-      openDirect,
       wantDisableEmode,
+      t,
+      onClose,
+      openDirect,
     ],
   );
 
@@ -209,7 +232,7 @@ const ManageEmodeFullModal = () => {
         disabled={wantDisableEmode}
         onSelectCategory={setSelectedCategoryId}
       />
-      {canShowDirectSubmit && (
+      {canShowDirectSubmit && hasChangeCategory && (
         <View style={styles.gasPreContainer}>
           <DirectSignGasInfo
             supportDirectSign={true}
@@ -244,6 +267,7 @@ const ManageEmodeFullModal = () => {
             }
             onFinished={() => handlePressManageEMode()}
             disabled={
+              !hasChangeCategory ||
               !manageEmodeTx ||
               !manageEmodeTx?.length ||
               isLoading ||
@@ -268,7 +292,7 @@ const ManageEmodeFullModal = () => {
             }
             titleStyle={wantDisableEmode ? styles.disableBtnTitle : undefined}
             loading={isLoading}
-            disabled={isLoading || !currentAccount}
+            disabled={isLoading || !currentAccount || !hasChangeCategory}
           />
         )}
       </View>

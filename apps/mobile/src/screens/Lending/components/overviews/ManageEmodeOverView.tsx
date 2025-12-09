@@ -198,6 +198,29 @@ const ManageEmodeOverView: React.FC<{
     return newSummary?.healthFactor || '';
   }, [newSummary?.healthFactor]);
 
+  const ltvLineContent = useMemo(() => {
+    if (disableEmode || !selectedCategoryId) {
+      return showLTVChange
+        ? `${formatPercent(
+            Number(iUserSummary?.currentLoanToValue || '0'),
+          )} → ${formatPercent(Number(newSummary.currentLoanToValue || '0'))}`
+        : formatPercent(Number(newSummary.currentLoanToValue));
+    }
+    const targetMode = eModes[selectedCategoryId];
+    return showLTVChange
+      ? `${formatPercent(
+          Number(iUserSummary?.currentLoanToValue || '0'),
+        )} → ${formatPercent(Number(newSummary.currentLoanToValue || '0'))}`
+      : formatPercent(Number(targetMode.ltv) / 10000);
+  }, [
+    disableEmode,
+    selectedCategoryId,
+    eModes,
+    showLTVChange,
+    iUserSummary?.currentLoanToValue,
+    newSummary.currentLoanToValue,
+  ]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{t('page.Lending.popup.title')}</Text>
@@ -230,15 +253,7 @@ const ManageEmodeOverView: React.FC<{
               />
             </Pressable>
           </View>
-          <Text style={styles.apy}>
-            {showLTVChange
-              ? `${formatPercent(
-                  Number(iUserSummary?.currentLoanToValue || '0'),
-                )} → ${formatPercent(
-                  Number(newSummary.currentLoanToValue || '0'),
-                )}`
-              : formatPercent(Number(newSummary.currentLoanToValue))}
-          </Text>
+          <Text style={styles.ltv}>{ltvLineContent}</Text>
         </View>
 
         <View
@@ -364,7 +379,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   unavailable: {
     color: colors2024['red-default'],
   },
-  apy: {
+  ltv: {
     color: colors2024['neutral-title-1'],
     fontSize: 16,
     lineHeight: 22,
@@ -408,7 +423,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   table: {
-    marginTop: 26,
+    marginTop: 12,
   },
   tableHeader: {
     flexDirection: 'row',

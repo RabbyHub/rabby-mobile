@@ -39,6 +39,10 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       fontWeight: '700',
       maxWidth: '90%',
     },
+    placeholderText: {
+      color: colors2024['neutral-secondary'],
+      fontWeight: '400',
+    },
     icon: {
       // transform: [{ rotate: '90deg' }],
     },
@@ -125,8 +129,9 @@ export function CategorySelector({
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
-            style={[styles.chainName]}>
-            {label}
+            style={[styles.chainName, !label && styles.placeholderText]}>
+            {label ||
+              t('page.Lending.manageEmode.categorySelector.placeholder')}
           </Text>
         </View>
 

@@ -2649,7 +2649,8 @@
       "availableCard": {
         "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
         "needSupply": "To borrow, you need to supply assets as collateral.",
-        "isolated": "Borrowing power and assets are limited due to Isolation mode."
+        "isolated": "Borrowing power and assets are limited due to Isolation mode.",
+        "emode": "In E-Mode some assets are not borrowable.Exit E-Mode to get access to all assets"
       },
       "list": {
         "headers": {
@@ -2772,6 +2773,7 @@
         "emode": "E-Mode",
         "title": "Manage E-Mode",
         "unavailable": "• Unavailable",
+        "unavailableTips": "Your existing lending/borrowing assets are not supported.",
         "enabled": "• Enabled",
         "description": "Enabling E-Mode allows you to maximize your borrowing power. However, borrowing is restricted to assets within the selected category.",
         "actions": {
@@ -2784,7 +2786,8 @@
           "buttonTitle": "Manage E-Mode"
         },
         "categorySelector": {
-          "label": "Asset category"
+          "label": "Asset category",
+          "placeholder": "Select"
         },
         "overview": {
           "title": "Asset category",

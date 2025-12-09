@@ -95,6 +95,27 @@ const BorrowPoolList = () => {
     [colors2024, isLight],
   );
 
+  const desc = useMemo(() => {
+    if (
+      iUserSummary?.availableBorrowsUSD === '0' ||
+      !iUserSummary?.availableBorrowsUSD
+    ) {
+      return t('page.Lending.availableCard.needSupply');
+    }
+    if (iUserSummary.userEmodeCategoryId !== 0) {
+      return t('page.Lending.availableCard.emode');
+    }
+    if (isInIsolationMode) {
+      return t('page.Lending.availableCard.isolated');
+    }
+    return t('page.Lending.availableCard.canBorrow');
+  }, [
+    iUserSummary?.availableBorrowsUSD,
+    iUserSummary?.userEmodeCategoryId,
+    isInIsolationMode,
+    t,
+  ]);
+
   const availableCard = useMemo(() => {
     if (loading || !iUserSummary?.totalLiquidityUSD) {
       return null;
@@ -138,27 +159,18 @@ const BorrowPoolList = () => {
             styles.availableCardValue,
             isInIsolationMode && styles.orangeText,
           ]}>
-          {iUserSummary?.availableBorrowsUSD && isInIsolationMode
-            ? t('page.Lending.availableCard.isolated')
-            : iUserSummary?.availableBorrowsUSD !== '0'
-            ? t('page.Lending.availableCard.canBorrow')
-            : t('page.Lending.availableCard.needSupply')}
+          {desc}
         </Text>
       </View>
     );
   }, [
     colors2024,
+    desc,
     iUserSummary?.availableBorrowsUSD,
     iUserSummary?.totalLiquidityUSD,
     isInIsolationMode,
     loading,
-    styles.availableCard,
-    styles.availableCardHeader,
-    styles.availableCardIsolated,
-    styles.availableCardTitle,
-    styles.availableCardValue,
-    styles.orangeText,
-    styles.usdValue,
+    styles,
     t,
   ]);
 
