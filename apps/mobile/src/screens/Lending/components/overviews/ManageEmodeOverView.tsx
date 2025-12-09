@@ -151,6 +151,7 @@ const ManageEmodeOverView: React.FC<{
         enableDismissOnClose: true,
         snapPoints: [308],
       },
+      allowAndroidHarewareBack: true,
       nextButtonProps: {
         title: t('page.Lending.gotIt'),
         onPress: () => {

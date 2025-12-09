@@ -105,6 +105,7 @@ export function CategorySelector({
     removeChainModal();
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_EMODE_CATEGORY,
+      allowAndroidHarewareBack: true,
       titleText: t('page.Lending.manageEmode.categorySelector.label'),
       bottomSheetModalProps: {
         enableContentPanningGesture: true,

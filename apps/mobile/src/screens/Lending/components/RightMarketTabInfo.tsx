@@ -94,6 +94,7 @@ const RightMarketTabInfo = () => {
   const handlePressEnabledEmode = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.MANAGE_EMODE,
+      allowAndroidHarewareBack: true,
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },

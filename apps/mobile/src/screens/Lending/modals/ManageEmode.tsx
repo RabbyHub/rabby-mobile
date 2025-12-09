@@ -23,6 +23,7 @@ export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
   const handlePressManageEMode = useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.MANAGE_EMODE_FULL,
+      allowAndroidHarewareBack: true,
       bottomSheetModalProps: {
         rootViewType: 'BottomSheetView',
         enableContentPanningGesture: true,
