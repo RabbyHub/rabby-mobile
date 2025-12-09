@@ -14,23 +14,82 @@ import { useTranslation } from 'react-i18next';
 import { formatUserSummary } from '@aave/math-utils';
 import dayjs from 'dayjs';
 import { useMode } from '../../hooks/useMode';
-import { useLendingSummary, useSelectedMarket } from '../../hooks';
+import { useLendingSummary } from '../../hooks';
+import { formatPercent } from '@/screens/TokenDetail/util';
+import TokenIcon from '../TokenIcon';
+import RcIconCorrectCC from '@/assets2024/icons/common/checked-cc.svg';
+import RcIconIncorrectCC from '@/assets2024/icons/common/close-bold-cc.svg';
+import { CategorySelector } from '../EmodeCategory/CategorySelector';
 
-const PairTable = () => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+const PairTable = ({
+  data,
+}: {
+  data: {
+    underlyingAsset: string;
+    symbol: string;
+    iconSymbol: string;
+    collateral: boolean;
+    borrowable: boolean;
+  }[];
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+
+  if (!data?.length) {
+    return null;
+  }
+
   return (
     <View style={styles.table}>
       <View style={styles.tableHeader}>
-        <Text>Asset</Text>
-        <Text>Collateral</Text>
-        <Text>Borrowable</Text>
+        <Text style={[styles.tableCell, styles.headerCell, styles.leftCell]}>
+          Asset
+        </Text>
+        <Text style={[styles.tableCell, styles.headerCell]}>Collateral</Text>
+        <Text style={[styles.tableCell, styles.headerCell]}>Borrowable</Text>
       </View>
-      <View>
-        {['111', '222', '333'].map(item => (
-          <View style={styles.tableRow} key={item}>
-            <Text>{item}</Text>
-            <Text>{item}</Text>
-            <Text>{item}</Text>
+      <View style={styles.tableBody}>
+        {data?.map(item => (
+          <View style={styles.tableRow} key={item.underlyingAsset}>
+            <View style={styles.tableCell}>
+              <View style={styles.assetAvatarContainer}>
+                <TokenIcon
+                  size={24}
+                  tokenSymbol={item.iconSymbol}
+                  chainSize={0}
+                />
+                <Text style={styles.symbol}>{item.symbol}</Text>
+              </View>
+            </View>
+            <View style={[styles.tableCell, styles.iconContainer]}>
+              {item.collateral ? (
+                <RcIconCorrectCC
+                  color={colors2024['green-default']}
+                  width={16}
+                  height={16}
+                />
+              ) : (
+                <RcIconIncorrectCC
+                  color={colors2024['red-default']}
+                  width={16}
+                  height={16}
+                />
+              )}
+            </View>
+            <View style={[styles.tableCell, styles.iconContainer]}>
+              {item.borrowable ? (
+                <RcIconCorrectCC
+                  color={colors2024['green-default']}
+                  width={16}
+                  height={16}
+                />
+              ) : (
+                <RcIconIncorrectCC
+                  color={colors2024['red-default']}
+                  width={16}
+                  height={16}
+                />
+              )}
+            </View>
           </View>
         ))}
       </View>
@@ -44,7 +103,7 @@ const ManageEmodeOverView: React.FC<{
 }> = ({ selectedCategoryId, onSelectCategory }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { emodeEnabled, emodeCategoryId } = useMode();
+  const { emodeEnabled, emodeCategoryId, eModes } = useMode();
 
   const {
     userReserves,
@@ -118,6 +177,15 @@ const ManageEmodeOverView: React.FC<{
     userReserves?.userReserves,
   ]);
 
+  // Shown only if the user has a collateral asset which is changing in LTV
+  const showLTVChange = useMemo(() => {
+    return (
+      iUserSummary?.currentLoanToValue !== '0' &&
+      Number(newSummary.currentLoanToValue).toFixed(3) !==
+        Number(iUserSummary?.currentLoanToValue).toFixed(3)
+    ); // Comparing without rounding causes stuttering, LTVs update asyncronously
+  }, [iUserSummary?.currentLoanToValue, newSummary.currentLoanToValue]);
+
   const afterHealthFactor = useMemo(() => {
     return newSummary?.healthFactor || '';
   }, [newSummary?.healthFactor]);
@@ -126,10 +194,16 @@ const ManageEmodeOverView: React.FC<{
     <View style={styles.container}>
       <Text style={styles.header}>{t('page.Lending.popup.title')}</Text>
       <View style={styles.content}>
-        <View style={styles.item}>
+        <View style={[styles.item, styles.categoryContainer]}>
           <Text style={styles.title}>Asset category</Text>
           <View style={styles.availableValueContainer}>
-            <Text style={styles.availableValue}>{selectedCategoryId}</Text>
+            <CategorySelector
+              label={
+                selectedCategoryId ? eModes[selectedCategoryId]?.label : ''
+              }
+              onChange={categoryId => onSelectCategory?.(categoryId)}
+              value={selectedCategoryId}
+            />
           </View>
         </View>
 
@@ -144,7 +218,15 @@ const ManageEmodeOverView: React.FC<{
               />
             </Pressable>
           </View>
-          <Text style={styles.apy}>{newSummary.currentLoanToValue}</Text>
+          <Text style={styles.apy}>
+            {showLTVChange
+              ? `${formatPercent(
+                  Number(iUserSummary?.currentLoanToValue || '0'),
+                )} → ${formatPercent(
+                  Number(newSummary.currentLoanToValue || '0'),
+                )}`
+              : formatPercent(Number(newSummary.currentLoanToValue))}
+          </Text>
         </View>
 
         <View
@@ -176,7 +258,11 @@ const ManageEmodeOverView: React.FC<{
             {t('page.Lending.popup.liquidationAt')}
           </Text>
         </View>
-        <PairTable />
+        <PairTable
+          data={
+            selectedCategoryId ? eModes[selectedCategoryId]?.assets || [] : []
+          }
+        />
       </View>
     </View>
   );
@@ -211,6 +297,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 6,
+  },
+  categoryContainer: {
+    flexDirection: 'column',
+    gap: 12,
   },
   maxLtvContainer: {
     flexDirection: 'row',
@@ -311,6 +401,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tableHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    paddingVertical: 8,
+  },
+  tableBody: {
+    marginTop: 12,
+    gap: 24,
   },
   tableRow: {
     flexDirection: 'row',
@@ -319,5 +417,32 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tableCell: {
     flex: 1,
     textAlign: 'center',
+  },
+  assetAvatarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingLeft: 12,
+  },
+  leftCell: {
+    textAlign: 'left',
+  },
+  headerCell: {
+    fontWeight: '500',
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  symbol: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 }));

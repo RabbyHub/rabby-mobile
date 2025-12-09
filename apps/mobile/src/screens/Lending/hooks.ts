@@ -224,6 +224,7 @@ const formattedReservesAndIncentivesAtom = atom(get => {
   const formattedReserves = formatReserves({
     reserves: reservesArray,
     currentTimestamp,
+    eModes,
     marketReferenceCurrencyDecimals:
       baseCurrencyData.marketReferenceCurrencyDecimals,
     marketReferencePriceInUsd:

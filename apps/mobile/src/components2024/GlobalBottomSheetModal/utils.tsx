@@ -63,6 +63,7 @@ import { HFDescription } from '@/screens/Lending/components/HFDescription';
 import { AddressListModal } from '@/screens/Address/components/MultiAssets/AddressList';
 import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
+import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -328,8 +329,12 @@ export const MODAL_CONFIGS: Record<
     Component: SelectLendingChain,
   },
   [MODAL_NAMES.MANAGE_EMODE_FULL]: {
-    snapPoints: [MODAL_MAX_HEIGHT],
+    snapPoints: ['100%'],
     Component: ManageEmodeFullModal,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {
+    snapPoints: ['85%'],
+    Component: SelectCategoryModal,
   },
 };

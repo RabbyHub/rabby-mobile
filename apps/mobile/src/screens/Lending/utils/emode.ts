@@ -59,3 +59,21 @@ export const formatEmodes = (reserves: FormattedReservesAndIncentives[]) => {
 
   return eModes;
 };
+
+// An E-Mode category is available if the user has no borrow positions outside of the category
+export function isEModeCategoryAvailable(
+  user: UserSummary,
+  eMode: EmodeCategory,
+): boolean {
+  const borrowableReserves = eMode.assets
+    .filter(asset => asset.borrowable)
+    .map(asset => asset.underlyingAsset);
+
+  const hasIncompatiblePositions = user.userReservesData.some(
+    userReserve =>
+      Number(userReserve.scaledVariableDebt) > 0 &&
+      !borrowableReserves.includes(userReserve.reserve.underlyingAsset),
+  );
+
+  return !hasIncompatiblePositions;
+}
