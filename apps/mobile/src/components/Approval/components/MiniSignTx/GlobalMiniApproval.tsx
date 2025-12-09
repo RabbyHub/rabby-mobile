@@ -1,6 +1,5 @@
 import { miniApprovalAtom } from '@/hooks/useMiniApproval';
 import { useClearMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
-import { EVENT_ROUTE_CHANGE, eventBus } from '@/utils/events';
 import { useMemoizedFn, useMount, useUnmount } from 'ahooks';
 import { useAtom } from 'jotai';
 import React, { useRef } from 'react';
@@ -13,6 +12,7 @@ import {
   useMiniSignGasStore,
 } from '@/hooks/miniSignGasStore';
 import { RootNames } from '@/constant/layout';
+import { perfEvents } from '@/core/utils/perf';
 
 const DON_AUTO_RESET_GAS_SCREEN = [
   RootNames.Swap,
@@ -70,11 +70,11 @@ export const GlobalMiniApproval = () => {
   );
 
   useMount(() => {
-    eventBus.addListener(EVENT_ROUTE_CHANGE, onEventRouteChange);
+    perfEvents.addListener('EVENT_ROUTE_CHANGE', onEventRouteChange);
   });
 
   useUnmount(() => {
-    eventBus.removeListener(EVENT_ROUTE_CHANGE, onEventRouteChange);
+    perfEvents.removeListener('EVENT_ROUTE_CHANGE', onEventRouteChange);
   });
 
   if (!currentAccount) {

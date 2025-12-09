@@ -223,7 +223,11 @@ function setUserTokenSettings(
   >,
 ) {
   userTokenSettingsState.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev, valOrFunc, { strict: true });
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+
+    if (!changed) return prev;
 
     return newVal;
   });

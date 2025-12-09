@@ -74,29 +74,17 @@ export default function SecurityTipStubModal({
   );
 }
 
-function useGlobalSecurityTipForScreenCapture() {
-  const { isBeingCaptured } = useIOSScreenIsBeingCaptured();
-  const { atSensitiveScene, $protectedConf } = useAtSensitiveScene();
-
-  return {
-    shouldShowSecurityTip:
-      atSensitiveScene &&
-      isBeingCaptured &&
-      $protectedConf.iosBlurType === ProtectType.SafeTipModal,
-    onOk: $protectedConf.onOk,
-  };
-}
 function useGlobalSecurityTipForScreenShot() {
-  const { $protectedConf } = useAtSensitiveScene();
+  const { warningScreenshotBackup } = useAtSensitiveScene();
   const onIsScreenshottedJustNow = React.useCallback<
     (Parameters<typeof useIOSScreenshotted>[0] &
       object)['onIsScreenshottedJustNow'] &
       object
   >(
     ctx => {
-      ctx.setScreenshotted(!!$protectedConf.warningScreenshotBackup);
+      ctx.setScreenshotted(!!warningScreenshotBackup);
     },
-    [$protectedConf.warningScreenshotBackup],
+    [warningScreenshotBackup],
   );
 
   const { isScreenshotJustNow, clearScreenshotJustNow } = useIOSScreenshotted({
@@ -105,21 +93,26 @@ function useGlobalSecurityTipForScreenShot() {
   });
 
   React.useEffect(() => {
-    if (!$protectedConf.warningScreenshotBackup) {
+    if (!warningScreenshotBackup) {
       clearScreenshotJustNow();
     }
-  }, [$protectedConf.warningScreenshotBackup, clearScreenshotJustNow]);
+  }, [warningScreenshotBackup, clearScreenshotJustNow]);
 
   return {
-    shouldShowBackupWarning:
-      isScreenshotJustNow && $protectedConf.warningScreenshotBackup,
+    shouldShowBackupWarning: isScreenshotJustNow && warningScreenshotBackup,
     clearScreenshotJustNow,
   };
 }
 
 export function GlobalSecurityTipStubModal() {
-  const { shouldShowSecurityTip, onOk } =
-    useGlobalSecurityTipForScreenCapture();
+  const { isBeingCaptured } = useIOSScreenIsBeingCaptured();
+  const { atSensitiveScene, iosBlurType, onOk } = useAtSensitiveScene();
+
+  const shouldShowSecurityTip =
+    atSensitiveScene &&
+    isBeingCaptured &&
+    iosBlurType === ProtectType.SafeTipModal;
+
   const { shouldShowBackupWarning, clearScreenshotJustNow } =
     useGlobalSecurityTipForScreenShot();
 

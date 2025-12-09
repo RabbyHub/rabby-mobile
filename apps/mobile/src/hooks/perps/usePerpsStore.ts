@@ -137,7 +137,11 @@ export const initialState: PerpsState = {
 export const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
 function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
   perpsStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev, valOrFunc, { strict: true });
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+    if (!changed) return prev;
+
     return newVal;
   });
 }

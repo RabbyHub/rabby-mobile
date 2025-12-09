@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 
-import { atom, useAtom } from 'jotai';
+// import { atom, useAtom } from 'jotai';
 import {
   KeyringAccount,
   CORE_KEYRING_TYPES,
@@ -49,18 +49,18 @@ import { sortAccountList } from '@/utils/sortAccountList';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
-const fetchingAccountsAtom = atom(false);
+// const fetchingAccountsAtom = atom(false);
 
 type Store = {
   accounts: KeyringAccountWithAlias[];
-  // fetchingAccounts: boolean;
+  fetchingAccounts: boolean;
   pinnedAddresses: IPinAddress[];
   currentAccount: KeyringAccountWithAlias | null;
 };
 const zAccountStore = zCreate<Store>((set, get) => {
   return {
     accounts: [],
-    // fetchingAccounts: false,
+    fetchingAccounts: false,
 
     pinnedAddresses: preferenceService.getPinAddresses(),
     currentAccount: null,
@@ -151,21 +151,11 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
 
   const { disableAutoFetch = false } = opts || {};
 
-  const doFetchAccounts = useCallback(async () => {
-    const nextAccounts = await fetchAllAccounts();
-    setAccounts(nextAccounts);
-  }, []);
-
-  const { fetchAction: fetchAccounts } = useAtomicRequest({
-    isRequestingAtom: fetchingAccountsAtom,
-    doRequest: doFetchAccounts,
-  });
-
   useEffect(() => {
     if (!disableAutoFetch) {
-      fetchAccounts();
+      doFetchAccounts();
     }
-  }, [disableAutoFetch, fetchAccounts]);
+  }, [disableAutoFetch]);
 
   const accounts = useCreationWithShallowCompare(() => {
     return filterMyAccounts(allAccounts);
@@ -173,7 +163,7 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
 
   return {
     accounts,
-    fetchAccounts,
+    fetchAccounts: doFetchAccounts,
   };
 }
 
@@ -323,19 +313,74 @@ export function useWalletBrandLogo<T extends string>(brandName?: T) {
 type MatteredChainBalances = {
   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
 };
-const matteredChainBalancesAtom = atom<MatteredChainBalances>({});
-const matteredChainBalancesAllAtom = atom<MatteredChainBalances>({});
-const testnetMatteredChainBalancesAtom = atom<MatteredChainBalances>({});
+type MatteredBalancesState = {
+  matteredChainBalances: MatteredChainBalances;
+  matteredChainBalancesAll: MatteredChainBalances;
+  testnetMatteredChainBalances: MatteredChainBalances;
+};
+const matteredBalancesStore = zCreate<MatteredBalancesState>(() => ({
+  matteredChainBalances: {},
+  matteredChainBalancesAll: {},
+  testnetMatteredChainBalances: {},
+}));
+
+function setMattredChainBalances(
+  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
+) {
+  matteredBalancesStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.matteredChainBalances,
+      valOrFunc,
+      { strict: true },
+    );
+
+    if (!changed) return prev;
+
+    return { ...prev, matteredChainBalances: newVal };
+  });
+}
+
+function setMattredChainBalancesAll(
+  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
+) {
+  matteredBalancesStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.matteredChainBalancesAll,
+      valOrFunc,
+      { strict: true },
+    );
+
+    if (!changed) return prev;
+
+    return { ...prev, matteredChainBalancesAll: newVal };
+  });
+}
+
+function setTestMattredChainBalances(
+  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
+) {
+  matteredBalancesStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.testnetMatteredChainBalances,
+      valOrFunc,
+      { strict: true },
+    );
+
+    if (!changed) return prev;
+
+    return { ...prev, testnetMatteredChainBalances: newVal };
+  });
+}
 
 export function useChainBalances() {
-  const [matteredChainBalances, setMattredChainBalances] = useAtom(
-    matteredChainBalancesAtom,
+  const matteredChainBalances = matteredBalancesStore(
+    s => s.matteredChainBalances,
   );
-  const [matteredChainBalancesAll, setMattredChainBalancesAll] = useAtom(
-    matteredChainBalancesAllAtom,
+  const matteredChainBalancesAll = matteredBalancesStore(
+    s => s.matteredChainBalancesAll,
   );
-  const [testnetMatteredChainBalances, setTestMattredChainBalances] = useAtom(
-    testnetMatteredChainBalancesAtom,
+  const testnetMatteredChainBalances = matteredBalancesStore(
+    s => s.testnetMatteredChainBalances,
   );
 
   return {

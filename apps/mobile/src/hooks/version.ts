@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
-import { atom, useAtom } from 'jotai';
 import { getVersion } from 'react-native-device-info';
 
 import Toast from 'react-native-root-toast';
@@ -9,11 +8,7 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
-import {
-  appStorageForZustand,
-  atomByMMKV,
-  MMKVStorageStrategy,
-} from '@/core/storage/mmkv';
+import { zustandByMMKV } from '@/core/storage/mmkv';
 
 import { useEffect } from 'react';
 import {
@@ -26,40 +21,21 @@ import { BUILD_CHANNEL } from '@/constant/env';
 import { APP_URLS, isNonPublicProductionEnv } from '@/constant';
 import { toast } from '@/components/Toast';
 import { useUnmountedRef } from './common/useMount';
-import { zCreate, zCreateJSONStorage, zPersist } from '@/core/utils/reexports';
+import { zCreate } from '@/core/utils/reexports';
 
 const appLocalVersion = getVersion();
-// const remoteVersionAtom = atomByMMKV<MergedRemoteVersion>(
-//   '@RemoteVersionMMKV',
-//   {
-//     version: appLocalVersion,
-//     downloadUrl: APP_URLS.DOWNLOAD_PAGE,
-//     externalUrlToOpen: '',
-//     storeUrl: null,
-//     source: BUILD_CHANNEL,
-//     couldUpgrade: false,
-//     changelog: '',
-//   },
-//   { storage: MMKVStorageStrategy.compatJson },
-// );
-// const localVersionAtom = atom<string>(appLocalVersion);
 
-const remoteVersionStore = zCreate(
-  zPersist<MergedRemoteVersion>(
-    () => ({
-      version: appLocalVersion,
-      downloadUrl: APP_URLS.DOWNLOAD_PAGE,
-      externalUrlToOpen: '',
-      storeUrl: null,
-      source: BUILD_CHANNEL,
-      couldUpgrade: false,
-      changelog: '',
-    }),
-    {
-      name: '@RemoteVersionMMKV',
-      storage: zCreateJSONStorage(() => appStorageForZustand),
-    },
-  ),
+const remoteVersionStore = zustandByMMKV<MergedRemoteVersion>(
+  '@RemoteVersionMMKV',
+  {
+    version: appLocalVersion,
+    downloadUrl: APP_URLS.DOWNLOAD_PAGE,
+    externalUrlToOpen: '',
+    storeUrl: null,
+    source: BUILD_CHANNEL,
+    couldUpgrade: false,
+    changelog: '',
+  },
 );
 function setRemoteVersion(val: MergedRemoteVersion) {
   remoteVersionStore.setState(val);
