@@ -99,11 +99,12 @@ const PairTable = ({
 
 const ManageEmodeOverView: React.FC<{
   selectedCategoryId?: number;
+  disabled?: boolean;
   onSelectCategory?: (categoryId: number) => void;
-}> = ({ selectedCategoryId, onSelectCategory }) => {
+}> = ({ selectedCategoryId, onSelectCategory, disabled: disableEmode }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { emodeEnabled, emodeCategoryId, eModes } = useMode();
+  const { eModes } = useMode();
 
   const {
     userReserves,
@@ -111,9 +112,6 @@ const ManageEmodeOverView: React.FC<{
     formattedPoolReservesAndIncentives,
     iUserSummary,
   } = useLendingSummary();
-  const disableEmode = useMemo(() => {
-    return emodeEnabled && emodeCategoryId === selectedCategoryId;
-  }, [emodeCategoryId, emodeEnabled, selectedCategoryId]);
 
   const handleSupplyDescription = () => {
     const modalId = createGlobalBottomSheetModal2024({

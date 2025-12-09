@@ -1,33 +1,260 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { Button } from '@/components2024/Button';
 import { useMode } from '../hooks/useMode';
 import ManageEmodeOverView from '../components/overviews/ManageEmodeOverView';
+import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { isAccountSupportMiniApproval } from '@/utils/account';
+import { last, noop } from 'lodash';
+import {
+  usePoolDataProviderContract,
+  useRefreshHistoryId,
+  useSelectedMarket,
+} from '../hooks';
+import { useSignatureStore } from '@/components2024/MiniSignV2';
+import { buildManageEmodeTx } from '../poolService';
+import { toast } from '@/components2024/Toast';
+import { useMiniSigner } from '@/hooks/useSigner';
+import {
+  CUSTOM_HISTORY_ACTION,
+  CUSTOM_HISTORY_TITLE_TYPE,
+} from '@/screens/Transaction/components/type';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { useTranslation } from 'react-i18next';
+import { apiProvider } from '@/core/apis';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { transactionHistoryService } from '@/core/services';
 
 const ManageEmodeFullModal = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   const { emodeEnabled, emodeCategoryId } = useMode();
+  const { chainInfo } = useSelectedMarket();
+  const { ctx } = useSignatureStore();
+  const { refresh } = useRefreshHistoryId();
 
-  const handlePressManageEMode = useCallback(() => {
-    console.log('CUSTOM_LOGGER:=>: handlePressManageEMode');
-  }, []);
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
+
+  const { pools } = usePoolDataProviderContract();
+  const [manageEmodeTx, setManageEmodeTx] = useState<any>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(
     emodeCategoryId || 0,
   );
+  const wantDisableEmode = useMemo(() => {
+    // 如果已经打开的话只能关闭，没有switch功能
+    return emodeEnabled;
+  }, [emodeEnabled]);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+    account: currentAccount!,
+    chainServerId: manageEmodeTx?.length
+      ? manageEmodeTx?.[0]?.chainId + ''
+      : '',
+    autoResetGasStoreOnChainChange: true,
+  });
+
+  const canShowDirectSubmit = useMemo(
+    () => isAccountSupportMiniApproval(currentAccount?.type || ''),
+    [currentAccount?.type],
+  );
+
+  const buildTx = useCallback(async () => {
+    if (!currentAccount || !pools || !chainInfo) {
+      setManageEmodeTx(null);
+      return;
+    }
+    try {
+      const manageEmodeResult = await buildManageEmodeTx({
+        pool: pools.pool,
+        address: currentAccount.address,
+        categoryId: wantDisableEmode ? 0 : selectedCategoryId,
+      });
+      const _txs = await Promise.all(manageEmodeResult.map(i => i.tx()));
+      const formatTxs = _txs.map(item => {
+        delete item.gasLimit;
+        return {
+          ...item,
+          chainId: chainInfo.id,
+        };
+      });
+      setManageEmodeTx(formatTxs);
+    } catch (error) {
+      toast.error('There was some error');
+    }
+  }, [chainInfo, currentAccount, pools, selectedCategoryId, wantDisableEmode]);
+
+  useEffect(() => {
+    buildTx();
+  }, [buildTx]);
+
+  useEffect(() => {
+    if (currentAccount && canShowDirectSubmit) {
+      prefetchMiniSigner({
+        txs: manageEmodeTx?.length ? manageEmodeTx : [],
+        synGasHeaderInfo: true,
+      });
+    }
+  }, [canShowDirectSubmit, currentAccount, prefetchMiniSigner, manageEmodeTx]);
+
+  const handlePressManageEMode = useCallback(
+    async (forceFullSign?: boolean) => {
+      if (!currentAccount || !manageEmodeTx || !manageEmodeTx?.length) {
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        if (!manageEmodeTx?.length) {
+          toast.info('please retry');
+          throw new Error('no txs');
+        }
+        let results: string[] = [];
+        if (canShowDirectSubmit && !forceFullSign) {
+          try {
+            results = await openDirect({
+              txs: manageEmodeTx,
+              ga: {
+                customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                customActionTitleType: wantDisableEmode
+                  ? CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE
+                  : CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE,
+              },
+            });
+          } catch (error) {
+            if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+              return;
+            }
+            toast.error(t('page.Lending.toggleCollateralDetail.error'));
+            return;
+          }
+        } else {
+          for (const tx of manageEmodeTx) {
+            const result = await apiProvider.sendRequest({
+              data: {
+                method: 'eth_sendTransaction',
+                params: [tx],
+                $ctx: {
+                  ga: {
+                    customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                    customActionTitleType: wantDisableEmode
+                      ? CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE
+                      : CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE,
+                  },
+                },
+              },
+              session: INTERNAL_REQUEST_SESSION,
+              account: currentAccount,
+            });
+            results.push(result);
+          }
+        }
+
+        const txId = last(results);
+        if (txId) {
+          transactionHistoryService.setCustomTxItem(
+            currentAccount.address,
+            manageEmodeTx[0].chainId,
+            txId,
+            {
+              actionType: wantDisableEmode
+                ? CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE
+                : CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE,
+            },
+          );
+        }
+        refresh();
+        toast.success(`Enable E-Mode ${t('page.Lending.submitted')}`);
+      } catch (error) {
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      currentAccount,
+      manageEmodeTx,
+      canShowDirectSubmit,
+      refresh,
+      t,
+      openDirect,
+      wantDisableEmode,
+    ],
+  );
+
   return (
     <AutoLockView as="View" style={styles.container}>
       <Text style={styles.title}>Manage E-Mode</Text>
-      <Text style={styles.description}>
-        Enabling E-Mode allows you to maximize your borrowing power. However,
-        borrowing is restricted to assets within the selected category.
-      </Text>
+      {wantDisableEmode ? null : (
+        <Text style={styles.description}>
+          Enabling E-Mode allows you to maximize your borrowing power. However,
+          borrowing is restricted to assets within the selected category.
+        </Text>
+      )}
       <ManageEmodeOverView
-        selectedCategoryId={selectedCategoryId}
+        selectedCategoryId={
+          wantDisableEmode ? emodeCategoryId : selectedCategoryId
+        }
+        disabled={wantDisableEmode}
         onSelectCategory={setSelectedCategoryId}
       />
+      {canShowDirectSubmit && (
+        <View style={styles.gasPreContainer}>
+          <DirectSignGasInfo
+            supportDirectSign={true}
+            loading={isLoading}
+            openShowMore={noop}
+            chainServeId={chainInfo?.serverId || ''}
+          />
+        </View>
+      )}
+      <View style={styles.buttonContainer}>
+        {canShowDirectSubmit ? (
+          <DirectSignBtn
+            loading={isLoading}
+            loadingType="circle"
+            key={wantDisableEmode ? 0 : selectedCategoryId}
+            showTextOnLoading
+            wrapperStyle={styles.directSignBtn}
+            authTitle={wantDisableEmode ? 'Disable E-Mode' : 'Enable E-Mode'}
+            titleStyle={wantDisableEmode ? styles.disableBtnTitle : undefined}
+            buttonStyle={wantDisableEmode ? styles.disableBtn : undefined}
+            title={wantDisableEmode ? 'Disable E-Mode' : 'Enable E-Mode'}
+            iconColor={
+              wantDisableEmode ? colors2024['neutral-title-1'] : undefined
+            }
+            onFinished={() => handlePressManageEMode()}
+            disabled={
+              !manageEmodeTx ||
+              !manageEmodeTx?.length ||
+              isLoading ||
+              !currentAccount ||
+              !!ctx?.disabledProcess
+            }
+            type="primary"
+            syncUnlockTime
+            account={currentAccount}
+            showHardWalletProcess
+          />
+        ) : (
+          <Button
+            loadingType="circle"
+            showTextOnLoading
+            containerStyle={styles.fullWidthButton}
+            onPress={() => handlePressManageEMode()}
+            title={wantDisableEmode ? 'Disable E-Mode' : 'Enable E-Mode'}
+            titleStyle={wantDisableEmode ? styles.disableBtnTitle : undefined}
+            loading={isLoading}
+            disabled={isLoading || !currentAccount}
+          />
+        )}
+      </View>
     </AutoLockView>
   );
 };
@@ -69,5 +296,32 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   disabledTitle: {
     color: ctx.colors2024['neutral-title-1'],
+  },
+  gasPreContainer: {
+    paddingHorizontal: 8,
+    marginTop: 12,
+    width: '100%',
+  },
+  buttonContainer: {
+    height: 116,
+    paddingTop: 12,
+    marginTop: 'auto',
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 12,
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  directSignBtn: {
+    width: '100%',
+  },
+  fullWidthButton: {
+    flex: 1,
+  },
+  disableBtnTitle: {
+    color: ctx.colors2024['neutral-title-1'],
+  },
+  disableBtn: {
+    backgroundColor: ctx.colors2024['neutral-line'],
   },
 }));
