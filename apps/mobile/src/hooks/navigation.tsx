@@ -1,25 +1,23 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Alert, StyleSheet } from 'react-native';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { debounce, merge } from 'lodash';
+import { merge } from 'lodash';
 
 import {
   NativeStackNavigationOptions,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import { useTheme2024 } from '@/hooks/theme';
 import {
-  getLatestNavigationName,
-  getReadyNavigationInstance,
-  navigationRef,
-} from '@/utils/navigation';
+  getColors2024,
+  useGetBinaryMode,
+  useThemeColors2024,
+} from '../hooks/theme';
+import { getReadyNavigationInstance, navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
 import {
   NavigationContainerRef,
-  TabActions,
   useNavigation,
 } from '@react-navigation/native';
 
@@ -125,7 +123,7 @@ type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
   headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
 };
 export const useStackScreenConfig = () => {
-  const { colors, colors2024 } = useTheme2024();
+  const appThemeMode = useGetBinaryMode();
 
   const navBack = useCallback(() => {
     const navigation = navigationRef.current;
@@ -139,11 +137,12 @@ export const useStackScreenConfig = () => {
     }
   }, []);
 
-  const headerPresets = makeHeadersPresets({ colors, colors2024 });
-
   /** @deprecated for new screen use mergeScreenOptions2024 instead */
   const mergeScreenOptions = useCallback(
     (...optsList: Partial<ScreenOptions>[]) => {
+      const { colors, colors2024 } = getColors2024(appThemeMode);
+      const headerPresets = makeHeadersPresets({ colors, colors2024 });
+
       const screenOptions: ScreenOptions = {
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
@@ -181,11 +180,14 @@ export const useStackScreenConfig = () => {
 
       return result;
     },
-    [headerPresets, colors, navBack],
+    [appThemeMode, navBack],
   );
 
   const mergeScreenOptions2024 = useCallback(
     (optsList: Partial<ScreenOptions>[], options?: any) => {
+      const { colors, colors2024 } = getColors2024(appThemeMode);
+      const headerPresets = makeHeadersPresets({ colors, colors2024 });
+
       const screenOptions: ScreenOptions = {
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
@@ -224,14 +226,14 @@ export const useStackScreenConfig = () => {
 
       return result;
     },
-    [headerPresets, colors2024, navBack],
+    [appThemeMode, navBack],
   );
 
   return { mergeScreenOptions, mergeScreenOptions2024 };
 };
 
 export function useBottomTabScreenConfig() {
-  const { colors, colors2024 } = useTheme2024();
+  const appThemeMode = useGetBinaryMode();
 
   const navBack = useCallback(() => {
     const navigation = navigationRef.current;
@@ -242,10 +244,11 @@ export function useBottomTabScreenConfig() {
     }
   }, []);
 
-  const headerPresets = makeHeadersPresets({ colors, colors2024 });
-
   const mergeBottomTabOptions2024 = useCallback(
     (optsList: Partial<BottomTabNavigationOptions>[] = [], options?: any) => {
+      const { colors, colors2024 } = getColors2024(appThemeMode);
+      const headerPresets = makeHeadersPresets({ colors, colors2024 });
+
       const bottomTabOptions: BottomTabNavigationOptions = {
         headerTitleAlign: 'center',
         headerStyle: {
@@ -286,7 +289,7 @@ export function useBottomTabScreenConfig() {
 
       return result;
     },
-    [headerPresets, colors2024, navBack],
+    [appThemeMode, navBack],
   );
 
   return { mergeBottomTabOptions2024 };

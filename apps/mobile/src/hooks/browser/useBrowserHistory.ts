@@ -43,6 +43,15 @@ function setBrowserHistoryStore(
   });
 }
 
+export const getBrowserHistoryList = () => {
+  const entities = browserService.history.selectors.selectEntities();
+  const ids = browserService.history.selectors.selectIds();
+  setBrowserHistoryStore({
+    ids,
+    entities,
+  });
+};
+
 export function resetBrowserHistoryStore() {
   setBrowserHistoryStore({
     ids: [],
@@ -55,15 +64,6 @@ export function useBrowserHistory() {
   const { dapps } = useDappsValue();
   const { bookmarkStore } = useBrowserBookmark();
   const { t } = useTranslation();
-
-  const getBrowserHistoryList = useMemoizedFn(() => {
-    const entities = browserService.history.selectors.selectEntities();
-    const ids = browserService.history.selectors.selectIds();
-    setBrowserHistoryStore({
-      ids,
-      entities,
-    });
-  });
 
   const setBrowserHistory = useMemoizedFn((item: BrowserHistoryItem) => {
     if (!item || !/^https?:\/\//.test(item.url)) {

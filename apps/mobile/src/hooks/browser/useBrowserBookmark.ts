@@ -30,7 +30,7 @@ function setBrowserBookmarkStore(
   });
 }
 
-const getBookmarkList = () => {
+export const getBookmarkList = () => {
   const entities = browserService.bookmark.selectors.selectEntities();
   const ids = browserService.bookmark.selectors.selectIds();
   setBrowserBookmarkStore({
@@ -109,8 +109,6 @@ export function useBrowserBookmark() {
     getBookmark,
     addBookmark,
     removeBookmark,
-    // updateBookmark,
-    getBookmarkList,
   };
 }
 

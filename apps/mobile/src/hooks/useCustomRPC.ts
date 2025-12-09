@@ -41,13 +41,13 @@ function setCustomRPCStatus(
   }));
 }
 
-export const useCustomRPC = () => {
-  const getAllRPC = useMemoizedFn(async () => {
-    const rpcMap = await apiCustomRPC.getAllCustomRPC();
-    setCustomRPCStore(rpcMap);
-    return rpcMap;
-  });
+export const getAllRPC = async () => {
+  const rpcMap = await apiCustomRPC.getAllCustomRPC();
+  setCustomRPCStore(rpcMap);
+  return rpcMap;
+};
 
+export const useCustomRPC = () => {
   const setCustomRPC = useMemoizedFn(
     async (payload: { chain: CHAINS_ENUM; url: string }) => {
       await apiCustomRPC.setCustomRPC(payload.chain, payload.url);

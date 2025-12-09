@@ -1,4 +1,3 @@
-import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo } from 'react';
 import { BIOMETRY_TYPE } from 'react-native-keychain';
 import { toast, toastLoading } from '@/components/Toast';
@@ -10,7 +9,6 @@ import {
   parseKeychainError,
 } from '@/core/apis/keychain';
 import { useTranslation } from 'react-i18next';
-import { useAtomCallback } from 'jotai/utils';
 import {
   ValidationBehaviorProps,
   parseValidationBehavior,
@@ -47,14 +45,8 @@ runIIFEFunc(() => {
     setBiometrics(prev => ({ ...prev, supportedBiometryType: supportedType }));
   });
 });
-// biometricsInfoAtom.onMount = setter => {
-//   apisKeychain.getSupportedBiometryType().then(supportedType => {
-//     setter(prev => ({ ...prev, supportedBiometryType: supportedType }));
-//   });
-// };
 
 export function useBiometricsComputed() {
-  // const biometrics = useAtomValue(biometricsInfoAtom);
   const authEnabled = biometricsInfoStore(s => s.authEnabled);
   const supportedBiometryType = biometricsInfoStore(
     s => s.supportedBiometryType,

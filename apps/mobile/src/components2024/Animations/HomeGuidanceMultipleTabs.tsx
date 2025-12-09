@@ -282,9 +282,9 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
     // leave here for debug
     // if (__DEV__) return;
     toggleGuidanceVisible(false);
-    // toggleViewedGuidance('multiTabs20251205Viewed', true);
-    // leave here for debug
-    !__DEV__ && toggleViewedGuidance('multiTabs20251205Viewed', true);
+    toggleViewedGuidance('multiTabs20251205Viewed', true);
+    // // leave here for debug
+    // !__DEV__ && toggleViewedGuidance('multiTabs20251205Viewed', true);
   }, [toggleGuidanceVisible, toggleViewedGuidance]);
 
   const { secondaryIndicatorAbsLayout } =
