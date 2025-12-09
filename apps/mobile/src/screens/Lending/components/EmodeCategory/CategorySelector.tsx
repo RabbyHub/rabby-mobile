@@ -39,6 +39,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 17,
       lineHeight: 22,
+      height: 22,
       fontWeight: '700',
       maxWidth: '90%',
     },
@@ -123,37 +124,34 @@ export function CategorySelector({
   }, [isCloseMode, removeChainModal, t, isLight, colors2024, value, onChange]);
 
   return (
-    <>
-      <TouchableOpacity
-        style={[styles.container, style]}
-        disabled={disable}
-        onPress={createChainModal}>
-        <View style={styles.left}>
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            style={[styles.chainName, !label && styles.placeholderText]}>
-            {label ||
-              t('page.Lending.manageEmode.categorySelector.placeholder')}
-          </Text>
-        </View>
+    <TouchableOpacity
+      style={[styles.container, style]}
+      disabled={disable}
+      onPress={createChainModal}>
+      <View style={styles.left}>
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={[styles.chainName, !label && styles.placeholderText]}>
+          {label || t('page.Lending.manageEmode.categorySelector.placeholder')}
+        </Text>
+      </View>
 
-        {!disable && !isCloseMode ? (
-          <View style={styles.iconContainer}>
-            <ArrowDownSVG
-              width={16}
-              height={16}
-              style={styles.icon}
-              color={colors2024['neutral-body']}
-            />
-          </View>
-        ) : null}
-        {isCloseMode ? (
-          <Text style={styles.enabledText}>
-            {t('page.Lending.manageEmode.enabled')}
-          </Text>
-        ) : null}
-      </TouchableOpacity>
-    </>
+      {!disable && !isCloseMode ? (
+        <View style={styles.iconContainer}>
+          <ArrowDownSVG
+            width={16}
+            height={16}
+            style={styles.icon}
+            color={colors2024['neutral-body']}
+          />
+        </View>
+      ) : null}
+      {isCloseMode ? (
+        <Text style={styles.enabledText}>
+          {t('page.Lending.manageEmode.enabled')}
+        </Text>
+      ) : null}
+    </TouchableOpacity>
   );
 }

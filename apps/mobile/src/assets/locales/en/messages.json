@@ -2746,7 +2746,9 @@
         "warning": "Borrowing this amount will lower your Health Factor to a risky level for liquidation.",
         "withdrawWarning": "Withdrawing this amount will lower your Health Factor to a risky level for liquidation.",
         "toggleCollateralWarning": "Disabling this asset as collateral will lower your Health Factor to a risky level for liquidation.",
-        "checkbox": "I understand the alert and want to continue."
+        "checkbox": "I understand the alert and want to continue.",
+        "emodeBlockWarning": "Disabling E-mode will lower your Health Factor to a risky level for liquidation.",
+        "blockEmodeWarning": "You can not disable E-Mode because that could cause liquidation. To exit E-Mode supply or repay borrowed positions."
       },
       "lqDescription": {
         "desc": "Liquidation value",
@@ -2767,7 +2769,8 @@
         "isolatedTitle": "Asset cannot be used as collateral",
         "isolatedDesc": "This asset can only be used as collateral in isolation mode, where you cannot supply other asset collateral for borrowing. Assets used as collateral in isolation mode can only be borrowed to a specific debt ceiling.",
         "globalIsolatedDesc": "In Isolation mode, you cannot supply other assets as collateral. A global debt ceiling limits the borrowing power of the isolated asset. To exit isolation mode disable UNI as collateral before borrowing another asset. ",
-        "isolatedSupplyDesc": "Collateral usage is limited because of isolation mode."
+        "isolatedSupplyDesc": "Collateral usage is limited because of isolation mode.",
+        "maxLTV": "The Maximum LTV ratio represents the maximum borrowing power of a specific collateral. For example, if a collateral has an LTV of 75%, the user can borrow up to 0.75 worth of ETH in the principal currency for every 1 ETH worth of collateral."
       },
       "manageEmode": {
         "emode": "E-Mode",

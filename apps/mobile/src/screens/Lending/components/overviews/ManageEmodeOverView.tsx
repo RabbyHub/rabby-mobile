@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 
-import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
@@ -113,25 +112,26 @@ const PairTable = ({
 const ManageEmodeOverView: React.FC<{
   selectedCategoryId?: number;
   disabled?: boolean;
+  newSummary: ReturnType<typeof formatUserSummary>;
   onSelectCategory?: (categoryId: number) => void;
-}> = ({ selectedCategoryId, onSelectCategory, disabled: disableEmode }) => {
+}> = ({
+  selectedCategoryId,
+  onSelectCategory,
+  disabled: disableEmode,
+  newSummary,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { eModes } = useMode();
 
-  const {
-    userReserves,
-    reserves,
-    formattedPoolReservesAndIncentives,
-    iUserSummary,
-  } = useLendingSummary();
+  const { iUserSummary } = useLendingSummary();
 
-  const handleSupplyDescription = () => {
+  const handleMaxLTVDescription = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DESCRIPTION,
-      title: t('page.Lending.modalDesc.availableToBorrow'),
+      title: '',
       titleStyle: {
-        marginTop: 12,
+        marginTop: 0,
         fontWeight: '900',
       },
       sectionStyle: {
@@ -142,7 +142,7 @@ const ManageEmodeOverView: React.FC<{
       },
       sections: [
         {
-          description: t('page.Lending.modalDesc.maxAmount'),
+          description: t('page.Lending.modalDesc.maxLTV'),
         },
       ],
       bottomSheetModalProps: {
@@ -167,26 +167,6 @@ const ManageEmodeOverView: React.FC<{
   const healthFactor = useMemo(() => {
     return iUserSummary?.healthFactor || '';
   }, [iUserSummary?.healthFactor]);
-
-  const newSummary = useMemo(() => {
-    return formatUserSummary({
-      currentTimestamp: dayjs().unix(),
-      userReserves: userReserves?.userReserves || [],
-      formattedReserves: formattedPoolReservesAndIncentives || [],
-      userEmodeCategoryId: disableEmode ? 0 : selectedCategoryId || 0,
-      marketReferenceCurrencyDecimals:
-        reserves?.baseCurrencyData?.marketReferenceCurrencyDecimals || 0,
-      marketReferencePriceInUsd:
-        reserves?.baseCurrencyData?.marketReferenceCurrencyPriceInUsd || 0,
-    });
-  }, [
-    disableEmode,
-    formattedPoolReservesAndIncentives,
-    reserves?.baseCurrencyData?.marketReferenceCurrencyDecimals,
-    reserves?.baseCurrencyData?.marketReferenceCurrencyPriceInUsd,
-    selectedCategoryId,
-    userReserves?.userReserves,
-  ]);
 
   // Shown only if the user has a collateral asset which is changing in LTV
   const showLTVChange = useMemo(() => {
@@ -248,7 +228,7 @@ const ManageEmodeOverView: React.FC<{
             <Text style={styles.title}>
               {t('page.Lending.manageEmode.overview.maxLtv')}
             </Text>
-            <Pressable hitSlop={20} onPress={handleSupplyDescription}>
+            <Pressable hitSlop={20} onPress={handleMaxLTVDescription}>
               <WarningFillCC
                 width={12}
                 height={12}
@@ -348,7 +328,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    flex: 1,
   },
   apyContainer: {
     marginTop: 26,

@@ -24,7 +24,7 @@ export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.MANAGE_EMODE_FULL,
       bottomSheetModalProps: {
-        rootViewType: 'BottomSheetScrollView',
+        rootViewType: 'BottomSheetView',
         enableContentPanningGesture: true,
       },
       onClose: () => {

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { last, noop } from 'lodash';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { apiProvider } from '@/core/apis';
@@ -23,15 +23,31 @@ import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/screens/Transaction/components/type';
+import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 
 import { useMode } from '../hooks/useMode';
 import { buildManageEmodeTx } from '../poolService';
 import ManageEmodeOverView from '../components/overviews/ManageEmodeOverView';
 import {
+  useLendingSummary,
   usePoolDataProviderContract,
   useRefreshHistoryId,
   useSelectedMarket,
 } from '../hooks';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { CheckBoxRect } from '@/components2024/CheckBox';
+import { formatUserSummary } from '@aave/math-utils';
+import dayjs from 'dayjs';
+import {
+  HF_BLOCK_THRESHOLD,
+  HF_RISK_CHECKBOX_THRESHOLD,
+} from '../utils/constant';
+
+const BOTTOM_SIZE = {
+  BUTTON: 116,
+  CHECKBOX: 40,
+  TIPS: 80,
+};
 
 const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -40,6 +56,9 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   const { chainInfo } = useSelectedMarket();
   const { ctx } = useSignatureStore();
   const { refresh } = useRefreshHistoryId();
+  const [isChecked, setIsChecked] = useState(false);
+  const { userReserves, reserves, formattedPoolReservesAndIncentives } =
+    useLendingSummary();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -56,8 +75,8 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   }, [emodeEnabled]);
 
   const hasChangeCategory = useMemo(() => {
-    return selectedCategoryId !== emodeCategoryId;
-  }, [selectedCategoryId, emodeCategoryId]);
+    return selectedCategoryId !== emodeCategoryId || wantDisableEmode;
+  }, [selectedCategoryId, emodeCategoryId, wantDisableEmode]);
 
   const [isLoading, setIsLoading] = useState(false);
   const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
@@ -68,13 +87,55 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
     autoResetGasStoreOnChainChange: true,
   });
 
+  const newSummary = useMemo(() => {
+    return formatUserSummary({
+      currentTimestamp: dayjs().unix(),
+      userReserves: userReserves?.userReserves || [],
+      formattedReserves: formattedPoolReservesAndIncentives || [],
+      userEmodeCategoryId: wantDisableEmode ? 0 : selectedCategoryId || 0,
+      marketReferenceCurrencyDecimals:
+        reserves?.baseCurrencyData?.marketReferenceCurrencyDecimals || 0,
+      marketReferencePriceInUsd:
+        reserves?.baseCurrencyData?.marketReferenceCurrencyPriceInUsd || 0,
+    });
+  }, [
+    wantDisableEmode,
+    formattedPoolReservesAndIncentives,
+    reserves?.baseCurrencyData?.marketReferenceCurrencyDecimals,
+    reserves?.baseCurrencyData?.marketReferenceCurrencyPriceInUsd,
+    selectedCategoryId,
+    userReserves?.userReserves,
+  ]);
+
+  const { isRisky, isBlock, desc } = useMemo(() => {
+    const _isRisky =
+      Number(newSummary?.healthFactor || '0') < HF_RISK_CHECKBOX_THRESHOLD;
+    const _isBlock =
+      Number(newSummary?.healthFactor || '0') <= HF_BLOCK_THRESHOLD;
+    return {
+      isRisky: _isRisky,
+      isBlock: _isBlock,
+      desc: _isBlock
+        ? t('page.Lending.risk.blockEmodeWarning')
+        : _isRisky
+        ? t('page.Lending.risk.warning')
+        : '',
+    };
+  }, [newSummary?.healthFactor, t]);
+
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
 
   const buildTx = useCallback(async () => {
-    if (!currentAccount || !pools || !chainInfo || !hasChangeCategory) {
+    if (
+      !currentAccount ||
+      !pools ||
+      !chainInfo ||
+      !hasChangeCategory ||
+      isBlock
+    ) {
       setManageEmodeTx(null);
       return;
     }
@@ -97,12 +158,13 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
       toast.error('There was some error');
     }
   }, [
-    chainInfo,
     currentAccount,
     pools,
-    selectedCategoryId,
-    wantDisableEmode,
+    chainInfo,
     hasChangeCategory,
+    isBlock,
+    wantDisableEmode,
+    selectedCategoryId,
   ]);
 
   useEffect(() => {
@@ -110,7 +172,12 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   }, [buildTx]);
 
   useEffect(() => {
-    if (currentAccount && canShowDirectSubmit && hasChangeCategory) {
+    if (
+      currentAccount &&
+      canShowDirectSubmit &&
+      hasChangeCategory &&
+      !isBlock
+    ) {
       prefetchMiniSigner({
         txs: manageEmodeTx?.length ? manageEmodeTx : [],
         synGasHeaderInfo: true,
@@ -122,6 +189,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
     prefetchMiniSigner,
     manageEmodeTx,
     hasChangeCategory,
+    isBlock,
   ]);
 
   const handlePressManageEMode = useCallback(
@@ -220,32 +288,110 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
     ],
   );
 
+  const disableDirectSignBtn = useMemo(() => {
+    return (
+      !hasChangeCategory ||
+      !manageEmodeTx ||
+      !manageEmodeTx?.length ||
+      isLoading ||
+      !currentAccount ||
+      !!ctx?.disabledProcess ||
+      (isRisky && !isChecked) ||
+      isBlock
+    );
+  }, [
+    hasChangeCategory,
+    manageEmodeTx,
+    isLoading,
+    currentAccount,
+    ctx?.disabledProcess,
+    isRisky,
+    isChecked,
+    isBlock,
+  ]);
+
+  const disableFullWidthButton = useMemo(() => {
+    return (
+      isLoading ||
+      !currentAccount ||
+      !hasChangeCategory ||
+      isBlock ||
+      (isRisky && !isChecked)
+    );
+  }, [
+    isLoading,
+    currentAccount,
+    hasChangeCategory,
+    isBlock,
+    isRisky,
+    isChecked,
+  ]);
+
   return (
     <AutoLockView as="View" style={styles.container}>
-      <Text style={styles.title}>{t('page.Lending.manageEmode.title')}</Text>
-      {wantDisableEmode ? null : (
-        <Text style={styles.description}>
-          {t('page.Lending.manageEmode.description')}
-        </Text>
-      )}
-      <ManageEmodeOverView
-        selectedCategoryId={
-          wantDisableEmode ? emodeCategoryId : selectedCategoryId
-        }
-        disabled={wantDisableEmode}
-        onSelectCategory={setSelectedCategoryId}
-      />
-      {canShowDirectSubmit && hasChangeCategory && (
-        <View style={styles.gasPreContainer}>
-          <DirectSignGasInfo
-            supportDirectSign={true}
-            loading={isLoading}
-            openShowMore={noop}
-            chainServeId={chainInfo?.serverId || ''}
-          />
-        </View>
-      )}
-      <View style={styles.buttonContainer}>
+      <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
+        <Text style={styles.title}>{t('page.Lending.manageEmode.title')}</Text>
+        {wantDisableEmode ? null : (
+          <Text style={styles.description}>
+            {t('page.Lending.manageEmode.description')}
+          </Text>
+        )}
+        <ManageEmodeOverView
+          selectedCategoryId={
+            wantDisableEmode ? emodeCategoryId : selectedCategoryId
+          }
+          newSummary={newSummary}
+          disabled={wantDisableEmode}
+          onSelectCategory={setSelectedCategoryId}
+        />
+        {canShowDirectSubmit && hasChangeCategory && !isBlock && (
+          <View style={styles.gasPreContainer}>
+            <DirectSignGasInfo
+              supportDirectSign={true}
+              loading={false}
+              openShowMore={noop}
+              chainServeId={chainInfo?.serverId || ''}
+            />
+          </View>
+        )}
+      </BottomSheetScrollView>
+      <View
+        style={[
+          styles.buttonContainer,
+          {
+            height:
+              BOTTOM_SIZE.BUTTON +
+              (isBlock
+                ? BOTTOM_SIZE.TIPS
+                : isRisky
+                ? BOTTOM_SIZE.CHECKBOX + BOTTOM_SIZE.TIPS
+                : 0),
+          },
+        ]}>
+        {isRisky && (
+          <>
+            <View style={styles.warningContainer}>
+              <RcIconWarningCircleCC
+                width={15}
+                height={15}
+                color={colors2024['red-default']}
+              />
+              <Text style={styles.warningText}>{desc}</Text>
+            </View>
+            {isBlock ? null : (
+              <TouchableOpacity
+                style={styles.checkbox}
+                onPress={() => {
+                  setIsChecked(prev => !prev);
+                }}>
+                <CheckBoxRect size={16} checked={isChecked} />
+                <Text style={styles.checkboxText}>
+                  {t('page.Lending.risk.checkbox')}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
         {canShowDirectSubmit ? (
           <DirectSignBtn
             loading={isLoading}
@@ -258,25 +404,25 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
                 ? t('page.Lending.manageEmode.actions.disable')
                 : t('page.Lending.manageEmode.actions.enable')
             }
-            titleStyle={wantDisableEmode ? styles.disableBtnTitle : undefined}
-            buttonStyle={wantDisableEmode ? styles.disableBtn : undefined}
+            titleStyle={[
+              wantDisableEmode && styles.closeButtonTitle,
+              disableDirectSignBtn && styles.disableBtnTitle,
+            ]}
+            buttonStyle={wantDisableEmode ? styles.closeButton : undefined}
             title={
               wantDisableEmode
                 ? t('page.Lending.manageEmode.actions.disable')
                 : t('page.Lending.manageEmode.actions.enable')
             }
             iconColor={
-              wantDisableEmode ? colors2024['neutral-title-1'] : undefined
+              disableDirectSignBtn
+                ? colors2024['neutral-info']
+                : wantDisableEmode
+                ? colors2024['neutral-title-1']
+                : undefined
             }
             onFinished={() => handlePressManageEMode()}
-            disabled={
-              !hasChangeCategory ||
-              !manageEmodeTx ||
-              !manageEmodeTx?.length ||
-              isLoading ||
-              !currentAccount ||
-              !!ctx?.disabledProcess
-            }
+            disabled={disableDirectSignBtn}
             type="primary"
             syncUnlockTime
             account={currentAccount}
@@ -293,9 +439,13 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
                 ? t('page.Lending.manageEmode.actions.disable')
                 : t('page.Lending.manageEmode.actions.enable')
             }
-            titleStyle={wantDisableEmode ? styles.disableBtnTitle : undefined}
+            titleStyle={[
+              wantDisableEmode && styles.closeButtonTitle,
+              disableFullWidthButton && styles.disableBtnTitle,
+            ]}
+            buttonStyle={wantDisableEmode ? styles.closeButton : undefined}
             loading={isLoading}
-            disabled={isLoading || !currentAccount || !hasChangeCategory}
+            disabled={disableFullWidthButton}
           />
         )}
       </View>
@@ -307,12 +457,16 @@ export default ManageEmodeFullModal;
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {
-    paddingHorizontal: 25,
+    paddingBottom: 0,
     height: '100%',
     position: 'relative',
     display: 'flex',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  contentContainer: {
+    paddingHorizontal: 25,
   },
   title: {
     color: ctx.colors2024['neutral-title-1'],
@@ -347,12 +501,15 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
   },
   buttonContainer: {
+    position: 'absolute',
+    paddingHorizontal: 25,
+    bottom: 0,
     height: 116,
     paddingTop: 12,
-    marginTop: 'auto',
     width: '100%',
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
+    justifyContent: 'center',
     gap: 12,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
@@ -362,10 +519,43 @@ const getStyles = createGetStyles2024(ctx => ({
   fullWidthButton: {
     flex: 1,
   },
-  disableBtnTitle: {
+  closeButtonTitle: {
     color: ctx.colors2024['neutral-title-1'],
   },
-  disableBtn: {
+  disableBtnTitle: {
+    color: ctx.colors2024['neutral-info'],
+  },
+  closeButton: {
     backgroundColor: ctx.colors2024['neutral-line'],
+  },
+  checkbox: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxText: {
+    fontSize: 16,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-foot'],
+  },
+  warningContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: ctx.colors2024['red-light-1'],
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  warningText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    flex: 1,
+    color: ctx.colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));
