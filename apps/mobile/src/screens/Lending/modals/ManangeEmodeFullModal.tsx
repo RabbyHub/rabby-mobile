@@ -171,7 +171,13 @@ const ManageEmodeFullModal = () => {
           );
         }
         refresh();
-        toast.success(`Enable E-Mode ${t('page.Lending.submitted')}`);
+        toast.success(
+          `${
+            wantDisableEmode
+              ? t('page.Lending.manageEmode.actions.disable')
+              : t('page.Lending.manageEmode.actions.enable')
+          } ${t('page.Lending.submitted')}`,
+        );
       } catch (error) {
       } finally {
         setIsLoading(false);
@@ -190,11 +196,10 @@ const ManageEmodeFullModal = () => {
 
   return (
     <AutoLockView as="View" style={styles.container}>
-      <Text style={styles.title}>Manage E-Mode</Text>
+      <Text style={styles.title}>{t('page.Lending.manageEmode.title')}</Text>
       {wantDisableEmode ? null : (
         <Text style={styles.description}>
-          Enabling E-Mode allows you to maximize your borrowing power. However,
-          borrowing is restricted to assets within the selected category.
+          {t('page.Lending.manageEmode.description')}
         </Text>
       )}
       <ManageEmodeOverView
@@ -222,10 +227,18 @@ const ManageEmodeFullModal = () => {
             key={wantDisableEmode ? 0 : selectedCategoryId}
             showTextOnLoading
             wrapperStyle={styles.directSignBtn}
-            authTitle={wantDisableEmode ? 'Disable E-Mode' : 'Enable E-Mode'}
+            authTitle={
+              wantDisableEmode
+                ? t('page.Lending.manageEmode.actions.disable')
+                : t('page.Lending.manageEmode.actions.enable')
+            }
             titleStyle={wantDisableEmode ? styles.disableBtnTitle : undefined}
             buttonStyle={wantDisableEmode ? styles.disableBtn : undefined}
-            title={wantDisableEmode ? 'Disable E-Mode' : 'Enable E-Mode'}
+            title={
+              wantDisableEmode
+                ? t('page.Lending.manageEmode.actions.disable')
+                : t('page.Lending.manageEmode.actions.enable')
+            }
             iconColor={
               wantDisableEmode ? colors2024['neutral-title-1'] : undefined
             }
@@ -248,7 +261,11 @@ const ManageEmodeFullModal = () => {
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
             onPress={() => handlePressManageEMode()}
-            title={wantDisableEmode ? 'Disable E-Mode' : 'Enable E-Mode'}
+            title={
+              wantDisableEmode
+                ? t('page.Lending.manageEmode.actions.disable')
+                : t('page.Lending.manageEmode.actions.enable')
+            }
             titleStyle={wantDisableEmode ? styles.disableBtnTitle : undefined}
             loading={isLoading}
             disabled={isLoading || !currentAccount}

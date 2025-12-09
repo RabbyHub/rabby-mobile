@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
+import { useTranslation } from 'react-i18next';
 
 export default function CategoryItem({
   title,
@@ -17,6 +18,7 @@ export default function CategoryItem({
   onPress?(): void;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const isDark = useGetBinaryMode() === 'dark';
   return (
     <TouchableView
@@ -41,7 +43,7 @@ export default function CategoryItem({
         </View>
         <View style={styles.rightArea}>
           <Text style={styles.unavailableTag}>
-            {available ? '' : '• Unavailable'}
+            {available ? '' : t('page.Lending.manageEmode.unavailable')}
           </Text>
         </View>
       </View>

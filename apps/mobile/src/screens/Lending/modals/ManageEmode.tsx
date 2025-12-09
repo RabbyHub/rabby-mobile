@@ -10,9 +10,11 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useTranslation } from 'react-i18next';
 
 export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   const { emodeEnabled } = useMode();
 
   const handlePressManageEMode = useCallback(() => {
@@ -31,15 +33,17 @@ export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <AutoLockView as="View" style={styles.container}>
-      <Text style={styles.title}>Efficiency mode (E-Mode)</Text>
+      <Text style={styles.title}>
+        {t('page.Lending.manageEmode.guide.title')}
+      </Text>
       <Text style={styles.description}>
-        E-Mode increases your LTV for a selected category of assets.{' '}
+        {t('page.Lending.manageEmode.guide.description')}
       </Text>
       <Button
         containerStyle={styles.button}
         buttonStyle={[emodeEnabled && styles.disabledButton]}
         titleStyle={[emodeEnabled && styles.disabledTitle]}
-        title="Manage E-Mode"
+        title={t('page.Lending.manageEmode.guide.buttonTitle')}
         onPress={handlePressManageEMode}
       />
     </AutoLockView>

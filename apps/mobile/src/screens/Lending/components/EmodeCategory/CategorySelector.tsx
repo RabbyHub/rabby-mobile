@@ -97,7 +97,7 @@ export function CategorySelector({
     removeChainModal();
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_EMODE_CATEGORY,
-      titleText: t('page.Lending.selectMarket'),
+      titleText: t('page.Lending.manageEmode.categorySelector.label'),
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         rootViewType: 'View',
@@ -140,7 +140,11 @@ export function CategorySelector({
             />
           </View>
         ) : null}
-        {isCloseMode ? <Text style={styles.enabledText}>• Enabled</Text> : null}
+        {isCloseMode ? (
+          <Text style={styles.enabledText}>
+            {t('page.Lending.manageEmode.enabled')}
+          </Text>
+        ) : null}
       </TouchableOpacity>
     </>
   );

@@ -15,6 +15,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { useTranslation } from 'react-i18next';
 
 const EnabledEmodeInfo = ({
   title,
@@ -63,6 +64,7 @@ const EnabledEmodeInfo = ({
 
 const DisabledEmodeInfo = ({ onPress }: { onPress: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   return (
     <Pressable style={[styles.inner, styles.disabledInner]} onPress={onPress}>
       <LightingIconCC
@@ -71,7 +73,7 @@ const DisabledEmodeInfo = ({ onPress }: { onPress: () => void }) => {
         color={colors2024['neutral-secondary']}
       />
       <Text numberOfLines={1} ellipsizeMode="tail" style={styles.disabledText}>
-        DISABLED
+        {t('page.Lending.disabled')}
       </Text>
       <SettingIconCC
         width={18}
@@ -84,6 +86,7 @@ const DisabledEmodeInfo = ({ onPress }: { onPress: () => void }) => {
 
 const RightMarketTabInfo = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   const { isInIsolationMode, currentEmode, emodeEnabled } = useMode();
 
   const handlePressEnabledEmode = useCallback(() => {
@@ -106,7 +109,9 @@ const RightMarketTabInfo = () => {
     return (
       <View style={styles.container}>
         <View style={styles.emodeContainer}>
-          <Text style={styles.emodeLabel}>E-Mode</Text>
+          <Text style={styles.emodeLabel}>
+            {t('page.Lending.manageEmode.emode')}
+          </Text>
           <EnabledEmodeInfo
             title={currentEmode?.label || ''}
             onPress={handlePressEnabledEmode}
@@ -119,7 +124,9 @@ const RightMarketTabInfo = () => {
   return (
     <View style={styles.container}>
       <View style={styles.emodeContainer}>
-        <Text style={styles.emodeLabel}>E-Mode</Text>
+        <Text style={styles.emodeLabel}>
+          {t('page.Lending.manageEmode.emode')}
+        </Text>
         <DisabledEmodeInfo onPress={handlePressEnabledEmode} />
       </View>
     </View>

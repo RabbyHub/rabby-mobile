@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Keyboard, Text, View } from 'react-native';
 import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
-
+import { useTranslation } from 'react-i18next';
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
@@ -24,6 +24,7 @@ interface IProps {
 const FOOTER_COMPONENT_HEIGHT = 32;
 export default function SelectCategoryModal({ value, onChange }: IProps) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const iUserSummary = useAtomValue(iUserSummaryAtom);
   const { eModes } = useMode();
   const eModeCategories: Record<number, EModeCategoryDisplay> = useMemo(
@@ -66,7 +67,9 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
       <BottomSheetHandlableView>
         <View style={{ ...styles.titleView, ...styles.titleViewWithText }}>
           <View style={styles.titleTextWrapper}>
-            <Text style={styles.titleText}>Assets category</Text>
+            <Text style={styles.titleText}>
+              {t('page.Lending.manageEmode.categorySelector.label')}
+            </Text>
           </View>
         </View>
       </BottomSheetHandlableView>

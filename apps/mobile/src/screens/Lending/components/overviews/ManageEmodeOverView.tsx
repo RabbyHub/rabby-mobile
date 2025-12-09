@@ -33,6 +33,7 @@ const PairTable = ({
   }[];
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
 
   if (!data?.length) {
     return null;
@@ -42,10 +43,14 @@ const PairTable = ({
     <View style={styles.table}>
       <View style={styles.tableHeader}>
         <Text style={[styles.tableCell, styles.headerCell, styles.leftCell]}>
-          Asset
+          {t('page.Lending.manageEmode.overview.row.asset')}
         </Text>
-        <Text style={[styles.tableCell, styles.headerCell]}>Collateral</Text>
-        <Text style={[styles.tableCell, styles.headerCell]}>Borrowable</Text>
+        <Text style={[styles.tableCell, styles.headerCell]}>
+          {t('page.Lending.manageEmode.overview.row.collateral')}
+        </Text>
+        <Text style={[styles.tableCell, styles.headerCell]}>
+          {t('page.Lending.manageEmode.overview.row.borrowable')}
+        </Text>
       </View>
       <View style={styles.tableBody}>
         {data?.map(item => (
@@ -57,7 +62,12 @@ const PairTable = ({
                   tokenSymbol={item.iconSymbol}
                   chainSize={0}
                 />
-                <Text style={styles.symbol}>{item.symbol}</Text>
+                <Text
+                  style={styles.symbol}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {item.symbol}
+                </Text>
               </View>
             </View>
             <View style={[styles.tableCell, styles.iconContainer]}>
@@ -193,7 +203,9 @@ const ManageEmodeOverView: React.FC<{
       <Text style={styles.header}>{t('page.Lending.popup.title')}</Text>
       <View style={styles.content}>
         <View style={[styles.item, styles.categoryContainer]}>
-          <Text style={styles.title}>Asset category</Text>
+          <Text style={styles.title}>
+            {t('page.Lending.manageEmode.overview.title')}
+          </Text>
           <View style={styles.availableValueContainer}>
             <CategorySelector
               label={
@@ -207,7 +219,9 @@ const ManageEmodeOverView: React.FC<{
 
         <View style={[styles.item, styles.apyContainer]}>
           <View style={styles.maxLtvContainer}>
-            <Text style={styles.title}>Max LTV</Text>
+            <Text style={styles.title}>
+              {t('page.Lending.manageEmode.overview.maxLtv')}
+            </Text>
             <Pressable hitSlop={20} onPress={handleSupplyDescription}>
               <WarningFillCC
                 width={12}
@@ -436,6 +450,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
+    maxWidth: 100,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
