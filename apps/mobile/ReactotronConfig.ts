@@ -6,7 +6,10 @@ import { getDevServerHost } from '@/core/utils/devServerSettings';
 import mmkvPlugin from '@/core/utils/reactotron-plugins/react-native-mmkv';
 import opSQLitePlugin from '@/core/utils/reactotron-plugins/op-sqlite';
 import '@/core/utils/reactotron-plugins/_setup';
-import { reactotronEvents } from '@/core/utils/reactotron-plugins/_utils';
+import {
+  reactotronEvents,
+  waitTronReady,
+} from '@/core/utils/reactotron-plugins/_utils';
 import { setupCustomCommands } from '@/core/utils/reactotron-plugins/_setup';
 
 export async function setupReactotronConnection() {
@@ -47,6 +50,7 @@ export async function setupReactotronConnection() {
     DEV_SERVER_HOSTNAME_ || persistedHostname || scriptHostname;
 
   let client: null | ReactotronReactNative = null;
+  const waitTronP = waitTronReady();
   if (finalScriptHostname) {
     Reactotron.clear();
     client = Reactotron.use(
@@ -70,6 +74,8 @@ export async function setupReactotronConnection() {
     setupCustomCommands(client);
 
     reactotronEvents.emit('__REACTOTRON_LOADED__', { client });
+
+    await waitTronP;
   }
 
   return client;

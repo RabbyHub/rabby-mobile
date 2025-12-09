@@ -8566,7 +8566,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@op-engineering/op-sqlite@npm:^15.1.1":
+"@op-engineering/op-sqlite@npm:15.1.1":
   version: 15.1.1
   resolution: "@op-engineering/op-sqlite@npm:15.1.1"
   dependencies:
@@ -8575,6 +8575,18 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 93f0e42f0ac4e36958aa345374f581b05294244f7f9bdd675f47e57f9f03a192958953e32cbd524ce9f6def553cea3760a821eb604544e63de4f52d706fc491c
+  languageName: node
+  linkType: hard
+
+"@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.1#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.1-64eb5c2a0a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 15.1.1
+  resolution: "@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.1#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.1-64eb5c2a0a.patch::version=15.1.1&hash=e54004&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    react-native-safe-area-context: ^5.6.2
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 231e1b0abb677cce144d554f1d67d753fa69b26f42df65e797551306841722c0626b8605c5e2283e05d5c0a2ecb10acfc2da244d96b3609c3625381677cf3a52
   languageName: node
   linkType: hard
 
