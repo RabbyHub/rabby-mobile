@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { Text, View, TouchableOpacity } from 'react-native';
+import { Text, View, TouchableOpacity, Pressable } from 'react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
@@ -19,17 +19,20 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
 import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
+import { ManageSetting } from '../ManageSetting';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
   onAddAddressPress?: () => void;
   onDone?: () => void;
   onMoreAddressListPress?: () => void;
+  isManageMode?: boolean;
 }
 export const AddressList = ({
   onAddAddressPress,
   onDone,
   onMoreAddressListPress,
+  isManageMode,
 }: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -99,11 +102,15 @@ export const AddressList = ({
     ({ item }) => {
       return (
         <View style={styles.itemGap}>
-          <AddressEntry data={item} onSelect={onDone} />
+          <AddressEntry
+            data={item}
+            onSelect={onDone}
+            isManageMode={isManageMode}
+          />
         </View>
       );
     },
-    [onDone, styles.itemGap],
+    [isManageMode, onDone, styles.itemGap],
   );
 
   const handleMoreWalletsPress = useCallback(() => {
@@ -241,7 +248,7 @@ export const AddressList = ({
       showsHorizontalScrollIndicator={false}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.list}
-      ListFooterComponent={renderFooter}
+      ListFooterComponent={isManageMode ? null : renderFooter}
       style={styles.listContainer}
       ListHeaderComponent={<View style={{ height: SPACING_HEIGHT }} />}
       refreshControl={
@@ -262,6 +269,12 @@ export const AddressListModal = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [moreAddressList, setMoreAddressList] = useState(false);
+  const [isManageMode, setIsManageMode] = useState(false);
+
+  const switchManageMode = () => {
+    setIsManageMode(e => !e);
+  };
+
   if (moreAddressList) {
     return (
       <NotMatterAddressDialog
@@ -272,11 +285,24 @@ export const AddressListModal = ({
   }
   return (
     <AutoLockView as="View" style={styles.container}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+          paddingRight: 20,
+        }}>
+        <ManageSetting
+          isManageMode={isManageMode}
+          switchManageMode={switchManageMode}
+        />
+      </View>
       <Text style={styles.title}>{t('component.multiAddressModal.title')}</Text>
+
       <AddressList
         onAddAddressPress={onAddAddressPress}
         onDone={onDone}
         onMoreAddressListPress={() => setMoreAddressList(true)}
+        isManageMode={isManageMode}
       />
     </AutoLockView>
   );
@@ -288,6 +314,15 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
+  },
+  done: {
+    color: ctx.colors2024['neutral-secondary'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
   },
   title: {
     fontSize: 20,

@@ -10,6 +10,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
+import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
@@ -102,6 +103,7 @@ interface AddressItemProps {
   hiddenPin?: boolean;
   changePercent?: string;
   isLoss?: boolean;
+  isManageMode?: boolean;
 }
 export const AddressItemInner2024 = (props: AddressItemProps) => {
   const {
@@ -112,6 +114,7 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
     hiddenPin,
     changePercent,
     isLoss,
+    isManageMode,
   } = props;
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
@@ -172,7 +175,13 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
         )}
       </InnerAddressItem>
 
-      {hiddenArrow ? null : (
+      {hiddenArrow ? null : isManageMode ? (
+        <RcIconSettingCC
+          width={20}
+          height={20}
+          color={colors2024['neutral-secondary']}
+        />
+      ) : (
         <ArrowCircleCC
           style={styles.arrow}
           color={

@@ -15,10 +15,13 @@ import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomS
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { IS_IOS } from '@/core/native/utils';
 import ArrowLeftSVG from '@/components/AccountSelectModalTx/icons/nav-left-cc.svg';
+import { ManageSetting } from './components/ManageSetting';
+
 export const NotMatterAddressDialog: React.FC<{
   onDone?: () => void;
   onBack?: () => void;
-}> = ({ onDone, onBack }) => {
+  showBackArrow?: boolean;
+}> = ({ onDone, onBack, showBackArrow = true }) => {
   const { notTop10Accounts, gnosisAccounts, watchAccounts, fetchAccounts } =
     useAccountInfo();
   const { bottom } = useSafeAreaInsets();
@@ -26,6 +29,11 @@ export const NotMatterAddressDialog: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [isScrolling, setIsScrolling] = React.useState(false);
   const scrollTimeoutRef = React.useRef<NodeJS.Timeout>();
+  const [isManageMode, setIsManageMode] = React.useState(false);
+
+  const switchManageMode = () => {
+    setIsManageMode(e => !e);
+  };
 
   useEffect(() => {
     fetchAccounts();
@@ -133,6 +141,7 @@ export const NotMatterAddressDialog: React.FC<{
         account={item}
         isScrolling={isScrolling}
         useLongPressing={true}
+        isManageMode={isManageMode}
       />
     </View>
   );
@@ -140,17 +149,26 @@ export const NotMatterAddressDialog: React.FC<{
   return (
     <AutoLockView as="View" style={styles.container}>
       <View style={styles.listHeader}>
-        <Pressable onPress={onBack} style={styles.backButton}>
-          <ArrowLeftSVG
-            width={24}
-            height={24}
-            color={colors2024['neutral-title-1']}
-          />
-        </Pressable>
+        {showBackArrow ? (
+          <Pressable onPress={onBack} style={styles.backButton}>
+            <ArrowLeftSVG
+              width={24}
+              height={24}
+              color={colors2024['neutral-title-1']}
+            />
+          </Pressable>
+        ) : null}
         <View style={styles.titleContainer}>
           <Text style={styles.listTitle}>
             {t('page.addressDetail.notMatterAddressDialog.title')}
           </Text>
+        </View>
+
+        <View style={styles.manageButton}>
+          <ManageSetting
+            isManageMode={isManageMode}
+            switchManageMode={switchManageMode}
+          />
         </View>
       </View>
       <BottomSheetSectionList
@@ -182,6 +200,11 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   backButton: {
     position: 'absolute',
     left: 20,
+    top: 0,
+  },
+  manageButton: {
+    position: 'absolute',
+    right: 20,
     top: 0,
   },
   listContainer: {
