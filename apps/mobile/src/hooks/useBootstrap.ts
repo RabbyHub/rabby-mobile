@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { atom, useAtom, useSetAtom } from 'jotai';
 import {
   customTestnetService,
   keyringService,
@@ -18,13 +17,7 @@ import {
 } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { loadSecurityChain, useGlobal } from './global';
-import {
-  useAppUnlocked,
-  useSetAppLock,
-  useTryUnlockAppWithBuiltinOnTop,
-  getTriedUnlock,
-} from './useLock';
-import { useNavigationReady } from './navigation';
+import { useAppUnlocked, getTriedUnlock } from './useLock';
 import SplashScreen from 'react-native-splash-screen';
 import { useAccounts } from './account';
 import { useLoadLockInfo } from '@/hooks/useLock';
@@ -34,10 +27,15 @@ import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks
 import { apisSafe } from '@/core/apis/safe';
 import { RefLikeObject } from '@/utils/type';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 import { replace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { setBrowserState } from './browser/useBrowser';
+import { perfEvents } from '@/core/utils/perf';
 
 const syncCustomTestChainList = () => {
   try {
@@ -247,6 +245,13 @@ const hideSplashScreen = (forceHide = false) => {
   }
 };
 
+runIIFEFunc(() => {
+  const sub = perfEvents.subscribe('APP_NAVIGATION_READY', () => {
+    hideSplashScreen(true);
+    sub.remove();
+  });
+});
+
 /**
  * @description only call this hook on the top level component
  */
@@ -256,11 +261,6 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
   useGlobal();
   useLoadLockInfo({ autoFetch: true });
   const { fetchBiometrics } = useBiometrics({ autoFetch: false });
-
-  const { appNavigationReady } = useNavigationReady();
-  React.useEffect(() => {
-    if (appNavigationReady) hideSplashScreen(true);
-  }, [appNavigationReady]);
 
   const startedLoadRef = React.useRef(false);
   React.useEffect(() => {

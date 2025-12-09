@@ -76,32 +76,6 @@ export function useCurrentRouteName() {
   };
 }
 
-// export function useSetCurrentRouteName() {
-//   return {
-//     setCurrentRouteName: useSetAtom(currentRouteNameAtom),
-//   };
-// }
-
-// const navigationReadyAtom = atom<boolean>(false);
-type NavigationStore = {
-  ready: boolean;
-};
-const navigationStore = zCreate<NavigationStore>(() => ({
-  ready: false,
-}));
-export function useNavigationReady() {
-  // const appNavigationReady = useAtomValue(navigationReadyAtom);
-  const appNavigationReady = navigationStore(s => s.ready);
-
-  return { appNavigationReady };
-}
-function setNavigationReady(ready: boolean) {
-  navigationStore.setState({ ready });
-}
-export function useSetNavigationReady() {
-  return { setNavigationReady };
-}
-
 const hitSlop = {
   top: 10,
   bottom: 10,

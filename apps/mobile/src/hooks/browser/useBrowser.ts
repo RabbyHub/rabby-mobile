@@ -1,5 +1,12 @@
+import { useMemo } from 'react';
+import { Platform } from 'react-native';
+import { useMemoizedFn } from 'ahooks';
+import { last, omit, sortBy } from 'lodash';
+import { v4 as uuid } from 'uuid';
+import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
+
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import { browserService, dappService } from '@/core/services';
+import { browserService } from '@/core/services';
 import { Tab } from '@/core/services/browserService';
 import { isGoogle } from '@/utils/browser';
 import {
@@ -11,29 +18,16 @@ import {
   canoicalizeDappUrl,
   safeGetOrigin,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom } from 'jotai';
-import { last, omit, sortBy } from 'lodash';
-import { v4 as uuid } from 'uuid';
-// import { dappsAtom } from '../useDapps';
-import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
-import { Platform } from 'react-native';
+
 import { useDappsValue } from '../useDapps';
 import { zCreate } from '@/core/utils/reexports';
-import { useMemo } from 'react';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 type TabsState = {
   tabs: Tab[];
   activeTabId: string;
 };
-// export const tabsAtom = atom<{
-//   tabs: Tab[];
-//   activeTabId: string;
-// }>({
-//   tabs: [],
-//   activeTabId: '',
-// });
+
 const tabsStore = zCreate<TabsState>(() => ({
   tabs: [],
   activeTabId: '',
@@ -110,7 +104,11 @@ export function setBrowserState(
   valOrFunc: UpdaterOrPartials<BrowserStateType>,
 ) {
   browserStateStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+    if (!changed) return prev;
+
     return newVal;
   });
 }

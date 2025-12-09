@@ -16,11 +16,7 @@ import {
   getScreenStatusBarConf,
   RootNames,
 } from './constant/layout';
-import {
-  apisHomeTabIndex,
-  useSetNavigationReady,
-  useStackScreenConfig,
-} from './hooks/navigation';
+import { apisHomeTabIndex, useStackScreenConfig } from './hooks/navigation';
 import { analytics, matomoLogScreenView } from './utils/analytics';
 
 import {
@@ -234,17 +230,18 @@ export default function AppNavigation() {
   const colors = useThemeColors();
 
   const { getIsAppUnlocked } = useAppUnlocked();
-  const { setNavigationReady } = useSetNavigationReady();
 
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
   >(() => {
-    setNavigationReady(true);
     let readyRootName = navigationRef.getCurrentRoute()?.name!;
     if (!getIsAppUnlocked()) {
       replace(RootNames.Unlock);
       readyRootName = RootNames.Unlock;
     }
+    perfEvents.emit('APP_NAVIGATION_READY', {
+      readyRootName,
+    });
     onRouteChange(readyRootName);
 
     analytics.logScreenView({
@@ -252,7 +249,7 @@ export default function AppNavigation() {
       screen_class: readyRootName,
     });
     matomoLogScreenView({ name: readyRootName });
-  }, [setNavigationReady, getIsAppUnlocked]);
+  }, [getIsAppUnlocked]);
 
   useDetermineExitAppOnPressBack();
 
