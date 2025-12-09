@@ -9,8 +9,8 @@ import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
-import { getSortedAddressList, sortAccountList } from '@/core/apis/account';
-import { preferenceService } from '@/core/services';
+import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 
 const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 
@@ -23,6 +23,8 @@ const waitQueueFinished = (q: PQueue) => {
     });
   });
 };
+
+const addressSentCache: Record<string, string[]> = {};
 
 export const enum RiskType {
   NEVER_SEND = 1,
@@ -38,7 +40,9 @@ export const useRisks = (options: {
   onLoadFinished?: (ctx: { risks: Array<RiskItem> }) => void;
 }) => {
   const { fromAddress, toAddress, cex, onLoadFinished } = options;
-  const [risks, setRisks] = useState<Array<RiskItem>>([]);
+  const [risksByAddr, setRisksByAddr] = useState<{
+    [toAddr: string]: Array<RiskItem>;
+  }>({});
   const { t } = useTranslation();
   const [loading, setLoading] = useState(!!toAddress);
   const riskGetRef = useRef(false);
@@ -47,15 +51,20 @@ export const useRisks = (options: {
     AddrDescResponse['desc'] | undefined
   >();
 
-  const hasSend = useMemo(() => {
-    return !loading && !risks.some(r => r.type === RiskType.NEVER_SEND);
-  }, [loading, risks]);
+  const { accounts } = useMyAccounts();
+  const sortedAccounts = useSortAddressList(accounts);
+
+  const top10Addresses = useCreationWithShallowCompare(() => {
+    return sortedAccounts.slice(0, __DEV__ ? 1 : 10).map(acc => acc.address);
+  }, [sortedAccounts]);
+  const caredAddresses = useMemo(() => {
+    if (fromAddress) return [fromAddress];
+
+    return top10Addresses;
+  }, [fromAddress, top10Addresses]);
 
   const fetchRisks = useCallback(async () => {
-    if (!toAddress) return;
-    const top10Addresses = (await getSortedAddressList()).sortedAccounts;
-
-    if (!top10Addresses.length) return;
+    if (!caredAddresses.length || !toAddress) return;
     if (riskGetRef.current) return;
     riskGetRef.current = true;
     setLoading(true);
@@ -71,10 +80,6 @@ export const useRisks = (options: {
 
       const addressDescPromise = getAddrDescWithCexLocalCacheSync(toAddress);
 
-      const caredAddresses = fromAddress
-        ? [fromAddress]
-        : top10Addresses.map(acc => acc.address);
-
       const checkTransferPromise = new Promise<void>(resolve => {
         caredAddresses.forEach(addr => {
           if (isSameAddress(addr, toAddress)) return;
@@ -86,6 +91,10 @@ export const useRisks = (options: {
 
               if (res?.has_transfer) {
                 addressSent = addr;
+                addressSentCache[toAddress] = [
+                  ...(addressSentCache[toAddress] || []),
+                  addr,
+                ];
               }
             } catch (error) {
               console.error('has_transfer fetch error', error);
@@ -150,17 +159,18 @@ export const useRisks = (options: {
         timeoutPromise,
       ]);
 
-      if (!addressSent) {
-        setRisks([
-          ...currRisks,
-          {
-            type: RiskType.NEVER_SEND,
-            value: t('page.confirmAddress.risks.noSend'),
-          },
-        ]);
-      } else {
-        setRisks(currRisks);
-      }
+      setRisksByAddr(prev => ({
+        ...prev,
+        [toAddress]: addressSent
+          ? currRisks
+          : [
+              ...currRisks,
+              {
+                type: RiskType.NEVER_SEND,
+                value: t('page.confirmAddress.risks.noSend'),
+              },
+            ],
+      }));
       onLoadFinished?.({ risks: [...currRisks] });
     } catch (error) {
       console.error('check transfer timeout or error', error);
@@ -172,22 +182,24 @@ export const useRisks = (options: {
           value: t('page.confirmAddress.risks.noSend'),
         },
       ];
-      setRisks(risks);
+      setRisksByAddr(prev => ({
+        ...prev,
+        [toAddress]: risks,
+      }));
       onLoadFinished?.({ risks });
     } finally {
       riskGetRef.current = false;
       setLoading(false);
     }
-  }, [fromAddress, toAddress, cex, t, onLoadFinished]);
+  }, [caredAddresses, toAddress, cex, t, onLoadFinished]);
 
   useEffect(() => {
     fetchRisks();
   }, [fetchRisks]);
 
   return {
-    risks,
+    risks: risksByAddr[toAddress] || [],
     addressDesc,
-    hasSend,
     loading,
     fetchRisks,
   };

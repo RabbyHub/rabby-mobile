@@ -271,8 +271,7 @@ function SendScreen({
     account: currentAccount!,
   });
   const isShowLoadingRef = useRef(true);
-  const initByCacheFinishedRef = useRef(false);
-  const initByCache = useCallback(async () => {
+  const initByCache = async () => {
     let targetToken: TokenItem | null = null;
     if (
       navParams &&
@@ -342,7 +341,10 @@ function SendScreen({
         targetToken = currentToken;
       }
     }
-
+    const hideLoading = isShowLoadingRef.current
+      ? // ? toastLoading('Loading Token...')
+        noop
+      : noop;
     try {
       if (navParams?.toAddress) {
         const res = await getRecommendToken({
@@ -362,12 +364,26 @@ function SendScreen({
           };
         }
       }
+      // 更新页面状态
       if (chainItem && targetToken.chain !== chainItem.serverId) {
         const target = findChainByServerID(targetToken.chain);
         if (target?.enum) {
           setChainEnum(target.enum);
         }
       }
+      // // 不知道为什么要，感觉可以不要
+      // if (!chainItem) {
+      //   setChainEnum(CHAINS_ENUM.ETH);
+      // }
+      // // 应该去了也可以
+      // if (targetToken) {
+      //   if (
+      //     !lowcaseSame(targetToken.chain, currentToken.chain) ||
+      //     !lowcaseSame(targetToken.id, currentToken.id)
+      //   ) {
+      //     // setCurrentToken(targetToken);
+      //   }
+      // }
       await Promise.race([
         await loadCurrentToken(
           targetToken.id,
@@ -380,34 +396,20 @@ function SendScreen({
       // hideLoading();
       isShowLoadingRef.current = true;
     }
-  }, [
-    navParams,
-    routeParams,
-    currentAccount,
-    currentToken,
-    chainItem,
-    setChainEnum,
-    putScreenState,
-    fetchOrderedChainList,
-    loadCurrentToken,
-  ]);
-  const initByCacheOnce = useCallback(async () => {
-    if (initByCacheFinishedRef.current) {
+  };
+
+  const init = async () => {
+    if (!currentAccount) {
+      redirectBackErrorHandler(navigation);
       return;
     }
-    initByCacheFinishedRef.current = true;
+    putScreenState({ inited: true });
+  };
 
-    try {
-      await initByCache();
-    } catch (e) {
-      console.error('SendScreen initByCache error', e);
-      initByCacheFinishedRef.current = false;
+  const checkIsAddressBlocked = async (to?: string) => {
+    if (!to) {
+      return;
     }
-  }, [initByCache]);
-
-  const checkIsAddressBlocked = useCallback(async (to?: string) => {
-    if (!to) return;
-
     try {
       const { is_blocked } = await openapi.isBlockedAddress(to);
       if (is_blocked) {
@@ -415,34 +417,28 @@ function SendScreen({
         setIsShowBlockedTransactionDialog(true);
       }
     } catch (e) {
-      console.error('checkIsAddressBlocked error', e);
+      // NOTHING
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (screenState.inited) {
-      initByCacheOnce();
+      initByCache();
       checkIsAddressBlocked(navParams?.toAddress);
-    }
-  }, [
-    screenState.inited,
-    initByCacheOnce,
-    checkIsAddressBlocked,
-    navParams?.toAddress,
-  ]);
-
-  useEffect(() => {
-    if (!currentAccount) {
-      redirectBackErrorHandler(navigation);
-      return;
     } else {
-      putScreenState({ inited: true });
+      init();
 
       return () => {
         apiPageStateCache.clearPageStateCache();
       };
     }
-  }, [currentAccount, navigation, putScreenState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    navParams,
+    screenState.inited,
+    currentAccount?.address,
+    currentAccount?.type,
+  ]);
 
   const { fetchContactAccounts } = useContactAccounts();
 

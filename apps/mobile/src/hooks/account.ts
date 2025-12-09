@@ -167,12 +167,10 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
     }
   }, [disableAutoFetch, fetchAccounts]);
 
-  const accounts = useCreationWithShallowCompare(() => {
-    return filterMyAccounts(allAccounts);
-  }, [allAccounts]);
-
   return {
-    accounts,
+    accounts: useMemo(() => {
+      return [...filterMyAccounts(allAccounts)];
+    }, [allAccounts]),
     fetchAccounts,
   };
 }
