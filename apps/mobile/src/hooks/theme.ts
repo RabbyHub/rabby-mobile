@@ -3,10 +3,9 @@ import {
   ColorSchemeName,
   Appearance,
   useColorScheme,
-  AppState,
   Platform,
 } from 'react-native';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   ThemeColors,
@@ -16,14 +15,17 @@ import {
   AppColorSchemes,
   AppColors2024Variants,
 } from '@/constant/theme';
-import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import {
+  appJsonStore,
+  MMKVStorageStrategy,
+  zustandByMMKV,
+} from '@/core/storage/mmkv';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
 import { useThemeMode } from '@rneui/themed';
 import { TFunction } from 'i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMemoizedFn } from 'ahooks';
+import { runDevIIFEFunc, runIIFEFunc } from '@/core/utils/store';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
 
@@ -47,12 +49,54 @@ function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {
     : 'light';
 }
 
-const ThemeModeStore = atomByMMKV('@AppTheme', 'light' as AppThemeScheme, {
-  storage: MMKVStorageStrategy.compatString,
-});
+// runDevIIFEFunc(() => {
+//   appJsonStore.setItem('@AppTheme', 'light');
+// });
+
+const themeModeStore = zustandByMMKV<{ appTheme: AppThemeScheme }>(
+  '@AppTheme',
+  { appTheme: 'light' },
+  {
+    storage: MMKVStorageStrategy.compatString,
+    migrateFromAtom(ctx) {
+      const newData = {
+        state: {
+          appTheme: (typeof ctx.oldData === 'string'
+            ? ctx.oldData
+            : 'light') as AppThemeScheme,
+        },
+        version: 0,
+      };
+      ctx.appJsonStore.setItem(ctx.legacyAppStoreKey, newData);
+
+      return { migrated: newData.state };
+    },
+  },
+);
+
+function toggleThemeMode(nextTheme?: AppThemeScheme) {
+  // throw new Error(`cannot specify theme node!`);
+
+  themeModeStore.setState(prev => {
+    if (!nextTheme) {
+      nextTheme =
+        AppColorSchemes[
+          (AppColorSchemes.indexOf(prev.appTheme) + 1) % AppColorSchemes.length
+        ];
+    }
+    Appearance.setColorScheme(appThemeToColorScheme(nextTheme));
+    return { ...prev, appTheme: nextTheme };
+  });
+}
+
+function getBinaryMode(appTheme = themeModeStore.getState().appTheme) {
+  const colorScheme = Appearance.getColorScheme();
+
+  return coerceBinaryTheme(appTheme, colorScheme);
+}
 
 export function useGetBinaryMode() {
-  const appTheme = useAtomValue(ThemeModeStore);
+  const appTheme = themeModeStore(s => s.appTheme);
   const colorScheme = useColorScheme();
 
   return coerceBinaryTheme(appTheme, colorScheme);
@@ -76,7 +120,7 @@ export function makeThemeOptions(t: TFunction) {
 }
 
 export function useAppThemeConfig() {
-  const appTheme = useAtomValue(ThemeModeStore);
+  const appTheme = themeModeStore(s => s);
   return appTheme;
 }
 
@@ -84,26 +128,8 @@ export function useAppThemeConfig() {
 // type suggests that it can be null. This will not happen in practice, so this
 // makes it a bit easier to work with.
 export const useAppTheme = (options?: { isAppTop?: boolean }) => {
-  const [appTheme, setAppTheme] = useAtom(ThemeModeStore);
+  const appTheme = themeModeStore(s => s.appTheme);
   const colorScheme = useColorScheme();
-
-  const toggleThemeMode = React.useCallback(
-    (nextTheme?: AppThemeScheme) => {
-      // throw new Error(`cannot specify theme node!`);
-
-      setAppTheme(prev => {
-        if (!nextTheme) {
-          nextTheme =
-            AppColorSchemes[
-              (AppColorSchemes.indexOf(prev) + 1) % AppColorSchemes.length
-            ];
-        }
-        Appearance.setColorScheme(appThemeToColorScheme(nextTheme));
-        return nextTheme;
-      });
-    },
-    [setAppTheme],
-  );
 
   const binaryTheme: ColorSchemeName = React.useMemo(
     () => coerceBinaryTheme(appTheme, colorScheme),
@@ -184,7 +210,24 @@ export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
 }
 
 const makeNoop = () => () => void 0;
-const isAndroid = Platform.OS === 'android';
+
+export function getColors2024(appThemeMode: ReturnType<typeof getBinaryMode>) {
+  const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
+  const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
+
+  return {
+    classicalColors,
+    colors: classicalColors,
+    colors2024,
+  };
+}
+
+export function useThemeColors2024() {
+  const appThemeMode = useGetBinaryMode();
+
+  return React.useMemo(() => getColors2024(appThemeMode), [appThemeMode]);
+}
+
 export function useTheme2024<
   T extends ReturnType<typeof createGetStyles2024>,
 >(opts?: { getStyle?: T; isLight?: boolean }) {

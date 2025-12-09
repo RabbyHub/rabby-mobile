@@ -29,12 +29,8 @@ function setBrowserBookmarkStore(
     return newVal;
   });
 }
-// const setStore = setBrowserBookmarkStore;
-// const browserBookmarkAtom = atom<EntityState<BrowserBookmarkItem, string>>({
-//   ids: [],
-//   entities: {},
-// });
-const getBookmarkList = () => {
+
+export const getBookmarkList = () => {
   const entities = browserService.bookmark.selectors.selectEntities();
   const ids = browserService.bookmark.selectors.selectIds();
   setBrowserBookmarkStore({
@@ -115,8 +111,6 @@ export function useBrowserBookmark() {
     getBookmark,
     addBookmark,
     removeBookmark,
-    // updateBookmark,
-    getBookmarkList,
   };
 }
 
