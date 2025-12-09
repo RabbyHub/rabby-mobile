@@ -4,7 +4,10 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayedProject, DisplayedToken, pQueue } from './project';
-import { isTestnet as checkIsTestnet } from '@/utils/chain';
+import {
+  isTestnet as checkIsTestnet,
+  makeChainServerIdSet,
+} from '@/utils/chain';
 import { flatten } from 'lodash';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { openapi } from '@/core/request';
@@ -168,37 +171,68 @@ export type TaggedPortfolioToken<
   _isPined: boolean;
   _isFold: boolean;
   _isManualFold: boolean;
+  _isManualUnFold: boolean;
   _isMiniFold: boolean;
   _isExcludeBalance: boolean;
   _pinIndex: number;
 };
-export function tagTokenItem<
+
+type ITokenSettingsSet = {
+  pinedQueue: ITokenSetting['pinedQueue'] & object;
+  includeTokens: Set<string>;
+  excludeTokens: Set<string>;
+  foldTokens: Set<string>;
+  unfoldTokens: Set<string>;
+};
+function encodeChainTokenId(chain: string, token_id: string) {
+  return `${chain}::${token_id}`.toLowerCase();
+}
+export function makeTokenSettingSets(
+  tokenSetting: ITokenSetting,
+): ITokenSettingsSet {
+  const tokenSettingSets: Required<ITokenSettingsSet> = {
+    pinedQueue: tokenSetting.pinedQueue || [],
+    includeTokens: new Set(
+      (tokenSetting.includeDefiAndTokens || [])
+        .filter(i => i.type === 'token')
+        .map(i => encodeChainTokenId(i.chainid, i.id)),
+    ),
+    excludeTokens: new Set(
+      (tokenSetting.excludeDefiAndTokens || [])
+        .filter(i => i.type === 'token')
+        .map(i => encodeChainTokenId(i.chainid, i.id)),
+    ),
+    foldTokens: new Set(
+      (tokenSetting.foldTokens || []).map(i =>
+        encodeChainTokenId(i.chainId, i.tokenId),
+      ),
+    ),
+    unfoldTokens: new Set(
+      (tokenSetting.unfoldTokens || []).map(i =>
+        encodeChainTokenId(i.chainId, i.tokenId),
+      ),
+    ),
+  };
+
+  return tokenSettingSets;
+}
+export function tagTokenItemV2<
   T extends AbstractPortfolioToken = AbstractPortfolioToken,
->(i: T, tokenSetting: ITokenSetting) {
-  const {
-    pinedQueue = [],
-    includeDefiAndTokens = [],
-    excludeDefiAndTokens = [],
-    foldTokens = [],
-    unfoldTokens = [],
-  } = tokenSetting;
-  const pinIndex = pinedQueue.findIndex(
-    x => x.chainId === i.chain && x.tokenId === i._tokenId,
+>(i: T, tokenSetting: Required<ITokenSettingsSet>) {
+  const { pinedQueue, includeTokens, excludeTokens, foldTokens, unfoldTokens } =
+    tokenSetting;
+  // const isPin = pinedQueue.has(encodeChainTokenId(i.chain, i._tokenId));
+  const pinIndex = Array.from(pinedQueue).findIndex(
+    x =>
+      x.chainId.toLowerCase() === i.chain.toLowerCase() &&
+      x.tokenId.toLowerCase() === i._tokenId.toLowerCase(),
   );
   const isPin = pinIndex !== -1;
   const isExcludeBalance = (() => {
-    if (
-      excludeDefiAndTokens.some(
-        x => x.id === i._tokenId && x.chainid === i.chain && x.type === 'token',
-      )
-    ) {
+    if (excludeTokens.has(encodeChainTokenId(i.chain, i._tokenId))) {
       return true;
     }
-    if (
-      includeDefiAndTokens.some(
-        x => x.id === i._tokenId && x.chainid === i.chain && x.type === 'token',
-      )
-    ) {
+    if (includeTokens.has(encodeChainTokenId(i.chain, i._tokenId))) {
       return false;
     }
     if (!i.is_core) {
@@ -206,15 +240,17 @@ export function tagTokenItem<
     }
     return false;
   })();
+
+  const isManualFold = foldTokens.has(encodeChainTokenId(i.chain, i._tokenId));
+  const isManualUnFold = unfoldTokens.has(
+    encodeChainTokenId(i.chain, i._tokenId),
+  );
+
   const [isFold, isMiniFold] = (() => {
-    if (
-      foldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
-    ) {
+    if (isManualFold) {
       return [true, false];
     }
-    if (
-      unfoldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
-    ) {
+    if (isManualUnFold) {
       return [false, false];
     }
     if (!i.is_core) {
@@ -226,56 +262,74 @@ export function tagTokenItem<
     return [false, false];
   })();
 
-  const isManualFold = foldTokens.some(
-    x => x.chainId === i.chain && x.tokenId === i._tokenId,
-  );
-
   return {
     ...i,
     _isPined: isPin,
     _isFold: isFold,
     _isManualFold: isManualFold,
+    _isManualUnFold: isManualUnFold,
     _isMiniFold: isMiniFold,
     _isExcludeBalance: isExcludeBalance,
     _pinIndex: pinIndex,
   };
 }
 
-export const tagTokenList = (
-  tokens: AbstractPortfolioToken[],
+export const tagTokenList = <T extends AbstractPortfolioToken>(
+  tokens: T[],
   tokenSetting: ITokenSetting,
+  options?: {
+    filterChainServerIds?: true | Set<string>;
+  },
 ) => {
-  const tagedTokens = tokens.map(i => tagTokenItem(i, tokenSetting));
-  const { unfoldTokens = [] } = tokenSetting;
-  const coreTokens = tokens.filter(i => i.is_core);
-  const listLength = coreTokens.length || 0;
-  const totalValue = coreTokens.reduce(
-    (acc, curr) => acc + (curr._usdValue || 0),
-    0,
-  );
-  const threshold = Math.min((totalValue || 0) / 100, 1000);
-  const thresholdIndex = coreTokens
-    ? coreTokens.findIndex(m => (m._usdValue || 0) < threshold)
-    : -1;
+  const { filterChainServerIds } = options || {};
+  const taggedTokens: ReturnType<typeof tagTokenItemV2>[] = [];
+  const statics = {
+    coreTokens: [] as ReturnType<typeof tagTokenItemV2>[],
+    totalValue: 0,
+    threshold: 0,
+    thresholdIndex: -1,
+    hasExpandSwitch: false,
+  };
 
-  const hasExpandSwitch =
-    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
-  if (!hasExpandSwitch) {
-    return tagedTokens;
+  const tokenSettingV2 = makeTokenSettingSets(tokenSetting);
+  const chainServerIds =
+    filterChainServerIds === true
+      ? makeChainServerIdSet()
+      : filterChainServerIds;
+
+  tokens.forEach(i => {
+    if (chainServerIds && !chainServerIds.has(i.chain)) return;
+
+    const tagged = tagTokenItemV2(i, tokenSettingV2);
+    taggedTokens.push(tagged);
+    if (tagged.is_core) {
+      statics.coreTokens.push(tagged);
+      statics.totalValue += tagged._usdValue || 0;
+    }
+  });
+
+  statics.threshold = Math.min(statics.totalValue / 100, 1000);
+  statics.thresholdIndex = statics.coreTokens.findIndex(
+    m => (m._usdValue || 0) < statics.threshold,
+  );
+
+  statics.hasExpandSwitch =
+    statics.coreTokens.length >= 15 &&
+    statics.thresholdIndex > -1 &&
+    statics.thresholdIndex <= statics.coreTokens.length - 4;
+
+  if (!statics.hasExpandSwitch) {
+    return taggedTokens;
   }
-  return tagedTokens.map(i => {
-    if (
-      i._isMiniFold ||
-      i._isFold ||
-      !i.is_core ||
-      unfoldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
-    ) {
+
+  return taggedTokens.map(i => {
+    if (i._isMiniFold || i._isFold || !i.is_core || i._isManualUnFold) {
       return i;
     }
     return {
       ...i,
-      _isMiniFold: (i._usdValue || 0) < threshold,
-      _isFold: (i._usdValue || 0) < threshold,
+      _isMiniFold: (i._usdValue || 0) < statics.threshold,
+      _isFold: (i._usdValue || 0) < statics.threshold,
     };
   });
 };

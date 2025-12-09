@@ -29,7 +29,7 @@ import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
-import { useAssets } from '../Search/useAssets';
+import { useLoadAssets } from '../Search/useAssets';
 import { formatNetworth } from '@/utils/math';
 import { getDisplayedPortfolioUsdValue } from '../Home/utils/converAssets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -275,7 +275,8 @@ export const DeFiDetailScreen = () => {
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
   const { getCacheTop10Assets, refreshing, portfoliosMap, loadSpecificDefi } =
-    useAssets({ hideCombined: true });
+    useLoadAssets();
+
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });

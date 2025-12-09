@@ -36,6 +36,7 @@ export const AddressList = ({
 
   const {
     top10Addresses,
+    top10Records,
     notMatterAccounts,
     list: _rawList,
     fetchAccounts,
@@ -110,8 +111,10 @@ export const AddressList = ({
   }, [onMoreAddressListPress]);
 
   const notMatterAvatarList = useMemo(() => {
-    return notMatterAccounts.slice(0, 3);
-  }, [notMatterAccounts]);
+    return notMatterAccounts
+      .filter(x => !top10Records.has(x.address.toLowerCase()))
+      .slice(0, 3);
+  }, [notMatterAccounts, top10Records]);
 
   const renderFooter = useCallback(
     () => (

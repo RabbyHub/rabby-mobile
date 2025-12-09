@@ -6,7 +6,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { FullDefiRenderItem } from '@/screens/Home/components/AssetRenderItems';
 import { AbstractProject, ActionItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useAssets } from '@/screens/Search/useAssets';
+import { useLoadAssets } from '@/screens/Search/useAssets';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import { DisplayedProject } from '@/screens/Home/utils/project';
@@ -26,8 +26,12 @@ import {
   useIsFocusedCurrentTab,
 } from './hooks/share';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
-import { useOnDeFiRefresh } from '@/screens/Home/hooks/store';
+import {
+  useAssetsPortfolios,
+  useOnDeFiRefresh,
+} from '@/screens/Home/hooks/store';
 import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
+import { useAccountInfo } from './hooks';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -54,11 +58,11 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     disableNFT: true,
   });
 
-  const {
-    portfolios: _rawPortfolios,
-    checkIsExpireAndUpdate,
-    isLoading,
-  } = useAssets({ hideCombined: false });
+  const { checkIsExpireAndUpdate, isLoading } = useLoadAssets();
+
+  const { portfolios: _rawPortfolios } = useAssetsPortfolios({
+    hideCombined: false,
+  });
 
   useEffect(() => {
     if (_rawPortfolios && !isLoading) {

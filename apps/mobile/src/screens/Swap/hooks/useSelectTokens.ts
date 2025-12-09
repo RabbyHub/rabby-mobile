@@ -13,7 +13,10 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { tokenItem2AbstractTokenWithOwner } from '@/utils/token';
-import { tagTokenItem } from '@/screens/Home/utils/token';
+import {
+  tagTokenItemV2,
+  makeTokenSettingSets,
+} from '@/screens/Home/utils/token';
 import { preferenceService } from '@/core/services';
 import { TokenSelectType } from '@/components/Token/TokenSelectorSheetModal';
 import { openapi } from '@/core/request';
@@ -410,13 +413,13 @@ export const useSelectTokens = ({
     if (enableSearchTokensV2 && keyword) {
       return (
         swapToTokenSearchResult?.map(token =>
-          tagTokenItem(
+          tagTokenItemV2(
             {
               ...token,
 
               _tokenId: token.id,
             },
-            userTokenSettings,
+            makeTokenSettingSets(userTokenSettings),
           ),
         ) || []
       );
@@ -435,7 +438,7 @@ export const useSelectTokens = ({
     });
     return tokenItems.map(token => {
       const data = tokenItem2AbstractTokenWithOwner(token, token.ownerAccount);
-      return tagTokenItem(data, userTokenSettings);
+      return tagTokenItemV2(data, makeTokenSettingSets(userTokenSettings));
     });
   }, [
     accounts,

@@ -17,7 +17,7 @@ import {
 import { getTotalFoldToken } from '@/screens/Home/utils/converAssets';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useAssets } from '@/screens/Search/useAssets';
+import { useLoadAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 import { icons } from '@/screens/Home/AssetContainer';
@@ -27,7 +27,7 @@ import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { RefreshControl } from 'react-native-gesture-handler';
-import { isTabsSwiping } from './hooks';
+import { isTabsSwiping, useAccountInfo } from './hooks';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -43,7 +43,7 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
-import { useOnTokenRefresh } from '@/screens/Home/hooks/store';
+import { useAssetsTokens, useOnTokenRefresh } from '@/screens/Home/hooks/store';
 
 const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -85,11 +85,11 @@ export const TokenList = ({ chain, updateToken }: Props) => {
     disableNFT: true,
   });
 
-  const {
-    tokens: _rawTokens,
-    checkIsExpireAndUpdate,
-    isLoading,
-  } = useAssets({ hideCombined: false });
+  const { checkIsExpireAndUpdate, isLoading } = useLoadAssets();
+
+  const { tokens: _rawTokens } = useAssetsTokens({
+    hideCombined: false,
+  });
 
   const tokens = useMemo(() => {
     return _rawTokens?.filter(item =>

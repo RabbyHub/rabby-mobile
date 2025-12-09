@@ -125,25 +125,7 @@ const doFetchAccounts = makeAvoidParallelAsyncFunc(async () => {
   return nextAccounts;
 });
 
-export async function getSortedAddressList(options?: {
-  includeOthers?: boolean;
-}) {
-  const { includeOthers = false } = options || {};
-  const allAccounts = await doFetchAccounts();
-  const allMyAccounts = filterMyAccounts(allAccounts);
-  const pinAddresses = preferenceService.getPinAddresses();
-
-  return {
-    allAccounts,
-    allMyAccounts,
-    sortedAccounts: includeOthers
-      ? sortAccountList(allAccounts, { highlightedAddresses: pinAddresses })
-      : sortAccountList(allMyAccounts, { highlightedAddresses: pinAddresses }),
-  };
-}
-
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
-  // const [accounts, setAccounts] = useAtom(accountsAtom);
   const accounts = zAccountStore(s => s.accounts);
 
   const { disableAutoFetch = false } = opts || {};
@@ -165,7 +147,6 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
 }
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
-  // const [allAccounts, setAccounts] = useAtom(accountsAtom);
   const allAccounts = zAccountStore(s => s.accounts);
 
   const { disableAutoFetch = false } = opts || {};
@@ -341,9 +322,6 @@ export function useWalletBrandLogo<T extends string>(brandName?: T) {
   };
 }
 
-const balanceMapAtom = atom<{
-  [address: string]: TotalBalanceResponse;
-}>({});
 type MatteredChainBalances = {
   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
 };
@@ -628,45 +606,6 @@ export function useLoadMatteredChainBalances({
     getOrderedChainList: fetchOrderedChainList,
   };
 }
-
-// interface AccountState {
-//   /**
-//    * @description useless now
-//    */
-//   // visibleAccounts: DisplayedKeyring[];
-//   /**
-//    * @description useless now
-//    */
-//   // hiddenAccounts: Account[];
-//   // keyrings: DisplayedKeyring[];
-//   // balanceMap: {
-//   //   [address: string]: TotalBalanceResponse;
-//   // };
-//   // matteredChainBalances: {
-//   //   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
-//   // };
-//   // testnetMatteredChainBalances: {
-//   //   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
-//   // };
-//   /**
-//    * @description maybe repeated hooks in Home
-//    */
-//   // tokens: {
-//   //   list: AbstractPortfolioToken[];
-//   //   customize: AbstractPortfolioToken[];
-//   //   blocked: AbstractPortfolioToken[];
-//   // };
-//   // testnetTokens: {
-//   //   list: AbstractPortfolioToken[];
-//   //   customize: AbstractPortfolioToken[];
-//   //   blocked: AbstractPortfolioToken[];
-//   // };
-
-//   /**
-//    * @description useless now
-//    */
-//   // mnemonicAccounts: DisplayedKeyring[];
-// }
 
 export const useFallbackAccount = () => {
   const accounts = useMyAccounts({

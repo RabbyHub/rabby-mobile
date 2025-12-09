@@ -19,14 +19,13 @@ import { tagNfts } from './nft';
 // import { tokenNonceAtom, deFiNonceAtom, nftNonceAtom } from './refresh';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useAtomCallback } from 'jotai/utils';
-import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { zCreate, zMutative } from '@/core/utils/reexports';
+import {
+  makeAvoidParallelAsyncFunc,
+  resolveValFromUpdater,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 import { eventBus, EventBusListeners } from '@/utils/events';
-
-let top20TokensCache: CombineTokensItem[] = [];
-let top10PortfoliosCache: CombineDefiItem[] = [];
-let top10NftsCache: CombineNFTItem[] = [];
 
 type OriginalCombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
@@ -245,11 +244,18 @@ type AssetsMapState = {
   portfoliosMap: { [address: string]: DisplayedProject[] };
   nftsMap: { [address: string]: DisplayNftItem[] };
 };
-export const assetsMapStore = zCreate<AssetsMapState>(() => ({
-  tokensMap: {},
-  portfoliosMap: {},
-  nftsMap: {},
-}));
+export const assetsMapStore = zCreate(
+  zMutative<AssetsMapState>(
+    () => ({
+      tokensMap: {},
+      portfoliosMap: {},
+      nftsMap: {},
+    }),
+    {
+      strict: __DEV__,
+    },
+  ),
+);
 
 function setTokensMap(
   valOrFunc: UpdaterOrPartials<AssetsMapState['tokensMap']>,
@@ -366,51 +372,10 @@ export const useAssetsMap = () => {
   const portfoliosMap = assetsMapStore(s => s.portfoliosMap);
   const nftsMap = assetsMapStore(s => s.nftsMap);
 
-  const { top10Addresses } = useAccountInfo();
-
-  const getTokenCombined = useCallback(
-    (tokenId: string, chain: string) => {
-      return combinedTokens(getAssetsMapDirectly('tokens'), top10Addresses, {
-        tokenId,
-        chain,
-      });
-    },
-    [top10Addresses],
-  );
-
-  // const getAssetsMapDirectly = useAtomCallback(
-  //   useCallback((getAtom, _, type) => {
-  //     switch (type) {
-  //       case 'tokens': {
-  //         const tokensMap = getAtom(tokensAtom);
-  //         return tokensMap;
-  //       }
-  //       case 'portfolios': {
-  //         const portfoliosMap = getAtom(portfoliosAtom);
-  //         return portfoliosMap;
-  //       }
-  //       case 'nfts': {
-  //         const nftsMap = getAtom(nftsAtom);
-  //         return nftsMap;
-  //       }
-  //       default: {
-  //         console.warn('Invalid asset type requested');
-  //         return {};
-  //       }
-  //     }
-  //   }, []),
-  // ) as GetAssetsFunc;
-
   return {
-    top10Addresses,
-    getTokenCombined,
-    // Export individual maps and setters for direct access in useAssets
     tokensMap,
-    // setTokensMap,
     portfoliosMap,
-    // setPortfoliosMap,
     nftsMap,
-    // setNftsMap,
     getAssetsMapDirectly,
   };
 };
@@ -426,7 +391,9 @@ export function useOnTokenRefresh() {
       const updatedTokensMap: { [address: string]: AbstractPortfolioToken[] } =
         {};
       Object.entries(prevTokensMap).forEach(([address, tokens]) => {
-        updatedTokensMap[address] = tagTokenList(tokens || [], tokenSettings);
+        updatedTokensMap[address] = tagTokenList(tokens || [], tokenSettings, {
+          filterChainServerIds: true,
+        });
       });
 
       return updatedTokensMap;
@@ -509,68 +476,78 @@ export function useOnNftRefresh() {
   }, [refreshTagNft]);
 }
 
-export const useAssetsComputation = ({
-  tokensMap: tokensMapParam,
-  portfoliosMap: portfoliosMapParam,
-  nftsMap: nftsMapParam,
-  top10Addresses,
+let top20TokensCache: CombineTokensItem[] = [];
+export const useAssetsTokens = ({
   hideCombined = false,
 }: {
-  tokensMap?: { [address: string]: AbstractPortfolioToken[] };
-  portfoliosMap?: { [address: string]: DisplayedProject[] };
-  nftsMap?: { [address: string]: DisplayNftItem[] };
-  top10Addresses: string[];
   hideCombined?: boolean;
 }) => {
-  // Use global state values when parameters are undefined
-  // const [globalTokensMap] = useAtom(tokensAtom);
   const globalTokensMap = assetsMapStore(s => s.tokensMap);
-  // const [globalPortfoliosMap] = useAtom(portfoliosAtom);
-  const globalPortfoliosMap = assetsMapStore(s => s.portfoliosMap);
-  // const [globalNftsMap] = useAtom(nftsAtom);
-  const globalNftsMap = assetsMapStore(s => s.nftsMap);
 
-  const tokensMap =
-    tokensMapParam !== undefined ? tokensMapParam : globalTokensMap;
-  const portfoliosMap =
-    portfoliosMapParam !== undefined ? portfoliosMapParam : globalPortfoliosMap;
-  const nftsMap = nftsMapParam !== undefined ? nftsMapParam : globalNftsMap;
+  const { top10Addresses } = useAccountInfo();
 
   const memoTokens = useMemo(() => {
     if (hideCombined) {
       return top20TokensCache;
     }
 
-    const tokens = combinedTokens(tokensMap, top10Addresses);
+    const tokens = combinedTokens(globalTokensMap, top10Addresses);
     top20TokensCache = tokens.filter(item => !item._isFold).slice(0, 20);
     return tokens;
-  }, [tokensMap, hideCombined, top10Addresses]);
+  }, [hideCombined, globalTokensMap, top10Addresses]);
+
+  return {
+    tokens: memoTokens,
+  };
+};
+
+let top10PortfoliosCache: CombineDefiItem[] = [];
+export function useAssetsPortfolios({
+  hideCombined = false,
+}: {
+  hideCombined?: boolean;
+}) {
+  const globalPortfoliosMap = assetsMapStore(s => s.portfoliosMap);
+
+  const { top10Addresses } = useAccountInfo();
 
   const memoPortfolios = useMemo(() => {
     if (hideCombined) {
       return top10PortfoliosCache;
     }
-
-    const portfolios = combinedProtocols(portfoliosMap, top10Addresses);
+    const portfolios = combinedProtocols(globalPortfoliosMap, top10Addresses);
     top10PortfoliosCache = portfolios.slice(0, 4);
     return portfolios;
-  }, [portfoliosMap, hideCombined, top10Addresses]);
+  }, [hideCombined, globalPortfoliosMap, top10Addresses]);
+
+  return {
+    portfolios: memoPortfolios,
+  };
+}
+
+let top10NftsCache: CombineNFTItem[] = [];
+export function useAssetsNFTs({
+  hideCombined = false,
+}: {
+  hideCombined?: boolean;
+}) {
+  const globalNftsMap = assetsMapStore(s => s.nftsMap);
+
+  const { top10Addresses } = useAccountInfo();
 
   const memoNfts = useMemo(() => {
     if (hideCombined) {
       return top10NftsCache;
     }
-    const nfts = combinedNfts(nftsMap, top10Addresses);
+    const nfts = combinedNfts(globalNftsMap, top10Addresses);
     top10NftsCache = nfts?.filter(item => !item._isFold).slice(0, 20) || [];
     return nfts;
-  }, [nftsMap, hideCombined, top10Addresses]);
+  }, [hideCombined, globalNftsMap, top10Addresses]);
 
   return {
-    tokens: memoTokens,
-    portfolios: memoPortfolios,
     nfts: memoNfts,
   };
-};
+}
 
 export const useMainnetTokens = (address?: string) => {
   // const [tokensMap, setTokensMap] = useAtom(tokensAtom);

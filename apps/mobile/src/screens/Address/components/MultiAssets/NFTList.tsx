@@ -18,7 +18,7 @@ import {
   DisplayNftItem,
 } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useAssets } from '@/screens/Search/useAssets';
+import { useLoadAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
@@ -51,8 +51,8 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
-import { isTabsSwiping } from './hooks';
-import { useOnNftRefresh } from '@/screens/Home/hooks/store';
+import { isTabsSwiping, useAccountInfo } from './hooks';
+import { useAssetsNFTs, useOnNftRefresh } from '@/screens/Home/hooks/store';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -85,11 +85,11 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     disableDefi: true,
   });
 
-  const {
-    nfts: _rawNftList,
-    checkIsExpireAndUpdate,
-    isLoading,
-  } = useAssets({ hideCombined: false });
+  const { checkIsExpireAndUpdate, isLoading } = useLoadAssets();
+
+  const { nfts: _rawNftList } = useAssetsNFTs({
+    hideCombined: false,
+  });
 
   useEffect(() => {
     if (_rawNftList && !isLoading) {
