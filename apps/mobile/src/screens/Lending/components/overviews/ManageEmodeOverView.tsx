@@ -1,24 +1,27 @@
 import React, { useMemo } from 'react';
+
+import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
+
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { isHFEmpty } from '../../utils';
+import { formatUserSummary } from '@aave/math-utils';
+import { formatPercent } from '@/screens/TokenDetail/util';
+import RcIconCorrectCC from '@/assets2024/icons/common/checked-cc.svg';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
-import HealthFactorText from '../HealthFactorText';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import RcIconIncorrectCC from '@/assets2024/icons/common/close-bold-cc.svg';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useTranslation } from 'react-i18next';
-import { formatUserSummary } from '@aave/math-utils';
-import dayjs from 'dayjs';
+
+import TokenIcon from '../TokenIcon';
+import { isHFEmpty } from '../../utils';
 import { useMode } from '../../hooks/useMode';
 import { useLendingSummary } from '../../hooks';
-import { formatPercent } from '@/screens/TokenDetail/util';
-import TokenIcon from '../TokenIcon';
-import RcIconCorrectCC from '@/assets2024/icons/common/checked-cc.svg';
-import RcIconIncorrectCC from '@/assets2024/icons/common/close-bold-cc.svg';
+import HealthFactorText from '../HealthFactorText';
 import { CategorySelector } from '../EmodeCategory/CategorySelector';
 
 const PairTable = ({

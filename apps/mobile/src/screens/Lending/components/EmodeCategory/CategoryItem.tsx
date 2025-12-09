@@ -1,10 +1,10 @@
 import { Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
+import { Tip } from '@/components/Tip';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useTranslation } from 'react-i18next';
-import { Tip } from '@/components/Tip';
 
 export default function CategoryItem({
   title,

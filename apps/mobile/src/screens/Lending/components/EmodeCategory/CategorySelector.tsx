@@ -1,17 +1,20 @@
+import React, { useMemo } from 'react';
+
+import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
+
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
+import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
 import {
   MODAL_ID,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
-import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
-import { useTranslation } from 'react-i18next';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+
 import { useMode } from '../../hooks/useMode';
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {

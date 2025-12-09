@@ -1,21 +1,23 @@
 import React, { useCallback } from 'react';
 
+import { useTranslation } from 'react-i18next';
+import { Pressable, Text, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import IsolatedTag from './IsolatedTag';
-import { useMode } from '../hooks/useMode';
-import { View, Text, Pressable } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 import LightingIcon from '@/assets2024/icons/lending/lighting.svg';
-import LightingIconCC from '@/assets2024/icons/lending/lighting-cc.svg';
 import SettingIconCC from '@/assets2024/icons/lending/setting.svg';
+import LightingIconCC from '@/assets2024/icons/lending/lighting-cc.svg';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { useTranslation } from 'react-i18next';
+
+import IsolatedTag from './IsolatedTag';
+import { useMode } from '../hooks/useMode';
 
 const EnabledEmodeInfo = ({
   title,

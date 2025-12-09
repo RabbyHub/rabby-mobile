@@ -1,16 +1,19 @@
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback } from 'react';
+
 import { Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
+
+import { useTheme2024 } from '@/hooks/theme';
 import { Button } from '@/components2024/Button';
+import { createGetStyles2024 } from '@/utils/styles';
 import AutoLockView from '@/components/AutoLockView';
-import { useMode } from '../hooks/useMode';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useTranslation } from 'react-i18next';
+
+import { useMode } from '../hooks/useMode';
 
 export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });

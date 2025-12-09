@@ -1,17 +1,20 @@
 import React, { useMemo } from 'react';
-import { Keyboard, Text, View } from 'react-native';
-import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
+
+import { useAtomValue } from 'jotai';
 import { useTranslation } from 'react-i18next';
+import { Keyboard, Text, View } from 'react-native';
+
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+
 import CategoryItem from './CategoryItem';
-import { useMode } from '../../hooks/useMode';
 import { EmodeCategory } from '../../type';
-import { isEModeCategoryAvailable } from '../../utils/emode';
+import { useMode } from '../../hooks/useMode';
 import { iUserSummaryAtom } from '../../hooks';
-import { useAtomValue } from 'jotai';
+import { isEModeCategoryAvailable } from '../../utils/emode';
 
 export type EModeCategoryDisplay = EmodeCategory & {
   available: boolean; // indicates if the user can enter this category

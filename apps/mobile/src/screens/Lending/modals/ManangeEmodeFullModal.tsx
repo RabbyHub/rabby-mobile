@@ -1,34 +1,37 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
-import AutoLockView from '@/components/AutoLockView';
-import { Button } from '@/components2024/Button';
-import { useMode } from '../hooks/useMode';
-import ManageEmodeOverView from '../components/overviews/ManageEmodeOverView';
-import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { isAccountSupportMiniApproval } from '@/utils/account';
+
 import { last, noop } from 'lodash';
+import { Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+
+import { apiProvider } from '@/core/apis';
+import { useTheme2024 } from '@/hooks/theme';
+import { toast } from '@/components2024/Toast';
+import { Button } from '@/components2024/Button';
+import { useMiniSigner } from '@/hooks/useSigner';
+import AutoLockView from '@/components/AutoLockView';
+import { createGetStyles2024 } from '@/utils/styles';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { transactionHistoryService } from '@/core/services';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import { isAccountSupportMiniApproval } from '@/utils/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useSignatureStore } from '@/components2024/MiniSignV2';
+import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import {
+  CUSTOM_HISTORY_ACTION,
+  CUSTOM_HISTORY_TITLE_TYPE,
+} from '@/screens/Transaction/components/type';
+
+import { useMode } from '../hooks/useMode';
+import { buildManageEmodeTx } from '../poolService';
+import ManageEmodeOverView from '../components/overviews/ManageEmodeOverView';
 import {
   usePoolDataProviderContract,
   useRefreshHistoryId,
   useSelectedMarket,
 } from '../hooks';
-import { useSignatureStore } from '@/components2024/MiniSignV2';
-import { buildManageEmodeTx } from '../poolService';
-import { toast } from '@/components2024/Toast';
-import { useMiniSigner } from '@/hooks/useSigner';
-import {
-  CUSTOM_HISTORY_ACTION,
-  CUSTOM_HISTORY_TITLE_TYPE,
-} from '@/screens/Transaction/components/type';
-import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
-import { useTranslation } from 'react-i18next';
-import { apiProvider } from '@/core/apis';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { transactionHistoryService } from '@/core/services';
 
 const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
