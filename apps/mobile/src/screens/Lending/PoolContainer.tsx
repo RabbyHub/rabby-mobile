@@ -177,10 +177,10 @@ const PoolContainer = () => {
           },
         ]}
         initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
-        externalContent={<RightMarketTabInfo />}
+        externalContent={loading ? null : <RightMarketTabInfo />}
       />
     ),
-    [styles.indicator, styles.tabBar, styles.tabsBarContainer],
+    [loading, styles.indicator, styles.tabBar, styles.tabsBarContainer],
   );
   return (
     <Tabs.Container

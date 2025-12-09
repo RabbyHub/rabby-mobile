@@ -143,11 +143,16 @@ const BorrowPoolList = () => {
           <Text
             style={[
               styles.availableCardTitle,
-              isInIsolationMode && styles.orangeText,
+              (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
+                styles.orangeText,
             ]}>
             {t('page.Lending.modalDesc.availableToBorrow')}:{' '}
             <Text
-              style={[styles.usdValue, isInIsolationMode && styles.orangeText]}>
+              style={[
+                styles.usdValue,
+                (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
+                  styles.orangeText,
+              ]}>
               {formatUsdValueKMB(
                 Number(iUserSummary?.availableBorrowsUSD || '0'),
               )}
@@ -157,7 +162,8 @@ const BorrowPoolList = () => {
         <Text
           style={[
             styles.availableCardValue,
-            isInIsolationMode && styles.orangeText,
+            (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
+              styles.orangeText,
           ]}>
           {desc}
         </Text>
@@ -168,9 +174,16 @@ const BorrowPoolList = () => {
     desc,
     iUserSummary?.availableBorrowsUSD,
     iUserSummary?.totalLiquidityUSD,
+    iUserSummary?.userEmodeCategoryId,
     isInIsolationMode,
     loading,
-    styles,
+    styles.availableCard,
+    styles.availableCardHeader,
+    styles.availableCardIsolated,
+    styles.availableCardTitle,
+    styles.availableCardValue,
+    styles.orangeText,
+    styles.usdValue,
     t,
   ]);
 
@@ -275,7 +288,7 @@ const BorrowPoolList = () => {
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
-      ListEmptyComponent={<PoolListLoading />}
+      ListEmptyComponent={loading ? <PoolListLoading /> : null}
       ListFooterComponent={renderFooterComponent}
       renderItem={renderItem}
     />

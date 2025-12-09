@@ -89,7 +89,7 @@ const DisabledEmodeInfo = ({ onPress }: { onPress: () => void }) => {
 const RightMarketTabInfo = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { isInIsolationMode, currentEmode, emodeEnabled } = useMode();
+  const { isInIsolationMode, currentEmode, emodeEnabled, eModes } = useMode();
 
   const handlePressEnabledEmode = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
@@ -122,7 +122,9 @@ const RightMarketTabInfo = () => {
       </View>
     );
   }
-
+  if (Object.keys(eModes).length === 1 && eModes[0]?.assets?.length === 0) {
+    return null;
+  }
   return (
     <View style={styles.container}>
       <View style={styles.emodeContainer}>

@@ -108,6 +108,13 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   ]);
 
   const { isRisky, isBlock, desc } = useMemo(() => {
+    if (Number(newSummary?.healthFactor || '0') <= 0) {
+      return {
+        isRisky: false,
+        isBlock: false,
+        desc: '',
+      };
+    }
     const _isRisky =
       Number(newSummary?.healthFactor || '0') < HF_RISK_CHECKBOX_THRESHOLD;
     const _isBlock =
@@ -329,7 +336,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <AutoLockView as="View" style={styles.container}>
-      <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
+      <BottomSheetScrollView contentContainerStyle={[styles.contentContainer]}>
         <Text style={styles.title}>{t('page.Lending.manageEmode.title')}</Text>
         {wantDisableEmode ? null : (
           <Text style={styles.description}>
@@ -467,6 +474,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   contentContainer: {
     paddingHorizontal: 25,
+    paddingBottom: 300,
   },
   title: {
     color: ctx.colors2024['neutral-title-1'],
@@ -509,7 +517,6 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
     gap: 12,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },

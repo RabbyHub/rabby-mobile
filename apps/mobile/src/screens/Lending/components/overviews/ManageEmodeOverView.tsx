@@ -239,19 +239,20 @@ const ManageEmodeOverView: React.FC<{
           <Text style={styles.ltv}>{ltvLineContent}</Text>
         </View>
 
-        <View
-          style={[
-            styles.item,
-            styles.hfContainer,
-            isHFEmpty(Number(healthFactor || '0')) && styles.hidden,
-          ]}>
+        <View style={[styles.item, styles.hfContainer]}>
           <Text style={styles.title}>{t('page.Lending.hf')}</Text>
           <Text style={styles.hfValue}>
             {afterHealthFactor ? (
               <>
-                <HealthFactorText healthFactor={healthFactor} />
+                <HealthFactorText
+                  limitless={healthFactor === '-1'}
+                  healthFactor={healthFactor}
+                />
                 <Text style={styles.arrow}>→</Text>
-                <HealthFactorText healthFactor={afterHealthFactor} />
+                <HealthFactorText
+                  limitless={afterHealthFactor === '-1'}
+                  healthFactor={afterHealthFactor}
+                />
               </>
             ) : (
               <HealthFactorText healthFactor={healthFactor} />
