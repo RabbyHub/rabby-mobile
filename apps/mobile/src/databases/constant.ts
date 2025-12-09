@@ -17,7 +17,11 @@ export function getRabbyAppDbName() {
 export function getRabbyAppDbDir() {
   try {
     return Platform.OS === 'android'
-      ? [`/data/data/${APPLICATION_ID}/databases`].join('/')
+      ? // ? [`/data/data/${APPLICATION_ID}/databases`].join('/')
+        [
+          RNFS.DocumentDirectoryPath.replace(/\/files\/?/, ''),
+          'databases',
+        ].join('/')
       : [RNFS.LibraryDirectoryPath, 'LocalDatabase'].join('/');
   } catch (error) {
     console.error(error);

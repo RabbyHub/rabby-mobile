@@ -30,8 +30,9 @@ export async function waitTronReady() {
       return;
     }
     reactotronEvents.once('__REACTOTRON_LOADED__', ({ client }) => {
-      instanceRef.current?.close();
+      if (instanceRef.current) return;
 
+      console.debug('[debug] waitTronReady:: client ready');
       instanceRef.current = client;
       resolve(client);
     });
