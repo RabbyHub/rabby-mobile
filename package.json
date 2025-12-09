@@ -90,7 +90,8 @@
     "@react-native-menu/menu@1.2.3": "patch:@react-native-menu/menu@npm%3A1.2.3#./.yarn/patches/@react-native-menu-menu-npm-1.2.3-182506938b.patch",
     "@rneui/base@^4.0.0-rc.8": "patch:@rneui/base@npm%3A4.0.0-rc.8#./.yarn/patches/@rneui-base-npm-4.0.0-rc.8-23456f2e0d.patch",
     "react-native-keychain@8.2.0": "patch:react-native-keychain@npm%3A8.2.0#./.yarn/patches/react-native-keychain-npm-8.2.0-ff8c16b501.patch",
-    "react-native-vision-camera@4.7.2": "patch:react-native-vision-camera@npm%3A4.7.2#./.yarn/patches/react-native-vision-camera-npm-4.7.2-5538eb538b.patch"
+    "react-native-vision-camera@4.7.2": "patch:react-native-vision-camera@npm%3A4.7.2#./.yarn/patches/react-native-vision-camera-npm-4.7.2-5538eb538b.patch",
+    "@op-engineering/op-sqlite@^15.1.1": "patch:@op-engineering/op-sqlite@npm%3A15.1.1#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.1-64eb5c2a0a.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",

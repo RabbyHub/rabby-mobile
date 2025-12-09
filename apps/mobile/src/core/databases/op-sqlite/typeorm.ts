@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import {
   ANDROID_DATABASE_PATH,
+  ANDROID_FILES_PATH,
   IOS_LIBRARY_PATH,
   QueryResult,
   Transaction,
@@ -30,8 +31,8 @@ export const opSqliteTypeORMDriver = {
       location?: string;
       encryptionKey?: string;
     },
-    ok?: (db: any) => void,
-    fail?: (msg: string) => void,
+    okOpen?: (db: any) => void,
+    failOpen?: (msg: string) => void,
   ) => {
     try {
       // if (!options.encryptionKey || options.encryptionKey.length === 0) {
@@ -40,7 +41,23 @@ export const opSqliteTypeORMDriver = {
 
       // console.debug([opSqliteTypeORMDriver] 'options', options);
       // const name = options.name;
-      // console.debug([opSqliteTypeORMDriver] 'IOS_LIBRARY_PATH, ANDROID_DATABASE_PATH', IOS_LIBRARY_PATH, ANDROID_DATABASE_PATH);
+      if (isIOS) {
+        console.debug(
+          '[opSqliteTypeORMDriver] IOS_LIBRARY_PATH, ANDROID_DATABASE_PATH',
+          IOS_LIBRARY_PATH,
+          ANDROID_DATABASE_PATH,
+        );
+      } else {
+        console.debug(
+          '[opSqliteTypeORMDriver] ANDROID_FILES_PATH, ANDROID_DATABASE_PATH',
+          ANDROID_FILES_PATH,
+          ANDROID_DATABASE_PATH,
+        );
+        console.debug(
+          '[opSqliteTypeORMDriver] getRabbyAppDbDir()',
+          getRabbyAppDbDir(),
+        );
+      }
       const location =
         options.location === ':memory:'
           ? options.location
@@ -57,13 +74,17 @@ export const opSqliteTypeORMDriver = {
         encryptionKey: options.encryptionKey || '',
       });
 
-      opSqliteDBRef.current = database;
-      OPSQLiteEvents.emit('__OP_SQLITE_LOADED__', { database });
-      if (opSqliteDBRef.current) {
+      if (!opSqliteDBRef.current) {
+        OPSQLiteEvents.emit('__OP_SQLITE_LOADED__', { database });
+        console.debug('[opSqliteTypeORMDriver] opened database', database);
+      } else {
         console.warn(
           '[opSqliteTypeORMDriver] Warning: database instance already exists, notice developer',
         );
       }
+      opSqliteDBRef.current = database;
+
+      // const database = opSqliteDBRef.current;
 
       const connection = {
         executeSql: async <T extends any>(
@@ -73,8 +94,10 @@ export const opSqliteTypeORMDriver = {
           fail?: (msg: string) => void,
         ): Promise<T> => {
           try {
-            const response = await database.executeWithHostObjects(sql, params);
-            // const response = await database.execute(sql, params);
+            // const response = await database.executeWithHostObjects(sql, params);
+            const response = __DEV__
+              ? await database.execute(sql, params)
+              : database.executeSync(sql, params);
             enhanceQueryResult(response);
             ok?.(response);
             return response as T;
@@ -91,6 +114,7 @@ export const opSqliteTypeORMDriver = {
         close: (ok: any, fail: any) => {
           try {
             database.close();
+            opSqliteDBRef.current = null;
             ok();
           } catch (e) {
             fail(`[op-sqlite]: Error closing db: ${e as string}`);
@@ -115,11 +139,11 @@ export const opSqliteTypeORMDriver = {
         },
       };
 
-      ok?.(connection);
+      okOpen?.(connection);
 
       return connection;
     } catch (e) {
-      fail?.(`[op-sqlite]: Error opening database: ${e as string}`);
+      failOpen?.(`[op-sqlite]: Error opening database: ${e as string}`);
       throw e;
     }
   },
