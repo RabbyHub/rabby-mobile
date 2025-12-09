@@ -13,18 +13,46 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { CombineNFTItem } from './store';
 
+function encodeChainTokenId(chain: string, token_id: string) {
+  return `${chain}::${token_id}`.toLowerCase();
+}
+type INftSettingsSet = {
+  foldNfts: Set<string>;
+  unfoldNfts: Set<string>;
+};
+export function makeNftSettingSets(
+  tokenSetting: ITokenSetting,
+): INftSettingsSet {
+  const tokenSettingSets: Required<INftSettingsSet> = {
+    foldNfts: new Set<string>(
+      [...(tokenSetting.foldNfts || [])].map(i =>
+        encodeChainTokenId(i.chain, i.id),
+      ),
+    ),
+    unfoldNfts: new Set<string>(
+      [...(tokenSetting.unfoldNfts || [])].map(i =>
+        encodeChainTokenId(i.chain, i.id),
+      ),
+    ),
+  };
+
+  return tokenSettingSets;
+}
+
 export const tagNfts = (
   nfts: NFTItem[],
   tokenSetting: ITokenSetting,
 ): DisplayNftItem[] => {
-  const { foldNfts, unfoldNfts } = tokenSetting;
+  const { foldNfts, unfoldNfts } = makeNftSettingSets(tokenSetting);
 
   return nfts.map(i => {
+    const isManualFold = foldNfts?.has(encodeChainTokenId(i.chain, i.id));
+
     const isFold = (() => {
-      if (foldNfts?.some(nft => nft.chain === i.chain && nft.id === i.id)) {
+      if (isManualFold) {
         return true;
       }
-      if (unfoldNfts?.some(nft => nft.chain === i.chain && nft.id === i.id)) {
+      if (unfoldNfts?.has(encodeChainTokenId(i.chain, i.id))) {
         return false;
       }
       if (!i.is_core) {
@@ -32,10 +60,6 @@ export const tagNfts = (
       }
       return false;
     })();
-
-    const isManualFold = foldNfts?.some(
-      nft => nft.chain === i.chain && nft.id === i.id,
-    );
 
     return Object.assign(i, {
       _isFold: isFold,
@@ -146,35 +170,43 @@ type CombineCollectionList = CollectionList & {
   address?: string;
 };
 export type NftItemWithCollection = CombineNFTItem | CombineCollectionList;
-export const collectionNftList = (
+
+export function varyNftListByFold<T extends any>(
   nftList: CombineNFTItem[],
-  forSingleAddress?: boolean,
-) => {
-  const collectionList: NftItemWithCollection[] = [];
+  mapperItem: (collection: NftItemWithCollection, item: CombineNFTItem) => T,
+  options?: {
+    forSingleAddress: boolean;
+  },
+) {
+  const { forSingleAddress = false } = options || {};
+
+  const retValues = {
+    foldList: [] as T[],
+    unFoldList: [] as T[],
+  };
+
+  const collectionMap: Record<string, CombineCollectionList> = {};
   nftList.forEach(item => {
+    const targetList = item._isFold ? retValues.foldList : retValues.unFoldList;
     if (!item.collection_id || !item.collection) {
-      collectionList.push(item);
+      targetList.push(mapperItem(item, item));
       return;
     }
-    const collection = collectionList.find(
-      (_item): _item is CombineCollectionList =>
-        'nft_list' in _item &&
-        (forSingleAddress
-          ? true
-          : isSameAddress(_item.address || '', item.address || '')) &&
-        _item.chain === item.chain &&
-        _item.id === item.collection?.id &&
-        !!_item.nft_list.length,
-    );
-    if (collection) {
-      collection.nft_list.push({ ...item, collection: null });
+    const key = `${forSingleAddress ? '' : item.address}-${item.chain}-${
+      item.collection?.id
+    }`;
+    if (collectionMap[key]) {
+      collectionMap[key].nft_list.push({ ...item, collection: null });
     } else {
-      collectionList.push({
+      const newCollection: CombineCollectionList = {
         ...item.collection,
         address: item.address,
         nft_list: [{ ...item, collection: null }],
-      } as unknown as CombineCollectionList);
+      } as unknown as CombineCollectionList;
+      collectionMap[key] = newCollection;
+      targetList.push(mapperItem(newCollection, item));
     }
   });
-  return collectionList;
-};
+
+  return retValues;
+}

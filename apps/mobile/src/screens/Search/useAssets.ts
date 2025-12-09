@@ -37,6 +37,7 @@ import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { makeChainServerIdSet } from '@/utils/chain';
+import { ITokenSetting } from '@/core/services/preference';
 
 type AssetsState = {
   loading: boolean;
@@ -279,7 +280,7 @@ export const useLoadAssets = () => {
   const batchLoadCacheTokens = useCallback(
     async (
       addresses: string[],
-      setting: any,
+      setting: ITokenSetting,
       options?: {
         core?: boolean;
         maxLength?: number;
@@ -349,7 +350,7 @@ export const useLoadAssets = () => {
   const batchLoadCacheDefi = useCallback(
     async (
       addresses: string[],
-      setting: any,
+      setting: ITokenSetting,
       options?: {
         maxLength?: number;
       },
@@ -393,7 +394,7 @@ export const useLoadAssets = () => {
   const batchLoadCacheNFT = useCallback(
     async (
       addresses: string[],
-      setting: any,
+      setting: ITokenSetting,
       options?: {
         core?: boolean;
         maxLength?: number;
@@ -678,21 +679,21 @@ export const useInitDetectDBAssets = () => {
           if (currentUpdateCount > currentAssetCount) {
             debounceReloadTokenList(
               [ctx.owner_addr],
-              preferenceService.getUserTokenSettings(),
+              preferenceService.getUserTokenSettingsSync(),
             );
           }
         } else if (taskFor === 'protocols') {
           if (currentUpdateCount > currentAssetCount) {
             debounceReloadDefiList(
               [ctx.owner_addr],
-              preferenceService.getUserTokenSettings(),
+              preferenceService.getUserTokenSettingsSync(),
             );
           }
         } else if (taskFor === 'nfts') {
           if (currentUpdateCount > currentAssetCount) {
             debounceReloadNftList(
               [ctx.owner_addr],
-              preferenceService.getUserTokenSettings(),
+              preferenceService.getUserTokenSettingsSync(),
             );
           }
         }

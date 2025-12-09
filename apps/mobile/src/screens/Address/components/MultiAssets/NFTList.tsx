@@ -29,8 +29,8 @@ import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import {
-  collectionNftList,
   NftItemWithCollection,
+  varyNftListByFold,
 } from '@/screens/Home/hooks/nft';
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -104,22 +104,20 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     );
   }, [_rawNftList, chain]);
 
-  const foldNftList: ActionItem[] = useMemo(
-    () =>
-      collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
-        type: 'fold_nft',
-        data: item,
-      })),
-    [nftList],
-  );
-  const unFoldNftList: ActionItem[] = useMemo(
-    () =>
-      collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
-        type: 'unfold_nft',
-        data: item,
-      })),
-    [nftList],
-  );
+  const { foldNftList, unFoldNftList } = useMemo(() => {
+    const result = varyNftListByFold<ActionItem>(
+      nftList,
+      (collection, item) => ({
+        type: item._isFold ? 'fold_nft' : 'unfold_nft',
+        data: collection,
+      }),
+    );
+
+    return {
+      foldNftList: result.foldList,
+      unFoldNftList: result.unFoldList,
+    };
+  }, [nftList]);
 
   const dataList = useMemo(() => {
     const itemData: Array<{

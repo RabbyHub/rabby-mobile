@@ -30,7 +30,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  collectionNftList,
+  varyNftListByFold,
   NftItemWithCollection,
   useQueryNft,
 } from './hooks/nft';
@@ -120,28 +120,21 @@ export const NFTList = ({
     );
   }, [_rawNftList, chain]);
 
-  const foldNftList: ActionItem[] = useMemo(
-    () =>
-      collectionNftList(
-        nftList.filter(i => i._isFold),
-        true,
-      ).map(item => ({
-        type: 'fold_nft',
-        data: item,
-      })),
-    [nftList],
-  );
-  const unFoldNftList: ActionItem[] = useMemo(
-    () =>
-      collectionNftList(
-        nftList.filter(i => !i._isFold),
-        true,
-      ).map(item => ({
-        type: 'unfold_nft',
-        data: item,
-      })),
-    [nftList],
-  );
+  const { foldNftList, unFoldNftList } = useMemo(() => {
+    const result = varyNftListByFold<ActionItem>(
+      nftList,
+      (collection, item) => ({
+        type: item._isFold ? 'fold_nft' : 'unfold_nft',
+        data: collection,
+      }),
+      { forSingleAddress: true },
+    );
+
+    return {
+      foldNftList: result.foldList,
+      unFoldNftList: result.unFoldList,
+    };
+  }, [nftList]);
 
   const dataList = useMemo(() => {
     const itemData: Array<{

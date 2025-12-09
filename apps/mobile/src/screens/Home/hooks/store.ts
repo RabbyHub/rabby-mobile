@@ -232,30 +232,16 @@ export const combinedNfts = (
   return nfts;
 };
 
-// export const tokensAtom = atom<{ [address: string]: AbstractPortfolioToken[] }>(
-//   {},
-// );
-// export const portfoliosAtom = atom<{ [address: string]: DisplayedProject[] }>(
-//   {},
-// );
-// export const nftsAtom = atom<{ [address: string]: DisplayNftItem[] }>({});
 type AssetsMapState = {
   tokensMap: { [address: string]: AbstractPortfolioToken[] };
   portfoliosMap: { [address: string]: DisplayedProject[] };
   nftsMap: { [address: string]: DisplayNftItem[] };
 };
-export const assetsMapStore = zCreate(
-  zMutative<AssetsMapState>(
-    () => ({
-      tokensMap: {},
-      portfoliosMap: {},
-      nftsMap: {},
-    }),
-    {
-      strict: __DEV__,
-    },
-  ),
-);
+export const assetsMapStore = zCreate<AssetsMapState>(() => ({
+  tokensMap: {},
+  portfoliosMap: {},
+  nftsMap: {},
+}));
 
 function setTokensMap(
   valOrFunc: UpdaterOrPartials<AssetsMapState['tokensMap']>,
