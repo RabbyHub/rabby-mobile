@@ -30,30 +30,21 @@ import {
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
 import { IS_IOS } from '@/core/native/utils';
-import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomSheetModal/security';
+import {
+  atSensitiveSceneState,
+  bottomSheetModalSecurityApis,
+} from '@/components2024/GlobalBottomSheetModal/security';
 import { useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
-import { EVENT_ROUTE_CHANGE, eventBus } from '@/utils/events';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
+import { perfEvents } from '@/core/utils/perf';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
   | NavigationContainerRef<RootStackParamsList>;
-
-// const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
-//   onLight: ThemeColors.light['neutral-body'],
-//   onDark: ThemeColors.dark['neutral-body'],
-// });
-
-// const currentRouteNameAtom = atom<AppRootName | string | undefined>(undefined);
-// currentRouteNameAtom.onMount = setAtom => {
-//   eventBus.addListener(EVENT_ROUTE_CHANGE, ({ currentRouteName }) => {
-//     setAtom(currentRouteName as AppRootName | string | undefined);
-//   });
-// };
 
 type NavigationRouteStore = {
   currentRouteName: AppRootName | string | undefined;
@@ -75,13 +66,12 @@ function setCurrentRouteName(
     return prev;
   });
 }
-eventBus.addListener(EVENT_ROUTE_CHANGE, ({ currentRouteName }) => {
+perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
   setCurrentRouteName(currentRouteName as AppRootName | string | undefined);
 });
 
 export function useCurrentRouteName() {
   return {
-    // currentRouteName: useAtomValue(currentRouteNameAtom),
     currentRouteName: navigationRouteStore(s => s.currentRouteName),
   };
 }
@@ -457,11 +447,12 @@ export type ProtectedConf = {
   warningScreenshotBackup: boolean;
   onOk?: (ctx: { navigation?: NavigationInstance | null }) => void;
 };
+const defaultOnOk = ctx => {
+  ctx.navigation?.goBack();
+};
 const defaultProtectedConf: ProtectedConf = {
   iosBlurType: ProtectType.NONE,
-  onOk: ctx => {
-    ctx.navigation?.goBack();
-  },
+  onOk: defaultOnOk,
   warningScreenshotBackup: false,
 };
 function getProtectedConf() {
@@ -486,9 +477,9 @@ const PROTECTED_SCREENS: {
   [RootNames.BackupPrivateKey]: getProtectedConf(),
 };
 
-function getAtSensitveScreenInfo(routeName: string | undefined) {
+function getAtSensitiveScreenInfo(routeName: string | undefined) {
   const result = {
-    $routeName: routeName,
+    // $routeName: routeName,
     $protectedConf: { ...defaultProtectedConf },
     _atSensitiveScreen: false,
   };
@@ -505,19 +496,66 @@ function getAtSensitveScreenInfo(routeName: string | undefined) {
   return result;
 }
 
-export function useAtSensitiveScene() {
-  // const currentRouteName = useAtomValue(currentRouteNameAtom);
-  const currentRouteName = navigationRouteStore(s => s.currentRouteName);
-  const { anySensitiveModalOpened } = useSensitiveGlobalModalsOpened();
+type AtSensitiveScreenInfo = ReturnType<typeof getAtSensitiveScreenInfo>;
+type AtSensitiveScreenState = {
+  anySensitiveModalOpened: boolean;
+  screenInfo: AtSensitiveScreenInfo;
+};
+const atSensitiveScreenStore = zCreate<AtSensitiveScreenState>(() => ({
+  anySensitiveModalOpened: false,
+  screenInfo: getAtSensitiveScreenInfo(undefined),
+}));
 
-  return useMemo(() => {
-    const srnInfo = getAtSensitveScreenInfo(currentRouteName);
+function setAtSensitiveScreenInfo(
+  valOrFunc: UpdaterOrPartials<AtSensitiveScreenInfo>,
+) {
+  atSensitiveScreenStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.screenInfo,
+      valOrFunc,
+      {
+        strict: true,
+      },
+    );
+
+    if (!changed) return prev;
+
+    return { ...prev, screenInfo: newVal };
+  });
+}
+
+perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
+  setAtSensitiveScreenInfo(getAtSensitiveScreenInfo(currentRouteName));
+});
+
+atSensitiveSceneState.subscribe(s => {
+  const anySensitiveModalOpened =
+    bottomSheetModalSecurityApis.isAnySensitiveModalOpened(s);
+
+  atSensitiveScreenStore.setState(prev => {
+    if (prev.anySensitiveModalOpened === anySensitiveModalOpened) {
+      return prev;
+    }
     return {
-      ...srnInfo,
+      ...prev,
       anySensitiveModalOpened,
-      atSensitiveScene: srnInfo._atSensitiveScreen || anySensitiveModalOpened,
     };
-  }, [currentRouteName, anySensitiveModalOpened]);
+  });
+});
+
+export function useAtSensitiveScene() {
+  const srnInfo = atSensitiveScreenStore(s => s.screenInfo);
+  const anySensitiveModalOpened = atSensitiveScreenStore(
+    s => s.anySensitiveModalOpened,
+  );
+
+  return {
+    anySensitiveModalOpened,
+    atSensitiveScene: srnInfo._atSensitiveScreen || anySensitiveModalOpened,
+    iosBlurType: srnInfo.$protectedConf.iosBlurType,
+    warningScreenshotBackup: srnInfo.$protectedConf.warningScreenshotBackup,
+    onOk: srnInfo.$protectedConf.onOk,
+  };
 }
 
 /**
@@ -528,7 +566,7 @@ export function useAppPreventScreenshotOnScreen({
 }: {
   isTop?: boolean;
 }) {
-  const { atSensitiveScene, $protectedConf } = useAtSensitiveScene();
+  const { atSensitiveScene, iosBlurType } = useAtSensitiveScene();
   const { forceAllowScreenshot } = useExpScreenCapture();
   const shouldPreventScreenCapturing =
     atSensitiveScene && !forceAllowScreenshot;
@@ -543,17 +581,12 @@ export function useAppPreventScreenshotOnScreen({
     if (!isTop) return;
 
     if (!IS_IOS) return;
-    if ($protectedConf.iosBlurType === ProtectType.SafeTipModal) return;
+    if (iosBlurType === ProtectType.SafeTipModal) return;
 
     if (isBeingCaptured && shouldPreventScreenCapturing) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();
     } else {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
-  }, [
-    isTop,
-    $protectedConf.iosBlurType,
-    isBeingCaptured,
-    shouldPreventScreenCapturing,
-  ]);
+  }, [isTop, iosBlurType, isBeingCaptured, shouldPreventScreenCapturing]);
 }
