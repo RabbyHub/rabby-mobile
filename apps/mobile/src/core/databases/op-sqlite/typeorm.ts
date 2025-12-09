@@ -74,17 +74,13 @@ export const opSqliteTypeORMDriver = {
         encryptionKey: options.encryptionKey || '',
       });
 
-      if (!opSqliteDBRef.current) {
-        OPSQLiteEvents.emit('__OP_SQLITE_LOADED__', { database });
-        console.debug('[opSqliteTypeORMDriver] opened database', database);
-      } else {
+      if (opSqliteDBRef.current) {
         console.warn(
           '[opSqliteTypeORMDriver] Warning: database instance already exists, notice developer',
         );
       }
       opSqliteDBRef.current = database;
-
-      // const database = opSqliteDBRef.current;
+      OPSQLiteEvents.emit('__OP_SQLITE_LOADED__', { database });
 
       const connection = {
         executeSql: async <T extends any>(
