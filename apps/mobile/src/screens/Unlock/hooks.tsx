@@ -1,48 +1,59 @@
 import { useCallback } from 'react';
-import { atom, useAtom } from 'jotai';
 import { apisLock } from '@/core/apis';
-import { useAtomRefState } from '@/hooks/common/useRefState';
-import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
 import { useBiometrics } from '@/hooks/biometrics';
 import { toast } from '@/components/Toast';
 import { Alert } from 'react-native';
 import { UnlockResultErrors } from '@/core/apis/lock';
 import { t } from 'i18next';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 export enum UNLOCK_STATE {
   IDLE = 0,
   UNLOCKING = 1,
 }
-const unlockStateAtom = atom({
+
+type UnlockState = {
+  hasLeftFromUnlock: boolean;
+  status: UNLOCK_STATE;
+};
+const unlockStateStore = zCreate<UnlockState>(() => ({
   hasLeftFromUnlock: false,
   status: UNLOCK_STATE.IDLE,
-});
+}));
+
+function setUnlockState(valOrFunc: UpdaterOrPartials<UnlockState>) {
+  unlockStateStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
+
+const unlockApp = async (password: string) => {
+  if (unlockStateStore.getState().status !== UNLOCK_STATE.IDLE)
+    return { error: '' } as UnlockResultErrors;
+
+  setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.UNLOCKING }));
+
+  try {
+    return await apisLock.unlockWalletWithUpdateUnlockTime(password);
+  } finally {
+    setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.IDLE }));
+  }
+};
+
+const afterLeaveFromUnlock = () => {
+  setUnlockState(prev => ({ ...prev, hasLeftFromUnlock: true }));
+};
+
 export function useUnlockApp() {
-  const {
-    atomState,
-    stateRef,
-    setAtomRefState: setUnlockState,
-  } = useAtomRefState(unlockStateAtom);
-
-  const unlockApp = useCallback(
-    async (password: string) => {
-      if (stateRef.current.status !== UNLOCK_STATE.IDLE)
-        return { error: '' } as UnlockResultErrors;
-
-      setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.UNLOCKING }));
-
-      try {
-        return await apisLock.unlockWalletWithUpdateUnlockTime(password);
-      } finally {
-        setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.IDLE }));
-      }
-    },
-    [stateRef, setUnlockState],
-  );
-
-  const afterLeaveFromUnlock = useCallback(() => {
-    setUnlockState(prev => ({ ...prev, hasLeftFromUnlock: true }));
-  }, [setUnlockState]);
+  const atomState = unlockStateStore(s => s);
 
   return {
     isUnlocking: atomState.status === UNLOCK_STATE.UNLOCKING,
@@ -52,27 +63,43 @@ export function useUnlockApp() {
   };
 }
 
-const hasTipedUserEnableBiometricsAtom = atomByMMKV(
+const hasTipedUserEnableBiometricsStore = zustandByMMKV(
   '@hasTipedUserEnableBiometrics',
-  false,
-  { storage: MMKVStorageStrategy.compatJson },
+  { hasTipedUserEnableBiometrics: false },
+  {
+    storage: MMKVStorageStrategy.compatJson,
+    migrateFromAtom: ctx => {
+      const migrated = {
+        state: { hasTipedUserEnableBiometrics: !!ctx.oldData },
+        version: 0,
+      };
+
+      return { migrated: migrated.state };
+    },
+  },
 );
-export function useResetHasTipedUserEnableBiometrics() {
-  const [, setHasTipedUserEnableBiometrics] = useAtom(
-    hasTipedUserEnableBiometricsAtom,
-  );
 
-  const resetHasTipedUserEnableBiometrics = useCallback(() => {
-    setHasTipedUserEnableBiometrics(false);
-  }, [setHasTipedUserEnableBiometrics]);
+function setHasTipedUserEnableBiometrics(
+  valOrFunc: UpdaterOrPartials<boolean>,
+) {
+  hasTipedUserEnableBiometricsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(
+      prev.hasTipedUserEnableBiometrics,
+      valOrFunc,
+    );
 
-  return {
-    resetHasTipedUserEnableBiometrics,
-  };
+    return { ...prev, hasTipedUserEnableBiometrics: newVal };
+  });
 }
+
+export function resetHasTipedUserEnableBiometrics() {
+  setHasTipedUserEnableBiometrics(false);
+}
+
 export function useTipedUserEnableBiometrics() {
-  const [hasTipedUserEnableBiometrics, setHasTipedUserEnableBiometrics] =
-    useAtom(hasTipedUserEnableBiometricsAtom);
+  const hasTipedUserEnableBiometrics = hasTipedUserEnableBiometricsStore(
+    s => s.hasTipedUserEnableBiometrics,
+  );
   const { computed, toggleBiometrics } = useBiometrics();
 
   const shouldTipedUserEnableBiometrics =
@@ -132,7 +159,6 @@ export function useTipedUserEnableBiometrics() {
     },
     [
       shouldTipedUserEnableBiometrics,
-      setHasTipedUserEnableBiometrics,
       toggleBiometrics,
       computed.defaultTypeLabel,
     ],

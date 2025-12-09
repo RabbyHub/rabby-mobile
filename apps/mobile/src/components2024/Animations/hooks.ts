@@ -1,26 +1,17 @@
-import { appStorageForZustand, atomByMMKV } from '@/core/storage/mmkv';
-import { zCreate, zCreateJSONStorage, zPersist } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { useAtom } from 'jotai';
 import { useCallback } from 'react';
+
+import { zustandByMMKV } from '@/core/storage/mmkv';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 type Guidances = {
   multiTabs20251205Viewed: boolean;
 };
-// const guidancePersistedAtom = atomByMMKV<Guidances>('@homeGuidance', {
-//   multiTabs20251205Viewed: true,
-// });
 
-export const guidancePersistedStore = zCreate(
-  zPersist<Guidances>(
-    (set, get) => ({
-      multiTabs20251205Viewed: false,
-    }),
-    {
-      name: '@homeGuidance',
-      storage: zCreateJSONStorage(() => appStorageForZustand),
-    },
-  ),
+export const guidancePersistedStore = zustandByMMKV<Guidances>(
+  '@homeGuidance',
+  {
+    multiTabs20251205Viewed: false,
+  },
 );
 
 function setGuidance(valOrFunc: UpdaterOrPartials<Guidances>) {
