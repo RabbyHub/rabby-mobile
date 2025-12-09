@@ -82,7 +82,6 @@ export function useBiometricsComputed() {
 
 const isFetchingBiometricsRef = { current: false };
 export function useBiometrics(options?: { autoFetch?: boolean }) {
-  // const [biometrics, setBiometrics] = useAtom(biometricsInfoAtom);
   const biometrics = biometricsInfoStore(
     useShallow(s => ({
       authEnabled: s.authEnabled,
@@ -224,13 +223,7 @@ function getBiometricsStubModalState() {
 }
 
 export function useVerifyByBiometrics() {
-  // const [{ status: biometricsStatus }, setState] = useAtom(
-  //   biometricsStubModalStateAtom,
-  // );
   const biometricsStatus = biometricsStubModalState(s => s.status);
-  // const getAtomValue = useAtomCallback(get =>
-  //   get(biometricsStubModalStateAtom),
-  // );
   const { t } = useTranslation();
 
   const {

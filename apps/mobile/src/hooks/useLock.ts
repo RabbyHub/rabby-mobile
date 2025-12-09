@@ -48,27 +48,9 @@ export function useSetAppLock() {
   return { setAppLock };
 }
 export function useAppUnlocked() {
-  // const [{ appUnlocked }, _setAppLock] = useAtom(appLockAtom);
-  // const getIsAppUnlocked = useAtomCallback(
-  //   useCallback(get => get(appLockAtom).appUnlocked, []),
-  // );
-  // const setAppLock = useCallback<typeof _setAppLock>((valOrFunc) => {
-  //   _setAppLock(prev => {
-  //     const nextVal = valOrFunc instanceof Function ? valOrFunc(prev) : valOrFunc;
-  //     if (isEqual(prev, nextVal)) return prev;
-
-  //     return nextVal;
-  //   })
-  // }, [_setAppLock]);
-
-  // const hasSetupCustomPassword = useMemo(() => {
-  //   return pwdStatus === PasswordStatus.Custom;
-  // }, [pwdStatus]);
-
   return {
     isAppUnlocked: zAppLockStore(state => state.appUnlocked),
     getIsAppUnlocked,
-    // hasSetupCustomPassword,
     setAppLock,
   };
 }
@@ -104,7 +86,6 @@ export function useTryUnlockAppWithBuiltinOnTop() {
 }
 
 export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
-  // const [appLock, setAppLock] = useAtom(appLockAtom);
   const appLock = zAppLockStore(
     useShallow(state => ({
       appUnlocked: state.appUnlocked,

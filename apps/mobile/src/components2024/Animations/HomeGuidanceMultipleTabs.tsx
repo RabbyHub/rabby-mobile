@@ -102,7 +102,6 @@ export function useMeasureLayoutForHomeGuidanceMultipleTabs<
   T extends View = View,
 >() {
   const viewRef = React.useRef<T>(null);
-  // const [, setGuidance] = useAtom(guidanceAtom);
 
   const measureTabBarWrapper = React.useCallback(() => {
     if (viewRef.current) {
@@ -158,9 +157,6 @@ export function useMeasureLayoutForHomeGuidanceMultipleTabs<
 }
 
 function useMeasuredLayoutForHomeGuidanceMultipleTabs() {
-  // const [guidance] = useAtom(guidanceAtom);
-  // const { top } = useSafeAreaInsets();
-
   const tabbarAbsLayout = guidanceStore(state => state.tabbarAbsLayout);
   const secondaryIndicatorAbsLayout = guidanceStore(
     state => state.secondaryIndicatorAbsLayout,
@@ -174,7 +170,6 @@ function useMeasuredLayoutForHomeGuidanceMultipleTabs() {
 }
 
 function useGuidanceMultipleTabsVisible() {
-  // const [{ visible }, setGuidance] = useAtom(guidanceAtom);
   const visible = guidanceStore(state => state.visible);
 
   const toggleGuidanceVisible = useCallback((visible: boolean) => {

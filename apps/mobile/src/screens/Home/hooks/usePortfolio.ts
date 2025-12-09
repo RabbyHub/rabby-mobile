@@ -122,7 +122,6 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
   const [isLoading, setLoading] = useSafeState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [hasValue, setHasValue] = useSafeState(false);
-  // const [singleDeFiNonce, setSingleDeFiNonce] = useAtom(singleDeFiNonceAtom);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;

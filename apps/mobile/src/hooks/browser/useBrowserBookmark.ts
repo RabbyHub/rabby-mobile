@@ -29,11 +29,7 @@ function setBrowserBookmarkStore(
     return newVal;
   });
 }
-// const setStore = setBrowserBookmarkStore;
-// const browserBookmarkAtom = atom<EntityState<BrowserBookmarkItem, string>>({
-//   ids: [],
-//   entities: {},
-// });
+
 const getBookmarkList = () => {
   const entities = browserService.bookmark.selectors.selectEntities();
   const ids = browserService.bookmark.selectors.selectIds();
@@ -44,8 +40,6 @@ const getBookmarkList = () => {
 };
 
 export function useBrowserBookmark() {
-  // const [store, setStore] = useAtom(browserBookmarkAtom);
-  // const [dapps] = useAtom(dappsAtom);
   const store = zBrowserBookmarkStore(s => s);
   const { dapps } = useDappsValue();
 

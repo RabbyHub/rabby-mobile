@@ -32,59 +32,16 @@ import { setChainList } from '@/hooks/useChainList';
  * @description only call this hook on app's top level
  */
 export function useSetupServiceStub() {
-  // const [, setDappServices] = useAtom(dappServiceAtom);
-  // const [, setCurrencyServices] = useAtom(currencyServiceAtom);
-  // const [, setChainList] = useAtom(chainListAtom);
   const { getAllRPC } = useCustomRPC();
   const { getBookmarkList } = useBrowserBookmark();
   const { getBrowserHistoryList } = useBrowserHistory();
-  // const [, setTabs] = useAtom(tabsAtom);
-  // const { initEventBus } = usePerpsStore();
   usePerpsEffectOnTop();
-
-  // useEffect(() => {
-  //   const disposes: Function[] = [];
-
-  //   dappService.setBeforeSetKV((k, v) => {
-  //     setDappServices(prev => ({ ...prev, [k]: v }));
-  //   }, disposes);
-
-  //   return () => {
-  //     disposes.forEach(dispose => dispose());
-  //   };
-  // }, [setDappServices]);
-
-  // useEffect(() => {
-  //   const disposes: Function[] = [];
-
-  //   currencyService.setBeforeSetKV((k, v) => {
-  //     setCurrencyServices(prev => ({ ...prev, [k]: v }));
-  //   }, disposes);
-
-  //   return () => {
-  //     disposes.forEach(dispose => dispose());
-  //   };
-  // }, [setCurrencyServices]);
-
-  // useMount(() => {
-  //   eventBus.on(EVENT_SWITCH_ACCOUNT, (v: any) => {
-  //     setCurrentAccount(v);
-  //   });
-  // });
 
   useMount(() => {
     setChainList({
       mainnetList: getChainList('mainnet'),
       testnetList: getChainList('testnet'),
     });
-    // eventBus.on(EVENT_UPDATE_CHAIN_LIST, v => {
-    //   setChainList(prev => {
-    //     return {
-    //       ...prev,
-    //       ...v,
-    //     };
-    //   });
-    // });
   });
 
   useMount(() => {
@@ -111,8 +68,4 @@ export function useSetupServiceStub() {
       }),
     );
   });
-
-  // useMount(() => {
-  //   initEventBus();
-  // });
 }

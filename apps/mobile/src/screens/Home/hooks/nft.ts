@@ -70,7 +70,6 @@ export const tagNfts = (
 export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(true);
   const [list, setList] = useSafeState<DisplayNftItem[]>([]);
-  // const [singleNFTNonce, setSingleNFTNonce] = useAtom(singleNFTNonceAtom);
   const fetchData = useCallback(
     async (force?: boolean) => {
       if (!addr) {

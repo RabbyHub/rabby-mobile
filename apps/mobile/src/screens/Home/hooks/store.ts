@@ -536,7 +536,6 @@ export function useAssetsNFTs({
 }
 
 export const useMainnetTokens = (address?: string) => {
-  // const [tokensMap, setTokensMap] = useAtom(tokensAtom);
   const tokensMap = assetsMapStore(s => s.tokensMap);
   const updateTokens = useCallback(
     (newTokens: AbstractPortfolioToken[]) => {
@@ -558,7 +557,6 @@ export const useMainnetTokens = (address?: string) => {
 };
 
 export const useMainnetPortfolios = (address?: string) => {
-  // const [portfoliosMap, setPortfoliosMap] = useAtom(portfoliosAtom);
   const portfoliosMap = assetsMapStore(s => s.portfoliosMap);
   const updatePortfolios = useCallback(
     (newPortfolios: DisplayedProject[]) => {
@@ -583,7 +581,6 @@ export const useMainnetPortfolios = (address?: string) => {
 };
 
 export const useMainnetNFTs = (address?: string) => {
-  // const [nftsMap, setNftsMap] = useAtom(nftsAtom);
   const nftsMap = assetsMapStore(s => s.nftsMap);
   const updateNFTs = useCallback(
     (newNFTs: DisplayNftItem[]) => {

@@ -25,7 +25,6 @@ function setCloudStorage(valOrFunc: UpdaterOrPartials<CloudStorageState>) {
   });
 }
 export function useGoogleSign() {
-  // const [cloudStorage, setCloudStorage] = useAtom(cloudStorageAtom);
   const cloudStorage = cloudStorageStore(state => state);
 
   const previousSigned = React.useMemo(

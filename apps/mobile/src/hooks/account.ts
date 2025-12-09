@@ -179,7 +179,6 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
 
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
-  // const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
   const pinAddresses = zAccountStore(s => s.pinnedAddresses);
 
   /**
@@ -252,11 +251,8 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 };
 
 export const usePinnedAccountList = () => {
-  // const [pinAddresses] = useAtom(pinAddressesAtom);
-  // const [accounts] = useAtom(accountsAtom);
   const pinAddresses = zAccountStore(s => s.pinnedAddresses);
   const accounts = zAccountStore(s => s.accounts);
-  // const [balanceAccounts] = useAtom(balanceAtom);
   const { balanceAccounts } = useBalanceAccounts();
 
   const pinnedAccountList = useMemo(() => {

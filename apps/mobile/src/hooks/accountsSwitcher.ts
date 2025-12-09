@@ -49,12 +49,6 @@ export const AccountSwitcherContext = React.createContext<SceneAccountInfo>(
 );
 
 export function useResetSceneAccountInfo() {
-  // const [, zSetSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
-
-  // const resetSceneAccountInfo = useCallback(() => {
-  //   zSetSceneAccountInfo(cloneDeep(AccountSwitcherInfos));
-  // }, []);
-
   return {
     resetSceneAccountInfo: zResetSceneAccountInfo,
   };
@@ -85,7 +79,6 @@ export function usePreFetchBeforeEnterScene() {
 }
 
 export function useSwitchSceneCurrentAccount() {
-  // const [sceneAccountInfo, zSetSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
   const sceneAccountInfo = sceneAccountInfoStore(s => s);
   /**
    * @description switch current account in scene, enable it if account is not null, or
@@ -335,7 +328,6 @@ export function useSceneAccountInfo(options: {
   const { accounts } = useAccounts({ disableAutoFetch: true });
 
   const { forScene } = options || {};
-  // const [sceneAccounts] = useAtom(sceneAccountInfoAtom);
   const sceneAccounts = sceneAccountInfoStore(s => s);
 
   const { pinAddresses } = usePinAddresses({

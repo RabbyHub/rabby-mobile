@@ -98,14 +98,10 @@ export default function useAccountsBalance(opts?: {
   accountsNoUnique?: boolean;
 }) {
   const { cacheTime = 10 * 60 * 1000, accountsNoUnique = true } = opts || {};
-  // const [balanceAccounts, setBalanceAccounts] = useAtom(balanceAtom);
   const balanceAccounts = balanceStore(s => s.balance);
-  // const [balanceCacheAccounts, setBalanceCacheAccounts] = useAtom(balanceCacheAtom);
   const balanceCacheAccounts = balanceStore(s => s.balanceCache);
 
-  // const [accountsLength, setAccountsLength] = useAtom(lengthAtom);
   const accountsLength = balanceStore(s => s.length);
-  // const [{ balanceLoading, loadBalanceFromApiStage }, setLoading] = useAtom(loadAccountsBalanceAtom);
   const balanceLoading = balanceLoadingStore(s => s.balanceLoading);
   const loadBalanceFromApiStage = balanceLoadingStore(
     s => s.loadBalanceFromApiStage,

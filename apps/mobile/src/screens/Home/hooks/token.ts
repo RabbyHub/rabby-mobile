@@ -64,7 +64,6 @@ export const useTokens = (
     AbstractPortfolioToken[]
   >([]);
 
-  // const [singleTokenNonce, setSingleTokenNonce] = useAtom(singleTokenNonceAtom);
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);
 

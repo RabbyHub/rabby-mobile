@@ -189,12 +189,10 @@ function setEntryScripts(valOrFunc: UpdaterOrPartials<LoadEntryScriptsState>) {
 export function useJavaScriptBeforeContentLoaded(options?: {
   isTop?: boolean;
 }) {
-  // const [{ couldRender }] = useAtom(bootstrapAtom);
   const couldRender = zBootstrapStore(s => s.couldRender);
   const inPageWeb3 = loadEntryScriptsStore(s => s.inPageWeb3);
   const vConsole = loadEntryScriptsStore(s => s.vConsole);
 
-  // const [entryScripts, setEntryScripts] = useAtom(loadEntryScriptsAtom);
   const { isTop } = options || {};
 
   React.useEffect(() => {
@@ -253,7 +251,6 @@ const hideSplashScreen = (forceHide = false) => {
  * @description only call this hook on the top level component
  */
 export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
-  // const [{ couldRender }, setBootstrap] = useAtom(bootstrapAtom);
   const couldRender = zBootstrapStore(s => s.couldRender);
   useJavaScriptBeforeContentLoaded({ isTop: true });
   useGlobal();
@@ -264,8 +261,6 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
   React.useEffect(() => {
     if (appNavigationReady) hideSplashScreen(true);
   }, [appNavigationReady]);
-
-  // const { getTriedUnlock } = useTryUnlockAppWithBuiltinOnTop();
 
   const startedLoadRef = React.useRef(false);
   React.useEffect(() => {

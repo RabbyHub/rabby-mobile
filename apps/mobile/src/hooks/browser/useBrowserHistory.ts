@@ -51,9 +51,7 @@ export function resetBrowserHistoryStore() {
 }
 
 export function useBrowserHistory() {
-  // const [store, setStore] = useAtom(browserHistoryAtom);
   const { ids, entities } = browserHistoryStore(s => s);
-  // const [dapps] = useAtom(dappsAtom);
   const { dapps } = useDappsValue();
   const { bookmarkStore } = useBrowserBookmark();
   const { t } = useTranslation();

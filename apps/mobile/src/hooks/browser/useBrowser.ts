@@ -162,7 +162,6 @@ function useDisplayedTabs() {
 }
 
 export function useHomeDisplayedTabs() {
-  // const [store] = useAtom(tabsAtom);
   const tabs = tabsStore(s => s.tabs);
   const { dapps } = useDappsValue();
 
@@ -181,7 +180,6 @@ export function useHomeDisplayedTabs() {
 }
 
 export const useBrowserActiveTabState = () => {
-  // return useAtom(browserActiveTabStateAtom);
   return [
     browserActiveTabStateStore(s => s),
     setBrowserActiveTabState,
@@ -189,14 +187,9 @@ export const useBrowserActiveTabState = () => {
 };
 
 export function useBrowser() {
-  // const [store, setStore] = useAtom(tabsAtom);
   const store = tabsStore(s => s);
-  // const [visible, setVisible] = useAtom(visibleAtom);
   const visible = browserExtraStore(s => s.visible);
-  // const [isShowManagePopup, setIsShowManagePopup] = useAtom(managePopupAtom);
   const isShowManagePopup = browserExtraStore(s => s.isShowManagePopup);
-  // const [browserState, setBrowserState] = useAtom(browserStateAtom);
-  // const [displayedTabs] = useAtom(displayedTabsAtom);
   const { displayedTabs } = useDisplayedTabs();
 
   const setPartialBrowserState = useMemoizedFn(
@@ -449,12 +442,3 @@ export function useBrowser() {
     terminateTabs,
   };
 }
-
-// export function useBrowserSearch() {
-//   const [searchState, setSearchState] = useAtom(searchStateAtom);
-
-//   return {
-//     searchState,
-//     setSearchState,
-//   };
-// }

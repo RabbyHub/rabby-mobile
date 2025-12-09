@@ -34,7 +34,6 @@ function setGuidance(valOrFunc: UpdaterOrPartials<Guidances>) {
 }
 
 export function useGuidanceShown() {
-  // const [guidance, setGuidance] = useAtom(guidancePersistedAtom);
   const multiTabs20251205Viewed = guidancePersistedStore(
     s => s.multiTabs20251205Viewed,
   );
