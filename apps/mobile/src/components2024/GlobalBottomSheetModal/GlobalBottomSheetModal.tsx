@@ -18,7 +18,7 @@ import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
 import { globalSheetModalEvents } from './event';
 import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
-import { useSensitiveGlobalModalsOpened } from './security';
+import { bottomSheetModalSecurityApis } from './security';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeBottomSheetProps } from './utils-help';
@@ -85,9 +85,6 @@ export const GlobalBottomSheetModal2024 = () => {
 
   const [getApproval] = useApproval();
 
-  const { markAtSensitiveModal, removeAtSensitiveModal } =
-    useSensitiveGlobalModalsOpened();
-
   const handleCreate = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.CREATE]
   >(
@@ -132,14 +129,14 @@ export const GlobalBottomSheetModal2024 = () => {
         return [...prev, newModal];
       });
       if (params.preventScreenshotOnModalOpen) {
-        markAtSensitiveModal(id);
+        bottomSheetModalSecurityApis.markAtSensitiveModal(id);
       }
 
       setTimeout(() => {
         handlePresent(id);
       }, 0);
     },
-    [getApproval, handlePresent, markAtSensitiveModal],
+    [getApproval, handlePresent],
   );
 
   const handleRemove = React.useCallback<
@@ -166,11 +163,11 @@ export const GlobalBottomSheetModal2024 = () => {
   >(
     key => {
       globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
-      removeAtSensitiveModal(key);
+      bottomSheetModalSecurityApis.removeAtSensitiveModal(key);
 
       handleRemove(key);
     },
-    [handleRemove, removeAtSensitiveModal],
+    [handleRemove],
   );
 
   const handleSnapToIndex = React.useCallback<

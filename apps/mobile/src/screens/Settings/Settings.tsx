@@ -122,7 +122,10 @@ import {
 import { AppCacheSizeText } from './components/SpecialText';
 import { IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import {
+  resetUpdateHistoryTime,
+  useHistoryTokenDict,
+} from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
 import { OpenApiPopup } from './components/OpenApiPopup';
@@ -219,7 +222,6 @@ function SettingsBlocks() {
     selectAutolockTimeRef.current?.present();
   }, [shouldRedirectToSetPasswordBefore]);
 
-  const { resetUpdateHistoryTime } = useHistoryTokenDict();
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const {

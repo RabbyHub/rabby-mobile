@@ -1,56 +1,64 @@
-import { atom, useAtom } from 'jotai';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { MODAL_ID } from './types';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-const atSensitiveSceneAtom = atom({
-  openedSensitiveGlobalModals: {} as Record<MODAL_ID, boolean>,
-});
-/**
- * @description Prevents the user from taking a screenshot,
- * and keep PREVIOUS state on cleanup
- */
-export function useSensitiveGlobalModalsOpened() {
-  const [sensitiveScene, setSensitiveScene] = useAtom(atSensitiveSceneAtom);
+type AtSensitiveSceneState = {
+  openedSensitiveGlobalModals: Record<MODAL_ID, boolean>;
+};
+export const atSensitiveSceneState = zCreate<AtSensitiveSceneState>(() => ({
+  openedSensitiveGlobalModals: {},
+}));
+function setSensitiveScene(
+  valOrFunc: UpdaterOrPartials<AtSensitiveSceneState>,
+) {
+  atSensitiveSceneState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
 
-  const markAtSensitiveModal = useCallback(
-    (key: MODAL_ID) => {
-      setSensitiveScene(prev => {
-        return {
-          ...prev,
-          openedSensitiveGlobalModals: {
-            ...prev.openedSensitiveGlobalModals,
-            [key]: true,
-          },
-        };
-      });
-    },
-    [setSensitiveScene],
-  );
-
-  const removeAtSensitiveModal = useCallback(
-    (key: MODAL_ID) => {
-      setSensitiveScene(prev => {
-        delete prev.openedSensitiveGlobalModals[key];
-        return {
-          ...prev,
-          openedSensitiveGlobalModals: {
-            ...prev.openedSensitiveGlobalModals,
-          },
-        };
-      });
-    },
-    [setSensitiveScene],
-  );
-
-  const anySensitiveModalOpened = useMemo(() => {
-    return Object.values(sensitiveScene.openedSensitiveGlobalModals).some(
-      Boolean,
-    );
-  }, [sensitiveScene.openedSensitiveGlobalModals]);
-
-  return {
-    anySensitiveModalOpened,
-    markAtSensitiveModal,
-    removeAtSensitiveModal,
-  };
+    return newVal;
+  });
 }
+
+function isAnySensitiveModalOpened(sensitiveScene: AtSensitiveSceneState) {
+  return Object.values(sensitiveScene.openedSensitiveGlobalModals).some(
+    Boolean,
+  );
+}
+
+const markAtSensitiveModal = (key: MODAL_ID) => {
+  setSensitiveScene(prev => {
+    return {
+      ...prev,
+      openedSensitiveGlobalModals: {
+        ...prev.openedSensitiveGlobalModals,
+        [key]: true,
+      },
+    };
+  });
+};
+
+const removeAtSensitiveModal = (key: MODAL_ID) => {
+  setSensitiveScene(prev => {
+    delete prev.openedSensitiveGlobalModals[key];
+    return {
+      ...prev,
+      openedSensitiveGlobalModals: {
+        ...prev.openedSensitiveGlobalModals,
+      },
+    };
+  });
+};
+
+function getIsAnySensitiveModalOpened() {
+  const sensitiveScene = atSensitiveSceneState.getState();
+  return isAnySensitiveModalOpened(sensitiveScene);
+}
+
+export const bottomSheetModalSecurityApis = {
+  markAtSensitiveModal,
+  removeAtSensitiveModal,
+  isAnySensitiveModalOpened,
+  getIsAnySensitiveModalOpened,
+};

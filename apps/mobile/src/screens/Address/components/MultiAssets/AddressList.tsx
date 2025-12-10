@@ -35,10 +35,10 @@ export const AddressList = ({
   const { t } = useTranslation();
 
   const {
+    top10Accounts,
     top10Addresses,
     top10Records,
     notMatterAccounts,
-    list: _rawList,
     fetchAccounts,
   } = useAccountInfo();
 
@@ -64,7 +64,7 @@ export const AddressList = ({
   useBalanceUpdate(triggerUpdate);
 
   const list = useMemo(() => {
-    return _rawList.slice(0, 10).map(item => {
+    return top10Accounts.map(item => {
       const account = balanceAccounts.find(acc =>
         isSameAddress(acc.address, item.address),
       );
@@ -74,7 +74,7 @@ export const AddressList = ({
         evmBalance: account?.evmBalance || item.evmBalance || 0,
       };
     });
-  }, [balanceAccounts, _rawList]);
+  }, [balanceAccounts, top10Accounts]);
 
   const addressListData = useMemo(() => {
     return [

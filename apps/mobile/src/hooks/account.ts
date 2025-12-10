@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 
-import { atom, useAtom } from 'jotai';
+// import { atom, useAtom } from 'jotai';
 import {
   KeyringAccount,
   CORE_KEYRING_TYPES,
@@ -32,7 +32,7 @@ import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
 import { isEqual, unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
-import { useHistoryTokenDict } from './historyTokenDict';
+import { updateHistoryTimeSingleAddress } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { fetchAllAccounts, KeyringAccountWithAlias } from '@/core/apis/account';
@@ -49,18 +49,18 @@ import { sortAccountList } from '@/utils/sortAccountList';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
-const fetchingAccountsAtom = atom(false);
+// const fetchingAccountsAtom = atom(false);
 
 type Store = {
   accounts: KeyringAccountWithAlias[];
-  // fetchingAccounts: boolean;
+  fetchingAccounts: boolean;
   pinnedAddresses: IPinAddress[];
   currentAccount: KeyringAccountWithAlias | null;
 };
 const zAccountStore = zCreate<Store>((set, get) => {
   return {
     accounts: [],
-    // fetchingAccounts: false,
+    fetchingAccounts: false,
 
     pinnedAddresses: preferenceService.getPinAddresses(),
     currentAccount: null,
@@ -79,7 +79,9 @@ function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
   zAccountStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(prev.accounts, valOrFunc);
 
-    if (changed) return { ...prev, accounts: newVal };
+    if (changed) {
+      return { ...prev, accounts: newVal };
+    }
 
     return prev;
   });
@@ -94,7 +96,9 @@ export function setCurrentAccount(
       valOrFunc,
     );
 
-    if (changed) return { ...prev, currentAccount: newVal };
+    if (changed) {
+      return { ...prev, currentAccount: newVal };
+    }
 
     return prev;
   });
@@ -112,7 +116,9 @@ function setPinAddresses(
       valOrFunc,
     );
 
-    if (changed) return { ...prev, pinnedAddresses: newVal };
+    if (changed) {
+      return { ...prev, pinnedAddresses: newVal };
+    }
 
     return prev;
   });
@@ -151,27 +157,17 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
 
   const { disableAutoFetch = false } = opts || {};
 
-  const doFetchAccounts = useCallback(async () => {
-    const nextAccounts = await fetchAllAccounts();
-    setAccounts(nextAccounts);
-  }, []);
-
-  const { fetchAction: fetchAccounts } = useAtomicRequest({
-    isRequestingAtom: fetchingAccountsAtom,
-    doRequest: doFetchAccounts,
-  });
-
   useEffect(() => {
     if (!disableAutoFetch) {
-      fetchAccounts();
+      doFetchAccounts();
     }
-  }, [disableAutoFetch, fetchAccounts]);
+  }, [disableAutoFetch]);
 
   return {
     accounts: useMemo(() => {
       return [...filterMyAccounts(allAccounts)];
     }, [allAccounts]),
-    fetchAccounts,
+    fetchAccounts: doFetchAccounts,
   };
 }
 
@@ -292,7 +288,6 @@ export const usePinnedAccountList = () => {
 
 export function useRemoveAccount() {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
-  const { updateHistoryTimeSingleAddress } = useHistoryTokenDict();
   return useCallback(
     async (account: KeyringAccount) => {
       await removeAddress(account);
@@ -306,7 +301,7 @@ export function useRemoveAccount() {
         transactionHistoryService.clearSuccessAndFailList(account.address);
       }
     },
-    [accounts, fetchAccounts, updateHistoryTimeSingleAddress],
+    [accounts, fetchAccounts],
   );
 }
 
@@ -325,19 +320,80 @@ export function useWalletBrandLogo<T extends string>(brandName?: T) {
 type MatteredChainBalances = {
   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
 };
-const matteredChainBalancesAtom = atom<MatteredChainBalances>({});
-const matteredChainBalancesAllAtom = atom<MatteredChainBalances>({});
-const testnetMatteredChainBalancesAtom = atom<MatteredChainBalances>({});
+type MatteredBalancesState = {
+  matteredChainBalances: MatteredChainBalances;
+  matteredChainBalancesAll: MatteredChainBalances;
+  testnetMatteredChainBalances: MatteredChainBalances;
+};
+const matteredBalancesStore = zCreate<MatteredBalancesState>(() => ({
+  matteredChainBalances: {},
+  matteredChainBalancesAll: {},
+  testnetMatteredChainBalances: {},
+}));
+
+function setMattredChainBalances(
+  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
+) {
+  matteredBalancesStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.matteredChainBalances,
+      valOrFunc,
+      { strict: true },
+    );
+
+    if (!changed) {
+      return prev;
+    }
+
+    return { ...prev, matteredChainBalances: newVal };
+  });
+}
+
+function setMattredChainBalancesAll(
+  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
+) {
+  matteredBalancesStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.matteredChainBalancesAll,
+      valOrFunc,
+      { strict: true },
+    );
+
+    if (!changed) {
+      return prev;
+    }
+
+    return { ...prev, matteredChainBalancesAll: newVal };
+  });
+}
+
+function setTestMattredChainBalances(
+  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
+) {
+  matteredBalancesStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.testnetMatteredChainBalances,
+      valOrFunc,
+      { strict: true },
+    );
+
+    if (!changed) {
+      return prev;
+    }
+
+    return { ...prev, testnetMatteredChainBalances: newVal };
+  });
+}
 
 export function useChainBalances() {
-  const [matteredChainBalances, setMattredChainBalances] = useAtom(
-    matteredChainBalancesAtom,
+  const matteredChainBalances = matteredBalancesStore(
+    s => s.matteredChainBalances,
   );
-  const [matteredChainBalancesAll, setMattredChainBalancesAll] = useAtom(
-    matteredChainBalancesAllAtom,
+  const matteredChainBalancesAll = matteredBalancesStore(
+    s => s.matteredChainBalancesAll,
   );
-  const [testnetMatteredChainBalances, setTestMattredChainBalances] = useAtom(
-    testnetMatteredChainBalancesAtom,
+  const testnetMatteredChainBalances = matteredBalancesStore(
+    s => s.testnetMatteredChainBalances,
   );
 
   return {
