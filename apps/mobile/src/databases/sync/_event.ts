@@ -5,6 +5,7 @@ import { makeJsEEClass } from '@/core/services/_utils';
 import { EntityAddressAssetBase } from '../entities/base';
 import { useEffect, useMemo, useRef } from 'react';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
+import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 
 export type SyncTaskOptions = {
   owner_addr: string;
@@ -51,9 +52,13 @@ export function useAppOrmSyncEvents<
   onRemoteDataUpserted: (ctx: Omit<RemoteDataUpsertedCtx, 'items'>) => void;
 }) {
   const { taskFor, onRemoteDataUpserted } = options;
-  const taskForListStr = useMemo(
-    () => JSON.stringify((Array.isArray(taskFor) ? taskFor : [taskFor]).sort()),
+  const sortedTask = useMemo(
+    () => (Array.isArray(taskFor) ? taskFor.slice().sort() : [taskFor]),
     [taskFor],
+  );
+  const taskForListStr = useCreationWithShallowCompare(
+    () => JSON.stringify(sortedTask),
+    [sortedTask],
   );
 
   const fnsRef = useRef({ onRemoteDataUpserted });
@@ -85,4 +90,26 @@ export function useAppOrmSyncEvents<
       appOrmEvents.off('onRemoteDataUpserted', listener);
     };
   }, [taskForListStr]);
+}
+
+export function onAppOrmSyncEvents<
+  T extends SyncTaskOptions['taskFor'],
+>(options: {
+  taskFor: T | T[];
+  onRemoteDataUpserted: (ctx: Omit<RemoteDataUpsertedCtx, 'items'>) => void;
+}) {
+  const { taskFor, onRemoteDataUpserted } = options;
+  const taskFors = Array.isArray(taskFor) ? taskFor : [taskFor].sort();
+
+  const subscription = appOrmEvents.subscribe('onRemoteDataUpserted', ctx => {
+    if (
+      !taskFors.includes(ctx.taskFor as T) ||
+      ['@unknown'].includes(ctx.taskFor)
+    )
+      return;
+
+    onRemoteDataUpserted(ctx);
+  });
+
+  return subscription;
 }

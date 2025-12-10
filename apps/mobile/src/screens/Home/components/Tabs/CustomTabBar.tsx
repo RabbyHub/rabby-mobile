@@ -22,7 +22,12 @@ export const DynamicCustomMaterialTabBar = (
 ) => {
   const renderTabItem = useCallback(
     (_props: any) => (
-      <MaterialTabItem {..._props} pressOpacity={1} inactiveOpacity={1} />
+      <MaterialTabItem
+        {..._props}
+        android_ripple={null}
+        pressOpacity={1}
+        inactiveOpacity={1}
+      />
     ),
     [],
   );

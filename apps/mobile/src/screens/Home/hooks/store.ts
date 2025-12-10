@@ -58,9 +58,13 @@ export interface IAssets {
   nfts?: DisplayNftItem[];
 }
 
+function encodeTokenKey(chain: string, id: string) {
+  return `${chain.toLowerCase()}-${id.toLowerCase()}`;
+}
+
 export const combinedTokens = (
   tokensMap: { [address: string]: AbstractPortfolioToken[] },
-  top10Addresses: string[],
+  caredAddresses: string[],
   filter?: {
     chain?: string;
     tokenId?: string;
@@ -68,15 +72,19 @@ export const combinedTokens = (
 ): CombineTokensItem[] => {
   const { unfoldTokens = [] } =
     preferenceService.getUserTokenSettingsSync() || {};
+  const unfoldTokensSet = new Set(
+    unfoldTokens.map(item => encodeTokenKey(item.chainId, item.tokenId)),
+  );
   const tokens: OriginalCombineTokensItem[] = [];
   const lowerAddresses = new Set(
     Object.keys(tokensMap).map(i => i.toLowerCase()),
   );
+  const caredAddressesSet = new Set(caredAddresses.map(i => i.toLowerCase()));
 
   Object.entries(tokensMap).forEach(([address, tokenList]) => {
     if (
       !lowerAddresses.has(address.toLowerCase()) ||
-      !top10Addresses.some(i => isSameAddress(i, address))
+      !caredAddressesSet.has(address.toLowerCase())
     ) {
       return;
     }
@@ -128,9 +136,7 @@ export const combinedTokens = (
         !hasExpandSwitch ||
         !i.is_core ||
         i._isManualFold ||
-        unfoldTokens.some(
-          x => x.chainId === i.chain && x.tokenId === i._tokenId,
-        )
+        unfoldTokensSet.has(encodeTokenKey(i.chain, i._tokenId))
       ) {
         return {
           ...i,
@@ -155,18 +161,23 @@ export const combinedTokens = (
     });
 };
 
+// function encodePortfolioKey(chain: string, id: string) {
+//   return `${chain.toLowerCase()}-${id.toLowerCase()}`;
+// }
+
 export const combinedProtocols = (
   portfoliosMap: { [address: string]: DisplayedProject[] },
-  top10Addresses: string[],
+  caredAddresses: string[],
 ): CombineDefiItem[] => {
   const portfolios: OriginalCombineDefiItem[] = [];
   const lowerAddresses = new Set(
     Object.keys(portfoliosMap).map(i => i.toLowerCase()) || [],
   );
+  const caredAddressesSet = new Set(caredAddresses.map(i => i.toLowerCase()));
   Object.entries(portfoliosMap).forEach(([address, portfolioList]) => {
     if (
       !lowerAddresses.has(address.toLowerCase()) ||
-      !top10Addresses.some(i => isSameAddress(i, address))
+      !caredAddressesSet.has(address.toLowerCase())
     ) {
       return;
     }
@@ -201,18 +212,23 @@ export const combinedProtocols = (
     }));
 };
 
+// function encodeNftKey(chain: string, id: string) {
+//   return `${chain.toLowerCase()}-${id.toLowerCase()}`;
+// }
+
 export const combinedNfts = (
   nftsMap: { [address: string]: DisplayNftItem[] },
-  top10Addresses: string[],
+  caredAddresses: string[],
 ): CombineNFTItem[] => {
   const nfts: OriginalCombineNFTItem[] = [];
   const lowerAddresses = new Set(
     Object.keys(nftsMap).map(i => i.toLowerCase()) || [],
   );
+  const caredAddressesSet = new Set(caredAddresses.map(i => i.toLowerCase()));
   Object.entries(nftsMap).forEach(([address, nftList]) => {
     if (
       !lowerAddresses.has(address.toLowerCase()) ||
-      !top10Addresses.some(i => isSameAddress(i, address))
+      !caredAddressesSet.has(address.toLowerCase())
     ) {
       return;
     }
@@ -232,7 +248,7 @@ export const combinedNfts = (
   return nfts;
 };
 
-type AssetsMapState = {
+export type AssetsMapState = {
   tokensMap: { [address: string]: AbstractPortfolioToken[] };
   portfoliosMap: { [address: string]: DisplayedProject[] };
   nftsMap: { [address: string]: DisplayNftItem[] };
@@ -461,6 +477,34 @@ export function useOnNftRefresh() {
     };
   }, [refreshTagNft]);
 }
+
+export const computeAssetsApis = {
+  memoTokens: (
+    caredAddresses: string[],
+    tokensMap?: AssetsMapState['tokensMap'],
+  ) => {
+    const globalTokensMap = tokensMap || assetsMapStore.getState().tokensMap;
+    const tokens = combinedTokens(globalTokensMap, caredAddresses);
+
+    return tokens;
+  },
+  memoPortfolios: (
+    caredAddresses: string[],
+    portfoliosMap?: AssetsMapState['portfoliosMap'],
+  ) => {
+    const globalPortfoliosMap =
+      portfoliosMap || assetsMapStore.getState().portfoliosMap;
+    const portfolios = combinedProtocols(globalPortfoliosMap, caredAddresses);
+
+    return portfolios;
+  },
+  memoNfts: (caredAddresses: string[], nftsMap?: AssetsMapState['nftsMap']) => {
+    const globalNftsMap = nftsMap || assetsMapStore.getState().nftsMap;
+    const nfts = combinedNfts(globalNftsMap, caredAddresses);
+
+    return nfts;
+  },
+};
 
 let top20TokensCache: CombineTokensItem[] = [];
 export const useAssetsTokens = ({

@@ -52,7 +52,7 @@ interface Props {
   onReachTopStatusChange?: (status: boolean) => void;
   chain?: string;
   account: Account;
-  updatePortfolio: (portfolios: DisplayedProject[]) => void;
+  updatePortfolio?: (portfolios: DisplayedProject[]) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 16;
@@ -89,12 +89,12 @@ export const PortfolioList = ({
     refreshing,
   } = usePortfolios(currentAccount?.address?.toLowerCase(), false);
 
-  useEffect(() => {
-    if (_rawPortfolios && !loadingPortfolio) {
-      updatePortfolioCallback(_rawPortfolios);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawPortfolios?.length, loadingPortfolio, updatePortfolioCallback]);
+  // useEffect(() => {
+  //   if (_rawPortfolios && !loadingPortfolio) {
+  //     updatePortfolioCallback?.(_rawPortfolios);
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [_rawPortfolios?.length, loadingPortfolio, updatePortfolioCallback]);
 
   const _portfolios = useMemo(
     () =>

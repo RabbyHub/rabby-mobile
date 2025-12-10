@@ -9,9 +9,7 @@ import {
   OpenOrder,
   WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
-import { useAppState } from '@react-native-community/hooks';
 // import { ApproveSignatures } from '@/background/service/perps';
-import { atom, useAtom } from 'jotai';
 import { Account } from '@/core/services/preference';
 import { ApproveSignatures } from '@/core/services/perpsService';
 import { DEFAULT_TOP_ASSET } from '@/constant/perps';

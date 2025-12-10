@@ -1,6 +1,5 @@
 import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 
-// import { atom, useAtom } from 'jotai';
 import {
   KeyringAccount,
   CORE_KEYRING_TYPES,

@@ -1,13 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text, Alert } from 'react-native';
-import { RcArrowRightCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import TouchableView from '@/components/Touchable/TouchableView';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
@@ -22,16 +19,37 @@ import {
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
 import { useGuidanceShown } from '@/components2024/Animations/hooks';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 const MAKE_DEFAULT_MOCK_DATA = () => ({
   forceShowFundWallet: false,
   forceShowOffchainNotify: false,
 });
 
-const homeCenterAreaMockData = atom({ ...MAKE_DEFAULT_MOCK_DATA() });
+// const homeCenterAreaMockData = atom({ ...MAKE_DEFAULT_MOCK_DATA() });
+
+type HomeCenterAreaMockData = {
+  devUIHomeCenterAreaModalVisible: boolean;
+  mockData: ReturnType<typeof MAKE_DEFAULT_MOCK_DATA>;
+};
+const homeCenterAreaMockDataStore = zCreate(() => ({
+  devUIHomeCenterAreaModalVisible: false,
+  mockData: MAKE_DEFAULT_MOCK_DATA(),
+}));
+
+function setMockData(
+  valOrFunc: UpdaterOrPartials<HomeCenterAreaMockData['mockData']>,
+) {
+  homeCenterAreaMockDataStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.mockData, valOrFunc);
+
+    return { ...prev, mockData: newVal };
+  });
+}
 
 export function useMockDataForHomeCenterArea() {
-  const mockData = useAtomValue(homeCenterAreaMockData);
+  const mockData = homeCenterAreaMockDataStore(s => s.mockData);
 
   const prodData = useMemo(() => MAKE_DEFAULT_MOCK_DATA(), []);
 
@@ -42,7 +60,6 @@ export function useMockDataForHomeCenterArea() {
 
 function useMakeMockDataForHomeCenterArea() {
   const { mockData } = useMockDataForHomeCenterArea();
-  const setMockData = useSetAtom(homeCenterAreaMockData);
 
   return {
     mockData,
@@ -50,10 +67,24 @@ function useMakeMockDataForHomeCenterArea() {
   };
 }
 
-const devUIHomeCenterAreaModalVisibleAtom = atom(false);
+function setDevUIHomeCenterAreaModalVisible(
+  valOrFunc: UpdaterOrPartials<
+    HomeCenterAreaMockData['devUIHomeCenterAreaModalVisible']
+  >,
+) {
+  homeCenterAreaMockDataStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(
+      prev.devUIHomeCenterAreaModalVisible,
+      valOrFunc,
+    );
+
+    return { ...prev, devUIHomeCenterAreaModalVisible: newVal };
+  });
+}
 export function useUIDevHomeCenterAreaModalVisiable() {
-  const [devUIHomeCenterAreaModalVisible, setDevUIHomeCenterAreaModalVisible] =
-    useAtom(devUIHomeCenterAreaModalVisibleAtom);
+  const devUIHomeCenterAreaModalVisible = homeCenterAreaMockDataStore(
+    s => s.devUIHomeCenterAreaModalVisible,
+  );
 
   return {
     devUIHomeCenterAreaModalVisible,

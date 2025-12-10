@@ -9,15 +9,30 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import PQueue from 'p-queue';
 import { useMemoizedFn } from 'ahooks';
 import { Account } from '@/core/services/preference';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 
-const approvalStatusAtom = atom<ApprovalStatus[]>([]);
+// const approvalStatusAtom = atom<ApprovalStatus[]>([]);
+const approvalStatusStore = zCreate<ApprovalStatus[]>(() => []);
+function setApprovalState(valOrFunc: UpdaterOrPartials<ApprovalStatus[]>) {
+  approvalStatusStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
 
 export function useApprovalAlert({
   account: currentAccount,
 }: {
   account: Account | null | undefined;
 }) {
-  const [approvalState, setApprovalState] = useAtom(approvalStatusAtom);
+  const approvalState = approvalStatusStore(s => s);
 
   const [, loadApprovalStatus] = useAsyncFn(async () => {
     if (
@@ -124,11 +139,26 @@ export const useApprovalsCount = () => {
   };
 };
 
-const appprovalsAlertAtom = atom<IApprovalsAlert>({
+// const appprovalsAlertAtom = atom<IApprovalsAlert>({
+//   total: 0,
+//   address2count: {},
+//   loading: false,
+// });
+const approvalsAlertStore = zCreate<IApprovalsAlert>(() => ({
   total: 0,
   address2count: {},
   loading: false,
-});
+}));
+function setAlertInfo(valOrFunc: UpdaterOrPartials<IApprovalsAlert>) {
+  approvalsAlertStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return { ...prev, ...newVal };
+  });
+}
+
 let lastTimeStamps = 0;
 
 const alertQueue = new PQueue({
@@ -138,18 +168,14 @@ const alertQueue = new PQueue({
 });
 
 export const useApprovalAlertCounts = (cacheTime: number) => {
-  const [alertInfo, setAlertInfo] = useAtom(appprovalsAlertAtom);
+  const alertInfo = approvalsAlertStore(s => s);
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
-  const displayAccounts = accounts.filter(
-    acc => !FILTER_ACCOUNT_TYPES.includes(acc.type),
+  const displayAccounts = useCreationWithShallowCompare(
+    () => accounts.filter(acc => !FILTER_ACCOUNT_TYPES.includes(acc.type)),
+    [accounts],
   );
-
-  useEffect(() => {
-    forceUpdate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayAccounts?.length]);
 
   const isNeedFetchData = useMemoizedFn(() => {
     const currentTime = Date.now();
@@ -166,7 +192,7 @@ export const useApprovalAlertCounts = (cacheTime: number) => {
       if (!displayAccounts.length) {
         return;
       }
-      if (alertInfo.loading) {
+      if (approvalsAlertStore.getState().loading) {
         return;
       }
       const address2count = {};
@@ -214,7 +240,7 @@ export const useApprovalAlertCounts = (cacheTime: number) => {
         loading: false,
       });
     }
-  }, [alertInfo.loading, displayAccounts, setAlertInfo]);
+  }, [displayAccounts]);
 
   const triggerUpdate = useMemoizedFn(() => {
     if (isNeedFetchData()) {
@@ -222,10 +248,16 @@ export const useApprovalAlertCounts = (cacheTime: number) => {
     }
   });
 
-  const forceUpdate = () => {
+  const forceUpdate = useMemoizedFn(() => {
     getAllApprovalInfo();
     lastTimeStamps = Date.now();
-  };
+  });
+
+  useEffect(() => {
+    forceUpdate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayAccounts?.length]);
+
   return {
     alertInfo,
     triggerUpdate,

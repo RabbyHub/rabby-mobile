@@ -63,7 +63,6 @@ interface Props {
   onReachTopStatusChange?: (status: boolean) => void;
   chain?: string;
   account: Account;
-  updateNft: (nftList: DisplayNftItem[]) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
@@ -73,7 +72,6 @@ export const NFTList = ({
   onReachTopStatusChange,
   chain,
   account: currentAccount,
-  updateNft: updateNftCallback,
 }: Props) => {
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle: getStyles,
@@ -94,18 +92,12 @@ export const NFTList = ({
     return hasBeenFocusedRef.current;
   }, [focusedTab]);
 
+  const userAddr = currentAccount?.address?.toLowerCase();
   const {
     list: _rawNftList,
     reload: reloadNftList,
     isLoading: loadingNft,
-  } = useQueryNft(currentAccount?.address?.toLowerCase(), false);
-
-  useEffect(() => {
-    if (_rawNftList && !loadingNft) {
-      updateNftCallback(_rawNftList);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawNftList?.length, loadingNft, updateNftCallback]);
+  } = useQueryNft(userAddr, false);
 
   useEffect(() => {
     if (isFocused) {

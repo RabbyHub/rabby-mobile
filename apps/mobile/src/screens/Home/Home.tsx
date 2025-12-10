@@ -16,7 +16,7 @@ import { useBgSize } from './hooks/useBgSize';
 import { atom, useSetAtom } from 'jotai';
 
 export const foldChartAtom = atom(true);
-function HomeScreen(): JSX.Element {
+function SingleAddressHome(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [isDecrease, setIsDecrease] = React.useState<boolean>(false);
@@ -50,7 +50,7 @@ function HomeScreen(): JSX.Element {
     [fadeAnim],
   );
   const renderHeaderTitle = React.useCallback(() => {
-    return <HomeScreen.HeaderArea account={currentAccount} />;
+    return <SingleAddressHome.HeaderArea account={currentAccount} />;
   }, [currentAccount]);
 
   const renderHeaderRight = React.useCallback(() => {
@@ -101,7 +101,7 @@ function HomeScreen(): JSX.Element {
   );
 }
 
-HomeScreen.HeaderArea = HeaderArea;
+SingleAddressHome.HeaderArea = HeaderArea;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   rootScreenContainer: {
@@ -124,4 +124,4 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-export default HomeScreen;
+export default SingleAddressHome;

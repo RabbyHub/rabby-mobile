@@ -9,7 +9,6 @@ import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDappsCC.svg';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
@@ -37,6 +36,7 @@ import {
   Text,
   TouchableOpacity as RNTouchableOpacity,
   View,
+  AppState,
 } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -46,19 +46,29 @@ import {
   browserService,
   currencyService,
   gasAccountService,
+  keyringService,
   preferenceService,
   transactionHistoryService,
 } from '@/core/services';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
+import {
+  apisHomeTabIndex,
+  resetNavigationTo,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
+import useAccountsBalance, {
+  apisAccountsBalance,
+  balanceAccountType,
+  fetchTotalBalance,
+} from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { navigateDeprecated } from '@/utils/navigation';
-import { useAppState } from '@react-native-community/hooks';
+import {
+  getReadyNavigationInstance,
+  navigateDeprecated,
+} from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
-import { debounce } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSortAddressList } from '../Address/useSortAddressList';
@@ -69,10 +79,13 @@ import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
 import { RateModal } from '@/components/RateModal/RateModal';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
-import { useExposureRateGuide } from '@/components/RateModal/hooks';
+import {
+  useExposureRateGuide,
+  useSetTotalBalanceTextForRateModal,
+} from '@/components/RateModal/hooks';
 import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
 import {
-  useSetTotalBalanceText,
+  useSetTotalBalanceTextForFeedback,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
 import { isNonPublicProductionEnv } from '@/constant';
@@ -81,14 +94,9 @@ import {
   ITEM_GRID_GAP,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
-import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { colord } from 'colord';
 import dayjs from 'dayjs';
 import {
@@ -96,7 +104,6 @@ import {
   useAccountInfo,
 } from '../Address/components/MultiAssets/hooks';
 import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
-import { useTipsDollarDialog } from '../CopyTrading/component/hooks';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
 import { FoundYourWalletGuide } from './FundYourWallet';
@@ -108,7 +115,6 @@ import {
 import { PerpsPnl } from './components/PerpsPnl';
 import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 import { LendingHF } from './components/LendingHF';
-import { useLendingData } from '../Lending/hooks';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
@@ -119,757 +125,635 @@ import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import {
   TAB_HEADER_MIN_HEIGHT,
+  TabMultiAssetsProps,
   TabsMultiAssets,
 } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { useFoldMultiChartStore } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
-import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
-import { RECOMMENDED_DEFAULT_QUERY_LIMIT } from '@/databases/entities/_helpers';
 import {
   RNGHPressable,
   RNGHTouchableOpacity,
 } from '@/components/customized/reexports';
 import { TABITEM_H } from './components/CustomTabBar';
-import { RefLikeObject } from '@/utils/type';
+import {
+  refreshSuccessAndFailList,
+  resetFetchHistoryTxCount,
+  useHomeHistoryStore,
+} from './hooks/history';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import {
+  fetch24BalanceForScene,
+  FetchTotalBalanceOptions,
+  useScene24hBalanceLightWeightData,
+} from '@/hooks/useScene24hBalance';
+import { getTop10MyAddresses } from '@/core/apis/account';
+import { runIIFEFunc } from '@/core/utils/store';
+import {
+  TmpHomeRefresher,
+  triggerFetchLendingData,
+} from '../Lending/TmpHomeRefresher';
 
+const isInActiveRef = {
+  current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
+};
+AppState.addEventListener('change', state => {
+  isInActiveRef.current = state !== 'active';
+});
 function couldDoRefresh() {
-  return apisHomeTabIndex.isHomeAtFirstTab();
+  return !isInActiveRef.current && apisHomeTabIndex.isHomeAtFirstTab();
 }
 
-const OverViewComponent = () => {
-  const { navigation } = useSafeSetNavigationOptions();
-  const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({
-    getStyle,
-  });
-  const [pendingTxCount, setPendingTxCount] = useState(0);
-  const [historyCount, setHistoryCount] = useState<{
-    success: number;
-    fail: number;
-  }>();
-  const { top10Addresses } = useAccountInfo();
+const onIndexChange = (idx: number) => apisHomeTabIndex.setTabIndex(idx);
 
-  const timeRef = useRef<null | ReturnType<typeof setTimeout>>(null);
-  const appState = useAppState();
+const OverViewComponent = React.memo(
+  ({}: // multi24HBalanceReturn,
+  React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
+    const navigation = useRabbyAppNavigation();
+    const { t } = useTranslation();
+    const { styles, colors2024 } = useTheme2024({
+      getStyle,
+    });
+    const { pendingTxCount, historyCount } = useHomeHistoryStore();
+    const { top10Addresses } = useAccountInfo();
 
-  const { width } = Dimensions.get('window');
-  const itemWidth =
-    (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
+    const { width } = Dimensions.get('window');
+    const itemWidth =
+      (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
 
-  const spinValue = useRef(new Animated.Value(0)).current;
-  const {
-    alertInfo,
-    forceUpdate,
-    triggerUpdate: triggerUpdateAlert,
-  } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
-  const { fetchData: fetchLendingData } = useLendingData();
+    const {
+      alertInfo,
+      forceUpdate,
+      triggerUpdate: triggerUpdateAlert,
+    } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
 
-  const { accounts } = useMyAccounts({ disableAutoFetch: true });
-  const sortedAccounts = useSortAddressList(accounts);
-  useSubscribePosition(sortedAccounts);
-  // 获取top50的私钥助记词账户
-  const top50PrivateKeyAccounts = useCreationWithShallowCompare(() => {
-    console.debug('top50PrivateKeyAccounts', sortedAccounts);
-    return sortedAccounts
-      .filter(
-        account =>
-          account.type == KEYRING_TYPE.SimpleKeyring ||
-          account.type == KEYRING_TYPE.HdKeyring,
-      )
-      .slice(0, 50)
-      .map(account => account.address);
-  }, [sortedAccounts]);
+    const { accounts } = useMyAccounts({ disableAutoFetch: true });
+    const sortedAccounts = useSortAddressList(accounts);
+    useSubscribePosition(sortedAccounts);
 
-  // add gift eligibility check hook
-  const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
-  // use useMemo to directly calculate isEligible so that it can respond to related state changes
+    const { isEligible, checkAddressesEligibility } =
+      useGasAccountEligibility();
 
-  // 初始化gift资格检查
-  useFocusEffect(
-    React.useCallback(() => {
-      if (!couldDoRefresh()) return;
-      if (top50PrivateKeyAccounts.length > 0) {
-        checkAddressesEligibility(top50PrivateKeyAccounts, true);
-      }
-    }, [top50PrivateKeyAccounts, checkAddressesEligibility]),
-  );
+    useFocusEffect(
+      React.useCallback(() => {
+        if (!couldDoRefresh()) return;
+        checkAddressesEligibility(true);
+      }, [checkAddressesEligibility]),
+    );
 
-  const MENU_ARR = useMemo(
-    () =>
+    const MENU_ARR = useMemo(
+      () =>
+        [
+          {
+            key: MultiHomeFeatTitle.Swap,
+            title: t('page.home.services.swap'),
+            icon: RcIconSwapCC,
+          },
+          {
+            key: MultiHomeFeatTitle.Send,
+            title: t('page.home.services.send'),
+            icon: RcIconSendCC,
+          },
+          {
+            key: MultiHomeFeatTitle.Receive,
+            title: t('page.home.services.receive'),
+            icon: RcIconReceiveCC,
+          },
+          {
+            key: MultiHomeFeatTitle.Bridge,
+            title: t('page.home.services.bridge'),
+            icon: RcIconBridgeCC,
+          },
+          // {
+          //   key: MultiHomeFeatTitle.CopyTrading,
+          //   title: t('page.home.services.copyTrading'),
+          //   icon: RcIconCopyTrading,
+          // },
+          {
+            key: MultiHomeFeatTitle.Perps,
+            title: t('page.home.services.perps'),
+            icon: RcIconPerps,
+          },
+          {
+            key: MultiHomeFeatTitle.Lending,
+            title: t('page.home.services.lending'),
+            icon: RcIconLending,
+            color: colors2024['brand-default-icon'],
+          },
+          {
+            key: MultiHomeFeatTitle.Points,
+            title: t('page.rabbyPoints.title'),
+            icon: RcIconPointsCC,
+          },
+          {
+            key: MultiHomeFeatTitle.History,
+            title: t('page.home.services.history'),
+            icon: RcIconHistoryCC,
+            badge: historyCount?.fail || historyCount?.success,
+            isSuccess: !historyCount?.fail,
+          },
+          {
+            key: MultiHomeFeatTitle.Approvals,
+            title: t('page.home.services.approvals'),
+            icon: RcIconApprovalsCC,
+            badge: alertInfo.total,
+          },
+          {
+            key: MultiHomeFeatTitle.Dapps,
+            title: IS_IOS
+              ? t('page.home.services.websites')
+              : t('page.home.services.dapps'),
+            icon: RcIconDapps,
+          },
+          {
+            key: MultiHomeFeatTitle.GasAccount,
+            title: t('page.home.services.gasAccount'),
+            icon: RcIconGasAccountCC,
+            showGiftIcon: isEligible,
+          },
+          // __DEV__ && {
+          //   title: MultiHomeFeatTitle.TEST_DAPP,
+          //   icon: RcIconDapps,
+          // },
+          {
+            key: MultiHomeFeatTitle.Watchlist,
+            title: t('page.home.services.watchlist'),
+            icon: RcIconWatchlistCC,
+          },
+          // {
+          //   title: MultiHomeFeatTitle.Ecosystem,
+          //   icon: RcIconEcosystem,
+          // },
+        ].filter(Boolean) as {
+          key: MultiHomeFeatTitle;
+          title: string;
+          icon: React.FC<import('react-native-svg').SvgProps>;
+          color?: string;
+          badge?: number;
+          isSuccess?: boolean;
+          showGiftIcon?: boolean;
+        }[],
       [
-        {
-          key: MultiHomeFeatTitle.Swap,
-          title: t('page.home.services.swap'),
-          icon: RcIconSwapCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Send,
-          title: t('page.home.services.send'),
-          icon: RcIconSendCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Receive,
-          title: t('page.home.services.receive'),
-          icon: RcIconReceiveCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Bridge,
-          title: t('page.home.services.bridge'),
-          icon: RcIconBridgeCC,
-        },
-        // {
-        //   key: MultiHomeFeatTitle.CopyTrading,
-        //   title: t('page.home.services.copyTrading'),
-        //   icon: RcIconCopyTrading,
-        // },
-        {
-          key: MultiHomeFeatTitle.Perps,
-          title: t('page.home.services.perps'),
-          icon: RcIconPerps,
-        },
-        {
-          key: MultiHomeFeatTitle.Lending,
-          title: t('page.home.services.lending'),
-          icon: RcIconLending,
-          color: colors2024['brand-default-icon'],
-        },
-        {
-          key: MultiHomeFeatTitle.Points,
-          title: t('page.rabbyPoints.title'),
-          icon: RcIconPointsCC,
-        },
-        {
-          key: MultiHomeFeatTitle.History,
-          title: t('page.home.services.history'),
-          icon: RcIconHistoryCC,
-          badge: historyCount?.fail || historyCount?.success,
-          isSuccess: !historyCount?.fail,
-        },
-        {
-          key: MultiHomeFeatTitle.Approvals,
-          title: t('page.home.services.approvals'),
-          icon: RcIconApprovalsCC,
-          badge: alertInfo.total,
-        },
-        {
-          key: MultiHomeFeatTitle.Dapps,
-          title: IS_IOS
-            ? t('page.home.services.websites')
-            : t('page.home.services.dapps'),
-          icon: RcIconDapps,
-        },
-        {
-          key: MultiHomeFeatTitle.GasAccount,
-          title: t('page.home.services.gasAccount'),
-          icon: RcIconGasAccountCC,
-          showGiftIcon: isEligible,
-        },
-        // __DEV__ && {
-        //   title: MultiHomeFeatTitle.TEST_DAPP,
-        //   icon: RcIconDapps,
-        // },
-        {
-          key: MultiHomeFeatTitle.Watchlist,
-          title: t('page.home.services.watchlist'),
-          icon: RcIconWatchlistCC,
-        },
-        // {
-        //   title: MultiHomeFeatTitle.Ecosystem,
-        //   icon: RcIconEcosystem,
-        // },
-      ].filter(Boolean) as {
+        t,
+        colors2024,
+        historyCount?.fail,
+        historyCount?.success,
+        alertInfo.total,
+        isEligible,
+      ],
+    );
+
+    const {
+      balanceAccounts,
+      balanceCacheAccounts,
+      // loadBalanceFromApiStage,
+      triggerUpdate,
+    } = useAccountsBalance({
+      cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
+      accountsNoUnique: true, // balanceAccounts has filter same address accounts
+    });
+
+    useFetchCexInfo();
+
+    const { syncTop10History } = useSyncHistoryDB(top10Addresses);
+
+    const { mockData } = useMockDataForHomeCenterArea();
+
+    const displayFundWalletOrig = useMemo(() => {
+      return (
+        !!balanceAccounts.length &&
+        balanceAccounts.every(e => e.balance === 0) &&
+        balanceCacheAccounts.every(e => e.balance === 0) &&
+        balanceAccounts.every(
+          e =>
+            transactionHistoryService.getTransactionGroups({
+              address: e.address,
+            }).length === 0,
+        )
+      );
+    }, [balanceAccounts, balanceCacheAccounts]);
+
+    const displayFundWallet = useMemo(() => {
+      if (isNonPublicProductionEnv && mockData.forceShowFundWallet) {
+        return true;
+      }
+      return displayFundWalletOrig;
+    }, [displayFundWalletOrig, mockData.forceShowFundWallet]);
+
+    useEffect(() => {
+      setTimeout(() => {
+        deleteLongTimeCurveCache();
+        deleteLongTime24hBalanceCache();
+      }, 0);
+    }, []);
+
+    useFocusEffect(
+      useCallback(() => {
+        if (!couldDoRefresh()) return;
+        refreshSuccessAndFailList();
+      }, []),
+    );
+
+    useFocusEffect(
+      useCallback(() => {
+        if (!couldDoRefresh()) return;
+        resetFetchHistoryTxCount();
+      }, []),
+    );
+
+    useFocusEffect(
+      useCallback(() => {
+        if (!couldDoRefresh()) return;
+        requestAnimationFrame(() => {
+          triggerUpdate().then(balanceAccounts =>
+            refresh24hAssets({ balanceAccounts }),
+          );
+          triggerUpdateAlert();
+          syncTop10History();
+        });
+      }, [triggerUpdate, triggerUpdateAlert, syncTop10History]),
+    );
+
+    const onRefresh = useCallback(() => {
+      if (!couldDoRefresh()) return;
+      Promise.all([
+        // force update balance from server api
+        triggerUpdate(true).then(balanceAccounts =>
+          refresh24hAssets({ force: true, balanceAccounts }),
+        ),
+        checkAddressesEligibility(true),
+      ]).finally(() => {
+        // update at background
+        forceUpdate();
+        triggerFetchLendingData();
+        syncTop10History(true);
+        currencyService.syncCurrencyList(true);
+      });
+    }, [
+      triggerUpdate,
+      checkAddressesEligibility,
+      forceUpdate,
+      syncTop10History,
+    ]);
+
+    const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
+    const handlePressWatchlist = useCallback(() => {
+      navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
+        screen: RootNames.Watchlist,
+        params: {},
+      });
+    }, [navigation]);
+
+    const { setPartialBrowserState, forceShowBrowser } = useBrowser();
+
+    const openDapps = useMemoizedFn(() => {
+      setPartialBrowserState({
+        isShowBrowser: true,
+        isShowSearch: true,
+        searchText: '',
+        searchTabId: '',
+        trigger: 'home',
+      });
+      forceShowBrowser();
+    });
+
+    const handleClickMenu = useCallback(
+      (key: MultiHomeFeatTitle) => {
+        if (!apisHomeTabIndex.isHomeAtFirstTab()) return;
+        if (isTabsSwiping.value) {
+          return;
+        }
+        switch (key) {
+          case MultiHomeFeatTitle.Send:
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.Send,
+                params: {},
+              }),
+            );
+            break;
+          case MultiHomeFeatTitle.Receive:
+            navigation.dispatch(
+              StackActions.push(RootNames.StackAddress, {
+                screen: RootNames.ReceiveAddressList,
+                params: {},
+              }),
+            );
+
+            break;
+          case MultiHomeFeatTitle.Swap:
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.MultiSwap,
+                params: {},
+              }),
+            );
+
+            break;
+          case MultiHomeFeatTitle.Bridge:
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.MultiBridge,
+                params: {},
+              }),
+            );
+            break;
+          case MultiHomeFeatTitle.History:
+            toggleUseAllAccountsOnScene('MultiHistory', true);
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.MultiAddressHistory,
+                params: {},
+              }),
+            );
+            break;
+          case MultiHomeFeatTitle.Approvals:
+            navigateDeprecated(RootNames.StackAddress, {
+              screen: RootNames.ApprovalAddressList,
+            });
+            break;
+          case MultiHomeFeatTitle.GasAccount:
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.GasAccount,
+                params: {},
+              }),
+            );
+            break;
+          case MultiHomeFeatTitle.Watchlist: {
+            handlePressWatchlist();
+            break;
+          }
+          case MultiHomeFeatTitle.Ecosystem:
+            break;
+          case MultiHomeFeatTitle.Buy:
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.MultiBuy,
+              params: {},
+            });
+            break;
+          case MultiHomeFeatTitle.Perps:
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Perps,
+              params: {},
+            });
+            break;
+          case MultiHomeFeatTitle.Lending:
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Lending,
+              params: {},
+            });
+            break;
+          case MultiHomeFeatTitle.Points:
+            navigation.push(RootNames.StackAddress, {
+              screen: RootNames.Points,
+              params: {},
+            });
+            break;
+
+          case MultiHomeFeatTitle.Dapps: {
+            openDapps();
+            break;
+          }
+          default:
+            break;
+        }
+      },
+      [
+        openDapps,
+        handlePressWatchlist,
+        navigation,
+        toggleUseAllAccountsOnScene,
+      ],
+    );
+
+    const generateCustomBadgeIcon = useCallback(
+      (el: {
         key: MultiHomeFeatTitle;
         title: string;
         icon: React.FC<import('react-native-svg').SvgProps>;
-        color?: string;
         badge?: number;
         isSuccess?: boolean;
         showGiftIcon?: boolean;
-      }[],
-    [
-      t,
-      colors2024,
-      historyCount?.fail,
-      historyCount?.success,
-      alertInfo.total,
-      isEligible,
-    ],
-  );
+      }) => {
+        if (el.key === MultiHomeFeatTitle.Watchlist) {
+          return <WatchListBadge />;
+        }
 
-  useEffect(() => {
-    if (pendingTxCount) {
-      Animated.loop(
-        Animated.timing(spinValue, {
-          toValue: 1,
-          duration: 1600,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
-      spinValue.resetAnimation();
-    }
-  }, [pendingTxCount, spinValue]);
+        if (el.key === MultiHomeFeatTitle.Perps) {
+          return <PerpsPnl />;
+        }
 
-  const {
-    balanceAccounts,
-    balanceCacheAccounts,
-    loadBalanceFromApiStage,
-    triggerUpdate,
-    getTotalBalance,
-  } = useAccountsBalance({
-    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
+        if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
+          return <HomePendingBadge number={pendingTxCount} />;
+        }
 
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
+        // 显示gift图标
+        if (el.key === MultiHomeFeatTitle.GasAccount && el.showGiftIcon) {
+          return <IconGift width={24} height={24} />;
+        }
 
-  const {
-    combineData,
-    refresh: refreshCurve,
-    loading,
-    isLoadingNew: loadingNewCurve,
-  } = useMulti24hBalance(top10Addresses, {
-    disableAutoFetch: true,
-    totalBalance: top10Balance.total,
-    totalEvmBalance: top10Balance.totalEvm,
-  });
-  useCexSupportList();
-  useFetchCexInfo();
-  useInitDetectDBAssets();
-  useSetTotalBalanceText(combineData.netWorth);
+        if (el.key === MultiHomeFeatTitle.Lending) {
+          return <LendingHF />;
+        }
 
-  const { syncTop10History } = useSyncHistoryDB(top10Addresses);
+        if (el.key === MultiHomeFeatTitle.Points) {
+          return <PointsBadge />;
+        }
 
-  const { mockData } = useMockDataForHomeCenterArea();
+        if (el.key === MultiHomeFeatTitle.Dapps) {
+          return <DappsBadge />;
+        }
+        if (el.key === MultiHomeFeatTitle.GasAccount) {
+          return <GasAccountBadge />;
+        }
 
-  const displayFundWalletOrig = useMemo(() => {
-    return (
-      !!balanceAccounts.length &&
-      balanceAccounts.every(e => e.balance === 0) &&
-      balanceCacheAccounts.every(e => e.balance === 0) &&
-      balanceAccounts.every(
-        e =>
-          transactionHistoryService.getTransactionGroups({ address: e.address })
-            .length === 0,
-      )
+        return (
+          <>
+            {!!el.badge && el.badge > 0 ? (
+              <BadgeText
+                count={el.badge}
+                isSuccess={el.isSuccess}
+                style={[styles.badgeStyle]}
+              />
+            ) : null}
+          </>
+        );
+      },
+      [pendingTxCount, styles.badgeStyle],
     );
-  }, [balanceAccounts, balanceCacheAccounts]);
 
-  const displayFundWallet = useMemo(() => {
-    if (isNonPublicProductionEnv && mockData.forceShowFundWallet) {
-      return true;
-    }
-    return displayFundWalletOrig;
-  }, [displayFundWalletOrig, mockData.forceShowFundWallet]);
+    const { bottom } = useSafeAreaInsets();
 
-  const fetchHistory = useCallback(() => {
-    const addresses = balanceCacheAccounts.map(i => i.address);
-    if (!addresses.length) {
-      return;
-    }
-    const { pendingsLength } =
-      transactionHistoryService.getPendingsAddresses(addresses);
-    setPendingTxCount(pendingsLength);
-    timeRef.current && clearInterval(timeRef.current);
-    timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
-  }, [balanceCacheAccounts, setPendingTxCount]);
+    const { shouldShowRateGuideOnHome } = useExposureRateGuide();
+    const offlineChainData = useOfflineChain();
+    const { viewedHomeTip } = useViewedHomeTip();
 
-  const detectHasAccounts = useMemoizedFn(async () => {
-    const result = { redirectAction: null as Function | null };
-    const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
-
-    if (!hasAccountsInKeyring) {
-      result.redirectAction = () => {
-        resetNavigationTo(navigation, 'GetStarted2024');
+    const { noBetweenContent, onlyOneContent } = useMemo(() => {
+      const visibleEls = [
+        displayFundWallet,
+        shouldShowRateGuideOnHome,
+        offlineChainData.displayWillClosedChain &&
+          offlineChainData.offlineChainInfo,
+        !viewedHomeTip,
+      ];
+      const hasBetweenContent = visibleEls.some(Boolean);
+      return {
+        noBetweenContent: !hasBetweenContent,
+        onlyOneContent: visibleEls.filter(Boolean).length === 1,
       };
-    }
-
-    return result;
-  });
-
-  useEffect(() => {
-    setTimeout(() => {
-      deleteLongTimeCurveCache();
-      deleteLongTime24hBalanceCache();
-    }, 0);
-  }, []);
-
-  const getSuccessAndFailList = useCallback(async () => {
-    if (!top10Addresses.length) return;
-    const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
-    const list = await HistoryItemEntity.getUnreadHistoryCount(
-      top10Addresses,
-      timestamp / 1000,
-    );
-    list.forEach(i => {
-      const status = i.status ?? 1;
-      const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
-      if (status === 1) {
-        transactionHistoryService.setSucceedList(id);
-      } else {
-        transactionHistoryService.setFailedList(id);
-      }
-    });
-
-    const count = transactionHistoryService.getFailedCount();
-    const success = transactionHistoryService.getSucceedCount();
-
-    setHistoryCount({
-      success: success,
-      fail: count,
-    });
-  }, [top10Addresses]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh()) return;
-      pendingTxCount;
-      getSuccessAndFailList();
-    }, [getSuccessAndFailList, pendingTxCount]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        const { redirectAction } = await detectHasAccounts();
-        if (redirectAction) {
-          redirectAction();
-        } else {
-          if (!couldDoRefresh()) return;
-          fetchHistory();
-        }
-      })();
-    }, [detectHasAccounts, fetchHistory]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh()) return;
-      if (appState === 'active') {
-        refreshCurve();
-      }
-    }, [appState, refreshCurve]),
-  );
-
-  const thorttleGetSuccessAndFailList = useMemo(
-    () => debounce(getSuccessAndFailList, 1000),
-    [getSuccessAndFailList],
-  );
-
-  useAppOrmSyncEvents({
-    taskFor: ['all-history'],
-    onRemoteDataUpserted: ctx => {
-      switch (ctx.taskFor) {
-        case 'all-history':
-          thorttleGetSuccessAndFailList();
-          break;
-        default:
-          break;
-      }
-    },
-  });
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh()) return;
-      if (appState === 'active') {
-        triggerUpdate();
-        triggerUpdateAlert();
-        syncTop10History();
-      }
-    }, [appState, triggerUpdate, triggerUpdateAlert, syncTop10History]),
-  );
-
-  const onRefresh = useCallback(() => {
-    if (!couldDoRefresh()) return;
-    Promise.all([
-      triggerUpdate(true), // force update balance from server api
-      refreshCurve(true),
-      checkAddressesEligibility(top50PrivateKeyAccounts, true),
-    ]).finally(() => {
-      // update at background
-      forceUpdate();
-      fetchLendingData();
-      syncTop10History(true);
-      currencyService.syncCurrencyList(true);
-    });
-  }, [
-    triggerUpdate,
-    refreshCurve,
-    checkAddressesEligibility,
-    top50PrivateKeyAccounts,
-    forceUpdate,
-    fetchLendingData,
-    syncTop10History,
-  ]);
-
-  const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
-  const handlePressWatchlist = useCallback(() => {
-    navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
-      screen: RootNames.Watchlist,
-      params: {},
-    });
-  }, [navigation]);
-
-  const { setPartialBrowserState, forceShowBrowser } = useBrowser();
-
-  const openDapps = useMemoizedFn(() => {
-    setPartialBrowserState({
-      isShowBrowser: true,
-      isShowSearch: true,
-      searchText: '',
-      searchTabId: '',
-      trigger: 'home',
-    });
-    forceShowBrowser();
-  });
-
-  const handleClickMenu = useCallback(
-    (key: MultiHomeFeatTitle) => {
-      if (!apisHomeTabIndex.isHomeAtFirstTab()) return;
-      if (isTabsSwiping.value) {
-        return;
-      }
-      switch (key) {
-        case MultiHomeFeatTitle.Send:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.Send,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.Receive:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackAddress, {
-              screen: RootNames.ReceiveAddressList,
-              params: {},
-            }),
-          );
-
-          break;
-        case MultiHomeFeatTitle.Swap:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSwap,
-              params: {},
-            }),
-          );
-
-          break;
-        case MultiHomeFeatTitle.Bridge:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBridge,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.History:
-          toggleUseAllAccountsOnScene('MultiHistory', true);
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiAddressHistory,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.Approvals:
-          navigateDeprecated(RootNames.StackAddress, {
-            screen: RootNames.ApprovalAddressList,
-          });
-          break;
-        case MultiHomeFeatTitle.GasAccount:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.GasAccount,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.Watchlist: {
-          handlePressWatchlist();
-          break;
-        }
-        case MultiHomeFeatTitle.Ecosystem:
-          break;
-        case MultiHomeFeatTitle.Buy:
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.MultiBuy,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.Perps:
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Perps,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.Lending:
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Lending,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.Points:
-          navigation.push(RootNames.StackAddress, {
-            screen: RootNames.Points,
-            params: {},
-          });
-          break;
-
-        case MultiHomeFeatTitle.Dapps: {
-          openDapps();
-          break;
-        }
-        default:
-          break;
-      }
-    },
-    [openDapps, handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
-  );
-
-  const generateCustomBadgeIcon = useCallback(
-    (el: {
-      key: MultiHomeFeatTitle;
-      title: string;
-      icon: React.FC<import('react-native-svg').SvgProps>;
-      badge?: number;
-      isSuccess?: boolean;
-      showGiftIcon?: boolean;
-    }) => {
-      if (el.key === MultiHomeFeatTitle.Watchlist) {
-        return <WatchListBadge />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Perps) {
-        return <PerpsPnl />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
-        return <HomePendingBadge number={pendingTxCount} />;
-      }
-
-      // 显示gift图标
-      if (el.key === MultiHomeFeatTitle.GasAccount && el.showGiftIcon) {
-        return <IconGift width={24} height={24} />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Lending) {
-        return <LendingHF />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Points) {
-        return <PointsBadge />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Dapps) {
-        return <DappsBadge />;
-      }
-      if (el.key === MultiHomeFeatTitle.GasAccount) {
-        return <GasAccountBadge />;
-      }
-
-      return (
-        <>
-          {!!el.badge && el.badge > 0 ? (
-            <BadgeText
-              count={el.badge}
-              isSuccess={el.isSuccess}
-              style={[styles.badgeStyle]}
-            />
-          ) : null}
-        </>
-      );
-    },
-    [pendingTxCount, styles.badgeStyle],
-  );
-
-  const { bottom } = useSafeAreaInsets();
-
-  const { shouldShowRateGuideOnHome } = useExposureRateGuide();
-  const offlineChainData = useOfflineChain();
-  const { viewedHomeTip } = useViewedHomeTip();
-
-  const { noBetweenContent, onlyOneContent } = useMemo(() => {
-    const visibleEls = [
-      displayFundWallet,
+    }, [
       shouldShowRateGuideOnHome,
-      offlineChainData.displayWillClosedChain &&
-        offlineChainData.offlineChainInfo,
-      !viewedHomeTip,
-    ];
-    const hasBetweenContent = visibleEls.some(Boolean);
-    return {
-      noBetweenContent: !hasBetweenContent,
-      onlyOneContent: visibleEls.filter(Boolean).length === 1,
-    };
-  }, [
-    shouldShowRateGuideOnHome,
-    offlineChainData,
-    displayFundWallet,
-    viewedHomeTip,
-  ]);
+      offlineChainData,
+      displayFundWallet,
+      viewedHomeTip,
+    ]);
 
-  return (
-    <Tabs.ScrollView
-      tvParallaxProperties={undefined}
-      showsVerticalScrollIndicator={false}
-      style={[styles.scroll, { flex: undefined }]}
-      contentContainerStyle={[
-        styles.scrollContainer,
-        {
-          // paddingBottom: bottom + 82,
-          paddingBottom: Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
-        },
-      ]}
-      refreshControl={
-        <RefreshControl refreshing={false} onRefresh={onRefresh} />
-      }>
-      <MultiAddressHomeHeader
-        data={combineData}
-        loading={loading}
-        loadBalanceFromApiStage={loadBalanceFromApiStage}
-        loadingNewCurve={loadingNewCurve}
-        onRefresh={onRefresh}
-        balanceAccounts={balanceAccounts}
-      />
-      <View
-        style={[
-          noBetweenContent
-            ? styles.contentBetweenHeaderAndMatrixEmpty
-            : styles.contentBetweenHeaderAndMatrix,
-          onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
-        ]}>
-        <OfflineChainNotify data={offlineChainData} />
+    useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
 
-        {displayFundWallet && <FoundYourWalletGuide />}
+    return (
+      <Tabs.ScrollView
+        tvParallaxProperties={undefined}
+        showsVerticalScrollIndicator={false}
+        style={[styles.scroll, { flex: undefined }]}
+        contentContainerStyle={[
+          styles.scrollContainer,
+          {
+            // paddingBottom: bottom + 82,
+            paddingBottom:
+              Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
+          },
+        ]}
+        refreshControl={
+          <RefreshControl refreshing={false} onRefresh={onRefresh} />
+        }>
+        <MultiAddressHomeHeader
+          onRefresh={onRefresh}
+          balanceAccounts={balanceAccounts}
+        />
+        <View
+          style={[
+            noBetweenContent
+              ? styles.contentBetweenHeaderAndMatrixEmpty
+              : styles.contentBetweenHeaderAndMatrix,
+            onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
+          ]}>
+          <OfflineChainNotify data={offlineChainData} />
 
-        {shouldShowRateGuideOnHome && (
-          <View
-            style={{
-              paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-            }}>
-            <RateModalTriggerOnHome totalBalanceText={combineData.netWorth} />
-            <RateModal totalBalanceText={combineData.netWorth} />
-          </View>
-        )}
+          {displayFundWallet && <FoundYourWalletGuide />}
 
-        <TipFeedbackByScreenshot />
-      </View>
+          {shouldShowRateGuideOnHome && (
+            <View
+              style={{
+                paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+              }}>
+              <RateModalTriggerOnHome /* totalBalanceText={combineData.netWorth} */
+              />
+              <RateModal /* totalBalanceText={combineData.netWorth} */ />
+            </View>
+          )}
 
-      <View style={styles.grid}>
-        <View style={styles.gridItemsWrap}>
-          {MENU_ARR.map((el, index) => {
-            return (
-              <RNGHTouchableOpacity
-                style={StyleSheet.flatten([
-                  styles.gridItem,
-                  { width: itemWidth },
-                ])}
-                key={index}
-                onPress={() => {
-                  requestAnimationFrame(() => {
-                    handleClickMenu(el.key);
-                  });
-                  matomoRequestEvent({
-                    category: 'Click_Services',
-                    action: `Click_${el.key}`,
-                  });
-                }}>
-                <View style={styles.badgeWrapper}>
-                  <View style={styles.iconWrapper}>
-                    <el.icon
-                      width={28}
-                      height={28}
-                      color={el.color || colors2024['brand-default-icon']}
-                    />
-                  </View>
-                  <View style={styles.rightBadgeWrapper}>
-                    {generateCustomBadgeIcon(el)}
-                  </View>
-                </View>
-                <Text style={styles.gridText}>{el.title}</Text>
-              </RNGHTouchableOpacity>
-            );
-          })}
+          <TipFeedbackByScreenshot />
         </View>
-        <BrowserSearchEntry alwaysShowSearch={false} />
-        <View style={styles.searchBarPlaceholder} />
-      </View>
-    </Tabs.ScrollView>
-  );
+
+        <View style={styles.grid}>
+          <View style={styles.gridItemsWrap}>
+            {MENU_ARR.map((el, index) => {
+              return (
+                <RNGHTouchableOpacity
+                  style={StyleSheet.flatten([
+                    styles.gridItem,
+                    { width: itemWidth },
+                  ])}
+                  key={index}
+                  onPress={() => {
+                    requestAnimationFrame(() => {
+                      handleClickMenu(el.key);
+                    });
+                    matomoRequestEvent({
+                      category: 'Click_Services',
+                      action: `Click_${el.key}`,
+                    });
+                  }}>
+                  <View style={styles.badgeWrapper}>
+                    <View style={styles.iconWrapper}>
+                      <el.icon
+                        width={28}
+                        height={28}
+                        color={el.color || colors2024['brand-default-icon']}
+                      />
+                    </View>
+                    <View style={styles.rightBadgeWrapper}>
+                      {generateCustomBadgeIcon(el)}
+                    </View>
+                  </View>
+                  <Text style={styles.gridText}>{el.title}</Text>
+                </RNGHTouchableOpacity>
+              );
+            })}
+          </View>
+          <BrowserSearchEntry alwaysShowSearch={false} />
+          <View style={styles.searchBarPlaceholder} />
+        </View>
+      </Tabs.ScrollView>
+    );
+  },
+);
+
+const detectHasAccounts = async () => {
+  const result = { redirectAction: null as Function | null };
+  const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+
+  if (!hasAccountsInKeyring) {
+    result.redirectAction = () => {
+      const navigation = getReadyNavigationInstance();
+      navigation && resetNavigationTo(navigation, 'GetStarted2024');
+    };
+  }
+
+  return result;
 };
 
+const refresh24hAssets = async ({
+  force = false,
+  balanceAccounts,
+}: {
+  force?: boolean;
+  balanceAccounts?: balanceAccountType[];
+} = {}) => {
+  const top10Addresses = await getTop10MyAddresses();
+  fetch24BalanceForScene('Home', {
+    addresses: top10Addresses,
+    force,
+    ...(balanceAccounts?.length && {
+      totals: apisAccountsBalance.computeTotalBalance(
+        top10Addresses,
+        balanceAccounts || [],
+      ),
+    }),
+  });
+};
+
+runIIFEFunc(() => {
+  keyringService.on('unlock', async () => {
+    const balanceAccounts = await fetchTotalBalance('from_cache');
+    await refresh24hAssets({ balanceAccounts });
+  });
+});
+
 function MultiAddressHome(): JSX.Element {
-  const { navigation } = useSafeSetNavigationOptions();
-  const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
   const appThemeConfig = useAppThemeConfig();
-  const [pendingTxCount, setPendingTxCount] = useState(0);
-  const { top10Addresses } = useAccountInfo();
 
-  const timeRef = useRef<null | ReturnType<typeof setTimeout>>(null);
-  const spinValue = useRef(new Animated.Value(0)).current;
+  const combinedData = useScene24hBalanceLightWeightData('Home');
+  useRendererDetect({ name: 'MultiAddressHome::multi24HBalanceReturn' });
 
-  const [tabIndex, setTabIndex] = useState(0);
-  const handleIndexChange = useCallback((_index: number) => {
-    apisHomeTabIndex.setTabIndex(_index);
-    setTabIndex(_index);
-  }, []);
-
-  useEffect(() => {
-    if (pendingTxCount) {
-      Animated.loop(
-        Animated.timing(spinValue, {
-          toValue: 1,
-          duration: 1600,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
-      spinValue.resetAnimation();
-    }
-  }, [pendingTxCount, spinValue]);
-
-  const { balanceCacheAccounts, getTotalBalance } = useAccountsBalance({
-    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
-
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
-
-  const { combineData, loading } = useMulti24hBalance(top10Addresses, {
-    disableAutoFetch: true,
-    totalBalance: top10Balance.total,
-    totalEvmBalance: top10Balance.totalEvm,
-  });
-  useCexSupportList();
-  useFetchCexInfo();
+  useSetTotalBalanceTextForFeedback(combinedData.netWorth);
+  useSetTotalBalanceTextForRateModal(combinedData.netWorth);
   useInitDetectDBAssets();
-  useSetTotalBalanceText(combineData.netWorth);
-
-  const fetchHistory = useCallback(() => {
-    const addresses = balanceCacheAccounts.map(i => i.address);
-    if (!addresses.length) {
-      return;
-    }
-    const { pendingsLength } =
-      transactionHistoryService.getPendingsAddresses(addresses);
-    setPendingTxCount(pendingsLength);
-    timeRef.current && clearInterval(timeRef.current);
-    timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
-  }, [balanceCacheAccounts, setPendingTxCount]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -877,19 +761,6 @@ function MultiAddressHome(): JSX.Element {
       deleteLongTime24hBalanceCache();
     }, 0);
   }, []);
-
-  const detectHasAccounts = useMemoizedFn(async () => {
-    const result = { redirectAction: null as Function | null };
-    const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
-
-    if (!hasAccountsInKeyring) {
-      result.redirectAction = () => {
-        resetNavigationTo(navigation, 'GetStarted2024');
-      };
-    }
-
-    return result;
-  });
 
   useFocusEffect(
     useCallback(() => {
@@ -899,7 +770,7 @@ function MultiAddressHome(): JSX.Element {
           redirectAction();
         }
       })();
-    }, [detectHasAccounts]),
+    }, []),
   );
 
   useEffect(() => {
@@ -956,7 +827,7 @@ function MultiAddressHome(): JSX.Element {
       type="linear"
       noHeader
       bgImageSource={
-        combineData.isLoss
+        combinedData.isLoss
           ? require('@/assets2024/singleHome/loss-home.png')
           : require('@/assets2024/singleHome/up-home.png')
       }
@@ -970,27 +841,27 @@ function MultiAddressHome(): JSX.Element {
       }}
       overwriteStyle={styles.screenContainer}>
       <ScreenSpecificStatusBar screenName={RootNames.Home} />
+
       <View
         style={[styles.paddingContainer]}
         onTouchStart={() => {
           setIsFoldMultiChart(true);
         }}>
         <TabsMultiAssets
-          data={combineData}
-          loading={loading}
-          tabIndex={tabIndex}
-          onIndexChange={handleIndexChange}
+          // data={combineData}
+          // loading={loading}
+          onIndexChange={onIndexChange}
+          // multi24HBalanceReturn={multi24HBalanceReturn}
           OverViewComponent={OverViewComponent}
         />
 
         {/* show search bar when Overview tab */}
-        {tabIndex === 0 && (
-          <View style={styles.globalSearchBar}>
-            <GlobalSearchBar />
-          </View>
-        )}
+        <GlobalSearchBar />
       </View>
+
       <HomeGuidanceMultipleTabs />
+
+      <TmpHomeRefresher />
     </NormalScreenContainer2024>
   );
 }
@@ -1466,15 +1337,6 @@ const getStyle = createGetStyles2024(
     },
     searchBarPlaceholder: {
       height: 80,
-    },
-    globalSearchBar: {
-      position: 'absolute',
-      left: 8,
-      right: 8,
-      bottom: Platform.select({
-        ios: 22,
-        android: Math.max(22, bottomSafeArea),
-      }),
     },
     topWrapper: {
       position: 'absolute',

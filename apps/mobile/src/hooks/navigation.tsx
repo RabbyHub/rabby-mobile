@@ -276,6 +276,15 @@ export function useRabbyAppNavigation<
   return useNavigation<K>();
 }
 
+const tabIndexStore = zCreate<{ tabIndex: number }>(() => ({ tabIndex: 0 }));
+export function useHomeTabIndex() {
+  const tabIndex = tabIndexStore(s => s.tabIndex);
+
+  return {
+    tabIndex,
+    setTabIndex: apisHomeTabIndex.setTabIndex,
+  };
+}
 const tabIndexRef: RefLikeObject<number> = { current: 0 };
 export const apisHomeTabIndex = {
   get tabIndex() {
@@ -286,6 +295,7 @@ export const apisHomeTabIndex = {
   },
   setTabIndex(val: number) {
     tabIndexRef.current = val;
+    tabIndexStore.setState({ tabIndex: val });
   },
 };
 

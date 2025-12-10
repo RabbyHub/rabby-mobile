@@ -31,7 +31,7 @@ export function makeAvoidParallelAsyncFunc<
 
   const wrappedFunc = async (
     ...args: Parameters<T>
-  ): Promise<ReturnType<T>> => {
+  ): Promise<Awaited<ReturnType<T>>> => {
     if (promiseRef.current) return promiseRef.current;
 
     let ret: PromiseRet | Error;

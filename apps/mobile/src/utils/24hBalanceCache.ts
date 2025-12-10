@@ -42,20 +42,12 @@ export const setBalance24hCache = (_address: string, data: IBalance24hData) => {
   storage.set(address, JSON.stringify(data));
 };
 
-export const get24hBalance = async (
-  addr: string,
-  realtimeEVMNetWorth: number,
-  force?: boolean,
-) => {
-  const res = await get24hBalanceWithCache(addr, realtimeEVMNetWorth, force);
+export const get24hBalance = async (addr: string, force?: boolean) => {
+  const res = await get24hBalanceWithCache(addr, force);
   return res?.data;
 };
 
-export const get24hBalanceWithCache = async (
-  _address: string,
-  realtimeEVMNetWorth: number,
-  force = false,
-) => {
+const get24hBalanceWithCache = async (_address: string, force = false) => {
   const address = _address.toLowerCase();
   const cache = getBalance24hCache(address);
   if (cache && !force && !cache.isExpired) {
@@ -95,4 +87,24 @@ export const deleteLongTime24hBalanceCache = () => {
   } catch (error) {
     console.error('deleteLongTimeCurveCache', error);
   }
+};
+
+export const getChangeData = (
+  data: IBalance24hData['data'],
+  realtimeNetWorth = 0,
+  realtimeTimestamp?: number,
+) => {
+  const startData = data || { total_usd_value: 0 };
+  const endNetWorth = realtimeTimestamp ? realtimeNetWorth : 0;
+  const assetsChange = endNetWorth - startData?.total_usd_value;
+
+  return {
+    changePercent:
+      startData?.total_usd_value !== 0
+        ? `${Math.abs(
+            (assetsChange * 100) / startData?.total_usd_value,
+          ).toFixed(2)}%`
+        : `${endNetWorth === 0 ? '0' : '100.00'}%`,
+    isLoss: assetsChange < 0,
+  };
 };

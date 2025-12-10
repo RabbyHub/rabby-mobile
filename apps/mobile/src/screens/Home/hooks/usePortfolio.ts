@@ -14,6 +14,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { debounce } from 'lodash';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useSingleDeFiRefresh } from './refresh';
+import { apisAddrChainStatics } from '../useChainInfo';
 
 export const tagProfiles = (
   profiles: DisplayedProject[],
@@ -119,6 +120,13 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       innerSetData,
     ];
   }, [_data.address, _data.data, _setData, userAddr]);
+
+  const addrData = _data.data;
+  useEffect(() => {
+    if (!userAddr || !addrData) return;
+    apisAddrChainStatics.updatePortfolio(userAddr, addrData);
+  }, [userAddr, addrData]);
+
   const [isLoading, setLoading] = useSafeState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [hasValue, setHasValue] = useSafeState(false);

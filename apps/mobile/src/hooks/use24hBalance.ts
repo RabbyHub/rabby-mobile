@@ -3,18 +3,60 @@ import {
   get24hBalance,
   IBalance24hData,
 } from '@/utils/24hBalanceCache';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { formatSmallUsdValue } from './useCurve';
 import PQueue from 'p-queue';
-import { atom, useAtom } from 'jotai';
 import { formatUsdValue } from '@/utils/number';
 import { useCreationWithShallowCompare } from './common/useMemozied';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
+const TEN_MINUTES = 10 * 60 * 1000;
 
-export const multi24hBalanceAtom = atom<
-  Record<string, { loading: boolean; data: IBalance24hData['data'] }>
->({});
+type Multi24hBalanceState = {
+  multi24hBalance: Record<
+    string,
+    { loading: boolean; data: IBalance24hData['data'] }
+  >;
+  loading: boolean;
+};
+
+export const useMulti24hBalanceStore = zCreate<Multi24hBalanceState>(set => ({
+  multi24hBalance: {},
+  loading: true,
+}));
+
+function setLoading(valOrFunc: UpdaterOrPartials<boolean>) {
+  useMulti24hBalanceStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev.loading, valOrFunc, {
+      strict: true,
+    });
+    if (!changed) return prev;
+
+    return { ...prev, loading: newVal };
+  });
+}
+
+function setMulti24hBalance(
+  valOrFunc: UpdaterOrPartials<Multi24hBalanceState['multi24hBalance']>,
+) {
+  useMulti24hBalanceStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.multi24hBalance,
+      valOrFunc,
+    );
+
+    if (!changed) {
+      return prev;
+    }
+
+    return {
+      ...prev,
+      multi24hBalance: newVal,
+    };
+  });
+}
 
 export const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -23,7 +65,11 @@ export const waitQueueFinished = (q: PQueue) => {
     });
   });
 };
-export const loadingMultiCurveAtom = atom(true);
+export function useMulti24hBalanceField() {
+  const multi24hBalance = useMulti24hBalanceStore(s => s.multi24hBalance);
+
+  return { multi24hBalance };
+}
 export const useMulti24hBalance = (
   addresses: string[],
   options?: {
@@ -39,82 +85,87 @@ export const useMulti24hBalance = (
     totalBalance,
     totalEvmBalance,
   } = options || {};
-  const [multi24hBalance, setMulti24hBalance] = useAtom(multi24hBalanceAtom);
-  const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
+  const multi24hBalance = useMulti24hBalanceStore(s => s.multi24hBalance);
+  const loading = useMulti24hBalanceStore(s => s.loading);
+  // const setMulti24hBalance = useMulti24hBalanceStore(s => s.setMulti24hBalance);
+  // const setLoading = useMulti24hBalanceStore(s => s.setLoading);
   const loadingMapRef = useRef<Record<string, boolean>>({});
+  const lastFetchTimeRef = useRef(0);
 
-  const fetch = useCallback(
-    async (address: string[], force = false) => {
-      try {
-        if (!address.length) {
-          setLoading(false);
+  const fetch = useCallback(async (address: string[], force = false) => {
+    try {
+      if (!address.length) {
+        setLoading(false);
+        return;
+      }
+      if (!force) {
+        const now = Date.now();
+        if (now - lastFetchTimeRef.current < TEN_MINUTES) {
           return;
         }
-        setLoading(!!force);
-        const nextCheckAddress = new Set([...address]);
-        !force &&
-          address.forEach(_addr => {
-            const addr = _addr.toLowerCase();
-            setMulti24hBalance(prev => ({
-              ...prev,
-              [addr]: {
-                ...(prev[addr] || {}),
-                loading: true,
-              },
-            }));
-            const cacheData = getBalance24hCache(addr);
-            if (!cacheData?.data || cacheData?.isExpired) {
-              return;
-            }
-            nextCheckAddress.delete(addr);
+        lastFetchTimeRef.current = now;
+      } else {
+        lastFetchTimeRef.current = Date.now();
+      }
+      setLoading(!!force);
+      const nextCheckAddress = new Set([...address]);
+      !force &&
+        address.forEach(_addr => {
+          const addr = _addr.toLowerCase();
+          setMulti24hBalance(prev => ({
+            ...prev,
+            [addr]: {
+              ...(prev[addr] || {}),
+              loading: true,
+            },
+          }));
+          const cacheData = getBalance24hCache(addr);
+          if (!cacheData?.data || cacheData?.isExpired) {
+            return;
+          }
+          nextCheckAddress.delete(addr);
+          setMulti24hBalance(prev => ({
+            ...prev,
+            [addr]: {
+              loading: false,
+              data: cacheData.data,
+            },
+          }));
+        });
+      queue.clear();
+      Array.from(nextCheckAddress).forEach(_addr => {
+        const addr = _addr.toLowerCase();
+        queue.add(async () => {
+          setMulti24hBalance(prev => ({
+            ...prev,
+            [addr]: {
+              ...prev[addr],
+              loading: true,
+            },
+          }));
+          try {
+            const address24hBalance = await get24hBalance(addr, force);
             setMulti24hBalance(prev => ({
               ...prev,
               [addr]: {
                 loading: false,
-                data: cacheData.data,
+                data: address24hBalance,
               },
             }));
-          });
-        queue.clear();
-        Array.from(nextCheckAddress).forEach(_addr => {
-          const addr = _addr.toLowerCase();
-          queue.add(async () => {
-            setMulti24hBalance(prev => ({
-              ...prev,
-              [addr]: {
-                ...prev[addr],
-                loading: true,
-              },
-            }));
-            try {
-              const address24hBalance = await get24hBalance(
-                addr,
-                totalEvmBalance || 0,
-                force,
-              );
-              setMulti24hBalance(prev => ({
-                ...prev,
-                [addr]: {
-                  loading: false,
-                  data: address24hBalance,
-                },
-              }));
-            } catch (error) {
-              console.error('Fetch curve error', error);
-            } finally {
-              loadingMapRef.current[addr] = false;
-            }
-          });
+          } catch (error) {
+            console.error('Fetch curve error', error);
+          } finally {
+            loadingMapRef.current[addr] = false;
+          }
         });
-        await waitQueueFinished(queue);
-        setLoading(false);
-      } catch (error) {
-        console.error('Fetch curve error', error);
-        setLoading(false);
-      }
-    },
-    [setLoading, setMulti24hBalance, totalEvmBalance],
-  );
+      });
+      await waitQueueFinished(queue);
+      setLoading(false);
+    } catch (error) {
+      console.error('Fetch curve error', error);
+      setLoading(false);
+    }
+  }, []);
 
   const refresh = useCallback(
     async (force?: boolean) => {

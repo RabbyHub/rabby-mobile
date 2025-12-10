@@ -53,6 +53,7 @@ import {
 } from './hooks/share';
 import { isTabsSwiping, useAccountInfo } from './hooks';
 import { useAssetsNFTs, useOnNftRefresh } from '@/screens/Home/hooks/store';
+import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -65,11 +66,13 @@ export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
 
 interface Props {
   chain?: string;
-  updateNft: (nfts: DisplayNftItem[]) => void;
 }
-export const NFTList = ({ chain, updateNft }: Props) => {
+export const NFTList = () => {
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+
+  const selectedChainItem = useSelectedChainItem();
+  const chain = selectedChainItem?.chain;
 
   const [foldNft, setFoldNft] = useState(true);
 
@@ -90,13 +93,6 @@ export const NFTList = ({ chain, updateNft }: Props) => {
   const { nfts: _rawNftList } = useAssetsNFTs({
     hideCombined: false,
   });
-
-  useEffect(() => {
-    if (_rawNftList && !isLoading) {
-      updateNft?.(_rawNftList);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawNftList?.length, isLoading, updateNft]);
 
   const nftList = useMemo(() => {
     return _rawNftList?.filter(item =>

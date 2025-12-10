@@ -63,7 +63,6 @@ interface Props {
   onReachTopStatusChange?: (status: boolean) => void;
   chain?: string;
   account: Account;
-  updateToken: (tokens: AbstractPortfolioToken[]) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
@@ -73,7 +72,6 @@ export const TokenList = ({
   chain,
   account: currentAccount,
   onReachTopStatusChange,
-  updateToken,
 }: Props) => {
   const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
@@ -89,13 +87,6 @@ export const TokenList = ({
   } = useTokens(currentAccount?.address?.toLowerCase(), {
     visible: false,
   });
-
-  useEffect(() => {
-    if (_rawTokens && !loadingToken) {
-      updateToken(_rawTokens);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawTokens?.length, loadingToken, updateToken]);
 
   const focusedTab = useFocusedTab();
 

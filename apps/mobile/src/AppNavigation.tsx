@@ -93,8 +93,6 @@ import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
-// import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-// const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
 
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
 
@@ -103,7 +101,7 @@ const RootAnimOptions: React.ComponentProps<
 >['screenOptions'] &
   object = {
   // animation: IS_IOS ? 'slide_from_right' : 'none',
-  animation: 'none',
+  animation: __DEV__ ? 'slide_from_right' : 'none',
   animationDuration: 200,
 };
 

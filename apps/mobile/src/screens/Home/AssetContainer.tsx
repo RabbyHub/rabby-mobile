@@ -28,7 +28,7 @@ import { NFTList } from './NFTList';
 import { DynamicCustomMaterialTabBar } from './components/Tabs/CustomTabBar';
 import CustomLabel from './components/Tabs/CustomLabel';
 import { ChainSelector } from './components/AssetRenderItems/SectionHeaders';
-import { useChainInfo } from './useChainInfo';
+import { getAddrChainInfo, useAddrChainInfo } from './useChainInfo';
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { EndBg } from './components/BgComponents';
 import { useAtom } from 'jotai';
@@ -55,6 +55,27 @@ interface Props {
 }
 const FOOTER_HEIGHT = 56;
 
+function SideChainSelector({
+  userAddr,
+  onChainClick,
+  chain,
+}: {
+  userAddr: string;
+  onChainClick?: React.ComponentProps<typeof ChainSelector>['onChainClick'];
+  chain?: string;
+}) {
+  const finalInfo = useAddrChainInfo(userAddr);
+  const { computedResult } = finalInfo;
+  return (
+    <ChainSelector
+      key={computedResult.top3Chains.sort().join(',')}
+      top3Chains={computedResult.top3Chains}
+      onChainClick={onChainClick}
+      chainServerId={chain}
+    />
+  );
+}
+
 export const AssetContainer: React.FC<Props> = ({
   onRefresh,
   onUpdateIsDecrease,
@@ -74,8 +95,9 @@ export const AssetContainer: React.FC<Props> = ({
   >();
   const { isDisConnect } = useGlobalStatus();
 
-  const { chainsInfo, updateToken, updatePortfolio, updateNft } =
-    useChainInfo();
+  const {
+    computedResult: { chainLength },
+  } = useAddrChainInfo(currentAccount?.address);
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
       if (clear) {
@@ -100,7 +122,8 @@ export const AssetContainer: React.FC<Props> = ({
               : colors2024['neutral-bg-1'],
           },
         },
-        chainList: chainsInfo.chainAssets,
+        chainList: getAddrChainInfo(currentAccount?.address).computedResult
+          .chainAssets,
         titleText: t('page.receiveAddressList.selectChainTitle'),
         onChange: (v: ChainListItem) => {
           setSelectChainItem(v);
@@ -117,7 +140,7 @@ export const AssetContainer: React.FC<Props> = ({
         },
       });
     },
-    [chainsInfo.chainAssets, colors2024, isLight, selectChainItem, t],
+    [colors2024, currentAccount?.address, isLight, selectChainItem, t],
   );
 
   const { balance, balanceLoading, evmBalance } = useCurrentBalance(
@@ -179,8 +202,8 @@ export const AssetContainer: React.FC<Props> = ({
   ]);
 
   const hasNotAssets = useMemo(() => {
-    return chainsInfo.chainLength === 0;
-  }, [chainsInfo.chainLength]);
+    return chainLength === 0;
+  }, [chainLength]);
 
   const errorNotAssets = useMemo(() => {
     return isDisConnect && hasNotAssets && hasNoCurveData;
@@ -199,22 +222,22 @@ export const AssetContainer: React.FC<Props> = ({
           reachTop ? null : <EndBg fold={fold} isDecrease={!!isDecrease} />
         }
         externalContent={
-          <ChainSelector
-            top3Chains={chainsInfo.chainAssets
-              .map(item => item.chain)
-              .slice(0, 3)}
-            onChainClick={handleOnChainClick}
-            chainServerId={selectChainItem?.chain}
-          />
+          !currentAccount?.address ? null : (
+            <SideChainSelector
+              userAddr={currentAccount?.address}
+              chain={selectChainItem?.chain}
+              onChainClick={handleOnChainClick}
+            />
+          )
         }
       />
     ),
     [
-      chainsInfo.chainAssets,
       fold,
       handleOnChainClick,
       isDecrease,
       reachTop,
+      currentAccount?.address,
       selectChainItem?.chain,
       styles.indicator,
       styles.tabBar,
@@ -260,7 +283,6 @@ export const AssetContainer: React.FC<Props> = ({
           account={currentAccount}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
-          updateToken={updateToken}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('DeFi')} name="defi">
@@ -269,7 +291,6 @@ export const AssetContainer: React.FC<Props> = ({
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
           account={currentAccount}
-          updatePortfolio={updatePortfolio}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('NFT')} name="nft">
@@ -278,7 +299,6 @@ export const AssetContainer: React.FC<Props> = ({
           account={currentAccount}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
-          updateNft={updateNft}
         />
       </Tabs.Tab>
     </Tabs.Container>

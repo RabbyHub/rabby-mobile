@@ -344,7 +344,7 @@ export function useViewingFeedback() {
   };
 }
 
-export function useSetTotalBalanceText(totalBalanceText: string) {
+export function useSetTotalBalanceTextForFeedback(totalBalanceText: string) {
   useEffect(() => {
     setFeedbackByScreenshot(prev => ({
       ...prev,

@@ -2,22 +2,13 @@ import React, { useCallback, useRef, useState } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { useTranslation } from 'react-i18next';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { MemoizedTokenItemLoader, TokenList } from './TokenList';
 import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
-import { useChainInfo } from '@/screens/Home/useChainInfo';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import {
   HeaderHeight,
   TabsTopHeader,
 } from '@/screens/Home/components/OverviewTopHeader';
-import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
@@ -26,6 +17,8 @@ import { MemoizedNFTItemLoader, NFTList } from './NFTList';
 import { Freeze } from 'react-freeze';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { useHomeTabIndex } from '@/hooks/navigation';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -40,13 +33,16 @@ export const icons = {
 export const TAB_HEADER_FULL_HEIGHT = 94;
 export const TAB_HEADER_MIN_HEIGHT = 44;
 
-interface Props {
-  tabIndex: number;
+export interface TabMultiAssetsProps {
+  // tabIndex: number;
   onIndexChange(index: number): void;
   // overViewContent: React.ReactNode;
-  OverViewComponent: React.FC;
-  data: ReturnType<typeof useMulti24hBalance>['combineData'];
-  loading: boolean;
+  OverViewComponent: React.FC<{
+    // multi24HBalanceReturn?: ReturnType<typeof useMulti24hBalance>;
+  }>;
+  // multi24HBalanceReturn: ReturnType<typeof useMulti24hBalance>;
+  // data: ReturnType<typeof useMulti24hBalance>['combineData'];
+  // loading: boolean;
 }
 
 export const enum TabName {
@@ -56,70 +52,31 @@ export const enum TabName {
   nft = 'nft',
 }
 
-export const TabsMultiAssets: React.FC<Props> = ({
-  tabIndex,
+function TabIndexBasedFreeze({
+  ofIndex,
+  children,
+  ...props
+}: {
+  ofIndex: number;
+} & Omit<React.ComponentProps<typeof Freeze>, 'freeze'>) {
+  const { tabIndex } = useHomeTabIndex();
+  return (
+    <Freeze {...props} freeze={ofIndex !== tabIndex}>
+      {children}
+    </Freeze>
+  );
+}
+
+export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
+  // tabIndex,
   onIndexChange,
-  data,
-  loading,
+  // data,
+  // loading,
+  // multi24HBalanceReturn,
   // overViewContent,
   OverViewComponent,
 }) => {
-  const { t } = useTranslation();
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
-
-  const chainSelectModalRef = useRef<
-    ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
-  >();
-  const [selectChainItem, setSelectChainItem] = useState<
-    ChainListItem | undefined
-  >();
-
-  const { chainsInfo, updateToken, updatePortfolio, updateNft } =
-    useChainInfo();
-
-  const handleOnChainClick = useCallback(
-    (clear: boolean) => {
-      if (clear) {
-        setSelectChainItem(undefined);
-        return;
-      }
-
-      if (chainSelectModalRef.current) {
-        removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-        chainSelectModalRef.current = undefined;
-      }
-      chainSelectModalRef.current = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
-        value: selectChainItem,
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          rootViewType: 'View',
-          handleStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
-          },
-        },
-        chainList: chainsInfo.chainAssets,
-        titleText: t('page.receiveAddressList.selectChainTitle'),
-        onChange: (v: ChainListItem) => {
-          setSelectChainItem(v);
-          if (chainSelectModalRef.current) {
-            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-            chainSelectModalRef.current = undefined;
-          }
-        },
-        onClose: () => {
-          if (chainSelectModalRef.current) {
-            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-            chainSelectModalRef.current = undefined;
-          }
-        },
-      });
-    },
-    [chainsInfo.chainAssets, colors2024, isLight, selectChainItem, t],
-  );
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   const renderTabBar = React.useCallback(
     (
@@ -131,18 +88,9 @@ export const TabsMultiAssets: React.FC<Props> = ({
         materialTabBarProps={{
           ..._props,
         }}
-        externalContent={
-          <ChainSelector
-            top3Chains={chainsInfo.chainAssets
-              .map(item => item.chain)
-              .slice(0, 3)}
-            onChainClick={handleOnChainClick}
-            chainServerId={selectChainItem?.chain}
-          />
-        }
       />
     ),
-    [chainsInfo.chainAssets, handleOnChainClick, selectChainItem?.chain],
+    [],
   );
 
   const renderLabel = useCallback(
@@ -153,19 +101,25 @@ export const TabsMultiAssets: React.FC<Props> = ({
     [],
   );
 
+  // const {tabIndex} = useHomeTabIndex();
+
   const renderHeader = useCallback<
     React.ComponentProps<typeof Tabs.Container>['renderHeader'] & object
   >(
     props => {
       return (
         <TabsTopHeader
-          data={data}
-          loading={loading}
-          showNetWorth={props.index.value !== 0}
+          // data={data}
+          // loading={loading}
+          // showNetWorth={tabIndex !== 0}
+          indexValue={props.index}
         />
       );
     },
-    [data, loading],
+    [
+      // tabIndex,
+      /* data, loading */
+    ],
   );
 
   const handleTabChange = useCallback(
@@ -182,6 +136,8 @@ export const TabsMultiAssets: React.FC<Props> = ({
     },
     [],
   );
+
+  useRendererDetect({ name: 'TabsMultiAssets' });
 
   return (
     <Tabs.Container
@@ -213,45 +169,42 @@ export const TabsMultiAssets: React.FC<Props> = ({
         name={TabName.token}
         label={renderLabel('Token')}>
         {/* <View /> */}
-        <Freeze
-          freeze={tabIndex !== 1}
+        <TabIndexBasedFreeze
+          ofIndex={1}
           placeholder={
             <MemoizedTokenItemLoader
               style={{ marginTop: TAB_HEADER_FULL_HEIGHT }}
             />
           }>
-          <TokenList chain={selectChainItem?.chain} updateToken={updateToken} />
-        </Freeze>
+          <TokenList />
+        </TabIndexBasedFreeze>
       </Tabs.Tab>
       <Tabs.Tab
         key={TabName.defi}
         name={TabName.defi}
         label={renderLabel('DeFi')}>
         {/* <View /> */}
-        <Freeze
-          freeze={tabIndex !== 2}
+        <TabIndexBasedFreeze
+          ofIndex={2}
           placeholder={
             <MemoizedDefiItemLoader
               style={{ marginTop: TAB_HEADER_FULL_HEIGHT + 16 }}
             />
           }>
-          <ProtocolList
-            chain={selectChainItem?.chain}
-            updatePortfolio={updatePortfolio}
-          />
-        </Freeze>
+          <ProtocolList />
+        </TabIndexBasedFreeze>
       </Tabs.Tab>
       <Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
         {/* <View /> */}
-        <Freeze
-          freeze={tabIndex !== 3}
+        <TabIndexBasedFreeze
+          ofIndex={3}
           placeholder={
             <MemoizedNFTItemLoader
               style={{ marginTop: TAB_HEADER_FULL_HEIGHT }}
             />
           }>
-          <NFTList chain={selectChainItem?.chain} updateNft={updateNft} />
-        </Freeze>
+          <NFTList />
+        </TabIndexBasedFreeze>
       </Tabs.Tab>
     </Tabs.Container>
   );

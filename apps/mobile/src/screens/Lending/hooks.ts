@@ -17,7 +17,7 @@ import {
 } from '@aave/math-utils';
 import { ethers } from 'ethers';
 import dayjs from 'dayjs';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { Atom, atom, getDefaultStore, useAtom, useAtomValue } from 'jotai';
 import { startTransition, useCallback, useMemo } from 'react';
 import { unstable_batchedUpdates } from 'react-native';
 import { InteractionManager } from 'react-native';
@@ -434,6 +434,21 @@ const preQueryParams: {
 } = {
   address: undefined,
   marketKey: undefined,
+};
+
+type ExtractValueType<T> = T extends Atom<infer V> ? V : never;
+const jotaiStore = getDefaultStore();
+const globalSets = {
+  setReserves: (value: ExtractValueType<typeof reservesAtom>) =>
+    jotaiStore.set(reservesAtom, value),
+  setUserReserves: (value: ExtractValueType<typeof userReservesAtom>) =>
+    jotaiStore.set(userReservesAtom, value),
+  setWalletBalances: (value: ExtractValueType<typeof walletBalancesAtom>) =>
+    jotaiStore.set(walletBalancesAtom, value),
+  setLoading: (value: ExtractValueType<typeof loadingAtom>) =>
+    jotaiStore.set(loadingAtom, value),
+  setCurrentAddress: (value: ExtractValueType<typeof addressAtom>) =>
+    jotaiStore.set(addressAtom, value),
 };
 
 const useLendingData = () => {

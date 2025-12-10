@@ -120,7 +120,7 @@ export function makeThemeOptions(t: TFunction) {
 }
 
 export function useAppThemeConfig() {
-  const appTheme = themeModeStore(s => s);
+  const appTheme = themeModeStore(s => s.appTheme);
   return appTheme;
 }
 

@@ -20,6 +20,21 @@ import {
   useMeasureLayoutForHomeGuidanceMultipleTabs,
 } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
+import {
+  getComputedChainInfo,
+  getSelectChainItem,
+  setSelectChainItem,
+  useSelectedChainItem,
+  useTop3Chains,
+} from '../useChainInfo';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
+import { useTranslation } from 'react-i18next';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -151,6 +166,85 @@ const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
 }));
 
+function SideChainSelector() {
+  const { styles, isLight, colors2024 } = useTheme2024({
+    getStyle: getSideChainSelectorStyles,
+  });
+
+  const chainSelectModalRef = useRef<
+    ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
+  >();
+  const { t } = useTranslation();
+  const selectedChainItem = useSelectedChainItem();
+  const handleOnChainClick = useCallback(
+    (clear: boolean) => {
+      if (clear) {
+        setSelectChainItem(undefined);
+        return;
+      }
+
+      if (chainSelectModalRef.current) {
+        removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
+        chainSelectModalRef.current = undefined;
+      }
+      chainSelectModalRef.current = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
+        value: getSelectChainItem(),
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          rootViewType: 'View',
+          handleStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+        },
+        chainList: getComputedChainInfo().chainAssets,
+        titleText: t('page.receiveAddressList.selectChainTitle'),
+        onChange: (v: ChainListItem) => {
+          setSelectChainItem(v);
+          if (chainSelectModalRef.current) {
+            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
+            chainSelectModalRef.current = undefined;
+          }
+        },
+        onClose: () => {
+          if (chainSelectModalRef.current) {
+            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
+            chainSelectModalRef.current = undefined;
+          }
+        },
+      });
+    },
+    [colors2024, isLight, t],
+  );
+
+  const top3Chains = useTop3Chains();
+
+  return (
+    <ChainSelector
+      // top3Chains={chainAssets.map(item => item.chain).slice(0, 3)}
+      top3Chains={top3Chains}
+      onChainClick={handleOnChainClick}
+      chainServerId={selectedChainItem?.chain}
+    />
+  );
+}
+
+const getSideChainSelectorStyles = createGetStyles2024(() => ({
+  container: {
+    flex: 1,
+    marginTop: 64,
+  },
+  headerContainer: {
+    backgroundColor: 'transparent',
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+}));
+
 type MaterialTabBarProps = React.ComponentProps<typeof MaterialTabBar>;
 export const HomeCustomMaterialTabBar = (_props: {
   materialTabBarProps: Omit<
@@ -163,7 +257,7 @@ export const HomeCustomMaterialTabBar = (_props: {
     | 'contentContainerStyle'
   >;
   indexDecimal?: Animated.SharedValue<number>;
-  externalContent?: React.ReactNode;
+  // externalContent?: React.ReactNode;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -246,7 +340,8 @@ export const HomeCustomMaterialTabBar = (_props: {
           indicatorStyle={styles.hideInnerIndicator}
           contentContainerStyle={styles.contentContainerStyle}
         />
-        {_props.externalContent}
+        <SideChainSelector />
+        {/* {_props.externalContent} */}
       </Animated.View>
     </View>
   );

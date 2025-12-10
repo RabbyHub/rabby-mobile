@@ -5,12 +5,24 @@ import { useGasAccountMethods } from '@/screens/GasAccount/hooks';
 import { useAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import {
+  makeAvoidParallelAsyncFunc,
+  resolveValFromUpdater,
+  runDevIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { apisAccount } from '@/core/apis';
+
+runDevIIFEFunc(() => {
+  // mock haven't claimed gift
+  gasAccountService.setHasClaimedGift(false);
+});
 
 const gasAccountState = zCreate(() => ({
   gasAccountSig: gasAccountService.getGasAccountSig(),
   hasClaimedGift: gasAccountService.getHasClaimedGift(),
   currentEligibleAddress: gasAccountService.getCurrentEligibleAddress(),
+  eligibilityData: [] as ClaimedGiftAddress[],
 }));
 
 function reFetchStatus() {
@@ -22,69 +34,75 @@ function reFetchStatus() {
       gasAccountSig: gasAccountService.getGasAccountSig(),
       hasClaimedGift: gasAccountService.getHasClaimedGift(),
       currentEligibleAddress: gasAccountService.getCurrentEligibleAddress(),
+      eligibilityData: [],
     };
   });
 }
 
+function setEligibilityData(
+  valOrFunc: UpdaterOrPartials<ClaimedGiftAddress[]>,
+) {
+  gasAccountState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.eligibilityData, valOrFunc);
+
+    return {
+      ...prev,
+      eligibilityData: newVal,
+    };
+  });
+}
+
+const checkAddressesEligibility = makeAvoidParallelAsyncFunc(
+  async (force = false) => {
+    try {
+      const doReturn = (gifts: ClaimedGiftAddress[]) => {
+        setEligibilityData(gifts);
+        return gifts;
+      };
+      if (gasAccountService.getHasClaimedGift()) {
+        return doReturn([]);
+      }
+
+      const gasAccountSig = gasAccountService.getGasAccountSig();
+      if (gasAccountSig?.sig) {
+        return doReturn([]);
+      }
+
+      const addresses = await apisAccount
+        .getTop50PrivateKeyAccounts()
+        .then(res => res.map(acc => acc.address));
+      if (addresses.length === 0) {
+        return doReturn([]);
+      }
+      const result = await gasAccountService.checkAddressEligibilityBatch(
+        addresses,
+        force,
+      );
+      return doReturn(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to check eligibility';
+      throw err;
+    } finally {
+      reFetchStatus();
+    }
+  },
+);
+
 export const useGasAccountEligibility = () => {
   const { login } = useGasAccountMethods();
   const { accounts } = useAccounts({ disableAutoFetch: true });
-  const [, setEligibilityData] = useState<ClaimedGiftAddress[]>([]);
-  const [, setLoading] = useState(false);
-  const [, setError] = useState<string | null>(null);
 
-  const state = gasAccountState(s => s);
-
-  const isEligible = useMemo(() => {
-    return (
-      state.currentEligibleAddress !== undefined &&
-      !state.gasAccountSig?.sig &&
-      !state.hasClaimedGift
-    );
-  }, [state]);
-
-  // 批量检查地址资格
-  const checkAddressesEligibility = useCallback(
-    async (addresses: string[], force = false) => {
-      try {
-        setLoading(true);
-        setError(null);
-        // 如果已经领取过礼包，无需检查
-        if (gasAccountService.getHasClaimedGift()) {
-          return [];
-        }
-
-        // 如果gas account已经登录，无需检查资格
-        const gasAccountSig = gasAccountService.getGasAccountSig();
-        if (gasAccountSig?.sig) {
-          return [];
-        }
-
-        const result = await gasAccountService.checkAddressEligibilityBatch(
-          addresses,
-          force,
-        );
-        setEligibilityData(result);
-
-        return result;
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Failed to check eligibility';
-        setError(errorMessage);
-        throw err;
-      } finally {
-        setLoading(false);
-        reFetchStatus();
-      }
-    },
-    [],
+  const isEligible = gasAccountState(
+    s =>
+      s.currentEligibleAddress !== undefined &&
+      !s.gasAccountSig?.sig &&
+      !s.hasClaimedGift,
   );
 
-  // 领取礼包
   const claimGift = useCallback(
     async (address: string) => {
       try {
-        // 从accounts列表中根据address匹配获取account信息
         const account = accounts.find(
           acc =>
             acc.address.toLowerCase() === address.toLowerCase() &&

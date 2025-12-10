@@ -19,6 +19,7 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useSingleTokenRefresh } from './refresh';
 import { debounce } from 'lodash';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { apisAddrChainStatics } from '../useChainInfo';
 
 const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -63,6 +64,10 @@ export const useTokens = (
   const [mainnetTokens, setMainnetTokens] = useSafeState<
     AbstractPortfolioToken[]
   >([]);
+  useEffect(() => {
+    if (!userAddr || !mainnetTokens) return;
+    apisAddrChainStatics.updateToken(userAddr, mainnetTokens);
+  }, [userAddr, mainnetTokens]);
 
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);
@@ -264,12 +269,6 @@ export const useTokens = (
   useSingleTokenRefresh({
     onRefresh: refreshTagToken,
   });
-  // useEffect(() => {
-  //   if (singleTokenNonce > 0) {
-  //     refreshTagToken();
-  //     setSingleTokenNonce(0);
-  //   }
-  // }, [refreshTagToken, setSingleTokenNonce, singleTokenNonce]);
 
   return {
     isLoading,
