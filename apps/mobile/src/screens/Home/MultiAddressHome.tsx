@@ -1,6 +1,5 @@
 import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
-import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
 import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
@@ -14,12 +13,8 @@ import { RootNames } from '@/constant/layout';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import {
-  StackActions,
-  useFocusEffect,
-  useIsFocused,
-} from '@react-navigation/native';
+import { createGetStyles2024 } from '@/utils/styles';
+import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
@@ -45,7 +40,6 @@ import { apisAccount } from '@/core/apis';
 import {
   browserService,
   currencyService,
-  gasAccountService,
   preferenceService,
   transactionHistoryService,
 } from '@/core/services';
@@ -96,7 +90,6 @@ import {
   useAccountInfo,
 } from '../Address/components/MultiAssets/hooks';
 import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
-import { useTipsDollarDialog } from '../CopyTrading/component/hooks';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
 import { FoundYourWalletGuide } from './FundYourWallet';
@@ -126,13 +119,8 @@ import { useFoldMultiChartStore } from '../Address/components/MultiAssets/Render
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
-import { RECOMMENDED_DEFAULT_QUERY_LIMIT } from '@/databases/entities/_helpers';
-import {
-  RNGHPressable,
-  RNGHTouchableOpacity,
-} from '@/components/customized/reexports';
+import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 import { TABITEM_H } from './components/CustomTabBar';
-import { RefLikeObject } from '@/utils/type';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
@@ -175,8 +163,8 @@ const OverViewComponent = () => {
     return sortedAccounts
       .filter(
         account =>
-          account.type == KEYRING_TYPE.SimpleKeyring ||
-          account.type == KEYRING_TYPE.HdKeyring,
+          account.type === KEYRING_TYPE.SimpleKeyring ||
+          account.type === KEYRING_TYPE.HdKeyring,
       )
       .slice(0, 50)
       .map(account => account.address);
@@ -338,6 +326,11 @@ const OverViewComponent = () => {
     totalBalance: top10Balance.total,
     totalEvmBalance: top10Balance.totalEvm,
   });
+
+  useEffect(() => {
+    console.log('combineData', combineData.change);
+  }, [combineData]);
+
   useCexSupportList();
   useFetchCexInfo();
   useInitDetectDBAssets();
@@ -447,15 +440,6 @@ const OverViewComponent = () => {
     }, [detectHasAccounts, fetchHistory]),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh()) return;
-      if (appState === 'active') {
-        refreshCurve();
-      }
-    }, [appState, refreshCurve]),
-  );
-
   const thorttleGetSuccessAndFailList = useMemo(
     () => debounce(getSuccessAndFailList, 1000),
     [getSuccessAndFailList],
@@ -481,8 +465,15 @@ const OverViewComponent = () => {
         triggerUpdate();
         triggerUpdateAlert();
         syncTop10History();
+        refreshCurve();
       }
-    }, [appState, triggerUpdate, triggerUpdateAlert, syncTop10History]),
+    }, [
+      appState,
+      triggerUpdate,
+      triggerUpdateAlert,
+      syncTop10History,
+      refreshCurve,
+    ]),
   );
 
   const onRefresh = useCallback(() => {
