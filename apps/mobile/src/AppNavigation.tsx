@@ -173,9 +173,7 @@ function useDetermineExitAppOnPressBack() {
       }
 
       // not prevent by default
-      const finalRet = !PREVENT_GESTURE_BOOL || isAndroidGte16;
-
-      if (!__DEV__ && isAndroidGte16) return PREVENT_GESTURE_BOOL;
+      const finalRet = !PREVENT_GESTURE_BOOL;
 
       const restCount = getBackRestCount();
       const navigationInst = navigationRef.current;
