@@ -91,6 +91,8 @@ import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottom
 import { ToggleCollateralModal } from './screens/Lending/modals/ToggleCollateralModal';
 import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
+import DeviceInfo from 'react-native-device-info';
+import { coerceNumber } from './utils/coerce';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -135,6 +137,25 @@ const setBackStage = (
   }
 };
 
+function atHome() {
+  return navigationRef.getCurrentRoute()?.name === RootNames.Home;
+}
+function atHomeFirstTab() {
+  return atHome() && apisHomeTabIndex.isHomeAtFirstTab();
+}
+
+const isAndroidGte16 = (() => {
+  try {
+    const androiVersion = DeviceInfo.getSystemVersion();
+    return IS_ANDROID && coerceNumber(androiVersion?.split('.')[0]) >= 16;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+})();
+
+const PREVENT_GESTURE_BOOL = true;
+
 function useDetermineExitAppOnPressBack() {
   React.useEffect(() => {
     /**
@@ -144,7 +165,17 @@ function useDetermineExitAppOnPressBack() {
     if (IS_IOS) return;
 
     const backAction = () => {
-      if (apisHomeTabIndex.isHomeAtFirstTab()) return false;
+      if (atHome()) {
+        if (!atHomeFirstTab()) {
+          perfEvents.emit('NAV_BACK_ON_HOME');
+          return PREVENT_GESTURE_BOOL;
+        }
+      }
+
+      // not prevent by default
+      const finalRet = !PREVENT_GESTURE_BOOL || isAndroidGte16;
+
+      if (!__DEV__ && isAndroidGte16) return PREVENT_GESTURE_BOOL;
 
       const restCount = getBackRestCount();
       const navigationInst = navigationRef.current;
@@ -158,24 +189,23 @@ function useDetermineExitAppOnPressBack() {
         } else if (restCount === REST_COUNTS.ON_EXIT) {
           try {
             RNHelpers.forceExitApp();
-            return true;
+            return PREVENT_GESTURE_BOOL;
           } catch (error) {
             console.error(error);
             Sentry.captureException(
               new Error(`exit app failed, ${JSON.stringify(error)}`),
             );
             // BackHandler.exitApp();
-            return false;
+            return finalRet;
           }
         }
 
-        return true;
+        return PREVENT_GESTURE_BOOL;
       } else {
         setBackStage(REST_COUNTS.CANT_EXIT);
       }
 
-      // not prevent by default
-      return false;
+      return finalRet;
     };
 
     const backHandler = BackHandler.addEventListener(

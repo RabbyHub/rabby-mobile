@@ -4,7 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 
 import { MemoizedTokenItemLoader, TokenList } from './TokenList';
 import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { CollapsibleRef, Tabs } from 'react-native-collapsible-tab-view';
 import {
   HeaderHeight,
   TabsTopHeader,
@@ -19,6 +19,8 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { useHomeTabIndex } from '@/hooks/navigation';
+import { runIIFEFunc } from '@/core/utils/store';
+import { perfEvents } from '@/core/utils/perf';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -66,6 +68,18 @@ function TabIndexBasedFreeze({
     </Freeze>
   );
 }
+
+const homeTabScrollerRef = React.createRef<CollapsibleRef<string>>();
+
+runIIFEFunc(() => {
+  perfEvents.subscribe('NAV_BACK_ON_HOME', () => {
+    if (!homeTabScrollerRef.current) return;
+    const currentIndex = homeTabScrollerRef.current?.getCurrentIndex() || 0;
+    if (currentIndex > 0) {
+      homeTabScrollerRef.current?.setIndex(Math.max(0, currentIndex - 1));
+    }
+  });
+});
 
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
   // tabIndex,
@@ -141,6 +155,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
 
   return (
     <Tabs.Container
+      ref={homeTabScrollerRef}
       onIndexChange={onIndexChange}
       renderHeader={renderHeader}
       onTabChange={handleTabChange}

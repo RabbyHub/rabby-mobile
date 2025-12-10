@@ -14,6 +14,8 @@ export type PerfEventBusListeners = {
     nextState: balanceAccountType[];
   }) => void;
 
+  NAV_BACK_ON_HOME: () => void;
+
   TMP_TRIGGER_FETCH_LENDING_DATA: () => void;
 };
 type PerfListeners = {
