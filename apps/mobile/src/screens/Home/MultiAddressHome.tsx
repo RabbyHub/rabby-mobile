@@ -57,6 +57,7 @@ import useAccountsBalance, {
   apisAccountsBalance,
   balanceAccountType,
   fetchTotalBalance,
+  useAccountsBalanceTrigger,
 } from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {
@@ -147,8 +148,9 @@ import { getTop10MyAddresses } from '@/core/apis/account';
 import { runIIFEFunc } from '@/core/utils/store';
 import {
   TmpHomeRefresher,
-  triggerFetchLendingData,
-} from '../Lending/TmpHomeRefresher';
+  triggerFetchHomeData,
+} from './components/TmpHomeRefresher';
+import { HomeCenterArea } from './components/HomeCenterArea';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -171,7 +173,6 @@ const OverViewComponent = React.memo(
       getStyle,
     });
     const { pendingTxCount, historyCount } = useHomeHistoryStore();
-    const { top10Addresses } = useAccountInfo();
 
     const { width } = Dimensions.get('window');
     const itemWidth =
@@ -299,42 +300,9 @@ const OverViewComponent = React.memo(
       ],
     );
 
-    const {
-      balanceAccounts,
-      balanceCacheAccounts,
-      // loadBalanceFromApiStage,
-      triggerUpdate,
-    } = useAccountsBalance({
-      cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-      accountsNoUnique: true, // balanceAccounts has filter same address accounts
-    });
-
     useFetchCexInfo();
 
-    const { syncTop10History } = useSyncHistoryDB(top10Addresses);
-
-    const { mockData } = useMockDataForHomeCenterArea();
-
-    const displayFundWalletOrig = useMemo(() => {
-      return (
-        !!balanceAccounts.length &&
-        balanceAccounts.every(e => e.balance === 0) &&
-        balanceCacheAccounts.every(e => e.balance === 0) &&
-        balanceAccounts.every(
-          e =>
-            transactionHistoryService.getTransactionGroups({
-              address: e.address,
-            }).length === 0,
-        )
-      );
-    }, [balanceAccounts, balanceCacheAccounts]);
-
-    const displayFundWallet = useMemo(() => {
-      if (isNonPublicProductionEnv && mockData.forceShowFundWallet) {
-        return true;
-      }
-      return displayFundWalletOrig;
-    }, [displayFundWalletOrig, mockData.forceShowFundWallet]);
+    const { triggerUpdate } = useAccountsBalanceTrigger();
 
     useEffect(() => {
       setTimeout(() => {
@@ -365,9 +333,9 @@ const OverViewComponent = React.memo(
             refresh24hAssets({ balanceAccounts }),
           );
           triggerUpdateAlert();
-          syncTop10History();
+          triggerFetchHomeData('TMP_TRIGGER:SYNC_TOP10_HISTORY');
         });
-      }, [triggerUpdate, triggerUpdateAlert, syncTop10History]),
+      }, [triggerUpdate, triggerUpdateAlert]),
     );
 
     const onRefresh = useCallback(() => {
@@ -381,16 +349,11 @@ const OverViewComponent = React.memo(
       ]).finally(() => {
         // update at background
         forceUpdate();
-        triggerFetchLendingData();
-        syncTop10History(true);
+        triggerFetchHomeData('TMP_TRIGGER:FETCH_LENDING_DATA');
+        triggerFetchHomeData('TMP_TRIGGER:SYNC_TOP10_HISTORY', true);
         currencyService.syncCurrencyList(true);
       });
-    }, [
-      triggerUpdate,
-      checkAddressesEligibility,
-      forceUpdate,
-      syncTop10History,
-    ]);
+    }, [triggerUpdate, checkAddressesEligibility, forceUpdate]);
 
     const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
     const handlePressWatchlist = useCallback(() => {
@@ -581,30 +544,6 @@ const OverViewComponent = React.memo(
 
     const { bottom } = useSafeAreaInsets();
 
-    const { shouldShowRateGuideOnHome } = useExposureRateGuide();
-    const offlineChainData = useOfflineChain();
-    const { viewedHomeTip } = useViewedHomeTip();
-
-    const { noBetweenContent, onlyOneContent } = useMemo(() => {
-      const visibleEls = [
-        displayFundWallet,
-        shouldShowRateGuideOnHome,
-        offlineChainData.displayWillClosedChain &&
-          offlineChainData.offlineChainInfo,
-        !viewedHomeTip,
-      ];
-      const hasBetweenContent = visibleEls.some(Boolean);
-      return {
-        noBetweenContent: !hasBetweenContent,
-        onlyOneContent: visibleEls.filter(Boolean).length === 1,
-      };
-    }, [
-      shouldShowRateGuideOnHome,
-      offlineChainData,
-      displayFundWallet,
-      viewedHomeTip,
-    ]);
-
     useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
 
     return (
@@ -625,32 +564,9 @@ const OverViewComponent = React.memo(
         }>
         <MultiAddressHomeHeader
           onRefresh={onRefresh}
-          balanceAccounts={balanceAccounts}
+          // balanceAccounts={balanceAccounts}
         />
-        <View
-          style={[
-            noBetweenContent
-              ? styles.contentBetweenHeaderAndMatrixEmpty
-              : styles.contentBetweenHeaderAndMatrix,
-            onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
-          ]}>
-          <OfflineChainNotify data={offlineChainData} />
-
-          {displayFundWallet && <FoundYourWalletGuide />}
-
-          {shouldShowRateGuideOnHome && (
-            <View
-              style={{
-                paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-              }}>
-              <RateModalTriggerOnHome /* totalBalanceText={combineData.netWorth} */
-              />
-              <RateModal /* totalBalanceText={combineData.netWorth} */ />
-            </View>
-          )}
-
-          <TipFeedbackByScreenshot />
-        </View>
+        <HomeCenterArea />
 
         <View style={styles.grid}>
           <View style={styles.gridItemsWrap}>
@@ -843,10 +759,7 @@ function MultiAddressHome(): JSX.Element {
           setIsFoldMultiChart(true);
         }}>
         <TabsMultiAssets
-          // data={combineData}
-          // loading={loading}
           onIndexChange={onIndexChange}
-          // multi24HBalanceReturn={multi24HBalanceReturn}
           OverViewComponent={OverViewComponent}
         />
 
@@ -1008,18 +921,6 @@ const getStyle = createGetStyles2024(
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
       borderWidth: 1,
-    },
-    contentBetweenHeaderAndMatrix: {
-      marginTop: 12,
-      marginBottom: 12,
-      gap: 12,
-      // ...makeDebugBorder(),
-    },
-    contentBetweenHeaderAndMatrixEmpty: {
-      marginBottom: 12,
-    },
-    contentBetweenHeaderAndMatrixOnlyOne: {
-      paddingTop: 0,
     },
     menuContainer: {
       marginTop: 0,

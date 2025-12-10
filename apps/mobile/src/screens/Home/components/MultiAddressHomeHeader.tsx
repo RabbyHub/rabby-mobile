@@ -114,10 +114,7 @@ export function MultiAddressHomeHeader(
     });
   }, [addressListData?.length]);
 
-  const { accountsLength } = useAccountsBalance({
-    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
+  const { accountsLength } = useAccountsBalance();
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);

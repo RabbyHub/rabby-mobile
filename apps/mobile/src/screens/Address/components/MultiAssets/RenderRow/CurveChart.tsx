@@ -57,10 +57,7 @@ function Chart({
   const { isLoadingNew: loadingNewCurve } = useSceneIsLoadingNew('Home');
 
   const { top10Addresses } = useAccountInfo();
-  const { getTotalBalance } = useAccountsBalance({
-    cacheTime: 10 * 60 * 1000,
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
+  const { getTotalBalance } = useAccountsBalance();
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);

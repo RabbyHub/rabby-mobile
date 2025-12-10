@@ -8,6 +8,7 @@ import { unionBy } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
+import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 
 export interface balanceAccountType {
   address: string;
@@ -256,27 +257,21 @@ export const fetchTotalBalance = async (
   return retBalancesArr;
 };
 
+const CACHE_TIME = HOME_REFRESH_INTERVAL; // 10 minutes
+const accountsNoUnique = true;
 export type LoadBalanceStage = 'idle' | 'loading' | 'finished';
-export default function useAccountsBalance(opts?: {
-  cacheTime?: number;
-  accountsNoUnique?: boolean;
-}) {
-  const { cacheTime = 10 * 60 * 1000, accountsNoUnique = true } = opts || {};
-  const balanceAccounts = balanceStore(s => s.balance);
-  const balanceCacheAccounts = balanceStore(s => s.balanceCache);
-  const accountsLength = balanceStore(s => s.length);
-
+export function useAccountsBalanceTrigger() {
   const lastTimeStamps = useRef<number>(0);
 
   const isNeedFetchData = useCallback(() => {
     const currentTime = Date.now();
     const diff = currentTime - lastTimeStamps.current;
-    if (diff > cacheTime) {
+    if (diff > CACHE_TIME) {
       lastTimeStamps.current = currentTime;
       return true;
     }
     return false;
-  }, [cacheTime]);
+  }, []);
 
   const triggerUpdate = useCallback(
     async (forceFromApi?: boolean) => {
@@ -296,8 +291,19 @@ export default function useAccountsBalance(opts?: {
         { accountsNoUnique },
       );
     },
-    [isNeedFetchData, accountsNoUnique],
+    [isNeedFetchData],
   );
+
+  return {
+    triggerUpdate,
+  };
+}
+export default function useAccountsBalance() {
+  const balanceAccounts = balanceStore(s => s.balance);
+  const balanceCacheAccounts = balanceStore(s => s.balanceCache);
+  const accountsLength = balanceStore(s => s.length);
+
+  const { triggerUpdate } = useAccountsBalanceTrigger();
 
   const getTotalBalance = useCallback(
     (addresses: string[]) => {

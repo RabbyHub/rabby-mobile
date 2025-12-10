@@ -101,7 +101,7 @@ export function AddressNavigator() {
         },
         headerTitle: '',
       })}>
-      <AddressStack.Screen
+      {/* <AddressStack.Screen
         name={RootNames.AddressList}
         component={AddressListScreen}
         options={mergeScreenOptions2024([
@@ -116,7 +116,7 @@ export function AddressNavigator() {
             headerRight: () => <AddressListScreenButton type="address" />,
           },
         ])}
-      />
+      /> */}
       <AddressStack.Screen
         name={RootNames.ReceiveAddressList}
         component={ReceiveAddressListScreen}
