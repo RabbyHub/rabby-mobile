@@ -1,6 +1,5 @@
 import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
-import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
 import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
@@ -13,12 +12,8 @@ import { RootNames } from '@/constant/layout';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import {
-  StackActions,
-  useFocusEffect,
-  useIsFocused,
-} from '@react-navigation/native';
+import { createGetStyles2024 } from '@/utils/styles';
+import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,

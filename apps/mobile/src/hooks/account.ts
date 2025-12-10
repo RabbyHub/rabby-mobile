@@ -31,7 +31,7 @@ import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
 import { isEqual, unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
-import { useHistoryTokenDict } from './historyTokenDict';
+import { updateHistoryTimeSingleAddress } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { fetchAllAccounts, KeyringAccountWithAlias } from '@/core/apis/account';
@@ -78,7 +78,9 @@ function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
   zAccountStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(prev.accounts, valOrFunc);
 
-    if (changed) return { ...prev, accounts: newVal };
+    if (changed) {
+      return { ...prev, accounts: newVal };
+    }
 
     return prev;
   });
@@ -93,7 +95,9 @@ export function setCurrentAccount(
       valOrFunc,
     );
 
-    if (changed) return { ...prev, currentAccount: newVal };
+    if (changed) {
+      return { ...prev, currentAccount: newVal };
+    }
 
     return prev;
   });
@@ -111,7 +115,9 @@ function setPinAddresses(
       valOrFunc,
     );
 
-    if (changed) return { ...prev, pinnedAddresses: newVal };
+    if (changed) {
+      return { ...prev, pinnedAddresses: newVal };
+    }
 
     return prev;
   });
@@ -279,7 +285,6 @@ export const usePinnedAccountList = () => {
 
 export function useRemoveAccount() {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
-  const { updateHistoryTimeSingleAddress } = useHistoryTokenDict();
   return useCallback(
     async (account: KeyringAccount) => {
       await removeAddress(account);
@@ -293,7 +298,7 @@ export function useRemoveAccount() {
         transactionHistoryService.clearSuccessAndFailList(account.address);
       }
     },
-    [accounts, fetchAccounts, updateHistoryTimeSingleAddress],
+    [accounts, fetchAccounts],
   );
 }
 
