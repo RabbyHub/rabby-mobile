@@ -22,7 +22,10 @@ import {
   dropAppDataSourceAndQuitApp,
   prepareAppDataSource,
 } from '@/databases/imports';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import {
+  resetUpdateHistoryTime,
+  useHistoryTokenDict,
+} from '@/hooks/historyTokenDict';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { downloadDbFile } from '@/databases/dbfs';
 import { IS_IOS } from '@/core/native/utils';
@@ -63,8 +66,6 @@ export default function DevDataPlaygroundModal({
     setDataPlaygroundModalVisible(false);
     onCancel?.();
   }, [setDataPlaygroundModalVisible, onCancel]);
-
-  const { resetUpdateHistoryTime } = useHistoryTokenDict();
 
   const navigation = useRabbyAppNavigation();
 
