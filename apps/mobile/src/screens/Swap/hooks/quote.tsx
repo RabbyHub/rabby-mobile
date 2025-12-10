@@ -9,6 +9,7 @@ import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import {
   ExplainTxResponse,
+  GasLevel,
   TokenItem,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -30,7 +31,7 @@ import React, { useRef } from 'react';
 import { useSwapSupportedDexList } from './settings';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { apiProvider } from '@/core/apis';
-import { Account } from '@/core/services/preference';
+import { Account, ChainGas } from '@/core/services/preference';
 
 const { isSameAddress } = addressUtils;
 
@@ -61,7 +62,9 @@ export const useQuoteMethods = () => {
     },
     [walletOpenapi],
   );
-  const nativeTokenPriceRef = useRef<Promise<TokenItem>>();
+  const nativeTokenPriceCache = useRef<Promise<TokenItem>>();
+  const recommendNonceTaskCache = useRef<Promise<string>>();
+  const gasMarketTaskCache = useRef<Promise<GasLevel[]>>();
 
   const getSwapList = React.useCallback(
     async (addr: string, start = 0, limit = 5) => {
@@ -136,7 +139,7 @@ export const useQuoteMethods = () => {
       | 'dexId'
       | 'userAddress'
       | 'account'
-    >) => {
+    >): Promise<[boolean, boolean]> => {
       const chainInfo = findChainByEnum(chain) || CHAINS[chain];
       if (
         payToken?.id === chainInfo.nativeTokenAddress ||
@@ -170,6 +173,134 @@ export const useQuoteMethods = () => {
     [],
   );
 
+  const getQuoteGasUsed = React.useCallback(
+    async ({
+      payToken,
+      receiveToken,
+      chain,
+      quote,
+      userAddress,
+      nonce,
+      chainInfo,
+    }: {
+      payToken: TokenItem;
+      receiveToken: TokenItem;
+      chain: CHAINS_ENUM;
+      quote: QuoteResult;
+      userAddress: string;
+      nonce: string;
+      chainInfo: NonNullable<ReturnType<typeof findChainByEnum>>;
+    }) => {
+      if (isSwapWrapToken(payToken.id, receiveToken.id, chain)) {
+        const data = await walletOpenapi.estimateGasUsd({
+          tx: {
+            ...quote.tx,
+            nonce,
+            chainId: chainInfo.id,
+            value: `0x${new BigNumber(quote.tx.value).toString(16)}`,
+          } as Tx,
+          origin: INTERNAL_REQUEST_ORIGIN,
+          address: userAddress,
+          updateNonce: true,
+          pending_tx_list: [],
+        });
+        return data.gas_used || data.safe_gas_used || 0;
+      }
+      return quote.gasUsed || 0;
+    },
+    [walletOpenapi],
+  );
+
+  const getRecommendNonceOnce = React.useCallback(
+    ({
+      from,
+      chainId,
+      account,
+    }: {
+      from: string;
+      chainId: number;
+      account: Account;
+    }) => {
+      if (recommendNonceTaskCache.current) {
+        return recommendNonceTaskCache.current;
+      }
+      const task = getRecommendNonce({
+        from,
+        chainId,
+        account,
+      });
+      recommendNonceTaskCache.current = task;
+      return task;
+    },
+    [],
+  );
+
+  const getGasMarketOnce = React.useCallback(
+    ({
+      quote,
+      nonce,
+      chain,
+      chainInfo,
+      account,
+    }: {
+      quote?: QuoteResult;
+      nonce?: string;
+      chain: CHAINS_ENUM;
+      chainInfo: NonNullable<ReturnType<typeof findChainByEnum>>;
+      account: Account;
+    }) => {
+      const isLinea = chain === CHAINS_ENUM.LINEA;
+      const cached = gasMarketTaskCache.current;
+      if (cached && !isLinea) {
+        return cached;
+      }
+
+      if (!isLinea) {
+        const task = apiProvider.gasMarketV2(
+          {
+            chainId: chainInfo.serverId,
+          },
+          account,
+        );
+        gasMarketTaskCache.current = task;
+        return task;
+      }
+
+      if (!quote || !nonce) {
+        return Promise.reject(new Error('linea gas market requires tx info'));
+      }
+
+      const task = apiProvider.gasMarketV2(
+        {
+          chain: chainInfo,
+          tx: {
+            ...quote.tx,
+            nonce,
+            chainId: chainInfo.id,
+          } as Tx,
+        },
+        account,
+      );
+
+      return task;
+    },
+    [],
+  );
+
+  type GasMarket = Awaited<ReturnType<typeof apiProvider.gasMarketV2>>;
+  type PreEstimateShared = {
+    lastTimeGas: ChainGas | null;
+    gasMarket: GasMarket;
+    tokenApprove: [boolean, boolean];
+    nativeToken: TokenItem;
+    gasUsed: number;
+  };
+  type PreEstimatePrefetched = {
+    [K in keyof PreEstimateShared]?:
+      | PreEstimateShared[K]
+      | Promise<PreEstimateShared[K]>;
+  };
+
   const getPreEstimateGasUsed = React.useCallback(
     async ({
       userAddress,
@@ -179,65 +310,58 @@ export const useQuoteMethods = () => {
       payAmount,
       dexId,
       quote,
+      nonce,
+      preFetched,
       account,
     }: getPreExecResultParams & {
+      nonce: string;
+      preFetched?: PreEstimatePrefetched;
       account: Account;
     }) => {
       const chainInfo = findChainByEnum(chain)!;
-      const nonce = await getRecommendNonce({
-        from: userAddress,
-        chainId: chainInfo.id,
-        account,
-      });
-
-      const getGasUsed = async () => {
-        if (isSwapWrapToken(payToken.id, receiveToken.id, chain)) {
-          const data = await walletOpenapi.estimateGasUsd({
-            tx: {
-              ...quote.tx,
-              nonce: nonce,
-              chainId: chainInfo.id,
-              value: `0x${new BigNumber(quote.tx.value).toString(16)}`,
-            } as Tx,
-            origin: INTERNAL_REQUEST_ORIGIN,
-            address: userAddress,
-            updateNonce: true,
-            pending_tx_list: [],
-          });
-          return data.gas_used || data.safe_gas_used || 0;
-        }
-        return quote.gasUsed || 0;
-      };
 
       const [
+        // lastTimeGas,
         gasMarket,
         [tokenApproved, shouldTwoStepApprove],
         nativeToken,
         gasUsed,
       ] = await Promise.all([
-        apiProvider.gasMarketV2(
-          {
-            chain: chainInfo,
-            tx: {
-              ...quote.tx,
-              nonce,
-              chainId: chainInfo.id,
-              gas: '0x0',
-            },
-          },
-          account,
+        // Promise.resolve(
+        //   preFetched?.lastTimeGas ??
+        //     getLastTimeGasSelection.getLastTimeGasSelection(chainInfo.id),
+        // ),
+        Promise.resolve(
+          preFetched?.gasMarket ??
+            getGasMarketOnce({ quote, nonce, chain, chainInfo, account }),
         ),
-        getTokenApproveStatus({
-          payToken,
-          receiveToken,
-          payAmount,
-          chain,
-          dexId,
-          userAddress,
-          account,
-        }),
-        nativeTokenPriceRef.current!,
-        getGasUsed(),
+        Promise.resolve(
+          preFetched?.tokenApprove ??
+            getTokenApproveStatus({
+              payToken,
+              receiveToken,
+              payAmount,
+              chain,
+              dexId,
+              userAddress,
+              account,
+            }),
+        ),
+        Promise.resolve(
+          preFetched?.nativeToken ?? nativeTokenPriceCache.current!,
+        ),
+        Promise.resolve(
+          preFetched?.gasUsed ??
+            getQuoteGasUsed({
+              payToken,
+              receiveToken,
+              chain,
+              quote,
+              userAddress,
+              nonce,
+              chainInfo,
+            }),
+        ),
       ]);
 
       const getGasPrice = () => {
@@ -261,7 +385,7 @@ export const useQuoteMethods = () => {
         gasUsd: formatUsdValue(gasUsdValue),
       };
     },
-    [walletOpenapi, getTokenApproveStatus],
+    [getGasMarketOnce, getQuoteGasUsed, getTokenApproveStatus],
   );
 
   const getDexQuote = React.useCallback(
@@ -278,24 +402,27 @@ export const useQuoteMethods = () => {
       onFinishedQuote,
       inSufficient,
       account,
+      sharedTasks,
     }: getDexQuoteParams & {
       setQuote?: (quote: TDexQuoteData) => void;
       onFinishedQuote: () => void;
       account: Account;
+      sharedTasks?: {
+        preFetched?: PreEstimatePrefetched;
+        recommendNonceTask?: Promise<string>;
+      };
     }): Promise<TDexQuoteData> => {
       const isOpenOcean = dexId === DEX_ENUM.OPENOCEAN;
       const chainInfo = findChainByEnum(chain) || CHAINS[chain];
-      try {
-        let gasPrice: number;
-        if (isOpenOcean) {
-          const gasMarket = await apiProvider.gasMarketV2(
-            {
-              chainId: chainInfo.serverId,
-            },
+      const recommendNonceTask = !inSufficient
+        ? sharedTasks?.recommendNonceTask ??
+          getRecommendNonceOnce({
+            from: userAddress,
+            chainId: chainInfo.id,
             account,
-          );
-          gasPrice = gasMarket?.[1]?.price;
-        }
+          })
+        : null;
+      try {
         stats.report('swapRequestQuote', {
           dex: dexId,
           chain,
@@ -323,7 +450,6 @@ export const useQuoteMethods = () => {
                   ? undefined
                   : Number(feeAfterDiscount) || 0,
               chain,
-              gasPrice,
               fee: true,
               chainServerId: chainInfo.serverId,
               nativeTokenAddress: chainInfo.nativeTokenAddress,
@@ -378,6 +504,51 @@ export const useQuoteMethods = () => {
             return quote;
           }
           try {
+            const nonce = await (recommendNonceTask ??
+              getRecommendNonceOnce({
+                from: userAddress,
+                chainId: chainInfo.id,
+                account,
+              }));
+
+            const preFetched = {
+              lastTimeGas: undefined,
+              gasMarket:
+                sharedTasks?.preFetched?.gasMarket ??
+                getGasMarketOnce({
+                  quote: data,
+                  nonce,
+                  chain,
+                  chainInfo,
+                  account,
+                }),
+              tokenApprove:
+                sharedTasks?.preFetched?.tokenApprove ??
+                getTokenApproveStatus({
+                  payToken,
+                  receiveToken,
+                  payAmount,
+                  chain,
+                  dexId,
+                  account,
+                  userAddress,
+                }),
+              nativeToken:
+                sharedTasks?.preFetched?.nativeToken ??
+                nativeTokenPriceCache.current!,
+              gasUsed:
+                sharedTasks?.preFetched?.gasUsed ??
+                getQuoteGasUsed({
+                  payToken,
+                  receiveToken,
+                  chain,
+                  quote: data,
+                  userAddress,
+                  nonce,
+                  chainInfo,
+                }),
+            };
+
             preExecResult = await pRetry(
               () =>
                 getPreEstimateGasUsed({
@@ -390,6 +561,8 @@ export const useQuoteMethods = () => {
                   dexId: dexId as DEX_ENUM,
                   inSufficient,
                   account,
+                  nonce,
+                  preFetched,
                 }),
               {
                 retries: 1,
@@ -432,12 +605,20 @@ export const useQuoteMethods = () => {
           isDex: true,
           preExecResult: null,
         };
+        recommendNonceTask?.catch(() => undefined);
         setQuote?.(quote);
         onFinishedQuote();
         return quote;
       }
     },
-    [getPreEstimateGasUsed, walletOpenapi],
+    [
+      getGasMarketOnce,
+      getPreEstimateGasUsed,
+      getQuoteGasUsed,
+      getRecommendNonceOnce,
+      getTokenApproveStatus,
+      walletOpenapi,
+    ],
   );
 
   const swapViewList = swapService.getSwapViewList();
@@ -453,7 +634,11 @@ export const useQuoteMethods = () => {
     ) => {
       const chainObj = findChainByEnum(params.chain)!;
 
-      nativeTokenPriceRef.current = pRetry(
+      recommendNonceTaskCache.current = undefined;
+      gasMarketTaskCache.current = undefined;
+      nativeTokenPriceCache.current = undefined;
+
+      nativeTokenPriceCache.current = pRetry(
         () =>
           walletOpenapi.getToken(
             params.userAddress,
@@ -462,6 +647,27 @@ export const useQuoteMethods = () => {
           ),
         { retries: 1 },
       );
+
+      const sharedRecommendNonceTask = params.inSufficient
+        ? null
+        : getRecommendNonceOnce({
+            from: params.userAddress,
+            chainId: chainObj.id,
+            account: params.account,
+          });
+
+      const sharedPreFetched: PreEstimatePrefetched = {
+        lastTimeGas: undefined,
+        nativeToken: nativeTokenPriceCache.current!,
+      };
+
+      if (params.chain !== CHAINS_ENUM.LINEA) {
+        sharedPreFetched.gasMarket = getGasMarketOnce({
+          chain: params.chain,
+          chainInfo: chainObj,
+          account: params.account,
+        });
+      }
 
       if (
         isSwapWrapToken(
@@ -474,6 +680,10 @@ export const useQuoteMethods = () => {
           ...params,
           dexId: DEX_ENUM.WRAPTOKEN,
           account: params.account,
+          sharedTasks: {
+            preFetched: sharedPreFetched,
+            recommendNonceTask: sharedRecommendNonceTask || undefined,
+          },
         });
       }
 
@@ -482,10 +692,25 @@ export const useQuoteMethods = () => {
           Object.keys(DEX).filter(e =>
             supportedDEXList.includes(e),
           ) as DEX_ENUM[]
-        ).map(dexId => getDexQuote({ ...params, dexId })),
+        ).map(dexId =>
+          getDexQuote({
+            ...params,
+            dexId,
+            sharedTasks: {
+              preFetched: sharedPreFetched,
+              recommendNonceTask: sharedRecommendNonceTask || undefined,
+            },
+          }),
+        ),
       ]);
     },
-    [walletOpenapi, getDexQuote, supportedDEXList],
+    [
+      getRecommendNonceOnce,
+      walletOpenapi,
+      getGasMarketOnce,
+      getDexQuote,
+      supportedDEXList,
+    ],
   );
 
   return {
