@@ -6,14 +6,12 @@ import { useTheme2024 } from '@/hooks/theme';
 export const AddressEntry = ({
   data,
   onSelect,
-  isManageMode,
 }: {
   data: KeyringAccountWithAlias & {
     changPercent?: string;
     isLoss?: boolean;
   };
   onSelect?: () => void;
-  isManageMode?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
@@ -24,7 +22,6 @@ export const AddressEntry = ({
       changePercent={data.changPercent}
       onSelect={onSelect}
       isLoss={data.isLoss}
-      isManageMode={isManageMode}
     />
   );
 };

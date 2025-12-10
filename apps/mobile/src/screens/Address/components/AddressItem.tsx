@@ -16,9 +16,6 @@ import { AddressItemContextMenu } from './AddressItemContextMenu';
 import { AddressItemInner2024 } from './AddressItemInner2024';
 import { AddressItemShadowView } from './AddressItemShadowView';
 import { isTabsSwiping } from './MultiAssets/hooks';
-import { useAddressDetailModal } from '../useAddressDetailModal';
-import { toast } from '@/components2024/Toast';
-import { useTranslation } from 'react-i18next';
 
 const { isSameAddress } = addressUtils;
 
@@ -48,7 +45,6 @@ interface AddressItemProps {
   onSelect?: () => void;
   useLongPressing?: boolean;
   handleGoDetail?: () => void;
-  isManageMode?: boolean;
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
   const {
@@ -61,12 +57,9 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     isScrolling,
     useLongPressing,
     handleGoDetail,
-    isManageMode,
   } = props;
   const { styles } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
-  const showAddressDetail = useAddressDetailModal();
-  const { t } = useTranslation();
 
   const onDetail = useCallback(() => {
     if (isTabsSwiping.value) {
@@ -86,15 +79,6 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
   }, [account, onSelect, handleGoDetail]);
 
-  const showAddressDetailPopup = () => {
-    showAddressDetail({
-      account: account,
-      onDelete: () => {
-        toast.success(t('global.Deleted'));
-      },
-    });
-  };
-
   const isCurrentAccount = React.useMemo(() => {
     return (
       lastSelectedAccount &&
@@ -112,7 +96,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([styles.root, props.style])}
         delayLongPress={200} // long press delay
-        onPress={isManageMode ? showAddressDetailPopup : onDetail}
+        onPress={onDetail}
         onLongPress={() => {
           useLongPressing && setIsPressing(true);
           trigger('impactLight', {
@@ -125,7 +109,6 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           account={account}
           changePercent={changePercent}
           isLoss={isLoss}
-          isManageMode={isManageMode}
         />
       </TouchableOpacity>
     </AddressItemShadowView>

@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { Text, View, TouchableOpacity, Pressable } from 'react-native';
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 import { AddressEntry } from './RenderRow/AddressEntry';
@@ -20,6 +20,9 @@ import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
 import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
 import { ManageSetting } from '../ManageSetting';
+import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
+import { useAddressDetailModal } from '../../useAddressDetailModal';
+import { toast } from '@/components2024/Toast';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
@@ -36,6 +39,8 @@ export const AddressList = ({
 }: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
+
+  const showAddressDetail = useAddressDetailModal();
 
   const {
     top10Addresses,
@@ -100,17 +105,48 @@ export const AddressList = ({
 
   const renderItem = useCallback(
     ({ item }) => {
+      if (isManageMode) {
+        const showAddressDetailPopup = () => {
+          showAddressDetail({
+            account: item,
+            onDelete: () => {
+              toast.success(t('global.Deleted'));
+            },
+          });
+        };
+        return (
+          <View style={[styles.itemGap, styles.manageModeItem]}>
+            <Pressable
+              onPress={showAddressDetailPopup}
+              style={styles.manageBtn}>
+              <RcIconSettingCC
+                width={20}
+                height={20}
+                color={colors2024['neutral-secondary']}
+              />
+            </Pressable>
+            <View style={{ width: '100%' }}>
+              <AddressEntry data={item} onSelect={onDone} />
+            </View>
+          </View>
+        );
+      }
       return (
         <View style={styles.itemGap}>
-          <AddressEntry
-            data={item}
-            onSelect={onDone}
-            isManageMode={isManageMode}
-          />
+          <AddressEntry data={item} onSelect={onDone} />
         </View>
       );
     },
-    [isManageMode, onDone, styles.itemGap],
+    [
+      isManageMode,
+      styles.itemGap,
+      styles.manageModeItem,
+      styles.manageBtn,
+      onDone,
+      colors2024,
+      showAddressDetail,
+      t,
+    ],
   );
 
   const handleMoreWalletsPress = useCallback(() => {
@@ -358,6 +394,18 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   itemGap: {
     marginTop: SPACING_HEIGHT,
+  },
+  manageModeItem: {
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: -16,
+  },
+  manageBtn: {
+    width: 64,
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContainer: {
     flex: 1,
