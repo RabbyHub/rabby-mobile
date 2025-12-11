@@ -49,16 +49,14 @@ import {
   useScene24hBalanceCombinedData,
   useScene24hBalanceMulti24hBalance,
   useSceneIsLoading,
-  useSceneIsLoadingNew,
 } from '@/hooks/useScene24hBalance';
 
 export function MultiAddressHomeHeader(
   props: {
     onRefresh?: () => void;
-    balanceAccounts?: balanceAccountType[];
   } & RNViewProps,
 ): JSX.Element {
-  const { style, onRefresh, balanceAccounts } = props;
+  const { style, onRefresh } = props;
 
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
   const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
@@ -73,6 +71,8 @@ export function MultiAddressHomeHeader(
   const setIsFoldMultiChart = useFoldMultiChartStore(
     s => s.setIsFoldMultiChart,
   );
+
+  const { balanceAccounts } = useAccountsBalance();
 
   const addressListData = useMemo(() => {
     return sortBy(

@@ -563,10 +563,7 @@ const OverViewComponent = React.memo(
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={onRefresh} />
         }>
-        <MultiAddressHomeHeader
-          onRefresh={onRefresh}
-          // balanceAccounts={balanceAccounts}
-        />
+        <MultiAddressHomeHeader onRefresh={onRefresh} />
         <HomeCenterArea />
 
         <View style={styles.grid}>
