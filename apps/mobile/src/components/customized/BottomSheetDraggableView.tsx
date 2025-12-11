@@ -1,6 +1,8 @@
-import { useBottomSheetInternal } from '@gorhom/bottom-sheet';
-import { BottomSheetInternalProvider } from '@gorhom/bottom-sheet/src/contexts';
-import BottomSheetDraggableView from '@gorhom/bottom-sheet/src/components/bottomSheetDraggableView/index';
+import {
+  BottomSheetDraggableView,
+  useBottomSheetInternal,
+} from '@gorhom/bottom-sheet';
+import { BottomSheetInternalProvider } from '@gorhom/bottom-sheet/src/contexts/internal';
 
 export function LocalPannableDraggableView({
   children,
