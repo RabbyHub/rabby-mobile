@@ -2650,7 +2650,8 @@
         "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
         "needSupply": "To borrow, you need to supply assets as collateral.",
         "isolated": "Borrowing power and assets are limited due to Isolation mode.",
-        "emode": "In E-Mode some assets are not borrowable.Exit E-Mode to get access to all assets"
+        "emode": "In E-Mode some assets are not borrowable.Exit E-Mode to get access to all assets",
+        "emodeNoAssets": "We couldn't find any assets related to your search. Try again with a different category."
       },
       "list": {
         "headers": {
@@ -2790,6 +2791,7 @@
         },
         "categorySelector": {
           "label": "Asset category",
+          "desc": "All borrow positions outside of this category must be closed to enable this category.",
           "placeholder": "Select"
         },
         "overview": {

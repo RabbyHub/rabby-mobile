@@ -103,6 +103,9 @@ const BorrowPoolList = () => {
       return t('page.Lending.availableCard.needSupply');
     }
     if (iUserSummary.userEmodeCategoryId !== 0) {
+      if (!sortReserves.length) {
+        return t('page.Lending.availableCard.emodeNoAssets');
+      }
       return t('page.Lending.availableCard.emode');
     }
     if (isInIsolationMode) {
@@ -113,6 +116,7 @@ const BorrowPoolList = () => {
     iUserSummary?.availableBorrowsUSD,
     iUserSummary?.userEmodeCategoryId,
     isInIsolationMode,
+    sortReserves.length,
     t,
   ]);
 
@@ -193,22 +197,25 @@ const BorrowPoolList = () => {
     ) : (
       <>
         {availableCard}
-        <View style={styles.listHeader}>
-          <Text style={styles.headerToken}>
-            {t('page.Lending.list.headers.token_balance')}
-          </Text>
-          <Text style={styles.headerApy}>
-            {t('page.Lending.list.headers.apy')}
-          </Text>
-          <Text style={styles.headerMyBorrows}>
-            {t('page.Lending.list.headers.myBorrows')}
-          </Text>
-        </View>
+        {sortReserves.length ? (
+          <View style={styles.listHeader}>
+            <Text style={styles.headerToken}>
+              {t('page.Lending.list.headers.token_balance')}
+            </Text>
+            <Text style={styles.headerApy}>
+              {t('page.Lending.list.headers.apy')}
+            </Text>
+            <Text style={styles.headerMyBorrows}>
+              {t('page.Lending.list.headers.myBorrows')}
+            </Text>
+          </View>
+        ) : null}
       </>
     );
   }, [
     availableCard,
     loading,
+    sortReserves.length,
     styles.headerApy,
     styles.headerMyBorrows,
     styles.headerToken,

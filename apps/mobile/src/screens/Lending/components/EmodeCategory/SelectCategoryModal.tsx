@@ -73,6 +73,9 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
             <Text style={styles.titleText}>
               {t('page.Lending.manageEmode.categorySelector.label')}
             </Text>
+            <Text style={styles.desc}>
+              {t('page.Lending.manageEmode.categorySelector.desc')}
+            </Text>
           </View>
         </View>
       </BottomSheetHandlableView>
@@ -119,7 +122,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     height: '100%',
     paddingHorizontal: 16,
-    paddingTop: 10,
   },
   searchBar: {
     flex: 1,
@@ -131,6 +133,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  desc: {
+    fontWeight: '400',
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    marginTop: 8,
   },
   titleTextWrapper: {
     flex: 1,

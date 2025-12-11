@@ -25,7 +25,7 @@ export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
       name: MODAL_NAMES.MANAGE_EMODE_FULL,
       allowAndroidHarewareBack: true,
       bottomSheetModalProps: {
-        rootViewType: 'BottomSheetView',
+        rootViewType: 'View',
         enableContentPanningGesture: true,
       },
       onClose: () => {

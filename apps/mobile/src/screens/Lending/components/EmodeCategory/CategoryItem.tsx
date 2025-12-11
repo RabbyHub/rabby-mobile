@@ -23,7 +23,6 @@ export default function CategoryItem({
   const isDark = useGetBinaryMode() === 'dark';
   return (
     <TouchableView
-      disabled={!available}
       style={[
         styles.container,
         {
@@ -35,13 +34,14 @@ export default function CategoryItem({
         style,
       ]}
       onPress={() => {
-        if (available) {
-          onPress?.();
-        }
+        onPress?.();
       }}>
       <View style={styles.contentContainer}>
         <View style={styles.leftBasic}>
-          <Text style={[styles.nameText, !available && styles.unavailableText]}>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[styles.nameText, !available && styles.unavailableText]}>
             {title}
           </Text>
         </View>
@@ -90,6 +90,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   leftBasic: {
     flexDirection: 'column',
+    flex: 1,
   },
   nameText: {
     fontSize: 16,

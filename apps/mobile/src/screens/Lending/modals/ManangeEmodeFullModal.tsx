@@ -42,6 +42,7 @@ import {
   HF_BLOCK_THRESHOLD,
   HF_RISK_CHECKBOX_THRESHOLD,
 } from '../utils/constant';
+import { isEModeCategoryAvailable } from '../utils/emode';
 
 const BOTTOM_SIZE = {
   BUTTON: 116,
@@ -52,13 +53,17 @@ const BOTTOM_SIZE = {
 const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { emodeEnabled, emodeCategoryId } = useMode();
+  const { emodeEnabled, emodeCategoryId, eModes } = useMode();
   const { chainInfo } = useSelectedMarket();
   const { ctx } = useSignatureStore();
   const { refresh } = useRefreshHistoryId();
   const [isChecked, setIsChecked] = useState(false);
-  const { userReserves, reserves, formattedPoolReservesAndIncentives } =
-    useLendingSummary();
+  const {
+    iUserSummary,
+    userReserves,
+    reserves,
+    formattedPoolReservesAndIncentives,
+  } = useLendingSummary();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -73,6 +78,13 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
     // 如果已经打开的话只能关闭，没有switch功能
     return emodeEnabled;
   }, [emodeEnabled]);
+
+  const isTargetCategoryAvailable = useMemo(() => {
+    const targetCategory = eModes[selectedCategoryId];
+    return iUserSummary
+      ? isEModeCategoryAvailable(iUserSummary, targetCategory)
+      : false;
+  }, [eModes, iUserSummary, selectedCategoryId]);
 
   const hasChangeCategory = useMemo(() => {
     return selectedCategoryId !== emodeCategoryId || wantDisableEmode;
@@ -125,7 +137,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
       desc: _isBlock
         ? t('page.Lending.risk.blockEmodeWarning')
         : _isRisky
-        ? t('page.Lending.risk.warning')
+        ? t('page.Lending.risk.emodeBlockWarning')
         : '',
     };
   }, [newSummary?.healthFactor, t]);
@@ -141,7 +153,8 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
       !pools ||
       !chainInfo ||
       !hasChangeCategory ||
-      isBlock
+      isBlock ||
+      !isTargetCategoryAvailable
     ) {
       setManageEmodeTx(null);
       return;
@@ -170,6 +183,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
     chainInfo,
     hasChangeCategory,
     isBlock,
+    isTargetCategoryAvailable,
     wantDisableEmode,
     selectedCategoryId,
   ]);
@@ -183,7 +197,8 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
       currentAccount &&
       canShowDirectSubmit &&
       hasChangeCategory &&
-      !isBlock
+      !isBlock &&
+      isTargetCategoryAvailable
     ) {
       prefetchMiniSigner({
         txs: manageEmodeTx?.length ? manageEmodeTx : [],
@@ -197,6 +212,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
     manageEmodeTx,
     hasChangeCategory,
     isBlock,
+    isTargetCategoryAvailable,
   ]);
 
   const handlePressManageEMode = useCallback(
@@ -304,7 +320,8 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
       !currentAccount ||
       !!ctx?.disabledProcess ||
       (isRisky && !isChecked) ||
-      isBlock
+      isBlock ||
+      !isTargetCategoryAvailable
     );
   }, [
     hasChangeCategory,
@@ -315,6 +332,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
     isRisky,
     isChecked,
     isBlock,
+    isTargetCategoryAvailable,
   ]);
 
   const disableFullWidthButton = useMemo(() => {
@@ -323,7 +341,8 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
       !currentAccount ||
       !hasChangeCategory ||
       isBlock ||
-      (isRisky && !isChecked)
+      (isRisky && !isChecked) ||
+      !isTargetCategoryAvailable
     );
   }, [
     isLoading,
@@ -332,11 +351,15 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
     isBlock,
     isRisky,
     isChecked,
+    isTargetCategoryAvailable,
   ]);
 
   return (
     <AutoLockView as="View" style={styles.container}>
-      <BottomSheetScrollView contentContainerStyle={[styles.contentContainer]}>
+      <BottomSheetScrollView
+        showsHorizontalScrollIndicator
+        style={styles.scrollableBlock}
+        contentContainerStyle={[styles.contentContainer]}>
         <Text style={styles.title}>{t('page.Lending.manageEmode.title')}</Text>
         {wantDisableEmode ? null : (
           <Text style={styles.description}>
@@ -351,16 +374,19 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
           disabled={wantDisableEmode}
           onSelectCategory={setSelectedCategoryId}
         />
-        {canShowDirectSubmit && hasChangeCategory && !isBlock && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
-              loading={false}
-              openShowMore={noop}
-              chainServeId={chainInfo?.serverId || ''}
-            />
-          </View>
-        )}
+        {canShowDirectSubmit &&
+          hasChangeCategory &&
+          !isBlock &&
+          isTargetCategoryAvailable && (
+            <View style={styles.gasPreContainer}>
+              <DirectSignGasInfo
+                supportDirectSign={true}
+                loading={false}
+                openShowMore={noop}
+                chainServeId={chainInfo?.serverId || ''}
+              />
+            </View>
+          )}
       </BottomSheetScrollView>
       <View
         style={[
@@ -467,10 +493,11 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingBottom: 0,
     height: '100%',
     position: 'relative',
-    display: 'flex',
-    justifyContent: 'space-between',
-    flex: 1,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  scrollableBlock: {
+    flex: 1,
+    height: '100%',
   },
   contentContainer: {
     paddingHorizontal: 25,

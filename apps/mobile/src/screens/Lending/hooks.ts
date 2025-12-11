@@ -34,6 +34,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { findChainByID } from '@/utils/chain';
 import { getProvider } from './provider';
+import { fetchIconSymbolAndName } from './utils/icon';
 
 export const marketAtom = atomByMMKV(
   '@lendingMarket',
@@ -229,7 +230,10 @@ const formattedReservesAndIncentivesAtom = atom(get => {
       baseCurrencyData.marketReferenceCurrencyDecimals,
     marketReferencePriceInUsd:
       baseCurrencyData.marketReferenceCurrencyPriceInUsd,
-  });
+  }).map(item => ({
+    ...item,
+    ...fetchIconSymbolAndName(item),
+  }));
 
   const formattedPoolReservesAndIncentives = formatReservesAndIncentives({
     reserves: reservesArray,
@@ -240,7 +244,10 @@ const formattedReservesAndIncentivesAtom = atom(get => {
       baseCurrencyData.marketReferenceCurrencyPriceInUsd,
     reserveIncentives: [],
     eModes,
-  });
+  }).map(item => ({
+    ...item,
+    ...fetchIconSymbolAndName(item),
+  }));
 
   return {
     formattedReserves,

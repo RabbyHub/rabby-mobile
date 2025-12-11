@@ -182,6 +182,13 @@ const ManageEmodeOverView: React.FC<{
     return newSummary?.healthFactor || '';
   }, [newSummary?.healthFactor]);
 
+  const isEmptyHF = useMemo(() => {
+    return (
+      isHFEmpty(Number(healthFactor || '0')) &&
+      isHFEmpty(Number(afterHealthFactor || '0'))
+    );
+  }, [afterHealthFactor, healthFactor]);
+
   const ltvLineContent = useMemo(() => {
     if (disableEmode || !selectedCategoryId) {
       return showLTVChange
@@ -194,7 +201,7 @@ const ManageEmodeOverView: React.FC<{
     return showLTVChange
       ? `${formatPercent(
           Number(iUserSummary?.currentLoanToValue || '0'),
-        )} → ${formatPercent(Number(newSummary.currentLoanToValue || '0'))}`
+        )} → ${formatPercent(Number(targetMode.ltv) / 10000)}`
       : formatPercent(Number(targetMode.ltv) / 10000);
   }, [
     disableEmode,
@@ -240,26 +247,28 @@ const ManageEmodeOverView: React.FC<{
           <Text style={styles.ltv}>{ltvLineContent}</Text>
         </View>
 
-        <View style={[styles.item, styles.hfContainer]}>
-          <Text style={styles.title}>{t('page.Lending.hf')}</Text>
-          <Text style={styles.hfValue}>
-            {afterHealthFactor ? (
-              <>
-                <HealthFactorText
-                  limitless={healthFactor === '-1'}
-                  healthFactor={healthFactor}
-                />
-                <Text style={styles.arrow}>→</Text>
-                <HealthFactorText
-                  limitless={afterHealthFactor === '-1'}
-                  healthFactor={afterHealthFactor}
-                />
-              </>
-            ) : (
-              <HealthFactorText healthFactor={healthFactor} />
-            )}
-          </Text>
-        </View>
+        {!isEmptyHF && (
+          <View style={[styles.item, styles.hfContainer]}>
+            <Text style={styles.title}>{t('page.Lending.hf')}</Text>
+            <Text style={styles.hfValue}>
+              {afterHealthFactor ? (
+                <>
+                  <HealthFactorText
+                    limitless={healthFactor === '-1'}
+                    healthFactor={healthFactor}
+                  />
+                  <Text style={styles.arrow}>→</Text>
+                  <HealthFactorText
+                    limitless={afterHealthFactor === '-1'}
+                    healthFactor={afterHealthFactor}
+                  />
+                </>
+              ) : (
+                <HealthFactorText healthFactor={healthFactor} />
+              )}
+            </Text>
+          </View>
+        )}
         <View
           style={[
             styles.item,
