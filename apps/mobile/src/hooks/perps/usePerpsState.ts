@@ -455,9 +455,9 @@ export const usePerpsState = () => {
       console.log('handleActionApproveStatus signActions', signActions);
       await executeSignatures(signActions, currentPerpsAccount);
 
-      // try {
-      await handleDirectApprove(signActions);
-      // } catch (error) {}
+      try {
+        await handleDirectApprove(signActions);
+      } catch (error) {}
       setAccountNeedApproveAgent(false);
       setAccountNeedApproveBuilderFee(false);
       isHandlingApproveStatus.current = false;
