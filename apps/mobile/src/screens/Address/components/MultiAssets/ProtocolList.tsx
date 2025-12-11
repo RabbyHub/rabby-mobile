@@ -1,9 +1,12 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { FullDefiRenderItem } from '@/screens/Home/components/AssetRenderItems';
+import {
+  FullDefiRenderItem,
+  TokenRowSectionHeader,
+} from '@/screens/Home/components/AssetRenderItems';
 import { AbstractProject, ActionItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useLoadAssets } from '@/screens/Search/useAssets';
@@ -25,7 +28,9 @@ import {
   useIsFocusedCurrentTab,
 } from './hooks/share';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
+import { getAllDefiCount } from '@/screens/Home/utils/converAssets';
 import {
+  CombineDefiItem,
   useAssetsPortfolios,
   useOnDeFiRefresh,
 } from '@/screens/Home/hooks/store';
@@ -43,6 +48,8 @@ interface Props {
 export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
+
+  const [foldDefi, setFoldDefi] = useState(true);
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
   const { deFiRefresh } = useTriggerTagAssets();
@@ -70,25 +77,45 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_rawPortfolios?.length, isLoading, updatePortfolio]);
 
-  const portfolios = useMemo(
-    () =>
-      _rawPortfolios.filter(item =>
-        chain && item?.chain ? item.chain === chain : true,
-      ),
-    [_rawPortfolios, chain],
-  );
+  const portfolios = useMemo(() => {
+    const list = _rawPortfolios.filter(item =>
+      chain && item?.chain ? item.chain === chain : true,
+    );
+    const foldList: CombineDefiItem[] = [];
+    const unFoldList: CombineDefiItem[] = [];
+    list.forEach(item => {
+      if (item._isFold) {
+        foldList.push(item);
+      } else {
+        unFoldList.push(item);
+      }
+    });
+    return {
+      unFoldList,
+      foldList,
+    };
+  }, [_rawPortfolios, chain]);
 
   const {
     data: portfoliosData,
     loadMore: loadMorePortfolios,
     hasMore: hasMorePortfolios,
-  } = useLoadMoreData(portfolios);
+  } = useLoadMoreData(portfolios.unFoldList);
   const shouldDefaultExpand = useMemo(
-    () => portfolios.length <= 5,
-    [portfolios.length],
+    () => portfolios.unFoldList.length <= 5,
+    [portfolios.unFoldList.length],
   );
 
   const portfolioListData = useMemo(() => {
+    const foldDeFiList: ActionItem[] = portfolios.foldList.map(item => ({
+      type: 'fold_defi',
+      data: item as unknown as DisplayedProject,
+    }));
+
+    const foldDeFiValue = getAllDefiCount(
+      portfolios.foldList as unknown as DisplayedProject[],
+    );
+
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -103,14 +130,30 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
         ],
       },
       {
-        show: !!isLoading && !portfolios.length,
+        show: !!foldDeFiList.length,
+        data: [
+          {
+            type: 'toggle_defi_fold',
+            data: foldDeFiValue,
+          },
+          ...(foldDefi ? [] : foldDeFiList),
+        ],
+      },
+      {
+        show:
+          !!isLoading &&
+          !portfolios.unFoldList.length &&
+          !portfolios.foldList.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: index.toString(),
         })),
       },
       {
-        show: !isLoading && portfolios.length === 0,
+        show:
+          !isLoading &&
+          portfolios.unFoldList.length === 0 &&
+          portfolios.foldList.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -125,29 +168,56 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [isLoading, t, portfoliosData, portfolios.length]);
+  }, [
+    foldDefi,
+    isLoading,
+    t,
+    portfolios.foldList,
+    portfolios.unFoldList.length,
+    portfoliosData,
+  ]);
 
   const hasNotAssets = useMemo(() => {
-    return portfolios.length === 0 && !isLoading && isFocused;
-  }, [portfolios.length, isLoading, isFocused]);
+    return (
+      portfolios.unFoldList.length === 0 &&
+      portfolios.foldList.length === 0 &&
+      !isLoading &&
+      isFocused
+    );
+  }, [
+    portfolios.foldList.length,
+    portfolios.unFoldList.length,
+    isLoading,
+    isFocused,
+  ]);
 
   const renderItem = useCallback(
     ({ item }) => {
       const { type, data } = item;
       switch (type) {
         case 'unfold_defi':
+        case 'fold_defi':
           return (
             <MemoizedFullDefiRenderItem
               data={data as unknown as AbstractProject}
               showAccount
               style={styles.fullDefi}
               disableAction={isLoading}
-              defaultExpand={shouldDefaultExpand}
+              defaultExpand={type === 'fold_defi' ? false : shouldDefaultExpand}
               account={
                 getAccountByAddress(
                   data?.address,
                 ) as unknown as KeyringAccountWithAlias
               }
+            />
+          );
+        case 'toggle_defi_fold':
+          return (
+            <TokenRowSectionHeader
+              style={styles.tokenSectionHeader}
+              str={data}
+              fold={foldDefi}
+              onPressFold={() => setFoldDefi(pre => !pre)}
             />
           );
         case 'empty-defi':
@@ -165,11 +235,13 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       }
     },
     [
-      isLoading,
-      getAccountByAddress,
+      foldDefi,
       styles.defiLoading,
       styles.emptyAssets,
       styles.fullDefi,
+      styles.tokenSectionHeader,
+      getAccountByAddress,
+      isLoading,
       shouldDefaultExpand,
     ],
   );
@@ -265,5 +337,10 @@ const getStyles = createGetStyles2024(() => ({
   fullDefi: {
     marginHorizontal: 0,
     // marginTop: 8,
+  },
+  tokenSectionHeader: {
+    paddingLeft: 0,
+    paddingRight: 0,
+    backgroundColor: 'transparent',
   },
 }));
