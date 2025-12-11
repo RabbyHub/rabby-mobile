@@ -34,15 +34,17 @@ const setHistoryLoading = (
   }, true);
 };
 
+export const useHistoryLoading = () => {
+  return historyLoadingStore(s => s);
+};
+
 export function useHistoryTokenDict() {
   const updateHistoryTime = historyTimeStore(s => s);
-  const historyLoading = historyLoadingStore(s => s);
 
   return {
     resetUpdateHistoryTime,
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
-    historyLoading,
     setHistoryLoading,
   };
 }
