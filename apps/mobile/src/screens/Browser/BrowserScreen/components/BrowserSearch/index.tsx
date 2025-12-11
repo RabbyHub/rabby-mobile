@@ -77,10 +77,11 @@ export function BrowserSearch({
 
   const isOpenURLRef = useRef(false);
 
-  const handleClose = useMemoizedFn(async () => {
+  const handleCancel = useMemoizedFn(async () => {
     Keyboard.dismiss();
-    await waitKeyboardHide();
-    onClose?.(trigger === 'home' && !isOpenURLRef.current);
+    setSearchText?.('');
+    // await waitKeyboardHide();
+    // onClose?.(trigger === 'home' && !isOpenURLRef.current);
   });
 
   const handleBlur = useMemoizedFn(async () => {
@@ -261,7 +262,7 @@ export function BrowserSearch({
           as="BottomSheetTextInput"
           value={searchText}
           onChangeText={setSearchText}
-          onCancel={handleClose}
+          onCancel={handleCancel}
           onBlur={handleBlur}
           onSubmitEditing={handleSubmitEditing}
           enterKeyHint="done"
