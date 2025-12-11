@@ -16,8 +16,9 @@ import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { HomePendingBadge } from './components/HomePending';
 import { Account } from '@/core/services/preference';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { foldChartAtom } from './Home';
+import { useHomeFoldChart } from './Home';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 const hitSlop = {
   top: 10,
@@ -40,7 +41,25 @@ interface HeaderRightHistoryProps {
   account: Account;
 }
 
-export const refreshHistoryIdAtom = atom(0);
+const refreshHistoryIdState = zCreate<{ refreshId: number }>(() => ({
+  refreshId: 0,
+}));
+
+export function setRefreshHistoryId(valOrFunc: UpdaterOrPartials<number>) {
+  refreshHistoryIdState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.refreshId, valOrFunc, {
+      strict: true,
+    });
+    return { refreshId: newVal };
+  });
+}
+
+export function useRefreshHistoryId() {
+  return {
+    refreshHistoryId: refreshHistoryIdState(s => s.refreshId),
+    setRefreshHistoryId,
+  };
+}
 
 export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   isInTokenDetail,
@@ -57,7 +76,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     fail: number;
   }>();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const setFoldChart = useSetAtom(foldChartAtom);
+  const { setFoldChart } = useHomeFoldChart();
 
   const fetchHistory = useCallback(() => {
     if (!currentAccount) {
@@ -91,7 +110,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
   }, [currentAccount, tokenItem]);
 
-  const refreshId = useAtomValue(refreshHistoryIdAtom);
+  const refreshId = refreshHistoryIdState(s => s.refreshId);
   useEffect(() => {
     if (refreshId > 0) {
       fetchHistory();
@@ -175,7 +194,7 @@ export const RightArea: React.FC<{
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
   const { t } = useTranslation();
-  const setFoldChart = useSetAtom(foldChartAtom);
+  const { setFoldChart } = useHomeFoldChart();
 
   const onPress = () => {
     if (currentAccount) {

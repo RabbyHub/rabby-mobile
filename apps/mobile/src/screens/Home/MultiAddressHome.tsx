@@ -32,6 +32,7 @@ import {
   TouchableOpacity as RNTouchableOpacity,
   View,
   AppState,
+  useWindowDimensions,
 } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -174,7 +175,7 @@ const OverViewComponent = React.memo(
     });
     const { pendingTxCount, historyCount } = useHomeHistoryStore();
 
-    const { width } = Dimensions.get('window');
+    const { width } = useWindowDimensions();
     const itemWidth =
       (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
 

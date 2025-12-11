@@ -2,6 +2,7 @@ import { Animated, Dimensions, ImageBackground, View } from 'react-native';
 import { useBgSize } from '../hooks/useBgSize';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { useHomeFoldChart } from '../Home';
 
 const ScreenWidth = Dimensions.get('window').width;
 
@@ -43,14 +44,15 @@ export const TopBg = ({
 };
 
 export const CenterBg = ({
-  fold,
+  // fold,
   isDecrease,
 }: {
-  fold: boolean;
+  // fold: boolean;
   isDecrease: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { layouts, bgFullHeight } = useBgSize();
+  const { isFoldChart: fold } = useHomeFoldChart();
   return (
     <View
       style={[

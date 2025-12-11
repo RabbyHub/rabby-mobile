@@ -18,6 +18,8 @@ export type PerfEventBusListeners = {
 
   'TMP_TRIGGER:FETCH_LENDING_DATA': () => void;
   'TMP_TRIGGER:SYNC_TOP10_HISTORY': (force?: boolean) => void;
+
+  'TMP_TRIGGER:SINGLE_HOME_REFRESH': (ignoreLoading?: boolean) => void;
 };
 type PerfListeners = {
   [P: string]: (data: any) => void;

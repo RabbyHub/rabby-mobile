@@ -12,11 +12,13 @@ import {
   assetsMapStore,
   computeAssetsApis,
 } from './hooks/store';
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 import { getTop10MyAddresses } from '@/core/apis/account';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { DisplayedProject } from './utils/project';
+import { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 type ChainAssetsUnit = Record<string, BigNumber>;
 interface BaseInfo {
@@ -122,11 +124,22 @@ function setAddressChainInfo(
   });
 }
 
-export function useAddrChainInfo(address: string) {
+export function useAddrChainLength(address: string) {
   const addr = address.toLowerCase();
-  return addrChainStaticsStore(
-    s => s[addr] || apisAddrChainStatics.makeFinalInfo(),
-  );
+  const chainLength =
+    addrChainStaticsStore(
+      useShallow(s => s[addr]?.computedResult.chainLength || 0),
+    ) || 0;
+  return { chainLength };
+}
+
+export function useAddrTop3Chains(address: string) {
+  const addr = address.toLowerCase();
+  const defaultValue = useMemo(() => [], []);
+  const top3Chains =
+    addrChainStaticsStore(s => s[addr]?.computedResult.top3Chains) ||
+    defaultValue;
+  return { top3Chains };
 }
 
 export function getAddrChainInfo(address: string) {
@@ -175,16 +188,18 @@ export const apisAddrChainStatics = {
       [addr]: tokens,
     });
 
-    prevFinalInfo.token =
-      apisAddrChainStatics.computeChainAssetsToken(combinedTokens);
-    const newFinalInfo = {
-      ...apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo),
-    };
+    const token = apisAddrChainStatics.computeChainAssetsToken(combinedTokens);
+    // if (isEqual(prevFinalInfo.token, token)) return ;
+    prevFinalInfo.token = token;
+
+    const computed =
+      apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo);
+    if (isEqual(prevFinalInfo.computedResult, computed)) return;
 
     setAddressChainInfo(prev => {
       return {
         ...prev,
-        [addr]: newFinalInfo,
+        [addr]: { ...prevFinalInfo, computedResult: computed },
       };
     });
   },
@@ -217,17 +232,19 @@ export const apisAddrChainStatics = {
       [addr]: _portfolios,
     });
 
-    // reset
-    prevFinalInfo.portfolio =
+    const portfolio =
       apisAddrChainStatics.computeChainAssetsPortfolio(combinedPortfolios);
-    const newFinalInfo = {
-      ...apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo),
-    };
+    // if (isEqual(prevFinalInfo.portfolio, portfolio)) return ;
+
+    prevFinalInfo.portfolio = portfolio;
+    const computed =
+      apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo);
+    if (isEqual(prevFinalInfo.computedResult, computed)) return;
 
     setAddressChainInfo(prev => {
       return {
         ...prev,
-        [addr]: newFinalInfo,
+        [addr]: { ...prevFinalInfo, computedResult: computed },
       };
     });
   },
@@ -251,17 +268,18 @@ export const apisAddrChainStatics = {
       [addr]: nftList,
     });
 
-    // reset
-    prevFinalInfo.nft =
-      apisAddrChainStatics.computeChainAssetsNft(combinedNfts);
-    const newFinalInfo = {
-      ...apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo),
-    };
+    const nft = apisAddrChainStatics.computeChainAssetsNft(combinedNfts);
+    // if (isEqual(prevFinalInfo.nft, nft)) return ;
+
+    prevFinalInfo.nft = nft;
+    const computed =
+      apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo);
+    if (isEqual(prevFinalInfo.computedResult, computed)) return;
 
     setAddressChainInfo(prev => {
       return {
         ...prev,
-        [addr]: newFinalInfo,
+        [addr]: { ...prevFinalInfo, computedResult: computed },
       };
     });
   },
@@ -290,7 +308,7 @@ export const apisAddrChainStatics = {
       top3Chains: chainAssetsArray.slice(0, 3).map(i => i.chain),
     };
   },
-  recomputeFinalInfoFromChainUnits: (finalInfo: FinalInfo) => {
+  recomputeFinalInfoFromChainUnits: (finalInfo: BaseInfo) => {
     const chainUnit: ChainAssetsUnit = {};
 
     Object.entries(finalInfo.token || {}).forEach(([chainId, total]) => {
@@ -308,10 +326,10 @@ export const apisAddrChainStatics = {
       chainUnit[chainId] = chainUnit[chainId].plus(total);
     });
 
-    finalInfo.computedResult =
+    const computedResult =
       apisAddrChainStatics.getComputedResultFromChainAssets(chainUnit);
 
-    return finalInfo;
+    return computedResult;
   },
 };
 

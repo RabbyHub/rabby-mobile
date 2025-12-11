@@ -16,7 +16,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { Tabs } from 'react-native-collapsible-tab-view';
-import { useCurve } from '@/hooks/useCurve';
+import { useSingleHomeCurveData } from '@/hooks/useCurve';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { Account } from '@/core/services/preference';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
@@ -28,11 +28,17 @@ import { NFTList } from './NFTList';
 import { DynamicCustomMaterialTabBar } from './components/Tabs/CustomTabBar';
 import CustomLabel from './components/Tabs/CustomLabel';
 import { ChainSelector } from './components/AssetRenderItems/SectionHeaders';
-import { getAddrChainInfo, useAddrChainInfo } from './useChainInfo';
+import {
+  getAddrChainInfo,
+  useAddrChainLength,
+  useAddrTop3Chains,
+} from './useChainInfo';
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { EndBg } from './components/BgComponents';
 import { useAtom } from 'jotai';
-import { foldChartAtom } from './Home';
+import { useHomeFoldChart } from './Home';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { triggerFetchHomeData } from './components/TmpHomeRefresher';
 
 const ScreenWidth = Dimensions.get('window').width;
 export const icons = {
@@ -48,7 +54,6 @@ export const icons = {
 
 interface Props {
   onRefresh(): void;
-  onUpdateIsDecrease?: (isDecrease: boolean) => void;
   onReachTopStatusChange?: (status: boolean) => void;
   account: Account;
   reachTop: boolean;
@@ -64,12 +69,11 @@ function SideChainSelector({
   onChainClick?: React.ComponentProps<typeof ChainSelector>['onChainClick'];
   chain?: string;
 }) {
-  const finalInfo = useAddrChainInfo(userAddr);
-  const { computedResult } = finalInfo;
+  const { top3Chains } = useAddrTop3Chains(userAddr);
   return (
     <ChainSelector
-      key={computedResult.top3Chains.sort().join(',')}
-      top3Chains={computedResult.top3Chains}
+      key={top3Chains.sort().join(',')}
+      top3Chains={top3Chains}
       onChainClick={onChainClick}
       chainServerId={chain}
     />
@@ -78,7 +82,6 @@ function SideChainSelector({
 
 export const AssetContainer: React.FC<Props> = ({
   onRefresh,
-  onUpdateIsDecrease,
   onReachTopStatusChange,
   reachTop,
   account: currentAccount,
@@ -95,9 +98,10 @@ export const AssetContainer: React.FC<Props> = ({
   >();
   const { isDisConnect } = useGlobalStatus();
 
-  const {
-    computedResult: { chainLength },
-  } = useAddrChainInfo(currentAccount?.address);
+  const { chainLength } = useAddrChainLength(currentAccount?.address);
+
+  useRendererDetect({ name: 'Home::AssetContainer' });
+
   const handleOnChainClick = useCallback(
     (clear: boolean) => {
       if (clear) {
@@ -143,63 +147,30 @@ export const AssetContainer: React.FC<Props> = ({
     [colors2024, currentAccount?.address, isLight, selectChainItem, t],
   );
 
-  const { balance, balanceLoading, evmBalance } = useCurrentBalance(
-    currentAccount?.address,
-    {
-      update: true,
-      noNeedBalance: false,
-    },
-  );
-  const {
-    result: curveData,
-    isLoading: isLoadingCurve,
-    refresh: refreshCurve,
-    hasNoData: hasNoCurveData,
-  } = useCurve(
-    currentAccount?.address,
-    0,
-    evmBalance,
-    CurveDayType.DAY,
-    balance,
-  );
+  const { hasNoData: hasNoCurveData, isDecrease } = useSingleHomeCurveData();
 
-  const isDecrease = useCachedValue(curveData, 'isLoss');
-  const [fold, setFold] = useAtom(foldChartAtom);
+  const { isFoldChart: fold, setFoldChart: setFold } = useHomeFoldChart();
   const handleRefresh = useCallback(
     async (ignoreLoading?: boolean) => {
       onRefresh?.();
-      refreshCurve(ignoreLoading);
+      triggerFetchHomeData('TMP_TRIGGER:SINGLE_HOME_REFRESH', ignoreLoading);
     },
-    [onRefresh, refreshCurve],
+    [onRefresh],
   );
 
   const renderHeader = useCallback(() => {
     return (
       <View>
         <HomeTopArea
-          onUpdateIsDecrease={onUpdateIsDecrease}
-          curveData={curveData}
-          isLoadingCurve={isLoadingCurve || (balanceLoading && !evmBalance)}
+          currentAddress={currentAccount?.address || ''}
           isDisConnect={isDisConnect}
-          onRefresh={() => handleRefresh(true)}
-          fold={fold}
+          // fold={fold}
+          // setFold={setFold}
           reachTop={reachTop}
-          setFold={setFold}
         />
       </View>
     );
-  }, [
-    onUpdateIsDecrease,
-    curveData,
-    isLoadingCurve,
-    balanceLoading,
-    evmBalance,
-    isDisConnect,
-    fold,
-    reachTop,
-    setFold,
-    handleRefresh,
-  ]);
+  }, [currentAccount?.address, isDisConnect, reachTop]);
 
   const hasNotAssets = useMemo(() => {
     return chainLength === 0;

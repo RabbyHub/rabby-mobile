@@ -14,11 +14,10 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
-import { refreshingAtom } from './hooks/project';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useIsRefreshing } from './hooks/project';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import { loadingCurveAtom } from '@/hooks/useCurve';
-import { foldChartAtom } from './Home';
+import { useIsLoadingCurve } from '@/hooks/useCurve';
+import { useHomeFoldChart } from './Home';
 
 export default function HomeHeaderArea({
   account: currentAccount,
@@ -26,9 +25,9 @@ export default function HomeHeaderArea({
   account: Account;
 }) {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const refreshing = useAtomValue(refreshingAtom);
-  const isLoadingCurve = useAtomValue(loadingCurveAtom);
-  const setFoldChart = useSetAtom(foldChartAtom);
+  const { isRefreshing: refreshing } = useIsRefreshing();
+  const { isLoadingCurve } = useIsLoadingCurve();
+  const { setFoldChart } = useHomeFoldChart();
 
   const name = useMemo(
     () => currentAccount?.aliasName || currentAccount?.brandName,
