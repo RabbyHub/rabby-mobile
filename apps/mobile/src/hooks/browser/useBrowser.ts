@@ -146,15 +146,17 @@ function setBrowserActiveTabState(
 
 const MAX_ACTIVE_TABS_COUNT = Platform.OS === 'android' ? 4 : 4;
 
+function getDisplayedTabs(tabs?: Tab[]) {
+  tabs = tabs || tabsStore.getState().tabs;
+
+  const displayedTabs = tabs.filter(item => item.isDapp);
+
+  return displayedTabs;
+}
+
 function useDisplayedTabs() {
   const tabs = tabsStore(s => s.tabs);
-  const displayedTabs = useMemo(
-    () =>
-      tabs.filter(item => {
-        return item.isDapp;
-      }),
-    [tabs],
-  );
+  const displayedTabs = useMemo(() => getDisplayedTabs(tabs), [tabs]);
 
   return { displayedTabs };
 }
@@ -184,33 +186,24 @@ export const useBrowserActiveTabState = () => {
   ] as const;
 };
 
-export function useBrowser() {
-  const store = tabsStore(s => s);
-  const visible = browserExtraStore(s => s.visible);
-  const isShowManagePopup = browserExtraStore(s => s.isShowManagePopup);
-  const { displayedTabs } = useDisplayedTabs();
+export const browserApis = {
+  setPartialBrowserState: (payload: Partial<BrowserStateType>) => {
+    return setBrowserState(prev => ({
+      ...prev,
+      ...payload,
+    }));
+  },
 
-  const setPartialBrowserState = useMemoizedFn(
-    (payload: Partial<BrowserStateType>) => {
-      return setBrowserState(prev => ({
-        ...prev,
-        ...payload,
-      }));
-    },
-  );
-
-  // const route = useRoute();
-
-  const getBrowserTabs = useMemoizedFn(() => {
+  getBrowserTabs: () => {
     setTabsStore(browserService.getBrowserTabs());
-  });
+  },
 
-  const updateBrowserTabs = useMemoizedFn((payload: Partial<typeof store>) => {
+  updateBrowserTabs: (payload: Partial<TabsState>) => {
     browserService.updateBrowserTabs(payload);
-    getBrowserTabs();
-  });
+    browserApis.getBrowserTabs();
+  },
 
-  const navigateToBrowserScreen = useMemoizedFn(() => {
+  navigateToBrowserScreen: () => {
     // if (route.name === RootNames.BrowserScreen) {
     //   return;
     // }
@@ -223,52 +216,54 @@ export function useBrowser() {
     //   screen: RootNames.BrowserScreen,
     // });
     setIsShowManagePopup(false);
-  });
+  },
 
-  const switchToTab = useMemoizedFn((tabId: string) => {
-    updateTab(tabId, {
+  switchToTab: (tabId: string) => {
+    browserApis.updateTab(tabId, {
       isTerminate: false,
       openTime: Date.now(),
-    });
-    updateBrowserTabs({
-      activeTabId: tabId,
-    });
-    setPartialBrowserState({
+    }),
+      browserApis.updateBrowserTabs({
+        activeTabId: tabId,
+      });
+    browserApis.setPartialBrowserState({
       isShowBrowser: true,
       isShowManage: false,
       isShowSearch: false,
     });
     // terminateTabs();
-  });
-  const closeTab = useMemoizedFn((tabId: string) => {
+  },
+  closeTab: (tabId: string) => {
+    const store = tabsStore.getState();
     if (tabId === store.activeTabId) {
       const index = store.tabs.findIndex(item => item.id === tabId);
       if (index === -1) {
         return;
       }
       const newActiveTab = store.tabs[index + 1] || store.tabs[index - 1];
-      updateBrowserTabs({
+      browserApis.updateBrowserTabs({
         activeTabId: newActiveTab?.id || '',
       });
     }
     const newTabs = store.tabs.filter(item => item.id !== tabId);
-    updateBrowserTabs({
+    browserApis.updateBrowserTabs({
       tabs: newTabs,
     });
     browserService.removeScreenshot({ tabId });
-  });
+  },
 
-  const closeAllTabs = useMemoizedFn(() => {
+  closeAllTabs: () => {
+    const store = tabsStore.getState();
     store.tabs.forEach(tab => {
       browserService.removeScreenshot({ tabId: tab.id });
     });
-    updateBrowserTabs({
+    browserApis.updateBrowserTabs({
       tabs: [],
       activeTabId: '',
     });
-  });
+  },
 
-  const terminateTabs = useMemoizedFn(() => {
+  terminateTabs: () => {
     setTimeout(() => {
       setTabsStore(prev => {
         const tabs = sortBy(
@@ -302,106 +297,103 @@ export function useBrowser() {
         return result;
       });
     });
-  });
+  },
 
-  const updateTab = useMemoizedFn(
-    (tabId: string, payload: Partial<Omit<Tab, 'id'>>) => {
-      const _payload =
-        !payload?.url || !/^https?:\/\//.test(payload.url)
-          ? omit(payload, 'url')
-          : payload;
-      setTabsStore(prev => {
-        const res = {
-          ...prev,
-          tabs: prev.tabs.map(item => {
-            if (item.id === tabId) {
-              return {
-                ...item,
-                ..._payload,
-              };
-            }
-            return item;
-          }),
-        };
-        browserService.updateBrowserTabs(res);
-        return res;
-      });
-    },
-  );
-
-  const openTab = useMemoizedFn(
-    (
-      url: string,
-      options?: {
-        isDapp?: boolean;
-        isNewTab?: boolean;
-      },
-    ) => {
-      const { isNewTab = false } = options || {};
-      if (!url?.trim() || !/^https?:\/\//.test(url)) {
-        // switchToTab(emptyTab.id);
-        return;
-      }
-      const newTab: Tab = {
-        url,
-        initialUrl: url,
-        id: uuid(),
-        openTime: Date.now(),
-        ...options,
+  updateTab: (tabId: string, payload: Partial<Omit<Tab, 'id'>>) => {
+    const _payload =
+      !payload?.url || !/^https?:\/\//.test(payload.url)
+        ? omit(payload, 'url')
+        : payload;
+    setTabsStore(prev => {
+      const res = {
+        ...prev,
+        tabs: prev.tabs.map(item => {
+          if (item.id === tabId) {
+            return {
+              ...item,
+              ..._payload,
+            };
+          }
+          return item;
+        }),
       };
+      browserService.updateBrowserTabs(res);
+      return res;
+    });
+  },
 
-      const { httpOrigin: targetOrigin, urlInfo } = canoicalizeDappUrl(
-        newTab.url,
-      );
-
-      const sameOriginTab = isNewTab
-        ? undefined
-        : displayedTabs.find(
-            item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
-          );
-
-      if (sameOriginTab && !isGoogle(targetOrigin)) {
-        switchToTab(sameOriginTab.id);
-        return true;
-      }
-
-      if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) {
-        return false;
-      }
-
-      setPartialBrowserState({
-        isShowBrowser: true,
-        isShowSearch: false,
-        isShowManage: false,
-      });
-
-      updateBrowserTabs({
-        tabs: [...store.tabs, newTab],
-        activeTabId: newTab.id,
-      });
-
-      // terminateTabs();
-
-      return true;
+  openTab: (
+    url: string,
+    options?: {
+      isDapp?: boolean;
+      isNewTab?: boolean;
     },
-  );
+  ) => {
+    const { isNewTab = false } = options || {};
+    if (!url?.trim() || !/^https?:\/\//.test(url)) {
+      // switchToTab(emptyTab.id);
+      return;
+    }
+    const newTab: Tab = {
+      url,
+      initialUrl: url,
+      id: uuid(),
+      openTime: Date.now(),
+      ...options,
+    };
 
-  const forceShowBrowser = useMemoizedFn(() => {
+    const { httpOrigin: targetOrigin, urlInfo } = canoicalizeDappUrl(
+      newTab.url,
+    );
+
+    const sameOriginTab = isNewTab
+      ? undefined
+      : getDisplayedTabs().find(
+          item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
+        );
+
+    if (sameOriginTab && !isGoogle(targetOrigin)) {
+      browserApis.switchToTab(sameOriginTab.id);
+      return true;
+    }
+
+    if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) {
+      return false;
+    }
+
+    browserApis.setPartialBrowserState({
+      isShowBrowser: true,
+      isShowSearch: false,
+      isShowManage: false,
+    });
+
+    const store = tabsStore.getState();
+    browserApis.updateBrowserTabs({
+      tabs: [...store.tabs, newTab],
+      activeTabId: newTab.id,
+    });
+
+    // terminateTabs();
+
+    return true;
+  },
+
+  forceShowBrowser: () => {
     eventBus.emit(EVENT_SHOW_BROWSER, true);
-  });
+  },
 
-  const forceShowBrowserManage = useMemoizedFn(() => {
+  forceShowBrowserManage: () => {
     eventBus.emit(EVENT_SHOW_BROWSER_MANAGE, true);
-  });
+  },
 
-  const showBrowser = useMemoizedFn(() => {
-    setPartialBrowserState({
+  showBrowser: () => {
+    browserApis.setPartialBrowserState({
       isShowBrowser: true,
       isShowSearch: false,
     });
-  });
+  },
 
-  const onHideBrowser = useMemoizedFn(() => {
+  onHideBrowser: () => {
     setTabsStore(pre => {
       const tabs = pre.tabs.filter(tab => tab.isDapp);
       const activeTabId = tabs.find(tab => tab.id === pre.activeTabId)
@@ -414,29 +406,39 @@ export function useBrowser() {
       browserService.updateBrowserTabs(res);
       return res;
     });
-  });
+  },
+};
+
+export function useBrowser() {
+  const store = tabsStore(s => s);
+  const visible = browserExtraStore(s => s.visible);
+  const isShowManagePopup = browserExtraStore(s => s.isShowManagePopup);
+  const { displayedTabs } = useDisplayedTabs();
 
   return {
-    getBrowserTabs,
     activeTabId: store.activeTabId,
     tabs: store.tabs,
     displayedTabs,
-    switchToTab,
-    closeTab,
-    updateTab,
-    openTab,
-    closeAllTabs,
+
     visible,
     setVisible,
     isShowManagePopup,
     setIsShowManagePopup,
-    showBrowser,
     browserState: browserStateStore(s => s),
     setBrowserState,
-    setPartialBrowserState,
-    onHideBrowser,
-    forceShowBrowser,
-    forceShowBrowserManage,
-    terminateTabs,
+
+    /* from apis */
+    getBrowserTabs: browserApis.getBrowserTabs,
+    switchToTab: browserApis.switchToTab,
+    closeTab: browserApis.closeTab,
+    updateTab: browserApis.updateTab,
+    openTab: browserApis.openTab,
+    closeAllTabs: browserApis.closeAllTabs,
+    showBrowser: browserApis.showBrowser,
+    setPartialBrowserState: browserApis.setPartialBrowserState,
+    onHideBrowser: browserApis.onHideBrowser,
+    forceShowBrowser: browserApis.forceShowBrowser,
+    forceShowBrowserManage: browserApis.forceShowBrowserManage,
+    terminateTabs: browserApis.terminateTabs,
   };
 }

@@ -74,18 +74,8 @@ import { useApprovalAlertCounts } from './hooks/approvals';
 
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
-import { RateModal } from '@/components/RateModal/RateModal';
-import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
-import {
-  useExposureRateGuide,
-  useSetTotalBalanceTextForRateModal,
-} from '@/components/RateModal/hooks';
-import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
-import {
-  useSetTotalBalanceTextForFeedback,
-  useViewedHomeTip,
-} from '@/components/Screenshot/hooks';
-import { isNonPublicProductionEnv } from '@/constant';
+import { useSetTotalBalanceTextForRateModal } from '@/components/RateModal/hooks';
+import { useSetTotalBalanceTextForFeedback } from '@/components/Screenshot/hooks';
 import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,
@@ -102,13 +92,7 @@ import {
 } from '../Address/components/MultiAssets/hooks';
 import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 import { useInitDetectDBAssets } from '../Search/useAssets';
-import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
-import { FoundYourWalletGuide } from './FundYourWallet';
 import { HomePendingBadge } from './components/HomePending';
-import {
-  OfflineChainNotify,
-  useOfflineChain,
-} from './components/OfflineChainNotify';
 import { PerpsPnl } from './components/PerpsPnl';
 import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 import { LendingHF } from './components/LendingHF';
@@ -116,7 +100,7 @@ import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
 import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
-import { useBrowser } from '@/hooks/browser/useBrowser';
+import { browserApis } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -364,17 +348,15 @@ const OverViewComponent = React.memo(
       });
     }, [navigation]);
 
-    const { setPartialBrowserState, forceShowBrowser } = useBrowser();
-
     const openDapps = useMemoizedFn(() => {
-      setPartialBrowserState({
+      browserApis.setPartialBrowserState({
         isShowBrowser: true,
         isShowSearch: true,
         searchText: '',
         searchTabId: '',
         trigger: 'home',
       });
-      forceShowBrowser();
+      browserApis.forceShowBrowser();
     });
 
     const handleClickMenu = useCallback(

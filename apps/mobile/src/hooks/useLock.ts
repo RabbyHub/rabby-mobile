@@ -54,6 +54,11 @@ export function useAppUnlocked() {
   };
 }
 
+export function getPwdStatus() {
+  const state = zAppLockStore.getState();
+  return state.pwdStatus;
+}
+
 export function usePasswordStatus() {
   // const { pwdStatus } = useAtomValue(appLockAtom);
   const pwdStatus = zAppLockStore(state => state.pwdStatus);

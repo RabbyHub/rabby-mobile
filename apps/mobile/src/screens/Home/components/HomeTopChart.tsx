@@ -53,7 +53,6 @@ function Chart({
   const { isFoldChart: fold } = useHomeFoldChart();
 
   const { isLoading, selectData: data } = useSingleHomeCurveData();
-  console.debug('[perf] data', data);
 
   const isLoadingCurve = isLoading || (balanceLoading && !evmBalance);
 
