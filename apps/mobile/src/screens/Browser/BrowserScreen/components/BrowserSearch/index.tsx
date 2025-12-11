@@ -80,6 +80,9 @@ export function BrowserSearch({
   const handleCancel = useMemoizedFn(async () => {
     Keyboard.dismiss();
     setSearchText?.('');
+    if (!Keyboard.isVisible() && !searchText) {
+      onClose?.(trigger === 'home' && !isOpenURLRef.current);
+    }
     // await waitKeyboardHide();
     // onClose?.(trigger === 'home' && !isOpenURLRef.current);
   });
