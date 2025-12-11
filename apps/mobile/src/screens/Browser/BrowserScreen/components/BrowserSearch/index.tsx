@@ -34,7 +34,7 @@ import {
 import { BrowserHot } from './BrowserHot';
 import { BrowserFavorite } from './BrowserFavorite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
 
 export function BrowserSearch({
   onClose,
@@ -173,7 +173,7 @@ export function BrowserSearch({
 
   return (
     <View style={[styles.container, style]}>
-      <BottomSheetHandlableView>
+      <LocalPannableDraggableView>
         {!searchText?.trim() ? (
           <BottomSheetScrollView
             contentContainerStyle={{ gap: 24, paddingHorizontal: 20 }}>
@@ -230,7 +230,7 @@ export function BrowserSearch({
             }}
           />
         )}
-      </BottomSheetHandlableView>
+      </LocalPannableDraggableView>
 
       <View
         style={[
