@@ -22,7 +22,6 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { navigateDeprecated } from '@/utils/navigation';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import IconEmpty from '@/assets2024/images/lending/empty.png';
 import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';

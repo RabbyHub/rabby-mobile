@@ -22,10 +22,7 @@ import {
   dropAppDataSourceAndQuitApp,
   prepareAppDataSource,
 } from '@/databases/imports';
-import {
-  resetUpdateHistoryTime,
-  useHistoryTokenDict,
-} from '@/hooks/historyTokenDict';
+import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { downloadDbFile } from '@/databases/dbfs';
 import { IS_IOS } from '@/core/native/utils';

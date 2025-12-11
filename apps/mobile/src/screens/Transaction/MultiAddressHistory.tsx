@@ -51,7 +51,7 @@ import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { useHistoryLoading } from '@/hooks/historyTokenDict';
 import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
 import {
   ensureHistoryListItemFromDb,
@@ -176,7 +176,7 @@ function History({
 
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(top10Addresses);
-  const { historyLoading } = useHistoryTokenDict();
+  const historyLoading = useHistoryLoading();
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
 

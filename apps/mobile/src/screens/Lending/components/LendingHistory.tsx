@@ -28,7 +28,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import {
   ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
@@ -100,7 +99,6 @@ function LendingHistory(): JSX.Element {
 
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(top10Addresses);
-  const { historyLoading } = useHistoryTokenDict();
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
 
