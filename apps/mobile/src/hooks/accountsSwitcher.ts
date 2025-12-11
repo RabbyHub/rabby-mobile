@@ -424,6 +424,7 @@ type OfSceneScreen =
   | typeof RootNames.MultiSwap
   | typeof RootNames.MultiBridge
   | typeof RootNames.MultiSend
+  | typeof RootNames.Send
   | typeof RootNames.TokenDetail
   | typeof RootNames.Lending;
 const ScreenSceneAccountContext = React.createContext<

@@ -93,6 +93,7 @@ import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
 import DeviceInfo from 'react-native-device-info';
 import { coerceNumber } from './utils/coerce';
+import { runIIFEFunc } from './core/utils/store';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -103,7 +104,7 @@ const RootAnimOptions: React.ComponentProps<
 >['screenOptions'] &
   object = {
   // animation: IS_IOS ? 'slide_from_right' : 'none',
-  animation: __DEV__ ? 'slide_from_right' : 'none',
+  animation: __DEV__ ? 'none' : 'none',
   animationDuration: 200,
 };
 
@@ -247,6 +248,19 @@ const onStateChange: React.ComponentProps<
   }
   routeNameRef.current = currentRouteName;
 };
+
+runIIFEFunc(() => {
+  const sub = perfEvents.subscribe('APP_NAVIGATION_READY', () => {
+    navigationRef.preload(RootNames.StackTransaction, {
+      screen: RootNames.Send,
+      params: {},
+    });
+
+    console.debug('[perf] AppNavigation: preloaded Send screen');
+
+    sub.remove();
+  });
+});
 
 const routeNameRef: RefLikeObject<string | undefined | null> = { current: '' };
 export default function AppNavigation() {

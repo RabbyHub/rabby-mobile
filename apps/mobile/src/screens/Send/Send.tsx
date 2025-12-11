@@ -128,10 +128,7 @@ function SendScreen({
 
   const route =
     useRoute<
-      GetNestedScreenRouteProp<
-        'TransactionNavigatorParamList',
-        'Send' | 'MultiSend'
-      >
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'Send'>
     >();
   const navParams = route.params;
 

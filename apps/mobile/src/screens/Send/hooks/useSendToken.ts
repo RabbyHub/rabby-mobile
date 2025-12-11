@@ -400,18 +400,20 @@ export function useSendTokenForm({
   toAddressBrandName,
   isForMultipleAddress = false,
   disableItemCheck,
-  currentAccount,
+  currentAccount: propAccount,
 }: {
   toAddress?: string;
   toAddressBrandName?: string;
   isForMultipleAddress: boolean;
   disableItemCheck?: ITokenCheck;
-  currentAccount: Account;
+  currentAccount?: Account;
 }) {
   const { t } = useTranslation();
 
   const sendTokenEventsRef = useRef(new EventEmitter());
-  const account = currentAccount;
+  const currentAccount =
+    propAccount || makeAccountObject({ address: '', brandName: '' });
+  const currentAddress = currentAccount.address;
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
 
@@ -424,7 +426,7 @@ export function useSendTokenForm({
 
   const route =
     useRoute<
-      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'MultiSend'>
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'Send'>
     >();
   const multiNavParams = route.params;
   const [formValues, setFormValues] = React.useState<FormSendToken>({
@@ -435,7 +437,7 @@ export function useSendTokenForm({
   const { addressType } = useCheckAddressType(
     formValues.to,
     chainItem,
-    account,
+    currentAccount,
   );
 
   const { isShowMessageDataForToken, isShowMessageDataForContract } =
@@ -482,7 +484,7 @@ export function useSendTokenForm({
 
       const params: Record<string, any> = {
         chainId: chain.id,
-        from: currentAccount!.address,
+        from: currentAddress,
         to: currentToken.id,
         value: '0x0',
         data: abiCoder.encodeFunctionCall(dataInput[0], dataInput[1]),
@@ -511,7 +513,7 @@ export function useSendTokenForm({
       return params;
     },
     [
-      currentAccount,
+      currentAddress,
       currentToken.chain,
       currentToken.decimals,
       currentToken.id,
@@ -579,7 +581,7 @@ export function useSendTokenForm({
   }, [loadGasListAndResolve, putScreenState]);
 
   const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
-    account,
+    account: currentAccount,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
   });
@@ -796,7 +798,7 @@ export function useSendTokenForm({
             params: [to, 'latest'],
           },
           chain.serverId,
-          account,
+          currentAccount,
         );
         const notContract = !!code && (code === '0x' || code === '0x0');
         let gasLimit = 0;
@@ -854,7 +856,7 @@ export function useSendTokenForm({
             },
           },
           session: INTERNAL_REQUEST_SESSION,
-          account,
+          account: currentAccount,
         },
         true,
       );
@@ -921,7 +923,7 @@ export function useSendTokenForm({
               params: [to, 'latest'],
             },
             chain.serverId,
-            account,
+            currentAccount,
           );
           const notContract = !!code && (code === '0x' || code === '0x0');
           let gasLimit = 0;
@@ -961,7 +963,7 @@ export function useSendTokenForm({
       }
       try {
         await preferenceService.setLastTimeSendToken(
-          currentAccount!.address,
+          currentAccount.address,
           currentToken,
         );
         // await persistPageStateCache();
@@ -1067,7 +1069,7 @@ export function useSendTokenForm({
                 },
               },
               session: INTERNAL_REQUEST_SESSION,
-              account,
+              account: currentAccount,
             })
             .then(resp => {
               const hash = resp as string;
@@ -1116,7 +1118,6 @@ export function useSendTokenForm({
       screenState.showGasReserved,
       screenState.estimatedGas,
       screenState.selectedGasLevel?.price,
-      account,
       prepareDirectSubmitMiniTx,
       openDirect,
       runFetchPendingCount,
@@ -1177,7 +1178,7 @@ export function useSendTokenForm({
             method: 'eth_estimateGas',
             params: [
               {
-                from: currentAddress,
+                from: currentAccount.address,
                 to: to && isValidAddress(to) ? to : zeroAddress(),
                 gasPrice: intToHex(0),
                 value: intToHex(0),
@@ -1185,7 +1186,7 @@ export function useSendTokenForm({
             ],
           },
           lastestChainItem.serverId,
-          account,
+          currentAccount,
         );
       } catch (err) {
         console.error(err);
@@ -1197,14 +1198,7 @@ export function useSendTokenForm({
 
       return doReturn(Number(gasUsed));
     },
-    [
-      chainItem,
-      currentToken,
-      currentAccount?.address,
-      formik.values.to,
-      putScreenState,
-      account,
-    ],
+    [chainItem, currentToken, formik.values.to, putScreenState, currentAccount],
   );
 
   const loadCurrentToken = useCallback(
@@ -1372,7 +1366,7 @@ export function useSendTokenForm({
                   gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
                   data: '0x',
                 },
-                account,
+                account: currentAccount,
               },
               chainItem.enum,
             );
@@ -1417,7 +1411,6 @@ export function useSendTokenForm({
       estimateGasOnChain,
       chainItem,
       onGasChange,
-      account,
     ],
   );
   const handleGasLevelChanged = useCallback(
@@ -1493,7 +1486,7 @@ export function useSendTokenForm({
       if (screenState.showGasReserved) {
         putScreenState({ showGasReserved: false });
       }
-      if (!account) {
+      if (!currentAddress) {
         console.error('[handleCurrentTokenChange] no account');
       }
       const newToken =
@@ -1527,18 +1520,13 @@ export function useSendTokenForm({
         isLoading: true,
       });
 
-      if (account) {
-        await loadCurrentToken(
-          token.id,
-          token.chain,
-          account.address,
-          newToken,
-        );
+      if (currentAddress) {
+        await loadCurrentToken(token.id, token.chain, currentAddress, newToken);
       }
     },
     [
       screenState.showGasReserved,
-      account,
+      currentAddress,
       currentToken.id,
       currentToken.chain,
       putChainToken,
@@ -1642,7 +1630,7 @@ export function useSendTokenForm({
         nextToken = await loadCurrentToken(
           chain.nativeTokenAddress,
           chain.serverId,
-          account.address,
+          currentAddress,
         );
       } catch (error) {
         console.error(error);
@@ -1669,7 +1657,7 @@ export function useSendTokenForm({
       patchFormValues,
       handleFormValuesChange,
       loadCurrentToken,
-      account.address,
+      currentAddress,
       setSlider,
       setIsDraggingSlider,
     ],
@@ -1805,7 +1793,7 @@ export function useSendTokenForm({
     currentAccount?.type,
     chainItem?.isTestnet,
     toAddress,
-    account,
+    currentAccount,
   ]);
 
   useEffect(() => {

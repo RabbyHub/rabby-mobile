@@ -319,7 +319,7 @@ export type TransactionNavigatorParamList = {
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
       };
-  [RootNames.MultiSend]?: TransactionNavigatorParamList['Send'] & object;
+  // [RootNames.MultiSend]?: TransactionNavigatorParamList['Send'] & object;
   [RootNames.SendNFT]: {
     nftItem: NFTItem;
     collectionName?: string;

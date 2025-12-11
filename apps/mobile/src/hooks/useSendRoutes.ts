@@ -35,7 +35,8 @@ export const useSendRoutes = () => {
       if (hasNft) {
         return RootNames.SendNFT;
       } else {
-        return isForSingleAddress ? RootNames.Send : RootNames.MultiSend;
+        // return isForSingleAddress ? RootNames.Send : RootNames.MultiSend;
+        return RootNames.Send;
       }
     },
     [hasNftParams],

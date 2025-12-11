@@ -3,6 +3,8 @@ import {
   setJSExceptionHandler,
   setNativeExceptionHandler,
 } from 'react-native-exception-handler';
+import Animated from 'react-native-reanimated';
+
 import { initSentry } from './core/sentry';
 import './perfs/bundle-splitter-analysis.ts';
 import './databases/orm';

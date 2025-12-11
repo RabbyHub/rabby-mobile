@@ -58,19 +58,6 @@ export default function TransactionNavigator() {
       })}>
       <TransactionStack.Screen
         name={RootNames.Send}
-        component={SendScreen}
-        options={mergeScreenOptions({
-          title: 'Send',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.MultiSend}
         component={SendScreen.ForMultipleAddress}
         options={mergeScreenOptions({
           title: 'Send',
@@ -82,6 +69,19 @@ export default function TransactionNavigator() {
           },
         })}
       />
+      {/* <TransactionStack.Screen
+        name={RootNames.MultiSend}
+        component={SendScreen.ForMultipleAddress}
+        options={mergeScreenOptions({
+          title: 'Send',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      /> */}
       <TransactionStack.Screen
         name={RootNames.SendNFT}
         component={SendNFTScreen}
