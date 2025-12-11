@@ -426,7 +426,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     gap: 8,
     marginTop: 8,
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   singleAssetContainer: {
     paddingHorizontal: 16,

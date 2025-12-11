@@ -16,7 +16,6 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import useLoadMoreData from './hooks/useLoadMoreData';
 import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
 import {
-  ListHeaderComponent,
   ListRenderFooter as ListRenderFooterComponent,
   ListRenderSeparator,
 } from './RenderRow/Common';
@@ -31,7 +30,6 @@ import {
   useOnDeFiRefresh,
 } from '@/screens/Home/hooks/store';
 import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
-import { useAccountInfo } from './hooks';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -85,6 +83,10 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     loadMore: loadMorePortfolios,
     hasMore: hasMorePortfolios,
   } = useLoadMoreData(portfolios);
+  const shouldDefaultExpand = useMemo(
+    () => portfolios.length <= 5,
+    [portfolios.length],
+  );
 
   const portfolioListData = useMemo(() => {
     const itemData: Array<{
@@ -140,6 +142,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
               showAccount
               style={styles.fullDefi}
               disableAction={isLoading}
+              defaultExpand={shouldDefaultExpand}
               account={
                 getAccountByAddress(
                   data?.address,
@@ -167,6 +170,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
       styles.defiLoading,
       styles.emptyAssets,
       styles.fullDefi,
+      shouldDefaultExpand,
     ],
   );
 
@@ -260,6 +264,6 @@ const getStyles = createGetStyles2024(() => ({
   },
   fullDefi: {
     marginHorizontal: 0,
-    marginTop: 8,
+    // marginTop: 8,
   },
 }));
