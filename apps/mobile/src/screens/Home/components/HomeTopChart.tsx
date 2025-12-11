@@ -83,13 +83,22 @@ function Chart({
       ]}>
       <View style={styles.chartContainer}>
         <LineChart.Provider data={data.list}>
-          <ChartHeader
-            rawNetWorth={data.rawNetWorth}
-            changePercent={data.changePercent}
-            isLoss={data.isLoss}
-            data={data.list}
-            loading={isLoadingCurve}
-          />
+          {isLoadingCurve ? (
+            <Skeleton
+              width={181}
+              height={42}
+              style={styles.skeleton}
+              LinearGradientComponent={LoadingLinear}
+            />
+          ) : (
+            <ChartHeader
+              rawNetWorth={data.rawNetWorth}
+              changePercent={data.changePercent}
+              isLoss={data.isLoss}
+              data={data.list}
+              loading={isLoadingCurve}
+            />
+          )}
           {fold ? null : isOffline || isNoAssets ? null : !isLoadingCurve ? (
             isInitialized ? (
               <LineChart
@@ -146,12 +155,7 @@ const ChartHeader = ({
     return formatSmallCurrencyValue(rawNetWorth, { currency });
   }, [rawNetWorth, currency]);
 
-  console.debug(
-    '[perf] ChartHeader:: rawNetWorth, currentIndex, currentIndex.value',
-    rawNetWorth,
-    currentIndex,
-    currentIndex.value,
-  );
+  console.debug('[perf] ChartHeader:: rawNetWorth', rawNetWorth);
 
   const data = useMemo(() => {
     return (
@@ -276,12 +280,12 @@ const ChartHeader = ({
     return {
       text: formatNetWorth.value,
     };
-  });
+  }, [netWorth]);
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
       text: percentChange.value,
     };
-  });
+  }, [changePercent]);
 
   const dateTimeAnimatedProps = useAnimatedProps(() => {
     return {
@@ -291,18 +295,8 @@ const ChartHeader = ({
 
   const { isFoldChart: fold, setFoldChart: setFold } = useHomeFoldChart();
 
-  if (loading) {
-    return (
-      <Skeleton
-        width={181}
-        height={42}
-        style={styles.skeleton}
-        LinearGradientComponent={LoadingLinear}
-      />
-    );
-  }
   return (
-    <View style={styles.charHeader}>
+    <View style={[styles.charHeader, loading && { display: 'none' }]}>
       <View style={styles.leftContainer}>
         <AnimateableText
           style={styles.netWorth}
