@@ -3,7 +3,6 @@ import { Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
-import { isHFEmpty } from '../../utils';
 import HealthFactorText from '../HealthFactorText';
 import { useTranslation } from 'react-i18next';
 
@@ -24,17 +23,19 @@ const BorrowActionOverView: React.FC<
           <Text style={styles.title}>{t('page.Lending.hf')}</Text>
           <Text style={styles.hfValue}>
             {afterHF ? (
-              isHFEmpty(Number(healthFactor || '0')) ? (
+              <>
+                <HealthFactorText
+                  limitless={healthFactor === '-1'}
+                  healthFactor={healthFactor}
+                />
+                <Text style={styles.arrow}>→</Text>
                 <HealthFactorText healthFactor={afterHF} />
-              ) : (
-                <>
-                  <HealthFactorText healthFactor={healthFactor} />
-                  <Text style={styles.arrow}>→</Text>
-                  <HealthFactorText healthFactor={afterHF} />
-                </>
-              )
+              </>
             ) : (
-              <HealthFactorText healthFactor={healthFactor} />
+              <HealthFactorText
+                limitless={healthFactor === '-1'}
+                healthFactor={healthFactor}
+              />
             )}
           </Text>
         </View>

@@ -57,8 +57,7 @@ export const HistoryItem = React.memo(
     const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
     const isShowSuccess = data.isShowSuccess;
-    const isScam = data.is_scam;
-    const isSmallUsdTx = data.isSmallUsdTx;
+    const isScam = data.is_scam || data.isSmallUsdTx;
     const chainItem = getChain(data.chain);
     const { styles, isLight } = useTheme2024({ getStyle });
 
@@ -110,6 +109,10 @@ export const HistoryItem = React.memo(
             return t('page.transactions.itemTitle.LendingOnCollateral');
           case CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL:
             return t('page.transactions.itemTitle.LendingOffCollateral');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE:
+            return t('page.transactions.itemTitle.LendingManageEMode');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE:
+            return t('page.transactions.itemTitle.LendingManageEModeDisable');
         }
       }
 
@@ -314,12 +317,7 @@ export const HistoryItem = React.memo(
 
     return (
       <TouchableOpacity onPress={handleNavigateDetail}>
-        <View
-          style={[
-            styles.card,
-            style,
-            isScam || isSmallUsdTx ? styles.cardGray : null,
-          ]}>
+        <View style={[styles.card, style, isScam ? styles.cardGray : null]}>
           <View style={styles.cardBody}>
             <View
               style={[
@@ -338,7 +336,13 @@ export const HistoryItem = React.memo(
                   <Text style={styles.titleText} numberOfLines={1}>
                     {formatTitle}
                   </Text>
-                  {isShowSuccess ? (
+                  {isScam ? (
+                    <View style={styles.scamContainer}>
+                      <Text style={styles.scamText}>
+                        {t('page.transactions.scam')}
+                      </Text>
+                    </View>
+                  ) : isShowSuccess ? (
                     <TxStatusItem status={1} showSuccess={true} />
                   ) : (
                     <TxStatusItem status={data.tx?.status ?? 1} />
@@ -425,14 +429,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   scamContainer: {
     borderRadius: 2,
-    backgroundColor: colors2024['neutral-line'],
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    height: 18,
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  scam: {
+  scamText: {
     fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
     fontSize: 12,
-    lineHeight: 14,
+    lineHeight: 16,
     color: colors2024['neutral-foot'],
   },
   cardHeaderInner: {

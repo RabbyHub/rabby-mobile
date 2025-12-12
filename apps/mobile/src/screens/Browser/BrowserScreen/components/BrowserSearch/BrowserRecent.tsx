@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import { RcIconDynamicArrowDownCC } from '@/assets/icons/dapp';
@@ -10,6 +10,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import dayjs from 'dayjs';
+import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 
 export function BrowserRecent({
   onPress,
@@ -24,6 +25,10 @@ export function BrowserRecent({
   });
 
   const { t } = useTranslation();
+
+  const filteredList = useMemo(() => {
+    return (list || []).slice(0, 3);
+  }, [list]);
 
   if (!list?.length) {
     return (
@@ -49,7 +54,7 @@ export function BrowserRecent({
       </View>
     );
   }
-  //
+
   return (
     <View>
       <View style={styles.header}>
@@ -58,37 +63,13 @@ export function BrowserRecent({
         </Text>
       </View>
       <View style={styles.grid}>
-        {list
-          ?.filter(item =>
-            dayjs
-              .unix(item.infoUpdateAt || (item as any)?.createdAt)
-              .add(3, 'day')
-              .isAfter(dayjs()),
-          )
-          .slice(0, 8)
-          .map(data => (
-            <TouchableOpacity
-              onPress={() => {
-                onPress?.(data);
-              }}
-              key={data.url || data.origin}
-              style={styles.gridItem}>
-              <DappIcon
-                source={
-                  data?.icon
-                    ? {
-                        uri: data.icon,
-                      }
-                    : undefined
-                }
-                origin={data.origin}
-                style={styles.dappIcon}
-              />
-              <Text style={styles.dappName} numberOfLines={1}>
-                {data.info?.name || data?.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        {filteredList.map(item => (
+          <BrowserSiteCard
+            data={item}
+            onPress={onPress}
+            key={item.url || item.origin}
+          />
+        ))}
       </View>
     </View>
   );
@@ -140,9 +121,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    rowGap: 16,
+    flexDirection: 'column',
+    gap: 8,
     width: '100%',
   },
   gridItem: {

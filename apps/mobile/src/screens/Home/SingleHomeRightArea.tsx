@@ -18,6 +18,7 @@ import { HomePendingBadge } from './components/HomePending';
 import { Account } from '@/core/services/preference';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { foldChartAtom } from './Home';
+import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 
 const hitSlop = {
   top: 10,
@@ -142,7 +143,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
         <View
           style={{ marginRight: 16, position: 'relative', paddingVertical: 4 }}>
           <RcIconHistory
-            color={colors2024['neutral-body']}
+            color={colors2024['neutral-title-1']}
             width={22}
             height={22}
           />
@@ -194,7 +195,11 @@ export const RightArea: React.FC<{
     <>
       <HeaderRightHistory account={currentAccount} />
       <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
-        <RcIconMore width={24} height={24} color={colors2024['neutral-body']} />
+        <RcIconSettingCC
+          width={20}
+          height={20}
+          color={colors2024['neutral-title-1']}
+        />
       </CustomTouchableOpacity>
     </>
   );

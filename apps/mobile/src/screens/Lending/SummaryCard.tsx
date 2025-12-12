@@ -131,8 +131,8 @@ const SummaryCard = (props: IProps) => {
                 ]}>
                 {isEstDailySwitch
                   ? estDaily(props.netWorth, props.netApy)
-                  : `${props.netApy > 0 ? '+' : ''}${formatApy(
-                      Number(props.netApy || '0'),
+                  : `${props.netApy > 0 ? '+' : '-'}${formatApy(
+                      Math.abs(Number(props.netApy || '0')),
                     )}`}
               </Text>
             </View>

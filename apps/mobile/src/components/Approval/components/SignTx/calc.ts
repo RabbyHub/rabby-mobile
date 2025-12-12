@@ -18,11 +18,15 @@ export const getRecommendGas = async ({
   gas,
   tx,
   gasUsed,
+  preparedHistoryGasUsed,
 }: {
   gasUsed: number;
   gas: number;
   tx: Tx;
   chainId: number;
+  preparedHistoryGasUsed?:
+    | ReturnType<typeof openapi.historyGasUsed>
+    | Awaited<ReturnType<typeof openapi.historyGasUsed>>;
 }) => {
   if (gas > 0) {
     return {
@@ -40,16 +44,21 @@ export const getRecommendGas = async ({
     };
   }
   try {
-    const res = await openapi.historyGasUsed({
-      tx: {
-        ...tx,
-        nonce: tx.nonce || '0x1', // set a mock nonce for explain if dapp not set it
-        data: tx.data,
-        value: tx.value || '0x0',
-        gas: tx.gas || '', // set gas limit if dapp not set
-      },
-      user_addr: tx.from,
-    });
+    let res: Awaited<ReturnType<typeof openapi.historyGasUsed>>;
+    if (!preparedHistoryGasUsed) {
+      res = await openapi.historyGasUsed({
+        tx: {
+          ...tx,
+          nonce: tx.nonce || '0x1', // set a mock nonce for explain if dapp not set it
+          data: tx.data,
+          value: tx.value || '0x0',
+          gas: tx.gas || '', // set gas limit if dapp not set
+        },
+        user_addr: tx.from,
+      });
+    } else {
+      res = await preparedHistoryGasUsed;
+    }
     if (res.gas_used > 0) {
       return {
         needRatio: true,
@@ -130,6 +139,7 @@ export const explainGas = async ({
   tx,
   gasLimit,
   account,
+  preparedL1Fee,
 }: {
   gasUsed: number | string;
   gasPrice: number | string;
@@ -138,19 +148,26 @@ export const explainGas = async ({
   tx: Tx;
   gasLimit: string | undefined;
   account: Account;
+  preparedL1Fee?: string | Promise<string>;
 }) => {
   let gasCostTokenAmount = new BigNumber(gasUsed).times(gasPrice).div(1e18);
   let maxGasCostAmount = new BigNumber(gasLimit || 0).times(gasPrice).div(1e18);
   const chain = findChain({ id: chainId });
   if (!chain) throw new Error(`${chainId} is not found in supported chains`);
   if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
-    const res = await apiProvider.fetchEstimatedL1Fee(
-      {
-        txParams: tx,
-        account,
-      },
-      chain.enum,
-    );
+    let res =
+      typeof preparedL1Fee === 'object' && 'then' in preparedL1Fee
+        ? await preparedL1Fee
+        : preparedL1Fee || undefined;
+    if (!res) {
+      res = await apiProvider.fetchEstimatedL1Fee(
+        {
+          txParams: tx,
+          account,
+        },
+        chain.enum,
+      );
+    }
     gasCostTokenAmount = new BigNumber(res).div(1e18).plus(gasCostTokenAmount);
     maxGasCostAmount = new BigNumber(res).div(1e18).plus(maxGasCostAmount);
   }
