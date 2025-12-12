@@ -215,7 +215,9 @@
         "LendingBorrow": "借款",
         "LendingRepay": "還款",
         "LendingOffCollateral": "關閉使用作為抵押",
-        "LendingOnCollateral": "開啟作為抵押品使用"
+        "LendingOnCollateral": "開啟作為抵押品使用",
+        "LendingManageEMode": "開啟 E-Mode",
+        "LendingManageEModeDisable": "關閉 E-Mode"
       },
       "detail": {
         "Unknown": "未知",
@@ -284,7 +286,9 @@
         "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 鏈上被跳過。這可能導致前面的交易待處理。<5></5> <6>提交一筆 tx</6> <7></7> 在鏈上以解決此問題。"
       },
       "HideScamTransactions": "隱藏詐騙交易",
-      "ShowScamTransactions": "顯示詐騙交易"
+      "ShowScamTransactions": "顯示詐騙交易",
+      "scam": "詐騙",
+      "scamTips": "此交易是由詐騙者發起的，目的是發送詐騙代幣和NFT。請勿與其互動。"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "輸入您的助記詞"
@@ -1032,7 +1036,8 @@
         "swap": "交換",
         "longTimeNoReceive": "網絡繁忙。這可能比平常需要更長的時間。請耐心等待。",
         "beReturnFailed": "橋接失敗。您的資產已被退回。",
-        "receivedDifferentTokenFromSource": "橋接失敗。源鏈上返回了不同的代幣。"
+        "receivedDifferentTokenFromSource": "橋接失敗。源鏈上返回了不同的代幣。",
+        "fromFailed": "交易未成功。請再試一次。"
       },
       "gasXUsd": "Gas: {{gasUsd}}"
     },
@@ -2287,7 +2292,8 @@
         "recentEmpty": "開始探索網站",
         "otherResults": "其他結果",
         "hot": "熱",
-        "favorite": "最愛"
+        "favorite": "最愛",
+        "hot10": "熱門 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "打開網站"
@@ -2772,7 +2778,9 @@
       "availableCard": {
         "needSupply": "要借款，您需要提供资产作为担保。",
         "canBorrow": "您可以根据您提供的抵押品借款，最高可达借款上限。",
-        "isolated": "由於隔離模式，借貸能力和資產受到限制。"
+        "isolated": "由於隔離模式，借貸能力和資產受到限制。",
+        "emodeNoAssets": "我們找不到任何與您的搜索相關的資產。請嘗試使用不同的類別。",
+        "emode": "在 E-Mode 中，某些資產無法借用。退出 E-Mode 以獲取所有資產的訪問權限。"
       },
       "list": {
         "headers": {
@@ -2851,7 +2859,9 @@
         "checkbox": "我了解警告並想繼續。",
         "withdrawWarning": "提取该金额将使您的健康因子下降到风险清算的水平。",
         "warning": "借用此金额将使您的健康因子降低到风险水平，可能面临清算。",
-        "toggleCollateralWarning": "禁用该资产作为抵押将会将您的健康因子降低到一个风险水平，可能面临清算。"
+        "toggleCollateralWarning": "禁用该资产作为抵押将会将您的健康因子降低到一个风险水平，可能面临清算。",
+        "emodeBlockWarning": "禁用 E-mode 将使您的健康因子下降到风险清算的水平。",
+        "blockEmodeWarning": "您無法禁用 E-Mode，因為這可能導致清算。要退出 E-Mode，請提供或償還借入的頭寸。"
       },
       "lqDescription": {
         "risky": "風險高",
@@ -2872,7 +2882,8 @@
         "isolatedTitle": "資產無法用作擔保品",
         "isolatedDesc": "此資產僅能在獨立模式下用作抵押，此時您無法提供其他資產抵押來進行借款。在獨立模式下用作抵押的資產僅能借出特定的債務上限。",
         "isolatedSupplyDesc": "抵押品的使用受到隔离模式的限制。",
-        "globalIsolatedDesc": "在隔离模式下，您无法将其他资产作为抵押品。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借入其他资产之前禁用UNI作为抵押品。"
+        "globalIsolatedDesc": "在隔离模式下，您无法将其他资产作为抵押品。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借入其他资产之前禁用UNI作为抵押品。",
+        "maxLTV": "最大 LTV 比率表示特定抵押品的最大借款能力。例如，如果一个抵押品的 LTV 为 75%，用户可以在每 1 ETH 抵押品的情况下，借出最多 0.75 值的主币 ETH。"
       },
       "supplied": "供應",
       "apy": "APY",
@@ -2907,7 +2918,45 @@
         "openDesc": "啟用這個資產作為抵押品將增加你的借貸能力和健康因子。然而，如果你的健康因子降到 1 之下，它可能會被清算。"
       },
       "searchMarket": "搜尋市場",
-      "selectMarket": "選擇市場"
+      "selectMarket": "選擇市場",
+      "manageEmode": {
+        "actions": {
+          "disable": "禁用 E-Mode",
+          "enable": "啟用 E-Mode"
+        },
+        "guide": {
+          "buttonTitle": "管理 E-Mode",
+          "description": "E-Mode 增加您在所選資產類別中的 LTV。",
+          "title": "效率模式 (E-Mode)"
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "最大 LTV",
+            "asset": "資產"
+          },
+          "placeholder": "選擇",
+          "desc": "此類別必須關閉所有此類別以外的借貸頭寸。",
+          "label": "資產類別"
+        },
+        "overview": {
+          "row": {
+            "asset": "資產",
+            "collateral": "抵押品",
+            "borrowable": "可借用的"
+          },
+          "apy": "APY",
+          "maxLtv": "最大 LTV",
+          "title": "資產類別"
+        },
+        "enabled": "• 啟用",
+        "disableTitle": "停用",
+        "title": "管理 E-Mode",
+        "unavailableTips": "您的現有借貸資產不受支持。",
+        "emode": "E-Mode",
+        "unavailable": "• 無法使用",
+        "description": "啟用 E-Mode 使您能夠最大化您的借貸能力。然而，借貸僅限於所選類別內的資產。"
+      },
+      "disabled": "禁用"
     }
   },
   "component": {

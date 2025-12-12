@@ -401,7 +401,9 @@
         "LendingBorrow": "Emprestar",
         "LendingRepay": "Reembolsar",
         "LendingOnCollateral": "Ativar uso como colateral",
-        "LendingOffCollateral": "Desligar uso como colateral"
+        "LendingOffCollateral": "Desligar uso como colateral",
+        "LendingManageEMode": "Ativar o E-Mode",
+        "LendingManageEModeDisable": "Desligar o E-Mode"
       },
       "detail": {
         "SpeedUp": "Acelerar",
@@ -470,7 +472,9 @@
         "skipNonceText": "Nonce #{{nonce}} ignorado na cadeia {{chainName}}. Isso pode causar transações pendentes à frente. <5></5> <6>Submeter uma tx</6> <7></7> na cadeia para resolver."
       },
       "ShowScamTransactions": "Mostrar transações fraudulentas",
-      "HideScamTransactions": "Ocultar transações fraudulentas"
+      "HideScamTransactions": "Ocultar transações fraudulentas",
+      "scam": "Golpe",
+      "scamTips": "Esta transação é iniciada por golpistas para enviar tokens e NFTs fraudulentos. Por favor, evite interagir com ela."
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Insira a sua seed phrase"
@@ -2481,7 +2485,8 @@
         "recentEmpty": "Começando a Explorar o Website",
         "hot": "Quente",
         "favorite": "Favorito",
-        "otherResults": "Outras Resultados"
+        "otherResults": "Outras Resultados",
+        "hot10": "Quente 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Abrir Websites"
@@ -2966,7 +2971,9 @@
       "availableCard": {
         "needSupply": "Para pedir emprestado, precisa fornecer ativos como colateral.",
         "canBorrow": "Você pode tomar emprestado com base na sua garantia fornecida, até o limite de empréstimo.",
-        "isolated": "O poder de empréstimo e os ativos estão limitados devido ao modo de Isolamento."
+        "isolated": "O poder de empréstimo e os ativos estão limitados devido ao modo de Isolamento.",
+        "emode": "No E-Mode, alguns ativos não são passíveis de empréstimo. Saia do E-Mode para ter acesso a todos os ativos.",
+        "emodeNoAssets": "Não conseguimos encontrar ativos relacionados à sua pesquisa. Tente novamente com uma categoria diferente."
       },
       "list": {
         "headers": {
@@ -3045,7 +3052,9 @@
         "checkbox": "Eu entendo o alerta e quero continuar.",
         "warning": "Emprestar esta quantia irá reduzir o seu Fator de Saúde para um nível arriscado para liquidação.",
         "withdrawWarning": "Retirar este montante irá baixar o seu Fator de Saúde para um nível arriscado de liquidação.",
-        "toggleCollateralWarning": "Desativar este ativo como colateral diminuirá o seu Fator de Saúde para um nível arriscado de liquidação."
+        "toggleCollateralWarning": "Desativar este ativo como colateral diminuirá o seu Fator de Saúde para um nível arriscado de liquidação.",
+        "emodeBlockWarning": "Desativar o E-mode irá diminuir o seu Fator de Saúde para um nível arriscado para liquidação.",
+        "blockEmodeWarning": "Não pode desativar o E-Mode porque isso pode causar liquidação. Para sair do E-Mode, forneça ou reembolse posições emprestadas."
       },
       "lqDescription": {
         "over3title": "Fator de saúde > 3.0:",
@@ -3066,7 +3075,8 @@
         "isolatedTitle": "O ativo não pode ser utilizado como colateral.",
         "isolatedDesc": "Este ativo pode ser utilizado apenas como garantia no modo de isolamento, onde não é possível fornecer outras garantias de ativos para empréstimos. Os ativos utilizados como garantia no modo de isolamento podem ser emprestados apenas até um limite de endividamento específico.",
         "isolatedSupplyDesc": "O uso de colaterais é limitado devido ao modo de isolamento.",
-        "globalIsolatedDesc": "No modo de Isolamento, não pode fornecer outros ativos como colateral. Um limite global de dívida limita o poder de empréstimo do ativo isolado. Para sair do modo de isolamento, desative o UNI como colateral antes de emprestar outro ativo."
+        "globalIsolatedDesc": "No modo de Isolamento, não pode fornecer outros ativos como colateral. Um limite global de dívida limita o poder de empréstimo do ativo isolado. Para sair do modo de isolamento, desative o UNI como colateral antes de emprestar outro ativo.",
+        "maxLTV": "A taxa máxima de LTV representa o poder máximo de empréstimo de uma garantia específica. Por exemplo, se uma garantia tem um LTV de 75%, o usuário pode emprestar até 0,75 em valor de ETH na moeda principal para cada 1 ETH em valor de garantia."
       },
       "supplied": "Fornecido",
       "gotIt": "Entendi",
@@ -3101,7 +3111,45 @@
         "enableIsolationModeDesc": "Está a entrar no modo de Isolamento. No modo de Isolamento, não pode fornecer outros ativos como colateral. Um teto global de dívida limita o poder de empréstimo do ativo isolado. Para sair do modo de isolamento, desative o CRV como colateral antes de emprestar outro ativo."
       },
       "searchMarket": "Pesquisar Mercado",
-      "selectMarket": "Selecionar Mercado"
+      "selectMarket": "Selecionar Mercado",
+      "manageEmode": {
+        "actions": {
+          "enable": "Ativar E-Mode",
+          "disable": "Desativar E-Mode"
+        },
+        "guide": {
+          "description": "O E-Mode aumenta o seu LTV para uma categoria de ativos selecionada.",
+          "buttonTitle": "Gerir E-Mode",
+          "title": "Modo de eficiência (E-Mode)"
+        },
+        "categorySelector": {
+          "header": {
+            "asset": "Ativos",
+            "ltv": "Max LTV"
+          },
+          "label": "Categoria de ativos",
+          "placeholder": "Selecionar",
+          "desc": "Todas as posições de empréstimo fora desta categoria devem ser fechadas para ativar esta categoria."
+        },
+        "overview": {
+          "row": {
+            "borrowable": "Emprestável",
+            "asset": "Ativo",
+            "collateral": "Colateral"
+          },
+          "title": "Categoria de ativo",
+          "maxLtv": "LTV Máximo",
+          "apy": "APY"
+        },
+        "title": "Gerir E-Mode",
+        "enabled": "• Ativado",
+        "unavailable": "• Indisponível",
+        "disableTitle": "Desativar",
+        "emode": "E-Mode",
+        "unavailableTips": "Os seus ativos de empréstimo/empréstimo existentes não são suportados.",
+        "description": "Ativar o E-Mode permite maximizar o seu poder de empréstimo. No entanto, o empréstimo está restrito a ativos dentro da categoria selecionada."
+      },
+      "disabled": "DESABILITADO"
     }
   },
   "constant": {

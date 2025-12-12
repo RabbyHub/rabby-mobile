@@ -395,7 +395,9 @@
         "LendingBorrow": "Ausleihen",
         "LendingSupply": "Angebot",
         "LendingOnCollateral": "Aktivieren Sie die Verwendung als Sicherheiten",
-        "LendingOffCollateral": "Verwende nicht als Sicherheiten ausschalten"
+        "LendingOffCollateral": "Verwende nicht als Sicherheiten ausschalten",
+        "LendingManageEModeDisable": "E-Mode deaktivieren",
+        "LendingManageEMode": "E-Mode aktivieren"
       },
       "detail": {
         "InteractionResults": "Interaktionsergebnisse",
@@ -464,7 +466,9 @@
         "skipNonceText": "Nonce #{{nonce}} wurde auf der {{chainName}}-Blockchain übersprungen. Dies kann zu ausstehenden Transaktionen führen. <5></5> <6>Reichen Sie eine tx</6> <7></7> auf der Blockchain ein, um das Problem zu beheben."
       },
       "ShowScamTransactions": "Zeige Betrugstransaktionen an",
-      "HideScamTransactions": "Scam-Transaktionen ausblenden"
+      "HideScamTransactions": "Scam-Transaktionen ausblenden",
+      "scam": "Betrug",
+      "scamTips": "Diese Transaktion wird von Betrügern initiiert, um Betrugs-Token und NFTs zu senden. Bitte unterlassen Sie die Interaktion damit."
     },
     "getStart": {
       "goToHome": "Gehe zu Home",
@@ -2481,7 +2485,8 @@
         "recentEmpty": "Starten Sie die Erkundung der Website",
         "hot": "Hot",
         "otherResults": "Andere Ergebnisse",
-        "favorite": "Favorit"
+        "favorite": "Favorit",
+        "hot10": "Heiße 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Websites öffnen"
@@ -2966,7 +2971,9 @@
       "availableCard": {
         "canBorrow": "Sie können basierend auf Ihrem bereitgestellten Sicherheiten bis zur Kreditobergrenze leihen.",
         "needSupply": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen.",
-        "isolated": "Die Kredit- und Vermögenswerte sind aufgrund des Isolationsmodus begrenzt."
+        "isolated": "Die Kredit- und Vermögenswerte sind aufgrund des Isolationsmodus begrenzt.",
+        "emodeNoAssets": "Wir konnten keine Vermögenswerte zu Ihrer Suche finden. Versuchen Sie es erneut mit einer anderen Kategorie.",
+        "emode": "Im E-Modus sind einige Vermögenswerte nicht ausleihbar. Verlassen Sie den E-Modus, um Zugang zu allen Vermögenswerten zu erhalten."
       },
       "list": {
         "headers": {
@@ -3045,7 +3052,9 @@
         "checkbox": "Ich verstehe die Warnung und möchte fortfahren.",
         "withdrawWarning": "Die Abhebung dieses Betrags wird Ihren Gesundheitsfaktor auf ein riskantes Niveau für eine Liquidation senken.",
         "warning": "Das Leihen dieses Betrags wird Ihren Health Factor auf ein riskantes Niveau für die Liquidation senken.",
-        "toggleCollateralWarning": "Das Deaktivieren dieses Assets als Sicherheit wird Ihren Gesundheitsfaktor auf ein riskantes Niveau für die Liquidation senken."
+        "toggleCollateralWarning": "Das Deaktivieren dieses Assets als Sicherheit wird Ihren Gesundheitsfaktor auf ein riskantes Niveau für die Liquidation senken.",
+        "emodeBlockWarning": "Das Deaktivieren des E-Modus verringert Ihren Gesundheitsfaktor auf ein riskantes Niveau für Liquidationen.",
+        "blockEmodeWarning": "Sie können den E-Modus nicht deaktivieren, da dies eine Liquidation verursachen könnte. Um den E-Modus zu verlassen, legen Sie geliehene Positionen an oder zahlen Sie sie zurück."
       },
       "lqDescription": {
         "over3title": "Gesundheitsfaktor > 3.0:",
@@ -3066,7 +3075,8 @@
         "isolatedTitle": "Das Asset kann nicht als Sicherheit verwendet werden.",
         "isolatedDesc": "Dieses Asset kann nur im Isolationsmodus als Sicherheiten verwendet werden, in dem Sie keine anderen Asset-Sicherheiten für das Ausleihen bereitstellen können. Assets, die im Isolationsmodus als Sicherheiten verwendet werden, können nur bis zu einer bestimmten Schuldenobergrenze ausgeliehen werden.",
         "isolatedSupplyDesc": "Die Verwendung von Collateral ist aufgrund des Isolationsmodus eingeschränkt.",
-        "globalIsolatedDesc": "Im Isolation-Modus können Sie keine anderen Vermögenswerte als Sicherheiten bereitstellen. Eine globale Schuldenobergrenze begrenzt die Kreditaufnahmefähigkeit des isolierten Vermögenswerts. Um den Isolation-Modus zu verlassen, deaktivieren Sie UNI als Sicherheiten, bevor Sie einen anderen Vermögenswert ausleihen."
+        "globalIsolatedDesc": "Im Isolation-Modus können Sie keine anderen Vermögenswerte als Sicherheiten bereitstellen. Eine globale Schuldenobergrenze begrenzt die Kreditaufnahmefähigkeit des isolierten Vermögenswerts. Um den Isolation-Modus zu verlassen, deaktivieren Sie UNI als Sicherheiten, bevor Sie einen anderen Vermögenswert ausleihen.",
+        "maxLTV": "Das maximale LTV-Verhältnis repräsentiert die maximale Kreditvergabe eines bestimmten Sicherheiten. Zum Beispiel, wenn eine Sicherheit ein LTV von 75% hat, kann der Benutzer bis zu 0,75 im Wert von ETH in der Hauptwährung für jede 1 ETH wertvolle Sicherheit leihen."
       },
       "supplied": "Geliefert",
       "netWorth": "Vermögen",
@@ -3101,7 +3111,45 @@
         "enableIsolationModeDesc": "Sie betreten den Isolationsmodus. Im Isolationsmodus können Sie andere Vermögenswerte nicht als Sicherheiten bereitstellen. Eine globale Verschuldungsgrenze begrenzt die Kreditaufnahmefähigkeit des isolierten Vermögenswerts. Um den Isolationsmodus zu verlassen, deaktivieren Sie CRV als Sicherheiten, bevor Sie einen anderen Vermögenswert leihen."
       },
       "searchMarket": "Markt durchsuchen",
-      "selectMarket": "Markt auswählen"
+      "selectMarket": "Markt auswählen",
+      "manageEmode": {
+        "actions": {
+          "disable": "E-Mode deaktivieren",
+          "enable": "E-Mode aktivieren"
+        },
+        "guide": {
+          "buttonTitle": "E-Mode verwalten",
+          "description": "E-Mode erhöht Ihren LTV für eine ausgewählte Kategorie von Vermögenswerten.",
+          "title": "Effizienzmodus (E-Mode)"
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "Max LTV",
+            "asset": "Vermögenswerte"
+          },
+          "label": "Vermögenskategorie",
+          "placeholder": "Auswählen",
+          "desc": "Alle Kreditpositionen außerhalb dieser Kategorie müssen geschlossen werden, um diese Kategorie zu aktivieren."
+        },
+        "overview": {
+          "row": {
+            "asset": "Vermögen",
+            "collateral": "Sicherheit",
+            "borrowable": "Ausleihbar"
+          },
+          "maxLtv": "Max LTV",
+          "title": "Vermögenskategorie",
+          "apy": "APY"
+        },
+        "title": "E-Mode verwalten",
+        "emode": "E-Modus",
+        "unavailable": "• Nicht verfügbar",
+        "disableTitle": "Deaktivieren",
+        "description": "Die Aktivierung des E-Modus ermöglicht es Ihnen, Ihre Kreditaufnahme zu maximieren. Das Ausleihen ist jedoch auf Vermögenswerte innerhalb der ausgewählten Kategorie beschränkt.",
+        "unavailableTips": "Ihre vorhandenen Kredit-/Leihassets werden nicht unterstützt.",
+        "enabled": "• Aktiviert"
+      },
+      "disabled": "DEAKTIVIERT"
     }
   },
   "constant": {

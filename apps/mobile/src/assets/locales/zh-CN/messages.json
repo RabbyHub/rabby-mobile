@@ -154,7 +154,9 @@
         "LendingRepay": "偿还",
         "LendingWithdraw": "提取",
         "LendingOnCollateral": "开启作为抵押品使用",
-        "LendingOffCollateral": "关闭作为抵押的使用"
+        "LendingOffCollateral": "关闭作为抵押的使用",
+        "LendingManageEModeDisable": "关闭 E-Mode",
+        "LendingManageEMode": "启用 E-Mode"
       },
       "detail": {
         "Cancel": "取消",
@@ -223,7 +225,9 @@
         "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 链上被跳过。这可能导致后续交易待处理。<5></5> <6>提交交易</6> <7></7> 到链上以解决"
       },
       "HideScamTransactions": "隐藏欺诈交易",
-      "ShowScamTransactions": "显示骗局交易"
+      "ShowScamTransactions": "显示骗局交易",
+      "scam": "骗局",
+      "scamTips": "此交易由骗子发起，用于发送诈骗代币和NFT。请勿与其互动。"
     },
     "getStart": {
       "goToHome": "前往首页",
@@ -2240,7 +2244,8 @@
         "recentEmpty": "开始探索网站",
         "favorite": "收藏夹",
         "hot": "热",
-        "otherResults": "其他结果"
+        "otherResults": "其他结果",
+        "hot10": "热榜 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "打开网站"
@@ -2725,7 +2730,9 @@
       "availableCard": {
         "needSupply": "要借款，您需要提供资产作为抵押。",
         "canBorrow": "您可以根据提供的抵押品借款，最高可达借款上限。",
-        "isolated": "由于隔离模式，借贷能力和资产受到限制。"
+        "isolated": "由于隔离模式，借贷能力和资产受到限制。",
+        "emode": "在 E-Mode 中，一些资产无法借入。退出 E-Mode 以获取对所有资产的访问权限。",
+        "emodeNoAssets": "我们无法找到与您的搜索相关的任何资产。请尝试使用不同的类别。"
       },
       "list": {
         "headers": {
@@ -2804,7 +2811,9 @@
         "checkbox": "我理解该提示并想继续。",
         "warning": "借用此金额将使您的健康因子降至风险清算的水平。",
         "withdrawWarning": "提取这个金额将使您的健康因子降低到风险清算的水平。",
-        "toggleCollateralWarning": "禁用该资产作为抵押将使您的健康因子降低到风险清算的水平。"
+        "toggleCollateralWarning": "禁用该资产作为抵押将使您的健康因子降低到风险清算的水平。",
+        "emodeBlockWarning": "禁用 E-mode 会将您的健康因子降低到一个风险水平，可能会面临清算。",
+        "blockEmodeWarning": "您无法禁用 E-Mode，因为这可能导致清算。要退出 E-Mode，请提供或偿还借入的头寸。"
       },
       "lqDescription": {
         "risky": "风险较高",
@@ -2825,7 +2834,8 @@
         "isolatedTitle": "资产不能用作抵押品",
         "isolatedDesc": "该资产只能在独立模式下用作抵押品，在这种模式下，您无法提供其他资产作为借款抵押品。在独立模式下用作抵押品的资产只能借用到特定的债务上限。",
         "isolatedSupplyDesc": "由于隔离模式，抵押品的使用受到限制。",
-        "globalIsolatedDesc": "在隔离模式下，您无法提供其他资产作为抵押。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借入其他资产之前禁用 UNI 作为抵押。"
+        "globalIsolatedDesc": "在隔离模式下，您无法提供其他资产作为抵押。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借入其他资产之前禁用 UNI 作为抵押。",
+        "maxLTV": "最大 LTV 比率代表特定抵押品的最大借贷能力。例如，如果抵押品的 LTV 为 75%，用户可以针对每 1 个 ETH 的抵押品借入价值 0.75 的 ETH。"
       },
       "apy": "APY",
       "submitted": "提交成功",
@@ -2860,7 +2870,45 @@
         "exitIsolationModeDesc": "您将退出隔离模式，其他代币现在可以用作抵押品。"
       },
       "searchMarket": "搜索市场",
-      "selectMarket": "选择市场"
+      "selectMarket": "选择市场",
+      "manageEmode": {
+        "actions": {
+          "enable": "启用 E-Mode",
+          "disable": "禁用 E-Mode"
+        },
+        "guide": {
+          "title": "效率模式 (E-Mode)",
+          "description": "E-Mode 会提高您所选类别资产的 LTV。",
+          "buttonTitle": "管理 E-Mode"
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "最大贷款价值比",
+            "asset": "资产"
+          },
+          "placeholder": "选择",
+          "label": "资产类别",
+          "desc": "该类别必须关闭所有此类别之外的借款头寸。"
+        },
+        "overview": {
+          "row": {
+            "borrowable": "可借用",
+            "asset": "资产",
+            "collateral": "抵押品"
+          },
+          "title": "资产类别",
+          "apy": "APY",
+          "maxLtv": "最大LTV"
+        },
+        "emode": "E-模式",
+        "unavailableTips": "您现有的借贷资产不受支持。",
+        "title": "管理 E-Mode",
+        "unavailable": "• 不可用",
+        "disableTitle": "禁用",
+        "enabled": "• 已启用",
+        "description": "启用 E-Mode 可以让您最大化您的借贷能力。然而，借贷仅限于所选类别中的资产。"
+      },
+      "disabled": "禁用"
     }
   },
   "component": {

@@ -52,7 +52,9 @@
         "LendingSupply": "공급",
         "LendingBorrow": "빌리기",
         "LendingOffCollateral": "담보로 사용 중지",
-        "LendingOnCollateral": "담보로 사용 활성화"
+        "LendingOnCollateral": "담보로 사용 활성화",
+        "LendingManageEModeDisable": "E-모드 끄기",
+        "LendingManageEMode": "E-모드 켜기"
       },
       "detail": {
         "ApproveToken": "토큰 승인",
@@ -121,7 +123,9 @@
         "skipNonceText": "Nonce #{{nonce}}가 {{chainName}} 체인에서 건너뛰었습니다. 이로 인해 앞에 대기 중인 거래가 발생할 수 있습니다. <5></5> <6>체인에 tx 제출</6> <7></7>하여 해결하십시오."
       },
       "HideScamTransactions": "사기 거래 숨기기",
-      "ShowScamTransactions": "사기 거래 표시"
+      "ShowScamTransactions": "사기 거래 표시",
+      "scam": "사기",
+      "scamTips": "이 거래는 사기꾼에 의해 사기 토큰과 NFT를 보내기 위해 시작되었습니다. 이에 대한 상호작용은 삼가해 주시기 바랍니다."
     },
     "getStart": {
       "goToHome": "홈으로 이동",
@@ -2138,7 +2142,8 @@
         "recentEmpty": "웹사이트 탐색 시작",
         "otherResults": "기타 결과",
         "hot": "핫",
-        "favorite": "즐겨찾기"
+        "favorite": "즐겨찾기",
+        "hot10": "핫 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "웹사이트 열기"
@@ -2623,7 +2628,9 @@
       "availableCard": {
         "needSupply": "빌리려면 자산을 담보로 제공해야 합니다.",
         "canBorrow": "담보를 제공한 만큼 최대 차입 한도까지 빌릴 수 있습니다.",
-        "isolated": "대규모 모드로 인해 빌리기 힘이 제한되고 자산이 한정됩니다."
+        "isolated": "대규모 모드로 인해 빌리기 힘이 제한되고 자산이 한정됩니다.",
+        "emodeNoAssets": "검색과 관련된 자산을 찾을 수 없습니다. 다른 카테고리로 다시 시도해 보세요.",
+        "emode": "E-모드에서는 일부 자산을 빌릴 수 없습니다. 모든 자산에 접근하려면 E-모드를 종료하세요."
       },
       "list": {
         "headers": {
@@ -2702,7 +2709,9 @@
         "checkbox": "알림을 이해하고 계속 진행하겠습니다.",
         "warning": "이 금액을 빌리면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다.",
         "withdrawWarning": "이 금액을 인출하면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다.",
-        "toggleCollateralWarning": "이 자산을 담보로 사용 중지하면 귀하의 건강 지수가 청산을 위한 위험한 수준으로 낮아집니다."
+        "toggleCollateralWarning": "이 자산을 담보로 사용 중지하면 귀하의 건강 지수가 청산을 위한 위험한 수준으로 낮아집니다.",
+        "emodeBlockWarning": "E-mode를 비활성화하면 청산을 위한 위험한 수준으로 Health Factor가 낮아집니다.",
+        "blockEmodeWarning": "E-모드를 비활성화할 수 없습니다. 그렇게 하면 청산이 발생할 수 있습니다. E-모드를 종료하려면 차입 포지션을 공급하거나 상환하세요."
       },
       "lqDescription": {
         "below1title": "건강 지수 ≤ 1.0:",
@@ -2723,7 +2732,8 @@
         "isolatedDesc": "이 자산은 고립 모드에서만 담보로 사용될 수 있으며, 여기서 다른 자산 담보를 공급하여 대출할 수 없습니다. 고립 모드에서 담보로 사용되는 자산은 특정 부채 한도 내에서만 대출할 수 있습니다.",
         "isolatedTitle": "자산을 담보로 사용할 수 없습니다.",
         "isolatedSupplyDesc": "담보 사용은 격리 모드 때문에 제한됩니다.",
-        "globalIsolatedDesc": "고립 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전 세계 부채 한도가 고립된 자산의 대출 능력을 제한합니다. 다른 자산을 대출하기 전에 UNI를 담보로 사용하지 않도록 설정하여 고립 모드를 종료하십시오."
+        "globalIsolatedDesc": "고립 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전 세계 부채 한도가 고립된 자산의 대출 능력을 제한합니다. 다른 자산을 대출하기 전에 UNI를 담보로 사용하지 않도록 설정하여 고립 모드를 종료하십시오.",
+        "maxLTV": "최대 LTV 비율은 특정 담보의 최대 대출 능력을 나타냅니다. 예를 들어, 담보의 LTV가 75%인 경우, 사용자는 담보 1 ETH당 0.75 가치의 ETH를 기본 통화로 대출할 수 있습니다."
       },
       "apy": "APY",
       "borrowed": "빌려진",
@@ -2758,7 +2768,45 @@
         "enableIsolationModeDesc": "당신은 격리 모드에 들어가고 있습니다. 격리 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전역 채무 한도가 격리된 자산의 차입 능력을 제한합니다. 다른 자산을 차입하기 전에 CRV를 담보로 비활성화하여 격리 모드를 종료하십시오."
       },
       "searchMarket": "시장 검색",
-      "selectMarket": "시장 선택"
+      "selectMarket": "시장 선택",
+      "manageEmode": {
+        "actions": {
+          "disable": "E-모드 비활성화",
+          "enable": "E-모드 활성화"
+        },
+        "guide": {
+          "buttonTitle": "E-모드 관리",
+          "title": "효율성 모드 (E-Mode)",
+          "description": "E-모드는 선택한 자산 범주에 대한 LTV를 증가시킵니다."
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "최대 LTV",
+            "asset": "자산"
+          },
+          "desc": "이 카테고리를 활성화하려면 이 카테고리 외부의 모든 차입 포지션을 닫아야 합니다.",
+          "placeholder": "선택하세요",
+          "label": "자산 카테고리"
+        },
+        "overview": {
+          "row": {
+            "collateral": "담보",
+            "borrowable": "대출 가능",
+            "asset": "자산"
+          },
+          "title": "자산 카테고리",
+          "maxLtv": "최대 LTV",
+          "apy": "APY"
+        },
+        "emode": "E-모드",
+        "unavailable": "• 사용 불가능",
+        "disableTitle": "비활성화",
+        "description": "E-모드를 활성화하면 대출 능력을 극대화할 수 있습니다. 그러나 대출은 선택한 카테고리 내의 자산으로 제한됩니다.",
+        "unavailableTips": "귀하의 기존 대출/차입 자산은 지원되지 않습니다.",
+        "enabled": "• 활성화됨",
+        "title": "E-모드 관리"
+      },
+      "disabled": "비활성화됨"
     }
   },
   "global": {
