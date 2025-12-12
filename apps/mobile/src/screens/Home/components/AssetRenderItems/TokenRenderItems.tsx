@@ -455,6 +455,10 @@ export const ExternalTokenRow = memo(
       onPressRightIcon,
       onPressToken,
     ]);
+    const isPositive = useMemo(
+      () => (data.price_24h_change || 0) >= 0,
+      [data.price_24h_change],
+    );
 
     return (
       <Container
@@ -505,12 +509,15 @@ export const ExternalTokenRow = memo(
               </View>
               <View style={styles.colContent}>
                 <Text style={styles.tokenRowAmount}>{data._usdValueStr}</Text>
-                <Text
-                  style={styles.searchAmountStr}
-                  ellipsizeMode="tail"
-                  numberOfLines={1}>
-                  {data._amountStr} {data.symbol}
-                </Text>
+                {typeof data.price_24h_change === 'number' && (
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.changeText,
+                      !isPositive && styles.changeTextPositive,
+                    ])}>
+                    {formatPercentage(Number(data.price_24h_change) || 0)}
+                  </Text>
+                )}
               </View>
             </View>
             {rightSlot}
@@ -928,5 +935,16 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     color: ctx.colors2024['neutral-InvertHighlight'],
     backgroundColor: ctx.colors2024['brand-default'],
+  },
+  changeText: {
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    color: ctx.colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+  },
+  changeTextPositive: {
+    color: ctx.colors2024['red-default'],
   },
 }));
