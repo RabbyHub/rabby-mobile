@@ -38,18 +38,7 @@ const TemplateDict = {
 };
 
 export const MemoItem = memo(
-  ({
-    currentAccount,
-    item,
-    onClickToken,
-  }: {
-    currentAccount?: KeyringAccountWithAlias;
-    item: AbstractPortfolio;
-    onClickToken?: (
-      tokenAddress: string,
-      direction: 'supply' | 'borrow',
-    ) => void;
-  }) => {
+  ({ item }: { item: AbstractPortfolio }) => {
     const { styles } = useTheme2024({ getStyle: getStyles });
 
     const types = item._originPortfolio.detail_types?.reverse();
@@ -65,8 +54,6 @@ export const MemoItem = memo(
         name={item._originPortfolio.name}
         data={item}
         style={styles.detail}
-        currentAccount={currentAccount}
-        onClickToken={onClickToken}
       />
     );
   },
@@ -82,8 +69,8 @@ export const WrapperDappActionsMemoItem = ({
   onRefresh,
   session,
   manageAction,
-  onClickToken,
   disableAction,
+  isLast,
 }: {
   item: AbstractPortfolio;
   chain?: string;
@@ -93,8 +80,8 @@ export const WrapperDappActionsMemoItem = ({
   onRefresh?: () => Promise<void>;
   session?: React.ComponentProps<typeof DappActions>['session'];
   manageAction?: TonManageAction;
-  onClickToken?: (tokenAddress: string, direction: 'supply' | 'borrow') => void;
   disableAction?: boolean;
+  isLast?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { colors2024 } = useTheme2024();
@@ -117,28 +104,14 @@ export const WrapperDappActionsMemoItem = ({
     return null;
   }
   return (
-    <View style={styles.portfolioCard}>
-      <LinearGradient
-        pointerEvents="none"
-        colors={[
-          colord(colors2024['neutral-line']).alpha(0.2).toRgbString(),
-          colord(colors2024['neutral-line']).alpha(0).toRgbString(),
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.gradientBg}
-      />
+    <View style={[styles.portfolioCard, isLast && styles.portfolioCardLast]}>
       <View style={styles.portfolioContent}>
-        <MemoItem
-          currentAccount={currentAccount}
-          item={item}
-          onClickToken={onClickToken}
-        />
+        <MemoItem item={item} />
       </View>
       {!!manageAction && (
         <TouchableOpacity
           style={[styles.button]}
-          onPress={() => manageAction(currentAccount, item)}>
+          onPress={() => manageAction?.(currentAccount, item)}>
           <Text style={styles.buttonText}>
             {t('component.portfolios.manage')}
           </Text>
@@ -164,16 +137,17 @@ export const WrapperDappActionsMemoItem = ({
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   portfolioCard: {
     width: '100%',
-    paddingTop: 12,
-    paddingHorizontal: 4,
-    paddingBottom: 20,
-    borderRadius: 12,
-    // backgroundColor: ctx.colors2024['neutral-bg-5'],
+    // paddingTop: 12,
+    // paddingHorizontal: 4,
     position: 'relative',
     overflow: 'hidden',
+    marginBottom: 24,
+  },
+  portfolioCardLast: {
+    marginBottom: 0,
   },
   portfolioContent: {
-    paddingHorizontal: 8,
+    // paddingHorizontal: 8,
   },
   detail: {
     backgroundColor: 'transparent',
@@ -187,10 +161,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   button: {
     marginTop: 0,
-    marginLeft: 8,
-    marginRight: 8,
     flex: 1,
-    height: 42,
+    height: 48,
     borderRadius: 12,
     backgroundColor: colors2024['brand-light-1'],
     display: 'flex',
@@ -205,6 +177,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   longMarginTop: {
-    marginTop: 20,
+    marginTop: 12,
   },
 }));
