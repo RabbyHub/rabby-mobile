@@ -161,8 +161,8 @@ export const FullDefiRenderItem = ({
     }
 
     for (let i = 0; i < data._portfolios.length; i++) {
-      if (result.size >= 4 || !data.chain) {
-        break; // 最多只有 4 个标签，发现标签足够就不需要再继续遍历下去了
+      if (result.size >= 3 || !data.chain) {
+        break; // 最多只有 3 个标签，发现标签足够就不需要再继续遍历下去了
       }
       const item = data._portfolios[i];
       const actions = item._originPortfolio.withdraw_actions || [];

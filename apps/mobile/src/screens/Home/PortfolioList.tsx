@@ -162,7 +162,7 @@ export const PortfolioList = ({
       },
       {
         show:
-          !!loadingPortfolio && !portfolios.length && !foldPortfolios.length,
+          !!loadingPortfolio && !portfolios.length && !unFoldDefiList.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: 'index-defi' + index.toString(),
@@ -172,7 +172,7 @@ export const PortfolioList = ({
         show:
           !loadingPortfolio &&
           portfolios.length === 0 &&
-          foldPortfolios.length === 0,
+          unFoldDefiList.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -202,7 +202,6 @@ export const PortfolioList = ({
       const { type, data } = _data;
       switch (type) {
         case 'unfold_defi':
-        case 'fold_defi':
           return (
             <MemoFullDefiRenderItem
               data={data as unknown as AbstractProject}
@@ -219,6 +218,16 @@ export const PortfolioList = ({
               str={data}
               fold={foldDefi}
               onPressFold={() => setFoldDefi(pre => !pre)}
+            />
+          );
+        case 'fold_defi':
+          return (
+            <MemoFullDefiRenderItem
+              data={data as unknown as AbstractProject}
+              showAccount={false}
+              disableAction={refreshing}
+              defaultExpand={type === 'fold_defi' ? false : shouldDefaultExpand}
+              account={currentAccount}
             />
           );
         case 'empty-defi':
