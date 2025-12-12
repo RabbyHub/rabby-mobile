@@ -396,7 +396,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '900',
+    fontWeight: '700',
     flexWrap: 'nowrap',
   },
   container: {
@@ -409,8 +409,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
       : colors2024['neutral-bg-3'],
     marginHorizontal: 16,
     borderRadius: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: 14,
+    paddingBottom: 14,
   },
   portfoliosContainer: {
     width: '100%',

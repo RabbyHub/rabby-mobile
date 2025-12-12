@@ -261,7 +261,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   button: {
     flex: 1,
-    height: 52,
+    height: 48,
     borderRadius: 12,
     // backgroundColor: colors2024['neutral-InvertHighlight'],
     borderWidth: 1,

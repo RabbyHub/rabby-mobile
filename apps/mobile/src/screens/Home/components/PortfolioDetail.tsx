@@ -23,7 +23,6 @@ import { useTranslation } from 'react-i18next';
 export const PortfolioHeader = ({
   data,
   name,
-  showDescription,
   showHistory,
 }: {
   data: AbstractPortfolio;
@@ -54,11 +53,6 @@ export const PortfolioHeader = ({
         <View style={styles.portfolioType}>
           <Text style={styles.portfolioTypeText}>{name}</Text>
         </View>
-        {showDescription ? (
-          <Text style={styles.portfolioDesc} numberOfLines={1}>
-            {data?._originPortfolio?.detail?.description || ''}
-          </Text>
-        ) : null}
       </View>
       <View>
         <Text style={styles.portfolioNetWorth}>{data._netWorth}</Text>
@@ -324,7 +318,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   portfolioTypeText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '900',
     color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
@@ -377,17 +371,19 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: 'rgba(112, 132, 255, 0.04)',
   },
   tokenRowHeader: {
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 6,
   },
   tokenListHeader: {
     // paddingHorizontal: 2,
     flexBasis: '35%',
     flexGrow: 1,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    textTransform: 'capitalize',
   },
   tokenListCol: {
     flexBasis: '35%',
@@ -447,6 +443,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: 12,
+    borderRadius: 6,
   },
   supplementField: {
     width: '50%',

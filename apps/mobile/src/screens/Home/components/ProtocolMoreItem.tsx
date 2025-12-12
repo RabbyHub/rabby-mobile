@@ -138,7 +138,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   portfolioCard: {
     width: '100%',
     // paddingTop: 12,
-    paddingHorizontal: 4,
+    // paddingHorizontal: 4,
     position: 'relative',
     overflow: 'hidden',
     marginBottom: 24,
@@ -177,6 +177,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   longMarginTop: {
-    marginTop: 20,
+    marginTop: 12,
   },
 }));

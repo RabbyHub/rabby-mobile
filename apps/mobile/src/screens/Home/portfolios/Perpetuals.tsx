@@ -69,7 +69,7 @@ export default React.memo(
               ? [portfolio.detail.position_token]
               : []
           }
-          name="POSITION"
+          name="Position"
         />
         <TokenList
           tokens={
@@ -77,7 +77,7 @@ export default React.memo(
           }
           style={styles.tokenList}
           headerStyle={styles.tokenListHeader}
-          name="MARGIN"
+          name="Margin"
         />
       </Card>
     );
