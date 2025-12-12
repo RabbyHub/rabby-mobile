@@ -20,6 +20,9 @@ export const HF_COLOR_BAD_THRESHOLD = 1.1; // 1.1
 // 清算线
 export const LIQUIDATION_HF_THRESHOLD = 1.0; // 1.0
 
+// emode操作预估时，健康因子低于该值时，阻断用户操作
+export const HF_BLOCK_THRESHOLD = 1.01;
+
 export const USD_DECIMALS = 8;
 
 // 模拟原生代币的地址

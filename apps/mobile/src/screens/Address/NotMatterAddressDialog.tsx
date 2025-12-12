@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
@@ -15,10 +15,16 @@ import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomS
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { IS_IOS } from '@/core/native/utils';
 import ArrowLeftSVG from '@/components/AccountSelectModalTx/icons/nav-left-cc.svg';
+import { ManageSetting } from './components/ManageSetting';
+import { useAddressDetailModal } from './useAddressDetailModal';
+import { toast } from '@/components2024/Toast';
+import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
+
 export const NotMatterAddressDialog: React.FC<{
   onDone?: () => void;
   onBack?: () => void;
-}> = ({ onDone, onBack }) => {
+  showBackArrow?: boolean;
+}> = ({ onDone, onBack, showBackArrow = true }) => {
   const { notTop10Accounts, gnosisAccounts, watchAccounts, fetchAccounts } =
     useAccountInfo();
   const { bottom } = useSafeAreaInsets();
@@ -26,6 +32,13 @@ export const NotMatterAddressDialog: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [isScrolling, setIsScrolling] = React.useState(false);
   const scrollTimeoutRef = React.useRef<NodeJS.Timeout>();
+  const [isManageMode, setIsManageMode] = React.useState(false);
+
+  const switchManageMode = () => {
+    setIsManageMode(e => !e);
+  };
+
+  const showAddressDetail = useAddressDetailModal();
 
   useEffect(() => {
     fetchAccounts();
@@ -92,65 +105,122 @@ export const NotMatterAddressDialog: React.FC<{
     return result;
   }, [notTop10Accounts, gnosisAccounts, watchAccounts, t]);
 
-  const renderSectionHeader = ({ section }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionHeaderText}>{section.title}</Text>
-      {section.type === 'notTop10Accounts' && (
-        <TouchableOpacity
-          onPress={() => {
-            const modalId = createGlobalBottomSheetModal2024({
-              name: MODAL_NAMES.DESCRIPTION,
-              title: t('page.addressDetail.notMatterAddressDialog.helpTitle'),
-              bottomSheetModalProps: {
-                enableContentPanningGesture: true,
-                enablePanDownToClose: true,
-                snapPoints: [300],
-              },
-              sections: [
-                {
-                  description: t(
-                    'page.addressDetail.notMatterAddressDialog.helpDescription1',
-                  ),
+  const renderSectionHeader = useCallback(
+    ({ section }) => (
+      <View style={[styles.sectionHeader, isManageMode && { paddingLeft: 48 }]}>
+        <Text style={styles.sectionHeaderText}>{section.title}</Text>
+        {section.type === 'notTop10Accounts' && (
+          <TouchableOpacity
+            onPress={() => {
+              const modalId = createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.DESCRIPTION,
+                title: t('page.addressDetail.notMatterAddressDialog.helpTitle'),
+                bottomSheetModalProps: {
+                  enableContentPanningGesture: true,
+                  enablePanDownToClose: true,
+                  snapPoints: [300],
                 },
-                {
-                  description: t(
-                    'page.addressDetail.notMatterAddressDialog.helpDescription2',
-                  ),
-                },
-              ],
-            });
-          }}>
-          <HelpIcon width={20} height={20} />
-        </TouchableOpacity>
-      )}
-    </View>
+                sections: [
+                  {
+                    description: t(
+                      'page.addressDetail.notMatterAddressDialog.helpDescription1',
+                    ),
+                  },
+                  {
+                    description: t(
+                      'page.addressDetail.notMatterAddressDialog.helpDescription2',
+                    ),
+                  },
+                ],
+              });
+            }}>
+            <HelpIcon width={20} height={20} />
+          </TouchableOpacity>
+        )}
+      </View>
+    ),
+    [isManageMode, styles.sectionHeader, styles.sectionHeaderText, t],
   );
 
-  const renderItem = ({ item }) => (
-    <View style={styles.itemGap}>
-      <AddressItemEntry
-        handleGoDetail={onDone}
-        account={item}
-        isScrolling={isScrolling}
-        useLongPressing={true}
-      />
-    </View>
+  const renderItem = useCallback(
+    ({ item }) => {
+      if (isManageMode) {
+        const showAddressDetailPopup = () => {
+          showAddressDetail({
+            account: item,
+            onDelete: () => {
+              toast.success(t('global.Deleted'));
+            },
+          });
+        };
+        return (
+          <View style={[styles.itemGap, styles.manageModeItem]}>
+            <Pressable
+              onPress={showAddressDetailPopup}
+              style={styles.manageBtn}>
+              <RcIconSettingCC
+                width={20}
+                height={20}
+                color={colors2024['neutral-secondary']}
+              />
+            </Pressable>
+            <View style={{ width: '100%' }}>
+              <AddressItemEntry
+                handleGoDetail={onDone}
+                account={item}
+                isScrolling={isScrolling}
+                useLongPressing={true}
+              />
+            </View>
+          </View>
+        );
+      }
+
+      return (
+        <View style={styles.itemGap}>
+          <AddressItemEntry
+            handleGoDetail={onDone}
+            account={item}
+            isScrolling={isScrolling}
+            useLongPressing={true}
+          />
+        </View>
+      );
+    },
+    [
+      colors2024,
+      isManageMode,
+      isScrolling,
+      onDone,
+      showAddressDetail,
+      styles,
+      t,
+    ],
   );
 
   return (
     <AutoLockView as="View" style={styles.container}>
       <View style={styles.listHeader}>
-        <Pressable onPress={onBack} style={styles.backButton}>
-          <ArrowLeftSVG
-            width={24}
-            height={24}
-            color={colors2024['neutral-title-1']}
-          />
-        </Pressable>
+        {showBackArrow ? (
+          <Pressable onPress={onBack} style={styles.backButton}>
+            <ArrowLeftSVG
+              width={24}
+              height={24}
+              color={colors2024['neutral-title-1']}
+            />
+          </Pressable>
+        ) : null}
         <View style={styles.titleContainer}>
           <Text style={styles.listTitle}>
             {t('page.addressDetail.notMatterAddressDialog.title')}
           </Text>
+        </View>
+
+        <View style={styles.manageButton}>
+          <ManageSetting
+            isManageMode={isManageMode}
+            switchManageMode={switchManageMode}
+          />
         </View>
       </View>
       <BottomSheetSectionList
@@ -184,6 +254,11 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     left: 20,
     top: 0,
   },
+  manageButton: {
+    position: 'absolute',
+    right: 20,
+    top: 0,
+  },
   listContainer: {
     flex: 1,
     paddingHorizontal: 16,
@@ -194,6 +269,18 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   itemGap: {
     marginBottom: 12,
+  },
+  manageModeItem: {
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: -16,
+  },
+  manageBtn: {
+    width: 64,
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listHeader: {
     position: 'relative',

@@ -7,14 +7,17 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { StorageAdapater } from '@rabby-wallet/persist-store';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 import {
-  SyncStorage,
-  SyncStringStorage,
+  type SyncStorage,
+  type SyncStringStorage,
 } from 'jotai/vanilla/utils/atomWithStorage';
+import { type StateStorage } from 'zustand/middleware';
+
 import { MMKV_FILE_NAMES, walkThroughMMKVFiles } from '../utils/appFS';
 import RNHelpers from '../native/RNHelpers';
 import { IS_IOS } from '../native/utils';
 import { runDevIIFEFunc } from '../utils/store';
 import { reactotronEvents } from '../utils/reactotron-plugins/_utils';
+import { zCreate, zCreateJSONStorage, zPersist } from '../utils/reexports';
 
 function checkIfDuplicatedStringifiedJsonObjectString(input: any) {
   return (
@@ -177,14 +180,31 @@ export const enum MMKVStorageStrategy {
   'compatString' = 1,
   'next' = 11,
 }
-type StringStorageOption =
-  /* AsyncStringStorage |  */
-  | SyncStringStorage
+type PresetStringStorageOption =
   /** @deprecated */
   | MMKVStorageStrategy.legacy
   | MMKVStorageStrategy.compatJson
   | MMKVStorageStrategy.compatString;
+
+function isPresetStorageStrategy(
+  storage?:
+    | PresetStringStorageOption
+    | JotaiStringStorageOption
+    | ZustandStringStorageOption,
+): storage is
+  | MMKVStorageStrategy.legacy
+  | MMKVStorageStrategy.compatJson
+  | MMKVStorageStrategy.compatString {
+  return (
+    storage === MMKVStorageStrategy.legacy ||
+    storage === MMKVStorageStrategy.compatJson ||
+    storage === MMKVStorageStrategy.compatString
+  );
+}
+
+type JotaiStringStorageOption = SyncStringStorage | PresetStringStorageOption;
 /**
+ * @deprecated
  * persist item as json, read it as its original type
  *
  * @baddesign In the past, `makeJotaiJsonStore` use storage consist with appStorage,
@@ -193,23 +213,20 @@ type StringStorageOption =
  * be JSON.stringify twice and JSON.parse twice. This is a bad behavior.
  */
 function makeJotaiJsonStore<T = any>(options?: {
-  storage?: StringStorageOption;
+  storage?: JotaiStringStorageOption;
 }) {
   const { storage } = options || {};
 
-  const jsonStore =
-    storage === MMKVStorageStrategy.legacy ||
-    storage === MMKVStorageStrategy.compatJson ||
-    storage === MMKVStorageStrategy.compatString
-      ? createJSONStorage<T>(() => GET_STRING_STORAGE_FOR_JSON_STORE(storage))
-      : storage
-      ? createJSONStorage<T>(() => storage)
-      : createJSONStorage<T>(() => ({
-          getItem: appMethods.getRawString,
-          setItem: appMethods.setRawString,
-          removeItem: appMethods.removeItem,
-          clearAll: appMethods.clearAll,
-        }));
+  const jsonStore = isPresetStorageStrategy(storage)
+    ? createJSONStorage<T>(() => GET_STRING_STORAGE_FOR_JSON_STORE(storage))
+    : storage
+    ? createJSONStorage<T>(() => storage)
+    : createJSONStorage<T>(() => ({
+        getItem: appMethods.getRawString,
+        setItem: appMethods.setRawString,
+        removeItem: appMethods.removeItem,
+        clearAll: appMethods.clearAll,
+      }));
 
   return jsonStore;
 }
@@ -260,7 +277,7 @@ export const atomByMMKV = <T = any>(
   key: string,
   initialValue: T,
   options?: {
-    storage?: StringStorageOption;
+    storage?: JotaiStringStorageOption;
     setupSubscribe?(ctx: {
       jsonStore: SyncStorage<T>;
     }): /* subscribe */ SyncStorage<T>['subscribe'] & Function;
@@ -274,6 +291,63 @@ export const atomByMMKV = <T = any>(
   }
 
   return atomWithStorage<T>(key, initialValue, jsonStore);
+};
+
+const defaultMigrateFromAtom: MigrateFromAtom<any> = ctx => {
+  const newData = { state: ctx.oldData, version: 0 };
+  appJsonStore.setItem(ctx.legacyAppStoreKey, newData);
+
+  return { migrated: newData };
+};
+type MigrateFromAtom<T> = (ctx: {
+  legacyAppStoreKey: string;
+  oldData: any;
+  appJsonStore: typeof appJsonStore;
+}) => { migrated: T };
+type ZustandStringStorageOption = StateStorage | PresetStringStorageOption;
+export const zustandByMMKV = <T = any>(
+  key: string,
+  initialValue: T,
+  options?: {
+    legacyAppStoreKey?: string;
+    migrateFromAtom?: MigrateFromAtom<T>;
+    storage: ZustandStringStorageOption;
+  },
+) => {
+  const {
+    storage,
+    legacyAppStoreKey = key,
+    migrateFromAtom = defaultMigrateFromAtom,
+  } = options || {};
+  const store =
+    (isPresetStorageStrategy(storage)
+      ? GET_STRING_STORAGE_FOR_JSON_STORE(storage)
+      : storage) || appStorageForZustand;
+
+  const oldData = appJsonStore.getItem(legacyAppStoreKey, initialValue);
+  const hasMigrated =
+    oldData?.hasOwnProperty('state') && oldData?.hasOwnProperty('version');
+
+  if (!hasMigrated) {
+    removeLegacyMMKVStorageByKey(legacyAppStoreKey as any);
+    migrateFromAtom({ legacyAppStoreKey, oldData, appJsonStore });
+  }
+
+  const zustandStore = zCreate(
+    zPersist<T>(
+      () => ({
+        ...initialValue,
+        // use old state
+        ...(!hasMigrated && oldData),
+      }),
+      {
+        name: key,
+        storage: zCreateJSONStorage(() => store),
+      },
+    ),
+  );
+
+  return zustandStore;
 };
 
 export function removeLegacyMMKVStorageByKey(key: `@${string}`) {

@@ -153,6 +153,15 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
     if (!reserve) {
       return false;
     }
+    // emode开启，但是不支持该池子借贷
+    const eModeBorrowDisabled =
+      !!userSummary?.userEmodeCategoryId &&
+      !reserve.reserve.eModes.find(
+        e => e.id === userSummary.userEmodeCategoryId,
+      );
+    if (eModeBorrowDisabled) {
+      return true;
+    }
     if (BigNumber(reserve.reserve.totalDebt).gte(reserve.reserve.borrowCap)) {
       return true;
     }
@@ -160,7 +169,11 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
       !userSummary?.availableBorrowsUSD ||
       userSummary?.availableBorrowsUSD === '0'
     );
-  }, [reserve, userSummary?.availableBorrowsUSD]);
+  }, [
+    reserve,
+    userSummary?.availableBorrowsUSD,
+    userSummary?.userEmodeCategoryId,
+  ]);
 
   const handlePressBorrow = () => {
     onClose?.();

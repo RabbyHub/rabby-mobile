@@ -137,7 +137,11 @@ export const initialState: PerpsState = {
 export const perpsStore = zCreate<PerpsState>(() => ({ ...initialState }));
 function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
   perpsStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev, valOrFunc, { strict: true });
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+    if (!changed) return prev;
+
     return newVal;
   });
 }
@@ -813,34 +817,6 @@ export const usePerpsStore = () => {
 runIIFEFunc(fetchMarketData);
 
 export function usePerpsEffectOnTop() {
-  // const { isLogin, currentPerpsAccount, wsSubscriptionsLen } = perpsStore(
-  //   useShallow(s => ({
-  //     isLogin: s.isLogin,
-  //     currentPerpsAccount: s.currentPerpsAccount,
-  //     wsSubscriptionsLen: s.wsSubscriptions.length,
-  //   })),
-  // );
-  // const appState = useAppState();
-  // const prevAppStateRef = useRef(appState);
-
-  // useEffect(() => {
-  //   if (prevAppStateRef.current !== appState) {
-  //     if (appState !== 'active') {
-  //       unsubscribeAll();
-  //       // const sdk = apisPerps.getPerpsSDK();
-  //       // sdk.ws.disconnect();
-  //     } else if (
-  //       appState === 'active' &&
-  //       isLogin &&
-  //       currentPerpsAccount &&
-  //       wsSubscriptionsLen === 0
-  //     ) {
-  //       subscribeToUserData(currentPerpsAccount.address);
-  //     }
-  //     prevAppStateRef.current = appState;
-  //   }
-  // }, [appState, isLogin, currentPerpsAccount, wsSubscriptionsLen]);
-
   useEffect(() => {
     const sdk = apisPerps.getPerpsSDK();
     const subscription = AppState.addEventListener('change', nextAppState => {

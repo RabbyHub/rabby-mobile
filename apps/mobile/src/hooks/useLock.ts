@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useShallow } from 'zustand/react/shallow';
 
 import { keyringService } from '@/core/services';
@@ -222,16 +221,10 @@ export function useIsOnBackground() {
  * @description call this hooks on the top level of your app to handle background state
  */
 export function useSecureOnBackground() {
-  // const setAppStatus = useSetAtom(appStateAtom);
-
   React.useEffect(() => {
     if (isAndroid) {
-      const subBlur = AppState.addEventListener('blur', () => {
-        // setAppStatus(prev => ({ ...prev, current: 'inactive' }));
-      });
-      const subFocus = AppState.addEventListener('focus', () => {
-        // setAppStatus(prev => ({ ...prev, current: 'active' }));
-      });
+      const subBlur = AppState.addEventListener('blur', () => {});
+      const subFocus = AppState.addEventListener('focus', () => {});
       /**
        * @why not AppState.addEventListener('blur'|'focus', ...)
        *
@@ -271,32 +264,30 @@ export const sheetModalRefsNeedLock = {
   switchBiometricsRef: React.createRef<SwitchToggleType>(),
   selectAutolockTimeRef: React.createRef<BottomSheetModal>(),
 };
-const setPasswordFirstAtom = atom({
+// const setPasswordFirstAtom = atom({
+//   isOnSettingsWaiting: false,
+// });
+const setPasswordFirstStore = zCreate<{ isOnSettingsWaiting: boolean }>(() => ({
   isOnSettingsWaiting: false,
-});
+}));
+function setSetPasswordFirst(
+  valOrFunc: UpdaterOrPartials<{ isOnSettingsWaiting: boolean }>,
+) {
+  setPasswordFirstStore.setState(
+    prev => resolveValFromUpdater(prev, valOrFunc).newVal,
+  );
+}
 export function useSetPasswordFirstState() {
-  const [{ isOnSettingsWaiting }, updateSetPasswordFirst] =
-    useAtom(setPasswordFirstAtom);
-
-  // const updateSetPasswordFirst = useCallback(
-  //   (state: { isOnSettingsWaiting: boolean }) => {
-  //     _updateSetPasswordFirst(prev => ({
-  //       ...prev,
-  //       ...state,
-  //     }));
-  //   },
-  //   [navigation, _updateSetPasswordFirst],
-  // );
+  const isOnSettingsWaiting = setPasswordFirstStore(s => s.isOnSettingsWaiting);
 
   return {
     isOnSettingsWaiting,
-    updateSetPasswordFirst,
+    updateSetPasswordFirst: setSetPasswordFirst,
   };
 }
 export function useSetPasswordFirst() {
   const navigation = useRabbyAppNavigation();
   const { lockInfo, fetchLockInfo } = useLoadLockInfo();
-  // const { updateSetPasswordFirst } = useSetPasswordFirstState();
 
   useFocusEffect(
     useCallback(() => {
@@ -329,7 +320,7 @@ export function useSetPasswordFirst() {
         });
         return true;
       } else if (onSettingsAction) {
-        // updateSetPasswordFirst({ isOnSettingsWaiting: true });
+        setSetPasswordFirst({ isOnSettingsWaiting: true });
         navigation.push(RootNames.StackSettings, {
           screen: RootNames.SetPassword,
           params: {

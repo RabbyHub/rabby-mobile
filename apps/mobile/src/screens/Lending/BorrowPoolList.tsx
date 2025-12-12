@@ -95,6 +95,31 @@ const BorrowPoolList = () => {
     [colors2024, isLight],
   );
 
+  const desc = useMemo(() => {
+    if (
+      iUserSummary?.availableBorrowsUSD === '0' ||
+      !iUserSummary?.availableBorrowsUSD
+    ) {
+      return t('page.Lending.availableCard.needSupply');
+    }
+    if (iUserSummary.userEmodeCategoryId !== 0) {
+      if (!sortReserves.length) {
+        return t('page.Lending.availableCard.emodeNoAssets');
+      }
+      return t('page.Lending.availableCard.emode');
+    }
+    if (isInIsolationMode) {
+      return t('page.Lending.availableCard.isolated');
+    }
+    return t('page.Lending.availableCard.canBorrow');
+  }, [
+    iUserSummary?.availableBorrowsUSD,
+    iUserSummary?.userEmodeCategoryId,
+    isInIsolationMode,
+    sortReserves.length,
+    t,
+  ]);
+
   const availableCard = useMemo(() => {
     if (loading || !iUserSummary?.totalLiquidityUSD) {
       return null;
@@ -122,11 +147,16 @@ const BorrowPoolList = () => {
           <Text
             style={[
               styles.availableCardTitle,
-              isInIsolationMode && styles.orangeText,
+              (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
+                styles.orangeText,
             ]}>
             {t('page.Lending.modalDesc.availableToBorrow')}:{' '}
             <Text
-              style={[styles.usdValue, isInIsolationMode && styles.orangeText]}>
+              style={[
+                styles.usdValue,
+                (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
+                  styles.orangeText,
+              ]}>
               {formatUsdValueKMB(
                 Number(iUserSummary?.availableBorrowsUSD || '0'),
               )}
@@ -136,20 +166,19 @@ const BorrowPoolList = () => {
         <Text
           style={[
             styles.availableCardValue,
-            isInIsolationMode && styles.orangeText,
+            (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
+              styles.orangeText,
           ]}>
-          {iUserSummary?.availableBorrowsUSD && isInIsolationMode
-            ? t('page.Lending.availableCard.isolated')
-            : iUserSummary?.availableBorrowsUSD !== '0'
-            ? t('page.Lending.availableCard.canBorrow')
-            : t('page.Lending.availableCard.needSupply')}
+          {desc}
         </Text>
       </View>
     );
   }, [
     colors2024,
+    desc,
     iUserSummary?.availableBorrowsUSD,
     iUserSummary?.totalLiquidityUSD,
+    iUserSummary?.userEmodeCategoryId,
     isInIsolationMode,
     loading,
     styles.availableCard,
@@ -168,22 +197,25 @@ const BorrowPoolList = () => {
     ) : (
       <>
         {availableCard}
-        <View style={styles.listHeader}>
-          <Text style={styles.headerToken}>
-            {t('page.Lending.list.headers.token_balance')}
-          </Text>
-          <Text style={styles.headerApy}>
-            {t('page.Lending.list.headers.apy')}
-          </Text>
-          <Text style={styles.headerMyBorrows}>
-            {t('page.Lending.list.headers.myBorrows')}
-          </Text>
-        </View>
+        {sortReserves.length ? (
+          <View style={styles.listHeader}>
+            <Text style={styles.headerToken}>
+              {t('page.Lending.list.headers.token_balance')}
+            </Text>
+            <Text style={styles.headerApy}>
+              {t('page.Lending.list.headers.apy')}
+            </Text>
+            <Text style={styles.headerMyBorrows}>
+              {t('page.Lending.list.headers.myBorrows')}
+            </Text>
+          </View>
+        ) : null}
       </>
     );
   }, [
     availableCard,
     loading,
+    sortReserves.length,
     styles.headerApy,
     styles.headerMyBorrows,
     styles.headerToken,
@@ -263,7 +295,7 @@ const BorrowPoolList = () => {
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
-      ListEmptyComponent={<PoolListLoading />}
+      ListEmptyComponent={loading ? <PoolListLoading /> : null}
       ListFooterComponent={renderFooterComponent}
       renderItem={renderItem}
     />

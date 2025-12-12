@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
-import { Text, View, TouchableOpacity } from 'react-native';
-import { useCallback, useMemo, useState } from 'react';
+import { Text, View, TouchableOpacity, Pressable } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 import { AddressEntry } from './RenderRow/AddressEntry';
@@ -19,26 +19,34 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
 import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
+import { ManageSetting } from '../ManageSetting';
+import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
+import { useAddressDetailModal } from '../../useAddressDetailModal';
+import { toast } from '@/components2024/Toast';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
   onAddAddressPress?: () => void;
   onDone?: () => void;
   onMoreAddressListPress?: () => void;
+  isManageMode?: boolean;
 }
 export const AddressList = ({
   onAddAddressPress,
   onDone,
   onMoreAddressListPress,
+  isManageMode,
 }: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
+  const showAddressDetail = useAddressDetailModal();
+
   const {
+    top10Accounts,
     top10Addresses,
     top10Records,
     notMatterAccounts,
-    list: _rawList,
     fetchAccounts,
   } = useAccountInfo();
 
@@ -64,7 +72,7 @@ export const AddressList = ({
   useBalanceUpdate(triggerUpdate);
 
   const list = useMemo(() => {
-    return _rawList.slice(0, 10).map(item => {
+    return top10Accounts.map(item => {
       const account = balanceAccounts.find(acc =>
         isSameAddress(acc.address, item.address),
       );
@@ -74,7 +82,7 @@ export const AddressList = ({
         evmBalance: account?.evmBalance || item.evmBalance || 0,
       };
     });
-  }, [balanceAccounts, _rawList]);
+  }, [balanceAccounts, top10Accounts]);
 
   const addressListData = useMemo(() => {
     return [
@@ -97,13 +105,48 @@ export const AddressList = ({
 
   const renderItem = useCallback(
     ({ item }) => {
+      if (isManageMode) {
+        const showAddressDetailPopup = () => {
+          showAddressDetail({
+            account: item,
+            onDelete: () => {
+              toast.success(t('global.Deleted'));
+            },
+          });
+        };
+        return (
+          <View style={[styles.itemGap, styles.manageModeItem]}>
+            <Pressable
+              onPress={showAddressDetailPopup}
+              style={styles.manageBtn}>
+              <RcIconSettingCC
+                width={20}
+                height={20}
+                color={colors2024['neutral-secondary']}
+              />
+            </Pressable>
+            <View style={{ width: '100%' }}>
+              <AddressEntry data={item} onSelect={onDone} />
+            </View>
+          </View>
+        );
+      }
       return (
         <View style={styles.itemGap}>
           <AddressEntry data={item} onSelect={onDone} />
         </View>
       );
     },
-    [onDone, styles.itemGap],
+    [
+      isManageMode,
+      styles.itemGap,
+      styles.manageModeItem,
+      styles.manageBtn,
+      onDone,
+      colors2024,
+      showAddressDetail,
+      t,
+    ],
   );
 
   const handleMoreWalletsPress = useCallback(() => {
@@ -241,7 +284,7 @@ export const AddressList = ({
       showsHorizontalScrollIndicator={false}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.list}
-      ListFooterComponent={renderFooter}
+      ListFooterComponent={isManageMode ? null : renderFooter}
       style={styles.listContainer}
       ListHeaderComponent={<View style={{ height: SPACING_HEIGHT }} />}
       refreshControl={
@@ -262,6 +305,12 @@ export const AddressListModal = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [moreAddressList, setMoreAddressList] = useState(false);
+  const [isManageMode, setIsManageMode] = useState(false);
+
+  const switchManageMode = () => {
+    setIsManageMode(e => !e);
+  };
+
   if (moreAddressList) {
     return (
       <NotMatterAddressDialog
@@ -272,11 +321,24 @@ export const AddressListModal = ({
   }
   return (
     <AutoLockView as="View" style={styles.container}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+          paddingRight: 20,
+        }}>
+        <ManageSetting
+          isManageMode={isManageMode}
+          switchManageMode={switchManageMode}
+        />
+      </View>
       <Text style={styles.title}>{t('component.multiAddressModal.title')}</Text>
+
       <AddressList
         onAddAddressPress={onAddAddressPress}
         onDone={onDone}
         onMoreAddressListPress={() => setMoreAddressList(true)}
+        isManageMode={isManageMode}
       />
     </AutoLockView>
   );
@@ -288,6 +350,15 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
+  },
+  done: {
+    color: ctx.colors2024['neutral-secondary'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
   },
   title: {
     fontSize: 20,
@@ -323,6 +394,18 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   itemGap: {
     marginTop: SPACING_HEIGHT,
+  },
+  manageModeItem: {
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: -16,
+  },
+  manageBtn: {
+    width: 64,
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContainer: {
     flex: 1,

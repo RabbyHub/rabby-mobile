@@ -33,7 +33,6 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatPrice, formatUsdValue } from '@/utils/number';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { formatUsdValueKMB } from '../../utils/price';
 import { ellipsisAddress } from '@/utils/address';
 import { ExchangeLogos } from './ExchangeLogos';
@@ -238,11 +237,6 @@ export const TokenRow = memo(
               </Text>
             ) : null}
           </View>
-          {data._isPined && (
-            <View style={[styles.favoriteBadge]}>
-              <RcIconFavorite color={colors2024['orange-default']} />
-            </View>
-          )}
         </TouchableOpacity>
       );
     }, [
@@ -255,7 +249,6 @@ export const TokenRow = memo(
       data._isExcludeBalance,
       data._usdValue,
       data.price_24h_change,
-      data._isPined,
       styles,
       style,
       onPressToken,
@@ -534,11 +527,6 @@ export const ExternalTokenRow = memo(
 
           {afterNode || null}
         </View>
-        {isPined && (
-          <View style={[styles.favoriteBadge]}>
-            <RcIconFavorite color={colors2024['orange-default']} />
-          </View>
-        )}
       </Container>
     );
   },
@@ -947,16 +935,6 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     color: ctx.colors2024['neutral-InvertHighlight'],
     backgroundColor: ctx.colors2024['brand-default'],
-  },
-  favoriteBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    backgroundColor: ctx.colors2024['orange-light-1'],
-    borderBottomLeftRadius: 12,
-    borderTopRightRadius: 16,
   },
   changeText: {
     fontWeight: '700',
