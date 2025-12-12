@@ -38,6 +38,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
       toAddressPositiveTips,
       toAddressInContactBook,
       toAddrCex,
+      currentNFT: nftItem,
     },
     callbacks: { handleIgnoreGasFeeChange },
     fns: { putScreenState, fetchContactAccounts },
@@ -63,6 +64,15 @@ export default function BottomArea({ account }: { account: Account | null }) {
     fromAddress,
     toAddress: formValues.to,
     cex: toAddrCex,
+    forbiddenCheck: useMemo(() => {
+      return {
+        user_addr: fromAddress || '',
+        to_addr: formValues.to || '',
+        chain_id: nftItem?.chain,
+        // id: nftItem?.id || '',
+        id: formValues.to || '',
+      };
+    }, [fromAddress, formValues.to, nftItem?.chain /* , nftItem?.id */]),
     onLoadFinished: useCallback(
       ctx => {
         putScreenState(prev => ({
@@ -222,7 +232,7 @@ const getStyles = createGetStyles2024(({ colors2024, bottomSafeArea }) => {
       paddingHorizontal: 24,
       position: 'absolute',
       paddingTop: bottomAreaSizes.containerPt,
-      paddingBottom: bottomAreaSizes.containerPb + bottomSafeArea,
+      paddingBottom: bottomAreaSizes.containerPb + 20 + bottomSafeArea,
       backgroundColor: colors2024['neutral-bg-1'],
       // ...makeDebugBorder(),
     },

@@ -204,7 +204,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   mainContent: {
     paddingHorizontal: 20,
-    paddingBottom: 248,
+    paddingBottom: 308,
   },
 
   buttonContainer: {
