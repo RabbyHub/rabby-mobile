@@ -13,6 +13,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { CombineNFTItem } from './store';
 import { apisAddrChainStatics } from '../useChainInfo';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 function encodeChainTokenId(chain: string, token_id: string) {
   return `${chain}::${token_id}`.toLowerCase();
@@ -72,10 +73,11 @@ export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(true);
   const [list, setList] = useSafeState<DisplayNftItem[]>([]);
 
+  const debouncedList = useDebouncedValue(list, 500);
   useEffect(() => {
-    if (!addr || !list) return;
-    apisAddrChainStatics.updateNft(addr, list);
-  }, [addr, list]);
+    if (!addr || !debouncedList) return;
+    apisAddrChainStatics.updateNft(addr, debouncedList);
+  }, [addr, debouncedList]);
 
   const fetchData = useCallback(
     async (force?: boolean) => {

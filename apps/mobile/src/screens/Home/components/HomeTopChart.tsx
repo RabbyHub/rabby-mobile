@@ -7,7 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import {
   CurvePoint,
   formatSmallCurrencyValue,
-  useSingleHomeCurveData,
+  useSingleHomeHomeTopChart,
 } from '@/hooks/useCurve';
 import Animated, {
   useAnimatedProps,
@@ -24,35 +24,31 @@ import {
   UNFOLD_ASSETS_HEADER_HEIGHT,
 } from '@/constant/layout';
 import Svg, { Path } from 'react-native-svg';
-import { useHomeFoldChart } from '../Home';
+import { apisSingleHome, useHomeFoldChart } from '../hooks/singleHome';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const ScreenWidth = Dimensions.get('screen').width;
 
-function Chart({
+export const HomeTopChart = memo(function Chart({
   isOffline,
   balanceLoading,
   evmBalance,
   isNoAssets,
   pathColor,
-}: // fold,
-// setFold,
-{
+}: {
   isOffline: boolean;
   balanceLoading: boolean;
   evmBalance?: number | null;
   isNoAssets: boolean;
   pathColor: string;
-  // fold: boolean;
-  // setFold: (fold: boolean) => void;
 }) {
   const { styles, colors } = useTheme2024({ getStyle });
   const [isInitialized, setIsInitialized] = useState(false);
 
   const { isFoldChart: fold } = useHomeFoldChart();
 
-  const { isLoading, selectData: data } = useSingleHomeCurveData();
+  const { isLoading, selectData: data } = useSingleHomeHomeTopChart();
 
   const isLoadingCurve = isLoading || (balanceLoading && !evmBalance);
 
@@ -128,8 +124,7 @@ function Chart({
       </View>
     </View>
   );
-}
-export const HomeTopChart = memo(Chart);
+});
 
 interface IHeaderProps {
   rawNetWorth: number;
@@ -292,7 +287,7 @@ const ChartHeader = ({
     };
   });
 
-  const { isFoldChart: fold, setFoldChart: setFold } = useHomeFoldChart();
+  const { isFoldChart: fold } = useHomeFoldChart();
 
   return (
     <View style={[styles.charHeader, loading && { display: 'none' }]}>
@@ -310,7 +305,7 @@ const ChartHeader = ({
       </View>
       <Pressable
         hitSlop={20}
-        onPress={() => setFold(!fold)}
+        onPress={() => apisSingleHome.setFoldChart(!fold)}
         style={styles.percentChangeContainer}>
         <AnimateableText
           style={lossStyleProps}

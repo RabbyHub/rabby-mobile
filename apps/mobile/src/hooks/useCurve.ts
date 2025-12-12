@@ -292,22 +292,20 @@ export function setCurveData(
   });
 }
 
-export function useSingleHomeCurveData() {
-  const curveList = loadingCurveState(s => s.curveList);
+export function useSingleHomeHasNoData() {
+  const hasNoData = loadingCurveState(s => {
+    return !s.curveList.length && !s.loadingCurve;
+  });
+
+  return { hasNoData };
+}
+export function useSingleHomeHomeTopChart() {
   const isLoading = loadingCurveState(s => s.loadingCurve);
   const selectData = loadingCurveState(s => s.selectData);
-  const isDecrease = loadingCurveState(s => s.isDecrease);
-  const result = isLoading ? undefined : selectData;
-
-  const hasNoData = !curveList.length && !isLoading;
 
   return {
-    curveList,
     isLoading,
-    hasNoData,
-    isDecrease,
     selectData,
-    result,
   };
 }
 

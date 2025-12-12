@@ -20,6 +20,7 @@ import { useSingleTokenRefresh } from './refresh';
 import { debounce } from 'lodash';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { apisAddrChainStatics } from '../useChainInfo';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -64,10 +65,12 @@ export const useTokens = (
   const [mainnetTokens, setMainnetTokens] = useSafeState<
     AbstractPortfolioToken[]
   >([]);
+
+  const debouncdMainnetTokens = useDebouncedValue(mainnetTokens, 500);
   useEffect(() => {
-    if (!userAddr || !mainnetTokens) return;
-    apisAddrChainStatics.updateToken(userAddr, mainnetTokens);
-  }, [userAddr, mainnetTokens]);
+    if (!userAddr || !debouncdMainnetTokens) return;
+    apisAddrChainStatics.updateToken(userAddr, debouncdMainnetTokens);
+  }, [userAddr, debouncdMainnetTokens]);
 
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);

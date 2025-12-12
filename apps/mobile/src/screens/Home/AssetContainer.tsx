@@ -8,37 +8,19 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 
 import { HomeTopArea } from './components/HomeTopArea';
-import { useTranslation } from 'react-i18next';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { Tabs } from 'react-native-collapsible-tab-view';
-import { useSingleHomeCurveData } from '@/hooks/useCurve';
-import useCurrentBalance from '@/hooks/useCurrentBalance';
-import { Account } from '@/core/services/preference';
+import { useSingleHomeHasNoData } from '@/hooks/useCurve';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
-import { CurveDayType } from '@/utils/curveDayType';
 import { PortfolioList } from './PortfolioList';
 import { TokenList } from './TokenList';
 import { NFTList } from './NFTList';
 import { DynamicCustomMaterialTabBar } from './components/Tabs/CustomTabBar';
 import CustomLabel from './components/Tabs/CustomLabel';
-import { ChainSelector } from './components/AssetRenderItems/SectionHeaders';
-import {
-  getAddrChainInfo,
-  useAddrChainLength,
-  useAddrTop3Chains,
-} from './useChainInfo';
-import useCachedValue from '@/hooks/common/useCachedValue';
-import { EndBg } from './components/BgComponents';
-import { useAtom } from 'jotai';
-import { useHomeFoldChart } from './Home';
+import { useAddrChainLength } from './useChainInfo';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { triggerFetchHomeData } from './components/TmpHomeRefresher';
+import { useSingleHomeAddress } from './hooks/singleHome';
 
 const ScreenWidth = Dimensions.get('window').width;
 export const icons = {
@@ -55,101 +37,25 @@ export const icons = {
 interface Props {
   onRefresh(): void;
   onReachTopStatusChange?: (status: boolean) => void;
-  account: Account;
-  reachTop: boolean;
 }
 const FOOTER_HEIGHT = 56;
-
-function SideChainSelector({
-  userAddr,
-  onChainClick,
-  chain,
-}: {
-  userAddr: string;
-  onChainClick?: React.ComponentProps<typeof ChainSelector>['onChainClick'];
-  chain?: string;
-}) {
-  const { top3Chains } = useAddrTop3Chains(userAddr);
-  return (
-    <ChainSelector
-      key={top3Chains.sort().join(',')}
-      top3Chains={top3Chains}
-      onChainClick={onChainClick}
-      chainServerId={chain}
-    />
-  );
-}
 
 export const AssetContainer: React.FC<Props> = ({
   onRefresh,
   onReachTopStatusChange,
-  reachTop,
-  account: currentAccount,
 }) => {
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const chainSelectModalRef = useRef<
-    ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
-  >();
+  const { currentAddress } = useSingleHomeAddress();
 
-  const [selectChainItem, setSelectChainItem] = useState<
-    ChainListItem | undefined
-  >();
   const { isDisConnect } = useGlobalStatus();
 
-  const { chainLength } = useAddrChainLength(currentAccount?.address);
+  const { chainLength } = useAddrChainLength(currentAddress);
 
   useRendererDetect({ name: 'Home::AssetContainer' });
 
-  const handleOnChainClick = useCallback(
-    (clear: boolean) => {
-      if (clear) {
-        setSelectChainItem(undefined);
-        return;
-      }
+  const { hasNoData: hasNoCurveData } = useSingleHomeHasNoData();
 
-      if (chainSelectModalRef.current) {
-        removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-        chainSelectModalRef.current = undefined;
-      }
-      chainSelectModalRef.current = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
-        value: selectChainItem,
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          rootViewType: 'View',
-          handleStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
-          },
-        },
-        chainList: getAddrChainInfo(currentAccount?.address).computedResult
-          .chainAssets,
-        titleText: t('page.receiveAddressList.selectChainTitle'),
-        onChange: (v: ChainListItem) => {
-          setSelectChainItem(v);
-          if (chainSelectModalRef.current) {
-            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-            chainSelectModalRef.current = undefined;
-          }
-        },
-        onClose: () => {
-          if (chainSelectModalRef.current) {
-            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-            chainSelectModalRef.current = undefined;
-          }
-        },
-      });
-    },
-    [colors2024, currentAccount?.address, isLight, selectChainItem, t],
-  );
-
-  const { hasNoData: hasNoCurveData, isDecrease } = useSingleHomeCurveData();
-
-  const { isFoldChart: fold, setFoldChart: setFold } = useHomeFoldChart();
   const handleRefresh = useCallback(
     async (ignoreLoading?: boolean) => {
       onRefresh?.();
@@ -161,16 +67,10 @@ export const AssetContainer: React.FC<Props> = ({
   const renderHeader = useCallback(() => {
     return (
       <View>
-        <HomeTopArea
-          currentAddress={currentAccount?.address || ''}
-          isDisConnect={isDisConnect}
-          // fold={fold}
-          // setFold={setFold}
-          reachTop={reachTop}
-        />
+        <HomeTopArea />
       </View>
     );
-  }, [currentAccount?.address, isDisConnect, reachTop]);
+  }, []);
 
   const hasNotAssets = useMemo(() => {
     return chainLength === 0;
@@ -189,31 +89,9 @@ export const AssetContainer: React.FC<Props> = ({
         }}
         containerStyle={styles.tabsBarContainer}
         indicatorStyle={styles.indicator}
-        bgComponent={
-          reachTop ? null : <EndBg fold={fold} isDecrease={!!isDecrease} />
-        }
-        externalContent={
-          !currentAccount?.address ? null : (
-            <SideChainSelector
-              userAddr={currentAccount?.address}
-              chain={selectChainItem?.chain}
-              onChainClick={handleOnChainClick}
-            />
-          )
-        }
       />
     ),
-    [
-      fold,
-      handleOnChainClick,
-      isDecrease,
-      reachTop,
-      currentAccount?.address,
-      selectChainItem?.chain,
-      styles.indicator,
-      styles.tabBar,
-      styles.tabsBarContainer,
-    ],
+    [styles.indicator, styles.tabBar, styles.tabsBarContainer],
   );
 
   const renderLabel = useCallback(
@@ -224,9 +102,8 @@ export const AssetContainer: React.FC<Props> = ({
     [],
   );
 
-  if (!currentAccount?.address) {
-    return null;
-  }
+  if (!currentAddress) return null;
+
   if (errorNotAssets) {
     return (
       <NetWorkError
@@ -238,36 +115,29 @@ export const AssetContainer: React.FC<Props> = ({
       />
     );
   }
+
   return (
     <Tabs.Container
       containerStyle={styles.container}
-      // minHeaderHeight={ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER}
       headerHeight={78}
-      // renderTabBar={renderTabBar}
       tabBarHeight={32}
       renderTabBar={renderTabBar}
       renderHeader={renderHeader}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab label={renderLabel('Token')} name="tokens">
         <TokenList
-          chain={selectChainItem?.chain}
-          account={currentAccount}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('DeFi')} name="defi">
         <PortfolioList
-          chain={selectChainItem?.chain}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
-          account={currentAccount}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('NFT')} name="nft">
         <NFTList
-          chain={selectChainItem?.chain}
-          account={currentAccount}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
         />

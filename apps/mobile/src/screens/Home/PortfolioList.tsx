@@ -6,7 +6,7 @@ import React, {
   useRef,
   memo,
 } from 'react';
-import { View } from 'react-native';
+import { ListRenderItem, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { createGetStyles2024 } from '@/utils/styles';
@@ -34,6 +34,7 @@ import { getItemId } from './utils/listRenderId';
 import { usePortfolios } from './hooks/usePortfolio';
 import useLoadMoreData from '../Address/components/MultiAssets/hooks/useLoadMoreData';
 import { PerpsSingleAssetPosition } from '../Perps/components/PerpsMultiAssetPosition';
+import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -50,24 +51,18 @@ const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 interface Props {
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
-  chain?: string;
-  account: Account;
-  updatePortfolio?: (portfolios: DisplayedProject[]) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 16;
 
-export const PortfolioList = ({
-  onRefresh,
-  onReachTopStatusChange,
-  chain,
-  account: currentAccount,
-  updatePortfolio: updatePortfolioCallback,
-}: Props) => {
+export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const { styles } = useTheme2024({
     getStyle: getStyles,
   });
   const { t } = useTranslation();
+  const { currentAccount } = useSingleHomeAccount();
+  const { selectedChain } = useSingleHomeChain();
+
   const focusedTab = useFocusedTab();
   const hasBeenFocusedRef = useRef(false);
 
@@ -83,25 +78,17 @@ export const PortfolioList = ({
 
   const {
     data: _rawPortfolios,
-    // hasValue: hasPortfolios,
     updateData: updatePortfolio,
     isLoading: loadingPortfolio,
     refreshing,
   } = usePortfolios(currentAccount?.address?.toLowerCase(), false);
 
-  // useEffect(() => {
-  //   if (_rawPortfolios && !loadingPortfolio) {
-  //     updatePortfolioCallback?.(_rawPortfolios);
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [_rawPortfolios?.length, loadingPortfolio, updatePortfolioCallback]);
-
   const _portfolios = useMemo(
     () =>
       _rawPortfolios.filter(item =>
-        chain && item?.chain ? item.chain === chain : true,
+        selectedChain && item?.chain ? item.chain === selectedChain : true,
       ),
-    [_rawPortfolios, chain],
+    [_rawPortfolios, selectedChain],
   );
 
   const {
@@ -155,7 +142,7 @@ export const PortfolioList = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, currentAccount?.address]);
 
-  const renderItem = useCallback(
+  const renderItem = useCallback<ListRenderItem<ActionItem>>(
     props => {
       const { item: _data } = props;
       const { type, data } = _data;

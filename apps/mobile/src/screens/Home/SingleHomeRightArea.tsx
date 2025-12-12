@@ -15,10 +15,9 @@ import { AbstractPortfolioToken } from './types';
 import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { HomePendingBadge } from './components/HomePending';
-import { Account } from '@/core/services/preference';
-import { useHomeFoldChart } from './Home';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useSingleHomeAccount, apisSingleHome } from './hooks/singleHome';
 
 const hitSlop = {
   top: 10,
@@ -38,7 +37,6 @@ interface HeaderRightHistoryProps {
   isInTokenDetail?: boolean;
   isMultiAddress?: boolean;
   tokenItem?: AbstractPortfolioToken;
-  account: Account;
 }
 
 const refreshHistoryIdState = zCreate<{ refreshId: number }>(() => ({
@@ -65,7 +63,6 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   isInTokenDetail,
   isMultiAddress,
   tokenItem,
-  account: currentAccount,
 }) => {
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | ReturnType<typeof setInterval>>(null);
@@ -76,7 +73,8 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     fail: number;
   }>();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { setFoldChart } = useHomeFoldChart();
+
+  const { currentAccount } = useSingleHomeAccount();
 
   const fetchHistory = useCallback(() => {
     if (!currentAccount) {
@@ -125,8 +123,9 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   );
 
   const openHistory = useCallback(async () => {
-    setFoldChart(true);
-    await switchSceneCurrentAccount('History', currentAccount);
+    apisSingleHome.setFoldChart(true);
+    currentAccount &&
+      (await switchSceneCurrentAccount('History', currentAccount));
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: isMultiAddress
@@ -141,7 +140,6 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
       }),
     );
   }, [
-    setFoldChart,
     switchSceneCurrentAccount,
     currentAccount,
     navigation,
@@ -187,18 +185,17 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   );
 };
 
-export const RightArea: React.FC<{
-  account: Account;
-}> = ({ account: currentAccount }) => {
+export const RightArea = () => {
   const showAddressDetail = useAddressDetailModal();
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
   const { t } = useTranslation();
-  const { setFoldChart } = useHomeFoldChart();
+
+  const { currentAccount } = useSingleHomeAccount();
 
   const onPress = () => {
     if (currentAccount) {
-      setFoldChart(true);
+      apisSingleHome.setFoldChart(true);
       showAddressDetail({
         account: currentAccount,
         onDelete: () => {
@@ -211,7 +208,7 @@ export const RightArea: React.FC<{
 
   return (
     <>
-      <HeaderRightHistory account={currentAccount} />
+      <HeaderRightHistory />
       <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
         <RcIconMore width={24} height={24} color={colors2024['neutral-body']} />
       </CustomTouchableOpacity>

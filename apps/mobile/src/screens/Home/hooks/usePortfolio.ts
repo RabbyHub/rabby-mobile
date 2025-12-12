@@ -15,6 +15,7 @@ import { debounce } from 'lodash';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useSingleDeFiRefresh } from './refresh';
 import { apisAddrChainStatics } from '../useChainInfo';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 export const tagProfiles = (
   profiles: DisplayedProject[],
@@ -121,11 +122,11 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     ];
   }, [_data.address, _data.data, _setData, userAddr]);
 
-  const addrData = _data.data;
+  const debouncedAddrData = useDebouncedValue(_data.data, 500);
   useEffect(() => {
-    if (!userAddr || !addrData) return;
-    apisAddrChainStatics.updatePortfolio(userAddr, addrData);
-  }, [userAddr, addrData]);
+    if (!userAddr || !debouncedAddrData) return;
+    apisAddrChainStatics.updatePortfolio(userAddr, debouncedAddrData);
+  }, [userAddr, debouncedAddrData]);
 
   const [isLoading, setLoading] = useSafeState(true);
   const [refreshing, setRefreshing] = useState(false);

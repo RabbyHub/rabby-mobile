@@ -17,17 +17,14 @@ import { trigger } from 'react-native-haptic-feedback';
 import { useIsRefreshing } from './hooks/project';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useIsLoadingCurve } from '@/hooks/useCurve';
-import { useHomeFoldChart } from './Home';
+import { apisSingleHome, useSingleHomeAccount } from './hooks/singleHome';
 
-export default function HomeHeaderArea({
-  account: currentAccount,
-}: {
-  account: Account;
-}) {
+export default function HomeHeaderArea() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { isRefreshing: refreshing } = useIsRefreshing();
   const { isLoadingCurve } = useIsLoadingCurve();
-  const { setFoldChart } = useHomeFoldChart();
+
+  const { currentAccount } = useSingleHomeAccount();
 
   const name = useMemo(
     () => currentAccount?.aliasName || currentAccount?.brandName,
@@ -39,7 +36,7 @@ export default function HomeHeaderArea({
   >(
     evt => {
       evt.stopPropagation();
-      setFoldChart(true);
+      apisSingleHome.setFoldChart(true);
       if (!currentAccount?.address) {
         return;
       }
@@ -50,7 +47,7 @@ export default function HomeHeaderArea({
       Clipboard.setString(currentAccount.address);
       toastCopyAddressSuccess(currentAccount.address);
     },
-    [currentAccount.address, setFoldChart],
+    [currentAccount?.address],
   );
 
   const nav = useNavigation();

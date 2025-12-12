@@ -13,41 +13,13 @@ import { RightArea } from './SingleHomeRightArea';
 import { BottomBtns } from './components/BottomBtns';
 import { TopBg } from './components/BgComponents';
 import { useBgSize } from './hooks/useBgSize';
-import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { useSingleHomeIsDecrease } from '@/hooks/useCurve';
-
-// export const foldChartAtom = atom(true);
-const singleAddressHomeFoldChartState = zCreate<{ foldChart: boolean }>(() => ({
-  foldChart: true,
-}));
-
-export function useHomeFoldChart() {
-  return {
-    isFoldChart: singleAddressHomeFoldChartState(s => s.foldChart),
-    setFoldChart,
-  };
-}
-
-function setFoldChart(valOrFunc: UpdaterOrPartials<boolean>) {
-  singleAddressHomeFoldChartState.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.foldChart,
-      valOrFunc,
-      {
-        strict: true,
-      },
-    );
-    if (!changed) return prev;
-    return { ...prev, foldChart: newVal };
-  });
-}
+import { apisSingleHome } from './hooks/singleHome';
 
 function SingleAddressHome(): JSX.Element {
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const [reachTop, setReachTop] = useState(false);
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const { topHeight } = useBgSize();
   const route =
@@ -64,7 +36,7 @@ function SingleAddressHome(): JSX.Element {
 
   const handleReachTopStatusChange = React.useCallback(
     (status: boolean) => {
-      setReachTop(!status);
+      apisSingleHome.setReachTop(!status);
       Animated.timing(fadeAnim, {
         toValue: status ? 1 : 0,
         duration: 100,
@@ -73,31 +45,17 @@ function SingleAddressHome(): JSX.Element {
     },
     [fadeAnim],
   );
-  const renderHeaderTitle = React.useCallback(() => {
-    return <SingleAddressHome.HeaderArea account={currentAccount} />;
-  }, [currentAccount]);
-
-  const renderHeaderRight = React.useCallback(() => {
-    return <RightArea account={currentAccount} />;
-  }, [currentAccount]);
 
   useRendererDetect({ name: 'SingleAddressHome' });
 
   React.useEffect(() => {
     setNavigationOptions({
-      // header: props => <HomeNativeStackHeader {...props} />,
-      headerTitle: renderHeaderTitle,
-      headerRight: renderHeaderRight,
+      headerTitle: () => <SingleAddressHome.HeaderArea />,
+      headerRight: () => <SingleAddressHome.RightArea />,
     });
-  }, [
-    currentAccount.address,
-    navigation,
-    renderHeaderRight,
-    renderHeaderTitle,
-    setNavigationOptions,
-  ]);
+  }, [setNavigationOptions]);
   const handleTouchEnd = () => {
-    setFoldChart(true);
+    apisSingleHome.setFoldChart(true);
   };
 
   return (
@@ -115,8 +73,6 @@ function SingleAddressHome(): JSX.Element {
         <AssetContainer
           onRefresh={triggerUpdate}
           onReachTopStatusChange={handleReachTopStatusChange}
-          account={currentAccount}
-          reachTop={reachTop}
         />
       </View>
       <View style={styles.bottomContainer} onTouchStart={handleTouchEnd}>
@@ -126,6 +82,7 @@ function SingleAddressHome(): JSX.Element {
   );
 }
 
+SingleAddressHome.RightArea = RightArea;
 SingleAddressHome.HeaderArea = HeaderArea;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({

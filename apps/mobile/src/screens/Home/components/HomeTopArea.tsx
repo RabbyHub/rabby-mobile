@@ -15,22 +15,15 @@ import { CenterBg } from './BgComponents';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { CurveDayType } from '@/utils/curveDayType';
 import { perfEvents } from '@/core/utils/perf';
+import { useHomeReachTop, useSingleHomeAddress } from '../hooks/singleHome';
+import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 
-export const HomeTopArea = ({
-  currentAddress,
-  isDisConnect,
-  // fold,
-  // setFold,
-  reachTop,
-}: {
-  currentAddress: string;
-  isDisConnect: boolean;
-  // fold: boolean;
-  // setFold: (fold: boolean) => void;
-  reachTop: boolean;
-}) => {
+export const HomeTopArea = () => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { currentAddress } = useSingleHomeAddress();
+  const { isDisConnect } = useGlobalStatus();
+
   const { balance, balanceLoading, evmBalance } = useCurrentBalance(
     currentAddress,
     {
@@ -38,6 +31,13 @@ export const HomeTopArea = ({
       noNeedBalance: false,
     },
   );
+  console.debug(
+    '[perf] HomeTopArea balance, evmBalance, balanceLoading',
+    balance,
+    evmBalance,
+    balanceLoading,
+  );
+
   const { refresh: refreshCurve } = useSingleHomeCurveRefresh(
     currentAddress,
     evmBalance,
@@ -46,7 +46,6 @@ export const HomeTopArea = ({
   );
 
   const { isLoss } = useSingleHomeIsLoss();
-  const { isDecrease } = useSingleHomeIsDecrease();
 
   useEffect(() => {
     refreshCurve();
@@ -69,11 +68,11 @@ export const HomeTopArea = ({
     [colors2024, isLoss],
   );
 
+  const { reachTop } = useHomeReachTop();
+
   return (
     <View style={[styles.container]}>
-      {reachTop ? null : (
-        <CenterBg /* fold={fold}  */ isDecrease={!!isDecrease} />
-      )}
+      {reachTop ? null : <CenterBg />}
       <GlobalWarning
         hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
@@ -82,8 +81,6 @@ export const HomeTopArea = ({
       />
 
       <HomeTopChart
-        // fold={fold}
-        // setFold={setFold}
         balanceLoading={balanceLoading}
         evmBalance={evmBalance}
         pathColor={pathColor}

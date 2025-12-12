@@ -124,21 +124,22 @@ function setAddressChainInfo(
   });
 }
 
-export function useAddrChainLength(address: string) {
-  const addr = address.toLowerCase();
+export function useAddrChainLength(address?: string) {
+  const addr = address?.toLowerCase();
   const chainLength =
     addrChainStaticsStore(
-      useShallow(s => s[addr]?.computedResult.chainLength || 0),
+      useShallow(s => (!addr ? 0 : s[addr]?.computedResult.chainLength || 0)),
     ) || 0;
   return { chainLength };
 }
 
-export function useAddrTop3Chains(address: string) {
-  const addr = address.toLowerCase();
+export function useAddrTop3Chains(address?: string) {
+  const addr = address?.toLowerCase();
   const defaultValue = useMemo(() => [], []);
   const top3Chains =
-    addrChainStaticsStore(s => s[addr]?.computedResult.top3Chains) ||
-    defaultValue;
+    addrChainStaticsStore(s =>
+      !addr ? defaultValue : s[addr]?.computedResult.top3Chains,
+    ) || defaultValue;
   return { top3Chains };
 }
 
@@ -178,7 +179,8 @@ export const apisAddrChainStatics = {
 
     return chainUnit;
   },
-  updateToken: (addr: string, tokens: AbstractPortfolioToken[]) => {
+  updateToken: debounce((addr: string, tokens: AbstractPortfolioToken[]) => {
+    console.debug('[feat] updateToken called');
     addr = addr.toLowerCase();
 
     const prevFinalInfo =
@@ -202,7 +204,7 @@ export const apisAddrChainStatics = {
         [addr]: { ...prevFinalInfo, computedResult: computed },
       };
     });
-  },
+  }, 300),
   computeChainAssetsPortfolio: (portfolios: AbstractProject[]) => {
     const chainUnit: ChainAssetsUnit = {};
     portfolios?.forEach(portfolio => {
@@ -222,7 +224,8 @@ export const apisAddrChainStatics = {
 
     return chainUnit;
   },
-  updatePortfolio: (addr: string, _portfolios: DisplayedProject[]) => {
+  updatePortfolio: debounce((addr: string, _portfolios: DisplayedProject[]) => {
+    console.debug('[feat] updatePortfolio called');
     addr = addr.toLowerCase();
 
     const prevFinalInfo =
@@ -247,7 +250,7 @@ export const apisAddrChainStatics = {
         [addr]: { ...prevFinalInfo, computedResult: computed },
       };
     });
-  },
+  }, 300),
   computeChainAssetsNft: (nftList: DisplayNftItem[]) => {
     const chainUnit: ChainAssetsUnit = {};
     nftList?.forEach(nft => {
@@ -258,7 +261,8 @@ export const apisAddrChainStatics = {
     });
     return chainUnit;
   },
-  updateNft: (addr: string, nftList: DisplayNftItem[]) => {
+  updateNft: debounce((addr: string, nftList: DisplayNftItem[]) => {
+    console.debug('[feat] updateNft called');
     addr = addr.toLowerCase();
 
     const prevFinalInfo =
@@ -282,7 +286,7 @@ export const apisAddrChainStatics = {
         [addr]: { ...prevFinalInfo, computedResult: computed },
       };
     });
-  },
+  }, 300),
   getComputedResultFromChainAssets: (chainUnit: Record<string, BigNumber>) => {
     const totalValue = Object.values(chainUnit).reduce(
       (sum, total) => sum.plus(total),

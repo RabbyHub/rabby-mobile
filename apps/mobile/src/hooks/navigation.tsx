@@ -6,11 +6,7 @@ import {
   NativeStackNavigationOptions,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import {
-  getColors2024,
-  useGetBinaryMode,
-  useThemeColors2024,
-} from '../hooks/theme';
+import { apisTheme, useGetBinaryMode } from '../hooks/theme';
 import { getReadyNavigationInstance, navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
@@ -104,7 +100,7 @@ export const useStackScreenConfig = () => {
   /** @deprecated for new screen use mergeScreenOptions2024 instead */
   const mergeScreenOptions = useCallback(
     (...optsList: Partial<ScreenOptions>[]) => {
-      const { colors, colors2024 } = getColors2024(appThemeMode);
+      const { colors, colors2024 } = apisTheme.getColors2024(appThemeMode);
       const headerPresets = makeHeadersPresets({ colors, colors2024 });
 
       const screenOptions: ScreenOptions = {
@@ -149,7 +145,7 @@ export const useStackScreenConfig = () => {
 
   const mergeScreenOptions2024 = useCallback(
     (optsList: Partial<ScreenOptions>[], options?: any) => {
-      const { colors, colors2024 } = getColors2024(appThemeMode);
+      const { colors, colors2024 } = apisTheme.getColors2024(appThemeMode);
       const headerPresets = makeHeadersPresets({ colors, colors2024 });
 
       const screenOptions: ScreenOptions = {
@@ -210,7 +206,7 @@ export function useBottomTabScreenConfig() {
 
   const mergeBottomTabOptions2024 = useCallback(
     (optsList: Partial<BottomTabNavigationOptions>[] = [], options?: any) => {
-      const { colors, colors2024 } = getColors2024(appThemeMode);
+      const { colors, colors2024 } = apisTheme.getColors2024(appThemeMode);
       const headerPresets = makeHeadersPresets({ colors, colors2024 });
 
       const bottomTabOptions: BottomTabNavigationOptions = {
