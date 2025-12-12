@@ -1427,16 +1427,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         throw e;
       }
 
-      stats.report('createTransaction', {
-        type: currentAccount.brandName,
-        category: KEYRING_CATEGORY_MAP[currentAccount.type],
-        chainId: chain.serverId,
-        createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-        source: params?.$ctx?.ga?.source || '',
-        trigger: params?.$ctx?.ga?.trigger || '',
-        swapUseSlider: params?.$ctx?.ga.swapUseSlider ?? '',
-      });
-
       matomoRequestEvent({
         category: 'Transaction',
         action: 'init',
@@ -1490,6 +1480,18 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         // no cache, use the fast level in gasMarket
         gas = gasList.find(item => item.level === 'normal')!;
       }
+
+      stats.report('createTransaction', {
+        type: currentAccount.brandName,
+        category: KEYRING_CATEGORY_MAP[currentAccount.type],
+        chainId: chain.serverId,
+        createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+        source: params?.$ctx?.ga?.source || '',
+        trigger: params?.$ctx?.ga?.trigger || '',
+        swapUseSlider: params?.$ctx?.ga.swapUseSlider ?? '',
+        gasLevel: gas?.level || 'normal',
+      });
+
       const fee = calcMaxPriorityFee(
         gasList,
         gas,
