@@ -216,11 +216,6 @@ export default function useCurrentBalance(
     };
   }, [getCurrentBalance]);
 
-  // useEffect(() => {
-  //   getCurrentBalance(forceUpdate);
-  //   setForceUpdate(false);
-  // }, [account?.toLowerCase(), balanceNonce]);
-
   return {
     balance,
     evmBalance,

@@ -297,12 +297,31 @@ export function useSingleHomeIsLoss() {
 
 export const useSingleHomeCurveRefresh = (
   address: string | undefined,
-  realtimeNetWorth: number | null,
-  days: CurveDayType = CurveDayType.DAY,
-  staticBalance: number | null,
+  {
+    realtimeNetWorth = null,
+    days = CurveDayType.DAY,
+    staticBalance = null,
+  }: {
+    realtimeNetWorth: number | null;
+    days: CurveDayType;
+    staticBalance: number | null;
+  },
 ) => {
   const fetch = useCallback(
     async (addr: string, force = false) => {
+      /**
+       * TODO: this is temporary solution, but this is still MUCH BETTER than its previous shape,
+       * at least it's readable, observable, predictable and stable.
+       */
+      if (
+        typeof realtimeNetWorth !== 'number' ||
+        typeof staticBalance !== 'number'
+      ) {
+        console.warn(
+          'realtimeNetWorth or staticBalance is invalid, skip this time fetch',
+        );
+        return;
+      }
       try {
         const curve = await getNetCurve(addr, days, force);
         const start =
