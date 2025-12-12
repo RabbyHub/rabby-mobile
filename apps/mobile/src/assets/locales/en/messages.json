@@ -45,6 +45,8 @@
       "Today": "Today",
       "Yesterday": "Yesterday",
       "ViewSmallItems": "View transactions < $0.1",
+      "scam": "Scam",
+      "scamTips": "This transaction is initiated by scammers to send scam tokens and NFTs. Please refrain from interacting with it.",
       "itemTitle": {
         "LendingSupply": "Supply",
         "LendingWithdraw": "Withdraw",

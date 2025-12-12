@@ -626,7 +626,17 @@ export const usePerpsState = () => {
         setAccountNeedApproveBuilderFee(false);
       }
     } else {
-      handleSetLaterApproveStatus(signActions);
+      let needApproveAgent = false;
+      let needApproveBuilderFee = false;
+      signActions.forEach(item => {
+        if (item.type === 'approveAgent') {
+          needApproveAgent = true;
+        } else if (item.type === 'approveBuilderFee') {
+          needApproveBuilderFee = true;
+        }
+      });
+      setAccountNeedApproveAgent(needApproveAgent);
+      setAccountNeedApproveBuilderFee(needApproveBuilderFee);
     }
 
     await loginPerpsAccount(account);
