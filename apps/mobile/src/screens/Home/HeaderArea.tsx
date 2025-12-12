@@ -14,44 +14,39 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
-import { refreshingAtom } from './hooks/project';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useIsRefreshing } from './hooks/project';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import { loadingCurveAtom } from '@/hooks/useCurve';
-import { foldChartAtom } from './Home';
+import { useIsLoadingCurve } from '@/hooks/useCurve';
+import { apisSingleHome, useSingleHomeAccountAlias } from './hooks/singleHome';
 
-export default function HomeHeaderArea({
-  account: currentAccount,
-}: {
-  account: Account;
-}) {
+export default function HomeHeaderArea() {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const refreshing = useAtomValue(refreshingAtom);
-  const isLoadingCurve = useAtomValue(loadingCurveAtom);
-  const setFoldChart = useSetAtom(foldChartAtom);
+  const { isRefreshing: refreshing } = useIsRefreshing();
+  const { isLoadingCurve } = useIsLoadingCurve();
 
-  const name = useMemo(
-    () => currentAccount?.aliasName || currentAccount?.brandName,
-    [currentAccount],
-  );
+  const {
+    address: currentAddress,
+    brandName,
+    name,
+  } = useSingleHomeAccountAlias();
 
   const handleCopyAddress = useCallback<
     React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
   >(
     evt => {
       evt.stopPropagation();
-      setFoldChart(true);
-      if (!currentAccount?.address) {
+      apisSingleHome.setFoldChart(true);
+      if (!currentAddress) {
         return;
       }
       trigger('impactLight', {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
-      Clipboard.setString(currentAccount.address);
-      toastCopyAddressSuccess(currentAccount.address);
+      Clipboard.setString(currentAddress);
+      toastCopyAddressSuccess(currentAddress);
     },
-    [currentAccount.address, setFoldChart],
+    [currentAddress],
   );
 
   const nav = useNavigation();
@@ -67,8 +62,8 @@ export default function HomeHeaderArea({
             <View className="relative">
               <TouchableOpacity hitSlop={24} onPress={goBack}>
                 <WalletIcon
-                  type={currentAccount?.brandName as KEYRING_TYPE}
-                  address={currentAccount?.address}
+                  type={brandName as KEYRING_TYPE}
+                  address={currentAddress}
                   width={22}
                   height={22}
                   borderRadius={6}

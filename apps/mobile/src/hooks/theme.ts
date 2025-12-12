@@ -120,7 +120,7 @@ export function makeThemeOptions(t: TFunction) {
 }
 
 export function useAppThemeConfig() {
-  const appTheme = themeModeStore(s => s);
+  const appTheme = themeModeStore(s => s.appTheme);
   return appTheme;
 }
 
@@ -211,21 +211,23 @@ export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
 
 const makeNoop = () => () => void 0;
 
-export function getColors2024(appThemeMode: ReturnType<typeof getBinaryMode>) {
+export const apisTheme = {
+  getBinaryMode,
+  getColors2024,
+};
+
+export function getColors2024(
+  appThemeMode: ReturnType<typeof getBinaryMode> = getBinaryMode(),
+) {
   const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
   const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
 
   return {
+    isLight: appThemeMode !== 'dark',
     classicalColors,
     colors: classicalColors,
     colors2024,
   };
-}
-
-export function useThemeColors2024() {
-  const appThemeMode = useGetBinaryMode();
-
-  return React.useMemo(() => getColors2024(appThemeMode), [appThemeMode]);
 }
 
 export function useTheme2024<

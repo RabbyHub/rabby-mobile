@@ -219,6 +219,8 @@ const getDefaultValue = () => ({
 
   userFeedback: '',
   isSubmitting: false,
+
+  totalBalanceText: '',
 });
 const rateModalStore = zCreate(() => getDefaultValue());
 function setRateModalState(
@@ -229,6 +231,15 @@ function setRateModalState(
 
     return { ...prev, ...newVal };
   });
+}
+
+export function useSetTotalBalanceTextForRateModal(totalBalanceText: string) {
+  useEffect(() => {
+    setRateModalState(prev => ({
+      ...prev,
+      totalBalanceText,
+    }));
+  }, [totalBalanceText]);
 }
 
 const toggleShowRateModal = (
@@ -270,16 +281,17 @@ const onChangeFeedback = (feedback: string) => {
 };
 
 const pushRateDetails = async (params: {
-  totalBalanceText: string;
+  totalBalanceText?: string;
   userStar?: number;
 }) => {
-  const userStar = params.userStar ?? rateModalStore.getState().userStar;
+  const rmState = rateModalStore.getState();
+  const userStar = params.userStar ?? rmState.userStar;
   const needFeedbackText = userStar <= 3;
 
-  const feedbackText = rateModalStore.getState().userFeedback.trim();
+  const feedbackText = rmState.userFeedback.trim();
 
   const starText = `${makeStarText(userStar, 5)} (${userStar})`;
-  const balanceText = params.totalBalanceText;
+  const balanceText = params.totalBalanceText || rmState.totalBalanceText;
   const versionText = APP_VERSIONS.forFeedback;
 
   const feedbackContent = [

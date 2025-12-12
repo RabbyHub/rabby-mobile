@@ -23,7 +23,7 @@ import { SwitchAllowScreenshot } from '../components/SwitchAllowScreenshot';
 import { useExpScreenCapture } from '@/hooks/appSettings';
 import { LabelScreenshotToReport } from '../components/SwitchScreenshotToReport';
 import {
-  useGetShowFeedbackOnScreenshotCapture,
+  getShowFeedbackOnScreenshotCapture,
   useScreenshotToReportEnabled,
 } from '@/components/Screenshot/hooks';
 
@@ -68,8 +68,6 @@ export default function DevScreenRecordingModal({
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
 
-  const { getShowFeedbackOnScreenshotCapture } =
-    useGetShowFeedbackOnScreenshotCapture();
   const isScreenshotReportEnabled = getShowFeedbackOnScreenshotCapture();
   const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
 

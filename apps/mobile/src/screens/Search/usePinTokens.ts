@@ -31,8 +31,6 @@ const getPinTokens = async () => {
   return newTokenDetails;
 };
 
-// export const pinTokensAtom = atom<TokenItem[]>([]);
-
 type PinTokensState = {
   pinTokens: TokenItem[];
 };
@@ -51,11 +49,7 @@ export async function handleFetchTokens() {
 }
 
 export const usePinTokens = () => {
-  // const [data, setData] = useAtom(pinTokensAtom);
   const data = pinTokensStore(s => s.pinTokens);
-  // const handleFetchTokens = useCallback(() => {
-  //   return getPinTokens().then(setData);
-  // }, [setData]);
 
   return {
     data,

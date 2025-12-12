@@ -131,11 +131,7 @@ export const useMulti24hBalance = (
               },
             }));
             try {
-              const address24hBalance = await get24hBalance(
-                addr,
-                totalEvmBalance || 0,
-                force,
-              );
+              const address24hBalance = await get24hBalance(addr, force);
               setMulti24hBalance(prev => ({
                 ...prev,
                 [addr]: {
@@ -157,7 +153,7 @@ export const useMulti24hBalance = (
         setLoading(false);
       }
     },
-    [setLoading, setMulti24hBalance, totalEvmBalance],
+    [setLoading, setMulti24hBalance],
   );
 
   const refresh = useCallback(

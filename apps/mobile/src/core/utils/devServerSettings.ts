@@ -6,10 +6,6 @@ import { resolveValFromUpdater, UpdaterOrPartials } from './store';
 
 const PERSIST_KEY = '@devServerSettings';
 
-export function getDevServerHost() {
-  return appJsonStore.getItem(PERSIST_KEY, {})?.devServerHost;
-}
-
 type DevServerHostState = {
   /** @sample 192.168.0.1:9090 */
   devServerHost: string;
@@ -20,6 +16,10 @@ const devServerSettingsStotre = zustandByMMKV<DevServerHostState>(PERSIST_KEY, {
   devServerHost: '',
   devServerHostAvailable: false,
 });
+
+export function getDevServerHost() {
+  return devServerSettingsStotre.getState().devServerHost;
+}
 
 function setDevServerStore(valOrFunc: UpdaterOrPartials<DevServerHostState>) {
   devServerSettingsStotre.setState(prev => {

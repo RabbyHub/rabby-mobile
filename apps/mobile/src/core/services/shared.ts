@@ -5,7 +5,10 @@ import {
   normalizeKeyringState,
 } from '../storage/mmkv';
 
-import { ContactBookService } from '@rabby-wallet/service-address';
+import {
+  ContactBookService,
+  ContactBookStore,
+} from '@rabby-wallet/service-address';
 
 import { findChainByID } from '@/utils/chain';
 import { DappService } from './dappService';
@@ -47,6 +50,7 @@ import { PerpsService } from './perpsService';
 import { CurrencyService } from './currencyService';
 import { LendingService } from './lendingService';
 import { SAFE_API_KEY } from '@/constant/env';
+import { perfEvents } from '../utils/perf';
 
 migrateAppStorage(appStorage);
 
@@ -90,6 +94,17 @@ const keyringClasses = [
 
 export const contactService = new ContactBookService({
   storageAdapter: appStorage,
+});
+contactService.setBeforeSetKV((k, v) => {
+  switch (k) {
+    case 'aliases': {
+      const aliases = v as unknown as ContactBookStore['aliases'];
+      perfEvents.emit('CONTACTS_ALIASES_UPDATE', {
+        nextState: aliases,
+      });
+      break;
+    }
+  }
 });
 
 export const appEncryptor = new RNEncryptor();

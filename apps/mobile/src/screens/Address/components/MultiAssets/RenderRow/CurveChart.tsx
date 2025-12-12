@@ -22,11 +22,15 @@ import Svg, { Path } from 'react-native-svg';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from '../hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { useIsFocused } from '@react-navigation/native';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { create } from 'zustand';
+import {
+  useScene24hBalanceCombinedData,
+  useSceneIsLoading,
+  useSceneIsLoadingNew,
+} from '@/hooks/useScene24hBalance';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const ScreenWidth = Dimensions.get('screen').width;
@@ -40,24 +44,20 @@ export const useFoldMultiChartStore = create<{
 }));
 
 function Chart({
-  data,
   hideType,
-  loadingNewCurve,
   accountsLength,
 }: {
-  data: ReturnType<typeof useMulti24hBalance>['combineData'];
-  loadingNewCurve: boolean;
   hideType: BALANCE_HIDE_TYPE;
   accountsLength?: number;
 }) {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const { isFoldMultiChart, setIsFoldMultiChart } = useFoldMultiChartStore();
 
+  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+  const { isLoadingNew: loadingNewCurve } = useSceneIsLoadingNew('Home');
+
   const { top10Addresses } = useAccountInfo();
-  const { getTotalBalance } = useAccountsBalance({
-    cacheTime: 10 * 60 * 1000,
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
+  const { getTotalBalance } = useAccountsBalance();
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);

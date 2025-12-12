@@ -12,7 +12,7 @@ export const useFetchCexInfo = () => {
   const { accounts } = useAccounts();
   const { whitelist } = useWhitelist();
 
-  const pendFechCexAddresses = useMemo(() => {
+  const pendingFetchCexAddresses = useMemo(() => {
     const watchAccounts = accounts.filter(
       account => account.type === KEYRING_CLASS.WATCH,
     );
@@ -39,7 +39,7 @@ export const useFetchCexInfo = () => {
     }
 
     const timeoutId = setTimeout(() => {
-      pendFechCexAddresses.forEach(address => {
+      pendingFetchCexAddresses.forEach(address => {
         queue.add(async () => {
           try {
             await getCexWithLocalCache(address, false);
@@ -52,5 +52,5 @@ export const useFetchCexInfo = () => {
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendFechCexAddresses.join(',')]);
+  }, [pendingFetchCexAddresses.join(',')]);
 };

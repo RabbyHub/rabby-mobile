@@ -40,8 +40,6 @@ export const getBookmarkList = () => {
 };
 
 export function useBrowserBookmark() {
-  // const [store, setStore] = useAtom(browserBookmarkAtom);
-  // const [dapps] = useAtom(dappsAtom);
   const store = zBrowserBookmarkStore(s => s);
   const { dapps } = useDappsValue();
 

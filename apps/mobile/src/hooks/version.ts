@@ -60,18 +60,6 @@ export function useUpgradeInfo(options?: { isTop?: boolean }) {
   const remoteVersion = remoteVersionStore(s => s);
   const localVersion = localVersionStore(s => s);
 
-  // const [remoteVersion, setRemoteVersion] = useAtom(remoteVersionAtom);
-  // const [localVersion, setLocalVersion] = useAtom(localVersionAtom);
-
-  // const loadRemoteVersion = useCallback(async () => {
-  //   return getUpgradeInfo().then(result => {
-  //     setRemoteVersion(result.finalRemoteInfo);
-  //     setLocalVersion(result.localVersion);
-
-  //     return result;
-  //   });
-  // }, []);
-
   const openedModalIdRef = useRef<string>('');
   const triggerCheckVersion = useCallback(
     async (options?: Parameters<typeof getUpgradeInfo>[0]) => {
@@ -126,7 +114,6 @@ export function useUpgradeInfo(options?: { isTop?: boolean }) {
  * @warning make sure this hook only used on non-production environment
  */
 export function useForceLocalVersionForNonProduction() {
-  // const [localVersion, setLocalVersion] = useAtom(localVersionAtom);
   const localVersion = localVersionStore(s => s);
   const { triggerCheckVersion } = useUpgradeInfo();
 

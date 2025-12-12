@@ -16,6 +16,7 @@ import { AddressItemContextMenu } from './AddressItemContextMenu';
 import { AddressItemInner2024 } from './AddressItemInner2024';
 import { AddressItemShadowView } from './AddressItemShadowView';
 import { isTabsSwiping } from './MultiAssets/hooks';
+import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const { isSameAddress } = addressUtils;
 
@@ -71,12 +72,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
     onSelect?.();
     handleGoDetail?.();
-    navigateDeprecated(RootNames.SingleAddressStack, {
-      screen: RootNames.SingleAddressHome,
-      params: {
-        account,
-      },
-    });
+    apisSingleHome.navigateToSingleHome(account);
   }, [account, onSelect, handleGoDetail]);
 
   const isCurrentAccount = React.useMemo(() => {

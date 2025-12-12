@@ -29,8 +29,8 @@ import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import {
-  collectionNftList,
   NftItemWithCollection,
+  varyNftListByFold,
 } from '@/screens/Home/hooks/nft';
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -53,6 +53,7 @@ import {
 } from './hooks/share';
 import { isTabsSwiping, useAccountInfo } from './hooks';
 import { useAssetsNFTs, useOnNftRefresh } from '@/screens/Home/hooks/store';
+import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -65,11 +66,13 @@ export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
 
 interface Props {
   chain?: string;
-  updateNft: (nfts: DisplayNftItem[]) => void;
 }
-export const NFTList = ({ chain, updateNft }: Props) => {
+export const NFTList = () => {
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+
+  const selectedChainItem = useSelectedChainItem();
+  const chain = selectedChainItem?.chain;
 
   const [foldNft, setFoldNft] = useState(true);
 
@@ -91,35 +94,26 @@ export const NFTList = ({ chain, updateNft }: Props) => {
     hideCombined: false,
   });
 
-  useEffect(() => {
-    if (_rawNftList && !isLoading) {
-      updateNft?.(_rawNftList);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawNftList?.length, isLoading, updateNft]);
-
   const nftList = useMemo(() => {
     return _rawNftList?.filter(item =>
       chain && item?.chain ? item.chain === chain : true,
     );
   }, [_rawNftList, chain]);
 
-  const foldNftList: ActionItem[] = useMemo(
-    () =>
-      collectionNftList(nftList.filter(i => i._isFold)).map(item => ({
-        type: 'fold_nft',
-        data: item,
-      })),
-    [nftList],
-  );
-  const unFoldNftList: ActionItem[] = useMemo(
-    () =>
-      collectionNftList(nftList.filter(i => !i._isFold)).map(item => ({
-        type: 'unfold_nft',
-        data: item,
-      })),
-    [nftList],
-  );
+  const { foldNftList, unFoldNftList } = useMemo(() => {
+    const result = varyNftListByFold<ActionItem>(
+      nftList,
+      (collection, item) => ({
+        type: item._isFold ? 'fold_nft' : 'unfold_nft',
+        data: collection,
+      }),
+    );
+
+    return {
+      foldNftList: result.foldList,
+      unFoldNftList: result.unFoldList,
+    };
+  }, [nftList]);
 
   const dataList = useMemo(() => {
     const itemData: Array<{

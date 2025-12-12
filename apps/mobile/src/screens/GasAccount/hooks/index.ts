@@ -108,8 +108,6 @@ export const useGasAccountGoBack = () => {
 export const useGasAccountMethods = () => {
   const { sig, accountId } = useGasAccountSign();
   const [, setLogoutVisible] = useGasAccountLogoutVisible();
-  const [, setLoginVisible] = useGasAccountLoginVisible();
-  const gotoDashboard = useGasAccountGoBack();
 
   const setGasAccount = useSetGasAccount();
 

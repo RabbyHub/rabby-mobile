@@ -7,7 +7,6 @@ import { useDappsValue, useDapps } from './useDapps';
 import { useBrowserHistory } from './browser/useBrowserHistory';
 
 export const useDappsHome = () => {
-  // const [dapps] = useAtom(dappsAtom);
   const { dapps } = useDappsValue();
   const {
     getDapps,

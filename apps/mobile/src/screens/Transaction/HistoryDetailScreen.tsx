@@ -30,8 +30,6 @@ import { formatIntlTimestamp } from '@/utils/time';
 import { useRoute } from '@react-navigation/native';
 import { getAlianName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
-import { navigateDeprecated } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
@@ -49,12 +47,12 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { useTranslation } from 'react-i18next';
 import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { usePendingBuyItemData } from '../Buy/hooks/history';
 import { HistoryItemCateType } from './components/type';
 import { findAccountByPriority } from '@/utils/account';
 import { useGetCexList } from './hook';
 import FastImage from 'react-native-fast-image';
 import { useAccountSelectModalCtx } from '@/components/AccountSelectModalTx/hooks';
+import { apisSingleHome } from '../Home/hooks/singleHome';
 
 export const TxStatusItem = ({
   status,
@@ -162,12 +160,7 @@ export const AddressItemInDetail = ({
 
     if (idx > -1) {
       if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
-      navigateDeprecated(RootNames.SingleAddressStack, {
-        screen: RootNames.SingleAddressHome,
-        params: {
-          account: accounts[idx],
-        },
-      });
+      apisSingleHome.navigateToSingleHome(accounts[idx]);
     } else {
       // popup
       console.debug('itemAliaName press open popup', address);

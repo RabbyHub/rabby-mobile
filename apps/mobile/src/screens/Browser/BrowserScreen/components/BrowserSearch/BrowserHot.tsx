@@ -12,10 +12,28 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { useDapps } from '@/hooks/useDapps';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { atom, useAtom } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-const hot3Atom = atom<DappInfo[]>([]);
-const useHot3DApp = () => useAtom(hot3Atom);
+const hot3Store = zCreate<{
+  dappList: DappInfo[];
+}>(() => ({
+  dappList: [],
+}));
+
+function setHot3Dapp(valOrFunc: UpdaterOrPartials<DappInfo[]>) {
+  hot3Store.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.dappList,
+      valOrFunc,
+      { strict: true },
+    );
+
+    if (!changed) return prev;
+
+    return { ...prev, dappList: newVal };
+  });
+}
 
 export function BrowserHot({ onPress }: { onPress?(dapp: DappInfo): void }) {
   const { styles } = useTheme2024({
@@ -28,7 +46,8 @@ export function BrowserHot({ onPress }: { onPress?(dapp: DappInfo): void }) {
     () => openapi.getHotDapps({ limit: 3, order_by: 'hot_count' }),
     [],
   );
-  const [hot3, setHot3] = useHot3DApp();
+
+  const hot3 = hot3Store(s => s.dappList);
 
   useEffect(() => {
     if (!hotDAppList?.length) {
@@ -53,9 +72,9 @@ export function BrowserHot({ onPress }: { onPress?(dapp: DappInfo): void }) {
       } as DappInfo;
 
       list.push(dappInfo);
-      setHot3(list);
+      setHot3Dapp(list);
     });
-  }, [hotDAppList, bookmarkList, dapps, setHot3]);
+  }, [hotDAppList, bookmarkList, dapps]);
 
   const { t } = useTranslation();
 

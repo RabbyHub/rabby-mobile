@@ -2,12 +2,12 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useState } from 'react';
-import { Dimensions, Pressable, View } from 'react-native';
+import { Dimensions, Pressable, Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   CurvePoint,
   formatSmallCurrencyValue,
-  formChartData,
+  useSingleHomeHomeTopChart,
 } from '@/hooks/useCurve';
 import Animated, {
   useAnimatedProps,
@@ -24,30 +24,33 @@ import {
   UNFOLD_ASSETS_HEADER_HEIGHT,
 } from '@/constant/layout';
 import Svg, { Path } from 'react-native-svg';
+import { apisSingleHome, useHomeFoldChart } from '../hooks/singleHome';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const ScreenWidth = Dimensions.get('screen').width;
 
-function Chart({
-  data,
+export const HomeTopChart = memo(function Chart({
   isOffline,
-  loading,
+  balanceLoading,
+  evmBalance,
   isNoAssets,
   pathColor,
-  fold,
-  setFold,
 }: {
   isOffline: boolean;
-  data: ReturnType<typeof formChartData>;
-  loading: boolean;
+  balanceLoading: boolean;
+  evmBalance?: number | null;
   isNoAssets: boolean;
   pathColor: string;
-  fold: boolean;
-  setFold: (fold: boolean) => void;
 }) {
   const { styles, colors } = useTheme2024({ getStyle });
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const { isFoldChart: fold } = useHomeFoldChart();
+
+  const { isLoading, selectData: data } = useSingleHomeHomeTopChart();
+
+  const isLoadingCurve = isLoading || (balanceLoading && !evmBalance);
 
   useEffect(() => {
     // 延迟初始化动画，避免页面切换时的卡顿
@@ -75,18 +78,23 @@ function Chart({
       ]}>
       <View style={styles.chartContainer}>
         <LineChart.Provider data={data.list}>
-          {isInitialized ? (
+          {isLoadingCurve ? (
+            <Skeleton
+              width={181}
+              height={42}
+              style={styles.skeleton}
+              LinearGradientComponent={LoadingLinear}
+            />
+          ) : (
             <ChartHeader
-              fold={fold}
-              setFold={setFold}
               rawNetWorth={data.rawNetWorth}
               changePercent={data.changePercent}
               isLoss={data.isLoss}
               data={data.list}
-              loading={loading}
+              loading={isLoadingCurve}
             />
-          ) : null}
-          {fold ? null : isOffline || isNoAssets ? null : !loading ? (
+          )}
+          {fold ? null : isOffline || isNoAssets ? null : !isLoadingCurve ? (
             isInitialized ? (
               <LineChart
                 height={104}
@@ -116,8 +124,7 @@ function Chart({
       </View>
     </View>
   );
-}
-export const HomeTopChart = memo(Chart);
+});
 
 interface IHeaderProps {
   rawNetWorth: number;
@@ -125,8 +132,6 @@ interface IHeaderProps {
   isLoss: boolean;
   loading: boolean;
   data: CurvePoint[];
-  fold: boolean;
-  setFold: (fold: boolean) => void;
 }
 const ChartHeader = ({
   rawNetWorth,
@@ -134,8 +139,6 @@ const ChartHeader = ({
   isLoss,
   loading,
   data: _data,
-  fold,
-  setFold,
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
@@ -145,6 +148,8 @@ const ChartHeader = ({
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(rawNetWorth, { currency });
   }, [rawNetWorth, currency]);
+
+  console.debug('[perf] ChartHeader:: rawNetWorth', rawNetWorth);
 
   const data = useMemo(() => {
     return (
@@ -269,32 +274,23 @@ const ChartHeader = ({
     return {
       text: formatNetWorth.value,
     };
-  }, [formatNetWorth.value]);
-
+  }, [netWorth]);
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
       text: percentChange.value,
     };
-  }, [percentChange.value]);
+  }, [changePercent]);
 
   const dateTimeAnimatedProps = useAnimatedProps(() => {
     return {
       text: dateTime.value,
     };
-  }, [dateTime.value]);
+  });
 
-  if (loading) {
-    return (
-      <Skeleton
-        width={181}
-        height={42}
-        style={styles.skeleton}
-        LinearGradientComponent={LoadingLinear}
-      />
-    );
-  }
+  const { isFoldChart: fold } = useHomeFoldChart();
+
   return (
-    <View style={styles.charHeader}>
+    <View style={[styles.charHeader, loading && { display: 'none' }]}>
       <View style={styles.leftContainer}>
         <AnimateableText
           style={styles.netWorth}
@@ -309,7 +305,7 @@ const ChartHeader = ({
       </View>
       <Pressable
         hitSlop={20}
-        onPress={() => setFold(!fold)}
+        onPress={() => apisSingleHome.setFoldChart(!fold)}
         style={styles.percentChangeContainer}>
         <AnimateableText
           style={lossStyleProps}

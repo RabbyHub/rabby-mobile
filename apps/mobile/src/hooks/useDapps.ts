@@ -56,7 +56,6 @@ function isDappConnected(dappOrigin: string) {
 }
 
 export function useDapps() {
-  // const [dapps, setDapps] = useAtom(dappsAtom);
   const dapps = dappServiceStore(s => s.dapps);
 
   const getDapps = useCallback(() => {

@@ -25,6 +25,7 @@ import { BlurShadowView } from '@/components2024/BluerShadow';
 import BigNumber from 'bignumber.js';
 import { splitNumberByStep } from '@/utils/number';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { apisSingleHome } from '../hooks/singleHome';
 
 export const HomeAddressItem: React.FC<{
   account: KeyringAccountWithAlias;
@@ -72,12 +73,7 @@ export const HomeAddressItem: React.FC<{
             category: 'Pin Address',
             action: 'PinAddress_ClickView',
           });
-          navigation.push(RootNames.SingleAddressStack, {
-            screen: RootNames.SingleAddressHome,
-            params: {
-              account: account,
-            },
-          });
+          apisSingleHome.navigateToSingleHome(account);
         }}
         onLongPress={() => {
           setIsPressing(true);

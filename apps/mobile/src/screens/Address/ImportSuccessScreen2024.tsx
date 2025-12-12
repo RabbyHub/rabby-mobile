@@ -45,7 +45,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiBalance } from '@/core/apis';
-import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
@@ -64,7 +64,6 @@ const DisMissKBWrapper = ({ children }) => (
 
 export const ImportSuccessScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { syncSingleAddress } = useSyncHistoryDB();
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
   const modalRef =
@@ -193,10 +192,10 @@ export const ImportSuccessScreen2024 = () => {
       const syncAddresses =
         addresses.length > 10 ? addresses.slice(0, 10) : addresses;
       syncAddresses.forEach(address => {
-        syncSingleAddress(address);
         syncTokens(address);
         syncProtocols(address);
       });
+      syncMultiAddressesHistory(syncAddresses);
       eventBus.emit('PERPS_ADD_ADDRESSES', syncAddresses);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

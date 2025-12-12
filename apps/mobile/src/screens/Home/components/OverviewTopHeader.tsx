@@ -25,7 +25,6 @@ import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
 import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
 import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
 import { ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
-import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { useMemoizedFn } from 'ahooks';
 import { useHideBalance } from '../hooks/useHideBalance';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
@@ -34,17 +33,37 @@ import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
+import {
+  runOnJS,
+  SharedValue,
+  useAnimatedReaction,
+  useDerivedValue,
+} from 'react-native-reanimated';
+import { useHomeTabIndex } from '@/hooks/navigation';
+import {
+  useScene24hBalanceCombinedData,
+  useSceneIsLoading,
+} from '@/hooks/useScene24hBalance';
 
 export const HeaderHeight = 24;
 
 export function TabsTopHeader(
   props: {
-    data: ReturnType<typeof useMulti24hBalance>['combineData'];
-    loading: boolean;
-    showNetWorth?: boolean;
+    // data: ReturnType<typeof useMulti24hBalance>['combineData'];
+    // loading: boolean;
+    // showNetWorth?: boolean;
+    indexValue?: SharedValue<number>;
   } & RNViewProps,
 ): JSX.Element {
-  const { loading, data, showNetWorth = false } = props;
+  const {
+    /* loading, data,  showNetWorth = false*/
+  } = props;
+  const { tabIndex } = useHomeTabIndex();
+  const showNetWorth = tabIndex !== 0;
+
+  const { isLoading: loading } = useSceneIsLoading('Home');
+  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });

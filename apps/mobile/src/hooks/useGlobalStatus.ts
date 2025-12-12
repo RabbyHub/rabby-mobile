@@ -1,4 +1,10 @@
-import { atom, useAtomValue } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
 
 const PING_URL = 'https://app-api.rabby.io/ping';
 
@@ -11,21 +17,41 @@ async function checkNetwork(): Promise<boolean> {
   }
 }
 
-const networkStatusAtom = atom(false); // false: 有网, true: 断网
+const networkStatusState = zCreate<{ isDisconnected: boolean }>(() => ({
+  isDisconnected: false,
+}));
+
+runIIFEFunc(() => {
+  startNetworkPolling();
+});
+
+function setNetworkStatus(valOrFunc: UpdaterOrPartials<boolean>) {
+  networkStatusState.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.isDisconnected,
+      valOrFunc,
+      { strict: true },
+    );
+    if (!changed) return prev;
+    return {
+      ...prev,
+      isDisconnected: newVal,
+    };
+  });
+}
 
 let timer: NodeJS.Timeout | null = null;
 let started = false;
 
-function startNetworkPolling(set: (v: boolean) => void) {
-  if (started) {
-    return;
-  }
+function startNetworkPolling() {
+  if (started) return;
   started = true;
+
   let lastStatus = false;
   const poll = async () => {
     const isDisconnected = !(await checkNetwork());
     if (isDisconnected !== lastStatus) {
-      set(isDisconnected);
+      setNetworkStatus(isDisconnected);
       lastStatus = isDisconnected;
     }
     const nextInterval = isDisconnected ? 2000 : 10000;
@@ -34,17 +60,8 @@ function startNetworkPolling(set: (v: boolean) => void) {
   poll();
 }
 
-networkStatusAtom.onMount = set => {
-  startNetworkPolling(set);
-  return () => {
-    if (timer) {
-      clearTimeout(timer);
-    }
-    started = false;
-  };
-};
-
 export const useGlobalStatus = () => {
-  const isDisConnect = useAtomValue(networkStatusAtom);
+  const isDisConnect = networkStatusState(useShallow(s => s.isDisconnected));
+
   return { isDisConnect };
 };

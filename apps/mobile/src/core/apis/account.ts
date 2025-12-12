@@ -2,6 +2,7 @@ import {
   DisplayKeyring,
   DisplayedKeyring,
   KEYRING_CLASS,
+  KEYRING_TYPE,
   KeyringAccount,
   KeyringIntf,
 } from '@rabby-wallet/keyring-utils';
@@ -172,6 +173,16 @@ export const filterMyAccounts = <
   );
 };
 
+export function filterDirectlySignableAccounts<
+  T extends KeyringAccount | KeyringAccountWithAlias,
+>(accounts: T[]) {
+  return accounts.filter(
+    account =>
+      account.type == KEYRING_TYPE.SimpleKeyring ||
+      account.type == KEYRING_TYPE.HdKeyring,
+  );
+}
+
 export function sortAccountList(
   accounts: Account[],
   {
@@ -211,65 +222,98 @@ export async function getSortedAddressList(options?: {
 }) {
   const { includeOthers = false } = options || {};
   const allAccounts = await fetchAllAccountsAvoidParallel();
-  const allMyAccounts = filterMyAccounts(allAccounts);
+  // const allMyAccounts = includeOthers ? [] : filterMyAccounts(allAccounts);
+  const accounts = includeOthers ? allAccounts : filterMyAccounts(allAccounts);
   const pinAddresses = preferenceService.getPinAddresses();
 
   return {
-    allAccounts,
-    allMyAccounts,
-    sortedAccounts: includeOthers
-      ? sortAccountList(allAccounts, { highlightedAddresses: pinAddresses })
-      : sortAccountList(allMyAccounts, { highlightedAddresses: pinAddresses }),
+    accounts,
+    sortedAccounts: sortAccountList(accounts, {
+      highlightedAddresses: pinAddresses,
+    }),
   };
 }
 
-export const getTop10MyAddresses = makeAvoidParallelAsyncFunc(async () => {
-  const { allMyAccounts } = await getSortedAddressList();
-
-  return filterOutTop10Accounts(allMyAccounts).top10Addresses;
-});
-
-export function filterOutTop10Accounts<
+export function filterOutTopAccounts<
   T extends { address: string; balance?: number },
->(sortedAccounts: T[], { gatherSameAddress = false } = {}) {
+>(sortedAccounts: T[], { topCount = 10, gatherSameAddress = false } = {}) {
   const ret = {
-    top10Addresses: [] as string[],
+    topAddresses: [] as string[],
     /**
-     * @description notice, top10 accounts may contains more than 10 items, because of same address with different brandName
+     * @description notice, top accounts may contains more than 10 items, because of same address with different brandName
      */
-    top10Accounts: [] as T[],
+    topAccounts: [] as T[],
     restAccounts: [] as T[],
   };
 
-  let top10Records = new Set<string>();
+  let topRecords = new Set<string>();
   if (gatherSameAddress) {
     for (const item of sortedAccounts) {
       const lowerAddress = item.address.toLowerCase();
-      if (top10Records.size >= 10) break;
+      if (topRecords.size >= topCount) break;
 
-      top10Records.add(lowerAddress);
+      topRecords.add(lowerAddress);
     }
 
     sortedAccounts.forEach(x => {
       const lx = x.address.toLowerCase();
-      if (top10Records.has(lx)) {
-        ret.top10Accounts.push(x);
-        // ret.top10Addresses.push(lx);
+      if (topRecords.has(lx)) {
+        ret.topAccounts.push(x);
+        // ret.topAddresses.push(lx);
       } else {
         ret.restAccounts.push(x);
       }
     });
 
-    ret.top10Addresses = Array.from([...top10Records]);
+    ret.topAddresses = Array.from([...topRecords]);
   } else {
-    ret.top10Accounts = sortedAccounts.slice(0, 10);
-    ret.restAccounts = sortedAccounts.slice(10);
-    ret.top10Addresses = ret.top10Accounts.map(item => {
+    ret.topAccounts = sortedAccounts.slice(0, topCount);
+    ret.restAccounts = sortedAccounts.slice(topCount);
+    ret.topAccounts.forEach(item => {
       const addr = item.address.toLowerCase();
-      top10Records.add(addr);
+      if (!topRecords.has(addr)) ret.topAddresses.push(addr);
+      topRecords.add(addr);
       return addr;
     });
   }
 
-  return { ...ret, top10Records };
+  return { ...ret, topRecords };
 }
+
+export function filterOutTop10Accounts<
+  T extends { address: string; balance?: number },
+>(sortedAccounts: T[], { gatherSameAddress = false } = {}) {
+  const result = filterOutTopAccounts(sortedAccounts, {
+    topCount: 10,
+    gatherSameAddress,
+  });
+
+  return {
+    top10Accounts: result.topAccounts,
+    top10Addresses: result.topAddresses,
+    top10Records: result.topRecords,
+    restAccounts: result.restAccounts,
+  };
+}
+
+export const getTop10MyAddresses = makeAvoidParallelAsyncFunc(
+  async ({ gatherSameAddress = false } = {}) => {
+    const { sortedAccounts } = await getSortedAddressList({
+      includeOthers: false,
+    });
+
+    return filterOutTop10Accounts(sortedAccounts, { gatherSameAddress })
+      .top10Addresses;
+  },
+);
+
+export const getTop50PrivateKeyAccounts = makeAvoidParallelAsyncFunc(
+  async () => {
+    const { sortedAccounts } = await getSortedAddressList({
+      includeOthers: false,
+    });
+    const privateKeyAccounts = filterDirectlySignableAccounts(sortedAccounts);
+
+    return privateKeyAccounts.slice(0, 50);
+  },
+);

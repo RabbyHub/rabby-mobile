@@ -161,10 +161,11 @@ export const RootNames = {
   PerpsMarketDetail: 'PerpsMarketDetail',
   PerpsHistory: 'PerpsHistory',
   AccountTransaction: 'AccountTransaction',
-  /* @deprecated */
+  /** @deprecated */
   MyBundle: 'MyBundle',
 
   StackAddress: 'StackAddress',
+  /** @deprecated */
   AddressList: 'AddressList',
   ApprovalAddressList: 'ApprovalAddressList',
   ImportNewAddress: 'ImportNewAddress',
