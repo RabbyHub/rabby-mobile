@@ -14,19 +14,20 @@ type SingleHomeState = {
   foldChart: boolean;
   reachTop: boolean;
 };
-export const singleHomeState = zCreate<SingleHomeState>(() => ({
-  currentAccount: undefined,
-  selectedChain: null,
-  foldChart: false,
-  reachTop: false,
-}));
+function getDefault(): SingleHomeState {
+  return {
+    currentAccount: undefined,
+    selectedChain: null,
+    foldChart: true,
+    reachTop: false,
+  };
+}
+export const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
 
 function presetSingHomeAccount(account: Account) {
   singleHomeState.setState({
+    ...getDefault(),
     currentAccount: account,
-    selectedChain: null,
-    foldChart: false,
-    reachTop: false,
   });
 }
 export const apisSingleHome = {
