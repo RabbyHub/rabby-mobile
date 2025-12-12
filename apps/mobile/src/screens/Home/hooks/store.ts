@@ -188,7 +188,7 @@ export const combinedProtocols = (
   const totalValue = portfolios.reduce((acc, curr) => {
     return acc + (curr.totalUsdValue.toNumber() || 0);
   }, 0);
-  const threshold = Math.min((totalValue || 0) / 1000, 1000);
+  const threshold = Math.min((totalValue || 0) / 100, 1000);
   const thresholdIndex = portfolios
     ? portfolios.findIndex(m => (m.totalUsdValue.toNumber() || 0) < threshold)
     : -1;
