@@ -162,7 +162,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   button: {
     marginTop: 0,
     flex: 1,
-    height: 42,
+    height: 48,
     borderRadius: 12,
     backgroundColor: colors2024['brand-light-1'],
     display: 'flex',
