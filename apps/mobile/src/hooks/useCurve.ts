@@ -126,43 +126,26 @@ export const formChartData = (
       }) || [];
 
   // patch realtime newworth
-  if (
-    isMeaningfulNumber(realtimeNetWorth) &&
-    realtimeTimestamp &&
-    list.length
-  ) {
+  if (realtimeTimestamp) {
     const realtimeChange = realtimeNetWorth - startUsdValue;
-    const lastTwoSecs = [
-      list[list.length - 2]?.timestamp || 0,
-      list[list.length - 1]?.timestamp || 0,
-    ];
-    const checkDiff = Math.min(
-      Math.max(lastTwoSecs[1] - lastTwoSecs[0], 0),
-      EXPECTED_CHECK_DIFF,
-    );
-    const realTimeSec = Math.floor(realtimeTimestamp / 1000);
-    const isLastPointSmooth =
-      !!lastTwoSecs[1] && realTimeSec - lastTwoSecs[1] <= checkDiff;
 
-    if (isLastPointSmooth) {
-      list.push({
-        value: realtimeNetWorth || 0,
-        netWorth: formatSmallUsdValue(realtimeNetWorth),
-        change: `${formatUsdValue(Math.abs(realtimeChange))}`,
-        rawChange: Math.abs(realtimeChange),
-        isLoss: realtimeChange < 0,
-        changePercent:
-          startUsdValue === 0
-            ? `${realtimeNetWorth === 0 ? '0' : '100.00'}%`
-            : `${(Math.abs(realtimeChange * 100) / startUsdValue).toFixed(2)}%`,
-        timestamp: Math.floor(realtimeTimestamp / 1000),
-        dateString: dayjs.unix(realtimeTimestamp / 1000).format('MM DD, HH:mm'),
-        clockTimeString: dayjs.unix(realtimeTimestamp / 1000).format('HH:mm'),
-        dateTimeString: dayjs
-          .unix(realtimeTimestamp / 1000)
-          .format('MM DD, HH:mm'),
-      });
-    }
+    list.push({
+      value: realtimeNetWorth || 0,
+      netWorth: formatSmallUsdValue(realtimeNetWorth),
+      change: `${formatUsdValue(Math.abs(realtimeChange))}`,
+      rawChange: Math.abs(realtimeChange),
+      isLoss: realtimeChange < 0,
+      changePercent:
+        startUsdValue === 0
+          ? `${realtimeNetWorth === 0 ? '0' : '100.00'}%`
+          : `${(Math.abs(realtimeChange * 100) / startUsdValue).toFixed(2)}%`,
+      timestamp: Math.floor(realtimeTimestamp / 1000),
+      dateString: dayjs.unix(realtimeTimestamp / 1000).format('MM DD, HH:mm'),
+      clockTimeString: dayjs.unix(realtimeTimestamp / 1000).format('HH:mm'),
+      dateTimeString: dayjs
+        .unix(realtimeTimestamp / 1000)
+        .format('MM DD, HH:mm'),
+    });
   }
 
   const endNetWorth = list?.length ? list[list.length - 1]?.value : 0;
@@ -266,14 +249,7 @@ export function setCurveData(
   },
 ) {
   loadingCurveState.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.curveList,
-      valOrFunc,
-      {
-        strict: true,
-      },
-    );
-    if (!changed) return prev;
+    const { newVal } = resolveValFromUpdater(prev.curveList, valOrFunc);
 
     const selectData = formChartData(
       newVal,
@@ -375,17 +351,6 @@ export const useSingleHomeCurveRefresh = (
     },
     [address, fetch],
   );
-
-  // useEffect(() => {
-  //   if (!address) return;
-  //   setIsLoading(true);
-  //   setCurveData([], {
-  //     days,
-  //     totalEvmBalance: realtimeNetWorth || 0,
-  //     totalBalance: staticBalance || 0,
-  //   });
-  //   fetch(address);
-  // }, [address, fetch, days, realtimeNetWorth, staticBalance]);
 
   return {
     refresh,

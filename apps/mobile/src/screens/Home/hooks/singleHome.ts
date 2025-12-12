@@ -42,6 +42,11 @@ export const apisSingleHome = {
       });
     });
   },
+  clearCurrentAccount: () => {
+    singleHomeState.setState({
+      ...getDefault(),
+    });
+  },
   getCurrentAddress: () => {
     return singleHomeState.getState().currentAccount?.address;
   },

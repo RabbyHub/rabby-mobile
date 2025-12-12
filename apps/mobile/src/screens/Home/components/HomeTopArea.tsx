@@ -24,6 +24,8 @@ export const HomeTopArea = () => {
   const { currentAddress } = useSingleHomeAddress();
   const { isDisConnect } = useGlobalStatus();
 
+  console.debug('[perf] HomeTopArea render', currentAddress);
+
   const { balance, balanceLoading, evmBalance } = useCurrentBalance(
     currentAddress,
     {
