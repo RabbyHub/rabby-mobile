@@ -455,9 +455,9 @@ export const usePerpsState = () => {
       console.log('handleActionApproveStatus signActions', signActions);
       await executeSignatures(signActions, currentPerpsAccount);
 
-      try {
-        await handleDirectApprove(signActions);
-      } catch (error) {}
+      // try {
+      await handleDirectApprove(signActions);
+      // } catch (error) {}
       setAccountNeedApproveAgent(false);
       setAccountNeedApproveBuilderFee(false);
       isHandlingApproveStatus.current = false;
@@ -626,7 +626,17 @@ export const usePerpsState = () => {
         setAccountNeedApproveBuilderFee(false);
       }
     } else {
-      handleSetLaterApproveStatus(signActions);
+      let needApproveAgent = false;
+      let needApproveBuilderFee = false;
+      signActions.forEach(item => {
+        if (item.type === 'approveAgent') {
+          needApproveAgent = true;
+        } else if (item.type === 'approveBuilderFee') {
+          needApproveBuilderFee = true;
+        }
+      });
+      setAccountNeedApproveAgent(needApproveAgent);
+      setAccountNeedApproveBuilderFee(needApproveBuilderFee);
     }
 
     await loginPerpsAccount(account);
