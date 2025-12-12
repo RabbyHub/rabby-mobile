@@ -25,9 +25,29 @@ import { devLog } from '@/utils/logger';
 import { useThemeMode } from '@rneui/themed';
 import { TFunction } from 'i18next';
 import { useMemoizedFn } from 'ahooks';
-import { runDevIIFEFunc, runIIFEFunc } from '@/core/utils/store';
+import { runDevIIFEFunc } from '@/core/utils/store';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
+
+function isValidAppTheme(themMode: any) {
+  return ['light', 'dark', 'system'].includes(themMode);
+}
+
+function coerceFinalThemeValue<T extends AppThemeScheme | ColorSchemeName>(
+  input: T,
+  defaultValue: T,
+): T {
+  switch (input) {
+    default:
+      return defaultValue;
+    case 'light':
+      return 'light' as T;
+    case 'dark':
+      return 'dark' as T;
+    case 'system':
+      return 'system' as T;
+  }
+}
 
 const FORCE_THEME = 'light' as const;
 function coerceBinaryTheme(
@@ -35,7 +55,9 @@ function coerceBinaryTheme(
   rnColorScheme: ColorSchemeName = 'light',
 ): Exclude<ColorSchemeName, null | void> {
   if (SHOULD_SUPPORT_DARK_MODE) {
-    return appTheme === 'system' ? rnColorScheme || 'light' : appTheme;
+    return appTheme === 'system'
+      ? rnColorScheme || 'light'
+      : coerceFinalThemeValue(appTheme, 'light');
   }
 
   return FORCE_THEME;
@@ -50,7 +72,7 @@ function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {
 }
 
 // runDevIIFEFunc(() => {
-//   appJsonStore.setItem('@AppTheme', 'light');
+//   appJsonStore.setItem('@AppTheme', 'dark');
 // });
 
 const themeModeStore = zustandByMMKV<{ appTheme: AppThemeScheme }>(
@@ -61,13 +83,13 @@ const themeModeStore = zustandByMMKV<{ appTheme: AppThemeScheme }>(
     migrateFromAtom(ctx) {
       const newData = {
         state: {
-          appTheme: (typeof ctx.oldData === 'string'
+          appTheme: (isValidAppTheme(ctx.oldData)
             ? ctx.oldData
             : 'light') as AppThemeScheme,
         },
         version: 0,
       };
-      ctx.appJsonStore.setItem(ctx.legacyAppStoreKey, newData);
+      ctx.appJsonStore.setItem(ctx.key, newData);
 
       return { migrated: newData.state };
     },
