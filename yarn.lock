@@ -3747,12 +3747,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bgd-labs/aave-address-book@npm:4.30.3":
-  version: 4.30.3
-  resolution: "@bgd-labs/aave-address-book@npm:4.30.3"
+"@bgd-labs/aave-address-book@npm:4.36.0":
+  version: 4.36.0
+  resolution: "@bgd-labs/aave-address-book@npm:4.36.0"
   peerDependencies:
     viem: ^2.23.5
-  checksum: 7d722dfbecea933d6a26f859f0f343cef669b1d9b309668460b90147bb7ec910e1096c346973531aff22ba33097558dd611f5045a4a86e9042b9d28546742eea
+  checksum: 53dc1bcbeeb34f28b9db0f18e911b8f795d92ea7ba230bfaca71f18da20da8b3ab257cd3ac945adaf6ae1669fa33b39bd466f39570ee9a3a71e74703ea117544
   languageName: node
   linkType: hard
 
@@ -34468,7 +34468,7 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": ^7.25.9
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
-    "@bgd-labs/aave-address-book": 4.30.3
+    "@bgd-labs/aave-address-book": 4.36.0
     "@craftzdog/react-native-buffer": ^6.0.5
     "@debank/common": 0.3.60
     "@debank/festats": 1.0.4

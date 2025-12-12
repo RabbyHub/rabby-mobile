@@ -109,6 +109,10 @@ export const HistoryItem = React.memo(
             return t('page.transactions.itemTitle.LendingOnCollateral');
           case CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL:
             return t('page.transactions.itemTitle.LendingOffCollateral');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE:
+            return t('page.transactions.itemTitle.LendingManageEMode');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE:
+            return t('page.transactions.itemTitle.LendingManageEModeDisable');
         }
       }
 

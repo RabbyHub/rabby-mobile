@@ -30,3 +30,18 @@ export type OpenDetailProps = {
   underlyingAsset: string;
   onClose?: () => void;
 };
+
+export type EmodeCategory = {
+  id: number;
+  label: string;
+  ltv: string;
+  liquidationThreshold: string;
+  liquidationBonus: string;
+  assets: Array<{
+    underlyingAsset: string;
+    symbol: string;
+    iconSymbol: string;
+    collateral: boolean;
+    borrowable: boolean;
+  }>;
+};

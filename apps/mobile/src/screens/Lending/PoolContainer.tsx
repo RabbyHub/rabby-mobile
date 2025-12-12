@@ -20,7 +20,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import IsolatedTag from './components/IsolatedTag';
+import RightMarketTabInfo from './components/RightMarketTabInfo';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -177,22 +177,10 @@ const PoolContainer = () => {
           },
         ]}
         initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
-        externalContent={
-          iUserSummary?.isInIsolationMode ? (
-            <View style={styles.isolatedTagContainer}>
-              <IsolatedTag isGlobal />
-            </View>
-          ) : null
-        }
+        externalContent={loading ? null : <RightMarketTabInfo />}
       />
     ),
-    [
-      iUserSummary?.isInIsolationMode,
-      styles.indicator,
-      styles.tabBar,
-      styles.tabsBarContainer,
-      styles.isolatedTagContainer,
-    ],
+    [loading, styles.indicator, styles.tabBar, styles.tabsBarContainer],
   );
   return (
     <Tabs.Container
@@ -338,7 +326,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     paddingLeft: 4,
     position: 'relative',
     height: 30,
-    overflow: 'hidden',
+    //overflow: 'hidden',
     flexDirection: 'row',
   },
   isolatedTagContainer: {

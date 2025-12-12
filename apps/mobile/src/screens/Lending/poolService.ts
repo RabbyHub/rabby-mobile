@@ -1,3 +1,9 @@
+/**
+ * @description 构建交易相关函数:
+ * supply、withdraw、borrow、repay、collateralSwitch、manageEmode
+ * 但不包含approve交易
+ */
+
 import { ChainId, Pool, PoolBundle } from '@aave/contract-helpers';
 import { referralCode } from './utils/constant';
 
@@ -131,5 +137,21 @@ export const collateralSwitchTx = async ({
     reserve,
     usageAsCollateral,
     useOptimizedPath: !!useOptimizedPath,
+  });
+};
+
+export const buildManageEmodeTx = async ({
+  pool,
+  address,
+  categoryId,
+}: {
+  pool: Pool;
+  address: string;
+  categoryId: number;
+}) => {
+  // categoryId如果是0，则表示取消E-Mode
+  return pool.setUserEMode({
+    user: address,
+    categoryId,
   });
 };
