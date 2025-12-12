@@ -746,11 +746,7 @@ function MultiAddressHome(): JSX.Element {
         />
 
         {/* show search bar when Overview tab */}
-        {/* {tabIndex === 0 && (
-          <View style={styles.globalSearchBar}>
-            <GlobalSearchBar />
-          </View>
-        )} */}
+        {/* <GlobalSearchBar /> */}
       </View>
 
       <HomeGuidanceMultipleTabs />
