@@ -405,12 +405,11 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
               setAmount(undefined);
               onClose?.();
-              return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
               handleSupply(true);
-              return;
             }
+            return;
           }
         } else {
           for (const tx of txsForMiniApproval) {
@@ -532,7 +531,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
               supportDirectSign={true}
-              loading={isLoading}
+              loading={false}
               openShowMore={noop}
               chainServeId={chainInfo?.serverId || ''}
             />

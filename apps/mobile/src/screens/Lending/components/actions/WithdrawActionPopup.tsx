@@ -252,12 +252,11 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
               setAmount(undefined);
               onClose?.();
-              return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
               handleWithdraw(true);
-              return;
             }
+            return;
           }
         } else {
           for (const tx of withdrawTxs) {
@@ -396,11 +395,11 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           afterSupply={afterSupply}
         />
 
-        {!!amount && amount !== '0' && canShowDirectSubmit && (
+        {canShowDirectSubmit && !!amount && amount !== '0' && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
               supportDirectSign={true}
-              loading={isLoading}
+              loading={false}
               openShowMore={noop}
               chainServeId={chainInfo?.serverId || ''}
             />
