@@ -25,8 +25,13 @@ import { devLog } from '@/utils/logger';
 import { useThemeMode } from '@rneui/themed';
 import { TFunction } from 'i18next';
 import { useMemoizedFn } from 'ahooks';
+import { runDevIIFEFunc } from '@/core/utils/store';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
+
+function isValidAppTheme(themMode: any) {
+  return ['light', 'dark', 'system'].includes(themMode);
+}
 
 function coerceFinalThemeValue<T extends AppThemeScheme | ColorSchemeName>(
   input: T,
@@ -66,21 +71,25 @@ function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {
     : 'light';
 }
 
+// runDevIIFEFunc(() => {
+//   appJsonStore.setItem('@AppTheme', 'dark');
+// });
+
 const themeModeStore = zustandByMMKV<{ appTheme: AppThemeScheme }>(
-  '@AppTheme202512',
+  '@AppTheme',
   { appTheme: 'light' },
   {
     storage: MMKVStorageStrategy.compatString,
     migrateFromAtom(ctx) {
       const newData = {
         state: {
-          appTheme: (typeof ctx.oldData === 'string'
+          appTheme: (isValidAppTheme(ctx.oldData)
             ? ctx.oldData
             : 'light') as AppThemeScheme,
         },
         version: 0,
       };
-      ctx.appJsonStore.setItem(ctx.legacyAppStoreKey, newData);
+      ctx.appJsonStore.setItem(ctx.key, newData);
 
       return { migrated: newData.state };
     },
