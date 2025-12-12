@@ -1,17 +1,5 @@
-import { preferenceService } from '@/core/services';
-import {
-  appJsonStore,
-  appStorage,
-  appStorageForZustand,
-  atomByMMKV,
-  MMKVStorageStrategy,
-} from '@/core/storage/mmkv';
-import { zCreate, zPersist, zCreateJSONStorage } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { cloneDeep } from 'lodash';
 
@@ -89,20 +77,14 @@ export const AccountSwitcherInfos = {
 //     });
 //   }
 // });
-const oldData = appJsonStore.getItem('@SceneAccounts', AccountSwitcherInfos);
 
-export const sceneAccountInfoStore = zCreate(
-  zPersist<SceneAccounts>(
-    (set, get) => ({
-      ...AccountSwitcherInfos,
-      // use old state
-      ...(!(oldData.state && 'version' in oldData) && oldData),
-    }),
-    {
-      name: '@SceneAccounts202512',
-      storage: zCreateJSONStorage(() => appStorageForZustand),
-    },
-  ),
+export const sceneAccountInfoStore = zustandByMMKV(
+  '@SceneAccounts202512',
+  AccountSwitcherInfos,
+  {
+    legacyAppStoreKey: '@SceneAccounts',
+    storage: MMKVStorageStrategy.compatJson,
+  },
 );
 
 export function getSceneAccountInfo() {

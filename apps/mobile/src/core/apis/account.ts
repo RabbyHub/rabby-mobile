@@ -231,37 +231,44 @@ export const getTop10MyAddresses = makeAvoidParallelAsyncFunc(async () => {
 
 export function filterOutTop10Accounts<
   T extends { address: string; balance?: number },
->(sortedAccounts: T[], { needRest = false } = {}) {
+>(sortedAccounts: T[], { gatherSameAddress = false } = {}) {
   const ret = {
     top10Addresses: [] as string[],
     /**
      * @description notice, top10 accounts may contains more than 10 items, because of same address with different brandName
      */
     top10Accounts: [] as T[],
-    restAddresses: [] as string[],
     restAccounts: [] as T[],
   };
 
-  const top10Records = new Set();
-
-  for (const item of sortedAccounts) {
-    const lowerAddress = item.address.toLowerCase();
-    if (!top10Records.has(lowerAddress)) {
-      if (top10Records.size < 10) {
-        !top10Records.has(lowerAddress) &&
-          ret.top10Addresses.push(lowerAddress);
-        ret.top10Accounts.push(item);
-      }
+  let top10Records = new Set<string>();
+  if (gatherSameAddress) {
+    for (const item of sortedAccounts) {
+      const lowerAddress = item.address.toLowerCase();
+      if (top10Records.size >= 10) break;
 
       top10Records.add(lowerAddress);
-      continue;
     }
 
-    if (!needRest && top10Records.size >= 10) {
-      break;
-    }
-    ret.restAddresses.push(lowerAddress);
-    ret.restAccounts.push(item);
+    sortedAccounts.forEach(x => {
+      const lx = x.address.toLowerCase();
+      if (top10Records.has(lx)) {
+        ret.top10Accounts.push(x);
+        // ret.top10Addresses.push(lx);
+      } else {
+        ret.restAccounts.push(x);
+      }
+    });
+
+    ret.top10Addresses = Array.from([...top10Records]);
+  } else {
+    ret.top10Accounts = sortedAccounts.slice(0, 10);
+    ret.restAccounts = sortedAccounts.slice(10);
+    ret.top10Addresses = ret.top10Accounts.map(item => {
+      const addr = item.address.toLowerCase();
+      top10Records.add(addr);
+      return addr;
+    });
   }
 
   return { ...ret, top10Records };

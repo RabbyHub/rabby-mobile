@@ -82,8 +82,7 @@ import BiometricsStubModal from './components/AuthenticationModal/BiometricsStub
 import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
 import { GlobalSignerPortal } from './components2024/MiniSignV2/components/GlobalSignerPortal';
-import { EVENT_ROUTE_CHANGE, eventBus } from './utils/events';
-import { useOpenedActiveDappState } from './screens/Dapps/hooks/useDappView';
+import { perfEvents } from './core/utils/perf';
 import {
   BottomSheetBrowser,
   BrowserManagePopup,
@@ -202,9 +201,9 @@ const onRouteChange = (
     _currentRouteName || navigationRef.getCurrentRoute()?.name;
   routeNameRef.current = currentRouteName;
 
-  eventBus.emit(EVENT_ROUTE_CHANGE, {
+  perfEvents.emit('EVENT_ROUTE_CHANGE', {
     currentRouteName,
-    previousRouteName,
+    previousRouteName: previousRouteName ?? undefined,
   });
 };
 

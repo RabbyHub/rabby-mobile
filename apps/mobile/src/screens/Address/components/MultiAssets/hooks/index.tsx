@@ -20,17 +20,17 @@ export const useAccountInfo = () => {
   );
 
   const sortedList = useSortAddressList(myAccounts);
-  const { top10Addresses, notTop10Accounts, top10Records } =
+  const { top10Accounts, top10Addresses, notTop10Accounts, top10Records } =
     useCreationWithShallowCompare(() => {
       const {
-        // top10Accounts,
+        top10Accounts,
         top10Addresses,
-        restAccounts: notTop10Accounts,
         top10Records,
-      } = filterOutTop10Accounts(sortedList, { needRest: true });
+        restAccounts: notTop10Accounts,
+      } = filterOutTop10Accounts(sortedList, { gatherSameAddress: false });
 
       return {
-        // top10Accounts,
+        top10Accounts,
         top10Addresses,
         top10Records,
         notTop10Accounts,
@@ -64,6 +64,7 @@ export const useAccountInfo = () => {
   }, [notTop10Accounts, gnosisAccounts, watchAccounts]);
 
   return {
+    top10Accounts,
     top10Addresses,
     top10Records,
     notMatterAccounts,

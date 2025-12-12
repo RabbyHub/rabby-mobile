@@ -43,7 +43,7 @@ import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getDefaultStore } from 'jotai';
-import { mockBatchRevokeAtom } from '@/hooks/appSettings';
+import { mockBatchRevokeStore } from '@/hooks/appSettings';
 import { Account } from '@/core/services/preference';
 import miscService from '@/core/services/misc';
 
@@ -158,7 +158,7 @@ export const sendTransaction = async ({
   sig?: string;
   account: Account;
 }) => {
-  const MOCK_BATCH_REVOKE = getDefaultStore().get(mockBatchRevokeAtom);
+  const MOCK_BATCH_REVOKE = mockBatchRevokeStore.getState();
   console.log('MOCK_BATCH_REVOKE', MOCK_BATCH_REVOKE);
 
   onProgress?.('building');
