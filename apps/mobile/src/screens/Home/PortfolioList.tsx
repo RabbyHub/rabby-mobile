@@ -109,24 +109,36 @@ export const PortfolioList = ({
     [_rawPortfolios, chain],
   );
 
-  const foldPortfolios = useMemo(
-    () => _portfolios.filter(item => item._isFold),
-    [_portfolios],
-  );
-  const unFoldPortfolios = useMemo(
-    () => _portfolios.filter(item => !item._isFold),
-    [_portfolios],
-  );
+  const filteredPortfolios = useMemo(() => {
+    const list = _portfolios.filter(item =>
+      chain && item?.chain ? item.chain === chain : true,
+    );
+    const foldList: DisplayedProject[] = [];
+    const unFoldList: DisplayedProject[] = [];
+    list.forEach(item => {
+      if (item._isFold) {
+        foldList.push(item);
+      } else {
+        unFoldList.push(item);
+      }
+    });
+    const foldDeFiValue = getAllDefiCount(foldList);
+    return {
+      unFoldList,
+      foldList,
+      foldDeFiValue,
+    };
+  }, [_portfolios, chain]);
 
   const {
     data: portfolios,
     loadMore: loadMorePortfolios,
     hasMore: hasMorePortfolios,
-  } = useLoadMoreData(unFoldPortfolios);
+  } = useLoadMoreData(filteredPortfolios.unFoldList);
 
   const shouldDefaultExpand = useMemo(
-    () => unFoldPortfolios.length <= 5,
-    [unFoldPortfolios.length],
+    () => filteredPortfolios.unFoldList.length <= 5,
+    [filteredPortfolios.unFoldList.length],
   );
 
   const dataList = useMemo(() => {
@@ -135,12 +147,12 @@ export const PortfolioList = ({
       data: item as unknown as DisplayedProject,
     }));
 
-    const foldDeFiList: ActionItem[] = foldPortfolios.map(item => ({
-      type: 'fold_defi',
-      data: item as unknown as DisplayedProject,
-    }));
-
-    const foldDeFiValue = getAllDefiCount(foldPortfolios);
+    const foldDeFiList: ActionItem[] = filteredPortfolios.foldList.map(
+      item => ({
+        type: 'fold_defi',
+        data: item as unknown as DisplayedProject,
+      }),
+    );
 
     const itemData: Array<{
       show: boolean;
@@ -155,7 +167,7 @@ export const PortfolioList = ({
         data: [
           {
             type: 'toggle_defi_fold',
-            data: foldDeFiValue,
+            data: filteredPortfolios.foldDeFiValue,
           },
           ...(foldDefi ? [] : foldDeFiList),
         ],
@@ -187,7 +199,14 @@ export const PortfolioList = ({
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [foldDefi, foldPortfolios, loadingPortfolio, portfolios, t]);
+  }, [
+    filteredPortfolios.foldDeFiValue,
+    filteredPortfolios.foldList,
+    foldDefi,
+    loadingPortfolio,
+    portfolios,
+    t,
+  ]);
 
   useEffect(() => {
     if (isFocused) {
