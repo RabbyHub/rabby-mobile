@@ -56,6 +56,7 @@ export function BrowserSearch({
   });
   // const { androidOnlyBottomOffset } = useSafeSizes();
   const { bottom } = useSafeAreaInsets();
+  const [isFocused, setIsFocused] = useState(false);
 
   const { t } = useTranslation();
   const { list } = useSearchDapps(searchText);
@@ -77,14 +78,19 @@ export function BrowserSearch({
 
   const isOpenURLRef = useRef(false);
 
-  const handleClose = useMemoizedFn(async () => {
+  const handleCancel = useMemoizedFn(async () => {
     Keyboard.dismiss();
-    await waitKeyboardHide();
-    onClose?.(trigger === 'home' && !isOpenURLRef.current);
+    setSearchText?.('');
+    if (!Keyboard.isVisible() && !searchText) {
+      onClose?.(trigger === 'home' && !isOpenURLRef.current);
+    }
+    // await waitKeyboardHide();
+    // onClose?.(trigger === 'home' && !isOpenURLRef.current);
   });
 
   const handleBlur = useMemoizedFn(async () => {
     Keyboard.dismiss();
+    setIsFocused(false);
     if (!searchText.trim() && !displayedBrowserHistoryList.length) {
       await waitKeyboardHide();
       onClose?.(trigger === 'home' && !isOpenURLRef.current);
@@ -177,45 +183,50 @@ export function BrowserSearch({
         {!searchText?.trim() ? (
           <BottomSheetScrollView
             contentContainerStyle={{ gap: 24, paddingHorizontal: 20 }}>
-            <BrowserFavorite
-              isInBottomSheet
-              onPress={dapp => {
-                handleOpenUrl(dapp.url || dapp.origin);
-                if (dapp.origin) {
-                  matomoRequestEvent({
-                    category: 'Websites Usage',
-                    action: 'Website_Visit_Favorite List',
-                    label: dapp.origin,
-                  });
-                }
-              }}
-            />
-            <BrowserHot
-              onPress={dapp => {
-                handleOpenUrl(dapp.url || dapp.origin);
-                if (dapp.origin) {
-                  matomoRequestEvent({
-                    category: 'Websites Usage',
-                    action: 'Website_Visit_Hot List',
-                    label: dapp.origin,
-                  });
-                }
-              }}
-            />
-            <BrowserRecent
-              isInBottomSheet
-              list={displayedBrowserHistoryList}
-              onPress={dapp => {
-                handleOpenUrl(dapp.url || dapp.origin);
-                if (dapp.origin) {
-                  matomoRequestEvent({
-                    category: 'Websites Usage',
-                    action: 'Website_Visit_Recent List',
-                    label: dapp.origin,
-                  });
-                }
-              }}
-            />
+            {!isFocused ? (
+              <>
+                <BrowserFavorite
+                  isInBottomSheet
+                  onPress={dapp => {
+                    handleOpenUrl(dapp.url || dapp.origin);
+                    if (dapp.origin) {
+                      matomoRequestEvent({
+                        category: 'Websites Usage',
+                        action: 'Website_Visit_Favorite List',
+                        label: dapp.origin,
+                      });
+                    }
+                  }}
+                />
+                <BrowserHot
+                  onPress={dapp => {
+                    handleOpenUrl(dapp.url || dapp.origin);
+                    if (dapp.origin) {
+                      matomoRequestEvent({
+                        category: 'Websites Usage',
+                        action: 'Website_Visit_Hot List',
+                        label: dapp.origin,
+                      });
+                    }
+                  }}
+                />
+              </>
+            ) : (
+              <BrowserRecent
+                isInBottomSheet
+                list={displayedBrowserHistoryList}
+                onPress={dapp => {
+                  handleOpenUrl(dapp.url || dapp.origin);
+                  if (dapp.origin) {
+                    matomoRequestEvent({
+                      category: 'Websites Usage',
+                      action: 'Website_Visit_Recent List',
+                      label: dapp.origin,
+                    });
+                  }
+                }}
+              />
+            )}
             <View style={{ height: 100 }} />
           </BottomSheetScrollView>
         ) : (
@@ -257,7 +268,7 @@ export function BrowserSearch({
           as="BottomSheetTextInput"
           value={searchText}
           onChangeText={setSearchText}
-          onCancel={handleClose}
+          onCancel={handleCancel}
           onBlur={handleBlur}
           onSubmitEditing={handleSubmitEditing}
           enterKeyHint="done"
@@ -265,6 +276,9 @@ export function BrowserSearch({
           placeholder={t('page.browser.BrowserSearch.placeholder')}
           alwaysShowCancel
           style={styles.searchBar}
+          onFocus={() => {
+            setIsFocused(true);
+          }}
         />
       </View>
     </View>

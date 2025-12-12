@@ -7,7 +7,6 @@ import {
   AbstractProject,
   DisplayNftItem,
 } from '../types';
-import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 import { DisplayedProject } from '../utils/project';
 import { formatAmount } from '@/utils/number';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -190,7 +189,7 @@ export const combinedProtocols = (
       portfolios.push({
         ...defi,
         address,
-        totalUsdValue: getDisplayedPortfolioUsdValue(defi._portfolios),
+        totalUsdValue: new BigNumber(defi.netWorth),
       });
     });
   });

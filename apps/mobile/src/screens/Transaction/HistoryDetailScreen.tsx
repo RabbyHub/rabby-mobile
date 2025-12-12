@@ -17,6 +17,7 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconSuccess from '@/assets2024/icons/history/IconSuccess.svg';
 import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
+import RcIconScamTips from '@/assets2024/icons/history/IconScamTips.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
@@ -142,7 +143,9 @@ export const AddressItemInDetail = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const disableNavigate = useMemo(() => {
-    if (propdisableNavigate) return true;
+    if (propdisableNavigate) {
+      return true;
+    }
 
     return !accounts.find(account => isSameAddress(account.address, address));
   }, [propdisableNavigate, accounts, address]);
@@ -214,6 +217,7 @@ function HistoryDetailScreen(): JSX.Element {
   const { t } = useTranslation();
   const status = useMemo(() => data.tx?.status ?? 1, [data]);
 
+  const isScam = data.is_scam || data.isSmallUsdTx;
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
     // containerPb: 12,
@@ -406,6 +410,23 @@ function HistoryDetailScreen(): JSX.Element {
     <NormalScreenContainer2024
       type={!isLight ? 'bg1' : 'bg2'}
       style={[styles.container]}>
+      {isScam ? (
+        <View style={styles.scamContainerWrapper}>
+          <View style={styles.scamContainer}>
+            <View style={{ padding: 2 }}>
+              <RcIconScamTips width={14} height={14} />
+            </View>
+            <View style={{ flex: 1, flexDirection: 'row' }}>
+              <Text style={styles.scamText}>
+                {t('page.transactions.scam')}:{' '}
+                <Text style={styles.scamTipsText}>
+                  {t('page.transactions.scamTips')}
+                </Text>
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
       <ScrollView style={[styles.scrollView]}>
         <HistoryTokenList
           data={data}
@@ -602,9 +623,9 @@ const PADDING_HORIZONTAL = 16;
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: { height: '100%', paddingTop: 24, paddingBottom: 24 },
   scrollView: {
-    height: '100%',
+    // height: '100%',
     paddingHorizontal: PADDING_HORIZONTAL,
-    flexShrink: 1,
+    flex: 1,
   },
   detailContainer: {
     width: '100%',
@@ -663,7 +684,33 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,
   },
-
+  scamContainerWrapper: {
+    paddingHorizontal: PADDING_HORIZONTAL,
+  },
+  scamContainer: {
+    borderRadius: 6,
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    width: '100%',
+    gap: 2,
+    marginBottom: 12,
+  },
+  scamText: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-body'],
+  },
+  scamTipsText: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-foot'],
+  },
   statuItemText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',

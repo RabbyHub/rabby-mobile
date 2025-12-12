@@ -45,6 +45,8 @@
       "Today": "Today",
       "Yesterday": "Yesterday",
       "ViewSmallItems": "View transactions < $0.1",
+      "scam": "Scam",
+      "scamTips": "This transaction is initiated by scammers to send scam tokens and NFTs. Please refrain from interacting with it.",
       "itemTitle": {
         "LendingSupply": "Supply",
         "LendingWithdraw": "Withdraw",
@@ -52,6 +54,8 @@
         "LendingRepay": "Repay",
         "LendingOnCollateral": "Turn on use as collateral",
         "LendingOffCollateral": "Turn off use as collateral",
+        "LendingManageEMode": "Turn on E-Mode",
+        "LendingManageEModeDisable": "Turn off E-Mode",
         "ReceivedGas": "Received Gas",
         "WithdrawnGas": "Withdrawn Gas",
         "DepositedGas": "Deposited Gas",
@@ -2208,7 +2212,8 @@
         "otherResults": "Other Results",
         "results": "Results",
         "placeholder": "Search Websites",
-        "recentEmpty": "Starting Exploring Website"
+        "recentEmpty": "Starting Exploring Website",
+        "hot10": "Hot 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Open Websites"
@@ -2643,10 +2648,13 @@
       "hf": "Health factor",
       "hfTitle": "Health Factor",
       "enterAmount": "Enter Amount",
+      "disabled": "DISABLED",
       "availableCard": {
         "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
         "needSupply": "To borrow, you need to supply assets as collateral.",
-        "isolated": "Borrowing power and assets are limited due to Isolation mode."
+        "isolated": "Borrowing power and assets are limited due to Isolation mode.",
+        "emode": "In E-Mode some assets are not borrowable.Exit E-Mode to get access to all assets",
+        "emodeNoAssets": "We couldn't find any assets related to your search. Try again with a different category."
       },
       "list": {
         "headers": {
@@ -2742,7 +2750,9 @@
         "warning": "Borrowing this amount will lower your Health Factor to a risky level for liquidation.",
         "withdrawWarning": "Withdrawing this amount will lower your Health Factor to a risky level for liquidation.",
         "toggleCollateralWarning": "Disabling this asset as collateral will lower your Health Factor to a risky level for liquidation.",
-        "checkbox": "I understand the alert and want to continue."
+        "checkbox": "I understand the alert and want to continue.",
+        "emodeBlockWarning": "Disabling E-mode will lower your Health Factor to a risky level for liquidation.",
+        "blockEmodeWarning": "You can not disable E-Mode because that could cause liquidation. To exit E-Mode supply or repay borrowed positions."
       },
       "lqDescription": {
         "desc": "Liquidation value",
@@ -2763,7 +2773,45 @@
         "isolatedTitle": "Asset cannot be used as collateral",
         "isolatedDesc": "This asset can only be used as collateral in isolation mode, where you cannot supply other asset collateral for borrowing. Assets used as collateral in isolation mode can only be borrowed to a specific debt ceiling.",
         "globalIsolatedDesc": "In Isolation mode, you cannot supply other assets as collateral. A global debt ceiling limits the borrowing power of the isolated asset. To exit isolation mode disable UNI as collateral before borrowing another asset. ",
-        "isolatedSupplyDesc": "Collateral usage is limited because of isolation mode."
+        "isolatedSupplyDesc": "Collateral usage is limited because of isolation mode.",
+        "maxLTV": "The Maximum LTV ratio represents the maximum borrowing power of a specific collateral. For example, if a collateral has an LTV of 75%, the user can borrow up to 0.75 worth of ETH in the principal currency for every 1 ETH worth of collateral."
+      },
+      "manageEmode": {
+        "emode": "E-Mode",
+        "title": "Manage E-Mode",
+        "disableTitle": "Disable",
+        "unavailable": "• Unavailable",
+        "unavailableTips": "Your existing lending/borrowing assets are not supported.",
+        "enabled": "• Enabled",
+        "description": "Enabling E-Mode allows you to maximize your borrowing power. However, borrowing is restricted to assets within the selected category.",
+        "actions": {
+          "enable": "Enable E-Mode",
+          "disable": "Disable E-Mode"
+        },
+        "guide": {
+          "title": "Efficiency mode (E-Mode)",
+          "description": "E-Mode increases your LTV for a selected category of assets.",
+          "buttonTitle": "Manage E-Mode"
+        },
+        "categorySelector": {
+          "label": "Asset category",
+          "header": {
+            "asset": "Assets",
+            "ltv": "Max LTV"
+          },
+          "desc": "All borrow positions outside of this category must be closed to enable this category.",
+          "placeholder": "Select"
+        },
+        "overview": {
+          "title": "Asset category",
+          "maxLtv": "Max LTV",
+          "apy": "APY",
+          "row": {
+            "asset": "Asset",
+            "collateral": "Collateral",
+            "borrowable": "Borrowable"
+          }
+        }
       }
     }
   },

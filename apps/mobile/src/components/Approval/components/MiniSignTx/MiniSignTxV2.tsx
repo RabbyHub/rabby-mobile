@@ -119,6 +119,7 @@ const MiniSignTxV2 = ({
               tx,
               gasLimit: item.gasLimit,
               account: currentAccount!,
+              preparedL1Fee: item.L1feeCache,
             }),
           };
         }),

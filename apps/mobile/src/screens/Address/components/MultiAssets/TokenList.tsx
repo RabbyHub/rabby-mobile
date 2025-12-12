@@ -27,7 +27,7 @@ import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { RefreshControl } from 'react-native-gesture-handler';
-import { isTabsSwiping, useAccountInfo } from './hooks';
+import { isTabsSwiping } from './hooks';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -279,36 +279,6 @@ export const TokenList = () => {
                 chainId: data.chain,
               });
               toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-            }
-            tokenRefresh();
-          },
-        },
-        {
-          title: data._isPined
-            ? t('page.tokenDetail.action.unfavorite')
-            : t('page.tokenDetail.action.favorite'),
-          icon: data._isPined
-            ? isLight
-              ? icons.unpinLight
-              : icons.unpinDark
-            : isLight
-            ? icons.pinLight
-            : icons.pinDark,
-          androidIconName: data._isPined
-            ? 'ic_rabby_menu_token_unfavorite'
-            : 'ic_rabby_menu_token_favorite',
-          key: 'favorite',
-          action() {
-            if (data._isPined) {
-              preferenceService.removePinedToken({
-                tokenId: data._tokenId,
-                chainId: data.chain,
-              });
-            } else {
-              preferenceService.pinToken({
-                tokenId: data._tokenId,
-                chainId: data.chain,
-              });
             }
             tokenRefresh();
           },

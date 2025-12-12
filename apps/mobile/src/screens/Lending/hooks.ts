@@ -1,4 +1,5 @@
 import {
+  EmodeDataHumanized,
   Pool,
   PoolBundle,
   ReservesDataHumanized,
@@ -33,6 +34,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { findChainByID } from '@/utils/chain';
 import { getProvider } from './provider';
+import { fetchIconSymbolAndName } from './utils/icon';
 
 export const marketAtom = atomByMMKV(
   '@lendingMarket',
@@ -146,25 +148,31 @@ export const usePoolDataProviderContract = () => {
         return {};
       }
       try {
-        const [reserves, userReserves, walletBalances] = await Promise.all([
-          pools.uiPoolDataProvider.getReservesHumanized({
-            lendingPoolAddressProvider:
+        const [reserves, userReserves, walletBalances, eModes] =
+          await Promise.all([
+            pools.uiPoolDataProvider.getReservesHumanized({
+              lendingPoolAddressProvider:
+                selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+            }),
+            pools.uiPoolDataProvider.getUserReservesHumanized({
+              lendingPoolAddressProvider:
+                selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+              user: address,
+            }),
+            pools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
+              address,
               selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
-          }),
-          pools.uiPoolDataProvider.getUserReservesHumanized({
-            lendingPoolAddressProvider:
-              selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
-            user: address,
-          }),
-          pools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
-            address,
-            selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
-          ),
-        ]);
+            ),
+            pools.uiPoolDataProvider.getEModesHumanized({
+              lendingPoolAddressProvider:
+                selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+            }),
+          ]);
         return {
           reserves,
           userReserves,
           walletBalances,
+          eModes,
         };
       } catch (error) {
         console.error('CUSTOM_LOGGER:=>: error', error);
@@ -190,6 +198,8 @@ const userReservesAtom = atom<
     }
   | undefined
 >(undefined);
+const eModesAtom = atom<EmodeDataHumanized[] | undefined>(undefined);
+
 const EMPTY_WALLET_BALANCES: UserWalletBalancesResponse = { 0: [], 1: [] };
 const walletBalancesAtom = atom<UserWalletBalancesResponse>(
   EMPTY_WALLET_BALANCES,
@@ -200,6 +210,7 @@ const refreshHistoryIdAtom = atom<number>(0);
 
 const formattedReservesAndIncentivesAtom = atom(get => {
   const reserves = get(reservesAtom);
+  const eModes = get(eModesAtom);
   if (!reserves) {
     return {
       formattedReserves: null,
@@ -214,11 +225,15 @@ const formattedReservesAndIncentivesAtom = atom(get => {
   const formattedReserves = formatReserves({
     reserves: reservesArray,
     currentTimestamp,
+    eModes,
     marketReferenceCurrencyDecimals:
       baseCurrencyData.marketReferenceCurrencyDecimals,
     marketReferencePriceInUsd:
       baseCurrencyData.marketReferenceCurrencyPriceInUsd,
-  });
+  }).map(item => ({
+    ...item,
+    ...fetchIconSymbolAndName(item),
+  }));
 
   const formattedPoolReservesAndIncentives = formatReservesAndIncentives({
     reserves: reservesArray,
@@ -228,7 +243,11 @@ const formattedReservesAndIncentivesAtom = atom(get => {
     marketReferencePriceInUsd:
       baseCurrencyData.marketReferenceCurrencyPriceInUsd,
     reserveIncentives: [],
-  });
+    eModes,
+  }).map(item => ({
+    ...item,
+    ...fetchIconSymbolAndName(item),
+  }));
 
   return {
     formattedReserves,
@@ -236,16 +255,16 @@ const formattedReservesAndIncentivesAtom = atom(get => {
   };
 });
 
-const formattedReservesAtom = atom(get => {
+export const formattedReservesAtom = atom(get => {
   return get(formattedReservesAndIncentivesAtom).formattedReserves;
 });
 
-const formattedPoolReservesAndIncentivesAtom = atom(get => {
+export const formattedPoolReservesAndIncentivesAtom = atom(get => {
   return get(formattedReservesAndIncentivesAtom)
     .formattedPoolReservesAndIncentives;
 });
 
-const iUserSummaryAtom = atom(get => {
+export const iUserSummaryAtom = atom(get => {
   const userReserves = get(userReservesAtom);
   const formattedReserves = get(formattedReservesAtom);
   const reserves = get(reservesAtom);
@@ -458,6 +477,7 @@ const useLendingData = () => {
   const [reserves, setReserves] = useAtom(reservesAtom);
   const [userReserves, setUserReserves] = useAtom(userReservesAtom);
   const [walletBalances, setWalletBalances] = useAtom(walletBalancesAtom);
+  const [, setEModes] = useAtom(eModesAtom);
   const [loading, setLoading] = useAtom(loadingAtom);
   const { marketKey } = useSelectedMarket();
   const [, setCurrentAddress] = useAtom(addressAtom);
@@ -491,6 +511,7 @@ const useLendingData = () => {
                 setReserves(nextReserves);
                 setUserReserves(nextUserReserves);
                 setWalletBalances(nextWalletBalances);
+                setEModes(data?.eModes);
                 setCurrentAddress(requestAddress);
                 setLoading(false);
               });
@@ -506,6 +527,7 @@ const useLendingData = () => {
       fetchContractData,
       marketKey,
       setCurrentAddress,
+      setEModes,
       setLoading,
       setReserves,
       setUserReserves,

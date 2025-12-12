@@ -165,9 +165,6 @@ interface BlockInfo {
 const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const { isGnosis } = params;
   const currentAccount = params.isGnosis ? params.account! : $account;
-  console.log({
-    currentAccount,
-  });
   const site = dappService.getDapp(origin || '');
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
@@ -322,6 +319,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   //     handleCancel();
   //   },
   // });
+
+  const recommendNoncePromiseRef = useRef<Promise<string> | null>(null);
 
   const {
     data = '0x',
@@ -548,11 +547,16 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     let recommendNonce = '0x0';
     if (!isGnosisAccount) {
       try {
-        recommendNonce = await getRecommendNonce({
-          tx,
-          chainId,
-          account: currentAccount,
-        });
+        if (recommendNoncePromiseRef.current) {
+          recommendNonce = (await recommendNoncePromiseRef.current) || '0x0';
+          recommendNoncePromiseRef.current = null;
+        } else {
+          recommendNonce = await getRecommendNonce({
+            tx,
+            chainId,
+            account: currentAccount,
+          });
+        }
         setRecommendNonce(recommendNonce);
       } catch (e) {
         if (await apiCustomRPC.hasCustomRPC(chain.enum)) {
@@ -564,11 +568,45 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     if (updateNonce && !isGnosisAccount) {
       setRealNonce(recommendNonce);
     } // do not overwrite nonce if from === to(cancel transaction)
+
+    const explainNonce = (updateNonce ? recommendNonce : tx.nonce) || '0x1';
+    const delegateCall = isGnosisAccount
+      ? !!params?.data?.[0]?.operation
+      : false;
+    const parseTxPromise = openapi.parseTx({
+      chainId: chain.serverId,
+      tx: {
+        ...tx,
+        gas: '0x0',
+        nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
+        value: tx.value || '0x0',
+        // todo
+        to: tx.to || '',
+      },
+      origin: origin || '',
+      addr: address,
+    });
+
+    const pendingTxListPromise = apisTransactionHistory.getPendingTxs({
+      recommendNonce,
+      address,
+      chainId: tx.chainId,
+    });
+
+    const blockPromise = apiProvider.requestETHRpc(
+      {
+        method: 'eth_getBlockByNumber',
+        params: ['latest', false],
+      },
+      chain.serverId,
+      currentAccount,
+    );
+
     const preExecPromise = openapi
       .preExecTx({
         tx: {
           ...tx,
-          nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1', // set a mock nonce for explain if dapp not set it
+          nonce: explainNonce, // set a mock nonce for explain if dapp not set it
           data: tx.data,
           value: tx.value || '0x0',
           gas: tx.gas || '', // set gas limit if dapp not set
@@ -576,12 +614,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         origin: origin || '',
         address,
         updateNonce,
-        pending_tx_list: await apisTransactionHistory.getPendingTxs({
-          recommendNonce,
-          address,
-          chainId: tx.chainId,
-        }),
-        delegate_call: isGnosisAccount ? !!params?.data?.[0]?.operation : false,
+        pending_tx_list: await pendingTxListPromise,
+        delegate_call: delegateCall,
       })
       .then(async res => {
         let estimateGas = 0;
@@ -598,14 +632,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         setRecommendGasLimit(`0x${gas.toString(16)}`);
         let block = null;
         try {
-          block = await apiProvider.requestETHRpc(
-            {
-              method: 'eth_getBlockByNumber',
-              params: ['latest', false],
-            },
-            chain.serverId,
-            currentAccount,
-          );
+          block = await blockPromise;
           setBlockInfo(block);
         } catch (e) {
           // DO NOTHING
@@ -625,6 +652,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             explainTx: res,
             needRatio,
             account: currentAccount,
+            preparedBlock: blockPromise,
           });
           setRecommendGasLimitRatio(_recommendGasLimitRatio);
           setGasLimit(_gasLimit);
@@ -635,179 +663,163 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         return res;
       });
 
-    return openapi
-      .parseTx({
-        chainId: chain.serverId,
-        tx: {
-          ...tx,
-          gas: '0x0',
-          nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
-          value: tx.value || '0x0',
-          // todo
-          to: tx.to || '',
-        },
-        origin: origin || '',
-        addr: address,
-      })
-      .then(async actionData => {
-        return preExecPromise.then(async res => {
-          let parsed: ParsedTransactionActionData,
-            requiredData: ActionRequireData;
-          if (actionData.action?.type === 'multi_actions') {
-            const actions = actionData.action.data as MultiAction;
-            const parsedActions = actions.map(action =>
-              parseAction({
+    return parseTxPromise.then(async actionData => {
+      return preExecPromise.then(async res => {
+        let parsed: ParsedTransactionActionData,
+          requiredData: ActionRequireData;
+        if (actionData.action?.type === 'multi_actions') {
+          const actions = actionData.action.data as MultiAction;
+          const parsedActions = actions.map(action =>
+            parseAction({
+              type: 'transaction',
+              data: action,
+              balanceChange: res.balance_change,
+              tx: {
+                ...tx,
+                gas: '0x0',
+                nonce: explainNonce,
+                value: tx.value || '0x0',
+              },
+              preExecVersion: res.pre_exec_version,
+              gasUsed: res.gas.gas_used,
+              sender: tx.from,
+            }),
+          );
+          const requireDataList = await Promise.all(
+            parsedActions.map(async item => {
+              const cexInfo = await getCexInfo(item.send?.to || '');
+              return fetchActionRequiredData({
                 type: 'transaction',
-                data: action,
-                balanceChange: res.balance_change,
+                actionData: item,
+                contractCall: actionData.contract_call,
+                chainId: chain.serverId,
+                sender: address,
+                walletProvider: {
+                  hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
+                  hasAddress: keyringService.hasAddress.bind(keyringService),
+                  getWhitelist: async () => whitelistService.getWhitelist(),
+                  isWhitelistEnabled: async () =>
+                    whitelistService.isWhitelistEnabled(),
+                  getPendingTxsByNonce: async (...args) =>
+                    transactionHistoryService.getPendingTxsByNonce(...args),
+                  findChain,
+                  ALIAS_ADDRESS,
+                },
+                cex: cexInfo,
                 tx: {
                   ...tx,
                   gas: '0x0',
                   nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
                   value: tx.value || '0x0',
                 },
-                preExecVersion: res.pre_exec_version,
-                gasUsed: res.gas.gas_used,
-                sender: tx.from,
-              }),
-            );
-            const requireDataList = await Promise.all(
-              parsedActions.map(async item => {
-                const cexInfo = await getCexInfo(item.send?.to || '');
-                return fetchActionRequiredData({
-                  type: 'transaction',
-                  actionData: item,
-                  contractCall: actionData.contract_call,
-                  chainId: chain.serverId,
-                  sender: address,
-                  walletProvider: {
-                    hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-                    hasAddress: keyringService.hasAddress.bind(keyringService),
-                    getWhitelist: async () => whitelistService.getWhitelist(),
-                    isWhitelistEnabled: async () =>
-                      whitelistService.isWhitelistEnabled(),
-                    getPendingTxsByNonce: async (...args) =>
-                      transactionHistoryService.getPendingTxsByNonce(...args),
-                    findChain,
-                    ALIAS_ADDRESS,
-                  },
-                  cex: cexInfo,
-                  tx: {
-                    ...tx,
-                    gas: '0x0',
-                    nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
-                    value: tx.value || '0x0',
-                  },
-                  apiProvider: isTestnet(chain.serverId)
-                    ? testOpenapi
-                    : openapi,
-                });
-              }),
-            );
-            const ctxList = await Promise.all(
-              requireDataList.map((requireData, index) => {
-                return formatSecurityEngineContext({
-                  type: 'transaction',
-                  actionData: parsedActions[index],
-                  requireData,
-                  chainId: chain.serverId,
-                  isTestnet: isTestnet(chain.serverId),
-                  provider: {
-                    getTimeSpan,
-                    hasAddress: keyringService.hasAddress.bind(keyringService),
-                  },
-                });
-              }),
-            );
-            const resultList = await Promise.all(
-              ctxList.map(ctx => executeEngine(ctx)),
-            );
-            parsed = parsedActions[0];
-            requiredData = requireDataList[0];
-            setMultiActionList(parsedActions);
-            setMultiActionRequireDataList(requireDataList);
-            setMultiActionEngineResultList(resultList);
-          } else {
-            parsed = parseAction({
-              type: 'transaction',
-              data: actionData.action,
-              balanceChange: res.balance_change,
-              tx: {
-                ...tx,
-                gas: '0x0',
-                nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
-                value: tx.value || '0x0',
-              },
-              preExecVersion: res.pre_exec_version,
-              gasUsed: res.gas.gas_used,
-              sender: tx.from,
-            });
-            const cexInfo = getCexInfo(parsed.send?.to || '');
-            requiredData = await fetchActionRequiredData({
-              type: 'transaction',
-              actionData: parsed,
-              contractCall: actionData.contract_call,
-              chainId: chain.serverId,
-              sender: address,
-              walletProvider: {
-                hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-                hasAddress: keyringService.hasAddress.bind(keyringService),
-                getWhitelist: async () => whitelistService.getWhitelist(),
-                isWhitelistEnabled: async () =>
-                  whitelistService.isWhitelistEnabled(),
-                getPendingTxsByNonce: async (...args) =>
-                  transactionHistoryService.getPendingTxsByNonce(...args),
-                findChain,
-                ALIAS_ADDRESS,
-              },
-              cex: cexInfo,
-              tx: {
-                ...tx,
-                gas: '0x0',
-                nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
-                value: tx.value || '0x0',
-              },
-              apiProvider: isTestnet(chain.serverId) ? testOpenapi : openapi,
-            });
-            const ctx = await formatSecurityEngineContext({
-              type: 'transaction',
-              actionData: parsed,
-              requireData: requiredData,
-              chainId: chain.serverId,
-              isTestnet: isTestnet(chain.serverId),
-              provider: {
-                getTimeSpan,
-                hasAddress: keyringService.hasAddress.bind(keyringService),
-              },
-            });
-            const result = await executeEngine(ctx);
-            setEngineResults(result);
-            setActionData(parsed);
-            setActionRequireData(requiredData);
-          }
+                apiProvider: isTestnet(chain.serverId) ? testOpenapi : openapi,
+              });
+            }),
+          );
+          const ctxList = await Promise.all(
+            requireDataList.map((requireData, index) => {
+              return formatSecurityEngineContext({
+                type: 'transaction',
+                actionData: parsedActions[index],
+                requireData,
+                chainId: chain.serverId,
+                isTestnet: isTestnet(chain.serverId),
+                provider: {
+                  getTimeSpan,
+                  hasAddress: keyringService.hasAddress.bind(keyringService),
+                },
+              });
+            }),
+          );
+          const resultList = await Promise.all(
+            ctxList.map(ctx => executeEngine(ctx)),
+          );
+          parsed = parsedActions[0];
+          requiredData = requireDataList[0];
+          setMultiActionList(parsedActions);
+          setMultiActionRequireDataList(requireDataList);
+          setMultiActionEngineResultList(resultList);
+        } else {
+          parsed = parseAction({
+            type: 'transaction',
+            data: actionData.action,
+            balanceChange: res.balance_change,
+            tx: {
+              ...tx,
+              gas: '0x0',
+              nonce: explainNonce,
+              value: tx.value || '0x0',
+            },
+            preExecVersion: res.pre_exec_version,
+            gasUsed: res.gas.gas_used,
+            sender: tx.from,
+          });
+          const cexInfo = getCexInfo(parsed.send?.to || '');
+          requiredData = await fetchActionRequiredData({
+            type: 'transaction',
+            actionData: parsed,
+            contractCall: actionData.contract_call,
+            chainId: chain.serverId,
+            sender: address,
+            walletProvider: {
+              hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
+              hasAddress: keyringService.hasAddress.bind(keyringService),
+              getWhitelist: async () => whitelistService.getWhitelist(),
+              isWhitelistEnabled: async () =>
+                whitelistService.isWhitelistEnabled(),
+              getPendingTxsByNonce: async (...args) =>
+                transactionHistoryService.getPendingTxsByNonce(...args),
+              findChain,
+              ALIAS_ADDRESS,
+            },
+            cex: cexInfo,
+            tx: {
+              ...tx,
+              gas: '0x0',
+              nonce: explainNonce,
+              value: tx.value || '0x0',
+            },
+            apiProvider: isTestnet(chain.serverId) ? testOpenapi : openapi,
+          });
+          const ctx = await formatSecurityEngineContext({
+            type: 'transaction',
+            actionData: parsed,
+            requireData: requiredData,
+            chainId: chain.serverId,
+            isTestnet: isTestnet(chain.serverId),
+            provider: {
+              getTimeSpan,
+              hasAddress: keyringService.hasAddress.bind(keyringService),
+            },
+          });
+          const result = await executeEngine(ctx);
+          setEngineResults(result);
+          setActionData(parsed);
+          setActionRequireData(requiredData);
+        }
 
-          const approval = (await getApproval())!;
+        const approval = (await getApproval())!;
 
-          approval?.signingTxId &&
-            (await transactionHistoryService.updateSigningTx(
-              approval.signingTxId,
-              {
-                rawTx: {
-                  nonce: updateNonce ? recommendNonce : tx.nonce,
-                },
-                explain: {
-                  ...res,
-                  approvalId: approval.id,
-                  calcSuccess: !(checkErrors.length > 0),
-                },
-                action: {
-                  actionData: parsed,
-                  requiredData,
-                },
+        approval?.signingTxId &&
+          (await transactionHistoryService.updateSigningTx(
+            approval.signingTxId,
+            {
+              rawTx: {
+                nonce: updateNonce ? recommendNonce : tx.nonce,
               },
-            ));
-        });
+              explain: {
+                ...res,
+                approvalId: approval.id,
+                calcSuccess: !(checkErrors.length > 0),
+              },
+              action: {
+                actionData: parsed,
+                requiredData,
+              },
+            },
+          ));
       });
+    });
   };
 
   const explain = async () => {
@@ -1363,11 +1375,16 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     let isBlockedTo = false;
     let isBlockedFrom = false;
     try {
+      const isBlockedFromPromise = openapi.isBlockedAddress(tx.from);
+      const isBlockedToPromise = tx.to
+        ? openapi.isBlockedAddress(tx.to)
+        : Promise.resolve({ is_blocked: false });
+
       if (tx.to) {
-        const { is_blocked } = await openapi.isBlockedAddress(tx.to);
+        const { is_blocked } = await isBlockedToPromise;
         isBlockedTo = is_blocked;
       }
-      const { is_blocked } = await openapi.isBlockedAddress(tx.from);
+      const { is_blocked } = await isBlockedFromPromise;
       isBlockedFrom = is_blocked;
       if (isBlockedTo || isBlockedFrom) {
         setIsShowBlockedTransactionDialog(true);
@@ -1409,16 +1426,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         }
         throw e;
       }
-
-      stats.report('createTransaction', {
-        type: currentAccount.brandName,
-        category: KEYRING_CATEGORY_MAP[currentAccount.type],
-        chainId: chain.serverId,
-        createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-        source: params?.$ctx?.ga?.source || '',
-        trigger: params?.$ctx?.ga?.trigger || '',
-        swapUseSlider: params?.$ctx?.ga.swapUseSlider ?? '',
-      });
 
       matomoRequestEvent({
         category: 'Transaction',
@@ -1473,6 +1480,18 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         // no cache, use the fast level in gasMarket
         gas = gasList.find(item => item.level === 'normal')!;
       }
+
+      stats.report('createTransaction', {
+        type: currentAccount.brandName,
+        category: KEYRING_CATEGORY_MAP[currentAccount.type],
+        chainId: chain.serverId,
+        createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+        source: params?.$ctx?.ga?.source || '',
+        trigger: params?.$ctx?.ga?.trigger || '',
+        swapUseSlider: params?.$ctx?.ga.swapUseSlider ?? '',
+        gasLevel: gas?.level || 'normal',
+      });
+
       const fee = calcMaxPriorityFee(
         gasList,
         gas,
