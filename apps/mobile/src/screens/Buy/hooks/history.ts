@@ -1,7 +1,7 @@
 import { openapi } from '@/core/request';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { syncSingleAddress } from '@/databases/hooks/history';
 import { syncRemoteBuyHistory } from '@/databases/sync/assets';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import {
@@ -30,8 +30,6 @@ export const usePendingBuyItemData = (
     });
   }, [addr]);
 
-  const { syncSingleAddress } = useSyncHistoryDB();
-
   const isPending = status === 'pending';
 
   useDebounce(
@@ -59,7 +57,7 @@ export const usePendingBuyItemData = (
     ) {
       syncSingleAddress(addr);
     }
-  }, [isPending, addr, id, value?.histories, syncSingleAddress]);
+  }, [isPending, addr, id, value?.histories]);
 
   useEffect(() => {
     if (addr && value?.histories.length) {
@@ -245,8 +243,6 @@ export const usePollBuyPendingNumber = (timer = 10000) => {
 
   const [pendingNumber, txId, chain] = pendingData || [];
 
-  const { syncSingleAddress } = useSyncHistoryDB();
-
   useEffect(() => {
     if ((!loading && pendingNumber !== undefined) || error) {
       timerRef.current = setTimeout(() => {
@@ -282,7 +278,7 @@ export const usePollBuyPendingNumber = (timer = 10000) => {
         syncSingleAddress(currentAccount?.address);
       }
     }
-  }, [pendingNumber, currentAccount?.address, syncSingleAddress, txId, chain]);
+  }, [pendingNumber, currentAccount?.address, txId, chain]);
 
   useEffect(() => {
     return () => {

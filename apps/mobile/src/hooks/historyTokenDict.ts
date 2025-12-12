@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-const historyTimeStore = zustandByMMKV<Record<string, number>>(
+export const historyTimeStore = zustandByMMKV<Record<string, number>>(
   '@HistoryTimeDictV3',
   {},
   { storage: MMKVStorageStrategy.compatJson },
@@ -25,7 +25,7 @@ export const resetUpdateHistoryTime = () => {
   historyTimeStore.setState({}, true);
 };
 
-const setHistoryLoading = (
+export const setHistoryLoading = (
   valOrFunc: UpdaterOrPartials<Record<string, boolean>>,
 ) => {
   historyLoadingStore.setState(prev => {
@@ -34,15 +34,6 @@ const setHistoryLoading = (
   }, true);
 };
 
-export function useHistoryTokenDict() {
-  const updateHistoryTime = historyTimeStore(s => s);
-  const historyLoading = historyLoadingStore(s => s);
-
-  return {
-    resetUpdateHistoryTime,
-    updateHistoryTime,
-    updateHistoryTimeSingleAddress,
-    historyLoading,
-    setHistoryLoading,
-  };
-}
+export const useHistoryLoading = () => {
+  return historyLoadingStore(s => s);
+};

@@ -1,5 +1,5 @@
 import { ellipsis } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { createPersistStore } from '@rabby-wallet/persist-store';
+import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 
 export type ContactBookItem = {
@@ -19,22 +19,15 @@ export type ContactBookStore = {
   aliases: Record<string, AddressAliasItem>;
 };
 
-export class ContactBookService {
-  store: ContactBookStore;
-
+export class ContactBookService extends StoreServiceBase<ContactBookStore> {
   constructor(options?: StorageAdapaterOptions) {
-    this.store = createPersistStore<ContactBookStore>(
-      {
-        name: 'contactBook',
-        template: {
-          contacts: {},
-          aliases: {},
-        },
-      },
-      {
-        storage: options?.storageAdapter,
-      },
-    );
+    super('contactBook', {
+      contacts: {},
+      aliases: {},
+    },
+    {
+      storageAdapter: options?.storageAdapter,
+    })
   }
 
   addContact(contact: ContactBookItem | ContactBookItem[]) {

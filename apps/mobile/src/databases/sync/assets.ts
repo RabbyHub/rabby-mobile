@@ -28,7 +28,7 @@ import { preferenceService, transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
 import { EvmTotalBalanceResponse } from '../hooks/balance';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { setHistoryLoading } from '@/hooks/historyTokenDict';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   const data = [..._tokens];
@@ -143,9 +143,6 @@ const updateSwapFailHistoryItem = (
 export async function syncRemoteHistory(
   address: string,
   res: TxAllHistoryResult | TxHistoryResult,
-  setHistoryLoading: ReturnType<
-    typeof useHistoryTokenDict
-  >['setHistoryLoading'],
 ) {
   try {
     console.debug(
@@ -213,55 +210,6 @@ export async function syncRemoteHistory(
     });
 
     console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction done');
-    return {
-      address,
-      history_list: history_list,
-    };
-  } catch (e) {
-    console.error('syncRemoteHistory', e);
-  }
-}
-
-export async function syncRemoteSwapHistory(
-  address: string,
-  history_list: SwapTradeList['history_list'],
-) {
-  try {
-    console.debug('syncRemoteSwapHistory length', history_list.length);
-
-    const historyItems = history_list.map(raw => {
-      const item = new SwapItemEntity();
-      SwapItemEntity.fillEntity(item, address, raw);
-
-      return item;
-    });
-    await prepareAppDataSource();
-    // // leave here for debug save
-    // const saveResult = await TokenItemEntity.save(tokenItems).catch(err => {
-    //   console.error('TokenItemEntity.save err', err);
-    //   throw err;
-    // });
-    console.debug('syncRemoteSwapHistory batchSaveWithPQueueAndTransaction');
-    await batchSaveWithPQueueAndTransaction(SwapItemEntity, historyItems, {
-      owner_addr: address,
-      taskFor: 'swap-history',
-      batchSize: 100,
-      concurrency: 1,
-      delayBetweenTasks: 1.5 * 1e3,
-      noNeedAbort: true,
-    })
-      .then(({ taskSignal, taskKey }) => {
-        if (taskSignal.aborted) {
-          console.warn(`[${taskKey}] Batch upsertion was aborted.`);
-        } else {
-          console.debug(`[${taskKey}] batch upsert tasks created`);
-        }
-      })
-      .catch(error => {
-        console.error('Batch upsert failed:', error);
-      });
-
-    console.debug('syncSwapHistory batchSaveWithPQueueAndTransaction done');
     return {
       address,
       history_list: history_list,

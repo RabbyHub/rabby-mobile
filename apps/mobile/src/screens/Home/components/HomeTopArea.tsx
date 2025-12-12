@@ -1,77 +1,88 @@
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { useTheme2024 } from '@/hooks/theme';
-import { formChartData } from '@/hooks/useCurve';
+import {
+  useSingleHomeCurveRefresh,
+  useSingleHomeIsDecrease,
+  useSingleHomeIsLoss,
+} from '@/hooks/useCurve';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { HomeTopChart } from './HomeTopChart';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { CenterBg } from './BgComponents';
+import useCurrentBalance from '@/hooks/useCurrentBalance';
+import { CurveDayType } from '@/utils/curveDayType';
+import { perfEvents } from '@/core/utils/perf';
+import { useHomeReachTop, useSingleHomeAddress } from '../hooks/singleHome';
+import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 
-export const HomeTopArea = ({
-  onUpdateIsDecrease,
-  curveData,
-  isLoadingCurve,
-  isDisConnect,
-  onRefresh,
-  fold,
-  setFold,
-  reachTop,
-}: {
-  onUpdateIsDecrease?: (status: boolean) => void;
-  curveData?: ReturnType<typeof formChartData>;
-  isLoadingCurve: boolean;
-  isDisConnect: boolean;
-  onRefresh: () => void;
-  fold: boolean;
-  setFold: (fold: boolean) => void;
-  reachTop: boolean;
-}) => {
+export const HomeTopArea = () => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const isDecrease = useCachedValue(curveData, 'isLoss');
+  const { currentAddress } = useSingleHomeAddress();
+  const { isDisConnect } = useGlobalStatus();
 
-  const pathColor = useMemo(
-    () =>
-      !curveData?.isLoss
-        ? colors2024['green-default']
-        : colors2024['red-default'],
-    [colors2024, curveData?.isLoss],
+  const { balance, balanceLoading, evmBalance } = useCurrentBalance(
+    currentAddress,
+    {
+      update: true,
+      noNeedBalance: false,
+    },
+  );
+  console.debug(
+    '[perf] HomeTopArea balance, evmBalance, balanceLoading',
+    balance,
+    evmBalance,
+    balanceLoading,
   );
 
+  const { refresh: refreshCurve } = useSingleHomeCurveRefresh(
+    currentAddress,
+    evmBalance,
+    CurveDayType.DAY,
+    balance,
+  );
+
+  const { isLoss } = useSingleHomeIsLoss();
+
   useEffect(() => {
-    if (isDecrease !== undefined) {
-      onUpdateIsDecrease?.(isDecrease);
-    }
-  }, [isDecrease, onUpdateIsDecrease]);
+    refreshCurve();
+
+    const { remove } = perfEvents.subscribe(
+      'TMP_TRIGGER:SINGLE_HOME_REFRESH',
+      async (ignoreLoading?: boolean) => {
+        console.debug('[perf] SINGLE_HOME_REFRESH triggered');
+        refreshCurve(ignoreLoading);
+      },
+    );
+
+    return () => {
+      remove();
+    };
+  }, [refreshCurve]);
+
+  const pathColor = useMemo(
+    () => (!isLoss ? colors2024['green-default'] : colors2024['red-default']),
+    [colors2024, isLoss],
+  );
+
+  const { reachTop } = useHomeReachTop();
 
   return (
     <View style={[styles.container]}>
-      {reachTop ? null : <CenterBg fold={fold} isDecrease={!!isDecrease} />}
+      {reachTop ? null : <CenterBg />}
       <GlobalWarning
         hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
-        onRefresh={onRefresh}
+        onRefresh={() => refreshCurve()}
       />
 
       <HomeTopChart
-        fold={fold}
-        setFold={setFold}
-        loading={isLoadingCurve}
-        data={
-          curveData || {
-            list: [],
-            rawNetWorth: 0,
-            rawChange: 0,
-            netWorth: '',
-            change: '',
-            changePercent: '',
-            isLoss: false,
-            isEmptyAssets: false,
-          }
-        }
+        balanceLoading={balanceLoading}
+        evmBalance={evmBalance}
         pathColor={pathColor}
         isNoAssets={false}
         isOffline={false}

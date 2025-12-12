@@ -1,28 +1,41 @@
 import { useEffect } from 'react';
 import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom } from 'jotai';
 
 import { openapi } from '@/core/request';
 import { getCexId } from '@/utils/addressCexId';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 
 export const globalSupportCexList: ProjectItem[] = [];
-export const supportCexListAtom = atom<ProjectItem[]>([]);
+type SupportedCexListState = {
+  list: ProjectItem[];
+};
+const supportCexListStore = zCreate<SupportedCexListState>(() => ({
+  list: [],
+}));
+
+function setSupportCexList(valOrFunc: UpdaterOrPartials<ProjectItem[]>) {
+  supportCexListStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.list, valOrFunc);
+
+    return { ...prev, list: newVal };
+  });
+}
+
+runIIFEFunc(() => {
+  openapi.getCexSupportList().then(res => {
+    globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
+    setSupportCexList(res);
+  });
+});
 export const useCexSupportList = () => {
-  const [list, setList] = useAtom(supportCexListAtom);
+  const list = supportCexListStore(s => s.list);
 
-  useEffect(() => {
-    if (list.length) {
-      return;
-    }
-    openapi.getCexSupportList().then(res => {
-      globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
-      setList(res);
-    });
-  }, [list.length, setList]);
-
-  return {
-    list,
-  };
+  return { list };
 };
 export const getCexInfo = (address: string) => {
   if (!address) {

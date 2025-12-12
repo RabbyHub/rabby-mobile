@@ -37,6 +37,7 @@ import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { makeChainServerIdSet } from '@/utils/chain';
+import { ITokenSetting } from '@/core/services/preference';
 
 type AssetsState = {
   loading: boolean;
@@ -82,6 +83,145 @@ function setShortCache(
     return { ...prev, shortCache: newVal };
   });
 }
+
+const batchLoadCacheTokens = async (
+  addresses: string[],
+  setting: ITokenSetting,
+  options?: {
+    core?: boolean;
+    maxLength?: number;
+  },
+) => {
+  if (!addresses.length) {
+    return;
+  }
+  setLoading(true);
+  const cachedTokens = await TokenItemEntity.batchMultiAddressTokens(
+    addresses,
+    options?.core,
+    options?.maxLength,
+  );
+  if (!cachedTokens.length) {
+    setLoading(false);
+    return;
+  }
+  const assetGroup = _.groupBy(cachedTokens, 'owner_addr');
+  const formatAssetMap = _.mapValues(assetGroup, group => {
+    const walletProject = new DisplayedProject({
+      id: 'Wallet',
+      name: 'Wallet',
+    });
+
+    let _data = produce(walletProject, draft => {
+      draft.netWorth = 0;
+      draft._netWorth = '$0';
+      draft._netWorthChange = '-';
+      draft.netWorthChange = 0;
+      draft._netWorthChangePercent = '';
+      draft._portfolioDict = {};
+      draft._portfolios = [];
+      draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
+    });
+
+    const chainTokens = group.reduce((m, n) => {
+      m[n.chain] = m[n.chain] || [];
+      m[n.chain].push(n);
+
+      return m;
+    }, {} as Record<string, TokenItem[]>);
+    _data = produce(_data, draft => {
+      setWalletTokens(draft, chainTokens);
+    });
+
+    const sortedTokens: AbstractPortfolioToken[] = tagTokenList(
+      sortWalletTokens(_data),
+      setting,
+      { filterChainServerIds: true },
+    );
+    return sortedTokens;
+  });
+
+  Object.keys(formatAssetMap).forEach(address => {
+    updateAssetListByAddress(address, {
+      type: 'tokens',
+      data: formatAssetMap[address],
+    });
+  });
+
+  setLoading(false);
+};
+
+const batchLoadCacheDefi = async (
+  addresses: string[],
+  setting: ITokenSetting,
+  options?: {
+    maxLength?: number;
+  },
+) => {
+  if (!addresses.length) {
+    return;
+  }
+  const cachedDeFis = await ProtocolItemEntity.batchMultAddressPortocols(
+    addresses,
+    options?.maxLength,
+  );
+  if (!cachedDeFis.length) {
+    return;
+  }
+
+  const protocolGroup = _.groupBy(cachedDeFis, 'owner_addr');
+  const formatProtocolMap = _.mapValues(protocolGroup, group => {
+    let projectDict: Record<string, DisplayedProject> | null = {};
+    group.forEach(project => {
+      if (projectDict) {
+        projectDict = produce(projectDict, draft => {
+          project && portfolio2Display(project, draft);
+        });
+      }
+    });
+    const realtimeData = Object.values(projectDict)?.sort(
+      (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
+    );
+    return tagProfiles(realtimeData, setting);
+  });
+
+  Object.keys(formatProtocolMap).forEach(address => {
+    updateAssetListByAddress(address, {
+      type: 'portfolios',
+      data: formatProtocolMap[address],
+    });
+  });
+};
+const batchLoadCacheNFT = async (
+  addresses: string[],
+  setting: ITokenSetting,
+  options?: {
+    core?: boolean;
+    maxLength?: number;
+  },
+) => {
+  if (!addresses.length) {
+    return;
+  }
+  const cacheNfts = await NFTItemEntity.batchMultAddressNFTs(
+    addresses,
+    options?.core,
+    options?.maxLength,
+  );
+  if (!cacheNfts.length) {
+    return;
+  }
+
+  const nftGroup = _.groupBy(cacheNfts, 'owner_addr');
+  const formatNFTMap = _.mapValues(nftGroup, group => tagNfts(group, setting));
+
+  Object.keys(formatNFTMap).forEach(address => {
+    updateAssetListByAddress(address, {
+      type: 'nfts',
+      data: formatNFTMap[address],
+    });
+  });
+};
 
 export const useLoadAssets = () => {
   const { isLoading, isFirstFetch, shortCache } = assetsStateStore(
@@ -275,156 +415,6 @@ export const useLoadAssets = () => {
     },
     [],
   );
-
-  const batchLoadCacheTokens = useCallback(
-    async (
-      addresses: string[],
-      setting: any,
-      options?: {
-        core?: boolean;
-        maxLength?: number;
-      },
-    ) => {
-      if (!addresses.length) {
-        return;
-      }
-      setLoading(true);
-      const cachedTokens = await TokenItemEntity.batchMultiAddressTokens(
-        addresses,
-        options?.core,
-        options?.maxLength,
-      );
-      if (!cachedTokens.length) {
-        setLoading(false);
-        return;
-      }
-      const assetGroup = _.groupBy(cachedTokens, 'owner_addr');
-      const formatAssetMap = _.mapValues(assetGroup, group => {
-        const walletProject = new DisplayedProject({
-          id: 'Wallet',
-          name: 'Wallet',
-        });
-
-        let _data = produce(walletProject, draft => {
-          draft.netWorth = 0;
-          draft._netWorth = '$0';
-          draft._netWorthChange = '-';
-          draft.netWorthChange = 0;
-          draft._netWorthChangePercent = '';
-          draft._portfolioDict = {};
-          draft._portfolios = [];
-          draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
-        });
-
-        const chainTokens = group.reduce((m, n) => {
-          m[n.chain] = m[n.chain] || [];
-          m[n.chain].push(n);
-
-          return m;
-        }, {} as Record<string, TokenItem[]>);
-        _data = produce(_data, draft => {
-          setWalletTokens(draft, chainTokens);
-        });
-
-        const sortedTokens: AbstractPortfolioToken[] = tagTokenList(
-          sortWalletTokens(_data),
-          setting,
-          { filterChainServerIds: true },
-        );
-        return sortedTokens;
-      });
-
-      Object.keys(formatAssetMap).forEach(address => {
-        updateAssetListByAddress(address, {
-          type: 'tokens',
-          data: formatAssetMap[address],
-        });
-      });
-
-      setLoading(false);
-    },
-    [],
-  );
-
-  const batchLoadCacheDefi = useCallback(
-    async (
-      addresses: string[],
-      setting: any,
-      options?: {
-        maxLength?: number;
-      },
-    ) => {
-      if (!addresses.length) {
-        return;
-      }
-      const cachedDeFis = await ProtocolItemEntity.batchMultAddressPortocols(
-        addresses,
-        options?.maxLength,
-      );
-      if (!cachedDeFis.length) {
-        return;
-      }
-
-      const protocolGroup = _.groupBy(cachedDeFis, 'owner_addr');
-      const formatProtocolMap = _.mapValues(protocolGroup, group => {
-        let projectDict: Record<string, DisplayedProject> | null = {};
-        group.forEach(project => {
-          if (projectDict) {
-            projectDict = produce(projectDict, draft => {
-              project && portfolio2Display(project, draft);
-            });
-          }
-        });
-        const realtimeData = Object.values(projectDict)?.sort(
-          (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-        );
-        return tagProfiles(realtimeData, setting);
-      });
-
-      Object.keys(formatProtocolMap).forEach(address => {
-        updateAssetListByAddress(address, {
-          type: 'portfolios',
-          data: formatProtocolMap[address],
-        });
-      });
-    },
-    [],
-  );
-  const batchLoadCacheNFT = useCallback(
-    async (
-      addresses: string[],
-      setting: any,
-      options?: {
-        core?: boolean;
-        maxLength?: number;
-      },
-    ) => {
-      if (!addresses.length) {
-        return;
-      }
-      const cacheNfts = await NFTItemEntity.batchMultAddressNFTs(
-        addresses,
-        options?.core,
-        options?.maxLength,
-      );
-      if (!cacheNfts.length) {
-        return;
-      }
-
-      const nftGroup = _.groupBy(cacheNfts, 'owner_addr');
-      const formatNFTMap = _.mapValues(nftGroup, group =>
-        tagNfts(group, setting),
-      );
-
-      Object.keys(formatNFTMap).forEach(address => {
-        updateAssetListByAddress(address, {
-          type: 'nfts',
-          data: formatNFTMap[address],
-        });
-      });
-    },
-    [],
-  );
   const removeUnNeedAssets = useCallback((addresses: string[]) => {
     const allAddresses = new Set([
       ...Object.keys(getAssetsMapDirectly('tokens')),
@@ -555,13 +545,7 @@ export const useLoadAssets = () => {
         ]);
       }, 0);
     },
-    [
-      removeUnNeedAssets,
-      shortCache,
-      batchLoadCacheTokens,
-      batchLoadCacheDefi,
-      batchLoadCacheNFT,
-    ],
+    [removeUnNeedAssets, shortCache],
   );
 
   const updateTokensAmount = useCallback(
@@ -629,80 +613,55 @@ export const useAssetsRefreshing = () => {
   };
 };
 
+const debounceReloadTokenList = debounce(batchLoadCacheTokens, 2000);
+const debounceReloadDefiList = debounce(batchLoadCacheDefi, 2000);
+const debounceReloadNftList = debounce(batchLoadCacheNFT, 2000);
 export const useInitDetectDBAssets = () => {
-  const {
-    isLoading,
-    batchLoadCacheTokens,
-    batchLoadCacheDefi,
-    batchLoadCacheNFT,
-  } = useLoadAssets();
-
-  const debounceReloadTokenList = useMemo(
-    () => debounce(batchLoadCacheTokens, 2000),
-    [batchLoadCacheTokens],
-  );
-  const debounceReloadDefiList = useMemo(
-    () => debounce(batchLoadCacheDefi, 2000),
-    [batchLoadCacheDefi],
-  );
-  const debounceReloadNftList = useMemo(
-    () => debounce(batchLoadCacheNFT, 2000),
-    [batchLoadCacheNFT],
-  );
-
   useAppOrmSyncEvents({
     taskFor: ['token', 'protocols', 'nfts'],
-    onRemoteDataUpserted: useCallback(
-      ctx => {
-        if (!ctx.success || isLoading) {
-          return;
-        }
-        const { taskFor } = ctx;
-        const currentUpdateCount =
-          ctx.syncDetails.batchSize * ctx.syncDetails.round +
-          ctx.syncDetails.count;
+    onRemoteDataUpserted: useCallback(ctx => {
+      if (!ctx.success || assetsStateStore.getState().loading) {
+        return;
+      }
+      const { taskFor } = ctx;
+      const currentUpdateCount =
+        ctx.syncDetails.batchSize * ctx.syncDetails.round +
+        ctx.syncDetails.count;
 
-        let currentAssetCount = 0;
-        if (taskFor === 'token') {
-          currentAssetCount =
-            getAssetsMapDirectly('tokens')[ctx.owner_addr]?.length || 0;
-        } else if (taskFor === 'protocols') {
-          currentAssetCount =
-            getAssetsMapDirectly('portfolios')[ctx.owner_addr]?.length || 0;
-        } else if (taskFor === 'nfts') {
-          currentAssetCount =
-            getAssetsMapDirectly('nfts')[ctx.owner_addr]?.length || 0;
-        }
+      let currentAssetCount = 0;
+      if (taskFor === 'token') {
+        currentAssetCount =
+          getAssetsMapDirectly('tokens')[ctx.owner_addr]?.length || 0;
+      } else if (taskFor === 'protocols') {
+        currentAssetCount =
+          getAssetsMapDirectly('portfolios')[ctx.owner_addr]?.length || 0;
+      } else if (taskFor === 'nfts') {
+        currentAssetCount =
+          getAssetsMapDirectly('nfts')[ctx.owner_addr]?.length || 0;
+      }
 
-        if (taskFor === 'token') {
-          if (currentUpdateCount > currentAssetCount) {
-            debounceReloadTokenList(
-              [ctx.owner_addr],
-              preferenceService.getUserTokenSettings(),
-            );
-          }
-        } else if (taskFor === 'protocols') {
-          if (currentUpdateCount > currentAssetCount) {
-            debounceReloadDefiList(
-              [ctx.owner_addr],
-              preferenceService.getUserTokenSettings(),
-            );
-          }
-        } else if (taskFor === 'nfts') {
-          if (currentUpdateCount > currentAssetCount) {
-            debounceReloadNftList(
-              [ctx.owner_addr],
-              preferenceService.getUserTokenSettings(),
-            );
-          }
+      if (taskFor === 'token') {
+        if (currentUpdateCount > currentAssetCount) {
+          debounceReloadTokenList(
+            [ctx.owner_addr],
+            preferenceService.getUserTokenSettingsSync(),
+          );
         }
-      },
-      [
-        isLoading,
-        debounceReloadDefiList,
-        debounceReloadNftList,
-        debounceReloadTokenList,
-      ],
-    ),
+      } else if (taskFor === 'protocols') {
+        if (currentUpdateCount > currentAssetCount) {
+          debounceReloadDefiList(
+            [ctx.owner_addr],
+            preferenceService.getUserTokenSettingsSync(),
+          );
+        }
+      } else if (taskFor === 'nfts') {
+        if (currentUpdateCount > currentAssetCount) {
+          debounceReloadNftList(
+            [ctx.owner_addr],
+            preferenceService.getUserTokenSettingsSync(),
+          );
+        }
+      }
+    }, []),
   });
 };

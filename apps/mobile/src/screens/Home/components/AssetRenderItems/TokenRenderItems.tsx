@@ -540,7 +540,7 @@ export const TokenRowSectionHeader = memo(
     buttonStyle,
     onPressFold,
   }: {
-    str: string;
+    str?: string | null;
     fold?: boolean;
     style?: ViewStyle;
     buttonStyle?: ViewStyle;

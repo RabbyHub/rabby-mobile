@@ -44,8 +44,6 @@ export function useOneKeyDevices() {
 }
 
 export const useGlobalInitOneKey = () => {
-  // const [, setDevices] = useAtom(oneKeyDevices);
-
   React.useEffect(() => {
     HardwareBleSdk.on(DEVICE.CONNECT, payload => {
       setDevices(prev => {

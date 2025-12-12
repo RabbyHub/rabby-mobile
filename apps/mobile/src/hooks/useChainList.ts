@@ -34,7 +34,6 @@ eventBus.on(EVENT_UPDATE_CHAIN_LIST, v => {
 });
 
 export const useChainList = () => {
-  // const [chainList] = useAtom(chainListAtom);
   const chainList = chainListStore(s => s);
 
   return {

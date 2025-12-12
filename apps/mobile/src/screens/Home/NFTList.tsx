@@ -5,7 +5,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ListRenderItem, StyleSheet, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { navigateDeprecated } from '@/utils/navigation';
@@ -30,7 +30,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  collectionNftList,
+  varyNftListByFold,
   NftItemWithCollection,
   useQueryNft,
 } from './hooks/nft';
@@ -46,6 +46,7 @@ import { runOnJS } from 'react-native-reanimated';
 import { Account } from '@/core/services/preference';
 import { getItemId } from './utils/listRenderId';
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
+import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -61,24 +62,18 @@ export const icons = {
 interface Props {
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
-  chain?: string;
-  account: Account;
-  updateNft: (nftList: DisplayNftItem[]) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
-export const NFTList = ({
-  onRefresh,
-  onReachTopStatusChange,
-  chain,
-  account: currentAccount,
-  updateNft: updateNftCallback,
-}: Props) => {
+export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle: getStyles,
   });
   const { t } = useTranslation();
+  const { currentAccount } = useSingleHomeAccount();
+
+  const { selectedChain } = useSingleHomeChain();
 
   const [foldNft, setFoldNft] = useState(true);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
@@ -94,18 +89,12 @@ export const NFTList = ({
     return hasBeenFocusedRef.current;
   }, [focusedTab]);
 
+  const userAddr = currentAccount?.address?.toLowerCase();
   const {
     list: _rawNftList,
     reload: reloadNftList,
     isLoading: loadingNft,
-  } = useQueryNft(currentAccount?.address?.toLowerCase(), false);
-
-  useEffect(() => {
-    if (_rawNftList && !loadingNft) {
-      updateNftCallback(_rawNftList);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawNftList?.length, loadingNft, updateNftCallback]);
+  } = useQueryNft(userAddr, false);
 
   useEffect(() => {
     if (isFocused) {
@@ -116,32 +105,25 @@ export const NFTList = ({
 
   const nftList = useMemo(() => {
     return _rawNftList.filter(item =>
-      chain && item?.chain ? item.chain === chain : true,
+      selectedChain && item?.chain ? item.chain === selectedChain : true,
     );
-  }, [_rawNftList, chain]);
+  }, [_rawNftList, selectedChain]);
 
-  const foldNftList: ActionItem[] = useMemo(
-    () =>
-      collectionNftList(
-        nftList.filter(i => i._isFold),
-        true,
-      ).map(item => ({
-        type: 'fold_nft',
-        data: item,
-      })),
-    [nftList],
-  );
-  const unFoldNftList: ActionItem[] = useMemo(
-    () =>
-      collectionNftList(
-        nftList.filter(i => !i._isFold),
-        true,
-      ).map(item => ({
-        type: 'unfold_nft',
-        data: item,
-      })),
-    [nftList],
-  );
+  const { foldNftList, unFoldNftList } = useMemo(() => {
+    const result = varyNftListByFold<ActionItem>(
+      nftList,
+      (collection, item) => ({
+        type: item._isFold ? 'fold_nft' : 'unfold_nft',
+        data: collection,
+      }),
+      { forSingleAddress: true },
+    );
+
+    return {
+      foldNftList: result.foldList,
+      unFoldNftList: result.unFoldList,
+    };
+  }, [nftList]);
 
   const dataList = useMemo(() => {
     const itemData: Array<{
@@ -285,9 +267,9 @@ export const NFTList = ({
     [isLight, singleNFTRefresh, t],
   );
 
-  const renderItem = useCallback(
-    (_type, _data) => {
-      const { type, data } = _data;
+  const renderItem = useCallback<ListRenderItem<ActionItem>>(
+    ({ item }) => {
+      const { type, data } = item;
       switch (type) {
         case 'unfold_nft':
         case 'fold_nft':
@@ -382,7 +364,7 @@ export const NFTList = ({
       <Tabs.FlatList
         data={dataList}
         keyExtractor={getItemId}
-        renderItem={({ item }) => renderItem(item.type, item)}
+        renderItem={renderItem}
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}

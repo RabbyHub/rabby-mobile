@@ -15,7 +15,6 @@ import { useBuyHistory } from '../hooks/history';
 import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { naviPush } from '@/utils/navigation';
 import { BuyHistoryItem as TBuyHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';

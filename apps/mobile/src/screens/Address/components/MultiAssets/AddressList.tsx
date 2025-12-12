@@ -51,10 +51,7 @@ export const AddressList = ({
   } = useAccountInfo();
 
   const { triggerUpdate, balanceAccounts, getTotalBalance } =
-    useAccountsBalance({
-      cacheTime: 10 * 60 * 1000,
-      accountsNoUnique: true, // balanceAccounts has filter same address accounts
-    });
+    useAccountsBalance();
 
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);

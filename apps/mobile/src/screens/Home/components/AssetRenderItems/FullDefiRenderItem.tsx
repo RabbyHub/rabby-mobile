@@ -20,8 +20,7 @@ import { useProtocolConfig } from '../../utils/protocolConfig';
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 import { usePortfolios } from '../../hooks/usePortfolio';
 import { useLoadAssets } from '@/screens/Search/useAssets';
-import { refreshHistoryIdAtom } from '../../SingleHomeRightArea';
-import { useSetAtom } from 'jotai';
+import { setRefreshHistoryId } from '../../SingleHomeRightArea';
 import { dappService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
 import { findChain } from '@/utils/chain';
@@ -59,7 +58,6 @@ export const FullDefiRenderItem = ({
 }: Props) => {
   const [isExpand, setIsExpand] = useState(defaultExpand ?? false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const setRefreshHistoryId = useSetAtom(refreshHistoryIdAtom);
   const isFromAppChain = useMemo(() => {
     return isAppChain(data?.chain || '');
   }, [data?.chain]);
@@ -143,7 +141,6 @@ export const FullDefiRenderItem = ({
     loadSpecificDefi,
     data?.id,
     data?.chain,
-    setRefreshHistoryId,
     updateSpecificProtocol,
   ]);
 

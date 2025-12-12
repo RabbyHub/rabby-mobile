@@ -3,14 +3,15 @@ import { Linking } from 'react-native';
 import { t } from 'i18next';
 import { keyringService } from '@/core/services';
 import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
-import { useBrowser } from './browser/useBrowser';
+import { browserApis, useBrowser } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
 import { toastIndicator, toastWithIcon } from '@/components/Toast';
 import { RcIconInfoForToast } from '@/screens/Unlock/icons';
 import { getRabbyLockInfo, PasswordStatus } from '@/core/apis/lock';
-import { usePasswordStatus } from './useLock';
+import { getPwdStatus, usePasswordStatus } from './useLock';
 import { ALLOWED_UL_DOMAINS } from '@/constant/universalLink';
 import { IS_IOS } from '@/core/native/utils';
+import { RefLikeObject } from '@/utils/type';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -65,66 +66,56 @@ function parseActionAndProcessLink(
 
 const toastTip = toastWithIcon(RcIconInfoForToast);
 
+const handleActions: OnParseUrlAndProcessAction = payload => {
+  switch (payload.type) {
+    case 'open-dapp':
+      browserApis.openTab(payload.dappUrl, {
+        isNewTab: true,
+      });
+      break;
+  }
+};
+
+const hideToastRef: RefLikeObject<() => void | null> = { current: () => null };
+const handleAppLink = async (url: string, isInit = false) => {
+  const maybeShortTipIsBetter = IS_IOS && isInit;
+
+  if (keyringService.isUnlocked()) {
+    // just parse the link if app is unlocked
+    parseActionAndProcessLink(url, handleActions);
+    setNextAppLink('');
+  } else if (
+    getPwdStatus() === PasswordStatus.UseBuiltIn ||
+    (await getRabbyLockInfo()).isUseBuiltInPwd
+  ) {
+    hideToastRef.current = toastTip(
+      t('page.universalLink.error.setupWalletFirst'),
+      {
+        duration: 3000,
+        hideOnPress: true,
+      },
+    );
+    setNextAppLink('');
+  } else {
+    // // notify trigger unlock request here
+    // hideToastRef.current = toastIndicator(
+    //   t('page.universalLink.error.unlockWalletFirst'),
+    //   {
+    //     duration: maybeShortTipIsBetter ? 10000 : 30000,
+    //     hideOnPress: maybeShortTipIsBetter,
+    //     isTop: true,
+    //   },
+    // );
+
+    if (isInit) {
+      setNextAppLink(prev => prev || url);
+    } else {
+      setNextAppLink(url);
+    }
+  }
+};
+
 export function useUniversalLinkOnTop() {
-  const { openTab } = useBrowser();
-
-  const handleActions = useCallback<OnParseUrlAndProcessAction>(
-    payload => {
-      switch (payload.type) {
-        case 'open-dapp':
-          openTab(payload.dappUrl, {
-            isNewTab: true,
-          });
-          break;
-      }
-    },
-    [openTab],
-  );
-
-  const { pwdStatus } = usePasswordStatus();
-
-  const hideToastRef = useRef<() => void>(() => {});
-  const handleAppLink = useCallback(
-    async (url: string, isInit = false) => {
-      const maybeShortTipIsBetter = IS_IOS && isInit;
-
-      if (keyringService.isUnlocked()) {
-        // just parse the link if app is unlocked
-        parseActionAndProcessLink(url, handleActions);
-        setNextAppLink('');
-      } else if (
-        pwdStatus === PasswordStatus.UseBuiltIn ||
-        (await getRabbyLockInfo()).isUseBuiltInPwd
-      ) {
-        hideToastRef.current = toastTip(
-          t('page.universalLink.error.setupWalletFirst'),
-          {
-            duration: 3000,
-            hideOnPress: true,
-          },
-        );
-        setNextAppLink('');
-      } else {
-        // // notify trigger unlock request here
-        // hideToastRef.current = toastIndicator(
-        //   t('page.universalLink.error.unlockWalletFirst'),
-        //   {
-        //     duration: maybeShortTipIsBetter ? 10000 : 30000,
-        //     hideOnPress: maybeShortTipIsBetter,
-        //     isTop: true,
-        //   },
-        // );
-
-        if (isInit) {
-          setNextAppLink(prev => prev || url);
-        } else {
-          setNextAppLink(url);
-        }
-      }
-    },
-    [pwdStatus, handleActions],
-  );
-
   useMount(() => {
     Linking.getInitialURL().then(url => {
       if (url) {
@@ -143,7 +134,7 @@ export function useUniversalLinkOnTop() {
     return () => {
       subscription.remove();
     };
-  }, [handleAppLink]);
+  }, []);
 
   useLayoutEffect(() => {
     const onUnlock = () => {
@@ -159,5 +150,5 @@ export function useUniversalLinkOnTop() {
     return () => {
       keyringService.off('unlock', onUnlock);
     };
-  }, [handleActions]);
+  }, []);
 }

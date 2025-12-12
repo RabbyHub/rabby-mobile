@@ -122,10 +122,7 @@ import {
 import { AppCacheSizeText } from './components/SpecialText';
 import { IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
-import {
-  resetUpdateHistoryTime,
-  useHistoryTokenDict,
-} from '@/hooks/historyTokenDict';
+import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
 import { OpenApiPopup } from './components/OpenApiPopup';
@@ -217,8 +214,9 @@ function SettingsBlocks() {
   const startSelectAutolockTime = useCallback(() => {
     if (
       shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setAutoLockTime' })
-    )
+    ) {
       return;
+    }
     selectAutolockTimeRef.current?.present();
   }, [shouldRedirectToSetPasswordBefore]);
 
@@ -246,8 +244,9 @@ function SettingsBlocks() {
   const startSwitchBiometrics = useCallback(() => {
     if (
       shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
-    )
+    ) {
       return;
+    }
     switchBiometricsRef.current?.toggle();
   }, [shouldRedirectToSetPasswordBefore]);
 

@@ -35,6 +35,7 @@ import {
   useOnDeFiRefresh,
 } from '@/screens/Home/hooks/store';
 import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
+import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
@@ -43,12 +44,13 @@ export const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
 
 interface Props {
   chain?: string;
-  updatePortfolio?: (portfolios: AbstractProject[]) => void;
 }
-export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
+export const ProtocolList = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
+  const selectedChainItem = useSelectedChainItem();
+  const chain = selectedChainItem?.chain;
   const [foldDefi, setFoldDefi] = useState(true);
 
   const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
@@ -68,14 +70,6 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
   const { portfolios: _rawPortfolios } = useAssetsPortfolios({
     hideCombined: false,
   });
-
-  useEffect(() => {
-    if (_rawPortfolios && !isLoading) {
-      updatePortfolio?.(_rawPortfolios);
-    }
-    // TODO: FIXIT
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawPortfolios?.length, isLoading, updatePortfolio]);
 
   const portfolios = useMemo(() => {
     const list = _rawPortfolios.filter(item =>
@@ -101,6 +95,7 @@ export const ProtocolList = ({ chain, updatePortfolio }: Props) => {
     loadMore: loadMorePortfolios,
     hasMore: hasMorePortfolios,
   } = useLoadMoreData(portfolios.unFoldList);
+
   const shouldDefaultExpand = useMemo(
     () => portfolios.unFoldList.length <= 5,
     [portfolios.unFoldList.length],

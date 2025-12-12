@@ -15,6 +15,7 @@ import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import useAccountsBalance, {
   balanceAccountType,
   LoadBalanceStage,
+  useLoadBalanceFromApiStage,
 } from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
@@ -24,7 +25,6 @@ import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { usePinnedAccountList } from '@/hooks/account';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
-import { useMulti24hBalance } from '@/hooks/use24hBalance';
 import { sortBy } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
 import { useHideBalance } from '../hooks/useHideBalance';
@@ -45,26 +45,23 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '@/screens/Address/components/AddressListScreenContainer';
+import {
+  useScene24hBalanceCombinedData,
+  useScene24hBalanceMulti24hBalance,
+  useSceneIsLoading,
+} from '@/hooks/useScene24hBalance';
 
 export function MultiAddressHomeHeader(
   props: {
-    data: ReturnType<typeof useMulti24hBalance>['combineData'];
-    loadBalanceFromApiStage: LoadBalanceStage;
-    loading: boolean;
-    loadingNewCurve: boolean;
     onRefresh?: () => void;
-    balanceAccounts?: balanceAccountType[];
   } & RNViewProps,
 ): JSX.Element {
-  const {
-    loading,
-    loadBalanceFromApiStage,
-    data,
-    loadingNewCurve,
-    style,
-    onRefresh,
-    balanceAccounts,
-  } = props;
+  const { style, onRefresh } = props;
+
+  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
+  const { isLoading: loading } = useSceneIsLoading('Home');
+
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { isDisConnect } = useGlobalStatus();
@@ -75,30 +72,23 @@ export function MultiAddressHomeHeader(
     s => s.setIsFoldMultiChart,
   );
 
-  const { multi24hBalance } = useMulti24hBalance(
-    pinnedAccountList.map(item => item.address),
-    {
-      disableAutoFetch: true,
-    },
-  );
+  const { balanceAccounts } = useAccountsBalance();
 
   const addressListData = useMemo(() => {
     return sortBy(
       pinnedAccountList.map(item => {
         const address24hBalanceData =
-          multi24hBalance[item.address.toLowerCase()]?.data;
+          multi24hBalance[item.address.toLowerCase()];
         const hasChangeData = address24hBalanceData;
         const balanceAccount = balanceAccounts?.find(acc =>
           isSameAddress(acc.address, item.address),
         );
+        const total_usd_value = address24hBalanceData?.total_usd_value || 0;
         const assetsChange =
-          (balanceAccount?.evmBalance || 0) -
-          address24hBalanceData?.total_usd_value;
+          (balanceAccount?.evmBalance || 0) - total_usd_value;
         let changePercent =
-          address24hBalanceData?.total_usd_value !== 0
-            ? `${Math.abs(
-                (assetsChange * 100) / address24hBalanceData?.total_usd_value,
-              ).toFixed(2)}%`
+          total_usd_value !== 0
+            ? `${Math.abs((assetsChange * 100) / total_usd_value).toFixed(2)}%`
             : `${balanceAccount?.evmBalance === 0 ? '0' : '100.00'}%`;
 
         return {
@@ -124,14 +114,12 @@ export function MultiAddressHomeHeader(
     });
   }, [addressListData?.length]);
 
-  const { accountsLength } = useAccountsBalance({
-    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
+  const { accountsLength } = useAccountsBalance();
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
+  const { loadBalanceFromApiStage } = useLoadBalanceFromApiStage();
   const previousLoading = usePrevious(loadBalanceFromApiStage);
   const [isAnimRunning, setIsAnimRunning] = useState(false);
   const animTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -304,12 +292,7 @@ export function MultiAddressHomeHeader(
                 isAnimRunning && styles.curveCardGradientBgWithAnim,
               ]}
             />
-            <MultiChart
-              data={data}
-              loadingNewCurve={loadingNewCurve}
-              hideType={hideType}
-              accountsLength={accountsLength}
-            />
+            <MultiChart hideType={hideType} accountsLength={accountsLength} />
             {addressListData?.length ? (
               <View
                 style={[

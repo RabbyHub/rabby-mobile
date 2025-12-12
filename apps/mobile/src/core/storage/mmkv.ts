@@ -295,15 +295,16 @@ export const atomByMMKV = <T = any>(
 
 const defaultMigrateFromAtom: MigrateFromAtom<any> = ctx => {
   const newData = { state: ctx.oldData, version: 0 };
-  appJsonStore.setItem(ctx.legacyAppStoreKey, newData);
+  appJsonStore.setItem(ctx.key, newData);
 
   return { migrated: newData };
 };
 type MigrateFromAtom<T> = (ctx: {
-  legacyAppStoreKey: string;
+  key: string;
+  // legacyAppStoreKey: string;
   oldData: any;
   appJsonStore: typeof appJsonStore;
-}) => { migrated: T };
+}) => { migrated: T; trimLegacyKey?: boolean };
 type ZustandStringStorageOption = StateStorage | PresetStringStorageOption;
 export const zustandByMMKV = <T = any>(
   key: string,
@@ -329,8 +330,10 @@ export const zustandByMMKV = <T = any>(
     oldData?.hasOwnProperty('state') && oldData?.hasOwnProperty('version');
 
   if (!hasMigrated) {
-    removeLegacyMMKVStorageByKey(legacyAppStoreKey as any);
-    migrateFromAtom({ legacyAppStoreKey, oldData, appJsonStore });
+    const result = migrateFromAtom({ key, oldData, appJsonStore });
+    if (key !== legacyAppStoreKey || result.trimLegacyKey) {
+      removeLegacyMMKVStorageByKey(legacyAppStoreKey as any);
+    }
   }
 
   const zustandStore = zCreate(

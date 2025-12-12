@@ -1,5 +1,11 @@
-import React, { useCallback, useState, useMemo, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, {
+  useCallback,
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+} from 'react';
+import { ListRenderItem, StyleSheet, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { navigateDeprecated } from '@/utils/navigation';
@@ -40,6 +46,7 @@ import useSortToken from './hooks/useSortTokens';
 import { isScamHidenToken } from './utils/collection';
 import { getTotalFoldToken } from './utils/converAssets';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -51,24 +58,17 @@ export const icons = {
 interface Props {
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
-  chain?: string;
-  account: Account;
-  updateToken: (tokens: AbstractPortfolioToken[]) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
-export const TokenList = ({
-  onRefresh,
-  chain,
-  account: currentAccount,
-  onReachTopStatusChange,
-  updateToken,
-}: Props) => {
+export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
   });
   const { t } = useTranslation();
+  const { currentAccount } = useSingleHomeAccount();
+  const { selectedChain } = useSingleHomeChain();
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
@@ -79,13 +79,6 @@ export const TokenList = ({
   } = useTokens(currentAccount?.address?.toLowerCase(), {
     visible: false,
   });
-
-  useEffect(() => {
-    if (_rawTokens && !loadingToken) {
-      updateToken(_rawTokens);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawTokens?.length, loadingToken, updateToken]);
 
   const focusedTab = useFocusedTab();
 
@@ -104,9 +97,9 @@ export const TokenList = ({
 
   const tokens = useMemo(() => {
     return _rawTokens?.filter(item =>
-      chain && item?.chain ? item.chain === chain : true,
+      selectedChain && item?.chain ? item.chain === selectedChain : true,
     );
-  }, [_rawTokens, chain]);
+  }, [_rawTokens, selectedChain]);
 
   const sortTokens = useSortToken(tokens || [], currentAccount);
 
@@ -301,9 +294,9 @@ export const TokenList = ({
     );
   }, [navigation]);
 
-  const renderItem = useCallback(
-    (_type: ActionItem['type'], _data: ActionItem) => {
-      const { type, data } = _data;
+  const renderItem = useCallback<ListRenderItem<ActionItem>>(
+    ({ item }) => {
+      const { type, data } = item;
       switch (type) {
         case 'unfold_token':
         case 'fold_token':
@@ -424,7 +417,7 @@ export const TokenList = ({
       <Tabs.FlatList
         data={dataList}
         keyExtractor={getItemId}
-        renderItem={({ item }) => renderItem(item.type, item)}
+        renderItem={renderItem}
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}

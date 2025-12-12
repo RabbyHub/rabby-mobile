@@ -44,6 +44,7 @@ import {
   useIsFocusedCurrentTab,
 } from './hooks/share';
 import { useAssetsTokens, useOnTokenRefresh } from '@/screens/Home/hooks/store';
+import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 
 const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -60,12 +61,14 @@ export const MemoizedTokenItemLoader = React.memo((props: RNViewProps) => {
 
 interface Props {
   chain?: string;
-  updateToken: (tokens: AbstractPortfolioToken[]) => void;
 }
 
-export const TokenList = ({ chain, updateToken }: Props) => {
+export const TokenList = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
+
+  const selectedChainItem = useSelectedChainItem();
+  const chain = selectedChainItem?.chain;
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
@@ -96,13 +99,6 @@ export const TokenList = ({ chain, updateToken }: Props) => {
       chain && item?.chain ? item.chain === chain : true,
     );
   }, [_rawTokens, chain]);
-
-  useEffect(() => {
-    if (_rawTokens && !isLoading) {
-      updateToken(_rawTokens);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawTokens?.length, isLoading, updateToken]);
 
   const tokenLists = useMemo(() => {
     const unFoldList: ActionItem[] = tokens

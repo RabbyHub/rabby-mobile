@@ -37,7 +37,7 @@ import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
-import { whitelistAtom } from '@/hooks/whitelist';
+import { setWhitelist } from '@/hooks/whitelist';
 import { contactService, whitelistService } from '@/core/services';
 import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
@@ -94,12 +94,10 @@ export const ScreenAddNewWhitelistAddress = ({
   const { t } = useTranslation();
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
 
-  const [, setWL] = useAtom(whitelistAtom);
-
   const getWhitelist = React.useCallback(async () => {
     const data = await whitelistService.getWhitelist();
-    setWL(data);
-  }, [setWL]);
+    setWhitelist(data);
+  }, []);
   // TODO: make auto focus
   // const { inputCallbackRef } = useAutoFocusInput(false);
 

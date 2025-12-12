@@ -34,6 +34,7 @@ import {
 import { BrowserHot } from './BrowserHot';
 import { BrowserFavorite } from './BrowserFavorite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
 
 export function BrowserSearch({
   onClose,
@@ -178,67 +179,69 @@ export function BrowserSearch({
 
   return (
     <View style={[styles.container, style]}>
-      {!searchText?.trim() ? (
-        <BottomSheetScrollView
-          contentContainerStyle={{ gap: 24, paddingHorizontal: 20 }}>
-          {!isFocused ? (
-            <>
-              <BrowserFavorite
+      <LocalPannableDraggableView>
+        {!searchText?.trim() ? (
+          <BottomSheetScrollView
+            contentContainerStyle={{ gap: 24, paddingHorizontal: 20 }}>
+            {!isFocused ? (
+              <>
+                <BrowserFavorite
+                  isInBottomSheet
+                  onPress={dapp => {
+                    handleOpenUrl(dapp.url || dapp.origin);
+                    if (dapp.origin) {
+                      matomoRequestEvent({
+                        category: 'Websites Usage',
+                        action: 'Website_Visit_Favorite List',
+                        label: dapp.origin,
+                      });
+                    }
+                  }}
+                />
+                <BrowserHot
+                  onPress={dapp => {
+                    handleOpenUrl(dapp.url || dapp.origin);
+                    if (dapp.origin) {
+                      matomoRequestEvent({
+                        category: 'Websites Usage',
+                        action: 'Website_Visit_Hot List',
+                        label: dapp.origin,
+                      });
+                    }
+                  }}
+                />
+              </>
+            ) : (
+              <BrowserRecent
                 isInBottomSheet
+                list={displayedBrowserHistoryList}
                 onPress={dapp => {
                   handleOpenUrl(dapp.url || dapp.origin);
                   if (dapp.origin) {
                     matomoRequestEvent({
                       category: 'Websites Usage',
-                      action: 'Website_Visit_Favorite List',
+                      action: 'Website_Visit_Recent List',
                       label: dapp.origin,
                     });
                   }
                 }}
               />
-              <BrowserHot
-                onPress={dapp => {
-                  handleOpenUrl(dapp.url || dapp.origin);
-                  if (dapp.origin) {
-                    matomoRequestEvent({
-                      category: 'Websites Usage',
-                      action: 'Website_Visit_Hot List',
-                      label: dapp.origin,
-                    });
-                  }
-                }}
-              />
-            </>
-          ) : (
-            <BrowserRecent
-              isInBottomSheet
-              list={displayedBrowserHistoryList}
-              onPress={dapp => {
-                handleOpenUrl(dapp.url || dapp.origin);
-                if (dapp.origin) {
-                  matomoRequestEvent({
-                    category: 'Websites Usage',
-                    action: 'Website_Visit_Recent List',
-                    label: dapp.origin,
-                  });
-                }
-              }}
-            />
-          )}
-          <View style={{ height: 100 }} />
-        </BottomSheetScrollView>
-      ) : (
-        <BrowserSearchResult
-          key={key}
-          isInBottomSheet
-          searchText={searchText}
-          data={list || []}
-          isValidDomain={!!isValidDomain}
-          onOpenURL={origin => {
-            handleOpenUrl(origin);
-          }}
-        />
-      )}
+            )}
+            <View style={{ height: 100 }} />
+          </BottomSheetScrollView>
+        ) : (
+          <BrowserSearchResult
+            key={key}
+            isInBottomSheet
+            searchText={searchText}
+            data={list || []}
+            isValidDomain={!!isValidDomain}
+            onOpenURL={origin => {
+              handleOpenUrl(origin);
+            }}
+          />
+        )}
+      </LocalPannableDraggableView>
 
       <View
         style={[

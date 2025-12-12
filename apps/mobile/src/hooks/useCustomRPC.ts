@@ -78,7 +78,6 @@ export const useCustomRPC = () => {
 
 export const useCustomRPCStatus = (chainEnum?: CHAINS_ENUM) => {
   const { customRPCStore } = useCustomRPC();
-  // const [customRPCStatus, setCustomRPCStatus] = useAtom(customRPCStatusAtom);
   const customRPCStatus = customRPCStore(s => s.customRPCStatus);
   const hasCustomRPC = useMemo(() => {
     return chainEnum && customRPCStore[chainEnum]?.enable;

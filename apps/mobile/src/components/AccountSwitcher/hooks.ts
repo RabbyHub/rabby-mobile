@@ -143,9 +143,6 @@ const setAddressTop5Tokens = (
 };
 
 function useTopTokensByAccount() {
-  // const [addressTop5Tokens, setAddressTop5Tokens] = useAtom(
-  //   addressTop5TokensAtom,
-  // );
   const addressTop5Tokens = accountSwitchStore(s => s.top5Tokens);
   const setTokensByAddr = useCallback((addr: string, tokens: TokenItem[]) => {
     setAddressTop5Tokens(prev => {

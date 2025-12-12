@@ -1,6 +1,5 @@
 import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 
-// import { atom, useAtom } from 'jotai';
 import {
   KeyringAccount,
   CORE_KEYRING_TYPES,
@@ -163,17 +162,18 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
     }
   }, [disableAutoFetch]);
 
+  const accounts = useCreationWithShallowCompare(() => {
+    return filterMyAccounts(allAccounts);
+  }, [allAccounts]);
+
   return {
-    accounts: useMemo(() => {
-      return [...filterMyAccounts(allAccounts)];
-    }, [allAccounts]),
+    accounts,
     fetchAccounts: doFetchAccounts,
   };
 }
 
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
-  // const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
   const pinAddresses = zAccountStore(s => s.pinnedAddresses);
 
   /**
@@ -246,11 +246,8 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 };
 
 export const usePinnedAccountList = () => {
-  // const [pinAddresses] = useAtom(pinAddressesAtom);
-  // const [accounts] = useAtom(accountsAtom);
   const pinAddresses = zAccountStore(s => s.pinnedAddresses);
   const accounts = zAccountStore(s => s.accounts);
-  // const [balanceAccounts] = useAtom(balanceAtom);
   const { balanceAccounts } = useBalanceAccounts();
 
   const pinnedAccountList = useMemo(() => {
@@ -341,9 +338,7 @@ function setMattredChainBalances(
       { strict: true },
     );
 
-    if (!changed) {
-      return prev;
-    }
+    if (!changed) return prev;
 
     return { ...prev, matteredChainBalances: newVal };
   });
@@ -359,9 +354,7 @@ function setMattredChainBalancesAll(
       { strict: true },
     );
 
-    if (!changed) {
-      return prev;
-    }
+    if (!changed) return prev;
 
     return { ...prev, matteredChainBalancesAll: newVal };
   });
@@ -377,9 +370,7 @@ function setTestMattredChainBalances(
       { strict: true },
     );
 
-    if (!changed) {
-      return prev;
-    }
+    if (!changed) return prev;
 
     return { ...prev, testnetMatteredChainBalances: newVal };
   });
