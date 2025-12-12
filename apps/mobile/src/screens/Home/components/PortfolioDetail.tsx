@@ -472,7 +472,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 4,
   },
   itemSeparator: {
-    marginBottom: 12,
+    // marginBottom: 12,
   },
   button: {
     marginTop: 0,

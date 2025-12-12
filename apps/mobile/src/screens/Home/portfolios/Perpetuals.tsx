@@ -92,6 +92,6 @@ const getStyles = createGetStyles2024(() => ({
     marginTop: 2,
   },
   supplements: {
-    marginTop: 12,
+    // marginTop: 12,
   },
 }));
