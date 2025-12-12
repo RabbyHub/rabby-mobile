@@ -17,7 +17,10 @@ import {
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { FullDefiRenderItem } from './components/AssetRenderItems';
+import {
+  FullDefiRenderItem,
+  TokenRowSectionHeader,
+} from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
 import { DisplayedProject } from './utils/project';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
@@ -35,6 +38,7 @@ import { usePortfolios } from './hooks/usePortfolio';
 import useLoadMoreData from '../Address/components/MultiAssets/hooks/useLoadMoreData';
 import { PerpsSingleAssetPosition } from '../Perps/components/PerpsMultiAssetPosition';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
+import { getAllDefiCount } from './utils/converAssets';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -75,6 +79,7 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   }, [focusedTab]);
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const [foldDefi, setFoldDefi] = useState(true);
 
   const {
     data: _rawPortfolios,
@@ -91,17 +96,51 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
     [_rawPortfolios, selectedChain],
   );
 
+  const filteredPortfolios = useMemo(() => {
+    const list = _portfolios.filter(item =>
+      selectedChain && item?.chain ? item.chain === selectedChain : true,
+    );
+    const foldList: DisplayedProject[] = [];
+    const unFoldList: DisplayedProject[] = [];
+    list.forEach(item => {
+      if (item._isFold) {
+        foldList.push(item);
+      } else {
+        unFoldList.push(item);
+      }
+    });
+    const foldDeFiValue = getAllDefiCount(foldList);
+    return {
+      unFoldList,
+      foldList,
+      foldDeFiValue,
+    };
+  }, [_portfolios, selectedChain]);
+
   const {
     data: portfolios,
     loadMore: loadMorePortfolios,
     hasMore: hasMorePortfolios,
-  } = useLoadMoreData(_portfolios);
+  } = useLoadMoreData(filteredPortfolios.unFoldList);
+
+  const shouldDefaultExpand = useMemo(
+    () => filteredPortfolios.unFoldList.length <= 5,
+    [filteredPortfolios.unFoldList.length],
+  );
 
   const dataList = useMemo(() => {
     const unFoldDefiList: ActionItem[] = portfolios.map(item => ({
       type: 'unfold_defi',
       data: item as unknown as DisplayedProject,
     }));
+
+    const foldDeFiList: ActionItem[] = filteredPortfolios.foldList.map(
+      item => ({
+        type: 'fold_defi',
+        data: item as unknown as DisplayedProject,
+      }),
+    );
+
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -111,14 +150,28 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
         data: unFoldDefiList,
       },
       {
-        show: !!loadingPortfolio && !portfolios.length,
+        show: !!foldDeFiList.length,
+        data: [
+          {
+            type: 'toggle_defi_fold',
+            data: filteredPortfolios.foldDeFiValue,
+          },
+          ...(foldDefi ? [] : foldDeFiList),
+        ],
+      },
+      {
+        show:
+          !!loadingPortfolio && !portfolios.length && !unFoldDefiList.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: 'index-defi' + index.toString(),
         })),
       },
       {
-        show: !loadingPortfolio && portfolios.length === 0,
+        show:
+          !loadingPortfolio &&
+          portfolios.length === 0 &&
+          unFoldDefiList.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -133,7 +186,14 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [loadingPortfolio, portfolios, t]);
+  }, [
+    filteredPortfolios.foldDeFiValue,
+    filteredPortfolios.foldList,
+    foldDefi,
+    loadingPortfolio,
+    portfolios,
+    t,
+  ]);
 
   useEffect(() => {
     if (isFocused) {
@@ -153,6 +213,26 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
               data={data as unknown as AbstractProject}
               showAccount={false}
               disableAction={refreshing}
+              defaultExpand={shouldDefaultExpand}
+              account={currentAccount}
+            />
+          );
+        case 'toggle_defi_fold':
+          return (
+            <TokenRowSectionHeader
+              style={styles.tokenSectionHeader}
+              str={data}
+              fold={foldDefi}
+              onPressFold={() => setFoldDefi(pre => !pre)}
+            />
+          );
+        case 'fold_defi':
+          return (
+            <MemoFullDefiRenderItem
+              data={data as unknown as AbstractProject}
+              showAccount={false}
+              disableAction={refreshing}
+              defaultExpand={false}
               account={currentAccount}
             />
           );
@@ -170,7 +250,14 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
           return null;
       }
     },
-    [currentAccount, refreshing, styles.emptyAssets],
+    [
+      currentAccount,
+      foldDefi,
+      refreshing,
+      shouldDefaultExpand,
+      styles.emptyAssets,
+      styles.tokenSectionHeader,
+    ],
   );
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -307,5 +394,8 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   defiLoading: {
     marginTop: 16,
+  },
+  tokenSectionHeader: {
+    backgroundColor: 'transparent',
   },
 }));

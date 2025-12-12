@@ -194,6 +194,18 @@ export const combinedProtocols = (
     });
   });
 
+  const listLength = portfolios.length || 0;
+  const totalValue = portfolios.reduce((acc, curr) => {
+    return acc + (curr.totalUsdValue.toNumber() || 0);
+  }, 0);
+  const threshold = Math.min((totalValue || 0) / 100, 1000);
+  const thresholdIndex = portfolios
+    ? portfolios.findIndex(m => (m.totalUsdValue.toNumber() || 0) < threshold)
+    : -1;
+
+  const hasExpandSwitch =
+    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
+
   return portfolios
     .sort((a, b) =>
       a.totalUsdValue.gt(b.totalUsdValue)
@@ -206,8 +218,10 @@ export const combinedProtocols = (
       ...p,
       totalUsdValue: p.totalUsdValue.toNumber(),
       _netWorth: formatNetworth(p.totalUsdValue?.toNumber()),
-      _isFold: false,
-      _isMiniFold: false,
+      _isFold: hasExpandSwitch ? p.totalUsdValue.toNumber() < threshold : false,
+      _isMiniFold: hasExpandSwitch
+        ? p.totalUsdValue.toNumber() < threshold
+        : false,
     }));
 };
 

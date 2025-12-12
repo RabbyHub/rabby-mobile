@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 
-const INIT_PAGE_SIZE = 5;
-const PAGE_SIZE = 5;
+const INIT_PAGE_SIZE = 10;
+const PAGE_SIZE = 10;
 const useLoadMoreData = <T>(initList: T[]) => {
   const [displayCount, setDisplayCount] = useState(INIT_PAGE_SIZE);
 

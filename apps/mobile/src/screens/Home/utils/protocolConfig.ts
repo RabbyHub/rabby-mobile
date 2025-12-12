@@ -9,10 +9,10 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { AbstractPortfolio } from '../types';
-import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { CustomMarket } from '@/screens/Lending/config/market';
 import { SvgProps } from 'react-native-svg';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
+import { useSelectedMarket } from '@/screens/Lending/hooks';
 
 const keyToMarketKey: Record<string, CustomMarket> = {
   aave3: CustomMarket.proto_mainnet_v3,
@@ -52,11 +52,6 @@ interface ProtocolConfigItemType {
     account?: KeyringAccountWithAlias,
   ) => boolean;
   onManage?: TonManageAction;
-  showTokenManage?: (
-    item: AbstractPortfolio,
-    account?: KeyringAccountWithAlias,
-  ) => boolean;
-  onTokenManage?: TonTokenManageAction;
 }
 
 export const useProtocolConfig = () => {
@@ -64,33 +59,32 @@ export const useProtocolConfig = () => {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useMyAccounts();
   const { setMarketKey } = useSelectedMarket();
+
   const generateAAVEConfig = useCallback(
     (key: string): ProtocolConfigItemType => {
       return {
         icon: AAVE3_ICON,
         bgColor1: 'rgba(147, 145, 247, 0.2)',
         bgColor2: 'rgba(147, 145, 247, 0)',
-        showTokenManage: (item, _account) => {
+        showManage: (item, _account) => {
           return item.name?.toLowerCase() === 'lending';
         },
-        onTokenManage: async (account, tokenAddress, direction) => {
+        onManage: async account => {
           const marketKey = keyToMarketKey[key];
           if (account && marketKey) {
             await switchSceneCurrentAccount('Lending', account);
             setMarketKey(marketKey);
           }
-          return navigation.navigate(RootNames.StackTransaction, {
+          navigation.navigate(RootNames.StackTransaction, {
             screen: RootNames.Lending,
-            params: {
-              tokenAddress,
-              direction,
-            },
+            params: {},
           });
         },
       };
     },
     [navigation, setMarketKey, switchSceneCurrentAccount],
   );
+
   const aave3Config = useMemo(() => {
     return Object.entries(keyToMarketKey).reduce((acc, [key]) => {
       acc[key] = generateAAVEConfig(key);
