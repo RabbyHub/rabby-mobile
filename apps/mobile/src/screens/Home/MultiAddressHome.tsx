@@ -46,7 +46,6 @@ import {
   preferenceService,
   transactionHistoryService,
 } from '@/core/services';
-import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import {
@@ -136,6 +135,8 @@ import {
   triggerFetchHomeData,
 } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
+import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
+import { historyTimeStore } from '@/hooks/historyTokenDict';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -310,6 +311,8 @@ const OverViewComponent = React.memo(
       }, []),
     );
 
+    const { top10Addresses } = useAccountInfo();
+    console.log('[MultiAddressHome] refresh MultiAddressHome exec');
     useFocusEffect(
       useCallback(() => {
         if (!couldDoRefresh()) return;
@@ -318,9 +321,9 @@ const OverViewComponent = React.memo(
             refresh24hAssets({ balanceAccounts }),
           );
           triggerUpdateAlert();
-          triggerFetchHomeData('TMP_TRIGGER:SYNC_TOP10_HISTORY');
+          syncTop10History(top10Addresses, false);
         });
-      }, [triggerUpdate, triggerUpdateAlert]),
+      }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
     );
 
     const onRefresh = useCallback(() => {

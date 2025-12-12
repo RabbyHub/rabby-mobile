@@ -49,7 +49,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
-import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { syncTop10History, syncSingleAddress } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
 import { useHistoryLoading } from '@/hooks/historyTokenDict';
 import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
@@ -174,8 +174,6 @@ function History({
     },
   );
 
-  const { syncTop10History, syncSingleAddress } =
-    useSyncHistoryDB(top10Addresses);
   const historyLoading = useHistoryLoading();
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
@@ -457,7 +455,7 @@ function History({
     } else {
       dbLastCursorRef.current = 0;
       isSceneUsingAllAccounts
-        ? syncTop10History(true)
+        ? syncTop10History(top10Addresses, true)
         : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
     }
   });
