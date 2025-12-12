@@ -136,7 +136,6 @@ import {
 } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
-import { historyTimeStore } from '@/hooks/historyTokenDict';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,

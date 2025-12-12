@@ -34,7 +34,7 @@ const getIsNeedSyncData = (address: string) => {
     return true;
   }
 
-  const latestTime = historyTimeStore(s => s[address]) || 0;
+  const latestTime = historyTimeStore.getState()?.[address] || 0;
 
   const currentTime = Date.now();
   const gap = currentTime - latestTime;
@@ -263,7 +263,7 @@ export const syncTop10History = async (
       const address = item.toLowerCase();
       const isForceFetchFromApi = force || (await getIsNeedSyncData(address));
       if (isForceFetchFromApi) {
-        const latestUpdateTime = historyTimeStore(s => s[address]) || 0;
+        const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
         const isUseRealTimeApi =
           latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
         updateHistoryTimeSingleAddress(address);
@@ -305,7 +305,7 @@ export const syncMultiAddressesHistory = async (addresses: string[]) => {
   });
   for (const item of addresses) {
     const address = item.toLowerCase();
-    const latestUpdateTime = historyTimeStore(s => s[address]) || 0;
+    const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
     const isUserRealTimeApi =
       latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
     updateHistoryTimeSingleAddress(address);
@@ -331,7 +331,7 @@ export const syncMultiAddressesHistory = async (addresses: string[]) => {
 };
 
 export const syncSingleAddress = async (address: string) => {
-  const latestUpdateTime = historyTimeStore(s => s[address]) || 0;
+  const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
   const isUseRealTimeApi =
     latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
   updateHistoryTimeSingleAddress(address);
