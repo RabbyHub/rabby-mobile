@@ -1,21 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
 
-import { DappInfo } from '@/core/services/dappService';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import { useTranslation } from 'react-i18next';
-import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
-import useAsync from 'react-use/lib/useAsync';
 import { openapi } from '@/core/request';
-import { stringUtils } from '@rabby-wallet/base-utils';
-import { useDapps } from '@/hooks/useDapps';
+import { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import { useTheme2024 } from '@/hooks/theme';
+import { useDapps } from '@/hooks/useDapps';
+import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
+import { createGetStyles2024 } from '@/utils/styles';
+import { stringUtils } from '@rabby-wallet/base-utils';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { atom, useAtom } from 'jotai';
-
-const hot3Atom = atom<DappInfo[]>([]);
-const useHot3DApp = () => useAtom(hot3Atom);
+import { useRequest } from 'ahooks';
+import { useTranslation } from 'react-i18next';
 
 export function BrowserHot({ onPress }: { onPress?(dapp: DappInfo): void }) {
   const { styles } = useTheme2024({
@@ -24,15 +20,18 @@ export function BrowserHot({ onPress }: { onPress?(dapp: DappInfo): void }) {
   const { dapps } = useDapps();
   const { bookmarkList } = useBrowserBookmark();
 
-  const { value: hotDAppList } = useAsync(
-    () => openapi.getHotDapps({ limit: 3, order_by: 'hot_count' }),
-    [],
-  );
-  const [hot3, setHot3] = useHot3DApp();
+  const { data: hotDAppList = [] } = useRequest(
+    () => openapi.getHotDapps({ limit: 10, order_by: 'hot_count' }),
+    {
+      cacheKey: 'hot-dapps',
 
-  useEffect(() => {
+      staleTime: 1000 * 60 * 10, // 10 minutes
+    },
+  );
+
+  const hotList = useMemo(() => {
     if (!hotDAppList?.length) {
-      return;
+      return [];
     }
     const list: DappInfo[] = [];
 
@@ -53,19 +52,22 @@ export function BrowserHot({ onPress }: { onPress?(dapp: DappInfo): void }) {
       } as DappInfo;
 
       list.push(dappInfo);
-      setHot3(list);
     });
-  }, [hotDAppList, bookmarkList, dapps, setHot3]);
+
+    return list;
+  }, [bookmarkList, dapps, hotDAppList]);
 
   const { t } = useTranslation();
 
   return (
     <View>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('page.browser.BrowserSearch.hot')}</Text>
+        <Text style={styles.title}>
+          {t('page.browser.BrowserSearch.hot10')}
+        </Text>
       </View>
       <View style={styles.grid}>
-        {hot3?.map(item => {
+        {hotList?.map(item => {
           return (
             <BrowserSiteCard data={item} onPress={onPress} key={item.origin} />
           );

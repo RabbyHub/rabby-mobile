@@ -2210,7 +2210,8 @@
         "otherResults": "Other Results",
         "results": "Results",
         "placeholder": "Search Websites",
-        "recentEmpty": "Starting Exploring Website"
+        "recentEmpty": "Starting Exploring Website",
+        "hot10": "Hot 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Open Websites"

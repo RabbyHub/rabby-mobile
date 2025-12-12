@@ -975,11 +975,11 @@ function MultiAddressHome(): JSX.Element {
         />
 
         {/* show search bar when Overview tab */}
-        {tabIndex === 0 && (
+        {/* {tabIndex === 0 && (
           <View style={styles.globalSearchBar}>
             <GlobalSearchBar />
           </View>
-        )}
+        )} */}
       </View>
       <HomeGuidanceMultipleTabs />
     </NormalScreenContainer2024>
