@@ -329,8 +329,8 @@ export const zustandByMMKV = <T = any>(
     oldData?.hasOwnProperty('state') && oldData?.hasOwnProperty('version');
 
   if (!hasMigrated) {
-    removeLegacyMMKVStorageByKey(legacyAppStoreKey as any);
     migrateFromAtom({ legacyAppStoreKey, oldData, appJsonStore });
+    removeLegacyMMKVStorageByKey(legacyAppStoreKey as any);
   }
 
   const zustandStore = zCreate(
