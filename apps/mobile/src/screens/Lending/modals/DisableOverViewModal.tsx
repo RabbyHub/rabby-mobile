@@ -155,7 +155,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   contentContainer: {
     paddingHorizontal: 25,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   headerTitle: {
     fontSize: 20,
