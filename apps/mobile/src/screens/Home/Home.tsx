@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { View, Animated } from 'react-native';
 import HeaderArea from './HeaderArea';
 import { AssetContainer } from './AssetContainer';
@@ -16,6 +16,7 @@ import { useBgSize } from './hooks/useBgSize';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { useSingleHomeIsDecrease } from '@/hooks/useCurve';
 import { apisSingleHome } from './hooks/singleHome';
+import { useUnmount } from 'ahooks';
 
 function SingleAddressHome(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -57,6 +58,10 @@ function SingleAddressHome(): JSX.Element {
   const handleTouchEnd = () => {
     apisSingleHome.setFoldChart(true);
   };
+
+  useUnmount(() => {
+    apisSingleHome.clearCurrentAccount();
+  });
 
   return (
     <NormalScreenContainer2024
