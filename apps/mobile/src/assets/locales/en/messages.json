@@ -2776,6 +2776,7 @@
       "manageEmode": {
         "emode": "E-Mode",
         "title": "Manage E-Mode",
+        "disableTitle": "Disable",
         "unavailable": "• Unavailable",
         "unavailableTips": "Your existing lending/borrowing assets are not supported.",
         "enabled": "• Enabled",
@@ -2791,6 +2792,10 @@
         },
         "categorySelector": {
           "label": "Asset category",
+          "header": {
+            "asset": "Assets",
+            "ltv": "Max LTV"
+          },
           "desc": "All borrow positions outside of this category must be closed to enable this category.",
           "placeholder": "Select"
         },

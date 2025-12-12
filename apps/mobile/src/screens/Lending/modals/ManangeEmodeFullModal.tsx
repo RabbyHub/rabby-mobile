@@ -357,10 +357,15 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   return (
     <AutoLockView as="View" style={styles.container}>
       <BottomSheetScrollView
-        showsHorizontalScrollIndicator
+        showsVerticalScrollIndicator
+        persistentScrollbar
         style={styles.scrollableBlock}
         contentContainerStyle={[styles.contentContainer]}>
-        <Text style={styles.title}>{t('page.Lending.manageEmode.title')}</Text>
+        <Text style={styles.title}>
+          {wantDisableEmode
+            ? t('page.Lending.manageEmode.actions.disable')
+            : t('page.Lending.manageEmode.title')}
+        </Text>
         {wantDisableEmode ? null : (
           <Text style={styles.description}>
             {t('page.Lending.manageEmode.description')}
@@ -373,6 +378,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
           newSummary={newSummary}
           disabled={wantDisableEmode}
           onSelectCategory={setSelectedCategoryId}
+          isUnAvailable={!isTargetCategoryAvailable && !!selectedCategoryId}
         />
         {canShowDirectSubmit &&
           hasChangeCategory &&
@@ -439,7 +445,9 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
             }
             titleStyle={[
               wantDisableEmode && styles.closeButtonTitle,
-              disableDirectSignBtn && styles.disableBtnTitle,
+              wantDisableEmode &&
+                disableDirectSignBtn &&
+                styles.disableBtnTitle,
             ]}
             buttonStyle={wantDisableEmode ? styles.closeButton : undefined}
             title={
@@ -448,10 +456,10 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
                 : t('page.Lending.manageEmode.actions.enable')
             }
             iconColor={
-              disableDirectSignBtn
-                ? colors2024['neutral-info']
-                : wantDisableEmode
-                ? colors2024['neutral-title-1']
+              wantDisableEmode
+                ? disableDirectSignBtn
+                  ? colors2024['neutral-info']
+                  : colors2024['neutral-title-1']
                 : undefined
             }
             onFinished={() => handlePressManageEMode()}
@@ -474,7 +482,9 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
             }
             titleStyle={[
               wantDisableEmode && styles.closeButtonTitle,
-              disableFullWidthButton && styles.disableBtnTitle,
+              wantDisableEmode &&
+                disableFullWidthButton &&
+                styles.disableBtnTitle,
             ]}
             buttonStyle={wantDisableEmode ? styles.closeButton : undefined}
             loading={isLoading}

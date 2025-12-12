@@ -64,6 +64,7 @@ import { AddressListModal } from '@/screens/Address/components/MultiAssets/Addre
 import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
+import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -265,6 +266,11 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.MANAGE_EMODE]: {
     snapPoints: [248],
     Component: ManageEmodeModal,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.DISABLE_EMODE_OVERVIEW]: {
+    snapPoints: [580],
+    Component: DisableEmodeOverviewModal,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.ADDRESS_HIGHT_DESC]: {

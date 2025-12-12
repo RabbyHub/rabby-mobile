@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleProp, Text, View, ViewStyle } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -23,8 +23,9 @@ import { useLendingSummary } from '../../hooks';
 import HealthFactorText from '../HealthFactorText';
 import { CategorySelector } from '../EmodeCategory/CategorySelector';
 
-const PairTable = ({
+export const PairTable = ({
   data,
+  style,
 }: {
   data: {
     underlyingAsset: string;
@@ -33,6 +34,7 @@ const PairTable = ({
     collateral: boolean;
     borrowable: boolean;
   }[];
+  style?: StyleProp<ViewStyle>;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -42,7 +44,7 @@ const PairTable = ({
   }
 
   return (
-    <View style={styles.table}>
+    <View style={[styles.table, style]}>
       <View style={styles.tableHeader}>
         <Text style={[styles.tableCell, styles.headerCell, styles.leftCell]}>
           {t('page.Lending.manageEmode.overview.row.asset')}
@@ -114,11 +116,13 @@ const ManageEmodeOverView: React.FC<{
   disabled?: boolean;
   newSummary: ReturnType<typeof formatUserSummary>;
   onSelectCategory?: (categoryId: number) => void;
+  isUnAvailable?: boolean;
 }> = ({
   selectedCategoryId,
   onSelectCategory,
   disabled: disableEmode,
   newSummary,
+  isUnAvailable,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -227,7 +231,13 @@ const ManageEmodeOverView: React.FC<{
               }
               onChange={categoryId => onSelectCategory?.(categoryId)}
               value={selectedCategoryId}
+              isUnAvailable={isUnAvailable}
             />
+            {isUnAvailable ? (
+              <Text style={styles.desc}>
+                {t('page.Lending.manageEmode.categorySelector.desc')}
+              </Text>
+            ) : null}
           </View>
         </View>
 
@@ -279,11 +289,13 @@ const ManageEmodeOverView: React.FC<{
             {t('page.Lending.popup.liquidationAt')}
           </Text>
         </View>
-        <PairTable
-          data={
-            selectedCategoryId ? eModes[selectedCategoryId]?.assets || [] : []
-          }
-        />
+        {!disableEmode && (
+          <PairTable
+            data={
+              selectedCategoryId ? eModes[selectedCategoryId]?.assets || [] : []
+            }
+          />
+        )}
       </View>
     </View>
   );
@@ -336,9 +348,16 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   availableValueContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     gap: 4,
+  },
+  desc: {
+    fontWeight: '400',
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
   },
   apyContainer: {
     marginTop: 26,

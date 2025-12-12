@@ -28,10 +28,12 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      gap: 4,
     },
     left: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
       flex: 1,
     },
     chainName: {
@@ -42,6 +44,17 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       height: 22,
       fontWeight: '700',
       maxWidth: '90%',
+    },
+    unavailablePlaceholder: {
+      color: colors2024['neutral-secondary'],
+      maxWidth: '60%',
+    },
+    unavailableText: {
+      color: colors2024['neutral-secondary'],
+      fontWeight: '400',
+      fontSize: 14,
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
     },
     placeholderText: {
       color: colors2024['neutral-secondary'],
@@ -76,12 +89,14 @@ export function CategorySelector({
   label,
   value,
   onChange,
+  isUnAvailable,
 }: React.PropsWithChildren<
   RNViewProps & {
     label?: string;
     onChange?: (categoryId: number) => void;
     disable?: boolean;
     value?: number;
+    isUnAvailable?: boolean;
   }
 >) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -133,9 +148,18 @@ export function CategorySelector({
         <Text
           numberOfLines={1}
           ellipsizeMode="tail"
-          style={[styles.chainName, !label && styles.placeholderText]}>
+          style={[
+            styles.chainName,
+            !label && styles.placeholderText,
+            isUnAvailable && styles.unavailablePlaceholder,
+          ]}>
           {label || t('page.Lending.manageEmode.categorySelector.placeholder')}
         </Text>
+        {isUnAvailable ? (
+          <Text style={styles.unavailableText}>
+            {t('page.Lending.manageEmode.unavailable')}
+          </Text>
+        ) : null}
       </View>
 
       {!disable && !isCloseMode ? (

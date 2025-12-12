@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useAtomValue } from 'jotai';
 import { useTranslation } from 'react-i18next';
@@ -59,6 +59,19 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
 
   const isDark = useGetBinaryMode() === 'dark';
 
+  const ListHeaderComponent = useCallback(() => {
+    return (
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerText}>
+          {t('page.Lending.manageEmode.categorySelector.header.asset')}
+        </Text>
+        <Text style={styles.headerText}>
+          {t('page.Lending.manageEmode.categorySelector.header.ltv')}
+        </Text>
+      </View>
+    );
+  }, [styles.headerContainer, styles.headerText, t]);
+
   return (
     <AutoLockView
       style={{
@@ -72,9 +85,6 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
           <View style={styles.titleTextWrapper}>
             <Text style={styles.titleText}>
               {t('page.Lending.manageEmode.categorySelector.label')}
-            </Text>
-            <Text style={styles.desc}>
-              {t('page.Lending.manageEmode.categorySelector.desc')}
             </Text>
           </View>
         </View>
@@ -90,6 +100,7 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
           ListFooterComponent={
             <View style={{ height: FOOTER_COMPONENT_HEIGHT }} />
           }
+          ListHeaderComponent={ListHeaderComponent}
           keyExtractor={item => item.id.toString()}
           renderItem={({ item, index }) => {
             const isSectionFirst = index === 0;
@@ -104,6 +115,7 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
                 <CategoryItem
                   title={item.label}
                   available={item.available}
+                  ltv={item.ltv}
                   isSelected={item.id === value}
                   onPress={() => onChange(item.id)}
                 />
@@ -229,5 +241,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sectionLast: {
     borderBottomLeftRadius: RADIUS_VALUE,
     borderBottomRightRadius: RADIUS_VALUE,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  headerText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));

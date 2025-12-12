@@ -5,10 +5,12 @@ import { Tip } from '@/components/Tip';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
+import { formatPercent } from '@/screens/TokenDetail/util';
 
 export default function CategoryItem({
   title,
   available,
+  ltv,
   style,
   isSelected,
   onPress,
@@ -16,6 +18,7 @@ export default function CategoryItem({
   title: string;
   available?: boolean;
   isSelected?: boolean;
+  ltv?: string;
   onPress?(): void;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -53,7 +56,11 @@ export default function CategoryItem({
               </Text>
             </View>
           </Tip>
-        ) : null}
+        ) : (
+          <Text style={styles.ltvText}>
+            {formatPercent(Number(ltv || 0) / 10000)}
+          </Text>
+        )}
       </View>
     </TouchableView>
   );
@@ -146,6 +153,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  ltvText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
 }));

@@ -13,12 +13,9 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 
-import { useMode } from '../hooks/useMode';
-
 export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { emodeEnabled } = useMode();
 
   const handlePressManageEMode = useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
@@ -45,8 +42,6 @@ export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
       </Text>
       <Button
         containerStyle={styles.button}
-        buttonStyle={[emodeEnabled && styles.disabledButton]}
-        titleStyle={[emodeEnabled && styles.disabledTitle]}
         title={t('page.Lending.manageEmode.guide.buttonTitle')}
         onPress={handlePressManageEMode}
       />
