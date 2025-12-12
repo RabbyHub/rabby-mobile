@@ -3,7 +3,10 @@ import { RootNames } from '@/constant/layout';
 import { Account } from '@/core/services/preference';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useAlias2 } from '@/hooks/alias';
 import { navigateDeprecated } from '@/utils/navigation';
+import { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 type SingleHomeState = {
   currentAccount?: Account;
@@ -81,6 +84,23 @@ export function useSingleHomeAccount() {
   return {
     currentAccount: singleHomeState(s => s.currentAccount),
   };
+}
+
+export function useSingleHomeAccountAlias() {
+  const { address, brandName } = singleHomeState(
+    useShallow(s => ({
+      address: s.currentAccount?.address,
+      brandName: s.currentAccount?.brandName,
+    })),
+  );
+  const { adderssAlias } = useAlias2(address || '', { autoFetch: true });
+
+  const name = useMemo(
+    () => adderssAlias || brandName,
+    [adderssAlias, brandName],
+  );
+
+  return { address, name, brandName };
 }
 
 export function useSingleHomeAddress() {

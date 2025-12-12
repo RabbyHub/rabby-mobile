@@ -1,5 +1,6 @@
 import { makeJsEEClass } from '@/core/services/_utils';
 import { balanceAccountType } from '@/hooks/useAccountsBalance';
+import { ContactBookStore } from '@rabby-wallet/service-address';
 
 export type PerfEventBusListeners = {
   EVENT_ROUTE_CHANGE: (ctx: {
@@ -12,6 +13,10 @@ export type PerfEventBusListeners = {
   ACCOUNTS_BALANCE_UPDATE: (ctx: {
     prevState: balanceAccountType[];
     nextState: balanceAccountType[];
+  }) => void;
+
+  CONTACTS_ALIASES_UPDATE: (ctx: {
+    nextState: ContactBookStore['aliases'];
   }) => void;
 
   NAV_BACK_ON_HOME: () => void;

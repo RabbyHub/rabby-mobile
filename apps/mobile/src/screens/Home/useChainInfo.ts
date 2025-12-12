@@ -180,7 +180,6 @@ export const apisAddrChainStatics = {
     return chainUnit;
   },
   updateToken: debounce((addr: string, tokens: AbstractPortfolioToken[]) => {
-    console.debug('[feat] updateToken called');
     addr = addr.toLowerCase();
 
     const prevFinalInfo =
@@ -225,7 +224,6 @@ export const apisAddrChainStatics = {
     return chainUnit;
   },
   updatePortfolio: debounce((addr: string, _portfolios: DisplayedProject[]) => {
-    console.debug('[feat] updatePortfolio called');
     addr = addr.toLowerCase();
 
     const prevFinalInfo =
@@ -262,7 +260,6 @@ export const apisAddrChainStatics = {
     return chainUnit;
   },
   updateNft: debounce((addr: string, nftList: DisplayNftItem[]) => {
-    console.debug('[feat] updateNft called');
     addr = addr.toLowerCase();
 
     const prevFinalInfo =
