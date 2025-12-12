@@ -21,6 +21,8 @@ export type PerfEventBusListeners = {
 
   NAV_BACK_ON_HOME: () => void;
 
+  TRIGGER_SINGLE_HOME_BALANCE: (force?: boolean) => void;
+
   'TMP_TRIGGER:FETCH_LENDING_DATA': () => void;
   'TMP_TRIGGER:SYNC_TOP10_HISTORY': (force?: boolean) => void;
 

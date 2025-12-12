@@ -60,8 +60,10 @@ const getWhitelistEnabled = async () => {
   setEnable(data);
 };
 
-const isAddrOnWhitelist = (address?: string) => {
-  const whitelist = whitelistStore.getState().whitelist;
+const gIsAddrOnWhitelist = (
+  address?: string,
+  whitelist = whitelistStore.getState().whitelist,
+) => {
   return isAddrInWhitelist(address, whitelist);
 };
 
@@ -146,6 +148,13 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
       }
     },
     [t],
+  );
+
+  const isAddrOnWhitelist = React.useCallback(
+    (address?: string) => {
+      return gIsAddrOnWhitelist(address, whitelist);
+    },
+    [whitelist],
   );
 
   const { disableAutoFetch } = options || {};
