@@ -207,7 +207,7 @@ export const PortfolioList = ({
               data={data as unknown as AbstractProject}
               showAccount={false}
               disableAction={refreshing}
-              defaultExpand={type === 'fold_defi' ? false : shouldDefaultExpand}
+              defaultExpand={shouldDefaultExpand}
               account={currentAccount}
             />
           );
@@ -226,7 +226,7 @@ export const PortfolioList = ({
               data={data as unknown as AbstractProject}
               showAccount={false}
               disableAction={refreshing}
-              defaultExpand={type === 'fold_defi' ? false : shouldDefaultExpand}
+              defaultExpand={false}
               account={currentAccount}
             />
           );
