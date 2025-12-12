@@ -1,5 +1,6 @@
 import { makeJsEEClass } from '@/core/services/_utils';
 import { balanceAccountType } from '@/hooks/useAccountsBalance';
+import { BalanceState } from '@/hooks/useCurrentBalance';
 import { ContactBookStore } from '@rabby-wallet/service-address';
 
 export type PerfEventBusListeners = {
@@ -21,12 +22,16 @@ export type PerfEventBusListeners = {
 
   NAV_BACK_ON_HOME: () => void;
 
-  TRIGGER_SINGLE_HOME_BALANCE: (force?: boolean) => void;
+  'TMP_TRIGGER:SINGLE_HOME_BALANCE': (force?: boolean) => void;
+  'TMP_UPDATED:SINGLE_HOME_BALANCE': (data: {
+    address: string;
+    newBalance: BalanceState;
+    prevBalance: BalanceState | undefined;
+  }) => void;
+  'TMP_TRIGGER:SINGLE_HOME_REFRESH': (ignoreLoading?: boolean) => void;
 
   'TMP_TRIGGER:FETCH_LENDING_DATA': () => void;
   'TMP_TRIGGER:SYNC_TOP10_HISTORY': (force?: boolean) => void;
-
-  'TMP_TRIGGER:SINGLE_HOME_REFRESH': (ignoreLoading?: boolean) => void;
 };
 type PerfListeners = {
   [P: string]: (data: any) => void;

@@ -295,16 +295,18 @@ export function useSingleHomeIsLoss() {
   return { isLoss };
 }
 
+type FetchParams = {
+  realtimeNetWorth: number | null;
+  staticBalance: number | null;
+};
 export const useSingleHomeCurveRefresh = (
   address: string | undefined,
   {
     realtimeNetWorth = null,
-    days = CurveDayType.DAY,
     staticBalance = null,
-  }: {
-    realtimeNetWorth: number | null;
+    days = CurveDayType.DAY,
+  }: FetchParams & {
     days: CurveDayType;
-    staticBalance: number | null;
   },
 ) => {
   const fetch = useCallback(
@@ -370,6 +372,23 @@ export const useSingleHomeCurveRefresh = (
     },
     [address, fetch],
   );
+
+  useEffect(() => {
+    const { remove } = perfEvents.subscribe(
+      'TMP_UPDATED:SINGLE_HOME_BALANCE',
+      ({ address: addr, newBalance }) => {
+        if (addr !== address) {
+          return;
+        }
+
+        setTimeout(() => refresh(), 300);
+      },
+    );
+
+    return () => {
+      remove();
+    };
+  }, [address, refresh]);
 
   return {
     refresh,
