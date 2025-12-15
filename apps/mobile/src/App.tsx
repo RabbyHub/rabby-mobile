@@ -55,7 +55,6 @@ const MemoziedAppNav = React.memo(AppNavigation);
 
 const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useInitializeAppOnTop();
-  useBootstrapApp({ rabbitCode });
 
   useSetupServiceStub();
   useUniversalLinkOnTop();
@@ -81,9 +80,10 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   );
 });
 
-const MemoziedMainScreen = React.memo(MainScreen);
+function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
+  const rabbitCode = __DEV__ ? 'RABBY_MOBILE_CODE_DEV' : propRabbitCode;
+  useBootstrapApp({ rabbitCode });
 
-function App({ rabbitCode }: AppProps): JSX.Element {
   return (
     <AppErrorBoundary>
       <ThemeProvider theme={rneuiTheme}>
@@ -93,9 +93,7 @@ function App({ rabbitCode }: AppProps): JSX.Element {
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
                 {/* read from native bundle on production */}
-                <MemoziedMainScreen
-                  rabbitCode={__DEV__ ? 'RABBY_MOBILE_CODE_DEV' : rabbitCode}
-                />
+                <MainScreen rabbitCode={rabbitCode} />
               </GestureHandlerRootView>
             </Suspense>
           </SafeAreaProvider>

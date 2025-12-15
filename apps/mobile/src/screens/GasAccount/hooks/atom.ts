@@ -187,7 +187,6 @@ const setGasAccount = (
 };
 
 async function fetchGasAccountInfo() {
-  console.debug('[feat][perf] fetchGasAccountInfo');
   const { sig, accountId } = gasAccountStore.getState().sigState || {};
 
   if (!sig || !accountId) {

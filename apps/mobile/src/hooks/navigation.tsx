@@ -294,7 +294,7 @@ export const apisHomeTabIndex = {
 
 export function resetNavigationTo(
   navigation: NavigationInstance,
-  type: 'Home' | 'Unlock' | 'GetStarted2024' = 'Home',
+  type: 'Home' | 'Unlock' | 'GetStartedScreen2024' = 'Home',
 ) {
   switch (type) {
     default:
@@ -327,7 +327,7 @@ export function resetNavigationTo(
 
       break;
     }
-    case 'GetStarted2024': {
+    case 'GetStartedScreen2024': {
       navigation.reset({
         index: 0,
         routes: [
@@ -569,7 +569,6 @@ export function startSubscribeIOSScreenRecording() {
 
     if (!IS_IOS && !__DEV__) return;
     const atSensitiveInfo = getAtSensitiveScene();
-    console.debug('[feat][perf] atSensitiveInfo', atSensitiveInfo);
     if (atSensitiveInfo.iosBlurType === ProtectType.SafeTipModal) return;
 
     const forceAllowScreenshot = getExpScreenCapture().forceAllowScreenshot;

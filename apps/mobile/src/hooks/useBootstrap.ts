@@ -260,10 +260,9 @@ runIIFEFunc(() => {
  * @description only call this hook on the top level component
  */
 export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
-  // useLoadLockInfo({ autoFetch: true });
-
   const startedLoadRef = React.useRef(false);
   React.useEffect(() => {
+    if (!rabbitCode) return;
     if (startedLoadRef.current) return;
     startedLoadRef.current = true;
 
