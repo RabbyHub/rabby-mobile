@@ -320,6 +320,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       setSupplyTx(formattedSupplyResult);
     } catch (error) {
       console.error('Build transactions error:', error);
+      toast.error('something error');
+      setSupplyTx(null);
+      setApproveTxs(null);
     } finally {
       setIsLoading(false);
     }
@@ -432,7 +435,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           }
         }
         const txId = last(results);
-        if (txId) {
+        if (txId && txsForMiniApproval[0]?.chainId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
             txsForMiniApproval[0].chainId,
@@ -510,7 +513,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         handleClickMaxButton={() => {
           setAmount(supplyAmount.amount || '0');
         }}
-        tokenAmount={Number(supplyAmount.amount || '0')}
+        tokenAmount={111111}
         price={Number(
           reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
         )}
