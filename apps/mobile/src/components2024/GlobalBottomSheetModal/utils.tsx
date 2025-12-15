@@ -65,6 +65,7 @@ import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
 import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
+import DebtTokenSelectModal from '@/screens/Lending/components/DebtTokenSelect';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -342,5 +343,9 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {
     snapPoints: ['85%'],
     Component: SelectCategoryModal,
+  },
+  [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
+    snapPoints: ['85%'],
+    Component: DebtTokenSelectModal,
   },
 };

@@ -29,6 +29,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from '../config/nativeToWrapper';
 import DetailLoadingSkeleton from './DetailLoadingSkeleton';
+import { SwappableToken } from '../types/swap';
 
 export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
   underlyingAsset,
@@ -213,6 +214,15 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
       },
     });
   };
+  const handleSwapDebt = () => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.DEBT_TOKEN_SELECT,
+      selectedToken: reserve,
+      onChange: (v: SwappableToken) => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+    });
+  };
   useEffect(() => {
     if (!loading && !reserve) {
       onClose?.();
@@ -376,6 +386,12 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
           title={t('page.Lending.borrowDetail.actions')}
         />
       </View>
+      <Button
+        containerStyle={styles.button}
+        titleStyle={styles.borrowButtonTitle}
+        onPress={handleSwapDebt}
+        title={t('page.Lending.borrowDetail.swapDebt')}
+      />
     </AutoLockView>
   );
 };

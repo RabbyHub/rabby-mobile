@@ -9,6 +9,7 @@ import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddr
 import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
 import { ButtonProps } from '../Button';
 import { OpenDetailProps, PopupDetailProps } from '@/screens/Lending/type';
+import { SwappableToken } from '@/screens/Lending/types/swap';
 
 export enum MODAL_NAMES {
   // 'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
@@ -79,6 +80,7 @@ export enum MODAL_NAMES {
   'DISABLE_EMODE_OVERVIEW' = 'DISABLE_EMODE_OVERVIEW',
   'MANAGE_EMODE_FULL' = 'MANAGE_EMODE_FULL',
   'SELECT_EMODE_CATEGORY' = 'SELECT_EMODE_CATEGORY',
+  'DEBT_TOKEN_SELECT' = 'DEBT_TOKEN_SELECT',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -136,6 +138,10 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.MANAGE_EMODE]: {};
   [MODAL_NAMES.DISABLE_EMODE_OVERVIEW]: {};
   [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {};
+  [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
+    selectedToken: SwappableToken;
+    onChange: (v: SwappableToken) => void;
+  };
 };
 
 export type MODAL_ID = `${MODAL_NAMES}_${string}`;

@@ -2717,6 +2717,7 @@
       },
       "borrowDetail": {
         "actions": "Borrow",
+        "swapDebt": "Swap",
         "approveAndBorrow": "Approve and Borrow",
         "almostReachedWarning": "Protocol borrow cap is at 100% for this asset. Further borrowing unavailable.",
         "almostReachedError": "Maximum amount available to borrow is limited because protocol borrow cap is nearly reached."
@@ -2801,6 +2802,14 @@
           },
           "desc": "All borrow positions outside of this category must be closed to enable this category.",
           "placeholder": "Select"
+        },
+        "debtSwapSelector": {
+          "title": "Select Borrow Token",
+          "header": {
+            "assets": "Token/Balance",
+            "apy": "APY",
+            "borrow": "My borrows"
+          }
         },
         "overview": {
           "title": "Asset category",
