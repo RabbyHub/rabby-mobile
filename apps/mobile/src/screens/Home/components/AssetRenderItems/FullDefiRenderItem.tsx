@@ -42,7 +42,7 @@ type SectionListItem = {
 };
 interface Props {
   data: AbstractProject;
-  account?: KeyringAccountWithAlias;
+  account?: KeyringAccountWithAlias | null;
   showAccount?: boolean;
   style?: StyleProp<ViewStyle>;
   disableAction?: boolean;
@@ -162,22 +162,22 @@ export const FullDefiRenderItem = ({
         break; // 最多只有 3 个标签，发现标签足够就不需要再继续遍历下去了
       }
       const item = data._portfolios[i];
-      const actions = item._originPortfolio.withdraw_actions || [];
+      const actions = item?._originPortfolio?.withdraw_actions || [];
       for (let k = 0; k < actions.length; k++) {
         const action = actions[k];
         if (
-          action.need_approve?.to &&
+          action?.need_approve?.to &&
           !isWhitelistSpender(action.need_approve?.to, data.chain)
         ) {
           continue; // 需要 approve 但不在白名单内，直接跳过
         }
-        if (isBlacklistMethod(action.func)) {
+        if (action?.func && isBlacklistMethod(action?.func)) {
           continue;
         }
-        if (['withdraw', 'queue'].includes(action.type)) {
+        if (action?.type && ['withdraw', 'queue'].includes(action?.type)) {
           result.add('Withdraw');
         }
-        if (action.type === 'claim') {
+        if (action?.type === 'claim') {
           result.add('Claim');
         }
       }
@@ -268,7 +268,7 @@ export const FullDefiRenderItem = ({
           </View>
           {isInnerProtocol && isExpand && (
             <View style={styles.innerProtocolContainer} pointerEvents="none">
-              <ProtocolIcon width={125} height={70} />
+              {ProtocolIcon && <ProtocolIcon width={125} height={70} />}
             </View>
           )}
         </View>

@@ -8,8 +8,11 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 
 import { HomeTopArea } from './components/HomeTopArea';
-import { Tabs } from 'react-native-collapsible-tab-view';
-import { useSingleHomeHasNoData } from '@/hooks/useCurve';
+import {
+  CollapsibleProps,
+  TabBarProps,
+  Tabs,
+} from 'react-native-collapsible-tab-view';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
 import { PortfolioList } from './PortfolioList';
@@ -19,8 +22,11 @@ import { DynamicCustomMaterialTabBar } from './components/Tabs/CustomTabBar';
 import CustomLabel from './components/Tabs/CustomLabel';
 import { useAddrChainLength } from './useChainInfo';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
-import { triggerFetchHomeData } from './components/TmpHomeRefresher';
-import { useSingleHomeAddress } from './hooks/singleHome';
+import {
+  useSingleHomeAddress,
+  useSingleHomeHasNoData,
+} from './hooks/singleHome';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 
 const ScreenWidth = Dimensions.get('window').width;
 export const icons = {
@@ -35,15 +41,11 @@ export const icons = {
 };
 
 interface Props {
-  onRefresh(): void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 56;
 
-export const AssetContainer: React.FC<Props> = ({
-  onRefresh,
-  onReachTopStatusChange,
-}) => {
+export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { currentAddress } = useSingleHomeAddress();
@@ -56,13 +58,14 @@ export const AssetContainer: React.FC<Props> = ({
 
   const { hasNoData: hasNoCurveData } = useSingleHomeHasNoData();
 
-  const handleRefresh = useCallback(
-    async (ignoreLoading?: boolean) => {
-      onRefresh?.();
-      triggerFetchHomeData('TMP_TRIGGER:SINGLE_HOME_REFRESH', ignoreLoading);
-    },
-    [onRefresh],
-  );
+  const handleRefresh = useCallback(async () => {
+    if (!currentAddress) return;
+    apisAddressBalance.triggerUpdate({
+      address: currentAddress,
+      force: true,
+      fromScene: 'SingleAddressHome',
+    });
+  }, [currentAddress]);
 
   const renderHeader = useCallback(() => {
     return (
@@ -80,11 +83,13 @@ export const AssetContainer: React.FC<Props> = ({
     return isDisConnect && hasNotAssets && hasNoCurveData;
   }, [hasNoCurveData, hasNotAssets, isDisConnect]);
 
-  const renderTabBar = React.useCallback(
-    (_props: any) => (
+  const renderTabBar = React.useCallback<
+    CollapsibleProps['renderTabBar'] & object
+  >(
+    props => (
       <DynamicCustomMaterialTabBar
         materialTabBarProps={{
-          ..._props,
+          ...props,
           tabStyle: styles.tabBar,
         }}
         containerStyle={styles.tabsBarContainer}
@@ -108,9 +113,7 @@ export const AssetContainer: React.FC<Props> = ({
     return (
       <NetWorkError
         hasError={isDisConnect}
-        onRefresh={() => {
-          handleRefresh(true);
-        }}
+        onRefresh={handleRefresh}
         style={styles.netWorkError}
       />
     );

@@ -108,8 +108,8 @@ export const useTokens = (
             : await queryTokensCache(userAddr);
           if (snapshot?.length) {
             const chainTokens = snapshot.reduce((m, n) => {
-              m[n.chain] = m[n.chain] || [];
-              m[n.chain].push(n);
+              const list = (m[n.chain] = m[n.chain] || []);
+              list.push(n);
 
               return m;
             }, {} as Record<string, TokenItem[]>);
@@ -133,10 +133,9 @@ export const useTokens = (
 
         const tokensDict: Record<string, TokenItem[]> = {};
         tokenRes.forEach(token => {
-          if (!tokensDict[token.chain]) {
-            tokensDict[token.chain] = [];
-          }
-          tokensDict[token.chain].push(token);
+          const list = (tokensDict[token.chain] =
+            tokensDict[token.chain] || []);
+          list.push(token);
         });
 
         _data = produce(_data, draft => {
@@ -207,8 +206,8 @@ export const useTokens = (
         (await preferenceService.getUserTokenSettings()) || {};
       if (cachedTokens.length) {
         const chainTokens = cachedTokens.reduce((m, n) => {
-          m[n.chain] = m[n.chain] || [];
-          m[n.chain].push(n);
+          const list = (m[n.chain] = m[n.chain] || []);
+          list.push(n);
           return m;
         }, {} as Record<string, TokenItem[]>);
         _data = produce(_data, draft => {

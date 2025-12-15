@@ -31,7 +31,7 @@ import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenChartRef, TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { formatTokenAmount } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
@@ -183,7 +183,6 @@ export const TokenMarketInfoScreen = () => {
     },
   );
 
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
 
   const refreshTag = useCallback(() => {
@@ -207,13 +206,20 @@ export const TokenMarketInfoScreen = () => {
     return (
       <RightMore
         token={token}
-        triggerUpdate={triggerUpdate}
+        triggerUpdate={() =>
+          finalAccount?.address &&
+          apisAddressBalance.triggerUpdate({
+            address: finalAccount?.address,
+            force: false,
+            fromScene: 'TokenDetail',
+          })
+        }
         isMultiAddress={false}
         refreshTags={refreshTag}
         unHold={false}
       />
     );
-  }, [token, triggerUpdate, refreshTag]);
+  }, [token, refreshTag, finalAccount?.address]);
 
   useFocusEffect(
     useCallback(() => {
@@ -468,7 +474,8 @@ export const TokenMarketInfoScreen = () => {
       currentInterval,
       Math.floor(Date.now() / 1000),
     ).then(res => {
-      chartWebViewRef.current?.updateCandleData(res.candles[0]);
+      res.candles[0] &&
+        chartWebViewRef.current?.updateCandleData(res.candles[0]);
     });
   }, [
     currentInterval,

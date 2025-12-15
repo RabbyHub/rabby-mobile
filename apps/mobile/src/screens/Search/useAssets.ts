@@ -124,8 +124,8 @@ const batchLoadCacheTokens = async (
     });
 
     const chainTokens = group.reduce((m, n) => {
-      m[n.chain] = m[n.chain] || [];
-      m[n.chain].push(n);
+      const list = (m[n.chain] = m[n.chain] || []);
+      list.push(n);
 
       return m;
     }, {} as Record<string, TokenItem[]>);
@@ -144,7 +144,7 @@ const batchLoadCacheTokens = async (
   Object.keys(formatAssetMap).forEach(address => {
     updateAssetListByAddress(address, {
       type: 'tokens',
-      data: formatAssetMap[address],
+      data: formatAssetMap[address] || [],
     });
   });
 
@@ -188,7 +188,7 @@ const batchLoadCacheDefi = async (
   Object.keys(formatProtocolMap).forEach(address => {
     updateAssetListByAddress(address, {
       type: 'portfolios',
-      data: formatProtocolMap[address],
+      data: formatProtocolMap[address] || [],
     });
   });
 };
@@ -218,7 +218,7 @@ const batchLoadCacheNFT = async (
   Object.keys(formatNFTMap).forEach(address => {
     updateAssetListByAddress(address, {
       type: 'nfts',
-      data: formatNFTMap[address],
+      data: formatNFTMap[address] || [],
     });
   });
 };
@@ -270,10 +270,9 @@ export const useLoadAssets = () => {
 
         const tokensDict: Record<string, TokenItem[]> = {};
         tokenRes.forEach(token => {
-          if (!tokensDict[token.chain]) {
-            tokensDict[token.chain] = [];
-          }
-          tokensDict[token.chain].push(token);
+          const list = (tokensDict[token.chain] =
+            tokensDict[token.chain] || []);
+          list.push(token);
         });
 
         setWalletTokens(wP, tokensDict);
