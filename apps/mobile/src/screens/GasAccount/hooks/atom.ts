@@ -1,9 +1,14 @@
+import { toast } from '@/components/Toast';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { sendRequest } from '@/core/apis/provider';
+import { openapi } from '@/core/request';
 import {
   gasAccountService,
   keyringService,
   perpsService,
 } from '@/core/services';
 import { GasAccountServiceStore } from '@/core/services/gasAccount';
+import { Account } from '@/core/services/preference';
 import { zCreate } from '@/core/utils/reexports';
 import {
   resolveValFromUpdater,
@@ -11,8 +16,10 @@ import {
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { eventBus, EVENTS } from '@/utils/events';
+import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import pRetry from 'p-retry';
 import { useCallback } from 'react';
 
 // const refreshGasBalanceAtom = atom(0);
@@ -178,21 +185,116 @@ const setGasAccount = (
   gasAccountService.setGasAccountSig(sig, account);
   setGasAccountSigState({ sig, accountId: account?.address, account: account });
 };
-export const useSetGasAccount = () => {
-  return setGasAccount;
+
+async function fetchGasAccountInfo() {
+  console.debug('[feat][perf] fetchGasAccountInfo');
+  const { sig, accountId } = gasAccountStore.getState().sigState || {};
+
+  if (!sig || !accountId) {
+    return undefined;
+  }
+  return openapi.getGasAccountInfo({ sig, id: accountId }).then(e => {
+    if (e.account.id) {
+      return e;
+    }
+    storeApiGasAccount.setGasAccount();
+    return undefined;
+  });
+}
+
+export const storeApiGasAccount = {
+  setGasAccount,
+  getSigState() {
+    return gasAccountStore.getState().sigState;
+  },
+  fetchGasAccountInfo,
+  setLogoutVisible(valOrFunc: UpdaterOrPartials<boolean>) {
+    setVisibleFor('logoutVisible', valOrFunc);
+  },
+  setLoginVisible(valOrFunc: UpdaterOrPartials<boolean>) {
+    setVisibleFor('loginVisible', valOrFunc);
+  },
+  setSwitchVisible(valOrFunc: UpdaterOrPartials<boolean>) {
+    setVisibleFor('switchVisible', valOrFunc);
+  },
+
+  loginGasAccount: async (selectAccount: Account) => {
+    const account = selectAccount;
+    if (!account) {
+      throw new Error('background.error.noCurrentAccount');
+    }
+    console.debug('selectAccount', account);
+    const { text } = await openapi.getGasAccountSignText(account.address);
+
+    const noSignType =
+      account?.type === KEYRING_CLASS.PRIVATE_KEY ||
+      account?.type === KEYRING_CLASS.MNEMONIC;
+
+    let signature = '';
+    if (noSignType) {
+      const { txHash } = await sendPersonalMessage({
+        data: [text, account.address],
+        account: account,
+      });
+      signature = txHash;
+    } else {
+      signature = await sendRequest<string>({
+        data: {
+          method: 'personal_sign',
+          params: [text, account.address],
+        },
+        session: INTERNAL_REQUEST_SESSION,
+        account,
+      });
+    }
+    console.log(signature);
+    if (signature) {
+      const result = await pRetry(
+        async () =>
+          openapi.loginGasAccount({
+            sig: signature,
+            account_id: account.address,
+          }),
+        {
+          retries: 2,
+        },
+      );
+
+      if (result?.success) {
+        storeApiGasAccount.setGasAccount(signature, account);
+        gasAccountService.setHasClaimedGift(true);
+        // setLoginVisible(false);
+      } else {
+        throw new Error('Login failed');
+      }
+    }
+    return signature;
+  },
+
+  logoutGasAccount: async () => {
+    const { sig, accountId } = storeApiGasAccount.getSigState() || {};
+    if (sig && accountId) {
+      const result = await openapi.logoutGasAccount({
+        sig,
+        account_id: accountId,
+      });
+      if (result.success) {
+        storeApiGasAccount.setGasAccount();
+        storeApiGasAccount.setLogoutVisible(false);
+        // gotoDashboard();
+      } else {
+        toast.show('please retry');
+      }
+    }
+  },
 };
 
 export const useGasAccountLogoutVisible = () => {
-  // return useAtom(logoutVisibleAtom);
   const isVisible = gasAccountStore(s => s.logoutVisible);
-  const setIsVisible = useCallback((valOrFunc: UpdaterOrPartials<boolean>) => {
-    setVisibleFor('logoutVisible', valOrFunc);
-  }, []);
-  return [isVisible, setIsVisible] as const;
+  return [isVisible, storeApiGasAccount.setLogoutVisible] as const;
 };
 
 export const useGasAccountLoginVisible = () => {
-  // return useAtom(loginVisibleAtom);
   const isVisible = gasAccountStore(s => s.loginVisible);
   const setIsVisible = useCallback((valOrFunc: UpdaterOrPartials<boolean>) => {
     setVisibleFor('loginVisible', valOrFunc);
@@ -201,7 +303,6 @@ export const useGasAccountLoginVisible = () => {
 };
 
 export const useGasAccountSwitchVisible = () => {
-  // return useAtom(switchVisibleAtom);
   const isVisible = gasAccountStore(s => s.switchVisible);
   const setIsVisible = useCallback((valOrFunc: UpdaterOrPartials<boolean>) => {
     setVisibleFor('switchVisible', valOrFunc);

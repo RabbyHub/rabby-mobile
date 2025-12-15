@@ -33,9 +33,7 @@ import { useNoLongerSupports } from './components2024/NoLongerSupports/useNoLong
 import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
-import { useGasAccountInfo } from './screens/GasAccount/hooks';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
-import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
 import { useUserDidTakeScreenshot } from './components/Screenshot/hooks';
 import Safe from '@rabby-wallet/gnosis-sdk';
@@ -43,7 +41,6 @@ import { SAFE_API_KEY } from './constant/env';
 Safe.apiKey = SAFE_API_KEY;
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
-import usePrevious from 'react-use/lib/usePrevious';
 import {
   RerenderDetector,
   useRendererDetect,
@@ -78,10 +75,8 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useNoLongerSupports();
   useTriggerI18nChangeOnAppTop();
   useIAPListener();
-  useGasAccountInfo();
   useTrezorConnectOnUrl();
   useIncreaseTxCountOnAppTop({ isTop: true });
-  useIntervalSyncDDefaultRPCs();
   useUserDidTakeScreenshot({ isTop: true });
 
   useEffect(() => {
