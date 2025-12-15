@@ -71,7 +71,7 @@ const addrRisks = zCreate<{
   [address: string]: {
     loading: boolean;
     addrDesc?:
-      | ReturnType<Awaited<typeof getAddrDescWithCexLocalCacheSync>>
+      | Awaited<ReturnType<typeof getAddrDescWithCexLocalCacheSync>>
       | undefined;
     risks: RiskItem[];
   };

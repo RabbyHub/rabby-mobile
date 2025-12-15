@@ -1,3 +1,5 @@
+import { getDefaultStore } from 'jotai';
+
 export { create as zCreate } from 'zustand';
 
 export {
@@ -8,3 +10,5 @@ export {
 export { mutative as zMutative } from 'zustand-mutative';
 
 export { create as mCreate } from 'mutative';
+
+export const jotaiStore = getDefaultStore();

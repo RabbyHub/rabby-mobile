@@ -87,10 +87,6 @@ export const sceneAccountInfoStore = zustandByMMKV(
   },
 );
 
-export function getSceneAccountInfo() {
-  return sceneAccountInfoStore.getState();
-}
-
 export function zSetSceneAccountInfo(
   valOrFunc: UpdaterOrPartials<SceneAccounts>,
 ) {

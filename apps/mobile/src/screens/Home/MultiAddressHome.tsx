@@ -136,6 +136,7 @@ import {
 } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
+import { apisLending } from '../Lending/hooks';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -320,6 +321,7 @@ const OverViewComponent = React.memo(
             refresh24hAssets({ balanceAccounts }),
           );
           triggerUpdateAlert();
+          apisLending.fetchLendingData();
           syncTop10History(top10Addresses, false);
         });
       }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
@@ -336,8 +338,7 @@ const OverViewComponent = React.memo(
       ]).finally(() => {
         // update at background
         forceUpdate();
-        triggerFetchHomeData('TMP_TRIGGER:FETCH_LENDING_DATA');
-        triggerFetchHomeData('TMP_TRIGGER:SYNC_TOP10_HISTORY', true);
+        apisLending.fetchLendingData();
         currencyService.syncCurrencyList(true);
       });
     }, [triggerUpdate, checkAddressesEligibility, forceUpdate]);
