@@ -9,26 +9,28 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from '@/components';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { Account } from '@/core/services/preference';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
 import { useIsRefreshing } from './hooks/project';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import { useIsLoadingCurve } from '@/hooks/useCurve';
-import { apisSingleHome, useSingleHomeAccountAlias } from './hooks/singleHome';
+import {
+  apisSingleHome,
+  useSingleHomeAccountAlias,
+  useSingleHomeLoading,
+} from './hooks/singleHome';
 
 export default function HomeHeaderArea() {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { isRefreshing: refreshing } = useIsRefreshing();
-  const { isLoadingCurve } = useIsLoadingCurve();
 
   const {
     address: currentAddress,
     brandName,
     name,
   } = useSingleHomeAccountAlias();
+  const { isLoadingCurve, balanceLoading } = useSingleHomeLoading();
 
   const handleCopyAddress = useCallback<
     React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
@@ -78,7 +80,7 @@ export default function HomeHeaderArea() {
               style={styles.titleText}>
               {name}
             </Text>
-            {refreshing || isLoadingCurve ? (
+            {refreshing || isLoadingCurve || balanceLoading ? (
               <LoadingCircle />
             ) : (
               <RcIconCopy style={styles.copy} />

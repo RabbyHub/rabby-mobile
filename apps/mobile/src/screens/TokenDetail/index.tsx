@@ -23,7 +23,7 @@ import {
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { formatPrice } from '@/utils/number';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -132,7 +132,6 @@ const TokenDetailContent = () => {
       },
     );
 
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
 
   const refreshTag = useCallback(() => {
@@ -166,13 +165,20 @@ const TokenDetailContent = () => {
     return (
       <RightMore
         token={token}
-        triggerUpdate={triggerUpdate}
+        triggerUpdate={() =>
+          effectiveAccount?.address &&
+          apisAddressBalance.triggerUpdate({
+            address: effectiveAccount?.address,
+            force: false,
+            fromScene: 'TokenDetail',
+          })
+        }
         isMultiAddress={false}
         refreshTags={refreshTag}
         unHold={false}
       />
     );
-  }, [token, triggerUpdate, refreshTag]);
+  }, [token, refreshTag, effectiveAccount?.address]);
 
   useFocusEffect(
     useCallback(() => {

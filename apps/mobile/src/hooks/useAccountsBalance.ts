@@ -204,7 +204,8 @@ export const fetchTotalBalance = async (
         intervalCap: 10,
       });
       for (let i = 0; i < uniqueList.length; i++) {
-        const { type, address, brandName } = uniqueList[i];
+        if (uniqueList[i]) continue;
+        const { type, address, brandName } = uniqueList[i]!;
         const account = address.toLowerCase();
         // batch fetch by queue
         queue.add(async () => {

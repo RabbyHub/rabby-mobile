@@ -49,7 +49,7 @@ interface ProtocolConfigItemType {
   bgColor2: string;
   showManage?: (
     item: AbstractPortfolio,
-    account?: KeyringAccountWithAlias,
+    account?: KeyringAccountWithAlias | null,
   ) => boolean;
   onManage?: TonManageAction;
 }
@@ -101,7 +101,7 @@ export const useProtocolConfig = () => {
         bgColor2: 'rgba(187, 235, 221, 0)',
         showManage: (
           item: AbstractPortfolio,
-          account?: KeyringAccountWithAlias,
+          account?: KeyringAccountWithAlias | null,
         ) => {
           if (!account?.address) {
             return false;

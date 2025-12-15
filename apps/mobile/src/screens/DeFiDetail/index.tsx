@@ -25,7 +25,7 @@ import {
   useFallbackAccount,
   useMyAccounts,
 } from '@/hooks/account';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
@@ -195,7 +195,6 @@ export const DeFiDetailScreen = () => {
   }, [data?.chain]);
 
   const { t } = useTranslation();
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { deFiRefresh, singleDeFiRefresh } = useTriggerTagAssets();
 
   const refreshTag = useCallback(() => {
@@ -258,7 +257,13 @@ export const DeFiDetailScreen = () => {
     return (
       <RightMore
         token={data}
-        refreshBalance={triggerUpdate}
+        refreshBalance={() =>
+          apisAddressBalance.triggerUpdate({
+            address: finalAccount?.address,
+            force: false,
+            fromScene: 'DefiDetail',
+          })
+        }
         refreshTags={refreshTag}
       />
     );
@@ -329,7 +334,7 @@ export const DeFiDetailScreen = () => {
       );
       if (idx > -1) {
         sectionsList.push({
-          ...tempList[idx],
+          ...tempList[idx]!,
           type: account.type,
           aliasName: account.aliasName || ellipsisAddress(account.address),
         });

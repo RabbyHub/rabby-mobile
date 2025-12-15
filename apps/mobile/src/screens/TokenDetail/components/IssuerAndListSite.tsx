@@ -25,7 +25,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 interface Props {
   tokenEntity?: TokenEntityDetail;
   entityLoading: boolean;
-  account?: KeyringAccountWithAlias;
+  account?: KeyringAccountWithAlias | null;
 }
 
 const DomainUrlLink = ({

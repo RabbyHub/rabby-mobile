@@ -172,7 +172,7 @@ const AssetPositionItem = ({
 };
 
 export const PerpsSingleAssetPosition: React.FC<{
-  account?: Account;
+  account?: Account | null;
 }> = ({ account }) => {
   const { clearinghouseStateMap, marketDataMap } = perpsStore(
     useShallow(s => ({
