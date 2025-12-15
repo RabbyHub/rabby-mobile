@@ -54,7 +54,9 @@
         "LendingBorrow": "Pinjam",
         "LendingRepay": "Bayar kembali",
         "LendingOnCollateral": "Hidupkan penggunaan sebagai jaminan",
-        "LendingOffCollateral": "Matikan penggunaan sebagai jaminan"
+        "LendingOffCollateral": "Matikan penggunaan sebagai jaminan",
+        "LendingManageEMode": "Aktifkan E-Mode",
+        "LendingManageEModeDisable": "Matikan E-Mode"
       },
       "detail": {
         "Succeeded": "Berhasil",
@@ -127,7 +129,9 @@
       "Today": "Hari ini",
       "NotShowAllTransactionsToast": "Transaksi tersembunyi disembunyikan",
       "ShowScamTransactions": "Tampilkan transaksi penipuan",
-      "ShowAllTransactionsToast": "Transaksi tersembunyi ditampilkan"
+      "ShowAllTransactionsToast": "Transaksi tersembunyi ditampilkan",
+      "scam": "Penipuan",
+      "scamTips": "Transaksi ini diinisiasi oleh penipu untuk mengirimkan token dan NFT penipuan. Harap hindari berinteraksi dengan itu."
     },
     "signTx": {
       "gasAccount": {
@@ -2137,7 +2141,8 @@
         "recentEmpty": "Mulai Menjelajahi Situs Web",
         "favorite": "Favorit",
         "hot": "Hangat",
-        "otherResults": "Hasil Lainnya"
+        "otherResults": "Hasil Lainnya",
+        "hot10": "Hot 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Buka Situs Web"
@@ -2622,7 +2627,9 @@
       "availableCard": {
         "canBorrow": "Anda dapat meminjam berdasarkan jaminan yang Anda suplai, hingga batas pinjaman.",
         "needSupply": "Untuk meminjam, Anda perlu menyediakan aset sebagai jaminan.",
-        "isolated": "Daya pinjaman dan aset terbatas karena mode Isolasi."
+        "isolated": "Daya pinjaman dan aset terbatas karena mode Isolasi.",
+        "emode": "Di E-Mode, beberapa aset tidak dapat dipinjam. Keluar dari E-Mode untuk mendapatkan akses ke semua aset.",
+        "emodeNoAssets": "Kami tidak dapat menemukan aset yang terkait dengan pencarian Anda. Coba lagi dengan kategori yang berbeda."
       },
       "list": {
         "headers": {
@@ -2701,7 +2708,9 @@
         "checkbox": "Saya memahami peringatan tersebut dan ingin melanjutkan.",
         "warning": "Meminjam jumlah ini akan menurunkan Faktor Kesehatan Anda ke level berisiko untuk likuidasi.",
         "withdrawWarning": "Menarikan jumlah ini akan menurunkan Faktor Kesehatan Anda ke level berisiko untuk likuidasi.",
-        "toggleCollateralWarning": "Menonaktifkan aset ini sebagai jaminan akan menurunkan Faktor Kesehatan Anda ke tingkat berisiko untuk likuidasi."
+        "toggleCollateralWarning": "Menonaktifkan aset ini sebagai jaminan akan menurunkan Faktor Kesehatan Anda ke tingkat berisiko untuk likuidasi.",
+        "blockEmodeWarning": "Anda tidak dapat menonaktifkan E-Mode karena itu bisa menyebabkan likuidasi. Untuk keluar dari E-Mode, sediakan atau lunasi posisi yang dipinjam.",
+        "emodeBlockWarning": "Menonaktifkan E-mode akan menurunkan Faktor Kesehatan Anda ke tingkat berisiko untuk likuidasi."
       },
       "lqDescription": {
         "risky": "Berisiko",
@@ -2722,7 +2731,8 @@
         "isolatedTitle": "Aset tidak dapat digunakan sebagai jaminan",
         "isolatedDesc": "Aset ini hanya dapat digunakan sebagai jaminan dalam mode isolasi, di mana Anda tidak dapat menyediakan jaminan aset lain untuk meminjam. Aset yang digunakan sebagai jaminan dalam mode isolasi hanya dapat dipinjam hingga batas utang tertentu.",
         "isolatedSupplyDesc": "Penggunaan collateral dibatasi karena mode isolasi.",
-        "globalIsolatedDesc": "Dalam mode Isolasi, Anda tidak dapat menyediakan aset lain sebagai jaminan. Batas utang global membatasi kekuatan pinjaman aset terisolasi. Untuk keluar dari mode isolasi, nonaktifkan UNI sebagai jaminan sebelum meminjam aset lain."
+        "globalIsolatedDesc": "Dalam mode Isolasi, Anda tidak dapat menyediakan aset lain sebagai jaminan. Batas utang global membatasi kekuatan pinjaman aset terisolasi. Untuk keluar dari mode isolasi, nonaktifkan UNI sebagai jaminan sebelum meminjam aset lain.",
+        "maxLTV": "Rasio LTV Maksimum menunjukkan daya pinjam maksimum dari agunan tertentu. Misalnya, jika suatu agunan memiliki LTV sebesar 75%, pengguna dapat meminjam hingga 0,75 nilai ETH dalam mata uang utama untuk setiap 1 ETH nilai agunan."
       },
       "estDailyEarning": "Est.Penghasilan Harian",
       "gotIt": "Mengerti",
@@ -2757,7 +2767,45 @@
         "exitIsolationModeTitle": "Keluar dari Mode Isolasi"
       },
       "selectMarket": "Pilih Pasar",
-      "searchMarket": "Cari Pasar"
+      "searchMarket": "Cari Pasar",
+      "manageEmode": {
+        "actions": {
+          "disable": "Nonaktifkan E-Mode",
+          "enable": "Aktifkan E-Mode"
+        },
+        "guide": {
+          "title": "Mode Efisiensi (E-Mode)",
+          "description": "E-Mode meningkatkan LTV Anda untuk kategori aset yang dipilih.",
+          "buttonTitle": "Kelola E-Mode"
+        },
+        "categorySelector": {
+          "header": {
+            "asset": "Aset",
+            "ltv": "Maks LTV"
+          },
+          "label": "Kategori aset",
+          "placeholder": "Pilih",
+          "desc": "Semua posisi pinjaman di luar kategori ini harus ditutup untuk mengaktifkan kategori ini."
+        },
+        "overview": {
+          "row": {
+            "collateral": "Jaminan",
+            "borrowable": "Dapat dipinjam",
+            "asset": "Aset"
+          },
+          "title": "Kategori aset",
+          "maxLtv": "Maks LTV",
+          "apy": "APY"
+        },
+        "unavailable": "• Tidak Tersedia",
+        "emode": "E-Mode",
+        "title": "Kelola E-Mode",
+        "disableTitle": "Nonaktifkan",
+        "unavailableTips": "Aset peminjaman/peminjaman Anda yang ada tidak didukung.",
+        "description": "Mengaktifkan E-Mode memungkinkan Anda memaksimalkan daya pinjaman Anda. Namun, pinjaman dibatasi pada aset dalam kategori yang dipilih.",
+        "enabled": "• Diaktifkan"
+      },
+      "disabled": "DINONAKTIFKAN"
     }
   },
   "component": {

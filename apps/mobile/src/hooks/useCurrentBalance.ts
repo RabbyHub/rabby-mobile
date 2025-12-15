@@ -11,11 +11,10 @@ import { keyringService } from '@/core/services';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { useMemoizedFn } from 'ahooks';
 import { perfEvents } from '@/core/utils/perf';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 
-type BalanceState = {
+export type BalanceState = {
   balance: number | null;
   evmBalance: number | null;
   testnetBalance: string | null;
@@ -40,6 +39,14 @@ function setAddrBalanceStore(
     );
     if (!changed) return prev;
 
+    setTimeout(() => {
+      perfEvents.emit('TMP_UPDATED:SINGLE_HOME_BALANCE', {
+        address,
+        newBalance: newVal,
+        prevBalance: prev[address],
+      });
+    }, 300);
+
     return { ...prev, [address]: newVal };
   });
 }
@@ -53,7 +60,7 @@ const triggerHomeBalanceStore = zCreate<TriggerHomeBalanceState>(() => ({
 }));
 
 const triggerUpdate = (force?: boolean) => {
-  perfEvents.emit('TRIGGER_SINGLE_HOME_BALANCE', force);
+  perfEvents.emit('TMP_TRIGGER:SINGLE_HOME_BALANCE', force);
 };
 
 export const useTriggerHomeBalanceUpdate = () => {
@@ -204,9 +211,9 @@ export default function useCurrentBalance(
     getCurrentBalance();
 
     const { remove } = perfEvents.subscribe(
-      'TRIGGER_SINGLE_HOME_BALANCE',
+      'TMP_TRIGGER:SINGLE_HOME_BALANCE',
       async (force?: boolean) => {
-        console.debug('[perf] TRIGGER_SINGLE_HOME_BALANCE triggered');
+        console.debug('[perf] TMP_TRIGGER:SINGLE_HOME_BALANCE triggered');
         getCurrentBalance(!!force);
       },
     );
@@ -215,11 +222,6 @@ export default function useCurrentBalance(
       remove();
     };
   }, [getCurrentBalance]);
-
-  // useEffect(() => {
-  //   getCurrentBalance(forceUpdate);
-  //   setForceUpdate(false);
-  // }, [account?.toLowerCase(), balanceNonce]);
 
   return {
     balance,

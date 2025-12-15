@@ -67,7 +67,9 @@
         "LendingBorrow": "Emprunter",
         "LendingRepay": "Rembourser",
         "LendingOffCollateral": "Désactiver l'utilisation comme garantie",
-        "LendingOnCollateral": "Activer l'utilisation en tant que garantie"
+        "LendingOnCollateral": "Activer l'utilisation en tant que garantie",
+        "LendingManageEMode": "Activer E-Mode",
+        "LendingManageEModeDisable": "Désactiver E-Mode"
       },
       "detail": {
         "Status": "Statut",
@@ -136,7 +138,9 @@
         "skipNonceText": "Nonce #{{nonce}} sauté sur la chaîne {{chainName}}. Cela peut causer des transactions en attente. <5></5> <6>Soumettre un tx</6> <7></7> sur la chaîne pour résoudre"
       },
       "HideScamTransactions": "Masquer les transactions frauduleuses",
-      "ShowScamTransactions": "Afficher les transactions frauduleuses"
+      "ShowScamTransactions": "Afficher les transactions frauduleuses",
+      "scam": "Arnaque",
+      "scamTips": "Cette transaction est initiée par des escrocs pour envoyer des tokens et des NFTs frauduleux. Veuillez vous abstenir d'interagir avec elle."
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Entrez votre phrase secrète"
@@ -2147,7 +2151,8 @@
         "recentEmpty": "Commencer à explorer le site Web",
         "hot": "Chaud",
         "favorite": "Préféré",
-        "otherResults": "Autres résultats"
+        "otherResults": "Autres résultats",
+        "hot10": "Chauds 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Ouvrir des sites Web"
@@ -2632,7 +2637,9 @@
       "availableCard": {
         "needSupply": "Pour emprunter, vous devez fournir des actifs en tant que garantie.",
         "canBorrow": "Vous pouvez emprunter en fonction de votre garantie fournie, jusqu'à la limite d'emprunt.",
-        "isolated": "Le pouvoir d'emprunt et les actifs sont limités en raison du mode d'isolement."
+        "isolated": "Le pouvoir d'emprunt et les actifs sont limités en raison du mode d'isolement.",
+        "emode": "En mode E, certains actifs ne peuvent pas être empruntés. Quittez le mode E pour accéder à tous les actifs.",
+        "emodeNoAssets": "Nous n'avons trouvé aucun actif lié à votre recherche. Essayez à nouveau avec une catégorie différente."
       },
       "list": {
         "headers": {
@@ -2711,7 +2718,9 @@
         "checkbox": "Je comprends l'alerte et je veux continuer.",
         "warning": "Emprunter ce montant réduira votre facteur de santé à un niveau risqué pour la liquidation.",
         "withdrawWarning": "Le retrait de ce montant fera baisser votre facteur de santé à un niveau risqué pour la liquidation.",
-        "toggleCollateralWarning": "Désactiver cet actif en tant que garantie fera baisser votre facteur de santé à un niveau risqué pour la liquidation."
+        "toggleCollateralWarning": "Désactiver cet actif en tant que garantie fera baisser votre facteur de santé à un niveau risqué pour la liquidation.",
+        "emodeBlockWarning": "Désactiver le mode E réduira votre facteur de santé à un niveau risqué pour la liquidation.",
+        "blockEmodeWarning": "Vous ne pouvez pas désactiver E-Mode car cela pourrait entraîner une liquidation. Pour quitter E-Mode, fournissez ou remboursez des positions empruntées."
       },
       "lqDescription": {
         "desc": "Valeur de liquidation",
@@ -2732,7 +2741,8 @@
         "isolatedTitle": "L'actif ne peut pas être utilisé comme garantie.",
         "isolatedDesc": "Cet actif ne peut être utilisé qu'en tant que garantie en mode d'isolement, où vous ne pouvez pas fournir d'autres actifs en garantie pour emprunter. Les actifs utilisés comme garantie en mode d'isolement ne peuvent être empruntés qu'à un plafond d'endettement spécifique.",
         "isolatedSupplyDesc": "L'utilisation des garanties est limitée en raison du mode d'isolation.",
-        "globalIsolatedDesc": "En mode d'isolement, vous ne pouvez pas fournir d'autres actifs comme garantie. Un plafond d'endettement global limite le pouvoir d'emprunt de l'actif isolé. Pour sortir du mode d'isolement, désactivez UNI en tant que garantie avant d'emprunter un autre actif."
+        "globalIsolatedDesc": "En mode d'isolement, vous ne pouvez pas fournir d'autres actifs comme garantie. Un plafond d'endettement global limite le pouvoir d'emprunt de l'actif isolé. Pour sortir du mode d'isolement, désactivez UNI en tant que garantie avant d'emprunter un autre actif.",
+        "maxLTV": "Le ratio LTV maximum représente le pouvoir d'emprunt maximum d'un collatéral spécifique. Par exemple, si un collatéral a un LTV de 75 %, l'utilisateur peut emprunter jusqu'à 0,75 de la valeur de l'ETH dans la monnaie principale pour chaque 1 ETH de valeur de collatéral."
       },
       "market": "Marché",
       "supplied": "Fournie",
@@ -2767,7 +2777,45 @@
         "enableIsolationModeDesc": "Vous entrez en mode Isolation. En mode Isolation, vous ne pouvez pas fournir d'autres actifs en tant que collatéral. Un plafond d'endettement global limite le pouvoir d'emprunt de l'actif isolé. Pour sortir du mode isolation, désactivez CRV en tant que collatéral avant d'emprunter un autre actif."
       },
       "selectMarket": "Sélectionner le marché",
-      "searchMarket": "Rechercher sur le marché"
+      "searchMarket": "Rechercher sur le marché",
+      "manageEmode": {
+        "actions": {
+          "disable": "Désactiver E-Mode",
+          "enable": "Activer le mode E"
+        },
+        "guide": {
+          "title": "Mode d'efficacité (E-Mode)",
+          "description": "E-Mode augmente votre LTV pour une catégorie d'actifs sélectionnée.",
+          "buttonTitle": "Gérer E-Mode"
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "Max LTV",
+            "asset": "Actifs"
+          },
+          "placeholder": "Sélectionner",
+          "label": "Catégorie d'actif",
+          "desc": "Toutes les positions d'emprunt en dehors de cette catégorie doivent être fermées pour activer cette catégorie."
+        },
+        "overview": {
+          "row": {
+            "collateral": "Garanties",
+            "borrowable": "Empruntable",
+            "asset": "Actif"
+          },
+          "title": "Catégorie d'actifs",
+          "maxLtv": "Max LTV",
+          "apy": "APY"
+        },
+        "enabled": "• Activé",
+        "emode": "E-Mode",
+        "unavailableTips": "Vos actifs de prêt/emprunt existants ne sont pas pris en charge.",
+        "unavailable": "• Indisponible",
+        "disableTitle": "Désactiver",
+        "description": "Activer le E-Mode vous permet de maximiser votre pouvoir d'emprunt. Cependant, l'emprunt est limité aux actifs de la catégorie sélectionnée.",
+        "title": "Gérer E-Mode"
+      },
+      "disabled": "DÉSACTIVÉ"
     }
   },
   "native": {

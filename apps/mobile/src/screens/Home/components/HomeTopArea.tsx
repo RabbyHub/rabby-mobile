@@ -40,12 +40,11 @@ export const HomeTopArea = () => {
     balanceLoading,
   );
 
-  const { refresh: refreshCurve } = useSingleHomeCurveRefresh(
-    currentAddress,
-    evmBalance,
-    CurveDayType.DAY,
-    balance,
-  );
+  const { refresh: refreshCurve } = useSingleHomeCurveRefresh(currentAddress, {
+    realtimeNetWorth: evmBalance,
+    days: CurveDayType.DAY,
+    staticBalance: balance,
+  });
 
   const { isLoss } = useSingleHomeIsLoss();
 

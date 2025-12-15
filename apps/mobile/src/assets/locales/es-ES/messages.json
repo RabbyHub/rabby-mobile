@@ -323,7 +323,9 @@
         "LendingSupply": "Suministro",
         "LendingWithdraw": "Retirar",
         "LendingOffCollateral": "Desactivar el uso como colateral",
-        "LendingOnCollateral": "Activar uso como colateral"
+        "LendingOnCollateral": "Activar uso como colateral",
+        "LendingManageEMode": "Activa el E-Mode",
+        "LendingManageEModeDisable": "Desactivar E-Mode"
       },
       "detail": {
         "Cancel": "Cancelar",
@@ -392,7 +394,9 @@
         "skipNonceText": "Nonce #{{nonce}} omitido en la cadena {{chainName}}. Esto puede causar transacciones pendientes por delante. <5></5> <6>Enviar un tx</6> <7></7> en la cadena para resolver."
       },
       "ShowScamTransactions": "Mostrar transacciones fraudulentas",
-      "HideScamTransactions": "Ocultar transacciones fraudulentas"
+      "HideScamTransactions": "Ocultar transacciones fraudulentas",
+      "scamTips": "Esta transacción es iniciada por estafadores para enviar tokens y NFTs de estafa. Por favor, evite interactuar con ella.",
+      "scam": "Estafa"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Introduce tu frase semilla"
@@ -2403,7 +2407,8 @@
         "recentEmpty": "Comenzando a explorar el sitio web",
         "favorite": "Favorito",
         "hot": "Caliente",
-        "otherResults": "Otros Resultados"
+        "otherResults": "Otros Resultados",
+        "hot10": "Hot 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Abrir sitios web"
@@ -2888,7 +2893,9 @@
       "availableCard": {
         "needSupply": "Para pedir prestado, necesitas aportar activos como garantía.",
         "canBorrow": "Puedes pedir prestado basado en tu colateral proporcionado, hasta el límite de préstamo.",
-        "isolated": "El poder de préstamo y los activos están limitados debido al modo de Aislamiento."
+        "isolated": "El poder de préstamo y los activos están limitados debido al modo de Aislamiento.",
+        "emodeNoAssets": "No pudimos encontrar ningún activo relacionado con tu búsqueda. Intenta de nuevo con una categoría diferente.",
+        "emode": "En E-Mode, algunos activos no son tomables en préstamo. Sal de E-Mode para acceder a todos los activos."
       },
       "list": {
         "headers": {
@@ -2967,7 +2974,9 @@
         "checkbox": "Entiendo la alerta y quiero continuar.",
         "warning": "Tomar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
         "withdrawWarning": "Retirar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
-        "toggleCollateralWarning": "Deshabilitar este activo como colateral reducirá tu Factor de Salud a un nivel arriesgado para la liquidación."
+        "toggleCollateralWarning": "Deshabilitar este activo como colateral reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
+        "blockEmodeWarning": "No puedes desactivar el E-Mode porque eso podría provocar una liquidación. Para salir del E-Mode, proporciona o reembolsa posiciones prestadas.",
+        "emodeBlockWarning": "Desactivar el E-mode reducirá tu Factor de Salud a un nivel arriesgado para la Liquidación."
       },
       "lqDescription": {
         "over3desc": "Tus posiciones están seguras",
@@ -2988,7 +2997,8 @@
         "isolatedTitle": "El activo no puede ser utilizado como colateral",
         "isolatedDesc": "Este activo solo se puede utilizar como colateral en modo de aislamiento, donde no puedes proporcionar colateral de otros activos para préstamos. Los activos utilizados como colateral en modo de aislamiento solo se pueden pedir prestados hasta un límite de deuda específico.",
         "isolatedSupplyDesc": "El uso de colateral está limitado debido al modo de aislamiento.",
-        "globalIsolatedDesc": "En el modo de Aislamiento, no puedes aportar otros activos como colateral. Un límite de deuda global restringe el poder de endeudamiento del activo aislado. Para salir del modo de aislamiento, desactiva UNI como colateral antes de pedir prestado otro activo."
+        "globalIsolatedDesc": "En el modo de Aislamiento, no puedes aportar otros activos como colateral. Un límite de deuda global restringe el poder de endeudamiento del activo aislado. Para salir del modo de aislamiento, desactiva UNI como colateral antes de pedir prestado otro activo.",
+        "maxLTV": "El máximo ratio LTV representa el máximo poder de préstamo de un colateral específico. Por ejemplo, si un colateral tiene un LTV del 75%, el usuario puede pedir prestado hasta 0.75 en valor de ETH en la moneda principal por cada 1 ETH en valor de colateral."
       },
       "gotIt": "Entendido",
       "market": "Mercado",
@@ -3023,7 +3033,45 @@
         "openTitle": "Revisar la habilitación"
       },
       "selectMarket": "Seleccionar Mercado",
-      "searchMarket": "Buscar Mercado"
+      "searchMarket": "Buscar Mercado",
+      "manageEmode": {
+        "actions": {
+          "disable": "Deshabilitar E-Mode",
+          "enable": "Habilitar E-Mode"
+        },
+        "guide": {
+          "title": "Modo de eficiencia (E-Mode)",
+          "buttonTitle": "Gestionar E-Mode",
+          "description": "E-Mode aumenta tu LTV para una categoría seleccionada de activos."
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "LTV máximo",
+            "asset": "Activos"
+          },
+          "label": "Categoría de activos",
+          "placeholder": "Seleccionar",
+          "desc": "Todas las posiciones de préstamo fuera de esta categoría deben cerrarse para habilitar esta categoría."
+        },
+        "overview": {
+          "row": {
+            "asset": "Activo",
+            "collateral": "Colateral",
+            "borrowable": "Préstamo"
+          },
+          "title": "Categoría de activos",
+          "maxLtv": "Máx LTV",
+          "apy": "APY"
+        },
+        "enabled": "• Habilitado",
+        "disableTitle": "Deshabilitar",
+        "unavailableTips": "Sus activos de préstamo/borrowing existentes no son compatibles.",
+        "emode": "E-Mode",
+        "unavailable": "• No disponible",
+        "title": "Gestionar E-Mode",
+        "description": "Habilitar E-Mode te permite maximizar tu poder de préstamo. Sin embargo, el préstamo está restringido a los activos dentro de la categoría seleccionada."
+      },
+      "disabled": "DESHABILITADO"
     }
   },
   "global": {

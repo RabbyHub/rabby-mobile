@@ -295,14 +295,35 @@ export function useSingleHomeIsLoss() {
   return { isLoss };
 }
 
+type FetchParams = {
+  realtimeNetWorth: number | null;
+  staticBalance: number | null;
+};
 export const useSingleHomeCurveRefresh = (
   address: string | undefined,
-  realtimeNetWorth: number | null,
-  days: CurveDayType = CurveDayType.DAY,
-  staticBalance: number | null,
+  {
+    realtimeNetWorth = null,
+    staticBalance = null,
+    days = CurveDayType.DAY,
+  }: FetchParams & {
+    days: CurveDayType;
+  },
 ) => {
   const fetch = useCallback(
     async (addr: string, force = false) => {
+      /**
+       * TODO: this is temporary solution, but this is still MUCH BETTER than its previous shape,
+       * at least it's readable, observable, predictable and stable.
+       */
+      if (
+        typeof realtimeNetWorth !== 'number' ||
+        typeof staticBalance !== 'number'
+      ) {
+        console.warn(
+          'realtimeNetWorth or staticBalance is invalid, skip this time fetch',
+        );
+        return;
+      }
       try {
         const curve = await getNetCurve(addr, days, force);
         const start =
@@ -351,6 +372,23 @@ export const useSingleHomeCurveRefresh = (
     },
     [address, fetch],
   );
+
+  useEffect(() => {
+    const { remove } = perfEvents.subscribe(
+      'TMP_UPDATED:SINGLE_HOME_BALANCE',
+      ({ address: addr, newBalance }) => {
+        if (addr !== address) {
+          return;
+        }
+
+        setTimeout(() => refresh(), 300);
+      },
+    );
+
+    return () => {
+      remove();
+    };
+  }, [address, refresh]);
 
   return {
     refresh,

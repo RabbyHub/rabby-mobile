@@ -110,7 +110,9 @@
         "LendingSupply": "供給",
         "LendingRepay": "返済",
         "LendingOnCollateral": "担保として使用をオンにする",
-        "LendingOffCollateral": "担保としての使用をオフにする"
+        "LendingOffCollateral": "担保としての使用をオフにする",
+        "LendingManageEMode": "E-Modeをオンにする",
+        "LendingManageEModeDisable": "E-Modeをオフにする"
       },
       "detail": {
         "SpeedUp": "速度アップ",
@@ -179,7 +181,9 @@
         "skipNonceText": "Nonce #{{nonce}} は {{chainName}} チェーンでスキップされました。これにより、保留中のトランザクションが発生する可能性があります。<5></5> <6>トランザクションを送信</6> <7></7>して解決してください。"
       },
       "HideScamTransactions": "詐欺取引を非表示にする",
-      "ShowScamTransactions": "詐欺トランザクションを表示"
+      "ShowScamTransactions": "詐欺トランザクションを表示",
+      "scamTips": "この取引は、詐欺師によって詐欺トークンやNFTを送信するために開始されました。関与しないでください。",
+      "scam": "詐欺"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "シードフレーズを入力してください"
@@ -2190,7 +2194,8 @@
         "recentEmpty": "ウェブサイトを探索し始める",
         "otherResults": "その他の結果",
         "favorite": "お気に入り",
-        "hot": "ホット"
+        "hot": "ホット",
+        "hot10": "ホット10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "ウェブサイトを開く"
@@ -2675,7 +2680,9 @@
       "availableCard": {
         "needSupply": "借りるには、資産を担保として提供する必要があります。",
         "canBorrow": "提供した担保に基づいて、借入上限まで借りることができます。",
-        "isolated": "アイソレーションモードにより、借入可能額と資産は制限されています。"
+        "isolated": "アイソレーションモードにより、借入可能額と資産は制限されています。",
+        "emodeNoAssets": "あなたの検索に関連する資産は見つかりませんでした。別のカテゴリで再度試してください。",
+        "emode": "E-モードでは、一部の資産は借りることができません。すべての資産にアクセスするには、E-モードを終了してください。"
       },
       "list": {
         "headers": {
@@ -2754,7 +2761,9 @@
         "checkbox": "アラートを理解し、続行したいと思います。",
         "withdrawWarning": "この金額を引き出すと、あなたのヘルスファクターが清算のリスクがあるレベルに下がります。",
         "warning": "この金額を借りると、あなたのヘルスファクターが清算のリスクレベルまで下がります。",
-        "toggleCollateralWarning": "この資産を担保として無効にすると、清算のリスクがあるレベルまでヘルスファクターが低下します。"
+        "toggleCollateralWarning": "この資産を担保として無効にすると、清算のリスクがあるレベルまでヘルスファクターが低下します。",
+        "emodeBlockWarning": "Eモードを無効にすると、あなたのヘルスファクターは清算の危険なレベルに下がります。",
+        "blockEmodeWarning": "E-Modeを無効にすることはできません。そうすると清算が発生する可能性があります。E-Modeを終了するには、供給または借用ポジションを返済してください。"
       },
       "lqDescription": {
         "desc": "清算価値",
@@ -2775,7 +2784,8 @@
         "isolatedTitle": "資産は担保として使用できません。",
         "isolatedDesc": "この資産は、他の資産の担保を借入に供給できないアイソレーションモードでのみ担保として使用できます。アイソレーションモードで担保として使用される資産は、特定の借入限度額にのみ借り入れることができます。",
         "isolatedSupplyDesc": "担保使用受到限制，因为处于隔离模式。",
-        "globalIsolatedDesc": "隔離モードでは、他の資産を担保として提供することはできません。グローバルな債務上限は、孤立した資産の借入能力を制限します。隔離モードから退出するには、別の資産を借りる前にUNIを担保として無効にしてください。"
+        "globalIsolatedDesc": "隔離モードでは、他の資産を担保として提供することはできません。グローバルな債務上限は、孤立した資産の借入能力を制限します。隔離モードから退出するには、別の資産を借りる前にUNIを担保として無効にしてください。",
+        "maxLTV": "最大LTV比率は、特定の担保の最大借入能力を表します。たとえば、担保のLTVが75%の場合、ユーザーは1 ETHの担保ごとに、主通貨で最大0.75のETHを借りることができます。"
       },
       "apy": "APY",
       "supplied": "供給された",
@@ -2810,7 +2820,45 @@
         "enableIsolationModeDesc": "アイソレーションモードに入っています。アイソレーションモードでは、他の資産を担保として提供することはできません。グローバルデットシーリングが隔離された資産の借入能力を制限します。アイソレーションモードから退出するには、他の資産を借りる前にCRVを担保として無効にしてください。"
       },
       "searchMarket": "市場を検索",
-      "selectMarket": "マーケットを選択"
+      "selectMarket": "マーケットを選択",
+      "manageEmode": {
+        "actions": {
+          "enable": "E-モードを有効にする",
+          "disable": "E-Modeを無効にする"
+        },
+        "guide": {
+          "buttonTitle": "E-Modeを管理する",
+          "title": "効率モード (E-Mode)",
+          "description": "E-Modeは、選択した資産カテゴリのLTVを増加させます。"
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "最大LTV",
+            "asset": "資産"
+          },
+          "label": "資産カテゴリー",
+          "placeholder": "選択してください",
+          "desc": "このカテゴリを有効にするには、このカテゴリ外のすべての借入ポジションを閉じる必要があります。"
+        },
+        "overview": {
+          "row": {
+            "collateral": "担保",
+            "borrowable": "借り入れ可能",
+            "asset": "資産"
+          },
+          "maxLtv": "最大LTV",
+          "title": "資産カテゴリ",
+          "apy": "APY"
+        },
+        "emode": "E-Mode",
+        "disableTitle": "無効にする",
+        "unavailableTips": "あなたの既存の貸出/借入資産はサポートされていません。",
+        "unavailable": "• 利用不可",
+        "title": "E-Modeを管理する",
+        "description": "E-Modeを有効にすると、借入力を最大限に引き出すことができます。ただし、借入は選択したカテゴリ内の資産に制限されています。",
+        "enabled": "• 有効化された"
+      },
+      "disabled": "無効"
     }
   },
   "global": {

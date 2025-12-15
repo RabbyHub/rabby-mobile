@@ -54,7 +54,9 @@
         "LendingSupply": "Arz",
         "LendingWithdraw": "Çekilme",
         "LendingOffCollateral": "Teminat olarak kullanmayı kapat",
-        "LendingOnCollateral": "Teminat olarak kullanmayı açın"
+        "LendingOnCollateral": "Teminat olarak kullanmayı açın",
+        "LendingManageEModeDisable": "E-Modu'nu Kapat",
+        "LendingManageEMode": "E-Modu'nu Aç"
       },
       "detail": {
         "Succeeded": "Başarılı",
@@ -127,7 +129,9 @@
       "ShowAllTransactionsToast": "Gizli işlemler gösteriliyor",
       "NotShowAllTransactionsToast": "Gizli işlemler gizlenmiş",
       "Today": "Bugün",
-      "ViewSmallItems": "$0.1'den küçük işlemleri görüntüle"
+      "ViewSmallItems": "$0.1'den küçük işlemleri görüntüle",
+      "scam": "Dolandırıcılık",
+      "scamTips": "Bu işlem, dolandırıcılar tarafından dolandırıcılık token'ları ve NFT'ler göndermek üzere başlatılmıştır. Lütfen onunla etkileşimde bulunmaktan kaçının."
     },
     "signTx": {
       "gasAccount": {
@@ -991,7 +995,8 @@
         "BridgeStatusUnavailable": "Köprü durumu kullanılamıyor. Lütfen fonların ulaştığını doğrulamak için işlem geçmişinizi kontrol edin.",
         "longTimeNoReceive": "Ağ yoğun. Bu daha uzun sürebilir. Lütfen sabırsızlanmayın.",
         "receivingTo": "{{chain}} üzerinde alma"
-      }
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "manageAddress": {
       "watch-address": "Adres İzle",
@@ -2136,7 +2141,8 @@
         "recentEmpty": "Başlayın Keşfetmeye Web Sitesi",
         "favorite": "Favori",
         "hot": "Sıcak",
-        "otherResults": "Diğer Sonuçlar"
+        "otherResults": "Diğer Sonuçlar",
+        "hot10": "Sıcak 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Web Sitelerini Aç"
@@ -2621,7 +2627,9 @@
       "availableCard": {
         "needSupply": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
         "canBorrow": "Teminat olarak sağladığınız teminatınıza göre, borç limitine kadar borç alabilirsiniz.",
-        "isolated": "İzolasyon modu nedeniyle borçlanma gücü ve varlıklar sınırlıdır."
+        "isolated": "İzolasyon modu nedeniyle borçlanma gücü ve varlıklar sınırlıdır.",
+        "emodeNoAssets": "Aramanıza bağlı herhangi bir varlık bulamadık. Farklı bir kategori ile tekrar deneyin.",
+        "emode": "E-Mode'da bazı varlıklar borç alınamaz. Tüm varlıklara erişim sağlamak için E-Mode'dan çıkın."
       },
       "list": {
         "headers": {
@@ -2700,7 +2708,9 @@
         "checkbox": "Uyarıyı anlıyorum ve devam etmek istiyorum.",
         "warning": "Bu miktarı borç almak, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir.",
         "withdrawWarning": "Bu miktarın çekilmesi, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir.",
-        "toggleCollateralWarning": "Bu varlığı teminat olarak devre dışı bırakmak, Sağlık Faktörünüzü likidasyon için riskli bir seviyeye düşürecektir."
+        "toggleCollateralWarning": "Bu varlığı teminat olarak devre dışı bırakmak, Sağlık Faktörünüzü likidasyon için riskli bir seviyeye düşürecektir.",
+        "emodeBlockWarning": "E-modu kapatmak, Sağlık Faktörünüzü tasfiye için riskli bir seviyeye düşürecektir.",
+        "blockEmodeWarning": "E-Modu devre dışı bırakamazsınız çünkü bu tasfiye ile sonuçlanabilir. E-Mod'dan çıkmak için, sağladığınız veya geri ödediğiniz borçlu pozisyonları kullanın."
       },
       "lqDescription": {
         "desc": "Tasfiye değeri",
@@ -2721,7 +2731,8 @@
         "isolatedTitle": "Varlık teminat olarak kullanılamaz.",
         "isolatedDesc": "Bu varlık yalnızca izolasyon modunda teminat olarak kullanılabilir; burada borç almak için başka varlık teminatı sağlayamazsınız. İzolasyon modunda teminat olarak kullanılan varlıklar yalnızca belirli bir borç tavanına kadar borç alınabilir.",
         "isolatedSupplyDesc": "Teminat kullanımı izolasyon modu nedeniyle sınırlıdır.",
-        "globalIsolatedDesc": "İzolasyon modunda, diğer varlıkları teminat olarak veremezsiniz. Küresel borç tavanı, izole edilmiş varlığın borçlanma gücünü sınırlar. İzolasyon modundan çıkmak için, başka bir varlık borçlanmadan önce UNI'yi teminat olarak devre dışı bırakın."
+        "globalIsolatedDesc": "İzolasyon modunda, diğer varlıkları teminat olarak veremezsiniz. Küresel borç tavanı, izole edilmiş varlığın borçlanma gücünü sınırlar. İzolasyon modundan çıkmak için, başka bir varlık borçlanmadan önce UNI'yi teminat olarak devre dışı bırakın.",
+        "maxLTV": "Maksimum LTV oranı, belirli bir teminatın maksimum borçlanma gücünü temsil eder. Örneğin, bir teminatın LTV'si %75 ise, kullanıcı her 1 ETH değerindeki teminat için ana para biriminde 0.75 değerinde ETH borç alabilir."
       },
       "supplied": "Sağlanan",
       "gotIt": "Tamamdır",
@@ -2756,7 +2767,45 @@
         "openDesc": "Bu varlığı teminat olarak etkinleştirmek, borçlanma gücünüzü ve Sağlık Faktörünü artırır. Ancak, sağlık faktörünüz 1'in altına düşerse tasfiye edilebilir."
       },
       "selectMarket": "Pazar Seçin",
-      "searchMarket": "Pazar Ara"
+      "searchMarket": "Pazar Ara",
+      "manageEmode": {
+        "actions": {
+          "enable": "E-Mode'u Etkinleştir",
+          "disable": "E-Mode'u Devre Dışı Bırak"
+        },
+        "guide": {
+          "buttonTitle": "E-Mode'u Yönet",
+          "title": "Verimlilik modu (E-Mode)",
+          "description": "E-Mode, seçilen bir varlık kategorisi için LTV'nizi artırır."
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "Maksimum LTV",
+            "asset": "Varlıklar"
+          },
+          "label": "Varlık kategorisi",
+          "desc": "Bu kategoriyi etkinleştirmek için bu kategorinin dışındaki tüm borç pozisyonları kapatılmalıdır.",
+          "placeholder": "Seçin"
+        },
+        "overview": {
+          "row": {
+            "borrowable": "Kullanılabilir",
+            "asset": "Varlık",
+            "collateral": "Teminat"
+          },
+          "title": "Varlık kategorisi",
+          "apy": "APY",
+          "maxLtv": "Max LTV"
+        },
+        "title": "E-Mode'u Yönet",
+        "emode": "E-Modu",
+        "unavailable": "• Kullanılamaz",
+        "unavailableTips": "Mevcut kredi verme/borç alma varlıklarınız desteklenmiyor.",
+        "disableTitle": "Devre dışı bırak",
+        "enabled": "• Etkinleştirildi",
+        "description": "E-Mode'u etkinleştirmek, borçlanma gücünüzü en üst düzeye çıkarmanıza olanak tanır. Ancak, borçlanma, seçilen kategori içindeki varlıklarla sınırlıdır."
+      },
+      "disabled": "DEVRE DIŞI"
     }
   },
   "component": {

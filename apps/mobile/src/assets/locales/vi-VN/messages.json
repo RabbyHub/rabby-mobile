@@ -145,7 +145,9 @@
         "LendingBorrow": "Vay mượn",
         "LendingRepay": "Trả nợ",
         "LendingOffCollateral": "Tắt sử dụng làm tài sản thế chấp",
-        "LendingOnCollateral": "Bật sử dụng làm tài sản thế chấp"
+        "LendingOnCollateral": "Bật sử dụng làm tài sản thế chấp",
+        "LendingManageEMode": "Bật E-Mode",
+        "LendingManageEModeDisable": "Tắt E-Mode"
       },
       "detail": {
         "From": "Từ",
@@ -214,7 +216,9 @@
         "skipNonceText": "Nonce #{{nonce}} bị bỏ qua trên chuỗi {{chainName}}. Điều này có thể gây ra các giao dịch đang chờ phía trước. <5></5> <6>Gửi một tx</6> <7></7> trên chuỗi để giải quyết."
       },
       "ShowScamTransactions": "Hiện scam transactions",
-      "HideScamTransactions": "Ẩn giao dịch lừa đảo"
+      "HideScamTransactions": "Ẩn giao dịch lừa đảo",
+      "scam": "Lừa đảo",
+      "scamTips": "Giao dịch này được khởi xướng bởi những kẻ lừa đảo để gửi token và NFT lừa đảo. Vui lòng tránh tương tác với nó."
     },
     "getStart": {
       "goToHome": "Đi đến Trang chủ",
@@ -2231,7 +2235,8 @@
         "recentEmpty": "Bắt đầu Khám Phá Website",
         "otherResults": "Kết quả khác",
         "hot": "Nóng",
-        "favorite": "Yêu thích"
+        "favorite": "Yêu thích",
+        "hot10": "Nóng 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Mở Trang Web"
@@ -2716,7 +2721,9 @@
       "availableCard": {
         "needSupply": "Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp.",
         "canBorrow": "Bạn có thể vay dựa trên tài sản thế chấp mà bạn cung cấp, lên đến giới hạn vay.",
-        "isolated": "Quyền vay và tài sản bị giới hạn do chế độ Isolation."
+        "isolated": "Quyền vay và tài sản bị giới hạn do chế độ Isolation.",
+        "emodeNoAssets": "Chúng tôi không thể tìm thấy bất kỳ tài sản nào liên quan đến tìm kiếm của bạn. Hãy thử lại với một danh mục khác.",
+        "emode": "Trong E-Mode, một số tài sản không thể vay. Thoát khỏi E-Mode để có quyền truy cập vào tất cả các tài sản."
       },
       "list": {
         "headers": {
@@ -2795,7 +2802,9 @@
         "checkbox": "Tôi hiểu thông báo và muốn tiếp tục.",
         "withdrawWarning": "Rút số tiền này sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý.",
         "warning": "Vay số tiền này sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý.",
-        "toggleCollateralWarning": "Vô hiệu hóa tài sản này làm tài sản thế chấp sẽ khiến hệ số an toàn của bạn giảm xuống mức rủi ro cho việc thanh lý."
+        "toggleCollateralWarning": "Vô hiệu hóa tài sản này làm tài sản thế chấp sẽ khiến hệ số an toàn của bạn giảm xuống mức rủi ro cho việc thanh lý.",
+        "emodeBlockWarning": "Vô hiệu hóa E-mode sẽ làm giảm Hệ số Sức khỏe của bạn xuống mức rủi ro cho việc thanh lý.",
+        "blockEmodeWarning": "Bạn không thể tắt E-Mode vì điều đó có thể gây ra thanh lý. Để thoát khỏi E-Mode, hãy cung cấp hoặc hoàn trả các vị trí đã vay."
       },
       "lqDescription": {
         "desc": "Giá trị thanh lý",
@@ -2816,7 +2825,8 @@
         "isolatedTitle": "Tài sản không thể được sử dụng làm tài sản thế chấp.",
         "isolatedDesc": "Tài sản này chỉ có thể được sử dụng làm tài sản thế chấp trong chế độ cách ly, nơi bạn không thể cung cấp tài sản khác làm tài sản thế chấp để vay. Tài sản được sử dụng làm tài sản thế chấp trong chế độ cách ly chỉ có thể được vay đến một giới hạn nợ cụ thể.",
         "isolatedSupplyDesc": "Việt ngữ: Việc sử dụng tài sản thế chấp bị giới hạn do chế độ cách ly.",
-        "globalIsolatedDesc": "Trong chế độ Isolate, bạn không thể cung cấp các tài sản khác làm tài sản thế chấp. Một hạn mức nợ toàn cầu giới hạn khả năng vay của tài sản bị cô lập. Để thoát khỏi chế độ Isolate, hãy tắt UNI làm tài sản thế chấp trước khi vay tài sản khác."
+        "globalIsolatedDesc": "Trong chế độ Isolate, bạn không thể cung cấp các tài sản khác làm tài sản thế chấp. Một hạn mức nợ toàn cầu giới hạn khả năng vay của tài sản bị cô lập. Để thoát khỏi chế độ Isolate, hãy tắt UNI làm tài sản thế chấp trước khi vay tài sản khác.",
+        "maxLTV": "Tỷ lệ LTV tối đa đại diện cho sức mua tối đa của một tài sản thế chấp cụ thể. Ví dụ, nếu một tài sản thế chấp có LTV là 75%, người dùng có thể vay tối đa 0.75 giá trị ETH bằng đồng tiền chính cho mỗi 1 ETH giá trị tài sản thế chấp."
       },
       "submitted": "đã gửi",
       "supplied": "Cung cấp",
@@ -2851,7 +2861,45 @@
         "riskToLiquidationText": "Bạn không thể chuyển sang chế độ sử dụng làm tài sản thế chấp cho loại tiền tệ này, vì nó sẽ gây ra cuộc gọi tài sản thế chấp."
       },
       "searchMarket": "Tìm kiếm Thị trường",
-      "selectMarket": "Chọn Thị Trường"
+      "selectMarket": "Chọn Thị Trường",
+      "manageEmode": {
+        "actions": {
+          "enable": "Kích hoạt E-Mode",
+          "disable": "Vô hiệu hóa E-Mode"
+        },
+        "guide": {
+          "buttonTitle": "Quản lý E-Mode",
+          "title": "Chế độ hiệu suất (E-Mode)",
+          "description": "E-Mode tăng LTV của bạn cho một danh mục tài sản đã chọn."
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "Max LTV",
+            "asset": "Tài sản"
+          },
+          "placeholder": "Chọn",
+          "label": "Danh mục tài sản",
+          "desc": "Tất cả các vị trí vay ngoài danh mục này phải được đóng lại để kích hoạt danh mục này."
+        },
+        "overview": {
+          "row": {
+            "asset": "Tài sản",
+            "borrowable": "Có thể cho vay",
+            "collateral": "Tài sản đảm bảo"
+          },
+          "maxLtv": "Max LTV",
+          "apy": "APY",
+          "title": "Danh mục tài sản"
+        },
+        "disableTitle": "Vô hiệu hóa",
+        "title": "Quản lý E-Mode",
+        "description": "Vi-VN：Bật E-Mode cho phép bạn tối đa hóa sức mạnh vay mượn của mình. Tuy nhiên, việc vay mượn bị giới hạn trong các tài sản thuộc danh mục đã chọn.",
+        "unavailable": "• Không có sẵn",
+        "unavailableTips": "Tài sản cho vay/nhận vay hiện tại của bạn không được hỗ trợ.",
+        "enabled": "• Đã kích hoạt",
+        "emode": "E-Mode"
+      },
+      "disabled": "VÔ HIỆU HÓA"
     }
   },
   "component": {
