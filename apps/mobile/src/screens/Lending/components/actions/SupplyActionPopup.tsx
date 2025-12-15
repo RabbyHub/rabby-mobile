@@ -246,7 +246,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       if (actualNeedApprove && !isNativeToken) {
         const requiredAmount = new BigNumber(amount)
           .multipliedBy(10 ** reserve.reserve.decimals)
-          .toString();
+          .toFixed();
 
         // 检查是否需要两步approve（针对以太坊上的USDT）
         let shouldTwoStepApprove = false;
