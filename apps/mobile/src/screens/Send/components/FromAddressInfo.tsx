@@ -69,7 +69,11 @@ export default function FromAddressInfo({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
-  const { balance } = useCurrentBalance(currentAccount?.address);
+  const { balance } = useCurrentBalance({
+    address: currentAccount?.address,
+    AUTO_FETCH: true,
+    fromScene: 'Unknown',
+  });
   const { RcWalletIcon } = useWalletBrandLogo(currentAccount?.brandName);
 
   const usdValue = useMemo(() => {

@@ -1,15 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  DisplayChainWithWhiteLogo,
-  findChainByServerID,
-  formatChain,
-} from '@/utils/chain';
+import { useCallback, useEffect } from 'react';
 import { apiBalance } from '@/core/apis';
 import { BalanceEntity } from '@/databases/entities/balance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { keyringService } from '@/core/services';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
-import { zCreate } from '@/core/utils/reexports';
+import { zCreate, zMutative } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
@@ -20,56 +15,78 @@ export type BalanceState = {
   testnetBalance: string | null;
 };
 
-type CurrentBalanceState = Record<string, BalanceState>;
+type AddressBalanceState = {
+  [address: string]: BalanceState | null;
+};
 
-const currentBalanceStore = zCreate<CurrentBalanceState>(() => ({}));
+type CurrentBalanceStore = {
+  addressBalances: AddressBalanceState;
+};
 
+const currentBalanceStore = zCreate(
+  zMutative<CurrentBalanceStore>(() => ({
+    addressBalances: {},
+  })),
+);
+
+export type AddressBalanceUpdaterSource =
+  | 'Unknown'
+  | 'SingleAddressHome'
+  | 'TokenDetail'
+  | 'DefiDetail'
+  | 'LendingDetail';
 function setAddrBalanceStore(
   address: string,
-  valOrFunc: UpdaterOrPartials<CurrentBalanceState[string]>,
+  valOrFunc: UpdaterOrPartials<AddressBalanceState[string]>,
+  options: {
+    force?: boolean;
+    /** @description The source or scene from which the balance update is triggered */
+    fromScene: AddressBalanceUpdaterSource;
+  },
 ) {
   if (!address) return;
+
   currentBalanceStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(
-      prev[address],
+      prev.addressBalances[address] || null,
       valOrFunc,
       {
         strict: true,
       },
     );
-    if (!changed) return prev;
+    if (!changed) return;
 
-    setTimeout(() => {
-      perfEvents.emit('TMP_UPDATED:SINGLE_HOME_BALANCE', {
-        address,
-        newBalance: newVal,
-        prevBalance: prev[address],
-      });
-    }, 300);
+    perfEvents.emit('TMP_UPDATED:SINGLE_HOME_BALANCE', {
+      address,
+      newBalance: newVal,
+      prevBalance: prev[address],
+      force: !!options.force,
+      fromScene: options.fromScene,
+    });
 
-    return { ...prev, [address]: newVal };
+    prev.addressBalances[address] = newVal;
   });
 }
 
-type TriggerHomeBalanceState = {
-  forceUpdate: boolean;
+const triggerUpdate = ({
+  ...params
+}: GetAddressBalanceOptions & { address: string }) => {
+  getAddressBalance(params.address, {
+    force: params.force,
+    fromScene: params.fromScene,
+  });
 };
 
-const triggerHomeBalanceStore = zCreate<TriggerHomeBalanceState>(() => ({
-  forceUpdate: false,
-}));
-
-const triggerUpdate = (force?: boolean) => {
-  perfEvents.emit('TMP_TRIGGER:SINGLE_HOME_BALANCE', force);
-};
-
-export const useTriggerHomeBalanceUpdate = () => {
-  return { triggerUpdate };
+export const apisAddressBalance = {
+  triggerUpdate,
+  getBalanceState(address: string) {
+    return currentBalanceStore.getState()?.addressBalances?.[address] || null;
+  },
 };
 
 const addrLoadingBalanceState = zCreate<Record<string, boolean>>(() => ({}));
 
-function setBalanceLoading(val: boolean, address?: string) {
+function setBalanceLoading(address: string, val: boolean) {
   if (address) {
     addrLoadingBalanceState.setState(prev => {
       return { ...prev, [address]: val };
@@ -77,10 +94,15 @@ function setBalanceLoading(val: boolean, address?: string) {
   }
 }
 
+type GetAddressBalanceOptions = {
+  force?: boolean;
+  fromScene: AddressBalanceUpdaterSource;
+};
 const getAddressBalance = makeSWRKeyAsyncFunc(
-  async (address: string, options?: { force?: boolean }) => {
+  async (address: string, options: GetAddressBalanceOptions) => {
     const { force } = options || {};
     try {
+      // TODO: improve it, fetch addresses from cache first
       const addresses = await keyringService.getAllAddresses();
       const filtered = addresses.filter(item =>
         isSameAddress(item.address, address),
@@ -91,27 +113,52 @@ const getAddressBalance = makeSWRKeyAsyncFunc(
       ) {
         core = true;
       }
-      const cachedBalance = await BalanceEntity.queryBalance(address, core);
-      if (cachedBalance) {
-        setAddrBalanceStore(address || '', {
-          balance: cachedBalance.total_usd_value,
-          evmBalance: cachedBalance.evm_usd_value || 0,
-        });
-        setBalanceLoading(false);
-      }
-      const {
-        total_usd_value: totalUsdValue,
-        chain_list: chainList,
-        evm_usd_value: evmUsdValue,
-      } = await apiBalance.getAddressBalance(address, { force });
+      setBalanceLoading(address, true);
 
-      setAddrBalanceStore(address || '', {
-        balance: totalUsdValue,
-        evmBalance: evmUsdValue || 0,
-      });
-      setBalanceLoading(false);
+      const remotedGotRef = { current: false };
+      await Promise.race([
+        BalanceEntity.queryBalance(address, core).then(cachedBalance => {
+          if (remotedGotRef.current) return;
+          if (cachedBalance) {
+            setAddrBalanceStore(
+              address,
+              {
+                balance: cachedBalance.total_usd_value,
+                evmBalance: cachedBalance.evm_usd_value || 0,
+              },
+              {
+                force: !!force,
+                fromScene: options?.fromScene,
+              },
+            );
+          }
+        }),
+        apiBalance
+          .getAddressBalance(address, { force })
+          .then(async remoteBalance => {
+            const {
+              total_usd_value: totalUsdValue,
+              chain_list: chainList,
+              evm_usd_value: evmUsdValue,
+            } = remoteBalance;
+
+            remotedGotRef.current = true;
+            setAddrBalanceStore(
+              address,
+              {
+                balance: totalUsdValue,
+                evmBalance: evmUsdValue || 0,
+              },
+              {
+                force: !!force,
+                fromScene: options?.fromScene,
+              },
+            );
+            setBalanceLoading(address, false);
+          }),
+      ]);
     } catch (e) {
-      setBalanceLoading(false);
+      setBalanceLoading(address, false);
       try {
         const { error_code, err_chain_ids } = JSON.parse((e as Error).message);
         if (error_code === 2) {
@@ -129,103 +176,60 @@ const getAddressBalance = makeSWRKeyAsyncFunc(
   ctx => {
     const addr = ctx.args[0];
     const force = ctx.args[1]?.force;
-    return `getAddressBalance-${addr}-force:${force ? '1' : '0'}`;
+    const fromScene = ctx.args[1]?.fromScene || 'Unknown';
+    return `getAddressBalance-${addr}-force:${
+      force ? '1' : '0'
+    }-fromScene:${fromScene}`;
   },
 );
 
-export default function useCurrentBalance(
-  account: string | undefined,
-  opts?: {
-    noNeedBalance?: boolean;
-    update?: boolean;
-    // includeTestnet?: boolean;
-  },
-) {
-  const {
-    update = false,
-    noNeedBalance = false,
-    // includeTestnet = false,
-  } = opts || {};
+export function useIsLoadingBalance(address?: string) {
+  const balanceLoading = addrLoadingBalanceState(s =>
+    address ? s[address] || false : false,
+  );
 
+  return { balanceLoading };
+}
+
+export function useAddressBalance(address?: string) {
   const balance = currentBalanceStore(s =>
-    account ? s[account]?.balance : null,
+    address ? s.addressBalances[address]?.balance ?? null : null,
   );
   const evmBalance = currentBalanceStore(s =>
-    account ? s[account]?.evmBalance : null,
+    address ? s.addressBalances[address]?.evmBalance ?? null : null,
   );
 
-  // const getTestnetBalance = useMemoizedFn(
-  //   async (address: string, options?: { force?: boolean }) => {
-  //     const { force } = options || {};
-  //     try {
-  //       const { total_usd_value: totalUsdValue, chain_list: chainList } =
-  //         await apiBalance.getAddressBalance(address, { force });
-  //       setAddrBalanceStore(account || '', {
-  //         testnetBalance: totalUsdValue.toString(),
-  //       });
-  //     } catch (e) {}
-  //   },
-  // );
+  return { balance, evmBalance };
+}
 
-  const getCurrentBalance = useCallback(
-    async (force = false) => {
-      if (!account || noNeedBalance) {
-        return;
-      }
-      setBalanceLoading(true);
-      const cacheData = await apiBalance.getAddressCacheBalance(account);
-      if (cacheData) {
-        setAddrBalanceStore(account || '', {
-          balance: cacheData.total_usd_value,
-          evmBalance: cacheData.evm_usd_value || 0,
-        });
-        // const chanList = cacheData.chain_list
-        //   .filter(item => item.born_at !== null)
-        //   .map(formatChain);
-        // setHasValueChainBalances(chanList.filter(item => item.usd_value > 0));
-        if (update) {
-          setBalanceLoading(true);
-          await getAddressBalance(account.toLowerCase(), { force });
-          // if (includeTestnet) {
-          //   await getTestnetBalance(account.toLowerCase(), { force });
-          // }
-        } else {
-          setBalanceLoading(false);
-        }
-      } else {
-        await getAddressBalance(account.toLowerCase(), { force });
-        // if (includeTestnet) {
-        //   await getTestnetBalance(account.toLowerCase(), { force });
-        // }
-        setBalanceLoading(false);
-      }
+export default function useCurrentBalance(options: {
+  address?: string;
+  AUTO_FETCH?: boolean;
+  fromScene: AddressBalanceUpdaterSource;
+}) {
+  const { address, fromScene } = options;
+  const balanceLoadingState = useIsLoadingBalance(address);
+  const { balance } = useAddressBalance(address);
+
+  const fetchBalance = useCallback(
+    async (params: Omit<GetAddressBalanceOptions, 'address' | 'fromScene'>) => {
+      if (!address) return;
+      return getAddressBalance(address, { force: params.force, fromScene });
     },
-    [account, noNeedBalance, update],
-  );
-
-  const balanceLoading = addrLoadingBalanceState(s =>
-    account ? s[account] || false : false,
+    [address, fromScene],
   );
 
   useEffect(() => {
-    getCurrentBalance();
+    if (!address) return;
 
-    const { remove } = perfEvents.subscribe(
-      'TMP_TRIGGER:SINGLE_HOME_BALANCE',
-      async (force?: boolean) => {
-        console.debug('[perf] TMP_TRIGGER:SINGLE_HOME_BALANCE triggered');
-        getCurrentBalance(!!force);
-      },
-    );
-
-    return () => {
-      remove();
-    };
-  }, [getCurrentBalance]);
+    if (options?.AUTO_FETCH) {
+      fetchBalance({ force: true });
+    }
+  }, [address, options?.AUTO_FETCH, fetchBalance]);
 
   return {
+    ...balanceLoadingState,
     balance,
-    evmBalance,
-    balanceLoading,
+    fetchBalance,
   };
 }

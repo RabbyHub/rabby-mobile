@@ -1,21 +1,19 @@
-import useCachedValue from '@/hooks/common/useCachedValue';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  useSingleHomeCurveRefresh,
-  useSingleHomeIsDecrease,
-  useSingleHomeIsLoss,
-} from '@/hooks/useCurve';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { HomeTopChart } from './HomeTopChart';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { CenterBg } from './BgComponents';
-import useCurrentBalance from '@/hooks/useCurrentBalance';
-import { CurveDayType } from '@/utils/curveDayType';
-import { perfEvents } from '@/core/utils/perf';
-import { useHomeReachTop, useSingleHomeAddress } from '../hooks/singleHome';
+import useCurrentBalance, {
+  apisAddressBalance,
+} from '@/hooks/useCurrentBalance';
+import {
+  useHomeReachTop,
+  useSingleHomeAddress,
+  useSingleHomeIsLoss,
+} from '../hooks/singleHome';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 
 export const HomeTopArea = () => {
@@ -24,45 +22,7 @@ export const HomeTopArea = () => {
   const { currentAddress } = useSingleHomeAddress();
   const { isDisConnect } = useGlobalStatus();
 
-  console.debug('[perf] HomeTopArea render', currentAddress);
-
-  const { balance, balanceLoading, evmBalance } = useCurrentBalance(
-    currentAddress,
-    {
-      update: true,
-      noNeedBalance: false,
-    },
-  );
-  console.debug(
-    '[perf] HomeTopArea balance, evmBalance, balanceLoading',
-    balance,
-    evmBalance,
-    balanceLoading,
-  );
-
-  const { refresh: refreshCurve } = useSingleHomeCurveRefresh(currentAddress, {
-    realtimeNetWorth: evmBalance,
-    days: CurveDayType.DAY,
-    staticBalance: balance,
-  });
-
   const { isLoss } = useSingleHomeIsLoss();
-
-  useEffect(() => {
-    refreshCurve();
-
-    const { remove } = perfEvents.subscribe(
-      'TMP_TRIGGER:SINGLE_HOME_REFRESH',
-      async (ignoreLoading?: boolean) => {
-        console.debug('[perf] SINGLE_HOME_REFRESH triggered');
-        refreshCurve(ignoreLoading);
-      },
-    );
-
-    return () => {
-      remove();
-    };
-  }, [refreshCurve]);
 
   const pathColor = useMemo(
     () => (!isLoss ? colors2024['green-default'] : colors2024['red-default']),
@@ -78,12 +38,17 @@ export const HomeTopArea = () => {
         hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
-        onRefresh={() => refreshCurve()}
+        onRefresh={() => {
+          if (!currentAddress) return;
+          apisAddressBalance.triggerUpdate({
+            address: currentAddress,
+            force: true,
+            fromScene: 'SingleAddressHome',
+          });
+        }}
       />
 
       <HomeTopChart
-        balanceLoading={balanceLoading}
-        evmBalance={evmBalance}
         pathColor={pathColor}
         isNoAssets={false}
         isOffline={false}

@@ -1,8 +1,7 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React from 'react';
 import { View, Animated } from 'react-native';
 import HeaderArea from './HeaderArea';
 import { AssetContainer } from './AssetContainer';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -14,8 +13,7 @@ import { BottomBtns } from './components/BottomBtns';
 import { TopBg } from './components/BgComponents';
 import { useBgSize } from './hooks/useBgSize';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
-import { useSingleHomeIsDecrease } from '@/hooks/useCurve';
-import { apisSingleHome } from './hooks/singleHome';
+import { apisSingleHome, useSingleHomeIsDecrease } from './hooks/singleHome';
 import { useUnmount } from 'ahooks';
 
 function SingleAddressHome(): JSX.Element {
@@ -31,7 +29,6 @@ function SingleAddressHome(): JSX.Element {
       >
     >();
   const currentAccount = route?.params?.account;
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
 
   const { isDecrease } = useSingleHomeIsDecrease();
 
@@ -69,16 +66,13 @@ function SingleAddressHome(): JSX.Element {
       overwriteStyle={[
         styles.rootScreenContainer,
         {
-          // 设计要求，TODO： check一些安卓机型
+          // 设计要求，TODO: check一些安卓机型
           paddingTop: topHeight,
         },
       ]}>
       <TopBg fadeAnim={fadeAnim} isDecrease={isDecrease} />
       <View style={styles.safeView} onTouchStart={handleTouchEnd}>
-        <AssetContainer
-          onRefresh={triggerUpdate}
-          onReachTopStatusChange={handleReachTopStatusChange}
-        />
+        <AssetContainer onReachTopStatusChange={handleReachTopStatusChange} />
       </View>
       <View style={styles.bottomContainer} onTouchStart={handleTouchEnd}>
         <BottomBtns currentAccount={currentAccount} />

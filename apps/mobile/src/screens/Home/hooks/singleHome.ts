@@ -4,19 +4,28 @@ import { Account } from '@/core/services/preference';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useAlias2 } from '@/hooks/alias';
+import {
+  useAddressBalance,
+  useIsLoadingBalance,
+} from '@/hooks/useCurrentBalance';
+import {
+  loadingCurveState,
+  makeDefaultSelectData,
+  useIsLoadingCurve,
+} from '@/hooks/useCurve';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 type SingleHomeState = {
-  currentAccount?: Account;
+  currentAccount: Account | null;
   selectedChain: ChainListItem | null;
   foldChart: boolean;
   reachTop: boolean;
 };
 function getDefault(): SingleHomeState {
   return {
-    currentAccount: undefined,
+    currentAccount: null,
     selectedChain: null,
     foldChart: true,
     reachTop: false,
@@ -43,9 +52,10 @@ export const apisSingleHome = {
     });
   },
   clearCurrentAccount: () => {
-    singleHomeState.setState({
-      ...getDefault(),
-    });
+    singleHomeState.setState(prev => ({
+      ...prev,
+      currentAccount: null,
+    }));
   },
   getCurrentAddress: () => {
     return singleHomeState.getState().currentAccount?.address;
@@ -110,9 +120,14 @@ export function useSingleHomeAccountAlias() {
 }
 
 export function useSingleHomeAddress() {
-  const currentAddress = singleHomeState(s => s.currentAccount?.address);
+  const { currentAddress, lcAddress } = singleHomeState(
+    useShallow(s => ({
+      currentAddress: s.currentAccount?.address,
+      lcAddress: s.currentAccount?.address.toLowerCase() || '',
+    })),
+  );
 
-  return { currentAddress };
+  return { currentAddress, lcAddress };
 }
 
 export function useSingleHomeChain() {
@@ -131,4 +146,68 @@ export function useHomeReachTop() {
   return {
     reachTop: singleHomeState(s => s.reachTop),
   };
+}
+
+export function useSingleHomeHasNoData() {
+  const { lcAddress } = useSingleHomeAddress();
+  const hasNoData = loadingCurveState(s => {
+    return !s[lcAddress]?.curveList.length && !s[lcAddress]?.loadingCurve;
+  });
+
+  return { hasNoData };
+}
+
+export function useSingleHomeSelectData() {
+  const { lcAddress } = useSingleHomeAddress();
+
+  const defaultSelectData = useMemo(() => makeDefaultSelectData(), []);
+  const selectData = loadingCurveState(
+    s => (!lcAddress ? null : s[lcAddress]?.selectData) || defaultSelectData,
+  );
+
+  return { selectData };
+}
+
+export function useSingleHomeLoading() {
+  const { lcAddress } = useSingleHomeAddress();
+  const { balanceLoading } = useIsLoadingBalance(lcAddress);
+  const { isLoadingCurve } = useIsLoadingCurve(lcAddress);
+
+  return {
+    balanceLoading,
+    isLoadingCurve,
+  };
+}
+
+export function useSingleHomeHomeTopChart() {
+  const { lcAddress } = useSingleHomeAddress();
+  const { selectData } = useSingleHomeSelectData();
+  const { balanceLoading, isLoadingCurve } = useSingleHomeLoading();
+  const { evmBalance, balance } = useAddressBalance(lcAddress);
+
+  const balanceLoadingWithoutLocal =
+    balanceLoading && (!evmBalance || !selectData.rawNetWorth);
+  const isLoadingChartData = isLoadingCurve || balanceLoadingWithoutLocal;
+
+  return {
+    balanceLoadingWithoutLocal,
+    isLoadingChartData,
+    selectData,
+  };
+}
+
+export function useSingleHomeIsDecrease() {
+  const { lcAddress } = useSingleHomeAddress();
+  const isDecrease = loadingCurveState(s =>
+    !lcAddress ? false : s[lcAddress]?.isDecrease,
+  );
+  return { isDecrease };
+}
+
+export function useSingleHomeIsLoss() {
+  const { lcAddress } = useSingleHomeAddress();
+  const isLoss = loadingCurveState(s =>
+    !lcAddress ? false : !!s[lcAddress]?.selectData?.isLoss,
+  );
+  return { isLoss };
 }

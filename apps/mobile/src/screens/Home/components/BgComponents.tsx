@@ -2,8 +2,11 @@ import { Animated, Dimensions, ImageBackground, View } from 'react-native';
 import { useBgSize } from '../hooks/useBgSize';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { useHomeFoldChart, useHomeReachTop } from '../hooks/singleHome';
-import { useSingleHomeIsDecrease } from '@/hooks/useCurve';
+import {
+  useHomeFoldChart,
+  useHomeReachTop,
+  useSingleHomeIsDecrease,
+} from '../hooks/singleHome';
 
 const ScreenWidth = Dimensions.get('window').width;
 
@@ -12,7 +15,7 @@ export const TopBg = ({
   isDecrease,
 }: {
   fadeAnim: Animated.Value;
-  isDecrease: boolean;
+  isDecrease?: boolean;
 }) => {
   const { layouts, bgFullHeight } = useBgSize();
   const { styles } = useTheme2024({ getStyle: getStyles });

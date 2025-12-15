@@ -21,6 +21,8 @@ import App from './src/App';
 import '@/utils/i18n';
 import { name as appName } from './app.json';
 
+import './src/setup-app-before-render';
+
 // must be called synchoronously immediately
 AppRegistry.registerComponent(appName, () => App);
 
