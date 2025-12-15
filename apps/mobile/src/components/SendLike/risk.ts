@@ -101,6 +101,7 @@ function setAddressDesc(
       ...prev,
       [address]: {
         ...(prev[address] || { risks: [] }),
+        loading: prev[address]?.loading || false,
         addressDesc,
       },
     };
