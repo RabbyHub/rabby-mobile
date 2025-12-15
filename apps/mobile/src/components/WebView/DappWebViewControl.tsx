@@ -224,7 +224,7 @@ const DappWebViewControl = React.forwardRef<
     } = useWebViewControl({ initialTabId: dappTabId });
 
     const { entryScriptWeb3Loaded, fullScript } =
-      useJavaScriptBeforeContentLoaded({ isTop: false });
+      useJavaScriptBeforeContentLoaded();
 
     const { formattedCurrentUrl } = useMemo(() => {
       return {

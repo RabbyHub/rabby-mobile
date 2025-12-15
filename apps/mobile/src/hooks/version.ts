@@ -10,7 +10,6 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 import { zustandByMMKV } from '@/core/storage/mmkv';
 
-import { useEffect } from 'react';
 import {
   DownloadLatestApkResult,
   MergedRemoteVersion,
@@ -22,6 +21,7 @@ import { APP_URLS, isNonPublicProductionEnv } from '@/constant';
 import { toast } from '@/components/Toast';
 import { useUnmountedRef } from './common/useMount';
 import { zCreate } from '@/core/utils/reexports';
+import { RefLikeObject } from '@/utils/type';
 
 const appLocalVersion = getVersion();
 
@@ -54,54 +54,53 @@ const loadRemoteVersion = async () => {
   });
 };
 
-export function useUpgradeInfo(options?: { isTop?: boolean }) {
-  const { isTop = false } = options || {};
+export function loadVersionInfoOnBootstrap() {
+  loadRemoteVersion().catch(error => {
+    console.error('Load remote version info failed', error);
+  });
+}
 
+const openedModalIdRef: RefLikeObject<string> = { current: '' };
+const triggerCheckVersion = async (
+  options?: Parameters<typeof getUpgradeInfo>[0],
+) => {
+  if (openedModalIdRef.current) return;
+  openedModalIdRef.current = 'checking';
+
+  return getUpgradeInfo(options)
+    .then(result => {
+      setRemoteVersion(result.finalRemoteInfo);
+
+      if (!result.finalRemoteInfo.couldUpgrade) {
+        toast.success('You are using the latest version', {
+          position: Toast.positions.BOTTOM,
+        });
+      } else {
+        openedModalIdRef.current = createGlobalBottomSheetModal({
+          name: MODAL_NAMES.TIP_UPGRADE,
+          title: 'New Version',
+          bottomSheetModalProps: {
+            onDismiss: () => {
+              removeGlobalBottomSheetModal(openedModalIdRef.current);
+              openedModalIdRef.current = '';
+            },
+          },
+        });
+      }
+    })
+    .catch(error => {
+      openedModalIdRef.current = '';
+
+      console.error('Check version failed', error);
+      toast.info('Check version failed', {
+        position: Toast.positions.BOTTOM,
+      });
+    });
+};
+
+export function useUpgradeInfo() {
   const remoteVersion = remoteVersionStore(s => s);
   const localVersion = localVersionStore(s => s);
-
-  const openedModalIdRef = useRef<string>('');
-  const triggerCheckVersion = useCallback(
-    async (options?: Parameters<typeof getUpgradeInfo>[0]) => {
-      if (openedModalIdRef.current) return;
-      openedModalIdRef.current = 'checking';
-
-      return getUpgradeInfo(options)
-        .then(result => {
-          setRemoteVersion(result.finalRemoteInfo);
-
-          if (!result.finalRemoteInfo.couldUpgrade) {
-            toast.success('You are using the latest version', {
-              position: Toast.positions.BOTTOM,
-            });
-          } else {
-            openedModalIdRef.current = createGlobalBottomSheetModal({
-              name: MODAL_NAMES.TIP_UPGRADE,
-              title: 'New Version',
-              bottomSheetModalProps: {
-                onDismiss: () => {
-                  removeGlobalBottomSheetModal(openedModalIdRef.current);
-                  openedModalIdRef.current = '';
-                },
-              },
-            });
-          }
-        })
-        .catch(error => {
-          openedModalIdRef.current = '';
-
-          console.error('Check version failed', error);
-          toast.info('Check version failed', {
-            position: Toast.positions.BOTTOM,
-          });
-        });
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (isTop) loadRemoteVersion();
-  }, [isTop]);
 
   return {
     localVersion,

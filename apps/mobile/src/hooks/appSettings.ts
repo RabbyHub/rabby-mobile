@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
@@ -70,15 +69,13 @@ const prodData = {
   forceAllowScreenshot: false,
   onExpScreenCaptureChange,
 };
-
-export function useExpScreenCapture() {
-  const { androidForceAllowScreenCapture, iosForceAllowScreenRecord } =
-    experimentalSettingsStore(
-      useShallow(s => ({
-        androidForceAllowScreenCapture: s.androidForceAllowScreenCapture,
-        iosForceAllowScreenRecord: s.iosForceAllowScreenRecord,
-      })),
-    );
+export function getExpScreenCapture(
+  s: Pick<
+    ScreenshotSettings,
+    'androidForceAllowScreenCapture' | 'iosForceAllowScreenRecord'
+  > = experimentalSettingsStore.getState(),
+) {
+  const { androidForceAllowScreenCapture, iosForceAllowScreenRecord } = s;
 
   if (!isNonPublicProductionEnv) {
     return prodData;
@@ -91,6 +88,23 @@ export function useExpScreenCapture() {
       androidForceAllowScreenCapture,
       iosForceAllowScreenRecord,
     }),
+  };
+}
+export function useExpScreenCapture() {
+  const {
+    androidForceAllowScreenCapture,
+    iosForceAllowScreenRecord,
+    forceAllowScreenshot,
+  } = experimentalSettingsStore(useShallow(s => getExpScreenCapture(s)));
+
+  if (!isNonPublicProductionEnv) {
+    return prodData;
+  }
+
+  return {
+    androidForceAllowScreenCapture,
+    iosForceAllowScreenRecord,
+    forceAllowScreenshot,
     onExpScreenCaptureChange,
   };
 }
@@ -123,24 +137,6 @@ export function useForceAllowScreenshot() {
     forceAllowScreenshot: isAllowScreenshot(result),
     setAllowScreenshot,
   };
-}
-
-/**
- * @description call this hook only once on the top level of your app
- */
-export function useGlobalAppPreventScreenrecordOnDev() {
-  const { forceAllowScreenshot } = useExpScreenCapture();
-  usePreventScreenshot(__DEV__ && !forceAllowScreenshot);
-
-  useEffect(() => {
-    if (!isIOS || !__DEV__) return;
-
-    if (!forceAllowScreenshot) {
-      RNScreenshotPrevent.iosProtectFromScreenRecording();
-    } else {
-      RNScreenshotPrevent.iosUnprotectFromScreenRecording();
-    }
-  }, [forceAllowScreenshot]);
 }
 
 const autoLockState = zCreate<{

@@ -16,13 +16,12 @@ import {
   JSBridgeHarden,
 } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
-import { loadSecurityChain, useGlobal } from './global';
-import { useAppUnlocked, getTriedUnlock } from './useLock';
+import { loadSecurityChain } from './global';
+import { getTriedUnlock, storeApiLock } from './useLock';
 import SplashScreen from 'react-native-splash-screen';
-import { useAccounts } from './account';
+import { storeApisAccounts, useAccounts } from './account';
 import { useLoadLockInfo } from '@/hooks/useLock';
-import { useBiometrics } from './biometrics';
-import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
+import { storeApisBiometrics, useBiometrics } from './biometrics';
 // import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
 import { RefLikeObject } from '@/utils/type';
@@ -100,23 +99,19 @@ const doInitializeApis = async () => {
  * @description only call this hook on the top level component
  */
 export function useInitializeAppOnTop() {
-  const { isAppUnlocked, setAppLock } = useAppUnlocked();
-  // const setBrowserState = useSetAtom(browserStateAtom);
-
-  const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
   React.useEffect(() => {
     const onUnlock = () => {
       console.debug('useBootstrap::onUnlock');
-      setAppLock(prev => ({ ...prev, appUnlocked: true }));
+      storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: true }));
       sendUserAddressEvent();
 
       doInitializeApis();
-      fetchAccounts();
+      storeApisAccounts.fetchAccounts();
       perpsService.unlockAgentWallets();
     };
     const onLock = () => {
-      setAppLock(prev => ({ ...prev, appUnlocked: false }));
-      fetchAccounts();
+      storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: false }));
+      storeApisAccounts.fetchAccounts();
       setBrowserState({
         isShowBrowser: false,
         isShowSearch: false,
@@ -133,19 +128,7 @@ export function useInitializeAppOnTop() {
       keyringService.off('unlock', onUnlock);
       keyringService.off('lock', onLock);
     };
-  }, [setAppLock, fetchAccounts]);
-
-  const { fetchTop5TokensForAllAccountsOnce } = useFetchTokensForAllAccounts();
-  React.useEffect(() => {
-    const onUnlock = () => {
-      fetchTop5TokensForAllAccountsOnce();
-    };
-    keyringService.on('unlock', onUnlock);
-
-    return () => {
-      keyringService.off('unlock', onUnlock);
-    };
-  }, [fetchTop5TokensForAllAccountsOnce]);
+  }, []);
 
   React.useEffect(() => {
     const onUnlock = async () => {
@@ -165,17 +148,28 @@ export function useInitializeAppOnTop() {
       keyringService.off('unlock', onUnlock);
     };
   }, []);
+}
 
-  return { isAppUnlocked };
+export function subscribeUnlockToFetchAccounts() {
+  keyringService.on('unlock', async () => {
+    const accounts = await keyringService.getAllVisibleAccountsArray();
+    if (!accounts?.length) {
+      replace(RootNames.StackGetStarted, {
+        screen: RootNames.GetStartedScreen2024,
+      });
+    }
+  });
 }
 
 type LoadEntryScriptsState = {
   inPageWeb3: string;
   vConsole: string;
+  fullScript: string;
 };
 const loadEntryScriptsStore = zCreate<LoadEntryScriptsState>(() => ({
   inPageWeb3: '',
   vConsole: '',
+  fullScript: '',
 }));
 function setEntryScripts(valOrFunc: UpdaterOrPartials<LoadEntryScriptsState>) {
   loadEntryScriptsStore.setState(prev => ({
@@ -184,55 +178,65 @@ function setEntryScripts(valOrFunc: UpdaterOrPartials<LoadEntryScriptsState>) {
   }));
 }
 
-export function useJavaScriptBeforeContentLoaded(options?: {
-  isTop?: boolean;
-}) {
-  const couldRender = zBootstrapStore(s => s.couldRender);
-  const inPageWeb3 = loadEntryScriptsStore(s => s.inPageWeb3);
-  const vConsole = loadEntryScriptsStore(s => s.vConsole);
+export async function loadJavaScriptBeforeContentLoadedOnBoot() {
+  return Promise.allSettled([
+    EntryScriptWeb3.init(),
+    __DEV__ ? EntryScriptVConsole.init() : Promise.resolve(''),
+  ]).then(([reqInPageWeb3, reqVConsole]) => {
+    const inPageWeb3 =
+      reqInPageWeb3.status === 'fulfilled' ? reqInPageWeb3.value : '';
+    const vConsole =
+      reqVConsole.status === 'fulfilled' ? reqVConsole.value : '';
 
-  const { isTop } = options || {};
-
-  React.useEffect(() => {
-    if (!isTop || inPageWeb3) return;
-
-    Promise.allSettled([
-      EntryScriptWeb3.init(),
-      __DEV__ ? EntryScriptVConsole.init() : Promise.resolve(''),
-    ]).then(([reqInPageWeb3, reqVConsole]) => {
-      const inPageWeb3 =
-        reqInPageWeb3.status === 'fulfilled' ? reqInPageWeb3.value : '';
-      const vConsole =
-        reqVConsole.status === 'fulfilled' ? reqVConsole.value : '';
-
-      setEntryScripts(prev => ({ ...prev, inPageWeb3, vConsole }));
-    });
-  }, [isTop, inPageWeb3]);
-
-  const fullScript = React.useMemo(() => {
-    return [
-      // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
-      JSBridgeHarden,
+    setEntryScripts(prev => ({
+      ...prev,
       inPageWeb3,
-      BROWSER_SCRIPT_BASE,
-      __DEV__ ? JS_GET_WINDOW_INFO_AFTER_LOAD : '',
-      SPA_urlChangeListener,
-      __DEV__ ? vConsole : '',
-      JS_LOG_ON_MESSAGE,
-      ';true;',
-      // DEBUG_IN_PAGE_SCRIPTS.LOAD_AFTER,
-    ]
-      .filter(Boolean)
-      .join('\n');
-  }, [inPageWeb3, vConsole]);
+      vConsole,
+      fullScript: getFullScript({ inPageWeb3, vConsole }),
+    }));
+  });
+}
 
-  return {
-    entryScriptWeb3Loaded: [
-      couldRender,
+function getFullScript({
+  inPageWeb3,
+  vConsole,
+}: {
+  inPageWeb3: string;
+  vConsole: string;
+}) {
+  return [
+    // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
+    JSBridgeHarden,
+    inPageWeb3,
+    BROWSER_SCRIPT_BASE,
+    __DEV__ ? JS_GET_WINDOW_INFO_AFTER_LOAD : '',
+    SPA_urlChangeListener,
+    __DEV__ ? vConsole : '',
+    JS_LOG_ON_MESSAGE,
+    ';true;',
+    // DEBUG_IN_PAGE_SCRIPTS.LOAD_AFTER,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+export function useJavaScriptBeforeContentLoaded() {
+  const inPageWeb3 = loadEntryScriptsStore(s => s.inPageWeb3);
+  const fullScript = loadEntryScriptsStore(s => s.fullScript);
+  const entryScriptWeb3Loaded = zBootstrapStore(s =>
+    [
+      s.couldRender,
       !!inPageWeb3,
       // __DEV__ ? !!entryScripts.vConsole : true,
     ].every(x => !!x),
-    entryScripts: { inPageWeb3, vConsole },
+  );
+
+  return {
+    entryScriptWeb3Loaded,
+    entryScripts: {
+      inPageWeb3,
+      // vConsole
+    },
     fullScript: fullScript,
   };
 }
@@ -256,11 +260,7 @@ runIIFEFunc(() => {
  * @description only call this hook on the top level component
  */
 export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
-  const couldRender = zBootstrapStore(s => s.couldRender);
-  useJavaScriptBeforeContentLoaded({ isTop: true });
-  useGlobal();
-  useLoadLockInfo({ autoFetch: true });
-  const { fetchBiometrics } = useBiometrics({ autoFetch: false });
+  // useLoadLockInfo({ autoFetch: true });
 
   const startedLoadRef = React.useRef(false);
   React.useEffect(() => {
@@ -270,7 +270,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
     Promise.allSettled([
       getTriedUnlock(),
       loadSecurityChain({ rabbitCode }),
-      fetchBiometrics(),
+      storeApisBiometrics.fetchBiometrics(),
     ])
       .then(async ([_unlockResult, _securityChain]) => {
         console.debug('useBootstrapApp::sucess', _unlockResult);
@@ -289,10 +289,13 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           );
         }, 1e3);
       });
-  }, [fetchBiometrics, rabbitCode]);
+  }, [rabbitCode]);
+}
+
+export function useAppCouldRender() {
+  const couldRender = zBootstrapStore(s => s.couldRender);
 
   return {
     couldRender,
-    securityChainOnTop: couldRender ? loadSecurityChain({ rabbitCode }) : null,
   };
 }

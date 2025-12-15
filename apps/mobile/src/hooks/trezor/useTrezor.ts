@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Linking } from 'react-native';
 import TrezorConnect, {
   BLOCKCHAIN_EVENT,
@@ -24,14 +23,12 @@ const trezorOnEvent = () => {
   });
 };
 
-export const useTrezorConnectOnUrl = () => {
-  useEffect(() => {
-    trezorOnEvent();
+export const startSubscribeTrezorConnectOnUrl = () => {
+  trezorOnEvent();
 
-    const subscription = Linking.addEventListener('url', event => {
-      TrezorConnect.handleDeeplink(event.url);
-    });
+  const subscription = Linking.addEventListener('url', event => {
+    TrezorConnect.handleDeeplink(event.url);
+  });
 
-    return () => subscription?.remove();
-  }, []);
+  return subscription;
 };

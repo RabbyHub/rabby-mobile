@@ -7,40 +7,32 @@ import 'react-native-gesture-handler';
  */
 import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
-import { useAppTheme, useThemeColors } from '@/hooks/theme';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
-import { useMemoizedFn } from 'ahooks';
 import { withExpoSnack } from 'nativewind';
 import React, { Suspense, useCallback, useEffect } from 'react';
 import { setup, withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { RootNames } from './constant/layout';
 import { ThemeColors } from './constant/theme';
-import { keyringService } from './core/services';
 import { useSetupServiceStub } from './core/storage/serviceStoreStub';
-import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
-import { useSecureOnBackground } from './hooks/useLock';
-import { replace } from './utils/navigation';
-import { useUpgradeInfo } from './hooks/version';
-import { AppProvider } from './hooks/global';
-import { useGlobalAppPreventScreenrecordOnDev } from './hooks/appSettings';
-import { useAppPreventScreenshotOnScreen } from './hooks/navigation';
-import { useAutoGoogleSignIfPreviousSignedOnTop } from './hooks/cloudStorage';
+import {
+  useAppCouldRender,
+  useBootstrapApp,
+  useInitializeAppOnTop,
+} from './hooks/useBootstrap';
+import { AppProvider, loadSecurityChain } from './hooks/global';
 import { useNoLongerSupports } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
-import { useUserDidTakeScreenshot } from './components/Screenshot/hooks';
 import Safe from '@rabby-wallet/gnosis-sdk';
 import { SAFE_API_KEY } from './constant/env';
 Safe.apiKey = SAFE_API_KEY;
 
-import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
 import {
   RerenderDetector,
   useRendererDetect,
@@ -62,41 +54,24 @@ type AppProps = { rabbitCode: string };
 const MemoziedAppNav = React.memo(AppNavigation);
 
 const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
-  const { isAppUnlocked } = useInitializeAppOnTop();
-  const { couldRender, securityChainOnTop } = useBootstrapApp({ rabbitCode });
+  useInitializeAppOnTop();
+  useBootstrapApp({ rabbitCode });
 
   useSetupServiceStub();
-  useUpgradeInfo({ isTop: true });
   useUniversalLinkOnTop();
-  useSecureOnBackground();
-  useGlobalAppPreventScreenrecordOnDev();
-  useAppPreventScreenshotOnScreen({ isTop: true });
-  useAutoGoogleSignIfPreviousSignedOnTop();
   useNoLongerSupports();
   useTriggerI18nChangeOnAppTop();
   useIAPListener();
-  useTrezorConnectOnUrl();
   useIncreaseTxCountOnAppTop({ isTop: true });
-  useUserDidTakeScreenshot({ isTop: true });
-
-  useEffect(() => {
-    (async () => {
-      if (isAppUnlocked) {
-        const accounts = await keyringService.getAllVisibleAccountsArray();
-        if (!accounts?.length) {
-          replace(RootNames.StackGetStarted, {
-            screen: RootNames.GetStartedScreen2024,
-          });
-        }
-      }
-    })();
-  }, [isAppUnlocked]);
 
   useRendererDetect({ name: 'MainScreen' });
 
+  const { couldRender } = useAppCouldRender();
+
   return (
-    <AppProvider value={{ securityChain: securityChainOnTop }}>
-      <RerenderDetector name="AppProvider" />
+    <AppProvider
+      value={{ rabbitCode, securityChain: loadSecurityChain({ rabbitCode }) }}>
+      <RerenderDetector name="UnderAppProvider" />
       <BottomSheetModalProvider>
         <ScreenSceneAccountProvider>
           {couldRender && <MemoziedAppNav />}

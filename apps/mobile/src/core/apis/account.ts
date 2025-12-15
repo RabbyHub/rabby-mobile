@@ -49,7 +49,7 @@ export async function getAllAccountsToDisplay() {
     contactService.getAliasByMap(),
   ]);
 
-  const result = await Promise.all<IDisplayedAccountWithBalance>(
+  const result = await Promise.all(
     displayedKeyrings
       .map(item => {
         return item.accounts.map(account => {
@@ -61,7 +61,7 @@ export async function getAllAccountsToDisplay() {
             aliasName: allAliasNames[account?.address?.toLowerCase()]?.alias,
             keyring: item.keyring,
             publicKey: item?.publicKey,
-          };
+          } as IDisplayedAccountWithBalance;
         });
       })
       .flat(1)
@@ -200,7 +200,7 @@ export function sortAccountList(
         addressUtils.isSameAddress(account.address, highlighted.address) &&
         account.brandName === highlighted.brandName,
     );
-    if (idx > -1) {
+    if (idx > -1 && restAccounts[idx]) {
       highlightedAccounts.push(restAccounts[idx]);
       restAccounts.splice(idx, 1);
     }
