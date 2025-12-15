@@ -513,7 +513,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         handleClickMaxButton={() => {
           setAmount(supplyAmount.amount || '0');
         }}
-        tokenAmount={111111}
+        tokenAmount={Number(supplyAmount.amount || '0')}
         price={Number(
           reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
         )}
