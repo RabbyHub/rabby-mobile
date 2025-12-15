@@ -151,6 +151,15 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   };
 }
 
+export const storeApiAccounts = {
+  getAccounts() {
+    return zAccountStore.getState().accounts;
+  },
+  getPinAddresses() {
+    return zAccountStore.getState().pinnedAddresses;
+  },
+};
+
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
   const allAccounts = zAccountStore(s => s.accounts);
 
