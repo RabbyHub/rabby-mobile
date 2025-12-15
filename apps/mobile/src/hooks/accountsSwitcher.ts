@@ -1,5 +1,5 @@
 import type { Account, IPinAddress } from '@/core/services/preference';
-import { useAccounts, usePinAddresses } from './account';
+import { storeApiAccounts, useAccounts, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
 import { useAtom } from 'jotai';
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
@@ -302,7 +302,8 @@ function computeSceneAccountInfo({
     !result.finalSceneCurrentAccount &&
     accounts.length
   ) {
-    result.finalSceneCurrentAccount = result.myAddresses[0] || accounts[0];
+    result.finalSceneCurrentAccount =
+      (result.myAddresses[0] || accounts[0]) ?? null;
   }
 
   if (!result.isSceneUsingAllAccounts && result.finalSceneCurrentAccount) {
@@ -328,7 +329,9 @@ export function useSceneAccountInfo(options: {
   const { accounts } = useAccounts({ disableAutoFetch: true });
 
   const { forScene } = options || {};
-  const sceneAccounts = sceneAccountInfoStore(s => s);
+  const sceneAccountInfo = sceneAccountInfoStore(s =>
+    !forScene ? null : s[forScene],
+  );
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -355,7 +358,6 @@ export function useSceneAccountInfo(options: {
     );
   }, [forScene]);
 
-  const sceneAccountInfo = sceneAccounts[forScene];
   const computeFinalSceneAccount = useCallback(
     (account?: Account | null) => {
       const result = computeSceneAccountInfo({
@@ -412,6 +414,28 @@ export function useSceneAccountInfo(options: {
     isHideToken,
   };
 }
+
+function getSceneAccountInfo(options: { forScene: AccountSwitcherScene }) {
+  const accounts = storeApiAccounts.getAccounts();
+  const pinAddresses = storeApiAccounts.getPinAddresses();
+
+  const { forScene } = options || {};
+  const sceneAccountInfo = sceneAccountInfoStore.getState()[forScene];
+
+  const result = computeSceneAccountInfo({
+    forScene,
+    sceneCurrentAccount: sceneAccountInfo?.currentAccount ?? null,
+    isSceneUsingAllAccounts: !!sceneAccountInfo?.useAllAccounts,
+    accounts,
+    pinAddresses,
+  });
+
+  return result;
+}
+
+export const storeApiAccountsSwitcher = {
+  getSceneAccountInfo,
+};
 
 function getDefaultSceneAccountInfo() {
   return {
