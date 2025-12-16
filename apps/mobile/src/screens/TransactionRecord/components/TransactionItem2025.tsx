@@ -307,6 +307,8 @@ export const TransactionItem = ({
           return t('page.transactions.itemTitle.LendingManageEMode');
         case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE:
           return t('page.transactions.itemTitle.LendingManageEModeDisable');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP:
+          return t('page.transactions.itemTitle.LendingDebtSwap');
       }
     }
 

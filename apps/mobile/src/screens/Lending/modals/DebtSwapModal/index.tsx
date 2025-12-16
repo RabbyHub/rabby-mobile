@@ -75,6 +75,11 @@ import {
   useSelectedMarket,
 } from '../../hooks';
 import { APP_CODE_LENDING_DEBT_SWAP } from '../../utils/constant';
+import { transactionHistoryService } from '@/core/services';
+import {
+  CUSTOM_HISTORY_ACTION,
+  CUSTOM_HISTORY_TITLE_TYPE,
+} from '@/screens/Transaction/components/type';
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
@@ -651,8 +656,9 @@ export default function DebtSwapModal({
             results = await openDirect({
               txs,
               ga: {
-                category: 'Lending',
-                action: 'DebtSwap',
+                customAction: CUSTOM_HISTORY_ACTION.LENDING,
+                customActionTitleType:
+                  CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP,
               },
               checkGasFeeTooHigh: ctx?.gasFeeTooHigh,
               ignoreGasFeeTooHigh: p?.ignoreGasFee,
@@ -686,13 +692,19 @@ export default function DebtSwapModal({
         }
 
         const txId = last(results);
-        if (txId) {
-          toast.success(
-            `${t('page.Lending.debtSwap.actions.title')} ${t(
-              'page.Lending.submitted',
-            )}`,
+        if (txId && chainInfo?.id) {
+          transactionHistoryService.setCustomTxItem(
+            currentAccount.address,
+            chainInfo?.id,
+            txId,
+            { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP },
           );
         }
+        toast.success(
+          `${t('page.Lending.debtSwap.actions.title')} ${t(
+            'page.Lending.submitted',
+          )}`,
+        );
         closeMiniSigner();
         onClose?.();
       } catch (error) {
@@ -706,12 +718,13 @@ export default function DebtSwapModal({
       fromAmount,
       currentAccount,
       canShowDirectSubmit,
+      chainInfo?.id,
+      t,
       closeMiniSigner,
       onClose,
       buildDebtSwapTxs,
       openDirect,
       ctx?.gasFeeTooHigh,
-      t,
     ],
   );
 
