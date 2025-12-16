@@ -68,6 +68,10 @@ check_env_file() {
       elif [ "$key_cleaned" == "RABBY_MOBILE_BUILD_CHANNEL" ]; then
         env_buildchannel="$value_cleaned"
       fi
+
+      if [ "$key_cleaned" == "IOS_SKIP_METRO_BUNDLE_ON_DEBUG" ]; then
+        export IOS_SKIP_METRO_BUNDLE_ON_DEBUG="$value_cleaned"
+      fi
     done < <(grep -v '^[[:space:]]*#' "$env_file" | grep -v '^[[:space:]]*$')
 
     if [ -z "$apiKey_fromEnvFile" ]; then
@@ -101,6 +105,11 @@ check_env_file() {
 }
 
 check_env_file;
+
+if [ "$CONFIGURATION" == "Debug" ] && [ "$IOS_SKIP_METRO_BUNDLE_ON_DEBUG" == "true" ]; then
+  echo "[RabbyMobileBuild] skip metro bundle on debug build as IOS_SKIP_METRO_BUNDLE_ON_DEBUG is true"
+  exit 0;
+fi
 
 [ -f yarn ] && yarn install;
 [ ! -z $DO_POD_INSTALL ] && bundle install && bundle exec pod install;
