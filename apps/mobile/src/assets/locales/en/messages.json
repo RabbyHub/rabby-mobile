@@ -2821,6 +2821,9 @@
             "borrowable": "Borrowable"
           }
         }
+      },
+      "debtSwap": {
+        "entryTips": "One-click to swap your borrowed asset, reducing steps and fees."
       }
     }
   },

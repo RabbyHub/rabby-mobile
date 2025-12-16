@@ -308,7 +308,7 @@ export const MODAL_CONFIGS: Record<
     Component: SupplyDetailPopup,
   },
   [MODAL_NAMES.BORROW_DETAIL]: {
-    snapPoints: [598],
+    snapPoints: ['85%'],
     Component: BorrowDetailPopup,
   },
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: {
