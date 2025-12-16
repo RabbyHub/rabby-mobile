@@ -8,13 +8,17 @@ import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 import MixedFlatChainList from './MixedFlatChainList';
 import { NextSearchBar } from '../SearchBar';
 import { useForceUpdate } from '@/hooks/useForceUpdate';
+import { findChainByServerID, searchChains } from '@/utils/chain';
+import { Chain } from '@/constant/chains';
 
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
 
+// TODO: 把 ChainListItem 改成基于 Chain 的扩展类型并在最外层处理好避免子组件里面需要多次 findChain
 export type ChainListItem = {
   chain: string;
   total: number;
@@ -36,6 +40,7 @@ export default function SelectChainWithDistribute({
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [canSearch, setCanSearch] = useState(false);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 100);
   const { t } = useTranslation();
   const inputRef = useRef<TextInput | null>(null);
   const forceUpdate = useForceUpdate();
@@ -55,16 +60,37 @@ export default function SelectChainWithDistribute({
     setCanSearch(!canSearch);
   };
 
+  const chainListWithInfo = useMemo(
+    () =>
+      (chainList || [])
+        .map(item => {
+          const chainInfo = findChainByServerID(item.chain);
+          if (!chainInfo) {
+            return null;
+          }
+          return {
+            ...item,
+            chainInfo,
+          };
+        })
+        .filter((item): item is ChainListItem & { chainInfo: Chain } => !!item),
+    [chainList],
+  );
+
   const filterChainList = useMemo(() => {
-    if (!search) {
-      return chainList;
+    if (!debouncedSearch) {
+      return chainListWithInfo;
     }
-    return (
-      chainList?.filter(item =>
-        item.chain.toLowerCase().includes(search.toLowerCase()),
-      ) || []
+    const matchedChains = searchChains({
+      list: chainListWithInfo.map(item => item.chainInfo),
+      pinned: [],
+      searchKeyword: debouncedSearch,
+    });
+    const matchedChainIds = new Set(matchedChains.map(item => item.serverId));
+    return chainListWithInfo.filter(item =>
+      matchedChainIds.has(item.chainInfo.serverId),
     );
-  }, [chainList, search]);
+  }, [chainListWithInfo, debouncedSearch]);
 
   useEffect(() => {
     // 应该有状态没刷新导致列表不能滚动，强制刷新下就解决了
