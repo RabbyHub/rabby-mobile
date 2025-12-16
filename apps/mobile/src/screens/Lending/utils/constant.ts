@@ -36,3 +36,5 @@ export const MAX_CLICK_WITHDRAW_HF_THRESHOLD = 1.05;
 
 // max时为了偿还利息额外给的阈值
 export const REPAY_AMOUNT_MULTIPLIER = 1.0025;
+
+export const APP_CODE_LENDING_DEBT_SWAP = 'rabby-mobile-lending-debt-swap';

@@ -29,15 +29,15 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from '../config/nativeToWrapper';
 import DetailLoadingSkeleton from './DetailLoadingSkeleton';
-import { SwappableToken } from '../types/swap';
 import DebtSwapEntryTips from './DetSwapEntryTips';
+import { getFromToken } from '../utils/swap';
 
 export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
   underlyingAsset,
   onClose,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
-  const { chainEnum, selectedMarketData } = useSelectedMarket();
+  const { chainEnum, selectedMarketData, chainInfo } = useSelectedMarket();
   const { t } = useTranslation();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -246,8 +246,14 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
     });
   };
   const handleSwapDebt = () => {
+    const r = formattedPoolReservesAndIncentives.find(item =>
+      isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+    );
+    if (!r || !userSummary || !chainInfo?.id) {
+      return;
+    }
     const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.DEBT_TOKEN_SELECT,
+      name: MODAL_NAMES.DEBT_SWAP,
       allowAndroidHarewareBack: true,
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
@@ -258,8 +264,12 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
             : colors2024['neutral-bg-1'],
         },
       },
-      onChange: (v: SwappableToken) => {
-        console.log('CUSTOM_LOGGER:=>: v', v);
+      fromToken: getFromToken(
+        r,
+        chainInfo?.id,
+        reserve?.variableBorrows || '0',
+      ),
+      onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
     });

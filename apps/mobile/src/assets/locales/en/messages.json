@@ -2823,7 +2823,23 @@
         }
       },
       "debtSwap": {
-        "entryTips": "One-click to swap your borrowed asset, reducing steps and fees."
+        "entryTips": "One-click to swap your borrowed asset, reducing steps and fees.",
+        "title": "Swap Borrow Position",
+        "actions": {
+          "title": "Debt Swap",
+          "amount": "Amount",
+          "borrowed": "Borrowed",
+          "swapTo": "Swap to",
+          "select": "Select"
+        },
+        "overview": {
+          "title": "Transaction Overview",
+          "borrowAPY": "Borrow apy",
+          "borrowValueAfter": "Borrow balance after swap"
+        },
+        "button": {
+          "swap": "Swap"
+        }
       }
     }
   },
