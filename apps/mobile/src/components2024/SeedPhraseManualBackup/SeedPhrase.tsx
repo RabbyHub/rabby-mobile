@@ -638,6 +638,9 @@ export const SeedPhrase: React.FC<Props> = ({
         open={showSecureTips}
         type={secureType}
         copyRaw={words.join(' ')}
+        onDismiss={() => {
+          setShowSecureTips(false);
+        }}
       />
 
       <View
@@ -670,10 +673,12 @@ const SecureBottomTips = ({
   type,
   copyRaw,
   open,
+  onDismiss,
 }: {
   type: 'screenshot' | 'copy';
   copyRaw?: string;
   open: boolean;
+  onDismiss?: () => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal(null);
@@ -743,7 +748,8 @@ const SecureBottomTips = ({
       })}
       ref={sheetModalRef}
       snapPoints={[height > 586 ? 586 : '90%']}
-      maxDynamicContentSize={586}>
+      maxDynamicContentSize={586}
+      onDismiss={onDismiss}>
       <BottomSheetScrollView>
         <View style={styles.secure}>
           <View style={styles.secureLogo}>
