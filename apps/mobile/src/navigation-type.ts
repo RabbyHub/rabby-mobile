@@ -183,7 +183,6 @@ export type AddressNavigatorParamList = {
   };
   [RootNames.ImportSafeAddress2024]?: {};
   [RootNames.ImportWatchAddress2024]?: {};
-  [RootNames.CreateSelectOnCurrentSeed]?: {};
   [RootNames.CreateSelectMethod]?: {};
   [RootNames.CreateChooseBackup]?: {
     delaySetPassword?: boolean;

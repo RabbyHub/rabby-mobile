@@ -36,7 +36,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import CreateNewAddress from '../Address/CreateNewAddress';
 import CreateSelectMethod from '../Address/CreateSelectMethod';
 import SetPassword2024 from '../Address/SetPassword2024';
-import CreateSelectOnCurrentSeed from '../Address/CreateSelectOnCurrentSeed/index';
 import CreateChooseBackup from '../Address/CreateChooseBackup';
 import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
@@ -265,11 +264,11 @@ export function AddressNavigator() {
         name={RootNames.CreateSelectMethod}
         component={CreateSelectMethod}
         options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.CreateSelectMethod'),
-          title: t('screens.addressStackTitle.CreateSelectMethod'),
+          headerTitle: t('screens.addressStackTitle.CreateWallet'),
+          title: t('screens.addressStackTitle.CreateWallet'),
           headerTintColor: colors2024['neutral-title-1'],
           headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
+            backgroundColor: colors2024['neutral-bg-0'],
           },
           headerTitleStyle: styles.headerTitleText,
         })}
@@ -278,21 +277,8 @@ export function AddressNavigator() {
         name={RootNames.CreateNewAddress}
         component={CreateNewAddress}
         options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.CreateNewAddress'),
-          title: t('screens.addressStackTitle.CreateNewAddress'),
-          headerTintColor: colors2024['neutral-title-1'],
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-          headerTitleStyle: styles.headerTitleText,
-        })}
-      />
-      <AddressStack.Screen
-        name={RootNames.CreateSelectOnCurrentSeed}
-        component={CreateSelectOnCurrentSeed}
-        options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.CreateSelectOnCurrentSeed'),
-          title: t('screens.addressStackTitle.CreateSelectOnCurrentSeed'),
+          headerTitle: t('screens.addressStackTitle.ConfrimAddress'),
+          title: t('screens.addressStackTitle.ConfrimAddress'),
           headerTintColor: colors2024['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
@@ -304,8 +290,8 @@ export function AddressNavigator() {
         name={RootNames.SetPassword2024}
         component={SetPassword2024}
         options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.SetPassword2024'),
-          title: t('screens.addressStackTitle.SetPassword2024'),
+          headerTitle: t('screens.addressStackTitle.SetPassword'),
+          title: t('screens.addressStackTitle.SetPassword'),
           headerTintColor: colors2024['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
@@ -317,8 +303,8 @@ export function AddressNavigator() {
         name={RootNames.CreateChooseBackup}
         component={CreateChooseBackup}
         options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.CreateChooseBackup'),
-          title: t('screens.addressStackTitle.CreateChooseBackup'),
+          headerTitle: t('screens.addressStackTitle.ChooseBackup'),
+          title: t('screens.addressStackTitle.ChooseBackup'),
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },

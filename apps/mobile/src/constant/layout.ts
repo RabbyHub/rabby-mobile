@@ -181,7 +181,6 @@ export const RootNames = {
   NftDetail: 'NftDetail',
   DeFiDetail: 'DeFiDetail',
   CreateNewAddress: 'CreateNewAddress',
-  CreateSelectOnCurrentSeed: 'CreateSelectOnCurrentSeed',
   SetPassword2024: 'SetPassword2024',
   CreateChooseBackup: 'CreateChooseBackup',
 
@@ -426,7 +425,6 @@ function makeScreenSpecConfig() {
       [RootNames.NftDetail]: bg1Default2024Conf,
       [RootNames.DeFiDetail]: bg1Default2024Conf,
       [RootNames.CreateNewAddress]: bg1Default2024Conf,
-      [RootNames.CreateSelectOnCurrentSeed]: bg1Default2024Conf,
       [RootNames.SetPassword2024]: bg1Default2024Conf,
       [RootNames.CreateChooseBackup]: bg1Default2024Conf,
 

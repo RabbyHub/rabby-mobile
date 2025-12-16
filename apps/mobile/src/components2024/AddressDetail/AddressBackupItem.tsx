@@ -11,6 +11,11 @@ import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '../Card';
 import { Item } from './Item';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '../GlobalBottomSheetModal';
+import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;

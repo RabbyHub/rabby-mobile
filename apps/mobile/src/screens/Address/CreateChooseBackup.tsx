@@ -70,7 +70,7 @@ function MainListBlocks() {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,
       },
-      preventScreenshotOnModalOpen: true,
+      preventScreenshotOnModalOpen: false,
       delaySetPassword: state?.delaySetPassword,
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);
@@ -88,7 +88,6 @@ function MainListBlocks() {
         Keyboard.dismiss();
       }}>
       <View style={[styles.container]}>
-        <ProgressBar amount={3} currentCount={3} />
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.backupSeedPhrase')}
         </Text>
@@ -244,7 +243,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     fontSize: 17,
     lineHeight: 22,
-    marginTop: 60,
     marginBottom: 30,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',

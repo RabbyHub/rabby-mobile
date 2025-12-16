@@ -1,13 +1,22 @@
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { useMemoizedFn } from 'ahooks';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { BlurView } from '@react-native-community/blur';
 import { createGetStyles2024 } from '@/utils/styles';
 import { default as RcIconEye } from '@/assets/icons/nextComponent/IconEye.svg';
-import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+} from '@/components/customized/BottomSheet';
 import _ from 'lodash';
 import { Button } from '../Button';
 import { WordsMatrix } from '@/components2024/WordsMatrix';
@@ -21,10 +30,18 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
+import Clipboard from '@react-native-clipboard/clipboard';
+import IconScreenshotSecure from '@/assets2024/icons/address/screenshot-secure.svg';
+import IconCopySecure from '@/assets2024/icons/address/copy-secure.svg';
+import { useSheetModal } from '@/hooks/useSheetModal';
+import { makeBottomSheetProps } from '../GlobalBottomSheetModal/utils-help';
+import IconCopy from '@/assets2024/icons/common/copy-brand.svg';
+import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
+import { useIOSScreenshotted } from '@/hooks/native/security';
+import { useSubmitFeedbackOnScreenshot } from '@/components/Screenshot/hooks';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWrapper: {
-    marginTop: 20,
     height: 66,
     display: 'flex',
     flexWrap: 'wrap',
@@ -77,6 +94,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 24,
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+    marginBottom: 12,
+    paddingTop: 8,
   },
   dotItem: {
     marginLeft: 8,
@@ -177,7 +196,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   wordContainer: {
     position: 'relative',
-    marginTop: 36,
+    marginTop: 24,
     flexShrink: 1,
     height: '100%',
     flexDirection: 'column',
@@ -206,6 +225,30 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 16,
     backgroundColor: 'rgba(0,0,0,0.6)',
   },
+  copyBtn: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors2024['brand-default'],
+    borderRadius: 8,
+    gap: 10,
+  },
+  copyBtnIcon: {
+    width: 17,
+    height: 17,
+    color: colors2024['brand-default'],
+  },
+  copyBtnText: {
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 18,
+  },
   tapText: {
     color: colors2024['neutral-InvertHighlight'],
     fontWeight: '700',
@@ -224,11 +267,100 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
   },
+
+  secure: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  secureLogo: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  secureTitle: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '800',
+    lineHeight: 24,
+  },
+  secureSubTitle: {
+    color: colors2024['neutral-secondary'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 22,
+    paddingTop: 8,
+    paddingBottom: 24,
+  },
+
+  secureDescList: {
+    gap: 8,
+    marginBottom: 30,
+  },
+
+  secureDescBox: {
+    backgroundColor: colors2024['neutral-bg-2'],
+    display: 'flex',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingLeft: 24,
+    borderRadius: 12,
+  },
+  secureDescText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 20,
+    textAlign: 'justify',
+  },
+
+  copyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  copyCancelBtn: {
+    height: 56,
+    paddingVertical: 16,
+    paddingHorizontal: 38,
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 12,
+  },
+  copyCancelText: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  copyConfirmContainer: {
+    height: 56,
+    flex: 1,
+  },
+  copyConfirmTitle: {
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 24,
+  },
 }));
 
 interface Props {
   onConfirm: () => void;
   delaySetPassword?: boolean;
+  readMode?: boolean;
+  seedPhraseData?: string;
 }
 
 const SIZES = {
@@ -236,11 +368,15 @@ const SIZES = {
   btnContainerBottom: 56,
 };
 
+type SecureType = 'copy' | 'screenshot';
+
 const VALIDATE_COUNT = 3;
 
 export const SeedPhrase: React.FC<Props> = ({
   onConfirm, // close modal
   delaySetPassword,
+  readMode,
+  seedPhraseData,
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { seedPharseData, addressList, confirmPassword } =
@@ -250,6 +386,9 @@ export const SeedPhrase: React.FC<Props> = ({
   const [isSelect, setIsSelect] = React.useState(false);
   const [selectArr, setSelectArr] = React.useState<number[]>([]);
 
+  const [showSecureTips, setShowSecureTips] = React.useState(false);
+  const [secureType, setSecureType] = React.useState<SecureType>('copy');
+
   const appThemeMode = useGetBinaryMode();
   const {
     seedPhrase,
@@ -257,13 +396,22 @@ export const SeedPhrase: React.FC<Props> = ({
     address,
     accountsToCreate = [],
   } = useMemo(() => {
+    if (readMode && seedPhraseData) {
+      return {
+        seedPhrase: seedPhraseData,
+        alias: '',
+        address: '',
+        accountsToCreate: [],
+      };
+    }
     return {
       seedPhrase: seedPharseData,
       alias: addressList?.[0].aliasName || '',
       address: addressList?.[0].address || '',
       accountsToCreate: addressList,
     };
-  }, [seedPharseData, addressList]);
+  }, [readMode, seedPhraseData, seedPharseData, addressList]);
+
   const [loading, setLoading] = React.useState(false);
   const [shuffleCount, setShuffleCount] = React.useState(0);
   const words = useMemo(() => seedPhrase.split(' ') || [], [seedPhrase]);
@@ -312,6 +460,9 @@ export const SeedPhrase: React.FC<Props> = ({
   });
 
   const handleVerify = useMemoizedFn(async () => {
+    if (readMode) {
+      return;
+    }
     if (validate()) {
       const mnemonics = seedPhrase;
       const passphrase = '';
@@ -371,6 +522,10 @@ export const SeedPhrase: React.FC<Props> = ({
   });
 
   const handleGoSelect = useMemoizedFn(() => {
+    if (readMode) {
+      onConfirm();
+      return;
+    }
     setIsSelect(true);
   });
 
@@ -384,6 +539,24 @@ export const SeedPhrase: React.FC<Props> = ({
   });
 
   const WordMatrixWrapper = isHidden ? View : BottomSheetScrollView;
+
+  const { closeSubmitModal } = useSubmitFeedbackOnScreenshot();
+
+  useEffect(() => {
+    if (isHidden) {
+      return;
+    }
+    const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(() => {
+      setSecureType('screenshot');
+      setShowSecureTips(true);
+      setTimeout(() => {
+        closeSubmitModal();
+      }, 100);
+    });
+    return () => {
+      remove();
+    };
+  }, [closeSubmitModal, isHidden]);
 
   return (
     <View style={[styles.rootContainer]}>
@@ -450,26 +623,194 @@ export const SeedPhrase: React.FC<Props> = ({
           />
         </WordMatrixWrapper>
       </View>
+
+      {!isHidden && !currentSelecting ? (
+        <TouchableOpacity
+          style={styles.copyBtn}
+          onPress={() => {
+            setShowSecureTips(false);
+            setTimeout(() => {
+              setSecureType('copy');
+              setShowSecureTips(true);
+            }, 100);
+          }}>
+          <IconCopy style={styles.copyBtnIcon} />
+          <Text style={styles.copyBtnText}>{t('global.copy')}</Text>
+        </TouchableOpacity>
+      ) : null}
+
+      <SecureBottomTips
+        open={showSecureTips}
+        type={secureType}
+        copyRaw={words.join(' ')}
+      />
+
       <View
         style={[
           styles.btnWrapper,
           { paddingBottom: safeSizes.btnContainerBottom },
         ]}>
         {!isHidden && (
-          <Button
-            disabled={currentSelecting && selectArr.length < 3}
-            containerStyle={styles.btnContainer}
-            loading={currentSelecting ? loading : false}
-            type="primary"
-            title={
-              currentSelecting
-                ? t('page.nextComponent.createNewAddress.Verify')
-                : t('page.nextComponent.createNewAddress.savedPhrase')
-            }
-            onPress={currentSelecting ? handleVerify : handleGoSelect}
-          />
+          <>
+            <Button
+              disabled={currentSelecting && selectArr.length < 3}
+              containerStyle={styles.btnContainer}
+              loading={currentSelecting ? loading : false}
+              type="primary"
+              title={
+                currentSelecting
+                  ? t('page.nextComponent.createNewAddress.Verify')
+                  : t('global.Confirm')
+              }
+              onPress={currentSelecting ? handleVerify : handleGoSelect}
+            />
+          </>
         )}
       </View>
     </View>
+  );
+};
+
+const SecureBottomTips = ({
+  type,
+  copyRaw,
+  open,
+}: {
+  type: 'screenshot' | 'copy';
+  copyRaw?: string;
+  open: boolean;
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { sheetModalRef, toggleShowSheetModal } = useSheetModal(null);
+  const { t } = useTranslation();
+  const { height } = useWindowDimensions();
+
+  const { titleMapping, subTitleMapping, descMapping } = useMemo(() => {
+    const titleMapping = {
+      screenshot: t('page.nextComponent.screenshotSecureTip.title'),
+      copy: t('page.nextComponent.copySeedPhraseSecureTip.title'),
+    };
+
+    const subTitleMapping = {
+      screenshot: t('page.nextComponent.screenshotSecureTip.subTitle'),
+      copy: t('page.nextComponent.copySeedPhraseSecureTip.subTitle'),
+    };
+
+    const descMapping = {
+      screenshot: [
+        t('page.nextComponent.screenshotSecureTip.tip1'),
+        t('page.nextComponent.screenshotSecureTip.tip2'),
+        t('page.nextComponent.screenshotSecureTip.tip3'),
+      ],
+      copy: [
+        t('page.nextComponent.copySeedPhraseSecureTip.tip1'),
+        t('page.nextComponent.copySeedPhraseSecureTip.tip2'),
+        t('page.nextComponent.copySeedPhraseSecureTip.tip3'),
+      ],
+    };
+    return {
+      titleMapping,
+      subTitleMapping,
+      descMapping,
+    };
+  }, [t]);
+
+  const onCopy = () => {
+    Clipboard.setString(copyRaw || '');
+    toast.success(t('page.nextComponent.copySeedPhraseSecureTip.copied'), {
+      position: height * 0.5,
+    });
+    setTimeout(() => {
+      Clipboard.setString('');
+    }, 1000 * 60);
+
+    toggleShowSheetModal('destroy');
+  };
+
+  useEffect(() => {
+    return () => {
+      toggleShowSheetModal?.('destroy');
+    };
+  }, [toggleShowSheetModal]);
+
+  useEffect(() => {
+    if (open) {
+      toggleShowSheetModal?.('destroy');
+    }
+    toggleShowSheetModal?.(open ? true : 'destroy');
+  }, [toggleShowSheetModal, open]);
+
+  return (
+    <AppBottomSheetModal
+      {...makeBottomSheetProps({
+        linearGradientType: 'bg1',
+        colors: colors2024,
+      })}
+      ref={sheetModalRef}
+      snapPoints={[height > 586 ? 586 : '90%']}
+      maxDynamicContentSize={586}>
+      <BottomSheetScrollView>
+        <View style={styles.secure}>
+          <View style={styles.secureLogo}>
+            {type === 'screenshot' && <IconScreenshotSecure />}
+            {type === 'copy' && <IconCopySecure />}
+          </View>
+          <Text style={styles.secureTitle}>{titleMapping[type]}</Text>
+          <Text style={styles.secureSubTitle}>{subTitleMapping[type]}</Text>
+          <View style={styles.secureDescList}>
+            {descMapping[type].map(desc => (
+              <View style={styles.secureDescBox} key={desc}>
+                <Text style={styles.secureDescText}>{desc}</Text>
+                <View
+                  style={{
+                    position: 'absolute',
+                    width: 4,
+                    height: 4,
+                    borderRadius: 4,
+                    backgroundColor: colors2024['neutral-title-1'],
+                    top: 24,
+                    left: 12,
+                  }}
+                />
+              </View>
+            ))}
+          </View>
+
+          <View>
+            {type === 'copy' && (
+              <View style={styles.copyRow}>
+                <TouchableOpacity
+                  style={styles.copyCancelBtn}
+                  onPress={() => {
+                    toggleShowSheetModal('destroy');
+                  }}>
+                  <Text style={styles.copyCancelText}>
+                    {t('global.Cancel')}
+                  </Text>
+                </TouchableOpacity>
+                <Button
+                  type="primary"
+                  containerStyle={styles.copyConfirmContainer}
+                  titleStyle={styles.copyConfirmTitle}
+                  title={t(
+                    'page.nextComponent.copySeedPhraseSecureTip.copyAnyway',
+                  )}
+                  onPress={onCopy}
+                />
+              </View>
+            )}
+
+            {type === 'screenshot' && (
+              <Button
+                title={t('global.GotIt')}
+                onPress={() => {
+                  toggleShowSheetModal('destroy');
+                }}
+              />
+            )}
+          </View>
+        </View>
+      </BottomSheetScrollView>
+    </AppBottomSheetModal>
   );
 };
