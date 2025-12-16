@@ -79,3 +79,24 @@ export const getTokensTo = (
     })
     .filter(token => token !== undefined);
 };
+
+export const getFromToken = (
+  reserve: FormattedReservesAndIncentives,
+  chainId: number,
+  totalBorrows: string,
+): SwappableToken => {
+  return {
+    addressToSwap: reserve.underlyingAsset,
+    addressForUsdPrice: reserve.underlyingAsset,
+    underlyingAddress: reserve.underlyingAsset,
+    name: reserve.name,
+    chainId,
+    decimals: reserve.decimals,
+    symbol: reserve.symbol,
+    balance: totalBorrows,
+    usdPrice: reserve.priceInUSD,
+    supplyAPY: reserve.supplyAPY,
+    variableBorrowAPY: reserve.variableBorrowAPY,
+    totalDebtUSD: reserve.totalDebtUSD,
+  };
+};
