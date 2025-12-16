@@ -540,23 +540,18 @@ export const SeedPhrase: React.FC<Props> = ({
 
   const WordMatrixWrapper = isHidden ? View : BottomSheetScrollView;
 
-  const { closeSubmitModal } = useSubmitFeedbackOnScreenshot();
-
   useEffect(() => {
     if (isHidden) {
       return;
     }
-    const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(() => {
+    const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(() => {
       setSecureType('screenshot');
       setShowSecureTips(true);
-      setTimeout(() => {
-        closeSubmitModal();
-      }, 100);
     });
     return () => {
       remove();
     };
-  }, [closeSubmitModal, isHidden]);
+  }, [isHidden]);
 
   return (
     <View style={[styles.rootContainer]}>

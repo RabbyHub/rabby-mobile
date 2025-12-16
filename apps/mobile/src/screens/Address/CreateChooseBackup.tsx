@@ -71,6 +71,7 @@ function MainListBlocks() {
         enablePanDownToClose: true,
       },
       preventScreenshotOnModalOpen: false,
+      // screenshotReportFreeBeforeModalClose: true,
       delaySetPassword: state?.delaySetPassword,
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);

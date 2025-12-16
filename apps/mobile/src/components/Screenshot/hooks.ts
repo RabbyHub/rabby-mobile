@@ -46,6 +46,27 @@ function trimScreenshotFeedbackStore<T extends ScreenshotFeedbackStore>(
   return pick(input, Keys);
 }
 
+type ScreenshotState = {
+  isScreenshotReportFree: boolean;
+};
+const screenshotState = zCreate<ScreenshotState>(() => ({
+  isScreenshotReportFree: false,
+}));
+
+function markIsScreenshotReportFree(isFree: boolean) {
+  screenshotState.setState(prev => ({
+    ...prev,
+    isScreenshotReportFree: isFree,
+  }));
+}
+
+export const storeApiScreenshotReport = {
+  markIsScreenshotReportFree,
+  isScreenshotReportFree: () => {
+    return screenshotState.getState().isScreenshotReportFree;
+  },
+};
+
 // runDevIIFEFunc(() => {
 //   appJsonStore.setItem('@screenshotFeedback', {
 //     viewedHomeTip: false,
@@ -365,6 +386,8 @@ const shouldToastFeedbackByScreenshot = () => {
   if (FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) return false;
   if (!getGlobalScreenCapturable()) return false;
 
+  if (storeApiScreenshotReport.isScreenshotReportFree()) return false;
+
   const feedbackByScreenshot = feedbackByScreenshotStore.getState();
   return (
     !feedbackByScreenshot.viewingFeedback &&
@@ -397,6 +420,14 @@ const setLastScreenshot = (
   }
 };
 
+if (IS_ANDROID) {
+  RNScreenshotPrevent.startScreenCaptureDetection().then(() => {
+    console.debug(
+      '[info] RNScreenshotPrevent started screen capture detection on Android',
+    );
+  });
+}
+
 export function useUserDidTakeScreenshot({
   isTop = false,
 }: {
@@ -405,7 +436,7 @@ export function useUserDidTakeScreenshot({
   useEffect(() => {
     if (!isTop) return;
 
-    const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(
+    const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(
       async params => {
         if (!getShowFeedbackOnScreenshotCapture()) return;
         if (!params?.captured) {
@@ -499,8 +530,6 @@ const closeSubmitModal = ({
 };
 
 export function useSubmitFeedbackOnScreenshot() {
-  // const [{ lastScreenshot, totalBalanceText }, setSubmitFeedbackOnScreenshot] =
-  //   useAtom(feedbackByScreenshotAtom);
   const { lastScreenshot, totalBalanceText } = feedbackByScreenshotStore(
     useShallow(s => ({
       lastScreenshot: s.lastScreenshot,

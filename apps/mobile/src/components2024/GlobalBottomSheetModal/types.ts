@@ -163,6 +163,10 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
    * @description specify whether preventing screenshot on modal open
    */
   preventScreenshotOnModalOpen?: boolean;
+  /**
+   * @description specify whether to disable screenshot report before modal close
+   */
+  screenshotReportFreeBeforeModalClose?: boolean;
   [key: string]: any;
 } & (T extends keyof MODAL_CREATE_PARAMS ? MODAL_CREATE_PARAMS[T] : {});
 
