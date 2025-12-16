@@ -22,7 +22,6 @@ export type EModeCategoryDisplay = EmodeCategory & {
 };
 
 interface IProps {
-  value: SwappableToken;
   excludeTokenAddress: string;
   onChange: (v: SwappableToken) => void;
 }

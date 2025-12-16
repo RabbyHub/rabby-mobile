@@ -6,7 +6,6 @@ import { SwappableToken } from '../types/swap';
 import { UserSummary } from '../type';
 import { CustomMarket } from '../config/market';
 import { TOKEN_LIST } from '../config/TokenList';
-import { FormattedReserveEMode } from '@aave/math-utils/dist/esm/formatters/emode';
 import { FormattedReservesAndIncentives } from './apy';
 import { SupportedChainId, WRAPPED_NATIVE_CURRENCIES } from './native';
 
