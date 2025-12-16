@@ -8,7 +8,6 @@ import {
   GetRateFunctions,
 } from '@paraswap/sdk';
 
-export const DEBT_SWAP_PARENT_ID = 'rabby-wallet-debt-swap';
 // TODO: get fee target from config
 const feeTarget = '0xe4ef35384A3cc4D0B15385cc9fc74Bd239dC8411';
 

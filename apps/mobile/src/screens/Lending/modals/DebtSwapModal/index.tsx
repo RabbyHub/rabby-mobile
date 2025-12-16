@@ -6,54 +6,35 @@ import React, {
   useState,
 } from 'react';
 
+import { ChainId } from '@aave/contract-helpers';
+import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import { OptimalRate } from '@paraswap/sdk';
 import { last, noop } from 'lodash';
 import BigNumber from 'bignumber.js';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
-import { useWindowDimensions } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import { Pressable, Text, TextInput, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
-import {
-  constants,
-  BigNumber as EthersBigNumber,
-  PopulatedTransaction,
-} from 'ethers';
+import { constants, PopulatedTransaction } from 'ethers';
 
-import { Slider } from '@rneui/themed';
 import { apiProvider } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
 import { toast } from '@/components2024/Toast';
-import { IS_ANDROID } from '@/core/native/utils';
 import { Button } from '@/components2024/Button';
-import { ChainId } from '@aave/contract-helpers';
 import { useMiniSigner } from '@/hooks/useSigner';
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
-import { OptimalRate, SwapSide } from '@paraswap/sdk';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { transactionHistoryService } from '@/core/services';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
-import { BubbleWithText } from '@/screens/Swap/components/Slider';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { ERC20Service } from '@aave/contract-helpers/dist/esm/erc20-contract';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { BaseDebtToken } from '@aave/contract-helpers/dist/esm/baseDebtToken-contract';
-import {
-  formatSpeicalAmount,
-  formatTokenAmount,
-  formatUsdValue,
-} from '@/utils/number';
+import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
 import {
   MINI_SIGN_ERROR,
   useSignatureStore,
@@ -67,45 +48,30 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 import { SwapType } from '../../types/swap';
 import DebtSwapModalOverview from './Overview';
 import TokenIcon from '../../components/TokenIcon';
 import { APP_CODE_LENDING_DEBT_SWAP } from '../../utils/constant';
 import { ParaswapRatesType, SwappableToken } from '../../types/swap';
-import { DEBT_SWAP_PARENT_ID, getParaswap } from '../../config/paraswap';
+import { getParaswap } from '../../config/paraswap';
 import { getParaswapSellRates } from '../../components/actions/DebtSwap/paraswap';
+import { usePoolDataProviderContract, useSelectedMarket } from '../../hooks';
+import { useFormatValues, useSwapReserves } from './hooks';
+import DebtSwapModalSlider from './Slider';
 import {
-  useLendingSummary,
-  usePoolDataProviderContract,
-  useSelectedMarket,
-} from '../../hooks';
-
+  sliderHapticTriggerNumbers,
+  DEFAULT_DEBT_SWAP_SLIPPAGE,
+  ZERO_PERMIT,
+  maxInputAmountWithSlippage,
+  formatTx,
+} from './utils';
+import { generateApproveDelegation } from '../../poolService';
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
   onClose?: () => void;
 }
-
-const sliderHapticTriggerNumbers = [0, 50, 100];
-const DEFAULT_DEBT_SWAP_SLIPPAGE = 200; // 2%
-const ZERO_PERMIT = {
-  value: '0',
-  deadline: '0',
-  v: 0,
-  r: constants.HashZero,
-  s: constants.HashZero,
-};
-
-const maxInputAmountWithSlippage = (amount: string, slippageBps: number) => {
-  const amt = new BigNumber(amount || 0);
-  if (amt.lte(0)) {
-    return '0';
-  }
-  return amt
-    .multipliedBy(new BigNumber(1).plus(new BigNumber(slippageBps).div(10000)))
-    .integerValue(BigNumber.ROUND_CEIL)
-    .toFixed(0);
-};
 
 export default function DebtSwapModal({
   fromToken,
@@ -116,15 +82,17 @@ export default function DebtSwapModal({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+
+  const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
+  const { pools } = usePoolDataProviderContract();
+  const { ctx } = useSignatureStore();
+
   const [fromAmount, setFromAmount] = useState<string>('');
-  const [debouncedFromAmount, setDebouncedFromAmount] = useState<string>('');
+  const debouncedFromAmount = useDebouncedValue(fromAmount, 400);
   const [toToken, setToToken] = useState<SwappableToken | undefined>();
   const [toAmount, setToAmount] = useState<string>('');
   const [slider, setSlider] = useState<number>(0);
   const previousSlider = useRef<number>(0);
-  const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
-  const { pools } = usePoolDataProviderContract();
-  const { formattedPoolReservesAndIncentives } = useLendingSummary();
   const [isLoading, setIsLoading] = useState(false);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [quote, setQuote] = useState<ParaswapRatesType | null>(null);
@@ -140,65 +108,18 @@ export default function DebtSwapModal({
     toToken?: string;
     srcAmount?: string;
   }>();
-  const { ctx } = useSignatureStore();
 
-  const fromBalanceBn = useMemo(() => {
-    return new BigNumber(fromToken?.balance || 0);
-  }, [fromToken]);
-
-  const fromBalanceDisplay = useMemo(() => {
-    return formatTokenAmount(fromBalanceBn.toString(10));
-  }, [fromBalanceBn]);
-
-  const fromUsdValue = useMemo(() => {
-    const usdPrice = new BigNumber(fromToken?.usdPrice || 0);
-    return formatUsdValue(
-      new BigNumber(fromAmount || 0).times(usdPrice).toString(10),
-    );
-  }, [fromAmount, fromToken?.usdPrice]);
-
-  const toUsdValue = useMemo(() => {
-    if (!toToken) {
-      return formatUsdValue(0);
-    }
-    const usdPrice = new BigNumber(toToken?.usdPrice || 0);
-    return formatUsdValue(
-      new BigNumber(toAmount || 0).times(usdPrice).toString(10),
-    );
-  }, [toAmount, toToken]);
-
-  const fromReserve = useMemo(
-    () =>
-      formattedPoolReservesAndIncentives?.find(item =>
-        isSameAddress(item.underlyingAsset, fromToken.underlyingAddress),
-      ),
-    [formattedPoolReservesAndIncentives, fromToken.underlyingAddress],
-  );
-
-  const toReserve = useMemo(
-    () =>
-      formattedPoolReservesAndIncentives?.find(item =>
-        isSameAddress(
-          item.underlyingAsset,
-          toToken?.underlyingAddress || constants.AddressZero,
-        ),
-      ),
-    [formattedPoolReservesAndIncentives, toToken?.underlyingAddress],
-  );
-
-  const isSameToken = useMemo(() => {
-    if (!toToken) {
-      return false;
-    }
-    return isSameAddress(
-      toToken.underlyingAddress,
-      fromToken.underlyingAddress,
-    );
-  }, [fromToken.underlyingAddress, toToken]);
-
-  const handleSlider100 = useCallback(() => {
-    setFromAmount(fromBalanceBn.toString(10));
-  }, [fromBalanceBn]);
+  const { fromBalanceBn, fromBalanceDisplay, fromUsdValue, toUsdValue } =
+    useFormatValues({
+      fromToken,
+      toToken,
+      fromAmount,
+      toAmount,
+    });
+  const { fromReserve, toReserve, isSameToken } = useSwapReserves({
+    fromToken,
+    toToken,
+  });
 
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
@@ -222,7 +143,7 @@ export default function DebtSwapModal({
       previousSlider.current = v;
 
       if (v === 100) {
-        handleSlider100();
+        setFromAmount(fromBalanceBn.toString(10));
         return;
       }
 
@@ -234,28 +155,7 @@ export default function DebtSwapModal({
           : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10),
       );
     },
-    [fromBalanceBn, handleSlider100],
-  );
-
-  const showBubble = useSharedValue(false);
-  const { width } = useWindowDimensions();
-
-  const sliderStyle = useAnimatedStyle(
-    () => ({
-      opacity: showBubble.value ? 1 : 0,
-      display: showBubble.value ? 'flex' : 'none',
-      position: 'absolute',
-      top: IS_ANDROID ? -72 : -60,
-      left: 0,
-      height: 70,
-      width,
-      transform: [
-        {
-          translateX: 0 - width / 2 + (IS_ANDROID ? 7 : 6),
-        },
-      ],
-    }),
-    [width],
+    [fromBalanceBn],
   );
 
   const onInputChange = useCallback(
@@ -279,13 +179,6 @@ export default function DebtSwapModal({
     },
     [fromBalanceBn],
   );
-
-  useEffect(() => {
-    const _t = setTimeout(() => {
-      setDebouncedFromAmount(fromAmount);
-    }, 400);
-    return () => clearTimeout(_t);
-  }, [fromAmount]);
 
   useEffect(() => {
     let cancelled = false;
@@ -330,7 +223,9 @@ export default function DebtSwapModal({
           destDecimals: fromToken.decimals,
           chainId: fromToken.chainId,
           user: currentAccount.address,
-          options: {},
+          options: {
+            partner: APP_CODE_LENDING_DEBT_SWAP,
+          },
           appCode: APP_CODE_LENDING_DEBT_SWAP,
         });
         if (cancelled || !quoteRes) {
@@ -398,7 +293,7 @@ export default function DebtSwapModal({
         setSwapRate({});
         setIsQuoteLoading(false);
         if (fromAmount) {
-          setDebouncedFromAmount(fromAmount);
+          setFromAmount(fromAmount);
         }
         removeGlobalBottomSheetModal2024(modalId);
       },
@@ -452,8 +347,6 @@ export default function DebtSwapModal({
     }
 
     const { paraswap, feeTarget } = getParaswap(fromToken.chainId as ChainId);
-    const kind =
-      swapRate.optimalRateData.side === SwapSide.BUY ? 'buy' : 'sell';
     const slippageBps = swapRate.slippageBps ?? DEFAULT_DEBT_SWAP_SLIPPAGE;
     const txParams: any = await paraswap.buildTx(
       {
@@ -461,14 +354,12 @@ export default function DebtSwapModal({
         destToken: fromToken.addressToSwap,
         srcDecimals: toToken.decimals,
         destDecimals: fromToken.decimals,
-        srcAmount:
-          kind === 'sell'
-            ? swapRate.inputAmount || swapRate.optimalRateData.srcAmount
-            : undefined,
-        destAmount: kind === 'buy' ? rawAmount : undefined,
+        // 只考虑 buy 场景，固定使用 destAmount = rawAmount
+        srcAmount: undefined,
+        destAmount: rawAmount,
         userAddress: currentAccount.address,
         priceRoute: swapRate.optimalRateData,
-        partner: DEBT_SWAP_PARENT_ID,
+        partner: APP_CODE_LENDING_DEBT_SWAP,
         partnerAddress: feeTarget,
         receiver: selectedMarketData.addresses.DEBT_SWITCH_ADAPTER,
         slippage: slippageBps,
@@ -511,12 +402,11 @@ export default function DebtSwapModal({
       collateralPermit: ZERO_PERMIT,
     });
 
-    const erc20Service = new ERC20Service(pools.provider);
-    const baseDebtService = new BaseDebtToken(pools.provider, erc20Service);
     let delegationTx: PopulatedTransaction | undefined;
     if (toReserve.variableDebtTokenAddress) {
-      delegationTx = baseDebtService.generateApproveDelegationTxData({
-        user: currentAccount.address,
+      delegationTx = generateApproveDelegation({
+        provider: pools.provider,
+        address: currentAccount.address,
         delegatee: selectedMarketData.addresses.DEBT_SWITCH_ADAPTER,
         debtTokenAddress: toReserve.variableDebtTokenAddress,
         amount: maxNewDebtAmount,
@@ -524,39 +414,20 @@ export default function DebtSwapModal({
     }
 
     const txs: Tx[] = [];
-    if (delegationTx?.data) {
-      const formattedDelegationTx: any = {
-        from: (delegationTx as any).from || currentAccount.address,
-        to: (delegationTx as any).to,
-        data: (delegationTx as any).data || '0x',
-        value:
-          (delegationTx as any).value &&
-          EthersBigNumber.isBigNumber((delegationTx as any).value)
-            ? (delegationTx as any).value.toHexString()
-            : (delegationTx as any).value ?? '0x0',
-        chainId: fromToken.chainId,
-      };
-      if ((delegationTx as any).nonce) {
-        formattedDelegationTx.nonce = (delegationTx as any).nonce;
-      }
-      txs.push(formattedDelegationTx as Tx);
+    const formattedDelegationTx = delegationTx
+      ? formatTx(delegationTx, currentAccount.address, fromToken.chainId)
+      : undefined;
+    const formattedDebtSwitchTx = formatTx(
+      debtSwitchTx,
+      currentAccount.address,
+      fromToken.chainId,
+    );
+    if (formattedDelegationTx) {
+      txs.push(formattedDelegationTx);
     }
-    const formattedDebtSwitchTx: any = {
-      from: (debtSwitchTx as any).from || currentAccount.address,
-      to: (debtSwitchTx as any).to,
-      data: (debtSwitchTx as any).data || '0x',
-      value:
-        (debtSwitchTx as any).value &&
-        EthersBigNumber.isBigNumber((debtSwitchTx as any).value)
-          ? (debtSwitchTx as any).value.toHexString()
-          : (debtSwitchTx as any).value ?? '0x0',
-      chainId: fromToken.chainId,
-    };
-    if ((debtSwitchTx as any).nonce) {
-      formattedDebtSwitchTx.nonce = (debtSwitchTx as any).nonce;
+    if (formattedDebtSwitchTx) {
+      txs.push(formattedDebtSwitchTx);
     }
-    txs.push(formattedDebtSwitchTx as Tx);
-    console.log('CUSTOM_LOGGER:=>: txs', txs);
     return txs;
   }, [
     currentAccount,
@@ -732,38 +603,10 @@ export default function DebtSwapModal({
                 {t('page.Lending.debtSwap.actions.borrowed')}
               </Text>
               <View style={styles.sliderContainer}>
-                <Slider
-                  key={`${fromToken?.underlyingAddress}`}
-                  allowTouchTrack={true}
-                  style={styles.slider}
-                  value={slider}
-                  onSlidingStart={() => {
-                    showBubble.value = true;
-                  }}
-                  onValueChange={onChangeSlider}
-                  onSlidingComplete={v => {
-                    showBubble.value = false;
-                    onChangeSlider(v);
-                  }}
-                  minimumValue={0}
-                  maximumValue={100}
-                  minimumTrackTintColor={colors2024['brand-default']}
-                  maximumTrackTintColor={colors2024['neutral-line']}
-                  step={1}
-                  thumbStyle={styles.thumbStyle}
-                  thumbProps={{
-                    children: (
-                      <View>
-                        <View
-                          style={[styles.outerThumb, styles.outerThumbWrapper]}>
-                          <View style={styles.innerThumb} />
-                          <Animated.View style={sliderStyle}>
-                            <BubbleWithText slide={slider || 0} />
-                          </Animated.View>
-                        </View>
-                      </View>
-                    ),
-                  }}
+                <DebtSwapModalSlider
+                  fromToken={fromToken}
+                  slider={slider}
+                  onChangeSlider={onChangeSlider}
                 />
                 <Text style={styles.sliderValue}>{slider}%</Text>
               </View>
@@ -897,7 +740,7 @@ export default function DebtSwapModal({
           chainEnum={chainEnum}
           fromAmount={fromAmount}
           toAmount={toAmount}
-          fromBalanceBn={fromBalanceBn}
+          fromBalanceBn={fromBalanceBn.toString()}
           isQuoteLoading={isQuoteLoading}
         />
         {canShowDirectSubmit && canSwap && (
@@ -1009,10 +852,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 8,
   },
-  slider: {
-    width: 126,
-    height: 4,
-  },
   sliderValue: {
     width: 40,
     textAlign: 'right',
@@ -1020,29 +859,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 13,
     fontWeight: '500',
     fontFamily: 'SF Pro',
-  },
-  thumbStyle: {
-    backgroundColor: colors2024['brand-default'],
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
-  outerThumbWrapper: {
-    position: 'relative',
-  },
-  outerThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors2024['brand-default'],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  innerThumb: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors2024['neutral-bg-1'],
   },
   tokenBody: {
     flexDirection: 'row',
