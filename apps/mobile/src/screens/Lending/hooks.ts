@@ -19,9 +19,8 @@ import {
 import { ethers } from 'ethers';
 import dayjs from 'dayjs';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { startTransition, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { unstable_batchedUpdates } from 'react-native';
-import { InteractionManager } from 'react-native';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
 import { CustomMarket, MarketDataType, marketsData } from './config/market';
@@ -300,7 +299,7 @@ const mappedBalancesAtom = atom(get => {
   const { 0: tokenAddresses, 1: balances } = walletBalances;
   return tokenAddresses.map((_address, ix) => ({
     address: _address.toLowerCase(),
-    amount: balances[ix].toString(),
+    amount: balances?.[ix]?.toString() || '0',
   }));
 });
 
@@ -455,21 +454,6 @@ const preQueryParams: {
   marketKey: undefined,
 };
 
-type ExtractValueType<T> = T extends Atom<infer V> ? V : never;
-const jotaiStore = getDefaultStore();
-const globalSets = {
-  setReserves: (value: ExtractValueType<typeof reservesAtom>) =>
-    jotaiStore.set(reservesAtom, value),
-  setUserReserves: (value: ExtractValueType<typeof userReservesAtom>) =>
-    jotaiStore.set(userReservesAtom, value),
-  setWalletBalances: (value: ExtractValueType<typeof walletBalancesAtom>) =>
-    jotaiStore.set(walletBalancesAtom, value),
-  setLoading: (value: ExtractValueType<typeof loadingAtom>) =>
-    jotaiStore.set(loadingAtom, value),
-  setCurrentAddress: (value: ExtractValueType<typeof addressAtom>) =>
-    jotaiStore.set(addressAtom, value),
-};
-
 const useLendingData = () => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -501,21 +485,17 @@ const useLendingData = () => {
       }
       fetchContractData(requestAddress)
         .then(data => {
-          InteractionManager.runAfterInteractions(() => {
-            startTransition(() => {
-              const nextReserves = data?.reserves;
-              const nextUserReserves = data?.userReserves;
-              const nextWalletBalances =
-                data?.walletBalances || EMPTY_WALLET_BALANCES;
-              unstable_batchedUpdates(() => {
-                setReserves(nextReserves);
-                setUserReserves(nextUserReserves);
-                setWalletBalances(nextWalletBalances);
-                setEModes(data?.eModes);
-                setCurrentAddress(requestAddress);
-                setLoading(false);
-              });
-            });
+          const nextReserves = data?.reserves;
+          const nextUserReserves = data?.userReserves;
+          const nextWalletBalances =
+            data?.walletBalances || EMPTY_WALLET_BALANCES;
+          unstable_batchedUpdates(() => {
+            setReserves(nextReserves);
+            setUserReserves(nextUserReserves);
+            setWalletBalances(nextWalletBalances);
+            setEModes(data?.eModes);
+            setCurrentAddress(requestAddress);
+            setLoading(false);
           });
         })
         .catch(() => {
