@@ -36,6 +36,7 @@ import { OptimalRate, SwapSide } from '@paraswap/sdk';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
+import { transactionHistoryService } from '@/core/services';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -59,12 +60,18 @@ import {
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { DebtSwitchAdapterService } from '@aave/contract-helpers/dist/esm/paraswap-debtSwitch-contract';
 import {
+  CUSTOM_HISTORY_ACTION,
+  CUSTOM_HISTORY_TITLE_TYPE,
+} from '@/screens/Transaction/components/type';
+import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 
 import { SwapType } from '../../types/swap';
+import DebtSwapModalOverview from './Overview';
 import TokenIcon from '../../components/TokenIcon';
+import { APP_CODE_LENDING_DEBT_SWAP } from '../../utils/constant';
 import { ParaswapRatesType, SwappableToken } from '../../types/swap';
 import { DEBT_SWAP_PARENT_ID, getParaswap } from '../../config/paraswap';
 import { getParaswapSellRates } from '../../components/actions/DebtSwap/paraswap';
@@ -73,13 +80,6 @@ import {
   usePoolDataProviderContract,
   useSelectedMarket,
 } from '../../hooks';
-import { APP_CODE_LENDING_DEBT_SWAP } from '../../utils/constant';
-import { transactionHistoryService } from '@/core/services';
-import {
-  CUSTOM_HISTORY_ACTION,
-  CUSTOM_HISTORY_TITLE_TYPE,
-} from '@/screens/Transaction/components/type';
-import DebtSwapModalOverview from './Overview';
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
@@ -805,12 +805,10 @@ export default function DebtSwapModal({
             <View style={styles.usdValueRow}>
               <Text style={styles.usdValue}>{fromUsdValue}</Text>
               <View style={styles.balanceRow}>
-                <RcIconWalletCC
-                  width={16}
-                  height={16}
-                  color={colors2024['neutral-foot']}
-                />
-                <Text style={styles.balanceText}>{fromBalanceDisplay}</Text>
+                <Text style={styles.balanceText}>
+                  {t('page.Lending.debtSwap.borrowBalance')}{' '}
+                  {fromBalanceDisplay}
+                </Text>
               </View>
             </View>
           </View>
@@ -838,6 +836,7 @@ export default function DebtSwapModal({
                 style={[
                   styles.amountDisplay,
                   !toAmount && styles.amountDisplayPlaceholder,
+                  isQuoteLoading && styles.loadingOpacity,
                 ]}>
                 {toAmount ? formatTokenAmount(toAmount) : '0'}
               </Text>
@@ -871,14 +870,22 @@ export default function DebtSwapModal({
 
             {toToken && (
               <View style={styles.usdValueRow}>
-                <Text style={styles.usdValue}>{toUsdValue}</Text>
+                <Text
+                  style={[
+                    styles.usdValue,
+                    isQuoteLoading && styles.loadingOpacity,
+                  ]}>
+                  {toUsdValue}
+                </Text>
                 <View style={styles.balanceRow}>
                   <RcIconWalletCC
                     width={16}
                     height={16}
                     color={colors2024['neutral-foot']}
                   />
-                  <Text style={styles.balanceText}>{toToken.balance}</Text>
+                  <Text style={styles.balanceText}>
+                    {formatTokenAmount(toToken.balance)}
+                  </Text>
                 </View>
               </View>
             )}
@@ -891,6 +898,7 @@ export default function DebtSwapModal({
           fromAmount={fromAmount}
           toAmount={toAmount}
           fromBalanceBn={fromBalanceBn}
+          isQuoteLoading={isQuoteLoading}
         />
         {canShowDirectSubmit && canSwap && (
           <View style={styles.gasPreContainer}>
@@ -1170,5 +1178,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   fullWidthButton: {
     flex: 1,
+  },
+  loadingOpacity: {
+    opacity: 0.5,
   },
 }));

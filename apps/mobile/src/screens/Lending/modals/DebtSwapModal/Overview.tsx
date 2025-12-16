@@ -18,6 +18,7 @@ interface DebtSwapModalOverviewProps {
   fromAmount: string;
   toAmount: string;
   fromBalanceBn?: BigNumber;
+  isQuoteLoading?: boolean;
 }
 
 const DebtSwapModalOverview = ({
@@ -27,6 +28,7 @@ const DebtSwapModalOverview = ({
   fromAmount,
   toAmount,
   fromBalanceBn,
+  isQuoteLoading,
 }: DebtSwapModalOverviewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -108,7 +110,11 @@ const DebtSwapModalOverview = ({
               </View>
             </View>
             {toToken && (
-              <View style={styles.borrowBalanceItem}>
+              <View
+                style={[
+                  styles.borrowBalanceItem,
+                  isQuoteLoading && styles.loadingOpacity,
+                ]}>
                 <TokenIcon
                   size={16}
                   chain={chainEnum}
@@ -211,5 +217,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'flex-start',
     justifyContent: 'flex-end',
     gap: 4,
+  },
+  loadingOpacity: {
+    opacity: 0.5,
   },
 }));
