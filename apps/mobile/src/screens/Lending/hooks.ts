@@ -18,7 +18,7 @@ import {
 } from '@aave/math-utils';
 import { ethers } from 'ethers';
 import dayjs from 'dayjs';
-import { Atom, atom, getDefaultStore, useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { startTransition, useCallback, useMemo } from 'react';
 import { unstable_batchedUpdates } from 'react-native';
 import { InteractionManager } from 'react-native';

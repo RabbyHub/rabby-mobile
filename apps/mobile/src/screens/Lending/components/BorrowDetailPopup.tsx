@@ -259,6 +259,7 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
         },
       },
       onChange: (v: SwappableToken) => {
+        console.log('CUSTOM_LOGGER:=>: v', v);
         removeGlobalBottomSheetModal2024(modalId);
       },
     });
