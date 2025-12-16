@@ -252,6 +252,7 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
     if (!r || !userSummary || !chainInfo?.id) {
       return;
     }
+    onClose?.();
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DEBT_SWAP,
       allowAndroidHarewareBack: true,

@@ -19,9 +19,8 @@ import {
 import { ethers } from 'ethers';
 import dayjs from 'dayjs';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { startTransition, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { unstable_batchedUpdates } from 'react-native';
-import { InteractionManager } from 'react-native';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
 import { CustomMarket, MarketDataType, marketsData } from './config/market';
@@ -523,21 +522,16 @@ async function fetchLendingData(options?: {
   }
   return fetchContractData(requestAddress)
     .then(data => {
-      InteractionManager.runAfterInteractions(() => {
-        startTransition(() => {
-          const nextReserves = data?.reserves;
-          const nextUserReserves = data?.userReserves;
-          const nextWalletBalances =
-            data?.walletBalances || EMPTY_WALLET_BALANCES;
-          unstable_batchedUpdates(() => {
-            globalSets.setReserves(nextReserves);
-            globalSets.setUserReserves(nextUserReserves);
-            globalSets.setWalletBalances(nextWalletBalances);
-            globalSets.setEModes(data?.eModes);
-            globalSets.setCurrentAddress(requestAddress);
-            globalSets.setLoading(false);
-          });
-        });
+      const nextReserves = data?.reserves;
+      const nextUserReserves = data?.userReserves;
+      const nextWalletBalances = data?.walletBalances || EMPTY_WALLET_BALANCES;
+      unstable_batchedUpdates(() => {
+        globalSets.setReserves(nextReserves);
+        globalSets.setUserReserves(nextUserReserves);
+        globalSets.setWalletBalances(nextWalletBalances);
+        globalSets.setEModes(data?.eModes);
+        globalSets.setCurrentAddress(requestAddress);
+        globalSets.setLoading(false);
       });
     })
     .catch(() => {

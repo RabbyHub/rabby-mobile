@@ -64,7 +64,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 
 import { SwapType } from '../../types/swap';
-import { formatApy } from '../../utils/format';
 import TokenIcon from '../../components/TokenIcon';
 import { ParaswapRatesType, SwappableToken } from '../../types/swap';
 import { DEBT_SWAP_PARENT_ID, getParaswap } from '../../config/paraswap';
@@ -80,6 +79,7 @@ import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/screens/Transaction/components/type';
+import DebtSwapModalOverview from './Overview';
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
@@ -111,7 +111,7 @@ export default function DebtSwapModal({
   fromToken,
   onClose,
 }: DebtSwapModalProps) {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -121,7 +121,6 @@ export default function DebtSwapModal({
   const [toToken, setToToken] = useState<SwappableToken | undefined>();
   const [toAmount, setToAmount] = useState<string>('');
   const [slider, setSlider] = useState<number>(0);
-  const [_isDraggingSlider, setIsDraggingSlider] = useState<boolean>(false);
   const previousSlider = useRef<number>(0);
   const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
@@ -168,20 +167,6 @@ export default function DebtSwapModal({
     );
   }, [toAmount, toToken]);
 
-  const fromBorrowApyDisplay = useMemo(() => {
-    if (!fromToken?.variableBorrowAPY) {
-      return '-';
-    }
-    return formatApy(Number(fromToken.variableBorrowAPY || '0'));
-  }, [fromToken?.variableBorrowAPY]);
-
-  const toBorrowApyDisplay = useMemo(() => {
-    if (!toToken?.variableBorrowAPY) {
-      return '-';
-    }
-    return formatApy(Number(toToken.variableBorrowAPY || '0'));
-  }, [toToken?.variableBorrowAPY]);
-
   const fromReserve = useMemo(
     () =>
       formattedPoolReservesAndIncentives?.find(item =>
@@ -211,20 +196,6 @@ export default function DebtSwapModal({
     );
   }, [fromToken.underlyingAddress, toToken]);
 
-  const estimatedFromBorrowAfter = useMemo(() => {
-    const amountBn = new BigNumber(fromAmount || 0);
-    const after = fromBalanceBn.minus(amountBn);
-    return after.isNegative() ? new BigNumber(0) : after;
-  }, [fromAmount, fromBalanceBn]);
-
-  const estimatedToBorrowAfter = useMemo(() => {
-    if (!toToken) {
-      return new BigNumber(0);
-    }
-    const amountBn = new BigNumber(toAmount || 0);
-    return amountBn.isNegative() ? new BigNumber(0) : amountBn;
-  }, [toAmount, toToken]);
-
   const handleSlider100 = useCallback(() => {
     setFromAmount(fromBalanceBn.toString(10));
   }, [fromBalanceBn]);
@@ -235,8 +206,7 @@ export default function DebtSwapModal({
   );
 
   const onChangeSlider = useCallback(
-    (v: number, syncAmount?: boolean) => {
-      setIsDraggingSlider(true);
+    (v: number) => {
       setSlider(v);
 
       if (
@@ -247,10 +217,6 @@ export default function DebtSwapModal({
           enableVibrateFallback: true,
           ignoreAndroidSystemSettings: false,
         });
-      }
-
-      if (syncAmount) {
-        setIsDraggingSlider(false);
       }
 
       previousSlider.current = v;
@@ -269,17 +235,6 @@ export default function DebtSwapModal({
       );
     },
     [fromBalanceBn, handleSlider100],
-  );
-
-  const onSlidingStart = useCallback(() => {
-    setIsDraggingSlider(true);
-  }, []);
-
-  const onAfterChangeSlider = useCallback(
-    (v: number) => {
-      onChangeSlider(v, true);
-    },
-    [onChangeSlider],
   );
 
   const showBubble = useSharedValue(false);
@@ -335,27 +290,27 @@ export default function DebtSwapModal({
   useEffect(() => {
     let cancelled = false;
     const fetchQuote = async () => {
+      const resetQuote = () => {
+        setToAmount('');
+        setQuote(null);
+        setSwapRate({});
+        setIsQuoteLoading(false);
+      };
+
       setIsQuoteLoading(true);
-      if (!toToken || isSameToken) {
-        setToAmount('');
-        setQuote(null);
-        setSwapRate({});
-        setIsQuoteLoading(false);
+      if (
+        !toToken ||
+        isSameToken ||
+        !debouncedFromAmount ||
+        !currentAccount?.address
+      ) {
+        resetQuote();
         return;
       }
-      if (!debouncedFromAmount || !currentAccount?.address) {
-        setToAmount('');
-        setQuote(null);
-        setSwapRate({});
-        setIsQuoteLoading(false);
-        return;
-      }
+
       const amountBn = new BigNumber(debouncedFromAmount || 0);
       if (amountBn.lte(0)) {
-        setToAmount('');
-        setQuote(null);
-        setSwapRate({});
-        setIsQuoteLoading(false);
+        resetQuote();
         return;
       }
       try {
@@ -450,9 +405,14 @@ export default function DebtSwapModal({
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         rootViewType: 'View',
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
       },
     });
-  }, [fromToken.underlyingAddress, fromAmount]);
+  }, [fromToken.underlyingAddress, fromAmount, colors2024, isLight]);
 
   const {
     openDirect,
@@ -563,33 +523,39 @@ export default function DebtSwapModal({
       });
     }
 
-    const normalizeTx = (tx: any): Tx => {
-      const value =
-        tx?.value && EthersBigNumber.isBigNumber(tx.value)
-          ? `0x${new BigNumber(tx.value.toString()).toString(16)}`
-          : tx?.value ?? '0x0';
-      const normalized: Tx = {
-        from: tx?.from || currentAccount.address,
-        to: tx?.to,
-        data: tx?.data || '0x',
-        value,
-        chainId: fromToken.chainId,
-        nonce: tx?.nonce ?? '0x0',
-      };
-      if (!tx?.nonce) {
-        delete (normalized as any).nonce;
-      }
-      if (!tx?.gas && !tx?.gasLimit) {
-        delete (normalized as any).gas;
-      }
-      return normalized;
-    };
-
     const txs: Tx[] = [];
     if (delegationTx?.data) {
-      txs.push(normalizeTx(delegationTx));
+      const formattedDelegationTx: any = {
+        from: (delegationTx as any).from || currentAccount.address,
+        to: (delegationTx as any).to,
+        data: (delegationTx as any).data || '0x',
+        value:
+          (delegationTx as any).value &&
+          EthersBigNumber.isBigNumber((delegationTx as any).value)
+            ? (delegationTx as any).value.toHexString()
+            : (delegationTx as any).value ?? '0x0',
+        chainId: fromToken.chainId,
+      };
+      if ((delegationTx as any).nonce) {
+        formattedDelegationTx.nonce = (delegationTx as any).nonce;
+      }
+      txs.push(formattedDelegationTx as Tx);
     }
-    txs.push(normalizeTx(debtSwitchTx));
+    const formattedDebtSwitchTx: any = {
+      from: (debtSwitchTx as any).from || currentAccount.address,
+      to: (debtSwitchTx as any).to,
+      data: (debtSwitchTx as any).data || '0x',
+      value:
+        (debtSwitchTx as any).value &&
+        EthersBigNumber.isBigNumber((debtSwitchTx as any).value)
+          ? (debtSwitchTx as any).value.toHexString()
+          : (debtSwitchTx as any).value ?? '0x0',
+      chainId: fromToken.chainId,
+    };
+    if ((debtSwitchTx as any).nonce) {
+      formattedDebtSwitchTx.nonce = (debtSwitchTx as any).nonce;
+    }
+    txs.push(formattedDebtSwitchTx as Tx);
     console.log('CUSTOM_LOGGER:=>: txs', txs);
     return txs;
   }, [
@@ -773,12 +739,11 @@ export default function DebtSwapModal({
                   value={slider}
                   onSlidingStart={() => {
                     showBubble.value = true;
-                    onSlidingStart();
                   }}
                   onValueChange={onChangeSlider}
                   onSlidingComplete={v => {
                     showBubble.value = false;
-                    onAfterChangeSlider(v);
+                    onChangeSlider(v);
                   }}
                   minimumValue={0}
                   maximumValue={100}
@@ -919,82 +884,14 @@ export default function DebtSwapModal({
             )}
           </Pressable>
         </View>
-        <Text style={[styles.sectionTitle, styles.transactionOverviewTitle]}>
-          {t('page.Lending.debtSwap.overview.title')}
-        </Text>
-        <View style={styles.transactionOverviewCard}>
-          <View style={styles.transactionOverviewRow}>
-            <Text style={styles.transactionOverviewLabel}>
-              {t('page.Lending.debtSwap.overview.borrowAPY')}
-            </Text>
-            <View style={styles.transactionOverviewValues}>
-              <Text style={styles.transactionOverviewValue}>
-                {fromBorrowApyDisplay}
-              </Text>
-              <Text style={styles.transactionOverviewArrow}>→</Text>
-              <Text style={styles.transactionOverviewValue}>
-                {toBorrowApyDisplay}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.transactionOverviewRow}>
-            <Text style={styles.transactionOverviewLabel}>
-              {t('page.Lending.debtSwap.overview.borrowValueAfter')}
-            </Text>
-            <View style={styles.borrowBalanceGroup}>
-              <View style={styles.borrowBalanceItem}>
-                <TokenIcon
-                  size={16}
-                  chain={chainEnum}
-                  chainSize={8}
-                  tokenSymbol={fromToken.symbol}
-                />
-                <View
-                  style={[
-                    styles.transactionOverviewValues,
-                    styles.afterBalance,
-                  ]}>
-                  <Text style={styles.transactionOverviewValue}>
-                    {formatTokenAmount(estimatedFromBorrowAfter.toString(10))}
-                  </Text>
-                  <Text style={styles.transactionOverviewValue}>
-                    {formatUsdValue(
-                      estimatedFromBorrowAfter
-                        .multipliedBy(fromToken.usdPrice || '0')
-                        .toString(10),
-                    )}
-                  </Text>
-                </View>
-              </View>
-              {toToken && (
-                <View style={styles.borrowBalanceItem}>
-                  <TokenIcon
-                    size={16}
-                    chain={chainEnum}
-                    chainSize={8}
-                    tokenSymbol={toToken.symbol}
-                  />
-                  <View
-                    style={[
-                      styles.transactionOverviewValues,
-                      styles.afterBalance,
-                    ]}>
-                    <Text style={styles.transactionOverviewValue}>
-                      {formatTokenAmount(estimatedToBorrowAfter.toString(10))}
-                    </Text>
-                    <Text style={styles.transactionOverviewValue}>
-                      {formatUsdValue(
-                        estimatedToBorrowAfter
-                          .multipliedBy(toToken.usdPrice || '0')
-                          .toString(10),
-                      )}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
+        <DebtSwapModalOverview
+          fromToken={fromToken}
+          toToken={toToken}
+          chainEnum={chainEnum}
+          fromAmount={fromAmount}
+          toAmount={toAmount}
+          fromBalanceBn={fromBalanceBn}
+        />
         {canShowDirectSubmit && canSwap && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
@@ -1075,78 +972,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     marginBottom: 12,
     paddingLeft: 4,
-  },
-  transactionOverviewTitle: {
-    marginTop: 26,
-  },
-  transactionOverviewCard: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
-    borderRadius: 16,
-    gap: 28,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-  },
-  transactionOverviewRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  transactionOverviewLabel: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-foot'],
-  },
-  transactionOverviewValues: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  afterBalance: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: 2,
-  },
-  transactionOverviewValue: {
-    fontSize: 17,
-    lineHeight: 17,
-    fontWeight: '700',
-    textAlign: 'right',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-  },
-  transactionOverviewArrow: {
-    fontSize: 14,
-    lineHeight: 19,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-  },
-  transactionOverviewDivider: {
-    height: 1,
-    marginVertical: 4,
-    backgroundColor: colors2024['neutral-line'],
-  },
-  borrowBalanceGroup: {
-    flex: 1,
-    gap: 10,
-  },
-  borrowBalanceItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'flex-end',
-    gap: 4,
-  },
-  borrowBalanceToken: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-body'],
   },
   content: {
     backgroundColor: colors2024['neutral-bg-2'],
@@ -1232,12 +1057,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   placeholderTokenInfo: {
     paddingLeft: 12,
   },
-  tokenIconPlaceholder: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: colors2024['neutral-bg-3'],
-  },
   tokenDetails: {
     flexShrink: 0,
   },
@@ -1251,12 +1070,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
-  },
-  tokenName: {
-    fontSize: 14,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-foot'],
   },
   selectTokenText: {
     fontSize: 16,
@@ -1334,9 +1147,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   arrowText: {
     fontSize: 22,
     color: colors2024['neutral-secondary'],
-  },
-  swapButton: {
-    marginTop: 8,
   },
   gasPreContainer: {
     paddingHorizontal: 8,
