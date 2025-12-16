@@ -4,8 +4,15 @@
  * 但不包含approve交易
  */
 
-import { ChainId, Pool, PoolBundle } from '@aave/contract-helpers';
+import {
+  BaseDebtToken,
+  ChainId,
+  ERC20Service,
+  Pool,
+  PoolBundle,
+} from '@aave/contract-helpers';
 import { referralCode } from './utils/constant';
+import { ethers } from 'ethers';
 
 export enum InterestRate {
   None = 'None',
@@ -153,5 +160,28 @@ export const buildManageEmodeTx = async ({
   return pool.setUserEMode({
     user: address,
     categoryId,
+  });
+};
+
+export const generateApproveDelegation = ({
+  provider,
+  address,
+  delegatee,
+  debtTokenAddress,
+  amount,
+}: {
+  provider: ethers.providers.Web3Provider;
+  address: string;
+  delegatee: string;
+  debtTokenAddress: string;
+  amount: string; // wei
+}) => {
+  const tokenERC20Service = new ERC20Service(provider);
+  const debtTokenService = new BaseDebtToken(provider, tokenERC20Service);
+  return debtTokenService.generateApproveDelegationTxData({
+    user: address,
+    delegatee,
+    debtTokenAddress,
+    amount,
   });
 };

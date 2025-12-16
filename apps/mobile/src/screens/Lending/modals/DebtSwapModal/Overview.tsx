@@ -17,7 +17,7 @@ interface DebtSwapModalOverviewProps {
   chainEnum?: CHAINS_ENUM;
   fromAmount: string;
   toAmount: string;
-  fromBalanceBn?: BigNumber;
+  fromBalanceBn?: string;
   isQuoteLoading?: boolean;
 }
 
@@ -51,7 +51,8 @@ const DebtSwapModalOverview = ({
       return new BigNumber(0);
     }
     const amountBn = new BigNumber(fromAmount || 0);
-    const after = fromBalanceBn?.minus(amountBn);
+    const bigNumberFromBalanceBn = new BigNumber(fromBalanceBn);
+    const after = bigNumberFromBalanceBn?.minus(amountBn);
     return after?.isNegative() ? new BigNumber(0) : after;
   }, [fromAmount, fromBalanceBn]);
 
