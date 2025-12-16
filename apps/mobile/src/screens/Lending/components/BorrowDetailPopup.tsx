@@ -30,13 +30,14 @@ import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from '../config/nativeToWrapper';
 import DetailLoadingSkeleton from './DetailLoadingSkeleton';
 import { SwappableToken } from '../types/swap';
+import DebtSwapEntryTips from './DetSwapEntryTips';
 
 export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
   underlyingAsset,
   onClose,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { chainEnum } = useSelectedMarket();
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const { chainEnum, selectedMarketData } = useSelectedMarket();
   const { t } = useTranslation();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -45,6 +46,7 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
     displayPoolReserves,
     iUserSummary: userSummary,
     loading,
+    formattedPoolReservesAndIncentives,
     wrapperPoolReserve,
   } = useLendingSummary();
   const reserve = useMemo(() => {
@@ -150,6 +152,35 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
     return reserve?.variableBorrows && reserve.variableBorrows !== '0';
   }, [reserve]);
 
+  const showDebtSwapButton = useMemo(() => {
+    return (
+      hasBorrowBalance && !!selectedMarketData?.enabledFeatures?.debtSwitch
+    );
+  }, [hasBorrowBalance, selectedMarketData?.enabledFeatures?.debtSwitch]);
+
+  const disableDebtSwapButton = useMemo(() => {
+    const r = formattedPoolReservesAndIncentives.find(item =>
+      isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+    );
+    if (!r) {
+      return true;
+    }
+    const disableEModeSwitch =
+      !!userSummary?.userEmodeCategoryId &&
+      formattedPoolReservesAndIncentives.filter(_r =>
+        _r.eModes.find(
+          e => e.id === userSummary?.userEmodeCategoryId && e.borrowingEnabled,
+        ),
+      ).length < 2;
+    return (
+      r.isPaused || !r.isActive || r.symbol === 'stETH' || disableEModeSwitch
+    );
+  }, [
+    formattedPoolReservesAndIncentives,
+    reserve?.underlyingAsset,
+    userSummary?.userEmodeCategoryId,
+  ]);
+
   const disableBorrowButton = useMemo(() => {
     if (!reserve) {
       return false;
@@ -217,17 +248,28 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
   const handleSwapDebt = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DEBT_TOKEN_SELECT,
-      selectedToken: reserve,
+      allowAndroidHarewareBack: true,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        rootViewType: 'View',
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      },
       onChange: (v: SwappableToken) => {
         removeGlobalBottomSheetModal2024(modalId);
       },
     });
   };
+
   useEffect(() => {
     if (!loading && !reserve) {
       onClose?.();
     }
   }, [loading, onClose, reserve]);
+
   if (loading || !reserve || !userSummary) {
     return <DetailLoadingSkeleton />;
   }
@@ -365,33 +407,66 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
               {formatUsdValueKMB(userSummary?.availableBorrowsUSD || '0')}
             </Text>
           </View>
+          {showDebtSwapButton && (
+            <View style={[styles.userInfoItem, styles.innerBtnsContainer]}>
+              {hasBorrowBalance && (
+                <Button
+                  type="ghost"
+                  buttonStyle={[styles.repayButton, styles.innerRepayButton]}
+                  titleStyle={styles.repayButtonTitle}
+                  containerStyle={styles.button}
+                  onPress={handlePressRepay}
+                  title={t('page.Lending.repayDetail.actions')}
+                />
+              )}
+              <Button
+                containerStyle={styles.button}
+                disabled={disableBorrowButton}
+                titleStyle={[
+                  styles.borrowButtonTitle,
+                  styles.innerBorrowButtonTitle,
+                ]}
+                buttonStyle={[styles.innerBorrowButton]}
+                onPress={handlePressBorrow}
+                title={t('page.Lending.borrowDetail.actions')}
+              />
+            </View>
+          )}
         </View>
       </View>
       <View style={styles.buttonContainer}>
-        {hasBorrowBalance && (
-          <Button
-            type="ghost"
-            buttonStyle={styles.repayButton}
-            titleStyle={styles.repayButtonTitle}
-            containerStyle={styles.button}
-            onPress={handlePressRepay}
-            title={t('page.Lending.repayDetail.actions')}
-          />
+        {showDebtSwapButton ? (
+          <DebtSwapEntryTips>
+            <Button
+              containerStyle={styles.button}
+              titleStyle={styles.borrowButtonTitle}
+              disabled={disableDebtSwapButton}
+              onPress={handleSwapDebt}
+              title={t('page.Lending.borrowDetail.swapDebt')}
+            />
+          </DebtSwapEntryTips>
+        ) : (
+          <>
+            {hasBorrowBalance && (
+              <Button
+                type="ghost"
+                buttonStyle={styles.repayButton}
+                titleStyle={styles.repayButtonTitle}
+                containerStyle={styles.button}
+                onPress={handlePressRepay}
+                title={t('page.Lending.repayDetail.actions')}
+              />
+            )}
+            <Button
+              containerStyle={styles.button}
+              disabled={disableBorrowButton}
+              titleStyle={styles.borrowButtonTitle}
+              onPress={handlePressBorrow}
+              title={t('page.Lending.borrowDetail.actions')}
+            />
+          </>
         )}
-        <Button
-          containerStyle={styles.button}
-          disabled={disableBorrowButton}
-          titleStyle={styles.borrowButtonTitle}
-          onPress={handlePressBorrow}
-          title={t('page.Lending.borrowDetail.actions')}
-        />
       </View>
-      <Button
-        containerStyle={styles.button}
-        titleStyle={styles.borrowButtonTitle}
-        onPress={handleSwapDebt}
-        title={t('page.Lending.borrowDetail.swapDebt')}
-      />
     </AutoLockView>
   );
 };
@@ -501,6 +576,9 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'space-between',
     gap: 4,
   },
+  innerBtnsContainer: {
+    gap: 12,
+  },
   myBorrowItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -568,6 +646,9 @@ const getStyles = createGetStyles2024(ctx => ({
     borderWidth: 0,
     backgroundColor: ctx.colors2024['neutral-line'],
   },
+  innerRepayButton: {
+    backgroundColor: ctx.colors2024['neutral-bg-5'],
+  },
   repayButtonTitle: {
     color: ctx.colors2024['neutral-title-1'],
     fontSize: 17,
@@ -580,5 +661,11 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  innerBorrowButtonTitle: {
+    color: ctx.colors2024['brand-default'],
+  },
+  innerBorrowButton: {
+    backgroundColor: ctx.colors2024['brand-light-1'],
   },
 }));

@@ -15,6 +15,7 @@ import { useMode } from '../../hooks/useMode';
 import { getTokensTo } from '../../utils/swap';
 import { SwappableToken } from '../../types/swap';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export type EModeCategoryDisplay = EmodeCategory & {
   available: boolean; // indicates if the user can enter this category
@@ -28,7 +29,6 @@ interface IProps {
 const FOOTER_COMPONENT_HEIGHT = 32;
 
 export default function DebtTokenSelectModal({
-  value,
   excludeTokenAddress,
   onChange,
 }: IProps) {
@@ -51,6 +51,9 @@ export default function DebtTokenSelectModal({
           chainInfo?.id,
           marketKey,
         )
+          .filter(
+            item => !isSameAddress(item.underlyingAddress, excludeTokenAddress),
+          )
           .map(item => {
             const displayPoolReserve = displayPoolReserves.find(
               x => x.underlyingAsset === item.underlyingAddress,
@@ -76,6 +79,7 @@ export default function DebtTokenSelectModal({
     chainInfo?.id,
     marketKey,
     formattedPoolReservesAndIncentives,
+    excludeTokenAddress,
     displayPoolReserves,
   ]);
 
@@ -84,18 +88,18 @@ export default function DebtTokenSelectModal({
   const ListHeaderComponent = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>
+        <Text style={[styles.headerText, styles.assetsHeaderText]}>
           {t('page.Lending.manageEmode.debtSwapSelector.header.assets')}
         </Text>
-        <Text style={styles.headerText}>
+        <Text style={[styles.headerText, styles.apyHeaderText]}>
           {t('page.Lending.manageEmode.debtSwapSelector.header.apy')}
         </Text>
-        <Text style={styles.headerText}>
+        <Text style={[styles.headerText, styles.borrowHeaderText]}>
           {t('page.Lending.manageEmode.debtSwapSelector.header.borrow')}
         </Text>
       </View>
     );
-  }, [styles.headerContainer, styles.headerText, t]);
+  }, [styles, t]);
 
   return (
     <AutoLockView
@@ -274,5 +278,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+  },
+  assetsHeaderText: {
+    flex: 1,
+  },
+  apyHeaderText: {
+    width: 60,
+    flex: 0,
+  },
+  borrowHeaderText: {
+    flex: 0,
+    marginLeft: 10,
+    width: 80,
+    textAlign: 'right',
   },
 }));
