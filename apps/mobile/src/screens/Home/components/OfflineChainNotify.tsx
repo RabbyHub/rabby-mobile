@@ -17,7 +17,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { useMockDataForHomeCenterArea } from '@/screens/Settings/sheetModals/DevUIHomeCenterArea';
+import { useMockDataForHomeCenterArea } from '../hooks/homeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';

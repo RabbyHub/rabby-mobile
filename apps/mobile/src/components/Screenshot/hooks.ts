@@ -144,6 +144,23 @@ export const getShowFeedbackOnScreenshotCapture = () => {
   });
 };
 
+export function useIsShowFeedbackOnScreenshot() {
+  const { disableScreenshotToReportUntil, showFeedbackOnScreenshot_20250923 } =
+    screenshotFeedbackStore(
+      useShallow(s => ({
+        disableScreenshotToReportUntil: s.disableScreenshotToReportUntil,
+        showFeedbackOnScreenshot_20250923: s.showFeedbackOnScreenshot_20250923,
+      })),
+    );
+
+  const isScreenshotReportEnabled = isEnabledScreenshotToReport({
+    showFeedbackOnScreenshot: showFeedbackOnScreenshot_20250923,
+    disableScreenshotToReportUntil: disableScreenshotToReportUntil,
+  });
+
+  return { isScreenshotReportEnabled };
+}
+
 const markViewedHomeTip = () => {
   if (screenshotFeedbackStore.getState().viewedHomeTip) return;
   setScreenshotFeedback(prev => ({

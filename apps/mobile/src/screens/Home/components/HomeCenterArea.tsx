@@ -8,7 +8,7 @@ import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
 import { useViewedHomeTip } from '@/components/Screenshot/hooks';
 import { isNonPublicProductionEnv } from '@/constant';
 import { ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
-import { useMockDataForHomeCenterArea } from '@/screens/Settings/sheetModals/DevUIHomeCenterArea';
+import { useMockDataForHomeCenterArea } from '../hooks/homeCenterArea';
 import { FoundYourWalletGuide } from '../FundYourWallet';
 import {
   OfflineChainNotify,

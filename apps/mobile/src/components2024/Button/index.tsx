@@ -24,13 +24,14 @@ import { CircleSpinnerCC } from '../CircleSpinner/CircleSpinnerCC';
 export type ButtonProps = Omit<
   TouchableOpacityProps &
     TouchableNativeFeedbackProps & {
+      height?: number;
       title?:
         | string
         | ((ctx: { titleStyle?: TextStyle }) => ReactNode)
         | React.ReactElement<{}>;
       titleStyle?: StyleProp<TextStyle>;
       buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
-      type?: 'primary' | 'ghost' | 'success';
+      type?: 'primary' | 'ghost' | 'success' | 'danger';
       loading?: boolean;
       loadingStyle?: StyleProp<ViewStyle>;
       containerStyle?: StyleProp<ViewStyle>;
@@ -50,6 +51,7 @@ export type ButtonProps = Omit<
 >;
 
 export const Button = ({
+  height = undefined,
   title = '',
   titleStyle: passedTitleStyle,
   TouchableComponent = TouchableOpacity,
@@ -87,6 +89,10 @@ export const Button = ({
         bg: colors2024['green-default'],
         currentColor: colors2024['neutral-InvertHighlight'],
       },
+      danger: {
+        bg: colors2024['red-default'],
+        currentColor: colors2024['neutral-InvertHighlight'],
+      },
     };
     return {
       currentColor:
@@ -118,21 +124,29 @@ export const Button = ({
     return StyleSheet.flatten([
       { color: currentColor },
       styles.title,
+      typeof height === 'number' && styles.titleWithLeading,
       passedTitleStyle,
       disabled && disabledTitleStyle,
     ]);
   }, [
     currentColor,
     styles.title,
+    height,
+    styles.titleWithLeading,
     passedTitleStyle,
     disabled,
     disabledTitleStyle,
   ]);
 
+  const styleWithHeight = useMemo(
+    () => typeof height === 'number' && { height },
+    [height],
+  );
   const treatAsDisabled = disabled || loading;
   const innerStyle = useMemo(() => {
     return StyleSheet.flatten([
       styles.button,
+      styleWithHeight,
       {
         backgroundColor: bgColor,
         borderColor:
@@ -153,6 +167,7 @@ export const Button = ({
   }, [
     treatAsDisabled,
     styles.button,
+    styleWithHeight,
     styles.shadowButton,
     bgColor,
     type,
@@ -188,7 +203,11 @@ export const Button = ({
 
   return (
     <View
-      style={StyleSheet.flatten([styles.container, containerStyle])}
+      style={StyleSheet.flatten([
+        styles.container,
+        containerStyle,
+        styleWithHeight,
+      ])}
       testID="RABBY_BUTTON_WRAPPER">
       <TouchableComponentInternal
         onPress={handleOnPress}
@@ -197,7 +216,7 @@ export const Button = ({
         accessibilityRole="button"
         accessibilityState={accessibilityState}
         {...rest}
-        style={rest.style}>
+        style={StyleSheet.flatten([rest.style, styleWithHeight])}>
         <ViewComponent style={innerStyle}>
           {/* Activity Indicator on loading */}
           {loading && (
@@ -272,7 +291,9 @@ const getStyle = createGetStyles2024(ctx => ({
     paddingVertical: 1,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
-    // lineHeight: 24,
+  },
+  titleWithLeading: {
+    lineHeight: 24,
   },
   iconContainer: {
     marginHorizontal: 8,
