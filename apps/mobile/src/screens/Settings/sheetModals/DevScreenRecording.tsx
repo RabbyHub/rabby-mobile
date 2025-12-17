@@ -23,7 +23,7 @@ import { SwitchAllowScreenshot } from '../components/SwitchAllowScreenshot';
 import { useExpScreenCapture } from '@/hooks/appSettings';
 import { LabelScreenshotToReport } from '../components/SwitchScreenshotToReport';
 import {
-  getShowFeedbackOnScreenshotCapture,
+  useIsShowFeedbackOnScreenshot,
   useScreenshotToReportEnabled,
 } from '@/components/Screenshot/hooks';
 
@@ -38,7 +38,6 @@ export function useDevScreenRecordingModalVisiable() {
   };
 }
 
-/** @deprecated */
 export default function DevScreenRecordingModal({
   onCancel,
 }: RNViewProps & {
@@ -69,8 +68,8 @@ export default function DevScreenRecordingModal({
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
 
-  const isScreenshotReportEnabled = getShowFeedbackOnScreenshotCapture();
   const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
+  const { isScreenshotReportEnabled } = useIsShowFeedbackOnScreenshot();
 
   const Items = (() => {
     const list: DevTestItem[] = [

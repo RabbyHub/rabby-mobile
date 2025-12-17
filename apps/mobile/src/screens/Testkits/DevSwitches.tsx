@@ -37,7 +37,7 @@ import {
 import { SwitchToggleType } from '@/components';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
-  useIsShowFeedbackOnScreenshotCapture,
+  useIsShowFeedbackOnScreenshot,
   useScreenshotToReportEnabled,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
@@ -82,7 +82,7 @@ function DevSwitchAboutScreenProtection() {
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
 
-  const { isScreenshotReportEnabled } = useIsShowFeedbackOnScreenshotCapture();
+  const { isScreenshotReportEnabled } = useIsShowFeedbackOnScreenshot();
   const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
 
   return (
