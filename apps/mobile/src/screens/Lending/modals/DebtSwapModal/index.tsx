@@ -133,10 +133,11 @@ export default function DebtSwapModal({
       fromAmount,
       toAmount,
     });
-  const { fromReserve, toReserve, isSameToken } = useSwapReserves({
-    fromToken,
-    toToken,
-  });
+  const { fromReserve, toReserve, isSameToken, toDisplayReserve } =
+    useSwapReserves({
+      fromToken,
+      toToken,
+    });
   const {
     slippage,
     slippageBpsRef,
@@ -763,7 +764,9 @@ export default function DebtSwapModal({
                     color={colors2024['neutral-foot']}
                   />
                   <Text style={styles.balanceText}>
-                    {formatTokenAmount(toToken.balance)}
+                    {formatTokenAmount(
+                      toDisplayReserve?.variableBorrows || '0',
+                    )}
                   </Text>
                 </View>
               </View>
@@ -823,6 +826,7 @@ export default function DebtSwapModal({
           toToken={toToken}
           chainEnum={chainEnum}
           fromAmount={fromAmount}
+          currentToAmount={toDisplayReserve?.variableBorrows || '0'}
           toAmount={toAmount}
           fromBalanceBn={fromBalanceBn.toString()}
           isQuoteLoading={isQuoteLoading}

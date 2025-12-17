@@ -62,7 +62,8 @@ export const useSwapReserves = ({
   fromToken: SwappableToken;
   toToken?: SwappableToken;
 }) => {
-  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { formattedPoolReservesAndIncentives, displayPoolReserves } =
+    useLendingSummary();
   const fromReserve = useMemo(
     () =>
       formattedPoolReservesAndIncentives?.find(item =>
@@ -81,6 +82,14 @@ export const useSwapReserves = ({
       ),
     [formattedPoolReservesAndIncentives, toToken?.underlyingAddress],
   );
+  const toDisplayReserve = useMemo(() => {
+    if (!toToken?.underlyingAddress) {
+      return undefined;
+    }
+    return displayPoolReserves.find(item =>
+      isSameAddress(item.underlyingAsset, toToken?.underlyingAddress),
+    );
+  }, [displayPoolReserves, toToken?.underlyingAddress]);
 
   const isSameToken = useMemo(() => {
     if (!toToken) {
@@ -95,6 +104,7 @@ export const useSwapReserves = ({
     fromReserve,
     toReserve,
     isSameToken,
+    toDisplayReserve,
   };
 };
 

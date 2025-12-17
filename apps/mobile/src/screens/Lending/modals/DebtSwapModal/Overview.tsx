@@ -19,6 +19,7 @@ interface DebtSwapModalOverviewProps {
   toAmount: string;
   fromBalanceBn?: string;
   isQuoteLoading?: boolean;
+  currentToAmount: string;
 }
 
 const DebtSwapModalOverview = ({
@@ -29,6 +30,7 @@ const DebtSwapModalOverview = ({
   toAmount,
   fromBalanceBn,
   isQuoteLoading,
+  currentToAmount,
 }: DebtSwapModalOverviewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -60,9 +62,11 @@ const DebtSwapModalOverview = ({
     if (!toToken) {
       return new BigNumber(0);
     }
+    const currentToAmountBn = new BigNumber(currentToAmount || 0);
     const amountBn = new BigNumber(toAmount || 0);
-    return amountBn.isNegative() ? new BigNumber(0) : amountBn;
-  }, [toAmount, toToken]);
+    const after = currentToAmountBn.plus(amountBn);
+    return after.isNegative() ? new BigNumber(0) : after;
+  }, [currentToAmount, toAmount, toToken]);
 
   return (
     <>
@@ -106,11 +110,13 @@ const DebtSwapModalOverview = ({
                     styles.transactionOverviewValue,
                     styles.usdValueText,
                   ]}>
-                  {formatUsdValue(
-                    estimatedFromBorrowAfter
-                      .multipliedBy(fromToken.usdPrice || '0')
-                      .toString(10),
-                  )}
+                  {estimatedFromBorrowAfter.eq(0)
+                    ? '$0'
+                    : formatUsdValue(
+                        estimatedFromBorrowAfter
+                          .multipliedBy(fromToken.usdPrice || '0')
+                          .toString(10),
+                      )}
                 </Text>
               </View>
             </View>
