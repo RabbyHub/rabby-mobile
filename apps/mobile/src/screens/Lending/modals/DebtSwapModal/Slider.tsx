@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 
 import { useWindowDimensions, View } from 'react-native';
 import Animated, {
@@ -13,6 +13,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BubbleWithText } from '@/screens/Swap/components/Slider';
 
 import { SwappableToken } from '../../types/swap';
+import { sliderHapticTriggerNumbers } from './utils';
+import { trigger } from 'react-native-haptic-feedback';
 
 interface DebtSwapModalSliderProps {
   fromToken: SwappableToken;
@@ -26,6 +28,8 @@ const DebtSwapModalSlider = ({
 }: DebtSwapModalSliderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const showBubble = useSharedValue(false);
+  const previousSlider = useRef<number>(0);
+
   const { width } = useWindowDimensions();
   const sliderStyle = useAnimatedStyle(
     () => ({
@@ -44,6 +48,23 @@ const DebtSwapModalSlider = ({
     }),
     [width],
   );
+  const handleSliderChange = useCallback(
+    (v: number) => {
+      if (
+        v !== previousSlider.current &&
+        sliderHapticTriggerNumbers.includes(v)
+      ) {
+        trigger('impactLight', {
+          enableVibrateFallback: true,
+          ignoreAndroidSystemSettings: false,
+        });
+      }
+
+      previousSlider.current = v;
+      onChangeSlider(v);
+    },
+    [onChangeSlider],
+  );
   return (
     <Slider
       key={`${fromToken?.underlyingAddress}`}
@@ -56,7 +77,7 @@ const DebtSwapModalSlider = ({
       onValueChange={onChangeSlider}
       onSlidingComplete={v => {
         showBubble.value = false;
-        onChangeSlider(v);
+        handleSliderChange(v);
       }}
       minimumValue={0}
       maximumValue={100}
