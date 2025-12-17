@@ -252,9 +252,6 @@ export type AddressNavigatorParamList = {
   [RootNames.BackupPrivateKey]?: {
     data: string;
   };
-  [RootNames.BackupMnemonic]?: {
-    data: string;
-  };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.WatchAddressList]?: {};
   [RootNames.SafeAddressList]?: {};

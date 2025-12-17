@@ -2,6 +2,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import React from 'react';
 
 import {
+  ScrollView,
   View,
   Text,
   TouchableWithoutFeedback,
@@ -16,12 +17,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { SeedPhraseGroup } from './CreateSelectOnCurrentSeed/SeedPhraseGroup';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function MainListBlocks() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { seedPhraseList, handleAddSeedPhraseAddress2024 } = useSeedPhrase();
   const navigation = useNavigation();
+  const { bottom } = useSafeAreaInsets();
 
   const handleCreateNewSeed = React.useCallback(() => {
     navigation.dispatch(
@@ -40,7 +43,12 @@ function MainListBlocks() {
       onPress={() => {
         Keyboard.dismiss();
       }}>
-      <View style={[styles.container]}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(bottom, 20) },
+        ]}>
         <TouchableOpacity
           style={styles.titleContainer}
           onPress={handleCreateNewSeed}>
@@ -64,7 +72,7 @@ function MainListBlocks() {
               style={styles.group}
             />
           ))}
-      </View>
+      </ScrollView>
     </TouchableWithoutFeedback>
   );
 }
@@ -135,13 +143,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   container: {
-    height: '100%',
-    position: 'relative',
+    flex: 1,
     display: 'flex',
+  },
+  content: {
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 24,
-    marginBottom: 20,
   },
   inputContainer: {
     marginVertical: 8,

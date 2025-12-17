@@ -1147,7 +1147,7 @@
         "WriteDownSeedPhrase": "Ghi Lại Seed Phrase của Bạn",
         "passwordTopTips": "Mật khẩu này sẽ được sử dụng để mở khóa ví của bạn và mã hóa dữ liệu cục bộ của bạn.",
         "whatIsSeedPhrase": "Seed Phrase là gì",
-        "WriteSeedPhrase": "Đây là cụm từ khôi phục của bạn. Viết nó ra giấy và lưu trữ ở nơi an toàn. Bạn sẽ cần nhập lại theo đúng thứ tự trong bước tiếp theo.",
+        "WriteSeedPhrase": "",
         "Continue": "Tiếp tục",
         "createOnCurrent": "Sử dụng Cụm từ Khôi phục Hiện tại",
         "createNewSeedPhrase": "Tạo Mới Seed Phrase",

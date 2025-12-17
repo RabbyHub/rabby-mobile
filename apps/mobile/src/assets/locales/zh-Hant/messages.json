@@ -1250,7 +1250,7 @@
         "passwordMin": "至少需要 8 個字符",
         "passwordTopTips": "此密碼將用於解鎖您的錢包並加密您的本地數據。",
         "backupSeedPhrase": "備份你的助記詞，以便在應用被刪除或設備丟失時恢復你的錢包。",
-        "WriteSeedPhrase": "這是你的助記詞。請將其寫在紙上並妥善保管。在下一步中，你將需要按正確的順序重新輸入。",
+        "WriteSeedPhrase": "",
         "createNewDesc": "生成新的种子短语以供新的钱包使用",
         "createOnCurrentDesc": "使用現有的導入種子短語創建錢包"
       },

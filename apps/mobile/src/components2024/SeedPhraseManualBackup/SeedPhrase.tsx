@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  StyleSheet,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -39,10 +40,16 @@ import IconCopy from '@/assets2024/icons/common/copy-brand.svg';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { useIOSScreenshotted } from '@/hooks/native/security';
 import { storeApiScreenshotReport } from '@/components/Screenshot/hooks';
+import IconWarning from '@/assets/icons/address/warning-rouned.svg';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '../GlobalBottomSheetModal';
+import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWrapper: {
-    height: 66,
+    minHeight: 66,
     display: 'flex',
     flexWrap: 'wrap',
     flexDirection: 'row',
@@ -50,6 +57,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     flexShrink: 0,
     // ...makeDebugBorder(),
+  },
+  warnWrapper: {
+    padding: 12,
+    paddingLeft: 34,
+    backgroundColor: colors2024['red-light-1'],
+    borderRadius: 8,
   },
   blueText: {
     marginHorizontal: 4,
@@ -59,6 +72,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     fontSize: 17,
   },
+  warnIcon: {
+    position: 'absolute',
+    left: 12,
+    top: 12,
+    width: 18,
+    height: 18,
+  },
   tipsText: {
     lineHeight: 22,
     color: colors2024['neutral-secondary'],
@@ -67,6 +87,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 0,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
+  },
+  warningTips: {
+    color: colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
+    textAlign: 'justify',
   },
   verifyTipsText: {
     width: '100%',
@@ -196,7 +225,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   wordContainer: {
     position: 'relative',
-    marginTop: 24,
+    marginTop: 12,
     flexShrink: 1,
     height: '100%',
     flexDirection: 'column',
@@ -291,6 +320,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '800',
     lineHeight: 24,
+    marginTop: 8,
   },
   secureSubTitle: {
     color: colors2024['neutral-secondary'],
@@ -393,7 +423,7 @@ export const SeedPhrase: React.FC<Props> = ({
   readMode,
   seedPhraseData,
 }) => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { seedPharseData, addressList, confirmPassword } =
     useCreateAddressProc();
   const { t } = useTranslation();
@@ -582,11 +612,20 @@ export const SeedPhrase: React.FC<Props> = ({
                 : t('page.nextComponent.createNewAddress.VerifyDownSeedPhrase')
             }
           />
-          <View style={styles.tipsWrapper}>
+          <View
+            style={[
+              styles.tipsWrapper,
+              !currentSelecting && styles.warnWrapper,
+            ]}>
             {!currentSelecting ? (
-              <Text style={styles.tipsText}>
-                {t('page.nextComponent.createNewAddress.WriteSeedPhrase')}
-              </Text>
+              <>
+                <Text style={[styles.tipsText, styles.warningTips]}>
+                  {readMode
+                    ? t('page.backupSeedPhrase.alert')
+                    : t('page.nextComponent.createNewAddress.WriteSeedPhrase')}
+                </Text>
+                <IconWarning style={styles.warnIcon} />
+              </>
             ) : (
               <View style={styles.verifyTipsText}>
                 <Text style={styles.tipsText}>
@@ -635,19 +674,55 @@ export const SeedPhrase: React.FC<Props> = ({
           )}
 
           {!isHidden && !currentSelecting ? (
-            <View style={styles.copyBtnWrapper}>
-              <TouchableOpacity
-                style={styles.copyBtn}
-                onPress={() => {
-                  setShowSecureTips(false);
-                  setTimeout(() => {
-                    setSecureType('copy');
-                    setShowSecureTips(true);
-                  }, 100);
-                }}>
-                <IconCopy style={styles.copyBtnIcon} />
-                <Text style={styles.copyBtnText}>{t('global.copy')}</Text>
-              </TouchableOpacity>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+              }}>
+              <View style={styles.copyBtnWrapper}>
+                <TouchableOpacity
+                  style={styles.copyBtn}
+                  onPress={() => {
+                    const id = createGlobalBottomSheetModal2024({
+                      name: MODAL_NAMES.SEED_PHRASE_QR_CODE,
+                      bottomSheetModalProps: {
+                        enableContentPanningGesture: true,
+                        enablePanDownToClose: true,
+                        rootViewType: 'BottomSheetScrollView',
+                      },
+                      preventScreenshotOnModalOpen: false,
+                      data: words.join(' '),
+                      onClose: () => {
+                        removeGlobalBottomSheetModal2024(id);
+                      },
+                      onDone: () => {
+                        removeGlobalBottomSheetModal2024(id);
+                      },
+                    });
+                  }}>
+                  <IconCopy style={styles.copyBtnIcon} />
+                  <Text style={styles.copyBtnText}>
+                    {t('page.backupSeedPhrase.showQrCode')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.copyBtnWrapper}>
+                <TouchableOpacity
+                  style={styles.copyBtn}
+                  onPress={() => {
+                    setShowSecureTips(false);
+                    setTimeout(() => {
+                      setSecureType('copy');
+                      setShowSecureTips(true);
+                    }, 100);
+                  }}>
+                  <IconCopy style={styles.copyBtnIcon} />
+                  <Text style={styles.copyBtnText}>{t('global.copy')}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : null}
         </WordMatrixWrapper>
@@ -667,7 +742,7 @@ export const SeedPhrase: React.FC<Props> = ({
           styles.btnWrapper,
           { paddingBottom: safeSizes.btnContainerBottom },
         ]}>
-        {!isHidden && (
+        {(!isHidden || readMode) && (
           <>
             <Button
               disabled={currentSelecting && selectArr.length < 3}
@@ -675,7 +750,9 @@ export const SeedPhrase: React.FC<Props> = ({
               loading={currentSelecting ? loading : false}
               type="primary"
               title={
-                currentSelecting
+                readMode
+                  ? t('global.Done')
+                  : currentSelecting
                   ? t('page.nextComponent.createNewAddress.Verify')
                   : t('global.Confirm')
               }

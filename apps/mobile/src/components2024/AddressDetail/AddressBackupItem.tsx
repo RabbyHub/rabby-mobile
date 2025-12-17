@@ -4,13 +4,13 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { useTranslation } from 'react-i18next';
 import { apiMnemonic, apiPrivateKey } from '@/core/apis';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '../Card';
 import { Item } from './Item';
+import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -32,7 +32,7 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
   const handlePressBackupPrivateKey = useCallback(() => {
     let data = '';
 
-    AuthenticationModal.show({
+    AuthenticationModal2024.show({
       confirmText: t('global.confirm'),
       cancelText: t('global.Cancel'),
       title: t('page.addressDetail.backup-private-key'),
@@ -64,7 +64,7 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
   const handlePressBackupSeedPhrase = useCallback(() => {
     let data = '';
 
-    AuthenticationModal.show({
+    AuthenticationModal2024.show({
       confirmText: t('global.confirm'),
       cancelText: t('global.Cancel'),
       title: t('page.addressDetail.backup-seed-phrase'),
@@ -80,10 +80,26 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
           return;
         }
         onCancel();
-        navigateDeprecated(RootNames.StackAddress, {
-          screen: RootNames.BackupMnemonic,
-          params: {
-            data,
+        // navigateDeprecated(RootNames.StackAddress, {
+        //   screen: RootNames.BackupMnemonic,
+        //   params: {
+        //     data,
+        //   },
+        // });
+
+        const id = createGlobalBottomSheetModal2024({
+          name: MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP,
+          bottomSheetModalProps: {
+            enableContentPanningGesture: false,
+            enablePanDownToClose: true,
+          },
+          preventScreenshotOnModalOpen: false,
+          readMode: true,
+          seedPhraseData: data,
+          // screenshotReportFreeBeforeModalClose: true,
+          // delaySetPassword: state?.delaySetPassword,
+          onDone: () => {
+            removeGlobalBottomSheetModal2024(id);
           },
         });
       },

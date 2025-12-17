@@ -65,6 +65,7 @@ import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
 import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
+import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -214,8 +215,12 @@ export const MODAL_CONFIGS: Record<
     Component: AddWhitelistSelectMethod,
   },
   [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: {
-    snapPoints: ['95%'],
+    snapPoints: ['100%'],
     Component: SeedPhraseManualBackup,
+  },
+  [MODAL_NAMES.SEED_PHRASE_QR_CODE]: {
+    snapPoints: [606],
+    Component: SeedPhraseQrCode,
   },
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: {
     snapPoints: [],

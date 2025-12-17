@@ -19,6 +19,7 @@ import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useSingleHomeAccount, apisSingleHome } from './hooks/singleHome';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
+import { naviPush } from '@/utils/navigation';
 
 const hitSlop = {
   top: 10,
@@ -187,7 +188,6 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
 };
 
 export const RightArea = () => {
-  const showAddressDetail = useAddressDetailModal();
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
   const { t } = useTranslation();
@@ -197,11 +197,13 @@ export const RightArea = () => {
   const onPress = () => {
     if (currentAccount) {
       apisSingleHome.setFoldChart(true);
-      showAddressDetail({
-        account: currentAccount,
-        onDelete: () => {
-          toast.success(t('global.Deleted'));
-          navigation?.canGoBack() && navigation.goBack();
+
+      naviPush(RootNames.StackAddress, {
+        screen: RootNames.AddressDetail,
+        params: {
+          address: currentAccount.address,
+          type: currentAccount.type,
+          brandName: currentAccount.brandName,
         },
       });
     }

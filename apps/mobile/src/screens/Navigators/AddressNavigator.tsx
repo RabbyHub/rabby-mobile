@@ -318,6 +318,11 @@ export function AddressNavigator() {
         options={{
           headerTitle: t('screens.addressStackTitle.AddressDetail'),
           title: t('screens.addressStackTitle.AddressDetail'),
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-0'],
+          },
+          headerTintColor: colors2024['neutral-title-1'],
+          headerTitleStyle: styles.headerTitleText,
         }}
       />
       <AddressStack.Screen
@@ -430,7 +435,7 @@ export function AddressNavigator() {
           },
         }}
       />
-      <AddressStack.Screen
+      {/* <AddressStack.Screen
         name={RootNames.BackupMnemonic}
         component={BackSeedPhraseScreen}
         options={{
@@ -440,7 +445,7 @@ export function AddressNavigator() {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
-      />
+      /> */}
       <AddressStack.Screen
         name={RootNames.RestoreFromCloud}
         component={RestoreFromCloud}

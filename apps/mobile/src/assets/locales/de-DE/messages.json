@@ -1353,7 +1353,7 @@
         "BackupSeedPhrase": "Manuelles Backup der Seed-Phrase",
         "createNewSeedPhrase": "Neue Seed Phrase erstellen",
         "confirmPasswordTips": "Passwörter stimmen überein",
-        "WriteSeedPhrase": "Dies ist Ihre Seed-Phrase. Notieren Sie sie auf Papier und bewahren Sie sie an einem sicheren Ort auf. Sie müssen sie im nächsten Schritt in der richtigen Reihenfolge erneut eingeben.",
+        "WriteSeedPhrase": "",
         "riskTips": "Bevor Sie beginnen, lesen Sie bitte diese Sicherheitstipps und behalten Sie sie im Hinterkopf:",
         "backupSeedPhrase": "Sichern Sie Ihre seed phrase, um Ihre Wallet wiederherzustellen, falls die App gelöscht wird oder Ihr Gerät verloren geht.",
         "createNewDesc": "Erzeugen Sie eine neue Seed-Phrase für neue Wallets",

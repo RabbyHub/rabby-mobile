@@ -19,6 +19,8 @@ import { ManageSetting } from './components/ManageSetting';
 import { useAddressDetailModal } from './useAddressDetailModal';
 import { toast } from '@/components2024/Toast';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
+import { naviPush } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 export const NotMatterAddressDialog: React.FC<{
   onDone?: () => void;
@@ -37,8 +39,6 @@ export const NotMatterAddressDialog: React.FC<{
   const switchManageMode = () => {
     setIsManageMode(e => !e);
   };
-
-  const showAddressDetail = useAddressDetailModal();
 
   useEffect(() => {
     fetchAccounts();
@@ -145,19 +145,20 @@ export const NotMatterAddressDialog: React.FC<{
   const renderItem = useCallback(
     ({ item }) => {
       if (isManageMode) {
-        const showAddressDetailPopup = () => {
-          showAddressDetail({
-            account: item,
-            onDelete: () => {
-              toast.success(t('global.Deleted'));
+        const gotoAddressDetail = () => {
+          onDone?.();
+          naviPush(RootNames.StackAddress, {
+            screen: RootNames.AddressDetail,
+            params: {
+              address: item.address,
+              type: item.type,
+              brandName: item.brandName,
             },
           });
         };
         return (
           <View style={[styles.itemGap, styles.manageModeItem]}>
-            <Pressable
-              onPress={showAddressDetailPopup}
-              style={styles.manageBtn}>
+            <Pressable onPress={gotoAddressDetail} style={styles.manageBtn}>
               <RcIconSettingCC
                 width={20}
                 height={20}
@@ -187,15 +188,7 @@ export const NotMatterAddressDialog: React.FC<{
         </View>
       );
     },
-    [
-      colors2024,
-      isManageMode,
-      isScrolling,
-      onDone,
-      showAddressDetail,
-      styles,
-      t,
-    ],
+    [colors2024, isManageMode, isScrolling, onDone, styles],
   );
 
   return (
