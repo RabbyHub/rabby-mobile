@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.content.Intent;
 import android.net.Uri;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
@@ -130,7 +131,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implem
           @Override
           public void onScreenCaptured() {
             Log.d(TAG, "Screen capture detected via new API!");
-            scanScreenshotDirectory();
+            takeViewScreenshotAndNotify();
           }
         };
 
@@ -148,49 +149,22 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implem
     }
   }
 
-  private void scanScreenshotDirectory() {
+  private void takeViewScreenshotAndNotify() {
     ContentResolver contentResolver = this.reactContext.getContentResolver();
     WritableMap params = Arguments.createMap();
     params.putBoolean("captured", false);
 
-    List<ScreenshotHelper.ScreenshotInfo> recentScreenshots = ScreenshotHelper.queryRecentScreenshots(
-        contentResolver,
-        1, // We usually only care about the latest one
-        BuildConfig.DEBUG ? 60 : 60  // Within the last 60 seconds
-    );
+    Activity activity = getCurrentActivity();
+    if (activity != null) {
+        ViewGroup contentContainer = activity.findViewById(android.R.id.content);
+        String base64 = ScreenshotUtils.captureViewToPngBase64(contentContainer.getRootView());
 
-    if (recentScreenshots.isEmpty()) {
-        params.putBoolean("androidScanEmpty", true);
-
-        boolean hasPermission = ContextCompat.checkSelfPermission(
-            this.reactContext,
-            Manifest.permission.READ_MEDIA_IMAGES
-        ) == PackageManager.PERMISSION_GRANTED;
-        params.putBoolean("androidHasPermission", hasPermission);
-        RabbyUtils.rnCtxSendEvent(this.reactContext, "userDidTakeScreenshot", params);
-        return;
+        params.putBoolean("captured", true);
+        params.putString("imageBase64", base64);
+        params.putString("imageType", "png");
     }
 
-    ScreenshotHelper.ScreenshotInfo latestScreenshot = recentScreenshots.get(0);
-
-    // Check if it's a new screenshot (avoid duplicate triggers)
-    if (recentScreenshotIds.contains(latestScreenshot.id)) return;
-
-    recentScreenshotIds.add(latestScreenshot.id);
-    mainHandler.postDelayed(() ->  {
-      recentScreenshotIds.remove(latestScreenshot.id);
-    }, DEBOUNCE_TIMEOUT_MS);
-
-    String base64 = ScreenshotHelper.getImageBase64(contentResolver, latestScreenshot.uri, 80);
-    params.putBoolean("captured", true);
-    params.putString("imageBase64", base64);
-    params.putString("path", latestScreenshot.fullPath.toString());
-    params.putString("uri", latestScreenshot.uri.toString());
-    params.putString("width", latestScreenshot.width + "");
-    params.putString("height", latestScreenshot.height + "");
     RabbyUtils.rnCtxSendEvent(this.reactContext, "userDidTakeScreenshot", params);
-
-    Log.d(TAG, "Screenshot detected: " + latestScreenshot);
   }
 
   @ReactMethod

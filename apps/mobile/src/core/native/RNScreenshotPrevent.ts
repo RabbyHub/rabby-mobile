@@ -16,8 +16,6 @@ type Listeners = {
    * @platform iOS, Android >= 14
    */
   userDidTakeScreenshot: (ret?: {
-    androidScanEmpty?: string;
-    androidHasPermission?: boolean;
     captured?: boolean;
     path?: string;
     height?: string | number;
