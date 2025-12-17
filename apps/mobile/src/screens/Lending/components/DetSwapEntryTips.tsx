@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -19,7 +19,7 @@ type DebtSwapEntryTipsState = {
 };
 
 const debtSwapEntryTipsStore = zustandByMMKV<DebtSwapEntryTipsState>(
-  '@DebtSwapEntryTips',
+  '@DebtSwapEntryTip',
   {
     isVisible: true,
   },
@@ -40,15 +40,27 @@ const DebtSwapEntryTips: React.FC<IProps> = ({ children }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
+  const [_isVisible, _setIsVisible] = useState(false);
   const isVisible = debtSwapEntryTipsStore(s => s.isVisible);
+
+  useEffect(() => {
+    // tip开启的同时开启弹窗会导致tip无法显示，所以需要延迟显示
+    const timeout = setTimeout(() => {
+      _setIsVisible(isVisible);
+    }, 1000);
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [isVisible]);
 
   const handleClose = useCallback(() => {
     setDebtSwapEntryTipsVisible(false);
+    _setIsVisible(false);
   }, []);
 
   return (
     <Tip
-      isVisible={isVisible}
+      isVisible={_isVisible}
       contentStyle={styles.contentStyle}
       parentWrapperStyle={styles.parentWrapperStyle}
       onClose={handleClose}

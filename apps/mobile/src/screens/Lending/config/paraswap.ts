@@ -1,3 +1,4 @@
+import { SWAP_FEE_ADDRESS } from '@/constant/swap';
 import { ChainId } from '@aave/contract-helpers';
 import {
   BuildTxFunctions,
@@ -8,8 +9,7 @@ import {
   GetRateFunctions,
 } from '@paraswap/sdk';
 
-// TODO: get fee target from config
-const feeTarget = '0xe4ef35384A3cc4D0B15385cc9fc74Bd239dC8411';
+const feeTarget = SWAP_FEE_ADDRESS;
 
 const ParaSwap = (chainId: number) => {
   const fetcher = constructFetchFetcher(fetch); // alternatively constructFetchFetcher

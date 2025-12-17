@@ -73,6 +73,7 @@ import {
 } from '../../poolService';
 import { normalizeBN } from '@aave/math-utils';
 import { getPriceImpactData } from './warning';
+import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
@@ -111,6 +112,8 @@ export default function DebtSwapModal({
 
   const [slider, setSlider] = useState<number>(0);
   const [riskChecked, setRiskChecked] = useState(false);
+  const [noQuote, setNoQuote] = useState(false);
+  const [quoteRefreshId, setQuoteRefreshId] = useState(0);
 
   const [swapRate, setSwapRate] = useState<{
     optimalRateData?: OptimalRate;
@@ -125,6 +128,9 @@ export default function DebtSwapModal({
     toToken?: string;
     srcAmount?: string;
   }>();
+
+  const quoteExpiredTimerRef = useRef<NodeJS.Timeout>();
+  const enableQuoteAutoRefreshRef = useRef(false);
 
   const { fromBalanceBn, fromBalanceDisplay, fromUsdValue, toUsdValue } =
     useFormatValues({
@@ -154,8 +160,13 @@ export default function DebtSwapModal({
   });
 
   const priceImpactData = useMemo(() => {
-    return getPriceImpactData({ fromToken, toToken, fromAmount, toAmount });
-  }, [fromToken, toToken, fromAmount, toAmount]);
+    return getPriceImpactData({
+      fromToken,
+      toToken,
+      fromAmount: debouncedFromAmount,
+      toAmount,
+    });
+  }, [fromToken, toToken, debouncedFromAmount, toAmount]);
 
   useEffect(() => {
     setRiskChecked(false);
@@ -164,6 +175,19 @@ export default function DebtSwapModal({
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
+  );
+
+  const clearQuoteExpiredTimer = useCallback(() => {
+    if (quoteExpiredTimerRef.current) {
+      clearTimeout(quoteExpiredTimerRef.current);
+    }
+  }, []);
+
+  useEffect(
+    () => () => {
+      clearQuoteExpiredTimer();
+    },
+    [clearQuoteExpiredTimer],
   );
 
   const onChangeSlider = useCallback(
@@ -190,12 +214,22 @@ export default function DebtSwapModal({
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
       }
+
+      // 允许输入过程中的中间状态，例如 "0."，并且当清空时保持输入为空
+      if (formatted === '') {
+        setFromAmount('');
+        setSlider(0);
+        return;
+      }
+
       const amountBn = new BigNumber(formatted || 0);
-      const safeAmountBn = amountBn.gt(fromBalanceBn)
-        ? fromBalanceBn
-        : amountBn;
-      const safeAmountStr = safeAmountBn.toString(10);
-      setFromAmount(safeAmountStr);
+      const exceedBalance = amountBn.gt(fromBalanceBn);
+      const safeAmountBn = exceedBalance ? fromBalanceBn : amountBn;
+      const displayAmountStr = exceedBalance
+        ? fromBalanceBn.toString(10)
+        : formatted;
+
+      setFromAmount(displayAmountStr);
 
       const percentage = fromBalanceBn.gt(0)
         ? safeAmountBn.div(fromBalanceBn).times(100).toNumber()
@@ -241,6 +275,9 @@ export default function DebtSwapModal({
         setQuote(null);
         setSwapRate({});
         setIsQuoteLoading(false);
+        setNoQuote(false);
+        enableQuoteAutoRefreshRef.current = false;
+        clearQuoteExpiredTimer();
       };
 
       setIsQuoteLoading(true);
@@ -281,6 +318,11 @@ export default function DebtSwapModal({
           invertedQuoteRoute: true,
         });
         if (cancelled || !quoteRes) {
+          if (!cancelled) {
+            setNoQuote(true);
+            enableQuoteAutoRefreshRef.current = false;
+            clearQuoteExpiredTimer();
+          }
           return;
         }
         // paraswap不提供建议滑点，基于硬编码设置默认值
@@ -306,11 +348,22 @@ export default function DebtSwapModal({
           ),
         });
         setToAmount(destAmount);
+        setNoQuote(false);
+        enableQuoteAutoRefreshRef.current = true;
+        clearQuoteExpiredTimer();
+        quoteExpiredTimerRef.current = setTimeout(() => {
+          if (enableQuoteAutoRefreshRef.current) {
+            setQuoteRefreshId(prev => prev + 1);
+          }
+        }, 1000 * 30);
       } catch (e) {
         if (!cancelled) {
           setToAmount('');
           setQuote(null);
           setSwapRate({});
+          setNoQuote(true);
+          enableQuoteAutoRefreshRef.current = false;
+          clearQuoteExpiredTimer();
         }
       } finally {
         if (!cancelled) {
@@ -332,6 +385,8 @@ export default function DebtSwapModal({
     isSameToken,
     fromToken.symbol,
     slippageBpsRef,
+    quoteRefreshId,
+    clearQuoteExpiredTimer,
   ]);
 
   const {
@@ -697,7 +752,10 @@ export default function DebtSwapModal({
           <View style={styles.dividerContainer}>
             <View style={styles.dividerLine} />
             <View style={styles.arrowContainer}>
-              <Text style={styles.arrowText}>↓</Text>
+              <BridgeSwitchBtn
+                style={styles.arrowWrapper}
+                loading={isQuoteLoading}
+              />
             </View>
           </View>
 
@@ -773,7 +831,11 @@ export default function DebtSwapModal({
             )}
           </Pressable>
         </View>
-        {canSwap && (
+        {noQuote && !isQuoteLoading && (
+          <Text style={styles.errorText}>{t('page.swap.no-quote-found')}</Text>
+        )}
+
+        {canSwap && !noQuote && (
           <View style={styles.slippageContainer}>
             <BridgeSlippage
               value={slippage}
@@ -788,29 +850,34 @@ export default function DebtSwapModal({
             />
           </View>
         )}
-        {canSwap && priceImpactData.showWarning && !isQuoteLoading && (
-          <View style={styles.priceImpactContainer}>
-            <View style={styles.priceImpactRow}>
-              <Text style={styles.priceImpactText}>
-                {t('page.bridge.price-impact')}
-              </Text>
-              <View style={styles.priceImpactDiffBox}>
-                <Text style={styles.priceImpactLossAmount}>
-                  {(priceImpactData.lostValue * 100).toFixed(1)}%
+        {canSwap &&
+          !noQuote &&
+          priceImpactData.showWarning &&
+          !isQuoteLoading && (
+            <View style={styles.priceImpactContainer}>
+              <View style={styles.priceImpactRow}>
+                <Text style={styles.priceImpactText}>
+                  {t('page.bridge.price-impact')}
                 </Text>
-                <RcIconBluePolygon color={colors2024['orange-default']} />
+                <View style={styles.priceImpactDiffBox}>
+                  <Text style={styles.priceImpactLossAmount}>
+                    {(priceImpactData.lostValue * 100).toFixed(1)}%
+                  </Text>
+                  <RcIconBluePolygon color={colors2024['orange-default']} />
+                </View>
               </View>
-            </View>
 
-            <WarningText>
-              <Text>
-                {t('page.Lending.debtSwap.priceImpactTips', {
-                  lostValue: `${(priceImpactData.lostValue * 100).toFixed(1)}%`,
-                })}
-              </Text>
-            </WarningText>
-          </View>
-        )}
+              <WarningText>
+                <Text>
+                  {t('page.Lending.debtSwap.priceImpactTips', {
+                    lostValue: `${(priceImpactData.lostValue * 100).toFixed(
+                      1,
+                    )}%`,
+                  })}
+                </Text>
+              </WarningText>
+            </View>
+          )}
         {canShowDirectSubmit && canSwap && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
@@ -825,7 +892,7 @@ export default function DebtSwapModal({
           fromToken={fromToken}
           toToken={toToken}
           chainEnum={chainEnum}
-          fromAmount={fromAmount}
+          fromAmount={debouncedFromAmount}
           currentToAmount={toDisplayReserve?.variableBorrows || '0'}
           toAmount={toAmount}
           fromBalanceBn={fromBalanceBn.toString()}
@@ -1088,6 +1155,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     zIndex: 1,
   },
+  arrowWrapper: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    transform: [{ translateX: -45 / 2 }, { translateY: -45 / 2 }],
+  },
   arrowText: {
     fontSize: 22,
     color: colors2024['neutral-secondary'],
@@ -1166,5 +1239,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+  },
+  errorText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['red-default'],
+    marginTop: 8,
+    paddingHorizontal: 8,
   },
 }));
