@@ -38,7 +38,7 @@ import { makeBottomSheetProps } from '../GlobalBottomSheetModal/utils-help';
 import IconCopy from '@/assets2024/icons/common/copy-brand.svg';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { useIOSScreenshotted } from '@/hooks/native/security';
-import { useSubmitFeedbackOnScreenshot } from '@/components/Screenshot/hooks';
+import { storeApiScreenshotReport } from '@/components/Screenshot/hooks';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWrapper: {
@@ -225,6 +225,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 16,
     backgroundColor: 'rgba(0,0,0,0.6)',
   },
+  copyBtnWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
   copyBtn: {
     flexDirection: 'row',
     paddingHorizontal: 12,
@@ -310,6 +316,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
     paddingLeft: 24,
     borderRadius: 12,
+  },
+  secureDot: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    borderRadius: 4,
+    backgroundColor: colors2024['neutral-title-1'],
+    top: 24,
+    left: 12,
   },
   secureDescText: {
     color: colors2024['neutral-title-1'],
@@ -544,11 +559,13 @@ export const SeedPhrase: React.FC<Props> = ({
     if (isHidden) {
       return;
     }
+    storeApiScreenshotReport.markIsScreenshotReportFree(true);
     const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(() => {
       setSecureType('screenshot');
       setShowSecureTips(true);
     });
     return () => {
+      storeApiScreenshotReport.markIsScreenshotReportFree(false);
       remove();
     };
   }, [isHidden]);
@@ -587,6 +604,14 @@ export const SeedPhrase: React.FC<Props> = ({
         </BottomSheetHandlableView>
         <WordMatrixWrapper
           style={[styles.wordContainer, isHidden && styles.blurViewContainer]}>
+          <WordsMatrix
+            shuffledNumbers={shuffledNumbers}
+            words={!currentSelecting ? words : shuffledWords}
+            selectArr={selectArr}
+            isSelectIng={currentSelecting}
+            onSelect={onSelect}
+            style={[styles.wordsMatrix]}
+          />
           {isHidden && (
             <BlurView
               style={styles.mask}
@@ -608,31 +633,25 @@ export const SeedPhrase: React.FC<Props> = ({
               </View>
             </BlurView>
           )}
-          <WordsMatrix
-            shuffledNumbers={shuffledNumbers}
-            words={!currentSelecting ? words : shuffledWords}
-            selectArr={selectArr}
-            isSelectIng={currentSelecting}
-            onSelect={onSelect}
-            style={[styles.wordsMatrix]}
-          />
+
+          {!isHidden && !currentSelecting ? (
+            <View style={styles.copyBtnWrapper}>
+              <TouchableOpacity
+                style={styles.copyBtn}
+                onPress={() => {
+                  setShowSecureTips(false);
+                  setTimeout(() => {
+                    setSecureType('copy');
+                    setShowSecureTips(true);
+                  }, 100);
+                }}>
+                <IconCopy style={styles.copyBtnIcon} />
+                <Text style={styles.copyBtnText}>{t('global.copy')}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
         </WordMatrixWrapper>
       </View>
-
-      {!isHidden && !currentSelecting ? (
-        <TouchableOpacity
-          style={styles.copyBtn}
-          onPress={() => {
-            setShowSecureTips(false);
-            setTimeout(() => {
-              setSecureType('copy');
-              setShowSecureTips(true);
-            }, 100);
-          }}>
-          <IconCopy style={styles.copyBtnIcon} />
-          <Text style={styles.copyBtnText}>{t('global.copy')}</Text>
-        </TouchableOpacity>
-      ) : null}
 
       <SecureBottomTips
         open={showSecureTips}
@@ -684,6 +703,11 @@ const SecureBottomTips = ({
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal(null);
   const { t } = useTranslation();
   const { height } = useWindowDimensions();
+
+  const snapPoints = useMemo(() => {
+    const oH = type === 'copy' ? 586 : 606;
+    return [height > oH ? oH : '80%'];
+  }, [height, type]);
 
   const { titleMapping, subTitleMapping, descMapping } = useMemo(() => {
     const titleMapping = {
@@ -747,9 +771,8 @@ const SecureBottomTips = ({
         colors: colors2024,
       })}
       ref={sheetModalRef}
-      snapPoints={[height > 586 ? 586 : '90%']}
-      maxDynamicContentSize={586}
-      onDismiss={onDismiss}>
+      snapPoints={snapPoints}
+      enableDismissOnClose>
       <BottomSheetScrollView>
         <View style={styles.secure}>
           <View style={styles.secureLogo}>
@@ -762,17 +785,7 @@ const SecureBottomTips = ({
             {descMapping[type].map(desc => (
               <View style={styles.secureDescBox} key={desc}>
                 <Text style={styles.secureDescText}>{desc}</Text>
-                <View
-                  style={{
-                    position: 'absolute',
-                    width: 4,
-                    height: 4,
-                    borderRadius: 4,
-                    backgroundColor: colors2024['neutral-title-1'],
-                    top: 24,
-                    left: 12,
-                  }}
-                />
+                <View style={styles.secureDot} />
               </View>
             ))}
           </View>
