@@ -803,7 +803,6 @@ function DevSettingsBlocks() {
           setIsShowOpenApiPopup(false);
         }}
       />
-      {/* <MockBatchRevokeModal /> */}
     </>
   );
 }
