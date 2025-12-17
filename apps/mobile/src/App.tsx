@@ -12,7 +12,7 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { withExpoSnack } from 'nativewind';
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useCallback, useEffect } from 'react';
 import { setup, withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
@@ -24,7 +24,6 @@ import { useSetupServiceStub } from './core/storage/serviceStoreStub';
 import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
 import { useSecureOnBackground } from './hooks/useLock';
 import { replace } from './utils/navigation';
-import JotaiNexus from './components/JotaiNexus';
 import { useUpgradeInfo } from './hooks/version';
 import { AppProvider } from './hooks/global';
 import { useGlobalAppPreventScreenrecordOnDev } from './hooks/appSettings';
@@ -39,8 +38,16 @@ import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
 import { useUserDidTakeScreenshot } from './components/Screenshot/hooks';
+import Safe from '@rabby-wallet/gnosis-sdk';
+import { SAFE_API_KEY, setIsTurboModuleEnabledOnBoot } from './constant/env';
+Safe.apiKey = SAFE_API_KEY;
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
+import usePrevious from 'react-use/lib/usePrevious';
+import {
+  RerenderDetector,
+  useRendererDetect,
+} from './components/Perf/PerfDetector';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -55,52 +62,59 @@ const rneuiTheme = createTheme({
 
 type AppProps = { rabbitCode: string; turboModuleEnabled: boolean };
 
-function MainScreen({ rabbitCode, turboModuleEnabled }: AppProps) {
-  const { isAppUnlocked } = useInitializeAppOnTop();
-  const { couldRender, securityChainOnTop } = useBootstrapApp({ rabbitCode });
-  const { binaryTheme } = useAppTheme({ isAppTop: true });
+const MemoziedAppNav = React.memo(AppNavigation);
 
-  useSetupServiceStub();
-  useUpgradeInfo({ isTop: true });
-  useUniversalLinkOnTop();
-  useSecureOnBackground();
-  useGlobalAppPreventScreenrecordOnDev();
-  useAppPreventScreenshotOnScreen({ isTop: true });
-  useAutoGoogleSignIfPreviousSignedOnTop();
-  useNoLongerSupports();
-  useTriggerI18nChangeOnAppTop();
-  useIAPListener();
-  useGasAccountInfo();
-  useTrezorConnectOnUrl();
-  useIncreaseTxCountOnAppTop({ isTop: true });
-  useIntervalSyncDDefaultRPCs();
-  useUserDidTakeScreenshot({ isTop: true });
+const MainScreen = React.memo(
+  ({ rabbitCode, turboModuleEnabled }: AppProps) => {
+    const { isAppUnlocked } = useInitializeAppOnTop();
+    const { couldRender, securityChainOnTop } = useBootstrapApp({ rabbitCode });
 
-  const initAccounts = useMemoizedFn(async () => {
-    const accounts = await keyringService.getAllVisibleAccountsArray();
-    if (!accounts?.length) {
-      replace(RootNames.StackGetStarted, {
-        screen: RootNames.GetStartedScreen2024,
-      });
-    }
-  });
+    useSetupServiceStub();
+    useUpgradeInfo({ isTop: true });
+    useUniversalLinkOnTop();
+    useSecureOnBackground();
+    useGlobalAppPreventScreenrecordOnDev();
+    useAppPreventScreenshotOnScreen({ isTop: true });
+    useAutoGoogleSignIfPreviousSignedOnTop();
+    useNoLongerSupports();
+    useTriggerI18nChangeOnAppTop();
+    useIAPListener();
+    useGasAccountInfo();
+    useTrezorConnectOnUrl();
+    useIncreaseTxCountOnAppTop({ isTop: true });
+    useIntervalSyncDDefaultRPCs();
+    useUserDidTakeScreenshot({ isTop: true });
 
-  useEffect(() => {
-    if (isAppUnlocked) {
-      initAccounts();
-    }
-  }, [isAppUnlocked, initAccounts]);
+    useEffect(() => {
+      (async () => {
+        if (isAppUnlocked) {
+          const accounts = await keyringService.getAllVisibleAccountsArray();
+          if (!accounts?.length) {
+            replace(RootNames.StackGetStarted, {
+              screen: RootNames.GetStartedScreen2024,
+            });
+          }
+        }
+      })();
+    }, [isAppUnlocked]);
 
-  return (
-    <AppProvider value={{ securityChain: securityChainOnTop }}>
-      <BottomSheetModalProvider>
-        <ScreenSceneAccountProvider>
-          {couldRender && <AppNavigation colorScheme={binaryTheme} />}
-        </ScreenSceneAccountProvider>
-      </BottomSheetModalProvider>
-    </AppProvider>
-  );
-}
+    useRendererDetect({ name: 'MainScreen' });
+
+    return (
+      <AppProvider
+        value={{ securityChain: securityChainOnTop, turboModuleEnabled }}>
+        <RerenderDetector name="AppProvider" />
+        <BottomSheetModalProvider>
+          <ScreenSceneAccountProvider>
+            {couldRender && <MemoziedAppNav />}
+          </ScreenSceneAccountProvider>
+        </BottomSheetModalProvider>
+      </AppProvider>
+    );
+  },
+);
+
+const MemoziedMainScreen = React.memo(MainScreen);
 
 function App({ rabbitCode, turboModuleEnabled }: AppProps): JSX.Element {
   return (
@@ -112,13 +126,13 @@ function App({ rabbitCode, turboModuleEnabled }: AppProps): JSX.Element {
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
                 {/* read from native bundle on production */}
-                <MainScreen
+                <MemoziedMainScreen
                   rabbitCode={__DEV__ ? 'RABBY_MOBILE_CODE_DEV' : rabbitCode}
-                  turboModuleEnabled={turboModuleEnabled}
+                  turboModuleEnabled={setIsTurboModuleEnabledOnBoot(
+                    turboModuleEnabled,
+                  )}
                 />
               </GestureHandlerRootView>
-              {/* <MainScreen /> */}
-              <JotaiNexus />
             </Suspense>
           </SafeAreaProvider>
         </RootSiblingParent>

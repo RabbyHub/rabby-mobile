@@ -3,7 +3,7 @@ import { RcIconLong } from '@/assets2024/icons/perps';
 import TradingViewCandleChart, {
   TradingViewChartRef,
 } from '@/components2024/TradingViewCandleChart';
-import { CANDLE_MENU_KEY } from '@/constant/perps';
+import { CANDLE_MENU_KEY, CANDLE_MENU_KEY_V2 } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
@@ -35,7 +35,7 @@ import { splitNumberByStep } from '@/utils/number';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 
-import { useAppState } from '@react-native-community/hooks';
+import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
 export interface ChartHoverData {
   time?: string;
   open?: number;
@@ -54,22 +54,22 @@ const containerStyle: React.CSSProperties = {
   position: 'relative',
 };
 
-const getInterval = (candleMenuKey: CANDLE_MENU_KEY) => {
+const getInterval = (candleMenuKey: CANDLE_MENU_KEY_V2) => {
   switch (candleMenuKey) {
-    case CANDLE_MENU_KEY.ONE_HOUR:
-      return CandlePeriod.ONE_MINUTE;
-    case CANDLE_MENU_KEY.ONE_DAY:
+    case CANDLE_MENU_KEY_V2.FIVE_MINUTES:
+      return CandlePeriod.FIVE_MINUTES;
+    case CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES:
+      return CandlePeriod.FIFTEEN_MINUTES;
+    case CANDLE_MENU_KEY_V2.ONE_HOUR:
       return CandlePeriod.ONE_HOUR;
-    case CANDLE_MENU_KEY.ONE_WEEK:
+    case CANDLE_MENU_KEY_V2.FOUR_HOURS:
       return CandlePeriod.FOUR_HOURS;
-    case CANDLE_MENU_KEY.ONE_MONTH:
-      return CandlePeriod.TWELVE_HOURS;
-    case CANDLE_MENU_KEY.YTD:
+    case CANDLE_MENU_KEY_V2.ONE_DAY:
       return CandlePeriod.ONE_DAY;
-    case CANDLE_MENU_KEY.ALL:
-      return CandlePeriod.ONE_DAY;
+    case CANDLE_MENU_KEY_V2.ONE_WEEK:
+      return CandlePeriod.ONE_WEEK;
     default:
-      return CandlePeriod.ONE_DAY;
+      return CandlePeriod.FIVE_MINUTES;
   }
 };
 
@@ -101,8 +101,11 @@ const parseCandles = (data: CandleSnapshot): CandleBar[] => {
 
 export const PerpsChart: React.FC<{
   market: MarketData;
+  coinNameRef: React.RefObject<string>;
   markPrice: number;
   currentAssetCtx?: MarketData;
+  selectedInterval: CANDLE_MENU_KEY_V2;
+  setSelectedInterval: (interval: CANDLE_MENU_KEY_V2) => void;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
   lineTagInfo?: {
     tpPrice: number;
@@ -110,42 +113,50 @@ export const PerpsChart: React.FC<{
     liquidationPrice: number;
     entryPrice: number;
   };
-}> = ({ market, markPrice, currentAssetCtx, activeAssetCtx, lineTagInfo }) => {
+}> = ({
+  market,
+  coinNameRef,
+  markPrice,
+  currentAssetCtx,
+  activeAssetCtx,
+  lineTagInfo,
+  selectedInterval,
+  setSelectedInterval,
+}) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
   const chartIsReadyRef = useRef(false);
   const [isReady, setIsReady] = useState(false);
-  const appState = useAppState();
-  const [selectedInterval, setSelectedInterval] =
-    React.useState<CANDLE_MENU_KEY>(CANDLE_MENU_KEY.ONE_DAY);
+  // const [selectedInterval, setSelectedInterval] =
+  //   React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   const unsubscribeRef = useRef<() => void>(() => {});
 
   const CANDLE_MENU_ITEM = useMemo(
     () => [
       {
+        label: '5M',
+        key: CANDLE_MENU_KEY_V2.FIVE_MINUTES,
+      },
+      {
+        label: '15M',
+        key: CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES,
+      },
+      {
         label: '1H',
-        key: CANDLE_MENU_KEY.ONE_HOUR,
+        key: CANDLE_MENU_KEY_V2.ONE_HOUR,
+      },
+      {
+        label: '4H',
+        key: CANDLE_MENU_KEY_V2.FOUR_HOURS,
       },
       {
         label: '1D',
-        key: CANDLE_MENU_KEY.ONE_DAY,
+        key: CANDLE_MENU_KEY_V2.ONE_DAY,
       },
       {
         label: '1W',
-        key: CANDLE_MENU_KEY.ONE_WEEK,
-      },
-      {
-        label: '1M',
-        key: CANDLE_MENU_KEY.ONE_MONTH,
-      },
-      {
-        label: 'YTD',
-        key: CANDLE_MENU_KEY.YTD,
-      },
-      {
-        label: 'ALL',
-        key: CANDLE_MENU_KEY.ALL,
+        key: CANDLE_MENU_KEY_V2.ONE_WEEK,
       },
     ],
     [],
@@ -184,23 +195,23 @@ export const PerpsChart: React.FC<{
       const interval = getInterval(selectedInterval);
 
       switch (selectedInterval) {
-        case CANDLE_MENU_KEY.ONE_HOUR:
-          start = end - 1 * 60 * 60 * 1000;
+        case CANDLE_MENU_KEY_V2.FIVE_MINUTES:
+          start = end - 1 * 24 * 60 * 60 * 1000; // 1 day
           break;
-        case CANDLE_MENU_KEY.ONE_DAY:
-          start = end - 1 * 24 * 60 * 60 * 1000;
+        case CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES:
+          start = end - 7 * 24 * 60 * 60 * 1000; // 1 week
           break;
-        case CANDLE_MENU_KEY.ONE_WEEK:
-          start = end - 1 * 7 * 24 * 60 * 60 * 1000;
+        case CANDLE_MENU_KEY_V2.ONE_HOUR:
+          start = end - 1 * 30 * 24 * 60 * 60 * 1000; // 1 month
           break;
-        case CANDLE_MENU_KEY.ONE_MONTH:
-          start = end - 1 * 30 * 24 * 60 * 60 * 1000;
+        case CANDLE_MENU_KEY_V2.FOUR_HOURS:
+          start = end - 4 * 30 * 24 * 60 * 60 * 1000; // 4 months
           break;
-        case CANDLE_MENU_KEY.YTD:
-          start = new Date(new Date().getFullYear(), 0, 1).getTime();
+        case CANDLE_MENU_KEY_V2.ONE_DAY:
+          start = end - 12 * 30 * 24 * 60 * 60 * 1000; // 1 years;
           end = Date.now();
           break;
-        case CANDLE_MENU_KEY.ALL:
+        case CANDLE_MENU_KEY_V2.ONE_WEEK:
           start = 0;
           end = Date.now();
           break;
@@ -223,7 +234,7 @@ export const PerpsChart: React.FC<{
       return {
         coin: market.name,
         interval: interval,
-        fitContent: true,
+        fitContent: false,
         candles: candles as any,
       };
     },
@@ -239,13 +250,8 @@ export const PerpsChart: React.FC<{
   );
 
   const handleChartReady = useMemoizedFn(() => {
-    setTimeout(() => {
-      chartIsReadyRef.current = true;
-      setIsReady(true);
-      if (chartData) {
-        chartWebViewRef.current?.setData(chartData);
-      }
-    }, 0);
+    chartIsReadyRef.current = true;
+    setIsReady(true);
   });
 
   const subscribeCandle = useMemoizedFn(() => {
@@ -259,6 +265,10 @@ export const PerpsChart: React.FC<{
       snapshot => {
         // Check if component is still mounted before updating
         // if (!isMountedRef.current || !seriesRef.current) return;
+
+        if (coinNameRef.current?.toUpperCase() !== snapshot.s.toUpperCase()) {
+          return;
+        }
 
         const candles = parseCandles([snapshot]);
         if (candles.length > 0) {
@@ -274,19 +284,22 @@ export const PerpsChart: React.FC<{
 
   // Subscribe to real-time candle updates
   useEffect(() => {
-    if (appState === 'active') {
-      const unsubscribe = subscribeCandle();
-      unsubscribeRef.current = unsubscribe;
-      return () => {
-        unsubscribe?.();
-      };
-    } else {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = () => {};
-      }
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
     }
-  }, [subscribeCandle, appState]);
+    const unsubscribe = subscribeCandle();
+    unsubscribeRef.current = unsubscribe;
+    return () => {
+      unsubscribe?.();
+    };
+  }, [subscribeCandle, market.name, selectedInterval]);
+
+  // Sync chart data when both chart is ready and data is available
+  useEffect(() => {
+    if (isReady && chartData) {
+      chartWebViewRef.current?.setData(chartData);
+    }
+  }, [isReady, chartData]);
 
   useEffect(() => {
     if (isReady && lineTagInfo) {
@@ -294,12 +307,26 @@ export const PerpsChart: React.FC<{
     }
   }, [isReady, lineTagInfo]);
 
+  // // Reset chart when market changes
+  // useEffect(() => {
+  //   // Reset chart state
+  //   setIsReady(false);
+  //   chartIsReadyRef.current = false;
+
+  //   // Unsubscribe from previous market
+  //   if (unsubscribeRef.current) {
+  //     unsubscribeRef.current();
+  //     unsubscribeRef.current = () => {};
+  //   }
+  // }, [market.name]);
+
   return (
     <View style={styles.chart}>
       <View style={styles.header}>
-        <Text style={styles.priceText}>
-          ${splitNumberByStep(markPrice || 0)}
-        </Text>
+        <TickerTexts textStyle={styles.priceText} duration={750}>
+          <TickItem rotateItems={['$']}>{'$'}</TickItem>
+          {splitNumberByStep(markPrice || 0)}
+        </TickerTexts>
         <Text
           style={[
             styles.changeText,
@@ -371,6 +398,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   content: {
     paddingHorizontal: 16,
+    paddingRight: 4,
     position: 'relative',
   },
   menu: {

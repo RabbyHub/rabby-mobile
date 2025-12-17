@@ -81,6 +81,28 @@ export class BalanceEntity extends EntityAddressAssetBase {
     };
   }
 
+  static async queryChainList(
+    address: string,
+  ): Promise<EvmTotalBalanceResponse['chain_list']> {
+    if (!address) {
+      return [];
+    }
+
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+    const result = await repo.findOne({
+      where: {
+        owner_addr: address,
+      },
+      select: {
+        chain_list: true,
+      },
+    });
+
+    return columnConverter.jsonStringToObj(result?.chain_list || '[]') || [];
+  }
+
   static async isExpired(owner_addr: string, isCore: boolean) {
     await prepareAppDataSource();
 

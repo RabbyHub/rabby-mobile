@@ -95,10 +95,15 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100142
-        versionName "0.6.40"
+        versionCode 100169
+        versionName "0.6.49"
         missingDimensionStrategy "store", "play"
         buildConfigField("boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString())
+        externalNativeBuild {
+          cmake {
+            arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+          }
+        }
     }
     splits {
         abi {
@@ -187,9 +192,10 @@ android {
     }
     // packagingOptions {
     //   jniLibs {
+    //     // useLegacyPackaging true
     //     pickFirsts += [
-    //       'lib/**/libssl.so',
-    //       'lib/**/libcrypto.so'
+    //       'lib/**/libjsi.so'
+    //       'lib/**/libreactnative.so'
     //     ]
     //   }
     // }
@@ -199,6 +205,12 @@ androidComponents {
   onVariants(selector().withBuildType("debug")) {
     // packaging.jniLibs.pickFirsts.add('lib/**/libssl.so')
     packaging.jniLibs.pickFirsts.add('lib/**/libcrypto.so')
+  }
+
+  // for allVariants
+  onVariants(selector().all()) {
+    packaging.jniLibs.pickFirsts.add('lib/**/libjsi.so')
+    packaging.jniLibs.pickFirsts.add('lib/**/libreactnative.so')
   }
 }
 
@@ -211,6 +223,10 @@ dependencies {
     implementation("com.facebook.react:react-android")
     implementation 'com.google.mlkit:barcode-scanning:17.2.0'
 
+    // implementation 'com.squareup.okhttp3:logging-interceptor:5.1.0'
+    // implementation 'com.squareup.okhttp3:okhttp:5.1.0'
+    // implementation 'com.squareup.okhttp3:okhttp-urlconnection:5.1.0'
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {
@@ -220,6 +236,6 @@ dependencies {
     implementation project(':react-native-splash-screen')
     // implementation project(':isudaji_react-native-install-apk')
 
-    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.10'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.29'
     implementation 'com.android.billingclient:billing:7.0.0'
 }

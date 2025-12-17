@@ -307,3 +307,41 @@ export const useTokenMarketInfo = (token: {
     supplyInfoLoading,
   };
 };
+
+export const useSingleTokenBalance = ({ token }: { token: TokenItem }) => {
+  const amountSum = useMemo(() => {
+    return token.amount;
+  }, [token.amount]);
+
+  const usdValue = useMemo(() => {
+    const _usdValue = token.price * amountSum;
+    return formatPrice(_usdValue || 0, 8, true);
+  }, [token.price, amountSum]);
+
+  const percentChange = useMemo(() => {
+    return token?.price_24h_change
+      ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
+      : '';
+  }, [token.price_24h_change]);
+
+  const is24hNoChange = useMemo(() => {
+    return !token?.price_24h_change;
+  }, [token.price_24h_change]);
+
+  const isLoss = useMemo(() => {
+    return token.price_24h_change ? Number(token.price_24h_change) < 0 : false;
+  }, [token.price_24h_change]);
+
+  const price = useMemo(() => {
+    return token.price;
+  }, [token.price]);
+
+  return {
+    amountSum,
+    usdValue,
+    percentChange,
+    isLoss,
+    is24hNoChange,
+    price,
+  };
+};

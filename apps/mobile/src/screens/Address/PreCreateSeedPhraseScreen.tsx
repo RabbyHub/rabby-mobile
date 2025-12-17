@@ -10,7 +10,7 @@ import { GDriveIcon } from '@/assets/icons/address/gdrive-icon';
 import { ManualIcon } from '@/assets/icons/address/manual-icon';
 import { WalletItem } from './components/WalletItem';
 import { apiMnemonic } from '@/core/apis';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import {
   createGlobalBottomSheetModal,
@@ -84,7 +84,7 @@ export const PreCreateSeedPhraseScreen = () => {
   }, [nav]);
 
   const handleBackupToPaper = React.useCallback(() => {
-    navigate(RootNames.StackAddress, {
+    navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.CreateMnemonic,
     });
   }, []);

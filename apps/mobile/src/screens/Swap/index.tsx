@@ -2,7 +2,6 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RootNames } from '@/constant/layout';
 import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
 import {
   preferenceService,
@@ -22,7 +21,7 @@ import {
 } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import React, {
   useCallback,
   useEffect,
@@ -63,7 +62,7 @@ import { SwapTokenItem } from './components/Token';
 import { Divider } from '@rneui/themed';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useSwapRecentToTokens } from './hooks/recent';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import {
@@ -80,14 +79,8 @@ import {
 } from '@/components/ExternalSwapBridgeDappPopup';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { Tip } from '@/components';
-import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { useMiniSigner } from '@/hooks/useSigner';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import {
-  directSigningAtom,
-  isAbortedDirectSubmitError,
-  useCanProcessDirectSubmit,
-  useMiniDirectSignGasFeeTooHigh,
-} from '@/hooks/useMiniApprovalDirectSign';
 import {
   ApprovePendingTxItem,
   PendingTxItem,
@@ -100,6 +93,11 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTwoStepSwap } from './hooks/twoStepSwap';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import useDebounce from 'react-use/lib/useDebounce';
+import {
+  MINI_SIGN_ERROR,
+  useSignatureStore,
+} from '@/components2024/MiniSignV2/state/SignatureManager';
+import { BridgeSlippage } from '../Bridge/components/BridgeSlippage';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -211,6 +209,10 @@ const Swap = ({
     account: currentAccount!,
   });
 
+  const chainServerId = useMemo(() => {
+    return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
+  }, [chain]);
+
   const {
     autoSlippage,
     isCustomSlippage,
@@ -297,8 +299,29 @@ const Swap = ({
 
   const navigation = useNavigation<SwapRouteProps['navigation']>();
 
-  const { prepareMiniTransactions, sendPrepareMiniTransactions } =
-    useMiniApproval();
+  const { ctx } = useSignatureStore();
+
+  const miniSignGasFeeTooHigh = !!ctx?.gasFeeTooHigh;
+  const canDirectSign = !ctx?.disabledProcess;
+
+  const {
+    prefetch: prefetchMiniSigner,
+    openDirect,
+    close: closeMiniSigner,
+  } = useMiniSigner({
+    account: currentAccount!,
+    chainServerId,
+    autoResetGasStoreOnChainChange: true,
+  });
+
+  const miniSignGa = useMemo(
+    () => ({
+      category: 'Swap',
+      source: 'swap',
+      swapUseSlider,
+    }),
+    [swapUseSlider],
+  );
 
   useEffect(() => {
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
@@ -513,10 +536,6 @@ const Swap = ({
 
   const [_, setRecentSwapToToken] = useSwapRecentToTokens();
 
-  const chainServerId = useMemo(() => {
-    return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
-  }, [chain]);
-
   const canShowDirectSubmit = useMemo(
     () =>
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
@@ -531,13 +550,20 @@ const Swap = ({
     setIsSubmitting(false);
   }, [payAmount, payToken?.id, receiveToken?.id, chain]);
 
-  const handleSwap = useMemoizedFn(async () => {
+  const checkGasFeeTooHighRef = useRef(true);
+
+  const onChangeCheckGasFeeTooHigh = useCallback((b: boolean) => {
+    checkGasFeeTooHighRef.current = b;
+  }, []);
+
+  const handleSwap = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
+    if (isSubmitting) {
+      return;
+    }
     if (receiveToken) {
       setRecentSwapToToken(receiveToken);
     }
     if (canShowDirectSubmit) {
-      clearExpiredTimer();
-
       try {
         setIsSubmitting(true);
 
@@ -547,16 +573,17 @@ const Swap = ({
         }
 
         let txHash = '';
-        if (isDirectSigning) {
-          return;
-        } else {
-          setDirectSigning(true);
-          setMiniSignLoading(true);
-        }
-        const res = await sendPrepareMiniTransactions({
-          directSubmit: canShowDirectSubmit,
+
+        clearExpiredTimer();
+        setMiniSignLoading(true);
+
+        const res = await openDirect({
+          txs: currentTxs!,
+          ga: miniSignGa,
+          checkGasFeeTooHigh: checkGasFeeTooHighRef.current,
+          ignoreGasFeeTooHigh: p?.ignoreGasFee || false,
         });
-        txHash = last(res)?.txHash || '';
+        txHash = last(res) || '';
 
         miniSignNextStep(txHash);
 
@@ -606,15 +633,19 @@ const Swap = ({
             });
           }
         }
-      } catch (e) {
-        setDirectSigning(false);
-        if ((e as any)?.name === 'SimulateError') {
-          gotoSwap();
-        } else if (isAbortedDirectSubmitError(e)) {
-          console.debug('isAbortedDirectSubmitError swap');
-        } else {
-          mutateTxs([]);
+      } catch (error: any) {
+        console.log('swap mini sign error', error);
+        if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
           refresh(e => e + 1);
+          mutateTxs([]);
+        } else if (
+          [
+            MINI_SIGN_ERROR.GAS_FEE_TOO_HIGH,
+            MINI_SIGN_ERROR.CANT_PROCESS,
+          ].includes(error)
+        ) {
+        } else {
+          gotoSwap();
         }
       } finally {
         setIsSubmitting(false);
@@ -639,17 +670,6 @@ const Swap = ({
   const lowCreditInit = useRef(false);
 
   const isFocused = useIsFocused();
-
-  // 监听页面焦点变化，当从TokenDetail返回时确保参数被正确设置
-  // useEffect(() => {
-  //   if (isFocused && navState?.isSwapToTokenDetail) {
-  //     console.log('DEBUG: Swap page focused, setting isSwapToTokenDetail to false');
-  //     navigation.setParams({
-  //       ...navState,
-  //       isSwapToTokenDetail: false,
-  //     });
-  //   }
-  // }, [isFocused, navState?.isSwapToTokenDetail, navigation]);
 
   const swapBtnDisabled =
     quoteLoading ||
@@ -677,9 +697,6 @@ const Swap = ({
     receiveToken,
     activeProvider?.quote,
   ]);
-
-  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
-  const canDirectSign = useCanProcessDirectSubmit();
 
   const [showMoreOpen, setShowMoreOpen] = useState(false);
 
@@ -714,7 +731,7 @@ const Swap = ({
     ],
   );
 
-  const noQuote = useDebounceValue(noQuoteOrigin, 10);
+  const noQuote = useDebouncedValue(noQuoteOrigin, 10);
 
   const lowCreditToken = useMemo(() => {
     if (!navState) {
@@ -790,33 +807,36 @@ const Swap = ({
     payAmount,
   });
 
-  const miniSignGasFeeTooHigh = useMiniDirectSignGasFeeTooHigh();
-
   const showRiskTips =
     isSlippageLow || isSlippageHigh || showLoss || miniSignGasFeeTooHigh;
 
   useEffect(() => {
-    if (canShowDirectSubmit) {
-      prepareMiniTransactions({
-        txs: currentTxs?.length ? currentTxs : [],
-        ga: {
-          category: 'Swap',
-          source: 'swap',
-          swapUseSlider,
-        },
-        directSubmit: canShowDirectSubmit,
-        account: currentAccount!,
-        transparentMask: true,
-        showMaskLoading: true,
-        checkGasFee: true,
-      });
+    if (!isFocused) {
+      closeMiniSigner();
+      return;
     }
+    if (!canShowDirectSubmit || !currentAccount || !currentTxs?.length) {
+      closeMiniSigner();
+      return;
+    }
+    onChangeCheckGasFeeTooHigh(true);
+    prefetchMiniSigner({
+      txs: currentTxs,
+      ga: miniSignGa,
+      checkGasFeeTooHigh: true,
+      synGasHeaderInfo: true,
+    }).catch(error => {
+      console.error('swap mini signer prefetch failed', error);
+    });
   }, [
-    currentTxs,
-    prepareMiniTransactions,
-    swapUseSlider,
+    onChangeCheckGasFeeTooHigh,
+    isFocused,
     canShowDirectSubmit,
     currentAccount,
+    currentTxs,
+    prefetchMiniSigner,
+    closeMiniSigner,
+    miniSignGa,
   ]);
 
   useEffect(() => {
@@ -839,27 +859,12 @@ const Swap = ({
     swapUseSlider,
   ]);
 
-  useEffect(() => {
-    if (isFocused) {
-      prepareMiniTransactions({
-        txs: [],
-        ga: {
-          category: 'Swap',
-          source: 'swap',
-          swapUseSlider,
-        },
-        directSubmit: canShowDirectSubmit,
-        account: currentAccount!,
-      });
-    }
-  }, [
-    isFocused,
-    activeProvider,
-    canShowDirectSubmit,
-    prepareMiniTransactions,
-    swapUseSlider,
-    currentAccount,
-  ]);
+  useEffect(
+    () => () => {
+      closeMiniSigner();
+    },
+    [closeMiniSigner],
+  );
 
   useEffect(() => {
     if (isFocused) {
@@ -1068,7 +1073,25 @@ const Swap = ({
           </View>
 
           {noQuote ? (
-            <Text style={styles.errorTip}>{t('page.swap.no-quote-found')}</Text>
+            <>
+              <Text style={styles.errorTip}>
+                {t('page.swap.no-quote-found')}
+              </Text>
+              <View>
+                <BridgeSlippage
+                  value={slippage}
+                  displaySlippage={slippage}
+                  onChange={setSlippage}
+                  autoSlippage={autoSlippage}
+                  isCustomSlippage={isCustomSlippage}
+                  setAutoSlippage={setAutoSlippage}
+                  setIsCustomSlippage={setIsCustomSlippage}
+                  type="swap"
+                  loading={quoteLoading}
+                  autoSuggestSlippage={autoSuggestSlippage}
+                />
+              </View>
+            </>
           ) : null}
 
           {isShowMoreVisible &&

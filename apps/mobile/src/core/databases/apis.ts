@@ -1,7 +1,7 @@
 import './setup';
 
 import { MakeSurePromise } from '@rabby-wallet/base-utils';
-import { SQLite } from './exports';
+import { SQLite, SQLiteDriverType } from './exports';
 
 const rabbyTestDBRef = {
   // TODO: maybe we can try to run it in non-UI Thread provided by react-native-reanimated
@@ -26,7 +26,7 @@ export async function getSQLiteInfo() {
   const rabbtTestDB = await onTestDbReady();
 
   return rabbtTestDB
-    .executeSql(
+    .executeSql<any>(
       `
     SELECT sqlite_version() as version
     , sqlite_source_id() as source_id
@@ -35,8 +35,11 @@ export async function getSQLiteInfo() {
       `,
       [],
     )
-    .then(([results]) => {
-      const row = results.rows.item(0);
+    .then(results => {
+      const row =
+        SQLiteDriverType === 'RNSQLiteStorage'
+          ? results[0].rows.item(0)
+          : results.rows.item(0);
       return {
         version: row.version as string,
         source_id: row.source_id as string,

@@ -46,6 +46,19 @@ export const useMiniSignFixedMode = (chainId?: number) => {
   return typeof num === 'number' ? true : false;
 };
 
+export const useMiniSignGasStoreOrigin = () => {
+  const [miniGasLevel, setMiniGasLevel] = useAtom(gasLevelAtom);
+  const [miniCustomPrice, setMiniCustomPrice] = useAtom(customPriceAtom);
+  const [fixedCustomGas, setFixedCustomGas] = useAtom(fixedCustomGasAtom);
+  return {
+    miniGasLevel,
+    setMiniGasLevel,
+    miniCustomPrice,
+    setMiniCustomPrice,
+    fixedCustomGas,
+    setFixedCustomGas,
+  };
+};
 export const useMiniSignGasStore = (chainId: number) => {
   const [miniGasLevel, setMiniGasLevel] = useAtom(gasLevelAtom);
   const [miniCustomPrice, setMiniCustomPrice] = useAtom(customPriceAtom);
@@ -70,7 +83,7 @@ export const useMiniSignGasStore = (chainId: number) => {
       setMiniCustomPrice(() =>
         isCustom
           ? {
-              [chainId]: params.customGasPrice || 0,
+              [params.chainId]: params.customGasPrice || 0,
             }
           : {},
       );
@@ -80,18 +93,16 @@ export const useMiniSignGasStore = (chainId: number) => {
 
       setFixedCustomGas(pre => {
         let data = { ...pre };
-        delete data[chainId];
+        delete data[params.chainId];
 
         if (isFixedMode) {
-          data[chainId] = params.customGasPrice || 0;
+          data[params.chainId] = params.customGasPrice || 0;
         }
-
-        console.log('setFixedCustomGas data', chainId, data);
 
         return data;
       });
     },
-    [chainId, setFixedCustomGas, setMiniCustomPrice, setMiniGasLevel],
+    [setFixedCustomGas, setMiniCustomPrice, setMiniGasLevel],
   );
 
   return {

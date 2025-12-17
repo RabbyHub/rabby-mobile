@@ -20,6 +20,7 @@ import { StackActions, useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
+import { naviPush } from '@/utils/navigation';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -39,7 +40,6 @@ const TokenActions = ({
   const { t } = useTranslation();
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { navigateToSendPolyScreen } = useSendRoutes();
   const navigation = useNavigation<HomeProps['navigation']>();
 
   const isFromSwap =
@@ -68,9 +68,12 @@ const TokenActions = ({
             );
           }
           setIsFromBack(false);
-          navigateToSendPolyScreen(!!isSingleAddress, {
-            chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-            tokenId: token?._tokenId,
+          naviPush(RootNames.StackTransaction, {
+            screen: RootNames.Send,
+            params: {
+              chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+              tokenId: token?._tokenId,
+            },
           });
         },
       },
@@ -120,7 +123,7 @@ const TokenActions = ({
 
           await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
           setIsFromBack(false);
-          navigation.navigate(RootNames.StackTransaction, {
+          naviPush(RootNames.StackTransaction, {
             screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
             params: {
               chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
@@ -143,7 +146,7 @@ const TokenActions = ({
 
           await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
           setIsFromBack(false);
-          navigation.navigate(RootNames.StackTransaction, {
+          naviPush(RootNames.StackTransaction, {
             screen: isSingleAddress ? RootNames.Bridge : RootNames.MultiBridge,
             params: {
               chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
@@ -157,7 +160,6 @@ const TokenActions = ({
       finalAccount,
       isFromSwap,
       isSingleAddress,
-      navigateToSendPolyScreen,
       navigation,
       setIsFromBack,
       switchSceneCurrentAccount,

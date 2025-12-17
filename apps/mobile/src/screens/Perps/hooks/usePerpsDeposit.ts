@@ -8,11 +8,7 @@ import { Account } from '@/core/services/preference';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 // import { useAuth } from '@/hooks/useAuth';
-import { useMiniApproval } from '@/hooks/useMiniApproval';
-import {
-  directSigningAtom,
-  isAbortedDirectSubmitError,
-} from '@/hooks/useMiniApprovalDirectSign';
+
 import {
   isAccountSupportDirectSign,
   isHardWareAccountAccountSupportMiniApproval,
@@ -28,6 +24,8 @@ import abiCoderInst, { AbiCoder } from 'web3-eth-abi';
 import { PerpBridgeHistory } from '../components/PerpsDepositPopup';
 import { openapi } from '@/core/request';
 import { last } from 'lodash';
+import { useMiniSigner } from '@/hooks/useSigner';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 const abiCoder = abiCoderInst as unknown as AbiCoder;
 
 export const usePerpsDeposit = ({
@@ -41,16 +39,25 @@ export const usePerpsDeposit = ({
     setLocalLoadingHistory,
   } = usePerpsStore();
 
+  // const {
+  //   sendMiniTransactions,
+  //   prepareMiniTransactions,
+  //   sendPrepareMiniTransactions,
+  // } = useMiniApproval();
+
   const {
-    sendMiniTransactions,
-    prepareMiniTransactions,
-    sendPrepareMiniTransactions,
-  } = useMiniApproval();
+    prefetch,
+    openUI,
+    openDirect,
+    close: closeMiniSign,
+    resetGasStore,
+  } = useMiniSigner({
+    account: currentPerpsAccount!,
+  });
 
   useClearMiniGasStateEffect({});
 
   // const runAuth = useAuth();
-  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
 
   const postPerpBridgeQuote = useMemoizedFn(
     async (hash: string, cacheBridgeHistory?: PerpBridgeHistory) => {
@@ -132,36 +139,27 @@ export const usePerpsDeposit = ({
       };
 
       if (isAccountSupportDirectSign(currentPerpsAccount.type)) {
-        if (isDirectSigning) {
-          return;
-        }
         try {
           // await runAuth();
-          prepareMiniTransactions({
+          resetGasStore();
+          closeMiniSign();
+          const res = await openDirect({
             txs: currentTxs || [],
             ga: {
               category: 'Perps',
               source: 'Perps',
               trigger: 'Perps',
             },
-            directSubmit: true,
-            account: currentPerpsAccount!,
-            showMaskLoading: false,
+            // showMaskLoading: false,
           });
-          setDirectSigning(true);
-          await sleep(500);
-          const res = await sendPrepareMiniTransactions({
-            directSubmit: true,
-          });
-          const txHash = last(res)?.txHash || '';
+          const txHash = last(res) || '';
           handleSetHistory(txHash);
-        } catch (e) {
-          setDirectSigning(false);
-          console.error(e);
-          if (
-            (e as any).name === 'SimulateError' ||
-            isAbortedDirectSubmitError(e)
-          ) {
+        } catch (error) {
+          console.error(error);
+
+          if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+            closeMiniSign();
+          } else {
             await handleFullback();
           }
         }
@@ -169,20 +167,22 @@ export const usePerpsDeposit = ({
         isHardWareAccountAccountSupportMiniApproval(currentPerpsAccount.type)
       ) {
         try {
-          const res = await sendMiniTransactions({
+          resetGasStore();
+          closeMiniSign();
+          const res = await openUI({
             txs: currentTxs || [],
             ga: {
               category: 'Perps',
               source: 'Perps',
               trigger: 'Perps',
             },
-            directSubmit: false,
-            account: currentPerpsAccount!,
           });
-          const txHash = last(res)?.txHash || '';
+          const txHash = last(res) || '';
           handleSetHistory(txHash);
         } catch (error) {
-          if ((error as any).name === 'SimulateError') {
+          if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
+            closeMiniSign();
+          } else {
             await handleFullback();
           }
         }

@@ -1,10 +1,10 @@
 import React from 'react';
 import { Text, TextStyle } from 'react-native';
 
-import { useAutoLockTime, useLastUnlockTime } from '@/hooks/appTimeout';
+import { useAutoLockTime, useLastUnlockedAuth } from '@/hooks/appTimeout';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import useInterval from 'react-use/lib/useInterval';
-import { NEED_DEVSETTINGBLOCKS } from '@/constant/env';
+import { NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { getTimeSpan, getTimeSpanByMs } from '@/utils/time';
 import { usePasswordStatus } from '@/hooks/useLock';
 import {
@@ -111,7 +111,7 @@ export function AutoLockSettingLabel({ style }: { style?: TextStyle }) {
 }
 
 export function LastUnlockTimeLabel() {
-  const { unlockTime } = useLastUnlockTime();
+  const { unlockTime } = useLastUnlockedAuth();
 
   const colors = useThemeColors();
 

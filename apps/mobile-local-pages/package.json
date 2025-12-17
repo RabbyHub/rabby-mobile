@@ -1,0 +1,49 @@
+{
+  "name": "mobile-local-pages",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b && vite build",
+    "bundle": "yarn build && yarn ../mobile link-assets",
+    "bundle:all": "yarn make-theme && yarn build --mode android && yarn build --mode ios",
+    "bundle:all:link": "yarn build --mode android && yarn build --mode ios && yarn ../mobile link-assets",
+    "bundle:android": "yarn build --mode android && yarn ../mobile link-assets",
+    "bundle:ios": "yarn build --mode ios && yarn ../mobile link-assets",
+    "dev": "vite --host",
+    "lint": "eslint .",
+    "lint:commit:fix": "eslint --fix --quiet --ext .js,.ts,.tsx ./src",
+    "make-theme": "node ./scripts/make-theme.cjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@rabby-wallet/base-utils": "workspace:^",
+    "bignumber.js": "^9.3.1",
+    "less": "^4.4.1",
+    "lightweight-charts": "^5.0.8",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@tailwindcss/postcss": "^4.1.14",
+    "@tailwindcss/vite": "^4.1.14",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.3",
+    "babel-plugin-react-compiler": "^19.1.0-rc.3",
+    "cross-env": "^10.0.0",
+    "eslint": "^9.36.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.4.0",
+    "jotai": "^2.15.0",
+    "lint-staged": "^15.2.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.14",
+    "tinycolor2": "^1.6.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.44.0",
+    "vite": "^7.1.7"
+  }
+}

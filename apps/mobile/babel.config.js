@@ -57,12 +57,18 @@ module.exports = {
           process.env.ZERO_AR_DATE || new Date().toISOString(),
         'process.env.RABBY_MOBILE_BUILD_ENV':
           process.env.RABBY_MOBILE_BUILD_ENV || 'production',
-        'process.env.buildchannel': process.env.buildchannel || 'selfhost-reg',
+        'process.env.buildchannel':
+          process.env.buildchannel ||
+          process.env.RABBY_MOBILE_BUILD_CHANNEL ||
+          'selfhost-reg',
         'process.env.BUILD_GIT_INFO': JSON.stringify({
           BUILD_GIT_HASH: buildGitInfo.BUILD_GIT_HASH,
           BUILD_GIT_HASH_TIME: buildGitInfo.BUILD_GIT_HASH_TIME,
           BUILD_GIT_COMMITOR: buildGitInfo.BUILD_GIT_COMMITOR,
         }),
+        'process.env.RABBY_MOBILE_SAFE_API_KEY':
+          process.env.RABBY_MOBILE_SAFE_API_KEY ||
+          process.env.MOBILE_SAFE_API_KEY,
       },
     ],
     [
@@ -83,8 +89,6 @@ module.exports = {
           '@': './src',
           'styled-components/native': 'styled-components/native',
           'styled-components': 'styled-components/native',
-          'react-native-sqlite-storage':
-            '@rabby-wallet/react-native-sqlite-storage',
         },
       },
     ],
@@ -93,6 +97,7 @@ module.exports = {
     ['module:react-native-dotenv', { moduleName: '@env' }],
     ['nativewind/babel', {}],
     ['@babel/plugin-proposal-decorators', { legacy: true }],
+    ['@babel/plugin-transform-class-static-block'],
     ['react-native-reanimated/plugin', { processNestedWorklets: true }],
   ],
   env: {

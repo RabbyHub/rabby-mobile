@@ -16,14 +16,14 @@ check_build_params;
 check_s3_params;
 checkout_s3_pub_deployment_params;
 
+cd $project_dir;
+
 # prepare variables
 # TODO: read from gradle
 proj_version=$(node --eval="process.stdout.write(require('./package.json').version)");
 app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)");
 android_version_name=$(grep -m1 "versionName" ./android/app/build.gradle | cut -d'"' -f2)
 android_version_code=$(grep -m1 "versionCode" ./android/app/build.gradle | xargs | cut -c 13-)
-
-cd $project_dir;
 
 BUILD_DATE=`date '+%Y%m%d_%H%M%S'`
 
@@ -42,7 +42,7 @@ fi
 build_selfhost() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   [ -z "$CI" ] && yarn;
-  yarn check-nodeengines && yarn link-assets;
+  yarn check-nodeengines && yarn ../mobile-local-pages bundle:all &&yarn link-assets;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     if [ "$USE_RESIGN_APK" == "true" ]; then
       echo "[deploy-android] try to resign template.apk to get the new one."
@@ -69,7 +69,7 @@ build_selfhost() {
 
 build_appstore() {
   export RABBY_MOBILE_BUILD_ENV="production";
-  yarn && yarn check-nodeengines && yarn link-assets;
+  yarn && yarn check-nodeengines && yarn ../mobile-local-pages bundle:all &&yarn link-assets;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
     bundle exec fastlane android playstore

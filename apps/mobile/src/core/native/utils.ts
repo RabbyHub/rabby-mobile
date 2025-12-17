@@ -11,7 +11,10 @@ import { enableLayoutAnimations } from 'react-native-reanimated';
 import { TurboNativeModules } from './specs';
 import { NativeModuleNames } from './specs/types';
 
-const isTurboModuleEnabled = global.__turboModuleProxy != null;
+const isTurboModuleEnabled =
+  !!global._IS_FABRIC ||
+  !!global.nativeFabricUIManager ||
+  !!global.__turboModuleProxy;
 
 type NativeModulesStatic = {
   [NativeModuleNames.ReactNativeSecurity]: /* NativeModule &  */ import('./specs/NativeReactNativeSecurity').Methods;

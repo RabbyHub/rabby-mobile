@@ -19,7 +19,7 @@ export default React.memo(
     const portfolio = data._originPortfolio;
 
     return (
-      <Card style={style} shadow>
+      <Card style={style}>
         <PortfolioHeader data={data} name={name} showDescription />
         <TokenList
           tokens={portfolio?.detail?.supply_token_list}

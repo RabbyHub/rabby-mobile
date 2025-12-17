@@ -4,6 +4,7 @@ import {
   contactService,
   dappService,
   keyringService,
+  perpsService,
   preferenceService,
   sessionService,
   transactionHistoryService,
@@ -60,6 +61,7 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
     contactService.removeAlias(account.address);
     whitelistService.removeWhitelist(account.address);
     transactionHistoryService.removeList(account.address);
+    perpsService.removeAgentWallet(account.address);
   }
   preferenceService.removePinAddress(account);
 

@@ -7,8 +7,8 @@ export const isScamHidenToken = (
   token: AbstractPortfolioToken | CombineDefiItem,
 ) => {
   const usdValue =
-    typeof (token as CombineDefiItem).totalUsdValue === 'number'
-      ? (token as CombineDefiItem).totalUsdValue
+    'totalUsdValue' in token && typeof token.totalUsdValue === 'number'
+      ? token.totalUsdValue
       : (token as AbstractPortfolioToken)._realUsdValue;
   return (
     !(token as TokenItemFromAbstractPortfolioToken).is_core &&

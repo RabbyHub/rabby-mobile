@@ -6,6 +6,7 @@
     "emitDecoratorMetadata": true,
     // "strictPropertyInitialization": false,
     "resolveJsonModule": true,
+    "noUncheckedIndexedAccess": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],

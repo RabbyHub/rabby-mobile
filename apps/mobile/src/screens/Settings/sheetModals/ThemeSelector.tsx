@@ -4,13 +4,20 @@ import { RcIconCheckmarkCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { makeThemeOptions, useAppTheme, useThemeStyles } from '@/hooks/theme';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { makeThemeOptions, useAppTheme, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTranslation } from 'react-i18next';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { FontWeightEnum } from '@/core/utils/fonts';
+
+import { default as RcThemeSystemCC } from './icons/theme-system-cc.svg';
+import { default as RcThemeLightCC } from './icons/theme-light-cc.svg';
+import { default as RcThemeDarkCC } from './icons/theme-dark-cc.svg';
+import { IS_IOS } from '@/core/native/utils';
 
 const themeSelectorModalVisibleAtom = atom(false);
 export function useThemeSelectorModalVisible() {
@@ -35,19 +42,31 @@ export default function ThemeSelectorModal({
   const { ThemeModeOptions, FULL_HEIGHT } = useMemo(() => {
     const options = makeThemeOptions(t);
     return {
-      ThemeModeOptions: options,
+      ThemeModeOptions: options.map(item => {
+        return {
+          ...item,
+          Icon:
+            item.value === 'light'
+              ? RcThemeLightCC
+              : item.value === 'dark'
+              ? RcThemeDarkCC
+              : RcThemeSystemCC,
+          // size: item.value === 'system' ? 22 : 20,
+        };
+      }),
       FULL_HEIGHT:
         SIZES.HANDLE_HEIGHT +
         (SIZES.titleMt + SIZES.titleHeight + SIZES.titleMb) +
         (SIZES.ITEM_HEIGHT + SIZES.ITEM_GAP) * (options.length - 1) +
         SIZES.ITEM_HEIGHT +
-        SIZES.containerPb,
+        SIZES.containerPb +
+        SIZES.listBottomSpace,
     };
   }, [t]);
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     sheetHeight: FULL_HEIGHT,
-    containerPaddingBottom: SIZES.containerPb,
+    containerBottomSpace: SIZES.containerPb,
   });
   const { toggleShowSheetModal } = useSheetModals({
     selectThemeMode: modalRef,
@@ -60,7 +79,7 @@ export default function ThemeSelectorModal({
     toggleShowSheetModal('selectThemeMode', visible || 'destroy');
   }, [visible, toggleShowSheetModal]);
 
-  const { styles, colors } = useThemeStyles(getStyles);
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const { appTheme, toggleThemeMode } = useAppTheme();
 
@@ -71,19 +90,31 @@ export default function ThemeSelectorModal({
 
   return (
     <AppBottomSheetModal
-      backgroundStyle={styles.sheet}
       ref={modalRef}
       index={0}
       snapPoints={[safeSizes.sheetHeight]}
-      handleStyle={styles.handleStyle}
+      {...makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+        // ...__DEV__ && {
+        //   createParams: {
+        //     bottomSheetModalProps: {
+        //       handleStyle: {
+        //         backgroundColor: 'black',
+        //       }
+        //     }
+        //   }
+        // }
+      })}
       onDismiss={handleCancel}
-      enableContentPanningGesture={false}>
+      enableContentPanningGesture
+      enablePanDownToClose>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {
-            paddingBottom: safeSizes.containerPaddingBottom,
+            paddingBottom: IS_IOS ? safeSizes.containerBottomSpace : 0,
           },
         ]}>
         <Text style={styles.title}>
@@ -102,15 +133,24 @@ export default function ThemeSelectorModal({
                   toggleThemeMode(item.value);
                   setThemeSelectorModalVisible(false);
                 }}>
-                <Text style={styles.settingItemLabel}>{item.title}</Text>
+                <View style={styles.leftCol}>
+                  <item.Icon
+                    style={styles.icon}
+                    width={20}
+                    height={20}
+                    color={colors2024['neutral-title-1']}
+                  />
+                  <Text style={styles.settingItemLabel}>{item.title}</Text>
+                </View>
                 {isSelected && (
                   <View>
-                    <RcIconCheckmarkCC color={colors['green-default']} />
+                    <RcIconCheckmarkCC color={colors2024['green-default']} />
                   </View>
                 )}
               </TouchableView>
             );
           })}
+          {!!ThemeModeOptions.length && <View style={styles.bottomSpacer} />}
         </View>
       </AutoLockView>
     </AppBottomSheetModal>
@@ -118,23 +158,17 @@ export default function ThemeSelectorModal({
 }
 
 const SIZES = {
-  ITEM_HEIGHT: 60,
+  ITEM_HEIGHT: 72,
   ITEM_GAP: 12,
   titleMt: 6,
   titleHeight: 24,
   titleMb: 16,
   HANDLE_HEIGHT: 8,
   containerPb: 42,
+  listBottomSpace: 48,
 };
-const getStyles = createGetStyles((colors, ctx) => {
+const getStyles = createGetStyles2024(ctx => {
   return {
-    sheet: {
-      backgroundColor: colors['neutral-bg-2'],
-    },
-    handleStyle: {
-      height: 8,
-      backgroundColor: colors['neutral-bg-2'],
-    },
     container: {
       flex: 1,
       paddingVertical: 0,
@@ -147,9 +181,11 @@ const getStyles = createGetStyles((colors, ctx) => {
       // ...makeDebugBorder('blue')
     },
     title: {
+      fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
+      fontWeight: FontWeightEnum.heavy,
+      lineHeight: 24,
+      color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',
 
       marginTop: SIZES.titleMt,
@@ -165,13 +201,13 @@ const getStyles = createGetStyles((colors, ctx) => {
     settingItem: {
       width: '100%',
       height: SIZES.ITEM_HEIGHT,
-      paddingTop: 18,
-      paddingBottom: 18,
-      paddingHorizontal: 20,
-      backgroundColor: !ctx?.isLight
-        ? colors['neutral-card1']
-        : colors['neutral-bg1'],
-      borderRadius: 8,
+      paddingTop: 0,
+      paddingBottom: 0,
+      paddingHorizontal: 24,
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
+      borderRadius: 16,
 
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -180,11 +216,25 @@ const getStyles = createGetStyles((colors, ctx) => {
     notFirstOne: {
       marginTop: SIZES.ITEM_GAP,
     },
+    bottomSpacer: {
+      height: SIZES.listBottomSpace,
+    },
+    leftCol: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    icon: {
+      marginRight: 12,
+      width: 20,
+      height: 20,
+    },
     settingItemLabel: {
-      color: colors['neutral-title-1'],
+      color: ctx.colors2024['neutral-title-1'],
       fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
       fontStyle: 'normal',
-      fontWeight: '500',
+      fontWeight: FontWeightEnum.bold,
     },
   };
 });

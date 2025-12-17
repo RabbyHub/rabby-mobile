@@ -1,18 +1,18 @@
 import { miniApprovalAtom } from '@/hooks/useMiniApproval';
 import { useClearMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
-import { EVENT_ROUTE_CHANGE, eventBus } from '@/utils/events';
 import { useMemoizedFn, useMount, useUnmount } from 'ahooks';
 import { useAtom } from 'jotai';
 import React, { useRef } from 'react';
 import { toastWithDotAnimation } from '@/components2024/Toast';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { MiniDirectSubmitApproval } from './DirectSubmitMiniSigntx';
+// import { MiniDirectSubmitApproval } from './DirectSubmitMiniSigntx';
 import { MiniApproval } from './MiniSignTx';
 import {
   useMemoMiniSignGasStore,
   useMiniSignGasStore,
 } from '@/hooks/miniSignGasStore';
 import { RootNames } from '@/constant/layout';
+import { perfEvents } from '@/core/utils/perf';
 
 const DON_AUTO_RESET_GAS_SCREEN = [
   RootNames.Swap,
@@ -70,36 +70,36 @@ export const GlobalMiniApproval = () => {
   );
 
   useMount(() => {
-    eventBus.addListener(EVENT_ROUTE_CHANGE, onEventRouteChange);
+    perfEvents.addListener('EVENT_ROUTE_CHANGE', onEventRouteChange);
   });
 
   useUnmount(() => {
-    eventBus.removeListener(EVENT_ROUTE_CHANGE, onEventRouteChange);
+    perfEvents.removeListener('EVENT_ROUTE_CHANGE', onEventRouteChange);
   });
 
   if (!currentAccount) {
     return null;
   }
 
-  if (state.directSubmit) {
-    return (
-      <MiniDirectSubmitApproval
-        {...state}
-        account={currentAccount}
-        key={`${currentAccount?.type}-${currentAccount?.address}-${state.id}`}
-        onSubmitting={handleSubmitting}
-        onSubmitted={handleSubmitted}
-        onVisibleChange={v => {
-          setState(prev => {
-            return {
-              ...prev,
-              visible: v,
-            };
-          });
-        }}
-      />
-    );
-  }
+  // if (state.directSubmit) {
+  //   return (
+  //     <MiniDirectSubmitApproval
+  //       {...state}
+  //       account={currentAccount}
+  //       key={`${currentAccount?.type}-${currentAccount?.address}-${state.id}`}
+  //       onSubmitting={handleSubmitting}
+  //       onSubmitted={handleSubmitted}
+  //       onVisibleChange={v => {
+  //         setState(prev => {
+  //           return {
+  //             ...prev,
+  //             visible: v,
+  //           };
+  //         });
+  //       }}
+  //     />
+  //   );
+  // }
 
   return (
     <MiniApproval

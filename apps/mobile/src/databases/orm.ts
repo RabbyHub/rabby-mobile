@@ -4,7 +4,7 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { HistoryItemEntity } from './entities/historyItem';
 import { LocalHistoryItemEntity } from './entities/localhistoryItem';
-import { PortocolItemEntity } from './entities/portocolItem';
+import { ProtocolItemEntity } from './entities/portocolItem';
 import { SQLite } from '@/core/databases/exports';
 import { getMigrations } from './migrations';
 import { APP_DB_PREFIX, getRabbyAppDbName } from './constant';
@@ -23,6 +23,7 @@ import {
   RabbyOrmDeployedConsoleLogger,
   RnSqlExecutionTimes,
 } from './logger';
+import { reactotronEvents } from '@/core/utils/reactotron-plugins/_utils';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -34,7 +35,7 @@ const dbOptions: DataSourceOptions = {
   location: 'default',
   // "query" | "schema" | "error" | "warn" | "info" | "log" | "migration"
   logging: __DEV__
-    ? ['error', /* 'query', 'schema',*/ 'migration']
+    ? ['error', 'query', 'schema', 'migration']
     : ['error', 'migration'],
   // logger: isNonPublicProductionEnv ? 'file' : 'advanced-console',
   // logger: __DEV__ ? 'advanced-console' : 'simple-console',
@@ -52,7 +53,7 @@ const dbOptions: DataSourceOptions = {
     LocalHistoryItemEntity,
     SwapItemEntity,
     BalanceEntity,
-    PortocolItemEntity,
+    ProtocolItemEntity,
     BuyItemEntity,
     CexEntity,
     CopyTradingBuyItemEntity,

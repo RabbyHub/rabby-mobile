@@ -81,7 +81,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
   },
   fdvContainer: {
-    backgroundColor: colors2024['green-light-4'],
+    backgroundColor: colors2024['green-light-1'],
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 4,

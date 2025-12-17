@@ -88,8 +88,6 @@ function useSetupPasswordForm() {
     >();
   const navParams = route.params;
 
-  // const { updateSetPasswordFirst } = useSetPasswordFirstState();
-
   const { fetchLockInfo } = useLoadLockInfo();
 
   const formik = useAppFormik({
@@ -130,7 +128,6 @@ function useSetupPasswordForm() {
               break;
             }
             case 'testkits:fromSettings': {
-              // updateSetPasswordFirst({ isOnSettingsWaiting: false });
               if (navParams.actionType === 'setBiometrics') {
                 sheetModalRefsNeedLock.switchBiometricsRef.current?.toggle();
               } else if (navParams.actionType === 'setAutoLockTime') {

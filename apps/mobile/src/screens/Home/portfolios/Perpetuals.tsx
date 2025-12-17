@@ -11,6 +11,8 @@ import {
 import { AbstractPortfolio } from '../types';
 import { formatNetworth } from '@/utils/math';
 import { getTokenSymbol } from '@/utils/token';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
 
 export default React.memo(
   ({
@@ -23,6 +25,7 @@ export default React.memo(
     style?: ViewStyle;
   }) => {
     const portfolio = data._originPortfolio;
+    const { styles } = useTheme2024({ getStyle: getStyles });
 
     const tradePair =
       getTokenSymbol(portfolio.detail.base_token) +
@@ -56,24 +59,39 @@ export default React.memo(
     ];
 
     return (
-      <Card style={style} shadow>
+      <Card style={style}>
         <PortfolioHeader data={data} name={name} showDescription />
-        <Supplements data={supplements} />
+        <Supplements style={styles.supplements} data={supplements} />
         <TokenList
+          headerStyle={styles.tokenListHeader}
           tokens={
             portfolio.detail.position_token
               ? [portfolio.detail.position_token]
               : []
           }
-          name="POSITION"
+          name="Position"
         />
         <TokenList
           tokens={
             portfolio.detail.margin_token ? [portfolio.detail.margin_token] : []
           }
-          name="MARGIN"
+          style={styles.tokenList}
+          headerStyle={styles.tokenListHeader}
+          name="Margin"
         />
       </Card>
     );
   },
 );
+
+const getStyles = createGetStyles2024(() => ({
+  tokenListHeader: {
+    marginTop: 0,
+  },
+  tokenList: {
+    marginTop: 2,
+  },
+  supplements: {
+    // marginTop: 12,
+  },
+}));

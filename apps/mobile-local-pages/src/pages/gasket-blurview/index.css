@@ -1,0 +1,170 @@
+/* @import '../../styles/tailwind-theme-v4.css'; */
+
+:root {
+  --border-width: var(--app-border-width, 2px);
+  --radius: var(--app-border-radius, 21px);
+  --animation-ms: var(--app-animation-ms, 2500);
+
+  --rect-width: var(--app-rect-width, 330px);
+  --rect-height: var(--app-rect-height, 240px);
+  --animation-color-rgb: var(--app-animation-color-rgb, 88, 198, 105);
+  --animation-color: rgba(var(--animation-color-rgb), 0.6);
+}
+
+html[data-theme='dark'] {
+  --animation-color: rgba(var(--animation-color-rgb), 0.4);
+}
+
+html,
+body {
+  background: transparent;
+  /* background: #000; */
+  margin: 0;
+  padding: 0;
+  max-width: var(--rect-width);
+}
+
+body .gradient-border::before,
+body .gradient-border .glow,
+body .gradient-border .glow::after {
+  opacity: 0;
+  animation-name: none;
+  transition: opacity 0.3s ease-in-out;
+}
+body.loading .gradient-border::before,
+body.loading .gradient-border .glow,
+body.loading .gradient-border .glow::after {
+  opacity: 1;
+  animation-name: spin;
+}
+
+.gradient-wrapper {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  border-radius: var(--radius);
+  width: calc(var(--rect-width));
+  height: var(--rect-height);
+  min-width: 240px;
+  min-height: 100px;
+}
+
+.gradient-border {
+  position: relative;
+  /* Basic size and positioning */
+  width: var(--rect-width);
+  height: var(--rect-height);
+  min-width: 240px;
+  min-height: 100px;
+
+  border-radius: var(--radius);
+  border: var(--border-width) solid transparent;
+}
+
+.gradient-border::before {
+  /* Gradient border */
+  content: ' ';
+  position: absolute;
+  width: calc(100vw - var(--border-width) * 0);
+  height: calc(100vh - var(--border-width) * 0);
+  left: calc(var(--border-width) * -1);
+  top: calc(var(--border-width) * -1);
+  z-index: -1;
+  border: inherit;
+  border-radius: inherit;
+  /* Gradient */
+  background-image: conic-gradient(
+    from var(--angle) at 50% 50%,
+    rgba(var(--animation-color-rgb), 0) 0deg,
+    rgba(var(--animation-color-rgb), 0) 90deg,
+    var(--animation-color) 180deg,
+    rgba(var(--animation-color-rgb), 0) 270deg,
+    rgba(var(--animation-color-rgb), 0) 360deg
+  );
+  background-origin: border-box;
+  /* Use the difference boolean of content-box and border-box to calculate a border mask */
+  -webkit-mask: linear-gradient(black, black), linear-gradient(black, black);
+  mask: linear-gradient(black, black), linear-gradient(black, black);
+  -webkit-mask-clip: content-box, border-box;
+  mask-clip: content-box, border-box;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  /*   应用动画 */
+  animation: spin linear infinite running;
+  animation-duration: calc(var(--animation-ms) * 1ms);
+}
+
+.gradient-border .glow {
+  /* Basic glow style */
+  position: absolute;
+  width: calc(100vw - var(--border-width) * 0);
+  height: calc(100vh - var(--border-width) * 0);
+  left: calc(var(--border-width) * -1);
+  top: calc(var(--border-width) * -1);
+  border-radius: inherit;
+}
+
+.gradient-border .glow::after {
+  /* The white glow serves as the base, and other glows inherit this class, only needing to change the color */
+  content: '';
+  position: absolute;
+  /* inset: calc(var(--border-width) * -1); */
+  width: calc(100vw - var(--border-width) * 0);
+  height: calc(100vh - var(--border-width) * 0);
+  left: calc(var(--border-width) * -1);
+  top: calc(var(--border-width) * -1);
+  z-index: -1;
+  border: calc(var(--border-width) * 2) solid transparent;
+  border-radius: inherit;
+  background-image: conic-gradient(
+    from var(--angle) at 50% 50%,
+    rgba(var(--animation-color-rgb), 0) 0deg,
+    transparent 90deg,
+    transparent 180deg,
+    transparent 270deg,
+    rgba(var(--animation-color-rgb), 0) 360deg
+  );
+  background-origin: border-box;
+  -webkit-mask: linear-gradient(black, black), linear-gradient(black, black);
+  mask: linear-gradient(black, black), linear-gradient(black, black);
+  -webkit-mask-clip: content-box, border-box;
+  mask-clip: content-box, border-box;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: spin linear infinite running;
+  animation-duration: calc(var(--animation-ms) * 1ms - 1000ms);
+}
+
+.base-glow {
+  /* This blur should be applied to the parent element of the mask, not the mask element itself. Therefore, the glow is implemented using a pseudo-element, and the original element is blurred. */
+  filter: blur(100px);
+}
+
+/* The same applies to other glows */
+.gradient-border .blur-glow::after {
+  background-image: conic-gradient(
+    from var(--angle) at 50% 50%,
+    transparent 0deg,
+    var(--animation-color) 90deg,
+    transparent 180deg
+  );
+  border: calc(var(--border-width) * 1) solid transparent;
+}
+
+.blur-glow {
+  filter: blur(100px);
+}
+
+/* Registering variables is necessary for animation */
+@property --angle {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0turn;
+}
+
+/* Rotation animation */
+@keyframes spin {
+  to {
+    --angle: 1turn;
+  }
+}

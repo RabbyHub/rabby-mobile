@@ -1,14 +1,20 @@
-import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo } from 'react';
 import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
-import { atomByMMKV } from '@/core/storage/mmkv';
+import { zustandByMMKV } from '@/core/storage/mmkv';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisAutoLock } from '@/core/apis';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { preferenceService } from '@/core/services';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { useAtomCallback } from 'jotai/utils';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
+import { zCreate } from '@/core/utils/reexports';
 
 const isIOS = DeviceUtils.isIOS();
 
@@ -16,7 +22,7 @@ type ScreenshotSettings = {
   androidForceAllowScreenCapture: boolean;
   iosForceAllowScreenRecord: boolean;
 };
-const ExperimentalSettingsAtom = atomByMMKV<ScreenshotSettings>(
+const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
   {
     /**
@@ -28,6 +34,16 @@ const ExperimentalSettingsAtom = atomByMMKV<ScreenshotSettings>(
     iosForceAllowScreenRecord: false,
   },
 );
+
+function setExpData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
+  experimentalSettingsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return { ...prev, ...newVal };
+  });
+}
 
 const KEY = isIOS
   ? 'iosForceAllowScreenRecord'
@@ -41,30 +57,28 @@ function isAllowScreenshot(
   return ret[KEY];
 }
 
-export function useExpScreenCapture() {
-  const [
-    { androidForceAllowScreenCapture, iosForceAllowScreenRecord },
-    setExpData,
-  ] = useAtom(ExperimentalSettingsAtom);
-  const onExpScreenCaptureChange = useCallback(
-    (partials: Partial<ScreenshotSettings>) => {
-      setExpData(prev => ({
-        ...prev,
-        ...partials,
-      }));
-    },
-    [setExpData],
-  );
+const onExpScreenCaptureChange = (partials: Partial<ScreenshotSettings>) => {
+  setExpData(prev => ({
+    ...prev,
+    ...partials,
+  }));
+};
 
-  const prodData = useMemo(
-    () => ({
-      androidForceAllowScreenCapture: false,
-      iosForceAllowScreenRecord: false,
-      forceAllowScreenshot: false,
-      onExpScreenCaptureChange,
-    }),
-    [onExpScreenCaptureChange],
-  );
+const prodData = {
+  androidForceAllowScreenCapture: false,
+  iosForceAllowScreenRecord: false,
+  forceAllowScreenshot: false,
+  onExpScreenCaptureChange,
+};
+
+export function useExpScreenCapture() {
+  const { androidForceAllowScreenCapture, iosForceAllowScreenRecord } =
+    experimentalSettingsStore(
+      useShallow(s => ({
+        androidForceAllowScreenCapture: s.androidForceAllowScreenCapture,
+        iosForceAllowScreenRecord: s.iosForceAllowScreenRecord,
+      })),
+    );
 
   if (!isNonPublicProductionEnv) {
     return prodData;
@@ -81,24 +95,26 @@ export function useExpScreenCapture() {
   };
 }
 
+const setAllowScreenshot = (
+  valueOrFunc: boolean | ((prev: boolean) => boolean),
+) => {
+  setExpData(prev => {
+    const next =
+      typeof valueOrFunc === 'function' ? valueOrFunc(prev[KEY]) : valueOrFunc;
+
+    return {
+      ...prev,
+      [KEY]: next,
+    };
+  });
+};
+
 export function useForceAllowScreenshot() {
-  const [result, setAtom] = useAtom(ExperimentalSettingsAtom);
-
-  const setAllowScreenshot = useCallback(
-    (valueOrFunc: boolean | ((prev: boolean) => boolean)) => {
-      setAtom(prev => {
-        const next =
-          typeof valueOrFunc === 'function'
-            ? valueOrFunc(prev[KEY])
-            : valueOrFunc;
-
-        return {
-          ...prev,
-          [KEY]: next,
-        };
-      });
-    },
-    [setAtom],
+  const result = experimentalSettingsStore(
+    useShallow(s => ({
+      androidForceAllowScreenCapture: s.androidForceAllowScreenCapture,
+      iosForceAllowScreenRecord: s.iosForceAllowScreenRecord,
+    })),
   );
 
   return {
@@ -127,64 +143,94 @@ export function useGlobalAppPreventScreenrecordOnDev() {
   }, [forceAllowScreenshot]);
 }
 
-const autoLockMinutesAtom = atom<number>(DEFAULT_AUTO_LOCK_MINUTES);
-autoLockMinutesAtom.onMount = setAutoLockMinutes => {
+const autoLockState = zCreate<{
+  minutes: number;
+}>(() => ({
+  minutes:
+    apisAutoLock.getPersistedAutoLockTimes()?.minutes ||
+    DEFAULT_AUTO_LOCK_MINUTES,
+}));
+function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
+  autoLockState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.minutes, valOrFunc);
+
+    return { ...prev, minutes: newVal };
+  });
+}
+
+runIIFEFunc(() => {
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
-};
+});
+
 export function useAutoLockTimeMinites() {
-  const [autoLockMinutes, setAutoLockMinutes] = useAtom(autoLockMinutesAtom);
+  const autoLockMinutes = autoLockState(s => s.minutes);
 
   return { autoLockMinutes };
 }
+
+const onAutoLockTimeMsChange = (ms: number) => {
+  const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
+  setAutoLockMinutes(minutes);
+  preferenceService.setPreference({
+    autoLockTime: minutes,
+  });
+  apisAutoLock.refreshAutolockTimeout();
+};
 export function useAutoLockTimeMs() {
-  const [autoLockMinutes, setAutoLockMinutes] = useAtom(autoLockMinutesAtom);
+  const autoLockMinutes = autoLockState(s => s.minutes);
 
   const autoLockMs = useMemo(
     () => autoLockMinutes * 60 * 1000,
     [autoLockMinutes],
   );
 
-  const onAutoLockTimeMsChange = useCallback(
-    (ms: number) => {
-      const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
-      setAutoLockMinutes(minutes);
-      preferenceService.setPreference({
-        autoLockTime: minutes,
-      });
-      apisAutoLock.refreshAutolockTimeout();
-    },
-    [setAutoLockMinutes],
-  );
-
   return {
     autoLockMs,
-    // autoLockMinutes,
     onAutoLockTimeMsChange,
   };
 }
 
-const showFloatingViewAtom = atom({
+// const showFloatingViewAtom = atom({
+//   collapsed: true,
+//   ui_showAutoLockCountdown: false,
+// });
+const showFloatingViewStore = zCreate<{
+  collapsed: boolean;
+  ui_showAutoLockCountdown: boolean;
+}>(() => ({
   collapsed: true,
   ui_showAutoLockCountdown: false,
-});
+}));
+function setShowFloatingView(
+  valOrFunc: UpdaterOrPartials<{
+    collapsed: boolean;
+    ui_showAutoLockCountdown: boolean;
+  }>,
+) {
+  showFloatingViewStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return { ...prev, ...newVal };
+  });
+}
+
+const toggleCollapsed = (nextEnabled?: boolean) => {
+  setShowFloatingView(prev => {
+    if (typeof nextEnabled !== 'boolean') {
+      nextEnabled = !prev.collapsed;
+    }
+    return {
+      ...prev,
+      collapsed: nextEnabled,
+    };
+  });
+};
 
 export function useFloatingView() {
-  const [floatingView, setShowFloatingView] = useAtom(showFloatingViewAtom);
-  const toggleCollapsed = useCallback(
-    (nextEnabled?: boolean) => {
-      setShowFloatingView(prev => {
-        if (typeof nextEnabled !== 'boolean') {
-          nextEnabled = !prev.collapsed;
-        }
-        return {
-          ...prev,
-          collapsed: nextEnabled,
-        };
-      });
-    },
-    [setShowFloatingView],
-  );
+  const floatingView = showFloatingViewStore(s => s);
 
   return {
     collapsed: floatingView.collapsed,
@@ -195,49 +241,59 @@ export function useFloatingView() {
   };
 }
 
-export function useToggleShowAutoLockCountdown() {
-  const [floatingView, setShowFloatingView] = useAtom(showFloatingViewAtom);
+const toggleShowAutoLockCountdown = (nextEnabled?: boolean) => {
+  setShowFloatingView(prev => {
+    if (typeof nextEnabled !== 'boolean') {
+      nextEnabled = !prev.ui_showAutoLockCountdown;
+    }
+    return {
+      ...prev,
+      ui_showAutoLockCountdown: nextEnabled,
+    };
+  });
+};
 
-  const toggleShowAutoLockCountdown = useCallback(
-    (nextEnabled?: boolean) => {
-      setShowFloatingView(prev => {
-        if (typeof nextEnabled !== 'boolean') {
-          nextEnabled = !prev.ui_showAutoLockCountdown;
-        }
-        return {
-          ...prev,
-          ui_showAutoLockCountdown: nextEnabled,
-        };
-      });
-    },
-    [setShowFloatingView],
+export function useToggleShowAutoLockCountdown() {
+  const ui_showAutoLockCountdown = showFloatingViewStore(
+    s => s.ui_showAutoLockCountdown,
   );
 
   return {
-    showAutoLockCountdown: floatingView.ui_showAutoLockCountdown,
+    showAutoLockCountdown: ui_showAutoLockCountdown,
     toggleShowAutoLockCountdown,
   };
 }
 
-export const mockBatchRevokeAtom = atom({
+type MockBatchRevokeState = {
+  DEBUG_MOCK_SUBMIT: boolean;
+  DEBUG_ETH_GAS_USD_LIMIT: number;
+  DEBUG_OTHER_CHAIN_GAS_USD_LIMIT: number;
+  DEBUG_SIMULATION_FAILED: boolean;
+};
+export const mockBatchRevokeStore = zCreate<MockBatchRevokeState>(() => ({
   DEBUG_MOCK_SUBMIT: false,
   DEBUG_ETH_GAS_USD_LIMIT: 20,
   DEBUG_OTHER_CHAIN_GAS_USD_LIMIT: 5,
   DEBUG_SIMULATION_FAILED: false,
-});
-export function useMockBatchRevoke() {
-  const [mockBatchRevokeSetting, setMockBatchRevokeSetting] =
-    useAtom(mockBatchRevokeAtom);
-
-  const setMockBatchRevoke = useCallback(
-    (key: keyof typeof mockBatchRevokeSetting, value: boolean | number) => {
-      setMockBatchRevokeSetting(prev => ({
-        ...prev,
-        [key]: value,
-      }));
-    },
-    [setMockBatchRevokeSetting],
+}));
+function setMockBatchRevokeSetting(
+  valOrFunc: UpdaterOrPartials<MockBatchRevokeState>,
+) {
+  mockBatchRevokeStore.setState(
+    prev => resolveValFromUpdater(prev, valOrFunc).newVal,
   );
+}
+const setMockBatchRevoke = (
+  key: keyof MockBatchRevokeState,
+  value: boolean | number,
+) => {
+  setMockBatchRevokeSetting(prev => ({
+    ...prev,
+    [key]: value,
+  }));
+};
+export function useMockBatchRevoke() {
+  const mockBatchRevokeSetting = mockBatchRevokeStore(s => s);
 
   return {
     mockBatchRevokeSetting,

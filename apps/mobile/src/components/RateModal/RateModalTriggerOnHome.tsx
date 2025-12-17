@@ -48,7 +48,7 @@ function starToText(number: number) {
 export function RateModalTriggerOnHome({
   style,
   totalBalanceText,
-}: RNViewProps & { totalBalanceText: string }) {
+}: RNViewProps & { totalBalanceText?: string }) {
   const { isLight, styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();

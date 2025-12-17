@@ -10,6 +10,7 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
+  ScrollView,
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -40,6 +41,7 @@ import { preferenceService } from '@/core/services';
 import {
   AddrDescResponse,
   TokenItem,
+  TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
@@ -76,11 +78,17 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { getRecommendToken } from '@/utils/addressSupport';
 import { lowcaseSame } from '@/utils/common';
 import { noop } from 'lodash';
-import { ShowMoreOnSend } from './components/SendShowMore';
+import { ShowMoreOnSend } from './components/ShowMoreOnSend';
 import { PendingTxItem } from '../Swap/components/PendingTxItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
+import {
+  globalSupportCexList,
+  useCexSupportList,
+} from '@/hooks/useCexSupportList';
+import { isValidHexAddress } from '@metamask/utils';
+import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -116,8 +124,7 @@ function SendScreen({
 
   useEffect(() => {
     clearLocalPendingTxData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearLocalPendingTxData]);
 
   const route =
     useRoute<
@@ -128,19 +135,8 @@ function SendScreen({
     >();
   const navParams = route.params;
 
-  const { chainItem, currentToken, setCurrentToken, setChainEnum } =
+  const { chainItem, currentToken, setChainEnum } =
     useSendTokenScreenChainToken();
-  const [addrDesc, setAddrDesc] = useState<
-    AddrDescResponse['desc'] | undefined
-  >(navParams?.addrDesc || getInitDescWithCexLocalCache(navParams?.toAddress));
-  useEffect(() => {
-    if (addrDesc || !navParams?.toAddress) {
-      return;
-    }
-    getAddrDescWithCexLocalCacheSync(navParams.toAddress).then(res => {
-      setAddrDesc(res);
-    });
-  }, [addrDesc, navParams?.toAddress]);
   const [routeParams] = useAtom(sendScreenParamsAtom);
 
   const {
@@ -148,6 +144,7 @@ function SendScreen({
     putScreenState,
     resetScreenState,
   } = useSendTokenScreenState();
+
   const Header = useCallback(
     () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
     [isForMultipleAddress],
@@ -158,27 +155,34 @@ function SendScreen({
     });
   }, [Header, setNavigationOptions]);
 
-  const disableItemCheck = useCallback(
-    (token: TokenItem & { cex_ids?: string[] }) => {
-      if (!addrDesc) {
+  const disableItemCheck = useCallback<ITokenCheck>(
+    (token: TokenItemWithEntity) => {
+      if (!screenState.toAddrDesc) {
         return {
           disable: false,
+          simpleReason: '',
           reason: '',
         };
       }
-      const toCexId = addrDesc?.cex?.id;
-      if (toCexId) {
-        const noSupportToken = token.cex_ids?.every?.(
+      const toCexId = screenState.toAddrDesc?.cex?.id;
+      const isSupportCEX = globalSupportCexList.find(cex => cex.id === toCexId);
+      if (toCexId && isSupportCEX) {
+        const cex_ids =
+          token.cex_ids || token.identity?.cex_list.map(item => item.id);
+        const noSupportToken = cex_ids?.every?.(
           id => id.toLowerCase() !== toCexId.toLowerCase(),
         );
-        if (!token?.cex_ids?.length || noSupportToken) {
+        if (!cex_ids?.length || noSupportToken) {
           return {
             disable: true,
-            reason: t('page.sendToken.noSupprotTokenForDex'),
+            simpleReason: t('page.sendToken.noSupportTokenReason.forDexSimple'),
+            reason: t('page.sendToken.noSupportTokenReason.forDex'),
           };
         }
       } else {
-        const safeChains = Object.entries(addrDesc?.contract || {})
+        const safeChains = Object.entries(
+          screenState.toAddrDesc?.contract || {},
+        )
           .filter(([, contract]) => {
             return contract.multisig;
           })
@@ -189,28 +193,33 @@ function SendScreen({
         ) {
           return {
             disable: true,
-            reason: t('page.sendToken.noSupprotTokenForSafe'),
+            simpleReason: t(
+              'page.sendToken.noSupportTokenReason.forSafeSimple',
+            ),
+            reason: t('page.sendToken.noSupportTokenReason.forSafe'),
           };
         }
-        const contactChains = Object.entries(addrDesc?.contract || {}).map(
-          ([chain]) => chain?.toLowerCase(),
-        );
+        const contactChains = Object.entries(
+          screenState.toAddrDesc?.contract || {},
+        ).map(([chain]) => chain?.toLowerCase());
         if (
           contactChains.length > 0 &&
           !contactChains.includes(token?.chain?.toLowerCase())
         ) {
           return {
             disable: true,
-            reason: t('page.sendToken.noSupportTokenForChain'),
+            simpleReason: t('page.sendToken.noSupportTokenReason.forChain'),
+            reason: t('page.sendToken.noSupportTokenReason.forChain'),
           };
         }
       }
       return {
         disable: false,
+        simpleReason: '',
         reason: '',
       };
     },
-    [addrDesc, t],
+    [screenState.toAddrDesc, t],
   );
 
   const {
@@ -219,7 +228,11 @@ function SendScreen({
     formValues,
     handleFieldChange,
     handleClickMaxButton,
+    onChangeSlider,
+    slider,
+    setSlider,
     handleGasLevelChanged,
+    handleIgnoreGasFeeChange,
 
     checkCexSupport,
     loadCurrentToken,
@@ -227,24 +240,39 @@ function SendScreen({
 
     whitelistEnabled,
     computed: {
+      toAccount,
       toAddressInContactBook,
-      toAddressIsValid,
-      toAddressInWhitelist,
+      toAddressIsCex,
+      toAddressPositiveTips,
       canSubmit,
       canDirectSign,
+      toAddrCex,
     },
   } = useSendTokenForm({
     toAddress: navParams?.toAddress,
+    toAddressBrandName: navParams?.addressBrandName,
     isForMultipleAddress: isForMultipleAddress,
     disableItemCheck,
     currentAccount: currentAccount!,
   });
 
+  useEffect(() => {
+    if (!formValues.to) return;
+    if (!isValidHexAddress(formValues.to as `0x${string}`)) return;
+
+    getAddrDescWithCexLocalCacheSync(formValues.to).then(res => {
+      putScreenState({
+        toAddrDesc: res,
+      });
+    });
+  }, [formValues.to, putScreenState]);
+
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
     account: currentAccount!,
   });
   const isShowLoadingRef = useRef(true);
-  const initByCache = async () => {
+  const initByCacheFinishedRef = useRef(false);
+  const initByCache = useCallback(async () => {
     let targetToken: TokenItem | null = null;
     if (
       navParams &&
@@ -314,9 +342,7 @@ function SendScreen({
         targetToken = currentToken;
       }
     }
-    const hideLoading = isShowLoadingRef.current
-      ? toastLoading('Loading Token...')
-      : noop;
+
     try {
       if (navParams?.toAddress) {
         const res = await getRecommendToken({
@@ -336,26 +362,12 @@ function SendScreen({
           };
         }
       }
-      // 更新页面状态
       if (chainItem && targetToken.chain !== chainItem.serverId) {
         const target = findChainByServerID(targetToken.chain);
         if (target?.enum) {
           setChainEnum(target.enum);
         }
       }
-      // // 不知道为什么要，感觉可以不要
-      // if (!chainItem) {
-      //   setChainEnum(CHAINS_ENUM.ETH);
-      // }
-      // // 应该去了也可以
-      // if (targetToken) {
-      //   if (
-      //     !lowcaseSame(targetToken.chain, currentToken.chain) ||
-      //     !lowcaseSame(targetToken.id, currentToken.id)
-      //   ) {
-      //     // setCurrentToken(targetToken);
-      //   }
-      // }
       await Promise.race([
         await loadCurrentToken(
           targetToken.id,
@@ -365,23 +377,37 @@ function SendScreen({
         sleep(5000),
       ]);
     } finally {
-      hideLoading();
+      // hideLoading();
       isShowLoadingRef.current = true;
     }
-  };
-
-  const init = async () => {
-    if (!currentAccount) {
-      redirectBackErrorHandler(navigation);
+  }, [
+    navParams,
+    routeParams,
+    currentAccount,
+    currentToken,
+    chainItem,
+    setChainEnum,
+    putScreenState,
+    fetchOrderedChainList,
+    loadCurrentToken,
+  ]);
+  const initByCacheOnce = useCallback(async () => {
+    if (initByCacheFinishedRef.current) {
       return;
     }
-    putScreenState({ inited: true });
-  };
+    initByCacheFinishedRef.current = true;
 
-  const checkIsAddressBlocked = async (to?: string) => {
-    if (!to) {
-      return;
+    try {
+      await initByCache();
+    } catch (e) {
+      console.error('SendScreen initByCache error', e);
+      initByCacheFinishedRef.current = false;
     }
+  }, [initByCache]);
+
+  const checkIsAddressBlocked = useCallback(async (to?: string) => {
+    if (!to) return;
+
     try {
       const { is_blocked } = await openapi.isBlockedAddress(to);
       if (is_blocked) {
@@ -389,28 +415,34 @@ function SendScreen({
         setIsShowBlockedTransactionDialog(true);
       }
     } catch (e) {
-      // NOTHING
+      console.error('checkIsAddressBlocked error', e);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (screenState.inited) {
-      initByCache();
+      initByCacheOnce();
       checkIsAddressBlocked(navParams?.toAddress);
+    }
+  }, [
+    screenState.inited,
+    initByCacheOnce,
+    checkIsAddressBlocked,
+    navParams?.toAddress,
+  ]);
+
+  useEffect(() => {
+    if (!currentAccount) {
+      redirectBackErrorHandler(navigation);
+      return;
     } else {
-      init();
+      putScreenState({ inited: true });
 
       return () => {
         apiPageStateCache.clearPageStateCache();
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    navParams,
-    screenState.inited,
-    currentAccount?.address,
-    currentAccount?.type,
-  ]);
+  }, [currentAccount, navigation, putScreenState]);
 
   const { fetchContactAccounts } = useContactAccounts();
 
@@ -434,7 +466,7 @@ function SendScreen({
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [sendTokenEvents, resetScreenState, navigation]);
+  }, [sendTokenEvents, resetScreenState]);
 
   useLayoutEffect(() => {
     return () => {
@@ -472,12 +504,15 @@ function SendScreen({
         screenState,
         formValues,
         computed: {
+          fromAddress: currentAccount?.address || '',
           canSubmit,
-          toAddressInWhitelist,
+          toAccount,
+          toAddressIsCex,
           whitelistEnabled,
-          toAddressIsValid,
           toAddressInContactBook,
+          toAddressPositiveTips,
           canDirectSign,
+          toAddrCex,
 
           chainItem,
           currentToken,
@@ -485,9 +520,11 @@ function SendScreen({
         },
         events: sendTokenEvents,
         formik,
+        slider,
         fns: {
           putScreenState,
           fetchContactAccounts,
+          disableItemCheck,
         },
 
         callbacks: {
@@ -495,33 +532,36 @@ function SendScreen({
           handleFieldChange,
           checkCexSupport,
           handleClickMaxButton,
+          onChangeSlider,
+          setSlider,
           handleGasLevelChanged,
+          handleIgnoreGasFeeChange,
         },
       }}>
-      <NormalScreenContainer2024 type="bg1">
-        {isForMultipleAddress && (
-          <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
-        )}
+      <NormalScreenContainer2024
+        type="bg1"
+        // overwriteStyle={styles.screenContainer}
+      >
+        <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         <TouchableWithoutFeedback
           onPress={() => {
             sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
             Keyboard.dismiss();
           }}>
-          <View style={styles.sendScreen}>
+          <ScrollView contentContainerStyle={styles.sendScreen}>
             <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
               {/* FromToSection */}
               <View>
                 {/* From */}
-                <FromAddressControl2024 disableSwitch={!isForMultipleAddress} />
+                <FromAddressControl2024 disableSwitch={false} />
                 {/* To */}
                 <ToAddressControl2024
                   style={{
                     marginTop: 24,
                     marginBottom: 0,
                   }}
-                  address={navParams?.toAddress || ''}
-                  addrDesc={addrDesc}
-                  brandName={navParams?.addressBrandName}
+                  addrDesc={screenState.toAddrDesc}
+                  // brandName={navParams?.addressBrandName}
                 />
                 {/* balance info */}
                 <BalanceSection
@@ -540,7 +580,7 @@ function SendScreen({
               )}
             </KeyboardAwareScrollView>
             <BottomArea account={currentAccount} />
-          </View>
+          </ScrollView>
         </TouchableWithoutFeedback>
         <TokenInfoPopup />
         <BlockedAddressDialog
@@ -558,6 +598,7 @@ function SendScreen({
   );
 }
 
+/** @deprecated */
 const ForMultipleAddress = (
   props: Omit<
     React.ComponentProps<typeof SendScreen>,
@@ -589,20 +630,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       justifyContent: 'space-between',
       flex: 1,
       paddingTop: 16,
+      position: 'relative',
+      height: '100%',
     },
     mainContent: {
       paddingHorizontal: 24,
-      paddingBottom: 200,
+      paddingBottom: 220,
     },
     balance: {
       marginTop: 24,
-    },
-    sectionTitle: {
-      color: colors2024['neutral-title-1'],
-      fontSize: 17,
-      fontWeight: '700',
-      fontFamily: 'SF Pro Rounded',
-      marginBottom: 8,
     },
     buttonContainer: {
       width: '100%',
@@ -610,33 +646,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     button: {
       backgroundColor: colors2024['blue-default'],
-    },
-    overlay: {
-      backgroundColor: 'rgba(0,0,0,0.8)',
-      height: '100%',
-      justifyContent: 'center',
-    },
-    modalContent: {
-      borderRadius: 20,
-      backgroundColor: colors2024['neutral-bg-1'],
-      boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-      marginHorizontal: 20,
-      paddingHorizontal: 20,
-      paddingVertical: 30,
-    },
-    btns: {
-      padding: 0,
-      marginTop: 30,
-    },
-    alertModalText: {
-      fontSize: 18,
-      lineHeight: 22,
-      fontWeight: '700',
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'center',
-      color: colors2024['neutral-title-1'],
     },
   }),
 );

@@ -8,6 +8,12 @@ import { getLatestNavigationName } from '@/utils/navigation';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { preferenceService } from '@/core/services';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  AccountSwitcherScene,
+  SceneAccounts,
+} from '@/hooks/sceneAccountInfoAtom';
+import { appJsonStore } from '@/core/storage/mmkv';
+import { apisPerps } from '@/core/apis';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -18,6 +24,29 @@ function runTryCatch<T extends (...args: any[]) => any>(
     console.error('Error occurred:', error);
     return null;
   }
+}
+
+export async function getSceneAddresses() {
+  const accounts = appJsonStore.getItem(
+    '@SceneAccounts202512',
+    {},
+  ) as SceneAccounts;
+
+  const values = Object.entries(accounts).reduce((acc, [key, value]) => {
+    if (!key.startsWith('@')) {
+      acc[key as AccountSwitcherScene] = value?.currentAccount?.address || null;
+    }
+    return acc;
+  }, {} as { [K in AccountSwitcherScene]: string | null });
+
+  const perpsInfo = await runTryCatch(
+    async () => await apisPerps.getPerpsCurrentAccount(),
+  );
+
+  return {
+    ...values,
+    Perps: perpsInfo?.address || perpsInfo,
+  };
 }
 
 const latestErrorsRef = {
@@ -37,8 +66,6 @@ export async function getScreenshotFeedbackExtra({
 }: {
   totalBalanceText: string;
 }): Promise<UserFeedbackItem['extra'] & object> {
-  // Implementation for collecting screenshot feedback
-
   const latestErrors = runTryCatch(() =>
     JSON.stringify(latestErrorsRef.current),
   );
@@ -82,6 +109,7 @@ export async function getScreenshotFeedbackExtra({
     myUncallableAddressCount,
     myFirstAddress: myFirstCallableAddress,
     myCurrentAddress,
+    mySceneAddresses: await runTryCatch(async () => await getSceneAddresses()),
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
     systemVersion: runTryCatch(() => DeviceInfo.getSystemVersion()),

@@ -20,10 +20,12 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 interface Props {
   tokenEntity?: TokenEntityDetail;
   entityLoading: boolean;
+  account?: KeyringAccountWithAlias | null;
 }
 
 const DomainUrlLink = ({
@@ -260,10 +262,10 @@ const ExpandableDescription = ({
 export const IssuerAndListSite: React.FC<Props> = ({
   tokenEntity,
   entityLoading,
+  account,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-
   const isBridgeDomain =
     tokenEntity?.bridge_ids && tokenEntity.bridge_ids.length > 0;
   const isVerified = tokenEntity?.is_domain_verified;
@@ -348,6 +350,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
                         token: ensureAbstractPortfolioToken(
                           tokenEntity.origin_token!,
                         ),
+                        account: account,
                         needUseCacheToken: true,
                       });
                     }}>

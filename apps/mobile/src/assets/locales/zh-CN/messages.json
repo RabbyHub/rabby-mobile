@@ -115,7 +115,10 @@
       }
     },
     "check": "检查",
-    "gotIt": "明白了"
+    "gotIt": "明白了",
+    "Dapp": "Dapp",
+    "Token": "代币",
+    "GotIt": "明白了"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -145,7 +148,15 @@
         "Revoke": "撤销{{token}}授权",
         "WithdrawnGas": "已提取 Gas",
         "ReceivedGas": "收到 Gas",
-        "DepositedGas": "存入 Gas"
+        "DepositedGas": "存入 Gas",
+        "LendingBorrow": "借入",
+        "LendingSupply": "供应",
+        "LendingRepay": "偿还",
+        "LendingWithdraw": "提取",
+        "LendingOnCollateral": "开启作为抵押品使用",
+        "LendingOffCollateral": "关闭作为抵押的使用",
+        "LendingManageEModeDisable": "关闭 E-Mode",
+        "LendingManageEMode": "启用 E-Mode"
       },
       "detail": {
         "Cancel": "取消",
@@ -214,7 +225,9 @@
         "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 链上被跳过。这可能导致后续交易待处理。<5></5> <6>提交交易</6> <7></7> 到链上以解决"
       },
       "HideScamTransactions": "隐藏欺诈交易",
-      "ShowScamTransactions": "显示骗局交易"
+      "ShowScamTransactions": "显示骗局交易",
+      "scam": "骗局",
+      "scamTips": "此交易由骗子发起，用于发送诈骗代币和NFT。请勿与其互动。"
     },
     "getStart": {
       "goToHome": "前往首页",
@@ -635,7 +648,13 @@
       "sectionTo": {
         "addrValidator__invalid": "此地址无效",
         "searchInputPlaceholder": "输入地址或扫描",
-        "addrValidator__empty": "请输入地址"
+        "addrValidator__empty": "请输入地址",
+        "positiveTips": {
+          "yourOwnAddress": "您的地址",
+          "sentRecently": "最近发送",
+          "whitelistedAddress": "白名单地址"
+        },
+        "selectPlaceholder": "选择地址"
       },
       "AddToContactsModal": {
         "editAddressNote": "编辑地址备注",
@@ -651,9 +670,9 @@
         "confirm": "确认",
         "level": {
           "custom": "自定义",
-          "slow": "普通",
-          "normal": "快速",
-          "fast": "即时",
+          "slow": "慢",
+          "normal": "正常",
+          "fast": "快速",
           "$unknown": "未知"
         },
         "popupDesc": "Gas费用将根据您设置的价格从转账金额中预留。"
@@ -668,11 +687,17 @@
         "cancel": "取消",
         "confirm": "继续"
       },
-      "noSupprotTokenForDex": "该交易所可能不支持此代币。请在继续操作前检查以避免损失。",
       "From": "来自",
-      "noSupprotTokenForSafe": "您要发送代币的安全地址未在此链上部署。请在继续之前检查，以避免损失。",
-      "noSupportTokenForChain": "收件人地址是另一个链上的合约地址。请在继续之前进行检查，以避免损失。",
-      "addressDetail": "地址详情"
+      "addressDetail": "地址详情",
+      "newAmount": "金额",
+      "noSupportTokenReason": {
+        "forDex": "此代币可能不被该交易所支持。请在继续之前进行检查以避免损失。",
+        "forDexSimple": "此代币可能不受此交易所支持",
+        "forChainSimple": "接收地址是不同链上的合约地址",
+        "forSafeSimple": "此 Safe 地址未在此链上部署",
+        "forChain": "收款地址是不同链上的合约地址。在继续前，请检查以避免损失。",
+        "forSafe": "您正在发送代币的 Safe 地址尚未在此链上部署。在继续之前请检查，以避免损失。"
+      }
     },
     "receive": {
       "title": "接收{{chain}}上的{{token}}",
@@ -811,9 +836,10 @@
         "approvals": "授权",
         "search": "搜索 Token",
         "copyTrading": "跟单交易",
-        "watchlist": "观察列表",
+        "watchlist": "代币关注列表",
         "perpsMarketList": "更多 Perps",
-        "perps": "合约"
+        "perps": "合约",
+        "lending": "借贷"
       }
     },
     "manageAddress": {
@@ -870,7 +896,25 @@
       "loss-tips": "您正在损失 {{usd}}。请尝试不同的金额。",
       "title": "Bridge",
       "bridged": "跨链已完成",
-      "gasFeeTooHight": "Gas费用高于正常情况。仅在您希望继续时确认。"
+      "gasFeeTooHight": "Gas费用高于正常情况。仅在您希望继续时确认。",
+      "pendingItem": {
+        "pending": "待处理",
+        "swap": "交换",
+        "estimatedTime": "预计时间",
+        "bridgeStatus": "桥接状态",
+        "BridgeStatusUnavailable": "桥接状态不可用。请检查您的交易历史以确认资金是否到账。",
+        "failed": "失败",
+        "receivedDifferentTokenFromSource": "桥接失败。源链上返回了不同的代币。",
+        "fromFailed": "交易未通过。请再试一次。",
+        "receivedDifferentTokenNeedSwap": "您收到了不同的代币。您可以将其兑换为您选择的代币。",
+        "queued": "排队中",
+        "longTimeNoReceive": "网络繁忙。这可能会比平时花费更长的时间。请耐心等待。",
+        "beReturnFailed": "桥接失败。您的资产已被退回。",
+        "sendingFrom": "从 {{chain}} 发送",
+        "completed": "已完成",
+        "receivingTo": "在 {{chain}} 上接收"
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "approvals": {
       "tab-switch": {
@@ -1122,7 +1166,6 @@
         "privateKey": "导入私人密钥",
         "seedPhrase": "导入助记词",
         "hardWare": "连接硬件钱包",
-        "safe": "安全",
         "tips": {
           "gotIt": "我知道了。",
           "title": "导入到 Rabby 安全吗？",
@@ -1156,6 +1199,9 @@
       },
       "homeCenterTipScreenshot": {
         "description": "随时截屏以快速报告错误"
+      },
+      "homeGuidanceMultipleTabs": {
+        "swipeToViewAllAssets": "向右滑动以查看所有资产"
       }
     },
     "signText": {
@@ -1397,9 +1443,32 @@
         },
         "manageAddressFrom": "从{{0}}管理钱包到{{1}}",
         "customAddressHdPath": "自定义钱包 HD 路径",
-        "selectIndexTip": "选择要开始的钱包序列号："
+        "selectIndexTip": "选择要开始的钱包序列号：",
+        "trezor": {
+          "hdPathType": {
+            "bip44": "BIP44：由 BIP44 协议定义的 HDpath。",
+            "ledgerLive": "Ledger Live: Ledger 官方 HD 路径。",
+            "legacy": "遗产：MEW / Mycrypto 使用的 HD 路径。"
+          },
+          "hdPathTypeNoChain": {
+            "legacy": "遗产：MEW / Mycrypto 使用的 HD 路径。",
+            "bip44": "BIP44：由 BIP44 协议定义的 HDpath。",
+            "ledgerLive": "Ledger Live：Ledger 官方 HD 路径。"
+          }
+        }
       },
-      "createNewAddress": "创建新钱包"
+      "createNewAddress": "创建新钱包",
+      "whatIsPrivateKey": {
+        "title": "什么是私钥",
+        "title4": "安全",
+        "title2": "备份",
+        "ButtonGotIt": "我知道了。",
+        "description1": "私钥是一串字母和数字，用于访问和控制您的钱包。您可以使用它在任何设备上恢复您的钱包。",
+        "description2": "如果您丢失了您的 private key，您将无法恢复您的钱包。",
+        "description4": "您的私钥存储在您设备的本地，并使用您的密码加密。只有您可以访问它。Rabby无法检索或访问您的私钥。",
+        "description3": "切勿分享您的私钥——任何拥有私钥的人都可以控制您的资金。",
+        "title3": "永远不要分享它"
+      }
     },
     "backupPrivateKey": {
       "clickToShowQr": "点击显示私钥二维码",
@@ -1594,7 +1663,9 @@
           "please-sign-this-text-message-to-verify-that-you-are-the-owner-of-this-address": "请签署此文本消息以验证您是此地址的拥有者"
         },
         "max-15-characters-use-numbers-and-letters-only": "最多 15 个字符，仅使用数字和字母。"
-      }
+      },
+      "xPoints": "{{point}} 积分",
+      "alreadyClaimedXPoints": "已领取：{{point}}"
     },
     "addChain": {
       "desc": "Rabby 无法验证自定义网络的安全性。请仅添加可信网络。",
@@ -1807,6 +1878,10 @@
       },
       "hotTokenList": {
         "title": "热"
+      },
+      "globalSearch": {
+        "placeHolder": "搜索 Dapp/Token",
+        "iosPlaceHolder": "搜索网站/Token"
       }
     },
     "receiveAddressList": {
@@ -1876,16 +1951,6 @@
         "tokenSecurity": "代币安全",
         "marketData": "市场数据"
       },
-      "interval": {
-        "1D": "1D",
-        "1H": "1H",
-        "15M": "15M",
-        "30M": "30M",
-        "5M": "5M",
-        "1W": "1W",
-        "4H": "4H",
-        "1M": "1M"
-      },
       "marketInfo": {
         "volume24h": "24小时交易量",
         "marketCap": "市场总值",
@@ -1910,20 +1975,44 @@
             "volume": "交易量",
             "buy": "购买",
             "address": "地址",
-            "tradingCount": "交易数量",
             "min": "最小值",
             "type": "类型",
             "sell": "出售",
             "qnt": "Qnt",
             "price": "价格",
-            "value": "价值"
+            "value": "价值",
+            "transactionCount": "交易数量"
           }
         },
         "empty": "无数据",
         "details": "详情",
         "summary": "摘要数据",
-        "activity": "活动"
-      }
+        "activity": "活动",
+        "pool": {
+          "tab": {
+            "top5": "前 5 个池",
+            "liquidityDetail": "流动性详情"
+          },
+          "actions": {
+            "all": "所有",
+            "remove": "删除",
+            "add": "添加"
+          },
+          "headers": {
+            "time": "时间",
+            "amount": "金额",
+            "value": "价值"
+          },
+          "dex": "Dex",
+          "pair": "配对",
+          "amount": "金额",
+          "value": "价值"
+        },
+        "pools": "池塘"
+      },
+      "headerBalanceText": "余额",
+      "price": "价格",
+      "headerTokenValueText": "代币价值"
     },
     "customRpc": {
       "add": "修改 RPC URL",
@@ -2060,14 +2149,16 @@
       "sentTimeHeader": "发送",
       "sendToWatchAddress": "发送到只读钱包",
       "sendToSafeAddress": "发送到安全钱包",
-      "sendToImportedAddress": "发送到我的导入钱包"
+      "sendToImportedAddress": "发送到我的导入钱包",
+      "dividerWatchOnlyWallets": "仅观察地址",
+      "enterOrSearchAddress": "输入或搜索地址"
     },
     "confirmAddress": {
       "risks": {
         "scamAddress": "接收地址是一个被 Rabby 标记的诈骗地址。",
         "contractAddress": "收款地址是一个合约地址，可能导致资金损失",
-        "noSend": "过去180天内您未曾向此地址发送资金。请确认是否继续。",
-        "dexNoDeposite": "接收地址是来自 CEX 的非充值地址。请确保您的充值地址正确。"
+        "cexNoDeposite": "接收地址是来自 CEX 的非充值地址。请确保您的充值地址正确。",
+        "noSend": "您在过去180天内没有向这个地址发送过交易。"
       },
       "brandNameTail": "地址",
       "dexNameTail": "充值地址",
@@ -2111,7 +2202,7 @@
       "syncingTips": "请保持相机稳定，直至扫描完成",
       "newUserVerify": "它也将作为您 Rabby Mobile 的默认密码。",
       "verifyWithPassword": "使用您的 Rabby Extension 密码进行验证",
-      "scanTips1": "在 Rabby 插件上点击“Rabby Mobile”",
+      "scanTips1": "在 Rabby 插件上点击“Mobile Sync”",
       "importedTips": "如果应用程序中已经存在重复地址，则不会导入。地址备注和白名单也将同步。",
       "verifyTips": "您的数据已离线加密。请输入您的 Rabby 插件密码进行解密和验证。"
     },
@@ -2150,7 +2241,11 @@
         "placeholder": "搜索网站",
         "recent": "最近",
         "searchInGoogle": "在 Google 中搜索 \"{{searchText}}\"",
-        "recentEmpty": "开始探索网站"
+        "recentEmpty": "开始探索网站",
+        "favorite": "收藏夹",
+        "hot": "热",
+        "otherResults": "其他结果",
+        "hot10": "热榜 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "打开网站"
@@ -2160,12 +2255,23 @@
         "refresh": "刷新",
         "favorite": "最喜欢",
         "disconnect": "断开连接",
-        "contentModeMobile": "请求移动站点"
+        "contentModeMobile": "请求移动站点",
+        "clearCache": "清除缓存"
       },
       "HyperliquidInvitePopup": {
         "btn": "立即加入",
         "title": "Hyperliquid 邀请计划",
-        "desc": "现在使用Rabby的代码加入，可享受<1>4%</1>的Hyperliquid费用折扣。"
+        "desc": "现在使用Rabby的代码加入，可享受<1>4%</1>的Hyperliquid费用折扣。",
+        "asterTitle": "Aster 推荐计划",
+        "asterDesc": "现在通过使用 Rabby 的代码来获取您的 Aster 费用 <1>4% 折扣</1>。"
+      },
+      "WebviewError": {
+        "error": "错误：",
+        "failedToLoad": "无法加载页面",
+        "alertText": "尝试<1/><2>在浏览器中打开</2><3/>以检查是否是网站问题"
+      },
+      "toast": {
+        "clearCacheSuccess": "缓存已清除"
       }
     },
     "browserManage": {
@@ -2284,6 +2390,525 @@
     },
     "perpsHistory": {
       "title": "历史"
+    },
+    "devUIBuiltInPages": {
+      "builtInPageTitle": "内建页面"
+    },
+    "perps": {
+      "PerpsCard": {
+        "depositBtn": "存款",
+        "withdrawBtn": "提取",
+        "available": "可用的",
+        "title": "交易永续合约",
+        "loginBtn": "登录交易永续合约",
+        "learnBtn": "了解永续合约",
+        "loginDesc": "使用您的地址登录并存入资金以开始交易永续合约"
+      },
+      "PerpsGuidePopup": {
+        "step5Title": "清算",
+        "step2Title": "做多",
+        "step1Title": "主永续合约",
+        "step4Desc": "杠杆让你可以用超过你投入的资金进行交易。它可以增加你的收益和损失。",
+        "step3Title": "做空",
+        "step1Desc": "在永续合约中，你不仅在交易资产。你在交易你对下一步将会发生什么的看法。",
+        "step5Desc": "每个头寸都有一个清算价格。如果市场价格达到该价格，您的头寸将会被平仓。使用更高的杠杆会增加被清算的风险。",
+        "step4Title": "调整杠杆",
+        "step2Desc": "当你预计价格会上涨时，你会选择做多。如果价格上涨，你将获利。如果价格下跌，你将亏损。",
+        "step3Desc": "当你预期价格会下跌时，你可以选择做空。如果价格下跌，你获得收益。如果价格上涨，你将亏损。"
+      },
+      "PerpsDepositPopup": {
+        "balance": "余额",
+        "amount": "数量",
+        "title": "存款",
+        "invalidNumber": "请输入一个有效的数字",
+        "depositBtn": "存款",
+        "fetchQuoteFailed": "获取存款报价失败。请切换代币。",
+        "estReceive": "预计接收：{{balance}}",
+        "minimumDepositSize": "最低存款金额为 $5",
+        "estReceiveTooltip": "跨链存款通过 LiFi 处理，可能会产生一定的滑点。预计在 {{number}} 秒内到达。",
+        "insufficientBalance": "余额不足"
+      },
+      "PerpsWithdrawPopup": {
+        "insufficientBalance": "余额不足",
+        "feeTooltipTitle": "费用",
+        "withdrawBtn": "提取",
+        "available": "可用",
+        "minimumWithdrawSize": "最小提现金额为 $2",
+        "title": "提取",
+        "feeTooltipDesc": "Hyperliquid 收取的提现费用：$1",
+        "amount": "数量",
+        "feeTip": "费用：$1.00",
+        "invalidNumber": "请输入一个有效的数字"
+      },
+      "PerpsWithdrawFeePopup": {
+        "btn": "我明白了",
+        "desc": "Hyperliquid 收取的提款手续费：$1",
+        "title": "费用"
+      },
+      "historyDetail": {
+        "title": {
+          "openLong": "开多",
+          "closeLong": "平仓多头",
+          "closeLongTp": "平仓做多止盈",
+          "closeShortSl": "平仓做空止损",
+          "closeShortTp": "平仓做空止盈",
+          "closeLongSl": "平仓多头止损",
+          "openShort": "开空头",
+          "closeShort": "平掉空头",
+          "closeShortLiquidation": "平仓做空清算",
+          "closeLongLiquidation": "平仓多头清算"
+        },
+        "price": "价格",
+        "fee": "费用",
+        "date": "日期",
+        "size": "规模",
+        "tradeValue": "交易价值",
+        "closedPnl": "已结算盈亏",
+        "provider": "提供者",
+        "gotItBtn": "我明白了",
+        "sizeTips": "您的交易的总价值或数量，由保证金和杠杆设置。",
+        "perps": "永续合约"
+      },
+      "PerpsAutoCloseModal": {
+        "takeProfit": "止盈",
+        "stopLoss": "止损",
+        "takeProfitTipsShort": "止盈价格必须低于当前价格",
+        "loss": "损失",
+        "takeProfitTipsLong": "止盈价格必须高于当前价格",
+        "stopLossTipsShort": "止损价格必须高于当前价格",
+        "stopLossTipsLong": "止损价格必须低于当前价格",
+        "stopLossTipsShortLiquidation": "价格高于清算价格 ({{price}})",
+        "profit": "利润",
+        "stopLossTipsLongLiquidation": "价格低于清算价格 ({{price}})",
+        "noPosition": "您必须先输入保证金。"
+      },
+      "PerpsDepositTokenModal": {
+        "swapBtn": "兑换",
+        "directTag": "直接存款",
+        "bridgeBtn": "桥接",
+        "goBridgeDesc": "仅支持在 Arbitrum 上直接存入 USDC。请在存入之前将您当前的代币桥接到 Arbitrum 上的 USDC。",
+        "goSwapDesc": "仅支持在 Arbitrum 上直接存入 USDC。在存入之前，请将您当前的代币兑换为 USDC。"
+      },
+      "history": {
+        "status": {
+          "pending": "待处理",
+          "completed": "已完成"
+        },
+        "title": "历史",
+        "closeLongSl": "平仓多头止损",
+        "closeLongTp": "平仓多单获利",
+        "closeShort": "平空",
+        "deposit": "存款",
+        "openLong": "开多",
+        "openShort": "开空单",
+        "withdraw": "提取",
+        "closeLongLiquidation": "平仓做多强平",
+        "closeShortSl": "平仓做空止损",
+        "closeShortLiquidation": "平仓做空清算",
+        "closeShortTp": "平仓做空止盈",
+        "closeLong": "平仓做多"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "选择要存入的 Token"
+      },
+      "PerpsAccountLogoutPopup": {
+        "title": "登出当前地址",
+        "logout": "登出",
+        "desc": "您正在退出当前的 Perps 账户。您可以随时通过使用此地址登录来恢复它。"
+      },
+      "PerpsDepositCard": {
+        "availableToTrade": "可交易：",
+        "deposit": "存款"
+      },
+      "PerpsAccountSelectorPopup": {
+        "notActivatedAddress": "未激活",
+        "lastUsed": "最后使用时间",
+        "hyperliquidBalance": "永续合约余额",
+        "activatedAddress": "已激活",
+        "noPosition": "没有头寸"
+      },
+      "title": "永续合约",
+      "selectAccountTitle": "选择一个钱包登录",
+      "more": "更多",
+      "explorePerps": "探索永续合约",
+      "positions": "仓位",
+      "deleteAgentSuccess": "代理已成功删除",
+      "leverageRangeMinError": "最低杠杆为 {{min}}x",
+      "regionNotSupport": "在您的地区不支持开仓。",
+      "leverageRangeMaxError": "最大杠杆为 {{max}}x",
+      "deleteAgentModal": "您已达到代理的最大数量。您想删除一个现有的代理以创建新的代理吗？",
+      "searchPerpsPopup": {
+        "searchPosition": "搜索头寸",
+        "empty": "未找到结果",
+        "searchPerps": "搜索永续合约",
+        "openPosition": "开启仓位",
+        "searchPlaceholder": "搜索永续合约"
+      },
+      "PerpsRiskPopup": {
+        "level": {
+          "warning": "警告",
+          "safe": "安全",
+          "danger": "危险"
+        },
+        "title": "风险等级",
+        "liquidationPrice": "清算价格",
+        "currentPrice": "当前价格",
+        "distanceLabel": "平仓距离",
+        "subtitle": "实时 liquidation 距离 (%)",
+        "liqIntro": "清算距离 (%) 表示当前价格与您的清算价格之间的距离。距离越大，说明仓位越安全；距离越小，则表示清算风险越高。",
+        "liqDistanceTipsLong": "下跌 <1>{{distance}}</1> 将触发清算。",
+        "liqDistanceTipsShort": "上涨 <1>{{distance}}</1> 将触发清算。"
+      },
+      "closeAll": "关闭全部",
+      "closeAllConfirmMessage": "您所有的未平仓头寸将以市场价格平仓。",
+      "closeAllConfirmTitle": "确认平掉所有仓位",
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid 头寸"
+      }
+    },
+    "perpsDetail": {
+      "PerpsPosition": {
+        "title": "头寸",
+        "tpPrice": "止盈价格",
+        "marginCross": "保证金（跨）",
+        "markPrice": "标记价格",
+        "justMargin": "保证金",
+        "size": "大小",
+        "entryPrice": "入场价格",
+        "autoClose": "自动平仓",
+        "liqPrice": "清算价格",
+        "closePosition": "关闭 {{direction}}",
+        "direction": "方向",
+        "marginIsolated": "保证金（孤立）",
+        "isolated": "隔离模式",
+        "pnl": "盈亏",
+        "slPrice": "止损价格",
+        "cross": "交叉",
+        "liquidationPrice": "清算价格",
+        "fundingPayments": "资金支付",
+        "margin": "保证金（隔离）",
+        "sizeTips": "您交易的总价值或数量，由保证金和杠杆设置。",
+        "liquidationPriceTips": "当您的保证金低于维持保证金水平时，交易所自动关闭您的仓位以防止进一步亏损的价格。",
+        "fundingPaymentsTips": "这是自开仓以来的净资金支付。资金费用是交易者支付或收取的每小时费用，以保持永续合约的价格接近代币的实际价格。",
+        "fundingGains": "资金收益",
+        "fundingGainsTips": "这是自头寸开启以来的净资金收益。资金是交易者每小时支付或接收的费用，用于保持永久合约的价格接近代币的实际价格。"
+      },
+      "PerpsInfo": {
+        "title": "信息",
+        "funding": "资金",
+        "openInterest": "未平仓合约",
+        "24Vol": "24小时交易量",
+        "openInterestTips": "该合约上所有用户的总未平仓头寸。",
+        "fundingTips": "这是交易者支付或收到的每小时费用，用于保持永续合约的价格接近代币的实际价格。如果是正值，多头支付空头。如果是负值，空头支付多头。",
+        "fundingRate": "资金利率"
+      },
+      "PerpsIntro": {
+        "title": "什么是 Perps？",
+        "desc": "交易永续合约涉及重大风险，包括由于高杠杆和市场波动而快速失去您的投资和抵押品的可能性。此类交易可能不适合所有用户。价格可能会受到资金利率和流动性的影响，您可能会在没有事先通知的情况下自动被平仓。市场数据由 Hyperliquid 提供。"
+      },
+      "PerpsClosePositionPopup": {
+        "title": "平仓",
+        "pnl": "PNL",
+        "providerFeeTips": "Hyperliquid 费用：{{fee}}",
+        "positionSize": "持仓大小",
+        "rabbyFeeTips": "Rabby 费用：0.04%",
+        "fee": "费用：",
+        "closeBtn": "关闭 {{direction}}",
+        "closedPnl": "已平仓PNL:",
+        "amount": "金额",
+        "confirm": "确认",
+        "receive": "接收：",
+        "minimumWarning": "最低金额为 {{percent}}%",
+        "total": "总计"
+      },
+      "PerpsOpenPositionPopup": {
+        "leverage": "杠杆",
+        "margin": "保证金",
+        "size": "大小",
+        "tpPrice": "止盈价格",
+        "maximumOrderSize": "最大订单大小为 {{amount}}",
+        "insufficientBalance": "余额不足",
+        "invalidNumber": "请输入一个有效的数字",
+        "minimumOrderSize": "最小订单金额为 $10",
+        "slPrice": "止损价",
+        "available": "可用的",
+        "sizeTips": "您交易的总价值或数量，由保证金和杠杆设置。",
+        "autoClose": "自动平仓",
+        "takeProfitWhenPriceAbove": "当价格高于时止盈",
+        "takeProfitWhenPriceBelow": "当价格低于时止盈",
+        "stopLossWhen": "止损于",
+        "stopLossWhenPriceAbove": "止损价格超过时",
+        "stopLossWhenPriceBelow": "当价格低于时止损",
+        "minMargin": "最低保证金为 {{amount}}",
+        "maxMargin": "最大保证金为 {{amount}}",
+        "upTo": "高达"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "price": "价格",
+        "tpPrice": "止盈价格",
+        "size": "大小",
+        "direction": "方向",
+        "title": "检查订单",
+        "fee": "费用",
+        "perps": "永续合约",
+        "autoClose": "自动平仓",
+        "btn": "开仓 {{direction}} 位置",
+        "initialMargin": "初始保证金",
+        "slPrice": "止损价格",
+        "estLqPrice": "预计清算价格",
+        "providerFeeTips": "Hyperliquid 费用：{{fee}}",
+        "rabbyFeeTips": "Rabby 费用：0%",
+        "sizeTips": "您交易的总价值或数量，由保证金和杠杆设定。",
+        "liquidationPriceTips": "当您的保证金低于维持保证金水平时，交易所会自动以此价格平仓以防止进一步亏损。",
+        "margin": "保证金（孤立）",
+        "free": "免费",
+        "rabbyFee": "Rabby费用",
+        "providerFee": "Hyperliquid手续费"
+      },
+      "action": {
+        "long": "做多",
+        "short": "做空",
+        "noPermission": "在您的地区不支持开仓。",
+        "closePosition": "关闭 {{direction}} 头寸",
+        "add": "添加",
+        "close": "关闭"
+      },
+      "PerpsAutoCloseModal": {
+        "slPrice": "止损价",
+        "tpPrice": "止盈价格",
+        "price": "价格：",
+        "entryPrice": "入场价格：",
+        "setTpPrice": "设置止盈价格",
+        "setSlPrice": "设置止损价格",
+        "takeProfitExpectedPNL": "获取利润预期 PNL",
+        "stopLossWhen": "止损条件",
+        "priceAbove": "价格高于",
+        "priceReaches": "价格达到",
+        "youLoss": "你亏损",
+        "stopLossExpectedPNL": "止损预期盈亏",
+        "priceBelow": "价格低于",
+        "youGain": "你获得",
+        "currentPrice": "当前 {{price}}",
+        "EntryAndCurrentPrice": "入场 {{entryPrice}}  当前 {{price}}",
+        "takeProfitWhen": "达到盈利时"
+      },
+      "PerpsEditMarginPopup": {
+        "currentPrice": "当前价格",
+        "title": "调整保证金",
+        "available": "可用",
+        "amountToAdd": "添加的金额",
+        "insufficientMargin": "保证金不足",
+        "liqPrice": "Liq. Price: 清算价格",
+        "amountToReduce": "减少的金额",
+        "insufficientMarginToReduce": "保证金不足，无法减仓。",
+        "reduceMargin": "减少保证金",
+        "perpsBalance": "永续合约余额",
+        "addMargin": "添加保证金",
+        "liqDistance": "Liq.Distance"
+      },
+      "PerpsAddPositionPopup": {
+        "addSize": "添加大小",
+        "totalSize": "总大小",
+        "addToShort": "添加到短期",
+        "addToLong": "添加到 Long"
+      },
+      "needDepositFirst": "您需要先存入资金。"
+    },
+    "selectAccountSheetModal": {
+      "title": {
+        "selectFromHistory": "从历史中选择",
+        "sendFrom": "发送自",
+        "viewSentTx": "发送",
+        "addNewWhitelistAddr": "添加新的白名单地址",
+        "sendTo": "发送至"
+      },
+      "addressEditorBadge": {
+        "nameUnknown": "给地址命名"
+      }
+    },
+    "Lending": {
+      "availableCard": {
+        "needSupply": "要借款，您需要提供资产作为抵押。",
+        "canBorrow": "您可以根据提供的抵押品借款，最高可达借款上限。",
+        "isolated": "由于隔离模式，借贷能力和资产受到限制。",
+        "emode": "在 E-Mode 中，一些资产无法借入。退出 E-Mode 以获取对所有资产的访问权限。",
+        "emodeNoAssets": "我们无法找到与您的搜索相关的任何资产。请尝试使用不同的类别。"
+      },
+      "list": {
+        "headers": {
+          "token": "代币",
+          "myBorrows": "我的借款",
+          "mySupplies": "我的供应",
+          "apy": "年化收益率",
+          "token_tvl": "Token/TVL",
+          "token_balance": "代币/余额"
+        },
+        "item": {
+          "tvl": "TVL"
+        }
+      },
+      "summary": {
+        "empty": {
+          "title": "赚取利息，随时借款",
+          "description": "由 AAVE 提供技术支持。安全且零费用。"
+        },
+        "more": "更多",
+        "risky": "风险大",
+        "healthy": "健康",
+        "lq": "如果低于1，可能会触发清算。"
+      },
+      "repayDetail": {
+        "actions": "还款",
+        "approveAndRepay": "批准和还款"
+      },
+      "supplyDetail": {
+        "actions": "供应",
+        "approveAndSupply": "批准与供应",
+        "availableToBorrow": "可借款",
+        "supplyAPY": "供应 APY",
+        "unavailable": "不可用",
+        "isolatedTips": "您现有的借贷资产不受支持。",
+        "collateralization": "抵押化",
+        "supplyBalance": "供应余额",
+        "enabled": "启用"
+      },
+      "withdrawDetail": {
+        "actions": "提取",
+        "remainingSupply": "剩余供应"
+      },
+      "borrowDetail": {
+        "actions": "借入",
+        "approveAndBorrow": "批准并借入",
+        "almostReachedWarning": "该资产的协议借款上限为100%。进一步借款不可用。",
+        "almostReachedError": "可借用的最大金额受限，因为协议借款上限几乎已达到。"
+      },
+      "popup": {
+        "remainingDebt": "剩余债务",
+        "title": "交易概览",
+        "available": "可用",
+        "amount": "金额",
+        "liquidationAt": "清算在 < 1.0"
+      },
+      "borrowOverview": {
+        "title": "借款详情",
+        "totalBorrowed": "总借款",
+        "availableToBorrow": "可借用",
+        "myBorrow": "我的借款",
+        "borrowCap": "借贷上限",
+        "liquidityPenalty": "清算罚金"
+      },
+      "supplyOverview": {
+        "walletBalance": "钱包余额",
+        "title": "供给详情",
+        "totalSupplied": "总供应量",
+        "availableToSupply": "可供供应",
+        "mySupply": "我的供应",
+        "almostCap": "该资产几乎达到了其借款上限。此市场中只剩下 {{available}} 可供借用。",
+        "reachCap": "该资产已达到其供应上限。该市场没有可供供应的资产。",
+        "useAsCollateral": "作为抵押使用"
+      },
+      "risk": {
+        "checkbox": "我理解该提示并想继续。",
+        "warning": "借用此金额将使您的健康因子降至风险清算的水平。",
+        "withdrawWarning": "提取这个金额将使您的健康因子降低到风险清算的水平。",
+        "toggleCollateralWarning": "禁用该资产作为抵押将使您的健康因子降低到风险清算的水平。",
+        "emodeBlockWarning": "禁用 E-mode 会将您的健康因子降低到一个风险水平，可能会面临清算。",
+        "blockEmodeWarning": "您无法禁用 E-Mode，因为这可能导致清算。要退出 E-Mode，请提供或偿还借入的头寸。"
+      },
+      "lqDescription": {
+        "risky": "风险较高",
+        "desc": "清算价值",
+        "over3desc": "您的持仓是安全的",
+        "over3title": "健康因子 > 3.0：",
+        "below1desc": "您的头寸面临清算风险。",
+        "warningText": "您的健康因子太低。为避免清算：\n1. 部分或全部偿还您的贷款\n2. 添加更多抵押品",
+        "introText": "您的健康指数显示您的借款头寸是多么安全。如果它下降得太低，您的抵押品可能会被清算。",
+        "liquidation": "清算：如果您的健康系数降到 1.0 以下，您的部分抵押品可能会被自动出售以偿还债务。将适用清算罚款，导致您部分抵押品损失。",
+        "below1title": "健康因子 ≤ 1.0:"
+      },
+      "modalDesc": {
+        "availableToBorrow": "可借用",
+        "availableToBorrowDesc": "您可以根据提供的抵押品进行借款，直到达到借款上限。",
+        "maxAmount": "这是您可以借入的最大金额，基于您提供的所有抵押品。您的总借款能力是通过将每个抵押资产的市场价值乘以其最大贷款价值比（Max LTV），然后将结果相加来计算的。",
+        "lqDesc": "当发生清算时，清算人会代表借款人偿还高达 50% 的未偿还借款金额。作为回报，他们可以以折扣购买抵押品，并将差额（清算罚金）作为奖励保留。",
+        "isolatedTitle": "资产不能用作抵押品",
+        "isolatedDesc": "该资产只能在独立模式下用作抵押品，在这种模式下，您无法提供其他资产作为借款抵押品。在独立模式下用作抵押品的资产只能借用到特定的债务上限。",
+        "isolatedSupplyDesc": "由于隔离模式，抵押品的使用受到限制。",
+        "globalIsolatedDesc": "在隔离模式下，您无法提供其他资产作为抵押。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借入其他资产之前禁用 UNI 作为抵押。",
+        "maxLTV": "最大 LTV 比率代表特定抵押品的最大借贷能力。例如，如果抵押品的 LTV 为 75%，用户可以针对每 1 个 ETH 的抵押品借入价值 0.75 的 ETH。"
+      },
+      "apy": "APY",
+      "submitted": "提交成功",
+      "market": "市场",
+      "gotIt": "明白了",
+      "enterAmount": "输入金额",
+      "hf": "健康因子",
+      "netWorth": "净资产",
+      "estDailyEarning": "预计每日收入",
+      "borrowed": "借用",
+      "hfTitle": "健康因子",
+      "selectChain": "选择链",
+      "supplied": "提供",
+      "isolated": "孤立的",
+      "estNetApy": "估计净年化收益率",
+      "marketSlot": "{{market}} 市场",
+      "toggleCollateralDetail": {
+        "enable": "将 {{asset}} 作为抵押品启用",
+        "disable": "禁用 {{asset}} 作为抵押品",
+        "actions": "切换 {{asset}} 作为抵押",
+        "error": "AAVE服务出现了一些错误。请稍后再试。"
+      },
+      "toggleCollateralModal": {
+        "closeTitle": "审查禁用",
+        "riskToLiquidationText": "您不能将该货币切换为抵押模式，因为这将导致抵押品催缴。",
+        "exitIsolationModeTitle": "退出隔离模式",
+        "enableIsolationModeTitle": "启用隔离模式",
+        "openTitle": "审核启用",
+        "openDesc": "将此资产启用为抵押品可以增加您的借款能力和健康因子。不过，如果您的健康因子降到 1 以下，可能会被清算。",
+        "closeDesc": "禁用此资产作为抵押物会影响您的借贷能力和健康因子。",
+        "enableIsolationModeDesc": "您正在进入隔离模式。在隔离模式下，您无法将其他资产作为抵押。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借用其他资产之前禁用 CRV 作为抵押。",
+        "exitIsolationModeDesc": "您将退出隔离模式，其他代币现在可以用作抵押品。"
+      },
+      "searchMarket": "搜索市场",
+      "selectMarket": "选择市场",
+      "manageEmode": {
+        "actions": {
+          "enable": "启用 E-Mode",
+          "disable": "禁用 E-Mode"
+        },
+        "guide": {
+          "title": "效率模式 (E-Mode)",
+          "description": "E-Mode 会提高您所选类别资产的 LTV。",
+          "buttonTitle": "管理 E-Mode"
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "最大贷款价值比",
+            "asset": "资产"
+          },
+          "placeholder": "选择",
+          "label": "资产类别",
+          "desc": "该类别必须关闭所有此类别之外的借款头寸。"
+        },
+        "overview": {
+          "row": {
+            "borrowable": "可借用",
+            "asset": "资产",
+            "collateral": "抵押品"
+          },
+          "title": "资产类别",
+          "apy": "APY",
+          "maxLtv": "最大LTV"
+        },
+        "emode": "E-模式",
+        "unavailableTips": "您现有的借贷资产不受支持。",
+        "title": "管理 E-Mode",
+        "unavailable": "• 不可用",
+        "disableTitle": "禁用",
+        "enabled": "• 已启用",
+        "description": "启用 E-Mode 可以让您最大化您的借贷能力。然而，借贷仅限于所选类别中的资产。"
+      },
+      "disabled": "禁用"
     }
   },
   "component": {
@@ -2340,6 +2965,11 @@
       },
       "favoriteFilter": {
         "all": "所有"
+      },
+      "riskDetected": {
+        "proceedBtn": "继续",
+        "title": "风险检测到",
+        "simpleExplanation": "不支持"
       }
     },
     "NoLongerSupports": {
@@ -2400,7 +3030,13 @@
         "login": "登录 GasAccount",
         "desc": "支付所有链上的Gas费用",
         "title": "存款 USDC / USDT",
-        "loginAndClaim": "登录并领取 {{amount}}"
+        "loginAndClaim": "登录并领取 {{amount}}",
+        "loginTips2": "任何链上的任何地址",
+        "loginTips3": "当你的 GasAccount 用尽时",
+        "loginTips1": "支付 gas 费用给",
+        "learnAbout": "了解更多关于 GasAccount 的信息",
+        "depositDesc": "在所有链上，当您没有 Gas 时",
+        "depositTitle": "存入 USDC/USDT 支付 Gas Fees"
       },
       "loginConfirmModal": {
         "title": "选择钱包登录",
@@ -2428,14 +3064,24 @@
         "gotIt": "我明白了",
         "giftTips": "活跃用户的 Gas Reward",
         "noWithdrawableBalanceDescription": "{{amount}} 的您燃气余额不可提现：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
+      "about": {
+        "title1": "GasAccount是什么",
+        "title2": "如何使用 GasAccount",
+        "title4": "GasAccount安全吗",
+        "title3": "GasAccount 是否有额外费用",
+        "desc2": "将资金添加到您的 GasAccount，并用于任何交易。签名时，选择使用原生代币或 GasAccount 支付燃料费用，随时切换。",
+        "desc3": "Rabby Wallet 不收取额外费用。您只需为您的交易支付 gas 费用，并为从 GasAccount 发送 gas 到您的地址支付少量 gas。",
+        "desc1": "GasAccount是一种新的支付手续费的方式。您可以使用一个账户为所有链上的所有地址覆盖手续费，而无需在每条链上使用本地代币。简单、可选，并且永远不会出现没有手续费的情况。",
+        "desc4": "GasAccount 无需合约批准或权限。您将资金存入 Rabby 的 GasAccount 地址，Rabby 在需要时将燃料发送到您的地址。设计上完全安全。"
       }
     },
     "ReserveGasPopup": {
       "title": "预留 Gas",
-      "instant": "即时",
+      "instant": "快速",
       "doNotReserve": "不预留Gas",
-      "fast": "快速",
-      "normal": "正常"
+      "fast": "正常",
+      "normal": "慢"
     },
     "externalSwapBrideDappPopup": {
       "thirdPartyDappToProceed": "请使用第三方 Dapp 继续操作",
@@ -2492,6 +3138,27 @@
     },
     "GlobalTipsPopup": {
       "btn": "我明白了"
+    },
+    "Prediction": {
+      "price": "价格",
+      "side": "侧边",
+      "amount": "数量",
+      "usdValue": "USD 价值"
+    },
+    "accountSelectModalTx": {
+      "addTrustedAddress": {
+        "addBtn": "立即添加",
+        "desc": "将信任的地址添加到白名单"
+      },
+      "importedAccounts": "导入的钱包",
+      "whitelistAccounts": "白名单",
+      "recentAccounts": "最近"
+    },
+    "portfolios": {
+      "manage": "管理"
+    },
+    "multiAddressModal": {
+      "title": "钱包"
     }
   },
   "bluetooth": {

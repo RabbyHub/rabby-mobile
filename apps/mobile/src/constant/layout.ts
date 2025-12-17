@@ -29,7 +29,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width - 32;
 export const DEFI_CARD_WIDTH = (SCREEN_WIDTH - 12) / 2;
 export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 74;
-export const DEFI_ITEM_HEIGHT = 120;
+export const DEFI_ITEM_HEIGHT = 200;
 export const ASSETS_SECTION_HEADER = 36;
 export const TOKEN_EMPTY_ROW_HIGHT = 326;
 export const ASSETS_EMPTY_ROW_HIGHT = 186;
@@ -44,6 +44,10 @@ export const SWITCH_HEADER_GAP = 16;
 export const ADDRESS_ENTRY_HEIGHT = 78;
 export const ADDRESS_ENTRY_GAP = 12;
 export const TOGGLE_SPLIT_HEIGHT = 24;
+
+export const FOLD_ASSETS_HEADER_HEIGHT = 46 + 32;
+export const UNFOLD_ASSETS_HEADER_HEIGHT = 161 + 20;
+export const TAB_HEADER_HEIGHT = 36;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {
@@ -94,6 +98,7 @@ export const RootNames = {
   FavoriteDapps: 'FavoriteDapps',
   Search: 'Search',
   Watchlist: 'Watchlist',
+  Lending: 'Lending',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
@@ -111,26 +116,21 @@ export const RootNames = {
   StackTestkits: 'StackTestkits',
   NewUserGetStarted2024: 'NewUserGetStarted2024',
   DevUIFontShowCase: 'DevUIFontShowCase',
+  DevUIAnimatedTextAndView: 'DevUIAnimatedTextAndView',
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
   DevUIDapps: 'DevUIDapps',
   DevDataSQLite: 'DevDataSQLite',
+  DevUIBuiltInPages: 'DevUIBuiltInPages',
   DevUIPermissions: 'DevUIPermissions',
+  DevSwitches: 'DevSwitches',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',
-  SendTo: 'SendTo',
   SendHistory: 'SendHistory',
-  SendInput: 'SendInput',
-  WhitelistInput: 'WhitelistInput',
-  SelectImportAddress: 'SelectImportAddress',
-  ImportAddress2Whitelist: 'ImportAddress2Whitelist',
-  SelectTypeAddress: 'SelectTypeAddress',
-  TypeAddress2Whitelist: 'TypeAddress2Whitelist',
-  ConfirmAddress: 'ConfirmAddress',
-  WhitelistConfirm: 'WhitelistConfirm',
+  /** @deprecated */
   MultiSend: 'MultiSend',
   SendNFT: 'SendNFT',
   MultiSendNFT: 'MultiSendNFT',
@@ -145,6 +145,7 @@ export const RootNames = {
   HistoryDetail: 'HistoryDetail',
   HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',
+  LendingHistory: 'LendingHistory',
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',
@@ -161,12 +162,12 @@ export const RootNames = {
   PerpsMarketDetail: 'PerpsMarketDetail',
   PerpsHistory: 'PerpsHistory',
   AccountTransaction: 'AccountTransaction',
-  /* @deprecated */
+  /** @deprecated */
   MyBundle: 'MyBundle',
 
   StackAddress: 'StackAddress',
+  /** @deprecated */
   AddressList: 'AddressList',
-  AddressAssetsOverview: 'AddressAssetsOverview',
   ApprovalAddressList: 'ApprovalAddressList',
   ImportNewAddress: 'ImportNewAddress',
   ImportHardwareAddress: 'ImportHardwareAddress',
@@ -216,6 +217,7 @@ export const RootNames = {
   SyncExtensionImported: 'SyncExtensionImported',
   SyncExtensionAccountSuccess: 'SyncExtensionAccountSuccess',
 
+  /** @deprecated */
   StackMain: 'StackMain',
 
   StackBrowser: 'StackBrowser',
@@ -224,6 +226,8 @@ export const RootNames = {
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
+
+type NonStackAppRootName = Exclude<AppRootName, `Stack${string}`>;
 
 export type ScreenStatusBarConf = {
   barStyle?: 'light-content' | 'dark-content';
@@ -250,9 +254,7 @@ function makeScreenSpecConfig() {
     '@default': ScreenStatusBarConf;
     '@bg1default': ScreenStatusBarConf;
     '@openeddapp': ScreenStatusBarConf;
-  } & {
-    [P in AppRootName]?: ScreenStatusBarConf;
-  };
+  } & Record<NonStackAppRootName, ScreenStatusBarConf>;
 
   const [dark, light] = [true, false].map(isDarkTheme => {
     const adaptiveStatusBarStyle = isDarkTheme
@@ -327,7 +329,7 @@ function makeScreenSpecConfig() {
       androidStatusBarBg: colors['blue-default'],
     };
 
-    const themeSpecs = <ThemeType>{
+    const themeSpecs: ThemeType = {
       '@default': bg1Default2024Conf,
       '@bg1default': { ...bg1DefaultConf },
       '@openeddapp': {
@@ -335,64 +337,140 @@ function makeScreenSpecConfig() {
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
         androidStatusBarBg: colors['neutral-bg-1'],
       },
-      GetStarted: blueLightConf,
-      GetStartedScreen2024: bg1DefaultConf,
-      NewUserGetStarted2024: bg1DefaultConf,
 
-      Home: transparentDefault2024Conf,
-      DappWebViewStubOnHome: {
+      // StackGetStarted
+      [RootNames.GetStartedScreen2024]: bg1DefaultConf,
+      [RootNames.CreateSelectMethod]: bg1Default2024Conf,
+      // StackRoot
+      // StackHomeNonTab
+
+      [RootNames.NotFound]: bg1Default2024Conf,
+      [RootNames.Unlock]: bg1DefaultConf,
+
+      // StackBottom
+      [RootNames.Home]: bg1Default2024Conf,
+      [RootNames.Points]: bg1Default2024Conf,
+
+      // StackDapps
+      [RootNames.Dapps]: bg1Default2024Conf,
+      [RootNames.FavoriteDapps]: bg1Default2024Conf,
+      [RootNames.Search]: bg1Default2024Conf,
+      [RootNames.Watchlist]: bg1Default2024Conf,
+      [RootNames.Lending]: bg1Default2024Conf,
+
+      // StackSettings
+      [RootNames.Settings]: historyPageConf,
+      [RootNames.SetPassword]: blueLightConf,
+      [RootNames.CustomTestnet]: bg1Default2024Conf,
+      [RootNames.CustomRPC]: bg1Default2024Conf,
+      [RootNames.SetBiometricsAuthentication]: bg1DefaultConf,
+      /** @deprecated */
+      [RootNames.GetStarted]: blueLightConf,
+      [RootNames.ProviderControllerTester]: bg1Default2024Conf,
+
+      // StackTestkits
+      [RootNames.NewUserGetStarted2024]: bg1DefaultConf,
+      [RootNames.DevUIFontShowCase]: bg1Default2024Conf,
+      [RootNames.DevUIAnimatedTextAndView]: bg1Default2024Conf,
+      [RootNames.DevUIFormShowCase]: bg1Default2024Conf,
+      [RootNames.DevUIAccountShowCase]: bg1Default2024Conf,
+      [RootNames.DevUIScreenContainerShowCase]: bg1Default2024Conf,
+      [RootNames.DevUIDapps]: bg1Default2024Conf,
+      [RootNames.DevDataSQLite]: bg1Default2024Conf,
+      [RootNames.DevUIBuiltInPages]: bg1Default2024Conf,
+      [RootNames.DevUIPermissions]: bg1Default2024Conf,
+      [RootNames.DevSwitches]: bg1Default2024Conf,
+
+      // StackTransaction
+      [RootNames.Send]: bg1Default2024Conf,
+      [RootNames.SendHistory]: bg1Default2024Conf,
+      [RootNames.MultiSend]: bg1Default2024Conf,
+      [RootNames.SendNFT]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      [RootNames.MultiSendNFT]: bg1Default2024Conf,
+      [RootNames.Receive]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      [RootNames.Swap]: bg1Default2024Conf,
+      [RootNames.MultiSwap]: bg1Default2024Conf,
+      [RootNames.GnosisTransactionQueue]: card2DefaultConf,
+      [RootNames.Approvals]: bg1Default2024Conf,
+      [RootNames.BatchRevoke]: transparentDefault2024Conf,
+      [RootNames.History]: historyPageConf,
+      [RootNames.CopyTradingTokenDetail]: bg1Default2024Conf,
+      [RootNames.HistoryDetail]: historyPageConf,
+      [RootNames.HistoryLocalDetail]: historyPageConf,
+      [RootNames.MultiAddressHistory]: historyPageConf,
+      [RootNames.LendingHistory]: bg1Default2024Conf,
+      [RootNames.Bridge]: bg1Default2024Conf,
+      [RootNames.MultiBridge]: bg1Default2024Conf,
+      [RootNames.GasAccount]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      [RootNames.Buy]: bg1Default2024Conf,
+      [RootNames.MultiBuy]: bg1Default2024Conf,
+      [RootNames.CopyTrading]: bg1Default2024Conf,
+      [RootNames.Perps]: bg1Default2024Conf,
+      [RootNames.PerpsMarketList]: bg1Default2024Conf,
+      [RootNames.PerpsMarketDetail]: bg1Default2024Conf,
+      [RootNames.PerpsHistory]: bg1Default2024Conf,
+      [RootNames.AccountTransaction]: bg1Default2024Conf,
+      [RootNames.MyBundle]: bg1Default2024Conf,
+
+      // StackAddress
+      [RootNames.AddressList]: bg1Default2024Conf,
+      [RootNames.ApprovalAddressList]: bg1Default2024Conf,
+      [RootNames.ImportNewAddress]: bg1Default2024Conf,
+      [RootNames.ImportHardwareAddress]: bg1Default2024Conf,
+      [RootNames.ImportSuccess]: blueLightConf,
+      [RootNames.ImportSuccess2024]: bg1Default2024Conf,
+      [RootNames.ImportMethods]: bg1Default2024Conf,
+      [RootNames.ImportWatchAddress]: blueLightConf,
+      [RootNames.ImportWatchAddress2024]: bg1Default2024Conf,
+      [RootNames.ImportSafeAddress]: blueLightConf,
+      [RootNames.ImportSafeAddress2024]: bg1Default2024Conf,
+      [RootNames.AddressDetail]: bg1Default2024Conf,
+      [RootNames.NftDetail]: bg1Default2024Conf,
+      [RootNames.DeFiDetail]: bg1Default2024Conf,
+      [RootNames.CreateNewAddress]: bg1Default2024Conf,
+      [RootNames.CreateSelectOnCurrentSeed]: bg1Default2024Conf,
+      [RootNames.SetPassword2024]: bg1Default2024Conf,
+      [RootNames.CreateChooseBackup]: bg1Default2024Conf,
+
+      [RootNames.ImportLedger]: bg1Default2024Conf,
+      [RootNames.ImportMoreAddress]: bg1Default2024Conf,
+      [RootNames.ImportPrivateKey]: bg1Default2024Conf,
+      [RootNames.ImportPrivateKey2024]: bg1Default2024Conf,
+      [RootNames.ImportMnemonic]: bg1Default2024Conf,
+      [RootNames.ImportMnemonic2024]: bg1Default2024Conf,
+      [RootNames.CreateMnemonic]: bg1Default2024Conf,
+      [RootNames.PreCreateMnemonic]: bg1Default2024Conf,
+      [RootNames.AddMnemonic]: bg1Default2024Conf,
+      [RootNames.CreateMnemonicBackup]: bg1Default2024Conf,
+      [RootNames.CreateMnemonicVerify]: bg1Default2024Conf,
+      [RootNames.Scanner]: transparentDefault2024Conf,
+      [RootNames.BackupPrivateKey]: bg1Default2024Conf,
+      [RootNames.BackupMnemonic]: bg1Default2024Conf,
+      [RootNames.RestoreFromCloud]: bg1Default2024Conf,
+      [RootNames.WatchAddressList]: bg1Default2024Conf,
+      [RootNames.SafeAddressList]: bg1Default2024Conf,
+
+      [RootNames.SingleAddressStack]: bg1Default2024Conf,
+      [RootNames.SingleAddressHome]: transparentDefault2024Conf,
+
+      [RootNames.DappWebViewStubOnHome]: {
         barStyle: adaptiveStatusBarStyle,
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
         androidStatusBarBg: colors['neutral-bg-1'],
       },
-      MultiAddressHome: bg1Default2024Conf,
-      // MultiAddressHome: bg1Default2024Conf,
-      Unlock: bg1DefaultConf,
-      History: historyPageConf,
-      MultiAddressHistory: historyPageConf,
-      HistoryDetail: historyPageConf,
-      HistoryLocalDetail: historyPageConf,
+      [RootNames.TokenDetail]: transparentDefault2024Conf,
+      [RootNames.TokenMarketInfo]: bg1Default2024Conf,
+      [RootNames.ReceiveAddressList]: bg1Default2024Conf,
 
-      Dapps: bg1Default2024Conf,
-      SendNFT: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      // SearchDapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      [RootNames.SyncExtensionPassword]: bg1Default2024Conf,
+      [RootNames.SyncExtensionImported]: bg1Default2024Conf,
+      [RootNames.SyncExtensionAccountSuccess]: bg1Default2024Conf,
 
-      // History: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      // StackMain
 
-      // ImportNewAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      // AddressList: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      ImportWatchAddress: blueLightConf,
-      ImportSafeAddress: blueLightConf,
-      ImportSuccess: blueLightConf,
-      // ImportSuccess2024: blueLightConf,
-      // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      Settings: historyPageConf,
-      SingleAddressHome: transparentDefault2024Conf,
-      TokenDetail: transparentDefault2024Conf,
-      Receive: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      GasAccount: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      Send: bg1Default2024Conf,
-      MultiSend: bg1Default2024Conf,
-      Swap: bg1Default2024Conf,
-      MultiSwap: bg1Default2024Conf,
-      Bridge: bg1Default2024Conf,
-      MultiBridge: bg1Default2024Conf,
-      // Receive: blueLightConf,
-      AddressList: bg1Default2024Conf,
-      SafeAddressList: bg1Default2024Conf,
-      WatchAddressList: bg1Default2024Conf,
-      ApprovalAddressList: bg1Default2024Conf,
-
-      GnosisTransactionQueue: card2DefaultConf,
-
-      Approvals: bg1Default2024Conf,
-
-      SetPassword: blueLightConf,
-      SetPassword2024: bg1Default2024Conf,
-      SetBiometricsAuthentication: bg1DefaultConf,
-      Scanner: transparentDefault2024Conf,
-      BatchRevoke: transparentDefault2024Conf,
-      // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      // StackBrowser
+      [RootNames.BrowserScreen]: bg1Default2024Conf,
+      [RootNames.BrowserManageScreen]: bg1Default2024Conf,
     };
 
     // return __DEV__ ? Object.freeze(themeSpecs) : themeSpecs;

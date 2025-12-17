@@ -1,7 +1,7 @@
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React, { useCallback } from 'react';
@@ -16,6 +16,7 @@ import { AddressItemContextMenu } from './AddressItemContextMenu';
 import { AddressItemInner2024 } from './AddressItemInner2024';
 import { AddressItemShadowView } from './AddressItemShadowView';
 import { isTabsSwiping } from './MultiAssets/hooks';
+import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const { isSameAddress } = addressUtils;
 
@@ -71,12 +72,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
     onSelect?.();
     handleGoDetail?.();
-    navigate(RootNames.SingleAddressStack, {
-      screen: RootNames.SingleAddressHome,
-      params: {
-        account,
-      },
-    });
+    apisSingleHome.navigateToSingleHome(account);
   }, [account, onSelect, handleGoDetail]);
 
   const isCurrentAccount = React.useMemo(() => {

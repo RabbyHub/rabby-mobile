@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Dimensions,
   StyleProp,
@@ -6,6 +6,8 @@ import {
   View,
   ViewStyle,
   Text,
+  TouchableOpacity,
+  Clipboard,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -17,6 +19,10 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
 import { useAssetsRefreshing } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
+import RcIconCopy from '@/assets2024/singleHome/copy.svg';
+import { trigger } from 'react-native-haptic-feedback';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { findChain } from '@/utils/chain';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -25,7 +31,11 @@ interface Props {
   tokenSize?: number;
   chainSize?: number;
   borderChain?: boolean;
+  title?: string;
   titleStyle?: StyleProp<TextStyle>;
+  rootStyle?: StyleProp<ViewStyle>;
+  disableRefresh?: boolean;
+  showCopyIcon?: boolean;
 }
 export const TokenDetailHeaderArea: React.FC<Props> = ({
   token,
@@ -33,13 +43,40 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   tokenSize = 35,
   chainSize = 16,
   borderChain = false,
+  title,
   titleStyle,
+  rootStyle,
+  disableRefresh = false,
+  showCopyIcon = false,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssetsRefreshing();
 
+  const isNativeToken = useMemo(() => {
+    const chain = findChain({ serverId: token?.chain });
+    return token?._tokenId === chain?.nativeTokenAddress;
+  }, [token?._tokenId, token?.chain]);
+
+  const handleCopyAddress = useCallback<
+    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
+  >(
+    evt => {
+      evt.stopPropagation();
+      if (!token?._tokenId || isNativeToken) {
+        return;
+      }
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+      Clipboard.setString(token._tokenId);
+      toastCopyAddressSuccess(token._tokenId);
+    },
+    [isNativeToken, token._tokenId],
+  );
+
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, rootStyle]}>
       <View style={[styles.container, style]}>
         <View style={styles.token}>
           <AssetAvatar
@@ -54,9 +91,16 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             style={[styles.tokenSymbol, titleStyle]}
             numberOfLines={1}
             ellipsizeMode="tail">
-            {ellipsisOverflowedText(getTokenSymbol(token), 15)}
+            {title || ellipsisOverflowedText(getTokenSymbol(token), 15)}
           </Text>
-          {refreshing && <LoadingCircle />}
+          {showCopyIcon && !isNativeToken && (
+            <TouchableOpacity
+              style={styles.touchBox}
+              onPress={handleCopyAddress}>
+              <RcIconCopy style={styles.copy} />
+            </TouchableOpacity>
+          )}
+          {!disableRefresh && refreshing && <LoadingCircle />}
         </View>
       </View>
     </View>
@@ -117,5 +161,14 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     borderColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
+  },
+  touchBox: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  copy: {
+    width: 18,
+    height: 18,
   },
 }));

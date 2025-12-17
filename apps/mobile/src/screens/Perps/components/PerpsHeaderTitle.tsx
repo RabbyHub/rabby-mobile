@@ -8,8 +8,8 @@ import { apiContact } from '@/core/apis';
 import { Account } from '@/core/services/preference';
 import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
-import { CaretDownIconCC } from '@/components/AccountSwitcher/icons/CaretDownIconCC';
-import { usePerspPopupState } from '../hooks/usePerpsPopupState';
+import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
+import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 
 export const PerpsHeaderTitle: React.FC<{
   account?: Account | null;
@@ -17,7 +17,7 @@ export const PerpsHeaderTitle: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const [popupState, setPopupState] = usePerspPopupState();
+  const [popupState, setPopupState] = usePerpsPopupState();
 
   const alias = useMemo(() => {
     if (!account?.address) {
@@ -48,7 +48,8 @@ export const PerpsHeaderTitle: React.FC<{
             <Text style={styles.address}>
               {alias || ellipsisAddress(account?.address)}
             </Text>
-            <CaretDownIconCC
+            <CaretArrowIconCC
+              dir="down"
               style={[popupState.isShowLoginPopup ? styles.reverseCaret : null]}
               width={18}
               height={18}
@@ -87,7 +88,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   address: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 20,
     color: colors2024['neutral-foot'],
   },

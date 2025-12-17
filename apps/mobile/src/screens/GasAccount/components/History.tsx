@@ -7,6 +7,7 @@ import {
   Easing,
   ListRenderItem,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
@@ -22,6 +23,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { GiftInfoModal } from './GiftInfoModal';
+import ImgEmpty from '@/assets2024/images/gasAccount/empty.png';
+import ImgEmptyDark from '@/assets2024/images/gasAccount/empty-dark.png';
 
 const HistoryItem = ({
   time,
@@ -272,11 +275,11 @@ export const GasAccountHistory = () => {
           isLight ? styles.containerLight : styles.containerDark,
         ]}>
         <View style={styles.emptyContent}>
-          {isLight ? (
-            <RcIconEmpty style={styles.emptyImg} />
-          ) : (
-            <RcIconEmptyDark style={styles.emptyImg} />
-          )}
+          <Image
+            source={isLight ? ImgEmpty : ImgEmptyDark}
+            style={styles.emptyImg}
+            resizeMode="contain"
+          />
           <Text style={styles.emptyText}>
             {t('page.gasAccount.history.noHistory')}
           </Text>
@@ -425,9 +428,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
 
   emptyImg: {
-    marginTop: 40,
-    width: 159,
-    height: 116.928,
+    marginTop: 36,
+    width: 163,
+    height: 126,
   },
 
   emptyContent: {
@@ -439,7 +442,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
 
   emptyText: {
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-secondary'],
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,

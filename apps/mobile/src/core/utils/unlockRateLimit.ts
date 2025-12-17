@@ -1,10 +1,10 @@
 import { appStorage } from '../storage/mmkv';
 
-// - if failed 5 times, reject unlock for 5 minutes
+// - if failed {limit} times, reject unlock for {duration} seconds
 const MULTIPLE_FAILED_CONF = {
   key: '@failed_unlock',
-  limit: 5,
-  duration: (1 * 60 + 6) * 1000,
+  limit: __DEV__ ? 5 : 999, // set a very high limit in production to disable the feature temporarily
+  duration: __DEV__ ? 6 * 1000 : 5 * 60 * 1000,
 };
 
 /**
@@ -45,17 +45,26 @@ function setMultipleFailed(partials?: Partial<FAILED_FREEZING_INFO>) {
     ...partials,
   });
 }
-function reCountdown(options: { restCountdown: number; nowMS?: number }) {
-  const { restCountdown, nowMS = Date.now() } = options;
+function reCountdown(options: {
+  restCountdown: number;
+  nowMS: number;
+  keepCount?: boolean;
+}) {
+  const { restCountdown, nowMS = Date.now(), keepCount } = options;
 
-  const ltCd = Math.min(
+  const lastTimeCountdown = Math.min(
     MULTIPLE_FAILED_CONF.duration,
     Math.max(0, restCountdown),
   );
 
+  const stored = getMultipleFailed();
   setMultipleFailed({
-    lastTimeCountdown: ltCd,
-    expireTimeUTC0: nowMS + ltCd,
+    ...(keepCount &&
+      stored.count && {
+        count: stored.count,
+      }),
+    lastTimeCountdown: lastTimeCountdown,
+    expireTimeUTC0: nowMS + lastTimeCountdown,
   });
 
   return getMultipleFailed();
@@ -96,6 +105,7 @@ export function shouldRejectUnlockDueToMultipleFailed() {
 
   const nowMS = Date.now();
   const newRecord = reCountdown({
+    keepCount: true,
     nowMS,
     restCountdown: Math.max(0, record.expireTimeUTC0 - nowMS),
   });
@@ -114,7 +124,7 @@ export function shouldRejectUnlockDueToMultipleFailed() {
     console.debug(
       '[unlockRateLimit::onBootstrap] find last-time unfinished countdown, re-countdown.',
     );
-    reCountdown({ restCountdown: record.lastTimeCountdown });
+    reCountdown({ restCountdown: record.lastTimeCountdown, nowMS: Date.now() });
   } else {
     // trigger once check
     shouldRejectUnlockDueToMultipleFailed();

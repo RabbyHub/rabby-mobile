@@ -13,14 +13,14 @@ import {
   activeDappStateEvents,
   globalSetActiveDappState,
 } from '@/core/bridges/state';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { stringUtils, urlUtils, hashUtils } from '@rabby-wallet/base-utils';
 import {
   isSameAccount,
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { useRefState } from '@/hooks/common/useRefState';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
@@ -492,8 +492,8 @@ export function useOpenDappView() {
     };
   }, [dapps, activeDappOrigin, openedDappRecords]);
 
-  const openedDappItems = useDebounceValue(originalInfo.openedDappItems, 100);
-  const activeDapp = useDebounceValue(originalInfo.activeDapp, 250);
+  const openedDappItems = useDebouncedValue(originalInfo.openedDappItems, 100);
+  const activeDapp = useDebouncedValue(originalInfo.activeDapp, 250);
 
   return {
     openingActiveDappRef,

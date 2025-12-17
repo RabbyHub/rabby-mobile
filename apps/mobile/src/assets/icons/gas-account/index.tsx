@@ -12,13 +12,13 @@ export const RcIconGasAccount = makeThemeIconFromCC(RcIconGasAccountCC, {
 });
 
 export const RcIconQuoteStart = makeThemeIconFromCC(RcIconQuoteStartCC, {
-  onLight: ThemeColors.light['blue-light-2'],
-  onDark: ThemeColors.dark['blue-light-2'],
+  onLight: ThemeColors.light['blue-light-disable'],
+  onDark: ThemeColors.dark['blue-light-disable'],
 });
 
 export const RcIconQuoteEnd = makeThemeIconFromCC(RcIconQuoteEndCC, {
-  onLight: ThemeColors.light['blue-light-2'],
-  onDark: ThemeColors.dark['blue-light-2'],
+  onLight: ThemeColors.light['blue-light-disable'],
+  onDark: ThemeColors.dark['blue-light-disable'],
 });
 
 export const RcIconGasAccountHeaderRight = makeThemeIconFromCC(

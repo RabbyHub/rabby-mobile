@@ -36,7 +36,7 @@ const HeaderBalanceCard = ({
         {
           backgroundColor: isLoss
             ? colors2024['red-light-1']
-            : colors2024['green-light-4'],
+            : colors2024['green-light-1'],
         },
         style,
       ]}
@@ -79,7 +79,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     height: 42,
     borderRadius: 6,
-    backgroundColor: colors2024['green-light-4'],
+    backgroundColor: colors2024['green-light-1'],
     paddingHorizontal: 16,
     paddingVertical: 10,
     flexDirection: 'row',

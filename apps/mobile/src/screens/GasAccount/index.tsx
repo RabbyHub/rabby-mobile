@@ -21,6 +21,7 @@ import {
 } from './hooks/atom';
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
+import { gasAccountService } from '@/core/services';
 
 export const GasAccountScreen = () => {
   const { t } = useTranslation();
@@ -43,10 +44,6 @@ export const GasAccountScreen = () => {
   } = useGasAccountInfo();
 
   const { refresh: refreshHistory } = useGasAccountHistoryRefresh();
-
-  // 检查gas account gift资格
-  const { getCurrentEligibleAddress } = useGasAccountEligibility();
-  const currentEligibleAddress = getCurrentEligibleAddress();
 
   const handleDeposit = useMemoizedFn((type?: 'token' | 'pay') => {
     setDepositState({
@@ -86,7 +83,7 @@ export const GasAccountScreen = () => {
       <GasAccountCard
         isLogin={isLogin}
         gasAccountInfo={gasAccount?.account}
-        currentEligibleAddress={currentEligibleAddress}
+        currentEligibleAddress={gasAccountService.getCurrentEligibleAddress()}
         onLoginPress={() => {
           setLoginVisible(true);
         }}

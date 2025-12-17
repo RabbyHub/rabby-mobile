@@ -1,4 +1,4 @@
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { isCached, preload } from 'react-native-bundle-splitter';
 
@@ -15,12 +15,15 @@ export async function preloadSettingsScreen() {
 export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.NewUserGetStarted2024]: 'NewUserGetStarted2024',
   [RootNames.DevUIFontShowCase]: 'DevUIFontShowCase',
+  [RootNames.DevUIAnimatedTextAndView]: 'DevUIAnimatedTextAndView',
   [RootNames.DevUIFormShowCase]: 'DevUIFormShowCase',
   [RootNames.DevUIAccountShowCase]: 'DevUIAccountShowCase',
   [RootNames.DevUIScreenContainerShowCase]: 'DevUIScreenContainerShowCase',
   [RootNames.DevUIDapps]: 'DevUIDapps',
   [RootNames.DevUIPermissions]: 'DevUIPermissions',
+  [RootNames.DevUIBuiltInPages]: 'DevUIBuiltInPages',
   [RootNames.DevDataSQLite]: 'DevDataSQLite',
+  [RootNames.DevSwitches]: 'DevSwitches',
 };
 
 export async function preloadNonProductionScreens() {

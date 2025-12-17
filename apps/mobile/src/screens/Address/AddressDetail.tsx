@@ -45,12 +45,12 @@ import {
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { GnosisSafeInfo } from './components/GnosisSafeInfo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { useTranslation } from 'react-i18next';
 import { apiMnemonic, apiPrivateKey, apisLock } from '@/core/apis';
-import { useAccountInfo } from '@/hooks/useAccountInfo';
+import { useAccountsInfo } from '@/hooks/useAccountInfo';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useAddressSource } from '@/hooks/useAddressSource';
 import { SeedPhraseBar } from './components/SeedPhraseBar';
@@ -273,7 +273,7 @@ export const AddressInfo = (props: AddressInfoProps) => {
         if (ctx.hasSetupCustomPassword && !data) {
           return;
         }
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.BackupPrivateKey,
           params: {
             data,
@@ -301,7 +301,7 @@ export const AddressInfo = (props: AddressInfoProps) => {
         if (ctx.hasSetupCustomPassword && !data) {
           return;
         }
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.BackupMnemonic,
           params: {
             data,
@@ -311,7 +311,7 @@ export const AddressInfo = (props: AddressInfoProps) => {
     });
   }, [account, invokeEnterPassphrase, t]);
 
-  const accountInfo = useAccountInfo(
+  const accountInfo = useAccountsInfo(
     account.type,
     account.address,
     account.brandName,

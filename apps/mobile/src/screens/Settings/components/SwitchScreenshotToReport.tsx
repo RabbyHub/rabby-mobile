@@ -5,7 +5,7 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { SwitchToggleType } from '@/components';
 import { useScreenshotToReportEnabled } from '@/components/Screenshot/hooks';
 import useInterval from 'react-use/lib/useInterval';
-import { NEED_DEVSETTINGBLOCKS } from '@/constant/env';
+import { NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { useTheme2024 } from '@/hooks/theme';
 import { getTimeSpanByMs } from '@/utils/time';
 
@@ -47,10 +47,10 @@ export function LabelScreenshotToReport() {
 
   const { text: timeOffset, mins } = React.useMemo(() => {
     spinner;
-    if (disableScreenshotToReportUntil === Infinity) {
+    const diffMs = Math.max(disableScreenshotToReportUntil - Date.now(), 0);
+    if (!diffMs || disableScreenshotToReportUntil === Infinity) {
       return { text: `∞`, mins: 0 };
     }
-    const diffMs = Math.max(disableScreenshotToReportUntil - Date.now(), 0);
 
     const timeSpans = getTimeSpanByMs(diffMs);
 

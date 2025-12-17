@@ -1,4 +1,4 @@
-import { refAssetForTradeView } from '@/core/storage/webviewAssets';
+import { refAssetForLocalWebView } from '@/core/storage/webviewAssets';
 
 interface ChartColors {
   background: string;
@@ -156,10 +156,11 @@ export const createTradingViewChartTemplate = (
     />
     <!-- 预加载关键资源 -->
     <link rel="preload" href=${
-      refAssetForTradeView('bignumber.js@9.3.1-bignumber.min.js').quoted
+      refAssetForLocalWebView('bignumber.js@9.3.1-bignumber.min.js').quoted
     } as="script" crossorigin="anonymous">
     <link rel="preload" href=${
-      refAssetForTradeView('lightweight-charts.standalone.production.js').quoted
+      refAssetForLocalWebView('lightweight-charts.standalone.production.js')
+        .quoted
     } as="script" crossorigin="anonymous">
     <style>
       body, html {
@@ -181,7 +182,7 @@ export const createTradingViewChartTemplate = (
   <body>
     <div id="container"></div>
     <script src=${
-      refAssetForTradeView('bignumber.js@9.3.1-bignumber.min.js').quoted
+      refAssetForLocalWebView('bignumber.js@9.3.1-bignumber.min.js').quoted
     }></script>
     <script>
       ${TradeViewJSGlobalUtils}
@@ -235,7 +236,7 @@ export const createTradingViewChartTemplate = (
       function loadTradingView() {
         const script = document.createElement('script');
         script.src = ${
-          refAssetForTradeView('lightweight-charts.standalone.production.js')
+          refAssetForLocalWebView('lightweight-charts.standalone.production.js')
             .quoted
         };
         script.onload = function () {
@@ -275,6 +276,7 @@ export const createTradingViewChartTemplate = (
                 horzLines: { color: window.colors.border },
               },
               timeScale: {
+                barSpacing: 10,
                 timeVisible: true,
                 secondsVisible: false,
                 borderColor: 'transparent',

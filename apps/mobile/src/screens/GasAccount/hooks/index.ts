@@ -24,6 +24,7 @@ import {
   useSetGasAccount,
 } from './atom';
 import { useRequest } from 'ahooks';
+import { apisHomeTabIndex } from '@/hooks/navigation';
 
 export const useGasAccountInfo = () => {
   const { sig, accountId } = useGasAccountSign();
@@ -99,6 +100,7 @@ export const useGasAccountGoBack = () => {
           },
         ],
       });
+      apisHomeTabIndex.setTabIndex(0);
     }
   }, [navigation]);
 };
@@ -106,8 +108,6 @@ export const useGasAccountGoBack = () => {
 export const useGasAccountMethods = () => {
   const { sig, accountId } = useGasAccountSign();
   const [, setLogoutVisible] = useGasAccountLogoutVisible();
-  const [, setLoginVisible] = useGasAccountLoginVisible();
-  const gotoDashboard = useGasAccountGoBack();
 
   const setGasAccount = useSetGasAccount();
 
@@ -299,7 +299,7 @@ export const useGasAccountHistory = () => {
           totalCount: value.pagination.total,
           list: uniqBy(
             [...(value?.history_list || []), ...(d?.list || [])],
-            e => `${e.chain_id}${e.tx_id}` as string,
+            e => `${e?.create_at}` as string,
           ),
         };
       });

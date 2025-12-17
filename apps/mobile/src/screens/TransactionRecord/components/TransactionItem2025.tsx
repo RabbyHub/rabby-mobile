@@ -31,7 +31,10 @@ import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { getAlianName, getAliasName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
 import { transactionHistoryService } from '@/core/services';
-import { HistoryItemCateType } from '@/screens/Transaction/components/type';
+import {
+  CUSTOM_HISTORY_TITLE_TYPE,
+  HistoryItemCateType,
+} from '@/screens/Transaction/components/type';
 import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
 import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryItemTokenArea';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
@@ -39,6 +42,12 @@ import { ellipsisAddress } from '@/utils/address';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { naviPush } from '@/utils/navigation';
 import FastImage from 'react-native-fast-image';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
+
+export type HistoryLocalDetailParams = GetNestedScreenRouteProp<
+  'TransactionNavigatorParamList',
+  'HistoryLocalDetail'
+>['params'];
 
 export const TransactionItem = ({
   historySuccessList,
@@ -47,7 +56,8 @@ export const TransactionItem = ({
   onRefresh,
   isForMultipleAddress,
   isInSendHistory,
-  onPressBottomBtn,
+  onPressItem,
+  onPressAddToWhitelistButton,
   closeHistoryPopup,
   getCexInfoByAddress,
 }: {
@@ -58,7 +68,8 @@ export const TransactionItem = ({
   canCancel?: boolean;
   onRefresh?: () => void;
   isInSendHistory?: boolean;
-  onPressBottomBtn?: (data: SendAction) => void;
+  onPressItem?: (ctx: HistoryLocalDetailParams) => void;
+  onPressAddToWhitelistButton?: (data: SendAction) => void;
   closeHistoryPopup?: () => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -90,10 +101,18 @@ export const TransactionItem = ({
 
     if (
       data.maxGasTx.action?.actionData.wrapToken ||
-      data.maxGasTx.action?.actionData.unWrapToken ||
-      data.maxGasTx.action?.actionData.swap
+      data.maxGasTx.action?.actionData.unWrapToken
     ) {
       return HistoryItemCateType.Swap;
+    }
+
+    if (data.maxGasTx.action?.actionData.swap) {
+      if (
+        data.maxGasTx.action?.actionData.swap?.payToken?.is_core &&
+        data.maxGasTx.action?.actionData.swap?.receiveToken?.is_core
+      ) {
+        return HistoryItemCateType.Swap;
+      }
     }
 
     if (
@@ -270,6 +289,27 @@ export const TransactionItem = ({
   }, [data]);
 
   const formatTitle = useMemo(() => {
+    if (data.customActionInfo.customActionTitleType) {
+      switch (data.customActionInfo.customActionTitleType) {
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY:
+          return t('page.transactions.itemTitle.LendingSupply');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW:
+          return t('page.transactions.itemTitle.LendingWithdraw');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW:
+          return t('page.transactions.itemTitle.LendingBorrow');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY:
+          return t('page.transactions.itemTitle.LendingRepay');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL:
+          return t('page.transactions.itemTitle.LendingOnCollateral');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL:
+          return t('page.transactions.itemTitle.LendingOffCollateral');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE:
+          return t('page.transactions.itemTitle.LendingManageEMode');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE:
+          return t('page.transactions.itemTitle.LendingManageEModeDisable');
+      }
+    }
+
     switch (formatType) {
       case HistoryItemCateType.GAS_DEPOSIT:
         return t('page.transactions.itemTitle.DepositedGas');
@@ -301,7 +341,7 @@ export const TransactionItem = ({
       default:
         return t('page.transactions.itemTitle.Default');
     }
-  }, [formatType, t, tokenApproveData]);
+  }, [formatType, t, tokenApproveData, data]);
 
   const formatDescribe = useMemo(() => {
     const ToText = t('page.swap.to') + ' ';
@@ -355,16 +395,22 @@ export const TransactionItem = ({
         break;
       case HistoryItemCateType.Revoke:
       case HistoryItemCateType.Approve:
+      case HistoryItemCateType.Cancel:
+      default:
         const appRequireData = data.maxGasTx.action
           ?.requiredData as ApproveTokenRequireData;
         const name = appRequireData?.protocol?.name;
         address =
           name || getAliasName(data.address) || ellipsisAddress(data.address);
         break;
-      case HistoryItemCateType.Cancel:
-      default:
-        address = getAliasName(data.address) || ellipsisAddress(data.address);
-        break;
+      // case HistoryItemCateType.Cancel:
+      // default:
+      //   const requiredData = data.maxGasTx.action?.requiredData;
+      //   address =
+      //     (requiredData as SendRequireData)?.protocol?.name ||
+      //     getAliasName(data.address) ||
+      //     ellipsisAddress(data.address);
+      //   break;
     }
 
     return (
@@ -383,8 +429,18 @@ export const TransactionItem = ({
     );
   }, [formatType, data, t, styles.describeText, getCexInfoByAddress]);
 
-  // const navigation = useRabbyAppNavigation();
-  const hanldeNavigateDetail = useCallback(() => {
+  const handlePressItem = useCallback(() => {
+    if (onPressItem) {
+      onPressItem({
+        isForMultipleAddress,
+        data,
+        type: formatType,
+        canCancel,
+        title: formatTitle,
+      });
+      return;
+    }
+
     if (isInSendHistory) {
       closeHistoryPopup?.();
     }
@@ -396,17 +452,18 @@ export const TransactionItem = ({
         type: formatType,
         canCancel,
         title: formatTitle,
-        onPressBottomBtn: onPressBottomBtn,
+        onPressAddToWhitelistButton: onPressAddToWhitelistButton,
       },
     });
   }, [
+    onPressItem,
     isForMultipleAddress,
     canCancel,
     data,
     formatTitle,
     formatType,
     isInSendHistory,
-    onPressBottomBtn,
+    onPressAddToWhitelistButton,
     closeHistoryPopup,
   ]);
 
@@ -434,7 +491,7 @@ export const TransactionItem = ({
   }, [data]);
 
   return (
-    <TouchableOpacity onPress={hanldeNavigateDetail} style={[styles.card]}>
+    <TouchableOpacity onPress={handlePressItem} style={[styles.card]}>
       <View
         style={[
           styles.leftContent,

@@ -12,14 +12,22 @@ export enum MultiHomeFeatTitle {
   Buy = 'Buy',
   Search = 'Search',
   Watchlist = 'Watchlist',
-  CopyTrading = 'Copy Trading',
+  // CopyTrading = 'Copy Trading',
   Perps = 'Perps',
-
+  Lending = 'Lending',
   /** @deprecated */
   TEST_DAPP = 'TEST_DAPP',
 }
 
 export enum AccountPannelSectionTitle {
+  MyAddresses = 'My Addresses',
+  SafeAddresses = 'Safe Addresses',
+  WatchAddresses = 'Watch Addresses',
+}
+
+export enum TxAccountPannelSectionTitle {
+  Recent = 'Recent',
+  Whitelist = 'Whitelist',
   MyAddresses = 'My Addresses',
   SafeAddresses = 'Safe Addresses',
   WatchAddresses = 'Watch Addresses',

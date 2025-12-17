@@ -1,4 +1,7 @@
-import { DEV_CONSOLE_URL as DEV_CONSOLE_URL_ } from '@env';
+import {
+  DEV_CONSOLE_URL as DEV_CONSOLE_URL_,
+  RABBY_MOBILE_SAFE_API_KEY as RABBY_MOBILE_SAFE_API_KEY_,
+} from '@env';
 
 export const APP_RUNTIME_ENV = __DEV__
   ? 'development'
@@ -26,6 +29,16 @@ export const BUILD_GIT_INFO: {
   ...INPUT_BUILD_GIT_INFO,
 };
 
+const isTurboModuleEnabledRef = { current: false };
+export function setIsTurboModuleEnabledOnBoot(enabled: boolean) {
+  isTurboModuleEnabledRef.current = enabled;
+  return enabled;
+}
+
+export function isTurboModuleEnabled() {
+  return isTurboModuleEnabledRef.current;
+}
+
 export function getSentryEnv() {
   return `ch:${BUILD_CHANNEL}|env:${APP_RUNTIME_ENV}`;
 }
@@ -33,12 +46,14 @@ export function getSentryEnv() {
 export const SENTRY_DEBUG = APP_RUNTIME_ENV !== 'production';
 
 export const IS_HERMES_ENABLED = !!(global as any).HermesInternal;
-export const isTurboModuleEnabled = !!global.__turboModuleProxy;
+// export const isTurboModuleEnabled = !!global.__turboModuleProxy;
 export const isFabricEnabled = !!global.nativeFabricUIManager;
-
-export const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
-export const isNonPublicProductionEnv = isSelfhostRegPkg || __DEV__;
-export const NEED_DEVSETTINGBLOCKS = isSelfhostRegPkg || __DEV__;
 
 export const appIsProd = process.env.NODE_ENV === 'production';
 export const appIsDev = __DEV__;
+
+export const SAFE_API_KEY =
+  /* from .env* */ RABBY_MOBILE_SAFE_API_KEY_ ||
+  /* for developer */ process.env.RABBY_MOBILE_SAFE_API_KEY ||
+  process.env.MOBILE_SAFE_API_KEY ||
+  '';

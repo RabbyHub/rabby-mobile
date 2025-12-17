@@ -15,7 +15,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetScrollView,
+  TouchableWithoutFeedback,
+} from '@gorhom/bottom-sheet';
 import { useAppState } from '@react-native-community/hooks';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +31,10 @@ import {
   AndroidSoftInputModes,
   KeyboardController,
 } from 'react-native-keyboard-controller';
+import { BrowserHot } from './BrowserHot';
+import { BrowserFavorite } from './BrowserFavorite';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LocalPannableDraggableView } from '@/components/customized/BottomSheetDraggableView';
 
 export function BrowserSearch({
   onClose,
@@ -47,16 +54,18 @@ export function BrowserSearch({
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
-  const { androidOnlyBottomOffset } = useSafeSizes();
+  // const { androidOnlyBottomOffset } = useSafeSizes();
+  const { bottom } = useSafeAreaInsets();
+  const [isFocused, setIsFocused] = useState(false);
 
   const { t } = useTranslation();
   const { list } = useSearchDapps(searchText);
 
-  const { browserHistoryList } = useBrowserHistory();
+  const { browserHistorySectionList } = useBrowserHistory();
 
   const displayedBrowserHistoryList = useMemo(() => {
-    return browserHistoryList.slice(0, 10);
-  }, [browserHistoryList]);
+    return browserHistorySectionList.flatMap(e => e.data);
+  }, [browserHistorySectionList]);
 
   const isValidDomain = useMemo(() => {
     const pared = parse(searchText);
@@ -67,19 +76,21 @@ export function BrowserSearch({
     );
   }, [searchText]);
 
-  const isTransparent =
-    trigger === 'home' && !displayedBrowserHistoryList.length && !searchText;
-
   const isOpenURLRef = useRef(false);
 
-  const handleClose = useMemoizedFn(async () => {
+  const handleCancel = useMemoizedFn(async () => {
     Keyboard.dismiss();
-    await waitKeyboardHide();
-    onClose?.(trigger === 'home' && !isOpenURLRef.current);
+    setSearchText?.('');
+    if (!Keyboard.isVisible() && !searchText) {
+      onClose?.(trigger === 'home' && !isOpenURLRef.current);
+    }
+    // await waitKeyboardHide();
+    // onClose?.(trigger === 'home' && !isOpenURLRef.current);
   });
 
   const handleBlur = useMemoizedFn(async () => {
     Keyboard.dismiss();
+    setIsFocused(false);
     if (!searchText.trim() && !displayedBrowserHistoryList.length) {
       await waitKeyboardHide();
       onClose?.(trigger === 'home' && !isOpenURLRef.current);
@@ -116,15 +127,16 @@ export function BrowserSearch({
   });
 
   const handleSubmitEditing = useMemoizedFn(() => {
-    // if (!searchText) {
-    //   return;
-    // }
-    // isOpenURLRef.current = true;
-    // if (isValidDomain) {
-    //   onOpenURL?.(
-    //     /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
-    //   );
-    // } else {
+    if (!searchText) {
+      return;
+    }
+    isOpenURLRef.current = true;
+    if (isValidDomain) {
+      onOpenURL?.(
+        /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
+      );
+    }
+    // else {
     //   onOpenURL?.(
     //     `https://www.google.com/search?q=${encodeURIComponent(searchText)}`,
     //   );
@@ -166,62 +178,80 @@ export function BrowserSearch({
   }, []);
 
   return (
-    <View
-      style={[
-        styles.container,
-
-        style,
-
-        isTransparent
-          ? {
-              backgroundColor: 'transparent',
-            }
-          : null,
-      ]}>
-      {!searchText?.trim() ? (
-        trigger === 'home' && !displayedBrowserHistoryList.length ? (
-          <View style={{ flex: 1 }}>
-            <TouchableWithoutFeedback
-              onPress={() => {
-                Keyboard.dismiss();
-              }}>
-              <View style={{ height: '100%' }} />
-            </TouchableWithoutFeedback>
-          </View>
+    <View style={[styles.container, style]}>
+      <LocalPannableDraggableView>
+        {!searchText?.trim() ? (
+          <BottomSheetScrollView
+            contentContainerStyle={{ gap: 24, paddingHorizontal: 20 }}>
+            {!isFocused ? (
+              <>
+                <BrowserFavorite
+                  isInBottomSheet
+                  onPress={dapp => {
+                    handleOpenUrl(dapp.url || dapp.origin);
+                    if (dapp.origin) {
+                      matomoRequestEvent({
+                        category: 'Websites Usage',
+                        action: 'Website_Visit_Favorite List',
+                        label: dapp.origin,
+                      });
+                    }
+                  }}
+                />
+                <BrowserHot
+                  onPress={dapp => {
+                    handleOpenUrl(dapp.url || dapp.origin);
+                    if (dapp.origin) {
+                      matomoRequestEvent({
+                        category: 'Websites Usage',
+                        action: 'Website_Visit_Hot List',
+                        label: dapp.origin,
+                      });
+                    }
+                  }}
+                />
+              </>
+            ) : (
+              <BrowserRecent
+                isInBottomSheet
+                list={displayedBrowserHistoryList}
+                onPress={dapp => {
+                  handleOpenUrl(dapp.url || dapp.origin);
+                  if (dapp.origin) {
+                    matomoRequestEvent({
+                      category: 'Websites Usage',
+                      action: 'Website_Visit_Recent List',
+                      label: dapp.origin,
+                    });
+                  }
+                }}
+              />
+            )}
+            <View style={{ height: 100 }} />
+          </BottomSheetScrollView>
         ) : (
-          <BrowserRecent
+          <BrowserSearchResult
+            key={key}
             isInBottomSheet
-            list={displayedBrowserHistoryList}
-            onPress={dapp => {
-              handleOpenUrl(dapp.url || dapp.origin);
-              if (dapp.origin) {
-                matomoRequestEvent({
-                  category: 'Websites Usage',
-                  action: 'Website_Visit_Recent List',
-                  label: dapp.origin,
-                });
-              }
+            searchText={searchText}
+            data={list || []}
+            isValidDomain={!!isValidDomain}
+            onOpenURL={origin => {
+              handleOpenUrl(origin);
             }}
           />
-        )
-      ) : (
-        <BrowserSearchResult
-          key={key}
-          isInBottomSheet
-          searchText={searchText}
-          data={list || []}
-          isValidDomain={!!isValidDomain}
-          onOpenURL={origin => {
-            handleOpenUrl(origin);
-          }}
-        />
-      )}
+        )}
+      </LocalPannableDraggableView>
 
       <View
         style={[
           styles.footer,
           {
-            marginBottom: androidOnlyBottomOffset,
+            position: 'absolute',
+            right: 0,
+            bottom: 0,
+            marginTop: 'auto',
+            paddingBottom: bottom || 12,
             // marginBottom:
             //   Platform.OS === 'android' ? androidOnlyBottomOffset : 20,
           },
@@ -238,14 +268,17 @@ export function BrowserSearch({
           as="BottomSheetTextInput"
           value={searchText}
           onChangeText={setSearchText}
-          onCancel={handleClose}
+          onCancel={handleCancel}
           onBlur={handleBlur}
           onSubmitEditing={handleSubmitEditing}
           enterKeyHint="done"
-          autoFocus
+          // autoFocus
           placeholder={t('page.browser.BrowserSearch.placeholder')}
           alwaysShowCancel
           style={styles.searchBar}
+          onFocus={() => {
+            setIsFocused(true);
+          }}
         />
       </View>
     </View>

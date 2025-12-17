@@ -1,4 +1,4 @@
-import { RcIconInfoFill1CC, RcIconInfoFillCC } from '@/assets/icons/common';
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -175,9 +175,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
                     <Text style={styles.label}>
                       {t('page.perps.historyDetail.size')}
                     </Text>
-                    <RcIconInfoFill1CC
-                      width={15}
-                      height={15}
+                    <RcIconInfoCC
+                      width={18}
+                      height={18}
                       color={colors2024['neutral-info']}
                     />
                   </View>

@@ -11,7 +11,7 @@ import { Media } from '@/components/Media';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
-import { useRoute } from '@react-navigation/native';
+import { StackActions, useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { GetRootScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -19,7 +19,7 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
-import { navigate } from '@/utils/navigation';
+import { navigate, naviPush } from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
 import FastImage from 'react-native-fast-image';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
@@ -27,7 +27,7 @@ import { useMyAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { useAssets } from '../Search/useAssets';
+import { useLoadAssets } from '../Search/useAssets';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
 import { DropDownMenuView } from '@/components2024/DropDownMenu';
@@ -132,7 +132,6 @@ export const NFTDetailScreen = () => {
   const { styles, colors } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { navigateToSendPolyScreen } = useSendRoutes();
   const route = useRoute<GetRootScreenRouteProp<'NftDetail'>>();
   const { token, isSingleAddress, account: routeAccount } = route.params || {};
   type NonListType = Exclude<typeof token, TokenItem[]>;
@@ -232,29 +231,40 @@ export const NFTDetailScreen = () => {
 
   const handleSend = useCallback(
     async (iToken: NFTItem, address: string, accountType: KEYRING_TYPE) => {
-      const fromAccount =
-        address && accountType
-          ? accounts.find(i => isSameAddress(address, i.address))
-          : undefined;
-      if (!fromAccount) {
-        return;
+      const foundRet = {
+        matched: null as null | (typeof accounts)[number],
+        onlyMatchedAddress: null as null | (typeof accounts)[number],
+      };
+
+      for (const acc of accounts) {
+        if (isSameAddress(acc.address, address)) {
+          foundRet.onlyMatchedAddress = acc;
+
+          if (acc.type === accountType) {
+            foundRet.matched = acc;
+            foundRet.onlyMatchedAddress = null;
+            break;
+          }
+        }
       }
+      const fromAccount = foundRet.matched || foundRet.onlyMatchedAddress;
+      if (!fromAccount) return;
+
       await switchSceneCurrentAccount('SendNFT', fromAccount);
-      navigateToSendPolyScreen(!!isSingleAddress, {
-        collectionName: iToken.contract_name || iToken?.collection?.name || '',
-        nftItem: iToken,
-        fromAccount,
+      naviPush(RootNames.StackTransaction, {
+        screen: RootNames.SendNFT,
+        params: {
+          collectionName:
+            iToken.contract_name || iToken?.collection?.name || '',
+          nftItem: iToken,
+          fromAccount,
+        },
       });
     },
-    [
-      accounts,
-      navigateToSendPolyScreen,
-      isSingleAddress,
-      switchSceneCurrentAccount,
-    ],
+    [accounts, switchSceneCurrentAccount],
   );
 
-  const { assetsMap, getCacheTop10Assets } = useAssets({ hideCombined: true });
+  const { nftsMap, getCacheTop10Assets } = useLoadAssets();
 
   type ItemBase = {
     data: NFTItem;
@@ -280,8 +290,8 @@ export const NFTDetailScreen = () => {
 
     const tempList: ItemBase[] = [];
 
-    Object.keys(assetsMap).map((address, index) => {
-      const { nfts } = assetsMap[address];
+    Object.keys(nftsMap).map((address, index) => {
+      const nfts = nftsMap[address];
 
       nfts?.map(item => {
         if (
@@ -322,7 +332,8 @@ export const NFTDetailScreen = () => {
             index: 0,
           } as ItemBase,
         ];
-  }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
+  }, [nftsMap, token, accounts, finalAccount, isSingleAddress]);
+
   useEffect(() => {
     const id = setTimeout(() => {
       getCacheTop10Assets({

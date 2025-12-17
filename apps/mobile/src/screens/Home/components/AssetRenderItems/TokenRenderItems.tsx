@@ -33,7 +33,6 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatPrice, formatUsdValue } from '@/utils/number';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { formatUsdValueKMB } from '../../utils/price';
 import { ellipsisAddress } from '@/utils/address';
 import { ExchangeLogos } from './ExchangeLogos';
@@ -41,6 +40,9 @@ import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { formatNetworth } from '@/utils/math';
 import BigNumber from 'bignumber.js';
 import { useCurrency } from '@/hooks/useCurrency';
+import { StyleProp } from 'react-native';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { AccountOverview } from '../AccountOverview';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -65,26 +67,27 @@ export const TokenRow = memo(
     chainLogoSize = 16,
     logoStyle,
     getMenuActions,
-    filterText,
     onTokenPress,
     hideFoldTag,
     disableMenu,
+    account,
   }: {
     data: AbstractPortfolioToken;
     style?: ViewStyle;
     logoStyle?: ViewStyle;
     logoSize?: number;
     chainLogoSize?: number;
-    filterText?: string;
     getMenuActions?: (token: AbstractPortfolioToken) => MenuAction[];
     hideFoldTag?: boolean;
     disableMenu?: boolean;
     onTokenPress?(token: AbstractPortfolioToken): void;
+    account?: KeyringAccountWithAlias;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
     const { currency } = useCurrency();
+    const showAccount = !!account;
     const percentColor = useMemo(() => {
       if (
         !data?.price_24h_change ||
@@ -107,7 +110,7 @@ export const TokenRow = memo(
       return onTokenPress?.(data);
     }, [data, onTokenPress]);
 
-    const handleShowExcludeTips = () => {
+    const handleShowExcludeTips = useCallback(() => {
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.DESCRIPTION,
         title: t('page.tokenDetail.excludeBalanceTips'),
@@ -130,95 +133,138 @@ export const TokenRow = memo(
           },
         },
       });
-    };
-    const children = (
-      <TouchableOpacity
-        style={StyleSheet.flatten([styles.tokenRowWrap, style])}
-        delayLongPress={200}
-        onLongPress={() => {
-          if (disableMenu) {
-            return;
-          }
-          setShowContextMenu(true);
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
-        }}
-        onPress={onPressToken}>
-        <View style={styles.tokenRowTokenWrap}>
-          <View>
-            <AssetAvatar
-              logo={data?.logo_url}
-              chain={data?.chain}
-              style={mediaStyle}
-              size={logoSize}
-              chainSize={chainLogoSize}
-            />
-          </View>
-          <View style={styles.tokenRowTokenInner}>
-            <View style={styles.tokenHeader}>
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={styles.tokenSymbol}>
-                {data.symbol}
-              </Text>
-              {!hideFoldTag && data._isManualFold && (
-                <TextBadge type="folded" />
+    }, [styles.modalNextButtonText, t]);
+    const children = useMemo(() => {
+      const amountContent = data._priceStr ? (
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={styles.amountStr}>{`${data._amountStr} ${data.symbol}`}</Text>
+      ) : null;
+
+      return (
+        <TouchableOpacity
+          style={StyleSheet.flatten([styles.tokenRowWrap, style])}
+          delayLongPress={200}
+          onLongPress={() => {
+            if (disableMenu) {
+              return;
+            }
+            setShowContextMenu(true);
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
+          }}
+          onPress={onPressToken}>
+          <View style={styles.tokenRowTokenWrap}>
+            <View>
+              <AssetAvatar
+                logo={data?.logo_url}
+                chain={data?.chain}
+                style={mediaStyle}
+                size={logoSize}
+                chainSize={chainLogoSize}
+              />
+            </View>
+            <View style={styles.tokenRowTokenInner}>
+              <View style={styles.tokenHeader}>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.tokenSymbol}>
+                  {data.symbol}
+                </Text>
+                {!hideFoldTag && data._isManualFold && (
+                  <TextBadge type="folded" />
+                )}
+              </View>
+
+              {showAccount ? (
+                <AccountOverview account={account} />
+              ) : (
+                amountContent
               )}
             </View>
+          </View>
 
-            {data._priceStr ? (
+          <View style={styles.tokenRowUsdValueWrap}>
+            <Text
+              style={[
+                data._amountStr
+                  ? styles.tokenRowAmount
+                  : styles.tokenRowUsdValue,
+                data._isExcludeBalance &&
+                  (data._usdValue || 0) > 0 &&
+                  styles.exclude,
+              ]}>
+              {formatNetworth(
+                new BigNumber(data._usdValue || 0)
+                  .times(currency.usd_rate)
+                  .toNumber(),
+                false,
+                currency.symbol,
+              )}
+            </Text>
+            {showAccount ? (
               <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={
-                  styles.amountStr
-                }>{`${data._amountStr} ${data.symbol}`}</Text>
+                style={StyleSheet.compose(styles.percent, {
+                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
+                    ? styles.exclude
+                    : {}),
+                  color: percentColor,
+                })}>
+                {formatPercentage(Number(data.price_24h_change) || 0)}
+              </Text>
+            ) : data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
+              <TouchableOpacity
+                hitSlop={hitSlop}
+                onPress={handleShowExcludeTips}>
+                <RcTipCC
+                  style={styles.tips}
+                  color={colors2024['neutral-info']}
+                />
+              </TouchableOpacity>
+            ) : data._amountStr ? (
+              <Text
+                style={StyleSheet.compose(styles.percent, {
+                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
+                    ? styles.exclude
+                    : {}),
+                  color: percentColor,
+                })}>
+                {formatPercentage(Number(data.price_24h_change) || 0)}
+              </Text>
             ) : null}
           </View>
-        </View>
-
-        <View style={styles.tokenRowUsdValueWrap}>
-          <Text
-            style={[
-              data._amountStr ? styles.tokenRowAmount : styles.tokenRowUsdValue,
-              data._isExcludeBalance &&
-                (data._usdValue || 0) > 0 &&
-                styles.exclude,
-            ]}>
-            {formatNetworth(
-              new BigNumber(data._usdValue || 0)
-                .times(currency.usd_rate)
-                .toNumber(),
-              false,
-              currency.symbol,
-            )}
-          </Text>
-          {data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
-            <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
-              <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
-            </TouchableOpacity>
-          ) : data._amountStr ? (
-            <Text
-              style={StyleSheet.compose(styles.percent, {
-                ...(data._isExcludeBalance && (data._usdValue || 0) > 0
-                  ? styles.exclude
-                  : {}),
-                color: percentColor,
-              })}>
-              {formatPercentage(Number(data.price_24h_change) || 0)}
-            </Text>
-          ) : null}
-        </View>
-        {data._isPined && (
-          <View style={[styles.favoriteBadge]}>
-            <RcIconFavorite color={colors2024['orange-default']} />
-          </View>
-        )}
-      </TouchableOpacity>
-    );
+        </TouchableOpacity>
+      );
+    }, [
+      data._priceStr,
+      data._amountStr,
+      data.symbol,
+      data?.logo_url,
+      data?.chain,
+      data._isManualFold,
+      data._isExcludeBalance,
+      data._usdValue,
+      data.price_24h_change,
+      styles,
+      style,
+      onPressToken,
+      mediaStyle,
+      logoSize,
+      chainLogoSize,
+      hideFoldTag,
+      showAccount,
+      account,
+      currency.usd_rate,
+      currency.symbol,
+      handleShowExcludeTips,
+      colors2024,
+      percentColor,
+      disableMenu,
+    ]);
     if (disableMenu) {
       return children;
     }
@@ -271,9 +317,10 @@ export const ExternalTokenRow = memo(
     isPined = false,
     rightSlot,
     onPressRightIcon,
+    afterNode,
   }: {
     data: TokenRowDataType;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
     logoStyle?: ViewStyle;
     fold?: boolean;
     logoSize?: number;
@@ -284,6 +331,7 @@ export const ExternalTokenRow = memo(
     decimalPrecision?: boolean;
     rightSlot?: ReactNode;
     onPressRightIcon?(): void;
+    afterNode?: ReactNode;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -407,6 +455,10 @@ export const ExternalTokenRow = memo(
       onPressRightIcon,
       onPressToken,
     ]);
+    const isPositive = useMemo(
+      () => (data.price_24h_change || 0) >= 0,
+      [data.price_24h_change],
+    );
 
     return (
       <Container
@@ -457,24 +509,24 @@ export const ExternalTokenRow = memo(
               </View>
               <View style={styles.colContent}>
                 <Text style={styles.tokenRowAmount}>{data._usdValueStr}</Text>
-                <Text
-                  style={styles.searchAmountStr}
-                  ellipsizeMode="tail"
-                  numberOfLines={1}>
-                  {data._amountStr} {data.symbol}
-                </Text>
+                {typeof data.price_24h_change === 'number' && (
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.changeText,
+                      !isPositive && styles.changeTextPositive,
+                    ])}>
+                    {formatPercentage(Number(data.price_24h_change) || 0)}
+                  </Text>
+                )}
               </View>
             </View>
             {rightSlot}
           </View>
 
           {ExtraContent}
+
+          {afterNode || null}
         </View>
-        {isPined && (
-          <View style={[styles.favoriteBadge]}>
-            <RcIconFavorite color={colors2024['orange-default']} />
-          </View>
-        )}
       </Container>
     );
   },
@@ -488,7 +540,7 @@ export const TokenRowSectionHeader = memo(
     buttonStyle,
     onPressFold,
   }: {
-    str: string;
+    str?: string | null;
     fold?: boolean;
     style?: ViewStyle;
     buttonStyle?: ViewStyle;
@@ -884,14 +936,15 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-InvertHighlight'],
     backgroundColor: ctx.colors2024['brand-default'],
   },
-  favoriteBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    backgroundColor: ctx.colors2024['orange-light-1'],
-    borderBottomLeftRadius: 12,
-    borderTopRightRadius: 16,
+  changeText: {
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    color: ctx.colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+  },
+  changeTextPositive: {
+    color: ctx.colors2024['red-default'],
   },
 }));

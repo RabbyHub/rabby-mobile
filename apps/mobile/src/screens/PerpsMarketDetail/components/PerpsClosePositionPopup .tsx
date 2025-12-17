@@ -1,10 +1,5 @@
-import {
-  RcArrowRight2CC,
-  RcIconInfoFill1CC,
-  RcIconInfoFillCC,
-} from '@/assets/icons/common';
-import { AppSwitch } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -13,39 +8,40 @@ import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { PerpsSlider } from './PerpsSlider';
 import {
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+  PERPS_EXCHANGE_FEE_NUMBER,
+  PERPS_MINI_USD_VALUE,
+} from '@/constant/perps';
 
 export const PerpsClosePositionPopup: React.FC<{
   visible?: boolean;
   coin: string;
   direction: 'Long' | 'Short';
   positionSize: string;
+  marginUsed: number;
+  markPrice: number;
+  entryPrice: number;
   providerFee: number;
   pnl: number;
   onCancel: () => void;
   onConfirm: () => void;
-  handleClosePosition: () => Promise<void>;
+  handleClosePosition: (closePercent: number) => Promise<void>;
 }> = ({
   visible,
-  coin,
+  coin: _coin,
   direction,
   positionSize,
-  providerFee,
+  marginUsed,
   pnl,
+  markPrice,
+  entryPrice,
+  providerFee,
   onCancel,
   onConfirm,
   handleClosePosition,
@@ -59,32 +55,49 @@ export const PerpsClosePositionPopup: React.FC<{
   const { t } = useTranslation();
   const { showTipsPopup } = useTipsPopup();
 
-  const [loading, setLoading] = React.useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [closePercent, setClosePercent] = useState<number>(100);
 
   const closePosition = useMemoizedFn(async () => {
     setLoading(true);
     try {
-      await handleClosePosition();
+      await handleClosePosition(closePercent);
       onConfirm();
     } finally {
       setLoading(false);
     }
   });
 
-  React.useEffect(() => {
+  const minClosePercent = useMemo(() => {
+    const minSizeValue = PERPS_MINI_USD_VALUE / markPrice;
+    const percentValue = (minSizeValue / Number(positionSize)) * 100;
+
+    // add one percent to avoid rounding error
+    return Math.min(100, Math.round(percentValue + 1));
+  }, [markPrice, positionSize]);
+
+  useEffect(() => {
     if (!visible) {
       setLoading(false);
+      setClosePercent(100);
     }
   }, [visible]);
 
-  const bothFee = React.useMemo(() => {
-    return providerFee + 0.0004;
+  const closedPnl = useMemo(() => {
+    return (pnl * closePercent) / 100;
+  }, [pnl, closePercent]);
+
+  const bothFee = useMemo(() => {
+    return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
   }, [providerFee]);
 
-  const { height } = useWindowDimensions();
-  const maxHeight = useMemo(() => {
-    return height - 200;
-  }, [height]);
+  const isValidClosePercent = useMemo(() => {
+    if (loading) {
+      return true;
+    }
+
+    return closePercent >= minClosePercent;
+  }, [closePercent, minClosePercent, loading]);
 
   useEffect(() => {
     if (visible) {
@@ -97,52 +110,81 @@ export const PerpsClosePositionPopup: React.FC<{
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      // snapPoints={snapPoints}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: isLight ? 'bg0' : 'bg1',
+        linearGradientType: 'bg1',
       })}
       onDismiss={onCancel}
-      // enableDynamicSizing
-      snapPoints={[358]}
-      maxDynamicContentSize={maxHeight}>
+      snapPoints={[490]}>
       <BottomSheetView>
         <AutoLockView style={[styles.container]}>
           <View>
             <Text style={styles.title}>
-              {t('page.perpsDetail.PerpsClosePositionPopup.title', {
-                coin: `${coin}-USD`,
-                direction: direction,
-              })}
+              {t('page.perpsDetail.PerpsClosePositionPopup.title')}
             </Text>
           </View>
 
-          <View style={styles.list}>
-            <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsClosePositionPopup.positionSize')}
-                </Text>
-              </View>
-              <View>
-                <Text style={styles.value}>
-                  {positionSize} {coin}
-                </Text>
-              </View>
+          <View style={styles.amountSection}>
+            <View style={styles.amountHeader}>
+              <Text style={styles.amountLabel}>
+                {t('page.perpsDetail.PerpsClosePositionPopup.amount')}
+              </Text>
             </View>
-            <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsClosePositionPopup.pnl')}
+            <View style={styles.amountValueRow}>
+              <View style={styles.amountValueContainer}>
+                <Text style={styles.amountValue}>
+                  ${splitNumberByStep(marginUsed.toFixed(2))}
+                </Text>
+                <Text style={styles.totalLabel}>
+                  {t('page.perpsDetail.PerpsClosePositionPopup.total')}
                 </Text>
               </View>
-              <View>
-                <Text
-                  style={[styles.value, pnl > 0 ? styles.green : styles.red]}>
-                  {pnl >= 0 ? '+' : '-'}$
-                  {splitNumberByStep(Math.abs(pnl).toFixed(2))}
+              <Text style={styles.percentageText}>{closePercent}%</Text>
+            </View>
+            <View style={styles.minimumWarningContainer}>
+              {!isValidClosePercent && (
+                <Text style={styles.minimumWarning}>
+                  {t(
+                    'page.perpsDetail.PerpsClosePositionPopup.minimumWarning',
+                    {
+                      percent: minClosePercent,
+                    },
+                  )}
                 </Text>
-              </View>
+              )}
+            </View>
+            <PerpsSlider
+              step={1}
+              value={closePercent}
+              onValueChange={setClosePercent}
+              showPercentage={false}
+            />
+          </View>
+
+          <View style={styles.pnlCard}>
+            <View style={styles.pnlCardRow}>
+              <Text style={styles.pnlLabel}>
+                {t('page.perpsDetail.PerpsClosePositionPopup.receive')}
+              </Text>
+              <Text style={[styles.pnlValue]}>
+                {'+'}$
+                {splitNumberByStep(
+                  ((marginUsed * closePercent) / 100).toFixed(2),
+                )}
+              </Text>
+            </View>
+            <View style={styles.pnlCardRow}>
+              <Text style={styles.pnlLabel}>
+                {t('page.perpsDetail.PerpsClosePositionPopup.closedPnl')}
+              </Text>
+              <Text
+                style={[
+                  styles.pnlValue,
+                  closedPnl >= 0 ? styles.green : styles.red,
+                ]}>
+                {closedPnl >= 0 ? '+' : '-'}$
+                {splitNumberByStep(Math.abs(closedPnl).toFixed(2))}
+              </Text>
             </View>
           </View>
 
@@ -163,22 +205,22 @@ export const PerpsClosePositionPopup: React.FC<{
             }}>
             <View style={styles.feeContainer}>
               <Text style={styles.fee}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.fee')}{' '}
+                {t('page.perpsDetail.PerpsClosePositionPopup.fee')}:{' '}
                 {formatPercent(bothFee, 4)}
               </Text>
-              <RcIconInfoFill1CC
+              <RcIconInfoCC
                 color={colors2024['neutral-info']}
-                width={15}
-                height={15}
+                width={18}
+                height={18}
               />
             </View>
           </TouchableOpacity>
+
           <Button
             type="primary"
-            title={t('page.perpsDetail.PerpsClosePositionPopup.closeBtn', {
-              direction: direction,
-            })}
+            title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
             loading={loading}
+            disabled={!isValidClosePercent}
             onPress={closePosition}
           />
         </AutoLockView>
@@ -193,7 +235,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       height: '100%',
       paddingBottom: 56,
       paddingHorizontal: 20,
-      // minHeight: 544,
     },
     title: {
       fontFamily: 'SF Pro Rounded',
@@ -201,75 +242,108 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 24,
       fontWeight: '900',
       color: colors2024['neutral-title-1'],
-      marginBottom: 16,
+      marginBottom: 20,
       textAlign: 'center',
     },
-    list: {
-      borderRadius: 16,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-    },
-    listItemContainer: {
-      padding: 16,
-    },
-    listItem: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 16,
-      justifyContent: 'space-between',
-    },
-    listItemRow: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    listSub: {
-      padding: 12,
+    amountSection: {
       backgroundColor: colors2024['neutral-bg-2'],
-      borderRadius: 6,
-      marginTop: 12,
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      borderRadius: 20,
+      paddingVertical: 16,
+      paddingBottom: 20,
+      paddingHorizontal: 20,
+      marginBottom: 12,
     },
-    listSubItem: {
-      display: 'flex',
+    amountHeader: {
       flexDirection: 'row',
+      justifyContent: 'space-between',
       alignItems: 'center',
-      minHeight: 28,
+      marginBottom: 4,
     },
-    listSubItemLabel: {
-      flex: 1,
+    amountLabel: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors2024['neutral-foot'],
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '900',
+      color: colors2024['brand-default'],
     },
-    listItemMain: {
-      flex: 1,
-      display: 'flex',
+    percentageText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 36,
+      lineHeight: 42,
+      fontWeight: '900',
+      color: colors2024['brand-default'],
+    },
+    amountValueContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      minHeight: 20,
     },
-    label: {
+    amountValueRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      height: 42,
+    },
+    amountValue: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '900',
+      color: colors2024['neutral-title-1'],
+    },
+    totalLabel: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '700',
+      color: colors2024['neutral-info'],
+    },
+    minimumWarning: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['red-default'],
+    },
+    minimumWarningContainer: {
+      marginBottom: 16,
+      // marginTop: -4,
+      height: 14,
+    },
+    pnlCardRow: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    pnlCard: {
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      flexDirection: 'column',
+      gap: 12,
+      width: '100%',
+      alignContent: 'center',
+      alignItems: 'center',
+      marginBottom: 30,
+    },
+    pnlLabel: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '500',
       color: colors2024['neutral-foot'],
     },
-    labelInfo: {
-      color: colors2024['neutral-info'],
-    },
-    value: {
+    pnlValue: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
       color: colors2024['neutral-title-1'],
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '900',
     },
     red: {
       color: colors2024['red-default'],
@@ -278,13 +352,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['green-default'],
     },
     feeContainer: {
-      display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 7,
-      marginTop: 26,
-      marginBottom: 16,
+      gap: 4,
+      marginBottom: 20,
     },
     fee: {
       fontSize: 14,

@@ -25,7 +25,11 @@ export const AccountInfo: React.FC<Props> = ({
   isTestnet = false,
 }) => {
   const [nickname, setNickname] = React.useState<string>();
-  const { balance } = useCurrentBalance(account?.address);
+  const { balance } = useCurrentBalance({
+    address: account?.address,
+    AUTO_FETCH: true,
+    fromScene: 'Unknown',
+  });
   const displayBalance = splitNumberByStep((balance || 0).toFixed(2));
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });

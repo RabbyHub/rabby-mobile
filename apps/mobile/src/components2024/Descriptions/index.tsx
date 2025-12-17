@@ -9,6 +9,7 @@ export const Descriptions: React.FC<{
   title?: string;
   titleStyle?: StyleProp<TextStyle>;
   sectionStyle?: StyleProp<ViewStyle>;
+  sectionDescStyle?: StyleProp<TextStyle>;
   sections: Array<{
     title?: string;
     description?: string;
@@ -24,11 +25,12 @@ export const Descriptions: React.FC<{
   sectionStyle,
   content,
   logoDom,
+  sectionDescStyle,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
+    <AutoLockView as="View" style={styles.container}>
       {!!logoDom && logoDom}
       {!!title && <Text style={[styles.title, titleStyle]}>{title}</Text>}
       <View style={styles.sectionContainer}>
@@ -40,7 +42,9 @@ export const Descriptions: React.FC<{
               <Text style={styles.sectionTitle}>{section.title}</Text>
             )}
             {!!section.description && (
-              <Text style={styles.sectionDesc}>{section.description}</Text>
+              <Text style={[styles.sectionDesc, sectionDescStyle]}>
+                {section.description}
+              </Text>
             )}
           </View>
         ))}
@@ -59,6 +63,7 @@ const getStyles = createGetStyles2024(ctx => ({
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   title: {
     color: ctx.colors2024['neutral-title-1'],

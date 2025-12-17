@@ -6,7 +6,7 @@ import { findChainByEnum } from '@/utils/chain';
 
 const LogoParaswap = require('@/assets/icons/swap/paraswap.png');
 const Logo0X = require('@/assets/icons/swap/0xswap.png');
-const Logo1inch = require('@/assets/icons/swap/1inch.png');
+const Logo1inch = require('@/assets/icons/swap/1inch.jpg');
 
 const LogoOpenOcean = require('@/assets/icons/swap/openocean.png');
 const LogoBinance = require('@/assets/icons/swap/binance.png');

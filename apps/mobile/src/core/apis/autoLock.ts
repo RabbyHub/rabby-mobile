@@ -21,7 +21,7 @@ function calc(ms: number = AUTO_LOCK_SECS.TIMEOUT_MILLISECS) {
 
 const autoLockTimeRef = {
   current: calc(),
-  timer: null as NodeJS.Timer | number | null,
+  timer: null as ReturnType<typeof setTimeout> | null,
 };
 
 type TimeoutContext = {

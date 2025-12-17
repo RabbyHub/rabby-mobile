@@ -28,7 +28,11 @@ export function makeThemeIconFromCC(
   colorsOrGetColors:
     | ThemeVariants
     | ((colors: AppColorsVariants) => ThemeVariants),
+  options?: {
+    allowColorProp?: boolean;
+  },
 ) {
+  const { allowColorProp } = options || {};
   return memo((props: SvgProps) => {
     const isLight = useGetBinaryMode() === 'light';
     const colors = useThemeColors();
@@ -39,7 +43,13 @@ export function makeThemeIconFromCC(
         : colorsOrGetColors;
     }, [colors]);
 
-    return <IconCC {...props} color={pickColorVariants(input, isLight)} />;
+    return (
+      <IconCC
+        {...props}
+        color={pickColorVariants(input, isLight)}
+        {...(allowColorProp && props.color && { color: props.color })}
+      />
+    );
   });
 }
 
@@ -51,7 +61,11 @@ export function makeThemeIcon2024FromCC(
         colors: AppColorsVariants;
         colors2024: AppColors2024Variants;
       }) => ThemeVaryVariants),
+  options?: {
+    allowColorProp?: boolean;
+  },
 ) {
+  const { allowColorProp } = options || {};
   return memo((props: SvgProps) => {
     const isLight = useGetBinaryMode() === 'light';
     const { colors, colors2024 } = useTheme2024();
@@ -62,7 +76,13 @@ export function makeThemeIcon2024FromCC(
         : colorsOrGetColors;
     }, [colors, colors2024]);
 
-    return <IconCC {...props} color={pickColorVariants(input, isLight)} />;
+    return (
+      <IconCC
+        {...props}
+        color={pickColorVariants(input, isLight)}
+        {...(allowColorProp && props.color && { color: props.color })}
+      />
+    );
   });
 }
 

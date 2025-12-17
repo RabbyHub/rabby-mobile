@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, ViewProps } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 
 const isAndroid = Platform.OS === 'android';
@@ -9,29 +9,58 @@ interface Props {
   blurAmount?: number;
   isLight?: boolean;
   borderRadius?: number;
+  viewTypeOnNoShadow?: 'fragment' | 'view';
+  viewProps?: ViewProps;
 }
 
-export const BlurShadowView = ({
-  children,
-  isLight,
-  blurAmount = 29,
-  borderRadius = 20,
-}: Props) => {
-  if (!isLight || isAndroid) {
-    return children;
-  }
-  return (
-    <View style={isLight ? styles.lightContainer : styles.container}>
-      <BlurView
-        style={StyleSheet.flatten([styles.blur, { borderRadius }])}
-        blurAmount={blurAmount}
-        blurType="light"
-        reducedTransparencyFallbackColor="white">
-        {children}
-      </BlurView>
-    </View>
-  );
-};
+export const BlurShadowView = React.forwardRef<View, Props>(
+  (
+    {
+      children,
+      isLight,
+      blurAmount = 29,
+      borderRadius = 20,
+      viewProps,
+      viewTypeOnNoShadow = viewProps ? 'view' : 'fragment',
+    },
+    ref,
+  ) => {
+    if (!isLight || isAndroid) {
+      if (viewTypeOnNoShadow === 'fragment') {
+        if (ref && __DEV__) {
+          console.warn(
+            '[BlurShadowView] ref is ignored when viewTypeOnNoShadow is "fragment"',
+          );
+        }
+        return children;
+      }
+
+      return (
+        <View ref={ref} {...viewProps}>
+          {children}
+        </View>
+      );
+    }
+
+    return (
+      <View
+        ref={ref}
+        {...viewProps}
+        style={[
+          isLight ? styles.lightContainer : styles.container,
+          viewProps?.style,
+        ]}>
+        <BlurView
+          style={StyleSheet.flatten([styles.blur, { borderRadius }])}
+          blurAmount={blurAmount}
+          blurType="light"
+          reducedTransparencyFallbackColor="white">
+          {children}
+        </BlurView>
+      </View>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   container: {

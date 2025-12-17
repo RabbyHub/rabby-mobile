@@ -60,6 +60,11 @@ export interface Props {
   isMiniSignTx?: boolean;
   directSubmit?: boolean;
   miniSignType?: 'tx' | 'typedData';
+  loading?: boolean;
+}
+
+export interface PropsWithAuthSession extends Props {
+  USE_LAST_UNLOCKED_AUTH?: boolean;
 }
 
 export const ActionsContainer: React.FC<

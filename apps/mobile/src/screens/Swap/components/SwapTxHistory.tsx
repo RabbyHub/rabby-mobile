@@ -20,12 +20,11 @@ import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
 import { SwapHistoryItem } from '@/components2024/HistoryItem/SwapHistoryItem';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
-import { useSyncHistoryDB } from '@/databases/hooks/history';
-import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
-import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
+import { syncSingleAddress } from '@/databases/hooks/history';
+import IconEmpty from '@/assets2024/images/lending/empty.png';
+import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { transactionHistoryService } from '@/core/services';
@@ -162,7 +161,7 @@ const HistoryList = ({
       !loading && (!txList || !txList?.list?.length) ? (
         <View style={styles.emptyView}>
           <Image
-            source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+            source={isLight ? IconEmpty : IconEmptyDark}
             width={160}
             height={120}
             style={{
@@ -265,7 +264,7 @@ export const SwapTxHistory = ({
         } as HistoryDisplayItem;
 
         onDismiss();
-        navigate(RootNames.StackTransaction, {
+        navigateDeprecated(RootNames.StackTransaction, {
           screen: RootNames.HistoryDetail,
           params: {
             isForMultipleAddress,
@@ -282,7 +281,7 @@ export const SwapTxHistory = ({
 
         if (itemData) {
           onDismiss();
-          navigate(RootNames.StackTransaction, {
+          navigateDeprecated(RootNames.StackTransaction, {
             screen: RootNames.HistoryLocalDetail,
             params: {
               isForMultipleAddress,
@@ -307,12 +306,11 @@ export const SwapTxHistory = ({
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
-  const { syncSingleAddress } = useSyncHistoryDB();
   useEffect(() => {
     if (currentAccount?.address) {
       syncSingleAddress(currentAccount?.address);
     }
-  }, [currentAccount?.address, syncSingleAddress]);
+  }, [currentAccount?.address]);
 
   return (
     <AppBottomSheetModal

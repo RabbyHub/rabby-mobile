@@ -5,7 +5,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -65,12 +65,12 @@ export const AddressListScreenButton: React.FC<Props> = ({
         });
         break;
       case 'watch-address':
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.ImportWatchAddress2024,
         });
         break;
       case 'safe-address':
-        navigate(RootNames.StackAddress, {
+        navigateDeprecated(RootNames.StackAddress, {
           screen: RootNames.ImportSafeAddress2024,
         });
         break;
@@ -83,7 +83,7 @@ export const AddressListScreenButton: React.FC<Props> = ({
       style={styles.headerRight}
       hitSlop={hitSlop}
       onPress={onPress}>
-      <WalletSVG width={24} height={24} color={colors2024['neutral-body']} />
+      <WalletSVG width={22} height={22} color={colors2024['neutral-title-1']} />
     </TouchableOpacity>
   );
 };

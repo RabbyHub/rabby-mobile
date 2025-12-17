@@ -12,10 +12,10 @@ import {
   TestnetChain,
   TestnetChainBase,
 } from '@/core/services/customTestnetService';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useImperativeHandle, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
@@ -30,231 +30,344 @@ import { useCustomTestnetForm } from '../hooks/useCustomTestnetForm';
 import { AddFromChainList } from './AddFromChainList';
 import { CustomTestnetForm } from './CustomTestnetForm';
 import { ModalLayouts, RootNames } from '@/constant/layout';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import AutoLockView from '@/components/AutoLockView';
 import { ConfirmModifyRpcModal } from './ConfirmModifyRpcModal';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 
-export const EditCustomTestnetPopup = ({
-  data,
-  visible,
-  onCancel,
-  onConfirm,
-  isEdit,
-  onChange,
-  ctx,
-}: {
+type Props = {
   isEdit?: boolean;
   data?: TestnetChainBase | null;
   visible: boolean;
   onCancel(): void;
   onConfirm(values: TestnetChain): void;
-  onChange?: (values: Partial<TestnetChainBase>) => void;
+  // onChange?: (values: Partial<TestnetChainBase>) => void;
   height?: number;
   ctx?: {
     ga?: {
       source?: string;
     };
   };
-}) => {
-  const [isShowAddFromChainList, setIsShowAddFromChainList] = useState(false);
-  const [isShowModifyRpcModal, setIsShowModifyRpcModal] = useState(false);
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const { t } = useTranslation();
-  const formik = useCustomTestnetForm({
-    onSubmit(values) {},
-  });
-
-  const resetForm = useMemoizedFn(() => {
-    formik.resetForm();
-  });
-
-  const setFormValues = useMemoizedFn((values: Partial<TestnetChainBase>) => {
-    formik.setValues(values);
-  });
-
-  const { loading, runAsync: runAddTestnet } = useRequest(
-    (
-      data: TestnetChainBase,
-      ctx?: {
-        ga?: {
-          source?: string;
-        };
-      },
-    ) => {
-      return isEdit
-        ? apiCustomTestnet.updateCustomTestnet(data)
-        : apiCustomTestnet.addCustomTestnet(data, ctx);
-    },
+};
+export type EditCustomTestnetPopupType = {
+  doBack: () => void;
+};
+export const EditCustomTestnetPopup = React.forwardRef<
+  EditCustomTestnetPopupType,
+  Props
+>(
+  (
     {
-      manual: true,
+      data,
+      visible,
+      onCancel,
+      onConfirm,
+      isEdit,
+      // onChange,
+      ctx,
     },
-  );
+    ref,
+  ) => {
+    const [isShowAddFromChainList, setIsShowAddFromChainList] = useState(false);
+    const [isShowModifyRpcModal, setIsShowModifyRpcModal] = useState(false);
+    const { colors, styles } = useTheme2024({ getStyle: getStyles });
+    const { t } = useTranslation();
+    const formik = useCustomTestnetForm({
+      onSubmit(values) {},
+    });
 
-  const handleSubmit = async () => {
-    const values = formik.values as any;
-    const errors = await formik.validateForm();
-    const isValid = Object.keys(errors || {}).length === 0;
-    if (!isValid) {
-      return;
-    }
-    const res = await runAddTestnet(values, ctx);
-    if ('error' in res) {
-      formik.setFieldError(res.error.key, res.error.message);
+    const resetForm = useMemoizedFn(() => {
+      formik.resetForm();
+    });
 
-      // if (!isEdit && res.error.status === 'alreadySupported') {
-      //   setIsShowModifyRpcModal(true);
-      //   // setFormValues(formik.values);
-      // }
-    } else {
-      onConfirm?.(res);
-    }
-  };
+    const setFormValues = useMemoizedFn((values: Partial<TestnetChainBase>) => {
+      formik.setValues(values);
+    });
 
-  useEffect(() => {
-    if (data && visible) {
-      setFormValues(data);
-    }
-  }, [data, setFormValues, visible]);
+    const { loading, runAsync: runAddTestnet } = useRequest(
+      (
+        data: TestnetChainBase,
+        ctx?: {
+          ga?: {
+            source?: string;
+          };
+        },
+      ) => {
+        return isEdit
+          ? apiCustomTestnet.updateCustomTestnet(data)
+          : apiCustomTestnet.addCustomTestnet(data, ctx);
+      },
+      {
+        manual: true,
+      },
+    );
 
-  useEffect(() => {
-    if (!visible) {
-      resetForm();
-    }
-  }, [resetForm, visible]);
+    const handleSubmit = async () => {
+      const values = formik.values as any;
+      const errors = await formik.validateForm();
+      const isValid = Object.keys(errors || {}).length === 0;
+      if (!isValid) {
+        return;
+      }
+      const res = await runAddTestnet(values, ctx);
+      if ('error' in res) {
+        formik.setFieldError(res.error.key, res.error.message);
 
-  const modalRef = React.useRef<AppBottomSheetModal>(null);
-  React.useEffect(() => {
-    if (!visible) {
-      modalRef.current?.close();
-    } else {
-      modalRef.current?.present();
-    }
-  }, [visible]);
+        // if (!isEdit && res.error.status === 'alreadySupported') {
+        //   setIsShowModifyRpcModal(true);
+        //   // setFormValues(formik.values);
+        // }
+      } else {
+        onConfirm?.(res);
+      }
+    };
 
-  useEffect(() => {
-    if (!visible) {
-      setIsShowAddFromChainList(false);
-    }
-  }, [visible]);
+    useEffect(() => {
+      if (data && visible) {
+        setFormValues(data);
+      }
+    }, [data, setFormValues, visible]);
 
-  return (
-    <>
-      <AppBottomSheetModal
-        snapPoints={['80%']}
-        ref={modalRef}
-        onDismiss={onCancel}>
-        <AutoLockView style={{ height: '100%' }}>
+    useEffect(() => {
+      if (!visible) {
+        resetForm();
+      }
+    }, [resetForm, visible]);
+
+    const modalRef = React.useRef<AppBottomSheetModal>(null);
+    React.useEffect(() => {
+      if (!visible) {
+        modalRef.current?.close();
+      } else {
+        modalRef.current?.present();
+      }
+    }, [visible]);
+
+    useEffect(() => {
+      if (!visible) {
+        setIsShowAddFromChainList(false);
+      }
+    }, [visible]);
+
+    useImperativeHandle(ref, () => ({
+      doBack: () => {
+        if (isShowAddFromChainList) {
+          setIsShowAddFromChainList(false);
+        } else if (isShowModifyRpcModal) {
+          setIsShowModifyRpcModal(false);
+        } else {
+          onCancel();
+        }
+      },
+    }));
+
+    return (
+      <>
+        <AppBottomSheetModal
+          snapPoints={['80%']}
+          ref={modalRef}
+          onDismiss={onCancel}
+          keyboardBlurBehavior="restore"
+          // android_keyboardInputMode="adjustPan"
+          android_keyboardInputMode="adjustPan"
+          enableDynamicSizing={false}
+          enableHandlePanningGesture
+          enableContentPanningGesture
+          enablePanDownToClose
+          // footerComponent={props => {
+          //   if (isShowAddFromChainList || isShowModifyRpcModal) {
+          //     return null;
+          //   }
+          //   return (
+          //     <BottomSheetFooter
+          //       bottomInset={bottomOffset}
+          //       animatedFooterPosition={props.animatedFooterPosition}>
+
+          //     </BottomSheetFooter>
+          //   );
+          // }}
+        >
           <TouchableWithoutFeedback
+            style={{ flex: 1, height: '100%' }}
             onPress={Keyboard.dismiss}
             accessible={false}>
-            <View style={styles.container}>
-              <AppBottomSheetModalTitle
-                style={{ paddingTop: ModalLayouts.titleTopOffset }}
-                title={t('page.customRpc.EditCustomTestnetModal.title')}
-              />
-              <KeyboardAwareScrollView
-                style={styles.container}
-                enableOnAndroid
-                scrollEnabled
-                keyboardOpeningTime={0}
-                keyboardShouldPersistTaps="handled">
-                <View style={styles.main}>
+            <AutoLockView as="View" style={{ flex: 1, height: '100%' }}>
+              <View style={[styles.container]}>
+                <AppBottomSheetModalTitle
+                  style={styles.modalTitle}
+                  title={t('page.customRpc.EditCustomTestnetModal.title')}
+                />
+                <View style={styles.quickAddAsRow}>
                   <TouchableOpacity
                     onPress={() => {
                       setIsShowAddFromChainList(true);
                     }}
-                    style={styles.quickAdd}>
+                    style={[styles.quickAdd]}>
                     <RcIconFlash color={colors['neutral-body']} />
                     <Text style={styles.quickAddText}>
                       {t('page.customRpc.EditCustomTestnetModal.quickAdd')}
                     </Text>
                     <RcIconRight color={colors['neutral-body']} />
                   </TouchableOpacity>
-                  <CustomTestnetForm formik={formik} isEdit={isEdit} />
                 </View>
-              </KeyboardAwareScrollView>
-              <View style={styles.footer}>
-                <Button
-                  onPress={onCancel}
-                  title={'Cancel'}
-                  buttonStyle={[styles.buttonStyle]}
-                  titleStyle={styles.btnCancelTitle}
-                  type="white"
-                  containerStyle={[
-                    styles.btnContainer,
-                    styles.btnCancelContainer,
-                  ]}
-                />
-                <Button
-                  title={'Confirm'}
-                  buttonStyle={[
-                    styles.buttonStyle,
-                    { backgroundColor: colors['blue-default'] },
-                  ]}
-                  style={{
-                    width: '100%',
+
+                <BottomSheetScrollView style={styles.formScrollView}>
+                  <CustomTestnetForm
+                    formik={formik}
+                    isEdit={isEdit}
+                    __IN_BOTTOM_SHEET__
+                  />
+                </BottomSheetScrollView>
+                <View
+                  style={[
+                    // styles.bsFooterContainer,
+                    styles.footer,
+                  ]}>
+                  <Button
+                    onPress={onCancel}
+                    title={t('global.cancel')}
+                    buttonStyle={[styles.buttonStyle]}
+                    titleStyle={styles.btnCancelTitle}
+                    type="white"
+                    containerStyle={[
+                      styles.btnContainer,
+                      styles.btnCancelContainer,
+                    ]}
+                  />
+                  <Button
+                    title={t('global.confirm')}
+                    buttonStyle={[
+                      styles.buttonStyle,
+                      { backgroundColor: colors['blue-default'] },
+                    ]}
+                    style={{
+                      width: '100%',
+                    }}
+                    titleStyle={styles.btnConfirmTitle}
+                    onPress={handleSubmit}
+                    loading={loading}
+                    containerStyle={[
+                      styles.btnContainer,
+                      styles.btnConfirmContainer,
+                    ]}
+                  />
+                </View>
+                <AddFromChainList
+                  visible={isShowAddFromChainList}
+                  onClose={() => {
+                    setIsShowAddFromChainList(false);
                   }}
-                  titleStyle={styles.btnConfirmTitle}
-                  onPress={handleSubmit}
-                  loading={loading}
-                  containerStyle={[
-                    styles.btnContainer,
-                    styles.btnConfirmContainer,
-                  ]}
+                  onSelect={item => {
+                    formik.resetForm();
+                    formik.setValues(item);
+                    setIsShowAddFromChainList(false);
+                    const source = ctx?.ga?.source || 'setting';
+                    matomoRequestEvent({
+                      category: 'Custom Network',
+                      action: 'Choose ChainList Network',
+                      label: `${source}_${String(item.id)}`,
+                    });
+                  }}
                 />
               </View>
-              <AddFromChainList
-                visible={isShowAddFromChainList}
-                onClose={() => {
-                  setIsShowAddFromChainList(false);
-                }}
-                onSelect={item => {
-                  formik.resetForm();
-                  formik.setValues(item);
-                  setIsShowAddFromChainList(false);
-                  const source = ctx?.ga?.source || 'setting';
-                  matomoRequestEvent({
-                    category: 'Custom Network',
-                    action: 'Choose ChainList Network',
-                    label: `${source}_${String(item.id)}`,
-                  });
-                }}
-              />
-            </View>
+            </AutoLockView>
           </TouchableWithoutFeedback>
-        </AutoLockView>
-      </AppBottomSheetModal>
-      <ConfirmModifyRpcModal
-        visible={isShowModifyRpcModal}
-        chainId={formik.values.id}
-        rpcUrl={formik.values.rpcUrl}
-        onCancel={() => {
-          setIsShowModifyRpcModal(false);
-        }}
-        onConfirm={() => {
-          setIsShowModifyRpcModal(false);
-          onCancel?.();
-          navigate(RootNames.StackSettings, {
-            screen: RootNames.CustomRPC,
-            params: {
-              chainId: formik.values.id!,
-              rpcUrl: formik.values.rpcUrl!,
-            },
-          });
-        }}
-      />
-    </>
-  );
+        </AppBottomSheetModal>
+        <ConfirmModifyRpcModal
+          visible={isShowModifyRpcModal}
+          chainId={formik.values.id}
+          rpcUrl={formik.values.rpcUrl}
+          onCancel={() => {
+            setIsShowModifyRpcModal(false);
+          }}
+          onConfirm={() => {
+            setIsShowModifyRpcModal(false);
+            onCancel?.();
+            navigateDeprecated(RootNames.StackSettings, {
+              screen: RootNames.CustomRPC,
+              params: {
+                chainId: formik.values.id!,
+                rpcUrl: formik.values.rpcUrl!,
+              },
+            });
+          }}
+        />
+      </>
+    );
+  },
+);
+
+const SIZES = {
+  innerPx: 20,
+  buttonHeight: 52,
+  footerPt: 20,
+  footerPb: 12,
+  scrollViewPb: 20,
+  footerHeight: 20 /* pt */ + 52 /* button height */ + 12 /* padding bottom */,
+  containerPb: 20 + 52 + 12, // scrollViewPb + buttonHeight + footerPb + extra space
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
+const getStyles = createGetStyles2024(({ colors, bottomSafeArea }) => {
+  return {
     container: {
       height: '100%',
+      flexDirection: 'column',
+      paddingBottom: SIZES.containerPb + bottomSafeArea,
     },
+    modalTitle: {
+      paddingTop: ModalLayouts.titleTopOffset,
+      // ...makeDebugBorder('green'),
+      height: 36,
+    },
+    quickAddAsRow: {
+      paddingHorizontal: SIZES.innerPx,
+      // ...makeDebugBorder(),
+      marginBottom: 20,
+    },
+    quickAdd: {
+      borderRadius: 6,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      padding: 16,
+      backgroundColor: colors['blue-light-1'],
+    },
+    quickAddText: {
+      flex: 1,
+      fontSize: 16,
+      lineHeight: 19,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
+    },
+    formScrollView: {
+      height: '100%',
+      flexShrink: 1,
+      paddingHorizontal: SIZES.innerPx,
+      paddingTop: 0,
+      paddingBottom: SIZES.scrollViewPb,
+      // ...makeDebugBorder('blue'),
+    },
+    // bsFooterContainer: {
+    //   // ...makeDebugBorder('red'),
+    //   height: SIZES.footerHeight,
+    //   maxWidth: Dimensions.get('window').width,
+    //   backgroundColor: colors['neutral-bg-1'],
+    //   display: 'flex',
+    //   flexDirection: 'row',
+    //   gap: 16,
+    //   justifyContent: 'space-between',
+    //   borderTopColor: colors['neutral-line'],
+    //   borderTopWidth: StyleSheet.hairlineWidth,
+    //   paddingTop: SIZES.footerPt,
+    //   paddingHorizontal: SIZES.innerPx,
+    //   paddingBottom: SIZES.footerPb,
+    // },
     footer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      height: SIZES.footerHeight + bottomSafeArea,
       width: '100%',
       maxWidth: Dimensions.get('window').width,
       display: 'flex',
@@ -263,18 +376,13 @@ const getStyles = (colors: AppColorsVariants) =>
       justifyContent: 'space-between',
       borderTopColor: colors['neutral-line'],
       borderTopWidth: StyleSheet.hairlineWidth,
-      paddingTop: 20,
-      paddingHorizontal: 20,
-      paddingBottom: 35,
-    },
-    main: {
-      paddingHorizontal: 20,
-      flex: 1,
+      paddingTop: SIZES.footerPt,
+      paddingHorizontal: SIZES.innerPx,
+      paddingBottom: SIZES.footerPb + bottomSafeArea,
     },
     btnContainer: {
-      flexShrink: 1,
       display: 'flex',
-      height: 52,
+      height: SIZES.buttonHeight,
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 8,
@@ -300,20 +408,5 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-title-2'],
       flex: 1,
     },
-    quickAdd: {
-      borderRadius: 6,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      padding: 16,
-      backgroundColor: colors['blue-light-1'],
-      marginBottom: 20,
-    },
-    quickAddText: {
-      flex: 1,
-      fontSize: 16,
-      lineHeight: 19,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-    },
-  });
+  };
+});

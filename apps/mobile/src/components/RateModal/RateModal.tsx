@@ -28,7 +28,7 @@ import PressableStar from './RateStar';
 
 const LOGO_SIZE = 67;
 
-export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
+export function RateModal({ totalBalanceText }: { totalBalanceText?: string }) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();

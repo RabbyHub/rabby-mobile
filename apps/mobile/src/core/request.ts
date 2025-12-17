@@ -3,7 +3,7 @@ import { RabbyApiPlugin } from '@rabby-wallet/rabby-api/dist/plugins/intf';
 
 import { gS } from '@rabby-wallet/rabby-sign-bvm/es/sign-rabby';
 import { APP_VERSIONS, INITIAL_OPENAPI_URL } from '@/constant';
-import { isNonPublicProductionEnv } from '@/constant/env';
+import { isNonPublicProductionEnv } from '@/constant';
 import { openApiStore } from './services/openapiStore';
 
 const SIGN_HDS = [
@@ -28,22 +28,21 @@ export const SignApiPlugin: RabbyApiPlugin = {
 };
 
 export const openapi = new OpenApiService({
-  store: isNonPublicProductionEnv
-    ? openApiStore
-    : {
-        host: INITIAL_OPENAPI_URL,
-      },
+  store: openApiStore,
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',
   clientVersion: APP_VERSIONS.fromJs,
 });
 openapi.initSync();
 
+// TODO: REMOVE ME
 export const testOpenapi = new OpenApiService({
   store: {
     host: __DEV__
       ? 'https://app-api.testnet.rabby.io'
       : 'https://app-api.testnet.rabby.io',
+    apiKey: openApiStore.apiKey,
+    apiTime: openApiStore.apiTime,
   },
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',

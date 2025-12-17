@@ -6,8 +6,8 @@ import {
   In,
   Brackets,
   Not,
-  LessThan,
   MoreThan,
+  Raw,
 } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
@@ -199,13 +199,18 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   static async batchQueryTokens(owner_addr: string) {
     await prepareAppDataSource();
 
-    return (await this.getRepository().findBy({ owner_addr }))
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
+    queryBuilder
+      .where({
+        owner_addr,
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 });
+
+    return (await queryBuilder.getMany()).map(i => ({
+      ...i,
+      cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+    }));
   }
 
   static async batchMultiAddressTokensByIdAndChain(
@@ -249,15 +254,23 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       queryBuilder.take(maxLength);
     }
 
-    const tokens = await queryBuilder.getMany();
+    const tokens = await queryBuilder
+      .where({
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+        // amount: Raw(alias => `${alias} > 0`),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 })
+      .getMany();
 
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    return (
+      tokens
+        // .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+        // .filter(i => i.amount > 0)
+        .map(i => ({
+          ...i,
+          cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+        }))
+    );
   }
 
   /**
@@ -290,7 +303,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     const repo = this.getRepository();
     const queryBuilder = repo.createQueryBuilder('tokenitem');
 
-    queryBuilder.where({ id: Not(EMPTY_TOKEN_ITEM_ID) });
+    queryBuilder
+      .where({
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+        // amount: Raw(alias => `${alias} > 0`),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 });
 
     if (addresses) {
       queryBuilder.andWhere({ owner_addr: In(addresses) });
@@ -336,17 +354,19 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .orderBy('tokenitem_token_usd_value', 'DESC');
 
     const tokens = await queryBuilder.getMany();
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    return (
+      tokens
+        // .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+        // .filter(i => i.amount > 0)
+        .map(i => ({
+          ...i,
+          cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+        }))
+    );
   }
 
   static async queryTokensByOwner(
-    owner_addr: string,
+    owner_addrs: string | string[],
     options?: {
       topCount?: number | false;
       /** @default true */
@@ -366,10 +386,23 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     } = options || {};
     topCount = Math.max(0, topCount || 0);
 
+    const owner_addr_list = [
+      ...new Set(
+        (Array.isArray(owner_addrs) ? owner_addrs : [owner_addrs]).map(addr =>
+          addr.toLowerCase(),
+        ),
+      ),
+    ];
     const repo = this.getRepository();
     const queryBuilder = repo
       .createQueryBuilder('tokenitem')
-      .where({ owner_addr, is_core: true, id: Not(EMPTY_TOKEN_ITEM_ID) })
+      .where({
+        owner_addr: In(owner_addr_list),
+        is_core: true,
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+        // amount: Raw(alias => `${alias} > 0`),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 })
       .select([
         // TODO: which need customized sqlite drivers
         // `"tokenitem"."raw_amount" / pow(10, tokenitem.decimals) AS tokenitme_token_amount`,
@@ -385,7 +418,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     }
 
     if (filter_tokenProportionGte10Percent) {
-      const loggerPrefix = `[queryTokensByOwner::${repo.metadata.tableName}::${owner_addr}]`;
+      const loggerPrefix = `[queryTokensByOwner::${
+        repo.metadata.tableName
+      }::${owner_addr_list.join(',')}]`;
       // notice: result[0]?.total_value maybe null is there's no any record about owner_addr
       const result = await repo
         .query(
@@ -394,7 +429,10 @@ export class TokenItemEntity extends EntityAddressAssetBase {
             'tokenitem.price',
           )} * ${correctBadRealOnSql('tokenitem.amount')} ) AS total_value
         FROM "${repo.metadata.tableName}" "tokenitem"
-        WHERE owner_addr = '${owner_addr}' AND is_core = 1`,
+        WHERE owner_addr IN(${owner_addr_list
+          .map(() => '?')
+          .join(',')}) AND is_core = 1`,
+          owner_addr_list,
         )
         .catch(error => {
           console.error(`${loggerPrefix} error on get total_value`, error);
@@ -427,13 +465,15 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       queryBuilder.take(topCount);
     }
     const tokens = await queryBuilder.getMany();
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    return (
+      tokens
+        // .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+        // .filter(i => i.amount > 0)
+        .map(i => ({
+          ...i,
+          cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+        }))
+    );
   }
 
   static async isExpired(owner_addr: string) {
@@ -624,6 +664,51 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     } catch (error) {
       console.error('Failed to get token list amount:', error);
       throw error;
+    }
+  }
+  static async getAddressesAmount({
+    address,
+    chain,
+    tokenId,
+  }: {
+    address: string;
+    chain: TokenItem['chain'];
+    tokenId: TokenItem['id'];
+  }): Promise<{
+    amount: number;
+    success: boolean;
+  }> {
+    try {
+      await prepareAppDataSource();
+
+      if (!address) {
+        return {
+          amount: 0,
+          success: false,
+        };
+      }
+
+      const repo = this.getRepository();
+      const result = await repo
+        .createQueryBuilder('tokenitem')
+        .select(
+          `SUM(${correctBadRealOnSql('tokenitem.amount')}) as total_amount`,
+        )
+        .where('tokenitem.owner_addr = :address', { address })
+        .andWhere('tokenitem.chain = :chain', { chain })
+        .andWhere('tokenitem.id = :tokenId', { tokenId })
+        .getRawOne();
+
+      return {
+        amount: parseFloat(result?.total_amount) || 0,
+        success: !!result,
+      };
+    } catch (error) {
+      console.error('Failed to get addresses amount:', error);
+      return {
+        amount: 0,
+        success: false,
+      };
     }
   }
 }

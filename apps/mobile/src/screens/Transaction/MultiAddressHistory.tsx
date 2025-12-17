@@ -49,21 +49,23 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
-import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { syncTop10History, syncSingleAddress } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { useHistoryLoading } from '@/hooks/historyTokenDict';
 import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
 import {
   ensureHistoryListItemFromDb,
   getHistoryItemType,
-  judgeIsSmallUsdTx,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import { HistoryItemCateType } from './components/type';
+import {
+  CUSTOM_HISTORY_TITLE_TYPE,
+  HistoryItemCateType,
+} from './components/type';
 import { fetchHistoryTokenItem } from '@/utils/assets';
 
 const _PAGE_COUNT = 200;
@@ -98,10 +100,11 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   address: string;
   project_item: ProjectItemType;
   key: string;
-  isSmallUsdTx?: boolean;
+  isSmallUsdTx?: boolean; // is will be filtered small tx
   account?: KeyringAccountWithAlias;
   isShowSuccess?: boolean;
   historyType: HistoryItemCateType;
+  historyCustomType?: CUSTOM_HISTORY_TITLE_TYPE;
 }
 
 interface IFetchHistory {
@@ -171,9 +174,7 @@ function History({
     },
   );
 
-  const { syncTop10History, syncSingleAddress } =
-    useSyncHistoryDB(top10Addresses);
-  const { historyLoading } = useHistoryTokenDict();
+  const historyLoading = useHistoryLoading();
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
 
@@ -205,11 +206,14 @@ function History({
         filterScamAndSmallTx: isFilter,
       });
 
+      const oneHourAgo = Math.floor(new Date().getTime() / 1000) - 60 * 60;
       const list = historyList.map(item => {
         return {
           ...ensureHistoryListItemFromDb(item),
           // hidden small and scam no need this prop
-          isSmallUsdTx: isFilter ? false : item.is_small_tx,
+          isSmallUsdTx: isFilter
+            ? false
+            : item.is_small_tx && item.time_at <= oneHourAgo,
           isShowSuccess: historySuccessList.includes(
             `${item.owner_addr.toLowerCase()}-${item.txHash}`,
           ),
@@ -454,7 +458,7 @@ function History({
     } else {
       dbLastCursorRef.current = 0;
       isSceneUsingAllAccounts
-        ? syncTop10History(true)
+        ? syncTop10History(top10Addresses, true)
         : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
     }
   });
@@ -752,6 +756,7 @@ const HistoryScreen = ({ isForMultipleAddress = true }) => {
       )}
       <ScreenSpecificStatusBar screenName={RootNames.History} />
       <History isTestnet={false} isForMultipleAddress={isForMultipleAddress} />
+      {/* TODO: it seems to be useless, drop it after confirming */}
       <BottomSheetModalTokenDetail
         __shouldSwitchSceneAccountBeforeRedirect__
         ref={tokenDetailModalRef}
@@ -877,7 +882,6 @@ const ForSingleAddress = () => {
 
   return <HistoryScreen isForMultipleAddress={false} />;
 };
-
 HistoryScreen.ForSingleAddress = ForSingleAddress;
 
 export default HistoryScreen;

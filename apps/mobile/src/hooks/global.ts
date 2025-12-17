@@ -10,6 +10,7 @@ const securityChainRef = {
   current: null as ReturnType<typeof makeSecureKeyChainInstance> | null,
 };
 const AppContext = React.createContext<{
+  turboModuleEnabled?: boolean;
   securityChain: ReturnType<typeof makeSecureKeyChainInstance> | null;
 }>({ securityChain: null });
 export const AppProvider = AppContext.Provider;
@@ -26,4 +27,10 @@ export function useAppSecurityChain() {
   const { securityChain } = React.useContext(AppContext);
 
   return { securityChain };
+}
+
+export function useIsTurboModuleEnabled() {
+  const { turboModuleEnabled } = React.useContext(AppContext);
+
+  return turboModuleEnabled;
 }

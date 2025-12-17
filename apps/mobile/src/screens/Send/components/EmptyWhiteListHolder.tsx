@@ -11,6 +11,7 @@ import { RcIconLockCC } from '@/assets/icons/send';
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
 }
+/** @deprecated */
 const EmptyWhiteListHolder = ({ gotoAddWhitelist }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();

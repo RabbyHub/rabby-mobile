@@ -1,4 +1,4 @@
-import { groupBy, minBy, range, unionBy } from 'lodash';
+import { groupBy, minBy, range } from 'lodash';
 import React, {
   useMemo,
   useRef,
@@ -8,7 +8,6 @@ import React, {
 } from 'react';
 import { FlatList, Platform, View, Text } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
-import dayjs from 'dayjs';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
@@ -22,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGetCexList } from '../hook';
 import { useMemoizedFn } from 'ahooks';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -83,6 +83,9 @@ export const HistoryList = forwardRef(
       onPresssItem,
       isForMultipleAddress = true,
       isNeedFetchFromApi,
+      appendBottom,
+      moreLoadingLength = 1,
+      tabList,
     }: {
       firstFetchDone?: boolean;
       historySuccessList?: string[];
@@ -96,6 +99,9 @@ export const HistoryList = forwardRef(
       loadMore?: () => void;
       onRefresh?: () => void;
       isNeedFetchFromApi?: boolean;
+      appendBottom?: number;
+      moreLoadingLength?: number;
+      tabList?: boolean;
     },
     ref,
   ) => {
@@ -194,6 +200,10 @@ export const HistoryList = forwardRef(
         }
       },
     );
+    const RenderList = useMemo(
+      () => (tabList ? Tabs.FlatList : FlatList),
+      [tabList],
+    );
 
     if (loading) {
       return (
@@ -206,7 +216,7 @@ export const HistoryList = forwardRef(
     }
 
     return (
-      <FlatList
+      <RenderList
         ref={flatListRef}
         data={markedList}
         renderItem={renderItem}
@@ -233,7 +243,15 @@ export const HistoryList = forwardRef(
         onEndReachedThreshold={0.5}
         removeClippedSubviews={false}
         ListFooterComponent={
-          loadingMore ? <SkeletonCard /> : <View style={{ height: bottom }} />
+          loadingMore ? (
+            <>
+              {range(0, moreLoadingLength).map(i => {
+                return <SkeletonCard key={i} />;
+              })}
+            </>
+          ) : (
+            <View style={{ height: bottom + (appendBottom || 0) }} />
+          )
         }
         refreshControl={
           onRefresh && (
@@ -275,14 +293,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 4,
   },
   marginBottom: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   date: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
     paddingLeft: 8,
-    marginTop: 12,
+    marginTop: 4,
     marginBottom: 8,
     color: colors2024['neutral-secondary'],
     lineHeight: 18,

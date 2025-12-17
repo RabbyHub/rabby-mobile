@@ -88,6 +88,7 @@ export function getHistoryItemType(data: TxHistoryItem): HistoryItemCateType {
 export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
   return {
     ...item,
+    historyCustomType: item.history_custom_type,
     historyType: item.history_type,
     receives: item.receives,
     sends: item.sends,

@@ -21,13 +21,18 @@ import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Account } from '@/core/services/preference';
 import { LinearGradientContainer } from '@/components2024/ScreenContainer/LinearGradientContainer';
-import { AddressItemInPanel, AddressItemSizes } from './AddressItemInPanel';
+import {
+  AddressItemInPanel,
+  AddressItemInPanelForTokenDetail,
+  AddressItemSizes,
+} from './AddressItemInPanel';
 import { UseAllAccountsItemInPanel } from './AddressItemUseAll';
 import { ScreenWithAccountSwitcherLayouts } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { IS_ANDROID } from '@/core/native/utils';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
 const SectionCollapsableNav = function ({
   isCollapsed = false,
   title,
@@ -79,6 +84,7 @@ export function AccountsPanelInModal({
   containerStyle,
   linearContainerProps,
   onSwitchSceneAccount,
+  token,
   scrollToBottom,
 }: // isVisible = false,
 AccountSwitcherAopProps<{
@@ -89,11 +95,16 @@ AccountSwitcherAopProps<{
     switchAction: () => Promise<void>;
     sceneAccount: Account;
   }) => void;
+  token?: AbstractPortfolioToken;
   scrollToBottom(): void;
 }>) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
 
   const { toggleSceneVisible } = useAccountSceneVisible(forScene);
+
+  const ItemRenderItem = useMemo(() => {
+    return token ? AddressItemInPanelForTokenDetail : AddressItemInPanel;
+  }, [token]);
 
   const {
     isPinnedAccount,
@@ -113,13 +124,13 @@ AccountSwitcherAopProps<{
     forScene,
   });
 
-  const notTop10Addresses = useMemo(() => {
+  const notTop10Accounts = useMemo(() => {
     return myAddresses.slice(10);
   }, [myAddresses]);
 
   const notMatterAddresses = useMemo(() => {
-    return [...notTop10Addresses, ...safeAddresses, ...watchAddresses];
-  }, [notTop10Addresses, safeAddresses, watchAddresses]);
+    return [...notTop10Accounts, ...safeAddresses, ...watchAddresses];
+  }, [notTop10Accounts, safeAddresses, watchAddresses]);
 
   const finalCurrentAccount =
     allowNullCurrentAccount && !sceneCurrentAccount
@@ -211,7 +222,7 @@ AccountSwitcherAopProps<{
   const renderRemainAddressesByType = useCallback(
     (
       accounts: ReturnType<typeof useSceneAccountInfo>['myAddresses'],
-      type: 'notTop10Addresses' | 'gnosisAccounts' | 'watchAccounts',
+      type: 'notTop10Accounts' | 'gnosisAccounts' | 'watchAccounts',
       title: string,
     ) => {
       if (accounts.length === 0) {
@@ -230,11 +241,12 @@ AccountSwitcherAopProps<{
                 !isSceneUsingAllAccounts &&
                 isSameAccount(account, finalSceneCurrentAccount);
               return (
-                <AddressItemInPanel
+                <ItemRenderItem
                   key={key}
                   addressItemProps={{ account }}
                   isCurrent={isCurrent}
-                  isPinned={false}
+                  token={token}
+                  // isPinned={false}
                   onPressAddress={handlePressAccount}
                   style={[
                     styles.addressItem,
@@ -248,10 +260,15 @@ AccountSwitcherAopProps<{
       );
     },
     [
+      ItemRenderItem,
       finalSceneCurrentAccount,
       handlePressAccount,
       isSceneUsingAllAccounts,
-      styles,
+      styles.addressItem,
+      styles.addressItemTopGap,
+      styles.sectionTitle,
+      styles.sectionTitleContainerNew,
+      token,
     ],
   );
 
@@ -341,8 +358,8 @@ AccountSwitcherAopProps<{
         {remainAddressesCollapsed && (
           <View style={styles.addressListContainerNew}>
             {renderRemainAddressesByType(
-              notTop10Addresses,
-              'notTop10Addresses',
+              notTop10Accounts,
+              'notTop10Accounts',
               t('page.addressDetail.notMatterAddressDialog.notTop10Address'),
             )}
             {renderRemainAddressesByType(
@@ -360,7 +377,7 @@ AccountSwitcherAopProps<{
       </View>
     ) : null;
   }, [
-    notTop10Addresses,
+    notTop10Accounts,
     safeAddresses,
     watchAddresses,
     colors2024,
@@ -395,11 +412,11 @@ AccountSwitcherAopProps<{
                     isSameAccount(account, finalSceneCurrentAccount);
 
                   return (
-                    <AddressItemInPanel
+                    <ItemRenderItem
                       key={key}
+                      token={token}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
-                      isPinned={false}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -432,11 +449,11 @@ AccountSwitcherAopProps<{
                     isSameAccount(account, finalSceneCurrentAccount);
 
                   return (
-                    <AddressItemInPanel
+                    <ItemRenderItem
                       key={key}
+                      token={token}
                       addressItemProps={{ account }}
                       isCurrent={isCurrent}
-                      isPinned={false}
                       onPressAddress={handlePressAccount}
                       style={[
                         styles.addressItem,
@@ -452,15 +469,21 @@ AccountSwitcherAopProps<{
       </>
     );
   }, [
-    styles,
-    t,
     safeAddresses,
+    styles.section,
+    styles.addressListContainer,
+    styles.addressItem,
+    styles.addressItemTopGap,
+    t,
+    navsCollapsed.safe,
+    navsCollapsed.watch,
     watchAddresses,
-    finalSceneCurrentAccount,
-    handlePressAccount,
-    isSceneUsingAllAccounts,
-    navsCollapsed,
     changeCollapsed,
+    isSceneUsingAllAccounts,
+    finalSceneCurrentAccount,
+    ItemRenderItem,
+    token,
+    handlePressAccount,
   ]);
 
   const myAddressesList = useCreationWithShallowCompare(() => {
@@ -469,7 +492,7 @@ AccountSwitcherAopProps<{
 
   return (
     <LinearGradientContainer
-      type="linear"
+      type="bg1"
       {...linearContainerProps}
       style={[styles.panel, containerStyle]}>
       <View style={styles.header}>
@@ -494,6 +517,16 @@ AccountSwitcherAopProps<{
                   isSelected={isSceneUsingAllAccounts}
                 />
               )}
+              {!!token && (
+                <View style={styles.tokenHeader}>
+                  <Text style={styles.headerBalanceText}>
+                    {t('page.tokenDetail.headerBalanceText')}{' '}
+                  </Text>
+                  <Text style={styles.headerTokenValueText}>
+                    {t('page.tokenDetail.headerTokenValueText')}
+                  </Text>
+                </View>
+              )}
               {myAddressesList.map((account, index) => {
                 const key = `account-${account.address}-${account.brandName}-${index}`;
                 const isCurrent =
@@ -501,11 +534,11 @@ AccountSwitcherAopProps<{
                   isSameAccount(account, finalCurrentAccount);
 
                 return (
-                  <AddressItemInPanel
+                  <ItemRenderItem
                     key={key}
+                    token={token}
                     addressItemProps={{ account }}
                     isCurrent={isCurrent}
-                    isPinned={isPinnedAccount(account)}
                     isHideToken={isHideToken}
                     onPressAddress={handlePressAccount}
                     style={[
@@ -596,7 +629,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     title: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '800',
+      fontWeight: '900',
       lineHeight: 24,
       color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',
@@ -671,6 +704,28 @@ const getPanelStyle = createGetStyles2024(ctx => {
       height: 6,
       width: 50,
       borderRadius: 104,
+    },
+    tokenHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 4,
+      paddingHorizontal: 10,
+      marginBottom: 8,
+    },
+    headerBalanceText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      color: ctx.colors2024['neutral-secondary'],
+      fontWeight: '400',
+    },
+    headerTokenValueText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      color: ctx.colors2024['neutral-secondary'],
+      fontWeight: '400',
     },
   };
 });

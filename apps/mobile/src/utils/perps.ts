@@ -1,6 +1,13 @@
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
-import { Meta, AssetCtx, MarginTable } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  Meta,
+  AssetCtx,
+  MarginTable,
+  ClearinghouseState,
+} from '@rabby-wallet/hyperliquid-sdk';
+import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
+import { Account } from '@/core/services/preference';
 
 export const formatMarkData = (
   marketData: [Meta, AssetCtx[]],
@@ -32,7 +39,9 @@ export const formatMarkData = (
     if (Array.isArray(meta.marginTables)) {
       for (const entry of meta.marginTables) {
         const [id, table] = entry || [];
-        if (id != null) marginTableMap[id] = table;
+        if (id != null) {
+          marginTableMap[id] = table;
+        }
       }
     }
 
@@ -41,9 +50,13 @@ export const formatMarkData = (
         const index = topAsset.id;
         const hlDataAsset = meta.universe[index];
 
-        if (!hlDataAsset) return null;
+        if (!hlDataAsset) {
+          return null;
+        }
 
-        if (hlDataAsset.isDelisted) return null;
+        if (hlDataAsset.isDelisted) {
+          return null;
+        }
 
         const m = metrics[index] || {};
         const table = marginTableMap[hlDataAsset?.marginTableId];
@@ -67,7 +80,9 @@ export const formatMarkData = (
           // 根据 markPx 推断价格精度
           pxDecimals: (() => {
             const markPx = m?.markPx;
-            if (!markPx) return 2;
+            if (!markPx) {
+              return 2;
+            }
             const parts = markPx.split('.');
             return parts.length > 1 ? parts[1].length : 2;
           })(),
@@ -100,16 +115,154 @@ export const calLiquidationPrice = (
   margin: number,
   direction: 'Long' | 'Short',
   positionSize: number,
-  leverage: number,
+  nationalValue: number,
   maxLeverage: number,
 ) => {
   const MMR = 1 / maxLeverage / 2;
   const side = direction === 'Long' ? 1 : -1;
-  const nationalValue = margin * leverage;
+  // const nationalValue = margin * leverage;
+  // const nationalValue = positionSize * markPrice;
   const maintenance_margin_required = nationalValue * MMR;
   const margin_available = margin - maintenance_margin_required;
   const liq_price =
     markPrice - (side * margin_available) / positionSize / (1 - MMR * side);
   // liq_price = price - side * margin_available / position_size / (1 - l * side)
-  return liq_price;
+  return Math.max(liq_price, 0);
+};
+
+// transfer_margin_required = max(initial_margin_required, 0.1 * total_position_value)
+export const calTransferMarginRequired = (
+  markPrice: number,
+  positionSize: number,
+  leverage: number,
+) => {
+  const nationalValue = Number(positionSize) * Number(markPrice);
+  const initialNationalValue = Number(positionSize) * Number(markPrice);
+  const initialMarginRequired = initialNationalValue * (1 / leverage);
+  const transferMarginRequired = Math.max(
+    initialMarginRequired,
+    0.1 * nationalValue,
+  );
+  return transferMarginRequired;
+};
+
+export const MAX_SIGNIFICANT_FIGURES = 6;
+
+export const formatPerpsPct = (v: number) => `${(v * 100).toFixed(2)}%`;
+
+/**
+ * Format price to ensure it passes validatePriceInput validation
+ * Rules:
+ * 1. Decimal places <= (6 - szDecimals)
+ * 2. Significant figures <= 5
+ * 3. Can be downgraded to integer if decimal part is all zeros
+ * @param price - The price number to format
+ * @param szDecimals - Size decimals parameter
+ * @returns Formatted price string that will always pass validatePriceInput
+ */
+export const formatTpOrSlPrice = (
+  price: number,
+  szDecimals: number,
+): string => {
+  if (!price || price === 0) {
+    return '0';
+  }
+
+  const vStr = price.toString();
+  if (!vStr.includes('.')) {
+    // Integer: always valid
+    return vStr;
+  }
+
+  const [integerPart, decimalPart] = vStr.split('.');
+
+  // Rule: if integer part has 6+ digits, force integer to always pass validator
+  if (integerPart.length >= 6) {
+    return integerPart;
+  }
+
+  // Calculate max decimal places: (6 - szDecimals)
+  const maxDecimals = MAX_SIGNIFICANT_FIGURES - szDecimals;
+
+  // Calculate significant figures (same logic as validatePriceInput)
+  // Merge integer and decimal parts first, then remove leading zeros
+  const allSignificantDigits = (integerPart + decimalPart).replace(/^0+/, '');
+  const integerDigits = integerPart.replace(/^0+/, '');
+
+  // If significant digits <= 5, just limit decimal places
+  if (allSignificantDigits.length <= 5) {
+    if (decimalPart.length > maxDecimals) {
+      const newDecimalPart = decimalPart.slice(0, maxDecimals);
+      // Remove trailing zeros
+      const trimmedDecimal = newDecimalPart.replace(/0+$/, '');
+      if (trimmedDecimal) {
+        return `${integerPart}.${trimmedDecimal}`;
+      }
+      return `${integerPart}`;
+    }
+    // Remove trailing zeros from original
+    const trimmedDecimal = decimalPart.replace(/0+$/, '');
+    if (trimmedDecimal) {
+      return `${integerPart}.${trimmedDecimal}`;
+    }
+    return `${integerPart}`;
+  }
+
+  // Significant digits > 5
+  // Integer significant digits = non-zero digits in integer part (leading zeros removed)
+  const integerPartLength = integerDigits.length;
+
+  if (integerPartLength >= 5) {
+    // When integer already occupies 5 digits, drop decimals to pass validator
+    return integerPart;
+  }
+
+  // Some digits are in decimal part
+  const remainingDigits = 5 - integerPartLength;
+
+  // Keep leading zeros but count significant digits after them
+  const leadingZerosInDecimal = decimalPart.match(/^0*/)?.[0] || '';
+  const sigDigitsInDecimal = decimalPart.slice(leadingZerosInDecimal.length);
+  const desiredSig = Math.min(remainingDigits, sigDigitsInDecimal.length);
+  const takenSig = sigDigitsInDecimal.slice(0, desiredSig);
+
+  // Compose decimal respecting maxDecimals
+  let composedDecimal = (leadingZerosInDecimal + takenSig).slice(
+    0,
+    maxDecimals,
+  );
+
+  // Remove trailing zeros
+  composedDecimal = composedDecimal.replace(/0+$/, '');
+  if (composedDecimal) {
+    return `${integerPart}.${composedDecimal}`;
+  }
+  return `${integerPart}`;
+};
+
+export const formatPositionPnl = (clearinghouseState: ClearinghouseState) => {
+  return {
+    pnl: clearinghouseState.assetPositions.reduce((acc, asset) => {
+      return acc + Number(asset.position.unrealizedPnl);
+    }, 0),
+    show: Number(clearinghouseState.marginSummary.accountValue) > 0,
+    type: (clearinghouseState.assetPositions.length > 0
+      ? 'pnl'
+      : 'accountValue') as 'pnl' | 'accountValue',
+    accountValue: Number(clearinghouseState.marginSummary.accountValue),
+  };
+};
+
+export const findDefaultAccount = (
+  accounts: Account[],
+  currentAccount: Account,
+) => {
+  const selectedItem =
+    currentAccount &&
+    accounts.find(
+      item =>
+        isSameAddress(item.address, currentAccount.address) &&
+        item.type === currentAccount.type,
+    );
+  return selectedItem;
 };

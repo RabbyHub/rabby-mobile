@@ -10,12 +10,19 @@ import {
 } from '@/perfs/preloads';
 import { useLayoutEffect } from 'react';
 import { devOnlyDelayNavi } from '../Testkits/testkits-utils';
+import { isNonPublicProductionEnv } from '@/constant';
 
 const GetStartedScreen2024 = registerAppScreen<
   typeof import('@/screens/GetStarted/NewUserGetStarted2024').default
 >({
   loader: () => import('@/screens/GetStarted/NewUserGetStarted2024'),
   name: TESTKITS_PRELOAD_SCREENS.NewUserGetStarted2024,
+});
+const DevUIAnimatedTextAndView = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIAnimatedTextAndView').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIAnimatedTextAndView'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIAnimatedTextAndView,
 });
 const DevUIFontShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIFontShowCase').default
@@ -47,6 +54,12 @@ const DevUIDapps = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevUIDapps'),
   name: TESTKITS_PRELOAD_SCREENS.DevUIDapps,
 });
+const DevUIBuiltInPages = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIBuiltInPages').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIBuiltInPages'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIBuiltInPages,
+});
 const DevUIPermissions = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIPermissions').default
 >({
@@ -59,6 +72,12 @@ const DevDataSQLite = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevDataSQLite'),
   name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
 });
+const DevSwitches = !isNonPublicProductionEnv
+  ? registerAppScreen<typeof import('@/screens/Testkits/DevSwitches').default>({
+      loader: () => import('@/screens/Testkits/DevSwitches'),
+      name: TESTKITS_PRELOAD_SCREENS.DevSwitches,
+    })
+  : require('@/screens/Testkits/DevSwitches').default;
 
 const Stack = createNativeStackNavigator();
 
@@ -94,6 +113,10 @@ export function TestkitsNavigator() {
         // }}
       />
       <Stack.Screen
+        name={RootNames.DevUIAnimatedTextAndView}
+        component={DevUIAnimatedTextAndView}
+      />
+      <Stack.Screen
         name={RootNames.DevUIFontShowCase}
         component={DevUIFontShowCase}
       />
@@ -111,11 +134,24 @@ export function TestkitsNavigator() {
       />
       <Stack.Screen name={RootNames.DevUIDapps} component={DevUIDapps} />
       <Stack.Screen
+        name={RootNames.DevUIBuiltInPages}
+        component={DevUIBuiltInPages}
+      />
+      <Stack.Screen
         name={RootNames.DevUIPermissions}
         component={DevUIPermissions}
       />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
+
+      <Stack.Screen
+        name={RootNames.DevSwitches}
+        component={DevSwitches}
+        options={{
+          headerShown: true,
+          // presentation: 'modal',
+        }}
+      />
     </Stack.Navigator>
   );
 }

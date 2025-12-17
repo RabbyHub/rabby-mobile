@@ -66,7 +66,7 @@ export type RootStackParamsList = {
   [RootNames.DeFiDetail]?: {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];
-    rawPortfolios?: DisplayedProject[];
+    rawPortfolios?: AbstractProject[];
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
     cache: boolean;
@@ -74,6 +74,8 @@ export type RootStackParamsList = {
   };
   [RootNames.Scanner]?: {
     syncExtension?: boolean;
+    /** @description for some scene scan in place, such as scan from modal */
+    disableGoBack?: boolean;
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
@@ -85,11 +87,10 @@ export type RootStackParamsList = {
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
-    rawPortfolios?: DisplayedProject[]; // only for single address
+    rawPortfolios?: AbstractProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
-    timestamp?: number; // 添加时间戳确保每次都是新页面
   };
   [RootNames.TokenMarketInfo]: {
     token:
@@ -99,11 +100,10 @@ export type RootStackParamsList = {
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
-    rawPortfolios?: DisplayedProject[]; // only for single address
+    rawPortfolios?: AbstractProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
-    timestamp?: number; // 添加时间戳确保每次都是新页面
   };
 };
 
@@ -114,7 +114,6 @@ export type RootStackParamsList = {
 export type HomeNavigatorParamsList = {
   [RootNames.Home]?: {};
   /** @deprecated */
-  [RootNames.Points]?: {};
   [RootNames.DappWebViewStubOnHome]?: {
     dappsWebViewFromRoute?:
       | typeof RootNames.Dapps
@@ -152,12 +151,13 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
+  [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
+  [RootNames.DevSwitches]?: {};
 };
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
-  [RootNames.AddressAssetsOverview]?: {};
   [RootNames.ReceiveAddressList]?: {
     tokenSymbol?: string;
     chainEnum?: CHAINS_ENUM;
@@ -265,6 +265,7 @@ export type AddressNavigatorParamList = {
   [RootNames.SyncExtensionAccountSuccess]?: {
     newAccounts: Account[];
   };
+  [RootNames.Points]?: {};
 };
 
 export type AccountNavigatorParamList = {
@@ -290,6 +291,7 @@ export type TransactionNavigatorParamList = {
     tokenItem?: AbstractPortfolioToken;
     currentAddress?: string;
   };
+  [RootNames.LendingHistory]?: {};
   [RootNames.CopyTrading]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
@@ -302,7 +304,7 @@ export type TransactionNavigatorParamList = {
     isForMultipleAddress?: boolean;
     title?: string;
     type?: HistoryItemCateType;
-    onPressBottomBtn?: (data: SendAction) => void;
+    onPressAddToWhitelistButton?: (data: SendAction) => void;
     isInSendHistory?: boolean;
   };
   [RootNames.Send]?:
@@ -319,15 +321,6 @@ export type TransactionNavigatorParamList = {
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
       };
-  [RootNames.SendTo]?: {};
-  [RootNames.SendInput]?: {
-    autoScan?: boolean;
-  };
-  [RootNames.WhitelistInput]?: { autoScan?: boolean };
-  [RootNames.SelectImportAddress]?: {};
-  [RootNames.SelectTypeAddress]?: {
-    type: 'watch' | 'safe';
-  };
   [RootNames.MultiSend]?: TransactionNavigatorParamList['Send'] & object;
   [RootNames.SendNFT]: {
     nftItem: NFTItem;
@@ -379,13 +372,22 @@ export type TransactionNavigatorParamList = {
     account: Account;
   };
 
-  [RootNames.Perps]?: {};
+  [RootNames.Perps]?: {
+    account?: KeyringAccountWithAlias;
+    fromName?: string;
+  };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {
     coin?: string;
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;
+    fromSource?: string;
+    showOpenPosition?: boolean;
+  };
+  [RootNames.Lending]?: {
+    tokenAddress?: string;
+    direction?: 'supply' | 'borrow';
   };
 };
 
@@ -445,6 +447,16 @@ export type GetNestedScreensParamsList<
   T extends _NestedScreensParamsName,
   K extends keyof _NestedScreensParamsDict[T] & string,
 > = _NestedScreensParamsDict[T][K];
+
+/** @deprecated use `GetNestedScreenRouteProp` directly */
+export type GetNestedScreenNavigationProps<
+  T extends _NestedScreensParamsName,
+  K extends keyof _NestedScreensParamsDict[T] & string,
+> = CompositeScreenProps<
+  // @ts-expect-error
+  NativeStackScreenProps<_NestedScreensParamsDict[T], K>,
+  NativeStackScreenProps<RootStackParamsList>
+>;
 export type GetNestedScreenRouteProp<
   T extends _NestedScreensParamsName,
   K extends keyof _NestedScreensParamsDict[T] & string,

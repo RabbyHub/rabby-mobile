@@ -219,7 +219,7 @@ export const useDebugToastErrorTxRetryInfo = ({
 }) => {
   // useEffect(() => {
   //   if (
-  //     isSelfhostRegPkg &&
+  //     isNonPublicProductionEnv &&
   //     description &&
   //     isFailedTx &&
   //     tx.chainId &&

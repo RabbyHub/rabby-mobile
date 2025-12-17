@@ -6,7 +6,7 @@ import { BackHandler } from 'react-native';
  * @platform android
  */
 export function useHandleBackPressClosable(
-  shouldBack: (() => boolean) | React.RefObject<boolean>,
+  requestBackOrRef: (() => boolean) | React.RefObject<boolean>,
   {
     autoEffectEnabled = false,
   }: {
@@ -17,12 +17,12 @@ export function useHandleBackPressClosable(
   } = {},
 ) {
   const shouldPreventFn = useCallback(() => {
-    if (typeof shouldBack === 'function') {
-      return !shouldBack();
+    if (typeof requestBackOrRef === 'function') {
+      return !requestBackOrRef();
     }
 
-    return !shouldBack.current;
-  }, [shouldBack]);
+    return !requestBackOrRef.current;
+  }, [requestBackOrRef]);
 
   const onHardwareBackHandler = useCallback(() => {
     const subscription = BackHandler.addEventListener(

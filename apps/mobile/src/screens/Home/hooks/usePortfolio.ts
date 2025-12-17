@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSafeState } from '@/hooks/useSafeState';
 import { portfolio2Display } from '../utils/portfolio';
@@ -7,12 +7,16 @@ import { DisplayedProject } from '../utils/project';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
-import { singleDeFiNounceAtom } from './refresh';
+// import { singleDeFiNonceAtom } from './refresh';
 import { useAtom, atom } from 'jotai';
-import { PortocolItemEntity } from '@/databases/entities/portocolItem';
+import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { debounce } from 'lodash';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { useSingleDeFiRefresh } from './refresh';
+import { apisAddrChainStatics } from '../useChainInfo';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+
 export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
@@ -117,9 +121,16 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       innerSetData,
     ];
   }, [_data.address, _data.data, _setData, userAddr]);
+
+  const debouncedAddrData = useDebouncedValue(_data.data, 500);
+  useEffect(() => {
+    if (!userAddr || !debouncedAddrData) return;
+    apisAddrChainStatics.updatePortfolio(userAddr, debouncedAddrData);
+  }, [userAddr, debouncedAddrData]);
+
   const [isLoading, setLoading] = useSafeState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [hasValue, setHasValue] = useSafeState(false);
-  const [singleDeFiNounce, setSingleDeFiNounce] = useAtom(singleDeFiNounceAtom);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -146,8 +157,9 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
         return;
       }
       setHasValue(false);
+      setRefreshing(true);
       if (!force) {
-        const cachePortocols = await PortocolItemEntity.batchQueryPortocols(
+        const cachePortocols = await ProtocolItemEntity.batchQueryPortocols(
           userAddr,
         );
         if (cachePortocols.length) {
@@ -187,6 +199,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       } catch (error) {
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     },
     [setData, setHasValue, setLoading, userAddr],
@@ -196,7 +209,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     if (!userAddr) {
       return;
     }
-    const cachePortocols = await PortocolItemEntity.batchQueryPortocols(
+    const cachePortocols = await ProtocolItemEntity.batchQueryPortocols(
       userAddr,
     );
     if (cachePortocols.length) {
@@ -259,12 +272,16 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     ),
   });
 
-  useEffect(() => {
-    if (singleDeFiNounce > 0) {
-      refreshTagPortfolio();
-      setSingleDeFiNounce(0);
-    }
-  }, [refreshTagPortfolio, setSingleDeFiNounce, singleDeFiNounce]);
+  useSingleDeFiRefresh({
+    onRefresh: refreshTagPortfolio,
+  });
+
+  // useEffect(() => {
+  //   if (singleDeFiNonce > 0) {
+  //     refreshTagPortfolio();
+  //     setSingleDeFiNonce(0);
+  //   }
+  // }, [refreshTagPortfolio, setSingleDeFiNonce, singleDeFiNonce]);
 
   const updateSpecificProtocol = useCallback(
     async (protocolId: string, chain: string) => {
@@ -317,6 +334,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     data: data || [],
     hasValue,
     isLoading,
+    refreshing,
     updateData: loadProcess,
     updateSpecificProtocol,
   };

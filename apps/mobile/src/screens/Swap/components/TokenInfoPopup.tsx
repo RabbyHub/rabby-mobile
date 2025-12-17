@@ -16,14 +16,17 @@ import { formatUsdValue } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 export const TokenInfoPopup = () => {
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
   const { styles, isLight } = useTheme2024({ getStyle });
   const [longPressToken, setLongPressToken] = useLongPressTokenAtom();
-
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const handleClose = () => {
     setLongPressToken({
       visible: false,
@@ -105,10 +108,11 @@ export const TokenInfoPopup = () => {
             }}
             onPressRightIcon={() => {
               if (longPressToken.tokenItem) {
-                navigate(RootNames.TokenDetail, {
+                navigateDeprecated(RootNames.TokenDetail, {
                   token: {
                     ...ensureAbstractPortfolioToken(longPressToken.tokenItem),
                   },
+                  account: currentAccount,
                   needUseCacheToken: true,
                 });
                 handleClose();

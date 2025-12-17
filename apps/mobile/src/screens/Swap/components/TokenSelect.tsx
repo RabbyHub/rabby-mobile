@@ -42,7 +42,7 @@ import {
   TokenItemMaybeWithOwner,
 } from '@/databases/hooks/token';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
 import { isWatchOrSafeAccount } from '@/utils/account';
@@ -91,7 +91,7 @@ type QueryConditions = {
 export type TokenSelectInst = {
   openTokenModal: (conds?: Partial<QueryConditions>) => void;
 };
-const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
+const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
   (
     {
       token,
@@ -106,6 +106,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       supportChains,
       searchPlaceholder,
       disableItemCheck,
+      style,
     },
     ref,
   ) => {
@@ -120,7 +121,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       useState<FavoriteFilterType>('all');
 
     const [_, setLongPressToken] = useLongPressTokenAtom();
-    const queryConds = useDebounceValue(_queryConds, 250);
+    const queryConds = useDebouncedValue(_queryConds, 250);
     const currentAccount = queryConds.account;
 
     const {
@@ -527,9 +528,10 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           onLongPress={handleLongPressToken}
           ref={tokenPressRef}>
           <View
-            style={
-              type === 'bridgeFrom' ? styles.bridgeWrapper : styles.wrapper
-            }>
+            style={[
+              type === 'bridgeFrom' ? styles.bridgeWrapper : styles.wrapper,
+              style,
+            ]}>
             {token ? (
               <>
                 <View style={styles.token}>

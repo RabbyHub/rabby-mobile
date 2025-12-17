@@ -2,20 +2,21 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
-import { RcIconQuoteEnd, RcIconQuoteStart } from '@/assets/icons/gas-account';
+import { Image, Text, View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import { GasAccountWrapperBg } from '../components/WrapperBg';
-import { GasAccountBlueLogo } from './GasAccountBlueLogo';
 import { ClaimedGiftAddress } from '@/core/services/gasAccount';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { useGasAccountMethods } from '../hooks';
 import {
   useGasAccountHistoryRefresh,
   useGasBalanceRefresh,
 } from '../hooks/atom';
 import IconGift from '@/assets2024/icons/gas-account/gift-01.svg';
 import { formatUsdValue } from '@/utils/number';
+import { GasAccountGuidePopup } from './GasAccountGuide';
+import ImgGasAccount from '@/assets2024/images/gasAccount/gasaccount.png';
+import { TouchableOpacity } from 'react-native';
+
 interface Props {
   onLoginPress?(): void;
   currentEligibleAddress?: ClaimedGiftAddress;
@@ -27,9 +28,11 @@ export const GasAccountLoginCard: React.FC<Props> = ({
   const { t } = useTranslation();
   const { refresh: refreshBalance } = useGasBalanceRefresh();
   const { refresh: refreshHistory } = useGasAccountHistoryRefresh();
-  const { claimGift, checkEligibility } = useGasAccountEligibility();
-  const { styles } = useTheme2024({ getStyle });
+  const { claimGift } = useGasAccountEligibility();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const [loading, setLoading] = useState(false);
+  const [guideVisible, setGuideVisible] = useState(false);
+
   const handleClick = async () => {
     try {
       setLoading(true);
@@ -54,19 +57,23 @@ export const GasAccountLoginCard: React.FC<Props> = ({
         styles.loginContainer,
         isLight ? styles.loginContainerLight : styles.loginContainerDark,
       ]}>
-      <GasAccountBlueLogo style={styles.logo} />
-      <View style={styles.quoteContainer}>
-        <RcIconQuoteStart style={styles.quoteStart} />
-        <Text style={styles.loginTip}>
-          {t('component.gasAccount.loginInTip.title')}
-        </Text>
-      </View>
-      <View style={styles.quoteContainer}>
-        <Text style={styles.loginDesc}>
-          {t('component.gasAccount.loginInTip.desc')}
-        </Text>
-        <RcIconQuoteEnd style={styles.quoteEnd} />
-      </View>
+      <Image
+        source={ImgGasAccount}
+        style={[
+          {
+            width: 123,
+            height: 99,
+          },
+        ]}
+        resizeMode="contain"
+      />
+      <Text style={styles.depositTitle}>
+        {t('component.gasAccount.loginInTip.depositTitle')}
+      </Text>
+      <Text style={styles.depositDesc}>
+        {t('component.gasAccount.loginInTip.depositDesc')}
+      </Text>
+
       <View style={styles.buttonContainer}>
         <Button
           loading={loading}
@@ -84,11 +91,33 @@ export const GasAccountLoginCard: React.FC<Props> = ({
                 </Text>
               </View>
             ) : (
-              t('component.gasAccount.loginInTip.login')
+              <Text style={styles.loginAndClaimText}>
+                {t('component.gasAccount.loginInTip.login')}
+              </Text>
             )
           }
         />
       </View>
+
+      <TouchableOpacity
+        style={[styles.confirmButton, styles.tipBtn]}
+        onPress={() => {
+          setGuideVisible(true);
+        }}>
+        <Text style={styles.tipBtnText}>
+          {t('component.gasAccount.loginInTip.learnAbout')}
+        </Text>
+      </TouchableOpacity>
+
+      <GasAccountGuidePopup
+        visible={guideVisible}
+        onClose={() => {
+          setGuideVisible(false);
+        }}
+        onComplete={() => {
+          setGuideVisible(false);
+        }}
+      />
     </GasAccountWrapperBg>
   );
 };
@@ -104,14 +133,15 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
   confirmButton: {
     width: '100%',
-    height: 52,
+    height: 56,
   },
   loginAndClaimText: {
     color: colors2024['neutral-InvertHighlight'],
-    fontSize: 20,
-    lineHeight: 24,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
     fontStyle: 'normal',
     fontWeight: '700',
+    lineHeight: 22,
   },
   loginAndClaimContainer: {
     flexDirection: 'row',
@@ -120,8 +150,8 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     justifyContent: 'center',
   },
   loginContainer: {
-    paddingTop: 38,
-    paddingBottom: 20,
+    paddingTop: 12,
+    paddingBottom: 24,
     paddingHorizontal: 16,
     marginHorizontal: 20,
     borderRadius: 16,
@@ -136,48 +166,41 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   loginContainerDark: {
     backgroundColor: colors2024['neutral-bg-2'],
   },
-  logo: {
-    width: 50,
-    height: 50,
-    marginBottom: 34,
-  },
-  loginTip: {
-    color: colors2024['brand-default'],
+  depositTitle: {
+    marginTop: 11,
+    marginBottom: 8,
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    fontStyle: 'normal',
+    fontWeight: '800',
+    lineHeight: 22,
+  },
+  depositDesc: {
+    marginBottom: 26,
+    color: colors2024['neutral-secondary'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 18,
+  },
+  tipBtn: {
+    marginTop: 12,
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tipBtnText: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
     fontStyle: 'normal',
     fontWeight: '700',
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 4,
-  },
-  loginDesc: {
-    color: colors2024['brand-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 32,
-  },
-  popupBody: {
-    padding: 0,
-  },
-  quoteContainer: {
-    position: 'relative',
-    // marginBottom: 16,
-  },
-  quoteEnd: {
-    position: 'absolute',
-    top: 2,
-    right: -20,
-  },
-  quoteStart: {
-    position: 'absolute',
-    top: 2,
-    left: -20,
+    lineHeight: 22,
   },
 }));

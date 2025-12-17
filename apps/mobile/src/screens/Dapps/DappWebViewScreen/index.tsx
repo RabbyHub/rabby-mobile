@@ -76,7 +76,7 @@ export function DappWebViewStubScreen() {
     switch (dappsWebViewFromRoute) {
       case RootNames.Dapps:
       case RootNames.FavoriteDapps: {
-        navigation.navigate(RootNames.StackDapps, {
+        navigation.navigateDeprecated(RootNames.StackDapps, {
           screen: dappsWebViewFromRoute,
         });
         break;
@@ -128,10 +128,10 @@ export function DappWebViewStubScreen() {
       return shouldPrevent;
     };
 
-    BackHandler.addEventListener('hardwareBackPress', listener);
+    const sub = BackHandler.addEventListener('hardwareBackPress', listener);
 
     return () => {
-      BackHandler.removeEventListener('hardwareBackPress', listener);
+      sub.remove();
     };
   }, [backToDappsScreen]);
 

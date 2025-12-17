@@ -23,6 +23,9 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
+import { useDevServerModalVisible } from '../Modals/DevModalDevServer';
+import { toast } from '@/components2024/Toast';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 const devUIPlaygroundModalVisibleAtom = atom(false);
 export function useDevUIPlaygroundModalVisible() {
@@ -66,6 +69,9 @@ export default function DevUIPlaygroundModal({
 
   const { accounts } = useAccounts();
 
+  const { haventSetDevServer, setDevServerSettingsModalVisible } =
+    useDevServerModalVisible();
+
   const Items = (() => {
     const list: DevTestItem[] = [
       {
@@ -94,6 +100,17 @@ export default function DevUIPlaygroundModal({
           //     screen: RootNames.NewUserGetStarted2024,
           //   }),
           // );
+        },
+      },
+      {
+        label: 'Animated View & Text',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIAnimatedTextAndView,
+            }),
+          );
         },
       },
       {
@@ -152,6 +169,22 @@ export default function DevUIPlaygroundModal({
         },
       },
       {
+        label: 'Built-in WebView Pages',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          if (__DEV__ && haventSetDevServer) {
+            toast.show('Please set up the dev server first.');
+            setDevServerSettingsModalVisible(true);
+            return;
+          }
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIBuiltInPages,
+            }),
+          );
+        },
+      },
+      {
         label: 'Permissions',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
@@ -168,7 +201,8 @@ export default function DevUIPlaygroundModal({
   })();
 
   const { safeSizes } = useSafeAndroidBottomSizes({
-    sheetHeight: getFullHeight(Items.length),
+    // sheetHeight: getFullHeight(Items.length),
+    sheetHeight: getFullHeight(5),
     containerPaddingBottom: SIZES.containerPb,
   });
 
@@ -180,9 +214,9 @@ export default function DevUIPlaygroundModal({
       snapPoints={[safeSizes.sheetHeight]}
       handleStyle={styles.handleStyle}
       onDismiss={handleCancel}
-      enableContentPanningGesture={false}>
+      enableContentPanningGesture>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {
@@ -190,7 +224,7 @@ export default function DevUIPlaygroundModal({
           },
         ]}>
         <Text style={styles.title}>Component Playground</Text>
-        <View style={styles.mainContainer}>
+        <BottomSheetScrollView contentContainerStyle={styles.mainContainer}>
           {Items.map((item, idx) => {
             const itemKey = `testitem-${item.label}`;
 
@@ -211,7 +245,7 @@ export default function DevUIPlaygroundModal({
               </GeneralTestItem>
             );
           })}
-        </View>
+        </BottomSheetScrollView>
       </AutoLockView>
     </AppBottomSheetModal>
   );

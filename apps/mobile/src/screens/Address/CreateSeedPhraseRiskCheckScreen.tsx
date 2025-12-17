@@ -6,7 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { CheckboxItem } from './components/CheckboxItem';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { RcIconInfoCC } from '@/assets/icons/common';
 
@@ -83,7 +83,7 @@ export const CreateSeedPhraseRickCheckScreen = () => {
     useQuestionsCheck();
 
   const handleConfirm = useMemoizedFn(() => {
-    navigate(RootNames.StackAddress, {
+    navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.CreateMnemonicBackup,
     });
   });

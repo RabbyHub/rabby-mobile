@@ -1,9 +1,9 @@
 import { FieldNilable } from "@rabby-wallet/base-utils";
-import type { StorageAdapaterOptions, StorageItemTpl } from "./storageAdapter";
+import type { Primitive, StorageAdapaterOptions, StorageItemTpl } from "./storageAdapter";
 import createPersistStore from "./createPersistStore";
 
 export class StoreServiceBase<
-  StoreType extends Record<string, StorageItemTpl> = Record<string, StorageItemTpl>,
+  StoreType extends StorageItemTpl = StorageItemTpl,
   StoreName extends string = string
 > {
   private _storeName: StoreName;
@@ -27,7 +27,11 @@ export class StoreServiceBase<
   }
 
   protected onBeforeSetKV<K extends keyof StoreType>(k: K, value: FieldNilable<StoreType>[K]) {
-    this?._beforeSetKV?.(k, value);
+    try {
+      this?._beforeSetKV?.(k, value);
+    } catch (error) {
+      console.error(`[StoreServiceBase::${this._storeName}] onBeforeSetKV error`, error);
+    }
   }
   private _beforeSetKV?: (<K extends keyof StoreType>(k: K, value: FieldNilable<StoreType>[K]) => void) | null;
   public setBeforeSetKV(

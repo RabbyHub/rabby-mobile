@@ -15,7 +15,7 @@ export const GasAccountWrapperBg = ({
   return (
     <View {...others} style={[styles.container, style]}>
       <View style={styles.bgWrapper}>
-        <RcIconBg width={'100%'} style={isLight ? null : styles.opacity50} />
+        {/* <RcIconBg width={'100%'} style={isLight ? null : styles.opacity50} /> */}
       </View>
       {children}
     </View>

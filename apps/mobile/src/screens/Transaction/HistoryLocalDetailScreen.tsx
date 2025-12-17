@@ -53,7 +53,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
     isForMultipleAddress,
     title,
     type,
-    onPressBottomBtn,
+    onPressAddToWhitelistButton,
   } = route.params || {};
   const [data, setData] = React.useState<TransactionGroup>(_data);
   const isPending = useMemo(() => data.isPending, [data]);
@@ -107,13 +107,10 @@ function HistoryLocalDetailScreen(): JSX.Element {
   }, [setNavigationOptions, getHeaderTitle]);
 
   const needUseSwap = useMemo(() => {
-    return Boolean(
-      type === HistoryItemCateType.Swap ||
-        data.maxGasTx.action?.actionData?.swap ||
-        data.maxGasTx.action?.actionData?.wrapToken ||
-        data.maxGasTx.action?.actionData?.unWrapToken,
-    );
-  }, [data, type]);
+    if (type === HistoryItemCateType.Swap) {
+      return true;
+    }
+  }, [type]);
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -206,7 +203,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
         <Send
           data={data}
           isSingleAddress={!isForMultipleAddress}
-          onPressBottomBtn={onPressBottomBtn}
+          onPressAddToWhitelistButton={onPressAddToWhitelistButton}
           account={txAccount}
         />
       ) : (

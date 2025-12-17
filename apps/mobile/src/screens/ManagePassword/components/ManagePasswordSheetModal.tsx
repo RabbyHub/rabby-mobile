@@ -28,7 +28,7 @@ import { toast, toastWithIcon } from '@/components/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { useBiometrics } from '@/hooks/biometrics';
-import { useResetHasTipedUserEnableBiometrics } from '@/screens/Unlock/hooks';
+import { resetHasTipedUserEnableBiometrics } from '@/screens/Unlock/hooks';
 import AutoLockView from '@/components/AutoLockView';
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { useAccounts } from '@/hooks/account';
@@ -112,8 +112,6 @@ function useClearPasswordForm() {
 
   const { fetchLockInfo } = useWalletPasswordInfo();
   const { fetchBiometrics } = useBiometrics();
-  const { resetHasTipedUserEnableBiometrics } =
-    useResetHasTipedUserEnableBiometrics();
 
   const formik = useFormik({
     initialValues: { currentPassword: '' },
@@ -270,10 +268,6 @@ function useResetPasswordAndKeyringsForm() {
   const { fetchLockInfo } = useWalletPasswordInfo();
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const { fetchBiometrics } = useBiometrics();
-  const { resetHasTipedUserEnableBiometrics } =
-    useResetHasTipedUserEnableBiometrics();
-
-  const navitation = useRabbyAppNavigation();
 
   const formik = useFormik({
     initialValues: { currentPassword: '' },

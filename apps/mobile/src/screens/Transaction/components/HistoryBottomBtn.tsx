@@ -30,6 +30,7 @@ import { transactionHistoryService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { findAccountByPriority } from '@/utils/account';
+import { naviPush } from '@/utils/navigation';
 
 interface ItemProps {
   status: number;
@@ -99,7 +100,6 @@ export const HistoryBottomBtn = ({
       buttonStyle: { height: viewStyle.height || 56 },
     };
   }, [styles.buttonContainer, buttonContainerStyle]);
-  const { navigateToSendPolyScreen } = useSendRoutes();
 
   const source = useMemo(
     () => transactionTxs?.$ctx?.ga?.source ?? '',
@@ -131,10 +131,13 @@ export const HistoryBottomBtn = ({
                 'MakeTransactionAbout',
                 isForMultipleAddress ? fromAddrIsImported : currentAccount,
               );
-              navigateToSendPolyScreen(!isForMultipleAddress, {
-                chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-                tokenId: sends[0]?.token_id,
-                toAddress: sends[0]?.to_addr,
+              naviPush(RootNames.StackTransaction, {
+                screen: RootNames.Send,
+                params: {
+                  chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                  tokenId: sends[0]?.token_id,
+                  toAddress: sends[0]?.to_addr,
+                },
               });
             }}
             title={t('page.transactions.detail.SendAgain')}

@@ -1,3 +1,5 @@
+// patch from file:///./../../../node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/BottomSheetBackdrop.tsx
+
 import React, {
   memo,
   useCallback,
@@ -28,14 +30,11 @@ import {
   DEFAULT_PRESS_BEHAVIOR,
 } from '@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/constants';
 import { styles } from '@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/styles';
-import type { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/types';
+import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
+
 import { apisAutoLock } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
 
-/**
- * @description this component is patched from the original BottomSheetBackdrop.tsx on package @gorhom/bottom-sheet,
- * the essence of this patch is to trigger onPress event when the backdrop is pressed event if the pressBehavior is set to 'none'
- */
 const BottomSheetBackdropComponent = ({
   animatedIndex,
   opacity: _providedOpacity,
@@ -112,6 +111,7 @@ const BottomSheetBackdropComponent = ({
         [0, 0, opacity],
         Extrapolation.CLAMP,
       ),
+      flex: 1,
     }),
     [animatedIndex, appearsOnIndex, disappearsOnIndex, opacity],
   );

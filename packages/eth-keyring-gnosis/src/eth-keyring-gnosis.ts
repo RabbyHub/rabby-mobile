@@ -184,6 +184,12 @@ export const generateTypedDataFrom = ({
 export class GnosisKeyring extends EventEmitter implements KeyringIntf {
   static type = keyringType;
 
+  static #apiSet = false;
+  static setApiKey (apiKey: string) {
+    Safe.apiKey = apiKey;
+    GnosisKeyring.#apiSet = true;
+  }
+
   type = keyringType;
 
   accounts: string[] = [];
@@ -211,6 +217,10 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
 
   constructor(options: DeserializeOption = {}) {
     super();
+    if (!GnosisKeyring.#apiSet) {
+      throw new Error('GnosisKeyring API key is not set, please call GnosisKeyring.setApiKey first');
+    }
+
     this.deserialize(options);
   }
 

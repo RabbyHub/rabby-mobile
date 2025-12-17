@@ -3,11 +3,11 @@ import { useCallback, useMemo } from 'react';
 
 import { useFocusEffect } from '@react-navigation/native';
 import { useAtom } from 'jotai';
-import { dappsAtom, useDapps } from './useDapps';
+import { useDappsValue, useDapps } from './useDapps';
 import { useBrowserHistory } from './browser/useBrowserHistory';
 
 export const useDappsHome = () => {
-  const [dapps] = useAtom(dappsAtom);
+  const { dapps } = useDappsValue();
   const {
     getDapps,
     addDapp,

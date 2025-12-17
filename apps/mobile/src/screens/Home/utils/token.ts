@@ -4,7 +4,10 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayedProject, DisplayedToken, pQueue } from './project';
-import { isTestnet as checkIsTestnet } from '@/utils/chain';
+import {
+  isTestnet as checkIsTestnet,
+  makeChainServerIdSet,
+} from '@/utils/chain';
 import { flatten } from 'lodash';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { openapi } from '@/core/request';
@@ -12,59 +15,86 @@ import { AbstractPortfolioToken } from '../types';
 import { ITokenSetting } from '@/core/services/preference';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { runOnJS } from 'react-native-reanimated';
+import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
+import { BalanceEntity } from '@/databases/entities/balance';
 
-export const queryTokensCache = async (user_id: string, isTestnet = false) => {
-  return requestOpenApiWithChainId(
-    ({ openapi }) => openapi.getCachedTokenList(user_id),
-    {
-      isTestnet,
-    },
-  );
-};
-
-export const batchQueryTokens = async (
-  user_id: string,
-  chainId?: string,
-  isTestnet: boolean = !chainId ? false : checkIsTestnet(chainId),
-) => {
-  if (!chainId && !isTestnet) {
-    const usedChains = await openapi.usedChainList(user_id);
-    const chainIdList = usedChains.map(item => item.id);
-    const res = await Promise.allSettled(
-      chainIdList.map(serverId =>
-        pQueue.add(async () => {
-          const chainTokensRes = await requestOpenApiWithChainId(
-            ({ openapi }) => openapi.listToken(user_id, serverId, true),
-            {
-              isTestnet,
-            },
-          );
-          return chainTokensRes;
-        }),
-      ),
+export const queryTokensCache = makeSWRKeyAsyncFunc(
+  (user_id: string, isTestnet: boolean = false) => {
+    return requestOpenApiWithChainId(
+      ({ openapi }) => openapi.getCachedTokenList(user_id),
+      {
+        isTestnet,
+      },
     );
+  },
+  ctx => [`${ctx.args[0]}-${ctx.args[1]}`],
+);
 
-    // 检查是否所有链都明确失败了
-    const allFailed = res.every(result => result.status === 'rejected');
-    if (allFailed && chainIdList.length > 0) {
-      throw new Error('All chains failed, service may unavailable');
+const batchQueryTokens = makeSWRKeyAsyncFunc(
+  async (
+    user_id: string,
+    chainId?: string,
+    isTestnet: boolean = !chainId ? false : checkIsTestnet(chainId),
+    isV2 = false,
+  ) => {
+    if (!chainId && !isTestnet) {
+      let chainIdList: string[] = [];
+      if (isV2) {
+        let usedChains = await BalanceEntity.queryChainList(user_id);
+        chainIdList = usedChains
+          .filter(item => item.usd_value > 0.5)
+          .map(item => item.id);
+        if (usedChains.length <= 0) {
+          // 兜底，预防还没写过本地数据的情况发生
+          // TODO: 移除
+          const chains = await openapi.usedChainList(user_id);
+          chainIdList = chains.map(item => item.id);
+        }
+      } else {
+        const usedChains = await openapi.usedChainList(user_id);
+        chainIdList = usedChains.map(item => item.id);
+      }
+      const res = await Promise.allSettled(
+        chainIdList.map(serverId =>
+          pQueue.add(async () => {
+            const chainTokensRes = await requestOpenApiWithChainId(
+              ({ openapi }) => openapi.listToken(user_id, serverId, true),
+              {
+                isTestnet,
+              },
+            );
+            return chainTokensRes;
+          }),
+        ),
+      );
+
+      // 检查是否所有链都明确失败了
+      const allFailed = res.every(result => result.status === 'rejected');
+      if (allFailed && chainIdList.length > 0) {
+        throw new Error('All chains failed, service may unavailable');
+      }
+
+      // 提取成功的结果，失败的结果返回空数组
+      const successfulResults = res.map(result =>
+        result.status === 'fulfilled' ? result.value : [],
+      );
+
+      return flatten(successfulResults as TokenItem[][]);
     }
-
-    // 提取成功的结果，失败的结果返回空数组
-    const successfulResults = res.map(result =>
-      result.status === 'fulfilled' ? result.value : [],
+    return requestOpenApiWithChainId(
+      ({ openapi }) => openapi.listToken(user_id, chainId, true),
+      {
+        isTestnet,
+      },
     );
-
-    return flatten(successfulResults as TokenItem[][]);
-  }
-  return requestOpenApiWithChainId(
-    ({ openapi }) => openapi.listToken(user_id, chainId, true),
-    {
-      isTestnet,
-    },
-  );
-};
+  },
+  ctx => {
+    const [user_id, chainId, isTestnet] = ctx.args;
+    return chainId
+      ? `${user_id}-${chainId}-${isTestnet}`
+      : `${user_id}-all-${isTestnet}`;
+  },
+);
 
 export const batchQueryTokensWithLocalCache = async (
   params: {
@@ -74,6 +104,7 @@ export const batchQueryTokensWithLocalCache = async (
   },
   force?: boolean,
   onlySync?: boolean,
+  isV2 = false,
 ) => {
   const {
     user_id,
@@ -83,14 +114,14 @@ export const batchQueryTokensWithLocalCache = async (
   if (!chainId && !isTestnet) {
     const isExpired = await TokenItemEntity.isExpired(user_id);
     if (force || isExpired) {
-      const tokens = await batchQueryTokens(user_id, chainId, isTestnet);
-      runOnJS(syncRemoteTokens)(user_id, [...tokens]);
+      const tokens = await batchQueryTokens(user_id, chainId, isTestnet, isV2);
+      syncRemoteTokens(user_id, [...tokens]);
       return tokens;
     } else {
       return onlySync ? [] : TokenItemEntity.batchQueryTokens(user_id);
     }
   }
-  return batchQueryTokens(user_id, chainId, isTestnet);
+  return batchQueryTokens(user_id, chainId, isTestnet, isV2);
 };
 
 export const batchQueryHistoryTokens = async (
@@ -140,37 +171,68 @@ export type TaggedPortfolioToken<
   _isPined: boolean;
   _isFold: boolean;
   _isManualFold: boolean;
+  _isManualUnFold: boolean;
   _isMiniFold: boolean;
   _isExcludeBalance: boolean;
   _pinIndex: number;
 };
-export function tagTokenItem<
+
+type ITokenSettingsSet = {
+  pinedQueue: ITokenSetting['pinedQueue'] & object;
+  includeTokens: Set<string>;
+  excludeTokens: Set<string>;
+  foldTokens: Set<string>;
+  unfoldTokens: Set<string>;
+};
+function encodeChainTokenId(chain: string, token_id: string) {
+  return `${chain}::${token_id}`.toLowerCase();
+}
+export function makeTokenSettingSets(
+  tokenSetting: ITokenSetting,
+): ITokenSettingsSet {
+  const tokenSettingSets: Required<ITokenSettingsSet> = {
+    pinedQueue: tokenSetting.pinedQueue || [],
+    includeTokens: new Set(
+      (tokenSetting.includeDefiAndTokens || [])
+        .filter(i => i.type === 'token')
+        .map(i => encodeChainTokenId(i.chainid, i.id)),
+    ),
+    excludeTokens: new Set(
+      (tokenSetting.excludeDefiAndTokens || [])
+        .filter(i => i.type === 'token')
+        .map(i => encodeChainTokenId(i.chainid, i.id)),
+    ),
+    foldTokens: new Set(
+      (tokenSetting.foldTokens || []).map(i =>
+        encodeChainTokenId(i.chainId, i.tokenId),
+      ),
+    ),
+    unfoldTokens: new Set(
+      (tokenSetting.unfoldTokens || []).map(i =>
+        encodeChainTokenId(i.chainId, i.tokenId),
+      ),
+    ),
+  };
+
+  return tokenSettingSets;
+}
+export function tagTokenItemV2<
   T extends AbstractPortfolioToken = AbstractPortfolioToken,
->(i: T, tokenSetting: ITokenSetting) {
-  const {
-    pinedQueue = [],
-    includeDefiAndTokens = [],
-    excludeDefiAndTokens = [],
-    foldTokens = [],
-    unfoldTokens = [],
-  } = tokenSetting;
-  const pinIndex = pinedQueue.findIndex(
-    x => x.chainId === i.chain && x.tokenId === i._tokenId,
+>(i: T, tokenSetting: Required<ITokenSettingsSet>) {
+  const { pinedQueue, includeTokens, excludeTokens, foldTokens, unfoldTokens } =
+    tokenSetting;
+  // const isPin = pinedQueue.has(encodeChainTokenId(i.chain, i._tokenId));
+  const pinIndex = Array.from(pinedQueue).findIndex(
+    x =>
+      x.chainId.toLowerCase() === i.chain.toLowerCase() &&
+      x.tokenId.toLowerCase() === i._tokenId.toLowerCase(),
   );
   const isPin = pinIndex !== -1;
   const isExcludeBalance = (() => {
-    if (
-      excludeDefiAndTokens.some(
-        x => x.id === i._tokenId && x.chainid === i.chain && x.type === 'token',
-      )
-    ) {
+    if (excludeTokens.has(encodeChainTokenId(i.chain, i._tokenId))) {
       return true;
     }
-    if (
-      includeDefiAndTokens.some(
-        x => x.id === i._tokenId && x.chainid === i.chain && x.type === 'token',
-      )
-    ) {
+    if (includeTokens.has(encodeChainTokenId(i.chain, i._tokenId))) {
       return false;
     }
     if (!i.is_core) {
@@ -178,15 +240,17 @@ export function tagTokenItem<
     }
     return false;
   })();
+
+  const isManualFold = foldTokens.has(encodeChainTokenId(i.chain, i._tokenId));
+  const isManualUnFold = unfoldTokens.has(
+    encodeChainTokenId(i.chain, i._tokenId),
+  );
+
   const [isFold, isMiniFold] = (() => {
-    if (
-      foldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
-    ) {
+    if (isManualFold) {
       return [true, false];
     }
-    if (
-      unfoldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
-    ) {
+    if (isManualUnFold) {
       return [false, false];
     }
     if (!i.is_core) {
@@ -198,57 +262,74 @@ export function tagTokenItem<
     return [false, false];
   })();
 
-  const isManualFold = foldTokens.some(
-    x => x.chainId === i.chain && x.tokenId === i._tokenId,
-  );
-
   return {
     ...i,
     _isPined: isPin,
-    _isFold: isPin ? false : isFold,
+    _isFold: isFold,
     _isManualFold: isManualFold,
+    _isManualUnFold: isManualUnFold,
     _isMiniFold: isMiniFold,
     _isExcludeBalance: isExcludeBalance,
     _pinIndex: pinIndex,
   };
 }
 
-export const tagTokenList = (
-  tokens: AbstractPortfolioToken[],
+export const tagTokenList = <T extends AbstractPortfolioToken>(
+  tokens: T[],
   tokenSetting: ITokenSetting,
+  options?: {
+    filterChainServerIds?: true | Set<string>;
+  },
 ) => {
-  const tagedTokens = tokens.map(i => tagTokenItem(i, tokenSetting));
-  const { unfoldTokens = [] } = tokenSetting;
-  const coreTokens = tokens.filter(i => i.is_core);
-  const listLength = coreTokens.length || 0;
-  const totalValue = coreTokens.reduce(
-    (acc, curr) => acc + (curr._usdValue || 0),
-    0,
-  );
-  const threshold = Math.min((totalValue || 0) / 1000, 1000);
-  const thresholdIndex = coreTokens
-    ? coreTokens.findIndex(m => (m._usdValue || 0) < threshold)
-    : -1;
+  const { filterChainServerIds } = options || {};
+  const taggedTokens: ReturnType<typeof tagTokenItemV2>[] = [];
+  const statics = {
+    coreTokens: [] as ReturnType<typeof tagTokenItemV2>[],
+    totalValue: 0,
+    threshold: 0,
+    thresholdIndex: -1,
+    hasExpandSwitch: false,
+  };
 
-  const hasExpandSwitch =
-    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
-  if (!hasExpandSwitch) {
-    return tagedTokens;
+  const tokenSettingV2 = makeTokenSettingSets(tokenSetting);
+  const chainServerIds =
+    filterChainServerIds === true
+      ? makeChainServerIdSet()
+      : filterChainServerIds;
+
+  tokens.forEach(i => {
+    if (chainServerIds && !chainServerIds.has(i.chain)) return;
+
+    const tagged = tagTokenItemV2(i, tokenSettingV2);
+    taggedTokens.push(tagged);
+    if (tagged.is_core) {
+      statics.coreTokens.push(tagged);
+      statics.totalValue += tagged._usdValue || 0;
+    }
+  });
+
+  statics.threshold = Math.min(statics.totalValue / 100, 1000);
+  statics.thresholdIndex = statics.coreTokens.findIndex(
+    m => (m._usdValue || 0) < statics.threshold,
+  );
+
+  statics.hasExpandSwitch =
+    statics.coreTokens.length >= 15 &&
+    statics.thresholdIndex > -1 &&
+    statics.thresholdIndex <= statics.coreTokens.length - 4;
+
+  if (!statics.hasExpandSwitch) {
+    return taggedTokens;
   }
-  return tagedTokens.map(i => {
-    if (
-      i._isPined ||
-      i._isMiniFold ||
-      i._isFold ||
-      !i.is_core ||
-      unfoldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
-    ) {
+
+  return taggedTokens.map(i => {
+    if (i._isMiniFold || i._isFold || !i.is_core || i._isManualUnFold) {
       return i;
     }
     return {
       ...i,
-      _isMiniFold: (i._usdValue || 0) < threshold,
-      _isFold: (i._usdValue || 0) < threshold,
+      _isMiniFold: (i._usdValue || 0) < statics.threshold,
+      _isFold: (i._usdValue || 0) < statics.threshold,
     };
   });
 };

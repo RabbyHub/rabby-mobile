@@ -11,7 +11,7 @@ import AddressSource from '../AddressSourceCard';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useWhitelist } from '@/hooks/whitelist';
-import { useRisks } from './risk';
+import { useRisks } from '@/components/SendLike/risk';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import {
@@ -36,6 +36,8 @@ export interface ConfirmAddressScreenProps {
   ) => void;
   onCancel?: () => void;
 }
+
+/** @deprecated */
 const ConfirmAddress = ({
   account,
   onCancel,
@@ -54,11 +56,10 @@ const ConfirmAddress = ({
   const shouldPasswordValidation = useMemo(() => {
     return disableWhiteSwitch || inWhiteList;
   }, [disableWhiteSwitch, inWhiteList]);
-  const { loading, risks, addressDesc } = useRisks(
-    account.address,
-    !!account.balance,
+  const { loading, risks, addressDesc } = useRisks({
+    toAddress: account.address,
     cex,
-  );
+  });
   const [isChecked, setIsChecked] = useState(false);
   const { accounts } = useAccounts({
     disableAutoFetch: true,

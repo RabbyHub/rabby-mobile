@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { Props } from '../FooterBar/ActionsContainer';
 import { MiniProcessActions } from './MiniProcessActions';
 import { apiOneKey } from '@/core/apis';
-import { useSetHardWareWalletSignBleStatus } from './atom';
 
 export const MiniOneKeyProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
@@ -25,24 +24,21 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
     [account.address],
   );
 
-  const { setOneKeyCheckBlePending } = useSetHardWareWalletSignBleStatus();
-
   const handleSubmit = React.useCallback(() => {
     if (isSubmitting) {
       return;
     }
     setIsSubmitting(true);
-    setOneKeyCheckBlePending(true);
     isConnectedPromise
       .then(([isConnected]) => {
-        setOneKeyCheckBlePending(false);
         if (!isConnected) {
           onClickConnect(
             () => {
-              props.onSubmit();
               setIsSubmitting(false);
+              props.onSubmit();
             },
             () => {
+              setIsSubmitting(false);
               props.onCancel?.();
             },
           );
@@ -52,15 +48,9 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
         setIsSubmitting(false);
       })
       .finally(() => {
-        setOneKeyCheckBlePending(false);
+        setIsSubmitting(false);
       });
-  }, [
-    isSubmitting,
-    setOneKeyCheckBlePending,
-    isConnectedPromise,
-    props,
-    onClickConnect,
-  ]);
+  }, [isSubmitting, isConnectedPromise, props, onClickConnect]);
 
   return (
     <MiniProcessActions
@@ -69,6 +59,7 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
       submitText={t('page.signFooterBar.oneKeyConfirm')}
       disabledProcess={disabledProcess}
       buttonIcon={<OneKeySvg width={22} height={22} viewBox="0 0 28 28" />}
+      loading={isSubmitting}
     />
   );
 };

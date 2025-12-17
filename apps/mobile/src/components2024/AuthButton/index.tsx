@@ -18,6 +18,7 @@ export type IAuthButtonProps = Omit<ButtonProps, 'onPress'> & {
   onBeforeAuth?: () => void;
   authTitle?: string;
   syncUnlockTime?: boolean;
+  iconColor?: string;
 };
 
 const AuthButton: React.FC<IAuthButtonProps> = ({
@@ -26,6 +27,7 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
   onCancel,
   authTitle,
   syncUnlockTime,
+  iconColor,
   ...props
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -95,19 +97,19 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
         isBiometricsEnabled ? (
           isFaceID ? (
             <RcIconKeychainFaceIdCC
-              color={colors2024['neutral-InvertHighlight']}
+              color={iconColor || colors2024['neutral-InvertHighlight']}
               style={styles.lockIcon}
             />
           ) : (
             <RcIconKeychainFingerprintCC
-              color={colors2024['neutral-InvertHighlight']}
+              color={iconColor || colors2024['neutral-InvertHighlight']}
               style={styles.lockIcon}
             />
           )
         ) : (
           // <BiometricsIcon isFaceID={isFaceID} size={22} />
           <RcIconLock
-            color={colors2024['neutral-InvertHighlight']}
+            color={iconColor || colors2024['neutral-InvertHighlight']}
             style={styles.lockIcon}
           />
         )

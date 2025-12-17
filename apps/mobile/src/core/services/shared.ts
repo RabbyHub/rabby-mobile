@@ -5,7 +5,10 @@ import {
   normalizeKeyringState,
 } from '../storage/mmkv';
 
-import { ContactBookService } from '@rabby-wallet/service-address';
+import {
+  ContactBookService,
+  ContactBookStore,
+} from '@rabby-wallet/service-address';
 
 import { findChainByID } from '@/utils/chain';
 import { DappService } from './dappService';
@@ -46,6 +49,9 @@ import { SyncChainService } from './syncChainService';
 import { PerpsService } from './perpsService';
 import { setPreferenceServiceRef } from '@/utils/analytics';
 import { CurrencyService } from './currencyService';
+import { LendingService } from './lendingService';
+import { SAFE_API_KEY } from '@/constant/env';
+import { perfEvents } from '../utils/perf';
 
 migrateAppStorage(appStorage);
 
@@ -72,6 +78,8 @@ function try_catch_issue_on_preference({
 
 try_catch_issue_on_preference({ pos: 'before_preference' });
 
+GnosisKeyring.setApiKey(SAFE_API_KEY);
+
 // TODO: add other keyring classes
 const keyringClasses = [
   MockWalletConnectKeyring,
@@ -87,6 +95,17 @@ const keyringClasses = [
 
 export const contactService = new ContactBookService({
   storageAdapter: appStorage,
+});
+contactService.setBeforeSetKV((k, v) => {
+  switch (k) {
+    case 'aliases': {
+      const aliases = v as unknown as ContactBookStore['aliases'];
+      perfEvents.emit('CONTACTS_ALIASES_UPDATE', {
+        nextState: aliases,
+      });
+      break;
+    }
+  }
 });
 
 export const appEncryptor = new RNEncryptor();
@@ -230,6 +249,10 @@ export const perpsService = new PerpsService({
   storageAdapter: appStorage,
 });
 
+export const lendingService = new LendingService({
+  storageAdapter: appStorage,
+});
+
 export const currencyService = new CurrencyService({
   storageAdapter: appStorage,
 });
@@ -254,5 +277,6 @@ migrateServices({
   metamaskMode: metamaskModeService,
   syncChain: syncChainService,
   perps: perpsService,
+  lending: lendingService,
   currency: currencyService,
 });

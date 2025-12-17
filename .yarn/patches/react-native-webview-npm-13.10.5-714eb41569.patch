@@ -426,10 +426,23 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55
          event.putBoolean("canGoBack", webView.canGoBack());
          event.putBoolean("canGoForward", webView.canGoForward());
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
-index 4600a8dc5c448a2236d25e40172453f93ae92c45..4550481079f5b59e9a11029082958bf6cbac43fd 100644
+index 4600a8dc5c448a2236d25e40172453f93ae92c45..52672555350070ea2ca434d20c4117457fa1e692 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
-@@ -705,4 +705,10 @@ class RNCWebViewManagerImpl {
+@@ -337,7 +337,11 @@ class RNCWebViewManagerImpl {
+             throw RuntimeException("Arguments for loading an url are null!")
+           }
+           webView.progressChangedFilter.setWaitingForCommandLoadUrl(false)
+-          webView.loadUrl(args.getString(0))
++          val target = args.getString(0) ?: ""
++          if (ReactBuildConfig.DEBUG && target.isEmpty()) {
++            throw RuntimeException("You must specify an URL to load")
++          }
++          webView.loadUrl(target)
+         }
+         "requestFocus" -> webView.requestFocus()
+         "clearFormData" -> webView.clearFormData()
+@@ -705,4 +709,10 @@ class RNCWebViewManagerImpl {
      fun setWebviewDebuggingEnabled(viewWrapper: RNCWebViewWrapper, enabled: Boolean) {
          RNCWebView.setWebContentsDebuggingEnabled(enabled)
      }

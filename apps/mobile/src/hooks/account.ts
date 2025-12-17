@@ -1,12 +1,10 @@
 import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 
-import { atom, useAtom } from 'jotai';
 import {
   KeyringAccount,
   CORE_KEYRING_TYPES,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
-import * as Sentry from '@sentry/react-native';
 
 import {
   contactService,
@@ -28,105 +26,120 @@ import { coerceFloat } from '@/utils/number';
 import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import * as apiBalance from '@/core/apis/balance';
 import { useAtomicRequest } from './common/useAtomicAction';
-import { appServiceEvents } from '@/core/services/_utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
 import { isEqual, unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
-import { useHistoryTokenDict } from './historyTokenDict';
+import { updateHistoryTimeSingleAddress } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { fetchAllAccounts, KeyringAccountWithAlias } from '@/core/apis/account';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  makeAvoidParallelAsyncFunc,
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
+import { useBalanceAccounts } from './useAccountsBalance';
+import { sortAccountList } from '@/utils/sortAccountList';
 
-export type KeyringAccountWithAlias = KeyringAccount & {
-  aliasName?: string;
-  balance?: number;
-  evmBalance?: number;
+export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
+
+// const fetchingAccountsAtom = atom(false);
+
+type Store = {
+  accounts: KeyringAccountWithAlias[];
+  fetchingAccounts: boolean;
+  pinnedAddresses: IPinAddress[];
+  currentAccount: KeyringAccountWithAlias | null;
 };
+const zAccountStore = zCreate<Store>((set, get) => {
+  return {
+    accounts: [],
+    fetchingAccounts: false,
 
-const accountsAtom = atom<KeyringAccountWithAlias[]>([]);
+    pinnedAddresses: preferenceService.getPinAddresses(),
+    currentAccount: null,
+  };
+});
 
-accountsAtom.onMount = setAtom => {
-  fetchAllAccounts().then(accounts => {
-    setAtom(accounts || []);
+runIIFEFunc(() => {
+  keyringService.once('unlock', () => {
+    fetchAllAccounts().then(accounts => {
+      setAccounts(accounts);
+    });
   });
-};
+});
 
-export const currentAccountAtom = atom<null | KeyringAccountWithAlias>(null);
+function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
+  zAccountStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev.accounts, valOrFunc);
 
-const pinAddressesAtom = atom<IPinAddress[]>([]);
-
-pinAddressesAtom.onMount = setAtom => {
-  const addresses = preferenceService.getPinAddresses();
-  setAtom(addresses);
-};
-
-/**
- * @description if new fetched accounts are same from the existing ones, return the existing ones
- * to keep same ref to avoid later re-renders on React Hooks
- */
-const existedAccountsRef = { current: [] as KeyringAccountWithAlias[] };
-async function fetchAllAccounts() {
-  let nextAccounts: KeyringAccountWithAlias[] = [];
-  try {
-    nextAccounts = await keyringService
-      .getAllVisibleAccountsArray()
-      .then(list => {
-        return list.map(account => {
-          const balance = preferenceService.getAddressBalance(account.address);
-          return {
-            ...account,
-            aliasName: '',
-            evmBalance: balance?.evm_usd_value || 0,
-            balance: balance?.total_usd_value || 0,
-          };
-        });
-      });
-
-    await Promise.allSettled(
-      nextAccounts.map(async (account, idx) => {
-        const aliasName = contactService.getAliasByAddress(account.address);
-        nextAccounts[idx] = {
-          ...account,
-          aliasName: aliasName?.alias || '',
-        };
-      }),
-    );
-  } catch (err) {
-    Sentry.captureException(err);
-  } finally {
-    if (!isEqual(existedAccountsRef.current, nextAccounts)) {
-      existedAccountsRef.current = nextAccounts;
+    if (changed) {
+      return { ...prev, accounts: newVal };
     }
 
-    return existedAccountsRef.current;
-  }
+    return prev;
+  });
 }
 
-const fetchingAccountsAtom = atom(false);
+export function setCurrentAccount(
+  valOrFunc: UpdaterOrPartials<Store['currentAccount']>,
+) {
+  zAccountStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.currentAccount,
+      valOrFunc,
+    );
+
+    if (changed) {
+      return { ...prev, currentAccount: newVal };
+    }
+
+    return prev;
+  });
+}
+eventBus.on(EVENT_SWITCH_ACCOUNT, v => {
+  setCurrentAccount(v);
+});
+
+function setPinAddresses(
+  valOrFunc: UpdaterOrPartials<Store['pinnedAddresses']>,
+) {
+  zAccountStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.pinnedAddresses,
+      valOrFunc,
+    );
+
+    if (changed) {
+      return { ...prev, pinnedAddresses: newVal };
+    }
+
+    return prev;
+  });
+}
+
+const doFetchAccounts = makeAvoidParallelAsyncFunc(async () => {
+  const nextAccounts = await fetchAllAccounts();
+  setAccounts(nextAccounts);
+
+  return nextAccounts;
+});
+
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const [accounts, setAccounts] = useAtom(accountsAtom);
+  const accounts = zAccountStore(s => s.accounts);
 
   const { disableAutoFetch = false } = opts || {};
 
-  const doFetchAccounts = useCallback(async () => {
-    const nextAccounts = await fetchAllAccounts();
-    setAccounts(prev => {
-      if (isEqual(prev, nextAccounts)) return prev;
-
-      return nextAccounts;
-    });
-  }, [setAccounts]);
-
-  const { fetchAction: fetchAccounts } = useAtomicRequest({
-    isRequestingAtom: fetchingAccountsAtom,
-    doRequest: doFetchAccounts,
-  });
-
   useEffect(() => {
     if (!disableAutoFetch) {
-      fetchAccounts();
+      doFetchAccounts();
     }
-  }, [disableAutoFetch, fetchAccounts]);
+  }, [disableAutoFetch]);
 
   const stableAccounts = useCreationWithShallowCompare(() => {
     return accounts;
@@ -134,42 +147,43 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
 
   return {
     accounts: stableAccounts,
-    fetchAccounts,
+    fetchAccounts: doFetchAccounts,
   };
 }
 
+export const storeApiAccounts = {
+  getAccounts() {
+    return zAccountStore.getState().accounts;
+  },
+  getPinAddresses() {
+    return zAccountStore.getState().pinnedAddresses;
+  },
+};
+
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
-  const [allAccounts, setAccounts] = useAtom(accountsAtom);
+  const allAccounts = zAccountStore(s => s.accounts);
 
   const { disableAutoFetch = false } = opts || {};
 
-  const doFetchAccounts = useCallback(async () => {
-    const nextAccounts = await fetchAllAccounts();
-    setAccounts(nextAccounts);
-  }, [setAccounts]);
-
-  const { fetchAction: fetchAccounts } = useAtomicRequest({
-    isRequestingAtom: fetchingAccountsAtom,
-    doRequest: doFetchAccounts,
-  });
-
   useEffect(() => {
     if (!disableAutoFetch) {
-      fetchAccounts();
+      doFetchAccounts();
     }
-  }, [disableAutoFetch, fetchAccounts]);
+  }, [disableAutoFetch]);
+
+  const accounts = useCreationWithShallowCompare(() => {
+    return filterMyAccounts(allAccounts);
+  }, [allAccounts]);
 
   return {
-    accounts: useMemo(() => {
-      return [...filterMyAccounts(allAccounts)];
-    }, [allAccounts]),
-    fetchAccounts,
+    accounts,
+    fetchAccounts: doFetchAccounts,
   };
 }
 
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
-  const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
+  const pinAddresses = zAccountStore(s => s.pinnedAddresses);
 
   /**
    * @deprecated
@@ -177,7 +191,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const getPinAddresses = useCallback(() => {
     const addresses = preferenceService.getPinAddresses();
     setPinAddresses(addresses);
-  }, [setPinAddresses]);
+  }, []);
 
   const getPinAddressesAsync = useCallback(async () => {
     return getPinAddresses();
@@ -207,6 +221,10 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
       if (nextPinned) {
         addresses.unshift(newItem);
         preferenceService.updatePinAddresses(addresses);
+        matomoRequestEvent({
+          category: 'Pin Address',
+          action: 'PinAddress_Finish',
+        });
       } else {
         const toggleIdx = addresses.findIndex(
           addr =>
@@ -220,7 +238,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
       }
       setPinAddresses(addresses);
     },
-    [setPinAddresses],
+    [],
   );
 
   useEffect(() => {
@@ -236,40 +254,46 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   };
 };
 
-export const usePinnedAccountList = (opts?: { disableAutoFetch?: boolean }) => {
-  const { disableAutoFetch = false } = opts || {};
-  const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
-  const { accounts } = useAccounts(opts);
+export const usePinnedAccountList = () => {
+  const pinAddresses = zAccountStore(s => s.pinnedAddresses);
+  const accounts = zAccountStore(s => s.accounts);
+  const { balanceAccounts } = useBalanceAccounts();
 
   const pinnedAccountList = useMemo(() => {
     const res: KeyringAccountWithAlias[] = [];
     pinAddresses?.forEach(pinAddr => {
-      const acc = accounts.find(account => {
+      const item = accounts.find(account => {
         return (
           isSameAddress(pinAddr.address, account.address) &&
           account.brandName === pinAddr.brandName
         );
       });
       if (
-        acc &&
+        item &&
         ![
           KEYRING_TYPE.GnosisKeyring,
           KEYRING_TYPE.WatchAddressKeyring,
           KEYRING_TYPE.WalletConnectKeyring,
-        ].includes(acc.type)
+        ].includes(item.type)
       ) {
-        res.push(acc);
+        const account = balanceAccounts.find(acc =>
+          isSameAddress(acc.address, item.address),
+        );
+        res.push({
+          ...item,
+          balance: account?.balance || item.balance || 0,
+          evmBalance: account?.evmBalance || item.evmBalance || 0,
+        });
       }
     });
     return res;
-  }, [accounts, pinAddresses]);
+  }, [accounts, balanceAccounts, pinAddresses]);
 
   return pinnedAccountList;
 };
 
 export function useRemoveAccount() {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
-  const { updateHistoryTimeSingleAddress } = useHistoryTokenDict();
   return useCallback(
     async (account: KeyringAccount) => {
       await removeAddress(account);
@@ -283,7 +307,7 @@ export function useRemoveAccount() {
         transactionHistoryService.clearSuccessAndFailList(account.address);
       }
     },
-    [accounts, fetchAccounts, updateHistoryTimeSingleAddress],
+    [accounts, fetchAccounts],
   );
 }
 
@@ -299,25 +323,77 @@ export function useWalletBrandLogo<T extends string>(brandName?: T) {
   };
 }
 
-const balanceMapAtom = atom<{
-  [address: string]: TotalBalanceResponse;
-}>({});
 type MatteredChainBalances = {
   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
 };
-const matteredChainBalancesAtom = atom<MatteredChainBalances>({});
-const matteredChainBalancesAllAtom = atom<MatteredChainBalances>({});
-const testnetMatteredChainBalancesAtom = atom<MatteredChainBalances>({});
+type MatteredBalancesState = {
+  matteredChainBalances: MatteredChainBalances;
+  matteredChainBalancesAll: MatteredChainBalances;
+  testnetMatteredChainBalances: MatteredChainBalances;
+};
+const matteredBalancesStore = zCreate<MatteredBalancesState>(() => ({
+  matteredChainBalances: {},
+  matteredChainBalancesAll: {},
+  testnetMatteredChainBalances: {},
+}));
+
+function setMattredChainBalances(
+  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
+) {
+  matteredBalancesStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.matteredChainBalances,
+      valOrFunc,
+      { strict: true },
+    );
+
+    if (!changed) return prev;
+
+    return { ...prev, matteredChainBalances: newVal };
+  });
+}
+
+function setMattredChainBalancesAll(
+  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
+) {
+  matteredBalancesStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.matteredChainBalancesAll,
+      valOrFunc,
+      { strict: true },
+    );
+
+    if (!changed) return prev;
+
+    return { ...prev, matteredChainBalancesAll: newVal };
+  });
+}
+
+function setTestMattredChainBalances(
+  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
+) {
+  matteredBalancesStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.testnetMatteredChainBalances,
+      valOrFunc,
+      { strict: true },
+    );
+
+    if (!changed) return prev;
+
+    return { ...prev, testnetMatteredChainBalances: newVal };
+  });
+}
 
 export function useChainBalances() {
-  const [matteredChainBalances, setMattredChainBalances] = useAtom(
-    matteredChainBalancesAtom,
+  const matteredChainBalances = matteredBalancesStore(
+    s => s.matteredChainBalances,
   );
-  const [matteredChainBalancesAll, setMattredChainBalancesAll] = useAtom(
-    matteredChainBalancesAllAtom,
+  const matteredChainBalancesAll = matteredBalancesStore(
+    s => s.matteredChainBalancesAll,
   );
-  const [testnetMatteredChainBalances, setTestMattredChainBalances] = useAtom(
-    testnetMatteredChainBalancesAtom,
+  const testnetMatteredChainBalances = matteredBalancesStore(
+    s => s.testnetMatteredChainBalances,
   );
 
   return {
@@ -586,45 +662,6 @@ export function useLoadMatteredChainBalances({
     getOrderedChainList: fetchOrderedChainList,
   };
 }
-
-// interface AccountState {
-//   /**
-//    * @description useless now
-//    */
-//   // visibleAccounts: DisplayedKeyring[];
-//   /**
-//    * @description useless now
-//    */
-//   // hiddenAccounts: Account[];
-//   // keyrings: DisplayedKeyring[];
-//   // balanceMap: {
-//   //   [address: string]: TotalBalanceResponse;
-//   // };
-//   // matteredChainBalances: {
-//   //   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
-//   // };
-//   // testnetMatteredChainBalances: {
-//   //   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
-//   // };
-//   /**
-//    * @description maybe repeated hooks in Home
-//    */
-//   // tokens: {
-//   //   list: AbstractPortfolioToken[];
-//   //   customize: AbstractPortfolioToken[];
-//   //   blocked: AbstractPortfolioToken[];
-//   // };
-//   // testnetTokens: {
-//   //   list: AbstractPortfolioToken[];
-//   //   customize: AbstractPortfolioToken[];
-//   //   blocked: AbstractPortfolioToken[];
-//   // };
-
-//   /**
-//    * @description useless now
-//    */
-//   // mnemonicAccounts: DisplayedKeyring[];
-// }
 
 export const useFallbackAccount = () => {
   const accounts = useMyAccounts({

@@ -30,7 +30,6 @@ export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
   const { browserState, setPartialBrowserState, onHideBrowser, terminateTabs } =
     useBrowser();
-  const { browserHistoryList } = useBrowserHistory();
   const { styles } = useTheme2024({
     getStyle,
   });
@@ -43,20 +42,6 @@ export const BottomSheetBrowser = () => {
   const snapPoints = useMemo(() => {
     return [safeOffScreenTop];
   }, [safeOffScreenTop]);
-
-  const isTransparent = useMemo(() => {
-    return (
-      browserState.trigger === 'home' &&
-      !browserHistoryList?.length &&
-      !browserState.searchText.trim() &&
-      browserState.isShowSearch
-    );
-  }, [
-    browserHistoryList?.length,
-    browserState.isShowSearch,
-    browserState.searchText,
-    browserState.trigger,
-  ]);
 
   useEffect(() => {
     if (browserState.isShowBrowser && !isLoad) {
@@ -108,7 +93,8 @@ export const BottomSheetBrowser = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowBrowser ? 0 : -1}
-      enableContentPanningGesture={browserState.isShowSearch}
+      // enableContentPanningGesture={browserState.isShowSearch}
+      enableContentPanningGesture={false}
       enablePanDownToClose
       enableHandlePanningGesture
       name="urlWebviewContainerRef"
@@ -116,7 +102,8 @@ export const BottomSheetBrowser = () => {
       snapPoints={snapPoints}
       enableDismissOnClose={false}
       keyboardBehavior="extend"
-      android_keyboardInputMode="adjustResize"
+      // android_keyboardInputMode="adjustResize"
+      backdropProps={{ pressBehavior: 'none' }}
       // enableBlurKeyboardOnGesture
       // handleStyle={styles.hidden}
       handleComponent={BrowserHandler}
@@ -149,24 +136,16 @@ export const BottomSheetBrowser = () => {
         }
       }}>
       <AutoLockView as="View" style={styles.customContentStyle}>
-        {!isTransparent ? (
-          <BottomSheetHandlableView
-            style={[
-              styles.customHandleContainer,
-              {
-                left: width / 2 - 25,
-              },
-            ]}>
-            <View style={styles.customHandle} />
-          </BottomSheetHandlableView>
-        ) : null}
-        {isLoad ? (
-          <BrowserScreen style={isTransparent ? styles.transparent : null} />
-        ) : (
-          <View
-            style={isTransparent ? styles.transparent : styles.placeholder}
-          />
-        )}
+        <BottomSheetHandlableView
+          style={[
+            styles.customHandleContainer,
+            {
+              left: width / 2 - 25,
+            },
+          ]}>
+          <View style={styles.customHandle} />
+        </BottomSheetHandlableView>
+        {isLoad ? <BrowserScreen /> : <View style={styles.placeholder} />}
       </AutoLockView>
     </AppBottomSheetModal>
   );
@@ -235,7 +214,7 @@ export const BrowserManagePopup = () => {
       }}
       ref={modalRef}
       keyboardBehavior="extend"
-      android_keyboardInputMode="adjustResize"
+      // android_keyboardInputMode="adjustResize"
       snapPoints={snapPoints}
       // enableDismissOnClose={false}
       onChange={index => {

@@ -11,12 +11,17 @@ import java.util.concurrent.TimeUnit
 class UserAgentClientFactory : OkHttpClientFactory {
     override fun createNewNetworkModuleClient(): OkHttpClient {
         val dispatcher = Dispatcher().apply {
-            maxRequests = 100
-            maxRequestsPerHost = 100
+            if (BuildConfig.DEBUG) {
+              maxRequests = 10
+              maxRequestsPerHost = 5
+            } else {
+              maxRequests = 100
+              maxRequestsPerHost = 100
+            }
         }
 
         Log.d("UserAgentClientFactory", "create")
-        
+
         return OkHttpClient.Builder()
             .dispatcher(dispatcher)
             .writeTimeout(10, TimeUnit.SECONDS)

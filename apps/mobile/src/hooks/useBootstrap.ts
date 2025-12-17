@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { atom, useAtom } from 'jotai';
 import {
   customTestnetService,
   keyringService,
@@ -14,17 +13,29 @@ import {
   BROWSER_SCRIPT_BASE,
   JS_GET_WINDOW_INFO_AFTER_LOAD,
   SPA_urlChangeListener,
+  JSBridgeHarden,
 } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { loadSecurityChain, useGlobal } from './global';
-import { useAppUnlocked, useTryUnlockAppWithBuiltinOnTop } from './useLock';
-import { useNavigationReady } from './navigation';
+import { useAppUnlocked, getTriedUnlock } from './useLock';
 import SplashScreen from 'react-native-splash-screen';
 import { useAccounts } from './account';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { useBiometrics } from './biometrics';
 import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
-import { browserStateAtom } from './browser/useBrowser';
+// import { browserStateAtom } from './browser/useBrowser';
+import { apisSafe } from '@/core/apis/safe';
+import { RefLikeObject } from '@/utils/type';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { replace } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { setBrowserState } from './browser/useBrowser';
+import { perfEvents } from '@/core/utils/perf';
 
 const syncCustomTestChainList = () => {
   try {
@@ -34,9 +45,17 @@ const syncCustomTestChainList = () => {
   }
 };
 
-const bootstrapAtom = atom({
+type BootStrapState = {
+  couldRender: boolean;
+};
+const zBootstrapStore = zCreate<BootStrapState>(() => ({
   couldRender: false,
-});
+}));
+function setBootstrap(valOrFunc: UpdaterOrPartials<BootStrapState>) {
+  zBootstrapStore.setState(
+    prev => resolveValFromUpdater(prev, valOrFunc).newVal,
+  );
+}
 
 const DEBUG_IN_PAGE_SCRIPTS = {
   LOAD_BEFORE: __DEV__
@@ -62,27 +81,27 @@ const DEBUG_IN_PAGE_SCRIPTS = {
     : ``,
 };
 
+const apiInitializedRef: RefLikeObject<boolean> = { current: false };
+const doInitializeApis = async () => {
+  if (apiInitializedRef.current) return;
+  apiInitializedRef.current = true;
+
+  try {
+    await initServices();
+    await initApis();
+    syncCustomTestChainList();
+  } catch (error) {
+    console.error('useInitializeAppOnTop::error', error);
+    apiInitializedRef.current = false;
+  }
+};
+
 /**
  * @description only call this hook on the top level component
  */
 export function useInitializeAppOnTop() {
   const { isAppUnlocked, setAppLock } = useAppUnlocked();
-  const [, setBrowserState] = useAtom(browserStateAtom);
-
-  const apiInitializedRef = React.useRef(false);
-  const doInitializeApis = React.useCallback(async () => {
-    if (apiInitializedRef.current) return;
-    apiInitializedRef.current = true;
-
-    try {
-      await initServices();
-      await initApis();
-      syncCustomTestChainList();
-    } catch (error) {
-      console.error('useInitializeAppOnTop::', error);
-      apiInitializedRef.current = false;
-    }
-  }, []);
+  // const setBrowserState = useSetAtom(browserStateAtom);
 
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
   React.useEffect(() => {
@@ -114,7 +133,7 @@ export function useInitializeAppOnTop() {
       keyringService.off('unlock', onUnlock);
       keyringService.off('lock', onLock);
     };
-  }, [setAppLock, doInitializeApis, fetchAccounts, setBrowserState]);
+  }, [setAppLock, fetchAccounts]);
 
   const { fetchTop5TokensForAllAccountsOnce } = useFetchTokensForAllAccounts();
   React.useEffect(() => {
@@ -129,28 +148,53 @@ export function useInitializeAppOnTop() {
   }, [fetchTop5TokensForAllAccountsOnce]);
 
   React.useEffect(() => {
-    if (isAppUnlocked) {
+    const onUnlock = async () => {
+      apisSafe.syncAllGnosisNetworks();
       doInitializeApis();
-    }
-  }, [doInitializeApis, isAppUnlocked]);
+
+      // const accounts = await keyringService.getAllVisibleAccountsArray();
+      // if (!accounts?.length) {
+      //   replace(RootNames.StackGetStarted, {
+      //     screen: RootNames.GetStartedScreen2024,
+      //   });
+      // }
+    };
+    keyringService.on('unlock', onUnlock);
+
+    return () => {
+      keyringService.off('unlock', onUnlock);
+    };
+  }, []);
 
   return { isAppUnlocked };
 }
 
-const loadEntryScriptsAtom = atom({
+type LoadEntryScriptsState = {
+  inPageWeb3: string;
+  vConsole: string;
+};
+const loadEntryScriptsStore = zCreate<LoadEntryScriptsState>(() => ({
   inPageWeb3: '',
   vConsole: '',
-});
+}));
+function setEntryScripts(valOrFunc: UpdaterOrPartials<LoadEntryScriptsState>) {
+  loadEntryScriptsStore.setState(prev => ({
+    ...prev,
+    ...resolveValFromUpdater(prev, valOrFunc, { strict: false }).newVal,
+  }));
+}
+
 export function useJavaScriptBeforeContentLoaded(options?: {
   isTop?: boolean;
 }) {
-  const [{ couldRender }] = useAtom(bootstrapAtom);
+  const couldRender = zBootstrapStore(s => s.couldRender);
+  const inPageWeb3 = loadEntryScriptsStore(s => s.inPageWeb3);
+  const vConsole = loadEntryScriptsStore(s => s.vConsole);
 
-  const [entryScripts, setEntryScripts] = useAtom(loadEntryScriptsAtom);
   const { isTop } = options || {};
 
   React.useEffect(() => {
-    if (!isTop || entryScripts.inPageWeb3) return;
+    if (!isTop || inPageWeb3) return;
 
     Promise.allSettled([
       EntryScriptWeb3.init(),
@@ -163,31 +207,32 @@ export function useJavaScriptBeforeContentLoaded(options?: {
 
       setEntryScripts(prev => ({ ...prev, inPageWeb3, vConsole }));
     });
-  }, [isTop, entryScripts.inPageWeb3, setEntryScripts]);
+  }, [isTop, inPageWeb3]);
 
   const fullScript = React.useMemo(() => {
     return [
       // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
-      entryScripts.inPageWeb3,
+      JSBridgeHarden,
+      inPageWeb3,
       BROWSER_SCRIPT_BASE,
       __DEV__ ? JS_GET_WINDOW_INFO_AFTER_LOAD : '',
       SPA_urlChangeListener,
-      __DEV__ ? entryScripts.vConsole : '',
+      __DEV__ ? vConsole : '',
       JS_LOG_ON_MESSAGE,
       ';true;',
       // DEBUG_IN_PAGE_SCRIPTS.LOAD_AFTER,
     ]
       .filter(Boolean)
       .join('\n');
-  }, [entryScripts.inPageWeb3, entryScripts.vConsole]);
+  }, [inPageWeb3, vConsole]);
 
   return {
     entryScriptWeb3Loaded: [
       couldRender,
-      !!entryScripts.inPageWeb3,
+      !!inPageWeb3,
       // __DEV__ ? !!entryScripts.vConsole : true,
     ].every(x => !!x),
-    entryScripts,
+    entryScripts: { inPageWeb3, vConsole },
     fullScript: fullScript,
   };
 }
@@ -200,43 +245,41 @@ const hideSplashScreen = (forceHide = false) => {
   }
 };
 
-// export function useHideSplash() {
-//   React.useEffect(() => {
-//     hideSplashScreen();
-//   }, []);
-// }
+runIIFEFunc(() => {
+  const sub = perfEvents.subscribe('APP_NAVIGATION_READY', () => {
+    hideSplashScreen(true);
+    sub.remove();
+  });
+});
 
 /**
  * @description only call this hook on the top level component
  */
 export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
-  const [{ couldRender }, setBootstrap] = useAtom(bootstrapAtom);
+  const couldRender = zBootstrapStore(s => s.couldRender);
   useJavaScriptBeforeContentLoaded({ isTop: true });
   useGlobal();
   useLoadLockInfo({ autoFetch: true });
   const { fetchBiometrics } = useBiometrics({ autoFetch: false });
 
-  const { appNavigationReady } = useNavigationReady();
+  const startedLoadRef = React.useRef(false);
   React.useEffect(() => {
-    if (appNavigationReady) {
-      hideSplashScreen(true);
-    }
-  }, [appNavigationReady]);
+    if (startedLoadRef.current) return;
+    startedLoadRef.current = true;
 
-  const { getTriedUnlock } = useTryUnlockAppWithBuiltinOnTop();
-
-  React.useEffect(() => {
     Promise.allSettled([
       getTriedUnlock(),
       loadSecurityChain({ rabbitCode }),
       fetchBiometrics(),
     ])
       .then(async ([_unlockResult, _securityChain]) => {
+        console.debug('useBootstrapApp::sucess', _unlockResult);
         setBootstrap({ couldRender: true });
       })
       .catch(err => {
-        console.error('useBootstrapApp::', err);
-        setBootstrap({ couldRender: true });
+        startedLoadRef.current = false;
+        console.error('useBootstrapApp::error', err);
+        setBootstrap({ couldRender: false });
       })
       .finally(() => {
         setTimeout(() => {
@@ -246,7 +289,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           );
         }, 1e3);
       });
-  }, [getTriedUnlock, setBootstrap, fetchBiometrics, rabbitCode]);
+  }, [fetchBiometrics, rabbitCode]);
 
   return {
     couldRender,

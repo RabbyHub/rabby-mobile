@@ -71,11 +71,14 @@ function AddressItemInSheetModal({
 }: {
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
+  /** @deprecated */
   isPinned?: boolean;
   showCopyAndQR?: boolean;
+  /** @deprecated */
   replaceNameWithAliasAddress?: boolean;
   defaultPressAction?: 'copy' | 'asPress';
   onPressAccount?: (account: Account) => void;
+  /** @deprecated */
   isReceive?: boolean;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
@@ -360,7 +363,7 @@ export function AccountsPanelInSheetModal({
 }: {
   containerStyle?: StyleProp<ViewStyle>;
   onSelectAccount?: (account: Account | null) => void;
-  scene?: 'GasAccount' | 'receive' | undefined;
+  scene?: 'GasAccount' | 'receive' | 'Lending' | 'TokenDetail' | undefined;
   defaultPressItemAction?: React.ComponentProps<
     typeof AddressItemInSheetModal
   >['defaultPressAction'];

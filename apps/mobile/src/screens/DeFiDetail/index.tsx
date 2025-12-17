@@ -25,11 +25,11 @@ import {
   useFallbackAccount,
   useMyAccounts,
 } from '@/hooks/account';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
-import { useAssets } from '../Search/useAssets';
+import { useLoadAssets } from '../Search/useAssets';
 import { formatNetworth } from '@/utils/math';
 import { getDisplayedPortfolioUsdValue } from '../Home/utils/converAssets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -195,7 +195,6 @@ export const DeFiDetailScreen = () => {
   }, [data?.chain]);
 
   const { t } = useTranslation();
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { deFiRefresh, singleDeFiRefresh } = useTriggerTagAssets();
 
   const refreshTag = useCallback(() => {
@@ -259,7 +258,13 @@ export const DeFiDetailScreen = () => {
     return (
       <RightMore
         token={data}
-        refreshBalance={triggerUpdate}
+        refreshBalance={() =>
+          apisAddressBalance.triggerUpdate({
+            address: finalAccount?.address,
+            force: false,
+            fromScene: 'DefiDetail',
+          })
+        }
         refreshTags={refreshTag}
       />
     );
@@ -275,8 +280,9 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
-  const { getCacheTop10Assets, refreshing, assetsMap, loadSpecificDefi } =
-    useAssets({ hideCombined: true });
+  const { getCacheTop10Assets, refreshing, portfoliosMap, loadSpecificDefi } =
+    useLoadAssets();
+
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -308,8 +314,8 @@ export const DeFiDetailScreen = () => {
       totalUsdValue: SectionListItem['totalUsdValue'];
       address: SectionListItem['address'];
     }[] = [];
-    Object.keys(assetsMap).forEach(address => {
-      const { portfolios } = assetsMap[address];
+    Object.keys(portfoliosMap).forEach(address => {
+      const portfolios = portfoliosMap[address];
 
       portfolios?.map(portfolio => {
         if (portfolio.id === data?.id && portfolio.chain === data?.chain) {
@@ -329,7 +335,7 @@ export const DeFiDetailScreen = () => {
       );
       if (idx > -1) {
         sectionsList.push({
-          ...tempList[idx],
+          ...tempList[idx]!,
           type: account.type,
           aliasName: account.aliasName || ellipsisAddress(account.address),
         });
@@ -341,7 +347,7 @@ export const DeFiDetailScreen = () => {
   }, [
     isSingleAddress,
     data,
-    assetsMap,
+    portfoliosMap,
     accounts,
     currentPortfolio,
     portfolioList,
@@ -407,10 +413,19 @@ export const DeFiDetailScreen = () => {
           addressType={section.type}
           onRefresh={handleRefresh}
           key={`${item.id}-${section.address}-${section.totalUsdValue}`}
+          session={
+            data?.site_url && data?.logo
+              ? {
+                  name: data?.name,
+                  icon: data?.logo || '',
+                  origin: data?.site_url || '',
+                }
+              : undefined
+          }
         />
       );
     },
-    [data?.chain, data?.logo, handleRefresh],
+    [data?.chain, data?.logo, data?.name, data?.site_url, handleRefresh],
   );
 
   const { bottom } = useSafeAreaInsets();

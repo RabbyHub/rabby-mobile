@@ -1,5 +1,5 @@
 import { ellipsis } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { createPersistStore } from '@rabby-wallet/persist-store';
+import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 
 export type ContactBookItem = {
@@ -19,22 +19,15 @@ export type ContactBookStore = {
   aliases: Record<string, AddressAliasItem>;
 };
 
-export class ContactBookService {
-  store: ContactBookStore;
-
+export class ContactBookService extends StoreServiceBase<ContactBookStore> {
   constructor(options?: StorageAdapaterOptions) {
-    this.store = createPersistStore<ContactBookStore>(
-      {
-        name: 'contactBook',
-        template: {
-          contacts: {},
-          aliases: {},
-        },
-      },
-      {
-        storage: options?.storageAdapter,
-      },
-    );
+    super('contactBook', {
+      contacts: {},
+      aliases: {},
+    },
+    {
+      storageAdapter: options?.storageAdapter,
+    })
   }
 
   addContact(contact: ContactBookItem | ContactBookItem[]) {
@@ -78,15 +71,19 @@ export class ContactBookService {
     return Object.values(this.store.aliases);
   }
 
-  getAliasByAddress(address: string): AddressAliasItem | undefined {
+  getAliasByAddress(address: string, options?: {
+    /** @default false */
+    keepEmptyIfNotFound?: boolean;
+  }): AddressAliasItem | undefined {
     if (!address) {
       return undefined;
     }
     const alias = this.store.aliases[address.toLowerCase()];
     if (!alias) {
+      const { keepEmptyIfNotFound = false } = options || {};
       return {
         address: address.toLowerCase(),
-        alias: ellipsis(address, 6),
+        alias: keepEmptyIfNotFound ? '' : ellipsis(address, 6),
         isDefaultAlias: true,
       };
     }

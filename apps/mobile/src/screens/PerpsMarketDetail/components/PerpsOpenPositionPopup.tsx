@@ -1,16 +1,14 @@
-import { AppSwitch } from '@/components';
+/* eslint-disable react-native/no-inline-styles */
+import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
+import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  formatPerpsUsdValue,
-  formatUsdValue,
-  splitNumberByStep,
-} from '@/utils/number';
-import { calLiquidationPrice } from '@/utils/perps';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { formatPerpsUsdValue } from '@/utils/number';
+import { calLiquidationPrice, formatPerpsPct } from '@/utils/perps';
+import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
   BottomSheetTextInput,
@@ -20,21 +18,27 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Platform,
+  Keyboard,
   Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
+  TextInput,
 } from 'react-native';
-import { PerpsAutoCloseModal } from './PerpsAutoCloseModal';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
+
+const isAndroid = Platform.OS === 'android';
 import { StepInput } from '@/components2024/StepInput';
-import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
+import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import BigNumber from 'bignumber.js';
 import { useUsdInput } from '@/hooks/useUsdInput';
-import { RcIconInfoFill1CC } from '@/assets/icons/common';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
-const isAndroid = Platform.OS === 'android';
+import { formatUsdValueKMB } from '@/screens/Home/utils/price';
+import { MarketData } from '@/hooks/perps/usePerpsStore';
+import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
+import { PerpsSlider } from './PerpsSlider';
+import { AssetPriceInfo } from './PerpsPriceInfo';
+import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -48,8 +52,12 @@ export const PerpsOpenPositionPopup: React.FC<{
   szDecimals: number;
   maxNtlValue: number;
   availableBalance: number;
+  setCurrentTpOrSl: (params: { tpPrice?: string; slPrice?: string }) => void;
   onCancel: () => void;
   onConfirm: () => void;
+  marketDataItem: MarketData;
+  activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
+  currentAssetCtx?: MarketData | null;
   handleOpenPosition: (params: {
     coin: string;
     size: string;
@@ -68,7 +76,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   >;
 }> = ({
   visible,
-  direction,
+  direction: _direction,
   providerFee,
   coin,
   coinLogo,
@@ -80,38 +88,47 @@ export const PerpsOpenPositionPopup: React.FC<{
   onCancel,
   onConfirm,
   handleOpenPosition,
+  setCurrentTpOrSl,
   maxNtlValue,
+  marketDataItem,
+  activeAssetCtx,
+  currentAssetCtx,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
   });
 
   const { t } = useTranslation();
-  const [leveragePopupVisible, setLeveragePopupVisible] = React.useState(false);
   const [isReviewMode, setIsReviewMode] = React.useState(false);
   const { showTipsPopup } = useTipsPopup();
-
-  const openLeveragePopup = () => {
-    setLeveragePopupVisible(true);
-  };
-  const [autoCloseVisible, setAutoCloseVisible] = React.useState(false);
-  // const [margin, setMargin] = React.useState<string>('');
+  const [direction, setSelectedDirection] = React.useState<'Long' | 'Short'>(
+    _direction,
+  );
   const {
     value: margin,
     displayedValue,
     onChangeText: setMargin,
   } = useUsdInput();
-  const [selectedLeverage, setLeverage] = React.useState<number | undefined>(5);
+  const [selectedLeverage, setLeverage] = React.useState<number | undefined>(
+    leverageRang[1],
+  );
   const leverage = selectedLeverage || 1;
-  const [autoClose, setAutoClose] = React.useState({
-    isOpen: false,
-    tpTriggerPx: '',
-    slTriggerPx: '',
-  });
+  const [tpTriggerPx, setTpTriggerPx] = React.useState<string>('');
+  const [slTriggerPx, setSlTriggerPx] = React.useState<string>('');
+  const leverageInputRef = useRef<TextInput>(null);
 
-  // 计算交易金额
+  // Calculate slider percentage
+  const sliderPercentage = React.useMemo(() => {
+    const marginValue = Number(margin) || 0;
+    if (marginValue === 0 || availableBalance === 0) {
+      return 0;
+    }
+    return Math.min((marginValue / availableBalance) * 100, 100);
+  }, [margin, availableBalance]);
+
+  // 计算交易金额, 不是真实的交易金额，估算
   const tradeAmount = React.useMemo(() => {
     const marginValue = Number(margin) || 0;
     return marginValue * leverage;
@@ -136,7 +153,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       Number(margin),
       direction,
       Number(tradeSize),
-      leverage,
+      Number(tradeSize) * markPrice,
       maxLeverage,
     ).toFixed(pxDecimals);
   }, [
@@ -184,7 +201,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       };
     }
 
-    if (usdValue < 10 || sizeValue < 10) {
+    if (sizeValue < PERPS_MINI_USD_VALUE) {
       // 最小订单限制 $10
       return {
         isValid: false,
@@ -219,14 +236,6 @@ export const PerpsOpenPositionPopup: React.FC<{
     t,
   ]);
 
-  const handleMax = useMemoizedFn(() => {
-    setMargin(
-      new BigNumber(availableBalance)
-        .decimalPlaces(2, BigNumber.ROUND_DOWN)
-        .toFixed(),
-    );
-  });
-
   const leverageRangeValidation = React.useMemo(() => {
     if (selectedLeverage == null || Number.isNaN(+selectedLeverage)) {
       return {
@@ -256,56 +265,75 @@ export const PerpsOpenPositionPopup: React.FC<{
     return { error: false, errorMessage: '' };
   }, [selectedLeverage, leverageRang, t]);
 
+  const resetInitValue = useMemoizedFn(() => {
+    setTpTriggerPx('');
+    setSlTriggerPx('');
+  });
+
   React.useEffect(() => {
-    if (!visible) {
-      setMargin('');
-      setLeverage(Math.min(leverageRang[1], 5));
-      setAutoClose({
-        isOpen: false,
-        tpTriggerPx: '',
-        slTriggerPx: '',
-      });
-      setLeveragePopupVisible(false);
+    if (visible) {
+      availableBalance > 2
+        ? setMargin(Math.round(availableBalance / 2).toString())
+        : setMargin('');
+      setLeverage(leverageRang[1]);
+      resetInitValue();
       setIsReviewMode(false);
     }
-  }, [visible, leverageRang, setMargin]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
+  useEffect(() => {
+    setSelectedDirection(_direction);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   const openPosition = useMemoizedFn(async () => {
-    const res = await handleOpenPosition({
+    await handleOpenPosition({
       coin,
       size: tradeSize,
       leverage,
       direction,
       midPx: markPrice.toString(),
-      tpTriggerPx:
-        autoClose.isOpen && autoClose.tpTriggerPx
-          ? autoClose.tpTriggerPx
-          : undefined,
-      slTriggerPx:
-        autoClose.isOpen && autoClose.slTriggerPx
-          ? autoClose.slTriggerPx
-          : undefined,
+      tpTriggerPx: tpTriggerPx ? tpTriggerPx : undefined,
+      slTriggerPx: slTriggerPx ? slTriggerPx : undefined,
+    });
+    setCurrentTpOrSl({
+      tpPrice: tpTriggerPx ? Number(tpTriggerPx).toString() : undefined,
+      slPrice: slTriggerPx ? Number(slTriggerPx).toString() : undefined,
     });
     onConfirm();
-    // return res;
   });
 
-  const handleAutoCloseSwitch = useMemoizedFn((e: boolean) => {
-    if (e) {
-      setAutoCloseVisible(true);
+  // Handle slider change
+  const handleSliderChange = useMemoizedFn((value: number) => {
+    const newMargin = (availableBalance * value) / 100;
+    setMargin(
+      new BigNumber(newMargin).decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed(),
+    );
+  });
+
+  const handleLeverageChange = useMemoizedFn((text: string) => {
+    const nextVal = +text;
+
+    if (Number.isNaN(nextVal) || text === '') {
+      setLeverage(undefined);
     } else {
-      setAutoClose({
-        isOpen: false,
-        tpTriggerPx: '',
-        slTriggerPx: '',
-      });
+      setLeverage(nextVal);
     }
   });
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
-    return height - 200;
+    return height - 100;
   }, [height]);
+
+  const isUp =
+    Number(marketDataItem.markPx) - Number(marketDataItem.prevDayPx) > 0;
+  const absPnlUsd = Math.abs(
+    Number(marketDataItem.markPx) - Number(marketDataItem.prevDayPx),
+  );
+  const absPnlPct = Math.abs(absPnlUsd / Number(marketDataItem.prevDayPx));
+  const pnlText = `${isUp ? '+' : '-'}${formatPerpsPct(absPnlPct)}`;
 
   useEffect(() => {
     if (visible) {
@@ -322,48 +350,116 @@ export const PerpsOpenPositionPopup: React.FC<{
         // snapPoints={snapPoints}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: isLight ? 'bg0' : 'bg1',
+          linearGradientType: 'bg1',
         })}
         onDismiss={onCancel}
-        enableDynamicSizing
-        maxDynamicContentSize={maxHeight}
+        snapPoints={[maxHeight]}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore">
-        <BottomSheetScrollView>
-          <AutoLockView style={[styles.container]}>
+        <AutoLockView style={[styles.container]}>
+          <BottomSheetScrollView
+            contentContainerStyle={styles.scrollViewContent}>
             <View>
               <Text style={styles.title}>
-                {direction} {coin}-USD
+                {t('page.perpsDetail.PerpsOpenPositionPopup.title', {
+                  defaultValue: 'Open Position',
+                })}
               </Text>
             </View>
-            <View style={styles.formItem}>
-              <Text style={styles.formItemLabel}>
+
+            <View>
+              <AssetPriceInfo
+                coin={coin}
+                logoUrl={marketDataItem.logoUrl}
+                activeAssetCtx={activeAssetCtx}
+                currentAssetCtx={marketDataItem}
+              />
+            </View>
+
+            {/* Long/Short Toggle */}
+            <View style={styles.directionToggle}>
+              <TouchableOpacity
+                style={[
+                  styles.directionButton,
+                  styles.directionButtonLeft,
+                  direction === 'Long' && {
+                    backgroundColor: colors2024['green-light-1'],
+                    borderRadius: 8,
+                  },
+                ]}
+                onPress={() => {
+                  setSelectedDirection('Long');
+                  resetInitValue();
+                }}>
+                <Text
+                  style={[
+                    styles.directionButtonText,
+                    direction === 'Long' && {
+                      color: colors2024['green-default'],
+                      fontWeight: '700',
+                    },
+                  ]}>
+                  {t('page.perpsDetail.action.long')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.directionButton,
+                  styles.directionButtonRight,
+                  direction === 'Short' && {
+                    backgroundColor: colors2024['red-light-1'],
+                    borderRadius: 8,
+                  },
+                ]}
+                onPress={() => {
+                  setSelectedDirection('Short');
+                  resetInitValue();
+                }}>
+                <Text
+                  style={[
+                    styles.directionButtonText,
+                    direction === 'Short' && {
+                      color: colors2024['red-default'],
+                      fontWeight: '700',
+                    },
+                  ]}>
+                  {t('page.perpsDetail.action.short')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {/* Margin Section */}
+            <View style={styles.marginSection}>
+              <Text style={styles.marginLabel}>
                 {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
               </Text>
 
-              <BottomSheetTextInput
-                keyboardType="numeric"
-                style={[
-                  styles.input,
-                  !marginValidation.isValid && margin !== ''
-                    ? styles.inputError
-                    : null,
-                ]}
-                placeholder="$0"
-                value={displayedValue}
-                onChangeText={setMargin}
-              />
-              <View style={styles.availableBalanceWrapper}>
-                <Text style={styles.formItemDesc}>
-                  {formatPerpsUsdValue(availableBalance, BigNumber.ROUND_DOWN)}{' '}
-                  {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
-                </Text>
-                <TouchableOpacity
-                  style={styles.maxButtonWrapper}
-                  onPress={handleMax}>
-                  <Text style={styles.maxButtonText}>MAX</Text>
-                </TouchableOpacity>
+              <View style={styles.marginItem}>
+                <View style={styles.marginAvailableWrapper}>
+                  <Text style={styles.marginTitle}>
+                    {formatPerpsUsdValue(
+                      availableBalance,
+                      BigNumber.ROUND_DOWN,
+                    )}
+                  </Text>
+                  <Text style={styles.marginAvailable}>
+                    {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
+                  </Text>
+                </View>
+                <BottomSheetTextInput
+                  keyboardType="numeric"
+                  style={[
+                    styles.input,
+                    !marginValidation.isValid && Number(margin) > 0
+                      ? styles.inputError
+                      : null,
+                  ]}
+                  placeholderTextColor={colors2024['neutral-info']}
+                  placeholder="$0"
+                  value={Number(margin) > 0 ? displayedValue : ''}
+                  onChangeText={setMargin}
+                />
               </View>
+
               <View style={styles.errorMsgContainer}>
                 {marginValidation.error ? (
                   <Text style={styles.errorMsg}>
@@ -371,9 +467,95 @@ export const PerpsOpenPositionPopup: React.FC<{
                   </Text>
                 ) : null}
               </View>
+
+              {/* Slider */}
+              <PerpsSlider
+                disabled={availableBalance < 0.1}
+                step={1}
+                value={sliderPercentage}
+                onValueChange={handleSliderChange}
+                showPercentage={false}
+              />
+            </View>
+            <View style={styles.marginSection}>
+              <Text style={styles.marginLabel}>
+                {t('page.perpsDetail.PerpsOpenPositionPopup.leverage')}
+              </Text>
+
+              <View style={styles.marginItem}>
+                <View style={styles.marginAvailableWrapper}>
+                  <Text style={styles.marginAvailable}>
+                    {t('page.perpsDetail.PerpsOpenPositionPopup.upTo')}
+                  </Text>
+                  <Text style={styles.marginTitle}>{leverageRang[1]}x</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    leverageInputRef.current?.focus();
+                  }}>
+                  <View style={styles.leverageInputWrapper}>
+                    <BottomSheetTextInput
+                      ref={leverageInputRef as any}
+                      keyboardType="numeric"
+                      style={[
+                        styles.input,
+                        leverageRangeValidation.error
+                          ? styles.inputError
+                          : null,
+                      ]}
+                      placeholderTextColor={colors2024['neutral-info']}
+                      placeholder="0"
+                      value={
+                        selectedLeverage == null ? '' : String(selectedLeverage)
+                      }
+                      onChangeText={handleLeverageChange}
+                    />
+                    <Text
+                      style={[
+                        styles.leverageSuffixText,
+                        leverageRangeValidation.error
+                          ? styles.inputError
+                          : null,
+                        selectedLeverage == null ? styles.textInfo : null,
+                      ]}>
+                      x
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.errorMsgContainer}>
+                {leverageRangeValidation.error ? (
+                  <Text style={styles.errorMsg}>
+                    {leverageRangeValidation.errorMessage}
+                  </Text>
+                ) : null}
+              </View>
+
+              {/* Slider */}
+              <PerpsSlider
+                value={selectedLeverage ?? 1}
+                onValueChange={setLeverage}
+                step={1}
+                hightLightTriggerValue={[
+                  leverageRang[0],
+                  leverageRang[1],
+                  5,
+                  10,
+                  15,
+                  20,
+                  25,
+                  30,
+                  35,
+                  40,
+                ]}
+                maxValue={leverageRang[1]}
+                showPercentage={false}
+                minValue={leverageRang[0]}
+              />
             </View>
             <View style={styles.list}>
-              <View style={[styles.listItem, styles.stepInputContainer]}>
+              {/* <View style={[styles.listItem, styles.stepInputContainer]}>
                 <View style={styles.listItemMain}>
                   <Text
                     style={[
@@ -408,15 +590,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                     as="BottomSheetTextInput"
                   />
                 </View>
-                {/* {leverageRangeValidation.errorMessage ? (
-                  <View style={styles.stepInputError}>
-                    <Text style={[styles.errorMsg]}>
-                      {leverageRangeValidation.errorMessage}
-                    </Text>
-                  </View>
-                ) : null} */}
-              </View>
-
+              </View> */}
               <View style={styles.listItem}>
                 <TouchableOpacity
                   onPress={() => {
@@ -431,9 +605,9 @@ export const PerpsOpenPositionPopup: React.FC<{
                     <Text style={styles.label}>
                       {t('page.perpsDetail.PerpsOpenPositionPopup.size')}
                     </Text>
-                    <RcIconInfoFill1CC
-                      width={15}
-                      height={15}
+                    <RcIconInfoCC
+                      width={18}
+                      height={18}
                       color={colors2024['neutral-info']}
                     />
                   </View>
@@ -448,58 +622,69 @@ export const PerpsOpenPositionPopup: React.FC<{
                   </Text>
                 </View>
               </View>
-              <View style={styles.listItemContainer}>
-                <View style={styles.listItemRow}>
-                  <View style={styles.listItemMain}>
-                    <Text style={styles.label}>
-                      {t('page.perpsDetail.PerpsOpenPositionPopup.autoClose')}
-                    </Text>
-                  </View>
-                  <View>
-                    <AppSwitch
-                      value={autoClose.isOpen}
-                      circleSize={20}
-                      circleBorderWidth={2}
-                      onValueChange={handleAutoCloseSwitch}
-                    />
-                  </View>
-                </View>
-                {autoClose.isOpen ? (
-                  <View style={styles.listSub}>
-                    {autoClose.tpTriggerPx ? (
-                      <View style={styles.listSubItem}>
-                        <Text style={styles.listSubItemLabel}>
-                          {t('page.perpsDetail.PerpsOpenPositionPopup.tpPrice')}
-                        </Text>
-                        <Text style={styles.value}>
-                          ${splitNumberByStep(autoClose.tpTriggerPx || 0)}
-                        </Text>
-                        {/* <RcArrowRight2CC
-                        width={16}
-                        height={16}
-                        color={colors2024['neutral-body']}
-                      /> */}
-                      </View>
-                    ) : null}
-                    {autoClose.slTriggerPx ? (
-                      <View style={styles.listSubItem}>
-                        <Text style={styles.listSubItemLabel}>
-                          {t('page.perpsDetail.PerpsOpenPositionPopup.slPrice')}
-                        </Text>
-                        <Text style={styles.value}>
-                          ${splitNumberByStep(autoClose.slTriggerPx || 0)}
-                        </Text>
-                        {/* <RcArrowRight2CC
-                        width={16}
-                        height={16}
-                        color={colors2024['neutral-body']}
-                      /> */}
-                      </View>
-                    ) : null}
-                  </View>
-                ) : null}
+              <View style={styles.listItem}>
+                <Text style={styles.label}>
+                  {direction === 'Long'
+                    ? t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceAbove',
+                      )
+                    : t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.takeProfitWhenPriceBelow',
+                      )}
+                </Text>
+                <PerpEditTpSlPriceTag
+                  coin={coin}
+                  actionType="tp"
+                  type="openPosition"
+                  markPrice={markPrice}
+                  initTpOrSlPrice={tpTriggerPx}
+                  direction={direction}
+                  size={Number(tradeSize)}
+                  margin={Number(margin)}
+                  liqPrice={Number(estimatedLiquidationPrice)}
+                  pxDecimals={pxDecimals}
+                  szDecimals={szDecimals}
+                  handleCancelAutoClose={async () => {
+                    setTpTriggerPx('');
+                  }}
+                  handleSetAutoClose={async (price: string) => {
+                    setTpTriggerPx(price);
+                  }}
+                />
+              </View>
+              <View style={styles.listItem}>
+                <Text style={styles.label}>
+                  {direction === 'Long'
+                    ? t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceBelow',
+                      )
+                    : t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.stopLossWhenPriceAbove',
+                      )}
+                </Text>
+                <PerpEditTpSlPriceTag
+                  coin={coin}
+                  actionType="sl"
+                  type="openPosition"
+                  markPrice={markPrice}
+                  initTpOrSlPrice={slTriggerPx}
+                  direction={direction}
+                  size={Number(tradeSize)}
+                  margin={Number(margin)}
+                  liqPrice={Number(estimatedLiquidationPrice)}
+                  pxDecimals={pxDecimals}
+                  szDecimals={szDecimals}
+                  handleCancelAutoClose={async () => {
+                    setSlTriggerPx('');
+                  }}
+                  handleSetAutoClose={async (price: string) => {
+                    setSlTriggerPx(price);
+                  }}
+                />
               </View>
             </View>
+          </BottomSheetScrollView>
+          <View style={styles.footer}>
             <Button
               type="primary"
               title={t('global.check')}
@@ -507,11 +692,12 @@ export const PerpsOpenPositionPopup: React.FC<{
                 !marginValidation.isValid || leverageRangeValidation.error
               }
               onPress={() => {
+                Keyboard.dismiss();
                 setIsReviewMode(true);
               }}
             />
-          </AutoLockView>
-        </BottomSheetScrollView>
+          </View>
+        </AutoLockView>
       </AppBottomSheetModal>
       <PerpsOpenPositionCheckPopup
         info={{
@@ -519,12 +705,13 @@ export const PerpsOpenPositionPopup: React.FC<{
           margin,
           direction,
           leverage,
-          tradeAmount,
+          tradeAmount: Number(tradeSize) * markPrice,
           tradeSize,
           markPrice,
           providerFee,
           bothFee,
-          autoClose,
+          tpTriggerPx,
+          slTriggerPx,
           estimatedLiquidationPrice,
           coinLogo,
         }}
@@ -534,31 +721,6 @@ export const PerpsOpenPositionPopup: React.FC<{
         }}
         onConfirm={openPosition}
       />
-      {autoCloseVisible ? (
-        <PerpsAutoCloseModal
-          visible={autoCloseVisible}
-          coin={coin}
-          type="openPosition"
-          price={markPrice}
-          liqPrice={Number(estimatedLiquidationPrice)}
-          direction={direction}
-          size={Number(tradeSize)}
-          pxDecimals={pxDecimals}
-          szDecimals={szDecimals}
-          onClose={() => setAutoCloseVisible(false)}
-          handleSetAutoClose={async (params: {
-            tpPrice: string;
-            slPrice: string;
-          }) => {
-            setAutoClose({
-              isOpen: true,
-              tpTriggerPx: params.tpPrice,
-              slTriggerPx: params.slPrice,
-            });
-            setAutoCloseVisible(false);
-          }}
-        />
-      ) : null}
     </>
   );
 };
@@ -567,9 +729,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     container: {
       height: '100%',
-      paddingBottom: 56,
-      paddingHorizontal: 20,
+      // paddingBottom: 56,
       // minHeight: 544,
+    },
+    scrollViewContent: {
+      paddingHorizontal: 20,
     },
     formItem: {
       paddingHorizontal: 16,
@@ -603,7 +767,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
     },
     errorMsgContainer: {
-      minHeight: 18,
+      height: 18,
+      marginBottom: -12,
     },
     errorMsg: {
       fontFamily: 'SF Pro Rounded',
@@ -612,14 +777,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       color: colors2024['red-default'],
     },
+    textInfo: {
+      color: colors2024['neutral-info'],
+    },
     input: {
       // fontFamily: 'SF Pro Rounded',
-      fontSize: 40,
-      lineHeight: 48,
+      fontSize: 36,
+      paddingVertical: 0,
+      lineHeight: 42,
       fontWeight: '900',
       color: colors2024['neutral-title-1'],
       flex: 1,
-      textAlign: 'center',
+      textAlign: 'right',
       ...(!isAndroid && {
         fontFamily: 'SF Pro Rounded', // avoid some android phone show number not in center
       }),
@@ -628,24 +797,82 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     inputError: {
       color: colors2024['red-default'],
     },
+    leverageInputWrapper: {
+      flexDirection: 'row',
+      display: 'flex',
+      alignItems: 'center',
+      flex: 1,
+      justifyContent: 'flex-end',
+    },
+    leverageSuffixText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 36,
+      lineHeight: 42,
+      fontWeight: '900',
+      color: colors2024['neutral-title-1'],
+    },
     title: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       lineHeight: 24,
       fontWeight: '900',
       color: colors2024['neutral-title-1'],
-      marginBottom: 16,
+      marginBottom: 6,
       textAlign: 'center',
+    },
+    content: {
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 4,
+    },
+    footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      paddingTop: 12,
+      paddingHorizontal: 16,
+      paddingBottom: 56,
+    },
+    row: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    name: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+    },
+    nameContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    volText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+    },
+    price: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
     },
     list: {
       borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
       backgroundColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
       marginBottom: 18,
-    },
-    listItemContainer: {
-      padding: 16,
     },
     listItem: {
       display: 'flex',
@@ -700,8 +927,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     value: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
+      fontSize: 17,
+      lineHeight: 22,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
     },
@@ -744,6 +971,195 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '700',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
+    },
+
+    // New styles for redesigned UI
+    directionToggle: {
+      padding: 4,
+      flexDirection: 'row',
+      marginBottom: 16,
+      borderRadius: 8,
+      marginTop: 16,
+      height: 42,
+      overflow: 'hidden',
+      backgroundColor: colors2024['neutral-bg-2'],
+    },
+    directionButton: {
+      flex: 1,
+      // paddingVertical: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors2024['neutral-bg-2'],
+    },
+    directionButtonLeft: {
+      borderTopLeftRadius: 8,
+      borderBottomLeftRadius: 8,
+    },
+    directionButtonRight: {
+      borderTopRightRadius: 8,
+      borderBottomRightRadius: 8,
+    },
+    directionButtonText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    coinInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      borderRadius: 12,
+      marginBottom: 16,
+    },
+    coinInfoLeft: {
+      flex: 1,
+    },
+    coinInfoRight: {
+      alignItems: 'flex-end',
+    },
+    coinName: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      marginBottom: 4,
+    },
+    coinDetail: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    coinPrice: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      marginBottom: 4,
+    },
+    coinChange: {
+      fontSize: 14,
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+    },
+    coinChangePositive: {
+      color: colors2024['green-default'],
+    },
+    coinChangeNegative: {
+      color: colors2024['red-default'],
+    },
+    marginItem: {
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: -6,
+      flexDirection: 'row',
+    },
+    marginSection: {
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      backgroundColor: colors2024['neutral-bg-2'],
+      borderRadius: 20,
+      paddingBottom: 6,
+      marginBottom: 12,
+      display: 'flex',
+      flexDirection: 'column',
+      // alignItems: 'center',
+    },
+    marginLabel: {
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '800',
+      // marginBottom: 4,
+      color: colors2024['brand-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    marginAvailableWrapper: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    marginTitle: {
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '800',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    marginAvailable: {
+      marginLeft: 4,
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '700',
+      color: colors2024['neutral-info'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    leverageContainer: {
+      backgroundColor: colors2024['neutral-bg-5'],
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    leverage: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+    },
+    priceChange: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['green-default'],
+    },
+    priceChangeDown: {
+      color: colors2024['red-default'],
+    },
+    card: {
+      borderRadius: 16,
+      paddingVertical: 14,
+      paddingHorizontal: 12,
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+      gap: 8,
+      ...(isLight
+        ? {
+            // shadow: 0 10px 11.9px 0 rgba(0, 0, 0, 0.02)
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.02,
+            shadowRadius: 11.9,
+            // elevation: 6,
+          }
+        : null),
+    },
+    icon: {
+      width: 46,
+      height: 46,
+      borderRadius: 1000,
+      flexShrink: 0,
+    },
+    infoContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
     },
   };
 });

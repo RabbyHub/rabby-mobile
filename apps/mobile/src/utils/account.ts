@@ -1,11 +1,17 @@
+import { contactService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import {
-  KeyringAccount,
-  KeyringTypeName,
-} from '@rabby-wallet/keyring-utils/src/types';
-import BigNumber from 'bignumber.js';
+import { ellipsisAddress } from './address';
+
+const priority = {
+  [KEYRING_TYPE.HdKeyring]: 1,
+  [KEYRING_TYPE.SimpleKeyring]: 2,
+  [KEYRING_TYPE.LedgerKeyring]: 3,
+  [KEYRING_TYPE.OneKeyKeyring]: 4,
+  [KEYRING_TYPE.KeystoneKeyring]: 5,
+  [KEYRING_TYPE.GnosisKeyring]: 6,
+};
 
 export type SceneAccount = Account & {
   isPinned?: boolean;
@@ -25,31 +31,12 @@ export function isSameAccount(
 }
 
 export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
-  const priority = {
-    [KEYRING_TYPE.HdKeyring]: 1,
-    [KEYRING_TYPE.SimpleKeyring]: 2,
-    [KEYRING_TYPE.LedgerKeyring]: 3,
-    [KEYRING_TYPE.OneKeyKeyring]: 4,
-    [KEYRING_TYPE.KeystoneKeyring]: 5,
-    [KEYRING_TYPE.GnosisKeyring]: 6,
-  };
-
   return accounts.sort((item1, item2) => {
     return (priority[item1.type] || 100) - (priority[item2.type] || 100);
   })[0];
 }
 
-export const sortAccountsByBalance = <
-  T extends { address: string; balance?: number }[],
->(
-  accounts: T,
-) => {
-  return accounts.sort((a, b) => {
-    return new BigNumber(b?.balance || 0)
-      .minus(new BigNumber(a?.balance || 0))
-      .toNumber();
-  });
-};
+export { sortAccountsByBalance, filterMyAccounts } from '@/core/apis/account';
 
 export function isWatchOrSafeAccount(account: Account | Account['type']) {
   if (!account) {
@@ -62,15 +49,6 @@ export function isWatchOrSafeAccount(account: Account | Account['type']) {
     accType && [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS].includes(accType)
   );
 }
-export const filterMyAccounts = <
-  T extends KeyringAccount | KeyringAccountWithAlias,
->(
-  accounts: T[],
-) => {
-  return accounts.filter(
-    a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-  );
-};
 
 export const isAccountSupportMiniApproval = (type?: string) => {
   if (!type) {
@@ -129,4 +107,22 @@ export function stableSerializeItems<
   Sorter extends (a: T[number], b: T[number]) => number,
 >(items: T, sorter: Sorter) {
   return JSON.stringify(items.sort(sorter), null, 0);
+}
+
+export function makeAccountObject<T extends Account>({
+  address,
+  brandName,
+}: {
+  address: string;
+  brandName?: string;
+}): T {
+  return {
+    address,
+    brandName: brandName || KEYRING_CLASS.WATCH,
+    aliasName:
+      contactService.getAliasByAddress(address)?.alias ||
+      ellipsisAddress(address),
+    balance: 0,
+    type: KEYRING_CLASS.WATCH,
+  } as any as T;
 }

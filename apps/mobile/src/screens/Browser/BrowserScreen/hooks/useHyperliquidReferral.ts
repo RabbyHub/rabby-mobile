@@ -1,5 +1,5 @@
-import { isNonPublicProductionEnv } from '@/constant/env';
-import { PERPS_INVITE_URL } from '@/constant/perps';
+import { isNonPublicProductionEnv } from '@/constant';
+import { PERPS_ASTER_INVITE_URL, PERPS_INVITE_URL } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import { preferenceService } from '@/core/services';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -53,6 +53,57 @@ export const useHyperliquidReferral = (options?: {
       refreshDeps: [origin, connectedAddress],
       onError(e) {
         console.log('check hyperliquid referral error', e);
+      },
+      onSuccess(shouldInvite) {
+        setIsShowInvite(shouldInvite);
+      },
+    },
+  );
+
+  return {
+    isShowInvite,
+    setIsShowInvite,
+  };
+};
+
+export const useAsterReferral = (options?: {
+  url?: string | null;
+  connectedAddress?: string | null;
+}) => {
+  const [isShowInvite, setIsShowInvite] = useState(false);
+  const { url, connectedAddress } = options || {};
+
+  const origin = useMemo(() => {
+    return url ? safeGetOrigin(url) : null;
+  }, [url]);
+
+  useRequest(
+    async () => {
+      if (!origin || !url || !connectedAddress) {
+        return false;
+      }
+
+      if (origin !== 'https://www.asterdex.com') {
+        return false;
+      }
+
+      if (url?.toLowerCase() === PERPS_ASTER_INVITE_URL.toLowerCase()) {
+        return false;
+      }
+
+      const hasShowAsterReferral =
+        preferenceService.getPreference('hasShowAsterPopup');
+
+      if (hasShowAsterReferral) {
+        return false;
+      }
+
+      return true;
+    },
+    {
+      refreshDeps: [origin, connectedAddress],
+      onError(e) {
+        console.log('check aster referral error', e);
       },
       onSuccess(shouldInvite) {
         setIsShowInvite(shouldInvite);

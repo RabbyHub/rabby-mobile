@@ -31,7 +31,6 @@ import ImportMethods from '../Address/ImportMethods';
 import { ImportHardwareAddressScreen } from '../Address/ImportHardwareAddress';
 import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen2024';
 import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
-import { CloudBackupButton2024 } from '../Address/CloudBackupButton2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { createGetStyles2024 } from '@/utils/styles';
 import CreateNewAddress from '../Address/CreateNewAddress';
@@ -50,7 +49,7 @@ import { useTranslation } from 'react-i18next';
 import { filterMyAccounts } from '@/utils/account';
 import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPasswordScreen';
 import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
-import { AddressAssetsOverview } from '@/screens/Address/AddressAssetsOverviewScreen';
+import PointsScreen from '../Points';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 
@@ -102,7 +101,7 @@ export function AddressNavigator() {
         },
         headerTitle: '',
       })}>
-      <AddressStack.Screen
+      {/* <AddressStack.Screen
         name={RootNames.AddressList}
         component={AddressListScreen}
         options={mergeScreenOptions2024([
@@ -117,17 +116,7 @@ export function AddressNavigator() {
             headerRight: () => <AddressListScreenButton type="address" />,
           },
         ])}
-      />
-      <AddressStack.Screen
-        name={RootNames.AddressAssetsOverview}
-        component={AddressAssetsOverview}
-        options={mergeScreenOptions2024([
-          {
-            // title: 'Address',
-            headerRight: () => <AddressListScreenButton type="address" />,
-          },
-        ])}
-      />
+      /> */}
       <AddressStack.Screen
         name={RootNames.ReceiveAddressList}
         component={ReceiveAddressListScreen}
@@ -396,7 +385,6 @@ export function AddressNavigator() {
           headerTitle: t('screens.addressStackTitle.ImportMnemonic'),
           title: t('screens.addressStackTitle.ImportMnemonic'),
           headerTitleStyle: styles.headerTitleText,
-          // headerRight: CloudBackupButton2024,
         }}
       />
       <AddressStack.Screen
@@ -494,6 +482,20 @@ export function AddressNavigator() {
           headerShadowVisible: false,
           headerShown: false,
         })}
+      />
+
+      <AddressStack.Screen
+        name={RootNames.Points}
+        component={PointsScreen}
+        options={mergeScreenOptions2024([
+          {
+            headerTitleAlign: 'center',
+            headerShown: true,
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: [styles.headerTitleText, { fontWeight: '900' }],
+            headerTitle: t('page.rabbyPoints.title'),
+          },
+        ])}
       />
     </AddressStack.Navigator>
   );

@@ -6,8 +6,18 @@ import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { SceneAccount } from '@/utils/account';
 
-export type AccountSwitcherScene = 'Receive' | 'GasAccount';
+export type AccountSwitcherScene =
+  | 'Receive'
+  | 'GasAccount'
+  | 'Lending'
+  | 'TokenDetail';
 
+type AccountToSelect = Account & {
+  isPinned?: boolean;
+};
+export type RecentlyUsedAccount = Account & {
+  lastUsedTime: number;
+};
 export function useSortAccountOnSelector() {
   const { accounts } = useAccounts({ disableAutoFetch: true });
 
@@ -30,34 +40,37 @@ export function useSortAccountOnSelector() {
     [pinAddressesDict],
   );
 
-  const computed = useMemo(() => {
-    const result = {
+  const stableRets = useMemo(() => {
+    const ret = {
       totalCountOfAccount: accounts.length,
-      myAddresses: [] as SceneAccount[],
-      // myRestAddresses: [] as SceneAccount[],
-      watchAddresses: [] as SceneAccount[],
-      safeAddresses: [] as SceneAccount[],
+
+      myAddresses: [] as AccountToSelect[],
+      watchAddresses: [] as AccountToSelect[],
+      safeAddresses: [] as AccountToSelect[],
+
+      recentlyUsedAddresses: [] as AccountToSelect[],
+      whitelistAddresses: [] as AccountToSelect[],
     };
 
     for (const [idx, origAccount] of accounts.entries()) {
-      const account: SceneAccount = { ...origAccount };
+      const account: AccountToSelect = { ...origAccount };
 
       if (account.type === KEYRING_CLASS.WATCH) {
-        result.watchAddresses.push(account);
+        ret.watchAddresses.push(account);
       } else if (account.type === KEYRING_CLASS.GNOSIS) {
-        result.safeAddresses.push(account);
+        ret.safeAddresses.push(account);
       } else {
-        result.myAddresses.push(account);
+        ret.myAddresses.push(account);
       }
     }
 
-    return result;
+    return ret;
   }, [accounts]);
 
-  computed.myAddresses = useSortAddressList(computed.myAddresses);
+  stableRets.myAddresses = useSortAddressList(stableRets.myAddresses);
 
   return {
-    ...computed,
+    ...stableRets,
     isPinnedAccount,
   };
 }

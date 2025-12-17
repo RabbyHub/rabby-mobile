@@ -12,6 +12,13 @@ declare global {
       toNeverResolve(): Promise<R>;
     }
   }
+
+  // patch @onekeyfe/hd-core
+  type BluetoothDevice = {
+    id: string;
+    name?: string;
+    gatt?: any;
+  };
 }
 
 // Export something so that TypeScript knows to interpret this as a module

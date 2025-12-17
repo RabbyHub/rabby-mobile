@@ -142,7 +142,7 @@ export default function EarningDialog({ onClose }: RNViewProps & DialogProps) {
               styles.totalEarningsContainer,
               {
                 backgroundColor: isPositive
-                  ? colors2024['green-light-4']
+                  ? colors2024['green-light-1']
                   : colors2024['neutral-bg-5'],
               },
             ]}>

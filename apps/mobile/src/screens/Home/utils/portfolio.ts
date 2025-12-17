@@ -2,7 +2,8 @@ import { PortfolioProject } from '../types';
 import { pQueue, DisplayedProject } from './project';
 import { getTokenHistoryPrice } from './price';
 import { openapi, testOpenapi } from '@/core/request';
-import { PortocolItemEntity } from '@/databases/entities/portocolItem';
+import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
+import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 
 export const snapshot2Display = (projects?: PortfolioProject[]) => {
   if (!projects) {
@@ -79,11 +80,11 @@ export const getCachedPortfolios = async (
   if (force) {
     return false;
   }
-  const isExpired = await PortocolItemEntity.isExpired(userAddr);
+  const isExpired = await ProtocolItemEntity.isExpired(userAddr);
   if (isExpired) {
     return false;
   }
-  return PortocolItemEntity.batchQueryPortocols(userAddr);
+  return ProtocolItemEntity.batchQueryPortocols(userAddr);
 };
 
 export const loadTestnetPortfolioSnapshot = (userAddr: string) => {
@@ -92,31 +93,39 @@ export const loadTestnetPortfolioSnapshot = (userAddr: string) => {
   });
 };
 
-export const batchLoadProjects = async (
-  user_id: string,
-  projectIds: string[],
-  isTestnet = false,
-  ignoreSingleError = false,
-) => {
-  const queues = projectIds.map(id =>
-    pQueue.add(async () => {
-      try {
-        if (isTestnet) {
-          return await testOpenapi.getProtocol({ addr: user_id, id });
-        } else {
-          return await openapi.getProtocol({ addr: user_id, id });
+export const batchLoadProjects = makeSWRKeyAsyncFunc(
+  async (
+    user_id: string,
+    projectIds: string[],
+    isTestnet = false,
+    ignoreSingleError = false,
+  ) => {
+    const queues = projectIds.map(id =>
+      pQueue.add(async () => {
+        try {
+          if (isTestnet) {
+            return await testOpenapi.getProtocol({ addr: user_id, id });
+          } else {
+            return await openapi.getProtocol({ addr: user_id, id });
+          }
+        } catch (error) {
+          console.error(`Failed to load protocol for project ${id}:`, error);
+          if (ignoreSingleError) {
+            return null;
+          }
+          throw error;
         }
-      } catch (error) {
-        console.error(`Failed to load protocol for project ${id}:`, error);
-        if (ignoreSingleError) {
-          return null;
-        }
-        throw error;
-      }
-    }),
-  );
-  return await Promise.all(queues);
-};
+      }),
+    );
+    return await Promise.all(queues);
+  },
+  ctx => [
+    ctx.args[0],
+    ctx.args[1].join(','),
+    ctx.args[2] ? 'testnet' : 'mainnet',
+    ctx.args[3] ? 'ignoreError' : 'strict',
+  ],
+);
 
 export const batchLoadHistoryProjects = async (
   user_id: string,
