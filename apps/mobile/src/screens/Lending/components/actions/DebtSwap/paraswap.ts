@@ -22,14 +22,7 @@ export async function getParaswapSellRates({
   invertedQuoteRoute = false,
 }: ProviderRatesParams): Promise<ParaswapRatesType> {
   const { paraswap } = getParaswap(chainId);
-  console.log('CUSTOM_LOGGER:=>: getParaswapSellRates', {
-    amount,
-    srcToken,
-    srcDecimals,
-    destToken,
-    destDecimals,
-    user,
-  });
+  console.log('CUSTOM_LOGGER:=>: getParaswapSellRates');
   return paraswap
     .getRate({
       amount,

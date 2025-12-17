@@ -7,12 +7,14 @@
 import {
   BaseDebtToken,
   ChainId,
+  DebtSwitchAdapterService,
   ERC20Service,
   Pool,
   PoolBundle,
 } from '@aave/contract-helpers';
-import { referralCode } from './utils/constant';
+import { MAX_UINT_AMOUNT, referralCode } from './utils/constant';
 import { ethers } from 'ethers';
+import { ZERO_PERMIT } from './modals/DebtSwapModal/utils';
 
 export enum InterestRate {
   None = 'None',
@@ -184,4 +186,53 @@ export const generateApproveDelegation = ({
     debtTokenAddress,
     amount,
   });
+};
+
+export const buildDebtSwitchTx = ({
+  provider,
+  address,
+  fromAddress,
+  rawAmount,
+  isMaxSelected,
+  debtSwitchAdapterAddress,
+  maxNewDebtAmount,
+  txCalldata,
+  augustus,
+  newAssetDebtToken,
+  newAssetUnderlying,
+}: {
+  provider: ethers.providers.Web3Provider;
+  address: string;
+  fromAddress: string;
+  rawAmount: string;
+  maxNewDebtAmount: string;
+  isMaxSelected: boolean;
+  debtSwitchAdapterAddress: string;
+  txCalldata: string;
+  augustus: string;
+  newAssetDebtToken: string;
+  newAssetUnderlying: string;
+}) => {
+  const debtSwitchService = new DebtSwitchAdapterService(
+    provider,
+    debtSwitchAdapterAddress,
+  );
+
+  const debtSwitchTx = debtSwitchService.debtSwitch({
+    user: address,
+    debtAssetUnderlying: fromAddress,
+    debtRepayAmount: isMaxSelected ? MAX_UINT_AMOUNT : rawAmount,
+    debtRateMode: 2, // variable
+    newAssetUnderlying,
+    newAssetDebtToken,
+    maxNewDebtAmount,
+    extraCollateralAmount: '0',
+    extraCollateralAsset: '0x0000000000000000000000000000000000000000',
+    repayAll: isMaxSelected,
+    txCalldata,
+    augustus,
+    creditDelegationPermit: ZERO_PERMIT,
+    collateralPermit: ZERO_PERMIT,
+  });
+  return debtSwitchTx;
 };

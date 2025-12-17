@@ -5,9 +5,14 @@ import {
   PopulatedTransaction,
 } from 'ethers';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import { SwapType } from '../../types/swap';
+import { getAssetGroup } from '../../config/swap';
 
+// 用于滑动反馈点位
 export const sliderHapticTriggerNumbers = [0, 50, 100];
-export const DEFAULT_DEBT_SWAP_SLIPPAGE = 200; // 2%
+
+export const DEFAULT_DEBT_SWAP_SLIPPAGE = 40; // 0.4%
+
 export const ZERO_PERMIT = {
   value: '0',
   deadline: '0',
@@ -51,4 +56,31 @@ export const formatTx = (
     return formattedTx as Tx;
   }
   return null;
+};
+
+export const swapTypesThatRequiresInvertedQuote: SwapType[] = [
+  SwapType.DebtSwap,
+  SwapType.RepayWithCollateral,
+];
+
+export const getParaswapSlippage = (
+  inputSymbol: string,
+  outputSymbol: string,
+  swapType: SwapType,
+): number => {
+  const inputGroup = getAssetGroup(inputSymbol);
+  const outputGroup = getAssetGroup(outputSymbol);
+
+  // 基于币对组给不同的默认值
+  const baseSlippage = inputGroup === outputGroup ? 10 : 20;
+
+  if (swapType === SwapType.DebtSwap) {
+    return Number(baseSlippage) * 2;
+  }
+
+  if (swapType === SwapType.RepayWithCollateral) {
+    return Number(baseSlippage) * 5;
+  }
+
+  return baseSlippage;
 };
