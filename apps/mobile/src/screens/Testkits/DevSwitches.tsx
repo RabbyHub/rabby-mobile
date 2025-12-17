@@ -321,7 +321,7 @@ function DevTestHomeCenterArea() {
   const { mockExposureRateGuide } = useMakeMockDataForRateGuideExposure();
   const { mockData, setMockData } = useMakeMockDataForHomeCenterArea();
   const { clearOfflineChainTips } = useMockClearOfflineChainTips();
-  const { mockResetViewedHomeTip } = useViewedHomeTip();
+  const { viewedHomeTip, mockResetViewedHomeTip } = useViewedHomeTip();
   const { multiTabs20251205Viewed, toggleViewedGuidance } = useGuidanceShown();
 
   useEffect(() => {
@@ -393,6 +393,19 @@ function DevTestHomeCenterArea() {
             mockExposureRateGuide();
           }}
         />
+
+        {!FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT && (
+          <Button
+            title={'Reset Screenshot-Report Tip'}
+            type="ghost"
+            height={48}
+            containerStyle={{ marginTop: 12 }}
+            disabled={!viewedHomeTip}
+            onPress={() => {
+              mockResetViewedHomeTip();
+            }}
+          />
+        )}
       </View>
 
       <View style={[styles.secondarySectionHeader, { marginTop: 24 }]}>
@@ -417,18 +430,6 @@ function DevTestHomeCenterArea() {
             toggleViewedGuidance('multiTabs20251205Viewed', false);
           }}
         />
-
-        {!FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT && (
-          <Button
-            title={'Reset Viewed Home Tip'}
-            type="ghost"
-            height={48}
-            containerStyle={{ marginTop: 12 }}
-            onPress={() => {
-              mockResetViewedHomeTip();
-            }}
-          />
-        )}
       </View>
     </View>
   );

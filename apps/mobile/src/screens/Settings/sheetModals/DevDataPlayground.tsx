@@ -166,9 +166,9 @@ export default function DevDataPlaygroundModal({
       snapPoints={[safeSizes.sheetHeight]}
       handleStyle={styles.handleStyle}
       onDismiss={handleCancel}
-      enableContentPanningGesture={false}>
+      enableContentPanningGesture>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {
