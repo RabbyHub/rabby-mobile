@@ -13,7 +13,6 @@ import {
   ASSETS_SECTION_HEADER,
 } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
-import { HighlightText } from '@/components2024/HighlightText';
 import { memo } from 'react';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
 import {
@@ -25,17 +24,19 @@ import { trigger } from 'react-native-haptic-feedback';
 import { NftItemWithCollection } from '../../hooks/nft';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayNftItem } from '../../types';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { AccountOverview } from '../AccountOverview';
 
 export const NftRow = memo(
   ({
     item,
     onPress,
-    filterText,
     style,
     logoSize = 40,
     disableMenu,
     menuActions,
     hideFoldTag,
+    account,
     chainLogoSize = 16,
   }: {
     item: NftItemWithCollection;
@@ -46,6 +47,7 @@ export const NftRow = memo(
     hideFoldTag?: boolean;
     menuActions?: MenuAction[];
     disableMenu?: boolean;
+    account?: KeyringAccountWithAlias;
     onPress: () => void;
   }) => {
     const { styles } = useTheme2024({ getStyle });
@@ -132,10 +134,13 @@ export const NftRow = memo(
                 marginRight: 55,
               },
             ]}>
-            <Text numberOfLines={1} ellipsizeMode="tail" style={styles.name}>
-              {item.name}
-            </Text>
-            {!hideFoldTag && _isManualFold && <TextBadge type="folded" />}
+            <View style={styles.nameBox}>
+              <Text numberOfLines={1} ellipsizeMode="tail" style={styles.name}>
+                {item.name}
+              </Text>
+              {!hideFoldTag && _isManualFold && <TextBadge type="folded" />}
+            </View>
+            {account ? <AccountOverview account={account} /> : null}
           </View>
         </View>
         <Text style={styles.amount}>
@@ -228,6 +233,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   projectNameBox: {
     flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  nameBox: {
+    flex: 0,
     flexDirection: 'row',
   },
   name: {
@@ -237,6 +248,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     marginRight: 8,
+    maxWidth: 200,
   },
   highlightText: {
     color: colors2024['brand-default'],

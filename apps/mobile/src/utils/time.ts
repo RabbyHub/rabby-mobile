@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
 import { isNil } from 'lodash';
+import { coerceInteger } from './number';
 
 dayjs.extend(utc);
 
@@ -187,4 +188,26 @@ export function formatIntlTimestamp(timestamp: number): string {
   const timePart = timeFormatter.format(date);
 
   return `${datePart} at ${timePart}`;
+}
+
+export function getLottieAnimationDurationInMS(
+  animationData: any,
+  options: {
+    frameCountFallback?: number;
+    frameRateFallback?: number;
+  },
+): number {
+  const frameCount =
+    coerceInteger(animationData['op'] || options.frameCountFallback, 0) -
+    coerceInteger(animationData['ip'], 0);
+  const frameRate = coerceInteger(
+    animationData['fr'] || options.frameRateFallback,
+    30,
+  ); // Default to 30 if not specified
+
+  if (frameRate === 0) {
+    return 0;
+  }
+
+  return (frameCount / frameRate) * 1000;
 }

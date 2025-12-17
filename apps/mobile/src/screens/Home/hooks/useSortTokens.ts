@@ -87,29 +87,4 @@ const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
   return result;
 };
 
-function sortTokenByChainBalance<T extends TokenItem | AbstractPortfolioToken>(
-  list: T[],
-  totalBalanceCache?: TotalBalanceResponse | null,
-) {
-  if (totalBalanceCache) {
-    list.sort((a, b) => {
-      const chain1 = totalBalanceCache.chain_list.find(
-        chain => chain.id === a.chain,
-      );
-      const chain2 = totalBalanceCache.chain_list.find(
-        chain => chain.id === b.chain,
-      );
-      if (chain1 && chain2) {
-        if (chain1.usd_value <= 0 && chain2.usd_value <= 0) {
-          return (chain2.born_at || 0) - (chain1.born_at || 0);
-        }
-        return chain2.usd_value - chain1.usd_value;
-      }
-      return 0;
-    });
-  }
-
-  return list;
-}
-
 export default useSortToken;

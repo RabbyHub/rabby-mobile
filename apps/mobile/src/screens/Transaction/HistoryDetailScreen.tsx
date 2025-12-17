@@ -17,6 +17,7 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconSuccess from '@/assets2024/icons/history/IconSuccess.svg';
 import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
+import RcIconScamTips from '@/assets2024/icons/history/IconScamTips.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
@@ -30,8 +31,6 @@ import { formatIntlTimestamp } from '@/utils/time';
 import { useRoute } from '@react-navigation/native';
 import { getAlianName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
-import { navigateDeprecated } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
@@ -49,12 +48,12 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { useTranslation } from 'react-i18next';
 import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { usePendingBuyItemData } from '../Buy/hooks/history';
 import { HistoryItemCateType } from './components/type';
 import { findAccountByPriority } from '@/utils/account';
 import { useGetCexList } from './hook';
 import FastImage from 'react-native-fast-image';
 import { useAccountSelectModalCtx } from '@/components/AccountSelectModalTx/hooks';
+import { apisSingleHome } from '../Home/hooks/singleHome';
 
 export const TxStatusItem = ({
   status,
@@ -144,7 +143,9 @@ export const AddressItemInDetail = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const disableNavigate = useMemo(() => {
-    if (propdisableNavigate) return true;
+    if (propdisableNavigate) {
+      return true;
+    }
 
     return !accounts.find(account => isSameAddress(account.address, address));
   }, [propdisableNavigate, accounts, address]);
@@ -162,12 +163,7 @@ export const AddressItemInDetail = ({
 
     if (idx > -1) {
       if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
-      navigateDeprecated(RootNames.SingleAddressStack, {
-        screen: RootNames.SingleAddressHome,
-        params: {
-          account: accounts[idx],
-        },
-      });
+      apisSingleHome.navigateToSingleHome(accounts[idx]);
     } else {
       // popup
       console.debug('itemAliaName press open popup', address);
@@ -221,6 +217,7 @@ function HistoryDetailScreen(): JSX.Element {
   const { t } = useTranslation();
   const status = useMemo(() => data.tx?.status ?? 1, [data]);
 
+  const isScam = data.is_scam || data.isSmallUsdTx;
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
     // containerPb: 12,
@@ -258,9 +255,19 @@ function HistoryDetailScreen(): JSX.Element {
     disableAutoFetch: true,
   });
 
-  const formatType = useMemo(() => {
+  const formatType: HistoryItemCateType = useMemo(() => {
+    if (data.historyType === HistoryItemCateType.Swap) {
+      if (
+        data.receives?.[0]?.token?.is_core &&
+        data.sends?.[0]?.token?.is_core
+      ) {
+        return HistoryItemCateType.Swap;
+      } else {
+        return HistoryItemCateType.UnKnown;
+      }
+    }
     return data.historyType;
-  }, [data]);
+  }, [data.historyType, data.receives, data.sends]);
 
   const { formatToken, isNft } = useMemo(() => {
     const cate = formatType;
@@ -403,6 +410,23 @@ function HistoryDetailScreen(): JSX.Element {
     <NormalScreenContainer2024
       type={!isLight ? 'bg1' : 'bg2'}
       style={[styles.container]}>
+      {isScam ? (
+        <View style={styles.scamContainerWrapper}>
+          <View style={styles.scamContainer}>
+            <View style={{ padding: 2 }}>
+              <RcIconScamTips width={14} height={14} />
+            </View>
+            <View style={{ flex: 1, flexDirection: 'row' }}>
+              <Text style={styles.scamText}>
+                {t('page.transactions.scam')}:{' '}
+                <Text style={styles.scamTipsText}>
+                  {t('page.transactions.scamTips')}
+                </Text>
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
       <ScrollView style={[styles.scrollView]}>
         <HistoryTokenList
           data={data}
@@ -599,9 +623,9 @@ const PADDING_HORIZONTAL = 16;
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: { height: '100%', paddingTop: 24, paddingBottom: 24 },
   scrollView: {
-    height: '100%',
+    // height: '100%',
     paddingHorizontal: PADDING_HORIZONTAL,
-    flexShrink: 1,
+    flex: 1,
   },
   detailContainer: {
     width: '100%',
@@ -660,7 +684,33 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,
   },
-
+  scamContainerWrapper: {
+    paddingHorizontal: PADDING_HORIZONTAL,
+  },
+  scamContainer: {
+    borderRadius: 6,
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    width: '100%',
+    gap: 2,
+    marginBottom: 12,
+  },
+  scamText: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-body'],
+  },
+  scamTipsText: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-foot'],
+  },
   statuItemText: {
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',

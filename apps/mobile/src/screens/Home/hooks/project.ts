@@ -5,15 +5,41 @@ import { useQueryNft } from './nft';
 import BigNumber from 'bignumber.js';
 import { atom, useAtom } from 'jotai';
 import { isAppChain } from '../utils/appchain';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-export const refreshingAtom = atom(false);
+const refreshingState = zCreate<{ refreshing: boolean }>(() => ({
+  refreshing: false,
+}));
+
+export function useIsRefreshing() {
+  return {
+    isRefreshing: refreshingState(s => s.refreshing),
+  };
+}
+
+function setRefreshing(valOrFunc: UpdaterOrPartials<boolean>) {
+  refreshingState.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.refreshing,
+      valOrFunc,
+      {
+        strict: true,
+      },
+    );
+    if (!changed) return prev;
+    return { ...prev, refreshing: newVal };
+  });
+}
 export const useQueryProjects = (userAddr: string | undefined) => {
-  const [refreshing, setRefreshing] = useAtom(refreshingAtom);
+  const { isRefreshing: refreshing } = useIsRefreshing();
   const {
     tokens,
     updateData: updateTokens,
     isLoading: isTokenLoading,
-  } = useTokens(userAddr, false, 0, undefined);
+  } = useTokens(userAddr, {
+    visible: false,
+  });
 
   const {
     data: portfolios,
@@ -42,7 +68,7 @@ export const useQueryProjects = (userAddr: string | undefined) => {
         setRefreshing(false);
       }
     },
-    [updateTokens, updatePortfolio, reloadNftList, setRefreshing],
+    [updateTokens, updatePortfolio, reloadNftList],
   );
 
   const chainsInfo = useMemo(() => {

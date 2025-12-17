@@ -3,7 +3,6 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useFindChain } from '@/hooks/useFindChain';
 import React from 'react';
 import {
   createGlobalBottomSheetModal2024,
@@ -15,6 +14,8 @@ import {
 } from '@/components2024/GlobalBottomSheetModal/types';
 import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
 import { useTranslation } from 'react-i18next';
+import { useLendingData, useSelectedMarket } from '../hooks';
+import { getMarketLogo } from '../config/market';
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   return {
@@ -58,9 +59,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
 });
 
 export function ChainSelector({
-  chainEnum,
   style,
-  onChange,
   disable,
 }: React.PropsWithChildren<
   RNViewProps & {
@@ -71,11 +70,9 @@ export function ChainSelector({
 >) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const chainItem = useFindChain({
-    enum: chainEnum,
-  });
-
+  const { selectedMarketData, setMarketKey, chainEnum } = useSelectedMarket();
   const modalRef = React.useRef<MODAL_ID>();
+  const { setLoading } = useLendingData();
 
   const removeChainModal = React.useCallback(() => {
     if (modalRef.current) {
@@ -85,10 +82,13 @@ export function ChainSelector({
 
   const createChainModal = React.useCallback(() => {
     removeChainModal();
+    if (!selectedMarketData?.market) {
+      return;
+    }
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_LENDING_CHAIN,
-      value: chainEnum,
-      titleText: t('page.Lending.selectChain'),
+      value: selectedMarketData.market,
+      titleText: t('page.Lending.selectMarket'),
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         rootViewType: 'View',
@@ -98,12 +98,21 @@ export function ChainSelector({
             : colors2024['neutral-bg-1'],
         },
       },
-      onChange: chain => {
+      onChange: market => {
+        setLoading(true);
         removeChainModal();
-        onChange?.(chain);
+        setMarketKey?.(market);
       },
     });
-  }, [removeChainModal, chainEnum, t, isLight, colors2024, onChange]);
+  }, [
+    removeChainModal,
+    selectedMarketData?.market,
+    t,
+    isLight,
+    colors2024,
+    setLoading,
+    setMarketKey,
+  ]);
 
   return (
     <>
@@ -116,9 +125,14 @@ export function ChainSelector({
             size={24}
             chainEnum={chainEnum}
             isShowRPCStatus={true}
+            source={
+              selectedMarketData && getMarketLogo(selectedMarketData.market)
+            }
           />
           <Text style={[styles.chainName]}>
-            {t('page.Lending.marketSlot', { market: chainItem?.name })}
+            {t('page.Lending.marketSlot', {
+              market: selectedMarketData?.marketTitle,
+            })}
           </Text>
         </View>
 

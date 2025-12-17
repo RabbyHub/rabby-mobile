@@ -1,82 +1,108 @@
-import { useCallback, useEffect, useState } from 'react';
-import { atom, useAtom } from 'jotai';
-import {
-  DisplayChainWithWhiteLogo,
-  findChainByServerID,
-  formatChain,
-} from '@/utils/chain';
+import { useCallback, useEffect } from 'react';
 import { apiBalance } from '@/core/apis';
 import { BalanceEntity } from '@/databases/entities/balance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { keyringService } from '@/core/services';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
+import { zCreate, zMutative } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { perfEvents } from '@/core/utils/perf';
+import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 
-const balanceAtom = atom<number | null>(null);
-const evmBalanceAtom = atom<number | null>(null);
-const testnetBalanceAtom = atom<string | null>(null);
-const balanceUpdateNonceAtom = atom<number>(0);
-const forceUpdateAtom = atom<boolean>(false);
-
-export const useTriggerHomeBalanceUpdate = () => {
-  /**
-   * @description in the future, only nonce >= 0, the fetching will be triggered
-   */
-  const [balanceNonce, setNonce] = useAtom(balanceUpdateNonceAtom);
-  const [, setForceUpdate] = useAtom(forceUpdateAtom);
-
-  const triggerUpdate = useCallback(() => {
-    setNonce(n => n + 1);
-    setForceUpdate(true);
-  }, [setForceUpdate, setNonce]);
-
-  return { balanceNonce, triggerUpdate };
+export type BalanceState = {
+  balance: number | null;
+  evmBalance: number | null;
+  testnetBalance: string | null;
 };
 
-export default function useCurrentBalance(
-  account: string | undefined,
-  opts?: {
-    noNeedBalance?: boolean;
-    update?: boolean;
-    includeTestnet?: boolean;
+type AddressBalanceState = {
+  [address: string]: BalanceState | null;
+};
+
+type CurrentBalanceStore = {
+  addressBalances: AddressBalanceState;
+};
+
+const currentBalanceStore = zCreate(
+  zMutative<CurrentBalanceStore>(() => ({
+    addressBalances: {},
+  })),
+);
+
+export type AddressBalanceUpdaterSource =
+  | 'Unknown'
+  | 'SingleAddressHome'
+  | 'TokenDetail'
+  | 'DefiDetail'
+  | 'LendingDetail';
+function setAddrBalanceStore(
+  address: string,
+  valOrFunc: UpdaterOrPartials<AddressBalanceState[string]>,
+  options: {
+    force?: boolean;
+    /** @description The source or scene from which the balance update is triggered */
+    fromScene: AddressBalanceUpdaterSource;
   },
 ) {
-  const {
-    update = false,
-    noNeedBalance = false,
-    includeTestnet = false,
-  } = opts || {};
+  if (!address) return;
 
-  const [balance, setBalance] = useAtom(balanceAtom);
-  const [evmBalance, setEvmBalance] = useAtom(evmBalanceAtom);
-  const [success, setSuccess] = useState(true);
-  const { balanceNonce } = useTriggerHomeBalanceUpdate();
-  const [forceUpdate, setForceUpdate] = useAtom(forceUpdateAtom);
+  currentBalanceStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.addressBalances[address] || null,
+      valOrFunc,
+      {
+        strict: true,
+      },
+    );
+    if (!changed) return;
 
-  const [balanceLoading, setBalanceLoading] = useState(true);
-  const [balanceUpdating, setBalanceUpdating] = useState(false);
-  const [balanceFromCache, setBalanceFromCache] = useState(false);
-  let isCanceled = false;
-  const [chainBalances, setChainBalances] = useState<
-    DisplayChainWithWhiteLogo[]
-  >([]);
-  const [hasValueChainBalances, setHasValueChainBalances] = useState<
-    DisplayChainWithWhiteLogo[]
-  >([]);
-  const [testnetBalance, setTestnetBalance] = useAtom(testnetBalanceAtom);
-  const [testnetSuccess, setTestnetSuccess] = useState(true);
-  const [testnetBalanceLoading, setTestnetBalanceLoading] = useState(false);
-  const [testnetBalanceFromCache, setTestnetBalanceFromCache] = useState(false);
-  const [testnetChainBalances, setTestnetChainBalances] = useState<
-    DisplayChainWithWhiteLogo[]
-  >([]);
-  const [missingList, setMissingList] = useState<string[]>();
+    perfEvents.emit('TMP_UPDATED:SINGLE_HOME_BALANCE', {
+      address,
+      newBalance: newVal,
+      prevBalance: prev[address],
+      force: !!options.force,
+      fromScene: options.fromScene,
+    });
 
-  const getAddressBalance = async (
-    address: string,
-    options?: { force?: boolean },
-  ) => {
+    prev.addressBalances[address] = newVal;
+  });
+}
+
+const triggerUpdate = ({
+  ...params
+}: GetAddressBalanceOptions & { address: string }) => {
+  getAddressBalance(params.address, {
+    force: params.force,
+    fromScene: params.fromScene,
+  });
+};
+
+export const apisAddressBalance = {
+  triggerUpdate,
+  getBalanceState(address: string) {
+    return currentBalanceStore.getState()?.addressBalances?.[address] || null;
+  },
+};
+
+const addrLoadingBalanceState = zCreate<Record<string, boolean>>(() => ({}));
+
+function setBalanceLoading(address: string, val: boolean) {
+  if (address) {
+    addrLoadingBalanceState.setState(prev => {
+      return { ...prev, [address]: val };
+    });
+  }
+}
+
+type GetAddressBalanceOptions = {
+  force?: boolean;
+  fromScene: AddressBalanceUpdaterSource;
+};
+const getAddressBalance = makeSWRKeyAsyncFunc(
+  async (address: string, options: GetAddressBalanceOptions) => {
     const { force } = options || {};
     try {
+      // TODO: improve it, fetch addresses from cache first
       const addresses = await keyringService.getAllAddresses();
       const filtered = addresses.filter(item =>
         isSameAddress(item.address, address),
@@ -87,148 +113,123 @@ export default function useCurrentBalance(
       ) {
         core = true;
       }
-      const cachedBalance = await BalanceEntity.queryBalance(address, core);
-      if (cachedBalance) {
-        setBalance(cachedBalance.total_usd_value);
-        setEvmBalance(cachedBalance.evm_usd_value || 0);
-        setSuccess(true);
-        setBalanceLoading(false);
-        setBalanceFromCache(false);
-        setBalanceUpdating(false);
-      }
-      const {
-        total_usd_value: totalUsdValue,
-        chain_list: chainList,
-        evm_usd_value: evmUsdValue,
-      } = await apiBalance.getAddressBalance(address, { force });
-      if (isCanceled) {
-        return;
-      }
-      setBalance(totalUsdValue);
-      setEvmBalance(evmUsdValue || 0);
-      setSuccess(true);
-      setChainBalances(chainList.filter(i => i.usd_value > 0).map(formatChain));
-      setHasValueChainBalances(chainList.filter(item => item.usd_value > 0));
-      setBalanceLoading(false);
-      setBalanceFromCache(false);
-      setBalanceUpdating(false);
+      setBalanceLoading(address, true);
+
+      const remotedGotRef = { current: false };
+      await Promise.race([
+        BalanceEntity.queryBalance(address, core).then(cachedBalance => {
+          if (remotedGotRef.current) return;
+          if (cachedBalance) {
+            setAddrBalanceStore(
+              address,
+              {
+                balance: cachedBalance.total_usd_value,
+                evmBalance: cachedBalance.evm_usd_value || 0,
+              },
+              {
+                force: !!force,
+                fromScene: options?.fromScene,
+              },
+            );
+          }
+        }),
+        apiBalance
+          .getAddressBalance(address, { force })
+          .then(async remoteBalance => {
+            const {
+              total_usd_value: totalUsdValue,
+              chain_list: chainList,
+              evm_usd_value: evmUsdValue,
+            } = remoteBalance;
+
+            remotedGotRef.current = true;
+            setAddrBalanceStore(
+              address,
+              {
+                balance: totalUsdValue,
+                evmBalance: evmUsdValue || 0,
+              },
+              {
+                force: !!force,
+                fromScene: options?.fromScene,
+              },
+            );
+            setBalanceLoading(address, false);
+          }),
+      ]);
     } catch (e) {
-      setBalanceLoading(false);
+      setBalanceLoading(address, false);
       try {
         const { error_code, err_chain_ids } = JSON.parse((e as Error).message);
         if (error_code === 2) {
-          const chainNames = err_chain_ids.map((serverId: string) => {
-            const chain = findChainByServerID(serverId);
-            return chain?.name;
-          });
-          setMissingList(chainNames);
-          setSuccess(true);
+          // const missingChains = err_chain_ids.map((serverId: string) => {
+          //   const chain = findChainByServerID(serverId);
+          //   return chain?.name;
+          // });
           return;
         }
       } catch (error) {
         console.error(error);
       }
-      setSuccess(false);
     }
-  };
+  },
+  ctx => {
+    const addr = ctx.args[0];
+    const force = ctx.args[1]?.force;
+    const fromScene = ctx.args[1]?.fromScene || 'Unknown';
+    return `getAddressBalance-${addr}-force:${
+      force ? '1' : '0'
+    }-fromScene:${fromScene}`;
+  },
+);
 
-  const getTestnetBalance = async (
-    address: string,
-    options?: { force?: boolean },
-  ) => {
-    const { force } = options || {};
-    try {
-      const { total_usd_value: totalUsdValue, chain_list: chainList } =
-        await apiBalance.getAddressBalance(address, { force });
-      if (isCanceled) {
-        return;
-      }
-      setTestnetBalance(totalUsdValue.toString());
-      setTestnetSuccess(true);
-      setTestnetChainBalances(
-        chainList.filter(i => i.usd_value > 0).map(formatChain),
-      );
-      setTestnetBalanceLoading(false);
-      setTestnetBalanceFromCache(false);
-    } catch (e) {
-      setTestnetSuccess(false);
-      setTestnetBalanceLoading(false);
-    }
-  };
+export function useIsLoadingBalance(address?: string) {
+  const balanceLoading = addrLoadingBalanceState(s =>
+    address ? s[address] || false : false,
+  );
 
-  const getCurrentBalance = async (force = false) => {
-    if (!account || noNeedBalance) {
-      return;
-    }
-    setBalanceLoading(true);
-    const cacheData = await apiBalance.getAddressCacheBalance(account);
-    if (cacheData) {
-      setBalanceFromCache(true);
-      setBalance(cacheData.total_usd_value);
-      setEvmBalance(cacheData.evm_usd_value || 0);
-      const chanList = cacheData.chain_list
-        .filter(item => item.born_at !== null)
-        .map(formatChain);
-      setHasValueChainBalances(chanList.filter(item => item.usd_value > 0));
-      if (update) {
-        setBalanceLoading(true);
-        await getAddressBalance(account.toLowerCase(), { force });
-        if (includeTestnet) {
-          await getTestnetBalance(account.toLowerCase(), { force });
-        }
-      } else {
-        setBalanceLoading(false);
-      }
-    } else {
-      await getAddressBalance(account.toLowerCase(), { force });
-      if (includeTestnet) {
-        await getTestnetBalance(account.toLowerCase(), { force });
-      }
-      setBalanceLoading(false);
-      setBalanceFromCache(false);
-    }
-  };
+  return { balanceLoading };
+}
+
+export function useAddressBalance(address?: string) {
+  const balance = currentBalanceStore(s =>
+    address ? s.addressBalances[address]?.balance ?? null : null,
+  );
+  const evmBalance = currentBalanceStore(s =>
+    address ? s.addressBalances[address]?.evmBalance ?? null : null,
+  );
+
+  return { balance, evmBalance };
+}
+
+export default function useCurrentBalance(options: {
+  address?: string;
+  AUTO_FETCH?: boolean;
+  fromScene: AddressBalanceUpdaterSource;
+}) {
+  const { address, fromScene } = options;
+  const balanceLoadingState = useIsLoadingBalance(address);
+  const { balance } = useAddressBalance(address);
+
+  const fetchBalance = useCallback(
+    async (params: Omit<GetAddressBalanceOptions, 'address' | 'fromScene'>) => {
+      if (!address) return;
+      return getAddressBalance(address, { force: params.force, fromScene });
+    },
+    [address, fromScene],
+  );
 
   useEffect(() => {
-    if (balanceNonce > 0) {
-      setBalanceUpdating(true);
-    }
-  }, [balanceNonce]);
+    if (!address) return;
 
-  useEffect(() => {
-    getCurrentBalance(forceUpdate);
-    setForceUpdate(false);
-    if (!noNeedBalance && account) {
-      apiBalance.getAddressCacheBalance(account).then(cache => {
-        setChainBalances(
-          cache
-            ? cache.chain_list
-                .filter(item => item.usd_value > 0)
-                .map(formatChain)
-            : [],
-        );
-      });
+    if (options?.AUTO_FETCH) {
+      fetchBalance({ force: true });
     }
-    return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      isCanceled = true;
-    };
-  }, [account?.toLowerCase(), balanceNonce]);
+  }, [address, options?.AUTO_FETCH, fetchBalance]);
+
   return {
+    ...balanceLoadingState,
     balance,
-    evmBalance,
-    chainBalances,
-    getAddressBalance,
-    success,
-    balanceLoading,
-    balanceFromCache,
-    testnetBalance,
-    testnetSuccess,
-    testnetBalanceLoading,
-    testnetBalanceFromCache,
-    testnetChainBalances,
-    balanceUpdating,
-    missingList,
-    hasValueChainBalances,
+    fetchBalance,
   };
 }

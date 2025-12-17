@@ -2,12 +2,12 @@ import { useAtom } from 'jotai';
 import type { SearchDevice } from '@onekeyfe/hd-core';
 import { apiOneKey } from '@/core/apis';
 import React from 'react';
-import { oneKeyDevices } from '@/core/apis/onekey';
+import { useOneKeyDevices } from '@/core/apis/onekey';
 import { checkAndRequestAndroidBluetooth } from '@/utils/bluetoothPermissions';
 import { Platform } from 'react-native';
 
 export function useOneKeyImport() {
-  const [devices, setDevices] = useAtom(oneKeyDevices);
+  const { devices, setOneKeyDevices } = useOneKeyDevices();
   const [error, setError] = React.useState<string | number | undefined>();
 
   const startScan = React.useCallback(async () => {
@@ -22,16 +22,16 @@ export function useOneKeyImport() {
 
     apiOneKey.searchDevices().then(res => {
       if (res.success) {
-        setDevices(res.payload as SearchDevice[]);
+        setOneKeyDevices(res.payload as SearchDevice[]);
       } else {
         setError(res.payload.code);
       }
     });
-  }, [setDevices]);
+  }, [setOneKeyDevices]);
 
   const cleanDevices = React.useCallback(() => {
-    setDevices([]);
-  }, [setDevices]);
+    setOneKeyDevices([]);
+  }, [setOneKeyDevices]);
 
   return { startScan, devices, error, cleanDevices };
 }

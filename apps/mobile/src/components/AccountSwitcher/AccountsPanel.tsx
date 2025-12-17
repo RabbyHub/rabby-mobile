@@ -124,13 +124,13 @@ AccountSwitcherAopProps<{
     forScene,
   });
 
-  const notTop10Addresses = useMemo(() => {
+  const notTop10Accounts = useMemo(() => {
     return myAddresses.slice(10);
   }, [myAddresses]);
 
   const notMatterAddresses = useMemo(() => {
-    return [...notTop10Addresses, ...safeAddresses, ...watchAddresses];
-  }, [notTop10Addresses, safeAddresses, watchAddresses]);
+    return [...notTop10Accounts, ...safeAddresses, ...watchAddresses];
+  }, [notTop10Accounts, safeAddresses, watchAddresses]);
 
   const finalCurrentAccount =
     allowNullCurrentAccount && !sceneCurrentAccount
@@ -222,7 +222,7 @@ AccountSwitcherAopProps<{
   const renderRemainAddressesByType = useCallback(
     (
       accounts: ReturnType<typeof useSceneAccountInfo>['myAddresses'],
-      type: 'notTop10Addresses' | 'gnosisAccounts' | 'watchAccounts',
+      type: 'notTop10Accounts' | 'gnosisAccounts' | 'watchAccounts',
       title: string,
     ) => {
       if (accounts.length === 0) {
@@ -358,8 +358,8 @@ AccountSwitcherAopProps<{
         {remainAddressesCollapsed && (
           <View style={styles.addressListContainerNew}>
             {renderRemainAddressesByType(
-              notTop10Addresses,
-              'notTop10Addresses',
+              notTop10Accounts,
+              'notTop10Accounts',
               t('page.addressDetail.notMatterAddressDialog.notTop10Address'),
             )}
             {renderRemainAddressesByType(
@@ -377,7 +377,7 @@ AccountSwitcherAopProps<{
       </View>
     ) : null;
   }, [
-    notTop10Addresses,
+    notTop10Accounts,
     safeAddresses,
     watchAddresses,
     colors2024,

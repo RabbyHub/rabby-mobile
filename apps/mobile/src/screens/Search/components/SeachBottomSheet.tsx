@@ -118,7 +118,9 @@ export const GlobalSearchBottomSheet = () => {
         ) : null}
         {showSearchBottomSheet ? (
           <SearchInner searchText={searchText} setSearchText={setSearchText} />
-        ) : null}
+        ) : (
+          <View style={styles.placeholder} />
+        )}
       </AutoLockView>
     </AppBottomSheetModal>
   );
@@ -179,7 +181,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 8,
     },
     placeholder: {
-      backgroundColor: colors2024['neutral-bg-1'],
       height: '100%',
     },
 

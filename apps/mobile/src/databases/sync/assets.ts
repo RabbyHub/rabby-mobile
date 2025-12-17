@@ -20,7 +20,7 @@ import {
 } from '@/constant/assets';
 import { SwapItemEntity } from '../entities/swapitem';
 import { BalanceEntity } from '../entities/balance';
-import { batchSaveWithPQueueAndTransaction } from './_task';
+import { batchSaveWithPQueueAndTransaction, BeforeEmitFn } from './_task';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
 import { deleteCurveCache } from '@/utils/24balanceCurveCache';
@@ -28,6 +28,7 @@ import { preferenceService, transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
 import { EvmTotalBalanceResponse } from '../hooks/balance';
+import { setHistoryLoading } from '@/hooks/historyTokenDict';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   const data = [..._tokens];
@@ -142,7 +143,6 @@ const updateSwapFailHistoryItem = (
 export async function syncRemoteHistory(
   address: string,
   res: TxAllHistoryResult | TxHistoryResult,
-  setHistoryLoading: any,
 ) {
   try {
     console.debug(
@@ -184,19 +184,24 @@ export async function syncRemoteHistory(
     //   console.error('TokenItemEntity.save err', err);
     //   throw err;
     // });
-    await batchSaveWithPQueueAndTransaction(
-      HistoryItemEntity,
-      historyItems,
-      {
-        owner_addr: address,
-        taskFor: 'all-history',
-        batchSize: 200,
-        concurrency: 1,
-        delayBetweenTasks: 1.5 * 1e3,
-        noNeedAbort: true,
+    await batchSaveWithPQueueAndTransaction(HistoryItemEntity, historyItems, {
+      owner_addr: address,
+      taskFor: 'all-history',
+      batchSize: 200,
+      concurrency: 1,
+      delayBetweenTasks: 1.5 * 1e3,
+      noNeedAbort: true,
+      beforeEmit: ctx => {
+        if (ctx.taskFor === 'all-history') {
+          setTimeout(() => {
+            setHistoryLoading?.(prev => ({
+              ...prev,
+              [ctx.owner_addr]: false,
+            }));
+          }, 2000);
+        }
       },
-      setHistoryLoading,
-    ).then(({ taskSignal, taskKey }) => {
+    }).then(({ taskSignal, taskKey }) => {
       if (taskSignal.aborted) {
         console.warn(`[${taskKey}] Batch upsertion was aborted.`);
       } else {
@@ -205,55 +210,6 @@ export async function syncRemoteHistory(
     });
 
     console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction done');
-    return {
-      address,
-      history_list: history_list,
-    };
-  } catch (e) {
-    console.error('syncRemoteHistory', e);
-  }
-}
-
-export async function syncRemoteSwapHistory(
-  address: string,
-  history_list: SwapTradeList['history_list'],
-) {
-  try {
-    console.debug('syncRemoteSwapHistory length', history_list.length);
-
-    const historyItems = history_list.map(raw => {
-      const item = new SwapItemEntity();
-      SwapItemEntity.fillEntity(item, address, raw);
-
-      return item;
-    });
-    await prepareAppDataSource();
-    // // leave here for debug save
-    // const saveResult = await TokenItemEntity.save(tokenItems).catch(err => {
-    //   console.error('TokenItemEntity.save err', err);
-    //   throw err;
-    // });
-    console.debug('syncRemoteSwapHistory batchSaveWithPQueueAndTransaction');
-    await batchSaveWithPQueueAndTransaction(SwapItemEntity, historyItems, {
-      owner_addr: address,
-      taskFor: 'swap-history',
-      batchSize: 100,
-      concurrency: 1,
-      delayBetweenTasks: 1.5 * 1e3,
-      noNeedAbort: true,
-    })
-      .then(({ taskSignal, taskKey }) => {
-        if (taskSignal.aborted) {
-          console.warn(`[${taskKey}] Batch upsertion was aborted.`);
-        } else {
-          console.debug(`[${taskKey}] batch upsert tasks created`);
-        }
-      })
-      .catch(error => {
-        console.error('Batch upsert failed:', error);
-      });
-
-    console.debug('syncSwapHistory batchSaveWithPQueueAndTransaction done');
     return {
       address,
       history_list: history_list,
@@ -474,8 +430,6 @@ export async function syncBalance(
   BalanceEntity.fillEntity(balanceItem, address, isCore, balance);
 
   await prepareAppDataSource();
-  // @TODO: remove this line, we don't need delete data first because we use upsert when save data
-  // await BalanceEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
     owner_addr: address,
     taskFor: 'balance',

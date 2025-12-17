@@ -5,7 +5,7 @@ import { Keyboard, Text, TouchableWithoutFeedback, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
 import { SyncExtensionHeader } from './components/Header';
 import { NextInput } from '@/components2024/Form/Input';
 import {
@@ -211,6 +211,7 @@ export const SyncExtensionPasswordScreen = () => {
             },
           ],
         });
+        apisHomeTabIndex.setTabIndex(0);
       } else {
         setNoAddrVisible(true);
       }

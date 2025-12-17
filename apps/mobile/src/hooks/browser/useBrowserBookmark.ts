@@ -4,31 +4,44 @@ import { DappInfo } from '@/core/services/dappService';
 import { EntityState } from '@/core/utils/createEntryAdapter';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
-import { dappsAtom } from '../useDapps';
+import { useDappsValue } from '../useDapps';
 import {
   safeGetOrigin,
   safeParseURL,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-const browserBookmarkAtom = atom<EntityState<BrowserBookmarkItem, string>>({
+type zBrowserBookmarkState = EntityState<BrowserBookmarkItem, string>;
+const zBrowserBookmarkStore = zCreate<zBrowserBookmarkState>(() => ({
   ids: [],
   entities: {},
-});
+}));
+
+function setBrowserBookmarkStore(
+  valOrFunc: UpdaterOrPartials<zBrowserBookmarkState>,
+) {
+  zBrowserBookmarkStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
+export const getBookmarkList = () => {
+  const entities = browserService.bookmark.selectors.selectEntities();
+  const ids = browserService.bookmark.selectors.selectIds();
+  setBrowserBookmarkStore({
+    ids,
+    entities,
+  });
+};
 
 export function useBrowserBookmark() {
-  const [store, setStore] = useAtom(browserBookmarkAtom);
-  const [dapps] = useAtom(dappsAtom);
-
-  const getBookmarkList = useMemoizedFn(() => {
-    const entities = browserService.bookmark.selectors.selectEntities();
-    const ids = browserService.bookmark.selectors.selectIds();
-    setStore({
-      ids,
-      entities,
-    });
-  });
+  const store = zBrowserBookmarkStore(s => s);
+  const { dapps } = useDappsValue();
 
   const addBookmark = useMemoizedFn((item: BrowserBookmarkItem) => {
     if (!item || !/^https?:\/\//.test(item.url)) {
@@ -96,8 +109,6 @@ export function useBrowserBookmark() {
     getBookmark,
     addBookmark,
     removeBookmark,
-    // updateBookmark,
-    getBookmarkList,
   };
 }
 

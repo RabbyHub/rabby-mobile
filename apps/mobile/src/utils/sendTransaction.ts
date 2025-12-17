@@ -43,8 +43,9 @@ import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getDefaultStore } from 'jotai';
-import { mockBatchRevokeAtom } from '@/hooks/appSettings';
+import { mockBatchRevokeStore } from '@/hooks/appSettings';
 import { Account } from '@/core/services/preference';
+import miscService from '@/core/services/misc';
 
 // fail code
 export enum FailedCode {
@@ -157,7 +158,7 @@ export const sendTransaction = async ({
   sig?: string;
   account: Account;
 }) => {
-  const MOCK_BATCH_REVOKE = getDefaultStore().get(mockBatchRevokeAtom);
+  const MOCK_BATCH_REVOKE = mockBatchRevokeStore.getState();
   console.log('MOCK_BATCH_REVOKE', MOCK_BATCH_REVOKE);
 
   onProgress?.('building');
@@ -190,6 +191,9 @@ export const sendTransaction = async ({
 
   const signingTxId = await transactionHistoryService.addSigningTx(tx);
 
+  const reportGasLevel =
+    normalGas.level || miscService.getCurrentGasLevel() || 'normal';
+
   stats.report('createTransaction', {
     type: currentAccount.brandName,
     category: KEYRING_CATEGORY_MAP[currentAccount.type],
@@ -199,6 +203,7 @@ export const sendTransaction = async ({
     trigger: ga?.trigger || '',
     networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
     swapUseSlider: ga?.swapUseSlider ?? '',
+    gasLevel: reportGasLevel,
   });
 
   // pre exec tx
@@ -218,6 +223,7 @@ export const sendTransaction = async ({
       pending_tx_list: await apisTransactionHistory.getPendingTxs({
         recommendNonce,
         address,
+        chainId: tx.chainId,
       }),
     }));
 
@@ -628,6 +634,8 @@ export const sendTransactionByMiniSignV2 = async ({
 
   const signingTxId = await transactionHistoryService.addSigningTx(tx);
 
+  const reportGasLevel = miscService.getCurrentGasLevel() || 'normal';
+
   stats.report('createTransaction', {
     type: currentAccount.brandName,
     category: KEYRING_CATEGORY_MAP[currentAccount.type],
@@ -637,6 +645,7 @@ export const sendTransactionByMiniSignV2 = async ({
     trigger: ga?.trigger || '',
     networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
     swapUseSlider: ga?.swapUseSlider ?? '',
+    gasLevel: reportGasLevel,
   });
 
   const transaction: Tx = {

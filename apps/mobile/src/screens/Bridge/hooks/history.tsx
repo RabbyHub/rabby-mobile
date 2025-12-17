@@ -101,8 +101,6 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
       //   ?.filter(item => item?.status === 'pending')
       //   .sort((a, b) => b.create_at - a.create_at);
 
-      updatePendingTxData(data.history_list);
-
       return (
         data?.history_list?.filter(item => item?.status === 'pending')
           ?.length || 0
@@ -114,46 +112,6 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
         setCount(v);
       },
     },
-  );
-
-  const updatePendingTxData = useCallback(
-    (historyList: BridgeHistory[]) => {
-      const recentlyTxHash = localPendingTxData?.hash;
-      if (recentlyTxHash) {
-        const findTx = historyList.find(
-          item => item.from_tx?.tx_id === recentlyTxHash,
-        );
-        if (!findTx) {
-          // no find tx, default set this tx failed
-          transactionHistoryService.completeBridgeTxHistory(
-            recentlyTxHash,
-            localPendingTxData.fromChainId,
-            'failed',
-          );
-          return;
-        }
-        if (
-          findTx &&
-          (findTx.status === 'completed' || findTx.status === 'failed') &&
-          localPendingTxData
-        ) {
-          const status =
-            findTx.status === 'completed' ? 'allSuccess' : 'failed';
-          setLocalPendingTxData({
-            ...localPendingTxData,
-            status,
-            completedAt: Date.now(),
-          });
-          transactionHistoryService.completeBridgeTxHistory(
-            recentlyTxHash,
-            localPendingTxData.fromChainId,
-            status,
-          );
-          setBridgeHistoryRedDot(true);
-        }
-      }
-    },
-    [setLocalPendingTxData, setBridgeHistoryRedDot, localPendingTxData],
   );
 
   const { loading, error, data: value, runAsync } = res;

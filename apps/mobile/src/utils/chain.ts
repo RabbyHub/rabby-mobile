@@ -5,6 +5,15 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 
+export function makeChainServerIdSet(_chainList?: (Chain | TestnetChain)[]) {
+  const chainList = _chainList || [
+    ...getChainList('mainnet'),
+    ...getChainList('testnet'),
+  ];
+
+  return new Set(chainList.map(chain => chain.serverId));
+}
+
 export const findChain = (
   params: {
     enum?: CHAINS_ENUM | string | null;

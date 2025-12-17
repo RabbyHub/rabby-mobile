@@ -2,6 +2,7 @@ import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
 import {
+  BridgeHistory,
   ExplainTxResponse,
   TokenItem,
   Tx,
@@ -109,10 +110,15 @@ export interface BridgeTxHistoryItem {
   fromAmount: number;
   toAmount: number;
   dexId: string;
-  status: 'pending' | 'fromSuccess' | 'allSuccess' | 'failed';
+  status: 'pending' | 'fromSuccess' | 'fromFailed' | 'allSuccess' | 'failed';
+  acceleratedHash?: string;
   hash: string;
+  estimatedDuration: number; // ms from server
   createdAt: number;
+  fromTxCompleteTs?: number;
   completedAt?: number;
+  actualToToken?: TokenItem; // actual token, may be not toToken
+  actualToAmount?: number; // actual amount
 }
 
 export interface SwapTxHistoryItem {
@@ -438,7 +444,10 @@ export class TransactionHistoryService {
         return isSameAddress(address, item.address);
       })
       .sort((a, b) => b.createdAt - a.createdAt)[0];
-    if (recentItem?.status === 'pending') {
+    if (
+      recentItem?.status === 'pending' ||
+      recentItem?.status === 'fromSuccess'
+    ) {
       return recentItem;
     } else {
       return null;
@@ -449,13 +458,13 @@ export class TransactionHistoryService {
     address: string,
     hash: string,
     chainId: number,
-    type: 'swap' | 'send' | 'approveSwap' | 'approveBridge',
+    type: 'swap' | 'send' | 'approveSwap' | 'approveBridge' | 'bridge',
   ) {
     return this.store[`${type}TxHistory`].find(
       item =>
         isSameAddress(address, item.address) &&
         item.hash === hash &&
-        item.chainId === chainId,
+        ('chainId' in item ? item.chainId : item.fromChainId) === chainId,
     );
   }
 
@@ -463,6 +472,7 @@ export class TransactionHistoryService {
     txs: TransactionHistoryItem[],
     chainId: number,
     status: SwapTxHistoryItem['status'],
+    completedTx: TransactionHistoryItem,
   ) {
     const arr = [
       this.store.swapTxHistory,
@@ -471,6 +481,7 @@ export class TransactionHistoryService {
       this.store.approveSwapTxHistory,
       this.store.approveBridgeTxHistory,
     ];
+
     const hashArr = txs.map(item => item.hash);
 
     eventBus.emit(EVENTS.INNER_HISTORY_ITEM_COMPLETE, {
@@ -492,13 +503,17 @@ export class TransactionHistoryService {
       );
       if (index > -1) {
         if ('fromChainId' in history[index]) {
+          const completedHash = completedTx.hash;
           // bridge tx
           history[index].status =
-            status === 'success' ? 'fromSuccess' : 'failed';
+            status === 'success' ? 'fromSuccess' : 'fromFailed';
+          (history[index] as BridgeTxHistoryItem).fromTxCompleteTs = Date.now();
+          (history[index] as BridgeTxHistoryItem).acceleratedHash =
+            completedHash || history[index].hash;
         } else {
           history[index].status = status;
+          history[index].completedAt = Date.now();
         }
-        history[index].completedAt = Date.now();
         if (
           'isFromCopyTrading' in history[index] &&
           history[index].isFromCopyTrading
@@ -523,13 +538,23 @@ export class TransactionHistoryService {
     from_tx_id: string,
     chainId: number,
     status: BridgeTxHistoryItem['status'],
+    bridgeTx?: BridgeHistory,
   ) {
-    this.store.bridgeTxHistory.forEach(item => {
+    let changed = false;
+    this.store.bridgeTxHistory.forEach((item, index) => {
       if (item.fromChainId === chainId && item.hash === from_tx_id) {
-        item.status = status;
-        item.completedAt = Date.now();
+        changed = true;
+        this.store.bridgeTxHistory[index].status = status;
+        this.store.bridgeTxHistory[index].completedAt = Date.now();
+        this.store.bridgeTxHistory[index].actualToToken =
+          bridgeTx?.to_actual_token;
+        this.store.bridgeTxHistory[index].actualToAmount =
+          bridgeTx?.actual?.receive_token_amount;
       }
     });
+    if (changed) {
+      this.store.bridgeTxHistory = this.store.bridgeTxHistory;
+    }
   }
 
   getIsNeedFetchTxHistory(address: string) {
@@ -901,7 +926,8 @@ export class TransactionHistoryService {
         if (
           target?.customActionInfo?.customAction ===
             CUSTOM_HISTORY_ACTION.LENDING &&
-          id
+          id &&
+          success
         ) {
           this.setLendingSuccessHistoryList(address, id);
         }
@@ -1013,6 +1039,7 @@ export class TransactionHistoryService {
         txs,
         chainId,
         completed.status === 1 ? 'success' : 'failed',
+        completedTx,
       );
       eventBus.emit(EVENTS.RELOAD_TX, {
         addressList: [address],

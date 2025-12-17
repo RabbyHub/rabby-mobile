@@ -65,7 +65,11 @@
         "LendingWithdraw": "Retirer",
         "LendingSupply": "Offre",
         "LendingBorrow": "Emprunter",
-        "LendingRepay": "Rembourser"
+        "LendingRepay": "Rembourser",
+        "LendingOffCollateral": "Désactiver l'utilisation comme garantie",
+        "LendingOnCollateral": "Activer l'utilisation en tant que garantie",
+        "LendingManageEMode": "Activer E-Mode",
+        "LendingManageEModeDisable": "Désactiver E-Mode"
       },
       "detail": {
         "Status": "Statut",
@@ -134,7 +138,9 @@
         "skipNonceText": "Nonce #{{nonce}} sauté sur la chaîne {{chainName}}. Cela peut causer des transactions en attente. <5></5> <6>Soumettre un tx</6> <7></7> sur la chaîne pour résoudre"
       },
       "HideScamTransactions": "Masquer les transactions frauduleuses",
-      "ShowScamTransactions": "Afficher les transactions frauduleuses"
+      "ShowScamTransactions": "Afficher les transactions frauduleuses",
+      "scam": "Arnaque",
+      "scamTips": "Cette transaction est initiée par des escrocs pour envoyer des tokens et des NFTs frauduleux. Veuillez vous abstenir d'interagir avec elle."
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Entrez votre phrase secrète"
@@ -951,7 +957,25 @@
       "no-route-found": "Aucun itinéraire trouvé",
       "the-following-bridge-route-are-found": "Taux suivants trouvés",
       "bridged": "Ponté",
-      "gasFeeTooHight": "Les frais de Gas sont plus élevés que la normale. Confirmez uniquement si vous souhaitez continuer."
+      "gasFeeTooHight": "Les frais de Gas sont plus élevés que la normale. Confirmez uniquement si vous souhaitez continuer.",
+      "pendingItem": {
+        "swap": "Échanger",
+        "receivingTo": "Recevoir sur {{chain}}",
+        "bridgeStatus": "Statut du Bridge",
+        "queued": "En attente",
+        "fromFailed": "La transaction n'est pas passée. Réessayez.",
+        "longTimeNoReceive": "Le réseau est occupé. Cela peut prendre plus de temps que d'habitude. Veuillez patienter.",
+        "failed": "Échoué",
+        "estimatedTime": "Temps estimé",
+        "BridgeStatusUnavailable": "État du pont indisponible. Veuillez vérifier votre historique de transactions pour confirmer que les fonds sont arrivés.",
+        "completed": "Terminé",
+        "sendingFrom": "Envoi depuis {{chain}}",
+        "pending": "En attente",
+        "receivedDifferentTokenNeedSwap": "Vous avez reçu un jeton différent. Vous pouvez l'échanger contre le jeton que vous avez sélectionné.",
+        "receivedDifferentTokenFromSource": "La passerelle a échoué. Un jeton différent a été renvoyé sur la chaîne source.",
+        "beReturnFailed": "Le pont a échoué. Vos actifs ont été retournés."
+      },
+      "gasXUsd": "Gas : {{gasUsd}}"
     },
     "dashboard": {
       "hd": {
@@ -2032,7 +2056,9 @@
       "sentTimeHeader": "Envoyé",
       "sendToWatchAddress": "Envoyer vers des portefeuilles en lecture seule",
       "sendToSafeAddress": "Envoyer vers des portefeuilles sécurisés",
-      "sendToImportedAddress": "Envoyez vers mes portefeuilles importés"
+      "sendToImportedAddress": "Envoyez vers mes portefeuilles importés",
+      "enterOrSearchAddress": "Entrer ou rechercher une adresse",
+      "dividerWatchOnlyWallets": "Adresses en mode surveillance uniquement"
     },
     "confirmAddress": {
       "risks": {
@@ -2125,7 +2151,8 @@
         "recentEmpty": "Commencer à explorer le site Web",
         "hot": "Chaud",
         "favorite": "Préféré",
-        "otherResults": "Autres résultats"
+        "otherResults": "Autres résultats",
+        "hot10": "Chauds 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Ouvrir des sites Web"
@@ -2432,11 +2459,16 @@
         "currentPrice": "Prix Actuel",
         "distanceLabel": "Distance de liquidation",
         "subtitle": "Distance de liquidation en temps réel (%)",
-        "liqIntro": "La Distance de Liquidation (%) indique à quelle distance se trouve le prix actuel de votre prix de liquidation. Une distance plus grande indique une position plus sûre, tandis qu'une distance plus petite signifie un risque de liquidation plus élevé."
+        "liqIntro": "La Distance de Liquidation (%) indique à quelle distance se trouve le prix actuel de votre prix de liquidation. Une distance plus grande indique une position plus sûre, tandis qu'une distance plus petite signifie un risque de liquidation plus élevé.",
+        "liqDistanceTipsLong": "Descendre <1>{{distance}}</1> déclenchera la liquidation.",
+        "liqDistanceTipsShort": "Monter de <1>{{distance}}</1> déclenchera la liquidation."
       },
       "closeAll": "Fermer tout",
       "closeAllConfirmTitle": "Confirmer la fermeture de toutes les positions",
-      "closeAllConfirmMessage": "Toutes vos positions ouvertes seront clôturées au prix du marché."
+      "closeAllConfirmMessage": "Toutes vos positions ouvertes seront clôturées au prix du marché.",
+      "assetPage": {
+        "hyperliquidPosition": "Position Hyperliquid"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2461,7 +2493,9 @@
         "fundingPaymentsTips": "Ceci est le paiement net de financement depuis l'ouverture de la position. Le financement est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp proche du prix réel du jeton.",
         "slPrice": "Prix de Stop-Loss",
         "entryPrice": "Prix d'entrée",
-        "marginCross": "Marge (Croisée)"
+        "marginCross": "Marge (Croisée)",
+        "fundingGains": "Gains de financement",
+        "fundingGainsTips": "Il s'agit des gains nets de financement depuis l'ouverture de la position. Le financement est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp proche du prix actuel du token."
       },
       "PerpsInfo": {
         "openInterest": "Intérêt Ouvert",
@@ -2469,14 +2503,15 @@
         "24Vol": "Volume sur 24h",
         "title": "Infos",
         "openInterestTips": "La position totale en cours de tous les utilisateurs sur ce contrat.",
-        "fundingTips": "Ceci est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp près du prix réel du token. S'il est positif, le long paie le short. S'il est négatif, le short paie le long."
+        "fundingTips": "Ceci est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp près du prix réel du token. S'il est positif, le long paie le short. S'il est négatif, le short paie le long.",
+        "fundingRate": "Taux de financement"
       },
       "PerpsIntro": {
         "title": "Qu'est-ce que les Perps ?",
         "desc": "Le trading de contrats perpétuels implique des risques significatifs, y compris la possibilité de perdre rapidement votre investissement et votre collatéral en raison d'un effet de levier élevé et de la volatilité du marché. Ce type de trading peut ne pas convenir à tous les utilisateurs. Les prix peuvent être affectés par les taux de financement et la liquidité, et vous pourriez être automatiquement liquidé sans préavis. Les données de marché sont fournies par Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "Fermer la position {{direction}} {{coin}}",
+        "title": "Fermer la position",
         "pnl": "PNL",
         "providerFeeTips": "Frais Hyperliquid : {{fee}}",
         "positionSize": "Taille de position",
@@ -2507,7 +2542,10 @@
         "takeProfitWhenPriceAbove": "Prenez vos bénéfices lorsque le prix est supérieur à",
         "takeProfitWhenPriceBelow": "Prendre Profit Lorsque le Prix Est Inférieur",
         "stopLossWhenPriceAbove": "Arrêter les pertes quand le prix est au-dessus",
-        "stopLossWhen": "Arrêt de perte lorsque"
+        "stopLossWhen": "Arrêt de perte lorsque",
+        "upTo": "Jusqu'à",
+        "minMargin": "La marge minimale est de {{amount}}",
+        "maxMargin": "La marge maximale est {{amount}}"
       },
       "PerpsOpenPositionCheckPopup": {
         "price": "Prix",
@@ -2535,7 +2573,9 @@
         "short": "Vendre à découvert",
         "long": "Long",
         "closePosition": "Fermer la position {{direction}}",
-        "noPermission": "L'ouverture de positions n'est pas prise en charge dans votre région."
+        "noPermission": "L'ouverture de positions n'est pas prise en charge dans votre région.",
+        "close": "Fermer",
+        "add": "Ajouter"
       },
       "PerpsAutoCloseModal": {
         "price": "Prix :",
@@ -2567,8 +2607,16 @@
         "liqPrice": "Prix de liquidation :",
         "insufficientMargin": "Marge insuffisante",
         "insufficientMarginToReduce": "Marge insuffisante pour réduire la position.",
-        "amountToAdd": "Montant à ajouter"
-      }
+        "amountToAdd": "Montant à ajouter",
+        "liqDistance": "Liq.Distance"
+      },
+      "PerpsAddPositionPopup": {
+        "totalSize": "Taille Totale",
+        "addToLong": "Ajouter à Long",
+        "addSize": "Ajouter la taille",
+        "addToShort": "Ajouter à Short"
+      },
+      "needDepositFirst": "Vous devez d'abord déposer des fonds."
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Page intégrée"
@@ -2588,7 +2636,10 @@
     "Lending": {
       "availableCard": {
         "needSupply": "Pour emprunter, vous devez fournir des actifs en tant que garantie.",
-        "canBorrow": "Vous pouvez emprunter en fonction de votre garantie fournie, jusqu'à la limite d'emprunt."
+        "canBorrow": "Vous pouvez emprunter en fonction de votre garantie fournie, jusqu'à la limite d'emprunt.",
+        "isolated": "Le pouvoir d'emprunt et les actifs sont limités en raison du mode d'isolement.",
+        "emode": "En mode E, certains actifs ne peuvent pas être empruntés. Quittez le mode E pour accéder à tous les actifs.",
+        "emodeNoAssets": "Nous n'avons trouvé aucun actif lié à votre recherche. Essayez à nouveau avec une catégorie différente."
       },
       "list": {
         "headers": {
@@ -2621,7 +2672,12 @@
         "actions": "Fournir",
         "availableToBorrow": "Disponible à emprunter",
         "approveAndSupply": "Approuver et fournir",
-        "supplyAPY": "Offre APY"
+        "supplyAPY": "Offre APY",
+        "supplyBalance": "Fournir le solde",
+        "collateralization": "Suralisation",
+        "enabled": "Activé",
+        "isolatedTips": "Vos actifs de prêt/emprunt existants ne sont pas pris en charge.",
+        "unavailable": "Indisponible"
       },
       "withdrawDetail": {
         "actions": "Retirer",
@@ -2655,12 +2711,16 @@
         "reachCap": "Cet actif a atteint son plafond d'offre. Rien n'est disponible à l'approvisionnement sur ce marché.",
         "walletBalance": "Solde du portefeuille",
         "title": "Détails de l'approvisionnement",
-        "almostCap": "Cet actif a presque atteint sa limite d'emprunt. Il ne reste que {{available}} disponible à emprunter sur ce marché."
+        "almostCap": "Cet actif a presque atteint sa limite d'emprunt. Il ne reste que {{available}} disponible à emprunter sur ce marché.",
+        "useAsCollateral": "Utiliser comme garantie"
       },
       "risk": {
         "checkbox": "Je comprends l'alerte et je veux continuer.",
         "warning": "Emprunter ce montant réduira votre facteur de santé à un niveau risqué pour la liquidation.",
-        "withdrawWarning": "Le retrait de ce montant fera baisser votre facteur de santé à un niveau risqué pour la liquidation."
+        "withdrawWarning": "Le retrait de ce montant fera baisser votre facteur de santé à un niveau risqué pour la liquidation.",
+        "toggleCollateralWarning": "Désactiver cet actif en tant que garantie fera baisser votre facteur de santé à un niveau risqué pour la liquidation.",
+        "emodeBlockWarning": "Désactiver le mode E réduira votre facteur de santé à un niveau risqué pour la liquidation.",
+        "blockEmodeWarning": "Vous ne pouvez pas désactiver E-Mode car cela pourrait entraîner une liquidation. Pour quitter E-Mode, fournissez ou remboursez des positions empruntées."
       },
       "lqDescription": {
         "desc": "Valeur de liquidation",
@@ -2679,7 +2739,10 @@
         "availableToBorrowDesc": "Vous pouvez emprunter en fonction de votre garantie fournie et jusqu'à ce que le plafond d'emprunt soit atteint.",
         "lqDesc": "Lorsqu'une liquidation se produit, les liquidateurs remboursent jusqu'à 50 % du montant emprunté restant au nom de l'emprunteur. En retour, ils peuvent acheter le collatéral à un prix réduit et conserver la différence (pénalité de liquidation) comme bonus.",
         "isolatedTitle": "L'actif ne peut pas être utilisé comme garantie.",
-        "isolatedDesc": "Cet actif ne peut être utilisé qu'en tant que garantie en mode d'isolement, où vous ne pouvez pas fournir d'autres actifs en garantie pour emprunter. Les actifs utilisés comme garantie en mode d'isolement ne peuvent être empruntés qu'à un plafond d'endettement spécifique."
+        "isolatedDesc": "Cet actif ne peut être utilisé qu'en tant que garantie en mode d'isolement, où vous ne pouvez pas fournir d'autres actifs en garantie pour emprunter. Les actifs utilisés comme garantie en mode d'isolement ne peuvent être empruntés qu'à un plafond d'endettement spécifique.",
+        "isolatedSupplyDesc": "L'utilisation des garanties est limitée en raison du mode d'isolation.",
+        "globalIsolatedDesc": "En mode d'isolement, vous ne pouvez pas fournir d'autres actifs comme garantie. Un plafond d'endettement global limite le pouvoir d'emprunt de l'actif isolé. Pour sortir du mode d'isolement, désactivez UNI en tant que garantie avant d'emprunter un autre actif.",
+        "maxLTV": "Le ratio LTV maximum représente le pouvoir d'emprunt maximum d'un collatéral spécifique. Par exemple, si un collatéral a un LTV de 75 %, l'utilisateur peut emprunter jusqu'à 0,75 de la valeur de l'ETH dans la monnaie principale pour chaque 1 ETH de valeur de collatéral."
       },
       "market": "Marché",
       "supplied": "Fournie",
@@ -2695,7 +2758,64 @@
       "hf": "Facteur de santé",
       "isolated": "isolé",
       "estNetApy": "Est. net APY",
-      "marketSlot": "{{market}} Marché"
+      "marketSlot": "{{market}} Marché",
+      "toggleCollateralDetail": {
+        "disable": "Désactiver {{asset}} en tant que garantie",
+        "error": "Il y a une erreur avec le service AAVE. Veuillez réessayer plus tard.",
+        "enable": "Activer {{asset}} comme garantie",
+        "actions": "Activer/Désactiver le Collatéral {{asset}}"
+      },
+      "toggleCollateralModal": {
+        "exitIsolationModeTitle": "Quitter le mode d'isolation",
+        "closeTitle": "Revoir la désactivation",
+        "exitIsolationModeDesc": "Vous quitterez le mode Isolation et d'autres tokens peuvent maintenant être utilisés comme collatéral.",
+        "closeDesc": "Désactiver cet actif en tant que garantie affecte votre pouvoir d'emprunt et votre facteur de santé.",
+        "riskToLiquidationText": "Vous ne pouvez pas passer en mode d'utilisation en tant que garantie pour cette monnaie, car cela entraînera un appel de garantie.",
+        "openDesc": "Activer cet actif comme garantie augmente votre pouvoir d'emprunt et votre facteur de santé. Cependant, il peut être liquidé si votre facteur de santé tombe en dessous de 1.",
+        "enableIsolationModeTitle": "Activer le mode d'isolement",
+        "openTitle": "Examen de l'activation",
+        "enableIsolationModeDesc": "Vous entrez en mode Isolation. En mode Isolation, vous ne pouvez pas fournir d'autres actifs en tant que collatéral. Un plafond d'endettement global limite le pouvoir d'emprunt de l'actif isolé. Pour sortir du mode isolation, désactivez CRV en tant que collatéral avant d'emprunter un autre actif."
+      },
+      "selectMarket": "Sélectionner le marché",
+      "searchMarket": "Rechercher sur le marché",
+      "manageEmode": {
+        "actions": {
+          "disable": "Désactiver E-Mode",
+          "enable": "Activer le mode E"
+        },
+        "guide": {
+          "title": "Mode d'efficacité (E-Mode)",
+          "description": "E-Mode augmente votre LTV pour une catégorie d'actifs sélectionnée.",
+          "buttonTitle": "Gérer E-Mode"
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "Max LTV",
+            "asset": "Actifs"
+          },
+          "placeholder": "Sélectionner",
+          "label": "Catégorie d'actif",
+          "desc": "Toutes les positions d'emprunt en dehors de cette catégorie doivent être fermées pour activer cette catégorie."
+        },
+        "overview": {
+          "row": {
+            "collateral": "Garanties",
+            "borrowable": "Empruntable",
+            "asset": "Actif"
+          },
+          "title": "Catégorie d'actifs",
+          "maxLtv": "Max LTV",
+          "apy": "APY"
+        },
+        "enabled": "• Activé",
+        "emode": "E-Mode",
+        "unavailableTips": "Vos actifs de prêt/emprunt existants ne sont pas pris en charge.",
+        "unavailable": "• Indisponible",
+        "disableTitle": "Désactiver",
+        "description": "Activer le E-Mode vous permet de maximiser votre pouvoir d'emprunt. Cependant, l'emprunt est limité aux actifs de la catégorie sélectionnée.",
+        "title": "Gérer E-Mode"
+      },
+      "disabled": "DÉSACTIVÉ"
     }
   },
   "native": {
@@ -2978,6 +3098,9 @@
     },
     "portfolios": {
       "manage": "Gérer"
+    },
+    "multiAddressModal": {
+      "title": "Portefeuilles"
     }
   },
   "global": {
@@ -3055,7 +3178,8 @@
     "gotIt": "Compris",
     "check": "Vérifier",
     "Token": "Jeton",
-    "Dapp": "Dapp"
+    "Dapp": "Dapp",
+    "GotIt": "Compris"
   },
   "background": {
     "transactionWatcher": {

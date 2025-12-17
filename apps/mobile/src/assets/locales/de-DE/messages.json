@@ -117,7 +117,8 @@
     "gotIt": "Verstanden",
     "check": "Überprüfen",
     "Token": "Token",
-    "Dapp": "Dapp"
+    "Dapp": "Dapp",
+    "GotIt": "Verstanden"
   },
   "component": {
     "accountSwitcher": {
@@ -364,6 +365,9 @@
     },
     "portfolios": {
       "manage": "Verwalten"
+    },
+    "multiAddressModal": {
+      "title": "Wallets"
     }
   },
   "page": {
@@ -389,7 +393,11 @@
         "LendingRepay": "Zurückzahlen",
         "LendingWithdraw": "Abheben",
         "LendingBorrow": "Ausleihen",
-        "LendingSupply": "Angebot"
+        "LendingSupply": "Angebot",
+        "LendingOnCollateral": "Aktivieren Sie die Verwendung als Sicherheiten",
+        "LendingOffCollateral": "Verwende nicht als Sicherheiten ausschalten",
+        "LendingManageEModeDisable": "E-Mode deaktivieren",
+        "LendingManageEMode": "E-Mode aktivieren"
       },
       "detail": {
         "InteractionResults": "Interaktionsergebnisse",
@@ -458,7 +466,9 @@
         "skipNonceText": "Nonce #{{nonce}} wurde auf der {{chainName}}-Blockchain übersprungen. Dies kann zu ausstehenden Transaktionen führen. <5></5> <6>Reichen Sie eine tx</6> <7></7> auf der Blockchain ein, um das Problem zu beheben."
       },
       "ShowScamTransactions": "Zeige Betrugstransaktionen an",
-      "HideScamTransactions": "Scam-Transaktionen ausblenden"
+      "HideScamTransactions": "Scam-Transaktionen ausblenden",
+      "scam": "Betrug",
+      "scamTips": "Diese Transaktion wird von Betrügern initiiert, um Betrugs-Token und NFTs zu senden. Bitte unterlassen Sie die Interaktion damit."
     },
     "getStart": {
       "goToHome": "Gehe zu Home",
@@ -1281,7 +1291,25 @@
       "duration": "{{duration}} Min.",
       "no-quote": "Kein Angebot",
       "bridged": "Überbrückt",
-      "gasFeeTooHight": "Die Gasgebühren sind höher als normal. Bestätigen Sie nur, wenn Sie fortfahren möchten."
+      "gasFeeTooHight": "Die Gasgebühren sind höher als normal. Bestätigen Sie nur, wenn Sie fortfahren möchten.",
+      "pendingItem": {
+        "completed": "Abgeschlossen",
+        "sendingFrom": "Senden von {{chain}}",
+        "queued": "In Warteschlange",
+        "receivingTo": "Empfangen auf {{chain}}",
+        "beReturnFailed": "Brücke fehlgeschlagen. Ihre Assets wurden zurückgegeben.",
+        "swap": "Tausch",
+        "bridgeStatus": "Bridge-Status",
+        "pending": "Ausstehend",
+        "estimatedTime": "Geschätzte Zeit",
+        "receivedDifferentTokenFromSource": "Bridge fehlgeschlagen. Ein anderer Token wurde auf der Quellkette zurückgegeben.",
+        "fromFailed": "Transaktion wurde nicht durchgeführt. Versuchen Sie es erneut.",
+        "receivedDifferentTokenNeedSwap": "Sie haben ein anderes Token erhalten. Sie können es gegen das von Ihnen ausgewählte Token tauschen.",
+        "BridgeStatusUnavailable": "Bridge-Status nicht verfügbar. Bitte überprüfen Sie Ihre Transaktionshistorie, um zu bestätigen, dass die Mittel angekommen sind.",
+        "failed": "Fehlgeschlagen",
+        "longTimeNoReceive": "Das Netzwerk ist beschäftigt. Dies kann länger als üblich dauern. Bitte haben Sie Geduld."
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -2362,7 +2390,9 @@
       "sentTimeHeader": "Gesendet",
       "sendToWatchAddress": "An Wallets nur zum Überwachen senden",
       "sendToSafeAddress": "An sichere Wallets senden",
-      "sendToImportedAddress": "An meine importierten Wallets senden"
+      "sendToImportedAddress": "An meine importierten Wallets senden",
+      "dividerWatchOnlyWallets": "Watch-only Adressen",
+      "enterOrSearchAddress": "Adresse eingeben oder suchen"
     },
     "confirmAddress": {
       "risks": {
@@ -2455,7 +2485,8 @@
         "recentEmpty": "Starten Sie die Erkundung der Website",
         "hot": "Hot",
         "otherResults": "Andere Ergebnisse",
-        "favorite": "Favorit"
+        "favorite": "Favorit",
+        "hot10": "Heiße 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Websites öffnen"
@@ -2762,11 +2793,16 @@
         "subtitle": "Echtzeit Liquidationsdistanz (%)",
         "currentPrice": "Aktueller Preis",
         "title": "Risikoniveau",
-        "liqIntro": "Liquidation Distance (%) zeigt, wie weit der aktuelle Preis von Ihrem Liquidationspreis entfernt ist. Eine größere Entfernung bedeutet eine sicherere Position, während eine kleinere Entfernung ein höheres Liquidationsrisiko bedeutet."
+        "liqIntro": "Liquidation Distance (%) zeigt, wie weit der aktuelle Preis von Ihrem Liquidationspreis entfernt ist. Eine größere Entfernung bedeutet eine sicherere Position, während eine kleinere Entfernung ein höheres Liquidationsrisiko bedeutet.",
+        "liqDistanceTipsShort": "Das Ansteigen um <1>{{distance}}</1> wird eine Liquidation auslösen.",
+        "liqDistanceTipsLong": "Der Rückgang um <1>{{distance}}</1> wird eine Liquidation auslösen."
       },
       "closeAllConfirmTitle": "Alle Positionen schließen bestätigen",
       "closeAll": "Alle schließen",
-      "closeAllConfirmMessage": "Alle Ihre offenen Positionen werden zum Marktpreis geschlossen."
+      "closeAllConfirmMessage": "Alle Ihre offenen Positionen werden zum Marktpreis geschlossen.",
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid Position"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2791,7 +2827,9 @@
         "liquidationPriceTips": "Der Preis, zu dem Ihre Position automatisch von der Börse geschlossen wird, um weitere Verluste zu verhindern, wenn Ihr Margin unter das Wartemargin-Niveau fällt.",
         "fundingPaymentsTips": "Dies sind die Nettogebühren, seit die Position eröffnet wurde. Die Funding ist eine stündliche Gebühr, die Händler zahlen oder erhalten, um den Preis des Perpetual Contracts nahe am tatsächlichen Preis des Tokens zu halten.",
         "closePosition": "Schließe {{direction}}",
-        "autoClose": "Automatisches Schließen"
+        "autoClose": "Automatisches Schließen",
+        "fundingGains": "Finanzierungsgewinne",
+        "fundingGainsTips": "Dies sind die Nettogewinne aus der Finanzierung, seit die Position eröffnet wurde. Funding ist eine stündliche Gebühr, die Händler zahlen oder erhalten, um den Preis des Perpetual Contracts nahe dem tatsächlichen Preis des Tokens zu halten."
       },
       "PerpsInfo": {
         "funding": "Finanzierung",
@@ -2799,14 +2837,15 @@
         "24Vol": "24h Volumen",
         "openInterestTips": "Die insgesamt ausstehende Position aller Benutzer in diesem Vertrag.",
         "openInterest": "Offene Interessen",
-        "fundingTips": "Dies ist eine stündliche Gebühr, die Trader zahlen oder erhalten, um den Preis des Perpetual-Contracts nahe dem tatsächlichen Preis des Tokens zu halten. Ist sie positiv, zahlt Long an Short. Ist sie negativ, zahlt Short an Long."
+        "fundingTips": "Dies ist eine stündliche Gebühr, die Trader zahlen oder erhalten, um den Preis des Perpetual-Contracts nahe dem tatsächlichen Preis des Tokens zu halten. Ist sie positiv, zahlt Long an Short. Ist sie negativ, zahlt Short an Long.",
+        "fundingRate": "Finanzierungsrate"
       },
       "PerpsIntro": {
         "title": "Was sind Perps?",
         "desc": "Der Handel mit perpetual contracts birgt erhebliche Risiken, einschließlich der Möglichkeit, Ihr Investment und Ihre Sicherheiten aufgrund von hohem Leverage und Marktvolatilität schnell zu verlieren. Ein solcher Handel ist möglicherweise nicht für alle Benutzer geeignet. Die Preise können von Funding Rates und Liquidität beeinflusst werden, und Sie könnten ohne vorherige Ankündigung automatisch liquidiert werden. Marktdaten werden von Hyperliquid bereitgestellt."
       },
       "PerpsClosePositionPopup": {
-        "title": "Schließe {{coin}} {{direction}} Position",
+        "title": "Position schließen",
         "positionSize": "Positionsgröße",
         "pnl": "PNL",
         "fee": "Gebühr:",
@@ -2837,7 +2876,10 @@
         "stopLossWhenPriceAbove": "Stop-Loss, wenn der Preis überliegt",
         "takeProfitWhenPriceAbove": "Nehmen Sie Gewinn, wenn der Preis über",
         "stopLossWhenPriceBelow": "Stop-Loss, wenn der Preis unter",
-        "takeProfitWhenPriceBelow": "Take Profit Wenn Preis Unter"
+        "takeProfitWhenPriceBelow": "Take Profit Wenn Preis Unter",
+        "minMargin": "Der Mindestmargin beträgt {{amount}}",
+        "upTo": "Bis zu",
+        "maxMargin": "Der maximale Betrag beträgt {{amount}}"
       },
       "PerpsOpenPositionCheckPopup": {
         "perps": "Perps",
@@ -2865,7 +2907,9 @@
         "short": "Short",
         "long": "Long",
         "noPermission": "Das Eröffnen von Positionen wird in Ihrer Region nicht unterstützt.",
-        "closePosition": "Schließe {{direction}} Position"
+        "closePosition": "Schließe {{direction}} Position",
+        "add": "Hinzufügen",
+        "close": "Schließen"
       },
       "PerpsAutoCloseModal": {
         "setSlPrice": "Stop-Loss-Preis festlegen",
@@ -2897,8 +2941,16 @@
         "reduceMargin": "Margin reduzieren",
         "amountToReduce": "Betrag zur Reduzierung",
         "available": "verfügbar",
-        "perpsBalance": "Perps-Bilanz"
-      }
+        "perpsBalance": "Perps-Bilanz",
+        "liqDistance": "Liq.Distanz"
+      },
+      "PerpsAddPositionPopup": {
+        "addToLong": "Zu Lang hinzufügen",
+        "totalSize": "Gesamtgröße",
+        "addToShort": "Zu Kurz hinzufügen",
+        "addSize": "Größe hinzufügen"
+      },
+      "needDepositFirst": "Sie müssen zuerst Geld einzahlen."
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Integrierte Seite"
@@ -2918,7 +2970,10 @@
     "Lending": {
       "availableCard": {
         "canBorrow": "Sie können basierend auf Ihrem bereitgestellten Sicherheiten bis zur Kreditobergrenze leihen.",
-        "needSupply": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen."
+        "needSupply": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen.",
+        "isolated": "Die Kredit- und Vermögenswerte sind aufgrund des Isolationsmodus begrenzt.",
+        "emodeNoAssets": "Wir konnten keine Vermögenswerte zu Ihrer Suche finden. Versuchen Sie es erneut mit einer anderen Kategorie.",
+        "emode": "Im E-Modus sind einige Vermögenswerte nicht ausleihbar. Verlassen Sie den E-Modus, um Zugang zu allen Vermögenswerten zu erhalten."
       },
       "list": {
         "headers": {
@@ -2951,7 +3006,12 @@
         "supplyAPY": "Liefer-APY",
         "approveAndSupply": "Genehmigen und Bereitstellen",
         "actions": "Lieferung",
-        "availableToBorrow": "Verfügbar zum Ausleihen"
+        "availableToBorrow": "Verfügbar zum Ausleihen",
+        "collateralization": "Besicherung",
+        "enabled": "Aktiviert",
+        "supplyBalance": "Versorgungsbilanz",
+        "unavailable": "Nicht verfügbar",
+        "isolatedTips": "Ihre bestehenden Kredit-/Leihvermögen werden nicht unterstützt."
       },
       "withdrawDetail": {
         "remainingSupply": "Verbleibender Vorrat",
@@ -2985,12 +3045,16 @@
         "mySupply": "Mein Angebot",
         "title": "Bereitstellungsdetails",
         "reachCap": "Dieses Asset hat sein Angebotshöchstlimit erreicht. Nichts kann aus diesem Markt bereitgestellt werden.",
-        "almostCap": "Dieses Asset hat fast seine Leihobergrenze erreicht. Es sind nur {{available}} verfügbar, um von diesem Markt geliehen zu werden."
+        "almostCap": "Dieses Asset hat fast seine Leihobergrenze erreicht. Es sind nur {{available}} verfügbar, um von diesem Markt geliehen zu werden.",
+        "useAsCollateral": "Als Sicherheiten verwenden"
       },
       "risk": {
         "checkbox": "Ich verstehe die Warnung und möchte fortfahren.",
         "withdrawWarning": "Die Abhebung dieses Betrags wird Ihren Gesundheitsfaktor auf ein riskantes Niveau für eine Liquidation senken.",
-        "warning": "Das Leihen dieses Betrags wird Ihren Health Factor auf ein riskantes Niveau für die Liquidation senken."
+        "warning": "Das Leihen dieses Betrags wird Ihren Health Factor auf ein riskantes Niveau für die Liquidation senken.",
+        "toggleCollateralWarning": "Das Deaktivieren dieses Assets als Sicherheit wird Ihren Gesundheitsfaktor auf ein riskantes Niveau für die Liquidation senken.",
+        "emodeBlockWarning": "Das Deaktivieren des E-Modus verringert Ihren Gesundheitsfaktor auf ein riskantes Niveau für Liquidationen.",
+        "blockEmodeWarning": "Sie können den E-Modus nicht deaktivieren, da dies eine Liquidation verursachen könnte. Um den E-Modus zu verlassen, legen Sie geliehene Positionen an oder zahlen Sie sie zurück."
       },
       "lqDescription": {
         "over3title": "Gesundheitsfaktor > 3.0:",
@@ -3009,7 +3073,10 @@
         "availableToBorrowDesc": "Sie können basierend auf Ihrer hinterlegten Sicherheiten leihen, bis die Kreditobergrenze erreicht ist.",
         "lqDesc": "Wenn eine Liquidation erfolgt, zahlen Liquidatoren bis zu 50% des ausstehenden geliehenen Betrags im Namen des Kreditnehmers zurück. Im Gegenzug können sie die Sicherheiten zu einem reduzierten Preis kaufen und die Differenz (Liquidationsstrafe) als Bonus behalten.",
         "isolatedTitle": "Das Asset kann nicht als Sicherheit verwendet werden.",
-        "isolatedDesc": "Dieses Asset kann nur im Isolationsmodus als Sicherheiten verwendet werden, in dem Sie keine anderen Asset-Sicherheiten für das Ausleihen bereitstellen können. Assets, die im Isolationsmodus als Sicherheiten verwendet werden, können nur bis zu einer bestimmten Schuldenobergrenze ausgeliehen werden."
+        "isolatedDesc": "Dieses Asset kann nur im Isolationsmodus als Sicherheiten verwendet werden, in dem Sie keine anderen Asset-Sicherheiten für das Ausleihen bereitstellen können. Assets, die im Isolationsmodus als Sicherheiten verwendet werden, können nur bis zu einer bestimmten Schuldenobergrenze ausgeliehen werden.",
+        "isolatedSupplyDesc": "Die Verwendung von Collateral ist aufgrund des Isolationsmodus eingeschränkt.",
+        "globalIsolatedDesc": "Im Isolation-Modus können Sie keine anderen Vermögenswerte als Sicherheiten bereitstellen. Eine globale Schuldenobergrenze begrenzt die Kreditaufnahmefähigkeit des isolierten Vermögenswerts. Um den Isolation-Modus zu verlassen, deaktivieren Sie UNI als Sicherheiten, bevor Sie einen anderen Vermögenswert ausleihen.",
+        "maxLTV": "Das maximale LTV-Verhältnis repräsentiert die maximale Kreditvergabe eines bestimmten Sicherheiten. Zum Beispiel, wenn eine Sicherheit ein LTV von 75% hat, kann der Benutzer bis zu 0,75 im Wert von ETH in der Hauptwährung für jede 1 ETH wertvolle Sicherheit leihen."
       },
       "supplied": "Geliefert",
       "netWorth": "Vermögen",
@@ -3025,7 +3092,64 @@
       "enterAmount": "Betrag eingeben",
       "isolated": "isoliert",
       "estNetApy": "Est. netto APY",
-      "marketSlot": "{{market}} Markt"
+      "marketSlot": "{{market}} Markt",
+      "toggleCollateralDetail": {
+        "disable": "Deaktiviere {{asset}} als Sicherheit",
+        "enable": "Aktivieren Sie {{asset}} als Sicherheiten",
+        "error": "Es gibt einen Fehler mit dem AAVE-Service. Bitte versuche es später erneut.",
+        "actions": "Umschalten {{asset}} Sicherheiten"
+      },
+      "toggleCollateralModal": {
+        "enableIsolationModeTitle": "Isolation-Modus aktivieren",
+        "exitIsolationModeTitle": "Verlassen Sie den Isolationsmodus",
+        "closeDesc": "Das Deaktivieren dieses Vermögenswerts als Sicherheiten wirkt sich auf Ihre Kreditaufnahmefähigkeit und den Gesundheitsfaktor aus.",
+        "riskToLiquidationText": "Sie können den Verwendungsmodus für diese Währung nicht auf Sicherheitenmodus umschalten, da dies einen Sicherheitenaufruf verursachen würde.",
+        "openTitle": "Überprüfung aktivieren",
+        "openDesc": "Das Aktivieren dieses Vermögens als Sicherheiten erhöht Ihre Kreditaufnahmefähigkeit und den Gesundheitsfaktor. Allerdings kann es liquidiert werden, wenn Ihr Gesundheitsfaktor unter 1 fällt.",
+        "closeTitle": "Überprüfung der Deaktivierung",
+        "exitIsolationModeDesc": "Sie werden den Isolationsmodus verlassen und andere Token können jetzt als Sicherheiten verwendet werden.",
+        "enableIsolationModeDesc": "Sie betreten den Isolationsmodus. Im Isolationsmodus können Sie andere Vermögenswerte nicht als Sicherheiten bereitstellen. Eine globale Verschuldungsgrenze begrenzt die Kreditaufnahmefähigkeit des isolierten Vermögenswerts. Um den Isolationsmodus zu verlassen, deaktivieren Sie CRV als Sicherheiten, bevor Sie einen anderen Vermögenswert leihen."
+      },
+      "searchMarket": "Markt durchsuchen",
+      "selectMarket": "Markt auswählen",
+      "manageEmode": {
+        "actions": {
+          "disable": "E-Mode deaktivieren",
+          "enable": "E-Mode aktivieren"
+        },
+        "guide": {
+          "buttonTitle": "E-Mode verwalten",
+          "description": "E-Mode erhöht Ihren LTV für eine ausgewählte Kategorie von Vermögenswerten.",
+          "title": "Effizienzmodus (E-Mode)"
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "Max LTV",
+            "asset": "Vermögenswerte"
+          },
+          "label": "Vermögenskategorie",
+          "placeholder": "Auswählen",
+          "desc": "Alle Kreditpositionen außerhalb dieser Kategorie müssen geschlossen werden, um diese Kategorie zu aktivieren."
+        },
+        "overview": {
+          "row": {
+            "asset": "Vermögen",
+            "collateral": "Sicherheit",
+            "borrowable": "Ausleihbar"
+          },
+          "maxLtv": "Max LTV",
+          "title": "Vermögenskategorie",
+          "apy": "APY"
+        },
+        "title": "E-Mode verwalten",
+        "emode": "E-Modus",
+        "unavailable": "• Nicht verfügbar",
+        "disableTitle": "Deaktivieren",
+        "description": "Die Aktivierung des E-Modus ermöglicht es Ihnen, Ihre Kreditaufnahme zu maximieren. Das Ausleihen ist jedoch auf Vermögenswerte innerhalb der ausgewählten Kategorie beschränkt.",
+        "unavailableTips": "Ihre vorhandenen Kredit-/Leihassets werden nicht unterstützt.",
+        "enabled": "• Aktiviert"
+      },
+      "disabled": "DEAKTIVIERT"
     }
   },
   "constant": {

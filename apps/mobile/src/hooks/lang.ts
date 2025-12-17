@@ -7,6 +7,7 @@ import {
   duplicatelyStringifiedAppJsonStore,
   IS_BOOTED_USER,
   MMKVStorageStrategy,
+  zustandByMMKV,
 } from '@/core/storage/mmkv';
 import i18n, {
   DEFAULT_LANG,
@@ -14,6 +15,7 @@ import i18n, {
   SupportedLang,
   SupportedLangs,
 } from '@/utils/i18n';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 function filterOutBestLang() {
   const langs = SupportedLangs.map(item => item.lang);
@@ -81,29 +83,31 @@ function makeLangSetting(lang: SupportedLang): LangSetting {
   return { lang: filterSupportedLang(lang), isRTL: false };
 }
 
-const langAtom = atomByMMKV<{
+const langStore = zustandByMMKV<{
   lang: SupportedLang;
   isRTL?: boolean;
 }>('@AppLangSetting', makeLangSetting(defaultLang), {
   storage: MMKVStorageStrategy.compatJson,
 });
 
+function gSetCurrentLanguage(valOrFunc: UpdaterOrPartials<LangSetting>) {
+  langStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+
+    return newVal;
+  });
+}
+
+const setCurrentLanguage = async (lang: SupportedLang) => {
+  const nextVal = filterSupportedLang(lang);
+  await i18n.changeLanguage(nextVal);
+  gSetCurrentLanguage(makeLangSetting(nextVal));
+};
+
 export function useAppLanguage() {
-  const [currentLangSetting, _setCurrentLangSetting] = useAtom(langAtom);
+  const lang = langStore(s => s.lang);
 
-  const setCurrentLanguage = useCallback(
-    async (lang: SupportedLang) => {
-      const nextVal = filterSupportedLang(lang);
-      await i18n.changeLanguage(nextVal);
-      _setCurrentLangSetting(makeLangSetting(nextVal));
-    },
-    [_setCurrentLangSetting],
-  );
-
-  const currentLanguage = useMemo(
-    () => filterSupportedLang(currentLangSetting.lang),
-    [currentLangSetting.lang],
-  );
+  const currentLanguage = useMemo(() => filterSupportedLang(lang), [lang]);
 
   return {
     currentLanguage,

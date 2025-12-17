@@ -16,17 +16,22 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useLendingData, useLendingSummary } from './hooks';
+import { useLendingData, useLendingSummary, useSelectedMarket } from './hooks';
 import TokenIcon from './components/TokenIcon';
-import { CHAINS_ENUM } from '@debank/common';
 import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
 import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import IconSwitchCC from '@/assets2024/icons/lending/switch-cc.svg';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import BigNumber from 'bignumber.js';
+//import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { formatApy, formatListNetWorth } from './utils/format';
+import { CHAINS_ENUM } from '@debank/common';
+import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
+import { DisplayPoolReserveInfo } from './type';
+import { displayGhoForMintableMarket } from './utils/supply';
+import { API_ETH_MOCK_ADDRESS } from './utils/constant';
+import wrapperToken from './config/wrapperToken';
 
 const FOOT_HEIGHT = 100;
 const SupplyPoolList = () => {
@@ -36,6 +41,7 @@ const SupplyPoolList = () => {
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
   const [toggleBalanceOrTVl, setToggleBalanceOrTVl] = useState(true); // default balance
+  const { chainEnum, marketKey } = useSelectedMarket();
 
   const sortReserves = useMemo(() => {
     return displayPoolReserves
@@ -43,23 +49,23 @@ const SupplyPoolList = () => {
         if (item.underlyingBalance && item.underlyingBalance !== '0') {
           return true;
         }
-        if (
-          BigNumber(item.reserve.totalLiquidity).gte(item.reserve.supplyCap)
-        ) {
-          return false;
-        }
+        const realUnderlyingAsset =
+          isSameAddress(item.underlyingAsset, API_ETH_MOCK_ADDRESS) && chainEnum
+            ? wrapperToken?.[chainEnum]?.address
+            : item.reserve.underlyingAsset;
         const reserve = reserves?.reservesData?.find(x =>
-          isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
+          isSameAddress(x.underlyingAsset, realUnderlyingAsset),
         );
-        if (
-          reserve?.usageAsCollateralEnabled === false ||
-          reserve?.isActive === false ||
-          reserve?.isFrozen ||
-          reserve?.isPaused
-        ) {
+        if (!reserve) {
           return false;
         }
-        return true;
+        return (
+          !(reserve?.isFrozen || reserve.isPaused) &&
+          !displayGhoForMintableMarket({
+            symbol: reserve.symbol,
+            currentMarket: marketKey,
+          })
+        );
       })
       .sort((a, b) => {
         if (
@@ -79,14 +85,13 @@ const SupplyPoolList = () => {
         }
         return Number(b.underlyingBalanceUSD) - Number(a.underlyingBalanceUSD);
       });
-  }, [displayPoolReserves, reserves?.reservesData]);
+  }, [chainEnum, displayPoolReserves, marketKey, reserves?.reservesData]);
 
   const handlePressItem = useCallback(
-    item => {
+    (item: DisplayPoolReserveInfo) => {
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.SUPPLY_DETAIL,
-        reserve: item,
-        userSummary: iUserSummary,
+        underlyingAsset: item.underlyingAsset,
         onClose: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
@@ -102,39 +107,76 @@ const SupplyPoolList = () => {
         },
       });
     },
-    [colors2024, iUserSummary, isLight],
+    [colors2024, isLight],
   );
+
+  const isInIsolationMode = useMemo(() => {
+    return iUserSummary?.isInIsolationMode;
+  }, [iUserSummary?.isInIsolationMode]);
+
+  const isolatedCard = useMemo(() => {
+    if (loading || !isInIsolationMode) {
+      return null;
+    }
+    return (
+      <View style={[styles.availableCard]}>
+        <View style={styles.availableCardHeader}>
+          <RcIconWarningCircleCC
+            width={14}
+            height={14}
+            color={colors2024['orange-default']}
+          />
+
+          <Text style={[styles.availableCardTitle]}>
+            {t('page.Lending.modalDesc.isolatedSupplyDesc')}
+          </Text>
+        </View>
+      </View>
+    );
+  }, [
+    colors2024,
+    isInIsolationMode,
+    loading,
+    styles.availableCard,
+    styles.availableCardHeader,
+    styles.availableCardTitle,
+    t,
+  ]);
 
   const ListHeaderComponent = useCallback(() => {
     return loading ? (
       <Skeleton style={styles.loading} width={124} height={20} circle />
     ) : (
-      <View style={styles.listHeader}>
-        <Pressable
-          style={styles.headerTokenContainer}
-          hitSlop={20}
-          onPress={() => setToggleBalanceOrTVl(pre => !pre)}>
-          <Text style={styles.headerToken}>
-            {toggleBalanceOrTVl
-              ? t('page.Lending.list.headers.token_balance')
-              : t('page.Lending.list.headers.token_tvl')}
+      <>
+        {isolatedCard}
+        <View style={styles.listHeader}>
+          <Pressable
+            style={styles.headerTokenContainer}
+            hitSlop={20}
+            onPress={() => setToggleBalanceOrTVl(pre => !pre)}>
+            <Text style={styles.headerToken}>
+              {toggleBalanceOrTVl
+                ? t('page.Lending.list.headers.token_balance')
+                : t('page.Lending.list.headers.token_tvl')}
+            </Text>
+            <IconSwitchCC
+              width={14}
+              height={14}
+              color={colors2024['neutral-secondary']}
+            />
+          </Pressable>
+          <Text style={styles.headerApy}>
+            {t('page.Lending.list.headers.apy')}
           </Text>
-          <IconSwitchCC
-            width={14}
-            height={14}
-            color={colors2024['neutral-secondary']}
-          />
-        </Pressable>
-        <Text style={styles.headerApy}>
-          {t('page.Lending.list.headers.apy')}
-        </Text>
-        <Text style={styles.headerMySupplies}>
-          {t('page.Lending.list.headers.mySupplies')}
-        </Text>
-      </View>
+          <Text style={styles.headerMySupplies}>
+            {t('page.Lending.list.headers.mySupplies')}
+          </Text>
+        </View>
+      </>
     );
   }, [
     colors2024,
+    isolatedCard,
     loading,
     styles.headerApy,
     styles.headerMySupplies,
@@ -151,6 +193,7 @@ const SupplyPoolList = () => {
 
   const renderItem = useCallback(
     ({ item }) => {
+      const isZeroSupplied = item.underlyingBalance === '0';
       return (
         <TouchableOpacity
           style={styles.item}
@@ -159,7 +202,7 @@ const SupplyPoolList = () => {
             <TokenIcon
               tokenSymbol={item.reserve.symbol}
               chainSize={0}
-              chain={CHAINS_ENUM.ETH}
+              chain={chainEnum || CHAINS_ENUM.ETH}
             />
             <View style={styles.symbolContainer}>
               <Text
@@ -194,30 +237,18 @@ const SupplyPoolList = () => {
             {formatApy(Number(item.reserve.supplyAPY || '0'))}
           </Text>
           <View style={styles.right}>
-            <Text style={styles.yourSupplied}>
-              {formatListNetWorth(Number(item.underlyingBalanceUSD || '0'))}
-            </Text>
+            {isZeroSupplied ? (
+              <Text style={[styles.yourSupplied, styles.zeroSupplied]}>$0</Text>
+            ) : (
+              <Text style={styles.yourSupplied}>
+                {formatListNetWorth(Number(item.underlyingBalanceUSD || '0'))}
+              </Text>
+            )}
           </View>
         </TouchableOpacity>
       );
     },
-    [
-      colors2024,
-      handlePressItem,
-      styles.apy,
-      styles.item,
-      styles.left,
-      styles.right,
-      styles.symbol,
-      styles.symbolContainer,
-      styles.tvl,
-      styles.walletIcon,
-      styles.yourBalance,
-      styles.yourBalanceContainer,
-      styles.yourSupplied,
-      t,
-      toggleBalanceOrTVl,
-    ],
+    [chainEnum, colors2024, handlePressItem, styles, t, toggleBalanceOrTVl],
   );
 
   const renderFooterComponent = useCallback(() => {
@@ -323,6 +354,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
   },
+  zeroSupplied: {
+    color: colors2024['neutral-info'],
+  },
   yourBalanceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -389,5 +423,25 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
+  },
+  availableCard: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors2024['orange-light-1'],
+    borderRadius: 6,
+    marginTop: 8,
+    gap: 2,
+  },
+  availableCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  availableCardTitle: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    color: colors2024['orange-default'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));

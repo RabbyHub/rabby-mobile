@@ -2,6 +2,11 @@ import { Animated, Dimensions, ImageBackground, View } from 'react-native';
 import { useBgSize } from '../hooks/useBgSize';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import {
+  useHomeFoldChart,
+  useHomeReachTop,
+  useSingleHomeIsDecrease,
+} from '../hooks/singleHome';
 
 const ScreenWidth = Dimensions.get('window').width;
 
@@ -10,7 +15,7 @@ export const TopBg = ({
   isDecrease,
 }: {
   fadeAnim: Animated.Value;
-  isDecrease: boolean;
+  isDecrease?: boolean;
 }) => {
   const { layouts, bgFullHeight } = useBgSize();
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -42,15 +47,12 @@ export const TopBg = ({
   );
 };
 
-export const CenterBg = ({
-  fold,
-  isDecrease,
-}: {
-  fold: boolean;
-  isDecrease: boolean;
-}) => {
+export const CenterBg = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { layouts, bgFullHeight } = useBgSize();
+  const { isFoldChart: fold } = useHomeFoldChart();
+  const { isDecrease } = useSingleHomeIsDecrease();
+
   return (
     <View
       style={[
@@ -81,15 +83,16 @@ export const CenterBg = ({
   );
 };
 
-export const EndBg = ({
-  fold,
-  isDecrease,
-}: {
-  fold: boolean;
-  isDecrease: boolean;
-}) => {
+export const EndBg = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { layouts, bgFullHeight } = useBgSize();
+  const { isFoldChart } = useHomeFoldChart();
+
+  const { reachTop } = useHomeReachTop();
+  const { isDecrease } = useSingleHomeIsDecrease();
+
+  if (!reachTop) return null;
+
   return (
     <ImageBackground
       source={
@@ -102,7 +105,7 @@ export const EndBg = ({
       style={[
         styles.endBg,
         {
-          top: fold ? layouts.fold.end.top : layouts.unfold.end.top,
+          top: isFoldChart ? layouts.fold.end.top : layouts.unfold.end.top,
           height: bgFullHeight,
         },
       ]}

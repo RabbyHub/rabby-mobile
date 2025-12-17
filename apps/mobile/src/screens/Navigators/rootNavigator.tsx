@@ -16,6 +16,8 @@ import { preloadSettingsScreen } from '@/perfs/preloads';
 
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
 
+const TabBarComponent = () => null;
+
 export function HomeScreenNavigator() {
   const colors = useThemeColors();
 
@@ -49,12 +51,13 @@ export function HomeScreenNavigator() {
             // headerTransparent: true,
           }
         }
-        tabBar={() => null}>
+        tabBar={TabBarComponent}>
         <HomeHiddenTabStack.Screen
           name={RootNames.Home}
           component={MultiAddressHome}
           options={{
             headerShown: false,
+            freezeOnBlur: false,
           }}
         />
 

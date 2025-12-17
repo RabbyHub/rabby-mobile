@@ -24,6 +24,7 @@ import RcIconCloseCC from '@/assets2024/icons/perps/IconCloseCC.svg';
 
 interface Props {
   coin: string;
+  handleActionApproveStatus?: () => Promise<void>;
   entryPrice?: number;
   markPrice: number;
   initTpOrSlPrice: string;
@@ -41,6 +42,7 @@ interface Props {
 
 export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   coin,
+  handleActionApproveStatus,
   entryPrice,
   markPrice,
   initTpOrSlPrice,
@@ -270,6 +272,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
       <TouchableOpacity
         style={styles.tagContainer}
         onPress={async () => {
+          await handleActionApproveStatus?.();
           if (initTpOrSlPrice) {
             await handleCancelAutoClose();
             return;

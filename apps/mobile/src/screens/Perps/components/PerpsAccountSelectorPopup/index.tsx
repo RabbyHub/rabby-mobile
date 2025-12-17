@@ -15,6 +15,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { PerpsAccountSelectorItem } from './PerpsAccountSelectorItem';
+import { getClearinghouseStateByMap } from '@/hooks/perps/usePerpsStore';
 
 export const PerpsAccountSelectorPopup: React.FC<{
   visible?: boolean;
@@ -62,12 +63,12 @@ export const PerpsAccountSelectorPopup: React.FC<{
     async () => {
       const list = uniqBy(myAddresses, i => i.address.toLowerCase());
       const res = await Promise.all(
-        list.slice(0, 10).map(async item => {
+        list.slice(0, 10).map(item => {
           try {
-            const info = await sdk.info.getClearingHouseState(item.address);
+            // const info = await sdk.info.getClearingHouseState(item.address);
             return {
               address: item.address,
-              info,
+              info: getClearinghouseStateByMap(item.address),
             };
           } catch (e) {
             return {

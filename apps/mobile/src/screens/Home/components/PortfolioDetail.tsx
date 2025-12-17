@@ -1,19 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  ViewStyle,
-  TouchableWithoutFeedback,
-  Animated,
-  Easing,
-  StyleProp,
-} from 'react-native';
+import React, { useMemo } from 'react';
+import { StyleSheet, View, Text, ViewStyle, StyleProp } from 'react-native';
 import { colord } from 'colord';
 import LinearGradient from 'react-native-linear-gradient';
 import groupBy from 'lodash/groupBy';
-import { RcIconInfoCC, RcIconRightCC } from '@/assets/icons/common';
-import { toast, toastWithIcon } from '@/components2024/Toast';
+import { RcIconInfoCC } from '@/assets/icons/common';
 import { AssetAvatar, Tip } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatNetworth } from '@/utils/math';
@@ -23,21 +13,16 @@ import {
   PortfolioItemNft,
   NftCollection,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { AbstractPortfolio, AbstractPortfolioToken } from '../types';
+import { AbstractPortfolio } from '../types';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { navigate, naviPush } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
-import { useAssets } from '@/screens/Search/useAssets';
 import { useRoute } from '@react-navigation/native';
-import { ensureAbstractPortfolioToken } from '../utils/token';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { useTranslation } from 'react-i18next';
 
 export const PortfolioHeader = ({
   data,
   name,
-  showDescription,
   showHistory,
 }: {
   data: AbstractPortfolio;
@@ -68,11 +53,6 @@ export const PortfolioHeader = ({
         <View style={styles.portfolioType}>
           <Text style={styles.portfolioTypeText}>{name}</Text>
         </View>
-        {showDescription ? (
-          <Text style={styles.portfolioDesc} numberOfLines={1}>
-            {data?._originPortfolio?.detail?.description || ''}
-          </Text>
-        ) : null}
       </View>
       <View>
         <Text style={styles.portfolioNetWorth}>{data._netWorth}</Text>
@@ -106,7 +86,6 @@ export const TokenList = ({
   tokens,
   style,
   nfts,
-  currentAccount,
   fraction,
   headerStyle,
 }: {
@@ -119,55 +98,14 @@ export const TokenList = ({
     value: number;
     shareToken: PortfolioItemToken;
   };
-  currentAccount?: KeyringAccountWithAlias;
   headerStyle?: StyleProp<ViewStyle>;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenNavigationProps<'DeFiDetail'>['route']>();
-  const { relateTokenId, isSingleAddress, account } = route.params || {};
+  const { relateTokenId } = route.params || {};
+  const { t } = useTranslation();
 
-  const [highlightAnim] = useState(new Animated.Value(0));
-
-  useEffect(() => {
-    Animated.sequence([
-      Animated.timing(highlightAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: false,
-      }),
-      Animated.timing(highlightAnim, {
-        toValue: 0.5,
-        duration: 1000,
-        useNativeDriver: false,
-      }),
-      Animated.timing(highlightAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: false,
-      }),
-      Animated.timing(highlightAnim, {
-        toValue: 0.5,
-        duration: 1000,
-        useNativeDriver: false,
-      }),
-      Animated.timing(highlightAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  }, [highlightAnim]);
-
-  const backgroundColor = highlightAnim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [
-      'transparent',
-      colors2024['brand-light-1'],
-      'rgba(112, 132, 255, 0.04)',
-    ],
-  });
-
-  const headers = [name, 'amount', 'USD Value'];
+  const headers = [name, 'Amount'];
 
   const _tokens: TokenItem[] = useMemo(() => {
     return (tokens ?? [])
@@ -251,28 +189,6 @@ export const TokenList = ({
     return result;
   }, [_fraction, _nfts, _tokens]);
 
-  const handleOpenTokenDetail = React.useCallback(
-    (token: TokenItem) => {
-      if (!currentAccount && !account) {
-        return;
-      }
-      naviPush(RootNames.TokenDetail, {
-        token: {
-          // just need id and chain to search cache
-          id: token.id,
-          chain: token.chain,
-          logo_url: token._logo,
-          symbol: token._symbol,
-          _tokenId: token.id,
-        } as any, // to do fix type
-        isSingleAddress,
-        account: currentAccount || account,
-        fromPortfolio: true,
-      });
-    },
-    [account, currentAccount, isSingleAddress],
-  );
-
   return list.length ? (
     <View style={StyleSheet.flatten([styles.tokenList, style])}>
       <View style={[styles.tokenRow, styles.tokenRowHeader, headerStyle]}>
@@ -291,22 +207,16 @@ export const TokenList = ({
           );
         })}
       </View>
-      {list.map(l => {
+      {list.map((l, index) => {
+        const isLast = index === list.length - 1;
         return (
-          <Animated.View
-            style={[
-              styles.tokenRow,
-              styles.tokenRowToken,
-              relateTokenId === l.id && { backgroundColor },
-            ]}
-            key={l.id}>
-            <TouchableWithoutFeedback
-              onPress={() => l.isToken && l.chain && handleOpenTokenDetail(l)}>
+          <View key={l.id} style={isLast ? undefined : styles.itemSeparator}>
+            <View style={[styles.tokenRow, styles.tokenRowToken]} key={l.id}>
               <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
                 <AssetAvatar
                   logo={l._logo}
                   logoStyle={l.isToken ? undefined : styles.nftIcon}
-                  size={20}
+                  size={24}
                 />
                 <Text
                   style={[
@@ -316,40 +226,30 @@ export const TokenList = ({
                   numberOfLines={1}>
                   {l._symbol}
                 </Text>
-                {l.isToken && l.chain && (
-                  <RcIconRightCC
-                    style={styles.arrowStyle}
-                    width={14}
-                    height={14}
-                    color={
-                      relateTokenId === l.id
-                        ? colors2024['brand-default']
-                        : colors2024['neutral-body']
-                    }
-                  />
-                )}
               </View>
-            </TouchableWithoutFeedback>
-            <Text style={styles.tokenListCol}>{formatAmount(l.amount)}</Text>
-            <View
-              style={StyleSheet.flatten([
-                styles.tokenListCol,
-                styles.flexCenter,
-                styles.flexRight,
-                styles.alignRight,
-              ])}>
-              <Text style={styles.tokenListColText}>{l._netWorthStr}</Text>
-              {l.tip ? (
-                <Tip content={l.tip}>
-                  <RcIconInfoCC
-                    width={12}
-                    height={12}
-                    style={styles.nftIconInfo}
-                  />
-                </Tip>
-              ) : null}
+              <View
+                style={StyleSheet.flatten([
+                  styles.tokenListCol,
+                  styles.flexCenter,
+                  styles.flexRight,
+                  styles.alignRight,
+                ])}>
+                <Text style={styles.tokenListColText}>{l._netWorthStr}</Text>
+                <Text style={styles.tokenAmountText}>
+                  {formatAmount(l.amount)}
+                </Text>
+                {l.tip ? (
+                  <Tip content={l.tip}>
+                    <RcIconInfoCC
+                      width={12}
+                      height={12}
+                      style={styles.nftIconInfo}
+                    />
+                  </Tip>
+                ) : null}
+              </View>
             </View>
-          </Animated.View>
+          </View>
         );
       })}
     </View>
@@ -403,6 +303,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     // paddingHorizontal: 8,
+    marginBottom: 12,
   },
   portfolioTypeDesc: {
     flexDirection: 'row',
@@ -410,15 +311,15 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 1,
   },
   portfolioType: {
-    borderRadius: 10,
-    paddingHorizontal: 6,
+    borderRadius: 4,
+    paddingHorizontal: 4,
     height: 20,
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: colors2024['brand-default'],
   },
   portfolioTypeText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: colors2024['brand-default'],
+    fontWeight: '900',
+    color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
   },
@@ -448,8 +349,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
 
   // tokenlist
   tokenList: {
-    marginTop: 8,
-    // marginHorizontal: 4,
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    // marginTop: 12,
+    marginBottom: 12,
   },
   tokenRow: {
     flexDirection: 'row',
@@ -460,24 +364,26 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: -4,
   },
   tokenRowToken: {
-    height: 32,
+    // height: 32,
+    paddingVertical: 6,
   },
   hightlightRow: {
     backgroundColor: 'rgba(112, 132, 255, 0.04)',
   },
   tokenRowHeader: {
-    height: 26,
-    marginTop: 10,
+    paddingTop: 8,
+    paddingBottom: 6,
   },
   tokenListHeader: {
     // paddingHorizontal: 2,
     flexBasis: '35%',
     flexGrow: 1,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '400',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    textTransform: 'capitalize',
   },
   tokenListCol: {
     flexBasis: '35%',
@@ -487,11 +393,18 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-body'],
   },
+  tokenAmountText: {
+    color: colors2024['neutral-secondary'],
+    fontSize: 12,
+    fontWeight: 500,
+    lineHeight: 16,
+  },
   tokenListColText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-title-1'],
+    lineHeight: 16,
   },
   tokenListSymbol: {
     flexDirection: 'row',
@@ -507,7 +420,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-title-1'],
     flexShrink: 1,
   },
   alignRight: {
@@ -515,9 +428,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'right',
   },
   flexCenter: {
-    alignItems: 'center',
+    alignItems: 'flex-end',
     display: 'flex',
-    flexDirection: 'row',
+    justifyContent: 'center',
+    flexDirection: 'column',
   },
   flexRight: {
     justifyContent: 'flex-end',
@@ -525,9 +439,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
 
   // supplements
   supplements: {
-    marginTop: 18,
+    // marginTop: 18,
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginBottom: 12,
+    borderRadius: 6,
   },
   supplementField: {
     width: '50%',
@@ -554,6 +470,26 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   nftIconInfo: {
     marginLeft: 4,
+  },
+  itemSeparator: {
+    // marginBottom: 12,
+  },
+  button: {
+    marginTop: 0,
+    flex: 1,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: colors2024['brand-light-1'],
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: colors2024['brand-default'],
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
 }));
 

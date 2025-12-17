@@ -1,10 +1,10 @@
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import createPersistStore from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
-import { CHAINS_ENUM } from '@/constant/chains';
+import { CustomMarket } from '@/screens/Lending/config/market';
 
 export interface LendingServiceStore {
-  lastSelectedChain: CHAINS_ENUM;
+  lastSelectedChain: CustomMarket;
   skipHealthFactorWarning: boolean;
 }
 
@@ -16,7 +16,7 @@ export class LendingService {
       {
         name: APP_STORE_NAMES.lending,
         template: {
-          lastSelectedChain: CHAINS_ENUM.ETH,
+          lastSelectedChain: CustomMarket.proto_mainnet_v3,
           skipHealthFactorWarning: false,
         },
       },
@@ -26,14 +26,14 @@ export class LendingService {
     );
   }
 
-  setLastSelectedChain = async (chainId: CHAINS_ENUM) => {
+  setLastSelectedChain = async (chainId: CustomMarket) => {
     if (!this.store) {
       throw new Error('LendingService not initialized');
     }
     this.store.lastSelectedChain = chainId;
   };
 
-  getLastSelectedChain = async () => {
+  getLastSelectedChain = () => {
     if (!this.store) {
       throw new Error('LendingService not initialized');
     }

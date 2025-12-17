@@ -33,7 +33,6 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatPrice, formatUsdValue } from '@/utils/number';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { formatUsdValueKMB } from '../../utils/price';
 import { ellipsisAddress } from '@/utils/address';
 import { ExchangeLogos } from './ExchangeLogos';
@@ -208,7 +207,15 @@ export const TokenRow = memo(
               )}
             </Text>
             {showAccount ? (
-              amountContent
+              <Text
+                style={StyleSheet.compose(styles.percent, {
+                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
+                    ? styles.exclude
+                    : {}),
+                  color: percentColor,
+                })}>
+                {formatPercentage(Number(data.price_24h_change) || 0)}
+              </Text>
             ) : data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
               <TouchableOpacity
                 hitSlop={hitSlop}
@@ -230,11 +237,6 @@ export const TokenRow = memo(
               </Text>
             ) : null}
           </View>
-          {data._isPined && (
-            <View style={[styles.favoriteBadge]}>
-              <RcIconFavorite color={colors2024['orange-default']} />
-            </View>
-          )}
         </TouchableOpacity>
       );
     }, [
@@ -247,7 +249,6 @@ export const TokenRow = memo(
       data._isExcludeBalance,
       data._usdValue,
       data.price_24h_change,
-      data._isPined,
       styles,
       style,
       onPressToken,
@@ -454,6 +455,10 @@ export const ExternalTokenRow = memo(
       onPressRightIcon,
       onPressToken,
     ]);
+    const isPositive = useMemo(
+      () => (data.price_24h_change || 0) >= 0,
+      [data.price_24h_change],
+    );
 
     return (
       <Container
@@ -504,12 +509,15 @@ export const ExternalTokenRow = memo(
               </View>
               <View style={styles.colContent}>
                 <Text style={styles.tokenRowAmount}>{data._usdValueStr}</Text>
-                <Text
-                  style={styles.searchAmountStr}
-                  ellipsizeMode="tail"
-                  numberOfLines={1}>
-                  {data._amountStr} {data.symbol}
-                </Text>
+                {typeof data.price_24h_change === 'number' && (
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.changeText,
+                      !isPositive && styles.changeTextPositive,
+                    ])}>
+                    {formatPercentage(Number(data.price_24h_change) || 0)}
+                  </Text>
+                )}
               </View>
             </View>
             {rightSlot}
@@ -519,11 +527,6 @@ export const ExternalTokenRow = memo(
 
           {afterNode || null}
         </View>
-        {isPined && (
-          <View style={[styles.favoriteBadge]}>
-            <RcIconFavorite color={colors2024['orange-default']} />
-          </View>
-        )}
       </Container>
     );
   },
@@ -537,7 +540,7 @@ export const TokenRowSectionHeader = memo(
     buttonStyle,
     onPressFold,
   }: {
-    str: string;
+    str?: string | null;
     fold?: boolean;
     style?: ViewStyle;
     buttonStyle?: ViewStyle;
@@ -933,14 +936,15 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-InvertHighlight'],
     backgroundColor: ctx.colors2024['brand-default'],
   },
-  favoriteBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    backgroundColor: ctx.colors2024['orange-light-1'],
-    borderBottomLeftRadius: 12,
-    borderTopRightRadius: 16,
+  changeText: {
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    color: ctx.colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+  },
+  changeTextPositive: {
+    color: ctx.colors2024['red-default'],
   },
 }));

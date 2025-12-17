@@ -1,11 +1,18 @@
 import { NativeModules } from 'react-native';
 import Reactotron, { ReactotronReactNative } from 'reactotron-react-native';
 import { DEV_SERVER_HOSTNAME as DEV_SERVER_HOSTNAME_ } from '@env';
-import { isNonPublicProductionEnv } from '@/constant';
+import { APP_VERSIONS, isNonPublicProductionEnv } from '@/constant';
 import { getDevServerHost } from '@/core/utils/devServerSettings';
+import mmkvPlugin from '@/core/utils/reactotron-plugins/react-native-mmkv';
+import opSQLitePlugin from '@/core/utils/reactotron-plugins/op-sqlite';
+import '@/core/utils/reactotron-plugins/_setup';
+import {
+  reactotronEvents,
+  waitTronReady,
+} from '@/core/utils/reactotron-plugins/_utils';
+import { setupCustomCommands } from '@/core/utils/reactotron-plugins/_setup';
 
-const instanceRef = { current: null as null | ReactotronReactNative };
-export function setupReactotronConnection() {
+export async function setupReactotronConnection() {
   let persistedHostname = '';
   let scriptHostname = '';
   try {
@@ -42,15 +49,19 @@ export function setupReactotronConnection() {
   const finalScriptHostname =
     DEV_SERVER_HOSTNAME_ || persistedHostname || scriptHostname;
 
-  if (instanceRef.current) {
-    instanceRef.current.close();
-    instanceRef.current = null;
-  }
-
+  let client: null | ReactotronReactNative = null;
+  const waitTronP = waitTronReady();
   if (finalScriptHostname) {
-    instanceRef.current = Reactotron
+    Reactotron.clear();
+    client = Reactotron.use(
+      mmkvPlugin<ReactotronReactNative>({
+        storage: require('@/core/storage/mmkv').appMMKVForDebug,
+      }),
+    )
+      .use(opSQLitePlugin<ReactotronReactNative>())
       // controls connection & communication settings
       .configure({
+        getClientId: async () => `RabbyMobile${APP_VERSIONS.fromJs}`,
         name: 'Rabby Mobile',
         host: finalScriptHostname,
       })
@@ -59,9 +70,15 @@ export function setupReactotronConnection() {
         asyncStorage: false, // there are more options to the async storage.
       })
       .connect(); // let's connect!
+
+    setupCustomCommands(client);
+
+    reactotronEvents.emit('__REACTOTRON_LOADED__', { client });
+
+    await waitTronP;
   }
 
-  return instanceRef.current;
+  return client;
 }
 
 if (__DEV__) {

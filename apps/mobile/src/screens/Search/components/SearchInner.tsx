@@ -24,6 +24,7 @@ import { useShowSearchBottomSheet } from './SeachBottomSheet';
 import { useSearchTokens } from '../useSearch';
 import { IS_ANDROID } from '@/core/native/utils';
 import { SearchAssetsOnHome } from './SearchAssetsOnHome';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 export const SearchInner = ({
   searchText,
@@ -247,7 +248,7 @@ export const SearchInner = ({
   ]);
 
   return (
-    <View
+    <KeyboardAvoidingView
       style={[
         styles.container,
         { height: '100%' },
@@ -281,7 +282,7 @@ export const SearchInner = ({
           style={styles.searchBar}
         />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 

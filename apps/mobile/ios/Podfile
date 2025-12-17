@@ -68,6 +68,16 @@ target 'RabbyMobile' do
     # Pods for testing
   end
 
+  pre_install do |installer|
+    installer.pod_targets.each do |pod|
+      if pod.name.eql?('op-sqlite')
+        def pod.build_type
+          Pod::BuildType.static_library
+        end
+      end
+    end
+  end
+
   # use_flipper!({'Flipper' => '0.58.0'})
   post_install do |installer|
     # flipper_post_install(installer)

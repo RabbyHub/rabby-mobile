@@ -4,7 +4,7 @@ import { ScrollView, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
 import { AddressItemInner2024 } from '../Address/components/AddressItemInner2024';
 import AnimationImportSuccess from '@/assets2024/animations/animation-import-success.json';
 import Lottie from 'lottie-react-native';
@@ -18,14 +18,13 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useSpecifyAccountsBalance } from './hooks/balance';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 
 export const SyncExtensionAccountSuccessfulScreen = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useRabbyAppNavigation();
-  const { syncMultiAddressesHistory } = useSyncHistoryDB();
 
   const route =
     useRoute<
@@ -60,7 +59,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
       fetchTotalBalance();
       syncMultiAddressesHistory(accounts.slice(0, 5).map(e => e.address));
     }
-  }, [accounts, fetchTotalBalance, syncMultiAddressesHistory]);
+  }, [accounts, fetchTotalBalance]);
 
   const sortedList = useSortAddressList(
     balanceAccounts?.length ? balanceAccounts : accounts,
@@ -78,6 +77,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
         },
       ],
     });
+    apisHomeTabIndex.setTabIndex(0);
 
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.SCAN_SYNC_EXTENSION_DONE,

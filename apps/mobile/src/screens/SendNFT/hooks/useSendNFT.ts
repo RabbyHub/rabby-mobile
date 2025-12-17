@@ -38,7 +38,7 @@ import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { toast } from '@/components/Toast';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { StackActions, useIsFocused } from '@react-navigation/native';
 import {
@@ -50,7 +50,7 @@ import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useRecentSendToHistoryFor } from '@/screens/Send/hooks/useRecentSend';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { useMiniSigner } from '@/hooks/useSigner';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { useMemoizedFn } from 'ahooks';
 import { abiCoder } from '@/core/apis/sendRequest';
@@ -562,11 +562,7 @@ export function useSendNFTForm({
             });
         }
 
-        navigation.dispatch(
-          StackActions.replace(RootNames.StackRoot, {
-            screen: RootNames.Home,
-          }),
-        );
+        resetNavigationTo(navigation, 'Home');
       } catch (e: any) {
         toast.info(e.message);
       } finally {
@@ -707,7 +703,7 @@ export function useSendNFTForm({
   const prepareCountRef = useRef(0);
 
   const isFocused = useIsFocused();
-  const stableAmountValue = useDebounceValue(formValues.amount, 300);
+  const stableAmountValue = useDebouncedValue(formValues.amount, 300);
 
   useEffect(() => {
     if (

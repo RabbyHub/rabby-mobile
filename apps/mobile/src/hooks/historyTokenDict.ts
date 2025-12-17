@@ -1,51 +1,39 @@
 import { useCallback } from 'react';
-import { useAtom } from 'jotai';
-import {
-  atomByMMKV,
-  MMKVStorageStrategy,
-  removeLegacyMMKVStorageByKey,
-} from '@/core/storage/mmkv';
+import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-const historyTimeBase = atomByMMKV<Record<string, number>>(
+export const historyTimeStore = zustandByMMKV<Record<string, number>>(
   '@HistoryTimeDictV3',
-  {} as Record<string, number>,
+  {},
   { storage: MMKVStorageStrategy.compatJson },
 );
 
-const historyLoadingDict = atomByMMKV<Record<string, boolean>>(
+const historyLoadingStore = zustandByMMKV<Record<string, boolean>>(
   '@historyLoadingDict',
-  {} as Record<string, boolean>,
+  {},
   { storage: MMKVStorageStrategy.compatJson },
 );
 
-(() => {
-  setTimeout(() => {
-    removeLegacyMMKVStorageByKey('@HistoryTokenDict');
-    removeLegacyMMKVStorageByKey('@HistoryProjectDict');
-    removeLegacyMMKVStorageByKey('@historyEnsureNoDataDict');
-  }, 1000);
-})();
+export const updateHistoryTimeSingleAddress = (add: string, time?: number) => {
+  historyTimeStore.setState(prev => ({
+    ...prev,
+    [add.toLowerCase()]: time || Date.now(),
+  }));
+};
 
-export function useHistoryTokenDict() {
-  const [updateHistoryTime, setUpdateHistoryTime] = useAtom(historyTimeBase);
-  const [historyLoading, setHistoryLoading] = useAtom(historyLoadingDict);
+export const resetUpdateHistoryTime = () => {
+  historyTimeStore.setState({}, true);
+};
 
-  const updateHistoryTimeSingleAddress = (add: string, time?: number) => {
-    setUpdateHistoryTime(prev => ({
-      ...prev,
-      [add.toLowerCase()]: time || Date.now(),
-    }));
-  };
+export const setHistoryLoading = (
+  valOrFunc: UpdaterOrPartials<Record<string, boolean>>,
+) => {
+  historyLoadingStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
+  }, true);
+};
 
-  const resetUpdateHistoryTime = useCallback(() => {
-    setUpdateHistoryTime({});
-  }, [setUpdateHistoryTime]);
-
-  return {
-    resetUpdateHistoryTime,
-    updateHistoryTime,
-    updateHistoryTimeSingleAddress,
-    historyLoading,
-    setHistoryLoading,
-  };
-}
+export const useHistoryLoading = () => {
+  return historyLoadingStore(s => s);
+};

@@ -1,5 +1,5 @@
 import type { Account, IPinAddress } from '@/core/services/preference';
-import { useAccounts, usePinAddresses } from './account';
+import { storeApiAccounts, useAccounts, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
 import { useAtom } from 'jotai';
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
@@ -8,11 +8,12 @@ import { RootNames } from '@/constant/layout';
 import { Platform } from 'react-native';
 import { sortAccountList } from '@/utils/sortAccountList';
 import {
-  AccountSwitcherInfos,
   AccountSwitcherScene,
   makeSceneAccount,
   SceneAccountInfo,
-  sceneAccountInfoAtom,
+  sceneAccountInfoStore,
+  zResetSceneAccountInfo,
+  zSetSceneAccountInfo,
 } from './sceneAccountInfoAtom';
 
 export type PropsForAccountSwitchScreen<T extends void | object = void> = {
@@ -48,14 +49,8 @@ export const AccountSwitcherContext = React.createContext<SceneAccountInfo>(
 );
 
 export function useResetSceneAccountInfo() {
-  const [, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
-
-  const resetSceneAccountInfo = useCallback(() => {
-    setSceneAccountInfo(cloneDeep(AccountSwitcherInfos));
-  }, [setSceneAccountInfo]);
-
   return {
-    resetSceneAccountInfo,
+    resetSceneAccountInfo: zResetSceneAccountInfo,
   };
 }
 
@@ -84,8 +79,7 @@ export function usePreFetchBeforeEnterScene() {
 }
 
 export function useSwitchSceneCurrentAccount() {
-  const [sceneAccountInfo, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
-
+  const sceneAccountInfo = sceneAccountInfoStore(s => s);
   /**
    * @description switch current account in scene, enable it if account is not null, or
    * inactivate it if account is null
@@ -109,7 +103,7 @@ export function useSwitchSceneCurrentAccount() {
         };
 
         const doReturn = async <T extends typeof prev>(val: T) => {
-          setSceneAccountInfo(val);
+          zSetSceneAccountInfo(val);
         };
 
         if (!maybeReEntrant && prev[scene]?.useAllAccounts) {
@@ -151,7 +145,7 @@ export function useSwitchSceneCurrentAccount() {
         return prev;
       }
     },
-    [sceneAccountInfo, setSceneAccountInfo],
+    [sceneAccountInfo],
   );
 
   /**
@@ -166,7 +160,7 @@ export function useSwitchSceneCurrentAccount() {
         const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
 
         const doReturn = <T extends typeof prev>(val: T) => {
-          setSceneAccountInfo(val);
+          zSetSceneAccountInfo(val);
           return val;
         };
 
@@ -202,12 +196,12 @@ export function useSwitchSceneCurrentAccount() {
         return prev;
       }
     },
-    [sceneAccountInfo, setSceneAccountInfo],
+    [sceneAccountInfo],
   );
 
   const toggleUseAllAccountsOnScene = useCallback(
     (scene: AccountSwitcherScene, useAll: boolean) => {
-      setSceneAccountInfo(prev => {
+      zSetSceneAccountInfo(prev => {
         const nextVal = ScenesSupportAllAccounts.includes(scene)
           ? useAll
           : false;
@@ -221,7 +215,7 @@ export function useSwitchSceneCurrentAccount() {
         };
       });
     },
-    [setSceneAccountInfo],
+    [],
   );
 
   return {
@@ -308,7 +302,8 @@ function computeSceneAccountInfo({
     !result.finalSceneCurrentAccount &&
     accounts.length
   ) {
-    result.finalSceneCurrentAccount = result.myAddresses[0] || accounts[0];
+    result.finalSceneCurrentAccount =
+      (result.myAddresses[0] || accounts[0]) ?? null;
   }
 
   if (!result.isSceneUsingAllAccounts && result.finalSceneCurrentAccount) {
@@ -334,7 +329,9 @@ export function useSceneAccountInfo(options: {
   const { accounts } = useAccounts({ disableAutoFetch: true });
 
   const { forScene } = options || {};
-  const [sceneAccounts] = useAtom(sceneAccountInfoAtom);
+  const sceneAccountInfo = sceneAccountInfoStore(s =>
+    !forScene ? null : s[forScene],
+  );
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -361,7 +358,6 @@ export function useSceneAccountInfo(options: {
     );
   }, [forScene]);
 
-  const sceneAccountInfo = sceneAccounts[forScene];
   const computeFinalSceneAccount = useCallback(
     (account?: Account | null) => {
       const result = computeSceneAccountInfo({
@@ -419,6 +415,28 @@ export function useSceneAccountInfo(options: {
   };
 }
 
+function getSceneAccountInfo(options: { forScene: AccountSwitcherScene }) {
+  const accounts = storeApiAccounts.getAccounts();
+  const pinAddresses = storeApiAccounts.getPinAddresses();
+
+  const { forScene } = options || {};
+  const sceneAccountInfo = sceneAccountInfoStore.getState()[forScene];
+
+  const result = computeSceneAccountInfo({
+    forScene,
+    sceneCurrentAccount: sceneAccountInfo?.currentAccount ?? null,
+    isSceneUsingAllAccounts: !!sceneAccountInfo?.useAllAccounts,
+    accounts,
+    pinAddresses,
+  });
+
+  return result;
+}
+
+export const storeApiAccountsSwitcher = {
+  getSceneAccountInfo,
+};
+
 function getDefaultSceneAccountInfo() {
   return {
     forScene: null,
@@ -449,12 +467,13 @@ const ScreenSceneAccountContext = React.createContext<
 type ProviderProps = React.ComponentProps<
   typeof ScreenSceneAccountContext.Provider
 >;
+const defaultSceneAccount = getDefaultSceneAccountInfo();
 export const ScreenSceneAccountProvider: React.FC<
   Omit<ProviderProps, 'value'> & Partial<Pick<ProviderProps, 'value'>>
 > = props => {
   const { children, value } = props;
   return React.createElement(ScreenSceneAccountContext.Provider, {
-    value: value || getDefaultSceneAccountInfo(),
+    value: value || defaultSceneAccount,
     children,
   });
 };

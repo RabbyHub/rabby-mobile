@@ -110,14 +110,14 @@ import {
 import { AppCacheSizeText } from './components/SpecialText';
 import { IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
 import { OpenApiPopup } from './components/OpenApiPopup';
 import MockBatchRevokeModal, {
   useDevMockBatchRevokeVisible,
 } from './sheetModals/DevMockBatchRevoke';
-import { preferenceService } from '@/core/services';
+import { perpsService, preferenceService } from '@/core/services';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 import { useMultiPress } from '@/hooks/tap';
 import {
@@ -196,12 +196,12 @@ function SettingsBlocks() {
   const startSelectAutolockTime = useCallback(() => {
     if (
       shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setAutoLockTime' })
-    )
+    ) {
       return;
+    }
     selectAutolockTimeRef.current?.present();
   }, [shouldRedirectToSetPasswordBefore]);
 
-  const { resetUpdateHistoryTime } = useHistoryTokenDict();
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const {
@@ -226,8 +226,9 @@ function SettingsBlocks() {
   const startSwitchBiometrics = useCallback(() => {
     if (
       shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
-    )
+    ) {
       return;
+    }
     switchBiometricsRef.current?.toggle();
   }, [shouldRedirectToSetPasswordBefore]);
 
@@ -698,6 +699,14 @@ function DevSettingsBlocks() {
               icon: RcCode,
               onPress: () => {
                 setMockBatchRevokeVisible(true);
+              },
+            },
+            {
+              label: 'RESET PERPS STORE',
+              icon: RcCode,
+              onPress: () => {
+                perpsService.resetStore();
+                toast.success('PERPS STORE RESET SUCCESS');
               },
             },
           ],

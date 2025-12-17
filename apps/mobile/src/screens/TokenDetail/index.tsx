@@ -23,7 +23,7 @@ import {
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { formatPrice } from '@/utils/number';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -132,7 +132,6 @@ const TokenDetailContent = () => {
       },
     );
 
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
 
   const refreshTag = useCallback(() => {
@@ -166,13 +165,20 @@ const TokenDetailContent = () => {
     return (
       <RightMore
         token={token}
-        triggerUpdate={triggerUpdate}
+        triggerUpdate={() =>
+          effectiveAccount?.address &&
+          apisAddressBalance.triggerUpdate({
+            address: effectiveAccount?.address,
+            force: false,
+            fromScene: 'TokenDetail',
+          })
+        }
         isMultiAddress={false}
         refreshTags={refreshTag}
         unHold={false}
       />
     );
-  }, [token, triggerUpdate, refreshTag]);
+  }, [token, refreshTag, effectiveAccount?.address]);
 
   useFocusEffect(
     useCallback(() => {
@@ -215,12 +221,12 @@ const TokenDetailContent = () => {
                     ? colors2024['neutral-secondary']
                     : isLoss
                     ? colors2024['red-disable']
-                    : colors2024['green-disable'],
+                    : colors2024['green-light-2'],
                   backgroundColor: is24hNoChange
                     ? colors2024['neutral-bg-1']
                     : isLoss
                     ? colors2024['red-light-1']
-                    : colors2024['green-light-4'],
+                    : colors2024['green-light-1'],
                 },
               ]}
               onPress={handleOpenTokenMarketInfo}>
@@ -421,7 +427,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 4,
       borderWidth: 1,
       borderColor: colors2024['green-default'],
-      backgroundColor: colors2024['green-light-4'],
+      backgroundColor: colors2024['green-light-1'],
       padding: 6,
       paddingHorizontal: 12,
       borderRadius: 16,

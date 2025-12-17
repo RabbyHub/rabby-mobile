@@ -49,7 +49,6 @@ import { useTranslation } from 'react-i18next';
 import { filterMyAccounts } from '@/utils/account';
 import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPasswordScreen';
 import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
-import { AddressAssetsOverview } from '@/screens/Address/AddressAssetsOverviewScreen';
 import PointsScreen from '../Points';
 
 const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
@@ -102,7 +101,7 @@ export function AddressNavigator() {
         },
         headerTitle: '',
       })}>
-      <AddressStack.Screen
+      {/* <AddressStack.Screen
         name={RootNames.AddressList}
         component={AddressListScreen}
         options={mergeScreenOptions2024([
@@ -117,17 +116,7 @@ export function AddressNavigator() {
             headerRight: () => <AddressListScreenButton type="address" />,
           },
         ])}
-      />
-      <AddressStack.Screen
-        name={RootNames.AddressAssetsOverview}
-        component={AddressAssetsOverview}
-        options={mergeScreenOptions2024([
-          {
-            // title: 'Address',
-            headerRight: () => <AddressListScreenButton type="address" />,
-          },
-        ])}
-      />
+      /> */}
       <AddressStack.Screen
         name={RootNames.ReceiveAddressList}
         component={ReceiveAddressListScreen}

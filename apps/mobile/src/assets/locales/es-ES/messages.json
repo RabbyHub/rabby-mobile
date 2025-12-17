@@ -287,6 +287,9 @@
     },
     "portfolios": {
       "manage": "Gestionar"
+    },
+    "multiAddressModal": {
+      "title": "Carteras"
     }
   },
   "page": {
@@ -318,7 +321,11 @@
         "LendingBorrow": "Pedir prestado",
         "LendingRepay": "Reembolsar",
         "LendingSupply": "Suministro",
-        "LendingWithdraw": "Retirar"
+        "LendingWithdraw": "Retirar",
+        "LendingOffCollateral": "Desactivar el uso como colateral",
+        "LendingOnCollateral": "Activar uso como colateral",
+        "LendingManageEMode": "Activa el E-Mode",
+        "LendingManageEModeDisable": "Desactivar E-Mode"
       },
       "detail": {
         "Cancel": "Cancelar",
@@ -387,7 +394,9 @@
         "skipNonceText": "Nonce #{{nonce}} omitido en la cadena {{chainName}}. Esto puede causar transacciones pendientes por delante. <5></5> <6>Enviar un tx</6> <7></7> en la cadena para resolver."
       },
       "ShowScamTransactions": "Mostrar transacciones fraudulentas",
-      "HideScamTransactions": "Ocultar transacciones fraudulentas"
+      "HideScamTransactions": "Ocultar transacciones fraudulentas",
+      "scamTips": "Esta transacción es iniciada por estafadores para enviar tokens y NFTs de estafa. Por favor, evite interactuar con ella.",
+      "scam": "Estafa"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Introduce tu frase semilla"
@@ -1338,7 +1347,25 @@
       "From": "Desde",
       "actual": "Actual:",
       "bridged": "Puenteado",
-      "gasFeeTooHight": "La tarifa de Gas es más alta de lo normal. Confirma solo si deseas continuar."
+      "gasFeeTooHight": "La tarifa de Gas es más alta de lo normal. Confirma solo si deseas continuar.",
+      "pendingItem": {
+        "completed": "Completado",
+        "estimatedTime": "Tiempo estimado",
+        "longTimeNoReceive": "La red está ocupada. Esto puede tardar más de lo habitual. Por favor, espere pacientemente.",
+        "pending": "Pendiente",
+        "failed": "Fallido",
+        "queued": "En cola",
+        "swap": "Intercambiar",
+        "sendingFrom": "Enviando desde {{chain}}",
+        "beReturnFailed": "El puente ha fallado. Sus activos han sido devueltos.",
+        "bridgeStatus": "Estado del puente",
+        "fromFailed": "La transacción no se realizó. Inténtalo de nuevo.",
+        "receivingTo": "Recibiendo en {{chain}}",
+        "BridgeStatusUnavailable": "Estado del puente no disponible. Por favor, verifica tu historial de transacciones para confirmar que los fondos han llegado.",
+        "receivedDifferentTokenNeedSwap": "Has recibido un token diferente. Puedes cambiarlo por el token que seleccionaste.",
+        "receivedDifferentTokenFromSource": "El puente falló. Se devolvió un token diferente en la cadena de origen."
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "newAddress": {
       "Quick": "Rápido",
@@ -2285,7 +2312,9 @@
       "sentTimeHeader": "Enviado",
       "sendToSafeAddress": "Enviar a monederos seguros",
       "sendToImportedAddress": "Enviar a mis monederos importados",
-      "sendToWatchAddress": "Enviar a Wallets Solo de Observación"
+      "sendToWatchAddress": "Enviar a Wallets Solo de Observación",
+      "enterOrSearchAddress": "Introducir o Buscar Dirección",
+      "dividerWatchOnlyWallets": "Direcciones de solo visualización"
     },
     "confirmAddress": {
       "risks": {
@@ -2378,7 +2407,8 @@
         "recentEmpty": "Comenzando a explorar el sitio web",
         "favorite": "Favorito",
         "hot": "Caliente",
-        "otherResults": "Otros Resultados"
+        "otherResults": "Otros Resultados",
+        "hot10": "Hot 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Abrir sitios web"
@@ -2685,11 +2715,16 @@
         "title": "Nivel de Riesgo",
         "liquidationPrice": "Precio de Liquidación",
         "liqIntro": "La distancia de liquidación (%) muestra cuán lejos está el precio actual de tu precio de liquidación. Una distancia mayor indica una posición más segura, mientras que una distancia menor significa un mayor riesgo de liquidación.",
-        "subtitle": "Distancia de liquidación en tiempo real (%)"
+        "subtitle": "Distancia de liquidación en tiempo real (%)",
+        "liqDistanceTipsShort": "Subir <1>{{distance}}</1> activará la liquidación.",
+        "liqDistanceTipsLong": "Bajando <1>{{distance}}</1> se activará la liquidación."
       },
       "closeAllConfirmTitle": "Confirmar Cerrar Todas las Posiciones",
       "closeAll": "Cerrar todo",
-      "closeAllConfirmMessage": "Todas tus posiciones abiertas se cerrarán al precio de mercado."
+      "closeAllConfirmMessage": "Todas tus posiciones abiertas se cerrarán al precio de mercado.",
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid Posición"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2714,7 +2749,9 @@
         "justMargin": "Margen",
         "direction": "Dirección",
         "slPrice": "Precio de Stop-Loss",
-        "autoClose": "Cierre automático"
+        "autoClose": "Cierre automático",
+        "fundingGains": "Ganancias de Financiamiento",
+        "fundingGainsTips": "Esto son las ganancias netas de financiamiento desde que se abrió la posición. El financiamiento es una tarifa por hora que los traders pagan o reciben para mantener el precio del contrato perp cerca del precio real del token."
       },
       "PerpsInfo": {
         "openInterestTips": "El total de posiciones pendientes de todos los usuarios en este contrato.",
@@ -2722,14 +2759,15 @@
         "title": "Información",
         "24Vol": "Volumen en 24h",
         "openInterest": "Interés Abierto",
-        "funding": "Financiación"
+        "funding": "Financiación",
+        "fundingRate": "Tasa de financiamiento"
       },
       "PerpsIntro": {
         "title": "¿Qué son los Perps?",
         "desc": "El comercio de contratos perpetuos implica riesgos significativos, incluyendo la posibilidad de perder rápidamente su inversión y colateral debido a un alto apalancamiento y la volatilidad del mercado. Este tipo de comercio puede no ser adecuado para todos los usuarios. Los precios pueden verse afectados por las tasas de financiación y la liquidez, y podría ser liquidado automáticamente sin previo aviso. Los datos del mercado son proporcionados por Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "Cerrar posición {{direction}} de {{coin}}",
+        "title": "Cerrar posición",
         "fee": "Tarifa:",
         "pnl": "PNL",
         "closeBtn": "Cerrar {{direction}}",
@@ -2760,7 +2798,10 @@
         "takeProfitWhenPriceBelow": "Toma de Beneficios Cuando el Precio Está por Debajo",
         "takeProfitWhenPriceAbove": "Toma de Ganancias Cuando el Precio esté por Encima",
         "stopLossWhenPriceBelow": "Detener Pérdidas Cuando el Precio Sea Inferior a",
-        "stopLossWhenPriceAbove": "Stop Loss Cuando el Precio Está Por Encima"
+        "stopLossWhenPriceAbove": "Stop Loss Cuando el Precio Está Por Encima",
+        "maxMargin": "El margen máximo es {{amount}}",
+        "upTo": "Hasta",
+        "minMargin": "El margen mínimo es {{amount}}"
       },
       "PerpsOpenPositionCheckPopup": {
         "perps": "Perpetuos",
@@ -2788,7 +2829,9 @@
         "closePosition": "Cerrar posición {{direction}}",
         "long": "Largo",
         "noPermission": "No se admiten abrir posiciones en su región.",
-        "short": "Corto"
+        "short": "Corto",
+        "add": "Añadir",
+        "close": "Cerrar"
       },
       "PerpsAutoCloseModal": {
         "slPrice": "Precio de Stop Loss",
@@ -2820,8 +2863,16 @@
         "amountToAdd": "Cantidad a agregar",
         "reduceMargin": "Reducir Margen",
         "available": "disponible",
-        "liqPrice": "Precio de Liq.:"
-      }
+        "liqPrice": "Precio de Liq.:",
+        "liqDistance": "Liq.Distancia"
+      },
+      "PerpsAddPositionPopup": {
+        "addToLong": "Añadir a Long",
+        "addSize": "Añadir Tamaño",
+        "totalSize": "Tamaño Total",
+        "addToShort": "Agregar a Short"
+      },
+      "needDepositFirst": "Primero necesitas depositar fondos."
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Página Integrada"
@@ -2841,7 +2892,10 @@
     "Lending": {
       "availableCard": {
         "needSupply": "Para pedir prestado, necesitas aportar activos como garantía.",
-        "canBorrow": "Puedes pedir prestado basado en tu colateral proporcionado, hasta el límite de préstamo."
+        "canBorrow": "Puedes pedir prestado basado en tu colateral proporcionado, hasta el límite de préstamo.",
+        "isolated": "El poder de préstamo y los activos están limitados debido al modo de Aislamiento.",
+        "emodeNoAssets": "No pudimos encontrar ningún activo relacionado con tu búsqueda. Intenta de nuevo con una categoría diferente.",
+        "emode": "En E-Mode, algunos activos no son tomables en préstamo. Sal de E-Mode para acceder a todos los activos."
       },
       "list": {
         "headers": {
@@ -2874,7 +2928,12 @@
         "actions": "Suministro",
         "supplyAPY": "Suministrar APY",
         "approveAndSupply": "Aprobar y Suministrar",
-        "availableToBorrow": "Disponible para pedir prestado"
+        "availableToBorrow": "Disponible para pedir prestado",
+        "enabled": "Habilitado",
+        "supplyBalance": "Suministro de saldo",
+        "collateralization": "Colateralización",
+        "isolatedTips": "Los activos de préstamo/endeudamiento existentes no son compatibles.",
+        "unavailable": "No disponible"
       },
       "withdrawDetail": {
         "actions": "Retirar",
@@ -2908,12 +2967,16 @@
         "totalSupplied": "Total Suministrado",
         "mySupply": "Mi Suministro",
         "almostCap": "Este activo ha alcanzado casi su límite de préstamo. Solo hay {{available}} disponible para ser prestado de este mercado.",
-        "reachCap": "Este activo ha alcanzado su límite de suministro. No hay nada disponible para ser suministrado desde este mercado."
+        "reachCap": "Este activo ha alcanzado su límite de suministro. No hay nada disponible para ser suministrado desde este mercado.",
+        "useAsCollateral": "Usar como colateral"
       },
       "risk": {
         "checkbox": "Entiendo la alerta y quiero continuar.",
         "warning": "Tomar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
-        "withdrawWarning": "Retirar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación."
+        "withdrawWarning": "Retirar esta cantidad reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
+        "toggleCollateralWarning": "Deshabilitar este activo como colateral reducirá tu Factor de Salud a un nivel arriesgado para la liquidación.",
+        "blockEmodeWarning": "No puedes desactivar el E-Mode porque eso podría provocar una liquidación. Para salir del E-Mode, proporciona o reembolsa posiciones prestadas.",
+        "emodeBlockWarning": "Desactivar el E-mode reducirá tu Factor de Salud a un nivel arriesgado para la Liquidación."
       },
       "lqDescription": {
         "over3desc": "Tus posiciones están seguras",
@@ -2932,7 +2995,10 @@
         "availableToBorrowDesc": "Puedes pedir prestado en función de tu garantía proporcionada y hasta que se alcance el límite de préstamo.",
         "lqDesc": "Cuando ocurre una liquidación, los liquidadores reembolsan hasta el 50% del monto pendiente prestado en nombre del prestatario. A cambio, pueden comprar la garantía a un precio con descuento y quedarse con la diferencia (penalización por liquidación) como bonificación.",
         "isolatedTitle": "El activo no puede ser utilizado como colateral",
-        "isolatedDesc": "Este activo solo se puede utilizar como colateral en modo de aislamiento, donde no puedes proporcionar colateral de otros activos para préstamos. Los activos utilizados como colateral en modo de aislamiento solo se pueden pedir prestados hasta un límite de deuda específico."
+        "isolatedDesc": "Este activo solo se puede utilizar como colateral en modo de aislamiento, donde no puedes proporcionar colateral de otros activos para préstamos. Los activos utilizados como colateral en modo de aislamiento solo se pueden pedir prestados hasta un límite de deuda específico.",
+        "isolatedSupplyDesc": "El uso de colateral está limitado debido al modo de aislamiento.",
+        "globalIsolatedDesc": "En el modo de Aislamiento, no puedes aportar otros activos como colateral. Un límite de deuda global restringe el poder de endeudamiento del activo aislado. Para salir del modo de aislamiento, desactiva UNI como colateral antes de pedir prestado otro activo.",
+        "maxLTV": "El máximo ratio LTV representa el máximo poder de préstamo de un colateral específico. Por ejemplo, si un colateral tiene un LTV del 75%, el usuario puede pedir prestado hasta 0.75 en valor de ETH en la moneda principal por cada 1 ETH en valor de colateral."
       },
       "gotIt": "Entendido",
       "market": "Mercado",
@@ -2948,7 +3014,64 @@
       "enterAmount": "Introducir cantidad",
       "isolated": "aislado",
       "estNetApy": "Est. net APY",
-      "marketSlot": "{{market}} Mercado"
+      "marketSlot": "{{market}} Mercado",
+      "toggleCollateralDetail": {
+        "actions": "Alternar {{asset}} Colateral",
+        "enable": "Habilitar {{asset}} como Colateral",
+        "disable": "Deshabilitar {{asset}} como Colateral",
+        "error": "Hay un error con el servicio de AAVE. Por favor, inténtalo de nuevo más tarde."
+      },
+      "toggleCollateralModal": {
+        "exitIsolationModeTitle": "Salir del Modo de Aislamiento",
+        "closeTitle": "Revisar la desactivación",
+        "riskToLiquidationText": "No puedes cambiar el uso a modo de colateral para esta moneda, porque provocará una llamada de colateral.",
+        "exitIsolationModeDesc": "Saldrás del modo de Aislamiento y otros tokens ahora pueden ser utilizados como colateral.",
+        "closeDesc": "Deshabilitar este activo como colateral afecta tu poder de endeudamiento y Factor de Salud.",
+        "enableIsolationModeDesc": "Estás entrando en modo Aislado. En modo Aislado, no puedes proporcionar otros activos como garantía. Un límite de deuda global restringe el poder de endeudamiento del activo aislado. Para salir del modo Aislado, desactiva CRV como garantía antes de pedir prestado otro activo.",
+        "openDesc": "Activar este activo como colateral aumenta tu poder de endeudamiento y el Factor de Salud. Sin embargo, puede ser liquidado si tu factor de salud cae por debajo de 1.",
+        "enableIsolationModeTitle": "Habilitar Modo de Aislamiento",
+        "openTitle": "Revisar la habilitación"
+      },
+      "selectMarket": "Seleccionar Mercado",
+      "searchMarket": "Buscar Mercado",
+      "manageEmode": {
+        "actions": {
+          "disable": "Deshabilitar E-Mode",
+          "enable": "Habilitar E-Mode"
+        },
+        "guide": {
+          "title": "Modo de eficiencia (E-Mode)",
+          "buttonTitle": "Gestionar E-Mode",
+          "description": "E-Mode aumenta tu LTV para una categoría seleccionada de activos."
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "LTV máximo",
+            "asset": "Activos"
+          },
+          "label": "Categoría de activos",
+          "placeholder": "Seleccionar",
+          "desc": "Todas las posiciones de préstamo fuera de esta categoría deben cerrarse para habilitar esta categoría."
+        },
+        "overview": {
+          "row": {
+            "asset": "Activo",
+            "collateral": "Colateral",
+            "borrowable": "Préstamo"
+          },
+          "title": "Categoría de activos",
+          "maxLtv": "Máx LTV",
+          "apy": "APY"
+        },
+        "enabled": "• Habilitado",
+        "disableTitle": "Deshabilitar",
+        "unavailableTips": "Sus activos de préstamo/borrowing existentes no son compatibles.",
+        "emode": "E-Mode",
+        "unavailable": "• No disponible",
+        "title": "Gestionar E-Mode",
+        "description": "Habilitar E-Mode te permite maximizar tu poder de préstamo. Sin embargo, el préstamo está restringido a los activos dentro de la categoría seleccionada."
+      },
+      "disabled": "DESHABILITADO"
     }
   },
   "global": {
@@ -3026,7 +3149,8 @@
     "check": "Verificar",
     "gotIt": "Entendido",
     "Token": "Token",
-    "Dapp": "Dapp"
+    "Dapp": "Dapp",
+    "GotIt": "Entendido"
   },
   "bluetooth": {
     "powered_off_alert": {

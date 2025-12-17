@@ -9,7 +9,7 @@ export const LedgerHDPathTypeLabel = {
   [LedgerHDPathType.Legacy]: 'Ledger Legacy',
 };
 
-export const useAccountInfo = (
+export const useAccountsInfo = (
   type: KeyringTypeName,
   address: string,
   brand?: string,

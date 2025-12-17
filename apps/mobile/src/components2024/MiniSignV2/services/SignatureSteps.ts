@@ -39,7 +39,7 @@ import {
 } from '@/components/Approval/components/SignTx/calc';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { getCexInfo } from '@/hooks/useCexSupportList';
-import { ALIAS_ADDRESS } from '@/constant/gas';
+import { ALIAS_ADDRESS, CAN_ESTIMATE_L1_FEE_CHAINS } from '@/constant/gas';
 import { getTimeSpan } from '@/utils/time';
 import {
   computeCustomGasPrice,
@@ -47,7 +47,7 @@ import {
 } from '../domain/gasSelection';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
-import { calcGasLimit } from '@/core/apis/transactions';
+import { BlockInfo, calcGasLimit } from '@/core/apis/transactions';
 import {
   FailedCode,
   sendTransactionByMiniSignV2 as sendTransaction,
@@ -72,6 +72,8 @@ import {
   setRetryTxRecommendNonce,
 } from '@/utils/errorTxRetry';
 import { t } from 'i18next';
+import miscService from '@/core/services/misc';
+import { requestETHRpc } from '@/core/apis/provider';
 
 async function recomputeExplainForCalcItems(params: {
   chainId: number;
@@ -365,7 +367,24 @@ export class SignatureSteps {
       lastSelection: gasSelection?.lastSelection,
     });
 
-    const [gasList, { median: gasPriceMedian }] = await Promise.all([
+    const preparedBlock = requestETHRpc<BlockInfo>(
+      {
+        method: 'eth_getBlockByNumber',
+        params: ['latest', false],
+      },
+      chain.serverId,
+      account,
+    );
+
+    const [
+      _,
+      gasList,
+      { median: gasPriceMedian },
+      nativeTokenBalance,
+      hasCustomChainRPC,
+      baseRecommendNonce,
+    ] = await Promise.all([
+      customRPCService.syncDefaultRPC().catch(() => {}),
       apiProvider.gasMarketV2(
         {
           chain,
@@ -375,8 +394,21 @@ export class SignatureSteps {
         account,
       ),
       openapi.gasPriceStats(chain.serverId),
-      customRPCService.syncDefaultRPC().catch(() => {}),
+      getNativeTokenBalance({
+        chainId: chain.id,
+        address: account.address,
+        account: account,
+      }),
+      apiCustomRPC.hasCustomRPC(chain.enum),
+      // base nonce for the batch (align with MiniSignTx)
+      getRecommendNonce({
+        tx: txs[0],
+        chainId: chain.id,
+        account,
+      }),
     ]);
+
+    const noCustomRPC = !hasCustomChainRPC;
 
     const selectedGas = selectInitialGas({
       gasList,
@@ -384,15 +416,7 @@ export class SignatureSteps {
       lastSelection: gasSelection?.lastSelection,
       customGasPrice,
     });
-    const nativeTokenBalance = await getNativeTokenBalance({
-      chainId: chain.id,
-      address: account.address,
-      account: account,
-    });
 
-    const noCustomRPC = !apiCustomRPC.hasCustomRPC(chain.enum);
-
-    const txsCalc: CalcItem[] = [];
     let nativeTokenPrice: number | undefined = undefined;
     const is1559Capable = !!(
       chain.eip?.['1559'] &&
@@ -404,21 +428,14 @@ export class SignatureSteps {
       chain.id,
       false,
     );
-    // base nonce for the batch (align with MiniSignTx)
-    const baseRecommendNonce = await getRecommendNonce({
-      tx: txs[0],
-      chainId: chain.id,
-      account,
-    });
-    const tempTxs: Tx[] = [];
-    for (let index = 0; index < txs.length; index++) {
-      const rawTx = txs[index];
-      const normalizedTx = normalizeTxParams(rawTx);
+
+    const tempTxs: Tx[] = txs.map((e, index) => {
+      const normalizedTx = normalizeTxParams(e);
       let buildTx: Tx = {
         chainId,
         data: normalizedTx.data || '0x', // can not execute with empty string, use 0x instead
         from: normalizedTx.from,
-        gas: normalizedTx.gas || rawTx.gasLimit,
+        gas: normalizedTx.gas || e.gasLimit,
         nonce:
           normalizedTx.nonce ||
           intToHex(new BigNumber(baseRecommendNonce).plus(index).toNumber()),
@@ -434,18 +451,64 @@ export class SignatureSteps {
             ? (buildTx as any).maxFeePerGas
             : intToHex(Math.round(maxPriorityFee));
       }
+      return buildTx;
+    });
 
-      tempTxs.push(buildTx);
+    const pending_tx_list_promise = apisTransactionHistory.getPendingTxs({
+      recommendNonce: baseRecommendNonce,
+      address: account.address,
+      chainId: txs[0].chainId,
+    });
+
+    let L1feePromises;
+
+    if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
+      L1feePromises = Promise.all(
+        tempTxs.map(tx =>
+          apiProvider.fetchEstimatedL1Fee(
+            {
+              txParams: tx,
+              account,
+            },
+            chain.enum,
+          ),
+        ),
+      );
+    }
+
+    const preExecProcess = async (index: number) => {
+      const buildTx = tempTxs[index];
+
+      const preparedHistoryGasUsed = openapi.historyGasUsed({
+        tx: {
+          ...buildTx,
+          nonce: buildTx.nonce || '0x1', // set a mock nonce for explain if dapp not set it
+          data: buildTx.data,
+          value: buildTx.value || '0x0',
+          gas: buildTx.gas || '', // set gas limit if dapp not set
+        },
+        user_addr: buildTx.from,
+      });
+
+      let L1feePromises;
+
+      if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
+        L1feePromises = apiProvider.fetchEstimatedL1Fee(
+          {
+            txParams: buildTx,
+            account,
+          },
+          chain.enum,
+        );
+      }
+
       const preExecResult = await openapi.preExecTx({
         tx: buildTx,
         origin: INTERNAL_REQUEST_ORIGIN,
         address: account.address,
         updateNonce: true,
         pending_tx_list: [
-          ...(await apisTransactionHistory.getPendingTxs({
-            recommendNonce: baseRecommendNonce,
-            address: account.address,
-          })),
+          ...(await pending_tx_list_promise),
           ...tempTxs.slice(0, index),
         ],
       });
@@ -464,6 +527,7 @@ export class SignatureSteps {
         gas: estimateGas,
         tx: buildTx,
         chainId: chain.id,
+        preparedHistoryGasUsed,
       });
       const gas = new BigNumber(gasRaw);
 
@@ -480,11 +544,11 @@ export class SignatureSteps {
             explainTx: preExecResult,
             needRatio,
             account,
+            preparedBlock,
           });
         gasLimit = _gl;
         recommendGasLimitRatio = _ratio;
       }
-
       const gasCost = await explainGas({
         gasUsed,
         gasPrice: selectedGas.price,
@@ -493,54 +557,61 @@ export class SignatureSteps {
         tx: buildTx,
         gasLimit,
         account,
+        preparedL1Fee: L1feePromises,
       });
-      nativeTokenPrice = preExecResult.native_token.price;
 
+      nativeTokenPrice = preExecResult.native_token.price;
       const finalTx = { ...buildTx, gas: gasLimit } as Tx;
-      txsCalc.push({
+      return {
         tx: finalTx,
         gasUsed,
         gasLimit: gasLimit!,
         recommendGasLimitRatio,
         gasCost,
         preExecResult,
-      });
+        L1feeCache: L1feePromises ? await L1feePromises : undefined,
+      };
+    };
 
-      if (index === txs.length - 1 && config?.onPreExecChange) {
-        try {
-          config.onPreExecChange(preExecResult);
-        } catch (err) {
-          console.error('onPreExecChange error', err);
-        }
-      }
+    const txsCalc = await Promise.all(
+      txs.map((_, index) => preExecProcess(index)),
+    );
+
+    if (config?.onPreExecChange && txsCalc.length) {
+      config?.onPreExecChange(txsCalc[txsCalc.length - 1].preExecResult);
     }
 
-    // align with MiniSignTx: aggregate checkErrors across batch with running balance
-    const checkErrors = aggregateCheckErrors({ txsCalc, nativeTokenBalance });
-    const isGasNotEnough = !!checkErrors?.some(e => e.code === 3001);
-    // gasless + gasAccount in parallel
-    const [gasless, gasAccount] = await Promise.all([
-      computeGasless({ txsCalc, gasPriceWei: selectedGas.price }),
-      computeGasAccount({ txsCalc }),
-    ]);
-
-    const selectedGasCost = await SignatureSteps.computeGasCost({
+    const gaslessTask = computeGasless({
+      txsCalc,
+      gasPriceWei: selectedGas.price,
+    });
+    const gasAccountTask = computeGasAccount({ txsCalc });
+    const selectedGasCostTask = SignatureSteps.computeGasCost({
       account,
       chainId: chain.id,
       txsCalc,
       price: selectedGas.price,
     });
+    const engineResultsTask: Promise<SecurityResult | undefined> =
+      enableSecurityEngine && txsCalc.length
+        ? SignatureSteps.getSecurityEngineResults({
+            account,
+            chainId: chain.id,
+            last: txsCalc[txsCalc.length - 1],
+          })
+        : Promise.resolve(undefined);
 
-    // security engine (optional)
-    let engineResults: SecurityResult | undefined;
-    if (enableSecurityEngine && txsCalc.length) {
-      const last = txsCalc[txsCalc.length - 1];
-      engineResults = await SignatureSteps.getSecurityEngineResults({
-        account,
-        chainId: chain.id,
-        last,
-      });
-    }
+    // align with MiniSignTx: aggregate checkErrors across batch with running balance
+    const checkErrors = aggregateCheckErrors({ txsCalc, nativeTokenBalance });
+    const isGasNotEnough = !!checkErrors?.some(e => e.code === 3001);
+
+    const [gasless, gasAccount, selectedGasCost, engineResults] =
+      await Promise.all([
+        gaslessTask,
+        gasAccountTask,
+        selectedGasCostTask,
+        engineResultsTask,
+      ]);
 
     return {
       chainId: chain.id,
@@ -702,6 +773,8 @@ export class SignatureSteps {
         };
       }
   > {
+    miscService.setCurrentGasLevel(params?.selectedGas?.level);
+
     const {
       chainServerId,
       txsCalc,

@@ -37,7 +37,7 @@ import {
 import { SwitchToggleType } from '@/components';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
-  useGetShowFeedbackOnScreenshotCapture,
+  useIsShowFeedbackOnScreenshotCapture,
   useScreenshotToReportEnabled,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
@@ -55,7 +55,10 @@ import {
   saveMnemonicToCloud,
 } from '@/core/utils/cloudBackup';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { useMakeMockDataForRateGuideExposure } from '@/components/RateModal/hooks';
+import {
+  useExposureRateGuide,
+  useMakeMockDataForRateGuideExposure,
+} from '@/components/RateModal/hooks';
 import { useMakeMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
 import { useMockClearOfflineChainTips } from '../Home/components/OfflineChainNotify';
 import { useGuidanceShown } from '@/components2024/Animations/hooks';
@@ -79,9 +82,7 @@ function DevSwitchAboutScreenProtection() {
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
 
-  const { getShowFeedbackOnScreenshotCapture } =
-    useGetShowFeedbackOnScreenshotCapture();
-  const isScreenshotReportEnabled = getShowFeedbackOnScreenshotCapture();
+  const { isScreenshotReportEnabled } = useIsShowFeedbackOnScreenshotCapture();
   const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
 
   return (
@@ -315,12 +316,12 @@ function DevTestCloudDrive() {
 function DevTestHomeCenterArea() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
-  const { shouldShowRateGuideOnHome, mockExposureRateGuide } =
-    useMakeMockDataForRateGuideExposure();
+  const { shouldShowRateGuideOnHome } = useExposureRateGuide();
+  const { mockExposureRateGuide } = useMakeMockDataForRateGuideExposure();
   const { mockData, setMockData } = useMakeMockDataForHomeCenterArea();
   const { clearOfflineChainTips } = useMockClearOfflineChainTips();
   const { mockResetViewedHomeTip } = useViewedHomeTip();
-  const { multiTabs20251111Viewed, toggleViewedGuidance } = useGuidanceShown();
+  const { multiTabs20251205Viewed, toggleViewedGuidance } = useGuidanceShown();
 
   useEffect(() => {
     if (mockData.forceShowOffchainNotify) {
@@ -409,10 +410,10 @@ function DevTestHomeCenterArea() {
           title={'Reset Home Multiple Tabs Guide'}
           type="ghost"
           height={48}
-          disabled={!multiTabs20251111Viewed}
+          disabled={!multiTabs20251205Viewed}
           containerStyle={{ marginTop: 0 }}
           onPress={() => {
-            toggleViewedGuidance('multiTabs20251111Viewed', false);
+            toggleViewedGuidance('multiTabs20251205Viewed', false);
           }}
         />
 

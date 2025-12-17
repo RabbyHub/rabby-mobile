@@ -14,20 +14,24 @@ export function getRabbyAppDbName() {
   return 'rabby-app.db';
 }
 
-export function getRabbyAppDbPath() {
+export function getRabbyAppDbDir() {
   try {
     return Platform.OS === 'android'
-      ? [`/data/data/${APPLICATION_ID}/databases`, getRabbyAppDbName()].join(
-          '/',
-        )
-      : [RNFS.LibraryDirectoryPath, 'LocalDatabase', getRabbyAppDbName()].join(
-          '/',
-        );
+      ? // ? [`/data/data/${APPLICATION_ID}/databases`].join('/')
+        [
+          RNFS.DocumentDirectoryPath.replace(/\/files\/?/, ''),
+          'databases',
+        ].join('/')
+      : [RNFS.LibraryDirectoryPath, 'LocalDatabase'].join('/');
   } catch (error) {
     console.error(error);
 
     return null;
   }
+}
+
+export function getRabbyAppDbPath() {
+  return [getRabbyAppDbDir(), getRabbyAppDbName()].join('/');
 }
 
 // if (__DEV__) {

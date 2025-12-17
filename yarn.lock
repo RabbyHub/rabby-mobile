@@ -3747,12 +3747,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bgd-labs/aave-address-book@npm:4.30.3":
-  version: 4.30.3
-  resolution: "@bgd-labs/aave-address-book@npm:4.30.3"
+"@bgd-labs/aave-address-book@npm:4.36.0":
+  version: 4.36.0
+  resolution: "@bgd-labs/aave-address-book@npm:4.36.0"
   peerDependencies:
     viem: ^2.23.5
-  checksum: 7d722dfbecea933d6a26f859f0f343cef669b1d9b309668460b90147bb7ec910e1096c346973531aff22ba33097558dd611f5045a4a86e9042b9d28546742eea
+  checksum: 53dc1bcbeeb34f28b9db0f18e911b8f795d92ea7ba230bfaca71f18da20da8b3ab257cd3ac945adaf6ae1669fa33b39bd466f39570ee9a3a71e74703ea117544
   languageName: node
   linkType: hard
 
@@ -6317,6 +6317,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@gorhom/bottom-sheet@patch:@gorhom/bottom-sheet@npm%3A5.0.6#./.yarn/patches/@gorhom-bottom-sheet-npm-5.0.6-ee2c6d5dad.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 5.0.6
+  resolution: "@gorhom/bottom-sheet@patch:@gorhom/bottom-sheet@npm%3A5.0.6#./.yarn/patches/@gorhom-bottom-sheet-npm-5.0.6-ee2c6d5dad.patch::version=5.0.6&hash=9c75ff&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@gorhom/portal": 1.0.14
+    invariant: ^2.2.4
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-native": "*"
+    react: "*"
+    react-native: "*"
+    react-native-gesture-handler: ">=2.16.1"
+    react-native-reanimated: ">=3.16.0"
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-native":
+      optional: true
+  checksum: 957e10d120a0fed647b65c1f0f1019c83c926f66078cc80dbb4e1ec29912ae6015f6d66301186b3a4a79d361463b8a2d32ac5175e735071ffa739dbe2e381db1
+  languageName: node
+  linkType: hard
+
 "@gorhom/portal@npm:1.0.14":
   version: 1.0.14
   resolution: "@gorhom/portal@npm:1.0.14"
@@ -7507,7 +7529,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/devices@npm:8.4.4, @ledgerhq/devices@npm:^8.4.4":
+"@ledgerhq/devices@npm:8.7.0":
+  version: 8.7.0
+  resolution: "@ledgerhq/devices@npm:8.7.0"
+  dependencies:
+    "@ledgerhq/errors": ^6.27.0
+    "@ledgerhq/logs": ^6.13.0
+    rxjs: ^7.8.1
+    semver: ^7.3.5
+  checksum: 780277445030bfa2124462df89b80e8b07a9111d4db9f59efe34f4363cb3fc76179a4735ee29a1dbef89edb683a84cc61e8801f6c1aa025726973456e2dbae26
+  languageName: node
+  linkType: hard
+
+"@ledgerhq/devices@npm:^8.4.4":
   version: 8.4.4
   resolution: "@ledgerhq/devices@npm:8.4.4"
   dependencies:
@@ -7516,18 +7550,6 @@ __metadata:
     rxjs: ^7.8.1
     semver: ^7.3.5
   checksum: 370fb38d484665c92165580e285cc792e7af0bf114a5d1e855aec602c6e39592090d0de7a43addeb4c13622f734ddd4f25be82f07507e14550753ce5473eea66
-  languageName: node
-  linkType: hard
-
-"@ledgerhq/devices@npm:8.5.1":
-  version: 8.5.1
-  resolution: "@ledgerhq/devices@npm:8.5.1"
-  dependencies:
-    "@ledgerhq/errors": ^6.25.0
-    "@ledgerhq/logs": ^6.13.0
-    rxjs: ^7.8.1
-    semver: ^7.3.5
-  checksum: ce066b5f4bf7ebab0e40bf5e96a87d61137d3d497548f6061ed81975a91a19873cf5056d924ce5454b6c4a967df000834ae8358cc2b4c6b8f8aa6470cb8d3a5c
   languageName: node
   linkType: hard
 
@@ -7553,10 +7575,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/errors@npm:^6.25.0":
-  version: 6.25.0
-  resolution: "@ledgerhq/errors@npm:6.25.0"
-  checksum: 066e4b97b6becda9b86b616829b5e025d60d658172179e5d7a9e7662e2f2c5ea70733d9930fee9031d18728da2996b632485f98258629267bb561526ab4e0367
+"@ledgerhq/errors@npm:^6.27.0":
+  version: 6.27.0
+  resolution: "@ledgerhq/errors@npm:6.27.0"
+  checksum: 7b65e20fbe37471de4e86a98cf9c4cb9591771d21c6b4c4e49783a388e1481006830dab677c8d90641bfdda79ff68db898f3cc9bac1bd01bed31ca9bd37c66fe
   languageName: node
   linkType: hard
 
@@ -7631,6 +7653,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ledgerhq/hw-transport@npm:6.31.13":
+  version: 6.31.13
+  resolution: "@ledgerhq/hw-transport@npm:6.31.13"
+  dependencies:
+    "@ledgerhq/devices": 8.7.0
+    "@ledgerhq/errors": ^6.27.0
+    "@ledgerhq/logs": ^6.13.0
+    events: ^3.3.0
+  checksum: eb9100b7cfc34153eb325a69240bc68b804508f6a54d1209686c28d4fda23737d1dce56ec184b613f5882ed9305139dce6f765e40292266d372f2196464baa59
+  languageName: node
+  linkType: hard
+
 "@ledgerhq/hw-transport@npm:6.31.4":
   version: 6.31.4
   resolution: "@ledgerhq/hw-transport@npm:6.31.4"
@@ -7640,18 +7674,6 @@ __metadata:
     "@ledgerhq/logs": ^6.12.0
     events: ^3.3.0
   checksum: bb5204513f2df3dbb646265954d1539bf6117cc08e73a4d1761ec10cb5f8255fe2b30112debc2433608de7260ee8878340c9f67690f5f62447a1466daa241ea7
-  languageName: node
-  linkType: hard
-
-"@ledgerhq/hw-transport@npm:^6.31.10":
-  version: 6.31.10
-  resolution: "@ledgerhq/hw-transport@npm:6.31.10"
-  dependencies:
-    "@ledgerhq/devices": 8.5.1
-    "@ledgerhq/errors": ^6.25.0
-    "@ledgerhq/logs": ^6.13.0
-    events: ^3.3.0
-  checksum: 947a664e7d1c59ccf060fd4d5378191cf3da92afca8e1d626f26fa99ae43c186b1c8e78d513cc6ab0d3e4b250879d4d97fe5b08e199b2a9cea031e0ac65a8272
   languageName: node
   linkType: hard
 
@@ -7691,18 +7713,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/react-native-hw-transport-ble@npm:6.35.3":
-  version: 6.35.3
-  resolution: "@ledgerhq/react-native-hw-transport-ble@npm:6.35.3"
+"@ledgerhq/react-native-hw-transport-ble@npm:6.35.6":
+  version: 6.35.6
+  resolution: "@ledgerhq/react-native-hw-transport-ble@npm:6.35.6"
   dependencies:
-    "@ledgerhq/devices": 8.5.1
-    "@ledgerhq/errors": ^6.25.0
-    "@ledgerhq/hw-transport": ^6.31.10
+    "@ledgerhq/devices": 8.7.0
+    "@ledgerhq/errors": ^6.27.0
+    "@ledgerhq/hw-transport": 6.31.13
     "@ledgerhq/logs": ^6.13.0
-    react-native-ble-plx: 3.5.0
+    react-native-ble-plx: 3.4.0
     rxjs: ^7.8.1
     uuid: ^9.0.1
-  checksum: b66f98b936e8fda09ba0590479efbc7564cfb148816ff45d5e994d6a411118f4fcc55dce71768c97520b3a0226e09112c7f120dd98fa15967fcc5078e5810197
+  checksum: 4b96bd72dc8fdf0c2fd3040263c06263b18812ad2efe03c84ddd06568e14d4d4c39884c299ef561164ac2928edbb195cd5c338de0f5ae3532d19daf4bcd112e1
   languageName: node
   linkType: hard
 
@@ -8566,6 +8588,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@op-engineering/op-sqlite@npm:15.1.1":
+  version: 15.1.1
+  resolution: "@op-engineering/op-sqlite@npm:15.1.1"
+  dependencies:
+    react-native-safe-area-context: ^5.6.2
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 93f0e42f0ac4e36958aa345374f581b05294244f7f9bdd675f47e57f9f03a192958953e32cbd524ce9f6def553cea3760a821eb604544e63de4f52d706fc491c
+  languageName: node
+  linkType: hard
+
+"@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.1#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.1-64eb5c2a0a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 15.1.1
+  resolution: "@op-engineering/op-sqlite@patch:@op-engineering/op-sqlite@npm%3A15.1.1#./.yarn/patches/@op-engineering-op-sqlite-npm-15.1.1-64eb5c2a0a.patch::version=15.1.1&hash=e54004&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    react-native-safe-area-context: ^5.6.2
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 231e1b0abb677cce144d554f1d67d753fa69b26f42df65e797551306841722c0626b8605c5e2283e05d5c0a2ecb10acfc2da244d96b3609c3625381677cf3a52
+  languageName: node
+  linkType: hard
+
 "@peculiar/asn1-schema@npm:^2.3.13":
   version: 2.3.15
   resolution: "@peculiar/asn1-schema@npm:2.3.15"
@@ -8814,7 +8860,7 @@ __metadata:
   resolution: "@rabby-wallet/eth-keyring-ledger@workspace:packages/eth-keyring-ledger"
   dependencies:
     "@ethereumjs/tx": 5
-    "@ledgerhq/devices": 8.4.4
+    "@ledgerhq/devices": 8.7.0
     "@ledgerhq/hw-app-eth": 6.45.0
     "@ledgerhq/hw-transport": 6.31.4
     "@ledgerhq/types-cryptoassets": 7.21.0
@@ -9002,16 +9048,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.0.10":
-  version: 1.0.10
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.0.10"
+"@rabby-wallet/hyperliquid-sdk@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.0"
   dependencies:
     "@ethereumjs/util": 9.0.0
     "@metamask/eth-sig-util": 5.1.0
     "@msgpack/msgpack": 3.1.2
     "@noble/hashes": 1.8.0
     ethereum-cryptography: 2.2.1
-  checksum: 953cd4a28d2c9199ae96bef6195bf4b0b42a747845cd41dd8686e136c9fb728e2d16542c8e0c7d1e99d1585712e531f6ee58e4114dd24c59702e9ee83baec6b2
+  checksum: 9adc3bdeb333780e8e251737aa329e9528b7b07f1d440ea678a3d5857cbdf005f82d43a9409f5c9ac4c1da09995c7ab1c33de795093ba6616d2348830e801e17
   languageName: node
   linkType: hard
 
@@ -9215,9 +9261,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.48":
-  version: 0.9.48
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.48"
+"@rabby-wallet/rabby-api@npm:0.9.50":
+  version: 0.9.50
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.50"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -9228,7 +9274,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 7172e82c74eb19893bc639c29bab4cb86d2d981fb4b692e399a722298cbe59ef097231289a370b385297e3cfc34e3716dc5d04452ff7a2e4d11a678e1e3f23a4
+  checksum: c7cd50f0ae7cbd9a7d0d3ce2dfecb141396b532f5b43914e26bec37f96cd198a4419a74970a41e257b3ab3bc182fada9699a77114ac1f5e954acab52d134be11
   languageName: node
   linkType: hard
 
@@ -9261,9 +9307,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.67":
-  version: 0.0.67
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.67"
+"@rabby-wallet/rabby-swap@npm:0.0.71":
+  version: 0.0.71
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.71"
   dependencies:
     "@ethersproject/abi": ^5.7.0
     axios: ^0.27.2
@@ -9272,16 +9318,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: efedf2319207bfe5eca4b9d5a8e0e96e0f860db560c64d5ca74b346ba84ed0a058c79c43902cbfa069ed7e8480da23970169218a94fed18cc29e1411a8987567
-  languageName: node
-  linkType: hard
-
-"@rabby-wallet/react-native-sqlite-storage@npm:7.0.0-alpha.2":
-  version: 7.0.0-alpha.2
-  resolution: "@rabby-wallet/react-native-sqlite-storage@npm:7.0.0-alpha.2"
-  peerDependencies:
-    react-native: ">=0.14.0"
-  checksum: 3d784d473d85a95def31dae73cbd4d6545d413b0ea2c16d6b34713901ca01b93e700ea23add0a99b8547d1f07369abb4ada6754beb142dd8d8dd2df412ea1f6a
+  checksum: 40f277b39d5daccf51a69fea32b315be395f739827ae65f22d8650dcf99eae8ff5c4bbe03fa3194bf167098795da2e660545bb4ec56532ae28e99c81dfdc3b07
   languageName: node
   linkType: hard
 
@@ -9289,7 +9326,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider"
   dependencies:
-    "@ledgerhq/devices": 8.4.4
+    "@ledgerhq/devices": 8.7.0
     "@rollup/plugin-image": ^2.1.1
     "@rollup/plugin-typescript": ^8.3.2
     "@types/chrome": ^0.0.186
@@ -14012,13 +14049,6 @@ __metadata:
   dependencies:
     "@types/react": "*"
   checksum: 2b69293a04609641be4963f5a9127aba3b7576cc15e3234fe6c341a940cbf3979e80bf848a43d93a24fb2ab09ad8faed54ac38c22037b159a0eea852e4dfa6eb
-  languageName: node
-  linkType: hard
-
-"@types/react-native-sqlite-storage@npm:^6.0.5":
-  version: 6.0.5
-  resolution: "@types/react-native-sqlite-storage@npm:6.0.5"
-  checksum: 192d4c3e2d93ea59f59387b8eb8d0aca3da32acca441aa5f84b2f4d919fc52aaa088ab5eb319ceec8471e58107d7463c56c733bfe5ff58915ac03b45313b6450
   languageName: node
   linkType: hard
 
@@ -31255,6 +31285,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mutative@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "mutative@npm:1.3.0"
+  checksum: 77ddbc68e9ef5c9b08d3517fd69df864def2ec654dc01d184047415757a07c3e4afa210f01756147a45b368603e2d2dce220182d469ae7d5bbbb9691c525f104
+  languageName: node
+  linkType: hard
+
 "mute-stream@npm:^0.0.8":
   version: 0.0.8
   resolution: "mute-stream@npm:0.0.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fmute-stream%2F-%2Fmute-stream-0.0.8.tgz"
@@ -34453,7 +34490,7 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": ^7.25.9
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
-    "@bgd-labs/aave-address-book": 4.30.3
+    "@bgd-labs/aave-address-book": 4.36.0
     "@craftzdog/react-native-buffer": ^6.0.5
     "@debank/common": 0.3.60
     "@debank/festats": 1.0.4
@@ -34462,7 +34499,7 @@ __metadata:
     "@ethereumjs/tx": 5.1.0
     "@ethereumjs/util": ^9.0.1
     "@gorhom/bottom-sheet": 5.0.6
-    "@ledgerhq/react-native-hw-transport-ble": 6.35.3
+    "@ledgerhq/react-native-hw-transport-ble": 6.35.6
     "@metamask/abi-utils": 3.0.0
     "@metamask/browser-passworder": 6.0.0
     "@metamask/eth-sig-util": 5.1.0
@@ -34471,6 +34508,7 @@ __metadata:
     "@notifee/react-native": ^7.8.0
     "@onekeyfe/hd-ble-sdk": 1.1.13
     "@onekeyfe/react-native-ble-utils": 0.1.4
+    "@op-engineering/op-sqlite": ^15.1.1
     "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-hd-keyring": 4.3.1
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
@@ -34479,15 +34517,14 @@ __metadata:
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": 5.0.2
     "@rabby-wallet/gnosis-sdk": 1.4.5
-    "@rabby-wallet/hyperliquid-sdk": 1.0.10
+    "@rabby-wallet/hyperliquid-sdk": 1.1.0
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.14
-    "@rabby-wallet/rabby-api": 0.9.48
+    "@rabby-wallet/rabby-api": 0.9.50
     "@rabby-wallet/rabby-security-engine": 2.0.11
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
-    "@rabby-wallet/rabby-swap": 0.0.67
-    "@rabby-wallet/react-native-sqlite-storage": 7.0.0-alpha.2
+    "@rabby-wallet/rabby-swap": 0.0.71
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-clipboard/clipboard": ^1.13.0
@@ -34524,7 +34561,6 @@ __metadata:
     "@types/qrcode": ^1.5.5
     "@types/react": ^18.0.24
     "@types/react-is": ^18.2.4
-    "@types/react-native-sqlite-storage": ^6.0.5
     "@types/react-native-version-check": ^3.4.8
     "@types/react-test-renderer": ^18.0.0
     "@types/through2": ^2.0.41
@@ -34564,6 +34600,7 @@ __metadata:
     lottie-react-native: 7.2.2
     markdown-it: ^14.0.0
     metro-react-native-babel-preset: 0.76.8
+    mutative: ^1.3.0
     nativewind: ^2.0.11
     node-libs-react-native: ^1.2.1
     p-queue: 7.3
@@ -34614,7 +34651,7 @@ __metadata:
     react-native-qrcode-svg: ^6.2.0
     react-native-quick-crypto: 0.7.13
     react-native-randombytes: ^3.6.1
-    react-native-reanimated: 3.17.1
+    react-native-reanimated: 3.18.2
     react-native-root-toast: ^3.5.1
     react-native-safe-area-context: 5.4.0
     react-native-screens: 4.9.2
@@ -34656,6 +34693,8 @@ __metadata:
     web3-utils: 1.7.0
     yup: ^1.3.3
     zeego: 1.10.0
+    zustand: 5.0.9
+    zustand-mutative: 1.3.1
   languageName: unknown
   linkType: soft
 
@@ -35388,13 +35427,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-is-edge-to-edge@npm:1.1.6":
-  version: 1.1.6
-  resolution: "react-native-is-edge-to-edge@npm:1.1.6"
+"react-native-is-edge-to-edge@npm:1.1.7":
+  version: 1.1.7
+  resolution: "react-native-is-edge-to-edge@npm:1.1.7"
   peerDependencies:
-    react: ">=18.2.0"
-    react-native: ">=0.73.0"
-  checksum: 4e07c1e34c01c8d50fd7c1d0460db06f6f0515197405230386a8ffb950cb724b10743af032310d1384df0a90059bfb8992ba2d93344ce86315315f0493feccc2
+    react: "*"
+    react-native: "*"
+  checksum: 4cdf2b2fb5b131f2015c26d2cb7688b4a0c5f3c8474b1bf0ddfa9eabb0263df440c87262ae8f812a6ecab0d5310df0373bddad4b51f53dabb2ffee01e9ef0f44
   languageName: node
   linkType: hard
 
@@ -35589,9 +35628,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-reanimated@npm:3.17.1":
-  version: 3.17.1
-  resolution: "react-native-reanimated@npm:3.17.1"
+"react-native-reanimated@npm:3.18.2":
+  version: 3.18.2
+  resolution: "react-native-reanimated@npm:3.18.2"
   dependencies:
     "@babel/plugin-transform-arrow-functions": ^7.0.0-0
     "@babel/plugin-transform-class-properties": ^7.0.0-0
@@ -35604,12 +35643,12 @@ __metadata:
     "@babel/preset-typescript": ^7.16.7
     convert-source-map: ^2.0.0
     invariant: ^2.2.4
-    react-native-is-edge-to-edge: 1.1.6
+    react-native-is-edge-to-edge: 1.1.7
   peerDependencies:
     "@babel/core": ^7.0.0-0
     react: "*"
     react-native: "*"
-  checksum: fd05040a3fc6a8f4efb387657c0cd6c314e5e6b50f859e127d6891d8f81c65b020ddcf78615aa0074b4e134e450d38c40db916c544e1e2efa26c50c82815607d
+  checksum: d8fe940ee735a663feba30e90ea75b719f60fa69f79448beed76f63137f5a775b1c93c0f747f85dca2732ef3a747e37acace7c92fc73c19aab0daf02dbccb910
   languageName: node
   linkType: hard
 
@@ -35656,6 +35695,16 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 7d7f9a8278048650fd207d436798bd062d6f78d771cb0665b92aef69dba870251339e6812e1d669fd1958345288bd0f9ac98fbfe353c13958d18b58dc946c341
+  languageName: node
+  linkType: hard
+
+"react-native-safe-area-context@npm:^5.6.2":
+  version: 5.6.2
+  resolution: "react-native-safe-area-context@npm:5.6.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 7b15cdd07df4f3650cf443fb322ee2d51b3ab45c652789cbea4cb48a8e6fd2b66e2be01e9f63e614ceaf28d9d228af681ca8857b2ed8dabe48f23964076d40c3
   languageName: node
   linkType: hard
 
@@ -35841,6 +35890,26 @@ __metadata:
     react-native-worklets-core:
       optional: true
   checksum: d0ed87b10f0be61c25b317cc599a7c4724ff6baccea211dd5b26bcf906c197e7445ef69a0ba4fa41a68221d8d90e941f2f55410c363b4a63209a41a3d0fa3f7d
+  languageName: node
+  linkType: hard
+
+"react-native-vision-camera@patch:react-native-vision-camera@npm%3A4.7.2#./.yarn/patches/react-native-vision-camera-npm-4.7.2-5538eb538b.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 4.7.2
+  resolution: "react-native-vision-camera@patch:react-native-vision-camera@npm%3A4.7.2#./.yarn/patches/react-native-vision-camera-npm-4.7.2-5538eb538b.patch::version=4.7.2&hash=2ceacc&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  peerDependencies:
+    "@shopify/react-native-skia": "*"
+    react: "*"
+    react-native: "*"
+    react-native-reanimated: "*"
+    react-native-worklets-core: "*"
+  peerDependenciesMeta:
+    "@shopify/react-native-skia":
+      optional: true
+    react-native-reanimated:
+      optional: true
+    react-native-worklets-core:
+      optional: true
+  checksum: 7f9b4240fec7ffc69078136ae3c0fada2197e260dc9c05cab188739f36144c03365ee9c7ec595977c597786e130175fa1716758f189232dc799d399f1ef82869
   languageName: node
   linkType: hard
 
@@ -43449,6 +43518,39 @@ __metadata:
   version: 3.22.4
   resolution: "zod@npm:3.22.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fzod%2F-%2Fzod-3.22.4.tgz"
   checksum: 80bfd7f8039b24fddeb0718a2ec7c02aa9856e4838d6aa4864335a047b6b37a3273b191ef335bf0b2002e5c514ef261ffcda5a589fb084a48c336ffc4cdbab7f
+  languageName: node
+  linkType: hard
+
+"zustand-mutative@npm:1.3.1":
+  version: 1.3.1
+  resolution: "zustand-mutative@npm:1.3.1"
+  peerDependencies:
+    "@types/react": ^18.0 || ^17.0 || ^19.0
+    mutative: ^1.3.0
+    react: ^18.0 || ^17.0 || ^19.0
+    zustand: ^4.0 || ^5.0
+  checksum: 5a914b35484d82a8aa361bb4dea16f9333c834c86f62e78aa454d934361e63101a5828e76eaa8c14ee1a167b2778bfe67a6a3bddcb3227dedfe42f4de82176b2
+  languageName: node
+  linkType: hard
+
+"zustand@npm:5.0.9":
+  version: 5.0.9
+  resolution: "zustand@npm:5.0.9"
+  peerDependencies:
+    "@types/react": ">=18.0.0"
+    immer: ">=9.0.6"
+    react: ">=18.0.0"
+    use-sync-external-store: ">=1.2.0"
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    immer:
+      optional: true
+    react:
+      optional: true
+    use-sync-external-store:
+      optional: true
+  checksum: 04bd9abf9f0958a979f6003fadfdcc48970c87323a622bf20cc3ad0c52c58b9d25136e03bddf3b902c4bedc393a2ffd0b66bc46865f6a356f8ec43b6df47e2d4
   languageName: node
   linkType: hard
 

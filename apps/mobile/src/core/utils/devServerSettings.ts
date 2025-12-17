@@ -1,40 +1,46 @@
-import { atom, useAtom } from 'jotai';
-
-import { appJsonStore, atomByMMKV } from '../storage/mmkv';
+import { appJsonStore, zustandByMMKV } from '../storage/mmkv';
 import { useCallback, useEffect, useMemo } from 'react';
 import { checkHostReachable } from './network';
 import { formatDevURI } from '@/components/WebView/LocalWebView/utils';
+import { resolveValFromUpdater, UpdaterOrPartials } from './store';
 
 const PERSIST_KEY = '@devServerSettings';
 
+type DevServerHostState = {
+  /** @sample 192.168.0.1:9090 */
+  devServerHost: string;
+  devServerHostAvailable: boolean;
+};
+
+const devServerSettingsStotre = zustandByMMKV<DevServerHostState>(PERSIST_KEY, {
+  devServerHost: '',
+  devServerHostAvailable: false,
+});
+
 export function getDevServerHost() {
-  return appJsonStore.getItem(PERSIST_KEY, {})?.devServerHost;
+  return devServerSettingsStotre.getState().devServerHost;
 }
 
-const devServerSettingsAtom = atomByMMKV(PERSIST_KEY, {
-  /** @sample 192.168.0.1:9090 */
-  devServerHost: '',
-});
-const devServerHostAvailableAtom = atom(false);
+function setDevServerStore(valOrFunc: UpdaterOrPartials<DevServerHostState>) {
+  devServerSettingsStotre.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+
+    if (!changed) return prev;
+
+    return { ...prev, ...newVal };
+  });
+}
+
+const setDevServerHost = (devServerHost: string) => {
+  setDevServerStore(prev => {
+    return { ...prev, devServerHost };
+  });
+};
 
 export function useDevServerSettings() {
-  const [devServerSettings, setDevServerSettings] = useAtom(
-    devServerSettingsAtom,
-  );
-
-  const setDevServerHost = useCallback(
-    (devServerHost: string) => {
-      setDevServerSettings(prev => {
-        // if (devServerHost) {
-        //   setTimeout(() => {
-        //     setupReactotronConnection();
-        //   }, 2000);
-        // }
-        return { ...prev, devServerHost };
-      });
-    },
-    [setDevServerSettings],
-  );
+  const devServerSettings = devServerSettingsStotre(s => s);
 
   return { devServerSettings, setDevServerHost };
 }
@@ -47,12 +53,12 @@ export function useDevServerHostAvailable({
   autoDetectHost?: boolean;
   devUri?: string | GetDevUriFn;
 } = {}) {
-  const [available, setAvailable] = useAtom(devServerHostAvailableAtom);
-  const [devServerSettings] = useAtom(devServerSettingsAtom);
+  const available = devServerSettingsStotre(s => s.devServerHostAvailable);
+  const devServerHost = devServerSettingsStotre(s => s.devServerHost);
 
   const { devUri } = useMemo(() => {
     const fallbackUri = formatDevURI({
-      host: devServerSettings.devServerHost,
+      host: devServerHost,
       port: 5173,
       protocol: 'http:',
     });
@@ -60,24 +66,24 @@ export function useDevServerHostAvailable({
       (!prop_devUri
         ? fallbackUri
         : typeof prop_devUri === 'function'
-        ? prop_devUri({ devServerHost: devServerSettings.devServerHost })
+        ? prop_devUri({ devServerHost: devServerHost })
         : prop_devUri) || fallbackUri;
 
     return {
       fallbackUri,
       devUri,
     };
-  }, [devServerSettings.devServerHost, prop_devUri]);
+  }, [devServerHost, prop_devUri]);
 
   const detect = useCallback(async () => {
-    if (!devServerSettings.devServerHost) {
-      setAvailable(false);
+    if (!devServerHost) {
+      setDevServerStore({ devServerHostAvailable: false });
       return;
     }
 
     const isReachable = await checkHostReachable(devUri);
-    setAvailable(isReachable);
-  }, [devUri, devServerSettings.devServerHost, setAvailable]);
+    setDevServerStore({ devServerHostAvailable: isReachable });
+  }, [devUri, devServerHost]);
 
   useEffect(() => {
     if (!autoDetectHost) return;
@@ -87,7 +93,7 @@ export function useDevServerHostAvailable({
 
   return {
     devUri,
-    devServerHost: devServerSettings.devServerHost,
+    devServerHost,
     devServerMobileLocalPagesAvailable: available,
   };
 }

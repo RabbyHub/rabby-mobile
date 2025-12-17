@@ -25,6 +25,7 @@ import { BlurShadowView } from '@/components2024/BluerShadow';
 import BigNumber from 'bignumber.js';
 import { splitNumberByStep } from '@/utils/number';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { apisSingleHome } from '../hooks/singleHome';
 
 export const HomeAddressItem: React.FC<{
   account: KeyringAccountWithAlias;
@@ -57,7 +58,7 @@ export const HomeAddressItem: React.FC<{
       account={account}
       preViewBorderRadius={16}
       key={`${account.type}-${account.address}`}
-      actions={['copy', 'pin', 'edit', 'delete']}>
+      actions={['copy', 'pin', 'edit']}>
       <TouchableOpacity
         onPressIn={() => setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
@@ -72,12 +73,7 @@ export const HomeAddressItem: React.FC<{
             category: 'Pin Address',
             action: 'PinAddress_ClickView',
           });
-          navigation.push(RootNames.SingleAddressStack, {
-            screen: RootNames.SingleAddressHome,
-            params: {
-              account: account,
-            },
-          });
+          apisSingleHome.navigateToSingleHome(account);
         }}
         onLongPress={() => {
           setIsPressing(true);

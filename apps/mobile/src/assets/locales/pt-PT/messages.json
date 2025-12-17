@@ -287,6 +287,9 @@
     },
     "portfolios": {
       "manage": "Gerir"
+    },
+    "multiAddressModal": {
+      "title": "Carteiras"
     }
   },
   "global": {
@@ -364,7 +367,8 @@
     "gotIt": "Entendi",
     "check": "Verifique",
     "Dapp": "Dapp",
-    "Token": "Token"
+    "Token": "Token",
+    "GotIt": "Entendi"
   },
   "page": {
     "getStart": {
@@ -395,7 +399,11 @@
         "LendingSupply": "Fornecer",
         "LendingWithdraw": "Retirar",
         "LendingBorrow": "Emprestar",
-        "LendingRepay": "Reembolsar"
+        "LendingRepay": "Reembolsar",
+        "LendingOnCollateral": "Ativar uso como colateral",
+        "LendingOffCollateral": "Desligar uso como colateral",
+        "LendingManageEMode": "Ativar o E-Mode",
+        "LendingManageEModeDisable": "Desligar o E-Mode"
       },
       "detail": {
         "SpeedUp": "Acelerar",
@@ -464,7 +472,9 @@
         "skipNonceText": "Nonce #{{nonce}} ignorado na cadeia {{chainName}}. Isso pode causar transações pendentes à frente. <5></5> <6>Submeter uma tx</6> <7></7> na cadeia para resolver."
       },
       "ShowScamTransactions": "Mostrar transações fraudulentas",
-      "HideScamTransactions": "Ocultar transações fraudulentas"
+      "HideScamTransactions": "Ocultar transações fraudulentas",
+      "scam": "Golpe",
+      "scamTips": "Esta transação é iniciada por golpistas para enviar tokens e NFTs fraudulentos. Por favor, evite interagir com ela."
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Insira a sua seed phrase"
@@ -1127,7 +1137,25 @@
       "gas-x-price": "Preço do Gas: {{price}} Gwei.",
       "duration": "{{duration}} min",
       "bridged": "Ponte",
-      "gasFeeTooHight": "A taxa de Gas é superior ao normal. Confirme apenas se desejar prosseguir."
+      "gasFeeTooHight": "A taxa de Gas é superior ao normal. Confirme apenas se desejar prosseguir.",
+      "pendingItem": {
+        "swap": "Trocar",
+        "completed": "Concluído",
+        "bridgeStatus": "Estado da Ponte",
+        "pending": "Pendentes",
+        "failed": "Falhou",
+        "beReturnFailed": "A ponte falhou. Os seus ativos foram devolvidos.",
+        "receivedDifferentTokenFromSource": "A ponte falhou. Um token diferente foi retornado na cadeia de origem.",
+        "fromFailed": "A transação não foi concluída. Tente novamente.",
+        "estimatedTime": "Tempo estimado",
+        "sendingFrom": "A enviar de {{chain}}",
+        "receivingTo": "Recebendo em {{chain}}",
+        "receivedDifferentTokenNeedSwap": "Você recebeu um token diferente. Você pode trocá-lo pelo token que selecionou.",
+        "longTimeNoReceive": "A rede está ocupada. Isso pode levar mais tempo do que o habitual. Por favor, aguarde pacientemente.",
+        "queued": "Em fila",
+        "BridgeStatusUnavailable": "Estado da bridge indisponível. Por favor, verifique o seu histórico de transações para confirmar que os fundos chegaram."
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "dashboard": {
       "home": {
@@ -2362,7 +2390,9 @@
       "sentTimeHeader": "Enviado",
       "sendToImportedAddress": "Enviar para as Minhas Carteiras Importadas",
       "sendToSafeAddress": "Enviar para Carteiras Seguras",
-      "sendToWatchAddress": "Enviar para carteiras somente de visualização"
+      "sendToWatchAddress": "Enviar para carteiras somente de visualização",
+      "dividerWatchOnlyWallets": "Endereços apenas para visualização",
+      "enterOrSearchAddress": "Introduza ou Pesquise Endereço"
     },
     "confirmAddress": {
       "risks": {
@@ -2455,7 +2485,8 @@
         "recentEmpty": "Começando a Explorar o Website",
         "hot": "Quente",
         "favorite": "Favorito",
-        "otherResults": "Outras Resultados"
+        "otherResults": "Outras Resultados",
+        "hot10": "Quente 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Abrir Websites"
@@ -2762,11 +2793,16 @@
         "liquidationPrice": "Preço de Liquidação",
         "title": "Nível de Risco",
         "liqIntro": "A Distância de Liquidação (%) mostra quão longe o preço atual está do seu preço de liquidação. Uma distância maior indica uma posição mais segura, enquanto uma distância menor significa um risco de liquidação mais alto.",
-        "distanceLabel": "Distância de Liquidação"
+        "distanceLabel": "Distância de Liquidação",
+        "liqDistanceTipsShort": "Subir <1>{{distance}}</1> irá ativar a liquidação.",
+        "liqDistanceTipsLong": "Descer <1>{{distance}}</1> acionará a liquidação."
       },
       "closeAll": "Fechar Tudo",
       "closeAllConfirmMessage": "Todas as suas posições abertas serão fechadas ao preço de mercado.",
-      "closeAllConfirmTitle": "Confirmar Fechar Todas as Posições"
+      "closeAllConfirmTitle": "Confirmar Fechar Todas as Posições",
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid Position"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2791,7 +2827,9 @@
         "size": "Tamanho",
         "tpPrice": "Preço de Take-Profit",
         "marginCross": "Margem (Cross)",
-        "isolated": "Isolado"
+        "isolated": "Isolado",
+        "fundingGainsTips": "Este é o ganho líquido de financiamento desde que a posição foi aberta. O financiamento é uma taxa horária que os comerciantes pagam ou recebem para manter o preço do contrato perp próximo ao preço real do token.",
+        "fundingGains": "Financiamento de Ganhos"
       },
       "PerpsInfo": {
         "funding": "Financiamento",
@@ -2799,14 +2837,15 @@
         "title": "Info",
         "openInterestTips": "A posição total em aberto de todos os utilizadores neste contrato.",
         "fundingTips": "Esta é uma taxa horária que os traders pagam ou recebem para manter o preço do contrato perp próximo ao preço real do token. Se positivo, long paga short. Se negativo, short paga long.",
-        "openInterest": "Interesse em Aberto"
+        "openInterest": "Interesse em Aberto",
+        "fundingRate": "Taxa de Financiamento"
       },
       "PerpsIntro": {
         "title": "O que são Perps?",
         "desc": "Negociar contratos perpétuos envolve riscos significativos, incluindo a possibilidade de perder rapidamente seu investimento e colateral devido à alta alavancagem e volatilidade do mercado. Esse tipo de negociação pode não ser adequado para todos os usuários. Os preços podem ser afetados por taxas de financiamento e liquidez, e você pode ser automaticamente liquidado sem aviso prévio. Os dados do mercado são fornecidos pela Hyperliquid."
       },
       "PerpsClosePositionPopup": {
-        "title": "Fechar posição {{direction}} de {{coin}}",
+        "title": "Fechar Posição",
         "positionSize": "Tamanho da Posição",
         "fee": "Taxa:",
         "pnl": "PNL",
@@ -2837,7 +2876,10 @@
         "stopLossWhen": "Parar Perda Quando",
         "takeProfitWhenPriceAbove": "Levar Lucro Quando o Preço Estiver Acima",
         "stopLossWhenPriceBelow": "Stop Loss Quando o Preço Estiver Abaixo",
-        "takeProfitWhenPriceBelow": "Levar Lucro Quando o Preço Estiver Abaixo"
+        "takeProfitWhenPriceBelow": "Levar Lucro Quando o Preço Estiver Abaixo",
+        "maxMargin": "Margem máxima é {{amount}}",
+        "upTo": "Até",
+        "minMargin": "A margem mínima é {{amount}}"
       },
       "PerpsOpenPositionCheckPopup": {
         "initialMargin": "Margem Inicial",
@@ -2865,7 +2907,9 @@
         "long": "Long: Comprar",
         "closePosition": "Fechar Posição {{direction}}",
         "noPermission": "A abertura de posições não é suportada na sua região.",
-        "short": "Vender"
+        "short": "Vender",
+        "add": "Adicionar",
+        "close": "Fechar"
       },
       "PerpsAutoCloseModal": {
         "setTpPrice": "Definir Preço de Lucro",
@@ -2897,8 +2941,16 @@
         "reduceMargin": "Reduzir Margem",
         "addMargin": "Adicionar Margem",
         "liqPrice": "Preço de Liquidação:",
-        "amountToAdd": "Montante a adicionar"
-      }
+        "amountToAdd": "Montante a adicionar",
+        "liqDistance": "Liq.Distância"
+      },
+      "PerpsAddPositionPopup": {
+        "addToLong": "Adicionar a Longo",
+        "addSize": "Adicionar Tamanho",
+        "totalSize": "Tamanho Total",
+        "addToShort": "Adicionar ao Short"
+      },
+      "needDepositFirst": "Você precisa depositar fundos primeiro."
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Página Integrada"
@@ -2918,7 +2970,10 @@
     "Lending": {
       "availableCard": {
         "needSupply": "Para pedir emprestado, precisa fornecer ativos como colateral.",
-        "canBorrow": "Você pode tomar emprestado com base na sua garantia fornecida, até o limite de empréstimo."
+        "canBorrow": "Você pode tomar emprestado com base na sua garantia fornecida, até o limite de empréstimo.",
+        "isolated": "O poder de empréstimo e os ativos estão limitados devido ao modo de Isolamento.",
+        "emode": "No E-Mode, alguns ativos não são passíveis de empréstimo. Saia do E-Mode para ter acesso a todos os ativos.",
+        "emodeNoAssets": "Não conseguimos encontrar ativos relacionados à sua pesquisa. Tente novamente com uma categoria diferente."
       },
       "list": {
         "headers": {
@@ -2951,7 +3006,12 @@
         "availableToBorrow": "Disponível para emprestar",
         "actions": "Fornecimento",
         "approveAndSupply": "Aprovar e Fornecer",
-        "supplyAPY": "Fornecer APY"
+        "supplyAPY": "Fornecer APY",
+        "collateralization": "Colateralização",
+        "supplyBalance": "Fornecer Balanço",
+        "enabled": "Ativado",
+        "isolatedTips": "Os seus ativos de empréstimo/ empréstimo existentes não são suportados.",
+        "unavailable": "Indisponível"
       },
       "withdrawDetail": {
         "actions": "Retirar",
@@ -2985,12 +3045,16 @@
         "mySupply": "Meu Fornecimento",
         "almostCap": "Este ativo quase atingiu o seu limite de empréstimo. Há apenas {{available}} disponível para ser emprestado a partir deste mercado.",
         "reachCap": "Este ativo atingiu o seu limite de fornecimento. Não há nada disponível para ser fornecido a partir deste mercado.",
-        "availableToSupply": "Disponível para Fornecer"
+        "availableToSupply": "Disponível para Fornecer",
+        "useAsCollateral": "Usar como colateral"
       },
       "risk": {
         "checkbox": "Eu entendo o alerta e quero continuar.",
         "warning": "Emprestar esta quantia irá reduzir o seu Fator de Saúde para um nível arriscado para liquidação.",
-        "withdrawWarning": "Retirar este montante irá baixar o seu Fator de Saúde para um nível arriscado de liquidação."
+        "withdrawWarning": "Retirar este montante irá baixar o seu Fator de Saúde para um nível arriscado de liquidação.",
+        "toggleCollateralWarning": "Desativar este ativo como colateral diminuirá o seu Fator de Saúde para um nível arriscado de liquidação.",
+        "emodeBlockWarning": "Desativar o E-mode irá diminuir o seu Fator de Saúde para um nível arriscado para liquidação.",
+        "blockEmodeWarning": "Não pode desativar o E-Mode porque isso pode causar liquidação. Para sair do E-Mode, forneça ou reembolse posições emprestadas."
       },
       "lqDescription": {
         "over3title": "Fator de saúde > 3.0:",
@@ -3009,7 +3073,10 @@
         "availableToBorrowDesc": "Você pode pegar emprestado com base na sua garantia fornecida e até que o limite de empréstimo seja alcançado.",
         "lqDesc": "Quando ocorre uma liquidação, os liquidatários reembolsam até 50% do montante emprestado em aberto em nome do devedor. Em troca, podem comprar o colateral a um desconto e manter a diferença (penalização de liquidação) como um bónus.",
         "isolatedTitle": "O ativo não pode ser utilizado como colateral.",
-        "isolatedDesc": "Este ativo pode ser utilizado apenas como garantia no modo de isolamento, onde não é possível fornecer outras garantias de ativos para empréstimos. Os ativos utilizados como garantia no modo de isolamento podem ser emprestados apenas até um limite de endividamento específico."
+        "isolatedDesc": "Este ativo pode ser utilizado apenas como garantia no modo de isolamento, onde não é possível fornecer outras garantias de ativos para empréstimos. Os ativos utilizados como garantia no modo de isolamento podem ser emprestados apenas até um limite de endividamento específico.",
+        "isolatedSupplyDesc": "O uso de colaterais é limitado devido ao modo de isolamento.",
+        "globalIsolatedDesc": "No modo de Isolamento, não pode fornecer outros ativos como colateral. Um limite global de dívida limita o poder de empréstimo do ativo isolado. Para sair do modo de isolamento, desative o UNI como colateral antes de emprestar outro ativo.",
+        "maxLTV": "A taxa máxima de LTV representa o poder máximo de empréstimo de uma garantia específica. Por exemplo, se uma garantia tem um LTV de 75%, o usuário pode emprestar até 0,75 em valor de ETH na moeda principal para cada 1 ETH em valor de garantia."
       },
       "supplied": "Fornecido",
       "gotIt": "Entendi",
@@ -3025,7 +3092,64 @@
       "hf": "Fator de saúde",
       "isolated": "isolado",
       "estNetApy": "Est. rendimento líquido APY",
-      "marketSlot": "{{market}} Mercado"
+      "marketSlot": "{{market}} Mercado",
+      "toggleCollateralDetail": {
+        "disable": "Desativar {{asset}} como Colateral",
+        "error": "Há um erro com o serviço AAVE. Por favor, tente novamente mais tarde.",
+        "enable": "Ativar {{asset}} como Colateral",
+        "actions": "Alternar {{asset}} Colateral"
+      },
+      "toggleCollateralModal": {
+        "openTitle": "Revisar Ativação",
+        "closeTitle": "Revisar Desativação",
+        "exitIsolationModeTitle": "Sair do Modo de Isolamento",
+        "enableIsolationModeTitle": "Ativar o Modo de Isolamento",
+        "closeDesc": "Desativar este ativo como colateral afeta o seu poder de empréstimo e o Fator de Saúde.",
+        "exitIsolationModeDesc": "Você sairá do modo de Isolamento e outros tokens agora podem ser usados como colateral.",
+        "riskToLiquidationText": "Não pode mudar o uso para o modo de colateral para esta moeda, porque irá causar uma chamada de colateral.",
+        "openDesc": "Ativar este ativo como colateral aumenta seu poder de empréstimo e o Fator de Saúde. No entanto, ele pode ser liquidado se seu fator de saúde cair abaixo de 1.",
+        "enableIsolationModeDesc": "Está a entrar no modo de Isolamento. No modo de Isolamento, não pode fornecer outros ativos como colateral. Um teto global de dívida limita o poder de empréstimo do ativo isolado. Para sair do modo de isolamento, desative o CRV como colateral antes de emprestar outro ativo."
+      },
+      "searchMarket": "Pesquisar Mercado",
+      "selectMarket": "Selecionar Mercado",
+      "manageEmode": {
+        "actions": {
+          "enable": "Ativar E-Mode",
+          "disable": "Desativar E-Mode"
+        },
+        "guide": {
+          "description": "O E-Mode aumenta o seu LTV para uma categoria de ativos selecionada.",
+          "buttonTitle": "Gerir E-Mode",
+          "title": "Modo de eficiência (E-Mode)"
+        },
+        "categorySelector": {
+          "header": {
+            "asset": "Ativos",
+            "ltv": "Max LTV"
+          },
+          "label": "Categoria de ativos",
+          "placeholder": "Selecionar",
+          "desc": "Todas as posições de empréstimo fora desta categoria devem ser fechadas para ativar esta categoria."
+        },
+        "overview": {
+          "row": {
+            "borrowable": "Emprestável",
+            "asset": "Ativo",
+            "collateral": "Colateral"
+          },
+          "title": "Categoria de ativo",
+          "maxLtv": "LTV Máximo",
+          "apy": "APY"
+        },
+        "title": "Gerir E-Mode",
+        "enabled": "• Ativado",
+        "unavailable": "• Indisponível",
+        "disableTitle": "Desativar",
+        "emode": "E-Mode",
+        "unavailableTips": "Os seus ativos de empréstimo/empréstimo existentes não são suportados.",
+        "description": "Ativar o E-Mode permite maximizar o seu poder de empréstimo. No entanto, o empréstimo está restrito a ativos dentro da categoria selecionada."
+      },
+      "disabled": "DESABILITADO"
     }
   },
   "constant": {

@@ -52,7 +52,11 @@
         "LendingWithdraw": "Tarik",
         "LendingSupply": "Pasokan",
         "LendingBorrow": "Pinjam",
-        "LendingRepay": "Bayar kembali"
+        "LendingRepay": "Bayar kembali",
+        "LendingOnCollateral": "Hidupkan penggunaan sebagai jaminan",
+        "LendingOffCollateral": "Matikan penggunaan sebagai jaminan",
+        "LendingManageEMode": "Aktifkan E-Mode",
+        "LendingManageEModeDisable": "Matikan E-Mode"
       },
       "detail": {
         "Succeeded": "Berhasil",
@@ -125,7 +129,9 @@
       "Today": "Hari ini",
       "NotShowAllTransactionsToast": "Transaksi tersembunyi disembunyikan",
       "ShowScamTransactions": "Tampilkan transaksi penipuan",
-      "ShowAllTransactionsToast": "Transaksi tersembunyi ditampilkan"
+      "ShowAllTransactionsToast": "Transaksi tersembunyi ditampilkan",
+      "scam": "Penipuan",
+      "scamTips": "Transaksi ini diinisiasi oleh penipu untuk mengirimkan token dan NFT penipuan. Harap hindari berinteraksi dengan itu."
     },
     "signTx": {
       "gasAccount": {
@@ -714,7 +720,9 @@
       "sentTimeHeader": "Terkirim",
       "sendToWatchAddress": "Kirim ke Dompet Hanya Tonton",
       "sendToSafeAddress": "Kirim ke Dompet Aman",
-      "sendToImportedAddress": "Kirim ke Dompet yang Diimpor Saya"
+      "sendToImportedAddress": "Kirim ke Dompet yang Diimpor Saya",
+      "enterOrSearchAddress": "Masukkan atau Cari Alamat",
+      "dividerWatchOnlyWallets": "Alamat hanya untuk dilihat"
     },
     "confirmAddress": {
       "risks": {
@@ -970,7 +978,25 @@
       "via-bridge": "via {{bridge}}",
       "no-route-found": "Tidak ada rute yang ditemukan",
       "best": "Terbaik",
-      "gasFeeTooHight": "Biaya gas lebih tinggi dari biasanya. Konfirmasi hanya jika Anda ingin melanjutkan."
+      "gasFeeTooHight": "Biaya gas lebih tinggi dari biasanya. Konfirmasi hanya jika Anda ingin melanjutkan.",
+      "pendingItem": {
+        "failed": "Gagal",
+        "fromFailed": "Transaksi tidak berhasil. Coba lagi.",
+        "completed": "Selesai",
+        "queued": "Antrian",
+        "swap": "Tukar",
+        "receivingTo": "Menerima di {{chain}}",
+        "pending": "Menunggu",
+        "estimatedTime": "Waktu estimasi",
+        "bridgeStatus": "Status Jembatan",
+        "sendingFrom": "Mengirim dari {{chain}}",
+        "longTimeNoReceive": "Jaringan sedang sibuk. Ini mungkin memerlukan waktu lebih lama dari biasanya. Harap bersabar.",
+        "BridgeStatusUnavailable": "Status jembatan tidak tersedia. Harap periksa riwayat transaksi Anda untuk mengonfirmasi bahwa dana telah tiba.",
+        "receivedDifferentTokenFromSource": "Jembatan gagal. Token yang berbeda dikembalikan di rantai sumber.",
+        "receivedDifferentTokenNeedSwap": "Anda menerima token yang berbeda. Anda dapat menukarnya dengan token yang Anda pilih.",
+        "beReturnFailed": "Jembatan gagal. Aset Anda telah dikembalikan."
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "manageAddress": {
       "cancel": "Batal",
@@ -2115,7 +2141,8 @@
         "recentEmpty": "Mulai Menjelajahi Situs Web",
         "favorite": "Favorit",
         "hot": "Hangat",
-        "otherResults": "Hasil Lainnya"
+        "otherResults": "Hasil Lainnya",
+        "hot10": "Hot 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Buka Situs Web"
@@ -2422,11 +2449,16 @@
         "currentPrice": "Harga Saat Ini",
         "subtitle": "Jarak likuidasi waktu nyata (%)",
         "distanceLabel": "Jarak Likuidasi",
-        "liqIntro": "Jarak Likuidasi (%) menunjukkan seberapa jauh harga saat ini dari harga likuidasi Anda. Jarak yang lebih besar menunjukkan posisi yang lebih aman, sementara jarak yang lebih kecil berarti risiko likuidasi yang lebih tinggi."
+        "liqIntro": "Jarak Likuidasi (%) menunjukkan seberapa jauh harga saat ini dari harga likuidasi Anda. Jarak yang lebih besar menunjukkan posisi yang lebih aman, sementara jarak yang lebih kecil berarti risiko likuidasi yang lebih tinggi.",
+        "liqDistanceTipsLong": "Menurun <1>{{distance}}</1> akan memicu likuidasi.",
+        "liqDistanceTipsShort": "Naik <1>{{distance}}</1> akan memicu likuidasi."
       },
       "closeAllConfirmTitle": "Konfirmasi Tutup Semua Posisi",
       "closeAllConfirmMessage": "Semua posisi terbuka Anda akan ditutup pada harga pasar.",
-      "closeAll": "Tutup Semua"
+      "closeAll": "Tutup Semua",
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid Position"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2451,7 +2483,9 @@
         "fundingPaymentsTips": "Ini adalah total pembayaran pendanaan sejak posisi dibuka. Pendanaan adalah biaya per jam yang dibayar atau diterima oleh trader untuk menjaga harga kontrak perp dekat dengan harga aktual token.",
         "liquidationPriceTips": "Harga di mana posisi Anda secara otomatis ditutup oleh bursa untuk mencegah kerugian lebih lanjut ketika margin Anda jatuh di bawah level margin pemeliharaan.",
         "slPrice": "Harga Henti-Rugi",
-        "closePosition": "Tutup {{direction}}"
+        "closePosition": "Tutup {{direction}}",
+        "fundingGains": "Pendanaan Keuntungan",
+        "fundingGainsTips": "Ini adalah keuntungan dana bersih sejak posisi dibuka. Pendanaan adalah biaya per jam yang dibayar atau diterima trader untuk menjaga harga kontrak perp tetap dekat dengan harga token yang sebenarnya."
       },
       "PerpsInfo": {
         "openInterestTips": "Total posisi terbuka dari semua pengguna pada kontrak ini.",
@@ -2459,7 +2493,8 @@
         "title": "Info",
         "openInterest": "Bunga Terbuka",
         "funding": "Pendanaan",
-        "fundingTips": "Ini adalah biaya per jam yang dibayar atau diterima oleh trader untuk menjaga harga kontrak perp mendekati harga aktual token. Jika positif, long membayar short. Jika negatif, short membayar long."
+        "fundingTips": "Ini adalah biaya per jam yang dibayar atau diterima oleh trader untuk menjaga harga kontrak perp mendekati harga aktual token. Jika positif, long membayar short. Jika negatif, short membayar long.",
+        "fundingRate": "Tingkat Pendanaan"
       },
       "PerpsIntro": {
         "title": "Apa itu Perps?",
@@ -2471,7 +2506,7 @@
         "positionSize": "Ukuran Posisi",
         "rabbyFeeTips": "Biaya Rabby: 0,04%",
         "pnl": "PNL",
-        "title": "Tutup Posisi {{coin}} {{direction}}",
+        "title": "Tutup Posisi",
         "closeBtn": "Tutup {{direction}}",
         "amount": "Jumlah",
         "total": "Total",
@@ -2497,7 +2532,10 @@
         "takeProfitWhenPriceAbove": "Ambil Keuntungan Saat Harga Di Atas",
         "stopLossWhenPriceAbove": "Stop Loss Ketika Harga di Atas",
         "stopLossWhenPriceBelow": "Stop Loss Ketika Harga Di Bawah",
-        "takeProfitWhenPriceBelow": "Ambil Untung Ketika Harga Dibawah"
+        "takeProfitWhenPriceBelow": "Ambil Untung Ketika Harga Dibawah",
+        "upTo": "Hingga",
+        "minMargin": "Margin minimum adalah {{amount}}",
+        "maxMargin": "Margin maksimum adalah {{amount}}"
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "Arah",
@@ -2525,7 +2563,9 @@
         "closePosition": "Tutup Posisi {{direction}}",
         "short": "Short",
         "noPermission": "Membuka posisi tidak didukung di wilayah Anda",
-        "long": "Long"
+        "long": "Long",
+        "add": "Tambahkan",
+        "close": "Tutup"
       },
       "PerpsAutoCloseModal": {
         "slPrice": "Harga Stop Loss",
@@ -2557,8 +2597,16 @@
         "amountToAdd": "Jumlah untuk ditambahkan",
         "insufficientMarginToReduce": "Margin tidak mencukupi untuk mengurangi posisi.",
         "reduceMargin": "Kurangi Margin",
-        "amountToReduce": "Jumlah untuk mengurangi"
-      }
+        "amountToReduce": "Jumlah untuk mengurangi",
+        "liqDistance": "Liq.Jarak"
+      },
+      "PerpsAddPositionPopup": {
+        "totalSize": "Ukuran Total",
+        "addSize": "Tambah Ukuran",
+        "addToLong": "Tambahkan ke Long",
+        "addToShort": "Tambahkan ke Pendek"
+      },
+      "needDepositFirst": "Anda perlu menyetor dana terlebih dahulu."
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Halaman Bawaan"
@@ -2578,7 +2626,10 @@
     "Lending": {
       "availableCard": {
         "canBorrow": "Anda dapat meminjam berdasarkan jaminan yang Anda suplai, hingga batas pinjaman.",
-        "needSupply": "Untuk meminjam, Anda perlu menyediakan aset sebagai jaminan."
+        "needSupply": "Untuk meminjam, Anda perlu menyediakan aset sebagai jaminan.",
+        "isolated": "Daya pinjaman dan aset terbatas karena mode Isolasi.",
+        "emode": "Di E-Mode, beberapa aset tidak dapat dipinjam. Keluar dari E-Mode untuk mendapatkan akses ke semua aset.",
+        "emodeNoAssets": "Kami tidak dapat menemukan aset yang terkait dengan pencarian Anda. Coba lagi dengan kategori yang berbeda."
       },
       "list": {
         "headers": {
@@ -2611,7 +2662,12 @@
         "availableToBorrow": "Tersedia untuk dipinjam",
         "approveAndSupply": "Setujui dan Pasok",
         "supplyAPY": "Supply APY",
-        "actions": "Persediaan"
+        "actions": "Persediaan",
+        "enabled": "Diaktifkan",
+        "collateralization": "Kollateralisasi",
+        "supplyBalance": "Saldo Pasokan",
+        "unavailable": "Tidak tersedia",
+        "isolatedTips": "Aset pinjaman/peminjaman yang ada tidak didukung."
       },
       "withdrawDetail": {
         "remainingSupply": "Sisa pasokan",
@@ -2645,12 +2701,16 @@
         "mySupply": "Ketersediaan Saya",
         "walletBalance": "Saldo Dompet",
         "almostCap": "Aset ini hampir mencapai batas pinjamannya. Hanya ada {{available}} yang tersedia untuk dipinjam dari pasar ini.",
-        "reachCap": "Aset ini telah mencapai batas pasokannya. Tidak ada yang tersedia untuk dipasok dari pasar ini."
+        "reachCap": "Aset ini telah mencapai batas pasokannya. Tidak ada yang tersedia untuk dipasok dari pasar ini.",
+        "useAsCollateral": "Gunakan sebagai jaminan"
       },
       "risk": {
         "checkbox": "Saya memahami peringatan tersebut dan ingin melanjutkan.",
         "warning": "Meminjam jumlah ini akan menurunkan Faktor Kesehatan Anda ke level berisiko untuk likuidasi.",
-        "withdrawWarning": "Menarikan jumlah ini akan menurunkan Faktor Kesehatan Anda ke level berisiko untuk likuidasi."
+        "withdrawWarning": "Menarikan jumlah ini akan menurunkan Faktor Kesehatan Anda ke level berisiko untuk likuidasi.",
+        "toggleCollateralWarning": "Menonaktifkan aset ini sebagai jaminan akan menurunkan Faktor Kesehatan Anda ke tingkat berisiko untuk likuidasi.",
+        "blockEmodeWarning": "Anda tidak dapat menonaktifkan E-Mode karena itu bisa menyebabkan likuidasi. Untuk keluar dari E-Mode, sediakan atau lunasi posisi yang dipinjam.",
+        "emodeBlockWarning": "Menonaktifkan E-mode akan menurunkan Faktor Kesehatan Anda ke tingkat berisiko untuk likuidasi."
       },
       "lqDescription": {
         "risky": "Berisiko",
@@ -2669,7 +2729,10 @@
         "lqDesc": "Ketika likuidasi terjadi, likuidator membayar hingga 50% dari jumlah pinjaman yang terutang atas nama peminjam. Sebagai imbalannya, mereka dapat membeli jaminan dengan harga diskon dan menyimpan selisihnya (penalty likuidasi) sebagai bonus.",
         "maxAmount": "Ini adalah jumlah maksimum yang dapat Anda pinjam berdasarkan semua jaminan yang Anda berikan. Total daya pinjam Anda dihitung dengan mengalikan nilai pasar dari masing-masing aset jaminan dengan Max LTV-nya, kemudian menjumlahkan hasilnya.",
         "isolatedTitle": "Aset tidak dapat digunakan sebagai jaminan",
-        "isolatedDesc": "Aset ini hanya dapat digunakan sebagai jaminan dalam mode isolasi, di mana Anda tidak dapat menyediakan jaminan aset lain untuk meminjam. Aset yang digunakan sebagai jaminan dalam mode isolasi hanya dapat dipinjam hingga batas utang tertentu."
+        "isolatedDesc": "Aset ini hanya dapat digunakan sebagai jaminan dalam mode isolasi, di mana Anda tidak dapat menyediakan jaminan aset lain untuk meminjam. Aset yang digunakan sebagai jaminan dalam mode isolasi hanya dapat dipinjam hingga batas utang tertentu.",
+        "isolatedSupplyDesc": "Penggunaan collateral dibatasi karena mode isolasi.",
+        "globalIsolatedDesc": "Dalam mode Isolasi, Anda tidak dapat menyediakan aset lain sebagai jaminan. Batas utang global membatasi kekuatan pinjaman aset terisolasi. Untuk keluar dari mode isolasi, nonaktifkan UNI sebagai jaminan sebelum meminjam aset lain.",
+        "maxLTV": "Rasio LTV Maksimum menunjukkan daya pinjam maksimum dari agunan tertentu. Misalnya, jika suatu agunan memiliki LTV sebesar 75%, pengguna dapat meminjam hingga 0,75 nilai ETH dalam mata uang utama untuk setiap 1 ETH nilai agunan."
       },
       "estDailyEarning": "Est.Penghasilan Harian",
       "gotIt": "Mengerti",
@@ -2685,7 +2748,64 @@
       "enterAmount": "Masukkan Jumlah",
       "isolated": "terisolasi",
       "estNetApy": "Est. net APY",
-      "marketSlot": "{{market}} Pasar"
+      "marketSlot": "{{market}} Pasar",
+      "toggleCollateralDetail": {
+        "enable": "Aktifkan {{asset}} sebagai Jaminan",
+        "disable": "Nonaktifkan {{asset}} sebagai Jaminan",
+        "actions": "Beralih {{asset}} Collateral",
+        "error": "Ada kesalahan dengan layanan AAVE. Silakan coba lagi nanti."
+      },
+      "toggleCollateralModal": {
+        "enableIsolationModeTitle": "Aktifkan Mode Isolasi",
+        "openTitle": "Tinjau Pengaktifan",
+        "closeDesc": "Menonaktifkan aset ini sebagai jaminan mempengaruhi daya pinjam dan Faktor Kesehatan Anda.",
+        "exitIsolationModeDesc": "Anda akan keluar dari mode Isolasi dan token lainnya sekarang dapat digunakan sebagai jaminan.",
+        "riskToLiquidationText": "Anda tidak dapat beralih penggunaan ke mode jaminan untuk mata uang ini, karena akan menyebabkan panggilan jaminan.",
+        "closeTitle": "Tinjau Nonaktifkan",
+        "enableIsolationModeDesc": "Anda sedang masuk ke mode Isolation. Di mode Isolation, Anda tidak dapat menyediakan aset lain sebagai jaminan. Batas utang global membatasi kekuatan pinjam dari aset yang terisolasi. Untuk keluar dari mode isolation, matikan CRV sebagai jaminan sebelum meminjam aset lain.",
+        "openDesc": "Mengaktifkan aset ini sebagai jaminan meningkatkan daya pinjam Anda dan Faktor Kesehatan. Namun, aset ini dapat dilikuidasi jika faktor kesehatan Anda turun di bawah 1.",
+        "exitIsolationModeTitle": "Keluar dari Mode Isolasi"
+      },
+      "selectMarket": "Pilih Pasar",
+      "searchMarket": "Cari Pasar",
+      "manageEmode": {
+        "actions": {
+          "disable": "Nonaktifkan E-Mode",
+          "enable": "Aktifkan E-Mode"
+        },
+        "guide": {
+          "title": "Mode Efisiensi (E-Mode)",
+          "description": "E-Mode meningkatkan LTV Anda untuk kategori aset yang dipilih.",
+          "buttonTitle": "Kelola E-Mode"
+        },
+        "categorySelector": {
+          "header": {
+            "asset": "Aset",
+            "ltv": "Maks LTV"
+          },
+          "label": "Kategori aset",
+          "placeholder": "Pilih",
+          "desc": "Semua posisi pinjaman di luar kategori ini harus ditutup untuk mengaktifkan kategori ini."
+        },
+        "overview": {
+          "row": {
+            "collateral": "Jaminan",
+            "borrowable": "Dapat dipinjam",
+            "asset": "Aset"
+          },
+          "title": "Kategori aset",
+          "maxLtv": "Maks LTV",
+          "apy": "APY"
+        },
+        "unavailable": "• Tidak Tersedia",
+        "emode": "E-Mode",
+        "title": "Kelola E-Mode",
+        "disableTitle": "Nonaktifkan",
+        "unavailableTips": "Aset peminjaman/peminjaman Anda yang ada tidak didukung.",
+        "description": "Mengaktifkan E-Mode memungkinkan Anda memaksimalkan daya pinjaman Anda. Namun, pinjaman dibatasi pada aset dalam kategori yang dipilih.",
+        "enabled": "• Diaktifkan"
+      },
+      "disabled": "DINONAKTIFKAN"
     }
   },
   "component": {
@@ -2933,6 +3053,9 @@
     },
     "portfolios": {
       "manage": "Kelola"
+    },
+    "multiAddressModal": {
+      "title": "Dompet"
     }
   },
   "native": {
@@ -3025,7 +3148,8 @@
     "gotIt": "Dapatkan",
     "check": "Periksa",
     "Token": "Token",
-    "Dapp": "Dapp"
+    "Dapp": "Dapp",
+    "GotIt": "Got it"
   },
   "background": {
     "error": {

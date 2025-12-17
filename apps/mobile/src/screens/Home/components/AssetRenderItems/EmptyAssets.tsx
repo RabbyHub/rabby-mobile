@@ -15,7 +15,7 @@ export const EmptyAssets = ({
   type = 'empty-assets',
 }: {
   style?: ViewProps['style'];
-  desc?: string;
+  desc?: string | null;
   type?: 'empty-assets' | 'empty-defi' | 'empty-nft';
 }) => {
   const { styles, isLight } = useTheme2024({ getStyle });

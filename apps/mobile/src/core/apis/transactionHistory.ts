@@ -48,9 +48,11 @@ class ApisTransactionHistory {
   getPendingTxs = async ({
     recommendNonce,
     address,
+    chainId,
   }: {
     recommendNonce: string;
     address: string;
+    chainId: number;
   }) => {
     const { pendings } = await transactionHistoryService.getList(address);
 
@@ -59,6 +61,7 @@ class ApisTransactionHistory {
       .reduce((result, item) => {
         return result.concat(item.txs.map(tx => tx.rawTx));
       }, [] as Tx[])
+      .filter(item => item.chainId === chainId)
       .map(item => ({
         from: item.from,
         to: item.to,

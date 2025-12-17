@@ -83,7 +83,10 @@ import { PendingTxItem } from '../Swap/components/PendingTxItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
-import { useCexSupportList } from '@/hooks/useCexSupportList';
+import {
+  globalSupportCexList,
+  useCexSupportList,
+} from '@/hooks/useCexSupportList';
 import { isValidHexAddress } from '@metamask/utils';
 import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 
@@ -162,7 +165,8 @@ function SendScreen({
         };
       }
       const toCexId = screenState.toAddrDesc?.cex?.id;
-      if (toCexId) {
+      const isSupportCEX = globalSupportCexList.find(cex => cex.id === toCexId);
+      if (toCexId && isSupportCEX) {
         const cex_ids =
           token.cex_ids || token.identity?.cex_list.map(item => item.id);
         const noSupportToken = cex_ids?.every?.(
@@ -267,7 +271,8 @@ function SendScreen({
     account: currentAccount!,
   });
   const isShowLoadingRef = useRef(true);
-  const initByCache = async () => {
+  const initByCacheFinishedRef = useRef(false);
+  const initByCache = useCallback(async () => {
     let targetToken: TokenItem | null = null;
     if (
       navParams &&
@@ -337,10 +342,7 @@ function SendScreen({
         targetToken = currentToken;
       }
     }
-    const hideLoading = isShowLoadingRef.current
-      ? // ? toastLoading('Loading Token...')
-        noop
-      : noop;
+
     try {
       if (navParams?.toAddress) {
         const res = await getRecommendToken({
@@ -360,26 +362,12 @@ function SendScreen({
           };
         }
       }
-      // 更新页面状态
       if (chainItem && targetToken.chain !== chainItem.serverId) {
         const target = findChainByServerID(targetToken.chain);
         if (target?.enum) {
           setChainEnum(target.enum);
         }
       }
-      // // 不知道为什么要，感觉可以不要
-      // if (!chainItem) {
-      //   setChainEnum(CHAINS_ENUM.ETH);
-      // }
-      // // 应该去了也可以
-      // if (targetToken) {
-      //   if (
-      //     !lowcaseSame(targetToken.chain, currentToken.chain) ||
-      //     !lowcaseSame(targetToken.id, currentToken.id)
-      //   ) {
-      //     // setCurrentToken(targetToken);
-      //   }
-      // }
       await Promise.race([
         await loadCurrentToken(
           targetToken.id,
@@ -392,20 +380,34 @@ function SendScreen({
       // hideLoading();
       isShowLoadingRef.current = true;
     }
-  };
-
-  const init = async () => {
-    if (!currentAccount) {
-      redirectBackErrorHandler(navigation);
+  }, [
+    navParams,
+    routeParams,
+    currentAccount,
+    currentToken,
+    chainItem,
+    setChainEnum,
+    putScreenState,
+    fetchOrderedChainList,
+    loadCurrentToken,
+  ]);
+  const initByCacheOnce = useCallback(async () => {
+    if (initByCacheFinishedRef.current) {
       return;
     }
-    putScreenState({ inited: true });
-  };
+    initByCacheFinishedRef.current = true;
 
-  const checkIsAddressBlocked = async (to?: string) => {
-    if (!to) {
-      return;
+    try {
+      await initByCache();
+    } catch (e) {
+      console.error('SendScreen initByCache error', e);
+      initByCacheFinishedRef.current = false;
     }
+  }, [initByCache]);
+
+  const checkIsAddressBlocked = useCallback(async (to?: string) => {
+    if (!to) return;
+
     try {
       const { is_blocked } = await openapi.isBlockedAddress(to);
       if (is_blocked) {
@@ -413,28 +415,34 @@ function SendScreen({
         setIsShowBlockedTransactionDialog(true);
       }
     } catch (e) {
-      // NOTHING
+      console.error('checkIsAddressBlocked error', e);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (screenState.inited) {
-      initByCache();
+      initByCacheOnce();
       checkIsAddressBlocked(navParams?.toAddress);
+    }
+  }, [
+    screenState.inited,
+    initByCacheOnce,
+    checkIsAddressBlocked,
+    navParams?.toAddress,
+  ]);
+
+  useEffect(() => {
+    if (!currentAccount) {
+      redirectBackErrorHandler(navigation);
+      return;
     } else {
-      init();
+      putScreenState({ inited: true });
 
       return () => {
         apiPageStateCache.clearPageStateCache();
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    navParams,
-    screenState.inited,
-    currentAccount?.address,
-    currentAccount?.type,
-  ]);
+  }, [currentAccount, navigation, putScreenState]);
 
   const { fetchContactAccounts } = useContactAccounts();
 

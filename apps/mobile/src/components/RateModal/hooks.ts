@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { atom, useAtom } from 'jotai';
 import * as Sentry from '@sentry/react-native';
 
 import { coerceInteger } from '@/utils/number';
-import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import {
+  appJsonStore,
+  MMKVStorageStrategy,
+  zustandByMMKV,
+} from '@/core/storage/mmkv';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { APP_URLS, APP_VERSIONS, APPLICATION_ID } from '@/constant';
@@ -11,6 +14,13 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { Platform } from 'react-native';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { openExternalUrl } from '@/core/utils/linking';
+import {
+  resolveValFromUpdater,
+  runDevIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
+import { zCreate } from '@/core/utils/reexports';
 
 const TX_COUNT_LIMIT = isNonPublicProductionEnv ? 1 : 3; // Minimum number of transactions before showing the rate guide
 const STAR_COUNT = 5;
@@ -55,22 +65,46 @@ function userCouldRated(
 ) {
   return (
     !lastExposureTimestamp?.userViewedRate &&
-    lastExposureTimestamp?.time &&
+    !!lastExposureTimestamp?.time &&
     lastExposureTimestamp?.time !== RATE_GUIDE_STATE.INIT &&
     lastExposureTimestamp?.time < Date.now()
   );
 }
-const rateGuideLastExposureAtom = atomByMMKV(
+
+// runDevIIFEFunc(() => {
+//   appJsonStore.setItem('@RateGuideLastExposure', {
+//     "txCount": 5,
+//     "latestTxHashes": [
+//       "0x3f7a954c46788987a9b76c2c53bb5bdd5a29d03bc13ff8accab9e08ea5423bb1",
+//       "0x1f110d36a222e2f681fdf072283cdda811ce53a72fa1c71f31f36b3cc834c568",
+//       "0x0161475a1a9c0769e366eeb0cad7345b8d16112343f1613c1a253826b1642fa6",
+//       "0x6bc4b5b4478d18ca3a54d3f99fdf47530caa3a698480101461f9be216bd96c73",
+//       "0x2f550e9623483534bc3aceb43f35724c904f5915e1764c77125e439bf0bb0dbe"
+//     ],
+//     "lastExposure_20250618_1": {
+//       "time": 1764939006316,
+//       "userViewedRate": true
+//     }
+//   })
+// })
+
+const rateGuideLastExposureState = zustandByMMKV(
   '@RateGuideLastExposure',
   getDefaultRateGuideLastExposure(),
   { storage: MMKVStorageStrategy.compatJson },
 );
 
+function setRateGuideLastExposure(
+  valOrFunc: UpdaterOrPartials<RateGuideLastExposure>,
+) {
+  rateGuideLastExposureState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+
+    return newVal;
+  });
+}
+
 export function useMakeMockDataForRateGuideExposure() {
-  const [
-    { [VERSIONED_KEY]: lastExposureTimestamp, txCount },
-    setRateGuideLastExposure,
-  ] = useAtom(rateGuideLastExposureAtom);
   const mockExposureRateGuide = useCallback(() => {
     setRateGuideLastExposure({
       ...getDefaultRateGuideLastExposure({
@@ -82,14 +116,9 @@ export function useMakeMockDataForRateGuideExposure() {
         (_, index) => `0x${index + 1}`,
       ),
     });
-  }, [setRateGuideLastExposure]);
-
-  const shouldShowRateGuideOnHome = useMemo(() => {
-    return txCount >= TX_COUNT_LIMIT && !!userCouldRated(lastExposureTimestamp);
-  }, [txCount, lastExposureTimestamp]);
+  }, []);
 
   return {
-    shouldShowRateGuideOnHome,
     mockExposureRateGuide,
   };
 }
@@ -100,8 +129,6 @@ export function useIncreaseTxCountOnAppTop({
 }: {
   isTop?: boolean;
 }) {
-  const [, setRateGuideLastExposure] = useAtom(rateGuideLastExposureAtom);
-
   useEffect(() => {
     if (!isTop) return;
 
@@ -137,15 +164,27 @@ export function useIncreaseTxCountOnAppTop({
     return () => {
       eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
     };
-  }, [isTop, setRateGuideLastExposure]);
+  }, [isTop]);
 }
 
+const disableExposureRateGuide = () => {
+  setRateGuideLastExposure(prev => ({
+    ...getDefaultRateGuideLastExposure({
+      time: prev[VERSIONED_KEY]?.time,
+      userViewedRate: true,
+    }),
+  }));
+  setRateModalState(getDefaultValue());
+};
+
 export function useExposureRateGuide() {
-  const [, setRateModalState] = useAtom(rateModalAtom);
-  const [
-    { txCount, [VERSIONED_KEY]: lastExposureTimestamp },
-    setRateGuideLastExposure,
-  ] = useAtom(rateGuideLastExposureAtom);
+  const { txCount, [VERSIONED_KEY]: lastExposureTimestamp } =
+    rateGuideLastExposureState(
+      useShallow(s => ({
+        txCount: s.txCount,
+        [VERSIONED_KEY]: s[VERSIONED_KEY],
+      })),
+    );
 
   // if (__DEV__) {
   //   console.debug('[useExposureRateGuide] txCount: %s', txCount);
@@ -154,16 +193,6 @@ export function useExposureRateGuide() {
   const shouldShowRateGuideOnHome = useMemo(() => {
     return txCount >= TX_COUNT_LIMIT && userCouldRated(lastExposureTimestamp);
   }, [txCount, lastExposureTimestamp]);
-
-  const disableExposureRateGuide = useCallback(() => {
-    setRateGuideLastExposure(prev => ({
-      ...getDefaultRateGuideLastExposure({
-        time: prev[VERSIONED_KEY]?.time,
-        userViewedRate: true,
-      }),
-    }));
-    setRateModalState(getDefaultValue());
-  }, [setRateGuideLastExposure, setRateModalState]);
 
   return {
     shouldShowRateGuideOnHome,
@@ -190,149 +219,162 @@ const getDefaultValue = () => ({
 
   userFeedback: '',
   isSubmitting: false,
+
+  totalBalanceText: '',
 });
-const rateModalAtom = atom(getDefaultValue());
+const rateModalStore = zCreate(() => getDefaultValue());
+function setRateModalState(
+  valOrFunc: UpdaterOrPartials<ReturnType<typeof getDefaultValue>>,
+) {
+  rateModalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+
+    return { ...prev, ...newVal };
+  });
+}
+
+export function useSetTotalBalanceTextForRateModal(totalBalanceText: string) {
+  useEffect(() => {
+    setRateModalState(prev => ({
+      ...prev,
+      totalBalanceText,
+    }));
+  }, [totalBalanceText]);
+}
+
+const toggleShowRateModal = (
+  nextValue: boolean = !rateModalStore.getState().visible,
+  options?: {
+    starCountOnOpen?: number;
+    disableExposureOnClose?: boolean;
+  },
+) => {
+  const nextState = {
+    ...getDefaultValue(),
+    visible: nextValue,
+  };
+
+  if (!nextValue && options?.disableExposureOnClose) {
+    disableExposureRateGuide();
+  } else if (
+    nextValue &&
+    options?.starCountOnOpen &&
+    coerceStar(options?.starCountOnOpen)
+  ) {
+    nextState.userStar = coerceStar(options?.starCountOnOpen);
+  }
+  setRateModalState(nextState);
+};
+
+const selectStar = (star: number) => {
+  setRateModalState(prev => ({
+    ...prev,
+    userStar: coerceStar(star),
+  }));
+};
+
+const onChangeFeedback = (feedback: string) => {
+  setRateModalState(prev => ({
+    ...prev,
+    userFeedback: feedback.slice(0, FEEDBACK_LEN_LIMIT), // Limit feedback to 300 characters
+  }));
+};
+
+const pushRateDetails = async (params: {
+  totalBalanceText?: string;
+  userStar?: number;
+}) => {
+  const rmState = rateModalStore.getState();
+  const userStar = params.userStar ?? rmState.userStar;
+  const needFeedbackText = userStar <= 3;
+
+  const feedbackText = rmState.userFeedback.trim();
+
+  const starText = `${makeStarText(userStar, 5)} (${userStar})`;
+  const balanceText = params.totalBalanceText || rmState.totalBalanceText;
+  const versionText = APP_VERSIONS.forFeedback;
+
+  const feedbackContent = [
+    ...(!needFeedbackText
+      ? [`${starText} (${balanceText}; ${versionText}) `]
+      : [
+          `Comment: ${feedbackText}`,
+          `Rate: ${starText}`,
+          `Total Balance: ${balanceText}`,
+          `App Version: ${versionText}`,
+          '  ',
+        ]),
+  ]
+    .concat(
+      isNonPublicProductionEnv
+        ? [
+            '  ',
+            '(Test Only Below) -----------------------',
+            `Platform: ${Platform.OS}`,
+            `App ID: ${APPLICATION_ID}`,
+          ]
+        : [],
+    )
+    .filter(Boolean)
+    .join('\n');
+  /**
+   * @notice In fact, it's not a real uninstall feedback, but a feedback for rate guide,
+   * related request url is /v1/feedback. Just use it to submit the feedback.
+   *
+   **/
+
+  try {
+    setRateModalState(prev => ({ ...prev, isSubmitting: true }));
+    if (needFeedbackText) {
+      await openapi.submitFeedback({
+        text: feedbackContent,
+        usage: 'rating',
+      });
+      matomoRequestEvent({
+        category: 'Rate Rabby',
+        action: 'Rate_SubmitAdvice',
+        label: [userStar].join('|'),
+      });
+    }
+  } catch (error) {
+    Sentry.captureException(error, {
+      extra: {
+        rateModalState: rateModalStore.getState(),
+        feedbackContent,
+      },
+    });
+    console.error('Failed to submit feedback:', error);
+  } finally {
+    setRateModalState(prev => ({ ...prev, isSubmitting: false }));
+  }
+};
+
+const openAppRateUrl = () => {
+  matomoRequestEvent({
+    category: 'Rate Rabby',
+    action: 'Rate_JumpAppStore',
+    label: [rateModalStore.getState().userStar].join('|'),
+  });
+  openExternalUrl(APP_URLS.RATE_URL);
+};
 
 export function useRateModal() {
-  const [rateModalState, setRateModalState] = useAtom(rateModalAtom);
-  const { disableExposureRateGuide } = useExposureRateGuide();
-
-  const toggleShowRateModal = useCallback(
-    (
-      nextValue: boolean = !rateModalState.visible,
-      options?: {
-        starCountOnOpen?: number;
-        disableExposureOnClose?: boolean;
-      },
-    ) => {
-      const nextState = {
-        ...getDefaultValue(),
-        visible: nextValue,
-      };
-
-      if (!nextValue && options?.disableExposureOnClose) {
-        disableExposureRateGuide();
-      } else if (
-        nextValue &&
-        options?.starCountOnOpen &&
-        coerceStar(options?.starCountOnOpen)
-      ) {
-        nextState.userStar = coerceStar(options?.starCountOnOpen);
-      }
-      setRateModalState(nextState);
-    },
-    [setRateModalState, rateModalState.visible, disableExposureRateGuide],
-  );
-
-  const selectStar = useCallback(
-    (star: number) => {
-      setRateModalState(prev => ({
-        ...prev,
-        userStar: coerceStar(star),
-      }));
-    },
-    [setRateModalState],
-  );
-
-  const onChangeFeedback = useCallback(
-    (feedback: string) => {
-      setRateModalState(prev => ({
-        ...prev,
-        userFeedback: feedback.slice(0, FEEDBACK_LEN_LIMIT), // Limit feedback to 300 characters
-      }));
-    },
-    [setRateModalState],
-  );
-
-  const pushRateDetails = useCallback(
-    async (params: { totalBalanceText: string; userStar?: number }) => {
-      const userStar = params.userStar ?? rateModalState.userStar;
-      const needFeedbackText = userStar <= 3;
-
-      const feedbackText = rateModalState.userFeedback.trim();
-
-      const starText = `${makeStarText(userStar, 5)} (${userStar})`;
-      const balanceText = params.totalBalanceText;
-      const versionText = APP_VERSIONS.forFeedback;
-
-      const feedbackContent = [
-        ...(!needFeedbackText
-          ? [`${starText} (${balanceText}; ${versionText}) `]
-          : [
-              `Comment: ${feedbackText}`,
-              `Rate: ${starText}`,
-              `Total Balance: ${balanceText}`,
-              `App Version: ${versionText}`,
-              '  ',
-            ]),
-      ]
-        .concat(
-          isNonPublicProductionEnv
-            ? [
-                '  ',
-                '(Test Only Below) -----------------------',
-                `Platform: ${Platform.OS}`,
-                `App ID: ${APPLICATION_ID}`,
-              ]
-            : [],
-        )
-        .filter(Boolean)
-        .join('\n');
-      /**
-       * @notice In fact, it's not a real uninstall feedback, but a feedback for rate guide,
-       * related request url is /v1/feedback. Just use it to submit the feedback.
-       *
-       **/
-
-      try {
-        setRateModalState(prev => ({ ...prev, isSubmitting: true }));
-        if (needFeedbackText) {
-          await openapi.submitFeedback({
-            text: feedbackContent,
-            usage: 'rating',
-          });
-          matomoRequestEvent({
-            category: 'Rate Rabby',
-            action: 'Rate_SubmitAdvice',
-            label: [userStar].join('|'),
-          });
-        }
-      } catch (error) {
-        Sentry.captureException(error, {
-          extra: {
-            rateModalState,
-            feedbackContent,
-          },
-        });
-        console.error('Failed to submit feedback:', error);
-      } finally {
-        setRateModalState(prev => ({ ...prev, isSubmitting: false }));
-      }
-    },
-    [rateModalState, setRateModalState],
-  );
-
-  const openAppRateUrl = useCallback(() => {
-    matomoRequestEvent({
-      category: 'Rate Rabby',
-      action: 'Rate_JumpAppStore',
-      label: [rateModalState.userStar].join('|'),
-    });
-    openExternalUrl(APP_URLS.RATE_URL);
-  }, [rateModalState.userStar]);
+  const visible = rateModalStore(s => s.visible);
+  const userStar = rateModalStore(s => s.userStar);
+  const userFeedback = rateModalStore(s => s.userFeedback);
+  const isSubmitting = rateModalStore(s => s.isSubmitting);
 
   return {
-    rateModalShown: rateModalState.visible,
+    rateModalShown: visible,
 
-    userStar: rateModalState.userStar,
+    userStar: userStar,
     toggleShowRateModal,
     selectStar,
 
-    userFeedback: rateModalState.userFeedback,
-    feedbackOverLimit:
-      rateModalState.userFeedback.length > FEEDBACK_LEN_LIMIT - 1,
+    userFeedback: userFeedback,
+    feedbackOverLimit: userFeedback.length > FEEDBACK_LEN_LIMIT - 1,
     onChangeFeedback,
-    isSubmitting: rateModalState.isSubmitting,
+    isSubmitting: isSubmitting,
     pushRateDetails,
 
     openAppRateUrl,

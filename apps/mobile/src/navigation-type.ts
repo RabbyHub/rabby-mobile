@@ -38,7 +38,6 @@ import {
 import { HistoryItemCateType } from './screens/Transaction/components/type';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { TabType } from './screens/CopyTrading/component/CopyTradingTokenDetail';
-import { DisplayedProject } from './screens/Home/utils/project';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -66,7 +65,7 @@ export type RootStackParamsList = {
   [RootNames.DeFiDetail]?: {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];
-    rawPortfolios?: DisplayedProject[];
+    rawPortfolios?: AbstractProject[];
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
     cache: boolean;
@@ -87,7 +86,7 @@ export type RootStackParamsList = {
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
-    rawPortfolios?: DisplayedProject[]; // only for single address
+    rawPortfolios?: AbstractProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
@@ -100,7 +99,7 @@ export type RootStackParamsList = {
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
-    rawPortfolios?: DisplayedProject[]; // only for single address
+    rawPortfolios?: AbstractProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
@@ -158,7 +157,6 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
-  [RootNames.AddressAssetsOverview]?: {};
   [RootNames.ReceiveAddressList]?: {
     tokenSymbol?: string;
     chainEnum?: CHAINS_ENUM;
@@ -384,8 +382,12 @@ export type TransactionNavigatorParamList = {
   [RootNames.PerpsMarketDetail]: {
     market: string;
     fromSource?: string;
+    showOpenPosition?: boolean;
   };
-  [RootNames.Lending]?: {};
+  [RootNames.Lending]?: {
+    tokenAddress?: string;
+    direction?: 'supply' | 'borrow';
+  };
 };
 
 export type SettingNavigatorParamList = {

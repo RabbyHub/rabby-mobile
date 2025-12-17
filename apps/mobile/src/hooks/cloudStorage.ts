@@ -2,12 +2,30 @@ import React from 'react';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { atom, useAtom, useSetAtom } from 'jotai';
 import { loginIfNeeded } from '@/core/utils/cloudBackup';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-const cloudStorageAtom = atom<{
+type CloudStorageState = {
   accessToken?: string;
-}>({});
+};
+// const cloudStorageAtom = atom<{
+//   accessToken?: string;
+// }>({});
+const cloudStorageStore = zCreate<CloudStorageState>(() => ({
+  accessToken: undefined,
+}));
+function setCloudStorage(valOrFunc: UpdaterOrPartials<CloudStorageState>) {
+  cloudStorageStore.setState(prev => {
+    const val = resolveValFromUpdater(prev, valOrFunc);
+
+    return {
+      ...prev,
+      ...val.newVal,
+    };
+  });
+}
 export function useGoogleSign() {
-  const [cloudStorage, setCloudStorage] = useAtom(cloudStorageAtom);
+  const cloudStorage = cloudStorageStore(state => state);
 
   const previousSigned = React.useMemo(
     () => GoogleSignin.hasPreviousSignIn(),
@@ -26,7 +44,7 @@ export function useGoogleSign() {
     }));
 
     return result;
-  }, [setCloudStorage]);
+  }, []);
 
   const doGoogleSignOut = React.useCallback(async () => {
     await GoogleSignin.signOut();
@@ -38,7 +56,7 @@ export function useGoogleSign() {
       ...prev,
       accessToken: undefined,
     }));
-  }, [setCloudStorage, cloudStorage]);
+  }, [cloudStorage]);
 
   return {
     isLoginedGoogle: !!cloudStorage.accessToken,
@@ -51,7 +69,7 @@ export function useGoogleSign() {
 }
 
 export function useAutoGoogleSignIfPreviousSignedOnTop() {
-  const setCloudStorage = useSetAtom(cloudStorageAtom);
+  // const setCloudStorage = useSetAtom(cloudStorageAtom);
 
   React.useEffect(() => {
     if (GoogleSignin.hasPreviousSignIn()) {
@@ -64,5 +82,5 @@ export function useAutoGoogleSignIfPreviousSignedOnTop() {
         });
       });
     }
-  }, [setCloudStorage]);
+  }, []);
 }

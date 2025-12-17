@@ -1,25 +1,19 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Alert, StyleSheet } from 'react-native';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { debounce, merge } from 'lodash';
+import { merge } from 'lodash';
 
 import {
   NativeStackNavigationOptions,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import { useTheme2024 } from '@/hooks/theme';
-import {
-  getLatestNavigationName,
-  getReadyNavigationInstance,
-  navigationRef,
-} from '@/utils/navigation';
+import { apisTheme, useGetBinaryMode } from '../hooks/theme';
+import { getReadyNavigationInstance, navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
 import {
   NavigationContainerRef,
-  TabActions,
   useNavigation,
 } from '@react-navigation/native';
 
@@ -32,43 +26,50 @@ import {
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
 import { IS_IOS } from '@/core/native/utils';
-import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomSheetModal/security';
+import {
+  atSensitiveSceneState,
+  bottomSheetModalSecurityApis,
+} from '@/components2024/GlobalBottomSheetModal/security';
 import { useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { RefLikeObject } from '@/utils/type';
+import { perfEvents } from '@/core/utils/perf';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
   | NavigationContainerRef<RootStackParamsList>;
 
-// const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
-//   onLight: ThemeColors.light['neutral-body'],
-//   onDark: ThemeColors.dark['neutral-body'],
-// });
+type NavigationRouteStore = {
+  currentRouteName: AppRootName | string | undefined;
+};
+const navigationRouteStore = zCreate<NavigationRouteStore>(() => ({
+  currentRouteName: undefined,
+}));
+function setCurrentRouteName(
+  valOrFunc: UpdaterOrPartials<NavigationRouteStore['currentRouteName']>,
+) {
+  navigationRouteStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.currentRouteName,
+      valOrFunc,
+    );
 
-const currentRouteNameAtom = atom<AppRootName | string | undefined>(undefined);
+    if (changed) return { ...prev, currentRouteName: newVal };
+
+    return prev;
+  });
+}
+perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
+  setCurrentRouteName(currentRouteName as AppRootName | string | undefined);
+});
+
 export function useCurrentRouteName() {
   return {
-    currentRouteName: useAtomValue(currentRouteNameAtom),
+    currentRouteName: navigationRouteStore(s => s.currentRouteName),
   };
-}
-
-export function useSetCurrentRouteName() {
-  return {
-    setCurrentRouteName: useSetAtom(currentRouteNameAtom),
-  };
-}
-
-const navigationReadyAtom = atom<boolean>(false);
-export function useNavigationReady() {
-  const appNavigationReady = useAtomValue(navigationReadyAtom);
-
-  return { appNavigationReady };
-}
-export function useSetNavigationReady() {
-  const setNavigationReady = useSetAtom(navigationReadyAtom);
-
-  return { setNavigationReady };
 }
 
 const hitSlop = {
@@ -82,7 +83,7 @@ type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
   headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
 };
 export const useStackScreenConfig = () => {
-  const { colors, colors2024 } = useTheme2024();
+  const appThemeMode = useGetBinaryMode();
 
   const navBack = useCallback(() => {
     const navigation = navigationRef.current;
@@ -96,11 +97,12 @@ export const useStackScreenConfig = () => {
     }
   }, []);
 
-  const headerPresets = makeHeadersPresets({ colors, colors2024 });
-
   /** @deprecated for new screen use mergeScreenOptions2024 instead */
   const mergeScreenOptions = useCallback(
     (...optsList: Partial<ScreenOptions>[]) => {
+      const { colors, colors2024 } = apisTheme.getColors2024(appThemeMode);
+      const headerPresets = makeHeadersPresets({ colors, colors2024 });
+
       const screenOptions: ScreenOptions = {
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
@@ -138,11 +140,14 @@ export const useStackScreenConfig = () => {
 
       return result;
     },
-    [headerPresets, colors, navBack],
+    [appThemeMode, navBack],
   );
 
   const mergeScreenOptions2024 = useCallback(
     (optsList: Partial<ScreenOptions>[], options?: any) => {
+      const { colors, colors2024 } = apisTheme.getColors2024(appThemeMode);
+      const headerPresets = makeHeadersPresets({ colors, colors2024 });
+
       const screenOptions: ScreenOptions = {
         animation: IS_IOS ? 'slide_from_right' : 'none',
         animationDuration: 200,
@@ -181,14 +186,14 @@ export const useStackScreenConfig = () => {
 
       return result;
     },
-    [headerPresets, colors2024, navBack],
+    [appThemeMode, navBack],
   );
 
   return { mergeScreenOptions, mergeScreenOptions2024 };
 };
 
 export function useBottomTabScreenConfig() {
-  const { colors, colors2024 } = useTheme2024();
+  const appThemeMode = useGetBinaryMode();
 
   const navBack = useCallback(() => {
     const navigation = navigationRef.current;
@@ -199,10 +204,11 @@ export function useBottomTabScreenConfig() {
     }
   }, []);
 
-  const headerPresets = makeHeadersPresets({ colors, colors2024 });
-
   const mergeBottomTabOptions2024 = useCallback(
     (optsList: Partial<BottomTabNavigationOptions>[] = [], options?: any) => {
+      const { colors, colors2024 } = apisTheme.getColors2024(appThemeMode);
+      const headerPresets = makeHeadersPresets({ colors, colors2024 });
+
       const bottomTabOptions: BottomTabNavigationOptions = {
         headerTitleAlign: 'center',
         headerStyle: {
@@ -243,7 +249,7 @@ export function useBottomTabScreenConfig() {
 
       return result;
     },
-    [headerPresets, colors2024, navBack],
+    [appThemeMode, navBack],
   );
 
   return { mergeBottomTabOptions2024 };
@@ -266,6 +272,29 @@ export function useRabbyAppNavigation<
   return useNavigation<K>();
 }
 
+const tabIndexStore = zCreate<{ tabIndex: number }>(() => ({ tabIndex: 0 }));
+export function useHomeTabIndex() {
+  const tabIndex = tabIndexStore(s => s.tabIndex);
+
+  return {
+    tabIndex,
+    setTabIndex: apisHomeTabIndex.setTabIndex,
+  };
+}
+const tabIndexRef: RefLikeObject<number> = { current: 0 };
+export const apisHomeTabIndex = {
+  get tabIndex() {
+    return tabIndexRef.current;
+  },
+  isHomeAtFirstTab() {
+    return tabIndexRef.current === 0;
+  },
+  setTabIndex(val: number) {
+    tabIndexRef.current = val;
+    tabIndexStore.setState({ tabIndex: val });
+  },
+};
+
 export function resetNavigationTo(
   navigation: NavigationInstance,
   type: 'Home' | 'Unlock' | 'GetStarted2024' = 'Home',
@@ -284,6 +313,7 @@ export function resetNavigationTo(
           },
         ],
       });
+      apisHomeTabIndex.setTabIndex(0);
       break;
     }
     case 'Unlock': {
@@ -291,12 +321,12 @@ export function resetNavigationTo(
         index: 0,
         routes: [{ name: RootNames.Unlock, params: {} }],
       });
-      if (
-        getLatestNavigationName() === RootNames.BrowserScreen ||
-        getLatestNavigationName() === RootNames.BrowserManageScreen
-      ) {
-        navigation.dispatch(TabActions.jumpTo(RootNames.StackMain));
-      }
+      // if (
+      //   getLatestNavigationName() === RootNames.BrowserScreen ||
+      //   getLatestNavigationName() === RootNames.BrowserManageScreen
+      // ) {
+      //   navigation.dispatch(TabActions.jumpTo(RootNames.StackMain));
+      // }
 
       break;
     }
@@ -397,11 +427,12 @@ export type ProtectedConf = {
   warningScreenshotBackup: boolean;
   onOk?: (ctx: { navigation?: NavigationInstance | null }) => void;
 };
+const defaultOnOk = ctx => {
+  ctx.navigation?.goBack();
+};
 const defaultProtectedConf: ProtectedConf = {
   iosBlurType: ProtectType.NONE,
-  onOk: ctx => {
-    ctx.navigation?.goBack();
-  },
+  onOk: defaultOnOk,
   warningScreenshotBackup: false,
 };
 function getProtectedConf() {
@@ -426,9 +457,9 @@ const PROTECTED_SCREENS: {
   [RootNames.BackupPrivateKey]: getProtectedConf(),
 };
 
-function getAtSensitveScreenInfo(routeName: string | undefined) {
+function getAtSensitiveScreenInfo(routeName: string | undefined) {
   const result = {
-    $routeName: routeName,
+    // $routeName: routeName,
     $protectedConf: { ...defaultProtectedConf },
     _atSensitiveScreen: false,
   };
@@ -445,18 +476,66 @@ function getAtSensitveScreenInfo(routeName: string | undefined) {
   return result;
 }
 
-export function useAtSensitiveScene() {
-  const currentRouteName = useAtomValue(currentRouteNameAtom);
-  const { anySensitiveModalOpened } = useSensitiveGlobalModalsOpened();
+type AtSensitiveScreenInfo = ReturnType<typeof getAtSensitiveScreenInfo>;
+type AtSensitiveScreenState = {
+  anySensitiveModalOpened: boolean;
+  screenInfo: AtSensitiveScreenInfo;
+};
+const atSensitiveScreenStore = zCreate<AtSensitiveScreenState>(() => ({
+  anySensitiveModalOpened: false,
+  screenInfo: getAtSensitiveScreenInfo(undefined),
+}));
 
-  return useMemo(() => {
-    const srnInfo = getAtSensitveScreenInfo(currentRouteName);
+function setAtSensitiveScreenInfo(
+  valOrFunc: UpdaterOrPartials<AtSensitiveScreenInfo>,
+) {
+  atSensitiveScreenStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.screenInfo,
+      valOrFunc,
+      {
+        strict: true,
+      },
+    );
+
+    if (!changed) return prev;
+
+    return { ...prev, screenInfo: newVal };
+  });
+}
+
+perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
+  setAtSensitiveScreenInfo(getAtSensitiveScreenInfo(currentRouteName));
+});
+
+atSensitiveSceneState.subscribe(s => {
+  const anySensitiveModalOpened =
+    bottomSheetModalSecurityApis.isAnySensitiveModalOpened(s);
+
+  atSensitiveScreenStore.setState(prev => {
+    if (prev.anySensitiveModalOpened === anySensitiveModalOpened) {
+      return prev;
+    }
     return {
-      ...srnInfo,
+      ...prev,
       anySensitiveModalOpened,
-      atSensitiveScene: srnInfo._atSensitiveScreen || anySensitiveModalOpened,
     };
-  }, [currentRouteName, anySensitiveModalOpened]);
+  });
+});
+
+export function useAtSensitiveScene() {
+  const srnInfo = atSensitiveScreenStore(s => s.screenInfo);
+  const anySensitiveModalOpened = atSensitiveScreenStore(
+    s => s.anySensitiveModalOpened,
+  );
+
+  return {
+    anySensitiveModalOpened,
+    atSensitiveScene: srnInfo._atSensitiveScreen || anySensitiveModalOpened,
+    iosBlurType: srnInfo.$protectedConf.iosBlurType,
+    warningScreenshotBackup: srnInfo.$protectedConf.warningScreenshotBackup,
+    onOk: srnInfo.$protectedConf.onOk,
+  };
 }
 
 /**
@@ -467,7 +546,7 @@ export function useAppPreventScreenshotOnScreen({
 }: {
   isTop?: boolean;
 }) {
-  const { atSensitiveScene, $protectedConf } = useAtSensitiveScene();
+  const { atSensitiveScene, iosBlurType } = useAtSensitiveScene();
   const { forceAllowScreenshot } = useExpScreenCapture();
   const shouldPreventScreenCapturing =
     atSensitiveScene && !forceAllowScreenshot;
@@ -482,17 +561,12 @@ export function useAppPreventScreenshotOnScreen({
     if (!isTop) return;
 
     if (!IS_IOS) return;
-    if ($protectedConf.iosBlurType === ProtectType.SafeTipModal) return;
+    if (iosBlurType === ProtectType.SafeTipModal) return;
 
     if (isBeingCaptured && shouldPreventScreenCapturing) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();
     } else {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
-  }, [
-    isTop,
-    $protectedConf.iosBlurType,
-    isBeingCaptured,
-    shouldPreventScreenCapturing,
-  ]);
+  }, [isTop, iosBlurType, isBeingCaptured, shouldPreventScreenCapturing]);
 }

@@ -60,6 +60,11 @@ import { WithdrawActionPopup } from '@/screens/Lending/components/actions/Withdr
 import { BorrowActionPopup } from '@/screens/Lending/components/actions/BorrowActionPopup';
 import { RepayActionPopup } from '@/screens/Lending/components/actions/RepayActionPopup';
 import { HFDescription } from '@/screens/Lending/components/HFDescription';
+import { AddressListModal } from '@/screens/Address/components/MultiAssets/AddressList';
+import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
+import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
+import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
+import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -71,7 +76,7 @@ function getDefaultViewTypePropsPreset(
     rootViewType: 'View',
     enablePanDownToClose: true,
     enableContentPanningGesture: true,
-    ...input,
+    ...(input || {}),
     rootViewStyle: StyleSheet.flatten([
       {
         height: '100%',
@@ -195,6 +200,11 @@ export const MODAL_CONFIGS: Record<
     Component: NotMatterAddressDialog,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
+  [MODAL_NAMES.ADDRESS_LiST]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: AddressListModal,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: {
     snapPoints: [384],
     Component: FundYourWallet,
@@ -253,6 +263,16 @@ export const MODAL_CONFIGS: Record<
     Component: Descriptions,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
+  [MODAL_NAMES.MANAGE_EMODE]: {
+    snapPoints: [248],
+    Component: ManageEmodeModal,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.DISABLE_EMODE_OVERVIEW]: {
+    snapPoints: [580],
+    Component: DisableEmodeOverviewModal,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
   [MODAL_NAMES.ADDRESS_HIGHT_DESC]: {
     snapPoints: [273],
     Component: AddressHightDesc,
@@ -283,7 +303,7 @@ export const MODAL_CONFIGS: Record<
     Component: BatchRevokeErrorReason,
   },
   [MODAL_NAMES.SUPPLY_DETAIL]: {
-    snapPoints: [510],
+    snapPoints: [606],
     Component: SupplyDetailPopup,
   },
   [MODAL_NAMES.BORROW_DETAIL]: {
@@ -291,7 +311,7 @@ export const MODAL_CONFIGS: Record<
     Component: BorrowDetailPopup,
   },
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: {
-    snapPoints: [666],
+    snapPoints: [686],
     Component: SupplyActionPopup,
   },
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: {
@@ -313,5 +333,14 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.SELECT_LENDING_CHAIN]: {
     snapPoints: ['80%'],
     Component: SelectLendingChain,
+  },
+  [MODAL_NAMES.MANAGE_EMODE_FULL]: {
+    snapPoints: ['100%'],
+    Component: ManageEmodeFullModal,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {
+    snapPoints: ['85%'],
+    Component: SelectCategoryModal,
   },
 };

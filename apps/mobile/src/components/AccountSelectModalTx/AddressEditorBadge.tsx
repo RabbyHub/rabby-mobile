@@ -96,7 +96,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
-    lineHeight: 23,
+    lineHeight: 20,
     marginLeft: 2,
     ...(IS_IOS && {
       position: 'relative',

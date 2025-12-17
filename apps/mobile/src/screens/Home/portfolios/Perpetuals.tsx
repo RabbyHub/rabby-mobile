@@ -11,7 +11,6 @@ import {
 import { AbstractPortfolio } from '../types';
 import { formatNetworth } from '@/utils/math';
 import { getTokenSymbol } from '@/utils/token';
-import { KeyringAccountWithAlias } from '@/hooks/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -20,12 +19,10 @@ export default React.memo(
     name,
     data,
     style,
-    currentAccount,
   }: {
     name: string;
     data: AbstractPortfolio;
     style?: ViewStyle;
-    currentAccount?: KeyringAccountWithAlias;
   }) => {
     const portfolio = data._originPortfolio;
     const { styles } = useTheme2024({ getStyle: getStyles });
@@ -66,23 +63,21 @@ export default React.memo(
         <PortfolioHeader data={data} name={name} showDescription />
         <Supplements style={styles.supplements} data={supplements} />
         <TokenList
-          currentAccount={currentAccount}
           headerStyle={styles.tokenListHeader}
           tokens={
             portfolio.detail.position_token
               ? [portfolio.detail.position_token]
               : []
           }
-          name="POSITION"
+          name="Position"
         />
         <TokenList
-          currentAccount={currentAccount}
           tokens={
             portfolio.detail.margin_token ? [portfolio.detail.margin_token] : []
           }
           style={styles.tokenList}
           headerStyle={styles.tokenListHeader}
-          name="MARGIN"
+          name="Margin"
         />
       </Card>
     );
@@ -97,6 +92,6 @@ const getStyles = createGetStyles2024(() => ({
     marginTop: 2,
   },
   supplements: {
-    marginTop: 12,
+    // marginTop: 12,
   },
 }));

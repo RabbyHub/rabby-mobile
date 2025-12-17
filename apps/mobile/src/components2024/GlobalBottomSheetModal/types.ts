@@ -8,12 +8,13 @@ import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGrad
 import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddress';
 import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
 import { ButtonProps } from '../Button';
-import { PopupDetailProps } from '@/screens/Lending/type';
+import { OpenDetailProps, PopupDetailProps } from '@/screens/Lending/type';
 
 export enum MODAL_NAMES {
   // 'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
   'COPY_TRADING_EARNINGS' = 'COPY_TRADING_EARNINGS',
   'NOT_MATTER_ADDRESS_DIALOG' = 'NOT_MATTER_ADDRESS_DIALOG',
+  'ADDRESS_LiST' = 'ADDRESS_LiST',
   'APPROVAL' = 'APPROVAL',
   'SWITCH_ADDRESS' = 'SWITCH_ADDRESS',
   'SWITCH_CHAIN' = 'SWITCH_CHAIN',
@@ -74,6 +75,10 @@ export enum MODAL_NAMES {
   'WITHDRAW_ACTION_DETAIL' = 'WITHDRAW_ACTION_DETAIL',
   'REPAY_ACTION_DETAIL' = 'REPAY_ACTION_DETAIL',
   'HF_DESCRIPTION' = 'HF_DESCRIPTION',
+  'MANAGE_EMODE' = 'MANAGE_EMODE',
+  'DISABLE_EMODE_OVERVIEW' = 'DISABLE_EMODE_OVERVIEW',
+  'MANAGE_EMODE_FULL' = 'MANAGE_EMODE_FULL',
+  'SELECT_EMODE_CATEGORY' = 'SELECT_EMODE_CATEGORY',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -114,8 +119,8 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.DESCRIPTION]: React.ComponentProps<
     typeof import('../Descriptions').Descriptions
   >;
-  [MODAL_NAMES.SUPPLY_DETAIL]: PopupDetailProps;
-  [MODAL_NAMES.BORROW_DETAIL]: PopupDetailProps;
+  [MODAL_NAMES.SUPPLY_DETAIL]: OpenDetailProps;
+  [MODAL_NAMES.BORROW_DETAIL]: OpenDetailProps;
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: PopupDetailProps;
   [MODAL_NAMES.BORROW_ACTION_DETAIL]: PopupDetailProps;
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: PopupDetailProps;
@@ -128,6 +133,9 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.HF_DESCRIPTION]: {
     hf: string;
   };
+  [MODAL_NAMES.MANAGE_EMODE]: {};
+  [MODAL_NAMES.DISABLE_EMODE_OVERVIEW]: {};
+  [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {};
 };
 
 export type MODAL_ID = `${MODAL_NAMES}_${string}`;

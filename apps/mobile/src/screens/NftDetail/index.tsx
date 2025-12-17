@@ -27,7 +27,7 @@ import { useMyAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { useAssets } from '../Search/useAssets';
+import { useLoadAssets } from '../Search/useAssets';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
 import { DropDownMenuView } from '@/components2024/DropDownMenu';
@@ -264,7 +264,7 @@ export const NFTDetailScreen = () => {
     [accounts, switchSceneCurrentAccount],
   );
 
-  const { assetsMap, getCacheTop10Assets } = useAssets({ hideCombined: true });
+  const { nftsMap, getCacheTop10Assets } = useLoadAssets();
 
   type ItemBase = {
     data: NFTItem;
@@ -290,8 +290,8 @@ export const NFTDetailScreen = () => {
 
     const tempList: ItemBase[] = [];
 
-    Object.keys(assetsMap).map((address, index) => {
-      const { nfts } = assetsMap[address];
+    Object.keys(nftsMap).map((address, index) => {
+      const nfts = nftsMap[address];
 
       nfts?.map(item => {
         if (
@@ -332,7 +332,7 @@ export const NFTDetailScreen = () => {
             index: 0,
           } as ItemBase,
         ];
-  }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
+  }, [nftsMap, token, accounts, finalAccount, isSingleAddress]);
 
   useEffect(() => {
     const id = setTimeout(() => {

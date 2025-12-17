@@ -1,10 +1,10 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
-import { PopupDetailProps } from '../type';
+import { OpenDetailProps } from '../type';
 import {
   formatAmountValueKMB,
   formatUsdValueKMB,
@@ -17,7 +17,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import TokenIcon from './TokenIcon';
-import { useLendingService } from '../hooks/useLendingService';
 import BigNumber from 'bignumber.js';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -25,18 +24,47 @@ import { useTranslation } from 'react-i18next';
 import { getHealthFactorText } from './HealthFactorText';
 import { formatNetworth } from '@/utils/math';
 import { formatApy } from '../utils/format';
+import { useSelectedMarket, useLendingSummary } from '../hooks';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { isValidAddress } from '@ethereumjs/util';
+import { nativeToWrapper } from '../config/nativeToWrapper';
+import DetailLoadingSkeleton from './DetailLoadingSkeleton';
 
-export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
-  reserve,
-  userSummary,
+export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
+  underlyingAsset,
   onClose,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { lastSelectedChain } = useLendingService();
+  const { chainEnum } = useSelectedMarket();
   const { t } = useTranslation();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+  const {
+    displayPoolReserves,
+    iUserSummary: userSummary,
+    loading,
+    wrapperPoolReserve,
+  } = useLendingSummary();
+  const reserve = useMemo(() => {
+    const validAddress = isValidAddress(underlyingAsset);
+    const nativeWrapperReserveAddress = wrapperPoolReserve?.underlyingAsset;
+    const defaultAddress = nativeToWrapper[underlyingAsset];
+    const realTimeReserve = displayPoolReserves?.find(item =>
+      isSameAddress(
+        item.underlyingAsset,
+        validAddress
+          ? underlyingAsset
+          : nativeWrapperReserveAddress || defaultAddress,
+      ),
+    );
+    return realTimeReserve;
+  }, [
+    displayPoolReserves,
+    underlyingAsset,
+    wrapperPoolReserve?.underlyingAsset,
+  ]);
+
   const handleShowLqBonusPopup = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DESCRIPTION,
@@ -115,10 +143,25 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
   };
 
   const hasBorrowBalance = useMemo(() => {
+    if (!reserve) {
+      return false;
+    }
     return reserve?.variableBorrows && reserve.variableBorrows !== '0';
-  }, [reserve.variableBorrows]);
+  }, [reserve]);
 
   const disableBorrowButton = useMemo(() => {
+    if (!reserve) {
+      return false;
+    }
+    // emode开启，但是不支持该池子借贷
+    const eModeBorrowDisabled =
+      !!userSummary?.userEmodeCategoryId &&
+      !reserve.reserve.eModes.find(
+        e => e.id === userSummary.userEmodeCategoryId,
+      );
+    if (eModeBorrowDisabled) {
+      return true;
+    }
     if (BigNumber(reserve.reserve.totalDebt).gte(reserve.reserve.borrowCap)) {
       return true;
     }
@@ -127,9 +170,9 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       userSummary?.availableBorrowsUSD === '0'
     );
   }, [
-    reserve.reserve.borrowCap,
-    reserve.reserve.totalDebt,
+    reserve,
     userSummary?.availableBorrowsUSD,
+    userSummary?.userEmodeCategoryId,
   ]);
 
   const handlePressBorrow = () => {
@@ -170,6 +213,14 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
       },
     });
   };
+  useEffect(() => {
+    if (!loading && !reserve) {
+      onClose?.();
+    }
+  }, [loading, onClose, reserve]);
+  if (loading || !reserve || !userSummary) {
+    return <DetailLoadingSkeleton />;
+  }
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
       <Text style={styles.title}>{t('page.Lending.borrowOverview.title')}</Text>
@@ -178,7 +229,7 @@ export const BorrowDetailPopup: React.FC<PopupDetailProps> = ({
           <View style={styles.tokenInfos}>
             <TokenIcon
               size={30}
-              chain={lastSelectedChain}
+              chain={chainEnum}
               chainSize={14}
               tokenSymbol={reserve.reserve.symbol}
             />

@@ -1,16 +1,33 @@
-import { atomByMMKV } from '@/core/storage/mmkv';
-import { useAtom } from 'jotai';
 import { useCallback } from 'react';
 
+import { zustandByMMKV } from '@/core/storage/mmkv';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+
 type Guidances = {
-  multiTabs20251111Viewed: boolean;
+  multiTabs20251205Viewed: boolean;
 };
-const guidancePersistedAtom = atomByMMKV<Guidances>('@homeGuidance', {
-  multiTabs20251111Viewed: true,
-});
+
+export const guidancePersistedStore = zustandByMMKV<Guidances>(
+  '@homeGuidance',
+  {
+    multiTabs20251205Viewed: false,
+  },
+);
+
+function setGuidance(valOrFunc: UpdaterOrPartials<Guidances>) {
+  guidancePersistedStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
 
 export function useGuidanceShown() {
-  const [guidance, setGuidance] = useAtom(guidancePersistedAtom);
+  const multiTabs20251205Viewed = guidancePersistedStore(
+    s => s.multiTabs20251205Viewed,
+  );
 
   const toggleViewedGuidance = useCallback(
     (k: keyof Guidances, nextVal?: boolean) => {
@@ -22,11 +39,11 @@ export function useGuidanceShown() {
         };
       });
     },
-    [setGuidance],
+    [],
   );
 
   return {
-    multiTabs20251111Viewed: guidance.multiTabs20251111Viewed,
+    multiTabs20251205Viewed,
     toggleViewedGuidance,
   };
 }

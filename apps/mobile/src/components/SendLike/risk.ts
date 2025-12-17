@@ -1,5 +1,4 @@
 import { openapi } from '@/core/request';
-import { useMyAccounts } from '@/hooks/account';
 import {
   AddrDescResponse,
   ProjectItem,
@@ -9,8 +8,10 @@ import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
-import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { getSortedAddressList, sortAccountList } from '@/core/apis/account';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater } from '@/core/utils/store';
+import { useMemoizedFn } from 'ahooks';
 
 const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 
@@ -24,81 +25,220 @@ const waitQueueFinished = (q: PQueue) => {
   });
 };
 
+const reqForbiddenTip = async (forbiddenCheck: ForBiddenCheckParams) => {
+  const allValuesSet =
+    forbiddenCheck?.chain_id &&
+    forbiddenCheck?.to_addr &&
+    forbiddenCheck?.user_addr &&
+    forbiddenCheck?.id;
+  if (allValuesSet) {
+    return await openapi
+      .checkTokenDepositForbidden({
+        chain_id: forbiddenCheck?.chain_id || 'eth',
+        to_addr: forbiddenCheck?.to_addr || '',
+        user_addr: forbiddenCheck?.user_addr || '',
+        id: forbiddenCheck?.id || '',
+      })
+      .then(res => {
+        return res?.msg || '';
+      })
+      .catch(error => {
+        console.error('checkTokenDepositForbidden error', error);
+        return null;
+      });
+  } else {
+    return null;
+  }
+};
+
+type ForBiddenCheckParams = {
+  user_addr: string;
+  id?: string;
+  chain_id?: string;
+  to_addr: string;
+};
+
 export const enum RiskType {
   NEVER_SEND = 1,
   SCAM_ADDRESS = 2,
   CONTRACT_ADDRESS = 3,
   CEX_NO_DEPOSIT = 4,
+
+  FORBIDDEN_TIP = 5,
 }
 type RiskItem = { type: RiskType; value: string };
+const addrRisks = zCreate<{
+  [address: string]: {
+    loading: boolean;
+    addrDesc?:
+      | Awaited<ReturnType<typeof getAddrDescWithCexLocalCacheSync>>
+      | undefined;
+    risks: RiskItem[];
+  };
+}>(() => ({}));
+
+function setLoading(address: string, loading: boolean) {
+  addrRisks.setState(prev => {
+    if (prev[address]?.loading === loading) {
+      return prev;
+    }
+    return {
+      ...prev,
+      [address]: {
+        ...(prev[address] || { risks: [] }),
+        loading,
+      },
+    };
+  });
+}
+
+function setAddressDesc(
+  address: string,
+  addressDesc: AddrDescResponse['desc'],
+) {
+  addrRisks.setState(prev => {
+    return {
+      ...prev,
+      [address]: {
+        ...(prev[address] || { risks: [] }),
+        loading: prev[address]?.loading || false,
+        addressDesc,
+      },
+    };
+  });
+}
+
+function setRisksForAddress(address: string, risks: RiskItem[]) {
+  addrRisks.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev[address]?.risks || [],
+      risks,
+      {
+        strict: true,
+      },
+    );
+    if (!changed) return prev;
+
+    return {
+      ...prev,
+      [address]: {
+        ...(prev[address] || { loading: false }),
+        risks: newVal,
+      },
+    };
+  });
+}
 export const useRisks = (options: {
   toAddress: string;
   fromAddress?: string;
+  forbiddenCheck?: ForBiddenCheckParams;
   cex?: ProjectItem | null;
   onLoadFinished?: (ctx: { risks: Array<RiskItem> }) => void;
 }) => {
-  const { fromAddress, toAddress, cex, onLoadFinished } = options;
-  const [risks, setRisks] = useState<Array<RiskItem>>([]);
+  const {
+    fromAddress,
+    toAddress,
+    forbiddenCheck: input_forbiddenCheck,
+    cex,
+    onLoadFinished: prop_onLoadFinished,
+  } = options;
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(!!toAddress);
   const riskGetRef = useRef(false);
 
-  const [addressDesc, setAddressDesc] = useState<
-    AddrDescResponse['desc'] | undefined
-  >();
+  const onLoadFinished = useMemoizedFn(prop_onLoadFinished || (() => {}));
 
+  const defaultRisks = useMemo(() => [], []);
+  const risks = addrRisks(s =>
+    !toAddress ? defaultRisks : s[toAddress]?.risks || defaultRisks,
+  );
+  const loading = addrRisks(s =>
+    !toAddress ? false : s[toAddress]?.loading || false,
+  );
+  const addressDesc = addrRisks(s =>
+    !toAddress ? undefined : s[toAddress]?.addrDesc,
+  );
   const hasSend = useMemo(() => {
     return !loading && !risks.some(r => r.type === RiskType.NEVER_SEND);
   }, [loading, risks]);
 
-  const { accounts } = useMyAccounts();
-  const sortedAccounts = useSortAddressList(accounts);
+  const memoForbiddenCheck = useMemo(() => {
+    return {
+      chain_id: input_forbiddenCheck?.chain_id,
+      id: input_forbiddenCheck?.id,
+      user_addr: input_forbiddenCheck?.user_addr || '',
+      to_addr: input_forbiddenCheck?.to_addr || '',
+    };
+  }, [
+    input_forbiddenCheck?.chain_id,
+    input_forbiddenCheck?.id,
+    input_forbiddenCheck?.user_addr,
+    input_forbiddenCheck?.to_addr,
+  ]);
 
-  const top10Addresses = useCreationWithShallowCompare(() => {
-    return sortedAccounts.slice(0, __DEV__ ? 1 : 10).map(acc => acc.address);
-  }, [sortedAccounts]);
-  const caredAddresses = useMemo(() => {
-    if (fromAddress) return [fromAddress];
-
-    return top10Addresses;
-  }, [fromAddress, top10Addresses]);
+  // const forbiddenCheck = useDebouncedValue(memoForbiddenCheck, 300);
+  const forbiddenCheck = memoForbiddenCheck;
 
   const fetchRisks = useCallback(async () => {
-    if (!caredAddresses.length || !toAddress) return;
+    if (!toAddress) return;
+    const top10Addresses = (
+      await getSortedAddressList({ includeOthers: false })
+    ).sortedAccounts;
+
+    if (!top10Addresses.length) return;
     if (riskGetRef.current) return;
     riskGetRef.current = true;
-    setLoading(true);
+    setLoading(toAddress, true);
 
-    const currRisks: Array<RiskItem> = [];
+    const curRisks: Array<RiskItem> = [];
     let addressSent = '';
     let hasError = false;
 
     try {
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('timeout')), 3000);
+      const timeoutPromise = new Promise<void>((resolve, reject) => {
+        // setTimeout(() => reject(new Error('timeout')), 5000);
+        setTimeout(() => resolve(), 5000);
       });
 
       const addressDescPromise = getAddrDescWithCexLocalCacheSync(toAddress);
 
-      const checkTransferPromise = new Promise<void>(resolve => {
-        caredAddresses.forEach(addr => {
-          if (isSameAddress(addr, toAddress)) return;
+      function updateRisksAP() {
+        setRisksForAddress(toAddress, curRisks);
+      }
 
-          queue.add(async () => {
-            try {
-              if (addressSent || hasError) return;
-              const res = await openapi.hasTransferAllChain(addr, toAddress);
+      const caredAddresses = fromAddress
+        ? [fromAddress]
+        : top10Addresses.map(acc => acc.address);
 
-              if (res?.has_transfer) {
-                addressSent = addr;
+      const checkTransferPromise = Promise.race([
+        new Promise<void>(resolve => {
+          caredAddresses.forEach(addr => {
+            if (isSameAddress(addr, toAddress)) return;
+
+            queue.add(async () => {
+              try {
+                if (addressSent || hasError) return;
+                const res = await openapi.hasTransferAllChain(addr, toAddress);
+
+                if (res?.has_transfer) {
+                  addressSent = addr;
+                }
+              } catch (error) {
+                console.error('has_transfer fetch error', error);
+                hasError = true;
               }
-            } catch (error) {
-              console.error('has_transfer fetch error', error);
-              hasError = true;
-            }
+            });
           });
-        });
-        waitQueueFinished(queue).then(() => resolve());
+          waitQueueFinished(queue).then(() => resolve());
+        }),
+        timeoutPromise,
+      ]).then(() => {
+        if (!addressSent) {
+          curRisks.push({
+            type: RiskType.NEVER_SEND,
+            value: t('page.confirmAddress.risks.noSend'),
+          });
+          updateRisksAP();
+        }
       });
 
       addressDescPromise.then(addressRes => {
@@ -121,19 +261,21 @@ export const useRisks = (options: {
           }
         }
         if (addressRes) {
-          setAddressDesc(addressRes);
+          setAddressDesc(toAddress, addressRes);
         }
         if (addressRes?.is_danger || addressRes?.is_scam) {
-          currRisks.push({
+          curRisks.push({
             type: RiskType.SCAM_ADDRESS,
             value: t('page.confirmAddress.risks.scamAddress'),
           });
+          updateRisksAP();
         }
         if (addressRes?.cex?.id && !addressRes.cex.is_deposit) {
-          currRisks.push({
+          curRisks.push({
             type: RiskType.CEX_NO_DEPOSIT,
             value: t('page.confirmAddress.risks.cexNoDeposite'),
           });
+          updateRisksAP();
         }
         const isContract = Object.keys(addressRes?.contract || {}).length > 0;
         const isSafeAddress = Object.keys(addressRes?.contract || {}).some(
@@ -143,47 +285,41 @@ export const useRisks = (options: {
           },
         );
         if (isContract && !isSafeAddress) {
-          currRisks.push({
+          curRisks.push({
             type: RiskType.CONTRACT_ADDRESS,
             value: t('page.confirmAddress.risks.contractAddress'),
+          });
+          updateRisksAP();
+        }
+      });
+
+      const forbiddenTipPromise = reqForbiddenTip(forbiddenCheck).then(tip => {
+        if (tip) {
+          curRisks.push({
+            type: RiskType.FORBIDDEN_TIP,
+            value: tip,
           });
         }
       });
 
-      await Promise.race([
-        Promise.all([addressDescPromise, checkTransferPromise]),
-        timeoutPromise,
+      await Promise.allSettled([
+        addressDescPromise,
+        checkTransferPromise,
+        forbiddenTipPromise,
       ]);
 
-      if (!addressSent) {
-        setRisks([
-          ...currRisks,
-          {
-            type: RiskType.NEVER_SEND,
-            value: t('page.confirmAddress.risks.noSend'),
-          },
-        ]);
-      } else {
-        setRisks(currRisks);
-      }
-      onLoadFinished?.({ risks: [...currRisks] });
+      setRisksForAddress(toAddress, curRisks);
+      onLoadFinished?.({ risks: [...curRisks] });
     } catch (error) {
-      console.error('check transfer timeout or error', error);
+      console.error('check risks timeout or error', error);
       queue.clear();
-      const risks = [
-        ...currRisks,
-        {
-          type: RiskType.NEVER_SEND,
-          value: t('page.confirmAddress.risks.noSend'),
-        },
-      ];
-      setRisks(risks);
-      onLoadFinished?.({ risks });
+      setRisksForAddress(toAddress, curRisks);
+      onLoadFinished?.({ risks: [...curRisks] });
     } finally {
       riskGetRef.current = false;
-      setLoading(false);
+      setLoading(toAddress, false);
     }
-  }, [caredAddresses, toAddress, cex, t, onLoadFinished]);
+  }, [fromAddress, toAddress, forbiddenCheck, cex, t, onLoadFinished]);
 
   useEffect(() => {
     fetchRisks();
@@ -193,16 +329,17 @@ export const useRisks = (options: {
     risks,
     addressDesc,
     hasSend,
-    loading,
+    loading: loading && risks.length === 0,
     fetchRisks,
   };
 };
 
 const riskTypePriority = {
-  [RiskType.CEX_NO_DEPOSIT]: 1,
-  [RiskType.NEVER_SEND]: 11,
-  [RiskType.CONTRACT_ADDRESS]: 111,
-  [RiskType.SCAM_ADDRESS]: 1111,
+  [RiskType.CEX_NO_DEPOSIT]: 10e-1,
+  [RiskType.NEVER_SEND]: 10,
+  [RiskType.CONTRACT_ADDRESS]: 10e1,
+  [RiskType.SCAM_ADDRESS]: 10e3,
+  [RiskType.FORBIDDEN_TIP]: 10e4,
 };
 
 export function sortRisksDesc(a: { type: RiskType }, b: { type: RiskType }) {

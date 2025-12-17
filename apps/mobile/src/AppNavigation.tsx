@@ -8,7 +8,7 @@ import {
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Appearance, BackHandler, ColorSchemeName } from 'react-native';
 import * as Sentry from '@sentry/react-native';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useAppTheme, useTheme2024, useThemeColors } from '@/hooks/theme';
 
 import { navigationRef, replace } from '@/utils/navigation';
 import {
@@ -16,11 +16,7 @@ import {
   getScreenStatusBarConf,
   RootNames,
 } from './constant/layout';
-import {
-  useSetCurrentRouteName,
-  useSetNavigationReady,
-  useStackScreenConfig,
-} from './hooks/navigation';
+import { apisHomeTabIndex, useStackScreenConfig } from './hooks/navigation';
 import { analytics, matomoLogScreenView } from './utils/analytics';
 
 import {
@@ -63,7 +59,7 @@ import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView'
 // import { GlobalAccountSwitcherStub } from './components/AccountSwitcher/SheetModal';
 import { toast } from './components2024/Toast';
 import RNHelpers from './core/native/RNHelpers';
-import { IS_IOS } from './core/native/utils';
+import { IS_ANDROID, IS_IOS } from './core/native/utils';
 
 import {
   UnlockScreen,
@@ -78,13 +74,11 @@ import {
   DeFiDetailScreen,
 } from '@/screens/index.eager';
 import getLinkingConfig from './LinkingConfig';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
 import { GlobalSignerPortal } from './components2024/MiniSignV2/components/GlobalSignerPortal';
-import { EVENT_ROUTE_CHANGE, eventBus } from './utils/events';
-import { useOpenedActiveDappState } from './screens/Dapps/hooks/useDappView';
+import { perfEvents } from './core/utils/perf';
 import {
   BottomSheetBrowser,
   BrowserManagePopup,
@@ -94,9 +88,13 @@ import { ModalsSubmitFeedbackByScreenshotStub } from './components/Screenshot/Sc
 import { GlobalTipsPopup } from './components2024/GlobalTipsPopup';
 import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
 import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottomSheet';
+import { ToggleCollateralModal } from './screens/Lending/modals/ToggleCollateralModal';
+import { RefLikeObject } from './utils/type';
+import { useRendererDetect } from './components/Perf/PerfDetector';
+import DeviceInfo from 'react-native-device-info';
+import { coerceNumber } from './utils/coerce';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
-const HomeHiddenTabStack = createBottomTabNavigator<any>();
 
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
 
@@ -105,7 +103,7 @@ const RootAnimOptions: React.ComponentProps<
 >['screenOptions'] &
   object = {
   // animation: IS_IOS ? 'slide_from_right' : 'none',
-  animation: 'none',
+  animation: __DEV__ ? 'slide_from_right' : 'none',
   animationDuration: 200,
 };
 
@@ -117,39 +115,48 @@ const REST_COUNTS = {
 
 const backRestCountRef = {
   current: REST_COUNTS.CANT_EXIT,
-  resetTimer: null as any,
+  resetTimer: null as ReturnType<typeof setTimeout> | null,
 };
 
-function useGetSetBackRestCount() {
-  const getBackRestCount = useCallback(() => {
-    return backRestCountRef.current;
-  }, []);
+const getBackRestCount = () => {
+  return backRestCountRef.current;
+};
 
-  const setBackRestCount = useCallback((value: number) => {
-    backRestCountRef.current = value;
-  }, []);
+const setBackRestCount = (value: number) => {
+  backRestCountRef.current = value;
+};
 
-  const setBackStage = useCallback(
-    (stage: (typeof REST_COUNTS)[keyof typeof REST_COUNTS]) => {
-      backRestCountRef.current = stage;
-      if (stage !== REST_COUNTS.CANT_EXIT) {
-        backRestCountRef.resetTimer = setTimeout(() => {
-          setBackRestCount(REST_COUNTS.CANT_EXIT);
-        }, 2500);
-      }
-    },
-    [setBackRestCount],
-  );
+const setBackStage = (
+  stage: (typeof REST_COUNTS)[keyof typeof REST_COUNTS],
+) => {
+  backRestCountRef.current = stage;
+  if (stage !== REST_COUNTS.CANT_EXIT) {
+    backRestCountRef.resetTimer = setTimeout(() => {
+      setBackRestCount(REST_COUNTS.CANT_EXIT);
+    }, 2500);
+  }
+};
 
-  return {
-    getBackRestCount,
-    setBackStage,
-  };
+function atHome() {
+  return navigationRef.getCurrentRoute()?.name === RootNames.Home;
+}
+function atHomeFirstTab() {
+  return atHome() && apisHomeTabIndex.isHomeAtFirstTab();
 }
 
-function useDetermineExitAppOnPressBack() {
-  const { getBackRestCount, setBackStage } = useGetSetBackRestCount();
+const isAndroidGte16 = (() => {
+  try {
+    const androiVersion = DeviceInfo.getSystemVersion();
+    return IS_ANDROID && coerceNumber(androiVersion?.split('.')[0]) >= 16;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+})();
 
+const PREVENT_GESTURE_BOOL = true;
+
+function useDetermineExitAppOnPressBack() {
   React.useEffect(() => {
     /**
      * in fact, BackHandler.addEventListener('hardwareBackPress', backAction) is not working on iOS,
@@ -158,6 +165,16 @@ function useDetermineExitAppOnPressBack() {
     if (IS_IOS) return;
 
     const backAction = () => {
+      if (atHome()) {
+        if (!atHomeFirstTab()) {
+          perfEvents.emit('NAV_BACK_ON_HOME');
+          return PREVENT_GESTURE_BOOL;
+        }
+      }
+
+      // not prevent by default
+      const finalRet = !PREVENT_GESTURE_BOOL;
+
       const restCount = getBackRestCount();
       const navigationInst = navigationRef.current;
       if (navigationInst && !navigationInst?.canGoBack()) {
@@ -170,24 +187,23 @@ function useDetermineExitAppOnPressBack() {
         } else if (restCount === REST_COUNTS.ON_EXIT) {
           try {
             RNHelpers.forceExitApp();
-            return true;
+            return PREVENT_GESTURE_BOOL;
           } catch (error) {
             console.error(error);
             Sentry.captureException(
               new Error(`exit app failed, ${JSON.stringify(error)}`),
             );
             // BackHandler.exitApp();
-            return false;
+            return finalRet;
           }
         }
 
-        return true;
+        return PREVENT_GESTURE_BOOL;
       } else {
         setBackStage(REST_COUNTS.CANT_EXIT);
       }
 
-      // not prevent by default
-      return false;
+      return finalRet;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -196,234 +212,62 @@ function useDetermineExitAppOnPressBack() {
     );
 
     return () => backHandler.remove();
-  }, [getBackRestCount, setBackStage]);
+  }, []);
 }
 
-const StackMain = () => {
-  const { mergeScreenOptions } = useStackScreenConfig();
-  const colors = useThemeColors();
-  return (
-    <RootStack.Navigator
-      screenOptions={{
-        ...RootAnimOptions,
-        headerShown: false,
-        navigationBarColor: 'transparent',
-      }}
-      initialRouteName={RootNames.StackGetStarted}>
-      <RootStack.Screen
-        name={RootNames.StackGetStarted}
-        component={GetStartedNavigator}
-      />
-      <RootStack.Screen
-        name={RootNames.StackRoot}
-        component={HomeScreenNavigator}
-        options={RootAnimOptions}
-      />
-      <RootStack.Screen
-        name={RootNames.StackHomeNonTab}
-        component={HomeNonTabNavigator}
-        options={RootAnimOptions}
-      />
-      <RootStack.Screen
-        name={RootNames.SingleAddressStack}
-        component={SingleAddressNavigator}
-      />
-      <RootStack.Screen
-        name={RootNames.Unlock}
-        component={UnlockScreen}
-        options={mergeScreenOptions({
-          title: '',
-          // another valid composition
-          // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
-          // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
-          // animationTypeForReplace: 'push',
-          animation: 'fade_from_bottom',
-          headerTitle: '',
-          headerBackVisible: false,
-          headerShadowVisible: false,
-          // headerShown: true,
-          headerTransparent: true,
-          headerStyle: {
-            // backgroundColor: colors['neutral-bg1'],
-          },
-        })}
-      />
-      <RootStack.Screen
-        name={RootNames.NotFound}
-        component={NotFoundScreen}
-        options={mergeScreenOptions({
-          title: 'Rabby Wallet',
-          headerShadowVisible: false,
-          headerShown: true,
-          headerTransparent: false,
-          headerStyle: {
-            backgroundColor: colors['neutral-bg1'],
-          },
-        })}
-      />
-      <RootStack.Screen
-        name={RootNames.StackTestkits}
-        component={TestkitsNavigator}
-      />
-      <RootStack.Screen
-        name={RootNames.AccountTransaction}
-        component={AccountNavigator}
-      />
-      <RootStack.Screen
-        name={RootNames.StackTransaction}
-        component={TransactionNavigator}
-      />
-      <RootStack.Screen
-        name={RootNames.StackSettings}
-        component={SettingNavigator}
-      />
-      <RootStack.Screen
-        name={RootNames.StackAddress}
-        component={AddressNavigator}
-      />
-      <RootStack.Screen
-        name={RootNames.StackDapps}
-        component={DappsNavigator}
-      />
-      <RootStack.Screen
-        name={RootNames.NftDetail}
-        component={NFTDetailScreen}
-        options={mergeScreenOptions({
-          headerShown: true,
-          headerTitleAlign: 'center',
-          headerTitle: '',
-          headerStyle: {
-            // backgroundColor: colors['neutral-bg-2'],
-            backgroundColor: 'transparent',
-          },
-        })}
-      />
-      <RootStack.Screen
-        name={RootNames.DeFiDetail}
-        component={DeFiDetailScreen}
-        options={mergeScreenOptions({
-          headerShown: true,
-          headerTitleAlign: 'center',
-          headerTitle: '',
-          headerLeft: () => null,
-          headerStyle: {
-            backgroundColor: 'transparent',
-          },
-        })}
-      />
-      <RootStack.Screen
-        name={RootNames.TokenDetail}
-        component={TokenDetailScreen}
-        options={mergeScreenOptions({
-          headerShown: true,
-          headerTitleAlign: 'left',
-          headerTitle: '',
-          headerStyle: {
-            // backgroundColor: colors['neutral-bg-2'],
-            backgroundColor: 'transparent',
-          },
-        })}
-        getId={({ params }) => {
-          const idStr = [
-            params.token.id,
-            params.isSwapToTokenDetail ? 'swapTo' : 'normal',
-            params.tokenSelectType,
-          ]
-            .filter(Boolean)
-            .join('-');
-          return idStr || undefined;
-        }}
-      />
-      <RootStack.Screen
-        name={RootNames.TokenMarketInfo}
-        component={TokenMarketInfoScreen}
-        options={mergeScreenOptions({
-          headerShown: true,
-          headerTitleAlign: 'left',
-          headerTitle: '',
-          headerStyle: {
-            // backgroundColor: colors['neutral-bg-2'],
-            backgroundColor: 'transparent',
-          },
-        })}
-        getId={({ params }) => {
-          const idStr = [
-            params.token.id,
-            params.isSwapToTokenDetail ? 'swapTo' : 'normal',
-            params.tokenSelectType,
-          ]
-            .filter(Boolean)
-            .join('-');
-          return idStr || undefined;
-        }}
-      />
-      <RootStack.Screen
-        name={RootNames.Scanner}
-        component={ScannerScreen}
-        options={mergeScreenOptions({
-          title: 'Scan',
-          headerShadowVisible: false,
-          headerShown: true,
-          headerStyle: {
-            backgroundColor: colors['neutral-black'],
-          },
-          headerTintColor: colors['neutral-title-2'],
-          headerTitleStyle: {
-            color: colors['neutral-title-2'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-          },
-        })}
-      />
-    </RootStack.Navigator>
-  );
+const onRouteChange = (
+  _currentRouteName?: string,
+  previousRouteName = routeNameRef.current,
+) => {
+  const currentRouteName =
+    _currentRouteName || navigationRef.getCurrentRoute()?.name;
+  routeNameRef.current = currentRouteName;
+
+  perfEvents.emit('EVENT_ROUTE_CHANGE', {
+    currentRouteName,
+    previousRouteName: previousRouteName ?? undefined,
+  });
 };
 
-export default function AppNavigation({
-  colorScheme,
-}: {
-  colorScheme: ColorSchemeName;
-}) {
-  const routeNameRef = useRef<string>();
+const onStateChange: React.ComponentProps<
+  typeof NavigationContainer
+>['onStateChange'] &
+  object = _navState => {
+  const previousRouteName = routeNameRef?.current;
+  const currentRouteName = navigationRef?.current?.getCurrentRoute()?.name;
+
+  if (previousRouteName !== currentRouteName) {
+    onRouteChange(currentRouteName, previousRouteName);
+
+    analytics.logScreenView({
+      screen_name: routeNameRef.current || '',
+      screen_class: routeNameRef.current || '',
+    });
+    matomoLogScreenView({ name: currentRouteName! });
+  }
+  routeNameRef.current = currentRouteName;
+};
+
+const routeNameRef: RefLikeObject<string | undefined | null> = { current: '' };
+export default function AppNavigation() {
   const { mergeScreenOptions } = useStackScreenConfig();
+  const { binaryTheme: colorScheme } = useAppTheme({ isAppTop: true });
+
   const colors = useThemeColors();
 
-  const { isAppUnlocked } = useAppUnlocked();
-  const { setNavigationReady } = useSetNavigationReady();
-
-  const { setCurrentRouteName } = useSetCurrentRouteName();
-
-  const onRouteChange = useCallback(
-    (currentRouteName?: string) => {
-      currentRouteName =
-        currentRouteName || navigationRef.getCurrentRoute()?.name;
-      routeNameRef.current = currentRouteName;
-
-      // tuneOnRouteChange(currentRouteName);
-      setCurrentRouteName(currentRouteName);
-
-      /**
-       * Some actions would reset the StatusBar style, such as navigation.setOptions,
-       * so component `AppStatusBar` works for those Screen without weired behaviors from '@react-native/navigation'.
-       *
-       * we do extra tune for StatusBar
-       */
-      // setTimeout(() => {
-      //   tuneOnRouteChange(currentRouteName);
-      // }, 250);
-    },
-    [setCurrentRouteName],
-  );
+  const { getIsAppUnlocked } = useAppUnlocked();
 
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
   >(() => {
-    setNavigationReady(true);
     let readyRootName = navigationRef.getCurrentRoute()?.name!;
-    if (!isAppUnlocked) {
+    if (!getIsAppUnlocked()) {
       replace(RootNames.Unlock);
       readyRootName = RootNames.Unlock;
     }
+    perfEvents.emit('APP_NAVIGATION_READY', {
+      readyRootName,
+    });
     onRouteChange(readyRootName);
 
     analytics.logScreenView({
@@ -431,53 +275,18 @@ export default function AppNavigation({
       screen_class: readyRootName,
     });
     matomoLogScreenView({ name: readyRootName });
-  }, [setNavigationReady, isAppUnlocked, onRouteChange]);
-
-  const { hasActiveDapp: isShowingDappCard } = useOpenedActiveDappState();
-
-  const onStateChange = useCallback<
-    React.ComponentProps<typeof NavigationContainer>['onStateChange'] & object
-  >(
-    _navState => {
-      const previousRouteName = routeNameRef.current;
-      const currentRouteName = navigationRef?.current?.getCurrentRoute()?.name;
-
-      if (previousRouteName !== currentRouteName) {
-        onRouteChange(currentRouteName);
-
-        eventBus.emit(EVENT_ROUTE_CHANGE, {
-          currentRouteName,
-          previousRouteName,
-        });
-        const appColorScheme = Appearance.getColorScheme();
-        const isDarkTheme = appColorScheme === 'dark';
-        if (currentRouteName) {
-          const { screenSpec } = getScreenStatusBarConf({
-            screenName: currentRouteName,
-            isDarkTheme,
-            isShowingDappCard,
-          });
-        }
-
-        analytics.logScreenView({
-          screen_name: routeNameRef.current,
-          screen_class: routeNameRef.current,
-        });
-        matomoLogScreenView({ name: currentRouteName! });
-      }
-      routeNameRef.current = currentRouteName;
-    },
-    [isShowingDappCard, onRouteChange],
-  );
+  }, [getIsAppUnlocked]);
 
   useDetermineExitAppOnPressBack();
 
-  const previousRoute = usePrevious(routeNameRef.current);
-  const isSlideFromGetStarted =
-    [undefined, RootNames.GetStarted, RootNames.GetStartedScreen2024].includes(
-      previousRoute as any,
-    ) && routeNameRef.current === RootNames.Unlock;
-  // console.debug('previousRoute: %s, routeNameRef.current: %s, isSlideFromGetStarted: %s', previousRoute, routeNameRef.current, isSlideFromGetStarted);
+  useRendererDetect({ name: 'AppNavigation' });
+
+  console.debug(
+    'routeNameRef.current, colorScheme',
+    routeNameRef.current,
+    colorScheme,
+    navigationRef.current,
+  );
 
   const linking = useMemo(() => getLinkingConfig(), []);
 
@@ -501,34 +310,187 @@ export default function AppNavigation({
           <DuplicateAddressModal />
           <AliasNameEditModal />
           <QrCodeModal />
-          <HomeHiddenTabStack.Navigator
-            screenOptions={
-              /* mergeScreenOptions */ {
-                animation: 'none',
-                // gestureEnabled: false,
-                headerTitleAlign: 'center',
-                headerStyle: {
-                  backgroundColor: 'transparent',
-                },
-                // headerShadowVisible: true,
-                headerTintColor: colors['neutral-title-1'],
-                headerTitleStyle: {
-                  color: colors['neutral-title-1'],
-                  fontWeight: '500',
-                  fontSize: DEFAULT_NAVBAR_FONT_SIZE,
-                },
-                // headerTransparent: true,
-              }
-            }
-            tabBar={() => null}>
-            <HomeHiddenTabStack.Screen
-              name={RootNames.StackMain}
-              component={StackMain}
-              options={{
-                headerShown: false,
-              }}
+          <RootStack.Navigator
+            screenOptions={{
+              ...RootAnimOptions,
+              headerShown: false,
+              navigationBarColor: 'transparent',
+              freezeOnBlur: false,
+            }}
+            initialRouteName={RootNames.StackGetStarted}>
+            <RootStack.Screen
+              name={RootNames.StackGetStarted}
+              component={GetStartedNavigator}
             />
-          </HomeHiddenTabStack.Navigator>
+            <RootStack.Screen
+              name={RootNames.StackRoot}
+              component={HomeScreenNavigator}
+              options={RootAnimOptions}
+            />
+            <RootStack.Screen
+              name={RootNames.StackHomeNonTab}
+              component={HomeNonTabNavigator}
+              options={RootAnimOptions}
+            />
+            <RootStack.Screen
+              name={RootNames.SingleAddressStack}
+              component={SingleAddressNavigator}
+            />
+            <RootStack.Screen
+              name={RootNames.Unlock}
+              component={UnlockScreen}
+              options={mergeScreenOptions({
+                title: '',
+                // another valid composition
+                // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
+                // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
+                // animationTypeForReplace: 'push',
+                animation: 'fade_from_bottom',
+                headerTitle: '',
+                headerBackVisible: false,
+                headerShadowVisible: false,
+                // headerShown: true,
+                headerTransparent: true,
+                headerStyle: {
+                  // backgroundColor: colors['neutral-bg1'],
+                },
+              })}
+            />
+            <RootStack.Screen
+              name={RootNames.NotFound}
+              component={NotFoundScreen}
+              options={mergeScreenOptions({
+                title: 'Rabby Wallet',
+                headerShadowVisible: false,
+                headerShown: true,
+                headerTransparent: false,
+                headerStyle: {
+                  backgroundColor: colors['neutral-bg1'],
+                },
+              })}
+            />
+            <RootStack.Screen
+              name={RootNames.StackTestkits}
+              component={TestkitsNavigator}
+            />
+            <RootStack.Screen
+              name={RootNames.AccountTransaction}
+              component={AccountNavigator}
+            />
+            <RootStack.Screen
+              name={RootNames.StackTransaction}
+              component={TransactionNavigator}
+            />
+            <RootStack.Screen
+              name={RootNames.StackSettings}
+              component={SettingNavigator}
+            />
+            <RootStack.Screen
+              name={RootNames.StackAddress}
+              component={AddressNavigator}
+            />
+            <RootStack.Screen
+              name={RootNames.StackDapps}
+              component={DappsNavigator}
+            />
+            <RootStack.Group
+              screenOptions={
+                {
+                  // freezeOnBlur: true,
+                }
+              }>
+              <RootStack.Screen
+                name={RootNames.NftDetail}
+                component={NFTDetailScreen}
+                options={mergeScreenOptions({
+                  headerShown: true,
+                  headerTitleAlign: 'center',
+                  headerTitle: '',
+                  headerStyle: {
+                    // backgroundColor: colors['neutral-bg-2'],
+                    backgroundColor: 'transparent',
+                  },
+                })}
+              />
+              <RootStack.Screen
+                name={RootNames.DeFiDetail}
+                component={DeFiDetailScreen}
+                options={mergeScreenOptions({
+                  headerShown: true,
+                  headerTitleAlign: 'center',
+                  headerTitle: '',
+                  headerLeft: () => null,
+                  headerStyle: {
+                    backgroundColor: 'transparent',
+                  },
+                })}
+              />
+              <RootStack.Screen
+                name={RootNames.TokenDetail}
+                component={TokenDetailScreen}
+                options={mergeScreenOptions({
+                  headerShown: true,
+                  headerTitleAlign: 'left',
+                  headerTitle: '',
+                  headerStyle: {
+                    // backgroundColor: colors['neutral-bg-2'],
+                    backgroundColor: 'transparent',
+                  },
+                })}
+                getId={({ params }) => {
+                  const idStr = [
+                    params.token.id,
+                    params.isSwapToTokenDetail ? 'swapTo' : 'normal',
+                    params.tokenSelectType,
+                  ]
+                    .filter(Boolean)
+                    .join('-');
+                  return idStr || undefined;
+                }}
+              />
+              <RootStack.Screen
+                name={RootNames.TokenMarketInfo}
+                component={TokenMarketInfoScreen}
+                options={mergeScreenOptions({
+                  headerShown: true,
+                  headerTitleAlign: 'left',
+                  headerTitle: '',
+                  headerStyle: {
+                    // backgroundColor: colors['neutral-bg-2'],
+                    backgroundColor: 'transparent',
+                  },
+                })}
+                getId={({ params }) => {
+                  const idStr = [
+                    params.token.id,
+                    params.isSwapToTokenDetail ? 'swapTo' : 'normal',
+                    params.tokenSelectType,
+                  ]
+                    .filter(Boolean)
+                    .join('-');
+                  return idStr || undefined;
+                }}
+              />
+              <RootStack.Screen
+                name={RootNames.Scanner}
+                component={ScannerScreen}
+                options={mergeScreenOptions({
+                  title: 'Scan',
+                  headerShadowVisible: false,
+                  headerShown: true,
+                  headerStyle: {
+                    backgroundColor: colors['neutral-black'],
+                  },
+                  headerTintColor: colors['neutral-title-2'],
+                  headerTitleStyle: {
+                    color: colors['neutral-title-2'],
+                    fontWeight: '900',
+                    fontFamily: 'SF Pro Rounded',
+                  },
+                })}
+              />
+            </RootStack.Group>
+          </RootStack.Navigator>
           <BiometricsStubModal />
           <ApprovalTokenDetailSheetModalStub />
           <GlobalSearchBottomSheet />
@@ -537,6 +499,7 @@ export default function AppNavigation({
         </NavigationContainer>
       </NavigationIndependentTree>
       <ModalsSubmitFeedbackByScreenshotStub />
+      <ToggleCollateralModal />
 
       {/** @warning put all business stub components before this modal */}
       <GlobalSecurityTipStubModal />

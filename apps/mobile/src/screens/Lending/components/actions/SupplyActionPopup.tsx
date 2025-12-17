@@ -6,23 +6,24 @@ import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
-import { CHAINS_ENUM } from '@debank/common';
 import SupplyActionOverView from './SupplyActionOverView';
 import {
   calculateHFAfterSupply,
   effectUserAvailable,
 } from '../../utils/hfUtils';
-import { useLendingSummary } from '../../hooks';
+import {
+  useLendingSummary,
+  usePoolDataProviderContract,
+  useSelectedMarket,
+} from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { buildSupplyTx } from '../../poolService';
+import { buildSupplyTx, optimizedPath } from '../../poolService';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { findChain } from '@/utils/chain';
-import { CustomMarket, marketsData } from '../../config/market';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -49,6 +50,7 @@ import {
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SUPPLY_UI_SAFE_MARGIN } from '../../utils/constant';
+import { CHAINS_ENUM } from '@debank/common';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -66,6 +68,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     forScene: 'Lending',
   });
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
+    useSelectedMarket();
+  const { pools } = usePoolDataProviderContract();
   const { t } = useTranslation();
   const { ctx } = useSignatureStore();
   const canShowDirectSubmit = useMemo(
@@ -84,7 +89,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
             item.underlyingAsset,
-            wrapperToken[reserve.chain].address,
+            wrapperToken?.[reserve.chain]?.address,
           )
         : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
     });
@@ -114,7 +119,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
             item.underlyingAsset,
-            wrapperToken[reserve.chain].address,
+            wrapperToken?.[reserve.chain]?.address,
           )
         : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
     });
@@ -146,9 +151,11 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       setNeedApprove(false);
       return;
     }
+    if (!selectedMarketData) {
+      return;
+    }
 
     try {
-      const chainInfo = findChain({ serverId: 'eth' });
       if (!chainInfo) {
         return;
       }
@@ -166,7 +173,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       const allowance = await getERC20Allowance(
         chainInfo.serverId,
         reserve.underlyingAsset,
-        marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+        selectedMarketData.addresses.LENDING_POOL,
         currentAccount.address,
         currentAccount,
       );
@@ -186,6 +193,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   }, [
     amount,
     currentAccount,
+    selectedMarketData,
+    chainInfo,
     reserve.underlyingAsset,
     reserve.reserve.decimals,
     isNativeToken,
@@ -198,10 +207,12 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       setApproveTxs(null);
       return;
     }
+    if (!selectedMarketData || !pools) {
+      return;
+    }
 
     try {
       setIsLoading(true);
-      const chainInfo = findChain({ serverId: 'eth' });
       if (!chainInfo) {
         return;
       }
@@ -218,7 +229,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         allowance = await getERC20Allowance(
           chainInfo.serverId,
           reserve.underlyingAsset,
-          marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          selectedMarketData.addresses.LENDING_POOL,
           currentAccount.address,
           currentAccount,
         );
@@ -240,7 +251,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         // 检查是否需要两步approve（针对以太坊上的USDT）
         let shouldTwoStepApprove = false;
         if (
-          chainInfo?.enum === CHAINS_ENUM.ETH &&
+          isMainnet &&
           isSameAddress(reserve.underlyingAsset, ETH_USDT_CONTRACT) &&
           Number(allowance) !== 0 &&
           !new BigNumber(allowance || '0').gte(requiredAmount)
@@ -253,8 +264,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           const zeroApproveResult = await approveToken({
             chainServerId: chainInfo.serverId,
             id: reserve.underlyingAsset,
-            spender:
-              marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+            spender: selectedMarketData.addresses.LENDING_POOL,
             amount: 0,
             account: currentAccount,
             isBuild: true,
@@ -274,8 +284,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         const approveResult = await approveToken({
           chainServerId: chainInfo.serverId,
           id: reserve.underlyingAsset,
-          spender:
-            marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          spender: selectedMarketData.addresses.LENDING_POOL,
           amount: requiredAmount,
           account: currentAccount,
           isBuild: true,
@@ -294,9 +303,11 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
       // 构建supply交易
       const supplyResult = await buildSupplyTx({
+        poolBundle: pools.poolBundle,
         amount: parseUnits(amount, reserve.reserve.decimals).toString(),
         address: currentAccount.address,
         reserve: reserve.underlyingAsset,
+        useOptimizedPath: optimizedPath(selectedMarketData.chainId),
       });
       delete supplyResult.gasLimit;
 
@@ -315,9 +326,13 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   }, [
     amount,
     currentAccount,
+    selectedMarketData,
+    pools,
+    chainInfo,
     reserve.underlyingAsset,
     reserve.reserve.decimals,
     isNativeToken,
+    isMainnet,
   ]);
 
   const supplyAmount = useMemo(() => {
@@ -390,12 +405,11 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
               setAmount(undefined);
               onClose?.();
-              return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
               handleSupply(true);
-              return;
             }
+            return;
           }
         } else {
           for (const tx of txsForMiniApproval) {
@@ -501,7 +515,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
         )}
         style={styles.amountInput}
-        chain={CHAINS_ENUM.ETH}
+        chain={chainEnum || CHAINS_ENUM.ETH}
       />
       <BottomSheetScrollView
         style={styles.bottomSheetScrollView}
@@ -517,9 +531,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
               supportDirectSign={true}
-              loading={isLoading}
+              loading={false}
               openShowMore={noop}
-              chainServeId="eth"
+              chainServeId={chainInfo?.serverId || ''}
             />
           </View>
         )}

@@ -126,7 +126,8 @@
     "check": "檢查",
     "gotIt": "了解了",
     "Token": "代幣",
-    "Dapp": "Dapp"
+    "Dapp": "Dapp",
+    "GotIt": "明白了"
   },
   "background": {
     "transactionWatcher": {
@@ -212,7 +213,11 @@
         "LendingWithdraw": "提現",
         "LendingSupply": "供應",
         "LendingBorrow": "借款",
-        "LendingRepay": "還款"
+        "LendingRepay": "還款",
+        "LendingOffCollateral": "關閉使用作為抵押",
+        "LendingOnCollateral": "開啟作為抵押品使用",
+        "LendingManageEMode": "開啟 E-Mode",
+        "LendingManageEModeDisable": "關閉 E-Mode"
       },
       "detail": {
         "Unknown": "未知",
@@ -281,7 +286,9 @@
         "skipNonceText": "Nonce #{{nonce}} 在 {{chainName}} 鏈上被跳過。這可能導致前面的交易待處理。<5></5> <6>提交一筆 tx</6> <7></7> 在鏈上以解決此問題。"
       },
       "HideScamTransactions": "隱藏詐騙交易",
-      "ShowScamTransactions": "顯示詐騙交易"
+      "ShowScamTransactions": "顯示詐騙交易",
+      "scam": "詐騙",
+      "scamTips": "此交易是由詐騙者發起的，目的是發送詐騙代幣和NFT。請勿與其互動。"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "輸入您的助記詞"
@@ -1014,7 +1021,25 @@
       "no-quote-found": "未找到報價。請嘗試其他代幣對。",
       "To": "至",
       "bridged": "橋接",
-      "gasFeeTooHight": "Gas 費用高於正常水平。只有在您希望繼續時才可確認。"
+      "gasFeeTooHight": "Gas 費用高於正常水平。只有在您希望繼續時才可確認。",
+      "pendingItem": {
+        "failed": "失敗",
+        "completed": "已完成",
+        "receivingTo": "在 {{chain}} 上接收",
+        "sendingFrom": "從 {{chain}} 發送",
+        "estimatedTime": "預估時間",
+        "queued": "排队中",
+        "bridgeStatus": "橋接狀態",
+        "receivedDifferentTokenNeedSwap": "您收到了一個不同的代幣。您可以將其交換為您選擇的代幣。",
+        "pending": "待處理",
+        "BridgeStatusUnavailable": "橋接狀態不可用。請檢查您的交易歷史以確認資金是否已到達。",
+        "swap": "交換",
+        "longTimeNoReceive": "網絡繁忙。這可能比平常需要更長的時間。請耐心等待。",
+        "beReturnFailed": "橋接失敗。您的資產已被退回。",
+        "receivedDifferentTokenFromSource": "橋接失敗。源鏈上返回了不同的代幣。",
+        "fromFailed": "交易未成功。請再試一次。"
+      },
+      "gasXUsd": "Gas: {{gasUsd}}"
     },
     "signFooterBar": {
       "importedByLedger": "透過 Ledger 匯入",
@@ -2172,7 +2197,9 @@
       "sentTimeHeader": "已發送",
       "sendToSafeAddress": "發送至 Safe Wallets",
       "sendToImportedAddress": "發送到我的匯入錢包",
-      "sendToWatchAddress": "發送至只讀錢包"
+      "sendToWatchAddress": "發送至只讀錢包",
+      "dividerWatchOnlyWallets": "只有查看的地址",
+      "enterOrSearchAddress": "輸入或搜尋地址"
     },
     "confirmAddress": {
       "risks": {
@@ -2265,7 +2292,8 @@
         "recentEmpty": "開始探索網站",
         "otherResults": "其他結果",
         "hot": "熱",
-        "favorite": "最愛"
+        "favorite": "最愛",
+        "hot10": "熱門 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "打開網站"
@@ -2572,11 +2600,16 @@
         "distanceLabel": "清算距離",
         "currentPrice": "當前價格",
         "title": "風險級別",
-        "liqIntro": "清算距離 (%) 顯示當前價格距離您的清算價格有多遠。距離越大表示風險較低，而距離越小則意味著清算風險較高。"
+        "liqIntro": "清算距離 (%) 顯示當前價格距離您的清算價格有多遠。距離越大表示風險較低，而距離越小則意味著清算風險較高。",
+        "liqDistanceTipsLong": "下跌 <1>{{distance}}</1> 會觸發清算。",
+        "liqDistanceTipsShort": "上升 <1>{{distance}}</1> 將觸發清算。"
       },
       "closeAll": "關閉全部",
       "closeAllConfirmTitle": "確認關閉所有持倉",
-      "closeAllConfirmMessage": "所有您的未平仓头寸将以市场价格平仓。"
+      "closeAllConfirmMessage": "所有您的未平仓头寸将以市场价格平仓。",
+      "assetPage": {
+        "hyperliquidPosition": "Hyperliquid 位置"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2601,7 +2634,9 @@
         "liquidationPriceTips": "當您的保證金低於維持保證金水平時，交易所自動平倉以防止進一步損失的價格。",
         "fundingPaymentsTips": "自该头寸开仓以来，这是净资金支付。资金是交易者每小时支付或收到的费用，以保持永续合约的价格接近代币的实际价格。",
         "marginCross": "保證金（交叉）",
-        "sizeTips": "您交易的总价值或数量，由保证金和杠杆设定。"
+        "sizeTips": "您交易的总价值或数量，由保证金和杠杆设定。",
+        "fundingGains": "資金收益",
+        "fundingGainsTips": "這是自開倉以來的淨資金收益。資金是一種每小時收取或支付的費用，交易者支付或收到這筆費用以保持期貨合約的價格接近代幣的實際價格。"
       },
       "PerpsInfo": {
         "funding": "資金負擔",
@@ -2609,14 +2644,15 @@
         "title": "資訊",
         "openInterestTips": "該合約上所有用戶的未平倉總頭寸。",
         "24Vol": "24小時交易量",
-        "fundingTips": "這是一個小時費用，交易者支付或接收該費用以保持永續合約價格接近代幣的實際價格。如果為正，做多的支付給做空的。如果為負，做空的支付給做多的。"
+        "fundingTips": "這是一個小時費用，交易者支付或接收該費用以保持永續合約價格接近代幣的實際價格。如果為正，做多的支付給做空的。如果為負，做空的支付給做多的。",
+        "fundingRate": "資金費率"
       },
       "PerpsIntro": {
         "desc": "交易永續合約涉及重大風險，包括因高槓桿和市場波動而迅速損失您的投資和抵押品的可能性。此類交易可能不適合所有用戶。價格可能受到資金利率和流動性的影響，您可能會在未通知的情況下被自動強制平倉。市場數據由 Hyperliquid 提供。",
         "title": "什麼是 Perps？"
       },
       "PerpsClosePositionPopup": {
-        "title": "關閉 {{coin}} {{direction}} 交易頭寸",
+        "title": "關閉倉位",
         "fee": "費用：",
         "closeBtn": "關閉 {{direction}}",
         "providerFeeTips": "Hyperliquid 費用：{{fee}}",
@@ -2647,7 +2683,10 @@
         "stopLossWhen": "止損於",
         "stopLossWhenPriceAbove": "當價格高於時止損",
         "stopLossWhenPriceBelow": "當價格低於時止損",
-        "takeProfitWhenPriceAbove": "當價格高於時獲利了結"
+        "takeProfitWhenPriceAbove": "當價格高於時獲利了結",
+        "minMargin": "最低保证金为 {{amount}}",
+        "maxMargin": "最高保证金为 {{amount}}",
+        "upTo": "高達"
       },
       "PerpsOpenPositionCheckPopup": {
         "size": "大小",
@@ -2675,7 +2714,9 @@
         "long": "做多",
         "noPermission": "在您的地区不支持开仓。",
         "short": "做空",
-        "closePosition": "關閉 {{direction}} 头寸"
+        "closePosition": "關閉 {{direction}} 头寸",
+        "add": "新增",
+        "close": "關閉"
       },
       "PerpsAutoCloseModal": {
         "tpPrice": "獲利價格",
@@ -2707,8 +2748,16 @@
         "reduceMargin": "減少保證金",
         "amountToReduce": "減少的數量",
         "insufficientMarginToReduce": "減少持倉的保證金不足。",
-        "addMargin": "添加保证金"
-      }
+        "addMargin": "添加保证金",
+        "liqDistance": "Liq.距離"
+      },
+      "PerpsAddPositionPopup": {
+        "addToLong": "添加至 Long",
+        "addToShort": "新增至短列表",
+        "totalSize": "總大小",
+        "addSize": "添加大小"
+      },
+      "needDepositFirst": "您需要先存入資金。"
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "內建頁面"
@@ -2728,7 +2777,10 @@
     "Lending": {
       "availableCard": {
         "needSupply": "要借款，您需要提供资产作为担保。",
-        "canBorrow": "您可以根据您提供的抵押品借款，最高可达借款上限。"
+        "canBorrow": "您可以根据您提供的抵押品借款，最高可达借款上限。",
+        "isolated": "由於隔離模式，借貸能力和資產受到限制。",
+        "emodeNoAssets": "我們找不到任何與您的搜索相關的資產。請嘗試使用不同的類別。",
+        "emode": "在 E-Mode 中，某些資產無法借用。退出 E-Mode 以獲取所有資產的訪問權限。"
       },
       "list": {
         "headers": {
@@ -2761,7 +2813,12 @@
         "availableToBorrow": "可借用",
         "approveAndSupply": "批准並供應",
         "supplyAPY": "供應 APY",
-        "actions": "供應"
+        "actions": "供應",
+        "unavailable": "不提供",
+        "supplyBalance": "供應餘額",
+        "isolatedTips": "您现有的借贷资产不被支持。",
+        "collateralization": "抵押化",
+        "enabled": "已啟用"
       },
       "withdrawDetail": {
         "remainingSupply": "剩餘供應量",
@@ -2795,12 +2852,16 @@
         "totalSupplied": "總供應量",
         "mySupply": "我的 Supply",
         "almostCap": "此資產已接近其借貸上限。此市場僅可借出 {{available}}。",
-        "reachCap": "此資產已達供應上限。此市場中沒有可供應的資產。"
+        "reachCap": "此資產已達供應上限。此市場中沒有可供應的資產。",
+        "useAsCollateral": "用作抵押"
       },
       "risk": {
         "checkbox": "我了解警告並想繼續。",
         "withdrawWarning": "提取该金额将使您的健康因子下降到风险清算的水平。",
-        "warning": "借用此金额将使您的健康因子降低到风险水平，可能面临清算。"
+        "warning": "借用此金额将使您的健康因子降低到风险水平，可能面临清算。",
+        "toggleCollateralWarning": "禁用该资产作为抵押将会将您的健康因子降低到一个风险水平，可能面临清算。",
+        "emodeBlockWarning": "禁用 E-mode 将使您的健康因子下降到风险清算的水平。",
+        "blockEmodeWarning": "您無法禁用 E-Mode，因為這可能導致清算。要退出 E-Mode，請提供或償還借入的頭寸。"
       },
       "lqDescription": {
         "risky": "風險高",
@@ -2819,7 +2880,10 @@
         "availableToBorrowDesc": "您可以根据您提供的抵押品进行借款，直到达到借款上限。",
         "lqDesc": "當清算發生時，清算人會代表借款人償還最多 50% 的未償還借款金額。作為回報，他們可以以折扣價格購買抵押品，並將差額（清算罰金）作為獎勵保留。",
         "isolatedTitle": "資產無法用作擔保品",
-        "isolatedDesc": "此資產僅能在獨立模式下用作抵押，此時您無法提供其他資產抵押來進行借款。在獨立模式下用作抵押的資產僅能借出特定的債務上限。"
+        "isolatedDesc": "此資產僅能在獨立模式下用作抵押，此時您無法提供其他資產抵押來進行借款。在獨立模式下用作抵押的資產僅能借出特定的債務上限。",
+        "isolatedSupplyDesc": "抵押品的使用受到隔离模式的限制。",
+        "globalIsolatedDesc": "在隔离模式下，您无法将其他资产作为抵押品。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借入其他资产之前禁用UNI作为抵押品。",
+        "maxLTV": "最大 LTV 比率表示特定抵押品的最大借款能力。例如，如果一个抵押品的 LTV 为 75%，用户可以在每 1 ETH 抵押品的情况下，借出最多 0.75 值的主币 ETH。"
       },
       "supplied": "供應",
       "apy": "APY",
@@ -2835,7 +2899,64 @@
       "hfTitle": "健康因子",
       "isolated": "孤立",
       "estNetApy": "預估淨年利率",
-      "marketSlot": "{{market}} 市場"
+      "marketSlot": "{{market}} 市場",
+      "toggleCollateralDetail": {
+        "disable": "禁用 {{asset}} 作为抵押品",
+        "enable": "啟用 {{asset}} 作為抵押品",
+        "error": "AAVE 服務出現一些錯誤。請稍後再試。",
+        "actions": "切換 {{asset}} 擔保品"
+      },
+      "toggleCollateralModal": {
+        "exitIsolationModeTitle": "退出隔离模式",
+        "enableIsolationModeTitle": "啟用隔離模式",
+        "closeTitle": "檢查禁用",
+        "openTitle": "審核啟用",
+        "riskToLiquidationText": "您无法将此货币的使用模式切换为抵押模式，因为这将导致抵押品催缴。",
+        "exitIsolationModeDesc": "您将退出隔离模式，其他代币现在可以用作抵押。",
+        "closeDesc": "禁用此资产作为抵押会影响您的借款能力和健康因子。",
+        "enableIsolationModeDesc": "您正在进入隔离模式。在隔离模式下，您无法使用其他资产作为抵押品。全局债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借用其他资产之前禁用 CRV 作为抵押品。",
+        "openDesc": "啟用這個資產作為抵押品將增加你的借貸能力和健康因子。然而，如果你的健康因子降到 1 之下，它可能會被清算。"
+      },
+      "searchMarket": "搜尋市場",
+      "selectMarket": "選擇市場",
+      "manageEmode": {
+        "actions": {
+          "disable": "禁用 E-Mode",
+          "enable": "啟用 E-Mode"
+        },
+        "guide": {
+          "buttonTitle": "管理 E-Mode",
+          "description": "E-Mode 增加您在所選資產類別中的 LTV。",
+          "title": "效率模式 (E-Mode)"
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "最大 LTV",
+            "asset": "資產"
+          },
+          "placeholder": "選擇",
+          "desc": "此類別必須關閉所有此類別以外的借貸頭寸。",
+          "label": "資產類別"
+        },
+        "overview": {
+          "row": {
+            "asset": "資產",
+            "collateral": "抵押品",
+            "borrowable": "可借用的"
+          },
+          "apy": "APY",
+          "maxLtv": "最大 LTV",
+          "title": "資產類別"
+        },
+        "enabled": "• 啟用",
+        "disableTitle": "停用",
+        "title": "管理 E-Mode",
+        "unavailableTips": "您的現有借貸資產不受支持。",
+        "emode": "E-Mode",
+        "unavailable": "• 無法使用",
+        "description": "啟用 E-Mode 使您能夠最大化您的借貸能力。然而，借貸僅限於所選類別內的資產。"
+      },
+      "disabled": "禁用"
     }
   },
   "component": {
@@ -3083,6 +3204,9 @@
     },
     "portfolios": {
       "manage": "管理"
+    },
+    "multiAddressModal": {
+      "title": "錢包"
     }
   },
   "common": {

@@ -6,7 +6,7 @@ import React, {
   useRef,
   memo,
 } from 'react';
-import { View } from 'react-native';
+import { ListRenderItem, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { createGetStyles2024 } from '@/utils/styles';
@@ -17,7 +17,10 @@ import {
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { FullDefiRenderItem } from './components/AssetRenderItems';
+import {
+  FullDefiRenderItem,
+  TokenRowSectionHeader,
+} from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
 import { DisplayedProject } from './utils/project';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
@@ -33,6 +36,9 @@ import { Account } from '@/core/services/preference';
 import { getItemId } from './utils/listRenderId';
 import { usePortfolios } from './hooks/usePortfolio';
 import useLoadMoreData from '../Address/components/MultiAssets/hooks/useLoadMoreData';
+import { PerpsSingleAssetPosition } from '../Perps/components/PerpsMultiAssetPosition';
+import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
+import { getAllDefiCount } from './utils/converAssets';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -49,24 +55,18 @@ const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 interface Props {
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
-  chain?: string;
-  account: Account;
-  updatePortfolio: (portfolios: DisplayedProject[]) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 16;
 
-export const PortfolioList = ({
-  onRefresh,
-  onReachTopStatusChange,
-  chain,
-  account: currentAccount,
-  updatePortfolio: updatePortfolioCallback,
-}: Props) => {
+export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const { styles } = useTheme2024({
     getStyle: getStyles,
   });
   const { t } = useTranslation();
+  const { currentAccount } = useSingleHomeAccount();
+  const { selectedChain } = useSingleHomeChain();
+
   const focusedTab = useFocusedTab();
   const hasBeenFocusedRef = useRef(false);
 
@@ -79,41 +79,68 @@ export const PortfolioList = ({
   }, [focusedTab]);
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const [foldDefi, setFoldDefi] = useState(true);
 
   const {
     data: _rawPortfolios,
-    // hasValue: hasPortfolios,
     updateData: updatePortfolio,
     isLoading: loadingPortfolio,
     refreshing,
   } = usePortfolios(currentAccount?.address?.toLowerCase(), false);
 
-  useEffect(() => {
-    if (_rawPortfolios && !loadingPortfolio) {
-      updatePortfolioCallback(_rawPortfolios);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawPortfolios?.length, loadingPortfolio, updatePortfolioCallback]);
-
   const _portfolios = useMemo(
     () =>
       _rawPortfolios.filter(item =>
-        chain && item?.chain ? item.chain === chain : true,
+        selectedChain && item?.chain ? item.chain === selectedChain : true,
       ),
-    [_rawPortfolios, chain],
+    [_rawPortfolios, selectedChain],
   );
+
+  const filteredPortfolios = useMemo(() => {
+    const list = _portfolios.filter(item =>
+      selectedChain && item?.chain ? item.chain === selectedChain : true,
+    );
+    const foldList: DisplayedProject[] = [];
+    const unFoldList: DisplayedProject[] = [];
+    list.forEach(item => {
+      if (item._isFold) {
+        foldList.push(item);
+      } else {
+        unFoldList.push(item);
+      }
+    });
+    const foldDeFiValue = getAllDefiCount(foldList);
+    return {
+      unFoldList,
+      foldList,
+      foldDeFiValue,
+    };
+  }, [_portfolios, selectedChain]);
 
   const {
     data: portfolios,
     loadMore: loadMorePortfolios,
     hasMore: hasMorePortfolios,
-  } = useLoadMoreData(_portfolios);
+  } = useLoadMoreData(filteredPortfolios.unFoldList);
+
+  const shouldDefaultExpand = useMemo(
+    () => filteredPortfolios.unFoldList.length <= 5,
+    [filteredPortfolios.unFoldList.length],
+  );
 
   const dataList = useMemo(() => {
     const unFoldDefiList: ActionItem[] = portfolios.map(item => ({
       type: 'unfold_defi',
       data: item as unknown as DisplayedProject,
     }));
+
+    const foldDeFiList: ActionItem[] = filteredPortfolios.foldList.map(
+      item => ({
+        type: 'fold_defi',
+        data: item as unknown as DisplayedProject,
+      }),
+    );
+
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -123,14 +150,28 @@ export const PortfolioList = ({
         data: unFoldDefiList,
       },
       {
-        show: !!loadingPortfolio && !portfolios.length,
+        show: !!foldDeFiList.length,
+        data: [
+          {
+            type: 'toggle_defi_fold',
+            data: filteredPortfolios.foldDeFiValue,
+          },
+          ...(foldDefi ? [] : foldDeFiList),
+        ],
+      },
+      {
+        show:
+          !!loadingPortfolio && !portfolios.length && !unFoldDefiList.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: 'index-defi' + index.toString(),
         })),
       },
       {
-        show: !loadingPortfolio && portfolios.length === 0,
+        show:
+          !loadingPortfolio &&
+          portfolios.length === 0 &&
+          unFoldDefiList.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -145,7 +186,14 @@ export const PortfolioList = ({
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [loadingPortfolio, portfolios, t]);
+  }, [
+    filteredPortfolios.foldDeFiValue,
+    filteredPortfolios.foldList,
+    foldDefi,
+    loadingPortfolio,
+    portfolios,
+    t,
+  ]);
 
   useEffect(() => {
     if (isFocused) {
@@ -154,7 +202,7 @@ export const PortfolioList = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, currentAccount?.address]);
 
-  const renderItem = useCallback(
+  const renderItem = useCallback<ListRenderItem<ActionItem>>(
     props => {
       const { item: _data } = props;
       const { type, data } = _data;
@@ -165,6 +213,26 @@ export const PortfolioList = ({
               data={data as unknown as AbstractProject}
               showAccount={false}
               disableAction={refreshing}
+              defaultExpand={shouldDefaultExpand}
+              account={currentAccount}
+            />
+          );
+        case 'toggle_defi_fold':
+          return (
+            <TokenRowSectionHeader
+              style={styles.tokenSectionHeader}
+              str={data}
+              fold={foldDefi}
+              onPressFold={() => setFoldDefi(pre => !pre)}
+            />
+          );
+        case 'fold_defi':
+          return (
+            <MemoFullDefiRenderItem
+              data={data as unknown as AbstractProject}
+              showAccount={false}
+              disableAction={refreshing}
+              defaultExpand={false}
               account={currentAccount}
             />
           );
@@ -182,7 +250,14 @@ export const PortfolioList = ({
           return null;
       }
     },
-    [currentAccount, refreshing, styles.emptyAssets],
+    [
+      currentAccount,
+      foldDefi,
+      refreshing,
+      shouldDefaultExpand,
+      styles.emptyAssets,
+      styles.tokenSectionHeader,
+    ],
   );
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -224,6 +299,9 @@ export const PortfolioList = ({
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
+        ListHeaderComponent={
+          <PerpsSingleAssetPosition account={currentAccount} />
+        }
         showsVerticalScrollIndicator={showScrollIndicator}
         showsHorizontalScrollIndicator={false}
         style={[styles.bgContainer, styles.list]}
@@ -316,5 +394,8 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   defiLoading: {
     marginTop: 16,
+  },
+  tokenSectionHeader: {
+    backgroundColor: 'transparent',
   },
 }));

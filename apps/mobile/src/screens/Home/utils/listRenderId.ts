@@ -38,6 +38,7 @@ const getSingleNftTags = (type: string, item: NFTItem) => {
   return [
     `type: ${type}`,
     `id: ${item.id}`,
+    `addr: ${'address' in item ? item.address : ''}`,
     `inner_id: ${item.inner_id}`,
     `chain: ${item.chain}`,
     `price: ${item.usd_price}`,
@@ -53,6 +54,7 @@ const getCollectionTags = (type: string, item: CollectionList) => {
   return [
     `type: ${type}`,
     `id: ${item.id}`,
+    `addr: ${'address' in item ? item.address : ''}`,
     `chain: ${item.chain}`,
     `name: ${item.name}`,
     `nft_length: ${item.nft_list.length}`,

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -b && vite build",
     "bundle": "yarn build && yarn ../mobile link-assets",
-    "bundle:all": "yarn build --mode android && yarn build --mode ios",
+    "bundle:all": "yarn make-theme && yarn build --mode android && yarn build --mode ios",
     "bundle:all:link": "yarn build --mode android && yarn build --mode ios && yarn ../mobile link-assets",
     "bundle:android": "yarn build --mode android && yarn ../mobile link-assets",
     "bundle:ios": "yarn build --mode ios && yarn ../mobile link-assets",

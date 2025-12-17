@@ -1,7 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { Keyboard, Pressable, Text, View, TextInput } from 'react-native';
 import { RcNextSearchCC } from '@/assets/icons/common';
-import { CHAINS_ENUM } from '@/constant/chains';
 import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 
@@ -10,22 +9,17 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { NextSearchBar } from '@/components2024/SearchBar';
-import ChainItem from './ChainItem';
+import MarketItem from './MarketItem';
+import { CustomMarket, MarketDataType, marketsData } from '../config/market';
 
-const LENDING_CHIAN_LIST = [
-  {
-    chain: CHAINS_ENUM.ETH,
-  },
-];
+const marketList: MarketDataType[] = Object.values(marketsData);
 
-export type SelectSortedChainProps = {
-  value?: CHAINS_ENUM;
-  onChange?: (value: CHAINS_ENUM) => void;
-};
-export default function SelectLendingChain({
-  value,
-  onChange,
-}: RNViewProps & SelectSortedChainProps) {
+interface IProps {
+  value: CustomMarket;
+  onChange: (market: CustomMarket) => void;
+}
+const FOOTER_COMPONENT_HEIGHT = 32;
+export default function SelectLendingChain({ value, onChange }: IProps) {
   const { t } = useTranslation();
   const [canSearch, setCanSearch] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -34,13 +28,13 @@ export default function SelectLendingChain({
   const isDark = useGetBinaryMode() === 'dark';
   const inputRef = useRef<TextInput | null>(null);
 
-  const filterChainList = useMemo(() => {
-    return LENDING_CHIAN_LIST.filter(item => {
+  const filterMarketList: MarketDataType[] = useMemo(() => {
+    return marketList.filter(item => {
       const formatKey = search.trim().toLowerCase();
       if (!formatKey) {
         return true;
       }
-      return item.chain.includes(formatKey);
+      return item.marketTitle.toLowerCase().includes(formatKey);
     });
   }, [search]);
 
@@ -72,7 +66,7 @@ export default function SelectLendingChain({
           <View style={{ ...styles.titleView, ...styles.titleViewWithText }}>
             <View style={styles.titleTextWrapper}>
               <Text style={styles.titleText}>
-                {t('page.Lending.selectChain')}
+                {t('page.Lending.selectMarket')}
               </Text>
             </View>
             <Pressable onPress={handleToggleSearch} style={styles.iconSearch}>
@@ -90,7 +84,7 @@ export default function SelectLendingChain({
               alwaysShowCancel={true}
               onCancel={handleToggleSearch}
               style={styles.searchBar}
-              placeholder={t('page.search.header.SearchChain')}
+              placeholder={t('page.Lending.searchMarket')}
               value={search}
               onChangeText={v => {
                 setSearch(v);
@@ -103,24 +97,26 @@ export default function SelectLendingChain({
       </BottomSheetHandlableView>
 
       <View style={[styles.chainListWrapper]}>
-        <BottomSheetFlatList<{ chain: string }>
-          data={filterChainList}
+        <BottomSheetFlatList<MarketDataType>
+          data={filterMarketList}
           onScrollBeginDrag={() => {
             Keyboard.dismiss();
           }}
           style={styles.flatList}
-          ListFooterComponent={<View style={{ height: 32 }} />}
-          keyExtractor={item => item.chain}
+          ListFooterComponent={
+            <View style={{ height: FOOTER_COMPONENT_HEIGHT }} />
+          }
+          keyExtractor={item => item.market}
           renderItem={({ item, index }) => {
             const isSectionFirst = index === 0;
-            const isSectionLast = index === (filterChainList?.length || 0) - 1;
+            const isSectionLast = index === (filterMarketList?.length || 0) - 1;
             return (
               <View
                 style={[
                   isSectionFirst && styles.sectionFirst,
                   isSectionLast && styles.sectionLast,
                 ]}>
-                <ChainItem data={item} value={value} onPress={onChange} />
+                <MarketItem data={item} value={value} onPress={onChange} />
               </View>
             );
           }}

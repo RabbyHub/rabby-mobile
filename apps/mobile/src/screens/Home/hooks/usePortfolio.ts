@@ -7,12 +7,16 @@ import { DisplayedProject } from '../utils/project';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
-import { singleDeFiNonceAtom } from './refresh';
+// import { singleDeFiNonceAtom } from './refresh';
 import { useAtom, atom } from 'jotai';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { debounce } from 'lodash';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { useSingleDeFiRefresh } from './refresh';
+import { apisAddrChainStatics } from '../useChainInfo';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+
 export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
@@ -117,10 +121,16 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       innerSetData,
     ];
   }, [_data.address, _data.data, _setData, userAddr]);
+
+  const debouncedAddrData = useDebouncedValue(_data.data, 500);
+  useEffect(() => {
+    if (!userAddr || !debouncedAddrData) return;
+    apisAddrChainStatics.updatePortfolio(userAddr, debouncedAddrData);
+  }, [userAddr, debouncedAddrData]);
+
   const [isLoading, setLoading] = useSafeState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [hasValue, setHasValue] = useSafeState(false);
-  const [singleDeFiNonce, setSingleDeFiNonce] = useAtom(singleDeFiNonceAtom);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -262,12 +272,16 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     ),
   });
 
-  useEffect(() => {
-    if (singleDeFiNonce > 0) {
-      refreshTagPortfolio();
-      setSingleDeFiNonce(0);
-    }
-  }, [refreshTagPortfolio, setSingleDeFiNonce, singleDeFiNonce]);
+  useSingleDeFiRefresh({
+    onRefresh: refreshTagPortfolio,
+  });
+
+  // useEffect(() => {
+  //   if (singleDeFiNonce > 0) {
+  //     refreshTagPortfolio();
+  //     setSingleDeFiNonce(0);
+  //   }
+  // }, [refreshTagPortfolio, setSingleDeFiNonce, singleDeFiNonce]);
 
   const updateSpecificProtocol = useCallback(
     async (protocolId: string, chain: string) => {

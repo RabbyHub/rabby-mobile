@@ -78,6 +78,14 @@ export default function BottomArea({ account }: { account: Account | null }) {
     fromAddress: fromAddress,
     toAddress: formValues.to,
     cex: toAddrCex,
+    forbiddenCheck: useMemo(() => {
+      return {
+        user_addr: fromAddress || '',
+        to_addr: formValues.to || '',
+        chain_id: currentToken?.chain || '',
+        id: currentToken?.id || '',
+      };
+    }, [fromAddress, formValues.to, currentToken?.chain, currentToken?.id]),
     onLoadFinished: useCallback(
       ctx => {
         putScreenState(prev => ({

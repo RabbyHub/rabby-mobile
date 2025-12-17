@@ -26,3 +26,7 @@ export function calcAspectRatio(
     width: Math.floor(shaped.width / aspectRatio),
   };
 }
+
+export function isMeaningfulNumber(input: any): input is number {
+  return typeof input === 'number' && !Number.isNaN(input);
+}

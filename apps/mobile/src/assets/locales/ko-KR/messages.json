@@ -50,7 +50,11 @@
         "LendingRepay": "상환",
         "LendingWithdraw": "출금",
         "LendingSupply": "공급",
-        "LendingBorrow": "빌리기"
+        "LendingBorrow": "빌리기",
+        "LendingOffCollateral": "담보로 사용 중지",
+        "LendingOnCollateral": "담보로 사용 활성화",
+        "LendingManageEModeDisable": "E-모드 끄기",
+        "LendingManageEMode": "E-모드 켜기"
       },
       "detail": {
         "ApproveToken": "토큰 승인",
@@ -119,7 +123,9 @@
         "skipNonceText": "Nonce #{{nonce}}가 {{chainName}} 체인에서 건너뛰었습니다. 이로 인해 앞에 대기 중인 거래가 발생할 수 있습니다. <5></5> <6>체인에 tx 제출</6> <7></7>하여 해결하십시오."
       },
       "HideScamTransactions": "사기 거래 숨기기",
-      "ShowScamTransactions": "사기 거래 표시"
+      "ShowScamTransactions": "사기 거래 표시",
+      "scam": "사기",
+      "scamTips": "이 거래는 사기꾼에 의해 사기 토큰과 NFT를 보내기 위해 시작되었습니다. 이에 대한 상호작용은 삼가해 주시기 바랍니다."
     },
     "getStart": {
       "goToHome": "홈으로 이동",
@@ -836,7 +842,25 @@
       "via-bridge": "{{bridge}} 통해",
       "To": "에게",
       "bridged": "브리징됨",
-      "gasFeeTooHight": "가스 요금이 정상보다 높습니다. 진행하시려면 확인하십시오."
+      "gasFeeTooHight": "가스 요금이 정상보다 높습니다. 진행하시려면 확인하십시오.",
+      "pendingItem": {
+        "swap": "스왑",
+        "receivingTo": "{{chain}}에서 받기",
+        "pending": "보류 중",
+        "longTimeNoReceive": "네트워크가 바쁩니다. 이 과정이 평소보다 오래 걸릴 수 있습니다. 잠시 기다려 주십시오.",
+        "BridgeStatusUnavailable": "브리지 상태를 사용할 수 없습니다. 자금이 도착했는지 확인하려면 거래 기록을 확인하십시오.",
+        "estimatedTime": "예상 시간",
+        "bridgeStatus": "브리지 상태",
+        "sendingFrom": "{{chain}}에서 전송 중",
+        "receivedDifferentTokenNeedSwap": "다른 토큰을 받았습니다. 선택한 토큰으로 교환할 수 있습니다.",
+        "beReturnFailed": "브릿지 실패. 귀하의 자산이 반환되었습니다.",
+        "receivedDifferentTokenFromSource": "브릿지 실패. 소스 체인에서 다른 토큰이 반환되었습니다.",
+        "queued": "대기 중",
+        "fromFailed": "거래가 진행되지 않았습니다. 다시 시도해 주세요.",
+        "failed": "실패했습니다",
+        "completed": "완료됨"
+      },
+      "gasXUsd": "가스: {{gasUsd}}"
     },
     "manageAddress": {
       "confirm": "확인",
@@ -2023,7 +2047,9 @@
       "sentTimeHeader": "보냈습니다",
       "sendToImportedAddress": "내가 가져온 지갑으로 보내기",
       "sendToWatchAddress": "감시 전용 지갑으로 보내기",
-      "sendToSafeAddress": "안전 지갑으로 보내기"
+      "sendToSafeAddress": "안전 지갑으로 보내기",
+      "enterOrSearchAddress": "주소 입력 또는 검색",
+      "dividerWatchOnlyWallets": "단순 조회 주소"
     },
     "confirmAddress": {
       "risks": {
@@ -2116,7 +2142,8 @@
         "recentEmpty": "웹사이트 탐색 시작",
         "otherResults": "기타 결과",
         "hot": "핫",
-        "favorite": "즐겨찾기"
+        "favorite": "즐겨찾기",
+        "hot10": "핫 10"
       },
       "BrowserSearchEntry": {
         "openWebsites": "웹사이트 열기"
@@ -2423,11 +2450,16 @@
         "currentPrice": "현재 가격",
         "title": "위험 수준",
         "subtitle": "실시간 청산 거리 (%)",
-        "liqIntro": "청산 거리 (%)는 현재 가격이 청산 가격에서 얼마나 떨어져 있는지를 보여줍니다. 거리가 클수록 안전한 포지션을 나타내며, 거리가 작을수록 청산 위험이 더 높음을 의미합니다."
+        "liqIntro": "청산 거리 (%)는 현재 가격이 청산 가격에서 얼마나 떨어져 있는지를 보여줍니다. 거리가 클수록 안전한 포지션을 나타내며, 거리가 작을수록 청산 위험이 더 높음을 의미합니다.",
+        "liqDistanceTipsLong": "하락 <1>{{distance}}</1>은 청산을 촉발합니다.",
+        "liqDistanceTipsShort": "<1>{{distance}}</1> 만큼 상승하면 청산이 발생합니다."
       },
       "closeAll": "모두 닫기",
       "closeAllConfirmMessage": "모든 열린 포지션은 시장 가격으로 종료됩니다.",
-      "closeAllConfirmTitle": "모든 포지션 닫기 확인"
+      "closeAllConfirmTitle": "모든 포지션 닫기 확인",
+      "assetPage": {
+        "hyperliquidPosition": "하이퍼리퀴드 포지션"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
@@ -2452,7 +2484,9 @@
         "margin": "마진(격리)",
         "entryPrice": "진입 가격",
         "fundingPaymentsTips": "포지션이 열린 이후 순 자금 지급액입니다. 자금은 트레이더가 perp 계약의 가격을 실제 토큰 가격에 가깝게 유지하기 위해 지불하거나 받는 시간당 수수료입니다.",
-        "liquidationPriceTips": "교환이 유지 마진 수준 아래로 마진이 떨어졌을 때 추가 손실을 방지하기 위해 귀하의 포지션이 자동으로 청산되는 가격입니다."
+        "liquidationPriceTips": "교환이 유지 마진 수준 아래로 마진이 떨어졌을 때 추가 손실을 방지하기 위해 귀하의 포지션이 자동으로 청산되는 가격입니다.",
+        "fundingGainsTips": "이것은 포지션이 열릴 때 이후의 순 자금 이익입니다. 펀딩은 거래자들이 영구 계약의 가격을 실제 토큰 가격에 가깝게 유지하기 위해 지불하거나 받는 시간당 수수료입니다.",
+        "fundingGains": "자금 수익"
       },
       "PerpsInfo": {
         "title": "정보",
@@ -2460,14 +2494,15 @@
         "funding": "펀딩",
         "openInterest": "열린 거래량",
         "openInterestTips": "이 계약에서 모든 사용자의 총 미결제 포지션입니다.",
-        "fundingTips": "이것은 거래자들이 perp 계약의 가격을 토큰의 실제 가격에 가깝게 유지하기 위해 지불하거나 받는 시간당 수수료입니다. 긍정적인 경우, 롱 포지션이 숏 포지션에게 지불합니다. 부정적인 경우, 숏 포지션이 롱 포지션에게 지불합니다."
+        "fundingTips": "이것은 거래자들이 perp 계약의 가격을 토큰의 실제 가격에 가깝게 유지하기 위해 지불하거나 받는 시간당 수수료입니다. 긍정적인 경우, 롱 포지션이 숏 포지션에게 지불합니다. 부정적인 경우, 숏 포지션이 롱 포지션에게 지불합니다.",
+        "fundingRate": "펀딩 비율"
       },
       "PerpsIntro": {
         "title": "Perps란 무엇인가요?",
         "desc": "영구 계약 거래는 높은 레버리지와 시장 변동성으로 인해 투자와 담보를 빠르게 잃을 가능성을 포함한 상당한 위험이 따릅니다. 이러한 거래는 모든 사용자에게 적합하지 않을 수 있습니다. 가격은 펀딩 비율 및 유동성의 영향을 받을 수 있으며, 사전 통보 없이 자동으로 청산될 수 있습니다. 시장 데이터는 Hyperliquid에서 제공됩니다."
       },
       "PerpsClosePositionPopup": {
-        "title": "{{coin}} {{direction}} 포지션 닫기",
+        "title": "포지션 종료",
         "positionSize": "포지션 크기",
         "closeBtn": "닫기 {{direction}}",
         "pnl": "PNL",
@@ -2498,7 +2533,10 @@
         "stopLossWhenPriceAbove": "가격이 위에 있을 때 손절매",
         "stopLossWhenPriceBelow": "가격이 아래로 내려갈 때 손실 제한",
         "stopLossWhen": "손절매 시",
-        "takeProfitWhenPriceBelow": "가격이 아래일 때 이익 실현"
+        "takeProfitWhenPriceBelow": "가격이 아래일 때 이익 실현",
+        "maxMargin": "최대 마진은 {{amount}}입니다.",
+        "minMargin": "최소 마진은 {{amount}}입니다.",
+        "upTo": "최대"
       },
       "PerpsOpenPositionCheckPopup": {
         "initialMargin": "초기 증거금",
@@ -2526,7 +2564,9 @@
         "long": "롱",
         "short": "숏",
         "noPermission": "귀하의 지역에서는 포지션 열기가 지원되지 않습니다.",
-        "closePosition": "{{direction}} 포지션 닫기"
+        "closePosition": "{{direction}} 포지션 닫기",
+        "close": "닫기",
+        "add": "추가"
       },
       "PerpsAutoCloseModal": {
         "price": "가격:",
@@ -2558,8 +2598,16 @@
         "amountToReduce": "줄이려는 금액",
         "insufficientMarginToReduce": "포지션을 줄이기에 충분한 마진이 없습니다.",
         "available": "사용 가능",
-        "liqPrice": "청산 가격:"
-      }
+        "liqPrice": "청산 가격:",
+        "liqDistance": "Liq.거리"
+      },
+      "PerpsAddPositionPopup": {
+        "addSize": "크기 추가",
+        "addToLong": "Long에 추가",
+        "totalSize": "총 크기",
+        "addToShort": "짧게 추가"
+      },
+      "needDepositFirst": "먼저 자금을 입금해야 합니다."
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "빌트인 페이지"
@@ -2579,7 +2627,10 @@
     "Lending": {
       "availableCard": {
         "needSupply": "빌리려면 자산을 담보로 제공해야 합니다.",
-        "canBorrow": "담보를 제공한 만큼 최대 차입 한도까지 빌릴 수 있습니다."
+        "canBorrow": "담보를 제공한 만큼 최대 차입 한도까지 빌릴 수 있습니다.",
+        "isolated": "대규모 모드로 인해 빌리기 힘이 제한되고 자산이 한정됩니다.",
+        "emodeNoAssets": "검색과 관련된 자산을 찾을 수 없습니다. 다른 카테고리로 다시 시도해 보세요.",
+        "emode": "E-모드에서는 일부 자산을 빌릴 수 없습니다. 모든 자산에 접근하려면 E-모드를 종료하세요."
       },
       "list": {
         "headers": {
@@ -2612,7 +2663,12 @@
         "actions": "공급",
         "availableToBorrow": "대출 가능",
         "supplyAPY": "공급 APY",
-        "approveAndSupply": "승인 및 공급"
+        "approveAndSupply": "승인 및 공급",
+        "supplyBalance": "공급 잔액",
+        "unavailable": "사용 불가",
+        "collateralization": "담보화",
+        "enabled": "활성화됨",
+        "isolatedTips": "귀하의 기존 대출/차입 자산은 지원되지 않습니다."
       },
       "withdrawDetail": {
         "actions": "출금",
@@ -2646,12 +2702,16 @@
         "totalSupplied": "총 공급량",
         "reachCap": "이 자산은 공급 한도에 도달했습니다. 이 시장에서 공급할 수 있는 것이 없습니다.",
         "almostCap": "이 자산은 거의 대출 한도에 도달했습니다. 이 시장에서 빌릴 수 있는 것은 {{available}}뿐입니다.",
-        "availableToSupply": "사용 가능 공급"
+        "availableToSupply": "사용 가능 공급",
+        "useAsCollateral": "담보로 사용하십시오"
       },
       "risk": {
         "checkbox": "알림을 이해하고 계속 진행하겠습니다.",
         "warning": "이 금액을 빌리면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다.",
-        "withdrawWarning": "이 금액을 인출하면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다."
+        "withdrawWarning": "이 금액을 인출하면 귀하의 건강 지수가 청산 위험 수준으로 낮아집니다.",
+        "toggleCollateralWarning": "이 자산을 담보로 사용 중지하면 귀하의 건강 지수가 청산을 위한 위험한 수준으로 낮아집니다.",
+        "emodeBlockWarning": "E-mode를 비활성화하면 청산을 위한 위험한 수준으로 Health Factor가 낮아집니다.",
+        "blockEmodeWarning": "E-모드를 비활성화할 수 없습니다. 그렇게 하면 청산이 발생할 수 있습니다. E-모드를 종료하려면 차입 포지션을 공급하거나 상환하세요."
       },
       "lqDescription": {
         "below1title": "건강 지수 ≤ 1.0:",
@@ -2670,7 +2730,10 @@
         "availableToBorrowDesc": "담보로 제공한 자산을 기반으로 대출할 수 있으며, 대출 한도에 도달할 때까지 가능합니다.",
         "lqDesc": "청산이 발생하면 청산자는 차용자를 대신하여 미결제 차입 금액의 최대 50%를 상환합니다. 그 대가로 그들은 담보를 할인된 가격에 구매할 수 있으며, 차액(청산 벌금)을 보너스로 유지할 수 있습니다.",
         "isolatedDesc": "이 자산은 고립 모드에서만 담보로 사용될 수 있으며, 여기서 다른 자산 담보를 공급하여 대출할 수 없습니다. 고립 모드에서 담보로 사용되는 자산은 특정 부채 한도 내에서만 대출할 수 있습니다.",
-        "isolatedTitle": "자산을 담보로 사용할 수 없습니다."
+        "isolatedTitle": "자산을 담보로 사용할 수 없습니다.",
+        "isolatedSupplyDesc": "담보 사용은 격리 모드 때문에 제한됩니다.",
+        "globalIsolatedDesc": "고립 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전 세계 부채 한도가 고립된 자산의 대출 능력을 제한합니다. 다른 자산을 대출하기 전에 UNI를 담보로 사용하지 않도록 설정하여 고립 모드를 종료하십시오.",
+        "maxLTV": "최대 LTV 비율은 특정 담보의 최대 대출 능력을 나타냅니다. 예를 들어, 담보의 LTV가 75%인 경우, 사용자는 담보 1 ETH당 0.75 가치의 ETH를 기본 통화로 대출할 수 있습니다."
       },
       "apy": "APY",
       "borrowed": "빌려진",
@@ -2686,7 +2749,64 @@
       "enterAmount": "금액 입력",
       "isolated": "격리된",
       "estNetApy": "추정 순 APY",
-      "marketSlot": "{{market}} 마켓"
+      "marketSlot": "{{market}} 마켓",
+      "toggleCollateralDetail": {
+        "actions": "토글 {{asset}} 담보",
+        "enable": "{{asset}}를 담보로 활성화",
+        "error": "AAVE 서비스에 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        "disable": "담보로 {{asset}} 비활성화"
+      },
+      "toggleCollateralModal": {
+        "closeTitle": "리뷰 비활성화",
+        "exitIsolationModeTitle": "격리 모드 종료",
+        "openTitle": "검토 활성화",
+        "enableIsolationModeTitle": "격리 모드 활성화",
+        "exitIsolationModeDesc": "격리 모드에서 종료되며, 이제 다른 토큰을 담보로 사용할 수 있습니다.",
+        "closeDesc": "이 자산을 담보로 사용하지 않으면 귀하의 대출 능력과 건강 지수에 영향을 미칩니다.",
+        "riskToLiquidationText": "이 통화의 담보 모드로 사용으로 전환할 수 없습니다. 이는 담보 호출을 유발할 수 있기 때문입니다.",
+        "openDesc": "이 자산을 담보로 설정하면 대출 능력과 건강 지수가 증가합니다. 그러나 건강 지수가 1 이하로 떨어지면 강제 청산될 수 있습니다.",
+        "enableIsolationModeDesc": "당신은 격리 모드에 들어가고 있습니다. 격리 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전역 채무 한도가 격리된 자산의 차입 능력을 제한합니다. 다른 자산을 차입하기 전에 CRV를 담보로 비활성화하여 격리 모드를 종료하십시오."
+      },
+      "searchMarket": "시장 검색",
+      "selectMarket": "시장 선택",
+      "manageEmode": {
+        "actions": {
+          "disable": "E-모드 비활성화",
+          "enable": "E-모드 활성화"
+        },
+        "guide": {
+          "buttonTitle": "E-모드 관리",
+          "title": "효율성 모드 (E-Mode)",
+          "description": "E-모드는 선택한 자산 범주에 대한 LTV를 증가시킵니다."
+        },
+        "categorySelector": {
+          "header": {
+            "ltv": "최대 LTV",
+            "asset": "자산"
+          },
+          "desc": "이 카테고리를 활성화하려면 이 카테고리 외부의 모든 차입 포지션을 닫아야 합니다.",
+          "placeholder": "선택하세요",
+          "label": "자산 카테고리"
+        },
+        "overview": {
+          "row": {
+            "collateral": "담보",
+            "borrowable": "대출 가능",
+            "asset": "자산"
+          },
+          "title": "자산 카테고리",
+          "maxLtv": "최대 LTV",
+          "apy": "APY"
+        },
+        "emode": "E-모드",
+        "unavailable": "• 사용 불가능",
+        "disableTitle": "비활성화",
+        "description": "E-모드를 활성화하면 대출 능력을 극대화할 수 있습니다. 그러나 대출은 선택한 카테고리 내의 자산으로 제한됩니다.",
+        "unavailableTips": "귀하의 기존 대출/차입 자산은 지원되지 않습니다.",
+        "enabled": "• 활성화됨",
+        "title": "E-모드 관리"
+      },
+      "disabled": "비활성화됨"
     }
   },
   "global": {
@@ -2764,7 +2884,8 @@
     "gotIt": "알겠습니다",
     "check": "확인",
     "Dapp": "Dapp",
-    "Token": "토큰"
+    "Token": "토큰",
+    "GotIt": "알겠어요"
   },
   "native": {
     "biometrics": {
@@ -3026,6 +3147,9 @@
     },
     "portfolios": {
       "manage": "관리하다"
+    },
+    "multiAddressModal": {
+      "title": "지갑"
     }
   },
   "constant": {
