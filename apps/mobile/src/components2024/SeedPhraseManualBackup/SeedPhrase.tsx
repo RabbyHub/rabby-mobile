@@ -451,8 +451,8 @@ export const SeedPhrase: React.FC<Props> = ({
     }
     return {
       seedPhrase: seedPharseData,
-      alias: addressList?.[0].aliasName || '',
-      address: addressList?.[0].address || '',
+      alias: addressList?.[0]?.aliasName || '',
+      address: addressList?.[0]?.address || '',
       accountsToCreate: addressList,
     };
   }, [readMode, seedPhraseData, seedPharseData, addressList]);
@@ -591,14 +591,20 @@ export const SeedPhrase: React.FC<Props> = ({
     }
     storeApiScreenshotReport.markIsScreenshotReportFree(true);
     const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(() => {
-      setSecureType('screenshot');
-      setShowSecureTips(true);
+      if (showSecureTips) {
+        return;
+      }
+      setShowSecureTips(false);
+      setTimeout(() => {
+        setSecureType('screenshot');
+        setShowSecureTips(true);
+      }, 100);
     });
     return () => {
       storeApiScreenshotReport.markIsScreenshotReportFree(false);
       remove();
     };
-  }, [isHidden]);
+  }, [isHidden, showSecureTips]);
 
   return (
     <View style={[styles.rootContainer]}>
@@ -681,33 +687,35 @@ export const SeedPhrase: React.FC<Props> = ({
                 justifyContent: 'center',
                 gap: 12,
               }}>
-              <View style={styles.copyBtnWrapper}>
-                <TouchableOpacity
-                  style={styles.copyBtn}
-                  onPress={() => {
-                    const id = createGlobalBottomSheetModal2024({
-                      name: MODAL_NAMES.SEED_PHRASE_QR_CODE,
-                      bottomSheetModalProps: {
-                        enableContentPanningGesture: true,
-                        enablePanDownToClose: true,
-                        rootViewType: 'BottomSheetScrollView',
-                      },
-                      preventScreenshotOnModalOpen: false,
-                      data: words.join(' '),
-                      onClose: () => {
-                        removeGlobalBottomSheetModal2024(id);
-                      },
-                      onDone: () => {
-                        removeGlobalBottomSheetModal2024(id);
-                      },
-                    });
-                  }}>
-                  <IconCopy style={styles.copyBtnIcon} />
-                  <Text style={styles.copyBtnText}>
-                    {t('page.backupSeedPhrase.showQrCode')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              {readMode ? (
+                <View style={styles.copyBtnWrapper}>
+                  <TouchableOpacity
+                    style={styles.copyBtn}
+                    onPress={() => {
+                      const id = createGlobalBottomSheetModal2024({
+                        name: MODAL_NAMES.SEED_PHRASE_QR_CODE,
+                        bottomSheetModalProps: {
+                          enableContentPanningGesture: true,
+                          enablePanDownToClose: true,
+                          rootViewType: 'BottomSheetScrollView',
+                        },
+                        preventScreenshotOnModalOpen: false,
+                        data: words.join(' '),
+                        onClose: () => {
+                          removeGlobalBottomSheetModal2024(id);
+                        },
+                        onDone: () => {
+                          removeGlobalBottomSheetModal2024(id);
+                        },
+                      });
+                    }}>
+                    <IconCopy style={styles.copyBtnIcon} />
+                    <Text style={styles.copyBtnText}>
+                      {t('page.backupSeedPhrase.showQrCode')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
 
               <View style={styles.copyBtnWrapper}>
                 <TouchableOpacity
@@ -849,7 +857,8 @@ const SecureBottomTips = ({
       })}
       ref={sheetModalRef}
       snapPoints={snapPoints}
-      enableDismissOnClose>
+      enableDismissOnClose
+      onDismiss={onDismiss}>
       <BottomSheetScrollView>
         <View style={styles.secure}>
           <View style={styles.secureLogo}>
