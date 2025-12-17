@@ -360,7 +360,7 @@ function SettingsBlocks() {
             onPress: () => {
               toggleScreenshotToReport();
             },
-            disabled: disabledBiometrics,
+            // disabled: disabledBiometrics,
             visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
           },
           {

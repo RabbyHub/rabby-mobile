@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
@@ -7,7 +7,6 @@ import { apisAutoLock } from '@/core/apis';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { preferenceService } from '@/core/services';
 import { isNonPublicProductionEnv } from '@/constant';
-import { useAtomCallback } from 'jotai/utils';
 import {
   resolveValFromUpdater,
   runIIFEFunc,

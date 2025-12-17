@@ -23,7 +23,7 @@ import {
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 
-export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = IS_ANDROID && !__DEV__;
+export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = false;
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 type ScreenshotFeedbackStore = {
   viewedHomeTip: boolean;
@@ -164,6 +164,23 @@ export const getShowFeedbackOnScreenshotCapture = () => {
     disableScreenshotToReportUntil: values.disableScreenshotToReportUntil,
   });
 };
+
+export function useIsShowFeedbackOnScreenshot() {
+  const { disableScreenshotToReportUntil, showFeedbackOnScreenshot_20250923 } =
+    screenshotFeedbackStore(
+      useShallow(s => ({
+        disableScreenshotToReportUntil: s.disableScreenshotToReportUntil,
+        showFeedbackOnScreenshot_20250923: s.showFeedbackOnScreenshot_20250923,
+      })),
+    );
+
+  const isShowFeedbackOnScreenshot = isEnabledScreenshotToReport({
+    showFeedbackOnScreenshot: showFeedbackOnScreenshot_20250923,
+    disableScreenshotToReportUntil: disableScreenshotToReportUntil,
+  });
+
+  return { isShowFeedbackOnScreenshot };
+}
 
 const markViewedHomeTip = () => {
   if (screenshotFeedbackStore.getState().viewedHomeTip) return;
@@ -439,9 +456,7 @@ export function useUserDidTakeScreenshot({
     const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(
       async params => {
         if (!getShowFeedbackOnScreenshotCapture()) return;
-        if (!params?.captured) {
-          if (IS_ANDROID && params && !params?.androidHasPermission) return;
-        }
+        if (!params?.captured) return;
 
         if (!shouldToastFeedbackByScreenshot()) return;
 
