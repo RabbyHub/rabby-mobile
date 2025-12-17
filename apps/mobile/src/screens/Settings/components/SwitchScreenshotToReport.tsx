@@ -47,10 +47,10 @@ export function LabelScreenshotToReport() {
 
   const { text: timeOffset, mins } = React.useMemo(() => {
     spinner;
-    if (disableScreenshotToReportUntil === Infinity) {
+    const diffMs = Math.max(disableScreenshotToReportUntil - Date.now(), 0);
+    if (!diffMs || disableScreenshotToReportUntil === Infinity) {
       return { text: `∞`, mins: 0 };
     }
-    const diffMs = Math.max(disableScreenshotToReportUntil - Date.now(), 0);
 
     const timeSpans = getTimeSpanByMs(diffMs);
 

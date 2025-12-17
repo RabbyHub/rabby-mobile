@@ -152,6 +152,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevDataSQLite]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
+  [RootNames.DevSwitches]?: {};
 };
 
 export type AddressNavigatorParamList = {

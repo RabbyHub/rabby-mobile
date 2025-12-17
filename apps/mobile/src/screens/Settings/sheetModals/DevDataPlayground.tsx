@@ -26,6 +26,8 @@ import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { downloadDbFile } from '@/databases/dbfs';
 import { IS_IOS } from '@/core/native/utils';
+import { perpsService } from '@/core/services';
+import { toast } from '@/components2024/Toast';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -131,6 +133,14 @@ export default function DevDataPlaygroundModal({
         },
       },
       {
+        label: 'Reset Perps Store',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          perpsService.resetStore();
+          toast.success('PERPS STORE RESET SUCCESS');
+        },
+      },
+      {
         label: 'Download DB file',
         icon: <RcCode style={styles.labelIcon} />,
         visible: IS_IOS,
@@ -156,9 +166,9 @@ export default function DevDataPlaygroundModal({
       snapPoints={[safeSizes.sheetHeight]}
       handleStyle={styles.handleStyle}
       onDismiss={handleCancel}
-      enableContentPanningGesture={false}>
+      enableContentPanningGesture>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {

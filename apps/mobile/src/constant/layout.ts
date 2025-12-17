@@ -124,6 +124,7 @@ export const RootNames = {
   DevDataSQLite: 'DevDataSQLite',
   DevUIBuiltInPages: 'DevUIBuiltInPages',
   DevUIPermissions: 'DevUIPermissions',
+  DevSwitches: 'DevSwitches',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
@@ -377,6 +378,7 @@ function makeScreenSpecConfig() {
       [RootNames.DevDataSQLite]: bg1Default2024Conf,
       [RootNames.DevUIBuiltInPages]: bg1Default2024Conf,
       [RootNames.DevUIPermissions]: bg1Default2024Conf,
+      [RootNames.DevSwitches]: bg1Default2024Conf,
 
       // StackTransaction
       [RootNames.Send]: bg1Default2024Conf,
