@@ -101,7 +101,11 @@ const DebtSwapModalOverview = ({
                 <Text style={styles.transactionOverviewValue}>
                   {formatTokenAmount(estimatedFromBorrowAfter.toString(10))}
                 </Text>
-                <Text style={styles.transactionOverviewValue}>
+                <Text
+                  style={[
+                    styles.transactionOverviewValue,
+                    styles.usdValueText,
+                  ]}>
                   {formatUsdValue(
                     estimatedFromBorrowAfter
                       .multipliedBy(fromToken.usdPrice || '0')
@@ -130,7 +134,11 @@ const DebtSwapModalOverview = ({
                   <Text style={styles.transactionOverviewValue}>
                     {formatTokenAmount(estimatedToBorrowAfter.toString(10))}
                   </Text>
-                  <Text style={styles.transactionOverviewValue}>
+                  <Text
+                    style={[
+                      styles.transactionOverviewValue,
+                      styles.usdValueText,
+                    ]}>
                     {formatUsdValue(
                       estimatedToBorrowAfter
                         .multipliedBy(toToken.usdPrice || '0')
@@ -201,6 +209,13 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'right',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+  },
+  usdValueText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-foot'],
   },
   transactionOverviewArrow: {
     fontSize: 14,

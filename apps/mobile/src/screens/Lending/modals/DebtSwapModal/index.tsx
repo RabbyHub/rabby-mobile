@@ -30,11 +30,14 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
+import { CheckBoxRect } from '@/components2024/CheckBox';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { BridgeSlippage } from '@/screens/Bridge/components/BridgeSlippage';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
+import { WarningText } from '@/screens/Bridge/components/WarningText';
+import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import {
   MINI_SIGN_ERROR,
   useSignatureStore,
@@ -69,10 +72,18 @@ import {
   generateApproveDelegation,
 } from '../../poolService';
 import { normalizeBN } from '@aave/math-utils';
+import { getPriceImpactData } from './warning';
+
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
   onClose?: () => void;
 }
+
+const BOTTOM_SIZE = {
+  BUTTON: 116,
+  CHECKBOX: 40,
+  TIPS: 80,
+};
 
 export default function DebtSwapModal({
   fromToken,
@@ -99,6 +110,7 @@ export default function DebtSwapModal({
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
 
   const [slider, setSlider] = useState<number>(0);
+  const [riskChecked, setRiskChecked] = useState(false);
 
   const [swapRate, setSwapRate] = useState<{
     optimalRateData?: OptimalRate;
@@ -139,6 +151,14 @@ export default function DebtSwapModal({
     toToken,
     setSwapRate,
   });
+
+  const priceImpactData = useMemo(() => {
+    return getPriceImpactData({ fromToken, toToken, fromAmount, toAmount });
+  }, [fromToken, toToken, fromAmount, toAmount]);
+
+  useEffect(() => {
+    setRiskChecked(false);
+  }, [displaySlippage, priceImpactData.showConfirmation]);
 
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
@@ -560,6 +580,15 @@ export default function DebtSwapModal({
     ],
   );
 
+  const isSlippageHigh = useMemo(() => {
+    const slippageValue = new BigNumber(displaySlippage || 0);
+    return slippageValue.gt(30);
+  }, [displaySlippage]);
+
+  const isRisky = useMemo(() => {
+    return isSlippageHigh || priceImpactData.showConfirmation;
+  }, [isSlippageHigh, priceImpactData.showConfirmation]);
+
   const canSwap = useMemo(() => {
     return (
       !!toToken &&
@@ -571,6 +600,10 @@ export default function DebtSwapModal({
       !isQuoteLoading
     );
   }, [fromAmount, fromBalanceBn, isQuoteLoading, isSameToken, quote, toToken]);
+
+  const buttonDisabled = useMemo(() => {
+    return !canSwap || (isRisky && !riskChecked);
+  }, [canSwap, isRisky, riskChecked]);
 
   return (
     <AutoLockView style={styles.container}>
@@ -737,16 +770,6 @@ export default function DebtSwapModal({
             )}
           </Pressable>
         </View>
-
-        <DebtSwapModalOverview
-          fromToken={fromToken}
-          toToken={toToken}
-          chainEnum={chainEnum}
-          fromAmount={fromAmount}
-          toAmount={toAmount}
-          fromBalanceBn={fromBalanceBn.toString()}
-          isQuoteLoading={isQuoteLoading}
-        />
         {canSwap && (
           <View style={styles.slippageContainer}>
             <BridgeSlippage
@@ -762,6 +785,29 @@ export default function DebtSwapModal({
             />
           </View>
         )}
+        {canSwap && priceImpactData.showWarning && !isQuoteLoading && (
+          <View style={styles.priceImpactContainer}>
+            <View style={styles.priceImpactRow}>
+              <Text style={styles.priceImpactText}>
+                {t('page.bridge.price-impact')}
+              </Text>
+              <View style={styles.priceImpactDiffBox}>
+                <Text style={styles.priceImpactLossAmount}>
+                  {(priceImpactData.lostValue * 100).toFixed(1)}%
+                </Text>
+                <RcIconBluePolygon color={colors2024['orange-default']} />
+              </View>
+            </View>
+
+            <WarningText>
+              <Text>
+                {t('page.Lending.debtSwap.priceImpactTips', {
+                  lostValue: `${(priceImpactData.lostValue * 100).toFixed(1)}%`,
+                })}
+              </Text>
+            </WarningText>
+          </View>
+        )}
         {canShowDirectSubmit && canSwap && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
@@ -772,9 +818,36 @@ export default function DebtSwapModal({
             />
           </View>
         )}
+        <DebtSwapModalOverview
+          fromToken={fromToken}
+          toToken={toToken}
+          chainEnum={chainEnum}
+          fromAmount={fromAmount}
+          toAmount={toAmount}
+          fromBalanceBn={fromBalanceBn.toString()}
+          isQuoteLoading={isQuoteLoading}
+        />
       </BottomSheetScrollView>
 
-      <View style={[styles.buttonContainer]}>
+      <View
+        style={[
+          styles.buttonContainer,
+          {
+            height: BOTTOM_SIZE.BUTTON + (isRisky ? BOTTOM_SIZE.CHECKBOX : 0),
+          },
+        ]}>
+        {isRisky && (
+          <Pressable
+            style={styles.riskContainer}
+            onPress={() => {
+              setRiskChecked(!riskChecked);
+            }}>
+            <CheckBoxRect checked={riskChecked} size={16} />
+            <Text style={styles.warningText}>
+              {t('page.bridge.showMore.signWarning')}
+            </Text>
+          </Pressable>
+        )}
         {canShowDirectSubmit ? (
           <DirectSignBtn
             loading={isLoading}
@@ -785,7 +858,7 @@ export default function DebtSwapModal({
             authTitle={t('page.Lending.debtSwap.button.swap')}
             title={t('page.Lending.debtSwap.button.swap')}
             onFinished={() => handleSwap()}
-            disabled={!canSwap}
+            disabled={buttonDisabled}
             type="primary"
             syncUnlockTime
             account={currentAccount}
@@ -799,7 +872,7 @@ export default function DebtSwapModal({
             onPress={() => handleSwap()}
             title={t('page.Lending.debtSwap.button.swap')}
             loading={isLoading}
-            disabled={!canSwap}
+            disabled={buttonDisabled}
           />
         )}
       </View>
@@ -1040,5 +1113,54 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   loadingOpacity: {
     opacity: 0.5,
+  },
+  riskContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  warningText: {
+    fontSize: 12,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+  },
+  priceImpactContainer: {
+    paddingHorizontal: 8,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  priceImpactRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  priceImpactText: {
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+    color: colors2024['neutral-secondary'],
+  },
+  priceImpactDiffBox: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  priceImpactLossAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+    color: colors2024['orange-default'],
+    marginRight: 4,
+  },
+  priceImpactTooltipText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
 }));
