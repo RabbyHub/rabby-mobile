@@ -1,6 +1,6 @@
 /**
  * @description 构建交易相关函数:
- * supply、withdraw、borrow、repay、collateralSwitch、manageEmode
+ * supply、withdraw、borrow、repay、collateralSwitch、manageEmode等操作的tx构建
  * 但不包含approve交易
  */
 

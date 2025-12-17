@@ -2841,7 +2841,8 @@
         },
         "button": {
           "swap": "Swap"
-        }
+        },
+        "priceImpactTips": "High price impact ({{lostValue}}). This route may return more due to low liquidity or small order size."
       }
     }
   },
