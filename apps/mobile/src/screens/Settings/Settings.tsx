@@ -114,9 +114,6 @@ import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
 import { OpenApiPopup } from './components/OpenApiPopup';
-import MockBatchRevokeModal, {
-  useDevMockBatchRevokeVisible,
-} from './sheetModals/DevMockBatchRevoke';
 import { perpsService, preferenceService } from '@/core/services';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 import { useMultiPress } from '@/hooks/tap';
@@ -571,7 +568,6 @@ function DevSettingsBlocks() {
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
 
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
-  const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
 
@@ -634,27 +630,6 @@ function DevSettingsBlocks() {
                 );
               },
             },
-            // {
-            //   label: '[Cloud] Test Memonics Backup',
-            //   icon: RcGoogleDrive,
-            //   onPress: async () => {
-            //     setCloudDriveTestItemModalVisible(true);
-            //   },
-            // },
-            // {
-            //   label: '[UI] Mock Home Center Areas',
-            //   icon: RcCode,
-            //   onPress: () => {
-            //     setDevUIHomeCenterAreaModalVisible(true);
-            //   },
-            // },
-            // {
-            //   label: '[UI] Wip Helpers',
-            //   icon: RcCode,
-            //   onPress: () => {
-            //     setDevUIWipModalVisible(true);
-            //   },
-            // },
             {
               label: 'UI Playground',
               icon: RcCode,
@@ -667,46 +642,6 @@ function DevSettingsBlocks() {
               icon: RcCode,
               onPress: () => {
                 setDataPlaygroundModalVisible(true);
-              },
-            },
-            // {
-            //   label: 'Screen Recording',
-            //   icon: isIOS ? RcScreenRecord : RcScreenshot,
-            //   onPress: () => {
-            //     setDevScreenRecordingModalVisible(true);
-            //   },
-            // },
-            // {
-            //   label: (
-            //     <Text>
-            //       <AutoLockCountDownLabel />
-            //     </Text>
-            //   ),
-            //   icon: RcAutoLockTime,
-            //   onPress: () => {
-            //     switchShowFloatingAutoLockCountdownRef.current?.toggle();
-            //   },
-            //   rightNode: (
-            //     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            //       <SwitchShowFloatingAutoLockCountdown
-            //         ref={switchShowFloatingAutoLockCountdownRef}
-            //       />
-            //     </View>
-            //   ),
-            // },
-            {
-              label: 'Mock Batch Revoke',
-              icon: RcCode,
-              onPress: () => {
-                setMockBatchRevokeVisible(true);
-              },
-            },
-            {
-              label: 'RESET PERPS STORE',
-              icon: RcCode,
-              onPress: () => {
-                perpsService.resetStore();
-                toast.success('PERPS STORE RESET SUCCESS');
               },
             },
           ],
@@ -824,18 +759,6 @@ function DevSettingsBlocks() {
                 });
               },
             },
-            // {
-            //   label: 'Test Biometrics',
-            //   icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
-            //   onPress: () => {
-            //     startBiometricsVerification({
-            //       onFinished: () => {
-            //         abortBiometricsVerification();
-            //       },
-            //     });
-            //   },
-            //   disabled: disabledBiometrics || !isBiometricsEnabled,
-            // },
           ],
         },
       }),
@@ -873,10 +796,6 @@ function DevSettingsBlocks() {
       <WalletLockTestItemModal />
       <DevUIPlaygroundModal />
       <DevDataPlayground />
-      {/* <CloudDriveTestItemModal /> */}
-      {/* <DevUIWipModal /> */}
-      {/* <DevUIHomeCenterAreaModal /> */}
-      {/* <DevScreenRecordingModal /> */}
       <DevModalDevServer />
       <OpenApiPopup
         visible={isShowOpenApiPopup}
@@ -884,7 +803,7 @@ function DevSettingsBlocks() {
           setIsShowOpenApiPopup(false);
         }}
       />
-      <MockBatchRevokeModal />
+      {/* <MockBatchRevokeModal /> */}
     </>
   );
 }

@@ -32,6 +32,7 @@ import {
 } from '@/assets/icons/settings';
 import {
   useExpScreenCapture,
+  useMockBatchRevoke,
   useToggleShowAutoLockCountdown,
 } from '@/hooks/appSettings';
 import { SwitchToggleType } from '@/components';
@@ -59,8 +60,8 @@ import {
   useExposureRateGuide,
   useMakeMockDataForRateGuideExposure,
 } from '@/components/RateModal/hooks';
-import { useMakeMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
-import { useMockClearOfflineChainTips } from '../Home/components/OfflineChainNotify';
+import { useMakeMockDataForHomeCenterArea } from '@/screens/Home/hooks/homeCenterArea';
+import { useMockClearOfflineChainTips } from '@/screens/Home/components/OfflineChainNotify';
 import { useGuidanceShown } from '@/components2024/Animations/hooks';
 import { Button } from '@/components2024/Button';
 import RNHelpers from '@/core/native/RNHelpers';
@@ -433,6 +434,113 @@ function DevTestHomeCenterArea() {
   );
 }
 
+function DevSwitchBatchRevoke() {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+
+  const { mockBatchRevokeSetting, setMockBatchRevoke } = useMockBatchRevoke();
+  const [ethGasUsdLimit, setEthGasAsUsdLimit] = React.useState(
+    mockBatchRevokeSetting.DEBUG_ETH_GAS_USD_LIMIT.toString(),
+  );
+  const [otherChainGasUsdLimit, setOtherChainGasUsdLimit] = React.useState(
+    mockBatchRevokeSetting.DEBUG_OTHER_CHAIN_GAS_USD_LIMIT.toString(),
+  );
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Mock Batch Revoke
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            setMockBatchRevoke(
+              'DEBUG_MOCK_SUBMIT',
+              !mockBatchRevokeSetting.DEBUG_MOCK_SUBMIT,
+            );
+          }}>
+          <AppSwitch2024
+            onValueChange={val => setMockBatchRevoke('DEBUG_MOCK_SUBMIT', val)}
+            value={mockBatchRevokeSetting.DEBUG_MOCK_SUBMIT}
+          />
+          <Text style={styles.switchLabel}>
+            {mockBatchRevokeSetting.DEBUG_MOCK_SUBMIT ? 'Enabled' : 'Disabled'}
+          </Text>
+        </TouchableOpacity>
+
+        <View style={[styles.rowWrapper, { marginTop: 12 }]}>
+          <NextInput
+            fieldName="ETH_GAS_USD_LIMIT"
+            inputProps={{
+              value: ethGasUsdLimit,
+              onChangeText: setEthGasAsUsdLimit,
+              keyboardType: 'decimal-pad',
+              placeholder: 'ETH_GAS_USD_LIMIT',
+              returnKeyType: 'done',
+              onBlur: () => {
+                setMockBatchRevoke(
+                  'DEBUG_ETH_GAS_USD_LIMIT',
+                  parseFloat(ethGasUsdLimit) || 0,
+                );
+              },
+            }}
+          />
+        </View>
+
+        <View style={[styles.rowWrapper, { marginTop: 12 }]}>
+          <NextInput
+            fieldName="OTHER_CHAIN_GAS_USD_LIMIT"
+            inputProps={{
+              value: otherChainGasUsdLimit,
+              onChangeText: setOtherChainGasUsdLimit,
+              keyboardType: 'decimal-pad',
+              placeholder: 'OTHER_CHAIN_GAS_USD_LIMIT',
+              returnKeyType: 'done',
+              onBlur: () => {
+                setMockBatchRevoke(
+                  'DEBUG_OTHER_CHAIN_GAS_USD_LIMIT',
+                  parseFloat(otherChainGasUsdLimit) || 0,
+                );
+              },
+            }}
+          />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.switchRowWrapper, { marginTop: 12 }]}
+          onPress={() => {
+            setMockBatchRevoke(
+              'DEBUG_SIMULATION_FAILED',
+              !mockBatchRevokeSetting.DEBUG_SIMULATION_FAILED,
+            );
+          }}>
+          <AppSwitch2024
+            onValueChange={val =>
+              setMockBatchRevoke('DEBUG_SIMULATION_FAILED', val)
+            }
+            value={mockBatchRevokeSetting.DEBUG_SIMULATION_FAILED}
+          />
+          <Text style={styles.switchLabel}>
+            {mockBatchRevokeSetting.DEBUG_SIMULATION_FAILED
+              ? 'Enabled Simulation Failure'
+              : 'Disabled Simulation Failure'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function DevResetPerpsStore() {}
+
 async function importWalletConnectAddress({
   address,
   brandName,
@@ -605,6 +713,9 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Home Notifications</Text>
         <DevTestHomeCenterArea />
+
+        <Text style={styles.areaTitle}>Batch Revoke</Text>
+        <DevSwitchBatchRevoke />
       </ScrollView>
     </NormalScreenContainer>
   );
@@ -673,6 +784,10 @@ const getStyles = createGetStyles2024(ctx =>
       alignItems: 'center',
       justifyContent: 'flex-start',
       width: '100%',
+    },
+    rowFieldLabel: {
+      fontSize: 16,
+      color: ctx.colors2024['neutral-title-1'],
     },
     label: {
       fontSize: 16,

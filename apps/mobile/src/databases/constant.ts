@@ -9,9 +9,16 @@ export const APP_DB_PREFIX = 'rabby_';
 // > Where as on Android the location of the database file is fixed,
 // > there are three choices of where the database file can be located on iOS.
 
-export function getRabbyAppDbName() {
+export function getRabbyAppDbName(purpose?: 'share') {
   // return `rabby-app-${APP_VERSIONS.fromJs}_${APP_VERSIONS.buildNumber}.db`;
-  return 'rabby-app.db';
+  switch (purpose) {
+    default: {
+      return 'rabby-app.db';
+    }
+    case 'share': {
+      return `rabby-app.share.db`;
+    }
+  }
 }
 
 export function getRabbyAppDbDir() {
