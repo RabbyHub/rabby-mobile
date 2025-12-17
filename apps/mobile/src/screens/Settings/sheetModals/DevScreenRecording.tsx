@@ -69,7 +69,7 @@ export default function DevScreenRecordingModal({
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
 
   const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
-  const { isShowFeedbackOnScreenshot } = useIsShowFeedbackOnScreenshot();
+  const { isScreenshotReportEnabled } = useIsShowFeedbackOnScreenshot();
 
   const Items = (() => {
     const list: DevTestItem[] = [
@@ -89,7 +89,7 @@ export default function DevScreenRecordingModal({
         visible: isNonPublicProductionEnv,
       },
       {
-        label: isShowFeedbackOnScreenshot
+        label: isScreenshotReportEnabled
           ? 'Report on screenshot now'
           : 'Disable Screenshot Until',
         icon: <RcCountdown style={styles.labelIcon} />,
@@ -98,10 +98,10 @@ export default function DevScreenRecordingModal({
         },
         rightNode: (
           <Text>
-            {isShowFeedbackOnScreenshot ? null : <LabelScreenshotToReport />}
+            {isScreenshotReportEnabled ? null : <LabelScreenshotToReport />}
           </Text>
         ),
-        visible: !isShowFeedbackOnScreenshot,
+        visible: !isScreenshotReportEnabled,
       },
     ];
 

@@ -174,12 +174,12 @@ export function useIsShowFeedbackOnScreenshot() {
       })),
     );
 
-  const isShowFeedbackOnScreenshot = isEnabledScreenshotToReport({
+  const isScreenshotReportEnabled = isEnabledScreenshotToReport({
     showFeedbackOnScreenshot: showFeedbackOnScreenshot_20250923,
     disableScreenshotToReportUntil: disableScreenshotToReportUntil,
   });
 
-  return { isShowFeedbackOnScreenshot };
+  return { isScreenshotReportEnabled };
 }
 
 const markViewedHomeTip = () => {
