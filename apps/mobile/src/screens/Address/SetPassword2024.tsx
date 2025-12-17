@@ -264,7 +264,7 @@ function MainListBlocks() {
         onTouchInputAway();
       }}>
       <View style={[styles.container]}>
-        {!state.hideProgress && <ProgressBar amount={3} currentCount={2} />}
+        {/* {!state.hideProgress && <ProgressBar amount={3} currentCount={2} />} */}
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.passwordTopTips')}
         </Text>
