@@ -21,7 +21,6 @@ import { BackupPrivateKeyScreen } from '../Address/BackupPrivateKeyScreen';
 import { CreateSeedPhraseRickCheckScreen } from '../Address/CreateSeedPhraseRiskCheckScreen';
 import { CreateSeedPhraseBackupScreen } from '../Address/CreateSeedPhraseBackupScreen';
 import { CreateSeedPhraseVerifyScreen } from '../Address/CreateSeedPhraseVerifyScreen';
-import { BackSeedPhraseScreen } from '../Address/BackSeedPhraseScreen';
 import { AddSeedPhraseScreen } from '../Address/AddSeedPhraseScreen/AddSeedPhraseScreen';
 import { PreCreateSeedPhraseScreen } from '../Address/PreCreateSeedPhraseScreen';
 import { CloudBackupButton } from '../Address/CloudBackupButton';

@@ -453,7 +453,6 @@ const PROTECTED_SCREENS: {
   [RootNames.ImportPrivateKey2024]: getProtectedConf(),
   [RootNames.CreateMnemonicBackup]: getProtectedConf(),
   [RootNames.CreateMnemonicVerify]: getProtectedConf(),
-  [RootNames.BackupMnemonic]: getProtectedConf(),
   [RootNames.BackupPrivateKey]: getProtectedConf(),
 };
 
