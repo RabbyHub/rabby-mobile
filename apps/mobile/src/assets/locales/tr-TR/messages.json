@@ -2640,9 +2640,7 @@
           "token_tvl": "Token/TVL",
           "token_balance": "Token/Bakiye"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -2739,16 +2737,12 @@
       "netWorth": "Net worth",
       "submitted": "gönderildi",
       "selectChain": "Zinciri Seçin",
-      "market": "Pazar",
       "estDailyEarning": "Günlük Tahmini Kazanç",
-      "apy": "APY",
       "borrowed": "Ödünç Alınan",
       "hf": "Sağlık faktörü",
       "hfTitle": "Sağlık Faktörü",
       "enterAmount": "Miktarı Girin",
-      "isolated": "izole edilmiş",
       "estNetApy": "Tahmini net APY",
-      "marketSlot": "{{market}} Pazar",
       "toggleCollateralDetail": {
         "actions": "{{asset}} Teminatını Değiştir",
         "enable": "{{asset}}'i Teminat Olarak Etkinleştir",
@@ -2780,7 +2774,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "Maksimum LTV",
             "asset": "Varlıklar"
           },
           "label": "Varlık kategorisi",
@@ -2793,12 +2786,9 @@
             "asset": "Varlık",
             "collateral": "Teminat"
           },
-          "title": "Varlık kategorisi",
-          "apy": "APY",
-          "maxLtv": "Max LTV"
+          "title": "Varlık kategorisi"
         },
         "title": "E-Mode'u Yönet",
-        "emode": "E-Modu",
         "unavailable": "• Kullanılamaz",
         "unavailableTips": "Mevcut kredi verme/borç alma varlıklarınız desteklenmiyor.",
         "disableTitle": "Devre dışı bırak",

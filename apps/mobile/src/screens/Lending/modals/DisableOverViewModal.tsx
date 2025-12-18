@@ -104,9 +104,7 @@ const DisableEmodeOverviewModal = ({ onClose }: { onClose: () => void }) => {
           />
           <View style={[styles.item]}>
             <View style={styles.maxLtvContainer}>
-              <Text style={styles.title}>
-                {t('page.Lending.manageEmode.overview.maxLtv')}
-              </Text>
+              <Text style={styles.title}>{t('page.Lending.maxLtv')}</Text>
               <Pressable hitSlop={20} onPress={handleMaxLTVDescription}>
                 <WarningFillCC
                   width={12}

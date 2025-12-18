@@ -165,9 +165,7 @@ const SupplyPoolList = () => {
               color={colors2024['neutral-secondary']}
             />
           </Pressable>
-          <Text style={styles.headerApy}>
-            {t('page.Lending.list.headers.apy')}
-          </Text>
+          <Text style={styles.headerApy}>{t('page.Lending.apy')}</Text>
           <Text style={styles.headerMySupplies}>
             {t('page.Lending.list.headers.mySupplies')}
           </Text>

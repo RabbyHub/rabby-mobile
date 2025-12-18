@@ -2693,9 +2693,7 @@
           "token_tvl": "トークン/TVL",
           "token_balance": "トークン/残高"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -2787,11 +2785,9 @@
         "globalIsolatedDesc": "隔離モードでは、他の資産を担保として提供することはできません。グローバルな債務上限は、孤立した資産の借入能力を制限します。隔離モードから退出するには、別の資産を借りる前にUNIを担保として無効にしてください。",
         "maxLTV": "最大LTV比率は、特定の担保の最大借入能力を表します。たとえば、担保のLTVが75%の場合、ユーザーは1 ETHの担保ごとに、主通貨で最大0.75のETHを借りることができます。"
       },
-      "apy": "APY",
       "supplied": "供給された",
       "estDailyEarning": "推定日収入",
       "selectChain": "チェーンを選択",
-      "market": "市場",
       "submitted": "提出されました",
       "netWorth": "ネットワース",
       "gotIt": "わかりました",
@@ -2799,9 +2795,7 @@
       "enterAmount": "金額を入力してください",
       "hfTitle": "ヘルスファクター",
       "hf": "ヘルスファクター",
-      "isolated": "隔離",
       "estNetApy": "推定ネットAPY",
-      "marketSlot": "{{market}} マーケット",
       "toggleCollateralDetail": {
         "disable": "{{asset}}を担保として無効化",
         "enable": "{{asset}}を担保として有効にする",
@@ -2833,7 +2827,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "最大LTV",
             "asset": "資産"
           },
           "label": "資産カテゴリー",
@@ -2846,11 +2839,8 @@
             "borrowable": "借り入れ可能",
             "asset": "資産"
           },
-          "maxLtv": "最大LTV",
-          "title": "資産カテゴリ",
-          "apy": "APY"
+          "title": "資産カテゴリ"
         },
-        "emode": "E-Mode",
         "disableTitle": "無効にする",
         "unavailableTips": "あなたの既存の貸出/借入資産はサポートされていません。",
         "unavailable": "• 利用不可",

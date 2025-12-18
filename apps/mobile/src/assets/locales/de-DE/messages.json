@@ -2984,9 +2984,7 @@
           "token_tvl": "Token/TVL",
           "token_balance": "Token/Guthaben"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -3080,9 +3078,7 @@
       },
       "supplied": "Geliefert",
       "netWorth": "Vermögen",
-      "market": "Markt",
       "selectChain": "Kette auswählen",
-      "apy": "APY",
       "borrowed": "Ausgeliehen",
       "estDailyEarning": "Est. Tägliches Einkommen",
       "gotIt": "Verstanden",
@@ -3090,9 +3086,7 @@
       "hf": "Gesundheitsfaktor",
       "hfTitle": "Gesundheitsfaktor",
       "enterAmount": "Betrag eingeben",
-      "isolated": "isoliert",
       "estNetApy": "Est. netto APY",
-      "marketSlot": "{{market}} Markt",
       "toggleCollateralDetail": {
         "disable": "Deaktiviere {{asset}} als Sicherheit",
         "enable": "Aktivieren Sie {{asset}} als Sicherheiten",
@@ -3124,7 +3118,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "Max LTV",
             "asset": "Vermögenswerte"
           },
           "label": "Vermögenskategorie",
@@ -3137,12 +3130,9 @@
             "collateral": "Sicherheit",
             "borrowable": "Ausleihbar"
           },
-          "maxLtv": "Max LTV",
-          "title": "Vermögenskategorie",
-          "apy": "APY"
+          "title": "Vermögenskategorie"
         },
         "title": "E-Mode verwalten",
-        "emode": "E-Modus",
         "unavailable": "• Nicht verfügbar",
         "disableTitle": "Deaktivieren",
         "description": "Die Aktivierung des E-Modus ermöglicht es Ihnen, Ihre Kreditaufnahme zu maximieren. Das Ausleihen ist jedoch auf Vermögenswerte innerhalb der ausgewählten Kategorie beschränkt.",

@@ -2984,9 +2984,7 @@
           "token_balance": "Token/Saldo",
           "token_tvl": "Token/TVL"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -3082,17 +3080,13 @@
       "gotIt": "Entendi",
       "submitted": "submetido",
       "netWorth": "Valor líquido",
-      "market": "Mercado",
       "estDailyEarning": "Est. Ganhos Diários",
       "selectChain": "Selecionar Cadeia",
-      "apy": "APY",
       "borrowed": "Emprestado",
       "hfTitle": "Fator de Saúde",
       "enterAmount": "Introduza o montante",
       "hf": "Fator de saúde",
-      "isolated": "isolado",
       "estNetApy": "Est. rendimento líquido APY",
-      "marketSlot": "{{market}} Mercado",
       "toggleCollateralDetail": {
         "disable": "Desativar {{asset}} como Colateral",
         "error": "Há um erro com o serviço AAVE. Por favor, tente novamente mais tarde.",
@@ -3124,8 +3118,7 @@
         },
         "categorySelector": {
           "header": {
-            "asset": "Ativos",
-            "ltv": "Max LTV"
+            "asset": "Ativos"
           },
           "label": "Categoria de ativos",
           "placeholder": "Selecionar",
@@ -3137,15 +3130,12 @@
             "asset": "Ativo",
             "collateral": "Colateral"
           },
-          "title": "Categoria de ativo",
-          "maxLtv": "LTV Máximo",
-          "apy": "APY"
+          "title": "Categoria de ativo"
         },
         "title": "Gerir E-Mode",
         "enabled": "• Ativado",
         "unavailable": "• Indisponível",
         "disableTitle": "Desativar",
-        "emode": "E-Mode",
         "unavailableTips": "Os seus ativos de empréstimo/empréstimo existentes não são suportados.",
         "description": "Ativar o E-Mode permite maximizar o seu poder de empréstimo. No entanto, o empréstimo está restrito a ativos dentro da categoria selecionada."
       },

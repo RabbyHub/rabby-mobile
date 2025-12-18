@@ -2650,9 +2650,7 @@
           "token_balance": "Jeton/Équilibre",
           "token_tvl": "Token/TVL"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -2744,7 +2742,6 @@
         "globalIsolatedDesc": "En mode d'isolement, vous ne pouvez pas fournir d'autres actifs comme garantie. Un plafond d'endettement global limite le pouvoir d'emprunt de l'actif isolé. Pour sortir du mode d'isolement, désactivez UNI en tant que garantie avant d'emprunter un autre actif.",
         "maxLTV": "Le ratio LTV maximum représente le pouvoir d'emprunt maximum d'un collatéral spécifique. Par exemple, si un collatéral a un LTV de 75 %, l'utilisateur peut emprunter jusqu'à 0,75 de la valeur de l'ETH dans la monnaie principale pour chaque 1 ETH de valeur de collatéral."
       },
-      "market": "Marché",
       "supplied": "Fournie",
       "estDailyEarning": "Est. Gains Quotidiens",
       "selectChain": "Sélectionner la chaîne",
@@ -2754,11 +2751,8 @@
       "borrowed": "Emprunté",
       "enterAmount": "Saisir le montant",
       "hfTitle": "Facteur de santé",
-      "apy": "APY",
       "hf": "Facteur de santé",
-      "isolated": "isolé",
       "estNetApy": "Est. net APY",
-      "marketSlot": "{{market}} Marché",
       "toggleCollateralDetail": {
         "disable": "Désactiver {{asset}} en tant que garantie",
         "error": "Il y a une erreur avec le service AAVE. Veuillez réessayer plus tard.",
@@ -2790,7 +2784,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "Max LTV",
             "asset": "Actifs"
           },
           "placeholder": "Sélectionner",
@@ -2803,12 +2796,9 @@
             "borrowable": "Empruntable",
             "asset": "Actif"
           },
-          "title": "Catégorie d'actifs",
-          "maxLtv": "Max LTV",
-          "apy": "APY"
+          "title": "Catégorie d'actifs"
         },
         "enabled": "• Activé",
-        "emode": "E-Mode",
         "unavailableTips": "Vos actifs de prêt/emprunt existants ne sont pas pris en charge.",
         "unavailable": "• Indisponible",
         "disableTitle": "Désactiver",
