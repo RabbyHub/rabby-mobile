@@ -60,7 +60,12 @@ import { ParaswapRatesType, SwappableToken } from '../../types/swap';
 import { getParaswap } from '../../config/paraswap';
 import { getParaswapSellRates } from '../../components/actions/DebtSwap/paraswap';
 import { usePoolDataProviderContract, useSelectedMarket } from '../../hooks';
-import { useDebtSwapSlippage, useFormatValues, useSwapReserves } from './hooks';
+import {
+  useDebtSwapSlippage,
+  useFormatValues,
+  useHFForDebtSwap,
+  useSwapReserves,
+} from './hooks';
 import DebtSwapModalSlider from './Slider';
 import {
   DEFAULT_DEBT_SWAP_SLIPPAGE,
@@ -72,7 +77,7 @@ import {
   generateApproveDelegation,
 } from '../../poolService';
 import { normalizeBN } from '@aave/math-utils';
-import { getPriceImpactData } from './warning';
+import { getPriceImpactData, getToAmountAfterSlippage } from './warning';
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 
 interface DebtSwapModalProps {
@@ -123,6 +128,8 @@ export default function DebtSwapModal({
     maxInputAmountWithSlippage?: string;
   }>({});
 
+  const [currentTxs, setCurrentTxs] = useState<Tx[]>([]);
+
   const lastQuoteParamsRef = useRef<{
     rawAmount: string;
     toToken?: string;
@@ -158,15 +165,21 @@ export default function DebtSwapModal({
     toToken,
     setSwapRate,
   });
+  const toAmountAfterSlippage = useMemo(() => {
+    return getToAmountAfterSlippage({
+      inputAmount: toAmount,
+      slippage: Number(slippage) * 100,
+    });
+  }, [toAmount, slippage]);
 
   const priceImpactData = useMemo(() => {
     return getPriceImpactData({
       fromToken,
       toToken,
       fromAmount: debouncedFromAmount,
-      toAmount,
+      toAmount: toAmountAfterSlippage,
     });
-  }, [fromToken, toToken, debouncedFromAmount, toAmount]);
+  }, [debouncedFromAmount, toToken, fromToken, toAmountAfterSlippage]);
 
   useEffect(() => {
     setRiskChecked(false);
@@ -521,16 +534,77 @@ export default function DebtSwapModal({
   ]);
 
   useEffect(() => {
-    if (currentAccount && canShowDirectSubmit) {
-      prefetchMiniSigner({
-        buildTxs: buildDebtSwapTxs,
-        synGasHeaderInfo: true,
-      });
-    }
+    let cancelled = false;
+    const buildTxs = async () => {
+      if (
+        !currentAccount ||
+        !toToken ||
+        !quote ||
+        !swapRate.optimalRateData ||
+        !selectedMarketData?.addresses?.DEBT_SWITCH_ADAPTER ||
+        !pools?.provider ||
+        !toReserve ||
+        !fromReserve ||
+        !debouncedFromAmount ||
+        new BigNumber(debouncedFromAmount).lte(0)
+      ) {
+        if (!cancelled) {
+          setCurrentTxs([]);
+        }
+        return;
+      }
+
+      try {
+        const txs = await buildDebtSwapTxs();
+        if (!cancelled) {
+          setCurrentTxs(txs);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setCurrentTxs([]);
+        }
+      }
+    };
+    buildTxs();
+    return () => {
+      cancelled = true;
+    };
   }, [
     buildDebtSwapTxs,
-    canShowDirectSubmit,
     currentAccount,
+    debouncedFromAmount,
+    fromReserve,
+    pools?.provider,
+    quote,
+    selectedMarketData?.addresses?.DEBT_SWITCH_ADAPTER,
+    swapRate.optimalRateData,
+    toReserve,
+    toToken,
+  ]);
+
+  const { currentHF, isHFLow, isLiquidatable, afterSwapInfo } =
+    useHFForDebtSwap({
+      fromToken,
+      toToken,
+      fromAmount,
+      toAmount: toAmountAfterSlippage,
+    });
+
+  useEffect(() => {
+    if (!currentAccount || !canShowDirectSubmit || !currentTxs?.length) {
+      closeMiniSigner();
+      return;
+    }
+    prefetchMiniSigner({
+      txs: currentTxs,
+      synGasHeaderInfo: true,
+      checkGasFeeTooHigh: true,
+    });
+  }, [
+    canShowDirectSubmit,
+    closeMiniSigner,
+    currentAccount,
+    currentTxs,
     prefetchMiniSigner,
   ]);
 
@@ -542,18 +616,7 @@ export default function DebtSwapModal({
 
       try {
         setIsLoading(true);
-        let txs: Tx[] = [];
-        try {
-          txs = await buildDebtSwapTxs();
-        } catch (error: any) {
-          if (error?.message === 'quote-outdated') {
-            toast.info('quote outdated, please retry');
-            return;
-          }
-          throw error;
-        }
-
-        if (!txs.length) {
+        if (!currentTxs.length) {
           toast.info('please retry');
           return;
         }
@@ -562,7 +625,7 @@ export default function DebtSwapModal({
         if (canShowDirectSubmit && !p?.forceFullSign) {
           try {
             results = await openDirect({
-              txs,
+              txs: currentTxs,
               ga: {
                 customAction: CUSTOM_HISTORY_ACTION.LENDING,
                 customActionTitleType:
@@ -572,6 +635,7 @@ export default function DebtSwapModal({
               ignoreGasFeeTooHigh: p?.ignoreGasFee,
             });
           } catch (error) {
+            console.error('CUSTOM_LOGGER:=>: error', error);
             if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
               closeMiniSigner();
               onClose?.();
@@ -586,7 +650,7 @@ export default function DebtSwapModal({
             return;
           }
         } else {
-          for (const tx of txs) {
+          for (const tx of currentTxs) {
             const hash = await apiProvider.sendRequest({
               data: {
                 method: 'eth_sendTransaction',
@@ -630,7 +694,7 @@ export default function DebtSwapModal({
       t,
       closeMiniSigner,
       onClose,
-      buildDebtSwapTxs,
+      currentTxs,
       openDirect,
       ctx?.gasFeeTooHigh,
     ],
@@ -642,8 +706,15 @@ export default function DebtSwapModal({
   }, [displaySlippage]);
 
   const isRisky = useMemo(() => {
-    return isSlippageHigh || priceImpactData.showConfirmation;
-  }, [isSlippageHigh, priceImpactData.showConfirmation]);
+    return isSlippageHigh || priceImpactData.showConfirmation || isHFLow;
+  }, [isHFLow, isSlippageHigh, priceImpactData.showConfirmation]);
+
+  const riskDesc = useMemo(() => {
+    if (isHFLow) {
+      return t('page.Lending.debtSwap.lpRiskWarning');
+    }
+    return t('page.bridge.showMore.signWarning');
+  }, [isHFLow, t]);
 
   const canSwap = useMemo(() => {
     return (
@@ -658,8 +729,8 @@ export default function DebtSwapModal({
   }, [fromAmount, fromBalanceBn, isQuoteLoading, isSameToken, quote, toToken]);
 
   const buttonDisabled = useMemo(() => {
-    return !canSwap || (isRisky && !riskChecked);
-  }, [canSwap, isRisky, riskChecked]);
+    return !canSwap || (isRisky && !riskChecked) || isLiquidatable;
+  }, [canSwap, isLiquidatable, isRisky, riskChecked]);
 
   return (
     <AutoLockView style={styles.container}>
@@ -894,9 +965,12 @@ export default function DebtSwapModal({
           chainEnum={chainEnum}
           fromAmount={debouncedFromAmount}
           currentToAmount={toDisplayReserve?.variableBorrows || '0'}
-          toAmount={toAmount}
+          toAmount={toAmountAfterSlippage}
           fromBalanceBn={fromBalanceBn.toString()}
           isQuoteLoading={isQuoteLoading}
+          currentHF={currentHF}
+          afterHF={afterSwapInfo?.hfAfterSwap.toString()}
+          showHF={isHFLow || isLiquidatable}
         />
       </BottomSheetScrollView>
 
@@ -904,9 +978,19 @@ export default function DebtSwapModal({
         style={[
           styles.buttonContainer,
           {
-            height: BOTTOM_SIZE.BUTTON + (isRisky ? BOTTOM_SIZE.CHECKBOX : 0),
+            height:
+              BOTTOM_SIZE.BUTTON +
+              (isRisky ? BOTTOM_SIZE.CHECKBOX : 0) +
+              (isLiquidatable ? BOTTOM_SIZE.TIPS : 0),
           },
         ]}>
+        {isLiquidatable && (
+          <View style={styles.riskContainer}>
+            <Text style={styles.dangerWarningText}>
+              {t('page.Lending.debtSwap.lpDangerWarning')}
+            </Text>
+          </View>
+        )}
         {isRisky && (
           <Pressable
             style={styles.riskContainer}
@@ -914,22 +998,20 @@ export default function DebtSwapModal({
               setRiskChecked(!riskChecked);
             }}>
             <CheckBoxRect checked={riskChecked} size={16} />
-            <Text style={styles.warningText}>
-              {t('page.bridge.showMore.signWarning')}
-            </Text>
+            <Text style={styles.warningText}>{riskDesc}</Text>
           </Pressable>
         )}
         {canShowDirectSubmit ? (
           <DirectSignBtn
             loading={isLoading}
             loadingType="circle"
-            key={`${fromToken.underlyingAddress}-${toToken?.underlyingAddress}`}
+            key={`${fromToken.underlyingAddress}-${toToken?.underlyingAddress}-${debouncedFromAmount}`}
             showTextOnLoading
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.debtSwap.button.swap')}
             title={t('page.Lending.debtSwap.button.swap')}
             onFinished={() => handleSwap()}
-            disabled={buttonDisabled}
+            disabled={buttonDisabled || !!ctx?.disabledProcess}
             type="primary"
             syncUnlockTime
             account={currentAccount}
@@ -1202,6 +1284,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
+  },
+  dangerWarningText: {
+    fontSize: 12,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    color: colors2024['red-default'],
   },
   priceImpactContainer: {
     paddingHorizontal: 8,

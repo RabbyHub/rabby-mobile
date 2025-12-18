@@ -10,6 +10,7 @@ import { formatApy } from '../../utils/format';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import BigNumber from 'bignumber.js';
+import HealthFactorText from '../../components/HealthFactorText';
 
 interface DebtSwapModalOverviewProps {
   fromToken: SwappableToken;
@@ -20,6 +21,9 @@ interface DebtSwapModalOverviewProps {
   fromBalanceBn?: string;
   isQuoteLoading?: boolean;
   currentToAmount: string;
+  currentHF?: string;
+  afterHF?: string;
+  showHF?: boolean;
 }
 
 const DebtSwapModalOverview = ({
@@ -31,6 +35,9 @@ const DebtSwapModalOverview = ({
   fromBalanceBn,
   isQuoteLoading,
   currentToAmount,
+  currentHF,
+  afterHF,
+  showHF,
 }: DebtSwapModalOverviewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -88,6 +95,22 @@ const DebtSwapModalOverview = ({
             </Text>
           </View>
         </View>
+        {showHF && currentHF && (
+          <View style={[styles.transactionOverviewRow, styles.hfContainer]}>
+            <Text style={styles.title}>{t('page.Lending.hf')}</Text>
+            <Text style={styles.hfValue}>
+              {afterHF ? (
+                <>
+                  <HealthFactorText healthFactor={currentHF} />
+                  <Text style={styles.arrow}>→</Text>
+                  <HealthFactorText healthFactor={afterHF} />
+                </>
+              ) : (
+                <HealthFactorText healthFactor={currentHF} />
+              )}
+            </Text>
+          </View>
+        )}
         <View style={styles.transactionOverviewRow}>
           <Text style={styles.transactionOverviewLabel}>
             {t('page.Lending.debtSwap.overview.borrowValueAfter')}
@@ -242,5 +265,36 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   loadingOpacity: {
     opacity: 0.5,
+  },
+  hfContainer: {
+    gap: 6,
+  },
+  hidden: {
+    display: 'none',
+  },
+  hfValue: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+    overflow: 'hidden',
+    alignSelf: 'flex-start',
+  },
+  title: {
+    color: colors2024['neutral-foot'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+  },
+  arrow: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));

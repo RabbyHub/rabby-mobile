@@ -11,6 +11,12 @@ import {
   maxInputAmountWithSlippage,
 } from './utils';
 import { OptimalRate } from '@paraswap/sdk';
+import { calculateHFAfterSwap } from '../../utils/hfUtils';
+import { valueToBigNumber } from '@aave/math-utils';
+import {
+  LIQUIDATION_DANGER_THRESHOLD,
+  LIQUIDATION_SAFETY_THRESHOLD,
+} from '../../utils/constant';
 
 export const useFormatValues = ({
   fromToken,
@@ -91,6 +97,15 @@ export const useSwapReserves = ({
     );
   }, [displayPoolReserves, toToken?.underlyingAddress]);
 
+  const fromDisplayReserve = useMemo(() => {
+    if (!fromToken.underlyingAddress) {
+      return undefined;
+    }
+    return displayPoolReserves.find(item =>
+      isSameAddress(item.underlyingAsset, fromToken.underlyingAddress),
+    );
+  }, [displayPoolReserves, fromToken.underlyingAddress]);
+
   const isSameToken = useMemo(() => {
     if (!toToken) {
       return false;
@@ -105,6 +120,7 @@ export const useSwapReserves = ({
     toReserve,
     isSameToken,
     toDisplayReserve,
+    fromDisplayReserve,
   };
 };
 
@@ -215,5 +231,87 @@ export const useDebtSwapSlippage = ({
     displaySlippage,
     selectedSlippageBps,
     slippageBpsRef,
+  };
+};
+
+export const useHFForDebtSwap = ({
+  fromToken,
+  toToken,
+  fromAmount,
+  toAmount,
+}: {
+  fromToken: SwappableToken;
+  toToken?: SwappableToken;
+  fromAmount: string;
+  toAmount: string;
+}) => {
+  const { iUserSummary: user } = useLendingSummary();
+  const { fromReserve, fromDisplayReserve, toReserve, toDisplayReserve } =
+    useSwapReserves({
+      fromToken,
+      toToken,
+    });
+  const afterSwapInfo = useMemo(() => {
+    if (
+      !fromDisplayReserve ||
+      !toDisplayReserve ||
+      !fromReserve ||
+      !toReserve ||
+      !user
+    ) {
+      return undefined;
+    }
+    return calculateHFAfterSwap({
+      fromAmount: toAmount,
+      fromAssetData: toReserve,
+      fromAssetUserData: toDisplayReserve,
+      toAmountAfterSlippage: fromAmount,
+      toAssetData: fromReserve,
+      user: user,
+      fromAssetType: 'debt',
+      toAssetType: 'debt',
+    });
+  }, [
+    fromDisplayReserve,
+    toDisplayReserve,
+    fromReserve,
+    toReserve,
+    user,
+    toAmount,
+    fromAmount,
+  ]);
+
+  const isHFLow = useMemo(() => {
+    const hfAfterSwap = afterSwapInfo?.hfAfterSwap;
+    if (!hfAfterSwap) {
+      return false;
+    }
+
+    const hfNumber = valueToBigNumber(hfAfterSwap);
+
+    if (hfNumber.lt(0)) {
+      return false;
+    }
+
+    return (
+      hfNumber.lt(LIQUIDATION_SAFETY_THRESHOLD) &&
+      hfNumber.gte(LIQUIDATION_DANGER_THRESHOLD)
+    );
+  }, [afterSwapInfo?.hfAfterSwap]);
+
+  const isLiquidatable = useMemo(() => {
+    if (!afterSwapInfo?.hfAfterSwap) {
+      return false;
+    }
+    return valueToBigNumber(afterSwapInfo.hfAfterSwap).lt(
+      LIQUIDATION_DANGER_THRESHOLD,
+    );
+  }, [afterSwapInfo?.hfAfterSwap]);
+
+  return {
+    currentHF: user?.healthFactor,
+    afterSwapInfo,
+    isHFLow,
+    isLiquidatable,
   };
 };

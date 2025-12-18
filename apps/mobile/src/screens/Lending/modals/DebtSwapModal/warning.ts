@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { SwappableToken } from '../../types/swap';
+import { valueToBigNumber } from '@aave/math-utils';
 
 export const valueLostPercentage = (
   destValueInUsd: number,
@@ -47,7 +48,7 @@ export const getPriceImpactData = ({
   fromAmount,
   toAmount,
 }: {
-  fromToken: SwappableToken;
+  fromToken?: SwappableToken;
   toToken?: SwappableToken;
   fromAmount: string;
   toAmount: string;
@@ -71,4 +72,16 @@ export const getPriceImpactData = ({
     lostValue,
     diff: lostValue.toFixed(2),
   };
+};
+
+export const getToAmountAfterSlippage = ({
+  inputAmount,
+  slippage,
+}: {
+  inputAmount: string; // to，目标债务
+  slippage: number; // bps
+}) => {
+  return valueToBigNumber(inputAmount)
+    .multipliedBy(1 + Number(slippage) / 10000)
+    .toFixed();
 };
