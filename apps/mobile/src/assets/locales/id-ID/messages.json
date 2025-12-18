@@ -1105,7 +1105,6 @@
         "passwordTopTips": "Kata sandi ini akan digunakan untuk membuka kunci dompet Anda dan mengenkripsi data lokal Anda.",
         "addressTopTips": "Gunakan untuk mengirim dan menerima crypto di blockchain",
         "confirmPasswordTips": "Kata sandi cocok",
-        "WriteSeedPhrase": "",
         "riskTips": "Sebelum Anda mulai, harap baca dan ingat tips keamanan ini:",
         "UnderstandsecurityPrecautions": "Saya memahami langkah-langkah keamanan ini.",
         "createOnCurrentDesc": "Buat dompet dengan frasa benih impor yang sudah ada",

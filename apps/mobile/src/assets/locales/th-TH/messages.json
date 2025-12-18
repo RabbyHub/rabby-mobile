@@ -1325,7 +1325,6 @@
         "passwordTopTips": "รหัสผ่านนี้จะถูกใช้เพื่อปลดล็อกกระเป๋าเงินของคุณและเข้ารหัสข้อมูลในเครื่องของคุณ",
         "VerifyDownSeedPhrase": "ยืนยันวลีเมล็ดพันธุ์ ",
         "savedPhrase": "ฉันได้บันทึก Phrase แล้ว",
-        "WriteSeedPhrase": "",
         "passwordMin": "ต้องมีอย่างน้อย 8 ตัวอักษร",
         "UnderstandsecurityPrecautions": "ฉันเข้าใจมาตรการรักษาความปลอดภัยเหล่านี้แล้ว",
         "selectWords": "เลือกคำ",

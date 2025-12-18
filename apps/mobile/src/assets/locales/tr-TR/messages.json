@@ -1100,7 +1100,6 @@
         "BackupSeedPhrase": "Manuel Olarak Seed Phrase Yedekle",
         "addressTopTips": "Bunu kullanarak blockchain üzerinde kripto gönderin ve alın.",
         "inOrder": "doğru sırayla.",
-        "WriteSeedPhrase": "",
         "createNewSeedPhrase": "Yeni Seed Phrase Oluştur",
         "VerifyDownSeedPhrase": "Seed ifadesini doğrulayın",
         "WriteDownSeedPhrase": "Seed ifadenizi yazın",

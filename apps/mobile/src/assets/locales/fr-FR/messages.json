@@ -1070,7 +1070,6 @@
         "createOnCurrent": "Utiliser la phrase de récupération actuelle",
         "WriteDownSeedPhrase": "Notez Votre Phrase Seed",
         "backupSeedPhrase": "Sauvegardez votre phrase de récupération pour restaurer votre portefeuille si l'application est supprimée ou si votre appareil est perdu.",
-        "WriteSeedPhrase": "",
         "passwordTopTips": "Ce mot de passe sera utilisé pour déverrouiller votre wallet et chiffrer vos données locales.",
         "createNewSeedPhrase": "Créer une nouvelle Seed Phrase",
         "createNewDesc": "Générez une nouvelle phrase de récupération pour les nouveaux wallets",

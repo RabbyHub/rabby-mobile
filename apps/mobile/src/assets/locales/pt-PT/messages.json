@@ -1405,7 +1405,6 @@
         "passwordMin": "Deve ter pelo menos 8 caracteres",
         "createNewSeedPhrase": "Criar Nova Seed Phrase",
         "backupSeedPhrase": "Faça backup da sua seed phrase para restaurar a sua carteira caso a aplicação seja apagada ou se o seu dispositivo for perdido.",
-        "WriteSeedPhrase": "",
         "riskTips": "Antes de começar, por favor, leia e mantenha estas dicas de segurança em mente:",
         "createOnCurrentDesc": "Criar carteira com uma frase-semente importada existente",
         "createNewDesc": "Gere uma nova frase-semente para novas carteiras"
