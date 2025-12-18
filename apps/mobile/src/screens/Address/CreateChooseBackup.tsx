@@ -89,7 +89,14 @@ function MainListBlocks() {
         Keyboard.dismiss();
       }}>
       <View style={[styles.container]}>
-        <Text style={[styles.text]}>
+        {!!state?.isFirstCreate && <ProgressBar amount={3} currentCount={3} />}
+        <Text
+          style={[
+            styles.text,
+            !!state?.isFirstCreate && {
+              marginTop: 60,
+            },
+          ]}>
           {t('page.nextComponent.createNewAddress.backupSeedPhrase')}
         </Text>
         <Card style={styles.listItem} onPress={handleBackupToCloud}>

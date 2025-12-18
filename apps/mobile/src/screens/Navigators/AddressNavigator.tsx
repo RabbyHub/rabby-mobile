@@ -276,8 +276,8 @@ export function AddressNavigator() {
         name={RootNames.CreateNewAddress}
         component={CreateNewAddress}
         options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.ConfrimAddress'),
-          title: t('screens.addressStackTitle.ConfrimAddress'),
+          headerTitle: t('screens.addressStackTitle.CreateNewAddress'),
+          title: t('screens.addressStackTitle.CreateNewAddress'),
           headerTintColor: colors2024['neutral-title-1'],
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
@@ -301,15 +301,21 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.CreateChooseBackup}
         component={CreateChooseBackup}
-        options={mergeScreenOptions({
-          headerTitle: t('screens.addressStackTitle.ChooseBackup'),
-          title: t('screens.addressStackTitle.ChooseBackup'),
-          headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
-          },
-          headerTintColor: colors2024['neutral-title-1'],
-          headerTitleStyle: styles.headerTitleText,
-        })}
+        options={e => {
+          return mergeScreenOptions({
+            headerTitle: e.route.params?.isFirstCreate
+              ? t('screens.addressStackTitle.CreateChooseBackup')
+              : t('screens.addressStackTitle.ChooseBackup'),
+            title: e.route.params?.isFirstCreate
+              ? t('screens.addressStackTitle.CreateChooseBackup')
+              : t('screens.addressStackTitle.ChooseBackup'),
+            headerStyle: {
+              backgroundColor: colors2024['neutral-bg-1'],
+            },
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
+          });
+        }}
       />
       <AddressStack.Screen
         name={RootNames.AddressDetail}

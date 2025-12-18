@@ -168,6 +168,7 @@ export type AddressNavigatorParamList = {
     mnemonics?: string;
     title?: string;
     accounts?: string[];
+    isFirstCreate?: boolean;
   };
   [RootNames.SetPassword2024]?: {
     finishGoToScreen:
@@ -181,12 +182,14 @@ export type AddressNavigatorParamList = {
     delaySetPassword?: boolean;
     hideBackIcon?: boolean;
     isFirstImportPassword?: boolean;
+    isFirstCreate?: boolean;
   };
   [RootNames.ImportSafeAddress2024]?: {};
   [RootNames.ImportWatchAddress2024]?: {};
   [RootNames.CreateSelectMethod]?: {};
   [RootNames.CreateChooseBackup]?: {
     delaySetPassword?: boolean;
+    isFirstCreate?: boolean;
   };
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportMethods]?: {

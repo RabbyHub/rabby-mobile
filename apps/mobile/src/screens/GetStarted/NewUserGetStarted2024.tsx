@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { RcIconLogoBlue } from '@/assets/icons/common';
@@ -77,6 +77,9 @@ function GetStartedScreen2024(): JSX.Element {
     );
     navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.CreateNewAddress,
+      params: {
+        isFirstCreate: true,
+      },
     });
   }, [getStaretd.processedInit, startCreateAddressProc]);
 
