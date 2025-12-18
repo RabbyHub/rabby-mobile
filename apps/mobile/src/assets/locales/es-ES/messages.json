@@ -2774,8 +2774,8 @@
         "providerFeeTips": "Tarifa de Hyperliquid: {{fee}}",
         "positionSize": "Tamaño de posición",
         "rabbyFeeTips": "Tarifa de Rabby: 0,04%",
-        "closedPnl": "PNL cerrado:",
-        "receive": "Recibir:",
+        "closedPnl": "PNL cerrado",
+        "receive": "Recibir",
         "total": "Total",
         "confirm": "Confirmar",
         "amount": "Cantidad",
@@ -2863,7 +2863,7 @@
         "amountToAdd": "Cantidad a agregar",
         "reduceMargin": "Reducir Margen",
         "available": "disponible",
-        "liqPrice": "Precio de Liq.:",
+        "liqPrice": "Precio de Liq.",
         "liqDistance": "Liq.Distancia"
       },
       "PerpsAddPositionPopup": {

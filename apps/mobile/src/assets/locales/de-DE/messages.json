@@ -2853,9 +2853,9 @@
         "closeBtn": "Schließe {{direction}}",
         "providerFeeTips": "Hyperliquid-Gebühr: {{fee}}",
         "total": "Gesamt",
-        "receive": "Erhalten:",
+        "receive": "Erhalten",
         "minimumWarning": "Der Mindestbetrag beträgt {{percent}}%.",
-        "closedPnl": "Geschlossener PNL:",
+        "closedPnl": "Geschlossener PNL",
         "amount": "Betrag",
         "confirm": "Bestätigen"
       },
@@ -2933,7 +2933,7 @@
       "PerpsEditMarginPopup": {
         "title": "Margin anpassen",
         "currentPrice": "Aktueller Preis",
-        "liqPrice": "Liq. Preis:",
+        "liqPrice": "Liq. Preis",
         "addMargin": "Margin hinzufügen",
         "insufficientMarginToReduce": "Unzureichende Marge, um die Position zu reduzieren.",
         "amountToAdd": "Betrag hinzufügen",
