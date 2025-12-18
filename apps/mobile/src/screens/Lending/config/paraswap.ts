@@ -1,4 +1,3 @@
-import { SWAP_FEE_ADDRESS } from '@/constant/swap';
 import { ChainId } from '@aave/contract-helpers';
 import {
   BuildTxFunctions,
@@ -9,7 +8,7 @@ import {
   GetRateFunctions,
 } from '@paraswap/sdk';
 
-const feeTarget = SWAP_FEE_ADDRESS;
+const DEBT_FEE_TARGET = '0xcd6b980029e6e6e0733ac8ec3e02be9410d09799';
 
 const ParaSwap = (chainId: number) => {
   const fetcher = constructFetchFetcher(fetch); // alternatively constructFetchFetcher
@@ -34,39 +33,39 @@ type ParaswapChainMap = {
 const paraswapNetworks: ParaswapChainMap = {
   [ChainId.mainnet]: {
     paraswap: ParaSwap(ChainId.mainnet),
-    feeTarget,
+    feeTarget: DEBT_FEE_TARGET,
   },
   [ChainId.polygon]: {
     paraswap: ParaSwap(ChainId.polygon),
-    feeTarget,
+    feeTarget: DEBT_FEE_TARGET,
   },
   [ChainId.avalanche]: {
     paraswap: ParaSwap(ChainId.avalanche),
-    feeTarget,
+    feeTarget: DEBT_FEE_TARGET,
   },
   [ChainId.arbitrum_one]: {
     paraswap: ParaSwap(ChainId.arbitrum_one),
-    feeTarget,
+    feeTarget: DEBT_FEE_TARGET,
   },
   [ChainId.optimism]: {
     paraswap: ParaSwap(ChainId.optimism),
-    feeTarget,
+    feeTarget: DEBT_FEE_TARGET,
   },
   [ChainId.base]: {
     paraswap: ParaSwap(ChainId.base),
-    feeTarget,
+    feeTarget: DEBT_FEE_TARGET,
   },
   [ChainId.bnb]: {
     paraswap: ParaSwap(ChainId.bnb),
-    feeTarget,
+    feeTarget: DEBT_FEE_TARGET,
   },
   [ChainId.xdai]: {
     paraswap: ParaSwap(ChainId.xdai),
-    feeTarget,
+    feeTarget: DEBT_FEE_TARGET,
   },
   [ChainId.sonic]: {
     paraswap: ParaSwap(ChainId.sonic),
-    feeTarget,
+    feeTarget: DEBT_FEE_TARGET,
   },
 };
 
