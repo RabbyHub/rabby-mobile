@@ -25,6 +25,7 @@ import { BackHandler, Platform, useWindowDimensions, View } from 'react-native';
 import { BrowserScreen } from '../BrowserScreen';
 import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
 import { BrowserHandler } from './BrowserHandler';
+import { BrowserFavoriteManage } from '../BrowserScreen/components/BrowserFavoriteManage';
 
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
@@ -38,10 +39,25 @@ export const BottomSheetBrowser = () => {
 
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { width } = useWindowDimensions();
+  const { browserHistoryList } = useBrowserHistory();
 
   const snapPoints = useMemo(() => {
     return [safeOffScreenTop];
   }, [safeOffScreenTop]);
+
+  const isTransparent = useMemo(() => {
+    return (
+      browserState.trigger === 'home' &&
+      !browserHistoryList?.length &&
+      !browserState.searchText.trim() &&
+      browserState.isShowSearch
+    );
+  }, [
+    browserHistoryList?.length,
+    browserState.isShowSearch,
+    browserState.searchText,
+    browserState.trigger,
+  ]);
 
   useEffect(() => {
     if (browserState.isShowBrowser && !isLoad) {
@@ -136,16 +152,24 @@ export const BottomSheetBrowser = () => {
         }
       }}>
       <AutoLockView as="View" style={styles.customContentStyle}>
-        <BottomSheetHandlableView
-          style={[
-            styles.customHandleContainer,
-            {
-              left: width / 2 - 25,
-            },
-          ]}>
-          <View style={styles.customHandle} />
-        </BottomSheetHandlableView>
-        {isLoad ? <BrowserScreen /> : <View style={styles.placeholder} />}
+        {!isTransparent ? (
+          <BottomSheetHandlableView
+            style={[
+              styles.customHandleContainer,
+              {
+                left: width / 2 - 25,
+              },
+            ]}>
+            <View style={styles.customHandle} />
+          </BottomSheetHandlableView>
+        ) : null}
+        {isLoad ? (
+          <BrowserScreen style={isTransparent ? styles.transparent : null} />
+        ) : (
+          <View
+            style={isTransparent ? styles.transparent : styles.placeholder}
+          />
+        )}
       </AutoLockView>
     </AppBottomSheetModal>
   );
@@ -226,6 +250,83 @@ export const BrowserManagePopup = () => {
       }}>
       <AutoLockView as="View">
         <BrowserManage />
+      </AutoLockView>
+    </AppBottomSheetModal>
+  );
+};
+
+export const BrowserFavoritePopup = () => {
+  const { safeOffScreenTop } = useSafeSizes();
+
+  const { browserState, setPartialBrowserState, openTab } = useBrowser();
+  const { colors2024, styles } = useTheme2024({ getStyle });
+
+  const snapPoints = useMemo(() => {
+    return [safeOffScreenTop - 40];
+  }, [safeOffScreenTop]);
+
+  const modalRef = useRef<AppBottomSheetModal>(null);
+
+  useEffect(() => {
+    if (browserState.isShowFavorite) {
+      modalRef.current?.present();
+    } else {
+      modalRef.current?.close();
+    }
+  }, [browserState.isShowFavorite]);
+
+  const handleBackPress = useCallback(() => {
+    if (browserState.isShowFavorite) {
+      setPartialBrowserState({
+        isShowFavorite: false,
+      });
+      return true;
+    }
+    return false;
+  }, [browserState.isShowFavorite, setPartialBrowserState]);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+    return () => subscription.remove();
+  }, [handleBackPress]);
+
+  useEffect(() => {
+    const handler = () => {
+      modalRef?.current?.present();
+    };
+    eventBus.addListener(EVENT_SHOW_BROWSER_MANAGE, handler);
+
+    return () => {
+      eventBus.removeListener(EVENT_SHOW_BROWSER_MANAGE, handler);
+    };
+  }, []);
+
+  return (
+    <AppBottomSheetModal
+      index={browserState.isShowFavorite ? 0 : -1}
+      enableHandlePanningGesture
+      enableContentPanningGesture={true}
+      enablePanDownToClose
+      // name="urlWebviewContainerRef"
+      handleStyle={styles.handleStyle}
+      handleIndicatorStyle={styles.handleIndicatorStyle}
+      ref={modalRef}
+      keyboardBehavior="extend"
+      // android_keyboardInputMode="adjustResize"
+      snapPoints={snapPoints}
+      // enableDismissOnClose={false}
+      onChange={index => {
+        if (index === -1) {
+          setPartialBrowserState({
+            isShowFavorite: false,
+          });
+        }
+      }}>
+      <AutoLockView as="View">
+        <BrowserFavoriteManage />
       </AutoLockView>
     </AppBottomSheetModal>
   );

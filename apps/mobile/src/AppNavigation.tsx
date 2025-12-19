@@ -81,6 +81,7 @@ import { GlobalSignerPortal } from './components2024/MiniSignV2/components/Globa
 import { perfEvents } from './core/utils/perf';
 import {
   BottomSheetBrowser,
+  BrowserFavoritePopup,
   BrowserManagePopup,
 } from './screens/Browser/BottomSheetBrowser';
 import { TokenMarketInfoScreen } from './screens/TokenDetail/TokenMarketInfoScreen';
@@ -496,6 +497,7 @@ export default function AppNavigation() {
           <GlobalSearchBottomSheet />
           <BottomSheetBrowser />
           <BrowserManagePopup />
+          <BrowserFavoritePopup />
         </NavigationContainer>
       </NavigationIndependentTree>
       <ModalsSubmitFeedbackByScreenshotStub />
