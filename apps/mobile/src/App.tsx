@@ -7,47 +7,40 @@ import 'react-native-gesture-handler';
  */
 import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
-import { useAppTheme, useThemeColors } from '@/hooks/theme';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
-import { useMemoizedFn } from 'ahooks';
 import { withExpoSnack } from 'nativewind';
-import React, { Suspense, useCallback, useEffect } from 'react';
-import { setup, withIAPContext } from 'react-native-iap';
+import React, { Suspense, useEffect } from 'react';
+import { withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import BigNumber from 'bignumber.js';
 import { RootNames } from './constant/layout';
 import { ThemeColors } from './constant/theme';
-import { keyringService } from './core/services';
 import { useSetupServiceStub } from './core/storage/serviceStoreStub';
-import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
-import { useSecureOnBackground } from './hooks/useLock';
-import { replace } from './utils/navigation';
-import { useUpgradeInfo } from './hooks/version';
-import { AppProvider } from './hooks/global';
-import { useGlobalAppPreventScreenrecordOnDev } from './hooks/appSettings';
-import { useAppPreventScreenshotOnScreen } from './hooks/navigation';
-import { useAutoGoogleSignIfPreviousSignedOnTop } from './hooks/cloudStorage';
+import {
+  useAppCouldRender,
+  useBootstrapApp,
+  useInitializeAppOnTop,
+} from './hooks/useBootstrap';
+import { AppProvider, loadSecurityChain } from './hooks/global';
 import { useNoLongerSupports } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
-import { useGasAccountInfo } from './screens/GasAccount/hooks';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
-import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
-import { useUserDidTakeScreenshot } from './components/Screenshot/hooks';
 import Safe from '@rabby-wallet/gnosis-sdk';
 import { SAFE_API_KEY } from './constant/env';
 Safe.apiKey = SAFE_API_KEY;
 
-import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
-import usePrevious from 'react-use/lib/usePrevious';
 import {
   RerenderDetector,
   useRendererDetect,
 } from './components/Perf/PerfDetector';
+
+BigNumber.config({ EXPONENTIAL_AT: [-20, 100] });
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -65,43 +58,23 @@ type AppProps = { rabbitCode: string };
 const MemoziedAppNav = React.memo(AppNavigation);
 
 const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
-  const { isAppUnlocked } = useInitializeAppOnTop();
-  const { couldRender, securityChainOnTop } = useBootstrapApp({ rabbitCode });
+  useInitializeAppOnTop();
 
   useSetupServiceStub();
-  useUpgradeInfo({ isTop: true });
   useUniversalLinkOnTop();
-  useSecureOnBackground();
-  useGlobalAppPreventScreenrecordOnDev();
-  useAppPreventScreenshotOnScreen({ isTop: true });
-  useAutoGoogleSignIfPreviousSignedOnTop();
   useNoLongerSupports();
   useTriggerI18nChangeOnAppTop();
   useIAPListener();
-  useGasAccountInfo();
-  useTrezorConnectOnUrl();
   useIncreaseTxCountOnAppTop({ isTop: true });
-  useIntervalSyncDDefaultRPCs();
-  useUserDidTakeScreenshot({ isTop: true });
-
-  useEffect(() => {
-    (async () => {
-      if (isAppUnlocked) {
-        const accounts = await keyringService.getAllVisibleAccountsArray();
-        if (!accounts?.length) {
-          replace(RootNames.StackGetStarted, {
-            screen: RootNames.GetStartedScreen2024,
-          });
-        }
-      }
-    })();
-  }, [isAppUnlocked]);
 
   useRendererDetect({ name: 'MainScreen' });
 
+  const { couldRender } = useAppCouldRender();
+
   return (
-    <AppProvider value={{ securityChain: securityChainOnTop }}>
-      <RerenderDetector name="AppProvider" />
+    <AppProvider
+      value={{ rabbitCode, securityChain: loadSecurityChain({ rabbitCode }) }}>
+      <RerenderDetector name="UnderAppProvider" />
       <BottomSheetModalProvider>
         <ScreenSceneAccountProvider>
           {couldRender && <MemoziedAppNav />}
@@ -111,9 +84,10 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   );
 });
 
-const MemoziedMainScreen = React.memo(MainScreen);
+function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
+  const rabbitCode = __DEV__ ? 'RABBY_MOBILE_CODE_DEV' : propRabbitCode;
+  useBootstrapApp({ rabbitCode });
 
-function App({ rabbitCode }: AppProps): JSX.Element {
   return (
     <AppErrorBoundary>
       <ThemeProvider theme={rneuiTheme}>
@@ -123,9 +97,7 @@ function App({ rabbitCode }: AppProps): JSX.Element {
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
                 {/* read from native bundle on production */}
-                <MemoziedMainScreen
-                  rabbitCode={__DEV__ ? 'RABBY_MOBILE_CODE_DEV' : rabbitCode}
-                />
+                <MainScreen rabbitCode={rabbitCode} />
               </GestureHandlerRootView>
             </Suspense>
           </SafeAreaProvider>

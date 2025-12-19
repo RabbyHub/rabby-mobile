@@ -65,9 +65,7 @@ export default function SelectCategoryModal({ value, onChange }: IProps) {
         <Text style={styles.headerText}>
           {t('page.Lending.manageEmode.categorySelector.header.asset')}
         </Text>
-        <Text style={styles.headerText}>
-          {t('page.Lending.manageEmode.categorySelector.header.ltv')}
-        </Text>
+        <Text style={styles.headerText}>{t('page.Lending.maxLtv')}</Text>
       </View>
     );
   }, [styles.headerContainer, styles.headerText, t]);

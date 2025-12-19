@@ -64,6 +64,7 @@ function useSetupPasswordForm(
   isBiometricsEnabled: boolean,
   delaySetPassword?: boolean,
   isFirstImportPassword?: boolean,
+  isFirstCreate?: boolean,
 ) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
@@ -148,6 +149,7 @@ function useSetupPasswordForm(
             screen: RootNames.CreateChooseBackup,
             params: {
               delaySetPassword: true,
+              isFirstCreate: !!isFirstCreate,
             },
           });
         } else {
@@ -209,6 +211,7 @@ function MainListBlocks() {
     isBiometricsEnabled,
     state.delaySetPassword,
     state.isFirstImportPassword,
+    state.isFirstCreate,
   );
 
   useFocusEffect(
@@ -264,7 +267,9 @@ function MainListBlocks() {
         onTouchInputAway();
       }}>
       <View style={[styles.container]}>
-        {!state.hideProgress && <ProgressBar amount={3} currentCount={2} />}
+        {(!state.hideProgress || state?.isFirstCreate) && (
+          <ProgressBar amount={3} currentCount={2} />
+        )}
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.passwordTopTips')}
         </Text>

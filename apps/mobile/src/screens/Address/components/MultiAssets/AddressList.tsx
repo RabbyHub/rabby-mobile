@@ -16,13 +16,18 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useBalanceUpdate } from './hooks/balance';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
 import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
 import { ManageSetting } from '../ManageSetting';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
-import { useAddressDetailModal } from '../../useAddressDetailModal';
-import { toast } from '@/components2024/Toast';
+import { RootNames } from '@/constant/layout';
+import { navigateDeprecated, naviPush } from '@/utils/navigation';
+import {
+  refresh24hAssets,
+  useScene24hBalanceMulti24hBalance,
+} from '@/hooks/useScene24hBalance';
+import { getChangeData } from '@/utils/24hBalanceCache';
+import { computeBalanceChange } from '@/core/apis/balance';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
@@ -40,31 +45,12 @@ export const AddressList = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const showAddressDetail = useAddressDetailModal();
+  const { top10Accounts, top10Records, notMatterAccounts, fetchAccounts } =
+    useAccountInfo();
 
-  const {
-    top10Accounts,
-    top10Addresses,
-    top10Records,
-    notMatterAccounts,
-    fetchAccounts,
-  } = useAccountInfo();
+  const { triggerUpdate, balanceAccounts } = useAccountsBalance();
 
-  const { triggerUpdate, balanceAccounts, getTotalBalance } =
-    useAccountsBalance();
-
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
-
-  const { multi24hBalance, refresh: refresh24hBalance } = useMulti24hBalance(
-    top10Addresses,
-    {
-      disableAutoFetch: true,
-      totalBalance: top10Balance.total,
-      totalEvmBalance: top10Balance.totalEvm,
-    },
-  );
+  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
 
   useBalanceUpdate(triggerUpdate);
 
@@ -82,40 +68,42 @@ export const AddressList = ({
   }, [balanceAccounts, top10Accounts]);
 
   const addressListData = useMemo(() => {
-    return [
-      ...list.map(item => {
-        const changeData = multi24hBalance[item.address.toLowerCase()]?.data;
-        const chartData = getChangeData(
-          changeData,
-          item.evmBalance,
-          new Date().getTime(),
+    return list
+      .map(item => {
+        const endNetWorth = item.evmBalance;
+        const changeData = multi24hBalance[item.address.toLowerCase()];
+        const startValue = changeData?.total_usd_value || 0;
+        const { changePercent, assetsChange } = computeBalanceChange(
+          endNetWorth,
+          startValue,
         );
         return {
           ...item,
           balance: item.balance,
-          changPercent: changeData ? chartData?.changePercent : undefined,
-          isLoss: changeData ? chartData?.isLoss : undefined,
+          changPercent: changeData ? changePercent : undefined,
+          isLoss: changeData ? assetsChange < 0 : undefined,
         };
-      }),
-    ];
+      })
+      .sort((a, b) => b.balance - a.balance);
   }, [list, multi24hBalance]);
 
   const renderItem = useCallback(
     ({ item }) => {
       if (isManageMode) {
-        const showAddressDetailPopup = () => {
-          showAddressDetail({
-            account: item,
-            onDelete: () => {
-              toast.success(t('global.Deleted'));
+        const gotoAddressDetail = () => {
+          onDone?.();
+          naviPush(RootNames.StackAddress, {
+            screen: RootNames.AddressDetail,
+            params: {
+              address: item.address,
+              type: item.type,
+              brandName: item.brandName,
             },
           });
         };
         return (
           <View style={[styles.itemGap, styles.manageModeItem]}>
-            <Pressable
-              onPress={showAddressDetailPopup}
-              style={styles.manageBtn}>
+            <Pressable onPress={gotoAddressDetail} style={styles.manageBtn}>
               <RcIconSettingCC
                 width={20}
                 height={20}
@@ -141,8 +129,6 @@ export const AddressList = ({
       styles.manageBtn,
       onDone,
       colors2024,
-      showAddressDetail,
-      t,
     ],
   );
 
@@ -263,14 +249,15 @@ export const AddressList = ({
   const onRefresh = useCallback(async () => {
     try {
       await Promise.all([
-        triggerUpdate(true),
-        refresh24hBalance(true),
+        triggerUpdate(true).then(balanceAccounts =>
+          refresh24hAssets({ balanceAccounts }),
+        ),
         fetchAccounts(),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [fetchAccounts, refresh24hBalance, triggerUpdate]);
+  }, [fetchAccounts, triggerUpdate]);
 
   // return null;
   return (

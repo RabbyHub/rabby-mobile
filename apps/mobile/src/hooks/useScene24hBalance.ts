@@ -13,11 +13,16 @@ import {
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
-import { apisAccountsBalance } from '@/hooks/useAccountsBalance';
+import {
+  apisAccountsBalance,
+  BalanceAccountType,
+  fetchTotalBalance,
+} from '@/hooks/useAccountsBalance';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { useShallow } from 'zustand/react/shallow';
 import { perfEvents } from '@/core/utils/perf';
 import { getTop10MyAddresses } from '@/core/apis/account';
+import { keyringService } from '@/core/services';
 
 const queues: Record<BalanceScene, PQueue> = {
   Home: new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 }),
@@ -25,14 +30,11 @@ const queues: Record<BalanceScene, PQueue> = {
 const TEN_MINUTES = 10 * 60 * 1000;
 
 type Multi24hBalance = {
-  [P: string]: IBalance24hData['data'];
+  [P: string]: IBalance24hData['data'] & {
+    updateTime: IBalance24hData['updateTime'];
+  };
 };
 type BalanceScene = 'Home';
-// type SceneState = {
-//   multi24hBalance: Multi24hBalance;
-//   loading: boolean;
-//   combinedData: ReturnType<typeof computeCombined24hBalanceData>;
-// };
 type Multi24hBalanceState = {
   addresses: Record<BalanceScene, string[]>;
   combinedData: Record<
@@ -121,7 +123,9 @@ function setSceneAddrLoading<T extends BalanceScene>(
 
 function setMulti24hBalance(
   address: string,
-  valOrFunc: UpdaterOrPartials<Multi24hBalanceState['multi24hBalance'][string]>,
+  valOrFunc: UpdaterOrPartials<
+    Multi24hBalanceState['multi24hBalance'][string] | undefined
+  >,
 ) {
   scene24hBalanceStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(
@@ -130,7 +134,7 @@ function setMulti24hBalance(
       { strict: true },
     );
 
-    if (!changed) {
+    if (!changed || !newVal) {
       return prev;
     }
 
@@ -189,7 +193,7 @@ export type FetchTotalBalanceOptions = {
   force?: boolean;
   totals?: ReturnType<typeof apisAccountsBalance.getLatestTotalBalance>;
 };
-export const fetch24BalanceForScene = makeSWRKeyAsyncFunc(
+const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
   async (scene: BalanceScene, options?: FetchTotalBalanceOptions) => {
     let { addresses, force = false } = options || {};
     if (!addresses?.length) {
@@ -234,12 +238,18 @@ export const fetch24BalanceForScene = makeSWRKeyAsyncFunc(
           const cacheData = getBalance24hCache(addr);
           const existedData = !!getMulti24hBalanceBy(addr);
           if (!existedData && cacheData?.data)
-            setMulti24hBalance(addr, cacheData.data);
+            setMulti24hBalance(addr, {
+              ...cacheData.data,
+              updateTime: cacheData.updateTime,
+            });
           if (!cacheData?.data || cacheData?.isExpired) {
             return;
           }
           nextCheckAddress.delete(addr);
-          setMulti24hBalance(addr, cacheData.data);
+          setMulti24hBalance(addr, {
+            ...cacheData.data,
+            updateTime: cacheData.updateTime,
+          });
         });
       beforeReturn();
       queue.clear();
@@ -249,7 +259,10 @@ export const fetch24BalanceForScene = makeSWRKeyAsyncFunc(
           setSceneAddrLoading(scene, addr, true);
           try {
             const address24hBalance = await get24hBalance(addr, force);
-            setMulti24hBalance(addr, address24hBalance);
+            setMulti24hBalance(addr, {
+              ...address24hBalance.data,
+              updateTime: address24hBalance.updateTime,
+            });
           } catch (error) {
             console.error('Fetch curve error', error);
           } finally {
@@ -272,15 +285,48 @@ export const fetch24BalanceForScene = makeSWRKeyAsyncFunc(
     const { addresses: addrList, force } = ctx.args[1] || {};
     const addresses = Array.isArray(addrList) ? addrList : [addrList];
     addresses.sort();
-    return `fetch24BalanceForScene-${scene}-${addresses.join(',')}-${
+    return `refreshCombinedDataForScene-${scene}-${addresses.join(',')}-${
       force ? 'force' : 'noforce'
     }`;
   },
 );
 
+export const refresh24hAssets = async ({
+  force = false,
+  balanceAccounts,
+}: {
+  force?: boolean;
+  balanceAccounts?: BalanceAccountType[];
+} = {}) => {
+  const top10Addresses = await getTop10MyAddresses();
+
+  refreshCombinedDataForScene('Home', {
+    addresses: top10Addresses,
+    force,
+    ...(balanceAccounts?.length && {
+      totals: apisAccountsBalance.computeTotalBalance(
+        top10Addresses,
+        balanceAccounts || [],
+      ),
+    }),
+  });
+};
+
 runIIFEFunc(() => {
+  keyringService.on('unlock', async () => {
+    const balanceAccounts = await fetchTotalBalance('from_cache');
+    await refresh24hAssets({ balanceAccounts });
+  });
+
   perfEvents.subscribe('ACCOUNTS_BALANCE_UPDATE', async data => {
-    fetch24BalanceForScene('Home', { addresses: await getTop10MyAddresses() });
+    await refresh24hAssets({
+      force: data.nextState !== data.prevState,
+      balanceAccounts: data.nextState,
+    });
+  });
+
+  perfEvents.subscribe('ACCOUNTS_MAYBE_CHANGED', async ctx => {
+    await fetchTotalBalance(ctx?.confirmed ? 'from_api' : 'from_cache');
   });
 });
 

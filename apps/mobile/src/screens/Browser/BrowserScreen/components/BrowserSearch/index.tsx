@@ -61,11 +61,7 @@ export function BrowserSearch({
   const { t } = useTranslation();
   const { list } = useSearchDapps(searchText);
 
-  const { browserHistorySectionList } = useBrowserHistory();
-
-  const displayedBrowserHistoryList = useMemo(() => {
-    return browserHistorySectionList.flatMap(e => e.data);
-  }, [browserHistorySectionList]);
+  const { browserHistoryList } = useBrowserHistory();
 
   const isValidDomain = useMemo(() => {
     const pared = parse(searchText);
@@ -76,22 +72,21 @@ export function BrowserSearch({
     );
   }, [searchText]);
 
+  const isTransparent =
+    trigger === 'home' && !browserHistoryList.length && !searchText;
+
   const isOpenURLRef = useRef(false);
 
   const handleCancel = useMemoizedFn(async () => {
     Keyboard.dismiss();
-    setSearchText?.('');
-    if (!Keyboard.isVisible() && !searchText) {
-      onClose?.(trigger === 'home' && !isOpenURLRef.current);
-    }
-    // await waitKeyboardHide();
-    // onClose?.(trigger === 'home' && !isOpenURLRef.current);
+    await waitKeyboardHide();
+    onClose?.(trigger === 'home' && !isOpenURLRef.current);
   });
 
   const handleBlur = useMemoizedFn(async () => {
     Keyboard.dismiss();
     setIsFocused(false);
-    if (!searchText.trim() && !displayedBrowserHistoryList.length) {
+    if (!searchText.trim() && !browserHistoryList.length) {
       await waitKeyboardHide();
       onClose?.(trigger === 'home' && !isOpenURLRef.current);
     }
@@ -178,54 +173,38 @@ export function BrowserSearch({
   }, []);
 
   return (
-    <View style={[styles.container, style]}>
+    <View
+      style={[
+        styles.container,
+        style,
+        isTransparent ? styles.transparent : null,
+      ]}>
       <LocalPannableDraggableView>
         {!searchText?.trim() ? (
           <BottomSheetScrollView
-            contentContainerStyle={{ gap: 24, paddingHorizontal: 20 }}>
-            {!isFocused ? (
+            contentContainerStyle={{
+              gap: 24,
+              paddingHorizontal: 20,
+            }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
+            {isTransparent ? null : (
               <>
-                <BrowserFavorite
+                <BrowserRecent
                   isInBottomSheet
+                  list={browserHistoryList}
                   onPress={dapp => {
                     handleOpenUrl(dapp.url || dapp.origin);
                     if (dapp.origin) {
                       matomoRequestEvent({
                         category: 'Websites Usage',
-                        action: 'Website_Visit_Favorite List',
-                        label: dapp.origin,
-                      });
-                    }
-                  }}
-                />
-                <BrowserHot
-                  onPress={dapp => {
-                    handleOpenUrl(dapp.url || dapp.origin);
-                    if (dapp.origin) {
-                      matomoRequestEvent({
-                        category: 'Websites Usage',
-                        action: 'Website_Visit_Hot List',
+                        action: 'Website_Visit_Recent List',
                         label: dapp.origin,
                       });
                     }
                   }}
                 />
               </>
-            ) : (
-              <BrowserRecent
-                isInBottomSheet
-                list={displayedBrowserHistoryList}
-                onPress={dapp => {
-                  handleOpenUrl(dapp.url || dapp.origin);
-                  if (dapp.origin) {
-                    matomoRequestEvent({
-                      category: 'Websites Usage',
-                      action: 'Website_Visit_Recent List',
-                      label: dapp.origin,
-                    });
-                  }
-                }}
-              />
             )}
             <View style={{ height: 100 }} />
           </BottomSheetScrollView>
@@ -256,14 +235,14 @@ export function BrowserSearch({
             //   Platform.OS === 'android' ? androidOnlyBottomOffset : 20,
           },
         ]}>
-        <TouchableOpacity onPress={handlePressHome}>
+        {/* <TouchableOpacity onPress={handlePressHome}>
           <ReactIconHome
             width={44}
             height={44}
             color={colors2024['neutral-title-1']}
             backgroundColor={colors2024['neutral-bg-5']}
           />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <NextSearchBar
           as="BottomSheetTextInput"
           value={searchText}
@@ -272,7 +251,7 @@ export function BrowserSearch({
           onBlur={handleBlur}
           onSubmitEditing={handleSubmitEditing}
           enterKeyHint="done"
-          // autoFocus
+          autoFocus
           placeholder={t('page.browser.BrowserSearch.placeholder')}
           alwaysShowCancel
           style={styles.searchBar}
@@ -349,5 +328,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   searchBar: {
     flex: 1,
+  },
+
+  transparent: {
+    backgroundColor: 'transparent',
   },
 }));

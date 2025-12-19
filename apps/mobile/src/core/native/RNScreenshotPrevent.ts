@@ -16,8 +16,6 @@ type Listeners = {
    * @platform iOS, Android >= 14
    */
   userDidTakeScreenshot: (ret?: {
-    androidScanEmpty?: string;
-    androidHasPermission?: boolean;
     captured?: boolean;
     path?: string;
     height?: string | number;
@@ -62,7 +60,7 @@ function makeDefaultHandler<T extends keyof Listeners>(fn: Listeners[T]) {
 /**
  * subscribes to userDidTakeScreenshot event
  */
-function iosOnUserDidTakeScreenshot(fn: Listeners['userDidTakeScreenshot']) {
+function onUserDidTakeScreenshot(fn: Listeners['userDidTakeScreenshot']) {
   const handler = makeDefaultHandler<'userDidTakeScreenshot'>(fn);
   if (handler) return handler;
 
@@ -100,7 +98,7 @@ function onScreenCaptureDetectionChanged(
 }
 
 if (__DEV__) {
-  // iosOnUserDidTakeScreenshot(() => {
+  // onUserDidTakeScreenshot(() => {
   //   console.debug('userDidTakeScreenshot');
   // });
   iosOnScreenCaptureChanged(params => {
@@ -124,9 +122,38 @@ const RNScreenshotPrevent = Object.freeze({
   //   nativeModule.iosToggleBlurView(!!bool);
   // },
   iosOnScreenCaptureChanged,
-  iosOnUserDidTakeScreenshot,
+  onUserDidTakeScreenshot,
   androidOnLifeCycleChanged,
   onScreenCaptureDetectionChanged,
+  // Android screenshot listening methods
+  // Android 14+ screen capture detection methods
+  startScreenCaptureDetection: async () => {
+    // if (
+    //   IS_ANDROID &&
+    //   !(await PermissionsAndroid.check(
+    //     PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+    //   ))
+    // ) {
+    //   await PermissionsAndroid.request(
+    //     PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+    //     {
+    //       title: i18next.t('global.permissionRequest.mediaLibrary.title'),
+    //       message: i18next.t('global.permissionRequest.mediaLibrary.message'),
+    //       buttonNeutral: i18next.t('global.permissionRequest.common.askMeLater'),
+    //       buttonNegative: i18next.t('global.cancel'),
+    //       buttonPositive: i18next.t('global.ok'),
+    //     },
+    //   );
+    // }
+    return nativeModule.startScreenCaptureDetection();
+  },
+  scanScreenshotDirectory: (
+    ...params: Parameters<typeof nativeModule.scanScreenshotDirectory>
+  ) => {
+    if (IS_IOS) return;
+
+    return nativeModule.scanScreenshotDirectory(...params);
+  },
 });
 
 export default RNScreenshotPrevent;

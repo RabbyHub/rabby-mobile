@@ -79,6 +79,7 @@ const BridgeShowMore = ({
   autoSuggestSlippage,
   duration,
   sourceAlwaysShow,
+  insufficient,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -96,6 +97,7 @@ const BridgeShowMore = ({
   slippageError?: boolean;
   autoSlippage: boolean;
   isCustomSlippage: boolean;
+  insufficient?: boolean;
   setAutoSlippage: (boolean: boolean) => void;
   setIsCustomSlippage: (boolean: boolean) => void;
   type: 'swap' | 'bridge';
@@ -307,7 +309,7 @@ const BridgeShowMore = ({
           </View>
         )}
 
-        {fromToken ? (
+        {!insufficient && fromToken ? (
           <DirectSignGasInfo
             supportDirectSign={supportDirectSign}
             loading={!!quoteLoading}

@@ -12,6 +12,7 @@ import {
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { apisAccount } from '@/core/apis';
+import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
 
 runDevIIFEFunc(() => {
   // mock haven't claimed gift
@@ -90,7 +91,6 @@ const checkAddressesEligibility = makeAvoidParallelAsyncFunc(
 );
 
 export const useGasAccountEligibility = () => {
-  const { login } = useGasAccountMethods();
   const { accounts } = useAccounts({ disableAutoFetch: true });
 
   const isEligible = gasAccountState(
@@ -113,7 +113,7 @@ export const useGasAccountEligibility = () => {
           throw new Error(`Account not found for address: ${address}`);
         }
 
-        const sig = await login(account);
+        const sig = await storeApiGasAccount.loginGasAccount(account);
         if (!sig) {
           throw new Error('No sig found');
         }
@@ -157,7 +157,7 @@ export const useGasAccountEligibility = () => {
         reFetchStatus();
       }
     },
-    [login, accounts],
+    [accounts],
   );
 
   return {

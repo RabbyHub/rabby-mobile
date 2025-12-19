@@ -1,11 +1,21 @@
 /**
  * @description 构建交易相关函数:
- * supply、withdraw、borrow、repay、collateralSwitch、manageEmode
+ * supply、withdraw、borrow、repay、collateralSwitch、manageEmode等操作的tx构建
  * 但不包含approve交易
  */
 
-import { ChainId, Pool, PoolBundle } from '@aave/contract-helpers';
-import { referralCode } from './utils/constant';
+import {
+  BaseDebtToken,
+  ChainId,
+  DebtSwitchAdapterService,
+  ERC20Service,
+  Pool,
+  PoolBundle,
+} from '@aave/contract-helpers';
+import BigNumber from 'bignumber.js';
+import { MAX_UINT_AMOUNT, referralCode } from './utils/constant';
+import { ethers } from 'ethers';
+import { ZERO_PERMIT } from './modals/DebtSwapModal/utils';
 
 export enum InterestRate {
   None = 'None',
@@ -154,4 +164,93 @@ export const buildManageEmodeTx = async ({
     user: address,
     categoryId,
   });
+};
+
+export const generateApproveDelegation = async ({
+  provider,
+  address,
+  delegatee,
+  debtTokenAddress,
+  amount,
+  decimals,
+}: {
+  provider: ethers.providers.Web3Provider;
+  address: string;
+  delegatee: string;
+  debtTokenAddress: string;
+  amount: string; // wei
+  decimals: number;
+}): Promise<ethers.PopulatedTransaction | undefined> => {
+  const tokenERC20Service = new ERC20Service(provider);
+  const debtTokenService = new BaseDebtToken(provider, tokenERC20Service);
+
+  const approvedAmount = await debtTokenService.approvedDelegationAmount({
+    user: address,
+    delegatee,
+    debtTokenAddress,
+  });
+  const approvedAmountBn = new BigNumber(
+    approvedAmount.toString(),
+  ).multipliedBy(10 ** decimals);
+  const requiredAmountBn = new BigNumber(amount);
+
+  if (approvedAmountBn.gte(requiredAmountBn)) {
+    return undefined;
+  }
+
+  return debtTokenService.generateApproveDelegationTxData({
+    user: address,
+    delegatee,
+    debtTokenAddress,
+    amount,
+  });
+};
+
+export const buildDebtSwitchTx = ({
+  provider,
+  address,
+  fromAddress,
+  rawAmount,
+  isMaxSelected,
+  debtSwitchAdapterAddress,
+  maxNewDebtAmount,
+  txCalldata,
+  augustus,
+  newAssetDebtToken,
+  newAssetUnderlying,
+}: {
+  provider: ethers.providers.Web3Provider;
+  address: string;
+  fromAddress: string;
+  rawAmount: string;
+  maxNewDebtAmount: string;
+  isMaxSelected: boolean;
+  debtSwitchAdapterAddress: string;
+  txCalldata: string;
+  augustus: string;
+  newAssetDebtToken: string;
+  newAssetUnderlying: string;
+}) => {
+  const debtSwitchService = new DebtSwitchAdapterService(
+    provider,
+    debtSwitchAdapterAddress,
+  );
+
+  const debtSwitchTx = debtSwitchService.debtSwitch({
+    user: address,
+    debtAssetUnderlying: fromAddress,
+    debtRepayAmount: isMaxSelected ? MAX_UINT_AMOUNT : rawAmount,
+    debtRateMode: 2, // variable
+    newAssetUnderlying,
+    newAssetDebtToken,
+    maxNewDebtAmount,
+    extraCollateralAmount: '0',
+    extraCollateralAsset: '0x0000000000000000000000000000000000000000',
+    repayAll: isMaxSelected,
+    txCalldata,
+    augustus,
+    creditDelegationPermit: ZERO_PERMIT,
+    collateralPermit: ZERO_PERMIT,
+  });
+  return debtSwitchTx;
 };

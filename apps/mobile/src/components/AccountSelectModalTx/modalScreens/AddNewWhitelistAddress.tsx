@@ -319,7 +319,6 @@ export const ScreenAddNewWhitelistAddress = ({
                 ]}>
                 <PasteButton
                   style={styles.pasteButton}
-                  cleanClipboardAfterPaste={!__DEV__}
                   onPaste={text => {
                     handleInputChange(text);
                     Keyboard.dismiss();

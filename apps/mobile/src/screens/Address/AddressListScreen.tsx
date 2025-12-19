@@ -89,16 +89,8 @@ export function AddressListScreen(): JSX.Element {
         removeGlobalBottomSheetModal2024(id);
       },
       shouldRedirectToSetPasswordBefore2024,
-      navigateTo: (screen: AppRootName, params?: object) => {
-        navigation.dispatch(
-          StackActions.push(RootNames.StackAddress, {
-            screen,
-            params,
-          }),
-        );
-      },
     });
-  }, [shouldRedirectToSetPasswordBefore2024, navigation]);
+  }, [shouldRedirectToSetPasswordBefore2024]);
 
   const { t } = useTranslation();
 

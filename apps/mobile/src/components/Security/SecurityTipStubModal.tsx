@@ -9,8 +9,9 @@ import { default as RcTipCC } from './icons/tip-cc.svg';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { Button } from '../Button';
 import {
+  clearScreenshotJustNow,
   useIOSScreenIsBeingCaptured,
-  useIOSScreenshotted,
+  useIOSScreenshottedJustNow,
 } from '@/hooks/native/security';
 import {
   ProtectedConf,
@@ -74,36 +75,6 @@ export default function SecurityTipStubModal({
   );
 }
 
-function useGlobalSecurityTipForScreenShot() {
-  const { warningScreenshotBackup } = useAtSensitiveScene();
-  const onIsScreenshottedJustNow = React.useCallback<
-    (Parameters<typeof useIOSScreenshotted>[0] &
-      object)['onIsScreenshottedJustNow'] &
-      object
-  >(
-    ctx => {
-      ctx.setScreenshotted(!!warningScreenshotBackup);
-    },
-    [warningScreenshotBackup],
-  );
-
-  const { isScreenshotJustNow, clearScreenshotJustNow } = useIOSScreenshotted({
-    isTop: false,
-    onIsScreenshottedJustNow,
-  });
-
-  React.useEffect(() => {
-    if (!warningScreenshotBackup) {
-      clearScreenshotJustNow();
-    }
-  }, [warningScreenshotBackup, clearScreenshotJustNow]);
-
-  return {
-    shouldShowBackupWarning: isScreenshotJustNow && warningScreenshotBackup,
-    clearScreenshotJustNow,
-  };
-}
-
 export function GlobalSecurityTipStubModal() {
   const { isBeingCaptured } = useIOSScreenIsBeingCaptured();
   const { atSensitiveScene, iosBlurType, onOk } = useAtSensitiveScene();
@@ -113,8 +84,17 @@ export function GlobalSecurityTipStubModal() {
     isBeingCaptured &&
     iosBlurType === ProtectType.SafeTipModal;
 
-  const { shouldShowBackupWarning, clearScreenshotJustNow } =
-    useGlobalSecurityTipForScreenShot();
+  const { warningScreenshotBackup } = useAtSensitiveScene();
+  const { isScreenshotJustNow } = useIOSScreenshottedJustNow();
+
+  React.useEffect(() => {
+    if (!warningScreenshotBackup) {
+      clearScreenshotJustNow();
+    }
+  }, [warningScreenshotBackup]);
+
+  const shouldShowBackupWarning =
+    isScreenshotJustNow && warningScreenshotBackup;
 
   return (
     <>

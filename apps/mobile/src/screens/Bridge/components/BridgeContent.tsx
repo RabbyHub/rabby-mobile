@@ -923,6 +923,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         <View>
           {selectedBridgeQuote && !quoteLoading && inSufficientCanGetQuote && (
             <BridgeShowMore
+              insufficient={inSufficient}
               sourceAlwaysShow
               duration={selectedBridgeQuote?.duration}
               supportDirectSign={canShowDirectSubmit}

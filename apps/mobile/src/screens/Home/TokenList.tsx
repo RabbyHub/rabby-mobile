@@ -51,6 +51,7 @@ import {
   useSingleHomeChain,
   useSingleHomeSelectData,
 } from './hooks/singleHome';
+import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -60,13 +61,18 @@ export const icons = {
 };
 
 interface Props {
+  noAssetsOnAnyChain: boolean;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
-export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
+export const TokenList = ({
+  noAssetsOnAnyChain,
+  onRefresh,
+  onReachTopStatusChange,
+}: Props) => {
   const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
   });
@@ -108,7 +114,7 @@ export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const sortTokens = useSortToken(tokens || [], currentAccount);
 
   const { selectData } = useSingleHomeSelectData();
-  const balanceValue = selectData.rawNetWorth;
+  const noAnyAssets = !selectData.rawNetWorth || noAssetsOnAnyChain;
 
   const dataList = useMemo(() => {
     const unFoldTokenList: ActionItem[] = sortTokens
@@ -190,7 +196,7 @@ export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
       },
       {
         show: !loadingToken && !sortTokens.length,
-        data: !balanceValue
+        data: noAnyAssets
           ? [{ type: 'empty-token' }]
           : [
               {
@@ -206,7 +212,7 @@ export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [foldHideList, foldScam, balanceValue, loadingToken, sortTokens, t]);
+  }, [foldHideList, foldScam, noAnyAssets, loadingToken, sortTokens, t]);
 
   const totalFoldTokenValue = useMemo(() => {
     return getTotalFoldToken(
@@ -216,14 +222,9 @@ export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
     );
   }, [sortTokens, currency.usd_rate, currency.symbol]);
 
-  const navigation =
-    useNavigation<NativeStackScreenProps<RootStackParamsList>['navigation']>();
-
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
   const { singleTokenRefresh, tokenRefresh } = useTriggerTagAssets();
-
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -275,33 +276,6 @@ export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
     },
     [isLight, singleTokenRefresh, t, tokenRefresh],
   );
-
-  const handleOnReceive = useCallback(async () => {
-    if (!currentAccount?.address) {
-      return;
-    }
-    await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-    navigation.dispatch(
-      StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.Receive,
-        params: {
-          account: currentAccount,
-        },
-      }),
-    );
-  }, [currentAccount, navigation, switchSceneCurrentAccount]);
-
-  const handleOnImport = useCallback(async () => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.ImportMethods,
-        params: {
-          isNotNewUserProc: true,
-          isFromEmptyAddress: true,
-        },
-      }),
-    );
-  }, [navigation]);
 
   const renderItem = useCallback<ListRenderItem<ActionItem>>(
     ({ item }) => {
@@ -361,8 +335,8 @@ export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
         case 'empty-token':
           return (
             <EmptyTokenRow
-              onReceive={handleOnReceive}
-              onImport={handleOnImport}
+              currentAccount={currentAccount}
+              // onReceive={handleOnReceive}
             />
           );
         case 'empty-assets':
@@ -385,9 +359,8 @@ export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
     },
     [
       foldHideList,
+      currentAccount,
       getTokenMenuActions,
-      handleOnImport,
-      handleOnReceive,
       handleOpenTokenDetail,
       isLight,
       styles,
