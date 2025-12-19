@@ -50,6 +50,7 @@ import {
   useScene24hBalanceMulti24hBalance,
   useSceneIsLoading,
 } from '@/hooks/useScene24hBalance';
+import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -183,34 +184,8 @@ export function MultiAddressHomeHeader(
     );
   }, [data.isLoss, data.rawChange, loadBalanceFromApiStage, previousLoading]);
 
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
-
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
-
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
-  const gotoAddAddress = useCallback(() => {
-    if (modalRef.current) {
-      removeGlobalBottomSheetModal2024(modalRef.current);
-      modalRef.current = undefined;
-    }
-
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-      shouldRedirectToSetPasswordBefore2024,
-      navigateTo: (screen: AppRootName, params?: object) => {
-        navigation.dispatch(
-          StackActions.push(RootNames.StackAddress, {
-            screen,
-            params,
-          }),
-        );
-      },
-    });
-  }, [shouldRedirectToSetPasswordBefore2024, navigation]);
 
   const handleWalletsListPress = useCallback(() => {
     setIsFoldMultiChart(true);
@@ -223,7 +198,12 @@ export function MultiAddressHomeHeader(
     });
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_LiST,
-      onAddAddressPress: gotoAddAddress,
+      onAddAddressPress: () => {
+        if (modalRef.current) {
+          removeGlobalBottomSheetModal2024(modalRef.current);
+        }
+        apiGlobalModal.showAddSelectMethodModal();
+      },
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         rootViewType: 'View',
@@ -238,7 +218,7 @@ export function MultiAddressHomeHeader(
         modalRef.current = undefined;
       },
     });
-  }, [colors2024, gotoAddAddress, isLight, setIsFoldMultiChart]);
+  }, [colors2024, isLight, setIsFoldMultiChart]);
 
   return (
     <View style={style}>

@@ -17,6 +17,7 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { naviPush } from '@/utils/navigation';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -250,9 +251,7 @@ export const sheetModalRefsNeedLock = {
   switchBiometricsRef: React.createRef<SwitchToggleType>(),
   selectAutolockTimeRef: React.createRef<BottomSheetModal>(),
 };
-// const setPasswordFirstAtom = atom({
-//   isOnSettingsWaiting: false,
-// });
+
 const setPasswordFirstStore = zCreate<{ isOnSettingsWaiting: boolean }>(() => ({
   isOnSettingsWaiting: false,
 }));
@@ -271,6 +270,43 @@ export function useSetPasswordFirstState() {
     updateSetPasswordFirst: setSetPasswordFirst,
   };
 }
+
+export const shouldRedirectToSetPasswordBefore2024 = async ({
+  backScreen,
+  isFirstImportPassword,
+}: {
+  backScreen: (AddressNavigatorParamList['SetPassword2024'] & {
+    actionAfterSetup: 'backScreen';
+  })['finishGoToScreen'];
+  isFirstImportPassword?: boolean;
+}) => {
+  if (!APP_FEATURE_SWITCH.customizePassword) {
+    return false;
+  }
+  // if (lockInfo.pwdStatus === PasswordStatus.Custom) {
+  //   return false;
+  // }
+  const shouldAsk = await apisLock.shouldAskSetPassword();
+  if (!shouldAsk) {
+    return false;
+  }
+
+  if (backScreen) {
+    naviPush(RootNames.StackAddress, {
+      screen: RootNames.SetPassword2024,
+      params: {
+        title: 'Set Password',
+        hideProgress: true,
+        finishGoToScreen: backScreen,
+        isFirstImportPassword,
+        hideBackIcon: isFirstImportPassword,
+      },
+    });
+    return true;
+  }
+  return false;
+};
+
 export function useSetPasswordFirst() {
   const navigation = useRabbyAppNavigation();
   const { lockInfo, fetchLockInfo } = useLoadLockInfo();
@@ -320,45 +356,6 @@ export function useSetPasswordFirst() {
       return false;
     },
     [navigation, lockInfo],
-  );
-
-  const shouldRedirectToSetPasswordBefore2024 = React.useCallback(
-    async ({
-      backScreen,
-      isFirstImportPassword,
-    }: {
-      backScreen: (AddressNavigatorParamList['SetPassword2024'] & {
-        actionAfterSetup: 'backScreen';
-      })['finishGoToScreen'];
-      isFirstImportPassword?: boolean;
-    }) => {
-      if (!APP_FEATURE_SWITCH.customizePassword) {
-        return false;
-      }
-      // if (lockInfo.pwdStatus === PasswordStatus.Custom) {
-      //   return false;
-      // }
-      const shouldAsk = await apisLock.shouldAskSetPassword();
-      if (!shouldAsk) {
-        return false;
-      }
-
-      if (backScreen) {
-        navigation.push(RootNames.StackAddress, {
-          screen: RootNames.SetPassword2024,
-          params: {
-            title: 'Set Password',
-            hideProgress: true,
-            finishGoToScreen: backScreen,
-            isFirstImportPassword,
-            hideBackIcon: isFirstImportPassword,
-          },
-        });
-        return true;
-      }
-      return false;
-    },
-    [navigation],
   );
 
   return {
