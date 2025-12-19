@@ -7,16 +7,15 @@ import 'react-native-gesture-handler';
  */
 import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
-import { useAppTheme, useThemeColors } from '@/hooks/theme';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
-import { useMemoizedFn } from 'ahooks';
 import { withExpoSnack } from 'nativewind';
-import React, { Suspense, useCallback, useEffect } from 'react';
-import { setup, withIAPContext } from 'react-native-iap';
+import React, { Suspense, useEffect } from 'react';
+import { withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import BigNumber from 'bignumber.js';
 import { RootNames } from './constant/layout';
 import { ThemeColors } from './constant/theme';
 import { keyringService } from './core/services';
@@ -43,11 +42,13 @@ import { SAFE_API_KEY } from './constant/env';
 Safe.apiKey = SAFE_API_KEY;
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
-import usePrevious from 'react-use/lib/usePrevious';
+
 import {
   RerenderDetector,
   useRendererDetect,
 } from './components/Perf/PerfDetector';
+
+BigNumber.config({ EXPONENTIAL_AT: [-20, 100] });
 
 const rneuiTheme = createTheme({
   lightColors: {
