@@ -492,12 +492,13 @@ export default function DebtSwapModal({
 
     let delegationTx: PopulatedTransaction | undefined;
     if (toReserve.variableDebtTokenAddress) {
-      delegationTx = generateApproveDelegation({
+      delegationTx = await generateApproveDelegation({
         provider: pools.provider,
         address: currentAccount.address,
         delegatee: selectedMarketData.addresses.DEBT_SWITCH_ADAPTER,
         debtTokenAddress: toReserve.variableDebtTokenAddress,
         amount: getApproveAmount(maxNewDebtAmount, slippageBps),
+        decimals: toToken.decimals,
       });
     }
 
@@ -685,6 +686,7 @@ export default function DebtSwapModal({
         onClose?.();
       } catch (error) {
         console.error('debt swap error', error);
+        toast.error('something error');
       } finally {
         setIsLoading(false);
       }

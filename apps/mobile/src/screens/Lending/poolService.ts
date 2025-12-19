@@ -12,6 +12,7 @@ import {
   Pool,
   PoolBundle,
 } from '@aave/contract-helpers';
+import BigNumber from 'bignumber.js';
 import { MAX_UINT_AMOUNT, referralCode } from './utils/constant';
 import { ethers } from 'ethers';
 import { ZERO_PERMIT } from './modals/DebtSwapModal/utils';
@@ -165,21 +166,38 @@ export const buildManageEmodeTx = async ({
   });
 };
 
-export const generateApproveDelegation = ({
+export const generateApproveDelegation = async ({
   provider,
   address,
   delegatee,
   debtTokenAddress,
   amount,
+  decimals,
 }: {
   provider: ethers.providers.Web3Provider;
   address: string;
   delegatee: string;
   debtTokenAddress: string;
   amount: string; // wei
-}) => {
+  decimals: number;
+}): Promise<ethers.PopulatedTransaction | undefined> => {
   const tokenERC20Service = new ERC20Service(provider);
   const debtTokenService = new BaseDebtToken(provider, tokenERC20Service);
+
+  const approvedAmount = await debtTokenService.approvedDelegationAmount({
+    user: address,
+    delegatee,
+    debtTokenAddress,
+  });
+  const approvedAmountBn = new BigNumber(
+    approvedAmount.toString(),
+  ).multipliedBy(10 ** decimals);
+  const requiredAmountBn = new BigNumber(amount);
+
+  if (approvedAmountBn.gte(requiredAmountBn)) {
+    return undefined;
+  }
+
   return debtTokenService.generateApproveDelegationTxData({
     user: address,
     delegatee,
