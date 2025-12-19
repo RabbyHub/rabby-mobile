@@ -686,7 +686,6 @@ export default function DebtSwapModal({
         onClose?.();
       } catch (error) {
         console.error('debt swap error', error);
-        toast.error('something error');
       } finally {
         setIsLoading(false);
       }
