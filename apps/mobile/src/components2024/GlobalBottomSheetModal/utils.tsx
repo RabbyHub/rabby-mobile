@@ -206,7 +206,10 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.ADDRESS_LiST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: AddressListModal,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+    globalModalPropsPreset: getDefaultViewTypePropsPreset({
+      enableContentPanningGesture: true,
+      rootViewType: 'View',
+    }),
   },
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: {
     snapPoints: [384],

@@ -49,9 +49,6 @@ export const HeaderHeight = 24;
 
 export function TabsTopHeader(
   props: {
-    // data: ReturnType<typeof useMulti24hBalance>['combineData'];
-    // loading: boolean;
-    // showNetWorth?: boolean;
     indexValue?: SharedValue<number>;
   } & RNViewProps,
 ): JSX.Element {

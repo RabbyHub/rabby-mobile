@@ -199,8 +199,6 @@ export function MultiAddressHomeHeader(
         apiGlobalModal.showAddSelectMethodModal();
       },
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        rootViewType: 'View',
         handleStyle: {
           backgroundColor: isLight
             ? colors2024['neutral-bg-0']

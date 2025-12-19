@@ -1,6 +1,7 @@
 import { MMKV } from 'react-native-mmkv';
 import { MMKV_FILE_NAMES } from '@/core/utils/appFS';
 import { openapi } from '@/core/request';
+import { computeBalanceChange } from '@/core/apis/balance';
 
 export const CURE_CACHE_TIME = 10 * 60 * 1000; // 10 min
 // export const CURE_CACHE_TIME = 7 * 24 * 60 * 60 * 1000; // TODO: 7 days min tmp for test
@@ -90,21 +91,19 @@ export const deleteLongTime24hBalanceCache = () => {
 };
 
 export const getChangeData = (
-  data: IBalance24hData['data'],
+  data?: IBalance24hData['data'],
   realtimeNetWorth = 0,
   realtimeTimestamp?: number,
 ) => {
   const startData = data || { total_usd_value: 0 };
   const endNetWorth = realtimeTimestamp ? realtimeNetWorth : 0;
-  const assetsChange = endNetWorth - startData?.total_usd_value;
+  const changeValues = computeBalanceChange(
+    endNetWorth,
+    startData.total_usd_value,
+  );
 
   return {
-    changePercent:
-      startData?.total_usd_value !== 0
-        ? `${Math.abs(
-            (assetsChange * 100) / startData?.total_usd_value,
-          ).toFixed(2)}%`
-        : `${endNetWorth === 0 ? '0' : '100.00'}%`,
-    isLoss: assetsChange < 0,
+    changePercent: changeValues.changePercent,
+    isLoss: changeValues.assetsChange < 0,
   };
 };
