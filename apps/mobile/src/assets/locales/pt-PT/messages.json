@@ -2852,9 +2852,9 @@
         "providerFeeTips": "Taxa Hyperliquid: {{fee}}",
         "closeBtn": "Fechar {{direction}}",
         "total": "Total",
-        "receive": "Receber:",
+        "receive": "Receber",
         "confirm": "Confirmar",
-        "closedPnl": "PNL Fechado:",
+        "closedPnl": "PNL Fechado",
         "amount": "Montante",
         "minimumWarning": "O valor mínimo é {{percent}}%"
       },
@@ -2939,7 +2939,7 @@
         "available": "disponível",
         "reduceMargin": "Reduzir Margem",
         "addMargin": "Adicionar Margem",
-        "liqPrice": "Preço de Liquidação:",
+        "liqPrice": "Preço de Liquidação",
         "amountToAdd": "Montante a adicionar",
         "liqDistance": "Liq.Distância"
       },

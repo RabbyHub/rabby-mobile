@@ -2510,9 +2510,9 @@
         "amount": "Miktar",
         "confirm": "Onayla",
         "minimumWarning": "Minimum miktar {{percent}}% olacaktır.",
-        "closedPnl": "Kapalı PNL:",
+        "closedPnl": "Kapalı PNL",
         "total": "Toplam",
-        "receive": "Alım:"
+        "receive": "Alım"
       },
       "PerpsOpenPositionPopup": {
         "maximumOrderSize": "Maksimum emir büyüklüğü {{amount}}'dir.",
@@ -2592,7 +2592,7 @@
         "amountToReduce": "Azaltılacak Miktar",
         "available": "mevcut",
         "insufficientMarginToReduce": "Pozisyonu azaltmak için yetersiz marj.",
-        "liqPrice": "Lik. Fiyat:",
+        "liqPrice": "Lik. Fiyat",
         "insufficientMargin": "Yetersiz teminat",
         "addMargin": "Marj ekle",
         "amountToAdd": "Ekleyeceğiniz Tutar",

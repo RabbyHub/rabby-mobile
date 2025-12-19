@@ -2563,9 +2563,9 @@
         "amount": "金額",
         "confirm": "確認",
         "total": "合計",
-        "closedPnl": "クローズドPNL:",
+        "closedPnl": "クローズドPNL",
         "minimumWarning": "最小額は {{percent}}% です",
-        "receive": "受け取る："
+        "receive": "受け取る"
       },
       "PerpsOpenPositionPopup": {
         "minimumOrderSize": "最小注文サイズは$10です。",
@@ -2644,7 +2644,7 @@
         "insufficientMargin": "マージン不足",
         "addMargin": "マージンを追加",
         "amountToReduce": "減少する金額",
-        "liqPrice": "Liq. 価格:",
+        "liqPrice": "Liq. 価格",
         "reduceMargin": "マージンを減らす",
         "amountToAdd": "追加する金額",
         "available": "利用可能",

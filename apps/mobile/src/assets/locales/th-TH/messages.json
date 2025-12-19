@@ -2762,8 +2762,8 @@
         "amount": "จำนวน",
         "confirm": "ยืนยัน",
         "minimumWarning": "จำนวนขั้นต่ำคือ {{percent}}%",
-        "receive": "รับ:",
-        "closedPnl": "Closed PNL:"
+        "receive": "รับ",
+        "closedPnl": "Closed PNL"
       },
       "PerpsOpenPositionPopup": {
         "size": "ขนาด",
@@ -2847,7 +2847,7 @@
         "addMargin": "เพิ่มมาร์จิ้น",
         "insufficientMargin": "ขอบเขตไม่เพียงพอ",
         "insufficientMarginToReduce": "มาร์จินไม่เพียงพอที่จะลดตำแหน่ง.",
-        "liqPrice": "Liq. Price:",
+        "liqPrice": "Liq. Price",
         "liqDistance": "Liq.ระยะทาง"
       },
       "PerpsAddPositionPopup": {

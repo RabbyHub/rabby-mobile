@@ -2508,8 +2508,8 @@
         "fee": "수수료:",
         "rabbyFeeTips": "Rabby 수수료: 0.04%",
         "providerFeeTips": "하이퍼리퀴드 수수료: {{fee}}",
-        "receive": "받기:",
-        "closedPnl": "닫힌 PNL:",
+        "receive": "받기",
+        "closedPnl": "닫힌 PNL",
         "amount": "금액",
         "confirm": "확인",
         "minimumWarning": "최소 금액은 {{percent}}%입니다.",
@@ -2597,7 +2597,7 @@
         "amountToReduce": "줄이려는 금액",
         "insufficientMarginToReduce": "포지션을 줄이기에 충분한 마진이 없습니다.",
         "available": "사용 가능",
-        "liqPrice": "청산 가격:",
+        "liqPrice": "청산 가격",
         "liqDistance": "Liq.거리"
       },
       "PerpsAddPositionPopup": {
