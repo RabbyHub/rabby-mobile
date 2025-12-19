@@ -1103,6 +1103,7 @@ const Swap = ({
                   marginHorizontal: -24,
                 }}>
                 <BridgeShowMore
+                  insufficient={inSufficient}
                   autoSuggestSlippage={autoSuggestSlippage}
                   supportDirectSign={canShowDirectSubmit}
                   openFeePopup={openFeePopup}
