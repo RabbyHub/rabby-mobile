@@ -77,7 +77,11 @@ import {
   generateApproveDelegation,
 } from '../../poolService';
 import { normalizeBN } from '@aave/math-utils';
-import { getPriceImpactData, getToAmountAfterSlippage } from './warning';
+import {
+  getApproveAmount,
+  getPriceImpactData,
+  getToAmountAfterSlippage,
+} from './warning';
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 
 interface DebtSwapModalProps {
@@ -493,7 +497,7 @@ export default function DebtSwapModal({
         address: currentAccount.address,
         delegatee: selectedMarketData.addresses.DEBT_SWITCH_ADAPTER,
         debtTokenAddress: toReserve.variableDebtTokenAddress,
-        amount: maxNewDebtAmount,
+        amount: getApproveAmount(maxNewDebtAmount, slippageBps),
       });
     }
 

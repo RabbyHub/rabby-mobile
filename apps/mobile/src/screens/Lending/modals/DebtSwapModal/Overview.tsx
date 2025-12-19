@@ -66,7 +66,7 @@ const DebtSwapModalOverview = ({
   }, [fromAmount, fromBalanceBn]);
 
   const estimatedToBorrowAfter = useMemo(() => {
-    if (!toToken) {
+    if (!toToken || isNaN(Number(toAmount))) {
       return new BigNumber(0);
     }
     const currentToAmountBn = new BigNumber(currentToAmount || 0);

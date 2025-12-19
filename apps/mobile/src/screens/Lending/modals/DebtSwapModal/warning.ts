@@ -85,3 +85,26 @@ export const getToAmountAfterSlippage = ({
     .multipliedBy(1 + Number(slippage) / 10000)
     .toFixed();
 };
+
+// generate signature approval a certain threshold above the current balance to account for accrued interest
+export const SIGNATURE_AMOUNT_MARGIN = 0.1;
+export const SIGNATURE_AMOUNT_MARGIN_HIGH = 0.25;
+
+// Calculate aToken amount to request for signature, adding small margin to account for accruing interest
+export const calculateSignedAmount = (amount: string, margin?: number) => {
+  const amountBN = valueToBigNumber(amount);
+  const marginBN = valueToBigNumber(margin ?? SIGNATURE_AMOUNT_MARGIN);
+  const amountWithMargin = amountBN.plus(amountBN.multipliedBy(marginBN));
+  return amountWithMargin.toFixed(0);
+};
+
+export const getApproveAmount = (amount: string, slippage: number) => {
+  const repeatAfterSlippage = getToAmountAfterSlippage({
+    inputAmount: amount,
+    slippage: Number(slippage || 0) * 100, // 为了和aave保持一致写的，有可能是多授权了
+  });
+  return calculateSignedAmount(
+    repeatAfterSlippage,
+    SIGNATURE_AMOUNT_MARGIN_HIGH,
+  );
+};
