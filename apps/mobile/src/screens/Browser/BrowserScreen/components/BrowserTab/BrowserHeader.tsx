@@ -117,7 +117,9 @@ export function BrowserHeader({
             </View>
           </TouchableWithoutFeedback>
 
-          <TouchableOpacity
+          <View style={{ width: 20 }} />
+
+          {/* <TouchableOpacity
             style={[styles.navControlItem]}
             onPress={onViewTabs}>
             <View style={styles.tabIconContainer}>
@@ -130,7 +132,7 @@ export function BrowserHeader({
                 <Text style={styles.tabCount}>{tabsCount || 0}</Text>
               </View>
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
         {url && dapp?.isDapp ? (
           <View style={styles.walletIconContainer}>

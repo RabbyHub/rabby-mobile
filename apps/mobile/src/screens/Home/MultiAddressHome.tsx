@@ -33,6 +33,8 @@ import {
   View,
   AppState,
   useWindowDimensions,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -239,13 +241,6 @@ const OverViewComponent = React.memo(
             title: t('page.home.services.approvals'),
             icon: RcIconApprovalsCC,
             badge: alertInfo.total,
-          },
-          {
-            key: MultiHomeFeatTitle.Dapps,
-            title: IS_IOS
-              ? t('page.home.services.websites')
-              : t('page.home.services.dapps'),
-            icon: RcIconDapps,
           },
           {
             key: MultiHomeFeatTitle.GasAccount,
@@ -455,20 +450,11 @@ const OverViewComponent = React.memo(
             });
             break;
 
-          case MultiHomeFeatTitle.Dapps: {
-            openDapps();
-            break;
-          }
           default:
             break;
         }
       },
-      [
-        openDapps,
-        handlePressWatchlist,
-        navigation,
-        toggleUseAllAccountsOnScene,
-      ],
+      [handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
     );
 
     const generateCustomBadgeIcon = useCallback(
@@ -505,9 +491,6 @@ const OverViewComponent = React.memo(
           return <PointsBadge />;
         }
 
-        if (el.key === MultiHomeFeatTitle.Dapps) {
-          return <DappsBadge />;
-        }
         if (el.key === MultiHomeFeatTitle.GasAccount) {
           return <GasAccountBadge />;
         }
@@ -530,11 +513,17 @@ const OverViewComponent = React.memo(
     const { bottom } = useSafeAreaInsets();
 
     useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
+    const [isEditing, setIsEditing] = useState(false);
 
     return (
       <Tabs.ScrollView
         tvParallaxProperties={undefined}
         showsVerticalScrollIndicator={false}
+        onTouchStart={() => {
+          if (isEditing) {
+            setIsEditing(false);
+          }
+        }}
         style={[styles.scroll, { flex: undefined }]}
         contentContainerStyle={[
           styles.scrollContainer,
@@ -586,7 +575,10 @@ const OverViewComponent = React.memo(
               );
             })}
           </View>
-          <BrowserSearchEntry alwaysShowSearch={false} />
+          <BrowserSearchEntry
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
           <View style={styles.searchBarPlaceholder} />
         </View>
       </Tabs.ScrollView>

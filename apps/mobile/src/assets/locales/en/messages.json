@@ -2240,6 +2240,9 @@
       },
       "toast": {
         "clearCacheSuccess": "Cache cleared"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "More"
       }
     },
     "browserManage": {
