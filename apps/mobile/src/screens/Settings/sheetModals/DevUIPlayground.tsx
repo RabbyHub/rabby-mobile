@@ -214,7 +214,7 @@ export default function DevUIPlaygroundModal({
       snapPoints={[safeSizes.sheetHeight]}
       handleStyle={styles.handleStyle}
       onDismiss={handleCancel}
-      enableContentPanningGesture={false}>
+      enableContentPanningGesture>
       <AutoLockView
         as="View"
         style={[

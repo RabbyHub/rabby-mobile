@@ -229,9 +229,6 @@ export const ImportSuccessScreen2024 = () => {
   }, [isFocus, state, accounts, importAddresses]);
 
   const handleImportMore = () => {
-    if (!state.isFirstImport) {
-      return;
-    }
     Keyboard.dismiss();
     if (modalRef.current) {
       return;
@@ -260,6 +257,8 @@ export const ImportSuccessScreen2024 = () => {
       },
     });
   };
+
+  console.log('state', state);
 
   const Wrapper =
     importAddresses.length > 1 ? KeyboardAvoidingView : DisMissKBWrapper;
@@ -293,6 +292,9 @@ export const ImportSuccessScreen2024 = () => {
               />
               <Text style={styles.aliasAddress}>
                 {importAddresses?.[0]?.aliasName || ''}
+              </Text>
+              <Text style={styles.importSuccessText}>
+                {t('page.syncExtension.importedSuccessfully')}
               </Text>
               {state?.supportChainList?.length ? (
                 <GnosisSupportChainList
@@ -342,7 +344,8 @@ export const ImportSuccessScreen2024 = () => {
           )}
         </View>
 
-        {state.isFirstImport && (
+        {(state.isFirstImport ||
+          state.brandName === KEYRING_TYPE.HdKeyring) && (
           <TouchableOpacity
             onPress={handleImportMore}
             style={styles.ledgerButton}>
@@ -356,6 +359,7 @@ export const ImportSuccessScreen2024 = () => {
             />
           </TouchableOpacity>
         )}
+
         <Button
           containerStyle={styles.btnContainer}
           type="primary"
@@ -452,6 +456,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
       textAlign: 'center',
+    },
+    importSuccessText: {
+      color: colors2024['brand-default'],
+      textAlign: 'center',
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontStyle: 'normal',
+      fontWeight: '800',
+      lineHeight: 24,
     },
     resultTip: {
       width: '100%',

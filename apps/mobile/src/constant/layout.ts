@@ -124,6 +124,7 @@ export const RootNames = {
   DevDataSQLite: 'DevDataSQLite',
   DevUIBuiltInPages: 'DevUIBuiltInPages',
   DevUIPermissions: 'DevUIPermissions',
+  DevSwitches: 'DevSwitches',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
@@ -181,7 +182,6 @@ export const RootNames = {
   NftDetail: 'NftDetail',
   DeFiDetail: 'DeFiDetail',
   CreateNewAddress: 'CreateNewAddress',
-  CreateSelectOnCurrentSeed: 'CreateSelectOnCurrentSeed',
   SetPassword2024: 'SetPassword2024',
   CreateChooseBackup: 'CreateChooseBackup',
 
@@ -199,7 +199,6 @@ export const RootNames = {
   CreateMnemonicVerify: 'CreateMnemonicVerify',
   Scanner: 'Scanner',
   BackupPrivateKey: 'BackupPrivateKey',
-  BackupMnemonic: 'BackupMnemonic',
   RestoreFromCloud: 'RestoreFromCloud',
   WatchAddressList: 'WatchAddressList',
   SafeAddressList: 'SafeAddressList',
@@ -378,6 +377,7 @@ function makeScreenSpecConfig() {
       [RootNames.DevDataSQLite]: bg1Default2024Conf,
       [RootNames.DevUIBuiltInPages]: bg1Default2024Conf,
       [RootNames.DevUIPermissions]: bg1Default2024Conf,
+      [RootNames.DevSwitches]: bg1Default2024Conf,
 
       // StackTransaction
       [RootNames.Send]: bg1Default2024Conf,
@@ -426,7 +426,6 @@ function makeScreenSpecConfig() {
       [RootNames.NftDetail]: bg1Default2024Conf,
       [RootNames.DeFiDetail]: bg1Default2024Conf,
       [RootNames.CreateNewAddress]: bg1Default2024Conf,
-      [RootNames.CreateSelectOnCurrentSeed]: bg1Default2024Conf,
       [RootNames.SetPassword2024]: bg1Default2024Conf,
       [RootNames.CreateChooseBackup]: bg1Default2024Conf,
 
@@ -443,7 +442,6 @@ function makeScreenSpecConfig() {
       [RootNames.CreateMnemonicVerify]: bg1Default2024Conf,
       [RootNames.Scanner]: transparentDefault2024Conf,
       [RootNames.BackupPrivateKey]: bg1Default2024Conf,
-      [RootNames.BackupMnemonic]: bg1Default2024Conf,
       [RootNames.RestoreFromCloud]: bg1Default2024Conf,
       [RootNames.WatchAddressList]: bg1Default2024Conf,
       [RootNames.SafeAddressList]: bg1Default2024Conf,

@@ -27,7 +27,10 @@ function runTryCatch<T extends (...args: any[]) => any>(
 }
 
 export async function getSceneAddresses() {
-  const accounts = appJsonStore.getItem('@SceneAccounts', {}) as SceneAccounts;
+  const accounts = appJsonStore.getItem(
+    '@SceneAccounts202512',
+    {},
+  ) as SceneAccounts;
 
   const values = Object.entries(accounts).reduce((acc, [key, value]) => {
     if (!key.startsWith('@')) {
@@ -36,9 +39,13 @@ export async function getSceneAddresses() {
     return acc;
   }, {} as { [K in AccountSwitcherScene]: string | null });
 
+  const perpsInfo = await runTryCatch(
+    async () => await apisPerps.getPerpsCurrentAccount(),
+  );
+
   return {
     ...values,
-    Perps: await apisPerps.getPerpsCurrentAccount(),
+    Perps: perpsInfo?.address || perpsInfo,
   };
 }
 

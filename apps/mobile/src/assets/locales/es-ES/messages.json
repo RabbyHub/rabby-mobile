@@ -1254,7 +1254,6 @@
         "backupSeedPhrase": "Realiza una copia de seguridad de tu seed phrase para restaurar tu wallet si se elimina la aplicación o si pierdes tu dispositivo.",
         "UnderstandsecurityPrecautions": "Entiendo estas precauciones de seguridad.",
         "createOnCurrent": "Usar la Actual Seed Phrase",
-        "WriteSeedPhrase": "Esta es tu frase de recuperación. Escríbela en papel y guárdala en un lugar seguro. Necesitarás volver a ingresarla, en el orden correcto, en el siguiente paso.",
         "createOnCurrentDesc": "Crear billetera con una frase semilla importada existente",
         "createNewDesc": "Generar una nueva frase semilla para nuevas carteras"
       },

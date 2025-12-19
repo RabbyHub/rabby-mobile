@@ -46,7 +46,11 @@ import useSortToken from './hooks/useSortTokens';
 import { isScamHidenToken } from './utils/collection';
 import { getTotalFoldToken } from './utils/converAssets';
 import { useCurrency } from '@/hooks/useCurrency';
-import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
+import {
+  useSingleHomeAccount,
+  useSingleHomeChain,
+  useSingleHomeSelectData,
+} from './hooks/singleHome';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -102,6 +106,9 @@ export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   }, [_rawTokens, selectedChain]);
 
   const sortTokens = useSortToken(tokens || [], currentAccount);
+
+  const { selectData } = useSingleHomeSelectData();
+  const balanceValue = selectData.rawNetWorth;
 
   const dataList = useMemo(() => {
     const unFoldTokenList: ActionItem[] = sortTokens
@@ -183,21 +190,23 @@ export const TokenList = ({ onRefresh, onReachTopStatusChange }: Props) => {
       },
       {
         show: !loadingToken && !sortTokens.length,
-        data: [
-          {
-            type: 'empty-assets',
-            data: t('page.singleHome.sectionHeader.NoData', {
-              name: t('page.singleHome.sectionHeader.Token'),
-            }),
-          },
-        ],
+        data: !balanceValue
+          ? [{ type: 'empty-token' }]
+          : [
+              {
+                type: 'empty-assets',
+                data: t('page.singleHome.sectionHeader.NoData', {
+                  name: t('page.singleHome.sectionHeader.Token'),
+                }),
+              },
+            ],
       },
     ];
     return itemData
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [foldHideList, foldScam, loadingToken, sortTokens, t]);
+  }, [foldHideList, foldScam, balanceValue, loadingToken, sortTokens, t]);
 
   const totalFoldTokenValue = useMemo(() => {
     return getTotalFoldToken(

@@ -112,7 +112,7 @@ export function useIOSScreenshotted(options?: {
   useEffect(() => {
     if (!IS_IOS) return;
 
-    const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(() => {
+    const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(() => {
       const setScreenshotted = (val?: boolean) =>
         setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: !!val }));
       onIsScreenshottedJustNow?.({ setScreenshotted });

@@ -23,6 +23,8 @@ import { ManageSetting } from '../ManageSetting';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { useAddressDetailModal } from '../../useAddressDetailModal';
 import { toast } from '@/components2024/Toast';
+import { RootNames } from '@/constant/layout';
+import { navigateDeprecated, naviPush } from '@/utils/navigation';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
@@ -39,8 +41,6 @@ export const AddressList = ({
 }: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-
-  const showAddressDetail = useAddressDetailModal();
 
   const {
     top10Accounts,
@@ -103,19 +103,20 @@ export const AddressList = ({
   const renderItem = useCallback(
     ({ item }) => {
       if (isManageMode) {
-        const showAddressDetailPopup = () => {
-          showAddressDetail({
-            account: item,
-            onDelete: () => {
-              toast.success(t('global.Deleted'));
+        const gotoAddressDetail = () => {
+          onDone?.();
+          naviPush(RootNames.StackAddress, {
+            screen: RootNames.AddressDetail,
+            params: {
+              address: item.address,
+              type: item.type,
+              brandName: item.brandName,
             },
           });
         };
         return (
           <View style={[styles.itemGap, styles.manageModeItem]}>
-            <Pressable
-              onPress={showAddressDetailPopup}
-              style={styles.manageBtn}>
+            <Pressable onPress={gotoAddressDetail} style={styles.manageBtn}>
               <RcIconSettingCC
                 width={20}
                 height={20}
@@ -141,8 +142,6 @@ export const AddressList = ({
       styles.manageBtn,
       onDone,
       colors2024,
-      showAddressDetail,
-      t,
     ],
   );
 
