@@ -15,6 +15,7 @@ import { useLendingData, useSelectedMarket } from './hooks';
 import { LendingHeader } from './components/Header';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useInitOpenDetail } from './hooks/useInitOpenDetail';
+import MyAssetHome from './MyAssetHome';
 const isAndroid = Platform.OS === 'android';
 
 function DashBoardScreen(): JSX.Element {
@@ -65,7 +66,7 @@ function DashBoardScreen(): JSX.Element {
       overwriteStyle={styles.overwriteStyle}>
       <AccountSwitcherModal forScene="Lending" inScreen />
       <View style={styles.container}>
-        <PoolContainer />
+        <MyAssetHome />
       </View>
     </NormalScreenContainer2024>
   );
@@ -95,7 +96,6 @@ const ForMultipleAddress = (
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   overwriteStyle: {
     position: 'relative',
-    paddingHorizontal: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],

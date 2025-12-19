@@ -1,0 +1,309 @@
+import React, { useMemo } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
+
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import TokenIcon from '../TokenIcon';
+import { DisplayPoolReserveInfo } from '../../type';
+import { formatApy, formatListNetWorth } from '../../utils/format';
+import { CollateralSwitch } from '../CollateralSwitch';
+import IsolatedTag from '../IsolatedTag';
+
+interface SupplyItemProps extends RNViewProps {
+  reserve: DisplayPoolReserveInfo;
+  canBeEnabledAsCollateral: boolean;
+  onToggleCollateral?: (reserve: DisplayPoolReserveInfo) => void;
+  onPressSupply?: (reserve: DisplayPoolReserveInfo) => void;
+  onPressWithdraw?: (reserve: DisplayPoolReserveInfo) => void;
+}
+
+const SupplyItem: React.FC<SupplyItemProps> = ({
+  reserve,
+  style,
+  canBeEnabledAsCollateral,
+  onToggleCollateral,
+  onPressSupply,
+  onPressWithdraw,
+}) => {
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+
+  const {
+    isSupplied,
+    apyText,
+    suppliedUsdText,
+    suppliedTokenText,
+    isIsolated,
+  } = useMemo(() => {
+    const hasSupplied =
+      !!reserve.underlyingBalanceUSD && reserve.underlyingBalanceUSD !== '0';
+
+    const apy = formatApy(Number(reserve.reserve.supplyAPY || '0'));
+    const suppliedUsd = formatListNetWorth(
+      Number(reserve.underlyingBalanceUSD || '0'),
+    );
+
+    const tokenAmountNum = Number(reserve.underlyingBalance || '0');
+    let tokenAmount = '';
+    if (tokenAmountNum) {
+      if (tokenAmountNum >= 1) {
+        tokenAmount = tokenAmountNum.toFixed(4);
+      } else {
+        tokenAmount = tokenAmountNum.toPrecision(4);
+      }
+    } else {
+      tokenAmount = '0';
+    }
+
+    return {
+      isSupplied: hasSupplied,
+      apyText: apy,
+      suppliedUsdText: suppliedUsd,
+      suppliedTokenText: `${tokenAmount} ${reserve.reserve.symbol}`,
+      isIsolated: reserve.reserve.isIsolated,
+    };
+  }, [reserve]);
+
+  return (
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-1']
+            : colors2024['neutral-bg-2'],
+        },
+        style,
+      ]}>
+      <View style={styles.content}>
+        <View style={styles.headerRow}>
+          <View style={styles.tokenInfo}>
+            <TokenIcon
+              size={46}
+              chainSize={0}
+              tokenSymbol={reserve.reserve.symbol}
+              chain={reserve.chain}
+            />
+            <View style={styles.tokenTextArea}>
+              <View style={styles.symbolArea}>
+                <Text
+                  style={styles.symbol}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {reserve.reserve.symbol}
+                </Text>
+                <View style={styles.apyTag}>
+                  <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+                </View>
+              </View>
+              {isIsolated ? <IsolatedTag /> : null}
+            </View>
+          </View>
+          <View style={styles.amountArea}>
+            <Text style={styles.amountUsd}>{suppliedUsdText}</Text>
+            <Text style={styles.amountToken} numberOfLines={1}>
+              {suppliedTokenText}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.footerRow}>
+          <View style={styles.collateralArea}>
+            <Text style={styles.collateralLabel}>Collateral</Text>
+            <CollateralSwitch
+              reserve={reserve}
+              canBeEnabledAsCollateral={canBeEnabledAsCollateral}
+              onValueChange={() => {
+                onToggleCollateral?.(reserve);
+              }}
+            />
+          </View>
+          <TouchableOpacity
+            style={styles.buttonSecondary}
+            activeOpacity={0.8}
+            onPress={() => onPressSupply?.(reserve)}>
+            <Text style={styles.buttonSecondaryText}>Supply</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.buttonPrimary}
+            activeOpacity={0.8}
+            onPress={() => onPressWithdraw?.(reserve)}>
+            <Text style={styles.buttonPrimaryText}>Withdraw</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {isSupplied ? (
+        <View style={styles.suppliedBadge}>
+          <Text style={styles.suppliedBadgeText}>Supplied</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+};
+
+export default SupplyItem;
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    borderRadius: 16,
+    paddingTop: 40,
+    paddingBottom: 12,
+    paddingHorizontal: 0,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    elevation: 2,
+    position: 'relative',
+  },
+  content: {
+    paddingHorizontal: 14,
+    gap: 12,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  tokenInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 1,
+  },
+  tokenTextArea: {
+    flexDirection: 'column',
+    gap: 4,
+  },
+  symbolArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
+  },
+  symbol: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '800',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  apyTag: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: colors2024['green-light-1'],
+  },
+  apyTagText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  isolatedTag: {
+    paddingHorizontal: 4.8,
+    paddingVertical: 2.8,
+    borderRadius: 6,
+    borderWidth: 0.8,
+    borderColor: colors2024['orange-light-2'],
+    backgroundColor: colors2024['orange-light-1'],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  isolatedTagText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: colors2024['orange-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  amountArea: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  amountUsd: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  amountToken: {
+    marginTop: 2,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  collateralArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  collateralLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  buttonSecondary: {
+    flex: 1,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors2024['neutral-bg-5'],
+  },
+  buttonSecondaryText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  buttonPrimary: {
+    flex: 1,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors2024['brand-light-1'],
+  },
+  buttonPrimaryText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  suppliedBadge: {
+    position: 'absolute',
+    top: 9,
+    left: 9,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: colors2024['green-default'],
+  },
+  suppliedBadgeText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: colors2024['neutral-InvertHighlight'],
+    fontFamily: 'SF Pro Rounded',
+  },
+}));

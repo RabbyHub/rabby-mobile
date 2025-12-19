@@ -26,6 +26,8 @@ export const CollateralSwitch: React.FC<IProps> = ({
         <AppSwitch2024
           value={false}
           disabled={true}
+          barHeight={18}
+          circleSize={18}
           backgroundActive={colors2024['green-default']}
           circleBorderActiveColor={colors2024['green-default']}
           onValueChange={onValueChange}
@@ -36,6 +38,8 @@ export const CollateralSwitch: React.FC<IProps> = ({
   return (
     <AppSwitch2024
       value={isEnabled}
+      barHeight={18}
+      circleSize={18}
       disabled={!canBeEnabledAsCollateral}
       backgroundActive={colors2024['green-default']}
       circleBorderActiveColor={colors2024['green-default']}
