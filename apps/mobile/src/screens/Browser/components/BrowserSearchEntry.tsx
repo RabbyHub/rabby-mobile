@@ -141,7 +141,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tabItem: {},
 
   browserTabPlaceholder: {
-    height: 24,
+    height: 20,
   },
 }));
 
