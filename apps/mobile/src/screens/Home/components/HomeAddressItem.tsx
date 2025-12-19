@@ -46,15 +46,15 @@ export const HomeAddressItem: React.FC<{
   // const [isPressing, setIsPressing] = React.useState(false);
   const { currency } = useCurrency();
 
-  const { curveState } = useCurveDataByAddress(account.address);
+  // const { curveState } = useCurveDataByAddress(account.address);
 
-  console.debug(
-    '[debug] account.address, curveState?.updateTime, updateTime, (curveState?.updateTime || 0) > (updateTime || 0)',
-    account.address,
-    curveState?.updateTime,
-    updateTime,
-    (curveState?.updateTime || 0) > (updateTime || 0),
-  );
+  // console.debug(
+  //   '[debug] account.address, curveState?.updateTime, updateTime, (curveState?.updateTime || 0) > (updateTime || 0)',
+  //   account.address,
+  //   curveState?.updateTime,
+  //   updateTime,
+  //   (curveState?.updateTime || 0) > (updateTime || 0),
+  // );
 
   const { balance, isZeroPercentChange, changePercent } = useMemo(() => {
     const ret = {
@@ -62,20 +62,20 @@ export const HomeAddressItem: React.FC<{
       isZeroPercentChange: false,
       changePercent: '0%',
     };
-    if (
-      curveState?.loadedFromApi &&
-      (curveState?.updateTime || 0) > (updateTime || 0)
-    ) {
-      ret.balance = formatSmallCurrencyValue(
-        curveState?.selectData.rawNetWorth,
-        {
-          currency: currency,
-        },
-      );
-      ret.changePercent = curveState?.selectData.changePercent;
-      ret.isZeroPercentChange = curveState?.selectData.rawChange === 0;
-      return ret;
-    }
+    // if (
+    //   curveState?.loadedFromApi &&
+    //   (curveState?.updateTime || 0) > (updateTime || 0)
+    // ) {
+    //   ret.balance = formatSmallCurrencyValue(
+    //     curveState?.selectData.rawNetWorth,
+    //     {
+    //       currency: currency,
+    //     },
+    //   );
+    //   ret.changePercent = curveState?.selectData.changePercent;
+    //   ret.isZeroPercentChange = curveState?.selectData.rawChange === 0;
+    //   return ret;
+    // }
 
     const b = new BigNumber(account.balance || 0);
     ret.balance = formatSmallCurrencyValue(b.toNumber(), {
@@ -85,12 +85,12 @@ export const HomeAddressItem: React.FC<{
     ret.isZeroPercentChange = ret.changePercent === '0%';
     return ret;
   }, [
-    updateTime,
-    curveState?.updateTime,
-    curveState?.loadedFromApi,
-    curveState?.selectData.rawNetWorth,
-    curveState?.selectData.changePercent,
-    curveState?.selectData.rawChange,
+    // updateTime,
+    // curveState?.updateTime,
+    // curveState?.loadedFromApi,
+    // curveState?.selectData.rawNetWorth,
+    // curveState?.selectData.changePercent,
+    // curveState?.selectData.rawChange,
     prop_changePercent,
     account.balance,
     currency,
