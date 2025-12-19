@@ -614,7 +614,7 @@ export const SeedPhrase: React.FC<Props> = ({
             style={styles.title}
             title={
               !currentSelecting
-                ? t('page.nextComponent.createNewAddress.WriteDownSeedPhrase')
+                ? t('page.nextComponent.createNewAddress.BackupYourSeedPhrase')
                 : t('page.nextComponent.createNewAddress.VerifyDownSeedPhrase')
             }
           />
