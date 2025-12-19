@@ -974,7 +974,9 @@ export default function DebtSwapModal({
           isQuoteLoading={isQuoteLoading}
           currentHF={currentHF}
           afterHF={afterSwapInfo?.hfAfterSwap.toString()}
-          showHF={isHFLow || isLiquidatable}
+          // TODO: 测试看上线前删掉
+          showHF={true}
+          //showHF={isHFLow || isLiquidatable}
         />
       </BottomSheetScrollView>
 
