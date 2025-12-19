@@ -62,13 +62,12 @@ export const useSeedPhrase = () => {
           params: {
             useCurrentSeed: true,
             mnemonics: data.mnemonic as string,
-            title: `3. ${t('screens.addressStackTitle.ConfrimAddress')}`,
             accounts,
           },
         });
       }
     },
-    [t],
+    [],
   );
 
   const seedPhraseList = useMemo(() => {
@@ -84,6 +83,18 @@ export const useSeedPhrase = () => {
       return publicKeys
         .map(e => pbMappings[e])
         .filter(e => !!e)
+        .sort((a, b) => {
+          const getTotalValue = (item: typeof a) =>
+            (item.list || []).reduce((pre, now) => {
+              return pre + (now.balance || 0);
+            }, 0);
+          const aValue = getTotalValue(a);
+          const bValue = getTotalValue(b);
+          if (aValue === bValue) {
+            return (b.list.length || 0) - (a.list.length || 0);
+          }
+          return bValue - aValue;
+        })
         .map((e, index) => ({ ...e, index: index })) as TypeKeyringGroup[];
     }
     return [];

@@ -153,6 +153,8 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       ]);
     } catch (error) {
       console.error('Build transactions error:', error);
+      toast.error('something error');
+      setTxs([]);
     } finally {
       setIsLoading(false);
     }
@@ -219,7 +221,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           }
         }
         const txId = last(results);
-        if (txId) {
+        if (txId && txs[0]?.chainId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
             txs[0].chainId,

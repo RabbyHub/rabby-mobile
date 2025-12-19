@@ -1405,7 +1405,6 @@
         "passwordMin": "Deve ter pelo menos 8 caracteres",
         "createNewSeedPhrase": "Criar Nova Seed Phrase",
         "backupSeedPhrase": "Faça backup da sua seed phrase para restaurar a sua carteira caso a aplicação seja apagada ou se o seu dispositivo for perdido.",
-        "WriteSeedPhrase": "Esta é a sua seed phrase. Anote-a num papel e guarde-a num lugar seguro. Terá de a introduzir novamente, na ordem correta, no passo seguinte.",
         "riskTips": "Antes de começar, por favor, leia e mantenha estas dicas de segurança em mente:",
         "createOnCurrentDesc": "Criar carteira com uma frase-semente importada existente",
         "createNewDesc": "Gere uma nova frase-semente para novas carteiras"
@@ -2853,9 +2852,9 @@
         "providerFeeTips": "Taxa Hyperliquid: {{fee}}",
         "closeBtn": "Fechar {{direction}}",
         "total": "Total",
-        "receive": "Receber:",
+        "receive": "Receber",
         "confirm": "Confirmar",
-        "closedPnl": "PNL Fechado:",
+        "closedPnl": "PNL Fechado",
         "amount": "Montante",
         "minimumWarning": "O valor mínimo é {{percent}}%"
       },
@@ -2940,7 +2939,7 @@
         "available": "disponível",
         "reduceMargin": "Reduzir Margem",
         "addMargin": "Adicionar Margem",
-        "liqPrice": "Preço de Liquidação:",
+        "liqPrice": "Preço de Liquidação",
         "amountToAdd": "Montante a adicionar",
         "liqDistance": "Liq.Distância"
       },
@@ -2984,9 +2983,7 @@
           "token_balance": "Token/Saldo",
           "token_tvl": "Token/TVL"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -3082,17 +3079,13 @@
       "gotIt": "Entendi",
       "submitted": "submetido",
       "netWorth": "Valor líquido",
-      "market": "Mercado",
       "estDailyEarning": "Est. Ganhos Diários",
       "selectChain": "Selecionar Cadeia",
-      "apy": "APY",
       "borrowed": "Emprestado",
       "hfTitle": "Fator de Saúde",
       "enterAmount": "Introduza o montante",
       "hf": "Fator de saúde",
-      "isolated": "isolado",
       "estNetApy": "Est. rendimento líquido APY",
-      "marketSlot": "{{market}} Mercado",
       "toggleCollateralDetail": {
         "disable": "Desativar {{asset}} como Colateral",
         "error": "Há um erro com o serviço AAVE. Por favor, tente novamente mais tarde.",
@@ -3124,8 +3117,7 @@
         },
         "categorySelector": {
           "header": {
-            "asset": "Ativos",
-            "ltv": "Max LTV"
+            "asset": "Ativos"
           },
           "label": "Categoria de ativos",
           "placeholder": "Selecionar",
@@ -3137,15 +3129,12 @@
             "asset": "Ativo",
             "collateral": "Colateral"
           },
-          "title": "Categoria de ativo",
-          "maxLtv": "LTV Máximo",
-          "apy": "APY"
+          "title": "Categoria de ativo"
         },
         "title": "Gerir E-Mode",
         "enabled": "• Ativado",
         "unavailable": "• Indisponível",
         "disableTitle": "Desativar",
-        "emode": "E-Mode",
         "unavailableTips": "Os seus ativos de empréstimo/empréstimo existentes não são suportados.",
         "description": "Ativar o E-Mode permite maximizar o seu poder de empréstimo. No entanto, o empréstimo está restrito a ativos dentro da categoria selecionada."
       },

@@ -27,6 +27,8 @@ export type PerfEventBusListeners = {
 
   NAV_BACK_ON_HOME: () => void;
 
+  CHANGE_PREVENT_SCREENSHOT: (isPrevented: boolean) => void;
+
   'TMP_UPDATED:SINGLE_HOME_BALANCE': (data: {
     address: string;
     newBalance: BalanceState | null;

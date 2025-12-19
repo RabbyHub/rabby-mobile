@@ -2,7 +2,6 @@ import { getChainList } from '@/constant/chains';
 import { setTabs } from '@/hooks/browser/useBrowser';
 import { getBookmarkList } from '@/hooks/browser/useBrowserBookmark';
 import { getBrowserHistoryList } from '@/hooks/browser/useBrowserHistory';
-import { usePerpsEffectOnTop } from '@/hooks/perps/usePerpsStore';
 import { getAllRPC } from '@/hooks/useCustomRPC';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMount } from 'ahooks';
@@ -13,8 +12,6 @@ import { setChainList } from '@/hooks/useChainList';
  * @description only call this hook on app's top level
  */
 export function useSetupServiceStub() {
-  usePerpsEffectOnTop();
-
   useMount(() => {
     setChainList({
       mainnetList: getChainList('mainnet'),

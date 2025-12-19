@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { debounce } from 'lodash';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
@@ -63,6 +64,20 @@ export const TokenAmountInput = ({
     );
   }, [colors2024]);
 
+  const handleChangeText = useMemo(
+    () =>
+      debounce((v: string) => {
+        onChange?.(formatSpeicalAmount(v));
+      }, 200),
+    [onChange],
+  );
+
+  useEffect(() => {
+    return () => {
+      handleChangeText.cancel();
+    };
+  }, [handleChangeText]);
+
   return (
     <>
       <View style={[styles.container, style]}>
@@ -87,9 +102,7 @@ export const TokenAmountInput = ({
                 styles.input,
               ]}
               value={value}
-              onChangeText={(v: string) => {
-                onChange?.(formatSpeicalAmount(v));
-              }}
+              onChangeText={handleChangeText}
               max={tokenAmount}
               placeholder="0"
               placeholderTextColor={colors2024['neutral-info']}

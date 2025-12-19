@@ -193,3 +193,140 @@ export const calculateHFAfterToggleCollateral = (
     currentLiquidationThreshold: user.currentLiquidationThreshold,
   });
 };
+
+export interface CalculateHFAfterSwapProps {
+  fromAmount: string;
+  fromAssetData: ReserveDataHumanized & FormatReserveUSDResponse;
+  fromAssetUserData: DisplayPoolReserveInfo;
+  fromAssetType: 'collateral' | 'debt' | 'none';
+  toAmountAfterSlippage: string;
+  toAssetData: ReserveDataHumanized & FormatReserveUSDResponse;
+  user: FormatUserSummaryAndIncentivesResponse<
+    ReserveDataHumanized & FormatReserveUSDResponse
+  >;
+  toAssetType: 'collateral' | 'debt' | 'none';
+}
+
+export function calculateHFAfterSwap({
+  fromAmount,
+  fromAssetData,
+  fromAssetUserData,
+  fromAssetType,
+  toAmountAfterSlippage,
+  toAssetData,
+  user,
+  toAssetType,
+}: CalculateHFAfterSwapProps) {
+  // Base balances
+  const currentCollateral = valueToBigNumber(
+    user.totalCollateralMarketReferenceCurrency,
+  );
+  const currentBorrows = valueToBigNumber(
+    user.totalBorrowsMarketReferenceCurrency,
+  );
+  const isInEmode = user.userEmodeCategoryId !== 0;
+
+  // Collateral changes
+  const canWithdrawFromCollateral =
+    fromAssetType === 'collateral' &&
+    fromAssetUserData.usageAsCollateralEnabledOnUser &&
+    fromAssetData.reserveLiquidationThreshold !== '0';
+  const canAddToCollateral =
+    toAssetType === 'collateral' &&
+    ((!user.isInIsolationMode && !toAssetData.isIsolated) ||
+      (user.isInIsolationMode &&
+        user.isolatedReserve?.underlyingAsset === toAssetData.underlyingAsset));
+
+  const withdrawCollateralMR = canWithdrawFromCollateral
+    ? valueToBigNumber(fromAmount).multipliedBy(
+        fromAssetData.formattedPriceInMarketReferenceCurrency,
+      )
+    : valueToBigNumber('0');
+  const addCollateralMR = canAddToCollateral
+    ? valueToBigNumber(toAmountAfterSlippage).multipliedBy(
+        toAssetData.formattedPriceInMarketReferenceCurrency,
+      )
+    : valueToBigNumber('0');
+
+  // Debt changes
+  const repayFromDebtMR =
+    fromAssetType === 'debt'
+      ? valueToBigNumber(fromAmount).multipliedBy(
+          fromAssetData.formattedPriceInMarketReferenceCurrency,
+        )
+      : valueToBigNumber('0');
+  const toDebtMR =
+    toAssetType === 'debt'
+      ? valueToBigNumber(toAmountAfterSlippage).multipliedBy(
+          toAssetData.formattedPriceInMarketReferenceCurrency,
+        )
+      : valueToBigNumber('0');
+  const repayToDebtMR =
+    fromAssetType === 'collateral' && toAssetType === 'debt'
+      ? toDebtMR
+      : valueToBigNumber('0');
+  const borrowToDebtMR =
+    fromAssetType === 'debt' && toAssetType === 'debt'
+      ? toDebtMR
+      : valueToBigNumber('0');
+
+  const newBorrows = BigNumber.max(
+    currentBorrows
+      .minus(repayFromDebtMR)
+      .minus(repayToDebtMR)
+      .plus(borrowToDebtMR),
+    valueToBigNumber('0'),
+  );
+  const newCollateral = currentCollateral
+    .minus(withdrawCollateralMR)
+    .plus(addCollateralMR);
+
+  if (newCollateral.lte(0)) {
+    return { hfEffectOfFromAmount: '0', hfAfterSwap: valueToBigNumber('-1') };
+  }
+
+  const fromEmode = fromAssetData.eModes.find(
+    elem => elem.id === user.userEmodeCategoryId,
+  );
+  const toEMode = toAssetData.eModes.find(
+    elem => elem.id === user.userEmodeCategoryId,
+  );
+  const fromReserveLT =
+    isInEmode && fromEmode
+      ? fromEmode.eMode.formattedLiquidationThreshold
+      : fromAssetData.formattedReserveLiquidationThreshold;
+  const toReserveLT =
+    isInEmode && toEMode
+      ? toEMode.eMode.formattedLiquidationThreshold
+      : toAssetData.formattedReserveLiquidationThreshold;
+
+  const ltTotalBefore = valueToBigNumber(
+    user.totalCollateralMarketReferenceCurrency,
+  ).multipliedBy(user.currentLiquidationThreshold);
+  const ltAfter = ltTotalBefore
+    .minus(withdrawCollateralMR.multipliedBy(fromReserveLT))
+    .plus(addCollateralMR.multipliedBy(toReserveLT))
+    .div(newCollateral)
+    .toFixed(4);
+
+  const hfAfterSwap = calculateHealthFactorFromBalancesBigUnits({
+    collateralBalanceMarketReferenceCurrency: newCollateral,
+    borrowBalanceMarketReferenceCurrency: newBorrows,
+    currentLiquidationThreshold: ltAfter,
+  });
+
+  // For gating flashloan flow: how risky is withdrawing the from collateral amount on its own
+  let hfEffectOfFromAmount = '0';
+  if (canWithdrawFromCollateral) {
+    hfEffectOfFromAmount = calculateHealthFactorFromBalancesBigUnits({
+      collateralBalanceMarketReferenceCurrency: valueToBigNumber(
+        fromAmount,
+      ).multipliedBy(fromAssetData.formattedPriceInMarketReferenceCurrency),
+      borrowBalanceMarketReferenceCurrency:
+        user.totalBorrowsMarketReferenceCurrency,
+      currentLiquidationThreshold: fromReserveLT,
+    }).toString();
+  }
+
+  return { hfEffectOfFromAmount, hfAfterSwap };
+}

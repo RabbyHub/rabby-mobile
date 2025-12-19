@@ -68,19 +68,15 @@ export function useGoogleSign() {
   };
 }
 
-export function useAutoGoogleSignIfPreviousSignedOnTop() {
-  // const setCloudStorage = useSetAtom(cloudStorageAtom);
-
-  React.useEffect(() => {
-    if (GoogleSignin.hasPreviousSignIn()) {
-      GoogleSignin.signInSilently().then(() => {
-        GoogleSignin.getTokens().then(({ accessToken }) => {
-          setCloudStorage(prev => ({
-            ...prev,
-            accessToken,
-          }));
-        });
+export function autoGoogleSignIfPreviousSignedOnBoot() {
+  if (GoogleSignin.hasPreviousSignIn()) {
+    GoogleSignin.signInSilently().then(() => {
+      GoogleSignin.getTokens().then(({ accessToken }) => {
+        setCloudStorage(prev => ({
+          ...prev,
+          accessToken,
+        }));
       });
-    }
-  }, []);
+    });
+  }
 }

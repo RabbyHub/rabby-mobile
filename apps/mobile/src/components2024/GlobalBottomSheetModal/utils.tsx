@@ -65,6 +65,9 @@ import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
 import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
+import DebtTokenSelectModal from '@/screens/Lending/components/DebtTokenSelect';
+import DebtSwapModal from '@/screens/Lending/modals/DebtSwapModal';
+import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -214,8 +217,12 @@ export const MODAL_CONFIGS: Record<
     Component: AddWhitelistSelectMethod,
   },
   [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: {
-    snapPoints: ['95%'],
+    snapPoints: ['100%'],
     Component: SeedPhraseManualBackup,
+  },
+  [MODAL_NAMES.SEED_PHRASE_QR_CODE]: {
+    snapPoints: [606],
+    Component: SeedPhraseQrCode,
   },
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: {
     snapPoints: [],
@@ -307,7 +314,7 @@ export const MODAL_CONFIGS: Record<
     Component: SupplyDetailPopup,
   },
   [MODAL_NAMES.BORROW_DETAIL]: {
-    snapPoints: [598],
+    snapPoints: ['85%'],
     Component: BorrowDetailPopup,
   },
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: {
@@ -342,5 +349,13 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {
     snapPoints: ['85%'],
     Component: SelectCategoryModal,
+  },
+  [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
+    snapPoints: ['85%'],
+    Component: DebtTokenSelectModal,
+  },
+  [MODAL_NAMES.DEBT_SWAP]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: DebtSwapModal,
   },
 };

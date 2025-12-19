@@ -33,6 +33,8 @@ import {
   View,
   AppState,
   useWindowDimensions,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -94,7 +96,7 @@ import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
 import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
-import { browserApis } from '@/hooks/browser/useBrowser';
+import { browserApis, setBrowserState } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -128,6 +130,7 @@ import {
 } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
+import { apisLending } from '../Lending/hooks';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -233,13 +236,6 @@ const OverViewComponent = React.memo(
             badge: alertInfo.total,
           },
           {
-            key: MultiHomeFeatTitle.Dapps,
-            title: IS_IOS
-              ? t('page.home.services.websites')
-              : t('page.home.services.dapps'),
-            icon: RcIconDapps,
-          },
-          {
             key: MultiHomeFeatTitle.GasAccount,
             title: t('page.home.services.gasAccount'),
             icon: RcIconGasAccountCC,
@@ -312,6 +308,7 @@ const OverViewComponent = React.memo(
             refresh24hAssets({ balanceAccounts }),
           );
           triggerUpdateAlert();
+          apisLending.fetchLendingData();
           syncTop10History(top10Addresses, false);
         });
       }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
@@ -328,7 +325,7 @@ const OverViewComponent = React.memo(
       ]).finally(() => {
         // update at background
         forceUpdate();
-        triggerFetchHomeData('TMP_TRIGGER:FETCH_LENDING_DATA');
+        apisLending.fetchLendingData();
         syncTop10History(top10Addresses, true);
         currencyService.syncCurrencyList(true);
       });
@@ -341,17 +338,6 @@ const OverViewComponent = React.memo(
         params: {},
       });
     }, [navigation]);
-
-    const openDapps = useMemoizedFn(() => {
-      browserApis.setPartialBrowserState({
-        isShowBrowser: true,
-        isShowSearch: true,
-        searchText: '',
-        searchTabId: '',
-        trigger: 'home',
-      });
-      browserApis.forceShowBrowser();
-    });
 
     const handleClickMenu = useCallback(
       (key: MultiHomeFeatTitle) => {
@@ -447,20 +433,11 @@ const OverViewComponent = React.memo(
             });
             break;
 
-          case MultiHomeFeatTitle.Dapps: {
-            openDapps();
-            break;
-          }
           default:
             break;
         }
       },
-      [
-        openDapps,
-        handlePressWatchlist,
-        navigation,
-        toggleUseAllAccountsOnScene,
-      ],
+      [handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
     );
 
     const generateCustomBadgeIcon = useCallback(
@@ -497,9 +474,6 @@ const OverViewComponent = React.memo(
           return <PointsBadge />;
         }
 
-        if (el.key === MultiHomeFeatTitle.Dapps) {
-          return <DappsBadge />;
-        }
         if (el.key === MultiHomeFeatTitle.GasAccount) {
           return <GasAccountBadge />;
         }
@@ -527,6 +501,9 @@ const OverViewComponent = React.memo(
       <Tabs.ScrollView
         tvParallaxProperties={undefined}
         showsVerticalScrollIndicator={false}
+        onTouchStart={() => {
+          setBrowserState({ isEditingFavorite: false });
+        }}
         style={[styles.scroll, { flex: undefined }]}
         contentContainerStyle={[
           styles.scrollContainer,
@@ -578,7 +555,7 @@ const OverViewComponent = React.memo(
               );
             })}
           </View>
-          <BrowserSearchEntry alwaysShowSearch={false} />
+          <BrowserSearchEntry />
           <View style={styles.searchBarPlaceholder} />
         </View>
       </Tabs.ScrollView>
@@ -593,7 +570,8 @@ const detectHasAccounts = async () => {
   if (!hasAccountsInKeyring) {
     result.redirectAction = () => {
       const navigation = getReadyNavigationInstance();
-      navigation && resetNavigationTo(navigation, 'GetStarted2024');
+      navigation &&
+        resetNavigationTo(navigation, RootNames.GetStartedScreen2024);
     };
   }
 
@@ -607,7 +585,7 @@ function MultiAddressHome(): JSX.Element {
   const appThemeConfig = useAppThemeConfig();
 
   const combinedData = useScene24hBalanceLightWeightData('Home');
-  useRendererDetect({ name: 'MultiAddressHome::multi24HBalanceReturn' });
+  useRendererDetect({ name: 'MultiAddressHome' });
 
   useSetTotalBalanceTextForFeedback(combinedData.netWorth);
   useSetTotalBalanceTextForRateModal(combinedData.netWorth);

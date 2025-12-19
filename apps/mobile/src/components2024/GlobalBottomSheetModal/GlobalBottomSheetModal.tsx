@@ -22,6 +22,7 @@ import { bottomSheetModalSecurityApis } from './security';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeBottomSheetProps } from './utils-help';
+import { storeApiScreenshotReport } from '@/components/Screenshot/hooks';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -131,6 +132,9 @@ export const GlobalBottomSheetModal2024 = () => {
       if (params.preventScreenshotOnModalOpen) {
         bottomSheetModalSecurityApis.markAtSensitiveModal(id);
       }
+      if (params.screenshotReportFreeBeforeModalClose) {
+        storeApiScreenshotReport.markIsScreenshotReportFree(true);
+      }
 
       setTimeout(() => {
         handlePresent(id);
@@ -165,9 +169,14 @@ export const GlobalBottomSheetModal2024 = () => {
       globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
       bottomSheetModalSecurityApis.removeAtSensitiveModal(key);
 
+      const params = modals.find(modal => modal.id === key)?.params;
+      if (params?.screenshotReportFreeBeforeModalClose) {
+        storeApiScreenshotReport.markIsScreenshotReportFree(false);
+      }
+
       handleRemove(key);
     },
-    [handleRemove],
+    [handleRemove, modals],
   );
 
   const handleSnapToIndex = React.useCallback<

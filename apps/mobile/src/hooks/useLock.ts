@@ -16,8 +16,13 @@ import { APP_FEATURE_SWITCH } from '@/constant';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { naviPush } from '@/utils/navigation';
+import {
+  makeAvoidParallelAsyncFunc,
+  resolveValFromUpdater,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { RefLikeObject } from '@/utils/type';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -43,6 +48,11 @@ function getIsAppUnlocked() {
   const state = zAppLockStore.getState();
   return state.appUnlocked;
 }
+
+export const storeApiLock = {
+  setAppLock,
+  getIsAppUnlocked,
+};
 
 export function useSetAppLock() {
   return { setAppLock };
@@ -90,6 +100,31 @@ export function useTryUnlockAppWithBuiltinOnTop() {
   return { getTriedUnlock };
 }
 
+const isLoadingRef: RefLikeObject<boolean> = { current: false };
+const fetchLockInfo = makeAvoidParallelAsyncFunc(async () => {
+  // if (isLoadingRef.current) return;
+  isLoadingRef.current = true;
+
+  try {
+    const response = await apisLock.getRabbyLockInfo();
+
+    setAppLock({
+      appUnlocked: keyringService.isUnlocked(),
+      pwdStatus: response.pwdStatus,
+    });
+
+    return response;
+  } catch (error) {
+    console.error(error);
+  } finally {
+    isLoadingRef.current = false;
+  }
+});
+
+export async function loadLockInfoOnBootstrap() {
+  return fetchLockInfo();
+}
+
 export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
   const appLock = zAppLockStore(
     useShallow(state => ({
@@ -100,32 +135,11 @@ export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
 
   const { autoFetch } = options || {};
 
-  const isLoadingRef = React.useRef(false);
-  const fetchLockInfo = useCallback(async () => {
-    if (isLoadingRef.current) return;
-    isLoadingRef.current = true;
-
-    try {
-      const response = await apisLock.getRabbyLockInfo();
-
-      setAppLock({
-        appUnlocked: keyringService.isUnlocked(),
-        pwdStatus: response.pwdStatus,
-      });
-
-      return response;
-    } catch (error) {
-      console.error(error);
-    } finally {
-      isLoadingRef.current = false;
-    }
-  }, []);
-
   React.useEffect(() => {
     if (autoFetch) {
       fetchLockInfo();
     }
-  }, [autoFetch, fetchLockInfo]);
+  }, [autoFetch]);
 
   const { isUseBuiltinPwd, isUseCustomPwd } = React.useMemo(() => {
     return {
@@ -154,15 +168,6 @@ function tryGetAppStatus() {
   }
 }
 
-// const appStateAtom = atom<{
-//   current: AppStateStatus;
-//   androidPaused: boolean;
-//   // iosStatus: AppStateStatus;
-// }>({
-//   current: tryGetAppStatus(),
-//   androidPaused: false,
-//   // iosStatus: FALLBACK_STATE,
-// });
 type AppStateState = {
   current: AppStateStatus;
   androidPaused: boolean;
@@ -207,42 +212,40 @@ export function useIsOnBackground() {
 /**
  * @description call this hooks on the top level of your app to handle background state
  */
-export function useSecureOnBackground() {
-  React.useEffect(() => {
-    if (isAndroid) {
-      const subBlur = AppState.addEventListener('blur', () => {});
-      const subFocus = AppState.addEventListener('focus', () => {});
-      /**
-       * @why not AppState.addEventListener('blur'|'focus', ...)
-       *
-       * because the blur and focus event will be triggered on <Modal /> component shown.
-       */
-      const subChanged = RNScreenshotPrevent.androidOnLifeCycleChanged(ret => {
-        setAppStatus(prev => ({
-          ...prev,
-          androidPaused: ['pause', 'prepaused'].includes(ret.state),
-        }));
-      });
+export function startSubscribeAppStateChange() {
+  if (isAndroid) {
+    const subBlur = AppState.addEventListener('blur', () => {});
+    const subFocus = AppState.addEventListener('focus', () => {});
+    /**
+     * @why not AppState.addEventListener('blur'|'focus', ...)
+     *
+     * because the blur and focus event will be triggered on <Modal /> component shown.
+     */
+    const subChanged = RNScreenshotPrevent.androidOnLifeCycleChanged(ret => {
+      setAppStatus(prev => ({
+        ...prev,
+        androidPaused: ['pause', 'prepaused'].includes(ret.state),
+      }));
+    });
 
-      return () => {
-        subBlur.remove();
-        subFocus.remove();
-        subChanged.remove();
-      };
-    } else if (isIOS && AppState.isAvailable) {
-      /** @see https://reactnative.dev/docs/appstate#change */
-      const subChange = AppState.addEventListener('change', nextStatus => {
-        // if (isInactive(nextStatus)) nativeBlockScreen();
-        // else nativeUnblockScreen();
+    return () => {
+      subBlur.remove();
+      subFocus.remove();
+      subChanged.remove();
+    };
+  } else if (isIOS && AppState.isAvailable) {
+    /** @see https://reactnative.dev/docs/appstate#change */
+    const subChange = AppState.addEventListener('change', nextStatus => {
+      // if (isInactive(nextStatus)) nativeBlockScreen();
+      // else nativeUnblockScreen();
 
-        setAppStatus(prev => ({ ...prev, current: nextStatus }));
-      });
+      setAppStatus(prev => ({ ...prev, current: nextStatus }));
+    });
 
-      return () => {
-        subChange.remove();
-      };
-    }
-  }, []);
+    return () => {
+      subChange.remove();
+    };
+  }
 }
 
 type SwitchToggleType =

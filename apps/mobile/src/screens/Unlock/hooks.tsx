@@ -8,6 +8,7 @@ import { UnlockResultErrors } from '@/core/apis/lock';
 import { t } from 'i18next';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
 
 export enum UNLOCK_STATE {
   IDLE = 0,
@@ -15,6 +16,7 @@ export enum UNLOCK_STATE {
 }
 
 type UnlockState = {
+  /** @deprecated */
   hasLeftFromUnlock: boolean;
   status: UNLOCK_STATE;
 };
@@ -52,14 +54,22 @@ const afterLeaveFromUnlock = () => {
   setUnlockState(prev => ({ ...prev, hasLeftFromUnlock: true }));
 };
 
+export const storeApisUnlock = {
+  unlockApp,
+  afterLeaveFromUnlock,
+};
+
 export function useUnlockApp() {
-  const atomState = unlockStateStore(s => s);
+  const { isUnlocking, hasLeftFromUnlock } = unlockStateStore(
+    useShallow(s => ({
+      isUnlocking: s.status === UNLOCK_STATE.UNLOCKING,
+      hasLeftFromUnlock: s.hasLeftFromUnlock,
+    })),
+  );
 
   return {
-    isUnlocking: atomState.status === UNLOCK_STATE.UNLOCKING,
-    hasLeftFromUnlock: atomState.hasLeftFromUnlock,
-    afterLeaveFromUnlock,
-    unlockApp,
+    isUnlocking,
+    hasLeftFromUnlock,
   };
 }
 

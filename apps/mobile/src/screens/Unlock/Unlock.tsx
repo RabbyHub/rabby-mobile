@@ -34,15 +34,23 @@ import {
   RequestGenericPurpose,
   parseKeychainError,
 } from '@/core/apis/keychain';
-import { useTipedUserEnableBiometrics, useUnlockApp } from './hooks';
+import {
+  storeApisUnlock,
+  useTipedUserEnableBiometrics,
+  useUnlockApp,
+} from './hooks';
 import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
-import { useBiometrics } from '@/hooks/biometrics';
+import { storeApisBiometrics, useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { sleep } from '@/utils/async';
 import { updateUnlockTime } from '@/core/apis/lock';
 import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
 import YesIcon from '@/assets2024/icons/common/check.svg';
+import i18next from 'i18next';
+import { RootNames } from '@/constant/layout';
+import { measureTime } from '@/core/utils/statics';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -61,7 +69,8 @@ const toastBiometricsFailed = (message?: string) => {
 const toastLoading = toastWithIcon(() => (
   <ActivityIndicator style={{ marginRight: 6 }} />
 ));
-const toastUnlocking = () => toastLoading('Unlocking', { duration: 3000 });
+const toastUnlocking = () =>
+  toastLoading(i18next.t('page.unlock.unlocking'), { duration: 3000 });
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   const { isFaceID = isIOS, size = BiometricsIconSize } = props;
@@ -82,7 +91,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
       password: Yup.string().required(t('page.unlock.password.required')),
     });
   }, [t]);
-  const { isUnlocking, unlockApp, afterLeaveFromUnlock } = useUnlockApp();
+  const { isUnlocking } = useUnlockApp();
 
   const checkUnlocked = useCallback(async () => {
     if (!apisLock.isUnlocked()) return;
@@ -90,14 +99,18 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
     const hasUnlockOnce = unlockOnceRef.current;
 
     const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
-    resetNavigationTo(
-      navigation,
-      !hasAccountsInKeyring && !hasUnlockOnce ? 'GetStarted2024' : 'Home',
-    );
+    requestAnimationFrame(() => {
+      resetNavigationTo(
+        navigation,
+        !hasAccountsInKeyring && !hasUnlockOnce
+          ? RootNames.GetStartedScreen2024
+          : RootNames.Home,
+      );
+    });
     unlockOnceRef.current = true;
 
-    afterLeaveFromUnlock();
-  }, [navigation, afterLeaveFromUnlock]);
+    storeApisUnlock.afterLeaveFromUnlock();
+  }, [navigation]);
 
   const { tipEnableBiometrics } = useTipedUserEnableBiometrics();
 
@@ -112,10 +125,18 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
       if (getFormikErrorsCount(errors)) return;
 
       const { needAlert } = await tipEnableBiometrics(values.password);
-      console.log('needAlert', needAlert);
+      console.debug('needAlert', needAlert);
       const hideToast = needAlert ? null : toastUnlocking();
       try {
-        const result = await unlockApp(values.password);
+        measureTime.start('UnlockWithPassword');
+        const result = await storeApisUnlock.unlockApp(values.password);
+        const timeResult = measureTime.end('UnlockWithPassword');
+        matomoRequestEvent({
+          category: 'Performance',
+          action: 'UnlockWithPassword',
+          value: timeResult.diff,
+        });
+
         if (result.error) {
           helpers?.setFieldError(
             'password',
@@ -163,19 +184,15 @@ export default function UnlockScreen() {
   const navigation = useRabbyAppNavigation();
   const {
     computed: { isBiometricsEnabled, isFaceID },
-    fetchBiometrics,
-    toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
     useUnlockForm(navigation);
 
   useFocusEffect(
     useCallback(() => {
-      fetchBiometrics();
-    }, [fetchBiometrics]),
+      storeApisBiometrics.fetchBiometrics();
+    }, []),
   );
-
-  const { unlockApp } = useUnlockApp();
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
   const couldSwitchingAuthentication = isBiometricsEnabled;
@@ -195,7 +212,14 @@ export default function UnlockScreen() {
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
         onPlainPassword: async password => {
-          const result = await unlockApp(password);
+          measureTime.start('UnlockWithBiometrics');
+          const result = await storeApisUnlock.unlockApp(password);
+          const timeResult = measureTime.end('UnlockWithBiometrics');
+          matomoRequestEvent({
+            category: 'Performance',
+            action: 'UnlockWithBiometrics',
+            value: timeResult.diff,
+          });
           if (result.error) {
             throw new Error(result.error);
           }
@@ -208,11 +232,11 @@ export default function UnlockScreen() {
       if (__DEV__ && incToReset() === 0) {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
         setUsingBiometrics(false);
-        toggleBiometrics(false, {});
+        storeApisBiometrics.toggleBiometrics(false, {});
       } else if (error.code === 'NIL_KEYCHAIN_OBJECT') {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
         setUsingBiometrics(false);
-        toggleBiometrics(false, {});
+        storeApisBiometrics.toggleBiometrics(false, {});
       } else {
         toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
       }
@@ -240,7 +264,7 @@ export default function UnlockScreen() {
         }
       }
     }
-  }, [unlockApp, toggleBiometrics, t]);
+  }, [t]);
 
   const lockBiometricRef = React.useRef(false);
   const manualUnlockWithBiometrics = useCallback(async () => {

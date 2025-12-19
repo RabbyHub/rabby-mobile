@@ -1370,12 +1370,14 @@ export class TransactionGroup {
   }
 
   get customActionInfo() {
+    const isApproveDelegation =
+      this.maxGasTx?.explain?.type_call?.action === 'approveDelegation';
     const approveData =
       this.maxGasTx.action?.actionData.approveToken ||
       this.maxGasTx.action?.actionData.approveNFT ||
       this.maxGasTx.action?.actionData.approveNFTCollection;
 
-    if (approveData) {
+    if (approveData || isApproveDelegation) {
       // magic method to filter approve txs before action tx
       return {
         customAction: undefined,

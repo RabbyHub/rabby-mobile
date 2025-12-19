@@ -49,7 +49,7 @@ export async function getAllAccountsToDisplay() {
     contactService.getAliasByMap(),
   ]);
 
-  const result = await Promise.all<IDisplayedAccountWithBalance>(
+  const result = await Promise.all(
     displayedKeyrings
       .map(item => {
         return item.accounts.map(account => {
@@ -62,7 +62,7 @@ export async function getAllAccountsToDisplay() {
               allAliasNames[account?.address?.toLowerCase()]?.alias || '',
             keyring: item.keyring,
             publicKey: item?.publicKey,
-          };
+          } as IDisplayedAccountWithBalance;
         });
       })
       .flat(1)

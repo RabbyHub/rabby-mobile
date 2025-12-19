@@ -8612,6 +8612,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@paraswap/core@npm:2.2.0":
+  version: 2.2.0
+  resolution: "@paraswap/core@npm:2.2.0"
+  checksum: b481e4b0d0590cafe3a2f0991391fabeb967339a25c11da3769215e95c9495a7b73728b39483ef00f2e1dd6e9dc33ca2467bf0c5b8cc0b5c5f77564d60093ea0
+  languageName: node
+  linkType: hard
+
+"@paraswap/sdk@npm:6.10.0":
+  version: 6.10.0
+  resolution: "@paraswap/sdk@npm:6.10.0"
+  dependencies:
+    "@paraswap/core": 2.2.0
+    bignumber.js: ^9.0.2
+    ts-essentials: ^9.1.2
+  peerDependencies:
+    axios: ">=0.25.0 <2.0.0"
+    ethers: ^5.5.0
+    web3: ^1.7.1
+  peerDependenciesMeta:
+    axios:
+      optional: true
+    ethers:
+      optional: true
+    web3:
+      optional: true
+  checksum: 4e50e3f658c638405bf728911846af63b46ab35e5d57fcc2378eb98e294f803b3af96db262221f6074e8c94db4c4465c7544fa78ab30e1734c11e6958db5d425
+  languageName: node
+  linkType: hard
+
 "@peculiar/asn1-schema@npm:^2.3.13":
   version: 2.3.15
   resolution: "@peculiar/asn1-schema@npm:2.3.15"
@@ -34509,6 +34538,7 @@ __metadata:
     "@onekeyfe/hd-ble-sdk": 1.1.13
     "@onekeyfe/react-native-ble-utils": 0.1.4
     "@op-engineering/op-sqlite": ^15.1.1
+    "@paraswap/sdk": 6.10.0
     "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-hd-keyring": 4.3.1
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
@@ -40141,6 +40171,18 @@ __metadata:
   version: 0.2.0
   resolution: "ts-easing@npm:0.2.0"
   checksum: e67ee862acca3b2e2718e736f31999adcef862d0df76d76a0e138588728d8a87dfec9978556044640bd0e90203590ad88ac2fe8746d0e9959b8d399132315150
+  languageName: node
+  linkType: hard
+
+"ts-essentials@npm:^9.1.2":
+  version: 9.4.2
+  resolution: "ts-essentials@npm:9.4.2"
+  peerDependencies:
+    typescript: ">=4.1.0"
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: ef9a15cef66e4c23942cd6a64ab1aa15108cabea187904ba8345bab309f5b5d8f4fc076950391af8fd3914df0349ce11dc716930949f7f5d24ec3a5851ccfe73
   languageName: node
   linkType: hard
 

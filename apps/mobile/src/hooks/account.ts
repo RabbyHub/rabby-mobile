@@ -158,6 +158,10 @@ const doFetchAccounts = async () => {
   return nextAccounts;
 };
 
+export const storeApisAccounts = {
+  fetchAccounts: doFetchAccounts,
+};
+
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   const accounts = zAccountStore(s => s.accounts);
 
@@ -322,8 +326,10 @@ export const usePinnedAccountList = () => {
 
 export function useRemoveAccount() {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const { togglePinAddressAsync } = usePinAddresses({ disableAutoFetch: true });
   return useCallback(
     async (account: KeyringAccount) => {
+      togglePinAddressAsync({ ...account, nextPinned: false });
       await removeAddress(account);
       await fetchAccounts();
       if (
@@ -335,7 +341,7 @@ export function useRemoveAccount() {
         transactionHistoryService.clearSuccessAndFailList(account.address);
       }
     },
-    [accounts, fetchAccounts],
+    [accounts, fetchAccounts, togglePinAddressAsync],
   );
 }
 

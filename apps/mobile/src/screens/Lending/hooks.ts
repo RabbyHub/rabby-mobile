@@ -18,10 +18,9 @@ import {
 } from '@aave/math-utils';
 import { ethers } from 'ethers';
 import dayjs from 'dayjs';
-import { Atom, atom, getDefaultStore, useAtom, useAtomValue } from 'jotai';
-import { startTransition, useCallback, useMemo } from 'react';
+import { atom, useAtom, useAtomValue } from 'jotai';
+import { useCallback, useMemo } from 'react';
 import { unstable_batchedUpdates } from 'react-native';
-import { InteractionManager } from 'react-native';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
 import { CustomMarket, MarketDataType, marketsData } from './config/market';
@@ -30,11 +29,16 @@ import wrapperToken from './config/wrapperToken';
 import { CHAINS_ENUM } from '@debank/common';
 import { API_ETH_MOCK_ADDRESS } from './utils/constant';
 import { DisplayPoolReserveInfo } from './type';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import {
+  storeApiAccountsSwitcher,
+  useSceneAccountInfo,
+} from '@/hooks/accountsSwitcher';
 import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { findChainByID } from '@/utils/chain';
 import { getProvider } from './provider';
 import { fetchIconSymbolAndName } from './utils/icon';
+import { ExtractAtomValueType } from '@/utils/type';
+import { jotaiStore } from '@/core/utils/reexports';
 
 export const marketAtom = atomByMMKV(
   '@lendingMarket',
@@ -133,6 +137,45 @@ const getCachePools = (marketKey?: CustomMarket) => {
   poolsMap.set(marketKey as CustomMarket, newPools);
   return newPools;
 };
+
+const fetchContractData = async (address: string) => {
+  const selectedMarketData = apisLending.getSelectedMarketInfo().marketData;
+  const pools = apisLending.getPools();
+  if (!selectedMarketData || !pools) {
+    return {};
+  }
+
+  try {
+    const [reserves, userReserves, walletBalances, eModes] = await Promise.all([
+      pools.uiPoolDataProvider.getReservesHumanized({
+        lendingPoolAddressProvider:
+          selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+      }),
+      pools.uiPoolDataProvider.getUserReservesHumanized({
+        lendingPoolAddressProvider:
+          selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+        user: address,
+      }),
+      pools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
+        address,
+        selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+      ),
+      pools.uiPoolDataProvider.getEModesHumanized({
+        lendingPoolAddressProvider:
+          selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
+      }),
+    ]);
+    return {
+      reserves,
+      userReserves,
+      walletBalances,
+      eModes,
+    };
+  } catch (error) {
+    console.error('CUSTOM_LOGGER:=>: error', error);
+    return {};
+  }
+};
 export const usePoolDataProviderContract = () => {
   const { selectedMarketData, marketKey, chainEnum } = useSelectedMarket();
   const pools = useMemo(() => {
@@ -142,50 +185,9 @@ export const usePoolDataProviderContract = () => {
     return getCachePools(marketKey);
   }, [marketKey, selectedMarketData]);
 
-  const fetchContractData = useCallback(
-    async (address: string) => {
-      if (!selectedMarketData || !pools) {
-        return {};
-      }
-      try {
-        const [reserves, userReserves, walletBalances, eModes] =
-          await Promise.all([
-            pools.uiPoolDataProvider.getReservesHumanized({
-              lendingPoolAddressProvider:
-                selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
-            }),
-            pools.uiPoolDataProvider.getUserReservesHumanized({
-              lendingPoolAddressProvider:
-                selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
-              user: address,
-            }),
-            pools.walletBalanceProvider.getUserWalletBalancesForLendingPoolProvider(
-              address,
-              selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
-            ),
-            pools.uiPoolDataProvider.getEModesHumanized({
-              lendingPoolAddressProvider:
-                selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
-            }),
-          ]);
-        return {
-          reserves,
-          userReserves,
-          walletBalances,
-          eModes,
-        };
-      } catch (error) {
-        console.error('CUSTOM_LOGGER:=>: error', error);
-        return {};
-      }
-    },
-    [pools, selectedMarketData],
-  );
-
   return {
     pools,
     selectedMarketData,
-    fetchContractData,
     chainEnum,
   };
 };
@@ -300,7 +302,7 @@ const mappedBalancesAtom = atom(get => {
   const { 0: tokenAddresses, 1: balances } = walletBalances;
   return tokenAddresses.map((_address, ix) => ({
     address: _address.toLowerCase(),
-    amount: balances[ix].toString(),
+    amount: balances[ix]?.toString(),
   }));
 });
 
@@ -455,84 +457,105 @@ const preQueryParams: {
   marketKey: undefined,
 };
 
-type ExtractValueType<T> = T extends Atom<infer V> ? V : never;
-const jotaiStore = getDefaultStore();
 const globalSets = {
-  setReserves: (value: ExtractValueType<typeof reservesAtom>) =>
+  setReserves: (value: ExtractAtomValueType<typeof reservesAtom>) =>
     jotaiStore.set(reservesAtom, value),
-  setUserReserves: (value: ExtractValueType<typeof userReservesAtom>) =>
+  setUserReserves: (value: ExtractAtomValueType<typeof userReservesAtom>) =>
     jotaiStore.set(userReservesAtom, value),
-  setWalletBalances: (value: ExtractValueType<typeof walletBalancesAtom>) =>
+  setWalletBalances: (value: ExtractAtomValueType<typeof walletBalancesAtom>) =>
     jotaiStore.set(walletBalancesAtom, value),
-  setLoading: (value: ExtractValueType<typeof loadingAtom>) =>
+  setEModes: (value: ExtractAtomValueType<typeof eModesAtom>) =>
+    jotaiStore.set(eModesAtom, value),
+  setLoading: (value: ExtractAtomValueType<typeof loadingAtom>) =>
     jotaiStore.set(loadingAtom, value),
-  setCurrentAddress: (value: ExtractValueType<typeof addressAtom>) =>
+  setCurrentAddress: (value: ExtractAtomValueType<typeof addressAtom>) =>
     jotaiStore.set(addressAtom, value),
 };
+
+export const apisLending = {
+  getSelectedMarketInfo() {
+    const market = jotaiStore.get(marketAtom);
+    return getMarketInfo(market);
+  },
+  getMarketKey() {
+    const marketKey = jotaiStore.get(marketAtom);
+    return marketKey;
+  },
+  getPools() {
+    const marketKey = apisLending.getMarketKey();
+    const selectedMarketData = apisLending.getSelectedMarketInfo().marketData;
+    if (!marketKey || !selectedMarketData) {
+      return undefined;
+    }
+    return getCachePools(marketKey);
+  },
+  fetchLendingData,
+};
+
+async function fetchLendingData(options?: {
+  accountAddress?: string;
+  ignoreLoading?: boolean;
+}) {
+  const {
+    accountAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
+      forScene: 'Lending',
+    }).finalSceneCurrentAccount?.address,
+    ignoreLoading,
+  } = options || {};
+
+  const requestAddress = accountAddress;
+  if (!requestAddress) {
+    return;
+  }
+
+  const marketKey = apisLending.getMarketKey();
+
+  // 用户强制忽略loading、前后params一样
+  const isSameParams =
+    preQueryParams.address === requestAddress &&
+    preQueryParams.marketKey === marketKey;
+  const isForceIgnoreLoading = ignoreLoading || isSameParams;
+  preQueryParams.address = requestAddress;
+  preQueryParams.marketKey = marketKey;
+  if (!isForceIgnoreLoading) {
+    globalSets.setLoading(true);
+  }
+  return fetchContractData(requestAddress)
+    .then(data => {
+      const nextReserves = data?.reserves;
+      const nextUserReserves = data?.userReserves;
+      const nextWalletBalances = data?.walletBalances || EMPTY_WALLET_BALANCES;
+      unstable_batchedUpdates(() => {
+        globalSets.setReserves(nextReserves);
+        globalSets.setUserReserves(nextUserReserves);
+        globalSets.setWalletBalances(nextWalletBalances);
+        globalSets.setEModes(data?.eModes);
+        globalSets.setCurrentAddress(requestAddress);
+        globalSets.setLoading(false);
+      });
+    })
+    .catch(() => {
+      globalSets.setLoading(false);
+    });
+}
 
 const useLendingData = () => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
-  const [reserves, setReserves] = useAtom(reservesAtom);
-  const [userReserves, setUserReserves] = useAtom(userReservesAtom);
-  const [walletBalances, setWalletBalances] = useAtom(walletBalancesAtom);
-  const [, setEModes] = useAtom(eModesAtom);
+  const [reserves] = useAtom(reservesAtom);
+  const [userReserves] = useAtom(userReservesAtom);
+  const [walletBalances] = useAtom(walletBalancesAtom);
   const [loading, setLoading] = useAtom(loadingAtom);
-  const { marketKey } = useSelectedMarket();
-  const [, setCurrentAddress] = useAtom(addressAtom);
-  const { fetchContractData } = usePoolDataProviderContract();
 
   const fetchData = useCallback(
-    async (ignoreLoading: boolean = false) => {
-      const requestAddress = currentAccount?.address;
-      if (!requestAddress) {
-        return;
-      }
-      // 用户强制忽略loading、前后params一样
-      const isSameParams =
-        preQueryParams.address === requestAddress &&
-        preQueryParams.marketKey === marketKey;
-      const isForceIgnoreLoading = ignoreLoading || isSameParams;
-      preQueryParams.address = requestAddress;
-      preQueryParams.marketKey = marketKey;
-      if (!isForceIgnoreLoading) {
-        setLoading(true);
-      }
-      fetchContractData(requestAddress)
-        .then(data => {
-          InteractionManager.runAfterInteractions(() => {
-            startTransition(() => {
-              const nextReserves = data?.reserves;
-              const nextUserReserves = data?.userReserves;
-              const nextWalletBalances =
-                data?.walletBalances || EMPTY_WALLET_BALANCES;
-              unstable_batchedUpdates(() => {
-                setReserves(nextReserves);
-                setUserReserves(nextUserReserves);
-                setWalletBalances(nextWalletBalances);
-                setEModes(data?.eModes);
-                setCurrentAddress(requestAddress);
-                setLoading(false);
-              });
-            });
-          });
-        })
-        .catch(() => {
-          setLoading(false);
-        });
+    (ignoreLoading?: boolean) => {
+      return fetchLendingData({
+        accountAddress: currentAccount?.address,
+        ignoreLoading,
+      });
     },
-    [
-      currentAccount?.address,
-      fetchContractData,
-      marketKey,
-      setCurrentAddress,
-      setEModes,
-      setLoading,
-      setReserves,
-      setUserReserves,
-      setWalletBalances,
-    ],
+    [currentAccount],
   );
 
   return {

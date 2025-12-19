@@ -246,7 +246,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       if (actualNeedApprove && !isNativeToken) {
         const requiredAmount = new BigNumber(amount)
           .multipliedBy(10 ** reserve.reserve.decimals)
-          .toString();
+          .toFixed();
 
         // 检查是否需要两步approve（针对以太坊上的USDT）
         let shouldTwoStepApprove = false;
@@ -320,6 +320,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       setSupplyTx(formattedSupplyResult);
     } catch (error) {
       console.error('Build transactions error:', error);
+      toast.error('something error');
+      setSupplyTx(null);
+      setApproveTxs(null);
     } finally {
       setIsLoading(false);
     }
@@ -432,7 +435,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           }
         }
         const txId = last(results);
-        if (txId) {
+        if (txId && txsForMiniApproval[0]?.chainId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
             txsForMiniApproval[0].chainId,

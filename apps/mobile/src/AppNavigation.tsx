@@ -81,6 +81,7 @@ import { GlobalSignerPortal } from './components2024/MiniSignV2/components/Globa
 import { perfEvents } from './core/utils/perf';
 import {
   BottomSheetBrowser,
+  BrowserFavoritePopup,
   BrowserManagePopup,
 } from './screens/Browser/BottomSheetBrowser';
 import { TokenMarketInfoScreen } from './screens/TokenDetail/TokenMarketInfoScreen';
@@ -93,6 +94,7 @@ import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
 import DeviceInfo from 'react-native-device-info';
 import { coerceNumber } from './utils/coerce';
+import { useAppCouldRender } from './hooks/useBootstrap';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -289,6 +291,10 @@ export default function AppNavigation() {
   );
 
   const linking = useMemo(() => getLinkingConfig(), []);
+
+  // const { couldRender } = useAppCouldRender();
+
+  // if (!couldRender) return null;
 
   return (
     <AutoLockView.ForAppNav
@@ -496,6 +502,7 @@ export default function AppNavigation() {
           <GlobalSearchBottomSheet />
           <BottomSheetBrowser />
           <BrowserManagePopup />
+          <BrowserFavoritePopup />
         </NavigationContainer>
       </NavigationIndependentTree>
       <ModalsSubmitFeedbackByScreenshotStub />

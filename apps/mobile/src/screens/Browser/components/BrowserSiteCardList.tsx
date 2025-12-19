@@ -81,7 +81,7 @@ export const BrowserSiteCardList = ({
 const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     list: {
-      marginBottom: 20,
+      paddingBottom: 20,
     },
     listItem: {
       marginBottom: 12,
