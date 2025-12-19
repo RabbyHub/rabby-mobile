@@ -963,21 +963,21 @@ export default function DebtSwapModal({
             />
           </View>
         )}
-        <DebtSwapModalOverview
-          fromToken={fromToken}
-          toToken={toToken}
-          chainEnum={chainEnum}
-          fromAmount={debouncedFromAmount}
-          currentToAmount={toDisplayReserve?.variableBorrows || '0'}
-          toAmount={toAmountAfterSlippage}
-          fromBalanceBn={fromBalanceBn.toString()}
-          isQuoteLoading={isQuoteLoading}
-          currentHF={currentHF}
-          afterHF={afterSwapInfo?.hfAfterSwap.toString()}
-          // TODO: 测试看上线前删掉
-          showHF={true}
-          //showHF={isHFLow || isLiquidatable}
-        />
+        {noQuote && !isQuoteLoading ? null : (
+          <DebtSwapModalOverview
+            fromToken={fromToken}
+            toToken={toToken}
+            chainEnum={chainEnum}
+            fromAmount={debouncedFromAmount}
+            currentToAmount={toDisplayReserve?.variableBorrows || '0'}
+            toAmount={toAmountAfterSlippage}
+            fromBalanceBn={fromBalanceBn.toString()}
+            isQuoteLoading={isQuoteLoading}
+            currentHF={currentHF}
+            afterHF={afterSwapInfo?.hfAfterSwap.toString()}
+            showHF={isHFLow || isLiquidatable}
+          />
+        )}
       </BottomSheetScrollView>
 
       <View
@@ -986,18 +986,20 @@ export default function DebtSwapModal({
           {
             height:
               BOTTOM_SIZE.BUTTON +
-              (isRisky ? BOTTOM_SIZE.CHECKBOX : 0) +
-              (isLiquidatable ? BOTTOM_SIZE.TIPS : 0),
+              (isLiquidatable
+                ? BOTTOM_SIZE.TIPS
+                : isRisky
+                ? BOTTOM_SIZE.CHECKBOX
+                : 0),
           },
         ]}>
-        {isLiquidatable && (
+        {isLiquidatable ? (
           <View style={styles.riskContainer}>
             <Text style={styles.dangerWarningText}>
               {t('page.Lending.debtSwap.lpDangerWarning')}
             </Text>
           </View>
-        )}
-        {isRisky && (
+        ) : isRisky ? (
           <Pressable
             style={styles.riskContainer}
             onPress={() => {
@@ -1006,7 +1008,7 @@ export default function DebtSwapModal({
             <CheckBoxRect checked={riskChecked} size={16} />
             <Text style={styles.warningText}>{riskDesc}</Text>
           </Pressable>
-        )}
+        ) : null}
         {canShowDirectSubmit ? (
           <DirectSignBtn
             loading={isLoading}

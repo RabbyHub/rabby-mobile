@@ -18,28 +18,24 @@ export const valueLostPercentage = (
 };
 
 export const shouldShowWarning = (lostValue: number, srcValueInUsd: number) => {
-  //TODO: 上线前删掉 测试环境，降低确认阈值
-  return true;
-  //if (srcValueInUsd > 500000) {
-  //  return lostValue > 0.03;
-  //}
-  //if (srcValueInUsd > 100000) {
-  //  return lostValue > 0.04;
-  //}
-  //if (srcValueInUsd > 10000) {
-  //  return lostValue > 0.05;
-  //}
-  //if (srcValueInUsd > 1000) {
-  //  return lostValue > 0.07;
-  //}
+  if (srcValueInUsd > 500000) {
+    return lostValue > 0.03;
+  }
+  if (srcValueInUsd > 100000) {
+    return lostValue > 0.04;
+  }
+  if (srcValueInUsd > 10000) {
+    return lostValue > 0.05;
+  }
+  if (srcValueInUsd > 1000) {
+    return lostValue > 0.07;
+  }
 
-  //return lostValue > 0.05;
+  return lostValue > 0.05;
 };
 
 export const shouldRequireConfirmation = (lostValue: number) => {
-  //TODO: 上线前删掉 测试环境，降低确认阈值
-  return lostValue > 0.0002;
-  //return lostValue > 0.2;
+  return lostValue > 0.2;
 };
 
 export const getPriceImpactData = ({
