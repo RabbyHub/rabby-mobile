@@ -1,6 +1,7 @@
 import { MMKV } from 'react-native-mmkv';
 import { MMKV_FILE_NAMES } from '@/core/utils/appFS';
 import { openapi } from '@/core/request';
+import { computeBalanceChange } from '@/core/apis/balance';
 
 export const CURE_CACHE_TIME = 10 * 60 * 1000; // 10 min
 // export const CURE_CACHE_TIME = 7 * 24 * 60 * 60 * 1000; // TODO: 7 days min tmp for test
@@ -37,17 +38,17 @@ export const getBalance24hCache = (_address: string) => {
   return null;
 };
 
-export const setBalance24hCache = (_address: string, data: IBalance24hData) => {
-  const address = _address.toLowerCase();
+export const setBalance24hCache = (addr: string, data: IBalance24hData) => {
+  const address = addr.toLowerCase();
   storage.set(address, JSON.stringify(data));
 };
 
 export const get24hBalance = async (addr: string, force?: boolean) => {
-  const res = await get24hBalanceWithCache(addr, force);
-  return res?.data;
+  const res = await refresh24hBalanceWithCache(addr, force);
+  return res;
 };
 
-const get24hBalanceWithCache = async (_address: string, force = false) => {
+const refresh24hBalanceWithCache = async (_address: string, force = false) => {
   const address = _address.toLowerCase();
   const cache = getBalance24hCache(address);
   if (cache && !force && !cache.isExpired) {
@@ -90,21 +91,19 @@ export const deleteLongTime24hBalanceCache = () => {
 };
 
 export const getChangeData = (
-  data: IBalance24hData['data'],
+  data?: IBalance24hData['data'],
   realtimeNetWorth = 0,
   realtimeTimestamp?: number,
 ) => {
   const startData = data || { total_usd_value: 0 };
   const endNetWorth = realtimeTimestamp ? realtimeNetWorth : 0;
-  const assetsChange = endNetWorth - startData?.total_usd_value;
+  const changeValues = computeBalanceChange(
+    endNetWorth,
+    startData.total_usd_value,
+  );
 
   return {
-    changePercent:
-      startData?.total_usd_value !== 0
-        ? `${Math.abs(
-            (assetsChange * 100) / startData?.total_usd_value,
-          ).toFixed(2)}%`
-        : `${endNetWorth === 0 ? '0' : '100.00'}%`,
-    isLoss: assetsChange < 0,
+    changePercent: changeValues.changePercent,
+    isLoss: changeValues.assetsChange < 0,
   };
 };

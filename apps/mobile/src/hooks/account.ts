@@ -45,6 +45,7 @@ import {
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { useBalanceAccounts } from './useAccountsBalance';
 import { sortAccountList } from '@/utils/sortAccountList';
+import { perfEvents } from '@/core/utils/perf';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
@@ -67,16 +68,42 @@ const zAccountStore = zCreate<Store>((set, get) => {
 });
 
 runIIFEFunc(() => {
-  keyringService.once('unlock', () => {
+  const fetchAndSet = (options?: { confirmChanged?: boolean }) => {
+    const { confirmChanged = false } = options || {};
     fetchAllAccounts().then(accounts => {
       setAccounts(accounts);
     });
+  };
+  keyringService.once('unlock', () => {
+    fetchAndSet();
+  });
+
+  keyringService.on('newAccount', () => {
+    fetchAndSet();
+  });
+  // removedAccount
+  keyringService.on('removedAccount', () => {
+    fetchAndSet();
+  });
+
+  keyringService.store.subscribe(state => {
+    if (state.booted && state.vault) {
+      fetchAndSet();
+    }
   });
 });
 
 function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
   zAccountStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(prev.accounts, valOrFunc);
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.accounts,
+      valOrFunc,
+      { strict: true },
+    );
+
+    setTimeout(() => {
+      perfEvents.emit('ACCOUNTS_MAYBE_CHANGED', { confirmed: changed });
+    }, 0);
 
     if (changed) {
       return { ...prev, accounts: newVal };
@@ -93,6 +120,7 @@ export function setCurrentAccount(
     const { newVal, changed } = resolveValFromUpdater(
       prev.currentAccount,
       valOrFunc,
+      { strict: true },
     );
 
     if (changed) {
@@ -123,12 +151,12 @@ function setPinAddresses(
   });
 }
 
-const doFetchAccounts = makeAvoidParallelAsyncFunc(async () => {
+const doFetchAccounts = async () => {
   const nextAccounts = await fetchAllAccounts();
   setAccounts(nextAccounts);
 
   return nextAccounts;
-});
+};
 
 export const storeApisAccounts = {
   fetchAccounts: doFetchAccounts,

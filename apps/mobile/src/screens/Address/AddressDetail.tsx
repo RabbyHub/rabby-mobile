@@ -18,6 +18,8 @@ import { AddressDetailInner } from '@/components2024/AddressDetail/AddressDetail
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useQrCodeModal } from '@/components2024/QrCodeModal/useQrCodeModal';
 import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
+import { resetNavigationTo } from '@/hooks/navigation';
+import { useTranslation } from 'react-i18next';
 
 type AddressDetailProps = CompositeScreenProps<
   NativeStackScreenProps<AddressNavigatorParamList, 'AddressDetail'>,
@@ -27,9 +29,9 @@ type AddressDetailProps = CompositeScreenProps<
 function AddressDetailScreen(): JSX.Element {
   const { colors2024 } = useTheme2024();
   const { params } = useRoute<AddressDetailProps['route']>();
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
   const qrCodeModal = useQrCodeModal();
-
+  const { t } = useTranslation();
   const { address, type, brandName } = params;
   const { accounts } = useAccounts();
   const account = useMemo(
@@ -72,7 +74,9 @@ function AddressDetailScreen(): JSX.Element {
           <AddressDetailInner
             account={account}
             onCancel={() => noop}
-            // onDelete={onDelete}
+            onDelete={() => {
+              resetNavigationTo(navigation, 'Home');
+            }}
           />
         ) : null}
       </ScrollView>

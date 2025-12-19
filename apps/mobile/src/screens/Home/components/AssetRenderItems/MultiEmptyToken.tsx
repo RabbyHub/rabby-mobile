@@ -11,26 +11,16 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { Card } from '@/components2024/Card';
-import {
-  RcIconOldReceive,
-  RcIconBuy,
-  RcIconImport,
-} from '@/assets2024/singleHome';
+import { RcIconOldReceive, RcIconImport } from '@/assets2024/singleHome';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { Account } from '@/core/services/preference';
 import { naviPush } from '@/utils/navigation';
 interface IProps {
-  currentAccount?: Account | null;
-  // onReceive: () => void;
-  // onImport: () => void;
   style?: StyleProp<ViewStyle>;
 }
-export const EmptyTokenRow = memo(({ currentAccount, style }: IProps) => {
+
+export const MultiEmptyTokenRow = memo(({ style }: IProps) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
-
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   return (
     <View style={[styles.constainer, style]}>
@@ -61,19 +51,10 @@ export const EmptyTokenRow = memo(({ currentAccount, style }: IProps) => {
             </View>
           </Card>
           <Card
-            onPress={async () => {
-              if (!currentAccount?.address) {
-                return;
-              }
-              await switchSceneCurrentAccount(
-                'MakeTransactionAbout',
-                currentAccount,
-              );
-              naviPush(RootNames.StackTransaction, {
-                screen: RootNames.Receive,
-                params: {
-                  account: currentAccount,
-                },
+            onPress={() => {
+              naviPush(RootNames.StackAddress, {
+                screen: RootNames.ReceiveAddressList,
+                params: {},
               });
             }}
             style={styles.card}>

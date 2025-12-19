@@ -10,9 +10,13 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { AppRootName, RootNames } from '@/constant/layout';
-import { useSetPasswordFirst } from '@/hooks/useLock';
+import {
+  shouldRedirectToSetPasswordBefore2024,
+  useSetPasswordFirst,
+} from '@/hooks/useLock';
 import { CurrentAddressProps } from './components/AddressListScreenContainer';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
+import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -42,27 +46,19 @@ export const AddressListScreenButton: React.FC<Props> = ({
   type = 'address',
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
+  // const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const onPress = React.useCallback(() => {
     switch (type) {
       case 'address':
-        const id = createGlobalBottomSheetModal2024({
-          name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-          onDone: () => {
-            removeGlobalBottomSheetModal2024(id);
-          },
-          shouldRedirectToSetPasswordBefore2024,
-          navigateTo: (screen: AppRootName, params?: object) => {
-            navigation.dispatch(
-              StackActions.push(RootNames.StackAddress, {
-                screen,
-                params,
-              }),
-            );
-          },
-        });
+        // const id = createGlobalBottomSheetModal2024({
+        //   name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
+        //   onDone: () => {
+        //     removeGlobalBottomSheetModal2024(id);
+        //   },
+        //   shouldRedirectToSetPasswordBefore2024,
+        // });
+        apiGlobalModal.showAddSelectMethodModal();
         break;
       case 'watch-address':
         navigateDeprecated(RootNames.StackAddress, {
@@ -77,7 +73,7 @@ export const AddressListScreenButton: React.FC<Props> = ({
       default:
       // NOTHING
     }
-  }, [type, shouldRedirectToSetPasswordBefore2024, navigation]);
+  }, [type]);
   return (
     <TouchableOpacity
       style={styles.headerRight}

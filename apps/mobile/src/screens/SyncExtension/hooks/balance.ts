@@ -29,7 +29,7 @@ export function useSpecifyAccountsBalance(accounts: Account[]) {
       }
       setBalanceLoading(true);
       // batch update
-      // const cacheBalancesArr = [] as balanceAccountType[];
+      // const cacheBalancesArr = [] as BalanceAccountType[];
 
       const list = accounts || [];
 
