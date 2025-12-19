@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
 
 import { Tip } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
@@ -9,6 +9,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import IconCloseCC from '@/assets2024/icons/common/close-cc.svg';
 import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { IS_ANDROID } from '@/core/native/utils';
 
 interface IProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ interface IProps {
 type DebtSwapEntryTipsState = {
   isVisible: boolean;
 };
+const ScreenWidth = Dimensions.get('window').width;
 
 const debtSwapEntryTipsStore = zustandByMMKV<DebtSwapEntryTipsState>(
   '@DebtSwapEntryTip',
@@ -65,7 +67,7 @@ const DebtSwapEntryTips: React.FC<IProps> = ({ children }) => {
       parentWrapperStyle={styles.parentWrapperStyle}
       onClose={handleClose}
       content={
-        <View style={styles.content}>
+        <View style={[styles.content, IS_ANDROID && styles.contentAndroid]}>
           <Text style={styles.text}>
             {t('page.Lending.debtSwap.entryTips')}
           </Text>
@@ -98,6 +100,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 15,
+  },
+  contentAndroid: {
+    width: ScreenWidth - 72,
+    flex: 1,
   },
   text: {
     fontSize: 14,
