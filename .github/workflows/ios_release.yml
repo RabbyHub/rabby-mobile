@@ -28,9 +28,9 @@ on:
       KEYCHAIN_PASS:
         required: true
 
-# defaults:
-#   run:
-#     shell: bash -ieo pipefail {0}
+defaults:
+  run:
+    shell: bash -ieol pipefail {0}
 
 env:
   BUILD_TARGET_PLATFORM: ios
