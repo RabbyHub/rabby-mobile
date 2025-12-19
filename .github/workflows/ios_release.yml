@@ -16,6 +16,13 @@ on:
         required: true
         type: boolean
         default: false
+      macos_machine_location:
+        required: true
+        type: choice
+        options:
+          - 'mobile'
+          - 'mobile-local'
+        default: 'mobile'
   workflow_call:
     secrets:
       KEYCHAIN_PASS:
@@ -31,7 +38,15 @@ env:
 jobs:
   setup:
     name: iOS-release-build
-    runs-on: [self-hosted, mobile, macOS]
+    strategy:
+      matrix:
+        include:
+          - host: macOS
+            machine_loc: ${{ inputs.macos_machine_location }}
+    runs-on:
+      - self-hosted
+      - ${{ matrix.host }}
+      - ${{ matrix.machine_loc }}
     steps:
       - uses: actions/checkout@v4
       - name: Get Actions Variables
