@@ -207,6 +207,8 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
       setWithdrawTxs(formatTxs as unknown as Tx[]);
     } catch (error) {
+      toast.error('something error');
+      setWithdrawTxs([]);
       console.error('Build transactions error:', error);
     } finally {
       setIsLoading(false);
@@ -280,7 +282,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         }
 
         const txId = last(results);
-        if (txId) {
+        if (txId && withdrawTxs[0]?.chainId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
             withdrawTxs[0].chainId,
