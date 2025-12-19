@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
@@ -21,6 +21,7 @@ interface AddressInfoProps {
   account: KeyringAccountWithAlias;
   onCancel: () => void;
   onDelete?: () => void;
+  showQRcode?: boolean;
 }
 
 export const AddressDetailInner: React.FC<
@@ -68,44 +69,58 @@ export const AddressDetailInner: React.FC<
 
   return (
     <View style={styles.root}>
-      <View style={styles.qrCodeView}>
-        <TouchableOpacity
-          style={styles.qrCode}
-          hitSlop={10}
-          onPress={() => {
-            qrCodeModal.show(account.address);
-          }}>
-          <QrcodeSVG
-            width={20}
-            height={20}
-            color={colors2024['neutral-body']}
-          />
-        </TouchableOpacity>
-      </View>
+      {__IN_SHEET_MODAL__ ? (
+        <View style={styles.qrCodeView}>
+          <TouchableOpacity
+            style={styles.qrCode}
+            hitSlop={10}
+            onPress={() => {
+              qrCodeModal.show(account.address);
+            }}>
+            <QrcodeSVG
+              width={20}
+              height={20}
+              color={colors2024['neutral-body']}
+            />
+          </TouchableOpacity>
+        </View>
+      ) : null}
       <AddressInfoItem account={account} />
       <View style={styles.cardList}>
-        <AddressAssetsItem onCancel={onCancel} account={account} />
-        <AddressBackupItem onCancel={onCancel} account={account} />
-        <Card style={styles.card}>
-          <Item
-            label={t('page.addressDetail.add-to-whitelist')}
-            value={
-              <AppSwitch2024
-                onValueChange={setInWhitelist}
-                changeValueImmediately={false}
-                value={inWhiteList}
-              />
-            }
-          />
-        </Card>
-        <Card style={styles.card}>
-          <Item
-            label={t('page.addressDetail.pin-in-list')}
-            value={<AppSwitch2024 onValueChange={setPinned} value={pinned} />}
-          />
-        </Card>
+        <View style={styles.group}>
+          <Text style={styles.subTitle}>
+            {t('page.addressDetail.basicInfo')}
+          </Text>
+          <AddressAssetsItem onCancel={onCancel} account={account} />
+        </View>
+        <View style={styles.group}>
+          <Text style={styles.subTitle}>{t('global.Backup')}</Text>
+          <AddressBackupItem onCancel={onCancel} account={account} />
+        </View>
+        <View style={styles.group}>
+          <Text style={styles.subTitle}>{t('global.Other')}</Text>
+          <Card style={styles.card}>
+            <Item
+              label={t('page.addressDetail.add-to-whitelist')}
+              value={
+                <AppSwitch2024
+                  onValueChange={setInWhitelist}
+                  changeValueImmediately={false}
+                  value={inWhiteList}
+                />
+              }
+            />
+          </Card>
+          <Card style={styles.card}>
+            <Item
+              label={t('page.addressDetail.pin-in-list')}
+              value={<AppSwitch2024 onValueChange={setPinned} value={pinned} />}
+            />
+          </Card>
+        </View>
+
         <Card
-          style={styles.card}
+          style={[styles.card, styles.delete]}
           onPress={() => {
             removeAccount({
               account,
@@ -131,12 +146,29 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     marginBottom: 56,
   },
+  subTitle: {
+    paddingLeft: 28,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 20,
+  },
   cardList: {
-    gap: 12,
+    gap: 20,
+  },
+  group: {
+    gap: 8,
   },
   card: {
     marginHorizontal: 16,
     width: 'auto',
+    borderRadius: 24,
+  },
+  delete: {
+    borderColor: colors2024['red-default'],
+    backgroundColor: colors2024['red-light-1'],
   },
   labelText: {
     color: colors2024['red-default'],

@@ -15,7 +15,7 @@
       "CreateSelectOnCurrentSeed": "2. Add Wallet",
       "SetPassword2024": "2. Set password",
       "CreateChooseBackup": "3. Choose a backup method",
-      "AddressDetail": "Wallet detail",
+      "AddressDetail": "Wallet Detail",
       "ImportMoreAddress": "Import more Wallets",
       "ImportPrivateKey": "Import Private Key",
       "ImportMnemonic": "Import Seed Phrase",
@@ -24,7 +24,10 @@
       "VerifySeedPhrase": "Verify seed phrase",
       "BackupPrivateKey": "Backup Private Key",
       "BackupSeedPhrase": "Backup Seed Phrase",
-      "RestoreFromCloud": "Restore from {{type}}"
+      "RestoreFromCloud": "Restore from {{type}}",
+      "CreateWallet": "Create Wallet",
+      "SetPassword": "Set password",
+      "ChooseBackup": "Choose a backup method"
     }
   },
   "page": {
@@ -1140,13 +1143,14 @@
         "Confirm": "Confirm",
         "passwordTopTips": "This password will be used to unlock your wallet and encrypt your local data.",
         "backupSeedPhrase": "Backup your seed phrase to restore your wallet if the app is deleted or your device is lost.",
+        "BackupYourSeedPhrase": "Backup Your Seed Phrase",
         "passwordMin": "Must be at least 8 characters",
         "confirmPasswordTips": "Passwords match",
         "whatIsSeedPhrase": "What's a Seed Phrase",
         "UnderstandsecurityPrecautions": "I understand these security precautions.",
         "selectWords": "Select words",
         "inOrder": "in the correct order.",
-        "WriteSeedPhrase": "This is your seed phrase. Write it down on paper and store it in a secure place. You will need to re-enter it, in the correct order, in the next step.",
+        "WriteSeedPhrase": "This is your seed phrase. Write it down and store it securely. If you lose it or share it, your assets could be lost forever. You'll be asked to re-enter this phrase (in order) in the next step.",
         "WriteDownSeedPhrase": "Write Down Your Seed Phrase",
         "VerifyDownSeedPhrase": "Verify seed phrase ",
         "BackupSeedPhrase": "Manually Backup Seed Phrase",
@@ -1157,6 +1161,22 @@
         "createOnCurrent": "Use Current Seed Phrase",
         "createOnCurrentDesc": "Create wallet with an existing imported seed phrase",
         "riskTips": "Before you begin, please read and keep these security tips in mind:"
+      },
+      "copySeedPhraseSecureTip": {
+        "title": "Keep Your SeedPhrase Secret",
+        "subTitle": "Anyone who gets your seed phrase can fully control your funds.",
+        "tip1": "Other apps may read your clipboard, so avoid switching apps after copying.",
+        "tip2": "Do not paste or save your seed phrase in cloud services or notes apps.",
+        "tip3": "Never share your seed phrase. We will never ask for it.",
+        "copied": "Seed phrase copied. The clipboard will clear in 1 minute.",
+        "copyAnyway": "Copy anyway"
+      },
+      "screenshotSecureTip": {
+        "title": "Screenshots aren’t secure",
+        "subTitle": "Saving your seed phrase as an image can expose it, so writing it down is a safer option.",
+        "tip1": "Screenshots can sync to the cloud or other devices, and may be accessed if a device is lost, stolen, or compromised.",
+        "tip2": "Apps or malware can read images stored in your photo library.",
+        "tip3": "Anyone who gets your seed phrase can take full control of your wallet, and this cannot be reversed."
       },
       "addAddress": {
         "createAddress": "Create Wallet",
@@ -1534,6 +1554,9 @@
       "hd-path": "HD Path",
       "manage-seed-phrase": "Manage Seed Phrase",
       "manage-addresses-under-this-seed-phrase": "Add wallet from this seed phrase",
+      "basicInfo": "Basic Info",
+      "backup": "Backup",
+      "other": "Other",
       "safeAddressListScreen": {
         "addSafeAddress": "Add Safe Wallets"
       },
@@ -3098,6 +3121,7 @@
   "global": {
     "appName": "Rabby Wallet",
     "appDescription": "Your go-to wallet for Ethereum and EVM",
+    "copy": "Copy",
     "copied": "Copied",
     "confirm": "Confirm",
     "next": "Next",
@@ -3141,6 +3165,8 @@
     "Addresses": "Addresses",
     "Wallets": "Select Wallet",
     "24h": "24h",
+    "Backup": "Backup",
+    "Other": "Other",
     "permissionRequest": {
       "common": {
         "askMeLater": "askMeLater"

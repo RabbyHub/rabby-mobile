@@ -89,6 +89,7 @@ import {
 } from '@/hooks/useCexSupportList';
 import { isValidHexAddress } from '@metamask/utils';
 import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -121,6 +122,8 @@ function SendScreen({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+
+  useRendererDetect({ name: 'SendScreen' });
 
   useEffect(() => {
     clearLocalPendingTxData();

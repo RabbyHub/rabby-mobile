@@ -1157,7 +1157,6 @@
         "passwordTopTips": "此密码将用于解锁您的钱包并加密您的本地数据。",
         "UnderstandsecurityPrecautions": "我了解这些安全预防措施。",
         "backupSeedPhrase": "备份你的助记词，以便在应用被删除或设备丢失时恢复你的钱包。",
-        "WriteSeedPhrase": "这是你的助记词。请将其写在纸上并妥善保管。在下一步中，你将需要按正确的顺序重新输入。",
         "passwordMin": "至少需要 8 个字符",
         "createOnCurrentDesc": "使用现有导入的种子短语创建钱包",
         "createNewDesc": "为新钱包生成一个新的种子短语"

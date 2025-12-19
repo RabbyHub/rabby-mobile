@@ -56,10 +56,12 @@ function MainListBlocks() {
   const getHeaderTitle = React.useCallback(() => {
     return (
       <HeaderTitleText2024 style={styles.title}>
-        {state?.title || t('screens.addressStackTitle.CreateNewAddress')}
+        {state?.title || state?.isFirstCreate
+          ? t('screens.addressStackTitle.CreateNewAddress')
+          : t('screens.addressStackTitle.ConfrimAddress')}
       </HeaderTitleText2024>
     );
-  }, [state?.title, styles.title, t]);
+  }, [state?.isFirstCreate, state?.title, styles.title, t]);
 
   React.useEffect(() => {
     setNavigationOptions({
@@ -144,6 +146,7 @@ function MainListBlocks() {
         params: {
           finishGoToScreen: RootNames.CreateChooseBackup,
           delaySetPassword: true,
+          isFirstCreate: !!state?.isFirstCreate,
         },
       });
     }
@@ -189,10 +192,12 @@ function MainListBlocks() {
         Keyboard.dismiss();
       }}>
       <View style={[styles.container]}>
-        <ProgressBar
-          amount={PROGRESS_BAR_STEP.THREE}
-          currentCount={currentProgressCount}
-        />
+        {!!state?.isFirstCreate && (
+          <ProgressBar
+            amount={PROGRESS_BAR_STEP.THREE}
+            currentCount={currentProgressCount}
+          />
+        )}
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.addressTopTips')}
         </Text>
@@ -268,7 +273,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
     paddingHorizontal: 20,
     marginBottom: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
   },
   addressText: {
     fontSize: 16,

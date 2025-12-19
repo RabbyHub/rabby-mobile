@@ -1056,7 +1056,6 @@
         "BackupSeedPhrase": "수동으로 Seed Phrase 백업하기",
         "inOrder": "올바른 순서로.",
         "confirmPasswordTips": "비밀번호가 일치합니다.",
-        "WriteSeedPhrase": "이것이 당신의 시드 구문입니다. 그것을 종이에 적고 안전한 장소에 보관하세요. 다음 단계에서 올바른 순서로 다시 입력해야 합니다.",
         "riskTips": "시작하기 전에, 다음 보안 팁을 읽고 꼭 기억하세요:",
         "VerifyDownSeedPhrase": "시드 구문 확인",
         "passwordMin": "최소 8자 이상이어야 합니다.",
