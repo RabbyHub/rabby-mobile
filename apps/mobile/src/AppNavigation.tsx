@@ -94,6 +94,7 @@ import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
 import DeviceInfo from 'react-native-device-info';
 import { coerceNumber } from './utils/coerce';
+import { useAppCouldRender } from './hooks/useBootstrap';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -290,6 +291,10 @@ export default function AppNavigation() {
   );
 
   const linking = useMemo(() => getLinkingConfig(), []);
+
+  // const { couldRender } = useAppCouldRender();
+
+  // if (!couldRender) return null;
 
   return (
     <AutoLockView.ForAppNav

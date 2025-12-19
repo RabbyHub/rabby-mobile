@@ -588,7 +588,8 @@ const detectHasAccounts = async () => {
   if (!hasAccountsInKeyring) {
     result.redirectAction = () => {
       const navigation = getReadyNavigationInstance();
-      navigation && resetNavigationTo(navigation, 'GetStarted2024');
+      navigation &&
+        resetNavigationTo(navigation, RootNames.GetStartedScreen2024);
     };
   }
 
@@ -629,7 +630,7 @@ function MultiAddressHome(): JSX.Element {
   const appThemeConfig = useAppThemeConfig();
 
   const combinedData = useScene24hBalanceLightWeightData('Home');
-  useRendererDetect({ name: 'MultiAddressHome::multi24HBalanceReturn' });
+  useRendererDetect({ name: 'MultiAddressHome' });
 
   useSetTotalBalanceTextForFeedback(combinedData.netWorth);
   useSetTotalBalanceTextForRateModal(combinedData.netWorth);

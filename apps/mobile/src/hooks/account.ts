@@ -130,6 +130,10 @@ const doFetchAccounts = makeAvoidParallelAsyncFunc(async () => {
   return nextAccounts;
 });
 
+export const storeApisAccounts = {
+  fetchAccounts: doFetchAccounts,
+};
+
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   const accounts = zAccountStore(s => s.accounts);
 

@@ -1472,7 +1472,8 @@
           "no": "Cancel",
           "yes": "Yes"
         }
-      }
+      },
+      "unlocking": "Unlocking"
     },
     "addToken": {
       "noTokenFound": "No token found",

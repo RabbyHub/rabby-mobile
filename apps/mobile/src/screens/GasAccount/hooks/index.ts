@@ -1,27 +1,17 @@
-import { toast } from '@/components/Toast';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RootNames } from '@/constant/layout';
-import { sendRequest } from '@/core/apis/sendRequest';
 import { openapi } from '@/core/request';
-import { gasAccountService, preferenceService } from '@/core/services';
-import { Account } from '@/core/services/preference';
 import { openExternalUrl } from '@/core/utils/linking';
 import { navigationRef } from '@/utils/navigation';
-import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { uniqBy } from 'lodash';
-import pRetry from 'p-retry';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Linking, Platform } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import {
+  storeApiGasAccount,
   useGasAccountHistoryRefresh,
-  useGasAccountLoginVisible,
-  useGasAccountLogoutVisible,
   useGasAccountSign,
   useGasBalanceRefresh,
-  useSetGasAccount,
 } from './atom';
 import { useRequest } from 'ahooks';
 import { apisHomeTabIndex } from '@/hooks/navigation';
@@ -31,8 +21,6 @@ export const useGasAccountInfo = () => {
 
   const { refreshId } = useGasBalanceRefresh();
 
-  const setGasAccount = useSetGasAccount();
-
   const {
     data: value,
     runAsync: runFetchGasAccountInfo,
@@ -40,22 +28,13 @@ export const useGasAccountInfo = () => {
     error,
   } = useRequest(
     async () => {
-      if (!sig || !accountId) {
-        return undefined;
-      }
-      return openapi.getGasAccountInfo({ sig, id: accountId }).then(e => {
-        if (e.account.id) {
-          return e;
-        }
-        setGasAccount();
-        return undefined;
-      });
+      return storeApiGasAccount.fetchGasAccountInfo();
     },
     {
       refreshDeps: [sig, accountId, refreshId],
       cacheKey: `current-gas-account-info-${accountId}`,
       onError() {
-        setGasAccount();
+        storeApiGasAccount.setGasAccount();
       },
     },
   );
@@ -65,7 +44,7 @@ export const useGasAccountInfo = () => {
     sig &&
     accountId
   ) {
-    setGasAccount();
+    storeApiGasAccount.setGasAccount();
   }
 
   return { loading, value, runFetchGasAccountInfo };
@@ -106,84 +85,10 @@ export const useGasAccountGoBack = () => {
 };
 
 export const useGasAccountMethods = () => {
-  const { sig, accountId } = useGasAccountSign();
-  const [, setLogoutVisible] = useGasAccountLogoutVisible();
-
-  const setGasAccount = useSetGasAccount();
-
-  const login = useCallback(
-    async (selectAccount: Account) => {
-      const account = selectAccount;
-      if (!account) {
-        throw new Error('background.error.noCurrentAccount');
-      }
-      console.debug('selectAccount', account);
-      const { text } = await openapi.getGasAccountSignText(account.address);
-
-      const noSignType =
-        account?.type === KEYRING_CLASS.PRIVATE_KEY ||
-        account?.type === KEYRING_CLASS.MNEMONIC;
-
-      let signature = '';
-      if (noSignType) {
-        const { txHash } = await sendPersonalMessage({
-          data: [text, account.address],
-          account: account,
-        });
-        signature = txHash;
-      } else {
-        signature = await sendRequest<string>({
-          data: {
-            method: 'personal_sign',
-            params: [text, account.address],
-          },
-          session: INTERNAL_REQUEST_SESSION,
-          account,
-        });
-      }
-      console.log(signature);
-      if (signature) {
-        const result = await pRetry(
-          async () =>
-            openapi.loginGasAccount({
-              sig: signature,
-              account_id: account.address,
-            }),
-          {
-            retries: 2,
-          },
-        );
-
-        if (result?.success) {
-          setGasAccount(signature, account);
-          gasAccountService.setHasClaimedGift(true);
-          // setLoginVisible(false);
-        } else {
-          throw new Error('Login failed');
-        }
-      }
-      return signature;
-    },
-    [setGasAccount],
-  );
-
-  const logout = useCallback(async () => {
-    if (sig && accountId) {
-      const result = await openapi.logoutGasAccount({
-        sig,
-        account_id: accountId,
-      });
-      if (result.success) {
-        setGasAccount();
-        setLogoutVisible(false);
-        // gotoDashboard();
-      } else {
-        toast.show('please retry');
-      }
-    }
-  }, [accountId, setGasAccount, setLogoutVisible, sig]);
-
-  return { login, logout };
+  return {
+    login: storeApiGasAccount.loginGasAccount,
+    logout: storeApiGasAccount.logoutGasAccount,
+  };
 };
 
 export const useGasAccountLogin = ({
