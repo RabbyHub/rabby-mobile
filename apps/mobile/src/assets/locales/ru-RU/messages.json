@@ -2733,9 +2733,7 @@
           "token_balance": "Токен/Баланс",
           "token_tvl": "Токен/TVL"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -2830,18 +2828,14 @@
       "borrowed": "Заемный",
       "supplied": "Поставлено",
       "netWorth": "Чистая стоимость",
-      "market": "Рынок",
       "submitted": "отправлено",
       "selectChain": "Выбрать цепочку",
       "gotIt": "Понял.",
       "estDailyEarning": "Est. Ежедневный заработок",
-      "apy": "APY",
       "enterAmount": "Введите сумму",
       "hf": "Фактор здоровья",
       "hfTitle": "Фактор здоровья",
-      "isolated": "изолированный",
       "estNetApy": "Ожидаемая чистая APY",
-      "marketSlot": "{{market}} Рынок",
       "toggleCollateralDetail": {
         "disable": "Отключить {{asset}} как залог",
         "actions": "Переключить {{asset}} Залог",
@@ -2873,7 +2867,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "Макс LTV",
             "asset": "Активы"
           },
           "label": "Категория актива",
@@ -2886,14 +2879,11 @@
             "borrowable": "Заемный",
             "collateral": "Залог"
           },
-          "maxLtv": "Макс LTV",
-          "title": "Категория активов",
-          "apy": "APY"
+          "title": "Категория активов"
         },
         "enabled": "• Включено",
         "unavailable": "• Недоступно",
         "unavailableTips": "Ваши существующие активы для заимствования/кредитования не поддерживаются.",
-        "emode": "E-Режим",
         "description": "Включение E-Mode позволяет вам максимизировать вашу кредитоспособность. Однако заимствование ограничено активами внутри выбранной категории.",
         "title": "Управление E-Mode",
         "disableTitle": "Отключить"

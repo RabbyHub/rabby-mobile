@@ -2639,9 +2639,7 @@
           "token_balance": "Token/Balance",
           "token_tvl": "Token/TVL"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -2735,19 +2733,15 @@
       },
       "estDailyEarning": "Est.Penghasilan Harian",
       "gotIt": "Mengerti",
-      "apy": "APY",
       "supplied": "Diberikan",
       "submitted": "dikirimkan",
       "netWorth": "Kekayaan bersih",
-      "market": "Pasar",
       "selectChain": "Pilih Rantai",
       "borrowed": "Dipinjam",
       "hfTitle": "Health Factor",
       "hf": "Faktor kesehatan",
       "enterAmount": "Masukkan Jumlah",
-      "isolated": "terisolasi",
       "estNetApy": "Est. net APY",
-      "marketSlot": "{{market}} Pasar",
       "toggleCollateralDetail": {
         "enable": "Aktifkan {{asset}} sebagai Jaminan",
         "disable": "Nonaktifkan {{asset}} sebagai Jaminan",
@@ -2779,8 +2773,7 @@
         },
         "categorySelector": {
           "header": {
-            "asset": "Aset",
-            "ltv": "Maks LTV"
+            "asset": "Aset"
           },
           "label": "Kategori aset",
           "placeholder": "Pilih",
@@ -2792,12 +2785,9 @@
             "borrowable": "Dapat dipinjam",
             "asset": "Aset"
           },
-          "title": "Kategori aset",
-          "maxLtv": "Maks LTV",
-          "apy": "APY"
+          "title": "Kategori aset"
         },
         "unavailable": "• Tidak Tersedia",
-        "emode": "E-Mode",
         "title": "Kelola E-Mode",
         "disableTitle": "Nonaktifkan",
         "unavailableTips": "Aset peminjaman/peminjaman Anda yang ada tidak didukung.",

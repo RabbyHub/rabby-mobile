@@ -2654,8 +2654,16 @@
       }
     },
     "Lending": {
+      "__skip_translation": [
+        "isolated",
+        "apy",
+        "marketSlot",
+        "market",
+        "maxLtv"
+      ],
       "isolated": "isolated",
       "apy": "APY",
+      "maxLtv": "Max LTV",
       "gotIt": "Got it",
       "market": "Market",
       "marketSlot": "{{market}} Market",
@@ -2684,11 +2692,11 @@
           "token": "Token",
           "token_balance": "Token/Balance",
           "token_tvl": "Token/TVL",
-          "apy": "APY",
           "myBorrows": "My borrows",
           "mySupplies": "My supplies"
         },
         "item": {
+          "__skip_translation": ["tvl"],
           "tvl": "TVL"
         }
       },
@@ -2800,6 +2808,7 @@
         "maxLTV": "The Maximum LTV ratio represents the maximum borrowing power of a specific collateral. For example, if a collateral has an LTV of 75%, the user can borrow up to 0.75 worth of ETH in the principal currency for every 1 ETH worth of collateral."
       },
       "manageEmode": {
+        "__skip_translation": ["emode"],
         "emode": "E-Mode",
         "title": "Manage E-Mode",
         "disableTitle": "Disable",
@@ -2819,16 +2828,13 @@
         "categorySelector": {
           "label": "Asset category",
           "header": {
-            "asset": "Assets",
-            "ltv": "Max LTV"
+            "asset": "Assets"
           },
           "desc": "All borrow positions outside of this category must be closed to enable this category.",
           "placeholder": "Select"
         },
         "overview": {
           "title": "Asset category",
-          "maxLtv": "Max LTV",
-          "apy": "APY",
           "row": {
             "asset": "Asset",
             "collateral": "Collateral",

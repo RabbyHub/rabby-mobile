@@ -2733,9 +2733,7 @@
           "token_tvl": "Token/TVL",
           "token_balance": "Token/Số dư"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -2830,18 +2828,14 @@
       "submitted": "đã gửi",
       "supplied": "Cung cấp",
       "borrowed": "Vay mượn",
-      "market": "Thị trường",
       "netWorth": "Giá trị tài sản ròng",
-      "apy": "APY",
       "selectChain": "Chọn Chuỗi",
       "estDailyEarning": "Ước tính thu nhập hàng ngày",
       "gotIt": "Hiểu rồi",
       "hf": "Hệ số sức khỏe",
       "enterAmount": "Nhập số tiền",
       "hfTitle": "Yếu tố sức khỏe",
-      "isolated": "tách biệt",
       "estNetApy": "Ước tính APY ròng",
-      "marketSlot": "{{market}} Thị Trường",
       "toggleCollateralDetail": {
         "enable": "Bật {{asset}} làm Tài sản đảm bảo",
         "disable": "Vô hiệu hóa {{asset}} làm tài sản thế chấp",
@@ -2873,7 +2867,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "Max LTV",
             "asset": "Tài sản"
           },
           "placeholder": "Chọn",
@@ -2886,8 +2879,6 @@
             "borrowable": "Có thể cho vay",
             "collateral": "Tài sản đảm bảo"
           },
-          "maxLtv": "Max LTV",
-          "apy": "APY",
           "title": "Danh mục tài sản"
         },
         "disableTitle": "Vô hiệu hóa",
@@ -2895,8 +2886,7 @@
         "description": "Vi-VN：Bật E-Mode cho phép bạn tối đa hóa sức mạnh vay mượn của mình. Tuy nhiên, việc vay mượn bị giới hạn trong các tài sản thuộc danh mục đã chọn.",
         "unavailable": "• Không có sẵn",
         "unavailableTips": "Tài sản cho vay/nhận vay hiện tại của bạn không được hỗ trợ.",
-        "enabled": "• Đã kích hoạt",
-        "emode": "E-Mode"
+        "enabled": "• Đã kích hoạt"
       },
       "disabled": "VÔ HIỆU HÓA"
     }
