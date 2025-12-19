@@ -23,7 +23,7 @@ import {
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 
-export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = IS_ANDROID && !__DEV__;
+export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = false;
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 type ScreenshotFeedbackStore = {
   viewedHomeTip: boolean;
@@ -45,6 +45,27 @@ function trimScreenshotFeedbackStore<T extends ScreenshotFeedbackStore>(
 ): ScreenshotFeedbackStore {
   return pick(input, Keys);
 }
+
+type ScreenshotState = {
+  isScreenshotReportFree: boolean;
+};
+const screenshotState = zCreate<ScreenshotState>(() => ({
+  isScreenshotReportFree: false,
+}));
+
+function markIsScreenshotReportFree(isFree: boolean) {
+  screenshotState.setState(prev => ({
+    ...prev,
+    isScreenshotReportFree: isFree,
+  }));
+}
+
+export const storeApiScreenshotReport = {
+  markIsScreenshotReportFree,
+  isScreenshotReportFree: () => {
+    return screenshotState.getState().isScreenshotReportFree;
+  },
+};
 
 // runDevIIFEFunc(() => {
 //   appJsonStore.setItem('@screenshotFeedback', {
@@ -143,6 +164,23 @@ export const getShowFeedbackOnScreenshotCapture = () => {
     disableScreenshotToReportUntil: values.disableScreenshotToReportUntil,
   });
 };
+
+export function useIsShowFeedbackOnScreenshot() {
+  const { disableScreenshotToReportUntil, showFeedbackOnScreenshot_20250923 } =
+    screenshotFeedbackStore(
+      useShallow(s => ({
+        disableScreenshotToReportUntil: s.disableScreenshotToReportUntil,
+        showFeedbackOnScreenshot_20250923: s.showFeedbackOnScreenshot_20250923,
+      })),
+    );
+
+  const isScreenshotReportEnabled = isEnabledScreenshotToReport({
+    showFeedbackOnScreenshot: showFeedbackOnScreenshot_20250923,
+    disableScreenshotToReportUntil: disableScreenshotToReportUntil,
+  });
+
+  return { isScreenshotReportEnabled };
+}
 
 const markViewedHomeTip = () => {
   if (screenshotFeedbackStore.getState().viewedHomeTip) return;
@@ -365,6 +403,8 @@ const shouldToastFeedbackByScreenshot = () => {
   if (FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) return false;
   if (!getGlobalScreenCapturable()) return false;
 
+  if (storeApiScreenshotReport.isScreenshotReportFree()) return false;
+
   const feedbackByScreenshot = feedbackByScreenshotStore.getState();
   return (
     !feedbackByScreenshot.viewingFeedback &&
@@ -402,12 +442,10 @@ export function startSubscribeUserDidTakeScreenshot({
 }: {
   isTop?: boolean;
 } = {}) {
-  const subscription = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(
+  const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(
     async params => {
       if (!getShowFeedbackOnScreenshotCapture()) return;
-      if (!params?.captured) {
-        if (IS_ANDROID && params && !params?.androidHasPermission) return;
-      }
+      if (!params?.captured) return;
 
       if (!shouldToastFeedbackByScreenshot()) return;
 
@@ -493,8 +531,6 @@ const closeSubmitModal = ({
 };
 
 export function useSubmitFeedbackOnScreenshot() {
-  // const [{ lastScreenshot, totalBalanceText }, setSubmitFeedbackOnScreenshot] =
-  //   useAtom(feedbackByScreenshotAtom);
   const { lastScreenshot, totalBalanceText } = feedbackByScreenshotStore(
     useShallow(s => ({
       lastScreenshot: s.lastScreenshot,

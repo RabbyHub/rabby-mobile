@@ -1254,7 +1254,6 @@
         "backupSeedPhrase": "Realiza una copia de seguridad de tu seed phrase para restaurar tu wallet si se elimina la aplicación o si pierdes tu dispositivo.",
         "UnderstandsecurityPrecautions": "Entiendo estas precauciones de seguridad.",
         "createOnCurrent": "Usar la Actual Seed Phrase",
-        "WriteSeedPhrase": "Esta es tu frase de recuperación. Escríbela en papel y guárdala en un lugar seguro. Necesitarás volver a ingresarla, en el orden correcto, en el siguiente paso.",
         "createOnCurrentDesc": "Crear billetera con una frase semilla importada existente",
         "createNewDesc": "Generar una nueva frase semilla para nuevas carteras"
       },
@@ -2774,8 +2773,8 @@
         "providerFeeTips": "Tarifa de Hyperliquid: {{fee}}",
         "positionSize": "Tamaño de posición",
         "rabbyFeeTips": "Tarifa de Rabby: 0,04%",
-        "closedPnl": "PNL cerrado:",
-        "receive": "Recibir:",
+        "closedPnl": "PNL cerrado",
+        "receive": "Recibir",
         "total": "Total",
         "confirm": "Confirmar",
         "amount": "Cantidad",
@@ -2863,7 +2862,7 @@
         "amountToAdd": "Cantidad a agregar",
         "reduceMargin": "Reducir Margen",
         "available": "disponible",
-        "liqPrice": "Precio de Liq.:",
+        "liqPrice": "Precio de Liq.",
         "liqDistance": "Liq.Distancia"
       },
       "PerpsAddPositionPopup": {
@@ -2906,9 +2905,7 @@
           "token_tvl": "Token/TVL",
           "token_balance": "Token/Saldo"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -3001,20 +2998,16 @@
         "maxLTV": "El máximo ratio LTV representa el máximo poder de préstamo de un colateral específico. Por ejemplo, si un colateral tiene un LTV del 75%, el usuario puede pedir prestado hasta 0.75 en valor de ETH en la moneda principal por cada 1 ETH en valor de colateral."
       },
       "gotIt": "Entendido",
-      "market": "Mercado",
       "borrowed": "Prestado",
       "supplied": "Suministrado",
       "submitted": "enviado",
       "estDailyEarning": "Est. Ganancia Diaria",
       "selectChain": "Seleccionar cadena",
-      "apy": "APY",
       "hfTitle": "Factor de Salud",
       "netWorth": "Valor neto",
       "hf": "Factor de salud",
       "enterAmount": "Introducir cantidad",
-      "isolated": "aislado",
       "estNetApy": "Est. net APY",
-      "marketSlot": "{{market}} Mercado",
       "toggleCollateralDetail": {
         "actions": "Alternar {{asset}} Colateral",
         "enable": "Habilitar {{asset}} como Colateral",
@@ -3046,7 +3039,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "LTV máximo",
             "asset": "Activos"
           },
           "label": "Categoría de activos",
@@ -3059,14 +3051,11 @@
             "collateral": "Colateral",
             "borrowable": "Préstamo"
           },
-          "title": "Categoría de activos",
-          "maxLtv": "Máx LTV",
-          "apy": "APY"
+          "title": "Categoría de activos"
         },
         "enabled": "• Habilitado",
         "disableTitle": "Deshabilitar",
         "unavailableTips": "Sus activos de préstamo/borrowing existentes no son compatibles.",
-        "emode": "E-Mode",
         "unavailable": "• No disponible",
         "title": "Gestionar E-Mode",
         "description": "Habilitar E-Mode te permite maximizar tu poder de préstamo. Sin embargo, el préstamo está restringido a los activos dentro de la categoría seleccionada."

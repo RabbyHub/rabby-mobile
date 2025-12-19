@@ -65,7 +65,7 @@ function userCouldRated(
 ) {
   return (
     !lastExposureTimestamp?.userViewedRate &&
-    lastExposureTimestamp?.time &&
+    !!lastExposureTimestamp?.time &&
     lastExposureTimestamp?.time !== RATE_GUIDE_STATE.INIT &&
     lastExposureTimestamp?.time < Date.now()
   );

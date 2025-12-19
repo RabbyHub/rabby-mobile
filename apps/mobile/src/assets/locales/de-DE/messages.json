@@ -1353,7 +1353,6 @@
         "BackupSeedPhrase": "Manuelles Backup der Seed-Phrase",
         "createNewSeedPhrase": "Neue Seed Phrase erstellen",
         "confirmPasswordTips": "Passwörter stimmen überein",
-        "WriteSeedPhrase": "Dies ist Ihre Seed-Phrase. Notieren Sie sie auf Papier und bewahren Sie sie an einem sicheren Ort auf. Sie müssen sie im nächsten Schritt in der richtigen Reihenfolge erneut eingeben.",
         "riskTips": "Bevor Sie beginnen, lesen Sie bitte diese Sicherheitstipps und behalten Sie sie im Hinterkopf:",
         "backupSeedPhrase": "Sichern Sie Ihre seed phrase, um Ihre Wallet wiederherzustellen, falls die App gelöscht wird oder Ihr Gerät verloren geht.",
         "createNewDesc": "Erzeugen Sie eine neue Seed-Phrase für neue Wallets",
@@ -2853,9 +2852,9 @@
         "closeBtn": "Schließe {{direction}}",
         "providerFeeTips": "Hyperliquid-Gebühr: {{fee}}",
         "total": "Gesamt",
-        "receive": "Erhalten:",
+        "receive": "Erhalten",
         "minimumWarning": "Der Mindestbetrag beträgt {{percent}}%.",
-        "closedPnl": "Geschlossener PNL:",
+        "closedPnl": "Geschlossener PNL",
         "amount": "Betrag",
         "confirm": "Bestätigen"
       },
@@ -2933,7 +2932,7 @@
       "PerpsEditMarginPopup": {
         "title": "Margin anpassen",
         "currentPrice": "Aktueller Preis",
-        "liqPrice": "Liq. Preis:",
+        "liqPrice": "Liq. Preis",
         "addMargin": "Margin hinzufügen",
         "insufficientMarginToReduce": "Unzureichende Marge, um die Position zu reduzieren.",
         "amountToAdd": "Betrag hinzufügen",
@@ -2984,9 +2983,7 @@
           "token_tvl": "Token/TVL",
           "token_balance": "Token/Guthaben"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -3080,9 +3077,7 @@
       },
       "supplied": "Geliefert",
       "netWorth": "Vermögen",
-      "market": "Markt",
       "selectChain": "Kette auswählen",
-      "apy": "APY",
       "borrowed": "Ausgeliehen",
       "estDailyEarning": "Est. Tägliches Einkommen",
       "gotIt": "Verstanden",
@@ -3090,9 +3085,7 @@
       "hf": "Gesundheitsfaktor",
       "hfTitle": "Gesundheitsfaktor",
       "enterAmount": "Betrag eingeben",
-      "isolated": "isoliert",
       "estNetApy": "Est. netto APY",
-      "marketSlot": "{{market}} Markt",
       "toggleCollateralDetail": {
         "disable": "Deaktiviere {{asset}} als Sicherheit",
         "enable": "Aktivieren Sie {{asset}} als Sicherheiten",
@@ -3124,7 +3117,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "Max LTV",
             "asset": "Vermögenswerte"
           },
           "label": "Vermögenskategorie",
@@ -3137,12 +3129,9 @@
             "collateral": "Sicherheit",
             "borrowable": "Ausleihbar"
           },
-          "maxLtv": "Max LTV",
-          "title": "Vermögenskategorie",
-          "apy": "APY"
+          "title": "Vermögenskategorie"
         },
         "title": "E-Mode verwalten",
-        "emode": "E-Modus",
         "unavailable": "• Nicht verfügbar",
         "disableTitle": "Deaktivieren",
         "description": "Die Aktivierung des E-Modus ermöglicht es Ihnen, Ihre Kreditaufnahme zu maximieren. Das Ausleihen ist jedoch auf Vermögenswerte innerhalb der ausgewählten Kategorie beschränkt.",

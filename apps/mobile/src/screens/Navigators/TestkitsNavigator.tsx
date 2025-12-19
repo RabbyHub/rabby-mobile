@@ -10,6 +10,7 @@ import {
 } from '@/perfs/preloads';
 import { useLayoutEffect } from 'react';
 import { devOnlyDelayNavi } from '../Testkits/testkits-utils';
+import { isNonPublicProductionEnv } from '@/constant';
 
 const GetStartedScreen2024 = registerAppScreen<
   typeof import('@/screens/GetStarted/NewUserGetStarted2024').default
@@ -71,6 +72,12 @@ const DevDataSQLite = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevDataSQLite'),
   name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
 });
+const DevSwitches = !isNonPublicProductionEnv
+  ? registerAppScreen<typeof import('@/screens/Testkits/DevSwitches').default>({
+      loader: () => import('@/screens/Testkits/DevSwitches'),
+      name: TESTKITS_PRELOAD_SCREENS.DevSwitches,
+    })
+  : require('@/screens/Testkits/DevSwitches').default;
 
 const Stack = createNativeStackNavigator();
 
@@ -136,6 +143,15 @@ export function TestkitsNavigator() {
       />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
+
+      <Stack.Screen
+        name={RootNames.DevSwitches}
+        component={DevSwitches}
+        options={{
+          headerShown: true,
+          // presentation: 'modal',
+        }}
+      />
     </Stack.Navigator>
   );
 }

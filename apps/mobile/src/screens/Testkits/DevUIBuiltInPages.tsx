@@ -12,7 +12,7 @@ import { useAppTheme, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
-import { Switch } from 'react-native-switch';
+import { RabbySwitch as Switch } from '@/components/Switch/Switch';
 import { Button } from '@rneui/themed';
 import { useTranslation } from 'react-i18next';
 import { useAppLanguage } from '@/hooks/lang';

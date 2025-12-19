@@ -450,7 +450,6 @@ const PROTECTED_SCREENS: {
   [RootNames.ImportPrivateKey2024]: getProtectedConf(),
   [RootNames.CreateMnemonicBackup]: getProtectedConf(),
   [RootNames.CreateMnemonicVerify]: getProtectedConf(),
-  [RootNames.BackupMnemonic]: getProtectedConf(),
   [RootNames.BackupPrivateKey]: getProtectedConf(),
 };
 
@@ -548,7 +547,7 @@ export function startSubscribeAtSensitiveScene() {
 }
 
 export function startSubscribeIOSJustScreenshotted() {
-  const subscription = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(() => {
+  const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(() => {
     const setScreenshotted = (val?: boolean) =>
       setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: !!val }));
 

@@ -298,6 +298,9 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       });
     } catch (error) {
       console.error('Build transactions error:', error);
+      toast.error('something error');
+      setRepayTx(null);
+      setApproveTxs(null);
     } finally {
       setIsLoading(false);
     }
@@ -391,7 +394,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           }
         }
         const txId = last(results);
-        if (txId) {
+        if (txId && txsForMiniApproval[0]?.chainId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
             txsForMiniApproval[0].chainId,

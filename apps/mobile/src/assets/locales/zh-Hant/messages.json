@@ -1250,7 +1250,6 @@
         "passwordMin": "至少需要 8 個字符",
         "passwordTopTips": "此密碼將用於解鎖您的錢包並加密您的本地數據。",
         "backupSeedPhrase": "備份你的助記詞，以便在應用被刪除或設備丟失時恢復你的錢包。",
-        "WriteSeedPhrase": "這是你的助記詞。請將其寫在紙上並妥善保管。在下一步中，你將需要按正確的順序重新輸入。",
         "createNewDesc": "生成新的种子短语以供新的钱包使用",
         "createOnCurrentDesc": "使用現有的導入種子短語創建錢包"
       },
@@ -2661,8 +2660,8 @@
         "rabbyFeeTips": "Rabby 手续费：0.04%",
         "amount": "金額",
         "confirm": "確認",
-        "receive": "接收：",
-        "closedPnl": "已平仓盈亏：",
+        "receive": "接收",
+        "closedPnl": "已平仓盈亏",
         "minimumWarning": "最小金额为 {{percent}}%",
         "total": "總計"
       },
@@ -2744,7 +2743,7 @@
         "insufficientMargin": "餘額不足",
         "perpsBalance": "永续合约余额",
         "available": "可用",
-        "liqPrice": "Liq. 價格：",
+        "liqPrice": "清算價格",
         "reduceMargin": "減少保證金",
         "amountToReduce": "減少的數量",
         "insufficientMarginToReduce": "減少持倉的保證金不足。",
@@ -2791,9 +2790,7 @@
           "token_tvl": "Token/TVL",
           "token_balance": "代幣/餘額"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -2886,20 +2883,16 @@
         "maxLTV": "最大 LTV 比率表示特定抵押品的最大借款能力。例如，如果一个抵押品的 LTV 为 75%，用户可以在每 1 ETH 抵押品的情况下，借出最多 0.75 值的主币 ETH。"
       },
       "supplied": "供應",
-      "apy": "APY",
       "borrowed": "借入",
       "gotIt": "收到",
       "submitted": "已提交",
       "selectChain": "選擇鏈",
       "estDailyEarning": "估計每日收益",
-      "market": "市場",
       "netWorth": "淨資產",
       "enterAmount": "輸入金額",
       "hf": "健康因子",
       "hfTitle": "健康因子",
-      "isolated": "孤立",
       "estNetApy": "預估淨年利率",
-      "marketSlot": "{{market}} 市場",
       "toggleCollateralDetail": {
         "disable": "禁用 {{asset}} 作为抵押品",
         "enable": "啟用 {{asset}} 作為抵押品",
@@ -2931,7 +2924,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "最大 LTV",
             "asset": "資產"
           },
           "placeholder": "選擇",
@@ -2944,15 +2936,12 @@
             "collateral": "抵押品",
             "borrowable": "可借用的"
           },
-          "apy": "APY",
-          "maxLtv": "最大 LTV",
           "title": "資產類別"
         },
         "enabled": "• 啟用",
         "disableTitle": "停用",
         "title": "管理 E-Mode",
         "unavailableTips": "您的現有借貸資產不受支持。",
-        "emode": "E-Mode",
         "unavailable": "• 無法使用",
         "description": "啟用 E-Mode 使您能夠最大化您的借貸能力。然而，借貸僅限於所選類別內的資產。"
       },

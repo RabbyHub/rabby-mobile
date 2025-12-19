@@ -66,6 +66,7 @@
     "@onekeyfe/hd-ble-sdk": "1.1.13",
     "@onekeyfe/react-native-ble-utils": "0.1.4",
     "@op-engineering/op-sqlite": "^15.1.1",
+    "@paraswap/sdk": "6.10.0",
     "@rabby-wallet/biz-utils": "workspace:^",
     "@rabby-wallet/eth-hd-keyring": "4.3.1",
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^",

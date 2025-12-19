@@ -8,12 +8,17 @@ import {
 } from 'react-native';
 import { enableLayoutAnimations } from 'react-native-reanimated';
 
+const isTurboModuleEnabled = global.__turboModuleProxy != null;
+
 interface NativeModulesStatic {
   ReactNativeSecurity: /* NativeModule &  */ {
     blockScreen(): void;
     unblockScreen(): void;
   };
   RNScreenshotPrevent: NativeModule & {
+    scanScreenshotDirectory: () => void;
+    startScreenCaptureDetection: () => Promise<void>;
+    stopScreenCaptureDetection: () => Promise<void>;
     togglePreventScreenshot: (isPrevent: boolean) => void;
     iosIsBeingCaptured(): boolean;
     // iosToggleBlurView(isProtected: boolean): void;
