@@ -53,12 +53,7 @@ import {
   resetNavigationTo,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import useAccountsBalance, {
-  apisAccountsBalance,
-  balanceAccountType,
-  fetchTotalBalance,
-  useAccountsBalanceTrigger,
-} from '@/hooks/useAccountsBalance';
+import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {
   getReadyNavigationInstance,
@@ -124,12 +119,9 @@ import {
 } from './hooks/history';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import {
-  fetch24BalanceForScene,
-  FetchTotalBalanceOptions,
+  refresh24hAssets,
   useScene24hBalanceLightWeightData,
 } from '@/hooks/useScene24hBalance';
-import { getTop10MyAddresses } from '@/core/apis/account';
-import { runIIFEFunc } from '@/core/utils/store';
 import {
   TmpHomeRefresher,
   triggerFetchHomeData,
@@ -607,33 +599,6 @@ const detectHasAccounts = async () => {
 
   return result;
 };
-
-const refresh24hAssets = async ({
-  force = false,
-  balanceAccounts,
-}: {
-  force?: boolean;
-  balanceAccounts?: balanceAccountType[];
-} = {}) => {
-  const top10Addresses = await getTop10MyAddresses();
-  fetch24BalanceForScene('Home', {
-    addresses: top10Addresses,
-    force,
-    ...(balanceAccounts?.length && {
-      totals: apisAccountsBalance.computeTotalBalance(
-        top10Addresses,
-        balanceAccounts || [],
-      ),
-    }),
-  });
-};
-
-runIIFEFunc(() => {
-  keyringService.on('unlock', async () => {
-    const balanceAccounts = await fetchTotalBalance('from_cache');
-    await refresh24hAssets({ balanceAccounts });
-  });
-});
 
 function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({

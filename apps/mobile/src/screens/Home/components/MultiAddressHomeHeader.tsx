@@ -13,8 +13,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 
 import useAccountsBalance, {
-  balanceAccountType,
-  LoadBalanceStage,
   useLoadBalanceFromApiStage,
 } from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -41,10 +39,6 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useSetPasswordFirst } from '@/hooks/useLock';
-import { AppRootName, RootNames } from '@/constant/layout';
-import { StackActions, useNavigation } from '@react-navigation/native';
-import { CurrentAddressProps } from '@/screens/Address/components/AddressListScreenContainer';
 import {
   useScene24hBalanceCombinedData,
   useScene24hBalanceMulti24hBalance,

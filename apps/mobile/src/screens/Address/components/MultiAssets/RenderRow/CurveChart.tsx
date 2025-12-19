@@ -58,8 +58,11 @@ function Chart({ hideType }: { hideType: BALANCE_HIDE_TYPE }) {
 
   const isNavFocused = useIsFocused();
   const {
+    // useless
     combineData: combineCurveData,
+    // useless
     isLoadingNew: isLoadingCurve,
+    // TODO: only useful action, migrate it
     refresh: refreshCurve,
   } = useMultiCurve(top10Addresses, {
     isNavigationFocused: isNavFocused,
@@ -67,6 +70,7 @@ function Chart({ hideType }: { hideType: BALANCE_HIDE_TYPE }) {
     totalBalance: top10Balance.total,
     totalEvmBalance: top10Balance.totalEvm,
   });
+
   const combineData = useMemo(() => {
     return {
       ...combineCurveData,
