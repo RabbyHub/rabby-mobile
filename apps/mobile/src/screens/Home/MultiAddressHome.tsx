@@ -337,10 +337,10 @@ const OverViewComponent = React.memo(
         // update at background
         forceUpdate();
         triggerFetchHomeData('TMP_TRIGGER:FETCH_LENDING_DATA');
-        triggerFetchHomeData('TMP_TRIGGER:SYNC_TOP10_HISTORY', true);
+        syncTop10History(top10Addresses, true);
         currencyService.syncCurrencyList(true);
       });
-    }, [triggerUpdate, checkAddressesEligibility, forceUpdate]);
+    }, [triggerUpdate, checkAddressesEligibility, forceUpdate, top10Addresses]);
 
     const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
     const handlePressWatchlist = useCallback(() => {

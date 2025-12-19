@@ -34,7 +34,6 @@ export type PerfEventBusListeners = {
   }) => void;
 
   'TMP_TRIGGER:FETCH_LENDING_DATA': () => void;
-  'TMP_TRIGGER:SYNC_TOP10_HISTORY': (force?: boolean) => void;
 };
 type PerfListeners = {
   [P: string]: (data: any) => void;
