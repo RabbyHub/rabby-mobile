@@ -87,9 +87,9 @@ jobs:
 
           if [ "$INPUT_MOBILE_LOC" != "mobile-local" ]; then
             RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS=${{ secrets.KEYCHAIN_PASS }}
+            # security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS ~/Library/Keychains/login.keychain-db
+            security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS login.keychain
           fi
-          # security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS ~/Library/Keychains/login.keychain-db
-          security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS login.keychain
           ./scripts/deploy-ios-appstore.sh
 
         env:
