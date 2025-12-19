@@ -24,7 +24,10 @@
       "ImportMoreAddress": "Impor lebih Banyak Dompet",
       "CreateNewAddress": "1. Konfirmasi Dompet Anda",
       "CreateSelectOnCurrentSeed": "2. Tambah Dompet",
-      "WatchAddressList": "Dompet Tonton Saja"
+      "WatchAddressList": "Dompet Tonton Saja",
+      "CreateWallet": "Buat Dompet",
+      "ChooseBackup": "Pilih metode pencadangan",
+      "SetPassword": "Atur kata sandi"
     }
   },
   "page": {
@@ -56,7 +59,8 @@
         "LendingOnCollateral": "Hidupkan penggunaan sebagai jaminan",
         "LendingOffCollateral": "Matikan penggunaan sebagai jaminan",
         "LendingManageEMode": "Aktifkan E-Mode",
-        "LendingManageEModeDisable": "Matikan E-Mode"
+        "LendingManageEModeDisable": "Matikan E-Mode",
+        "LendingDebtSwap": "Swap Utang"
       },
       "detail": {
         "Succeeded": "Berhasil",
@@ -1108,7 +1112,9 @@
         "riskTips": "Sebelum Anda mulai, harap baca dan ingat tips keamanan ini:",
         "UnderstandsecurityPrecautions": "Saya memahami langkah-langkah keamanan ini.",
         "createOnCurrentDesc": "Buat dompet dengan frasa benih impor yang sudah ada",
-        "createNewDesc": "Hasilkan frasa seed baru untuk dompet baru"
+        "createNewDesc": "Hasilkan frasa seed baru untuk dompet baru",
+        "BackupYourSeedPhrase": "Cadangkan Frase Benih Anda",
+        "WriteSeedPhrase": "Ini adalah frase benih Anda. Catat dan simpan dengan aman. Jika Anda kehilangannya atau membagikannya, aset Anda bisa hilang selamanya. Anda akan diminta untuk memasukkan kembali frase ini (dalam urutan) di langkah berikutnya."
       },
       "addAddress": {
         "hardwareWallet": "Dompet Donasi Hardware",
@@ -1165,6 +1171,22 @@
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Geser ke kanan untuk melihat semua aset"
+      },
+      "copySeedPhraseSecureTip": {
+        "copyAnyway": "Copy lagi",
+        "title": "Jaga SeedPhrase Anda Rahasia",
+        "tip3": "Jangan pernah membagikan frase pemulihan Anda. Kami tidak akan pernah meminta ini.",
+        "tip2": "Jangan menempelkan atau menyimpan frase pemulihan Anda di layanan cloud atau aplikasi catatan.",
+        "subTitle": "Siapa pun yang mendapatkan seed phrase Anda dapat sepenuhnya mengontrol dana Anda.",
+        "copied": "Frasa benih disalin. Clipboard akan terhapus dalam 1 menit.",
+        "tip1": "Aplikasi lain mungkin dapat membaca papan klip Anda, jadi hindari berpindah aplikasi setelah menyalin."
+      },
+      "screenshotSecureTip": {
+        "title": "Tangkapan layar tidak aman",
+        "tip2": "Aplikasi atau malware dapat membaca gambar yang disimpan di perpustakaan foto Anda.",
+        "subTitle": "Menyimpan frasa benih Anda sebagai gambar dapat mengeksposnya, jadi menuliskannya adalah pilihan yang lebih aman.",
+        "tip1": "Tangkapan layar dapat disinkronkan ke cloud atau perangkat lain, dan dapat diakses jika perangkat hilang, dicuri, atau terganggu.",
+        "tip3": "Siapa pun yang mendapatkan seed phrase Anda dapat mengambil kendali penuh atas dompet Anda, dan ini tidak dapat dibalik."
       }
     },
     "newAddress": {
@@ -1401,7 +1423,8 @@
         },
         "failedAndTipTitle": "Pembukaan gagal",
         "usePassword": "Beralih ke penggunaan kata sandi untuk membuka kunci."
-      }
+      },
+      "unlocking": "Membuka Kunci"
     },
     "addToken": {
       "noTokenFound": "Tidak ada token yang ditemukan",
@@ -1514,7 +1537,10 @@
         "helpDescription1": "Untuk memastikan pembaruan data yang tepat waktu dan akurat, hanya 10 dompet terbaik Anda yang termasuk dalam Total Balance dan Portfolio.",
         "helpTitle": "Dompet yang排在前10名之后",
         "notTop10Address": "Dompet yang terdaftar di bawah 10 besar"
-      }
+      },
+      "backup": "Cadangan",
+      "other": "Lainnya",
+      "basicInfo": "Informasi Dasar"
     },
     "customRpc": {
       "EditRPCModal": {
@@ -2168,6 +2194,9 @@
       },
       "toast": {
         "clearCacheSuccess": "Cache dibersihkan"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "Lebih banyak"
       }
     },
     "browserManage": {
@@ -2638,8 +2667,7 @@
           "myBorrows": "Peminjaman saya",
           "token_balance": "Token/Balance",
           "token_tvl": "Token/TVL"
-        },
-        "item": {}
+        }
       },
       "summary": {
         "empty": {
@@ -2674,7 +2702,8 @@
         "actions": "Meminjam",
         "approveAndBorrow": "Aproval dan Meminjam",
         "almostReachedError": "Jumlah maksimum yang tersedia untuk dipinjam terbatas karena batas peminjaman protokol sudah hampir tercapai.",
-        "almostReachedWarning": "Batas pinjaman protokol adalah 100% untuk aset ini. Pinjaman lebih lanjut tidak tersedia."
+        "almostReachedWarning": "Batas pinjaman protokol adalah 100% untuk aset ini. Pinjaman lebih lanjut tidak tersedia.",
+        "swapDebt": "Tukar"
       },
       "popup": {
         "available": "tersedia",
@@ -2792,9 +2821,39 @@
         "disableTitle": "Nonaktifkan",
         "unavailableTips": "Aset peminjaman/peminjaman Anda yang ada tidak didukung.",
         "description": "Mengaktifkan E-Mode memungkinkan Anda memaksimalkan daya pinjaman Anda. Namun, pinjaman dibatasi pada aset dalam kategori yang dipilih.",
-        "enabled": "• Diaktifkan"
+        "enabled": "• Diaktifkan",
+        "debtSwapSelector": {
+          "header": {
+            "borrow": "Peminjaman saya",
+            "assets": "Token/Balance"
+          },
+          "title": "Pilih Token Pinjam"
+        }
       },
-      "disabled": "DINONAKTIFKAN"
+      "disabled": "DINONAKTIFKAN",
+      "debtSwap": {
+        "actions": {
+          "borrowed": "Dipinjam",
+          "title": "Pertukaran Utang",
+          "select": "Pilih",
+          "amount": "Jumlah",
+          "swapTo": "Tukar ke"
+        },
+        "overview": {
+          "borrowAPY": "Pinjam apy",
+          "borrowValueAfter": "Saldo pinjaman setelah pertukaran",
+          "title": "Ikhtisar Transaksi"
+        },
+        "button": {
+          "swap": "Tukar"
+        },
+        "borrowBalance": "Saldo pinjaman",
+        "title": "Tukar Posisi Pinjaman",
+        "entryTips": "Satu klik untuk menukarkan aset yang Anda pinjam, mengurangi langkah dan biaya.",
+        "priceImpactTips": "Dampak harga tinggi ({{lostValue}}). Rute ini mungkin memberikan lebih banyak karena likuiditas rendah atau ukuran pesanan kecil.",
+        "lpDangerWarning": "Setelah pertukaran ini, faktor kesehatan Anda akan sangat rendah dan dapat mengakibatkan likuidasi. Silakan pilih aset lain atau kurangi jumlah pertukaran untuk tetap aman.",
+        "lpRiskWarning": "Faktor kesehatan rendah setelah pertukaran. Posisi Anda akan membawa risiko likuidasi yang lebih tinggi."
+      }
     }
   },
   "component": {
@@ -3138,7 +3197,10 @@
     "check": "Periksa",
     "Token": "Token",
     "Dapp": "Dapp",
-    "GotIt": "Got it"
+    "GotIt": "Got it",
+    "copy": "Salin",
+    "Backup": "Cadangan",
+    "Other": "Lainnya"
   },
   "background": {
     "error": {
