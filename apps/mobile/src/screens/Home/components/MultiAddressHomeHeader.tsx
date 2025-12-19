@@ -27,7 +27,7 @@ import { usePinnedAccountList } from '@/hooks/account';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { sortBy } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
-import { useHideBalance } from '../hooks/useHideBalance';
+import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
@@ -51,35 +51,23 @@ import {
   useSceneIsLoading,
 } from '@/hooks/useScene24hBalance';
 
-export function MultiAddressHomeHeader(
-  props: {
-    onRefresh?: () => void;
-  } & RNViewProps,
-): JSX.Element {
-  const { style, onRefresh } = props;
-
-  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
-  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
-  const { isLoading: loading } = useSceneIsLoading('Home');
-
-  const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { isDisConnect } = useGlobalStatus();
-
-  const pinnedAccountList = usePinnedAccountList();
-  const [hideType] = useHideBalance();
-  const setIsFoldMultiChart = useFoldMultiChartStore(
-    s => s.setIsFoldMultiChart,
-  );
+function MultiPinnedAddressList({
+  pinnedAccountList,
+  hideType,
+}: {
+  pinnedAccountList: ReturnType<typeof usePinnedAccountList>;
+  hideType: BALANCE_HIDE_TYPE;
+}) {
+  const { styles } = useTheme2024({ getStyle });
 
   const { balanceAccounts } = useAccountsBalance();
+  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
 
   const addressListData = useMemo(() => {
     return sortBy(
       pinnedAccountList.map(item => {
         const address24hBalanceData =
           multi24hBalance[item.address.toLowerCase()];
-        const hasChangeData = address24hBalanceData;
         const balanceAccount = balanceAccounts?.find(acc =>
           isSameAddress(acc.address, item.address),
         );
@@ -93,10 +81,11 @@ export function MultiAddressHomeHeader(
 
         return {
           ...item,
+          updateTime: address24hBalanceData?.updateTime,
           balance: balanceAccount?.balance || item.balance || 0,
           evmBalance: balanceAccount?.evmBalance || item.evmBalance || 0,
-          changePercent: hasChangeData ? changePercent : undefined,
-          isLoss: hasChangeData ? assetsChange < 0 : undefined,
+          changePercent: address24hBalanceData ? changePercent : undefined,
+          isLoss: address24hBalanceData ? assetsChange < 0 : undefined,
         };
       }),
       item => -(item.balance || 0),
@@ -114,7 +103,48 @@ export function MultiAddressHomeHeader(
     });
   }, [addressListData?.length]);
 
-  const { accountsLength } = useAccountsBalance();
+  return (
+    <View
+      style={[
+        styles.accountList,
+        hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
+      ]}>
+      {addressListData?.map(item => {
+        return (
+          <HomeAddressItem
+            hideType={hideType}
+            account={item}
+            updateTime={item.updateTime}
+            key={`${item.type}-${item.address}`}
+            isLoss={item.isLoss}
+            changePercent={item.changePercent}
+          />
+        );
+      })}
+    </View>
+  );
+}
+
+export function MultiAddressHomeHeader(
+  props: {
+    onRefresh?: () => void;
+  } & RNViewProps,
+): JSX.Element {
+  const { style, onRefresh } = props;
+
+  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+  const { isLoading: loading } = useSceneIsLoading('Home');
+
+  const { t } = useTranslation();
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { isDisConnect } = useGlobalStatus();
+
+  const pinnedAccountList = usePinnedAccountList();
+  const [hideType] = useHideBalance();
+  const setIsFoldMultiChart = useFoldMultiChartStore(
+    s => s.setIsFoldMultiChart,
+  );
+
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
@@ -273,7 +303,7 @@ export function MultiAddressHomeHeader(
             style={[
               styles.curveCard,
               styles.shadowView,
-              !addressListData.length && styles.noAddressCard,
+              !pinnedAccountList.length && styles.noAddressCard,
             ]}
             onPress={() => {
               handleWalletsListPress();
@@ -292,25 +322,12 @@ export function MultiAddressHomeHeader(
                 isAnimRunning && styles.curveCardGradientBgWithAnim,
               ]}
             />
-            <MultiChart hideType={hideType} accountsLength={accountsLength} />
-            {addressListData?.length ? (
-              <View
-                style={[
-                  styles.accountList,
-                  hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
-                ]}>
-                {addressListData?.map(item => {
-                  return (
-                    <HomeAddressItem
-                      hideType={hideType}
-                      account={item}
-                      key={`${item.type}-${item.address}`}
-                      isLoss={item.isLoss}
-                      changePercent={item.changePercent}
-                    />
-                  );
-                })}
-              </View>
+            <MultiChart hideType={hideType} />
+            {pinnedAccountList?.length ? (
+              <MultiPinnedAddressList
+                hideType={hideType}
+                pinnedAccountList={pinnedAccountList}
+              />
             ) : null}
             {hideType === 'HALF_HIDE' ? (
               <View style={styles.accountCardMask}>

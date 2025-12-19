@@ -37,17 +37,17 @@ export const getBalance24hCache = (_address: string) => {
   return null;
 };
 
-export const setBalance24hCache = (_address: string, data: IBalance24hData) => {
-  const address = _address.toLowerCase();
+export const setBalance24hCache = (addr: string, data: IBalance24hData) => {
+  const address = addr.toLowerCase();
   storage.set(address, JSON.stringify(data));
 };
 
 export const get24hBalance = async (addr: string, force?: boolean) => {
-  const res = await get24hBalanceWithCache(addr, force);
-  return res?.data;
+  const res = await refresh24hBalanceWithCache(addr, force);
+  return res;
 };
 
-const get24hBalanceWithCache = async (_address: string, force = false) => {
+const refresh24hBalanceWithCache = async (_address: string, force = false) => {
   const address = _address.toLowerCase();
   const cache = getBalance24hCache(address);
   if (cache && !force && !cache.isExpired) {

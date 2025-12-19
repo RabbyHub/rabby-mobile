@@ -131,7 +131,8 @@ export const useMulti24hBalance = (
               },
             }));
             try {
-              const address24hBalance = await get24hBalance(addr, force);
+              const address24hBalance = (await get24hBalance(addr, force))
+                ?.data;
               setMulti24hBalance(prev => ({
                 ...prev,
                 [addr]: {

@@ -25,14 +25,11 @@ const queues: Record<BalanceScene, PQueue> = {
 const TEN_MINUTES = 10 * 60 * 1000;
 
 type Multi24hBalance = {
-  [P: string]: IBalance24hData['data'];
+  [P: string]: IBalance24hData['data'] & {
+    updateTime: IBalance24hData['updateTime'];
+  };
 };
 type BalanceScene = 'Home';
-// type SceneState = {
-//   multi24hBalance: Multi24hBalance;
-//   loading: boolean;
-//   combinedData: ReturnType<typeof computeCombined24hBalanceData>;
-// };
 type Multi24hBalanceState = {
   addresses: Record<BalanceScene, string[]>;
   combinedData: Record<
@@ -121,7 +118,9 @@ function setSceneAddrLoading<T extends BalanceScene>(
 
 function setMulti24hBalance(
   address: string,
-  valOrFunc: UpdaterOrPartials<Multi24hBalanceState['multi24hBalance'][string]>,
+  valOrFunc: UpdaterOrPartials<
+    Multi24hBalanceState['multi24hBalance'][string] | undefined
+  >,
 ) {
   scene24hBalanceStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(
@@ -130,7 +129,7 @@ function setMulti24hBalance(
       { strict: true },
     );
 
-    if (!changed) {
+    if (!changed || !newVal) {
       return prev;
     }
 
@@ -234,12 +233,18 @@ export const fetch24BalanceForScene = makeSWRKeyAsyncFunc(
           const cacheData = getBalance24hCache(addr);
           const existedData = !!getMulti24hBalanceBy(addr);
           if (!existedData && cacheData?.data)
-            setMulti24hBalance(addr, cacheData.data);
+            setMulti24hBalance(addr, {
+              ...cacheData.data,
+              updateTime: cacheData.updateTime,
+            });
           if (!cacheData?.data || cacheData?.isExpired) {
             return;
           }
           nextCheckAddress.delete(addr);
-          setMulti24hBalance(addr, cacheData.data);
+          setMulti24hBalance(addr, {
+            ...cacheData.data,
+            updateTime: cacheData.updateTime,
+          });
         });
       beforeReturn();
       queue.clear();
@@ -249,7 +254,10 @@ export const fetch24BalanceForScene = makeSWRKeyAsyncFunc(
           setSceneAddrLoading(scene, addr, true);
           try {
             const address24hBalance = await get24hBalance(addr, force);
-            setMulti24hBalance(addr, address24hBalance);
+            setMulti24hBalance(addr, {
+              ...address24hBalance.data,
+              updateTime: address24hBalance.updateTime,
+            });
           } catch (error) {
             console.error('Fetch curve error', error);
           } finally {
