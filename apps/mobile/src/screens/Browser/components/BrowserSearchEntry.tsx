@@ -139,6 +139,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
   },
   tabItem: {},
+
+  browserTabPlaceholder: {
+    height: 24,
+  },
 }));
 
 const BlurViewOnlyIOSWrapper = ({
@@ -174,10 +178,7 @@ const BlurViewOnlyIOSWrapper = ({
   );
 };
 
-export const BrowserSearchEntry: React.FC<{
-  isEditing?: boolean;
-  setIsEditing?: (isEditing: boolean) => void;
-}> = ({ isEditing, setIsEditing }) => {
+export const BrowserSearchEntry: React.FC = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const {
     browserState,
@@ -267,10 +268,14 @@ export const BrowserSearchEntry: React.FC<{
                 })}
               </View>
             </View>
-          ) : null}
+          ) : (
+            <View style={styles.browserTabPlaceholder} />
+          )}
           <BrowserFavoriteInHome
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            isEditing={browserState.isEditingFavorite}
+            setIsEditing={isEditing => {
+              setBrowserState({ isEditingFavorite: isEditing });
+            }}
             onPress={dapp => {
               openTab(dapp.url || dapp.origin);
             }}

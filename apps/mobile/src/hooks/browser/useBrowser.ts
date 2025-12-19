@@ -90,6 +90,7 @@ type BrowserStateType = {
   searchText: string;
   searchTabId: string;
   trigger: string;
+  isEditingFavorite?: boolean;
 };
 
 const browserStateStore = zCreate<BrowserStateType>(() => ({
@@ -100,6 +101,7 @@ const browserStateStore = zCreate<BrowserStateType>(() => ({
   searchText: '',
   searchTabId: '',
   trigger: '',
+  isEditingFavorite: false,
 }));
 
 export function setBrowserState(

@@ -101,7 +101,7 @@ import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
 import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
-import { browserApis } from '@/hooks/browser/useBrowser';
+import { browserApis, setBrowserState } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -513,16 +513,13 @@ const OverViewComponent = React.memo(
     const { bottom } = useSafeAreaInsets();
 
     useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
-    const [isEditing, setIsEditing] = useState(false);
 
     return (
       <Tabs.ScrollView
         tvParallaxProperties={undefined}
         showsVerticalScrollIndicator={false}
         onTouchStart={() => {
-          if (isEditing) {
-            setIsEditing(false);
-          }
+          setBrowserState({ isEditingFavorite: false });
         }}
         style={[styles.scroll, { flex: undefined }]}
         contentContainerStyle={[
@@ -575,10 +572,7 @@ const OverViewComponent = React.memo(
               );
             })}
           </View>
-          <BrowserSearchEntry
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-          />
+          <BrowserSearchEntry />
           <View style={styles.searchBarPlaceholder} />
         </View>
       </Tabs.ScrollView>
