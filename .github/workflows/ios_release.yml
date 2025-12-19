@@ -78,7 +78,6 @@ jobs:
           xcode-version: '16.2'
 
       - name: Install dependencies && Build app
-        shell: bash
         run: |
           cd apps/mobile;
           rm -rf node_modules;
