@@ -308,7 +308,6 @@ const OverViewComponent = React.memo(
             refresh24hAssets({ balanceAccounts }),
           );
           triggerUpdateAlert();
-          apisLending.fetchLendingData();
           syncTop10History(top10Addresses, false);
         });
       }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
