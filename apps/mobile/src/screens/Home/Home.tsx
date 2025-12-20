@@ -15,6 +15,7 @@ import { useBgSize } from './hooks/useBgSize';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { apisSingleHome, useSingleHomeIsDecrease } from './hooks/singleHome';
 import { useUnmount } from 'ahooks';
+import { HomeTopArea } from './components/HomeTopArea';
 
 function SingleAddressHome(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -72,6 +73,7 @@ function SingleAddressHome(): JSX.Element {
       ]}>
       <TopBg fadeAnim={fadeAnim} isDecrease={isDecrease} />
       <View style={styles.safeView} onTouchStart={handleTouchEnd}>
+        <HomeTopArea />
         <AssetContainer onReachTopStatusChange={handleReachTopStatusChange} />
       </View>
       <View style={styles.bottomContainer} onTouchStart={handleTouchEnd}>
