@@ -43,13 +43,7 @@ export const useFoldMultiChartStore = create<{
   setIsFoldMultiChart: v => set({ isFoldMultiChart: v }),
 }));
 
-function Chart({
-  hideType,
-  accountsLength,
-}: {
-  hideType: BALANCE_HIDE_TYPE;
-  accountsLength?: number;
-}) {
+function Chart({ hideType }: { hideType: BALANCE_HIDE_TYPE }) {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const { isFoldMultiChart, setIsFoldMultiChart } = useFoldMultiChartStore();
 
@@ -57,15 +51,18 @@ function Chart({
   const { isLoadingNew: loadingNewCurve } = useSceneIsLoadingNew('Home');
 
   const { top10Addresses } = useAccountInfo();
-  const { getTotalBalance } = useAccountsBalance();
+  const { accountsLength, getTotalBalance } = useAccountsBalance();
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
 
   const isNavFocused = useIsFocused();
   const {
+    // useless
     combineData: combineCurveData,
+    // useless
     isLoadingNew: isLoadingCurve,
+    // TODO: only useful action, migrate it
     refresh: refreshCurve,
   } = useMultiCurve(top10Addresses, {
     isNavigationFocused: isNavFocused,
@@ -73,6 +70,7 @@ function Chart({
     totalBalance: top10Balance.total,
     totalEvmBalance: top10Balance.totalEvm,
   });
+
   const combineData = useMemo(() => {
     return {
       ...combineCurveData,

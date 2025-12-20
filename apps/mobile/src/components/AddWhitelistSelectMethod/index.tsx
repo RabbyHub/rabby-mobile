@@ -12,13 +12,9 @@ import { ListItem } from '@/components2024/ListItem/ListItem';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
-  navigateTo: (screen: AppRootName, params?: object) => void;
 }
 
-export const AddWhitelistSelectMethod: React.FC<Props> = ({
-  onDone,
-  navigateTo,
-}) => {
+export const AddWhitelistSelectMethod: React.FC<Props> = ({ onDone }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -29,7 +25,6 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
         <Text style={styles.desc}>{t('page.sendPoly.modals.content')}</Text>
         <ListItem
           onPress={async () => {
-            // navigateTo(RootNames.WhitelistInput);
             onDone();
           }}
           style={styles.importItem}

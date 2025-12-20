@@ -86,18 +86,22 @@ type BrowserStateType = {
   isShowBrowser: boolean;
   isShowSearch: boolean;
   isShowManage: boolean;
+  isShowFavorite: boolean;
   searchText: string;
   searchTabId: string;
   trigger: string;
+  isEditingFavorite?: boolean;
 };
 
 const browserStateStore = zCreate<BrowserStateType>(() => ({
   isShowBrowser: false,
   isShowSearch: false,
   isShowManage: false,
+  isShowFavorite: false,
   searchText: '',
   searchTabId: '',
   trigger: '',
+  isEditingFavorite: false,
 }));
 
 export function setBrowserState(

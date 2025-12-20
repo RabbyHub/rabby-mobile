@@ -2613,10 +2613,10 @@
         "rabbyFeeTips": "Rabby 费用：0.04%",
         "fee": "费用：",
         "closeBtn": "关闭 {{direction}}",
-        "closedPnl": "已平仓PNL:",
+        "closedPnl": "已平仓PNL",
         "amount": "金额",
         "confirm": "确认",
-        "receive": "接收：",
+        "receive": "接收",
         "minimumWarning": "最低金额为 {{percent}}%",
         "total": "总计"
       },
@@ -2697,7 +2697,7 @@
         "available": "可用",
         "amountToAdd": "添加的金额",
         "insufficientMargin": "保证金不足",
-        "liqPrice": "Liq. Price: 清算价格",
+        "liqPrice": "清算价格",
         "amountToReduce": "减少的金额",
         "insufficientMarginToReduce": "保证金不足，无法减仓。",
         "reduceMargin": "减少保证金",
@@ -2742,9 +2742,7 @@
           "token_tvl": "Token/TVL",
           "token_balance": "代币/余额"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -2836,9 +2834,7 @@
         "globalIsolatedDesc": "在隔离模式下，您无法提供其他资产作为抵押。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借入其他资产之前禁用 UNI 作为抵押。",
         "maxLTV": "最大 LTV 比率代表特定抵押品的最大借贷能力。例如，如果抵押品的 LTV 为 75%，用户可以针对每 1 个 ETH 的抵押品借入价值 0.75 的 ETH。"
       },
-      "apy": "APY",
       "submitted": "提交成功",
-      "market": "市场",
       "gotIt": "明白了",
       "enterAmount": "输入金额",
       "hf": "健康因子",
@@ -2848,9 +2844,7 @@
       "hfTitle": "健康因子",
       "selectChain": "选择链",
       "supplied": "提供",
-      "isolated": "孤立的",
       "estNetApy": "估计净年化收益率",
-      "marketSlot": "{{market}} 市场",
       "toggleCollateralDetail": {
         "enable": "将 {{asset}} 作为抵押品启用",
         "disable": "禁用 {{asset}} 作为抵押品",
@@ -2882,7 +2876,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "最大贷款价值比",
             "asset": "资产"
           },
           "placeholder": "选择",
@@ -2895,11 +2888,8 @@
             "asset": "资产",
             "collateral": "抵押品"
           },
-          "title": "资产类别",
-          "apy": "APY",
-          "maxLtv": "最大LTV"
+          "title": "资产类别"
         },
-        "emode": "E-模式",
         "unavailableTips": "您现有的借贷资产不受支持。",
         "title": "管理 E-Mode",
         "unavailable": "• 不可用",

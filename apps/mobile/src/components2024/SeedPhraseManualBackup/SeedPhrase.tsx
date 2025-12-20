@@ -38,7 +38,6 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { makeBottomSheetProps } from '../GlobalBottomSheetModal/utils-help';
 import IconCopy from '@/assets2024/icons/common/copy-brand.svg';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import { useIOSScreenshotted } from '@/hooks/native/security';
 import { storeApiScreenshotReport } from '@/components/Screenshot/hooks';
 import IconWarning from '@/assets/icons/address/warning-rouned.svg';
 import {

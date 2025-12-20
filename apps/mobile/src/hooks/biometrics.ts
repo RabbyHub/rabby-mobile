@@ -73,6 +73,94 @@ export function useBiometricsComputed() {
 }
 
 const isFetchingBiometricsRef = { current: false };
+const fetchBiometrics = async () => {
+  if (isFetchingBiometricsRef.current) return;
+
+  isFetchingBiometricsRef.current = true;
+  try {
+    let supportedType = null as null | BIOMETRY_TYPE;
+    try {
+      supportedType = await apisKeychain.getSupportedBiometryType();
+    } catch (error) {
+      console.error(error);
+    }
+    setBiometrics(prev => {
+      // if (prev.authEnabled && !supportedType) {
+      //   toast.info(
+      //     'Biometrics authentication disabled because no valid biometric data found.',
+      //   );
+      // }
+      return {
+        ...prev,
+        supportedBiometryType: supportedType,
+        authEnabled: supportedType ? isAuthenticatedByBiometrics() : false,
+      };
+    });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    isFetchingBiometricsRef.current = false;
+  }
+};
+
+const toggleBiometrics = async <T extends boolean>(
+  nextEnabled: T,
+  input: { tipLoading?: boolean } & (T extends true
+    ? { validatedPassword: string }
+    : { validatedPassword?: undefined }),
+) => {
+  const { validatedPassword, tipLoading } = input;
+
+  const hideToast = !tipLoading
+    ? null
+    : toastLoading(`${nextEnabled ? 'Enabling' : 'Disabling'} biometrics`);
+
+  const reset = async () => {
+    await apisKeychain.resetGenericPassword();
+    setBiometrics(prev => ({ ...prev, authEnabled: false }));
+  };
+
+  try {
+    if (!nextEnabled) {
+      await reset();
+    } else {
+      if (!validatedPassword) {
+        throw new Error('Validated password is required to enable biometrics.');
+      }
+
+      await apisKeychain.setGenericPassword(
+        validatedPassword,
+        KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+      );
+      const requestResult = await apisKeychain.requestGenericPassword({
+        purpose: RequestGenericPurpose.VERIFY,
+      });
+      if (!requestResult) {
+        await reset();
+      } else if (requestResult && requestResult.actionSuccess) {
+        setBiometrics(prev => ({ ...prev, authEnabled: true }));
+      }
+    }
+  } catch (error: any) {
+    if (nextEnabled) await reset();
+
+    const parsedInfo = parseKeychainError(error);
+    if (parsedInfo.isCancelledByUser || (__DEV__ && parsedInfo.sysMessage)) {
+      toast.show(parsedInfo.sysMessage);
+    } else {
+      toast.show(error?.message);
+    }
+  } finally {
+    hideToast?.();
+    await fetchBiometrics();
+  }
+};
+
+export const storeApisBiometrics = {
+  fetchBiometrics,
+  toggleBiometrics,
+};
+
 export function useBiometrics(options?: { autoFetch?: boolean }) {
   const biometrics = biometricsInfoStore(
     useShallow(s => ({
@@ -81,102 +169,11 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
     })),
   );
 
-  const fetchBiometrics = useCallback(async () => {
-    if (isFetchingBiometricsRef.current) return;
-
-    isFetchingBiometricsRef.current = true;
-    try {
-      let supportedType = null as null | BIOMETRY_TYPE;
-      try {
-        supportedType = await apisKeychain.getSupportedBiometryType();
-      } catch (error) {
-        console.error(error);
-      }
-      setBiometrics(prev => {
-        // if (prev.authEnabled && !supportedType) {
-        //   toast.info(
-        //     'Biometrics authentication disabled because no valid biometric data found.',
-        //   );
-        // }
-        return {
-          ...prev,
-          supportedBiometryType: supportedType,
-          authEnabled: supportedType ? isAuthenticatedByBiometrics() : false,
-        };
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      isFetchingBiometricsRef.current = false;
-    }
-  }, []);
-
-  const toggleBiometrics = useCallback(
-    async <T extends boolean>(
-      nextEnabled: T,
-      input: { tipLoading?: boolean } & (T extends true
-        ? { validatedPassword: string }
-        : { validatedPassword?: undefined }),
-    ) => {
-      const { validatedPassword, tipLoading } = input;
-
-      const hideToast = !tipLoading
-        ? null
-        : toastLoading(`${nextEnabled ? 'Enabling' : 'Disabling'} biometrics`);
-
-      const reset = async () => {
-        await apisKeychain.resetGenericPassword();
-        setBiometrics(prev => ({ ...prev, authEnabled: false }));
-      };
-
-      try {
-        if (!nextEnabled) {
-          await reset();
-        } else {
-          if (!validatedPassword) {
-            throw new Error(
-              'Validated password is required to enable biometrics.',
-            );
-          }
-
-          await apisKeychain.setGenericPassword(
-            validatedPassword,
-            KEYCHAIN_AUTH_TYPES.BIOMETRICS,
-          );
-          const requestResult = await apisKeychain.requestGenericPassword({
-            purpose: RequestGenericPurpose.VERIFY,
-          });
-          if (!requestResult) {
-            await reset();
-          } else if (requestResult && requestResult.actionSuccess) {
-            setBiometrics(prev => ({ ...prev, authEnabled: true }));
-          }
-        }
-      } catch (error: any) {
-        if (nextEnabled) await reset();
-
-        const parsedInfo = parseKeychainError(error);
-        if (
-          parsedInfo.isCancelledByUser ||
-          (__DEV__ && parsedInfo.sysMessage)
-        ) {
-          toast.show(parsedInfo.sysMessage);
-        } else {
-          toast.show(error?.message);
-        }
-      } finally {
-        hideToast?.();
-        await fetchBiometrics();
-      }
-    },
-    [fetchBiometrics],
-  );
-
   useEffect(() => {
     if (options?.autoFetch) {
       fetchBiometrics();
     }
-  }, [options?.autoFetch, fetchBiometrics]);
+  }, [options?.autoFetch]);
 
   const computed = useBiometricsComputed();
 
@@ -188,13 +185,6 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
   };
 }
 
-// const biometricsStubModalStateAtom = atom<{
-//   status: 'idle' | 'preparing' | 'processing' | 'success' | 'failed';
-//   lastStubBehaviors: ValidationBehaviorProps | null;
-// }>({
-//   status: 'idle',
-//   lastStubBehaviors: {},
-// });
 type BiometricsStubModalState = {
   status: 'idle' | 'preparing' | 'processing' | 'success' | 'failed';
   lastStubBehaviors: ValidationBehaviorProps | null;

@@ -20,13 +20,11 @@ interface Props {
   shouldRedirectToSetPasswordBefore2024: ReturnType<
     typeof useSetPasswordFirst
   >['shouldRedirectToSetPasswordBefore2024'];
-  navigateTo: (screen: AppRootName, params?: object) => void;
 }
 
 export const AddAddressSelectMethod: React.FC<Props> = ({
   onDone,
   shouldRedirectToSetPasswordBefore2024,
-  navigateTo,
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -49,7 +47,9 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
               return;
             }
 
-            navigateTo(RootNames.CreateSelectMethod);
+            naviPush(RootNames.StackAddress, {
+              screen: RootNames.CreateSelectMethod,
+            });
             onDone();
           }}
           style={styles.importItem}
@@ -59,8 +59,11 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
         <ListItem
           disableArrow={true}
           onPress={() => {
-            navigateTo(RootNames.ImportMethods, {
-              isNotNewUserProc: true,
+            naviPush(RootNames.StackAddress, {
+              screen: RootNames.ImportMethods,
+              params: {
+                isNotNewUserProc: true,
+              },
             });
             onDone();
           }}
@@ -71,7 +74,9 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
         <ListItem
           disableArrow={true}
           onPress={() => {
-            navigateTo(RootNames.ImportHardwareAddress);
+            naviPush(RootNames.StackAddress, {
+              screen: RootNames.ImportHardwareAddress,
+            });
             onDone();
           }}
           style={styles.importItem}

@@ -437,74 +437,60 @@ const setLastScreenshot = (
   }
 };
 
-if (IS_ANDROID) {
-  RNScreenshotPrevent.startScreenCaptureDetection().then(() => {
-    console.debug(
-      '[info] RNScreenshotPrevent started screen capture detection on Android',
-    );
-  });
-}
-
-export function useUserDidTakeScreenshot({
+export function startSubscribeUserDidTakeScreenshot({
   isTop = false,
 }: {
   isTop?: boolean;
 } = {}) {
-  useEffect(() => {
-    if (!isTop) return;
+  const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(
+    async params => {
+      if (!getShowFeedbackOnScreenshotCapture()) return;
+      if (!params?.captured) return;
 
-    const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(
-      async params => {
-        if (!getShowFeedbackOnScreenshotCapture()) return;
-        if (!params?.captured) return;
+      if (!shouldToastFeedbackByScreenshot()) return;
 
-        if (!shouldToastFeedbackByScreenshot()) return;
+      const sizes = {
+        height: coerceNumber(params?.height, 100),
+        width: coerceNumber(params?.width, 100),
+      };
+      const fullPath = params?.path
+        ? AppScreenshotFS.normalizeFilePath(params.path)
+        : '';
 
-        const sizes = {
-          height: coerceNumber(params?.height, 100),
-          width: coerceNumber(params?.width, 100),
-        };
-        const fullPath = params?.path
-          ? AppScreenshotFS.normalizeFilePath(params.path)
-          : '';
+      if (params?.imageBase64) {
+        setLastScreenshot(
+          Image.resolveAssetSource({
+            // TODO: set contentType by params.type
+            uri: AppScreenshotFS.normalizeBase64(
+              params.imageBase64,
+              params.imageType || 'image/jpeg',
+            ),
+            height: sizes.height,
+            width: sizes.width,
+          }),
+        );
+      } else if (fullPath && (await RNFS.exists(fullPath))) {
+        const inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath, {
+          imageType: params?.imageType,
+        });
+        if (!inAppPath) return;
 
-        if (params?.imageBase64) {
-          setLastScreenshot(
-            Image.resolveAssetSource({
-              // TODO: set contentType by params.type
-              uri: AppScreenshotFS.normalizeBase64(
-                params.imageBase64,
-                params.imageType || 'image/jpeg',
-              ),
-              height: sizes.height,
-              width: sizes.width,
-            }),
-          );
-        } else if (fullPath && (await RNFS.exists(fullPath))) {
-          const inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath, {
-            imageType: params?.imageType,
-          });
-          if (!inAppPath) return;
+        setLastScreenshot(
+          Image.resolveAssetSource({
+            // TODO: set contentType by params.type
+            uri: AppScreenshotFS.normalizeBase64(
+              inAppPath,
+              params?.imageType || 'image/jpeg',
+            ),
+            height: sizes.height,
+            width: sizes.width,
+          }),
+        );
+      }
+    },
+  );
 
-          setLastScreenshot(
-            Image.resolveAssetSource({
-              // TODO: set contentType by params.type
-              uri: AppScreenshotFS.normalizeBase64(
-                inAppPath,
-                params?.imageType || 'image/jpeg',
-              ),
-              height: sizes.height,
-              width: sizes.width,
-            }),
-          );
-        }
-      },
-    );
-
-    return () => {
-      remove();
-    };
-  }, [isTop]);
+  return subscription;
 }
 
 const onChangeFeedback = (feedback: string) => {

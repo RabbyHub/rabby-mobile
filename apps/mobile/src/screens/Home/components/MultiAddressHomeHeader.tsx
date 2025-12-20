@@ -13,8 +13,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 
 import useAccountsBalance, {
-  balanceAccountType,
-  LoadBalanceStage,
   useLoadBalanceFromApiStage,
 } from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -27,7 +25,7 @@ import { usePinnedAccountList } from '@/hooks/account';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { sortBy } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
-import { useHideBalance } from '../hooks/useHideBalance';
+import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
@@ -41,45 +39,30 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useSetPasswordFirst } from '@/hooks/useLock';
-import { AppRootName, RootNames } from '@/constant/layout';
-import { StackActions, useNavigation } from '@react-navigation/native';
-import { CurrentAddressProps } from '@/screens/Address/components/AddressListScreenContainer';
 import {
   useScene24hBalanceCombinedData,
   useScene24hBalanceMulti24hBalance,
   useSceneIsLoading,
 } from '@/hooks/useScene24hBalance';
+import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 
-export function MultiAddressHomeHeader(
-  props: {
-    onRefresh?: () => void;
-  } & RNViewProps,
-): JSX.Element {
-  const { style, onRefresh } = props;
-
-  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
-  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
-  const { isLoading: loading } = useSceneIsLoading('Home');
-
-  const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { isDisConnect } = useGlobalStatus();
-
-  const pinnedAccountList = usePinnedAccountList();
-  const [hideType] = useHideBalance();
-  const setIsFoldMultiChart = useFoldMultiChartStore(
-    s => s.setIsFoldMultiChart,
-  );
+function MultiPinnedAddressList({
+  pinnedAccountList,
+  hideType,
+}: {
+  pinnedAccountList: ReturnType<typeof usePinnedAccountList>;
+  hideType: BALANCE_HIDE_TYPE;
+}) {
+  const { styles } = useTheme2024({ getStyle });
 
   const { balanceAccounts } = useAccountsBalance();
+  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
 
   const addressListData = useMemo(() => {
     return sortBy(
       pinnedAccountList.map(item => {
         const address24hBalanceData =
           multi24hBalance[item.address.toLowerCase()];
-        const hasChangeData = address24hBalanceData;
         const balanceAccount = balanceAccounts?.find(acc =>
           isSameAddress(acc.address, item.address),
         );
@@ -93,10 +76,11 @@ export function MultiAddressHomeHeader(
 
         return {
           ...item,
+          updateTime: address24hBalanceData?.updateTime,
           balance: balanceAccount?.balance || item.balance || 0,
           evmBalance: balanceAccount?.evmBalance || item.evmBalance || 0,
-          changePercent: hasChangeData ? changePercent : undefined,
-          isLoss: hasChangeData ? assetsChange < 0 : undefined,
+          changePercent: address24hBalanceData ? changePercent : undefined,
+          isLoss: address24hBalanceData ? assetsChange < 0 : undefined,
         };
       }),
       item => -(item.balance || 0),
@@ -114,7 +98,48 @@ export function MultiAddressHomeHeader(
     });
   }, [addressListData?.length]);
 
-  const { accountsLength } = useAccountsBalance();
+  return (
+    <View
+      style={[
+        styles.accountList,
+        hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
+      ]}>
+      {addressListData?.map(item => {
+        return (
+          <HomeAddressItem
+            hideType={hideType}
+            account={item}
+            updateTime={item.updateTime}
+            key={`${item.type}-${item.address}`}
+            isLoss={item.isLoss}
+            changePercent={item.changePercent}
+          />
+        );
+      })}
+    </View>
+  );
+}
+
+export function MultiAddressHomeHeader(
+  props: {
+    onRefresh?: () => void;
+  } & RNViewProps,
+): JSX.Element {
+  const { style, onRefresh } = props;
+
+  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+  const { isLoading: loading } = useSceneIsLoading('Home');
+
+  const { t } = useTranslation();
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { isDisConnect } = useGlobalStatus();
+
+  const pinnedAccountList = usePinnedAccountList();
+  const [hideType] = useHideBalance();
+  const setIsFoldMultiChart = useFoldMultiChartStore(
+    s => s.setIsFoldMultiChart,
+  );
+
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
@@ -153,34 +178,8 @@ export function MultiAddressHomeHeader(
     );
   }, [data.isLoss, data.rawChange, loadBalanceFromApiStage, previousLoading]);
 
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
-
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
-
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
-  const gotoAddAddress = useCallback(() => {
-    if (modalRef.current) {
-      removeGlobalBottomSheetModal2024(modalRef.current);
-      modalRef.current = undefined;
-    }
-
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-      shouldRedirectToSetPasswordBefore2024,
-      navigateTo: (screen: AppRootName, params?: object) => {
-        navigation.dispatch(
-          StackActions.push(RootNames.StackAddress, {
-            screen,
-            params,
-          }),
-        );
-      },
-    });
-  }, [shouldRedirectToSetPasswordBefore2024, navigation]);
 
   const handleWalletsListPress = useCallback(() => {
     setIsFoldMultiChart(true);
@@ -193,10 +192,13 @@ export function MultiAddressHomeHeader(
     });
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_LiST,
-      onAddAddressPress: gotoAddAddress,
+      onAddAddressPress: () => {
+        if (modalRef.current) {
+          removeGlobalBottomSheetModal2024(modalRef.current);
+        }
+        apiGlobalModal.showAddSelectMethodModal();
+      },
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        rootViewType: 'View',
         handleStyle: {
           backgroundColor: isLight
             ? colors2024['neutral-bg-0']
@@ -208,7 +210,7 @@ export function MultiAddressHomeHeader(
         modalRef.current = undefined;
       },
     });
-  }, [colors2024, gotoAddAddress, isLight, setIsFoldMultiChart]);
+  }, [colors2024, isLight, setIsFoldMultiChart]);
 
   return (
     <View style={style}>
@@ -273,7 +275,7 @@ export function MultiAddressHomeHeader(
             style={[
               styles.curveCard,
               styles.shadowView,
-              !addressListData.length && styles.noAddressCard,
+              !pinnedAccountList.length && styles.noAddressCard,
             ]}
             onPress={() => {
               handleWalletsListPress();
@@ -292,25 +294,12 @@ export function MultiAddressHomeHeader(
                 isAnimRunning && styles.curveCardGradientBgWithAnim,
               ]}
             />
-            <MultiChart hideType={hideType} accountsLength={accountsLength} />
-            {addressListData?.length ? (
-              <View
-                style={[
-                  styles.accountList,
-                  hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
-                ]}>
-                {addressListData?.map(item => {
-                  return (
-                    <HomeAddressItem
-                      hideType={hideType}
-                      account={item}
-                      key={`${item.type}-${item.address}`}
-                      isLoss={item.isLoss}
-                      changePercent={item.changePercent}
-                    />
-                  );
-                })}
-              </View>
+            <MultiChart hideType={hideType} />
+            {pinnedAccountList?.length ? (
+              <MultiPinnedAddressList
+                hideType={hideType}
+                pinnedAccountList={pinnedAccountList}
+              />
             ) : null}
             {hideType === 'HALF_HIDE' ? (
               <View style={styles.accountCardMask}>

@@ -202,7 +202,7 @@ export function sortChainItems<T extends Chain>(
   );
 }
 
-function searchChains(options: {
+export function searchChains(options: {
   list: Chain[];
   pinned: string[];
   searchKeyword: string;

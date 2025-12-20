@@ -49,7 +49,7 @@ export async function getAllAccountsToDisplay() {
     contactService.getAliasByMap(),
   ]);
 
-  const result = await Promise.all<IDisplayedAccountWithBalance>(
+  const result = await Promise.all(
     displayedKeyrings
       .map(item => {
         return item.accounts.map(account => {
@@ -58,10 +58,11 @@ export async function getAllAccountsToDisplay() {
             address: account.address.toLowerCase(),
             type: item.type,
             byImport: item.byImport,
-            aliasName: allAliasNames[account?.address?.toLowerCase()]?.alias,
+            aliasName:
+              allAliasNames[account?.address?.toLowerCase()]?.alias || '',
             keyring: item.keyring,
             publicKey: item?.publicKey,
-          };
+          } as IDisplayedAccountWithBalance;
         });
       })
       .flat(1)
@@ -114,7 +115,7 @@ export type KeyringAccountWithAlias = KeyringAccount & {
  * to keep same ref to avoid later re-renders on React Hooks
  */
 const existedAccountsRef = { current: [] as KeyringAccountWithAlias[] };
-export async function fetchAllAccounts() {
+async function fetchAllAccountsProcess() {
   let nextAccounts: KeyringAccountWithAlias[] = [];
   try {
     nextAccounts = await keyringService
@@ -200,7 +201,7 @@ export function sortAccountList(
         addressUtils.isSameAddress(account.address, highlighted.address) &&
         account.brandName === highlighted.brandName,
     );
-    if (idx > -1) {
+    if (idx > -1 && restAccounts[idx]) {
       highlightedAccounts.push(restAccounts[idx]);
       restAccounts.splice(idx, 1);
     }
@@ -214,14 +215,15 @@ export function sortAccountList(
   return normalAccounts;
 }
 
-const fetchAllAccountsAvoidParallel =
-  makeAvoidParallelAsyncFunc(fetchAllAccounts);
+export const fetchAllAccounts = makeAvoidParallelAsyncFunc(
+  fetchAllAccountsProcess,
+);
 
 export async function getSortedAddressList(options?: {
   includeOthers?: boolean;
 }) {
   const { includeOthers = false } = options || {};
-  const allAccounts = await fetchAllAccountsAvoidParallel();
+  const allAccounts = await fetchAllAccounts();
   // const allMyAccounts = includeOthers ? [] : filterMyAccounts(allAccounts);
   const accounts = includeOthers ? allAccounts : filterMyAccounts(allAccounts);
   const pinAddresses = preferenceService.getPinAddresses();

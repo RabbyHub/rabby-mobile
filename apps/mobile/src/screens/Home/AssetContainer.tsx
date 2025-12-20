@@ -75,13 +75,11 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
     );
   }, []);
 
-  const hasNotAssets = useMemo(() => {
-    return chainLength === 0;
-  }, [chainLength]);
+  const noAssetsOnAnyChain = chainLength === 0;
 
   const errorNotAssets = useMemo(() => {
-    return isDisConnect && hasNotAssets && hasNoCurveData;
-  }, [hasNoCurveData, hasNotAssets, isDisConnect]);
+    return isDisConnect && noAssetsOnAnyChain && hasNoCurveData;
+  }, [hasNoCurveData, noAssetsOnAnyChain, isDisConnect]);
 
   const renderTabBar = React.useCallback<
     CollapsibleProps['renderTabBar'] & object
@@ -129,6 +127,7 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab label={renderLabel('Token')} name="tokens">
         <TokenList
+          noAssetsOnAnyChain={noAssetsOnAnyChain}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
         />
