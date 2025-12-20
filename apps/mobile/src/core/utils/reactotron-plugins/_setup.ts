@@ -30,14 +30,14 @@ export function setupCustomCommands(client: ReactotronReactNative) {
     description: 'Logs the current state of the MMKV store on DevTools',
     args: [
       {
-        name: 'storeName',
+        name: 'mmkvName',
         type: ArgType.String,
       },
     ],
     handler: payload => {
       reactotronEvents.emit('CM_LOG_MMKV_STORE', {
         reqid: stringUtils.randString(),
-        storeName: payload?.storeName as any,
+        mmkvName: payload?.mmkvName as any,
       });
 
       return { success: true };
