@@ -326,8 +326,12 @@ export const zustandByMMKV = <T = any>(
       : storage) || appStorageForZustand;
 
   const oldData = appJsonStore.getItem(legacyAppStoreKey, initialValue);
+  const newData =
+    key === legacyAppStoreKey
+      ? oldData
+      : appJsonStore.getItem(key, initialValue);
   const hasMigrated =
-    oldData?.hasOwnProperty('state') && oldData?.hasOwnProperty('version');
+    newData?.hasOwnProperty('state') && newData?.hasOwnProperty('version');
 
   if (!hasMigrated) {
     const result = migrateFromAtom({ key, oldData, appJsonStore });
