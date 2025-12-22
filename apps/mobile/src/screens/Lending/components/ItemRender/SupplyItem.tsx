@@ -1,31 +1,56 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import TokenIcon from '../TokenIcon';
-import { DisplayPoolReserveInfo } from '../../type';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { CollateralSwitch } from '../CollateralSwitch';
 import IsolatedTag from '../IsolatedTag';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { isValidAddress } from '@ethereumjs/util';
+import { useLendingSummary } from '../../hooks';
+import { nativeToWrapper } from '../../config/nativeToWrapper';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
+import { getSupplyCapData } from '../../utils/supply';
 
 interface SupplyItemProps extends RNViewProps {
-  reserve: DisplayPoolReserveInfo;
-  canBeEnabledAsCollateral: boolean;
-  onToggleCollateral?: (reserve: DisplayPoolReserveInfo) => void;
-  onPressSupply?: (reserve: DisplayPoolReserveInfo) => void;
-  onPressWithdraw?: (reserve: DisplayPoolReserveInfo) => void;
+  underlyingAsset: string;
 }
 
-const SupplyItem: React.FC<SupplyItemProps> = ({
-  reserve,
-  style,
-  canBeEnabledAsCollateral,
-  onToggleCollateral,
-  onPressSupply,
-  onPressWithdraw,
-}) => {
+const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+
+  const {
+    displayPoolReserves,
+    wrapperPoolReserve,
+    iUserSummary: userSummary,
+  } = useLendingSummary();
+  const { openCollateralChange } = useToggleCollateralModal();
+
+  const reserve = useMemo(() => {
+    const validAddress = isValidAddress(underlyingAsset);
+    const nativeWrapperReserveAddress = wrapperPoolReserve?.underlyingAsset;
+    const defaultAddress = nativeToWrapper[underlyingAsset];
+    const realTimeReserve = displayPoolReserves?.find(item =>
+      isSameAddress(
+        item.underlyingAsset,
+        validAddress
+          ? underlyingAsset
+          : nativeWrapperReserveAddress || defaultAddress,
+      ),
+    );
+    return realTimeReserve;
+  }, [
+    displayPoolReserves,
+    underlyingAsset,
+    wrapperPoolReserve?.underlyingAsset,
+  ]);
 
   const {
     isSupplied,
@@ -34,6 +59,15 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
     suppliedTokenText,
     isIsolated,
   } = useMemo(() => {
+    if (!reserve) {
+      return {
+        isSupplied: false,
+        apyText: '',
+        suppliedUsdText: '',
+        suppliedTokenText: '',
+        isIsolated: false,
+      };
+    }
     const hasSupplied =
       !!reserve.underlyingBalanceUSD && reserve.underlyingBalanceUSD !== '0';
 
@@ -63,6 +97,64 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
     };
   }, [reserve]);
 
+  const canBeEnabledAsCollateral = useMemo(() => {
+    if (!reserve) {
+      return false;
+    }
+    const { supplyCapReached } = getSupplyCapData(reserve);
+    return userSummary
+      ? !supplyCapReached &&
+          reserve.reserve.reserveLiquidationThreshold !== '0' &&
+          ((!reserve.reserve.isIsolated && !userSummary.isInIsolationMode) ||
+            userSummary.isolatedReserve?.underlyingAsset ===
+              reserve.underlyingAsset ||
+            (reserve.reserve.isIsolated &&
+              userSummary.totalCollateralMarketReferenceCurrency === '0'))
+      : false;
+  }, [reserve, userSummary]);
+
+  const handleOpenSupplyDetail = useCallback(() => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
+      reserve,
+      userSummary,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-1'],
+        },
+      },
+    });
+  }, [colors2024, reserve, userSummary]);
+
+  const handleOpenWithdrawDetail = useCallback(() => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.WITHDRAW_ACTION_DETAIL,
+      reserve,
+      userSummary,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-1'],
+        },
+      },
+    });
+  }, [colors2024, reserve, userSummary]);
+
+  if (!reserve) {
+    return null;
+  }
+
   return (
     <View
       style={[
@@ -80,8 +172,8 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
             <TokenIcon
               size={46}
               chainSize={0}
-              tokenSymbol={reserve.reserve.symbol}
-              chain={reserve.chain}
+              tokenSymbol={reserve?.reserve?.symbol || ''}
+              chain={reserve?.chain}
             />
             <View style={styles.tokenTextArea}>
               <View style={styles.symbolArea}>
@@ -113,20 +205,20 @@ const SupplyItem: React.FC<SupplyItemProps> = ({
               reserve={reserve}
               canBeEnabledAsCollateral={canBeEnabledAsCollateral}
               onValueChange={() => {
-                onToggleCollateral?.(reserve);
+                openCollateralChange(reserve);
               }}
             />
           </View>
           <TouchableOpacity
             style={styles.buttonSecondary}
             activeOpacity={0.8}
-            onPress={() => onPressSupply?.(reserve)}>
+            onPress={handleOpenSupplyDetail}>
             <Text style={styles.buttonSecondaryText}>Supply</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.buttonPrimary}
             activeOpacity={0.8}
-            onPress={() => onPressWithdraw?.(reserve)}>
+            onPress={handleOpenWithdrawDetail}>
             <Text style={styles.buttonPrimaryText}>Withdraw</Text>
           </TouchableOpacity>
         </View>

@@ -4,7 +4,6 @@ import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useLendingData, useLendingSummary } from './hooks';
-import { DisplayPoolReserveInfo } from './type';
 import BorrowItem from './components/ItemRender/BorrowItem';
 import SupplyItem from './components/ItemRender/SupplyItem';
 import SummaryItem from './components/ItemRender/SummaryItem';
@@ -15,24 +14,22 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { getSupplyCapData } from './utils/supply';
 import { ChainSelector } from './ChainSelector';
 
 type MyAssetItem =
   | {
       type: 'borrow';
-      reserve: DisplayPoolReserveInfo;
+      underlyingAsset: string;
       usdValue: number;
     }
   | {
       type: 'supply';
-      reserve: DisplayPoolReserveInfo;
+      underlyingAsset: string;
       usdValue: number;
-      canBeEnabledAsCollateral: boolean;
     };
 
 const MyAssetHome: React.FC = () => {
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { displayPoolReserves, loading, iUserSummary, apyInfo } =
     useLendingSummary();
@@ -45,81 +42,24 @@ const MyAssetHome: React.FC = () => {
       const borrowUsd = Number(item.totalBorrowsUSD || '0');
 
       if (supplyUsd > 0) {
-        const { supplyCapReached } = getSupplyCapData(item);
-        const canBeEnabledAsCollateral = iUserSummary
-          ? !supplyCapReached &&
-            item.reserve.reserveLiquidationThreshold !== '0' &&
-            ((!item.reserve.isIsolated && !iUserSummary.isInIsolationMode) ||
-              iUserSummary.isolatedReserve?.underlyingAsset ===
-                item.underlyingAsset ||
-              (item.reserve.isIsolated &&
-                iUserSummary.totalCollateralMarketReferenceCurrency === '0'))
-          : false;
         list.push({
           type: 'supply',
-          reserve: item,
+          underlyingAsset: item.underlyingAsset,
           usdValue: supplyUsd,
-          canBeEnabledAsCollateral,
         });
       }
 
       if (borrowUsd > 0) {
         list.push({
           type: 'borrow',
-          reserve: item,
+          underlyingAsset: item.underlyingAsset,
           usdValue: borrowUsd,
         });
       }
     });
 
     return list.sort((a, b) => b.usdValue - a.usdValue);
-  }, [displayPoolReserves, iUserSummary]);
-
-  const handleOpenBorrowDetail = useCallback(
-    (item: DisplayPoolReserveInfo) => {
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.BORROW_DETAIL,
-        underlyingAsset: item.reserve.underlyingAsset,
-        onClose: () => {
-          removeGlobalBottomSheetModal2024(modalId);
-        },
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-          handleStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
-          },
-        },
-      });
-    },
-    [colors2024, isLight],
-  );
-
-  const handleOpenSupplyDetail = useCallback(
-    (item: DisplayPoolReserveInfo) => {
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.SUPPLY_DETAIL,
-        underlyingAsset: item.underlyingAsset,
-        onClose: () => {
-          removeGlobalBottomSheetModal2024(modalId);
-        },
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          enableDismissOnClose: true,
-          handleStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
-          },
-        },
-      });
-    },
-    [colors2024, isLight],
-  );
+  }, [displayPoolReserves]);
 
   const handleOpenSupplyList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
@@ -140,8 +80,8 @@ const MyAssetHome: React.FC = () => {
   }, []);
 
   const keyExtractor = useCallback((item: MyAssetItem) => {
-    const { reserve } = item;
-    return `${item.type}-${reserve.reserve.underlyingAsset}-${reserve.reserve.symbol}`;
+    const { underlyingAsset } = item;
+    return `${item.type}-${underlyingAsset}`;
   }, []);
 
   const renderItem = useCallback(
@@ -149,25 +89,19 @@ const MyAssetHome: React.FC = () => {
       if (item.type === 'borrow') {
         return (
           <BorrowItem
-            reserve={item.reserve}
+            underlyingAsset={item.underlyingAsset}
             style={styles.item}
-            onPressBorrow={handleOpenBorrowDetail}
-            onPressRepay={handleOpenBorrowDetail}
           />
         );
       }
       return (
         <SupplyItem
-          reserve={item.reserve}
-          canBeEnabledAsCollateral={item.canBeEnabledAsCollateral}
+          underlyingAsset={item.underlyingAsset}
           style={styles.item}
-          onToggleCollateral={handleOpenSupplyDetail}
-          onPressSupply={handleOpenSupplyDetail}
-          onPressWithdraw={handleOpenSupplyDetail}
         />
       );
     },
-    [handleOpenBorrowDetail, handleOpenSupplyDetail, styles.item],
+    [styles.item],
   );
 
   const renderHeader = useCallback(() => {

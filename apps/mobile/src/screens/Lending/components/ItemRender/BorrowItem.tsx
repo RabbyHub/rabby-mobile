@@ -1,29 +1,67 @@
 import React, { useMemo } from 'react';
+
+import BigNumber from 'bignumber.js';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
+import { isValidAddress } from '@ethereumjs/util';
 import { createGetStyles2024 } from '@/utils/styles';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+
 import TokenIcon from '../TokenIcon';
-import { DisplayPoolReserveInfo } from '../../type';
+import { getFromToken } from '../../utils/swap';
+import { nativeToWrapper } from '../../config/nativeToWrapper';
 import { formatApy, formatListNetWorth } from '../../utils/format';
+import { useLendingSummary, useSelectedMarket } from '../../hooks';
 
 interface BorrowItemProps extends RNViewProps {
-  reserve: DisplayPoolReserveInfo;
-  onPressSwap?: (reserve: DisplayPoolReserveInfo) => void;
-  onPressBorrow?: (reserve: DisplayPoolReserveInfo) => void;
-  onPressRepay?: (reserve: DisplayPoolReserveInfo) => void;
+  underlyingAsset: string;
 }
 
-const BorrowItem: React.FC<BorrowItemProps> = ({
-  reserve,
-  style,
-  onPressSwap,
-  onPressBorrow,
-  onPressRepay,
-}) => {
+const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
+  const { selectedMarketData, chainInfo } = useSelectedMarket();
+  const {
+    displayPoolReserves,
+    wrapperPoolReserve,
+    iUserSummary: userSummary,
+    formattedPoolReservesAndIncentives,
+  } = useLendingSummary();
+
+  const reserve = useMemo(() => {
+    const validAddress = isValidAddress(underlyingAsset);
+    const nativeWrapperReserveAddress = wrapperPoolReserve?.underlyingAsset;
+    const defaultAddress = nativeToWrapper[underlyingAsset];
+    const realTimeReserve = displayPoolReserves?.find(item =>
+      isSameAddress(
+        item.underlyingAsset,
+        validAddress
+          ? underlyingAsset
+          : nativeWrapperReserveAddress || defaultAddress,
+      ),
+    );
+    return realTimeReserve;
+  }, [
+    displayPoolReserves,
+    underlyingAsset,
+    wrapperPoolReserve?.underlyingAsset,
+  ]);
+
   const { isBorrowed, apyText, usdText, tokenAmountText } = useMemo(() => {
+    if (!reserve) {
+      return {
+        isBorrowed: false,
+        apyText: '',
+        usdText: '',
+        tokenAmountText: '',
+      };
+    }
     const isBorrowedFlag =
       !!reserve.totalBorrowsUSD && reserve.totalBorrowsUSD !== '0';
 
@@ -50,6 +88,137 @@ const BorrowItem: React.FC<BorrowItemProps> = ({
     };
   }, [reserve]);
 
+  const hasBorrowBalance = useMemo(() => {
+    if (!reserve) {
+      return false;
+    }
+    return reserve?.variableBorrows && reserve.variableBorrows !== '0';
+  }, [reserve]);
+
+  const showDebtSwapButton = useMemo(() => {
+    return (
+      hasBorrowBalance && !!selectedMarketData?.enabledFeatures?.debtSwitch
+    );
+  }, [hasBorrowBalance, selectedMarketData?.enabledFeatures?.debtSwitch]);
+
+  const disableDebtSwapButton = useMemo(() => {
+    const r = formattedPoolReservesAndIncentives.find(item =>
+      isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+    );
+    if (!r) {
+      return true;
+    }
+    const disableEModeSwitch =
+      !!userSummary?.userEmodeCategoryId &&
+      formattedPoolReservesAndIncentives.filter(_r =>
+        _r.eModes.find(
+          e => e.id === userSummary?.userEmodeCategoryId && e.borrowingEnabled,
+        ),
+      ).length < 2;
+    return (
+      r.isPaused || !r.isActive || r.symbol === 'stETH' || disableEModeSwitch
+    );
+  }, [
+    formattedPoolReservesAndIncentives,
+    reserve?.underlyingAsset,
+    userSummary?.userEmodeCategoryId,
+  ]);
+
+  const disableBorrowButton = useMemo(() => {
+    if (!reserve) {
+      return false;
+    }
+    // emode开启，但是不支持该池子借贷
+    const eModeBorrowDisabled =
+      !!userSummary?.userEmodeCategoryId &&
+      !reserve.reserve.eModes.find(
+        e => e.id === userSummary.userEmodeCategoryId,
+      );
+    if (eModeBorrowDisabled) {
+      return true;
+    }
+    if (BigNumber(reserve.reserve.totalDebt).gte(reserve.reserve.borrowCap)) {
+      return true;
+    }
+    return (
+      !userSummary?.availableBorrowsUSD ||
+      userSummary?.availableBorrowsUSD === '0'
+    );
+  }, [
+    reserve,
+    userSummary?.availableBorrowsUSD,
+    userSummary?.userEmodeCategoryId,
+  ]);
+
+  const handlePressBorrow = () => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.BORROW_ACTION_DETAIL,
+      reserve,
+      userSummary,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-1'],
+        },
+      },
+    });
+  };
+  const handlePressRepay = () => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.REPAY_ACTION_DETAIL,
+      reserve,
+      userSummary,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-1'],
+        },
+      },
+    });
+  };
+  const handleSwapDebt = () => {
+    const r = formattedPoolReservesAndIncentives.find(item =>
+      isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+    );
+    if (!r || !userSummary || !chainInfo?.id) {
+      return;
+    }
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.DEBT_SWAP,
+      allowAndroidHarewareBack: true,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        rootViewType: 'View',
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      },
+      fromToken: getFromToken(
+        r,
+        chainInfo?.id,
+        reserve?.variableBorrows || '0',
+      ),
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+    });
+  };
+
+  if (!reserve) {
+    return null;
+  }
   return (
     <View
       style={[
@@ -91,22 +260,26 @@ const BorrowItem: React.FC<BorrowItemProps> = ({
         </View>
 
         <View style={styles.buttonRow}>
+          {showDebtSwapButton && (
+            <TouchableOpacity
+              style={styles.buttonSecondary}
+              activeOpacity={0.8}
+              disabled={disableDebtSwapButton}
+              onPress={handleSwapDebt}>
+              <Text style={styles.buttonSecondaryText}>Swap</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={styles.buttonSecondary}
             activeOpacity={0.8}
-            onPress={() => onPressSwap?.(reserve)}>
-            <Text style={styles.buttonSecondaryText}>Swap</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.buttonSecondary}
-            activeOpacity={0.8}
-            onPress={() => onPressBorrow?.(reserve)}>
+            disabled={disableBorrowButton}
+            onPress={handlePressBorrow}>
             <Text style={styles.buttonSecondaryText}>Borrow</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.buttonPrimary}
             activeOpacity={0.8}
-            onPress={() => onPressRepay?.(reserve)}>
+            onPress={handlePressRepay}>
             <Text style={styles.buttonPrimaryText}>Repay</Text>
           </TouchableOpacity>
         </View>
