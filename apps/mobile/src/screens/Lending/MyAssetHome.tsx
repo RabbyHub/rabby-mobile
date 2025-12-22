@@ -1,20 +1,28 @@
 import React, { useCallback, useMemo } from 'react';
+
+import BigNumber from 'bignumber.js';
+import { useTranslation } from 'react-i18next';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import { useLendingData, useLendingSummary } from './hooks';
-import BorrowItem from './components/ItemRender/BorrowItem';
-import SupplyItem from './components/ItemRender/SupplyItem';
-import SummaryItem from './components/ItemRender/SummaryItem';
 import { Button } from '@/components2024/Button';
-import { useTranslation } from 'react-i18next';
+import { createGetStyles2024 } from '@/utils/styles';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+
 import { ChainSelector } from './ChainSelector';
+import wrapperToken from './config/wrapperToken';
+import { API_ETH_MOCK_ADDRESS } from './utils/constant';
+import { assetCanBeBorrowedByUser } from './utils/borrow';
+import BorrowItem from './components/ItemRender/BorrowItem';
+import SupplyItem from './components/ItemRender/SupplyItem';
+import { displayGhoForMintableMarket } from './utils/supply';
+import SummaryItem from './components/ItemRender/SummaryItem';
+import { useLendingData, useLendingSummary, useSelectedMarket } from './hooks';
 
 type MyAssetItem =
   | {
@@ -31,16 +39,59 @@ type MyAssetItem =
 const MyAssetHome: React.FC = () => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { displayPoolReserves, loading, iUserSummary, apyInfo } =
+  const { chainEnum, marketKey } = useSelectedMarket();
+  const { displayPoolReserves, loading, iUserSummary, apyInfo, reserves } =
     useLendingSummary();
   const { fetchData } = useLendingData();
 
   const myAssetList: MyAssetItem[] = useMemo(() => {
     const list: MyAssetItem[] = [];
-    (displayPoolReserves || []).forEach(item => {
+    const supplyList = displayPoolReserves?.filter(item => {
+      if (item.underlyingBalance && item.underlyingBalance !== '0') {
+        return true;
+      }
+      const realUnderlyingAsset =
+        isSameAddress(item.underlyingAsset, API_ETH_MOCK_ADDRESS) && chainEnum
+          ? wrapperToken?.[chainEnum]?.address
+          : item.reserve.underlyingAsset;
+      const reserve = reserves?.reservesData?.find(x =>
+        isSameAddress(x.underlyingAsset, realUnderlyingAsset),
+      );
+      if (!reserve) {
+        return false;
+      }
+      return (
+        !(reserve?.isFrozen || reserve.isPaused) &&
+        !displayGhoForMintableMarket({
+          symbol: reserve.symbol,
+          currentMarket: marketKey,
+        })
+      );
+    });
+    const borrowList = displayPoolReserves?.filter(item => {
+      if (isSameAddress(item.underlyingAsset, API_ETH_MOCK_ADDRESS)) {
+        return false;
+      }
+      if (item.variableBorrows && item.variableBorrows !== '0') {
+        return true;
+      }
+      if (BigNumber(item.reserve.totalDebt).gte(item.reserve.borrowCap)) {
+        return false;
+      }
+      const reserve = reserves?.reservesData?.find(x =>
+        isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
+      );
+      if (!reserve || !iUserSummary) {
+        return false;
+      }
+      return assetCanBeBorrowedByUser(
+        reserve,
+        iUserSummary,
+        item.reserve.eModes,
+      );
+    });
+    supplyList?.forEach(item => {
       const supplyUsd = Number(item.underlyingBalanceUSD || '0');
-      const borrowUsd = Number(item.totalBorrowsUSD || '0');
-
       if (supplyUsd > 0) {
         list.push({
           type: 'supply',
@@ -48,7 +99,9 @@ const MyAssetHome: React.FC = () => {
           usdValue: supplyUsd,
         });
       }
-
+    });
+    borrowList.forEach(item => {
+      const borrowUsd = Number(item.totalBorrowsUSD || '0');
       if (borrowUsd > 0) {
         list.push({
           type: 'borrow',
@@ -59,7 +112,13 @@ const MyAssetHome: React.FC = () => {
     });
 
     return list.sort((a, b) => b.usdValue - a.usdValue);
-  }, [displayPoolReserves]);
+  }, [
+    chainEnum,
+    displayPoolReserves,
+    iUserSummary,
+    marketKey,
+    reserves?.reservesData,
+  ]);
 
   const handleOpenSupplyList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({

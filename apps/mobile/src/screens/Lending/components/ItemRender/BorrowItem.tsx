@@ -3,7 +3,6 @@ import React, { useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { isValidAddress } from '@ethereumjs/util';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,7 +15,6 @@ import {
 
 import TokenIcon from '../TokenIcon';
 import { getFromToken } from '../../utils/swap';
-import { nativeToWrapper } from '../../config/nativeToWrapper';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
 
@@ -30,30 +28,14 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
   const { t } = useTranslation();
   const { selectedMarketData, chainInfo } = useSelectedMarket();
   const {
-    displayPoolReserves,
-    wrapperPoolReserve,
     iUserSummary: userSummary,
     formattedPoolReservesAndIncentives,
+    getTargetReserve,
   } = useLendingSummary();
 
   const reserve = useMemo(() => {
-    const validAddress = isValidAddress(underlyingAsset);
-    const nativeWrapperReserveAddress = wrapperPoolReserve?.underlyingAsset;
-    const defaultAddress = nativeToWrapper[underlyingAsset];
-    const realTimeReserve = displayPoolReserves?.find(item =>
-      isSameAddress(
-        item.underlyingAsset,
-        validAddress
-          ? underlyingAsset
-          : nativeWrapperReserveAddress || defaultAddress,
-      ),
-    );
-    return realTimeReserve;
-  }, [
-    displayPoolReserves,
-    underlyingAsset,
-    wrapperPoolReserve?.underlyingAsset,
-  ]);
+    return getTargetReserve(underlyingAsset);
+  }, [getTargetReserve, underlyingAsset]);
 
   const { isBorrowed, apyText, usdText, tokenAmountText } = useMemo(() => {
     if (!reserve) {
@@ -287,7 +269,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
             activeOpacity={0.8}
             onPress={handlePressRepay}>
             <Text style={styles.buttonPrimaryText}>
-              {t('page.Lending.borrowDetail.borrowed')}
+              {t('page.Lending.repayDetail.actions')}
             </Text>
           </TouchableOpacity>
         </View>

@@ -2,9 +2,6 @@ import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { isValidAddress } from '@ethereumjs/util';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -18,7 +15,6 @@ import IsolatedTag from '../IsolatedTag';
 import { useLendingSummary } from '../../hooks';
 import { getSupplyCapData } from '../../utils/supply';
 import { CollateralSwitch } from '../CollateralSwitch';
-import { nativeToWrapper } from '../../config/nativeToWrapper';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
 
@@ -30,31 +26,12 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
-  const {
-    displayPoolReserves,
-    wrapperPoolReserve,
-    iUserSummary: userSummary,
-  } = useLendingSummary();
+  const { iUserSummary: userSummary, getTargetReserve } = useLendingSummary();
   const { openCollateralChange } = useToggleCollateralModal();
 
   const reserve = useMemo(() => {
-    const validAddress = isValidAddress(underlyingAsset);
-    const nativeWrapperReserveAddress = wrapperPoolReserve?.underlyingAsset;
-    const defaultAddress = nativeToWrapper[underlyingAsset];
-    const realTimeReserve = displayPoolReserves?.find(item =>
-      isSameAddress(
-        item.underlyingAsset,
-        validAddress
-          ? underlyingAsset
-          : nativeWrapperReserveAddress || defaultAddress,
-      ),
-    );
-    return realTimeReserve;
-  }, [
-    displayPoolReserves,
-    underlyingAsset,
-    wrapperPoolReserve?.underlyingAsset,
-  ]);
+    return getTargetReserve(underlyingAsset);
+  }, [getTargetReserve, underlyingAsset]);
 
   const {
     isSupplied,

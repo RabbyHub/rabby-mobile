@@ -35,9 +35,14 @@ import { formatApy, formatListNetWorth } from '../../utils/format';
 const FOOT_HEIGHT = 36;
 
 const LendingBorrowList: React.FC = () => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { displayPoolReserves, reserves, loading, iUserSummary } =
-    useLendingSummary();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const {
+    displayPoolReserves,
+    reserves,
+    loading,
+    iUserSummary,
+    getTargetReserve,
+  } = useLendingSummary();
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
   const [search, setSearch] = useState('');
@@ -193,8 +198,9 @@ const LendingBorrowList: React.FC = () => {
   const handlePressItem = useCallback(
     (item: DisplayPoolReserveInfo) => {
       const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.BORROW_DETAIL,
-        underlyingAsset: item.reserve.underlyingAsset,
+        name: MODAL_NAMES.BORROW_ACTION_DETAIL,
+        reserve: getTargetReserve(item.reserve.underlyingAsset),
+        userSummary: iUserSummary,
         onClose: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
@@ -203,14 +209,12 @@ const LendingBorrowList: React.FC = () => {
           enablePanDownToClose: true,
           enableDismissOnClose: true,
           handleStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
+            backgroundColor: colors2024['neutral-bg-1'],
           },
         },
       });
     },
-    [colors2024, isLight],
+    [colors2024, getTargetReserve, iUserSummary],
   );
 
   const ListHeaderComponent = useCallback(() => {

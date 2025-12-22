@@ -39,6 +39,8 @@ import { getProvider } from './provider';
 import { fetchIconSymbolAndName } from './utils/icon';
 import { ExtractAtomValueType } from '@/utils/type';
 import { jotaiStore } from '@/core/utils/reexports';
+import { isValidAddress } from '@ethereumjs/util';
+import { nativeToWrapper } from './config/nativeToWrapper';
 
 export const marketAtom = atomByMMKV(
   '@lendingMarket',
@@ -581,6 +583,24 @@ const useLendingSummary = () => {
   const wrapperPoolReserve = useAtomValue(wrapperPoolReserveAtom);
   const apyInfo = useAtomValue(apyInfoAtom);
 
+  const getTargetReserve = useCallback(
+    (underlyingAsset: string) => {
+      const validAddress = isValidAddress(underlyingAsset);
+      const nativeWrapperReserveAddress = wrapperPoolReserve?.underlyingAsset;
+      const defaultAddress = nativeToWrapper[underlyingAsset];
+      const realTimeReserve = finalDisplayPoolReserves?.find(item =>
+        isSameAddress(
+          item.underlyingAsset,
+          validAddress
+            ? underlyingAsset
+            : nativeWrapperReserveAddress || defaultAddress,
+        ),
+      );
+      return realTimeReserve;
+    },
+    [finalDisplayPoolReserves, wrapperPoolReserve?.underlyingAsset],
+  );
+
   return {
     reserves,
     userReserves,
@@ -591,6 +611,7 @@ const useLendingSummary = () => {
     wrapperPoolReserve,
     apyInfo,
     loading,
+    getTargetReserve,
   };
 };
 
