@@ -320,13 +320,16 @@ runIIFEFunc(() => {
 
   perfEvents.subscribe('ACCOUNTS_BALANCE_UPDATE', async data => {
     await refresh24hAssets({
-      force: data.nextState !== data.prevState,
+      // force: data.nextState !== data.prevState,
       balanceAccounts: data.nextState,
     });
   });
 
   perfEvents.subscribe('ACCOUNTS_MAYBE_CHANGED', async ctx => {
-    await fetchTotalBalance(ctx?.confirmed ? 'from_api' : 'from_cache');
+    const balanceAccounts = await fetchTotalBalance(
+      ctx?.confirmed ? 'from_api' : 'from_cache',
+    );
+    await refresh24hAssets({ balanceAccounts, force: ctx?.confirmed });
   });
 });
 

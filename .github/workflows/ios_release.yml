@@ -16,14 +16,21 @@ on:
         required: true
         type: boolean
         default: false
+      macos_machine_location:
+        required: true
+        type: choice
+        options:
+          - 'mobile'
+          - 'mobile-local'
+        default: 'mobile'
   workflow_call:
     secrets:
       KEYCHAIN_PASS:
         required: true
 
-# defaults:
-#   run:
-#     shell: bash -ieo pipefail {0}
+defaults:
+  run:
+    shell: bash -ieol pipefail {0}
 
 env:
   BUILD_TARGET_PLATFORM: ios
@@ -31,7 +38,15 @@ env:
 jobs:
   setup:
     name: iOS-release-build
-    runs-on: [self-hosted, mobile, macOS]
+    strategy:
+      matrix:
+        include:
+          - host: macOS
+            machine_loc: ${{ inputs.macos_machine_location }}
+    runs-on:
+      - self-hosted
+      - ${{ matrix.host }}
+      - ${{ matrix.machine_loc }}
     steps:
       - uses: actions/checkout@v4
       - name: Get Actions Variables
@@ -63,25 +78,29 @@ jobs:
           xcode-version: '16.2'
 
       - name: Install dependencies && Build app
-        shell: bash
         run: |
           cd apps/mobile;
           rm -rf node_modules;
           yarn install;
           yarn postinstall;
 
-          # security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db
-          security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
+          if [ "$INPUT_MOBILE_LOC" != "mobile-local" ]; then
+            RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS=${{ secrets.KEYCHAIN_PASS }}
+          fi
+          # security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS ~/Library/Keychains/login.keychain-db
+          security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS login.keychain
           ./scripts/deploy-ios-appstore.sh
 
         env:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
+          RABBY_MOBILE_SAFE_API_KEY: ${{ secrets.MOBILE_SAFE_API_KEY }}
           RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
+          INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
           CONFIGURATION: release

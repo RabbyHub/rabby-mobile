@@ -22,8 +22,10 @@ import {
 } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
+import DeviceUtils from '@/core/utils/device';
 
-export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = false;
+export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
+  IS_ANDROID && !DeviceUtils.isGteAndroid(14);
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 type ScreenshotFeedbackStore = {
   viewedHomeTip: boolean;
@@ -437,11 +439,15 @@ const setLastScreenshot = (
   }
 };
 
-export function startSubscribeUserDidTakeScreenshot({
-  isTop = false,
-}: {
-  isTop?: boolean;
-} = {}) {
+if (IS_ANDROID) {
+  RNScreenshotPrevent.startScreenCaptureDetection().then(() => {
+    console.debug(
+      '[info] RNScreenshotPrevent started screen capture detection on Android',
+    );
+  });
+}
+
+export function startSubscribeUserDidTakeScreenshot() {
   const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(
     async params => {
       if (!getShowFeedbackOnScreenshotCapture()) return;

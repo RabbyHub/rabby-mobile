@@ -24,7 +24,10 @@
       "CreateNewAddress": "1. Xác nhận Ví của bạn",
       "WatchAddressList": "Ví chỉ xem",
       "ImportWatchAddress2024": "Thêm Ví Chỉ Xem",
-      "ConfrimAddress": "Xác nhận Ví của bạn"
+      "ConfrimAddress": "Xác nhận Ví của bạn",
+      "SetPassword": "Đặt mật khẩu",
+      "ChooseBackup": "Chọn phương pháp sao lưu",
+      "CreateWallet": "Tạo Ví"
     }
   },
   "native": {
@@ -118,7 +121,10 @@
     "gotIt": "Đã hiểu",
     "Token": "Token",
     "Dapp": "Dapp",
-    "GotIt": "Hiểu rồi"
+    "GotIt": "Hiểu rồi",
+    "Other": "Khác",
+    "Backup": "Sao lưu",
+    "copy": "Sao chép"
   },
   "page": {
     "transactions": {
@@ -147,7 +153,8 @@
         "LendingOffCollateral": "Tắt sử dụng làm tài sản thế chấp",
         "LendingOnCollateral": "Bật sử dụng làm tài sản thế chấp",
         "LendingManageEMode": "Bật E-Mode",
-        "LendingManageEModeDisable": "Tắt E-Mode"
+        "LendingManageEModeDisable": "Tắt E-Mode",
+        "LendingDebtSwap": "Hoán đổi nợ"
       },
       "detail": {
         "From": "Từ",
@@ -1152,7 +1159,9 @@
         "createNewSeedPhrase": "Tạo Mới Seed Phrase",
         "VerifyDownSeedPhrase": "Xác minh seed phrase",
         "createNewDesc": "Tạo một cụm từ hạt giống mới cho các ví mới",
-        "createOnCurrentDesc": "Tạo ví bằng cụm từ gốc đã nhập sẵn."
+        "createOnCurrentDesc": "Tạo ví bằng cụm từ gốc đã nhập sẵn.",
+        "BackupYourSeedPhrase": "Sao lưu cụm từ phục hồi của bạn",
+        "WriteSeedPhrase": "Đây là cụm từ hạt giống của bạn. Hãy viết nó ra và lưu trữ một cách an toàn. Nếu bạn bị mất hoặc chia sẻ nó, tài sản của bạn có thể bị mất mãi mãi. Bạn sẽ được yêu cầu nhập lại cụm từ này (theo thứ tự) trong bước tiếp theo."
       },
       "rateModalTriggerOnHome": {
         "description": "Bạn đánh giá thế nào về Rabby Wallet?"
@@ -1171,6 +1180,22 @@
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Kéo sang phải để xem tất cả tài sản"
+      },
+      "copySeedPhraseSecureTip": {
+        "copied": "Cụm từ khôi phục đã được sao chép. Bảng tạm sẽ xóa sau 1 phút.",
+        "tip3": "Không bao giờ chia sẻ cụm từ khôi phục của bạn. Chúng tôi sẽ không bao giờ yêu cầu điều đó.",
+        "tip2": "Đừng dán hoặc lưu cụm từ hạt giống của bạn trong các dịch vụ đám mây hoặc ứng dụng ghi chú.",
+        "tip1": "Các ứng dụng khác có thể đọc clipboard của bạn, vì vậy hãy tránh chuyển đổi ứng dụng sau khi sao chép.",
+        "copyAnyway": "Sao chép dù sao",
+        "title": "Giữ SeedPhrase của bạn bí mật",
+        "subTitle": "Bất kỳ ai có cụm từ hạt giống của bạn đều có thể kiểm soát hoàn toàn quỹ của bạn."
+      },
+      "screenshotSecureTip": {
+        "subTitle": "Việc lưu cụm từ khôi phục của bạn dưới dạng hình ảnh có thể làm lộ nó, vì vậy việc viết nó ra là một phương án an toàn hơn.",
+        "title": "Ảnh chụp màn hình không an toàn",
+        "tip2": "Các ứng dụng hoặc phần mềm độc hại có thể đọc các hình ảnh được lưu trữ trong thư viện ảnh của bạn.",
+        "tip3": "Bất kỳ ai có được cụm từ hạt giống của bạn đều có thể kiểm soát hoàn toàn ví của bạn, và điều này không thể đảo ngược.",
+        "tip1": "Hình chụp màn hình có thể đồng bộ với đám mây hoặc các thiết bị khác, và có thể được truy cập nếu thiết bị bị mất, bị đánh cắp hoặc bị xâm phạm."
       }
     },
     "signText": {
@@ -1207,7 +1232,8 @@
         "switchtype_fingerprint": "Mở khóa bằng dấu vân tay",
         "switchtype_pwd": "Mở khóa bằng Mật khẩu",
         "unlock": "Mở khóa"
-      }
+      },
+      "unlocking": "Mở khóa"
     },
     "addToken": {
       "tokenSupported": "Token đã được hỗ trợ trên Rabby",
@@ -1541,7 +1567,10 @@
         "helpDescription2": "Bạn có thể nhấn giữ để ghim ví và điều chỉnh các ví nào được bao gồm.",
         "watchOnlyWallet": "Ví chỉ theo dõi",
         "helpDescription1": "Để đảm bảo cập nhật dữ liệu kịp thời và chính xác, chỉ có 10 ví hàng đầu của bạn được bao gồm trong Tổng Số Dư và Danh Mục Đầu Tư."
-      }
+      },
+      "backup": "Sao lưu",
+      "basicInfo": "Thông tin cơ bản",
+      "other": "Khác"
     },
     "customRpc": {
       "closed": "Đã đóng",
@@ -2262,6 +2291,9 @@
       },
       "toast": {
         "clearCacheSuccess": "Bộ nhớ cache đã được xóa"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "Thêm"
       }
     },
     "browserManage": {
@@ -2732,8 +2764,7 @@
           "myBorrows": "Các khoản vay của tôi",
           "token_tvl": "Token/TVL",
           "token_balance": "Token/Số dư"
-        },
-        "item": {}
+        }
       },
       "summary": {
         "empty": {
@@ -2768,7 +2799,8 @@
         "actions": "Vay mượn",
         "approveAndBorrow": "Chấp thuận và Vay",
         "almostReachedError": "Số tiền tối đa có sẵn để vay bị giới hạn vì giới hạn vay của giao thức gần đạt.",
-        "almostReachedWarning": "Mức giới hạn vay của giao thức cho tài sản này là 100%. Không có khả năng vay thêm."
+        "almostReachedWarning": "Mức giới hạn vay của giao thức cho tài sản này là 100%. Không có khả năng vay thêm.",
+        "swapDebt": "Hoán đổi"
       },
       "popup": {
         "amount": "Số lượng",
@@ -2886,9 +2918,39 @@
         "description": "Vi-VN：Bật E-Mode cho phép bạn tối đa hóa sức mạnh vay mượn của mình. Tuy nhiên, việc vay mượn bị giới hạn trong các tài sản thuộc danh mục đã chọn.",
         "unavailable": "• Không có sẵn",
         "unavailableTips": "Tài sản cho vay/nhận vay hiện tại của bạn không được hỗ trợ.",
-        "enabled": "• Đã kích hoạt"
+        "enabled": "• Đã kích hoạt",
+        "debtSwapSelector": {
+          "header": {
+            "assets": "Token/Số dư",
+            "borrow": "Các khoản vay của tôi"
+          },
+          "title": "Chọn Token Vay"
+        }
       },
-      "disabled": "VÔ HIỆU HÓA"
+      "disabled": "VÔ HIỆU HÓA",
+      "debtSwap": {
+        "actions": {
+          "select": "Chọn",
+          "swapTo": "Hoán đổi sang",
+          "amount": "Số tiền",
+          "title": "Hoán Đổi Nợ",
+          "borrowed": "Được vay"
+        },
+        "overview": {
+          "borrowAPY": "Vay apy",
+          "title": "Tổng quan giao dịch",
+          "borrowValueAfter": "Số dư vay sau khi hoán đổi"
+        },
+        "button": {
+          "swap": "Hoán đổi"
+        },
+        "borrowBalance": "Số dư vay",
+        "entryTips": "Một cú nhấp chuột để hoán đổi tài sản đã vay của bạn, giảm bước và phí.",
+        "lpRiskWarning": "Số yếu tố sức khỏe thấp sau khi hoán đổi. Vị trí của bạn sẽ có rủi ro thanh lý cao hơn.",
+        "lpDangerWarning": "Yếu tố sức khỏe của bạn sau giao dịch này sẽ ở mức rất thấp và có thể dẫn đến việc thanh lý. Vui lòng chọn tài sản khác hoặc giảm số lượng giao dịch để đảm bảo an toàn.",
+        "priceImpactTips": "Tác động giá cao ({{lostValue}}). Đường này có thể trả lại nhiều hơn do tính thanh khoản thấp hoặc kích thước đơn hàng nhỏ.",
+        "title": "Hoán đổi Vị trí Vay"
+      }
     }
   },
   "component": {
