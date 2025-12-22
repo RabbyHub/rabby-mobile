@@ -1,7 +1,6 @@
 import { useMemoizedFn } from 'ahooks';
 import { zCreate } from '@/core/utils/reexports';
 import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
-import { useCallback as useZCallback } from 'react';
 
 type TipsState = {
   visible: boolean;
@@ -18,7 +17,7 @@ const tipsStore = zCreate<TipsState>(() => ({
 function setTipsState(valOrFunc: UpdaterOrPartials<TipsState>) {
   tipsStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
-      strict: true,
+      strict: false,
     });
 
     if (!changed) return prev;
@@ -47,14 +46,10 @@ export const useTipsPopup = () => {
     });
   });
 
-  const setState = useZCallback((valOrFunc: UpdaterOrPartials<TipsState>) => {
-    setTipsState(valOrFunc);
-  }, []);
-
   return {
     showTipsPopup,
     hideTipsPopup,
     state,
-    setState,
+    setState: setTipsState,
   };
 };

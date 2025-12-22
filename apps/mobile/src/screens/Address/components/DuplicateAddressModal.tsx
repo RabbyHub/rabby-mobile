@@ -1,6 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { atom, useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Text, View } from 'react-native';
@@ -9,34 +8,54 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 const { isSameAddress } = addressUtils;
 
-const visibleAtom = atom(false);
-const accountAtom = atom<KeyringAccountWithAlias | undefined>(undefined);
+const duplicateAddressModalStore = zCreate<{
+  visible: boolean;
+  account: KeyringAccountWithAlias | undefined;
+}>()(() => ({
+  visible: false,
+  account: undefined,
+}));
+
+function setVisible(valOrFunc: UpdaterOrPartials<boolean>) {
+  duplicateAddressModalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.visible, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, visible: newVal };
+  });
+}
+
+function setAccount(
+  valOrFunc: UpdaterOrPartials<KeyringAccountWithAlias | undefined>,
+) {
+  duplicateAddressModalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.account, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, account: newVal };
+  });
+}
 
 export const useDuplicateAddressModal = () => {
-  const [_, setVisible] = useAtom(visibleAtom);
-  const [_1, setAccount] = useAtom(accountAtom);
-
-  const show = React.useCallback(
-    (a: KeyringAccountWithAlias) => {
-      setVisible(true);
-      setAccount(a);
-    },
-    [setAccount, setVisible],
-  );
+  const show = React.useCallback((a: KeyringAccountWithAlias) => {
+    setVisible(true);
+    setAccount(a);
+  }, []);
 
   const hide = React.useCallback(() => {
     setVisible(false);
-  }, [setVisible]);
+  }, []);
 
   return { show, hide };
 };
 
 export const DuplicateAddressModal: React.FC = () => {
-  const [visible, setVisible] = useAtom(visibleAtom);
-  const [account] = useAtom(accountAtom);
+  const { visible, account } = duplicateAddressModalStore();
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { accounts } = useAccounts();
@@ -62,12 +81,12 @@ export const DuplicateAddressModal: React.FC = () => {
 
   const onCancel = React.useCallback(() => {
     setVisible(false);
-  }, [setVisible]);
+  }, []);
 
   const onConfirm = React.useCallback(() => {
     handleSwitch();
     setVisible(false);
-  }, [handleSwitch, setVisible]);
+  }, [handleSwitch]);
 
   return (
     <Modal

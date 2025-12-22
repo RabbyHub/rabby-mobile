@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
-import { atom, useAtom } from 'jotai';
 import { useBiometrics } from '../biometrics';
 import { apisLock } from '@/core/apis';
 import { toast } from '@/components2024/Toast';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 export const enum ProcDataType {
   Seed = 1,
@@ -40,12 +41,23 @@ function getDefaultCreateAddressProc(): CreateAdressProcess {
     },
   };
 }
-const createAddressAtom = atom<CreateAdressProcess>(
+const createAddressStore = zCreate<CreateAdressProcess>(() =>
   getDefaultCreateAddressProc(),
 );
 
+function setCreateAddressProc(
+  valOrFunc: UpdaterOrPartials<CreateAdressProcess>,
+) {
+  createAddressStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
 export function useCreateAddressProc() {
-  const [createAddressProc, setCreateAddressProc] = useAtom(createAddressAtom);
+  const createAddressProc = createAddressStore();
 
   const startCreateAddressProc = useCallback(
     (
@@ -58,7 +70,7 @@ export function useCreateAddressProc() {
         typedData: data,
       }));
     },
-    [setCreateAddressProc],
+    [],
   );
 
   const storePassword = useCallback(
@@ -71,7 +83,7 @@ export function useCreateAddressProc() {
         },
       }));
     },
-    [setCreateAddressProc],
+    [],
   );
 
   const storeAddressList = useCallback(
@@ -81,22 +93,19 @@ export function useCreateAddressProc() {
         addressList: addressList,
       }));
     },
-    [setCreateAddressProc],
+    [],
   );
 
   const resetCreateAddressProc = useCallback(() => {
     setCreateAddressProc(getDefaultCreateAddressProc());
-  }, [setCreateAddressProc]);
+  }, []);
 
-  const storeSeedPharse = useCallback(
-    (seedPharse: string) => {
-      setCreateAddressProc(prev => ({
-        ...prev,
-        typedData: seedPharse,
-      }));
-    },
-    [setCreateAddressProc],
-  );
+  const storeSeedPharse = useCallback((seedPharse: string) => {
+    setCreateAddressProc(prev => ({
+      ...prev,
+      typedData: seedPharse,
+    }));
+  }, []);
 
   const { toggleBiometrics } = useBiometrics();
 
@@ -176,12 +185,21 @@ function getDefaultImportAddressProc(): ImportAdressProcess {
     confirmPasswordCB: () => Promise.resolve(undefined),
   };
 }
-const importAddressAtom = atom<ImportAdressProcess>(
+const importAddressStore = zCreate<ImportAdressProcess>(() =>
   getDefaultImportAddressProc(),
 );
 
+function setImportAddressProc(
+  valOrFunc: UpdaterOrPartials<ImportAdressProcess>,
+) {
+  importAddressStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
+  });
+}
+
 export function useImportAddressProc() {
-  const [importAddressProc, setImportAddressProc] = useAtom(importAddressAtom);
+  const importAddressProc = importAddressStore();
 
   const storePassword = useCallback(
     (passwordForm: ImportAdressProcess['passwordForm']) => {
@@ -193,12 +211,12 @@ export function useImportAddressProc() {
         },
       }));
     },
-    [setImportAddressProc],
+    [],
   );
 
   const resetImportAddressProc = useCallback(() => {
     setImportAddressProc(getDefaultImportAddressProc());
-  }, [setImportAddressProc]);
+  }, []);
 
   const setConfirmCB = (cb: AnyPromiseFn) => {
     setImportAddressProc(prev => ({

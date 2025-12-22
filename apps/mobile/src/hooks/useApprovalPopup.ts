@@ -4,12 +4,21 @@ import {
   removeGlobalBottomSheetModal,
   snapToIndexGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
-import { atom, useAtom } from 'jotai';
 import React, { useCallback } from 'react';
-import { getActiveDappState } from '@/core/bridges/state';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 const ids = new Set<string>();
-const idAtom = atom<string | null>(null);
+const idState = zCreate<string | null>(() => null);
+function setId(valOrFunc: UpdaterOrPartials<string | null>) {
+  idState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
 
 const clearPopup = (idToClear: string | null) => {
   if (!idToClear) return;
@@ -21,7 +30,8 @@ const clearPopup = (idToClear: string | null) => {
  * New popup window for approval
  */
 export const useApprovalPopup = () => {
-  const [id, setId] = useAtom(idAtom);
+  // const [id, setId] = useAtom(idAtom);
+  const id = idState();
 
   const showPopup = useCallback(() => {
     const _id = createGlobalBottomSheetModal({
@@ -29,7 +39,7 @@ export const useApprovalPopup = () => {
     });
     setId(_id);
     ids.add(_id);
-  }, [setId]);
+  }, []);
 
   const enablePopup = useCallback((type: string) => {
     if (type) {

@@ -1,12 +1,24 @@
 import { openapi } from '@/core/request';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
-export const hotTokenListAtom = atom<TokenDetailWithPriceCurve[]>([]);
+const hotTokenListStore = zCreate<TokenDetailWithPriceCurve[]>(() => []);
+
+function setHotTokenList(
+  valOrFunc: UpdaterOrPartials<TokenDetailWithPriceCurve[]>,
+) {
+  hotTokenListStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
 
 export const useHotTokenList = (visible?: boolean) => {
-  const [hotTokenList, setHotTokenList] = useAtom(hotTokenListAtom);
+  const hotTokenList = hotTokenListStore();
   const [loading, setLoading] = useState(false);
 
   const getHotTokenList = useCallback(
@@ -25,7 +37,7 @@ export const useHotTokenList = (visible?: boolean) => {
         return [];
       }
     },
-    [hotTokenList.length, setHotTokenList],
+    [hotTokenList.length],
   );
 
   useEffect(() => {
