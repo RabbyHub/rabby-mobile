@@ -37,7 +37,6 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 import { openapi, testOpenapi } from '@/core/request';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
-import { atom, useAtom, useAtomValue } from 'jotai';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import {
@@ -53,6 +52,8 @@ import {
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { ApprovalsLayouts } from './layout';
 import { Account } from '@/core/services/preference';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 export const FILTER_TYPES = {
   contract: 'contract',
@@ -641,22 +642,62 @@ export function useApprovalsPage() {
   return React.useContext(ApprovalsPageContext);
 }
 
-const focusedApprovalAtom = atom<{
+const focusedApprovalStore = zCreate<{
   contract: ContractApprovalItem | null;
   asset: AssetApprovalItem | null;
-}>({
+}>()(() => ({
   contract: null,
   asset: null,
-});
+}));
 
-const sheetModalRefAtom = atom({
+function setFocusedApproval(
+  valOrFunc: UpdaterOrPartials<{
+    contract: ContractApprovalItem | null;
+    asset: AssetApprovalItem | null;
+  }>,
+) {
+  focusedApprovalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, ...newVal };
+  });
+}
+
+const sheetModalRefStore = zCreate<{
+  approvalContractDetail: React.RefObject<BottomSheetModal>;
+  approvalAssetDetail: React.RefObject<BottomSheetModal>;
+}>()(() => ({
   approvalContractDetail: React.createRef<BottomSheetModal>(),
   approvalAssetDetail: React.createRef<BottomSheetModal>(),
-});
+}));
+
+const revokeStore = zCreate<{
+  contract: RevokeItemDict;
+  contractFocusing: RevokeItemDict;
+  assets: RevokeItemDict;
+  assetsFocusing: RevokeItemDict;
+}>()(() => ({ ...DFLT_REVOKE }));
+
+function setRevoke(
+  valOrFunc: UpdaterOrPartials<{
+    contract: RevokeItemDict;
+    contractFocusing: RevokeItemDict;
+    assets: RevokeItemDict;
+    assetsFocusing: RevokeItemDict;
+  }>,
+) {
+  revokeStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, ...newVal };
+  });
+}
 
 export function useFocusedApprovalOnApprovals() {
-  const [focusedApproval, setFocusedApproval] = useAtom(focusedApprovalAtom);
-  const sheetModals = useAtomValue(sheetModalRefAtom);
+  const focusedApproval = focusedApprovalStore();
+  const sheetModals = sheetModalRefStore();
 
   const sheetModalsOps = useSheetModals(sheetModals);
   const { toggleShowSheetModal } = sheetModalsOps;
@@ -691,12 +732,7 @@ export function useFocusedApprovalOnApprovals() {
         toggleShowSheetModal('approvalContractDetail', 'destroy');
       }
     },
-    [
-      toggleShowSheetModal,
-      setFocusedApproval,
-      startFocusApprovalRevokes,
-      confirmSelectedRevoke,
-    ],
+    [toggleShowSheetModal, startFocusApprovalRevokes, confirmSelectedRevoke],
   );
 
   const toggleFocusedAssetItem = React.useCallback(
@@ -719,12 +755,7 @@ export function useFocusedApprovalOnApprovals() {
         toggleShowSheetModal('approvalAssetDetail', 'destroy');
       }
     },
-    [
-      toggleShowSheetModal,
-      setFocusedApproval,
-      startFocusApprovalRevokes,
-      confirmSelectedRevoke,
-    ],
+    [toggleShowSheetModal, startFocusApprovalRevokes, confirmSelectedRevoke],
   );
 
   return {
@@ -745,22 +776,13 @@ const DFLT_REVOKE = {
   assets: {},
   assetsFocusing: {},
 };
-const revokeAtom = atom<{
-  contract: RevokeItemDict;
-  contractFocusing: RevokeItemDict;
-  assets: RevokeItemDict;
-  assetsFocusing: RevokeItemDict;
-}>({ ...DFLT_REVOKE });
 export function useRevokeApprovals() {
-  const [
-    {
-      contract: contractRevokeMap,
-      contractFocusing: contractFocusingRevokeMap,
-      assets: assetRevokeMap,
-      assetsFocusing: assetFocusingRevokeMap,
-    },
-    setRevoke,
-  ] = useAtom(revokeAtom);
+  const {
+    contract: contractRevokeMap,
+    contractFocusing: contractFocusingRevokeMap,
+    assets: assetRevokeMap,
+    assetsFocusing: assetFocusingRevokeMap,
+  } = revokeStore();
 
   const resetRevokeMaps = React.useCallback(
     (type?: keyof typeof DFLT_REVOKE) => {
@@ -781,7 +803,7 @@ export function useRevokeApprovals() {
           setRevoke({ ...DFLT_REVOKE });
       }
     },
-    [setRevoke],
+    [],
   );
 
   const startFocusApprovalRevokes = React.useCallback(
@@ -813,7 +835,7 @@ export function useRevokeApprovals() {
             };
       });
     },
-    [setRevoke],
+    [],
   );
   const confirmSelectedRevoke = React.useCallback(
     (
@@ -848,7 +870,7 @@ export function useRevokeApprovals() {
             };
       });
     },
-    [setRevoke],
+    [],
   );
 
   return {
@@ -864,8 +886,8 @@ export function useRevokeApprovals() {
   };
 }
 export function useRevokeContractSpenders() {
-  const focusedApproval = useAtomValue(focusedApprovalAtom);
-  const [revokes, setRevoke] = useAtom(revokeAtom);
+  const focusedApproval = focusedApprovalStore();
+  const revokes = revokeStore();
 
   const toggleSelectContractSpender = React.useCallback(
     (
@@ -934,7 +956,7 @@ export function useRevokeContractSpenders() {
         return { ...prev, [revokeKey]: contractRevokeMap };
       });
     },
-    [setRevoke],
+    [],
   );
   const { nextShouldPickAllFocusingContracts } = React.useMemo(() => {
     return {
@@ -979,8 +1001,8 @@ export type ToggleSelectApprovalSpenderCtx = {
   nextSelect?: boolean;
 };
 export function useRevokeAssetSpenders() {
-  const focusedApproval = useAtomValue(focusedApprovalAtom);
-  const [revokes, setRevoke] = useAtom(revokeAtom);
+  const focusedApproval = focusedApprovalStore();
+  const revokes = revokeStore();
 
   const toggleSelectAssetSpender = React.useCallback(
     (
@@ -1024,7 +1046,7 @@ export function useRevokeAssetSpenders() {
         return { ...prev, [revokeKey]: assetRevokeMap };
       });
     },
-    [setRevoke],
+    [],
   );
   const nextShouldPickAllFocusingAsset = React.useMemo(() => {
     const { isSelectedAll } = parseApprovalSpenderSelection(

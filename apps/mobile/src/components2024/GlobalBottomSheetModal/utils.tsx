@@ -50,7 +50,6 @@ import { BatchRevokeErrorReason } from '@/screens/BatchRevoke/BatchRevokeErrorRe
 import { FundYourWallet } from '@/screens/Home/FundYourWallet';
 import { SettingTrezor } from '@/components/HDSetting/SettingTrezor';
 import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
-import EarningDialog from '@/screens/CopyTrading/component/EarningDialog';
 import { AddressHightDesc } from '../AddressHightDesc';
 import SelectLendingChain from '@/screens/Lending/ChainSelector/SelectLendingChain';
 import { SupplyDetailPopup } from '@/screens/Lending/components/SupplyDetailPopup';
@@ -119,10 +118,6 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: {
     snapPoints: ['80%'],
     Component: SelectChainWithDistribute,
-  },
-  [MODAL_NAMES.COPY_TRADING_EARNINGS]: {
-    snapPoints: ['80%'],
-    Component: EarningDialog,
   },
   [MODAL_NAMES.CANCEL_CONNECT]: { snapPoints: [244], Component: CancelConnect },
   [MODAL_NAMES.SELECT_CHAIN]: { snapPoints: ['80%'], Component: SelectChain },

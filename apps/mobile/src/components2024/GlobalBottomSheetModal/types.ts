@@ -12,8 +12,6 @@ import { OpenDetailProps, PopupDetailProps } from '@/screens/Lending/type';
 import { type SeedPhraseQrCodeProps } from '../AddressDetail/SeedPhraseQrCode';
 
 export enum MODAL_NAMES {
-  // 'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
-  'COPY_TRADING_EARNINGS' = 'COPY_TRADING_EARNINGS',
   'NOT_MATTER_ADDRESS_DIALOG' = 'NOT_MATTER_ADDRESS_DIALOG',
   'ADDRESS_LiST' = 'ADDRESS_LiST',
   'APPROVAL' = 'APPROVAL',
