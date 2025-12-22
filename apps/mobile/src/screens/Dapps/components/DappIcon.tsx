@@ -73,6 +73,9 @@ export const DappIcon = ({
           source={source}
           style={[styles.image]}
           resizeMode={FastImage.resizeMode.cover}
+          onLoadStart={() => {
+            setLoaded(false);
+          }}
           onLoadEnd={() => {
             setLoaded(true);
           }}
