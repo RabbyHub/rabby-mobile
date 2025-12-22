@@ -7,23 +7,30 @@ import { useSheetModals } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { makeThemeOptions, useAppTheme, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTranslation } from 'react-i18next';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { FontWeightEnum } from '@/core/utils/fonts';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 import { default as RcThemeSystemCC } from './icons/theme-system-cc.svg';
 import { default as RcThemeLightCC } from './icons/theme-light-cc.svg';
 import { default as RcThemeDarkCC } from './icons/theme-dark-cc.svg';
 import { IS_IOS } from '@/core/native/utils';
 
-const themeSelectorModalVisibleAtom = atom(false);
+const themeSelectorModalVisibleStore = zCreate<boolean>(() => false);
+
+function setThemeSelectorModalVisible(valOrFunc: UpdaterOrPartials<boolean>) {
+  themeSelectorModalVisibleStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
+  });
+}
+
 export function useThemeSelectorModalVisible() {
-  const [themeSelectorModalVisible, setThemeSelectorModalVisible] = useAtom(
-    themeSelectorModalVisibleAtom,
-  );
+  const themeSelectorModalVisible = themeSelectorModalVisibleStore();
 
   return {
     themeSelectorModalVisible,

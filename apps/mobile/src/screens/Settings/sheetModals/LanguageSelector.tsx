@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text } from 'react-native';
-import { atom, useAtom } from 'jotai';
 
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
 
@@ -17,13 +16,21 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { FontWeightEnum } from '@/core/utils/fonts';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
-const currentLanguageModalVisibleAtom = atom(false);
+const currentLanguageModalVisibleStore = zCreate<boolean>(() => false);
+
+function setCurrentLanguageModalVisible(valOrFunc: UpdaterOrPartials<boolean>) {
+  currentLanguageModalVisibleStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
+  });
+}
+
 export function useCurrentLanguageModalVisible() {
   const { currentLanguage } = useAppLanguage();
-  const [currentLanguageModalVisible, setCurrentLanguageModalVisible] = useAtom(
-    currentLanguageModalVisibleAtom,
-  );
+  const currentLanguageModalVisible = currentLanguageModalVisibleStore();
 
   return {
     currentLangLabel: useMemo(() => {

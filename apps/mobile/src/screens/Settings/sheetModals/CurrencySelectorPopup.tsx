@@ -1,4 +1,3 @@
-import { atom, useAtom } from 'jotai';
 import React, {
   useCallback,
   useDeferredValue,
@@ -8,6 +7,8 @@ import React, {
   useState,
 } from 'react';
 import { Keyboard, Text, useWindowDimensions, View } from 'react-native';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 import { RcIconCheckmarkCC, RcNextSearchCC } from '@/assets/icons/common';
 
@@ -31,10 +32,18 @@ import { useTranslation } from 'react-i18next';
 import { sortBy, uniq } from 'lodash';
 import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 
-const visibleAtom = atom(false);
+const visibleStore = zCreate<boolean>(() => false);
+
+function setIsShowCurrencyPopup(valOrFunc: UpdaterOrPartials<boolean>) {
+  visibleStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
+  });
+}
+
 export function useCurrentCurrencyVisible() {
-  const [isShowCurrencyPopup, setIsShowCurrencyPopup] = useAtom(visibleAtom);
   const { currency } = useCurrency();
+  const isShowCurrencyPopup = visibleStore();
 
   return {
     currency,
