@@ -1,23 +1,26 @@
 import React, { useCallback, useMemo } from 'react';
+
+import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { isValidAddress } from '@ethereumjs/util';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import TokenIcon from '../TokenIcon';
-import { formatApy, formatListNetWorth } from '../../utils/format';
-import { CollateralSwitch } from '../CollateralSwitch';
-import IsolatedTag from '../IsolatedTag';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { isValidAddress } from '@ethereumjs/util';
+
+import TokenIcon from '../TokenIcon';
+import IsolatedTag from '../IsolatedTag';
 import { useLendingSummary } from '../../hooks';
-import { nativeToWrapper } from '../../config/nativeToWrapper';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
 import { getSupplyCapData } from '../../utils/supply';
+import { CollateralSwitch } from '../CollateralSwitch';
+import { nativeToWrapper } from '../../config/nativeToWrapper';
+import { formatApy, formatListNetWorth } from '../../utils/format';
+import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
 
 interface SupplyItemProps extends RNViewProps {
   underlyingAsset: string;
@@ -26,6 +29,7 @@ interface SupplyItemProps extends RNViewProps {
 const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
+  const { t } = useTranslation();
   const {
     displayPoolReserves,
     wrapperPoolReserve,
@@ -200,7 +204,9 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
 
         <View style={styles.footerRow}>
           <View style={styles.collateralArea}>
-            <Text style={styles.collateralLabel}>Collateral</Text>
+            <Text style={styles.collateralLabel}>
+              {t('page.Lending.supplyOverview.collateral')}
+            </Text>
             <CollateralSwitch
               reserve={reserve}
               canBeEnabledAsCollateral={canBeEnabledAsCollateral}
@@ -213,20 +219,26 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
             style={styles.buttonSecondary}
             activeOpacity={0.8}
             onPress={handleOpenSupplyDetail}>
-            <Text style={styles.buttonSecondaryText}>Supply</Text>
+            <Text style={styles.buttonSecondaryText}>
+              {t('page.Lending.supplyDetail.actions')}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.buttonPrimary}
             activeOpacity={0.8}
             onPress={handleOpenWithdrawDetail}>
-            <Text style={styles.buttonPrimaryText}>Withdraw</Text>
+            <Text style={styles.buttonPrimaryText}>
+              {t('page.Lending.withdrawDetail.actions')}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {isSupplied ? (
         <View style={styles.suppliedBadge}>
-          <Text style={styles.suppliedBadgeText}>Supplied</Text>
+          <Text style={styles.suppliedBadgeText}>
+            {t('page.Lending.supplyDetail.supplied')}
+          </Text>
         </View>
       ) : null}
     </View>

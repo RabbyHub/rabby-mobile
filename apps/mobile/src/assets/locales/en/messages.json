@@ -2724,6 +2724,7 @@
       },
       "supplyDetail": {
         "actions": "Supply",
+        "supplied": "Supplied",
         "approveAndSupply": "Approve and Supply",
         "availableToBorrow": "Available to borrow",
         "supplyAPY": "Supply APY",
@@ -2757,6 +2758,7 @@
       "borrowDetail": {
         "actions": "Borrow",
         "swapDebt": "Swap",
+        "borrowed": "Borrowed",
         "approveAndBorrow": "Approve and Borrow",
         "almostReachedWarning": "Protocol borrow cap is at 100% for this asset. Further borrowing unavailable.",
         "almostReachedError": "Maximum amount available to borrow is limited because protocol borrow cap is nearly reached."
@@ -2783,6 +2785,7 @@
         "walletBalance": "Wallet Balance",
         "availableToSupply": "Available to Supply",
         "useAsCollateral": "Use as collateral",
+        "collateral": "Collateral",
         "reachCap": "This asset has reached its supply cap. Nothing is available to be supplied from this market.",
         "almostCap": "This asset has almost reached its borrow cap. There is only {{available}} available to be borrowed from this market."
       },

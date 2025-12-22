@@ -1,13 +1,14 @@
 import React, { useMemo } from 'react';
 
 import BigNumber from 'bignumber.js';
+import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { isValidAddress } from '@ethereumjs/util';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { isValidAddress } from '@ethereumjs/util';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -26,6 +27,7 @@ interface BorrowItemProps extends RNViewProps {
 const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
+  const { t } = useTranslation();
   const { selectedMarketData, chainInfo } = useSelectedMarket();
   const {
     displayPoolReserves,
@@ -266,7 +268,9 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
               activeOpacity={0.8}
               disabled={disableDebtSwapButton}
               onPress={handleSwapDebt}>
-              <Text style={styles.buttonSecondaryText}>Swap</Text>
+              <Text style={styles.buttonSecondaryText}>
+                {t('page.Lending.borrowDetail.swapDebt')}
+              </Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -274,13 +278,17 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
             activeOpacity={0.8}
             disabled={disableBorrowButton}
             onPress={handlePressBorrow}>
-            <Text style={styles.buttonSecondaryText}>Borrow</Text>
+            <Text style={styles.buttonSecondaryText}>
+              {t('page.Lending.borrowDetail.actions')}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.buttonPrimary}
             activeOpacity={0.8}
             onPress={handlePressRepay}>
-            <Text style={styles.buttonPrimaryText}>Repay</Text>
+            <Text style={styles.buttonPrimaryText}>
+              {t('page.Lending.borrowDetail.borrowed')}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

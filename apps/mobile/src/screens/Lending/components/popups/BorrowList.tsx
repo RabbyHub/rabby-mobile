@@ -1,4 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
+
+import BigNumber from 'bignumber.js';
+import { useTranslation } from 'react-i18next';
 import {
   FlatList,
   RefreshControl,
@@ -7,28 +10,27 @@ import {
   View,
 } from 'react-native';
 
+import { Skeleton } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { NextSearchBar } from '@/components2024/SearchBar';
+import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
+import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useLendingData, useLendingSummary } from '../../hooks';
+
 import TokenIcon from '../TokenIcon';
 import { PoolListLoading } from '../Loading';
-import { Skeleton } from '@rneui/themed';
-import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useTranslation } from 'react-i18next';
-import { formatApy, formatListNetWorth } from '../../utils/format';
-import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { DisplayPoolReserveInfo } from '../../type';
-import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import { assetCanBeBorrowedByUser } from '../../utils/borrow';
-import BigNumber from 'bignumber.js';
-import { NextSearchBar } from '@/components2024/SearchBar';
+import { useLendingData, useLendingSummary } from '../../hooks';
+import { formatApy, formatListNetWorth } from '../../utils/format';
 
 const FOOT_HEIGHT = 36;
 
@@ -222,9 +224,7 @@ const LendingBorrowList: React.FC = () => {
             <Text style={styles.headerToken}>
               {t('page.Lending.list.headers.token_balance')}
             </Text>
-            <Text style={styles.headerApy}>
-              {t('page.Lending.list.headers.apy')}
-            </Text>
+            <Text style={styles.headerApy}>{t('page.Lending.apy')}</Text>
             <Text style={styles.headerMyBorrows}>
               {t('page.Lending.list.headers.myBorrows')}
             </Text>
