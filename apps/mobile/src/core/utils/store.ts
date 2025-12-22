@@ -19,7 +19,7 @@ export function resolveValFromUpdater<Val = unknown>(
     if (Array.isArray(prev)) {
       ret.newVal = [...(input as any[])] as Val;
     } else {
-      ret.newVal = { ...prev, ...input };
+      ret.newVal = input ? { ...prev, ...input } : input;
     }
   } else {
     // for primitive type
