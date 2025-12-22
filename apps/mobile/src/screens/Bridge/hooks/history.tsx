@@ -8,7 +8,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
-import { atom, useAtom, useAtomValue } from 'jotai';
 import {
   BridgeTxHistoryItem,
   SwapTxHistoryItem,
@@ -19,17 +18,59 @@ import { findChain } from '@/utils/chain';
 import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { fetchRefreshLocalData } from '@/screens/Swap/hooks/history';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
-const pendingCountAtom = atom(0);
-const bridgeTxDataPendingAtom = atom<BridgeHistory | null>(null);
-export const bridgeHistoryRedDotAtom = atom(false);
+const pendingCountStore = zCreate<number>(() => 0);
+function setPendingCount(valOrFunc: UpdaterOrPartials<number>) {
+  pendingCountStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
+
+// Zustand implementation for bridgeTxDataPending
+const bridgeTxDataPendingStore = zCreate<BridgeHistory | null>(() => null);
+
+function setBridgeTxDataPending(
+  valOrFunc: UpdaterOrPartials<BridgeHistory | null>,
+) {
+  bridgeTxDataPendingStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
+
+// Zustand implementation for bridgeHistoryRedDot
+const bridgeHistoryRedDotStore = zCreate<boolean>(() => false);
+function setBridgeHistoryRedDot(valOrFunc: UpdaterOrPartials<boolean>) {
+  bridgeHistoryRedDotStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
 
 export const useReadBridgePendingCount = () => {
-  return useAtomValue(pendingCountAtom);
+  return pendingCountStore();
 };
 
 export const useReadBridgeHistoryRedDot = () => {
-  return useAtomValue(bridgeHistoryRedDotAtom);
+  return bridgeHistoryRedDotStore();
 };
 
 export const fetchLocalBridgePendingTx = (address: string) => {
@@ -40,12 +81,8 @@ export const fetchLocalBridgePendingTx = (address: string) => {
 };
 
 export const usePollBridgePendingNumber = (timer = 10000) => {
-  const [, setCount] = useAtom(pendingCountAtom);
-  const [pendingTxData, setPendingTxData] = useAtom(bridgeTxDataPendingAtom);
   const [localPendingTxData, setLocalPendingTxData] =
     useState<BridgeTxHistoryItem | null>(null);
-
-  const [, setBridgeHistoryRedDot] = useAtom(bridgeHistoryRedDotAtom);
 
   const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -58,11 +95,10 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
 
   useEffect(() => {
     if (account?.address) {
-      setPendingTxData(null);
+      setBridgeTxDataPending(null);
       clearTimer();
     }
-  }, [account?.address, clearTimer, setPendingTxData]);
-
+  }, [account?.address, clearTimer, setLocalPendingTxData]);
   const runFetchLocalPendingTx = useCallback(() => {
     if (account?.address) {
       const resTx = fetchLocalBridgePendingTx(account.address);
@@ -109,7 +145,7 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
     {
       refreshDeps: [account?.address],
       onSuccess(v) {
-        setCount(v);
+        setPendingCount(v);
       },
     },
   );
@@ -141,7 +177,7 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
     const currentTs = bridgeService.getOpenBridgeHistoryTs(account?.address!);
     bridgeService.setOpenBridgeHistoryTs(account?.address!);
     return currentTs;
-  }, [setBridgeHistoryRedDot, account?.address]);
+  }, [account?.address]);
 
   // useInterval(() => {
   //   if (localPendingTxData) {

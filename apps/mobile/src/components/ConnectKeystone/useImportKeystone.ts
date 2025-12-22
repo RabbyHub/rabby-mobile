@@ -5,13 +5,12 @@ import {
   HARDWARE_KEYRING_TYPES,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
-import { useAtom } from 'jotai';
 import React from 'react';
-import { settingAtom } from '../HDSetting/MainContainer';
+import { useHDSettingState } from '../HDSetting/MainContainer';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 
 export const useImportKeystone = () => {
-  const [_2, setSetting] = useAtom(settingAtom);
+  const { setSetting } = useHDSettingState();
   const { showImportMorePopup } = useShowImportMoreAddressPopup();
 
   const goImport = React.useCallback(() => {

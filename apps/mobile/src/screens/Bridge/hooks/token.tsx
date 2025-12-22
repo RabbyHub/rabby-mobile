@@ -29,7 +29,9 @@ import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
+import { useCallback as useZCallback } from 'react';
 
 export const enableInsufficientQuote = true;
 
@@ -69,9 +71,27 @@ export const tokenPriceImpact = (
   };
 };
 
-const tokenRefreshIdAtom = atom(0);
-const useTokenRefreshId = () => useAtomValue(tokenRefreshIdAtom);
-const useSetTokenRefreshId = () => useSetAtom(tokenRefreshIdAtom);
+// Zustand implementation for tokenRefreshId
+const tokenRefreshIdStore = zCreate<number>(() => 0);
+
+function setTokenRefreshId(valOrFunc: UpdaterOrPartials<number>) {
+  tokenRefreshIdStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
+
+const useTokenRefreshId = () => tokenRefreshIdStore();
+const useSetTokenRefreshId = () => {
+  return useZCallback((valOrFunc: UpdaterOrPartials<number>) => {
+    setTokenRefreshId(valOrFunc);
+  }, []);
+};
 
 const useToken = (type: 'from' | 'to') => {
   const refreshId = useTokenRefreshId();

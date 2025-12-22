@@ -1,8 +1,7 @@
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { MainContainer, settingAtom } from './MainContainer';
-import { useAtom } from 'jotai';
+import { MainContainer, useHDSettingState } from './MainContainer';
 import { apiMnemonic } from '@/core/apis';
 
 export const SettingHDKeyring: React.FC<{
@@ -11,7 +10,7 @@ export const SettingHDKeyring: React.FC<{
   passphrase: string;
 }> = ({ onDone, mnemonics, passphrase }) => {
   const { t } = useTranslation();
-  const [setting, setSetting] = useAtom(settingAtom);
+  const { setting, setSetting } = useHDSettingState();
 
   const hdPathOptions = React.useMemo(
     () => [

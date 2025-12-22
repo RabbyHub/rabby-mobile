@@ -24,15 +24,31 @@ import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { signatureStore, useSignatureStore } from '@/components2024/MiniSignV2';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
+import { useCallback as useZCallback } from 'react';
 
-const showMoreGasSelectModalVisibleAtom = atom(false);
+const showMoreGasSelectModalVisibleStore = zCreate<boolean>(() => false);
 
-export const useGetShowMoreGasSelectVisible = () =>
-  useAtomValue(showMoreGasSelectModalVisibleAtom);
-const useSetShowMoreGasSelectVisible = () =>
-  useSetAtom(showMoreGasSelectModalVisibleAtom);
-const gasInfoByUIAtom = atom<
+function setShowMoreGasSelectModalVisible(
+  valOrFunc: UpdaterOrPartials<boolean>,
+) {
+  showMoreGasSelectModalVisibleStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
+
+export const useGetShowMoreGasSelectVisible = () => {
+  return showMoreGasSelectModalVisibleStore();
+};
+
+type GasInfoByUIState =
   | {
       externalPanelSelection: (gas: GasLevel) => void;
       handleClickEdit: () => void;
@@ -59,13 +75,31 @@ const gasInfoByUIAtom = atom<
         estimate_tx_cost: number;
       };
     }
-  | undefined
->(undefined);
+  | undefined;
 
-export const [useGetGasInfoByUI, useSetGasInfoByUI] = [
-  () => useAtomValue(gasInfoByUIAtom),
-  () => useSetAtom(gasInfoByUIAtom),
-];
+const gasInfoByUIStore = zCreate<GasInfoByUIState>(() => undefined);
+
+export function setGasInfoByUI(valOrFunc: UpdaterOrPartials<GasInfoByUIState>) {
+  gasInfoByUIStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
+
+export const useGetGasInfoByUIZ = () => {
+  return gasInfoByUIStore();
+};
+
+export const useSetGasInfoByUI = () => {
+  return useZCallback((valOrFunc: UpdaterOrPartials<GasInfoByUIState>) => {
+    setGasInfoByUI(valOrFunc);
+  }, []);
+};
 
 const GasMethod = (props: {
   active: boolean;
@@ -125,7 +159,7 @@ export default function ShowMoreGasSelectModal({
 
   const state = useSignatureStore();
   const { ctx, config, status } = state;
-  const gasInfoByUI = useGetGasInfoByUI();
+  const gasInfoByUI = useGetGasInfoByUIZ();
   const setGasInfoByUI = useSetGasInfoByUI();
 
   useEffect(() => {
@@ -144,8 +178,6 @@ export default function ShowMoreGasSelectModal({
 
   // const hasCustomRpc = !ctx?.noCustomRPC;
 
-  const setVisible = useSetShowMoreGasSelectVisible();
-
   const handleChangeGasMethod = useCallback(
     async (method: 'native' | 'gasAccount') => {
       try {
@@ -158,17 +190,17 @@ export default function ShowMoreGasSelectModal({
   );
 
   useEffect(() => {
-    setVisible(false);
+    setShowMoreGasSelectModalVisible(false);
     return () => {
-      setVisible(false);
+      setShowMoreGasSelectModalVisible(false);
     };
-  }, [setVisible]);
+  }, []);
 
   useEffect(() => {
     if (visible) {
-      setVisible(true);
+      setShowMoreGasSelectModalVisible(true);
     }
-  }, [visible, setVisible]);
+  }, [visible]);
 
   const {
     externalPanelSelection,

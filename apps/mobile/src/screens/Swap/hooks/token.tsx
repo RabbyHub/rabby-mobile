@@ -2,9 +2,8 @@ import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { WrapTokenAddressMap } from '@rabby-wallet/rabby-swap';
 import BigNumber from 'bignumber.js';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { refreshIdAtom, useSetQuoteVisible } from './atom';
+import { useRefreshId, swapRefresh, useSetQuoteVisible } from './atom';
 import useAsync from 'react-use/lib/useAsync';
 import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
@@ -30,6 +29,9 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { Account } from '@/core/services/preference';
 import { useAutoSlippageEffect } from './autoSlippageEffect';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
+import { useCallback as useZCallback } from 'react';
 
 export const enableInsufficientQuote = true;
 
@@ -37,9 +39,27 @@ const sliderHapticTriggerNumbers = [0, 50, 100];
 
 const { isSameAddress } = addressUtils;
 
-const tokenRefreshIdAtom = atom(0);
-const useTokenRefreshId = () => useAtomValue(tokenRefreshIdAtom);
-const useSetTokenRefreshId = () => useSetAtom(tokenRefreshIdAtom);
+// Zustand implementation for tokenRefreshId
+const tokenRefreshIdStore = zCreate<number>(() => 0);
+
+function setTokenRefreshId(valOrFunc: UpdaterOrPartials<number>) {
+  tokenRefreshIdStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
+
+const useTokenRefreshId = () => tokenRefreshIdStore();
+const useSetTokenRefreshId = () => {
+  return useZCallback((valOrFunc: UpdaterOrPartials<number>) => {
+    setTokenRefreshId(valOrFunc);
+  }, []);
+};
 
 const useTokenInfo = ({
   userAddress,
@@ -118,9 +138,8 @@ export interface FeeProps {
 
 export const useTokenPair = ({ account }: { account: Account }) => {
   const userAddress = account.address;
-  const refreshId = useAtomValue(refreshIdAtom);
+  const refreshId = useRefreshId();
   const setTokenRefreshId = useSetTokenRefreshId();
-  const setRefreshId = useSetAtom(refreshIdAtom);
 
   const [showMoreVisible, setShowMoreVisible] = useState(false);
 
@@ -189,32 +208,29 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const setActiveProvider: React.Dispatch<
     React.SetStateAction<QuoteProvider | undefined>
-  > = useCallback(
-    p => {
-      if (expiredTimer.current) {
-        clearTimeout(expiredTimer.current);
+  > = useCallback(p => {
+    if (expiredTimer.current) {
+      clearTimeout(expiredTimer.current);
+    }
+
+    setOriActiveProvider(pre => {
+      enableRefreshRef.current = p ? true : false;
+      if (typeof p === 'function') {
+        const result = p(pre);
+        enableRefreshRef.current = result ? true : false;
+
+        return result;
       }
 
-      setOriActiveProvider(pre => {
-        enableRefreshRef.current = p ? true : false;
-        if (typeof p === 'function') {
-          const result = p(pre);
-          enableRefreshRef.current = result ? true : false;
+      return p;
+    });
 
-          return result;
-        }
-
-        return p;
-      });
-
-      expiredTimer.current = setTimeout(() => {
-        if (enableRefreshRef.current) {
-          setRefreshId(e => e + 1);
-        }
-      }, 1000 * 20);
-    },
-    [setRefreshId],
-  );
+    expiredTimer.current = setTimeout(() => {
+      if (enableRefreshRef.current) {
+        swapRefresh();
+      }
+    }, 1000 * 20);
+  }, []);
 
   const [payToken, setPayToken] = useTokenInfo({
     userAddress,

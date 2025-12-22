@@ -1,14 +1,8 @@
 import { apiLedger } from '@/core/apis';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
-import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  initAccountsAtom,
-  isLoadedAtom,
-  MainContainer,
-  settingAtom,
-} from './MainContainer';
+import { MainContainer, useHDSettingState } from './MainContainer';
 import { InitAccounts } from './type';
 
 export const SettingLedger: React.FC<{
@@ -46,9 +40,14 @@ export const SettingLedger: React.FC<{
     [t],
   );
 
-  const [initAccounts, setInitAccounts] = useAtom(initAccountsAtom);
-  const [setting, setSetting] = useAtom(settingAtom);
-  const [isLoaded, setIsLoaded] = useAtom(isLoadedAtom);
+  const {
+    initAccounts,
+    setInitAccounts,
+    setting,
+    setSetting,
+    isLoaded,
+    setIsLoaded,
+  } = useHDSettingState();
   const handleConfirm = React.useCallback(
     value => {
       apiLedger

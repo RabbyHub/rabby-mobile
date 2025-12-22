@@ -1,4 +1,3 @@
-import { useAtom } from 'jotai';
 import type { SearchDevice } from '@onekeyfe/hd-core';
 import { apiOneKey } from '@/core/apis';
 import React from 'react';

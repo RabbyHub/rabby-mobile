@@ -10,7 +10,6 @@ import {
   useSwapTxHistoryVisible,
 } from '../hooks/history';
 import { SwapTxHistory } from './SwapTxHistory';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 export const SwapHeader = ({
   isForMultipleAddress,

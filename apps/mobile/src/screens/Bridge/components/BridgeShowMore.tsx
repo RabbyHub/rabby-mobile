@@ -29,7 +29,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatGasHeaderUsdValue, formatTokenAmount } from '@/utils/number';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
-import ShowMoreGasSelectModal, { useGetGasInfoByUI } from './ShowMoreGasModal';
+import ShowMoreGasSelectModal, { useGetGasInfoByUIZ } from './ShowMoreGasModal';
 import { getGasLevelI18nKey } from '@/utils/trans';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -446,7 +446,7 @@ export const DirectSignGasInfo = ({
 
   const { ctx, config, status } = useSignatureStore();
 
-  const gasInfoByUI = useGetGasInfoByUI();
+  const gasInfoByUI = useGetGasInfoByUIZ();
 
   const { gasCostUsdStr, gasAccountCost } = gasInfoByUI || {};
 

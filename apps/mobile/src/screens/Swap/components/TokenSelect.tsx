@@ -46,7 +46,7 @@ import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
 import { isWatchOrSafeAccount } from '@/utils/account';
-import { useLongPressTokenAtom } from '../hooks';
+import { setLongPressToken } from '../hooks';
 import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSelectTokens } from '../hooks/useSelectTokens';
@@ -120,7 +120,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
     const [favoriteFilterValue, setFavoriteFilterValue] =
       useState<FavoriteFilterType>('all');
 
-    const [_, setLongPressToken] = useLongPressTokenAtom();
     const queryConds = useDebouncedValue(_queryConds, 250);
     const currentAccount = queryConds.account;
 

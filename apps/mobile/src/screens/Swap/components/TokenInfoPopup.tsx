@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { View, Text, Dimensions, TouchableOpacity, Modal } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { AssetAvatar } from '@/components';
-import { useLongPressTokenAtom } from '../hooks';
+import { useLongPressToken } from '../hooks';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
@@ -23,7 +23,7 @@ export const TokenInfoPopup = () => {
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
   const { styles, isLight } = useTheme2024({ getStyle });
-  const [longPressToken, setLongPressToken] = useLongPressTokenAtom();
+  const [longPressToken, setLongPressToken] = useLongPressToken();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });

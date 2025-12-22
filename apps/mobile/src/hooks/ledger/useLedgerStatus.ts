@@ -1,6 +1,5 @@
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { apiLedger } from '@/core/apis';
-import { atom, getDefaultStore, useAtom } from 'jotai';
 import React from 'react';
 import { Device } from 'react-native-ble-plx';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
@@ -8,10 +7,13 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { zCreate } from '@/core/utils/reexports';
 
-export const ledgerStatusAtom = atom<'CONNECTED' | 'DISCONNECTED' | undefined>(
-  'CONNECTED',
-);
+type LedgerStatus = 'CONNECTED' | 'DISCONNECTED' | undefined;
+
+const ledgerStatusStore = zCreate<{ status: LedgerStatus }>(() => ({
+  status: 'CONNECTED',
+}));
 
 export const useLedgerStatus = (
   address: string,
@@ -20,19 +22,21 @@ export const useLedgerStatus = (
     autoConnect?: boolean;
   },
 ) => {
-  const [status, setStatus] = useAtom(ledgerStatusAtom);
+  const [status, setStatus] = React.useState<LedgerStatus>('CONNECTED');
   const [deviceId, setDeviceId] = React.useState<string>();
 
   React.useEffect(() => {
     if (extra?.autoConnect ?? true) {
       apiLedger.isConnected(address).then(([isConnected, id]) => {
-        setStatus(isConnected ? 'CONNECTED' : 'DISCONNECTED');
+        const newStatus = isConnected ? 'CONNECTED' : 'DISCONNECTED';
+        setStatus(newStatus);
+        ledgerStatusStore.setState({ status: newStatus });
         if (id) {
           setDeviceId(id);
         }
       });
     }
-  }, [address, setStatus, extra?.autoConnect]);
+  }, [address, extra?.autoConnect]);
 
   const onClickConnect = React.useCallback(
     (cb?: () => void, rej?: () => void) => {
@@ -47,6 +51,7 @@ export const useLedgerStatus = (
             await TransportBLE.open(d.id);
             apiLedger.fixDeviceId(address, d.id);
             setStatus('CONNECTED');
+            ledgerStatusStore.setState({ status: 'CONNECTED' });
             isConnected = true;
             cb?.();
           } catch (e) {
@@ -54,6 +59,7 @@ export const useLedgerStatus = (
             await TransportBLE.disconnectDevice(d.id);
             rej?.();
             setStatus('DISCONNECTED');
+            ledgerStatusStore.setState({ status: 'DISCONNECTED' });
           } finally {
             setTimeout(() => {
               removeGlobalBottomSheetModal2024(id);
@@ -70,7 +76,7 @@ export const useLedgerStatus = (
         },
       });
     },
-    [address, deviceId, extra?.onDismiss, setStatus],
+    [address, deviceId, extra?.onDismiss],
   );
 
   return {
@@ -80,10 +86,8 @@ export const useLedgerStatus = (
 };
 
 export const setLedgerStatus = (connected?: boolean) => {
-  getDefaultStore().set(
-    ledgerStatusAtom,
-    connected ? 'CONNECTED' : 'DISCONNECTED',
-  );
+  const status = connected ? 'CONNECTED' : 'DISCONNECTED';
+  ledgerStatusStore.setState({ status });
 };
 
 export const callConnectLedgerModal = ({

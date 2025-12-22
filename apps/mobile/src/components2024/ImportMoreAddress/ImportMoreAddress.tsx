@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { useAtom } from 'jotai';
 import { useTranslation } from 'react-i18next';
 import {
   HARDWARE_KEYRING_TYPES,
@@ -24,7 +23,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { replaceToFirst } from '@/utils/navigation';
 
 import { toast } from '@/components2024/Toast';
-import { settingAtom } from '@/components/HDSetting/MainContainer';
+import { useHDSettingState } from '@/components/HDSetting/MainContainer';
 import { getAccountBalance } from '@/components/HDSetting/util';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
@@ -102,7 +101,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   }, [params.type]);
   const [accounts, setAccounts] = React.useState<ViewAccount[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [setting, setSetting] = useAtom(settingAtom);
+  const { setting, setSetting } = useHDSettingState();
   const stoppedRef = React.useRef(true);
   const exitRef = React.useRef(false);
   const startNumberRef = React.useRef((setting?.startNumber || 1) - 1);

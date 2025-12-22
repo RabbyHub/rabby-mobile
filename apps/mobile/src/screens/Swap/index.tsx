@@ -21,7 +21,6 @@ import {
 } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import { useAtomValue, useSetAtom } from 'jotai';
 import React, {
   useCallback,
   useEffect,
@@ -46,9 +45,11 @@ import {
   useTokenPair,
 } from './hooks';
 import {
-  refreshIdAtom,
+  swapRefresh,
   useQuoteVisible,
   useRabbyFeeVisible,
+  useRefreshId,
+  incrementRefreshId,
 } from './hooks/atom';
 import { buildDexSwap, dexSwap } from './hooks/swap';
 import { Button } from '@/components2024/Button';
@@ -63,7 +64,7 @@ import { Divider } from '@rneui/themed';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
-import { useSwapRecentToTokens } from './hooks/recent';
+import { useSwapRecentToTokens, useSwapRecentToTokensZ } from './hooks/recent';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import {
   GetNestedScreenRouteProp,
@@ -243,8 +244,8 @@ const Swap = ({
   });
   const [swapDappOpen, setSwapDappOpen] = useState(false);
 
-  const refresh = useSetAtom(refreshIdAtom);
-  const refreshId = useAtomValue(refreshIdAtom);
+  const refresh = swapRefresh;
+  const refreshIdZ = useRefreshId();
 
   const [
     { visible: isShowRabbyFeePopup, dexName, dexFeeDesc },
@@ -466,7 +467,7 @@ const Swap = ({
       } catch (error) {
         console.error(error);
       } finally {
-        refresh(e => e + 1);
+        incrementRefreshId();
       }
     }
   });
@@ -534,7 +535,7 @@ const Swap = ({
     manual: true,
   });
 
-  const [_, setRecentSwapToToken] = useSwapRecentToTokens();
+  const [_, setRecentSwapToToken] = useSwapRecentToTokensZ();
 
   const canShowDirectSubmit = useMemo(
     () =>
@@ -636,7 +637,7 @@ const Swap = ({
       } catch (error: any) {
         console.log('swap mini sign error', error);
         if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
-          refresh(e => e + 1);
+          incrementRefreshId();
           mutateTxs([]);
         } else if (
           [
@@ -868,9 +869,9 @@ const Swap = ({
 
   useEffect(() => {
     if (isFocused) {
-      refresh(e => e + 1);
+      incrementRefreshId();
     }
-  }, [isFocused, refresh]);
+  }, [isFocused]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -1204,7 +1205,7 @@ const Swap = ({
             {canShowDirectSubmit ? (
               <DirectSignBtn
                 // refresh  risk check
-                key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
+                key={`${refreshIdZ}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
                 loading={miniSignLoading}
                 loadingType="circle"
                 showTextOnLoading
@@ -1223,7 +1224,7 @@ const Swap = ({
                   clearExpiredTimer();
                 }}
                 onCancel={() => {
-                  refresh(e => e + 1);
+                  swapRefresh();
                 }}
                 account={currentAccount}
                 showHardWalletProcess
@@ -1240,7 +1241,7 @@ const Swap = ({
                     return;
                   }
                   if (!activeProvider || slippageChanged) {
-                    refresh(e => e + 1);
+                    incrementRefreshId();
 
                     return;
                   }

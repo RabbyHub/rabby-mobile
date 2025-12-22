@@ -1,27 +1,38 @@
 import { openapi } from '@/core/request';
 import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { uniqBy } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
-import { refreshIdAtom } from './atom';
+import { swapRefresh, useRefreshId } from './atom';
 import { useInterval, useMount, useRequest } from 'ahooks';
 import { swapService, transactionHistoryService } from '@/core/services';
-import { findChain } from '@/utils/chain';
-import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import {
   SwapTxHistoryItem,
   SendTxHistoryItem,
 } from '@/core/services/transactionHistory';
-const swapTxHistoryVisibleAtom = atom(false);
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
+
+const swapTxHistoryVisibleStore = zCreate<boolean>(() => false);
+function setSwapTxHistoryVisible(valOrFunc: UpdaterOrPartials<boolean>) {
+  swapTxHistoryVisibleStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
 
 export const useSwapTxHistoryVisible = () => {
-  const [visible, setVisible] = useAtom(swapTxHistoryVisibleAtom);
+  const visible = swapTxHistoryVisibleStore();
   return {
     visible,
-    setVisible,
+    setVisible: setSwapTxHistoryVisible,
   };
 };
 
@@ -44,8 +55,8 @@ export const useSwapHistory = () => {
   });
   const addr = currentAccount?.address || '';
 
-  const refreshSwapTxListCount = useAtomValue(refreshIdAtom);
-  const refreshSwapListTx = useSetAtom(refreshIdAtom);
+  const refreshSwapTxListCount = useRefreshId();
+  const refreshSwapListTx = swapRefresh;
 
   if (!addr) {
     throw new Error('no addr');
@@ -127,11 +138,67 @@ export const useSwapHistory = () => {
   };
 };
 
-export const swapPendingCountAtom = atom(0);
-export const swapPendingTxDataAtom = atom<SwapItem | null>(null);
-export const swapHistoryRedDotAtom = atom(false);
+const swapHistoryState = zCreate<{
+  swapPendingCount: number;
+  swapPendingTxData: SwapItem | null;
+  swapHistoryRedDot: boolean;
+}>(() => ({
+  swapPendingCount: 0,
+  swapPendingTxData: null,
+  swapHistoryRedDot: false,
+}));
+
+export const setSwapPendingCount = (valOrFunc: UpdaterOrPartials<number>) => {
+  swapHistoryState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.swapPendingCount, valOrFunc, {
+      strict: false,
+    });
+
+    return {
+      ...prev,
+      swapPendingCount: newVal,
+    };
+  });
+};
 export const useReadPendingCount = () => {
-  return useAtomValue(swapPendingCountAtom);
+  return swapHistoryState(state => state.swapPendingCount);
+};
+function setSwapHistoryRedDot(valOrFunc: UpdaterOrPartials<boolean>) {
+  swapHistoryState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(
+      prev.swapHistoryRedDot,
+      valOrFunc,
+      {
+        strict: false,
+      },
+    );
+
+    return {
+      ...prev,
+      swapHistoryRedDot: newVal,
+    };
+  });
+}
+
+function setSwapPendingTxData(valOrFunc: UpdaterOrPartials<SwapItem | null>) {
+  swapHistoryState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(
+      prev.swapPendingTxData,
+      valOrFunc,
+      {
+        strict: false,
+      },
+    );
+
+    return {
+      ...prev,
+      swapPendingTxData: newVal,
+    };
+  });
+}
+
+export const useReadSwapHistoryRedDot = () => {
+  return swapHistoryState(state => state.swapHistoryRedDot);
 };
 
 export const fetchLocalSwapPendingTx = (address: string) => {
@@ -165,20 +232,11 @@ export const fetchRefreshLocalData = (
   }
 };
 
-export const usePendingTxData = () => {
-  return useAtomValue(swapPendingCountAtom);
-};
-
-export const useReadSwapHistoryRedDot = () => {
-  return useAtomValue(swapHistoryRedDotAtom);
-};
 export const usePollSwapPendingNumber = (timer = 10000) => {
-  const [, setCount] = useAtom(swapPendingCountAtom);
-  const [, setTxData] = useAtom(swapPendingTxDataAtom);
   const [localPendingTxData, setLocalPendingTxData] = useState<
     SwapTxHistoryItem | SendTxHistoryItem | null
   >(null);
-  const [, setSwapHistoryRedDot] = useAtom(swapHistoryRedDotAtom);
+
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -209,13 +267,13 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
         swapService.setOpenSwapHistoryTs(account.address);
       }
       // judge if the tx is in local storage todo
-      setTxData(txData?.[0] || null);
+      setSwapPendingTxData(txData?.[0] || null);
 
       return txData?.[0] || null;
     },
     {
       onSuccess(v) {
-        setTxData(v);
+        setSwapPendingTxData(v);
       },
       refreshDeps: [currentAccount],
     },
@@ -283,7 +341,7 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
     );
     swapService.setOpenSwapHistoryTs(currentAccount?.address!);
     return currentTs;
-  }, [setSwapHistoryRedDot, currentAccount?.address]);
+  }, [currentAccount?.address]);
 
   useEffect(() => {
     timerRef.current && clearTimeout(timerRef.current);

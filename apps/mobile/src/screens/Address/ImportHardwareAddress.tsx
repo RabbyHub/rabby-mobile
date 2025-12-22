@@ -24,8 +24,7 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { useFocusEffect } from '@react-navigation/native';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { useAtom } from 'jotai';
-import { settingAtom } from '@/components/HDSetting/MainContainer';
+import { useHDSettingState } from '@/components/HDSetting/MainContainer';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -142,7 +141,7 @@ export function ImportHardwareAddressScreen(): JSX.Element {
     });
   }, []);
 
-  const [_2, setSetting] = useAtom(settingAtom);
+  const { setSetting } = useHDSettingState();
   const { showImportMorePopup } = useShowImportMoreAddressPopup();
 
   const importFirstAddress = React.useCallback(async () => {

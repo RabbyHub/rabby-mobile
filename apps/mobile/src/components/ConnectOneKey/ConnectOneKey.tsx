@@ -4,9 +4,8 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useAtom } from 'jotai';
 import React from 'react';
-import { settingAtom } from '../HDSetting/MainContainer';
+import { useHDSettingState } from '../HDSetting/MainContainer';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
@@ -23,7 +22,7 @@ export const ConnectOneKey: React.FC<{
   onSelectDeviceId?: (id: string) => void;
   deviceId?: string;
 }> = ({ onDone, onSelectDeviceId, deviceId }) => {
-  const [_2, setSetting] = useAtom(settingAtom);
+  const { setSetting } = useHDSettingState();
   const [currentScreen, setCurrentScreen] = React.useState<
     'scan' | 'select' | 'ble' | 'notfound' | 'connect'
   >('ble');

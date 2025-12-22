@@ -26,7 +26,7 @@ import {
 import { toast } from '@/components/Toast';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { useAtom } from 'jotai';
-import { settingAtom } from '@/components/HDSetting/MainContainer';
+import { useHDSettingState } from '@/components/HDSetting/MainContainer';
 import { Radio } from '@/components/Radio';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { getAccountBalance } from '@/components/HDSetting/util';
@@ -185,7 +185,7 @@ export const ImportMoreAddressScreen = () => {
   const [accounts, setAccounts] = React.useState<LedgerAccount[]>([]);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const [setting, setSetting] = useAtom(settingAtom);
+  const { setting, setSetting } = useHDSettingState();
   const stoppedRef = React.useRef(true);
   const exitRef = React.useRef(false);
   const startNumberRef = React.useRef((setting?.startNumber || 1) - 1);

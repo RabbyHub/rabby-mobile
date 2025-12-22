@@ -1,37 +1,40 @@
 import { DEX } from '@/constant/swap';
 import { openapi } from '@/core/request';
 import { swapService } from '@/core/services';
-import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  UpdaterOrPartials,
+  resolveValFromUpdater,
+  runIIFEFunc,
+} from '@/core/utils/store';
+import { useCallback } from 'react';
 
-const swapUnlimitedAllowanceAtom = atom(false, (get, set, bool: boolean) => {
-  swapService.setUnlimitedAllowance(bool);
-  set(swapUnlimitedAllowanceAtom, bool);
-});
+const swapUnlimitedAllowanceStore = zCreate<boolean>(() =>
+  swapService.getUnlimitedAllowance(),
+);
+function setSwapUnlimitedAllowance(valOrFunc: UpdaterOrPartials<boolean>) {
+  swapUnlimitedAllowanceStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: true,
+    });
 
-swapUnlimitedAllowanceAtom.onMount = s => {
-  s(swapService.getUnlimitedAllowance());
-};
+    if (!changed) return prev;
 
-export const useSwapUnlimitedAllowance = () =>
-  useAtom(swapUnlimitedAllowanceAtom);
+    swapService.setUnlimitedAllowance(newVal);
 
-const swapSettingsVisibleAtom = atom(false);
-
-export const useSwapSettingsVisible = () => {
-  const [visible, setVisible] = useAtom(swapSettingsVisibleAtom);
-  return {
-    visible,
-    setVisible,
-  };
-};
-
-const swapSupportedDexList = atom<string[]>(Object.keys(DEX));
-
-swapSupportedDexList.onMount = setAtom => {
-  openapi.getSupportedDEXList().then(s => {
-    setAtom(s.dex_list?.filter(e => DEX[e]));
+    return newVal;
   });
+}
+
+export const useSwapUnlimitedAllowance = () => {
+  const state = swapUnlimitedAllowanceStore();
+
+  const setState = useCallback((valOrFunc: UpdaterOrPartials<boolean>) => {
+    setSwapUnlimitedAllowance(valOrFunc);
+  }, []);
+
+  return [state, setState] as const;
 };
 
 const getSettings = () => ({
@@ -41,11 +44,23 @@ const getSettings = () => ({
   sortIncludeGasFee: swapService.getSwapSortIncludeGasFee(),
 });
 
-const settingSwapAtom = atom(getSettings());
+type SettingSwapState = ReturnType<typeof getSettings>;
+const settingSwapStore = zCreate<SettingSwapState>(() => getSettings());
+runIIFEFunc(() => {
+  settingSwapStore.setState(getSettings());
+});
 
-settingSwapAtom.onMount = setAtom => {
-  setAtom(getSettings());
-};
+function setSettingSwap(valOrFunc: UpdaterOrPartials<SettingSwapState>) {
+  settingSwapStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    if (!changed) return prev;
+
+    return newVal;
+  });
+}
 
 function wrapSwapSettingsMethod<
   T extends Record<string, (...args: any[]) => void>,
@@ -65,7 +80,7 @@ function wrapSwapSettingsMethod<
 }
 
 export const useSwapSettings = () => {
-  const [settings, setSettings] = useAtom(settingSwapAtom);
+  const settings = settingSwapStore();
 
   const methods = useMemo(() => {
     const {
@@ -82,10 +97,10 @@ export const useSwapSettings = () => {
         setSwapSortIncludeGasFee,
       },
       () => {
-        setSettings(getSettings());
+        setSettingSwap(getSettings());
       },
     );
-  }, [setSettings]);
+  }, []);
 
   return {
     ...settings,
@@ -93,10 +108,24 @@ export const useSwapSettings = () => {
   };
 };
 
-export const useSwapSupportedDexList = () => useAtom(swapSupportedDexList);
+const swapSupportedDexListStore = zCreate<string[]>(() => Object.keys(DEX));
+runIIFEFunc(() => {
+  openapi.getSupportedDEXList().then(s => {
+    swapSupportedDexListStore.setState(s.dex_list?.filter(e => DEX[e]) || []);
+  });
+});
+export const useSwapSupportedDexList = () => {
+  return [swapSupportedDexListStore()];
+};
 
 export const useSwapViewDexIdList = () => {
-  const viewList = useAtom(settingSwapAtom)[0].swapViewList;
-  const [dexList] = useAtom(swapSupportedDexList);
+  const viewList = settingSwapStore().swapViewList;
+  const dexList = swapSupportedDexListStore();
   return dexList.filter(e => viewList[e] !== false);
+};
+
+export const useSwapViewDexIdListZ = () => {
+  const settings = settingSwapStore();
+  const dexList = swapSupportedDexListStore();
+  return dexList.filter(e => settings.swapViewList[e] !== false);
 };

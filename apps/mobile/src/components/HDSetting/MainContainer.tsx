@@ -1,7 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetTextInput, TouchableOpacity } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
-import { atom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View, Text } from 'react-native';
@@ -13,15 +12,58 @@ import { Account, InitAccounts } from './type';
 import { fetchAccountsInfo } from './util';
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
+import { zCreate } from '@/core/utils/reexports';
+import { useCallback } from 'react';
 
 export const MAX_ACCOUNT_COUNT = 50;
 const HARDENED_OFFSET = 0x80000000 - 50;
-export const isLoadedAtom = atom<boolean>(false);
-export const initAccountsAtom = atom<InitAccounts | undefined>(undefined);
-export const settingAtom = atom<Setting>({
-  hdPath: LedgerHDPathType.LedgerLive,
-  startNumber: 1,
-});
+
+type HDSettingState = {
+  isLoaded: boolean;
+  initAccounts: InitAccounts | undefined;
+  setting: {
+    hdPath: LedgerHDPathType;
+    startNumber: number;
+  };
+};
+
+const hdSettingStore = zCreate<HDSettingState>(() => ({
+  isLoaded: false,
+  initAccounts: undefined,
+  setting: {
+    hdPath: LedgerHDPathType.LedgerLive,
+    startNumber: 1,
+  },
+}));
+
+export const useHDSettingState = () => {
+  const state = hdSettingStore(state => state);
+
+  const setIsLoaded = useCallback((isLoaded: boolean) => {
+    hdSettingStore.setState(prev => ({ ...prev, isLoaded }));
+  }, []);
+
+  const setInitAccounts = useCallback(
+    (initAccounts: InitAccounts | undefined) => {
+      hdSettingStore.setState(prev => ({ ...prev, initAccounts }));
+    },
+    [],
+  );
+
+  const setSetting = useCallback(
+    (setting: { hdPath: LedgerHDPathType; startNumber: number }) => {
+      hdSettingStore.setState(prev => ({ ...prev, setting }));
+    },
+    [],
+  );
+
+  return {
+    ...state,
+    setIsLoaded,
+    setInitAccounts,
+    setSetting,
+  };
+};
 
 export interface Setting {
   hdPath: LedgerHDPathType;

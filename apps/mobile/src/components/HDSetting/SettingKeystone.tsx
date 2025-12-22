@@ -1,13 +1,11 @@
 import { apiKeystone } from '@/core/apis';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
-import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import {
-  isLoadedAtom,
   MainContainer,
-  settingAtom,
+  useHDSettingState,
   Props as MainContainerProps,
   MAX_ACCOUNT_COUNT,
 } from './MainContainer';
@@ -156,8 +154,7 @@ export const SettingKeystone: React.FC<{
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const [setting, setSetting] = useAtom(settingAtom);
-  const [isLoaded, setIsLoaded] = useAtom(isLoadedAtom);
+  const { setting, setSetting, isLoaded, setIsLoaded } = useHDSettingState();
 
   const handleConfirm = React.useCallback(
     value => {

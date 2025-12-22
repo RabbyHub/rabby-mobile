@@ -5,13 +5,15 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { apiOneKey } from '@/core/apis';
-import { atom, getDefaultStore, useAtom } from 'jotai';
 import { noop } from 'lodash';
 import React from 'react';
+import { zCreate } from '@/core/utils/reexports';
 
-export const oneKeyStatusAtom = atom<'CONNECTED' | 'DISCONNECTED' | undefined>(
-  'CONNECTED',
-);
+type OneKeyStatus = 'CONNECTED' | 'DISCONNECTED' | undefined;
+
+const oneKeyStatusStore = zCreate<{ status: OneKeyStatus }>(() => ({
+  status: 'CONNECTED',
+}));
 
 export const useOneKeyStatus = (
   address: string,
@@ -20,20 +22,22 @@ export const useOneKeyStatus = (
     autoConnect?: boolean;
   },
 ) => {
-  const [status, setStatus] = useAtom(oneKeyStatusAtom);
+  const [status, setStatus] = React.useState<OneKeyStatus>('CONNECTED');
   const [deviceId, setDeviceId] = React.useState<string>();
   let toastHiddenRef = React.useRef<() => void>(() => {});
 
   React.useEffect(() => {
     if (extra?.autoConnect ?? true) {
       apiOneKey.isConnected(address).then(([isConnected, id]) => {
-        setStatus(isConnected ? 'CONNECTED' : 'DISCONNECTED');
+        const newStatus = isConnected ? 'CONNECTED' : 'DISCONNECTED';
+        setStatus(newStatus);
+        oneKeyStatusStore.setState({ status: newStatus });
         if (id) {
           setDeviceId(id);
         }
       });
     }
-  }, [address, setStatus, extra?.autoConnect]);
+  }, [address, extra?.autoConnect]);
 
   const onClickConnect = React.useCallback(
     (cb?: () => void, rej?: () => void) => {
@@ -53,11 +57,13 @@ export const useOneKeyStatus = (
             await apiOneKey.unlockDevice();
             await apiOneKey.fixConnectId(address, connectDeviceId);
             setStatus('CONNECTED');
+            oneKeyStatusStore.setState({ status: 'CONNECTED' });
             isConnected = true;
             cb?.();
           } catch (e) {
             rej?.();
             setStatus('DISCONNECTED');
+            oneKeyStatusStore.setState({ status: 'DISCONNECTED' });
           } finally {
             setTimeout(() => {
               removeGlobalBottomSheetModal2024(id);
@@ -75,7 +81,7 @@ export const useOneKeyStatus = (
         },
       });
     },
-    [address, deviceId, extra?.onDismiss, setStatus],
+    [address, deviceId, extra?.onDismiss],
   );
 
   React.useEffect(() => {
@@ -91,10 +97,8 @@ export const useOneKeyStatus = (
 };
 
 export const setOneKeyStatus = (connected?: boolean) => {
-  getDefaultStore().set(
-    oneKeyStatusAtom,
-    connected ? 'CONNECTED' : 'DISCONNECTED',
-  );
+  const status = connected ? 'CONNECTED' : 'DISCONNECTED';
+  oneKeyStatusStore.setState({ status });
 };
 
 export const callConnectOneKeyModal = ({

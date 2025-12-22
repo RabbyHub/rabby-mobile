@@ -20,7 +20,7 @@ import { AssetAvatar } from '@/components';
 import { useBridgeSupportedChains } from '../hooks';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useMemoizedFn, useUnmount } from 'ahooks';
-import { useLongPressTokenAtom } from '@/screens/Swap/hooks';
+import { setLongPressToken } from '@/screens/Swap/hooks';
 import { trigger } from 'react-native-haptic-feedback';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
@@ -157,7 +157,6 @@ const BridgeToTokenSelect = ({
 
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [_, setLongPressToken] = useLongPressTokenAtom();
 
   const handleTokenChange = useMemoizedFn(async (tokenItem?: TokenItem) => {
     if (!tokenItem || !tokenItem.id) {

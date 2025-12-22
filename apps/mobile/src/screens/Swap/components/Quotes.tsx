@@ -12,12 +12,11 @@ import { getTokenSymbol } from '@/utils/token';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import BigNumber from 'bignumber.js';
-import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Easing, Text, TouchableOpacity, View } from 'react-native';
 import { TDexQuoteData, useSwapSettings, useSwapViewDexIdList } from '../hooks';
-import { refreshIdAtom } from '../hooks/atom';
+import { swapRefresh } from '../hooks/atom';
 import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
 import {
@@ -296,11 +295,9 @@ export const QuoteList = (props: QuotesProps) => {
   const { visible, onClose, loading } = props;
   const bottomRef = useRef<BottomSheetModalMethods>(null);
 
-  const refresh = useSetAtom(refreshIdAtom);
-
   const refreshQuote = React.useCallback(() => {
-    refresh(e => e + 1);
-  }, [refresh]);
+    swapRefresh();
+  }, []);
 
   const { t } = useTranslation();
 

@@ -2,9 +2,11 @@ import { openapi } from '@/core/request';
 import { findChainByServerID } from '@/utils/chain';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { BridgeAggregator } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtomValue } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { runIIFEFunc } from '@/core/utils/store';
 
-const bridgeSupportedChainsAtom = atom(
+// Zustand implementation for bridgeSupportedChains
+const bridgeSupportedChainsStore = zCreate<CHAINS_ENUM[]>(() =>
   [
     'arb',
     'matic',
@@ -23,29 +25,28 @@ const bridgeSupportedChainsAtom = atom(
   ].map(e => findChainByServerID(e)!.enum || e),
 );
 
-bridgeSupportedChainsAtom.onMount = setAtom => {
+runIIFEFunc(() => {
   openapi.getBridgeSupportChainV2().then(chains => {
     if (chains.length) {
       const mappings = Object.values(CHAINS).reduce((acc, chain) => {
         acc[chain.serverId] = chain.enum;
         return acc;
       }, {} as Record<string, CHAINS_ENUM>);
-      setAtom(
+      bridgeSupportedChainsStore.setState(
         chains.map(item => findChainByServerID(item)?.enum || mappings[item]),
       );
     }
   });
-};
+});
 
-const aggregatorsListAtom = atom<BridgeAggregator[]>([]);
-
-aggregatorsListAtom.onMount = setAtom => {
+// Zustand implementation for aggregatorsList
+const aggregatorsListStore = zCreate<BridgeAggregator[]>(() => []);
+runIIFEFunc(() => {
   openapi.getBridgeAggregatorList().then(s => {
-    setAtom(s);
+    aggregatorsListStore.setState(s);
   });
-};
+});
 
-export const useBridgeSupportedChains = () =>
-  useAtomValue(bridgeSupportedChainsAtom);
+export const useBridgeSupportedChains = () => bridgeSupportedChainsStore();
 
-export const useAggregatorsList = () => useAtomValue(aggregatorsListAtom);
+export const useAggregatorsList = () => aggregatorsListStore();

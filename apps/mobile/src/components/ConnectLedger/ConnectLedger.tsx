@@ -5,11 +5,10 @@ import { useLedgerImport } from '@/hooks/ledger/useLedgerImport';
 import { navigateDeprecated } from '@/utils/navigation';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useAtom } from 'jotai';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Device } from 'react-native-ble-plx';
-import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
+import { useHDSettingState } from '../HDSetting/MainContainer';
 import { toast, toastIndicator } from '../Toast';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
@@ -33,8 +32,7 @@ export const ConnectLedger: React.FC<{
   deviceId?: string;
 }> = ({ onDone, onSelectDevice, deviceId }) => {
   const { searchAndPair, devices, errorCode } = useLedgerImport();
-  const [_1, setIsLoaded] = useAtom(isLoadedAtom);
-  const [_2, setSetting] = useAtom(settingAtom);
+  const { setIsLoaded, setSetting } = useHDSettingState();
   const { t } = useTranslation();
   const [currentScreen, setCurrentScreen] = React.useState<
     'scan' | 'select' | 'ble' | 'notfound' | 'openEthApp'

@@ -1,10 +1,10 @@
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { zCreate } from '@/core/utils/reexports';
+import { runIIFEFunc } from '@/core/utils/store';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBridgeSupportedChains } from '@/screens/Bridge/hooks/atom';
 import { findChainByEnum } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
-import { atom, useAtom } from 'jotai';
-import { loadable } from 'jotai/utils';
 import { useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
@@ -29,9 +29,33 @@ const fetchSwapDapps = async () => {
   return data;
 };
 
-const swapDappsAtom = loadable(atom(async () => fetchSwapDapps()));
+const swapBridgeStore = zCreate<{
+  swapDapps: {
+    state: 'loading' | 'hasData' | 'error';
+    data?: SwapBridgeDapps[];
+    error?: any;
+  };
+  bridgeDapps: {
+    state: 'loading' | 'hasData' | 'error';
+    data?: SwapBridgeDapps[];
+    error?: any;
+  };
+}>(() => {
+  return {
+    swapDapps: { state: 'loading' },
+    bridgeDapps: { state: 'loading' },
+  };
+});
 
-const bridgeDappsAtom = loadable(atom(async () => fetchBridgeDapps()));
+runIIFEFunc(() => {
+  fetchSwapDapps().then(data => {
+    swapBridgeStore.setState({ swapDapps: { state: 'hasData', data } });
+  });
+
+  fetchBridgeDapps().then(data => {
+    swapBridgeStore.setState({ bridgeDapps: { state: 'hasData', data } });
+  });
+});
 
 export const useExternalSwapBridgeDapps = (
   chain: CHAINS_ENUM | CHAINS_ENUM[],
@@ -39,9 +63,8 @@ export const useExternalSwapBridgeDapps = (
 ) => {
   const bridgeSupportedChains = useBridgeSupportedChains();
 
-  const [swapValue] = useAtom(swapDappsAtom);
-
-  const [bridgeValue] = useAtom(bridgeDappsAtom);
+  const swapValue = swapBridgeStore(s => s.swapDapps);
+  const bridgeValue = swapBridgeStore(s => s.bridgeDapps);
 
   const { value, loading } = useAsync(async () => {
     if (swapValue.state === 'hasData' && bridgeValue.state === 'hasData') {
