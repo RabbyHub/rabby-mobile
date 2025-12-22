@@ -6,7 +6,6 @@ import { useSafeState } from 'ahooks';
 import { NFTItem, CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { syncNFTs } from '@/databases/hooks/assets';
 import { useSingleNftRefresh } from './refresh';
-import { useAtom } from 'jotai';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';

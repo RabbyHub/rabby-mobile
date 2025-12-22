@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { atom, useAtom } from 'jotai';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
@@ -101,9 +100,21 @@ async function fetchApprovalAmount(address: string): Promise<number> {
   }
 }
 
-export const approvalDataAtom = atom<Record<string, number>>({});
+const approvalDataStore = zCreate<Record<string, number>>(() => ({}));
+
+function setApprovalDataState(
+  valOrFunc: UpdaterOrPartials<Record<string, number>>,
+) {
+  approvalDataStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
 export const useApprovalsCount = () => {
-  const [appprovalInfo, setAppprovalInfo] = useAtom(approvalDataAtom);
+  const appprovalInfo = approvalDataStore();
 
   const getAllApprovalCount = useCallback(
     async (displayAccounts: KeyringAccountWithAlias[]) => {
@@ -115,13 +126,13 @@ export const useApprovalsCount = () => {
           try {
             const amount = await fetchApprovalAmount(item.address);
 
-            setAppprovalInfo(prev => ({
+            setApprovalDataState(prev => ({
               ...prev,
               [item.address]: amount,
             }));
           } catch (error) {
             console.error(`Error processing address ${item.address}:`, error);
-            setAppprovalInfo(prev => ({
+            setApprovalDataState(prev => ({
               ...prev,
               [item.address]: 0,
             }));
@@ -131,7 +142,7 @@ export const useApprovalsCount = () => {
 
       return waitQueueFinished(queue);
     },
-    [setAppprovalInfo],
+    [],
   );
   return {
     address2Count: appprovalInfo,

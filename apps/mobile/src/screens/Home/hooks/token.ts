@@ -5,7 +5,6 @@ import { findChain, makeChainServerIdSet } from '@/utils/chain';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { preferenceService } from '@/core/services';
-import { atom, useAtom } from 'jotai';
 import { DisplayedProject } from '../utils/project';
 import {
   queryTokensCache,
@@ -21,6 +20,8 @@ import { debounce } from 'lodash';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { apisAddrChainStatics } from '../useChainInfo';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -35,9 +36,27 @@ export const filterDisplayToken = (tokens: AbstractPortfolioToken[]) => {
   });
 };
 
-export const testnetTokensAtom = atom({
+const testnetTokensStore = zCreate<{
+  list: AbstractPortfolioToken[];
+}>()(() => ({
   list: [] as AbstractPortfolioToken[],
-});
+}));
+
+function setTestnetTokensState(
+  valOrFunc: UpdaterOrPartials<{ list: AbstractPortfolioToken[] }>,
+) {
+  testnetTokensStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
+export const useTestnetTokens = () => {
+  const testnetTokens = testnetTokensStore();
+  return [testnetTokens, setTestnetTokensState] as const;
+};
 
 export const useLocalTokens = (userAddr: string | undefined) => {
   const [tokenList, setTokenList] = useSafeState<TokenItem[]>([]);

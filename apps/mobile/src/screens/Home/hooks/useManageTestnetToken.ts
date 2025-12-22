@@ -1,12 +1,11 @@
 import { useMemoizedFn } from 'ahooks';
-import { useAtom } from 'jotai';
 import { AbstractPortfolioToken } from '../types';
-import { testnetTokensAtom } from './token';
+import { useTestnetTokens } from './token';
 import { apiCustomTestnet } from '@/core/apis';
 import { findChain } from '@/utils/chain';
 
 export const useManageTestnetTokenList = () => {
-  const [, setTestnetTokens] = useAtom(testnetTokensAtom);
+  const [, setTestnetTokens] = useTestnetTokens();
 
   const addCustomToken = useMemoizedFn(
     async (token: AbstractPortfolioToken) => {

@@ -1,5 +1,4 @@
 import BigNumber from 'bignumber.js';
-import { atom, useAtom } from 'jotai';
 
 import { formatNetworth } from '@/utils/math';
 import {

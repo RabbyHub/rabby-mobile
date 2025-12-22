@@ -3,7 +3,6 @@ import { useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
 import BigNumber from 'bignumber.js';
-import { atom, useAtom } from 'jotai';
 import { isAppChain } from '../utils/appchain';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';

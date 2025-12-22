@@ -8,7 +8,6 @@ import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
 // import { singleDeFiNonceAtom } from './refresh';
-import { useAtom, atom } from 'jotai';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { debounce } from 'lodash';
@@ -16,6 +15,8 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useSingleDeFiRefresh } from './refresh';
 import { apisAddrChainStatics } from '../useChainInfo';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 export const tagProfiles = (
   profiles: DisplayedProject[],
@@ -100,13 +101,29 @@ export const log = () => {
   // console.log(...args);
 };
 
-export const currentPortfolioAtom = atom<{
+const currentPortfolioStore = zCreate<{
   data: DisplayedProject[];
   address: string;
-}>({ data: [], address: '' });
+}>()(() => ({ data: [], address: '' }));
+
+function setCurrentPortfolioState(
+  valOrFunc: UpdaterOrPartials<{ data: DisplayedProject[]; address: string }>,
+) {
+  currentPortfolioStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
+export const useCurrentPortfolio = () => {
+  const currentPortfolio = currentPortfolioStore();
+  return [currentPortfolio, setCurrentPortfolioState] as const;
+};
 
 export const usePortfolios = (userAddr: string | undefined, visible = true) => {
-  const [_data, _setData] = useAtom(currentPortfolioAtom);
+  const [_data, _setData] = useCurrentPortfolio();
   const [data, setData] = useMemo(() => {
     const innerSetData = (d: DisplayedProject[]) =>
       _setData({
