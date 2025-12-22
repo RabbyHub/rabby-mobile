@@ -1,5 +1,4 @@
 import { createRef, useCallback, useMemo, useRef } from 'react';
-import { atom, useAtom, useAtomValue } from 'jotai';
 
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -22,30 +21,13 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { isNonPublicProductionEnv } from '@/constant';
 import { useRefState } from '@/hooks/common/useRefState';
-
-const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
-activeDappTabIdAtom.onMount = set => {
-  const listener = (tabId: ActiveDappState['tabId']) => {
-    set(tabId);
-  };
-  activeDappStateEvents.addListener('updated', listener);
-
-  return () => {
-    activeDappStateEvents.removeListener('updated', listener);
-  };
-};
-
-const activeDappOriginAtom = atom<ActiveDappState['dappOrigin']>(null);
-export function useOpenedActiveDappState() {
-  const activeDappOrigin = useAtomValue(activeDappOriginAtom);
-  const activeTabId = useAtomValue(activeDappTabIdAtom);
-
-  return {
-    activeDappOrigin,
-    activeTabId: activeTabId,
-    hasActiveDapp: !!activeDappOrigin,
-  };
-}
+import { zCreate } from '@/core/utils/reexports';
+import { useShallow } from 'zustand/react/shallow';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 
 export type OpenedDappItem = {
   origin: DappInfo['origin'];
@@ -63,41 +45,113 @@ export type OpenedDappItem = {
   openTime: number;
   lastOpenWebViewId?: string | null;
 };
+
+type DappViewState = {
+  activeDappTabId: ActiveDappState['tabId'];
+  activeDappOrigin: ActiveDappState['dappOrigin'];
+  dappsViewConfig: {
+    maxCount: number;
+    expireDuration: number;
+  };
+  openedDappRecords: OpenedDappItem[];
+  activeWebViewSheetModalRefs: {
+    openedDappWebviewSheetModalRef: React.RefObject<BottomSheetModal>;
+    urlWebviewContainerRef: React.RefObject<BottomSheetModal>;
+  };
+  openedNonDappOrigin: string | null;
+};
+
 const DAPPS_VIEW_LIMIT = {
   maxCount: 1,
   // 30days
   expireDuration: 3 * 86400 * 1e3,
 };
+
 const DAPPS_VIEW_LIMIT_SHORT = {
   maxCount: 1,
   // 5 mins
   expireDuration: 5 * 60 * 1e3,
 };
-const dappsViewConfigAtom = atom({
-  maxCount: DAPPS_VIEW_LIMIT.maxCount,
-  expireDuration: isNonPublicProductionEnv
-    ? DAPPS_VIEW_LIMIT_SHORT.expireDuration
-    : DAPPS_VIEW_LIMIT.expireDuration,
+
+const dappViewStore = zCreate<DappViewState>(() => {
+  const dappsViewConfig = {
+    maxCount: DAPPS_VIEW_LIMIT.maxCount,
+    expireDuration: isNonPublicProductionEnv
+      ? DAPPS_VIEW_LIMIT_SHORT.expireDuration
+      : DAPPS_VIEW_LIMIT.expireDuration,
+  };
+
+  return {
+    activeDappTabId: null,
+    activeDappOrigin: null,
+    dappsViewConfig,
+    openedDappRecords: [],
+    activeWebViewSheetModalRefs: {
+      openedDappWebviewSheetModalRef: createRef<BottomSheetModal>(),
+      urlWebviewContainerRef: createRef<BottomSheetModal>(),
+    },
+    openedNonDappOrigin: null,
+  };
 });
-const openedDappRecordsAtom = atom<OpenedDappItem[]>([]);
+
+function setDappViewState(valOrFunc: UpdaterOrPartials<DappViewState>) {
+  dappViewStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
+  });
+}
+
+// Initialize activeDappTabId with event listener
+runIIFEFunc(() => {
+  const listener = (tabId: ActiveDappState['tabId']) => {
+    setDappViewState(prev => ({ ...prev, activeDappTabId: tabId }));
+  };
+  activeDappStateEvents.addListener('updated', listener);
+
+  // Return cleanup function
+  return () => {
+    activeDappStateEvents.removeListener('updated', listener);
+  };
+});
+
+export function useOpenedActiveDappState() {
+  const { activeDappOrigin, activeDappTabId } = dappViewStore(
+    useShallow(state => ({
+      activeDappOrigin: state.activeDappOrigin,
+      activeDappTabId: state.activeDappTabId,
+    })),
+  );
+
+  return {
+    activeDappOrigin,
+    activeTabId: activeDappTabId,
+    hasActiveDapp: !!activeDappOrigin,
+  };
+}
+
 /**
  * @deprecated
  */
 export function useOpenedDappsRecordsOnDEV() {
-  const openedDappRecords = useAtomValue(openedDappRecordsAtom);
+  const { openedDappRecords } = dappViewStore(
+    useShallow(state => ({
+      openedDappRecords: state.openedDappRecords,
+    })),
+  );
 
   return {
     openedDappRecords,
   };
 }
 
-const activeWebViewSheetModalRefs = atom({
-  openedDappWebviewSheetModalRef: createRef<BottomSheetModal>(),
-  urlWebviewContainerRef: createRef<BottomSheetModal>(),
-});
-
 export function useActiveViewSheetModalRefs() {
-  return useSheetModals(useAtomValue(activeWebViewSheetModalRefs));
+  const { activeWebViewSheetModalRefs } = dappViewStore(
+    useShallow(state => ({
+      activeWebViewSheetModalRefs: state.activeWebViewSheetModalRefs,
+    })),
+  );
+
+  return useSheetModals(activeWebViewSheetModalRefs);
 }
 
 export function makeDappTabId(seed?: string) {
@@ -109,37 +163,49 @@ export function makeDappTabId(seed?: string) {
 }
 
 export function useDappsViewConfig() {
-  const [config, setConfig] = useAtom(dappsViewConfigAtom);
+  const { dappsViewConfig } = dappViewStore(
+    useShallow(state => ({
+      dappsViewConfig: state.dappsViewConfig,
+    })),
+  );
 
-  const { isUsingShort, dappsViewConfig } = useMemo(() => {
-    const result = {
-      isUsingShort: false,
-      dappsViewConfig: { ...config },
-    };
-    if (!isNonPublicProductionEnv)
-      result.dappsViewConfig.expireDuration = DAPPS_VIEW_LIMIT.expireDuration;
+  const setDappsViewConfig = useCallback(
+    (config: { maxCount: number; expireDuration: number }) => {
+      setDappViewState(prev => ({ ...prev, dappsViewConfig: config }));
+    },
+    [],
+  );
 
-    result.isUsingShort =
-      result.dappsViewConfig.expireDuration ===
-      DAPPS_VIEW_LIMIT_SHORT.expireDuration;
+  const { isUsingShort, dappsViewConfig: currentDappsViewConfig } =
+    useMemo(() => {
+      const result = {
+        isUsingShort: false,
+        dappsViewConfig: { ...dappsViewConfig },
+      };
+      if (!isNonPublicProductionEnv)
+        result.dappsViewConfig.expireDuration = DAPPS_VIEW_LIMIT.expireDuration;
 
-    return result;
-  }, [config]);
+      result.isUsingShort =
+        result.dappsViewConfig.expireDuration ===
+        DAPPS_VIEW_LIMIT_SHORT.expireDuration;
+
+      return result;
+    }, [dappsViewConfig]);
 
   const toggleUseShortConfig = useCallback(
     (nextUseShort: boolean = !isUsingShort) => {
       if (nextUseShort) {
-        setConfig({ ...DAPPS_VIEW_LIMIT_SHORT });
+        setDappsViewConfig({ ...DAPPS_VIEW_LIMIT_SHORT });
       } else {
-        setConfig({ ...DAPPS_VIEW_LIMIT });
+        setDappsViewConfig({ ...DAPPS_VIEW_LIMIT });
       }
     },
-    [isUsingShort, setConfig],
+    [isUsingShort, setDappsViewConfig],
   );
 
   return {
     toggleUseShortConfig,
-    dappsViewConfig,
+    dappsViewConfig: currentDappsViewConfig,
   };
 }
 
@@ -185,13 +251,27 @@ export type DappWebViewHideContext = {
 };
 export function useOpenDappView() {
   const { dapps, addDapp } = useDapps();
-  const [activeDappOrigin, _setActiveDappOrigin] =
-    useAtom(activeDappOriginAtom);
+  const { activeDappOrigin, openedDappRecords, dappsViewConfig } =
+    dappViewStore(
+      useShallow(state => ({
+        activeDappOrigin: state.activeDappOrigin,
+        openedDappRecords: state.openedDappRecords,
+        dappsViewConfig: state.dappsViewConfig,
+      })),
+    );
 
   const { activate, inactivate } = useDappLastUsedAccount();
 
   // const openingActiveDappRef = useRef<boolean>(false);
   const { stateRef: openingActiveDappRef } = useRefState<any>(false);
+
+  const _setActiveDappOrigin = useCallback(
+    (origin: DappInfo['origin'] | null) => {
+      setDappViewState(prev => ({ ...prev, activeDappOrigin: origin }));
+    },
+    [],
+  );
+
   const setActiveDappOrigin = useCallback(
     (origin: DappInfo['origin'] | null) => {
       globalSetActiveDappState({ dappOrigin: origin });
@@ -204,12 +284,42 @@ export function useOpenDappView() {
 
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
 
-  const { dappsViewConfig } = useDappsViewConfig();
+  const _setOpenedOriginsDapps = useCallback(
+    (
+      valueOrFunc:
+        | OpenedDappItem[]
+        | ((prev: OpenedDappItem[]) => OpenedDappItem[]),
+    ) => {
+      setDappViewState(prev => {
+        const nextVal =
+          typeof valueOrFunc === 'function'
+            ? valueOrFunc(prev.openedDappRecords)
+            : valueOrFunc;
+        let filteredVal = [...nextVal];
 
-  // TODO: how about opened non-dapp urls?
-  const [openedDappRecords, _setOpenedOriginsDapps] = useAtom(
-    openedDappRecordsAtom,
+        if (filteredVal.length > prev.dappsViewConfig.maxCount) {
+          // sort desc by openTime
+          filteredVal.sort((a, b) => b.openTime - a.openTime);
+        }
+
+        // trim all dapps expired
+        filteredVal = filteredVal.filter(
+          item =>
+            Date.now() - item.openTime <= prev.dappsViewConfig.expireDuration,
+        );
+
+        return {
+          ...prev,
+          openedDappRecords: filteredVal.slice(
+            0,
+            prev.dappsViewConfig.maxCount,
+          ),
+        };
+      });
+    },
+    [],
   );
+
   const setOpenedOriginsDapps = useCallback<typeof _setOpenedOriginsDapps>(
     valueOrFunc => {
       let nextVal =
@@ -512,14 +622,19 @@ export function useOpenDappView() {
   };
 }
 
-const openedNonDappOriginAtom = atom<string | null>(null);
 /**
  * @deprecated
  */
 export function useOpenUrlView() {
-  const [openedNonDappOrigin, setOpenedNonDappOrigin] = useAtom(
-    openedNonDappOriginAtom,
+  const { openedNonDappOrigin } = dappViewStore(
+    useShallow(state => ({
+      openedNonDappOrigin: state.openedNonDappOrigin,
+    })),
   );
+
+  const setOpenedNonDappOrigin = useCallback((url: string | null) => {
+    setDappViewState(prev => ({ ...prev, openedNonDappOrigin: url }));
+  }, []);
 
   const setOpenedUrl = useCallback(
     (url: string) => {

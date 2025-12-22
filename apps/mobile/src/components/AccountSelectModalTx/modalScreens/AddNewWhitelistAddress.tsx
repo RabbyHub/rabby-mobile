@@ -43,7 +43,6 @@ import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { setCexId } from '@/utils/addressCexId';
-import { useAtom } from 'jotai';
 import { toast } from '@/components2024/Toast';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { ellipsisAddress } from '@/utils/address';

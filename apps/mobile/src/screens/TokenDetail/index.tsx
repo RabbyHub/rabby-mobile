@@ -28,7 +28,7 @@ import { formatPrice } from '@/utils/number';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenDetailHistoryList } from './components/HistoryList';
-import { isFromBackAtom } from '../Swap/hooks/atom';
+import { setIsFromBack } from '../Swap/hooks/atom';
 import BalanceOverview from './components/BalanceOverview';
 import { useSingleTokenBalance } from './hook';
 import { RootNames } from '@/constant/layout';
@@ -76,7 +76,6 @@ const TokenDetailContent = () => {
   });
   const { t } = useTranslation();
 
-  const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffBottom } = useSafeSizes();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -186,7 +185,7 @@ const TokenDetailContent = () => {
         // 页面失焦（返回/左滑/点击返回按钮）时统一副作用
         setIsFromBack(true);
       };
-    }, [setIsFromBack]),
+    }, []),
   );
 
   React.useEffect(() => {

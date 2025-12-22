@@ -100,8 +100,7 @@ import {
   getLatestNavigationName,
   navigateDeprecated,
 } from '@/utils/navigation';
-import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
-import { useAtom } from 'jotai';
+import { useIsFromBack } from '@/screens/Swap/hooks/atom';
 import {
   useAnimatedGestureHandler,
   runOnJS,
@@ -316,7 +315,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
   ) => {
     const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
       useSheetModal();
-    const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
+    const { isFromBack, setIsFromBack } = useIsFromBack();
     const { list: cexList } = useCexSupportList();
 
     useImperativeHandle(ref, () => {

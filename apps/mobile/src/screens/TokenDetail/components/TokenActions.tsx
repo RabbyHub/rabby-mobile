@@ -12,9 +12,7 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { findChain, findChainByServerID, getChain } from '@/utils/chain';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
-import { useSetAtom } from 'jotai';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { setIsFromBack } from '@/screens/Swap/hooks/atom';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -38,7 +36,6 @@ const TokenActions = ({
 }: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const setIsFromBack = useSetAtom(isFromBackAtom);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const navigation = useNavigation<HomeProps['navigation']>();
 
@@ -161,7 +158,6 @@ const TokenActions = ({
       isFromSwap,
       isSingleAddress,
       navigation,
-      setIsFromBack,
       switchSceneCurrentAccount,
       t,
       token?._tokenId,

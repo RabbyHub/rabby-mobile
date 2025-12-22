@@ -1,5 +1,12 @@
 import { preferenceService } from '@/core/services';
-import { atom, useAtom } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { useShallow } from 'zustand/react/shallow';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { useCallback } from 'react';
 
 export const BALANCE_HIDE_TYPE = {
   HIDE: 'HIDE',
@@ -10,33 +17,58 @@ export const BALANCE_HIDE_TYPE = {
 export type BALANCE_HIDE_TYPE =
   (typeof BALANCE_HIDE_TYPE)[keyof typeof BALANCE_HIDE_TYPE];
 
-const baseHideTypeAtom = atom<BALANCE_HIDE_TYPE>(BALANCE_HIDE_TYPE.SHOW);
-
-baseHideTypeAtom.onMount = setAtom => {
-  const hideType =
-    preferenceService.getPreference('balanceHideType') ||
-    BALANCE_HIDE_TYPE.SHOW;
-  setAtom(hideType);
+type HideBalanceState = {
+  hideType: BALANCE_HIDE_TYPE;
 };
 
-const hideTypeAtom = atom<
-  BALANCE_HIDE_TYPE,
-  [((v: BALANCE_HIDE_TYPE) => BALANCE_HIDE_TYPE) | BALANCE_HIDE_TYPE],
-  void
->(
-  get => {
-    return get(baseHideTypeAtom);
-  },
-  (get, set, update) => {
-    const nextValue =
-      typeof update === 'function' ? update(get(baseHideTypeAtom)) : update;
-    set(baseHideTypeAtom, nextValue);
-    preferenceService.setPreference({
-      balanceHideType: nextValue,
-    });
-  },
-);
+const hideBalanceStore = zCreate<HideBalanceState>(() => {
+  return {
+    hideType: BALANCE_HIDE_TYPE.SHOW,
+  };
+});
+
+function setHideBalanceState(valOrFunc: UpdaterOrPartials<HideBalanceState>) {
+  hideBalanceStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    // Save to preference service
+    if (newVal.hideType) {
+      preferenceService.setPreference({
+        balanceHideType: newVal.hideType,
+      });
+    }
+    return newVal;
+  });
+}
+
+export function initializeHideBalanceState() {
+  runIIFEFunc(() => {
+    const hideType =
+      preferenceService.getPreference('balanceHideType') ||
+      BALANCE_HIDE_TYPE.SHOW;
+    setHideBalanceState({ hideType });
+  });
+}
 
 export const useHideBalance = () => {
-  return useAtom(hideTypeAtom);
+  const hideType = hideBalanceStore(useShallow(state => state.hideType));
+
+  const setHideType = useCallback(
+    (
+      update: ((v: BALANCE_HIDE_TYPE) => BALANCE_HIDE_TYPE) | BALANCE_HIDE_TYPE,
+    ) => {
+      setHideBalanceState(prev => {
+        const currentHideType = prev.hideType;
+        const nextValue =
+          typeof update === 'function'
+            ? (update as (v: BALANCE_HIDE_TYPE) => BALANCE_HIDE_TYPE)(
+                currentHideType,
+              )
+            : update;
+        return { ...prev, hideType: nextValue };
+      });
+    },
+    [],
+  );
+
+  return [hideType, setHideType] as const;
 };

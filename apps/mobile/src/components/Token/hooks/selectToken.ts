@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { atom, SetStateAction, useAtom } from 'jotai';
 import * as Sentry from '@sentry/react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 

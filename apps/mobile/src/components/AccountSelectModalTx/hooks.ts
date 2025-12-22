@@ -5,12 +5,11 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { Alert } from 'react-native';
 import { contactService } from '@/core/services';
 import { devLog } from '@/utils/logger';
-import { throttle } from 'lodash';
 import type { HistoryLocalDetailParams } from '@/screens/TransactionRecord/components/TransactionItem2025';
-import { atomByMMKV } from '@/core/storage/mmkv';
-import { useAtom } from 'jotai';
 import { Account } from '@/core/services/preference';
 import EventEmitter from 'events';
+import { zustandByMMKV } from '@/core/storage/mmkv';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 function getNoop() {
   return () => {
@@ -126,7 +125,7 @@ export const useAlertAddress = (address: string, onConfirm: () => void) => {
   }, [address, isAddrOnWhitelist, onConfirm, t]);
 };
 
-const newlyAddedWhitelistAtom = atomByMMKV<
+const newlyAddedWhitelistState = zustandByMMKV<
   Record<
     string,
     {
@@ -135,20 +134,24 @@ const newlyAddedWhitelistAtom = atomByMMKV<
   >
 >('@newlyAddedWhitelist', {});
 
-export function useRecordWhitelistAddTime() {
-  const [newlyAddedWhitelist, setNewlyAddedWhitelist] = useAtom(
-    newlyAddedWhitelistAtom,
-  );
+function setNewlyAddedWhitelist(
+  valOrFunc: UpdaterOrPartials<Record<string, { addTime: number }>>,
+) {
+  newlyAddedWhitelistState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
+  });
+}
 
-  const recordAddTime = React.useCallback(
-    (address: string) => {
-      setNewlyAddedWhitelist(prev => ({
-        ...prev,
-        [address]: { addTime: Date.now() },
-      }));
-    },
-    [setNewlyAddedWhitelist],
-  );
+export function useRecordWhitelistAddTime() {
+  const newlyAddedWhitelist = newlyAddedWhitelistState();
+
+  const recordAddTime = React.useCallback((address: string) => {
+    setNewlyAddedWhitelist(prev => ({
+      ...prev,
+      [address]: { addTime: Date.now() },
+    }));
+  }, []);
 
   return {
     recordAddTime,
@@ -159,7 +162,7 @@ export function useRecordWhitelistAddTime() {
 export function useSortWhitelistByAddTime<
   T extends string | { address: string },
 >(whitelist: T[]) {
-  const [newlyAddedWhitelist] = useAtom(newlyAddedWhitelistAtom);
+  const newlyAddedWhitelist = newlyAddedWhitelistState();
 
   const sortedList = React.useMemo(() => {
     return [...whitelist].sort((a, b) => {

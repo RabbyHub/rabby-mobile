@@ -22,7 +22,7 @@ import RcIconReceiveCC from '@/assets2024/singleHome/receive-cc.svg';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { useSetAtom } from 'jotai';
-import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
+import { setIsFromBack } from '@/screens/Swap/hooks/atom';
 import { CHAINS_ENUM } from '@debank/common';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
@@ -47,7 +47,6 @@ export const TokenDetailBottomBtns = ({
   const moreSheetModalRef = React.useRef<BottomSheetModal>(null);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
-  const setIsFromBack = useSetAtom(isFromBackAtom);
 
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);

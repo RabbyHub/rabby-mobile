@@ -40,8 +40,7 @@ import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
 import RcIconWarningCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import { useAtom, useSetAtom } from 'jotai';
-import { isFromBackAtom } from '../Swap/hooks/atom';
+import { setIsFromBack } from '../Swap/hooks/atom';
 import {
   fetchTokenPriceData,
   useSingleTokenBalance,
@@ -59,15 +58,18 @@ import TradingViewCandleChart, {
 } from '@/components2024/TradingViewCandleChart';
 import TimePanel from './components/TimePanel';
 import MarketInfo from './components/MarketInfo';
-import { atomByMMKV } from '@/core/storage/mmkv';
+import { zustandByMMKV } from '@/core/storage/mmkv';
 import ActivityAndHolders from './components/Market/ActivityAndHolders';
 import { scrollEndCallBack } from './components/Market/hooks';
 import { every10sEvent, useEvery10sEvent } from './event';
 
-const currentIntervalAtom = atomByMMKV<CandlePeriod>(
+const currentIntervalState = zustandByMMKV<CandlePeriod>(
   '@tokenDetail.currentInterval',
   CandlePeriod.ONE_MINUTE,
 );
+function setCurrentInterval(val: CandlePeriod) {
+  currentIntervalState.setState(() => val);
+}
 
 const isAndroid = Platform.OS === 'android';
 
@@ -129,7 +131,6 @@ export const TokenMarketInfoScreen = () => {
     getStyle,
   });
 
-  const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
   const { list: accounts } = useAccountInfo();
 
@@ -227,7 +228,7 @@ export const TokenMarketInfoScreen = () => {
         // 页面失焦（返回/左滑/点击返回按钮）时统一副作用
         setIsFromBack(true);
       };
-    }, [setIsFromBack]),
+    }, []),
   );
 
   React.useEffect(() => {
@@ -426,7 +427,8 @@ export const TokenMarketInfoScreen = () => {
 
   const tokenPriceChartRef = React.useRef<TokenChartRef>(null);
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
-  const [currentInterval, setCurrentInterval] = useAtom(currentIntervalAtom);
+
+  const currentInterval = currentIntervalState(s => s);
 
   const [loading, setLoading] = useState(true);
   const handleRefresh = useCallback(() => {
@@ -453,7 +455,7 @@ export const TokenMarketInfoScreen = () => {
         chartWebViewRef.current?.setData(res);
       });
     },
-    [setCurrentInterval, token._tokenId, token.chain],
+    [token._tokenId, token.chain],
   );
   const handleScroll = useCallback(event => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;

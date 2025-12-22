@@ -1,5 +1,4 @@
 import { createRef, useCallback, useMemo, useRef } from 'react';
-import { atom, useAtom, useAtomValue } from 'jotai';
 
 import { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
@@ -30,23 +29,26 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { zCreate } from '@/core/utils/reexports';
 
-const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
-activeDappTabIdAtom.onMount = set => {
-  const listener = (tabId: ActiveDappState['tabId']) => {
-    set(tabId);
-  };
-  activeDappStateEvents.addListener('updated', listener);
+const activeDappTabIdState = zCreate<ActiveDappState['tabId']>(() => null);
+runIIFEFunc(() => {
+  activeDappStateEvents.addListener('updated', tabId => {
+    activeDappTabIdState.setState(tabId);
+  });
+});
 
-  return () => {
-    activeDappStateEvents.removeListener('updated', listener);
-  };
-};
-
-const activeDappOriginAtom = atom<ActiveDappState['dappOrigin']>(null);
+const activeDappOriginState = zCreate<ActiveDappState['dappOrigin']>(
+  () => null,
+);
 export function useOpenedActiveDappState() {
-  const activeDappOrigin = useAtomValue(activeDappOriginAtom);
-  const activeTabId = useAtomValue(activeDappTabIdAtom);
+  const activeDappOrigin = activeDappOriginState(s => s);
+  const activeTabId = activeDappTabIdState(s => s);
 
   return {
     activeDappOrigin,
@@ -71,32 +73,16 @@ export type OpenedDappItem = {
   openTime: number;
   lastOpenWebViewId?: string | null;
 };
-const DAPPS_VIEW_LIMIT = {
-  maxCount: 1,
-  // 30days
-  expireDuration: 3 * 86400 * 1e3,
-};
-const DAPPS_VIEW_LIMIT_SHORT = {
-  maxCount: 1,
-  // 5 mins
-  expireDuration: 5 * 60 * 1e3,
-};
-const dappsViewConfigAtom = atom({
-  maxCount: DAPPS_VIEW_LIMIT.maxCount,
-  expireDuration: isNonPublicProductionEnv
-    ? DAPPS_VIEW_LIMIT_SHORT.expireDuration
-    : DAPPS_VIEW_LIMIT.expireDuration,
-});
-const openedDappWebViewRecordsAtom = atom<OpenedDappItem[]>([]);
-/**
- * @deprecated
- */
-export function useOpenedDappsRecordsOnDEV() {
-  const openedDappRecords = useAtomValue(openedDappWebViewRecordsAtom);
-
-  return {
-    openedDappRecords,
-  };
+const openedDappWebViewRecordsState = zCreate<OpenedDappItem[]>(() => []);
+function setOpenedDappWebViewRecords(
+  valOrFunc: UpdaterOrPartials<OpenedDappItem[]>,
+) {
+  openedDappWebViewRecordsState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
 }
 
 function makeDappWebViewTabId(seed?: string) {
@@ -149,12 +135,11 @@ export type DappWebViewHideContext = {
 };
 export function useDappWebViewScreen() {
   const { dapps, addDapp } = useDapps();
-  const [activeDappOrigin, _setActiveDappOrigin] =
-    useAtom(activeDappOriginAtom);
+  const activeDappOrigin = activeDappOriginState(s => s);
+  const _setActiveDappOrigin = activeDappOriginState.setState;
 
   const { activate, inactivate } = useDappLastUsedAccount();
 
-  // const openingActiveDappRef = useRef<boolean>(false);
   const { stateRef: openingActiveDappRef } = useRefState<any>(false);
   const setActiveDappOrigin = useCallback(
     (origin: DappInfo['origin'] | null) => {
@@ -171,11 +156,8 @@ export function useDappWebViewScreen() {
 
   const { dappsViewConfig } = useDappsViewConfig();
 
-  // TODO: how about opened non-dapp urls?
-  const [openedDappRecords, _setOpenedOriginsDapps] = useAtom(
-    openedDappWebViewRecordsAtom,
-  );
-  const setOpenedOriginsDapps = useCallback<typeof _setOpenedOriginsDapps>(
+  const openedDappRecords = openedDappWebViewRecordsState(s => s);
+  const setOpenedOriginsDapps = useCallback<typeof setOpenedDappWebViewRecords>(
     valueOrFunc => {
       let nextVal =
         typeof valueOrFunc === 'function'
@@ -191,9 +173,9 @@ export function useDappWebViewScreen() {
         item => Date.now() - item.openTime <= dappsViewConfig.expireDuration,
       );
 
-      _setOpenedOriginsDapps(nextVal.slice(0, dappsViewConfig.maxCount));
+      setOpenedDappWebViewRecords(nextVal.slice(0, dappsViewConfig.maxCount));
     },
-    [openedDappRecords, _setOpenedOriginsDapps, dappsViewConfig],
+    [openedDappRecords, dappsViewConfig],
   );
 
   const expandDappWebViewScreen = useCallback(
@@ -475,25 +457,30 @@ export function useDappWebViewScreen() {
   };
 }
 
-const openedNonDappOriginAtom = atom<string | null>(null);
+// const openedNonDappOriginAtom = atom<string | null>(null);
+const openedNonDappOriginState = zCreate<string | null>(() => null);
+function setOpenedNonDappOrigin(valOrFunc: UpdaterOrPartials<string | null>) {
+  openedNonDappOriginState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
 /**
  * @deprecated
  */
 export function useOpenUrlView() {
-  const [openedNonDappOrigin, setOpenedNonDappOrigin] = useAtom(
-    openedNonDappOriginAtom,
-  );
+  const openedNonDappOrigin = openedNonDappOriginState(s => s);
 
-  const setOpenedUrl = useCallback(
-    (url: string) => {
-      setOpenedNonDappOrigin(url);
-    },
-    [setOpenedNonDappOrigin],
-  );
+  const setOpenedUrl = useCallback((url: string) => {
+    setOpenedNonDappOrigin(url);
+  }, []);
 
   const removeOpenedUrl = useCallback(() => {
     setOpenedNonDappOrigin(null);
-  }, [setOpenedNonDappOrigin]);
+  }, []);
 
   return {
     openedNonDappOrigin,

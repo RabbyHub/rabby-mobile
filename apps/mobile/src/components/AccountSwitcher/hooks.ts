@@ -1,4 +1,3 @@
-import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { type AccountSwitcherScene } from '@/hooks/sceneAccountInfoAtom';
@@ -52,10 +51,23 @@ const DefaultStates: {
   '@ActiveDappWebViewModal': makeDefaultState(),
 };
 
-export const screenHeaderAccountSwitcherAtom = atom(DefaultStates);
+const screenHeaderAccountSwitcherState = zCreate<{
+  [key in CustomModalScene]?: AccountSwitcherState;
+}>(() => {
+  return DefaultStates;
+});
+
+function setScenes(valOrFunc: UpdaterOrPartials<typeof DefaultStates>) {
+  screenHeaderAccountSwitcherState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
 
 export function useAccountSceneVisible(forScene?: AccountSwitcherScene) {
-  const [scenes, setScenes] = useAtom(screenHeaderAccountSwitcherAtom);
+  const scenes = screenHeaderAccountSwitcherState(s => s);
 
   const toggleSceneVisible = useCallback(
     (scene: AccountSwitcherScene, nextVisible?: boolean) => {
@@ -70,7 +82,7 @@ export function useAccountSceneVisible(forScene?: AccountSwitcherScene) {
         };
       });
     },
-    [setScenes],
+    [],
   );
 
   const getSceneVisible = useCallback(

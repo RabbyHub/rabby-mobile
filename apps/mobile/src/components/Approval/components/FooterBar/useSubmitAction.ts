@@ -8,10 +8,15 @@ import { useAuthenticationModal } from '@/components/AuthenticationModal/hooks';
 import { isNonPublicProductionEnv } from '@/constant';
 import { apisLock } from '@/core/apis';
 import { unlockTimeEvent, updateUnlockTime } from '@/core/apis/lock';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 import { useBiometrics } from '@/hooks/biometrics';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { usePasswordStatus } from '@/hooks/useLock';
-import { atom, useAtom } from 'jotai';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,12 +24,18 @@ const DEFAULT_VERIFY_INTERVAL = isNonPublicProductionEnv
   ? 1000 * 60 * 1 // 1 minute
   : 1000 * 60 * 10; // 10 minutes
 
-const unlockTimeAtom = atom(0);
-unlockTimeAtom.onMount = setter => {
-  unlockTimeEvent.addListener('updated', value => {
-    setter(value);
+const unlockTimeState = zCreate<number>(() => 0);
+function setUnlockTime(valOrFunc: UpdaterOrPartials<number>) {
+  unlockTimeState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
   });
-};
+}
+runIIFEFunc(() => {
+  unlockTimeEvent.addListener('updated', value => {
+    unlockTimeState.setState(value);
+  });
+});
 
 const RcIconFaceId = makeThemeIconFromCC(
   RcIconKeychainFaceIdCC,
@@ -50,7 +61,7 @@ export const useSubmitAction = ({
   const { computed: bioComputed } = useBiometrics();
   const { isUseCustomPwd } = usePasswordStatus();
 
-  const [unlockTime, setUnlockTime] = useAtom(unlockTimeAtom);
+  const unlockTime = unlockTimeState();
 
   const isInAuthSession = Date.now() - unlockTime < DEFAULT_VERIFY_INTERVAL;
   const isLastUnlockTimeValid = !!useLastUnlockedAuth && isInAuthSession;
@@ -74,7 +85,7 @@ export const useSubmitAction = ({
 
   React.useEffect(() => {
     setUnlockTime(apisLock.getUnlockTime());
-  }, [setUnlockTime]);
+  }, []);
 
   const {
     currentAuthType,
