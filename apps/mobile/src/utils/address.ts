@@ -1,4 +1,5 @@
 export const ellipsis = (text: string, length = 6) => {
+  if (!text) return '';
   const reg = new RegExp(`^(.{${length + 2}})(.*)(.{${length}})$`);
   return text.toString().replace(reg, '$1...$3');
 };

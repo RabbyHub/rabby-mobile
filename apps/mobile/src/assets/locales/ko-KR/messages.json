@@ -1056,7 +1056,6 @@
         "BackupSeedPhrase": "수동으로 Seed Phrase 백업하기",
         "inOrder": "올바른 순서로.",
         "confirmPasswordTips": "비밀번호가 일치합니다.",
-        "WriteSeedPhrase": "이것이 당신의 시드 구문입니다. 그것을 종이에 적고 안전한 장소에 보관하세요. 다음 단계에서 올바른 순서로 다시 입력해야 합니다.",
         "riskTips": "시작하기 전에, 다음 보안 팁을 읽고 꼭 기억하세요:",
         "VerifyDownSeedPhrase": "시드 구문 확인",
         "passwordMin": "최소 8자 이상이어야 합니다.",
@@ -2509,8 +2508,8 @@
         "fee": "수수료:",
         "rabbyFeeTips": "Rabby 수수료: 0.04%",
         "providerFeeTips": "하이퍼리퀴드 수수료: {{fee}}",
-        "receive": "받기:",
-        "closedPnl": "닫힌 PNL:",
+        "receive": "받기",
+        "closedPnl": "닫힌 PNL",
         "amount": "금액",
         "confirm": "확인",
         "minimumWarning": "최소 금액은 {{percent}}%입니다.",
@@ -2598,7 +2597,7 @@
         "amountToReduce": "줄이려는 금액",
         "insufficientMarginToReduce": "포지션을 줄이기에 충분한 마진이 없습니다.",
         "available": "사용 가능",
-        "liqPrice": "청산 가격:",
+        "liqPrice": "청산 가격",
         "liqDistance": "Liq.거리"
       },
       "PerpsAddPositionPopup": {
@@ -2641,9 +2640,7 @@
           "token_tvl": "토큰/TVL",
           "token_balance": "토큰/잔액"
         },
-        "item": {
-          "tvl": "TVL"
-        }
+        "item": {}
       },
       "summary": {
         "empty": {
@@ -2735,11 +2732,9 @@
         "globalIsolatedDesc": "고립 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전 세계 부채 한도가 고립된 자산의 대출 능력을 제한합니다. 다른 자산을 대출하기 전에 UNI를 담보로 사용하지 않도록 설정하여 고립 모드를 종료하십시오.",
         "maxLTV": "최대 LTV 비율은 특정 담보의 최대 대출 능력을 나타냅니다. 예를 들어, 담보의 LTV가 75%인 경우, 사용자는 담보 1 ETH당 0.75 가치의 ETH를 기본 통화로 대출할 수 있습니다."
       },
-      "apy": "APY",
       "borrowed": "빌려진",
       "supplied": "제공됨",
       "netWorth": "순자산",
-      "market": "시장",
       "selectChain": "체인 선택",
       "submitted": "제출됨",
       "gotIt": "알겠습니다",
@@ -2747,9 +2742,7 @@
       "hf": "건강 지수",
       "hfTitle": "건강 지수",
       "enterAmount": "금액 입력",
-      "isolated": "격리된",
       "estNetApy": "추정 순 APY",
-      "marketSlot": "{{market}} 마켓",
       "toggleCollateralDetail": {
         "actions": "토글 {{asset}} 담보",
         "enable": "{{asset}}를 담보로 활성화",
@@ -2781,7 +2774,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "최대 LTV",
             "asset": "자산"
           },
           "desc": "이 카테고리를 활성화하려면 이 카테고리 외부의 모든 차입 포지션을 닫아야 합니다.",
@@ -2794,11 +2786,8 @@
             "borrowable": "대출 가능",
             "asset": "자산"
           },
-          "title": "자산 카테고리",
-          "maxLtv": "최대 LTV",
-          "apy": "APY"
+          "title": "자산 카테고리"
         },
-        "emode": "E-모드",
         "unavailable": "• 사용 불가능",
         "disableTitle": "비활성화",
         "description": "E-모드를 활성화하면 대출 능력을 극대화할 수 있습니다. 그러나 대출은 선택한 카테고리 내의 자산으로 제한됩니다.",

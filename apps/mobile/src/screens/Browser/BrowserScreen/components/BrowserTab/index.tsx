@@ -301,7 +301,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const viewShotRef = useRef<ViewShot | null>(null);
 
     const { entryScriptWeb3Loaded, fullScript } =
-      useJavaScriptBeforeContentLoaded({ isTop: false });
+      useJavaScriptBeforeContentLoaded();
 
     const { onLoadStart, onMessage: onWebViewMessage } = useSetupWebview({
       dappOrigin: origin,

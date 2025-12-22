@@ -202,9 +202,7 @@ const BorrowPoolList = () => {
             <Text style={styles.headerToken}>
               {t('page.Lending.list.headers.token_balance')}
             </Text>
-            <Text style={styles.headerApy}>
-              {t('page.Lending.list.headers.apy')}
-            </Text>
+            <Text style={styles.headerApy}>{t('page.Lending.apy')}</Text>
             <Text style={styles.headerMyBorrows}>
               {t('page.Lending.list.headers.myBorrows')}
             </Text>

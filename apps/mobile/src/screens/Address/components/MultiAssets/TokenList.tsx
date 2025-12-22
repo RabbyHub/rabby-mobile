@@ -44,7 +44,11 @@ import {
   useIsFocusedCurrentTab,
 } from './hooks/share';
 import { useAssetsTokens, useOnTokenRefresh } from '@/screens/Home/hooks/store';
-import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
+import {
+  useSelectedChainItem,
+  useTop3Chains,
+} from '@/screens/Home/useChainInfo';
+import { MultiEmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/MultiEmptyToken';
 
 const MemoizedTokenRow = React.memo(TokenRow);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -93,6 +97,8 @@ export const TokenList = () => {
   const { tokens: _rawTokens } = useAssetsTokens({
     hideCombined: false,
   });
+
+  // const top3Chains = useTop3Chains();
 
   const tokens = useMemo(() => {
     return _rawTokens?.filter(item =>
@@ -203,7 +209,7 @@ export const TokenList = () => {
         show: !isLoading && !tokens.length,
         data: [
           {
-            type: 'empty-token',
+            type: 'empty-assets',
             data: t('page.singleHome.sectionHeader.NoData', {
               name: t('page.singleHome.sectionHeader.Token'),
             }),
@@ -229,9 +235,7 @@ export const TokenList = () => {
     t,
   ]);
 
-  const hasNotAssets = useMemo(() => {
-    return tokens.length === 0 && !isLoading && isFocused;
-  }, [tokens.length, isLoading, isFocused]);
+  const hasNoAssets = tokens.length === 0 && !isLoading && isFocused;
 
   const handleOpenTokenDetail = useCallback(
     (token: AbstractPortfolioToken, account?: KeyringAccountWithAlias) => {
@@ -341,10 +345,11 @@ export const TokenList = () => {
               onPressFold={handleToggleTokenFold}
             />
           );
-        case 'empty-assets':
         case 'loading-skeleton':
           return <MemoizedItemLoader style={styles.loadingItem} />;
         case 'empty-token':
+          return <MultiEmptyTokenRow style={{ paddingHorizontal: 0 }} />;
+        case 'empty-assets':
           return (
             <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
           );
@@ -387,13 +392,10 @@ export const TokenList = () => {
     <Tabs.FlatList
       keyExtractor={getItemId}
       data={
-        hasNotAssets
+        hasNoAssets
           ? [
               {
                 type: 'empty-token',
-                data: t('page.singleHome.sectionHeader.NoData', {
-                  name: t('page.singleHome.sectionHeader.Token'),
-                }),
               },
             ]
           : portfolioListData

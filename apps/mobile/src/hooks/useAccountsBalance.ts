@@ -9,8 +9,9 @@ import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
+import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 
-export interface balanceAccountType {
+export interface BalanceAccountType {
   address: string;
   balance: number;
   evmBalance: number;
@@ -29,8 +30,8 @@ const waitQueueFinished = (q: PQueue) => {
 };
 
 type BalanceState = {
-  balance: balanceAccountType[];
-  balanceCache: balanceAccountType[];
+  balance: BalanceAccountType[];
+  balanceCache: BalanceAccountType[];
   length: number;
 };
 const balanceStore = zCreate<BalanceState>(() => ({
@@ -50,7 +51,7 @@ export function useBalanceAccounts() {
 }
 
 function setBalanceAccounts(
-  valOrFunc: UpdaterOrPartials<balanceAccountType[]>,
+  valOrFunc: UpdaterOrPartials<BalanceAccountType[]>,
 ) {
   balanceStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(prev.balance, valOrFunc, {
@@ -68,7 +69,7 @@ function setBalanceAccounts(
 }
 
 function setBalanceCacheAccounts(
-  valOrFunc: UpdaterOrPartials<balanceAccountType[]>,
+  valOrFunc: UpdaterOrPartials<BalanceAccountType[]>,
 ) {
   balanceStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(
@@ -105,9 +106,9 @@ function setLoading(valOrFunc: UpdaterOrPartials<BalanceLoadingState>) {
     return { ...prev, ...newVal };
   });
 }
-function getBalanceLoading() {
-  return balanceLoadingStore.getState().balanceLoading;
-}
+// function getBalanceLoading() {
+//   return balanceLoadingStore.getState().balanceLoading;
+// }
 
 export function useLoadBalanceFromApiStage() {
   const loadBalanceFromApiStage = balanceLoadingStore(
@@ -119,7 +120,7 @@ export function useLoadBalanceFromApiStage() {
 
 function computeTotalBalance(
   addresses: string[],
-  balanceAccounts: balanceAccountType[],
+  balanceAccounts: BalanceAccountType[],
 ) {
   let total = 0;
   let totalEvm = 0;
@@ -146,120 +147,118 @@ export const apisAccountsBalance = {
   getLatestTotalBalance,
 };
 
-export const fetchTotalBalance = async (
-  fetchType: 'from_cache' | 'from_api',
-  options?: {
-    accountsNoUnique?: boolean;
-  },
-) => {
-  const retBalancesArr = [] as balanceAccountType[];
-  try {
-    if (getBalanceLoading()) {
-      console.log('fetchTotalBalance loading return');
-      return;
-    }
-    setLoading(prev => ({ ...prev, balanceLoading: true }));
-    // batch update
+export const fetchTotalBalance = makeSWRKeyAsyncFunc(
+  async (fetchType: 'from_cache' | 'from_api') => {
+    const retBalancesArr = [] as BalanceAccountType[];
+    try {
+      // if (getBalanceLoading()) {
+      //   console.log('fetchTotalBalance loading return');
+      //   // return;
+      // }
+      setLoading(prev => ({ ...prev, balanceLoading: true }));
+      // batch update
 
-    const list = await keyringService.getAllVisibleAccountsArray();
+      const list = await keyringService.getAllVisibleAccountsArray();
 
-    const formatList = list.filter(
-      a =>
-        a.type !== KEYRING_CLASS.WATCH &&
-        a.type !== KEYRING_CLASS.GNOSIS &&
-        a.type !== KEYRING_CLASS.WALLETCONNECT,
-    );
-    // .map(a => a.address.toLowerCase());
+      const formatList = list.filter(
+        a =>
+          a.type !== KEYRING_CLASS.WATCH &&
+          a.type !== KEYRING_CLASS.GNOSIS &&
+          a.type !== KEYRING_CLASS.WALLETCONNECT,
+      );
+      // .map(a => a.address.toLowerCase());
 
-    setAccountsLength(formatList.length);
+      setAccountsLength(formatList.length);
 
-    const { accountsNoUnique = true } = options || {};
-    const uniqueList = accountsNoUnique
-      ? unionBy(formatList, account => account.address.toLowerCase())
-      : formatList;
+      const uniqueList = unionBy(formatList, account =>
+        account.address.toLowerCase(),
+      );
 
-    // deault first get from cache store
-    uniqueList.map(({ address, type, brandName }) => {
-      const account = address.toLowerCase();
-      const cacheData = preferenceService.getAddressBalance(account);
-      if (uniqueList.find(o => isSameAddress(o.address, account))) {
-        retBalancesArr.push({
-          address: account,
-          balance: cacheData?.total_usd_value || 0,
-          evmBalance: cacheData?.evm_usd_value || 0,
-          type,
-          brandName,
-        });
-      }
-    });
-    setBalanceCacheAccounts(retBalancesArr);
-    setBalanceAccounts(retBalancesArr);
-
-    if (fetchType === 'from_api') {
-      setLoading(prev => ({ ...prev, loadBalanceFromApiStage: 'loading' }));
-      const queueBalanceArr = [] as balanceAccountType[];
-      // get from server api by queue
-      const queue = new PQueue({
-        interval: 2000,
-        intervalCap: 10,
-      });
-      for (let i = 0; i < uniqueList.length; i++) {
-        if (uniqueList[i]) continue;
-        const { type, address, brandName } = uniqueList[i]!;
+      // deault first get from cache store
+      uniqueList.map(({ address, type, brandName }) => {
         const account = address.toLowerCase();
-        // batch fetch by queue
-        queue.add(async () => {
-          try {
-            const resData = await apiBalance.getAddressBalance(account, {
-              force: true,
-            });
-            if (uniqueList.find(o => isSameAddress(o.address, account))) {
-              queueBalanceArr.push({
-                address: account,
-                balance: resData?.total_usd_value || 0,
-                evmBalance: resData?.evm_usd_value || 0,
-                type,
-                brandName,
-              });
-            }
-          } catch (e) {
-            console.log('fetchTotalBalance  error', e);
-            // api fetch error fallback get from cache store
-            const cacheData = preferenceService.getAddressBalance(account);
-            if (uniqueList.find(o => isSameAddress(o.address, account))) {
-              queueBalanceArr.push({
-                address: account,
-                balance: cacheData?.total_usd_value || 0,
-                evmBalance: cacheData?.evm_usd_value || 0,
-                type,
-                brandName,
-              });
-            }
-          }
+        const cacheData = preferenceService.getAddressBalance(account);
+        if (uniqueList.find(o => isSameAddress(o.address, account))) {
+          retBalancesArr.push({
+            address: account,
+            balance: cacheData?.total_usd_value || 0,
+            evmBalance: cacheData?.evm_usd_value || 0,
+            type,
+            brandName,
+          });
+        }
+      });
+      setBalanceCacheAccounts(retBalancesArr);
+      setBalanceAccounts(retBalancesArr);
+
+      if (fetchType === 'from_api') {
+        setLoading(prev => ({ ...prev, loadBalanceFromApiStage: 'loading' }));
+        const queueBalanceArr = [] as BalanceAccountType[];
+        // get from server api by queue
+        const queue = new PQueue({
+          interval: 2000,
+          intervalCap: 10,
         });
+        for (let i = 0; i < uniqueList.length; i++) {
+          if (!uniqueList[i]) continue;
+          const { type, address, brandName } = uniqueList[i]!;
+          const account = address.toLowerCase();
+          // batch fetch by queue
+          queue.add(async () => {
+            try {
+              const resData = await apiBalance.getAddressBalance(account, {
+                force: true,
+              });
+              if (uniqueList.find(o => isSameAddress(o.address, account))) {
+                queueBalanceArr.push({
+                  address: account,
+                  balance: resData?.total_usd_value || 0,
+                  evmBalance: resData?.evm_usd_value || 0,
+                  type,
+                  brandName,
+                });
+              }
+            } catch (e) {
+              console.log('fetchTotalBalance  error', e);
+              // api fetch error fallback get from cache store
+              const cacheData = preferenceService.getAddressBalance(account);
+              if (uniqueList.find(o => isSameAddress(o.address, account))) {
+                queueBalanceArr.push({
+                  address: account,
+                  balance: cacheData?.total_usd_value || 0,
+                  evmBalance: cacheData?.evm_usd_value || 0,
+                  type,
+                  brandName,
+                });
+              }
+            }
+          });
+        }
+        await waitQueueFinished(queue);
+        setBalanceAccounts(queueBalanceArr);
+        setLoading(prev => ({
+          ...prev,
+          loadBalanceFromApiStage: 'finished',
+        }));
       }
-      await waitQueueFinished(queue);
-      setBalanceAccounts(queueBalanceArr);
+    } catch (e) {
+      console.error('fetchTotalBalance  error', e);
+    } finally {
       setLoading(prev => ({
         ...prev,
-        loadBalanceFromApiStage: 'finished',
+        balanceLoading: false,
+        loadBalanceFromApiStage: 'idle',
       }));
     }
-  } catch (e) {
-    console.error('fetchTotalBalance  error', e);
-  } finally {
-    setLoading(prev => ({
-      ...prev,
-      balanceLoading: false,
-      loadBalanceFromApiStage: 'idle',
-    }));
-  }
 
-  return retBalancesArr;
-};
+    return retBalancesArr;
+  },
+  ctx => {
+    return `fetchTotalBalance-${ctx.args[0]}`;
+  },
+);
 
 const CACHE_TIME = HOME_REFRESH_INTERVAL; // 10 minutes
-const accountsNoUnique = true;
 export type LoadBalanceStage = 'idle' | 'loading' | 'finished';
 export function useAccountsBalanceTrigger() {
   const lastTimeStamps = useRef<number>(0);
@@ -287,10 +286,7 @@ export function useAccountsBalanceTrigger() {
       if (forceFromApi) {
         lastTimeStamps.current = Date.now();
       }
-      return fetchTotalBalance(
-        isForceFetchFromApi ? 'from_api' : 'from_cache',
-        { accountsNoUnique },
-      );
+      return fetchTotalBalance(isForceFetchFromApi ? 'from_api' : 'from_cache');
     },
     [isNeedFetchData],
   );

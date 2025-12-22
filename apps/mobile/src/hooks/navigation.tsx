@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Alert, StyleSheet } from 'react-native';
-import { merge } from 'lodash';
+import { get, merge } from 'lodash';
 
 import {
   NativeStackNavigationOptions,
@@ -18,11 +18,7 @@ import {
 } from '@react-navigation/native';
 
 import type { RootStackParamsList } from '@/navigation-type';
-import {
-  useIOSScreenRecording,
-  useIOSScreenshotted,
-  usePreventScreenshot,
-} from './native/security';
+import { setIOSScreenCapture } from './native/security';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
 import { IS_IOS } from '@/core/native/utils';
@@ -30,13 +26,14 @@ import {
   atSensitiveSceneState,
   bottomSheetModalSecurityApis,
 } from '@/components2024/GlobalBottomSheetModal/security';
-import { useExpScreenCapture } from './appSettings';
+import { getExpScreenCapture, useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
+import { useShallow } from 'zustand/react/shallow';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -297,7 +294,7 @@ export const apisHomeTabIndex = {
 
 export function resetNavigationTo(
   navigation: NavigationInstance,
-  type: 'Home' | 'Unlock' | 'GetStarted2024' = 'Home',
+  type: 'Home' | 'Unlock' | 'GetStartedScreen2024' = 'Home',
 ) {
   switch (type) {
     default:
@@ -330,7 +327,7 @@ export function resetNavigationTo(
 
       break;
     }
-    case 'GetStarted2024': {
+    case 'GetStartedScreen2024': {
       navigation.reset({
         index: 0,
         routes: [
@@ -453,7 +450,6 @@ const PROTECTED_SCREENS: {
   [RootNames.ImportPrivateKey2024]: getProtectedConf(),
   [RootNames.CreateMnemonicBackup]: getProtectedConf(),
   [RootNames.CreateMnemonicVerify]: getProtectedConf(),
-  [RootNames.BackupMnemonic]: getProtectedConf(),
   [RootNames.BackupPrivateKey]: getProtectedConf(),
 };
 
@@ -524,10 +520,12 @@ atSensitiveSceneState.subscribe(s => {
 });
 
 export function useAtSensitiveScene() {
-  const srnInfo = atSensitiveScreenStore(s => s.screenInfo);
-  const anySensitiveModalOpened = atSensitiveScreenStore(
-    s => s.anySensitiveModalOpened,
-  );
+  return atSensitiveScreenStore(useShallow(s => getAtSensitiveScene(s)));
+}
+
+export function getAtSensitiveScene(s = atSensitiveScreenStore.getState()) {
+  const srnInfo = s.screenInfo;
+  const anySensitiveModalOpened = s.anySensitiveModalOpened;
 
   return {
     anySensitiveModalOpened,
@@ -538,35 +536,50 @@ export function useAtSensitiveScene() {
   };
 }
 
-/**
- * @description call this hook only once on the top level of your app
- */
-export function useAppPreventScreenshotOnScreen({
-  isTop = false,
-}: {
-  isTop?: boolean;
-}) {
-  const { atSensitiveScene, iosBlurType } = useAtSensitiveScene();
-  const { forceAllowScreenshot } = useExpScreenCapture();
-  const shouldPreventScreenCapturing =
-    atSensitiveScene && !forceAllowScreenshot;
+export function startSubscribeAtSensitiveScene() {
+  atSensitiveScreenStore.subscribe(s => {
+    const shouldPreventScreenCapturing =
+      getAtSensitiveScene(s).atSensitiveScene &&
+      !getExpScreenCapture().forceAllowScreenshot;
 
-  usePreventScreenshot(shouldPreventScreenCapturing, { isTop });
+    perfEvents.emit('CHANGE_PREVENT_SCREENSHOT', shouldPreventScreenCapturing);
+  });
+}
 
-  const { isBeingCaptured } = useIOSScreenRecording({ isTop });
-  useIOSScreenshotted({ isTop });
+export function startSubscribeIOSJustScreenshotted() {
+  const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(() => {
+    const setScreenshotted = (val?: boolean) =>
+      setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: !!val }));
 
-  // protect from screen recording
-  useEffect(() => {
-    if (!isTop) return;
+    setScreenshotted(getAtSensitiveScene().warningScreenshotBackup);
+  });
 
-    if (!IS_IOS) return;
-    if (iosBlurType === ProtectType.SafeTipModal) return;
+  return subscription;
+}
 
-    if (isBeingCaptured && shouldPreventScreenCapturing) {
+export function startSubscribeIOSScreenRecording() {
+  if (!IS_IOS && !__DEV__) return;
+
+  const subscription = RNScreenshotPrevent.iosOnScreenCaptureChanged(ctx => {
+    setIOSScreenCapture(prev => ({
+      ...prev,
+      isBeingCaptured: ctx.isBeingCaptured,
+    }));
+
+    if (!IS_IOS && !__DEV__) return;
+    const atSensitiveInfo = getAtSensitiveScene();
+    if (atSensitiveInfo.iosBlurType === ProtectType.SafeTipModal) return;
+
+    const forceAllowScreenshot = getExpScreenCapture().forceAllowScreenshot;
+    const shouldPreventScreenCapturing =
+      atSensitiveInfo.atSensitiveScene && !forceAllowScreenshot;
+
+    if (ctx.isBeingCaptured && shouldPreventScreenCapturing) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();
     } else {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
-  }, [isTop, iosBlurType, isBeingCaptured, shouldPreventScreenCapturing]);
+  });
+
+  return subscription;
 }

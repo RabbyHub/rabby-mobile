@@ -9,6 +9,7 @@ import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddr
 import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
 import { ButtonProps } from '../Button';
 import { OpenDetailProps, PopupDetailProps } from '@/screens/Lending/type';
+import { type SeedPhraseQrCodeProps } from '../AddressDetail/SeedPhraseQrCode';
 
 export enum MODAL_NAMES {
   // 'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
@@ -81,6 +82,9 @@ export enum MODAL_NAMES {
   'SELECT_EMODE_CATEGORY' = 'SELECT_EMODE_CATEGORY',
   'LENDING_SUPPLY_LIST' = 'LENDING_SUPPLY_LIST',
   'LENDING_BORROW_LIST' = 'LENDING_BORROW_LIST',
+  'DEBT_TOKEN_SELECT' = 'DEBT_TOKEN_SELECT',
+  'DEBT_SWAP' = 'DEBT_SWAP',
+  'SEED_PHRASE_QR_CODE' = 'SEED_PHRASE_QR_CODE',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -137,7 +141,13 @@ export type MODAL_CREATE_PARAMS = {
   };
   [MODAL_NAMES.MANAGE_EMODE]: {};
   [MODAL_NAMES.DISABLE_EMODE_OVERVIEW]: {};
+  [MODAL_NAMES.DEBT_TOKEN_SELECT]: {};
   [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {};
+  [MODAL_NAMES.DEBT_SWAP]: {
+    fromToken: import('@/screens/Lending/types/swap').SwappableToken;
+    onClose?: () => void;
+  };
+  [MODAL_NAMES.SEED_PHRASE_QR_CODE]: SeedPhraseQrCodeProps;
 };
 
 export type MODAL_ID = `${MODAL_NAMES}_${string}`;
@@ -165,6 +175,10 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
    * @description specify whether preventing screenshot on modal open
    */
   preventScreenshotOnModalOpen?: boolean;
+  /**
+   * @description specify whether to disable screenshot report before modal close
+   */
+  screenshotReportFreeBeforeModalClose?: boolean;
   [key: string]: any;
 } & (T extends keyof MODAL_CREATE_PARAMS ? MODAL_CREATE_PARAMS[T] : {});
 

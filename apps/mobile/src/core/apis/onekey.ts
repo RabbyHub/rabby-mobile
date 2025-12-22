@@ -43,24 +43,22 @@ export function useOneKeyDevices() {
   };
 }
 
-export const useGlobalInitOneKey = () => {
-  React.useEffect(() => {
-    HardwareBleSdk.on(DEVICE.CONNECT, payload => {
-      setDevices(prev => {
-        if (prev.find(d => d.connectId === payload?.device?.connectId)) {
-          return prev;
-        }
-        return [...prev, payload?.device];
-      });
+export function startSubscribeOnekeyDevices() {
+  HardwareBleSdk.on(DEVICE.CONNECT, payload => {
+    setDevices(prev => {
+      if (prev.find(d => d.connectId === payload?.device?.connectId)) {
+        return prev;
+      }
+      return [...prev, payload?.device];
     });
-    HardwareBleSdk.on(DEVICE.DISCONNECT, payload => {
-      cleanUp();
-      setDevices(prev =>
-        prev.filter(d => d.connectId !== payload?.device?.connectId),
-      );
-    });
-  }, []);
-};
+  });
+  HardwareBleSdk.on(DEVICE.DISCONNECT, payload => {
+    cleanUp();
+    setDevices(prev =>
+      prev.filter(d => d.connectId !== payload?.device?.connectId),
+    );
+  });
+}
 
 export async function initOneKeyKeyring() {
   return getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring, keyring => {

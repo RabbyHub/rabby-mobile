@@ -120,6 +120,12 @@ class SignatureManager {
     return !!gasCost?.gt(limit);
   }
 
+  private isPreExecResultFailed() {
+    return this?.state.ctx?.txsCalc.some(
+      r => !r?.preExecResult?.pre_exec?.success,
+    );
+  }
+
   private clearRunState() {
     this.run = null;
     this.pendingCtx.clear();
@@ -538,6 +544,12 @@ class SignatureManager {
         this.pendingCtx.get(fingerprint) ||
         this.ensureContext(request, this.run?.id);
       await prepared;
+
+      if (this.isPreExecResultFailed()) {
+        this.rejectPending(MINI_SIGN_ERROR.PREFETCH_FAILURE);
+        return resultPromise;
+      }
+
       if (this.isGasFeeTooHighFor(this.state.ctx, this.state.config)) {
         this.rejectPending(MINI_SIGN_ERROR.GAS_FEE_TOO_HIGH);
         return resultPromise;
