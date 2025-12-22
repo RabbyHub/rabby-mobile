@@ -3,36 +3,118 @@ import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
-import { atom, useAtom } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 export type CommonPopupComponentName = keyof typeof MODAL_NAMES;
 
-const titleAtom = atom<React.ReactNode>('Sign');
-const heightAtom = atom<number>(360);
-const accountAtom = atom<
-  | {
-      address: string;
-      brandName: string;
-      realBrandName?: string;
-      chainId?: number;
-    }
-  | undefined
->(undefined);
-const dataAtom = atom<any>(undefined);
-const visibleAtom = atom<boolean>(false);
-const componentNameAtom = atom<CommonPopupComponentName | undefined | false>(
-  false,
-);
-const idAtom = atom<string | undefined>(undefined);
+type CommonPopupViewState = {
+  title: React.ReactNode;
+  height: number;
+  account:
+    | {
+        address: string;
+        brandName: string;
+        realBrandName?: string;
+        chainId?: number;
+      }
+    | undefined;
+  data: any;
+  visible: boolean;
+  componentName: CommonPopupComponentName | undefined | false;
+  id: string | undefined;
+};
+
+const commonPopupViewStore = zCreate<CommonPopupViewState>(() => ({
+  title: 'Sign',
+  height: 360,
+  account: undefined,
+  data: undefined,
+  visible: false,
+  componentName: false,
+  id: undefined,
+}));
+
+function setCommonPopupViewState(
+  valOrFunc: UpdaterOrPartials<CommonPopupViewState>,
+) {
+  commonPopupViewStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
+const setComponentName = (
+  valOrFunc: UpdaterOrPartials<CommonPopupComponentName | undefined | false>,
+) => {
+  setCommonPopupViewState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.componentName, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, componentName: newVal };
+  });
+};
+
+const setVisible = (valOrFunc: UpdaterOrPartials<boolean>) => {
+  setCommonPopupViewState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.visible, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, visible: newVal };
+  });
+};
+
+const setTitle = (valOrFunc: UpdaterOrPartials<React.ReactNode>) => {
+  setCommonPopupViewState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.title, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, title: newVal };
+  });
+};
+
+const setHeight = (valOrFunc: UpdaterOrPartials<number>) => {
+  setCommonPopupViewState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.height, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, height: newVal };
+  });
+};
+
+const setAccount = (
+  valOrFunc: UpdaterOrPartials<CommonPopupViewState['account']>,
+) => {
+  setCommonPopupViewState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.account, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, account: newVal };
+  });
+};
+
+const setData = (valOrFunc: UpdaterOrPartials<any>) => {
+  setCommonPopupViewState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.data, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, data: newVal };
+  });
+};
+
+const setId = (valOrFunc: UpdaterOrPartials<string | undefined>) => {
+  setCommonPopupViewState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.id, valOrFunc, {
+      strict: false,
+    });
+    return { ...prev, id: newVal };
+  });
+};
 
 export const useCommonPopupView = () => {
-  const [componentName, setComponentName] = useAtom(componentNameAtom);
-  const [visible, setVisible] = useAtom(visibleAtom);
-  const [title, setTitle] = useAtom(titleAtom);
-  const [height, setHeight] = useAtom(heightAtom);
-  const [account, setAccount] = useAtom(accountAtom);
-  const [data, setData] = useAtom(dataAtom);
-  const [id, setId] = useAtom(idAtom);
+  const commonPopupState = commonPopupViewStore();
 
   const activePopup = (name: CommonPopupComponentName) => {
     setComponentName(name);
@@ -48,15 +130,18 @@ export const useCommonPopupView = () => {
   const closePopup = () => {
     setVisible(false);
 
-    if (componentName) {
-      removeGlobalBottomSheetModal(id);
+    if (commonPopupState.componentName) {
+      removeGlobalBottomSheetModal(commonPopupState.id);
     }
 
     setComponentName(undefined);
   };
 
   const activeApprovalPopup = () => {
-    if (componentName === 'APPROVAL' && visible === false) {
+    if (
+      commonPopupState.componentName === 'APPROVAL' &&
+      commonPopupState.visible === false
+    ) {
       setVisible(true);
       return true;
     }
@@ -64,19 +149,19 @@ export const useCommonPopupView = () => {
   };
 
   return {
-    visible,
+    visible: commonPopupState.visible,
     setVisible,
     closePopup,
-    componentName,
+    componentName: commonPopupState.componentName,
     activePopup,
-    title,
+    title: commonPopupState.title,
     setTitle,
-    height,
+    height: commonPopupState.height,
     setHeight,
-    account,
+    account: commonPopupState.account,
     setAccount,
     activeApprovalPopup,
-    data,
+    data: commonPopupState.data,
     setData,
   };
 };

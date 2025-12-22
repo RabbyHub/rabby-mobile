@@ -1,18 +1,18 @@
 import React from 'react';
 import { noop } from 'lodash';
 import { createContext, useContext, useState } from 'react';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
 
-export function createContextState<T>(initialState: T, jotai = false) {
-  if (jotai) {
-    const atomState = atom(initialState);
-    const useValueByJotai = () => useAtomValue(atomState);
-    const useSetValueByJotai = () => useSetAtom(atomState);
+export function createContextState<T>(initialState: T, global = false) {
+  if (global) {
+    const zustandState = zCreate<T>(() => initialState);
+    const useValueByZustand = () => zustandState();
+    const useSetValueByZustand = () => zustandState.setState;
     const Provider = ({ children }: React.PropsWithChildren<unknown>) => {
       return <>{children}</>;
     };
 
-    return [Provider, useValueByJotai, useSetValueByJotai] as const;
+    return [Provider, useValueByZustand, useSetValueByZustand] as const;
   }
   const StateContext = createContext<T>(initialState);
   const DispatchContext =
@@ -24,7 +24,7 @@ export function createContextState<T>(initialState: T, jotai = false) {
   const Provider = ({ children }: React.PropsWithChildren<unknown>) => {
     const [value, setValue] = useState(initialState);
 
-    if (jotai) {
+    if (global) {
       return <>{children}</>;
     }
 

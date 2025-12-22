@@ -2,14 +2,29 @@ import { openapi } from '@/core/request';
 import { Account } from '@/core/services/preference';
 import { useAccounts } from '@/hooks/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { atom, useAtom, useAtomValue } from 'jotai';
 import PQueue from 'p-queue';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 type PointInfo = Awaited<ReturnType<typeof openapi.getRabbyPoints>>;
 export type AccountPoints = Account & Partial<PointInfo>;
 
-const pointsBadgeAtom = atom(0);
+const pointsBadgeStore = zCreate<number>(() => 0);
+
+function setPointsBadgeState(valOrFunc: UpdaterOrPartials<number>) {
+  pointsBadgeStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
+export const usePointsBadgeValue = () => {
+  const pointsBadge = pointsBadgeStore();
+  return pointsBadge;
+};
 
 const AddrPointsQueue = new PQueue({
   interval: 1000,
@@ -20,7 +35,6 @@ const AddrPointsQueue = new PQueue({
 export const FILTER_ACCOUNT_TYPES = [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS];
 
 export const useGetRabbyPoints = () => {
-  const [, setPointsBadgeAtom] = useAtom(pointsBadgeAtom);
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -84,13 +98,13 @@ export const useGetRabbyPoints = () => {
     const totalPoints = Object.values(points).reduce((acc, curr) => {
       return acc + (curr.claimed_points || 0);
     }, 0);
-    setPointsBadgeAtom(totalPoints);
-  }, [points, setPointsBadgeAtom]);
+    setPointsBadgeState(totalPoints);
+  }, [points]);
 
   return accountsWithPoints;
 };
 
 export const usePointsBadge = () => {
   useGetRabbyPoints();
-  return useAtomValue(pointsBadgeAtom);
+  return usePointsBadgeValue();
 };

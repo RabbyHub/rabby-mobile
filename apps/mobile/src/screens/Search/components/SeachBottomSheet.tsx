@@ -15,14 +15,26 @@ import React, {
 } from 'react';
 import { BackHandler, Keyboard, useWindowDimensions, View } from 'react-native';
 import { SearchInner } from './SearchInner';
-import { atom, useAtom } from 'jotai';
 import { useCurrentRouteName } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
-const showSearchBottomAtom = atom(false);
+// Zustand implementation for showSearchBottom
+const showSearchBottomStore = zCreate<boolean>(() => false);
+
+function setShowSearchBottomState(valOrFunc: UpdaterOrPartials<boolean>) {
+  showSearchBottomStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
 
 export const useShowSearchBottomSheet = () => {
-  return useAtom(showSearchBottomAtom);
+  const showSearchBottom = showSearchBottomStore();
+  return [showSearchBottom, setShowSearchBottomState] as const;
 };
 
 export const GlobalSearchBottomSheet = () => {

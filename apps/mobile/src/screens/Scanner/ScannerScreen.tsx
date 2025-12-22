@@ -10,7 +10,6 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import { GetRootScreenRouteProp } from '@/navigation-type';
-import { atom, useAtom } from 'jotai';
 import { Code } from 'react-native-vision-camera';
 import { RootStackParamsList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
@@ -20,15 +19,26 @@ import { useTranslation } from 'react-i18next';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import EventEmitter from 'events';
 import { throttle } from 'lodash';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 
-const textAtom = atom<string | undefined>(undefined);
+// Zustand implementation for text
+const textStore = zCreate<string | undefined>(() => undefined);
+
+function setTextState(valOrFunc: UpdaterOrPartials<string | undefined>) {
+  textStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
 
 export const useScanner = () => {
-  const [text, setText] = useAtom(textAtom);
-
-  const clear = () => setText(undefined);
+  const text = textStore();
+  const clear = () => setTextState(undefined);
 
   return { text, clear };
 };
@@ -52,7 +62,6 @@ export const onScannerEvent = (
 
 export const ScannerScreen = () => {
   const { t } = useTranslation();
-  const [_, setText] = useAtom(textAtom);
   const { styles } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenRouteProp<'Scanner'>>();
   const navigation = useRabbyAppNavigation();
@@ -83,7 +92,7 @@ export const ScannerScreen = () => {
               isSyncExtensionScanned.current = true;
               const ur = decoder.resultUR();
               const result = strFromU8(gunzipSync(Uint8Array.from(ur.cbor)));
-              setText(result);
+              setTextState(result);
 
               nav.dispatch(
                 StackActions.replace(RootNames.StackAddress, {
@@ -96,22 +105,22 @@ export const ScannerScreen = () => {
           }
         }
       } else {
-        setText(data[0].value!);
+        setTextState(data[0].value!);
         nav.goBack();
       }
     },
-    [decoder, nav, navState?.syncExtension, setText],
+    [decoder, nav, navState?.syncExtension],
   );
 
   useEffect(() => {
     if (navState?.syncExtension) {
       return () => {
         if (!isSyncExtensionScanned) {
-          setText(undefined);
+          setTextState(undefined);
         }
       };
     }
-  }, [navState, setText]);
+  }, [navState]);
 
   useLayoutEffect(() => {
     const unsub = navigation.addListener(

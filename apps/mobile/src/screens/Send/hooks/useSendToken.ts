@@ -27,12 +27,10 @@ import {
   TokenItemWithEntity,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom } from 'jotai';
 import { openapi } from '@/core/request';
 import { TFunction } from 'i18next';
 import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
-import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
@@ -86,6 +84,8 @@ import { IExtractFromPromise } from '@/utils/type';
 import { useFindAddressByWhitelist } from './useWhiteListAddress';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { coerceNumber } from '@/utils/coerce';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -116,12 +116,32 @@ export const enum SendTokenEvents {
   'ON_SIGNED_SUCCESS' = 'ON_SIGNED_SUCCESS',
 }
 
-const sendTokenScreenChainTokenAtom = atom({
+// Zustand implementation for sendTokenScreenChainToken
+type ChainTokenType = {
+  chainEnum: CHAINS_ENUM;
+  currentToken: TokenItemWithEntity & {
+    tokenId?: string;
+  };
+};
+
+const sendTokenScreenChainTokenStore = zCreate<ChainTokenType>(() => ({
   chainEnum: CHAINS_ENUM.ETH,
   currentToken: makeDefaultToken(),
-});
+}));
+
+function setSendTokenScreenChainTokenState(
+  valOrFunc: UpdaterOrPartials<ChainTokenType>,
+) {
+  sendTokenScreenChainTokenStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
 export function useSendTokenScreenChainToken() {
-  const [chainToken, _setChainToken] = useAtom(sendTokenScreenChainTokenAtom);
+  const chainToken = sendTokenScreenChainTokenStore();
   const { chainEnum, currentToken } = chainToken;
   const setRouteParams = setParams;
 
@@ -131,23 +151,20 @@ export function useSendTokenScreenChainToken() {
     }) || null;
   /** @deprecated weried behavior */
   const currentTokenRef = useRef(currentToken);
-  const putChainToken = useCallback(
-    (values: Partial<typeof chainToken>) => {
-      if (values.currentToken) {
-        currentTokenRef.current = values.currentToken;
-      }
+  const putChainToken = useCallback((values: Partial<typeof chainToken>) => {
+    if (values.currentToken) {
+      currentTokenRef.current = values.currentToken;
+    }
 
-      return _setChainToken(prev => {
-        const nextVal = {
-          ...prev,
-          ...values,
-        };
+    return setSendTokenScreenChainTokenState(prev => {
+      const nextVal = {
+        ...prev,
+        ...values,
+      };
 
-        return nextVal;
-      });
-    },
-    [_setChainToken],
-  );
+      return nextVal;
+    });
+  }, []);
   // devLog('currentToken.chain', currentToken.chain);
 
   const { isNativeToken } = useMemo(() => {
@@ -288,15 +305,27 @@ const DFLT_SEND_STATE: SendScreenState = {
   // toAddrAccountInfo: null,
   toAddrDesc: null,
 };
-const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
+const sendTokenScreenStateStore = zCreate<SendScreenState>(() => ({
+  ...DFLT_SEND_STATE,
+}));
+
+function setSendTokenScreenStateState(
+  valOrFunc: UpdaterOrPartials<SendScreenState>,
+) {
+  sendTokenScreenStateStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
 export function useSendTokenScreenState() {
-  const [sendTokenScreenState, setSendScreenState] = useAtom(
-    sendTokenScreenStateAtom,
-  );
+  const sendTokenScreenState = sendTokenScreenStateStore();
 
   const putScreenState = useCallback<InternalContext['fns']['putScreenState']>(
     patchOrUpdateFunc => {
-      setSendScreenState(prev => {
+      setSendTokenScreenStateState(prev => {
         const patch =
           typeof patchOrUpdateFunc === 'function'
             ? patchOrUpdateFunc(prev)
@@ -308,12 +337,12 @@ export function useSendTokenScreenState() {
         };
       });
     },
-    [setSendScreenState],
+    [],
   );
 
   const resetScreenState = useCallback(() => {
-    setSendScreenState({ ...DFLT_SEND_STATE });
-  }, [setSendScreenState]);
+    setSendTokenScreenStateState({ ...DFLT_SEND_STATE });
+  }, []);
 
   return {
     sendTokenScreenState,
