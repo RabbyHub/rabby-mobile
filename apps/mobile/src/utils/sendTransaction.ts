@@ -42,7 +42,6 @@ import {
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { isNonPublicProductionEnv } from '@/constant';
-import { getDefaultStore } from 'jotai';
 import { mockBatchRevokeStore } from '@/hooks/appSettings';
 import { Account } from '@/core/services/preference';
 import miscService from '@/core/services/misc';

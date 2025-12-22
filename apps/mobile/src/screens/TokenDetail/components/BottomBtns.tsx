@@ -21,7 +21,6 @@ import RcIconMoreCC from '@/assets/icons/home/more-cc.svg';
 import RcIconReceiveCC from '@/assets2024/singleHome/receive-cc.svg';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
-import { useSetAtom } from 'jotai';
 import { setIsFromBack } from '@/screens/Swap/hooks/atom';
 import { CHAINS_ENUM } from '@debank/common';
 

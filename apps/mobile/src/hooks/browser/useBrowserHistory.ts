@@ -5,7 +5,6 @@ import { DappInfo } from '@/core/services/dappService';
 import { EntityState } from '@/core/utils/createEntryAdapter';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 import { useDappsValue } from '../useDapps';
 import { useBrowserBookmark } from './useBrowserBookmark';

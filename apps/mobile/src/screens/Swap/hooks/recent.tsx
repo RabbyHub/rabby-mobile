@@ -2,7 +2,7 @@ import { swapService } from '@/core/services';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { zCreate } from '@/core/utils/reexports';
 import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
-import { useCallback as useZCallback } from 'react';
+import { useCallback } from 'react';
 
 // Zustand implementation for recentToTokens
 type RecentToTokensState = TokenItem[];
@@ -26,7 +26,7 @@ function setRecentToTokens(valOrFunc: UpdaterOrPartials<RecentToTokensState>) {
 export const useSwapRecentToTokens = () => {
   const state = recentToTokensStore();
 
-  const setState = useZCallback(
+  const setState = useCallback(
     (valOrFunc: UpdaterOrPartials<RecentToTokensState> | TokenItem) => {
       if (
         typeof valOrFunc === 'object' &&
@@ -51,7 +51,7 @@ export const useSwapRecentToTokens = () => {
 export const useSwapRecentToTokensZ = () => {
   const state = recentToTokensStore();
 
-  const setState = useZCallback(
+  const setState = useCallback(
     (valOrFunc: UpdaterOrPartials<RecentToTokensState> | TokenItem) => {
       if (
         typeof valOrFunc === 'object' &&

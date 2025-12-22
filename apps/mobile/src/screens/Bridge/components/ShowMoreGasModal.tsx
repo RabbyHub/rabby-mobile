@@ -26,7 +26,6 @@ import { signatureStore, useSignatureStore } from '@/components2024/MiniSignV2';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
 import { zCreate } from '@/core/utils/reexports';
 import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
-import { useCallback as useZCallback } from 'react';
 
 const showMoreGasSelectModalVisibleStore = zCreate<boolean>(() => false);
 
@@ -96,7 +95,7 @@ export const useGetGasInfoByUIZ = () => {
 };
 
 export const useSetGasInfoByUI = () => {
-  return useZCallback((valOrFunc: UpdaterOrPartials<GasInfoByUIState>) => {
+  return useCallback((valOrFunc: UpdaterOrPartials<GasInfoByUIState>) => {
     setGasInfoByUI(valOrFunc);
   }, []);
 };

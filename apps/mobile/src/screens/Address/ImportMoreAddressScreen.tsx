@@ -25,7 +25,6 @@ import {
 } from 'react-native';
 import { toast } from '@/components/Toast';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
-import { useAtom } from 'jotai';
 import { useHDSettingState } from '@/components/HDSetting/MainContainer';
 import { Radio } from '@/components/Radio';
 import { addressUtils } from '@rabby-wallet/base-utils';

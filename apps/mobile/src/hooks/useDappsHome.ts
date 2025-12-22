@@ -2,7 +2,6 @@ import { sortBy } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { useFocusEffect } from '@react-navigation/native';
-import { useAtom } from 'jotai';
 import { useDappsValue, useDapps } from './useDapps';
 import { useBrowserHistory } from './browser/useBrowserHistory';
 

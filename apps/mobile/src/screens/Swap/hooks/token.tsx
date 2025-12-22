@@ -31,7 +31,6 @@ import { useAutoSlippageEffect } from './autoSlippageEffect';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { zCreate } from '@/core/utils/reexports';
 import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
-import { useCallback as useZCallback } from 'react';
 
 export const enableInsufficientQuote = true;
 
@@ -56,7 +55,7 @@ function setTokenRefreshId(valOrFunc: UpdaterOrPartials<number>) {
 
 const useTokenRefreshId = () => tokenRefreshIdStore();
 const useSetTokenRefreshId = () => {
-  return useZCallback((valOrFunc: UpdaterOrPartials<number>) => {
+  return useCallback((valOrFunc: UpdaterOrPartials<number>) => {
     setTokenRefreshId(valOrFunc);
   }, []);
 };
