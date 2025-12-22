@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
-  Pressable,
   RefreshControl,
   Text,
   TouchableOpacity,
@@ -10,7 +9,6 @@ import {
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -24,11 +22,9 @@ import {
 import TokenIcon from '../TokenIcon';
 import { PoolListLoading } from '../Loading';
 import { Skeleton } from '@rneui/themed';
-import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
-import IconSwitchCC from '@/assets2024/icons/lending/switch-cc.svg';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useTranslation } from 'react-i18next';
-import { formatApy, formatListNetWorth } from '../../utils/format';
+import { formatApy } from '../../utils/format';
 import { CHAINS_ENUM } from '@debank/common';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { DisplayPoolReserveInfo } from '../../type';
@@ -36,11 +32,18 @@ import { displayGhoForMintableMarket } from '../../utils/supply';
 import { API_ETH_MOCK_ADDRESS } from '../../utils/constant';
 import wrapperToken from '../../config/wrapperToken';
 import { NextSearchBar } from '@/components2024/SearchBar';
+import { formatUsdValueKMB } from '@/screens/TokenDetail/util';
+import { isUnFoldToken } from '../../config/unfold';
+import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
 
-const FOOT_HEIGHT = 36;
+const FOOT_HEIGHT = 86;
+
+type SupplyListItem =
+  | { type: 'reserve'; data: DisplayPoolReserveInfo }
+  | { type: 'toggle_fold' };
 
 const LendingSupplyList: React.FC = () => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const {
     displayPoolReserves,
     reserves,
@@ -50,8 +53,8 @@ const LendingSupplyList: React.FC = () => {
   } = useLendingSummary();
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
-  const [toggleBalanceOrTVl, setToggleBalanceOrTVl] = useState(true);
   const [search, setSearch] = useState('');
+  const [foldHideList, setFoldHideList] = useState(true);
   const { chainEnum, marketKey } = useSelectedMarket();
 
   const sortReserves = useMemo(() => {
@@ -109,9 +112,46 @@ const LendingSupplyList: React.FC = () => {
     );
   }, [search, sortReserves]);
 
+  const unFoldList = useMemo(() => {
+    return filteredReserves.filter(item =>
+      isUnFoldToken(marketKey, item.reserve.symbol),
+    );
+  }, [filteredReserves, marketKey]);
+
+  const foldList = useMemo(() => {
+    return filteredReserves.filter(
+      item => !isUnFoldToken(marketKey, item.reserve.symbol),
+    );
+  }, [filteredReserves, marketKey]);
+
   const isInIsolationMode = useMemo(() => {
     return iUserSummary?.isInIsolationMode;
   }, [iUserSummary?.isInIsolationMode]);
+
+  const dataList = useMemo<SupplyListItem[]>(() => {
+    if (loading) {
+      return [];
+    }
+    const list: SupplyListItem[] = [];
+    unFoldList.forEach(item => {
+      list.push({
+        type: 'reserve',
+        data: item,
+      });
+    });
+    if (foldList.length) {
+      list.push({ type: 'toggle_fold' });
+      if (!foldHideList) {
+        foldList.forEach(item => {
+          list.push({
+            type: 'reserve',
+            data: item,
+          });
+        });
+      }
+    }
+    return list;
+  }, [foldHideList, foldList, loading, unFoldList]);
 
   const isolatedCard = useMemo(() => {
     if (loading || !isInIsolationMode) {
@@ -171,56 +211,59 @@ const LendingSupplyList: React.FC = () => {
       <>
         {isolatedCard}
         <View style={styles.listHeader}>
-          <Pressable
-            style={styles.headerTokenContainer}
-            hitSlop={20}
-            onPress={() => setToggleBalanceOrTVl(pre => !pre)}>
+          <View style={styles.headerTokenContainer}>
             <Text style={styles.headerToken}>
-              {toggleBalanceOrTVl
-                ? t('page.Lending.list.headers.token_balance')
-                : t('page.Lending.list.headers.token_tvl')}
+              {t('page.Lending.list.headers.token')}
             </Text>
-            <IconSwitchCC
-              width={14}
-              height={14}
-              color={colors2024['neutral-secondary']}
-            />
-          </Pressable>
+          </View>
+          <Text style={styles.headerTvl}>{t('page.Lending.tvl')}</Text>
           <Text style={styles.headerApy}>{t('page.Lending.apy')}</Text>
-          <Text style={styles.headerMySupplies}>
-            {t('page.Lending.list.headers.mySupplies')}
-          </Text>
         </View>
       </>
     );
   }, [
-    colors2024,
     isolatedCard,
     loading,
     styles.headerApy,
-    styles.headerMySupplies,
     styles.headerToken,
     styles.headerTokenContainer,
+    styles.headerTvl,
     styles.listHeader,
     styles.loading,
     t,
-    toggleBalanceOrTVl,
   ]);
 
-  const keyExtractor = useCallback((item: DisplayPoolReserveInfo) => {
-    return `${item.reserve.underlyingAsset}-${item.reserve.symbol}`;
+  const keyExtractor = useCallback((item: SupplyListItem) => {
+    if (item.type === 'toggle_fold') {
+      return 'toggle-fold';
+    }
+    return `${item.data.reserve.underlyingAsset}-${item.data.reserve.symbol}`;
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: DisplayPoolReserveInfo }) => {
-      const isZeroSupplied = item.underlyingBalance === '0';
+    ({ item }: { item: SupplyListItem }) => {
+      if (item.type === 'toggle_fold') {
+        return (
+          <TokenRowSectionHeader
+            str={null}
+            fold={foldHideList}
+            style={styles.sectionHeader}
+            buttonStyle={styles.buttonHeader}
+            onPressFold={() => {
+              setFoldHideList(pre => !pre);
+            }}
+          />
+        );
+      }
+
+      const data = item.data;
       return (
         <TouchableOpacity
           style={styles.item}
-          onPress={() => handlePressItem(item)}>
+          onPress={() => handlePressItem(data)}>
           <View style={styles.left}>
             <TokenIcon
-              tokenSymbol={item.reserve.symbol}
+              tokenSymbol={data.reserve.symbol}
               chainSize={0}
               chain={chainEnum || CHAINS_ENUM.ETH}
             />
@@ -229,46 +272,22 @@ const LendingSupplyList: React.FC = () => {
                 style={styles.symbol}
                 numberOfLines={1}
                 ellipsizeMode="tail">
-                {item.reserve.symbol}
+                {data.reserve.symbol}
               </Text>
-              {toggleBalanceOrTVl ? (
-                <View style={styles.yourBalanceContainer}>
-                  <WalletFillCC
-                    width={16}
-                    height={16}
-                    style={styles.walletIcon}
-                    color={colors2024['secondary-foot']}
-                  />
-                  <Text style={styles.yourBalance}>
-                    {formatUsdValueKMB(item.walletBalanceUSD || '0')}
-                  </Text>
-                </View>
-              ) : (
-                <Text style={styles.tvl}>
-                  {t('page.Lending.list.item.tvl')}:{' '}
-                  {formatUsdValueKMB(
-                    Number(item.reserve.totalLiquidityUSD || '0'),
-                  )}
-                </Text>
-              )}
             </View>
           </View>
-          <Text style={styles.apy}>
-            {formatApy(Number(item.reserve.supplyAPY || '0'))}
+          <Text style={styles.tvl}>
+            {formatUsdValueKMB(Number(data.reserve.totalLiquidityUSD || '0'))}
           </Text>
           <View style={styles.right}>
-            {isZeroSupplied ? (
-              <Text style={[styles.yourSupplied, styles.zeroSupplied]}>$0</Text>
-            ) : (
-              <Text style={styles.yourSupplied}>
-                {formatListNetWorth(Number(item.underlyingBalanceUSD || '0'))}
-              </Text>
-            )}
+            <Text style={styles.apy}>
+              {formatApy(Number(data.reserve.supplyAPY || '0'))}
+            </Text>
           </View>
         </TouchableOpacity>
       );
     },
-    [chainEnum, colors2024, handlePressItem, styles, t, toggleBalanceOrTVl],
+    [chainEnum, foldHideList, handlePressItem, styles],
   );
 
   const renderFooterComponent = useCallback(() => {
@@ -290,7 +309,7 @@ const LendingSupplyList: React.FC = () => {
         />
       </View>
       <FlatList
-        data={loading ? [] : filteredReserves}
+        data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -316,6 +335,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     paddingHorizontal: 16,
     width: '100%',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   titleContainer: {
     paddingTop: 12,
@@ -355,8 +377,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 8,
   },
   apy: {
-    flex: 0,
-    width: 60,
+    width: 100,
+    textAlign: 'right',
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
@@ -365,9 +387,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   right: {
     flex: 0,
-    marginLeft: 10,
-    width: 80,
+    width: 100,
     gap: 2,
+  },
+  tvl: {
+    width: 100,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    textAlign: 'right',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
   },
   symbolContainer: {
     gap: 2,
@@ -380,13 +410,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     maxWidth: 80,
     overflow: 'hidden',
-  },
-  tvl: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
   },
   yourSupplied: {
     fontSize: 16,
@@ -420,7 +443,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   listHeader: {
     paddingVertical: 2,
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -446,11 +469,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'flex-start',
     gap: 4,
   },
+  headerTvl: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-secondary'],
+    width: 100,
+    flex: 0,
+    textAlign: 'right',
+  },
   headerApy: {
     fontSize: 14,
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
-    width: 60,
+    width: 100,
+    textAlign: 'right',
     flex: 0,
   },
   headerMySupplies: {
@@ -460,6 +492,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 0,
     marginLeft: 10,
     width: 80,
+  },
+  sectionHeader: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+    marginTop: 8,
+    paddingHorizontal: 0,
+    paddingLeft: 0,
+  },
+  buttonHeader: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   //headerContainer: {
   //  backgroundColor: isLight

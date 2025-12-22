@@ -16,7 +16,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
-import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
@@ -24,15 +23,22 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
 
 import TokenIcon from '../TokenIcon';
 import { PoolListLoading } from '../Loading';
 import { DisplayPoolReserveInfo } from '../../type';
 import { assetCanBeBorrowedByUser } from '../../utils/borrow';
 import { useLendingData, useLendingSummary } from '../../hooks';
-import { formatApy, formatListNetWorth } from '../../utils/format';
+import { formatApy } from '../../utils/format';
+import { isUnFoldToken } from '../../config/unfold';
+import { useSelectedMarket } from '../../hooks';
 
-const FOOT_HEIGHT = 36;
+const FOOT_HEIGHT = 86;
+
+type BorrowListItem =
+  | { type: 'reserve'; data: DisplayPoolReserveInfo }
+  | { type: 'toggle_fold' };
 
 const LendingBorrowList: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -46,6 +52,8 @@ const LendingBorrowList: React.FC = () => {
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
   const [search, setSearch] = useState('');
+  const [foldHideList, setFoldHideList] = useState(true);
+  const { marketKey } = useSelectedMarket();
 
   const isInIsolationMode = useMemo(() => {
     return iUserSummary?.isInIsolationMode;
@@ -98,6 +106,43 @@ const LendingBorrowList: React.FC = () => {
       item.reserve.symbol.toLowerCase().includes(keyword),
     );
   }, [search, sortReserves]);
+
+  const unFoldList = useMemo(() => {
+    return filteredReserves.filter(item =>
+      isUnFoldToken(marketKey, item.reserve.symbol),
+    );
+  }, [filteredReserves, marketKey]);
+
+  const foldList = useMemo(() => {
+    return filteredReserves.filter(
+      item => !isUnFoldToken(marketKey, item.reserve.symbol),
+    );
+  }, [filteredReserves, marketKey]);
+
+  const dataList = useMemo<BorrowListItem[]>(() => {
+    if (loading) {
+      return [];
+    }
+    const list: BorrowListItem[] = [];
+    unFoldList.forEach(item => {
+      list.push({
+        type: 'reserve',
+        data: item,
+      });
+    });
+    if (foldList.length) {
+      list.push({ type: 'toggle_fold' });
+      if (!foldHideList) {
+        foldList.forEach(item => {
+          list.push({
+            type: 'reserve',
+            data: item,
+          });
+        });
+      }
+    }
+    return list;
+  }, [foldHideList, foldList, loading, unFoldList]);
 
   const desc = useMemo(() => {
     if (
@@ -228,10 +273,10 @@ const LendingBorrowList: React.FC = () => {
             <Text style={styles.headerToken}>
               {t('page.Lending.list.headers.token_balance')}
             </Text>
-            <Text style={styles.headerApy}>{t('page.Lending.apy')}</Text>
             <Text style={styles.headerMyBorrows}>
-              {t('page.Lending.list.headers.myBorrows')}
+              {t('page.Lending.list.headers.totalBorrowed')}
             </Text>
+            <Text style={styles.headerApy}>{t('page.Lending.apy')}</Text>
           </View>
         ) : null}
       </>
@@ -248,59 +293,61 @@ const LendingBorrowList: React.FC = () => {
     t,
   ]);
 
-  const keyExtractor = useCallback((item: DisplayPoolReserveInfo) => {
-    return `${item.reserve.underlyingAsset}-${item.reserve.symbol}`;
+  const keyExtractor = useCallback((item: BorrowListItem) => {
+    if (item.type === 'toggle_fold') {
+      return 'toggle-fold';
+    }
+    return `${item.data.reserve.underlyingAsset}-${item.data.reserve.symbol}`;
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: DisplayPoolReserveInfo }) => {
-      const isZeroBorrowed = item.totalBorrowsUSD === '0';
+    ({ item }: { item: BorrowListItem }) => {
+      if (item.type === 'toggle_fold') {
+        return (
+          <TokenRowSectionHeader
+            str={null}
+            fold={foldHideList}
+            style={styles.sectionHeader}
+            buttonStyle={styles.buttonHeader}
+            onPressFold={() => {
+              setFoldHideList(pre => !pre);
+            }}
+          />
+        );
+      }
+
+      const data = item.data;
       return (
         <TouchableOpacity
           style={styles.item}
-          onPress={() => handlePressItem(item)}>
+          onPress={() => handlePressItem(data)}>
           <View style={styles.left}>
             <TokenIcon
               size={46}
               chainSize={0}
-              tokenSymbol={item.reserve.symbol}
+              tokenSymbol={data.reserve.symbol}
             />
             <View style={styles.symbolContainer}>
               <Text
                 style={styles.symbol}
                 numberOfLines={1}
                 ellipsizeMode="tail">
-                {item.reserve.symbol}
+                {data.reserve.symbol}
               </Text>
-              <View style={styles.yourBalanceContainer}>
-                <WalletFillCC
-                  width={16}
-                  height={16}
-                  style={styles.walletIcon}
-                  color={colors2024['secondary-foot']}
-                />
-                <Text style={styles.yourBalance}>
-                  {formatUsdValueKMB(item.walletBalanceUSD || '0')}
-                </Text>
-              </View>
             </View>
           </View>
-          <Text style={styles.apy}>
-            {formatApy(Number(item.reserve.variableBorrowAPY || '0'))}
+          <Text style={styles.totalBorrowed}>
+            {formatUsdValueKMB(Number(data.reserve.totalDebtUSD || '0'))}
           </Text>
           <View style={styles.right}>
-            {isZeroBorrowed ? (
-              <Text style={[styles.yourSupplied, styles.zeroBorrowed]}>$0</Text>
-            ) : (
-              <Text style={styles.yourSupplied}>
-                {formatListNetWorth(Number(item.totalBorrowsUSD || '0'))}
-              </Text>
-            )}
+            <Text style={styles.apy}>
+              {formatApy(Number(data.reserve.variableBorrowAPY || '0'))}
+            </Text>
           </View>
         </TouchableOpacity>
       );
     },
-    [colors2024, handlePressItem, styles],
+    [foldHideList, handlePressItem, styles],
   );
 
   const renderFooterComponent = useCallback(() => {
@@ -322,7 +369,7 @@ const LendingBorrowList: React.FC = () => {
         />
       </View>
       <FlatList
-        data={loading ? [] : filteredReserves}
+        data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -348,6 +395,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     paddingHorizontal: 16,
     width: '100%',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   titleContainer: {
     paddingTop: 12,
@@ -388,11 +438,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   apy: {
     flex: 0,
-    width: 60,
+    width: 80,
     fontSize: 16,
     lineHeight: 20,
+    textAlign: 'right',
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  totalBorrowed: {
+    width: 100,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    textAlign: 'right',
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
   right: {
@@ -468,8 +528,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
-    width: 60,
-    flex: 0,
+    width: 80,
+    textAlign: 'right',
   },
   headerMyBorrows: {
     fontSize: 14,
@@ -477,7 +537,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-secondary'],
     flex: 0,
     marginLeft: 10,
-    width: 80,
+    width: 100,
+    textAlign: 'right',
+  },
+  sectionHeader: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+    marginTop: 8,
+    paddingLeft: 0,
+  },
+  buttonHeader: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   availableCard: {
     paddingHorizontal: 12,

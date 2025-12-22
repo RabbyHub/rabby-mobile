@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { FlatList, RefreshControl, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { Button } from '@/components2024/Button';
@@ -23,6 +23,9 @@ import SupplyItem from './components/ItemRender/SupplyItem';
 import { displayGhoForMintableMarket } from './utils/supply';
 import SummaryItem from './components/ItemRender/SummaryItem';
 import { useLendingData, useLendingSummary, useSelectedMarket } from './hooks';
+import { ItemListLoading } from './components/ItemRender/ItemLoading';
+import EmptyItem from './components/ItemRender/EmptyItem';
+import { DisableBorrowTip } from './components/DisableBorrowTip';
 
 type MyAssetItem =
   | {
@@ -37,7 +40,7 @@ type MyAssetItem =
     };
 
 const MyAssetHome: React.FC = () => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { chainEnum, marketKey } = useSelectedMarket();
   const { displayPoolReserves, loading, iUserSummary, apyInfo, reserves } =
@@ -126,17 +129,35 @@ const MyAssetHome: React.FC = () => {
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        rootViewType: 'View',
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      },
     });
-  }, []);
+  }, [colors2024, isLight]);
 
   const handleOpenBorrowList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.LENDING_BORROW_LIST,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        rootViewType: 'View',
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      },
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
     });
-  }, []);
+  }, [colors2024, isLight]);
 
   const keyExtractor = useCallback((item: MyAssetItem) => {
     const { underlyingAsset } = item;
@@ -175,20 +196,20 @@ const MyAssetHome: React.FC = () => {
     if (loading) {
       return null;
     }
+    return <EmptyItem />;
+  }, [loading]);
+
+  const disableBorrowButton = useMemo(() => {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>
-          {/*{t('page.Lending.myAssets.noBorrowedPositions')}*/}
-          xx
-        </Text>
-      </View>
+      !iUserSummary?.availableBorrowsUSD ||
+      iUserSummary?.availableBorrowsUSD === '0'
     );
-  }, [loading, styles.emptyContainer, styles.emptyText]);
+  }, [iUserSummary?.availableBorrowsUSD]);
 
   return (
     <View style={styles.container}>
       <FlatList
-        data={myAssetList}
+        data={loading ? [] : myAssetList}
         showsVerticalScrollIndicator={false}
         keyExtractor={keyExtractor}
         contentContainerStyle={styles.listContentContainer}
@@ -196,7 +217,9 @@ const MyAssetHome: React.FC = () => {
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={
-          iUserSummary ? (
+          loading ? (
+            <ItemListLoading />
+          ) : iUserSummary && !!myAssetList.length ? (
             <View style={styles.footer}>
               <SummaryItem
                 netWorth={iUserSummary?.netWorthUSD || ''}
@@ -223,16 +246,20 @@ const MyAssetHome: React.FC = () => {
             buttonStyle={styles.normalButton}
             titleStyle={styles.actionGhostTitle}
             title={t('page.Lending.supplyDetail.actions')}
+            disabled={loading}
             onPress={handleOpenSupplyList}
           />
         </View>
         <View style={styles.actionBtnContainer}>
-          <Button
-            containerStyle={styles.actionButton}
-            titleStyle={styles.actionPrimaryTitle}
-            title={t('page.Lending.borrowDetail.actions')}
-            onPress={handleOpenBorrowList}
-          />
+          <DisableBorrowTip showTip={disableBorrowButton}>
+            <Button
+              containerStyle={styles.actionButton}
+              titleStyle={styles.actionPrimaryTitle}
+              title={t('page.Lending.borrowDetail.actions')}
+              disabled={loading || disableBorrowButton}
+              onPress={handleOpenBorrowList}
+            />
+          </DisableBorrowTip>
         </View>
       </View>
     </View>
