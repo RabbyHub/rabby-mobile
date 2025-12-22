@@ -5,24 +5,55 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
-import { atom, useAtom, useAtomValue } from 'jotai';
 import { unionBy } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
-const pendingCountAtom = atom(0);
-const successTxListAtom = atom<string[]>([]);
-const failTxListAtom = atom<string[]>([]);
+const sendPendingCountStore = zCreate<{
+  pendingCount: number;
+  successTxList: string[];
+  failTxList: string[];
+}>()(() => ({
+  pendingCount: 0,
+  successTxList: [],
+  failTxList: [],
+}));
+
+function setPendingCount(valOrFunc: UpdaterOrPartials<number>) {
+  sendPendingCountStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.pendingCount, valOrFunc);
+    return { ...prev, pendingCount: newVal };
+  });
+}
+
+function setSuccessTxList(valOrFunc: UpdaterOrPartials<string[]>) {
+  sendPendingCountStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.successTxList, valOrFunc);
+    return { ...prev, successTxList: newVal };
+  });
+}
+
+function setFailTxList(valOrFunc: UpdaterOrPartials<string[]>) {
+  sendPendingCountStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.failTxList, valOrFunc);
+    return { ...prev, failTxList: newVal };
+  });
+}
 
 export const useReadSendPendingCount = () => {
-  return useAtomValue(pendingCountAtom);
+  const { pendingCount } = sendPendingCountStore();
+  return pendingCount;
 };
 
 export const useReadSendSuccessTxList = () => {
-  return useAtomValue(successTxListAtom);
+  const { successTxList } = sendPendingCountStore();
+  return successTxList;
 };
 
 export const useReadSendFailTxList = () => {
-  return useAtomValue(failTxListAtom);
+  const { failTxList } = sendPendingCountStore();
+  return failTxList;
 };
 
 export const usePollSendPendingCount = (params?: {
@@ -60,11 +91,10 @@ export const usePollSendPendingCount = (params?: {
     }
     return total;
   };
-  const [, setCount] = useAtom(pendingCountAtom);
 
   const res = useRequest(fetchPendingCount, {
     onSuccess(v) {
-      setCount(v);
+      setPendingCount(v);
     },
     refreshDeps: [isForMultipleAddress, currentAccount?.address],
   });

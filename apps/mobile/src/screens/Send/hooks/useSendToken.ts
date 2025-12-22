@@ -61,7 +61,7 @@ import {
   useIsFocused,
   useRoute,
 } from '@react-navigation/native';
-import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
+import { sendRoutesStore, setParams } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import {
   isAccountSupportMiniApproval,
@@ -123,7 +123,7 @@ const sendTokenScreenChainTokenAtom = atom({
 export function useSendTokenScreenChainToken() {
   const [chainToken, _setChainToken] = useAtom(sendTokenScreenChainTokenAtom);
   const { chainEnum, currentToken } = chainToken;
-  const [, setRouteParams] = useAtom(sendScreenParamsAtom);
+  const setRouteParams = setParams;
 
   const chainItem =
     useFindChain({
@@ -417,7 +417,7 @@ export function useSendTokenForm({
 
   const { chainEnum, isNativeToken, currentToken, putChainToken, chainItem } =
     useSendTokenScreenChainToken();
-  const [, setRouteParams] = useAtom(sendScreenParamsAtom);
+  const setRouteParams = setParams;
 
   const { sendTokenScreenState: screenState, putScreenState } =
     useSendTokenScreenState();

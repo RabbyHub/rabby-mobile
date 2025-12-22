@@ -67,8 +67,8 @@ import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import FromAddressControl2024 from './components/FromAddressControl';
-import { useAtom } from 'jotai';
-import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
+import { sendRoutesStore } from '@/hooks/useSendRoutes';
+import { useShallow } from 'zustand/react/shallow';
 import {
   getAddrDescWithCexLocalCacheSync,
   getInitDescWithCexLocalCache,
@@ -140,7 +140,14 @@ function SendScreen({
 
   const { chainItem, currentToken, setChainEnum } =
     useSendTokenScreenChainToken();
-  const [routeParams] = useAtom(sendScreenParamsAtom);
+  const { params: routeParams } = sendRoutesStore(
+    useShallow(
+      (state: {
+        params: { [key: string]: any };
+        isSingleAddress: boolean;
+      }) => ({ params: state.params }),
+    ),
+  );
 
   const {
     sendTokenScreenState: screenState,

@@ -11,11 +11,12 @@ import { findChain } from '@/utils/chain';
 import { SendRequireData } from '@rabby-wallet/rabby-action';
 import { useInterval, useMemoizedFn, useRequest } from 'ahooks';
 import dayjs from 'dayjs';
-import { atom, useAtom } from 'jotai';
 import { sortBy, unionBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Hex, isValidHexAddress } from '@metamask/utils';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -222,19 +223,33 @@ export const fetchLocalSendPendingTx = (address: string) => {
   return transactionHistoryService.getRecentPendingTxHistory(address, 'send');
 };
 
-const localPendingTxDataAtom = atom<SendTxHistoryItem | null>(null);
+const localPendingTxDataStore = zCreate<{
+  localPendingTxData: SendTxHistoryItem | null;
+}>()(() => ({
+  localPendingTxData: null,
+}));
+
+function setLocalPendingTxData(
+  valOrFunc: UpdaterOrPartials<SendTxHistoryItem | null>,
+) {
+  localPendingTxDataStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(
+      prev.localPendingTxData,
+      valOrFunc,
+    );
+    return { ...prev, localPendingTxData: newVal };
+  });
+}
 
 export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
-  const [localPendingTxData, setLocalPendingTxData] = useAtom(
-    localPendingTxDataAtom,
-  );
+  const { localPendingTxData } = localPendingTxDataStore();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
 
   const clearLocalPendingTxData = useCallback(() => {
     setLocalPendingTxData(null);
-  }, [setLocalPendingTxData]);
+  }, []);
 
   const runFetchLocalPendingTx = useCallback(() => {
     if (currentAccount?.address) {
@@ -243,7 +258,7 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
       ) as SendTxHistoryItem;
       setLocalPendingTxData(resTx);
     }
-  }, [currentAccount?.address, setLocalPendingTxData]);
+  }, [currentAccount?.address]);
 
   useEffect(() => {
     runFetchLocalPendingTx();

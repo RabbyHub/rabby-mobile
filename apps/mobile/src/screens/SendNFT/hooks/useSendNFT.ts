@@ -21,13 +21,14 @@ import {
   ProjectItem,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom } from 'jotai';
 import { openapi } from '@/core/request';
 import { TFunction } from 'i18next';
 import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { Account, ChainGas } from '@/core/services/preference';
@@ -127,11 +128,19 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   toAddrDesc: null,
 };
-const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
+const sendTokenScreenStateStore = zCreate<SendScreenState>()(() => ({
+  ...DFLT_SEND_STATE,
+}));
+
+function setSendNFTScreenState(valOrFunc: UpdaterOrPartials<SendScreenState>) {
+  sendTokenScreenStateStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return newVal;
+  });
+}
+
 export function useSendNFTScreenState() {
-  const [sendNFTScreenState, setSendNFTScreenState] = useAtom(
-    sendTokenScreenStateAtom,
-  );
+  const sendNFTScreenState = sendTokenScreenStateStore();
 
   const putScreenState = useCallback<InternalContext['fns']['putScreenState']>(
     patchOrUpdateFunc => {
@@ -147,12 +156,12 @@ export function useSendNFTScreenState() {
         };
       });
     },
-    [setSendNFTScreenState],
+    [],
   );
 
   const resetScreenState = useCallback(() => {
     setSendNFTScreenState({ ...DFLT_SEND_STATE });
-  }, [setSendNFTScreenState]);
+  }, []);
 
   return {
     sendNFTScreenState,
