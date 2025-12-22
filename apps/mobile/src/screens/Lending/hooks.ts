@@ -20,7 +20,7 @@ import { ethers } from 'ethers';
 import dayjs from 'dayjs';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useMemo } from 'react';
-import { unstable_batchedUpdates } from 'react-native';
+import { InteractionManager, unstable_batchedUpdates } from 'react-native';
 import { BigNumber } from 'bignumber.js';
 import { formatUserYield } from './utils/apy';
 import { CustomMarket, MarketDataType, marketsData } from './config/market';
@@ -33,12 +33,21 @@ import {
   storeApiAccountsSwitcher,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
-import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import {
+  atomByMMKV,
+  makeJotaiJsonStore,
+  makeMMKVStorage,
+  MMKVStorageStrategy,
+} from '@/core/storage/mmkv';
 import { findChainByID } from '@/utils/chain';
 import { getProvider } from './provider';
 import { fetchIconSymbolAndName } from './utils/icon';
-import { ExtractAtomValueType } from '@/utils/type';
+import { ExtractAtomValueType, RefLikeObject } from '@/utils/type';
 import { jotaiStore } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
+import { debounce } from 'lodash';
+import { MMKV_FILE_NAMES } from '@/core/utils/appFS';
 
 export const marketAtom = atomByMMKV(
   '@lendingMarket',
@@ -139,8 +148,8 @@ const getCachePools = (marketKey?: CustomMarket) => {
 };
 
 const fetchContractData = async (address: string) => {
-  const selectedMarketData = apisLending.getSelectedMarketInfo().marketData;
-  const pools = apisLending.getPools();
+  const selectedMarketData = getSelectedMarketInfo().marketData;
+  const pools = getPools();
   if (!selectedMarketData || !pools) {
     return {};
   }
@@ -165,6 +174,7 @@ const fetchContractData = async (address: string) => {
           selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
       }),
     ]);
+
     return {
       reserves,
       userReserves,
@@ -192,20 +202,76 @@ export const usePoolDataProviderContract = () => {
   };
 };
 
-const reservesAtom = atom<ReservesDataHumanized | undefined>(undefined);
-const userReservesAtom = atom<
+const EMPTY_WALLET_BALANCES: UserWalletBalancesResponse = { 0: [], 1: [] };
+
+type RemoteDataState = {
+  reserves: ReservesDataHumanized | undefined;
+  userReserves:
+    | {
+        userReserves: UserReserveDataHumanized[];
+        userEmodeCategoryId: number;
+      }
+    | undefined;
+  walletBalances: UserWalletBalancesResponse;
+  eModes: EmodeDataHumanized[] | undefined;
+};
+// const remoteDataAtom = atom<RemoteDataState>({
+//   reserves: undefined,
+//   userReserves: undefined,
+//   walletBalances: EMPTY_WALLET_BALANCES,
+//   eModes: undefined,
+// });
+
+export const { storage: lendingCacheStorage, methods: lendingCacheMethods } =
+  makeMMKVStorage({
+    id: MMKV_FILE_NAMES.LENDING_DATA_CACHE,
+  });
+const lendingJsonStore = makeJotaiJsonStore({ methods: lendingCacheMethods });
+
+const refreshMemAtom = atom(0);
+
+const reservesBaseAtom = atomByMMKV<ReservesDataHumanized | undefined>(
+  'reserves',
+  undefined,
+  { storage: lendingCacheStorage },
+);
+const reservesAtom = atom(get => {
+  get(refreshMemAtom);
+  return get(reservesBaseAtom);
+});
+
+const userReservesBaseAtom = atomByMMKV<
   | {
       userReserves: UserReserveDataHumanized[];
       userEmodeCategoryId: number;
     }
   | undefined
->(undefined);
-const eModesAtom = atom<EmodeDataHumanized[] | undefined>(undefined);
+>('userReserves', undefined, { storage: lendingCacheStorage });
+const userReservesAtom = atom(get => {
+  get(refreshMemAtom);
+  return get(userReservesBaseAtom);
+});
 
-const EMPTY_WALLET_BALANCES: UserWalletBalancesResponse = { 0: [], 1: [] };
-const walletBalancesAtom = atom<UserWalletBalancesResponse>(
-  EMPTY_WALLET_BALANCES,
+const eModesBaseAtom = atomByMMKV<EmodeDataHumanized[] | undefined>(
+  'eModes',
+  undefined,
+  { storage: lendingCacheStorage },
 );
+const eModesAtom = atom(get => {
+  get(refreshMemAtom);
+  return get(eModesBaseAtom);
+});
+
+const walletBalancesBaseAtom = atomByMMKV<UserWalletBalancesResponse>(
+  'walletBalances',
+  EMPTY_WALLET_BALANCES,
+  { storage: lendingCacheStorage },
+);
+const walletBalancesAtom = atom(get => {
+  get(refreshMemAtom);
+  return get(walletBalancesBaseAtom);
+});
+
 const addressAtom = atom<string | undefined>(undefined);
 const loadingAtom = atom<boolean>(false);
 const refreshHistoryIdAtom = atom<number>(0);
@@ -457,87 +523,167 @@ const preQueryParams: {
   marketKey: undefined,
 };
 
+const setRemoteTaskRef: RefLikeObject<null | ReturnType<
+  typeof InteractionManager.runAfterInteractions
+>> = { current: null };
 const globalSets = {
-  setReserves: (value: ExtractAtomValueType<typeof reservesAtom>) =>
-    jotaiStore.set(reservesAtom, value),
-  setUserReserves: (value: ExtractAtomValueType<typeof userReservesAtom>) =>
-    jotaiStore.set(userReservesAtom, value),
-  setWalletBalances: (value: ExtractAtomValueType<typeof walletBalancesAtom>) =>
-    jotaiStore.set(walletBalancesAtom, value),
-  setEModes: (value: ExtractAtomValueType<typeof eModesAtom>) =>
-    jotaiStore.set(eModesAtom, value),
+  // setRemoteData: debounce((valOrFunc: UpdaterOrPartials<RemoteDataState>, persistOnly = false) => {
+  //   setRemoteTaskRef.current?.cancel();
+  //   setRemoteTaskRef.current = InteractionManager.runAfterInteractions(() => {
+  //     // jotaiStore.set(remoteDataAtom, prev => {
+  //     //   const { newVal } = resolveValFromUpdater(prev, valOrFunc, { strict: false });
+  //     //   setRemoteTaskRef.current = null;
+
+  //     //   console.debug('[perf] lending:: remote data will be set', newVal);
+
+  //     //   return {
+  //     //     ...prev,
+  //     //     ...newVal,
+  //     //   }
+  //     // });
+  //   })
+  // }, 200),
+  setRemoteData: (
+    data: Partial<RemoteDataState>,
+    { persistOnly = false } = {},
+  ) => {
+    setRemoteTaskRef.current?.cancel();
+    setRemoteTaskRef.current = InteractionManager.runAfterInteractions(
+      debounce(() => {
+        globalSets.setReserves(data?.reserves, { persistOnly });
+        globalSets.setUserReserves(data?.userReserves, { persistOnly });
+        globalSets.setWalletBalances(
+          data?.walletBalances || EMPTY_WALLET_BALANCES,
+          { persistOnly },
+        );
+        globalSets.setEModes(data?.eModes, { persistOnly });
+        if (persistOnly) {
+          jotaiStore.set(refreshMemAtom, v => v + 1);
+        }
+      }, 2000),
+    );
+  },
+  setReserves: (
+    value: ExtractAtomValueType<typeof reservesAtom>,
+    { persistOnly = false } = {},
+  ) => {
+    if (persistOnly) {
+      lendingJsonStore.setItem('reserves', value);
+    } else {
+      // jotaiStore.set(reservesAtom, value);
+      jotaiStore.set(reservesBaseAtom, value);
+    }
+  },
+  setUserReserves: (
+    value: ExtractAtomValueType<typeof userReservesAtom>,
+    { persistOnly = false } = {},
+  ) => {
+    if (persistOnly) {
+      lendingJsonStore.setItem('userReserves', value);
+    } else {
+      // jotaiStore.set(userReservesAtom, value);
+      jotaiStore.set(userReservesBaseAtom, value);
+    }
+  },
+  setEModes: (
+    value: ExtractAtomValueType<typeof eModesAtom>,
+    { persistOnly = false } = {},
+  ) => {
+    if (persistOnly) {
+      lendingJsonStore.setItem('eModes', value);
+    } else {
+      // jotaiStore.set(eModesAtom, value);
+      jotaiStore.set(eModesBaseAtom, value);
+    }
+  },
+  setWalletBalances: (
+    value: ExtractAtomValueType<typeof walletBalancesAtom>,
+    { persistOnly = false } = {},
+  ) => {
+    if (persistOnly) {
+      lendingJsonStore.setItem('walletBalances', value);
+    } else {
+      // jotaiStore.set(walletBalancesAtom, value);
+      jotaiStore.set(walletBalancesBaseAtom, value);
+    }
+  },
+
   setLoading: (value: ExtractAtomValueType<typeof loadingAtom>) =>
     jotaiStore.set(loadingAtom, value),
   setCurrentAddress: (value: ExtractAtomValueType<typeof addressAtom>) =>
     jotaiStore.set(addressAtom, value),
 };
 
-export const apisLending = {
-  getSelectedMarketInfo() {
-    const market = jotaiStore.get(marketAtom);
-    return getMarketInfo(market);
-  },
-  getMarketKey() {
-    const marketKey = jotaiStore.get(marketAtom);
-    return marketKey;
-  },
-  getPools() {
-    const marketKey = apisLending.getMarketKey();
-    const selectedMarketData = apisLending.getSelectedMarketInfo().marketData;
-    if (!marketKey || !selectedMarketData) {
-      return undefined;
+const fetchLendingData = makeSWRKeyAsyncFunc(
+  async (options?: {
+    accountAddress?: string;
+    ignoreLoading?: boolean;
+    persistOnly?: boolean;
+  }) => {
+    const {
+      accountAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
+        forScene: 'Lending',
+      }).finalSceneCurrentAccount?.address,
+      ignoreLoading,
+      persistOnly = false,
+    } = options || {};
+
+    const requestAddress = accountAddress;
+    if (!requestAddress) {
+      return;
     }
-    return getCachePools(marketKey);
-  },
-  fetchLendingData,
-};
 
-async function fetchLendingData(options?: {
-  accountAddress?: string;
-  ignoreLoading?: boolean;
-}) {
-  const {
-    accountAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
-      forScene: 'Lending',
-    }).finalSceneCurrentAccount?.address,
-    ignoreLoading,
-  } = options || {};
+    const marketKey = getMarketKey();
 
-  const requestAddress = accountAddress;
-  if (!requestAddress) {
-    return;
-  }
+    // 用户强制忽略loading、前后params一样
+    const isSameParams =
+      preQueryParams.address === requestAddress &&
+      preQueryParams.marketKey === marketKey;
+    const isForceIgnoreLoading = ignoreLoading || isSameParams;
+    preQueryParams.address = requestAddress;
+    preQueryParams.marketKey = marketKey;
+    if (!isForceIgnoreLoading) {
+      globalSets.setLoading(true);
+    }
+    return fetchContractData(requestAddress)
+      .then(data => {
+        globalSets.setRemoteData(data, { persistOnly });
 
-  const marketKey = apisLending.getMarketKey();
-
-  // 用户强制忽略loading、前后params一样
-  const isSameParams =
-    preQueryParams.address === requestAddress &&
-    preQueryParams.marketKey === marketKey;
-  const isForceIgnoreLoading = ignoreLoading || isSameParams;
-  preQueryParams.address = requestAddress;
-  preQueryParams.marketKey = marketKey;
-  if (!isForceIgnoreLoading) {
-    globalSets.setLoading(true);
-  }
-  return fetchContractData(requestAddress)
-    .then(data => {
-      const nextReserves = data?.reserves;
-      const nextUserReserves = data?.userReserves;
-      const nextWalletBalances = data?.walletBalances || EMPTY_WALLET_BALANCES;
-      unstable_batchedUpdates(() => {
-        globalSets.setReserves(nextReserves);
-        globalSets.setUserReserves(nextUserReserves);
-        globalSets.setWalletBalances(nextWalletBalances);
-        globalSets.setEModes(data?.eModes);
         globalSets.setCurrentAddress(requestAddress);
         globalSets.setLoading(false);
+      })
+      .catch(() => {
+        globalSets.setLoading(false);
       });
-    })
-    .catch(() => {
-      globalSets.setLoading(false);
-    });
+  },
+  ctx => {
+    const { accountAddress, ignoreLoading, persistOnly } = ctx.args[0] || {};
+    return `lendingData-${accountAddress || 'no_address'}-${
+      ignoreLoading ? 'ignore' : 'normal'
+    }-${persistOnly ? 'persist' : 'normal'}`;
+  },
+);
+
+function getSelectedMarketInfo() {
+  const market = jotaiStore.get(marketAtom);
+  return getMarketInfo(market);
 }
+function getMarketKey() {
+  const marketKey = jotaiStore.get(marketAtom);
+  return marketKey;
+}
+function getPools() {
+  const marketKey = getMarketKey();
+  const selectedMarketData = getSelectedMarketInfo().marketData;
+  if (!marketKey || !selectedMarketData) {
+    return undefined;
+  }
+  return getCachePools(marketKey);
+}
+
+export const apisLending = {
+  fetchLendingData,
+};
 
 const useLendingData = () => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
