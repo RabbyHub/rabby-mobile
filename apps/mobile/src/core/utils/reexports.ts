@@ -1,6 +1,6 @@
 import { getDefaultStore } from 'jotai';
 
-export { create as zCreate } from 'zustand';
+export { create as zCreate, useStore as zUseStore } from 'zustand';
 
 export {
   persist as zPersist,

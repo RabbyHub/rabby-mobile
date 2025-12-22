@@ -63,12 +63,13 @@ import ActivityAndHolders from './components/Market/ActivityAndHolders';
 import { scrollEndCallBack } from './components/Market/hooks';
 import { every10sEvent, useEvery10sEvent } from './event';
 
-const currentIntervalState = zustandByMMKV<CandlePeriod>(
-  '@tokenDetail.currentInterval',
-  CandlePeriod.ONE_MINUTE,
-);
+const currentIntervalState = zustandByMMKV<{
+  interval: CandlePeriod;
+}>('@tokenDetail.currentInterval', {
+  interval: CandlePeriod.ONE_MINUTE,
+});
 function setCurrentInterval(val: CandlePeriod) {
-  currentIntervalState.setState(() => val);
+  currentIntervalState.setState(() => ({ interval: val }));
 }
 
 const isAndroid = Platform.OS === 'android';
@@ -428,7 +429,7 @@ export const TokenMarketInfoScreen = () => {
   const tokenPriceChartRef = React.useRef<TokenChartRef>(null);
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
 
-  const currentInterval = currentIntervalState(s => s);
+  const currentInterval = currentIntervalState(s => s.interval);
 
   const [loading, setLoading] = useState(true);
   const handleRefresh = useCallback(() => {

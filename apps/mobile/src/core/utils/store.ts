@@ -16,7 +16,7 @@ export function resolveValFromUpdater<Val = unknown>(
   if (typeof input === 'function') {
     ret.newVal = input(prev);
   } else if (typeof input === 'object') {
-    if (Array.isArray(prev)) {
+    if (Array.isArray(prev) || Array.isArray(input)) {
       ret.newVal = [...(input as any[])] as Val;
     } else {
       ret.newVal = input ? { ...prev, ...input } : input;
