@@ -1,5 +1,4 @@
 import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom } from 'jotai';
 import { useClearMiniApprovalTask } from './useMiniApprovalTask';
 import { uniqueId } from 'lodash';
 import {
@@ -9,10 +8,13 @@ import {
 import { Account } from '@/core/services/preference';
 import { MiniTypedData } from './useMiniSignTypedDataApprovalTask';
 import { sendSignTypedData } from '@/utils/sendTypedData';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 export let DirectSubmitReject;
 
-const miniApprovalAtom = atom<{
+// Zustand implementation for miniApproval
+type MiniApprovalState = {
   txs?: MiniTypedData[];
   onReject?: (e?: any) => void;
   onResolve?: (res: Awaited<ReturnType<typeof sendSignTypedData>>[]) => void;
@@ -22,16 +24,28 @@ const miniApprovalAtom = atom<{
   directSubmit?: boolean;
   account?: Account;
   autoSign?: boolean;
-}>({
+};
+
+const miniApprovalStore = zCreate<MiniApprovalState>(() => ({
   txs: [],
-});
+}));
+
+function setMiniApprovalState(valOrFunc: UpdaterOrPartials<MiniApprovalState>) {
+  miniApprovalStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
 
 export const useMiniSignTypedDataApprovalState = () => {
-  return useAtom(miniApprovalAtom);
+  return miniApprovalStore();
 };
 
 export const useSendMiniSignTypedData = () => {
-  const [state, setState] = useAtom(miniApprovalAtom);
+  const state = miniApprovalStore();
   const { clear } = useClearMiniApprovalTask();
 
   const _sendMiniTransactions = useMemoizedFn(
@@ -52,7 +66,7 @@ export const useSendMiniSignTypedData = () => {
           if (directSubmit) {
             DirectSubmitReject = directSubmit ? reject : undefined;
           }
-          setState(prev => {
+          setMiniApprovalState(prev => {
             return {
               ...prev,
               id: id || prev.id,
@@ -61,7 +75,7 @@ export const useSendMiniSignTypedData = () => {
               directSubmit: !!directSubmit,
               account,
               onReject: e => {
-                setState(prev => ({
+                setMiniApprovalState(prev => ({
                   ...prev,
                   txs: [],
                 }));
@@ -74,7 +88,7 @@ export const useSendMiniSignTypedData = () => {
                 reject(e);
               },
               onResolve: res => {
-                setState(prev => ({
+                setMiniApprovalState(prev => ({
                   ...prev,
                   txs: [],
                 }));
@@ -101,7 +115,7 @@ export const useSendMiniSignTypedData = () => {
       autoSign?: boolean;
     }) => {
       clear();
-      setState(prev => {
+      setMiniApprovalState(prev => {
         return {
           ...prev,
           id: uniqueId('mini-approval'),

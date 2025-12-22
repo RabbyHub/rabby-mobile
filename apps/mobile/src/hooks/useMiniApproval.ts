@@ -1,6 +1,5 @@
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useClearMiniApprovalTask } from './useMiniApprovalTask';
 import { noop, uniqueId } from 'lodash';
 import { sendTransaction } from '@/utils/sendTransaction';
@@ -11,10 +10,13 @@ import {
 import { sleep } from '@/utils/async';
 import { Account } from '@/core/services/preference';
 import { ReactNode, useCallback } from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 export let DirectSubmitReject;
 
-export const miniApprovalAtom = atom<{
+// Zustand implementation for miniApproval
+type MiniApprovalState = {
   txs?: Tx[];
   visible?: boolean;
   onReject?: (e?: any) => void;
@@ -27,9 +29,21 @@ export const miniApprovalAtom = atom<{
   showMaskLoading?: boolean;
   transparentMask?: boolean;
   checkGasFee?: boolean;
-}>({
+};
+
+const miniApprovalStore = zCreate<MiniApprovalState>(() => ({
   txs: [],
-});
+}));
+
+function setMiniApprovalState(valOrFunc: UpdaterOrPartials<MiniApprovalState>) {
+  miniApprovalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
 
 const DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG = {
   // autoTriggerPreExecError: false,
@@ -41,15 +55,42 @@ const DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG = {
   // onRedirectToDeposit: noop,
 };
 
-const miniSignExtraPropsAtom = atom(DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+// Zustand implementation for miniSignExtraProps
+type MiniSignExtraPropsState = typeof DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG;
 
-export const useGetMiniSignTxExtraProps = () =>
-  useAtomValue(miniSignExtraPropsAtom);
+const miniSignExtraPropsStore = zCreate<MiniSignExtraPropsState>(
+  () => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG,
+);
+
+function setMiniSignExtraPropsState(
+  valOrFunc: UpdaterOrPartials<MiniSignExtraPropsState>,
+) {
+  miniSignExtraPropsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+export const useGetMiniSignTxExtraProps = () => miniSignExtraPropsStore();
+
+// Hook to replace useAtom(miniApprovalAtom)
+export const useMiniApprovalState = () => {
+  const state = miniApprovalStore();
+  return [state, setMiniApprovalState] as const;
+};
 
 // let globalCurrentApprovalId = uniqueId('mini-approval');
 export const useMiniApproval = () => {
-  const [state, setState] = useAtom(miniApprovalAtom);
-  const setMiniSignExtraProps = useSetAtom(miniSignExtraPropsAtom);
+  const state = miniApprovalStore();
+  const setMiniSignExtraProps = useCallback(
+    (valOrFunc: UpdaterOrPartials<MiniSignExtraPropsState>) => {
+      setMiniSignExtraPropsState(valOrFunc);
+    },
+    [],
+  );
   const { clear } = useClearMiniApprovalTask();
 
   const _sendMiniTransactions = useMemoizedFn(
@@ -73,7 +114,7 @@ export const useMiniApproval = () => {
           if (directSubmit) {
             DirectSubmitReject = directSubmit ? reject : undefined;
           }
-          setState(prev => {
+          setMiniApprovalState(prev => {
             return {
               ...prev,
               id: id || prev.id,
@@ -83,7 +124,7 @@ export const useMiniApproval = () => {
               directSubmit: !!directSubmit,
               account,
               onReject: e => {
-                setState(prev => ({
+                setMiniApprovalState(prev => ({
                   ...prev,
                   txs: [],
                   visible: false,
@@ -91,7 +132,9 @@ export const useMiniApproval = () => {
                   transparentMask: false,
                   checkGasFee: false,
                 }));
-                setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+                setMiniSignExtraPropsState(
+                  () => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG,
+                );
                 const signingTxId =
                   notificationService.currentMiniApproval?.signingTxId;
                 if (signingTxId) {
@@ -101,7 +144,7 @@ export const useMiniApproval = () => {
                 reject(e);
               },
               onResolve: res => {
-                setState(prev => ({
+                setMiniApprovalState(prev => ({
                   ...prev,
                   txs: [],
                   visible: false,
@@ -109,7 +152,9 @@ export const useMiniApproval = () => {
                   transparentMask: false,
                   checkGasFee: false,
                 }));
-                setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+                setMiniSignExtraPropsState(
+                  () => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG,
+                );
                 notificationService.currentMiniApproval = null;
                 resolve(res);
               },
@@ -150,8 +195,8 @@ export const useMiniApproval = () => {
   );
 
   const resetMiniSignExtraProps = useCallback(() => {
-    setMiniSignExtraProps(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
-  }, [setMiniSignExtraProps]);
+    setMiniSignExtraPropsState(() => DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+  }, []);
 
   const prepareMiniTransactions = useMemoizedFn(
     ({
@@ -174,7 +219,7 @@ export const useMiniApproval = () => {
       console.debug('prepareMiniTransactions trigger', ga, txs?.length);
       clear();
       resetMiniSignExtraProps();
-      setState(prev => {
+      setMiniApprovalState(prev => {
         return {
           ...prev,
           id: uniqueId('mini-approval'),

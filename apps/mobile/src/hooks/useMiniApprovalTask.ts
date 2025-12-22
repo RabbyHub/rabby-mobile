@@ -1,7 +1,6 @@
 import { FailedCode, sendTransaction } from '@/utils/sendTransaction';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { atom, useAtom, useAtomValue } from 'jotai';
 import _, { uniqueId } from 'lodash';
 import React, { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +11,8 @@ import {
   setRetryTxRecommendNonce,
 } from '@/utils/errorTxRetry';
 import BigNumber from 'bignumber.js';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 type TxStatus = 'sended' | 'signed' | 'idle' | 'failed';
 
@@ -26,40 +27,87 @@ type ListItemType = {
   hash?: string;
 };
 
-const taskListAtom = atom<ListItemType[]>([]);
-const taskStatusAtom = atom<'idle' | 'active' | 'paused' | 'completed'>('idle');
-const taskErrorAtom = atom<{
+// Zustand implementation for taskList
+type TaskListState = ListItemType[];
+const taskListStore = zCreate<TaskListState>(() => []);
+
+function setTaskListState(valOrFunc: UpdaterOrPartials<TaskListState>) {
+  taskListStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+// Zustand implementation for taskStatus
+type TaskStatusState = 'idle' | 'active' | 'paused' | 'completed';
+const taskStatusStore = zCreate<TaskStatusState>(() => 'idle');
+
+function setTaskStatusState(valOrFunc: UpdaterOrPartials<TaskStatusState>) {
+  taskStatusStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+// Zustand implementation for taskError
+type TaskErrorState = {
   status: 'REJECTED' | 'FAILED';
   content: string;
   description: string;
-} | null>(null);
+} | null;
 
-const miniSignTxInfoAtom = atom(get => {
-  const index = _.findLastIndex(
-    get(taskListAtom),
-    item => item.status !== 'idle',
-  );
+const taskErrorStore = zCreate<TaskErrorState>(() => null);
+
+function setTaskErrorState(valOrFunc: UpdaterOrPartials<TaskErrorState>) {
+  taskErrorStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+// Zustand implementation for miniSignTxInfo
+type MiniSignTxInfoState = {
+  status: TaskStatusState;
+  totalTxLength: number;
+  error: TaskErrorState;
+  currentActiveIndex: number;
+};
+
+const miniSignTxInfoStore = zCreate<MiniSignTxInfoState>(get => {
+  const list = taskListStore.getState();
+  const status = taskStatusStore.getState();
+  const error = taskErrorStore.getState();
+  const index = _.findLastIndex(list, item => item.status !== 'idle');
   return {
-    status: get(taskStatusAtom),
-    totalTxLength: get(taskListAtom).length,
-    error: get(taskErrorAtom),
+    status,
+    totalTxLength: list.length,
+    error,
     currentActiveIndex: index <= -1 ? 0 : index,
   };
 });
 
-export const useGetMiniSignInfo = () => useAtomValue(miniSignTxInfoAtom);
+export const useGetMiniSignInfo = () => miniSignTxInfoStore();
 
 let globalCurrentTaskId = uniqueId();
 export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
-  const [list, setList] = useAtom(taskListAtom);
-  const [status, setStatus] = useAtom(taskStatusAtom);
-  const [error, setError] = useAtom(taskErrorAtom);
+  const list = taskListStore();
+  const status = taskStatusStore();
+  const error = taskErrorStore();
 
   const { t } = useTranslation();
 
   const _updateList = useMemoizedFn(
     ({ index, payload }: { index: number; payload: Partial<ListItemType> }) => {
-      setList(prev => {
+      setTaskListState(prev => {
         const cloned = [...prev];
 
         cloned[index] = {
@@ -73,9 +121,9 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
   );
 
   const init = useMemoizedFn((list: ListItemType[]) => {
-    setList(list);
-    setStatus('idle');
-    setError(null);
+    setTaskListState(list);
+    setTaskStatusState('idle');
+    setTaskErrorState(null);
     globalCurrentTaskId = uniqueId();
   });
 
@@ -96,7 +144,7 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
       }
 
       try {
-        setStatus('active');
+        setTaskStatusState('active');
         for (let index = 0; index < list.length; index++) {
           let item = list[index];
 
@@ -205,7 +253,7 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
               nonce: tx.nonce,
             });
 
-            setError({
+            setTaskErrorState({
               status: _status,
               content:
                 _status === 'REJECTED'
@@ -224,7 +272,7 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
         if (currentId !== globalCurrentTaskId) {
           return;
         }
-        setStatus('completed');
+        setTaskStatusState('completed');
         return resultList;
       } catch (e) {
         console.error(e);
@@ -237,12 +285,12 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
   );
 
   const handleRetry = useMemoizedFn(async () => {
-    setError(null);
+    setTaskErrorState(null);
     return await start(true);
   });
 
   const stop = useMemoizedFn(() => {
-    setStatus('idle');
+    setTaskStatusState('idle');
   });
 
   const currentActiveIndex = React.useMemo(() => {
@@ -274,14 +322,10 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
 };
 
 export const useClearMiniApprovalTask = () => {
-  const [, setList] = useAtom(taskListAtom);
-  const [, setStatus] = useAtom(taskStatusAtom);
-  const [, setError] = useAtom(taskErrorAtom);
-
   const clear = useMemoizedFn(() => {
-    setList([]);
-    setStatus('idle');
-    setError(null);
+    setTaskListState([]);
+    setTaskStatusState('idle');
+    setTaskErrorState(null);
     globalCurrentTaskId = uniqueId();
   });
 

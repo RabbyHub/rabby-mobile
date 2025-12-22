@@ -1,10 +1,11 @@
 import { FailedCode } from '@/utils/sendTransaction';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { atom, useAtom } from 'jotai';
 import _, { uniqueId } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { sendSignTypedData } from '@/utils/sendTypedData';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 type TxStatus = 'sended' | 'signed' | 'idle' | 'failed';
 
@@ -25,13 +26,52 @@ type ListItemType = {
   hash?: string;
 };
 
-const taskListAtom = atom<ListItemType[]>([]);
-const taskStatusAtom = atom<'idle' | 'active' | 'paused' | 'completed'>('idle');
-const taskErrorAtom = atom<{
+// Zustand implementation for taskList
+type TaskListState = ListItemType[];
+const taskListStore = zCreate<TaskListState>(() => []);
+
+function setTaskListState(valOrFunc: UpdaterOrPartials<TaskListState>) {
+  taskListStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+// Zustand implementation for taskStatus
+type TaskStatusState = 'idle' | 'active' | 'paused' | 'completed';
+const taskStatusStore = zCreate<TaskStatusState>(() => 'idle');
+
+function setTaskStatusState(valOrFunc: UpdaterOrPartials<TaskStatusState>) {
+  taskStatusStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+// Zustand implementation for taskError
+type TaskErrorState = {
   status: 'REJECTED' | 'FAILED';
   content: string;
   description: string;
-} | null>(null);
+} | null;
+
+const taskErrorStore = zCreate<TaskErrorState>(() => null);
+
+function setTaskErrorState(valOrFunc: UpdaterOrPartials<TaskErrorState>) {
+  taskErrorStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
 
 let globalCurrentTaskId = uniqueId();
 export const useMiniTypedDataApprovalTask = ({
@@ -39,15 +79,15 @@ export const useMiniTypedDataApprovalTask = ({
 }: {
   ga?: Record<string, any>;
 }) => {
-  const [list, setList] = useAtom(taskListAtom);
-  const [status, setStatus] = useAtom(taskStatusAtom);
-  const [error, setError] = useAtom(taskErrorAtom);
+  const list = taskListStore();
+  const status = taskStatusStore();
+  const error = taskErrorStore();
 
   const { t } = useTranslation();
 
   const _updateList = useMemoizedFn(
     ({ index, payload }: { index: number; payload: Partial<ListItemType> }) => {
-      setList(prev => {
+      setTaskListState(prev => {
         const cloned = [...prev];
 
         cloned[index] = {
@@ -61,9 +101,9 @@ export const useMiniTypedDataApprovalTask = ({
   );
 
   const init = useMemoizedFn((list: ListItemType[]) => {
-    setList(list);
-    setStatus('idle');
-    setError(null);
+    setTaskListState(list);
+    setTaskStatusState('idle');
+    setTaskErrorState(null);
     globalCurrentTaskId = uniqueId();
   });
 
@@ -73,7 +113,7 @@ export const useMiniTypedDataApprovalTask = ({
       const resultList: Awaited<ReturnType<typeof sendSignTypedData>>[] = [];
 
       try {
-        setStatus('active');
+        setTaskStatusState('active');
         for (let index = 0; index < list.length; index++) {
           let item = list[index];
 
@@ -137,7 +177,7 @@ export const useMiniTypedDataApprovalTask = ({
             const _status =
               e.name === FailedCode.UserRejected ? 'REJECTED' : 'FAILED';
 
-            setError({
+            setTaskErrorState({
               status: _status,
               content:
                 _status === 'REJECTED'
@@ -155,7 +195,7 @@ export const useMiniTypedDataApprovalTask = ({
         if (currentId !== globalCurrentTaskId) {
           return;
         }
-        setStatus('completed');
+        setTaskStatusState('completed');
         return resultList;
       } catch (e) {
         console.error(e);
@@ -168,12 +208,12 @@ export const useMiniTypedDataApprovalTask = ({
   );
 
   const handleRetry = useMemoizedFn(async () => {
-    setError(null);
+    setTaskErrorState(null);
     return await start(true);
   });
 
   const stop = useMemoizedFn(() => {
-    setStatus('idle');
+    setTaskStatusState('idle');
   });
 
   const currentActiveIndex = React.useMemo(() => {
@@ -205,14 +245,10 @@ export const useMiniTypedDataApprovalTask = ({
 };
 
 export const useClearMiniTypedDataApprovalTask = () => {
-  const [, setList] = useAtom(taskListAtom);
-  const [, setStatus] = useAtom(taskStatusAtom);
-  const [, setError] = useAtom(taskErrorAtom);
-
   const clear = useMemoizedFn(() => {
-    setList([]);
-    setStatus('idle');
-    setError(null);
+    setTaskListState([]);
+    setTaskStatusState('idle');
+    setTaskErrorState(null);
     globalCurrentTaskId = uniqueId();
   });
 

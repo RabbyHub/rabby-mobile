@@ -1,7 +1,6 @@
-import { miniApprovalAtom } from '@/hooks/useMiniApproval';
+import { useMiniApprovalState } from '@/hooks/useMiniApproval';
 import { useClearMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
 import { useMemoizedFn, useMount, useUnmount } from 'ahooks';
-import { useAtom } from 'jotai';
 import React, { useRef } from 'react';
 import { toastWithDotAnimation } from '@/components2024/Toast';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -24,7 +23,7 @@ const DON_AUTO_RESET_GAS_SCREEN = [
 ] as string[];
 
 export const GlobalMiniApproval = () => {
-  const [state, setState] = useAtom(miniApprovalAtom);
+  const [state, setState] = useMiniApprovalState();
   const currentAccount = state.account;
   const { clear } = useClearMiniApprovalTask();
   // const [currentRoute, setCurrentRoute] = useState(getLatestNavigationName());

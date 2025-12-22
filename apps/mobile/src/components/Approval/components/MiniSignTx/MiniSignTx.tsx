@@ -70,7 +70,6 @@ import { sendTransaction } from '@/utils/sendTransaction';
 import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
 import AutoLockView from '@/components/AutoLockView';
 
-import { useAtom } from 'jotai';
 import { MiniApprovalError } from './error';
 import {
   useMiniSignFixedMode,

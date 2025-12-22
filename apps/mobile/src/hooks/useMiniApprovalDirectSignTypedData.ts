@@ -1,17 +1,39 @@
-import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { useCallback } from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
-const miniSignTypedDataSign = atom<boolean>(false);
+// Zustand implementation for miniSignTypedDataSign
+const miniSignTypedDataSignStore = zCreate<boolean>(() => false);
 
-export const useSetMiniSigningTypedData = () =>
-  useSetAtom(miniSignTypedDataSign);
-export const useGetMiniSigningTypedData = () =>
-  useAtomValue(miniSignTypedDataSign);
+function setMiniSignTypedDataSignState(valOrFunc: UpdaterOrPartials<boolean>) {
+  miniSignTypedDataSignStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+export const useSetMiniSigningTypedData = () => {
+  return useCallback((valOrFunc: UpdaterOrPartials<boolean>) => {
+    setMiniSignTypedDataSignState(valOrFunc);
+  }, []);
+};
+
+export const useGetMiniSigningTypedData = () => miniSignTypedDataSignStore();
 
 export const useResetMiniSigningTypedData = () => {
-  const setMiniSignTypedDataSign = useSetAtom(miniSignTypedDataSign);
+  const setMiniSignTypedDataSign = useCallback(
+    (valOrFunc: UpdaterOrPartials<boolean>) => {
+      setMiniSignTypedDataSignState(valOrFunc);
+    },
+    [],
+  );
+
   const reset = useCallback(() => {
     setMiniSignTypedDataSign(false);
   }, [setMiniSignTypedDataSign]);
+
   return reset;
 };

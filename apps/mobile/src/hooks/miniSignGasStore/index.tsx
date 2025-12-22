@@ -1,8 +1,9 @@
-import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { zustandByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { useCallback, useEffect, useState } from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
-export const fixedCustomGasAtom = atomByMMKV(
+export const fixedCustomGasStore = zustandByMMKV(
   'miniSignCustomGas',
   {} as {
     [key: number]: number;
@@ -10,19 +11,59 @@ export const fixedCustomGasAtom = atomByMMKV(
   { storage: MMKVStorageStrategy.compatJson },
 );
 
-const gasLevelAtom = atom<'normal' | 'slow' | 'fast' | 'custom'>('normal');
-const customPriceAtom = atom<{
+// Zustand implementation for gasLevel
+type GasLevelState = 'normal' | 'slow' | 'fast' | 'custom';
+const gasLevelStore = zCreate<GasLevelState>(() => 'normal');
+
+function setGasLevelState(valOrFunc: UpdaterOrPartials<GasLevelState>) {
+  gasLevelStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+// Zustand implementation for customPrice
+type CustomPriceState = {
   [key: number]: number;
-}>({});
+};
+
+const customPriceStore = zCreate<CustomPriceState>(() => ({}));
+
+function setCustomPriceState(valOrFunc: UpdaterOrPartials<CustomPriceState>) {
+  customPriceStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
 
 export const useMemoMiniSignGasStore = () => {
-  const [miniGasLevel, setMiniGasLevel] = useAtom(gasLevelAtom);
-  const [miniCustomPrice, setMiniCustomPrice] = useAtom(customPriceAtom);
+  const miniGasLevel = gasLevelStore();
+  const miniCustomPrice = customPriceStore();
+
+  const setMiniGasLevel = useCallback(
+    (valOrFunc: UpdaterOrPartials<GasLevelState>) => {
+      setGasLevelState(valOrFunc);
+    },
+    [],
+  );
+
+  const setMiniCustomPrice = useCallback(
+    (valOrFunc: UpdaterOrPartials<CustomPriceState>) => {
+      setCustomPriceState(valOrFunc);
+    },
+    [],
+  );
 
   const reset = useCallback(() => {
-    setMiniGasLevel('normal');
-    setMiniCustomPrice({});
-  }, [setMiniGasLevel, setMiniCustomPrice]);
+    setGasLevelState('normal');
+    setCustomPriceState({});
+  }, []);
 
   return {
     miniGasLevel,
@@ -35,7 +76,7 @@ export const useMemoMiniSignGasStore = () => {
 };
 
 export const useMiniSignFixedMode = (chainId?: number) => {
-  const fixedCustomGas = useAtomValue(fixedCustomGasAtom);
+  const fixedCustomGas = fixedCustomGasStore();
 
   if (!chainId) {
     return false;
@@ -47,9 +88,31 @@ export const useMiniSignFixedMode = (chainId?: number) => {
 };
 
 export const useMiniSignGasStoreOrigin = () => {
-  const [miniGasLevel, setMiniGasLevel] = useAtom(gasLevelAtom);
-  const [miniCustomPrice, setMiniCustomPrice] = useAtom(customPriceAtom);
-  const [fixedCustomGas, setFixedCustomGas] = useAtom(fixedCustomGasAtom);
+  const miniGasLevel = gasLevelStore();
+  const miniCustomPrice = customPriceStore();
+  const fixedCustomGas = fixedCustomGasStore();
+
+  const setMiniGasLevel = useCallback(
+    (valOrFunc: UpdaterOrPartials<GasLevelState>) => {
+      setGasLevelState(valOrFunc);
+    },
+    [],
+  );
+
+  const setMiniCustomPrice = useCallback(
+    (valOrFunc: UpdaterOrPartials<CustomPriceState>) => {
+      setCustomPriceState(valOrFunc);
+    },
+    [],
+  );
+
+  const setFixedCustomGas = useCallback(
+    (valOrFunc: UpdaterOrPartials<typeof fixedCustomGas>) => {
+      fixedCustomGasStore.setState(valOrFunc);
+    },
+    [],
+  );
+
   return {
     miniGasLevel,
     setMiniGasLevel,
@@ -59,10 +122,32 @@ export const useMiniSignGasStoreOrigin = () => {
     setFixedCustomGas,
   };
 };
+
 export const useMiniSignGasStore = (chainId: number) => {
-  const [miniGasLevel, setMiniGasLevel] = useAtom(gasLevelAtom);
-  const [miniCustomPrice, setMiniCustomPrice] = useAtom(customPriceAtom);
-  const [fixedCustomGas, setFixedCustomGas] = useAtom(fixedCustomGasAtom);
+  const miniGasLevel = gasLevelStore();
+  const miniCustomPrice = customPriceStore();
+  const fixedCustomGas = fixedCustomGasStore();
+
+  const setMiniGasLevel = useCallback(
+    (valOrFunc: UpdaterOrPartials<GasLevelState>) => {
+      setGasLevelState(valOrFunc);
+    },
+    [],
+  );
+
+  const setMiniCustomPrice = useCallback(
+    (valOrFunc: UpdaterOrPartials<CustomPriceState>) => {
+      setCustomPriceState(valOrFunc);
+    },
+    [],
+  );
+
+  const setFixedCustomGas = useCallback(
+    (valOrFunc: UpdaterOrPartials<typeof fixedCustomGas>) => {
+      fixedCustomGasStore.setState(valOrFunc);
+    },
+    [],
+  );
 
   const currentMiniSignGasLevel =
     fixedCustomGas?.[chainId] !== undefined ? 'custom' : miniGasLevel;
@@ -111,6 +196,7 @@ export const useMiniSignGasStore = (chainId: number) => {
     updateMiniGas,
   };
 };
+
 // 内置功能签名
 // - 页面记忆 Instant/Fast/Normal, 重进页面前有效；
 // - 链记忆 Custom，切链或重进页面前有效；
