@@ -1,14 +1,15 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   RefreshControl,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -54,8 +55,23 @@ const LendingSupplyList: React.FC = () => {
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
   const [search, setSearch] = useState('');
+  const [isInputActive, setIsInputActive] = useState(false);
+
   const [foldHideList, setFoldHideList] = useState(true);
   const { chainEnum, marketKey } = useSelectedMarket();
+  const inputRef = useRef<TextInput | null>(null);
+
+  const inputNotActiveAndNoQuery = useMemo(() => {
+    return !(search || isInputActive);
+  }, [search, isInputActive]);
+
+  const handleInputFocus = () => {
+    setIsInputActive(true);
+  };
+
+  const handleInputBlur = () => {
+    setIsInputActive(false);
+  };
 
   const sortReserves = useMemo(() => {
     return displayPoolReserves
@@ -257,10 +273,19 @@ const LendingSupplyList: React.FC = () => {
       }
 
       const data = item.data;
+      const isWrapperToken = chainEnum
+        ? isSameAddress(
+            wrapperToken[chainEnum]?.address,
+            data.reserve.underlyingAsset,
+          )
+        : false;
       return (
         <TouchableOpacity
-          style={styles.item}
+          style={[styles.item, isWrapperToken && styles.wrapperToken]}
           onPress={() => handlePressItem(data)}>
+          {isWrapperToken && !search && (
+            <View style={styles.wrapperTokenArrow} />
+          )}
           <View style={styles.left}>
             <TokenIcon
               tokenSymbol={data.reserve.symbol}
@@ -287,7 +312,7 @@ const LendingSupplyList: React.FC = () => {
         </TouchableOpacity>
       );
     },
-    [chainEnum, foldHideList, handlePressItem, styles],
+    [chainEnum, foldHideList, handlePressItem, search, styles],
   );
 
   const renderFooterComponent = useCallback(() => {
@@ -304,9 +329,34 @@ const LendingSupplyList: React.FC = () => {
           style={styles.searchBar}
           value={search}
           onChangeText={setSearch}
+          inputContainerStyle={{
+            justifyContent: inputNotActiveAndNoQuery ? 'center' : 'flex-start',
+          }}
+          inputStyle={{
+            flex: inputNotActiveAndNoQuery ? 0 : 1,
+          }}
           placeholder={t('component.TokenSelector.searchPlaceHolder2')}
           returnKeyType="search"
+          placeholderTextColor={colors2024['neutral-secondary']}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+          onCancel={() => {
+            setSearch('');
+            setTimeout(() => {
+              inputRef.current?.blur();
+            }, 50);
+          }}
+          ref={inputRef}
         />
+        {/* for mask touch event in input to emit focus event */}
+        {inputNotActiveAndNoQuery && (
+          <TouchableOpacity
+            style={[styles.absoluteContainer]}
+            onPress={() => {
+              inputRef.current?.focus();
+            }}
+          />
+        )}
       </View>
       <FlatList
         data={loading ? [] : dataList}
@@ -369,6 +419,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
     marginTop: 8,
+    overflow: 'visible',
+  },
+  wrapperToken: {
+    backgroundColor: colors2024['neutral-bg-5'],
+    borderColor: colors2024['neutral-line'],
+    borderWidth: 1,
+  },
+  wrapperTokenArrow: {
+    position: 'absolute',
+    top: -15,
+    left: 30,
+    zIndex: 1,
+    ...makeTriangleStyle({
+      dir: 'up',
+      size: 7,
+      color: colors2024['neutral-bg-5'],
+      backgroundColor: 'transparent',
+    }),
   },
   left: {
     flex: 1,
@@ -492,6 +560,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 0,
     marginLeft: 10,
     width: 80,
+  },
+  absoluteContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
   },
   sectionHeader: {
     backgroundColor: isLight

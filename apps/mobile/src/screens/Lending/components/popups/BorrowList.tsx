@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import {
   FlatList,
   RefreshControl,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -52,8 +53,23 @@ const LendingBorrowList: React.FC = () => {
   const { t } = useTranslation();
   const { fetchData } = useLendingData();
   const [search, setSearch] = useState('');
+  const [isInputActive, setIsInputActive] = useState(false);
+
   const [foldHideList, setFoldHideList] = useState(true);
   const { marketKey } = useSelectedMarket();
+  const inputRef = useRef<TextInput | null>(null);
+
+  const inputNotActiveAndNoQuery = useMemo(() => {
+    return !(search || isInputActive);
+  }, [search, isInputActive]);
+
+  const handleInputFocus = () => {
+    setIsInputActive(true);
+  };
+
+  const handleInputBlur = () => {
+    setIsInputActive(false);
+  };
 
   const isInIsolationMode = useMemo(() => {
     return iUserSummary?.isInIsolationMode;
@@ -366,7 +382,32 @@ const LendingBorrowList: React.FC = () => {
           onChangeText={setSearch}
           placeholder={t('component.TokenSelector.searchPlaceHolder2')}
           returnKeyType="search"
+          inputContainerStyle={{
+            justifyContent: inputNotActiveAndNoQuery ? 'center' : 'flex-start',
+          }}
+          inputStyle={{
+            flex: inputNotActiveAndNoQuery ? 0 : 1,
+          }}
+          placeholderTextColor={colors2024['neutral-secondary']}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+          onCancel={() => {
+            setSearch('');
+            setTimeout(() => {
+              inputRef.current?.blur();
+            }, 50);
+          }}
+          ref={inputRef}
         />
+        {/* for mask touch event in input to emit focus event */}
+        {inputNotActiveAndNoQuery && (
+          <TouchableOpacity
+            style={[styles.absoluteContainer]}
+            onPress={() => {
+              inputRef.current?.focus();
+            }}
+          />
+        )}
       </View>
       <FlatList
         data={loading ? [] : dataList}
@@ -591,5 +632,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '400',
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
+  },
+  absoluteContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
   },
 }));

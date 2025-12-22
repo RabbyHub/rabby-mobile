@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -204,16 +204,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
     return null;
   }
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-1']
-            : colors2024['neutral-bg-2'],
-        },
-        style,
-      ]}>
+    <View style={[styles.container, style]}>
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={styles.tokenInfo}>
@@ -286,21 +277,31 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
 
 export default BorrowItem;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     borderRadius: 16,
     paddingTop: 40,
     paddingBottom: 12,
     paddingHorizontal: 0,
     marginTop: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.07,
-    shadowRadius: 16,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    elevation: 2,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.07,
+        shadowRadius: 16,
+        shadowOffset: {
+          width: 0,
+          height: 8,
+        },
+      },
+      android: {
+        elevation: 0,
+      },
+      default: {},
+    }),
     position: 'relative',
   },
   content: {

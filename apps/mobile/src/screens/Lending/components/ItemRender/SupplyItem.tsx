@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -23,7 +23,7 @@ interface SupplyItemProps extends RNViewProps {
 }
 
 const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
   const { iUserSummary: userSummary, getTargetReserve } = useLendingSummary();
@@ -137,16 +137,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-1']
-            : colors2024['neutral-bg-2'],
-        },
-        style,
-      ]}>
+    <View style={[styles.container, style]}>
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={styles.tokenInfo}>
@@ -224,21 +215,31 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
 
 export default SupplyItem;
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     borderRadius: 16,
     paddingTop: 40,
     paddingBottom: 12,
     paddingHorizontal: 0,
     marginTop: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.07,
-    shadowRadius: 16,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    elevation: 2,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.07,
+        shadowRadius: 16,
+        shadowOffset: {
+          width: 0,
+          height: 8,
+        },
+      },
+      android: {
+        elevation: 0,
+      },
+      default: {},
+    }),
     position: 'relative',
   },
   content: {
