@@ -2,7 +2,8 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { atom } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
@@ -12,7 +13,22 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export const activeTabAtom = atom('favorites');
+// Zustand implementation for activeTab
+const activeTabStore = zCreate<'favorites'>(() => 'favorites');
+
+function setActiveTabState(valOrFunc: UpdaterOrPartials<'favorites'>) {
+  activeTabStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
+export const useActiveTab = () => {
+  const activeTab = activeTabStore();
+  return [activeTab, setActiveTabState] as const;
+};
 
 export function BrowserFavoriteManage(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({

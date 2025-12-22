@@ -7,11 +7,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BlurView, BlurViewProps } from '@react-native-community/blur';
 import { useMemoizedFn } from 'ahooks';
-import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
-import { activeTabAtom } from '../BrowserScreen/components/BrowserManage';
+import { useActiveTab } from '../BrowserScreen/components/BrowserManage';
 import { BrowserTabCard } from '../BrowserScreen/components/BrowserManage/BrowserTabList/BrowserTabCard';
 import { BrowserFavoriteInHome } from './BrowserFavoriteInHome';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
@@ -193,7 +192,7 @@ export const BrowserSearchEntry: React.FC = () => {
   } = useBrowser();
 
   const { homeDisplayedTabs: tabs } = useHomeDisplayedTabs();
-  const [, setActiveTab] = useAtom(activeTabAtom);
+  const [, setActiveTab] = useActiveTab();
 
   const { t } = useTranslation();
   const handlePress = useMemoizedFn(() => {

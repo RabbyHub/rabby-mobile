@@ -17,9 +17,52 @@ import { RcIconAddPlusCircle, ReactIconHome } from '@/assets2024/icons/browser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useAppState } from '@react-native-community/hooks';
-import { atom, useAtom } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
-export const activeTabAtom = atom('favorites');
+// Zustand implementation for activeTab
+const activeTabStore = zCreate<'favorites' | 'history' | 'tab'>(
+  () => 'favorites',
+);
+
+function setActiveTabState(
+  valOrFunc: UpdaterOrPartials<'favorites' | 'history' | 'tab'>,
+) {
+  activeTabStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
+
+export const useActiveTab = () => {
+  const activeTab = activeTabStore();
+  const setActiveTab = React.useCallback(
+    (
+      valOrFunc: UpdaterOrPartials<'favorites' | 'history' | 'tab'> | string,
+    ) => {
+      // Type guard for string values
+      if (typeof valOrFunc === 'string') {
+        // Validate that the string is one of our expected values
+        if (
+          valOrFunc === 'favorites' ||
+          valOrFunc === 'history' ||
+          valOrFunc === 'tab'
+        ) {
+          setActiveTabState(valOrFunc);
+        }
+        return;
+      }
+
+      // Handle function/updater pattern
+      setActiveTabState(valOrFunc);
+    },
+    [],
+  );
+
+  return [activeTab, setActiveTab] as const;
+};
 
 export function BrowserManage(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
@@ -34,7 +77,7 @@ export function BrowserManage(): JSX.Element {
   const { openTab, setPartialBrowserState, closeAllTabs } = useBrowser();
   const { removeAllBrowserHistory } = useBrowserHistory();
 
-  const [activeTab, setActiveTab] = useAtom(activeTabAtom);
+  const [activeTab, setActiveTab] = useActiveTab();
   const { t } = useTranslation();
   const [isShowDelete, setIsShowDelete] = useState(false);
 
@@ -56,7 +99,7 @@ export function BrowserManage(): JSX.Element {
         label: t('page.browserManage.option.tab'),
         key: 'tab',
       },
-    ];
+    ] as const;
   }, [t]);
 
   const tabRef = React.useRef<React.ComponentRef<typeof Tabs.Container>>();
@@ -125,7 +168,7 @@ export function BrowserManage(): JSX.Element {
         onTabChange={data => {
           if (!isChangingTabRef.current) {
             setActiveTab(data.tabName);
-            activeTabRef.current = data.tabName;
+            activeTabRef.current = data.tabName as typeof activeTab;
           }
           if (
             isChangingTabRef.current &&
