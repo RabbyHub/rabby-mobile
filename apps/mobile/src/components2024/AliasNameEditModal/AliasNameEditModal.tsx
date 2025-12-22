@@ -3,7 +3,6 @@ import { useAlias } from '@/hooks/alias';
 import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useAtom } from 'jotai';
 import React from 'react';
 import {
   KeyboardAvoidingView,
@@ -15,25 +14,21 @@ import {
 } from 'react-native';
 import { AliasNameEditView } from './AliasNameEditView';
 import {
-  visibleAtom,
-  accountAtom,
-  accountIconUriAtom,
+  useAliasNameEditModal,
   confirmCallBack,
 } from './useAliasNameEditModal';
 
 export const AliasNameEditModal: React.FC = () => {
   const { styles } = useTheme2024({ getStyle });
-  const [visible, setVisible] = useAtom(visibleAtom);
-  const [account] = useAtom(accountAtom);
-  const [iconUri] = useAtom(accountIconUriAtom);
+  const { visible, account, accountIconUri, hide } = useAliasNameEditModal();
 
   const [_, updateAliasName] = useAlias(account?.address || '');
   const [input, setInput] = React.useState(account?.aliasName || '');
   const [loading, setLoading] = React.useState(false);
   const onCancel = React.useCallback(() => {
-    setVisible(false);
+    hide();
     confirmCallBack.value = undefined;
-  }, [setVisible]);
+  }, [hide]);
 
   const onConfirm = React.useCallback(() => {
     if (!account) {
@@ -46,10 +41,10 @@ export const AliasNameEditModal: React.FC = () => {
       updateAliasName(input || ellipsisAddress(account.address));
     }
     setLoading(false);
-    setVisible(false);
+    hide();
     confirmCallBack.value = undefined;
     setInput('');
-  }, [account, input, setVisible, updateAliasName]);
+  }, [account, input, hide, updateAliasName]);
 
   React.useEffect(() => {
     setInput(account?.aliasName || '');
@@ -69,7 +64,7 @@ export const AliasNameEditModal: React.FC = () => {
                 iconSize={66}
                 iconBorderRadius={16}
                 account={account}
-                accoutnIconUri={iconUri}
+                accoutnIconUri={accountIconUri}
                 onChange={setInput}
               />
             )}

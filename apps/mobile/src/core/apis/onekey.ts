@@ -5,9 +5,7 @@ import { keyringService, preferenceService } from '../services/shared';
 import { bindOneKeyEvents } from '@/utils/onekey';
 import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
 import { DEVICE } from '@onekeyfe/hd-core';
-import { atom, useAtom } from 'jotai';
 import type { SearchDevice } from '@onekeyfe/hd-core';
-import React from 'react';
 import { zCreate } from '../utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '../utils/store';
 

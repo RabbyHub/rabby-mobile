@@ -8,15 +8,31 @@ import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
-import { atom, useAtom } from 'jotai';
 import { CurveDayType } from '@/utils/curveDayType';
 import { useCreationWithShallowCompare } from './common/useMemozied';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
 
-export const multiTimeStampAtom = atom<
-  Record<string, { loading: boolean; data: ITIME_STEP_ITEM[] }>
->({});
+const multiCurveStore = zCreate<{
+  multiTimeStamp: Record<string, { loading: boolean; data: ITIME_STEP_ITEM[] }>;
+  loading: boolean;
+}>()(() => ({
+  multiTimeStamp: {},
+  loading: true,
+}));
+
+function setMultiTimeStamp(
+  valOrFunc: UpdaterOrPartials<
+    Record<string, { loading: boolean; data: ITIME_STEP_ITEM[] }>
+  >,
+) {
+  multiCurveStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.multiTimeStamp, valOrFunc);
+    return { ...prev, multiTimeStamp: newVal };
+  });
+}
 
 export const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -84,7 +100,12 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
 
   return result;
 };
-export const loadingMultiCurveAtom = atom(true);
+function setLoading(valOrFunc: UpdaterOrPartials<boolean>) {
+  multiCurveStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.loading, valOrFunc);
+    return { ...prev, loading: newVal };
+  });
+}
 export const useMultiCurve = (
   addresses: string[],
   options?: {
@@ -100,34 +121,71 @@ export const useMultiCurve = (
     totalBalance,
     totalEvmBalance,
   } = options || {};
-  const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
-  const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
+  const { multiTimeStamp, loading } = multiCurveStore();
   const loadingMapRef = useRef<Record<string, boolean>>({});
 
-  const fetch = useCallback(
-    async (_addresses: string[], force = false) => {
-      try {
-        if (!_addresses.length) {
-          setLoading(false);
-          return;
-        }
-        setLoading(!!force);
-        const nextCheckAddress = new Set([..._addresses]);
-        !force &&
-          _addresses.forEach(_addr => {
-            const addr = _addr.toLowerCase();
-            setMultiTimeStamp(prev => ({
-              ...prev,
-              [addr]: {
-                ...(prev[addr] || {}),
-                loading: true,
-              },
-            }));
-            const cacheData = getCurveCache(addr);
-            if (!cacheData?.data || cacheData?.isExpired) {
-              return;
-            }
-            const curve = cacheData.data;
+  const fetch = useCallback(async (_addresses: string[], force = false) => {
+    try {
+      if (!_addresses.length) {
+        setLoading(false);
+        return;
+      }
+      setLoading(!!force);
+      const nextCheckAddress = new Set([..._addresses]);
+      !force &&
+        _addresses.forEach(_addr => {
+          const addr = _addr.toLowerCase();
+          setMultiTimeStamp(prev => ({
+            ...prev,
+            [addr]: {
+              ...(prev[addr] || {}),
+              loading: true,
+            },
+          }));
+          const cacheData = getCurveCache(addr);
+          if (!cacheData?.data || cacheData?.isExpired) {
+            return;
+          }
+          const curve = cacheData.data;
+          const start = dayjs().add(-24, 'hours').add(10, 'minutes').valueOf();
+          const step = 5 * 60 * 1000;
+          const result = patchCurveData(
+            curve.map(item => {
+              return {
+                timestamp: item.timestamp * 1000,
+                price: item.usd_value,
+              };
+            }),
+            start,
+            step,
+          );
+          nextCheckAddress.delete(addr);
+          setMultiTimeStamp(prev => ({
+            ...prev,
+            [addr]: {
+              loading: false,
+              data: result.map(item => {
+                return {
+                  timestamp: dayjs(item.timestamp).unix(),
+                  usd_value: item.price,
+                };
+              }),
+            },
+          }));
+        });
+      queue.clear();
+      Array.from(nextCheckAddress).forEach(_addr => {
+        const addr = _addr.toLowerCase();
+        queue.add(async () => {
+          setMultiTimeStamp(prev => ({
+            ...prev,
+            [addr]: {
+              ...prev[addr],
+              loading: true,
+            },
+          }));
+          try {
+            const curve = await getNetCurve(addr, CurveDayType.DAY, force);
             const start = dayjs()
               .add(-24, 'hours')
               .add(10, 'minutes')
@@ -143,7 +201,6 @@ export const useMultiCurve = (
               start,
               step,
             );
-            nextCheckAddress.delete(addr);
             setMultiTimeStamp(prev => ({
               ...prev,
               [addr]: {
@@ -156,63 +213,20 @@ export const useMultiCurve = (
                 }),
               },
             }));
-          });
-        queue.clear();
-        Array.from(nextCheckAddress).forEach(_addr => {
-          const addr = _addr.toLowerCase();
-          queue.add(async () => {
-            setMultiTimeStamp(prev => ({
-              ...prev,
-              [addr]: {
-                ...prev[addr],
-                loading: true,
-              },
-            }));
-            try {
-              const curve = await getNetCurve(addr, CurveDayType.DAY, force);
-              const start = dayjs()
-                .add(-24, 'hours')
-                .add(10, 'minutes')
-                .valueOf();
-              const step = 5 * 60 * 1000;
-              const result = patchCurveData(
-                curve.map(item => {
-                  return {
-                    timestamp: item.timestamp * 1000,
-                    price: item.usd_value,
-                  };
-                }),
-                start,
-                step,
-              );
-              setMultiTimeStamp(prev => ({
-                ...prev,
-                [addr]: {
-                  loading: false,
-                  data: result.map(item => {
-                    return {
-                      timestamp: dayjs(item.timestamp).unix(),
-                      usd_value: item.price,
-                    };
-                  }),
-                },
-              }));
-            } catch (error) {
-              console.error('Fetch curve error', error);
-            } finally {
-              loadingMapRef.current[addr] = false;
-            }
-          });
+          } catch (error) {
+            console.error('Fetch curve error', error);
+          } finally {
+            loadingMapRef.current[addr] = false;
+          }
         });
-        await waitQueueFinished(queue);
-        setLoading(false);
-      } catch (error) {
-        console.error('Fetch curve error', error);
-        setLoading(false);
-      }
-    },
-    [setLoading, setMultiTimeStamp],
-  );
+      });
+      await waitQueueFinished(queue);
+      setLoading(false);
+    } catch (error) {
+      console.error('Fetch curve error', error);
+      setLoading(false);
+    }
+  }, []);
 
   const refresh = useCallback(
     async (force?: boolean) => {

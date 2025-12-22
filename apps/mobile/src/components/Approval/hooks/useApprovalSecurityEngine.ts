@@ -4,8 +4,9 @@ import {
   RuleConfig,
   UserData,
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { atom, useAtom } from 'jotai';
 import React from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 interface State {
   userData: UserData;
@@ -24,26 +25,48 @@ interface State {
   };
 }
 
-const userDataAtom = atom<State['userData']>({
-  originWhitelist: [],
-  originBlacklist: [],
-  contractWhitelist: [],
-  contractBlacklist: [],
-  addressWhitelist: [],
-  addressBlacklist: [],
-});
-const rulesAtom = atom<State['rules']>([]);
-const currentTxAtom = atom<State['currentTx']>({
-  processedRules: [],
-  ruleDrawer: {
-    selectRule: null,
-    visible: false,
+const approvalSecurityEngineStore = zCreate<State>()(() => ({
+  userData: {
+    originWhitelist: [],
+    originBlacklist: [],
+    contractWhitelist: [],
+    contractBlacklist: [],
+    addressWhitelist: [],
+    addressBlacklist: [],
   },
-});
+  rules: [],
+  currentTx: {
+    processedRules: [],
+    ruleDrawer: {
+      selectRule: null,
+      visible: false,
+    },
+  },
+}));
+
+function setUserData(valOrFunc: UpdaterOrPartials<UserData>) {
+  approvalSecurityEngineStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.userData, valOrFunc);
+    return { ...prev, userData: newVal };
+  });
+}
+
+function setRules(valOrFunc: UpdaterOrPartials<RuleConfig[]>) {
+  approvalSecurityEngineStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.rules, valOrFunc);
+    return { ...prev, rules: newVal };
+  });
+}
+
+function setCurrentTx(valOrFunc: UpdaterOrPartials<State['currentTx']>) {
+  approvalSecurityEngineStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.currentTx, valOrFunc);
+    return { ...prev, currentTx: newVal };
+  });
+}
+
 export const useApprovalSecurityEngine = () => {
-  const [userData, setUserData] = useAtom(userDataAtom);
-  const [rules, setRules] = useAtom(rulesAtom);
-  const [currentTx, setCurrentTx] = useAtom(currentTxAtom);
+  const { userData, rules, currentTx } = approvalSecurityEngineStore();
 
   const updateCurrentTx = React.useCallback(
     (payload: Partial<State['currentTx']>) => {
@@ -54,7 +77,7 @@ export const useApprovalSecurityEngine = () => {
         };
       });
     },
-    [setCurrentTx],
+    [],
   );
 
   const resetCurrentTx = React.useCallback(() => {
@@ -98,32 +121,26 @@ export const useApprovalSecurityEngine = () => {
     },
     [updateCurrentTx],
   );
-  const unProcessRule = React.useCallback(
-    (id: string) => {
-      setCurrentTx(prev => {
-        return {
-          ...prev,
-          processedRules: prev.processedRules.filter(i => i !== id),
-        };
-      });
-    },
-    [setCurrentTx],
-  );
-  const processRule = React.useCallback(
-    (id: string) => {
-      setCurrentTx(prev => {
-        return {
-          ...prev,
-          processedRules: [...prev.processedRules, id],
-        };
-      });
-    },
-    [setCurrentTx],
-  );
+  const unProcessRule = React.useCallback((id: string) => {
+    setCurrentTx(prev => {
+      return {
+        ...prev,
+        processedRules: prev.processedRules.filter(i => i !== id),
+      };
+    });
+  }, []);
+  const processRule = React.useCallback((id: string) => {
+    setCurrentTx(prev => {
+      return {
+        ...prev,
+        processedRules: [...prev.processedRules, id],
+      };
+    });
+  }, []);
   const init = React.useCallback(() => {
     setUserData(apiSecurityEngine.getSecurityEngineUserData());
     setRules(apiSecurityEngine.getSecurityEngineRules());
-  }, [setRules, setUserData]);
+  }, []);
 
   return {
     userData,

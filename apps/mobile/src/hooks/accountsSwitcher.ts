@@ -1,7 +1,6 @@
 import type { Account, IPinAddress } from '@/core/services/preference';
 import { storeApiAccounts, useAccounts, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
-import { useAtom } from 'jotai';
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import cloneDeep from 'lodash/cloneDeep';
 import { RootNames } from '@/constant/layout';

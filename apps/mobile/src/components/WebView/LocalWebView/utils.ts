@@ -1,5 +1,6 @@
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { SupportedLang } from '@/utils/i18n';
-import { atom, useAtom } from 'jotai';
 import { useCallback } from 'react';
 import { Platform } from 'react-native';
 import WebView, { WebViewProps } from 'react-native-webview';
@@ -88,20 +89,32 @@ export const FALLBACK_HTML = /* html */ `
 </html>
 `;
 
-const localWebViewAtom = atom({
+const localWebViewState = zCreate<{
+  forceUseLocalResource: boolean;
+}>()(() => ({
   forceUseLocalResource: !__DEV__,
-});
+}));
+
+function setLocalWebViewSettings(
+  valOrFunc: UpdaterOrPartials<{ forceUseLocalResource: boolean }>,
+) {
+  localWebViewState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return {
+      ...prev,
+      ...newVal,
+    };
+  });
+}
 
 export function useLocalWebViewSettings() {
-  const [localWebViewSettings, setLocalWebViewSettings] =
-    useAtom(localWebViewAtom);
+  const localWebViewSettings = localWebViewState();
 
-  const setForceLocalMode = useCallback(
-    (forceUseLocalResource: boolean) => {
-      setLocalWebViewSettings(prev => ({ ...prev, forceUseLocalResource }));
-    },
-    [setLocalWebViewSettings],
-  );
+  const setForceLocalMode = useCallback((forceUseLocalResource: boolean) => {
+    setLocalWebViewSettings(prev => ({ ...prev, forceUseLocalResource }));
+  }, []);
 
   return {
     isUseLocalResource: localWebViewSettings.forceUseLocalResource || !__DEV__,

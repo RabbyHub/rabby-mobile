@@ -1,24 +1,50 @@
-import { atom, useAtom } from 'jotai';
 import React from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
 
-export const visibleAtom = atom(false);
-export const dataAtom = atom(undefined);
+type QrCodeModalState = {
+  visible: boolean;
+  data: any;
+};
+
+const qrCodeModalStore = zCreate<QrCodeModalState>(() => ({
+  visible: false,
+  data: undefined,
+}));
+
+export function setVisible(valOrFunc: UpdaterOrPartials<boolean>) {
+  qrCodeModalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.visible, valOrFunc);
+    return { ...prev, visible: newVal };
+  });
+}
+
+function setData(valOrFunc: UpdaterOrPartials<any>) {
+  qrCodeModalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.data, valOrFunc);
+    return { ...prev, data: newVal };
+  });
+}
 
 export const useQrCodeModal = () => {
-  const [_, setVisible] = useAtom(visibleAtom);
-  const [_1, setData] = useAtom(dataAtom);
-
-  const show = React.useCallback(
-    a => {
-      setVisible(true);
-      setData(a);
-    },
-    [setData, setVisible],
-  );
+  const show = React.useCallback((a: any) => {
+    setVisible(true);
+    setData(a);
+  }, []);
 
   const hide = React.useCallback(() => {
     setVisible(false);
-  }, [setVisible]);
+  }, []);
 
   return { show, hide };
 };
+
+export function useQrCodeModalStore() {
+  return qrCodeModalStore(
+    useShallow(state => ({
+      visible: state.visible,
+      data: state.data,
+    })),
+  );
+}

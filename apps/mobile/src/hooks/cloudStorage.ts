@@ -1,19 +1,17 @@
 import React from 'react';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { atom, useAtom, useSetAtom } from 'jotai';
-import { loginIfNeeded } from '@/core/utils/cloudBackup';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { loginIfNeeded } from '@/core/utils/cloudBackup';
 
 type CloudStorageState = {
   accessToken?: string;
 };
-// const cloudStorageAtom = atom<{
-//   accessToken?: string;
-// }>({});
+
 const cloudStorageStore = zCreate<CloudStorageState>(() => ({
   accessToken: undefined,
 }));
+
 function setCloudStorage(valOrFunc: UpdaterOrPartials<CloudStorageState>) {
   cloudStorageStore.setState(prev => {
     const val = resolveValFromUpdater(prev, valOrFunc);
@@ -24,6 +22,7 @@ function setCloudStorage(valOrFunc: UpdaterOrPartials<CloudStorageState>) {
     };
   });
 }
+
 export function useGoogleSign() {
   const cloudStorage = cloudStorageStore(state => state);
 

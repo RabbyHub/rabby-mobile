@@ -34,7 +34,6 @@ import { useSingleTokenBalance } from './hook';
 import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RightMore } from './components/RightMore';
-import { useSetAtom } from 'jotai';
 import { TokenDetailBottomBtns } from './components/BottomBtns';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import {

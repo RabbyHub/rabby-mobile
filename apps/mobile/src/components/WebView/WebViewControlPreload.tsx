@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import { Dimensions, Platform, StyleSheet } from 'react-native';
-import { atom, useAtom } from 'jotai';
 import WebView, { WebViewProps } from 'react-native-webview';
 
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
@@ -9,6 +8,8 @@ import DappWebViewControl from './DappWebViewControl';
 import { SELF_CHECK_RPC_METHOD } from '@/constant/rpc';
 import { makeDebugBorder } from '@/utils/styles';
 import { BLANK_RABBY_PAGE } from './hooks';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -52,7 +53,15 @@ function getTouchHtml(inPageScript: string = '') {
   `;
 }
 
-const firstTouchedAtom = atom(!isAndroid);
+const firstTouchedState = zCreate<boolean>(() => !isAndroid);
+function setFirstTouched(valOrFunc: UpdaterOrPartials<boolean>) {
+  firstTouchedState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+    return newVal;
+  });
+}
 /**
  * @deprecated
  * @description set this component on the top level of App's navigation context
@@ -61,7 +70,7 @@ const firstTouchedAtom = atom(!isAndroid);
  * @platform android
  */
 export default function WebViewControlPreload() {
-  const [firstTouched, setFirstTouched] = useAtom(firstTouchedAtom);
+  const firstTouched = firstTouchedState();
 
   const { entryScriptWeb3Loaded, entryScripts } =
     useJavaScriptBeforeContentLoaded();
@@ -80,7 +89,7 @@ export default function WebViewControlPreload() {
       setFirstTouched(true);
       devLog('[WebViewControlPreload] webview loadEnd, force closed it');
     }, 500);
-  }, [setFirstTouched]);
+  }, []);
 
   const embedHtml = useMemo(() => {
     return getTouchHtml(entryScripts.inPageWeb3);

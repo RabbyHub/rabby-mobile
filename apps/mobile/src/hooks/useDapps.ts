@@ -12,7 +12,6 @@ import {
 } from '@/core/services/shared';
 import { FieldNilable, stringUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom } from 'jotai';
 import { KeyringAccountWithAlias, useAccounts, useMyAccounts } from './account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { zCreate } from '@/core/utils/reexports';

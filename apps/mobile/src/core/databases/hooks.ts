@@ -1,15 +1,30 @@
-import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
 import { getSQLiteInfo } from './apis';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
 
-const sqliteInfoAtom = atom<{
+type SQLiteInfo = {
   version?: string;
   source_id?: string;
   thread_safe?: boolean;
-} | null>(null);
+} | null;
+
+const sqliteInfoStore = zCreate<{
+  sqliteInfo: SQLiteInfo;
+}>(() => ({
+  sqliteInfo: null,
+}));
+
+function setSqliteInfo(valOrFunc: UpdaterOrPartials<SQLiteInfo>) {
+  sqliteInfoStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.sqliteInfo, valOrFunc);
+    return { ...prev, sqliteInfo: newVal };
+  });
+}
 
 export function useSQLiteInfo(options?: { enableAutoFetch?: boolean }) {
-  const [sqliteInfo, setSqliteInfo] = useAtom(sqliteInfoAtom);
+  const { sqliteInfo } = sqliteInfoStore(useShallow(s => s));
 
   const { enableAutoFetch } = options ?? {};
 
@@ -34,7 +49,7 @@ export function useSQLiteInfo(options?: { enableAutoFetch?: boolean }) {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [setSqliteInfo]);
+  }, []);
 
   useEffect(() => {
     if (enableAutoFetch) {

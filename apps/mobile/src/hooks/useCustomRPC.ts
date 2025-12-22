@@ -4,7 +4,6 @@ import { RPCItem } from '@/core/services/customRPCService';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 
 // const customRPCAtom = atom<Partial<Record<CHAINS_ENUM, RPCItem>>>({});

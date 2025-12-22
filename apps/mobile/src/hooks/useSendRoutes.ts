@@ -1,5 +1,4 @@
 import { useNavigation } from '@react-navigation/native';
-import { atom, useAtom } from 'jotai';
 import {
   RootStackParamsList,
   TransactionNavigatorParamList,
@@ -16,14 +15,37 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { naviPush } from '@/utils/navigation';
+import { zCreate } from '@/core/utils/reexports';
+import { UpdaterOrPartials, resolveValFromUpdater } from '@/core/utils/store';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
-export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
-export const isSingleAddressAtom = atom<boolean>(false);
+
+export const sendRoutesStore = zCreate<{
+  params: { [key: string]: any };
+  isSingleAddress: boolean;
+}>()(() => ({
+  params: {},
+  isSingleAddress: false,
+}));
+
+export function setParams(
+  valOrFunc: UpdaterOrPartials<{ [key: string]: any }>,
+) {
+  sendRoutesStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.params, valOrFunc);
+    return { ...prev, params: newVal };
+  });
+}
+
+export function setIsSingleAddress(valOrFunc: UpdaterOrPartials<boolean>) {
+  sendRoutesStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.isSingleAddress, valOrFunc);
+    return { ...prev, isSingleAddress: newVal };
+  });
+}
 export const useSendRoutes = () => {
   const { findAccountWithoutBalance } = useFindAddressByWhitelist();
-  const [params, setParams] = useAtom(sendScreenParamsAtom);
-  const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
+  const { params, isSingleAddress } = sendRoutesStore();
 
   const hasNftParams = useCallback((mergedParams: { [key: string]: any }) => {
     return !!mergedParams.nftItem;
@@ -123,8 +145,6 @@ export const useSendRoutes = () => {
       findAccountWithoutBalance,
       navigateToSendScreen,
       params,
-      setIsSingleAddress,
-      setParams,
       navigateToTargetScreen,
     ],
   );

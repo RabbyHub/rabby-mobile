@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { findBestLanguageTag } from 'react-native-localize';
-import { useAtom } from 'jotai';
 import {
   atomByMMKV,
   duplicatelyStringifiedAppJsonStore,

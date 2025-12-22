@@ -16,7 +16,6 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { atom, useAtom } from 'jotai';
 
 import LottieView from 'lottie-react-native';
 

@@ -1,13 +1,6 @@
-import { getChainList } from '@/constant/chains';
 import { findChain } from '@/utils/chain';
-import { atom } from 'jotai';
 import { useMemo } from 'react';
 import { useChainList } from './useChainList';
-
-export const chainListAtom = atom({
-  mainnetList: getChainList('mainnet'),
-  testnetList: getChainList('testnet'),
-});
 
 export const useFindChain = ({
   id,

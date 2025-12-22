@@ -2,8 +2,6 @@ import { IManageToken } from '@/core/services/preference';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { preferenceService } from '@/core/services';
 import { openapi } from '@/core/request';
-import { atom, useAtom } from 'jotai';
-import { useCallback } from 'react';
 import { zCreate } from '@/core/utils/reexports';
 
 const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {

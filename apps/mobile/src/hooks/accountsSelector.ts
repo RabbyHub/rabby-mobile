@@ -1,7 +1,6 @@
 import type { Account, IPinAddress } from '@/core/services/preference';
 import { useAccounts, usePinAddresses } from './account';
 import { useCallback, useMemo } from 'react';
-import { atom, useAtom } from 'jotai';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 

@@ -1,24 +1,67 @@
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { atom, useAtom } from 'jotai';
-import React from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
+import { useCallback } from 'react';
 
 export type AliasNameEditModalConfirmCallback = (aliasName: string) => void;
 
-export const visibleAtom = atom(false);
-export const accountAtom = atom<KeyringAccountWithAlias | undefined>(undefined);
-export const accountIconUriAtom = atom<string>('');
-export let confirmCallBack: {
+type AliasNameEditModalState = {
+  visible: boolean;
+  account: KeyringAccountWithAlias | undefined;
+  accountIconUri: string;
+};
+
+const aliasNameEditModalStore = zCreate<AliasNameEditModalState>(() => ({
+  visible: false,
+  account: undefined,
+  accountIconUri: '',
+}));
+
+let confirmCallBack: {
   value: AliasNameEditModalConfirmCallback | undefined;
 } = {
   value: undefined,
 };
 
-export const useAliasNameEditModal = () => {
-  const [_, setVisible] = useAtom(visibleAtom);
-  const [_1, setAccount] = useAtom(accountAtom);
-  const [_2, setAccountIcon] = useAtom(accountIconUriAtom);
+function setAliasNameEditModalState(
+  valOrFunc: UpdaterOrPartials<AliasNameEditModalState>,
+) {
+  aliasNameEditModalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return { ...prev, ...newVal };
+  });
+}
 
-  const show = React.useCallback(
+function setVisible(valOrFunc: UpdaterOrPartials<boolean>) {
+  aliasNameEditModalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.visible, valOrFunc);
+    return { ...prev, visible: newVal };
+  });
+}
+
+function setAccount(
+  valOrFunc: UpdaterOrPartials<KeyringAccountWithAlias | undefined>,
+) {
+  aliasNameEditModalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.account, valOrFunc);
+    return { ...prev, account: newVal };
+  });
+}
+
+function setAccountIcon(valOrFunc: UpdaterOrPartials<string>) {
+  aliasNameEditModalStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.accountIconUri, valOrFunc);
+    return { ...prev, accountIconUri: newVal };
+  });
+}
+
+export const useAliasNameEditModal = () => {
+  const { visible, account, accountIconUri } = aliasNameEditModalStore(
+    useShallow(s => s),
+  );
+
+  const show = useCallback(
     (
       a: KeyringAccountWithAlias,
       uri?: string,
@@ -29,14 +72,16 @@ export const useAliasNameEditModal = () => {
       setAccountIcon(uri || '');
       confirmCallBack.value = cb;
     },
-    [setAccount, setAccountIcon, setVisible],
+    [],
   );
 
-  const hide = React.useCallback(() => {
+  const hide = useCallback(() => {
     setVisible(false);
     setAccountIcon('');
     confirmCallBack.value = undefined;
-  }, [setAccountIcon, setVisible]);
+  }, []);
 
-  return { show, hide };
+  return { visible, account, accountIconUri, show, hide };
 };
+
+export { confirmCallBack };

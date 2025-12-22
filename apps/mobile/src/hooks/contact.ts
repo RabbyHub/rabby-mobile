@@ -2,16 +2,33 @@ import { useEffect } from 'react';
 import { apiContact } from '@/core/apis';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { ContactBookItem } from '@rabby-wallet/service-address';
-import { atom, useAtom } from 'jotai';
 import { useCallback } from 'react';
 import { useAccountsToDisplay } from './accountToDisplay';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
 
-const contactsByAddrAtom = atom<Record<string, ContactBookItem>>({});
+type ContactsState = {
+  contactsByAddr: Record<string, ContactBookItem>;
+};
+
+const contactsByAddrStore = zCreate<ContactsState>(() => ({
+  contactsByAddr: {},
+}));
+
+function setContactsByAddr(
+  valOrFunc: UpdaterOrPartials<Record<string, ContactBookItem>>,
+) {
+  contactsByAddrStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.contactsByAddr, valOrFunc);
+    return { ...prev, contactsByAddr: newVal };
+  });
+}
 
 export function useContactAccounts({
   autoFetch = false,
 }: { autoFetch?: boolean } = {}) {
-  const [contactsByAddr, setContactsByAddr] = useAtom(contactsByAddrAtom);
+  const { contactsByAddr } = contactsByAddrStore(useShallow(s => s));
   const { accountsList, fetchAllAccountsToDisplay } = useAccountsToDisplay();
 
   const isAddrOnContactBook = useCallback(
@@ -35,7 +52,7 @@ export function useContactAccounts({
 
   const fetchContactsByAddress = useCallback(async () => {
     setContactsByAddr(apiContact.getContactsByAddress());
-  }, [setContactsByAddr]);
+  }, []);
 
   const fetchContactAccounts = useCallback(() => {
     fetchContactsByAddress();

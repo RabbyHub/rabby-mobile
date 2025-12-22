@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { atom, useAtom } from 'jotai';
-import RNFS from 'react-native-fs';
 
 import { getRabbyAppDbPath } from '../constant';
 import { getDbFileSize } from '../dbfs';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
 
 const STAGES = {
   gb: 1024 * 1024 * 1024,
@@ -69,14 +70,27 @@ function getSemanticBytes(total_bytes: number) {
 //   return result;
 // }
 
-const sqliteStaticsInfoAtom = atom<{
+type SQLiteStaticsInfo = {
   total_bytes: number | null;
-} | null>({
-  total_bytes: 0,
-});
+} | null;
+
+const sqliteStaticsInfoStore = zCreate<{
+  sqliteStatics: SQLiteStaticsInfo;
+}>(() => ({
+  sqliteStatics: {
+    total_bytes: 0,
+  },
+}));
+
+function setSqliteStatics(valOrFunc: UpdaterOrPartials<SQLiteStaticsInfo>) {
+  sqliteStaticsInfoStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.sqliteStatics, valOrFunc);
+    return { ...prev, sqliteStatics: newVal };
+  });
+}
 
 export function useSQLiteStatics(options?: { enableAutoFetch?: boolean }) {
-  const [sqliteStatics, setSqliteStatics] = useAtom(sqliteStaticsInfoAtom);
+  const { sqliteStatics } = sqliteStaticsInfoStore(useShallow(s => s));
 
   const { enableAutoFetch } = options ?? {};
 
@@ -94,7 +108,7 @@ export function useSQLiteStatics(options?: { enableAutoFetch?: boolean }) {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [setSqliteStatics]);
+  }, []);
 
   const semanticBytes = useMemo(() => {
     // if (!sqliteStatics || typeof sqliteStatics?.total_bytes !== 'number') return '-';

@@ -4,7 +4,9 @@ import { contactService, keyringService } from '@/core/services';
 import { sortAccountsByBalance } from '@/utils/account';
 import { DisplayedKeyring } from '@rabby-wallet/keyring-utils';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
 import React, { useCallback } from 'react';
 
 type IDisplayedAccount = Required<DisplayedKeyring['accounts'][number]>;
@@ -20,14 +22,19 @@ type IState = {
   accountsList: IDisplayedAccountWithBalance[];
 };
 
-const accountToDisplayStateAtom = atom<IState>({
+const accountToDisplayStateStore = zCreate<IState>(() => ({
   accountsList: [],
-});
+}));
+
+function setAccountToDisplayState(valOrFunc: UpdaterOrPartials<IState>) {
+  accountToDisplayStateStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+    return { ...prev, ...newVal };
+  });
+}
 
 export function useAccountsToDisplay() {
-  const [{ accountsList }, setAccountToDisplayState] = useAtom(
-    accountToDisplayStateAtom,
-  );
+  const { accountsList } = accountToDisplayStateStore(useShallow(s => s));
   const loadingAccountsRef = React.useRef(false);
 
   const fetchAllAccountsToDisplay = useCallback(async () => {
@@ -53,7 +60,7 @@ export function useAccountsToDisplay() {
         ...prev,
       }));
     }
-  }, [setAccountToDisplayState]);
+  }, []);
 
   return {
     isLoadingAccounts: loadingAccountsRef.current,

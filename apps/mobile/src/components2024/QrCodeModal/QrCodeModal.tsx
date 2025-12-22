@@ -1,17 +1,15 @@
 import DeviceUtils from '@/core/utils/device';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useAtom } from 'jotai';
 import React from 'react';
 import { Modal, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { visibleAtom, dataAtom } from './useQrCodeModal';
+import { setVisible, useQrCodeModalStore } from './useQrCodeModal';
 import CloseCircleSVG from '@/assets2024/icons/common/close-circle.svg';
 
 export const QrCodeModal: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [visible, setVisible] = useAtom(visibleAtom);
-  const [data] = useAtom(dataAtom);
+  const { visible, data } = useQrCodeModalStore();
 
   if (!visible) {
     return null;
