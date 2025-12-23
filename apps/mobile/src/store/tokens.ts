@@ -48,13 +48,23 @@ export interface ITokenItem {
 interface TokenListState {
   tokenListMap: Record<string, ITokenItem[]>;
   isLoading: boolean;
+  isLoadingByAddress: Record<string, boolean>;
   forMultiAssets(chainServerId?: string): {
+    unFoldTokens: ITokenItem[];
+    foldTokens: ITokenItem[];
+    scamTokens: ITokenItem[];
+  };
+  forSingleAssets(
+    address: string,
+    chainServerId?: string,
+  ): {
     unFoldTokens: ITokenItem[];
     foldTokens: ITokenItem[];
     scamTokens: ITokenItem[];
   };
   initStore(): void;
   batchGetTokenList(addresses: string[], force?: boolean): void;
+  getTokenList(address: string, force?: boolean): void;
 }
 
 function getMultiAssetsFoldResultFromParts({
@@ -127,10 +137,19 @@ const useTokenList = zCreate<TokenListState>((set, get) => {
     foldTokens: ITokenItem[];
     scamTokens: ITokenItem[];
   } | null = null;
+  let lastSingleAssetsResult: {
+    unFoldTokens: ITokenItem[];
+    foldTokens: ITokenItem[];
+    scamTokens: ITokenItem[];
+  } | null = null;
+  let lastSingleAddress: string | undefined;
+  let lastSingleChainServerId: string | undefined;
+  let lastSingleTokenListMap: TokenListState['tokenListMap'] | null = null;
 
   return {
     tokenListMap: {},
-    isLoading: false,
+    isLoading: false, // 整体的 loading 状态
+    isLoadingByAddress: {}, // 单个地址的 loading 状态
     // selectors
     forMultiAssets(chainServerId?: string) {
       const tokenListMap = get().tokenListMap || {};
@@ -185,6 +204,65 @@ const useTokenList = zCreate<TokenListState>((set, get) => {
       lastTokenListMap = tokenListMap;
       lastChainServerId = chainServerId;
       lastMultiAssetsResult = result;
+
+      return result;
+    },
+    forSingleAssets(address: string, chainServerId?: string) {
+      const tokenListMap = get().tokenListMap || {};
+      const normalizedAddress = address.toLowerCase();
+      if (
+        lastSingleAssetsResult &&
+        lastSingleTokenListMap === tokenListMap &&
+        lastSingleAddress === normalizedAddress &&
+        lastSingleChainServerId === chainServerId
+      ) {
+        return lastSingleAssetsResult;
+      }
+      const tokens = tokenListMap[normalizedAddress] || [];
+      const scamTokens: ITokenItem[] = [];
+      const nonScamTokens: ITokenItem[] = [];
+      const coreTokens: ITokenItem[] = [];
+      let totalValue = 0;
+      tokens.forEach(token => {
+        const usdValue = token.usd_value || 0;
+        const isZeroCore = token.is_core && usdValue === 0;
+        const isScam = (usdValue === 0 && !isZeroCore) || token.is_scam;
+        if (isScam) {
+          scamTokens.push(token);
+        } else {
+          nonScamTokens.push(token);
+        }
+        if (!isScam && token.is_core) {
+          coreTokens.push(token);
+          totalValue += usdValue;
+        }
+      });
+      const { foldedTokens, unfoldedTokens } =
+        getMultiAssetsFoldResultFromParts({
+          nonScamTokens,
+          coreTokens,
+          totalValue,
+        });
+      const result = chainServerId
+        ? {
+            unFoldTokens: unfoldedTokens.filter(
+              item => item.chain === chainServerId,
+            ),
+            foldTokens: foldedTokens.filter(
+              item => item.chain === chainServerId,
+            ),
+            scamTokens: scamTokens.filter(item => item.chain === chainServerId),
+          }
+        : {
+            unFoldTokens: unfoldedTokens,
+            foldTokens: foldedTokens,
+            scamTokens,
+          };
+
+      lastSingleTokenListMap = tokenListMap;
+      lastSingleAddress = normalizedAddress;
+      lastSingleChainServerId = chainServerId;
+      lastSingleAssetsResult = result;
 
       return result;
     },
@@ -285,6 +363,93 @@ const useTokenList = zCreate<TokenListState>((set, get) => {
       );
       set(() => ({ isLoading: false }));
       set(() => ({ tokenListMap: realTimeTokenMap }));
+    },
+    async getTokenList(address: string, force = false) {
+      const normalizedAddress = address.toLowerCase();
+      if (!force) {
+        const isExpired = await isDataExpired(normalizedAddress);
+        if (!isExpired) {
+          const tokens = (await TokenItemEntity.batchQueryTokens(
+            normalizedAddress,
+          )) as TokenItemEntity[];
+          const res = tokens.map(tokenItemEntityToTokenItem);
+          set(state => ({
+            tokenListMap: {
+              ...state.tokenListMap,
+              [normalizedAddress]: res,
+            },
+          }));
+          return;
+        }
+      }
+
+      set(state => ({
+        isLoadingByAddress: {
+          ...state.isLoadingByAddress,
+          [normalizedAddress]: true,
+        },
+      }));
+
+      try {
+        const cacheList = await queryTokensCache(address);
+        const cacheTokens = cacheList.map(item =>
+          tokenItemToITokenItem(item, address),
+        );
+        set(state => ({
+          tokenListMap: {
+            ...state.tokenListMap,
+            [normalizedAddress]: cacheTokens,
+          },
+        }));
+
+        let chainIdList: string[] = [];
+        let usedChains = await BalanceEntity.queryChainList(address);
+        chainIdList = usedChains
+          .filter(item => item.usd_value > 0.5)
+          .map(item => item.id);
+        if (usedChains.length <= 0) {
+          const chains = await openapi.usedChainList(address);
+          chainIdList = chains.map(item => item.id);
+        }
+        const realTimeTokenQueue = new PQueue({
+          concurrency: 15,
+        });
+        const res = await Promise.allSettled(
+          chainIdList.map(
+            async serverId =>
+              await realTimeTokenQueue.add(async () => {
+                const chainTokensRes = await requestOpenApiWithChainId(
+                  ({ openapi }) => openapi.listToken(address, serverId, true),
+                  {
+                    isTestnet: false,
+                  },
+                );
+                const tokenList = chainTokensRes.map(item =>
+                  tokenItemToITokenItem(item, address),
+                );
+                return tokenList;
+              }),
+          ),
+        );
+        const results = res
+          .map(result => (result.status === 'fulfilled' ? result.value : []))
+          .flat() as ITokenItem[];
+
+        syncRemoteTokens(normalizedAddress, results);
+        set(state => ({
+          tokenListMap: {
+            ...state.tokenListMap,
+            [normalizedAddress]: results,
+          },
+        }));
+      } finally {
+        set(state => ({
+          isLoadingByAddress: {
+            ...state.isLoadingByAddress,
+            [normalizedAddress]: false,
+          },
+        }));
+      }
     },
   };
 });
