@@ -6,7 +6,7 @@ import {
   StyleProp,
   ViewStyle,
 } from 'react-native';
-import { TOKEN_EMPTY_ROW_HIGHT } from '@/constant/layout';
+import { RootNames, TOKEN_EMPTY_ROW_HIGHT } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,14 +16,21 @@ import {
   RcIconBuy,
   RcIconImport,
 } from '@/assets2024/singleHome';
+import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { Account } from '@/core/services/preference';
+import { naviPush } from '@/utils/navigation';
 interface IProps {
-  onReceive: () => void;
-  onImport: () => void;
+  currentAccount?: Account | null;
+  // onReceive: () => void;
+  // onImport: () => void;
   style?: StyleProp<ViewStyle>;
 }
-export const EmptyTokenRow = memo(({ onReceive, onImport, style }: IProps) => {
+export const EmptyTokenRow = memo(({ currentAccount, style }: IProps) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
+
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   return (
     <View style={[styles.constainer, style]}>
@@ -36,7 +43,11 @@ export const EmptyTokenRow = memo(({ onReceive, onImport, style }: IProps) => {
         </Text>
         <Text style={styles.desc}>{t('page.singleHome.emptyToken.desc')}</Text>
         <View style={styles.cardList}>
-          <Card onPress={onImport} style={styles.card}>
+          <Card
+            onPress={() => {
+              apiGlobalModal.showAddSelectMethodModal();
+            }}
+            style={styles.card}>
             <View style={styles.icon}>
               <RcIconImport width={16.8} height={16.8} />
             </View>
@@ -49,7 +60,23 @@ export const EmptyTokenRow = memo(({ onReceive, onImport, style }: IProps) => {
               </Text>
             </View>
           </Card>
-          <Card onPress={onReceive} style={styles.card}>
+          <Card
+            onPress={async () => {
+              if (!currentAccount?.address) {
+                return;
+              }
+              await switchSceneCurrentAccount(
+                'MakeTransactionAbout',
+                currentAccount,
+              );
+              naviPush(RootNames.StackTransaction, {
+                screen: RootNames.Receive,
+                params: {
+                  account: currentAccount,
+                },
+              });
+            }}
+            style={styles.card}>
             <View style={styles.icon}>
               <RcIconOldReceive width={16.8} height={16.8} />
             </View>

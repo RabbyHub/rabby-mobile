@@ -24,7 +24,10 @@
       "ImportMoreAddress": "ウォレットを追加インポートする",
       "ConfrimAddress": "ウォレットを確認してください",
       "CreateNewAddress": "1. ウォレットを確認してください",
-      "CreateSelectOnCurrentSeed": "2. ウォレットを追加"
+      "CreateSelectOnCurrentSeed": "2. ウォレットを追加",
+      "SetPassword": "パスワードを設定する",
+      "CreateWallet": "ウォレットを作成する",
+      "ChooseBackup": "バックアップ方法を選択してください"
     }
   },
   "constant": {
@@ -112,7 +115,8 @@
         "LendingOnCollateral": "担保として使用をオンにする",
         "LendingOffCollateral": "担保としての使用をオフにする",
         "LendingManageEMode": "E-Modeをオンにする",
-        "LendingManageEModeDisable": "E-Modeをオフにする"
+        "LendingManageEModeDisable": "E-Modeをオフにする",
+        "LendingDebtSwap": "債務スワップ"
       },
       "detail": {
         "SpeedUp": "速度アップ",
@@ -990,9 +994,10 @@
         "passwordTopTips": "このパスワードは、ウォレットのロックを解除し、ローカルデータを暗号化するために使用されます。",
         "UnderstandsecurityPrecautions": "これらのセキュリティ対策を理解しています。",
         "passwordMin": "8文字以上である必要があります",
-        "WriteSeedPhrase": "これはあなたのシードフレーズです。紙に書き留めて、安全な場所に保管してください。次のステップで正しい順序で再入力する必要があります。",
         "createNewDesc": "新しいウォレット用の新しいシードフレーズを生成します。",
-        "createOnCurrentDesc": "既存のインポートされたシードフレーズでウォレットを作成する"
+        "createOnCurrentDesc": "既存のインポートされたシードフレーズでウォレットを作成する",
+        "BackupYourSeedPhrase": "シードフレーズをバックアップする",
+        "WriteSeedPhrase": "これはあなたのシードフレーズです。メモして安全に保管してください。これを失ったり共有したりすると、あなたの資産は永遠に失われる可能性があります。次のステップでは、このフレーズを再入力するよう求められます（順番通りに）。"
       },
       "importAddress": {
         "privateKey": "プライベートキーをインポートする",
@@ -1027,6 +1032,22 @@
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "すべての資産を見るには右にスワイプしてください"
+      },
+      "copySeedPhraseSecureTip": {
+        "tip3": "決してシードフレーズを共有しないでください。私たちはそれを求めることはありません。",
+        "tip2": "クラウドサービスやメモアプリにシードフレーズを貼り付けたり保存したりしないでください。",
+        "copyAnyway": "そのままコピーする",
+        "copied": "シードフレーズがコピーされました。クリップボードは1分後にクリアされます。",
+        "title": "シードフレーズを秘密にしておいてください",
+        "tip1": "他のアプリがクリップボードを読み取る可能性があるため、コピー後にアプリを切り替えないでください。",
+        "subTitle": "あなたのシードフレーズを取得した誰かが、あなたの資金を完全に管理できます。"
+      },
+      "screenshotSecureTip": {
+        "title": "スクリーンショットは安全ではありません",
+        "tip2": "アプリやマルウェアは、あなたのフォトライブラリに保存されている画像を読み取ることができます。",
+        "tip1": "スクリーンショットはクラウドや他のデバイスと同期でき、デバイスが失われたり、盗まれたり、侵害された場合にアクセスできます。",
+        "tip3": "シードフレーズを取得した誰もがあなたのウォレットを完全に制御でき、これは元に戻すことができません。",
+        "subTitle": "シードフレーズを画像として保存すると、漏洩する可能性があるため、書き留める方が安全な選択肢です。"
       }
     },
     "switchChain": {
@@ -1176,7 +1197,8 @@
         "error": "パスワードが間違っています",
         "placeholder": "パスワードを入力してアンロックしてください",
         "required": "パスワードを入力してキーリングのロックを解除してください。"
-      }
+      },
+      "unlocking": "アンロック"
     },
     "manageAddress": {
       "confirm": "確認",
@@ -1504,7 +1526,10 @@
         "notTop10Address": "トップ10にランクインしていないウォレット",
         "helpDescription2": "ウォレットをピン留めするには、長押しして、含めたいウォレットを調整してください。",
         "helpDescription1": "適時かつ正確なデータ更新を確保するために、Total BalanceとPortfolioにはあなたの上位10個のwalletsのみが含まれています。"
-      }
+      },
+      "backup": "バックアップ",
+      "other": "その他",
+      "basicInfo": "基本情報"
     },
     "gasAccount": {
       "deposit": "入金",
@@ -2222,6 +2247,9 @@
       },
       "toast": {
         "clearCacheSuccess": "キャッシュがクリアされました"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "さらに"
       }
     },
     "browserManage": {
@@ -2564,9 +2592,9 @@
         "amount": "金額",
         "confirm": "確認",
         "total": "合計",
-        "closedPnl": "クローズドPNL:",
+        "closedPnl": "クローズドPNL",
         "minimumWarning": "最小額は {{percent}}% です",
-        "receive": "受け取る："
+        "receive": "受け取る"
       },
       "PerpsOpenPositionPopup": {
         "minimumOrderSize": "最小注文サイズは$10です。",
@@ -2645,7 +2673,7 @@
         "insufficientMargin": "マージン不足",
         "addMargin": "マージンを追加",
         "amountToReduce": "減少する金額",
-        "liqPrice": "Liq. 価格:",
+        "liqPrice": "Liq. 価格",
         "reduceMargin": "マージンを減らす",
         "amountToAdd": "追加する金額",
         "available": "利用可能",
@@ -2692,9 +2720,6 @@
           "mySupplies": "私のサプライ",
           "token_tvl": "トークン/TVL",
           "token_balance": "トークン/残高"
-        },
-        "item": {
-          "tvl": "TVL"
         }
       },
       "summary": {
@@ -2730,7 +2755,8 @@
         "actions": "借りる",
         "approveAndBorrow": "承認と借入",
         "almostReachedError": "借入可能的最大金额受到限制，因为协议借入上限已接近。",
-        "almostReachedWarning": "この資産のプロトコル借入上限は100%です。これ以上の借入はできません。"
+        "almostReachedWarning": "この資産のプロトコル借入上限は100%です。これ以上の借入はできません。",
+        "swapDebt": "スワップ"
       },
       "popup": {
         "available": "利用可能",
@@ -2787,11 +2813,9 @@
         "globalIsolatedDesc": "隔離モードでは、他の資産を担保として提供することはできません。グローバルな債務上限は、孤立した資産の借入能力を制限します。隔離モードから退出するには、別の資産を借りる前にUNIを担保として無効にしてください。",
         "maxLTV": "最大LTV比率は、特定の担保の最大借入能力を表します。たとえば、担保のLTVが75%の場合、ユーザーは1 ETHの担保ごとに、主通貨で最大0.75のETHを借りることができます。"
       },
-      "apy": "APY",
       "supplied": "供給された",
       "estDailyEarning": "推定日収入",
       "selectChain": "チェーンを選択",
-      "market": "市場",
       "submitted": "提出されました",
       "netWorth": "ネットワース",
       "gotIt": "わかりました",
@@ -2799,9 +2823,7 @@
       "enterAmount": "金額を入力してください",
       "hfTitle": "ヘルスファクター",
       "hf": "ヘルスファクター",
-      "isolated": "隔離",
       "estNetApy": "推定ネットAPY",
-      "marketSlot": "{{market}} マーケット",
       "toggleCollateralDetail": {
         "disable": "{{asset}}を担保として無効化",
         "enable": "{{asset}}を担保として有効にする",
@@ -2833,7 +2855,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "最大LTV",
             "asset": "資産"
           },
           "label": "資産カテゴリー",
@@ -2846,19 +2867,46 @@
             "borrowable": "借り入れ可能",
             "asset": "資産"
           },
-          "maxLtv": "最大LTV",
-          "title": "資産カテゴリ",
-          "apy": "APY"
+          "title": "資産カテゴリ"
         },
-        "emode": "E-Mode",
         "disableTitle": "無効にする",
         "unavailableTips": "あなたの既存の貸出/借入資産はサポートされていません。",
         "unavailable": "• 利用不可",
         "title": "E-Modeを管理する",
         "description": "E-Modeを有効にすると、借入力を最大限に引き出すことができます。ただし、借入は選択したカテゴリ内の資産に制限されています。",
-        "enabled": "• 有効化された"
+        "enabled": "• 有効化された",
+        "debtSwapSelector": {
+          "header": {
+            "borrow": "私の借入",
+            "assets": "トークン/残高"
+          },
+          "title": "借入トークンを選択"
+        }
       },
-      "disabled": "無効"
+      "disabled": "無効",
+      "debtSwap": {
+        "actions": {
+          "amount": "金額",
+          "select": "選択します",
+          "title": "債務スワップ",
+          "swapTo": "スワップする",
+          "borrowed": "借りた"
+        },
+        "overview": {
+          "borrowValueAfter": "スワップ後の借入残高",
+          "borrowAPY": "借りるapy",
+          "title": "取引の概要"
+        },
+        "button": {
+          "swap": "スワップ"
+        },
+        "entryTips": "ワンクリックで借りた資産をスワップし、手順と手数料を削減します。",
+        "borrowBalance": "借入残高",
+        "title": "スワップ 借入 ポジション",
+        "lpRiskWarning": "スワップ後の健康係数が低下しています。あなたのポジションは、清算のリスクが高くなります。",
+        "priceImpactTips": "高い価格影響（{{lostValue}}）。このルートは、流動性が低いか小さな注文サイズのために、より多く返す可能性があります。",
+        "lpDangerWarning": "このスワップ後のあなたのヘルスファクターは非常に低くなり、清算のリスクがあります。安全を保つために、別の資産を選ぶか、スワップ額を減らしてください。"
+      }
     }
   },
   "global": {
@@ -2937,7 +2985,10 @@
     "gotIt": "わかった",
     "Dapp": "Dapp",
     "Token": "トークン",
-    "GotIt": "わかった"
+    "GotIt": "わかった",
+    "Backup": "バックアップ",
+    "copy": "コピー",
+    "Other": "他の"
   },
   "bluetooth": {
     "powered_off_alert": {

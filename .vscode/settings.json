@@ -11,7 +11,12 @@
   "i18n-ally.keystyle": "nested",
   "i18n-ally.extract.ignored": ["Gwei"],
   "i18n-ally.sourceLanguage": "en",
-  "cSpell.words": ["hyperliquid", "Perps", "rabby"],
+  "cSpell.words": [
+    "hyperliquid",
+    "Paraswap",
+    "Perps",
+    "rabby"
+  ],
   "i18n-ally.enabledFrameworks": ["i18next", "react-i18next"],
   "i18n-ally.keysInUse": [
     "native.authentication.auth_prompt_cancel",

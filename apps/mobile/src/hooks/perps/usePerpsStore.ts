@@ -814,18 +814,16 @@ export const usePerpsStore = () => {
 
 runIIFEFunc(fetchMarketData);
 
-export function usePerpsEffectOnTop() {
-  useEffect(() => {
-    const sdk = apisPerps.getPerpsSDK();
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      // Pass the state string ('active', 'background', 'inactive') directly
-      sdk.ws.handleAppStateChange(nextAppState);
-    });
+export function startSubscribePerpsOnAppState() {
+  const sdk = apisPerps.getPerpsSDK();
+  const subscription = AppState.addEventListener('change', nextAppState => {
+    // Pass the state string ('active', 'background', 'inactive') directly
+    sdk.ws.handleAppStateChange(nextAppState);
+  });
 
-    return () => {
-      subscription.remove();
-    };
-  }, []);
+  return () => {
+    subscription.remove();
+  };
 }
 
 export const useSubscribePosition = (sortedAccounts: Account[]) => {

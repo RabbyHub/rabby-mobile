@@ -36,15 +36,8 @@ export const TAB_HEADER_FULL_HEIGHT = 94;
 export const TAB_HEADER_MIN_HEIGHT = 44;
 
 export interface TabMultiAssetsProps {
-  // tabIndex: number;
   onIndexChange(index: number): void;
-  // overViewContent: React.ReactNode;
-  OverViewComponent: React.FC<{
-    // multi24HBalanceReturn?: ReturnType<typeof useMulti24hBalance>;
-  }>;
-  // multi24HBalanceReturn: ReturnType<typeof useMulti24hBalance>;
-  // data: ReturnType<typeof useMulti24hBalance>['combineData'];
-  // loading: boolean;
+  OverViewComponent: React.FC<{}>;
 }
 
 export const enum TabName {

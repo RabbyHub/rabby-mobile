@@ -3,11 +3,11 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAccounts, usePinAddresses } from '@/hooks/account';
 import { sortAccountsByBalance } from '@/utils/account';
-import { balanceAccountType } from '@/hooks/useAccountsBalance';
+import { BalanceAccountType } from '@/hooks/useAccountsBalance';
 import { ellipsisAddress } from '@/utils/address';
 
 export default function useHomePinAddress(
-  balanceAccounts: balanceAccountType[],
+  balanceAccounts: BalanceAccountType[],
 ) {
   const { pinAddresses, togglePinAddressAsync } = usePinAddresses({
     disableAutoFetch: true,
@@ -21,7 +21,7 @@ export default function useHomePinAddress(
     // const restAccounts =
     //   balanceAccounts.length > 0 ? balanceAccounts : accounts;
     const restAccounts = balanceAccounts;
-    let highlightedAccounts: balanceAccountType[] = [];
+    let highlightedAccounts: BalanceAccountType[] = [];
 
     pinAddresses.forEach(highlighted => {
       if (

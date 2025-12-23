@@ -24,7 +24,10 @@
       "CreateSelectOnCurrentSeed": "2. 지갑 추가",
       "CreateNewAddress": "1. 지갑 확인하기",
       "AddressDetail": "지갑 세부정보",
-      "ImportMoreAddress": "더 많은 Wallets 가져오기"
+      "ImportMoreAddress": "더 많은 Wallets 가져오기",
+      "SetPassword": "비밀번호 설정",
+      "ChooseBackup": "백업 방법 선택",
+      "CreateWallet": "지갑 만들기"
     }
   },
   "page": {
@@ -54,7 +57,8 @@
         "LendingOffCollateral": "담보로 사용 중지",
         "LendingOnCollateral": "담보로 사용 활성화",
         "LendingManageEModeDisable": "E-모드 끄기",
-        "LendingManageEMode": "E-모드 켜기"
+        "LendingManageEMode": "E-모드 켜기",
+        "LendingDebtSwap": "부채 교환"
       },
       "detail": {
         "ApproveToken": "토큰 승인",
@@ -1056,7 +1060,6 @@
         "BackupSeedPhrase": "수동으로 Seed Phrase 백업하기",
         "inOrder": "올바른 순서로.",
         "confirmPasswordTips": "비밀번호가 일치합니다.",
-        "WriteSeedPhrase": "이것이 당신의 시드 구문입니다. 그것을 종이에 적고 안전한 장소에 보관하세요. 다음 단계에서 올바른 순서로 다시 입력해야 합니다.",
         "riskTips": "시작하기 전에, 다음 보안 팁을 읽고 꼭 기억하세요:",
         "VerifyDownSeedPhrase": "시드 구문 확인",
         "passwordMin": "최소 8자 이상이어야 합니다.",
@@ -1065,7 +1068,9 @@
         "whatIsSeedPhrase": "Seed Phrase란 무엇인가요?",
         "backupSeedPhrase": "앱이 삭제되거나 기기를 분실한 경우 지갑을 복원할 수 있도록 시드 구문을 백업하세요.",
         "createOnCurrentDesc": "기존에 가져온 시드 구문으로 지갑 생성",
-        "createNewDesc": "새로운 지갑을 위한 새로운 시드 문구를 생성하세요"
+        "createNewDesc": "새로운 지갑을 위한 새로운 시드 문구를 생성하세요",
+        "BackupYourSeedPhrase": "시드 구문 백업하기",
+        "WriteSeedPhrase": "이것이 귀하의 시드 문구입니다. 적어 두고 안전하게 보관하세요. 이를 잃어버리거나 공유하면 귀하의 자산이 영원히 손실될 수 있습니다. 다음 단계에서 이 문구를 (순서대로) 다시 입력하라는 요청을 받게 됩니다."
       },
       "importAddress": {
         "seedPhrase": "시드 구문 가져오기",
@@ -1100,6 +1105,22 @@
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "모든 자산을 보려면 오른쪽으로 스와이프하십시오."
+      },
+      "copySeedPhraseSecureTip": {
+        "copyAnyway": "어쨌든 복사하세요",
+        "tip1": "다른 앱에서 클립보드를 읽을 수 있으므로 복사한 후 앱을 전환하지 마세요.",
+        "title": "당신의 SeedPhrase를 비밀로 유지하세요",
+        "tip2": "클라우드 서비스나 메모 앱에 시드 구문을 붙여넣거나 저장하지 마십시오.",
+        "copied": "시드 문구가 복사되었습니다. 클립보드는 1분 후에 지워집니다.",
+        "subTitle": "누구든지 당신의 시드 문구를 얻으면 귀하의 자금을 완전히 제어할 수 있습니다.",
+        "tip3": "결코 시드 문구를 공유하지 마세요. 우리는 절대 그것을 요구하지 않을 것입니다."
+      },
+      "screenshotSecureTip": {
+        "tip3": "누구든지 당신의 seed phrase를 획득하면 지갑을 완전히 제어할 수 있으며, 이는 되돌릴 수 없습니다.",
+        "title": "스크린샷은 안전하지 않습니다",
+        "tip2": "앱이나 악성코드가 사진 라이브러리에 저장된 이미지를 읽을 수 있습니다.",
+        "subTitle": "시드 문구를 이미지로 저장하면 노출될 수 있으므로, 이를 적어두는 것이 더 안전한 선택입니다.",
+        "tip1": "스크린샷은 클라우드나 다른 장치와 동기화할 수 있으며, 장치가 분실되거나 도난당하거나 손상된 경우에도 접근할 수 있습니다."
       }
     },
     "switchChain": {
@@ -1128,7 +1149,8 @@
         "switchtype_faceid": "Face ID로 잠금 해제",
         "unlock": "잠금 해제",
         "switchtype_fingerprint": "지문으로 잠금 해제"
-      }
+      },
+      "unlocking": "잠금 해제"
     },
     "signText": {
       "title": "텍스트 서명",
@@ -1236,7 +1258,10 @@
         "helpDescription2": "지갑을 고정하려면 길게 누르고 포함할 지갑을 조정할 수 있습니다.",
         "helpDescription1": "적시 및 정확한 데이터 업데이트를 보장하기 위해, Total Balance 및 Portfolio에는 오직 상위 10개의 지갑만 포함됩니다.",
         "title": "다음 지갑은 총 잔액에 포함되지 않습니다."
-      }
+      },
+      "backup": "백업",
+      "other": "기타",
+      "basicInfo": "기본 정보"
     },
     "customRpc": {
       "opened": "Opened: 열림",
@@ -2170,6 +2195,9 @@
       },
       "toast": {
         "clearCacheSuccess": "캐시가 지워졌습니다"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "더 보기"
       }
     },
     "browserManage": {
@@ -2509,8 +2537,8 @@
         "fee": "수수료:",
         "rabbyFeeTips": "Rabby 수수료: 0.04%",
         "providerFeeTips": "하이퍼리퀴드 수수료: {{fee}}",
-        "receive": "받기:",
-        "closedPnl": "닫힌 PNL:",
+        "receive": "받기",
+        "closedPnl": "닫힌 PNL",
         "amount": "금액",
         "confirm": "확인",
         "minimumWarning": "최소 금액은 {{percent}}%입니다.",
@@ -2598,7 +2626,7 @@
         "amountToReduce": "줄이려는 금액",
         "insufficientMarginToReduce": "포지션을 줄이기에 충분한 마진이 없습니다.",
         "available": "사용 가능",
-        "liqPrice": "청산 가격:",
+        "liqPrice": "청산 가격",
         "liqDistance": "Liq.거리"
       },
       "PerpsAddPositionPopup": {
@@ -2640,9 +2668,6 @@
           "apy": "APY",
           "token_tvl": "토큰/TVL",
           "token_balance": "토큰/잔액"
-        },
-        "item": {
-          "tvl": "TVL"
         }
       },
       "summary": {
@@ -2678,7 +2703,8 @@
         "approveAndBorrow": "승인 및 대출",
         "actions": "빌리다",
         "almostReachedWarning": "이 자산에 대한 프로토콜 대출 한도가 100%입니다. 추가 대출이 불가능합니다.",
-        "almostReachedError": "대출할 수 있는 최대 금액은 프로토콜 대출 한도가 거의 도달했기 때문에 제한됩니다."
+        "almostReachedError": "대출할 수 있는 최대 금액은 프로토콜 대출 한도가 거의 도달했기 때문에 제한됩니다.",
+        "swapDebt": "스왑"
       },
       "popup": {
         "available": "사용 가능",
@@ -2735,11 +2761,9 @@
         "globalIsolatedDesc": "고립 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전 세계 부채 한도가 고립된 자산의 대출 능력을 제한합니다. 다른 자산을 대출하기 전에 UNI를 담보로 사용하지 않도록 설정하여 고립 모드를 종료하십시오.",
         "maxLTV": "최대 LTV 비율은 특정 담보의 최대 대출 능력을 나타냅니다. 예를 들어, 담보의 LTV가 75%인 경우, 사용자는 담보 1 ETH당 0.75 가치의 ETH를 기본 통화로 대출할 수 있습니다."
       },
-      "apy": "APY",
       "borrowed": "빌려진",
       "supplied": "제공됨",
       "netWorth": "순자산",
-      "market": "시장",
       "selectChain": "체인 선택",
       "submitted": "제출됨",
       "gotIt": "알겠습니다",
@@ -2747,9 +2771,7 @@
       "hf": "건강 지수",
       "hfTitle": "건강 지수",
       "enterAmount": "금액 입력",
-      "isolated": "격리된",
       "estNetApy": "추정 순 APY",
-      "marketSlot": "{{market}} 마켓",
       "toggleCollateralDetail": {
         "actions": "토글 {{asset}} 담보",
         "enable": "{{asset}}를 담보로 활성화",
@@ -2781,7 +2803,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "최대 LTV",
             "asset": "자산"
           },
           "desc": "이 카테고리를 활성화하려면 이 카테고리 외부의 모든 차입 포지션을 닫아야 합니다.",
@@ -2794,19 +2815,46 @@
             "borrowable": "대출 가능",
             "asset": "자산"
           },
-          "title": "자산 카테고리",
-          "maxLtv": "최대 LTV",
-          "apy": "APY"
+          "title": "자산 카테고리"
         },
-        "emode": "E-모드",
         "unavailable": "• 사용 불가능",
         "disableTitle": "비활성화",
         "description": "E-모드를 활성화하면 대출 능력을 극대화할 수 있습니다. 그러나 대출은 선택한 카테고리 내의 자산으로 제한됩니다.",
         "unavailableTips": "귀하의 기존 대출/차입 자산은 지원되지 않습니다.",
         "enabled": "• 활성화됨",
-        "title": "E-모드 관리"
+        "title": "E-모드 관리",
+        "debtSwapSelector": {
+          "header": {
+            "assets": "토큰/잔액",
+            "borrow": "내 차입"
+          },
+          "title": "대출 토큰 선택"
+        }
       },
-      "disabled": "비활성화됨"
+      "disabled": "비활성화됨",
+      "debtSwap": {
+        "actions": {
+          "swapTo": "스왑하기",
+          "borrowed": "빌린",
+          "amount": "금액",
+          "title": "부채 교환",
+          "select": "선택하세요"
+        },
+        "overview": {
+          "borrowAPY": "빌리기 apy",
+          "title": "거래 개요",
+          "borrowValueAfter": "스왑 후 대출 잔액"
+        },
+        "button": {
+          "swap": "스왑"
+        },
+        "borrowBalance": "차입 잔액",
+        "title": "스왑 대출 포지션",
+        "entryTips": "원클릭으로 빌린 자산을 교환하여 단계와 수수료를 줄입니다.",
+        "lpDangerWarning": "이 스왑 후 귀하의 건강 지수가 심각하게 낮아져 청산이 발생할 수 있습니다. 안전을 위해 다른 자산을 선택하거나 스왑 금액을 줄여 주십시오.",
+        "priceImpactTips": "높은 가격 영향 ({{lostValue}}). 이 경로는 유동성이 낮거나 주문 규모가 작아 더 많은 반환이 있을 수 있습니다.",
+        "lpRiskWarning": "스왑 후 낮은 건강 지수. 귀하의 포지션은 청산 위험이 더 높습니다."
+      }
     }
   },
   "global": {
@@ -2885,7 +2933,10 @@
     "check": "확인",
     "Dapp": "Dapp",
     "Token": "토큰",
-    "GotIt": "알겠어요"
+    "GotIt": "알겠어요",
+    "Backup": "백업",
+    "copy": "복사",
+    "Other": "기타"
   },
   "native": {
     "biometrics": {

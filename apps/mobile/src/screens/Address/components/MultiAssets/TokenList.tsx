@@ -19,13 +19,13 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import { isTabsSwiping, useAccountInfo } from './hooks';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
+import { MultiEmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/MultiEmptyToken';
 import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
+import useTokenList, { ITokenItem } from '@/store/tokens';
+import { formatNetworth } from '@/utils/math';
 import { ListHeaderComponent, ListRenderSeparator } from './RenderRow/Common';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
-import useTokenList, { ITokenItem } from '@/store/tokens';
-import { formatNetworth } from '@/utils/math';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -85,9 +85,7 @@ export const TokenList = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [top10Addresses]);
 
-  const hasNoAssets = useMemo(() => {
-    return tokens.length === 0 && !isLoading && isFocused;
-  }, [tokens.length, isLoading, isFocused]);
+  const hasNoAssets = tokens.length === 0 && !isLoading && isFocused;
 
   const scamTokenDisplaySummary = useMemo(() => {
     return {
@@ -129,6 +127,24 @@ export const TokenList = () => {
       console.error('Refresh failed:', error);
     }
   }, [batchGetTokenList, top10Addresses]);
+
+  if (hasNoAssets) {
+    return (
+      <Tabs.ScrollView
+        tvParallaxProperties={null}
+        style={styles.container}
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            style={styles.bgContainer}
+            onRefresh={onRefresh}
+            refreshing={false}
+          />
+        }>
+        <MultiEmptyTokenRow />
+      </Tabs.ScrollView>
+    );
+  }
 
   return (
     <Tabs.ScrollView

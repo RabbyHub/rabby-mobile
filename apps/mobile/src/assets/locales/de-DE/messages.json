@@ -24,7 +24,10 @@
       "WatchAddressList": "Watch-Only Wallet",
       "CreateSelectOnCurrentSeed": "2. Wallet hinzufügen",
       "ImportMoreAddress": "Mehr Wallets importieren",
-      "CreateNewAddress": "1. Bestätigen Sie Ihre Wallet"
+      "CreateNewAddress": "1. Bestätigen Sie Ihre Wallet",
+      "CreateWallet": "Wallet erstellen",
+      "ChooseBackup": "Wählen Sie eine Sicherungsmethode",
+      "SetPassword": "Passwort festlegen"
     }
   },
   "native": {
@@ -118,7 +121,10 @@
     "check": "Überprüfen",
     "Token": "Token",
     "Dapp": "Dapp",
-    "GotIt": "Verstanden"
+    "GotIt": "Verstanden",
+    "Other": "Sonstiges",
+    "copy": "Kopieren",
+    "Backup": "Sicherung"
   },
   "component": {
     "accountSwitcher": {
@@ -397,7 +403,8 @@
         "LendingOnCollateral": "Aktivieren Sie die Verwendung als Sicherheiten",
         "LendingOffCollateral": "Verwende nicht als Sicherheiten ausschalten",
         "LendingManageEModeDisable": "E-Mode deaktivieren",
-        "LendingManageEMode": "E-Mode aktivieren"
+        "LendingManageEMode": "E-Mode aktivieren",
+        "LendingDebtSwap": "Schuldenumtausch"
       },
       "detail": {
         "InteractionResults": "Interaktionsergebnisse",
@@ -1353,11 +1360,12 @@
         "BackupSeedPhrase": "Manuelles Backup der Seed-Phrase",
         "createNewSeedPhrase": "Neue Seed Phrase erstellen",
         "confirmPasswordTips": "Passwörter stimmen überein",
-        "WriteSeedPhrase": "Dies ist Ihre Seed-Phrase. Notieren Sie sie auf Papier und bewahren Sie sie an einem sicheren Ort auf. Sie müssen sie im nächsten Schritt in der richtigen Reihenfolge erneut eingeben.",
         "riskTips": "Bevor Sie beginnen, lesen Sie bitte diese Sicherheitstipps und behalten Sie sie im Hinterkopf:",
         "backupSeedPhrase": "Sichern Sie Ihre seed phrase, um Ihre Wallet wiederherzustellen, falls die App gelöscht wird oder Ihr Gerät verloren geht.",
         "createNewDesc": "Erzeugen Sie eine neue Seed-Phrase für neue Wallets",
-        "createOnCurrentDesc": "Wallet mit einer bereits importierten Seed-Phrase erstellen"
+        "createOnCurrentDesc": "Wallet mit einer bereits importierten Seed-Phrase erstellen",
+        "BackupYourSeedPhrase": "Sichern Sie Ihre Seed Phrase",
+        "WriteSeedPhrase": "Dies ist Ihr Seed-Phrase. Schreiben Sie es auf und bewahren Sie es sicher auf. Wenn Sie es verlieren oder teilen, könnten Ihre Vermögenswerte für immer verloren sein. Sie werden im nächsten Schritt aufgefordert, diese Phrase (in der richtigen Reihenfolge) erneut einzugeben."
       },
       "importAddress": {
         "privateKey": "Private Key importieren",
@@ -1392,6 +1400,22 @@
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Wischen Sie nach rechts, um alle Vermögenswerte anzuzeigen."
+      },
+      "copySeedPhraseSecureTip": {
+        "title": "Halte deine SeedPhrase geheim",
+        "tip3": "Teile niemals deinen Seed-Phrasen. Wir werden niemals danach fragen.",
+        "copyAnyway": "Kopiere trotzdem",
+        "copied": "Seed-Phrase kopiert. Die Zwischenablage wird in 1 Minute gelöscht.",
+        "tip2": "Kopiere oder speichere deine Seed-Phrase nicht in Cloud-Diensten oder Notizen-Apps.",
+        "subTitle": "Jeder, der deinen Seed Phrase erhält, kann deine Gelder vollständig kontrollieren.",
+        "tip1": "Andere Apps können Ihre Zwischenablage lesen, vermeiden Sie daher den Wechsel zwischen Apps nach dem Kopieren."
+      },
+      "screenshotSecureTip": {
+        "title": "Screenshots sind nicht sicher",
+        "tip2": "Apps oder Malware können Bilder lesen, die in Ihrer Fotobibliothek gespeichert sind.",
+        "tip1": "Screenshots können mit der Cloud oder anderen Geräten synchronisiert werden und können abgerufen werden, wenn ein Gerät verloren, gestohlen oder kompromittiert ist.",
+        "subTitle": "Das Speichern Ihrer Seed-Phrase als Bild kann sie gefährden, daher ist das Aufschreiben eine sicherere Option.",
+        "tip3": "Jeder, der Ihren Seed-Phrase erhält, kann die volle Kontrolle über Ihr Wallet übernehmen, und dies kann nicht rückgängig gemacht werden."
       }
     },
     "switchChain": {
@@ -1493,7 +1517,8 @@
         "unlock": "Entsperren",
         "switchtype_faceid": "Mit Face ID entsperren",
         "switchtype_pwd": "Mit Passwort entsperren"
-      }
+      },
+      "unlocking": "Entsperren"
     },
     "newAddress": {
       "createNewSeedPhrase": "Neue Seed-Phrase erstellen",
@@ -1756,7 +1781,10 @@
         "watchOnlyWallet": "Watch-Only Wallet",
         "safeWallet": "Sichere Wallet",
         "helpDescription1": "Um rechtzeitige und genaue Datenaktualisierungen zu gewährleisten, sind nur Ihre Top 10 Wallets in Total Balance und Portfolio enthalten."
-      }
+      },
+      "other": "Andere",
+      "backup": "Sicherung",
+      "basicInfo": "Grundinformationen"
     },
     "addToken": {
       "hasAdded": "Dieser Token wurde hinzugefügt.",
@@ -2513,6 +2541,9 @@
       },
       "toast": {
         "clearCacheSuccess": "Cache gelöscht"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "Mehr"
       }
     },
     "browserManage": {
@@ -2853,9 +2884,9 @@
         "closeBtn": "Schließe {{direction}}",
         "providerFeeTips": "Hyperliquid-Gebühr: {{fee}}",
         "total": "Gesamt",
-        "receive": "Erhalten:",
+        "receive": "Erhalten",
         "minimumWarning": "Der Mindestbetrag beträgt {{percent}}%.",
-        "closedPnl": "Geschlossener PNL:",
+        "closedPnl": "Geschlossener PNL",
         "amount": "Betrag",
         "confirm": "Bestätigen"
       },
@@ -2933,7 +2964,7 @@
       "PerpsEditMarginPopup": {
         "title": "Margin anpassen",
         "currentPrice": "Aktueller Preis",
-        "liqPrice": "Liq. Preis:",
+        "liqPrice": "Liq. Preis",
         "addMargin": "Margin hinzufügen",
         "insufficientMarginToReduce": "Unzureichende Marge, um die Position zu reduzieren.",
         "amountToAdd": "Betrag hinzufügen",
@@ -2983,9 +3014,6 @@
           "apy": "APY",
           "token_tvl": "Token/TVL",
           "token_balance": "Token/Guthaben"
-        },
-        "item": {
-          "tvl": "TVL"
         }
       },
       "summary": {
@@ -3021,7 +3049,8 @@
         "actions": "Leihen",
         "approveAndBorrow": "Genehmigen und Ausleihen",
         "almostReachedWarning": "Der Protokoll-Verleihlimit beträgt 100% für dieses Asset. Weitere Kredite sind nicht verfügbar.",
-        "almostReachedError": "Der maximale Betrag, der ausgeliehen werden kann, ist begrenzt, da die Kreditobergrenze des Protokolls nahezu erreicht ist."
+        "almostReachedError": "Der maximale Betrag, der ausgeliehen werden kann, ist begrenzt, da die Kreditobergrenze des Protokolls nahezu erreicht ist.",
+        "swapDebt": "Tausch"
       },
       "popup": {
         "available": "verfügbar",
@@ -3080,9 +3109,7 @@
       },
       "supplied": "Geliefert",
       "netWorth": "Vermögen",
-      "market": "Markt",
       "selectChain": "Kette auswählen",
-      "apy": "APY",
       "borrowed": "Ausgeliehen",
       "estDailyEarning": "Est. Tägliches Einkommen",
       "gotIt": "Verstanden",
@@ -3090,9 +3117,7 @@
       "hf": "Gesundheitsfaktor",
       "hfTitle": "Gesundheitsfaktor",
       "enterAmount": "Betrag eingeben",
-      "isolated": "isoliert",
       "estNetApy": "Est. netto APY",
-      "marketSlot": "{{market}} Markt",
       "toggleCollateralDetail": {
         "disable": "Deaktiviere {{asset}} als Sicherheit",
         "enable": "Aktivieren Sie {{asset}} als Sicherheiten",
@@ -3124,7 +3149,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "Max LTV",
             "asset": "Vermögenswerte"
           },
           "label": "Vermögenskategorie",
@@ -3137,19 +3161,46 @@
             "collateral": "Sicherheit",
             "borrowable": "Ausleihbar"
           },
-          "maxLtv": "Max LTV",
-          "title": "Vermögenskategorie",
-          "apy": "APY"
+          "title": "Vermögenskategorie"
         },
         "title": "E-Mode verwalten",
-        "emode": "E-Modus",
         "unavailable": "• Nicht verfügbar",
         "disableTitle": "Deaktivieren",
         "description": "Die Aktivierung des E-Modus ermöglicht es Ihnen, Ihre Kreditaufnahme zu maximieren. Das Ausleihen ist jedoch auf Vermögenswerte innerhalb der ausgewählten Kategorie beschränkt.",
         "unavailableTips": "Ihre vorhandenen Kredit-/Leihassets werden nicht unterstützt.",
-        "enabled": "• Aktiviert"
+        "enabled": "• Aktiviert",
+        "debtSwapSelector": {
+          "header": {
+            "borrow": "Meine Ausleihen",
+            "assets": "Token/Guthaben"
+          },
+          "title": "Wählen Sie das Kredit-Token aus"
+        }
       },
-      "disabled": "DEAKTIVIERT"
+      "disabled": "DEAKTIVIERT",
+      "debtSwap": {
+        "actions": {
+          "select": "Auswählen",
+          "title": "Schulden-Tausch",
+          "swapTo": "Swap zu",
+          "amount": "Betrag",
+          "borrowed": "Geliehen"
+        },
+        "overview": {
+          "title": "Transaktionsübersicht",
+          "borrowValueAfter": "Entleihensaldo nach dem Tausch",
+          "borrowAPY": "Ausleihen apy"
+        },
+        "button": {
+          "swap": "Tausch"
+        },
+        "title": "Tausch Darlehensposition",
+        "borrowBalance": "Leihguthaben",
+        "entryTips": "Ein Klick, um Ihr geliehenes Asset zu tauschen, wodurch Schritte und Gebühren reduziert werden.",
+        "priceImpactTips": "Hoher Preisimpact ({{lostValue}}). Diese Route kann aufgrund niedriger Liquidität oder kleiner Bestellgröße mehr zurückgeben.",
+        "lpRiskWarning": "Niedriger Gesundheitsfaktor nach dem Swap. Ihre Position trägt ein höheres Risiko der Liquidation.",
+        "lpDangerWarning": "Ihr Gesundheitsfaktor nach diesem Swap wird kritisch niedrig sein und kann zu einer Liquidation führen. Bitte wählen Sie einen anderen Vermögenswert oder reduzieren Sie den Swap-Betrag, um sicher zu bleiben."
+      }
     }
   },
   "constant": {

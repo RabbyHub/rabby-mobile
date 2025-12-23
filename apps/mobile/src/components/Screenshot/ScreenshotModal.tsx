@@ -114,6 +114,10 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
     }
   }, [globalModalShown]);
 
+  if (!globalModalShown) {
+    return null;
+  }
+
   return (
     <Modal
       visible={globalModalShown}

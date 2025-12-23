@@ -11,47 +11,90 @@ import {
   ViewStyle,
 } from 'react-native';
 
-import { useTranslation } from 'react-i18next';
-
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useCurrency } from '@/hooks/useCurrency';
 import { AddressItemContextMenu } from '@/screens/Address/components/AddressItemContextMenu';
 import { trigger } from 'react-native-haptic-feedback';
 import { BALANCE_HIDE_TYPE } from '../hooks/useHideBalance';
-import { BlurShadowView } from '@/components2024/BluerShadow';
 import BigNumber from 'bignumber.js';
-import { splitNumberByStep } from '@/utils/number';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { apisSingleHome } from '../hooks/singleHome';
+import {
+  formatSmallCurrencyValue,
+  useCurveDataByAddress,
+} from '@/hooks/useCurve';
 
 export const HomeAddressItem: React.FC<{
   account: KeyringAccountWithAlias;
+  updateTime?: number;
   style?: StyleProp<ViewStyle>;
   changePercent?: string;
   isLoss?: boolean;
   hideType?: BALANCE_HIDE_TYPE;
-}> = props => {
-  const { account, changePercent, isLoss, hideType } = props;
-  const { navigation } = useSafeSetNavigationOptions();
-  const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+}> = ({
+  style,
+  account,
+  updateTime,
+  changePercent: prop_changePercent,
+  isLoss,
+  hideType,
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const [isPressing, setIsPressing] = React.useState(false);
+  // const [isPressing, setIsPressing] = React.useState(false);
   const { currency } = useCurrency();
 
-  const isZeroPercentChange = changePercent === '0%';
+  // const { curveState } = useCurveDataByAddress(account.address);
 
-  const balance = useMemo(() => {
-    const b = new BigNumber(account.balance || 0).times(currency.usd_rate);
-    return `${currency.symbol}${splitNumberByStep(
-      b.isGreaterThan(10)
-        ? b.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString()
-        : b.toFixed(2),
-    )}`;
-  }, [account.balance, currency.symbol, currency.usd_rate]);
+  // console.debug(
+  //   '[debug] account.address, curveState?.updateTime, updateTime, (curveState?.updateTime || 0) > (updateTime || 0)',
+  //   account.address,
+  //   curveState?.updateTime,
+  //   updateTime,
+  //   (curveState?.updateTime || 0) > (updateTime || 0),
+  // );
+
+  const { balance, isZeroPercentChange, changePercent } = useMemo(() => {
+    const ret = {
+      balance: '',
+      isZeroPercentChange: false,
+      changePercent: '0%',
+    };
+    // if (
+    //   curveState?.loadedFromApi &&
+    //   (curveState?.updateTime || 0) > (updateTime || 0)
+    // ) {
+    //   ret.balance = formatSmallCurrencyValue(
+    //     curveState?.selectData.rawNetWorth,
+    //     {
+    //       currency: currency,
+    //     },
+    //   );
+    //   ret.changePercent = curveState?.selectData.changePercent;
+    //   ret.isZeroPercentChange = curveState?.selectData.rawChange === 0;
+    //   return ret;
+    // }
+
+    const b = new BigNumber(account.balance || 0);
+    ret.balance = formatSmallCurrencyValue(b.toNumber(), {
+      currency: currency,
+    });
+    ret.changePercent = prop_changePercent || '0%';
+    ret.isZeroPercentChange = ret.changePercent === '0%';
+    return ret;
+  }, [
+    // updateTime,
+    // curveState?.updateTime,
+    // curveState?.loadedFromApi,
+    // curveState?.selectData.rawNetWorth,
+    // curveState?.selectData.changePercent,
+    // curveState?.selectData.rawChange,
+    prop_changePercent,
+    account.balance,
+    currency,
+  ]);
 
   return (
     <AddressItemContextMenu
@@ -60,9 +103,9 @@ export const HomeAddressItem: React.FC<{
       key={`${account.type}-${account.address}`}
       actions={['copy', 'pin', 'edit']}>
       <TouchableOpacity
-        onPressIn={() => setIsPressing(true)}
-        onPressOut={() => setIsPressing(false)}
-        style={StyleSheet.flatten([props.style])}
+        // onPressIn={() => setIsPressing(true)}
+        // onPressOut={() => setIsPressing(false)}
+        style={StyleSheet.flatten([style])}
         delayLongPress={200} // long press delay
         onPress={() => {
           trigger('impactLight', {
@@ -76,7 +119,7 @@ export const HomeAddressItem: React.FC<{
           apisSingleHome.navigateToSingleHome(account);
         }}
         onLongPress={() => {
-          setIsPressing(true);
+          // setIsPressing(true);
           trigger('impactLight', {
             enableVibrateFallback: true,
             ignoreAndroidSystemSettings: false,

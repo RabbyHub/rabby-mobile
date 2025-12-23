@@ -33,7 +33,10 @@
       "CreateNewAddress": "1. 確認您的 Wallet",
       "CreateSelectOnCurrentSeed": "2. 添加錢包",
       "WatchAddressList": "觀察錢包",
-      "ConfrimAddress": "確認您的錢包"
+      "ConfrimAddress": "確認您的錢包",
+      "SetPassword": "設定密碼",
+      "ChooseBackup": "選擇備份方法",
+      "CreateWallet": "建立錢包"
     }
   },
   "native": {
@@ -127,7 +130,10 @@
     "gotIt": "了解了",
     "Token": "代幣",
     "Dapp": "Dapp",
-    "GotIt": "明白了"
+    "GotIt": "明白了",
+    "copy": "複製",
+    "Backup": "備份",
+    "Other": "其他"
   },
   "background": {
     "transactionWatcher": {
@@ -217,7 +223,8 @@
         "LendingOffCollateral": "關閉使用作為抵押",
         "LendingOnCollateral": "開啟作為抵押品使用",
         "LendingManageEMode": "開啟 E-Mode",
-        "LendingManageEModeDisable": "關閉 E-Mode"
+        "LendingManageEModeDisable": "關閉 E-Mode",
+        "LendingDebtSwap": "債務交換"
       },
       "detail": {
         "Unknown": "未知",
@@ -1203,7 +1210,8 @@
           "yes": "是的",
           "content": "您是否想啟用 {{ bioType }} 解鎖 Rabby Wallet？"
         }
-      }
+      },
+      "unlocking": "解鎖"
     },
     "backupSeedPhrase": {
       "qrCodePopupTitle": "QR Code",
@@ -1250,9 +1258,10 @@
         "passwordMin": "至少需要 8 個字符",
         "passwordTopTips": "此密碼將用於解鎖您的錢包並加密您的本地數據。",
         "backupSeedPhrase": "備份你的助記詞，以便在應用被刪除或設備丟失時恢復你的錢包。",
-        "WriteSeedPhrase": "這是你的助記詞。請將其寫在紙上並妥善保管。在下一步中，你將需要按正確的順序重新輸入。",
         "createNewDesc": "生成新的种子短语以供新的钱包使用",
-        "createOnCurrentDesc": "使用現有的導入種子短語創建錢包"
+        "createOnCurrentDesc": "使用現有的導入種子短語創建錢包",
+        "BackupYourSeedPhrase": "備份您的 Seed Phrase",
+        "WriteSeedPhrase": "這是您的種子短語。請將其寫下並安全存儲。如果您丟失或分享它，您的資產可能會永遠丟失。在下一步中，您將被要求按順序重新輸入這個短語。"
       },
       "addAddress": {
         "hardwareWallet": "硬體錢包",
@@ -1294,6 +1303,22 @@
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "向右滑动以查看所有資產"
+      },
+      "copySeedPhraseSecureTip": {
+        "title": "保持您的 SeedPhrase 秘密",
+        "tip3": "請勿分享您的助記詞。我們永遠不會要求您提供它。",
+        "subTitle": "任何獲得你的 seed phrase 的人都可以完全控制你的資金。",
+        "copyAnyway": "無論如何複製",
+        "copied": "種子短語已複製。剪貼簿將在 1 分鐘內清除。",
+        "tip1": "其他應用程式可能會讀取您的剪貼簿，因此在複製後請避免切換應用程式。",
+        "tip2": "請勿在雲端服務或筆記應用中粘貼或儲存您的種子短語。"
+      },
+      "screenshotSecureTip": {
+        "tip3": "任何獲取您的 seed phrase 的人都可以完全控制您的錢包，且這無法反轉。",
+        "tip2": "應用程式或惡意軟體可以讀取儲存在您的照片庫中的影像。",
+        "tip1": "截圖可以同步到雲端或其他設備，如果設備遺失、被盜或受到侵犯，可以進行訪問。",
+        "title": "螢幕截圖並不安全",
+        "subTitle": "將您的種子短語保存為圖像可能會暴露它，因此寫下來是一個更安全的選擇。"
       }
     },
     "ethSign": {
@@ -2078,7 +2103,10 @@
         "notTop10Address": "排名在前10之外的钱包",
         "helpDescription2": "您可以長按來固定錢包並調整包含的錢包。",
         "helpDescription1": "為了確保及時準確的數據更新，只有您的前10個錢包會包含在總餘額和投資組合中。"
-      }
+      },
+      "basicInfo": "基本資訊",
+      "other": "其他",
+      "backup": "備份"
     },
     "setting": {
       "followUs": "關注我們",
@@ -2320,6 +2348,9 @@
       },
       "toast": {
         "clearCacheSuccess": "快取已清除"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "更多"
       }
     },
     "browserManage": {
@@ -2661,8 +2692,8 @@
         "rabbyFeeTips": "Rabby 手续费：0.04%",
         "amount": "金額",
         "confirm": "確認",
-        "receive": "接收：",
-        "closedPnl": "已平仓盈亏：",
+        "receive": "接收",
+        "closedPnl": "已平仓盈亏",
         "minimumWarning": "最小金额为 {{percent}}%",
         "total": "總計"
       },
@@ -2744,7 +2775,7 @@
         "insufficientMargin": "餘額不足",
         "perpsBalance": "永续合约余额",
         "available": "可用",
-        "liqPrice": "Liq. 價格：",
+        "liqPrice": "清算價格",
         "reduceMargin": "減少保證金",
         "amountToReduce": "減少的數量",
         "insufficientMarginToReduce": "減少持倉的保證金不足。",
@@ -2790,9 +2821,6 @@
           "mySupplies": "我的供应",
           "token_tvl": "Token/TVL",
           "token_balance": "代幣/餘額"
-        },
-        "item": {
-          "tvl": "TVL"
         }
       },
       "summary": {
@@ -2828,7 +2856,8 @@
         "approveAndBorrow": "批准和借款",
         "actions": "借入",
         "almostReachedError": "可借贷的最大金额受到限制，因为协议借贷上限即将达到。",
-        "almostReachedWarning": "該資產的協議借貸上限為 100%。進一步借貸不可用。"
+        "almostReachedWarning": "該資產的協議借貸上限為 100%。進一步借貸不可用。",
+        "swapDebt": "交換"
       },
       "popup": {
         "amount": "金額",
@@ -2886,20 +2915,16 @@
         "maxLTV": "最大 LTV 比率表示特定抵押品的最大借款能力。例如，如果一个抵押品的 LTV 为 75%，用户可以在每 1 ETH 抵押品的情况下，借出最多 0.75 值的主币 ETH。"
       },
       "supplied": "供應",
-      "apy": "APY",
       "borrowed": "借入",
       "gotIt": "收到",
       "submitted": "已提交",
       "selectChain": "選擇鏈",
       "estDailyEarning": "估計每日收益",
-      "market": "市場",
       "netWorth": "淨資產",
       "enterAmount": "輸入金額",
       "hf": "健康因子",
       "hfTitle": "健康因子",
-      "isolated": "孤立",
       "estNetApy": "預估淨年利率",
-      "marketSlot": "{{market}} 市場",
       "toggleCollateralDetail": {
         "disable": "禁用 {{asset}} 作为抵押品",
         "enable": "啟用 {{asset}} 作為抵押品",
@@ -2931,7 +2956,6 @@
         },
         "categorySelector": {
           "header": {
-            "ltv": "最大 LTV",
             "asset": "資產"
           },
           "placeholder": "選擇",
@@ -2944,19 +2968,46 @@
             "collateral": "抵押品",
             "borrowable": "可借用的"
           },
-          "apy": "APY",
-          "maxLtv": "最大 LTV",
           "title": "資產類別"
         },
         "enabled": "• 啟用",
         "disableTitle": "停用",
         "title": "管理 E-Mode",
         "unavailableTips": "您的現有借貸資產不受支持。",
-        "emode": "E-Mode",
         "unavailable": "• 無法使用",
-        "description": "啟用 E-Mode 使您能夠最大化您的借貸能力。然而，借貸僅限於所選類別內的資產。"
+        "description": "啟用 E-Mode 使您能夠最大化您的借貸能力。然而，借貸僅限於所選類別內的資產。",
+        "debtSwapSelector": {
+          "header": {
+            "assets": "代幣/餘額",
+            "borrow": "我的借款"
+          },
+          "title": "選擇借入代幣"
+        }
       },
-      "disabled": "禁用"
+      "disabled": "禁用",
+      "debtSwap": {
+        "actions": {
+          "swapTo": "交換到",
+          "select": "選擇",
+          "title": "債務交換",
+          "borrowed": "借入",
+          "amount": "金額"
+        },
+        "overview": {
+          "title": "交易概覽",
+          "borrowValueAfter": "交換後的借款餘額",
+          "borrowAPY": "借款 apy"
+        },
+        "button": {
+          "swap": "交換"
+        },
+        "title": "交換借入倉位",
+        "entryTips": "一鍵交換您的借貸資產，減少步驟和費用。",
+        "lpRiskWarning": "換幣後健康指數過低。您的頭寸將承擔更高的清算風險。",
+        "borrowBalance": "借入餘額",
+        "lpDangerWarning": "進行此次交換後，您的健康因子將會非常低，可能導致清算。請選擇其他資產或減少交換金額以保持安全。",
+        "priceImpactTips": "高價格影響 ({{lostValue}})。此路徑可能因流動性低或訂單規模小而返回更多。"
+      }
     }
   },
   "component": {

@@ -236,13 +236,12 @@ export const useMultiCurve = (
           })
           .filter(data => data.length > 0);
     const isAllGet = list.length === stableAddresses.length;
-    return formChartData(
-      combineMulitCurve(list),
-      isAllGet ? totalEvmBalance || 0 : 0,
-      isAllGet ? new Date().getTime() : 0,
-      CurveDayType.DAY,
-      isAllGet ? totalBalance : 0,
-    );
+    return formChartData(combineMulitCurve(list), {
+      realtimeNetWorth: isAllGet ? totalEvmBalance || 0 : 0,
+      realtimeTimestamp: isAllGet ? new Date().getTime() : 0,
+      type: CurveDayType.DAY,
+      staticBalance: isAllGet ? totalBalance : 0,
+    });
   }, [
     isNavigationFocused,
     stableAddresses,

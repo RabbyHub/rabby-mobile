@@ -170,6 +170,7 @@ export type AddressNavigatorParamList = {
     mnemonics?: string;
     title?: string;
     accounts?: string[];
+    isFirstCreate?: boolean;
   };
   [RootNames.SetPassword2024]?: {
     finishGoToScreen:
@@ -183,13 +184,14 @@ export type AddressNavigatorParamList = {
     delaySetPassword?: boolean;
     hideBackIcon?: boolean;
     isFirstImportPassword?: boolean;
+    isFirstCreate?: boolean;
   };
   [RootNames.ImportSafeAddress2024]?: {};
   [RootNames.ImportWatchAddress2024]?: {};
-  [RootNames.CreateSelectOnCurrentSeed]?: {};
   [RootNames.CreateSelectMethod]?: {};
   [RootNames.CreateChooseBackup]?: {
     delaySetPassword?: boolean;
+    isFirstCreate?: boolean;
   };
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportMethods]?: {
@@ -253,9 +255,6 @@ export type AddressNavigatorParamList = {
   [RootNames.CreateMnemonicBackup]?: {};
   [RootNames.CreateMnemonicVerify]?: {};
   [RootNames.BackupPrivateKey]?: {
-    data: string;
-  };
-  [RootNames.BackupMnemonic]?: {
     data: string;
   };
   [RootNames.RestoreFromCloud]?: {};

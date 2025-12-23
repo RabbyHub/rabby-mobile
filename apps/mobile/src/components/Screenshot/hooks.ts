@@ -22,8 +22,10 @@ import {
 } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
+import DeviceUtils from '@/core/utils/device';
 
-export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = IS_ANDROID && !__DEV__;
+export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
+  IS_ANDROID && !DeviceUtils.isGteAndroid(14);
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 type ScreenshotFeedbackStore = {
   viewedHomeTip: boolean;
@@ -45,6 +47,27 @@ function trimScreenshotFeedbackStore<T extends ScreenshotFeedbackStore>(
 ): ScreenshotFeedbackStore {
   return pick(input, Keys);
 }
+
+type ScreenshotState = {
+  isScreenshotReportFree: boolean;
+};
+const screenshotState = zCreate<ScreenshotState>(() => ({
+  isScreenshotReportFree: false,
+}));
+
+function markIsScreenshotReportFree(isFree: boolean) {
+  screenshotState.setState(prev => ({
+    ...prev,
+    isScreenshotReportFree: isFree,
+  }));
+}
+
+export const storeApiScreenshotReport = {
+  markIsScreenshotReportFree,
+  isScreenshotReportFree: () => {
+    return screenshotState.getState().isScreenshotReportFree;
+  },
+};
 
 // runDevIIFEFunc(() => {
 //   appJsonStore.setItem('@screenshotFeedback', {
@@ -382,6 +405,8 @@ const shouldToastFeedbackByScreenshot = () => {
   if (FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) return false;
   if (!getGlobalScreenCapturable()) return false;
 
+  if (storeApiScreenshotReport.isScreenshotReportFree()) return false;
+
   const feedbackByScreenshot = feedbackByScreenshotStore.getState();
   return (
     !feedbackByScreenshot.viewingFeedback &&
@@ -414,68 +439,64 @@ const setLastScreenshot = (
   }
 };
 
-export function useUserDidTakeScreenshot({
-  isTop = false,
-}: {
-  isTop?: boolean;
-} = {}) {
-  useEffect(() => {
-    if (!isTop) return;
-
-    const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(
-      async params => {
-        if (!getShowFeedbackOnScreenshotCapture()) return;
-        if (!params?.captured) {
-          if (IS_ANDROID && params && !params?.androidHasPermission) return;
-        }
-
-        if (!shouldToastFeedbackByScreenshot()) return;
-
-        const sizes = {
-          height: coerceNumber(params?.height, 100),
-          width: coerceNumber(params?.width, 100),
-        };
-        const fullPath = params?.path
-          ? AppScreenshotFS.normalizeFilePath(params.path)
-          : '';
-
-        if (params?.imageBase64) {
-          setLastScreenshot(
-            Image.resolveAssetSource({
-              // TODO: set contentType by params.type
-              uri: AppScreenshotFS.normalizeBase64(
-                params.imageBase64,
-                params.imageType || 'image/jpeg',
-              ),
-              height: sizes.height,
-              width: sizes.width,
-            }),
-          );
-        } else if (fullPath && (await RNFS.exists(fullPath))) {
-          const inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath, {
-            imageType: params?.imageType,
-          });
-          if (!inAppPath) return;
-
-          setLastScreenshot(
-            Image.resolveAssetSource({
-              // TODO: set contentType by params.type
-              uri: AppScreenshotFS.normalizeBase64(
-                inAppPath,
-                params?.imageType || 'image/jpeg',
-              ),
-              height: sizes.height,
-              width: sizes.width,
-            }),
-          );
-        }
-      },
+if (IS_ANDROID) {
+  RNScreenshotPrevent.startScreenCaptureDetection().then(() => {
+    console.debug(
+      '[info] RNScreenshotPrevent started screen capture detection on Android',
     );
+  });
+}
 
-    return () => {
-      remove();
-    };
-  }, [isTop]);
+export function startSubscribeUserDidTakeScreenshot() {
+  const subscription = RNScreenshotPrevent.onUserDidTakeScreenshot(
+    async params => {
+      if (!getShowFeedbackOnScreenshotCapture()) return;
+      if (!params?.captured) return;
+
+      if (!shouldToastFeedbackByScreenshot()) return;
+
+      const sizes = {
+        height: coerceNumber(params?.height, 100),
+        width: coerceNumber(params?.width, 100),
+      };
+      const fullPath = params?.path
+        ? AppScreenshotFS.normalizeFilePath(params.path)
+        : '';
+
+      if (params?.imageBase64) {
+        setLastScreenshot(
+          Image.resolveAssetSource({
+            // TODO: set contentType by params.type
+            uri: AppScreenshotFS.normalizeBase64(
+              params.imageBase64,
+              params.imageType || 'image/jpeg',
+            ),
+            height: sizes.height,
+            width: sizes.width,
+          }),
+        );
+      } else if (fullPath && (await RNFS.exists(fullPath))) {
+        const inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath, {
+          imageType: params?.imageType,
+        });
+        if (!inAppPath) return;
+
+        setLastScreenshot(
+          Image.resolveAssetSource({
+            // TODO: set contentType by params.type
+            uri: AppScreenshotFS.normalizeBase64(
+              inAppPath,
+              params?.imageType || 'image/jpeg',
+            ),
+            height: sizes.height,
+            width: sizes.width,
+          }),
+        );
+      }
+    },
+  );
+
+  return subscription;
 }
 
 const onChangeFeedback = (feedback: string) => {
@@ -516,8 +537,6 @@ const closeSubmitModal = ({
 };
 
 export function useSubmitFeedbackOnScreenshot() {
-  // const [{ lastScreenshot, totalBalanceText }, setSubmitFeedbackOnScreenshot] =
-  //   useAtom(feedbackByScreenshotAtom);
   const { lastScreenshot, totalBalanceText } = feedbackByScreenshotStore(
     useShallow(s => ({
       lastScreenshot: s.lastScreenshot,

@@ -33,6 +33,8 @@ import {
   View,
   AppState,
   useWindowDimensions,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -53,12 +55,7 @@ import {
   resetNavigationTo,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import useAccountsBalance, {
-  apisAccountsBalance,
-  balanceAccountType,
-  fetchTotalBalance,
-  useAccountsBalanceTrigger,
-} from '@/hooks/useAccountsBalance';
+import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {
   getReadyNavigationInstance,
@@ -99,7 +96,7 @@ import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
 import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
-import { browserApis } from '@/hooks/browser/useBrowser';
+import { browserApis, setBrowserState } from '@/hooks/browser/useBrowser';
 import { GlobalSearchBar } from '../Search/components/SearchBar';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -124,12 +121,9 @@ import {
 } from './hooks/history';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import {
-  fetch24BalanceForScene,
-  FetchTotalBalanceOptions,
+  refresh24hAssets,
   useScene24hBalanceLightWeightData,
 } from '@/hooks/useScene24hBalance';
-import { getTop10MyAddresses } from '@/core/apis/account';
-import { runIIFEFunc } from '@/core/utils/store';
 import {
   TmpHomeRefresher,
   triggerFetchHomeData,
@@ -137,6 +131,7 @@ import {
 import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
 import useTokenList from '@/store/tokens';
+import { apisLending } from '../Lending/hooks';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -243,13 +238,6 @@ const OverViewComponent = React.memo(
             badge: alertInfo.total,
           },
           {
-            key: MultiHomeFeatTitle.Dapps,
-            title: IS_IOS
-              ? t('page.home.services.websites')
-              : t('page.home.services.dapps'),
-            icon: RcIconDapps,
-          },
-          {
             key: MultiHomeFeatTitle.GasAccount,
             title: t('page.home.services.gasAccount'),
             icon: RcIconGasAccountCC,
@@ -343,11 +331,11 @@ const OverViewComponent = React.memo(
       ]).finally(() => {
         // update at background
         forceUpdate();
-        triggerFetchHomeData('TMP_TRIGGER:FETCH_LENDING_DATA');
-        triggerFetchHomeData('TMP_TRIGGER:SYNC_TOP10_HISTORY', true);
+        apisLending.fetchLendingData();
+        syncTop10History(top10Addresses, true);
         currencyService.syncCurrencyList(true);
       });
-    }, [triggerUpdate, checkAddressesEligibility, forceUpdate]);
+    }, [triggerUpdate, checkAddressesEligibility, forceUpdate, top10Addresses]);
 
     const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
     const handlePressWatchlist = useCallback(() => {
@@ -356,17 +344,6 @@ const OverViewComponent = React.memo(
         params: {},
       });
     }, [navigation]);
-
-    const openDapps = useMemoizedFn(() => {
-      browserApis.setPartialBrowserState({
-        isShowBrowser: true,
-        isShowSearch: true,
-        searchText: '',
-        searchTabId: '',
-        trigger: 'home',
-      });
-      browserApis.forceShowBrowser();
-    });
 
     const handleClickMenu = useCallback(
       (key: MultiHomeFeatTitle) => {
@@ -462,20 +439,11 @@ const OverViewComponent = React.memo(
             });
             break;
 
-          case MultiHomeFeatTitle.Dapps: {
-            openDapps();
-            break;
-          }
           default:
             break;
         }
       },
-      [
-        openDapps,
-        handlePressWatchlist,
-        navigation,
-        toggleUseAllAccountsOnScene,
-      ],
+      [handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
     );
 
     const generateCustomBadgeIcon = useCallback(
@@ -512,9 +480,6 @@ const OverViewComponent = React.memo(
           return <PointsBadge />;
         }
 
-        if (el.key === MultiHomeFeatTitle.Dapps) {
-          return <DappsBadge />;
-        }
         if (el.key === MultiHomeFeatTitle.GasAccount) {
           return <GasAccountBadge />;
         }
@@ -542,6 +507,9 @@ const OverViewComponent = React.memo(
       <Tabs.ScrollView
         tvParallaxProperties={undefined}
         showsVerticalScrollIndicator={false}
+        onTouchStart={() => {
+          setBrowserState({ isEditingFavorite: false });
+        }}
         style={[styles.scroll, { flex: undefined }]}
         contentContainerStyle={[
           styles.scrollContainer,
@@ -593,7 +561,7 @@ const OverViewComponent = React.memo(
               );
             })}
           </View>
-          <BrowserSearchEntry alwaysShowSearch={false} />
+          <BrowserSearchEntry />
           <View style={styles.searchBarPlaceholder} />
         </View>
       </Tabs.ScrollView>
@@ -608,39 +576,13 @@ const detectHasAccounts = async () => {
   if (!hasAccountsInKeyring) {
     result.redirectAction = () => {
       const navigation = getReadyNavigationInstance();
-      navigation && resetNavigationTo(navigation, 'GetStarted2024');
+      navigation &&
+        resetNavigationTo(navigation, RootNames.GetStartedScreen2024);
     };
   }
 
   return result;
 };
-
-const refresh24hAssets = async ({
-  force = false,
-  balanceAccounts,
-}: {
-  force?: boolean;
-  balanceAccounts?: balanceAccountType[];
-} = {}) => {
-  const top10Addresses = await getTop10MyAddresses();
-  fetch24BalanceForScene('Home', {
-    addresses: top10Addresses,
-    force,
-    ...(balanceAccounts?.length && {
-      totals: apisAccountsBalance.computeTotalBalance(
-        top10Addresses,
-        balanceAccounts || [],
-      ),
-    }),
-  });
-};
-
-runIIFEFunc(() => {
-  keyringService.on('unlock', async () => {
-    const balanceAccounts = await fetchTotalBalance('from_cache');
-    await refresh24hAssets({ balanceAccounts });
-  });
-});
 
 function MultiAddressHome(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
@@ -649,7 +591,7 @@ function MultiAddressHome(): JSX.Element {
   const appThemeConfig = useAppThemeConfig();
 
   const combinedData = useScene24hBalanceLightWeightData('Home');
-  useRendererDetect({ name: 'MultiAddressHome::multi24HBalanceReturn' });
+  useRendererDetect({ name: 'MultiAddressHome' });
 
   useSetTotalBalanceTextForFeedback(combinedData.netWorth);
   useSetTotalBalanceTextForRateModal(combinedData.netWorth);

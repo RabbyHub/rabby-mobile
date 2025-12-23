@@ -7,24 +7,21 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BlurView, BlurViewProps } from '@react-native-community/blur';
 import { useMemoizedFn } from 'ahooks';
+import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import { BrowserTabCard } from '../BrowserScreen/components/BrowserManage/BrowserTabList/BrowserTabCard';
 import { activeTabAtom } from '../BrowserScreen/components/BrowserManage';
-import { useAtom } from 'jotai';
+import { BrowserTabCard } from '../BrowserScreen/components/BrowserManage/BrowserTabList/BrowserTabCard';
+import { BrowserFavoriteInHome } from './BrowserFavoriteInHome';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 
 const isAndroid = Platform.OS === 'android';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   fabContainer: {
-    // position: 'absolute',
-    // bottom: 30,
-    // left: 8,
-    // right: 8,
-    // zIndex: 10,
-    // width: 'auto',
+    paddingHorizontal: 12,
+    paddingBottom: 20,
     ...Platform.select({
       ios: {
         shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
@@ -99,24 +96,23 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   container: {
-    paddingHorizontal: 15,
     marginTop: 12,
     flex: 1,
   },
-  empty: {
-    flex: 1,
-  },
-  tabContainerSmall: {
-    width: '50%',
-  },
-  tabContainer: {
-    marginTop: 18,
-    marginBottom: 30,
+  containerInner: {
+    display: 'flex',
+    flexDirection: 'column',
     borderRadius: 20,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
+  },
 
+  tabContainerSmall: {
+    width: '50%',
+  },
+  tabContainer: {
+    marginBottom: 18,
     ...Platform.select({
       ios: {
         shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
@@ -143,6 +139,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
   },
   tabItem: {},
+
+  browserTabPlaceholder: {
+    height: 20,
+  },
 }));
 
 const BlurViewOnlyIOSWrapper = ({
@@ -178,9 +178,7 @@ const BlurViewOnlyIOSWrapper = ({
   );
 };
 
-export const BrowserSearchEntry: React.FC<{ alwaysShowSearch?: boolean }> = ({
-  alwaysShowSearch,
-}) => {
+export const BrowserSearchEntry: React.FC = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const {
     browserState,
@@ -190,6 +188,8 @@ export const BrowserSearchEntry: React.FC<{ alwaysShowSearch?: boolean }> = ({
     forceShowBrowserManage,
     closeTab,
     switchToTab,
+    openTab,
+    setBrowserState,
   } = useBrowser();
 
   const { homeDisplayedTabs: tabs } = useHomeDisplayedTabs();
@@ -222,107 +222,85 @@ export const BrowserSearchEntry: React.FC<{ alwaysShowSearch?: boolean }> = ({
   });
 
   return (
-    <View style={styles.container}>
-      {tabs.length ? (
-        <View
-          style={[
-            styles.tabContainer,
-            tabs.length === 1 ? styles.tabContainerSmall : null,
-          ]}>
-          <BlurViewOnlyIOSWrapper
-            isLight={isLight}
-            blurAmount={14.5}
-            borderRadius={20}>
-            <View style={styles.tabContainerInner}>
-              {tabs.map(tab => {
-                return (
-                  <View
-                    style={[
-                      styles.tabItemContainer,
-                      tabs.length === 1 ? styles.tabItemContainerSmall : null,
-                    ]}
-                    key={tab.id}>
-                    <BrowserTabCard
-                      containerStyle={styles.tabItem}
-                      tab={tab}
-                      onPress={() => {
-                        switchToTab(tab.id);
-                        const origin = safeGetOrigin(tab.url || tab.initialUrl);
-                        if (origin) {
-                          matomoRequestEvent({
-                            category: 'Websites Usage',
-                            action: 'Website_Visit_Home Tab',
-                            label: origin,
-                          });
-                        }
-                      }}
-                      onPressClose={() => {
-                        closeTab(tab.id);
-                      }}
-                    />
-                  </View>
-                );
-              })}
-            </View>
-          </BlurViewOnlyIOSWrapper>
-        </View>
-      ) : (
-        <View style={styles.empty} />
-      )}
-      {alwaysShowSearch && browserState.isShowBrowser && (
-        <TouchableOpacity style={styles.fabContainer} onPress={handlePress}>
-          <BlurViewOnlyIOSWrapper
-            isLight={isLight}
-            blurAmount={14.5}
-            borderRadius={20}>
-            <LinearGradient
-              colors={
-                isLight
-                  ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
-                  : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.8)']
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.gradient}>
-              <View style={styles.innerCircle}>
-                <RcNextSearchCC
-                  width={20}
-                  height={20}
-                  style={styles.icon}
-                  color={colors2024['neutral-secondary']}
-                />
-                <Text style={styles.text}>
-                  {t('page.browser.BrowserSearchEntry.openWebsites')}
-                </Text>
-                <TouchableOpacity
-                  style={[styles.navControlItem]}
-                  onPress={handleTabPress}>
-                  {displayedTabs?.length ? (
-                    <View style={styles.tabIconContainer}>
-                      <RcIconTabsCC
-                        color={colors2024['neutral-body']}
-                        width={24}
-                        height={24}
+    <View style={[styles.container]}>
+      <BlurViewOnlyIOSWrapper
+        isLight={isLight}
+        blurAmount={14.5}
+        borderRadius={20}>
+        <View style={styles.containerInner}>
+          {tabs.length ? (
+            <View
+              style={[
+                styles.tabContainer,
+                tabs.length === 1 ? styles.tabContainerSmall : null,
+              ]}>
+              <View style={styles.tabContainerInner}>
+                {tabs.map(tab => {
+                  return (
+                    <View
+                      style={[
+                        styles.tabItemContainer,
+                        tabs.length === 1 ? styles.tabItemContainerSmall : null,
+                      ]}
+                      key={tab.id}>
+                      <BrowserTabCard
+                        containerStyle={styles.tabItem}
+                        tab={tab}
+                        onPress={() => {
+                          switchToTab(tab.id);
+                          const origin = safeGetOrigin(
+                            tab.url || tab.initialUrl,
+                          );
+                          if (origin) {
+                            matomoRequestEvent({
+                              category: 'Websites Usage',
+                              action: 'Website_Visit_Home Tab',
+                              label: origin,
+                            });
+                          }
+                        }}
+                        onPressClose={() => {
+                          closeTab(tab.id);
+                        }}
                       />
-                      <View style={styles.tabCountContainer}>
-                        <Text style={styles.tabCount}>
-                          {displayedTabs?.length || 0}
-                        </Text>
-                      </View>
                     </View>
-                  ) : (
-                    <RcIconStarCC
-                      color={colors2024['neutral-secondary']}
-                      width={24}
-                      height={24}
-                    />
-                  )}
-                </TouchableOpacity>
+                  );
+                })}
               </View>
-            </LinearGradient>
-          </BlurViewOnlyIOSWrapper>
-        </TouchableOpacity>
-      )}
+            </View>
+          ) : (
+            <View style={styles.browserTabPlaceholder} />
+          )}
+          <BrowserFavoriteInHome
+            isEditing={browserState.isEditingFavorite}
+            setIsEditing={isEditing => {
+              setBrowserState({ isEditingFavorite: isEditing });
+            }}
+            onPress={dapp => {
+              openTab(dapp.url || dapp.origin);
+            }}
+            onMorePress={() => {
+              setBrowserState({
+                isShowFavorite: true,
+              });
+            }}
+          />
+          <TouchableOpacity style={styles.fabContainer} onPress={handlePress}>
+            <View style={styles.innerCircle}>
+              <RcNextSearchCC
+                width={20}
+                height={20}
+                style={styles.icon}
+                color={colors2024['neutral-secondary']}
+              />
+              <Text style={styles.text}>
+                {t('page.browser.BrowserSearchEntry.openWebsites')}
+              </Text>
+              <View style={{ width: 20 }} />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </BlurViewOnlyIOSWrapper>
     </View>
   );
 };
