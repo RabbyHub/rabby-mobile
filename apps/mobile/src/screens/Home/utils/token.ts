@@ -30,7 +30,7 @@ export const queryTokensCache = makeSWRKeyAsyncFunc(
   ctx => [`${ctx.args[0]}-${ctx.args[1]}`],
 );
 
-const batchQueryTokens = makeSWRKeyAsyncFunc(
+export const batchQueryTokens = makeSWRKeyAsyncFunc(
   async (
     user_id: string,
     chainId?: string,

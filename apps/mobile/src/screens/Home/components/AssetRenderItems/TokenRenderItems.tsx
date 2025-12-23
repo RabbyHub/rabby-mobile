@@ -43,6 +43,8 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { StyleProp } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountOverview } from '../AccountOverview';
+import { formatAmount } from '@/utils/number';
+import { ITokenItem } from '@/store/tokens';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -279,6 +281,167 @@ export const TokenRow = memo(
         triggerProps={{ action: 'longPress' }}>
         {children}
       </ContextMenuView>
+    );
+  },
+);
+
+export const TokenRowV2 = memo(
+  ({
+    data,
+    style,
+    logoSize = 40,
+    chainLogoSize = 16,
+    logoStyle,
+    onTokenPress,
+    account,
+    scene = 'default',
+  }: {
+    data: ITokenItem;
+    style?: ViewStyle;
+    logoStyle?: ViewStyle;
+    logoSize?: number;
+    chainLogoSize?: number;
+    getMenuActions?: (token: ITokenItem) => MenuAction[];
+    hideFoldTag?: boolean;
+    disableMenu?: boolean;
+    onTokenPress?(token: ITokenItem): void;
+    account?: KeyringAccountWithAlias;
+    scene?: 'default' | 'portfolio'; // portfolio 适用于展示用户拥有的资产，比如资产页、用户持有 token 的选择器
+  }) => {
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const { t } = useTranslation();
+    const { currency } = useCurrency();
+    const showAccount = !!account;
+    const percentColor = useMemo(() => {
+      if (
+        !data?.price_24h_change ||
+        Math.abs(Number(data.price_24h_change)) < 0.00001
+      ) {
+        return colors2024['neutral-secondary'];
+      }
+      if (Number(data.price_24h_change) > 0) {
+        return colors2024['green-default'];
+      }
+      return colors2024['red-default'];
+    }, [colors2024, data.price_24h_change]);
+
+    const mediaStyle = useMemo(
+      () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
+      [logoStyle, styles.tokenRowLogo],
+    );
+
+    const onPressToken = useCallback(() => {
+      return onTokenPress?.(data);
+    }, [data, onTokenPress]);
+
+    const handleShowExcludeTips = useCallback(() => {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.DESCRIPTION,
+        title: t('page.tokenDetail.excludeBalanceTips'),
+        sections: [],
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          snapPoints: ['40%'],
+        },
+        nextButtonProps: {
+          title: (
+            <Text style={styles.modalNextButtonText}>
+              {t('page.tokenDetail.excludeBalanceTipsButton')}
+            </Text>
+          ),
+          titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+          onPress: () => {
+            removeGlobalBottomSheetModal2024(modalId);
+          },
+        },
+      });
+    }, [styles.modalNextButtonText, t]);
+
+    const amountContent = (
+      <Text
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        style={styles.amountStr}>{`${formatAmount(data.amount)} ${
+        data.symbol
+      }`}</Text>
+    );
+
+    return (
+      <TouchableOpacity
+        style={StyleSheet.flatten([styles.tokenRowWrap, style])}
+        delayLongPress={200}
+        onPress={onPressToken}>
+        <View style={styles.tokenRowTokenWrap}>
+          <View>
+            <AssetAvatar
+              logo={data?.logo_url}
+              chain={data?.chain}
+              style={mediaStyle}
+              size={logoSize}
+              chainSize={chainLogoSize}
+            />
+          </View>
+          <View style={styles.tokenRowTokenInner}>
+            <View style={styles.tokenHeader}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.tokenSymbol}>
+                {data.symbol}
+              </Text>
+            </View>
+
+            {showAccount ? (
+              <AccountOverview account={account} />
+            ) : (
+              amountContent
+            )}
+          </View>
+        </View>
+
+        <View style={styles.tokenRowUsdValueWrap}>
+          <Text
+            style={[
+              styles.tokenRowAmount,
+              scene === 'portfolio' && !data.is_core ? styles.exclude : null,
+            ]}>
+            {formatNetworth(
+              new BigNumber(data.usd_value || 0)
+                .times(currency.usd_rate)
+                .toNumber(),
+              false,
+              currency.symbol,
+            )}
+          </Text>
+          {showAccount ? (
+            <Text
+              style={StyleSheet.compose(styles.percent, {
+                ...(!data.is_core && (data.usd_value || 0) > 0
+                  ? styles.exclude
+                  : {}),
+                color: percentColor,
+              })}>
+              {formatPercentage(Number(data.price_24h_change) || 0)}
+            </Text>
+          ) : !data.is_core && (data.usd_value || 0) > 0 ? (
+            <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
+              <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
+            </TouchableOpacity>
+          ) : scene === 'portfolio' ? (
+            <Text
+              style={StyleSheet.compose(styles.percent, {
+                ...(!data.is_core && (data.usd_value || 0) > 0
+                  ? styles.exclude
+                  : {}),
+                color: percentColor,
+              })}>
+              {formatPercentage(Number(data.price_24h_change) || 0)}
+            </Text>
+          ) : null}
+        </View>
+      </TouchableOpacity>
     );
   },
 );

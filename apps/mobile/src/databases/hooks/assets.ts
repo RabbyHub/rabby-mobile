@@ -79,7 +79,6 @@ export const syncTokens = async (
   if (!address) {
     return [];
   }
-  console.log('syncTokens', address);
   const tokenRes = await batchQueryTokensWithLocalCache(
     {
       user_id: address,

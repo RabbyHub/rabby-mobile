@@ -136,6 +136,7 @@ import {
 } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
+import useTokenList from '@/store/tokens';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -154,6 +155,7 @@ const OverViewComponent = React.memo(
   React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
     const navigation = useRabbyAppNavigation();
     const { t } = useTranslation();
+    const tokenListStore = useTokenList();
     const { styles, colors2024 } = useTheme2024({
       getStyle,
     });
@@ -324,6 +326,11 @@ const OverViewComponent = React.memo(
         });
       }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
     );
+
+    useEffect(() => {
+      tokenListStore.initStore();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const onRefresh = useCallback(() => {
       if (!couldDoRefresh()) return;

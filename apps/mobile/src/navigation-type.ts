@@ -38,6 +38,7 @@ import {
 import { HistoryItemCateType } from './screens/Transaction/components/type';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { TabType } from './screens/CopyTrading/component/CopyTradingTokenDetail';
+import { ITokenItem } from './store/tokens';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -81,6 +82,7 @@ export type RootStackParamsList = {
   [RootNames.TokenDetail]: {
     token:
       | AbstractPortfolioToken
+      | ITokenItem
       | import('@/screens/Home/hooks/store').CombineTokensItem;
     fromPortfolio?: boolean;
     needUseCacheToken?: boolean;

@@ -37,7 +37,7 @@ export const useMulti24hBalanceStore = zCreate<Multi24hBalanceState>(set => ({
         state.multi24hBalance,
         updater,
       );
-
+      console.log('24hbalance', newVal);
       if (!changed) {
         return state;
       }
