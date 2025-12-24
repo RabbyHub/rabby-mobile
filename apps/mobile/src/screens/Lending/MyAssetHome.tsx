@@ -22,7 +22,13 @@ import BorrowItem from './components/ItemRender/BorrowItem';
 import SupplyItem from './components/ItemRender/SupplyItem';
 import { displayGhoForMintableMarket } from './utils/supply';
 import SummaryItem from './components/ItemRender/SummaryItem';
-import { useLendingData, useLendingSummary, useSelectedMarket } from './hooks';
+import {
+  useFetchLendingData,
+  useLendingIsLoading,
+  useLendingRemoteData,
+  useLendingSummary,
+  useSelectedMarket,
+} from './hooks';
 import { ItemListLoading } from './components/ItemRender/ItemLoading';
 import EmptyItem from './components/ItemRender/EmptyItem';
 import { DisableBorrowTip } from './components/DisableBorrowTip';
@@ -43,9 +49,10 @@ const MyAssetHome: React.FC = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { chainEnum, marketKey } = useSelectedMarket();
-  const { displayPoolReserves, loading, iUserSummary, apyInfo, reserves } =
-    useLendingSummary();
-  const { fetchData } = useLendingData();
+  const { reserves } = useLendingRemoteData();
+  const { loading } = useLendingIsLoading();
+  const { fetchData } = useFetchLendingData();
+  const { displayPoolReserves, iUserSummary, apyInfo } = useLendingSummary();
 
   const myAssetList: MyAssetItem[] = useMemo(() => {
     const list: MyAssetItem[] = [];

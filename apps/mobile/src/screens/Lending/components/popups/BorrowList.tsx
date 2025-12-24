@@ -30,7 +30,12 @@ import TokenIcon from '../TokenIcon';
 import { PoolListLoading } from '../Loading';
 import { DisplayPoolReserveInfo } from '../../type';
 import { assetCanBeBorrowedByUser } from '../../utils/borrow';
-import { useLendingData, useLendingSummary } from '../../hooks';
+import {
+  useFetchLendingData,
+  useLendingIsLoading,
+  useLendingRemoteData,
+  useLendingSummary,
+} from '../../hooks';
 import { formatApy } from '../../utils/format';
 import { isUnFoldToken } from '../../config/unfold';
 import { useSelectedMarket } from '../../hooks';
@@ -43,15 +48,12 @@ type BorrowListItem =
 
 const LendingBorrowList: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const {
-    displayPoolReserves,
-    reserves,
-    loading,
-    iUserSummary,
-    getTargetReserve,
-  } = useLendingSummary();
+  const { reserves } = useLendingRemoteData();
+  const { loading } = useLendingIsLoading();
+  const { displayPoolReserves, iUserSummary, getTargetReserve } =
+    useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useLendingData();
+  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
 

@@ -26,7 +26,11 @@ import { useTranslation } from 'react-i18next';
 import { formatNetworth } from '@/utils/math';
 import IsolatedTag from './IsolatedTag';
 import { formatApy } from '../utils/format';
-import { useLendingSummary, useSelectedMarket } from '../hooks';
+import {
+  useLendingIsLoading,
+  useLendingSummary,
+  useSelectedMarket,
+} from '../hooks';
 import { CollateralSwitch } from './CollateralSwitch';
 import { getSupplyCapData } from '../utils/supply';
 import { useToggleCollateralModal } from '../modals/ToggleCollateralModal';
@@ -44,10 +48,10 @@ export const SupplyDetailPopup: React.FC<OpenDetailProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+  const { loading } = useLendingIsLoading();
   const {
     displayPoolReserves,
     iUserSummary: userSummary,
-    loading,
     wrapperPoolReserve,
   } = useLendingSummary();
   const { t } = useTranslation();

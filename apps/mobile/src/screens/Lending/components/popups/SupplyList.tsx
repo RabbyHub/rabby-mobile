@@ -16,7 +16,9 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  useLendingData,
+  useFetchLendingData,
+  useLendingIsLoading,
+  useLendingRemoteData,
   useLendingSummary,
   useSelectedMarket,
 } from '../../hooks';
@@ -45,15 +47,13 @@ type SupplyListItem =
 
 const LendingSupplyList: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const {
-    displayPoolReserves,
-    reserves,
-    loading,
-    iUserSummary,
-    getTargetReserve,
-  } = useLendingSummary();
+
+  const { reserves } = useLendingRemoteData();
+  const { loading } = useLendingIsLoading();
+  const { displayPoolReserves, iUserSummary, getTargetReserve } =
+    useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useLendingData();
+  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
 
