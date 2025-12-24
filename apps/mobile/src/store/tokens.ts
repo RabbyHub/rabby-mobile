@@ -129,7 +129,7 @@ const isDataExpiredBatch = async (addresses: string[]) => {
   return res.some(item => !!item);
 };
 
-const useTokenList = zCreate<TokenListState>((set, get) => {
+const tokenListStore = zCreate<TokenListState>((set, get) => {
   let lastTokenListMap: TokenListState['tokenListMap'] | null = null;
   let lastChainServerId: string | undefined;
   let lastMultiAssetsResult: {
@@ -364,6 +364,7 @@ const useTokenList = zCreate<TokenListState>((set, get) => {
       set(() => ({ isLoading: false }));
       set(() => ({ tokenListMap: realTimeTokenMap }));
     },
+
     async getTokenList(address: string, force = false) {
       const normalizedAddress = address.toLowerCase();
       if (!force) {
@@ -454,4 +455,4 @@ const useTokenList = zCreate<TokenListState>((set, get) => {
   };
 });
 
-export default useTokenList;
+export default tokenListStore;

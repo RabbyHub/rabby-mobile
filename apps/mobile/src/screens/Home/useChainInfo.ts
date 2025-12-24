@@ -12,6 +12,7 @@ import {
   assetsMapStore,
   computeAssetsApis,
 } from './hooks/store';
+import tokenStore from '@/store/tokens';
 import { debounce, isEqual } from 'lodash';
 import { getTop10MyAddresses } from '@/core/apis/account';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
@@ -56,13 +57,17 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
 }
 
 const debounceComputeChainList = debounce<
-  Parameters<typeof assetsMapStore.subscribe>[0]
+  Parameters<typeof assetsMapStore.subscribe | typeof tokenStore.subscribe>[0]
 >(async () => {
-  const top10Addresses = await getTop10MyAddresses();
+  const top10Addresses = (await getTop10MyAddresses()).map(item =>
+    item.toLowerCase(),
+  );
 
   setFinalInfo(computeChainsListV2(top10Addresses));
 }, 100);
+
 assetsMapStore.subscribe(debounceComputeChainList);
+tokenStore.subscribe(debounceComputeChainList);
 
 export function getComputedChainInfo() {
   const baseInfo = chainStaticsStore.getState();
@@ -181,7 +186,7 @@ export const apisAddrChainStatics = {
   },
   updateToken: debounce((addr: string, tokens: AbstractPortfolioToken[]) => {
     addr = addr.toLowerCase();
-
+    console.log('updateToken', addr, tokens);
     const prevFinalInfo =
       addrChainStaticsStore.getState()[addr] ||
       apisAddrChainStatics.makeFinalInfo();
@@ -225,7 +230,7 @@ export const apisAddrChainStatics = {
   },
   updatePortfolio: debounce((addr: string, _portfolios: DisplayedProject[]) => {
     addr = addr.toLowerCase();
-
+    console.log('updatePortfolio', addr, _portfolios);
     const prevFinalInfo =
       addrChainStaticsStore.getState()[addr] ||
       apisAddrChainStatics.makeFinalInfo();
@@ -261,7 +266,7 @@ export const apisAddrChainStatics = {
   },
   updateNft: debounce((addr: string, nftList: DisplayNftItem[]) => {
     addr = addr.toLowerCase();
-
+    console.log('updateNft', addr, nftList);
     const prevFinalInfo =
       addrChainStaticsStore.getState()[addr] ||
       apisAddrChainStatics.makeFinalInfo();
@@ -349,28 +354,32 @@ function computeChainsListV2(
     // retFinalInfo?: FinalInfo;
   } = {},
 ) {
+  console.log('caredAddresses', caredAddresses, combinedTokens);
   const finalInfo = /* retFinalInfo ||  */ apisAddrChainStatics.makeFinalInfo();
 
   const chainUnit: ChainAssetsUnit = {};
 
   const assetsMap = assetsMapStore.getState();
-
+  const tokenListMap = tokenStore.getState().tokenListMap;
   const tokens =
     combinedTokens ||
-    computeAssetsApis.memoTokens(caredAddresses, assetsMap.tokensMap);
+    Object.keys(tokenListMap)
+      .filter(key => caredAddresses.includes(key))
+      .map(key => tokenListMap[key] || [])
+      .flat()
+      .filter(token => token.is_core);
   tokens?.forEach(token => {
     const chainId = token.chain;
     if (!finalInfo.token[chainId]) {
       finalInfo.token[chainId] = new BigNumber(0);
     }
-    if (token._isExcludeBalance) {
-      return;
-    }
     finalInfo.token[chainId] = finalInfo.token[chainId].plus(
-      token._usdValue || 0,
+      token._usdValue || token.usd_value || 0,
     );
     chainUnit[chainId] = chainUnit[chainId] || new BigNumber(0);
-    chainUnit[chainId] = chainUnit[chainId].plus(token._usdValue || 0);
+    chainUnit[chainId] = chainUnit[chainId].plus(
+      token._usdValue || token.usd_value || 0,
+    );
   });
 
   const portfolios =

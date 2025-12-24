@@ -85,7 +85,10 @@ export const TokenList = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [top10Addresses]);
 
-  const hasNoAssets = tokens.length === 0 && !isLoading && isFocused;
+  const hasNoAssets =
+    tokens.length + foldTokens.length + scamTokens.length === 0 &&
+    !isLoading &&
+    isFocused;
 
   const scamTokenDisplaySummary = useMemo(() => {
     return {
@@ -210,6 +213,9 @@ export const TokenList = () => {
               />
             </View>
           )}
+          style={{
+            flexGrow: 0,
+          }}
           ListHeaderComponent={ListHeaderComponent}
           ItemSeparatorComponent={ListRenderSeparator}
           // ListFooterComponent={ListRenderFooter}
@@ -222,7 +228,7 @@ export const TokenList = () => {
             <MemoizedScamTokenHeader
               total={scamTokenDisplaySummary.total}
               logoUrls={scamTokenDisplaySummary.logos}
-              style={styles.renderItemWrapper}
+              style={{ ...styles.renderItemWrapper, flexGrow: 0 }}
               onPress={handleOpenScamToken}
             />
           )}
