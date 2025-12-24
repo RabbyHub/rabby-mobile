@@ -205,8 +205,8 @@ const ManageEmodeOverView: React.FC<{
     return showLTVChange
       ? `${formatPercent(
           Number(iUserSummary?.currentLoanToValue || '0'),
-        )} → ${formatPercent(Number(targetMode.ltv) / 10000)}`
-      : formatPercent(Number(targetMode.ltv) / 10000);
+        )} → ${formatPercent(Number(targetMode?.ltv) / 10000)}`
+      : formatPercent(Number(targetMode?.ltv) / 10000);
   }, [
     disableEmode,
     selectedCategoryId,

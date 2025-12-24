@@ -2664,16 +2664,21 @@
         "apy",
         "marketSlot",
         "market",
-        "maxLtv"
+        "maxLtv",
+        "tvl"
       ],
       "isolated": "isolated",
       "apy": "APY",
+      "tvl": "TVL",
       "maxLtv": "Max LTV",
       "gotIt": "Got it",
       "market": "Market",
       "marketSlot": "{{market}} Market",
       "submitted": "submitted",
       "netWorth": "Net worth",
+      "totalBorrowed": "Total borrowed",
+      "totalSupplied": "Total supplied",
+      "netApy": "Net APY",
       "supplied": "Supplied",
       "borrowed": "Borrowed",
       "estDailyEarning": "Est.Daily Earning",
@@ -2698,6 +2703,7 @@
           "token_balance": "Token/Balance",
           "token_tvl": "Token/TVL",
           "myBorrows": "My borrows",
+          "totalBorrowed": "Total Borrowed",
           "mySupplies": "My supplies"
         },
         "item": {
@@ -2708,7 +2714,8 @@
       "summary": {
         "empty": {
           "title": "Earn Interest, Borrow Anytime",
-          "description": "Powered by AAVE. Secure and zero fees."
+          "description": "Powered by AAVE. Secure and zero fees.",
+          "endDesc": "You don’t have any deposits yet. Deposit the assets below to earn interest."
         },
         "lq": "If goes below 1, the liquidation might be triggered.",
         "more": "More",
@@ -2721,6 +2728,7 @@
       },
       "supplyDetail": {
         "actions": "Supply",
+        "supplied": "Supplied",
         "approveAndSupply": "Approve and Supply",
         "availableToBorrow": "Available to borrow",
         "supplyAPY": "Supply APY",
@@ -2754,6 +2762,7 @@
       "borrowDetail": {
         "actions": "Borrow",
         "swapDebt": "Swap",
+        "borrowed": "Borrowed",
         "approveAndBorrow": "Approve and Borrow",
         "almostReachedWarning": "Protocol borrow cap is at 100% for this asset. Further borrowing unavailable.",
         "almostReachedError": "Maximum amount available to borrow is limited because protocol borrow cap is nearly reached."
@@ -2771,7 +2780,8 @@
         "borrowCap": "Borrow Cap",
         "myBorrow": "My Borrow",
         "availableToBorrow": "Available to borrow",
-        "liquidityPenalty": "Liquidation Penalty"
+        "liquidityPenalty": "Liquidation Penalty",
+        "reachCapTip": "This asset has reached the borrow cap. "
       },
       "supplyOverview": {
         "title": "Supply Details",
@@ -2780,6 +2790,7 @@
         "walletBalance": "Wallet Balance",
         "availableToSupply": "Available to Supply",
         "useAsCollateral": "Use as collateral",
+        "collateral": "Collateral",
         "reachCap": "This asset has reached its supply cap. Nothing is available to be supplied from this market.",
         "almostCap": "This asset has almost reached its borrow cap. There is only {{available}} available to be borrowed from this market."
       },
@@ -2878,6 +2889,13 @@
         "priceImpactTips": "High price impact ({{lostValue}}). This route may return more due to low liquidity or small order size.",
         "lpRiskWarning": "Low health factor after swap. Your position will carry a higher risk of liquidation.",
         "lpDangerWarning": "Your health factor after this swap will be critically low and may result in liquidation. Please choose a different asset or reduce the swap amount to stay safe."
+      },
+      "hfTips": {
+        "desc": "If it drops below 1.0, your collateral may be liquidated.",
+        "more": "More"
+      },
+      "disableBorrowTip": {
+        "desc": "No supply: To borrow you need to supply assets as collateral."
       }
     }
   },

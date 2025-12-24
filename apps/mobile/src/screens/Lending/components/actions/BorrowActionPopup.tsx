@@ -52,6 +52,7 @@ import {
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { CHAINS_ENUM } from '@debank/common';
+import BorrowToCapTip from '../Tips/BorrowToCapTip';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -297,6 +298,13 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     }
   }, [canShowDirectSubmit, currentAccount, amount, txs, prefetchMiniSigner]);
 
+  const showBorrowToCapTip = useMemo(() => {
+    if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
+      return false;
+    }
+    return BigNumber(reserve.reserve.totalDebt).gte(reserve.reserve.borrowCap);
+  }, [reserve?.reserve?.totalDebt, reserve?.reserve?.borrowCap]);
+
   const errorMessage = useMemo(() => {
     if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
       return undefined;
@@ -381,6 +389,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             />
           </View>
         )}
+        {showBorrowToCapTip && <BorrowToCapTip />}
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>

@@ -58,6 +58,8 @@ import {
 } from '@/perfs/workerReq';
 import { StoreApi, UseBoundStore } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
+import { isValidAddress } from '@ethereumjs/util';
+import { nativeToWrapper } from './config/nativeToWrapper';
 
 const marketAtom = atomByMMKV('@lendingMarket', CustomMarket.proto_mainnet_v3, {
   storage: MMKVStorageStrategy.compatString,
@@ -816,6 +818,24 @@ const useLendingSummary = () => {
     apyInfo,
   } = computedInfoState();
 
+  const getTargetReserve = useCallback(
+    (underlyingAsset: string) => {
+      const validAddress = isValidAddress(underlyingAsset);
+      const nativeWrapperReserveAddress = wrapperPoolReserve?.underlyingAsset;
+      const defaultAddress = nativeToWrapper[underlyingAsset];
+      const realTimeReserve = finalDisplayPoolReserves?.find(item =>
+        isSameAddress(
+          item.underlyingAsset,
+          validAddress
+            ? underlyingAsset
+            : nativeWrapperReserveAddress || defaultAddress,
+        ),
+      );
+      return realTimeReserve;
+    },
+    [finalDisplayPoolReserves, wrapperPoolReserve?.underlyingAsset],
+  );
+
   return {
     // reserves,
     // userReserves,
@@ -825,7 +845,7 @@ const useLendingSummary = () => {
     formattedPoolReservesAndIncentives,
     wrapperPoolReserve,
     apyInfo,
-    // loading,
+    getTargetReserve,
   };
 };
 
