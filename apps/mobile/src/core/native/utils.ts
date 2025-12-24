@@ -40,6 +40,16 @@ interface NativeModulesStatic {
     //  */
     // iosExcludeDirectoryFromBackup?(directoryPath: string): Promise<boolean>;
   };
+  RNThread: NativeModule & {
+    startThread(
+      jsFilePath: string,
+      options?: {
+        usePackedResource?: true | string;
+      },
+    ): Promise<number>;
+    stopThread(threadId: number): void;
+    postThreadMessage(threadId: number, message: string): void;
+  };
 }
 
 export const IS_ANDROID = Platform.OS === 'android';
