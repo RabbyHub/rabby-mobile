@@ -154,6 +154,7 @@ reset_builtin_assets() {
   echo "cleanup and copy fonts to $ios_target..."
   rm -rf $ios_target && mkdir -p $ios_target;
   cp $project_dir/assets/fonts/* $ios_target
+  yarn buildworker:prod:ios;
 
   # Android
   mkdir -p $project_dir/android/app/src/main/assets/fonts && \
@@ -177,6 +178,8 @@ reset_builtin_assets() {
   else
     echo "haven't build $project_dir/assets/android/builtin-pages/, skipped copy";
   fi
+
+  yarn buildworker:prod:android;
 
   # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }

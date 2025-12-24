@@ -11,16 +11,17 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import PoolContainer from './PoolContainer';
-import { useLendingData, useSelectedMarket } from './hooks';
+import { useFetchLendingData, useSelectedMarket } from './hooks';
 import { LendingHeader } from './components/Header';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useInitOpenDetail } from './hooks/useInitOpenDetail';
+import { DelayMount } from '@/components/Perf/DelayMount';
 const isAndroid = Platform.OS === 'android';
 
 function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { fetchData } = useLendingData();
+  const { fetchData } = useFetchLendingData();
   const { marketKey } = useSelectedMarket();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -28,17 +29,8 @@ function DashBoardScreen(): JSX.Element {
   useInitOpenDetail();
 
   useEffect(() => {
-    if (!marketKey) {
-      return;
-    }
-    const timeout = setTimeout(() => {
-      fetchData();
-    }, 500);
-    return () => {
-      clearTimeout(timeout);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [marketKey, currentAccount?.address]);
+    fetchData();
+  }, [fetchData]);
 
   const Header = React.useCallback(
     () => (

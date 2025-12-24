@@ -19,7 +19,7 @@ import {
 import TokenIcon from '../TokenIcon';
 import { isHFEmpty } from '../../utils';
 import { useMode } from '../../hooks/useMode';
-import { useLendingSummary } from '../../hooks';
+import { useLendingISummary, useLendingSummary } from '../../hooks';
 import HealthFactorText from '../HealthFactorText';
 import { CategorySelector } from '../EmodeCategory/CategorySelector';
 
@@ -128,7 +128,7 @@ const ManageEmodeOverView: React.FC<{
   const { t } = useTranslation();
   const { eModes } = useMode();
 
-  const { iUserSummary } = useLendingSummary();
+  const { iUserSummary } = useLendingISummary();
 
   const handleMaxLTVDescription = () => {
     const modalId = createGlobalBottomSheetModal2024({

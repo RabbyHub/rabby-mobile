@@ -31,7 +31,7 @@ export type ButtonProps = Omit<
         | React.ReactElement<{}>;
       titleStyle?: StyleProp<TextStyle>;
       buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
-      type?: 'primary' | 'ghost' | 'success' | 'danger';
+      type?: 'primary' | 'ghost' | 'success' | 'danger' | 'warning';
       loading?: boolean;
       loadingStyle?: StyleProp<ViewStyle>;
       containerStyle?: StyleProp<ViewStyle>;
@@ -91,6 +91,10 @@ export const Button = ({
       },
       danger: {
         bg: colors2024['red-default'],
+        currentColor: colors2024['neutral-InvertHighlight'],
+      },
+      warning: {
+        bg: colors2024['orange-default'],
         currentColor: colors2024['neutral-InvertHighlight'],
       },
     };

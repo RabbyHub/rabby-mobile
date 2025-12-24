@@ -11,7 +11,11 @@ import {
 import { CompositeScreenProps, useRoute } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect } from 'react';
-import { useLendingData } from '../hooks';
+import {
+  apisLending,
+  useFetchLendingData,
+  useLendingRemoteData,
+} from '../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -24,7 +28,7 @@ export const useInitOpenDetail = () => {
   const route = useRoute<SwapRouteProps['route']>();
 
   const { tokenAddress, direction } = route.params || {};
-  const { setLoading, reserves } = useLendingData();
+  const { reserves } = useLendingRemoteData();
 
   const openSupplyDetail = useCallback(
     (address: string) => {
@@ -32,7 +36,7 @@ export const useInitOpenDetail = () => {
         isSameAddress(item.underlyingAsset, address),
       );
       if (!reserve) {
-        setLoading(true);
+        apisLending.setLoading(true);
       }
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.SUPPLY_DETAIL,
@@ -52,7 +56,7 @@ export const useInitOpenDetail = () => {
         },
       });
     },
-    [colors2024, isLight, reserves?.reservesData, setLoading],
+    [colors2024, isLight, reserves?.reservesData],
   );
 
   const openBorrowDetail = useCallback(
@@ -61,7 +65,7 @@ export const useInitOpenDetail = () => {
         isSameAddress(item.underlyingAsset, address),
       );
       if (!reserve) {
-        setLoading(true);
+        apisLending.setLoading(true);
       }
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.BORROW_DETAIL,
@@ -81,7 +85,7 @@ export const useInitOpenDetail = () => {
         },
       });
     },
-    [colors2024, isLight, reserves?.reservesData, setLoading],
+    [colors2024, isLight, reserves?.reservesData],
   );
 
   useEffect(() => {

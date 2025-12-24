@@ -78,6 +78,23 @@ export function usePreFetchBeforeEnterScene() {
   };
 }
 
+const toggleUseAllAccountsOnScene = (
+  scene: AccountSwitcherScene,
+  useAll: boolean,
+) => {
+  zSetSceneAccountInfo(prev => {
+    const nextVal = ScenesSupportAllAccounts.includes(scene) ? useAll : false;
+
+    return {
+      ...prev,
+      [scene]: {
+        ...prev[scene],
+        useAllAccounts: nextVal,
+      },
+    };
+  });
+};
+
 export function useSwitchSceneCurrentAccount() {
   const sceneAccountInfo = sceneAccountInfoStore(s => s);
   /**
@@ -197,25 +214,6 @@ export function useSwitchSceneCurrentAccount() {
       }
     },
     [sceneAccountInfo],
-  );
-
-  const toggleUseAllAccountsOnScene = useCallback(
-    (scene: AccountSwitcherScene, useAll: boolean) => {
-      zSetSceneAccountInfo(prev => {
-        const nextVal = ScenesSupportAllAccounts.includes(scene)
-          ? useAll
-          : false;
-
-        return {
-          ...prev,
-          [scene]: {
-            ...prev[scene],
-            useAllAccounts: nextVal,
-          },
-        };
-      });
-    },
-    [],
   );
 
   return {
@@ -435,6 +433,7 @@ function getSceneAccountInfo(options: { forScene: AccountSwitcherScene }) {
 
 export const storeApiAccountsSwitcher = {
   getSceneAccountInfo,
+  toggleUseAllAccountsOnScene,
 };
 
 function getDefaultSceneAccountInfo() {

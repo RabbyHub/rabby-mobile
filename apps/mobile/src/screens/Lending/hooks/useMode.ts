@@ -1,18 +1,28 @@
 // emode 和 isolate 属于模式管理,并且互斥，同处这个hook管理
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
-  iUserSummaryAtom,
-  formattedPoolReservesAndIncentivesAtom,
+  // iUserSummaryAtom,
+  useLendingISummary,
+  useFormattedPoolReservesAndIncentivesAtom,
 } from '../hooks';
 import { useAtomValue } from 'jotai';
 import { formatEmodes, isEmodeEnabled } from '../utils/emode';
+import { selectAtom } from 'jotai/utils';
 
 export const useMode = () => {
-  const iUserSummary = useAtomValue(iUserSummaryAtom);
-  const formattedPoolReserves = useAtomValue(
-    formattedPoolReservesAndIncentivesAtom,
-  );
+  console.debug('[perf] useMode:: called');
+  // const iUserSummary = useAtomValue(
+  //   selectAtom(
+  //     iUserSummaryAtom,
+  //     useCallback(s => ({
+  //       userEmodeCategoryId: s?.userEmodeCategoryId,
+  //       isInIsolationMode: s?.isInIsolationMode,
+  //     }), [])
+  //   )
+  // );
+  const { iUserSummary } = useLendingISummary();
+  const formattedPoolReserves = useFormattedPoolReservesAndIncentivesAtom();
 
   const emodeEnabled = useMemo(() => {
     return iUserSummary ? isEmodeEnabled(iUserSummary) : false;
