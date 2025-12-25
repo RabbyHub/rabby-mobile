@@ -333,7 +333,7 @@ export const MODAL_CONFIGS: Record<
     Component: BorrowActionPopup,
   },
   [MODAL_NAMES.REPAY_ACTION_DETAIL]: {
-    snapPoints: [666],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: RepayActionPopup,
   },
   [MODAL_NAMES.HF_DESCRIPTION]: {

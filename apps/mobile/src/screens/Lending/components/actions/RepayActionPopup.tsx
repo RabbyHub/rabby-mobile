@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -46,8 +46,10 @@ import {
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { CHAINS_ENUM } from '@debank/common';
 import { REPAY_AMOUNT_MULTIPLIER } from '../../utils/constant';
+import RepayWithCollateral from './RepayWithCollateralContent';
+import { getFromToken } from '../../utils/swap';
 
-export const RepayActionPopup: React.FC<PopupDetailProps> = ({
+export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
@@ -483,10 +485,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>
-        {t('page.Lending.repayDetail.actions')} {reserve.reserve.symbol}
-      </Text>
+    <>
       <View style={styles.amountHeader}>
         <Text style={styles.amountHeaderTitle}>
           {t('page.Lending.popup.amount')}
@@ -581,6 +580,85 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           />
         )}
       </View>
+    </>
+  );
+};
+
+export const RepayActionPopup: React.FC<PopupDetailProps> = ({
+  reserve,
+  userSummary,
+  onClose,
+}) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+
+  const [repaySource, setRepaySource] = useState<'wallet' | 'collateral'>(
+    'wallet',
+  );
+  const { chainInfo } = useSelectedMarket();
+  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const repayToken = useMemo(() => {
+    const r = formattedPoolReservesAndIncentives.find(item =>
+      isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+    );
+    if (!r || !chainInfo?.id) {
+      return undefined;
+    }
+    return getFromToken(r, chainInfo?.id, reserve?.variableBorrows || '0');
+  }, [
+    formattedPoolReservesAndIncentives,
+    chainInfo?.id,
+    reserve?.variableBorrows,
+    reserve?.underlyingAsset,
+  ]);
+
+  //TODO: 判断是否支持repay with collateral 才决定是否显示switch
+
+  return (
+    <AutoLockView as="BottomSheetView" style={styles.container}>
+      <Text style={styles.title}>
+        {t('page.Lending.repayDetail.actions')} {reserve.reserve.symbol}
+      </Text>
+      <Text style={styles.sourceSwitchTitle}>Repay with</Text>
+      <View style={styles.sourceSwitchContainer}>
+        <Pressable
+          style={[
+            styles.sourceSwitchTab,
+            repaySource === 'wallet' && styles.sourceSwitchTabActive,
+          ]}
+          onPress={() => setRepaySource('wallet')}>
+          <Text
+            style={[
+              styles.sourceSwitchTabText,
+              repaySource === 'wallet' && styles.sourceSwitchTabTextActive,
+            ]}>
+            Wallet balance
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.sourceSwitchTab,
+            repaySource === 'collateral' && styles.sourceSwitchTabActive,
+          ]}
+          onPress={() => setRepaySource('collateral')}>
+          <Text
+            style={[
+              styles.sourceSwitchTabText,
+              repaySource === 'collateral' && styles.sourceSwitchTabTextActive,
+            ]}>
+            Collateral
+          </Text>
+        </Pressable>
+      </View>
+      {repaySource === 'wallet' ? (
+        <RepayActionPopupContent
+          reserve={reserve}
+          userSummary={userSummary}
+          onClose={onClose}
+        />
+      ) : repayToken ? (
+        <RepayWithCollateral onClose={onClose} repayToken={repayToken} />
+      ) : null}
     </AutoLockView>
   );
 };
@@ -654,6 +732,49 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     marginTop: 0,
     fontFamily: 'SF Pro Rounded',
+  },
+  sourceSwitchTitle: {
+    marginTop: 16,
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    color: ctx.colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'left',
+    width: '100%',
+  },
+  sourceSwitchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    marginTop: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 0,
+    borderRadius: 10,
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  sourceSwitchTab: {
+    flex: 1,
+    height: 34,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  sourceSwitchTabActive: {
+    backgroundColor: ctx.colors2024['neutral-title-1'],
+  },
+  sourceSwitchTabText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    color: ctx.colors2024['neutral-secondary'],
+  },
+  sourceSwitchTabTextActive: {
+    fontWeight: '700',
+    color: ctx.colors2024['neutral-bg-0'],
   },
   buttonContainer: {
     height: 116,
