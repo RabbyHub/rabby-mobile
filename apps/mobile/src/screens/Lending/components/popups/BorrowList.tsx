@@ -39,6 +39,7 @@ import {
 import { formatApy } from '../../utils/format';
 import { isUnFoldToken } from '../../config/unfold';
 import { useSelectedMarket } from '../../hooks';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 const FOOT_HEIGHT = 86;
 
@@ -414,7 +415,7 @@ const LendingBorrowList: React.FC = () => {
           />
         )}
       </View>
-      <FlatList
+      <BottomSheetFlatList
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}

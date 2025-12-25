@@ -41,6 +41,7 @@ import { NextSearchBar } from '@/components2024/SearchBar';
 import { formatUsdValueKMB } from '@/screens/TokenDetail/util';
 import { isUnFoldToken } from '../../config/unfold';
 import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 const FOOT_HEIGHT = 86;
 
@@ -366,7 +367,7 @@ const LendingSupplyList: React.FC<
           />
         )}
       </View>
-      <FlatList
+      <BottomSheetFlatList
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}
