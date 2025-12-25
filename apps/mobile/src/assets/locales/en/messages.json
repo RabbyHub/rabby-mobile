@@ -1822,7 +1822,7 @@
         "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals",
         "googlePayFeeDesc": "Includes a Google Pay fee. No withdrawals",
         "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals",
-        "applePayFeeDesc1": "Includes an App Store fee. No withdrawals.",
+        "applePayFeeDesc1": "Includes an App Store fee. No withdrawals",
         "pay": "Pay"
       },
       "paymentAddressPopup": {
