@@ -192,11 +192,13 @@ const LendingBorrowList: React.FC = () => {
     if (loading || !iUserSummary?.totalLiquidityUSD) {
       return null;
     }
+
+    const showOrange = isInIsolationMode || !!iUserSummary?.userEmodeCategoryId;
     return (
       <View
         style={[
           styles.availableCard,
-          isInIsolationMode && styles.availableCardIsolated,
+          showOrange && styles.availableCardIsolated,
         ]}>
         <View style={styles.availableCardHeader}>
           {(iUserSummary?.availableBorrowsUSD &&
@@ -210,21 +212,16 @@ const LendingBorrowList: React.FC = () => {
                   ? colors2024['orange-default']
                   : colors2024['neutral-info']
               }
+              style={{ position: 'relative', top: 1 }}
             />
           ) : null}
           <Text
             style={[
               styles.availableCardTitle,
-              (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
-                styles.orangeText,
+              showOrange && styles.orangeText,
             ]}>
             {t('page.Lending.modalDesc.availableToBorrow')}:{' '}
-            <Text
-              style={[
-                styles.usdValue,
-                (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
-                  styles.orangeText,
-              ]}>
+            <Text style={[styles.usdValue, showOrange && styles.orangeText]}>
               {formatUsdValueKMB(
                 Number(iUserSummary?.availableBorrowsUSD || '0'),
               )}
@@ -232,11 +229,7 @@ const LendingBorrowList: React.FC = () => {
           </Text>
         </View>
         <Text
-          style={[
-            styles.availableCardValue,
-            (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
-              styles.orangeText,
-          ]}>
+          style={[styles.availableCardValue, showOrange && styles.orangeText]}>
           {desc}
         </Text>
       </View>
