@@ -14,9 +14,14 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
-  useLendingData,
+  GlobalModalViewProps,
+  MODAL_NAMES,
+} from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  useFetchLendingData,
+  useLendingIsLoading,
+  useLendingRemoteData,
   useLendingSummary,
   useSelectedMarket,
 } from '../../hooks';
@@ -36,6 +41,7 @@ import { NextSearchBar } from '@/components2024/SearchBar';
 import { formatUsdValueKMB } from '@/screens/TokenDetail/util';
 import { isUnFoldToken } from '../../config/unfold';
 import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 const FOOT_HEIGHT = 86;
 
@@ -43,17 +49,17 @@ type SupplyListItem =
   | { type: 'reserve'; data: DisplayPoolReserveInfo }
   | { type: 'toggle_fold' };
 
-const LendingSupplyList: React.FC = () => {
+const LendingSupplyList: React.FC<
+  GlobalModalViewProps<MODAL_NAMES.LENDING_SUPPLY_LIST>
+> = ({}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const {
-    displayPoolReserves,
-    reserves,
-    loading,
-    iUserSummary,
-    getTargetReserve,
-  } = useLendingSummary();
+
+  const { reserves } = useLendingRemoteData();
+  const { loading } = useLendingIsLoading();
+  const { displayPoolReserves, iUserSummary, getTargetReserve } =
+    useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useLendingData();
+  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
 
@@ -200,10 +206,13 @@ const LendingSupplyList: React.FC = () => {
 
   const handlePressItem = useCallback(
     (item: DisplayPoolReserveInfo) => {
+      const reserve = getTargetReserve(item.reserve.underlyingAsset);
+      const userSummary = iUserSummary;
+      if (!reserve || !userSummary) return;
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
-        reserve: getTargetReserve(item.reserve.underlyingAsset),
-        userSummary: iUserSummary,
+        reserve,
+        userSummary,
         onClose: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
@@ -358,7 +367,7 @@ const LendingSupplyList: React.FC = () => {
           />
         )}
       </View>
-      <FlatList
+      <BottomSheetFlatList
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}

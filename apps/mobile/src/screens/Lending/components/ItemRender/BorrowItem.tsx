@@ -135,6 +135,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
   ]);
 
   const handlePressBorrow = () => {
+    if (!reserve || !userSummary) return;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.BORROW_ACTION_DETAIL,
       reserve,
@@ -153,6 +154,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
     });
   };
   const handlePressRepay = () => {
+    if (!reserve || !userSummary) return;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.REPAY_ACTION_DETAIL,
       reserve,

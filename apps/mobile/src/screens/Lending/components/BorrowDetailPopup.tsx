@@ -24,7 +24,11 @@ import { useTranslation } from 'react-i18next';
 import { getHealthFactorText } from './HealthFactorText';
 import { formatNetworth } from '@/utils/math';
 import { formatApy } from '../utils/format';
-import { useSelectedMarket, useLendingSummary } from '../hooks';
+import {
+  useSelectedMarket,
+  useLendingSummary,
+  useLendingIsLoading,
+} from '../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from '../config/nativeToWrapper';
@@ -42,10 +46,10 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+  const { loading } = useLendingIsLoading();
   const {
     displayPoolReserves,
     iUserSummary: userSummary,
-    loading,
     formattedPoolReservesAndIncentives,
     wrapperPoolReserve,
   } = useLendingSummary();
@@ -209,6 +213,7 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
 
   const handlePressBorrow = () => {
     onClose?.();
+    if (!reserve || !userSummary) return;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.BORROW_ACTION_DETAIL,
       reserve,
@@ -228,6 +233,7 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
   };
   const handlePressRepay = () => {
     onClose?.();
+    if (!reserve || !userSummary) return;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.REPAY_ACTION_DETAIL,
       reserve,

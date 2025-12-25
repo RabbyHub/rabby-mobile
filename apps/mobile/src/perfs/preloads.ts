@@ -24,6 +24,7 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevUIBuiltInPages]: 'DevUIBuiltInPages',
   [RootNames.DevDataSQLite]: 'DevDataSQLite',
   [RootNames.DevSwitches]: 'DevSwitches',
+  [RootNames.DevPerf]: 'DevPerf',
 };
 
 export async function preloadNonProductionScreens() {

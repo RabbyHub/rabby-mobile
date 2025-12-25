@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.packages.build.json",
+  "compilerOptions": {
+    "outDir": "./worker-dist",
+    "rootDir": "./worker-src",
+    "lib": ["ES2020", "DOM"],
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "experimentalDecorators": false,
+    "emitDecoratorMetadata": false,
+    "resolveJsonModule": true,
+    "noUncheckedIndexedAccess": true,
+    "baseUrl": ".",
+    "paths": {
+      "@rabby-wallet/*": ["../../packages/*/dist", "../../packages/*/src"]
+    }
+  },
+  "include": ["./worker-src/**/*"]
+}

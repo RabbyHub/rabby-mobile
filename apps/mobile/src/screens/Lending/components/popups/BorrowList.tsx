@@ -30,10 +30,16 @@ import TokenIcon from '../TokenIcon';
 import { PoolListLoading } from '../Loading';
 import { DisplayPoolReserveInfo } from '../../type';
 import { assetCanBeBorrowedByUser } from '../../utils/borrow';
-import { useLendingData, useLendingSummary } from '../../hooks';
+import {
+  useFetchLendingData,
+  useLendingIsLoading,
+  useLendingRemoteData,
+  useLendingSummary,
+} from '../../hooks';
 import { formatApy } from '../../utils/format';
 import { isUnFoldToken } from '../../config/unfold';
 import { useSelectedMarket } from '../../hooks';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 const FOOT_HEIGHT = 86;
 
@@ -43,15 +49,12 @@ type BorrowListItem =
 
 const LendingBorrowList: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const {
-    displayPoolReserves,
-    reserves,
-    loading,
-    iUserSummary,
-    getTargetReserve,
-  } = useLendingSummary();
+  const { reserves } = useLendingRemoteData();
+  const { loading } = useLendingIsLoading();
+  const { displayPoolReserves, iUserSummary, getTargetReserve } =
+    useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useLendingData();
+  const { fetchData } = useFetchLendingData();
   const [search, setSearch] = useState('');
   const [isInputActive, setIsInputActive] = useState(false);
 
@@ -189,11 +192,13 @@ const LendingBorrowList: React.FC = () => {
     if (loading || !iUserSummary?.totalLiquidityUSD) {
       return null;
     }
+
+    const showOrange = isInIsolationMode || !!iUserSummary?.userEmodeCategoryId;
     return (
       <View
         style={[
           styles.availableCard,
-          isInIsolationMode && styles.availableCardIsolated,
+          showOrange && styles.availableCardIsolated,
         ]}>
         <View style={styles.availableCardHeader}>
           {(iUserSummary?.availableBorrowsUSD &&
@@ -207,21 +212,16 @@ const LendingBorrowList: React.FC = () => {
                   ? colors2024['orange-default']
                   : colors2024['neutral-info']
               }
+              style={{ position: 'relative', top: 1 }}
             />
           ) : null}
           <Text
             style={[
               styles.availableCardTitle,
-              (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
-                styles.orangeText,
+              showOrange && styles.orangeText,
             ]}>
             {t('page.Lending.modalDesc.availableToBorrow')}:{' '}
-            <Text
-              style={[
-                styles.usdValue,
-                (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
-                  styles.orangeText,
-              ]}>
+            <Text style={[styles.usdValue, showOrange && styles.orangeText]}>
               {formatUsdValueKMB(
                 Number(iUserSummary?.availableBorrowsUSD || '0'),
               )}
@@ -229,11 +229,7 @@ const LendingBorrowList: React.FC = () => {
           </Text>
         </View>
         <Text
-          style={[
-            styles.availableCardValue,
-            (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
-              styles.orangeText,
-          ]}>
+          style={[styles.availableCardValue, showOrange && styles.orangeText]}>
           {desc}
         </Text>
       </View>
@@ -258,10 +254,13 @@ const LendingBorrowList: React.FC = () => {
 
   const handlePressItem = useCallback(
     (item: DisplayPoolReserveInfo) => {
+      const reserve = getTargetReserve(item.reserve.underlyingAsset);
+      const userSummary = iUserSummary;
+      if (!reserve || !userSummary) return;
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.BORROW_ACTION_DETAIL,
-        reserve: getTargetReserve(item.reserve.underlyingAsset),
-        userSummary: iUserSummary,
+        reserve,
+        userSummary,
         onClose: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
@@ -409,7 +408,7 @@ const LendingBorrowList: React.FC = () => {
           />
         )}
       </View>
-      <FlatList
+      <BottomSheetFlatList
         data={loading ? [] : dataList}
         style={styles.list}
         showsVerticalScrollIndicator={false}

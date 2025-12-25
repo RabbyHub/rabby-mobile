@@ -20,35 +20,50 @@ import { ethers } from 'ethers';
 import dayjs from 'dayjs';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useMemo } from 'react';
-import { unstable_batchedUpdates } from 'react-native';
+import { InteractionManager, unstable_batchedUpdates } from 'react-native';
 import { BigNumber } from 'bignumber.js';
-import { formatUserYield } from './utils/apy';
+import { FormattedReservesAndIncentives, formatUserYield } from './utils/apy';
 import { CustomMarket, MarketDataType, marketsData } from './config/market';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import wrapperToken from './config/wrapperToken';
 import { CHAINS_ENUM } from '@debank/common';
 import { API_ETH_MOCK_ADDRESS } from './utils/constant';
-import { DisplayPoolReserveInfo } from './type';
+import { DisplayPoolReserveInfo, UserSummary } from './type';
 import {
   storeApiAccountsSwitcher,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
-import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import {
+  atomByMMKV,
+  makeJotaiJsonStore,
+  makeMMKVStorage,
+  MMKVStorageStrategy,
+} from '@/core/storage/mmkv';
 import { findChainByID } from '@/utils/chain';
 import { getProvider } from './provider';
-import { fetchIconSymbolAndName } from './utils/icon';
-import { ExtractAtomValueType } from '@/utils/type';
-import { jotaiStore } from '@/core/utils/reexports';
+import { fetchIconSymbolAndName, IconSymbolInterface } from './utils/icon';
+import { ExtractAtomValueType, RefLikeObject } from '@/utils/type';
+import { jotaiStore, zCreate } from '@/core/utils/reexports';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
+import { debounce } from 'lodash';
+import {
+  worker_formatReserves,
+  worker_formatReservesAndIncentives,
+  worker_formatUserSummaryAndIncentives,
+} from '@/perfs/workerReq';
+import { StoreApi, UseBoundStore } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from './config/nativeToWrapper';
 
-export const marketAtom = atomByMMKV(
-  '@lendingMarket',
-  CustomMarket.proto_mainnet_v3,
-  {
-    storage: MMKVStorageStrategy.compatString,
-  },
-);
+const marketAtom = atomByMMKV('@lendingMarket', CustomMarket.proto_mainnet_v3, {
+  storage: MMKVStorageStrategy.compatString,
+});
 
 const getMarketInfo = (market?: CustomMarket) => {
   const marketData: MarketDataType | undefined =
@@ -70,14 +85,24 @@ const getMarketInfo = (market?: CustomMarket) => {
   };
 };
 
-export const useSelectedMarket = () => {
-  const [market, setMarket] = useAtom(marketAtom);
-  const { marketData, chainEnum, chainInfo, isMainnet } = useMemo(
-    () => getMarketInfo(market),
-    [market],
-  );
+function useSelectedMarketKey() {
+  const [marketKey, setMarketKey] = useAtom(marketAtom);
+
   return {
-    marketKey: market,
+    marketKey: marketKey,
+    setMarketKey: setMarketKey,
+  };
+}
+
+export const useSelectedMarket = () => {
+  const { marketKey, setMarketKey: setMarket } = useSelectedMarketKey();
+  const { marketData, chainEnum, chainInfo, isMainnet } = useMemo(
+    () => getMarketInfo(marketKey),
+    [marketKey],
+  );
+
+  return {
+    marketKey: marketKey,
     selectedMarketData: marketData,
     setMarketKey: setMarket,
     chainEnum,
@@ -140,9 +165,9 @@ const getCachePools = (marketKey?: CustomMarket) => {
   return newPools;
 };
 
-const fetchContractData = async (address: string) => {
-  const selectedMarketData = apisLending.getSelectedMarketInfo().marketData;
-  const pools = apisLending.getPools();
+const fetchContractData = async (address: string, marketKey?: CustomMarket) => {
+  const selectedMarketData = getSelectedMarketInfo(marketKey).marketData;
+  const pools = getPools();
   if (!selectedMarketData || !pools) {
     return {};
   }
@@ -167,10 +192,12 @@ const fetchContractData = async (address: string) => {
           selectedMarketData.addresses.LENDING_POOL_ADDRESS_PROVIDER,
       }),
     ]);
+
     return {
       reserves,
       userReserves,
       walletBalances,
+      // walletBalances: EMPTY_WALLET_BALANCES as UserWalletBalancesResponse,
       eModes,
     };
   } catch (error) {
@@ -194,85 +221,185 @@ export const usePoolDataProviderContract = () => {
   };
 };
 
-const reservesAtom = atom<ReservesDataHumanized | undefined>(undefined);
-const userReservesAtom = atom<
-  | {
-      userReserves: UserReserveDataHumanized[];
-      userEmodeCategoryId: number;
-    }
-  | undefined
->(undefined);
-const eModesAtom = atom<EmodeDataHumanized[] | undefined>(undefined);
-
 const EMPTY_WALLET_BALANCES: UserWalletBalancesResponse = { 0: [], 1: [] };
-const walletBalancesAtom = atom<UserWalletBalancesResponse>(
-  EMPTY_WALLET_BALANCES,
-);
-const addressAtom = atom<string | undefined>(undefined);
-const loadingAtom = atom<boolean>(false);
-const refreshHistoryIdAtom = atom<number>(0);
 
-const formattedReservesAndIncentivesAtom = atom(get => {
-  const reserves = get(reservesAtom);
-  const eModes = get(eModesAtom);
+type RemoteDataState = {
+  reserves: ReservesDataHumanized | undefined;
+  userReserves:
+    | {
+        userReserves: UserReserveDataHumanized[];
+        userEmodeCategoryId: number;
+      }
+    | undefined;
+  walletBalances: UserWalletBalancesResponse;
+  eModes: EmodeDataHumanized[] | undefined;
+};
+
+function getInitRemoteData() {
+  return {
+    reserves: undefined,
+    userReserves: undefined,
+    walletBalances: EMPTY_WALLET_BALANCES,
+    eModes: undefined,
+  };
+}
+type RemoteDataKey = `${CustomMarket}::${string}`;
+function encodeRemoteDataKey(
+  marketKey: CustomMarket,
+  address: string,
+): RemoteDataKey {
+  return `${marketKey}::${address}`;
+}
+const remoteDataState = zCreate<{
+  [P in RemoteDataKey]: RemoteDataState;
+}>(() => {
+  return {};
+});
+
+function useCurrentLendingDataKey() {
+  const { marketKey } = useSelectedMarketKey();
+  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
+  const currentAddress = finalSceneCurrentAccount?.address || '';
+  const lendingDataKey = useMemo(() => {
+    return !currentAddress
+      ? ''
+      : encodeRemoteDataKey(marketKey, currentAddress);
+  }, [currentAddress, marketKey]);
+
+  return {
+    marketKey,
+    currentAddress,
+    lendingDataKey,
+  };
+}
+
+const DEFAULT_LENDING_REMOTE_DATA = getInitRemoteData();
+export function useLendingRemoteData() {
+  const { lendingDataKey } = useCurrentLendingDataKey();
+
+  const { reserves, userReserves, walletBalances, eModes } = remoteDataState(
+    useShallow(
+      s =>
+        (s[lendingDataKey] as RemoteDataState) || DEFAULT_LENDING_REMOTE_DATA,
+    ),
+  );
+
+  return {
+    reserves,
+    userReserves,
+    walletBalances,
+    eModes,
+  };
+}
+
+const lendingLoadState = zCreate<{
+  addrMarketLoading: Record<string, boolean>;
+  refreshHistoryId: number;
+}>(() => ({
+  addrMarketLoading: {},
+  refreshHistoryId: 0,
+}));
+
+function mapItem<T extends IconSymbolInterface>(item: T): T {
+  return {
+    ...item,
+    ...fetchIconSymbolAndName(item),
+  };
+}
+
+function re_formatReserves(params: Parameters<typeof formatReserves>[0]) {
+  return (formatReserves(params) || []).map(mapItem);
+}
+
+const DEFAULT_RESERVES_AND_INCENTIVES = {
+  formattedReserves: null as null | ReturnType<typeof re_formatReserves>,
+  formattedPoolReservesAndIncentives: [] as FormattedReservesAndIncentives[],
+};
+
+async function computeFormattedReservesAndIncentives({
+  reserves,
+  eModes,
+}: {
+  reserves: ReservesDataHumanized | undefined;
+  eModes: EmodeDataHumanized[] | undefined;
+}) {
   if (!reserves) {
-    return {
-      formattedReserves: null,
-      formattedPoolReservesAndIncentives: [],
-    };
+    return DEFAULT_RESERVES_AND_INCENTIVES;
   }
 
   const reservesArray = reserves.reservesData;
   const baseCurrencyData = reserves.baseCurrencyData;
   const currentTimestamp = dayjs().unix();
 
-  const formattedReserves = formatReserves({
-    reserves: reservesArray,
-    currentTimestamp,
-    eModes,
-    marketReferenceCurrencyDecimals:
-      baseCurrencyData.marketReferenceCurrencyDecimals,
-    marketReferencePriceInUsd:
-      baseCurrencyData.marketReferenceCurrencyPriceInUsd,
-  }).map(item => ({
-    ...item,
-    ...fetchIconSymbolAndName(item),
-  }));
-
-  const formattedPoolReservesAndIncentives = formatReservesAndIncentives({
-    reserves: reservesArray,
-    currentTimestamp,
-    marketReferenceCurrencyDecimals:
-      baseCurrencyData.marketReferenceCurrencyDecimals,
-    marketReferencePriceInUsd:
-      baseCurrencyData.marketReferenceCurrencyPriceInUsd,
-    reserveIncentives: [],
-    eModes,
-  }).map(item => ({
-    ...item,
-    ...fetchIconSymbolAndName(item),
-  }));
+  const formattedReserves = (
+    (await worker_formatReserves({
+      reserves: reservesArray,
+      currentTimestamp,
+      eModes,
+      marketReferenceCurrencyDecimals:
+        baseCurrencyData.marketReferenceCurrencyDecimals,
+      marketReferencePriceInUsd:
+        baseCurrencyData.marketReferenceCurrencyPriceInUsd,
+    })) || []
+  ).map(mapItem);
+  console.debug(
+    '[perf] formattedReservesAndIncentivesAtom:: formattedReserves',
+    formattedReserves,
+  );
+  const formattedPoolReservesAndIncentives = (
+    (await worker_formatReservesAndIncentives({
+      reserves: reservesArray,
+      currentTimestamp,
+      marketReferenceCurrencyDecimals:
+        baseCurrencyData.marketReferenceCurrencyDecimals,
+      marketReferencePriceInUsd:
+        baseCurrencyData.marketReferenceCurrencyPriceInUsd,
+      reserveIncentives: [],
+      eModes,
+    })) || []
+  ).map(mapItem) as unknown as FormattedReservesAndIncentives[];
+  console.debug(
+    '[perf] formattedReservesAndIncentivesAtom:: formattedPoolReservesAndIncentives',
+    formattedPoolReservesAndIncentives,
+  );
 
   return {
     formattedReserves,
     formattedPoolReservesAndIncentives,
   };
-});
+}
 
-export const formattedReservesAtom = atom(get => {
-  return get(formattedReservesAndIncentivesAtom).formattedReserves;
-});
+export function useFormattedReservesAtom() {
+  const { lendingDataKey } = useCurrentLendingDataKey();
+  return computedInfoState(
+    useShallow(
+      s =>
+        getComputedInfoByKey(lendingDataKey).formattedReservesAndIncentivesState
+          .formattedReserves,
+    ),
+  );
+}
 
-export const formattedPoolReservesAndIncentivesAtom = atom(get => {
-  return get(formattedReservesAndIncentivesAtom)
-    .formattedPoolReservesAndIncentives;
-});
+export function useFormattedPoolReservesAndIncentivesAtom() {
+  const { lendingDataKey } = useCurrentLendingDataKey();
+  return computedInfoState(
+    useShallow(
+      s =>
+        getComputedInfoByKey(lendingDataKey).formattedReservesAndIncentivesState
+          .formattedPoolReservesAndIncentives,
+    ),
+  );
+}
 
-export const iUserSummaryAtom = atom(get => {
-  const userReserves = get(userReservesAtom);
-  const formattedReserves = get(formattedReservesAtom);
-  const reserves = get(reservesAtom);
-
+async function computeIUserSummary({
+  userReserves,
+  reserves,
+  formattedReserves,
+}: Pick<RemoteDataState, 'userReserves' | 'reserves'> & {
+  formattedReserves: ReturnType<typeof formatReservesAndIncentives> | null;
+}) {
   if (!userReserves || !formattedReserves) {
     return null;
   }
@@ -285,7 +412,15 @@ export const iUserSummaryAtom = atom(get => {
   const currentTimestamp = dayjs().unix();
   const userReservesArray = userReserves.userReserves;
 
-  return formatUserSummaryAndIncentives({
+  console.debug(
+    '[perf] iUserSummaryAtom:: userReservesArray, formattedReserves',
+    userReservesArray,
+    formattedReserves,
+  );
+
+  const startTime = Date.now();
+
+  const syncResult = await worker_formatUserSummaryAndIncentives({
     currentTimestamp,
     marketReferencePriceInUsd:
       baseCurrencyData.marketReferenceCurrencyPriceInUsd,
@@ -297,26 +432,50 @@ export const iUserSummaryAtom = atom(get => {
     reserveIncentives: [],
     userIncentives: [],
   });
-});
+  const endTime = Date.now();
+  const diff = endTime - startTime;
+  console.debug(
+    '[perf] iUserSummaryAtom:: syncResult, startTime, endTime, diff',
+    syncResult,
+    startTime,
+    endTime,
+    diff,
+  );
 
-const mappedBalancesAtom = atom(get => {
-  const walletBalances = get(walletBalancesAtom);
+  return syncResult;
+}
+
+type ExtractStateType<T> = T extends UseBoundStore<StoreApi<infer U>>
+  ? U
+  : never;
+type MappedBalances = Array<{ address: string; amount: string }>;
+
+function computeMappedBalances({
+  walletBalances,
+}: Pick<RemoteDataState, 'walletBalances'>) {
   const { 0: tokenAddresses, 1: balances } = walletBalances;
   return tokenAddresses.map((_address, ix) => ({
     address: _address.toLowerCase(),
-    amount: balances[ix]?.toString(),
+    amount: balances[ix]?.toString() || '',
   }));
-});
+}
 
-const displayPoolReservesAtom = atom(get => {
-  const iUserSummary = get(iUserSummaryAtom);
-  const reserves = get(reservesAtom);
-  const mappedBalances = get(mappedBalancesAtom);
-  const market = get(marketAtom);
-
+function computeDisplayPoolReserves({
+  reserves,
+  iUserSummary,
+  mappedBalances,
+  market,
+}: {
+  reserves: ReservesDataHumanized | undefined;
+  iUserSummary: null | ReturnType<typeof formatUserSummaryAndIncentives>;
+  mappedBalances: MappedBalances;
+  market: CustomMarket;
+}) {
   if (!iUserSummary || !reserves?.baseCurrencyData) {
     return [];
   }
+
+  console.debug('[perf] displayPoolReservesAtom::');
 
   const baseCurrencyData = reserves.baseCurrencyData;
   const chainEnum =
@@ -344,16 +503,23 @@ const displayPoolReservesAtom = atom(get => {
       }),
     };
   }) as DisplayPoolReserveInfo[];
-});
+}
 
-const wrapperPoolReserveAndFinalDisplayPoolReservesAtom = atom(get => {
-  const displayPoolReserves = get(displayPoolReservesAtom);
-  const formattedPoolReservesAndIncentives = get(
-    formattedPoolReservesAndIncentivesAtom,
-  );
-  const mappedBalances = get(mappedBalancesAtom);
-  const reserves = get(reservesAtom);
-  const market = get(marketAtom);
+function computeWrapperPoolReserveAndFinalDisplayPoolReserves({
+  displayPoolReserves,
+  formattedPoolReservesAndIncentives,
+  mappedBalances,
+  reserves,
+  market,
+}: {
+  displayPoolReserves: DisplayPoolReserveInfo[];
+  formattedPoolReservesAndIncentives: ReturnType<
+    typeof formatReservesAndIncentives
+  >;
+  mappedBalances: MappedBalances;
+  reserves: ReservesDataHumanized | undefined;
+  market: CustomMarket;
+}) {
   const chainEnum =
     findChainByID(marketsData[market]?.chainId)?.enum || CHAINS_ENUM.ETH;
   if (
@@ -365,6 +531,8 @@ const wrapperPoolReserveAndFinalDisplayPoolReservesAtom = atom(get => {
       finalDisplayPoolReserves: displayPoolReserves,
     };
   }
+
+  console.debug('[perf] wrapperPoolReserveAndFinalDisplayPoolReservesAtom::');
 
   const wrapperReserve = displayPoolReserves.find(item => {
     return isSameAddress(
@@ -418,36 +586,74 @@ const wrapperPoolReserveAndFinalDisplayPoolReservesAtom = atom(get => {
     wrapperPoolReserve,
     finalDisplayPoolReserves,
   };
-});
+}
 
-const wrapperPoolReserveAtom = atom(get => {
-  return get(wrapperPoolReserveAndFinalDisplayPoolReservesAtom)
-    .wrapperPoolReserve;
-});
-
-const finalDisplayPoolReservesAtom = atom(get => {
-  return get(wrapperPoolReserveAndFinalDisplayPoolReservesAtom)
-    .finalDisplayPoolReserves;
-});
-
-const apyInfoAtom = atom(get => {
-  const formattedPoolReservesAndIncentives = get(
-    formattedPoolReservesAndIncentivesAtom,
-  );
-  const iUserSummary = get(iUserSummaryAtom);
-
+function computeApyInfo({
+  formattedPoolReservesAndIncentives,
+  iUserSummary,
+}: {
+  formattedPoolReservesAndIncentives: FormattedReservesAndIncentives[];
+  iUserSummary: null | UserSummary;
+}) {
   if (!formattedPoolReservesAndIncentives.length || !iUserSummary) {
     return null;
   }
 
   return formatUserYield(formattedPoolReservesAndIncentives, iUserSummary);
-});
+}
 
+type IndexedComputedInfo = {
+  formattedReservesAndIncentivesState: typeof DEFAULT_RESERVES_AND_INCENTIVES;
+  iUserSummary: null | UserSummary;
+  mappedBalances: { address: string; amount: string }[];
+  displayPoolReserves: DisplayPoolReserveInfo[];
+  wrapperPoolReserveAndFinalDisplayPoolReserves: ReturnType<
+    typeof computeWrapperPoolReserveAndFinalDisplayPoolReserves
+  >;
+  apyInfo: null | ReturnType<typeof formatUserYield>;
+};
+function getInitComputedInfo(): IndexedComputedInfo {
+  return {
+    formattedReservesAndIncentivesState: DEFAULT_RESERVES_AND_INCENTIVES,
+    iUserSummary: null,
+    mappedBalances: [],
+    displayPoolReserves: [],
+    wrapperPoolReserveAndFinalDisplayPoolReserves: {
+      wrapperPoolReserve: null,
+      finalDisplayPoolReserves: [],
+    },
+    apyInfo: null,
+  };
+}
+const DEFAULT_COMPUTED_INFO = getInitComputedInfo();
+const computedInfoState = zCreate<{
+  [P in RemoteDataKey]: IndexedComputedInfo;
+}>(() => {
+  return {};
+});
+function getComputedInfoByKey(
+  lendingDataKey: string,
+  state = computedInfoState.getState(),
+) {
+  return state[lendingDataKey as RemoteDataKey] || DEFAULT_COMPUTED_INFO;
+}
+
+function setRefreshHistoryId(valOrFunc: UpdaterOrPartials<number>) {
+  lendingLoadState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.refreshHistoryId, valOrFunc, {
+      strict: false,
+    });
+    return {
+      ...prev,
+      refreshHistoryId: newVal,
+    };
+  });
+}
 const useRefreshHistoryId = () => {
-  const [refreshHistoryId, setRefreshHistoryId] = useAtom(refreshHistoryIdAtom);
+  const refreshHistoryId = lendingLoadState(s => s.refreshHistoryId);
   const refresh = useCallback(() => {
     setRefreshHistoryId(e => e + 1);
-  }, [setRefreshHistoryId]);
+  }, []);
   return { refreshHistoryId, refresh };
 };
 
@@ -459,129 +665,223 @@ const preQueryParams: {
   marketKey: undefined,
 };
 
+// const setRemoteTaskRef: RefLikeObject<null | ReturnType<
+//   typeof InteractionManager.runAfterInteractions
+// >> = { current: null };
 const globalSets = {
-  setReserves: (value: ExtractAtomValueType<typeof reservesAtom>) =>
-    jotaiStore.set(reservesAtom, value),
-  setUserReserves: (value: ExtractAtomValueType<typeof userReservesAtom>) =>
-    jotaiStore.set(userReservesAtom, value),
-  setWalletBalances: (value: ExtractAtomValueType<typeof walletBalancesAtom>) =>
-    jotaiStore.set(walletBalancesAtom, value),
-  setEModes: (value: ExtractAtomValueType<typeof eModesAtom>) =>
-    jotaiStore.set(eModesAtom, value),
-  setLoading: (value: ExtractAtomValueType<typeof loadingAtom>) =>
-    jotaiStore.set(loadingAtom, value),
-  setCurrentAddress: (value: ExtractAtomValueType<typeof addressAtom>) =>
-    jotaiStore.set(addressAtom, value),
-};
+  setRemoteData: debounce(
+    async (
+      addr: string,
+      marketKey: CustomMarket,
+      valOrFunc: UpdaterOrPartials<RemoteDataState>,
+    ) => {
+      const lendingDataKey = encodeRemoteDataKey(marketKey, addr);
 
-export const apisLending = {
-  getSelectedMarketInfo() {
-    const market = jotaiStore.get(marketAtom);
-    return getMarketInfo(market);
-  },
-  getMarketKey() {
-    const marketKey = jotaiStore.get(marketAtom);
-    return marketKey;
-  },
-  getPools() {
-    const marketKey = apisLending.getMarketKey();
-    const selectedMarketData = apisLending.getSelectedMarketInfo().marketData;
-    if (!marketKey || !selectedMarketData) {
-      return undefined;
-    }
-    return getCachePools(marketKey);
-  },
-  fetchLendingData,
-};
-
-async function fetchLendingData(options?: {
-  accountAddress?: string;
-  ignoreLoading?: boolean;
-}) {
-  const {
-    accountAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
-      forScene: 'Lending',
-    }).finalSceneCurrentAccount?.address,
-    ignoreLoading,
-  } = options || {};
-
-  const requestAddress = accountAddress;
-  if (!requestAddress) {
-    return;
-  }
-
-  const marketKey = apisLending.getMarketKey();
-
-  // 用户强制忽略loading、前后params一样
-  const isSameParams =
-    preQueryParams.address === requestAddress &&
-    preQueryParams.marketKey === marketKey;
-  const isForceIgnoreLoading = ignoreLoading || isSameParams;
-  preQueryParams.address = requestAddress;
-  preQueryParams.marketKey = marketKey;
-  if (!isForceIgnoreLoading) {
-    globalSets.setLoading(true);
-  }
-  return fetchContractData(requestAddress)
-    .then(data => {
-      const nextReserves = data?.reserves;
-      const nextUserReserves = data?.userReserves;
-      const nextWalletBalances = data?.walletBalances || EMPTY_WALLET_BALANCES;
-      unstable_batchedUpdates(() => {
-        globalSets.setReserves(nextReserves);
-        globalSets.setUserReserves(nextUserReserves);
-        globalSets.setWalletBalances(nextWalletBalances);
-        globalSets.setEModes(data?.eModes);
-        globalSets.setCurrentAddress(requestAddress);
-        globalSets.setLoading(false);
+      const prev = remoteDataState.getState();
+      const prevData = prev[lendingDataKey] || getInitRemoteData();
+      const { newVal } = resolveValFromUpdater(prevData, valOrFunc, {
+        strict: false,
       });
-    })
-    .catch(() => {
-      globalSets.setLoading(false);
-    });
+
+      const formattedReservesAndIncentives =
+        await computeFormattedReservesAndIncentives(newVal);
+
+      const iUserSummary = await computeIUserSummary({
+        ...newVal,
+        formattedReserves: formattedReservesAndIncentives.formattedReserves,
+      });
+
+      const mappedBalances = computeMappedBalances({
+        walletBalances: newVal.walletBalances,
+      });
+
+      const displayPoolReserves = computeDisplayPoolReserves({
+        ...newVal,
+        iUserSummary: iUserSummary as UserSummary,
+        mappedBalances: mappedBalances,
+        market: jotaiStore.get(marketAtom),
+      });
+
+      const wrapperPoolReserveAndFinalDisplayPoolReserves =
+        computeWrapperPoolReserveAndFinalDisplayPoolReserves({
+          displayPoolReserves: displayPoolReserves,
+          formattedPoolReservesAndIncentives:
+            formattedReservesAndIncentives.formattedPoolReservesAndIncentives,
+          mappedBalances: mappedBalances,
+          reserves: newVal.reserves,
+          market: jotaiStore.get(marketAtom),
+        });
+
+      const apyInfo = computeApyInfo({
+        formattedPoolReservesAndIncentives:
+          formattedReservesAndIncentives.formattedPoolReservesAndIncentives,
+        iUserSummary: iUserSummary as UserSummary,
+      });
+
+      console.debug('[perf] lending:: remote data will be set', newVal);
+      remoteDataState.setState({
+        ...prev,
+        [lendingDataKey]: newVal,
+      });
+
+      computedInfoState.setState(prev => {
+        return {
+          ...prev,
+          [lendingDataKey]: {
+            formattedReservesAndIncentivesState: formattedReservesAndIncentives,
+            iUserSummary: iUserSummary,
+            mappedBalances: mappedBalances,
+            displayPoolReserves: displayPoolReserves,
+            wrapperPoolReserveAndFinalDisplayPoolReserves:
+              wrapperPoolReserveAndFinalDisplayPoolReserves,
+            apyInfo: apyInfo,
+          },
+        };
+      });
+    },
+    200,
+  ),
+
+  setLoading: (
+    loading: boolean,
+    indexes?: {
+      address?: string;
+      marketKey?: CustomMarket;
+    },
+  ) => {
+    const marketKey = indexes?.marketKey || getMarketKey();
+    const address =
+      indexes?.address ||
+      storeApiAccountsSwitcher.getSceneAccountInfo({
+        forScene: 'Lending',
+      }).finalSceneCurrentAccount?.address;
+
+    if (!address || !marketKey) {
+      console.warn('setLoading missing params', { address, marketKey });
+      return;
+    }
+
+    const lendingDataKey = encodeRemoteDataKey(marketKey, address);
+    lendingLoadState.setState(prev => ({
+      ...prev,
+      addrMarketLoading: {
+        ...prev.addrMarketLoading,
+        [lendingDataKey]: loading,
+      },
+    }));
+  },
+};
+
+const fetchLendingData = makeSWRKeyAsyncFunc(
+  async (options?: {
+    accountAddress?: string;
+    ignoreLoading?: boolean;
+    persistOnly?: boolean;
+    marketKey?: CustomMarket;
+  }) => {
+    const {
+      accountAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
+        forScene: 'Lending',
+      }).finalSceneCurrentAccount?.address,
+      ignoreLoading,
+      marketKey: paramMarketKey,
+    } = options || {};
+
+    const requestAddress = accountAddress;
+    if (!requestAddress) {
+      return;
+    }
+
+    const marketKey = paramMarketKey || getMarketKey();
+    if (!marketKey) return;
+
+    // 用户强制忽略loading、前后params一样
+    const isSameParams =
+      preQueryParams.address === requestAddress &&
+      preQueryParams.marketKey === marketKey;
+    const isForceIgnoreLoading = ignoreLoading || isSameParams;
+    preQueryParams.address = requestAddress;
+    preQueryParams.marketKey = marketKey;
+    if (!isForceIgnoreLoading) {
+      globalSets.setLoading(true, { address: requestAddress, marketKey });
+    }
+    return fetchContractData(requestAddress, marketKey)
+      .then(async data => {
+        globalSets.setRemoteData(requestAddress, marketKey, data);
+
+        globalSets.setLoading(false, { address: requestAddress, marketKey });
+      })
+      .catch(() => {
+        globalSets.setLoading(false, { address: requestAddress, marketKey });
+      });
+  },
+  ctx => {
+    const { accountAddress, ignoreLoading, persistOnly } = ctx.args[0] || {};
+    return `lendingData-${accountAddress || 'no_address'}-${
+      ignoreLoading ? 'ignore' : 'normal'
+    }-${persistOnly ? 'persist' : 'normal'}`;
+  },
+);
+
+function getSelectedMarketInfo(marketKey?: CustomMarket) {
+  const market = marketKey || jotaiStore.get(marketAtom);
+  return getMarketInfo(market);
+}
+function getMarketKey() {
+  const marketKey = jotaiStore.get(marketAtom);
+  return marketKey;
+}
+function getPools() {
+  const marketKey = getMarketKey();
+  const selectedMarketData = getSelectedMarketInfo(marketKey).marketData;
+  if (!marketKey || !selectedMarketData) {
+    return undefined;
+  }
+  return getCachePools(marketKey);
 }
 
-const useLendingData = () => {
+export const apisLending = {
+  fetchLendingData,
+  setLoading: globalSets.setLoading,
+};
+
+const useFetchLendingData = () => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
-  const [reserves] = useAtom(reservesAtom);
-  const [userReserves] = useAtom(userReservesAtom);
-  const [walletBalances] = useAtom(walletBalancesAtom);
-  const [loading, setLoading] = useAtom(loadingAtom);
+
+  const { marketKey } = useSelectedMarketKey();
 
   const fetchData = useCallback(
     (ignoreLoading?: boolean) => {
       return fetchLendingData({
         accountAddress: currentAccount?.address,
         ignoreLoading,
+        marketKey,
       });
     },
-    [currentAccount],
+    [currentAccount?.address, marketKey],
   );
 
   return {
-    reserves,
-    userReserves,
-    walletBalances,
-    loading,
-    setLoading,
     fetchData,
   };
 };
 
 const useLendingSummary = () => {
-  const reserves = useAtomValue(reservesAtom);
-  const userReserves = useAtomValue(userReservesAtom);
-  const walletBalances = useAtomValue(walletBalancesAtom);
-  const loading = useAtomValue(loadingAtom);
-  const formattedPoolReservesAndIncentives = useAtomValue(
-    formattedPoolReservesAndIncentivesAtom,
+  console.debug('[perf] useLendingSummary:: called');
+  const { iUserSummary } = useLendingISummary();
+  const { lendingDataKey } = useCurrentLendingDataKey();
+  const {
+    formattedReservesAndIncentivesState: { formattedPoolReservesAndIncentives },
+    wrapperPoolReserveAndFinalDisplayPoolReserves: {
+      finalDisplayPoolReserves,
+      wrapperPoolReserve,
+    },
+    apyInfo,
+  } = computedInfoState<IndexedComputedInfo>(
+    useShallow(s => getComputedInfoByKey(lendingDataKey)),
   );
-  const iUserSummary = useAtomValue(iUserSummaryAtom);
-  const finalDisplayPoolReserves = useAtomValue(finalDisplayPoolReservesAtom);
-  const wrapperPoolReserve = useAtomValue(wrapperPoolReserveAtom);
-  const apyInfo = useAtomValue(apyInfoAtom);
 
   const getTargetReserve = useCallback(
     (underlyingAsset: string) => {
@@ -602,17 +902,103 @@ const useLendingSummary = () => {
   );
 
   return {
-    reserves,
-    userReserves,
-    walletBalances,
     displayPoolReserves: finalDisplayPoolReserves,
     iUserSummary,
     formattedPoolReservesAndIncentives,
     wrapperPoolReserve,
     apyInfo,
-    loading,
     getTargetReserve,
   };
 };
 
-export { useLendingData, useLendingSummary, useRefreshHistoryId };
+export function useLendingSummaryCard() {
+  const { lendingDataKey } = useCurrentLendingDataKey();
+  const iUserSummary = computedInfoState(
+    useShallow(s => {
+      const ss: IndexedComputedInfo =
+        s[lendingDataKey] || getInitComputedInfo();
+      return {
+        totalLiquidityMarketReferenceCurrency:
+          ss.iUserSummary?.totalLiquidityMarketReferenceCurrency || '0',
+        healthFactor: ss.iUserSummary?.healthFactor || '0',
+        netWorthUSD: ss.iUserSummary?.netWorthUSD || '0',
+        totalBorrowsUSD: ss.iUserSummary?.totalBorrowsUSD || '0',
+        totalLiquidityUSD: ss.iUserSummary?.totalLiquidityUSD || '0',
+      };
+    }),
+  );
+  const apyInfo = computedInfoState(
+    useShallow(s => getComputedInfoByKey(lendingDataKey).apyInfo),
+  );
+  const netAPY = apyInfo?.netAPY || 0;
+
+  return { iUserSummary, netAPY };
+}
+export function useLendingIsLoading() {
+  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
+  const currentAddress = finalSceneCurrentAccount?.address || '';
+  const loading = lendingLoadState(
+    s => s.addrMarketLoading[currentAddress] || false,
+  );
+
+  return { loading };
+}
+export function useLendingPoolContainer() {
+  const { lendingDataKey } = useCurrentLendingDataKey();
+  const totalLiquidityMarketReferenceCurrency = computedInfoState(
+    useShallow(
+      s =>
+        getComputedInfoByKey(lendingDataKey).iUserSummary
+          ?.totalLiquidityMarketReferenceCurrency || '0',
+    ),
+  );
+  const { loading } = useLendingIsLoading();
+
+  return {
+    totalLiquidityMarketReferenceCurrency,
+    loading,
+  };
+}
+export function useLendingISummary() {
+  const { lendingDataKey } = useCurrentLendingDataKey();
+  const iUserSummary = computedInfoState(
+    useShallow(s => getComputedInfoByKey(lendingDataKey).iUserSummary),
+  );
+
+  return {
+    iUserSummary,
+  };
+}
+export function useHasUserSummary() {
+  const { lendingDataKey } = useCurrentLendingDataKey();
+  const hasUserSummary = computedInfoState(
+    useShallow(s => !!getComputedInfoByKey(lendingDataKey).iUserSummary),
+  );
+
+  return {
+    hasUserSummary,
+  };
+}
+export function useLendingHF() {
+  const { lendingDataKey } = useCurrentLendingDataKey();
+  const lendingHf = computedInfoState(
+    useShallow(s => {
+      const state: IndexedComputedInfo = getComputedInfoByKey(lendingDataKey);
+      if (!state.iUserSummary) {
+        return null;
+      }
+      return {
+        healthFactor: state.iUserSummary?.healthFactor || '0',
+        netWorthUSD: state.iUserSummary?.netWorthUSD || '0',
+      };
+    }),
+  );
+
+  return {
+    lendingHf,
+  };
+}
+
+export { useFetchLendingData, useLendingSummary, useRefreshHistoryId };

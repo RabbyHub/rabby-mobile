@@ -10,6 +10,8 @@ import ToggleCollateralOverView from '../components/actions/ToggleCollateralOver
 import { calculateHFAfterToggleCollateral } from '../utils/hfUtils';
 import { collateralSwitchTx, optimizedPath } from '../poolService';
 import {
+  useHasUserSummary,
+  useLendingRemoteData,
   useLendingSummary,
   usePoolDataProviderContract,
   useRefreshHistoryId,
@@ -65,11 +67,7 @@ export const useToggleCollateralModal = () => {
   };
 };
 
-function ToggleCollateralContent({
-  userSummary,
-}: {
-  userSummary: UserSummary;
-}) {
+function ToggleCollateralContent({}: {}) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [isShowToggleCollateralModal, setIsShowToggleCollateralModal] = useAtom(
@@ -78,7 +76,9 @@ function ToggleCollateralContent({
   const [isLoading, setIsLoading] = useState(false);
   const { pools } = usePoolDataProviderContract();
   const [currentToggleReserve] = useAtom(currentToggleReserveAtom);
-  const { userReserves, wrapperPoolReserve } = useLendingSummary();
+
+  const { userReserves } = useLendingRemoteData();
+  const { wrapperPoolReserve, iUserSummary: userSummary } = useLendingSummary();
   const { selectedMarketData, chainInfo } = useSelectedMarket();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -95,7 +95,7 @@ function ToggleCollateralContent({
   const { ctx } = useSignatureStore();
 
   const afterHF = useMemo(() => {
-    if (!currentToggleReserve) {
+    if (!currentToggleReserve || !userSummary) {
       return undefined;
     }
     return calculateHFAfterToggleCollateral(
@@ -417,7 +417,7 @@ function ToggleCollateralContent({
             </View>
           </View>
           <View style={styles.bodyContainer}>
-            {!!currentToggleReserve && (
+            {!!currentToggleReserve && userSummary && (
               <ToggleCollateralOverView
                 reserve={currentToggleReserve}
                 afterHF={afterHF}
@@ -514,13 +514,13 @@ function ToggleCollateralContent({
 }
 
 export const ToggleCollateralModal = () => {
-  const { iUserSummary } = useLendingSummary();
+  const { hasUserSummary } = useHasUserSummary();
   const { currentRouteName } = useCurrentRouteName();
   const isLendingRoute = currentRouteName === RootNames.Lending;
-  if (!iUserSummary || !isLendingRoute) {
+  if (!hasUserSummary || !isLendingRoute) {
     return null;
   }
-  return <ToggleCollateralContent userSummary={iUserSummary} />;
+  return <ToggleCollateralContent />;
 };
 
 const ScreenWidth = Dimensions.get('screen').width;

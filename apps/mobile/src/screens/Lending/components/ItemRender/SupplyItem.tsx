@@ -95,6 +95,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
   }, [reserve, userSummary]);
 
   const handleOpenSupplyDetail = useCallback(() => {
+    if (!reserve || !userSummary) return;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
       reserve,
@@ -114,6 +115,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
   }, [colors2024, reserve, userSummary]);
 
   const handleOpenWithdrawDetail = useCallback(() => {
+    if (!reserve || !userSummary) return;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.WITHDRAW_ACTION_DETAIL,
       reserve,
