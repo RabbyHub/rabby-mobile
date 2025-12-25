@@ -67,16 +67,24 @@ function DevWorker() {
   });
 
   useEffect(() => {
-    const subscription = workerThread.onThreadMessage(message => {
-      // console.debug(
-      //   '[perf] RNThread onThreadMessage received message:',
-      //   message,
-      // );
-      if (message.type === 'ack') {
-        setAckMsgs(msgs => {
-          const newMsgs = [...msgs, message].slice(-ACK_LIMIT);
-          return newMsgs;
-        });
+    const subscription = workerThread.onThreadMessage(payload => {
+      switch (payload.type) {
+        case 'ack': {
+          setAckMsgs(msgs => {
+            const newMsgs = [...msgs, payload].slice(-ACK_LIMIT);
+            return newMsgs;
+          });
+          break;
+        }
+        case '@catchedError': {
+          const { isFatal, error } = payload;
+          console.debug('[perf] Worker Thread Error:', payload);
+          break;
+        }
+        default: {
+          console.debug('[perf] Received payload not cared:', payload);
+          break;
+        }
       }
     });
 
@@ -98,37 +106,127 @@ function DevWorker() {
       </View>
 
       <View
-        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
-        <Button
-          disabled={!threadRunning}
-          title={'Restart computation Thread'}
-          type="warning"
-          height={48}
-          containerStyle={{ marginTop: 12 }}
-          onPress={() => {
-            workerThread.restart();
-          }}
-        />
+        style={[
+          styles.secondarySectionContent,
+          { flexDirection: 'column', width: '100%' },
+        ]}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 18, marginLeft: 2 },
+          ]}>
+          Basic Capacities
+        </Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            marginTop: 12,
+            gap: 12,
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            width: '100%',
+          }}>
+          <Button
+            disabled={!threadRunning}
+            title={'Restart'}
+            type="warning"
+            height={48}
+            containerStyle={{ flexShrink: 1, width: '50%', marginTop: 0 }}
+            onPress={() => {
+              workerThread.restart();
+            }}
+          />
+          <Button
+            title={threadRunning ? 'Stop Thread' : 'Start Thread'}
+            type={threadRunning ? 'danger' : 'primary'}
+            height={48}
+            containerStyle={{ flexShrink: 1, width: '50%', marginTop: 0 }}
+            onPress={() => {
+              if (threadRunning) {
+                workerThread.terminate();
+              } else {
+                workerThread.start();
+              }
+            }}
+          />
+        </View>
         <Button
           title={
-            threadRunning
-              ? 'Stop computation Thread'
-              : 'Start computation Thread'
+            IS_IOS
+              ? `LS iOS MainBundlePath Dir List`
+              : `LS Android Assets Dir List`
           }
-          type={threadRunning ? 'danger' : 'primary'}
+          type="ghost"
           height={48}
-          containerStyle={{ marginTop: 12 }}
+          containerStyle={{ marginTop: 12, height: '100%' }}
           onPress={() => {
-            if (threadRunning) {
-              workerThread.terminate();
-            } else {
-              workerThread.start();
+            if (IS_IOS) {
+              RNFS.readDir(RNFS.MainBundlePath).then(res => {
+                console.debug(
+                  'RNFS.MainBundlePath dir list:',
+                  res,
+                  res.map(item => item.name),
+                );
+              });
+            } else if (IS_ANDROID) {
+              RNFS.readDir(RNFS.DocumentDirectoryPath).then(res => {
+                console.debug(
+                  'RNFS.DocumentDirectoryPath dir list:',
+                  res,
+                  res.map(item => item.name),
+                );
+              });
             }
           }}
         />
       </View>
+
       <View
-        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        style={[
+          styles.secondarySectionContent,
+          { flexDirection: 'column', marginTop: 16, width: '100%' },
+        ]}>
+        <Text style={[styles.secondarySectionTitle, { fontSize: 18 }]}>
+          Lifecycle
+        </Text>
+        <View style={{ marginTop: 16, width: '100%' }}>
+          <Button
+            title={'Trigger WorkerThread Error'}
+            type="warning"
+            height={48}
+            containerStyle={{ height: '100%' }}
+            onPress={() => {
+              workerThread.remoteCall('@DevTest', {
+                purpose: 'triggerError',
+              });
+            }}
+          />
+          <Button
+            title={'Trigger Garbage Collection'}
+            type="primary"
+            height={48}
+            containerStyle={{ height: '100%', marginTop: 12 }}
+            onPress={() => {
+              workerThread.remoteCall('@DevTest', {
+                purpose: 'triggerGC',
+              });
+            }}
+          />
+        </View>
+      </View>
+
+      <View
+        style={[
+          styles.secondarySectionContent,
+          { flexDirection: 'column', marginTop: 16, width: '100%' },
+        ]}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 18, marginLeft: 2 },
+          ]}>
+          Remote Call
+        </Text>
         <View
           style={{
             flexDirection: 'row',
@@ -170,7 +268,6 @@ function DevWorker() {
             containerStyle={{ height: '100%' }}
             style={{ width: 100 }}
             onPress={() => {
-              workerThread.remoteCall('@DevTest');
               workerThread
                 .remoteCall('plus', {
                   leftValue: coerceInteger(plusData.leftValue),
@@ -182,47 +279,18 @@ function DevWorker() {
             }}
           />
         </View>
-      </View>
 
-      <View style={{ marginTop: 12 }}>
-        <Button
-          title={`Trigger Lending Data`}
-          type="ghost"
-          height={48}
-          containerStyle={{ height: '100%' }}
-          onPress={() => {
-            apisLending.fetchLendingData();
-          }}
-        />
-        <Button
-          title={
-            IS_IOS
-              ? `LS iOS MainBundlePath Dir List`
-              : `LS Android Assets Dir List`
-          }
-          type="ghost"
-          height={48}
-          containerStyle={{ marginTop: 12, height: '100%' }}
-          onPress={() => {
-            if (IS_IOS) {
-              RNFS.readDir(RNFS.MainBundlePath).then(res => {
-                console.debug(
-                  'RNFS.MainBundlePath dir list:',
-                  res,
-                  res.map(item => item.name),
-                );
-              });
-            } else if (IS_ANDROID) {
-              RNFS.readDir(RNFS.DocumentDirectoryPath).then(res => {
-                console.debug(
-                  'RNFS.DocumentDirectoryPath dir list:',
-                  res,
-                  res.map(item => item.name),
-                );
-              });
-            }
-          }}
-        />
+        <View style={{ marginTop: 12, width: '100%' }}>
+          <Button
+            title={`Trigger Lending Data`}
+            type="ghost"
+            height={48}
+            containerStyle={{ height: '100%' }}
+            onPress={() => {
+              apisLending.fetchLendingData();
+            }}
+          />
+        </View>
       </View>
 
       <View
@@ -291,6 +359,7 @@ const getStyles = createGetStyles2024(ctx =>
     areaTitle: {
       fontSize: 36,
       marginBottom: 12,
+      color: ctx.colors2024['neutral-title-1'],
     },
     screenScrollableView: {
       minHeight: '100%',

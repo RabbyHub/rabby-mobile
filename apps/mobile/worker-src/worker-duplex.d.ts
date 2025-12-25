@@ -24,7 +24,9 @@ type WorkerDuplexDefs = {
   //   }>;
   // };
   _DevTest: {
-    post: WorkerReq<'@DevTest'>;
+    post: WorkerReq<'@DevTest'> & {
+      purpose: 'triggerError' | 'triggerGC';
+    };
     response: WorkerResponse<
       '@DevTest',
       {
@@ -114,6 +116,14 @@ type WorkerSend = {
       '@errorReq',
       {
         errorCode: string | number;
+        error: string;
+      }
+    >
+  | WorkerMsg<
+      '@catchedError',
+      {
+        isFatal?: boolean;
+        scene?: string;
         error: string;
       }
     >

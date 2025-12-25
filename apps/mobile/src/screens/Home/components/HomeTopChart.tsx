@@ -3,7 +3,7 @@ import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Dimensions, Pressable, Text, View } from 'react-native';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
 import Animated, {
   Easing,
@@ -108,12 +108,12 @@ export const HomeTopChart = memo(function Chart({
               LinearGradientComponent={LoadingLinear}
             />
           ) : (
-            <ChartHeader />
+            <ChartHeader animOpacityStyle={animOpacityStyle} />
           )}
           <Animated.View style={[animOpacityStyle]}>
-            {fold ? null : isOffline ||
-              isNoAssets ||
-              !data.list.length ? null : !isLoadingChartData ? (
+            {isOffline ||
+            isNoAssets ||
+            !data.list.length ? null : !isLoadingChartData ? (
               <LineChart
                 height={104}
                 width={ScreenWidth - 32}
@@ -143,20 +143,16 @@ export const HomeTopChart = memo(function Chart({
 });
 
 interface IHeaderProps {
-  // loading: boolean;
-  // data: CurvePoint[];
+  animOpacityStyle: ReturnType<typeof useAnimatedStyle>;
 }
-const ChartHeader = ({}: IHeaderProps) => {
+const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const [isInitialized, setIsInitialized] = useState(false);
   const { currency, formatCurrentCurrency } = useCurrency();
 
-  const {
-    balanceLoadingWithoutLocal: loading,
-    isLoadingChartData,
-    selectData,
-  } = useSingleHomeHomeTopChart();
+  const { balanceLoadingWithoutLocal: loading, selectData } =
+    useSingleHomeHomeTopChart();
 
   const rawNetWorth = selectData.rawNetWorth;
   const changePercent = selectData.changePercent;
@@ -314,12 +310,10 @@ const ChartHeader = ({}: IHeaderProps) => {
           style={styles.netWorth}
           animatedProps={netWorthAnimatedProps}
         />
-        {fold ? null : (
-          <AnimateableText
-            style={styles.changeTime}
-            animatedProps={dateTimeAnimatedProps}
-          />
-        )}
+        <AnimateableText
+          style={[styles.changeTime, animOpacityStyle]}
+          animatedProps={dateTimeAnimatedProps}
+        />
       </View>
       <Pressable
         hitSlop={20}
@@ -383,6 +377,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    alignSelf: 'flex-start',
+    marginTop: 16,
+    // ...makeDebugBorder(),
   },
   netWorth: {
     fontSize: 42,

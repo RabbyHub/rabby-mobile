@@ -58,16 +58,23 @@ public class ReactContextBuilder {
     }
 
     private JavaScriptExecutorFactory getJSExecutorFactory() {
-        try {
-            String appName = Uri.encode(parentContext.getPackageName());
-            String deviceName = Uri.encode(getFriendlyDeviceName());
-            // If JSC is included, use it as normal
-            SoLoader.loadLibrary("jscexecutor");
-            return new JSCExecutorFactory(appName, deviceName);
-        } catch (UnsatisfiedLinkError jscE) {
-            // Otherwise use Hermes
-            return new HermesExecutorFactory();
-        }
+        HermesExecutorFactory hermesExecutorFactory = new HermesExecutorFactory();
+        String appName = Uri.encode(parentContext.getPackageName());
+        String deviceName = Uri.encode(getFriendlyDeviceName());
+
+        hermesExecutorFactory.setDebuggerName(appName + "|" + deviceName);
+
+        return hermesExecutorFactory;
+        // try {
+        //     String appName = Uri.encode(parentContext.getPackageName());
+        //     String deviceName = Uri.encode(getFriendlyDeviceName());
+        //     // If JSC is included, use it as normal
+        //     SoLoader.loadLibrary("jscexecutor");
+        //     return new JSCExecutorFactory(appName, deviceName);
+        // } catch (UnsatisfiedLinkError jscE) {
+        //     // Otherwise use Hermes
+        //     return new HermesExecutorFactory();
+        // }
     }
 
     public ReactApplicationContext build() throws Exception {

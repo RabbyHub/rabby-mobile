@@ -9,18 +9,8 @@ import './_setup';
 import { ThreadSelf, threadSelfEE } from './utils/ThreadSelf';
 import { stringUtils } from '@rabby-wallet/base-utils';
 
-globalThis.formatUserSummary = formatUserSummary;
-globalThis.formatUserSummaryAndIncentives = formatUserSummaryAndIncentives;
-
 // // send a message, strings only
 // ThreadSelf.postMessage('hello');
-
-setInterval(() => {
-  ThreadSelf.postMessage({
-    type: 'ack',
-    time: Date.now(),
-  });
-}, 3000);
 
 threadSelfEE.addListener('msgToThread', message => {
   const msgData = stringUtils.safeParseJSON(message) as null | WorkerDuplexPost;
@@ -92,6 +82,26 @@ threadSelfEE.addListener('msgToThread', message => {
       break;
     }
     case '@DevTest': {
+      if (msgData.purpose === 'triggerError') {
+        ThreadSelf.postMessage({
+          type: 'response:@DevTest',
+          reqid: msgData.reqid,
+          data: {
+            result: 'This will trigger an error',
+          },
+        });
+        throw new Error('DevTest triggered error in Worker thread');
+      } else if (msgData.purpose === 'triggerGC') {
+        globalThis.gc?.();
+        ThreadSelf.postMessage({
+          type: 'response:@DevTest',
+          reqid: msgData.reqid,
+          data: {
+            result: 'Garbage collection triggered',
+          },
+        });
+        return;
+      }
       ThreadSelf.postMessage({
         type: 'response:@DevTest',
         reqid: msgData.reqid,

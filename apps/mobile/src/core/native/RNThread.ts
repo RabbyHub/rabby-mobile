@@ -85,7 +85,7 @@ export class Thread {
         const sub = this.onThreadMessage(message => {
           if (message.type === `response:${type}` && message.reqid === reqid) {
             console.debug(
-              '[perf] remoteCall:: type, message, reqid',
+              '[perf] remoteCall::response type, message, reqid',
               type,
               message,
               reqid,
