@@ -2,15 +2,18 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { useTheme2024 } from '@/hooks/theme';
 import { DisplayPoolReserveInfo } from '../type';
 import { Tip } from '@/components';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 interface IProps {
+  label?: React.ReactNode;
   reserve: DisplayPoolReserveInfo;
   canBeEnabledAsCollateral: boolean;
   onValueChange: (value: boolean) => void;
 }
 export const CollateralSwitch: React.FC<IProps> = ({
+  label,
   reserve,
   canBeEnabledAsCollateral,
   onValueChange,
@@ -22,7 +25,9 @@ export const CollateralSwitch: React.FC<IProps> = ({
 
   if (!canBeEnabledAsCollateral) {
     return (
-      <Tip content={t('page.Lending.supplyDetail.isolatedTips')}>
+      <Tip
+        as="RNGHPressable"
+        content={t('page.Lending.supplyDetail.isolatedTips')}>
         <AppSwitch2024
           value={false}
           disabled={true}

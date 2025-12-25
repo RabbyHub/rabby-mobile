@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatNetworth } from '@/utils/math';
 import { estDaily, formatApy } from '../../utils/format';
@@ -199,43 +199,51 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
                   styles.metricItemCompact,
                   isHFEmpty(Number(healthFactor || '0')) && styles.hidden,
                 ]}>
-                <View style={styles.healthFactorHeader}>
-                  <Text style={styles.metricLabel}>{t('page.Lending.hf')}</Text>
-                  <HFTipsContent
-                    visible={hfTipsVisible}
-                    onHide={() => setHfTipsVisible(false)}
-                    onMorePress={handleShowHFDescription}>
-                    <WarningFillCC
-                      width={12}
-                      height={12}
-                      onPress={() => setHfTipsVisible(true)}
-                      color={colors2024['neutral-secondary']}
-                    />
-                  </HFTipsContent>
-                </View>
-                <View style={styles.healthRow}>
-                  <Text
-                    style={[styles.healthValue, { color: healthStatus.color }]}>
-                    {getHealthFactorText(healthFactor)}
-                  </Text>
-                  {extraInfo && (
-                    <View
-                      style={[
-                        styles.healthTag,
-                        { backgroundColor: healthStatus.backgroundColor },
-                      ]}>
+                <HFTipsContent
+                  visible={hfTipsVisible}
+                  onHide={() => setHfTipsVisible(false)}
+                  onMorePress={handleShowHFDescription}>
+                  <Pressable
+                    style={[styles.metricItem, { paddingHorizontal: 0 }]}
+                    onPress={() => setHfTipsVisible(true)}>
+                    <View style={styles.healthFactorHeader}>
+                      <Text style={styles.metricLabel}>
+                        {t('page.Lending.hf')}
+                      </Text>
+                      <WarningFillCC
+                        width={12}
+                        height={12}
+                        color={colors2024['neutral-secondary']}
+                      />
+                    </View>
+                    <View style={styles.healthRow}>
                       <Text
                         style={[
-                          styles.healthTagText,
-                          {
-                            color: healthStatus.color,
-                          },
+                          styles.healthValue,
+                          { color: healthStatus.color },
                         ]}>
-                        {healthStatus.label}
+                        {getHealthFactorText(healthFactor)}
                       </Text>
+                      {extraInfo && (
+                        <View
+                          style={[
+                            styles.healthTag,
+                            { backgroundColor: healthStatus.backgroundColor },
+                          ]}>
+                          <Text
+                            style={[
+                              styles.healthTagText,
+                              {
+                                color: healthStatus.color,
+                              },
+                            ]}>
+                            {healthStatus.label}
+                          </Text>
+                        </View>
+                      )}
                     </View>
-                  )}
-                </View>
+                  </Pressable>
+                </HFTipsContent>
               </View>
               <View style={[styles.metricItem, styles.metricItemCompact]}>
                 <Text style={styles.metricLabel}>
@@ -402,6 +410,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   closeButton: {},
   parentWrapperStyle: {
     width: '100%',
+    flex: 1,
+    gap: 6,
   },
   contentStyle: {
     paddingHorizontal: 12,

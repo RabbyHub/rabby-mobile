@@ -493,8 +493,6 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     prefetchMiniSigner,
   ]);
 
-  console.debug('[feat] supplyAmount', supplyAmount);
-
   const emptyAmount = !supplyAmount.amount || supplyAmount.amount === '0';
 
   return (
