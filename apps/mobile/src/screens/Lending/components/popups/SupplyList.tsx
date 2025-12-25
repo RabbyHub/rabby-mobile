@@ -296,6 +296,13 @@ const LendingSupplyList: React.FC<
                 ellipsizeMode="tail">
                 {data.reserve.symbol}
               </Text>
+              {!!isWrapperToken && chainEnum && (
+                <Text style={styles.wrapperTokenText}>
+                  {t('page.Lending.list.item.wrapperToken', {
+                    name: wrapperToken[chainEnum]?.origin?.symbol,
+                  })}
+                </Text>
+              )}
             </View>
           </View>
           <Text style={styles.tvl}>
@@ -309,7 +316,7 @@ const LendingSupplyList: React.FC<
         </TouchableOpacity>
       );
     },
-    [chainEnum, foldHideList, handlePressItem, search, styles],
+    [chainEnum, foldHideList, handlePressItem, search, styles, t],
   );
 
   const renderFooterComponent = useCallback(() => {
@@ -440,7 +447,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 8,
   },
   apy: {
-    width: 100,
+    width: 80,
     textAlign: 'right',
     fontSize: 16,
     lineHeight: 20,
@@ -450,11 +457,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   right: {
     flex: 0,
-    width: 100,
+    width: 80,
     gap: 2,
   },
   tvl: {
-    width: 100,
+    width: 80,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
@@ -464,6 +471,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   symbolContainer: {
     gap: 2,
+  },
+  wrapperTokenText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: colors2024['neutral-info'],
+    fontFamily: 'SF Pro Rounded',
   },
   symbol: {
     fontSize: 16,
@@ -536,7 +550,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
-    width: 100,
+    width: 80,
     flex: 0,
     textAlign: 'right',
   },
@@ -544,7 +558,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
-    width: 100,
+    width: 80,
     textAlign: 'right',
     flex: 0,
   },

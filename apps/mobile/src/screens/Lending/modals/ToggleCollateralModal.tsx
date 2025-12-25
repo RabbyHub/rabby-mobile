@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { atom, useAtom } from 'jotai';
-import { DisplayPoolReserveInfo, UserSummary } from '../type';
+import { DisplayPoolReserveInfo } from '../type';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import ToggleCollateralOverView from '../components/actions/ToggleCollateralOverView';
@@ -324,7 +324,7 @@ function ToggleCollateralContent({}: {}) {
         }
 
         const txId = last(results);
-        if (txId) {
+        if (txId && txs[0]) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
             txs[0].chainId,

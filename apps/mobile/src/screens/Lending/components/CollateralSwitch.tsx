@@ -4,7 +4,6 @@ import { DisplayPoolReserveInfo } from '../type';
 import { Tip } from '@/components';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
 
 interface IProps {
   label?: React.ReactNode;
@@ -12,6 +11,7 @@ interface IProps {
   canBeEnabledAsCollateral: boolean;
   onValueChange: (value: boolean) => void;
 }
+const HIT_SLOP = { top: 5, bottom: 5, left: 50, right: 0 };
 export const CollateralSwitch: React.FC<IProps> = ({
   label,
   reserve,
@@ -36,6 +36,7 @@ export const CollateralSwitch: React.FC<IProps> = ({
           backgroundActive={colors2024['green-default']}
           circleBorderActiveColor={colors2024['green-default']}
           onValueChange={onValueChange}
+          hitSlop={HIT_SLOP}
         />
       </Tip>
     );
@@ -49,6 +50,7 @@ export const CollateralSwitch: React.FC<IProps> = ({
       backgroundActive={colors2024['green-default']}
       circleBorderActiveColor={colors2024['green-default']}
       onValueChange={onValueChange}
+      hitSlop={HIT_SLOP}
     />
   );
 };

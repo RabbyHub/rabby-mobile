@@ -2708,7 +2708,8 @@
         },
         "item": {
           "__skip_translation": ["tvl"],
-          "tvl": "TVL"
+          "tvl": "TVL",
+          "wrapperToken": "Wrapped token for {{name}}"
         }
       },
       "summary": {
