@@ -213,6 +213,7 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
 
   const handlePressBorrow = () => {
     onClose?.();
+    if (!reserve || !userSummary) return;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.BORROW_ACTION_DETAIL,
       reserve,
@@ -232,6 +233,7 @@ export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
   };
   const handlePressRepay = () => {
     onClose?.();
+    if (!reserve || !userSummary) return;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.REPAY_ACTION_DETAIL,
       reserve,

@@ -149,9 +149,10 @@ export const SupplyDetailPopup: React.FC<OpenDetailProps> = ({
 
   const handlePressSupply = () => {
     onClose?.();
+    if (!reserve || !userSummary) return;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
-      reserve: reserve,
+      reserve,
       userSummary,
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
@@ -168,9 +169,10 @@ export const SupplyDetailPopup: React.FC<OpenDetailProps> = ({
   };
   const handlePressWithdraw = () => {
     onClose?.();
+    if (!reserve || !userSummary) return;
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.WITHDRAW_ACTION_DETAIL,
-      reserve: reserve,
+      reserve,
       userSummary,
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);

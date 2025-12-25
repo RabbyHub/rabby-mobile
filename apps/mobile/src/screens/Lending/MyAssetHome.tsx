@@ -135,7 +135,7 @@ const MyAssetHome: React.FC = () => {
   const handleOpenSupplyList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.LENDING_SUPPLY_LIST,
-      onClose: () => {
+      onCancel: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
       bottomSheetModalProps: {
@@ -162,7 +162,7 @@ const MyAssetHome: React.FC = () => {
             : colors2024['neutral-bg-1'],
         },
       },
-      onClose: () => {
+      onCancel: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
     });

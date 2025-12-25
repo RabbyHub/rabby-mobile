@@ -14,7 +14,10 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  GlobalModalViewProps,
+  MODAL_NAMES,
+} from '@/components2024/GlobalBottomSheetModal/types';
 import {
   useFetchLendingData,
   useLendingIsLoading,
@@ -45,7 +48,9 @@ type SupplyListItem =
   | { type: 'reserve'; data: DisplayPoolReserveInfo }
   | { type: 'toggle_fold' };
 
-const LendingSupplyList: React.FC = () => {
+const LendingSupplyList: React.FC<
+  GlobalModalViewProps<MODAL_NAMES.LENDING_SUPPLY_LIST>
+> = ({}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { reserves } = useLendingRemoteData();
@@ -200,10 +205,13 @@ const LendingSupplyList: React.FC = () => {
 
   const handlePressItem = useCallback(
     (item: DisplayPoolReserveInfo) => {
+      const reserve = getTargetReserve(item.reserve.underlyingAsset);
+      const userSummary = iUserSummary;
+      if (!reserve || !userSummary) return;
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
-        reserve: getTargetReserve(item.reserve.underlyingAsset),
-        userSummary: iUserSummary,
+        reserve,
+        userSummary,
         onClose: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },

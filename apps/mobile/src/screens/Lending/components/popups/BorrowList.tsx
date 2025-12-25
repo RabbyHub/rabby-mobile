@@ -260,10 +260,13 @@ const LendingBorrowList: React.FC = () => {
 
   const handlePressItem = useCallback(
     (item: DisplayPoolReserveInfo) => {
+      const reserve = getTargetReserve(item.reserve.underlyingAsset);
+      const userSummary = iUserSummary;
+      if (!reserve || !userSummary) return;
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.BORROW_ACTION_DETAIL,
-        reserve: getTargetReserve(item.reserve.underlyingAsset),
-        userSummary: iUserSummary,
+        reserve,
+        userSummary,
         onClose: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
