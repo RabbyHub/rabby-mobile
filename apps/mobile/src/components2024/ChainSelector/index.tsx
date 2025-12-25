@@ -68,6 +68,7 @@ export const ChainSelector = ({
   const { t } = useTranslation();
 
   const activeSelectChainPopup = () => {
+    if (!account) return;
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       value: value,

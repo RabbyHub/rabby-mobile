@@ -16,6 +16,8 @@ const marketList: MarketDataType[] = Object.values(marketsData);
 
 interface IProps {
   value: CustomMarket;
+  /** @deprecated */
+  titleText?: string;
   onChange: (market: CustomMarket) => void;
 }
 const FOOTER_COMPONENT_HEIGHT = 32;

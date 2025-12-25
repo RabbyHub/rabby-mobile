@@ -129,7 +129,7 @@ const useChainSeletorList = ({
 };
 
 export type SelectSortedChainProps = {
-  value?: CHAINS_ENUM;
+  value?: CHAINS_ENUM | null;
   onChange?: (value: CHAINS_ENUM) => void;
   supportChains?: CHAINS_ENUM[];
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
@@ -181,13 +181,13 @@ export default function SelectChainWithSummary({
     if (excludeChains?.length) {
       return [_matteredList, _unmatteredList].map(chains =>
         chains.filter(e => !excludeChains.includes(e.enum)),
-      );
+      ) as [Chain[], Chain[]];
     }
     return [_matteredList, _unmatteredList];
   }, [excludeChains, _matteredList, _unmatteredList]);
 
   useEffect(() => {
-    const chain = findChainByEnum(value);
+    const chain = findChainByEnum(value ?? undefined);
     const isTestnet = !!chain?.isTestnet;
     if (isTestnet) {
       onTabChange('testnet');
@@ -283,7 +283,7 @@ export default function SelectChainWithSummary({
             style={styles.innerBlock}
             matteredList={matteredList}
             unmatteredList={unmatteredList}
-            value={value}
+            value={value ?? undefined}
             onChange={onChange}
             supportChains={supportChains}
             disabledTips={disabledTips}
