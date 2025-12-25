@@ -1,14 +1,32 @@
-import { Thread } from '@/core/native/RNThread';
+import { Thread, ThreadError } from '@/core/native/RNThread';
 
-import { RefLikeObject } from '@/utils/type';
-
-const threadRef: RefLikeObject<Thread | null> = { current: null };
 // relative path from the app bundle root
-threadRef.current = new Thread('worker-src/worker.thread.js');
-
-export const workerThread = threadRef.current!;
+export const workerThread = new Thread('worker-src/worker.thread.js');
 
 export function startComputationThread() {
-  const thread = threadRef.current!;
-  thread.start();
+  workerThread.start();
+}
+
+type Context = {
+  workThread: Thread;
+  rpcCall: Thread['remoteCall'];
+};
+export async function rpcCallAndFallback<
+  T extends (ctx: Context, ...args: any[]) => Promise<any>,
+>(fn: T, fallback: () => Awaited<ReturnType<T>> | ReturnType<T>) {
+  try {
+    if (!__DEV__ || !workerThread.isRunning) {
+      throw new Error(ThreadError.Timeout);
+    }
+    return fn({
+      workThread: workerThread,
+      rpcCall: workerThread.remoteCall.bind(workerThread),
+    });
+  } catch (error: any) {
+    const msg = error.message;
+    if (msg === ThreadError.Timeout) {
+      return fallback();
+    }
+    throw error;
+  }
 }

@@ -31,6 +31,7 @@ import { NextInput } from '@/components2024/Form/Input';
 import { coerceInteger } from '@/utils/number';
 import { apisLending } from '../Lending/hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { worker_plus } from '@/perfs/workerReq';
 
 export const makeNoop = () => () => {};
 
@@ -268,14 +269,12 @@ function DevWorker() {
             containerStyle={{ height: '100%' }}
             style={{ width: 100 }}
             onPress={() => {
-              workerThread
-                .remoteCall('plus', {
-                  leftValue: coerceInteger(plusData.leftValue),
-                  rightValue: coerceInteger(plusData.rightValue),
-                })
-                .then(res => {
-                  toast.success(`plus result: ${res}`);
-                });
+              worker_plus(
+                coerceInteger(plusData.leftValue),
+                coerceInteger(plusData.rightValue),
+              ).then(res => {
+                toast.success(`plus result: ${res}`);
+              });
             }}
           />
         </View>
