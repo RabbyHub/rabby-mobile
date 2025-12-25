@@ -85,15 +85,24 @@ const getMarketInfo = (market?: CustomMarket) => {
   };
 };
 
+function useSelectedMarketKey() {
+  const [marketKey, setMarketKey] = useAtom(marketAtom);
+
+  return {
+    marketKey: marketKey,
+    setMarketKey: setMarketKey,
+  };
+}
+
 export const useSelectedMarket = () => {
-  const [market, setMarket] = useAtom(marketAtom);
+  const { marketKey, setMarketKey: setMarket } = useSelectedMarketKey();
   const { marketData, chainEnum, chainInfo, isMainnet } = useMemo(
-    () => getMarketInfo(market),
-    [market],
+    () => getMarketInfo(marketKey),
+    [marketKey],
   );
 
   return {
-    marketKey: market,
+    marketKey: marketKey,
     selectedMarketData: marketData,
     setMarketKey: setMarket,
     chainEnum,
@@ -156,8 +165,8 @@ const getCachePools = (marketKey?: CustomMarket) => {
   return newPools;
 };
 
-const fetchContractData = async (address: string) => {
-  const selectedMarketData = getSelectedMarketInfo().marketData;
+const fetchContractData = async (address: string, marketKey?: CustomMarket) => {
+  const selectedMarketData = getSelectedMarketInfo(marketKey).marketData;
   const pools = getPools();
   if (!selectedMarketData || !pools) {
     return {};
@@ -226,7 +235,7 @@ type RemoteDataState = {
   eModes: EmodeDataHumanized[] | undefined;
 };
 
-function getInitData() {
+function getInitRemoteData() {
   return {
     reserves: undefined,
     userReserves: undefined,
@@ -234,20 +243,62 @@ function getInitData() {
     eModes: undefined,
   };
 }
-// const addressAtom = atom<string | undefined>(undefined);
-// const loadingAtom = atom<boolean>(false);
-// const refreshHistoryIdAtom = atom<number>(0);
+type RemoteDataKey = `${CustomMarket}::${string}`;
+function encodeRemoteDataKey(
+  marketKey: CustomMarket,
+  address: string,
+): RemoteDataKey {
+  return `${marketKey}::${address}`;
+}
+const remoteDataState = zCreate<{
+  [P in RemoteDataKey]: RemoteDataState;
+}>(() => {
+  return {};
+});
 
-// const remoteDataAtom = atom<RemoteDataState>(getInitData());
-const remoteDataState = zCreate<RemoteDataState>(() => getInitData());
+function useCurrentLendingDataKey() {
+  const { marketKey } = useSelectedMarketKey();
+  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
+  const currentAddress = finalSceneCurrentAccount?.address || '';
+  const lendingDataKey = useMemo(() => {
+    return !currentAddress
+      ? ''
+      : encodeRemoteDataKey(marketKey, currentAddress);
+  }, [currentAddress, marketKey]);
+
+  return {
+    marketKey,
+    currentAddress,
+    lendingDataKey,
+  };
+}
+
+const DEFAULT_LENDING_REMOTE_DATA = getInitRemoteData();
+export function useLendingRemoteData() {
+  const { lendingDataKey } = useCurrentLendingDataKey();
+
+  const { reserves, userReserves, walletBalances, eModes } = remoteDataState(
+    useShallow(
+      s =>
+        (s[lendingDataKey] as RemoteDataState) || DEFAULT_LENDING_REMOTE_DATA,
+    ),
+  );
+
+  return {
+    reserves,
+    userReserves,
+    walletBalances,
+    eModes,
+  };
+}
 
 const lendingLoadState = zCreate<{
-  address: string | undefined;
-  loading: boolean;
+  addrMarketLoading: Record<string, boolean>;
   refreshHistoryId: number;
 }>(() => ({
-  address: undefined,
-  loading: false,
+  addrMarketLoading: {},
   refreshHistoryId: 0,
 }));
 
@@ -261,14 +312,6 @@ function mapItem<T extends IconSymbolInterface>(item: T): T {
 function re_formatReserves(params: Parameters<typeof formatReserves>[0]) {
   return (formatReserves(params) || []).map(mapItem);
 }
-
-// function re_formatReservesAndIncentives(
-//   params: Parameters<typeof formatReservesAndIncentives>[0],
-// ) {
-//   return (formatReservesAndIncentives(params) || []).map(
-//     mapItem,
-//   ) as unknown as FormattedReservesAndIncentives[];
-// }
 
 const DEFAULT_RESERVES_AND_INCENTIVES = {
   formattedReserves: null as null | ReturnType<typeof re_formatReserves>,
@@ -329,23 +372,26 @@ async function computeFormattedReservesAndIncentives({
 }
 
 export function useFormattedReservesAtom() {
-  // return formattedReservesAndIncentivesState(s => s.formattedReserves);
+  const { lendingDataKey } = useCurrentLendingDataKey();
   return computedInfoState(
-    s => s.formattedReservesAndIncentivesState.formattedReserves,
+    useShallow(
+      s =>
+        getComputedInfoByKey(lendingDataKey).formattedReservesAndIncentivesState
+          .formattedReserves,
+    ),
   );
 }
 
 export function useFormattedPoolReservesAndIncentivesAtom() {
-  // return formattedReservesAndIncentivesState(
-  //   s => s.formattedPoolReservesAndIncentives,
-  // );
+  const { lendingDataKey } = useCurrentLendingDataKey();
   return computedInfoState(
-    s =>
-      s.formattedReservesAndIncentivesState.formattedPoolReservesAndIncentives,
+    useShallow(
+      s =>
+        getComputedInfoByKey(lendingDataKey).formattedReservesAndIncentivesState
+          .formattedPoolReservesAndIncentives,
+    ),
   );
 }
-
-// const iUserSummaryState = zCreate<null | UserSummary>(() => null);
 
 async function computeIUserSummary({
   userReserves,
@@ -354,8 +400,6 @@ async function computeIUserSummary({
 }: Pick<RemoteDataState, 'userReserves' | 'reserves'> & {
   formattedReserves: ReturnType<typeof formatReservesAndIncentives> | null;
 }) {
-  // const formattedReserves = formattedReservesAndIncentivesState.getState().formattedReserves;
-
   if (!userReserves || !formattedReserves) {
     return null;
   }
@@ -405,14 +449,6 @@ type ExtractStateType<T> = T extends UseBoundStore<StoreApi<infer U>>
   ? U
   : never;
 type MappedBalances = Array<{ address: string; amount: string }>;
-// const mappedBalancesState = zCreate<
-//   Array<{
-//     address: string;
-//     amount: string;
-//   }>
-// >(() => {
-//   return [];
-// });
 
 function computeMappedBalances({
   walletBalances,
@@ -423,10 +459,6 @@ function computeMappedBalances({
     amount: balances[ix]?.toString() || '',
   }));
 }
-
-// const displayPoolReservesState = zCreate<DisplayPoolReserveInfo[]>(() => {
-//   return [];
-// });
 
 function computeDisplayPoolReserves({
   reserves,
@@ -556,9 +588,6 @@ function computeWrapperPoolReserveAndFinalDisplayPoolReserves({
   };
 }
 
-// const apyInfoState = zCreate<null | ReturnType<typeof formatUserYield>>(
-//   () => null,
-// );
 function computeApyInfo({
   formattedPoolReservesAndIncentives,
   iUserSummary,
@@ -573,7 +602,7 @@ function computeApyInfo({
   return formatUserYield(formattedPoolReservesAndIncentives, iUserSummary);
 }
 
-const computedInfoState = zCreate<{
+type IndexedComputedInfo = {
   formattedReservesAndIncentivesState: typeof DEFAULT_RESERVES_AND_INCENTIVES;
   iUserSummary: null | UserSummary;
   mappedBalances: { address: string; amount: string }[];
@@ -582,7 +611,8 @@ const computedInfoState = zCreate<{
     typeof computeWrapperPoolReserveAndFinalDisplayPoolReserves
   >;
   apyInfo: null | ReturnType<typeof formatUserYield>;
-}>(() => {
+};
+function getInitComputedInfo(): IndexedComputedInfo {
   return {
     formattedReservesAndIncentivesState: DEFAULT_RESERVES_AND_INCENTIVES,
     iUserSummary: null,
@@ -594,7 +624,19 @@ const computedInfoState = zCreate<{
     },
     apyInfo: null,
   };
+}
+const DEFAULT_COMPUTED_INFO = getInitComputedInfo();
+const computedInfoState = zCreate<{
+  [P in RemoteDataKey]: IndexedComputedInfo;
+}>(() => {
+  return {};
 });
+function getComputedInfoByKey(
+  lendingDataKey: string,
+  state = computedInfoState.getState(),
+) {
+  return state[lendingDataKey as RemoteDataKey] || DEFAULT_COMPUTED_INFO;
+}
 
 function setRefreshHistoryId(valOrFunc: UpdaterOrPartials<number>) {
   lendingLoadState.setState(prev => {
@@ -628,71 +670,106 @@ const preQueryParams: {
 // >> = { current: null };
 const globalSets = {
   setRemoteData: debounce(
-    async (valOrFunc: UpdaterOrPartials<RemoteDataState>) => {
+    async (
+      addr: string,
+      marketKey: CustomMarket,
+      valOrFunc: UpdaterOrPartials<RemoteDataState>,
+    ) => {
+      const lendingDataKey = encodeRemoteDataKey(marketKey, addr);
+
       const prev = remoteDataState.getState();
-      const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      const prevData = prev[lendingDataKey] || getInitRemoteData();
+      const { newVal } = resolveValFromUpdater(prevData, valOrFunc, {
         strict: false,
       });
 
-      const computed = await computeFormattedReservesAndIncentives(newVal);
-      // formattedReservesAndIncentivesState.setState(computed);
+      const formattedReservesAndIncentives =
+        await computeFormattedReservesAndIncentives(newVal);
 
-      const computed2 = await computeIUserSummary({
+      const iUserSummary = await computeIUserSummary({
         ...newVal,
-        formattedReserves: computed.formattedReserves,
+        formattedReserves: formattedReservesAndIncentives.formattedReserves,
       });
 
-      const computed3 = computeMappedBalances({
+      const mappedBalances = computeMappedBalances({
         walletBalances: newVal.walletBalances,
       });
 
-      const computed4 = computeDisplayPoolReserves({
+      const displayPoolReserves = computeDisplayPoolReserves({
         ...newVal,
-        iUserSummary: computed2 as UserSummary,
-        mappedBalances: computed3,
+        iUserSummary: iUserSummary as UserSummary,
+        mappedBalances: mappedBalances,
         market: jotaiStore.get(marketAtom),
       });
 
-      const computed5 = computeWrapperPoolReserveAndFinalDisplayPoolReserves({
-        displayPoolReserves: computed4,
-        formattedPoolReservesAndIncentives:
-          computed.formattedPoolReservesAndIncentives,
-        mappedBalances: computed3,
-        reserves: newVal.reserves,
-        market: jotaiStore.get(marketAtom),
-      });
+      const wrapperPoolReserveAndFinalDisplayPoolReserves =
+        computeWrapperPoolReserveAndFinalDisplayPoolReserves({
+          displayPoolReserves: displayPoolReserves,
+          formattedPoolReservesAndIncentives:
+            formattedReservesAndIncentives.formattedPoolReservesAndIncentives,
+          mappedBalances: mappedBalances,
+          reserves: newVal.reserves,
+          market: jotaiStore.get(marketAtom),
+        });
 
-      const computed6 = computeApyInfo({
+      const apyInfo = computeApyInfo({
         formattedPoolReservesAndIncentives:
-          computed.formattedPoolReservesAndIncentives,
-        iUserSummary: computed2 as UserSummary,
+          formattedReservesAndIncentives.formattedPoolReservesAndIncentives,
+        iUserSummary: iUserSummary as UserSummary,
       });
 
       console.debug('[perf] lending:: remote data will be set', newVal);
-      remoteDataState.setState(newVal);
-      computedInfoState.setState({
-        formattedReservesAndIncentivesState: computed,
-        iUserSummary: computed2 as UserSummary,
-        mappedBalances: computed3,
-        displayPoolReserves: computed4,
-        wrapperPoolReserveAndFinalDisplayPoolReserves: computed5,
-        apyInfo: computed6,
+      remoteDataState.setState({
+        ...prev,
+        [lendingDataKey]: newVal,
+      });
+
+      computedInfoState.setState(prev => {
+        return {
+          ...prev,
+          [lendingDataKey]: {
+            formattedReservesAndIncentivesState: formattedReservesAndIncentives,
+            iUserSummary: iUserSummary,
+            mappedBalances: mappedBalances,
+            displayPoolReserves: displayPoolReserves,
+            wrapperPoolReserveAndFinalDisplayPoolReserves:
+              wrapperPoolReserveAndFinalDisplayPoolReserves,
+            apyInfo: apyInfo,
+          },
+        };
       });
     },
     200,
   ),
 
-  setLoading: (value: boolean) => {
+  setLoading: (
+    loading: boolean,
+    indexes?: {
+      address?: string;
+      marketKey?: CustomMarket;
+    },
+  ) => {
+    const marketKey = indexes?.marketKey || getMarketKey();
+    const address =
+      indexes?.address ||
+      storeApiAccountsSwitcher.getSceneAccountInfo({
+        forScene: 'Lending',
+      }).finalSceneCurrentAccount?.address;
+
+    if (!address || !marketKey) {
+      console.warn('setLoading missing params', { address, marketKey });
+      return;
+    }
+
+    const lendingDataKey = encodeRemoteDataKey(marketKey, address);
     lendingLoadState.setState(prev => ({
       ...prev,
-      loading: value,
+      addrMarketLoading: {
+        ...prev.addrMarketLoading,
+        [lendingDataKey]: loading,
+      },
     }));
   },
-  setCurrentAddress: (value: string) =>
-    lendingLoadState.setState(prev => ({
-      ...prev,
-      currentAddress: value,
-    })),
 };
 
 const fetchLendingData = makeSWRKeyAsyncFunc(
@@ -707,7 +784,6 @@ const fetchLendingData = makeSWRKeyAsyncFunc(
         forScene: 'Lending',
       }).finalSceneCurrentAccount?.address,
       ignoreLoading,
-      persistOnly = false,
       marketKey: paramMarketKey,
     } = options || {};
 
@@ -727,17 +803,16 @@ const fetchLendingData = makeSWRKeyAsyncFunc(
     preQueryParams.address = requestAddress;
     preQueryParams.marketKey = marketKey;
     if (!isForceIgnoreLoading) {
-      globalSets.setLoading(true);
+      globalSets.setLoading(true, { address: requestAddress, marketKey });
     }
-    return fetchContractData(requestAddress)
+    return fetchContractData(requestAddress, marketKey)
       .then(async data => {
-        await globalSets.setRemoteData(data);
+        globalSets.setRemoteData(requestAddress, marketKey, data);
 
-        globalSets.setCurrentAddress(requestAddress);
-        globalSets.setLoading(false);
+        globalSets.setLoading(false, { address: requestAddress, marketKey });
       })
       .catch(() => {
-        globalSets.setLoading(false);
+        globalSets.setLoading(false, { address: requestAddress, marketKey });
       });
   },
   ctx => {
@@ -748,8 +823,8 @@ const fetchLendingData = makeSWRKeyAsyncFunc(
   },
 );
 
-function getSelectedMarketInfo() {
-  const market = jotaiStore.get(marketAtom);
+function getSelectedMarketInfo(marketKey?: CustomMarket) {
+  const market = marketKey || jotaiStore.get(marketAtom);
   return getMarketInfo(market);
 }
 function getMarketKey() {
@@ -758,7 +833,7 @@ function getMarketKey() {
 }
 function getPools() {
   const marketKey = getMarketKey();
-  const selectedMarketData = getSelectedMarketInfo().marketData;
+  const selectedMarketData = getSelectedMarketInfo(marketKey).marketData;
   if (!marketKey || !selectedMarketData) {
     return undefined;
   }
@@ -775,7 +850,7 @@ const useFetchLendingData = () => {
     forScene: 'Lending',
   });
 
-  const { marketKey } = useSelectedMarket();
+  const { marketKey } = useSelectedMarketKey();
 
   const fetchData = useCallback(
     (ignoreLoading?: boolean) => {
@@ -796,7 +871,7 @@ const useFetchLendingData = () => {
 const useLendingSummary = () => {
   console.debug('[perf] useLendingSummary:: called');
   const { iUserSummary } = useLendingISummary();
-
+  const { lendingDataKey } = useCurrentLendingDataKey();
   const {
     formattedReservesAndIncentivesState: { formattedPoolReservesAndIncentives },
     wrapperPoolReserveAndFinalDisplayPoolReserves: {
@@ -804,7 +879,9 @@ const useLendingSummary = () => {
       wrapperPoolReserve,
     },
     apyInfo,
-  } = computedInfoState();
+  } = computedInfoState<IndexedComputedInfo>(
+    useShallow(s => getComputedInfoByKey(lendingDataKey)),
+  );
 
   const getTargetReserve = useCallback(
     (underlyingAsset: string) => {
@@ -825,9 +902,6 @@ const useLendingSummary = () => {
   );
 
   return {
-    // reserves,
-    // userReserves,
-    // walletBalances,
     displayPoolReserves: finalDisplayPoolReserves,
     iUserSummary,
     formattedPoolReservesAndIncentives,
@@ -837,60 +911,47 @@ const useLendingSummary = () => {
   };
 };
 
-export function useLendingRemoteData() {
-  const { reserves, userReserves, walletBalances, eModes } = remoteDataState(
-    s => s,
-  );
-  // const { reserves, userReserves, walletBalances, eModes } = useAtomValue(remoteDataAtom);
-
-  return {
-    reserves,
-    userReserves,
-    walletBalances,
-    eModes,
-  };
-}
-
 export function useLendingSummaryCard() {
-  // const iUserSummary = iUserSummaryState(
-  //   useShallow(s => ({
-  //     totalLiquidityMarketReferenceCurrency:
-  //       s?.totalLiquidityMarketReferenceCurrency || '0',
-  //     healthFactor: s?.healthFactor || '0',
-  //     netWorthUSD: s?.netWorthUSD || '0',
-  //     totalBorrowsUSD: s?.totalBorrowsUSD || '0',
-  //     totalLiquidityUSD: s?.totalLiquidityUSD || '0',
-  //   })),
-  // );
-  // const netAPY = apyInfoState(useCallback(apy => apy?.netAPY || 0, []));
+  const { lendingDataKey } = useCurrentLendingDataKey();
   const iUserSummary = computedInfoState(
-    useShallow(s => ({
-      totalLiquidityMarketReferenceCurrency:
-        s.iUserSummary?.totalLiquidityMarketReferenceCurrency || '0',
-      healthFactor: s.iUserSummary?.healthFactor || '0',
-      netWorthUSD: s.iUserSummary?.netWorthUSD || '0',
-      totalBorrowsUSD: s.iUserSummary?.totalBorrowsUSD || '0',
-      totalLiquidityUSD: s.iUserSummary?.totalLiquidityUSD || '0',
-    })),
+    useShallow(s => {
+      const ss: IndexedComputedInfo =
+        s[lendingDataKey] || getInitComputedInfo();
+      return {
+        totalLiquidityMarketReferenceCurrency:
+          ss.iUserSummary?.totalLiquidityMarketReferenceCurrency || '0',
+        healthFactor: ss.iUserSummary?.healthFactor || '0',
+        netWorthUSD: ss.iUserSummary?.netWorthUSD || '0',
+        totalBorrowsUSD: ss.iUserSummary?.totalBorrowsUSD || '0',
+        totalLiquidityUSD: ss.iUserSummary?.totalLiquidityUSD || '0',
+      };
+    }),
   );
-  const { apyInfo } = computedInfoState();
+  const apyInfo = computedInfoState(
+    useShallow(s => getComputedInfoByKey(lendingDataKey).apyInfo),
+  );
   const netAPY = apyInfo?.netAPY || 0;
 
   return { iUserSummary, netAPY };
 }
 export function useLendingIsLoading() {
-  // const loading = useAtomValue(loadingAtom);
-  const loading = lendingLoadState(s => s.loading);
+  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
+  const currentAddress = finalSceneCurrentAccount?.address || '';
+  const loading = lendingLoadState(
+    s => s.addrMarketLoading[currentAddress] || false,
+  );
 
   return { loading };
 }
 export function useLendingPoolContainer() {
-  // const totalLiquidityMarketReferenceCurrency = iUserSummaryState(
-  //   useShallow(s => s?.totalLiquidityMarketReferenceCurrency || '0'),
-  // );
+  const { lendingDataKey } = useCurrentLendingDataKey();
   const totalLiquidityMarketReferenceCurrency = computedInfoState(
     useShallow(
-      s => s.iUserSummary?.totalLiquidityMarketReferenceCurrency || '0',
+      s =>
+        getComputedInfoByKey(lendingDataKey).iUserSummary
+          ?.totalLiquidityMarketReferenceCurrency || '0',
     ),
   );
   const { loading } = useLendingIsLoading();
@@ -901,42 +962,36 @@ export function useLendingPoolContainer() {
   };
 }
 export function useLendingISummary() {
-  // const iUserSummary = useAtomValue(iUserSummaryAtom);
-  // const iUserSummary = iUserSummaryState();
-  const iUserSummary = computedInfoState(s => s.iUserSummary);
+  const { lendingDataKey } = useCurrentLendingDataKey();
+  const iUserSummary = computedInfoState(
+    useShallow(s => getComputedInfoByKey(lendingDataKey).iUserSummary),
+  );
 
   return {
     iUserSummary,
   };
 }
 export function useHasUserSummary() {
-  // const hasUserSummary = iUserSummaryState(useShallow(s => !!s));
-  const hasUserSummary = computedInfoState(useShallow(s => !!s.iUserSummary));
+  const { lendingDataKey } = useCurrentLendingDataKey();
+  const hasUserSummary = computedInfoState(
+    useShallow(s => !!getComputedInfoByKey(lendingDataKey).iUserSummary),
+  );
 
   return {
     hasUserSummary,
   };
 }
 export function useLendingHF() {
-  // const lendingHf = iUserSummaryState(
-  //   useShallow(s => {
-  //     if (!s) {
-  //       return null;
-  //     }
-  //     return {
-  //       healthFactor: s?.healthFactor || '0',
-  //       netWorthUSD: s?.netWorthUSD || '0',
-  //     };
-  //   }),
-  // );
+  const { lendingDataKey } = useCurrentLendingDataKey();
   const lendingHf = computedInfoState(
     useShallow(s => {
-      if (!s.iUserSummary) {
+      const state: IndexedComputedInfo = getComputedInfoByKey(lendingDataKey);
+      if (!state.iUserSummary) {
         return null;
       }
       return {
-        healthFactor: s.iUserSummary?.healthFactor || '0',
-        netWorthUSD: s.iUserSummary?.netWorthUSD || '0',
+        healthFactor: state.iUserSummary?.healthFactor || '0',
+        netWorthUSD: state.iUserSummary?.netWorthUSD || '0',
       };
     }),
   );

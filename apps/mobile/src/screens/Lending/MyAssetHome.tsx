@@ -50,9 +50,11 @@ const MyAssetHome: React.FC = () => {
   const { t } = useTranslation();
   const { chainEnum, marketKey } = useSelectedMarket();
   const { reserves } = useLendingRemoteData();
-  const { loading } = useLendingIsLoading();
+  const { loading: isFetching } = useLendingIsLoading();
   const { fetchData } = useFetchLendingData();
   const { displayPoolReserves, iUserSummary, apyInfo } = useLendingSummary();
+
+  const loading = isFetching || !iUserSummary || !displayPoolReserves;
 
   const myAssetList: MyAssetItem[] = useMemo(() => {
     const list: MyAssetItem[] = [];

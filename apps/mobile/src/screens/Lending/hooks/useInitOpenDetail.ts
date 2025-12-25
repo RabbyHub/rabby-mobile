@@ -36,7 +36,7 @@ export const useInitOpenDetail = () => {
         isSameAddress(item.underlyingAsset, address),
       );
       if (!reserve) {
-        apisLending.setLoading(true);
+        apisLending.setLoading(true, { address });
       }
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.SUPPLY_DETAIL,
@@ -65,7 +65,7 @@ export const useInitOpenDetail = () => {
         isSameAddress(item.underlyingAsset, address),
       );
       if (!reserve) {
-        apisLending.setLoading(true);
+        apisLending.setLoading(true, { address });
       }
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.BORROW_DETAIL,

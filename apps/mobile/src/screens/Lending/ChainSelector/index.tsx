@@ -98,7 +98,7 @@ export function ChainSelector({
         },
       },
       onChange: market => {
-        apisLending.setLoading(true);
+        apisLending.setLoading(true, { marketKey: market });
         removeChainModal();
         setMarketKey?.(market);
       },
