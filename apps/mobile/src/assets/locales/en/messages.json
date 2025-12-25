@@ -2859,6 +2859,13 @@
             "borrow": "My borrows"
           }
         },
+        "collateralSwapSelector": {
+          "title": "Select Collateral Token",
+          "header": {
+            "assets": "Token/Balance",
+            "collateral": "My collateral"
+          }
+        },
         "overview": {
           "title": "Asset category",
           "row": {
@@ -2893,7 +2900,13 @@
       },
       "repayWithCollateral": {
         "toRepay": "Expected amount to repay",
-        "repayWith": "Collateral to repay with"
+        "repayWith": "Collateral to repay with",
+        "action": {
+          "title": "Repay with {{collateral}}"
+        },
+        "button": {
+          "repay": "Repay"
+        }
       },
       "hfTips": {
         "desc": "If it drops below 1.0, your collateral may be liquidated.",

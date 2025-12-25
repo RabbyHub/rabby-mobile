@@ -292,9 +292,10 @@ export const buildRepayWithCollateralTx = ({
     repayWithAmount,
     repayAmount,
     repayAllDebt,
-    rateMode,
     flash: useFlashLoan,
     swapAndRepayCallData: swapCallData,
     augustus,
+    permitSignature: undefined,
+    rateMode,
   });
 };

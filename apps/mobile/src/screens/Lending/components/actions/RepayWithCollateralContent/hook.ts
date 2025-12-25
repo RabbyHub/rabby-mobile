@@ -126,7 +126,7 @@ export const useSwapReserves = ({
   };
 };
 
-export const useDebtSwapSlippage = ({
+export const useRepayWithCollateralSlippage = ({
   collateralToken,
   repayToken,
   setSwapRate,
@@ -156,7 +156,7 @@ export const useDebtSwapSlippage = ({
     return getParaswapSlippage(
       collateralToken.symbol || '',
       repayToken.symbol || '',
-      SwapType.DebtSwap,
+      SwapType.RepayWithCollateral,
     );
   }, [collateralToken, repayToken.symbol]);
 

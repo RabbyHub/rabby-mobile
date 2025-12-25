@@ -47,6 +47,8 @@ import {
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { normalizeBN } from '@aave/math-utils';
 import { approveToken } from '@/core/apis/approvals';
+import { getERC20Allowance } from '@/core/apis/provider';
+import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -63,8 +65,8 @@ import { usePoolDataProviderContract, useSelectedMarket } from '../../../hooks';
 import {
   useFormatValues,
   useSwapReserves,
-  useDebtSwapSlippage,
   useHFForDebtSwap,
+  useRepayWithCollateralSlippage,
 } from './hook';
 import {
   DEFAULT_DEBT_SWAP_SLIPPAGE,
@@ -80,6 +82,7 @@ import {
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
+import { ethers, PopulatedTransaction } from 'ethers';
 
 interface RepayWithCollateralProps {
   repayToken: SwappableToken;
@@ -102,7 +105,8 @@ export default function RepayWithCollateral({
     forScene: 'Lending',
   });
 
-  const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
+  const { chainEnum, chainInfo, selectedMarketData, isMainnet } =
+    useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
   const { ctx } = useSignatureStore();
 
@@ -172,7 +176,7 @@ export default function RepayWithCollateral({
     isCustomSlippage,
     setIsCustomSlippage,
     displaySlippage,
-  } = useDebtSwapSlippage({
+  } = useRepayWithCollateralSlippage({
     collateralToken: selectedCollateralToken,
     repayToken,
     setSwapRate,
@@ -210,12 +214,10 @@ export default function RepayWithCollateral({
 
   const handleOpenFromTokenSelect = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.DEBT_TOKEN_SELECT,
+      name: MODAL_NAMES.COLLATERAL_TOKEN_SELECT,
       excludeTokenAddress: repayToken.underlyingAddress,
       onChange: (token: SwappableToken) => {
         setSelectedCollateralToken(token);
-        setRepayAmount('');
-        setSlider(0);
         setCollateralAmount('');
         setQuote(null);
         setSwapRate({});
@@ -337,11 +339,11 @@ export default function RepayWithCollateral({
           swapType: SwapType.RepayWithCollateral,
           chainId: repayToken.chainId,
           amount: rawAmount,
-          srcToken: repayToken.underlyingAddress,
-          destToken: selectedCollateralToken.underlyingAddress,
+          srcToken: selectedCollateralToken.underlyingAddress,
+          destToken: repayToken.underlyingAddress,
           user: currentAccount.address,
-          srcDecimals: repayToken.decimals,
-          destDecimals: selectedCollateralToken.decimals,
+          srcDecimals: selectedCollateralToken.decimals,
+          destDecimals: repayToken.decimals,
           side: 'buy' as const,
           appCode: APP_CODE_LENDING_DEBT_SWAP,
           options: {
@@ -349,11 +351,6 @@ export default function RepayWithCollateral({
           },
           invertedQuoteRoute: true,
         };
-
-        console.log(
-          '[RepayWithCollateral] 构建报价参数:',
-          JSON.stringify(quoteParams, null, 2),
-        );
 
         const quoteRes = await getParaswapSellRates(quoteParams);
 
@@ -388,7 +385,6 @@ export default function RepayWithCollateral({
             slippageBpsRef.current,
           ),
         });
-        console.log('CUSTOM_LOGGER:=>: destAmount', destAmount);
         setCollateralAmount(destAmount);
         setNoQuote(false);
         enableQuoteAutoRefreshRef.current = true;
@@ -399,7 +395,6 @@ export default function RepayWithCollateral({
           }
         }, 1000 * 30);
       } catch (e) {
-        console.error('[RepayWithCollateral] 报价错误:', e);
         if (!cancelled) {
           setCollateralAmount('');
           setQuote(null);
@@ -458,8 +453,8 @@ export default function RepayWithCollateral({
     }
 
     const rawAmount = normalizeBN(
-      collateralAmount,
-      -1 * selectedCollateralToken.decimals,
+      repayAmount,
+      -1 * repayToken.decimals,
     ).toFixed(0);
 
     if (
@@ -475,23 +470,18 @@ export default function RepayWithCollateral({
     const slippageBps = swapRate.slippageBps ?? DEFAULT_DEBT_SWAP_SLIPPAGE;
 
     const swapTxParams: any = {
-      srcToken: selectedCollateralToken?.underlyingAddress,
-      destToken: repayToken.underlyingAddress,
       destAmount: rawAmount,
+      destDecimals: repayToken.decimals,
+      destToken: repayToken.underlyingAddress,
+      isDirectFeeTransfer: true,
+      partnerAddress: feeTarget,
       slippage: slippageBps,
       priceRoute: swapRate.optimalRateData,
-      userAddress: currentAccount.address,
-      partnerAddress: feeTarget,
+      srcToken: selectedCollateralToken?.underlyingAddress,
       srcDecimals: selectedCollateralToken.decimals,
-      destDecimals: repayToken.decimals,
-      isDirectFeeTransfer: true,
+      userAddress: currentAccount.address,
       takeSurplus: true,
     };
-
-    console.log(
-      '[RepayWithCollateral] 构建 ParaSwap 交易参数:',
-      JSON.stringify(swapTxParams, null, 2),
-    );
 
     const txParams: any = await paraswap.buildTx(swapTxParams, {
       ignoreChecks: true,
@@ -514,27 +504,16 @@ export default function RepayWithCollateral({
       fromUnderlyingAsset: selectedCollateralToken.underlyingAddress,
       fromATokenAddress: collateralReserve.aTokenAddress,
       toUnderlyingAsset: repayToken.underlyingAddress,
-      repayAmount: rawAmount,
-      repayWithAmount,
+      repayAmount: repayAmount,
+      repayWithAmount: BigNumber(collateralAmount)
+        .multipliedBy(1 + slippageBps / 10000)
+        .toFixed(selectedCollateralToken.decimals),
       repayAllDebt: isMaxSelected,
-      rateMode: InterestRate.Variable,
+      rateMode: InterestRate.None,
       useFlashLoan: false,
       swapCallData,
       augustus,
     };
-
-    console.log(
-      '[RepayWithCollateral] 构建 repayWithCollateral 交易参数:',
-      JSON.stringify(
-        {
-          user: currentAccount.address,
-          ...repayWithCollateralParams,
-        },
-        null,
-        2,
-      ),
-    );
-
     const repayWithCollateralTx = await buildRepayWithCollateralTx({
       pool: pools.pool,
       address: currentAccount.address,
@@ -545,61 +524,108 @@ export default function RepayWithCollateral({
 
     if (
       !isSameAddress(
-        selectedCollateralToken.underlyingAddress,
+        selectedCollateralToken.addressToSwap,
         chainInfo?.nativeTokenAddress || '',
       )
     ) {
-      const aTokenAddress = collateralReserve.aTokenAddress;
+      const aTokenAddress = selectedCollateralToken.addressToSwap;
       if (!aTokenAddress) {
         throw new Error('aTokenAddress not found');
       }
 
       const approveAmount = getApproveAmount(repayWithAmount, slippageBps);
 
-      const approveParams = {
-        chainServerId: chainInfo.serverId,
-        id: aTokenAddress,
-        spender: selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
-        amount: approveAmount,
-        account: currentAccount,
-        isBuild: true,
-      };
-
-      console.log(
-        '[RepayWithCollateral] 构建 approve 交易参数:',
-        JSON.stringify(approveParams, null, 2),
-      );
-
-      const approveResult = await approveToken(approveParams);
-
-      const approveTxBuilt = {
-        ...approveResult.params[0],
-        from: approveResult.params[0].from || currentAccount.address,
-        value: approveResult.params[0].value ?? '0x0',
-        chainId: approveResult.params[0].chainId || chainInfo.id,
-      };
-
-      console.log(
-        '[RepayWithCollateral] approve 交易:',
-        JSON.stringify(approveTxBuilt, null, 2),
-      );
-
-      txs.push(approveTxBuilt);
-    }
-    console.log(
-      'CUSTOM_LOGGER:=>: repayWithCollateralTx',
-      repayWithCollateralTx,
-    );
-
-    const formattedRepayTxs = [...repayWithCollateralTx].map(tx =>
-      // TODO: check type
-      formatTx(
-        tx as unknown as any,
+      // 实时检查当前allowance
+      const allowance = await getERC20Allowance(
+        chainInfo.serverId,
+        aTokenAddress,
+        selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
         currentAccount.address,
-        repayToken.chainId,
-      ),
+        currentAccount,
+      );
+
+      const requiredAmount = new BigNumber(approveAmount).toString();
+      const actualNeedApprove = !new BigNumber(allowance || '0').gte(
+        requiredAmount,
+      );
+
+      if (actualNeedApprove) {
+        let shouldTwoStepApprove = false;
+        if (
+          isMainnet &&
+          isSameAddress(
+            selectedCollateralToken.underlyingAddress,
+            ETH_USDT_CONTRACT,
+          ) &&
+          Number(allowance) !== 0 &&
+          !new BigNumber(allowance || '0').gte(requiredAmount)
+        ) {
+          shouldTwoStepApprove = true;
+        }
+
+        // 如果需要两步approve，先执行0额度approve
+        if (shouldTwoStepApprove) {
+          const zeroApproveResult = await approveToken({
+            chainServerId: chainInfo.serverId,
+            id: aTokenAddress,
+            spender: selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
+            amount: 0,
+            account: currentAccount,
+            isBuild: true,
+          });
+
+          const zeroApproveTxBuilt = {
+            ...zeroApproveResult.params[0],
+            from: zeroApproveResult.params[0].from || currentAccount.address,
+            value: zeroApproveResult.params[0].value ?? '0x0',
+            chainId: zeroApproveResult.params[0].chainId || chainInfo.id,
+          };
+
+          txs.push(zeroApproveTxBuilt);
+        }
+        const approveResult = await approveToken({
+          chainServerId: chainInfo.serverId,
+          id: aTokenAddress,
+          spender: selectedMarketData.addresses.REPAY_WITH_COLLATERAL_ADAPTER,
+          amount: approveAmount,
+          account: currentAccount,
+          isBuild: true,
+        });
+
+        const approveTxBuilt = {
+          ...approveResult.params[0],
+          from: approveResult.params[0].from || currentAccount.address,
+          value: approveResult.params[0].value ?? '0x0',
+          chainId: approveResult.params[0].chainId || chainInfo.id,
+        };
+
+        txs.push(approveTxBuilt);
+      }
+    }
+
+    const actionTx = repayWithCollateralTx.find(tx =>
+      ['DLP_ACTION'].includes(tx.txType),
     );
-    txs.push(...(formattedRepayTxs as Tx[]));
+    if (!actionTx) {
+      throw new Error('Action tx not found');
+    }
+    const tx = await actionTx.tx();
+    const populatedTx: PopulatedTransaction = {
+      to: tx.to,
+      from: tx.from,
+      data: tx.data,
+      gasLimit: tx.gasLimit,
+      gasPrice: tx.gasPrice,
+      nonce: tx.nonce,
+      chainId: tx.chainId,
+      value: tx.value ? ethers.BigNumber.from(tx.value) : undefined,
+    };
+    const formattedRepayTx = formatTx(
+      populatedTx,
+      currentAccount.address,
+      repayToken.chainId,
+    );
+    txs.push(formattedRepayTx as unknown as Tx);
 
     return txs;
   }, [
@@ -616,12 +642,14 @@ export default function RepayWithCollateral({
     repayReserve,
     collateralReserve,
     chainInfo,
-    collateralAmount,
+    repayAmount,
+    repayToken.decimals,
     repayToken.chainId,
     repayToken.underlyingAddress,
-    repayToken.decimals,
     debouncedRepayAmount,
     debtBalance,
+    collateralAmount,
+    isMainnet,
   ]);
 
   useEffect(() => {
@@ -648,7 +676,7 @@ export default function RepayWithCollateral({
       try {
         const txs = await buildRepayWithCollateralTxs();
         if (!cancelled) {
-          setCurrentTxs(txs);
+          setCurrentTxs(txs.filter(tx => !!tx));
         }
       } catch (error) {
         console.error('[RepayWithCollateral] 构建交易错误:', error);
@@ -771,9 +799,9 @@ export default function RepayWithCollateral({
           );
         }
         toast.success(
-          `${t('page.Lending.repayWithCollateral.actions.title')} ${t(
-            'page.Lending.submitted',
-          )}`,
+          `${t('page.Lending.repayWithCollateral.action.title', {
+            collateral: selectedCollateralToken?.symbol,
+          })} ${t('page.Lending.submitted')}`,
         );
         closeMiniSigner();
         onClose?.();
@@ -838,7 +866,7 @@ export default function RepayWithCollateral({
   }, [canRepay, isLiquidatable, isRisky, riskChecked]);
 
   return (
-    <View style={styles.container}>
+    <>
       <BottomSheetScrollView
         showsVerticalScrollIndicator
         persistentScrollbar
@@ -933,7 +961,10 @@ export default function RepayWithCollateral({
                 {collateralAmount ? formatTokenAmount(collateralAmount) : '0'}
               </Text>
               <Pressable
-                style={styles.tokenInfo}
+                style={[
+                  styles.tokenInfo,
+                  !selectedCollateralToken && styles.placeholderTokenInfo,
+                ]}
                 onPress={handleOpenFromTokenSelect}>
                 {selectedCollateralToken ? (
                   <>
@@ -1101,22 +1132,15 @@ export default function RepayWithCollateral({
           />
         )}
       </View>
-    </View>
+    </>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: {
-    marginTop: 12,
-    height: '100%',
-    width: '100%',
-    borderRadius: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-  },
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   scrollableBlock: {
     flex: 1,
+    width: '100%',
+    marginTop: 12,
     height: '100%',
   },
   contentContainer: {
@@ -1328,7 +1352,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   buttonContainer: {
     position: 'absolute',
-    paddingHorizontal: 25,
     bottom: 0,
     height: 116,
     paddingTop: 12,
