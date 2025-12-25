@@ -1,4 +1,4 @@
-import { CreateParams, MODAL_NAMES } from './types';
+import { GlobalBottomSheetModalProps, MODAL_NAMES } from './types';
 import { Approval } from '@/components//Approval';
 import { SwitchAddress } from '@/components/CommonPopup/SwitchAddress';
 import { SwitchChain } from '@/components/CommonPopup/SwitchChain';
@@ -65,16 +65,17 @@ import { ManageEmodeModal } from '@/screens/Lending/modals/ManageEmode';
 import ManageEmodeFullModal from '@/screens/Lending/modals/ManangeEmodeFullModal';
 import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/SelectCategoryModal';
 import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
+import LendingSupplyList from '@/screens/Lending/components/popups/SupplyList';
+import LendingBorrowList from '@/screens/Lending/components/popups/BorrowList';
 import DebtTokenSelectModal from '@/screens/Lending/components/DebtTokenSelect';
 import DebtSwapModal from '@/screens/Lending/modals/DebtSwapModal';
 import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
-type ModalProps = CreateParams<MODAL_NAMES>['bottomSheetModalProps'];
 function getDefaultViewTypePropsPreset(
-  input?: Partial<ModalProps>,
-): ModalProps {
+  input?: Partial<GlobalBottomSheetModalProps>,
+): GlobalBottomSheetModalProps {
   return {
     rootViewType: 'View',
     enablePanDownToClose: true,
@@ -89,14 +90,15 @@ function getDefaultViewTypePropsPreset(
   };
 }
 
-export const MODAL_CONFIGS: Record<
-  MODAL_NAMES,
-  {
-    snapPoints: (string | number)[] | undefined;
-    Component: React.FC<any>;
-    globalModalPropsPreset?: ModalProps;
-  }
-> = {
+export type ModalComponents = {
+  [key in MODAL_NAMES]: (typeof MODAL_CONFIGS)[key]['Component'];
+};
+
+export type ModalComponentProps = {
+  [key in MODAL_NAMES]: React.ComponentProps<ModalComponents[key]>;
+};
+
+export const MODAL_CONFIGS = {
   [MODAL_NAMES.APPROVAL]: { snapPoints: ['100%'], Component: Approval },
   [MODAL_NAMES.CANCEL_APPROVAL]: {
     snapPoints: [288],
@@ -352,6 +354,16 @@ export const MODAL_CONFIGS: Record<
   [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {
     snapPoints: ['85%'],
     Component: SelectCategoryModal,
+  },
+  [MODAL_NAMES.LENDING_SUPPLY_LIST]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: LendingSupplyList,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.LENDING_BORROW_LIST]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: LendingBorrowList,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
     snapPoints: ['85%'],

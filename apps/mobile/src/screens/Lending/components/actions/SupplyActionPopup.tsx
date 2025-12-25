@@ -51,6 +51,7 @@ import {
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { SUPPLY_UI_SAFE_MARGIN } from '../../utils/constant';
 import { CHAINS_ENUM } from '@debank/common';
+import { ReserveErrorTip } from '../ErrorTip';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -352,6 +353,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       )
       .toString();
     return {
+      isLteZero: miniAmount.lte(0),
       amount: miniAmount.toString(),
       usdValue,
     };
@@ -491,8 +493,10 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     prefetchMiniSigner,
   ]);
 
+  const emptyAmount = !supplyAmount.amount || supplyAmount.amount === '0';
+
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
+    <AutoLockView as="View" style={styles.container}>
       <Text style={styles.title}>
         {t('page.Lending.supplyDetail.actions')} {reserve.reserve.symbol}
       </Text>
@@ -500,11 +504,17 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         <Text style={styles.amountHeaderTitle}>
           {t('page.Lending.popup.amount')}
         </Text>
-        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-          supplyAmount.amount || '0',
-        )}${reserve.reserve.symbol}($${formatAmountValueKMB(
-          supplyAmount.usdValue || '0',
-        )}) ${t('page.Lending.popup.available')}`}</Text>
+        <Text
+          style={[
+            styles.amountValueDescription,
+            emptyAmount && styles.amountValueDescriptionDanger,
+          ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
+          reserve.reserve.symbol
+        }($${
+          supplyAmount.isLteZero
+            ? '0'
+            : formatAmountValueKMB(supplyAmount.usdValue || '0')
+        }) ${t('page.Lending.popup.available')}`}</Text>
       </View>
       <TokenAmountInput
         value={amount}
@@ -540,6 +550,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             />
           </View>
         )}
+
+        <ReserveErrorTip reserve={reserve} style={{ marginTop: 30 }} />
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>
@@ -622,6 +634,9 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 18,
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+  },
+  amountValueDescriptionDanger: {
+    color: ctx.colors2024['red-default'],
   },
   amountInput: {
     marginTop: 12,

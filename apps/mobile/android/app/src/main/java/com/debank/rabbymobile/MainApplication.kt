@@ -26,6 +26,7 @@ class MainApplication : Application(), ReactApplication {
               add(RNScreenshotPreventPackage());
               add(RNTimeChangedPackage());
               add(RNHelpersPackage());
+              add(RNThreadPackage());
             }
 
         override fun getJSMainModuleName(): String = "index"

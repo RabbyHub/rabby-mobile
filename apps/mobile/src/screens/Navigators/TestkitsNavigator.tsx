@@ -78,6 +78,12 @@ const DevSwitches = !isNonPublicProductionEnv
       name: TESTKITS_PRELOAD_SCREENS.DevSwitches,
     })
   : require('@/screens/Testkits/DevSwitches').default;
+const DevPerf = !isNonPublicProductionEnv
+  ? registerAppScreen<typeof import('@/screens/Testkits/DevPerf').default>({
+      loader: () => import('@/screens/Testkits/DevPerf'),
+      name: TESTKITS_PRELOAD_SCREENS.DevPerf,
+    })
+  : require('@/screens/Testkits/DevPerf').default;
 
 const Stack = createNativeStackNavigator();
 
@@ -147,6 +153,14 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevSwitches}
         component={DevSwitches}
+        options={{
+          headerShown: true,
+          // presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.DevPerf}
+        component={DevPerf}
         options={{
           headerShown: true,
           // presentation: 'modal',

@@ -153,6 +153,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
   [RootNames.DevSwitches]?: {};
+  [RootNames.DevPerf]?: {};
 };
 
 export type AddressNavigatorParamList = {

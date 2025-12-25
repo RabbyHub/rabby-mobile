@@ -1,25 +1,25 @@
 import React, { useCallback, useMemo } from 'react';
-import {
-  Text,
-  StyleSheet,
-  View,
-  PressableProps,
-  GestureResponderEvent,
-} from 'react-native';
+import { Text, StyleSheet, View, PressableProps } from 'react-native';
 import { Platform, StatusBar, Pressable } from 'react-native';
 import Tooltip, { TooltipProps } from 'react-native-walkthrough-tooltip';
 import { colord } from 'colord';
 import { useThemeStyles } from '@/hooks/theme';
 import { useSwitch } from '@/hooks/useSwitch';
 import { AppColorsVariants } from '@/constant/theme';
+import { RNGHPressable, RNGHPressableProps } from './customized/reexports';
 
-type TipProps = Omit<TooltipProps, 'content'> & {
+type PressableComponent = 'RNPressable' | 'RNGHPressable';
+type PressableComProps<T extends PressableComponent> = T extends 'RNPressable'
+  ? PressableProps
+  : RNGHPressableProps;
+type TipProps<T extends PressableComponent> = Omit<TooltipProps, 'content'> & {
+  as?: T;
   content: string | TooltipProps['content'];
   hideArrow?: boolean;
   isLight?: boolean;
-  pressableProps?: Omit<PressableProps, 'onPress'> & {
+  pressableProps?: Omit<PressableComProps<T>, 'onPress'> & {
     onPress?: (ctx: {
-      event: GestureResponderEvent;
+      event: Parameters<PressableComProps<T>['onPress'] & object>[0];
       turnOn: () => void;
       turnOff: () => void;
     }) => void;
@@ -27,7 +27,8 @@ type TipProps = Omit<TooltipProps, 'content'> & {
   noPressable?: boolean;
 };
 
-export const Tip = ({
+export const Tip = <T extends PressableComponent = 'RNPressable'>({
+  as: propAs = 'RNPressable' as T,
   content,
   tooltipStyle,
   pressableProps,
@@ -38,10 +39,13 @@ export const Tip = ({
   children,
   noPressable = false,
   ...rest
-}: TipProps) => {
+}: TipProps<T>) => {
   const { colors, styles } = useThemeStyles(getStyle);
 
   const { on, turnOn, turnOff } = useSwitch();
+
+  const PressableComponent =
+    propAs === 'RNPressable' ? Pressable : RNGHPressable;
 
   const _content = useMemo(() => {
     return typeof content === 'string' ? (
@@ -71,16 +75,17 @@ export const Tip = ({
     [arrowSize, hideArrow],
   );
 
-  const handleOnPress = useCallback<PressableProps['onPress'] & object>(
+  const onPress = pressableProps?.onPress;
+  const handleOnPress = useCallback<PressableComProps<T>['onPress'] & object>(
     evt => {
-      if (typeof pressableProps?.onPress === 'function') {
-        pressableProps.onPress({ event: evt, turnOn, turnOff });
+      if (typeof onPress === 'function') {
+        onPress?.({ event: evt, turnOn, turnOff });
         return;
       }
 
       turnOn();
     },
-    [pressableProps, turnOff, turnOn],
+    [onPress, turnOff, turnOn],
   );
 
   return (
@@ -109,13 +114,15 @@ export const Tip = ({
       {controlled || noPressable ? (
         children
       ) : (
-        <Pressable
+        <PressableComponent
           hitSlop={10}
           {...pressableProps}
+          // @ts-expect-error
           style={StyleSheet.flatten([pressableProps?.style])}
+          // @ts-expect-error
           onPress={handleOnPress}>
           {children}
-        </Pressable>
+        </PressableComponent>
       )}
     </Tooltip>
   );

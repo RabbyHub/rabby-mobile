@@ -27,10 +27,9 @@ function runTryCatch<T extends (...args: any[]) => any>(
 }
 
 export async function getSceneAddresses() {
-  const accounts = appJsonStore.getItem(
-    '@SceneAccounts202512',
-    {},
-  ) as SceneAccounts;
+  const zustandStore = appJsonStore.getItem('@SceneAccounts202512', {});
+
+  const accounts = zustandStore.state as SceneAccounts;
 
   const values = Object.entries(accounts).reduce((acc, [key, value]) => {
     if (!key.startsWith('@')) {
