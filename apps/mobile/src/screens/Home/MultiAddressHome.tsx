@@ -328,7 +328,7 @@ const OverViewComponent = React.memo(
       ]).finally(() => {
         // update at background
         forceUpdate();
-        apisLending.fetchLendingData({ persistOnly: false });
+        apisLending.fetchLendingData();
         syncTop10History(top10Addresses, true);
         currencyService.syncCurrencyList(true);
       });
