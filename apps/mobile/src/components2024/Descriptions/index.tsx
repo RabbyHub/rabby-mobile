@@ -6,7 +6,7 @@ import { Button, ButtonProps } from '../Button';
 import AutoLockView from '@/components/AutoLockView';
 
 export const Descriptions: React.FC<{
-  title?: string;
+  title?: React.ReactNode;
   titleStyle?: StyleProp<TextStyle>;
   sectionStyle?: StyleProp<ViewStyle>;
   sectionDescStyle?: StyleProp<TextStyle>;

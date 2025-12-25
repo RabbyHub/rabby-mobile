@@ -1,4 +1,4 @@
-import { CreateParams, MODAL_NAMES } from './types';
+import { GlobalBottomSheetModalProps, MODAL_NAMES } from './types';
 import { Approval } from '@/components//Approval';
 import { SwitchAddress } from '@/components/CommonPopup/SwitchAddress';
 import { SwitchChain } from '@/components/CommonPopup/SwitchChain';
@@ -71,10 +71,9 @@ import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
-type ModalProps = CreateParams<MODAL_NAMES>['bottomSheetModalProps'];
 function getDefaultViewTypePropsPreset(
-  input?: Partial<ModalProps>,
-): ModalProps {
+  input?: Partial<GlobalBottomSheetModalProps>,
+): GlobalBottomSheetModalProps {
   return {
     rootViewType: 'View',
     enablePanDownToClose: true,
@@ -89,14 +88,15 @@ function getDefaultViewTypePropsPreset(
   };
 }
 
-export const MODAL_CONFIGS: Record<
-  MODAL_NAMES,
-  {
-    snapPoints: (string | number)[] | undefined;
-    Component: React.FC<any>;
-    globalModalPropsPreset?: ModalProps;
-  }
-> = {
+export type ModalComponents = {
+  [key in MODAL_NAMES]: (typeof MODAL_CONFIGS)[key]['Component'];
+};
+
+export type ModalComponentProps = {
+  [key in MODAL_NAMES]: React.ComponentProps<ModalComponents[key]>;
+};
+
+export const MODAL_CONFIGS = {
   [MODAL_NAMES.APPROVAL]: { snapPoints: ['100%'], Component: Approval },
   [MODAL_NAMES.CANCEL_APPROVAL]: {
     snapPoints: [288],

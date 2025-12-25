@@ -12,7 +12,7 @@ import {
   MODAL_NAMES,
   RemoveParams,
 } from './types';
-import { MODAL_CONFIGS } from './utils';
+import { MODAL_CONFIGS, ModalComponents } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
@@ -224,10 +224,12 @@ export const GlobalBottomSheetModal2024 = () => {
   return (
     <View>
       {modals.map(modal => {
-        const ModalView = MODAL_CONFIGS[modal.params.name].Component;
-
+        const mConfig = MODAL_CONFIGS[modal.params.name];
+        const ModalView = mConfig.Component as React.ComponentType<any>;
         const propsPreset =
-          MODAL_CONFIGS[modal.params.name].globalModalPropsPreset;
+          'globalModalPropsPreset' in mConfig
+            ? mConfig.globalModalPropsPreset
+            : {};
         const finalBottomSheetModalProps: typeof propsPreset & object = {
           ...propsPreset,
           ...modal.params.bottomSheetModalProps,

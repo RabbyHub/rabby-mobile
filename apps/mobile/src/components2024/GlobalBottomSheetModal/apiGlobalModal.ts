@@ -7,7 +7,7 @@ import { MODAL_NAMES } from './types';
 import { shouldRedirectToSetPasswordBefore2024 } from '@/hooks/useLock';
 
 const modalRef: RefLikeObject<
-  ReturnType<typeof createGlobalBottomSheetModal2024>
+  ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
 > = { current: undefined };
 function showAddSelectMethodModal() {
   if (modalRef.current) {

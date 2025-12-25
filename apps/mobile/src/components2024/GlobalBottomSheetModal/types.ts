@@ -1,15 +1,7 @@
-import React from 'react';
-
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
-import type { AuthenticationModalProps } from '@/components/AuthenticationModal/AuthenticationModal';
-import type { NFTDetailPopupProps } from '@/screens/NftDetail/PopupInner';
 import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
-import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddress';
-import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
-import { ButtonProps } from '../Button';
-import { OpenDetailProps, PopupDetailProps } from '@/screens/Lending/type';
-import { type SeedPhraseQrCodeProps } from '../AddressDetail/SeedPhraseQrCode';
+import { type ModalComponentProps } from './utils';
 
 export enum MODAL_NAMES {
   // 'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
@@ -101,69 +93,93 @@ export enum APPROVAL_MODAL_NAMES {
   'AddAsset' = 'AddAsset',
 }
 
-export type MODAL_CREATE_PARAMS = {
-  [MODAL_NAMES.APPROVAL]: {};
-  [MODAL_NAMES.SWITCH_ADDRESS]: {};
-  [MODAL_NAMES.SWITCH_CHAIN]: {};
-  [MODAL_NAMES.CANCEL_CONNECT]: {};
-  [MODAL_NAMES.CANCEL_APPROVAL]: {};
-  [MODAL_NAMES.SELECT_CHAIN]: {};
-  [MODAL_NAMES.SIMPLE_CONFIRM]: {
-    title: string;
-  };
-  [MODAL_NAMES.SELECT_SORTED_CHAIN]: {};
-  [MODAL_NAMES.VIEW_RAW_DETAILS]: {};
-  [MODAL_NAMES.CANCEL_TX_POPUP]: {};
-  [MODAL_NAMES.TIP_UPGRADE]: {};
-  [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: {};
-  [MODAL_NAMES.CONFIRM_ADDRESS]: ConfirmAddressScreenProps;
-  [MODAL_NAMES.SELECT_CEX]: ISelectCexPorps;
-  [MODAL_NAMES.AUTHENTICATION]: AuthenticationModalProps;
-  [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupProps;
-  [MODAL_NAMES.DESCRIPTION]: React.ComponentProps<
-    typeof import('../Descriptions').Descriptions
-  >;
-  [MODAL_NAMES.SUPPLY_DETAIL]: OpenDetailProps;
-  [MODAL_NAMES.BORROW_DETAIL]: OpenDetailProps;
-  [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: PopupDetailProps;
-  [MODAL_NAMES.BORROW_ACTION_DETAIL]: PopupDetailProps;
-  [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: PopupDetailProps;
-  [MODAL_NAMES.REPAY_ACTION_DETAIL]: PopupDetailProps;
-  [MODAL_NAMES.RESTORE_FROM_CLOUD]: {};
-  [MODAL_NAMES.ADDRESS_HIGHT_DESC]: {
-    address: string;
-    nextButtonProps?: ButtonProps;
-  };
-  [MODAL_NAMES.HF_DESCRIPTION]: {
-    hf: string;
-  };
-  [MODAL_NAMES.MANAGE_EMODE]: {};
-  [MODAL_NAMES.DISABLE_EMODE_OVERVIEW]: {};
-  [MODAL_NAMES.DEBT_TOKEN_SELECT]: {};
-  [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {};
-  [MODAL_NAMES.DEBT_SWAP]: {
-    fromToken: import('@/screens/Lending/types/swap').SwappableToken;
-    onClose?: () => void;
-  };
-  [MODAL_NAMES.SEED_PHRASE_QR_CODE]: SeedPhraseQrCodeProps;
-};
+// const modalCreateParams2024: Record<MODAL_NAMES, object> = {
+//   [MODAL_NAMES.COPY_TRADING_EARNINGS]: {},
+//   [MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG]: {},
+//   [MODAL_NAMES.ADDRESS_LiST]: {},
+//   [MODAL_NAMES.APPROVAL]: {},
+//   [MODAL_NAMES.SWITCH_ADDRESS]: {},
+//   [MODAL_NAMES.SWITCH_CHAIN]: {},
+//   [MODAL_NAMES.CANCEL_CONNECT]: {},
+//   [MODAL_NAMES.CANCEL_APPROVAL]: {},
+//   [MODAL_NAMES.SELECT_CHAIN]: {},
+//   [MODAL_NAMES.SIMPLE_CONFIRM]: {},
+//   [MODAL_NAMES.SELECT_SORTED_CHAIN]: {},
+//   [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: {},
+//   [MODAL_NAMES.SELECT_LENDING_CHAIN]: {},
+//   [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: {},
+//   [MODAL_NAMES.VIEW_RAW_DETAILS]: {},
+//   [MODAL_NAMES.CANCEL_TX_POPUP]: {},
+//   [MODAL_NAMES.CONNECT_LEDGER]: {},
+//   [MODAL_NAMES.SETTING_LEDGER]: {},
+//   [MODAL_NAMES.CONNECT_KEYSTONE]: {},
+//   [MODAL_NAMES.SETTING_KEYSTONE]: {},
+//   [MODAL_NAMES.CONNECT_ONEKEY]: {},
+//   [MODAL_NAMES.SETTING_ONEKEY]: {},
+//   [MODAL_NAMES.SETTING_HDKEYRING]: {},
+//   [MODAL_NAMES.SETTING_TREZOR]: {},
+//   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: {},
+//   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: {},
+//   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: {},
+//   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: {},
+//   [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: {},
+//   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: {},
+//   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]: {},
+//   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: {},
+//   [MODAL_NAMES.TIP_UPGRADE]: {},
+//   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: {},
+//   [MODAL_NAMES.TIP_PRIVACY_POLICY]: {},
+//   [MODAL_NAMES.TIP_TERM_OF_USE]: {},
+//   [MODAL_NAMES.ONEKEY_INPUT_PIN]: {},
+//   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: {},
+//   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: {},
+//   [MODAL_NAMES.AUTHENTICATION]: {},
+//   [MODAL_NAMES.CONFIRM_ADDRESS]: {},
+//   [MODAL_NAMES.SELECT_CEX]: {},
+//   [MODAL_NAMES.NFT_DETAIL]: {},
+//   [MODAL_NAMES.DESCRIPTION]: {},
+//   [MODAL_NAMES.ADDRESS_HIGHT_DESC]: {},
+//   [MODAL_NAMES.RESTORE_FROM_CLOUD]: {},
+//   [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: {},
+//   [MODAL_NAMES.ADDRESS_DETAIL]: {},
+//   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: {},
+//   [MODAL_NAMES.NO_LONGER_SUPPORTS]: {},
+//   [MODAL_NAMES.COLLECTION_NFTS]: {},
+//   [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: {},
+//   [MODAL_NAMES.SUPPLY_DETAIL]: {},
+//   [MODAL_NAMES.BORROW_DETAIL]: {},
+//   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: {},
+//   [MODAL_NAMES.BORROW_ACTION_DETAIL]: {},
+//   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: {},
+//   [MODAL_NAMES.REPAY_ACTION_DETAIL]: {},
+//   [MODAL_NAMES.HF_DESCRIPTION]: {},
+//   [MODAL_NAMES.MANAGE_EMODE]: {},
+//   [MODAL_NAMES.DISABLE_EMODE_OVERVIEW]: {},
+//   [MODAL_NAMES.MANAGE_EMODE_FULL]: {},
+//   [MODAL_NAMES.SELECT_EMODE_CATEGORY]: {},
+//   [MODAL_NAMES.DEBT_TOKEN_SELECT]: {},
+//   [MODAL_NAMES.DEBT_SWAP]: {},
+//   [MODAL_NAMES.SEED_PHRASE_QR_CODE]: {},
+// }
 
 export type MODAL_ID = `${MODAL_NAMES}_${string}`;
 
-export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
+export type GlobalBottomSheetModalProps = Partial<BottomSheetModalProps> & {
+  linearGradientType?: LinearGradientContainerProps['type'];
+  /**
+   * @description by default we use BottomSheetView, but if your sub views contain scrollable content, you MUST use View as modal's inner root
+   * @see https://gorhom.dev/react-native-bottom-sheet/scrollables
+   * @default 'BottomSheetView'
+   */
+  rootViewType?: 'View' | 'BottomSheetView' | 'BottomSheetScrollView';
+  rootViewStyle?: RNViewProps['style'];
+};
+
+type CreateParamsBase<T extends MODAL_NAMES = MODAL_NAMES> = {
   name: T;
   approvalComponent?: APPROVAL_MODAL_NAMES;
   onCancel?: () => void;
-  bottomSheetModalProps?: Partial<BottomSheetModalProps> & {
-    linearGradientType?: LinearGradientContainerProps['type'];
-    /**
-     * @description by default we use BottomSheetView, but if your sub views contain scrollable content, you MUST use View as modal's inner root
-     * @see https://gorhom.dev/react-native-bottom-sheet/scrollables
-     * @default 'BottomSheetView'
-     */
-    rootViewType?: 'View' | 'BottomSheetView' | 'BottomSheetScrollView';
-    rootViewStyle?: RNViewProps['style'];
-  };
+  bottomSheetModalProps?: GlobalBottomSheetModalProps;
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,
    * @default false
@@ -177,14 +193,19 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
    * @description specify whether to disable screenshot report before modal close
    */
   screenshotReportFreeBeforeModalClose?: boolean;
-  [key: string]: any;
-} & (T extends keyof MODAL_CREATE_PARAMS ? MODAL_CREATE_PARAMS[T] : {});
+};
+
+export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> =
+  CreateParamsBase<T> &
+    (T extends MODAL_NAMES
+      ? Omit<ModalComponentProps[T], '$createParams'>
+      : {});
 
 export type GlobalModalViewProps<
   T extends MODAL_NAMES = MODAL_NAMES,
   P extends object = object,
-> = CreateParams<T> & {
-  $createParams: CreateParams<T>;
+> = CreateParamsBase<T> & {
+  $createParams: CreateParamsBase<T>;
 } & P;
 
 export type RemoveParams = Partial<

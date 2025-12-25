@@ -10,6 +10,8 @@ import { Button } from '../Button';
 export interface SeedPhraseQrCodeProps {
   data: string;
   onClose: () => void;
+  /** @deprecated */
+  onDone?: () => void;
 }
 
 export const SeedPhraseQrCode = ({ data, onClose }: SeedPhraseQrCodeProps) => {
