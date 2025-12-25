@@ -17,6 +17,7 @@ import { getSupplyCapData } from '../../utils/supply';
 import { CollateralSwitch } from '../CollateralSwitch';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
+import { formatTokenAmount } from '@/utils/number';
 
 interface SupplyItemProps extends RNViewProps {
   underlyingAsset: string;
@@ -73,7 +74,9 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
       isSupplied: hasSupplied,
       apyText: apy,
       suppliedUsdText: suppliedUsd,
-      suppliedTokenText: `${tokenAmount} ${reserve.reserve.symbol}`,
+      suppliedTokenText: `${formatTokenAmount(tokenAmount)} ${
+        reserve.reserve.symbol
+      }`,
       isIsolated: reserve.reserve.isIsolated,
     };
   }, [reserve]);
@@ -95,7 +98,9 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
   }, [reserve, userSummary]);
 
   const handleOpenSupplyDetail = useCallback(() => {
-    if (!reserve || !userSummary) return;
+    if (!reserve || !userSummary) {
+      return;
+    }
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
       reserve,
@@ -115,7 +120,9 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
   }, [colors2024, reserve, userSummary]);
 
   const handleOpenWithdrawDetail = useCallback(() => {
-    if (!reserve || !userSummary) return;
+    if (!reserve || !userSummary) {
+      return;
+    }
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.WITHDRAW_ACTION_DETAIL,
       reserve,

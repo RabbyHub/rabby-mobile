@@ -19,19 +19,25 @@ import { CHAINS_ENUM } from '@debank/common';
 import { useSelectedMarket } from '../../hooks';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import RightArrowCC from '@/assets2024/icons/common/right-cc.svg';
+import { CustomMarket } from '../../config/market';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const EmptyItem = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { displayPoolReserves, getTargetReserve, iUserSummary } =
     useLendingSummary();
-  const { chainEnum } = useSelectedMarket();
+  const { chainEnum, marketKey } = useSelectedMarket();
 
   const filterReserves = useMemo(() => {
     return displayPoolReserves
       ?.filter(item => {
         if (
-          item.reserve.underlyingAsset === API_ETH_MOCK_ADDRESS.toLowerCase()
+          isSameAddress(
+            item.reserve.underlyingAsset,
+            API_ETH_MOCK_ADDRESS.toLowerCase(),
+          ) &&
+          marketKey === CustomMarket.proto_mainnet_v3
         ) {
           return true;
         }
@@ -44,13 +50,15 @@ const EmptyItem = () => {
         );
       })
       .slice(0, 5);
-  }, [displayPoolReserves]);
+  }, [displayPoolReserves, marketKey]);
 
   const handlePressItem = useCallback(
     (item: DisplayPoolReserveInfo) => {
       const reserve = getTargetReserve(item.reserve.underlyingAsset);
       const userSummary = iUserSummary;
-      if (!reserve || !userSummary) return;
+      if (!reserve || !userSummary) {
+        return;
+      }
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
         reserve,

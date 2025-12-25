@@ -53,6 +53,7 @@ import {
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { CHAINS_ENUM } from '@debank/common';
 import BorrowToCapTip from '../Tips/BorrowToCapTip';
+import { formatTokenAmount } from '@/utils/number';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -350,7 +351,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         <Text style={styles.amountHeaderTitle}>
           {t('page.Lending.popup.amount')}
         </Text>
-        <Text style={styles.amountValueDescription}>{`${formatAmountValueKMB(
+        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
           availableToBorrow.amount || '0',
         )}${reserve.reserve.symbol} ($${formatAmountValueKMB(
           availableToBorrow.usdValue || '0',

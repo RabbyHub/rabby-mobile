@@ -17,6 +17,7 @@ import TokenIcon from '../TokenIcon';
 import { getFromToken } from '../../utils/swap';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
+import { formatTokenAmount } from '@/utils/number';
 
 interface BorrowItemProps extends RNViewProps {
   underlyingAsset: string;
@@ -68,7 +69,9 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
       isBorrowed: isBorrowedFlag,
       apyText: apy,
       usdText: usd,
-      tokenAmountText: `${tokenAmount} ${reserve.reserve.symbol}`,
+      tokenAmountText: `${formatTokenAmount(tokenAmount)} ${
+        reserve.reserve.symbol
+      }`,
     };
   }, [reserve]);
 
@@ -135,7 +138,9 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
   ]);
 
   const handlePressBorrow = () => {
-    if (!reserve || !userSummary) return;
+    if (!reserve || !userSummary) {
+      return;
+    }
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.BORROW_ACTION_DETAIL,
       reserve,
@@ -154,7 +159,9 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
     });
   };
   const handlePressRepay = () => {
-    if (!reserve || !userSummary) return;
+    if (!reserve || !userSummary) {
+      return;
+    }
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.REPAY_ACTION_DETAIL,
       reserve,

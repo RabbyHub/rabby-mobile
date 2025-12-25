@@ -246,13 +246,19 @@ function ToggleCollateralContent({}: {}) {
         ? t('page.Lending.toggleCollateralModal.exitIsolationModeDesc')
         : t('page.Lending.toggleCollateralModal.enableIsolationModeDesc');
     }
-    return currentToggleReserve?.usageAsCollateralEnabledOnUser
-      ? t('page.Lending.toggleCollateralModal.closeDesc')
-      : t('page.Lending.toggleCollateralModal.openDesc');
+    if (currentToggleReserve?.usageAsCollateralEnabledOnUser) {
+      if (userSummary?.totalBorrowsUSD === '0') {
+        return '';
+      }
+      return t('page.Lending.toggleCollateralModal.closeDesc');
+    } else {
+      return t('page.Lending.toggleCollateralModal.openDesc');
+    }
   }, [
     currentToggleReserve?.reserve.isIsolated,
     currentToggleReserve?.usageAsCollateralEnabledOnUser,
     t,
+    userSummary?.totalBorrowsUSD,
   ]);
 
   const handleToggleCollateral = useCallback(
@@ -393,28 +399,30 @@ function ToggleCollateralContent({}: {}) {
           </View>
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
-            <View
-              style={[
-                styles.errorMessageContainer,
-                {
-                  backgroundColor: cardColors.bgColor,
-                },
-              ]}>
-              <RcIconWarningCircleCC
-                width={15}
-                height={15}
-                color={cardColors.iconColor}
-              />
-              <Text
+            {!!desc && (
+              <View
                 style={[
-                  styles.errorMessage,
+                  styles.errorMessageContainer,
                   {
-                    color: cardColors.textColor,
+                    backgroundColor: cardColors.bgColor,
                   },
                 ]}>
-                {desc}
-              </Text>
-            </View>
+                <RcIconWarningCircleCC
+                  width={15}
+                  height={15}
+                  color={cardColors.iconColor}
+                />
+                <Text
+                  style={[
+                    styles.errorMessage,
+                    {
+                      color: cardColors.textColor,
+                    },
+                  ]}>
+                  {desc}
+                </Text>
+              </View>
+            )}
           </View>
           <View style={styles.bodyContainer}>
             {!!currentToggleReserve && userSummary && (
