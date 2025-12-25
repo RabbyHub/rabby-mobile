@@ -24,7 +24,10 @@
       "ImportWatchAddress2024": "Ajouter un portefeuille en lecture seule",
       "CreateNewAddress": "1. Confirmez votre Wallet",
       "CreateSelectOnCurrentSeed": "2. Ajouter un portefeuille",
-      "ConfrimAddress": "Confirmez votre portefeuille"
+      "ConfrimAddress": "Confirmez votre portefeuille",
+      "SetPassword": "Définir le mot de passe",
+      "ChooseBackup": "Choisissez une méthode de sauvegarde",
+      "CreateWallet": "Créer un portefeuille"
     }
   },
   "constant": {
@@ -69,7 +72,8 @@
         "LendingOffCollateral": "Désactiver l'utilisation comme garantie",
         "LendingOnCollateral": "Activer l'utilisation en tant que garantie",
         "LendingManageEMode": "Activer E-Mode",
-        "LendingManageEModeDisable": "Désactiver E-Mode"
+        "LendingManageEModeDisable": "Désactiver E-Mode",
+        "LendingDebtSwap": "Échange de Dettes"
       },
       "detail": {
         "Status": "Statut",
@@ -1073,7 +1077,9 @@
         "passwordTopTips": "Ce mot de passe sera utilisé pour déverrouiller votre wallet et chiffrer vos données locales.",
         "createNewSeedPhrase": "Créer une nouvelle Seed Phrase",
         "createNewDesc": "Générez une nouvelle phrase de récupération pour les nouveaux wallets",
-        "createOnCurrentDesc": "Créer un portefeuille avec une phrase mnémotechnique importée existante"
+        "createOnCurrentDesc": "Créer un portefeuille avec une phrase mnémotechnique importée existante",
+        "BackupYourSeedPhrase": "Sauvegardez votre phrase de récupération",
+        "WriteSeedPhrase": "Ceci est votre phrase de récupération. Écrivez-la et conservez-la en sécurité. Si vous la perdez ou la partagez, vos actifs pourraient être perdus pour toujours. Vous serez invité à saisir de nouveau cette phrase (dans l'ordre) à l'étape suivante."
       },
       "importAddress": {
         "privateKey": "Importer une clé privée",
@@ -1108,6 +1114,22 @@
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Glissez à droite pour voir tous les actifs"
+      },
+      "copySeedPhraseSecureTip": {
+        "title": "Gardez votre SeedPhrase secret",
+        "subTitle": "Quiconque obtient votre seed phrase peut pleinement contrôler vos fonds.",
+        "tip2": "Ne collez pas et ne sauvegardez pas votre phrase de récupération dans des services cloud ou des applications de notes.",
+        "tip1": "D'autres applications peuvent lire votre presse-papiers, donc évitez de changer d'application après avoir copié.",
+        "copyAnyway": "Copier quand même",
+        "copied": "Phrase de secours copiée. Le presse-papiers se videra dans 1 minute.",
+        "tip3": "Ne partagez jamais votre phrase de récupération. Nous ne vous demanderons jamais cela."
+      },
+      "screenshotSecureTip": {
+        "title": "Les captures d'écran ne sont pas sécurisées",
+        "tip1": "Les captures d'écran peuvent se synchroniser avec le cloud ou d'autres appareils, et peuvent être accessibles si un appareil est perdu, volé ou compromis.",
+        "subTitle": "Enregistrer votre phrase de récupération sous forme d'image peut l'exposer, donc l'écrire est une option plus sûre.",
+        "tip2": "Les applications ou les logiciels malveillants peuvent lire les images stockées dans votre bibliothèque de photos.",
+        "tip3": "Quiconque obtient votre seed phrase peut prendre le contrôle total de votre wallet, et cela ne peut pas être inversé."
       }
     },
     "signText": {
@@ -1179,7 +1201,10 @@
         "helpDescription1": "Pour garantir des mises à jour de données précises et en temps voulu, seules vos 10 meilleurs portefeuilles sont inclus dans le Solde total et le Portefeuille.",
         "notTop10Address": "Portefeuilles classés en dessous des 10 meilleurs",
         "helpDescription2": "Vous pouvez appuyer longuement pour épingler les portefeuilles et ajuster lesquels sont inclus."
-      }
+      },
+      "basicInfo": "Informations de base",
+      "other": "Autre",
+      "backup": "Sauvegarde"
     },
     "connect": {
       "popularLevelHigh": "Haut",
@@ -1233,7 +1258,8 @@
           "title": "Activer {{ bioType }}",
           "content": "Voulez-vous activer {{ bioType }} pour déverrouiller le portefeuille Rabby ?"
         }
-      }
+      },
+      "unlocking": "Déverrouillage"
     },
     "ethSign": {
       "alert": "La signature avec 'eth_sign' peut entraîner une perte d'actifs. Pour votre sécurité, Rabby ne prend pas en charge cette méthode."
@@ -2178,6 +2204,9 @@
       },
       "toast": {
         "clearCacheSuccess": "Cache vidé"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "Plus"
       }
     },
     "browserManage": {
@@ -2648,8 +2677,7 @@
           "myBorrows": "Mes emprunts",
           "token_balance": "Jeton/Équilibre",
           "token_tvl": "Token/TVL"
-        },
-        "item": {}
+        }
       },
       "summary": {
         "empty": {
@@ -2684,7 +2712,8 @@
         "actions": "Emprunter",
         "approveAndBorrow": "Approuver et Emprunter",
         "almostReachedError": "Le montant maximum disponible pour emprunter est limité car le plafond d'emprunt du protocole est presque atteint.",
-        "almostReachedWarning": "Le cap d'emprunt du protocole est de 100 % pour cet actif. Emprunts supplémentaires non disponibles."
+        "almostReachedWarning": "Le cap d'emprunt du protocole est de 100 % pour cet actif. Emprunts supplémentaires non disponibles.",
+        "swapDebt": "Échanger"
       },
       "popup": {
         "available": "disponible",
@@ -2802,9 +2831,39 @@
         "unavailable": "• Indisponible",
         "disableTitle": "Désactiver",
         "description": "Activer le E-Mode vous permet de maximiser votre pouvoir d'emprunt. Cependant, l'emprunt est limité aux actifs de la catégorie sélectionnée.",
-        "title": "Gérer E-Mode"
+        "title": "Gérer E-Mode",
+        "debtSwapSelector": {
+          "header": {
+            "assets": "Token/Balance",
+            "borrow": "Mes emprunts"
+          },
+          "title": "Sélectionner le Token d'emprunt"
+        }
       },
-      "disabled": "DÉSACTIVÉ"
+      "disabled": "DÉSACTIVÉ",
+      "debtSwap": {
+        "actions": {
+          "amount": "Montant",
+          "swapTo": "Échanger vers",
+          "title": "Échange de Dette",
+          "select": "Sélectionnez",
+          "borrowed": "Emprunté"
+        },
+        "overview": {
+          "borrowAPY": "Emprunter apy",
+          "borrowValueAfter": "Solde d'emprunt après échange",
+          "title": "Aperçu des transactions"
+        },
+        "button": {
+          "swap": "Échanger"
+        },
+        "title": "Échanger la position d'emprunt",
+        "entryTips": "Un clic pour échanger votre actif emprunté, réduisant les étapes et les frais.",
+        "borrowBalance": "Emprunter un solde",
+        "lpRiskWarning": "Facteur de santé faible après l'échange. Votre position comportera un risque plus élevé de liquidation.",
+        "priceImpactTips": "Impact de prix élevé ({{lostValue}}). Cet itinéraire peut retourner plus en raison d'une faible liquidité ou d'une petite taille de commande.",
+        "lpDangerWarning": "Votre facteur de santé après cet échange sera extrêmement bas et pourrait entraîner une liquidation. Veuillez choisir un autre actif ou réduire le montant de l'échange pour rester en sécurité."
+      }
     }
   },
   "native": {
@@ -3168,7 +3227,10 @@
     "check": "Vérifier",
     "Token": "Jeton",
     "Dapp": "Dapp",
-    "GotIt": "Compris"
+    "GotIt": "Compris",
+    "Other": "Autre",
+    "copy": "Copier",
+    "Backup": "Sauvegarde"
   },
   "background": {
     "transactionWatcher": {

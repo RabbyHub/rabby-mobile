@@ -21,7 +21,9 @@ export type EModeCategoryDisplay = EmodeCategory & {
 };
 
 interface IProps {
-  value: number;
+  value?: number;
+  /** @deprecated */
+  titleText?: string;
   onChange: (categoryId: number) => void;
 }
 const FOOTER_COMPONENT_HEIGHT = 32;

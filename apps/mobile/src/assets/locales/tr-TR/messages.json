@@ -24,7 +24,10 @@
       "ImportNewAddress": "Cüzdan Ekle",
       "ImportWatchAddress2024": "Sadece İzleme Cüzdanı Ekle",
       "CreateSelectOnCurrentSeed": "2. Cüzdan Ekle",
-      "ConfrimAddress": "Cüzdanınızı Onaylayın"
+      "ConfrimAddress": "Cüzdanınızı Onaylayın",
+      "CreateWallet": "Cüzdan Oluştur",
+      "ChooseBackup": "Yedekleme yöntemi seçin",
+      "SetPassword": "Şifre belirle"
     }
   },
   "page": {
@@ -56,7 +59,8 @@
         "LendingOffCollateral": "Teminat olarak kullanmayı kapat",
         "LendingOnCollateral": "Teminat olarak kullanmayı açın",
         "LendingManageEModeDisable": "E-Modu'nu Kapat",
-        "LendingManageEMode": "E-Modu'nu Aç"
+        "LendingManageEMode": "E-Modu'nu Aç",
+        "LendingDebtSwap": "Borç Takası"
       },
       "detail": {
         "Succeeded": "Başarılı",
@@ -1108,7 +1112,9 @@
         "riskTips": "Başlamadan önce, lütfen bu güvenlik ipuçlarını okuyun ve aklınızda bulundurun:",
         "Continue": "Devam et",
         "createNewDesc": "Yeni cüzdanlar için yeni bir seed phrase oluşturun",
-        "createOnCurrentDesc": "Mevcut bir içe aktarılan seed phrase ile cüzdan oluşturun"
+        "createOnCurrentDesc": "Mevcut bir içe aktarılan seed phrase ile cüzdan oluşturun",
+        "BackupYourSeedPhrase": "Seed ifadenizi yedekleyin",
+        "WriteSeedPhrase": "Bu sizin tohum ifadenizdir. Bunu yazın ve güvenli bir yerde saklayın. Eğer kaybederseniz veya paylaşırsanız, varlıklarınız sonsuza dek kaybolabilir. Bir sonraki adımda bu ifadeyi (sırayla) tekrar girmeniz istenecektir."
       },
       "addAddress": {
         "syncRabbyExtension": "Rabby Uzantısını Senkronize Et",
@@ -1165,6 +1171,22 @@
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Sağ kaydırarak tüm varlıkları görüntüleyin."
+      },
+      "copySeedPhraseSecureTip": {
+        "subTitle": "Seed kelimenizi alan herkes fonlarınızı tamamen kontrol edebilir.",
+        "tip2": "Seed ifadenizi bulut hizmetlerinde veya not uygulamalarında yapıştırmayın veya kaydetmeyin.",
+        "copied": "Kıdem kelimesi kopyalandı. Panoya 1 dakika içinde temizlenecek.",
+        "copyAnyway": "Yine de kopyala",
+        "title": "SeedPhrase'inizi Gizli Tutun",
+        "tip3": "Asla seed kelimenizi paylaşmayın. Biz asla bunu istemeyeceğiz.",
+        "tip1": "Diğer uygulamalar panonuzu okuyabilir, bu yüzden kopyalama işlemi sonrası uygulamalar arasında geçiş yapmaktan kaçının."
+      },
+      "screenshotSecureTip": {
+        "title": "Ekran görüntüleri güvenli değildir",
+        "tip1": "Ekran görüntüleri buluta veya diğer cihazlara senkronize edilebilir ve bir cihaz kaybolduğunda, çalındığında veya tehlikeye girdiğinde erişilebilir.",
+        "tip3": "Seed ifrenizi alan herkes cüzdanınıza tamamen hakim olabilir ve bu geri alınamaz.",
+        "tip2": "Uygulamalar veya kötü amaçlı yazılımlar, fotoğraf kütüphanenizde depolanan resimleri okuyabilir.",
+        "subTitle": "Seed ifadenizi bir resim olarak kaydetmek onu ifşa edebilir, bu yüzden yazılı olarak kaydetmek daha güvenli bir seçenektir."
       }
     },
     "newAddress": {
@@ -1401,7 +1423,8 @@
         },
         "failedAndTipTitle": "Kilid açma başarısız oldu",
         "usePassword": "Şifre ile açma işlemi için geçiş yapıldı."
-      }
+      },
+      "unlocking": "Açma"
     },
     "addToken": {
       "noTokenFound": "Token bulunamadı",
@@ -1514,7 +1537,10 @@
         "title": "Aşağıdaki cüzdanlar Toplam Bakiye'ye dahil edilmemiştir.",
         "helpDescription2": "Cüzdanları sabitlemek ve hangilerinin dahil edileceğini ayarlamak için uzun basabilirsiniz.",
         "helpDescription1": "Zamanında ve doğru veri güncellemelerini sağlamak için, yalnızca en iyi 10 cüzdanınız Toplam Bakiyeye ve Portföye dahil edilmiştir."
-      }
+      },
+      "other": "Diğer",
+      "basicInfo": "Temel Bilgiler",
+      "backup": "Yedekle"
     },
     "customRpc": {
       "EditRPCModal": {
@@ -2168,6 +2194,9 @@
       },
       "toast": {
         "clearCacheSuccess": "Önbellek temizlendi"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "Daha Fazla"
       }
     },
     "browserManage": {
@@ -2638,8 +2667,7 @@
           "apy": "APY",
           "token_tvl": "Token/TVL",
           "token_balance": "Token/Bakiye"
-        },
-        "item": {}
+        }
       },
       "summary": {
         "empty": {
@@ -2674,7 +2702,8 @@
         "actions": "Ödünç Al",
         "approveAndBorrow": "Onayla ve Borç Al",
         "almostReachedError": "Maksimum borç alma miktarı, protokol borç limiti neredeyse ulaşıldığı için sınırlıdır.",
-        "almostReachedWarning": "Protokol borç limiti bu varlık için %100'dür. Daha fazla borç alma available değildir."
+        "almostReachedWarning": "Protokol borç limiti bu varlık için %100'dür. Daha fazla borç alma available değildir.",
+        "swapDebt": "Değiştir"
       },
       "popup": {
         "available": "mevcut",
@@ -2792,9 +2821,39 @@
         "unavailableTips": "Mevcut kredi verme/borç alma varlıklarınız desteklenmiyor.",
         "disableTitle": "Devre dışı bırak",
         "enabled": "• Etkinleştirildi",
-        "description": "E-Mode'u etkinleştirmek, borçlanma gücünüzü en üst düzeye çıkarmanıza olanak tanır. Ancak, borçlanma, seçilen kategori içindeki varlıklarla sınırlıdır."
+        "description": "E-Mode'u etkinleştirmek, borçlanma gücünüzü en üst düzeye çıkarmanıza olanak tanır. Ancak, borçlanma, seçilen kategori içindeki varlıklarla sınırlıdır.",
+        "debtSwapSelector": {
+          "header": {
+            "assets": "Token/Bakiye",
+            "borrow": "Benim borçlarım"
+          },
+          "title": "Borç Alınacak Token'ı Seçin"
+        }
       },
-      "disabled": "DEVRE DIŞI"
+      "disabled": "DEVRE DIŞI",
+      "debtSwap": {
+        "actions": {
+          "title": "Borç Değişimi",
+          "swapTo": "Değiştir",
+          "select": "Seçin",
+          "borrowed": "Ödünç Alınmış",
+          "amount": "Miktar"
+        },
+        "overview": {
+          "borrowValueAfter": "Takastan sonra borç bakiyesi",
+          "title": "İşlem Genel Bakışı",
+          "borrowAPY": "Borrow apy"
+        },
+        "button": {
+          "swap": "Değiştir"
+        },
+        "title": "Swap Borrow Position",
+        "borrowBalance": "Borç bakiyesi",
+        "entryTips": "Bir tıklama ile borç aldığınız varlığı değiştirin, adımları ve ücretleri azaltın.",
+        "lpRiskWarning": "Takasta sonra düşük sağlık faktörü. Pozisyonunuzun tasfiye riski daha yüksek olacaktır.",
+        "priceImpactTips": "Yüksek fiyat etkisi ({{lostValue}}). Bu yol, düşük likidite veya küçük sipariş boyutu nedeniyle daha fazla getiri sağlayabilir.",
+        "lpDangerWarning": "Bu takas sonrası sağlık faktörünüz kritik derecede düşük olacak ve tasfiye ile sonuçlanabilir. Lütfen güvende kalmak için farklı bir varlık seçin veya takas miktarını azaltın."
+      }
     }
   },
   "component": {
@@ -3138,7 +3197,10 @@
     "check": "Kontrol Et",
     "Dapp": "Dapp",
     "Token": "Jeton",
-    "GotIt": "Anladım"
+    "GotIt": "Anladım",
+    "Backup": "Yedekle",
+    "copy": "Kopyala",
+    "Other": "Diğer"
   },
   "background": {
     "error": {

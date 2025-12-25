@@ -24,7 +24,10 @@
       "ImportMoreAddress": "Importar mais Carteiras",
       "CreateSelectOnCurrentSeed": "2. Adicionar Carteira",
       "ConfrimAddress": "Confirme a Sua Carteira",
-      "ImportNewAddress": "Adicionar uma Carteira"
+      "ImportNewAddress": "Adicionar uma Carteira",
+      "SetPassword": "Definir palavra-passe",
+      "CreateWallet": "Criar Wallet",
+      "ChooseBackup": "Escolha um método de backup"
     }
   },
   "native": {
@@ -368,7 +371,10 @@
     "check": "Verifique",
     "Dapp": "Dapp",
     "Token": "Token",
-    "GotIt": "Entendi"
+    "GotIt": "Entendi",
+    "Other": "Outro",
+    "Backup": "Cópia de segurança",
+    "copy": "Copiar"
   },
   "page": {
     "getStart": {
@@ -403,7 +409,8 @@
         "LendingOnCollateral": "Ativar uso como colateral",
         "LendingOffCollateral": "Desligar uso como colateral",
         "LendingManageEMode": "Ativar o E-Mode",
-        "LendingManageEModeDisable": "Desligar o E-Mode"
+        "LendingManageEModeDisable": "Desligar o E-Mode",
+        "LendingDebtSwap": "Troca de Dívida"
       },
       "detail": {
         "SpeedUp": "Acelerar",
@@ -1407,7 +1414,9 @@
         "backupSeedPhrase": "Faça backup da sua seed phrase para restaurar a sua carteira caso a aplicação seja apagada ou se o seu dispositivo for perdido.",
         "riskTips": "Antes de começar, por favor, leia e mantenha estas dicas de segurança em mente:",
         "createOnCurrentDesc": "Criar carteira com uma frase-semente importada existente",
-        "createNewDesc": "Gere uma nova frase-semente para novas carteiras"
+        "createNewDesc": "Gere uma nova frase-semente para novas carteiras",
+        "BackupYourSeedPhrase": "Faça o Backup da Sua Frase Semente",
+        "WriteSeedPhrase": "Esta é a sua frase semente. Anote-a e guarde-a com segurança. Se a perder ou a partilhar, os seus ativos podem ser perdidos para sempre. Você será solicitado a reintroduzir esta frase (na ordem) no próximo passo."
       },
       "importAddress": {
         "privateKey": "Importar Private Key",
@@ -1442,6 +1451,22 @@
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Deslize para a direita para ver todos os ativos"
+      },
+      "copySeedPhraseSecureTip": {
+        "copyAnyway": "Copiar de qualquer maneira",
+        "subTitle": "Qualquer pessoa que obtenha a sua seed phrase pode controlar totalmente os seus fundos.",
+        "tip2": "Não cole nem salve a sua frase-semente em serviços de nuvem ou aplicações de notas.",
+        "tip3": "Nunca partilhe a sua frase-semente. Nunca a solicitaremos.",
+        "copied": "Frase-semente copiada. A área de transferência será limpa em 1 minuto.",
+        "title": "Mantenha a sua SeedPhrase em segredo",
+        "tip1": "Outras aplicações podem ler a sua área de transferência, por isso evite mudar de aplicações após copiar."
+      },
+      "screenshotSecureTip": {
+        "title": "Capturas de ecrã não são seguras",
+        "tip2": "Aplicações ou malware podem ler imagens armazenadas na sua biblioteca de fotografias.",
+        "tip3": "Qualquer pessoa que obtenha a sua seed phrase pode assumir o controlo total da sua wallet, e isso não pode ser revertido.",
+        "tip1": "As capturas de ecrã podem sincronizar para a nuvem ou outros dispositivos, e podem ser acedidas se um dispositivo for perdido, roubado ou comprometido.",
+        "subTitle": "Guardar a sua frase semente como uma imagem pode expô-la, por isso escrevê-la é uma opção mais segura."
       }
     },
     "newAddress": {
@@ -1678,7 +1703,8 @@
           "content": "Deseja ativar {{ bioType }} para desbloquear Rabby Wallet?",
           "title": "Ativar {{ bioType }}"
         }
-      }
+      },
+      "unlocking": "Desbloqueando"
     },
     "switchChain": {
       "requestRabbyToSupport": "Solicitar suporte para Rabby",
@@ -1842,7 +1868,10 @@
         "notTop10Address": "Wallets classificados abaixo dos 10 melhores",
         "helpDescription2": "Você pode pressionar longamente para fixar carteiras e ajustar quais estão incluídas.",
         "helpDescription1": "Para garantir atualizações de dados em tempo hábil e precisas, apenas as suas 10 carteiras principais estão incluídas no Total Balance e no Portfolio."
-      }
+      },
+      "other": "Outro",
+      "basicInfo": "Informações Básicas",
+      "backup": "Cópia de segurança"
     },
     "backupSeedPhrase": {
       "qrCodePopupTitle": "Código QR",
@@ -2512,6 +2541,9 @@
       },
       "toast": {
         "clearCacheSuccess": "Cache limpo"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "Mais"
       }
     },
     "browserManage": {
@@ -2982,8 +3014,7 @@
           "mySupplies": "Meus suprimentos",
           "token_balance": "Token/Saldo",
           "token_tvl": "Token/TVL"
-        },
-        "item": {}
+        }
       },
       "summary": {
         "empty": {
@@ -3018,7 +3049,8 @@
         "actions": "Emprestar",
         "approveAndBorrow": "Aprovar e Pedir Emprestado",
         "almostReachedError": "O montante máximo disponível para empréstimo é limitado porque o limite de empréstimo do protocolo está quase atingido.",
-        "almostReachedWarning": "O limite de empréstimo do protocolo está em 100% para este ativo. Novos empréstimos não estão disponíveis."
+        "almostReachedWarning": "O limite de empréstimo do protocolo está em 100% para este ativo. Novos empréstimos não estão disponíveis.",
+        "swapDebt": "Trocar"
       },
       "popup": {
         "amount": "Montante",
@@ -3136,9 +3168,39 @@
         "unavailable": "• Indisponível",
         "disableTitle": "Desativar",
         "unavailableTips": "Os seus ativos de empréstimo/empréstimo existentes não são suportados.",
-        "description": "Ativar o E-Mode permite maximizar o seu poder de empréstimo. No entanto, o empréstimo está restrito a ativos dentro da categoria selecionada."
+        "description": "Ativar o E-Mode permite maximizar o seu poder de empréstimo. No entanto, o empréstimo está restrito a ativos dentro da categoria selecionada.",
+        "debtSwapSelector": {
+          "header": {
+            "borrow": "Meus empréstimos",
+            "assets": "Token/Saldo"
+          },
+          "title": "Selecionar Token de Empréstimo"
+        }
       },
-      "disabled": "DESABILITADO"
+      "disabled": "DESABILITADO",
+      "debtSwap": {
+        "actions": {
+          "title": "Troca de Dívida",
+          "select": "Selecionar",
+          "swapTo": "Trocar para",
+          "borrowed": "Emprestado",
+          "amount": "Quantidade"
+        },
+        "overview": {
+          "title": "Visão Geral da Transação",
+          "borrowAPY": "Empréstimo apy",
+          "borrowValueAfter": "Saldo de empréstimo após troca"
+        },
+        "button": {
+          "swap": "Trocar"
+        },
+        "borrowBalance": "Saldo de empréstimo",
+        "title": "Trocar Posição de Empréstimo",
+        "entryTips": "Troque o seu ativo emprestado com um clique, reduzindo etapas e taxas.",
+        "lpDangerWarning": "O seu fator de saúde após esta troca ficará criticamente baixo e pode resultar em liquidação. Por favor, escolha um ativo diferente ou reduza o valor da troca para se manter seguro.",
+        "lpRiskWarning": "Fator de saúde baixo após a troca. Sua posição terá um risco maior de liquidação.",
+        "priceImpactTips": "Impacto de preço elevado ({{lostValue}}). Esta rota pode retornar mais devido à baixa liquidez ou ao tamanho pequeno da ordem."
+      }
     }
   },
   "constant": {

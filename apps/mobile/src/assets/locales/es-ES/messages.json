@@ -24,7 +24,10 @@
       "CreateNewAddress": "1. Confirma tu Wallet",
       "ImportMoreAddress": "Importar más Wallets",
       "ImportWatchAddress2024": "Añadir billetera de solo observación",
-      "ConfrimAddress": "Confirma tu billetera"
+      "ConfrimAddress": "Confirma tu billetera",
+      "CreateWallet": "Crear Wallet",
+      "SetPassword": "Establecer contraseña",
+      "ChooseBackup": "Elige un método de respaldo"
     }
   },
   "native": {
@@ -325,7 +328,8 @@
         "LendingOffCollateral": "Desactivar el uso como colateral",
         "LendingOnCollateral": "Activar uso como colateral",
         "LendingManageEMode": "Activa el E-Mode",
-        "LendingManageEModeDisable": "Desactivar E-Mode"
+        "LendingManageEModeDisable": "Desactivar E-Mode",
+        "LendingDebtSwap": "Intercambio de Deuda"
       },
       "detail": {
         "Cancel": "Cancelar",
@@ -1255,7 +1259,9 @@
         "UnderstandsecurityPrecautions": "Entiendo estas precauciones de seguridad.",
         "createOnCurrent": "Usar la Actual Seed Phrase",
         "createOnCurrentDesc": "Crear billetera con una frase semilla importada existente",
-        "createNewDesc": "Generar una nueva frase semilla para nuevas carteras"
+        "createNewDesc": "Generar una nueva frase semilla para nuevas carteras",
+        "BackupYourSeedPhrase": "Copia tu frase semilla",
+        "WriteSeedPhrase": "Esta es tu frase semilla. Escríbela y guárdala de forma segura. Si la pierdes o la compartes, tus activos podrían perderse para siempre. Se te pedirá que vuelvas a introducir esta frase (en orden) en el siguiente paso."
       },
       "importAddress": {
         "seedPhrase": "Importar Seed Phrase",
@@ -1305,6 +1311,22 @@
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Desliza a la derecha para ver todos los activos"
+      },
+      "copySeedPhraseSecureTip": {
+        "subTitle": "Cualquiera que obtenga tu seed phrase puede controlar completamente tus fondos.",
+        "copied": "Frase semilla copiada. El portapapeles se borrará en 1 minuto.",
+        "tip1": "Otras aplicaciones pueden leer tu portapapeles, así que evita cambiar de aplicación después de copiar.",
+        "title": "Mantén tu SeedPhrase en secreto",
+        "tip2": "No pegues ni guardes tu frase semilla en servicios en la nube o aplicaciones de notas.",
+        "tip3": "Nunca compartas tu frase semilla. Nunca te la pediremos.",
+        "copyAnyway": "Copia de todas formas"
+      },
+      "screenshotSecureTip": {
+        "tip2": "Las aplicaciones o malware pueden leer imágenes almacenadas en tu biblioteca de fotos.",
+        "title": "Las capturas de pantalla no son seguras.",
+        "tip1": "Las capturas de pantalla se pueden sincronizar con la nube u otros dispositivos, y se pueden acceder si un dispositivo se pierde, es robado o se ve comprometido.",
+        "subTitle": "Guardar tu frase semilla como una imagen puede exponerla, así que escribirla es una opción más segura.",
+        "tip3": "Cualquiera que obtenga tu frase semilla puede tomar el control total de tu wallet, y esto no se puede revertir."
       }
     },
     "bridge": {
@@ -1621,7 +1643,8 @@
           "title": "Habilitar {{ bioType }}",
           "no": "Cancelar"
         }
-      }
+      },
+      "unlocking": "Desbloqueando"
     },
     "importSafe": {
       "loading": "Buscando la cadena desplegada de esta dirección",
@@ -1746,7 +1769,10 @@
         "helpDescription2": "Puedes mantener pulsado para fijar billeteras y ajustar cuáles están incluidas.",
         "notTop10Address": "Bolsas clasificadas por debajo de las 10 mejores",
         "helpDescription1": "Para garantizar actualizaciones de datos oportunas y precisas, solo se incluyen tus 10 principales wallets en el Total Balance y en el Portfolio."
-      }
+      },
+      "other": "Otro",
+      "basicInfo": "Información básica",
+      "backup": "Copia de seguridad"
     },
     "connect": {
       "connectBtn": "Conectar",
@@ -2434,6 +2460,9 @@
       },
       "toast": {
         "clearCacheSuccess": "Caché vaciado"
+      },
+      "BrowserFavoriteInHome": {
+        "more": "Más"
       }
     },
     "browserManage": {
@@ -2904,8 +2933,7 @@
           "apy": "APY",
           "token_tvl": "Token/TVL",
           "token_balance": "Token/Saldo"
-        },
-        "item": {}
+        }
       },
       "summary": {
         "empty": {
@@ -2940,7 +2968,8 @@
         "approveAndBorrow": "Aprobar y Prestar",
         "actions": "Pedir prestado",
         "almostReachedError": "El monto máximo disponible para pedir prestado está limitado porque se ha alcanzado casi el límite de préstamo del protocolo.",
-        "almostReachedWarning": "El límite de préstamo del protocolo está en el 100% para este activo. No se puede realizar más préstamos."
+        "almostReachedWarning": "El límite de préstamo del protocolo está en el 100% para este activo. No se puede realizar más préstamos.",
+        "swapDebt": "Intercambiar"
       },
       "popup": {
         "amount": "Cantidad",
@@ -3058,9 +3087,39 @@
         "unavailableTips": "Sus activos de préstamo/borrowing existentes no son compatibles.",
         "unavailable": "• No disponible",
         "title": "Gestionar E-Mode",
-        "description": "Habilitar E-Mode te permite maximizar tu poder de préstamo. Sin embargo, el préstamo está restringido a los activos dentro de la categoría seleccionada."
+        "description": "Habilitar E-Mode te permite maximizar tu poder de préstamo. Sin embargo, el préstamo está restringido a los activos dentro de la categoría seleccionada.",
+        "debtSwapSelector": {
+          "header": {
+            "assets": "Token/Saldo",
+            "borrow": "Mis préstamos"
+          },
+          "title": "Seleccionar Token de Préstamo"
+        }
       },
-      "disabled": "DESHABILITADO"
+      "disabled": "DESHABILITADO",
+      "debtSwap": {
+        "actions": {
+          "title": "Intercambio de Deuda",
+          "swapTo": "Intercambiar a",
+          "amount": "Cantidad",
+          "select": "Seleccionar",
+          "borrowed": "Solicitado"
+        },
+        "overview": {
+          "title": "Resumen de Transacciones",
+          "borrowAPY": "Pedir apy",
+          "borrowValueAfter": "Balance de préstamo después del intercambio"
+        },
+        "button": {
+          "swap": "Intercambiar"
+        },
+        "borrowBalance": "Saldo de préstamo",
+        "title": "Intercambiar Posición de Préstamo",
+        "entryTips": "Un clic para intercambiar tu activo prestado, reduciendo pasos y tarifas.",
+        "lpRiskWarning": "Bajo factor de salud después del intercambio. Tu posición tendrá un mayor riesgo de liquidación.",
+        "priceImpactTips": "Alto impacto en el precio ({{lostValue}}). Esta ruta puede devolver más debido a la baja liquidez o al tamaño pequeño de la orden.",
+        "lpDangerWarning": "Su factor de salud después de este intercambio será críticamente bajo y puede resultar en liquidación. Por favor, elija un activo diferente o reduzca la cantidad del intercambio para mantenerse a salvo."
+      }
     }
   },
   "global": {
@@ -3139,7 +3198,10 @@
     "gotIt": "Entendido",
     "Token": "Token",
     "Dapp": "Dapp",
-    "GotIt": "Entendido"
+    "GotIt": "Entendido",
+    "Other": "Otro",
+    "Backup": "Copia de seguridad",
+    "copy": "Copiar"
   },
   "bluetooth": {
     "powered_off_alert": {
