@@ -423,12 +423,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   wrapperToken: {
     backgroundColor: colors2024['neutral-bg-5'],
-    borderColor: colors2024['neutral-line'],
-    borderWidth: 1,
   },
   wrapperTokenArrow: {
     position: 'absolute',
-    top: -15,
+    top: -14,
     left: 30,
     zIndex: 1,
     ...makeTriangleStyle({

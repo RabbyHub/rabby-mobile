@@ -219,11 +219,17 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
                     {getHealthFactorText(healthFactor)}
                   </Text>
                   {extraInfo && (
-                    <View style={styles.healthTag}>
+                    <View
+                      style={[
+                        styles.healthTag,
+                        { backgroundColor: healthStatus.backgroundColor },
+                      ]}>
                       <Text
                         style={[
                           styles.healthTagText,
-                          { color: healthStatus.color },
+                          {
+                            color: healthStatus.color,
+                          },
                         ]}>
                         {healthStatus.label}
                       </Text>
@@ -336,7 +342,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: 4,
-    backgroundColor: colors2024['green-light-1'],
   },
   healthTagText: {
     fontSize: 12,

@@ -284,7 +284,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   footer: {
     paddingTop: 12,
-    paddingBottom: 140,
+    paddingBottom: 118,
   },
   actionBar: {
     position: 'absolute',

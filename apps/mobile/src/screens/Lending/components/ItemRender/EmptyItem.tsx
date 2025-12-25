@@ -131,6 +131,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 12,
     borderRadius: 16,
     marginTop: 12,
+    marginBottom: 120,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
@@ -138,7 +139,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   listContainer: {
     paddingHorizontal: 16,
     paddingTop: 30,
-    paddingBottom: 120,
+    paddingBottom: 24,
   },
   listHeader: {
     flexDirection: 'row',
