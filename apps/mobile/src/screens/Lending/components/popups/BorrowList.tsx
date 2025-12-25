@@ -103,15 +103,7 @@ const LendingBorrowList: React.FC = () => {
         );
       })
       .sort((a, b) => {
-        if (
-          Number(a.totalBorrowsUSD) === 0 &&
-          Number(b.totalBorrowsUSD) === 0
-        ) {
-          return (
-            Number(b.reserve.totalDebtUSD) - Number(a.reserve.totalDebtUSD)
-          );
-        }
-        return Number(b.totalBorrowsUSD) - Number(a.totalBorrowsUSD);
+        return Number(b.reserve.totalDebtUSD) - Number(a.reserve.totalDebtUSD);
       });
   }, [displayPoolReserves, iUserSummary, reserves?.reservesData]);
 
