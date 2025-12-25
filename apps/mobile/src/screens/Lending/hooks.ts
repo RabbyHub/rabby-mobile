@@ -91,6 +91,7 @@ export const useSelectedMarket = () => {
     () => getMarketInfo(market),
     [market],
   );
+
   return {
     marketKey: market,
     selectedMarketData: marketData,
@@ -622,79 +623,61 @@ const preQueryParams: {
   marketKey: undefined,
 };
 
-const setRemoteTaskRef: RefLikeObject<null | ReturnType<
-  typeof InteractionManager.runAfterInteractions
->> = { current: null };
+// const setRemoteTaskRef: RefLikeObject<null | ReturnType<
+//   typeof InteractionManager.runAfterInteractions
+// >> = { current: null };
 const globalSets = {
   setRemoteData: debounce(
-    (
-      valOrFunc: UpdaterOrPartials<RemoteDataState>,
-      { persistOnly = false } = {},
-    ) => {
-      setRemoteTaskRef.current?.cancel();
-      setRemoteTaskRef.current = InteractionManager.runAfterInteractions(
-        async () => {
-          setRemoteTaskRef.current = null;
+    async (valOrFunc: UpdaterOrPartials<RemoteDataState>) => {
+      const prev = remoteDataState.getState();
+      const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+        strict: false,
+      });
 
-          const prev = remoteDataState.getState();
-          // const prev = jotaiStore.get(remoteDataAtom);
-          const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
-            strict: false,
-          });
-          console.debug('[perf] lending:: remote data will be set', newVal);
-          remoteDataState.setState(newVal);
-          // jotaiStore.set(remoteDataAtom, newVal);
+      const computed = await computeFormattedReservesAndIncentives(newVal);
+      // formattedReservesAndIncentivesState.setState(computed);
 
-          const computed = await computeFormattedReservesAndIncentives(newVal);
-          // formattedReservesAndIncentivesState.setState(computed);
+      const computed2 = await computeIUserSummary({
+        ...newVal,
+        formattedReserves: computed.formattedReserves,
+      });
 
-          const computed2 = await computeIUserSummary({
-            ...newVal,
-            formattedReserves: computed.formattedReserves,
-          });
-          // iUserSummaryState.setState(computed2 as UserSummary);
+      const computed3 = computeMappedBalances({
+        walletBalances: newVal.walletBalances,
+      });
 
-          const computed3 = computeMappedBalances({
-            walletBalances: newVal.walletBalances,
-          });
-          // mappedBalancesState.setState(computed3);
+      const computed4 = computeDisplayPoolReserves({
+        ...newVal,
+        iUserSummary: computed2 as UserSummary,
+        mappedBalances: computed3,
+        market: jotaiStore.get(marketAtom),
+      });
 
-          const computed4 = computeDisplayPoolReserves({
-            ...newVal,
-            iUserSummary: computed2 as UserSummary,
-            mappedBalances: computed3,
-            market: jotaiStore.get(marketAtom),
-          });
-          // displayPoolReservesState.setState(computed4);
+      const computed5 = computeWrapperPoolReserveAndFinalDisplayPoolReserves({
+        displayPoolReserves: computed4,
+        formattedPoolReservesAndIncentives:
+          computed.formattedPoolReservesAndIncentives,
+        mappedBalances: computed3,
+        reserves: newVal.reserves,
+        market: jotaiStore.get(marketAtom),
+      });
 
-          const computed5 =
-            computeWrapperPoolReserveAndFinalDisplayPoolReserves({
-              displayPoolReserves: computed4,
-              formattedPoolReservesAndIncentives:
-                computed.formattedPoolReservesAndIncentives,
-              mappedBalances: computed3,
-              reserves: newVal.reserves,
-              market: jotaiStore.get(marketAtom),
-            });
-          // wrapperPoolReserveAndFinalDisplayPoolReservesState.setState(computed5);
+      const computed6 = computeApyInfo({
+        formattedPoolReservesAndIncentives:
+          computed.formattedPoolReservesAndIncentives,
+        iUserSummary: computed2 as UserSummary,
+      });
 
-          const computed6 = computeApyInfo({
-            formattedPoolReservesAndIncentives:
-              computed.formattedPoolReservesAndIncentives,
-            iUserSummary: computed2 as UserSummary,
-          });
-          // apyInfoState.setState(computed6);
-
-          computedInfoState.setState({
-            formattedReservesAndIncentivesState: computed,
-            iUserSummary: computed2 as UserSummary,
-            mappedBalances: computed3,
-            displayPoolReserves: computed4,
-            wrapperPoolReserveAndFinalDisplayPoolReserves: computed5,
-            apyInfo: computed6,
-          });
-        },
-      );
+      console.debug('[perf] lending:: remote data will be set', newVal);
+      remoteDataState.setState(newVal);
+      computedInfoState.setState({
+        formattedReservesAndIncentivesState: computed,
+        iUserSummary: computed2 as UserSummary,
+        mappedBalances: computed3,
+        displayPoolReserves: computed4,
+        wrapperPoolReserveAndFinalDisplayPoolReserves: computed5,
+        apyInfo: computed6,
+      });
     },
     200,
   ),
@@ -717,6 +700,7 @@ const fetchLendingData = makeSWRKeyAsyncFunc(
     accountAddress?: string;
     ignoreLoading?: boolean;
     persistOnly?: boolean;
+    marketKey?: CustomMarket;
   }) => {
     const {
       accountAddress = storeApiAccountsSwitcher.getSceneAccountInfo({
@@ -724,6 +708,7 @@ const fetchLendingData = makeSWRKeyAsyncFunc(
       }).finalSceneCurrentAccount?.address,
       ignoreLoading,
       persistOnly = false,
+      marketKey: paramMarketKey,
     } = options || {};
 
     const requestAddress = accountAddress;
@@ -731,7 +716,7 @@ const fetchLendingData = makeSWRKeyAsyncFunc(
       return;
     }
 
-    const marketKey = getMarketKey();
+    const marketKey = paramMarketKey || getMarketKey();
     if (!marketKey) return;
 
     // 用户强制忽略loading、前后params一样
@@ -745,8 +730,8 @@ const fetchLendingData = makeSWRKeyAsyncFunc(
       globalSets.setLoading(true);
     }
     return fetchContractData(requestAddress)
-      .then(data => {
-        globalSets.setRemoteData(data, { persistOnly });
+      .then(async data => {
+        await globalSets.setRemoteData(data);
 
         globalSets.setCurrentAddress(requestAddress);
         globalSets.setLoading(false);
@@ -790,14 +775,17 @@ const useFetchLendingData = () => {
     forScene: 'Lending',
   });
 
+  const { marketKey } = useSelectedMarket();
+
   const fetchData = useCallback(
     (ignoreLoading?: boolean) => {
       return fetchLendingData({
         accountAddress: currentAccount?.address,
         ignoreLoading,
+        marketKey,
       });
     },
-    [currentAccount?.address],
+    [currentAccount?.address, marketKey],
   );
 
   return {

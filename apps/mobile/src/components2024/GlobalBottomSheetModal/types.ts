@@ -148,6 +148,9 @@ export type MODAL_CREATE_PARAMS = {
     onClose?: () => void;
   };
   [MODAL_NAMES.SEED_PHRASE_QR_CODE]: SeedPhraseQrCodeProps;
+  [MODAL_NAMES.SELECT_LENDING_CHAIN]: React.ComponentProps<
+    typeof import('@/screens/Lending/ChainSelector/SelectLendingChain').default
+  >;
 };
 
 export type MODAL_ID = `${MODAL_NAMES}_${string}`;

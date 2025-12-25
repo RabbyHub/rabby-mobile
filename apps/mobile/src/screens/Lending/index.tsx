@@ -21,10 +21,6 @@ function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { fetchData } = useFetchLendingData();
-  const { marketKey } = useSelectedMarket();
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'Lending',
-  });
   useInitOpenDetail();
 
   useEffect(() => {

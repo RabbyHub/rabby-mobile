@@ -72,7 +72,6 @@ export function ChainSelector({
   const { t } = useTranslation();
   const { selectedMarketData, setMarketKey, chainEnum } = useSelectedMarket();
   const modalRef = React.useRef<MODAL_ID>();
-  // const { setLoading } = useFetchLendingData();
 
   const removeChainModal = React.useCallback(() => {
     if (modalRef.current) {
