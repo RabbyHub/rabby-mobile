@@ -1,13 +1,10 @@
 /// <reference path="../../../worker-src/worker-duplex.d.ts" />
 
 import { EmitterSubscription } from 'react-native';
-import RNFS from 'react-native-fs';
 
-import { IS_IOS, makeRnEEClass, resolveNativeModule } from './utils';
+import { makeRnEEClass, resolveNativeModule } from './utils';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { makeJsEEClass } from '../services/_utils';
 import { sleep } from '@/utils/async';
-import { getRabbyAppDbDir } from '@/databases/constant';
 
 const { RNThread } = resolveNativeModule('RNThread');
 
@@ -35,6 +32,10 @@ function waitNextThread() {
 }
 
 type MsgHandler = (message: WorkerDuplexReceive) => void;
+
+export const ThreadError = {
+  Timeout: 'Timeout',
+};
 
 export class Thread {
   #id: Promise<number> = waitNextThread();
@@ -95,7 +96,7 @@ export class Thread {
           }
         });
         sleep(timeout).then(() => {
-          reject(new Error('Timeout'));
+          reject(new Error(ThreadError.Timeout));
           sub.remove();
         });
       },
