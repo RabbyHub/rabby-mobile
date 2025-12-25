@@ -2713,9 +2713,9 @@
       },
       "summary": {
         "empty": {
-          "title": "Earn Interest, Borrow Anytime",
+          "title": "Earn Interest with your assets",
           "description": "Powered by AAVE. Secure and zero fees.",
-          "endDesc": "You don’t have any deposits yet. Deposit the assets below to earn interest."
+          "endDesc": "You don’t have any deposits yet. Check out below recommended assets to start earning interest."
         },
         "lq": "If goes below 1, the liquidation might be triggered.",
         "more": "More",
