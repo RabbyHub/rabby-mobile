@@ -85,14 +85,14 @@ const LendingSupplyList: React.FC<
         if (item.underlyingBalance && item.underlyingBalance !== '0') {
           return true;
         }
-        if (
-          // 达到供应上限
-          BigNumber(item.reserve?.totalLiquidity || '0').gte(
-            item.reserve?.supplyCap || '0',
-          )
-        ) {
-          return false;
-        }
+        //if (
+        //  // 达到供应上限
+        //  BigNumber(item.reserve?.totalLiquidity || '0').gte(
+        //    item.reserve?.supplyCap || '0',
+        //  )
+        //) {
+        //  return false;
+        //}
         const realUnderlyingAsset =
           isSameAddress(item.underlyingAsset, API_ETH_MOCK_ADDRESS) && chainEnum
             ? wrapperToken?.[chainEnum]?.address

@@ -95,9 +95,10 @@ const LendingBorrowList: React.FC = () => {
         if (eModeBorrowDisabled) {
           return false;
         }
-        if (BigNumber(item.reserve.totalDebt).gte(item.reserve.borrowCap)) {
-          return false;
-        }
+        // 贷款上限
+        //if (BigNumber(item.reserve.totalDebt).gte(item.reserve.borrowCap)) {
+        //  return false;
+        //}
         const reserve = reserves?.reservesData?.find(x =>
           isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
         );
