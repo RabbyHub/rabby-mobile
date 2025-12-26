@@ -57,7 +57,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 import { SwapType } from '../../../types/swap';
 import TokenIcon from '../../TokenIcon';
-import { APP_CODE_LENDING_DEBT_SWAP } from '../../../utils/constant';
+import { APP_CODE_LENDING_REPAY_WITH_COLLATERAL } from '../../../utils/constant';
 import { ParaswapRatesType, SwappableToken } from '../../../types/swap';
 import { getParaswap } from '../../../config/paraswap';
 import { getParaswapSellRates } from '../DebtSwap/paraswap';
@@ -69,13 +69,12 @@ import {
   useRepayWithCollateralSlippage,
 } from './hook';
 import {
-  DEFAULT_DEBT_SWAP_SLIPPAGE,
   maxInputAmountWithSlippage,
   formatTx,
 } from '../../../modals/DebtSwapModal/utils';
 import { buildRepayWithCollateralTx } from '../../../poolService';
 import {
-  getApproveAmount,
+  calculateSignedAmount,
   getPriceImpactData,
   getToAmountAfterSlippage,
 } from '../../../modals/DebtSwapModal/warning';
@@ -83,6 +82,7 @@ import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { ethers, PopulatedTransaction } from 'ethers';
+import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
 
 interface RepayWithCollateralProps {
   repayToken: SwappableToken;
@@ -154,15 +154,10 @@ export default function RepayWithCollateral({
     collateralToken: selectedCollateralToken,
     repayToken,
     collateralAmount,
-    repayAmount,
+    repayAmount: debouncedRepayAmount,
   });
 
-  const {
-    collateralReserve,
-    repayReserve,
-    isSameToken,
-    collateralDisplayReserve,
-  } = useSwapReserves({
+  const { collateralReserve, repayReserve, isSameToken } = useSwapReserves({
     collateralToken: selectedCollateralToken,
     repayToken,
   });
@@ -184,10 +179,10 @@ export default function RepayWithCollateral({
 
   const repayAmountAfterSlippage = useMemo(() => {
     return getToAmountAfterSlippage({
-      inputAmount: repayAmount,
+      inputAmount: debouncedRepayAmount,
       slippage: Number(slippage) * 100,
     });
-  }, [repayAmount, slippage]);
+  }, [debouncedRepayAmount, slippage]);
 
   const priceImpactData = useMemo(() => {
     return getPriceImpactData({
@@ -345,9 +340,9 @@ export default function RepayWithCollateral({
           srcDecimals: selectedCollateralToken.decimals,
           destDecimals: repayToken.decimals,
           side: 'buy' as const,
-          appCode: APP_CODE_LENDING_DEBT_SWAP,
+          appCode: APP_CODE_LENDING_REPAY_WITH_COLLATERAL,
           options: {
-            partner: APP_CODE_LENDING_DEBT_SWAP,
+            partner: APP_CODE_LENDING_REPAY_WITH_COLLATERAL,
           },
           invertedQuoteRoute: true,
         };
@@ -370,7 +365,7 @@ export default function RepayWithCollateral({
 
         lastQuoteParamsRef.current = {
           rawAmount,
-          toToken: selectedCollateralToken.underlyingAddress,
+          toToken: selectedCollateralToken.addressToSwap,
           srcAmount: quoteRes.destSpotAmount,
         };
 
@@ -453,7 +448,7 @@ export default function RepayWithCollateral({
     }
 
     const rawAmount = normalizeBN(
-      repayAmount,
+      debouncedRepayAmount,
       -1 * repayToken.decimals,
     ).toFixed(0);
 
@@ -461,13 +456,14 @@ export default function RepayWithCollateral({
       !lastQuoteParamsRef.current ||
       lastQuoteParamsRef.current.rawAmount !== rawAmount ||
       lastQuoteParamsRef.current.toToken !==
-        selectedCollateralToken.underlyingAddress
+        selectedCollateralToken.addressToSwap
     ) {
       throw new Error('quote-outdated');
     }
 
     const { paraswap, feeTarget } = getParaswap(repayToken.chainId as ChainId);
-    const slippageBps = swapRate.slippageBps ?? DEFAULT_DEBT_SWAP_SLIPPAGE;
+    const slippageBps =
+      swapRate.slippageBps ?? DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE;
 
     const swapTxParams: any = {
       destAmount: rawAmount,
@@ -504,7 +500,7 @@ export default function RepayWithCollateral({
       fromUnderlyingAsset: selectedCollateralToken.underlyingAddress,
       fromATokenAddress: collateralReserve.aTokenAddress,
       toUnderlyingAsset: repayToken.underlyingAddress,
-      repayAmount: repayAmount,
+      repayAmount: debouncedRepayAmount,
       repayWithAmount: BigNumber(collateralAmount)
         .multipliedBy(1 + slippageBps / 10000)
         .toFixed(selectedCollateralToken.decimals),
@@ -533,7 +529,7 @@ export default function RepayWithCollateral({
         throw new Error('aTokenAddress not found');
       }
 
-      const approveAmount = getApproveAmount(repayWithAmount, slippageBps);
+      const approveAmount = calculateSignedAmount(repayWithAmount);
 
       // 实时检查当前allowance
       const allowance = await getERC20Allowance(
@@ -642,11 +638,10 @@ export default function RepayWithCollateral({
     repayReserve,
     collateralReserve,
     chainInfo,
-    repayAmount,
+    debouncedRepayAmount,
     repayToken.decimals,
     repayToken.chainId,
     repayToken.underlyingAddress,
-    debouncedRepayAmount,
     debtBalance,
     collateralAmount,
     isMainnet,
@@ -679,7 +674,7 @@ export default function RepayWithCollateral({
           setCurrentTxs(txs.filter(tx => !!tx));
         }
       } catch (error) {
-        console.error('[RepayWithCollateral] 构建交易错误:', error);
+        console.error('CUSTOM_LOGGER:=>: error', error);
         if (!cancelled) {
           setCurrentTxs([]);
         }
@@ -1007,9 +1002,7 @@ export default function RepayWithCollateral({
                     color={colors2024['neutral-foot']}
                   />
                   <Text style={styles.balanceText}>
-                    {formatTokenAmount(
-                      collateralDisplayReserve?.variableBorrows || '0',
-                    )}
+                    {formatTokenAmount(selectedCollateralToken.balance || '0')}
                   </Text>
                 </View>
               </View>
@@ -1140,7 +1133,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   scrollableBlock: {
     flex: 1,
     width: '100%',
-    marginTop: 12,
+    marginTop: 16,
     height: '100%',
   },
   contentContainer: {

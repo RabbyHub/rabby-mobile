@@ -60,6 +60,7 @@
         "LendingManageEMode": "Turn on E-Mode",
         "LendingManageEModeDisable": "Turn off E-Mode",
         "LendingDebtSwap": "Debt Swap",
+        "LendingRepayWithCollateral": "Repay with Collateral",
         "ReceivedGas": "Received Gas",
         "WithdrawnGas": "Withdrawn Gas",
         "DepositedGas": "Deposited Gas",

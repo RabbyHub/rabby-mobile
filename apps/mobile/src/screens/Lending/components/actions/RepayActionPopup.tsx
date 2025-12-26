@@ -679,7 +679,7 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 4,
-    marginTop: 36,
+    marginTop: 16,
   },
   amountHeaderTitle: {
     fontSize: 17,
