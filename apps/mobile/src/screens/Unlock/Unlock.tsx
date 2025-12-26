@@ -75,7 +75,7 @@ async function reportUnlockTime(
     os_name: DeviceInfo.getSystemName(),
     app_ver: APP_VERSIONS.forFeedback,
     app_id: APPLICATION_ID,
-    callable_address_count:
+    callable_addr_count:
       (await runTryCatch(
         async () =>
           await getAddressesForReport().then(res => res.myCallableAddressCount),
