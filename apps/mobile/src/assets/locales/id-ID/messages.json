@@ -2666,12 +2666,18 @@
           "token": "Token",
           "myBorrows": "Peminjaman saya",
           "token_balance": "Token/Balance",
-          "token_tvl": "Token/TVL"
+          "token_tvl": "Token/TVL",
+          "totalBorrowed": "Total Dipinjamkan"
+        },
+        "item": {
+          "wrapperToken": "Wrapped token untuk {{name}}"
         }
       },
       "summary": {
         "empty": {
-          "description": "Ditenagai oleh AAVE. Aman dan tanpa biaya."
+          "description": "Ditenagai oleh AAVE. Aman dan tanpa biaya.",
+          "title": "Dapatkan Bunga dari aset Anda",
+          "endDesc": "Anda belum memiliki simpanan apa pun. Lihat aset-aset yang direkomendasikan di bawah ini untuk mulai menghasilkan bunga."
         },
         "more": "Lebih banyak",
         "healthy": "Sehat",
@@ -2691,7 +2697,8 @@
         "collateralization": "Kollateralisasi",
         "supplyBalance": "Saldo Pasokan",
         "unavailable": "Tidak tersedia",
-        "isolatedTips": "Aset pinjaman/peminjaman yang ada tidak didukung."
+        "isolatedTips": "Aset pinjaman/peminjaman yang ada tidak didukung.",
+        "supplied": "Disuplai"
       },
       "withdrawDetail": {
         "remainingSupply": "Sisa pasokan",
@@ -2702,7 +2709,8 @@
         "approveAndBorrow": "Aproval dan Meminjam",
         "almostReachedError": "Jumlah maksimum yang tersedia untuk dipinjam terbatas karena batas peminjaman protokol sudah hampir tercapai.",
         "almostReachedWarning": "Batas pinjaman protokol adalah 100% untuk aset ini. Pinjaman lebih lanjut tidak tersedia.",
-        "swapDebt": "Tukar"
+        "swapDebt": "Tukar",
+        "borrowed": "Dipinjam"
       },
       "popup": {
         "available": "tersedia",
@@ -2717,7 +2725,8 @@
         "totalBorrowed": "Total Borrowed",
         "title": "Rincian Pinjaman",
         "availableToBorrow": "Tersedia untuk dipinjam",
-        "liquidityPenalty": "Denda Likuidasi"
+        "liquidityPenalty": "Denda Likuidasi",
+        "reachCapTip": "Aset ini telah mencapai batas pinjaman."
       },
       "supplyOverview": {
         "availableToSupply": "Tersedia untuk Menyediakan",
@@ -2727,7 +2736,8 @@
         "walletBalance": "Saldo Dompet",
         "almostCap": "Aset ini hampir mencapai batas pinjamannya. Hanya ada {{available}} yang tersedia untuk dipinjam dari pasar ini.",
         "reachCap": "Aset ini telah mencapai batas pasokannya. Tidak ada yang tersedia untuk dipasok dari pasar ini.",
-        "useAsCollateral": "Gunakan sebagai jaminan"
+        "useAsCollateral": "Gunakan sebagai jaminan",
+        "collateral": "Jaminan"
       },
       "risk": {
         "checkbox": "Saya memahami peringatan tersebut dan ingin melanjutkan.",
@@ -2852,7 +2862,17 @@
         "priceImpactTips": "Dampak harga tinggi ({{lostValue}}). Rute ini mungkin memberikan lebih banyak karena likuiditas rendah atau ukuran pesanan kecil.",
         "lpDangerWarning": "Setelah pertukaran ini, faktor kesehatan Anda akan sangat rendah dan dapat mengakibatkan likuidasi. Silakan pilih aset lain atau kurangi jumlah pertukaran untuk tetap aman.",
         "lpRiskWarning": "Faktor kesehatan rendah setelah pertukaran. Posisi Anda akan membawa risiko likuidasi yang lebih tinggi."
-      }
+      },
+      "hfTips": {
+        "more": "Lebih banyak",
+        "desc": "Jika jatuh di bawah 1.0, jaminan Anda mungkin akan dilikuidasi."
+      },
+      "disableBorrowTip": {
+        "desc": "Tidak ada pasokan: Untuk meminjam, Anda perlu menyediakan aset sebagai jaminan."
+      },
+      "netApy": "Net APY",
+      "totalSupplied": "Total supplied",
+      "totalBorrowed": "Total borrowed"
     }
   },
   "component": {
