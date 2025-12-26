@@ -35,7 +35,7 @@ type Multi24hBalance = {
   };
 };
 type BalanceScene = 'Home';
-type Multi24hBalanceState = {
+export type Multi24hBalanceState = {
   addresses: Record<BalanceScene, string[]>;
   combinedData: Record<
     BalanceScene,
@@ -174,6 +174,11 @@ function onComputedSceneCombinedData<T extends BalanceScene>(
       [scene]: combinedData,
     },
   }));
+
+  perfEvents.emit('SCENE_24H_BALANCE_UPDATED', {
+    scene: scene,
+    combinedData: combinedData,
+  });
 }
 
 const waitQueueFinished = (q: PQueue) => {

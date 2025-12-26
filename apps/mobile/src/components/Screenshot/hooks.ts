@@ -23,6 +23,7 @@ import {
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import DeviceUtils from '@/core/utils/device';
+import { perfEvents } from '@/core/utils/perf';
 
 export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
   IS_ANDROID && !DeviceUtils.isGteAndroid(14);
@@ -384,13 +385,14 @@ export function useViewingFeedback() {
   };
 }
 
-export function useSetTotalBalanceTextForFeedback(totalBalanceText: string) {
-  useEffect(() => {
+export function screenshotModalStartSyncNetworth() {
+  perfEvents.subscribe('SCENE_24H_BALANCE_UPDATED', ({ combinedData }) => {
+    const netWorth = combinedData.netWorth;
     setFeedbackByScreenshot(prev => ({
       ...prev,
-      totalBalanceText,
+      totalBalanceText: netWorth,
     }));
-  }, [totalBalanceText]);
+  });
 }
 
 export function useSubmitFeedbackModalVisible() {

@@ -1,10 +1,14 @@
+import { getLatestOnlineConfig } from '@/core/config/online';
 import { Thread, ThreadError } from '@/core/native/RNThread';
 
 // relative path from the app bundle root
 export const workerThread = new Thread('worker-src/worker.thread.js');
 
-export function startComputationThread() {
-  workerThread.start();
+export async function startComputationThread() {
+  const config = await getLatestOnlineConfig();
+  if (config.switches?.['20251226.enable_worker_thread']) {
+    workerThread.start();
+  }
 }
 
 type Context = {
