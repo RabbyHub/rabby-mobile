@@ -2905,6 +2905,11 @@
         "action": {
           "title": "Repay with {{collateral}}"
         },
+        "overview": {
+          "title": "Transaction Overview",
+          "borrowValueAfter": "Borrow balance after repay",
+          "collateralValueAfter": "Collateral balance after repay"
+        },
         "button": {
           "repay": "Repay"
         }

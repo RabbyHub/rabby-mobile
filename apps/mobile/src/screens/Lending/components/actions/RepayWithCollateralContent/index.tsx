@@ -65,8 +65,8 @@ import { usePoolDataProviderContract, useSelectedMarket } from '../../../hooks';
 import {
   useFormatValues,
   useSwapReserves,
-  useHFForDebtSwap,
   useRepayWithCollateralSlippage,
+  useHFForRepayWithCollateral,
 } from './hook';
 import {
   maxInputAmountWithSlippage,
@@ -83,6 +83,8 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { ethers, PopulatedTransaction } from 'ethers';
 import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
+import DebtSwapModalSlider from '@/screens/Lending/modals/DebtSwapModal/Slider';
+import RepayWithCollateralOverview from './Overview';
 
 interface RepayWithCollateralProps {
   repayToken: SwappableToken;
@@ -157,10 +159,11 @@ export default function RepayWithCollateral({
     repayAmount: debouncedRepayAmount,
   });
 
-  const { collateralReserve, repayReserve, isSameToken } = useSwapReserves({
-    collateralToken: selectedCollateralToken,
-    repayToken,
-  });
+  const { collateralReserve, repayReserve, isSameToken, repayDisplayReserve } =
+    useSwapReserves({
+      collateralToken: selectedCollateralToken,
+      repayToken,
+    });
 
   const {
     slippage,
@@ -697,12 +700,13 @@ export default function RepayWithCollateral({
     debouncedRepayAmount,
   ]);
 
-  const { isHFLow, isLiquidatable } = useHFForDebtSwap({
-    collateralToken: selectedCollateralToken,
-    repayToken,
-    collateralAmount,
-    repayAmount: debouncedRepayAmount,
-  });
+  const { isHFLow, isLiquidatable, currentHF, afterSwapInfo } =
+    useHFForRepayWithCollateral({
+      collateralToken: selectedCollateralToken,
+      repayToken,
+      collateralAmount,
+      repayAmount: debouncedRepayAmount,
+    });
 
   useEffect(() => {
     if (!currentAccount || !canShowDirectSubmit || !currentTxs?.length) {
@@ -874,6 +878,12 @@ export default function RepayWithCollateral({
                 {t('page.Lending.repayWithCollateral.toRepay')}
               </Text>
               <View style={styles.sliderContainer}>
+                <DebtSwapModalSlider
+                  style={styles.slider}
+                  fromToken={repayToken}
+                  slider={slider}
+                  onChangeSlider={onChangeSlider}
+                />
                 <Text style={styles.sliderValue}>{slider}%</Text>
               </View>
             </View>
@@ -1066,6 +1076,21 @@ export default function RepayWithCollateral({
             />
           </View>
         )}
+        {noQuote && !isQuoteLoading ? null : (
+          <RepayWithCollateralOverview
+            fromToken={selectedCollateralToken}
+            toToken={repayToken}
+            chainEnum={chainEnum}
+            fromAmount={collateralAmount}
+            currentToAmount={repayDisplayReserve?.variableBorrows || '0'}
+            toAmount={debouncedRepayAmount}
+            fromBalanceBn={selectedCollateralToken?.balance || '0'}
+            isQuoteLoading={isQuoteLoading}
+            currentHF={currentHF}
+            afterHF={afterSwapInfo?.hfAfterSwap.toString()}
+            showHF={isHFLow || isLiquidatable}
+          />
+        )}
       </BottomSheetScrollView>
 
       <View
@@ -1135,10 +1160,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     marginTop: 16,
     height: '100%',
+    paddingBottom: 140,
   },
   contentContainer: {
     //paddingHorizontal: 25,
-    //paddingBottom: 300,
+    paddingBottom: 140,
   },
   header: {
     paddingHorizontal: 20,
@@ -1192,10 +1218,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sliderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 2,
+  },
+  slider: {
+    width: 100,
   },
   sliderValue: {
-    width: 40,
+    //width: 40,
     textAlign: 'right',
     color: colors2024['brand-default'],
     fontSize: 13,

@@ -11,7 +11,7 @@ import {
   maxInputAmountWithSlippage,
 } from '../../../modals/DebtSwapModal/utils';
 import { OptimalRate } from '@paraswap/sdk';
-import { calculateHFAfterSwap } from '../../../utils/hfUtils';
+import { calculateHFAfterCollateralRepay } from '../../../utils/hfUtils';
 import { valueToBigNumber } from '@aave/math-utils';
 import {
   LIQUIDATION_DANGER_THRESHOLD,
@@ -236,7 +236,7 @@ export const useRepayWithCollateralSlippage = ({
   };
 };
 
-export const useHFForDebtSwap = ({
+export const useHFForRepayWithCollateral = ({
   collateralToken,
   repayToken,
   collateralAmount,
@@ -263,19 +263,28 @@ export const useHFForDebtSwap = ({
       !repayDisplayReserve ||
       !collateralReserve ||
       !repayReserve ||
-      !user
+      !user ||
+      !collateralToken
     ) {
       return undefined;
     }
-    return calculateHFAfterSwap({
-      fromAmount: repayAmount,
-      fromAssetData: repayReserve,
-      fromAssetUserData: repayDisplayReserve,
-      toAmountAfterSlippage: collateralAmount,
-      toAssetData: collateralReserve,
-      user: user,
-      fromAssetType: 'debt',
-      toAssetType: 'debt',
+    console.log('CUSTOM_LOGGER:=>: calculateHFAfterCollateralRepay', {
+      amountToReceiveAfterSwap: repayAmount ?? '0',
+      amountToSwap: collateralAmount ?? '0',
+      fromAssetData: collateralReserve, // used as collateral
+      user,
+      toAssetData: repayReserve,
+      repayWithUserReserve: collateralDisplayReserve,
+      debt: repayDisplayReserve.variableBorrows ?? '0',
+    });
+    return calculateHFAfterCollateralRepay({
+      amountToReceiveAfterSwap: repayAmount ?? '0',
+      amountToSwap: collateralAmount ?? '0',
+      fromAssetData: collateralReserve, // used as collateral
+      user,
+      toAssetData: repayReserve,
+      repayWithUserReserve: collateralDisplayReserve,
+      debt: repayDisplayReserve.variableBorrows ?? '0',
     });
   }, [
     collateralDisplayReserve,
@@ -283,9 +292,12 @@ export const useHFForDebtSwap = ({
     collateralReserve,
     repayReserve,
     user,
-    repayAmount,
+    collateralToken,
     collateralAmount,
+    repayAmount,
   ]);
+
+  console.log('CUSTOM_LOGGER:=>: afterSwapInfo', afterSwapInfo);
 
   const isHFLow = useMemo(() => {
     const hfAfterSwap = afterSwapInfo?.hfAfterSwap;
