@@ -235,7 +235,7 @@ function setRateModalState(
   });
 }
 
-export function rateModalStartSyncNetwork() {
+export function rateModalStartSyncNetworth() {
   perfEvents.subscribe('SCENE_24H_BALANCE_UPDATED', ({ combinedData }) => {
     const netWorth = combinedData.netWorth;
     setRateModalState(prev => ({

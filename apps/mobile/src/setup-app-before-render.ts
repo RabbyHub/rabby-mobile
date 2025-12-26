@@ -17,7 +17,10 @@ import { startSubscribeTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
 import { startFetchOnceTop5TokensForAllAccounts } from './components/AccountSwitcher/hooks';
 import { loadVersionInfoOnBootstrap } from './hooks/version';
 import { autoGoogleSignIfPreviousSignedOnBoot } from './hooks/cloudStorage';
-import { startSubscribeUserDidTakeScreenshot } from './components/Screenshot/hooks';
+import {
+  screenshotModalStartSyncNetworth,
+  startSubscribeUserDidTakeScreenshot,
+} from './components/Screenshot/hooks';
 import { startSubscribeWhetherPreventScreenshot } from './hooks/native/security';
 import {
   startSubscribeAtSensitiveScene,
@@ -25,7 +28,7 @@ import {
   startSubscribeIOSScreenRecording,
 } from './hooks/navigation';
 import { startComputationThread } from './perfs/thread';
-import { rateModalStartSyncNetwork } from './components/RateModal/hooks';
+import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
 
 loadLockInfoOnBootstrap();
 startFetchOnceTop5TokensForAllAccounts();
@@ -53,6 +56,7 @@ startSubscribeIOSJustScreenshotted();
 startSubscribeWhetherPreventScreenshot();
 startSubscribeIOSScreenRecording();
 
-rateModalStartSyncNetwork();
+rateModalStartSyncNetworth();
+screenshotModalStartSyncNetworth();
 
 startComputationThread();

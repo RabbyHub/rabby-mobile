@@ -72,7 +72,6 @@ import { useApprovalAlertCounts } from './hooks/approvals';
 
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
-import { useSetTotalBalanceTextForFeedback } from '@/components/Screenshot/hooks';
 import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,
@@ -593,7 +592,6 @@ function MultiAddressHome(): JSX.Element {
   const combinedData = useScene24hBalanceLightWeightData('Home');
   useRendererDetect({ name: 'MultiAddressHome' });
 
-  useSetTotalBalanceTextForFeedback(combinedData.netWorth);
   useInitDetectDBAssets();
 
   useEffect(() => {
