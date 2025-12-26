@@ -47,7 +47,7 @@ const useChainSeletorList = ({
   supportChains?: Chain['enum'][];
   netTabKey?: NetSwitchTabsKey;
   needAllAddresses?: boolean;
-  account: Account;
+  account?: Account;
 }) => {
   const [search, setSearch] = useState('');
   const {
@@ -140,7 +140,7 @@ export type SelectSortedChainProps = {
   excludeChains?: CHAINS_ENUM[];
   needAllAddresses?: boolean;
   onClose?: () => void;
-  account: Account;
+  account?: Account;
 };
 export default function SelectChainWithSummary({
   value,

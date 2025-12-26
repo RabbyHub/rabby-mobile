@@ -4,6 +4,7 @@ import {
   AddressBalanceUpdaterSource,
   BalanceState,
 } from '@/hooks/useCurrentBalance';
+import { Multi24hBalanceState } from '@/hooks/useScene24hBalance';
 import { ContactBookStore } from '@rabby-wallet/service-address';
 
 export type PerfEventBusListeners = {
@@ -29,6 +30,11 @@ export type PerfEventBusListeners = {
 
   CHANGE_PREVENT_SCREENSHOT: (isPrevented: boolean) => void;
 
+  SCENE_24H_BALANCE_UPDATED: (ctx: {
+    scene: keyof Multi24hBalanceState['combinedData'];
+    combinedData: Multi24hBalanceState['combinedData'][keyof Multi24hBalanceState['combinedData']];
+  }) => void;
+
   'TMP_UPDATED:SINGLE_HOME_BALANCE': (data: {
     address: string;
     newBalance: BalanceState | null;
@@ -36,8 +42,6 @@ export type PerfEventBusListeners = {
     force: boolean;
     fromScene: AddressBalanceUpdaterSource;
   }) => void;
-
-  'TMP_TRIGGER:FETCH_LENDING_DATA': () => void;
 };
 type PerfListeners = {
   [P: string]: (data: any) => void;
