@@ -144,9 +144,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    width: '100%',
   },
   hfTipsContentText: {
-    flex: 1,
+    width: '80%',
+    height: '100%',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
@@ -169,9 +171,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   contentStyle: {
     paddingHorizontal: 12,
     paddingRight: 19,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 54,
   },
 }));

@@ -166,7 +166,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || amount === '0' || amount === '0.' || !currentAccount) {
       setWithdrawTxs([]);
       return;
     }
