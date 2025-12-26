@@ -50,6 +50,7 @@ import {
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { CHAINS_ENUM } from '@debank/common';
+import { ReserveDataHumanized } from '@aave/contract-helpers';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -165,7 +166,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || amount === '0' || amount === '0.' || !currentAccount) {
       setWithdrawTxs([]);
       return;
     }
@@ -179,11 +180,13 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
 
-      const targetPool = isNativeToken
-        ? wrapperPoolReserve
-        : formattedPoolReservesAndIncentives.find(item =>
-            isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
-          );
+      const targetPool = (
+        isNativeToken
+          ? wrapperPoolReserve
+          : formattedPoolReservesAndIncentives.find(item =>
+              isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
+            )
+      ) as ReserveDataHumanized | undefined | null;
 
       if (!targetPool?.aTokenAddress) {
         return;

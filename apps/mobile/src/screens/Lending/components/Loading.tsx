@@ -4,6 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
+import { useLendingIsLoading } from '../hooks';
 
 export const PoolItemLoading = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -21,6 +22,11 @@ export const PoolItemLoading = () => {
 
 export const PoolListLoading = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+
+  const { loading } = useLendingIsLoading();
+
+  if (loading) return null;
+
   return (
     <View style={styles.listContainer}>
       {Array.from({ length: 8 }).map((_, i) => (

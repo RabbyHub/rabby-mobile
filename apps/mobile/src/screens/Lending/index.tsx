@@ -10,35 +10,22 @@ import {
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
-import PoolContainer from './PoolContainer';
-import { useLendingData, useSelectedMarket } from './hooks';
+import { useFetchLendingData, useSelectedMarket } from './hooks';
 import { LendingHeader } from './components/Header';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useInitOpenDetail } from './hooks/useInitOpenDetail';
+import MyAssetHome from './MyAssetHome';
 const isAndroid = Platform.OS === 'android';
 
 function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { fetchData } = useLendingData();
-  const { marketKey } = useSelectedMarket();
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'Lending',
-  });
+  const { fetchData } = useFetchLendingData();
   useInitOpenDetail();
 
   useEffect(() => {
-    if (!marketKey) {
-      return;
-    }
-    const timeout = setTimeout(() => {
-      fetchData();
-    }, 500);
-    return () => {
-      clearTimeout(timeout);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [marketKey, currentAccount?.address]);
+    fetchData();
+  }, [fetchData]);
 
   const Header = React.useCallback(
     () => (
@@ -65,7 +52,7 @@ function DashBoardScreen(): JSX.Element {
       overwriteStyle={styles.overwriteStyle}>
       <AccountSwitcherModal forScene="Lending" inScreen />
       <View style={styles.container}>
-        <PoolContainer />
+        <MyAssetHome />
       </View>
     </NormalScreenContainer2024>
   );
@@ -95,7 +82,6 @@ const ForMultipleAddress = (
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   overwriteStyle: {
     position: 'relative',
-    paddingHorizontal: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],

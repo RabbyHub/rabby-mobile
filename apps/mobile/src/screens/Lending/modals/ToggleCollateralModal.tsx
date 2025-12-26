@@ -3,13 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { atom, useAtom } from 'jotai';
-import { DisplayPoolReserveInfo, UserSummary } from '../type';
+import { DisplayPoolReserveInfo } from '../type';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import ToggleCollateralOverView from '../components/actions/ToggleCollateralOverView';
 import { calculateHFAfterToggleCollateral } from '../utils/hfUtils';
 import { collateralSwitchTx, optimizedPath } from '../poolService';
 import {
+  useHasUserSummary,
+  useLendingRemoteData,
   useLendingSummary,
   usePoolDataProviderContract,
   useRefreshHistoryId,
@@ -65,11 +67,7 @@ export const useToggleCollateralModal = () => {
   };
 };
 
-function ToggleCollateralContent({
-  userSummary,
-}: {
-  userSummary: UserSummary;
-}) {
+function ToggleCollateralContent({}: {}) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [isShowToggleCollateralModal, setIsShowToggleCollateralModal] = useAtom(
@@ -78,7 +76,9 @@ function ToggleCollateralContent({
   const [isLoading, setIsLoading] = useState(false);
   const { pools } = usePoolDataProviderContract();
   const [currentToggleReserve] = useAtom(currentToggleReserveAtom);
-  const { userReserves, wrapperPoolReserve } = useLendingSummary();
+
+  const { userReserves } = useLendingRemoteData();
+  const { wrapperPoolReserve, iUserSummary: userSummary } = useLendingSummary();
   const { selectedMarketData, chainInfo } = useSelectedMarket();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -95,7 +95,7 @@ function ToggleCollateralContent({
   const { ctx } = useSignatureStore();
 
   const afterHF = useMemo(() => {
-    if (!currentToggleReserve) {
+    if (!currentToggleReserve || !userSummary) {
       return undefined;
     }
     return calculateHFAfterToggleCollateral(
@@ -246,13 +246,19 @@ function ToggleCollateralContent({
         ? t('page.Lending.toggleCollateralModal.exitIsolationModeDesc')
         : t('page.Lending.toggleCollateralModal.enableIsolationModeDesc');
     }
-    return currentToggleReserve?.usageAsCollateralEnabledOnUser
-      ? t('page.Lending.toggleCollateralModal.closeDesc')
-      : t('page.Lending.toggleCollateralModal.openDesc');
+    if (currentToggleReserve?.usageAsCollateralEnabledOnUser) {
+      if (userSummary?.totalBorrowsUSD === '0') {
+        return '';
+      }
+      return t('page.Lending.toggleCollateralModal.closeDesc');
+    } else {
+      return t('page.Lending.toggleCollateralModal.openDesc');
+    }
   }, [
     currentToggleReserve?.reserve.isIsolated,
     currentToggleReserve?.usageAsCollateralEnabledOnUser,
     t,
+    userSummary?.totalBorrowsUSD,
   ]);
 
   const handleToggleCollateral = useCallback(
@@ -318,7 +324,7 @@ function ToggleCollateralContent({
         }
 
         const txId = last(results);
-        if (txId) {
+        if (txId && txs[0]) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
             txs[0].chainId,
@@ -393,31 +399,33 @@ function ToggleCollateralContent({
           </View>
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
-            <View
-              style={[
-                styles.errorMessageContainer,
-                {
-                  backgroundColor: cardColors.bgColor,
-                },
-              ]}>
-              <RcIconWarningCircleCC
-                width={15}
-                height={15}
-                color={cardColors.iconColor}
-              />
-              <Text
+            {!!desc && (
+              <View
                 style={[
-                  styles.errorMessage,
+                  styles.errorMessageContainer,
                   {
-                    color: cardColors.textColor,
+                    backgroundColor: cardColors.bgColor,
                   },
                 ]}>
-                {desc}
-              </Text>
-            </View>
+                <RcIconWarningCircleCC
+                  width={15}
+                  height={15}
+                  color={cardColors.iconColor}
+                />
+                <Text
+                  style={[
+                    styles.errorMessage,
+                    {
+                      color: cardColors.textColor,
+                    },
+                  ]}>
+                  {desc}
+                </Text>
+              </View>
+            )}
           </View>
           <View style={styles.bodyContainer}>
-            {!!currentToggleReserve && (
+            {!!currentToggleReserve && userSummary && (
               <ToggleCollateralOverView
                 reserve={currentToggleReserve}
                 afterHF={afterHF}
@@ -514,13 +522,13 @@ function ToggleCollateralContent({
 }
 
 export const ToggleCollateralModal = () => {
-  const { iUserSummary } = useLendingSummary();
+  const { hasUserSummary } = useHasUserSummary();
   const { currentRouteName } = useCurrentRouteName();
   const isLendingRoute = currentRouteName === RootNames.Lending;
-  if (!iUserSummary || !isLendingRoute) {
+  if (!hasUserSummary || !isLendingRoute) {
     return null;
   }
-  return <ToggleCollateralContent userSummary={iUserSummary} />;
+  return <ToggleCollateralContent />;
 };
 
 const ScreenWidth = Dimensions.get('screen').width;

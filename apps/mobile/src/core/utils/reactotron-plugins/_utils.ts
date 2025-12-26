@@ -2,6 +2,7 @@ import { ReactotronCore } from 'reactotron-core-client';
 import { ReactotronReactNative } from 'reactotron-react-native';
 
 import { makeJsEEClass } from '@/core/services/_utils';
+import { type MMKV_FILE_NAMES } from '../appFS';
 
 type CM_CTX<T = any> = { reqid: string } & T;
 export type EventBusListeners = {
@@ -10,7 +11,7 @@ export type EventBusListeners = {
   CM_EXECUTE_SQL: (data: CM_CTX & { sql: string }) => void;
   CM_LOG_MMKV_STORE: (
     data: CM_CTX & {
-      storeName?: 'a' | 'app' | 'appStore' | 'k' | 'keyring' | 'keyringStore';
+      mmkvName?: 'a' | 'app' | 'appStore' | 'k' | 'keyring' | 'keyringStore';
     },
   ) => void;
 };

@@ -18,6 +18,7 @@ import { IS_IOS } from '../native/utils';
 import { runDevIIFEFunc } from '../utils/store';
 import { reactotronEvents } from '../utils/reactotron-plugins/_utils';
 import { zCreate, zCreateJSONStorage, zPersist } from '../utils/reexports';
+// import { lendingCacheStorage } from '@/screens/Lending/hooks';
 
 function checkIfDuplicatedStringifiedJsonObjectString(input: any) {
   return (
@@ -68,7 +69,7 @@ export function getJsonValueStringCompat(
   return finalString ?? null;
 }
 
-function makeAppStorage(options?: MMKVConfiguration) {
+export function makeMMKVStorage(options?: MMKVConfiguration) {
   const mmkv = new MMKV(options);
 
   function getItem<T>(key: string): T | null {
@@ -134,11 +135,11 @@ const {
   storage: appStorage,
   methods: appMethods,
   mmkv: appMMKV,
-} = makeAppStorage({
+} = makeMMKVStorage({
   id: MMKV_FILE_NAMES.DEFAULT,
 });
 
-const { storage: keyringStorage, mmkv: keyringMMKV } = makeAppStorage({
+const { storage: keyringStorage, mmkv: keyringMMKV } = makeMMKVStorage({
   id: MMKV_FILE_NAMES.KEYRING,
   encryptionKey: 'keyring',
 });
@@ -212,20 +213,24 @@ type JotaiStringStorageOption = SyncStringStorage | PresetStringStorageOption;
  * the logic of `makeJotaiJsonStore`, and is not a good design, that is, one value would
  * be JSON.stringify twice and JSON.parse twice. This is a bad behavior.
  */
-function makeJotaiJsonStore<T = any>(options?: {
+export function makeJotaiJsonStore<T = any>(options?: {
+  methods?: Pick<
+    ReturnType<typeof makeMMKVStorage>['methods'],
+    'getRawString' | 'setRawString' | 'removeItem' | 'clearAll'
+  >;
   storage?: JotaiStringStorageOption;
 }) {
-  const { storage } = options || {};
+  const { methods = appMethods, storage } = options || {};
 
   const jsonStore = isPresetStorageStrategy(storage)
     ? createJSONStorage<T>(() => GET_STRING_STORAGE_FOR_JSON_STORE(storage))
     : storage
     ? createJSONStorage<T>(() => storage)
     : createJSONStorage<T>(() => ({
-        getItem: appMethods.getRawString,
-        setItem: appMethods.setRawString,
-        removeItem: appMethods.removeItem,
-        clearAll: appMethods.clearAll,
+        getItem: methods.getRawString,
+        setItem: methods.setRawString,
+        removeItem: methods.removeItem,
+        clearAll: methods.clearAll,
       }));
 
   return jsonStore;
@@ -326,8 +331,12 @@ export const zustandByMMKV = <T = any>(
       : storage) || appStorageForZustand;
 
   const oldData = appJsonStore.getItem(legacyAppStoreKey, initialValue);
+  const newData =
+    key === legacyAppStoreKey
+      ? oldData
+      : appJsonStore.getItem(key, initialValue);
   const hasMigrated =
-    oldData?.hasOwnProperty('state') && oldData?.hasOwnProperty('version');
+    newData?.hasOwnProperty('state') && newData?.hasOwnProperty('version');
 
   if (!hasMigrated) {
     const result = migrateFromAtom({ key, oldData, appJsonStore });
@@ -407,31 +416,37 @@ export function removeLegacyMMKVStorageByKey(key: `@${string}`) {
 })();
 
 runDevIIFEFunc(() => {
-  reactotronEvents.subscribe('CM_LOG_MMKV_STORE', ({ storeName }) => {
-    switch (storeName) {
+  const logStorage = (
+    storage: typeof appJsonStore | typeof keyringStorage,
+    // | typeof lendingCacheStorage,
+  ) => {
+    const allKeys = appMMKVForDebug.getAllKeys();
+    console.debug('Reactotron MMKV Store keys', allKeys);
+    const dump: Record<string, any> = {};
+    allKeys.forEach(key => {
+      dump[key] = storage.getItem(key, null);
+    });
+    console.debug('Reactotron MMKV Store: appStore', dump);
+  };
+  reactotronEvents.subscribe('CM_LOG_MMKV_STORE', ({ mmkvName }) => {
+    switch (mmkvName) {
       default:
       case 'a':
       case 'app':
       case 'appStore': {
-        const allKeys = appMMKVForDebug.getAllKeys();
-        console.debug('Reactotron MMKV Store keys', allKeys);
-        const dump: Record<string, any> = {};
-        allKeys.forEach(key => {
-          dump[key] = appJsonStore.getItem(key, null);
-        });
-        console.debug('Reactotron MMKV Store: appStore', dump);
+        logStorage(appJsonStore);
         break;
       }
       case 'k':
       case 'keyring':
       case 'keyringStore': {
-        const allKeys = keyringMMKV.getAllKeys();
-        console.debug('Reactotron Keyring MMKV Store keys', allKeys);
-        const dump: Record<string, any> = {};
-        allKeys.forEach(key => {
-          dump[key] = keyringStorage.getItem(key);
-        });
-        console.debug('Reactotron MMKV Store: keyringStore', dump);
+        logStorage(keyringStorage);
+        break;
+      }
+      case 'l':
+      case 'lending':
+      case 'lendingDataCache': {
+        // logStorage(lendingCacheStorage);
         break;
       }
     }

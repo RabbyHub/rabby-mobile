@@ -11,7 +11,7 @@ import CustomLabel from '../TokenDetail/components/CustomLabel';
 import { useTranslation } from 'react-i18next';
 import EmptySummaryCard from './EmptySummaryCard';
 import SummaryCard from './SummaryCard';
-import { useLendingSummary } from './hooks';
+import { useLendingPoolContainer, useLendingIsLoading } from './hooks';
 import { ChainSelector } from './ChainSelector';
 import Animated, {
   Easing,
@@ -21,8 +21,73 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import RightMarketTabInfo from './components/RightMarketTabInfo';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
 
 const screenWidth = Dimensions.get('window').width;
+
+function ContainerHeader() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+
+  const { totalLiquidityMarketReferenceCurrency, loading } =
+    useLendingPoolContainer();
+
+  const isEmpty = useMemo(() => {
+    return loading || totalLiquidityMarketReferenceCurrency === '0';
+  }, [loading, totalLiquidityMarketReferenceCurrency]);
+
+  const [primaryIsEmpty, setPrimaryIsEmpty] = useState<boolean>(isEmpty);
+  const overlayOpacity = useSharedValue(0);
+  const primaryOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    if (isEmpty === primaryIsEmpty) {
+      return;
+    }
+    // 仅在 true -> false（空到非空）时执行交叉淡入淡出
+    if (primaryIsEmpty && !isEmpty) {
+      overlayOpacity.value = withTiming(
+        1,
+        { duration: 300, easing: Easing.linear },
+        finished => {
+          if (finished) {
+            runOnJS(setPrimaryIsEmpty)(isEmpty);
+          }
+        },
+      );
+      primaryOpacity.value = withTiming(0, {
+        duration: 100,
+        easing: Easing.linear,
+      });
+    } else {
+      // 其他方向（false -> true）直接切换，无动画
+      runOnJS(setPrimaryIsEmpty)(isEmpty);
+      primaryOpacity.value = 1;
+      overlayOpacity.value = 0;
+    }
+  }, [isEmpty, primaryIsEmpty, overlayOpacity, primaryOpacity]);
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.value,
+  }));
+  const primaryStyle = useAnimatedStyle(() => ({
+    opacity: primaryOpacity.value,
+  }));
+
+  return (
+    <View style={styles.headerContainer}>
+      <ChainSelector />
+      <View style={styles.fadeWrapper}>
+        <Animated.View style={primaryStyle}>
+          {primaryIsEmpty ? <EmptySummaryCard /> : <SummaryCard />}
+        </Animated.View>
+        <Animated.View
+          // pointerEvents="none"
+          style={[styles.overlayAbsolute, overlayStyle]}>
+          {isEmpty ? <EmptySummaryCard /> : <SummaryCard />}
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
 
 const PoolContainer = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -62,100 +127,9 @@ const PoolContainer = () => {
     [colors2024, t, styles.label],
   );
 
-  const { apyInfo, iUserSummary, loading } = useLendingSummary();
+  const { loading } = useLendingIsLoading();
 
-  const isEmpty = useMemo(() => {
-    return (
-      loading || iUserSummary?.totalLiquidityMarketReferenceCurrency === '0'
-    );
-  }, [loading, iUserSummary]);
-
-  const [primaryIsEmpty, setPrimaryIsEmpty] = useState<boolean>(isEmpty);
-  const overlayOpacity = useSharedValue(0);
-  const primaryOpacity = useSharedValue(1);
-  useEffect(() => {
-    if (isEmpty === primaryIsEmpty) {
-      return;
-    }
-    // 仅在 true -> false（空到非空）时执行交叉淡入淡出
-    if (primaryIsEmpty && !isEmpty) {
-      overlayOpacity.value = withTiming(
-        1,
-        { duration: 300, easing: Easing.linear },
-        finished => {
-          if (finished) {
-            runOnJS(setPrimaryIsEmpty)(isEmpty);
-          }
-        },
-      );
-      primaryOpacity.value = withTiming(0, {
-        duration: 100,
-        easing: Easing.linear,
-      });
-    } else {
-      // 其他方向（false -> true）直接切换，无动画
-      runOnJS(setPrimaryIsEmpty)(isEmpty);
-      primaryOpacity.value = 1;
-      overlayOpacity.value = 0;
-    }
-  }, [isEmpty, primaryIsEmpty, overlayOpacity, primaryOpacity]);
-  const overlayStyle = useAnimatedStyle(() => ({
-    opacity: overlayOpacity.value,
-  }));
-  const primaryStyle = useAnimatedStyle(() => ({
-    opacity: primaryOpacity.value,
-  }));
-
-  const renderHeader = useCallback(() => {
-    return (
-      <View style={styles.headerContainer}>
-        <ChainSelector />
-        <View style={styles.fadeWrapper}>
-          <Animated.View style={primaryStyle}>
-            {primaryIsEmpty ? (
-              <EmptySummaryCard />
-            ) : (
-              <SummaryCard
-                netWorth={iUserSummary?.netWorthUSD || ''}
-                supplied={iUserSummary?.totalLiquidityUSD || ''}
-                borrowed={iUserSummary?.totalBorrowsUSD || ''}
-                netApy={apyInfo?.netAPY || 0}
-                healthFactor={iUserSummary?.healthFactor || ''}
-              />
-            )}
-          </Animated.View>
-          <Animated.View
-            // pointerEvents="none"
-            style={[styles.overlayAbsolute, overlayStyle]}>
-            {isEmpty ? (
-              <EmptySummaryCard />
-            ) : (
-              <SummaryCard
-                netWorth={iUserSummary?.netWorthUSD || ''}
-                supplied={iUserSummary?.totalLiquidityUSD || ''}
-                borrowed={iUserSummary?.totalBorrowsUSD || ''}
-                netApy={apyInfo?.netAPY || 0}
-                healthFactor={iUserSummary?.healthFactor || ''}
-              />
-            )}
-          </Animated.View>
-        </View>
-      </View>
-    );
-  }, [
-    apyInfo?.netAPY,
-    iUserSummary?.healthFactor,
-    iUserSummary?.netWorthUSD,
-    iUserSummary?.totalBorrowsUSD,
-    iUserSummary?.totalLiquidityUSD,
-    isEmpty,
-    styles.headerContainer,
-    primaryIsEmpty,
-    overlayStyle,
-    primaryStyle,
-    styles.fadeWrapper,
-    styles.overlayAbsolute,
-  ]);
+  useRendererDetect({ name: 'LendingPoolContainer' });
 
   const renderTabBar = React.useCallback(
     (_props: any) => (
@@ -186,7 +160,7 @@ const PoolContainer = () => {
     <Tabs.Container
       renderTabBar={renderTabBar}
       tabBarHeight={0}
-      renderHeader={renderHeader}
+      renderHeader={ContainerHeader}
       headerHeight={0}
       minHeaderHeight={0}
       containerStyle={styles.container}
