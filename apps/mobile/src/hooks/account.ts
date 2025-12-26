@@ -442,6 +442,100 @@ export function useChainBalances() {
   };
 }
 
+const isShowTestnet = false;
+
+const fetchSingleAddressBalanceFromDb = async (
+  address: string,
+): Promise<{
+  mainnet: TotalBalanceResponse | null;
+  testnet: TotalBalanceResponse | null;
+}> => {
+  return requestOpenApiMultipleNets<
+    TotalBalanceResponse | null,
+    {
+      mainnet: TotalBalanceResponse | null;
+      testnet: TotalBalanceResponse | null;
+    }
+  >(
+    ctx => {
+      if (!isShowTestnet && ctx.isTestnetTask) {
+        return null;
+      }
+      return BalanceEntity.queryBalance(address, true);
+    },
+    {
+      needTestnetResult: isShowTestnet,
+      processResults: ({ mainnet, testnet }) => {
+        return {
+          mainnet: mainnet,
+          testnet: testnet,
+        };
+      },
+      fallbackValues: {
+        mainnet: null,
+        testnet: null,
+      },
+    },
+  );
+};
+const fetchAllAddressesChainBalance = async (): Promise<{
+  matteredChainBalances: MatteredChainBalances;
+}> => {
+  console.log('fetchAllAddressesChainBalance exe');
+  const addresses = await keyringService.getAllAddresses();
+  const filtered = addresses.filter(item =>
+    CORE_KEYRING_TYPES.includes(item.type as any),
+  );
+  const unionAddresses = unionBy(filtered, 'address').map(i =>
+    i.address.toLowerCase(),
+  );
+
+  const allResults = await Promise.all(
+    unionAddresses.map(address => fetchSingleAddressBalanceFromDb(address)),
+  );
+
+  const mainnetBalance: TotalBalanceResponse = {
+    chain_list: [],
+    total_usd_value: 0,
+  };
+
+  allResults.forEach(result => {
+    if (result.mainnet?.chain_list) {
+      result.mainnet.chain_list.forEach(chain => {
+        const existingChain = mainnetBalance.chain_list.find(
+          c => c.id === chain.id,
+        );
+        if (existingChain) {
+          existingChain.usd_value = existingChain.usd_value + chain.usd_value;
+        } else {
+          mainnetBalance.chain_list.push(chain);
+        }
+      });
+    }
+  });
+
+  const mainnetTotalUsdValue = (mainnetBalance?.chain_list || []).reduce(
+    (accu, cur) => accu + coerceFloat(cur.usd_value),
+    0,
+  );
+  const matteredChainBalances = (mainnetBalance?.chain_list || []).reduce(
+    (accu, cur) => {
+      const curUsdValue = coerceFloat(cur.usd_value);
+      if (curUsdValue > 1 && curUsdValue / mainnetTotalUsdValue > 0.01) {
+        accu[cur.id] = formatChainToDisplay(cur);
+      }
+      return accu;
+    },
+    {} as MatteredChainBalances,
+  );
+
+  setMattredChainBalancesAll(matteredChainBalances);
+  console.log('fetchAllAddressesChainBalance  done');
+  return {
+    matteredChainBalances,
+  };
+};
+
 export function useLoadMatteredChainBalances({
   account: currentAccount,
 }: {
@@ -459,8 +553,6 @@ export function useLoadMatteredChainBalances({
   } = useChainBalances();
 
   const currentAccountAddr = currentAccount?.address;
-
-  const isShowTestnet = false;
 
   const fetchMatteredChainBalance = useCallback(
     async (options?: {
@@ -540,105 +632,9 @@ export function useLoadMatteredChainBalances({
         testnetMatteredChainBalances,
       };
     },
-    [
-      currentAccountAddr,
-      isShowTestnet,
-      setMattredChainBalances,
-      setTestMattredChainBalances,
-    ],
+    [currentAccountAddr, setMattredChainBalances, setTestMattredChainBalances],
   );
 
-  const fetchSingleAddressBalanceFromDb = async (
-    address: string,
-  ): Promise<{
-    mainnet: TotalBalanceResponse | null;
-    testnet: TotalBalanceResponse | null;
-  }> => {
-    return requestOpenApiMultipleNets<
-      TotalBalanceResponse | null,
-      {
-        mainnet: TotalBalanceResponse | null;
-        testnet: TotalBalanceResponse | null;
-      }
-    >(
-      ctx => {
-        if (!isShowTestnet && ctx.isTestnetTask) {
-          return null;
-        }
-        return BalanceEntity.queryBalance(address, true);
-      },
-      {
-        needTestnetResult: isShowTestnet,
-        processResults: ({ mainnet, testnet }) => {
-          return {
-            mainnet: mainnet,
-            testnet: testnet,
-          };
-        },
-        fallbackValues: {
-          mainnet: null,
-          testnet: null,
-        },
-      },
-    );
-  };
-  const fetchAllAddressesChainBalance = async (): Promise<{
-    matteredChainBalances: MatteredChainBalances;
-  }> => {
-    console.log('fetchAllAddressesChainBalance exe');
-    const addresses = await keyringService.getAllAddresses();
-    const filtered = addresses.filter(item =>
-      CORE_KEYRING_TYPES.includes(item.type as any),
-    );
-    const unionAddresses = unionBy(filtered, 'address').map(i =>
-      i.address.toLowerCase(),
-    );
-
-    const allResults = await Promise.all(
-      unionAddresses.map(address => fetchSingleAddressBalanceFromDb(address)),
-    );
-
-    const mainnetBalance: TotalBalanceResponse = {
-      chain_list: [],
-      total_usd_value: 0,
-    };
-
-    allResults.forEach(result => {
-      if (result.mainnet?.chain_list) {
-        result.mainnet.chain_list.forEach(chain => {
-          const existingChain = mainnetBalance.chain_list.find(
-            c => c.id === chain.id,
-          );
-          if (existingChain) {
-            existingChain.usd_value = existingChain.usd_value + chain.usd_value;
-          } else {
-            mainnetBalance.chain_list.push(chain);
-          }
-        });
-      }
-    });
-
-    const mainnetTotalUsdValue = (mainnetBalance?.chain_list || []).reduce(
-      (accu, cur) => accu + coerceFloat(cur.usd_value),
-      0,
-    );
-    const matteredChainBalances = (mainnetBalance?.chain_list || []).reduce(
-      (accu, cur) => {
-        const curUsdValue = coerceFloat(cur.usd_value);
-        if (curUsdValue > 1 && curUsdValue / mainnetTotalUsdValue > 0.01) {
-          accu[cur.id] = formatChainToDisplay(cur);
-        }
-        return accu;
-      },
-      {} as MatteredChainBalances,
-    );
-
-    setMattredChainBalancesAll(matteredChainBalances);
-    console.log('fetchAllAddressesChainBalance  done');
-    return {
-      matteredChainBalances,
-    };
-  };
   const fetchOrderedChainList = useCallback(
     async (opts: { supportChains?: CHAINS_ENUM[] }) => {
       const { supportChains } = opts || {};
