@@ -2,6 +2,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import { getOriginName, hashCode } from '@/utils/common';
 import { createGetStyles } from '@/utils/styles';
 import { Image } from '@rneui/themed';
+import { set } from 'lodash';
 import React, { useMemo } from 'react';
 import {
   ImageStyle,
@@ -46,6 +47,7 @@ export const DappIcon = ({
   }, [origin]);
 
   const [loaded, setLoaded] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
 
   const Placeholder = (
     <View
@@ -75,12 +77,16 @@ export const DappIcon = ({
           resizeMode={FastImage.resizeMode.cover}
           onLoadStart={() => {
             setLoaded(false);
+            setIsError(false);
           }}
           onLoadEnd={() => {
             setLoaded(true);
           }}
+          onError={() => {
+            setIsError(true);
+          }}
         />
-        {!loaded ? (
+        {!loaded || isError ? (
           <View style={styles.placeholderContainer}>{Placeholder}</View>
         ) : null}
       </View>
