@@ -268,15 +268,6 @@ export const useHFForRepayWithCollateral = ({
     ) {
       return undefined;
     }
-    console.log('CUSTOM_LOGGER:=>: calculateHFAfterCollateralRepay', {
-      amountToReceiveAfterSwap: repayAmount ?? '0',
-      amountToSwap: collateralAmount ?? '0',
-      fromAssetData: collateralReserve, // used as collateral
-      user,
-      toAssetData: repayReserve,
-      repayWithUserReserve: collateralDisplayReserve,
-      debt: repayDisplayReserve.variableBorrows ?? '0',
-    });
     return calculateHFAfterCollateralRepay({
       amountToReceiveAfterSwap: repayAmount ?? '0',
       amountToSwap: collateralAmount ?? '0',
@@ -296,8 +287,6 @@ export const useHFForRepayWithCollateral = ({
     collateralAmount,
     repayAmount,
   ]);
-
-  console.log('CUSTOM_LOGGER:=>: afterSwapInfo', afterSwapInfo);
 
   const isHFLow = useMemo(() => {
     const hfAfterSwap = afterSwapInfo?.hfAfterSwap;

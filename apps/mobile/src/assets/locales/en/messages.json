@@ -2905,6 +2905,7 @@
         "action": {
           "title": "Repay with {{collateral}}"
         },
+        "collateralNotEnough": "Your collateral balance is lower than the selected amount.",
         "overview": {
           "title": "Transaction Overview",
           "borrowValueAfter": "Borrow balance after repay",

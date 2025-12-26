@@ -180,7 +180,7 @@ export default function RepayWithCollateral({
     setSwapRate,
   });
 
-  const repayAmountAfterSlippage = useMemo(() => {
+  const collateralAmountAfterSlippage = useMemo(() => {
     return getToAmountAfterSlippage({
       inputAmount: debouncedRepayAmount,
       slippage: Number(slippage) * 100,
@@ -192,13 +192,13 @@ export default function RepayWithCollateral({
       fromToken: selectedCollateralToken,
       toToken: repayToken,
       fromAmount: collateralAmount,
-      toAmount: repayAmountAfterSlippage,
+      toAmount: collateralAmountAfterSlippage,
     });
   }, [
     selectedCollateralToken,
     repayToken,
     collateralAmount,
-    repayAmountAfterSlippage,
+    collateralAmountAfterSlippage,
   ]);
 
   useEffect(() => {
@@ -433,7 +433,11 @@ export default function RepayWithCollateral({
     chainServerId: chainInfo?.serverId || '',
     autoResetGasStoreOnChainChange: true,
   });
-
+  const collateralNotEnough = useMemo(() => {
+    return new BigNumber(collateralAmountAfterSlippage).gt(
+      selectedCollateralToken?.balance || '0',
+    );
+  }, [collateralAmountAfterSlippage, selectedCollateralToken?.balance]);
   const buildRepayWithCollateralTxs = useCallback(async (): Promise<Tx[]> => {
     if (
       !currentAccount ||
@@ -445,7 +449,8 @@ export default function RepayWithCollateral({
       !repayReserve ||
       !collateralReserve ||
       !pools?.pool ||
-      !chainInfo
+      !chainInfo ||
+      collateralNotEnough
     ) {
       return [];
     }
@@ -641,6 +646,7 @@ export default function RepayWithCollateral({
     repayReserve,
     collateralReserve,
     chainInfo,
+    collateralNotEnough,
     debouncedRepayAmount,
     repayToken.decimals,
     repayToken.chainId,
@@ -663,7 +669,8 @@ export default function RepayWithCollateral({
         !repayReserve ||
         !collateralReserve ||
         !debouncedRepayAmount ||
-        new BigNumber(debouncedRepayAmount).lte(0)
+        new BigNumber(debouncedRepayAmount).lte(0) ||
+        collateralNotEnough
       ) {
         if (!cancelled) {
           setCurrentTxs([]);
@@ -698,18 +705,24 @@ export default function RepayWithCollateral({
     repayReserve,
     selectedCollateralToken,
     debouncedRepayAmount,
+    collateralNotEnough,
   ]);
 
   const { isHFLow, isLiquidatable, currentHF, afterSwapInfo } =
     useHFForRepayWithCollateral({
       collateralToken: selectedCollateralToken,
       repayToken,
-      collateralAmount,
+      collateralAmount: collateralAmountAfterSlippage,
       repayAmount: debouncedRepayAmount,
     });
 
   useEffect(() => {
-    if (!currentAccount || !canShowDirectSubmit || !currentTxs?.length) {
+    if (
+      !currentAccount ||
+      !canShowDirectSubmit ||
+      !currentTxs?.length ||
+      collateralNotEnough
+    ) {
       closeMiniSigner();
       return;
     }
@@ -721,6 +734,7 @@ export default function RepayWithCollateral({
   }, [
     canShowDirectSubmit,
     closeMiniSigner,
+    collateralNotEnough,
     currentAccount,
     currentTxs,
     prefetchMiniSigner,
@@ -847,6 +861,7 @@ export default function RepayWithCollateral({
       !isSameToken &&
       !!quote &&
       !!debouncedRepayAmount &&
+      !collateralNotEnough &&
       new BigNumber(debouncedRepayAmount).gt(0) &&
       new BigNumber(debouncedRepayAmount).lte(debtBalance) &&
       !isQuoteLoading
@@ -856,13 +871,19 @@ export default function RepayWithCollateral({
     isSameToken,
     quote,
     debouncedRepayAmount,
+    collateralNotEnough,
     debtBalance,
     isQuoteLoading,
   ]);
 
   const buttonDisabled = useMemo(() => {
-    return !canRepay || (isRisky && !riskChecked) || isLiquidatable;
-  }, [canRepay, isLiquidatable, isRisky, riskChecked]);
+    return (
+      !canRepay ||
+      (isRisky && !riskChecked) ||
+      isLiquidatable ||
+      collateralNotEnough
+    );
+  }, [canRepay, collateralNotEnough, isLiquidatable, isRisky, riskChecked]);
 
   return (
     <>
@@ -1076,12 +1097,12 @@ export default function RepayWithCollateral({
             />
           </View>
         )}
-        {noQuote && !isQuoteLoading ? null : (
+        {(noQuote && !isQuoteLoading) || collateralNotEnough ? null : (
           <RepayWithCollateralOverview
             fromToken={selectedCollateralToken}
             toToken={repayToken}
             chainEnum={chainEnum}
-            fromAmount={collateralAmount}
+            fromAmount={collateralAmountAfterSlippage}
             currentToAmount={repayDisplayReserve?.variableBorrows || '0'}
             toAmount={debouncedRepayAmount}
             fromBalanceBn={selectedCollateralToken?.balance || '0'}
@@ -1106,10 +1127,14 @@ export default function RepayWithCollateral({
                 : 0),
           },
         ]}>
-        {isLiquidatable ? (
+        {isLiquidatable || collateralNotEnough ? (
           <View style={styles.riskContainer}>
             <Text style={styles.dangerWarningText}>
-              {t('page.Lending.debtSwap.lpDangerWarning')}
+              {collateralNotEnough
+                ? t('page.Lending.repayWithCollateral.collateralNotEnough')
+                : isLiquidatable
+                ? t('page.Lending.debtSwap.lpDangerWarning')
+                : ''}
             </Text>
           </View>
         ) : isRisky ? (
