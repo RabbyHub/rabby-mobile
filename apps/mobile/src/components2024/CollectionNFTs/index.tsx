@@ -16,6 +16,8 @@ interface Props {
   data: CollectionList;
   titleText?: string;
   onPressItem: (item: NFTItem) => void;
+  /** @deprecated */
+  onClose?: () => void;
   account?: KeyringAccountWithAlias;
 }
 

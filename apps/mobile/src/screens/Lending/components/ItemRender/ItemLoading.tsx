@@ -4,33 +4,29 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
-import { useLendingIsLoading } from '../hooks';
 
-export const PoolItemLoading = () => {
+export const ItemLoading = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <View style={styles.container}>
-      <Skeleton style={styles.loading} width={40} height={40} circle />
-      <View style={styles.loaderList}>
-        <Skeleton style={styles.loading} height={20} circle />
-        <Skeleton style={styles.loading} width={144} height={18} circle />
+      <View style={styles.itemContainer}>
+        <Skeleton style={styles.loading} width={40} height={40} circle />
+        <View style={styles.loaderList}>
+          <Skeleton style={styles.loading} width={144} height={22} circle />
+        </View>
       </View>
+      <Skeleton style={[styles.loading, styles.actions]} height={40} />
     </View>
   );
 };
 
-export const PoolListLoading = () => {
+export const ItemListLoading = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const { loading } = useLendingIsLoading();
-
-  if (loading) return null;
-
   return (
     <View style={styles.listContainer}>
-      {Array.from({ length: 8 }).map((_, i) => (
-        <PoolItemLoading key={i} />
+      {Array.from({ length: 5 }).map((_, i) => (
+        <ItemLoading key={i} />
       ))}
     </View>
   );
@@ -43,10 +39,10 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   container: {
     width: '100%',
-    height: 74,
+    height: 138,
     alignItems: 'center',
     borderRadius: 16,
-    flexDirection: 'row',
+    flexDirection: 'column',
     paddingHorizontal: 12,
     paddingVertical: 15,
     gap: 12,
@@ -55,11 +51,19 @@ const getStyles = createGetStyles2024(ctx => ({
       : ctx.colors2024['neutral-bg-2'],
     borderTopColor: ctx.colors2024['neutral-line'],
   },
+  itemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   loaderList: {
     gap: 4,
     flex: 1,
   },
   loading: {
     backgroundColor: ctx.colors2024['neutral-bg-5'],
+  },
+  actions: {
+    borderRadius: 12,
   },
 }));

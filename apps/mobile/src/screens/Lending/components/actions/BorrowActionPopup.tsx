@@ -52,6 +52,8 @@ import {
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { CHAINS_ENUM } from '@debank/common';
+import BorrowToCapTip from '../Tips/BorrowToCapTip';
+import { formatTokenAmount } from '@/utils/number';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -265,7 +267,10 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     const poolAmount = BigNumber(reserve.reserve.borrowCap)
       .minus(BigNumber(reserve.reserve.totalDebt))
       .multipliedBy(BORROW_SAFE_MARGIN);
-    const miniAmount = myAmount.gte(poolAmount) ? poolAmount : myAmount;
+    const formattedPoolAmount = poolAmount.lt(0) ? BigNumber(0) : poolAmount;
+    const miniAmount = myAmount.gte(formattedPoolAmount)
+      ? formattedPoolAmount
+      : myAmount;
     const usdValue = miniAmount
       .multipliedBy(
         BigNumber(
@@ -296,6 +301,13 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       });
     }
   }, [canShowDirectSubmit, currentAccount, amount, txs, prefetchMiniSigner]);
+
+  const showBorrowToCapTip = useMemo(() => {
+    if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
+      return false;
+    }
+    return BigNumber(reserve.reserve.totalDebt).gte(reserve.reserve.borrowCap);
+  }, [reserve?.reserve?.totalDebt, reserve?.reserve?.borrowCap]);
 
   const errorMessage = useMemo(() => {
     if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
@@ -342,7 +354,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         <Text style={styles.amountHeaderTitle}>
           {t('page.Lending.popup.amount')}
         </Text>
-        <Text style={styles.amountValueDescription}>{`${formatAmountValueKMB(
+        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
           availableToBorrow.amount || '0',
         )}${reserve.reserve.symbol} ($${formatAmountValueKMB(
           availableToBorrow.usdValue || '0',
@@ -381,6 +393,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             />
           </View>
         )}
+        {showBorrowToCapTip && <BorrowToCapTip />}
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>

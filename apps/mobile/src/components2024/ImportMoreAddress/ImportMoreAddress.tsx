@@ -51,6 +51,8 @@ export interface Props {
     mnemonics?: string;
     passphrase?: string;
     keyringId?: number;
+    /** @deprecated */
+    isExistedKR?: boolean;
     account?: KeyringAccountWithAlias;
     brand: string;
   };

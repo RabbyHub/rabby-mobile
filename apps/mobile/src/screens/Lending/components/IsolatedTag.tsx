@@ -81,6 +81,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
     gap: 2,
     borderWidth: 0.8,
     borderColor: colors2024['orange-light-2'],

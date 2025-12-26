@@ -124,8 +124,11 @@ export function assetCanBeBorrowedByUser(
     isFrozen,
     isPaused,
   }: ReserveDataHumanized,
-  user: FormatUserSummaryAndIncentivesResponse<
-    ReserveDataHumanized & FormatReserveUSDResponse
+  user: Pick<
+    FormatUserSummaryAndIncentivesResponse<
+      ReserveDataHumanized & FormatReserveUSDResponse
+    >,
+    'userEmodeCategoryId' | 'isInIsolationMode'
   >,
   eModes: FormattedReserveEMode[],
 ) {

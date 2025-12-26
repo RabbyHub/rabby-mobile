@@ -21,16 +21,28 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { getHealthFactorText } from './components/HealthFactorText';
 import { atom, useAtom } from 'jotai';
+import { useLendingSummaryCard } from './hooks';
 
-interface IProps {
-  netWorth: string;
-  supplied: string;
-  borrowed: string;
-  netApy: number;
-  healthFactor: string;
-}
 const isEstDailySwitchAtom = atom(true);
-const SummaryCard = (props: IProps) => {
+const SummaryCard = (/* props: IProps */) => {
+  const {
+    iUserSummary: {
+      netWorthUSD: netWorth,
+      totalLiquidityUSD: supplied,
+      totalBorrowsUSD: borrowed,
+      healthFactor,
+    },
+    netAPY,
+  } = useLendingSummaryCard();
+
+  const props = {
+    netWorth: netWorth || '',
+    supplied: supplied || '',
+    borrowed: borrowed || '',
+    healthFactor: healthFactor || '',
+    netApy: netAPY || 0,
+  };
+
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { skipHealthFactorWarning, setSkipHealthFactorWarning } =

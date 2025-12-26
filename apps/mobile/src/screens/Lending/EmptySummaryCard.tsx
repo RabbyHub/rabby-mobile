@@ -12,10 +12,13 @@ const EmptySummaryCard = () => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.topDescription}>
+        {t('page.Lending.summary.empty.description')}
+      </Text>
       <Image style={styles.image} source={EmptySummaryCardImage} />
       <Text style={styles.title}>{t('page.Lending.summary.empty.title')}</Text>
-      <Text style={styles.description}>
-        {t('page.Lending.summary.empty.description')}
+      <Text style={styles.endDescription}>
+        {t('page.Lending.summary.empty.endDesc')}
       </Text>
     </View>
   );
@@ -23,7 +26,7 @@ const EmptySummaryCard = () => {
 
 export default EmptySummaryCard;
 
-const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
     color: colors2024['red-default'],
@@ -31,12 +34,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    height: 186,
     marginTop: 12,
-    borderRadius: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    paddingHorizontal: 16,
+    paddingTop: 10,
   },
   image: {
     width: 123,
@@ -49,11 +49,19 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '900',
     fontFamily: 'SF Pro Rounded',
   },
-  description: {
+  topDescription: {
     color: colors2024['neutral-secondary'],
     fontSize: 14,
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '400',
+  },
+  endDescription: {
+    color: colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '400',
+    textAlign: 'center',
   },
 }));

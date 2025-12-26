@@ -16,7 +16,14 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useLendingData, useLendingSummary, useSelectedMarket } from './hooks';
+import {
+  useFetchLendingData,
+  useLendingIsLoading,
+  useLendingISummary,
+  useLendingRemoteData,
+  useLendingSummary,
+  useSelectedMarket,
+} from './hooks';
 import TokenIcon from './components/TokenIcon';
 import { PoolListLoading } from './components/Loading';
 import { Skeleton } from '@rneui/themed';
@@ -32,16 +39,85 @@ import { DisplayPoolReserveInfo } from './type';
 import { displayGhoForMintableMarket } from './utils/supply';
 import { API_ETH_MOCK_ADDRESS } from './utils/constant';
 import wrapperToken from './config/wrapperToken';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+
+const ListHeaderComponent = React.memo(
+  ({
+    toggleBalanceOrTVl,
+    setToggleBalanceOrTVl,
+  }: {
+    toggleBalanceOrTVl: boolean;
+    setToggleBalanceOrTVl: React.Dispatch<React.SetStateAction<boolean>>;
+  }) => {
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+
+    const { loading } = useLendingIsLoading();
+    const { iUserSummary } = useLendingISummary();
+    const { t } = useTranslation();
+    // const [toggleBalanceOrTVl, setToggleBalanceOrTVl] = useState(true); // default balance
+    useRendererDetect({ name: 'SupplyPoolList::ListHeaderComponent' });
+
+    const isInIsolationMode = useMemo(() => {
+      return iUserSummary?.isInIsolationMode;
+    }, [iUserSummary?.isInIsolationMode]);
+
+    return loading ? (
+      <Skeleton style={styles.loading} width={124} height={20} circle />
+    ) : (
+      <>
+        {loading || !isInIsolationMode ? null : (
+          <View style={[styles.availableCard]}>
+            <View style={styles.availableCardHeader}>
+              <RcIconWarningCircleCC
+                width={14}
+                height={14}
+                color={colors2024['orange-default']}
+              />
+
+              <Text style={[styles.availableCardTitle]}>
+                {t('page.Lending.modalDesc.isolatedSupplyDesc')}
+              </Text>
+            </View>
+          </View>
+        )}
+        <View style={styles.listHeader}>
+          <Pressable
+            style={styles.headerTokenContainer}
+            hitSlop={20}
+            onPress={() => setToggleBalanceOrTVl(pre => !pre)}>
+            <Text style={styles.headerToken}>
+              {toggleBalanceOrTVl
+                ? t('page.Lending.list.headers.token_balance')
+                : t('page.Lending.list.headers.token_tvl')}
+            </Text>
+            <IconSwitchCC
+              width={14}
+              height={14}
+              color={colors2024['neutral-secondary']}
+            />
+          </Pressable>
+          <Text style={styles.headerApy}>{t('page.Lending.apy')}</Text>
+          <Text style={styles.headerMySupplies}>
+            {t('page.Lending.list.headers.mySupplies')}
+          </Text>
+        </View>
+      </>
+    );
+  },
+);
 
 const FOOT_HEIGHT = 100;
-const SupplyPoolList = () => {
+const SupplyPoolList = React.memo(() => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
-  const { displayPoolReserves, reserves, loading, iUserSummary } =
-    useLendingSummary();
+
+  const { reserves } = useLendingRemoteData();
+  const { displayPoolReserves } = useLendingSummary();
   const { t } = useTranslation();
-  const { fetchData } = useLendingData();
+  const { fetchData } = useFetchLendingData();
   const [toggleBalanceOrTVl, setToggleBalanceOrTVl] = useState(true); // default balance
   const { chainEnum, marketKey } = useSelectedMarket();
+
+  useRendererDetect({ name: 'SupplyPoolList' });
 
   const sortReserves = useMemo(() => {
     return displayPoolReserves
@@ -110,81 +186,6 @@ const SupplyPoolList = () => {
     [colors2024, isLight],
   );
 
-  const isInIsolationMode = useMemo(() => {
-    return iUserSummary?.isInIsolationMode;
-  }, [iUserSummary?.isInIsolationMode]);
-
-  const isolatedCard = useMemo(() => {
-    if (loading || !isInIsolationMode) {
-      return null;
-    }
-    return (
-      <View style={[styles.availableCard]}>
-        <View style={styles.availableCardHeader}>
-          <RcIconWarningCircleCC
-            width={14}
-            height={14}
-            color={colors2024['orange-default']}
-          />
-
-          <Text style={[styles.availableCardTitle]}>
-            {t('page.Lending.modalDesc.isolatedSupplyDesc')}
-          </Text>
-        </View>
-      </View>
-    );
-  }, [
-    colors2024,
-    isInIsolationMode,
-    loading,
-    styles.availableCard,
-    styles.availableCardHeader,
-    styles.availableCardTitle,
-    t,
-  ]);
-
-  const ListHeaderComponent = useCallback(() => {
-    return loading ? (
-      <Skeleton style={styles.loading} width={124} height={20} circle />
-    ) : (
-      <>
-        {isolatedCard}
-        <View style={styles.listHeader}>
-          <Pressable
-            style={styles.headerTokenContainer}
-            hitSlop={20}
-            onPress={() => setToggleBalanceOrTVl(pre => !pre)}>
-            <Text style={styles.headerToken}>
-              {toggleBalanceOrTVl
-                ? t('page.Lending.list.headers.token_balance')
-                : t('page.Lending.list.headers.token_tvl')}
-            </Text>
-            <IconSwitchCC
-              width={14}
-              height={14}
-              color={colors2024['neutral-secondary']}
-            />
-          </Pressable>
-          <Text style={styles.headerApy}>{t('page.Lending.apy')}</Text>
-          <Text style={styles.headerMySupplies}>
-            {t('page.Lending.list.headers.mySupplies')}
-          </Text>
-        </View>
-      </>
-    );
-  }, [
-    colors2024,
-    isolatedCard,
-    loading,
-    styles.headerApy,
-    styles.headerMySupplies,
-    styles.headerToken,
-    styles.headerTokenContainer,
-    styles.listHeader,
-    styles.loading,
-    t,
-    toggleBalanceOrTVl,
-  ]);
   const keyExtractor = useCallback(item => {
     return `${item.reserve.underlyingAsset}-${item.reserve.symbol}`;
   }, []);
@@ -255,7 +256,7 @@ const SupplyPoolList = () => {
 
   return (
     <Tabs.FlatList
-      data={loading ? [] : sortReserves}
+      data={sortReserves}
       style={styles.container}
       showsVerticalScrollIndicator={false}
       refreshControl={
@@ -268,13 +269,20 @@ const SupplyPoolList = () => {
       updateCellsBatchingPeriod={50}
       removeClippedSubviews
       keyExtractor={keyExtractor}
-      ListHeaderComponent={ListHeaderComponent}
-      ListEmptyComponent={<PoolListLoading />}
+      ListHeaderComponent={() => {
+        return (
+          <ListHeaderComponent
+            toggleBalanceOrTVl={toggleBalanceOrTVl}
+            setToggleBalanceOrTVl={setToggleBalanceOrTVl}
+          />
+        );
+      }}
+      ListEmptyComponent={PoolListLoading}
       ListFooterComponent={renderFooterComponent}
       renderItem={renderItem}
     />
   );
-};
+});
 
 export default SupplyPoolList;
 

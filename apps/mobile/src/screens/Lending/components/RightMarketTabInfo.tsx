@@ -105,7 +105,8 @@ const RightMarketTabInfo = () => {
 
   if (isInIsolationMode) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, styles.endFlow]}>
+        <Text style={styles.emodeLabel} />
         <IsolatedTag isGlobal />
       </View>
     );
@@ -142,22 +143,28 @@ const RightMarketTabInfo = () => {
 
 export default RightMarketTabInfo;
 
-const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 0,
-    marginLeft: 'auto',
+    justifyContent: 'space-between',
+  },
+  endFlow: {
+    justifyContent: 'flex-end',
+    flexDirection: 'row',
   },
   emodeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     height: 22,
     gap: 4,
   },
   emodeLabel: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-foot'],
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
   },
   emodeValue: {
     fontSize: 12,
@@ -179,9 +186,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     height: 32,
   },
   inner: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 6,
     paddingHorizontal: 6,
     justifyContent: 'center',

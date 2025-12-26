@@ -5,7 +5,13 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValueKMB } from '../TokenDetail/util';
-import { useLendingData, useLendingSummary } from './hooks';
+import {
+  useFetchLendingData,
+  useLendingIsLoading,
+  useLendingISummary,
+  useLendingRemoteData,
+  useLendingSummary,
+} from './hooks';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -22,18 +28,128 @@ import { useTranslation } from 'react-i18next';
 import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import { formatApy, formatListNetWorth } from './utils/format';
 import { assetCanBeBorrowedByUser } from './utils/borrow';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+
+const ListHeaderComponent = React.memo(
+  ({ sortReservesLen }: { sortReservesLen: number }) => {
+    const { styles, colors2024, isLight } = useTheme2024({
+      getStyle: getStyles,
+    });
+
+    const { t } = useTranslation();
+    const { loading } = useLendingIsLoading();
+    const { iUserSummary } = useLendingISummary();
+    const isInIsolationMode = useMemo(() => {
+      return iUserSummary?.isInIsolationMode;
+    }, [iUserSummary?.isInIsolationMode]);
+
+    useRendererDetect({ name: 'BorrowPoolList::ListHeaderComponent' });
+
+    const desc = useMemo(() => {
+      if (
+        iUserSummary?.availableBorrowsUSD === '0' ||
+        !iUserSummary?.availableBorrowsUSD
+      ) {
+        return t('page.Lending.availableCard.needSupply');
+      }
+      if (iUserSummary.userEmodeCategoryId !== 0) {
+        if (!sortReservesLen) {
+          return t('page.Lending.availableCard.emodeNoAssets');
+        }
+        return t('page.Lending.availableCard.emode');
+      }
+      if (isInIsolationMode) {
+        return t('page.Lending.availableCard.isolated');
+      }
+      return t('page.Lending.availableCard.canBorrow');
+    }, [
+      iUserSummary?.availableBorrowsUSD,
+      iUserSummary?.userEmodeCategoryId,
+      isInIsolationMode,
+      sortReservesLen,
+      t,
+    ]);
+
+    return loading ? (
+      <Skeleton style={styles.loading} width={124} height={20} circle />
+    ) : (
+      <>
+        {!(loading || !iUserSummary?.totalLiquidityUSD) && (
+          <View
+            style={[
+              styles.availableCard,
+              isInIsolationMode && styles.availableCardIsolated,
+            ]}>
+            <View style={styles.availableCardHeader}>
+              {(iUserSummary?.availableBorrowsUSD &&
+                iUserSummary?.availableBorrowsUSD === '0') ||
+              isInIsolationMode ? (
+                <RcIconWarningCircleCC
+                  width={14}
+                  height={14}
+                  color={
+                    isInIsolationMode
+                      ? colors2024['orange-default']
+                      : colors2024['neutral-info']
+                  }
+                />
+              ) : null}
+              <Text
+                style={[
+                  styles.availableCardTitle,
+                  (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
+                    styles.orangeText,
+                ]}>
+                {t('page.Lending.modalDesc.availableToBorrow')}:{' '}
+                <Text
+                  style={[
+                    styles.usdValue,
+                    (isInIsolationMode ||
+                      !!iUserSummary?.userEmodeCategoryId) &&
+                      styles.orangeText,
+                  ]}>
+                  {formatUsdValueKMB(
+                    Number(iUserSummary?.availableBorrowsUSD || '0'),
+                  )}
+                </Text>
+              </Text>
+            </View>
+            <Text
+              style={[
+                styles.availableCardValue,
+                (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
+                  styles.orangeText,
+              ]}>
+              {desc}
+            </Text>
+          </View>
+        )}
+        {sortReservesLen ? (
+          <View style={styles.listHeader}>
+            <Text style={styles.headerToken}>
+              {t('page.Lending.list.headers.token_balance')}
+            </Text>
+            <Text style={styles.headerApy}>{t('page.Lending.apy')}</Text>
+            <Text style={styles.headerMyBorrows}>
+              {t('page.Lending.list.headers.myBorrows')}
+            </Text>
+          </View>
+        ) : null}
+      </>
+    );
+  },
+);
 
 const FOOT_HEIGHT = 100;
-const BorrowPoolList = () => {
+const BorrowPoolList = React.memo(() => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
-  const { displayPoolReserves, reserves, iUserSummary, loading } =
-    useLendingSummary();
-  const { t } = useTranslation();
-  const { fetchData } = useLendingData();
-  const isInIsolationMode = useMemo(() => {
-    return iUserSummary?.isInIsolationMode;
-  }, [iUserSummary?.isInIsolationMode]);
+  const { fetchData } = useFetchLendingData();
+
+  const { displayPoolReserves, iUserSummary } = useLendingSummary();
+  const { reserves } = useLendingRemoteData();
+
+  useRendererDetect({ name: 'BorrowPoolList' });
 
   const sortReserves = useMemo(() => {
     return displayPoolReserves
@@ -95,132 +211,6 @@ const BorrowPoolList = () => {
     [colors2024, isLight],
   );
 
-  const desc = useMemo(() => {
-    if (
-      iUserSummary?.availableBorrowsUSD === '0' ||
-      !iUserSummary?.availableBorrowsUSD
-    ) {
-      return t('page.Lending.availableCard.needSupply');
-    }
-    if (iUserSummary.userEmodeCategoryId !== 0) {
-      if (!sortReserves.length) {
-        return t('page.Lending.availableCard.emodeNoAssets');
-      }
-      return t('page.Lending.availableCard.emode');
-    }
-    if (isInIsolationMode) {
-      return t('page.Lending.availableCard.isolated');
-    }
-    return t('page.Lending.availableCard.canBorrow');
-  }, [
-    iUserSummary?.availableBorrowsUSD,
-    iUserSummary?.userEmodeCategoryId,
-    isInIsolationMode,
-    sortReserves.length,
-    t,
-  ]);
-
-  const availableCard = useMemo(() => {
-    if (loading || !iUserSummary?.totalLiquidityUSD) {
-      return null;
-    }
-    return (
-      <View
-        style={[
-          styles.availableCard,
-          isInIsolationMode && styles.availableCardIsolated,
-        ]}>
-        <View style={styles.availableCardHeader}>
-          {(iUserSummary?.availableBorrowsUSD &&
-            iUserSummary?.availableBorrowsUSD === '0') ||
-          isInIsolationMode ? (
-            <RcIconWarningCircleCC
-              width={14}
-              height={14}
-              color={
-                isInIsolationMode
-                  ? colors2024['orange-default']
-                  : colors2024['neutral-info']
-              }
-            />
-          ) : null}
-          <Text
-            style={[
-              styles.availableCardTitle,
-              (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
-                styles.orangeText,
-            ]}>
-            {t('page.Lending.modalDesc.availableToBorrow')}:{' '}
-            <Text
-              style={[
-                styles.usdValue,
-                (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
-                  styles.orangeText,
-              ]}>
-              {formatUsdValueKMB(
-                Number(iUserSummary?.availableBorrowsUSD || '0'),
-              )}
-            </Text>
-          </Text>
-        </View>
-        <Text
-          style={[
-            styles.availableCardValue,
-            (isInIsolationMode || !!iUserSummary?.userEmodeCategoryId) &&
-              styles.orangeText,
-          ]}>
-          {desc}
-        </Text>
-      </View>
-    );
-  }, [
-    colors2024,
-    desc,
-    iUserSummary?.availableBorrowsUSD,
-    iUserSummary?.totalLiquidityUSD,
-    iUserSummary?.userEmodeCategoryId,
-    isInIsolationMode,
-    loading,
-    styles.availableCard,
-    styles.availableCardHeader,
-    styles.availableCardIsolated,
-    styles.availableCardTitle,
-    styles.availableCardValue,
-    styles.orangeText,
-    styles.usdValue,
-    t,
-  ]);
-
-  const ListHeaderComponent = useCallback(() => {
-    return loading ? (
-      <Skeleton style={styles.loading} width={124} height={20} circle />
-    ) : (
-      <>
-        {availableCard}
-        {sortReserves.length ? (
-          <View style={styles.listHeader}>
-            <Text style={styles.headerToken}>
-              {t('page.Lending.list.headers.token_balance')}
-            </Text>
-            <Text style={styles.headerApy}>{t('page.Lending.apy')}</Text>
-            <Text style={styles.headerMyBorrows}>
-              {t('page.Lending.list.headers.myBorrows')}
-            </Text>
-          </View>
-        ) : null}
-      </>
-    );
-  }, [
-    availableCard,
-    loading,
-    sortReserves.length,
-    styles.headerApy,
-    styles.headerMyBorrows,
-    styles.headerToken,
-    styles.listHeader,
-    styles.loading,
-    t,
-  ]);
   const keyExtractor = useCallback(item => {
     return `${item.reserve.underlyingAsset}-${item.reserve.symbol}`;
   }, []);
@@ -280,9 +270,11 @@ const BorrowPoolList = () => {
 
   return (
     <Tabs.FlatList
-      data={loading ? [] : sortReserves}
+      data={sortReserves}
       style={styles.container}
-      ListHeaderComponent={ListHeaderComponent}
+      ListHeaderComponent={() => {
+        return <ListHeaderComponent sortReservesLen={sortReserves.length} />;
+      }}
       showsVerticalScrollIndicator={false}
       ListHeaderComponentStyle={styles.headerContainer}
       initialNumToRender={8}
@@ -293,12 +285,12 @@ const BorrowPoolList = () => {
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={() => fetchData(true)} />
       }
-      ListEmptyComponent={loading ? <PoolListLoading /> : null}
+      ListEmptyComponent={PoolListLoading}
       ListFooterComponent={renderFooterComponent}
       renderItem={renderItem}
     />
   );
-};
+});
 
 export default BorrowPoolList;
 

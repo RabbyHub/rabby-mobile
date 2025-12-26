@@ -28,6 +28,8 @@ export type ChainListItem = {
 type SelectSortedChainProps = {
   value?: ChainListItem;
   onChange?: (value: ChainListItem) => void;
+  /** @deprecated */
+  onClose?: () => void;
   chainList?: ChainListItem[];
   titleText?: string;
 };
