@@ -889,6 +889,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     initIdRef.current += 1;
     const currentFetchId = initIdRef.current;
     const { firstChain } = await fetchOrderedChainList({
+      address: currentAccount?.address,
       supportChains: supportedChains,
     });
     if (initIdRef.current !== currentFetchId) {
@@ -945,6 +946,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       }
     }
   }, [
+    currentAccount?.address,
     fetchOrderedChainList,
     supportedChains,
     setSlider,

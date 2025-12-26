@@ -7,7 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
 import { useLocalTokens } from '@/screens/Home/hooks/token';
-import { useChainBalances } from '@/hooks/account';
+import { useChainBalances, useMatteredChainBalancesAll } from '@/hooks/account';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { useLoadAssets } from '@/screens/Search/useAssets';
@@ -47,8 +47,9 @@ export default function MixedFlatChainList({
 
   const { styles } = useTheme2024({ getStyle });
   const { tokenList } = useLocalTokens(currentAccount?.address);
-  const { matteredChainBalances, matteredChainBalancesAll } =
-    useChainBalances();
+  const { matteredChainBalances } = useChainBalances();
+  const { matteredChainBalancesAll } = useMatteredChainBalancesAll();
+
   const tokenListMap = useMemo(() => {
     if (!tokenList || needAllAddresses) {
       return {};

@@ -17,7 +17,10 @@ import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 
 import { NetSwitchTabsKey } from '@/constant/netType';
-import { useLoadMatteredChainBalances } from '@/hooks/account';
+import {
+  useLoadMatteredChainBalances,
+  useMatteredChainBalancesAll,
+} from '@/hooks/account';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
 import NetSwitchTabs, {
@@ -55,11 +58,13 @@ const useChainSeletorList = ({
     matteredChainBalances,
     fetchMatteredChainBalance,
 
-    matteredChainBalancesAll,
     fetchAllAddressesChainBalance,
   } = useLoadMatteredChainBalances({
     account,
   });
+
+  const { matteredChainBalancesAll } = useMatteredChainBalancesAll();
+
   useEffect(() => {
     needAllAddresses
       ? fetchAllAddressesChainBalance()
@@ -70,30 +75,18 @@ const useChainSeletorList = ({
     fetchMatteredChainBalance,
   ]);
 
-  const { pinned, chainBalances } = useMemo(() => {
-    return {
-      // TODO: not supported now
-      pinned: [],
-      chainBalances:
-        netTabKey === 'testnet'
-          ? testnetMatteredChainBalances
-          : needAllAddresses
-          ? matteredChainBalancesAll
-          : matteredChainBalances,
-      isShowTestnet: false,
-    };
-  }, [
-    netTabKey,
-    testnetMatteredChainBalances,
-    matteredChainBalances,
-    matteredChainBalancesAll,
-    needAllAddresses,
-  ]);
-
   const { mainnetList, testnetList } = useChainList();
 
-  const { allSearched, matteredList, unmatteredList } = useMemo(() => {
+  const { pinned, allSearched, matteredList, unmatteredList } = useMemo(() => {
     const searchKw = search?.trim().toLowerCase();
+    const pinned = [];
+    const chainBalances =
+      netTabKey === 'testnet'
+        ? testnetMatteredChainBalances
+        : needAllAddresses
+        ? matteredChainBalancesAll
+        : matteredChainBalances;
+
     const result = varyAndSortChainItems({
       supportChains,
       searchKeyword: searchKw,
@@ -105,6 +98,9 @@ const useChainSeletorList = ({
     });
 
     return {
+      // TODO: not supported now
+      pinned,
+      chainBalances,
       allSearched: result.allSearched,
       matteredList: searchKw ? [] : result.matteredList,
       unmatteredList: searchKw ? [] : result.unmatteredList,
@@ -112,11 +108,13 @@ const useChainSeletorList = ({
   }, [
     search,
     supportChains,
-    chainBalances,
-    pinned,
     netTabKey,
     mainnetList,
     testnetList,
+    testnetMatteredChainBalances,
+    matteredChainBalances,
+    matteredChainBalancesAll,
+    needAllAddresses,
   ]);
 
   return {
