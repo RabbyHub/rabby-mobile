@@ -72,7 +72,6 @@ import { useApprovalAlertCounts } from './hooks/approvals';
 
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
-import { useSetTotalBalanceTextForRateModal } from '@/components/RateModal/hooks';
 import { useSetTotalBalanceTextForFeedback } from '@/components/Screenshot/hooks';
 import {
   HOME_REFRESH_INTERVAL,
@@ -595,7 +594,6 @@ function MultiAddressHome(): JSX.Element {
   useRendererDetect({ name: 'MultiAddressHome' });
 
   useSetTotalBalanceTextForFeedback(combinedData.netWorth);
-  useSetTotalBalanceTextForRateModal(combinedData.netWorth);
   useInitDetectDBAssets();
 
   useEffect(() => {

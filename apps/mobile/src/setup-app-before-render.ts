@@ -25,6 +25,7 @@ import {
   startSubscribeIOSScreenRecording,
 } from './hooks/navigation';
 import { startComputationThread } from './perfs/thread';
+import { rateModalStartSyncNetwork } from './components/RateModal/hooks';
 
 loadLockInfoOnBootstrap();
 startFetchOnceTop5TokensForAllAccounts();
@@ -51,5 +52,7 @@ startSubscribeAtSensitiveScene();
 startSubscribeIOSJustScreenshotted();
 startSubscribeWhetherPreventScreenshot();
 startSubscribeIOSScreenRecording();
+
+rateModalStartSyncNetwork();
 
 startComputationThread();

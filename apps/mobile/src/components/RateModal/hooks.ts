@@ -17,10 +17,12 @@ import { openExternalUrl } from '@/core/utils/linking';
 import {
   resolveValFromUpdater,
   runDevIIFEFunc,
+  runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
+import { perfEvents } from '@/core/utils/perf';
 
 const TX_COUNT_LIMIT = isNonPublicProductionEnv ? 1 : 3; // Minimum number of transactions before showing the rate guide
 const STAR_COUNT = 5;
@@ -233,13 +235,14 @@ function setRateModalState(
   });
 }
 
-export function useSetTotalBalanceTextForRateModal(totalBalanceText: string) {
-  useEffect(() => {
+export function rateModalStartSyncNetwork() {
+  perfEvents.subscribe('SCENE_24H_BALANCE_UPDATED', ({ combinedData }) => {
+    const netWorth = combinedData.netWorth;
     setRateModalState(prev => ({
       ...prev,
-      totalBalanceText,
+      totalBalanceText: netWorth,
     }));
-  }, [totalBalanceText]);
+  });
 }
 
 const toggleShowRateModal = (
@@ -250,7 +253,7 @@ const toggleShowRateModal = (
   },
 ) => {
   const nextState = {
-    ...getDefaultValue(),
+    ...rateModalStore.getState(),
     visible: nextValue,
   };
 
@@ -280,18 +283,15 @@ const onChangeFeedback = (feedback: string) => {
   }));
 };
 
-const pushRateDetails = async (params: {
-  totalBalanceText?: string;
-  userStar?: number;
-}) => {
+const pushRateDetails = async (params?: { userStar?: number }) => {
   const rmState = rateModalStore.getState();
-  const userStar = params.userStar ?? rmState.userStar;
+  const userStar = params?.userStar ?? rmState.userStar;
   const needFeedbackText = userStar <= 3;
 
   const feedbackText = rmState.userFeedback.trim();
 
   const starText = `${makeStarText(userStar, 5)} (${userStar})`;
-  const balanceText = params.totalBalanceText || rmState.totalBalanceText;
+  const balanceText = rmState.totalBalanceText;
   const versionText = APP_VERSIONS.forFeedback;
 
   const feedbackContent = [

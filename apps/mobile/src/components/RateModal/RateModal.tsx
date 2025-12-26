@@ -28,7 +28,7 @@ import PressableStar from './RateStar';
 
 const LOGO_SIZE = 67;
 
-export function RateModal({ totalBalanceText }: { totalBalanceText?: string }) {
+export function RateModal() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
@@ -128,7 +128,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText?: string }) {
                     ]}
                     onPress={() => {
                       openAppRateUrl();
-                      pushRateDetails({ totalBalanceText }).finally(() => {
+                      pushRateDetails().finally(() => {
                         closeModal();
                       });
                     }}
@@ -224,7 +224,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText?: string }) {
                       styles.feedbackButtonConfirmText,
                     ]}
                     onPress={() => {
-                      pushRateDetails({ totalBalanceText })
+                      pushRateDetails()
                         .then(() => {
                           toast.success(
                             t('page.nextComponent.rateModal.feedbackSuccess'),
