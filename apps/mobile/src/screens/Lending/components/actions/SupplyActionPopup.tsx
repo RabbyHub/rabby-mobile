@@ -344,7 +344,10 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     const poolAmount = BigNumber(reserve.reserve.supplyCap)
       .minus(BigNumber(reserve.reserve.totalLiquidity))
       .multipliedBy(SUPPLY_UI_SAFE_MARGIN);
-    const miniAmount = myAmount.gte(poolAmount) ? poolAmount : myAmount;
+    const formattedPoolAmount = poolAmount.lt(0) ? BigNumber(0) : poolAmount;
+    const miniAmount = myAmount.gte(formattedPoolAmount)
+      ? formattedPoolAmount
+      : myAmount;
     const usdValue = miniAmount
       .multipliedBy(
         BigNumber(

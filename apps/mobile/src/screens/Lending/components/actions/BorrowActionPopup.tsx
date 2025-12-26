@@ -267,7 +267,10 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     const poolAmount = BigNumber(reserve.reserve.borrowCap)
       .minus(BigNumber(reserve.reserve.totalDebt))
       .multipliedBy(BORROW_SAFE_MARGIN);
-    const miniAmount = myAmount.gte(poolAmount) ? poolAmount : myAmount;
+    const formattedPoolAmount = poolAmount.lt(0) ? BigNumber(0) : poolAmount;
+    const miniAmount = myAmount.gte(formattedPoolAmount)
+      ? formattedPoolAmount
+      : myAmount;
     const usdValue = miniAmount
       .multipliedBy(
         BigNumber(
