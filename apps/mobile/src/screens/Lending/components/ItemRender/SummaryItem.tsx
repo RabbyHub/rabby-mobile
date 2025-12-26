@@ -1,7 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeTriangleStyle,
+} from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatNetworth } from '@/utils/math';
 import { estDaily, formatApy } from '../../utils/format';
@@ -12,12 +16,12 @@ import { HF_COLOR_GOOD_THRESHOLD } from '../../utils/constant';
 import RightMarketTabInfo from '../RightMarketTabInfo';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import IconCloseCC from '@/assets2024/icons/common/close-cc.svg';
-import { Tip } from '@/components/Tip';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useLendingService } from '../../hooks/useLendingService';
 
 interface SummaryItemProps {
   netWorth: string;
@@ -26,51 +30,6 @@ interface SummaryItemProps {
   netApy: number;
   healthFactor: string;
 }
-
-const HFTipsContent = ({
-  onMorePress,
-  children,
-  visible,
-  onHide,
-}: {
-  onMorePress: () => void;
-  children: React.ReactNode;
-  visible: boolean;
-  onHide: () => void;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
-  const handleMorePress = () => {
-    onHide();
-    onMorePress();
-  };
-  return (
-    <Tip
-      isVisible={visible}
-      onClose={onHide}
-      contentStyle={styles.contentStyle}
-      parentWrapperStyle={styles.parentWrapperStyle}
-      content={
-        <View style={styles.hfTipsContent}>
-          <Text style={styles.hfTipsContentText}>
-            {t('page.Lending.hfTips.desc')}
-            <Pressable style={styles.moreContainer} onPress={handleMorePress}>
-              <Text style={styles.moreText}>
-                {t('page.Lending.hfTips.more')}
-              </Text>
-            </Pressable>
-          </Text>
-          <IconCloseCC
-            width={20}
-            height={20}
-            color={colors2024['neutral-secondary']}
-          />
-        </View>
-      }>
-      {children}
-    </Tip>
-  );
-};
 
 const SummaryItem: React.FC<SummaryItemProps> = ({
   netWorth,
@@ -81,13 +40,18 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const [hfTipsVisible, setHfTipsVisible] = useState(false);
+  const { skipHealthFactorWarning, setSkipHealthFactorWarning } =
+    useLendingService();
   const extraInfo = useMemo(() => {
-    if (!healthFactor || isHFEmpty(Number(healthFactor || '0'))) {
+    if (
+      !healthFactor ||
+      isHFEmpty(Number(healthFactor || '0')) ||
+      skipHealthFactorWarning
+    ) {
       return false;
     }
     return true;
-  }, [healthFactor]);
+  }, [healthFactor, skipHealthFactorWarning]);
 
   const healthStatus = useMemo(() => {
     const numHF = Number(healthFactor || '0');
@@ -124,6 +88,11 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
       hf: healthFactor,
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
+      },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
       },
     });
   };
@@ -199,51 +168,56 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
                   styles.metricItemCompact,
                   isHFEmpty(Number(healthFactor || '0')) && styles.hidden,
                 ]}>
-                <HFTipsContent
-                  visible={hfTipsVisible}
-                  onHide={() => setHfTipsVisible(false)}
-                  onMorePress={handleShowHFDescription}>
-                  <Pressable
-                    style={[styles.metricItem, { paddingHorizontal: 0 }]}
-                    onPress={() => setHfTipsVisible(true)}>
-                    <View style={styles.healthFactorHeader}>
-                      <Text style={styles.metricLabel}>
-                        {t('page.Lending.hf')}
-                      </Text>
-                      <WarningFillCC
-                        width={12}
-                        height={12}
-                        color={colors2024['neutral-secondary']}
-                      />
-                    </View>
-                    <View style={styles.healthRow}>
+                <Pressable
+                  style={[styles.metricItem, { paddingHorizontal: 0 }]}
+                  onPress={handleShowHFDescription}>
+                  <View style={styles.healthFactorHeader}>
+                    <Text style={styles.metricLabel}>
+                      {t('page.Lending.hf')}
+                    </Text>
+                    <WarningFillCC
+                      width={12}
+                      height={12}
+                      color={colors2024['neutral-secondary']}
+                    />
+                  </View>
+                  <View style={styles.healthRow}>
+                    <Text
+                      style={[
+                        styles.healthValue,
+                        { color: healthStatus.color },
+                      ]}>
+                      {getHealthFactorText(healthFactor)}
+                    </Text>
+                    <View
+                      style={[
+                        styles.healthTag,
+                        { backgroundColor: healthStatus.backgroundColor },
+                      ]}>
                       <Text
                         style={[
-                          styles.healthValue,
-                          { color: healthStatus.color },
+                          styles.healthTagText,
+                          {
+                            color: healthStatus.color,
+                          },
                         ]}>
-                        {getHealthFactorText(healthFactor)}
+                        {healthStatus.label}
                       </Text>
-                      {extraInfo && (
+                      {!!extraInfo && (
                         <View
                           style={[
-                            styles.healthTag,
-                            { backgroundColor: healthStatus.backgroundColor },
-                          ]}>
-                          <Text
-                            style={[
-                              styles.healthTagText,
-                              {
-                                color: healthStatus.color,
-                              },
-                            ]}>
-                            {healthStatus.label}
-                          </Text>
-                        </View>
+                            styles.triangle,
+                            makeTriangleStyle({
+                              dir: 'up',
+                              size: 8,
+                              color: colors2024['neutral-bg-5'],
+                            }),
+                          ]}
+                        />
                       )}
                     </View>
-                  </Pressable>
-                </HFTipsContent>
+                  </View>
+                </Pressable>
               </View>
               <View style={[styles.metricItem, styles.metricItemCompact]}>
                 <Text style={styles.metricLabel}>
@@ -269,6 +243,29 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
                 <Text style={styles.metricValue}>{estDailyText}</Text>
               </View>
             </View>
+            {!!extraInfo && (
+              <View style={[styles.extraContainer]}>
+                <View style={styles.extraLeft}>
+                  <Text style={styles.extraLeftText}>
+                    {t('page.Lending.summary.lq')}
+                  </Text>
+                  <TouchableOpacity onPress={handleShowHFDescription}>
+                    <Text style={styles.extraLeftMore}>
+                      {t('page.Lending.summary.more')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  style={styles.extraClose}
+                  onPress={() => setSkipHealthFactorWarning(true)}>
+                  <IconCloseCC
+                    width={14}
+                    height={14}
+                    color={colors2024['neutral-title-1']}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
           </>
         )}
       </View>
@@ -420,5 +417,44 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     height: 54,
+  },
+  extraContainer: {
+    position: 'relative',
+    backgroundColor: colors2024['neutral-bg-5'],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingRight: 16,
+    marginHorizontal: 12,
+    height: 40,
+  },
+  extraLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  extraLeftText: {
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-foot'],
+  },
+  extraLeftMore: {
+    fontSize: 12,
+    fontWeight: '900',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
+  extraClose: {
+    marginLeft: 8,
+  },
+  triangle: {
+    position: 'absolute',
+    bottom: -16,
+    left: '50%',
+    color: 'black',
+    transform: [{ translateX: -6 }],
   },
 }));

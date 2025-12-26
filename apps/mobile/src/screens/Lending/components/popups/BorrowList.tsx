@@ -3,7 +3,6 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import {
-  FlatList,
   RefreshControl,
   Text,
   TextInput,
@@ -87,9 +86,19 @@ const LendingBorrowList: React.FC = () => {
         if (item.variableBorrows && item.variableBorrows !== '0') {
           return true;
         }
-        if (BigNumber(item.reserve.totalDebt).gte(item.reserve.borrowCap)) {
+        // emode开启，但是不支持该池子借贷
+        const eModeBorrowDisabled =
+          !!iUserSummary?.userEmodeCategoryId &&
+          !item.reserve.eModes.find(
+            e => e.id === iUserSummary.userEmodeCategoryId,
+          );
+        if (eModeBorrowDisabled) {
           return false;
         }
+        // 贷款上限
+        //if (BigNumber(item.reserve.totalDebt).gte(item.reserve.borrowCap)) {
+        //  return false;
+        //}
         const reserve = reserves?.reservesData?.find(x =>
           isSameAddress(x.underlyingAsset, item.reserve.underlyingAsset),
         );
@@ -248,7 +257,9 @@ const LendingBorrowList: React.FC = () => {
     (item: DisplayPoolReserveInfo) => {
       const reserve = getTargetReserve(item.reserve.underlyingAsset);
       const userSummary = iUserSummary;
-      if (!reserve || !userSummary) return;
+      if (!reserve || !userSummary) {
+        return;
+      }
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.BORROW_ACTION_DETAIL,
         reserve,

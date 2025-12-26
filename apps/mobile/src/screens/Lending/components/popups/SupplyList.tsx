@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  FlatList,
   RefreshControl,
   Text,
   TextInput,
@@ -42,6 +41,7 @@ import { formatUsdValueKMB } from '@/screens/TokenDetail/util';
 import { isUnFoldToken } from '../../config/unfold';
 import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import BigNumber from 'bignumber.js';
 
 const FOOT_HEIGHT = 86;
 
@@ -85,6 +85,14 @@ const LendingSupplyList: React.FC<
         if (item.underlyingBalance && item.underlyingBalance !== '0') {
           return true;
         }
+        //if (
+        //  // 达到供应上限
+        //  BigNumber(item.reserve?.totalLiquidity || '0').gte(
+        //    item.reserve?.supplyCap || '0',
+        //  )
+        //) {
+        //  return false;
+        //}
         const realUnderlyingAsset =
           isSameAddress(item.underlyingAsset, API_ETH_MOCK_ADDRESS) && chainEnum
             ? wrapperToken?.[chainEnum]?.address
