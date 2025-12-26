@@ -15,6 +15,7 @@ import { storeApiGasAccount } from './screens/GasAccount/hooks/atom';
 import { startSubscribeOnekeyDevices } from './core/apis/onekey';
 import { startSubscribeTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
 import { startFetchOnceTop5TokensForAllAccounts } from './components/AccountSwitcher/hooks';
+import { startSyncOnlineConfig } from './core/config/online';
 import { loadVersionInfoOnBootstrap } from './hooks/version';
 import { autoGoogleSignIfPreviousSignedOnBoot } from './hooks/cloudStorage';
 import {
@@ -35,6 +36,7 @@ startFetchOnceTop5TokensForAllAccounts();
 subscribeUnlockToFetchAccounts();
 startSubscribeAppStateChange();
 
+startSyncOnlineConfig();
 loadVersionInfoOnBootstrap();
 
 loadJavaScriptBeforeContentLoadedOnBoot();

@@ -4,6 +4,10 @@ import { Platform } from 'react-native';
 import { merge } from 'lodash';
 import { stringUtils } from '@rabby-wallet/base-utils';
 
+function sleep(ms = 0) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 const BASE_URL = isNonPublicProductionEnv
   ? 'https://download.rabby.io/downloads/wallet-mobile-config-reg'
   : 'https://download.rabby.io/downloads/wallet-mobile-config';
@@ -14,6 +18,7 @@ type OnlineConfig = {
   ['switches']?: {
     ['20250820.reportSentry_slowQuery']?: boolean;
     ['20250924.android_webview_always_treat_as_reload']?: boolean;
+    ['20251226.enable_worker_thread']?: boolean;
   };
 };
 
@@ -22,6 +27,7 @@ function getDefaultOnlineConfig(): OnlineConfig {
     switches: {
       '20250820.reportSentry_slowQuery': false,
       '20250924.android_webview_always_treat_as_reload': true,
+      '20251226.enable_worker_thread': false,
     },
   };
 }
@@ -41,18 +47,29 @@ export async function fetchConfigOnBootstrap() {
   return json as Partial<OnlineConfig> | undefined;
 }
 
-(() => {
+const firstFetchPromise = Promise.race([
   fetchConfigOnBootstrap().catch(() => {
     console.warn('Failed to fetch online config');
-  });
+  }),
+  sleep(5000),
+]);
+
+export function startSyncOnlineConfig() {
+  firstFetchPromise;
 
   setInterval(() => {
     fetchConfigOnBootstrap().catch(() => {
       console.warn('Failed to fetch online config');
     });
   }, 5 * 60 * 1e3); // every 5 minutes
-})();
+}
 
 export function getOnlineConfig() {
+  return configRef.current;
+}
+
+export async function getLatestOnlineConfig() {
+  await firstFetchPromise;
+
   return configRef.current;
 }
