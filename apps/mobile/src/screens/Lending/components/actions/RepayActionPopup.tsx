@@ -48,6 +48,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { REPAY_AMOUNT_MULTIPLIER } from '../../utils/constant';
 import RepayWithCollateral from './RepayWithCollateralContent';
 import { getFromToken } from '../../utils/swap';
+import { isSupportRepayWithCollateral } from './RepayWithCollateralContent/utils';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
@@ -595,7 +596,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   const [repaySource, setRepaySource] = useState<'wallet' | 'collateral'>(
     'wallet',
   );
-  const { chainInfo } = useSelectedMarket();
+  const { chainInfo, selectedMarketData } = useSelectedMarket();
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
   const repayToken = useMemo(() => {
     const r = formattedPoolReservesAndIncentives.find(item =>
@@ -612,44 +613,51 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     reserve?.underlyingAsset,
   ]);
 
-  //TODO: 判断是否支持repay with collateral 才决定是否显示switch
+  const showSwitch = useMemo(() => {
+    return isSupportRepayWithCollateral(chainInfo?.id || 0, selectedMarketData);
+  }, [chainInfo?.id, selectedMarketData]);
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
       <Text style={styles.title}>
         {t('page.Lending.repayDetail.actions')} {reserve.reserve.symbol}
       </Text>
-      <Text style={styles.sourceSwitchTitle}>Repay with</Text>
-      <View style={styles.sourceSwitchContainer}>
-        <Pressable
-          style={[
-            styles.sourceSwitchTab,
-            repaySource === 'wallet' && styles.sourceSwitchTabActive,
-          ]}
-          onPress={() => setRepaySource('wallet')}>
-          <Text
-            style={[
-              styles.sourceSwitchTabText,
-              repaySource === 'wallet' && styles.sourceSwitchTabTextActive,
-            ]}>
-            Wallet balance
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.sourceSwitchTab,
-            repaySource === 'collateral' && styles.sourceSwitchTabActive,
-          ]}
-          onPress={() => setRepaySource('collateral')}>
-          <Text
-            style={[
-              styles.sourceSwitchTabText,
-              repaySource === 'collateral' && styles.sourceSwitchTabTextActive,
-            ]}>
-            Collateral
-          </Text>
-        </Pressable>
-      </View>
+      {showSwitch && (
+        <>
+          <Text style={styles.sourceSwitchTitle}>Repay with</Text>
+          <View style={styles.sourceSwitchContainer}>
+            <Pressable
+              style={[
+                styles.sourceSwitchTab,
+                repaySource === 'wallet' && styles.sourceSwitchTabActive,
+              ]}
+              onPress={() => setRepaySource('wallet')}>
+              <Text
+                style={[
+                  styles.sourceSwitchTabText,
+                  repaySource === 'wallet' && styles.sourceSwitchTabTextActive,
+                ]}>
+                Wallet balance
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.sourceSwitchTab,
+                repaySource === 'collateral' && styles.sourceSwitchTabActive,
+              ]}
+              onPress={() => setRepaySource('collateral')}>
+              <Text
+                style={[
+                  styles.sourceSwitchTabText,
+                  repaySource === 'collateral' &&
+                    styles.sourceSwitchTabTextActive,
+                ]}>
+                Collateral
+              </Text>
+            </Pressable>
+          </View>
+        </>
+      )}
       {repaySource === 'wallet' ? (
         <RepayActionPopupContent
           reserve={reserve}
