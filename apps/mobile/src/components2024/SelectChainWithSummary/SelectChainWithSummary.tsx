@@ -37,9 +37,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { NextSearchBar } from '../SearchBar';
 import { Account } from '@/core/services/preference';
-
-const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
-const RcIconSearch = makeThemeIconFromCC(RcNextSearchCC, 'neutral-secondary');
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
 
 const useChainSeletorList = ({
   supportChains,
@@ -62,6 +60,8 @@ const useChainSeletorList = ({
   } = useLoadMatteredChainBalances({
     account,
   });
+
+  useRendererDetect({ name: 'SelectChainWithSummary' });
 
   const { matteredChainBalancesAll } = useMatteredChainBalancesAll();
 

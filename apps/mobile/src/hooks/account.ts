@@ -12,7 +12,7 @@ import {
   preferenceService,
   transactionHistoryService,
 } from '@/core/services';
-import { removeAddress } from '@/core/apis/address';
+import { getAllAccounts, removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
@@ -158,10 +158,21 @@ const doFetchAccounts = async () => {
   return nextAccounts;
 };
 
-export const storeApisAccounts = {
-  fetchAccounts: doFetchAccounts,
-  setCurrentCaredAddress,
-};
+async function removeAccount(account: KeyringAccount) {
+  const accounts = await getAllAccounts();
+
+  togglePinAddressAsync({ ...account, nextPinned: false });
+  await removeAddress(account);
+  await doFetchAccounts();
+  if (
+    accounts.filter(acc => isSameAddress(acc.address, account.address))
+      .length === 1
+  ) {
+    await deleteDBResourceForAddress(account.address);
+    updateHistoryTimeSingleAddress(account.address, 0);
+    transactionHistoryService.clearSuccessAndFailList(account.address);
+  }
+}
 
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   const accounts = zAccountStore(s => s.accounts);
@@ -191,6 +202,9 @@ export const storeApiAccounts = {
   getPinAddresses() {
     return zAccountStore.getState().pinnedAddresses;
   },
+  fetchAccounts: doFetchAccounts,
+  setCurrentCaredAddress,
+  removeAccount,
 };
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
@@ -214,6 +228,47 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
   };
 }
 
+const togglePinAddressAsync = (payload: {
+  brandName: Account['brandName'];
+  address: Account['address'];
+  nextPinned?: boolean;
+}) => {
+  const allPinAddresses = preferenceService.getPinAddresses();
+
+  const {
+    nextPinned = !allPinAddresses.some(
+      highlighted =>
+        isSameAddress(highlighted.address, payload.address) &&
+        highlighted.brandName === payload.brandName,
+    ),
+  } = payload;
+
+  const addresses = [...allPinAddresses];
+  const newItem = {
+    brandName: payload.brandName,
+    address: payload.address,
+  };
+  if (nextPinned) {
+    addresses.unshift(newItem);
+    preferenceService.updatePinAddresses(addresses);
+    matomoRequestEvent({
+      category: 'Pin Address',
+      action: 'PinAddress_Finish',
+    });
+  } else {
+    const toggleIdx = addresses.findIndex(
+      addr =>
+        addr.brandName === payload.brandName &&
+        isSameAddress(addr.address, payload.address),
+    );
+    if (toggleIdx > -1) {
+      addresses.splice(toggleIdx, 1);
+    }
+    preferenceService.updatePinAddresses(addresses);
+  }
+  setPinAddresses(addresses);
+};
+
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
   const pinAddresses = zAccountStore(s => s.pinnedAddresses);
@@ -229,50 +284,6 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const getPinAddressesAsync = useCallback(async () => {
     return getPinAddresses();
   }, [getPinAddresses]);
-
-  const togglePinAddressAsync = useCallback(
-    (payload: {
-      brandName: Account['brandName'];
-      address: Account['address'];
-      nextPinned?: boolean;
-    }) => {
-      const allPinAddresses = preferenceService.getPinAddresses();
-
-      const {
-        nextPinned = !allPinAddresses.some(
-          highlighted =>
-            isSameAddress(highlighted.address, payload.address) &&
-            highlighted.brandName === payload.brandName,
-        ),
-      } = payload;
-
-      const addresses = [...allPinAddresses];
-      const newItem = {
-        brandName: payload.brandName,
-        address: payload.address,
-      };
-      if (nextPinned) {
-        addresses.unshift(newItem);
-        preferenceService.updatePinAddresses(addresses);
-        matomoRequestEvent({
-          category: 'Pin Address',
-          action: 'PinAddress_Finish',
-        });
-      } else {
-        const toggleIdx = addresses.findIndex(
-          addr =>
-            addr.brandName === payload.brandName &&
-            isSameAddress(addr.address, payload.address),
-        );
-        if (toggleIdx > -1) {
-          addresses.splice(toggleIdx, 1);
-        }
-        preferenceService.updatePinAddresses(addresses);
-      }
-      setPinAddresses(addresses);
-    },
-    [],
-  );
 
   useEffect(() => {
     if (!disableAutoFetch) {
@@ -325,6 +336,9 @@ export const usePinnedAccountList = () => {
   return pinnedAccountList;
 };
 
+/**
+ * @deprecated use `removeAccount` directly
+ */
 export function useRemoveAccount() {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const { togglePinAddressAsync } = usePinAddresses({ disableAutoFetch: true });

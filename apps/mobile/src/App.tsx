@@ -25,8 +25,6 @@ import {
   useInitializeAppOnTop,
 } from './hooks/useBootstrap';
 import { AppProvider, loadSecurityChain } from './hooks/global';
-import { useNoLongerSupports } from './components2024/NoLongerSupports/useNoLongerSupports';
-import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
@@ -62,8 +60,6 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
 
   useSetupServiceStub();
   useUniversalLinkOnTop();
-  useNoLongerSupports();
-  useTriggerI18nChangeOnAppTop();
   useIAPListener();
   useIncreaseTxCountOnAppTop({ isTop: true });
 

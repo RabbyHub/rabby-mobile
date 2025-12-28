@@ -4,6 +4,8 @@ import {
 } from './hooks/useBootstrap';
 
 import { runIIFEFunc } from './core/utils/store';
+import { startSubscribeLangChange } from './hooks/lang';
+
 import {
   loadLockInfoOnBootstrap,
   startSubscribeAppStateChange,
@@ -30,6 +32,9 @@ import {
 } from './hooks/navigation';
 import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
+import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
+
+startSubscribeLangChange();
 
 loadLockInfoOnBootstrap();
 startFetchOnceTop5TokensForAllAccounts();
@@ -62,3 +67,5 @@ rateModalStartSyncNetworth();
 screenshotModalStartSyncNetworth();
 
 startComputationThread();
+
+trimNoLongerSupportsOnUnlock();
