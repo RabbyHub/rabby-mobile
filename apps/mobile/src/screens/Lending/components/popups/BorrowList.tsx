@@ -289,7 +289,7 @@ const LendingBorrowList: React.FC = () => {
         {filteredReserves.length ? (
           <View style={styles.listHeader}>
             <Text style={styles.headerToken}>
-              {t('page.Lending.list.headers.token_balance')}
+              {t('page.Lending.list.headers.token')}
             </Text>
             <Text style={styles.headerMyBorrows}>
               {t('page.Lending.list.headers.totalBorrowed')}

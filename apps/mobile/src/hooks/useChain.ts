@@ -64,9 +64,9 @@ export function useAsyncInitializeChainList({
     updateInitStage('fetching');
 
     preferenceService.getPreference('pinnedChain');
-    await getMatteredChainBalance({});
+    await getMatteredChainBalance({ address: account.address });
     updateInitStage('fetched');
-  }, [updateInitStage, getMatteredChainBalance]);
+  }, [updateInitStage, getMatteredChainBalance, account.address]);
 
   useEffect(() => {
     fetchDataOnce();

@@ -3013,12 +3013,18 @@
           "myBorrows": "Mein Darlehen",
           "apy": "APY",
           "token_tvl": "Token/TVL",
-          "token_balance": "Token/Guthaben"
+          "token_balance": "Token/Guthaben",
+          "totalBorrowed": "Gesamte Kreditaufnahme"
+        },
+        "item": {
+          "wrapperToken": "Wrapped-Token für {{name}}"
         }
       },
       "summary": {
         "empty": {
-          "description": "Betrieben von AAVE. Sicher und null Gebühren."
+          "description": "Betrieben von AAVE. Sicher und null Gebühren.",
+          "title": "Verdienen Sie Zinsen mit Ihren Assets",
+          "endDesc": "Sie haben noch keine Einzahlungen vorgenommen. Schauen Sie sich die empfohlenen Vermögenswerte unten an, um damit Zinsen zu verdienen."
         },
         "healthy": "Gesund",
         "more": "Mehr",
@@ -3038,7 +3044,8 @@
         "enabled": "Aktiviert",
         "supplyBalance": "Versorgungsbilanz",
         "unavailable": "Nicht verfügbar",
-        "isolatedTips": "Ihre bestehenden Kredit-/Leihvermögen werden nicht unterstützt."
+        "isolatedTips": "Ihre bestehenden Kredit-/Leihvermögen werden nicht unterstützt.",
+        "supplied": "Geliefert"
       },
       "withdrawDetail": {
         "remainingSupply": "Verbleibender Vorrat",
@@ -3049,7 +3056,8 @@
         "approveAndBorrow": "Genehmigen und Ausleihen",
         "almostReachedWarning": "Der Protokoll-Verleihlimit beträgt 100% für dieses Asset. Weitere Kredite sind nicht verfügbar.",
         "almostReachedError": "Der maximale Betrag, der ausgeliehen werden kann, ist begrenzt, da die Kreditobergrenze des Protokolls nahezu erreicht ist.",
-        "swapDebt": "Tausch"
+        "swapDebt": "Tausch",
+        "borrowed": "Ausgeliehen"
       },
       "popup": {
         "available": "verfügbar",
@@ -3064,7 +3072,8 @@
         "availableToBorrow": "Verfügbar zum Ausleihen",
         "liquidityPenalty": "Liquiditätsstrafe",
         "borrowCap": "Leihobergrenze",
-        "totalBorrowed": "Total Borrowed"
+        "totalBorrowed": "Total Borrowed",
+        "reachCapTip": "Dieses Asset hat die Kreditobergrenze erreicht."
       },
       "supplyOverview": {
         "availableToSupply": "Verfügbar zur Lieferung",
@@ -3074,7 +3083,8 @@
         "title": "Bereitstellungsdetails",
         "reachCap": "Dieses Asset hat sein Angebotshöchstlimit erreicht. Nichts kann aus diesem Markt bereitgestellt werden.",
         "almostCap": "Dieses Asset hat fast seine Leihobergrenze erreicht. Es sind nur {{available}} verfügbar, um von diesem Markt geliehen zu werden.",
-        "useAsCollateral": "Als Sicherheiten verwenden"
+        "useAsCollateral": "Als Sicherheiten verwenden",
+        "collateral": "Sicherheit"
       },
       "risk": {
         "checkbox": "Ich verstehe die Warnung und möchte fortfahren.",
@@ -3199,7 +3209,17 @@
         "priceImpactTips": "Hoher Preisimpact ({{lostValue}}). Diese Route kann aufgrund niedriger Liquidität oder kleiner Bestellgröße mehr zurückgeben.",
         "lpRiskWarning": "Niedriger Gesundheitsfaktor nach dem Swap. Ihre Position trägt ein höheres Risiko der Liquidation.",
         "lpDangerWarning": "Ihr Gesundheitsfaktor nach diesem Swap wird kritisch niedrig sein und kann zu einer Liquidation führen. Bitte wählen Sie einen anderen Vermögenswert oder reduzieren Sie den Swap-Betrag, um sicher zu bleiben."
-      }
+      },
+      "hfTips": {
+        "more": "Mehr",
+        "desc": "Wenn es unter 1,0 fällt, kann Ihre Sicherheit liquidiert werden."
+      },
+      "disableBorrowTip": {
+        "desc": "Kein Supply: Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen."
+      },
+      "totalBorrowed": "Total borrowed",
+      "totalSupplied": "Gesamtangebot",
+      "netApy": "Netto-APY"
     }
   },
   "constant": {

@@ -2719,12 +2719,18 @@
           "myBorrows": "私の借入",
           "mySupplies": "私のサプライ",
           "token_tvl": "トークン/TVL",
-          "token_balance": "トークン/残高"
+          "token_balance": "トークン/残高",
+          "totalBorrowed": "合計借入額"
+        },
+        "item": {
+          "wrapperToken": "{{name}}のラップトークン"
         }
       },
       "summary": {
         "empty": {
-          "description": "AAVEによって提供されています。安全で手数料ゼロです。"
+          "description": "AAVEによって提供されています。安全で手数料ゼロです。",
+          "title": "資産で金利を獲得しましょう",
+          "endDesc": "まだ預金がありません。下記の推奨資産を確認して、利息を得ることを始めましょう。"
         },
         "more": "もっと",
         "healthy": "健康",
@@ -2744,7 +2750,8 @@
         "isolatedTips": "あなたの既存の貸付/借入資産はサポートされていません。",
         "enabled": "有効化済み",
         "supplyBalance": "供給残高",
-        "collateralization": "担保化"
+        "collateralization": "担保化",
+        "supplied": "供給されました"
       },
       "withdrawDetail": {
         "actions": "出金",
@@ -2755,7 +2762,8 @@
         "approveAndBorrow": "承認と借入",
         "almostReachedError": "借入可能的最大金额受到限制，因为协议借入上限已接近。",
         "almostReachedWarning": "この資産のプロトコル借入上限は100%です。これ以上の借入はできません。",
-        "swapDebt": "スワップ"
+        "swapDebt": "スワップ",
+        "borrowed": "借入した"
       },
       "popup": {
         "available": "利用可能",
@@ -2770,7 +2778,8 @@
         "totalBorrowed": "合計借入額",
         "borrowCap": "借入上限",
         "title": "借入詳細情報",
-        "liquidityPenalty": "清算ペナルティ"
+        "liquidityPenalty": "清算ペナルティ",
+        "reachCapTip": "この資産は借り入れ上限に達しました。"
       },
       "supplyOverview": {
         "title": "供給の詳細",
@@ -2780,7 +2789,8 @@
         "availableToSupply": "提供可能",
         "reachCap": "この資産は供給上限に達しました。この市場から供給されるものはありません。",
         "almostCap": "この資産は借入限度額にほぼ達しています。この市場から借りられるのは{{available}}のみです。",
-        "useAsCollateral": "担保として使用する"
+        "useAsCollateral": "担保として使用する",
+        "collateral": "担保"
       },
       "risk": {
         "checkbox": "アラートを理解し、続行したいと思います。",
@@ -2905,7 +2915,17 @@
         "lpRiskWarning": "スワップ後の健康係数が低下しています。あなたのポジションは、清算のリスクが高くなります。",
         "priceImpactTips": "高い価格影響（{{lostValue}}）。このルートは、流動性が低いか小さな注文サイズのために、より多く返す可能性があります。",
         "lpDangerWarning": "このスワップ後のあなたのヘルスファクターは非常に低くなり、清算のリスクがあります。安全を保つために、別の資産を選ぶか、スワップ額を減らしてください。"
-      }
+      },
+      "hfTips": {
+        "more": "もっと",
+        "desc": "1.0を下回ると、あなたの担保が清算される可能性があります。"
+      },
+      "disableBorrowTip": {
+        "desc": "供給がありません：借りるためには、担保として資産を供給する必要があります。"
+      },
+      "totalSupplied": "総供給量",
+      "totalBorrowed": "合計借入額",
+      "netApy": "ネットAPY"
     }
   },
   "global": {

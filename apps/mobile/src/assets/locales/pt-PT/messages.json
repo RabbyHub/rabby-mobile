@@ -3013,12 +3013,18 @@
           "apy": "APY",
           "mySupplies": "Meus suprimentos",
           "token_balance": "Token/Saldo",
-          "token_tvl": "Token/TVL"
+          "token_tvl": "Token/TVL",
+          "totalBorrowed": "Total Emprestado"
+        },
+        "item": {
+          "wrapperToken": "Token embrulhado para {{name}}"
         }
       },
       "summary": {
         "empty": {
-          "description": "Impulsionado pela AAVE. Seguro e sem taxas."
+          "description": "Impulsionado pela AAVE. Seguro e sem taxas.",
+          "title": "Ganhe juros com os seus ativos",
+          "endDesc": "Ainda não tem depósitos. Confira abaixo os ativos recomendados para começar a ganhar juros."
         },
         "risky": "Arriscado",
         "more": "Mais",
@@ -3038,7 +3044,8 @@
         "supplyBalance": "Fornecer Balanço",
         "enabled": "Ativado",
         "isolatedTips": "Os seus ativos de empréstimo/ empréstimo existentes não são suportados.",
-        "unavailable": "Indisponível"
+        "unavailable": "Indisponível",
+        "supplied": "Fornecido"
       },
       "withdrawDetail": {
         "actions": "Retirar",
@@ -3049,7 +3056,8 @@
         "approveAndBorrow": "Aprovar e Pedir Emprestado",
         "almostReachedError": "O montante máximo disponível para empréstimo é limitado porque o limite de empréstimo do protocolo está quase atingido.",
         "almostReachedWarning": "O limite de empréstimo do protocolo está em 100% para este ativo. Novos empréstimos não estão disponíveis.",
-        "swapDebt": "Trocar"
+        "swapDebt": "Trocar",
+        "borrowed": "Emprestado"
       },
       "popup": {
         "amount": "Montante",
@@ -3064,7 +3072,8 @@
         "availableToBorrow": "Disponível para emprestar",
         "title": "Detalhes do Empréstimo",
         "myBorrow": "Meu Empréstimo",
-        "liquidityPenalty": "Penalização de Liquidação"
+        "liquidityPenalty": "Penalização de Liquidação",
+        "reachCapTip": "Este ativo atingiu o limite de empréstimo."
       },
       "supplyOverview": {
         "totalSupplied": "Total Fornecido",
@@ -3074,7 +3083,8 @@
         "almostCap": "Este ativo quase atingiu o seu limite de empréstimo. Há apenas {{available}} disponível para ser emprestado a partir deste mercado.",
         "reachCap": "Este ativo atingiu o seu limite de fornecimento. Não há nada disponível para ser fornecido a partir deste mercado.",
         "availableToSupply": "Disponível para Fornecer",
-        "useAsCollateral": "Usar como colateral"
+        "useAsCollateral": "Usar como colateral",
+        "collateral": "Colateral"
       },
       "risk": {
         "checkbox": "Eu entendo o alerta e quero continuar.",
@@ -3199,7 +3209,17 @@
         "lpDangerWarning": "O seu fator de saúde após esta troca ficará criticamente baixo e pode resultar em liquidação. Por favor, escolha um ativo diferente ou reduza o valor da troca para se manter seguro.",
         "lpRiskWarning": "Fator de saúde baixo após a troca. Sua posição terá um risco maior de liquidação.",
         "priceImpactTips": "Impacto de preço elevado ({{lostValue}}). Esta rota pode retornar mais devido à baixa liquidez ou ao tamanho pequeno da ordem."
-      }
+      },
+      "hfTips": {
+        "more": "Mais",
+        "desc": "Se cair abaixo de 1,0, a sua garantia pode ser liquidada."
+      },
+      "disableBorrowTip": {
+        "desc": "Sem fornecimento: Para emprestar, você precisa fornecer ativos como garantia."
+      },
+      "netApy": "Net APY",
+      "totalBorrowed": "Total emprestado",
+      "totalSupplied": "Total fornecido"
     }
   },
   "constant": {

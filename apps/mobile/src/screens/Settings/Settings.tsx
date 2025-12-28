@@ -130,6 +130,7 @@ import {
   CurrencySelectorPopup,
   useCurrentCurrencyVisible,
 } from './sheetModals/CurrencySelectorPopup';
+import { isWorkerThreadRunning } from '@/perfs/thread';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -146,6 +147,7 @@ function AlertBuildInfo() {
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
         `Hermes Enabled: ${IS_HERMES_ENABLED}`,
+        `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
         '   ',
         !!BUILD_GIT_INFO.BUILD_GIT_HASH_TIME &&
           `Lastest Commit: ${dayjs(BUILD_GIT_INFO.BUILD_GIT_HASH_TIME).format(
@@ -170,6 +172,7 @@ function AlertBuildInfo() {
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Revision: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
         `Hermes Enabled: ${IS_HERMES_ENABLED}`,
+        `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
       ]
         .filter(Boolean)
         .join('\n'),
