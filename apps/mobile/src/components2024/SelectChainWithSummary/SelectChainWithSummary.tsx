@@ -20,7 +20,7 @@ import { NetSwitchTabsKey } from '@/constant/netType';
 import {
   useLoadMatteredChainBalances,
   useMatteredChainBalancesAll,
-} from '@/hooks/account';
+} from '@/hooks/accountChainBalance';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
 import NetSwitchTabs, {

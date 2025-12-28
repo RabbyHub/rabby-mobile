@@ -4,8 +4,10 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
-import { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  MODAL_NAMES,
+  MODAL_ID,
+} from '@/components2024/GlobalBottomSheetModal/types';
 
 export function useShowUserAgreementLikeModal() {
   const openedModalIdRef = React.useRef<MODAL_ID | string>('');

@@ -2,7 +2,10 @@ import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 
 import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@debank/common';
-import { useChainBalances, useLoadMatteredChainBalances } from './account';
+import {
+  useChainBalances,
+  useLoadMatteredChainBalances,
+} from './accountChainBalance';
 import { preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 

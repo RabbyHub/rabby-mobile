@@ -11,7 +11,7 @@ import {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 import { useImportKeystone } from '@/components/ConnectKeystone/useImportKeystone';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
