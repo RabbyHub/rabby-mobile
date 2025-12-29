@@ -170,7 +170,7 @@ const MyAssetHome: React.FC = () => {
 
   const keyExtractor = useCallback((item: MyAssetItem) => {
     const { underlyingAsset } = item;
-    return `${item.type}-${underlyingAsset}`;
+    return `${item.type}-${underlyingAsset}-${item.usdValue}`;
   }, []);
 
   const renderItem = useCallback(

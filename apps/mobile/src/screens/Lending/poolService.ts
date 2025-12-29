@@ -254,3 +254,49 @@ export const buildDebtSwitchTx = ({
   });
   return debtSwitchTx;
 };
+
+type NewType = InterestRate;
+
+export const buildRepayWithCollateralTx = ({
+  pool,
+  address,
+  fromUnderlyingAsset,
+  fromATokenAddress,
+  toUnderlyingAsset,
+  repayWithAmount,
+  repayAmount,
+  repayAllDebt,
+  rateMode,
+  useFlashLoan,
+  swapCallData,
+  augustus,
+}: {
+  pool: Pool;
+  address: string;
+  fromUnderlyingAsset: string;
+  fromATokenAddress: string;
+  toUnderlyingAsset: string;
+  repayWithAmount: string;
+  repayAmount: string;
+  repayAllDebt: boolean;
+  rateMode: NewType;
+  useFlashLoan: boolean;
+  swapCallData: string;
+  augustus: string;
+}) => {
+  return pool.paraswapRepayWithCollateral({
+    user: address,
+    fromAsset: fromUnderlyingAsset,
+    fromAToken: fromATokenAddress,
+    assetToRepay: toUnderlyingAsset,
+    repayWithAmount,
+    repayAmount,
+    repayAllDebt,
+    flash: useFlashLoan,
+    swapAndRepayCallData: swapCallData,
+    augustus,
+    permitSignature: undefined,
+    // @ts-ignore TODO：和aave保持一致，还不清楚为什么它为什么是undefined
+    rateMode: undefined,
+  });
+};
