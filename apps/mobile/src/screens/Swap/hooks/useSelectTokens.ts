@@ -78,10 +78,6 @@ export const useSelectTokens = ({
     };
   }, [tokens, userTokenSettings]);
 
-  useEffect(() => {
-    console.log('tokenWithOwner', tokenWithOwner);
-  }, [tokenWithOwner]);
-
   const checkIsExpireAndUpdate = useCallback(async () => {
     if (currentAccount) {
       return;

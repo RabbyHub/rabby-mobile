@@ -26,6 +26,7 @@ import {
   View,
 } from 'react-native';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
+import { useShallow } from 'zustand/shallow';
 
 export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
@@ -37,7 +38,9 @@ export const PerpsSelectTokenPopup: React.FC<{
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
-  const _tokens = useTokenList(s => s.forPerpsTokenSelect(account?.address));
+  const _tokens = useTokenList(
+    useShallow(s => s.forPerpsTokenSelect(account?.address)),
+  );
   const { getTokenList } = useTokenList();
 
   const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(
