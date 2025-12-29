@@ -19,7 +19,6 @@ import { LoadingLinear } from './TokenPriceChart/LoadingLinear';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 
 interface Props {
