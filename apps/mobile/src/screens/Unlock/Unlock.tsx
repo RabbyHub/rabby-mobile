@@ -29,7 +29,7 @@ import {
 } from '@/hooks/navigation';
 import { getFormikErrorsCount } from '@/utils/patch';
 import { useFocusEffect } from '@react-navigation/native';
-import { APP_TEST_PWD, APP_VERSIONS } from '@/constant';
+import { APP_TEST_PWD, APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import {
   RequestGenericPurpose,
   parseKeychainError,
@@ -50,11 +50,21 @@ import YesIcon from '@/assets2024/icons/common/check.svg';
 import i18next from 'i18next';
 import { RootNames } from '@/constant/layout';
 import { measureTime } from '@/core/utils/statics';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
 import DeviceInfo from 'react-native-device-info';
+import { getAddressesForReport } from '@/core/apis/address';
 
-function reportUnlockTime(
+function runTryCatch<T extends (...args: any[]) => any>(
+  fn: T,
+): ReturnType<T> | null {
+  try {
+    return fn();
+  } catch (error) {
+    console.error('Error occurred:', error);
+    return null;
+  }
+}
+async function reportUnlockTime(
   timsMs: number,
   unlockType: 'password' | 'biometrics',
 ) {
@@ -64,6 +74,12 @@ function reportUnlockTime(
     os_version: DeviceInfo.getSystemVersion(),
     os_name: DeviceInfo.getSystemName(),
     app_ver: APP_VERSIONS.forFeedback,
+    app_id: APPLICATION_ID,
+    callable_addr_count:
+      (await runTryCatch(
+        async () =>
+          await getAddressesForReport().then(res => res.myCallableAddressCount),
+      )) || 0,
   });
 }
 

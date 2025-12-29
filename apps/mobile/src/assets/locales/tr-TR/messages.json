@@ -2666,12 +2666,18 @@
           "myBorrows": "Benim borçlarım",
           "apy": "APY",
           "token_tvl": "Token/TVL",
-          "token_balance": "Token/Bakiye"
+          "token_balance": "Token/Bakiye",
+          "totalBorrowed": "Toplam Borçlanma"
+        },
+        "item": {
+          "wrapperToken": "{{name}} için Wrapped token"
         }
       },
       "summary": {
         "empty": {
-          "description": "AAVE tarafından desteklenmektedir. Güvenli ve sıfır ücret."
+          "description": "AAVE tarafından desteklenmektedir. Güvenli ve sıfır ücret.",
+          "title": "Varlıklarınızla Faiz Kazanın",
+          "endDesc": "Henüz herhangi bir yatırımız yok. Faiz kazanmaya başlamak için aşağıda önerilen varlıklara göz atın."
         },
         "risky": "Riskli",
         "more": "Daha Fazla",
@@ -2691,7 +2697,8 @@
         "collateralization": "Teminatlandırma",
         "enabled": "Etkinleştirildi",
         "unavailable": "Kullanılamıyor",
-        "isolatedTips": "Mevcut kredi verme/kredi alma varlıklarınız desteklenmiyor."
+        "isolatedTips": "Mevcut kredi verme/kredi alma varlıklarınız desteklenmiyor.",
+        "supplied": "Tedarik Edildi"
       },
       "withdrawDetail": {
         "remainingSupply": "Kalan arzı",
@@ -2702,7 +2709,8 @@
         "approveAndBorrow": "Onayla ve Borç Al",
         "almostReachedError": "Maksimum borç alma miktarı, protokol borç limiti neredeyse ulaşıldığı için sınırlıdır.",
         "almostReachedWarning": "Protokol borç limiti bu varlık için %100'dür. Daha fazla borç alma available değildir.",
-        "swapDebt": "Değiştir"
+        "swapDebt": "Değiştir",
+        "borrowed": "Ödünç Alındı"
       },
       "popup": {
         "available": "mevcut",
@@ -2717,7 +2725,8 @@
         "availableToBorrow": "Kullanılabilir borç alma",
         "title": "Kredi Detayları",
         "totalBorrowed": "Toplam Borçlu",
-        "liquidityPenalty": "Tasfiye Cezası"
+        "liquidityPenalty": "Tasfiye Cezası",
+        "reachCapTip": "Bu varlık borç alma sınırına ulaştı."
       },
       "supplyOverview": {
         "walletBalance": "Cüzdan Bakiyesi",
@@ -2727,7 +2736,8 @@
         "totalSupplied": "Toplam Sağlanan",
         "reachCap": "Bu varlık, arz sınırına ulaşmıştır. Bu piyasadan tedarik edilecek hiçbir şey yoktur.",
         "almostCap": "Bu varlık neredeyse borç sınırına ulaşmış durumda. Bu piyasadan borç alınabilecek yalnızca {{available}} mevcut.",
-        "useAsCollateral": "Teminat olarak kullanın"
+        "useAsCollateral": "Teminat olarak kullanın",
+        "collateral": "Teminat"
       },
       "risk": {
         "checkbox": "Uyarıyı anlıyorum ve devam etmek istiyorum.",
@@ -2852,7 +2862,17 @@
         "lpRiskWarning": "Takasta sonra düşük sağlık faktörü. Pozisyonunuzun tasfiye riski daha yüksek olacaktır.",
         "priceImpactTips": "Yüksek fiyat etkisi ({{lostValue}}). Bu yol, düşük likidite veya küçük sipariş boyutu nedeniyle daha fazla getiri sağlayabilir.",
         "lpDangerWarning": "Bu takas sonrası sağlık faktörünüz kritik derecede düşük olacak ve tasfiye ile sonuçlanabilir. Lütfen güvende kalmak için farklı bir varlık seçin veya takas miktarını azaltın."
-      }
+      },
+      "hfTips": {
+        "more": "Daha fazla",
+        "desc": "Eğer 1.0'ın altına düşerse, teminatınız tasfiye edilebilir."
+      },
+      "disableBorrowTip": {
+        "desc": "Temin yok: Borç almak için teminat olarak varlık sağlamanız gerekir."
+      },
+      "totalSupplied": "Toplam sağlanan",
+      "totalBorrowed": "Toplam borçlanma",
+      "netApy": "Net APY"
     }
   },
   "component": {

@@ -2676,12 +2676,18 @@
           "mySupplies": "Mes fournitures",
           "myBorrows": "Mes emprunts",
           "token_balance": "Jeton/Équilibre",
-          "token_tvl": "Token/TVL"
+          "token_tvl": "Token/TVL",
+          "totalBorrowed": "Total Emprunté"
+        },
+        "item": {
+          "wrapperToken": "Token Wrapped pour {{name}}"
         }
       },
       "summary": {
         "empty": {
-          "description": "Alimenté par AAVE. Sécurisé et sans frais."
+          "description": "Alimenté par AAVE. Sécurisé et sans frais.",
+          "title": "Gagnez des intérêts sur vos actifs",
+          "endDesc": "Vous n'avez encore aucun dépôt. Découvrez ci-dessous les actifs recommandés pour commencer à gagner des intérêts."
         },
         "more": "Plus",
         "healthy": "Sain",
@@ -2701,7 +2707,8 @@
         "collateralization": "Suralisation",
         "enabled": "Activé",
         "isolatedTips": "Vos actifs de prêt/emprunt existants ne sont pas pris en charge.",
-        "unavailable": "Indisponible"
+        "unavailable": "Indisponible",
+        "supplied": "Fournis"
       },
       "withdrawDetail": {
         "actions": "Retirer",
@@ -2712,7 +2719,8 @@
         "approveAndBorrow": "Approuver et Emprunter",
         "almostReachedError": "Le montant maximum disponible pour emprunter est limité car le plafond d'emprunt du protocole est presque atteint.",
         "almostReachedWarning": "Le cap d'emprunt du protocole est de 100 % pour cet actif. Emprunts supplémentaires non disponibles.",
-        "swapDebt": "Échanger"
+        "swapDebt": "Échanger",
+        "borrowed": "Emprunté"
       },
       "popup": {
         "available": "disponible",
@@ -2727,7 +2735,8 @@
         "availableToBorrow": "Disponible à emprunter",
         "title": "Détails de l'emprunt",
         "borrowCap": "Plafond d'emprunt",
-        "liquidityPenalty": "Pénalité de liquidation"
+        "liquidityPenalty": "Pénalité de liquidation",
+        "reachCapTip": "Cet actif a atteint le plafond d'emprunt."
       },
       "supplyOverview": {
         "totalSupplied": "Total fourni",
@@ -2737,7 +2746,8 @@
         "walletBalance": "Solde du portefeuille",
         "title": "Détails de l'approvisionnement",
         "almostCap": "Cet actif a presque atteint sa limite d'emprunt. Il ne reste que {{available}} disponible à emprunter sur ce marché.",
-        "useAsCollateral": "Utiliser comme garantie"
+        "useAsCollateral": "Utiliser comme garantie",
+        "collateral": "Garanties"
       },
       "risk": {
         "checkbox": "Je comprends l'alerte et je veux continuer.",
@@ -2862,7 +2872,17 @@
         "lpRiskWarning": "Facteur de santé faible après l'échange. Votre position comportera un risque plus élevé de liquidation.",
         "priceImpactTips": "Impact de prix élevé ({{lostValue}}). Cet itinéraire peut retourner plus en raison d'une faible liquidité ou d'une petite taille de commande.",
         "lpDangerWarning": "Votre facteur de santé après cet échange sera extrêmement bas et pourrait entraîner une liquidation. Veuillez choisir un autre actif ou réduire le montant de l'échange pour rester en sécurité."
-      }
+      },
+      "hfTips": {
+        "more": "Plus",
+        "desc": "S'il descend en dessous de 1,0, votre collatéral peut être liquidé."
+      },
+      "disableBorrowTip": {
+        "desc": "Aucun approvisionnement : Pour emprunter, vous devez fournir des actifs en tant que garantie."
+      },
+      "totalSupplied": "Total fourni",
+      "totalBorrowed": "Total emprunté",
+      "netApy": "APY net"
     }
   },
   "native": {
