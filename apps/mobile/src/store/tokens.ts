@@ -133,6 +133,12 @@ function getMultiAssetsFoldResultFromParts({
   };
 }
 
+const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) =>
+  (b.usd_value || 0) - (a.usd_value || 0);
+
+const sortByUsdValueDesc = (list: ITokenItem[]) =>
+  list.slice().sort(compareByUsdValueDesc);
+
 const isDataExpired = async (address: string) => {
   const isExpired = await TokenItemEntity.isExpired(address);
   return isExpired;
@@ -307,8 +313,6 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
         : Object.values(tokenListMap).flat();
       const getUsdValue = (token: ITokenItem) =>
         token.usd_value || (token.price || 0) * (token.amount || 0);
-      const sortByUsdValueDesc = (list: ITokenItem[]) =>
-        list.slice().sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0));
       const filterAndSortTokens = (list: ITokenItem[]) => {
         if (!normalizedKeyword) {
           return sortByUsdValueDesc(list);
@@ -431,7 +435,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
       const tokenListMap = get().tokenListMap || {};
       if (!address) return [];
       return (
-        tokenListMap[address.toLowerCase()]?.filter(item => item.is_core) || []
+        tokenListMap[address.toLowerCase()]
+          ?.filter(item => item.is_core)
+          .sort(compareByUsdValueDesc) || []
       );
     },
     forChainSelector(address?: string) {
