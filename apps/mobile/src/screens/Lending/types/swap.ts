@@ -112,4 +112,5 @@ export type SwappableToken = {
   totalBorrowsUSD?: string;
   walletBalanceUSD?: string;
   totalDebtUSD?: string;
+  underlyingUsdValue?: string;
 };

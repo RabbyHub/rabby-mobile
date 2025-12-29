@@ -2863,7 +2863,7 @@
         "collateralSwapSelector": {
           "title": "Select Collateral Token",
           "header": {
-            "assets": "Token/Balance",
+            "assets": "Token",
             "collateral": "My collateral"
           }
         },

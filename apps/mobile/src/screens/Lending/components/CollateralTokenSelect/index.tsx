@@ -52,6 +52,8 @@ export default function CollateralTokenSelectModal({
               ...item,
               totalBorrowsUSD: displayPoolReserve?.totalBorrowsUSD,
               walletBalanceUSD: displayPoolReserve?.walletBalanceUSD,
+              underlyingUsdValue:
+                displayPoolReserve?.underlyingBalanceUSD || '0',
             };
           })
           .sort((a, b) => {

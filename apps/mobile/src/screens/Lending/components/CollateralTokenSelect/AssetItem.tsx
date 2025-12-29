@@ -4,9 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { SwappableToken } from '../../types/swap';
-import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import TokenIcon from '../TokenIcon';
-import { formatUsdValueKMB } from '@/screens/TokenDetail/util';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 
 const AssetItem = ({
@@ -16,7 +14,7 @@ const AssetItem = ({
   token: SwappableToken;
   onPress: () => void;
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const isZeroBorrowed = token.balance === '0';
   return (
     <TouchableOpacity style={styles.item} onPress={onPress}>
@@ -26,17 +24,6 @@ const AssetItem = ({
           <Text style={styles.symbol} numberOfLines={1} ellipsizeMode="tail">
             {token.symbol}
           </Text>
-          <View style={styles.yourBalanceContainer}>
-            <WalletFillCC
-              width={16}
-              height={16}
-              style={styles.walletIcon}
-              color={colors2024['secondary-foot']}
-            />
-            <Text style={styles.yourBalance}>
-              {formatUsdValueKMB(token.walletBalanceUSD || '0')}
-            </Text>
-          </View>
         </View>
       </View>
       <Text style={styles.apy}>
@@ -47,7 +34,7 @@ const AssetItem = ({
           <Text style={[styles.yourSupplied, styles.zeroBorrowed]}>$0</Text>
         ) : (
           <Text style={styles.yourSupplied}>
-            {formatListNetWorth(Number(token.balance || '0'))}
+            {formatListNetWorth(Number(token.underlyingUsdValue || '0'))}
           </Text>
         )}
       </View>

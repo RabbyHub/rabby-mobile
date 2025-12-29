@@ -116,14 +116,16 @@ export default function RepayWithCollateral({
     SwappableToken | undefined
   >();
 
-  const [repayAmount, setRepayAmount] = useState<string>('');
+  const [repayAmount, setRepayAmount] = useState<string>(
+    repayToken.balance || '0',
+  );
   const debouncedRepayAmount = useDebouncedValue(repayAmount, 400);
   const [collateralAmount, setCollateralAmount] = useState<string>('');
 
   const [quote, setQuote] = useState<ParaswapRatesType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
-  const [slider, setSlider] = useState<number>(0);
+  const [slider, setSlider] = useState<number>(100);
   const [riskChecked, setRiskChecked] = useState(false);
   const [noQuote, setNoQuote] = useState(false);
   const [quoteRefreshId, setQuoteRefreshId] = useState(0);
@@ -182,23 +184,23 @@ export default function RepayWithCollateral({
 
   const collateralAmountAfterSlippage = useMemo(() => {
     return getToAmountAfterSlippage({
-      inputAmount: debouncedRepayAmount,
+      inputAmount: collateralAmount,
       slippage: Number(slippage) * 100,
     });
-  }, [debouncedRepayAmount, slippage]);
+  }, [collateralAmount, slippage]);
 
   const priceImpactData = useMemo(() => {
     return getPriceImpactData({
       fromToken: selectedCollateralToken,
       toToken: repayToken,
       fromAmount: collateralAmount,
-      toAmount: collateralAmountAfterSlippage,
+      toAmount: debouncedRepayAmount,
     });
   }, [
     selectedCollateralToken,
     repayToken,
     collateralAmount,
-    collateralAmountAfterSlippage,
+    debouncedRepayAmount,
   ]);
 
   useEffect(() => {
@@ -315,7 +317,9 @@ export default function RepayWithCollateral({
         !selectedCollateralToken ||
         isSameToken ||
         !debouncedRepayAmount ||
-        !currentAccount?.address
+        !currentAccount?.address ||
+        !collateralReserve?.underlyingAsset ||
+        !collateralReserve?.decimals
       ) {
         resetQuote();
         return;
@@ -337,10 +341,10 @@ export default function RepayWithCollateral({
           swapType: SwapType.RepayWithCollateral,
           chainId: repayToken.chainId,
           amount: rawAmount,
-          srcToken: selectedCollateralToken.underlyingAddress,
+          srcToken: collateralReserve?.underlyingAsset,
+          srcDecimals: collateralReserve?.decimals,
           destToken: repayToken.underlyingAddress,
           user: currentAccount.address,
-          srcDecimals: selectedCollateralToken.decimals,
           destDecimals: repayToken.decimals,
           side: 'buy' as const,
           appCode: APP_CODE_LENDING_REPAY_WITH_COLLATERAL,
@@ -422,6 +426,8 @@ export default function RepayWithCollateral({
     repayToken.decimals,
     repayToken.chainId,
     repayToken.underlyingAddress,
+    collateralReserve?.underlyingAsset,
+    collateralReserve?.decimals,
   ]);
 
   const {
@@ -434,10 +440,13 @@ export default function RepayWithCollateral({
     autoResetGasStoreOnChainChange: true,
   });
   const collateralNotEnough = useMemo(() => {
+    if (!selectedCollateralToken) {
+      return false;
+    }
     return new BigNumber(collateralAmountAfterSlippage).gt(
       selectedCollateralToken?.balance || '0',
     );
-  }, [collateralAmountAfterSlippage, selectedCollateralToken?.balance]);
+  }, [collateralAmountAfterSlippage, selectedCollateralToken]);
   const buildRepayWithCollateralTxs = useCallback(async (): Promise<Tx[]> => {
     if (
       !currentAccount ||
@@ -613,15 +622,19 @@ export default function RepayWithCollateral({
     if (!actionTx) {
       throw new Error('Action tx not found');
     }
-    const tx = await actionTx.tx();
+    let tx;
+    try {
+      tx = await actionTx.tx();
+    } catch (error) {
+      // 内部的gas limit没预估通过，就忽略
+      if ((error as any).transaction) {
+        tx = (error as any).transaction;
+      }
+    }
     const populatedTx: PopulatedTransaction = {
       to: tx.to,
       from: tx.from,
       data: tx.data,
-      gasLimit: tx.gasLimit,
-      gasPrice: tx.gasPrice,
-      nonce: tx.nonce,
-      chainId: tx.chainId,
       value: tx.value ? ethers.BigNumber.from(tx.value) : undefined,
     };
     const formattedRepayTx = formatTx(
@@ -1185,6 +1198,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     marginTop: 16,
     height: '100%',
+    overflow: 'visible',
     paddingBottom: 140,
   },
   contentContainer: {
