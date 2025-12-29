@@ -17,6 +17,7 @@ import { syncRemoteTokens } from '@/databases/sync/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { BalanceEntity } from '@/databases/entities/balance';
+import { ITokenItem } from '@/store/tokens';
 
 export const queryTokensCache = makeSWRKeyAsyncFunc(
   (user_id: string, isTestnet: boolean = false) => {
@@ -30,7 +31,7 @@ export const queryTokensCache = makeSWRKeyAsyncFunc(
   ctx => [`${ctx.args[0]}-${ctx.args[1]}`],
 );
 
-const batchQueryTokens = makeSWRKeyAsyncFunc(
+export const batchQueryTokens = makeSWRKeyAsyncFunc(
   async (
     user_id: string,
     chainId?: string,
@@ -216,6 +217,24 @@ export function makeTokenSettingSets(
 
   return tokenSettingSets;
 }
+
+export function tagTokenItemFavorite<T extends ITokenItem = ITokenItem>(
+  i: T,
+  tokenSetting: { pinedQueue: ITokenSettingsSet['pinedQueue'] },
+) {
+  const { pinedQueue } = tokenSetting;
+  const pinIndex = Array.from(pinedQueue).findIndex(
+    x =>
+      x.chainId.toLowerCase() === i.chain.toLowerCase() &&
+      x.tokenId.toLowerCase() === i.id.toLowerCase(),
+  );
+  const isPin = pinIndex !== -1;
+  return {
+    ...i,
+    isPin,
+  };
+}
+
 export function tagTokenItemV2<
   T extends AbstractPortfolioToken = AbstractPortfolioToken,
 >(i: T, tokenSetting: Required<ITokenSettingsSet>) {

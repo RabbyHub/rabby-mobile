@@ -4,9 +4,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractProject } from '@/screens/Home/types';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { createGetStyles2024 } from '@/utils/styles';
-import { abstractTokenToTokenItem } from '@/utils/token';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
 import React, { useCallback, useEffect } from 'react';
@@ -47,6 +45,7 @@ import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRightCC.svg';
 import { patchSingleToken } from '@/databases/sync/assets';
 import { BG_FULL_HEIGHT } from '../Home/hooks/useBgSize';
 import { Tabs } from 'react-native-collapsible-tab-view';
+import { ITokenItem } from '@/store/tokens';
 
 const isAndroid = Platform.OS === 'android';
 const ScreenWidth = Dimensions.get('window').width;
@@ -116,19 +115,20 @@ const TokenDetailContent = () => {
         const res = await openapi.getToken(
           effectiveAccount?.address!,
           token.chain,
-          token._tokenId,
+          token.id,
         );
+        // TODO: 通过 store 写 db
         patchSingleToken(effectiveAccount?.address!, res);
-        return ensureAbstractPortfolioToken({
-          ...abstractTokenToTokenItem(token),
+        return {
+          ...token,
           amount: res?.amount,
           price_24h_change: res?.price_24h_change,
           usd_value: res?.usd_value,
           price: res?.price,
-        });
+        } as ITokenItem;
       },
       {
-        refreshDeps: [token.chain, token._tokenId, effectiveAccount?.address],
+        refreshDeps: [token.chain, token.id, effectiveAccount?.address],
       },
     );
 

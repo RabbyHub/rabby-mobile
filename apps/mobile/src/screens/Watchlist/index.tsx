@@ -24,10 +24,10 @@ import { useWatchlistTokens } from './hooks/useWatchlistTokens';
 import { navigateDeprecated } from '@/utils/navigation';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { RootNames } from '@/constant/layout';
-import { ensureAbstractPortfolioToken } from '../Home/utils/token';
 import { useHotTokenList } from './hooks/useHotTokenList';
 import { WatchlistCheckbox } from './components/Checkbox';
 import { atomByMMKV } from '@/core/storage/mmkv';
+import { tokenItemToITokenItem } from '@/utils/token';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -135,7 +135,7 @@ function WatchlistScreen(): JSX.Element {
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
       navigateDeprecated(RootNames.TokenMarketInfo, {
-        token: ensureAbstractPortfolioToken(token),
+        token: tokenItemToITokenItem(token, ''),
         unHold: false,
         needUseCacheToken: true,
       });

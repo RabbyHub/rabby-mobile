@@ -1,5 +1,5 @@
 import { atom, useAtom } from 'jotai';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { ITokenItem } from '@/store/tokens';
 
 const visibleAtom = atom({
   isShowGuidePopup: false,
@@ -13,7 +13,7 @@ const visibleAtom = atom({
   searchListOpenFrom: 'searchPerps' as 'openPosition' | 'searchPerps',
 });
 
-const selectedTokenAtom = atom<AbstractPortfolioToken | null>(null);
+const selectedTokenAtom = atom<ITokenItem | null>(null);
 
 export const usePerpsPopupState = () => {
   return useAtom(visibleAtom);

@@ -38,6 +38,7 @@ import {
 import { HistoryItemCateType } from './screens/Transaction/components/type';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { TabType } from './screens/CopyTrading/component/CopyTradingTokenDetail';
+import { ITokenItem } from './store/tokens';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -79,9 +80,7 @@ export type RootStackParamsList = {
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
   [RootNames.TokenDetail]: {
-    token:
-      | AbstractPortfolioToken
-      | import('@/screens/Home/hooks/store').CombineTokensItem;
+    token: ITokenItem;
     fromPortfolio?: boolean;
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
@@ -92,9 +91,7 @@ export type RootStackParamsList = {
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
   };
   [RootNames.TokenMarketInfo]: {
-    token:
-      | AbstractPortfolioToken
-      | import('@/screens/Home/hooks/store').CombineTokensItem;
+    token: ITokenItem;
     fromPortfolio?: boolean;
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
@@ -361,10 +358,6 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.MultiBridge]?: TransactionNavigatorParamList['Bridge'] & object;
   [RootNames.GasAccount]?: {};
-  [RootNames.Buy]?: {
-    receiveToken?: TokenItem;
-  };
-  [RootNames.MultiBuy]?: TransactionNavigatorParamList['Buy'] & object;
   [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];
     dataSource: AssetApprovalSpender[];

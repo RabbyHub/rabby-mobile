@@ -13,7 +13,6 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
-import { useIsRefreshing } from './hooks/project';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import {
   apisSingleHome,
@@ -23,7 +22,6 @@ import {
 
 export default function HomeHeaderArea() {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { isRefreshing: refreshing } = useIsRefreshing();
 
   const {
     address: currentAddress,
@@ -80,7 +78,7 @@ export default function HomeHeaderArea() {
               style={styles.titleText}>
               {name}
             </Text>
-            {refreshing || isLoadingCurve || balanceLoading ? (
+            {isLoadingCurve || balanceLoading ? (
               <LoadingCircle />
             ) : (
               <RcIconCopy style={styles.copy} />

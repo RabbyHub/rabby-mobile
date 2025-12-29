@@ -1,4 +1,3 @@
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -10,23 +9,11 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Dimensions,
-  FlatList,
-  Platform,
-  RefreshControl,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
-import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
-// import { PerpsMain } from './components/PerpsMain';
-import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
-import * as Sentry from '@sentry/react-native';
 import { PerpsGuidePopup } from './components/PerpsGuidePopup';
 import { PerpsDepositPopup } from './components/PerpsDepositPopup';
 import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
@@ -37,7 +24,7 @@ import {
   usePerpsPopupState,
   useSelectedToken,
 } from './hooks/usePerpsPopupState';
-import { useMemoizedFn, useRequest } from 'ahooks';
+import { useMemoizedFn } from 'ahooks';
 import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
@@ -48,9 +35,6 @@ import { sortBy } from 'lodash';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
-import { showToast } from '@/hooks/perps/showToast';
-import { toast } from '@/components2024/Toast';
-import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { PerpsSelectTokenPopup } from './components/PerpsDepositPopup/PerpsSelectTokenPopup';
 import { PerpsDepositTokenModal } from './components/PerpsDepositPopup/PerpsDepositTokenModal';
 import { openapi } from '@/core/request';
@@ -59,9 +43,7 @@ import {
   ARB_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useRoute } from '@react-navigation/native';
 import { PerpHeader } from './components/PerpHeader';
-import Toast from 'react-native-root-toast';
 import { PerpSearchListPopup } from './components/PerpSearchListPopup';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
@@ -525,7 +507,7 @@ export const PerpsScreen = () => {
           setSelectedToken(token);
           if (
             token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-            isSameAddress(token._tokenId, ARB_USDC_TOKEN_ID)
+            isSameAddress(token.id, ARB_USDC_TOKEN_ID)
           ) {
             setPopupState(prev => ({
               ...prev,
@@ -536,7 +518,7 @@ export const PerpsScreen = () => {
           }
 
           const res = await openapi.getPerpsBridgeIsSupportToken({
-            token_id: token._tokenId,
+            token_id: token.id,
             chain_id: token.chain,
           });
 

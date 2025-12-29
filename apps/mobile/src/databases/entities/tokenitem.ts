@@ -18,6 +18,8 @@ import {
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
+import { tokenItemEntityToTokenItem } from '@/utils/token';
+import { ITokenItem } from '@/store/tokens';
 
 @Entity('cache_tokenitem')
 export class TokenItemEntity extends EntityAddressAssetBase {
@@ -139,7 +141,10 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   static fillEntity(
     e: TokenItemEntity,
     owner_addr: string,
-    input: TokenItem & { value_24h_change?: string; cex_ids?: string[] },
+    input: (TokenItem | ITokenItem) & {
+      value_24h_change?: string;
+      cex_ids?: string[];
+    },
   ) {
     e.owner_addr = owner_addr;
 
@@ -271,6 +276,66 @@ export class TokenItemEntity extends EntityAddressAssetBase {
           cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
         }))
     );
+  }
+
+  static async getDefaultTokensByAddresses(
+    addresses: string[],
+  ): Promise<Record<string, ITokenItem[]>> {
+    await prepareAppDataSource();
+    const owner_addr_list = [
+      ...new Set(addresses.map(addr => addr.toLowerCase())),
+    ];
+    if (!owner_addr_list.length) {
+      return {};
+    }
+
+    const repo = this.getRepository();
+    const tableName = repo.metadata.tableName;
+    const subQueryColumns = repo.metadata.columns.map(col => {
+      if (['amount', 'price'].includes(col.databaseName)) {
+        return `${correctBadRealOnSql(
+          `tokenitem.${col.databaseName}` as
+            | 'tokenitem.amount'
+            | 'tokenitem.price',
+        )} AS "${col.databaseName}"`;
+      }
+      return `"${col.databaseName}"`;
+    });
+    const outerSelectColumns = repo.metadata.columns.map(
+      col => `"${col.databaseName}"`,
+    );
+    const usdValueOrderExpr = `(${correctBadRealOnSql(
+      'tokenitem.price',
+    )} * ${correctBadRealOnSql('tokenitem.amount')})`;
+
+    const placeholders = owner_addr_list.map(() => '?').join(',');
+    const params: any[] = [...owner_addr_list, EMPTY_TOKEN_ITEM_ID, 20];
+    const sql = `
+      SELECT ${outerSelectColumns.join(', ')}
+      FROM (
+        SELECT ${subQueryColumns.join(', ')},
+               ROW_NUMBER() OVER (PARTITION BY owner_addr ORDER BY ${usdValueOrderExpr} DESC) AS rn
+        FROM "${tableName}" tokenitem
+        WHERE owner_addr IN (${placeholders})
+          AND is_core = 1
+          AND id != ?
+          AND amount > 0
+      ) tokenitem
+      WHERE tokenitem.rn <= ?
+    `;
+
+    const rows = await repo.query(sql, params);
+
+    const result: Record<string, ITokenItem[]> = {};
+    rows.forEach(row => {
+      const key = row.owner_addr;
+      if (!result[key]) {
+        result[key] = [];
+      }
+      result[key].push(tokenItemEntityToTokenItem(row));
+    });
+
+    return result;
   }
 
   /**

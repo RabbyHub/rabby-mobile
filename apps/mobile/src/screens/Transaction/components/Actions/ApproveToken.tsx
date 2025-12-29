@@ -10,7 +10,7 @@ import {
   formatUsdValue,
 } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -134,7 +134,7 @@ export const ApproveToken: React.FC<Props> = ({
 
   const handleGotoTokenDetail = useMemoizedFn(() => {
     naviPush(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken(actionData.token),
+      token: tokenItemToITokenItem(actionData.token, ''),
       account,
       needUseCacheToken: true,
       isSingleAddress,

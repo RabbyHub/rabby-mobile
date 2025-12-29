@@ -37,6 +37,8 @@ import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { tokenItemToITokenItem } from '@/utils/token';
 
 interface Props {
   resultTokens: AbstractPortfolioToken[];
@@ -103,16 +105,13 @@ export const SearchAssets: React.FC<Props> = ({
 
   useFocusEffect(fetchPinedTokenList);
 
-  const handleOpenTokenDetail = React.useCallback(
-    (token: AbstractPortfolioToken) => {
-      navigateDeprecated(RootNames.TokenMarketInfo, {
-        token: token,
-        unHold: token._unHold,
-        needUseCacheToken: true,
-      });
-    },
-    [],
-  );
+  const handleOpenTokenDetail = React.useCallback((token: TokenItem) => {
+    navigateDeprecated(RootNames.TokenMarketInfo, {
+      token: tokenItemToITokenItem(token, ''),
+      unHold: true, // TODO: 待确认
+      needUseCacheToken: true,
+    });
+  }, []);
 
   const renderItem = useCallback(
     ({ item }: { item: AbstractPortfolioToken }) => {

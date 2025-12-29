@@ -1,64 +1,66 @@
-import React, {
-  useCallback,
-  useState,
-  useMemo,
-  useEffect,
-  useRef,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ListRenderItem, StyleSheet, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
+import { useTranslation } from 'react-i18next';
+import {
+  Tabs,
+  useCurrentTabScrollY,
+  useFocusedTab,
+} from 'react-native-collapsible-tab-view';
+import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
+import { useShallow } from 'zustand/shallow';
 
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { AbstractPortfolioToken, ActionItem, CombineToken } from './types';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
   RootNames,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
-
-import { TokenRow, TokenRowSectionHeader } from './components/AssetRenderItems';
-import { useTranslation } from 'react-i18next';
-import { preferenceService } from '@/core/services';
-import { toast } from '@/components2024/Toast';
-import { StackActions, useNavigation } from '@react-navigation/native';
-import { useTriggerTagAssets } from './hooks/refresh';
 import { EmptyTokenRow } from './components/AssetRenderItems/EmptyToken';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamsList } from '@/navigation-type';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { ItemLoader } from './components/Skeleton';
 import { ScamTokenHeader } from './components/AssetRenderItems/ScamTokenHeader';
 import {
-  Tabs,
-  useCurrentTabScrollY,
-  useFocusedTab,
-} from 'react-native-collapsible-tab-view';
-import { useAnimatedReaction } from 'react-native-reanimated';
-import { runOnJS } from 'react-native-reanimated';
-import { Account } from '@/core/services/preference';
-import { getItemId } from './utils/listRenderId';
-import { useTokens } from './hooks/token';
-import useSortToken from './hooks/useSortTokens';
-import { isScamHidenToken } from './utils/collection';
-import { getTotalFoldToken } from './utils/converAssets';
+  TokenRowSectionHeader,
+  TokenRowV2,
+} from './components/AssetRenderItems';
 import { useCurrency } from '@/hooks/useCurrency';
 import {
   useSingleHomeAccount,
   useSingleHomeChain,
   useSingleHomeSelectData,
 } from './hooks/singleHome';
-import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
+import useTokenList, { ITokenItem } from '@/store/tokens';
+import { formatNetworth } from '@/utils/math';
 
-export const icons = {
-  unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
-  unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
-  foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
-  foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-};
+type TokenListItem =
+  | {
+      type: 'unfold_token' | 'fold_token';
+      data: ITokenItem;
+    }
+  | {
+      type: 'toggle_token_fold';
+    }
+  | {
+      type: 'scam_token';
+      data: {
+        total: number;
+        logoUrls: string[];
+      };
+    }
+  | {
+      type: 'empty-token';
+    }
+  | {
+      type: 'empty-assets';
+      data: string;
+    }
+  | {
+      type: 'loading-skeleton';
+      data: string;
+    };
 
 interface Props {
   noAssetsOnAnyChain: boolean;
@@ -79,222 +81,165 @@ export const TokenList = ({
   const { t } = useTranslation();
   const { currentAccount } = useSingleHomeAccount();
   const { selectedChain } = useSingleHomeChain();
+  const { currency } = useCurrency();
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
-  const {
-    tokens: _rawTokens,
-    isLoading: loadingToken,
-    updateData,
-  } = useTokens(currentAccount?.address?.toLowerCase(), {
-    visible: false,
-  });
 
   const focusedTab = useFocusedTab();
-
   const isFocused = useMemo(() => {
-    const currentFocused = focusedTab === 'tokens';
-
-    return currentFocused;
+    return focusedTab === 'tokens';
   }, [focusedTab]);
 
+  const currentAddress = currentAccount?.address;
+  const lowerAddress = currentAddress?.toLowerCase();
+
+  const emptyResult = useMemo(
+    () => ({
+      unFoldTokens: [] as ITokenItem[],
+      foldTokens: [] as ITokenItem[],
+      scamTokens: [] as ITokenItem[],
+    }),
+    [],
+  );
+
+  const { unFoldTokens, foldTokens, scamTokens } = useTokenList(
+    useShallow(state =>
+      currentAddress
+        ? state.forSingleAssets(currentAddress, selectedChain)
+        : emptyResult,
+    ),
+  );
+
+  const isLoading = useTokenList(state => {
+    if (!lowerAddress) return false;
+    return !!state.isLoadingByAddress[lowerAddress];
+  });
+  const { getTokenList } = useTokenList();
+
   useEffect(() => {
-    if (isFocused) {
-      updateData();
+    if (!isFocused || !currentAddress) {
+      return;
     }
-  }, [isFocused, updateData]);
-  const { currency } = useCurrency();
-
-  const tokens = useMemo(() => {
-    return _rawTokens?.filter(item =>
-      selectedChain && item?.chain ? item.chain === selectedChain : true,
-    );
-  }, [_rawTokens, selectedChain]);
-
-  const sortTokens = useSortToken(tokens || [], currentAccount);
+    getTokenList(currentAddress);
+  }, [currentAddress, getTokenList, isFocused]);
 
   const { selectData } = useSingleHomeSelectData();
   const noAnyAssets = !selectData.rawNetWorth || noAssetsOnAnyChain;
 
-  const dataList = useMemo(() => {
-    const unFoldTokenList: ActionItem[] = sortTokens
-      .filter(i => !i._isFold)
-      .map(item => ({
-        type: 'unfold_token',
-        data: item,
-      }));
-    const foldAndIncludeBalanceTokenList: ActionItem[] = sortTokens
-      .filter(
-        i =>
-          !isScamHidenToken(i) &&
-          i._isFold &&
-          !i._isExcludeBalance &&
-          i._realUsdValue > 0,
-      )
-      .map(item => ({
-        type: 'fold_token',
-        data: item,
-      }));
-    const foldAndExcludeBalanceTokenList: ActionItem[] = sortTokens
-      .filter(
-        i =>
-          !isScamHidenToken(i) &&
-          i._isFold &&
-          (i._isExcludeBalance || i._realUsdValue === 0),
-      )
-      .map(item => ({
-        type: 'fold_token',
-        data: item,
-      }));
-    const scamTokens: ActionItem[] = sortTokens
-      .filter(isScamHidenToken)
-      .map(item => ({
-        type: 'fold_token',
-        data: item,
-      }));
-    const foldTokenList = [
-      ...foldAndIncludeBalanceTokenList,
-      ...foldAndExcludeBalanceTokenList,
-    ];
-    const itemData: Array<{
-      show: boolean;
-      data: ActionItem[];
-    }> = [
-      {
-        show: true,
-        data: unFoldTokenList,
-      },
-      {
-        show: !!foldTokenList.length || !!scamTokens.length,
-        data: [
-          { type: 'toggle_token_fold' },
-          ...(foldHideList ? [] : foldTokenList),
-        ],
-      },
-      {
-        show: !foldHideList && !!scamTokens.length,
-        data: foldScam
-          ? [
-              {
-                type: 'scam_token',
-                data: {
-                  total: scamTokens.length,
-                  logoUrls: (scamTokens as CombineToken[])
-                    .slice(0, 3)
-                    .map(i => i.data?.logo_url),
-                },
-              },
-            ]
-          : scamTokens,
-      },
-      {
-        show: !!loadingToken && !sortTokens.length,
-        data: Array.from({ length: 5 }, (_, index) => ({
-          type: 'loading-skeleton',
-          data: 'index-token' + index.toString(),
-        })),
-      },
-      {
-        show: !loadingToken && !sortTokens.length,
-        data: noAnyAssets
-          ? [{ type: 'empty-token' }]
-          : [
-              {
-                type: 'empty-assets',
-                data: t('page.singleHome.sectionHeader.NoData', {
-                  name: t('page.singleHome.sectionHeader.Token'),
-                }),
-              },
-            ],
-      },
-    ];
-    return itemData
-      .filter(item => item.show)
-      .map(item => item.data)
-      .flat();
-  }, [foldHideList, foldScam, noAnyAssets, loadingToken, sortTokens, t]);
+  const foldTokenUsdValue = useMemo(() => {
+    const usdValue = foldTokens
+      .filter(item => item.is_core)
+      .reduce((total, item) => total + item.usd_value, 0);
+    return formatNetworth(usdValue * currency.usd_rate, false, currency.symbol);
+  }, [currency.symbol, currency.usd_rate, foldTokens]);
 
-  const totalFoldTokenValue = useMemo(() => {
-    return getTotalFoldToken(
-      sortTokens.filter(i => i._isFold),
-      currency.usd_rate,
-      currency.symbol,
-    );
-  }, [sortTokens, currency.usd_rate, currency.symbol]);
+  const dataList = useMemo(() => {
+    const items: TokenListItem[] = [];
+
+    unFoldTokens.forEach(token => {
+      items.push({ type: 'unfold_token', data: token });
+    });
+
+    const hasFoldSection = foldTokens.length > 0 || scamTokens.length > 0;
+    if (hasFoldSection) {
+      items.push({ type: 'toggle_token_fold' });
+      if (!foldHideList) {
+        foldTokens.forEach(token => {
+          items.push({ type: 'fold_token', data: token });
+        });
+        if (scamTokens.length > 0) {
+          if (foldScam) {
+            items.push({
+              type: 'scam_token',
+              data: {
+                total: scamTokens.length,
+                logoUrls: scamTokens.slice(0, 3).map(i => i.logo_url),
+              },
+            });
+          } else {
+            scamTokens.forEach(token => {
+              items.push({ type: 'fold_token', data: token });
+            });
+          }
+        }
+      }
+    }
+
+    if (isLoading && items.length === 0) {
+      items.push(
+        ...Array.from({ length: 5 }, (_, index) => ({
+          type: 'loading-skeleton' as const,
+          data: `index-token-${index.toString()}`,
+        })),
+      );
+    }
+
+    if (!isLoading && items.length === 0) {
+      if (noAnyAssets) {
+        items.push({ type: 'empty-token' });
+      } else {
+        items.push({
+          type: 'empty-assets',
+          data: t('page.singleHome.sectionHeader.NoData', {
+            name: t('page.singleHome.sectionHeader.Token'),
+          }),
+        });
+      }
+    }
+
+    return items;
+  }, [
+    foldHideList,
+    foldScam,
+    foldTokens,
+    isLoading,
+    noAnyAssets,
+    scamTokens,
+    t,
+    unFoldTokens,
+  ]);
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
-  const { singleTokenRefresh, tokenRefresh } = useTriggerTagAssets();
-
-  const handleOpenTokenDetail = React.useCallback(
-    (token: AbstractPortfolioToken) => {
+  const handleOpenTokenDetail = useCallback(
+    (token: ITokenItem) => {
+      console.log(currentAccount);
       navigateDeprecated(RootNames.TokenDetail, {
-        token: token,
+        token,
         isSingleAddress: true,
         account: currentAccount as any,
       });
     },
     [currentAccount],
   );
-  const getTokenMenuActions = useCallback(
-    (data: AbstractPortfolioToken): MenuAction[] => {
-      return [
-        {
-          title: data._isFold
-            ? t('page.tokenDetail.action.unfold')
-            : t('page.tokenDetail.action.fold'),
-          icon: data._isFold
-            ? isLight
-              ? icons.unfoldLight
-              : icons.unfoldDark
-            : isLight
-            ? icons.foldLight
-            : icons.foldDark,
-          androidIconName: data._isFold
-            ? 'ic_rabby_menu_unfold'
-            : 'ic_rabby_menu_fold',
-          key: 'fold',
-          action() {
-            if (data._isFold) {
-              preferenceService.manualUnFoldToken({
-                tokenId: data._tokenId,
-                chainId: data.chain,
-              });
-              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-            } else {
-              preferenceService.manualFoldToken({
-                tokenId: data._tokenId,
-                chainId: data.chain,
-              });
-              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-            }
-            singleTokenRefresh();
-            tokenRefresh();
-          },
-        },
-      ];
-    },
-    [isLight, singleTokenRefresh, t, tokenRefresh],
-  );
 
-  const renderItem = useCallback<ListRenderItem<ActionItem>>(
+  const handleRefresh = useCallback(() => {
+    if (!currentAddress) {
+      return;
+    }
+    getTokenList(currentAddress, true);
+    onRefresh?.();
+  }, [currentAddress, getTokenList, onRefresh]);
+
+  const renderItem = useCallback<ListRenderItem<TokenListItem>>(
     ({ item }) => {
-      const { type, data } = item;
+      const { type } = item;
       switch (type) {
         case 'unfold_token':
         case 'fold_token':
           return (
             <View style={styles.rowWrap}>
-              <TokenRow
-                data={data}
+              <TokenRowV2
+                data={item.data}
                 style={StyleSheet.flatten([
                   styles.renderItemWrapper,
                   !isLight && styles.bg2,
                 ])}
                 onTokenPress={handleOpenTokenDetail}
-                getMenuActions={getTokenMenuActions}
                 logoSize={46}
                 chainLogoSize={18}
+                scene="portfolio"
               />
             </View>
           );
@@ -302,8 +247,8 @@ export const TokenList = ({
           return (
             <View style={styles.rowWrap}>
               <ScamTokenHeader
-                total={data.total}
-                logoUrls={data.logoUrls}
+                total={item.data.total}
+                logoUrls={item.data.logoUrls}
                 style={StyleSheet.flatten([
                   styles.renderItemWrapper,
                   !isLight && styles.bg2,
@@ -317,7 +262,7 @@ export const TokenList = ({
         case 'toggle_token_fold':
           return (
             <TokenRowSectionHeader
-              str={totalFoldTokenValue}
+              str={foldTokenUsdValue}
               fold={foldHideList}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
@@ -343,7 +288,7 @@ export const TokenList = ({
           return (
             <EmptyAssets
               style={styles.emptyAssets}
-              desc={data ?? undefined}
+              desc={item.data ?? undefined}
               type={type}
             />
           );
@@ -358,15 +303,31 @@ export const TokenList = ({
       }
     },
     [
-      foldHideList,
       currentAccount,
-      getTokenMenuActions,
+      foldHideList,
+      foldTokenUsdValue,
       handleOpenTokenDetail,
       isLight,
       styles,
-      totalFoldTokenValue,
     ],
   );
+
+  const keyExtractor = useCallback((item: TokenListItem) => {
+    if (item.type === 'unfold_token' || item.type === 'fold_token') {
+      return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
+    }
+    if (item.type === 'scam_token') {
+      return `scam-token-${item.data.total}`;
+    }
+    if (item.type === 'loading-skeleton') {
+      return `loading-${item.data}`;
+    }
+    if (item.type === 'empty-assets') {
+      return `empty-assets-${item.data}`;
+    }
+    return item.type;
+  }, []);
+
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
   }, []);
@@ -394,13 +355,13 @@ export const TokenList = ({
       runOnJS(handleScroll)(currentScrollY);
     },
   );
+
   return (
     <View style={styles.container}>
       <Tabs.FlatList
         data={dataList}
-        keyExtractor={getItemId}
+        keyExtractor={keyExtractor}
         renderItem={renderItem}
-        // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={showScrollIndicator}
@@ -409,10 +370,7 @@ export const TokenList = ({
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}
-            onRefresh={() => {
-              updateData?.(true);
-              onRefresh?.();
-            }}
+            onRefresh={handleRefresh}
             refreshing={false}
           />
         }
