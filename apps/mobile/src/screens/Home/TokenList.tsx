@@ -205,12 +205,11 @@ export const TokenList = ({
   const handleOpenTokenDetail = useCallback(
     (token: ITokenItem) => {
       console.log(currentAccount);
-      // TODO: 修复类型问题
-      // navigateDeprecated(RootNames.TokenDetail, {
-      //   token,
-      //   isSingleAddress: true,
-      //   account: currentAccount as any,
-      // });
+      navigateDeprecated(RootNames.TokenDetail, {
+        token,
+        isSingleAddress: true,
+        account: currentAccount as any,
+      });
     },
     [currentAccount],
   );

@@ -10,7 +10,6 @@ import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useInfiniteScroll, useMemoizedFn, useMount } from 'ahooks';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import {
   ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
@@ -32,6 +31,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
+import { ITokenItem } from '@/store/tokens';
 
 interface IFetchHistory {
   last: number;
@@ -47,7 +47,7 @@ export const TokenDetailHistoryList = ({
   onReachTopStatusChange,
 }: {
   finalAccount: KeyringAccountWithAlias | null;
-  token: AbstractPortfolioToken;
+  token: ITokenItem;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }) => {
@@ -207,7 +207,7 @@ export const TokenDetailHistoryList = ({
       addr,
       lastMap.current[addr] || 0,
       tokenItem.chain,
-      tokenItem._tokenId,
+      tokenItem.id,
       isMyAddress,
     );
     if (result.list.length < PAGE_COUNT) {

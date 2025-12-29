@@ -1,7 +1,7 @@
-import { type TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { type AbstractPortfolioToken } from '../types';
 import { type CombineDefiItem } from '../hooks/store';
 import { type TokenItemFromAbstractPortfolioToken } from '@/utils/token';
+import { ITokenItem } from '@/store/tokens';
 
 export const isScamHidenToken = (
   token: AbstractPortfolioToken | CombineDefiItem,
@@ -16,11 +16,6 @@ export const isScamHidenToken = (
     !usdValue
   );
 };
-export const isScamTokenForSelect = (token: TokenItemMaybeWithOwner) => {
-  const netWorth = token.amount * token.price || 0;
-  return (
-    !token.is_core &&
-    !netWorth &&
-    (token as TokenItemFromAbstractPortfolioToken).isFold
-  );
+export const isScamTokenForSelect = (token: ITokenItem) => {
+  return (!token.is_core && !token.usd_value) || token.is_scam;
 };

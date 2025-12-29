@@ -10,7 +10,7 @@ import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
 import useAsync from 'react-use/lib/useAsync';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
@@ -114,9 +114,12 @@ const BridgeToTokenSelect = ({
   }, [currentAccount, chainId, tokenSelectorVisible, queryConds.keyword]);
 
   const displayTokenList = useMemo(() => {
-    return uniqBy(tokenList, item => {
-      return `${item.chain}-${item.id}`;
-    })
+    return uniqBy(
+      (tokenList || []).map(item => tokenItemToITokenItem(item, '')),
+      item => {
+        return `${item.chain}-${item.id}`;
+      },
+    )
       .filter(e => !excludeTokens.includes(e.id))
       .filter(e => {
         if (favoriteFilterValue === 'favorite') {

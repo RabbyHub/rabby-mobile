@@ -414,12 +414,6 @@ const OverViewComponent = React.memo(
           }
           case MultiHomeFeatTitle.Ecosystem:
             break;
-          case MultiHomeFeatTitle.Buy:
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBuy,
-              params: {},
-            });
-            break;
           case MultiHomeFeatTitle.Perps:
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Perps,

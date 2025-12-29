@@ -12,7 +12,6 @@ import {
 } from '@/screens/Home/components/AssetRenderItems';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useLoadAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -102,12 +101,12 @@ export const TokenList = () => {
       if (isTabsSwiping.value) {
         return;
       }
-      // navigateDeprecated(RootNames.TokenDetail, {
-      //   token: token,
-      //   unHold: false,
-      //   needUseCacheToken: true,
-      //   account,
-      // });
+      navigateDeprecated(RootNames.TokenDetail, {
+        token: token,
+        unHold: false,
+        needUseCacheToken: true,
+        account,
+      });
     },
     [],
   );

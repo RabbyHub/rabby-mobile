@@ -6,7 +6,7 @@ import { BlurView } from '@react-native-community/blur';
 import { AssetAvatar } from '@/components';
 import { useLongPressTokenAtom } from '../hooks';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
@@ -109,9 +109,7 @@ export const TokenInfoPopup = () => {
             onPressRightIcon={() => {
               if (longPressToken.tokenItem) {
                 navigateDeprecated(RootNames.TokenDetail, {
-                  token: {
-                    ...ensureAbstractPortfolioToken(longPressToken.tokenItem),
-                  },
+                  token: tokenItemToITokenItem(longPressToken.tokenItem, ''),
                   account: currentAccount,
                   needUseCacheToken: true,
                 });

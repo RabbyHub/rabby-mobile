@@ -32,6 +32,7 @@ export interface ITokenItem {
   raw_amount?: string;
   price_24h_change?: number | null;
   cex_ids: string[];
+  time_at: number;
   credit_score?: number;
   is_suspicious?: boolean;
   is_scam?: boolean;
@@ -41,8 +42,10 @@ export interface ITokenItem {
   content_type?: 'image' | 'image_url' | 'video_url' | 'audio_url';
   content?: string;
   inner_id?: string;
-  time_at?: number;
   raw_amount_hex_str?: string;
+  isPin?: boolean;
+  trade_volume_level?: 'low' | 'middle' | 'high';
+  support_market_data?: boolean;
 }
 
 interface TokenListState {
@@ -62,9 +65,20 @@ interface TokenListState {
     foldTokens: ITokenItem[];
     scamTokens: ITokenItem[];
   };
+  forTokenSelect(
+    address?: string,
+    chainServerId?: string,
+    keyword?: string,
+  ): {
+    unFoldTokens: ITokenItem[];
+    foldTokens: ITokenItem[];
+    scamTokens: ITokenItem[];
+  };
+  forPerpsTokenSelect(address?: string): ITokenItem[];
+  forChainSelector(address?: string): ITokenItem[];
   initStore(): void;
-  batchGetTokenList(addresses: string[], force?: boolean): void;
-  getTokenList(address: string, force?: boolean): void;
+  batchGetTokenList(addresses: string[], force?: boolean): Promise<void>;
+  getTokenList(address: string, force?: boolean): Promise<void>;
 }
 
 function getMultiAssetsFoldResultFromParts({
@@ -145,6 +159,15 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
   let lastSingleAddress: string | undefined;
   let lastSingleChainServerId: string | undefined;
   let lastSingleTokenListMap: TokenListState['tokenListMap'] | null = null;
+  let lastTokenSelectResult: {
+    unFoldTokens: ITokenItem[];
+    foldTokens: ITokenItem[];
+    scamTokens: ITokenItem[];
+  } | null = null;
+  let lastTokenSelectChainServerId: string | undefined;
+  let lastTokenSelectListMap: TokenListState['tokenListMap'] | null = null;
+  let lastTokenSelectAddress: string | undefined;
+  let lastTokenSelectKeyword: string | undefined;
 
   return {
     tokenListMap: {},
@@ -266,9 +289,163 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
 
       return result;
     },
-    // forSingleAssetsDefaultList(address: string) {},
-    // forSingleAssetsMoreList(address: string) {},
-    // forTokenSelector(address: string) {},
+    forTokenSelect(address?: string, chainServerId?: string, keyword?: string) {
+      const tokenListMap = get().tokenListMap || {};
+      const normalizedAddress = address ? address.toLowerCase() : undefined;
+      const normalizedKeyword = keyword ? keyword.toLowerCase() : undefined;
+      if (
+        lastTokenSelectResult &&
+        lastTokenSelectListMap === tokenListMap &&
+        lastTokenSelectChainServerId === chainServerId &&
+        lastTokenSelectAddress === normalizedAddress &&
+        lastTokenSelectKeyword === normalizedKeyword
+      ) {
+        return lastTokenSelectResult;
+      }
+      const tokens = normalizedAddress
+        ? tokenListMap[normalizedAddress] || []
+        : Object.values(tokenListMap).flat();
+      const getUsdValue = (token: ITokenItem) =>
+        token.usd_value || (token.price || 0) * (token.amount || 0);
+      const sortByUsdValueDesc = (list: ITokenItem[]) =>
+        list.slice().sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0));
+      const filterAndSortTokens = (list: ITokenItem[]) => {
+        if (!normalizedKeyword) {
+          return sortByUsdValueDesc(list);
+        }
+        const keywordLower = normalizedKeyword;
+        const filteredList = list.filter(item => {
+          const matchKeyWords = [item.id, item.symbol];
+          return matchKeyWords.some(i =>
+            i?.toLowerCase().includes(keywordLower),
+          );
+        });
+        return filteredList.sort((a, b) => {
+          const aIdLower = a.id?.toLowerCase() || '';
+          const bIdLower = b.id?.toLowerCase() || '';
+          const aSymbolLower = a.symbol?.toLowerCase() || '';
+          const bSymbolLower = b.symbol?.toLowerCase() || '';
+
+          const aExactMatch =
+            aIdLower === keywordLower || aSymbolLower === keywordLower;
+          const bExactMatch =
+            bIdLower === keywordLower || bSymbolLower === keywordLower;
+
+          const getScore = (exactMatch: boolean, isCore: boolean) => {
+            if (exactMatch && isCore) {
+              return 4;
+            }
+            if (exactMatch && !isCore) {
+              return 3;
+            }
+            if (!exactMatch && isCore) {
+              return 2;
+            }
+            return 1;
+          };
+
+          const aScore = getScore(aExactMatch, a.is_core);
+          const bScore = getScore(bExactMatch, b.is_core);
+          if (aScore !== bScore) {
+            return bScore - aScore;
+          }
+
+          if (a.is_suspicious !== b.is_suspicious) {
+            return a.is_suspicious ? 1 : -1;
+          }
+
+          const aIdMatch = aIdLower.includes(keywordLower);
+          const bIdMatch = bIdLower.includes(keywordLower);
+          const aSymbolMatch = aSymbolLower.includes(keywordLower);
+          const bSymbolMatch = bSymbolLower.includes(keywordLower);
+
+          if (aIdMatch && !bIdMatch) {
+            return -1;
+          }
+          if (!aIdMatch && bIdMatch) {
+            return 1;
+          }
+          if (aSymbolMatch && !bSymbolMatch) {
+            return -1;
+          }
+          if (!aSymbolMatch && bSymbolMatch) {
+            return 1;
+          }
+
+          return getUsdValue(b) - getUsdValue(a);
+        });
+      };
+      let sortedUnfoldTokens: ITokenItem[] = [];
+      let sortedFoldTokens: ITokenItem[] = [];
+      let sortedScamTokens: ITokenItem[] = [];
+      if (normalizedKeyword) {
+        sortedUnfoldTokens = filterAndSortTokens(tokens);
+      } else {
+        const unFoldTokens: ITokenItem[] = [];
+        const foldTokens: ITokenItem[] = [];
+        const scamTokens: ITokenItem[] = [];
+        tokens.forEach(token => {
+          const usdValue = token.usd_value || 0;
+          const isScam = !!token.is_scam || (!token.is_core && usdValue === 0);
+          if (isScam) {
+            scamTokens.push(token);
+          } else if (token.is_core) {
+            unFoldTokens.push(token);
+          } else {
+            foldTokens.push(token);
+          }
+        });
+
+        sortedUnfoldTokens = sortByUsdValueDesc(unFoldTokens);
+        sortedFoldTokens = sortByUsdValueDesc(foldTokens);
+        sortedScamTokens = sortByUsdValueDesc(scamTokens);
+      }
+
+      const result = chainServerId
+        ? {
+            unFoldTokens: sortedUnfoldTokens.filter(
+              item => item.chain === chainServerId,
+            ),
+            foldTokens: sortedFoldTokens.filter(
+              item => item.chain === chainServerId,
+            ),
+            scamTokens: sortedScamTokens.filter(
+              item => item.chain === chainServerId,
+            ),
+          }
+        : {
+            unFoldTokens: sortedUnfoldTokens,
+            foldTokens: sortedFoldTokens,
+            scamTokens: sortedScamTokens,
+          };
+
+      lastTokenSelectListMap = tokenListMap;
+      lastTokenSelectChainServerId = chainServerId;
+      lastTokenSelectAddress = normalizedAddress;
+      lastTokenSelectKeyword = normalizedKeyword;
+      lastTokenSelectResult = result;
+
+      return result;
+    },
+    forPerpsTokenSelect(address?: string) {
+      const tokenListMap = get().tokenListMap || {};
+      if (!address) return [];
+      return (
+        tokenListMap[address.toLowerCase()]?.filter(item => item.is_core) || []
+      );
+    },
+    forChainSelector(address?: string) {
+      const tokenListMap = get().tokenListMap || {};
+      if (address) {
+        const normalizedAddress = address.toLowerCase();
+        return (tokenListMap[normalizedAddress] || []).filter(
+          item => item.is_core,
+        );
+      }
+      return Object.values(tokenListMap)
+        .flat()
+        .filter(item => item.is_core);
+    },
 
     // actions
     async initStore() {
@@ -401,17 +578,16 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
             ...state.tokenListMap,
             [normalizedAddress]: cacheTokens,
           },
+          isLoadingByAddress: {
+            ...state.isLoadingByAddress,
+            [normalizedAddress]: false,
+          },
         }));
 
         let chainIdList: string[] = [];
-        let usedChains = await BalanceEntity.queryChainList(address);
-        chainIdList = usedChains
-          .filter(item => item.usd_value > 0.5)
-          .map(item => item.id);
-        if (usedChains.length <= 0) {
-          const chains = await openapi.usedChainList(address);
-          chainIdList = chains.map(item => item.id);
-        }
+        // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
+        const chains = await openapi.usedChainList(address);
+        chainIdList = chains.map(item => item.id);
         const realTimeTokenQueue = new PQueue({
           concurrency: 15,
         });

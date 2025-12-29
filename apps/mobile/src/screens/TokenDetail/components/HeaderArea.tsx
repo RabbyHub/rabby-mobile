@@ -23,10 +23,11 @@ import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import { trigger } from 'react-native-haptic-feedback';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { findChain } from '@/utils/chain';
+import { ITokenItem } from '@/store/tokens';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
-  token: AbstractPortfolioToken;
+  token: ITokenItem;
   style?: StyleProp<ViewStyle>;
   tokenSize?: number;
   chainSize?: number;
@@ -54,25 +55,25 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
 
   const isNativeToken = useMemo(() => {
     const chain = findChain({ serverId: token?.chain });
-    return token?._tokenId === chain?.nativeTokenAddress;
-  }, [token?._tokenId, token?.chain]);
+    return token?.id === chain?.nativeTokenAddress;
+  }, [token?.id, token?.chain]);
 
   const handleCopyAddress = useCallback<
     React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
   >(
     evt => {
       evt.stopPropagation();
-      if (!token?._tokenId || isNativeToken) {
+      if (!token?.id || isNativeToken) {
         return;
       }
       trigger('impactLight', {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
-      Clipboard.setString(token._tokenId);
-      toastCopyAddressSuccess(token._tokenId);
+      Clipboard.setString(token.id);
+      toastCopyAddressSuccess(token.id);
     },
-    [isNativeToken, token._tokenId],
+    [isNativeToken, token.id],
   );
 
   return (

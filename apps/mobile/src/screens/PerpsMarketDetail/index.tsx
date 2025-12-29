@@ -522,7 +522,7 @@ export const PerpsMarketDetailScreen = () => {
           setSelectedToken(token);
           if (
             token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-            isSameAddress(token._tokenId, ARB_USDC_TOKEN_ID)
+            isSameAddress(token.id, ARB_USDC_TOKEN_ID)
           ) {
             setAmountVisible(true);
             setShowDepositTokenPopup(false);
@@ -530,7 +530,7 @@ export const PerpsMarketDetailScreen = () => {
           }
 
           const res = await openapi.getPerpsBridgeIsSupportToken({
-            token_id: token._tokenId,
+            token_id: token.id,
             chain_id: token.chain,
           });
 

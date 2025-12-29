@@ -10,7 +10,7 @@ import {
   formatUsdValue,
 } from '@/utils/number';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import {
@@ -141,7 +141,7 @@ export const Send: React.FC<Props> = ({
   const handleGotoTokenDetail = useMemoizedFn(() => {
     if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
     naviPush(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken(actionData.token),
+      token: tokenItemToITokenItem(actionData.token, ''),
       needUseCacheToken: true,
       isSingleAddress,
       account,

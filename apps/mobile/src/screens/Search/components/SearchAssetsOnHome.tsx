@@ -46,6 +46,7 @@ import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
+import { tokenItemToITokenItem } from '@/utils/token';
 
 interface Props {
   resultTokens: AbstractPortfolioToken[];
@@ -134,8 +135,8 @@ export const SearchAssetsOnHome: React.FC<Props> = ({
     (token: AbstractPortfolioToken) => {
       onTokenSelect?.();
       navigateDeprecated(RootNames.TokenMarketInfo, {
-        token: token,
-        unHold: token._unHold,
+        token: tokenItemToITokenItem(token, ''),
+        unHold: false,
         needUseCacheToken: true,
       });
     },

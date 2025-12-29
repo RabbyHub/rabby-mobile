@@ -6,24 +6,23 @@ import { useTranslation } from 'react-i18next';
 import { usePinTokens } from '../usePinTokens';
 import { AssetAvatar } from '@/components';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { getTokenSymbol } from '@/utils/token';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useFocusEffect } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 export const PinedTokenList = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { data: pinTokens, handleFetchTokens } = usePinTokens();
   const { removePinedToken } = useUserTokenSettings();
-  const handleOpenTokenDetail = useCallback((token: AbstractPortfolioToken) => {
+  const handleOpenTokenDetail = useCallback((token: TokenItem) => {
     navigateDeprecated(RootNames.TokenDetail, {
-      token: token,
+      token: tokenItemToITokenItem(token, ''),
       unHold: false,
       needUseCacheToken: true,
     });
@@ -72,7 +71,7 @@ export const PinedTokenList = () => {
             triggerProps={{ action: 'longPress' }}>
             <TouchableOpacity
               onPress={() => {
-                handleOpenTokenDetail(ensureAbstractPortfolioToken(token));
+                handleOpenTokenDetail(token);
               }}
               delayLongPress={200} // long press delay
               onLongPress={() => {

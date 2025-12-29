@@ -331,9 +331,10 @@ function SendScreen({
       }
 
       if (!targetToken) {
-        targetToken = await preferenceService.getLastTimeSendToken(
-          currentAccount!.address,
-        );
+        targetToken =
+          (await preferenceService.getLastTimeSendToken(
+            currentAccount!.address,
+          )) || null;
       }
       if (!targetToken) {
         const { firstChain } = await fetchOrderedChainList({

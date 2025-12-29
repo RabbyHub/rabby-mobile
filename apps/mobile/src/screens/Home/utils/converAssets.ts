@@ -3,25 +3,22 @@ import { AbstractPortfolioToken, DisplayNftItem } from '../types';
 import { SMALL_TOKEN_ID } from '@/utils/token';
 import { formatNetworth } from '@/utils/math';
 import { DisplayedProject } from './project';
+import { ITokenItem } from '@/store/tokens';
 
 const SMALL_TOKEN = {
   id: SMALL_TOKEN_ID,
-  _usdValue: 0,
-  _usdValueChangeStr: '-',
-} as AbstractPortfolioToken;
-export const convertSmallTokenList = (tokens?: AbstractPortfolioToken[]) => {
-  const tokensTotalValue = tokens
-    ?.reduce(
-      (acc, item) => acc.plus(item._isExcludeBalance ? 0 : item._usdValue || 0),
-      new BigNumber(0),
-    )
-    .toNumber();
+  usd_value: 0,
+} as ITokenItem;
+export const convertSmallTokenList = (tokens?: ITokenItem[]) => {
+  const tokensTotalValue =
+    tokens
+      ?.reduce((acc, item) => acc.plus(item.usd_value || 0), new BigNumber(0))
+      .toNumber() || 0;
   return tokens?.length
     ? [
         {
           ...SMALL_TOKEN,
-          _usdValue: tokensTotalValue,
-          _usdValueStr: formatNetworth(tokensTotalValue),
+          usd_value: tokensTotalValue,
         },
         ...tokens,
       ]

@@ -1,15 +1,12 @@
-import { ComplexProtocol, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
 import { chunk } from 'lodash';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { runOnJS } from 'react-native-reanimated';
+import { useCallback, useEffect, useState } from 'react';
 
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import {
   syncRemotePortocols,
   syncRemotePortocol,
 } from '@/databases/sync/assets';
-import { KeyringAccountWithAlias } from '@/hooks/account';
-import { useSafeState } from '@/hooks/useSafeState';
 import { batchQueryNFTsWithLocalCache } from '@/screens/Home/utils/nft';
 import {
   batchLoadProjects,
@@ -17,7 +14,6 @@ import {
   loadPortfolioSnapshot,
   snapshot2Display,
 } from '@/screens/Home/utils/portfolio';
-import { batchQueryTokensWithLocalCache } from '@/screens/Home/utils/token';
 
 import { TokenItemEntity } from '../entities/tokenitem';
 import { formatAppChain, isAppChain } from '@/screens/Home/utils/appchain';
@@ -68,31 +64,6 @@ export const loadAppChainComplexProtocols = async (userAddr: string) => {
     console.error('app chain list load failed', error);
     return { protocols: [], errorAppIds: [] };
   }
-};
-
-export const syncTokens = async (
-  address: string,
-  force?: boolean,
-  onlySync?: boolean,
-  isV2 = false, // v2 的区别在于更新实时数据时不会更新 usd value <= 0.5 的链，达到减少大概率不必要请求的目的
-) => {
-  if (!address) {
-    return [];
-  }
-  const tokenRes = await batchQueryTokensWithLocalCache(
-    {
-      user_id: address,
-    },
-    force,
-    onlySync,
-    isV2,
-  );
-  return (
-    tokenRes?.map(i => ({
-      ...i,
-      owner_addr: address,
-    })) || []
-  );
 };
 
 export const syncProtocols = async (
@@ -192,53 +163,4 @@ export const syncNFTs = async (
     console.error(e);
     return [];
   }
-};
-
-export const useSyncAssetsDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
-  const [isSyncing, setIsSyncing] = useSafeState(false);
-  const [isFirstFetch, setIsFirstFetch] = useState(true);
-  const abortRef = useRef(false);
-
-  const interrupt = () => {
-    abortRef.current = true;
-  };
-
-  const syncTop10Assets = async (force?: boolean) => {
-    const top10Account = sortedAccounts.filter(i => !!i.balance).slice(0, 10);
-    setIsSyncing(true);
-    const addresses = [
-      ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
-    ];
-    try {
-      for (const address of addresses) {
-        if (abortRef.current) {
-          console.log('Fetching interrupted.');
-          setIsSyncing(false);
-          setIsFirstFetch(false);
-          break;
-        }
-
-        try {
-          await Promise.all([
-            syncTokens(address, force, true),
-            syncProtocols(address, force, true),
-            syncNFTs(address, force, true),
-          ]);
-        } catch (error) {
-          console.error(`Error fetching data for ${address.slice(-4)}:`, error);
-        }
-        await new Promise(resolve => setTimeout(resolve, 0));
-      }
-    } finally {
-      setIsSyncing(false);
-      setIsFirstFetch(false);
-    }
-  };
-
-  return {
-    isSyncing,
-    syncTop10Assets,
-    interrupt,
-    refreshing: !!isSyncing && !isFirstFetch,
-  };
 };

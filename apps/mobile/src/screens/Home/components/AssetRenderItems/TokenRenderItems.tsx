@@ -31,7 +31,11 @@ import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { getTokenSymbol } from '@/utils/token';
-import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  TokenEntityDetail,
+  TokenItem,
+  TokenItemWithEntity,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { formatPrice, formatUsdValue } from '@/utils/number';
 import { formatUsdValueKMB } from '../../utils/price';
 import { ellipsisAddress } from '@/utils/address';
@@ -446,10 +450,6 @@ export const TokenRowV2 = memo(
   },
 );
 
-export interface TokenRowDataType extends AbstractPortfolioToken {
-  identity?: TokenEntityDetail;
-}
-
 const Container = ({
   touchable,
   children,
@@ -482,14 +482,14 @@ export const ExternalTokenRow = memo(
     onPressRightIcon,
     afterNode,
   }: {
-    data: TokenRowDataType;
+    data: ITokenItem | TokenItem | TokenItemWithEntity;
     style?: StyleProp<ViewStyle>;
     logoStyle?: ViewStyle;
     fold?: boolean;
     logoSize?: number;
     chainLogoSize?: number;
     isPined?: boolean;
-    onTokenPress?(token: TokenRowDataType): void;
+    onTokenPress?(token: ITokenItem | TokenItem | TokenItemWithEntity): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
     rightSlot?: ReactNode;
@@ -511,8 +511,9 @@ export const ExternalTokenRow = memo(
     }, [data, onTokenPress]);
 
     const fdv = useMemo(() => {
-      if (data.identity?.fdv) {
-        return data.identity?.fdv;
+      const d = data as TokenItemWithEntity;
+      if (d.identity?.fdv) {
+        return d.identity?.fdv;
       }
       return data.fdv || 0;
     }, [data]);
@@ -549,20 +550,25 @@ export const ExternalTokenRow = memo(
                 </Text>
               </Text>
             )}
-            {!isGasToken && (data?.identity?.token_id || data.id) && (
-              <View style={styles.verticalLine} />
-            )}
-            {!isGasToken && (data?.identity?.token_id || data.id) && (
-              <View style={styles.tokenRowContent}>
-                <Text style={styles.caValue}>
-                  {'CA'}
-                  <Text style={styles.caValueText}>
-                    {':'}
-                    {ellipsisAddress(data?.identity?.token_id || data.id)}
+            {!isGasToken &&
+              ((data as TokenItemWithEntity)?.identity?.token_id ||
+                data.id) && <View style={styles.verticalLine} />}
+            {!isGasToken &&
+              ((data as TokenItemWithEntity)?.identity?.token_id ||
+                data.id) && (
+                <View style={styles.tokenRowContent}>
+                  <Text style={styles.caValue}>
+                    {'CA'}
+                    <Text style={styles.caValueText}>
+                      {':'}
+                      {ellipsisAddress(
+                        (data as TokenItemWithEntity)?.identity?.token_id ||
+                          data.id,
+                      )}
+                    </Text>
                   </Text>
-                </Text>
-              </View>
-            )}
+                </View>
+              )}
           </View>
           <View style={styles.rightSection}>
             {(notVerified || isSuspicious) && (
@@ -595,10 +601,7 @@ export const ExternalTokenRow = memo(
         </Pressable>
       );
     }, [
-      data.is_verified,
-      data?.identity?.token_id,
-      data.id,
-      data.is_suspicious,
+      data,
       styles.searchTokenExtraInfo,
       styles.bubbleArrow,
       styles.leftSection,
@@ -658,8 +661,9 @@ export const ExternalTokenRow = memo(
                                   ?.logo_url || '',
                             )
                             .filter(i => !!i) || []
-                        : data.identity?.cex_list?.map(item => item.logo_url) ||
-                          []
+                        : (data as TokenItemWithEntity).identity?.cex_list?.map(
+                            item => item.logo_url,
+                          ) || []
                     }
                   />
                 </View>
@@ -671,7 +675,9 @@ export const ExternalTokenRow = memo(
                 </Text>
               </View>
               <View style={styles.colContent}>
-                <Text style={styles.tokenRowAmount}>{data._usdValueStr}</Text>
+                <Text style={styles.tokenRowAmount}>
+                  {formatNetworth(data.usd_value)}
+                </Text>
                 {typeof data.price_24h_change === 'number' && (
                   <Text
                     style={StyleSheet.flatten([
