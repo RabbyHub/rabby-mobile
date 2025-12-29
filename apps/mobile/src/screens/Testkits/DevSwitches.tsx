@@ -734,6 +734,7 @@ const getStyles = createGetStyles2024(ctx =>
     areaTitle: {
       fontSize: 36,
       marginBottom: 12,
+      color: ctx.colors2024['neutral-title-1'],
     },
     screenScrollableView: {
       minHeight: '100%',

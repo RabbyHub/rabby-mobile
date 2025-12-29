@@ -13,7 +13,7 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import CategoryItem from './CategoryItem';
 import { EmodeCategory } from '../../type';
 import { useMode } from '../../hooks/useMode';
-import { iUserSummaryAtom } from '../../hooks';
+import { useLendingISummary } from '../../hooks';
 import { isEModeCategoryAvailable } from '../../utils/emode';
 
 export type EModeCategoryDisplay = EmodeCategory & {
@@ -21,14 +21,16 @@ export type EModeCategoryDisplay = EmodeCategory & {
 };
 
 interface IProps {
-  value: number;
+  value?: number;
+  /** @deprecated */
+  titleText?: string;
   onChange: (categoryId: number) => void;
 }
 const FOOTER_COMPONENT_HEIGHT = 32;
 export default function SelectCategoryModal({ value, onChange }: IProps) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const iUserSummary = useAtomValue(iUserSummaryAtom);
+  const { iUserSummary } = useLendingISummary();
   const { eModes } = useMode();
   const eModeCategories: Record<number, EModeCategoryDisplay> = useMemo(
     () =>

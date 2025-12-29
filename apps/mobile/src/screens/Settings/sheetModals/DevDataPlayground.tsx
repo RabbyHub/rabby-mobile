@@ -28,6 +28,7 @@ import { downloadDbFile } from '@/databases/dbfs';
 import { IS_IOS } from '@/core/native/utils';
 import { perpsService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
+import { naviPush } from '@/utils/navigation';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -146,6 +147,15 @@ export default function DevDataPlaygroundModal({
         visible: IS_IOS,
         onPress: async () => {
           downloadDbFile();
+        },
+      },
+      {
+        label: 'High performance',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: async () => {
+          naviPush(RootNames.StackTestkits, {
+            screen: RootNames.DevPerf,
+          });
         },
       },
     ];

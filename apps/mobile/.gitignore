@@ -92,6 +92,7 @@ scripts/tmp
 /android/app/src/main/assets/custom/vconsole.min.js
 /android/app/src/main/assets/custom/*
 /android/app/src/main/assets/fonts/*
+/android/app/src/main/assets/threads/*
 /android/app/src/main/res/font/*.ttf
 /android/app/src/main/res/font/*.otf
 /ios/RabbyMobile/Resources/*.ttf
@@ -109,3 +110,6 @@ tsconfig.typecheck.temp.json
 /scripts/.fast-build-work
 /scripts/**/_test.sh
 /scripts/fast-build/*.txt
+
+/worker-dist/
+tsconfig.worker.tsbuildinfo

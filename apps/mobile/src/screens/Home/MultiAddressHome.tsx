@@ -35,6 +35,8 @@ import {
   useWindowDimensions,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  InteractionManager,
+  Alert,
 } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -49,7 +51,7 @@ import {
   transactionHistoryService,
 } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import {
   apisHomeTabIndex,
   resetNavigationTo,
@@ -70,8 +72,6 @@ import { useApprovalAlertCounts } from './hooks/approvals';
 
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
-import { useSetTotalBalanceTextForRateModal } from '@/components/RateModal/hooks';
-import { useSetTotalBalanceTextForFeedback } from '@/components/Screenshot/hooks';
 import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,
@@ -95,9 +95,7 @@ import { LendingHF } from './components/LendingHF';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
-import { DappsBadge } from '../Browser/BrowserScreen/components/DappsBadge';
-import { browserApis, setBrowserState } from '@/hooks/browser/useBrowser';
-import { GlobalSearchBar } from '../Search/components/SearchBar';
+import { setBrowserState } from '@/hooks/browser/useBrowser';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import {
@@ -132,6 +130,8 @@ import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
 import useTokenList from '@/store/tokens';
 import { apisLending } from '../Lending/hooks';
+import { FastTouchable } from '@/components/Perf/FastTouchable';
+import { isNonPublicProductionEnv } from '@/constant';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -176,7 +176,7 @@ const OverViewComponent = React.memo(
     useFocusEffect(
       React.useCallback(() => {
         if (!couldDoRefresh()) return;
-        checkAddressesEligibility(true);
+        checkAddressesEligibility();
       }, [checkAddressesEligibility]),
     );
 
@@ -310,6 +310,8 @@ const OverViewComponent = React.memo(
             refresh24hAssets({ balanceAccounts }),
           );
           triggerUpdateAlert();
+          // // leave here to measure perf impact
+          // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
           syncTop10History(top10Addresses, false);
         });
       }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
@@ -337,7 +339,7 @@ const OverViewComponent = React.memo(
       });
     }, [triggerUpdate, checkAddressesEligibility, forceUpdate, top10Addresses]);
 
-    const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
+    // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
     const handlePressWatchlist = useCallback(() => {
       navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
         screen: RootNames.Watchlist,
@@ -387,7 +389,10 @@ const OverViewComponent = React.memo(
             );
             break;
           case MultiHomeFeatTitle.History:
-            toggleUseAllAccountsOnScene('MultiHistory', true);
+            storeApiAccountsSwitcher.toggleUseAllAccountsOnScene(
+              'MultiHistory',
+              true,
+            );
             navigation.dispatch(
               StackActions.push(RootNames.StackTransaction, {
                 screen: RootNames.MultiAddressHistory,
@@ -437,7 +442,7 @@ const OverViewComponent = React.memo(
             break;
         }
       },
-      [handlePressWatchlist, navigation, toggleUseAllAccountsOnScene],
+      [handlePressWatchlist, navigation],
     );
 
     const generateCustomBadgeIcon = useCallback(
@@ -523,13 +528,14 @@ const OverViewComponent = React.memo(
           <View style={styles.gridItemsWrap}>
             {MENU_ARR.map((el, index) => {
               return (
-                <RNGHTouchableOpacity
+                <FastTouchable
                   style={StyleSheet.flatten([
                     styles.gridItem,
                     { width: itemWidth },
                   ])}
                   key={index}
                   onPress={() => {
+                    console.debug('[perf] touched menu', el.key);
                     requestAnimationFrame(() => {
                       handleClickMenu(el.key);
                     });
@@ -551,7 +557,7 @@ const OverViewComponent = React.memo(
                     </View>
                   </View>
                   <Text style={styles.gridText}>{el.title}</Text>
-                </RNGHTouchableOpacity>
+                </FastTouchable>
               );
             })}
           </View>
@@ -587,8 +593,6 @@ function MultiAddressHome(): JSX.Element {
   const combinedData = useScene24hBalanceLightWeightData('Home');
   useRendererDetect({ name: 'MultiAddressHome' });
 
-  useSetTotalBalanceTextForFeedback(combinedData.netWorth);
-  useSetTotalBalanceTextForRateModal(combinedData.netWorth);
   useInitDetectDBAssets();
 
   useEffect(() => {

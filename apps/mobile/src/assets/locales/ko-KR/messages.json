@@ -2667,13 +2667,18 @@
           "token": "토큰",
           "apy": "APY",
           "token_tvl": "토큰/TVL",
-          "token_balance": "토큰/잔액"
+          "token_balance": "토큰/잔액",
+          "totalBorrowed": "총 대출 금액"
+        },
+        "item": {
+          "wrapperToken": "{{name}}을(를) 위한 래핑 토큰"
         }
       },
       "summary": {
         "empty": {
-          "title": "이자 얻기, 언제든지 대출하기",
-          "description": "AAVE에 의해 지원됩니다. 안전하고 수수료가 없습니다."
+          "description": "AAVE에 의해 지원됩니다. 안전하고 수수료가 없습니다.",
+          "endDesc": "아직 예치금이 없습니다. 아래 추천 자산을 확인하여 이자를 벌기 시작하세요.",
+          "title": "자산으로 이자 얻기"
         },
         "healthy": "건강한",
         "risky": "위험한",
@@ -2693,7 +2698,8 @@
         "unavailable": "사용 불가",
         "collateralization": "담보화",
         "enabled": "활성화됨",
-        "isolatedTips": "귀하의 기존 대출/차입 자산은 지원되지 않습니다."
+        "isolatedTips": "귀하의 기존 대출/차입 자산은 지원되지 않습니다.",
+        "supplied": "제공됨"
       },
       "withdrawDetail": {
         "actions": "출금",
@@ -2704,7 +2710,8 @@
         "actions": "빌리다",
         "almostReachedWarning": "이 자산에 대한 프로토콜 대출 한도가 100%입니다. 추가 대출이 불가능합니다.",
         "almostReachedError": "대출할 수 있는 최대 금액은 프로토콜 대출 한도가 거의 도달했기 때문에 제한됩니다.",
-        "swapDebt": "스왑"
+        "swapDebt": "스왑",
+        "borrowed": "빌린"
       },
       "popup": {
         "available": "사용 가능",
@@ -2719,7 +2726,8 @@
         "title": "대출 세부 정보",
         "borrowCap": "대출 한도",
         "availableToBorrow": "대여 가능",
-        "liquidityPenalty": "청산 패널티"
+        "liquidityPenalty": "청산 패널티",
+        "reachCapTip": "이 자산은 대출 한도에 도달했습니다."
       },
       "supplyOverview": {
         "mySupply": "내 공급",
@@ -2729,7 +2737,8 @@
         "reachCap": "이 자산은 공급 한도에 도달했습니다. 이 시장에서 공급할 수 있는 것이 없습니다.",
         "almostCap": "이 자산은 거의 대출 한도에 도달했습니다. 이 시장에서 빌릴 수 있는 것은 {{available}}뿐입니다.",
         "availableToSupply": "사용 가능 공급",
-        "useAsCollateral": "담보로 사용하십시오"
+        "useAsCollateral": "담보로 사용하십시오",
+        "collateral": "담보"
       },
       "risk": {
         "checkbox": "알림을 이해하고 계속 진행하겠습니다.",
@@ -2854,7 +2863,17 @@
         "lpDangerWarning": "이 스왑 후 귀하의 건강 지수가 심각하게 낮아져 청산이 발생할 수 있습니다. 안전을 위해 다른 자산을 선택하거나 스왑 금액을 줄여 주십시오.",
         "priceImpactTips": "높은 가격 영향 ({{lostValue}}). 이 경로는 유동성이 낮거나 주문 규모가 작아 더 많은 반환이 있을 수 있습니다.",
         "lpRiskWarning": "스왑 후 낮은 건강 지수. 귀하의 포지션은 청산 위험이 더 높습니다."
-      }
+      },
+      "hfTips": {
+        "more": "더 보기",
+        "desc": "1.0 이하로 떨어지면, 귀하의 담보가 청산될 수 있습니다."
+      },
+      "disableBorrowTip": {
+        "desc": "공급 없음: 자금을 빌리려면 자산을 담보로 제공해야 합니다."
+      },
+      "totalSupplied": "총 공급량",
+      "totalBorrowed": "총 차입금",
+      "netApy": "순수 APY"
     }
   },
   "global": {

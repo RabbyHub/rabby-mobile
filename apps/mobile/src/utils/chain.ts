@@ -266,6 +266,10 @@ export function varyAndSortChainItems(deps: {
 
   _all.forEach((item: Chain) => {
     const inPinned = pinned.find(pinnedEnum => pinnedEnum === item.enum);
+    const itemWithBalance = {
+      ...item,
+      usd_value: matteredChainBalances[item.serverId]?.usd_value || 0,
+    };
 
     if (!inPinned) {
       if (supportChains?.length && !supportChains.includes(item.enum)) {
@@ -273,7 +277,7 @@ export function varyAndSortChainItems(deps: {
       } else if (!matteredChainBalances[item.serverId]) {
         unpinnedListGroup.withoutBalance.push(item);
       } else {
-        unpinnedListGroup.withBalance.push(item);
+        unpinnedListGroup.withBalance.push(itemWithBalance);
       }
     } else {
       if (supportChains?.length && !supportChains.includes(item.enum)) {
@@ -281,7 +285,7 @@ export function varyAndSortChainItems(deps: {
       } else if (!matteredChainBalances[item.serverId]) {
         pinnedListGroup.withoutBalance.push(item);
       } else {
-        pinnedListGroup.withBalance.push(item);
+        pinnedListGroup.withBalance.push(itemWithBalance);
       }
     }
   });

@@ -2772,13 +2772,18 @@
           "mySupplies": "我的供应",
           "apy": "年化收益率",
           "token_tvl": "Token/TVL",
-          "token_balance": "代币/余额"
+          "token_balance": "代币/余额",
+          "totalBorrowed": "总借款"
+        },
+        "item": {
+          "wrapperToken": "为 {{name}} 的 Wrapped token"
         }
       },
       "summary": {
         "empty": {
-          "title": "赚取利息，随时借款",
-          "description": "由 AAVE 提供技术支持。安全且零费用。"
+          "description": "由 AAVE 提供技术支持。安全且零费用。",
+          "title": "用你的资产赚取利息",
+          "endDesc": "您还没有任何存款。请查看下面推荐的资产以开始赚取利息。"
         },
         "more": "更多",
         "risky": "风险大",
@@ -2798,7 +2803,8 @@
         "isolatedTips": "您现有的借贷资产不受支持。",
         "collateralization": "抵押化",
         "supplyBalance": "供应余额",
-        "enabled": "启用"
+        "enabled": "启用",
+        "supplied": "提供的"
       },
       "withdrawDetail": {
         "actions": "提取",
@@ -2809,7 +2815,8 @@
         "approveAndBorrow": "批准并借入",
         "almostReachedWarning": "该资产的协议借款上限为100%。进一步借款不可用。",
         "almostReachedError": "可借用的最大金额受限，因为协议借款上限几乎已达到。",
-        "swapDebt": "交换"
+        "swapDebt": "交换",
+        "borrowed": "借入"
       },
       "popup": {
         "remainingDebt": "剩余债务",
@@ -2824,7 +2831,8 @@
         "availableToBorrow": "可借用",
         "myBorrow": "我的借款",
         "borrowCap": "借贷上限",
-        "liquidityPenalty": "清算罚金"
+        "liquidityPenalty": "清算罚金",
+        "reachCapTip": "该资产已达到借款上限。"
       },
       "supplyOverview": {
         "walletBalance": "钱包余额",
@@ -2834,7 +2842,8 @@
         "mySupply": "我的供应",
         "almostCap": "该资产几乎达到了其借款上限。此市场中只剩下 {{available}} 可供借用。",
         "reachCap": "该资产已达到其供应上限。该市场没有可供供应的资产。",
-        "useAsCollateral": "作为抵押使用"
+        "useAsCollateral": "作为抵押使用",
+        "collateral": "抵押品"
       },
       "risk": {
         "checkbox": "我理解该提示并想继续。",
@@ -2959,7 +2968,17 @@
         "lpDangerWarning": "在此交易后，您的健康因子将会非常低，并可能导致清算。请选择其他资产或减少交易金额以确保安全。",
         "lpRiskWarning": "交换后低健康因子。您的头寸将承受更高的清算风险。",
         "entryTips": "一键交换你借入的资产，减少步骤和费用。"
-      }
+      },
+      "hfTips": {
+        "more": "更多",
+        "desc": "如果其低于1.0，您的抵押品可能会被清算。"
+      },
+      "disableBorrowTip": {
+        "desc": "没有供应：要借款，您需要提供资产作为抵押。"
+      },
+      "totalBorrowed": "总借款",
+      "netApy": "净年收益率",
+      "totalSupplied": "总供应量"
     }
   },
   "component": {

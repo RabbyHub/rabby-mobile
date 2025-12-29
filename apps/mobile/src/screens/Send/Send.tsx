@@ -334,10 +334,11 @@ function SendScreen({
         targetToken =
           (await preferenceService.getLastTimeSendToken(
             currentAccount!.address,
-          )) || null;
+          )) ?? null;
       }
       if (!targetToken) {
         const { firstChain } = await fetchOrderedChainList({
+          address: currentAccount!.address,
           supportChains: undefined,
         });
         targetToken = firstChain ? makeTokenFromChain(firstChain) : null;

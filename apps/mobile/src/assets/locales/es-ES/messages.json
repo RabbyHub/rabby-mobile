@@ -2932,13 +2932,18 @@
           "mySupplies": "Mis suministros",
           "apy": "APY",
           "token_tvl": "Token/TVL",
-          "token_balance": "Token/Saldo"
+          "token_balance": "Token/Saldo",
+          "totalBorrowed": "Total Prestado"
+        },
+        "item": {
+          "wrapperToken": "Token envuelto para {{name}}"
         }
       },
       "summary": {
         "empty": {
-          "title": "Gana intereses, pide prestado en cualquier momento",
-          "description": "Impulsado por AAVE. Seguro y sin comisiones."
+          "description": "Impulsado por AAVE. Seguro y sin comisiones.",
+          "title": "Gana intereses con tus activos",
+          "endDesc": "Aún no tienes depósitos. Consulta los activos recomendados a continuación para comenzar a ganar intereses."
         },
         "healthy": "Saludable",
         "more": "Más",
@@ -2958,7 +2963,8 @@
         "supplyBalance": "Suministro de saldo",
         "collateralization": "Colateralización",
         "isolatedTips": "Los activos de préstamo/endeudamiento existentes no son compatibles.",
-        "unavailable": "No disponible"
+        "unavailable": "No disponible",
+        "supplied": "Suministrado"
       },
       "withdrawDetail": {
         "actions": "Retirar",
@@ -2969,7 +2975,8 @@
         "actions": "Pedir prestado",
         "almostReachedError": "El monto máximo disponible para pedir prestado está limitado porque se ha alcanzado casi el límite de préstamo del protocolo.",
         "almostReachedWarning": "El límite de préstamo del protocolo está en el 100% para este activo. No se puede realizar más préstamos.",
-        "swapDebt": "Intercambiar"
+        "swapDebt": "Intercambiar",
+        "borrowed": "Prestado"
       },
       "popup": {
         "amount": "Cantidad",
@@ -2984,7 +2991,8 @@
         "myBorrow": "Mi Préstamo",
         "borrowCap": "Límite de Préstamo",
         "availableToBorrow": "Disponible para pedir prestado",
-        "liquidityPenalty": "Penalización por Liquidación"
+        "liquidityPenalty": "Penalización por Liquidación",
+        "reachCapTip": "Este activo ha alcanzado el límite de préstamo."
       },
       "supplyOverview": {
         "title": "Detalles de suministro",
@@ -2994,7 +3002,8 @@
         "mySupply": "Mi Suministro",
         "almostCap": "Este activo ha alcanzado casi su límite de préstamo. Solo hay {{available}} disponible para ser prestado de este mercado.",
         "reachCap": "Este activo ha alcanzado su límite de suministro. No hay nada disponible para ser suministrado desde este mercado.",
-        "useAsCollateral": "Usar como colateral"
+        "useAsCollateral": "Usar como colateral",
+        "collateral": "Colateral"
       },
       "risk": {
         "checkbox": "Entiendo la alerta y quiero continuar.",
@@ -3119,7 +3128,17 @@
         "lpRiskWarning": "Bajo factor de salud después del intercambio. Tu posición tendrá un mayor riesgo de liquidación.",
         "priceImpactTips": "Alto impacto en el precio ({{lostValue}}). Esta ruta puede devolver más debido a la baja liquidez o al tamaño pequeño de la orden.",
         "lpDangerWarning": "Su factor de salud después de este intercambio será críticamente bajo y puede resultar en liquidación. Por favor, elija un activo diferente o reduzca la cantidad del intercambio para mantenerse a salvo."
-      }
+      },
+      "hfTips": {
+        "more": "Más",
+        "desc": "Si cae por debajo de 1.0, tu colateral puede ser liquidado."
+      },
+      "disableBorrowTip": {
+        "desc": "Sin suministro: Para pedir prestado, necesitas ofrecer activos como garantía."
+      },
+      "totalBorrowed": "Total prestado",
+      "netApy": "Net APY",
+      "totalSupplied": "Total suministrado"
     }
   },
   "global": {

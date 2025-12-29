@@ -1,10 +1,15 @@
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { rtConverter, runOnComputeRt } from '@/core/perf/runtime';
 import { useTheme2024 } from '@/hooks/theme';
-import { useLendingData, useLendingSummary } from '@/screens/Lending/hooks';
+import { apisLending, useLendingHF } from '@/screens/Lending/hooks';
 import { getHealthStatusColor } from '@/screens/Lending/utils';
 import { formatNetworth, formatNum } from '@/utils/math';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import BigNumber from 'bignumber.js';
+import { useCallback, useEffect } from 'react';
 import { Text } from 'react-native';
+import { runOnJS, runOnUI, useSharedValue } from 'react-native-reanimated';
 
 const NetWorthBadge: React.FC<{ netWorth: string }> = ({ netWorth }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -16,40 +21,48 @@ const NetWorthBadge: React.FC<{ netWorth: string }> = ({ netWorth }) => {
   );
 };
 
+const consoleFromUI = {
+  debug: ((...args) => {
+    'worklet';
+    runOnJS(console.debug)(...args);
+  }) as typeof console.debug,
+};
+
 export const LendingHF: React.FC<{}> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { fetchData } = useLendingData();
-  const { iUserSummary } = useLendingSummary();
+  const { lendingHf } = useLendingHF();
+
+  useRendererDetect({ name: 'LendingHF' });
 
   useEffect(() => {
-    if (iUserSummary) {
+    if (lendingHf) {
       return;
     }
     const timer = setTimeout(() => {
-      fetchData();
+      apisLending.fetchLendingData();
     }, 200);
     return () => {
       timer && clearTimeout(timer);
     };
-  }, [fetchData, iUserSummary]);
+  }, [lendingHf]);
 
   if (
-    !iUserSummary?.healthFactor ||
-    Number(iUserSummary.healthFactor) <= 0 ||
-    Number(iUserSummary.healthFactor) >= 3
+    !lendingHf?.healthFactor ||
+    Number(lendingHf.healthFactor) <= 0 ||
+    Number(lendingHf.healthFactor) >= 3
   ) {
-    return <NetWorthBadge netWorth={iUserSummary?.netWorthUSD || '0'} />;
+    return <NetWorthBadge netWorth={lendingHf?.netWorthUSD || '0'} />;
   }
   return (
     <Text
       style={[
         styles.text,
         {
-          color: getHealthStatusColor(Number(iUserSummary.healthFactor || '0'))
+          color: getHealthStatusColor(Number(lendingHf.healthFactor || '0'))
             .color,
         },
       ]}>
-      {formatNum(iUserSummary.healthFactor)}
+      {formatNum(lendingHf.healthFactor)}
     </Text>
   );
 };

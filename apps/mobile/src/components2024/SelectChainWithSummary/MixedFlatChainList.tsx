@@ -6,7 +6,7 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
-import { useChainBalances } from '@/hooks/account';
+import { useChainBalances, useMatteredChainBalancesAll } from '@/hooks/account';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
 import useTokenList, { ITokenItem } from '@/store/tokens';
@@ -41,8 +41,9 @@ export default function MixedFlatChainList({
   );
 
   const { styles } = useTheme2024({ getStyle });
-  const { matteredChainBalances, matteredChainBalancesAll } =
-    useChainBalances();
+  const { matteredChainBalances } = useChainBalances();
+  const { matteredChainBalancesAll } = useMatteredChainBalancesAll();
+
   const tokenListMap = useMemo(() => {
     if (!tokens) {
       return {};

@@ -117,7 +117,7 @@ export interface FeeProps {
 }
 
 export const useTokenPair = ({ account }: { account: Account }) => {
-  const userAddress = account.address;
+  const userAddress = account?.address;
   const refreshId = useAtomValue(refreshIdAtom);
   const setTokenRefreshId = useSetTokenRefreshId();
   const setRefreshId = useSetAtom(refreshIdAtom);

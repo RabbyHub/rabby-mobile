@@ -2,13 +2,16 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { Dimensions, Pressable, Text, View } from 'react-native';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import Animated, {
+  Easing,
   useAnimatedProps,
   useAnimatedStyle,
   useDerivedValue,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
@@ -43,7 +46,11 @@ export const useFoldMultiChartStore = create<{
   setIsFoldMultiChart: v => set({ isFoldMultiChart: v }),
 }));
 
-function Chart({ hideType }: { hideType: BALANCE_HIDE_TYPE }) {
+export const MultiChart = memo(function MultiChart({
+  hideType,
+}: {
+  hideType: BALANCE_HIDE_TYPE;
+}) {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const { isFoldMultiChart, setIsFoldMultiChart } = useFoldMultiChartStore();
 
@@ -96,7 +103,40 @@ function Chart({ hideType }: { hideType: BALANCE_HIDE_TYPE }) {
     setIsFoldMultiChart(!isFoldMultiChart);
   }, [setIsFoldMultiChart, isFoldMultiChart, refreshCurve]);
 
-  const chartsData = isFoldMultiChart ? [] : combineCurveData.list;
+  const chartsData = combineCurveData.list;
+
+  const heightAnim = useSharedValue(0);
+  const opacityAnim = useSharedValue(0);
+
+  const CHART_HEIGHT = 114;
+  useEffect(() => {
+    const DURATION = 200;
+    if (isFoldMultiChart) {
+      heightAnim.value = withTiming(0, {
+        easing: Easing.inOut(Easing.ease),
+        duration: DURATION,
+      });
+      opacityAnim.value = withTiming(0, { duration: DURATION });
+    } else {
+      heightAnim.value = withTiming(CHART_HEIGHT, {
+        easing: Easing.inOut(Easing.ease),
+        duration: DURATION,
+      });
+      opacityAnim.value = withTiming(1, { duration: DURATION });
+    }
+  }, [isFoldMultiChart, heightAnim, opacityAnim]);
+
+  const animatedHeightStyle = useAnimatedStyle(() => {
+    return {
+      height: heightAnim.value,
+    };
+  });
+
+  const animOpacityStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacityAnim.value,
+    };
+  });
 
   return (
     <View
@@ -122,38 +162,39 @@ function Chart({ hideType }: { hideType: BALANCE_HIDE_TYPE }) {
             toggleFoldMultiChart={toggleFoldMultiChart}
             isFoldMultiChart={isFoldMultiChart}
           />
-          {isFoldMultiChart || !chartsData.length ? null : !isLoadingCurve ? (
-            <LineChart
-              height={114}
-              width={ScreenWidth - 72}
-              shape={d3Shape.curveCatmullRom}
-              style={[
-                styles.relative,
-                (hideType === 'HIDE' || hideType === 'HALF_HIDE') &&
-                  styles.balanceOpacity,
-              ]}>
-              <LineChart.Path
-                showInactivePath={false}
-                color={pathColor}
-                width={2}>
-                <LineChart.Gradient color={pathColor} />
-              </LineChart.Path>
-              <LineChart.CursorLine color={colors['neutral-line']} />
-              <LineChart.CursorCrosshair
-                color={pathColor}
-                outerSize={12}
-                size={8}
-              />
-            </LineChart>
-          ) : (
-            <CurveLoader style={styles.loading} />
-          )}
+          <Animated.View style={[animatedHeightStyle, animOpacityStyle]}>
+            {!chartsData.length ? null : !isLoadingCurve ? (
+              <LineChart
+                height={CHART_HEIGHT}
+                width={ScreenWidth - 72}
+                shape={d3Shape.curveCatmullRom}
+                style={[
+                  styles.relative,
+                  (hideType === 'HIDE' || hideType === 'HALF_HIDE') &&
+                    styles.balanceOpacity,
+                ]}>
+                <LineChart.Path
+                  showInactivePath={false}
+                  color={pathColor}
+                  width={2}>
+                  <LineChart.Gradient color={pathColor} />
+                </LineChart.Path>
+                <LineChart.CursorLine color={colors['neutral-line']} />
+                <LineChart.CursorCrosshair
+                  color={pathColor}
+                  outerSize={12}
+                  size={8}
+                />
+              </LineChart>
+            ) : (
+              <CurveLoader style={styles.loading} />
+            )}
+          </Animated.View>
         </LineChart.Provider>
       </View>
     </View>
   );
-}
-export const MultiChart = memo(Chart);
+});
 
 interface IHeaderProps {
   rawNetWorth: number;
@@ -288,6 +329,7 @@ const ChartHeader = ({
       stroke: colors2024['neutral-secondary'],
     };
   }, [isLoss, data, currentIndex, colors2024, hideType]);
+
   const isHidden = useMemo(() => {
     return hideType === 'HIDE';
   }, [hideType]);
@@ -335,6 +377,8 @@ const ChartHeader = ({
             e.stopPropagation();
             toggleFoldMultiChart();
           }}
+          hitSlop={10}
+          pressRetentionOffset={10}
           style={[
             styles.changeSection,
             hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
@@ -351,28 +395,28 @@ const ChartHeader = ({
                 style={styles.changeTime}
                 animatedProps={dateTimeAnimatedProps}
               />
+              <View style={styles.percentChangeContainer}>
+                <Svg
+                  style={{
+                    transform: isFoldMultiChart
+                      ? [{ rotate: '90deg' }]
+                      : [{ rotate: '270deg' }],
+                  }}
+                  width={16}
+                  height={16}
+                  viewBox="0 0 24 24"
+                  fill="none">
+                  <AnimatedPath
+                    d="M8.4 4.80005L15.6 12L8.4 19.2"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    animatedProps={arrowStrokeProps}
+                  />
+                </Svg>
+              </View>
             </>
           )}
-          <View style={styles.percentChangeContainer}>
-            <Svg
-              style={{
-                transform: isFoldMultiChart
-                  ? [{ rotate: '90deg' }]
-                  : [{ rotate: '270deg' }],
-              }}
-              width={16}
-              height={16}
-              viewBox="0 0 24 24"
-              fill="none">
-              <AnimatedPath
-                d="M8.4 4.80005L15.6 12L8.4 19.2"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                animatedProps={arrowStrokeProps}
-              />
-            </Svg>
-          </View>
         </Pressable>
       )}
     </View>

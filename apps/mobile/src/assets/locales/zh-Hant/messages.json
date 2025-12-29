@@ -2820,13 +2820,18 @@
           "apy": "APY",
           "mySupplies": "我的供应",
           "token_tvl": "Token/TVL",
-          "token_balance": "代幣/餘額"
+          "token_balance": "代幣/餘額",
+          "totalBorrowed": "總借款額"
+        },
+        "item": {
+          "wrapperToken": "{{name}} 的 Wrapped token"
         }
       },
       "summary": {
         "empty": {
           "description": "由 AAVE 提供支持。安全且零费用。",
-          "title": "賺取利息，隨時借款"
+          "title": "用你的資產獲取利息",
+          "endDesc": "您尚未进行任何存款。查看下面推荐的资产以开始赚取利息。"
         },
         "healthy": "健康",
         "more": "更多",
@@ -2846,7 +2851,8 @@
         "supplyBalance": "供應餘額",
         "isolatedTips": "您现有的借贷资产不被支持。",
         "collateralization": "抵押化",
-        "enabled": "已啟用"
+        "enabled": "已啟用",
+        "supplied": "供應"
       },
       "withdrawDetail": {
         "remainingSupply": "剩餘供應量",
@@ -2857,7 +2863,8 @@
         "actions": "借入",
         "almostReachedError": "可借贷的最大金额受到限制，因为协议借贷上限即将达到。",
         "almostReachedWarning": "該資產的協議借貸上限為 100%。進一步借貸不可用。",
-        "swapDebt": "交換"
+        "swapDebt": "交換",
+        "borrowed": "借入"
       },
       "popup": {
         "amount": "金額",
@@ -2872,7 +2879,8 @@
         "borrowCap": "貸款上限",
         "totalBorrowed": "總借款額",
         "availableToBorrow": "可借款",
-        "liquidityPenalty": "清算罰金"
+        "liquidityPenalty": "清算罰金",
+        "reachCapTip": "此資產已達到借貸上限。"
       },
       "supplyOverview": {
         "title": "供應細節",
@@ -2882,7 +2890,8 @@
         "mySupply": "我的 Supply",
         "almostCap": "此資產已接近其借貸上限。此市場僅可借出 {{available}}。",
         "reachCap": "此資產已達供應上限。此市場中沒有可供應的資產。",
-        "useAsCollateral": "用作抵押"
+        "useAsCollateral": "用作抵押",
+        "collateral": "擔保品"
       },
       "risk": {
         "checkbox": "我了解警告並想繼續。",
@@ -3007,7 +3016,17 @@
         "borrowBalance": "借入餘額",
         "lpDangerWarning": "進行此次交換後，您的健康因子將會非常低，可能導致清算。請選擇其他資產或減少交換金額以保持安全。",
         "priceImpactTips": "高價格影響 ({{lostValue}})。此路徑可能因流動性低或訂單規模小而返回更多。"
-      }
+      },
+      "hfTips": {
+        "more": "更多",
+        "desc": "如果它跌破 1.0，您的抵押品可能会被清算。"
+      },
+      "disableBorrowTip": {
+        "desc": "無供應：要借款，您需要提供資產作為擔保。"
+      },
+      "totalSupplied": "總供應量",
+      "totalBorrowed": "總共借入",
+      "netApy": "淨年利率"
     }
   },
   "component": {

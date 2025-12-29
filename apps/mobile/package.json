@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.50",
+  "version": "0.6.51",
   "private": true,
   "repository": {
     "type": "git",
@@ -10,6 +10,10 @@
     "android": "react-native run-android",
     "build-inpage": "sh ./scripts/postinstall.sh",
     "build:deps": "yarn ../../ build",
+    "buildworker": "yarn buildworker:clean && tsc --build tsconfig.worker.json --sourceMap false --verbose",
+    "buildworker:clean": "rimraf dist-worker '**/*.worker.tsbuildinfo'",
+    "buildworker:prod:ios": "react-native bundle --dev false --assets-dest ./ios --entry-file worker-src/worker.thread.ts --platform ios --bundle-output ./assets/ios/threads/worker.thread.jsbundle",
+    "buildworker:prod:android": "react-native bundle --dev false --assets-dest ./android/app/src/main/res/ --entry-file worker-src/worker.thread.ts --platform android --bundle-output ./android/app/src/main/assets/threads/worker.thread.bundle",
     "devtools": "react-devtools",
     "doctor": "react-native doctor",
     "vbundle:android": "react-native-bundle-visualizer --platform=android --entry-file=./index.js",

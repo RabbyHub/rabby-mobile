@@ -2,7 +2,9 @@ import { EmodeCategory, UserSummary } from '../type';
 import { FormattedReservesAndIncentives } from './apy';
 import { fetchIconSymbolAndName } from './icon';
 
-export const isEmodeEnabled = (user: UserSummary) => {
+export const isEmodeEnabled = (
+  user: Partial<Pick<UserSummary, 'userEmodeCategoryId'>>,
+) => {
   return !!user?.userEmodeCategoryId && user.userEmodeCategoryId !== 0;
 };
 

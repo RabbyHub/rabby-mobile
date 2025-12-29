@@ -29,7 +29,7 @@ import {
 } from '@/hooks/navigation';
 import { getFormikErrorsCount } from '@/utils/patch';
 import { useFocusEffect } from '@react-navigation/native';
-import { APP_TEST_PWD } from '@/constant';
+import { APP_TEST_PWD, APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import {
   RequestGenericPurpose,
   parseKeychainError,
@@ -50,7 +50,38 @@ import YesIcon from '@/assets2024/icons/common/check.svg';
 import i18next from 'i18next';
 import { RootNames } from '@/constant/layout';
 import { measureTime } from '@/core/utils/statics';
-import { matomoRequestEvent } from '@/utils/analytics';
+import { stats } from '@/utils/stats';
+import DeviceInfo from 'react-native-device-info';
+import { getAddressesForReport } from '@/core/apis/address';
+
+function runTryCatch<T extends (...args: any[]) => any>(
+  fn: T,
+): ReturnType<T> | null {
+  try {
+    return fn();
+  } catch (error) {
+    console.error('Error occurred:', error);
+    return null;
+  }
+}
+async function reportUnlockTime(
+  timsMs: number,
+  unlockType: 'password' | 'biometrics',
+) {
+  stats.report('unlockTime', {
+    unlock_type: unlockType,
+    duration: timsMs,
+    os_version: DeviceInfo.getSystemVersion(),
+    os_name: DeviceInfo.getSystemName(),
+    app_ver: APP_VERSIONS.forFeedback,
+    app_id: APPLICATION_ID,
+    callable_addr_count:
+      (await runTryCatch(
+        async () =>
+          await getAddressesForReport().then(res => res.myCallableAddressCount),
+      )) || 0,
+  });
+}
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -131,11 +162,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
         measureTime.start('UnlockWithPassword');
         const result = await storeApisUnlock.unlockApp(values.password);
         const timeResult = measureTime.end('UnlockWithPassword');
-        matomoRequestEvent({
-          category: 'Performance',
-          action: 'UnlockWithPassword',
-          value: timeResult.diff,
-        });
+        reportUnlockTime(timeResult.diff, 'password');
 
         if (result.error) {
           helpers?.setFieldError(
@@ -215,11 +242,8 @@ export default function UnlockScreen() {
           measureTime.start('UnlockWithBiometrics');
           const result = await storeApisUnlock.unlockApp(password);
           const timeResult = measureTime.end('UnlockWithBiometrics');
-          matomoRequestEvent({
-            category: 'Performance',
-            action: 'UnlockWithBiometrics',
-            value: timeResult.diff,
-          });
+          reportUnlockTime(timeResult.diff, 'biometrics');
+
           if (result.error) {
             throw new Error(result.error);
           }

@@ -29,6 +29,7 @@ import { useMode } from '../hooks/useMode';
 import { buildManageEmodeTx } from '../poolService';
 import ManageEmodeOverView from '../components/overviews/ManageEmodeOverView';
 import {
+  useLendingRemoteData,
   useLendingSummary,
   usePoolDataProviderContract,
   useRefreshHistoryId,
@@ -58,12 +59,10 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   const { ctx } = useSignatureStore();
   const { refresh } = useRefreshHistoryId();
   const [isChecked, setIsChecked] = useState(false);
-  const {
-    iUserSummary,
-    userReserves,
-    reserves,
-    formattedPoolReservesAndIncentives,
-  } = useLendingSummary();
+  const { userReserves, reserves } = useLendingRemoteData();
+
+  const { iUserSummary, formattedPoolReservesAndIncentives } =
+    useLendingSummary();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',

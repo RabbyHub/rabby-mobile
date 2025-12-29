@@ -30,6 +30,8 @@ export const FundYourWallet = ({
     onPress: () => void;
   }[];
   onClose: () => void;
+  /** @deprecated */
+  onDone?: () => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });

@@ -11,6 +11,10 @@
 		00E356F31AD99517003FC87E /* RabbyMobileTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* RabbyMobileTests.m */; };
 		0120B2102D082C0000FCB1B1 /* RNHelpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */; };
 		014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */; };
+		018EF41E2EFBCDE8001A2361 /* RNThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 018EF41A2EFBCDE8001A2361 /* RNThread.m */; };
+		018EF41F2EFBCDE8001A2361 /* ThreadSelfModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 018EF41C2EFBCDE8001A2361 /* ThreadSelfModule.m */; };
+		018EF4562EFC0016001A2361 /* threads in Resources */ = {isa = PBXBuildFile; fileRef = 018EF4552EFC0011001A2361 /* threads */; };
+		018EF45A2EFC0FEE001A2361 /* RNUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 018EF4582EFC0FEE001A2361 /* RNUtils.m */; };
 		01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */; };
 		01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */; };
 		01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE01E2C3889BB0033D12B /* ScreenShield.swift */; };
@@ -27,11 +31,11 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */; };
 		5EE661F197D0425E824520F4 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = 8E9AD328E8F6407FBCE15FC1 /* InpageBridgeWeb3.js */; };
-		61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
+		61119C058F0C8F2FBCC8530A /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */; };
 		817EDAB71A6F410782AFA68A /* bignumber.js@9.3.1-bignumber.min.js in Resources */ = {isa = PBXBuildFile; fileRef = FB7142274FF640DBA93D0473 /* bignumber.js@9.3.1-bignumber.min.js */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		A435C93C4EB14CC4B4CB98D0 /* (null) in Resources */ = {isa = PBXBuildFile; };
 		A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 370EA128F5694C408EE79381 /* vconsole.min.js */; };
 		ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */; };
 		AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */; };
@@ -56,6 +60,13 @@
 		0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RNHelpers.mm; path = RabbyMobile/RNHelpers.mm; sourceTree = "<group>"; };
 		01390F572E40CD3C0058B77C /* RabbyMobileRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobileRelease.entitlements; path = RabbyMobile/RabbyMobileRelease.entitlements; sourceTree = "<group>"; };
 		014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		018EF4192EFBCDE8001A2361 /* RNThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNThread.h; sourceTree = "<group>"; };
+		018EF41A2EFBCDE8001A2361 /* RNThread.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNThread.m; sourceTree = "<group>"; };
+		018EF41B2EFBCDE8001A2361 /* ThreadSelfModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreadSelfModule.h; sourceTree = "<group>"; };
+		018EF41C2EFBCDE8001A2361 /* ThreadSelfModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ThreadSelfModule.m; sourceTree = "<group>"; };
+		018EF4552EFC0011001A2361 /* threads */ = {isa = PBXFileReference; lastKnownFileType = folder; name = threads; path = ../assets/ios/threads; sourceTree = "<group>"; };
+		018EF4572EFC0FEE001A2361 /* RNUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNUtils.h; sourceTree = "<group>"; };
+		018EF4582EFC0FEE001A2361 /* RNUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNUtils.m; sourceTree = "<group>"; };
 		01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIImage+ImageEffects.m"; path = "RabbyMobile/UIImage+ImageEffects.m"; sourceTree = "<group>"; };
 		01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RNScreenshotPrevent.m; path = RabbyMobile/RNScreenshotPrevent.m; sourceTree = "<group>"; };
 		01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNScreenshotPrevent.h; path = RabbyMobile/RNScreenshotPrevent.h; sourceTree = "<group>"; };
@@ -110,7 +121,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */,
+				61119C058F0C8F2FBCC8530A /* (null) in Frameworks */,
 				AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -135,9 +146,33 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		018EF41D2EFBCDE8001A2361 /* Thread */ = {
+			isa = PBXGroup;
+			children = (
+				018EF4192EFBCDE8001A2361 /* RNThread.h */,
+				018EF41A2EFBCDE8001A2361 /* RNThread.m */,
+				018EF41B2EFBCDE8001A2361 /* ThreadSelfModule.h */,
+				018EF41C2EFBCDE8001A2361 /* ThreadSelfModule.m */,
+			);
+			name = Thread;
+			path = RabbyMobile/Thread;
+			sourceTree = "<group>";
+		};
+		018EF4592EFC0FEE001A2361 /* Base */ = {
+			isa = PBXGroup;
+			children = (
+				018EF4572EFC0FEE001A2361 /* RNUtils.h */,
+				018EF4582EFC0FEE001A2361 /* RNUtils.m */,
+			);
+			name = Base;
+			path = RabbyMobile/Base;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* RabbyMobile */ = {
 			isa = PBXGroup;
 			children = (
+				018EF4592EFC0FEE001A2361 /* Base */,
+				018EF41D2EFBCDE8001A2361 /* Thread */,
 				01390F572E40CD3C0058B77C /* RabbyMobileRelease.entitlements */,
 				0120B20E2D082C0000FCB1B1 /* RNHelpers.h */,
 				0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */,
@@ -184,6 +219,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				018EF4552EFC0011001A2361 /* threads */,
 				01DBDD9F2E86FFF70060C03B /* builtin-pages */,
 				014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */,
 				ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */,
@@ -344,12 +380,13 @@
 				ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */,
 				62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */,
 				E576F98C62E44D04A874C8B7 /* SF-Pro-Rounded-Heavy.otf in Resources */,
+				018EF4562EFC0016001A2361 /* threads in Resources */,
 				0FDFDF1FBA404AB3A3E6ECCA /* SF-Pro-Rounded-Medium.otf in Resources */,
 				5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */,
 				5EE661F197D0425E824520F4 /* InpageBridgeWeb3.js in Resources */,
 				A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */,
 				817EDAB71A6F410782AFA68A /* bignumber.js@9.3.1-bignumber.min.js in Resources */,
-				A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */,
+				A435C93C4EB14CC4B4CB98D0 /* (null) in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -545,12 +582,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				018EF41E2EFBCDE8001A2361 /* RNThread.m in Sources */,
+				018EF41F2EFBCDE8001A2361 /* ThreadSelfModule.m in Sources */,
 				01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */,
 				01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */,
+				018EF45A2EFC0FEE001A2361 /* RNUtils.m in Sources */,
 				01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */,
 				0120B2102D082C0000FCB1B1 /* RNHelpers.mm in Sources */,
 			);

@@ -2,15 +2,18 @@ import { useThemeStyles } from '@/hooks/theme';
 import { getOriginName, hashCode } from '@/utils/common';
 import { createGetStyles } from '@/utils/styles';
 import { Image } from '@rneui/themed';
+import { set } from 'lodash';
 import React, { useMemo } from 'react';
 import {
   ImageStyle,
   ImageURISource,
   StyleProp,
+  StyleSheet,
   Text,
   View,
   ViewStyle,
 } from 'react-native';
+import FastImage, { FastImageProps } from 'react-native-fast-image';
 
 const bgColorList = [
   '#F69373',
@@ -34,14 +37,17 @@ export const DappIcon = ({
 }: {
   style?: StyleProp<ViewStyle>;
   origin: string;
-  source?: ImageURISource;
+  source?: Exclude<FastImageProps['source'], number>;
 }) => {
   const { colors, styles, isLight } = useThemeStyles(getStyles);
   const [bgColor, originName] = useMemo(() => {
     const bgIndex = Math.abs(hashCode(origin) % 12);
 
-    return [bgColorList[bgIndex].toLowerCase(), getOriginName(origin || '')];
+    return [bgColorList[bgIndex]?.toLowerCase(), getOriginName(origin || '')];
   }, [origin]);
+
+  const [loaded, setLoaded] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
 
   const Placeholder = (
     <View
@@ -59,12 +65,30 @@ export const DappIcon = ({
   if (source?.uri) {
     return (
       <View style={[{ overflow: 'hidden' }, style]}>
-        <Image
+        {/* <Image
           source={source}
           style={styles.image}
           PlaceholderContent={Placeholder}
           placeholderStyle={styles.placeholderStyle}
+        /> */}
+        <FastImage
+          source={source}
+          style={[styles.image]}
+          resizeMode={FastImage.resizeMode.cover}
+          onLoadStart={() => {
+            setLoaded(false);
+            setIsError(false);
+          }}
+          onLoadEnd={() => {
+            setLoaded(true);
+          }}
+          onError={() => {
+            setIsError(true);
+          }}
         />
+        {!loaded || isError ? (
+          <View style={styles.placeholderContainer}>{Placeholder}</View>
+        ) : null}
       </View>
     );
   }
@@ -89,5 +113,14 @@ const getStyles = createGetStyles((colors, ctx) => ({
   },
   placeholderStyle: {
     backgroundColor: 'transparent',
+  },
+  placeholderContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }));

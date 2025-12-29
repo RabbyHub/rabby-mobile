@@ -45,6 +45,8 @@ interface Props {
 }
 const FOOTER_HEIGHT = 56;
 
+const renderHeader = () => null;
+
 export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -67,35 +69,11 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
     });
   }, [currentAddress]);
 
-  const renderHeader = useCallback(() => {
-    return (
-      <View>
-        <HomeTopArea />
-      </View>
-    );
-  }, []);
-
   const noAssetsOnAnyChain = chainLength === 0;
 
   const errorNotAssets = useMemo(() => {
     return isDisConnect && noAssetsOnAnyChain && hasNoCurveData;
   }, [hasNoCurveData, noAssetsOnAnyChain, isDisConnect]);
-
-  const renderTabBar = React.useCallback<
-    CollapsibleProps['renderTabBar'] & object
-  >(
-    props => (
-      <DynamicCustomMaterialTabBar
-        materialTabBarProps={{
-          ...props,
-          tabStyle: styles.tabBar,
-        }}
-        containerStyle={styles.tabsBarContainer}
-        indicatorStyle={styles.indicator}
-      />
-    ),
-    [styles.indicator, styles.tabBar, styles.tabsBarContainer],
-  );
 
   const renderLabel = useCallback(
     (name: string) =>
@@ -120,10 +98,10 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   return (
     <Tabs.Container
       containerStyle={styles.container}
-      headerHeight={78}
-      tabBarHeight={32}
-      renderTabBar={renderTabBar}
+      headerHeight={0}
       renderHeader={renderHeader}
+      tabBarHeight={32}
+      renderTabBar={DynamicCustomMaterialTabBar}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab label={renderLabel('Token')} name="tokens">
         <TokenList
@@ -231,28 +209,6 @@ const getStyles = createGetStyles2024(ctx => ({
     height: '100%',
     marginTop: -50,
     backgroundColor: ctx.colors2024['neutral-bg-0'],
-  },
-  tabBar: {
-    height: 32,
-    width: 'auto',
-    flexShrink: 0,
-    flex: 0,
-    paddingHorizontal: 0,
-    // marginRight: 20,
-  },
-  tabsBarContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: 16,
-    paddingRight: 16,
-    position: 'relative',
-    height: 36,
-    paddingBottom: 4,
-    overflow: 'hidden',
-  },
-  indicator: {
-    height: 0,
   },
   bg: {
     position: 'absolute',

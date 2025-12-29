@@ -2763,13 +2763,18 @@
           "mySupplies": "Cung cấp của tôi",
           "myBorrows": "Các khoản vay của tôi",
           "token_tvl": "Token/TVL",
-          "token_balance": "Token/Số dư"
+          "token_balance": "Token/Số dư",
+          "totalBorrowed": "Tổng số đã vay"
+        },
+        "item": {
+          "wrapperToken": "Token được gói cho {{name}}"
         }
       },
       "summary": {
         "empty": {
-          "title": "Kiếm lãi, Vay bất cứ khi nào",
-          "description": "Được phát triển bởi AAVE. An toàn và không có phí."
+          "description": "Được phát triển bởi AAVE. An toàn và không có phí.",
+          "title": "Kiếm lãi với tài sản của bạn",
+          "endDesc": "Bạn chưa có khoản gửi nào. Hãy xem các tài sản được đề xuất bên dưới để bắt đầu kiếm lãi."
         },
         "risky": "Rủi ro",
         "healthy": "Khỏe mạnh",
@@ -2789,7 +2794,8 @@
         "collateralization": "Đảm bảo tài sản",
         "isolatedTips": "Tài sản cho vay/vay mượn hiện tại của bạn không được hỗ trợ.",
         "supplyBalance": "Cung cấp số dư",
-        "unavailable": "Không khả dụng"
+        "unavailable": "Không khả dụng",
+        "supplied": "Cung cấp"
       },
       "withdrawDetail": {
         "actions": "Rút tiền",
@@ -2800,7 +2806,8 @@
         "approveAndBorrow": "Chấp thuận và Vay",
         "almostReachedError": "Số tiền tối đa có sẵn để vay bị giới hạn vì giới hạn vay của giao thức gần đạt.",
         "almostReachedWarning": "Mức giới hạn vay của giao thức cho tài sản này là 100%. Không có khả năng vay thêm.",
-        "swapDebt": "Hoán đổi"
+        "swapDebt": "Hoán đổi",
+        "borrowed": "Đã vay"
       },
       "popup": {
         "amount": "Số lượng",
@@ -2815,7 +2822,8 @@
         "availableToBorrow": "Có sẵn để vay",
         "borrowCap": "Mức Vay",
         "totalBorrowed": "Tổng tiền vay",
-        "liquidityPenalty": "Phí thanh lý"
+        "liquidityPenalty": "Phí thanh lý",
+        "reachCapTip": "Tài sản này đã đạt giới hạn vay."
       },
       "supplyOverview": {
         "title": "Thông tin cung cấp",
@@ -2825,7 +2833,8 @@
         "mySupply": "Cung cấp của tôi",
         "almostCap": "Tài sản này gần như đã đạt giới hạn vay của nó. Chỉ còn {{available}} có sẵn để vay từ thị trường này.",
         "reachCap": "Tài sản này đã đạt đến giới hạn cung cấp của nó. Không có gì có sẵn để cung cấp từ thị trường này.",
-        "useAsCollateral": "Sử dụng làm tài sản thế chấp"
+        "useAsCollateral": "Sử dụng làm tài sản thế chấp",
+        "collateral": "Tài sản thế chấp"
       },
       "risk": {
         "checkbox": "Tôi hiểu thông báo và muốn tiếp tục.",
@@ -2950,7 +2959,17 @@
         "lpDangerWarning": "Yếu tố sức khỏe của bạn sau giao dịch này sẽ ở mức rất thấp và có thể dẫn đến việc thanh lý. Vui lòng chọn tài sản khác hoặc giảm số lượng giao dịch để đảm bảo an toàn.",
         "priceImpactTips": "Tác động giá cao ({{lostValue}}). Đường này có thể trả lại nhiều hơn do tính thanh khoản thấp hoặc kích thước đơn hàng nhỏ.",
         "title": "Hoán đổi Vị trí Vay"
-      }
+      },
+      "hfTips": {
+        "more": "Thêm",
+        "desc": "Nếu nó giảm xuống dưới 1.0, tài sản thế chấp của bạn có thể bị thanh lý."
+      },
+      "disableBorrowTip": {
+        "desc": "Không có tài sản: Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp."
+      },
+      "totalSupplied": "Tổng cung cấp",
+      "netApy": "Net APY",
+      "totalBorrowed": "Tổng số đã mượn"
     }
   },
   "component": {
