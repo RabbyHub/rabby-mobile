@@ -1161,7 +1161,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 16,
     height: '100%',
     overflow: 'visible',
-    paddingBottom: 140,
   },
   contentContainer: {
     //paddingHorizontal: 25,
@@ -1406,7 +1405,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
   },
   dangerWarningText: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     color: colors2024['red-default'],
