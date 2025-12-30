@@ -83,7 +83,6 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { ethers, PopulatedTransaction } from 'ethers';
 import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
-import DebtSwapModalSlider from '@/screens/Lending/modals/DebtSwapModal/Slider';
 import RepayWithCollateralOverview from './Overview';
 
 interface RepayWithCollateralProps {
@@ -118,14 +117,13 @@ export default function RepayWithCollateral({
     SwappableToken | undefined
   >(defaultCollateralToken);
 
-  const [repayAmount, setRepayAmount] = useState<string>('0');
-  const debouncedRepayAmount = useDebouncedValue(repayAmount, 400);
+  const [repayAmount, setRepayAmount] = useState<string>('');
+  const debouncedRepayAmount = useDebouncedValue(repayAmount || '0', 400);
   const [collateralAmount, setCollateralAmount] = useState<string>('');
 
   const [quote, setQuote] = useState<ParaswapRatesType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
-  const [slider, setSlider] = useState<number>(0);
   const [riskChecked, setRiskChecked] = useState(false);
   const [noQuote, setNoQuote] = useState(false);
   const [quoteRefreshId, setQuoteRefreshId] = useState(0);
@@ -250,24 +248,6 @@ export default function RepayWithCollateral({
     [clearQuoteExpiredTimer],
   );
 
-  const onChangeSlider = useCallback(
-    (v: number) => {
-      setSlider(v);
-      if (v === 100) {
-        setRepayAmount(debtBalance.toString(10));
-        return;
-      }
-      const newAmountBn = new BigNumber(v).div(100).times(debtBalance);
-      const isTooSmall = newAmountBn.lt(0.0001);
-      setRepayAmount(
-        isTooSmall
-          ? newAmountBn.toString(10)
-          : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10),
-      );
-    },
-    [debtBalance],
-  );
-
   const onInputChange = useCallback(
     (text: string) => {
       const formatted = formatSpeicalAmount(text);
@@ -277,24 +257,16 @@ export default function RepayWithCollateral({
 
       if (formatted === '') {
         setRepayAmount('');
-        setSlider(0);
         return;
       }
 
       const amountBn = new BigNumber(formatted || 0);
       const exceedBalance = amountBn.gt(debtBalance);
-      const safeAmountBn = exceedBalance ? debtBalance : amountBn;
       const displayAmountStr = exceedBalance
         ? debtBalance.toString(10)
         : formatted;
 
       setRepayAmount(displayAmountStr);
-
-      const percentage = debtBalance.gt(0)
-        ? safeAmountBn.div(debtBalance).times(100).toNumber()
-        : 0;
-      const clampedPercentage = Math.min(100, Math.max(0, percentage));
-      setSlider(Math.round(clampedPercentage));
     },
     [debtBalance],
   );
@@ -911,15 +883,6 @@ export default function RepayWithCollateral({
               <Text style={styles.label}>
                 {t('page.Lending.repayWithCollateral.toRepay')}
               </Text>
-              <View style={styles.sliderContainer}>
-                <DebtSwapModalSlider
-                  style={styles.slider}
-                  fromToken={repayToken}
-                  slider={slider}
-                  onChangeSlider={onChangeSlider}
-                />
-                <Text style={styles.sliderValue}>{slider}%</Text>
-              </View>
             </View>
 
             <View style={styles.tokenBody}>
@@ -937,10 +900,10 @@ export default function RepayWithCollateral({
                 scrollEnabled={true}
                 placeholderTextColor={colors2024['neutral-info']}
               />
-              {slider !== 100 && (
+              {(!repayAmount || BigNumber(repayAmount || '0').lte(0)) && (
                 <Pressable
                   style={styles.maxButtonWrapper}
-                  onPress={() => onChangeSlider(100)}>
+                  onPress={() => setRepayAmount(debtBalance.toString(10))}>
                   <Text style={styles.maxButtonText}>MAX</Text>
                 </Pressable>
               )}
@@ -1122,7 +1085,6 @@ export default function RepayWithCollateral({
             isQuoteLoading={isQuoteLoading}
             currentHF={currentHF}
             afterHF={afterSwapInfo?.hfAfterSwap.toString()}
-            showHF={isHFLow || isLiquidatable}
           />
         )}
       </BottomSheetScrollView>
