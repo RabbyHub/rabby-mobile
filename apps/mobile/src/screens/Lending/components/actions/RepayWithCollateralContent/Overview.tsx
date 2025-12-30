@@ -40,7 +40,7 @@ const RepayWithCollateralOverview = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const estimatedFromBorrowAfter = useMemo(() => {
+  const estimatedCollateralAfter = useMemo(() => {
     if (!fromBalanceBn) {
       return new BigNumber(0);
     }
@@ -66,7 +66,7 @@ const RepayWithCollateralOverview = ({
   return (
     <>
       <Text style={[styles.sectionTitle, styles.transactionOverviewTitle]}>
-        {t('page.Lending.debtSwap.overview.title')}
+        {t('page.Lending.repayWithCollateral.overview.title')}
       </Text>
       <View style={styles.transactionOverviewCard}>
         <View style={[styles.transactionOverviewRow, styles.hfContainer]}>
@@ -146,17 +146,17 @@ const RepayWithCollateralOverview = ({
               <View
                 style={[styles.transactionOverviewValues, styles.afterBalance]}>
                 <Text style={styles.transactionOverviewValue}>
-                  {formatTokenAmount(estimatedFromBorrowAfter.toString(10))}
+                  {formatTokenAmount(estimatedCollateralAfter.toString(10))}
                 </Text>
                 <Text
                   style={[
                     styles.transactionOverviewValue,
                     styles.usdValueText,
                   ]}>
-                  {estimatedFromBorrowAfter.eq(0)
+                  {estimatedCollateralAfter.eq(0)
                     ? '$0'
                     : formatUsdValue(
-                        estimatedFromBorrowAfter
+                        estimatedCollateralAfter
                           .multipliedBy(fromToken.usdPrice || '0')
                           .toString(10),
                       )}
