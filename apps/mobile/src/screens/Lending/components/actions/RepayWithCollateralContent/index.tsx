@@ -184,7 +184,7 @@ export default function RepayWithCollateral({
 
   const collateralAmountAfterSlippage = useMemo(() => {
     return getToAmountAfterSlippage({
-      inputAmount: collateralAmount,
+      inputAmount: collateralAmount || '0',
       slippage: Number(slippage) * 100,
     });
   }, [collateralAmount, slippage]);
@@ -522,7 +522,7 @@ export default function RepayWithCollateral({
         .multipliedBy(1 + slippageBps / 10000)
         .toFixed(selectedCollateralToken.decimals),
       repayAllDebt: isMaxSelected,
-      rateMode: InterestRate.None,
+      rateMode: InterestRate.Variable,
       useFlashLoan: false,
       swapCallData,
       augustus,
@@ -1203,7 +1203,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   contentContainer: {
     //paddingHorizontal: 25,
-    paddingBottom: 140,
+    paddingBottom: 220,
   },
   header: {
     paddingHorizontal: 20,

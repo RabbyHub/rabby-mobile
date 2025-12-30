@@ -669,7 +669,9 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       </Text>
       {showSwitch && (
         <>
-          <Text style={styles.sourceSwitchTitle}>Repay with</Text>
+          <Text style={styles.sourceSwitchTitle}>
+            {t('page.Lending.repayDetail.repayWith')}
+          </Text>
           <View style={styles.sourceSwitchContainer}>
             <Pressable
               style={[
@@ -682,7 +684,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
                   styles.sourceSwitchTabText,
                   repaySource === 'wallet' && styles.sourceSwitchTabTextActive,
                 ]}>
-                Wallet balance
+                {t('page.Lending.repayDetail.tabs.wallet')}
               </Text>
             </Pressable>
             <Pressable
@@ -697,7 +699,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
                   repaySource === 'collateral' &&
                     styles.sourceSwitchTabTextActive,
                 ]}>
-                Collateral
+                {t('page.Lending.repayDetail.tabs.collateral')}
               </Text>
             </Pressable>
           </View>
