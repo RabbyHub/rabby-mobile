@@ -88,6 +88,7 @@ import RepayWithCollateralOverview from './Overview';
 
 interface RepayWithCollateralProps {
   repayToken: SwappableToken;
+  defaultCollateralToken?: SwappableToken;
   onClose?: () => void;
 }
 
@@ -99,6 +100,7 @@ const BOTTOM_SIZE = {
 
 export default function RepayWithCollateral({
   repayToken,
+  defaultCollateralToken,
   onClose,
 }: RepayWithCollateralProps) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -114,18 +116,16 @@ export default function RepayWithCollateral({
 
   const [selectedCollateralToken, setSelectedCollateralToken] = useState<
     SwappableToken | undefined
-  >();
+  >(defaultCollateralToken);
 
-  const [repayAmount, setRepayAmount] = useState<string>(
-    repayToken.balance || '0',
-  );
+  const [repayAmount, setRepayAmount] = useState<string>('0');
   const debouncedRepayAmount = useDebouncedValue(repayAmount, 400);
   const [collateralAmount, setCollateralAmount] = useState<string>('');
 
   const [quote, setQuote] = useState<ParaswapRatesType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
-  const [slider, setSlider] = useState<number>(100);
+  const [slider, setSlider] = useState<number>(0);
   const [riskChecked, setRiskChecked] = useState(false);
   const [noQuote, setNoQuote] = useState(false);
   const [quoteRefreshId, setQuoteRefreshId] = useState(0);
@@ -191,16 +191,16 @@ export default function RepayWithCollateral({
 
   const priceImpactData = useMemo(() => {
     return getPriceImpactData({
-      fromToken: selectedCollateralToken,
-      toToken: repayToken,
-      fromAmount: collateralAmount,
-      toAmount: debouncedRepayAmount,
+      fromToken: repayToken,
+      toToken: selectedCollateralToken,
+      fromAmount: debouncedRepayAmount,
+      toAmount: collateralAmountAfterSlippage,
     });
   }, [
-    selectedCollateralToken,
     repayToken,
-    collateralAmount,
+    selectedCollateralToken,
     debouncedRepayAmount,
+    collateralAmountAfterSlippage,
   ]);
 
   useEffect(() => {

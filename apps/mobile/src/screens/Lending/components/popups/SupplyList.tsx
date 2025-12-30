@@ -41,7 +41,6 @@ import { formatUsdValueKMB } from '@/screens/TokenDetail/util';
 import { isUnFoldToken } from '../../config/unfold';
 import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import BigNumber from 'bignumber.js';
 
 const FOOT_HEIGHT = 86;
 
