@@ -22,7 +22,6 @@ interface RepayWithCollateralOverviewProps {
   currentToAmount: string;
   currentHF?: string;
   afterHF?: string;
-  showHF?: boolean;
 }
 
 const RepayWithCollateralOverview = ({
@@ -72,7 +71,7 @@ const RepayWithCollateralOverview = ({
         <View style={[styles.transactionOverviewRow, styles.hfContainer]}>
           <Text style={styles.title}>{t('page.Lending.hf')}</Text>
           <Text style={styles.hfValue}>
-            {afterHF ? (
+            {afterHF && toAmount !== '0' ? (
               <>
                 <HealthFactorText
                   limitless={currentHF === '-1'}

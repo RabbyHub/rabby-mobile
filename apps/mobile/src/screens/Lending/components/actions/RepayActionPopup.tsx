@@ -491,52 +491,56 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
   return (
     <>
-      <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>
-          {t('page.Lending.popup.amount')}
-        </Text>
-        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-          repayAmount.amount || '0',
-        )} ${reserve.reserve.symbol} ($${formatAmountValueKMB(
-          repayAmount.usdValue || '0',
-        )}) ${t('page.Lending.popup.available')}`}</Text>
-      </View>
-      <TokenAmountInput
-        value={amount}
-        onChange={handleChangeAmount}
-        symbol={reserve.reserve.symbol}
-        handleClickMaxButton={() => {
-          handleChangeAmount('-1');
-        }}
-        tokenAmount={Number(repayAmount.amount || '0')}
-        price={Number(
-          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
-        )}
-        style={styles.amountInput}
-        chain={chainEnum || CHAINS_ENUM.ETH}
-      />
       <BottomSheetScrollView
         style={styles.bottomSheetScrollView}
-        contentContainerStyle={styles.transactionContainer}>
-        <RepayActionOverView
-          reserve={reserve}
-          amount={amount}
-          userSummary={userSummary}
-          afterRepayAmount={afterRepayAmount}
-          afterRepayUsdValue={afterRepayUsdValue}
-          afterHF={afterHF}
+        showsVerticalScrollIndicator
+        persistentScrollbar
+        contentContainerStyle={styles.contentContainer}>
+        <View style={styles.amountHeader}>
+          <Text style={styles.amountHeaderTitle}>
+            {t('page.Lending.popup.amount')}
+          </Text>
+          <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
+            repayAmount.amount || '0',
+          )} ${reserve.reserve.symbol} ($${formatAmountValueKMB(
+            repayAmount.usdValue || '0',
+          )}) ${t('page.Lending.popup.available')}`}</Text>
+        </View>
+        <TokenAmountInput
+          value={amount}
+          onChange={handleChangeAmount}
+          symbol={reserve.reserve.symbol}
+          handleClickMaxButton={() => {
+            handleChangeAmount('-1');
+          }}
+          tokenAmount={Number(repayAmount.amount || '0')}
+          price={Number(
+            reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+          )}
+          style={styles.amountInput}
+          chain={chainEnum || CHAINS_ENUM.ETH}
         />
+        <View style={styles.transactionContainer}>
+          <RepayActionOverView
+            reserve={reserve}
+            amount={amount}
+            userSummary={userSummary}
+            afterRepayAmount={afterRepayAmount}
+            afterRepayUsdValue={afterRepayUsdValue}
+            afterHF={afterHF}
+          />
 
-        {!!amount && amount !== '0' && canShowDirectSubmit && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
-              loading={false}
-              openShowMore={noop}
-              chainServeId={chainInfo?.serverId || ''}
-            />
-          </View>
-        )}
+          {!!amount && amount !== '0' && canShowDirectSubmit && (
+            <View style={styles.gasPreContainer}>
+              <DirectSignGasInfo
+                supportDirectSign={true}
+                loading={false}
+                openShowMore={noop}
+                chainServeId={chainInfo?.serverId || ''}
+              />
+            </View>
+          )}
+        </View>
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>
@@ -668,7 +672,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         {t('page.Lending.repayDetail.actions')} {reserve.reserve.symbol}
       </Text>
       {showSwitch && (
-        <>
+        <View style={styles.switchContainer}>
           <Text style={styles.sourceSwitchTitle}>
             {t('page.Lending.repayDetail.repayWith')}
           </Text>
@@ -703,7 +707,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
               </Text>
             </Pressable>
           </View>
-        </>
+        </View>
       )}
       {repaySource === 'wallet' ? (
         <RepayActionPopupContent
@@ -731,6 +735,11 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'column',
     paddingHorizontal: 20,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  switchContainer: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    width: '100%',
+    zIndex: 999,
   },
   amountHeader: {
     flexDirection: 'row',
@@ -763,11 +772,17 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
   },
   contentContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
+    paddingBottom: 200,
     width: '100%',
   },
   bottomSheetScrollView: {
+    flex: 1,
     width: '100%',
+    marginTop: 16,
+    height: '100%',
+    overflow: 'visible',
+    paddingBottom: 140,
   },
   transactionContainer: {
     gap: 12,
@@ -791,6 +806,9 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     marginTop: 0,
     fontFamily: 'SF Pro Rounded',
+    width: '100%',
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    zIndex: 999,
   },
   sourceSwitchTitle: {
     marginTop: 16,
