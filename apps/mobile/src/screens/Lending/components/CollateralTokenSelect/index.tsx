@@ -57,10 +57,13 @@ export default function CollateralTokenSelectModal({
             };
           })
           .sort((a, b) => {
-            if (Number(a.balance) === 0 && Number(b.balance) === 0) {
+            if (
+              Number(a.underlyingUsdValue) === 0 &&
+              Number(b.underlyingUsdValue) === 0
+            ) {
               return Number(b.balance) - Number(a.balance);
             }
-            return Number(b.balance) - Number(a.balance);
+            return Number(b.underlyingUsdValue) - Number(a.underlyingUsdValue);
           })
       : [];
   }, [

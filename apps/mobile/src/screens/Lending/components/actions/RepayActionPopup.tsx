@@ -45,10 +45,14 @@ import {
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { CHAINS_ENUM } from '@debank/common';
-import { REPAY_AMOUNT_MULTIPLIER } from '../../utils/constant';
+import {
+  API_ETH_MOCK_ADDRESS,
+  REPAY_AMOUNT_MULTIPLIER,
+} from '../../utils/constant';
 import RepayWithCollateral from './RepayWithCollateralContent';
 import { getFromToken } from '../../utils/swap';
 import { isSupportRepayWithCollateral } from './RepayWithCollateralContent/utils';
+import wrapperToken from '../../config/wrapperToken';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
@@ -597,7 +601,8 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     'wallet',
   );
   const { chainInfo, selectedMarketData } = useSelectedMarket();
-  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { formattedPoolReservesAndIncentives, displayPoolReserves } =
+    useLendingSummary();
   const repayToken = useMemo(() => {
     const r = formattedPoolReservesAndIncentives.find(item =>
       isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
@@ -610,6 +615,46 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     formattedPoolReservesAndIncentives,
     chainInfo?.id,
     reserve?.variableBorrows,
+    reserve?.underlyingAsset,
+  ]);
+
+  const defaultCollateralToken = useMemo(() => {
+    const displayReserve = displayPoolReserves
+      .filter(
+        item =>
+          !isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+      )
+      .sort((a, b) => {
+        return BigNumber(b.underlyingBalanceUSD).comparedTo(
+          a.underlyingBalanceUSD,
+        );
+      })[0];
+    const r = formattedPoolReservesAndIncentives.find(item => {
+      return isSameAddress(
+        displayReserve?.underlyingAsset || '',
+        API_ETH_MOCK_ADDRESS,
+      )
+        ? isSameAddress(
+            item.underlyingAsset,
+            wrapperToken?.[displayReserve?.chain || CHAINS_ENUM.ETH]?.address,
+          )
+        : isSameAddress(
+            item.underlyingAsset,
+            displayReserve?.underlyingAsset || '',
+          );
+    });
+    if (!r || !chainInfo?.id) {
+      return undefined;
+    }
+    return getFromToken(
+      r,
+      chainInfo?.id,
+      displayReserve?.underlyingBalance || '0',
+    );
+  }, [
+    displayPoolReserves,
+    formattedPoolReservesAndIncentives,
+    chainInfo?.id,
     reserve?.underlyingAsset,
   ]);
 
@@ -665,7 +710,11 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           onClose={onClose}
         />
       ) : repayToken ? (
-        <RepayWithCollateral onClose={onClose} repayToken={repayToken} />
+        <RepayWithCollateral
+          onClose={onClose}
+          repayToken={repayToken}
+          defaultCollateralToken={defaultCollateralToken}
+        />
       ) : null}
     </AutoLockView>
   );

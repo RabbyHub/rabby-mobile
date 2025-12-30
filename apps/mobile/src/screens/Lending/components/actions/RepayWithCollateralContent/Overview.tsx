@@ -6,7 +6,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { View, Text } from 'react-native';
 import TokenIcon from '../../../components/TokenIcon';
 import { SwappableToken } from '../../../types/swap';
-import { formatApy } from '../../../utils/format';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import BigNumber from 'bignumber.js';
@@ -75,12 +74,21 @@ const RepayWithCollateralOverview = ({
           <Text style={styles.hfValue}>
             {afterHF ? (
               <>
-                <HealthFactorText healthFactor={currentHF || '0'} />
+                <HealthFactorText
+                  limitless={currentHF === '-1'}
+                  healthFactor={currentHF || '0'}
+                />
                 <Text style={styles.arrow}>→</Text>
-                <HealthFactorText healthFactor={afterHF} />
+                <HealthFactorText
+                  limitless={afterHF === '-1'}
+                  healthFactor={afterHF}
+                />
               </>
             ) : (
-              <HealthFactorText healthFactor={currentHF || '0'} />
+              <HealthFactorText
+                limitless={currentHF === '-1'}
+                healthFactor={currentHF || '0'}
+              />
             )}
           </Text>
         </View>
