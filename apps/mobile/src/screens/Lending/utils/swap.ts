@@ -111,22 +111,22 @@ export const getCollateralTokens = (
   return user?.userReservesData
     .filter(userReserve => userReserve.underlyingBalance !== '0')
     .map<SwappableToken | undefined>(position => {
-      const isWrappedNative =
-        WRAPPED_NATIVE_CURRENCIES[
-          chainId as SupportedChainId
-        ]?.address?.toLowerCase() === position.underlyingAsset.toLowerCase();
-      const nativeToken = isWrappedNative
-        ? TOKEN_LIST.tokens.find(
-            t => t.extensions?.isNative && t.chainId === chainId,
-          )
-        : undefined;
+      //const isWrappedNative =
+      //  WRAPPED_NATIVE_CURRENCIES[
+      //    chainId as SupportedChainId
+      //  ]?.address?.toLowerCase() === position.underlyingAsset.toLowerCase();
+      //const nativeToken = isWrappedNative
+      //  ? TOKEN_LIST.tokens.find(
+      //      t => t.extensions?.isNative && t.chainId === chainId,
+      //    )
+      //  : undefined;
 
       return {
         addressToSwap: position.reserve.aTokenAddress,
         addressForUsdPrice: position.reserve.aTokenAddress,
         underlyingAddress: position.reserve.underlyingAsset,
         decimals: position.reserve.decimals,
-        symbol: nativeToken?.symbol ?? position.reserve.symbol,
+        symbol: position.reserve.symbol,
         name: position.reserve.name,
         balance: position.underlyingBalance,
         chainId,
