@@ -2758,7 +2758,13 @@
         "closeDesc": "Disabling this asset as collateral affects your borrowing power and Health Factor.",
         "enableIsolationModeDesc": "You are entering Isolation mode. In Isolation mode, you cannot supply other assets as collateral. A global debt ceiling limits the borrowing power of the isolated asset. To exit isolation mode disable CRV as collateral before borrowing another asset.",
         "exitIsolationModeDesc": "You will exit Isolation mode and other tokens can now be used as collateral.",
-        "riskToLiquidationText": "You can not switch usage as collateral mode for this currency, because it will cause collateral call"
+        "riskToLiquidationText": "You can not switch usage as collateral mode for this currency, because it will cause collateral call",
+        "toggleRiskTexts": {
+          "doNotHaveSuppliesInThisCurrency": "You do not have supplies in this currency",
+          "canNotUseThisCurrencyAsCollateral": "You can not use this currency as collateral",
+          "canNotSwitchUsageAsCollateralMode": "You can not switch usage as collateral mode for this currency, because it will cause collateral call",
+          "zeroLTVWithdrawBlocked": "Assets with zero LTV ({{assets}}) must be withdrawn or disabled as collateral to perform this action"
+        }
       },
       "borrowDetail": {
         "actions": "Borrow",
