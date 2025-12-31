@@ -175,7 +175,7 @@ export const apisAddrChainStatics = {
 
     return chainUnit;
   },
-  updateToken: debounce((addr: string, tokens: ITokenItem[]) => {
+  updateToken: (addr: string, tokens: ITokenItem[]) => {
     addr = addr.toLowerCase();
     const prevFinalInfo =
       addrChainStaticsStore.getState()[addr] ||
@@ -194,7 +194,7 @@ export const apisAddrChainStatics = {
         [addr]: { ...prevFinalInfo, computedResult: computed },
       };
     });
-  }, 300),
+  },
   computeChainAssetsPortfolio: (portfolios: AbstractProject[]) => {
     const chainUnit: ChainAssetsUnit = {};
     portfolios?.forEach(portfolio => {
