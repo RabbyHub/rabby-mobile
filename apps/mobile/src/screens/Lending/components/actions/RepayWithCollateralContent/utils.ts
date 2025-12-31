@@ -1,7 +1,7 @@
 import { MarketDataType } from '@/screens/Lending/config/market';
 import { SupportedChainId } from '@/screens/Lending/utils/native';
 
-export const DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE = 10; // 1%
+export const DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE = 100; // 1%
 
 const REPAY_WITH_COLLATERAL_SUPPORTED_CHAINs = [
   SupportedChainId.ARBITRUM_ONE,

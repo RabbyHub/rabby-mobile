@@ -500,11 +500,16 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           <Text style={styles.amountHeaderTitle}>
             {t('page.Lending.popup.amount')}
           </Text>
-          <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-            repayAmount.amount || '0',
-          )} ${reserve.reserve.symbol} ($${formatAmountValueKMB(
-            repayAmount.usdValue || '0',
-          )}) ${t('page.Lending.popup.available')}`}</Text>
+          <Text
+            style={[
+              styles.amountValueDescription,
+              (repayAmount.amount === '0' || !repayAmount.amount) &&
+                styles.amountValueDescriptionDanger,
+            ]}>{`${formatTokenAmount(repayAmount.amount || '0')} ${
+            reserve.reserve.symbol
+          } ($${formatAmountValueKMB(repayAmount.usdValue || '0')}) ${t(
+            'page.Lending.popup.available',
+          )}`}</Text>
         </View>
         <TokenAmountInput
           value={amount}
@@ -667,7 +672,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   }, [chainInfo?.id, selectedMarketData]);
 
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
+    <AutoLockView style={styles.container}>
       <Text style={styles.title}>
         {t('page.Lending.repayDetail.actions')} {reserve.reserve.symbol}
       </Text>
@@ -761,6 +766,9 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 18,
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+  },
+  amountValueDescriptionDanger: {
+    color: ctx.colors2024['red-default'],
   },
   amountInput: {
     marginTop: 12,
