@@ -23,7 +23,7 @@ import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { ItemLoader } from './components/Skeleton';
 import { ScamTokenHeader } from './components/AssetRenderItems/ScamTokenHeader';
 import {
-  TokenRowSectionHeader,
+  TokenRowSectionLpTokenHeader,
   TokenRowV2,
 } from './components/AssetRenderItems';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -85,6 +85,7 @@ export const TokenList = ({
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
+  const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
 
   const focusedTab = useFocusedTab();
   const isFocused = useMemo(() => {
@@ -106,7 +107,7 @@ export const TokenList = ({
   const { unFoldTokens, foldTokens, scamTokens } = useTokenList(
     useShallow(state =>
       currentAddress
-        ? state.forSingleAssets(currentAddress, selectedChain)
+        ? state.forSingleAssets(currentAddress, selectedChain, isLpTokenEnabled)
         : emptyResult,
     ),
   );
@@ -261,8 +262,9 @@ export const TokenList = ({
           );
         case 'toggle_token_fold':
           return (
-            <TokenRowSectionHeader
-              str={foldTokenUsdValue}
+            <TokenRowSectionLpTokenHeader
+              isEnabled={isLpTokenEnabled}
+              onValueChange={setIsLpTokenEnabled}
               fold={foldHideList}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
@@ -305,9 +307,9 @@ export const TokenList = ({
     [
       currentAccount,
       foldHideList,
-      foldTokenUsdValue,
       handleOpenTokenDetail,
       isLight,
+      isLpTokenEnabled,
       styles,
     ],
   );

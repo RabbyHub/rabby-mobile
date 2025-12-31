@@ -96,6 +96,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   // credit_score
   @Column('real', { default: 0 })
   credit_score: TokenItem['credit_score'] = 0;
+  // protocol_id
+  @Column('text', { default: '' })
+  protocol_id: TokenItem['protocol_id'] = '';
   // raw_amount
   @Column({
     type: 'text',
@@ -178,6 +181,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.value_24h_change = input.value_24h_change ?? '1';
     e.cex_ids = columnConverter.jsonObjToString(input.cex_ids || []);
     e.fdv = input.fdv ?? 0;
+    e.protocol_id = input.protocol_id ?? '';
 
     e.makeDbId();
   }

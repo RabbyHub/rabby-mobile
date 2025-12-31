@@ -104,6 +104,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
 
     const [_, setLongPressToken] = useLongPressTokenAtom();
     const queryConds = useDebouncedValue(_queryConds, 250);
+    const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
     const currentAccount = queryConds.account;
 
     const {
@@ -126,6 +127,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
     } = useSelectTokens({
       currentAccount,
       chain_server_id: queryConds.chainServerId,
+      isLpTokenEnabled,
     });
 
     useImperativeHandle(ref, () => ({
@@ -201,16 +203,18 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
         onChange && onChange('');
         onTokenChange(t);
         setTokenSelectorVisible(false);
+        setIsLpTokenEnabled(false);
       },
-      [onChange, onTokenChange, setTokenSelectorVisible],
+      [onChange, onTokenChange, setTokenSelectorVisible, setIsLpTokenEnabled],
     );
 
     const handleTokenSelectorClose = useCallback(() => {
       //FIXME: snap to close will retrigger render
       setTimeout(() => {
         setTokenSelectorVisible(false);
+        setIsLpTokenEnabled(false);
       }, 0);
-    }, [setTokenSelectorVisible]);
+    }, [setTokenSelectorVisible, setIsLpTokenEnabled]);
 
     const resetQueryConds = useCallback(() => {
       setQueryConds(prev => ({
@@ -454,6 +458,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
           showTestNetSwitch={isShowTestnet}
           selectTab={selectedTab}
           onTabChange={onTabChange}
+          showLpTokenSwitch={true}
+          isLpTokenEnabled={isLpTokenEnabled}
+          onLpTokenChange={setIsLpTokenEnabled}
         />
       </>
     );
