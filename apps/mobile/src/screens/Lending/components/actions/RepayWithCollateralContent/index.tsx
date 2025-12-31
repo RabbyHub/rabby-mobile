@@ -904,7 +904,7 @@ export default function RepayWithCollateral({
               {(!repayAmount || BigNumber(repayAmount || '0').lte(0)) && (
                 <Pressable
                   style={styles.maxButtonWrapper}
-                  onPress={() => setRepayAmount(debtBalance.toFixed(0))}>
+                  onPress={() => setRepayAmount(debtBalance.toString(10))}>
                   <Text style={styles.maxButtonText}>MAX</Text>
                 </Pressable>
               )}
