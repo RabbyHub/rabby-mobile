@@ -49,6 +49,9 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountOverview } from '../AccountOverview';
 import { formatAmount } from '@/utils/number';
 import { ITokenItem } from '@/store/tokens';
+import { isLpToken } from '@/utils/lpToken';
+import LpTokenIcon from '../LpTokenIcon';
+import LpTokenSwitch from '../LpTokenSwitch';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -395,8 +398,10 @@ export const TokenRowV2 = memo(
                 style={styles.tokenSymbol}>
                 {data.symbol}
               </Text>
+              {isLpToken(data) && (
+                <LpTokenIcon protocolId={data.protocol_id || ''} />
+              )}
             </View>
-
             {showAccount ? (
               <AccountOverview account={account} />
             ) : (
@@ -747,6 +752,57 @@ export const TokenRowSectionHeader = memo(
         <View style={styles.tokenRowUsdValueWrap}>
           <Text style={styles.tokenRowUsdValue}>{str}</Text>
         </View>
+      </View>
+    );
+  },
+);
+
+export const TokenRowSectionLpTokenHeader = memo(
+  ({
+    isEnabled,
+    onValueChange,
+    fold,
+    style,
+    buttonStyle,
+    onPressFold,
+  }: {
+    isEnabled: boolean;
+    onValueChange: (value: boolean) => void;
+    fold?: boolean;
+    style?: ViewStyle;
+    buttonStyle?: ViewStyle;
+    onPressFold?(): void;
+  }) => {
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const { t } = useTranslation();
+
+    return (
+      <View style={[styles.tokenSectionHeader, style]}>
+        <View style={styles.tokenRowTokenWrap}>
+          <View style={styles.tokenRowTokenInner}>
+            <TouchableOpacity
+              onPress={onPressFold}
+              style={[styles.tokenRowTokenInnerSmallToken, buttonStyle]}>
+              <Text style={styles.actionText}>
+                {fold
+                  ? t('page.tokenDetail.action.all')
+                  : t('page.tokenDetail.action.less')}
+              </Text>
+              {fold ? (
+                <RcUnFoldCC
+                  style={styles.arrow}
+                  color={colors2024['neutral-secondary']}
+                />
+              ) : (
+                <RcFoldCC
+                  style={styles.arrow}
+                  color={colors2024['neutral-secondary']}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+        <LpTokenSwitch isEnabled={isEnabled} onValueChange={onValueChange} />
       </View>
     );
   },

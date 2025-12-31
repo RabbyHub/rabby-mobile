@@ -7,7 +7,7 @@ import { useShallow } from 'zustand/shallow';
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
-  TokenRowSectionHeader,
+  TokenRowSectionLpTokenHeader,
   TokenRowV2,
 } from '@/screens/Home/components/AssetRenderItems';
 import { navigateDeprecated } from '@/utils/navigation';
@@ -28,7 +28,7 @@ import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
-const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionHeader);
+const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionLpTokenHeader);
 
 const MemoizedItemLoader = React.memo(ItemLoader);
 export const MemoizedTokenItemLoader = React.memo((props: RNViewProps) => {
@@ -50,6 +50,7 @@ export const TokenList = () => {
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
+  const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
 
   const { currency } = useCurrency();
 
@@ -64,7 +65,7 @@ export const TokenList = () => {
     unFoldTokens: tokens,
     foldTokens,
     scamTokens,
-  } = useTokenList(useShallow(s => s.forMultiAssets(chain)));
+  } = useTokenList(useShallow(s => s.forMultiAssets(chain, isLpTokenEnabled)));
 
   const { isLoading } = useTokenList();
 
@@ -182,9 +183,10 @@ export const TokenList = () => {
       ))}
       <MemoizedTokenRowSectionHeader
         style={styles.tokenSectionHeader}
-        str={foldTokenUsdValue}
         fold={foldHideList}
         onPressFold={handleToggleTokenFold}
+        isEnabled={isLpTokenEnabled}
+        onValueChange={setIsLpTokenEnabled}
       />
       {!foldHideList && (
         <FlatList

@@ -6,6 +6,7 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { waitQueueFinished } from '@/hooks/useMultiCurve';
 import { queryTokensCache } from '@/screens/Home/utils/token';
+import { lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import {
   tokenItemEntityToTokenItem,
@@ -46,13 +47,17 @@ export interface ITokenItem {
   isPin?: boolean;
   trade_volume_level?: 'low' | 'middle' | 'high';
   support_market_data?: boolean;
+  protocol_id?: string;
 }
 
 interface TokenListState {
   tokenListMap: Record<string, ITokenItem[]>;
   isLoading: boolean;
   isLoadingByAddress: Record<string, boolean>;
-  forMultiAssets(chainServerId?: string): {
+  forMultiAssets(
+    chainServerId?: string,
+    isLpTokenEnabled?: boolean,
+  ): {
     unFoldTokens: ITokenItem[];
     foldTokens: ITokenItem[];
     scamTokens: ITokenItem[];
@@ -60,6 +65,7 @@ interface TokenListState {
   forSingleAssets(
     address: string,
     chainServerId?: string,
+    isLpTokenEnabled?: boolean,
   ): {
     unFoldTokens: ITokenItem[];
     foldTokens: ITokenItem[];
@@ -69,6 +75,7 @@ interface TokenListState {
     address?: string,
     chainServerId?: string,
     keyword?: string,
+    isLpTokenEnabled?: boolean,
   ): {
     unFoldTokens: ITokenItem[];
     foldTokens: ITokenItem[];
@@ -174,18 +181,20 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
   let lastTokenSelectListMap: TokenListState['tokenListMap'] | null = null;
   let lastTokenSelectAddress: string | undefined;
   let lastTokenSelectKeyword: string | undefined;
+  let lastIsLpTokenEnabled: boolean | undefined;
 
   return {
     tokenListMap: {},
     isLoading: false, // 整体的 loading 状态
     isLoadingByAddress: {}, // 单个地址的 loading 状态
     // selectors
-    forMultiAssets(chainServerId?: string) {
+    forMultiAssets(chainServerId?: string, isLpTokenEnabled?: boolean) {
       const tokenListMap = get().tokenListMap || {};
       if (
         lastMultiAssetsResult &&
         lastTokenListMap === tokenListMap &&
-        lastChainServerId === chainServerId
+        lastChainServerId === chainServerId &&
+        lastIsLpTokenEnabled === isLpTokenEnabled
       ) {
         return lastMultiAssetsResult;
       }
@@ -219,31 +228,42 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
             unFoldTokens: unfoldedTokens.filter(
               item => item.chain === chainServerId,
             ),
-            foldTokens: foldedTokens.filter(
-              item => item.chain === chainServerId,
-            ),
-            scamTokens: scamTokens.filter(item => item.chain === chainServerId),
+            foldTokens: foldedTokens
+              .filter(item => item.chain === chainServerId)
+              .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+            scamTokens: scamTokens
+              .filter(item => item.chain === chainServerId)
+              .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
           }
         : {
             unFoldTokens: unfoldedTokens,
-            foldTokens: foldedTokens,
-            scamTokens,
+            foldTokens: foldedTokens.filter(i =>
+              lpTokenFilter(i, isLpTokenEnabled),
+            ),
+            scamTokens: scamTokens.filter(i =>
+              lpTokenFilter(i, isLpTokenEnabled),
+            ),
           };
 
       lastTokenListMap = tokenListMap;
       lastChainServerId = chainServerId;
       lastMultiAssetsResult = result;
-
+      lastIsLpTokenEnabled = isLpTokenEnabled;
       return result;
     },
-    forSingleAssets(address: string, chainServerId?: string) {
+    forSingleAssets(
+      address: string,
+      chainServerId?: string,
+      isLpTokenEnabled?: boolean,
+    ) {
       const tokenListMap = get().tokenListMap || {};
       const normalizedAddress = address.toLowerCase();
       if (
         lastSingleAssetsResult &&
         lastSingleTokenListMap === tokenListMap &&
         lastSingleAddress === normalizedAddress &&
-        lastSingleChainServerId === chainServerId
+        lastSingleChainServerId === chainServerId &&
+        lastIsLpTokenEnabled === isLpTokenEnabled
       ) {
         return lastSingleAssetsResult;
       }
@@ -277,25 +297,36 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
             unFoldTokens: unfoldedTokens.filter(
               item => item.chain === chainServerId,
             ),
-            foldTokens: foldedTokens.filter(
-              item => item.chain === chainServerId,
-            ),
-            scamTokens: scamTokens.filter(item => item.chain === chainServerId),
+            foldTokens: foldedTokens
+              .filter(item => item.chain === chainServerId)
+              .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+            scamTokens: scamTokens
+              .filter(item => item.chain === chainServerId)
+              .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
           }
         : {
             unFoldTokens: unfoldedTokens,
-            foldTokens: foldedTokens,
-            scamTokens,
+            foldTokens: foldedTokens.filter(i =>
+              lpTokenFilter(i, isLpTokenEnabled),
+            ),
+            scamTokens: scamTokens.filter(i =>
+              lpTokenFilter(i, isLpTokenEnabled),
+            ),
           };
 
       lastSingleTokenListMap = tokenListMap;
       lastSingleAddress = normalizedAddress;
       lastSingleChainServerId = chainServerId;
       lastSingleAssetsResult = result;
-
+      lastIsLpTokenEnabled = isLpTokenEnabled;
       return result;
     },
-    forTokenSelect(address?: string, chainServerId?: string, keyword?: string) {
+    forTokenSelect(
+      address?: string,
+      chainServerId?: string,
+      keyword?: string,
+      isLpTokenEnabled?: boolean,
+    ) {
       const tokenListMap = get().tokenListMap || {};
       const normalizedAddress = address ? address.toLowerCase() : undefined;
       const normalizedKeyword = keyword ? keyword.toLowerCase() : undefined;
@@ -304,7 +335,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
         lastTokenSelectListMap === tokenListMap &&
         lastTokenSelectChainServerId === chainServerId &&
         lastTokenSelectAddress === normalizedAddress &&
-        lastTokenSelectKeyword === normalizedKeyword
+        lastTokenSelectKeyword === normalizedKeyword &&
+        lastIsLpTokenEnabled === isLpTokenEnabled
       ) {
         return lastTokenSelectResult;
       }
@@ -313,7 +345,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
         : Object.values(tokenListMap).flat();
       const getUsdValue = (token: ITokenItem) =>
         token.usd_value || (token.price || 0) * (token.amount || 0);
-      const filterAndSortTokens = (list: ITokenItem[]) => {
+      const filterAndSortTokens = (_list: ITokenItem[]) => {
+        const list = _list.filter(i => lpTokenFilter(i, isLpTokenEnabled));
         if (!normalizedKeyword) {
           return sortByUsdValueDesc(list);
         }
@@ -382,7 +415,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
       let sortedUnfoldTokens: ITokenItem[] = [];
       let sortedFoldTokens: ITokenItem[] = [];
       let sortedScamTokens: ITokenItem[] = [];
-      if (normalizedKeyword) {
+      if (normalizedKeyword || isLpTokenEnabled) {
         sortedUnfoldTokens = filterAndSortTokens(tokens);
       } else {
         const unFoldTokens: ITokenItem[] = [];
@@ -427,13 +460,16 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
       lastTokenSelectChainServerId = chainServerId;
       lastTokenSelectAddress = normalizedAddress;
       lastTokenSelectKeyword = normalizedKeyword;
+      lastIsLpTokenEnabled = isLpTokenEnabled;
       lastTokenSelectResult = result;
 
       return result;
     },
     forPerpsTokenSelect(address?: string) {
       const tokenListMap = get().tokenListMap || {};
-      if (!address) return [];
+      if (!address) {
+        return [];
+      }
       return (
         tokenListMap[address.toLowerCase()]
           ?.filter(item => item.is_core)

@@ -14,9 +14,11 @@ import { useSelectTokensThreadSafe } from '@/components/Token/hooks/selectToken'
 export const useSelectTokens = ({
   currentAccount: _currentAccount,
   chain_server_id,
+  isLpTokenEnabled,
 }: {
   currentAccount?: Account | null;
   chain_server_id?: string;
+  isLpTokenEnabled?: boolean;
 }) => {
   const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
@@ -45,7 +47,9 @@ export const useSelectTokens = ({
 
   const loadToken = useCallback(
     (address?: string) => {
-      if (!address) return;
+      if (!address) {
+        return;
+      }
       getTokenList(address, true);
     },
     [getTokenList],
@@ -53,14 +57,25 @@ export const useSelectTokens = ({
 
   const firstLoadedRef = useRef(false);
   useEffect(() => {
-    if (!currentAddress) return;
+    if (!currentAddress) {
+      return;
+    }
     if (!firstLoadedRef.current) {
       firstLoadedRef.current = true;
       getTokenList(currentAddress, true);
     }
   }, [currentAddress, getTokenList]);
 
-  const tokens = forTokenSelect(currentAddress, chain_server_id);
+  const tokens = useMemo(
+    () =>
+      forTokenSelect(
+        currentAddress,
+        chain_server_id,
+        undefined,
+        isLpTokenEnabled,
+      ),
+    [forTokenSelect, currentAddress, chain_server_id, isLpTokenEnabled],
+  );
 
   const tokenWithOwner = useMemo(() => {
     const formatToken = (token: ITokenItem) => {
