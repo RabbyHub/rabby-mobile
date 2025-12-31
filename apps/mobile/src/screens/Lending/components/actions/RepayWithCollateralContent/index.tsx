@@ -492,6 +492,7 @@ export default function RepayWithCollateral({
       repayAmount: debouncedRepayAmount,
       repayWithAmount: BigNumber(collateralAmount)
         .multipliedBy(1 + slippageBps / 10000)
+        .decimalPlaces(selectedCollateralToken.decimals, BigNumber.ROUND_CEIL)
         .toFixed(selectedCollateralToken.decimals),
       repayAllDebt: isMaxSelected,
       rateMode: InterestRate.Variable,
@@ -903,7 +904,7 @@ export default function RepayWithCollateral({
               {(!repayAmount || BigNumber(repayAmount || '0').lte(0)) && (
                 <Pressable
                   style={styles.maxButtonWrapper}
-                  onPress={() => setRepayAmount(debtBalance.toString(10))}>
+                  onPress={() => setRepayAmount(debtBalance.toFixed(0))}>
                   <Text style={styles.maxButtonText}>MAX</Text>
                 </Pressable>
               )}
