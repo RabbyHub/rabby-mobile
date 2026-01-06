@@ -7,37 +7,26 @@ import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
-import RcIconDapps from '@/assets2024/icons/home/IconDappsCC.svg';
 import { RootNames } from '@/constant/layout';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
+  PanResponder,
   Dimensions,
-  Easing,
   Platform,
   RefreshControl,
   StyleSheet,
   Text,
-  TouchableOpacity as RNTouchableOpacity,
   View,
   AppState,
   useWindowDimensions,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  InteractionManager,
-  Alert,
 } from 'react-native';
+import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
@@ -45,10 +34,7 @@ import { apisAccount } from '@/core/apis';
 import {
   browserService,
   currencyService,
-  gasAccountService,
-  keyringService,
   preferenceService,
-  transactionHistoryService,
 } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
@@ -63,7 +49,6 @@ import {
   getReadyNavigationInstance,
   navigateDeprecated,
 } from '@/utils/navigation';
-import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSortAddressList } from '../Address/useSortAddressList';
@@ -97,7 +82,7 @@ import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
 import { setBrowserState } from '@/hooks/browser/useBrowser';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import {
   TAB_HEADER_MIN_HEIGHT,
   TabMultiAssetsProps,
@@ -107,10 +92,6 @@ import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidan
 import { useFoldMultiChartStore } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
-import {
-  RNGHPressable,
-  RNGHTouchableOpacity,
-} from '@/components/customized/reexports';
 import { TABITEM_H } from './components/CustomTabBar';
 import {
   refreshSuccessAndFailList,
@@ -122,15 +103,11 @@ import {
   refresh24hAssets,
   useScene24hBalanceLightWeightData,
 } from '@/hooks/useScene24hBalance';
-import {
-  TmpHomeRefresher,
-  triggerFetchHomeData,
-} from './components/TmpHomeRefresher';
+import { TmpHomeRefresher } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
-import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
+import { syncTop10History } from '@/databases/hooks/history';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
-import { isNonPublicProductionEnv } from '@/constant';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -154,9 +131,10 @@ const OverViewComponent = React.memo(
     });
     const { pendingTxCount, historyCount } = useHomeHistoryStore();
 
-    const { width } = useWindowDimensions();
+    const { width, height } = useWindowDimensions();
     const itemWidth =
       (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
+    const pullThreshold = 50;
 
     const {
       alertInfo,
@@ -499,71 +477,241 @@ const OverViewComponent = React.memo(
 
     const { bottom } = useSafeAreaInsets();
 
+    const pullDistanceRef = useRef(0);
+    const pullDistanceAnim = useRef(new Animated.Value(0)).current;
+    const isAutoExpandedRef = useRef(false);
+    const contentHeightRef = useRef(0);
+    const layoutHeightRef = useRef(0);
+    const dismissThreshold = 80;
+    const panelTranslateY = useMemo(
+      () =>
+        pullDistanceAnim.interpolate({
+          inputRange: [0, pullThreshold],
+          outputRange: [height, 0],
+          extrapolate: 'clamp',
+        }),
+      [height, pullDistanceAnim, pullThreshold],
+    );
+    const panelScale = useMemo(
+      () =>
+        pullDistanceAnim.interpolate({
+          inputRange: [0, pullThreshold],
+          outputRange: [0.75, 1],
+          extrapolate: 'clamp',
+        }),
+      [pullDistanceAnim, pullThreshold],
+    );
+    const panelOpacity = useMemo(
+      () =>
+        pullDistanceAnim.interpolate({
+          inputRange: [0, pullThreshold * 0.8],
+          outputRange: [0, 1],
+          extrapolate: 'clamp',
+        }),
+      [pullDistanceAnim, pullThreshold],
+    );
+
+    const updatePullDistance = useCallback(
+      (distance: number) => {
+        if (isAutoExpandedRef.current) return;
+        pullDistanceRef.current = distance;
+        pullDistanceAnim.setValue(distance);
+      },
+      [pullDistanceAnim],
+    );
+
+    const triggerAutoExpand = useCallback(() => {
+      if (isAutoExpandedRef.current) return;
+      isAutoExpandedRef.current = true;
+      pullDistanceRef.current = pullThreshold;
+      Animated.timing(pullDistanceAnim, {
+        toValue: pullThreshold,
+        duration: 220,
+        useNativeDriver: true,
+      }).start();
+    }, [pullDistanceAnim, pullThreshold]);
+
+    const handlePullRelease = useCallback(() => {
+      if (pullDistanceRef.current >= pullThreshold) {
+        isAutoExpandedRef.current = true;
+        Animated.timing(pullDistanceAnim, {
+          toValue: pullThreshold,
+          duration: 220,
+          useNativeDriver: true,
+        }).start();
+        return;
+      }
+      isAutoExpandedRef.current = false;
+      Animated.timing(pullDistanceAnim, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
+    }, [pullDistanceAnim, pullThreshold]);
+
+    const collapsePanel = useCallback(() => {
+      isAutoExpandedRef.current = false;
+      pullDistanceRef.current = 0;
+      Animated.timing(pullDistanceAnim, {
+        toValue: 0,
+        duration: 220,
+        useNativeDriver: true,
+      }).start();
+    }, [pullDistanceAnim]);
+
+    const expandPanResponder = useRef(
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => isAutoExpandedRef.current,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          isAutoExpandedRef.current && Math.abs(gestureState.dy) > 2,
+        onPanResponderMove: (_, gestureState) => {
+          if (!isAutoExpandedRef.current) return;
+          const nextDistance = Math.max(0, pullThreshold - gestureState.dy);
+          pullDistanceRef.current = nextDistance;
+          pullDistanceAnim.setValue(nextDistance);
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (!isAutoExpandedRef.current) return;
+          if (gestureState.dy > dismissThreshold) {
+            collapsePanel();
+            return;
+          }
+          Animated.timing(pullDistanceAnim, {
+            toValue: pullThreshold,
+            duration: 180,
+            useNativeDriver: true,
+          }).start();
+        },
+        onPanResponderTerminate: () => {
+          if (!isAutoExpandedRef.current) return;
+          Animated.timing(pullDistanceAnim, {
+            toValue: pullThreshold,
+            duration: 180,
+            useNativeDriver: true,
+          }).start();
+        },
+      }),
+    ).current;
+
+    const scrollY = useCurrentTabScrollY();
+    const handleScrollYChange = useCallback(
+      (currentScrollY: number) => {
+        if (isAutoExpandedRef.current) return;
+        if (!contentHeightRef.current || !layoutHeightRef.current) return;
+        const maxOffset = Math.max(
+          0,
+          contentHeightRef.current - layoutHeightRef.current,
+        );
+        const overscroll = Math.max(0, currentScrollY - maxOffset);
+        const clamped = Math.min(overscroll, pullThreshold);
+        if (clamped >= pullThreshold) {
+          triggerAutoExpand();
+          return;
+        }
+        updatePullDistance(clamped);
+      },
+      [pullThreshold, triggerAutoExpand, updatePullDistance],
+    );
+
+    useAnimatedReaction(
+      () => scrollY.value,
+      currentScrollY => {
+        runOnJS(handleScrollYChange)(currentScrollY);
+      },
+      [handleScrollYChange],
+    );
+
     useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
 
     return (
-      <Tabs.ScrollView
-        tvParallaxProperties={undefined}
-        showsVerticalScrollIndicator={false}
-        onTouchStart={() => {
-          setBrowserState({ isEditingFavorite: false });
-        }}
-        style={[styles.scroll, { flex: undefined }]}
-        contentContainerStyle={[
-          styles.scrollContainer,
-          {
-            // paddingBottom: bottom + 82,
-            paddingBottom:
-              Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
-          },
-        ]}
-        refreshControl={
-          <RefreshControl refreshing={false} onRefresh={onRefresh} />
-        }>
-        <MultiAddressHomeHeader onRefresh={onRefresh} />
-        <HomeCenterArea />
+      <View style={styles.pullUpWrapper}>
+        <Tabs.ScrollView
+          tvParallaxProperties={undefined}
+          showsVerticalScrollIndicator={false}
+          onTouchStart={() => {
+            setBrowserState({ isEditingFavorite: false });
+          }}
+          style={[styles.scroll, { flex: undefined }]}
+          contentContainerStyle={[
+            styles.scrollContainer,
+            {
+              // paddingBottom: bottom + 82,
+              paddingBottom:
+                Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
+            },
+          ]}
+          overScrollMode="always"
+          bounces
+          onContentSizeChange={(_, heightValue) => {
+            contentHeightRef.current = heightValue;
+          }}
+          onLayout={event => {
+            layoutHeightRef.current = event.nativeEvent.layout.height;
+          }}
+          onScrollEndDrag={handlePullRelease}
+          refreshControl={
+            <RefreshControl refreshing={false} onRefresh={onRefresh} />
+          }>
+          <MultiAddressHomeHeader onRefresh={onRefresh} />
+          <HomeCenterArea />
 
-        <View style={styles.grid}>
-          <View style={styles.gridItemsWrap}>
-            {MENU_ARR.map((el, index) => {
-              return (
-                <FastTouchable
-                  style={StyleSheet.flatten([
-                    styles.gridItem,
-                    { width: itemWidth },
-                  ])}
-                  key={index}
-                  onPress={() => {
-                    console.debug('[perf] touched menu', el.key);
-                    requestAnimationFrame(() => {
-                      handleClickMenu(el.key);
-                    });
-                    matomoRequestEvent({
-                      category: 'Click_Services',
-                      action: `Click_${el.key}`,
-                    });
-                  }}>
-                  <View style={styles.badgeWrapper}>
-                    <View style={styles.iconWrapper}>
-                      <el.icon
-                        width={28}
-                        height={28}
-                        color={el.color || colors2024['brand-default-icon']}
-                      />
+          <View style={styles.grid}>
+            <View style={styles.gridItemsWrap}>
+              {MENU_ARR.map((el, index) => {
+                return (
+                  <FastTouchable
+                    style={StyleSheet.flatten([
+                      styles.gridItem,
+                      { width: itemWidth },
+                    ])}
+                    key={index}
+                    onPress={() => {
+                      console.debug('[perf] touched menu', el.key);
+                      requestAnimationFrame(() => {
+                        handleClickMenu(el.key);
+                      });
+                      matomoRequestEvent({
+                        category: 'Click_Services',
+                        action: `Click_${el.key}`,
+                      });
+                    }}>
+                    <View style={styles.badgeWrapper}>
+                      <View style={styles.iconWrapper}>
+                        <el.icon
+                          width={28}
+                          height={28}
+                          color={el.color || colors2024['brand-default-icon']}
+                        />
+                      </View>
+                      <View style={styles.rightBadgeWrapper}>
+                        {generateCustomBadgeIcon(el)}
+                      </View>
                     </View>
-                    <View style={styles.rightBadgeWrapper}>
-                      {generateCustomBadgeIcon(el)}
-                    </View>
-                  </View>
-                  <Text style={styles.gridText}>{el.title}</Text>
-                </FastTouchable>
-              );
-            })}
+                    <Text style={styles.gridText}>{el.title}</Text>
+                  </FastTouchable>
+                );
+              })}
+            </View>
+            <BrowserSearchEntry />
+            <View style={styles.searchBarPlaceholder} />
           </View>
-          <BrowserSearchEntry />
-          <View style={styles.searchBarPlaceholder} />
-        </View>
-      </Tabs.ScrollView>
+        </Tabs.ScrollView>
+        <Animated.View
+          pointerEvents="auto"
+          {...expandPanResponder.panHandlers}
+          style={[
+            styles.pullUpPanel,
+            {
+              height,
+              opacity: panelOpacity,
+              transform: [
+                { translateY: panelTranslateY },
+                { scale: panelScale },
+              ],
+            },
+          ]}
+        />
+      </View>
     );
   },
 );
@@ -1167,6 +1315,16 @@ const getStyle = createGetStyles2024(
       top: 0,
       left: 0,
       width: '100%',
+    },
+    pullUpWrapper: {
+      flex: 1,
+    },
+    pullUpPanel: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'red',
     },
   }),
 );

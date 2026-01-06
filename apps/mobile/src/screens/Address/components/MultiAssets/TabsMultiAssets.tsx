@@ -156,6 +156,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
       headerHeight={HeaderHeight}
       minHeaderHeight={HeaderHeight}
       tabBarHeight={74}
+      allowHeaderOverscroll
       lazy={false}
       cancelLazyFadeIn
       pagerProps={{
