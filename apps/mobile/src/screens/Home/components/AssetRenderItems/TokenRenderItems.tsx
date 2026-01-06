@@ -32,7 +32,6 @@ import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { getTokenSymbol } from '@/utils/token';
 import {
-  TokenEntityDetail,
   TokenItem,
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -488,7 +487,6 @@ export const ExternalTokenRow = memo(
     onTokenPress,
     touchable = true,
     decimalPrecision = false,
-    isPined = false,
     rightSlot,
     onPressRightIcon,
     afterNode,
@@ -499,7 +497,6 @@ export const ExternalTokenRow = memo(
     fold?: boolean;
     logoSize?: number;
     chainLogoSize?: number;
-    isPined?: boolean;
     onTokenPress?(token: ITokenItem | TokenItem | TokenItemWithEntity): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
@@ -507,6 +504,7 @@ export const ExternalTokenRow = memo(
     onPressRightIcon?(): void;
     afterNode?: ReactNode;
   }) => {
+    const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
     const mediaStyle = useMemo(
@@ -695,20 +693,28 @@ export const ExternalTokenRow = memo(
                   {formatNetworth(data.usd_value || 0)}
                 </Text>
                 <View style={styles.priceInfo}>
-                  <Text style={styles.usdValue}>
-                    @{decimalPrecision ? '$' : ''}
-                    {(decimalPrecision ? formatPrice : formatUsdValue)(
-                      data.price || 0,
-                    )}
-                  </Text>
-                  {typeof data.price_24h_change === 'number' && (
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.changeText,
-                        !isPositive && styles.changeTextPositive,
-                      ])}>
-                      {formatPercentage(Number(data.price_24h_change) || 0)}
+                  {!data.amount && !data.price ? (
+                    <Text style={styles.noPriceText}>
+                      {t('component.portfolios.noPrice')}
                     </Text>
+                  ) : (
+                    <>
+                      <Text style={styles.usdValue}>
+                        @{decimalPrecision ? '$' : ''}
+                        {(decimalPrecision ? formatPrice : formatUsdValue)(
+                          data.price || 0,
+                        )}
+                      </Text>
+                      {typeof data.price_24h_change === 'number' && (
+                        <Text
+                          style={StyleSheet.flatten([
+                            styles.changeText,
+                            !isPositive && styles.changeTextPositive,
+                          ])}>
+                          {formatPercentage(Number(data.price_24h_change) || 0)}
+                        </Text>
+                      )}
+                    </>
                   )}
                 </View>
               </View>
@@ -906,6 +912,13 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
+  },
+  noPriceText: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
   },
   usdValue: {
     color: ctx.colors2024['neutral-secondary'],
