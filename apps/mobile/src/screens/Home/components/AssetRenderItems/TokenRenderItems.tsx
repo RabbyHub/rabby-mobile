@@ -666,7 +666,7 @@ export const ExternalTokenRow = memo(
                   </Text>
                   <ExchangeLogos
                     logos={
-                      data.cex_ids
+                      data.cex_ids?.length
                         ? data.cex_ids
                             .map(
                               id =>

@@ -364,7 +364,7 @@ const SwapToTokenSelect = forwardRef<
           showFavoriteFilter
           favoriteFilterValue={favoriteFilterValue}
           onFavoriteFilterChange={setFavoriteFilterValue}
-          type={type}
+          type="swapTo"
           disableItemCheck={disableItemCheck}
           selectToken={token}
           placeholder={placeholder}

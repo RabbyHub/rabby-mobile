@@ -27,7 +27,10 @@ import RcFoldCC from '@/assets2024/icons/common/fold.svg';
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  TokenItem,
+  TokenItemWithEntity,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
@@ -482,7 +485,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     }, [foldTokensList]);
 
     const needToTokenMarketInfo = useMemo(() => {
-      return type === 'swapTo' || type === 'bridgeTo';
+      return !!type && ['swapTo', 'bridgeTo'].includes(type);
     }, [type]);
     const { accounts } = useMyAccounts({ disableAutoFetch: true });
 
@@ -646,13 +649,16 @@ export const TokenSelectorSheetModal = React.forwardRef<
             if (Number(token.price_24h_change) > 0) {
               percentColor = colors2024['green-default'];
             }
-            const cexLogos =
-              token?.cex_ids
-                ?.map(
-                  id => cexList.find(item => item.id === id)?.logo_url || '',
-                )
-                .filter(i => !!i) || [];
-
+            const cexLogos = token?.cex_ids?.length
+              ? token.cex_ids
+                  .map(
+                    id =>
+                      cexList.find(_item => _item.id === id)?.logo_url || '',
+                  )
+                  .filter(i => !!i) || []
+              : (token as TokenItemWithEntity).identity?.cex_list?.map(
+                  _item => _item.logo_url,
+                ) || [];
             const alertDisabledToken = () => {
               if (disabled) {
                 disabledTips && toast.info(disabledTips);
