@@ -928,7 +928,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                               <Text
                                 style={[styles.tokenPrice]}
                                 numberOfLines={1}>
-                                {`$${formatPrice(token.price)}`}
+                                {`@$${formatPrice(token.price)}`}
                               </Text>
                               <Text
                                 style={StyleSheet.compose(styles.percent, {
@@ -1589,7 +1589,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 18,
       textAlign: 'right',
       width: '100%',
-      maxWidth: '100%',
+      maxWidth: 200,
       fontFamily: 'SF Pro Rounded',
     },
     textSecondary: {

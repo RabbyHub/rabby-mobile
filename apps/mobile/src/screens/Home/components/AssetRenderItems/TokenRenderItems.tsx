@@ -426,7 +426,7 @@ export const TokenRowV2 = memo(
           </Text>
           {showAccount ? (
             <View style={styles.priceInfo}>
-              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
+              <Text style={styles.price}>{`@$${formatPrice(data.price)}`}</Text>
               <Text
                 style={StyleSheet.compose(styles.percent, {
                   ...(!data.is_core && (data.usd_value || 0) > 0
@@ -443,7 +443,7 @@ export const TokenRowV2 = memo(
             </TouchableOpacity>
           ) : scene === 'portfolio' ? (
             <View style={styles.priceInfo}>
-              <Text style={styles.price}>@{formatPrice(data.price)}</Text>
+              <Text style={styles.price}>{`@$${formatPrice(data.price)}`}</Text>
               <Text
                 style={StyleSheet.compose(styles.percent, {
                   ...(!data.is_core && (data.usd_value || 0) > 0
@@ -925,7 +925,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowTokenInner: {
     flexShrink: 1,
     justifyContent: 'center',
-    gap: 0,
+    gap: 2,
   },
   searchTokenExtraInfo: {
     flex: 1,

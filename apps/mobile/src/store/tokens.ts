@@ -140,8 +140,11 @@ function getMultiAssetsFoldResultFromParts({
   };
 }
 
-const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) =>
-  (b.usd_value || 0) - (a.usd_value || 0);
+const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) => {
+  const aUsdValue = a.is_core ? a.usd_value || 0 : -1;
+  const bUsdValue = b.is_core ? b.usd_value || 0 : -1;
+  return bUsdValue - aUsdValue;
+};
 
 const sortByUsdValueDesc = (list: ITokenItem[]) =>
   list.slice().sort(compareByUsdValueDesc);
@@ -343,8 +346,12 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
       const tokens = normalizedAddress
         ? tokenListMap[normalizedAddress] || []
         : Object.values(tokenListMap).flat();
-      const getUsdValue = (token: ITokenItem) =>
-        token.usd_value || (token.price || 0) * (token.amount || 0);
+      const getUsdValue = (token: ITokenItem) => {
+        if (!token.is_core) {
+          return -1;
+        }
+        return token.usd_value || (token.price || 0) * (token.amount || 0);
+      };
       const filterAndSortTokens = (_list: ITokenItem[]) => {
         const list = _list.filter(i => lpTokenFilter(i, isLpTokenEnabled));
         if (!normalizedKeyword) {
@@ -412,48 +419,19 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
           return getUsdValue(b) - getUsdValue(a);
         });
       };
-      let sortedUnfoldTokens: ITokenItem[] = [];
-      let sortedFoldTokens: ITokenItem[] = [];
-      let sortedScamTokens: ITokenItem[] = [];
-      if (normalizedKeyword || isLpTokenEnabled) {
-        sortedUnfoldTokens = filterAndSortTokens(tokens);
-      } else {
-        const unFoldTokens: ITokenItem[] = [];
-        const foldTokens: ITokenItem[] = [];
-        const scamTokens: ITokenItem[] = [];
-        tokens.forEach(token => {
-          const usdValue = token.usd_value || 0;
-          const isScam = !!token.is_scam || (!token.is_core && usdValue === 0);
-          if (isScam) {
-            scamTokens.push(token);
-          } else if (token.is_core) {
-            unFoldTokens.push(token);
-          } else {
-            foldTokens.push(token);
-          }
-        });
-
-        sortedUnfoldTokens = sortByUsdValueDesc(unFoldTokens);
-        sortedFoldTokens = sortByUsdValueDesc(foldTokens);
-        sortedScamTokens = sortByUsdValueDesc(scamTokens);
-      }
-
+      const sortedUnfoldTokens = filterAndSortTokens(tokens);
       const result = chainServerId
         ? {
             unFoldTokens: sortedUnfoldTokens.filter(
               item => item.chain === chainServerId,
             ),
-            foldTokens: sortedFoldTokens.filter(
-              item => item.chain === chainServerId,
-            ),
-            scamTokens: sortedScamTokens.filter(
-              item => item.chain === chainServerId,
-            ),
+            foldTokens: [],
+            scamTokens: [],
           }
         : {
             unFoldTokens: sortedUnfoldTokens,
-            foldTokens: sortedFoldTokens,
-            scamTokens: sortedScamTokens,
+            foldTokens: [],
+            scamTokens: [],
           };
 
       lastTokenSelectListMap = tokenListMap;
