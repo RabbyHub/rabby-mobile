@@ -47,7 +47,6 @@ import { AddWhitelistSelectMethod } from '@/components/AddWhitelistSelectMethod'
 import ConfirmAddress from '@/screens/Send/components/ConfirmAddress';
 import SelectCex from '@/screens/Send/components/SelectCex';
 import { BatchRevokeErrorReason } from '@/screens/BatchRevoke/BatchRevokeErrorReason';
-import { FundYourWallet } from '@/screens/Home/FundYourWallet';
 import { SettingTrezor } from '@/components/HDSetting/SettingTrezor';
 import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
 import EarningDialog from '@/screens/CopyTrading/component/EarningDialog';
@@ -212,10 +211,6 @@ export const MODAL_CONFIGS = {
       enableContentPanningGesture: true,
       rootViewType: 'View',
     }),
-  },
-  [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: {
-    snapPoints: [384],
-    Component: FundYourWallet,
   },
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: {
     snapPoints: [492],

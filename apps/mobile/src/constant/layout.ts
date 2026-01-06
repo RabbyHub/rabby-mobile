@@ -170,6 +170,7 @@ export const RootNames = {
   /** @deprecated */
   AddressList: 'AddressList',
   ApprovalAddressList: 'ApprovalAddressList',
+  /** @deprecated */
   ImportNewAddress: 'ImportNewAddress',
   ImportHardwareAddress: 'ImportHardwareAddress',
   ImportSuccess: 'ImportSuccess',

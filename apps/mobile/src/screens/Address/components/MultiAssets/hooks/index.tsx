@@ -1,15 +1,23 @@
-import { filterOutTop10Accounts } from '@/core/apis/account';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import {
+  filterDirectlySignableAccounts,
+  filterOutTop10Accounts,
+} from '@/core/apis/account';
+import {
+  KeyringAccountWithAlias,
+  useAccounts,
+  useMyAccounts,
+} from '@/hooks/account';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { useMemo } from 'react';
 
 export const isTabsSwiping = {
   value: false,
 };
 
-export const useAccountInfo = () => {
+export function useAccountInfo() {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -77,4 +85,19 @@ export const useAccountInfo = () => {
     fetchAccounts,
     rawAllAccounts: accounts,
   };
-};
+}
+
+export function useShowReceiveAddressTip() {
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
+  const accountToShowReceiveTip = useMemo(() => {
+    const accountsToCheck = filterDirectlySignableAccounts(accounts);
+
+    if (accountsToCheck.length !== 1) return null;
+
+    return accountsToCheck[0]?.evmBalance === 0 ? accountsToCheck[0] : null;
+  }, [accounts]);
+
+  return {
+    accountToShowReceiveTip,
+  };
+}

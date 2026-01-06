@@ -445,7 +445,9 @@
       "addressCount_one": "{{count}} Wallet",
       "addressCount_other": "{{count}} Wallets",
       "success": "{{type}} successfully!",
-      "importMore": "Import more Wallets"
+      "importMore": "Import more Wallets",
+      "viewAddress": "View Wallet",
+      "addressCount": "{{count}} Addresses"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Enter your seed phrase, separating each word with a space"
@@ -2897,6 +2899,16 @@
       },
       "disableBorrowTip": {
         "desc": "No supply: To borrow you need to supply assets as collateral."
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "title": "Receive assets",
+        "btnCopyAddress": "Copy Address",
+        "importTip": {
+          "title": "Import a wallet",
+          "desc": "Add an existing address with funds."
+        }
       }
     }
   },

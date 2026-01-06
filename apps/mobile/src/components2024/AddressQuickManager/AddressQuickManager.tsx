@@ -134,24 +134,6 @@ export const AddressQuickManager: React.FC<Props> = ({
     });
   }, [accounts]);
 
-  // const gotoAddAddress = React.useCallback(() => {
-  //   const id = createGlobalBottomSheetModal2024({
-  //     name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-  //     onDone: () => {
-  //       removeGlobalBottomSheetModal2024(id);
-  //     },
-  //     shouldRedirectToSetPasswordBefore2024,
-  //     navigateTo: (screen: AppRootName, params?: object) => {
-  //       navigation.dispatch(
-  //         StackActions.push(RootNames.StackAddress, {
-  //           screen,
-  //           params,
-  //         }),
-  //       );
-  //     },
-  //   });
-  // }, [shouldRedirectToSetPasswordBefore2024, navigation]);
-
   return (
     <View>
       <View style={styles.titleTextWrapper}>

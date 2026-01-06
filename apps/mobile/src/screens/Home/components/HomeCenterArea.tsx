@@ -6,75 +6,54 @@ import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerO
 import { useExposureRateGuide } from '@/components/RateModal/hooks';
 import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
 import { useViewedHomeTip } from '@/components/Screenshot/hooks';
-import { isNonPublicProductionEnv } from '@/constant';
 import { ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
-import { useMockDataForHomeCenterArea } from '../hooks/homeCenterArea';
-import { FoundYourWalletGuide } from '../FundYourWallet';
 import {
   OfflineChainNotify,
   useOfflineChain,
 } from '../components/OfflineChainNotify';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { transactionHistoryService } from '@/core/services';
+import { useShowReceiveAddressTip } from '@/screens/Address/components/MultiAssets/hooks';
+import { ReceiveOnNoAssets } from './ReceiveOnNoAssets';
 
 export function HomeCenterArea() {
   const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
 
-  const {
-    balanceAccounts,
-    balanceCacheAccounts,
-    // loadBalanceFromApiStage,
-  } = useAccountsBalance();
-
-  const { mockData } = useMockDataForHomeCenterArea();
-
-  const displayFundWalletOrig = useMemo(() => {
-    return (
-      !!balanceAccounts.length &&
-      balanceAccounts.every(e => e.balance === 0) &&
-      balanceCacheAccounts.every(e => e.balance === 0) &&
-      balanceAccounts.every(
-        e =>
-          transactionHistoryService.getTransactionGroups({
-            address: e.address,
-          }).length === 0,
-      )
-    );
-  }, [balanceAccounts, balanceCacheAccounts]);
-
-  const displayFundWallet = useMemo(() => {
-    if (isNonPublicProductionEnv && mockData.forceShowFundWallet) {
-      return true;
-    }
-    return displayFundWalletOrig;
-  }, [displayFundWalletOrig, mockData.forceShowFundWallet]);
-
+  const { accountToShowReceiveTip } = useShowReceiveAddressTip();
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
-  const { viewedHomeTip } = useViewedHomeTip();
 
-  const { noBetweenContent, onlyOneContent } = useMemo(() => {
-    const visibleEls = [
-      displayFundWallet,
-      shouldShowRateGuideOnHome,
-      offlineChainData.displayWillClosedChain &&
-        offlineChainData.offlineChainInfo,
-      !viewedHomeTip,
-    ];
+  const { viewedHomeTip: viewedScreenShotReportTip } = useViewedHomeTip();
+
+  const { blocksVisibility, noBetweenContent, onlyOneContent } = useMemo(() => {
+    const blocks = {
+      soloAccountToShowReceiveTip: false as boolean,
+      rateGuideOnHome: false as boolean,
+      offlineChainData: !!(
+        offlineChainData.displayWillClosedChain &&
+        offlineChainData.offlineChainInfo
+      ),
+      tipScreenshot: false as boolean,
+    };
+
+    if (accountToShowReceiveTip) blocks.soloAccountToShowReceiveTip = true;
+    else if (!viewedScreenShotReportTip) blocks.tipScreenshot = true;
+    else if (shouldShowRateGuideOnHome) blocks.rateGuideOnHome = true;
+
+    const visibleEls = Object.values(blocks);
     const hasBetweenContent = visibleEls.some(Boolean);
     return {
+      blocksVisibility: blocks,
       noBetweenContent: !hasBetweenContent,
       onlyOneContent: visibleEls.filter(Boolean).length === 1,
     };
   }, [
     shouldShowRateGuideOnHome,
     offlineChainData,
-    displayFundWallet,
-    viewedHomeTip,
+    accountToShowReceiveTip,
+    viewedScreenShotReportTip,
   ]);
 
   return (
@@ -85,11 +64,22 @@ export function HomeCenterArea() {
           : styles.contentBetweenHeaderAndMatrix,
         onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
       ]}>
-      <OfflineChainNotify data={offlineChainData} />
+      {blocksVisibility.offlineChainData && (
+        <OfflineChainNotify data={offlineChainData} />
+      )}
 
-      {displayFundWallet && <FoundYourWalletGuide />}
+      {blocksVisibility.soloAccountToShowReceiveTip && (
+        <ReceiveOnNoAssets.BgWrapper>
+          <ReceiveOnNoAssets
+            account={accountToShowReceiveTip}
+            isForSingle={false}
+          />
+        </ReceiveOnNoAssets.BgWrapper>
+      )}
 
-      {shouldShowRateGuideOnHome && (
+      {blocksVisibility.tipScreenshot && <TipFeedbackByScreenshot />}
+
+      {blocksVisibility.rateGuideOnHome && (
         <View
           style={{
             paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
@@ -99,8 +89,6 @@ export function HomeCenterArea() {
           <RateModal /* totalBalanceText={combineData.netWorth} */ />
         </View>
       )}
-
-      <TipFeedbackByScreenshot />
     </View>
   );
 }
