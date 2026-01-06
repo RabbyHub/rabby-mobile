@@ -365,24 +365,6 @@ function DevTestHomeCenterArea() {
           <Text style={styles.switchLabel}>Force Show Offchain Notify</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.switchRowWrapper, { marginTop: 12 }]}
-          onPress={() => {
-            setMockData(prev => ({
-              ...prev,
-              forceShowFundWallet: !prev.forceShowFundWallet,
-            }));
-          }}>
-          <AppSwitch2024
-            onPress={evt => evt.stopPropagation()}
-            value={mockData.forceShowFundWallet}
-            onValueChange={value => {
-              setMockData(prev => ({ ...prev, forceShowFundWallet: value }));
-            }}
-          />
-          <Text style={styles.switchLabel}>Force Show FundWallet</Text>
-        </TouchableOpacity>
-
         <Button
           title={'Exposure Rate Guide'}
           type="ghost"

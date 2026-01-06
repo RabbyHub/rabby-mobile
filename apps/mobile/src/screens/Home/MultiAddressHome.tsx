@@ -132,6 +132,7 @@ import useTokenList from '@/store/tokens';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { isNonPublicProductionEnv } from '@/constant';
+import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -146,8 +147,7 @@ function couldDoRefresh() {
 const onIndexChange = (idx: number) => apisHomeTabIndex.setTabIndex(idx);
 
 const OverViewComponent = React.memo(
-  ({}: // multi24HBalanceReturn,
-  React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
+  ({}: React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
     const navigation = useRabbyAppNavigation();
     const { t } = useTranslation();
     const tokenListStore = useTokenList();
@@ -522,6 +522,7 @@ const OverViewComponent = React.memo(
           <RefreshControl refreshing={false} onRefresh={onRefresh} />
         }>
         <MultiAddressHomeHeader onRefresh={onRefresh} />
+
         <HomeCenterArea />
 
         <View style={styles.grid}>
@@ -691,9 +692,6 @@ function MultiAddressHome(): JSX.Element {
           onIndexChange={onIndexChange}
           OverViewComponent={OverViewComponent}
         />
-
-        {/* show search bar when Overview tab */}
-        {/* <GlobalSearchBar /> */}
       </View>
 
       <HomeGuidanceMultipleTabs />

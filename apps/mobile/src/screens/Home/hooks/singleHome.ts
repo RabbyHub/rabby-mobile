@@ -4,6 +4,7 @@ import { Account } from '@/core/services/preference';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useAlias2 } from '@/hooks/alias';
+import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import {
   useAddressBalance,
   useIsLoadingBalance,
@@ -40,15 +41,25 @@ function presetSingHomeAccount(account: Account) {
   });
 }
 export const apisSingleHome = {
-  navigateToSingleHome: (account: Account) => {
+  navigateToSingleHome: (account: Account, options?: { replace?: boolean }) => {
     presetSingHomeAccount(account);
     requestAnimationFrame(() => {
-      navigateDeprecated(RootNames.SingleAddressStack, {
-        screen: RootNames.SingleAddressHome,
-        params: {
-          account: account,
-        },
-      });
+      const { replace } = options || {};
+      if (replace) {
+        resetNavigationOnTopOfHome(RootNames.SingleAddressStack, {
+          screen: RootNames.SingleAddressHome,
+          params: {
+            account: account,
+          },
+        });
+      } else {
+        navigateDeprecated(RootNames.SingleAddressStack, {
+          screen: RootNames.SingleAddressHome,
+          params: {
+            account: account,
+          },
+        });
+      }
     });
   },
   clearCurrentAccount: () => {
@@ -176,6 +187,16 @@ export function useSingleHomeLoading() {
   return {
     balanceLoading,
     isLoadingCurve,
+  };
+}
+
+export function useSingleHomeNoAssetsValueOnChain() {
+  const { lcAddress } = useSingleHomeAddress();
+  const { balanceLoading } = useIsLoadingBalance(lcAddress);
+  const { evmBalance, balance } = useAddressBalance(lcAddress);
+
+  return {
+    noAssetsValue: !balanceLoading && evmBalance === 0,
   };
 }
 

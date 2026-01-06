@@ -1,10 +1,14 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
 import { MemoizedTokenItemLoader, TokenList } from './TokenList';
 import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
-import { CollapsibleRef, Tabs } from 'react-native-collapsible-tab-view';
+import {
+  CollapsibleRef,
+  TabBarProps,
+  Tabs,
+} from 'react-native-collapsible-tab-view';
 import {
   HeaderHeight,
   TabsTopHeader,
@@ -12,7 +16,7 @@ import {
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
-import { isTabsSwiping } from './hooks';
+import { isTabsSwiping, useShowReceiveAddressTip } from './hooks';
 import { MemoizedNFTItemLoader, NFTList } from './NFTList';
 import { Freeze } from 'react-freeze';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -21,6 +25,10 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { useHomeTabIndex } from '@/hooks/navigation';
 import { runIIFEFunc } from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
+import { useMyAccounts } from '@/hooks/account';
+import { filterDirectlySignableAccounts } from '@/core/apis/account';
+import { ReceiveOnNoAssets } from '@/screens/Home/components/ReceiveOnNoAssets';
+import { Account } from '@/core/services/preference';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -37,7 +45,9 @@ export const TAB_HEADER_MIN_HEIGHT = 44;
 
 export interface TabMultiAssetsProps {
   onIndexChange(index: number): void;
-  OverViewComponent: React.FC<{}>;
+  OverViewComponent: React.FC<{
+    accountToShowReceiveTip?: Account | null;
+  }>;
 }
 
 export const enum TabName {
@@ -46,6 +56,10 @@ export const enum TabName {
   defi = 'defi',
   nft = 'nft',
 }
+
+const renderTabBar = (
+  _props: React.ComponentProps<typeof HomeCustomMaterialTabBar>,
+) => <HomeCustomMaterialTabBar {..._props} />;
 
 function TabIndexBasedFreeze({
   ofIndex,
@@ -56,7 +70,10 @@ function TabIndexBasedFreeze({
 } & Omit<React.ComponentProps<typeof Freeze>, 'freeze'>) {
   const { tabIndex } = useHomeTabIndex();
   return (
-    <Freeze {...props} freeze={ofIndex !== tabIndex}>
+    <Freeze
+      {...props}
+      // freeze={ofIndex !== tabIndex}
+      freeze={false}>
       {children}
     </Freeze>
   );
@@ -74,60 +91,20 @@ runIIFEFunc(() => {
   });
 });
 
+const renderLabel =
+  (name: string) =>
+  ({ index, indexDecimal }) =>
+    <CustomLabel index={index} indexDecimal={indexDecimal} text={name} />;
+
+const renderHeader = (props: Pick<TabBarProps<string>, 'index'>) => {
+  return <TabsTopHeader indexValue={props.index} />;
+};
+
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
-  // tabIndex,
   onIndexChange,
-  // data,
-  // loading,
-  // multi24HBalanceReturn,
-  // overViewContent,
   OverViewComponent,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const renderTabBar = React.useCallback(
-    (
-      _props: React.ComponentProps<
-        typeof HomeCustomMaterialTabBar
-      >['materialTabBarProps'],
-    ) => (
-      <HomeCustomMaterialTabBar
-        materialTabBarProps={{
-          ..._props,
-        }}
-      />
-    ),
-    [],
-  );
-
-  const renderLabel = useCallback(
-    (name: string) =>
-      // eslint-disable-next-line react/no-unstable-nested-components
-      ({ index, indexDecimal }) =>
-        <CustomLabel index={index} indexDecimal={indexDecimal} text={name} />,
-    [],
-  );
-
-  // const {tabIndex} = useHomeTabIndex();
-
-  const renderHeader = useCallback<
-    React.ComponentProps<typeof Tabs.Container>['renderHeader'] & object
-  >(
-    props => {
-      return (
-        <TabsTopHeader
-          // data={data}
-          // loading={loading}
-          // showNetWorth={tabIndex !== 0}
-          indexValue={props.index}
-        />
-      );
-    },
-    [
-      // tabIndex,
-      /* data, loading */
-    ],
-  );
 
   const handleTabChange = useCallback(
     ({ prevIndex, index }: { prevIndex: number; index: number }) => {
@@ -146,6 +123,8 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
 
   useRendererDetect({ name: 'TabsMultiAssets' });
 
+  const { accountToShowReceiveTip } = useShowReceiveAddressTip();
+
   return (
     <Tabs.Container
       ref={homeTabScrollerRef}
@@ -162,6 +141,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
         },
+        scrollEnabled: !accountToShowReceiveTip,
       }}
       containerStyle={styles.container}
       headerContainerStyle={styles.headerContainer}>
@@ -169,14 +149,13 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         key={TabName.overview}
         name={TabName.overview}
         label={() => null}>
-        <OverViewComponent />
+        <OverViewComponent accountToShowReceiveTip={accountToShowReceiveTip} />
       </Tabs.Tab>
 
       <Tabs.Tab
         key={TabName.token}
         name={TabName.token}
         label={renderLabel('Token')}>
-        {/* <View /> */}
         <TabIndexBasedFreeze
           ofIndex={1}
           placeholder={
@@ -191,7 +170,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         key={TabName.defi}
         name={TabName.defi}
         label={renderLabel('DeFi')}>
-        {/* <View /> */}
         <TabIndexBasedFreeze
           ofIndex={2}
           placeholder={
@@ -203,7 +181,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         </TabIndexBasedFreeze>
       </Tabs.Tab>
       <Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
-        {/* <View /> */}
         <TabIndexBasedFreeze
           ofIndex={3}
           placeholder={
