@@ -86,7 +86,10 @@ import {
   TransactionNavigatorParamList,
 } from '@/navigation-type';
 import { TokenItemContextMenu } from './TokenContextMenu';
-import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
+import {
+  ExternalTokenRow,
+  formatPercentage,
+} from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { isScamTokenForSelect } from '@/screens/Home/utils/collection';
@@ -668,6 +671,16 @@ export const TokenSelectorSheetModal = React.forwardRef<
               currentChainItem &&
               !supportChains.includes(currentChainItem.enum);
 
+            let percentColor = colors2024['red-default'];
+            if (
+              !token.price_24h_change ||
+              Math.abs(Number(token.price_24h_change)) < 0.00001
+            ) {
+              percentColor = colors2024['neutral-secondary'];
+            }
+            if (Number(token.price_24h_change) > 0) {
+              percentColor = colors2024['green-default'];
+            }
             const cexLogos =
               token?.cex_ids
                 ?.map(
@@ -925,9 +938,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
                               )
                             ) : (
                               <Text
-                                style={[styles.tokenPrice, { marginTop: 4 }]}
-                                numberOfLines={1}>
-                                {`$${formatPrice(token.price)}`}
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                                style={[
+                                  styles.tokenHeaderAmount,
+                                  // isExcludeBalanceShowTips && styles.textSecondary,
+                                ]}>
+                                {formatTokenAmount(token.amount)} {token.symbol}
                               </Text>
                             )}
                             {isBridgeTo && (
@@ -969,16 +986,25 @@ export const TokenSelectorSheetModal = React.forwardRef<
                               styles.utilMl,
                               styles.tokenInfoColRight,
                             ]}>
-                            <Text
-                              numberOfLines={1}
-                              ellipsizeMode="tail"
-                              style={[
-                                styles.tokenHeaderAmount,
-                                { marginTop: 4 },
-                                // isExcludeBalanceShowTips && styles.textSecondary,
-                              ]}>
-                              {formatTokenAmount(token.amount)} {token.symbol}
-                            </Text>
+                            <View style={styles.priceInfo}>
+                              <Text
+                                style={[styles.tokenPrice]}
+                                numberOfLines={1}>
+                                {`$${formatPrice(token.price)}`}
+                              </Text>
+                              <Text
+                                style={StyleSheet.compose(styles.percent, {
+                                  ...(!token.is_core &&
+                                  (token.usd_value || 0) > 0
+                                    ? styles.exclude
+                                    : {}),
+                                  color: percentColor,
+                                })}>
+                                {formatPercentage(
+                                  Number(token.price_24h_change) || 0,
+                                )}
+                              </Text>
+                            </View>
                           </View>
                         </View>
                       </View>
@@ -1405,7 +1431,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['green-light-1'],
       paddingHorizontal: 6,
       paddingVertical: 1,
-      marginTop: 5,
     },
     tardeLevelText: {
       color: colors2024['green-default'],
@@ -1611,12 +1636,27 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
     },
+    exclude: {
+      color: colors2024['neutral-info'],
+    },
+    percent: {
+      textAlign: 'right',
+      fontSize: 14,
+      fontWeight: '700',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
+    },
     searchBar: {
       flex: 1,
     },
     tokenInfoColRight: {
       alignItems: 'flex-end',
       textAlign: 'right',
+    },
+    priceInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
     },
     tokenHeaderAmount: {
       color: colors2024['neutral-secondary'],
