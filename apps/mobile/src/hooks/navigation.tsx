@@ -7,7 +7,11 @@ import {
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 import { apisTheme, useGetBinaryMode } from '../hooks/theme';
-import { getReadyNavigationInstance, navigationRef } from '@/utils/navigation';
+import {
+  getReadyNavigationInstance,
+  navigationRef,
+  naviReplace,
+} from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
@@ -343,6 +347,31 @@ export function resetNavigationTo(
     }
   }
 }
+
+export const resetNavigationOnTopOfHome: typeof naviReplace = (
+  stack,
+  params?,
+) => {
+  const navigation = getReadyNavigationInstance();
+  if (!navigation) return;
+
+  navigation.reset({
+    index: 0,
+    routes: [
+      {
+        name: RootNames.StackRoot,
+        params: {
+          screen: RootNames.Home,
+        },
+      },
+      {
+        name: stack,
+        params: params || {},
+      },
+    ],
+  });
+  apisHomeTabIndex.setTabIndex(0);
+};
 
 async function canLockWallet() {
   const lockInfo = await apisLock.getRabbyLockInfo();

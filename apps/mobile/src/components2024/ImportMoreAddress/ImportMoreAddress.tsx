@@ -39,6 +39,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { Button } from '../Button';
+import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 
 const { isSameAddress } = addressUtils;
 
@@ -60,48 +61,55 @@ export interface Props {
 }
 
 export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
-  const apiHD = React.useMemo(() => {
+  const { apiHD, hdType, hdBrandName } = React.useMemo(() => {
+    const ret = {
+      apiHD: null as
+        | null
+        | typeof apiLedger
+        | typeof apiOneKey
+        | typeof apiKeystone
+        | typeof apiTrezor,
+      hdType: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
+      hdBrandName: HARDWARE_KEYRING_TYPES.Keystone.brandName as
+        | typeof KEYRING_CLASS.HARDWARE.LEDGER
+        | typeof KEYRING_CLASS.HARDWARE.ONEKEY
+        | typeof KEYRING_CLASS.HARDWARE.TREZOR
+        | typeof KEYRING_CLASS.MNEMONIC,
+    };
     switch (params.type) {
-      case KEYRING_TYPE.LedgerKeyring:
-        return apiLedger;
-      case KEYRING_TYPE.OneKeyKeyring:
-        return apiOneKey;
-      case KEYRING_TYPE.KeystoneKeyring:
-        return apiKeystone;
-      case KEYRING_TYPE.TrezorKeyring:
-        return apiTrezor;
-      default:
-        return null;
+      case KEYRING_TYPE.LedgerKeyring: {
+        ret.apiHD = apiLedger;
+        ret.hdType = KEYRING_TYPE.LedgerKeyring;
+        ret.hdBrandName = KEYRING_CLASS.HARDWARE.LEDGER;
+        break;
+      }
+      case KEYRING_TYPE.OneKeyKeyring: {
+        ret.apiHD = apiOneKey;
+        ret.hdType = KEYRING_TYPE.OneKeyKeyring;
+        ret.hdBrandName = KEYRING_CLASS.HARDWARE.ONEKEY;
+        break;
+      }
+      case KEYRING_TYPE.KeystoneKeyring: {
+        ret.apiHD = apiKeystone;
+        ret.hdType = KEYRING_TYPE.TrezorKeyring;
+        ret.hdBrandName = KEYRING_CLASS.HARDWARE.TREZOR;
+        break;
+      }
+      case KEYRING_TYPE.TrezorKeyring: {
+        ret.apiHD = apiTrezor;
+        ret.hdType = KEYRING_TYPE.TrezorKeyring;
+        ret.hdBrandName = KEYRING_CLASS.HARDWARE.TREZOR;
+        break;
+      }
+      case KEYRING_TYPE.HdKeyring: {
+        ret.hdType = KEYRING_TYPE.HdKeyring;
+        ret.hdBrandName = KEYRING_CLASS.MNEMONIC;
+        break;
+      }
     }
+
+    return ret;
   }, [params]);
-  const hdType = React.useMemo(() => {
-    switch (params.type) {
-      case KEYRING_TYPE.LedgerKeyring:
-        return KEYRING_TYPE.LedgerKeyring;
-      case KEYRING_TYPE.OneKeyKeyring:
-        return KEYRING_TYPE.OneKeyKeyring;
-      case KEYRING_TYPE.TrezorKeyring:
-        return KEYRING_TYPE.TrezorKeyring;
-      case KEYRING_TYPE.HdKeyring:
-        return KEYRING_TYPE.HdKeyring;
-      default:
-        return HARDWARE_KEYRING_TYPES.Keystone.type;
-    }
-  }, [params.type]) as KEYRING_TYPE;
-  const hdBrandName = React.useMemo(() => {
-    switch (params.type) {
-      case KEYRING_TYPE.LedgerKeyring:
-        return KEYRING_CLASS.HARDWARE.LEDGER;
-      case KEYRING_TYPE.OneKeyKeyring:
-        return KEYRING_CLASS.HARDWARE.ONEKEY;
-      case KEYRING_TYPE.TrezorKeyring:
-        return KEYRING_CLASS.HARDWARE.TREZOR;
-      case KEYRING_TYPE.HdKeyring:
-        return KEYRING_CLASS.MNEMONIC;
-      default:
-        return HARDWARE_KEYRING_TYPES.Keystone.brandName;
-    }
-  }, [params.type]);
   const [accounts, setAccounts] = React.useState<ViewAccount[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [setting, setSetting] = useAtom(settingAtom);
@@ -197,6 +205,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     stoppedRef.current = false;
     const start = startNumberRef.current;
     let i = start;
+    // let unknownError = false;
+
     try {
       maxCountRef.current =
         (await apiHD?.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
@@ -215,6 +225,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         errMessage = t('page.newAddress.ledger.error.lockedOrNoEthApp');
       } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
         errMessage = t('page.newAddress.ledger.error.unknown');
+        // unknownError = true;
+        if (__DEV__) exitRef.current = true;
       }
       if (errMessage) {
         toast.show(errMessage);
@@ -319,12 +331,16 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
           true,
         )
           .then(() => {
-            replaceToFirst(RootNames.StackAddress, {
+            resetNavigationOnTopOfHome(RootNames.StackAddress, {
               screen: RootNames.ImportSuccess2024,
               params: {
                 type: hdType,
                 brandName: hdBrandName,
                 address: selectedAccounts.map(a => a.address),
+                mnemonics: params.mnemonics,
+                passphrase: params.passphrase,
+                keyringId: params.keyringId,
+                isExistedKR: params.isExistedKR,
               },
             });
           })
@@ -347,7 +363,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         await apiHD?.importAddress(acc.index - 1);
       }
 
-      replaceToFirst(RootNames.StackAddress, {
+      resetNavigationOnTopOfHome(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
           type: hdType,
@@ -367,6 +383,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     params.type,
     params.mnemonics,
     params.passphrase,
+    params.keyringId,
+    params.isExistedKR,
     selectedAccounts,
     hdType,
     hdBrandName,

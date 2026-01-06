@@ -8,7 +8,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
@@ -44,7 +44,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { apiBalance } from '@/core/apis';
+import { apiBalance, apiMnemonic } from '@/core/apis';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
@@ -52,7 +52,9 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { syncTokens, syncProtocols } from '@/databases/hooks/assets';
 import { EVENTS } from '@/utils/events';
 import { eventBus } from '@/utils/events';
-import { apisHomeTabIndex } from '@/hooks/navigation';
+import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
+import { apisSingleHome } from '../Home/hooks/singleHome';
+import { isNonPublicProductionEnv } from '@/constant';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -100,6 +102,15 @@ export const ImportSuccessScreen2024 = () => {
     });
   }, [importAddresses]);
 
+  const onlyFirstAccount = useMemo(() => {
+    return importAddresses.length === 1
+      ? {
+          ...importAddresses[0]!,
+          brandName: state?.brandName,
+          type: state?.type,
+        }
+      : null;
+  }, [importAddresses, state?.brandName, state?.type]);
   const handleDone = React.useCallback(() => {
     saveFirstAddressAlias();
     Keyboard.dismiss();
@@ -108,19 +119,13 @@ export const ImportSuccessScreen2024 = () => {
       REPORT_TIMEOUT_ACTION_KEY.ADD_NEW_ADDRESS_DONE,
     );
 
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: RootNames.StackRoot,
-          params: {
-            screen: RootNames.Home,
-          },
-        },
-      ],
-    });
+    if (onlyFirstAccount) {
+      apisSingleHome.navigateToSingleHome(onlyFirstAccount, { replace: true });
+    } else {
+      resetNavigationTo(navigation, 'Home');
+    }
     apisHomeTabIndex.setTabIndex(0);
-  }, [navigation, saveFirstAddressAlias]);
+  }, [onlyFirstAccount, navigation, saveFirstAddressAlias]);
 
   const isFocus = useIsFocused();
 
@@ -228,7 +233,7 @@ export const ImportSuccessScreen2024 = () => {
     }
   }, [isFocus, state, accounts, importAddresses]);
 
-  const handleImportMore = () => {
+  const handleImportMore = async () => {
     Keyboard.dismiss();
     if (modalRef.current) {
       return;
@@ -236,15 +241,26 @@ export const ImportSuccessScreen2024 = () => {
 
     saveFirstAddressAlias();
 
+    const params = {
+      type: state.type,
+      mnemonics: state.mnemonics,
+      passphrase: state.passphrase,
+      keyringId: state.keyringId,
+      brand: state.brandName,
+    };
+
+    const firstAddr = importAddresses[0]?.address;
+    if (params.type === KEYRING_TYPE.HdKeyring && firstAddr) {
+      if (!params.mnemonics) {
+        throw new Error(
+          '[ImportSuccessScreen2024] mnemonics is required for HdKeyring',
+        );
+      }
+    }
+
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.IMPORT_MORE_ADDRESS,
-      params: {
-        type: state.type,
-        mnemonics: state.mnemonics,
-        passphrase: state.passphrase,
-        keyringId: state.keyringId,
-        brand: state.brandName,
-      },
+      params: params,
       bottomSheetModalProps: {
         onDismiss: () => {
           modalRef.current = undefined;
@@ -281,7 +297,7 @@ export const ImportSuccessScreen2024 = () => {
           />
         </View>
         <View style={styles.addressList}>
-          {importAddresses.length === 1 ? (
+          {onlyFirstAccount ? (
             <View style={styles.itemContainer}>
               <WalletIcon
                 type={state?.type}
@@ -363,7 +379,11 @@ export const ImportSuccessScreen2024 = () => {
         <Button
           containerStyle={styles.btnContainer}
           type="primary"
-          title={t('global.Done')}
+          title={
+            onlyFirstAccount
+              ? t('page.importSuccess.viewAddress')
+              : t('global.Done')
+          }
           // noShadow={true}
           onPress={handleDone}
         />
