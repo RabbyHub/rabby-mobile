@@ -14,9 +14,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  SectionListRenderItem,
   TextInput,
-  Pressable,
   Dimensions,
   Alert,
   ListRenderItem,
@@ -24,29 +22,23 @@ import {
 import {
   BottomSheetBackdropProps,
   BottomSheetFlatList,
-  BottomSheetSectionList,
 } from '@gorhom/bottom-sheet';
-import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import RcFoldCC from '@/assets2024/icons/common/fold.svg';
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import {
-  TokenItem,
-  TokenItemWithEntity,
-} from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
-  getTokenSymbol,
   SMALL_TOKEN_ID,
   type DisplayedTokenWithOwner,
   type TokenItemFromAbstractPortfolioToken,
 } from '@/utils/token';
-import { formatAmount, formatPrice, formatTokenAmount } from '@/utils/number';
+import { formatPrice, formatTokenAmount } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
 import { findChainByServerID } from '@/utils/chain';
@@ -60,16 +52,7 @@ import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 import { useTranslation } from 'react-i18next';
-import { TextBadge } from '@/screens/Address/components/PinBadge';
-import { ellipsisOverflowedText } from '@/utils/text';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { useMemoizedFn } from 'ahooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import {
   CompositeScreenProps,
   useFocusEffect,
@@ -91,13 +74,10 @@ import {
   formatPercentage,
 } from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
-import { useUserTokenSettings } from '@/hooks/useTokenSettings';
-import { isScamTokenForSelect } from '@/screens/Home/utils/collection';
 import { SCAM_TOKEN_HAEDER_ID } from './constant';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { NextSearchBar } from '@/components2024/SearchBar';
-import { Favorite } from '@/components2024/Favorite';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { FavoriteTag } from '@/components2024/Favorite';
 import {
   getLatestNavigationName,
   navigateDeprecated,
@@ -157,13 +137,6 @@ const hiddenZIndex = -9999;
 
 const ITEM_HEIGHT = 72;
 
-const hitSlop = {
-  top: 10,
-  bottom: 10,
-  left: 10,
-  right: 10,
-};
-
 export type ITokenCheck = (token: TokenItem) => {
   disable: boolean;
   simpleReason: string;
@@ -183,10 +156,6 @@ export type TokenSelectType =
   | 'bridgeFrom'
   | 'bridgeTo';
 
-type TokenItemFromAbstractPortfolioTokenWithExtra =
-  TokenItemFromAbstractPortfolioToken & {
-    logoUrls?: string[];
-  };
 export type TokenItemForRender = {
   _chain: string;
   recentList: ((
@@ -244,9 +213,6 @@ export interface TokenSelectorProps<
   isLpTokenEnabled?: boolean;
   onLpTokenChange?: (value: boolean) => void;
 }
-const filterTestnetTokenItem = (token: ITokenItem | TokenItem) => {
-  return !findChainByServerID(token.chain)?.isTestnet;
-};
 
 const isAndroid = Platform.OS === 'android';
 
@@ -401,7 +367,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const [swapToTokenDetail, setSwapToTokenDetail] = useState(false);
     const route = useRoute<SwapRouteProps['route']>();
     const isFocused = useIsFocused();
-    const { pinToken, removePinedToken } = useUserTokenSettings();
 
     const isSwapRoute =
       route.name === RootNames.Swap || route.name === RootNames.MultiSwap;
@@ -752,34 +717,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           (disabled || lightDisable) &&
                             styles.tokenItemDisabled,
                         ]}
-                        rightSlot={
-                          <Pressable
-                            style={styles.rightSlot}
-                            onPress={e => {
-                              e.stopPropagation();
-                              if (isPined) {
-                                removePinedToken(token);
-                              } else {
-                                pinToken(token);
-                              }
-                            }}
-                            hitSlop={{
-                              top: 20,
-                              bottom: 20,
-                              left: 20,
-                              right: 20,
-                            }}>
-                            <RcIconFavorite
-                              width={22}
-                              height={21}
-                              color={
-                                isPined
-                                  ? colors2024['orange-default']
-                                  : colors2024['neutral-line']
-                              }
-                            />
-                          </Pressable>
-                        }
                         onPressRightIcon={() => {
                           setTimeout(() => {
                             toggleShowSheetModal('destroy');
@@ -815,6 +752,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           )
                         }
                       />
+                      {isPined && <FavoriteTag style={styles.favoriteTag} />}
                     </TouchableOpacity>
                   </TokenItemContextMenu>
                 </View>
@@ -1008,19 +946,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           </View>
                         </View>
                       </View>
-                      <View style={styles.tokenRight}>
-                        <Favorite
-                          favorite={isPined}
-                          style={styles.favorite}
-                          handlePressFavorite={() => {
-                            if (isPined) {
-                              removePinedToken(token);
-                            } else {
-                              pinToken(token);
-                            }
-                          }}
-                        />
-                      </View>
                     </View>
                     {lightDisable && (
                       <View
@@ -1042,6 +967,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         </Text>
                       </View>
                     )}
+                    {isPined && <FavoriteTag style={styles.favoriteTag} />}
                   </TouchableOpacity>
                 </TokenItemContextMenu>
               </View>
@@ -1068,8 +994,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         disabledTips,
         onConfirm,
         toggleShowSheetModal,
-        removePinedToken,
-        pinToken,
         fold,
         foldTokensUsdValue,
         onPressToken,
@@ -1739,6 +1663,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flex: 1,
       minHeight: 32,
       marginBottom: 0,
+    },
+    favoriteTag: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
     },
     lightDisableIcon: {},
     lightDisableText: {
