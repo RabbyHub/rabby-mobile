@@ -30,7 +30,9 @@ import {
 } from './hooks/navigation';
 import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
+import { startManageAccountStoreLifecycle } from './hooks/account';
 
+startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();
 startFetchOnceTop5TokensForAllAccounts();
 subscribeUnlockToFetchAccounts();
