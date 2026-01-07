@@ -1,4 +1,5 @@
 import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
+import RcIconDoubleArrowCC from '@/assets2024/icons/common/double-arrow-cc.svg';
 import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
 import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
@@ -13,7 +14,13 @@ import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Animated,
   PanResponder,
@@ -108,6 +115,9 @@ import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History } from '@/databases/hooks/history';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
+import { BrowserFavorite } from '../Browser/BrowserScreen/components/BrowserSearch/BrowserFavorite';
+import { BrowserFavoriteManage } from '../Browser/BrowserScreen/components/BrowserFavoriteManage';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -122,8 +132,12 @@ function couldDoRefresh() {
 const onIndexChange = (idx: number) => apisHomeTabIndex.setTabIndex(idx);
 
 const OverViewComponent = React.memo(
-  ({}: // multi24HBalanceReturn,
-  React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
+  ({
+    tabsOpacityRef,
+  }: // multi24HBalanceReturn,
+  React.ComponentProps<TabMultiAssetsProps['OverViewComponent']> & {
+    tabsOpacityRef?: React.MutableRefObject<Animated.AnimatedInterpolation<number> | null>;
+  }) => {
     const navigation = useRabbyAppNavigation();
     const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({
@@ -476,7 +490,9 @@ const OverViewComponent = React.memo(
     );
 
     const { bottom } = useSafeAreaInsets();
+    const { safeOffHeader, safeTop } = useSafeSizes();
 
+    const [isExpanded, setIsExpanded] = useState(false);
     const pullDistanceRef = useRef(0);
     const pullDistanceAnim = useRef(new Animated.Value(0)).current;
     const isAutoExpandedRef = useRef(false);
@@ -496,10 +512,10 @@ const OverViewComponent = React.memo(
       () =>
         pullDistanceAnim.interpolate({
           inputRange: [0, pullThreshold],
-          outputRange: [0.75, 1],
+          outputRange: isExpanded ? [1, 1] : [0.75, 1],
           extrapolate: 'clamp',
         }),
-      [pullDistanceAnim, pullThreshold],
+      [pullDistanceAnim, pullThreshold, isExpanded],
     );
     const panelOpacity = useMemo(
       () =>
@@ -510,6 +526,50 @@ const OverViewComponent = React.memo(
         }),
       [pullDistanceAnim, pullThreshold],
     );
+    const contentTranslateY = useMemo(
+      () =>
+        pullDistanceAnim.interpolate({
+          inputRange: [0, pullThreshold],
+          outputRange: [0, -height],
+          extrapolate: 'clamp',
+        }),
+      [height, pullDistanceAnim, pullThreshold],
+    );
+    const tabsOpacity = useMemo(
+      () =>
+        pullDistanceAnim.interpolate({
+          inputRange: [0, pullThreshold * 0.5],
+          outputRange: [1, 0],
+          extrapolate: 'clamp',
+        }),
+      [pullDistanceAnim, pullThreshold],
+    );
+
+    useEffect(() => {
+      if (tabsOpacityRef) {
+        tabsOpacityRef.current = tabsOpacity;
+      }
+    }, [tabsOpacity, tabsOpacityRef]);
+    const overlayOpacity = useMemo(() => {
+      return pullDistanceAnim.interpolate({
+        inputRange: [0, pullThreshold * 0.3, pullThreshold],
+        outputRange: isExpanded ? [0, 0, 0] : [0, 1, 0],
+        extrapolate: 'clamp',
+      });
+    }, [pullDistanceAnim, pullThreshold, isExpanded]);
+
+    useEffect(() => {
+      pullDistanceAnim.addListener(({ value }) => {
+        if (value >= pullThreshold) {
+          setIsExpanded(true);
+        } else if (value === 0) {
+          setIsExpanded(false);
+        }
+      });
+      return () => {
+        pullDistanceAnim.removeAllListeners();
+      };
+    }, [pullDistanceAnim]);
 
     const updatePullDistance = useCallback(
       (distance: number) => {
@@ -625,92 +685,117 @@ const OverViewComponent = React.memo(
 
     return (
       <View style={styles.pullUpWrapper}>
-        <Tabs.ScrollView
-          tvParallaxProperties={undefined}
-          showsVerticalScrollIndicator={false}
-          onTouchStart={() => {
-            setBrowserState({ isEditingFavorite: false });
-          }}
-          style={[styles.scroll, { flex: undefined }]}
-          contentContainerStyle={[
-            styles.scrollContainer,
-            {
-              // paddingBottom: bottom + 82,
-              paddingBottom:
-                Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
-            },
-          ]}
-          overScrollMode="always"
-          bounces
-          onContentSizeChange={(_, heightValue) => {
-            contentHeightRef.current = heightValue;
-          }}
-          onLayout={event => {
-            layoutHeightRef.current = event.nativeEvent.layout.height;
-          }}
-          onScrollEndDrag={handlePullRelease}
-          refreshControl={
-            <RefreshControl refreshing={false} onRefresh={onRefresh} />
-          }>
-          <MultiAddressHomeHeader onRefresh={onRefresh} />
-          <HomeCenterArea />
+        <Animated.View
+          style={{
+            transform: [{ translateY: contentTranslateY }],
+          }}>
+          <Tabs.ScrollView
+            tvParallaxProperties={undefined}
+            showsVerticalScrollIndicator={false}
+            onTouchStart={() => {
+              setBrowserState({ isEditingFavorite: false });
+            }}
+            style={[styles.scroll, { flex: undefined }]}
+            contentContainerStyle={[
+              styles.scrollContainer,
+              {
+                // paddingBottom: bottom + 82,
+                paddingBottom:
+                  Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
+              },
+            ]}
+            overScrollMode="always"
+            bounces
+            onContentSizeChange={(_, heightValue) => {
+              contentHeightRef.current = heightValue;
+            }}
+            onLayout={event => {
+              layoutHeightRef.current = event.nativeEvent.layout.height;
+            }}
+            onScrollEndDrag={handlePullRelease}
+            refreshControl={
+              <RefreshControl refreshing={false} onRefresh={onRefresh} />
+            }>
+            <MultiAddressHomeHeader onRefresh={onRefresh} />
+            <HomeCenterArea />
 
-          <View style={styles.grid}>
-            <View style={styles.gridItemsWrap}>
-              {MENU_ARR.map((el, index) => {
-                return (
-                  <FastTouchable
-                    style={StyleSheet.flatten([
-                      styles.gridItem,
-                      { width: itemWidth },
-                    ])}
-                    key={index}
-                    onPress={() => {
-                      console.debug('[perf] touched menu', el.key);
-                      requestAnimationFrame(() => {
-                        handleClickMenu(el.key);
-                      });
-                      matomoRequestEvent({
-                        category: 'Click_Services',
-                        action: `Click_${el.key}`,
-                      });
-                    }}>
-                    <View style={styles.badgeWrapper}>
-                      <View style={styles.iconWrapper}>
-                        <el.icon
-                          width={28}
-                          height={28}
-                          color={el.color || colors2024['brand-default-icon']}
-                        />
+            <View style={styles.grid}>
+              <View style={styles.gridItemsWrap}>
+                {MENU_ARR.map((el, index) => {
+                  return (
+                    <FastTouchable
+                      style={StyleSheet.flatten([
+                        styles.gridItem,
+                        { width: itemWidth },
+                      ])}
+                      key={index}
+                      onPress={() => {
+                        console.debug('[perf] touched menu', el.key);
+                        requestAnimationFrame(() => {
+                          handleClickMenu(el.key);
+                        });
+                        matomoRequestEvent({
+                          category: 'Click_Services',
+                          action: `Click_${el.key}`,
+                        });
+                      }}>
+                      <View style={styles.badgeWrapper}>
+                        <View style={styles.iconWrapper}>
+                          <el.icon
+                            width={28}
+                            height={28}
+                            color={el.color || colors2024['brand-default-icon']}
+                          />
+                        </View>
+                        <View style={styles.rightBadgeWrapper}>
+                          {generateCustomBadgeIcon(el)}
+                        </View>
                       </View>
-                      <View style={styles.rightBadgeWrapper}>
-                        {generateCustomBadgeIcon(el)}
-                      </View>
-                    </View>
-                    <Text style={styles.gridText}>{el.title}</Text>
-                  </FastTouchable>
-                );
-              })}
+                      <Text style={styles.gridText}>{el.title}</Text>
+                    </FastTouchable>
+                  );
+                })}
+              </View>
+              <BrowserSearchEntry />
+              {/* <View style={styles.searchBarPlaceholder} /> */}
+              <View style={styles.swipeUpHint}>
+                <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
+                <Text style={styles.swipeUpHintText}>
+                  Swipe up to explore more dApps
+                </Text>
+              </View>
             </View>
-            <BrowserSearchEntry />
-            <View style={styles.searchBarPlaceholder} />
-          </View>
-        </Tabs.ScrollView>
+          </Tabs.ScrollView>
+        </Animated.View>
         <Animated.View
           pointerEvents="auto"
           {...expandPanResponder.panHandlers}
           style={[
             styles.pullUpPanel,
             {
+              paddingTop: safeTop,
               height,
-              opacity: panelOpacity,
+              // opacity: panelOpacity,
               transform: [
                 { translateY: panelTranslateY },
-                { scale: panelScale },
+                // { scale: panelScale },
               ],
             },
-          ]}
-        />
+          ]}>
+          <Animated.View
+            style={[
+              styles.pullOverlay,
+              { top: -90 + safeTop, opacity: overlayOpacity },
+            ]}
+          />
+          <Animated.View
+            style={{
+              transformOrigin: 'top',
+              transform: [{ scale: panelScale }],
+            }}>
+            <BrowserFavoriteManage />
+          </Animated.View>
+        </Animated.View>
       </View>
     );
   },
@@ -736,6 +821,9 @@ function MultiAddressHome(): JSX.Element {
     getStyle,
   });
   const appThemeConfig = useAppThemeConfig();
+  const tabsOpacityRef = useRef<Animated.AnimatedInterpolation<number> | null>(
+    null,
+  );
 
   const combinedData = useScene24hBalanceLightWeightData('Home');
   useRendererDetect({ name: 'MultiAddressHome' });
@@ -809,6 +897,12 @@ function MultiAddressHome(): JSX.Element {
     apisHomeTabIndex.setTabIndex(0);
   }, []);
 
+  const WrappedOverViewComponent = useMemo(
+    () => (props: any) =>
+      <OverViewComponent {...props} tabsOpacityRef={tabsOpacityRef} />,
+    [tabsOpacityRef],
+  );
+
   return (
     <NormalScreenContainer2024
       type="linear"
@@ -836,7 +930,8 @@ function MultiAddressHome(): JSX.Element {
         }}>
         <TabsMultiAssets
           onIndexChange={onIndexChange}
-          OverViewComponent={OverViewComponent}
+          OverViewComponent={WrappedOverViewComponent}
+          tabsOpacity={tabsOpacityRef.current || undefined}
         />
 
         {/* show search bar when Overview tab */}
@@ -1324,7 +1419,44 @@ const getStyle = createGetStyles2024(
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'red',
+    },
+    pullOverlay: {
+      position: 'absolute',
+      top: -90,
+      transform: [{ translateX: -501 }],
+      left: '50%',
+      height: 1002,
+      width: 1002,
+      borderRadius: 10000,
+      backgroundColor: colors2024['brand-light-1'],
+      zIndex: 10,
+      pointerEvents: 'none',
+    },
+    swipeUpHint: {
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 16,
+    },
+    swipeUpHintFixed: {
+      position: 'absolute',
+      bottom: 16,
+      left: 0,
+      right: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 5,
+    },
+    swipeUpHintText: {
+      marginTop: 4,
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
     },
   }),
 );

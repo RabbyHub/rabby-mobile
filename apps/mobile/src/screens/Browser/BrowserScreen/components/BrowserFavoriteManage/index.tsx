@@ -5,16 +5,20 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { atom } from 'jotai';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { BrowserSearch } from '../BrowserSearch';
 import { BrowserFavorite } from './BrowserFavorite';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+// import { TouchableOpacity } from 'react-native-gesture-handler';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const activeTabAtom = atom('favorites');
 
-export function BrowserFavoriteManage(): JSX.Element {
+export function BrowserFavoriteManage({
+  isInBottomSheet,
+}: {
+  isInBottomSheet?: boolean;
+}): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
@@ -34,7 +38,7 @@ export function BrowserFavoriteManage(): JSX.Element {
     <View style={styles.page}>
       <View style={styles.favoritesList}>
         <BrowserFavorite
-          isInBottomSheet
+          isInBottomSheet={isInBottomSheet}
           onPress={dapp => {
             openTab(dapp.url || dapp.origin);
             setPartialBrowserState({
@@ -47,9 +51,9 @@ export function BrowserFavoriteManage(): JSX.Element {
       <TouchableOpacity
         style={[styles.fabContainer, { paddingBottom: bottom || 12 }]}
         onPress={() => {
-          setSearchState({
+          setPartialBrowserState({
+            isShowBrowser: true,
             isShowSearch: true,
-            searchText: '',
           });
         }}>
         <View style={styles.innerCircle}>
@@ -65,52 +69,15 @@ export function BrowserFavoriteManage(): JSX.Element {
           <View style={{ width: 20 }} />
         </View>
       </TouchableOpacity>
-
-      {searchState.isShowSearch ? (
-        <BrowserSearch
-          style={styles.browserSearch}
-          searchText={searchState.searchText}
-          setSearchText={v => {
-            setSearchState(prev => {
-              return {
-                ...prev,
-                searchText: v,
-              };
-            });
-          }}
-          onClose={shouldClose => {
-            if (shouldClose) {
-              setSearchState({
-                isShowSearch: false,
-                searchText: '',
-              });
-              setPartialBrowserState({
-                isShowBrowser: false,
-                isShowManage: false,
-              });
-            } else {
-              setSearchState({
-                isShowSearch: false,
-                searchText: '',
-              });
-            }
-          }}
-          onOpenURL={url => {
-            openTab(url, {
-              isDapp: true,
-            });
-          }}
-        />
-      ) : null}
     </View>
   );
 }
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   page: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-0']
+    //   : colors2024['neutral-bg-1'],
     display: 'flex',
     flexDirection: 'column',
     height: '100%',

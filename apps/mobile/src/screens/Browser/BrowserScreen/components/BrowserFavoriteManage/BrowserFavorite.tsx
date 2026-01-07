@@ -1,18 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import { DappInfo } from '@/core/services/dappService';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
+import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-import RcIconDelete from '@/assets2024/icons/browser/delete.svg';
-import { ScrollView } from 'react-native-gesture-handler';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
+
 export function BrowserFavorite({
   onPress,
+  isInBottomSheet,
 }: {
   onPress?(dapp: DappInfo): void;
   isInBottomSheet?: boolean;
@@ -75,7 +73,7 @@ export function BrowserFavorite({
             </TouchableOpacity>
           </View>
         }
-        isInBottomSheet
+        isInBottomSheet={isInBottomSheet}
         data={list}
         onPress={isEditing ? undefined : onPress}
         style={styles.list}

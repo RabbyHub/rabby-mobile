@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
+import { Animated } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -38,6 +39,7 @@ export const TAB_HEADER_MIN_HEIGHT = 44;
 export interface TabMultiAssetsProps {
   onIndexChange(index: number): void;
   OverViewComponent: React.FC<{}>;
+  tabsOpacity?: Animated.AnimatedInterpolation<number>;
 }
 
 export const enum TabName {
@@ -82,6 +84,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
   // multi24HBalanceReturn,
   // overViewContent,
   OverViewComponent,
+  tabsOpacity,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -91,13 +94,19 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         typeof HomeCustomMaterialTabBar
       >['materialTabBarProps'],
     ) => (
-      <HomeCustomMaterialTabBar
-        materialTabBarProps={{
-          ..._props,
-        }}
-      />
+      <Animated.View
+        style={{ opacity: tabsOpacity || 1 }}
+        pointerEvents={
+          (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto'
+        }>
+        <HomeCustomMaterialTabBar
+          materialTabBarProps={{
+            ..._props,
+          }}
+        />
+      </Animated.View>
     ),
-    [],
+    [tabsOpacity],
   );
 
   const renderLabel = useCallback(
@@ -115,15 +124,22 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
   >(
     props => {
       return (
-        <TabsTopHeader
-          // data={data}
-          // loading={loading}
-          // showNetWorth={tabIndex !== 0}
-          indexValue={props.index}
-        />
+        <Animated.View
+          style={{ opacity: tabsOpacity || 1 }}
+          pointerEvents={
+            (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto'
+          }>
+          <TabsTopHeader
+            // data={data}
+            // loading={loading}
+            // showNetWorth={tabIndex !== 0}
+            indexValue={props.index}
+          />
+        </Animated.View>
       );
     },
     [
+      tabsOpacity,
       // tabIndex,
       /* data, loading */
     ],
