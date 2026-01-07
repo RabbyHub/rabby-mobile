@@ -197,7 +197,7 @@ export const TokenList = ({
       {
         show: !loadingToken && !sortTokens.length,
         data: noAnyAssets
-          ? [{ type: 'empty-token' }]
+          ? [{ type: 'empty-assets' }]
           : [
               {
                 type: 'empty-assets',

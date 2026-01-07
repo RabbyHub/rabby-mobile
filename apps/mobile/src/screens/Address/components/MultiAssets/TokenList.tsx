@@ -395,7 +395,10 @@ export const TokenList = () => {
         hasNoAssets
           ? [
               {
-                type: 'empty-token',
+                type: 'empty-assets',
+                data: t('page.singleHome.sectionHeader.NoData', {
+                  name: t('page.singleHome.sectionHeader.Token'),
+                }),
               },
             ]
           : portfolioListData

@@ -102,15 +102,14 @@ const Indicator = ({
     }
   }, [fadeIn, opacity]);
 
-  const { accountToShowReceiveTip } = useShowReceiveAddressTip();
-
-  if (accountToShowReceiveTip) return null;
+  // const { accountToShowReceiveTip } = useShowReceiveAddressTip();
+  // if (accountToShowReceiveTip) return null;
 
   return (
     <View
       style={[
         styles.indicatorContainer,
-        accountToShowReceiveTip && { display: 'none' },
+        // accountToShowReceiveTip && { display: 'none' },
       ]}>
       <Animated.View style={[stylez, styles.indicator, style]} />
       <View style={styles.leftBackground} />
