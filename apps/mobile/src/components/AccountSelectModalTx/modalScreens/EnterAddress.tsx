@@ -3,7 +3,7 @@ import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigateDeprecated } from '@/utils/navigation';
-import { isValidHexAddress } from '@metamask/utils';
+import { isValidAddress } from '@ethereumjs/util';
 import {
   Keyboard,
   TouchableOpacity,
@@ -31,15 +31,7 @@ import { AddressEditorBadge } from '../AddressEditorBadge';
 import { touchedFeedback } from '@/utils/touch';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { useAccounts } from '@/hooks/account';
-import {
-  useSortAddressList,
-  useSortedAccounts,
-} from '@/screens/Address/useSortAddressList';
-import AccountCard from '@/components/Address/components/AccountCard';
-import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { ellipsisAddress } from '@/utils/address';
-import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
+import { useSortedAccounts } from '@/screens/Address/useSortAddressList';
 import { SearchedAddressItemInSheetModal } from '../AddressItem/SearchedItem';
 import { Account } from '@/core/services/preference';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -92,7 +84,7 @@ const ScreenPanelEnterAddress = ({
   }>(null);
 
   const isValidAddr = useMemo(
-    () => isValidHexAddress(input as `0x${string}`),
+    () => isValidAddress(input as `0x${string}`),
     [input],
   );
   const hasError = !!input && !isValidAddr && !ensResult?.addr;
@@ -106,7 +98,7 @@ const ScreenPanelEnterAddress = ({
 
   const { foundAccountInfo } = useMemo(() => {
     let info: null | ReturnType<typeof findAccountWithoutBalance> = null;
-    if (isValidHexAddress(input as `0x${string}`)) {
+    if (isValidAddress(input as `0x${string}`)) {
       info = findAccountWithoutBalance(input, { useEllipsisAsFallback: false }); // clear input when enter screen
     }
     return {
@@ -159,7 +151,7 @@ const ScreenPanelEnterAddress = ({
 
   const handleConfirmAddress = useCallback(
     async (address: string) => {
-      if (!isValidHexAddress(address as any)) {
+      if (!isValidAddress(address as any)) {
         setError(INPUT_ERROR.INVALID_ADDRESS);
         return;
       }
@@ -219,7 +211,7 @@ const ScreenPanelEnterAddress = ({
       setError(undefined);
       return;
     }
-    if (isValidHexAddress(input as `0x${string}`)) {
+    if (isValidAddress(input as `0x${string}`)) {
       setError(undefined);
       return;
     }
