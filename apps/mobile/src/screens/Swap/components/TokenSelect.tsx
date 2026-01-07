@@ -119,15 +119,16 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
 
     const {
       tokens,
-      existedTokens,
       checkIsExpireAndUpdate,
       loadToken,
       loadOnVisibleChanged,
       isLoading: isLoadingAllTokens,
+      isSearching,
     } = useSelectTokens({
       currentAccount,
       chain_server_id: queryConds.chainServerId,
       isLpTokenEnabled,
+      keyword: queryConds.keyword,
     });
 
     useImperativeHandle(ref, () => ({
@@ -160,8 +161,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       currentAccount?.address,
       loadToken,
       checkIsExpireAndUpdate,
-      existedTokens,
-      type,
     ]);
 
     const { userTokenSettings, fetchUserTokenSettings } =
@@ -172,11 +171,14 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
     );
 
     const isListLoading = useMemo(() => {
+      if (isSearching) {
+        return true;
+      }
       if (hasHandledTokenSelectorVisibleRef.current) {
         return false;
       }
       return isLoadingAllTokens;
-    }, [isLoadingAllTokens]);
+    }, [isLoadingAllTokens, isSearching]);
 
     const handleSearchTokens = useCallback<
       React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']

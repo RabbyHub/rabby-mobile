@@ -368,6 +368,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
         const keywordLower = normalizedKeyword;
         const filteredList = list.filter(item => {
           const matchKeyWords = [item.id, item.symbol];
+          if (!isLpTokenEnabled && item.is_core === false) {
+            return false;
+          }
           return matchKeyWords.some(i =>
             i?.toLowerCase().includes(keywordLower),
           );

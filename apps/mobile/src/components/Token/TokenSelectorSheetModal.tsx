@@ -506,7 +506,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       }
 
       const totalUsdValue = foldTokensList.reduce(
-        (acc, token) => acc + (token.usd_value || 0),
+        (acc, token) => acc + (token.is_core ? token.usd_value || 0 : 0),
         0,
       );
 
