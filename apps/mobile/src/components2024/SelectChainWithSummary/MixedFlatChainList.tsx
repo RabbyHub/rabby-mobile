@@ -7,6 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
 import { useChainBalances, useMatteredChainBalancesAll } from '@/hooks/account';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
 import useTokenList, { ITokenItem } from '@/store/tokens';
@@ -36,8 +37,18 @@ export default function MixedFlatChainList({
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   account?: Account | null;
 }) {
+  const { top10Addresses } = useAccountInfo();
+  const selectedAddresses = useMemo(() => {
+    if (needAllAddresses) {
+      return top10Addresses;
+    }
+    if (currentAccount?.address) {
+      return [currentAccount.address];
+    }
+    return [];
+  }, [needAllAddresses, top10Addresses, currentAccount?.address]);
   const tokens = useTokenList(
-    useShallow(s => s.forChainSelector(currentAccount?.address)),
+    useShallow(s => s.forChainSelector(selectedAddresses)),
   );
 
   const { styles } = useTheme2024({ getStyle });

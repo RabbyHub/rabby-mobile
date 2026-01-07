@@ -65,7 +65,9 @@ export const TokenList = () => {
     unFoldTokens: tokens,
     foldTokens,
     scamTokens,
-  } = useTokenList(useShallow(s => s.forMultiAssets(chain, isLpTokenEnabled)));
+  } = useTokenList(
+    useShallow(s => s.forMultiAssets(top10Addresses, chain, isLpTokenEnabled)),
+  );
 
   const { isLoading } = useTokenList();
 

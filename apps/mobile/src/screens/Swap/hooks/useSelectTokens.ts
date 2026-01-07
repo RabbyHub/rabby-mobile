@@ -23,6 +23,12 @@ export const useSelectTokens = ({
   const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
   const { top10Addresses } = useAccountInfo();
+  const tokenSelectAddresses = useMemo(() => {
+    if (currentAddress) {
+      return [currentAddress];
+    }
+    return top10Addresses;
+  }, [currentAddress, top10Addresses]);
 
   const [isFirstFetch, setIsFirstFetch] = useState(true);
 
@@ -69,12 +75,12 @@ export const useSelectTokens = ({
   const tokens = useMemo(
     () =>
       forTokenSelect(
-        currentAddress,
+        tokenSelectAddresses,
         chain_server_id,
         undefined,
         isLpTokenEnabled,
       ),
-    [forTokenSelect, currentAddress, chain_server_id, isLpTokenEnabled],
+    [forTokenSelect, tokenSelectAddresses, chain_server_id, isLpTokenEnabled],
   );
 
   const tokenWithOwner = useMemo(() => {
