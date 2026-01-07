@@ -187,7 +187,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   );
 };
 
-export const RightArea = () => {
+export const SingleHomeRightArea = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
   const { t } = useTranslation();

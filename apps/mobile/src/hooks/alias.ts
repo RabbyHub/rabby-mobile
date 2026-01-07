@@ -4,6 +4,9 @@ import { useAccounts } from './account';
 import { apiContact } from '@/core/apis';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { perfEvents } from '@/core/utils/perf';
+import { AddressAliasItem } from '@rabby-wallet/service-address';
+import { useShallow } from 'zustand/react/shallow';
+import { addressUtils } from '@rabby-wallet/base-utils';
 
 export const useAlias = (address?: string) => {
   const [name, setName] = useState<string>('');
@@ -34,7 +37,7 @@ export const useAlias = (address?: string) => {
 
 const addressAliasStore = zCreate(
   zMutative<{
-    aliasesMap: Record<string, string>;
+    aliasesMap: Record<string, AddressAliasItem>;
   }>(
     () => ({
       aliasesMap: {},
@@ -47,20 +50,26 @@ const addressAliasStore = zCreate(
 perfEvents.on('CONTACTS_ALIASES_UPDATE', ({ nextState }) => {
   addressAliasStore.setState(state => {
     Object.entries(nextState || {}).forEach(([address, addresItem]) => {
-      state.aliasesMap[address.toLowerCase()] = addresItem.alias;
+      const lcAddr = address.toLowerCase();
+      state.aliasesMap[lcAddr] = {
+        ...addresItem,
+        isDefaultAlias:
+          addresItem.alias.toLowerCase() ===
+          addressUtils.ellipsis(address, 6).toLowerCase(),
+      };
     });
   });
 });
 
-function setName(address: string, alias: string) {
+function setName(address: string, aliasItem: AddressAliasItem) {
   const addr = address.toLowerCase();
 
   addressAliasStore.setState(prev => {
     const prevAlias = prev.aliasesMap[addr];
-    if (prevAlias === alias) return;
+    if (prevAlias === aliasItem) return;
 
-    if (alias) {
-      prev.aliasesMap[addr] = alias;
+    if (aliasItem) {
+      prev.aliasesMap[addr] = aliasItem;
     }
   });
 }
@@ -79,17 +88,30 @@ export function useAlias2(
   },
 ) {
   const { autoFetch = false, FETCH_AFTER_UPDATE = false } = options || {};
-  const adderssAlias = addressAliasStore(s =>
-    !address ? '' : s.aliasesMap[address.toLowerCase()] || '',
+  const { adderssAlias, isDefaultAlias } = addressAliasStore(
+    useShallow(s => {
+      const lcAddr = address.toLowerCase();
+      const item = s.aliasesMap[lcAddr];
+      return {
+        adderssAlias: !lcAddr ? '' : item?.alias || '',
+        isDefaultAlias: !lcAddr
+          ? true
+          : item?.isDefaultAlias ??
+            item?.alias.toLowerCase() ===
+              addressUtils.ellipsis(address, 6).toLowerCase(),
+      };
+    }),
   );
 
   const fetchAlias = useCallback(() => {
     if (!address) return;
 
-    const alias = apiContact.getAliasName(address) || '';
-    setName(address, alias);
+    const aliasItem = contactService.getAliasByAddress(address, {
+      keepEmptyIfNotFound: false,
+    });
+    if (aliasItem) setName(address, aliasItem);
 
-    return alias;
+    return aliasItem?.address;
   }, [address]);
 
   useEffect(() => {
@@ -110,6 +132,7 @@ export function useAlias2(
 
   return {
     adderssAlias,
+    isDefaultAlias,
     updateAlias,
     fetchAlias,
   };

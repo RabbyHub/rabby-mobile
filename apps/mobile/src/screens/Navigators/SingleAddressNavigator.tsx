@@ -24,8 +24,8 @@ export function SingleAddressNavigator() {
         options={mergeScreenOptions({
           title: '',
           headerTitle: '',
+          header: () => <SingleAddressHome.Header />,
           headerShown: true,
-          // headerRight: RightArea,
           headerStyle: {
             backgroundColor: 'transparent',
           },

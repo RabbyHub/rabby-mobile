@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 
 export const BG_FULL_HEIGHT = 560;
 export const useBgSize = () => {
-  const { safeOffHeader } = useSafeSizes();
+  const { safeTop, safeOffHeader } = useSafeSizes();
 
   const sizes = useMemo(() => {
     const topHeight = safeOffHeader - 11;
@@ -48,10 +48,11 @@ export const useBgSize = () => {
     };
 
     return {
+      safeTop,
       layouts,
       bgFullHeight: BG_FULL_HEIGHT,
       topHeight,
     };
-  }, [safeOffHeader]);
+  }, [safeTop, safeOffHeader]);
   return sizes;
 };

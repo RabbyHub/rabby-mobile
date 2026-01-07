@@ -491,59 +491,57 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
   );
 });
 
-const getStyle = createGetStyles2024(
-  ({ colors2024, isLight, bottomSafeArea }) => {
-    return {
-      container: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: IS_IOS ? 1 : 1,
-        // ...makeDebugBorder(),
-      },
-      absEle: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      },
-      containerMask: {
-        backgroundColor: isLight ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.6)',
-      },
-      content: {
-        position: 'absolute',
-        width: '100%',
-        paddingTop: 0,
-        justifyContent: 'center',
-        alignItems: 'center',
-        // ...makeDebugBorder(),
-      },
-      gestureAnimContainer: {
-        marginTop: 24,
-        alignItems: 'center',
-        justifyContent: 'center',
-      },
-      swipeText: {
-        color: colors2024['neutral-InvertHighlight'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 16,
-        fontStyle: 'normal',
-        fontWeight: 700,
-        lineHeight: 20,
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+  return {
+    container: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: IS_IOS ? 1 : 1,
+      // ...makeDebugBorder(),
+    },
+    absEle: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    containerMask: {
+      backgroundColor: isLight ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+    },
+    content: {
+      position: 'absolute',
+      width: '100%',
+      paddingTop: 0,
+      justifyContent: 'center',
+      alignItems: 'center',
+      // ...makeDebugBorder(),
+    },
+    gestureAnimContainer: {
+      marginTop: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    swipeText: {
+      color: colors2024['neutral-InvertHighlight'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontStyle: 'normal',
+      fontWeight: 700,
+      lineHeight: 20,
 
-        marginTop: 16,
-      },
-      animationLottie: {
-        width: '100%',
-        height: '100%',
-        flex: 1,
-      },
-    };
-  },
-);
+      marginTop: 16,
+    },
+    animationLottie: {
+      width: '100%',
+      height: '100%',
+      flex: 1,
+    },
+  };
+});
 
 function DefaultBeforeNode({
   secondaryIndicatorAbsLayout,

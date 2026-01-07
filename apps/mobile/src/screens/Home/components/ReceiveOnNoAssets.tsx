@@ -20,7 +20,6 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useState } from 'react';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 
 const SIZES = {
   qrCodeSize: 163,
@@ -29,7 +28,7 @@ const SIZES = {
 
 export function ReceiveOnNoAssets({
   account,
-  isForSingle,
+  isForSingle = false,
 }: {
   account?: Account | null;
   isForSingle?: boolean;
@@ -258,14 +257,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 ReceiveOnNoAssets.BgWrapper = function BgWrapper({
   style,
   children,
-}: React.PropsWithChildren<RNViewProps & {}>) {
-  const { styles } = useTheme2024({ getStyle: getBgWrapper });
+  isForSingle = false,
+}: React.PropsWithChildren<
+  RNViewProps & {
+    isForSingle?: boolean;
+  }
+>) {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getBgWrapper });
 
   return (
     <View style={[styles.container, style]}>
       <View style={styles.card}>
-        <View style={styles.usdIconWrapper}>
-          <IconBgUsdCC style={styles.usdIcon} />
+        <View
+          style={[
+            styles.usdIconWrapper,
+            isForSingle && styles.usdIconWrapperSingle,
+          ]}>
+          <IconBgUsdCC
+            style={styles.usdIcon}
+            width={styles.usdIcon.width}
+            height={styles.usdIcon.height}
+          />
         </View>
         {children}
       </View>
@@ -287,10 +299,15 @@ const getBgWrapper = createGetStyles2024(({ colors2024 }) => {
       minHeight: 384,
       width: '100%',
     },
+    usdIconWrapperSingle: {
+      top: 16,
+    },
     usdIconWrapper: {
       position: 'absolute',
       right: 0,
       top: 40,
+      zIndex: -1,
+      // ...makeDebugBorder(),
     },
     usdIcon: {
       width: 47,
