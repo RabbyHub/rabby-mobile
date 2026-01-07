@@ -46,7 +46,7 @@ export const TAB_HEADER_MIN_HEIGHT = 44;
 export interface TabMultiAssetsProps {
   onIndexChange(index: number): void;
   OverViewComponent: React.FC<{
-    accountToShowReceiveTip?: Account | null;
+    // accountToShowReceiveTip?: Account | null;
   }>;
 }
 
@@ -141,7 +141,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
         },
-        scrollEnabled: !accountToShowReceiveTip,
+        // scrollEnabled: !accountToShowReceiveTip,
       }}
       containerStyle={styles.container}
       headerContainerStyle={styles.headerContainer}>
@@ -149,7 +149,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         key={TabName.overview}
         name={TabName.overview}
         label={() => null}>
-        <OverViewComponent accountToShowReceiveTip={accountToShowReceiveTip} />
+        <OverViewComponent />
       </Tabs.Tab>
 
       <Tabs.Tab
