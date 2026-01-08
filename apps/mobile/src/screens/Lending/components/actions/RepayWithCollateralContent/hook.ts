@@ -307,7 +307,14 @@ export const useHFForRepayWithCollateral = ({
   }, [afterSwapInfo?.hfAfterSwap]);
 
   const isLiquidatable = useMemo(() => {
-    if (!afterSwapInfo?.hfAfterSwap) {
+    const hfAfterSwap = afterSwapInfo?.hfAfterSwap;
+    if (!hfAfterSwap) {
+      return false;
+    }
+
+    const hfNumber = valueToBigNumber(hfAfterSwap);
+
+    if (hfNumber.lt(0)) {
       return false;
     }
     return valueToBigNumber(afterSwapInfo.hfAfterSwap).lt(

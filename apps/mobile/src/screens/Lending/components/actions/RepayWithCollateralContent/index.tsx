@@ -83,11 +83,11 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { ethers, PopulatedTransaction } from 'ethers';
 import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
-import DebtSwapModalSlider from '@/screens/Lending/modals/DebtSwapModal/Slider';
 import RepayWithCollateralOverview from './Overview';
 
 interface RepayWithCollateralProps {
   repayToken: SwappableToken;
+  defaultCollateralToken?: SwappableToken;
   onClose?: () => void;
 }
 
@@ -99,6 +99,7 @@ const BOTTOM_SIZE = {
 
 export default function RepayWithCollateral({
   repayToken,
+  defaultCollateralToken,
   onClose,
 }: RepayWithCollateralProps) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -114,18 +115,15 @@ export default function RepayWithCollateral({
 
   const [selectedCollateralToken, setSelectedCollateralToken] = useState<
     SwappableToken | undefined
-  >();
+  >(defaultCollateralToken);
 
-  const [repayAmount, setRepayAmount] = useState<string>(
-    repayToken.balance || '0',
-  );
-  const debouncedRepayAmount = useDebouncedValue(repayAmount, 400);
+  const [repayAmount, setRepayAmount] = useState<string>('');
+  const debouncedRepayAmount = useDebouncedValue(repayAmount || '0', 400);
   const [collateralAmount, setCollateralAmount] = useState<string>('');
 
   const [quote, setQuote] = useState<ParaswapRatesType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
-  const [slider, setSlider] = useState<number>(100);
   const [riskChecked, setRiskChecked] = useState(false);
   const [noQuote, setNoQuote] = useState(false);
   const [quoteRefreshId, setQuoteRefreshId] = useState(0);
@@ -184,23 +182,23 @@ export default function RepayWithCollateral({
 
   const collateralAmountAfterSlippage = useMemo(() => {
     return getToAmountAfterSlippage({
-      inputAmount: collateralAmount,
+      inputAmount: collateralAmount || '0',
       slippage: Number(slippage) * 100,
     });
   }, [collateralAmount, slippage]);
 
   const priceImpactData = useMemo(() => {
     return getPriceImpactData({
-      fromToken: selectedCollateralToken,
-      toToken: repayToken,
-      fromAmount: collateralAmount,
-      toAmount: debouncedRepayAmount,
+      fromToken: repayToken,
+      toToken: selectedCollateralToken,
+      fromAmount: debouncedRepayAmount,
+      toAmount: collateralAmountAfterSlippage,
     });
   }, [
-    selectedCollateralToken,
     repayToken,
-    collateralAmount,
+    selectedCollateralToken,
     debouncedRepayAmount,
+    collateralAmountAfterSlippage,
   ]);
 
   useEffect(() => {
@@ -250,24 +248,6 @@ export default function RepayWithCollateral({
     [clearQuoteExpiredTimer],
   );
 
-  const onChangeSlider = useCallback(
-    (v: number) => {
-      setSlider(v);
-      if (v === 100) {
-        setRepayAmount(debtBalance.toString(10));
-        return;
-      }
-      const newAmountBn = new BigNumber(v).div(100).times(debtBalance);
-      const isTooSmall = newAmountBn.lt(0.0001);
-      setRepayAmount(
-        isTooSmall
-          ? newAmountBn.toString(10)
-          : new BigNumber(newAmountBn.toFixed(4, 1)).toString(10),
-      );
-    },
-    [debtBalance],
-  );
-
   const onInputChange = useCallback(
     (text: string) => {
       const formatted = formatSpeicalAmount(text);
@@ -277,24 +257,16 @@ export default function RepayWithCollateral({
 
       if (formatted === '') {
         setRepayAmount('');
-        setSlider(0);
         return;
       }
 
       const amountBn = new BigNumber(formatted || 0);
       const exceedBalance = amountBn.gt(debtBalance);
-      const safeAmountBn = exceedBalance ? debtBalance : amountBn;
       const displayAmountStr = exceedBalance
         ? debtBalance.toString(10)
         : formatted;
 
       setRepayAmount(displayAmountStr);
-
-      const percentage = debtBalance.gt(0)
-        ? safeAmountBn.div(debtBalance).times(100).toNumber()
-        : 0;
-      const clampedPercentage = Math.min(100, Math.max(0, percentage));
-      setSlider(Math.round(clampedPercentage));
     },
     [debtBalance],
   );
@@ -520,9 +492,10 @@ export default function RepayWithCollateral({
       repayAmount: debouncedRepayAmount,
       repayWithAmount: BigNumber(collateralAmount)
         .multipliedBy(1 + slippageBps / 10000)
+        .decimalPlaces(selectedCollateralToken.decimals, BigNumber.ROUND_CEIL)
         .toFixed(selectedCollateralToken.decimals),
       repayAllDebt: isMaxSelected,
-      rateMode: InterestRate.None,
+      rateMode: InterestRate.Variable,
       useFlashLoan: false,
       swapCallData,
       augustus,
@@ -911,15 +884,6 @@ export default function RepayWithCollateral({
               <Text style={styles.label}>
                 {t('page.Lending.repayWithCollateral.toRepay')}
               </Text>
-              <View style={styles.sliderContainer}>
-                <DebtSwapModalSlider
-                  style={styles.slider}
-                  fromToken={repayToken}
-                  slider={slider}
-                  onChangeSlider={onChangeSlider}
-                />
-                <Text style={styles.sliderValue}>{slider}%</Text>
-              </View>
             </View>
 
             <View style={styles.tokenBody}>
@@ -937,10 +901,10 @@ export default function RepayWithCollateral({
                 scrollEnabled={true}
                 placeholderTextColor={colors2024['neutral-info']}
               />
-              {slider !== 100 && (
+              {(!repayAmount || BigNumber(repayAmount || '0').lte(0)) && (
                 <Pressable
                   style={styles.maxButtonWrapper}
-                  onPress={() => onChangeSlider(100)}>
+                  onPress={() => setRepayAmount(debtBalance.toString(10))}>
                   <Text style={styles.maxButtonText}>MAX</Text>
                 </Pressable>
               )}
@@ -1122,7 +1086,6 @@ export default function RepayWithCollateral({
             isQuoteLoading={isQuoteLoading}
             currentHF={currentHF}
             afterHF={afterSwapInfo?.hfAfterSwap.toString()}
-            showHF={isHFLow || isLiquidatable}
           />
         )}
       </BottomSheetScrollView>
@@ -1199,11 +1162,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 16,
     height: '100%',
     overflow: 'visible',
-    paddingBottom: 140,
   },
   contentContainer: {
     //paddingHorizontal: 25,
-    paddingBottom: 140,
+    paddingBottom: 220,
   },
   header: {
     paddingHorizontal: 20,
@@ -1444,7 +1406,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
   },
   dangerWarningText: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     color: colors2024['red-default'],

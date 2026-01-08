@@ -296,7 +296,6 @@ export const buildRepayWithCollateralTx = ({
     swapAndRepayCallData: swapCallData,
     augustus,
     permitSignature: undefined,
-    // @ts-ignore TODO：和aave保持一致，还不清楚为什么它为什么是undefined
-    rateMode: undefined,
+    rateMode,
   });
 };

@@ -2729,7 +2729,12 @@
       },
       "repayDetail": {
         "actions": "Repay",
-        "approveAndRepay": "Approve and Repay"
+        "approveAndRepay": "Approve and Repay",
+        "repayWith": "Repay with",
+        "tabs": {
+          "wallet": "Wallet balance",
+          "collateral": "Collateral"
+        }
       },
       "supplyDetail": {
         "actions": "Supply",
