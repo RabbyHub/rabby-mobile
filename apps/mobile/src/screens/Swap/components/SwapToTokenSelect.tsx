@@ -39,6 +39,7 @@ import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { ITokenItem } from '@/store/tokens';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -195,7 +196,18 @@ const SwapToTokenSelect = forwardRef<
       return _tokens;
     }, [queryConds.chainServerId, swapTokenList]);
 
-    const isListLoading = swapTokenListLoading;
+    const { data: favoriteTokens, loading: favoriteTokensLoading } =
+      useFavoriteTokens({
+        focus: favoriteFilterValue === 'favorite',
+        address: currentAddress,
+        chainId,
+      });
+
+    const isListLoading = useMemo(() => {
+      return favoriteFilterValue === 'favorite'
+        ? favoriteTokensLoading
+        : swapTokenListLoading;
+    }, [favoriteFilterValue, favoriteTokensLoading, swapTokenListLoading]);
 
     const handleSearchTokens = useCallback<
       React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']
@@ -275,11 +287,7 @@ const SwapToTokenSelect = forwardRef<
       let filteredTokens = availableToken || [];
 
       if (favoriteFilterValue === 'favorite') {
-        filteredTokens = filteredTokens?.filter(token =>
-          pinedQueue?.some(
-            x => x.chainId === token.chain && x.tokenId === token.id,
-          ),
-        );
+        return favoriteTokens;
       }
 
       const tokensWithPinStatus = filteredTokens?.map(e => ({
@@ -290,7 +298,7 @@ const SwapToTokenSelect = forwardRef<
       })) as ITokenItem[];
 
       return tokensWithPinStatus;
-    }, [availableToken, favoriteFilterValue, pinedQueue]);
+    }, [availableToken, favoriteFilterValue, favoriteTokens, pinedQueue]);
 
     const { forScene, ofScreen } = useScreenSceneAccountContext();
     const allowClearAccountFilter = useMemo(() => {

@@ -116,10 +116,12 @@ const BridgeToTokenSelect = ({
     return [];
   }, [currentAccount, chainId, tokenSelectorVisible, queryConds.keyword]);
 
-  const { data: favoriteTokens } = useFavoriteTokens({
-    chainId,
-    focus: tokenSelectorVisible,
-  });
+  const { data: favoriteTokens, loading: favoriteTokensLoading } =
+    useFavoriteTokens({
+      focus: favoriteFilterValue === 'favorite',
+      address,
+      chainId,
+    });
 
   const displayTokenList = useMemo(() => {
     return uniqBy(
@@ -133,7 +135,11 @@ const BridgeToTokenSelect = ({
     ).filter(e => !excludeTokens.includes(e.id));
   }, [favoriteFilterValue, favoriteTokens, tokenList, excludeTokens]);
 
-  const isListLoading = tokenListLoading;
+  const isListLoading = useMemo(() => {
+    return favoriteFilterValue === 'favorite'
+      ? favoriteTokensLoading
+      : tokenListLoading;
+  }, [favoriteFilterValue, favoriteTokensLoading, tokenListLoading]);
 
   const handleSearchTokens = React.useCallback(async keyword => {
     setQueryConds({
