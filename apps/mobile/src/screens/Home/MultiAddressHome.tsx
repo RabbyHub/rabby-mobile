@@ -498,6 +498,8 @@ const OverViewComponent = React.memo(
     const isAutoExpandedRef = useRef(false);
     const contentHeightRef = useRef(0);
     const layoutHeightRef = useRef(0);
+    const isAtBottomRef = useRef(false);
+    const gestureStartYRef = useRef(0);
     const dismissThreshold = 80;
     const panelTranslateY = useMemo(
       () =>
@@ -619,20 +621,69 @@ const OverViewComponent = React.memo(
       }).start();
     }, [pullDistanceAnim]);
 
+    const checkIsAtBottom = useCallback(() => {
+      if (!contentHeightRef.current || !layoutHeightRef.current) {
+        return false;
+      }
+      const maxOffset = Math.max(
+        0,
+        contentHeightRef.current - layoutHeightRef.current,
+      );
+      // For Android, we need to check the current scroll position
+      // Since we can't get it synchronously, we rely on the ref but also check if content is smaller than layout
+      if (contentHeightRef.current <= layoutHeightRef.current) {
+        return true; // Already at bottom if content fits in view
+      }
+      return isAtBottomRef.current;
+    }, []);
+
     const expandPanResponder = useRef(
       PanResponder.create({
-        onStartShouldSetPanResponder: () => isAutoExpandedRef.current,
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          isAutoExpandedRef.current && Math.abs(gestureState.dy) > 2,
+        onStartShouldSetPanResponder: () => {
+          if (IS_ANDROID) {
+            // On Android, allow capture when expanded
+            return isAutoExpandedRef.current;
+          }
+          return isAutoExpandedRef.current;
+        },
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          if (IS_ANDROID) {
+            // On Android, capture swipe down gestures when expanded
+            return isAutoExpandedRef.current && gestureState.dy > 5;
+          }
+          return isAutoExpandedRef.current && Math.abs(gestureState.dy) > 2;
+        },
         onPanResponderMove: (_, gestureState) => {
-          if (!isAutoExpandedRef.current) return;
-          const nextDistance = Math.max(0, pullThreshold - gestureState.dy);
-          pullDistanceRef.current = nextDistance;
-          pullDistanceAnim.setValue(nextDistance);
+          if (!isAutoExpandedRef.current) {
+            return;
+          }
+          if (IS_ANDROID) {
+            // On Android, handle swipe down differently
+            const distance = Math.max(0, gestureState.dy);
+            const nextDistance = Math.max(0, pullThreshold - distance);
+            console.log('[Android Swipe Down] Moving:', {
+              dy: gestureState.dy,
+              distance,
+              nextDistance,
+            });
+            pullDistanceRef.current = nextDistance;
+            pullDistanceAnim.setValue(nextDistance);
+          } else {
+            const nextDistance = Math.max(0, pullThreshold - gestureState.dy);
+            pullDistanceRef.current = nextDistance;
+            pullDistanceAnim.setValue(nextDistance);
+          }
         },
         onPanResponderRelease: (_, gestureState) => {
-          if (!isAutoExpandedRef.current) return;
+          if (!isAutoExpandedRef.current) {
+            return;
+          }
+          console.log('[Android Swipe Down] Released:', {
+            dy: gestureState.dy,
+            dismissThreshold,
+          });
           if (gestureState.dy > dismissThreshold) {
+            console.log('[Android Swipe Down] Collapsing panel');
             collapsePanel();
             return;
           }
@@ -643,7 +694,9 @@ const OverViewComponent = React.memo(
           }).start();
         },
         onPanResponderTerminate: () => {
-          if (!isAutoExpandedRef.current) return;
+          if (!isAutoExpandedRef.current) {
+            return;
+          }
           Animated.timing(pullDistanceAnim, {
             toValue: pullThreshold,
             duration: 180,
@@ -653,9 +706,91 @@ const OverViewComponent = React.memo(
       }),
     ).current;
 
+    // Android-specific swipe up gesture handler
+    const androidSwipeUpResponder = useRef(
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => {
+          // On Android, always allow gesture capture if not expanded
+          const shouldCapture = !isAutoExpandedRef.current;
+          console.log('[Android Swipe] onStartShouldSetPanResponder:', {
+            contentHeight: contentHeightRef.current,
+            layoutHeight: layoutHeightRef.current,
+            isExpanded: isAutoExpandedRef.current,
+            shouldCapture,
+          });
+          return shouldCapture;
+        },
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          // Only capture swipe up gestures (dy < 0)
+          const shouldCapture =
+            !isAutoExpandedRef.current && gestureState.dy < -8;
+          console.log('[Android Swipe] onMoveShouldSetPanResponder:', {
+            dy: gestureState.dy,
+            shouldCapture,
+          });
+          return shouldCapture;
+        },
+        onPanResponderGrant: event => {
+          console.log('[Android Swipe] Gesture granted');
+          gestureStartYRef.current = event.nativeEvent.pageY;
+        },
+        onPanResponderMove: (event, gestureState) => {
+          if (isAutoExpandedRef.current) {
+            return;
+          }
+
+          const distance = Math.max(0, -gestureState.dy);
+          const clamped = Math.min(distance, pullThreshold);
+          console.log('[Android Swipe] Moving:', {
+            dy: gestureState.dy,
+            distance,
+            clamped,
+          });
+          pullDistanceRef.current = clamped;
+          pullDistanceAnim.setValue(clamped);
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          console.log('[Android Swipe] Released:', {
+            dy: gestureState.dy,
+            distance: pullDistanceRef.current,
+            threshold: pullThreshold * 0.4,
+          });
+
+          const distance = Math.max(0, -gestureState.dy);
+          if (distance >= pullThreshold * 0.4) {
+            console.log('[Android Swipe] Expanding panel');
+            isAutoExpandedRef.current = true;
+            Animated.timing(pullDistanceAnim, {
+              toValue: pullThreshold,
+              duration: 220,
+              useNativeDriver: true,
+            }).start();
+          } else {
+            console.log('[Android Swipe] Collapsing back');
+            Animated.timing(pullDistanceAnim, {
+              toValue: 0,
+              duration: 180,
+              useNativeDriver: true,
+            }).start();
+          }
+        },
+        onPanResponderTerminate: () => {
+          console.log('[Android Swipe] Gesture terminated');
+          if (!isAutoExpandedRef.current) {
+            Animated.timing(pullDistanceAnim, {
+              toValue: 0,
+              duration: 180,
+              useNativeDriver: true,
+            }).start();
+          }
+        },
+      }),
+    ).current;
+
     const scrollY = useCurrentTabScrollY();
     const handleScrollYChange = useCallback(
       (currentScrollY: number) => {
+        if (Platform.OS === 'android') return; // Android uses onScroll instead
         if (isAutoExpandedRef.current) return;
         if (!contentHeightRef.current || !layoutHeightRef.current) return;
         const maxOffset = Math.max(
@@ -676,6 +811,7 @@ const OverViewComponent = React.memo(
     useAnimatedReaction(
       () => scrollY.value,
       currentScrollY => {
+        if (Platform.OS === 'android') return; // Android uses onScroll instead
         runOnJS(handleScrollYChange)(currentScrollY);
       },
       [handleScrollYChange],
@@ -704,15 +840,68 @@ const OverViewComponent = React.memo(
                   Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
               },
             ]}
-            overScrollMode="always"
-            bounces
+            overScrollMode={Platform.OS === 'android' ? 'never' : 'always'}
+            bounces={Platform.OS === 'ios'}
+            scrollEventThrottle={16}
             onContentSizeChange={(_, heightValue) => {
               contentHeightRef.current = heightValue;
             }}
             onLayout={event => {
               layoutHeightRef.current = event.nativeEvent.layout.height;
             }}
-            onScrollEndDrag={handlePullRelease}
+            onMomentumScrollEnd={
+              Platform.OS === 'android'
+                ? event => {
+                    const { contentOffset, layoutMeasurement, contentSize } =
+                      event.nativeEvent;
+                    const maxOffset = Math.max(
+                      0,
+                      contentSize.height - layoutMeasurement.height,
+                    );
+                    const currentScrollY = contentOffset.y;
+                    const wasAtBottom = isAtBottomRef.current;
+                    isAtBottomRef.current = currentScrollY >= maxOffset - 20;
+
+                    console.log('[Android Swipe] onMomentumScrollEnd:', {
+                      currentScrollY,
+                      maxOffset,
+                      diff: maxOffset - currentScrollY,
+                      contentHeight: contentSize.height,
+                      layoutHeight: layoutMeasurement.height,
+                      isAtBottom: isAtBottomRef.current,
+                      wasAtBottom,
+                    });
+
+                    if (!wasAtBottom && isAtBottomRef.current) {
+                      console.log(
+                        '[Android Swipe] Reached bottom, swipe up enabled',
+                      );
+                    }
+                  }
+                : undefined
+            }
+            onScrollEndDrag={event => {
+              if (Platform.OS === 'android') {
+                const { contentOffset, layoutMeasurement, contentSize } =
+                  event.nativeEvent;
+                const maxOffset = Math.max(
+                  0,
+                  contentSize.height - layoutMeasurement.height,
+                );
+                const currentScrollY = contentOffset.y;
+                const wasAtBottom = isAtBottomRef.current;
+                isAtBottomRef.current = currentScrollY >= maxOffset - 20;
+
+                console.log('[Android Swipe] onScrollEndDrag:', {
+                  currentScrollY,
+                  maxOffset,
+                  diff: maxOffset - currentScrollY,
+                  isAtBottom: isAtBottomRef.current,
+                  wasAtBottom,
+                });
+              }
+              handlePullRelease();
+            }}
             refreshControl={
               <RefreshControl refreshing={false} onRefresh={onRefresh} />
             }>
@@ -758,7 +947,9 @@ const OverViewComponent = React.memo(
               </View>
               <BrowserSearchEntry />
               {/* <View style={styles.searchBarPlaceholder} /> */}
-              <View style={styles.swipeUpHint}>
+              <View
+                {...(IS_ANDROID ? androidSwipeUpResponder.panHandlers : {})}
+                style={styles.swipeUpHint}>
                 <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
                 <Text style={styles.swipeUpHintText}>
                   Swipe up to explore more dApps
@@ -1438,6 +1629,8 @@ const getStyle = createGetStyles2024(
       justifyContent: 'center',
       alignItems: 'center',
       marginTop: 16,
+      paddingVertical: IS_ANDROID ? 20 : 0,
+      minHeight: IS_ANDROID ? 80 : 'auto',
     },
     swipeUpHintFixed: {
       position: 'absolute',
