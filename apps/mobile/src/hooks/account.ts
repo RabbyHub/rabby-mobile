@@ -48,6 +48,7 @@ import { useBalanceAccounts } from './useAccountsBalance';
 import { perfEvents } from '@/core/utils/perf';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { EntityAccountBase } from '@/databases/entities/base';
+import { ormEvents } from '@/databases/entities/_helpers';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
@@ -81,7 +82,9 @@ const fetchAndSet = (options?: { confirmChanged?: boolean }) => {
 };
 
 async function fetchNewlyAddedAccounts() {
-  return AccountInfoEntity.getAccountsAddedIn().then(accounts => {
+  return AccountInfoEntity.getAccountsAddedIn(
+    NEWLY_ADDED_ACCOUNT_DURATION,
+  ).then(accounts => {
     zAccountStore.setState(prev => {
       const newVal = accounts.reduce((accu, cur) => {
         accu[cur._db_id] = cur;
@@ -100,6 +103,8 @@ async function fetchNewlyAddedAccounts() {
   });
 }
 
+const NEWLY_ADDED_ACCOUNT_DURATION = 10 * 60 * 1000;
+
 export function useIsNewlyAddedAccount(account: KeyringAccount) {
   const dbId = useMemo(() => {
     return EntityAccountBase.buildDBId({
@@ -114,7 +119,9 @@ export function useIsNewlyAddedAccount(account: KeyringAccount) {
 
   return {
     newlyAddedAccount,
-    isNewlyAdded: !!newlyAddedAccount,
+    isNewlyAdded:
+      !!newlyAddedAccount &&
+      Date.now() - newlyAddedAccount.updated_at <= NEWLY_ADDED_ACCOUNT_DURATION,
   };
 }
 
@@ -137,10 +144,11 @@ export function startManageAccountStoreLifecycle() {
     fetchAndSet();
   });
   // removedAccount
-  keyringService.on('removedAccount', (account: Account) => {
+  keyringService.on('removedAccount', async (account: Account) => {
     fetchAndSet();
 
-    AccountInfoEntity.deleteByAccount(account);
+    await AccountInfoEntity.deleteByAccount(account);
+    await fetchNewlyAddedAccounts();
   });
 
   keyringService.store.subscribe(state => {
@@ -149,15 +157,19 @@ export function startManageAccountStoreLifecycle() {
     }
   });
 
-  accountEvents.on('ACCOUNT_ADDED', ({ accounts, scene }) => {
-    AccountInfoEntity.recordNewAccount(accounts);
+  accountEvents.on('ACCOUNT_ADDED', async ({ accounts, scene }) => {
+    await AccountInfoEntity.recordNewAccount(accounts);
+    await fetchNewlyAddedAccounts();
+  });
+
+  ormEvents.on(`account_info:removed`, () => {
     fetchNewlyAddedAccounts();
   });
 
   fetchNewlyAddedAccounts();
   setInterval(() => {
     fetchNewlyAddedAccounts();
-  }, 3 * 1e3);
+  }, 10 * 1e3);
 }
 
 function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {

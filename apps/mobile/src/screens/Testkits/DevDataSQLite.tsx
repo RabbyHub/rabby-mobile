@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -28,8 +29,11 @@ import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { useDevNewlyAddedAccounts } from '@/hooks/account';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { getTimeFromNow } from '@/utils/time';
 import { useRestCountDownLabel } from '@/hooks/system/time';
+import { accountEvents } from '@/core/apis/account';
+import { AddressItemContextMenuDev } from '../Address/components/AddressItemContextMenuDev';
+import { AddressItemShadowView } from '../Address/components/AddressItemShadowView';
+import { touchedFeedback } from '@/utils/touch';
 
 function NewlyAddedAccountItem({
   item,
@@ -86,7 +90,6 @@ function NewlyAddedAccountItem({
               </View>
             </View>
             <View style={addressItemStyles.rightContainer}>
-              {/* <Text>{getTimeFromNow((item.updated_at || 0) / 1e3)}</Text> */}
               <Text style={[{ color: cdTextColor }]}>{countDownText}</Text>
             </View>
           </View>
@@ -102,8 +105,6 @@ function DevSQLiteInfo() {
     isLight: true,
   });
   const { sqliteInfo } = useSQLiteInfo({ enableAutoFetch: true });
-
-  const { newlyAddedAccounts } = useDevNewlyAddedAccounts();
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -135,20 +136,6 @@ function DevSQLiteInfo() {
             {' '.repeat(100)}
           </Text>
         </View>
-      </View>
-
-      <View style={{ marginTop: 0, width: '100%' }}>
-        <Text style={[styles.subMarkedTitle, { marginBottom: 12 }]}>
-          Newly Added Accounts Total: {newlyAddedAccounts.length}
-        </Text>
-        <FlatList
-          data={newlyAddedAccounts}
-          contentContainerStyle={{ gap: 8 }}
-          renderItem={info => {
-            const { item } = info;
-            return <NewlyAddedAccountItem key={item._db_id} item={item} />;
-          }}
-        />
       </View>
 
       <Button
@@ -187,6 +174,8 @@ function DevDataAccount() {
   const { assetsInfo, fetchAssetsInfo } = useAssetsBasicInfo({
     enableAutoFetch: true,
   });
+
+  const { newlyAddedAccounts } = useDevNewlyAddedAccounts();
 
   return (
     <View style={[styles.showCaseRowsContainer]}>
@@ -229,6 +218,54 @@ function DevDataAccount() {
         containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
         onPress={() => fetchAssetsInfo()}
       />
+
+      <View style={{ marginTop: 24, width: '100%' }}>
+        <Text style={[styles.subMarkedTitle, { marginBottom: 12 }]}>
+          Newly Added Accounts Total: {newlyAddedAccounts.length}
+        </Text>
+        <FlatList
+          data={newlyAddedAccounts}
+          contentContainerStyle={{ gap: 8 }}
+          renderItem={info => {
+            const { item } = info;
+            return (
+              <AddressItemContextMenuDev
+                key={item._db_id}
+                account={item}
+                actions={['dev:removeAddedRecord']}>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  // onPressIn={() => !useLongPressing && setIsPressing(true)}
+                  // onPressOut={() => setIsPressing(false)}
+                  // style={StyleSheet.flatten([styles.root])}
+                  delayLongPress={200} // long press delay
+                  // onPress={onDetail}
+                  onLongPress={() => {
+                    // useLongPressing && setIsPressing(true);
+                    touchedFeedback();
+                  }}>
+                  <NewlyAddedAccountItem item={item} />
+                </TouchableOpacity>
+              </AddressItemContextMenuDev>
+            );
+          }}
+        />
+      </View>
+
+      {!newlyAddedAccounts.length && (
+        <Button
+          title={'Mock Current Account Added'}
+          height={48}
+          containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
+          onPress={() => {
+            if (!currentAccount) return;
+
+            accountEvents.emit('ACCOUNT_ADDED', {
+              accounts: [currentAccount],
+            });
+          }}
+        />
+      )}
     </View>
   );
 }
