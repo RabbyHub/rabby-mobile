@@ -1,7 +1,6 @@
 import { getTop10MyAddresses } from '@/core/apis/account';
 import { openapi } from '@/core/request';
 import { zCreate } from '@/core/utils/reexports';
-import { BalanceEntity } from '@/databases/entities/balance';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { waitQueueFinished } from '@/hooks/useMultiCurve';
@@ -201,7 +200,7 @@ const computeMultiAssets = (
   tokens.forEach(token => {
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
-    const isScam = (usdValue === 0 && !isZeroCore) || token.is_scam;
+    const isScam = (usdValue === 0 && !isZeroCore) || token.is_suspicious;
     if (isScam) {
       scamTokens.push(token);
     } else {
@@ -256,7 +255,7 @@ const computeSingleAssets = (
   tokens.forEach(token => {
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
-    const isScam = (usdValue === 0 && !isZeroCore) || token.is_scam;
+    const isScam = (usdValue === 0 && !isZeroCore) || token.is_suspicious;
     if (isScam) {
       scamTokens.push(token);
     } else {
@@ -320,10 +319,10 @@ const computeTokenSelect = (
       return [];
     }
     const filteredList = _list.filter(item => {
-      if (!item.is_verified) {
+      if (item.is_verified === false) {
         return false;
       }
-      if (!item.is_core && !item.protocol_id) {
+      if (item.is_core === false && !item.protocol_id) {
         return false;
       }
       const matchKeyWords = [item.id, item.symbol];
@@ -397,7 +396,8 @@ const computeTokenSelect = (
     const scamTokens: ITokenItem[] = [];
     tokens.forEach(token => {
       const usdValue = token.usd_value || 0;
-      const isScam = !!token.is_scam || (!token.is_core && usdValue === 0);
+      const isScam =
+        !!token.is_suspicious || (!token.is_core && usdValue === 0);
       if (isScam) {
         scamTokens.push(token);
       } else if (token.is_core) {

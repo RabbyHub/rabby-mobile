@@ -100,7 +100,7 @@ export const useSelectTokens = ({
         return list.map(item => tokenItemToITokenItem(item, currentAddress));
       }
       return [];
-    }, [chain_server_id, currentAddress, keyword, isLpTokenEnabled]);
+    }, [chain_server_id, currentAddress, keyword]);
 
   const tokenSelectKey = useMemo(
     () =>
