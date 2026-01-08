@@ -18,7 +18,7 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import { isTabsSwiping, useAccountInfo } from './hooks';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { MultiEmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/MultiEmptyToken';
+import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
 import useTokenList, { ITokenItem } from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
@@ -146,7 +146,13 @@ export const TokenList = () => {
             refreshing={false}
           />
         }>
-        <MultiEmptyTokenRow />
+        <EmptyAssets
+          style={styles.emptyAssets}
+          desc={t('page.singleHome.sectionHeader.NoData', {
+            name: t('page.singleHome.sectionHeader.Token'),
+          })}
+          type={'empty-assets'}
+        />
       </Tabs.ScrollView>
     );
   }
