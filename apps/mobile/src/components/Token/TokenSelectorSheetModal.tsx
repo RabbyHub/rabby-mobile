@@ -115,6 +115,9 @@ import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { touchedFeedback } from '@/utils/touch';
 import { ITokenItem } from '@/store/tokens';
 import { useMyAccounts } from '@/hooks/account';
+import LpTokenSwitch from '@/screens/Home/components/LpTokenSwitch';
+import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
+import { isLpToken } from '@/utils/lpToken';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -234,6 +237,9 @@ export interface TokenSelectorProps<
   favoriteFilterValue?: FavoriteFilterType;
   onFavoriteFilterChange?: (value: FavoriteFilterType) => void;
   disableSort?: boolean;
+  showLpTokenSwitch?: boolean;
+  isLpTokenEnabled?: boolean;
+  onLpTokenChange?: (value: boolean) => void;
 }
 const filterTestnetTokenItem = (token: ITokenItem | TokenItem) => {
   return !findChainByServerID(token.chain)?.isTestnet;
@@ -335,6 +341,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
       showFavoriteFilter = false,
       favoriteFilterValue = 'all',
       onFavoriteFilterChange,
+      showLpTokenSwitch = false,
+      isLpTokenEnabled = false,
+      onLpTokenChange,
     },
     ref,
   ) => {
@@ -497,7 +506,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       }
 
       const totalUsdValue = foldTokensList.reduce(
-        (acc, token) => acc + (token.usd_value || 0),
+        (acc, token) => acc + (token.is_core ? token.usd_value || 0 : 0),
         0,
       );
 
@@ -715,7 +724,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           longPressTriggered.current = false;
                           return;
                         }
-                        if (alertDisabledToken()) return true;
+                        if (alertDisabledToken()) {
+                          return true;
+                        }
                         onConfirm(token);
                         toggleShowSheetModal('collapse');
                       }}>
@@ -822,7 +833,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         return;
                       }
 
-                      if (alertDisabledToken()) return true;
+                      if (alertDisabledToken()) {
+                        return true;
+                      }
                       onConfirm(token);
                       toggleShowSheetModal('collapse');
                     }}
@@ -859,12 +872,20 @@ export const TokenSelectorSheetModal = React.forwardRef<
                                 style={[
                                   styles.tokenName,
                                   !needToTokenMarketInfo &&
+                                    !isLpToken(token) &&
                                     styles.tokenNameFullWidth,
                                 ]}
                                 ellipsizeMode="tail"
                                 numberOfLines={1}>
                                 {token?.symbol}
                               </Text>
+                              {isLpToken(token) && (
+                                <View style={styles.lpTokenIconContainer}>
+                                  <LpTokenIcon
+                                    protocolId={token.protocol_id || ''}
+                                  />
+                                </View>
+                              )}
                               {needToTokenMarketInfo && (
                                 <View style={styles.exchangeLogosContainer}>
                                   <ExchangeLogos logos={cexLogos} />
@@ -1102,7 +1123,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
         // enableDismissOnClose={false}
         enableDismissOnClose
         onChange={idx => {
-          if (idx < 0) onCancel();
+          if (idx < 0) {
+            onCancel();
+          }
         }}
         {...{
           containerStyle:
@@ -1200,15 +1223,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
               !willShowFilterRow && { display: 'none' },
             ]}>
             <View style={styles.leftFilters}>
-              {showFavoriteFilter && (
-                <FavoriteFilterItem
-                  value={favoriteFilterValue}
-                  onChange={onFavoriteFilterChange || (() => {})}
-                />
-              )}
-            </View>
-
-            <View style={styles.rightFilters}>
               {willShowAccountFilter && (
                 <AccountFilterItem
                   filterAccount={filterAccount}
@@ -1245,6 +1259,21 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     }}
                   />
                 </View>
+              )}
+              {showFavoriteFilter && (
+                <FavoriteFilterItem
+                  value={favoriteFilterValue}
+                  onChange={onFavoriteFilterChange || (() => {})}
+                />
+              )}
+            </View>
+
+            <View style={styles.rightFilters}>
+              {showLpTokenSwitch && (
+                <LpTokenSwitch
+                  isEnabled={isLpTokenEnabled}
+                  onValueChange={onLpTokenChange}
+                />
               )}
             </View>
           </View>
@@ -1283,7 +1312,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     style={{
                       height: 400,
                     }}
-                    text="No tokens"
+                    text={
+                      isLpTokenEnabled
+                        ? 'No Liquidity Provider (LP) Token'
+                        : 'No tokens'
+                    }
                   />
                 )
               }
@@ -1561,6 +1594,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenNameFullWidth: {
       width: '100%',
+    },
+    lpTokenIconContainer: {
+      marginLeft: 0,
+      flexShrink: 0,
+      justifyContent: 'flex-start',
     },
     exchangeLogosContainer: {
       maxWidth: '100%',

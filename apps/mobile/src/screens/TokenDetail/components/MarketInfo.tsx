@@ -36,7 +36,7 @@ const MarketInfo = ({
   return (
     <View style={styles.container}>
       <View style={styles.priceContainer}>
-        <Text style={styles.priceValue}>{formatPrice(price)}</Text>
+        <Text style={styles.priceValue}>{`$${formatPrice(price)}`}</Text>
         <View style={styles.priceChangeContainer}>
           <Text
             style={[
@@ -57,7 +57,7 @@ const MarketInfo = ({
             {t('page.tokenDetail.marketInfo.marketCap')}
           </Text>
           <Text style={styles.infoItemValue}>
-            {marketCap ? formatNumber(marketCap) : '-'}
+            {marketCap ? formatUsdValue(marketCap) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>
