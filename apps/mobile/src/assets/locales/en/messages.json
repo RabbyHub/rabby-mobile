@@ -2241,7 +2241,8 @@
         "hot10": "Hot 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "Open Websites"
+        "openWebsites": "Open Websites",
+        "searchWebsite": "Search Website"
       },
       "menu": {
         "refresh": "Refresh",

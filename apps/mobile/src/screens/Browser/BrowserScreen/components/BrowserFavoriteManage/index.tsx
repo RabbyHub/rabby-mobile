@@ -11,13 +11,16 @@ import { BrowserFavorite } from './BrowserFavorite';
 // import { TouchableOpacity } from 'react-native-gesture-handler';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ReactIconHome } from '@/assets2024/icons/browser';
 
 export const activeTabAtom = atom('favorites');
 
 export function BrowserFavoriteManage({
   isInBottomSheet,
+  onPressHome,
 }: {
   isInBottomSheet?: boolean;
+  onPressHome?(): void;
 }): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
@@ -48,27 +51,53 @@ export function BrowserFavoriteManage({
         />
       </View>
 
-      <TouchableOpacity
-        style={[styles.fabContainer, { paddingBottom: bottom || 12 }]}
-        onPress={() => {
-          setPartialBrowserState({
-            isShowBrowser: true,
-            isShowSearch: true,
-          });
-        }}>
-        <View style={styles.innerCircle}>
-          <RcNextSearchCC
-            width={20}
-            height={20}
-            style={styles.icon}
-            color={colors2024['neutral-secondary']}
+      <View
+        style={[
+          styles.footer,
+          {
+            position: 'absolute',
+            right: 0,
+            bottom: 0,
+            marginTop: 'auto',
+            paddingBottom: bottom || 12,
+            // marginBottom:
+            //   Platform.OS === 'android' ? androidOnlyBottomOffset : 20,
+          },
+        ]}>
+        <TouchableOpacity onPress={onPressHome}>
+          <ReactIconHome
+            width={44}
+            height={44}
+            color={colors2024['neutral-title-1']}
+            backgroundColor={colors2024['neutral-bg-5']}
           />
-          <Text style={styles.text}>
-            {t('page.browser.BrowserSearchEntry.openWebsites')}
-          </Text>
-          <View style={{ width: 20 }} />
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.fabContainer]}
+          onPress={() => {
+            setPartialBrowserState({
+              isShowBrowser: true,
+              isShowSearch: true,
+              searchText: '',
+              searchTabId: '',
+              trigger: 'home',
+            });
+          }}>
+          <View style={styles.innerCircle}>
+            <RcNextSearchCC
+              width={20}
+              height={20}
+              style={styles.icon}
+              color={colors2024['neutral-secondary']}
+            />
+            <Text style={styles.text}>
+              {t('page.browser.BrowserSearchEntry.searchWebsite')}
+            </Text>
+            <View style={{ width: 20 }} />
+          </View>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -87,19 +116,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   fabContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
-    ...Platform.select({
-      ios: {
-        shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
-        shadowOffset: { width: 0, height: isLight ? -6 : -27 },
-        shadowOpacity: 1,
-        shadowRadius: isLight ? 20 : 13,
-      },
-      android: {},
-    }),
+    flex: 1,
+    // paddingHorizontal: 20,
+    // paddingTop: 8,
+    // paddingBottom: 20,
+    // backgroundColor: colors2024['neutral-bg-1'],
+    // ...Platform.select({
+    //   ios: {
+    //     shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
+    //     shadowOffset: { width: 0, height: isLight ? -6 : -27 },
+    //     shadowOpacity: 1,
+    //     shadowRadius: isLight ? 20 : 13,
+    //   },
+    //   android: {},
+    // }),
   },
   gradient: {
     padding: 12,
@@ -140,5 +170,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
 
   browserSearch: {
     paddingTop: 18,
+  },
+
+  footer: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+    // marginBottom: 30,
+    // box-shadow: 0px -6px 40px 0px rgba(55, 56, 63, 0.12);
+    // backdrop-filter: blur(14.5px);
   },
 }));

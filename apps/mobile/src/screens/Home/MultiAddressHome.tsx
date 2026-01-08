@@ -118,6 +118,7 @@ import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { BrowserFavorite } from '../Browser/BrowserScreen/components/BrowserSearch/BrowserFavorite';
 import { BrowserFavoriteManage } from '../Browser/BrowserScreen/components/BrowserFavoriteManage';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { trigger } from 'react-native-haptic-feedback';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -584,6 +585,10 @@ const OverViewComponent = React.memo(
 
     const triggerAutoExpand = useCallback(() => {
       if (isAutoExpandedRef.current) return;
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
       isAutoExpandedRef.current = true;
       pullDistanceRef.current = pullThreshold;
       Animated.timing(pullDistanceAnim, {
@@ -984,7 +989,16 @@ const OverViewComponent = React.memo(
               transformOrigin: 'top',
               transform: [{ scale: panelScale }],
             }}>
-            <BrowserFavoriteManage />
+            <BrowserFavoriteManage
+              onPressHome={() => {
+                Animated.timing(pullDistanceAnim, {
+                  toValue: 0,
+                  duration: 180,
+                  useNativeDriver: true,
+                }).start();
+                isAutoExpandedRef.current = false;
+              }}
+            />
           </Animated.View>
         </Animated.View>
       </View>
