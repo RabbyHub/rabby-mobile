@@ -204,7 +204,13 @@ export const TokenList = ({
 
     if (!isLoading && items.length === 0) {
       if (noAnyAssets) {
-        items.push({ type: 'empty-token' });
+        // items.push({ type: 'empty-token' });
+        items.push({
+          type: 'empty-assets',
+          data: t('page.singleHome.sectionHeader.NoData', {
+            name: t('page.singleHome.sectionHeader.Token'),
+          }),
+        });
       } else {
         items.push({
           type: 'empty-assets',
