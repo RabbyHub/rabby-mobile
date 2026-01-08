@@ -39,9 +39,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { tokenItemToITokenItem } from '@/utils/token';
+import { ITokenItem } from '@/store/tokens';
 
 interface Props {
-  resultTokens: AbstractPortfolioToken[];
+  resultTokens: ITokenItem[];
   loading: boolean;
   searchState: string;
 }
@@ -114,7 +115,7 @@ export const SearchAssets: React.FC<Props> = ({
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: AbstractPortfolioToken }) => {
+    ({ item }: { item: ITokenItem }) => {
       return (
         item && (
           <ExternalTokenRow
