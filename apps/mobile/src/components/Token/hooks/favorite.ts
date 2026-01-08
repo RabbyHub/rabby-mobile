@@ -156,7 +156,6 @@ export const useFavoriteTokens = ({
 
   useEffect(() => {
     if (address && focus) {
-      console.log('handleFetchTokens', address, focus);
       handleFetchTokens();
     }
   }, [address, focus, handleFetchTokens]);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import {
@@ -111,6 +111,44 @@ export const useSelectTokens = ({
     return tokens.map(formatToken);
   }, [tokens, searchTokenResult, formatToken]);
 
+  const shouldLoadRecommended = useMemo(() => {
+    if (
+      !currentAddress ||
+      isLpTokenEnabled ||
+      keyword ||
+      (searchTokenResult && searchTokenResult.length > 0)
+    ) {
+      return false;
+    }
+    return tokens.length < 10;
+  }, [
+    currentAddress,
+    isLpTokenEnabled,
+    keyword,
+    searchTokenResult,
+    tokens.length,
+  ]);
+
+  const { value: recommendedTokens, loading: loadingRecommendedTokens } =
+    useAsync(async () => {
+      if (!shouldLoadRecommended || !currentAddress) {
+        return [];
+      }
+      const list = await openapi.getSwapTokenList(
+        currentAddress,
+        chain_server_id || '',
+      );
+      return list.map(item => tokenItemToITokenItem(item, ''));
+    }, [shouldLoadRecommended, currentAddress, chain_server_id]);
+
+  const finalTokens = useMemo(() => {
+    if (recommendedTokens && recommendedTokens.length > 0) {
+      const formattedRecommended = recommendedTokens.map(formatToken);
+      return [...tokenWithOwner, ...formattedRecommended];
+    }
+    return tokenWithOwner;
+  }, [tokenWithOwner, recommendedTokens, formatToken]);
+
   const checkIsExpireAndUpdate = useCallback(async () => {
     if (currentAccount) {
       return;
@@ -128,9 +166,9 @@ export const useSelectTokens = ({
   );
 
   return {
-    tokens: tokenWithOwner,
+    tokens: finalTokens,
     existedTokens: !!tokens.length,
-    isSearching: searchingToken,
+    isSearching: searchingToken || loadingRecommendedTokens,
     isLoading: isLoadingToken,
     checkIsExpireAndUpdate,
     loadToken,
