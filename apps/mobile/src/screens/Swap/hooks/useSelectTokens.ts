@@ -90,6 +90,7 @@ export const useSelectTokens = ({
       }
       return [];
     }, [chain_server_id, currentAddress, keyword, isLpTokenEnabled]);
+
   const tokens = forTokenSelect(
     tokenSelectAddresses,
     chain_server_id,
@@ -97,62 +98,26 @@ export const useSelectTokens = ({
     isLpTokenEnabled,
   );
 
-  useEffect(() => {
-    console.log(keyword, Date.now());
-  }, [keyword]);
-
-  const mergedTokens = useMemo(() => {
-    if (!searchTokenResult?.length) {
-      return tokens;
-    }
-
-    const tokensKeySet = new Set<string>();
-    const collectTokenKeys = (list: ITokenItem[]) => {
-      list.forEach(item => {
-        tokensKeySet.add(`${item.chain}_${item.id}`);
-      });
-    };
-    collectTokenKeys(tokens.unFoldTokens);
-    collectTokenKeys(tokens.foldTokens);
-    collectTokenKeys(tokens.scamTokens);
-
-    const seenSearchKeys = new Set<string>();
-    const sortedSearchTokens = searchTokenResult
-      .filter(item => {
-        const key = `${item.chain}_${item.id}`;
-        if (tokensKeySet.has(key) || seenSearchKeys.has(key)) {
-          return false;
-        }
-        seenSearchKeys.add(key);
-        return true;
-      })
-      .sort((a, b) => {
-        if (a.is_core !== b.is_core) {
-          return a.is_core ? -1 : 1;
-        }
-        return (b.credit_score || 0) - (a.credit_score || 0);
-      });
-
-    return {
-      ...tokens,
-      unFoldTokens: tokens.unFoldTokens.concat(sortedSearchTokens),
-    };
-  }, [tokens, searchTokenResult]);
-
   const formatToken = useCallback(
     (token: ITokenItem) =>
       tagTokenItemFavorite(token, makeTokenSettingSets(userTokenSettings)),
     [userTokenSettings],
   );
 
-  const tokenWithOwner = useMemo(
-    () => ({
-      unFoldTokens: mergedTokens.unFoldTokens.map(formatToken),
-      foldTokens: mergedTokens.foldTokens.map(formatToken),
-      scamTokens: mergedTokens.scamTokens.map(formatToken),
-    }),
-    [mergedTokens, formatToken],
-  );
+  const tokenWithOwner = useMemo(() => {
+    if (searchTokenResult && (searchTokenResult?.length || 0) > 0) {
+      return {
+        unFoldTokens: searchTokenResult.map(formatToken),
+        foldTokens: [],
+        scamTokens: [],
+      };
+    }
+    return {
+      unFoldTokens: tokens.unFoldTokens.map(formatToken),
+      foldTokens: tokens.foldTokens.map(formatToken),
+      scamTokens: tokens.scamTokens.map(formatToken),
+    };
+  }, [tokens, searchTokenResult, formatToken]);
 
   const checkIsExpireAndUpdate = useCallback(async () => {
     if (currentAccount) {
