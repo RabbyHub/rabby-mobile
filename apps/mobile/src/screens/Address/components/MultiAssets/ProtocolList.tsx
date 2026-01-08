@@ -280,9 +280,9 @@ export const ProtocolList = () => {
           : portfolioListData
       }
       renderItem={renderItem}
-      initialNumToRender={5}
-      windowSize={5}
-      maxToRenderPerBatch={5}
+      initialNumToRender={15}
+      windowSize={15}
+      maxToRenderPerBatch={15}
       removeClippedSubviews
       ItemSeparatorComponent={ListRenderSeparator}
       ListHeaderComponent={<PerpsMultiAssetPosition />}
