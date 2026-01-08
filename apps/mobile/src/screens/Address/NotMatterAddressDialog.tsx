@@ -167,6 +167,7 @@ export const NotMatterAddressDialog: React.FC<{
             </Pressable>
             <View style={{ width: '100%' }}>
               <AddressItemEntry
+                showMarkIfNewlyAdded
                 handleGoDetail={onDone}
                 account={item}
                 isScrolling={isScrolling}
@@ -180,6 +181,7 @@ export const NotMatterAddressDialog: React.FC<{
       return (
         <View style={styles.itemGap}>
           <AddressItemEntry
+            showMarkIfNewlyAdded
             handleGoDetail={onDone}
             account={item}
             isScrolling={isScrolling}
