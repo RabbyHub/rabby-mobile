@@ -23,7 +23,7 @@ export const useWatchlistTokens = () => {
   const cacheRef = useRef<Map<string, TokenDetailWithPriceCurve>>(new Map());
 
   const getWatchlistTokens = useCallback(
-    async (force = false, excludeTokens?: IManageToken[]) => {
+    async (force = false, excludeTokens?: IManageToken[], chainId?: string) => {
       try {
         if (data.length === 0) {
           setLoading(true);
@@ -33,13 +33,17 @@ export const useWatchlistTokens = () => {
         setHasData(pinedQueue.length > 0);
         // 生成所有token的key
         const allKeys = pinedQueue
-          .filter(
-            t =>
-              !excludeTokens?.some(
-                e =>
-                  e.chainId.toLowerCase() === t.chainId.toLowerCase() &&
-                  e.tokenId.toLowerCase() === t.tokenId.toLowerCase(),
-              ),
+          .filter(t =>
+            chainId ? t.chainId.toLowerCase() === chainId.toLowerCase() : true,
+          )
+          .filter(t =>
+            excludeTokens
+              ? !excludeTokens?.some(
+                  e =>
+                    e.chainId.toLowerCase() === t.chainId.toLowerCase() &&
+                    e.tokenId.toLowerCase() === t.tokenId.toLowerCase(),
+                )
+              : true,
           )
           .filter(t => t.chainId && t.tokenId)
           .map(i => `${i.chainId}:${i.tokenId}`);
@@ -92,8 +96,8 @@ export const useWatchlistTokens = () => {
   );
 
   const handleFetchTokens = useCallback(
-    (force = false) => {
-      return getWatchlistTokens(force).then(setData);
+    (force = false, excludeTokens?: IManageToken[], chainId?: string) => {
+      return getWatchlistTokens(force, excludeTokens, chainId).then(setData);
     },
     [getWatchlistTokens, setData],
   );

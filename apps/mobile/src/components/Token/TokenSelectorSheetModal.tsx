@@ -82,12 +82,6 @@ import {
 } from '@/utils/navigation';
 import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
 import { useAtom } from 'jotai';
-import {
-  useAnimatedGestureHandler,
-  runOnJS,
-  useSharedValue,
-} from 'react-native-reanimated';
-import { PanGestureHandler } from 'react-native-gesture-handler';
 import { useRefState } from '@/hooks/common/useRefState';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/ExchangeLogos';
@@ -930,31 +924,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         showFavoriteFilter,
       ]);
 
-    // Used to prevent repeated triggering
-    const hasTriggered = useSharedValue(false);
-
-    const onGestureEvent = useAnimatedGestureHandler({
-      onStart: () => {
-        hasTriggered.value = false;
-      },
-      onActive: event => {
-        if (!onFavoriteFilterChange || hasTriggered.value) {
-          return;
-        }
-        // Set threshold, trigger if exceeded
-        const threshold = 50;
-        if (Math.abs(event.translationX) > Math.abs(event.translationY)) {
-          if (event.translationX > threshold) {
-            hasTriggered.value = true;
-            runOnJS(onFavoriteFilterChange)?.('all');
-          } else if (event.translationX < -threshold) {
-            hasTriggered.value = true;
-            runOnJS(onFavoriteFilterChange)?.('favorite');
-          }
-        }
-      },
-    });
-
     const { onHardwareBackHandler } = useHandleBackPressClosable(
       useCallback(() => {
         onCancel();
@@ -1127,49 +1096,44 @@ export const TokenSelectorSheetModal = React.forwardRef<
             </View>
           </View>
           {(!isSwapTo || (query && !list.length)) && <>{customHeaderTitle}</>}
-          <PanGestureHandler
-            onGestureEvent={onGestureEvent}
-            activeOffsetX={[-10, 10]}
-            failOffsetY={[-5, 5]}>
-            <BottomSheetFlatList
-              contentInset={{ bottom: 30 }}
-              keyboardShouldPersistTaps="handled"
-              style={[styles.scrollView]}
-              onScrollBeginDrag={() => Keyboard.dismiss()}
-              windowSize={5}
-              data={dataList}
-              showsVerticalScrollIndicator={false}
-              keyExtractor={item => {
-                if (item.type === 'unfold_token') {
-                  return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
-                }
-                if (item.type === 'empty-assets') {
-                  return `empty-assets-${item.data}`;
-                }
-                return item.type;
-              }}
-              ListHeaderComponent={ListHeader}
-              ListEmptyComponent={
-                isLoading ? null : (
-                  <NotMatchedHolder
-                    style={{
-                      height: 400,
-                    }}
-                    text={
-                      isLpTokenEnabled
-                        ? 'No Liquidity Provider (LP) Token'
-                        : 'No tokens'
-                    }
-                  />
-                )
+          <BottomSheetFlatList
+            contentInset={{ bottom: 30 }}
+            keyboardShouldPersistTaps="handled"
+            style={[styles.scrollView]}
+            onScrollBeginDrag={() => Keyboard.dismiss()}
+            windowSize={5}
+            data={dataList}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={item => {
+              if (item.type === 'unfold_token') {
+                return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
               }
-              extraData={isLoading}
-              initialNumToRender={20}
-              maxToRenderPerBatch={20}
-              onEndReachedThreshold={0.3}
-              renderItem={renderItemRenderComponent}
-            />
-          </PanGestureHandler>
+              if (item.type === 'empty-assets') {
+                return `empty-assets-${item.data}`;
+              }
+              return item.type;
+            }}
+            ListHeaderComponent={ListHeader}
+            ListEmptyComponent={
+              isLoading ? null : (
+                <NotMatchedHolder
+                  style={{
+                    height: 400,
+                  }}
+                  text={
+                    isLpTokenEnabled
+                      ? 'No Liquidity Provider (LP) Token'
+                      : 'No tokens'
+                  }
+                />
+              )
+            }
+            extraData={isLoading}
+            initialNumToRender={20}
+            maxToRenderPerBatch={20}
+            onEndReachedThreshold={0.3}
+            renderItem={renderItemRenderComponent}
+          />
         </AutoLockView>
       </AppBottomSheetModal>
     );
