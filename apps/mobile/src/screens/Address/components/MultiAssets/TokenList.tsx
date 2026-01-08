@@ -248,6 +248,9 @@ export const TokenList = () => {
               />
             </View>
           )}
+          initialNumToRender={20}
+          windowSize={5}
+          maxToRenderPerBatch={20}
           style={{
             flexGrow: 0,
           }}
@@ -270,6 +273,9 @@ export const TokenList = () => {
           {!foldScam && (
             <FlatList
               data={scamTokens}
+              initialNumToRender={20}
+              windowSize={5}
+              maxToRenderPerBatch={20}
               keyExtractor={item =>
                 `${item.owner_addr}-${item.chain}-${item.id}`
               }
