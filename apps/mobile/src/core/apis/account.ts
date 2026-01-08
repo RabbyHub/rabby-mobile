@@ -336,7 +336,6 @@ export type PerfAccountEventBusListeners = {
     accounts: KeyringEventAccount[];
     scene?: 'privateKey' | 'memonics' | 'hardware';
   }) => void;
-  ACCOUNT_REMOVED: (ctx: { accounts: KeyringEventAccount[] }) => void;
 };
 const { EventEmitter: AccountEE } =
   makeJsEEClass<PerfAccountEventBusListeners>();

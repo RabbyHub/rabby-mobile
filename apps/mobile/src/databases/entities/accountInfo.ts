@@ -4,12 +4,11 @@ import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
 import { EntityAccountBase } from './base';
 import { prepareAppDataSource } from '../imports';
-import { ReactNativeDriver } from '@/core/utils/reexports';
 import { resolveDriverAndConnectionFromEntity } from '@/core/databases/op-sqlite/typeorm';
-import { APP_DB_PREFIX } from '../constant';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
+import { ormEvents } from './_helpers';
 
-const TABLE_NAME = 'account_info';
-@Entity(TABLE_NAME)
+@Entity(ORM_TABLE_NAMES.account_info)
 export class AccountInfoEntity extends EntityAccountBase {
   @UpdateDateColumn({ type: 'integer', nullable: true }) updated_at?: number =
     Date.now();
@@ -35,7 +34,7 @@ export class AccountInfoEntity extends EntityAccountBase {
     const accounts = Array.isArray(account) ? account : [account];
 
     const sqlStm = `
-INSERT INTO "${APP_DB_PREFIX}${TABLE_NAME}"
+INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.account_info}"
 ("_db_id", "created_at", "updated_at", "address", "type", "brandName")
 VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = EXCLUDED."updated_at"
     `;
@@ -69,11 +68,15 @@ VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = 
     const entity = new AccountInfoEntity();
     AccountInfoEntity.fillEntity(entity, account);
 
-    await repo.delete({ _db_id: entity._db_id });
+    const deleteResult = await repo.delete({ _db_id: entity._db_id });
+
+    ormEvents.emit(`account_info:removed`, { deleteResult });
   }
 
   static async getAccountsAddedIn(time = 60 * 1e3 * 10) {
-    const queryBuilder = this.getRepository().createQueryBuilder(TABLE_NAME);
+    const queryBuilder = this.getRepository().createQueryBuilder(
+      ORM_TABLE_NAMES.account_info,
+    );
     const nowInt = Date.now();
 
     queryBuilder
@@ -84,7 +87,7 @@ VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = 
         updated_at: LessThan(nowInt),
       });
 
-    queryBuilder.orderBy(`${TABLE_NAME}.updated_at`, 'DESC');
+    queryBuilder.orderBy(`${ORM_TABLE_NAMES.account_info}.updated_at`, 'DESC');
 
     const newlyAddedAccounts = await queryBuilder.getMany();
 
@@ -99,7 +102,9 @@ VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = 
   }
 
   static async isAccountAddedIn(time = 60 * 1e3 * 10) {
-    const queryBuilder = this.getRepository().createQueryBuilder(TABLE_NAME);
+    const queryBuilder = this.getRepository().createQueryBuilder(
+      ORM_TABLE_NAMES.account_info,
+    );
     const nowInt = Date.now();
 
     queryBuilder
@@ -110,7 +115,7 @@ VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = 
         updated_at: LessThan(nowInt),
       });
 
-    queryBuilder.orderBy(`${TABLE_NAME}.updated_at`, 'DESC');
+    queryBuilder.orderBy(`${ORM_TABLE_NAMES.account_info}.updated_at`, 'DESC');
 
     const foundOne = await queryBuilder.getRawOne();
 
