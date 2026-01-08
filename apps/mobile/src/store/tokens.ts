@@ -77,11 +77,7 @@ interface TokenListState {
     chainServerId?: string,
     keyword?: string,
     isLpTokenEnabled?: boolean,
-  ): {
-    unFoldTokens: ITokenItem[];
-    foldTokens: ITokenItem[];
-    scamTokens: ITokenItem[];
-  };
+  ): ITokenItem[];
   forPerpsTokenSelect(address?: string): ITokenItem[];
   forChainSelector(addresses: string[]): ITokenItem[];
   initStore(): void;
@@ -177,11 +173,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
   let lastSingleAddress: string | undefined;
   let lastSingleChainServerId: string | undefined;
   let lastSingleTokenListMap: TokenListState['tokenListMap'] | null = null;
-  let lastTokenSelectResult: {
-    unFoldTokens: ITokenItem[];
-    foldTokens: ITokenItem[];
-    scamTokens: ITokenItem[];
-  } | null = null;
+  let lastTokenSelectResult: ITokenItem[] | null = null;
   let lastTokenSelectChainServerId: string | undefined;
   let lastTokenSelectListMap: TokenListState['tokenListMap'] | null = null;
   let lastTokenSelectAddressesKey: string | undefined;
@@ -439,18 +431,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
       };
       const sortedUnfoldTokens = filterAndSortTokens(tokens);
       const result = chainServerId
-        ? {
-            unFoldTokens: sortedUnfoldTokens.filter(
-              item => item.chain === chainServerId,
-            ),
-            foldTokens: [],
-            scamTokens: [],
-          }
-        : {
-            unFoldTokens: sortedUnfoldTokens,
-            foldTokens: [],
-            scamTokens: [],
-          };
+        ? sortedUnfoldTokens.filter(item => item.chain === chainServerId)
+        : sortedUnfoldTokens;
 
       lastTokenSelectListMap = tokenListMap;
       lastTokenSelectChainServerId = chainServerId;
