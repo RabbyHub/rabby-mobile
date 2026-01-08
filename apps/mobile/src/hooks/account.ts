@@ -88,7 +88,7 @@ async function fetchNewlyAddedAccounts() {
         return accu;
       }, {} as Store['newlyAddedAccounts']);
 
-      if (isEqual(prev.newlyAddedAccounts, newVal)) return prev;
+      // if (isEqual(prev.newlyAddedAccounts, newVal)) return prev;
 
       return {
         ...prev,

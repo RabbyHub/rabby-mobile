@@ -8,7 +8,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
@@ -55,6 +55,11 @@ import { eventBus } from '@/utils/events';
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { apisSingleHome } from '../Home/hooks/singleHome';
 import { isNonPublicProductionEnv } from '@/constant';
+import { useMount } from 'ahooks';
+import {
+  accountEvents,
+  PerfAccountEventBusListeners,
+} from '@/core/apis/account';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -81,6 +86,55 @@ export const ImportSuccessScreen2024 = () => {
   if (!state) {
     throw new Error('[ImportSuccess2024] route.params is undefined');
   }
+
+  useMount(() => {
+    const addressList = (
+      Array.isArray(state.address) ? state.address : [state.address]
+    ).filter(Boolean);
+
+    if (addressList.length === 0) return;
+    const record = (
+      scene: Parameters<
+        PerfAccountEventBusListeners['ACCOUNT_ADDED']
+      >[0]['scene'] &
+        string,
+    ) => {
+      accountEvents.emit('ACCOUNT_ADDED', {
+        accounts: addressList.map(address => ({
+          address,
+          brandName: state.brandName,
+          type: state.type,
+        })),
+        scene: scene,
+      });
+    };
+
+    switch (state.type) {
+      case KEYRING_TYPE.HdKeyring: {
+        record('memonics');
+        break;
+      }
+      case KEYRING_TYPE.SimpleKeyring: {
+        record('privateKey');
+        break;
+      }
+      case KEYRING_TYPE.LedgerKeyring:
+      case KEYRING_TYPE.KeystoneKeyring:
+      case KEYRING_TYPE.OneKeyKeyring:
+      case KEYRING_TYPE.TrezorKeyring: {
+        record('hardware');
+        break;
+      }
+      case KEYRING_TYPE.GnosisKeyring:
+      case KEYRING_TYPE.WatchAddressKeyring:
+      default:
+        if (isNonPublicProductionEnv) {
+          console.warn(
+            `[ImportSuccessScreen2024] Non recored newly added keyring type: ${state.type}`,
+          );
+        }
+    }
+  });
 
   const [loadingBalance, setLoadingBalance] = useState(true);
   const [addressBalances, setAddressBalances] = useState<

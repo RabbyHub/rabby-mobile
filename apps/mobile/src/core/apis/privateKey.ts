@@ -38,10 +38,10 @@ export const importPrivateKey = async data => {
   const keyring = await keyringService.importPrivateKey(cleanedPrivateKey);
   const accounts = await _setCurrentAccountFromKeyring(keyring);
 
-  accountEvents.emit('ACCOUNT_ADDED', {
-    accounts,
-    scene: 'privateKey',
-  });
+  // accountEvents.emit('ACCOUNT_ADDED', {
+  //   accounts,
+  //   scene: 'privateKey',
+  // });
 
   return accounts;
 };
