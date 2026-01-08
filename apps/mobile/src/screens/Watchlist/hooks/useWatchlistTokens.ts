@@ -23,7 +23,7 @@ export const useWatchlistTokens = () => {
   const cacheRef = useRef<Map<string, TokenDetailWithPriceCurve>>(new Map());
 
   const getWatchlistTokens = useCallback(
-    async (force = false) => {
+    async (force = false, excludeTokens?: IManageToken[]) => {
       try {
         if (data.length === 0) {
           setLoading(true);
@@ -33,6 +33,14 @@ export const useWatchlistTokens = () => {
         setHasData(pinedQueue.length > 0);
         // 生成所有token的key
         const allKeys = pinedQueue
+          .filter(
+            t =>
+              !excludeTokens?.some(
+                e =>
+                  e.chainId.toLowerCase() === t.chainId.toLowerCase() &&
+                  e.tokenId.toLowerCase() === t.tokenId.toLowerCase(),
+              ),
+          )
           .filter(t => t.chainId && t.tokenId)
           .map(i => `${i.chainId}:${i.tokenId}`);
         let needFetchKeys = allKeys;
