@@ -197,7 +197,15 @@ export const TokenList = ({
       {
         show: !loadingToken && !sortTokens.length,
         data: noAnyAssets
-          ? [{ type: 'empty-assets' }]
+          ? [
+              {
+                // type: 'empty-token',
+                type: 'empty-assets',
+                data: t('page.singleHome.sectionHeader.NoData', {
+                  name: t('page.singleHome.sectionHeader.Token'),
+                }),
+              },
+            ]
           : [
               {
                 type: 'empty-assets',
