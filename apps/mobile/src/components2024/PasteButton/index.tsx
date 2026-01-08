@@ -26,7 +26,7 @@ const PasteButton: React.FC<IProps> = ({
   onPaste,
   style,
   disableTrigger,
-  cleanClipboardAfterPaste = !__DEV__,
+  cleanClipboardAfterPaste = false,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
