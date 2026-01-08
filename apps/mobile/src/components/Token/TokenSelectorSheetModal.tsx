@@ -23,8 +23,6 @@ import {
   BottomSheetBackdropProps,
   BottomSheetFlatList,
 } from '@gorhom/bottom-sheet';
-import RcFoldCC from '@/assets2024/icons/common/fold.svg';
-import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import {
@@ -37,7 +35,6 @@ import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
-  SMALL_TOKEN_ID,
   type DisplayedTokenWithOwner,
   type TokenItemFromAbstractPortfolioToken,
 } from '@/utils/token';
@@ -77,8 +74,6 @@ import {
   formatPercentage,
 } from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
-import { SCAM_TOKEN_HAEDER_ID } from './constant';
-import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { FavoriteTag } from '@/components2024/Favorite';
 import {
@@ -112,18 +107,8 @@ type SwapRouteProps = CompositeScreenProps<
 
 type TokenListItem =
   | {
-      type: 'unfold_token' | 'fold_token';
+      type: 'unfold_token';
       data: ITokenItem;
-    }
-  | {
-      type: 'toggle_token_fold';
-    }
-  | {
-      type: 'scam_token';
-      data: {
-        total: number;
-        logoUrls: string[];
-      };
     }
   | {
       type: 'empty-token';
@@ -290,8 +275,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
     {
       visible,
       list,
-      foldTokensList = [],
-      scamTokensList = [],
       displayAccountFilter = false,
       filterAccount,
       chainServerId,
@@ -339,13 +322,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
       }
     }, [visible]);
 
-    const [fold, setFold] = useState(true);
-    const [isScamFold, setIsScamFold] = useState(true);
-
     const { t } = useTranslation();
     const isBridgeTo = type === 'bridgeTo';
     const isSwapTo = type === 'swapTo';
-    const isSend = type === 'send';
 
     const onLpTokenChange = useCallback(
       (value: boolean) => {
@@ -369,8 +348,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
     useEffect(() => {
       if (!visible) {
         setIsInputActive(false);
-        setFold(true);
-        setIsScamFold(true);
         onLpTokenChange?.(false);
         onFavoriteFilterChange?.('all');
         setQuery('');
@@ -463,47 +440,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
         items.push({ type: 'unfold_token', data: token });
       });
 
-      const hasFoldSection =
-        foldTokensList.length > 0 || scamTokensList.length > 0;
-      if (hasFoldSection) {
-        items.push({ type: 'toggle_token_fold' });
-        if (!fold) {
-          foldTokensList.forEach(token => {
-            items.push({ type: 'fold_token', data: token });
-          });
-          if (scamTokensList.length > 0) {
-            if (isScamFold) {
-              items.push({
-                type: 'scam_token',
-                data: {
-                  total: scamTokensList.length,
-                  logoUrls: scamTokensList.slice(0, 3).map(i => i.logo_url),
-                },
-              });
-            } else {
-              scamTokensList.forEach(token => {
-                items.push({ type: 'fold_token', data: token });
-              });
-            }
-          }
-        }
-      }
-
       return items;
-    }, [list, foldTokensList, scamTokensList, fold, isScamFold]);
-
-    const foldTokensUsdValue = useMemo(() => {
-      if (!foldTokensList.length) {
-        return '';
-      }
-
-      const totalUsdValue = foldTokensList.reduce(
-        (acc, token) => acc + (token.is_core ? token.usd_value || 0 : 0),
-        0,
-      );
-
-      return formatNetworth(totalUsdValue);
-    }, [foldTokensList]);
+    }, [list]);
 
     const needToTokenMarketInfo = useMemo(() => {
       return !!type && ['swapTo', 'bridgeTo'].includes(type);
@@ -544,13 +482,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
       );
     }, [isLoading]);
 
-    const onPressToken = useCallback(() => {
-      if (!fold) {
-        setIsScamFold(true);
-      }
-      return setFold(pre => !pre);
-    }, [fold]);
-
     const longPressTriggered = useRef(false);
     const renderItemRenderComponent = useCallback<
       ListRenderItem<TokenListItem[][number]>
@@ -560,77 +491,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
           return null;
         }
 
-        const renderFoldToggle = () => {
-          return (
-            <View style={StyleSheet.flatten([styles.tokenRowWrap])}>
-              <View style={styles.tokenRowTokenWrap}>
-                <View style={styles.tokenRowTokenInner}>
-                  <TouchableOpacity
-                    onPress={onPressToken}
-                    style={styles.tokenRowTokenInnerSmallToken}>
-                    <Text style={styles.actionText}>
-                      {fold ? 'All' : 'Less'}
-                    </Text>
-                    {fold ? (
-                      <RcUnFoldCC
-                        style={styles.arrow}
-                        color={colors2024['neutral-secondary']}
-                      />
-                    ) : (
-                      <RcFoldCC
-                        style={styles.arrow}
-                        color={colors2024['neutral-secondary']}
-                      />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View style={styles.tokenRowUsdValueWrap}>
-                <Text style={styles.tokenRowUsdValue}>
-                  {foldTokensUsdValue}
-                </Text>
-              </View>
-            </View>
-          );
-        };
-
         switch (item.type) {
-          case 'toggle_token_fold':
-            return renderFoldToggle();
-          case 'scam_token':
-            return (
-              <ScamTokenHeader
-                onPress={() => {
-                  setIsScamFold(false);
-                }}
-                style={styles.scamHeader}
-                total={item.data.total}
-                logoUrls={item.data.logoUrls}
-              />
-            );
-          case 'fold_token':
           case 'unfold_token': {
             const token = item.data;
-
-            if (token.id === SCAM_TOKEN_HAEDER_ID) {
-              return (
-                <ScamTokenHeader
-                  onPress={() => {
-                    setIsScamFold(false);
-                  }}
-                  style={styles.scamHeader}
-                  total={scamTokensList.length}
-                  logoUrls={scamTokensList
-                    .slice(0, 3)
-                    .map(scamToken => scamToken.logo_url)}
-                />
-              );
-            }
-
-            if (token.id === SMALL_TOKEN_ID) {
-              return renderFoldToggle();
-            }
-
             const {
               disable: lightDisable,
               reason: disableReason,
@@ -1021,11 +884,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         disabledTips,
         onConfirm,
         toggleShowSheetModal,
-        fold,
-        foldTokensUsdValue,
-        onPressToken,
-        scamTokensList,
-        setIsScamFold,
       ],
     );
 
@@ -1282,14 +1140,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
               data={dataList}
               showsVerticalScrollIndicator={false}
               keyExtractor={item => {
-                if (
-                  item.type === 'unfold_token' ||
-                  item.type === 'fold_token'
-                ) {
+                if (item.type === 'unfold_token') {
                   return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
-                }
-                if (item.type === 'scam_token') {
-                  return `scam-token-${item.data.total}`;
                 }
                 if (item.type === 'empty-assets') {
                   return `empty-assets-${item.data}`;

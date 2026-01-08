@@ -106,17 +106,9 @@ export const useSelectTokens = ({
 
   const tokenWithOwner = useMemo(() => {
     if (searchTokenResult && (searchTokenResult?.length || 0) > 0) {
-      return {
-        unFoldTokens: searchTokenResult.map(formatToken),
-        foldTokens: [],
-        scamTokens: [],
-      };
+      return searchTokenResult.map(formatToken);
     }
-    return {
-      unFoldTokens: tokens.unFoldTokens.map(formatToken),
-      foldTokens: tokens.foldTokens.map(formatToken),
-      scamTokens: tokens.scamTokens.map(formatToken),
-    };
+    return tokens.map(formatToken);
   }, [tokens, searchTokenResult, formatToken]);
 
   const checkIsExpireAndUpdate = useCallback(async () => {
@@ -137,11 +129,7 @@ export const useSelectTokens = ({
 
   return {
     tokens: tokenWithOwner,
-    existedTokens: !!(
-      tokens.foldTokens.length +
-      tokens.unFoldTokens.length +
-      tokens.scamTokens.length
-    ),
+    existedTokens: !!tokens.length,
     isSearching: searchingToken,
     isLoading: isLoadingToken,
     checkIsExpireAndUpdate,
