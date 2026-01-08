@@ -281,7 +281,7 @@ export const ProtocolList = () => {
       }
       renderItem={renderItem}
       initialNumToRender={15}
-      windowSize={15}
+      windowSize={5}
       maxToRenderPerBatch={15}
       removeClippedSubviews
       ItemSeparatorComponent={ListRenderSeparator}

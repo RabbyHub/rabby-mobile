@@ -307,7 +307,7 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
         style={[styles.bgContainer, styles.list]}
         onEndReached={loadMorePortfolios}
         onEndReachedThreshold={0.5}
-        windowSize={15}
+        windowSize={4}
         maxToRenderPerBatch={15}
         removeClippedSubviews
         refreshControl={
