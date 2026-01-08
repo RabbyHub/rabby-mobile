@@ -509,17 +509,8 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
       });
       await Promise.allSettled(
         addresses.map(async address => {
-          let chainIdList: string[] = [];
-          let usedChains = await BalanceEntity.queryChainList(address);
-          chainIdList = usedChains
-            .filter(item => item.usd_value > 0.5)
-            .map(item => item.id);
-          if (usedChains.length <= 0) {
-            // 兜底，预防还没写过本地数据的情况发生
-            // TODO: 移除
-            const chains = await openapi.usedChainList(address);
-            chainIdList = chains.map(item => item.id);
-          }
+          const chains = await openapi.usedChainList(address);
+          const chainIdList = chains.map(item => item.id);
           const res = await Promise.allSettled(
             chainIdList.map(
               async serverId =>
