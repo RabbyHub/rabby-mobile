@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import {
@@ -44,14 +44,6 @@ export const useSelectTokens = ({
 
   const registerTokenSelect = useTokenListComputedStore(
     state => state.registerTokenSelect,
-  );
-  const emptyTokenSelectResult = useMemo(
-    () => ({
-      unFoldTokens: [] as ITokenItem[],
-      foldTokens: [] as ITokenItem[],
-      scamTokens: [] as ITokenItem[],
-    }),
-    [],
   );
 
   const isLoadingToken = useMemo(() => {
@@ -129,17 +121,15 @@ export const useSelectTokens = ({
   ]);
 
   const tokens = useTokenListComputedStore(state => {
-    return state.tokenSelectCache[tokenSelectKey] || emptyTokenSelectResult;
+    return state.tokenSelectCache[tokenSelectKey] || [];
   });
 
   const mergedTokens = useMemo(() => {
     if (!keyword || !searchTokenResult?.length) {
       return tokens;
     }
-    const seen = new Set(
-      tokens.unFoldTokens.map(token => `${token.chain}:${token.id}`),
-    );
-    const mergedList = tokens.unFoldTokens.slice();
+    const seen = new Set(tokens.map(token => `${token.chain}:${token.id}`));
+    const mergedList = tokens.slice();
     searchTokenResult.forEach(token => {
       const key = `${token.chain}:${token.id}`;
       if (!seen.has(key)) {
@@ -147,11 +137,7 @@ export const useSelectTokens = ({
         mergedList.push(token);
       }
     });
-    return {
-      unFoldTokens: mergedList,
-      foldTokens: [],
-      scamTokens: [],
-    };
+    return mergedList;
   }, [keyword, searchTokenResult, tokens]);
 
   const formatToken = useCallback(
@@ -161,12 +147,46 @@ export const useSelectTokens = ({
   );
 
   const tokenWithOwner = useMemo(() => {
-    return {
-      unFoldTokens: mergedTokens.unFoldTokens.map(formatToken),
-      foldTokens: mergedTokens.foldTokens.map(formatToken),
-      scamTokens: mergedTokens.scamTokens.map(formatToken),
-    };
+    return mergedTokens.map(formatToken);
   }, [mergedTokens, formatToken]);
+
+  const shouldLoadRecommended = useMemo(() => {
+    if (
+      !currentAddress ||
+      isLpTokenEnabled ||
+      keyword ||
+      (searchTokenResult && searchTokenResult.length > 0)
+    ) {
+      return false;
+    }
+    return tokens.length < 10;
+  }, [
+    currentAddress,
+    isLpTokenEnabled,
+    keyword,
+    searchTokenResult,
+    tokens.length,
+  ]);
+
+  const { value: recommendedTokens, loading: loadingRecommendedTokens } =
+    useAsync(async () => {
+      if (!shouldLoadRecommended || !currentAddress) {
+        return [];
+      }
+      const list = await openapi.getSwapTokenList(
+        currentAddress,
+        chain_server_id || '',
+      );
+      return list.map(item => tokenItemToITokenItem(item, ''));
+    }, [shouldLoadRecommended, currentAddress, chain_server_id]);
+
+  const finalTokens = useMemo(() => {
+    if (recommendedTokens && recommendedTokens.length > 0) {
+      const formattedRecommended = recommendedTokens.map(formatToken);
+      return [...tokenWithOwner, ...formattedRecommended];
+    }
+    return tokenWithOwner;
+  }, [tokenWithOwner, recommendedTokens, formatToken]);
 
   const checkIsExpireAndUpdate = useCallback(async () => {
     if (currentAccount) {
@@ -185,13 +205,9 @@ export const useSelectTokens = ({
   );
 
   return {
-    tokens: tokenWithOwner,
-    existedTokens: !!(
-      mergedTokens.foldTokens.length +
-      mergedTokens.unFoldTokens.length +
-      mergedTokens.scamTokens.length
-    ),
-    isSearching: searchingToken,
+    tokens: finalTokens,
+    existedTokens: !!tokens.length,
+    isSearching: searchingToken || loadingRecommendedTokens,
     isLoading: isLoadingToken,
     checkIsExpireAndUpdate,
     loadToken,

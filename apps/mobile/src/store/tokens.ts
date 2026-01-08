@@ -116,8 +116,11 @@ function getMultiAssetsFoldResultFromParts({
   };
 }
 
-const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) =>
-  (b.usd_value || 0) - (a.usd_value || 0);
+const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) => {
+  const aUsdValue = a.is_core ? a.usd_value || 0 : -1;
+  const bUsdValue = b.is_core ? b.usd_value || 0 : -1;
+  return bUsdValue - aUsdValue;
+};
 
 const sortByUsdValueDesc = (list: ITokenItem[]) =>
   list.slice().sort(compareByUsdValueDesc);
@@ -298,9 +301,9 @@ const computeTokenSelect = (
   chainServerId?: string,
   keyword?: string,
   isLpTokenEnabled?: boolean,
-): TokenAssetsResult => {
+): ITokenItem[] => {
   if (!addresses.length) {
-    return createEmptyAssetsResult();
+    return [];
   }
   const normalizedAddresses = normalizeAddresses(addresses);
   const normalizedKeyword = keyword ? keyword.toLowerCase() : undefined;
@@ -384,51 +387,17 @@ const computeTokenSelect = (
     });
   };
   let sortedUnfoldTokens: ITokenItem[] = [];
-  let sortedFoldTokens: ITokenItem[] = [];
-  let sortedScamTokens: ITokenItem[] = [];
   if (normalizedKeyword) {
     sortedUnfoldTokens = searchAndSortTokens(tokens);
   } else if (isLpTokenEnabled) {
     sortedUnfoldTokens = filterAndSortTokens(tokens);
   } else {
-    const unFoldTokens: ITokenItem[] = [];
-    const foldTokens: ITokenItem[] = [];
-    const scamTokens: ITokenItem[] = [];
-    tokens.forEach(token => {
-      const usdValue = token.usd_value || 0;
-      const isScam =
-        !!token.is_suspicious || (!token.is_core && usdValue === 0);
-      if (isScam) {
-        scamTokens.push(token);
-      } else if (token.is_core) {
-        unFoldTokens.push(token);
-      } else {
-        foldTokens.push(token);
-      }
-    });
-
-    sortedUnfoldTokens = sortByUsdValueDesc(unFoldTokens);
-    sortedFoldTokens = sortByUsdValueDesc(foldTokens);
-    sortedScamTokens = sortByUsdValueDesc(scamTokens);
+    sortedUnfoldTokens = sortByUsdValueDesc(tokens);
   }
 
   return chainServerId
-    ? {
-        unFoldTokens: sortedUnfoldTokens.filter(
-          item => item.chain === chainServerId,
-        ),
-        foldTokens: sortedFoldTokens.filter(
-          item => item.chain === chainServerId,
-        ),
-        scamTokens: sortedScamTokens.filter(
-          item => item.chain === chainServerId,
-        ),
-      }
-    : {
-        unFoldTokens: sortedUnfoldTokens,
-        foldTokens: sortedFoldTokens,
-        scamTokens: sortedScamTokens,
-      };
+    ? sortedUnfoldTokens.filter(item => item.chain === chainServerId)
+    : sortedUnfoldTokens;
 };
 
 const computePerpsTokenSelect = (
@@ -635,7 +604,7 @@ const tokenListStore = zCreate<TokenListState>(set => ({
 type TokenListComputedState = {
   multiAssetsCache: Record<string, TokenAssetsResult>;
   singleAssetsCache: Record<string, TokenAssetsResult>;
-  tokenSelectCache: Record<string, TokenAssetsResult>;
+  tokenSelectCache: Record<string, ITokenItem[]>;
   perpsTokenSelectCache: Record<string, ITokenItem[]>;
   chainSelectorCache: Record<string, ITokenItem[]>;
   registerMultiAssets: (
@@ -915,7 +884,7 @@ const rebuildComputedCaches = (
     );
   });
 
-  const tokenSelectCache: Record<string, TokenAssetsResult> = {};
+  const tokenSelectCache: Record<string, ITokenItem[]> = {};
   tokenSelectCacheParams.forEach((params, key) => {
     tokenSelectCache[key] = computeTokenSelect(
       tokenListMap,

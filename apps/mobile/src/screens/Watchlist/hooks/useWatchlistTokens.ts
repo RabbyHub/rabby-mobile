@@ -21,11 +21,12 @@ export const useWatchlistTokens = () => {
   const [loading, setLoading] = useState(false);
   // token级别缓存，key为chainId:tokenId
   const cacheRef = useRef<Map<string, TokenDetailWithPriceCurve>>(new Map());
+  const noData = useMemo(() => data.length === 0, [data]);
 
   const getWatchlistTokens = useCallback(
-    async (force = false) => {
+    async (force = false, chainId?: string) => {
       try {
-        if (data.length === 0) {
+        if (noData) {
           setLoading(true);
         }
         const { pinedQueue = [] } =
@@ -33,6 +34,9 @@ export const useWatchlistTokens = () => {
         setHasData(pinedQueue.length > 0);
         // 生成所有token的key
         const allKeys = pinedQueue
+          .filter(t =>
+            chainId ? t.chainId.toLowerCase() === chainId.toLowerCase() : true,
+          )
           .filter(t => t.chainId && t.tokenId)
           .map(i => `${i.chainId}:${i.tokenId}`);
         let needFetchKeys = allKeys;
@@ -80,12 +84,12 @@ export const useWatchlistTokens = () => {
         return [];
       }
     },
-    [data.length],
+    [noData],
   );
 
   const handleFetchTokens = useCallback(
-    (force = false) => {
-      return getWatchlistTokens(force).then(setData);
+    (force = false, chainId?: string) => {
+      return getWatchlistTokens(force, chainId).then(setData);
     },
     [getWatchlistTokens, setData],
   );

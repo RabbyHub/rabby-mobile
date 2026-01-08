@@ -27,6 +27,7 @@ import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
+import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -65,7 +66,9 @@ const BridgeToTokenSelect = ({
     setTokenSelectorVisible,
   } = useTokenSelectorModalVisible({
     onVisibleChanged: useMemoizedFn(visible => {
-      if (!visible) return;
+      if (!visible) {
+        return;
+      }
     }),
   });
 
@@ -113,25 +116,30 @@ const BridgeToTokenSelect = ({
     return [];
   }, [currentAccount, chainId, tokenSelectorVisible, queryConds.keyword]);
 
+  const { data: favoriteTokens, loading: favoriteTokensLoading } =
+    useFavoriteTokens({
+      focus: favoriteFilterValue === 'favorite',
+      address,
+      chainId,
+    });
+
   const displayTokenList = useMemo(() => {
     return uniqBy(
-      (tokenList || []).map(item => tokenItemToITokenItem(item, '')),
+      (favoriteFilterValue === 'favorite'
+        ? favoriteTokens
+        : tokenList || []
+      ).map(item => tokenItemToITokenItem(item, '')),
       item => {
         return `${item.chain}-${item.id}`;
       },
-    )
-      .filter(e => !excludeTokens.includes(e.id))
-      .filter(e => {
-        if (favoriteFilterValue === 'favorite') {
-          return pinedQueue?.some(
-            x => x.chainId === e.chain && x.tokenId === e.id,
-          );
-        }
-        return true;
-      });
-  }, [tokenList, excludeTokens, favoriteFilterValue, pinedQueue]);
+    ).filter(e => !excludeTokens.includes(e.id));
+  }, [favoriteFilterValue, favoriteTokens, tokenList, excludeTokens]);
 
-  const isListLoading = tokenListLoading;
+  const isListLoading = useMemo(() => {
+    return favoriteFilterValue === 'favorite'
+      ? favoriteTokensLoading
+      : tokenListLoading;
+  }, [favoriteFilterValue, favoriteTokensLoading, tokenListLoading]);
 
   const handleSearchTokens = React.useCallback(async keyword => {
     setQueryConds({
