@@ -5,15 +5,15 @@ import {
   CombineNFTItem,
   CombineTokensItem,
 } from '../Home/hooks/store';
-import { DisplayedPortfolio } from '../Home/utils/project';
 import { formatAmount } from '@/utils/math';
-import { AbstractPortfolio, AbstractPortfolioToken } from '../Home/types';
+import { AbstractPortfolio } from '../Home/types';
 import { openapi } from '@/core/request';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks/index';
 import BigNumber from 'bignumber.js';
 import { formatUsdValue } from '@/utils/number';
-
+import { ITokenItem } from '@/store/tokens';
+import { tokenItemToITokenItem } from '@/utils/token';
 export const useSearch = () => {
   const [searchState, setSearchState] = useState<string>('');
   const debouncedSearchValue = useDebounce(searchState, {
@@ -136,9 +136,7 @@ export const filterNfts = (nfts: CombineNFTItem[], filterText?: string) => {
 };
 
 export const useSearchTokens = (filterText?: string) => {
-  const [resultTokens, setResultTokens] = useState<AbstractPortfolioToken[]>(
-    [],
-  );
+  const [resultTokens, setResultTokens] = useState<ITokenItem[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const searchedRef = useRef<string>('');
@@ -189,19 +187,13 @@ export const useSearchTokens = (filterText?: string) => {
           const key = `${token.chain}-${token.id}`;
           const localAmount = amountMap.get(key) || 0;
 
-          const amountBn = new BigNumber(localAmount);
-          const priceBn = new BigNumber(token.price || 0);
-          const usdValue = amountBn.times(priceBn).toNumber();
-
-          return {
-            ...token,
-            _isPined: false,
-            _isFold: false,
-            _isExcludeBalance: false,
-            _usdValueStr: usdValue ? formatUsdValue(usdValue) : '$0',
-            _amountStr: localAmount ? formatAmount(localAmount) : '0',
-            _tokenId: token.id,
-          } as unknown as AbstractPortfolioToken;
+          return tokenItemToITokenItem(
+            {
+              ...token,
+              amount: localAmount,
+            },
+            '',
+          );
         }),
       );
       setSearched(true);

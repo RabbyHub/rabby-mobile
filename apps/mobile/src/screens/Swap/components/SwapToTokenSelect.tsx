@@ -38,6 +38,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { ITokenItem } from '@/store/tokens';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -133,7 +134,40 @@ const SwapToTokenSelect = forwardRef<
             q: queryConds.keyword,
             chain_id: queryConds.chainServerId || '',
           });
-          return list.map(item => tokenItemToITokenItem(item, ''));
+          let localAmounts: Array<{
+            chain: string;
+            tokenId: string;
+            amount: number;
+          }> = [];
+          if (list.length > 0) {
+            const tokenList = list.map(t => ({
+              chain: t.chain,
+              tokenId: t.id,
+            }));
+            try {
+              localAmounts = await TokenItemEntity.getTokenListAmount({
+                owner_addr: [currentAddress],
+                tokenList,
+              });
+            } catch (error) {
+              console.error('Failed to get local token amounts:', error);
+            }
+          }
+
+          const amountMap = new Map<string, number>();
+          localAmounts.forEach(item => {
+            const key = `${item.chain}-${item.tokenId}`;
+            amountMap.set(key, item.amount);
+          });
+          return list.map(item =>
+            tokenItemToITokenItem(
+              {
+                ...item,
+                amount: amountMap.get(`${item.chain}-${item.id}`) || 0,
+              },
+              '',
+            ),
+          );
         }
         const list = await openapi.getSwapTokenList(
           currentAddress,
