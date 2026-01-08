@@ -441,7 +441,7 @@ const setLastScreenshot = (
   }
 };
 
-if (IS_ANDROID) {
+if (IS_ANDROID && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
   RNScreenshotPrevent.startScreenCaptureDetection().then(() => {
     console.debug(
       '[info] RNScreenshotPrevent started screen capture detection on Android',
