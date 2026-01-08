@@ -40,6 +40,9 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { Button } from '../Button';
 import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
+import i18next from 'i18next';
+import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
+import { accountEvents } from '@/core/apis/account';
 
 const { isSameAddress } = addressUtils;
 
@@ -60,51 +63,59 @@ export interface Props {
   onCancel: () => void;
 }
 
+async function onAddressImported(addresses: KeyringEventAccount[]) {
+  accountEvents.emit('ACCOUNT_ADDED', {
+    accounts: addresses,
+  });
+}
+
 export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   const { apiHD, hdType, hdBrandName } = React.useMemo(() => {
     const ret = {
-      apiHD: null as
-        | null
-        | typeof apiLedger
-        | typeof apiOneKey
-        | typeof apiKeystone
-        | typeof apiTrezor,
+      apiHD: null,
       hdType: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
-      hdBrandName: HARDWARE_KEYRING_TYPES.Keystone.brandName as
-        | typeof KEYRING_CLASS.HARDWARE.LEDGER
-        | typeof KEYRING_CLASS.HARDWARE.ONEKEY
-        | typeof KEYRING_CLASS.HARDWARE.TREZOR
-        | typeof KEYRING_CLASS.MNEMONIC,
+      hdBrandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
     };
     switch (params.type) {
       case KEYRING_TYPE.LedgerKeyring: {
-        ret.apiHD = apiLedger;
-        ret.hdType = KEYRING_TYPE.LedgerKeyring;
-        ret.hdBrandName = KEYRING_CLASS.HARDWARE.LEDGER;
-        break;
+        return {
+          ...ret,
+          apiHD: apiLedger,
+          hdType: KEYRING_TYPE.LedgerKeyring,
+          hdBrandName: KEYRING_CLASS.HARDWARE.LEDGER,
+        };
       }
       case KEYRING_TYPE.OneKeyKeyring: {
-        ret.apiHD = apiOneKey;
-        ret.hdType = KEYRING_TYPE.OneKeyKeyring;
-        ret.hdBrandName = KEYRING_CLASS.HARDWARE.ONEKEY;
-        break;
+        return {
+          ...ret,
+          apiHD: apiOneKey,
+          hdType: KEYRING_TYPE.OneKeyKeyring,
+          hdBrandName: KEYRING_CLASS.HARDWARE.ONEKEY,
+        };
       }
       case KEYRING_TYPE.KeystoneKeyring: {
-        ret.apiHD = apiKeystone;
-        ret.hdType = KEYRING_TYPE.TrezorKeyring;
-        ret.hdBrandName = KEYRING_CLASS.HARDWARE.TREZOR;
-        break;
+        return {
+          ...ret,
+          apiHD: apiKeystone,
+          hdType: KEYRING_TYPE.KeystoneKeyring,
+          hdBrandName: KEYRING_CLASS.HARDWARE.KEYSTONE,
+        };
       }
       case KEYRING_TYPE.TrezorKeyring: {
-        ret.apiHD = apiTrezor;
-        ret.hdType = KEYRING_TYPE.TrezorKeyring;
-        ret.hdBrandName = KEYRING_CLASS.HARDWARE.TREZOR;
-        break;
+        return {
+          ...ret,
+          apiHD: apiTrezor,
+          hdType: KEYRING_TYPE.TrezorKeyring,
+          hdBrandName: KEYRING_CLASS.HARDWARE.TREZOR,
+        };
       }
       case KEYRING_TYPE.HdKeyring: {
-        ret.hdType = KEYRING_TYPE.HdKeyring;
-        ret.hdBrandName = KEYRING_CLASS.MNEMONIC;
-        break;
+        return {
+          ...ret,
+          apiHD: null,
+          hdType: KEYRING_TYPE.HdKeyring,
+          hdBrandName: KEYRING_CLASS.MNEMONIC,
+        };
       }
     }
 
@@ -318,16 +329,19 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
 
   const handleConfirm = React.useCallback(async () => {
     setImporting(true);
-    importToastHiddenRef.current = toast.show('Importing...', {
-      duration: 100000,
-    });
+    importToastHiddenRef.current = toast.show(
+      i18next.t('page.newAddress.importing'),
+      {
+        duration: 100000,
+      },
+    );
 
     if (params.type === KEYRING_TYPE.HdKeyring) {
       setTimeout(() => {
         activeAndPersistAccountsByMnemonics(
           params.mnemonics!,
           params.passphrase || '',
-          selectedAccounts as any,
+          selectedAccounts,
           true,
         )
           .then(() => {
@@ -362,6 +376,13 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       for (const acc of selectedAccounts) {
         await apiHD?.importAddress(acc.index - 1);
       }
+      await onAddressImported(
+        selectedAccounts.map(item => ({
+          address: item.address,
+          type: hdType,
+          brandName: hdBrandName,
+        })),
+      );
 
       resetNavigationOnTopOfHome(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,

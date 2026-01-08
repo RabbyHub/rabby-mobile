@@ -20,14 +20,14 @@ import { useHomeTabIndex } from '@/hooks/navigation';
 const isAndroid = Platform.OS === 'android';
 
 const getStyle = createGetStyles2024(
-  ({ colors2024, isLight, bottomSafeArea }) => ({
+  ({ colors2024, isLight, safeAreaInsets }) => ({
     globalSearchBar: {
       position: 'absolute',
       left: 8,
       right: 8,
       bottom: Platform.select({
         ios: 22,
-        android: Math.max(22, bottomSafeArea),
+        android: Math.max(22, safeAreaInsets.bottom),
       }),
     },
     fabContainer: {

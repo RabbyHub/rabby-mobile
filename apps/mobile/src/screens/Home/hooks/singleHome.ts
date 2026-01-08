@@ -32,7 +32,7 @@ function getDefault(): SingleHomeState {
     reachTop: false,
   };
 }
-export const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
+const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
 
 function presetSingHomeAccount(account: Account) {
   singleHomeState.setState({
@@ -70,6 +70,9 @@ export const apisSingleHome = {
   },
   getCurrentAddress: () => {
     return singleHomeState.getState().currentAccount?.address;
+  },
+  getCurrentAccount: () => {
+    return singleHomeState.getState().currentAccount;
   },
   setSelectChainItem: (chain: ChainListItem | null) => {
     singleHomeState.setState({
@@ -120,14 +123,20 @@ export function useSingleHomeAccountAlias() {
       brandName: s.currentAccount?.brandName,
     })),
   );
-  const { adderssAlias } = useAlias2(address || '', { autoFetch: true });
+  const { adderssAlias, isDefaultAlias } = useAlias2(address || '', {
+    autoFetch: true,
+  });
 
-  const name = useMemo(
+  const aliasExist = useMemo(() => {
+    return !!address && !!adderssAlias && !isDefaultAlias;
+  }, [address, adderssAlias, isDefaultAlias]);
+
+  const nameText = useMemo(
     () => adderssAlias || brandName,
     [adderssAlias, brandName],
   );
 
-  return { address, name, brandName };
+  return { aliasExist, address, nameText, brandName, isDefaultAlias };
 }
 
 export function useSingleHomeAddress() {

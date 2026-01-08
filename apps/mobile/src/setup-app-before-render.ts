@@ -33,9 +33,10 @@ import {
 import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
 import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
+import { startManageAccountStoreLifecycle } from './hooks/account';
 
 startSubscribeLangChange();
-
+startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();
 startFetchOnceTop5TokensForAllAccounts();
 subscribeUnlockToFetchAccounts();

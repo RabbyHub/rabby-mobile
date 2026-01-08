@@ -7,7 +7,6 @@ import {
 } from '@rabby-wallet/keyring-utils';
 
 import {
-  contactService,
   keyringService,
   preferenceService,
   transactionHistoryService,
@@ -25,7 +24,6 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { coerceFloat } from '@/utils/number';
 import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import * as apiBalance from '@/core/apis/balance';
-import { useAtomicRequest } from './common/useAtomicAction';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
@@ -34,28 +32,35 @@ import { BalanceEntity } from '@/databases/entities/balance';
 import { updateHistoryTimeSingleAddress } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { fetchAllAccounts, KeyringAccountWithAlias } from '@/core/apis/account';
+import {
+  accountEvents,
+  fetchAllAccounts,
+  KeyringAccountWithAlias,
+} from '@/core/apis/account';
 import { zCreate } from '@/core/utils/reexports';
 import {
-  makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
   runIIFEFunc,
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { useBalanceAccounts } from './useAccountsBalance';
-import { sortAccountList } from '@/utils/sortAccountList';
 import { perfEvents } from '@/core/utils/perf';
+import { AccountInfoEntity } from '@/databases/entities/accountInfo';
+import { EntityAccountBase } from '@/databases/entities/base';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
-
-// const fetchingAccountsAtom = atom(false);
 
 type Store = {
   accounts: KeyringAccountWithAlias[];
   fetchingAccounts: boolean;
   pinnedAddresses: IPinAddress[];
   currentAccount: KeyringAccountWithAlias | null;
+
+  newlyAddedAccounts: Record<
+    AccountInfoEntity['_db_id'],
+    Awaited<ReturnType<typeof AccountInfoEntity.getAccountsAddedIn>>[0]
+  >;
 };
 const zAccountStore = zCreate<Store>((set, get) => {
   return {
@@ -64,26 +69,68 @@ const zAccountStore = zCreate<Store>((set, get) => {
 
     pinnedAddresses: preferenceService.getPinAddresses(),
     currentAccount: null,
+
+    newlyAddedAccounts: {},
   };
 });
 
-runIIFEFunc(() => {
-  const fetchAndSet = (options?: { confirmChanged?: boolean }) => {
-    const { confirmChanged = false } = options || {};
-    fetchAllAccounts().then(accounts => {
-      setAccounts(accounts);
+const fetchAndSet = (options?: { confirmChanged?: boolean }) => {
+  fetchAllAccounts().then(accounts => {
+    setAccounts(accounts);
+  });
+};
+
+async function fetchNewlyAddedAccounts() {
+  return AccountInfoEntity.getAccountsAddedIn().then(accounts => {
+    zAccountStore.setState(prev => {
+      const newVal = accounts.reduce((accu, cur) => {
+        accu[cur._db_id] = cur;
+        return accu;
+      }, {} as Store['newlyAddedAccounts']);
+
+      if (isEqual(prev.newlyAddedAccounts, newVal)) return prev;
+
+      return {
+        ...prev,
+        newlyAddedAccounts: newVal,
+      };
     });
+
+    return accounts;
+  });
+}
+
+export function useIsNewlyAddedAccount(account: KeyringAccount) {
+  const dbId = useMemo(() => {
+    return EntityAccountBase.buildDBId({
+      address: account.address,
+      type: account.type,
+      brandName: account.brandName,
+    });
+  }, [account.address, account.type, account.brandName]);
+  const newlyAddedAccount = zAccountStore(
+    s => s.newlyAddedAccounts[dbId] ?? null,
+  );
+
+  return {
+    newlyAddedAccount,
+    isNewlyAdded: !!newlyAddedAccount,
   };
+}
+
+export function startManageAccountStoreLifecycle() {
   keyringService.once('unlock', () => {
     fetchAndSet();
   });
 
-  keyringService.on('newAccount', () => {
+  keyringService.on('newAccount', (account: Account) => {
     fetchAndSet();
   });
   // removedAccount
-  keyringService.on('removedAccount', () => {
+  keyringService.on('removedAccount', (account: Account) => {
     fetchAndSet();
+
+    AccountInfoEntity.deleteByAccount(account);
   });
 
   keyringService.store.subscribe(state => {
@@ -91,7 +138,20 @@ runIIFEFunc(() => {
       fetchAndSet();
     }
   });
-});
+
+  accountEvents.on('ACCOUNT_ADDED', ({ accounts, scene }) => {
+    AccountInfoEntity.recordNewAccount(accounts);
+    fetchNewlyAddedAccounts();
+  });
+
+  fetchNewlyAddedAccounts();
+  setInterval(
+    () => {
+      fetchNewlyAddedAccounts();
+    },
+    __DEV__ ? 10 * 1e3 : 1 * 60 * 1e3,
+  );
+}
 
 function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
   zAccountStore.setState(prev => {

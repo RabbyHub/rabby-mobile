@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ColorSchemeName,
   Appearance,
@@ -26,6 +26,7 @@ import { useThemeMode } from '@rneui/themed';
 import { TFunction } from 'i18next';
 import { useMemoizedFn } from 'ahooks';
 import { runDevIIFEFunc } from '@/core/utils/store';
+import { useCreationWithShallowCompare } from './common/useMemozied';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
 
@@ -213,16 +214,15 @@ export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
       ? opts?.isLight
       : appThemeMode === 'light';
 
-  const { bottom: bottomSafeArea } = useSafeAreaInsets();
-
+  const { safeAreaInsets } = useStyleSafeAreaInsets();
   const getStyle = useMemoizedFn(_getStyle || makeNoop());
 
   const cs = React.useMemo(() => {
     return {
       colors,
-      styles: getStyle(colors, { isLight, bottomSafeArea }) as ReturnType<T>,
+      styles: getStyle(colors, { isLight, safeAreaInsets }) as ReturnType<T>,
     };
-  }, [colors, getStyle, isLight, bottomSafeArea]);
+  }, [colors, getStyle, isLight, safeAreaInsets]);
 
   return {
     ...cs,
@@ -252,13 +252,30 @@ export function getColors2024(
   };
 }
 
+function useStyleSafeAreaInsets() {
+  const safeAreaInsetsOrig = useSafeAreaInsets();
+  const safeAreaInsets = useMemo(() => {
+    return {
+      top: safeAreaInsetsOrig.top,
+      bottom: safeAreaInsetsOrig.bottom,
+      left: safeAreaInsetsOrig.left,
+      right: safeAreaInsetsOrig.right,
+    };
+  }, [
+    safeAreaInsetsOrig.top,
+    safeAreaInsetsOrig.bottom,
+    safeAreaInsetsOrig.left,
+    safeAreaInsetsOrig.right,
+  ]);
+
+  return { safeAreaInsets };
+}
+
 export function useTheme2024<
   T extends ReturnType<typeof createGetStyles2024>,
 >(opts?: { getStyle?: T; isLight?: boolean }) {
   const appThemeMode = useGetBinaryMode();
-  const { bottom: bottomSafeArea } = useSafeAreaInsets();
-  // const { getStyle } = opts || {};
-
+  const { safeAreaInsets } = useStyleSafeAreaInsets();
   const getStyle = useMemoizedFn(opts?.getStyle || makeNoop());
 
   const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
@@ -276,11 +293,10 @@ export function useTheme2024<
         colors2024,
         classicalColors,
         isLight,
-        bottomSafeArea,
-        // androidOnlyBottomSafeArea: isAndroid ? bottomSafeArea : 0,
+        safeAreaInsets,
       }) as T extends void ? void : ReturnType<T>,
     };
-  }, [colors2024, classicalColors, getStyle, isLight, bottomSafeArea]);
+  }, [colors2024, classicalColors, getStyle, isLight, safeAreaInsets]);
 
   return {
     ...cs,

@@ -11,6 +11,13 @@ import {
 import { getRabbyAppDbDir } from '@/databases/constant';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { OPSQLiteEvents } from './events';
+import {
+  BaseEntity,
+  DataSource,
+  EntityTarget,
+  ObjectLiteral,
+} from 'typeorm/browser';
+import { ReactNativeDriver } from '@/core/utils/reexports';
 
 const enhanceQueryResult = (result: QueryResult): void => {
   // @ts-expect-error
@@ -83,6 +90,9 @@ export const opSqliteTypeORMDriver = {
       OPSQLiteEvents.emit('__OP_SQLITE_LOADED__', { database });
 
       const connection = {
+        getDb() {
+          return database;
+        },
         executeSql: async <T extends any>(
           sql: string,
           params: any[] | undefined,
@@ -144,3 +154,19 @@ export const opSqliteTypeORMDriver = {
     }
   },
 };
+
+type OPSQliteConnectionType = Awaited<
+  ReturnType<typeof opSqliteTypeORMDriver.openDatabase>
+>;
+
+export function resolveDriverAndConnectionFromEntity<
+  Entity extends ObjectLiteral,
+>(ds: DataSource, entityCls: EntityTarget<Entity>) {
+  const repo = ds.getRepository(entityCls);
+  const driver = repo.manager.connection.driver as ReactNativeDriver;
+
+  return {
+    driver,
+    connection: driver.databaseConnection as OPSQliteConnectionType,
+  };
+}

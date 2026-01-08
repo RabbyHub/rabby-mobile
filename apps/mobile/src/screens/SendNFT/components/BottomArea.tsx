@@ -224,7 +224,7 @@ export const bottomAreaSizes = {
   bottom: 0,
 };
 
-const getStyles = createGetStyles2024(({ colors2024, bottomSafeArea }) => {
+const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
   return {
     bottomDockArea: {
       bottom: bottomAreaSizes.bottom,
@@ -232,7 +232,7 @@ const getStyles = createGetStyles2024(({ colors2024, bottomSafeArea }) => {
       paddingHorizontal: 24,
       position: 'absolute',
       paddingTop: bottomAreaSizes.containerPt,
-      paddingBottom: bottomAreaSizes.containerPb + 20 + bottomSafeArea,
+      paddingBottom: bottomAreaSizes.containerPb + 20 + safeAreaInsets.bottom,
       backgroundColor: colors2024['neutral-bg-1'],
       // ...makeDebugBorder(),
     },

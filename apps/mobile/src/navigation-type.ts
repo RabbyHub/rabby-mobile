@@ -270,8 +270,7 @@ export type AccountNavigatorParamList = {
 
 export type SingleAddressNavigatorParamList = {
   [RootNames.SingleAddressHome]: {
-    scrollToToken?: string;
-    account: Account;
+    // account: Account;
   };
 };
 

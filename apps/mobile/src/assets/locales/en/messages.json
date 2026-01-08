@@ -1452,7 +1452,8 @@
             "content": "It's not supported to import multiple {{0}} devices If you switch to a new {{0}} device, the current device's address list will be removed before starting the import process."
           }
         }
-      }
+      },
+      "importing": "Importing..."
     },
     "unlock": {
       "btn": {

@@ -96,7 +96,7 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   if (!currentAccount) return null;
   if (noAssetsValue && isDirectlySignableAccount(currentAccount)) {
     return (
-      <ReceiveOnNoAssets.BgWrapper>
+      <ReceiveOnNoAssets.BgWrapper isForSingle>
         <ReceiveOnNoAssets account={currentAccount} isForSingle />
       </ReceiveOnNoAssets.BgWrapper>
     );

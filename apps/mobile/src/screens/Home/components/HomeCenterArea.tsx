@@ -69,7 +69,7 @@ export function HomeCenterArea() {
       )}
 
       {blocksVisibility.soloAccountToShowReceiveTip && (
-        <ReceiveOnNoAssets.BgWrapper>
+        <ReceiveOnNoAssets.BgWrapper isForSingle={false}>
           <ReceiveOnNoAssets
             account={accountToShowReceiveTip}
             isForSingle={false}
@@ -93,19 +93,17 @@ export function HomeCenterArea() {
   );
 }
 
-const getStyle = createGetStyles2024(
-  ({ colors2024, isLight, bottomSafeArea }) => ({
-    contentBetweenHeaderAndMatrix: {
-      marginTop: 12,
-      marginBottom: 12,
-      gap: 12,
-      // ...makeDebugBorder(),
-    },
-    contentBetweenHeaderAndMatrixEmpty: {
-      marginBottom: 12,
-    },
-    contentBetweenHeaderAndMatrixOnlyOne: {
-      paddingTop: 0,
-    },
-  }),
-);
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  contentBetweenHeaderAndMatrix: {
+    marginTop: 12,
+    marginBottom: 12,
+    gap: 12,
+    // ...makeDebugBorder(),
+  },
+  contentBetweenHeaderAndMatrixEmpty: {
+    marginBottom: 12,
+  },
+  contentBetweenHeaderAndMatrixOnlyOne: {
+    paddingTop: 0,
+  },
+}));

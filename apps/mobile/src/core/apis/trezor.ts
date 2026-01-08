@@ -17,7 +17,7 @@ export async function importAddress(index: number) {
   const keyring = await getKeyring<TrezorKeyring>(trezorType);
 
   keyring.setAccountToUnlock(index.toString());
-  const result = await keyringService.addNewAccount(keyring as any);
+  const result = await keyringService.addNewAccount(keyring);
   preferenceService.initCurrentAccount();
   console.log('importAddress index', index, result);
   return result;

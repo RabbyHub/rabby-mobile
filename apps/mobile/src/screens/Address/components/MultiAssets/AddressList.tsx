@@ -31,12 +31,14 @@ import { computeBalanceChange } from '@/core/apis/balance';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
+  showMarkIfNewlyAdded?: boolean;
   onAddAddressPress?: () => void;
   onDone?: () => void;
   onMoreAddressListPress?: () => void;
   isManageMode?: boolean;
 }
 export const AddressList = ({
+  showMarkIfNewlyAdded = true,
   onAddAddressPress,
   onDone,
   onMoreAddressListPress,
@@ -111,14 +113,22 @@ export const AddressList = ({
               />
             </Pressable>
             <View style={{ width: '100%' }}>
-              <AddressEntry data={item} onSelect={onDone} />
+              <AddressEntry
+                showMarkIfNewlyAdded={showMarkIfNewlyAdded}
+                data={item}
+                onSelect={onDone}
+              />
             </View>
           </View>
         );
       }
       return (
         <View style={styles.itemGap}>
-          <AddressEntry data={item} onSelect={onDone} />
+          <AddressEntry
+            showMarkIfNewlyAdded={showMarkIfNewlyAdded}
+            data={item}
+            onSelect={onDone}
+          />
         </View>
       );
     },
@@ -129,6 +139,7 @@ export const AddressList = ({
       styles.manageBtn,
       onDone,
       colors2024,
+      showMarkIfNewlyAdded,
     ],
   );
 
