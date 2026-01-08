@@ -95,10 +95,15 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
       >['materialTabBarProps'],
     ) => (
       <Animated.View
-        style={{ opacity: tabsOpacity || 1 }}
-        pointerEvents={
-          (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto'
-        }>
+        style={{
+          opacity: tabsOpacity || 1,
+          pointerEvents:
+            (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto',
+        }}
+        // pointerEvents={
+        //   (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto'
+        // }
+      >
         <HomeCustomMaterialTabBar
           materialTabBarProps={{
             ..._props,
@@ -125,10 +130,15 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
     props => {
       return (
         <Animated.View
-          style={{ opacity: tabsOpacity || 1 }}
-          pointerEvents={
-            (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto'
-          }>
+          style={{
+            opacity: tabsOpacity || 1,
+            pointerEvents:
+              (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto',
+          }}
+          // pointerEvents={
+          //   (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto'
+          // }
+        >
           <TabsTopHeader
             // data={data}
             // loading={loading}

@@ -506,10 +506,10 @@ const OverViewComponent = React.memo(
       () =>
         pullDistanceAnim.interpolate({
           inputRange: [0, pullThreshold],
-          outputRange: [height, 0],
+          outputRange: [height - safeTop, 0],
           extrapolate: 'clamp',
         }),
-      [height, pullDistanceAnim, pullThreshold],
+      [height, pullDistanceAnim, pullThreshold, safeTop],
     );
     const panelScale = useMemo(
       () =>
@@ -533,10 +533,10 @@ const OverViewComponent = React.memo(
       () =>
         pullDistanceAnim.interpolate({
           inputRange: [0, pullThreshold],
-          outputRange: [0, -height],
+          outputRange: [0, -height + safeTop + 20],
           extrapolate: 'clamp',
         }),
-      [height, pullDistanceAnim, pullThreshold],
+      [height, pullDistanceAnim, pullThreshold, safeTop],
     );
     const tabsOpacity = useMemo(
       () =>
@@ -969,8 +969,8 @@ const OverViewComponent = React.memo(
           style={[
             styles.pullUpPanel,
             {
-              paddingTop: safeTop,
-              height,
+              // paddingTop: safeTop,
+              height: height - safeTop,
               // opacity: panelOpacity,
               transform: [
                 { translateY: panelTranslateY },
@@ -981,7 +981,11 @@ const OverViewComponent = React.memo(
           <Animated.View
             style={[
               styles.pullOverlay,
-              { top: -90 + safeTop, opacity: overlayOpacity },
+              {
+                // top: -90 + safeTop,
+                top: -90,
+                opacity: overlayOpacity,
+              },
             ]}
           />
           <Animated.View
@@ -1196,6 +1200,7 @@ const getStyle = createGetStyles2024(
     scroll: {
       flex: 1,
       marginTop: TAB_HEADER_MIN_HEIGHT,
+      marginBottom: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
     },
     scrollContainer: {
       // paddingTop: 88,
