@@ -82,27 +82,6 @@ export default function DevDataPlaygroundModal({
           );
         },
       },
-      {
-        label: 'Clear All SQLite and quit',
-        icon: <RcCode style={styles.labelIcon} />,
-        onPress: async () => {
-          Alert.alert(
-            'Clear',
-            'This will clear all SQLite database data, restart app is required, are you sure?',
-            [
-              { text: 'Cancel', onPress: makeNoop },
-              {
-                text: 'Clear',
-                style: 'destructive',
-                onPress: async () => {
-                  resetUpdateHistoryTime();
-                  await dropAppDataSourceAndQuitApp();
-                },
-              },
-            ],
-          );
-        },
-      },
       // {
       //   label: 'Clear All SQLite (No restart)',
       //   icon: <RcCode style={styles.labelIcon} />,
@@ -120,19 +99,6 @@ export default function DevDataPlaygroundModal({
       //       });
       //   },
       // },
-      {
-        label: 'Clear history DB data',
-        icon: <RcCode style={styles.labelIcon} />,
-        onPress: async () => {
-          resetUpdateHistoryTime();
-          await prepareAppDataSource();
-          await Promise.all([
-            HistoryItemEntity.clear(),
-            SwapItemEntity.clear(),
-            BuyItemEntity.clear(),
-          ]);
-        },
-      },
       {
         label: 'Reset Perps Store',
         icon: <RcCode style={styles.labelIcon} />,

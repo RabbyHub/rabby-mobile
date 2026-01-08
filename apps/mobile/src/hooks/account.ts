@@ -88,7 +88,7 @@ async function fetchNewlyAddedAccounts() {
         return accu;
       }, {} as Store['newlyAddedAccounts']);
 
-      // if (isEqual(prev.newlyAddedAccounts, newVal)) return prev;
+      if (isEqual(prev.newlyAddedAccounts, newVal)) return prev;
 
       return {
         ...prev,
@@ -115,6 +115,16 @@ export function useIsNewlyAddedAccount(account: KeyringAccount) {
   return {
     newlyAddedAccount,
     isNewlyAdded: !!newlyAddedAccount,
+  };
+}
+
+export function useDevNewlyAddedAccounts() {
+  const newlyAddedAccounts = zAccountStore(s => s.newlyAddedAccounts);
+  return {
+    newlyAddedAccounts: useMemo(
+      () => Object.values(newlyAddedAccounts),
+      [newlyAddedAccounts],
+    ),
   };
 }
 
@@ -145,12 +155,9 @@ export function startManageAccountStoreLifecycle() {
   });
 
   fetchNewlyAddedAccounts();
-  setInterval(
-    () => {
-      fetchNewlyAddedAccounts();
-    },
-    __DEV__ ? 10 * 1e3 : 1 * 60 * 1e3,
-  );
+  setInterval(() => {
+    fetchNewlyAddedAccounts();
+  }, 3 * 1e3);
 }
 
 function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
