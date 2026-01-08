@@ -64,9 +64,9 @@ export interface Props {
 }
 
 async function onAddressImported(addresses: KeyringEventAccount[]) {
-  accountEvents.emit('ACCOUNT_ADDED', {
-    accounts: addresses,
-  });
+  // accountEvents.emit('ACCOUNT_ADDED', {
+  //   accounts: addresses,
+  // });
 }
 
 export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {

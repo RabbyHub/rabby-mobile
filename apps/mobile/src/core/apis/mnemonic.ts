@@ -351,14 +351,14 @@ export const activeAndPersistAccountsByMnemonics = async (
 
   keyring.activeAccounts(accountsToImport.map(acc => (acc as any).index! - 1));
 
-  accountEvents.emit('ACCOUNT_ADDED', {
-    accounts: accountsToImport.map(acc => ({
-      address: acc.address,
-      type: keyring.type as KeyringTypeName,
-      brandName: keyring.type,
-    })),
-    scene: 'memonics',
-  });
+  // accountEvents.emit('ACCOUNT_ADDED', {
+  //   accounts: accountsToImport.map(acc => ({
+  //     address: acc.address,
+  //     type: keyring.type as KeyringTypeName,
+  //     brandName: keyring.type,
+  //   })),
+  //   scene: 'memonics',
+  // });
 
   const detail = keyring.getInfoByAddress(accountsToImport[0].address);
   if (detail?.basePublicKey) {
