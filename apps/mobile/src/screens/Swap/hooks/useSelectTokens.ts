@@ -8,7 +8,11 @@ import {
 import { Account } from '@/core/services/preference';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
-import useTokenList, { ITokenItem } from '@/store/tokens';
+import useTokenList, {
+  getTokenSelectCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 
 import { useSelectTokensThreadSafe } from '@/components/Token/hooks/selectToken';
 import { openapi } from '@/core/request';
@@ -35,13 +39,20 @@ export const useSelectTokens = ({
     return top10Addresses;
   }, [currentAddress, top10Addresses]);
 
-  const {
-    isLoading,
-    isLoadingByAddress,
-    forTokenSelect,
-    batchGetTokenList,
-    getTokenList,
-  } = useTokenList();
+  const { isLoading, isLoadingByAddress, batchGetTokenList, getTokenList } =
+    useTokenList();
+
+  const registerTokenSelect = useTokenListComputedStore(
+    state => state.registerTokenSelect,
+  );
+  const emptyTokenSelectResult = useMemo(
+    () => ({
+      unFoldTokens: [] as ITokenItem[],
+      foldTokens: [] as ITokenItem[],
+      scamTokens: [] as ITokenItem[],
+    }),
+    [],
+  );
 
   const isLoadingToken = useMemo(() => {
     if (!currentAccount) {
@@ -77,7 +88,7 @@ export const useSelectTokens = ({
 
   const { value: searchTokenResult, loading: searchingToken } =
     useAsync(async () => {
-      if (!currentAddress || isLpTokenEnabled) {
+      if (!currentAddress) {
         return [];
       }
       if (keyword) {
@@ -91,12 +102,57 @@ export const useSelectTokens = ({
       return [];
     }, [chain_server_id, currentAddress, keyword, isLpTokenEnabled]);
 
-  const tokens = forTokenSelect(
+  const tokenSelectKey = useMemo(
+    () =>
+      getTokenSelectCacheKey(
+        tokenSelectAddresses,
+        chain_server_id,
+        keyword,
+        isLpTokenEnabled,
+      ),
+    [tokenSelectAddresses, chain_server_id, keyword, isLpTokenEnabled],
+  );
+
+  useEffect(() => {
+    registerTokenSelect(
+      tokenSelectAddresses,
+      chain_server_id,
+      keyword,
+      isLpTokenEnabled,
+    );
+  }, [
+    registerTokenSelect,
     tokenSelectAddresses,
     chain_server_id,
     keyword,
     isLpTokenEnabled,
-  );
+  ]);
+
+  const tokens = useTokenListComputedStore(state => {
+    return state.tokenSelectCache[tokenSelectKey] || emptyTokenSelectResult;
+  });
+
+  const mergedTokens = useMemo(() => {
+    if (!keyword || !searchTokenResult?.length) {
+      return tokens;
+    }
+    const seen = new Set(
+      tokens.unFoldTokens.map(token => `${token.chain}:${token.id}`),
+    );
+    const mergedList = tokens.unFoldTokens.slice();
+    searchTokenResult.forEach(token => {
+      const key = `${token.chain}:${token.id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        mergedList.push(token);
+      }
+    });
+    return {
+      unFoldTokens: mergedList,
+      foldTokens: [],
+      scamTokens: [],
+    };
+  }, [keyword, searchTokenResult, tokens]);
 
   const formatToken = useCallback(
     (token: ITokenItem) =>
@@ -105,19 +161,12 @@ export const useSelectTokens = ({
   );
 
   const tokenWithOwner = useMemo(() => {
-    if (searchTokenResult && (searchTokenResult?.length || 0) > 0) {
-      return {
-        unFoldTokens: searchTokenResult.map(formatToken),
-        foldTokens: [],
-        scamTokens: [],
-      };
-    }
     return {
-      unFoldTokens: tokens.unFoldTokens.map(formatToken),
-      foldTokens: tokens.foldTokens.map(formatToken),
-      scamTokens: tokens.scamTokens.map(formatToken),
+      unFoldTokens: mergedTokens.unFoldTokens.map(formatToken),
+      foldTokens: mergedTokens.foldTokens.map(formatToken),
+      scamTokens: mergedTokens.scamTokens.map(formatToken),
     };
-  }, [tokens, searchTokenResult, formatToken]);
+  }, [mergedTokens, formatToken]);
 
   const checkIsExpireAndUpdate = useCallback(async () => {
     if (currentAccount) {
@@ -138,9 +187,9 @@ export const useSelectTokens = ({
   return {
     tokens: tokenWithOwner,
     existedTokens: !!(
-      tokens.foldTokens.length +
-      tokens.unFoldTokens.length +
-      tokens.scamTokens.length
+      mergedTokens.foldTokens.length +
+      mergedTokens.unFoldTokens.length +
+      mergedTokens.scamTokens.length
     ),
     isSearching: searchingToken,
     isLoading: isLoadingToken,
