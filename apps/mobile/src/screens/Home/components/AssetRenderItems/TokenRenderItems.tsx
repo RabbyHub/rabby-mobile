@@ -436,10 +436,6 @@ export const TokenRowV2 = memo(
                 {formatPercentage(Number(data.price_24h_change) || 0)}
               </Text>
             </View>
-          ) : !data.is_core && (data.usd_value || 0) > 0 ? (
-            <TouchableOpacity hitSlop={hitSlop} onPress={handleShowExcludeTips}>
-              <RcTipCC style={styles.tips} color={colors2024['neutral-info']} />
-            </TouchableOpacity>
           ) : scene === 'portfolio' ? (
             <View style={styles.priceInfo}>
               <Text style={styles.price}>{`@$${formatPrice(data.price)}`}</Text>
@@ -784,6 +780,7 @@ export const TokenRowSectionHeader = memo(
 
 export const TokenRowSectionLpTokenHeader = memo(
   ({
+    str,
     isEnabled,
     onValueChange,
     fold,
@@ -791,6 +788,7 @@ export const TokenRowSectionLpTokenHeader = memo(
     buttonStyle,
     onPressFold,
   }: {
+    str?: string | null;
     isEnabled: boolean;
     onValueChange: (value: boolean) => void;
     fold?: boolean;
@@ -827,7 +825,13 @@ export const TokenRowSectionLpTokenHeader = memo(
             </TouchableOpacity>
           </View>
         </View>
-        <LpTokenSwitch isEnabled={isEnabled} onValueChange={onValueChange} />
+        {fold ? (
+          <View style={styles.tokenRowUsdValueWrap}>
+            <Text style={styles.tokenRowUsdValue}>{str}</Text>
+          </View>
+        ) : (
+          <LpTokenSwitch isEnabled={isEnabled} onValueChange={onValueChange} />
+        )}
       </View>
     );
   },

@@ -3,11 +3,38 @@ interface IsLpTokenProps {
   is_core?: boolean;
   protocol_id?: string;
 }
+
+// lpTokenMode is false
+export const defaultTokenFilter = (token: IsLpTokenProps) => {
+  // null和false是两种情况，null表示没处理，false已经明确是诈骗token
+  if (token.is_verified === false) {
+    return false;
+  }
+  if (token.is_core === false) {
+    return false;
+  }
+  if (!token.is_core && token.protocol_id) {
+    return false;
+  }
+  return true;
+};
+
+// lpTokenMode is true
+export const includeLpTokensFilter = (token: IsLpTokenProps) => {
+  if (token.is_verified === false) {
+    return false;
+  }
+  if (token.is_core === false && !token.protocol_id) {
+    return false;
+  }
+  return true;
+};
+
 export const isLpToken = (token: IsLpTokenProps) => {
-  return !!token.is_verified && !token.is_core && !!token.protocol_id;
+  return token.is_verified !== false && !token.is_core && !!token.protocol_id;
 };
 
 export const lpTokenFilter = (
   item: IsLpTokenProps,
   isLpTokenEnabled?: boolean,
-) => (isLpTokenEnabled ? isLpToken(item) : !isLpToken(item));
+) => (isLpTokenEnabled ? isLpToken(item) : defaultTokenFilter(item));

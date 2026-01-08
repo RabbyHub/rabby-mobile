@@ -55,6 +55,7 @@ interface TokenListState {
   isLoading: boolean;
   isLoadingByAddress: Record<string, boolean>;
   forMultiAssets(
+    addresses: string[],
     chainServerId?: string,
     isLpTokenEnabled?: boolean,
   ): {
@@ -72,7 +73,7 @@ interface TokenListState {
     scamTokens: ITokenItem[];
   };
   forTokenSelect(
-    address?: string,
+    addresses: string[],
     chainServerId?: string,
     keyword?: string,
     isLpTokenEnabled?: boolean,
@@ -82,7 +83,7 @@ interface TokenListState {
     scamTokens: ITokenItem[];
   };
   forPerpsTokenSelect(address?: string): ITokenItem[];
-  forChainSelector(address?: string): ITokenItem[];
+  forChainSelector(addresses: string[]): ITokenItem[];
   initStore(): void;
   batchGetTokenList(addresses: string[], force?: boolean): Promise<void>;
   getTokenList(address: string, force?: boolean): Promise<void>;
@@ -167,6 +168,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
     foldTokens: ITokenItem[];
     scamTokens: ITokenItem[];
   } | null = null;
+  let lastMultiAssetsAddressesKey: string | undefined;
   let lastSingleAssetsResult: {
     unFoldTokens: ITokenItem[];
     foldTokens: ITokenItem[];
@@ -182,7 +184,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
   } | null = null;
   let lastTokenSelectChainServerId: string | undefined;
   let lastTokenSelectListMap: TokenListState['tokenListMap'] | null = null;
-  let lastTokenSelectAddress: string | undefined;
+  let lastTokenSelectAddressesKey: string | undefined;
   let lastTokenSelectKeyword: string | undefined;
   let lastIsLpTokenEnabled: boolean | undefined;
 
@@ -191,17 +193,28 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
     isLoading: false, // 整体的 loading 状态
     isLoadingByAddress: {}, // 单个地址的 loading 状态
     // selectors
-    forMultiAssets(chainServerId?: string, isLpTokenEnabled?: boolean) {
+    forMultiAssets(
+      addresses: string[],
+      chainServerId?: string,
+      isLpTokenEnabled?: boolean,
+    ) {
       const tokenListMap = get().tokenListMap || {};
+      const normalizedAddresses = addresses.map(address =>
+        address.toLowerCase(),
+      );
+      const addressesKey = normalizedAddresses.slice().sort().join('|');
       if (
         lastMultiAssetsResult &&
         lastTokenListMap === tokenListMap &&
+        lastMultiAssetsAddressesKey === addressesKey &&
         lastChainServerId === chainServerId &&
         lastIsLpTokenEnabled === isLpTokenEnabled
       ) {
         return lastMultiAssetsResult;
       }
-      const tokens = Object.values(tokenListMap).flat();
+      const tokens = normalizedAddresses.flatMap(
+        address => tokenListMap[address] || [],
+      );
       const scamTokens: ITokenItem[] = [];
       const nonScamTokens: ITokenItem[] = [];
       const coreTokens: ITokenItem[] = [];
@@ -249,6 +262,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
           };
 
       lastTokenListMap = tokenListMap;
+      lastMultiAssetsAddressesKey = addressesKey;
       lastChainServerId = chainServerId;
       lastMultiAssetsResult = result;
       lastIsLpTokenEnabled = isLpTokenEnabled;
@@ -325,27 +339,28 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
       return result;
     },
     forTokenSelect(
-      address?: string,
+      addresses: string[],
       chainServerId?: string,
       keyword?: string,
       isLpTokenEnabled?: boolean,
     ) {
       const tokenListMap = get().tokenListMap || {};
-      const normalizedAddress = address ? address.toLowerCase() : undefined;
+      const normalizedAddresses = addresses.map(item => item.toLowerCase());
+      const addressesKey = normalizedAddresses.slice().sort().join('|');
       const normalizedKeyword = keyword ? keyword.toLowerCase() : undefined;
       if (
         lastTokenSelectResult &&
         lastTokenSelectListMap === tokenListMap &&
         lastTokenSelectChainServerId === chainServerId &&
-        lastTokenSelectAddress === normalizedAddress &&
+        lastTokenSelectAddressesKey === addressesKey &&
         lastTokenSelectKeyword === normalizedKeyword &&
         lastIsLpTokenEnabled === isLpTokenEnabled
       ) {
         return lastTokenSelectResult;
       }
-      const tokens = normalizedAddress
-        ? tokenListMap[normalizedAddress] || []
-        : Object.values(tokenListMap).flat();
+      const tokens = normalizedAddresses.flatMap(
+        address => tokenListMap[address] || [],
+      );
       const getUsdValue = (token: ITokenItem) => {
         if (!token.is_core) {
           return -1;
@@ -360,6 +375,9 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
         const keywordLower = normalizedKeyword;
         const filteredList = list.filter(item => {
           const matchKeyWords = [item.id, item.symbol];
+          if (!isLpTokenEnabled && item.is_core === false) {
+            return false;
+          }
           return matchKeyWords.some(i =>
             i?.toLowerCase().includes(keywordLower),
           );
@@ -436,7 +454,7 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
 
       lastTokenSelectListMap = tokenListMap;
       lastTokenSelectChainServerId = chainServerId;
-      lastTokenSelectAddress = normalizedAddress;
+      lastTokenSelectAddressesKey = addressesKey;
       lastTokenSelectKeyword = normalizedKeyword;
       lastIsLpTokenEnabled = isLpTokenEnabled;
       lastTokenSelectResult = result;
@@ -454,16 +472,13 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
           .sort(compareByUsdValueDesc) || []
       );
     },
-    forChainSelector(address?: string) {
+    forChainSelector(addresses: string[]) {
       const tokenListMap = get().tokenListMap || {};
-      if (address) {
-        const normalizedAddress = address.toLowerCase();
-        return (tokenListMap[normalizedAddress] || []).filter(
-          item => item.is_core,
-        );
-      }
-      return Object.values(tokenListMap)
-        .flat()
+      const normalizedAddresses = addresses.map(address =>
+        address.toLowerCase(),
+      );
+      return normalizedAddresses
+        .flatMap(address => tokenListMap[address] || [])
         .filter(item => item.is_core);
     },
 
@@ -497,7 +512,6 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
               res[key] = [transformedToken];
             }
           }
-          console.log(res);
           set(() => ({ tokenListMap: res }));
           return;
         }
