@@ -50,40 +50,16 @@ export interface ITokenItem {
   protocol_id?: string;
 }
 
+type TokenAssetsResult = {
+  unFoldTokens: ITokenItem[];
+  foldTokens: ITokenItem[];
+  scamTokens: ITokenItem[];
+};
+
 interface TokenListState {
   tokenListMap: Record<string, ITokenItem[]>;
   isLoading: boolean;
   isLoadingByAddress: Record<string, boolean>;
-  forMultiAssets(
-    addresses: string[],
-    chainServerId?: string,
-    isLpTokenEnabled?: boolean,
-  ): {
-    unFoldTokens: ITokenItem[];
-    foldTokens: ITokenItem[];
-    scamTokens: ITokenItem[];
-  };
-  forSingleAssets(
-    address: string,
-    chainServerId?: string,
-    isLpTokenEnabled?: boolean,
-  ): {
-    unFoldTokens: ITokenItem[];
-    foldTokens: ITokenItem[];
-    scamTokens: ITokenItem[];
-  };
-  forTokenSelect(
-    addresses: string[],
-    chainServerId?: string,
-    keyword?: string,
-    isLpTokenEnabled?: boolean,
-  ): {
-    unFoldTokens: ITokenItem[];
-    foldTokens: ITokenItem[];
-    scamTokens: ITokenItem[];
-  };
-  forPerpsTokenSelect(address?: string): ITokenItem[];
-  forChainSelector(addresses: string[]): ITokenItem[];
   initStore(): void;
   batchGetTokenList(addresses: string[], force?: boolean): Promise<void>;
   getTokenList(address: string, force?: boolean): Promise<void>;
@@ -157,487 +133,389 @@ const isDataExpiredBatch = async (addresses: string[]) => {
   return res.some(item => !!item);
 };
 
-const tokenListStore = zCreate<TokenListState>((set, get) => {
-  let lastTokenListMap: TokenListState['tokenListMap'] | null = null;
-  let lastChainServerId: string | undefined;
-  let lastMultiAssetsResult: {
-    unFoldTokens: ITokenItem[];
-    foldTokens: ITokenItem[];
-    scamTokens: ITokenItem[];
-  } | null = null;
-  let lastMultiAssetsAddressesKey: string | undefined;
-  let lastSingleAssetsResult: {
-    unFoldTokens: ITokenItem[];
-    foldTokens: ITokenItem[];
-    scamTokens: ITokenItem[];
-  } | null = null;
-  let lastSingleAddress: string | undefined;
-  let lastSingleChainServerId: string | undefined;
-  let lastSingleTokenListMap: TokenListState['tokenListMap'] | null = null;
-  let lastTokenSelectResult: {
-    unFoldTokens: ITokenItem[];
-    foldTokens: ITokenItem[];
-    scamTokens: ITokenItem[];
-  } | null = null;
-  let lastTokenSelectChainServerId: string | undefined;
-  let lastTokenSelectListMap: TokenListState['tokenListMap'] | null = null;
-  let lastTokenSelectAddressesKey: string | undefined;
-  let lastTokenSelectKeyword: string | undefined;
-  let lastIsLpTokenEnabled: boolean | undefined;
+const COMPUTED_CACHE_LIMIT = 10;
 
-  return {
-    tokenListMap: {},
-    isLoading: false, // 整体的 loading 状态
-    isLoadingByAddress: {}, // 单个地址的 loading 状态
-    // selectors
-    forMultiAssets(
-      addresses: string[],
-      chainServerId?: string,
-      isLpTokenEnabled?: boolean,
-    ) {
-      const tokenListMap = get().tokenListMap || {};
-      const normalizedAddresses = addresses.map(address =>
-        address.toLowerCase(),
-      );
-      const addressesKey = normalizedAddresses.slice().sort().join('|');
-      if (
-        lastMultiAssetsResult &&
-        lastTokenListMap === tokenListMap &&
-        lastMultiAssetsAddressesKey === addressesKey &&
-        lastChainServerId === chainServerId &&
-        lastIsLpTokenEnabled === isLpTokenEnabled
-      ) {
-        return lastMultiAssetsResult;
+const createEmptyAssetsResult = (): TokenAssetsResult => ({
+  unFoldTokens: [],
+  foldTokens: [],
+  scamTokens: [],
+});
+
+const normalizeAddresses = (addresses: string[]) =>
+  addresses.map(address => address.toLowerCase());
+
+const getAddressesKey = (addresses: string[]) =>
+  normalizeAddresses(addresses).slice().sort().join('|');
+
+export const getMultiAssetsCacheKey = (
+  addresses: string[],
+  chainServerId?: string,
+  isLpTokenEnabled?: boolean,
+) =>
+  `${getAddressesKey(addresses)}::${chainServerId ?? ''}::${
+    isLpTokenEnabled ? '1' : '0'
+  }`;
+
+export const getSingleAssetsCacheKey = (
+  address: string,
+  chainServerId?: string,
+  isLpTokenEnabled?: boolean,
+) =>
+  `${address.toLowerCase()}::${chainServerId ?? ''}::${
+    isLpTokenEnabled ? '1' : '0'
+  }`;
+
+export const getTokenSelectCacheKey = (
+  addresses: string[],
+  chainServerId?: string,
+  keyword?: string,
+  isLpTokenEnabled?: boolean,
+) =>
+  `${getAddressesKey(addresses)}::${chainServerId ?? ''}::${
+    keyword ? keyword.toLowerCase() : ''
+  }::${isLpTokenEnabled ? '1' : '0'}`;
+
+export const getPerpsTokenSelectCacheKey = (address: string) =>
+  address.toLowerCase();
+
+export const getChainSelectorCacheKey = (addresses: string[]) =>
+  getAddressesKey(addresses);
+
+const computeMultiAssets = (
+  tokenListMap: TokenListState['tokenListMap'],
+  addresses: string[],
+  chainServerId?: string,
+  isLpTokenEnabled?: boolean,
+): TokenAssetsResult => {
+  if (!addresses.length) {
+    return createEmptyAssetsResult();
+  }
+  const normalizedAddresses = normalizeAddresses(addresses);
+  const tokens = normalizedAddresses.flatMap(
+    address => tokenListMap[address] || [],
+  );
+  const scamTokens: ITokenItem[] = [];
+  const nonScamTokens: ITokenItem[] = [];
+  const coreTokens: ITokenItem[] = [];
+  let totalValue = 0;
+  tokens.forEach(token => {
+    const usdValue = token.usd_value || 0;
+    const isZeroCore = token.is_core && usdValue === 0;
+    const isScam = (usdValue === 0 && !isZeroCore) || token.is_scam;
+    if (isScam) {
+      scamTokens.push(token);
+    } else {
+      nonScamTokens.push(token);
+    }
+    if (!isScam && token.is_core) {
+      coreTokens.push(token);
+      totalValue += usdValue;
+    }
+  });
+  const { foldedTokens, unfoldedTokens } = getMultiAssetsFoldResultFromParts({
+    nonScamTokens,
+    coreTokens,
+    totalValue,
+  });
+  return chainServerId
+    ? {
+        unFoldTokens: unfoldedTokens.filter(
+          item => item.chain === chainServerId,
+        ),
+        foldTokens: foldedTokens
+          .filter(item => item.chain === chainServerId)
+          .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+        scamTokens: scamTokens
+          .filter(item => item.chain === chainServerId)
+          .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
       }
-      const tokens = normalizedAddresses.flatMap(
-        address => tokenListMap[address] || [],
-      );
-      const scamTokens: ITokenItem[] = [];
-      const nonScamTokens: ITokenItem[] = [];
-      const coreTokens: ITokenItem[] = [];
-      let totalValue = 0;
-      tokens.forEach(token => {
-        const usdValue = token.usd_value || 0;
-        const isZeroCore = token.is_core && usdValue === 0;
-        const isScam = (usdValue === 0 && !isZeroCore) || token.is_scam;
-        if (isScam) {
-          scamTokens.push(token);
-        } else {
-          nonScamTokens.push(token);
-        }
-        if (!isScam && token.is_core) {
-          coreTokens.push(token);
-          totalValue += usdValue;
-        }
-      });
-      const { foldedTokens, unfoldedTokens } =
-        getMultiAssetsFoldResultFromParts({
-          nonScamTokens,
-          coreTokens,
-          totalValue,
-        });
-      const result = chainServerId
-        ? {
-            unFoldTokens: unfoldedTokens.filter(
-              item => item.chain === chainServerId,
-            ),
-            foldTokens: foldedTokens
-              .filter(item => item.chain === chainServerId)
-              .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-            scamTokens: scamTokens
-              .filter(item => item.chain === chainServerId)
-              .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-          }
-        : {
-            unFoldTokens: unfoldedTokens,
-            foldTokens: foldedTokens.filter(i =>
-              lpTokenFilter(i, isLpTokenEnabled),
-            ),
-            scamTokens: scamTokens.filter(i =>
-              lpTokenFilter(i, isLpTokenEnabled),
-            ),
-          };
-
-      lastTokenListMap = tokenListMap;
-      lastMultiAssetsAddressesKey = addressesKey;
-      lastChainServerId = chainServerId;
-      lastMultiAssetsResult = result;
-      lastIsLpTokenEnabled = isLpTokenEnabled;
-      return result;
-    },
-    forSingleAssets(
-      address: string,
-      chainServerId?: string,
-      isLpTokenEnabled?: boolean,
-    ) {
-      const tokenListMap = get().tokenListMap || {};
-      const normalizedAddress = address.toLowerCase();
-      if (
-        lastSingleAssetsResult &&
-        lastSingleTokenListMap === tokenListMap &&
-        lastSingleAddress === normalizedAddress &&
-        lastSingleChainServerId === chainServerId &&
-        lastIsLpTokenEnabled === isLpTokenEnabled
-      ) {
-        return lastSingleAssetsResult;
-      }
-      const tokens = tokenListMap[normalizedAddress] || [];
-      const scamTokens: ITokenItem[] = [];
-      const nonScamTokens: ITokenItem[] = [];
-      const coreTokens: ITokenItem[] = [];
-      let totalValue = 0;
-      tokens.forEach(token => {
-        const usdValue = token.usd_value || 0;
-        const isZeroCore = token.is_core && usdValue === 0;
-        const isScam = (usdValue === 0 && !isZeroCore) || token.is_scam;
-        if (isScam) {
-          scamTokens.push(token);
-        } else {
-          nonScamTokens.push(token);
-        }
-        if (!isScam && token.is_core) {
-          coreTokens.push(token);
-          totalValue += usdValue;
-        }
-      });
-      const { foldedTokens, unfoldedTokens } =
-        getMultiAssetsFoldResultFromParts({
-          nonScamTokens,
-          coreTokens,
-          totalValue,
-        });
-      const result = chainServerId
-        ? {
-            unFoldTokens: unfoldedTokens.filter(
-              item => item.chain === chainServerId,
-            ),
-            foldTokens: foldedTokens
-              .filter(item => item.chain === chainServerId)
-              .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-            scamTokens: scamTokens
-              .filter(item => item.chain === chainServerId)
-              .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-          }
-        : {
-            unFoldTokens: unfoldedTokens,
-            foldTokens: foldedTokens.filter(i =>
-              lpTokenFilter(i, isLpTokenEnabled),
-            ),
-            scamTokens: scamTokens.filter(i =>
-              lpTokenFilter(i, isLpTokenEnabled),
-            ),
-          };
-
-      lastSingleTokenListMap = tokenListMap;
-      lastSingleAddress = normalizedAddress;
-      lastSingleChainServerId = chainServerId;
-      lastSingleAssetsResult = result;
-      lastIsLpTokenEnabled = isLpTokenEnabled;
-      return result;
-    },
-    forTokenSelect(
-      addresses: string[],
-      chainServerId?: string,
-      keyword?: string,
-      isLpTokenEnabled?: boolean,
-    ) {
-      const tokenListMap = get().tokenListMap || {};
-      const normalizedAddresses = addresses.map(item => item.toLowerCase());
-      const addressesKey = normalizedAddresses.slice().sort().join('|');
-      const normalizedKeyword = keyword ? keyword.toLowerCase() : undefined;
-      if (
-        lastTokenSelectResult &&
-        lastTokenSelectListMap === tokenListMap &&
-        lastTokenSelectChainServerId === chainServerId &&
-        lastTokenSelectAddressesKey === addressesKey &&
-        lastTokenSelectKeyword === normalizedKeyword &&
-        lastIsLpTokenEnabled === isLpTokenEnabled
-      ) {
-        return lastTokenSelectResult;
-      }
-      const tokens = normalizedAddresses.flatMap(
-        address => tokenListMap[address] || [],
-      );
-      const getUsdValue = (token: ITokenItem) =>
-        token.usd_value || (token.price || 0) * (token.amount || 0);
-      const filterAndSortTokens = (_list: ITokenItem[]) => {
-        const list = _list.filter(i => lpTokenFilter(i, isLpTokenEnabled));
-        if (!normalizedKeyword) {
-          return sortByUsdValueDesc(list);
-        }
-        const keywordLower = normalizedKeyword;
-        const filteredList = list.filter(item => {
-          const matchKeyWords = [item.id, item.symbol];
-          if (!isLpTokenEnabled && item.is_core === false) {
-            return false;
-          }
-          return matchKeyWords.some(i =>
-            i?.toLowerCase().includes(keywordLower),
-          );
-        });
-        return filteredList.sort((a, b) => {
-          const aIdLower = a.id?.toLowerCase() || '';
-          const bIdLower = b.id?.toLowerCase() || '';
-          const aSymbolLower = a.symbol?.toLowerCase() || '';
-          const bSymbolLower = b.symbol?.toLowerCase() || '';
-
-          const aExactMatch =
-            aIdLower === keywordLower || aSymbolLower === keywordLower;
-          const bExactMatch =
-            bIdLower === keywordLower || bSymbolLower === keywordLower;
-
-          const getScore = (exactMatch: boolean, isCore: boolean) => {
-            if (exactMatch && isCore) {
-              return 4;
-            }
-            if (exactMatch && !isCore) {
-              return 3;
-            }
-            if (!exactMatch && isCore) {
-              return 2;
-            }
-            return 1;
-          };
-
-          const aScore = getScore(aExactMatch, a.is_core);
-          const bScore = getScore(bExactMatch, b.is_core);
-          if (aScore !== bScore) {
-            return bScore - aScore;
-          }
-
-          if (a.is_suspicious !== b.is_suspicious) {
-            return a.is_suspicious ? 1 : -1;
-          }
-
-          const aIdMatch = aIdLower.includes(keywordLower);
-          const bIdMatch = bIdLower.includes(keywordLower);
-          const aSymbolMatch = aSymbolLower.includes(keywordLower);
-          const bSymbolMatch = bSymbolLower.includes(keywordLower);
-
-          if (aIdMatch && !bIdMatch) {
-            return -1;
-          }
-          if (!aIdMatch && bIdMatch) {
-            return 1;
-          }
-          if (aSymbolMatch && !bSymbolMatch) {
-            return -1;
-          }
-          if (!aSymbolMatch && bSymbolMatch) {
-            return 1;
-          }
-
-          return getUsdValue(b) - getUsdValue(a);
-        });
+    : {
+        unFoldTokens: unfoldedTokens,
+        foldTokens: foldedTokens.filter(i =>
+          lpTokenFilter(i, isLpTokenEnabled),
+        ),
+        scamTokens: scamTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
       };
-      let sortedUnfoldTokens: ITokenItem[] = [];
-      let sortedFoldTokens: ITokenItem[] = [];
-      let sortedScamTokens: ITokenItem[] = [];
-      if (normalizedKeyword || isLpTokenEnabled) {
-        sortedUnfoldTokens = filterAndSortTokens(tokens);
+};
+
+const computeSingleAssets = (
+  tokenListMap: TokenListState['tokenListMap'],
+  address: string,
+  chainServerId?: string,
+  isLpTokenEnabled?: boolean,
+): TokenAssetsResult => {
+  if (!address) {
+    return createEmptyAssetsResult();
+  }
+  const normalizedAddress = address.toLowerCase();
+  const tokens = tokenListMap[normalizedAddress] || [];
+  const scamTokens: ITokenItem[] = [];
+  const nonScamTokens: ITokenItem[] = [];
+  const coreTokens: ITokenItem[] = [];
+  let totalValue = 0;
+  tokens.forEach(token => {
+    const usdValue = token.usd_value || 0;
+    const isZeroCore = token.is_core && usdValue === 0;
+    const isScam = (usdValue === 0 && !isZeroCore) || token.is_scam;
+    if (isScam) {
+      scamTokens.push(token);
+    } else {
+      nonScamTokens.push(token);
+    }
+    if (!isScam && token.is_core) {
+      coreTokens.push(token);
+      totalValue += usdValue;
+    }
+  });
+  const { foldedTokens, unfoldedTokens } = getMultiAssetsFoldResultFromParts({
+    nonScamTokens,
+    coreTokens,
+    totalValue,
+  });
+  return chainServerId
+    ? {
+        unFoldTokens: unfoldedTokens.filter(
+          item => item.chain === chainServerId,
+        ),
+        foldTokens: foldedTokens
+          .filter(item => item.chain === chainServerId)
+          .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+        scamTokens: scamTokens
+          .filter(item => item.chain === chainServerId)
+          .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+      }
+    : {
+        unFoldTokens: unfoldedTokens,
+        foldTokens: foldedTokens.filter(i =>
+          lpTokenFilter(i, isLpTokenEnabled),
+        ),
+        scamTokens: scamTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+      };
+};
+
+const computeTokenSelect = (
+  tokenListMap: TokenListState['tokenListMap'],
+  addresses: string[],
+  chainServerId?: string,
+  keyword?: string,
+  isLpTokenEnabled?: boolean,
+): TokenAssetsResult => {
+  if (!addresses.length) {
+    return createEmptyAssetsResult();
+  }
+  const normalizedAddresses = normalizeAddresses(addresses);
+  const normalizedKeyword = keyword ? keyword.toLowerCase() : undefined;
+  const tokens = normalizedAddresses.flatMap(
+    address => tokenListMap[address] || [],
+  );
+  const getUsdValue = (token: ITokenItem) =>
+    token.usd_value || (token.price || 0) * (token.amount || 0);
+  const filterAndSortTokens = (_list: ITokenItem[]) => {
+    const list = _list.filter(i => lpTokenFilter(i, isLpTokenEnabled));
+    return sortByUsdValueDesc(list);
+  };
+  const searchAndSortTokens = (_list: ITokenItem[]) => {
+    const keywordLower = normalizedKeyword;
+    if (!keywordLower) {
+      return [];
+    }
+    const filteredList = _list.filter(item => {
+      if (!item.is_verified) {
+        return false;
+      }
+      if (!item.is_core && !item.protocol_id) {
+        return false;
+      }
+      const matchKeyWords = [item.id, item.symbol];
+      return matchKeyWords.some(i => i?.toLowerCase().includes(keywordLower));
+    });
+    return filteredList.sort((a, b) => {
+      const aIdLower = a.id?.toLowerCase() || '';
+      const bIdLower = b.id?.toLowerCase() || '';
+      const aSymbolLower = a.symbol?.toLowerCase() || '';
+      const bSymbolLower = b.symbol?.toLowerCase() || '';
+
+      const aExactMatch =
+        aIdLower === keywordLower || aSymbolLower === keywordLower;
+      const bExactMatch =
+        bIdLower === keywordLower || bSymbolLower === keywordLower;
+
+      const getScore = (exactMatch: boolean, isCore: boolean) => {
+        if (exactMatch && isCore) {
+          return 4;
+        }
+        if (exactMatch && !isCore) {
+          return 3;
+        }
+        if (!exactMatch && isCore) {
+          return 2;
+        }
+        return 1;
+      };
+
+      const aScore = getScore(aExactMatch, a.is_core);
+      const bScore = getScore(bExactMatch, b.is_core);
+      if (aScore !== bScore) {
+        return bScore - aScore;
+      }
+
+      if (a.is_suspicious !== b.is_suspicious) {
+        return a.is_suspicious ? 1 : -1;
+      }
+
+      const aIdMatch = aIdLower.includes(keywordLower);
+      const bIdMatch = bIdLower.includes(keywordLower);
+      const aSymbolMatch = aSymbolLower.includes(keywordLower);
+      const bSymbolMatch = bSymbolLower.includes(keywordLower);
+
+      if (aIdMatch && !bIdMatch) {
+        return -1;
+      }
+      if (!aIdMatch && bIdMatch) {
+        return 1;
+      }
+      if (aSymbolMatch && !bSymbolMatch) {
+        return -1;
+      }
+      if (!aSymbolMatch && bSymbolMatch) {
+        return 1;
+      }
+
+      return getUsdValue(b) - getUsdValue(a);
+    });
+  };
+  let sortedUnfoldTokens: ITokenItem[] = [];
+  let sortedFoldTokens: ITokenItem[] = [];
+  let sortedScamTokens: ITokenItem[] = [];
+  if (normalizedKeyword) {
+    sortedUnfoldTokens = searchAndSortTokens(tokens);
+  } else if (isLpTokenEnabled) {
+    sortedUnfoldTokens = filterAndSortTokens(tokens);
+  } else {
+    const unFoldTokens: ITokenItem[] = [];
+    const foldTokens: ITokenItem[] = [];
+    const scamTokens: ITokenItem[] = [];
+    tokens.forEach(token => {
+      const usdValue = token.usd_value || 0;
+      const isScam = !!token.is_scam || (!token.is_core && usdValue === 0);
+      if (isScam) {
+        scamTokens.push(token);
+      } else if (token.is_core) {
+        unFoldTokens.push(token);
       } else {
-        const unFoldTokens: ITokenItem[] = [];
-        const foldTokens: ITokenItem[] = [];
-        const scamTokens: ITokenItem[] = [];
-        tokens.forEach(token => {
-          const usdValue = token.usd_value || 0;
-          const isScam = !!token.is_scam || (!token.is_core && usdValue === 0);
-          if (isScam) {
-            scamTokens.push(token);
-          } else if (token.is_core) {
-            unFoldTokens.push(token);
+        foldTokens.push(token);
+      }
+    });
+
+    sortedUnfoldTokens = sortByUsdValueDesc(unFoldTokens);
+    sortedFoldTokens = sortByUsdValueDesc(foldTokens);
+    sortedScamTokens = sortByUsdValueDesc(scamTokens);
+  }
+
+  return chainServerId
+    ? {
+        unFoldTokens: sortedUnfoldTokens.filter(
+          item => item.chain === chainServerId,
+        ),
+        foldTokens: sortedFoldTokens.filter(
+          item => item.chain === chainServerId,
+        ),
+        scamTokens: sortedScamTokens.filter(
+          item => item.chain === chainServerId,
+        ),
+      }
+    : {
+        unFoldTokens: sortedUnfoldTokens,
+        foldTokens: sortedFoldTokens,
+        scamTokens: sortedScamTokens,
+      };
+};
+
+const computePerpsTokenSelect = (
+  tokenListMap: TokenListState['tokenListMap'],
+  address?: string,
+): ITokenItem[] => {
+  if (!address) {
+    return [];
+  }
+  return (
+    tokenListMap[address.toLowerCase()]
+      ?.filter(item => item.is_core)
+      .sort(compareByUsdValueDesc) || []
+  );
+};
+
+const computeChainSelector = (
+  tokenListMap: TokenListState['tokenListMap'],
+  addresses: string[],
+): ITokenItem[] => {
+  if (!addresses.length) {
+    return [];
+  }
+  const normalizedAddresses = normalizeAddresses(addresses);
+  return normalizedAddresses
+    .flatMap(address => tokenListMap[address] || [])
+    .filter(item => item.is_core);
+};
+
+const tokenListStore = zCreate<TokenListState>(set => ({
+  tokenListMap: {},
+  isLoading: false, // 整体的 loading 状态
+  isLoadingByAddress: {}, // 单个地址的 loading 状态
+  async initStore() {
+    // 在 App 启动时执行，初始化冷备数据
+    // 取 Top10 地址
+    const top10Addresses = await getTop10MyAddresses(true);
+    const tokenMap = await TokenItemEntity.getDefaultTokensByAddresses(
+      top10Addresses,
+    );
+    // 写入 Store
+    set(() => ({ tokenListMap: tokenMap }));
+  },
+
+  async batchGetTokenList(addresses: string[], force = false) {
+    if (!force) {
+      const isExpired = await isDataExpiredBatch(addresses);
+      if (!isExpired) {
+        const tokens = await TokenItemEntity.batchMultiAddressTokens(addresses);
+        const res: Record<string, ITokenItem[]> = {};
+        for (let i = 0; i < tokens.length; i++) {
+          const token = tokens[i] as TokenItemEntity;
+          const transformedToken = tokenItemEntityToTokenItem(token);
+          const key = transformedToken.owner_addr.toLowerCase();
+          if (res[key]) {
+            res[key].push(transformedToken);
           } else {
-            foldTokens.push(token);
+            res[key] = [transformedToken];
           }
-        });
-
-        sortedUnfoldTokens = sortByUsdValueDesc(unFoldTokens);
-        sortedFoldTokens = sortByUsdValueDesc(foldTokens);
-        sortedScamTokens = sortByUsdValueDesc(scamTokens);
-      }
-
-      const result = chainServerId
-        ? {
-            unFoldTokens: sortedUnfoldTokens.filter(
-              item => item.chain === chainServerId,
-            ),
-            foldTokens: sortedFoldTokens.filter(
-              item => item.chain === chainServerId,
-            ),
-            scamTokens: sortedScamTokens.filter(
-              item => item.chain === chainServerId,
-            ),
-          }
-        : {
-            unFoldTokens: sortedUnfoldTokens,
-            foldTokens: sortedFoldTokens,
-            scamTokens: sortedScamTokens,
-          };
-
-      lastTokenSelectListMap = tokenListMap;
-      lastTokenSelectChainServerId = chainServerId;
-      lastTokenSelectAddressesKey = addressesKey;
-      lastTokenSelectKeyword = normalizedKeyword;
-      lastIsLpTokenEnabled = isLpTokenEnabled;
-      lastTokenSelectResult = result;
-
-      return result;
-    },
-    forPerpsTokenSelect(address?: string) {
-      const tokenListMap = get().tokenListMap || {};
-      if (!address) {
-        return [];
-      }
-      return (
-        tokenListMap[address.toLowerCase()]
-          ?.filter(item => item.is_core)
-          .sort(compareByUsdValueDesc) || []
-      );
-    },
-    forChainSelector(addresses: string[]) {
-      const tokenListMap = get().tokenListMap || {};
-      const normalizedAddresses = addresses.map(address =>
-        address.toLowerCase(),
-      );
-      return normalizedAddresses
-        .flatMap(address => tokenListMap[address] || [])
-        .filter(item => item.is_core);
-    },
-
-    // actions
-    async initStore() {
-      // 在 App 启动时执行，初始化冷备数据
-      // 取 Top10 地址
-      const top10Addresses = await getTop10MyAddresses(true);
-      const tokenMap = await TokenItemEntity.getDefaultTokensByAddresses(
-        top10Addresses,
-      );
-      // 写入 Store
-      set(() => ({ tokenListMap: tokenMap }));
-    },
-
-    async batchGetTokenList(addresses: string[], force = false) {
-      if (!force) {
-        const isExpired = await isDataExpiredBatch(addresses);
-        if (!isExpired) {
-          const tokens = await TokenItemEntity.batchMultiAddressTokens(
-            addresses,
-          );
-          const res: Record<string, ITokenItem[]> = {};
-          for (let i = 0; i < tokens.length; i++) {
-            const token = tokens[i] as TokenItemEntity;
-            const transformedToken = tokenItemEntityToTokenItem(token);
-            const key = transformedToken.owner_addr.toLowerCase();
-            if (res[key]) {
-              res[key].push(transformedToken);
-            } else {
-              res[key] = [transformedToken];
-            }
-          }
-          set(() => ({ tokenListMap: res }));
-          return;
         }
+        set(() => ({ tokenListMap: res }));
+        return;
       }
-      set(() => ({ isLoading: true }));
-      const cacheTokenQueue = new PQueue({
-        concurrency: 5,
-      });
-      const cacheTokenMap: Record<string, ITokenItem[]> = {};
-      addresses.forEach(address => {
-        cacheTokenQueue.add(async () => {
-          const list = await queryTokensCache(address);
-          cacheTokenMap[address.toLowerCase()] = list.map(item =>
-            tokenItemToITokenItem(item, address),
-          );
-        });
-      });
-      await waitQueueFinished(cacheTokenQueue);
-      set(() => ({ tokenListMap: cacheTokenMap }));
-      const realTimeTokenMap: Record<string, ITokenItem[]> = {};
-      const realTimeTokenQueue = new PQueue({
-        concurrency: 15,
-      });
-      await Promise.allSettled(
-        addresses.map(async address => {
-          const chains = await openapi.usedChainList(address);
-          const chainIdList = chains.map(item => item.id);
-          const res = await Promise.allSettled(
-            chainIdList.map(
-              async serverId =>
-                await realTimeTokenQueue.add(async () => {
-                  const chainTokensRes = await requestOpenApiWithChainId(
-                    ({ openapi }) => openapi.listToken(address, serverId, true),
-                    {
-                      isTestnet: false,
-                    },
-                  );
-                  const tokenList = chainTokensRes.map(item =>
-                    tokenItemToITokenItem(item, address),
-                  );
-                  return tokenList;
-                }),
-            ),
-          );
-          const results = res
-            .map(result => (result.status === 'fulfilled' ? result.value : []))
-            .flat() as ITokenItem[];
-          realTimeTokenMap[address.toLowerCase()] = results;
-          syncRemoteTokens(address.toLowerCase(), results);
-        }),
-      );
-      set(() => ({ isLoading: false }));
-      set(() => ({ tokenListMap: realTimeTokenMap }));
-    },
-
-    async getTokenList(address: string, force = false) {
-      const normalizedAddress = address.toLowerCase();
-      if (!force) {
-        const isExpired = await isDataExpired(normalizedAddress);
-        if (!isExpired) {
-          const tokens = (await TokenItemEntity.batchQueryTokens(
-            normalizedAddress,
-          )) as TokenItemEntity[];
-          const res = tokens.map(tokenItemEntityToTokenItem);
-          set(state => ({
-            tokenListMap: {
-              ...state.tokenListMap,
-              [normalizedAddress]: res,
-            },
-          }));
-          return;
-        }
-      }
-
-      set(state => ({
-        isLoadingByAddress: {
-          ...state.isLoadingByAddress,
-          [normalizedAddress]: true,
-        },
-      }));
-
-      try {
-        const cacheList = await queryTokensCache(address);
-        const cacheTokens = cacheList.map(item =>
+    }
+    set(() => ({ isLoading: true }));
+    const cacheTokenQueue = new PQueue({
+      concurrency: 5,
+    });
+    const cacheTokenMap: Record<string, ITokenItem[]> = {};
+    addresses.forEach(address => {
+      cacheTokenQueue.add(async () => {
+        const list = await queryTokensCache(address);
+        cacheTokenMap[address.toLowerCase()] = list.map(item =>
           tokenItemToITokenItem(item, address),
         );
-        set(state => ({
-          tokenListMap: {
-            ...state.tokenListMap,
-            [normalizedAddress]: cacheTokens,
-          },
-          isLoadingByAddress: {
-            ...state.isLoadingByAddress,
-            [normalizedAddress]: false,
-          },
-        }));
-
-        let chainIdList: string[] = [];
-        // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
+      });
+    });
+    await waitQueueFinished(cacheTokenQueue);
+    set(() => ({ tokenListMap: cacheTokenMap }));
+    const realTimeTokenMap: Record<string, ITokenItem[]> = {};
+    const realTimeTokenQueue = new PQueue({
+      concurrency: 15,
+    });
+    await Promise.allSettled(
+      addresses.map(async address => {
         const chains = await openapi.usedChainList(address);
-        chainIdList = chains.map(item => item.id);
-        const realTimeTokenQueue = new PQueue({
-          concurrency: 15,
-        });
+        const chainIdList = chains.map(item => item.id);
         const res = await Promise.allSettled(
           chainIdList.map(
             async serverId =>
@@ -658,24 +536,423 @@ const tokenListStore = zCreate<TokenListState>((set, get) => {
         const results = res
           .map(result => (result.status === 'fulfilled' ? result.value : []))
           .flat() as ITokenItem[];
+        realTimeTokenMap[address.toLowerCase()] = results;
+        syncRemoteTokens(address.toLowerCase(), results);
+      }),
+    );
+    set(() => ({ isLoading: false }));
+    set(() => ({ tokenListMap: realTimeTokenMap }));
+  },
 
-        syncRemoteTokens(normalizedAddress, results);
+  async getTokenList(address: string, force = false) {
+    const normalizedAddress = address.toLowerCase();
+    if (!force) {
+      const isExpired = await isDataExpired(normalizedAddress);
+      if (!isExpired) {
+        const tokens = (await TokenItemEntity.batchQueryTokens(
+          normalizedAddress,
+        )) as TokenItemEntity[];
+        const res = tokens.map(tokenItemEntityToTokenItem);
         set(state => ({
           tokenListMap: {
             ...state.tokenListMap,
-            [normalizedAddress]: results,
+            [normalizedAddress]: res,
           },
         }));
-      } finally {
-        set(state => ({
-          isLoadingByAddress: {
-            ...state.isLoadingByAddress,
-            [normalizedAddress]: false,
-          },
-        }));
+        return;
       }
+    }
+
+    set(state => ({
+      isLoadingByAddress: {
+        ...state.isLoadingByAddress,
+        [normalizedAddress]: true,
+      },
+    }));
+
+    try {
+      const cacheList = await queryTokensCache(address);
+      const cacheTokens = cacheList.map(item =>
+        tokenItemToITokenItem(item, address),
+      );
+      set(state => ({
+        tokenListMap: {
+          ...state.tokenListMap,
+          [normalizedAddress]: cacheTokens,
+        },
+        isLoadingByAddress: {
+          ...state.isLoadingByAddress,
+          [normalizedAddress]: false,
+        },
+      }));
+
+      let chainIdList: string[] = [];
+      // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
+      const chains = await openapi.usedChainList(address);
+      chainIdList = chains.map(item => item.id);
+      const realTimeTokenQueue = new PQueue({
+        concurrency: 15,
+      });
+      const res = await Promise.allSettled(
+        chainIdList.map(
+          async serverId =>
+            await realTimeTokenQueue.add(async () => {
+              const chainTokensRes = await requestOpenApiWithChainId(
+                ({ openapi }) => openapi.listToken(address, serverId, true),
+                {
+                  isTestnet: false,
+                },
+              );
+              const tokenList = chainTokensRes.map(item =>
+                tokenItemToITokenItem(item, address),
+              );
+              return tokenList;
+            }),
+        ),
+      );
+      const results = res
+        .map(result => (result.status === 'fulfilled' ? result.value : []))
+        .flat() as ITokenItem[];
+
+      syncRemoteTokens(normalizedAddress, results);
+      set(state => ({
+        tokenListMap: {
+          ...state.tokenListMap,
+          [normalizedAddress]: results,
+        },
+      }));
+    } finally {
+      set(state => ({
+        isLoadingByAddress: {
+          ...state.isLoadingByAddress,
+          [normalizedAddress]: false,
+        },
+      }));
+    }
+  },
+}));
+
+type TokenListComputedState = {
+  multiAssetsCache: Record<string, TokenAssetsResult>;
+  singleAssetsCache: Record<string, TokenAssetsResult>;
+  tokenSelectCache: Record<string, TokenAssetsResult>;
+  perpsTokenSelectCache: Record<string, ITokenItem[]>;
+  chainSelectorCache: Record<string, ITokenItem[]>;
+  registerMultiAssets: (
+    addresses: string[],
+    chainServerId?: string,
+    isLpTokenEnabled?: boolean,
+  ) => string;
+  registerSingleAssets: (
+    address: string,
+    chainServerId?: string,
+    isLpTokenEnabled?: boolean,
+  ) => string;
+  registerTokenSelect: (
+    addresses: string[],
+    chainServerId?: string,
+    keyword?: string,
+    isLpTokenEnabled?: boolean,
+  ) => string;
+  registerPerpsTokenSelect: (address?: string) => string | null;
+  registerChainSelector: (addresses: string[]) => string;
+};
+
+const multiAssetsCacheParams = new Map<
+  string,
+  {
+    addresses: string[];
+    chainServerId?: string;
+    isLpTokenEnabled?: boolean;
+  }
+>();
+const singleAssetsCacheParams = new Map<
+  string,
+  {
+    address: string;
+    chainServerId?: string;
+    isLpTokenEnabled?: boolean;
+  }
+>();
+const tokenSelectCacheParams = new Map<
+  string,
+  {
+    addresses: string[];
+    chainServerId?: string;
+    keyword?: string;
+    isLpTokenEnabled?: boolean;
+  }
+>();
+const perpsTokenSelectCacheParams = new Map<string, { address: string }>();
+const chainSelectorCacheParams = new Map<string, { addresses: string[] }>();
+const multiAssetsCacheOrder: string[] = [];
+const singleAssetsCacheOrder: string[] = [];
+const tokenSelectCacheOrder: string[] = [];
+const perpsTokenSelectCacheOrder: string[] = [];
+const chainSelectorCacheOrder: string[] = [];
+
+const removeKeysFromCache = <T extends Record<string, unknown>>(
+  cache: T,
+  keys: string[],
+) => {
+  if (!keys.length) {
+    return cache;
+  }
+  const next = { ...cache };
+  keys.forEach(key => {
+    delete next[key];
+  });
+  return next;
+};
+
+const touchCacheParams = <T>(
+  map: Map<string, T>,
+  order: string[],
+  key: string,
+  params: T,
+  limit = COMPUTED_CACHE_LIMIT,
+) => {
+  if (map.has(key)) {
+    map.set(key, params);
+    const index = order.indexOf(key);
+    if (index > -1) {
+      order.splice(index, 1);
+    }
+    order.push(key);
+    return [] as string[];
+  }
+  map.set(key, params);
+  order.push(key);
+  if (order.length > limit) {
+    const removed = order.shift();
+    if (removed) {
+      map.delete(removed);
+      return [removed];
+    }
+  }
+  return [] as string[];
+};
+
+export const useTokenListComputedStore = zCreate<TokenListComputedState>(
+  set => ({
+    multiAssetsCache: {},
+    singleAssetsCache: {},
+    tokenSelectCache: {},
+    perpsTokenSelectCache: {},
+    chainSelectorCache: {},
+    registerMultiAssets(addresses, chainServerId, isLpTokenEnabled) {
+      const key = getMultiAssetsCacheKey(
+        addresses,
+        chainServerId,
+        isLpTokenEnabled,
+      );
+      const removedKeys = touchCacheParams(
+        multiAssetsCacheParams,
+        multiAssetsCacheOrder,
+        key,
+        {
+          addresses,
+          chainServerId,
+          isLpTokenEnabled,
+        },
+      );
+      const tokenListMap = tokenListStore.getState().tokenListMap;
+      set(state => ({
+        multiAssetsCache: removeKeysFromCache(
+          {
+            ...state.multiAssetsCache,
+            [key]: computeMultiAssets(
+              tokenListMap,
+              addresses,
+              chainServerId,
+              isLpTokenEnabled,
+            ),
+          },
+          removedKeys,
+        ),
+      }));
+      return key;
     },
-  };
+    registerSingleAssets(address, chainServerId, isLpTokenEnabled) {
+      const key = getSingleAssetsCacheKey(
+        address,
+        chainServerId,
+        isLpTokenEnabled,
+      );
+      const removedKeys = touchCacheParams(
+        singleAssetsCacheParams,
+        singleAssetsCacheOrder,
+        key,
+        {
+          address,
+          chainServerId,
+          isLpTokenEnabled,
+        },
+      );
+      const tokenListMap = tokenListStore.getState().tokenListMap;
+      set(state => ({
+        singleAssetsCache: removeKeysFromCache(
+          {
+            ...state.singleAssetsCache,
+            [key]: computeSingleAssets(
+              tokenListMap,
+              address,
+              chainServerId,
+              isLpTokenEnabled,
+            ),
+          },
+          removedKeys,
+        ),
+      }));
+      return key;
+    },
+    registerTokenSelect(addresses, chainServerId, keyword, isLpTokenEnabled) {
+      const key = getTokenSelectCacheKey(
+        addresses,
+        chainServerId,
+        keyword,
+        isLpTokenEnabled,
+      );
+      const removedKeys = touchCacheParams(
+        tokenSelectCacheParams,
+        tokenSelectCacheOrder,
+        key,
+        {
+          addresses,
+          chainServerId,
+          keyword,
+          isLpTokenEnabled,
+        },
+      );
+      const tokenListMap = tokenListStore.getState().tokenListMap;
+      set(state => ({
+        tokenSelectCache: removeKeysFromCache(
+          {
+            ...state.tokenSelectCache,
+            [key]: computeTokenSelect(
+              tokenListMap,
+              addresses,
+              chainServerId,
+              keyword,
+              isLpTokenEnabled,
+            ),
+          },
+          removedKeys,
+        ),
+      }));
+      return key;
+    },
+    registerPerpsTokenSelect(address) {
+      if (!address) {
+        return null;
+      }
+      const key = getPerpsTokenSelectCacheKey(address);
+      const removedKeys = touchCacheParams(
+        perpsTokenSelectCacheParams,
+        perpsTokenSelectCacheOrder,
+        key,
+        {
+          address,
+        },
+      );
+      const tokenListMap = tokenListStore.getState().tokenListMap;
+      set(state => ({
+        perpsTokenSelectCache: removeKeysFromCache(
+          {
+            ...state.perpsTokenSelectCache,
+            [key]: computePerpsTokenSelect(tokenListMap, address),
+          },
+          removedKeys,
+        ),
+      }));
+      return key;
+    },
+    registerChainSelector(addresses) {
+      const key = getChainSelectorCacheKey(addresses);
+      const removedKeys = touchCacheParams(
+        chainSelectorCacheParams,
+        chainSelectorCacheOrder,
+        key,
+        {
+          addresses,
+        },
+      );
+      const tokenListMap = tokenListStore.getState().tokenListMap;
+      set(state => ({
+        chainSelectorCache: removeKeysFromCache(
+          {
+            ...state.chainSelectorCache,
+            [key]: computeChainSelector(tokenListMap, addresses),
+          },
+          removedKeys,
+        ),
+      }));
+      return key;
+    },
+  }),
+);
+
+const rebuildComputedCaches = (
+  tokenListMap: TokenListState['tokenListMap'],
+) => {
+  const multiAssetsCache: Record<string, TokenAssetsResult> = {};
+  multiAssetsCacheParams.forEach((params, key) => {
+    multiAssetsCache[key] = computeMultiAssets(
+      tokenListMap,
+      params.addresses,
+      params.chainServerId,
+      params.isLpTokenEnabled,
+    );
+  });
+
+  const singleAssetsCache: Record<string, TokenAssetsResult> = {};
+  singleAssetsCacheParams.forEach((params, key) => {
+    singleAssetsCache[key] = computeSingleAssets(
+      tokenListMap,
+      params.address,
+      params.chainServerId,
+      params.isLpTokenEnabled,
+    );
+  });
+
+  const tokenSelectCache: Record<string, TokenAssetsResult> = {};
+  tokenSelectCacheParams.forEach((params, key) => {
+    tokenSelectCache[key] = computeTokenSelect(
+      tokenListMap,
+      params.addresses,
+      params.chainServerId,
+      params.keyword,
+      params.isLpTokenEnabled,
+    );
+  });
+
+  const perpsTokenSelectCache: Record<string, ITokenItem[]> = {};
+  perpsTokenSelectCacheParams.forEach((params, key) => {
+    perpsTokenSelectCache[key] = computePerpsTokenSelect(
+      tokenListMap,
+      params.address,
+    );
+  });
+
+  const chainSelectorCache: Record<string, ITokenItem[]> = {};
+  chainSelectorCacheParams.forEach((params, key) => {
+    chainSelectorCache[key] = computeChainSelector(
+      tokenListMap,
+      params.addresses,
+    );
+  });
+
+  useTokenListComputedStore.setState({
+    multiAssetsCache,
+    singleAssetsCache,
+    tokenSelectCache,
+    perpsTokenSelectCache,
+    chainSelectorCache,
+  });
+};
+
+tokenListStore.subscribe(state => {
+  rebuildComputedCaches(state.tokenListMap);
 });
 
 export default tokenListStore;

@@ -12,7 +12,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
-import useTokenList, { ITokenItem } from '@/store/tokens';
+import useTokenList, {
+  getPerpsTokenSelectCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -26,7 +30,6 @@ import {
   View,
 } from 'react-native';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
-import { useShallow } from 'zustand/shallow';
 
 export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
@@ -38,9 +41,28 @@ export const PerpsSelectTokenPopup: React.FC<{
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
-  const _tokens = useTokenList(
-    useShallow(s => s.forPerpsTokenSelect(account?.address)),
+  const registerPerpsTokenSelect = useTokenListComputedStore(
+    state => state.registerPerpsTokenSelect,
   );
+  const perpsTokenKey = useMemo(() => {
+    if (!account?.address) {
+      return null;
+    }
+    return getPerpsTokenSelectCacheKey(account.address);
+  }, [account?.address]);
+  useEffect(() => {
+    if (!account?.address) {
+      return;
+    }
+    registerPerpsTokenSelect(account.address);
+  }, [account?.address, registerPerpsTokenSelect]);
+
+  const _tokens = useTokenListComputedStore(state => {
+    if (!perpsTokenKey) {
+      return [];
+    }
+    return state.perpsTokenSelectCache[perpsTokenKey] || [];
+  });
   const { getTokenList } = useTokenList();
 
   const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(

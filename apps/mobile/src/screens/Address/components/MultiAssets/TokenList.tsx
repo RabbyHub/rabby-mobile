@@ -20,7 +20,11 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
-import useTokenList, { ITokenItem } from '@/store/tokens';
+import useTokenList, {
+  getMultiAssetsCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
 import { ListHeaderComponent, ListRenderSeparator } from './RenderRow/Common';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
@@ -61,12 +65,34 @@ export const TokenList = () => {
   //   hideCombined: false,
   // });
 
+  const emptyResult = useMemo(
+    () => ({
+      unFoldTokens: [] as ITokenItem[],
+      foldTokens: [] as ITokenItem[],
+      scamTokens: [] as ITokenItem[],
+    }),
+    [],
+  );
+
+  const registerMultiAssets = useTokenListComputedStore(
+    state => state.registerMultiAssets,
+  );
+
+  const multiAssetsKey = useMemo(
+    () => getMultiAssetsCacheKey(top10Addresses, chain, isLpTokenEnabled),
+    [top10Addresses, chain, isLpTokenEnabled],
+  );
+
+  useEffect(() => {
+    registerMultiAssets(top10Addresses, chain, isLpTokenEnabled);
+  }, [top10Addresses, chain, isLpTokenEnabled, registerMultiAssets]);
+
   const {
     unFoldTokens: tokens,
     foldTokens,
     scamTokens,
-  } = useTokenList(
-    useShallow(s => s.forMultiAssets(top10Addresses, chain, isLpTokenEnabled)),
+  } = useTokenListComputedStore(
+    useShallow(state => state.multiAssetsCache[multiAssetsKey] || emptyResult),
   );
 
   const { isLoading } = useTokenList();

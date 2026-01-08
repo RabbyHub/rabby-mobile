@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import orderBy from 'lodash/orderBy';
 
@@ -10,8 +10,11 @@ import { useChainBalances, useMatteredChainBalancesAll } from '@/hooks/account';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
-import useTokenList, { ITokenItem } from '@/store/tokens';
-import { useShallow } from 'zustand/shallow';
+import useTokenList, {
+  getChainSelectorCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 
 export default function MixedFlatChainList({
   style,
@@ -47,9 +50,20 @@ export default function MixedFlatChainList({
     }
     return [];
   }, [needAllAddresses, top10Addresses, currentAccount?.address]);
-  const tokens = useTokenList(
-    useShallow(s => s.forChainSelector(selectedAddresses)),
+  const registerChainSelector = useTokenListComputedStore(
+    state => state.registerChainSelector,
   );
+  const chainSelectorKey = useMemo(
+    () => getChainSelectorCacheKey(selectedAddresses),
+    [selectedAddresses],
+  );
+  useEffect(() => {
+    registerChainSelector(selectedAddresses);
+  }, [selectedAddresses, registerChainSelector]);
+
+  const tokens = useTokenListComputedStore(state => {
+    return state.chainSelectorCache[chainSelectorKey] || [];
+  });
 
   const { styles } = useTheme2024({ getStyle });
   const { matteredChainBalances } = useChainBalances();
