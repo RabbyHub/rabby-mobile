@@ -32,7 +32,11 @@ import {
   useSingleHomeChain,
   useSingleHomeSelectData,
 } from './hooks/singleHome';
-import useTokenList, { ITokenItem } from '@/store/tokens';
+import useTokenList, {
+  getSingleAssetsCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
 
 type TokenListItem =
@@ -104,10 +108,32 @@ export const TokenList = ({
     [],
   );
 
-  const { unFoldTokens, foldTokens, scamTokens } = useTokenList(
+  const registerSingleAssets = useTokenListComputedStore(
+    state => state.registerSingleAssets,
+  );
+
+  const singleAssetsKey = useMemo(() => {
+    if (!currentAddress) {
+      return null;
+    }
+    return getSingleAssetsCacheKey(
+      currentAddress,
+      selectedChain,
+      isLpTokenEnabled,
+    );
+  }, [currentAddress, selectedChain, isLpTokenEnabled]);
+
+  useEffect(() => {
+    if (!currentAddress) {
+      return;
+    }
+    registerSingleAssets(currentAddress, selectedChain, isLpTokenEnabled);
+  }, [currentAddress, selectedChain, isLpTokenEnabled, registerSingleAssets]);
+
+  const { unFoldTokens, foldTokens, scamTokens } = useTokenListComputedStore(
     useShallow(state =>
-      currentAddress
-        ? state.forSingleAssets(currentAddress, selectedChain, isLpTokenEnabled)
+      singleAssetsKey
+        ? state.singleAssetsCache[singleAssetsKey] || emptyResult
         : emptyResult,
     ),
   );
