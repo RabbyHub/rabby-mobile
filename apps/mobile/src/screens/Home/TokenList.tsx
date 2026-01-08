@@ -271,9 +271,11 @@ export const TokenList = ({
                 styles.buttonHeader,
                 !isLight && styles.bg2,
               ])}
+              str={foldTokenUsdValue}
               onPressFold={() => {
                 if (!foldHideList) {
                   setFoldScam(true);
+                  setIsLpTokenEnabled(false);
                 }
                 setFoldHideList(pre => !pre);
               }}
@@ -307,6 +309,7 @@ export const TokenList = ({
     [
       currentAccount,
       foldHideList,
+      foldTokenUsdValue,
       handleOpenTokenDetail,
       isLight,
       isLpTokenEnabled,

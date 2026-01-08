@@ -99,13 +99,20 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       chainServerId: chainId,
     });
 
-    const [favoriteFilterValue, setFavoriteFilterValue] =
+    const [_favoriteFilterValue, setFavoriteFilterValue] =
       useState<FavoriteFilterType>('all');
 
     const [_, setLongPressToken] = useLongPressTokenAtom();
     const queryConds = useDebouncedValue(_queryConds, 250);
     const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
     const currentAccount = queryConds.account;
+
+    const favoriteFilterValue = useMemo(() => {
+      if (!!queryConds.keyword) {
+        return 'all';
+      }
+      return _favoriteFilterValue;
+    }, [_favoriteFilterValue, queryConds.keyword]);
 
     const {
       visible: tokenSelectorVisible,
@@ -444,7 +451,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
           isLoading={
             selectedTab === 'testnet' ? testnetTokenListLoading : isListLoading
           }
-          showFavoriteFilter
+          showFavoriteFilter={!queryConds.keyword}
           favoriteFilterValue={favoriteFilterValue}
           onFavoriteFilterChange={setFavoriteFilterValue}
           type={type}
@@ -460,7 +467,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
           showTestNetSwitch={isShowTestnet}
           selectTab={selectedTab}
           onTabChange={onTabChange}
-          showLpTokenSwitch={true}
+          showLpTokenSwitch={!queryConds.keyword}
           isLpTokenEnabled={isLpTokenEnabled}
           onLpTokenChange={setIsLpTokenEnabled}
         />

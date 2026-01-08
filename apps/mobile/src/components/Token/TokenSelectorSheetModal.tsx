@@ -338,12 +338,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
       showTestNetSwitch,
       selectTab,
       onTabChange,
-      showFavoriteFilter = false,
+      showFavoriteFilter: _showFavoriteFilter,
       favoriteFilterValue = 'all',
-      onFavoriteFilterChange,
-      showLpTokenSwitch = false,
+      onFavoriteFilterChange: _onFavoriteFilterChange,
+      showLpTokenSwitch: _showLpTokenSwitch,
       isLpTokenEnabled = false,
-      onLpTokenChange,
+      onLpTokenChange: _onLpTokenChange,
     },
     ref,
   ) => {
@@ -375,14 +375,35 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const isSwapTo = type === 'swapTo';
     const isSend = type === 'send';
 
+    const onLpTokenChange = useCallback(
+      (value: boolean) => {
+        if (value) {
+          _onFavoriteFilterChange?.('all');
+        }
+        _onLpTokenChange?.(value);
+      },
+      [_onLpTokenChange, _onFavoriteFilterChange],
+    );
+    const onFavoriteFilterChange = useCallback(
+      (value: FavoriteFilterType) => {
+        if (value === 'favorite') {
+          _onLpTokenChange?.(false);
+        }
+        _onFavoriteFilterChange?.(value);
+      },
+      [_onFavoriteFilterChange, _onLpTokenChange],
+    );
+
     useEffect(() => {
       if (!visible) {
         setIsInputActive(false);
         setFold(true);
         setIsScamFold(true);
+        onLpTokenChange?.(false);
+        onFavoriteFilterChange?.('all');
         setQuery('');
       }
-    }, [visible]);
+    }, [onFavoriteFilterChange, onLpTokenChange, visible]);
 
     const { bottom } = useSafeAreaInsets();
 
@@ -1055,6 +1076,20 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const inputNotActiveAndNoQuery = useMemo(() => {
       return !(query || isInputActive);
     }, [query, isInputActive]);
+
+    const showFavoriteFilter = useMemo(() => {
+      if (isInputActive) {
+        return false;
+      }
+      return _showFavoriteFilter;
+    }, [_showFavoriteFilter, isInputActive]);
+
+    const showLpTokenSwitch = useMemo(() => {
+      if (isInputActive) {
+        return false;
+      }
+      return _showLpTokenSwitch;
+    }, [_showLpTokenSwitch, isInputActive]);
 
     const { willShowChainFilter, willShowAccountFilter, willShowFilterRow } =
       useMemo(() => {
