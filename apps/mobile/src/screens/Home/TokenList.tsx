@@ -479,8 +479,8 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
   emptyAssets: {
-    backgroundColor: 'transparent',
-    height: '100%',
-    marginTop: -100,
+    //backgroundColor: 'transparent',
+    //height: '100%',
+    //marginTop: -100,
   },
 }));
