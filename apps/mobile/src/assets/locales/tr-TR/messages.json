@@ -60,7 +60,8 @@
         "LendingOnCollateral": "Teminat olarak kullanmayı açın",
         "LendingManageEModeDisable": "E-Modu'nu Kapat",
         "LendingManageEMode": "E-Modu'nu Aç",
-        "LendingDebtSwap": "Borç Takası"
+        "LendingDebtSwap": "Borç Takası",
+        "LendingRepayWithCollateral": "Teminat ile Geri Ödeme"
       },
       "detail": {
         "Succeeded": "Başarılı",
@@ -446,7 +447,8 @@
       "success": "{{type}} başarıyla!",
       "addressCount_one": "{{count}} Cüzdan",
       "importMore": "Daha Fazla Cüzdan İçe Aktar",
-      "addressCount_other": "{{count}} Cüzdanlar"
+      "addressCount_other": "{{count}} Cüzdanlar",
+      "viewAddress": "Cüzdanı Görüntüle"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Seed ifrenizi girin, her kelimeyi bir boşlukla ayırın"
@@ -1400,7 +1402,8 @@
         "description3": "Asla özel anahtarınızı paylaşmayın—ona erişimi olan herkes fonlarınızı kontrol edebilir.",
         "description1": "Özel anahtar, cüzdanınıza erişmek ve kontrol etmek için kullanılan harf ve rakamlar dizisidir. Cüzdanınızı herhangi bir cihazda kurtarmak için bunu kullanabilirsiniz.",
         "title3": "Asla Paylaşma"
-      }
+      },
+      "importing": "İçe aktarıyor..."
     },
     "unlock": {
       "btn": {
@@ -2686,7 +2689,12 @@
       },
       "repayDetail": {
         "actions": "Geri Ödeme",
-        "approveAndRepay": "Onayla ve Geri Öde"
+        "approveAndRepay": "Onayla ve Geri Öde",
+        "tabs": {
+          "collateral": "Teminat",
+          "wallet": "Cüzdan bakiyesi"
+        },
+        "repayWith": "Geri ödeme yapın ile"
       },
       "supplyDetail": {
         "actions": "Arz",
@@ -2795,7 +2803,13 @@
         "closeDesc": "Bu varlığın teminat olarak devre dışı bırakılması, borçlanma gücünüzü ve Sağlık Faktörünü etkiler.",
         "riskToLiquidationText": "Bu para birimi için teminat modu olarak kullanımını değiştiremezsiniz, çünkü bu teminat çağrısına neden olacaktır.",
         "enableIsolationModeDesc": "İzolasyon moduna giriyorsunuz. İzolasyon modundayken, diğer varlıkları teminat olarak sağlayamazsınız. Küresel bir borç tavanı, izole edilmiş varlığın borçlanma gücünü sınırlar. Başka bir varlık borçlanmadan önce teminat olarak CRV'yi devre dışı bırakarak izolasyon modundan çıkın.",
-        "openDesc": "Bu varlığı teminat olarak etkinleştirmek, borçlanma gücünüzü ve Sağlık Faktörünü artırır. Ancak, sağlık faktörünüz 1'in altına düşerse tasfiye edilebilir."
+        "openDesc": "Bu varlığı teminat olarak etkinleştirmek, borçlanma gücünüzü ve Sağlık Faktörünü artırır. Ancak, sağlık faktörünüz 1'in altına düşerse tasfiye edilebilir.",
+        "toggleRiskTexts": {
+          "canNotSwitchUsageAsCollateralMode": "Bu para birimi için teminat modu olarak kullanımını değiştiremiyorsunuz, çünkü bu teminat çağrısına neden olacaktır.",
+          "canNotUseThisCurrencyAsCollateral": "Bu para birimini teminat olarak kullanamazsınız.",
+          "doNotHaveSuppliesInThisCurrency": "Bu para biriminde arzınız yok.",
+          "zeroLTVWithdrawBlocked": "Sıfır LTV'ye sahip varlıklar ({{assets}}) bu işlemi gerçekleştirmek için geri çekilmeli veya teminat olarak devre dışı bırakılmalıdır."
+        }
       },
       "selectMarket": "Pazar Seçin",
       "searchMarket": "Pazar Ara",
@@ -2837,6 +2851,13 @@
             "borrow": "Benim borçlarım"
           },
           "title": "Borç Alınacak Token'ı Seçin"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "collateral": "Teminatım",
+            "assets": "Jeton"
+          },
+          "title": "Teminat Token Seçin"
         }
       },
       "disabled": "DEVRE DIŞI",
@@ -2872,7 +2893,33 @@
       },
       "totalSupplied": "Toplam sağlanan",
       "totalBorrowed": "Toplam borçlanma",
-      "netApy": "Net APY"
+      "netApy": "Net APY",
+      "repayWithCollateral": {
+        "action": {
+          "title": "{{collateral}} ile geri öde"
+        },
+        "overview": {
+          "title": "İşlem Genel Bakışı",
+          "collateralValueAfter": "Teminat bakiyesi geri ödeme sonrası",
+          "borrowValueAfter": "Borç bakiyesi geri ödeme sonrası"
+        },
+        "button": {
+          "repay": "Geri Ödeme"
+        },
+        "repayWith": "Teminat ile geri ödemek için",
+        "collateralNotEnough": "Teminat bakiyeniz seçilen tutardan daha düşük.",
+        "toRepay": "Beklenen geri ödeme tutarı"
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "title": "Cüzdanı İçe Aktar",
+          "desc": "Mevcut bakiyesi olan bir adres ekleyin."
+        },
+        "title": "Varlıkları Al",
+        "btnCopyAddress": "Adresi Kopyala"
+      }
     }
   },
   "component": {
@@ -2998,6 +3045,10 @@
         "proceedBtn": "Devam et",
         "simpleExplanation": "Desteklenmiyor",
         "title": "Risk Tespit Edildi"
+      },
+      "placeholders": {
+        "noTokens": "Hiçbir token yok",
+        "noLpTokens": "No Likidite Sağlayıcı (LP) Token"
       }
     },
     "ModalPreviewNFTItem": {
@@ -3123,6 +3174,9 @@
     },
     "multiAddressModal": {
       "title": "Cüzdanlar"
+    },
+    "lpTokenModal": {
+      "desc": "Bu, {{protocolId}} için bir Likidite Sağlayıcı (LP) Token'dır."
     }
   },
   "native": {
@@ -3219,7 +3273,14 @@
     "GotIt": "Anladım",
     "Backup": "Yedekle",
     "copy": "Kopyala",
-    "Other": "Diğer"
+    "Other": "Diğer",
+    "toast": {
+      "clipboard": {
+        "copiedPrivateKey": "Özel anahtar kopyalandı. Panoya 1 dakika içinde temizlenecek.",
+        "pasted_and_cleared": "Yapıştırıldı ve panoya temizlendi",
+        "copiedSeedPhrase": "Seed ifadesi kopyalandı. Panoya 1 dakika içinde sıfırlanacak."
+      }
+    }
   },
   "background": {
     "error": {

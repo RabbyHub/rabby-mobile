@@ -73,7 +73,8 @@
         "LendingOnCollateral": "Activer l'utilisation en tant que garantie",
         "LendingManageEMode": "Activer E-Mode",
         "LendingManageEModeDisable": "Désactiver E-Mode",
-        "LendingDebtSwap": "Échange de Dettes"
+        "LendingDebtSwap": "Échange de Dettes",
+        "LendingRepayWithCollateral": "Rembourser avec des garanties"
       },
       "detail": {
         "Status": "Statut",
@@ -154,7 +155,8 @@
       "success": "{{type}} réussi !",
       "addressCount_one": "{{count}} Portefeuille",
       "importMore": "Importer plus de Wallets",
-      "addressCount_other": "{{count}} Portefeuilles"
+      "addressCount_other": "{{count}} Portefeuilles",
+      "viewAddress": "Voir le portefeuille"
     },
     "signTx": {
       "crossChain": {
@@ -1528,7 +1530,8 @@
         "description1": "Une clé privée est une chaîne de lettres et de chiffres utilisée pour accéder et contrôler votre wallet. Vous pouvez l'utiliser pour récupérer votre wallet sur n'importe quel appareil.",
         "description4": "Votre clé privée est stockée localement sur votre appareil et cryptée avec votre mot de passe. Uniquement vous pouvez y accéder. Rabby ne peut pas récupérer ou accéder à votre clé privée.",
         "title": "Qu'est-ce qu'une clé privée"
-      }
+      },
+      "importing": "Importation..."
     },
     "importSafe": {
       "error": {
@@ -2696,7 +2699,12 @@
       },
       "repayDetail": {
         "actions": "Rembourser",
-        "approveAndRepay": "Approuver et Rembourser"
+        "approveAndRepay": "Approuver et Rembourser",
+        "tabs": {
+          "collateral": "Garantie",
+          "wallet": "Solde du portefeuille"
+        },
+        "repayWith": "Rembourser avec"
       },
       "supplyDetail": {
         "actions": "Fournir",
@@ -2805,7 +2813,13 @@
         "openDesc": "Activer cet actif comme garantie augmente votre pouvoir d'emprunt et votre facteur de santé. Cependant, il peut être liquidé si votre facteur de santé tombe en dessous de 1.",
         "enableIsolationModeTitle": "Activer le mode d'isolement",
         "openTitle": "Examen de l'activation",
-        "enableIsolationModeDesc": "Vous entrez en mode Isolation. En mode Isolation, vous ne pouvez pas fournir d'autres actifs en tant que collatéral. Un plafond d'endettement global limite le pouvoir d'emprunt de l'actif isolé. Pour sortir du mode isolation, désactivez CRV en tant que collatéral avant d'emprunter un autre actif."
+        "enableIsolationModeDesc": "Vous entrez en mode Isolation. En mode Isolation, vous ne pouvez pas fournir d'autres actifs en tant que collatéral. Un plafond d'endettement global limite le pouvoir d'emprunt de l'actif isolé. Pour sortir du mode isolation, désactivez CRV en tant que collatéral avant d'emprunter un autre actif.",
+        "toggleRiskTexts": {
+          "doNotHaveSuppliesInThisCurrency": "Vous n'avez pas de fournitures dans cette devise.",
+          "canNotUseThisCurrencyAsCollateral": "Vous ne pouvez pas utiliser cette devise comme garantie.",
+          "zeroLTVWithdrawBlocked": "Les actifs avec un LTV de zéro ({{assets}}) doivent être retirés ou désactivés en tant que garantie pour effectuer cette action.",
+          "canNotSwitchUsageAsCollateralMode": "Vous ne pouvez pas passer à l'utilisation en mode de garantie pour cette devise, car cela entraînera un appel de garantie."
+        }
       },
       "selectMarket": "Sélectionner le marché",
       "searchMarket": "Rechercher sur le marché",
@@ -2847,6 +2861,13 @@
             "borrow": "Mes emprunts"
           },
           "title": "Sélectionner le Token d'emprunt"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "collateral": "Mon collatéral",
+            "assets": "Jeton"
+          },
+          "title": "Sélectionner le jeton de garantie"
         }
       },
       "disabled": "DÉSACTIVÉ",
@@ -2882,7 +2903,30 @@
       },
       "totalSupplied": "Total fourni",
       "totalBorrowed": "Total emprunté",
-      "netApy": "APY net"
+      "netApy": "APY net",
+      "repayWithCollateral": {
+        "overview": {
+          "title": "Aperçu des transactions",
+          "collateralValueAfter": "Solde de collatéral après remboursement",
+          "borrowValueAfter": "Solde d'emprunt après remboursement"
+        },
+        "button": {
+          "repay": "Rembourser"
+        },
+        "repayWith": "Garanties à rembourser avec",
+        "toRepay": "Montant attendu à rembourser",
+        "collateralNotEnough": "Votre solde de collatéral est inférieur au montant sélectionné."
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "title": "Importer un portefeuille",
+          "desc": "Ajouter une adresse existante avec des fonds."
+        },
+        "btnCopyAddress": "Copier l'adresse",
+        "title": "Recevoir des actifs"
+      }
     }
   },
   "native": {
@@ -2945,6 +2989,10 @@
         "simpleExplanation": "Non pris en charge",
         "proceedBtn": "Procéder",
         "title": "Risque détecté"
+      },
+      "placeholders": {
+        "noTokens": "Aucun jeton",
+        "noLpTokens": "Aucun jeton de fournisseur de liquidité (LP)"
       }
     },
     "AccountSelectDrawer": {
@@ -3168,6 +3216,9 @@
     },
     "multiAddressModal": {
       "title": "Portefeuilles"
+    },
+    "lpTokenModal": {
+      "desc": "Ceci est un jeton de Fournisseur de Liquidité (LP) pour {{protocolId}}"
     }
   },
   "global": {
@@ -3249,7 +3300,14 @@
     "GotIt": "Compris",
     "Other": "Autre",
     "copy": "Copier",
-    "Backup": "Sauvegarde"
+    "Backup": "Sauvegarde",
+    "toast": {
+      "clipboard": {
+        "copiedSeedPhrase": "Phrase de récupération copiée. Le presse-papiers se videra dans 1 minute.",
+        "copiedPrivateKey": "Clé privée copiée. Le presse-papiers se videra dans 1 minute.",
+        "pasted_and_cleared": "Collé et presse-papiers vidé"
+      }
+    }
   },
   "background": {
     "transactionWatcher": {

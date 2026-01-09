@@ -60,7 +60,8 @@
         "LendingOffCollateral": "Matikan penggunaan sebagai jaminan",
         "LendingManageEMode": "Aktifkan E-Mode",
         "LendingManageEModeDisable": "Matikan E-Mode",
-        "LendingDebtSwap": "Swap Utang"
+        "LendingDebtSwap": "Swap Utang",
+        "LendingRepayWithCollateral": "Bayar kembali dengan Collateral"
       },
       "detail": {
         "Succeeded": "Berhasil",
@@ -446,7 +447,8 @@
       "success": "{{type}} berhasil!",
       "addressCount_one": "{{count}} Dompet",
       "importMore": "Impor lebih Banyak Dompet",
-      "addressCount_other": "{{count}} Dompet"
+      "addressCount_other": "{{count}} Dompet",
+      "viewAddress": "Lihat Dompet"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Masukkan frasa seed Anda, pisahkan setiap kata dengan spasi"
@@ -1400,7 +1402,8 @@
         "ButtonGotIt": "Saya sudah mengerti.",
         "description3": "Jangan pernah membagikan kunci pribadi Anda—siapa pun yang memiliki akses ke sana dapat mengendalikan dana Anda.",
         "description1": "Sebuah kunci privat adalah sekumpulan huruf dan angka yang digunakan untuk mengakses dan mengontrol dompet Anda. Anda dapat menggunakannya untuk memulihkan dompet Anda di perangkat apa pun."
-      }
+      },
+      "importing": "Mengimpor..."
     },
     "unlock": {
       "btn": {
@@ -2686,7 +2689,12 @@
       },
       "repayDetail": {
         "actions": "Bayar kembali",
-        "approveAndRepay": "Setujui dan Bayar Kembali"
+        "approveAndRepay": "Setujui dan Bayar Kembali",
+        "tabs": {
+          "collateral": "Jaminan",
+          "wallet": "Saldo dompet"
+        },
+        "repayWith": "Bayar dengan"
       },
       "supplyDetail": {
         "availableToBorrow": "Tersedia untuk dipinjam",
@@ -2795,7 +2803,13 @@
         "closeTitle": "Tinjau Nonaktifkan",
         "enableIsolationModeDesc": "Anda sedang masuk ke mode Isolation. Di mode Isolation, Anda tidak dapat menyediakan aset lain sebagai jaminan. Batas utang global membatasi kekuatan pinjam dari aset yang terisolasi. Untuk keluar dari mode isolation, matikan CRV sebagai jaminan sebelum meminjam aset lain.",
         "openDesc": "Mengaktifkan aset ini sebagai jaminan meningkatkan daya pinjam Anda dan Faktor Kesehatan. Namun, aset ini dapat dilikuidasi jika faktor kesehatan Anda turun di bawah 1.",
-        "exitIsolationModeTitle": "Keluar dari Mode Isolasi"
+        "exitIsolationModeTitle": "Keluar dari Mode Isolasi",
+        "toggleRiskTexts": {
+          "canNotUseThisCurrencyAsCollateral": "Anda tidak dapat menggunakan mata uang ini sebagai jaminan.",
+          "doNotHaveSuppliesInThisCurrency": "Anda tidak memiliki persediaan dalam mata uang ini",
+          "canNotSwitchUsageAsCollateralMode": "Anda tidak dapat mengalihkan penggunaan sebagai mode jaminan untuk mata uang ini, karena itu akan menyebabkan panggilan jaminan.",
+          "zeroLTVWithdrawBlocked": "Aset dengan LTV nol ({{assets}}) harus ditarik atau dinonaktifkan sebagai jaminan untuk melakukan tindakan ini."
+        }
       },
       "selectMarket": "Pilih Pasar",
       "searchMarket": "Cari Pasar",
@@ -2837,6 +2851,13 @@
             "assets": "Token/Balance"
           },
           "title": "Pilih Token Pinjam"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "assets": "Token",
+            "collateral": "Kollateral saya"
+          },
+          "title": "Pilih Token Jaminan"
         }
       },
       "disabled": "DINONAKTIFKAN",
@@ -2872,7 +2893,33 @@
       },
       "netApy": "Net APY",
       "totalSupplied": "Total supplied",
-      "totalBorrowed": "Total borrowed"
+      "totalBorrowed": "Total borrowed",
+      "repayWithCollateral": {
+        "action": {
+          "title": "Bayar kembali dengan {{collateral}}"
+        },
+        "overview": {
+          "borrowValueAfter": "Saldo pinjam setelah dilunasi",
+          "title": "Ikhtisar Transaksi",
+          "collateralValueAfter": "Saldo jaminan setelah pembayaran kembali"
+        },
+        "button": {
+          "repay": "Bayar kembali"
+        },
+        "toRepay": "Jumlah yang diharapkan untuk dilunasi",
+        "collateralNotEnough": "Saldo jaminan Anda lebih rendah dari jumlah yang dipilih.",
+        "repayWith": "Jaminan untuk dibayar kembali dengan"
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "desc": "Tambahkan alamat yang sudah ada dengan dana.",
+          "title": "Impor dompet"
+        },
+        "btnCopyAddress": "Salin Alamat",
+        "title": "Terima aset"
+      }
     }
   },
   "component": {
@@ -2998,6 +3045,10 @@
         "simpleExplanation": "Tidak didukung",
         "proceedBtn": "Lanjutkan",
         "title": "Risiko Terdeteksi"
+      },
+      "placeholders": {
+        "noTokens": "Tidak ada token",
+        "noLpTokens": "Tidak Ada Token Penyedia Likuiditas (LP)"
       }
     },
     "ModalPreviewNFTItem": {
@@ -3123,6 +3174,9 @@
     },
     "multiAddressModal": {
       "title": "Dompet"
+    },
+    "lpTokenModal": {
+      "desc": "Ini adalah Token Penyedia Likuiditas (LP) untuk {{protocolId}}"
     }
   },
   "native": {
@@ -3219,7 +3273,14 @@
     "GotIt": "Got it",
     "copy": "Salin",
     "Backup": "Cadangan",
-    "Other": "Lainnya"
+    "Other": "Lainnya",
+    "toast": {
+      "clipboard": {
+        "copiedPrivateKey": "Kunci privat telah disalin. Papan klip akan dibersihkan dalam 1 menit.",
+        "pasted_and_cleared": "Ditempel dan clipboard dibersihkan",
+        "copiedSeedPhrase": "Frasa biji telah disalin. Papan klip akan dibersihkan dalam 1 menit."
+      }
+    }
   },
   "background": {
     "error": {

@@ -124,7 +124,14 @@
     "GotIt": "Verstanden",
     "Other": "Sonstiges",
     "copy": "Kopieren",
-    "Backup": "Sicherung"
+    "Backup": "Sicherung",
+    "toast": {
+      "clipboard": {
+        "copiedSeedPhrase": "Seed-Phrase kopiert. Die Zwischenablage wird in 1 Minute gelöscht.",
+        "copiedPrivateKey": "Privater Schlüssel kopiert. Die Zwischenablage wird in 1 Minute gelöscht.",
+        "pasted_and_cleared": "In die Zwischenablage kopiert und diese geleert"
+      }
+    }
   },
   "component": {
     "accountSwitcher": {
@@ -187,6 +194,10 @@
         "proceedBtn": "Fortfahren",
         "simpleExplanation": "Nicht unterstützt",
         "title": "Risiko erkannt"
+      },
+      "placeholders": {
+        "noTokens": "Keine Tokens",
+        "noLpTokens": "Kein Liquiditätsanbieter (LP) Token"
       }
     },
     "AuthenticationModals": {
@@ -374,6 +385,9 @@
     },
     "multiAddressModal": {
       "title": "Wallets"
+    },
+    "lpTokenModal": {
+      "desc": "Dies ist ein Liquiditätsanbieter(LP)-Token für {{protocolId}}."
     }
   },
   "page": {
@@ -404,7 +418,8 @@
         "LendingOffCollateral": "Verwende nicht als Sicherheiten ausschalten",
         "LendingManageEModeDisable": "E-Mode deaktivieren",
         "LendingManageEMode": "E-Mode aktivieren",
-        "LendingDebtSwap": "Schuldenumtausch"
+        "LendingDebtSwap": "Schuldenumtausch",
+        "LendingRepayWithCollateral": "Mit Sicherheiten zurückzahlen"
       },
       "detail": {
         "InteractionResults": "Interaktionsergebnisse",
@@ -488,7 +503,8 @@
       "success": "{{type}} erfolgreich!",
       "addressCount_one": "{{count}} Wallet",
       "importMore": "Importiere mehr Wallets",
-      "addressCount_other": "{{count}} Wallets"
+      "addressCount_other": "{{count}} Wallets",
+      "viewAddress": "Wallet anzeigen"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Geben Sie Ihre Seed-Phrase ein"
@@ -1731,7 +1747,8 @@
         "description4": "Ihr privater Schlüssel wird lokal auf Ihrem Gerät gespeichert und mit Ihrem Passwort verschlüsselt. Nur Sie können darauf zugreifen. Rabby kann Ihren privaten Schlüssel nicht abrufen oder darauf zugreifen.",
         "description1": "Ein privater Schlüssel ist eine Zeichenfolge aus Buchstaben und Zahlen, die verwendet wird, um auf Ihr Wallet zuzugreifen und es zu steuern. Sie können ihn verwenden, um Ihr Wallet auf einem beliebigen Gerät wiederherzustellen.",
         "description3": "Teilen Sie niemals Ihren privaten Schlüssel – jeder, der Zugriff darauf hat, kann Ihre Mittel kontrollieren."
-      }
+      },
+      "importing": "Importieren..."
     },
     "addressDetail": {
       "address": "Adresse",
@@ -3033,7 +3050,12 @@
       },
       "repayDetail": {
         "approveAndRepay": "Genehmigen und Rückzahlen",
-        "actions": "Rückzahlung"
+        "actions": "Rückzahlung",
+        "tabs": {
+          "wallet": "Wallet-Balance",
+          "collateral": "Kollateral"
+        },
+        "repayWith": "Mit zurückzahlen"
       },
       "supplyDetail": {
         "supplyAPY": "Liefer-APY",
@@ -3142,7 +3164,13 @@
         "openDesc": "Das Aktivieren dieses Vermögens als Sicherheiten erhöht Ihre Kreditaufnahmefähigkeit und den Gesundheitsfaktor. Allerdings kann es liquidiert werden, wenn Ihr Gesundheitsfaktor unter 1 fällt.",
         "closeTitle": "Überprüfung der Deaktivierung",
         "exitIsolationModeDesc": "Sie werden den Isolationsmodus verlassen und andere Token können jetzt als Sicherheiten verwendet werden.",
-        "enableIsolationModeDesc": "Sie betreten den Isolationsmodus. Im Isolationsmodus können Sie andere Vermögenswerte nicht als Sicherheiten bereitstellen. Eine globale Verschuldungsgrenze begrenzt die Kreditaufnahmefähigkeit des isolierten Vermögenswerts. Um den Isolationsmodus zu verlassen, deaktivieren Sie CRV als Sicherheiten, bevor Sie einen anderen Vermögenswert leihen."
+        "enableIsolationModeDesc": "Sie betreten den Isolationsmodus. Im Isolationsmodus können Sie andere Vermögenswerte nicht als Sicherheiten bereitstellen. Eine globale Verschuldungsgrenze begrenzt die Kreditaufnahmefähigkeit des isolierten Vermögenswerts. Um den Isolationsmodus zu verlassen, deaktivieren Sie CRV als Sicherheiten, bevor Sie einen anderen Vermögenswert leihen.",
+        "toggleRiskTexts": {
+          "canNotUseThisCurrencyAsCollateral": "Sie können diese Währung nicht als Sicherheiten verwenden.",
+          "doNotHaveSuppliesInThisCurrency": "Sie haben keine Bestände in dieser Währung.",
+          "canNotSwitchUsageAsCollateralMode": "Sie können den Verwendungsmodus für diese Währung nicht auf Sicherheitenmodus umschalten, da dies einen Sicherheitenaufruf verursachen wird.",
+          "zeroLTVWithdrawBlocked": "Vermögenswerte mit einem LTV von null ({{assets}}) müssen abgehoben oder als Sicherheiten deaktiviert werden, um diese Aktion auszuführen."
+        }
       },
       "searchMarket": "Markt durchsuchen",
       "selectMarket": "Markt auswählen",
@@ -3184,6 +3212,13 @@
             "assets": "Token/Guthaben"
           },
           "title": "Wählen Sie das Kredit-Token aus"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "assets": "Token",
+            "collateral": "Mein Sicherheiten"
+          },
+          "title": "Wählen Sie das Sicherheiten-Token"
         }
       },
       "disabled": "DEAKTIVIERT",
@@ -3219,7 +3254,33 @@
       },
       "totalBorrowed": "Total borrowed",
       "totalSupplied": "Gesamtangebot",
-      "netApy": "Netto-APY"
+      "netApy": "Netto-APY",
+      "repayWithCollateral": {
+        "action": {
+          "title": "Zahlen Sie mit {{collateral}} zurück"
+        },
+        "overview": {
+          "title": "Transaktionsübersicht",
+          "borrowValueAfter": "Ausleihsaldo nach Rückzahlung",
+          "collateralValueAfter": "Kollateralbetrag nach der Rückzahlung"
+        },
+        "button": {
+          "repay": "Rückzahlen"
+        },
+        "repayWith": "Sicherheiten zur Rückzahlung mit",
+        "toRepay": "Erwarteter Rückzahlungsbetrag",
+        "collateralNotEnough": "Ihr Sicherheitensaldo ist niedriger als der ausgewählte Betrag."
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "desc": "Füge eine vorhandene Adresse mit Guthaben hinzu.",
+          "title": "Eine Wallet importieren"
+        },
+        "btnCopyAddress": "Adresse kopieren",
+        "title": "Vermögenswerte empfangen"
+      }
     }
   },
   "constant": {
