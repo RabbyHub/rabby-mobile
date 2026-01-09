@@ -8,7 +8,6 @@ import SimpleConfirmInner from '@/components/CommonPopup/SimpleConfirm';
 import { ViewRawDetail } from '@/components/Approval/components/TxComponents/ViewRawModal';
 import { SelectChain } from '@/components/SelectChain';
 import { CancelTxPopup } from '@/components/CancelTxPopup';
-import { SelectSortedChain } from '@/components2024/SelectSortedChain';
 import { SelectChainWithSummary } from '@/components2024/SelectChainWithSummary';
 import SelectChainWithDistribute from '@/components2024/SelectChainWithDistribute';
 import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
@@ -71,6 +70,7 @@ import DebtTokenSelectModal from '@/screens/Lending/components/DebtTokenSelect';
 import DebtSwapModal from '@/screens/Lending/modals/DebtSwapModal';
 import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 import { LpTokenDescription } from '../LpTokenDescription';
+import CollateralTokenSelectModal from '@/screens/Lending/components/CollateralTokenSelect';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -110,10 +110,6 @@ export const MODAL_CONFIGS = {
     Component: SwitchAddress,
   },
   [MODAL_NAMES.SWITCH_CHAIN]: { snapPoints: ['45%'], Component: SwitchChain },
-  [MODAL_NAMES.SELECT_SORTED_CHAIN]: {
-    snapPoints: ['80%'],
-    Component: SelectSortedChain,
-  },
   [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: {
     snapPoints: ['80%'],
     Component: SelectChainWithSummary,
@@ -336,7 +332,7 @@ export const MODAL_CONFIGS = {
     Component: BorrowActionPopup,
   },
   [MODAL_NAMES.REPAY_ACTION_DETAIL]: {
-    snapPoints: [666],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: RepayActionPopup,
   },
   [MODAL_NAMES.HF_DESCRIPTION]: {
@@ -378,5 +374,9 @@ export const MODAL_CONFIGS = {
     snapPoints: [241],
     Component: LpTokenDescription,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.COLLATERAL_TOKEN_SELECT]: {
+    snapPoints: ['85%'],
+    Component: CollateralTokenSelectModal,
   },
 };

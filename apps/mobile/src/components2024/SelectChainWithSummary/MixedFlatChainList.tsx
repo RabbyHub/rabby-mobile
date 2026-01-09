@@ -6,11 +6,14 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
-import { useChainBalances, useMatteredChainBalancesAll } from '@/hooks/account';
+import {
+  useChainBalances,
+  useMatteredChainBalancesAll,
+} from '@/hooks/accountChainBalance';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
-import useTokenList, {
+import {
   getChainSelectorCacheKey,
   ITokenItem,
   useTokenListComputedStore,

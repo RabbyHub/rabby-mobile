@@ -17,6 +17,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
 import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { useRendererDetect } from '../Perf/PerfDetector';
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
@@ -42,6 +43,8 @@ export function ScreenHeaderAccountSwitcher({
   } = useSceneAccountInfo({
     forScene,
   });
+
+  useRendererDetect({ name: 'ScreenHeaderAccountSwitcher' });
 
   const { preFetchData } = usePreFetchBeforeEnterScene();
 

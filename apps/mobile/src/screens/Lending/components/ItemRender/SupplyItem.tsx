@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
@@ -12,12 +12,14 @@ import {
 
 import TokenIcon from '../TokenIcon';
 import IsolatedTag from '../IsolatedTag';
-import { useLendingSummary } from '../../hooks';
+import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { getSupplyCapData } from '../../utils/supply';
 import { CollateralSwitch } from '../CollateralSwitch';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
 import { formatTokenAmount } from '@/utils/number';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import wrapperToken from '../../config/wrapperToken';
 
 interface SupplyItemProps extends RNViewProps {
   underlyingAsset: string;
@@ -29,7 +31,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
   const { t } = useTranslation();
   const { iUserSummary: userSummary, getTargetReserve } = useLendingSummary();
   const { openCollateralChange } = useToggleCollateralModal();
-
+  const { chainEnum } = useSelectedMarket();
   const reserve = useMemo(() => {
     return getTargetReserve(underlyingAsset);
   }, [getTargetReserve, underlyingAsset]);
@@ -141,12 +143,23 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
     });
   }, [colors2024, reserve, userSummary]);
 
+  const isWrapperToken = useMemo(() => {
+    return chainEnum && reserve
+      ? isSameAddress(
+          wrapperToken[chainEnum]?.address,
+          reserve.reserve.underlyingAsset,
+        )
+      : false;
+  }, [chainEnum, reserve]);
+
   if (!reserve) {
     return null;
   }
 
   return (
-    <View style={[styles.container, style]}>
+    <View
+      style={[styles.container, isWrapperToken && styles.wrapperToken, style]}>
+      {isWrapperToken && <View style={styles.wrapperTokenArrow} />}
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={styles.tokenInfo}>
@@ -250,6 +263,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       default: {},
     }),
     position: 'relative',
+  },
+  wrapperToken: {
+    backgroundColor: colors2024['neutral-bg-5'],
+  },
+  wrapperTokenArrow: {
+    position: 'absolute',
+    top: -14,
+    left: 30,
+    zIndex: 1,
+    ...makeTriangleStyle({
+      dir: 'up',
+      size: 7,
+      color: colors2024['neutral-bg-5'],
+      backgroundColor: 'transparent',
+    }),
   },
   content: {
     paddingHorizontal: 14,

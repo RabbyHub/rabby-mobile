@@ -9,7 +9,7 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { SelectSortedChainProps } from '@/components/SelectSortedChain';
+import { SelectSortedChainProps } from '@/components2024/SelectChainWithSummary';
 import { useFindChain } from '@/hooks/useFindChain';
 import React from 'react';
 import {

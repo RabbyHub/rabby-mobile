@@ -17,7 +17,7 @@ import { tokenAmountBn } from '@/screens/Swap/utils';
 import BigNumber from 'bignumber.js';
 import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';
-import { useLoadMatteredChainBalances } from '@/hooks/account';
+import { useLoadMatteredChainBalances } from '@/hooks/accountChainBalance';
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { apiProvider } from '@/core/apis';

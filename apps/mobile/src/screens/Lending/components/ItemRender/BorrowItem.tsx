@@ -171,8 +171,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
       },
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-        enableDismissOnClose: true,
+        rootViewType: 'View',
         handleStyle: {
           backgroundColor: colors2024['neutral-bg-1'],
         },

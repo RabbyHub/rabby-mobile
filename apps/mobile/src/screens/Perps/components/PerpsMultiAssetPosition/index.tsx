@@ -267,18 +267,20 @@ export const PerpsSingleAssetPosition: React.FC<{
 
   return (
     <>
-      <View style={[styles.container, styles.singleAssetContainer]}>
-        {dataList.map(item => {
-          return (
-            <AssetPositionItem
-              key={`${item.account.address}-${item.assetPositions.position.coin}`}
-              isSingleAddress={true}
-              item={item}
-              onShowRiskPopup={() => handleShowRiskPopup(item)}
-            />
-          );
-        })}
-      </View>
+      {!!dataList.length && (
+        <View style={[styles.container, styles.singleAssetContainer]}>
+          {dataList.map(item => {
+            return (
+              <AssetPositionItem
+                key={`${item.account.address}-${item.assetPositions.position.coin}`}
+                isSingleAddress={true}
+                item={item}
+                onShowRiskPopup={() => handleShowRiskPopup(item)}
+              />
+            );
+          })}
+        </View>
+      )}
       {riskPopupData && (
         <PerpsRiskLevelPopup
           direction={riskPopupData.direction}

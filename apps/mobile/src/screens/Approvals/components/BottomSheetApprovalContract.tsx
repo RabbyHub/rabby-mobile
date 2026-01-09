@@ -192,19 +192,6 @@ export default function BottomSheetApprovalContract({
           contractItemToBlur: focusedContractApproval,
         });
       }}
-      footerComponent={() => {
-        return (
-          <BottomSheetModalFooterButton
-            title={[
-              t('page.approvals.component.RevokeButton.btnText'),
-              confirmingContractCount && ` (${confirmingContractCount})`,
-            ]
-              .filter(Boolean)
-              .join('')}
-            onPress={handleRevoke}
-          />
-        );
-      }}
       snapPoints={['75%']}
       bottomInset={1}>
       {focusedContractApproval && (
@@ -259,6 +246,16 @@ export default function BottomSheetApprovalContract({
               onEndReachedThreshold={0.3}
             />
           </BottomSheetScrollView>
+
+          <BottomSheetModalFooterButton
+            title={[
+              t('page.approvals.component.RevokeButton.btnText'),
+              confirmingContractCount && ` (${confirmingContractCount})`,
+            ]
+              .filter(Boolean)
+              .join('')}
+            onPress={handleRevoke}
+          />
         </AutoLockView>
       )}
     </AppBottomSheetModal>

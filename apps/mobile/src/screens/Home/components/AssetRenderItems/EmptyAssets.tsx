@@ -52,7 +52,7 @@ export const EmptyAssets = ({
 
 const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   container: {
-    height: 186,
+    height: 195,
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
