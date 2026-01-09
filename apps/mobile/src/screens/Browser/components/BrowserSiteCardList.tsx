@@ -72,6 +72,7 @@ export const BrowserSiteCardList = ({
           </View>
         );
       }}
+      bounces={false}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={ListEmptyComponent}
     />

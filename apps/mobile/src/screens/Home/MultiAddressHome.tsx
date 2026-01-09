@@ -38,6 +38,8 @@ import Animated, {
   withTiming,
   interpolate,
   Extrapolate,
+  withSpring,
+  useDerivedValue,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
@@ -500,6 +502,11 @@ const OverViewComponent = React.memo(
     const { bottom } = useSafeAreaInsets();
     const { safeTop } = useSafeSizes();
 
+    const pullDistance = useSharedValue(0); // 容器的位移
+    const pullPercent = useDerivedValue(() => {
+      return (pullDistance.value / height) * 100;
+    });
+
     const [isExpanded, setIsExpanded] = useState(false);
     const pullDistanceRef = useRef(0);
     const pullDistanceAnim = useSharedValue(0);
@@ -513,8 +520,8 @@ const OverViewComponent = React.memo(
         transform: [
           {
             translateY: interpolate(
-              pullDistanceAnim.value,
-              [0, pullThreshold],
+              pullPercent.value,
+              [0, -100],
               [height - safeTop, 0],
               Extrapolate.CLAMP,
             ),
@@ -523,13 +530,18 @@ const OverViewComponent = React.memo(
       };
     }, [height, pullThreshold, safeTop]);
 
+    console.log(
+      '[MultiAddressHome] render with isExpanded',
+      panelTranslateYStyle,
+    );
+
     const panelScaleStyle = useAnimatedStyle(() => {
       return {
         transform: [
           {
             scale: interpolate(
-              pullDistanceAnim.value,
-              [0, pullThreshold],
+              pullPercent.value,
+              [0, -100],
               isExpanded ? [1, 1] : [0.75, 1],
               Extrapolate.CLAMP,
             ),
@@ -555,6 +567,14 @@ const OverViewComponent = React.memo(
 
     const tabsOpacityValue = useSharedValue(1);
 
+    // useAnimatedReaction(
+    //   () => pullDistance.value,
+    //   value => {
+    //     console.log('?????', value);
+    //   },
+    //   [],
+    // );
+
     useAnimatedReaction(
       () => pullDistanceAnim.value,
       value => {
@@ -577,8 +597,8 @@ const OverViewComponent = React.memo(
     const overlayOpacityStyle = useAnimatedStyle(() => {
       return {
         opacity: interpolate(
-          pullDistanceAnim.value,
-          [0, pullThreshold * 0.3, pullThreshold],
+          pullPercent.value,
+          [0, -100 * 0.3, -100],
           isExpanded ? [0, 0, 0] : [0, 1, 0],
           Extrapolate.CLAMP,
         ),
@@ -586,12 +606,12 @@ const OverViewComponent = React.memo(
     }, [pullThreshold, isExpanded]);
 
     useAnimatedReaction(
-      () => pullDistanceAnim.value,
+      () => pullPercent.value,
       value => {
-        if (value >= pullThreshold) {
-          // runOnJS(setIsExpanded)(true);
+        if (Math.abs(value) >= 50) {
+          runOnJS(setIsExpanded)(true);
         } else if (value === 0) {
-          // runOnJS(setIsExpanded)(false);
+          runOnJS(setIsExpanded)(false);
         }
       },
       [pullThreshold],
@@ -606,14 +626,20 @@ const OverViewComponent = React.memo(
       [pullDistanceAnim],
     );
 
-    const setExpandedState = useCallback((threshold: number) => {
-      trigger('impactLight', {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
-      isAutoExpandedRef.current = true;
-      pullDistanceRef.current = threshold;
-    }, []);
+    const setExpandedState = useCallback(
+      (expand?: boolean) => {
+        trigger('impactLight', {
+          enableVibrateFallback: true,
+          ignoreAndroidSystemSettings: false,
+        });
+        if (expand) {
+          pullDistance.value = 0;
+        } else {
+          pullDistance.value = height;
+        }
+      },
+      [height, pullDistance],
+    );
 
     const triggerAutoExpand = useCallback(() => {
       if (isAutoExpandedRef.current) return;
@@ -635,82 +661,66 @@ const OverViewComponent = React.memo(
         duration: 220,
       });
     }, [pullDistanceAnim]);
+    const scrollYY = useDerivedValue(() => scrollY?.value);
 
-    const expandPanGesture = Gesture.Pan()
-      .onStart(() => {
-        'worklet';
+    // 2. Pan 手势：处理容器位移
+    const panGesture = Gesture.Pan()
+      .onChange(event => {
+        // 判断是否触底：当前滚动距离 + 容器高度 >= 内容高度
+        // const isAtBottom =
+        console.log('scroll ', scrollY, scrollYY);
+        const isAtBottom = true;
+        //   scrollY.value + containerHeight.value >= contentHeight.value - 1;
+        const isPushingUp = event.changeY < 0; // 手指向上滑
+        if (isAtBottom && isPushingUp) {
+          // 如果触底且继续向上拉，改变容器位移
+          pullDistance.value += event.changeY;
+        } else if (pullDistance.value < 0 && event.changeY > 0) {
+          // 如果容器已经被拉上去，且手指开始向下划，先还原容器位移
+          pullDistance.value = Math.min(0, pullDistance.value + event.changeY);
+        }
       })
-      .onUpdate(event => {
-        'worklet';
-        if (!isAutoExpandedRef.current) {
-          return;
+      .onEnd(() => {
+        console.log('pullPercent.value', pullPercent.value);
+        if (Math.abs(pullPercent.value) >= 30) {
+          // runOnJS(setExpandedState)(false);
+          pullDistance.value = withTiming(-height, {
+            duration: 500,
+          });
         }
-        const nextDistance = Math.max(0, pullThreshold - event.translationY);
-        pullDistanceAnim.value = nextDistance;
+        // 松手后容器弹回原位
+        // translateY.value = withSpring(0, { damping: 20 });
       })
-      .onEnd(event => {
-        'worklet';
-        if (!isAutoExpandedRef.current) {
-          return;
-        }
-        if (event.translationY > dismissThreshold) {
-          runOnJS(collapsePanel)();
-          return;
-        }
-        pullDistanceAnim.value = withTiming(pullThreshold, {
-          duration: 180,
-        });
-        runOnJS((threshold: number) => {
-          pullDistanceRef.current = threshold;
-        })(pullThreshold);
-      })
-      .onFinalize(() => {
-        'worklet';
-        if (!isAutoExpandedRef.current) {
-          return;
-        }
-        pullDistanceAnim.value = withTiming(pullThreshold, {
-          duration: 180,
-        });
-      });
+      // 关键：允许 Pan 手势和 ScrollView 的内置手势同时工作
+      .simultaneousWithExternalGesture(Gesture.Native());
 
-    // Swipe up gesture handler
-    const swipeUpGesture = Gesture.Pan()
-      .onStart(event => {
-        // 'worklet';
-        // runOnJS((y: number) => {
-        //   gestureStartYRef.current = y;
-        // })(event.absoluteY);
-      })
-      .onUpdate(event => {
-        'worklet';
-        // if (isAutoExpandedRef.current) {
-        //   return;
-        // }
+    const drawerGesture = Gesture.Pan()
+      .onChange(event => {
+        // 判断是否触底：当前滚动距离 + 容器高度 >= 内容高度
+        // const isAtBottom =
+        //   scrollY.value + containerHeight.value >= contentHeight.value - 1;
 
-        // const distance = Math.max(0, -event.translationY);
-        // const clamped = Math.min(distance, pullThreshold);
-        // pullDistanceAnim.value = clamped;
+        pullDistance.value += event.changeY;
       })
-      .onEnd(event => {
-        // 'worklet';
-        // const distance = Math.max(0, -event.translationY);
-        // if (distance >= pullThreshold * 0.4) {
-        //   pullDistanceAnim.value = withTiming(pullThreshold, {
-        //     duration: 220,
-        //   });
-        //   runOnJS(setExpandedState)(pullThreshold);
-        // } else {
-        //   pullDistanceAnim.value = withTiming(0, {
-        //     duration: 180,
-        //   });
-        // }
+      .onEnd(() => {
+        // 松手后容器弹回原位
+        pullDistance.value = withSpring(0, { damping: 20 });
       })
-      .onFinalize(() => {
-        'worklet';
-      });
+      // 关键：允许 Pan 手势和 ScrollView 的内置手势同时工作
+      .simultaneousWithExternalGesture(Gesture.Native());
+
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ translateY: pullDistance.value }],
+    }));
 
     const scrollY = useCurrentTabScrollY();
+    console.log(
+      'height',
+      height,
+      contentHeightRef,
+      layoutHeightRef,
+      scrollY?.value,
+    );
     const handleScrollYChange = useCallback(
       (currentScrollY: number) => {
         if (isAutoExpandedRef.current) return;
@@ -721,6 +731,13 @@ const OverViewComponent = React.memo(
         );
         const overscroll = Math.max(0, currentScrollY - maxOffset);
         const clamped = Math.min(overscroll, pullThreshold);
+        console.log('[MultiAddressHome] overscroll', {
+          currentScrollY,
+          maxOffset,
+          overscroll,
+          clamped,
+          pullThreshold,
+        });
         if (clamped >= pullThreshold) {
           triggerAutoExpand();
           return;
@@ -733,7 +750,8 @@ const OverViewComponent = React.memo(
     useAnimatedReaction(
       () => scrollY.value,
       currentScrollY => {
-        runOnJS(handleScrollYChange)(currentScrollY);
+        console.log('[MultiAddressHome] scrollY changed', currentScrollY);
+        // runOnJS(handleScrollYChange)(currentScrollY);
       },
       [handleScrollYChange],
     );
@@ -742,7 +760,11 @@ const OverViewComponent = React.memo(
 
     return (
       <View style={styles.pullUpWrapper}>
-        <Animated.View style={contentTranslateYStyle}>
+        {/* <GestureDetector gesture={panGesture}> */}
+        <Animated.View style={animatedStyle}>
+          {/* <View style={{ height: 500, backgroundColor: 'red' }}>
+              <Text>test</Text>
+            </View> */}
           <Tabs.ScrollView
             tvParallaxProperties={undefined}
             showsVerticalScrollIndicator={false}
@@ -758,8 +780,9 @@ const OverViewComponent = React.memo(
                   Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
               },
             ]}
-            overScrollMode={Platform.OS === 'android' ? 'never' : 'always'}
-            bounces={Platform.OS === 'ios'}
+            overScrollMode={'never'}
+            bounces={true}
+            // bounces={false}
             scrollEventThrottle={16}
             onContentSizeChange={(_, heightValue) => {
               contentHeightRef.current = heightValue;
@@ -811,8 +834,7 @@ const OverViewComponent = React.memo(
                 })}
               </View>
               <BrowserSearchEntry />
-              {/* <View style={styles.searchBarPlaceholder} /> */}
-              {/* <GestureDetector gesture={swipeUpGesture}>
+              <GestureDetector gesture={panGesture}>
                 <View style={styles.swipeUpHint}>
                   <RcIconDoubleArrowCC
                     color={colors2024['neutral-secondary']}
@@ -821,11 +843,12 @@ const OverViewComponent = React.memo(
                     Swipe up to explore more dApps
                   </Text>
                 </View>
-              </GestureDetector> */}
+              </GestureDetector>
             </View>
           </Tabs.ScrollView>
         </Animated.View>
-        <GestureDetector gesture={expandPanGesture}>
+        {/* </GestureDetector> */}
+        <GestureDetector gesture={drawerGesture}>
           <Animated.View
             pointerEvents="auto"
             style={[
@@ -850,6 +873,7 @@ const OverViewComponent = React.memo(
               style={[
                 {
                   transformOrigin: 'top',
+                  // height: 500,
                 },
                 panelScaleStyle,
               ]}>
