@@ -9077,9 +9077,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/gnosis-sdk@npm:1.4.6-2":
-  version: 1.4.6-2
-  resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.6-2"
+"@rabby-wallet/gnosis-sdk@npm:1.4.6":
+  version: 1.4.6
+  resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.6"
   dependencies:
     "@ethersproject/bignumber": 5.5.0
     "@ethersproject/bytes": 5.5.0
@@ -9094,7 +9094,7 @@ __metadata:
     ethereumjs-util: 7.1.3
     ethers: 5.5.1
     semver: 7.5.4
-  checksum: 84df4fd30dc9aafb914f3d668bf05b7c248eeb80c3db754f68c9c1377a962c9ad8ccb80cd090c232ef0adea84f65283ae0cb877c734ed6635c012cd52c3c5e98
+  checksum: b3d46afbf5367274764a9f3b5c1eba62aed0b30aa3cc641aacd9544fd15df2ceb543099d02c1ecf247f58a72e4588bdcbdbe28c3fc72da3a44fa36f2f12dcae9
   languageName: node
   linkType: hard
 
@@ -34577,7 +34577,7 @@ __metadata:
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": 5.0.2
-    "@rabby-wallet/gnosis-sdk": 1.4.6-2
+    "@rabby-wallet/gnosis-sdk": 1.4.6
     "@rabby-wallet/hyperliquid-sdk": 1.1.0
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
