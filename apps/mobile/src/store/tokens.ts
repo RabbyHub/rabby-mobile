@@ -5,7 +5,7 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { waitQueueFinished } from '@/hooks/useMultiCurve';
 import { queryTokensCache } from '@/screens/Home/utils/token';
-import { lpTokenFilter } from '@/utils/lpToken';
+import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import {
   tokenItemEntityToTokenItem,
@@ -403,9 +403,8 @@ const computeTokenSelect = (
     sortedUnfoldTokens = searchAndSortTokens(tokens);
   } else if (isLpTokenEnabled) {
     sortedUnfoldTokens = filterAndSortTokens(tokens);
-    console.log('CUSTOM_LOGGER:=>: ', sortedUnfoldTokens);
   } else {
-    sortedUnfoldTokens = sortByUsdValueDesc(tokens);
+    sortedUnfoldTokens = sortByUsdValueDesc(tokens.filter(defaultTokenFilter));
   }
 
   return chainServerId

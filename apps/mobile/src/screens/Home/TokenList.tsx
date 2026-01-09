@@ -142,6 +142,10 @@ export const TokenList = ({
     if (!lowerAddress) return false;
     return !!state.isLoadingByAddress[lowerAddress]?.loading;
   });
+  const isAllLoading = useTokenList(state => {
+    if (!lowerAddress) return false;
+    return !!state.isLoadingByAddress[lowerAddress]?.allLoading;
+  });
   const { getTokenList } = useTokenList();
 
   useEffect(() => {
@@ -193,7 +197,10 @@ export const TokenList = ({
       }
     }
 
-    if (isLoading && items.length === 0) {
+    if (
+      (isLoading && items.length === 0) ||
+      (isAllLoading && isLpTokenEnabled)
+    ) {
       items.push(
         ...Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton' as const,
@@ -226,7 +233,9 @@ export const TokenList = ({
     foldHideList,
     foldScam,
     foldTokens,
+    isAllLoading,
     isLoading,
+    isLpTokenEnabled,
     noAnyAssets,
     scamTokens,
     t,
