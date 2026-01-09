@@ -225,7 +225,7 @@ export const TokenList = () => {
         onValueChange={setIsLpTokenEnabled}
       />
       {!foldHideList && (
-        <FlatList
+        <Tabs.FlatList
           data={foldTokens}
           keyExtractor={item => `${item.owner_addr}-${item.chain}-${item.id}`}
           renderItem={({ item, index }) => (
@@ -273,7 +273,7 @@ export const TokenList = () => {
             />
           )}
           {!foldScam && (
-            <FlatList
+            <Tabs.FlatList
               data={scamTokens}
               initialNumToRender={20}
               windowSize={5}
