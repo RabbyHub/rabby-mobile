@@ -206,7 +206,10 @@ const computeMultiAssets = (
   tokens.forEach(token => {
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
-    const isScam = (usdValue === 0 && !isZeroCore) || token.is_suspicious;
+    const isScam =
+      token.is_verified === false ||
+      (usdValue === 0 && !isZeroCore) ||
+      token.is_suspicious;
     if (isScam) {
       scamTokens.push(token);
     } else {
@@ -261,7 +264,10 @@ const computeSingleAssets = (
   tokens.forEach(token => {
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
-    const isScam = (usdValue === 0 && !isZeroCore) || token.is_suspicious;
+    const isScam =
+      token.is_verified === false ||
+      (usdValue === 0 && !isZeroCore) ||
+      token.is_suspicious;
     if (isScam) {
       scamTokens.push(token);
     } else {
