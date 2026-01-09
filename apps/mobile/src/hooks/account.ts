@@ -103,7 +103,7 @@ async function fetchNewlyAddedAccounts() {
   });
 }
 
-const NEWLY_ADDED_ACCOUNT_DURATION = 10 * 60 * 1000;
+export const NEWLY_ADDED_ACCOUNT_DURATION = 10 * 60 * 1000;
 
 export function useIsNewlyAddedAccount(account: KeyringAccount) {
   const dbId = useMemo(() => {

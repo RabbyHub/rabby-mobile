@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Alert,
   Dimensions,
@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import AnimateableText from 'react-native-animateable-text';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
@@ -27,13 +28,32 @@ import {
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
-import { useDevNewlyAddedAccounts } from '@/hooks/account';
+import {
+  NEWLY_ADDED_ACCOUNT_DURATION,
+  useDevNewlyAddedAccounts,
+} from '@/hooks/account';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useRestCountDownLabel } from '@/hooks/system/time';
 import { accountEvents } from '@/core/apis/account';
 import { AddressItemContextMenuDev } from '../Address/components/AddressItemContextMenuDev';
 import { AddressItemShadowView } from '../Address/components/AddressItemShadowView';
 import { touchedFeedback } from '@/utils/touch';
+
+function UpdatedTimeCount({ updatedAt }: { updatedAt: number }) {
+  const { countdownTextStyles, countdownTextProps } = useRestCountDownLabel({
+    FUTURE_TIME: updatedAt + NEWLY_ADDED_ACCOUNT_DURATION,
+    defaultText: 'Just now',
+  });
+  // const textRef = useRef<Text>(null);
+
+  return (
+    <AnimateableText
+      // ref={textRef}
+      animatedProps={countdownTextProps}
+      style={[countdownTextStyles]}
+    />
+  );
+}
 
 function NewlyAddedAccountItem({
   item,
@@ -44,16 +64,6 @@ function NewlyAddedAccountItem({
     getStyle: getStyles,
     isLight: true,
   });
-
-  const { countDownText, countDownSecs } = useRestCountDownLabel(
-    item.updated_at,
-  );
-  const cdTextColor =
-    countDownSecs > 60
-      ? colors2024['green-default']
-      : countDownSecs > 5
-      ? colors2024['orange-default']
-      : colors2024['red-default'];
 
   return (
     <AddressItem account={item}>
@@ -89,8 +99,13 @@ function NewlyAddedAccountItem({
                 <WalletAddress />
               </View>
             </View>
-            <View style={addressItemStyles.rightContainer}>
-              <Text style={[{ color: cdTextColor }]}>{countDownText}</Text>
+            <View
+              style={[
+                addressItemStyles.rightContainer,
+                { gap: 8, alignItems: 'flex-end' },
+              ]}>
+              <WalletBalance />
+              <UpdatedTimeCount updatedAt={item.updated_at} />
             </View>
           </View>
         );
