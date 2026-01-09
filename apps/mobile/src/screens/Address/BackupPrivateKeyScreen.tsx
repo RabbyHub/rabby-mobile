@@ -12,6 +12,8 @@ import { RootNames } from '@/constant/layout';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { MaskContainer } from './components/MaskContainer';
 import { toast } from '@/components2024/Toast';
+import i18next from 'i18next';
+import { onCopiedSensitiveData } from '@/utils/clipboard';
 
 const QR_CODE_WIDTH = Dimensions.get('window').width - 130;
 
@@ -135,7 +137,10 @@ export const BackupPrivateKeyScreen = () => {
               <CopyAddressIcon
                 style={styles.copyButton}
                 address={data}
-                onToastSucess={() => toast.success('Copied')}
+                onToastSuccess={() => {
+                  toast.success(i18next.t('global.copied'));
+                  onCopiedSensitiveData({ type: 'privateKey' });
+                }}
               />
             </>
           )}

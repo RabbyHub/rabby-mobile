@@ -19,6 +19,7 @@ const isIOS = DeviceUtils.isIOS();
 type ScreenshotSettings = {
   androidForceAllowScreenCapture: boolean;
   iosForceAllowScreenRecord: boolean;
+  timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -30,10 +31,17 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
      */
     androidForceAllowScreenCapture: false,
     iosForceAllowScreenRecord: false,
+
+    timeTipAboutSeedPhraseAndPrivateKey: 'copy',
   },
 );
 
-function setExpData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
+export const storeApiExpSettingData = {
+  set: setExpSettingData,
+  get: getExpSettingData,
+};
+
+function setExpSettingData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
   experimentalSettingsStore.setState(prev => {
     const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
       strict: false,
@@ -41,6 +49,10 @@ function setExpData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
 
     return { ...prev, ...newVal };
   });
+}
+
+function getExpSettingData() {
+  return experimentalSettingsStore.getState();
 }
 
 const KEY = isIOS
@@ -56,7 +68,7 @@ function isAllowScreenshot(
 }
 
 const onExpScreenCaptureChange = (partials: Partial<ScreenshotSettings>) => {
-  setExpData(prev => ({
+  setExpSettingData(prev => ({
     ...prev,
     ...partials,
   }));
@@ -111,7 +123,7 @@ export function useExpScreenCapture() {
 const setAllowScreenshot = (
   valueOrFunc: boolean | ((prev: boolean) => boolean),
 ) => {
-  setExpData(prev => {
+  setExpSettingData(prev => {
     const next =
       typeof valueOrFunc === 'function' ? valueOrFunc(prev[KEY]) : valueOrFunc;
 
@@ -135,6 +147,18 @@ export function useForceAllowScreenshot() {
     iosForceAllowScreenRecord: result.iosForceAllowScreenRecord,
     forceAllowScreenshot: isAllowScreenshot(result),
     setAllowScreenshot,
+  };
+}
+
+export function useTimeTipAboutSeedPhraseAndPrivateKey() {
+  const timeTipAboutSeedPhraseAndPrivateKey = experimentalSettingsStore(
+    s => s.timeTipAboutSeedPhraseAndPrivateKey,
+  );
+
+  return {
+    timeTipAboutSeedPhraseAndPrivateKey: isNonPublicProductionEnv
+      ? timeTipAboutSeedPhraseAndPrivateKey
+      : 'none',
   };
 }
 

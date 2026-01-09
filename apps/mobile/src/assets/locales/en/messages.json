@@ -3314,7 +3314,14 @@
       }
     },
     "check": "Check",
-    "gotIt": "Got It"
+    "gotIt": "Got It",
+    "toast": {
+      "clipboard": {
+        "copiedSeedPhrase": "Seed phrase copied. The clipboard will clear in 1 minute.",
+        "copiedPrivateKey": "Private key copied. The clipboard will clear in 1 minute.",
+        "pasted_and_cleared": "Pasted and clipboard cleared"
+      }
+    }
   },
   "background": {
     "error": {

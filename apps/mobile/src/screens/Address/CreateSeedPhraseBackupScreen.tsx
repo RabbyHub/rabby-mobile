@@ -60,7 +60,7 @@ export const CreateSeedPhraseBackupScreen = () => {
           <CopyAddressIcon
             ref={copyAddressRef}
             address={seedPhrase || ''}
-            onToastSucess={() => toast.success('Copied')}
+            onToastSuccess={() => toast.success('Copied')}
           />
           <Text style={styles.copyText}>Copy seed phrase</Text>
         </View>
