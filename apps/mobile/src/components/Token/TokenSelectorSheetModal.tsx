@@ -22,6 +22,7 @@ import {
 import {
   BottomSheetBackdropProps,
   BottomSheetFlatList,
+  BottomSheetFlatListMethods,
 } from '@gorhom/bottom-sheet';
 import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
@@ -93,6 +94,7 @@ import { useMyAccounts } from '@/hooks/account';
 import LpTokenSwitch from '@/screens/Home/components/LpTokenSwitch';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { isLpToken } from '@/utils/lpToken';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -298,6 +300,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
   ) => {
     const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
       useSheetModal();
+    const listRef = useRef<BottomSheetFlatListMethods>(null);
     const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
     const { list: cexList } = useCexSupportList();
 
@@ -326,6 +329,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           _onFavoriteFilterChange?.('all');
         }
         _onLpTokenChange?.(value);
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
       },
       [_onLpTokenChange, _onFavoriteFilterChange],
     );
@@ -357,6 +361,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const inputRef = useRef<TextInput | null>(null);
 
     const [query, setQuery] = useState('');
+    const debouncedQuery = useDebouncedValue(query, 250); // 跟外面组件用一样的 debounce，不然组件里的 UI 状态先变会导致 UI 闪一下
     const [isInputActive, setIsInputActive] = useState(false);
 
     const [swapToTokenDetail, setSwapToTokenDetail] = useState(false);
@@ -408,13 +413,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
       };
     }, [chainServerId, filterAccount]);
 
-    useDebounce(
-      () => {
-        onSearch(isBridgeTo ? query : { ...chainSearchCtx, keyword: query });
-      },
-      150,
-      [chainSearchCtx, query],
-    );
+    useEffect(() => {
+      onSearch(isBridgeTo ? query : { ...chainSearchCtx, keyword: query });
+    }, [chainSearchCtx, isBridgeTo, onSearch, query]);
 
     const handleQueryChange = (value: string) => {
       setQuery(value);
@@ -562,7 +563,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               }
             };
 
-            if (query) {
+            if (debouncedQuery) {
               return (
                 <View style={{ marginTop: 8, marginHorizontal: 16 }}>
                   <TokenItemContextMenu
@@ -867,7 +868,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         accounts,
         chainSearchCtx.filterAccountItem,
         supportChains,
-        query,
+        debouncedQuery,
         needToTokenMarketInfo,
         type,
         styles,
@@ -1102,6 +1103,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             style={[styles.scrollView]}
             onScrollBeginDrag={() => Keyboard.dismiss()}
             windowSize={5}
+            ref={listRef}
             data={dataList}
             showsVerticalScrollIndicator={false}
             keyExtractor={item => {

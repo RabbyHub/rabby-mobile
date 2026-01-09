@@ -28,6 +28,7 @@ import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -55,9 +56,10 @@ const BridgeToTokenSelect = ({
   placeholder,
   address,
 }: BridgeToTokenSelectProps) => {
-  const [queryConds, setQueryConds] = useState({
+  const [_queryConds, setQueryConds] = useState({
     keyword: '',
   });
+  const queryConds = useDebouncedValue(_queryConds, 250);
 
   const bridgeSupportedChains = useBridgeSupportedChains();
   const {

@@ -51,11 +51,12 @@ export const useSelectTokens = ({
     if (currentAddress) {
       return [currentAddress];
     }
-    if (prevCurrentAddress.current) {
+    if (keyword && prevCurrentAddress.current) {
+      // 产品需求：x 掉当前地址后默认视图下展示多地址的余额，搜索视图下只展示当前地址的余额
       return [prevCurrentAddress.current];
     }
     return top10Addresses;
-  }, [currentAddress, top10Addresses]);
+  }, [currentAddress, top10Addresses, keyword]);
 
   const { isLoading, isLoadingByAddress, batchGetTokenList, getTokenList } =
     useTokenList();
@@ -101,16 +102,14 @@ export const useSelectTokens = ({
 
   const { value: searchTokenResult, loading: searchingToken } =
     useAsync(async () => {
-      if (!currentAddress) {
-        return [];
-      }
+      const address = currentAddress || prevCurrentAddress.current || '';
       if (keyword) {
         const list = await openapi.searchToken(
-          currentAddress,
+          address,
           keyword,
           chain_server_id || '',
         );
-        return list.map(item => tokenItemToITokenItem(item, currentAddress));
+        return list.map(item => tokenItemToITokenItem(item, address));
       }
       return [];
     }, [chain_server_id, currentAddress, keyword]);
