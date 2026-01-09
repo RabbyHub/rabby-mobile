@@ -155,15 +155,7 @@ const TokenSelector = ({
   }, []);
 
   const sortedList = useMemo(() => {
-    const _list =
-      list
-        ?.map(i => ({
-          ...i,
-          pinned: pinedQueue?.some(
-            pin => pin.chainId === i.chain && pin.tokenId === i.id,
-          ),
-        }))
-        ?.sort((a, b) => b.amount - a.amount) || [];
+    const _list = list?.sort((a, b) => b.amount - a.amount) || [];
     const index = _list.findIndex(i => new BigNumber(i.amount || 0).lt(cost));
     const k = query?.trim()?.toLowerCase();
 
@@ -198,7 +190,7 @@ const TokenSelector = ({
         data: sortAndFilter(_list.slice(index)),
       },
     ];
-  }, [cost, list, pinedQueue, query]);
+  }, [cost, list, query]);
 
   const Row = useCallback(
     ({ item }: { item: TokenItem & { pinned?: boolean } }) => {
@@ -234,24 +226,10 @@ const TokenSelector = ({
           <Text style={styles.text}>
             {formatUsdValue(item.amount * item.price || 0)}
           </Text>
-          {!!item.pinned && (
-            <View style={[styles.favoriteBadge]}>
-              <RcIconFavorite color={colors2024['orange-default']} />
-            </View>
-          )}
         </CustomTouchableOpacity>
       );
     },
-    [
-      colors2024,
-      cost,
-      onChange,
-      onClose,
-      styles.box,
-      styles.favoriteBadge,
-      styles.text,
-      styles.tokenListItem,
-    ],
+    [cost, onChange, onClose, styles.box, styles.text, styles.tokenListItem],
   );
 
   const showInsufficientTip = useMemo(() => {
