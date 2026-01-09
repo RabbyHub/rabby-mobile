@@ -177,7 +177,7 @@ export function ImportHardwareAddressScreen(): JSX.Element {
 
       showImportMorePopup({
         type: KEYRING_TYPE.TrezorKeyring,
-        brand: KEYRING_CLASS.HARDWARE.TREZOR,
+        brandName: KEYRING_CLASS.HARDWARE.TREZOR,
       });
     }
   }, [setSetting, showImportMorePopup]);

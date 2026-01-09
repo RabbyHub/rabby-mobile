@@ -186,7 +186,7 @@ export const ImportSeedPhraseScreen2024 = () => {
         }
         showImportMorePopup({
           type: KEYRING_TYPE.HdKeyring,
-          brand: KEYRING_CLASS.MNEMONIC,
+          brandName: KEYRING_CLASS.MNEMONIC,
           mnemonics: formatMnemonics,
           passphrase: '',
           keyringId: keyringId || undefined,
