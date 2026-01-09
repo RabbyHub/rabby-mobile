@@ -31,10 +31,28 @@ export const useSelectTokens = ({
 }) => {
   const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
+  const prevCurrentAddress = useRef(
+    currentAccount?.address || _currentAccount?.address,
+  );
+  const lastCurrentAddressRef = useRef(
+    currentAccount?.address || _currentAccount?.address,
+  );
   const { top10Addresses } = useAccountInfo();
+
+  // 产品需求：当 x 掉地址选择时搜索视图下仍然展示当前地址的余额，用 ref 缓存最后一个 currentAddress 实现
+  useEffect(() => {
+    if (currentAddress !== lastCurrentAddressRef.current) {
+      prevCurrentAddress.current = lastCurrentAddressRef.current;
+      lastCurrentAddressRef.current = currentAddress;
+    }
+  }, [currentAddress]);
+
   const tokenSelectAddresses = useMemo(() => {
     if (currentAddress) {
       return [currentAddress];
+    }
+    if (prevCurrentAddress.current) {
+      return [prevCurrentAddress.current];
     }
     return top10Addresses;
   }, [currentAddress, top10Addresses]);
