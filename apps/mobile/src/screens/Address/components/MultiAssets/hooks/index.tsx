@@ -1,15 +1,29 @@
-import { filterOutTop10Accounts } from '@/core/apis/account';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import {
+  filterDirectlySignableAccounts,
+  filterOutTop10Accounts,
+  isDirectlySignableAccount,
+  isHardwareAccount,
+} from '@/core/apis/account';
+import { openapi } from '@/core/request';
+import {
+  KeyringAccountWithAlias,
+  storeApiAccounts,
+  useAccounts,
+  useMyAccounts,
+} from '@/hooks/account';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import { apisAccountsBalance } from '@/hooks/useAccountsBalance';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { useMemo } from 'react';
+import useAsync from 'react-use/lib/useAsync';
 
 export const isTabsSwiping = {
   value: false,
 };
 
-export const useAccountInfo = () => {
+export function useAccountInfo() {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -77,4 +91,89 @@ export const useAccountInfo = () => {
     fetchAccounts,
     rawAllAccounts: accounts,
   };
-};
+}
+
+function isAccountToShowReceiveTip(account: KeyringAccountWithAlias) {
+  return isDirectlySignableAccount(account) || isHardwareAccount(account);
+}
+
+export async function getShowReceiveAddressTip(options?: {
+  caredAccount?: KeyringAccountWithAlias | null;
+  isForSingle?: boolean;
+}) {
+  const { caredAccount, isForSingle = false } = options || {};
+
+  if (!caredAccount && isForSingle) {
+    throw new Error('caredAccount is required when isForSingle is true');
+  }
+
+  let targetAccount = caredAccount;
+  if (!isForSingle) {
+    const myAccounts = await storeApiAccounts
+      .fetchAccounts()
+      .then(accounts => filterMyAccounts(accounts));
+    const accountsToCheck = myAccounts.filter(account =>
+      isAccountToShowReceiveTip(account),
+    );
+    if (accountsToCheck.length !== 1) return null;
+
+    targetAccount = accountsToCheck[0];
+  }
+
+  if (!targetAccount) return null;
+  if (!isAccountToShowReceiveTip(targetAccount)) return null;
+
+  const evmBalance =
+    apisAccountsBalance.getBalanceByAddress(targetAccount.address)
+      ?.evmBalance ??
+    targetAccount.evmBalance ??
+    0;
+
+  let borned = false;
+  try {
+    const addressDesc = await openapi.addrDesc(targetAccount.address);
+    borned = addressDesc.desc.born_at != null;
+  } catch (error) {
+    console.warn('Failed to fetch address desc', error);
+  }
+
+  return {
+    targetAccount,
+    evmBalance,
+    borned,
+  };
+}
+
+export function useAccountHomeShowReceiveTip(
+  caredAccount?: KeyringAccountWithAlias | null,
+) {
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
+  const asyncResult = useAsync(
+    () =>
+      getShowReceiveAddressTip({ caredAccount, isForSingle: !!caredAccount }),
+    [caredAccount, accounts],
+  );
+
+  if (asyncResult.error) {
+    console.error('Failed to get show receive address tip', asyncResult.error);
+  }
+
+  const targetAccount = asyncResult.loading
+    ? null
+    : asyncResult.value?.targetAccount || null;
+  const accountToShowReceiveTip =
+    !!targetAccount &&
+    asyncResult.value?.evmBalance === 0 &&
+    !asyncResult.value?.borned
+      ? targetAccount
+      : null;
+
+  return {
+    targetAccount,
+    accountToShowReceiveTip:
+      accountToShowReceiveTip &&
+      isAccountToShowReceiveTip(accountToShowReceiveTip)
+        ? accountToShowReceiveTip
+        : null,
+  };
+}

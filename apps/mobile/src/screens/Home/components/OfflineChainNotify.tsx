@@ -88,12 +88,14 @@ export const useOfflineChain = () => {
         if (!isIn7days || isExpired) {
           return false;
         }
+
+        if (mockData.forceShowOffchainNotify) return true;
         return accountChainBalanceList.some(chainBalance =>
           chainBalance?.some(chain => chain.id === e.id && chain.usd_value > 1),
         );
       })
       .sort((a, b) => a.offline_at - b.offline_at);
-  }, [balanceAccounts, offlineList]);
+  }, [balanceAccounts, offlineList, mockData.forceShowOffchainNotify]);
 
   const displayWillClosedChain = useMemo(
     () => list?.filter(e => !closedTipsChains?.includes(e.id))?.[0],

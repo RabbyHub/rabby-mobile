@@ -1,7 +1,11 @@
 import React, { useMemo } from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
-import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useIsNewlyAddedAccount,
+  usePinAddresses,
+} from '@/hooks/account';
 import {
   AddressItem as InnerAddressItem,
   WalletPin,
@@ -56,6 +60,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   itemNamePinned: {
     marginLeft: -52,
   },
+  itemName: {
+    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  newMarkView: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    flexShrink: 0,
+    borderRadius: 4,
+    backgroundColor: colors2024['brand-light-1'],
+  },
+  newMarkText: {
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: 500,
+    lineHeight: 16,
+  },
   balanceContainer: {
     flexDirection: 'row',
     gap: 4,
@@ -72,11 +96,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-  },
-  itemName: {
-    gap: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   arrow: {
     width: 26,
@@ -102,17 +121,18 @@ interface AddressItemProps {
   hiddenPin?: boolean;
   changePercent?: string;
   isLoss?: boolean;
+  showMarkIfNewlyAdded?: boolean;
 }
-export const AddressItemInner2024 = (props: AddressItemProps) => {
-  const {
-    account,
-    style,
-    hiddenArrow,
-    isPressing,
-    hiddenPin,
-    changePercent,
-    isLoss,
-  } = props;
+export const AddressItemInner2024 = ({
+  account,
+  style,
+  hiddenArrow,
+  isPressing,
+  hiddenPin,
+  changePercent,
+  isLoss,
+  showMarkIfNewlyAdded = false,
+}: AddressItemProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { pinAddresses } = usePinAddresses({
@@ -128,6 +148,11 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
     [pinAddresses, account],
   );
   const isZeroPercentChange = changePercent === '0%';
+
+  const { isNewlyAdded } = useIsNewlyAddedAccount(account);
+
+  const shouldShowNewMark =
+    showMarkIfNewlyAdded && isNewlyAdded && account.evmBalance === 0;
 
   return (
     <Card
@@ -148,6 +173,11 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
             <View style={styles.itemInfo}>
               <View style={styles.itemName}>
                 <WalletName style={StyleSheet.flatten([styles.itemNameText])} />
+                {shouldShowNewMark && (
+                  <View style={styles.newMarkView}>
+                    <Text style={styles.newMarkText}>New</Text>
+                  </View>
+                )}
               </View>
               <View style={styles.balanceContainer}>
                 <WalletBalance style={styles.itemBalanceText} />

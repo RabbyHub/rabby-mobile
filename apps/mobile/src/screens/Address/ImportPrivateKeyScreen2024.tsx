@@ -56,7 +56,7 @@ export const ImportPrivateKeyScreen2024 = () => {
           params: {
             type: KEYRING_TYPE.SimpleKeyring,
             brandName: KEYRING_CLASS.PRIVATE_KEY,
-            address: account.address,
+            address: account?.address,
           },
         });
       })

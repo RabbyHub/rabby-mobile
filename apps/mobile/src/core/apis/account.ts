@@ -9,6 +9,7 @@ import {
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import * as Sentry from '@sentry/react-native';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
 import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { contactService, keyringService, preferenceService } from '../services';
@@ -20,6 +21,7 @@ import { type IPinAddress, type Account } from '../services/preference';
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 
 import BigNumber from 'bignumber.js';
+import { makeJsEEClass } from '@/core/services/_utils';
 
 function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
   if (keyring instanceof DisplayKeyring) {
@@ -174,6 +176,26 @@ export const filterMyAccounts = <
   );
 };
 
+export function isDirectlySignableAccount(
+  account: KeyringAccount | KeyringAccountWithAlias,
+) {
+  return (
+    account.type == KEYRING_TYPE.SimpleKeyring ||
+    account.type == KEYRING_TYPE.HdKeyring
+  );
+}
+
+export function isHardwareAccount(
+  account: KeyringAccount | KeyringAccountWithAlias,
+) {
+  return (
+    account.type === KEYRING_CLASS.HARDWARE.LEDGER ||
+    account.type === KEYRING_CLASS.HARDWARE.TREZOR ||
+    account.type === KEYRING_CLASS.HARDWARE.KEYSTONE ||
+    account.type === KEYRING_CLASS.HARDWARE.ONEKEY
+  );
+}
+
 export function filterDirectlySignableAccounts<
   T extends KeyringAccount | KeyringAccountWithAlias,
 >(accounts: T[]) {
@@ -319,3 +341,13 @@ export const getTop50PrivateKeyAccounts = makeAvoidParallelAsyncFunc(
     return privateKeyAccounts.slice(0, 50);
   },
 );
+
+export type PerfAccountEventBusListeners = {
+  ACCOUNT_ADDED: (ctx: {
+    accounts: KeyringEventAccount[];
+    scene?: 'privateKey' | 'memonics' | 'hardware' | 'syncExtension';
+  }) => void;
+};
+const { EventEmitter: AccountEE } =
+  makeJsEEClass<PerfAccountEventBusListeners>();
+export const accountEvents = new AccountEE();

@@ -5,6 +5,7 @@ import {
 
 import { runIIFEFunc } from './core/utils/store';
 import { startSubscribeLangChange } from './hooks/lang';
+import { startManageAccountStoreLifecycle } from './hooks/account';
 
 import {
   loadLockInfoOnBootstrap,
@@ -37,6 +38,7 @@ import { startCheckClearAction } from './utils/clipboard';
 
 startSubscribeLangChange();
 
+startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();
 startFetchOnceTop5TokensForAllAccounts();
 subscribeUnlockToFetchAccounts();

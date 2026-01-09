@@ -446,7 +446,9 @@
       "addressCount_one": "{{count}} Wallet",
       "addressCount_other": "{{count}} Wallets",
       "success": "{{type}} successfully!",
-      "importMore": "Import more Wallets"
+      "importMore": "Import more Wallets",
+      "viewAddress": "View Wallet",
+      "addressCount": "{{count}} Addresses"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Enter your seed phrase, separating each word with a space"
@@ -1450,7 +1452,8 @@
             "content": "It's not supported to import multiple {{0}} devices If you switch to a new {{0}} device, the current device's address list will be removed before starting the import process."
           }
         }
-      }
+      },
+      "importing": "Importing..."
     },
     "unlock": {
       "btn": {
@@ -2932,6 +2935,16 @@
       },
       "disableBorrowTip": {
         "desc": "No supply: To borrow you need to supply assets as collateral."
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "title": "Receive assets",
+        "btnCopyAddress": "Copy Address",
+        "importTip": {
+          "title": "Import a wallet",
+          "desc": "Add an existing address with funds."
+        }
       }
     }
   },

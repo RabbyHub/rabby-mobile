@@ -4,6 +4,7 @@ import { Account } from '@/core/services/preference';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useAlias2 } from '@/hooks/alias';
+import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import {
   useAddressBalance,
   useIsLoadingBalance,
@@ -31,7 +32,7 @@ function getDefault(): SingleHomeState {
     reachTop: false,
   };
 }
-export const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
+const singleHomeState = zCreate<SingleHomeState>(() => getDefault());
 
 function presetSingHomeAccount(account: Account) {
   singleHomeState.setState({
@@ -40,15 +41,25 @@ function presetSingHomeAccount(account: Account) {
   });
 }
 export const apisSingleHome = {
-  navigateToSingleHome: (account: Account) => {
+  navigateToSingleHome: (account: Account, options?: { replace?: boolean }) => {
     presetSingHomeAccount(account);
     requestAnimationFrame(() => {
-      navigateDeprecated(RootNames.SingleAddressStack, {
-        screen: RootNames.SingleAddressHome,
-        params: {
-          account: account,
-        },
-      });
+      const { replace } = options || {};
+      if (replace) {
+        resetNavigationOnTopOfHome(RootNames.SingleAddressStack, {
+          screen: RootNames.SingleAddressHome,
+          params: {
+            account: account,
+          },
+        });
+      } else {
+        navigateDeprecated(RootNames.SingleAddressStack, {
+          screen: RootNames.SingleAddressHome,
+          params: {
+            account: account,
+          },
+        });
+      }
     });
   },
   clearCurrentAccount: () => {
@@ -59,6 +70,9 @@ export const apisSingleHome = {
   },
   getCurrentAddress: () => {
     return singleHomeState.getState().currentAccount?.address;
+  },
+  getCurrentAccount: () => {
+    return singleHomeState.getState().currentAccount;
   },
   setSelectChainItem: (chain: ChainListItem | null) => {
     singleHomeState.setState({
@@ -109,14 +123,20 @@ export function useSingleHomeAccountAlias() {
       brandName: s.currentAccount?.brandName,
     })),
   );
-  const { adderssAlias } = useAlias2(address || '', { autoFetch: true });
+  const { adderssAlias, isDefaultAlias } = useAlias2(address || '', {
+    autoFetch: true,
+  });
 
-  const name = useMemo(
+  const aliasExist = useMemo(() => {
+    return !!address && !!adderssAlias && !isDefaultAlias;
+  }, [address, adderssAlias, isDefaultAlias]);
+
+  const nameText = useMemo(
     () => adderssAlias || brandName,
     [adderssAlias, brandName],
   );
 
-  return { address, name, brandName };
+  return { aliasExist, address, nameText, brandName, isDefaultAlias };
 }
 
 export function useSingleHomeAddress() {
@@ -176,6 +196,16 @@ export function useSingleHomeLoading() {
   return {
     balanceLoading,
     isLoadingCurve,
+  };
+}
+
+export function useSingleHomeNoAssetsValueOnChain() {
+  const { lcAddress } = useSingleHomeAddress();
+  const { balanceLoading } = useIsLoadingBalance(lcAddress);
+  const { evmBalance, balance } = useAddressBalance(lcAddress);
+
+  return {
+    noAssetsValue: !balanceLoading && evmBalance === 0,
   };
 }
 

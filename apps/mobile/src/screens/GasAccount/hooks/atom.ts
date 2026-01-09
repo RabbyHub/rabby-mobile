@@ -19,6 +19,7 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 import pRetry from 'p-retry';
 import { useCallback } from 'react';
 
@@ -137,11 +138,11 @@ export const useGasAccountHistoryRefresh = () => {
   return { refreshId, refresh };
 };
 
-const syncDeleteGasAccount = async (
-  address: string,
-  type: string,
-  brand?: string,
-) => {
+const syncDeleteGasAccount = async ({
+  address,
+  type,
+  brandName,
+}: KeyringEventAccount) => {
   if (type !== KEYRING_TYPE.WatchAddressKeyring) {
     const restAddresses = await keyringService.getAllAddresses();
     const gasAccount =

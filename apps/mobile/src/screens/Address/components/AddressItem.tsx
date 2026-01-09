@@ -46,6 +46,9 @@ interface AddressItemProps {
   onSelect?: () => void;
   useLongPressing?: boolean;
   handleGoDetail?: () => void;
+  showMarkIfNewlyAdded?: React.ComponentProps<
+    typeof AddressItemInner2024
+  >['showMarkIfNewlyAdded'];
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
   const {
@@ -58,6 +61,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     isScrolling,
     useLongPressing,
     handleGoDetail,
+    showMarkIfNewlyAdded,
   } = props;
   const { styles } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
@@ -105,6 +109,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           account={account}
           changePercent={changePercent}
           isLoss={isLoss}
+          showMarkIfNewlyAdded={showMarkIfNewlyAdded}
         />
       </TouchableOpacity>
     </AddressItemShadowView>

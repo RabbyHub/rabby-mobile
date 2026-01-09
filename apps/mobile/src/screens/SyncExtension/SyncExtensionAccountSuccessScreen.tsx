@@ -19,6 +19,7 @@ import { useSpecifyAccountsBalance } from './hooks/balance';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
+import { accountEvents } from '@/core/apis/account';
 
 export const SyncExtensionAccountSuccessfulScreen = () => {
   const { t } = useTranslation();
@@ -58,6 +59,11 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
     if (accounts.length) {
       fetchTotalBalance();
       syncMultiAddressesHistory(accounts.slice(0, 5).map(e => e.address));
+
+      accountEvents.emit('ACCOUNT_ADDED', {
+        accounts: accounts,
+        scene: 'syncExtension',
+      });
     }
   }, [accounts, fetchTotalBalance]);
 

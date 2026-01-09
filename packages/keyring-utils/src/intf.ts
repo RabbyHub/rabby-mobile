@@ -1,3 +1,6 @@
+import type {
+  TypedTransaction,
+} from '@ethereumjs/tx';
 import type { KeyringAccount, KeyringTypeName } from './types';
 
 export type KeyringSerializedData<T = any> = {
@@ -33,7 +36,7 @@ export declare class KeyringIntf {
 
   deserialize(opts?: { accounts?: string[] }): Promise<void>;
 
-  setAccountToAdd(account: string): void;
+  setAccountToAdd?(account: string): void;
 
   addAccounts(numberOfAccounts?: number): Promise<string[]>;
 
@@ -47,11 +50,11 @@ export declare class KeyringIntf {
     address: string,
     transaction: any,
     ...rest: any
-  ): Promise<void>;
+  ): Promise<void | TypedTransaction>;
 
-  signPersonalMessage(address: string, message: string): Promise<void>;
+  signPersonalMessage(address: string, message: string): Promise<void | string>;
 
-  signTypedData(address: string, data: any): Promise<void>;
+  signTypedData(address: string, data: any, options?: { version?: string }): Promise<void>;
 
   /* ===================== optional members ===================== */
 
@@ -69,7 +72,8 @@ export declare class KeyringIntf {
   getNextPage?<T extends string | AccountItemPagerQueryResult>(): Promise<T[]>;
 
   /* for some hardware wallet */
-  unlock?(hdPath: string): Promise<string | void>;
+  unlock?(hdPath?: string | number): Promise<string | void>;
+  // unlock?(haIndex?: number): Promise<string | void>;
 
   unlock?(...args: any[]): Promise<any | void>;
 
