@@ -13,7 +13,7 @@ import {
 } from '../components/OfflineChainNotify';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useShowReceiveAddressTip } from '@/screens/Address/components/MultiAssets/hooks';
+import { useAccountHomeShowReceiveTip } from '@/screens/Address/components/MultiAssets/hooks';
 import { ReceiveOnNoAssets } from './ReceiveOnNoAssets';
 
 export function HomeCenterArea() {
@@ -21,7 +21,7 @@ export function HomeCenterArea() {
     getStyle,
   });
 
-  const { accountToShowReceiveTip } = useShowReceiveAddressTip();
+  const { accountToShowReceiveTip } = useAccountHomeShowReceiveTip();
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
 

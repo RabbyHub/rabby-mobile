@@ -32,12 +32,12 @@ const waitQueueFinished = (q: PQueue) => {
 type BalanceState = {
   balance: BalanceAccountType[];
   balanceCache: BalanceAccountType[];
-  length: number;
+  matteredAccountLength: number;
 };
 const balanceStore = zCreate<BalanceState>(() => ({
   balance: [],
   balanceCache: [],
-  length: 0,
+  matteredAccountLength: 0,
 }));
 
 export function getBalanceCacheAccounts() {
@@ -85,9 +85,12 @@ function setBalanceCacheAccounts(
 
 function setAccountsLength(valOrFunc: UpdaterOrPartials<number>) {
   balanceStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev.length, valOrFunc);
+    const { newVal } = resolveValFromUpdater(
+      prev.matteredAccountLength,
+      valOrFunc,
+    );
 
-    return { ...prev, length: newVal };
+    return { ...prev, matteredAccountLength: newVal };
   });
 }
 
@@ -145,6 +148,13 @@ function getLatestTotalBalance(addresses: string[]) {
 export const apisAccountsBalance = {
   computeTotalBalance,
   getLatestTotalBalance,
+  getBalanceByAddress: (address: string) => {
+    const balanceAccounts = balanceStore.getState().balance;
+
+    return balanceAccounts.find(item =>
+      isSameAddress(item.address, address.toLowerCase()),
+    );
+  },
 };
 
 export const fetchTotalBalance = makeSWRKeyAsyncFunc(
@@ -295,10 +305,11 @@ export function useAccountsBalanceTrigger() {
     triggerUpdate,
   };
 }
+
 export default function useAccountsBalance() {
   const balanceAccounts = balanceStore(s => s.balance);
   const balanceCacheAccounts = balanceStore(s => s.balanceCache);
-  const accountsLength = balanceStore(s => s.length);
+  const accountsLength = balanceStore(s => s.matteredAccountLength);
 
   const { triggerUpdate } = useAccountsBalanceTrigger();
 

@@ -300,7 +300,7 @@ export const ImportSuccessScreen2024 = () => {
       mnemonics: state.mnemonics,
       passphrase: state.passphrase,
       keyringId: state.keyringId,
-      brand: state.brandName,
+      brandName: state.brandName,
     };
 
     const firstAddr = importAddresses[0]?.address;

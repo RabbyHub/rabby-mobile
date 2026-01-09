@@ -54,7 +54,7 @@ export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAl
 
 type Store = {
   accounts: KeyringAccountWithAlias[];
-  fetchingAccounts: boolean;
+  // fetchingAccounts: boolean;
   pinnedAddresses: IPinAddress[];
   currentAccount: KeyringAccountWithAlias | null;
 
@@ -66,7 +66,7 @@ type Store = {
 const zAccountStore = zCreate<Store>((set, get) => {
   return {
     accounts: [],
-    fetchingAccounts: false,
+    // fetchingAccounts: false,
 
     pinnedAddresses: preferenceService.getPinAddresses(),
     currentAccount: null,
@@ -169,6 +169,8 @@ export function startManageAccountStoreLifecycle() {
   fetchNewlyAddedAccounts();
   setInterval(() => {
     fetchNewlyAddedAccounts();
+
+    AccountInfoEntity.trimExpiredAccounts(NEWLY_ADDED_ACCOUNT_DURATION);
   }, 10 * 1e3);
 }
 

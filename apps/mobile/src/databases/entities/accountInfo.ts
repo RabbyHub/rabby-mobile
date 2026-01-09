@@ -25,7 +25,6 @@ export class AccountInfoEntity extends EntityAccountBase {
     account: KeyringEventAccount | KeyringEventAccount[],
   ) {
     const ds = await prepareAppDataSource();
-    const repo = ds.getRepository(AccountInfoEntity);
     const { driver, connection } = resolveDriverAndConnectionFromEntity(
       ds,
       AccountInfoEntity,
@@ -73,7 +72,28 @@ VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = 
     ormEvents.emit(`account_info:removed`, { deleteResult });
   }
 
-  static async getAccountsAddedIn(time = 60 * 1e3 * 10) {
+  static async trimExpiredAccounts(duration = 60 * 1e3 * 10) {
+    const ds = await prepareAppDataSource();
+    const repo = ds.getRepository(AccountInfoEntity);
+    const nowInt = Date.now();
+    const expireDivider = nowInt - duration;
+
+    if (expireDivider <= 0) {
+      console.warn(
+        '[warn] trimExpiredAccounts called with non-positive duration',
+      );
+      return;
+    }
+
+    const deleteResult = await repo.delete({
+      updated_at: LessThan(expireDivider),
+    });
+  }
+
+  static async getAccountsAddedIn(
+    time = 60 * 1e3 * 10,
+    options?: { trimExpired?: boolean },
+  ) {
     const queryBuilder = this.getRepository().createQueryBuilder(
       ORM_TABLE_NAMES.account_info,
     );

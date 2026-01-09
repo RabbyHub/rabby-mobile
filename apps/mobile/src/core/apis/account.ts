@@ -178,10 +178,21 @@ export const filterMyAccounts = <
 
 export function isDirectlySignableAccount(
   account: KeyringAccount | KeyringAccountWithAlias,
-): account is KeyringAccount | KeyringAccountWithAlias {
+) {
   return (
     account.type == KEYRING_TYPE.SimpleKeyring ||
     account.type == KEYRING_TYPE.HdKeyring
+  );
+}
+
+export function isHardwareAccount(
+  account: KeyringAccount | KeyringAccountWithAlias,
+) {
+  return (
+    account.type === KEYRING_CLASS.HARDWARE.LEDGER ||
+    account.type === KEYRING_CLASS.HARDWARE.TREZOR ||
+    account.type === KEYRING_CLASS.HARDWARE.KEYSTONE ||
+    account.type === KEYRING_CLASS.HARDWARE.ONEKEY
   );
 }
 
@@ -334,7 +345,7 @@ export const getTop50PrivateKeyAccounts = makeAvoidParallelAsyncFunc(
 export type PerfAccountEventBusListeners = {
   ACCOUNT_ADDED: (ctx: {
     accounts: KeyringEventAccount[];
-    scene?: 'privateKey' | 'memonics' | 'hardware';
+    scene?: 'privateKey' | 'memonics' | 'hardware' | 'syncExtension';
   }) => void;
 };
 const { EventEmitter: AccountEE } =

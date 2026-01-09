@@ -25,6 +25,7 @@ import {
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { isDirectlySignableAccount } from '@/core/apis/account';
+import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
 
 const ScreenWidth = Dimensions.get('window').width;
 export const icons = {
@@ -81,7 +82,9 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
         <CustomLabel index={index} indexDecimal={indexDecimal} text={name} />,
     [],
   );
-  const { noAssetsValue } = useSingleHomeNoAssetsValueOnChain();
+  // const { noAssetsValue } = useSingleHomeNoAssetsValueOnChain();
+  const { accountToShowReceiveTip } =
+    useAccountHomeShowReceiveTip(currentAccount);
 
   if (errorNotAssets) {
     return (
@@ -94,10 +97,10 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   }
 
   if (!currentAccount) return null;
-  if (noAssetsValue && isDirectlySignableAccount(currentAccount)) {
+  if (accountToShowReceiveTip) {
     return (
       <ReceiveOnNoAssets.BgWrapper isForSingle>
-        <ReceiveOnNoAssets account={currentAccount} isForSingle />
+        <ReceiveOnNoAssets account={accountToShowReceiveTip} isForSingle />
       </ReceiveOnNoAssets.BgWrapper>
     );
   }

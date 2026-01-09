@@ -16,7 +16,7 @@ import {
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
-import { isTabsSwiping, useShowReceiveAddressTip } from './hooks';
+import { isTabsSwiping } from './hooks';
 import { MemoizedNFTItemLoader, NFTList } from './NFTList';
 import { Freeze } from 'react-freeze';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -122,8 +122,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
   );
 
   useRendererDetect({ name: 'TabsMultiAssets' });
-
-  const { accountToShowReceiveTip } = useShowReceiveAddressTip();
 
   return (
     <Tabs.Container

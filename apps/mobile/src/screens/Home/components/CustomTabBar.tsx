@@ -35,7 +35,6 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { useTranslation } from 'react-i18next';
-import { useShowReceiveAddressTip } from '@/screens/Address/components/MultiAssets/hooks';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -102,15 +101,8 @@ const Indicator = ({
     }
   }, [fadeIn, opacity]);
 
-  // const { accountToShowReceiveTip } = useShowReceiveAddressTip();
-  // if (accountToShowReceiveTip) return null;
-
   return (
-    <View
-      style={[
-        styles.indicatorContainer,
-        // accountToShowReceiveTip && { display: 'none' },
-      ]}>
+    <View style={[styles.indicatorContainer]}>
       <Animated.View style={[stylez, styles.indicator, style]} />
       <View style={styles.leftBackground} />
       <View
