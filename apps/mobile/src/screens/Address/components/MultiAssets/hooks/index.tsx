@@ -16,7 +16,6 @@ import { apisAccountsBalance } from '@/hooks/useAccountsBalance';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 export const isTabsSwiping = {
@@ -34,22 +33,26 @@ export function useAccountInfo() {
   );
 
   const sortedList = useSortAddressList(myAccounts);
-  const { top10Accounts, top10Addresses, notTop10Accounts, top10Records } =
-    useCreationWithShallowCompare(() => {
-      const {
-        top10Accounts,
-        top10Addresses,
-        top10Records,
-        restAccounts: notTop10Accounts,
-      } = filterOutTop10Accounts(sortedList, { gatherSameAddress: false });
+  const {
+    myTop10Accounts,
+    myTop10Addresses,
+    myTop10Records,
+    myNotTop10Accounts,
+  } = useCreationWithShallowCompare(() => {
+    const {
+      top10Accounts: myTop10Accounts,
+      top10Addresses: myTop10Addresses,
+      top10Records: myTop10Records,
+      restAccounts: myNotTop10Accounts,
+    } = filterOutTop10Accounts(sortedList, { gatherSameAddress: false });
 
-      return {
-        top10Accounts,
-        top10Addresses,
-        top10Records,
-        notTop10Accounts,
-      };
-    }, [sortedList]);
+    return {
+      myTop10Accounts,
+      myTop10Addresses,
+      myTop10Records,
+      myNotTop10Accounts,
+    };
+  }, [sortedList]);
 
   const { hasWatchAddress, hasSafeAddress, gnosisAccounts, watchAccounts } =
     useCreationWithShallowCompare(() => {
@@ -73,23 +76,24 @@ export function useAccountInfo() {
       return ret;
     }, [accounts]);
 
-  const notMatterAccounts = useCreationWithShallowCompare(() => {
-    return [...notTop10Accounts, ...gnosisAccounts, ...watchAccounts];
-  }, [notTop10Accounts, gnosisAccounts, watchAccounts]);
+  const notMatteredAccounts = useCreationWithShallowCompare(() => {
+    return [...myNotTop10Accounts, ...gnosisAccounts, ...watchAccounts];
+  }, [myNotTop10Accounts, gnosisAccounts, watchAccounts]);
 
   return {
-    top10Accounts,
-    top10Addresses,
-    top10Records,
-    notMatterAccounts,
+    myTop10Accounts,
+    myTop10Addresses,
+    myTop10Records,
+    myNotTop10Accounts,
+    notMatteredAccounts,
     gnosisAccounts,
     watchAccounts,
-    notTop10Accounts,
     list: sortedList,
     hasWatchAddress,
     hasSafeAddress,
     fetchAccounts,
     rawAllAccounts: accounts,
+    matteredAccountCount: filterMyAccounts(sortedList).length,
   };
 }
 

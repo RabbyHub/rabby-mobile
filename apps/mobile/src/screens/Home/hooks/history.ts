@@ -1,6 +1,6 @@
 import { debounce } from 'lodash';
 
-import { getTop10MyAddresses } from '@/core/apis/account';
+import { getTop10MyAccounts } from '@/core/apis/account';
 import { transactionHistoryService } from '@/core/services';
 import { makeAvoidParallelAsyncFunc } from '@/core/utils/concurrency';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
@@ -55,7 +55,7 @@ function setHistoryCount(
 
 export const refreshSuccessAndFailList = makeAvoidParallelAsyncFunc(
   async () => {
-    const top10Addresses = await getTop10MyAddresses();
+    const { top10Addresses } = await getTop10MyAccounts();
     if (!top10Addresses.length) return;
     const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
     const list = await HistoryItemEntity.getUnreadHistoryCount(
@@ -99,8 +99,8 @@ const timeRef: RefLikeObject<ReturnType<typeof setInterval> | null> = {
 export const resetFetchHistoryTxCount = makeAvoidParallelAsyncFunc(async () => {
   timeRef.current && clearInterval(timeRef.current);
 
-  const balanceCacheAccounts = getBalanceCacheAccounts();
-  const addresses = balanceCacheAccounts.map(i => i.address);
+  const balanceAccounts = getBalanceCacheAccounts();
+  const addresses = Object.keys(balanceAccounts);
   if (!addresses.length) {
     return;
   }

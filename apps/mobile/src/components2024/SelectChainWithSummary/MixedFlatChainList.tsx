@@ -43,16 +43,16 @@ export default function MixedFlatChainList({
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   account?: Account | null;
 }) {
-  const { top10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
   const selectedAddresses = useMemo(() => {
     if (needAllAddresses) {
-      return top10Addresses;
+      return myTop10Addresses;
     }
     if (currentAccount?.address) {
       return [currentAccount.address];
     }
     return [];
-  }, [needAllAddresses, top10Addresses, currentAccount?.address]);
+  }, [needAllAddresses, myTop10Addresses, currentAccount?.address]);
   const registerChainSelector = useTokenListComputedStore(
     state => state.registerChainSelector,
   );

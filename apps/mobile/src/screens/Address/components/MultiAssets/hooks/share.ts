@@ -5,7 +5,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import { useAccountInfo } from '../hooks';
-import useAccountsBalance, {
+import {
   apisAccountsBalance,
   useAccountsBalanceTrigger,
 } from '@/hooks/useAccountsBalance';
@@ -57,13 +57,13 @@ export const useCheckIsExpireAndUpdate = ({
   disableNFT?: boolean;
 }) => {
   const initRef = useRef(false);
-  const { top10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
   const { triggerUpdate } = useAccountsBalanceTrigger();
   const { checkIsExpireAndUpdate } = useLoadAssets();
 
   useEffect(() => {
     initRef.current = false;
-  }, [top10Addresses.length]);
+  }, [myTop10Addresses.length]);
 
   useEffect(() => {
     if (!isFocused) return;
@@ -78,9 +78,9 @@ export const useCheckIsExpireAndUpdate = ({
         disableDefi,
         disableNFT,
         updateReturn: true,
-        realTimeAddresses: top10Addresses,
+        realTimeAddresses: myTop10Addresses,
         ignoreLoading:
-          !apisAccountsBalance.getLatestTotalBalance(top10Addresses),
+          !apisAccountsBalance.getLatestTotalBalance(myTop10Addresses),
       });
     }, 50);
 
@@ -93,7 +93,7 @@ export const useCheckIsExpireAndUpdate = ({
     disableDefi,
     disableNFT,
     checkIsExpireAndUpdate,
-    top10Addresses,
+    myTop10Addresses,
   ]);
 
   useEffect(() => {

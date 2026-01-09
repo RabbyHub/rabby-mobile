@@ -49,6 +49,7 @@ import { perfEvents } from '@/core/utils/perf';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { EntityAccountBase } from '@/databases/entities/base';
 import { ormEvents } from '@/databases/entities/_helpers';
+import { InteractionManager } from 'react-native';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
@@ -168,10 +169,16 @@ export function startManageAccountStoreLifecycle() {
 
   fetchNewlyAddedAccounts();
   setInterval(() => {
-    fetchNewlyAddedAccounts();
-
-    AccountInfoEntity.trimExpiredAccounts(NEWLY_ADDED_ACCOUNT_DURATION);
+    InteractionManager.runAfterInteractions(() => {
+      fetchNewlyAddedAccounts();
+    });
   }, 10 * 1e3);
+
+  setInterval(() => {
+    InteractionManager.runAfterInteractions(() => {
+      AccountInfoEntity.trimExpiredAccounts(NEWLY_ADDED_ACCOUNT_DURATION);
+    });
+  }, 60 * 1e3);
 }
 
 function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
@@ -183,7 +190,7 @@ function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
     );
 
     setTimeout(() => {
-      perfEvents.emit('ACCOUNTS_MAYBE_CHANGED', { confirmed: changed });
+      perfEvents.emit('ACCOUNTS_MAYBE_CHANGED', { accounts: newVal, confirmed: changed });
     }, 0);
 
     if (changed) {
@@ -400,9 +407,7 @@ export const usePinnedAccountList = () => {
           KEYRING_TYPE.WalletConnectKeyring,
         ].includes(item.type)
       ) {
-        const account = balanceAccounts.find(acc =>
-          isSameAddress(acc.address, item.address),
-        );
+        const account = balanceAccounts[item.address.toLowerCase()];
         res.push({
           ...item,
           balance: account?.balance || item.balance || 0,

@@ -409,16 +409,16 @@ export function useAssetsPortfolios({
 }) {
   const globalPortfoliosMap = assetsMapStore(s => s.portfoliosMap);
 
-  const { top10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
 
   const memoPortfolios = useMemo(() => {
     if (hideCombined) {
       return top10PortfoliosCache;
     }
-    const portfolios = combinedProtocols(globalPortfoliosMap, top10Addresses);
+    const portfolios = combinedProtocols(globalPortfoliosMap, myTop10Addresses);
     top10PortfoliosCache = portfolios.slice(0, 4);
     return portfolios;
-  }, [hideCombined, globalPortfoliosMap, top10Addresses]);
+  }, [hideCombined, globalPortfoliosMap, myTop10Addresses]);
 
   return {
     portfolios: memoPortfolios,
@@ -433,16 +433,16 @@ export function useAssetsNFTs({
 }) {
   const globalNftsMap = assetsMapStore(s => s.nftsMap);
 
-  const { top10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
 
   const memoNfts = useMemo(() => {
     if (hideCombined) {
       return top10NftsCache;
     }
-    const nfts = combinedNfts(globalNftsMap, top10Addresses);
+    const nfts = combinedNfts(globalNftsMap, myTop10Addresses);
     top10NftsCache = nfts?.filter(item => !item._isFold).slice(0, 20) || [];
     return nfts;
-  }, [hideCombined, globalNftsMap, top10Addresses]);
+  }, [hideCombined, globalNftsMap, myTop10Addresses]);
 
   return {
     nfts: memoNfts,

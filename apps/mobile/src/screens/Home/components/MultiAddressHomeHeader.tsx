@@ -31,8 +31,8 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { IS_IOS } from '@/core/native/utils';
 import {
-  useFoldMultiChartStore,
   MultiChart,
+  setIsFoldMultiChart,
 } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
 import {
   createGlobalBottomSheetModal2024,
@@ -61,11 +61,10 @@ function MultiPinnedAddressList({
   const addressListData = useMemo(() => {
     return sortBy(
       pinnedAccountList.map(item => {
+        const lcAddr = item.address.toLowerCase();
         const address24hBalanceData =
-          multi24hBalance[item.address.toLowerCase()];
-        const balanceAccount = balanceAccounts?.find(acc =>
-          isSameAddress(acc.address, item.address),
-        );
+          multi24hBalance[lcAddr];
+        const balanceAccount = balanceAccounts?.[lcAddr];
         const total_usd_value = address24hBalanceData?.total_usd_value || 0;
         const assetsChange =
           (balanceAccount?.evmBalance || 0) - total_usd_value;
@@ -136,9 +135,6 @@ export function MultiAddressHomeHeader(
 
   const pinnedAccountList = usePinnedAccountList();
   const [hideType] = useHideBalance();
-  const setIsFoldMultiChart = useFoldMultiChartStore(
-    s => s.setIsFoldMultiChart,
-  );
 
   const [couldRenderLocalWebView, setCouldRenderLocalWebView] = useState(false);
 
@@ -210,7 +206,7 @@ export function MultiAddressHomeHeader(
         modalRef.current = undefined;
       },
     });
-  }, [colors2024, isLight, setIsFoldMultiChart]);
+  }, [colors2024, isLight]);
 
   return (
     <View style={style}>

@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
-import { getSortedAddressList, sortAccountList } from '@/core/apis/account';
+import { getAccountList, sortAccountList } from '@/core/apis/account';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater } from '@/core/utils/store';
 import { useMemoizedFn } from 'ahooks';
@@ -181,7 +181,7 @@ export const useRisks = (options: {
   const fetchRisks = useCallback(async () => {
     if (!toAddress) return;
     const top10Addresses = (
-      await getSortedAddressList({ includeOthers: false })
+      await getAccountList({ filter: 'onlyMine' })
     ).sortedAccounts;
 
     if (!top10Addresses.length) return;

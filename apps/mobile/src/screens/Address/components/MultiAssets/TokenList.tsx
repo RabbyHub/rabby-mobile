@@ -66,7 +66,7 @@ type TokenListItem =
 export const TokenList = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { top10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = useMemo(() => {
     return selectedChainItem?.chain;
@@ -95,13 +95,13 @@ export const TokenList = () => {
   );
 
   const multiAssetsKey = useMemo(
-    () => getMultiAssetsCacheKey(top10Addresses, chain, isLpTokenEnabled),
-    [top10Addresses, chain, isLpTokenEnabled],
+    () => getMultiAssetsCacheKey(myTop10Addresses, chain, isLpTokenEnabled),
+    [myTop10Addresses, chain, isLpTokenEnabled],
   );
 
   useEffect(() => {
-    registerMultiAssets(top10Addresses, chain, isLpTokenEnabled);
-  }, [top10Addresses, chain, isLpTokenEnabled, registerMultiAssets]);
+    registerMultiAssets(myTop10Addresses, chain, isLpTokenEnabled);
+  }, [myTop10Addresses, chain, isLpTokenEnabled, registerMultiAssets]);
 
   const {
     unFoldTokens: tokens,
@@ -125,9 +125,9 @@ export const TokenList = () => {
   const { batchGetTokenList } = useTokenList();
 
   useEffect(() => {
-    batchGetTokenList(top10Addresses);
+    batchGetTokenList(myTop10Addresses);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10Addresses]);
+  }, [myTop10Addresses]);
 
   const hasNoAssets =
     tokens.length + foldTokens.length + scamTokens.length === 0 &&
@@ -163,11 +163,11 @@ export const TokenList = () => {
 
   const onRefresh = useCallback(async () => {
     try {
-      batchGetTokenList(top10Addresses, true);
+      batchGetTokenList(myTop10Addresses, true);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [batchGetTokenList, top10Addresses]);
+  }, [batchGetTokenList, myTop10Addresses]);
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];

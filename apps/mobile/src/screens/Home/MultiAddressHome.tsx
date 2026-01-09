@@ -104,7 +104,7 @@ import {
   TabsMultiAssets,
 } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { useFoldMultiChartStore } from '../Address/components/MultiAssets/RenderRow/CurveChart';
+import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import {
@@ -150,7 +150,6 @@ const OverViewComponent = React.memo(
   ({}: React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
     const navigation = useRabbyAppNavigation();
     const { t } = useTranslation();
-    const tokenListStore = useTokenList();
     const { styles, colors2024 } = useTheme2024({
       getStyle,
     });
@@ -300,7 +299,7 @@ const OverViewComponent = React.memo(
       }, []),
     );
 
-    const { top10Addresses } = useAccountInfo();
+    const { myTop10Addresses } = useAccountInfo();
     console.log('[MultiAddressHome] refresh MultiAddressHome exec');
     useFocusEffect(
       useCallback(() => {
@@ -312,15 +311,10 @@ const OverViewComponent = React.memo(
           triggerUpdateAlert();
           // // leave here to measure perf impact
           // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
-          syncTop10History(top10Addresses, false);
+          syncTop10History(myTop10Addresses, false);
         });
-      }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
+      }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
     );
-
-    useEffect(() => {
-      tokenListStore.initStore();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const onRefresh = useCallback(() => {
       if (!couldDoRefresh()) return;
@@ -334,10 +328,10 @@ const OverViewComponent = React.memo(
         // update at background
         forceUpdate();
         apisLending.fetchLendingData();
-        syncTop10History(top10Addresses, true);
+        syncTop10History(myTop10Addresses, true);
         currencyService.syncCurrencyList(true);
       });
-    }, [triggerUpdate, checkAddressesEligibility, forceUpdate, top10Addresses]);
+    }, [triggerUpdate, checkAddressesEligibility, forceUpdate, myTop10Addresses]);
 
     // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
     const handlePressWatchlist = useCallback(() => {
@@ -654,10 +648,6 @@ function MultiAddressHome(): JSX.Element {
       });
     }
   }, []);
-
-  const setIsFoldMultiChart = useFoldMultiChartStore(
-    s => s.setIsFoldMultiChart,
-  );
 
   useEffect(() => {
     apisHomeTabIndex.setTabIndex(0);

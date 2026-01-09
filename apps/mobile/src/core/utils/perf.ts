@@ -1,11 +1,12 @@
 import { makeJsEEClass } from '@/core/services/_utils';
-import { BalanceAccountType } from '@/hooks/useAccountsBalance';
+import { AccountsBalanceState, BalanceAccountType } from '@/hooks/useAccountsBalance';
 import {
   AddressBalanceUpdaterSource,
   BalanceState,
 } from '@/hooks/useCurrentBalance';
 import { Multi24hBalanceState } from '@/hooks/useScene24hBalance';
 import { ContactBookStore } from '@rabby-wallet/service-address';
+import { Account } from '../services/preference';
 
 export type PerfEventBusListeners = {
   EVENT_ROUTE_CHANGE: (ctx: {
@@ -15,11 +16,11 @@ export type PerfEventBusListeners = {
 
   APP_NAVIGATION_READY: (ctx: { readyRootName: string }) => void;
 
-  ACCOUNTS_MAYBE_CHANGED: (ctx: { confirmed?: boolean }) => void;
+  ACCOUNTS_MAYBE_CHANGED: (ctx: { accounts: Account[]; confirmed?: boolean }) => void;
 
   ACCOUNTS_BALANCE_UPDATE: (ctx: {
-    prevState: BalanceAccountType[];
-    nextState: BalanceAccountType[];
+    prevState: AccountsBalanceState['balance'];
+    nextState: AccountsBalanceState['balance'];
   }) => void;
 
   CONTACTS_ALIASES_UPDATE: (ctx: {
