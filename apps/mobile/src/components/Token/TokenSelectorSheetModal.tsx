@@ -394,6 +394,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           _onLpTokenChange?.(false);
         }
         _onFavoriteFilterChange?.(value);
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
       },
       [_onFavoriteFilterChange, _onLpTokenChange],
     );
@@ -1351,8 +1352,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     }}
                     text={
                       isLpTokenEnabled
-                        ? 'No Liquidity Provider (LP) Token'
-                        : 'No tokens'
+                        ? t('component.TokenSelector.placeholders.noLpTokens')
+                        : t('component.TokenSelector.placeholders.noTokens')
                     }
                   />
                 )
