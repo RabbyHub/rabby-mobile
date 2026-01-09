@@ -134,8 +134,21 @@ const BridgeToTokenSelect = ({
       item => {
         return `${item.chain}-${item.id}`;
       },
-    ).filter(e => !excludeTokens.includes(e.id));
-  }, [favoriteFilterValue, favoriteTokens, tokenList, excludeTokens]);
+    )
+      .map(e => ({
+        ...e,
+        isPin: pinedQueue?.some(
+          x => x.chainId === e.chain && x.tokenId === e.id,
+        ),
+      }))
+      .filter(e => !excludeTokens.includes(e.id));
+  }, [
+    favoriteFilterValue,
+    favoriteTokens,
+    tokenList,
+    pinedQueue,
+    excludeTokens,
+  ]);
 
   const isListLoading = useMemo(() => {
     return favoriteFilterValue === 'favorite'

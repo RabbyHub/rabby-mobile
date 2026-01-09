@@ -3159,8 +3159,7 @@
       "usdValue": "USD Value"
     },
     "portfolios": {
-      "manage": "Manage",
-      "noPrice": "No price"
+      "manage": "Manage"
     },
     "multiAddressModal": {
       "title": "Wallets"

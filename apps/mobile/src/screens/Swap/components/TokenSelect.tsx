@@ -281,7 +281,10 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
 
     const unFoldTokenList = useMemo(() => {
       if (favoriteFilterValue === 'favorite') {
-        return favoriteTokens;
+        return favoriteTokens.map(e => ({
+          ...e,
+          isPin: true,
+        }));
       }
       const tokensWithPinStatus = tokens?.map(e => ({
         ...e,

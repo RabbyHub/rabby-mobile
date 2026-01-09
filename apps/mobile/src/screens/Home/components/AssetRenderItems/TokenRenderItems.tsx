@@ -689,28 +689,20 @@ export const ExternalTokenRow = memo(
                   {formatNetworth(data.usd_value || 0)}
                 </Text>
                 <View style={styles.priceInfo}>
-                  {!data.amount && !data.price ? (
-                    <Text style={styles.noPriceText}>
-                      {t('component.portfolios.noPrice')}
+                  <Text style={styles.usdValue}>
+                    @{decimalPrecision ? '$' : ''}
+                    {(decimalPrecision ? formatPrice : formatUsdValue)(
+                      data.price || 0,
+                    )}
+                  </Text>
+                  {typeof data.price_24h_change === 'number' && (
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.changeText,
+                        !isPositive && styles.changeTextPositive,
+                      ])}>
+                      {formatPercentage(Number(data.price_24h_change) || 0)}
                     </Text>
-                  ) : (
-                    <>
-                      <Text style={styles.usdValue}>
-                        @{decimalPrecision ? '$' : ''}
-                        {(decimalPrecision ? formatPrice : formatUsdValue)(
-                          data.price || 0,
-                        )}
-                      </Text>
-                      {typeof data.price_24h_change === 'number' && (
-                        <Text
-                          style={StyleSheet.flatten([
-                            styles.changeText,
-                            !isPositive && styles.changeTextPositive,
-                          ])}>
-                          {formatPercentage(Number(data.price_24h_change) || 0)}
-                        </Text>
-                      )}
-                    </>
                   )}
                 </View>
               </View>
@@ -916,13 +908,6 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-  },
-  noPriceText: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
   },
   usdValue: {
     color: ctx.colors2024['neutral-secondary'],
