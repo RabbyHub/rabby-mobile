@@ -181,11 +181,14 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       if (isSearching) {
         return true;
       }
+      if (isLpTokenEnabled) {
+        return isLoadingAllTokens;
+      }
       if (hasHandledTokenSelectorVisibleRef.current) {
         return false;
       }
       return isLoadingAllTokens;
-    }, [isLoadingAllTokens, isSearching]);
+    }, [isLoadingAllTokens, isLpTokenEnabled, isSearching]);
 
     const handleSearchTokens = useCallback<
       React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']

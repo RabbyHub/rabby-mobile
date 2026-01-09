@@ -140,7 +140,7 @@ export const TokenList = ({
 
   const isLoading = useTokenList(state => {
     if (!lowerAddress) return false;
-    return !!state.isLoadingByAddress[lowerAddress];
+    return !!state.isLoadingByAddress[lowerAddress]?.loading;
   });
   const { getTokenList } = useTokenList();
 
