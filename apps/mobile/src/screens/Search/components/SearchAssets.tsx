@@ -40,6 +40,7 @@ import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { tokenItemToITokenItem } from '@/utils/token';
 import { ITokenItem } from '@/store/tokens';
+import { FavoriteTag } from '@/components2024/Favorite';
 
 interface Props {
   resultTokens: ITokenItem[];
@@ -116,46 +117,29 @@ export const SearchAssets: React.FC<Props> = ({
 
   const renderItem = useCallback(
     ({ item }: { item: ITokenItem }) => {
+      const isPined = watchlistTokenList.some(
+        t => t.chainId === item.chain && t.tokenId === item.id,
+      );
       return (
         item && (
-          <ExternalTokenRow
-            data={item}
-            style={styles.renderItemWrapper}
-            onTokenPress={handleOpenTokenDetail}
-            logoSize={40}
-            decimalPrecision
-            rightSlot={
-              <Pressable
-                style={styles.rightSlot}
-                onPress={e => {
-                  e.stopPropagation();
-                  handlePressFavorite(item.id, item.chain);
-                }}
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-                <RcIconFavorite
-                  width={22}
-                  height={21}
-                  color={
-                    watchlistTokenList.some(
-                      t => t.chainId === item.chain && t.tokenId === item.id,
-                    )
-                      ? colors2024['orange-default']
-                      : colors2024['neutral-line']
-                  }
-                />
-              </Pressable>
-            }
-          />
+          <View>
+            <ExternalTokenRow
+              data={item}
+              style={styles.renderItemWrapper}
+              onTokenPress={handleOpenTokenDetail}
+              logoSize={40}
+              decimalPrecision
+            />
+            {isPined ? <FavoriteTag style={styles.favoriteTag} /> : null}
+          </View>
         )
       );
     },
     [
-      colors2024,
-      handleOpenTokenDetail,
-      handlePressFavorite,
-      styles.rightSlot,
-      styles.renderItemWrapper,
       watchlistTokenList,
+      styles.renderItemWrapper,
+      styles.favoriteTag,
+      handleOpenTokenDetail,
     ],
   );
 
@@ -427,5 +411,10 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   rightSlot: {
     marginLeft: 8,
+  },
+  favoriteTag: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
 }));

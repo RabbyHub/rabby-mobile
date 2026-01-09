@@ -42,6 +42,7 @@ import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { tagTokenItemFavorite } from '@/screens/Home/utils/token';
 import { ITokenItem } from '@/store/tokens';
+import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -108,7 +109,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
     const currentAccount = queryConds.account;
 
     const favoriteFilterValue = useMemo(() => {
-      if (!!queryConds.keyword) {
+      if (queryConds.keyword?.trim().length > 0) {
         return 'all';
       }
       return _favoriteFilterValue;
@@ -177,6 +178,13 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       [userTokenSettings.pinedQueue],
     );
 
+    const { data: favoriteTokens, loading: favoriteTokensLoading } =
+      useFavoriteTokens({
+        focus: favoriteFilterValue === 'favorite',
+        address: currentAccount?.address,
+        chainId: queryConds.chainServerId,
+      });
+
     const isListLoading = useMemo(() => {
       if (isSearching) {
         return true;
@@ -184,11 +192,20 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       if (isLpTokenEnabled) {
         return isLoadingAllTokens;
       }
+      if (favoriteFilterValue === 'favorite') {
+        return favoriteTokensLoading;
+      }
       if (hasHandledTokenSelectorVisibleRef.current) {
         return false;
       }
       return isLoadingAllTokens;
-    }, [isLoadingAllTokens, isLpTokenEnabled, isSearching]);
+    }, [
+      favoriteFilterValue,
+      favoriteTokensLoading,
+      isLoadingAllTokens,
+      isLpTokenEnabled,
+      isSearching,
+    ]);
 
     const handleSearchTokens = useCallback<
       React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']
@@ -263,46 +280,20 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
     );
 
     const unFoldTokenList = useMemo(() => {
-      let filteredTokens = tokens.unFoldTokens;
-
       if (favoriteFilterValue === 'favorite') {
-        filteredTokens = filteredTokens.filter(token =>
-          pinedQueue?.some(
-            x => x.chainId === token.chain && x.tokenId === token.id,
-          ),
-        );
+        return favoriteTokens.map(e => ({
+          ...e,
+          isPin: true,
+        }));
       }
-
-      return filteredTokens;
-    }, [tokens, pinedQueue, favoriteFilterValue]);
-
-    const foldTokenList = useMemo(() => {
-      let filteredTokens = tokens.foldTokens;
-
-      if (favoriteFilterValue === 'favorite') {
-        filteredTokens = filteredTokens.filter(token =>
-          pinedQueue?.some(
-            x => x.chainId === token.chain && x.tokenId === token.id,
-          ),
-        );
-      }
-
-      return filteredTokens;
-    }, [tokens, pinedQueue, favoriteFilterValue]);
-
-    const scamTokenList = useMemo(() => {
-      let filteredTokens = tokens.scamTokens;
-
-      if (favoriteFilterValue === 'favorite') {
-        filteredTokens = filteredTokens.filter(token =>
-          pinedQueue?.some(
-            x => x.chainId === token.chain && x.tokenId === token.id,
-          ),
-        );
-      }
-
-      return filteredTokens;
-    }, [tokens, pinedQueue, favoriteFilterValue]);
+      const tokensWithPinStatus = tokens?.map(e => ({
+        ...e,
+        isPin: pinedQueue?.some(
+          x => x.chainId === e.chain && x.tokenId === e.id,
+        ),
+      })) as ITokenItem[];
+      return tokensWithPinStatus;
+    }, [favoriteFilterValue, tokens, favoriteTokens, pinedQueue]);
 
     const { forScene, ofScreen } = useScreenSceneAccountContext();
     const allowClearAccountFilter = useMemo(() => {
@@ -446,8 +437,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
           visible={tokenSelectorVisible}
           unshiftList={[]}
           list={selectedTab === 'testnet' ? testnetTokenList : unFoldTokenList}
-          foldTokensList={selectedTab === 'testnet' ? [] : foldTokenList}
-          scamTokensList={selectedTab === 'testnet' ? [] : scamTokenList}
           onConfirm={handleCurrentTokenChange}
           onCancel={handleTokenSelectorClose}
           onSearch={handleSearchTokens}

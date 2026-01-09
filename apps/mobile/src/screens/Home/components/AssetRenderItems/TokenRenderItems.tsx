@@ -32,11 +32,10 @@ import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { getTokenSymbol } from '@/utils/token';
 import {
-  TokenEntityDetail,
   TokenItem,
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { formatPrice, formatUsdValue } from '@/utils/number';
+import { formatPrice, formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { formatUsdValueKMB } from '../../utils/price';
 import { ellipsisAddress } from '@/utils/address';
 import { ExchangeLogos } from './ExchangeLogos';
@@ -53,7 +52,7 @@ import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '../LpTokenIcon';
 import LpTokenSwitch from '../LpTokenSwitch';
 
-const formatPercentage = (x: number) => {
+export const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
     return '0%';
   }
@@ -425,25 +424,31 @@ export const TokenRowV2 = memo(
             )}
           </Text>
           {showAccount ? (
-            <Text
-              style={StyleSheet.compose(styles.percent, {
-                ...(!data.is_core && (data.usd_value || 0) > 0
-                  ? styles.exclude
-                  : {}),
-                color: percentColor,
-              })}>
-              {formatPercentage(Number(data.price_24h_change) || 0)}
-            </Text>
+            <View style={styles.priceInfo}>
+              <Text style={styles.price}>{`@$${formatPrice(data.price)}`}</Text>
+              <Text
+                style={StyleSheet.compose(styles.percent, {
+                  ...(!data.is_core && (data.usd_value || 0) > 0
+                    ? styles.exclude
+                    : {}),
+                  color: percentColor,
+                })}>
+                {formatPercentage(Number(data.price_24h_change) || 0)}
+              </Text>
+            </View>
           ) : scene === 'portfolio' ? (
-            <Text
-              style={StyleSheet.compose(styles.percent, {
-                ...(!data.is_core && (data.usd_value || 0) > 0
-                  ? styles.exclude
-                  : {}),
-                color: percentColor,
-              })}>
-              {formatPercentage(Number(data.price_24h_change) || 0)}
-            </Text>
+            <View style={styles.priceInfo}>
+              <Text style={styles.price}>{`@$${formatPrice(data.price)}`}</Text>
+              <Text
+                style={StyleSheet.compose(styles.percent, {
+                  ...(!data.is_core && (data.usd_value || 0) > 0
+                    ? styles.exclude
+                    : {}),
+                  color: percentColor,
+                })}>
+                {formatPercentage(Number(data.price_24h_change) || 0)}
+              </Text>
+            </View>
           ) : null}
         </View>
       </TouchableOpacity>
@@ -478,7 +483,6 @@ export const ExternalTokenRow = memo(
     onTokenPress,
     touchable = true,
     decimalPrecision = false,
-    isPined = false,
     rightSlot,
     onPressRightIcon,
     afterNode,
@@ -489,7 +493,6 @@ export const ExternalTokenRow = memo(
     fold?: boolean;
     logoSize?: number;
     chainLogoSize?: number;
-    isPined?: boolean;
     onTokenPress?(token: ITokenItem | TokenItem | TokenItemWithEntity): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
@@ -497,6 +500,7 @@ export const ExternalTokenRow = memo(
     onPressRightIcon?(): void;
     afterNode?: ReactNode;
   }) => {
+    const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
     const mediaStyle = useMemo(
@@ -552,11 +556,13 @@ export const ExternalTokenRow = memo(
               </Text>
             )}
             {!isGasToken &&
-              ((data as TokenItemWithEntity)?.identity?.token_id ||
-                data.id) && <View style={styles.verticalLine} />}
+              Boolean(
+                (data as TokenItemWithEntity)?.identity?.token_id || data.id,
+              ) && <View style={styles.verticalLine} />}
             {!isGasToken &&
-              ((data as TokenItemWithEntity)?.identity?.token_id ||
-                data.id) && (
+              Boolean(
+                (data as TokenItemWithEntity)?.identity?.token_id || data.id,
+              ) && (
                 <View style={styles.tokenRowContent}>
                   <Text style={styles.caValue}>
                     {'CA'}
@@ -572,7 +578,7 @@ export const ExternalTokenRow = memo(
               )}
           </View>
           <View style={styles.rightSection}>
-            {(notVerified || isSuspicious) && (
+            {!!(notVerified || isSuspicious) && (
               <View>
                 <RcTipCC
                   style={styles.tips}
@@ -659,7 +665,7 @@ export const ExternalTokenRow = memo(
                   )}
                   <ExchangeLogos
                     logos={
-                      data.cex_ids
+                      data.cex_ids?.length
                         ? data.cex_ids
                             .map(
                               id =>
@@ -673,26 +679,37 @@ export const ExternalTokenRow = memo(
                     }
                   />
                 </View>
-                <Text style={styles.usdValue}>
-                  {decimalPrecision ? '$' : ''}
-                  {(decimalPrecision ? formatPrice : formatUsdValue)(
-                    data.price || 0,
-                  )}
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[
+                    styles.tokenHeaderAmount,
+                    // isExcludeBalanceShowTips && styles.textSecondary,
+                  ]}>
+                  {formatTokenAmount(data.amount)} {data.symbol}
                 </Text>
               </View>
               <View style={styles.colContent}>
                 <Text style={styles.tokenRowAmount}>
-                  {formatNetworth(data.usd_value)}
+                  {formatNetworth(data.usd_value || 0)}
                 </Text>
-                {typeof data.price_24h_change === 'number' && (
-                  <Text
-                    style={StyleSheet.flatten([
-                      styles.changeText,
-                      !isPositive && styles.changeTextPositive,
-                    ])}>
-                    {formatPercentage(Number(data.price_24h_change) || 0)}
+                <View style={styles.priceInfo}>
+                  <Text style={styles.usdValue}>
+                    @{decimalPrecision ? '$' : ''}
+                    {(decimalPrecision ? formatPrice : formatUsdValue)(
+                      data.price || 0,
+                    )}
                   </Text>
-                )}
+                  {typeof data.price_24h_change === 'number' && (
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.changeText,
+                        !isPositive && styles.changeTextPositive,
+                      ])}>
+                      {formatPercentage(Number(data.price_24h_change) || 0)}
+                    </Text>
+                  )}
+                </View>
               </View>
             </View>
             {rightSlot}
@@ -897,8 +914,12 @@ const getStyles = createGetStyles2024(ctx => ({
     flexShrink: 0,
     justifyContent: 'flex-start',
   },
+  priceInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
   usdValue: {
-    marginTop: 2,
     color: ctx.colors2024['neutral-secondary'],
     fontSize: 14,
     lineHeight: 18,
@@ -916,7 +937,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowTokenInner: {
     flexShrink: 1,
     justifyContent: 'center',
-    gap: 0,
+    gap: 2,
   },
   searchTokenExtraInfo: {
     flex: 1,
@@ -967,6 +988,15 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'flex-end',
     gap: 0,
     flex: 0,
+  },
+  tokenHeaderAmount: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+    width: '100%',
+    maxWidth: '100%',
+    fontFamily: 'SF Pro Rounded',
   },
   leftColContent: {
     maxWidth: '70%',
@@ -1146,6 +1176,13 @@ const getStyles = createGetStyles2024(ctx => ({
   tips: {
     width: 14,
     height: 14,
+  },
+  price: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
   },
   percent: {
     textAlign: 'right',
