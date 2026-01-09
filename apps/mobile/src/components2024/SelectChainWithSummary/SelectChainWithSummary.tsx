@@ -20,7 +20,7 @@ import { NetSwitchTabsKey } from '@/constant/netType';
 import {
   useLoadMatteredChainBalances,
   useMatteredChainBalancesAll,
-} from '@/hooks/account';
+} from '@/hooks/accountChainBalance';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
 import NetSwitchTabs, {
@@ -37,9 +37,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { NextSearchBar } from '../SearchBar';
 import { Account } from '@/core/services/preference';
-
-const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
-const RcIconSearch = makeThemeIconFromCC(RcNextSearchCC, 'neutral-secondary');
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
 
 const useChainSeletorList = ({
   supportChains,
@@ -62,6 +60,8 @@ const useChainSeletorList = ({
   } = useLoadMatteredChainBalances({
     account,
   });
+
+  useRendererDetect({ name: 'SelectChainWithSummary' });
 
   const { matteredChainBalancesAll } = useMatteredChainBalancesAll();
 

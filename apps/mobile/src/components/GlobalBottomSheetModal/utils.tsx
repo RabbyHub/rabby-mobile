@@ -8,7 +8,6 @@ import SimpleConfirmInner from '../CommonPopup/SimpleConfirm';
 import { ViewRawDetail } from '../Approval/components/TxComponents/ViewRawModal';
 import { SelectChain } from '../SelectChain';
 import { CancelTxPopup } from '../CancelTxPopup';
-import { SelectSortedChain } from '../SelectSortedChain';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import type { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { ConnectLedger } from '../ConnectLedger/ConnectLedger';
@@ -38,7 +37,6 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.CANCEL_APPROVAL]: [288],
   [MODAL_NAMES.SWITCH_ADDRESS]: ['45%'],
   [MODAL_NAMES.SWITCH_CHAIN]: ['45%'],
-  [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
   [MODAL_NAMES.CANCEL_CONNECT]: [244],
   [MODAL_NAMES.SELECT_CHAIN]: ['80%'],
   [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
@@ -73,7 +71,6 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.CANCEL_CONNECT]: CancelConnect,
   [MODAL_NAMES.SELECT_CHAIN]: SelectChain,
   [MODAL_NAMES.SIMPLE_CONFIRM]: SimpleConfirmInner,
-  [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
   [MODAL_NAMES.CONNECT_LEDGER]: ConnectLedger,

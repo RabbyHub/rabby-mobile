@@ -7,7 +7,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
 import { useLocalTokens } from '@/screens/Home/hooks/token';
-import { useChainBalances, useMatteredChainBalancesAll } from '@/hooks/account';
+import {
+  useChainBalances,
+  useMatteredChainBalancesAll,
+} from '@/hooks/accountChainBalance';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { useLoadAssets } from '@/screens/Search/useAssets';

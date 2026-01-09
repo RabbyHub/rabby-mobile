@@ -196,6 +196,7 @@ export const TokenMarketInfoScreen = () => {
         style={{ marginLeft: -3 }}
         key={finalAccount?.address}
         token={token}
+        showCopyIcon
       />
     );
   }, [finalAccount?.address, token]);

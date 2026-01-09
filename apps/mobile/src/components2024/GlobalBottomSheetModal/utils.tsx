@@ -8,7 +8,6 @@ import SimpleConfirmInner from '@/components/CommonPopup/SimpleConfirm';
 import { ViewRawDetail } from '@/components/Approval/components/TxComponents/ViewRawModal';
 import { SelectChain } from '@/components/SelectChain';
 import { CancelTxPopup } from '@/components/CancelTxPopup';
-import { SelectSortedChain } from '@/components2024/SelectSortedChain';
 import { SelectChainWithSummary } from '@/components2024/SelectChainWithSummary';
 import SelectChainWithDistribute from '@/components2024/SelectChainWithDistribute';
 import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
@@ -108,10 +107,6 @@ export const MODAL_CONFIGS = {
     Component: SwitchAddress,
   },
   [MODAL_NAMES.SWITCH_CHAIN]: { snapPoints: ['45%'], Component: SwitchChain },
-  [MODAL_NAMES.SELECT_SORTED_CHAIN]: {
-    snapPoints: ['80%'],
-    Component: SelectSortedChain,
-  },
   [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: {
     snapPoints: ['80%'],
     Component: SelectChainWithSummary,

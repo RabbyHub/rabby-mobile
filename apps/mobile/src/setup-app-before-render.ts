@@ -4,6 +4,9 @@ import {
 } from './hooks/useBootstrap';
 
 import { runIIFEFunc } from './core/utils/store';
+import { startSubscribeLangChange } from './hooks/lang';
+import { startManageAccountStoreLifecycle } from './hooks/account';
+
 import {
   loadLockInfoOnBootstrap,
   startSubscribeAppStateChange,
@@ -30,7 +33,9 @@ import {
 } from './hooks/navigation';
 import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
-import { startManageAccountStoreLifecycle } from './hooks/account';
+import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
+
+startSubscribeLangChange();
 
 startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();
@@ -64,3 +69,5 @@ rateModalStartSyncNetworth();
 screenshotModalStartSyncNetworth();
 
 startComputationThread();
+
+trimNoLongerSupportsOnUnlock();

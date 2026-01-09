@@ -9,11 +9,10 @@ import { useLoadLockInfo, usePasswordStatus } from '@/hooks/useLock';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import type { ValidationBehaviorProps } from '@/core/apis/lock';
 
-import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import {
   GlobalModalViewProps,
   MODAL_NAMES,
-} from '../GlobalBottomSheetModal/types';
+} from '@/components2024/GlobalBottomSheetModal/types';
 import { CheckItem } from './CheckItem';
 import { noop } from 'lodash';
 import { BiometricsIcon } from './BiometricsIcon';
