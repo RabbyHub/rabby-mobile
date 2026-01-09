@@ -54,7 +54,8 @@ build_adhoc() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
-  yarn;
+  [ -z "$CI" ] && yarn;
+  yarn check-nodeengines && yarn ../mobile-local-pages bundle:all && yarn link-assets && yarn buildworker:prod:ios;
   yarn syncrnversion;
   cd $project_dir/ios;
   bundle install && bundle exec pod install --repo-update;

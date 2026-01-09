@@ -37,7 +37,7 @@ rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 build_selfhost() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   [ -z "$CI" ] && yarn;
-  yarn check-nodeengines && yarn ../mobile-local-pages bundle:all &&yarn link-assets;
+  yarn check-nodeengines && yarn ../mobile-local-pages bundle:all && yarn link-assets && yarn buildworker:prod:android;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     if [ "$USE_RESIGN_APK" == "true" ]; then
       echo "[deploy-android] try to resign template.apk to get the new one."
@@ -64,7 +64,7 @@ build_selfhost() {
 
 build_appstore() {
   export RABBY_MOBILE_BUILD_ENV="production";
-  yarn && yarn check-nodeengines && yarn ../mobile-local-pages bundle:all &&yarn link-assets;
+  yarn && yarn check-nodeengines && yarn ../mobile-local-pages bundle:all && yarn link-assets && yarn buildworker:prod:android;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
     bundle exec fastlane android playstore

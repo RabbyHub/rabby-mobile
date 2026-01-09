@@ -6,7 +6,6 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
-
 import {
   useChainBalances,
   useMatteredChainBalancesAll,

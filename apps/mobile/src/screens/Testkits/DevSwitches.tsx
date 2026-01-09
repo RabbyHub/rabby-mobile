@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Alert,
   Dimensions,
@@ -31,8 +37,10 @@ import {
   RcScreenshot,
 } from '@/assets/icons/settings';
 import {
+  storeApiExpSettingData,
   useExpScreenCapture,
   useMockBatchRevoke,
+  useTimeTipAboutSeedPhraseAndPrivateKey,
   useToggleShowAutoLockCountdown,
 } from '@/hooks/appSettings';
 import { SwitchToggleType } from '@/components';
@@ -69,7 +77,6 @@ import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mo
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDappsViewConfig } from '../Dapps/hooks/useDappView';
 import { useResetSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { formatTimeReadable } from '@/utils/time';
 import { getScreenshotFeedbackExtra } from '@/components/Screenshot/utils';
 import AnimateableText from 'react-native-animateable-text';
 
@@ -149,6 +156,78 @@ function DevSwitchAboutScreenProtection() {
             </View>
           </View>
         </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function DevSwitchAboutExpData() {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+
+  const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
+
+  const { timeTipAboutSeedPhraseAndPrivateKey } =
+    useTimeTipAboutSeedPhraseAndPrivateKey();
+  const btnGroupStates = useMemo(() => {
+    const buttons = [
+      'copy',
+      'pasted',
+      'none',
+    ] as (typeof timeTipAboutSeedPhraseAndPrivateKey)[];
+    return {
+      selectedIndex: buttons.indexOf(timeTipAboutSeedPhraseAndPrivateKey),
+      buttons,
+    };
+  }, [timeTipAboutSeedPhraseAndPrivateKey]);
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Tip on Copy/Paste Seed Phrase and Private Key
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <View style={[styles.rowWrapper, { marginTop: 0 }]}>
+          <View style={[styles.buttonGroup]}>
+            {btnGroupStates.buttons.map(btn => {
+              const key = btn;
+              const isSelected = btn === timeTipAboutSeedPhraseAndPrivateKey;
+              return (
+                <Button
+                  key={key}
+                  height={48}
+                  titleStyle={[
+                    {
+                      color: isSelected
+                        ? colors2024['neutral-title-2']
+                        : colors2024['blue-default'],
+                    },
+                  ]}
+                  type={isSelected ? 'primary' : 'ghost'}
+                  title={ctx => {
+                    return (
+                      <Text style={[styles.label, ctx.titleStyle]}>{btn}</Text>
+                    );
+                  }}
+                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                  onPress={() => {
+                    storeApiExpSettingData.set(prev => ({
+                      ...prev,
+                      timeTipAboutSeedPhraseAndPrivateKey: btn,
+                    }));
+                  }}
+                />
+              );
+            })}
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -513,8 +592,6 @@ function DevSwitchBatchRevoke() {
   );
 }
 
-function DevResetPerpsStore() {}
-
 async function importWalletConnectAddress({
   address,
   brandName,
@@ -680,6 +757,7 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Security</Text>
         <DevSwitchAboutScreenProtection />
+        <DevSwitchAboutExpData />
         <DevSwitchAboutAutoLock />
 
         <Text style={styles.areaTitle}>Cloud Drive</Text>
@@ -780,6 +858,17 @@ const getStyles = createGetStyles2024(ctx =>
     propertyType: {
       color: ctx.colors2024['blue-default'],
       fontSize: 16,
+    },
+
+    buttonGroup: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 8,
+    },
+    btnOnGroup: {
+      flexShrink: 1,
+      width: '100%',
     },
   }),
 );
