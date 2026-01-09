@@ -281,10 +281,19 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
 
     const unFoldTokenList = useMemo(() => {
       if (favoriteFilterValue === 'favorite') {
-        return favoriteTokens;
+        return favoriteTokens.map(e => ({
+          ...e,
+          isPin: true,
+        }));
       }
-      return tokens;
-    }, [tokens, favoriteFilterValue, favoriteTokens]);
+      const tokensWithPinStatus = tokens?.map(e => ({
+        ...e,
+        isPin: pinedQueue?.some(
+          x => x.chainId === e.chain && x.tokenId === e.id,
+        ),
+      })) as ITokenItem[];
+      return tokensWithPinStatus;
+    }, [favoriteFilterValue, tokens, favoriteTokens, pinedQueue]);
 
     const { forScene, ofScreen } = useScreenSceneAccountContext();
     const allowClearAccountFilter = useMemo(() => {

@@ -287,7 +287,10 @@ const SwapToTokenSelect = forwardRef<
       let filteredTokens = availableToken || [];
 
       if (favoriteFilterValue === 'favorite') {
-        return favoriteTokens;
+        return favoriteTokens.map(e => ({
+          ...e,
+          isPin: true,
+        }));
       }
 
       const tokensWithPinStatus = filteredTokens?.map(e => ({
