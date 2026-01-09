@@ -52,11 +52,11 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   @Column('text', { default: '' })
   id: TokenItem['id'] = '';
   // is_core
-  @Column('boolean')
-  is_core: TokenItem['is_core'] = false;
+  @Column('boolean', { nullable: true })
+  is_core: TokenItem['is_core'] | null = null;
   // is_verified
-  @Column('boolean')
-  is_verified: TokenItem['is_verified'] = false;
+  @Column('boolean', { nullable: true })
+  is_verified: TokenItem['is_verified'] | null = null;
   // is_wallet
   @Column('boolean')
   is_wallet: TokenItem['is_wallet'] = false;
@@ -161,8 +161,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.credit_score = input.credit_score ?? 0;
     e.display_symbol = input.display_symbol ?? '';
     e.id = input.id ?? '';
-    e.is_core = input.is_core ?? false;
-    e.is_verified = input.is_verified ?? false;
+    e.is_core = input.is_core ?? null;
+    e.is_verified = input.is_verified ?? null;
     e.is_wallet = input.is_wallet ?? false;
     e.is_scam = input.is_scam ?? false;
     e.is_infinity = input.is_infinity ?? false;
