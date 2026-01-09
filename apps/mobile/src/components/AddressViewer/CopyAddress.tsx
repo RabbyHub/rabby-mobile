@@ -25,7 +25,7 @@ type Props = {
   address?: string | null;
   style?: SvgProps['style'];
   color?: string;
-  onToastSucess?: (ctx: { address: string }) => void;
+  onToastSuccess?: (ctx: { address: string }) => void;
   title?: string;
   titleStyle?: StyleProp<TextStyle>;
   icon?:
@@ -42,7 +42,7 @@ export type CopyAddressIconType = {
 export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
   function (
     {
-      onToastSucess: propOnToastSucess,
+      onToastSuccess: propOnToastSucess,
       style,
       // containerStyle,
       address,
@@ -55,7 +55,7 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
   ) {
     const { colors } = useThemeStyles(getStyles);
 
-    const onToastSucess = useCallback<Props['onToastSucess'] & object>(
+    const onToastSuccess = useCallback<Props['onToastSuccess'] & object>(
       ({ address }) => {
         if (propOnToastSucess) propOnToastSucess({ address });
         else {
@@ -71,9 +71,9 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
 
         evt?.stopPropagation();
         Clipboard.setString(address);
-        onToastSucess({ address });
+        onToastSuccess({ address });
       },
-      [address, onToastSucess],
+      [address, onToastSuccess],
     );
 
     useImperativeHandle(ref, () => ({
