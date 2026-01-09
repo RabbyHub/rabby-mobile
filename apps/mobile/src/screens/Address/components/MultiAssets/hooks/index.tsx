@@ -11,7 +11,10 @@ import {
   useAccounts,
   useMyAccounts,
 } from '@/hooks/account';
-import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
+import {
+  useCreationWithDeepCompare,
+  useCreationWithShallowCompare,
+} from '@/hooks/common/useMemozied';
 import { apisAccountsBalance } from '@/hooks/useAccountsBalance';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
@@ -50,6 +53,10 @@ export function useAccountInfo() {
         notTop10Accounts,
       };
     }, [sortedList]);
+  const stableTop10Addresses = useCreationWithDeepCompare(
+    () => top10Addresses,
+    [top10Addresses],
+  );
 
   const { hasWatchAddress, hasSafeAddress, gnosisAccounts, watchAccounts } =
     useCreationWithShallowCompare(() => {
@@ -79,7 +86,7 @@ export function useAccountInfo() {
 
   return {
     top10Accounts,
-    top10Addresses,
+    top10Addresses: stableTop10Addresses,
     top10Records,
     notMatterAccounts,
     gnosisAccounts,

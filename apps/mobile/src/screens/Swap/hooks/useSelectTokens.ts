@@ -148,10 +148,6 @@ export const useSelectTokens = ({
     return state.tokenSelectCache[tokenSelectKey] || EMPTY_TOKEN_LIST;
   });
 
-  useEffect(() => {
-    console.log('tokens', tokens);
-  }, [tokens]);
-
   const mergedTokens = useMemo(() => {
     if (!keyword || !searchTokenResult?.length) {
       return tokens;
