@@ -5,7 +5,7 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { waitQueueFinished } from '@/hooks/useMultiCurve';
 import { queryTokensCache } from '@/screens/Home/utils/token';
-import { lpTokenFilter } from '@/utils/lpToken';
+import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import {
   tokenItemEntityToTokenItem,
@@ -400,7 +400,7 @@ const computeTokenSelect = (
     const unFoldTokens: ITokenItem[] = [];
     const foldTokens: ITokenItem[] = [];
     const scamTokens: ITokenItem[] = [];
-    tokens.forEach(token => {
+    tokens.filter(defaultTokenFilter).forEach(token => {
       const usdValue = token.usd_value || 0;
       const isScam =
         !!token.is_suspicious || (!token.is_core && usdValue === 0);
