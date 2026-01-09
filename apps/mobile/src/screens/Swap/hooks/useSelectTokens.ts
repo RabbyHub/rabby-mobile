@@ -180,7 +180,7 @@ export const useSelectTokens = ({
     ) {
       return false;
     }
-    return tokens.length < 10;
+    return tokens.length === 0;
   }, [
     currentAddress,
     isLpTokenEnabled,

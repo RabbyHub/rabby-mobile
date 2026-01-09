@@ -403,7 +403,6 @@ const computeTokenSelect = (
     sortedUnfoldTokens = searchAndSortTokens(tokens);
   } else if (isLpTokenEnabled) {
     sortedUnfoldTokens = filterAndSortTokens(tokens);
-    console.log('CUSTOM_LOGGER:=>: ', sortedUnfoldTokens);
   } else {
     sortedUnfoldTokens = sortByUsdValueDesc(tokens.filter(defaultTokenFilter));
   }
