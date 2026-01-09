@@ -46,6 +46,7 @@ import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import IconCloseCC from '@/assets2024/icons/common/close-cc.svg';
 import { useCurrentRouteName } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
+import { useCollateralWaring } from '../hooks/useCollateralWaring';
 
 export const toggleCollateralModalAtom = atom(false);
 export const currentToggleReserveAtom = atom<DisplayPoolReserveInfo | null>(
@@ -77,7 +78,7 @@ function ToggleCollateralContent({}: {}) {
   const { pools } = usePoolDataProviderContract();
   const [currentToggleReserve] = useAtom(currentToggleReserveAtom);
 
-  const { userReserves } = useLendingRemoteData();
+  const { userReserves, reserves } = useLendingRemoteData();
   const { wrapperPoolReserve, iUserSummary: userSummary } = useLendingSummary();
   const { selectedMarketData, chainInfo } = useSelectedMarket();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -135,6 +136,28 @@ function ToggleCollateralContent({}: {}) {
     );
   }, [currentToggleReserve?.underlyingAsset]);
 
+  const poolReserve = useMemo(() => {
+    return reserves?.reservesData?.find(item =>
+      isSameAddress(
+        item.underlyingAsset,
+        isNativeToken
+          ? wrapperPoolReserve?.underlyingAsset || ''
+          : currentToggleReserve?.underlyingAsset || '',
+      ),
+    );
+  }, [
+    currentToggleReserve?.underlyingAsset,
+    isNativeToken,
+    reserves?.reservesData,
+    wrapperPoolReserve?.underlyingAsset,
+  ]);
+
+  const { isError, errorMessage } = useCollateralWaring({
+    afterHF,
+    userReserve: currentToggleReserve,
+    poolReserve,
+  });
+
   const buildTx = useCallback(async () => {
     if (
       !currentToggleReserve ||
@@ -142,6 +165,7 @@ function ToggleCollateralContent({}: {}) {
       !pools ||
       !chainInfo ||
       isRiskToLiquidation ||
+      isError ||
       !isShowToggleCollateralModal
     ) {
       setTxs([]);
@@ -177,7 +201,7 @@ function ToggleCollateralContent({}: {}) {
       });
       setTxs(formatTxs as unknown as Tx[]);
     } catch (error) {
-      toast.error('There was some error');
+      console.error('There was some error', error);
     }
   }, [
     chainInfo,
@@ -185,6 +209,7 @@ function ToggleCollateralContent({}: {}) {
     currentToggleReserve,
     isNativeToken,
     isRiskToLiquidation,
+    isError,
     isShowToggleCollateralModal,
     pools,
     selectedMarketData?.chainId,
@@ -362,6 +387,7 @@ function ToggleCollateralContent({}: {}) {
       currentAccount &&
       canShowDirectSubmit &&
       !isRiskToLiquidation &&
+      !isError &&
       isShowToggleCollateralModal
     ) {
       prefetchMiniSigner({
@@ -373,9 +399,59 @@ function ToggleCollateralContent({}: {}) {
     canShowDirectSubmit,
     currentAccount,
     isRiskToLiquidation,
+    isError,
     isShowToggleCollateralModal,
     prefetchMiniSigner,
     txs,
+  ]);
+
+  const RiskContent = useMemo(() => {
+    if (isError) {
+      return <Text style={styles.riskToLiquidationText}>{errorMessage}</Text>;
+    }
+    if (isRiskToLiquidation) {
+      return (
+        <Text style={styles.riskToLiquidationText}>
+          {t('page.Lending.toggleCollateralModal.riskToLiquidationText')}
+        </Text>
+      );
+    }
+    if (showRisk) {
+      return (
+        <>
+          <View style={styles.warningContainer}>
+            <RcIconWarningCircleCC
+              width={15}
+              height={15}
+              color={colors2024['red-default']}
+            />
+            <Text style={styles.warningText}>
+              {t('page.Lending.risk.toggleCollateralWarning')}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.checkbox}
+            onPress={() => {
+              setIsChecked(prev => !prev);
+            }}>
+            <CheckBoxRect size={16} checked={isChecked} />
+            <Text style={styles.checkboxText}>
+              {t('page.Lending.risk.checkbox')}
+            </Text>
+          </TouchableOpacity>
+        </>
+      );
+    }
+    return null;
+  }, [
+    isError,
+    isRiskToLiquidation,
+    showRisk,
+    styles,
+    errorMessage,
+    t,
+    colors2024,
+    isChecked,
   ]);
 
   if (!isShowToggleCollateralModal) {
@@ -432,46 +508,21 @@ function ToggleCollateralContent({}: {}) {
                 userSummary={userSummary}
               />
             )}
-            {!!txs.length && canShowDirectSubmit && !isRiskToLiquidation && (
-              <View style={styles.gasPreContainer}>
-                <DirectSignGasInfo
-                  supportDirectSign={true}
-                  loading={isLoading}
-                  openShowMore={noop}
-                  chainServeId={chainInfo?.serverId || ''}
-                />
-              </View>
-            )}
+            {!!txs.length &&
+              canShowDirectSubmit &&
+              !isRiskToLiquidation &&
+              !isError && (
+                <View style={styles.gasPreContainer}>
+                  <DirectSignGasInfo
+                    supportDirectSign={true}
+                    loading={isLoading}
+                    openShowMore={noop}
+                    chainServeId={chainInfo?.serverId || ''}
+                  />
+                </View>
+              )}
           </View>
-          {showRisk && (
-            <>
-              <View style={styles.warningContainer}>
-                <RcIconWarningCircleCC
-                  width={15}
-                  height={15}
-                  color={colors2024['red-default']}
-                />
-                <Text style={styles.warningText}>
-                  {t('page.Lending.risk.toggleCollateralWarning')}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.checkbox}
-                onPress={() => {
-                  setIsChecked(prev => !prev);
-                }}>
-                <CheckBoxRect size={16} checked={isChecked} />
-                <Text style={styles.checkboxText}>
-                  {t('page.Lending.risk.checkbox')}
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
-          {isRiskToLiquidation && (
-            <Text style={styles.riskToLiquidationText}>
-              {t('page.Lending.toggleCollateralModal.riskToLiquidationText')}
-            </Text>
-          )}
+          {RiskContent}
           <View style={styles.btnContainer}>
             {canShowDirectSubmit ? (
               <DirectSignBtn
@@ -490,7 +541,8 @@ function ToggleCollateralContent({}: {}) {
                   !currentAccount ||
                   !!ctx?.disabledProcess ||
                   (isRisky && !isChecked) ||
-                  isRiskToLiquidation
+                  isRiskToLiquidation ||
+                  isError
                 }
                 type="primary"
                 syncUnlockTime
@@ -510,7 +562,8 @@ function ToggleCollateralContent({}: {}) {
                   isLoading ||
                   !currentAccount ||
                   (isRisky && !isChecked) ||
-                  isRiskToLiquidation
+                  isRiskToLiquidation ||
+                  isError
                 }
               />
             )}
@@ -675,6 +728,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   riskToLiquidationText: {
     marginTop: 8,
+    paddingHorizontal: 8,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
