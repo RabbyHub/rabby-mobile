@@ -189,17 +189,21 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       if (isSearching) {
         return true;
       }
-      if (hasHandledTokenSelectorVisibleRef.current) {
-        return false;
+      if (isLpTokenEnabled) {
+        return isLoadingAllTokens;
       }
       if (favoriteFilterValue === 'favorite') {
         return favoriteTokensLoading;
+      }
+      if (hasHandledTokenSelectorVisibleRef.current) {
+        return false;
       }
       return isLoadingAllTokens;
     }, [
       favoriteFilterValue,
       favoriteTokensLoading,
       isLoadingAllTokens,
+      isLpTokenEnabled,
       isSearching,
     ]);
 

@@ -51,8 +51,11 @@ export const useSelectTokens = ({
       return isLoading;
     }
     const address = currentAccount.address.toLowerCase();
-    return isLoadingByAddress[address];
-  }, [isLoading, isLoadingByAddress, currentAccount]);
+    if (isLpTokenEnabled) {
+      return isLoadingByAddress[address]?.allLoading;
+    }
+    return isLoadingByAddress[address]?.loading;
+  }, [currentAccount, isLpTokenEnabled, isLoadingByAddress, isLoading]);
 
   const { fetchAccountsAndTokenSettings, userTokenSettings } =
     useSelectTokensThreadSafe();
