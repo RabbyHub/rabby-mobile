@@ -299,7 +299,7 @@ const ScreenPanelEnterAddress = ({
                 <View style={[ctx.wrapperStyle, styles.customIconContainer]}>
                   <PasteButton
                     style={styles.pasteButton}
-                    cleanClipboardAfterPaste={!__DEV__}
+                    cleanClipboardAfterPaste={false}
                     onPaste={text => {
                       handleInputChange(text);
                       Keyboard.dismiss();

@@ -33,6 +33,7 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { onPastedSensitiveData } from '@/utils/clipboard';
 
 export const ImportPrivateKeyScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -188,6 +189,7 @@ export const ImportPrivateKeyScreen2024 = () => {
               style={styles.pasteButton}
               onPaste={text => {
                 setPrivateKey(text);
+                onPastedSensitiveData({ type: 'privateKey' });
               }}
             />
           </View>

@@ -33,6 +33,7 @@ import {
 import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
 import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
+import { startCheckClearAction } from './utils/clipboard';
 
 startSubscribeLangChange();
 
@@ -69,3 +70,5 @@ screenshotModalStartSyncNetworth();
 startComputationThread();
 
 trimNoLongerSupportsOnUnlock();
+
+startCheckClearAction();
