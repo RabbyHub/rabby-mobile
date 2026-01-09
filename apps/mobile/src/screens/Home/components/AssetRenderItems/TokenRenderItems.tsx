@@ -658,6 +658,11 @@ export const ExternalTokenRow = memo(
                     ellipsizeMode="tail">
                     {getTokenSymbol(data)}
                   </Text>
+                  {isLpToken(data) && (
+                    <View style={styles.lpTokenIconContainer}>
+                      <LpTokenIcon protocolId={data?.protocol_id || ''} />
+                    </View>
+                  )}
                   <ExchangeLogos
                     logos={
                       data.cex_ids?.length
@@ -903,6 +908,11 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     maxWidth: 150,
     // ...makeDebugBorder(),
+  },
+  lpTokenIconContainer: {
+    marginLeft: 0,
+    flexShrink: 0,
+    justifyContent: 'flex-start',
   },
   priceInfo: {
     flexDirection: 'row',
