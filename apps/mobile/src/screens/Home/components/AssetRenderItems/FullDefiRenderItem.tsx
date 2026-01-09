@@ -248,7 +248,9 @@ export const FullDefiRenderItem = ({
                 <View style={styles.protocolActionsList}>
                   {protocolActionList.length > 0 &&
                     protocolActionList.map(item => (
-                      <View style={styles.protocolActionsItemWrapper}>
+                      <View
+                        style={styles.protocolActionsItemWrapper}
+                        key={item}>
                         <Text style={styles.protocolActionsItem} key={item}>
                           {item}
                         </Text>

@@ -23,6 +23,7 @@ import dayjs from 'dayjs';
 import { TokenMetaInfo } from './TokenMetaInfo';
 import { QueryCopyTradingBuyItemResult } from '@/databases/entities/copyTradingBuyItem';
 import { formatUsdValueKMBWithSign } from '@/screens/Home/utils/price';
+import { tokenItemToITokenItem } from '@/utils/token';
 interface TokenInfoProps {
   tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
   currentTokenProfitData?: QueryCopyTradingBuyItemResult;
@@ -129,7 +130,7 @@ export const TokenInfo: React.FC<TokenInfoProps> = ({
     <ScrollView style={styles.container}>
       {EarningsDom}
       <TokenPriceChart
-        token={ensureAbstractPortfolioToken(tradingTokenItem)}
+        token={tokenItemToITokenItem(tradingTokenItem, '')}
         amountList={[]}
         extraMetaInfo={TokenMetaExtraInfo}
         onUpChange={onUpChange}

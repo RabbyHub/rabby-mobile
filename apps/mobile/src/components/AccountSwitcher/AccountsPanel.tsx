@@ -33,6 +33,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { ITokenItem } from '@/store/tokens';
 const SectionCollapsableNav = function ({
   isCollapsed = false,
   title,
@@ -95,7 +96,7 @@ AccountSwitcherAopProps<{
     switchAction: () => Promise<void>;
     sceneAccount: Account;
   }) => void;
-  token?: AbstractPortfolioToken;
+  token?: ITokenItem;
   scrollToBottom(): void;
 }>) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });

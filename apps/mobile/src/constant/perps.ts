@@ -1,3 +1,4 @@
+import { ITokenItem } from '@/store/tokens';
 import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
 
 // must be a USDC token and more than 5 usdc
@@ -19,6 +20,7 @@ export const ARB_USDC_TOKEN_ITEM = {
   logo_url:
     'https://static.debank.com/image/arb_token/logo_url/0xaf88d065e77c8cc2239327c5edb3a432268e5831/fffcd27b9efff5a86ab942084c05924d.png',
   amount: 0,
+  raw_amount_hex_str: '0x0',
   price: 1,
   decimals: 6,
   display_symbol: 'USDC',
@@ -29,6 +31,9 @@ export const ARB_USDC_TOKEN_ITEM = {
   is_infinity: false,
   is_suspicious: false,
   time_at: 0,
+  owner_addr: '',
+  usd_value: 0,
+  cex_ids: [],
 };
 export enum CANDLE_MENU_KEY {
   ONE_HOUR = '1H',

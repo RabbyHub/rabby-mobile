@@ -15,6 +15,7 @@ import { AccountSwitcherContextMenu } from './ContextMenu';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { TokenDetailHeaderArea } from '@/screens/TokenDetail/components/HeaderArea';
 import { formatPrice, formatTokenAmount } from '@/utils/number';
+import { ITokenItem } from '@/store/tokens';
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
   radiusValue: 20,
@@ -40,7 +41,7 @@ export function AddressItemInPanel({
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
   onPressAddress?: (account: Account) => void;
-  token?: AbstractPortfolioToken;
+  token?: ITokenItem;
   isHideToken?: boolean;
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
@@ -151,7 +152,7 @@ export function AddressItemInPanelForTokenDetail({
 }: {
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
-  token?: AbstractPortfolioToken;
+  token?: ITokenItem;
   onPressAddress?: (account: Account) => void;
   isHideToken?: boolean;
 } & RNViewProps) {

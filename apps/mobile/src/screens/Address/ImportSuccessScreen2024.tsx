@@ -49,8 +49,8 @@ import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { syncTokens, syncProtocols } from '@/databases/hooks/assets';
-import { EVENTS } from '@/utils/events';
+import { syncProtocols } from '@/databases/hooks/assets';
+import useTokenList from '@/store/tokens';
 import { eventBus } from '@/utils/events';
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { apisSingleHome } from '../Home/hooks/singleHome';
@@ -76,6 +76,7 @@ export const ImportSuccessScreen2024 = () => {
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
   const { t } = useTranslation();
+  const { getTokenList } = useTokenList();
 
   const route =
     useRoute<
@@ -251,7 +252,7 @@ export const ImportSuccessScreen2024 = () => {
       const syncAddresses =
         addresses.length > 10 ? addresses.slice(0, 10) : addresses;
       syncAddresses.forEach(address => {
-        syncTokens(address);
+        getTokenList(address);
         syncProtocols(address);
       });
       syncMultiAddressesHistory(syncAddresses);
@@ -267,7 +268,7 @@ export const ImportSuccessScreen2024 = () => {
     if (!importAddresses.length) {
       return;
     }
-    const lastAddress = importAddresses[importAddresses.length - 1].address;
+    const lastAddress = importAddresses[importAddresses.length - 1]!.address;
     if (isFocus) {
       const targetAccount = accounts.find(
         a =>

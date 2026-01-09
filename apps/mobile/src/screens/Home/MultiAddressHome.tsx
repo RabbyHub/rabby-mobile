@@ -128,6 +128,7 @@ import {
 } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
+import useTokenList from '@/store/tokens';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { isNonPublicProductionEnv } from '@/constant';
@@ -149,6 +150,7 @@ const OverViewComponent = React.memo(
   ({}: React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
     const navigation = useRabbyAppNavigation();
     const { t } = useTranslation();
+    const tokenListStore = useTokenList();
     const { styles, colors2024 } = useTheme2024({
       getStyle,
     });
@@ -315,6 +317,11 @@ const OverViewComponent = React.memo(
       }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
     );
 
+    useEffect(() => {
+      tokenListStore.initStore();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const onRefresh = useCallback(() => {
       if (!couldDoRefresh()) return;
       Promise.all([
@@ -411,12 +418,6 @@ const OverViewComponent = React.memo(
             break;
           }
           case MultiHomeFeatTitle.Ecosystem:
-            break;
-          case MultiHomeFeatTitle.Buy:
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBuy,
-              params: {},
-            });
             break;
           case MultiHomeFeatTitle.Perps:
             navigation.push(RootNames.StackTransaction, {

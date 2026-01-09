@@ -17,25 +17,17 @@ import { RcIconRightCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatTokenAmount } from '@/utils/number';
 import { HistoryItemIcon } from './HistoryItemIcon';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
 import { navigateDeprecated, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { fetchHistoryTokenUUId } from './utils';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { ellipsisOverflowedText } from '@/utils/text';
-import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
-import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
-
-import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 import { HistoryItemCateType } from './type';
 import { Account } from '@/core/services/preference';
 import { isArray } from 'lodash';
 import { Dimensions } from 'react-native';
-import { GetRootScreenRouteProp } from '@/navigation-type';
-const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
 interface ItemProps {
   status: number;
@@ -152,7 +144,7 @@ export const HistoryTokenList = ({
         });
       } else {
         navigateDeprecated(RootNames.TokenDetail, {
-          token: ensureAbstractPortfolioToken(singeToken as TokenItem),
+          token: tokenItemToITokenItem(singeToken as TokenItem, ''),
           needUseCacheToken: true,
           isSingleAddress: !isForMultipleAddress,
           account: currentAccount,

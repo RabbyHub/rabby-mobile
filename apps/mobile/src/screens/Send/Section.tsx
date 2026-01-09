@@ -156,39 +156,6 @@ export function BalanceSection({
     <View style={style}>
       <View style={styles.titleSection}>
         <Text style={styles.sectionTitle}>{t('page.sendToken.newAmount')}</Text>
-
-        {/* <View style={styles.sliderContainer}>
-          <Slider
-            key={`${currentToken?.id}-${currentToken?.chain}`}
-            allowTouchTrack={!sliderDisable}
-            disabled={sliderDisable}
-            style={styles.slider}
-            value={slider}
-            onSlidingStart={onSlidingStart}
-            onValueChange={onChangeSlider}
-            onSlidingComplete={onAfterChangeSlider}
-            minimumValue={0}
-            maximumValue={100}
-            minimumTrackTintColor={colors2024['brand-default']}
-            maximumTrackTintColor={colors2024['neutral-line']}
-            step={1}
-            thumbStyle={styles.thumbStyle}
-            thumbProps={{
-              children: (
-                <View>
-                  <View style={[styles.outerThumb, { position: 'relative' }]}>
-                    <View style={styles.innerThumb} />
-
-                    <Animated.View style={sliderStyle}>
-                      <BubbleWithText slide={slider || 0} />
-                    </Animated.View>
-                  </View>
-                </View>
-              ),
-            }}
-          />
-          <Text style={styles.sliderValue}>{slider}%</Text>
-        </View> */}
         <TouchableOpacity
           style={styles.balanceArea}
           onPress={screenState.isLoading ? noop : handleClickMaxButton}>

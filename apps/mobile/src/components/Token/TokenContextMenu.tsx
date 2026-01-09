@@ -15,6 +15,7 @@ import { type TokenSelectType } from './TokenSelectorSheetModal';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { Keyboard } from 'react-native';
+import { tokenItemToITokenItem } from '@/utils/token';
 
 interface Props {
   token: TokenItem;
@@ -55,16 +56,13 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
     navigateDeprecated(
       needToTokenMarketInfo ? RootNames.TokenMarketInfo : RootNames.TokenDetail,
       {
-        token: {
-          ...ensureAbstractPortfolioToken(token),
-          _isPined: isPined,
-        },
+        token: tokenItemToITokenItem(token, ''),
         needUseCacheToken: true,
         tokenSelectType: type,
         account: currentAccount,
       },
     );
-  }, [needToTokenMarketInfo, token, isPined, type, currentAccount]);
+  }, [needToTokenMarketInfo, token, type, currentAccount]);
 
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
@@ -109,7 +107,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
   const menuActions = React.useMemo(() => {
     return ['favorite', 'detail']
       .map(key => {
-        return menuActionDict[key];
+        return menuActionDict[key]!;
       })
       .filter(v => v);
   }, [menuActionDict]);

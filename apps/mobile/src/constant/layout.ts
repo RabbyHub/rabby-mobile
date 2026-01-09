@@ -150,10 +150,6 @@ export const RootNames = {
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',
-  /** @deprecated */
-  Buy: 'Buy',
-  /** @deprecated */
-  MultiBuy: 'MultiBuy',
   /**
    * @deprecated
    */
@@ -403,8 +399,6 @@ function makeScreenSpecConfig() {
       [RootNames.Bridge]: bg1Default2024Conf,
       [RootNames.MultiBridge]: bg1Default2024Conf,
       [RootNames.GasAccount]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      [RootNames.Buy]: bg1Default2024Conf,
-      [RootNames.MultiBuy]: bg1Default2024Conf,
       [RootNames.CopyTrading]: bg1Default2024Conf,
       [RootNames.Perps]: bg1Default2024Conf,
       [RootNames.PerpsMarketList]: bg1Default2024Conf,

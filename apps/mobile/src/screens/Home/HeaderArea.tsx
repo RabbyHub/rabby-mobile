@@ -13,7 +13,6 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { trigger } from 'react-native-haptic-feedback';
-import { useIsRefreshing } from './hooks/project';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import {
   apisSingleHome,
@@ -27,7 +26,6 @@ import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAl
 
 export default function HomeHeaderArea({ style }: RNViewProps) {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { isRefreshing: refreshing } = useIsRefreshing();
 
   const {
     aliasExist,
@@ -95,7 +93,7 @@ export default function HomeHeaderArea({ style }: RNViewProps) {
                 <RcIconHomeHeaderPenEditAddr style={styles.editIcon} />
               </TouchableOpacity>
             )}
-            {refreshing || isLoadingCurve || balanceLoading ? (
+            {isLoadingCurve || balanceLoading ? (
               <LoadingCircle />
             ) : (
               <RcIconCopy style={styles.copy} />

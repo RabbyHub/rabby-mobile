@@ -27,7 +27,6 @@ import { last, unionBy, orderBy, debounce } from 'lodash';
 import { Text, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import {
-  BuyHistoryItem,
   TokenItem,
   TxAllHistoryResult,
   TxHistoryItem,

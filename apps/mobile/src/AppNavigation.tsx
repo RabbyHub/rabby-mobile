@@ -73,7 +73,6 @@ import {
   NFTDetailScreen,
   DeFiDetailScreen,
 } from '@/screens/index.eager';
-import getLinkingConfig from './LinkingConfig';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
@@ -290,8 +289,6 @@ export default function AppNavigation() {
     navigationRef.current,
   );
 
-  const linking = useMemo(() => getLinkingConfig(), []);
-
   // const { couldRender } = useAppCouldRender();
 
   // if (!couldRender) return null;
@@ -306,12 +303,10 @@ export default function AppNavigation() {
       <NavigationIndependentTree>
         <NavigationContainer
           navigationInChildEnabled
-          linking={linking}
           ref={navigationRef}
           // key={userId}
           onReady={onReady}
           onStateChange={onStateChange}
-          // linking={LinkingConfiguration}
           theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <DuplicateAddressModal />
           <AliasNameEditModal />

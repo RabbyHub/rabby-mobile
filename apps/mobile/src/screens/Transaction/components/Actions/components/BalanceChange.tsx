@@ -14,7 +14,7 @@ import { Text, View, ViewProps } from 'react-native';
 // import * as Values from '../Actions/components/Values';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue } from '@/utils/number';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 // import useCommonStyle from '../../hooks/useCommonStyle';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import RcIconArrowRight from '@/assets2024/icons/history/IconArrowRightCircle.svg';
@@ -199,7 +199,7 @@ export const BalanceChange = ({
 
   const handleGotoDetail = useMemoizedFn((token: TokenItem) => {
     naviPush(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken(token),
+      token: tokenItemToITokenItem(token, ''),
       needUseCacheToken: true,
       isSingleAddress,
       account,

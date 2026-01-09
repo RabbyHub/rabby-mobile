@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -45,9 +45,16 @@ import {
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { CHAINS_ENUM } from '@debank/common';
-import { REPAY_AMOUNT_MULTIPLIER } from '../../utils/constant';
+import {
+  API_ETH_MOCK_ADDRESS,
+  REPAY_AMOUNT_MULTIPLIER,
+} from '../../utils/constant';
+import RepayWithCollateral from './RepayWithCollateralContent';
+import { getFromToken } from '../../utils/swap';
+import { isSupportRepayWithCollateral } from './RepayWithCollateralContent/utils';
+import wrapperToken from '../../config/wrapperToken';
 
-export const RepayActionPopup: React.FC<PopupDetailProps> = ({
+export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
@@ -483,56 +490,62 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>
-        {t('page.Lending.repayDetail.actions')} {reserve.reserve.symbol}
-      </Text>
-      <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>
-          {t('page.Lending.popup.amount')}
-        </Text>
-        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-          repayAmount.amount || '0',
-        )} ${reserve.reserve.symbol} ($${formatAmountValueKMB(
-          repayAmount.usdValue || '0',
-        )}) ${t('page.Lending.popup.available')}`}</Text>
-      </View>
-      <TokenAmountInput
-        value={amount}
-        onChange={handleChangeAmount}
-        symbol={reserve.reserve.symbol}
-        handleClickMaxButton={() => {
-          handleChangeAmount('-1');
-        }}
-        tokenAmount={Number(repayAmount.amount || '0')}
-        price={Number(
-          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
-        )}
-        style={styles.amountInput}
-        chain={chainEnum || CHAINS_ENUM.ETH}
-      />
+    <>
       <BottomSheetScrollView
         style={styles.bottomSheetScrollView}
-        contentContainerStyle={styles.transactionContainer}>
-        <RepayActionOverView
-          reserve={reserve}
-          amount={amount}
-          userSummary={userSummary}
-          afterRepayAmount={afterRepayAmount}
-          afterRepayUsdValue={afterRepayUsdValue}
-          afterHF={afterHF}
+        showsVerticalScrollIndicator
+        persistentScrollbar
+        contentContainerStyle={styles.contentContainer}>
+        <View style={styles.amountHeader}>
+          <Text style={styles.amountHeaderTitle}>
+            {t('page.Lending.popup.amount')}
+          </Text>
+          <Text
+            style={[
+              styles.amountValueDescription,
+              (repayAmount.amount === '0' || !repayAmount.amount) &&
+                styles.amountValueDescriptionDanger,
+            ]}>{`${formatTokenAmount(repayAmount.amount || '0')} ${
+            reserve.reserve.symbol
+          } ($${formatAmountValueKMB(repayAmount.usdValue || '0')}) ${t(
+            'page.Lending.popup.available',
+          )}`}</Text>
+        </View>
+        <TokenAmountInput
+          value={amount}
+          onChange={handleChangeAmount}
+          symbol={reserve.reserve.symbol}
+          handleClickMaxButton={() => {
+            handleChangeAmount('-1');
+          }}
+          tokenAmount={Number(repayAmount.amount || '0')}
+          price={Number(
+            reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+          )}
+          style={styles.amountInput}
+          chain={chainEnum || CHAINS_ENUM.ETH}
         />
+        <View style={styles.transactionContainer}>
+          <RepayActionOverView
+            reserve={reserve}
+            amount={amount}
+            userSummary={userSummary}
+            afterRepayAmount={afterRepayAmount}
+            afterRepayUsdValue={afterRepayUsdValue}
+            afterHF={afterHF}
+          />
 
-        {!!amount && amount !== '0' && canShowDirectSubmit && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
-              loading={false}
-              openShowMore={noop}
-              chainServeId={chainInfo?.serverId || ''}
-            />
-          </View>
-        )}
+          {!!amount && amount !== '0' && canShowDirectSubmit && (
+            <View style={styles.gasPreContainer}>
+              <DirectSignGasInfo
+                supportDirectSign={true}
+                loading={false}
+                openShowMore={noop}
+                chainServeId={chainInfo?.serverId || ''}
+              />
+            </View>
+          )}
+        </View>
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>
@@ -581,6 +594,139 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           />
         )}
       </View>
+    </>
+  );
+};
+
+export const RepayActionPopup: React.FC<PopupDetailProps> = ({
+  reserve,
+  userSummary,
+  onClose,
+}) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+
+  const [repaySource, setRepaySource] = useState<'wallet' | 'collateral'>(
+    'wallet',
+  );
+  const { chainInfo, selectedMarketData } = useSelectedMarket();
+  const { formattedPoolReservesAndIncentives, displayPoolReserves } =
+    useLendingSummary();
+  const repayToken = useMemo(() => {
+    const r = formattedPoolReservesAndIncentives.find(item =>
+      isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+    );
+    if (!r || !chainInfo?.id) {
+      return undefined;
+    }
+    return getFromToken(r, chainInfo?.id, reserve?.variableBorrows || '0');
+  }, [
+    formattedPoolReservesAndIncentives,
+    chainInfo?.id,
+    reserve?.variableBorrows,
+    reserve?.underlyingAsset,
+  ]);
+
+  const defaultCollateralToken = useMemo(() => {
+    const displayReserve = displayPoolReserves
+      .filter(
+        item =>
+          !isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+      )
+      .sort((a, b) => {
+        return BigNumber(b.underlyingBalanceUSD).comparedTo(
+          a.underlyingBalanceUSD,
+        );
+      })[0];
+    const r = formattedPoolReservesAndIncentives.find(item => {
+      return isSameAddress(
+        displayReserve?.underlyingAsset || '',
+        API_ETH_MOCK_ADDRESS,
+      )
+        ? isSameAddress(
+            item.underlyingAsset,
+            wrapperToken?.[displayReserve?.chain || CHAINS_ENUM.ETH]?.address,
+          )
+        : isSameAddress(
+            item.underlyingAsset,
+            displayReserve?.underlyingAsset || '',
+          );
+    });
+    if (!r || !chainInfo?.id) {
+      return undefined;
+    }
+    return getFromToken(
+      r,
+      chainInfo?.id,
+      displayReserve?.underlyingBalance || '0',
+    );
+  }, [
+    displayPoolReserves,
+    formattedPoolReservesAndIncentives,
+    chainInfo?.id,
+    reserve?.underlyingAsset,
+  ]);
+
+  const showSwitch = useMemo(() => {
+    return isSupportRepayWithCollateral(chainInfo?.id || 0, selectedMarketData);
+  }, [chainInfo?.id, selectedMarketData]);
+
+  return (
+    <AutoLockView style={styles.container}>
+      <Text style={styles.title}>
+        {t('page.Lending.repayDetail.actions')} {reserve.reserve.symbol}
+      </Text>
+      {showSwitch && (
+        <View style={styles.switchContainer}>
+          <Text style={styles.sourceSwitchTitle}>
+            {t('page.Lending.repayDetail.repayWith')}
+          </Text>
+          <View style={styles.sourceSwitchContainer}>
+            <Pressable
+              style={[
+                styles.sourceSwitchTab,
+                repaySource === 'wallet' && styles.sourceSwitchTabActive,
+              ]}
+              onPress={() => setRepaySource('wallet')}>
+              <Text
+                style={[
+                  styles.sourceSwitchTabText,
+                  repaySource === 'wallet' && styles.sourceSwitchTabTextActive,
+                ]}>
+                {t('page.Lending.repayDetail.tabs.wallet')}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.sourceSwitchTab,
+                repaySource === 'collateral' && styles.sourceSwitchTabActive,
+              ]}
+              onPress={() => setRepaySource('collateral')}>
+              <Text
+                style={[
+                  styles.sourceSwitchTabText,
+                  repaySource === 'collateral' &&
+                    styles.sourceSwitchTabTextActive,
+                ]}>
+                {t('page.Lending.repayDetail.tabs.collateral')}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+      {repaySource === 'wallet' ? (
+        <RepayActionPopupContent
+          reserve={reserve}
+          userSummary={userSummary}
+          onClose={onClose}
+        />
+      ) : repayToken ? (
+        <RepayWithCollateral
+          onClose={onClose}
+          repayToken={repayToken}
+          defaultCollateralToken={defaultCollateralToken}
+        />
+      ) : null}
     </AutoLockView>
   );
 };
@@ -595,13 +741,18 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 20,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
+  switchContainer: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    width: '100%',
+    zIndex: 999,
+  },
   amountHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 4,
-    marginTop: 36,
+    marginTop: 16,
   },
   amountHeaderTitle: {
     fontSize: 17,
@@ -616,6 +767,9 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
+  amountValueDescriptionDanger: {
+    color: ctx.colors2024['red-default'],
+  },
   amountInput: {
     marginTop: 12,
   },
@@ -626,11 +780,17 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
   },
   contentContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
+    paddingBottom: 200,
     width: '100%',
   },
   bottomSheetScrollView: {
+    flex: 1,
     width: '100%',
+    marginTop: 16,
+    height: '100%',
+    overflow: 'visible',
+    paddingBottom: 140,
   },
   transactionContainer: {
     gap: 12,
@@ -654,6 +814,52 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     marginTop: 0,
     fontFamily: 'SF Pro Rounded',
+    width: '100%',
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    zIndex: 999,
+  },
+  sourceSwitchTitle: {
+    marginTop: 16,
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    color: ctx.colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'left',
+    width: '100%',
+  },
+  sourceSwitchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    marginTop: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 0,
+    borderRadius: 10,
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  sourceSwitchTab: {
+    flex: 1,
+    height: 34,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  sourceSwitchTabActive: {
+    backgroundColor: ctx.colors2024['neutral-title-1'],
+  },
+  sourceSwitchTabText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    color: ctx.colors2024['neutral-secondary'],
+  },
+  sourceSwitchTabTextActive: {
+    fontWeight: '700',
+    color: ctx.colors2024['neutral-bg-0'],
   },
   buttonContainer: {
     height: 116,
