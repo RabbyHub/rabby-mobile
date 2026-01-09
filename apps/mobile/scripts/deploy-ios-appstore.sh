@@ -55,6 +55,7 @@ build_appstore() {
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
   yarn;
+  yarn check-nodeengines && yarn ../mobile-local-pages bundle:all && yarn link-assets && yarn buildworker:prod:ios;
   yarn syncrnversion;
   cd $project_dir/ios;
   bundle install;
