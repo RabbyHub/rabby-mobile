@@ -3083,7 +3083,14 @@
         "title": "Risk Detected",
         "proceedBtn": "Proceed",
         "simpleExplanation": "Not supported"
+      },
+      "placeholders": {
+        "noTokens": "No tokens",
+        "noLpTokens": "No Liquidity Provider (LP) Token"
       }
+    },
+    "lpTokenModal": {
+      "desc": "This is a Liquidity Provider(LP) Token for {{protocolId}} "
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {

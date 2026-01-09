@@ -5,12 +5,14 @@ import { View, Text } from 'react-native';
 import { Button } from '../Button';
 import AutoLockView from '@/components/AutoLockView';
 import RcLpTokenIcon from '@/assets2024/icons/home/RcLpTokenIcon.svg';
+import { useTranslation } from 'react-i18next';
 
 export const LpTokenDescription: React.FC<{
   protocolId: string;
   onClose: () => void;
 }> = ({ protocolId, onClose }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
 
   return (
     <AutoLockView as="View" style={styles.container}>
@@ -22,7 +24,7 @@ export const LpTokenDescription: React.FC<{
         />
       </View>
       <Text style={styles.title}>
-        This is a Liquidity Provider(LP) Token for {protocolId}{' '}
+        {t('component.lpTokenModal.desc', { protocolId })}
       </Text>
       <Button containerStyle={styles.button} title="Got it" onPress={onClose} />
     </AutoLockView>
