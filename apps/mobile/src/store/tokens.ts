@@ -58,7 +58,13 @@ type TokenAssetsResult = {
 interface TokenListState {
   tokenListMap: Record<string, ITokenItem[]>;
   isLoading: boolean;
-  isLoadingByAddress: Record<string, boolean>;
+  isLoadingByAddress: Record<
+    string,
+    {
+      loading: boolean;
+      allLoading: boolean;
+    }
+  >;
   initStore(): void;
   batchGetTokenList(addresses: string[], force?: boolean): Promise<void>;
   getTokenList(address: string, force?: boolean): Promise<void>;
@@ -430,7 +436,8 @@ const computeChainSelector = (
 const tokenListStore = zCreate<TokenListState>(set => ({
   tokenListMap: {},
   isLoading: false, // 整体的 loading 状态
-  isLoadingByAddress: {}, // 单个地址的 loading 状态
+  // 单个地址的 loading 状态：cache token拿到loading设置false，等所有token都拿到allLoading才设置false
+  isLoadingByAddress: {},
   async initStore() {
     // 在 App 启动时执行，初始化冷备数据
     // 取 Top10 地址
@@ -535,7 +542,7 @@ const tokenListStore = zCreate<TokenListState>(set => ({
     set(state => ({
       isLoadingByAddress: {
         ...state.isLoadingByAddress,
-        [normalizedAddress]: true,
+        [normalizedAddress]: { loading: true, allLoading: true },
       },
     }));
 
@@ -551,7 +558,8 @@ const tokenListStore = zCreate<TokenListState>(set => ({
         },
         isLoadingByAddress: {
           ...state.isLoadingByAddress,
-          [normalizedAddress]: false,
+          // cache已经拿到，但是不是所有token都拿到
+          [normalizedAddress]: { loading: false, allLoading: true },
         },
       }));
 
@@ -594,7 +602,7 @@ const tokenListStore = zCreate<TokenListState>(set => ({
       set(state => ({
         isLoadingByAddress: {
           ...state.isLoadingByAddress,
-          [normalizedAddress]: false,
+          [normalizedAddress]: { loading: false, allLoading: false },
         },
       }));
     }

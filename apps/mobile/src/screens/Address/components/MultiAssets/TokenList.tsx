@@ -147,6 +147,7 @@ export const TokenList = () => {
   const handleToggleTokenFold = useCallback(() => {
     if (!foldHideList) {
       setFoldScam(true);
+      setIsLpTokenEnabled(false);
     }
     setFoldHideList(pre => !pre);
   }, [foldHideList]);
